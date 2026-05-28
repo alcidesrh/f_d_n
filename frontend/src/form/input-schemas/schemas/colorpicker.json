@@ -1,0 +1,181 @@
+[
+  {
+    "$formkit": "colorpicker",
+    "label": "Colorpicker",
+    "help": "Some input help text.",
+    "value": "#DE1B1B"
+  },
+  {
+    "$formkit": "colorpicker",
+    "label": "Colorpicke: with icons",
+    "help": "Some input help text.",
+    "prefixIcon": "star",
+    "suffixIcon": "heart",
+    "value": "#DE1B1B"
+  },
+  {
+    "$formkit": "colorpicker",
+    "label": "Colorpicker: disabled",
+    "disabled": true,
+    "help": "Some input help text.",
+    "value": "#DE1B1B"
+  },
+  {
+    "$formkit": "colorpicker",
+    "label": "Colorpicker: invalid",
+    "help": "Some input help text.",
+    "value": "#DE1B1B",
+    "validation": "is:#000000",
+    "validationVisibility": "live",
+    "validationMessages": {
+      "is": "Color must be #000000"
+    }
+  },
+  {
+    "$formkit": "colorpicker",
+    "label": "Colorpicker: inline",
+    "inline": true,
+    "help": "Some input help text.",
+    "value": "#68B9CD"
+  },
+  {
+    "$formkit": "colorpicker",
+    "label": "Colorpicker: inline invalid",
+    "inline": true,
+    "help": "Some input help text.",
+    "value": "#DE1B1B",
+    "validation": "is:#000000",
+    "validationVisibility": "live",
+    "validationMessages": {
+      "is": "Color must be #000000"
+    }
+  },
+  {
+    "$formkit": "colorpicker",
+    "label": "Colorpicker: inline w/ disabled eyedropper",
+    "help": "Some input help text.",
+    "inline": true,
+    "eyeDropper": false,
+    "value": "#AE40C9"
+  },
+  {
+    "$formkit": "colorpicker",
+    "label": "Colorpicker: inline w/ swatches",
+    "inline": true,
+    "help": "Some input help text.",
+    "value": "#50E3C2",
+    "options": [
+      "#000000",
+      "hsla(180, 100%, 0%, 0.5)",
+      "hsla(352, 98%, 41%, 1)",
+      "rgb(245, 166, 35)",
+      "hsl(55deg, 94%, 54.1%)",
+      "#8B572A",
+      "#7ED321",
+      "#417505",
+      "#B955CB",
+      "#9013FE",
+      "#4A90E2",
+      "#50E3C2",
+      "#B8E986",
+      "#4A4A4A",
+      "#9B9B9B",
+      "#FFFFFF",
+      "hsla(220, 30%, 100%, 0.5)",
+      "rgba(233,22,155,0.5)",
+      "hsla(50deg,85.5%,83.7%,0.5)"
+    ]
+  },
+  {
+    "$formkit": "colorpicker",
+    "label": "Colorpicker: inline w/ grouped swatches",
+    "inline": true,
+    "help": "Some input help text.",
+    "value": "#50E3C2",
+    "options": [
+      {
+        "group": "FormKit",
+        "options": [
+          {
+            "label": "Brand Orange",
+            "value": "#ff985d"
+          },
+          {
+            "label": "Brand Yellow",
+            "value": "#f7ce68"
+          },
+          {
+            "label": "Brand Blue",
+            "value": "#0275FF"
+          },
+          {
+            "label": "Brand Dark",
+            "value": "#2b2b35"
+          }
+        ]
+      },
+      {
+        "group": "Other",
+        "options": [
+          "#000000",
+          "hsla(180, 100%, 0%, 0.5)",
+          "hsla(352, 98%, 41%, 1)",
+          "rgb(245, 166, 35)",
+          "hsl(55deg, 94%, 54.1%)",
+          "#8B572A",
+          "#7ED321",
+          "#417505",
+          "#B955CB",
+          "#9013FE",
+          "#4A90E2",
+          "#50E3C2",
+          "#B8E986",
+          "#4A4A4A",
+          "#9B9B9B",
+          "#FFFFFF",
+          "hsla(220, 30%, 100%, 0.5)",
+          "rgba(233,22,155,0.5)",
+          "hsla(50deg,85.5%,83.7%,0.5)"
+        ]
+      }
+    ]
+  },
+  {
+    "$formkit": "colorpicker",
+    "label": "Colorpicker: inline swatch-only",
+    "inline": true,
+    "help": "Some input help text.",
+    "value": "#7ED321",
+    "panelFormat": "false",
+    "panelControls": "false",
+    "options": [
+      "#000000",
+      "hsla(180, 100%, 0%, 0.5)",
+      "hsla(352, 98%, 41%, 1)",
+      "rgb(245, 166, 35)",
+      "hsl(55deg, 94%, 54.1%)",
+      "#8B572A",
+      "#7ED321",
+      "#417505",
+      "#B955CB",
+      "#9013FE",
+      "#4A90E2",
+      "#50E3C2",
+      "#B8E986",
+      "#4A4A4A",
+      "#9B9B9B",
+      "#FFFFFF",
+      "hsla(220, 30%, 100%, 0.5)",
+      "rgba(233,22,155,0.5)",
+      "hsla(50deg,85.5%,83.7%,0.5)"
+    ]
+  },
+  {
+    "$formkit": "colorpicker",
+    "label": "Colorpicker: inline disabled",
+    "inline": true,
+    "disabled": true,
+    "help": "Some input help text.",
+    "value": "#9013FE"
+  }
+]

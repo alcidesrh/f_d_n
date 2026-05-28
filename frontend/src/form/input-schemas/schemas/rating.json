@@ -1,0 +1,43 @@
+[
+  {
+    "$formkit": "rating",
+    "label": "Rating"
+  },
+  {
+    "$formkit": "rating",
+    "label": "Rating: with value",
+    "value": "5"
+  },
+  {
+    "$formkit": "rating",
+    "label": "Rating: with half-step",
+    "value": "3.5",
+    "step": "0.5"
+  },
+  {
+    "$formkit": "rating",
+    "label": "Rating: with custom icon",
+    "value": "3",
+    "ratingIcon": "android"
+  },
+  {
+    "$formkit": "rating",
+    "label": "Rating: with custom colors",
+    "value": "3",
+    "onColor": "pink",
+    "offColor": "black"
+  },
+  {
+    "$formkit": "rating",
+    "label": "Rating: invalid",
+    "value": "3",
+    "validation": "min:5",
+    "validationVisibility": "live"
+  },
+  {
+    "$formkit": "rating",
+    "label": "Rating: disabled",
+    "disabled": true,
+    "value": "3"
+  }
+]

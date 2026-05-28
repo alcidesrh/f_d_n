@@ -1,0 +1,31 @@
+[
+  {
+    "$formkit": "form",
+    "submitLabel": "Login",
+    "onSubmit": "$formSubmitHandler",
+    "submitAttrs": {
+      "suffixIcon": "submit"
+    },
+    "children": [
+      {
+        "$formkit": "text",
+        "label": "Username",
+        "name": "username",
+        "validation": "required",
+        "placeholder": "Enter your username"
+      },
+      {
+        "$formkit": "password",
+        "label": "Password",
+        "name": "password",
+        "validation": "required",
+        "placeholder": "Enter your password"
+      },
+      {
+        "$formkit": "checkbox",
+        "label": "Remember Me",
+        "name": "rememberme"
+      }
+    ]
+  }
+]

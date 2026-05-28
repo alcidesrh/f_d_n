@@ -1,0 +1,13 @@
+.m-1 { margin: $space-sm; }
+.m-2 { margin: $space-md; }
+.m-3 { margin: $space-lg; }
+
+.p-1 { padding: $space-sm; }
+.p-2 { padding: $space-md; }
+.p-3 { padding: $space-lg; }
+
+.text-ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

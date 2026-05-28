@@ -1,0 +1,130 @@
+.q-notification.fdn-notify {
+	backdrop-filter: blur(3.5px) saturate(120%);
+
+	& .q-notification__actions {
+		position: absolute;
+		top: 0px;
+		width: 100%;
+
+		&>button {
+			position: absolute;
+			right: -16px;
+			top: -10px;
+
+			& i {
+				position: absolute;
+				top: 10px;
+			}
+		}
+	}
+
+	& .q-notification__content {
+		padding-right: 25px;
+		max-width: 500px;
+
+		&>i {
+			position: absolute;
+			top: 15px;
+			font-size: 1.3rem !important;
+
+		}
+
+		&>.q-notification__message {
+			margin-left: 15px;
+			font-size: 1.1rem;
+			font-weight: 400;
+			padding: 15px;
+
+			&>.q-notification__caption {
+				opacity: 1;
+				font-size: .9rem;
+				font-weight: 400;
+				margin-top: 20px;
+			}
+
+			&>* {
+				overflow-wrap: anywhere;
+			}
+		}
+	}
+
+	& .q-notification__actions {
+		&:hover {
+			background-color: transparent !important;
+		}
+
+		&>button {
+			padding: 0px !important;
+
+			&:hover {
+				background-color: transparent !important;
+			}
+
+			&>span.q-focus-helper {
+				display: none;
+			}
+
+			&>span>i {
+
+				// font-size: 1.2rem !important;
+				font-weight: 400 !important;
+			}
+		}
+	}
+
+	&.bg-negative {
+		border: 1px solid $red-5;
+		background: -alpha($red-1, 0.15) !important;
+		color: $red-9 !important;
+
+		& .q-notification__caption {
+			color: $red-7;
+		}
+
+		& .q-notification__actions>button {
+			color: $red-9 !important;
+		}
+	}
+
+	&.bg-positive {
+		border: 1px solid $emerald;
+		background: -alpha($emerald-1, 0.5) !important;
+		color: $emerald-10 !important;
+
+		& .q-notification__caption {
+			color: $green-9 !important;
+		}
+
+		& .q-notification__actions>button {
+			color: $green-9 !important;
+		}
+	}
+
+	&.bg-info {
+		border: 1px solid $blue;
+		background: -alpha($blue-1, .15) !important;
+		color: $blue-10 !important;
+
+		& .q-notification__caption {
+			color: $blue-9 !important;
+		}
+
+		& .q-notification__actions>button {
+			color: $blue-9 !important;
+		}
+	}
+
+	&.bg-warning {
+		border: 1px solid $orange;
+		background: -alpha($orange-1, .15) !important;
+		color: $orange-10 !important;
+
+		& .q-notification__caption {
+			color: $orange-9 !important;
+		}
+
+		& .q-notification__actions>button {
+			color: $orange-9 !important;
+		}
+	}
+}

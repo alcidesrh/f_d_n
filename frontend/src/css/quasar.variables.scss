@@ -1,0 +1,77 @@
+@use "quasar/src/css/variables" as q;
+@use "sass:map";
+@import './color.scss';
+
+
+/* COLORS */
+
+
+
+$font-family: 'Roboto Flex Variable', sans-serif;
+$white: oklch(100% 0 250);
+$background: $white;
+$primary: $surface;
+$secondary: $emerald;
+$accent: $indigo; // used by dark mode
+$dark-page: $surface-9;
+$dark : $surface-11;
+$positive : $emerald;
+$negative : $red;
+$info : $blue;
+$warning : $orange;
+$highlight: #FBF5A7;
+$primary-foreground: $white;
+
+$topbar-sidebar-bg: $surface-2;
+$text-color: $surface-8;
+$topbar: 70px;
+$border: 1px solid $surface-4;
+$sidebar-width: calc(200px - 16px);
+$sidebar-mini-width: 57px;
+
+
+.text-surface {
+  color: $surface-4 !important;
+}
+
+.bg-surface {
+  background: $surface-3 !important;
+}
+
+/* STATES */
+$active: rgba(0, 0, 0, .08);
+$focus: rgba(25, 118, 210, .25);
+
+/* TYPO */
+
+/* RADIUS */
+$radius-sm: 6px;
+$radius-md: 10px;
+$radius-lg: 14px;
+
+/* SHADOWS */
+$shadow-sm: 0 1px 2px rgba(0, 0, 0, .08);
+$shadow-md: 0 4px 12px rgba(0, 0, 0, .12);
+$shadow-lg: 0 10px 25px rgba(0, 0, 0, .18);
+
+/* NEUTRALS */
+$bg: #ffffff;
+$text: #1f2937;
+
+/* STATES */
+$hover: -alpha($surface, .15);
+$active: rgba(0, 0, 0, .08);
+$focus: rgba(25, 118, 210, .25);
+
+$radius-sm: 6px;
+$radius-md: 10px;
+$radius-lg: 14px;
+
+/* SHADOWS */
+$shadow-sm: 0 1px 2px rgba(0, 0, 0, .08);
+$shadow-md: 0 4px 12px rgba(0, 0, 0, .12);
+$shadow-lg: 0 10px 25px rgba(0, 0, 0, .18);
+
+.bg-red {
+  background-color: $red-5 !important;
+}

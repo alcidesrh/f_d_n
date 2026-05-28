@@ -1,0 +1,68 @@
+# Development environment override
+services:
+  php:
+    build:
+      context: ./backend
+      target: frankenphp_dev
+    volumes:
+      - ./backend:/app
+      - /app/var
+      - ./backend/frankenphp/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./backend/frankenphp/conf.d/app.dev.ini:/usr/local/etc/php/conf.d/app.dev.ini:ro
+      # If you develop on Mac or Windows you can remove the vendor/ directory
+      #  from the bind-mount for better performance by enabling the next line:
+      #- /app/vendor
+    environment:
+      MERCURE_EXTRA_DIRECTIVES: demo
+      # See https://xdebug.org/docs/all_settings#mode
+      XDEBUG_MODE: '${XDEBUG_MODE:-off}'
+    extra_hosts:
+      # Ensure that host.docker.internal is correctly defined on Linux
+      - host.docker.internal:host-gateway
+    tty: true
+
+  frontend:
+    build:
+      context: ./frontend
+      target: dev
+    volumes:
+      - ./frontend:/frontend
+      - ./frontend/node_modules:/frontend/node_modules
+    environment:
+      API_PLATFORM_CREATE_CLIENT_ENTRYPOINT: http://php
+      API_PLATFORM_CREATE_CLIENT_OUTPUT: .
+      # Development usage only
+      NODE_TLS_REJECT_UNAUTHORIZED: '0'
+
+  ###> symfony/mercure-bundle ###
+  ###< symfony/mercure-bundle ###
+
+  ###> doctrine/doctrine-bundle ###
+  database:
+    ports:
+      - target: 5432
+        published: 5432
+        protocol: tcp
+  ###< doctrine/doctrine-bundle ###
+
+  worker:
+    build:
+      context: ./backend
+      target: frankenphp_dev
+    container_name: fdn_worker
+    restart: unless-stopped
+    command: php bin/console messenger:consume sync_tasks --time-limit=3600
+    depends_on:
+      database:
+        condition: service_healthy
+    volumes:
+      - ./api:/app
+      - /app/var
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-fdn}:${POSTGRES_PASSWORD:-fdn}@database:5432/${POSTGRES_DB:-fdn}?serverVersion=${POSTGRES_VERSION:-16}&charset=${POSTGRES_CHARSET:-utf8}
+      systemfdn_host: ${systemfdn_host:-207.244.233.184}
+      systemfdn_port: ${systemfdn_port:-5050}
+      systemfdn_user: ${systemfdn_user:-sa}
+      systemfdn_password: ${systemfdn_password:-b9H^m9KNQdZ`w#7j}
+      systemfdn_dbname: ${systemfdn_dbname:-TerminalOmnibus}
+      APP_ENV: dev

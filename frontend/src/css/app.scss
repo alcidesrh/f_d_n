@@ -1,0 +1,135 @@
+// @layer reset, quasar, theme, components, utilities, overrides;
+// @import './quasar.variables.sass';
+// @import 'quasar/src/css/index.sass';
+// @import './tokens.scss';
+@import './root.scss';
+@import './components/index.scss';
+@import 'utopia.scss';
+@import 'material-symbols/index.css';
+@import '_fonts.scss';
+@import './theme/index.scss';
+// @import './media-form.scss';
+// @import './media-grid-form.scss';
+@import './media-queries.scss';
+
+// .route-enter-active,
+// .route-leave-active {
+//   transition:
+//     opacity 0.25s ease,
+//     transform 0.25s ease;
+// }
+
+// .route-enter-from {
+//   opacity: 0;
+//   transform: translateY(58px);
+// }
+
+// .route-leave-to {
+//   opacity: 0;
+//   transform: translateY(-58px);
+// }
+
+.route-enter-active,
+.route-leave-active {
+  transition: transform 0.3s ease, opacity 0.2s ease, scale .2s ease;
+}
+
+
+.route-enter-from {
+  // transform: translateX(20px);
+  opacity: 0;
+  // scale: .8
+}
+
+.route-enter-to {
+  // transform: translateX(0);
+  opacity: 1;
+  // scale: 1
+}
+
+.route-leave-from {
+  // transform: translateX(0);
+  opacity: 1;
+  // scale: 1
+}
+
+.route-leave-to {
+  // transform: translateX(-20px);
+  opacity: 0;
+  // scale: .8
+}
+
+// .route-enter-active,
+// .route-leave-active {
+//   transition: transform 0.3s ease, opacity 0.3s ease;
+// }
+
+// .route-enter-from {
+//   transform: translateX(20px);
+//   opacity: 0;
+// }
+
+// .route-leave-to {
+//   transform: translateX(-20px);
+//   opacity: 0;
+// }
+
+fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.slide-left-enter-active {
+  transition: all 0.2s ease;
+}
+
+.slide-left-enter-from {
+  opacity: 0;
+  transform: translateX(-100%);
+}
+
+.slide-left-leave-to {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
+
+.slide-right-enter-active {
+  transition: all 0.3s ease;
+}
+
+.slide-right-enter-from {
+  opacity: 0;
+  transform: translateX(-100%);
+}
+
+.slide-right-leave-to {
+  opacity: 0;
+  transform: translateX(100%);
+}
+
+.auto-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.auto-grid-1 {
+  grid-template-columns: repeat(1, 1fr);
+}
+
+.auto-grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.auto-grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.auto-grid-4 {
+  grid-template-columns: repeat(4, 1fr);
+}

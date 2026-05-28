@@ -1,0 +1,58 @@
+// @use './tokens' as *;
+
+:root {
+  // color-scheme: light;
+  font-size: 16px;
+
+  --primary: #{$primary};
+  --secondary: #{$secondary};
+  --accent: #{$accent};
+
+  --positive: #{$positive};
+  --negative: #{$negative};
+  --warning: #{$warning};
+
+  --surface: #{$surface};
+  --text: #{$text};
+
+  --hover: #{$hover};
+  --active: #{$active};
+  --focus: #{$focus};
+
+  --font-family: #{$font-family};
+
+  --text-xs: .75rem;
+  --text-sm: .875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+
+  --space-1: .25rem;
+  --space-2: .5rem;
+  --space-3: .75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+
+  --radius-sm: #{$radius-sm};
+  --radius-md: #{$radius-md};
+  --radius-lg: #{$radius-lg};
+
+  --shadow-sm: #{$shadow-sm};
+  --shadow-md: #{$shadow-md};
+  --shadow-lg: #{$shadow-lg};
+
+  --transition-fast: 120ms ease;
+  --transition-base: 180ms ease;
+  --transition-slow: 280ms ease;
+
+  *:focus:not(input):not(textarea):not([contenteditable="true"]),
+  button:focus,
+  a:focus,
+  div:focus {
+    caret-color: transparent;
+    // user-select: none;
+  }
+
+
+}

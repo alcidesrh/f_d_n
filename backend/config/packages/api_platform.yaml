@@ -1,0 +1,7 @@
+api_platform:
+    title: Sistema de Gestión de Transporte de Pasajeros
+    version: 1.0.0
+    defaults:
+        stateless: true
+        cache_headers:
+            vary: ['Content-Type', 'Authorization', 'Origin']

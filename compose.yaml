@@ -1,0 +1,74 @@
+services:
+  php:
+    image: ${IMAGES_PREFIX:-}app-php
+    restart: unless-stopped
+    container_name: fdn_backend
+    environment:
+      PWA_UPSTREAM: frontend:9000
+      SERVER_NAME: ${SERVER_NAME:-localhost}, php:80
+      MERCURE_PUBLISHER_JWT_KEY: ${CADDY_MERCURE_JWT_SECRET:-!ChangeThisMercureHubJWTSecretKey!}
+      MERCURE_SUBSCRIBER_JWT_KEY: ${CADDY_MERCURE_JWT_SECRET:-!ChangeThisMercureHubJWTSecretKey!}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16}
+      TRUSTED_HOSTS: ^${SERVER_NAME:-example\.com|localhost}|php$$
+      DATABASE_URL: postgresql://${POSTGRES_USER:-fdn}:${POSTGRES_PASSWORD:-fdn}@database:5432/${POSTGRES_DB:-fdn}?serverVersion=${POSTGRES_VERSION:-16}&charset=${POSTGRES_CHARSET:-utf8}
+      MERCURE_URL: ${CADDY_MERCURE_URL:-http://php/.well-known/mercure}
+      MERCURE_PUBLIC_URL: ${CADDY_MERCURE_PUBLIC_URL:-https://${SERVER_NAME:-localhost}/.well-known/mercure}
+      MERCURE_JWT_SECRET: ${CADDY_MERCURE_JWT_SECRET:-!ChangeThisMercureHubJWTSecretKey!}
+      # The two next lines can be removed after initial installation
+      SYMFONY_VERSION: ${SYMFONY_VERSION:-}
+      STABILITY: ${STABILITY:-stable}
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    ports:
+      # HTTP
+      - target: 80
+        published: ${HTTP_PORT:-80}
+        protocol: tcp
+      # HTTPS
+      - target: 443
+        published: ${HTTPS_PORT:-443}
+        protocol: tcp
+      # HTTP/3
+      - target: 443
+        published: ${HTTP3_PORT:-443}
+        protocol: udp
+
+  frontend:
+    container_name: fdn_frontend
+    image: ${IMAGES_PREFIX:-}app-frontend
+    # environment:
+    #   NEXT_PUBLIC_ENTRYPOINT: http://php
+    #   NUXTAUTH_SECRET: ${NUXTAUTH_SECRET:-!ChangeThisNextAuthSecret!}
+    #   NUXTAUTH_URL: ${NUXTAUTH_URL:-https://localhost/api/auth}
+    #   NUXTAUTH_URL_INTERNAL: http://127.0.0.1:3000/api/auth
+
+  ###> doctrine/doctrine-bundle ###
+  database:
+    container_name: fdn_database
+    image: postgres:${POSTGRES_VERSION:-16}-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-fdn}
+      # You should definitely change the password in production
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fdn}
+      POSTGRES_USER: ${POSTGRES_USER:-fdn}
+    healthcheck:
+      test: ['CMD', 'pg_isready -U ${POSTGRES_USER:-app}']
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      # you may use a bind-mounted host directory instead, so that it is harder to accidentally remove the volume and lose all your data!
+      # - ./api/docker/db/data:/var/lib/postgresql/data
+###< doctrine/doctrine-bundle ###
+
+volumes:
+  caddy_data:
+  caddy_config:
+  ###> doctrine/doctrine-bundle ###
+  db_data:
+###< doctrine/doctrine-bundle ###
+###> symfony/mercure-bundle ###
+###< symfony/mercure-bundle ###
+

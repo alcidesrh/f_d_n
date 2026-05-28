@@ -1,0 +1,146 @@
+[
+  {
+    "$formkit": "repeater",
+    "label": "Repeater",
+    "name": "Users",
+    "help": "Some input help text.",
+    "insertControl": true,
+    "add-label": "Add User",
+    "children": [
+      {
+        "$formkit": "text",
+        "name": "email",
+        "label": "Email",
+        "validation": "required|email"
+      },
+      {
+        "$formkit": "dropdown",
+        "name": "role",
+        "label": "Role",
+        "validation": "required",
+        "options": [
+          { "label": "Front-end", "value": "frontend" },
+          { "label": "Back-end", "value": "backend" },
+          { "label": "Full-stack", "value": "fullstack" },
+          { "label": "DevOps", "value": "devops" },
+          { "label": "Designer", "value": "designer" },
+          { "label": "Other", "value": "other" }
+        ]
+      }
+    ],
+    "value": [
+      { "email": "andrew@formkit.com", "role": "fullstack" },
+      { "email": "justin@formkit.com", "role": "fullstack" }
+    ]
+  },
+  {
+    "$formkit": "repeater",
+    "label": "Repeater with draggable enabled",
+    "name": "Users",
+    "help": "Some input help text.",
+    "insertControl": true,
+    "add-label": "Add User",
+    "draggable": "true",
+    "children": [
+      {
+        "$formkit": "text",
+        "name": "email",
+        "label": "Email",
+        "validation": "required|email"
+      },
+      {
+        "$formkit": "dropdown",
+        "name": "role",
+        "label": "Role",
+        "validation": "required",
+        "options": [
+          { "label": "Front-end", "value": "frontend" },
+          { "label": "Back-end", "value": "backend" },
+          { "label": "Full-stack", "value": "fullstack" },
+          { "label": "DevOps", "value": "devops" },
+          { "label": "Designer", "value": "designer" },
+          { "label": "Other", "value": "other" }
+        ]
+      }
+    ],
+    "value": [
+      { "email": "andrew@formkit.com", "role": "fullstack" },
+      { "email": "justin@formkit.com", "role": "fullstack" }
+    ]
+  },
+  {
+    "$formkit": "repeater",
+    "label": "Repeater: invalid",
+    "name": "Users",
+    "help": "Some input help text.",
+    "insertControl": true,
+    "add-label": "Add User",
+    "validation": "min:2",
+    "validation-visibility": "live",
+    "children": [
+      {
+        "$formkit": "text",
+        "name": "email",
+        "label": "Email"
+      }
+    ],
+    "value": [{ "email": "andrew@formkit.com" }]
+  },
+  {
+    "$formkit": "repeater",
+    "label": "Repeater: disabled",
+    "help": "Some input help text.",
+    "name": "Users",
+    "disabled": true,
+    "insertControl": true,
+    "add-label": "Add User",
+    "children": [
+      {
+        "$formkit": "text",
+        "name": "email",
+        "label": "Email",
+        "validation": "required|email"
+      }
+    ],
+    "value": [
+      { "email": "andrew@formkit.com" },
+      { "email": "justin@formkit.com" }
+    ]
+  },
+  {
+    "$formkit": "repeater",
+    "label": "Repeater: disabled with a manually re-enabled child",
+    "help": "Some input help text.",
+    "name": "Users",
+    "disabled": true,
+    "insertControl": true,
+    "add-label": "Add User",
+    "children": [
+      {
+        "$formkit": "text",
+        "name": "email",
+        "label": "Email",
+        "validation": "required|email"
+      },
+      {
+        "$formkit": "dropdown",
+        "name": "role",
+        "label": "Role",
+        "validation": "required",
+        "disabled": false,
+        "options": [
+          { "label": "Front-end", "value": "frontend" },
+          { "label": "Back-end", "value": "backend" },
+          { "label": "Full-stack", "value": "fullstack" },
+          { "label": "DevOps", "value": "devops" },
+          { "label": "Designer", "value": "designer" },
+          { "label": "Other", "value": "other" }
+        ]
+      }
+    ],
+    "value": [
+      { "email": "andrew@formkit.com", "role": "fullstack" },
+      { "email": "justin@formkit.com", "role": "fullstack" }
+    ]
+  }
+]

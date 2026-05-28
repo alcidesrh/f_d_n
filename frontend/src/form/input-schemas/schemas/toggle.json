@@ -1,0 +1,57 @@
+[
+  {
+    "$formkit": "toggle",
+    "value": true
+  },
+  {
+    "$formkit": "toggle",
+    "label": "Toggle: with label",
+    "value": true
+  },
+  {
+    "$formkit": "toggle",
+    "label": "Toggle: with alt label",
+    "altLabelPosition": true
+  },
+  {
+    "$formkit": "toggle",
+    "label": "Toggle: with value labels",
+    "offValueLabel": "Off",
+    "onValueLabel": "On",
+    "value": true
+  },
+  {
+    "$formkit": "toggle",
+    "label": "Toggle: with value labels inside",
+    "offValueLabel": "Off",
+    "onValueLabel": "On",
+    "valueLabelDisplay": "inner",
+    "value": true
+  },
+  {
+    "$formkit": "toggle",
+    "label": "Toggle: invalid",
+    "validation": "accepted",
+    "validationVisibility": "live"
+  },
+  {
+    "$formkit": "toggle",
+    "label": "Toggle: with icon",
+    "thumbIcon": "star",
+    "value": true
+  },
+  {
+    "$formkit": "toggle",
+    "label": "Toggle: with color props",
+    "thumbIcon": "star",
+    "thumbColorOn": "#4FCE5D",
+    "trackColorOn": "#435A64",
+    "iconColorOn": "#FFFFFF",
+    "value": true
+  },
+  {
+    "$formkit": "toggle",
+    "label": "Toggle: disabled",
+    "disabled": true
+  }
+]

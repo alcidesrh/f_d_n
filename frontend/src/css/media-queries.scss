@@ -1,0 +1,76 @@
+/* =========================================
+   QUASAR BREAKPOINTS
+   xs < 600
+   sm ≥ 600
+   md ≥ 1024
+   lg ≥ 1440
+   xl ≥ 1920
+========================================= */
+.mobile-only {
+  display: none;
+}
+
+.desktop-only {
+  display: block;
+}
+
+.screen-xs .mobile-only,
+.screen-sm .mobile-only {
+  display: block;
+}
+
+.screen-xs .desktop-only,
+.screen-sm .desktop-only {
+  display: none;
+}
+
+/* XS */
+@media (max-width: 599px) {
+
+  .mobile-only {
+    display: block;
+  }
+
+  .desktop-only {
+    display: none;
+  }
+
+}
+
+/* SM */
+@media (min-width: 600px) and (max-width: 1023px) {
+
+  .form-container>form {
+    & .form-header {
+      width: 90%;
+    }
+
+  }
+}
+
+/* MD */
+@media (min-width: 1024px) and (max-width: 1439px) {
+
+  .desktop-md {
+    display: block;
+  }
+
+}
+
+/* LG */
+@media (min-width: 1440px) and (max-width: 1919px) {
+
+  .desktop-lg {
+    display: block;
+  }
+
+}
+
+/* XL */
+@media (min-width: 1920px) {
+
+  .desktop-xl {
+    display: block;
+  }
+
+}

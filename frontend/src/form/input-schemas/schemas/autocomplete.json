@@ -1,0 +1,132 @@
+[
+  {
+    "$formkit": "autocomplete",
+    "label": "Autocomplete",
+    "placeholder": "Type something...",
+    "help": "Some input help text.",
+    "options": "$basicOptions"
+  },
+  {
+    "$formkit": "autocomplete",
+    "label": "Autocomplete: loading",
+    "help": "Some input help text.",
+    "loadOnCreated": true,
+    "options": "$asyncLoader"
+  },
+  {
+    "$formkit": "autocomplete",
+    "label": "Autocomplete: paginated",
+    "help": "Some input help text.",
+    "loadOnCreated": true,
+    "options": "$paginatedLoader"
+  },
+  {
+    "$formkit": "autocomplete",
+    "label": "Autocomplete: with value",
+    "placeholder": "Type something...",
+    "help": "Some input help text.",
+    "value": "Option 2",
+    "options": "$basicOptions"
+  },
+  {
+    "$formkit": "autocomplete",
+    "label": "Autocomplete: invalid",
+    "placeholder": "Type something...",
+    "help": "Some input help text.",
+    "options": "$basicOptions",
+    "validation": "required",
+    "validationVisibility": "live"
+  },
+  {
+    "$formkit": "autocomplete",
+    "label": "Autocomplete: with removable selection",
+    "placeholder": "Type something...",
+    "help": "Some input help text.",
+    "value": "Option 1",
+    "selectionRemovable": true,
+    "options": "$basicOptions"
+  },
+  {
+    "$formkit": "autocomplete",
+    "label": "Autocomplete: multiple values",
+    "placeholder": "Type something...",
+    "help": "Some input help text.",
+    "value": ["Option 2"],
+    "multiple": true,
+    "options": "$basicOptions"
+  },
+  {
+    "$formkit": "autocomplete",
+    "label": "Autocomplete: with option groups",
+    "placeholder": "Choose an option",
+    "multiple": true,
+    "closeOnSelect": false,
+    "help": "Some input help text.",
+    "options": [
+      {
+        "group": "Fruits",
+        "options": ["Apple", "Banana", "Orange", "Strawberry"]
+      },
+      {
+        "group": "Vegetables",
+        "options": ["Carrot", "Potato", "Broccoli", "Spinach"]
+      },
+      {
+        "group": "Proteins",
+        "options": ["Chicken", "Beef", "Pork", "Fish"]
+      }
+    ]
+  },
+  {
+    "$formkit": "autocomplete",
+    "label": "Autocomplete: selection appearance option",
+    "placeholder": "Type something...",
+    "help": "Some input help text.",
+    "value": "Option 2",
+    "selectionAppearance": "option",
+    "options": "$basicOptions"
+  },
+  {
+    "$formkit": "autocomplete",
+    "label": "Autocomplete: selection appearance option (multiple)",
+    "placeholder": "Type something...",
+    "help": "Some input help text.",
+    "value": ["Option 1", "Option 2"],
+    "multiple": true,
+    "selectionAppearance": "option",
+    "options": "$basicOptions"
+  },
+  {
+    "$formkit": "autocomplete",
+    "label": "Autocomplete: with empty message",
+    "placeholder": "Type something...",
+    "help": "Some input help text.",
+    "value": "foo",
+    "emptyMessage": "No results found.",
+    "options": "$basicOptions"
+  },
+  {
+    "$formkit": "autocomplete",
+    "label": "Autocomplete: with icons",
+    "placeholder": "Type something...",
+    "help": "Some input help text.",
+    "prefixIcon": "star",
+    "suffixIcon": "submit",
+    "options": "$basicOptions"
+  },
+  {
+    "$formkit": "autocomplete",
+    "label": "Autocomplete: with no options",
+    "placeholder": "Type something...",
+    "help": "Some input help text.",
+    "options": []
+  },
+  {
+    "$formkit": "autocomplete",
+    "label": "Autocomplete: disabled",
+    "placeholder": "Type something...",
+    "help": "Some input help text.",
+    "options": "$basicOptions",
+    "disabled": true
+  }
+]

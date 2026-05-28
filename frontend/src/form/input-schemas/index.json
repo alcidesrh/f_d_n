@@ -1,0 +1,42 @@
+{
+  "core": [
+    "button",
+    "checkbox",
+    "color",
+    "date",
+    "datetime-local",
+    "email",
+    "file",
+    "month",
+    "number",
+    "password",
+    "radio",
+    "range",
+    "search",
+    "select",
+    "submit",
+    "summary",
+    "telephone",
+    "text",
+    "textarea",
+    "time",
+    "url",
+    "week"
+  ],
+  "pro": [
+    "autocomplete",
+    "colorpicker",
+    "datepicker",
+    "dropdown",
+    "mask",
+    "rating",
+    "repeater",
+    "slider",
+    "taglist",
+    "toggle",
+    "togglebuttons",
+    "transferlist"
+  ],
+  "addons": ["barcode", "multi-step"],
+  "forms": ["login", "tshirt", "survey", "registration", "application"]
+}

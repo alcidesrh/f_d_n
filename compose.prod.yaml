@@ -1,0 +1,24 @@
+# Production environment override
+services:
+  php:
+  image: ${PHP_DOCKER_IMAGE}
+  build:
+      context: ./api
+      target: frankenphp_prod
+    environment:
+      APP_ENV: prod
+      APP_SECRET: ${APP_SECRET}
+      MERCURE_PUBLISHER_JWT_KEY: ${CADDY_MERCURE_JWT_SECRET}
+      MERCURE_SUBSCRIBER_JWT_KEY: ${CADDY_MERCURE_JWT_SECRET}
+
+  frontend:
+    image: ${PWA_DOCKER_IMAGE}
+    build:
+      context: ./frontend
+      target: prod
+    # environment:
+    #   NUXTAUTH_SECRET: ${NUXTAUTH_SECRET}
+
+  database:
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}

@@ -1,0 +1,164 @@
+{
+  "editor.bracketPairColorization.enabled": false,
+  "editor.guides.bracketPairs": true,
+  "typescript.tsdk": "node_modules/typescript/lib",
+  // ========== Visuals ==========
+  // ==========  Global Level Config, needs to put in User Settings ==========
+  "unocss.exclude": [
+    "**/form/formkit-theme-fdn/**"
+  ],
+  "tailwindCSS.files.exclude": [
+    "**/form/formkit-theme-fdn/**"
+  ],
+  "files.watcherExclude": {
+    "**/src/form/formkit-theme-fdn/**": true
+  },
+  "search.exclude": {
+    "**/srsc/form/formkit-theme-fdn/**": true,
+    "**/node_modules": false,
+  },
+  "npm.scriptExplorerExclude": [
+    "**/form/formkit-theme-fdn/**"
+  ],
+  "javascript.preferences.autoImportFileExcludePatterns": [
+    "**/form/formkit-theme-fdn/**"
+  ],
+  "typescript.preferences.autoImportFileExcludePatterns": [
+    "**/form/formkit-theme-fdn/**"
+  ],
+  // "files.exclude": {
+  //   "{READ,Make,Dock,pub,node}*": true,
+  //   "app/": false,
+  //   "*.{ts,js,json,yaml,*}": true
+  // },
+  "workbench.colorCustomizations": {
+    "activityBar.activeBackground": "#0a7d5f",
+    "activityBar.background": "#0a7d5f",
+    "activityBar.foreground": "#e7e7e7",
+    "activityBar.inactiveForeground": "#e7e7e799",
+    "activityBarBadge.background": "#f8fafc",
+    "activityBarBadge.foreground": "#15202b",
+    "commandCenter.border": "#e7e7e799",
+    "sash.hoverBorder": "#0a7d5f",
+    "statusBar.background": "#064e3b",
+    "statusBar.foreground": "#e7e7e7",
+    "statusBarItem.hoverBackground": "#0a7d5f",
+    "statusBarItem.remoteBackground": "#064e3b",
+    "statusBarItem.remoteForeground": "#e7e7e7",
+    "titleBar.activeBackground": "#064e3b",
+    "titleBar.activeForeground": "#e7e7e7",
+    "titleBar.inactiveBackground": "#064e3b99",
+    "titleBar.inactiveForeground": "#e7e7e799",
+    // "editor.background": "#F5F5F5", // Light gray background for readability
+    // "editor.foreground": "#1A1A1A", // Dark gray for general text
+    // "editorLineNumber.foreground": "#6B7280", // Subtle gray for line numbers
+    // "editorLineNumber.activeForeground": "#111827", // Darker gray for active line
+    // "editorCursor.foreground": "#2563EB", // Blue cursor for visibility
+    // // Light gray for similar word highlights
+    // "editor.findMatchBackground": "#FBBF2433", // Soft yellow for search matches
+    // "editor.findMatchHighlightBackground": "#FBBF2433", // Lighter yellow for all matches
+    // "editor.wordHighlightBackground": "#e2e8f0",
+  },
+  "files.exclude": {
+    "**/src/form/formkit-theme-fdn/**": true,
+  },
+  "editor.hover.enabled": "off",
+  "workbench.tips.enabled": false,
+  "cSpell.words": [
+    "opsz",
+    "wght"
+  ],
+  // Syntax highlighting for TypeScript and PHP
+  // "editor.tokenColorCustomizations": {
+  //   "textMateRules": [
+  //     {
+  //       "scope": [
+  //         "comment",
+  //         "punctuation.definition.comment"
+  //       ],
+  //       "settings": {
+  //         "foreground": "#6B7280", // Muted gray for comments
+  //         "fontStyle": "italic"
+  //       }
+  //     },
+  //     {
+  //       "scope": [
+  //         "keyword",
+  //         "keyword.control",
+  //         "storage.type",
+  //         "storage.modifier"
+  //       ],
+  //       "settings": {
+  //         "foreground": "#7C3AED", // Vibrant purple for keywords (e.g., function, class, interface)
+  //       }
+  //     },
+  //     {
+  //       "scope": [
+  //         "variable",
+  //         "variable.parameter",
+  //         "variable.other"
+  //       ],
+  //       "settings": {
+  //         "foreground": "#1F2937", // Dark gray for variables
+  //       }
+  //     },
+  //     {
+  //       "scope": [
+  //         "entity.name.function",
+  //         "support.function"
+  //       ],
+  //       "settings": {
+  //         "foreground": "#2563EB", // Blue for function names
+  //       }
+  //     },
+  //     {
+  //       "scope": [
+  //         "string",
+  //         "string.quoted",
+  //         "string.template"
+  //       ],
+  //       "settings": {
+  //         "foreground": "#15803D", // Green for strings
+  //       }
+  //     },
+  //     {
+  //       "scope": [
+  //         "constant.numeric",
+  //         "constant.language"
+  //       ],
+  //       "settings": {
+  //         "foreground": "#B91C1C", // Red for numbers and constants
+  //       }
+  //     },
+  //     {
+  //       "scope": [
+  //         "entity.name.type",
+  //         "entity.name.class",
+  //         "entity.name.interface"
+  //       ],
+  //       "settings": {
+  //         "foreground": "#B45309", // Amber for class/interface names
+  //       }
+  //     },
+  //     {
+  //       "scope": [
+  //         "punctuation",
+  //         "punctuation.definition",
+  //         "punctuation.separator"
+  //       ],
+  //       "settings": {
+  //         "foreground": "#4B5563", // Medium gray for punctuation (e.g., commas, semicolons)
+  //       }
+  //     },
+  //     {
+  //       "scope": [
+  //         "support.type",
+  //         "support.class"
+  //       ],
+  //       "settings": {
+  //         "foreground": "#0E7490", // Teal for built-in types (e.g., string, number in TypeScript)
+  //       }
+  //     }
+  //   ]
+  // }
+}

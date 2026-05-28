@@ -1,0 +1,129 @@
+[
+  {
+    "$formkit": "togglebuttons",
+    "label": "Toggle Buttons: with label",
+    "help": "Some input help text.",
+    "options": [
+      {
+        "label": "Small",
+        "value": "small"
+      },
+      {
+        "label": "Medium",
+        "value": "medium"
+      },
+      {
+        "label": "Large",
+        "value": "large"
+      }
+    ]
+  },
+  {
+    "$formkit": "togglebuttons",
+    "label": "Toggle Buttons: with value",
+    "value": "small",
+    "help": "Some input help text.",
+    "options": [
+      {
+        "label": "Small",
+        "value": "small"
+      },
+      {
+        "label": "Medium",
+        "value": "medium"
+      },
+      {
+        "label": "Large",
+        "value": "large"
+      }
+    ]
+  },
+  {
+    "$formkit": "togglebuttons",
+    "label": "Toggle Buttons: with multiple values",
+    "value": ["small", "medium"],
+    "multiple": "true",
+    "help": "Some input help text.",
+    "options": [
+      {
+        "label": "Small",
+        "value": "small"
+      },
+      {
+        "label": "Medium",
+        "value": "medium"
+      },
+      {
+        "label": "Large",
+        "value": "large"
+      }
+    ]
+  },
+  {
+    "$formkit": "togglebuttons",
+    "label": "Toggle Buttons: with disabled value",
+    "help": "Some input help text.",
+    "options": [
+      {
+        "label": "Small",
+        "value": "small"
+      },
+      {
+        "label": "Medium",
+        "value": "medium"
+      },
+      {
+        "label": "Large",
+        "value": "large",
+        "disabled": "true"
+      }
+    ]
+  },
+  {
+    "$formkit": "togglebuttons",
+    "label": "Toggle Buttons: disabled",
+    "help": "Some input help text.",
+    "disabled": "true",
+    "options": [
+      {
+        "label": "Small",
+        "value": "small"
+      },
+      {
+        "label": "Medium",
+        "value": "medium"
+      },
+      {
+        "label": "Large",
+        "value": "large"
+      }
+    ]
+  },
+  {
+    "$formkit": "togglebuttons",
+    "label": "Toggle Buttons: single",
+    "help": "Some input help text.",
+    "vertical": "true"
+  },
+  {
+    "$formkit": "togglebuttons",
+    "label": "Toggle Buttons: vertical",
+    "help": "Some input help text.",
+    "value": "small",
+    "vertical": "true",
+    "options": [
+      {
+        "label": "Small",
+        "value": "small"
+      },
+      {
+        "label": "Medium",
+        "value": "medium"
+      },
+      {
+        "label": "Large",
+        "value": "large"
+      }
+    ]
+  }
+]

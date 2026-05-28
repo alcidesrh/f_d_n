@@ -1,0 +1,14 @@
+.q-chip {
+  background-color: $surface-2;
+  padding: 10px 8px;
+  border: 1px solid $surface-5; //$border;
+  font-size: 12px;
+  font-weight: 5500;
+
+  &>i {
+    margin-left: 5px;
+    color: $text-color;
+    font-weight: 300;
+    opacity: 1;
+  }
+}

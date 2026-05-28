@@ -1,0 +1,76 @@
+html,
+body,
+#q-app {
+  height: 100%;
+}
+
+
+
+body {
+  font-family: $font-family;
+  font-size: 1rem;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: $background;
+  color: $text-color;
+  line-height: normal;
+  overflow-x: hidden;
+  overflow-y: auto;
+  height: 100%;
+  // @include mq;
+}
+
+::selection {
+  background: var(--primary);
+  color: white;
+}
+
+.text-color {
+  color: $text-color;
+}
+
+.rounded-full {
+  border-radius: 999px;
+}
+
+/* Ejemplos de clases útiles */
+.bg-primary {
+  background-color: $primary;
+  color: $primary-foreground;
+}
+
+.clickable {
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.clickable:hover {
+  background: var(--hover);
+}
+
+.surface {
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+* {
+  scrollbar-width: thin;
+}
+
+.main-content {
+    top: 70px;
+    flex-grow: 1;
+    transition-property: padding-left;
+    transition-duration: 0.3s;
+    width: auto;
+    padding-left: $sidebar-width;
+
+    &.mini {
+        padding-left: $sidebar-mini-width;
+    }
+
+    &.close {
+        padding-left: 0;
+    }
+}

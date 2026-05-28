@@ -1,0 +1,62 @@
+{
+  "name": "frontend",
+  "version": "0.0.1",
+  "description": "A Quasar Project",
+  "productName": "Quasar App",
+  "author": "Alcides <alcidesrh@gmail.com>",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "echo \"No test specified\" && exit 0",
+    "dev": "quasar dev",
+    "build": "quasar build",
+    "postinstall": "quasar prepare",
+    "format": "prettier --write \"**/*.{js,ts,vue,scss,html,md,json}\" --ignore-path .gitignore"
+  },
+  "dependencies": {
+    "@apollo/client": "^4.0.9",
+    "@formkit/addons": "^1.7.2",
+    "@formkit/utils": "^2.0.0",
+    "@formkit/vue": "^1.7.2",
+    "@kitql/helpers": "^0.8.13",
+    "@quasar/extras": "^1.16.4",
+    "@vue/apollo-composable": "^5.0.0-alpha.2",
+    "@vueuse/components": "^14.1.0",
+    "@vueuse/core": "^14.1.0",
+    "browser-tab-id": "^0.0.8",
+    "dayjs": "^1.11.19",
+    "gql-query-builder": "^3.8.0",
+    "graphql": "^16.12.0",
+    "graphql-tag": "^2.12.6",
+    "gsap": "^3.14.2",
+    "material-symbols": "^0.40.1",
+    "pinia": "^3.0.1",
+    "pinia-plugin-persistedstate": "^4.7.1",
+    "quasar": "^2.16.0",
+    "ramda": "^0.32.0",
+    "utopia-core": "^1.6.0",
+    "utopia-core-scss": "^1.3.1",
+    "voca": "^1.4.1",
+    "vue": "^3.5.22",
+    "vue-i18n": "^11.0.0",
+    "vue-router": "^4.0.12"
+  },
+  "devDependencies": {
+    "@intlify/unplugin-vue-i18n": "^4.0.0",
+    "@quasar/app-vite": "^2.1.0",
+    "@types/node": "^20.5.9",
+    "@unocss/preset-wind4": "^66.5.10",
+    "autoprefixer": "^10.4.2",
+    "prettier": "^3.3.3",
+    "typescript": "^5.9.2",
+    "unocss": "^66.5.10",
+    "unplugin-auto-import": "^20.3.0",
+    "unplugin-vue-components": "^30.0.0"
+  },
+  "engines": {
+    "node": "^28 || ^26 || ^24 || ^22 || ^20",
+    "npm": ">= 6.13.4",
+    "yarn": ">= 1.21.1"
+  },
+  "packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319"
+}

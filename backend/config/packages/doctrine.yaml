@@ -1,0 +1,75 @@
+doctrine:
+    dbal:
+        default_connection: default
+        connections:
+            default:
+                # configure these for your database server
+                url: "%env(DATABASE_URL)%"
+                logging: true
+                profiling_collect_backtrace: "%kernel.debug%"
+
+            systemfdn:
+                driver: sqlsrv
+                host: "%env(systemfdn_host)%"
+                port: "%env(systemfdn_port)%"
+                charset: UTF-8
+                options:
+                    trustServerCertificate: true
+                    encrypt: false
+                dbname: "%env(systemfdn_dbname)%"
+                user: "%env(systemfdn_user)%"
+                password: "%env(systemfdn_password)%"
+
+    orm:
+        default_entity_manager: "default"
+        entity_managers:
+            default:
+                connection: default
+                naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
+                validate_xml_mapping: true
+                dql:
+                    string_functions:
+                        CAST: App\Doctrine\CastFunction
+                auto_mapping: true
+                mappings:
+                    App:
+                        type: attribute
+                        is_bundle: false
+                        dir: "%kernel.project_dir%/src/Entity"
+                        prefix: 'App\Entity'
+                        alias: App
+
+            systemfdn:
+                naming_strategy: doctrine.orm.naming_strategy.underscore
+                connection: systemfdn
+                mappings:
+                    systemfdn:
+                        is_bundle: false
+                        # type: annotation
+                        dir: "%kernel.project_dir%/src/EntitySistemaFdn"
+                        prefix: 'App\EntitySistemaFdn'
+                        alias: systemfdns
+
+when@test:
+    doctrine:
+        dbal:
+            # "TEST_TOKEN" is typically set by ParaTest
+            dbname_suffix: "_test%env(default::TEST_TOKEN)%"
+
+when@prod:
+    doctrine:
+        orm:
+            query_cache_driver:
+                type: pool
+                pool: doctrine.system_cache_pool
+            result_cache_driver:
+                type: pool
+                pool: doctrine.result_cache_pool
+
+    framework:
+        cache:
+            pools:
+                doctrine.result_cache_pool:
+                    adapter: cache.app
+                doctrine.system_cache_pool:
+                    adapter: cache.system

@@ -1,0 +1,55 @@
+@use 'utopia-core-scss/src/utopia' as utopia;
+
+/* @link https://utopia.fyi/space/calculator?c=320,16,1.2,1240,20,1.25,5,2,&s=0.75|0.5|0.25,1.5|2|3|4|6,s-l&g=s,l,xl,12 */
+
+:root {
+	@include utopia.generateTypeScale(('minWidth': 320,
+			'maxWidth': 1240,
+			'minFontSize': 10,
+			'maxFontSize': 14,
+			'minTypeScale': 1.2,
+			'maxTypeScale': 1.25,
+			'positiveSteps': 5,
+			'negativeSteps': 5,
+			/* Optional params */
+			'relativeTo': 'viewport',
+			'prefix': 'step-',
+		));
+
+	// Generates this:
+	// --step--2: clamp(...);
+	// --step--1: clamp(...);
+	// --step-0: clamp(...);
+	// --step-1: clamp(...);
+	// --step-2: clamp(...);
+
+	@include utopia.generateSpaceScale(('minWidth': 320,
+			'maxWidth': 1240,
+			'minSize': 10,
+			'maxSize': 26,
+			'positiveSteps': (1.5,
+				2,
+			),
+			'negativeSteps': (0.75,
+			),
+			/* Optional params */
+			'customSizes': ('s-l',
+			),
+			'usePx': true,
+			'relativeTo': 'container',
+			'prefix': 'space-',
+			'allPairs': false,
+		));
+
+	// Generates this:
+	// --space-xs: clamp(...);
+	// --space-s: clamp(...);
+	// --space-m: clamp(...);
+	// --space-l: clamp(...);
+	// // One-up pairs
+	// --space-xs-s: clamp(...);
+	// --space-s-m: clamp(...);
+	// --space-m-l: clamp(...);
+	// // Custom pairs
+	// --space-s-l: clamp(...);
+}

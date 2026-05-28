@@ -1,0 +1,32 @@
+[
+  {
+    "$formkit": "form",
+    "config": {
+      "validationVisibility": "live"
+    },
+    "actions": false,
+    "children": [
+      {
+        "$cmp": "FormKitSummary",
+        "props": {
+          "forceShow": true
+        }
+      },
+      {
+        "$formkit": "hidden",
+        "name": "First Name",
+        "validation": "required"
+      },
+      {
+        "$formkit": "hidden",
+        "name": "Last Name",
+        "validation": "required"
+      },
+      {
+        "$formkit": "hidden",
+        "name": "Email",
+        "validation": "required"
+      }
+    ]
+  }
+]

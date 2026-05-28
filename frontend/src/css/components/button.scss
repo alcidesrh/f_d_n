@@ -1,0 +1,24 @@
+.q-btn {
+  text-transform: capitalize;
+
+  // font-size: 1rem;
+  // padding: 5px 15px !important;
+  // height: fit-content !important;
+  &.q-btn--dense {
+    // padding: 5px 15px !important;
+  }
+
+  & .q-icon {
+    font-size: 1.4rem;
+    font-weight: 300;
+
+    &.on-left {
+      margin-right: 6px;
+    }
+  }
+}
+
+.q-btn::before,
+.q-btn-dropdown--split .q-btn-dropdown__arrow-container.q-btn--outline {
+  border-color: $surface-5 ;
+}

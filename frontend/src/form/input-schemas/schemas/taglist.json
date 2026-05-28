@@ -1,0 +1,137 @@
+[
+  {
+    "$formkit": "taglist",
+    "label": "Taglist",
+    "help": "Some input help text.",
+    "options": "$basicOptions"
+  },
+  {
+    "$formkit": "taglist",
+    "label": "Taglist: with placeholder",
+    "placeholder": "Choose an option",
+    "help": "Some input help text.",
+    "options": "$basicOptions"
+  },
+  {
+    "$formkit": "taglist",
+    "label": "Taglist: loading",
+    "help": "Some input help text.",
+    "loadOnCreated": true,
+    "options": "$asyncLoader"
+  },
+  {
+    "$formkit": "taglist",
+    "label": "Taglist: paginated",
+    "help": "Some input help text.",
+    "loadOnCreated": true,
+    "options": "$paginatedLoader"
+  },
+  {
+    "$formkit": "taglist",
+    "label": "Taglist: with value",
+    "placeholder": "Choose an option",
+    "help": "Some input help text.",
+    "value": ["Option 2"],
+    "options": "$basicOptions"
+  },
+  {
+    "$formkit": "taglist",
+    "label": "Taglist: invalid",
+    "placeholder": "Choose an option",
+    "help": "Some input help text.",
+    "validation": "required",
+    "validationVisibility": "live",
+    "options": "$basicOptions"
+  },
+  {
+    "$formkit": "taglist",
+    "label": "Taglist: multiple values",
+    "placeholder": "Choose an option",
+    "help": "Some input help text.",
+    "value": ["Option 1", "Option 2"],
+    "options": "$basicOptions"
+  },
+  {
+    "$formkit": "taglist",
+    "label": "Taglist: with option groups",
+    "placeholder": "Choose an option",
+    "help": "Some input help text.",
+    "options": [
+      {
+        "group": "Fruits",
+        "options": ["Apple", "Banana", "Orange", "Strawberry"]
+      },
+      {
+        "group": "Vegetables",
+        "options": ["Carrot", "Potato", "Broccoli", "Spinach"]
+      },
+      {
+        "group": "Proteins",
+        "options": ["Chicken", "Beef", "Pork", "Fish"]
+      }
+    ]
+  },
+  {
+    "$formkit": "taglist",
+    "label": "Taglist: selection appearance tags with many options",
+    "placeholder": "Choose an option",
+    "help": "Some input help text.",
+    "value": [
+      "Apple",
+      "Banana",
+      "Orange",
+      "Strawberry",
+      "Cherry",
+      "Chocolate",
+      "Pineapple",
+      "Vanilla",
+      "Lemon",
+      "Pistachio"
+    ],
+    "selectionAppearance": "tags",
+    "options": [
+      "Apple",
+      "Banana",
+      "Orange",
+      "Strawberry",
+      "Cherry",
+      "Chocolate",
+      "Pineapple",
+      "Vanilla",
+      "Lemon",
+      "Pistachio"
+    ]
+  },
+  {
+    "$formkit": "taglist",
+    "label": "Taglist: with icons",
+    "placeholder": "Choose an option",
+    "help": "Some input help text.",
+    "prefixIcon": "star",
+    "suffixIcon": "submit",
+    "options": "$basicOptions"
+  },
+  {
+    "$formkit": "taglist",
+    "label": "Taglist: with no options",
+    "placeholder": "Choose an option",
+    "help": "Some input help text.",
+    "options": []
+  },
+  {
+    "$formkit": "taglist",
+    "label": "Taglist: with no options and empty message",
+    "placeholder": "Choose an option",
+    "help": "Some input help text.",
+    "emptyMessage": "No options available",
+    "options": []
+  },
+  {
+    "$formkit": "taglist",
+    "label": "Taglist: disabled",
+    "placeholder": "Choose an option",
+    "help": "Some input help text.",
+    "options": "$basicOptions",
+    "disabled": true
+  }
+]

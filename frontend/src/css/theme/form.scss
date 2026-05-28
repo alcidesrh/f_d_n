@@ -1,0 +1,225 @@
+.q-field--dense .q-field__control,
+.q-field--dense .q-field__marginal {
+  // height: 35px;
+}
+
+.col-wraper {
+
+  .q-field--auto-height.q-field--dense .q-field__control,
+  .q-field--auto-height.q-field--dense .q-field__native,
+  .q-field--inner .q-field__control,
+  .q-field--outlined .q-field__control,
+  .q-field--dense .q-field__marginal {
+    height: 33px;
+    min-height: 33px;
+
+    & input {
+      padding: 0px;
+    }
+  }
+
+  & i,
+  & .fdn-icon {
+    position: absolute;
+    right: 5px;
+  }
+
+}
+
+.q-field--outlined .q-field__control::before {
+  border-color: $surface-5 ;
+}
+
+.q-field--outlined.q-field--highlighted .q-field__control:after {
+  border-width: calc(1.5px);
+  // border-color: $surface-9 ;
+}
+
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+  /* Removes the margin in older versions of Chrome */
+}
+
+/* Firefox */
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+  /* Standard property for newer browsers */
+}
+
+.formkit-label {
+  margin-bottom: 10px;
+  display: inline-block;
+  // font-weight: 500;
+  text-transform: capitalize;
+
+  &>.formkit-asterisk {
+    color: $red-6 !important;
+    margin-left: 3px;
+  }
+}
+
+.formkit-outer {
+  margin-bottom: 20px;
+  // width: fit-content;
+
+  &>.formkit-wrapper {
+    width: 100%;
+    max-width: 20rem;
+    margin: auto;
+
+    &>.formkit-inner {}
+  }
+}
+
+.form-container {
+  width: 100%;
+  margin: auto;
+  // margin-top: 20px;
+
+  &>form {
+    width: 100%;
+
+    & .form-row {
+      width: fit-content;
+      height: 500px;
+      // display: flex;
+      // flex-wrap: wrap;
+      // justify-content: center;
+      margin: auto;
+
+      &>.form-col {
+        float: left;
+        // display: inline-block;
+        /* background-color: black; */
+        // margin: auto;
+        width: fit-content;
+
+        &>* {
+          float: left;
+          margin: 0px 15px;
+          margin-bottom: 30px;
+          width: fit-content;
+          min-width: 25rem;
+        }
+      }
+    }
+
+    & .divider {
+      border-top: 1px solid #e2e8f0;
+      margin: 25px auto;
+      width: 40%;
+    }
+
+    & .form-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: end;
+      margin: 10px auto;
+      width: 70%;
+    }
+
+    & .form-columns-2 {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      justify-content: center;
+      grid-template-columns: repeat(2, minmax(10em, max-content));
+    }
+
+    & .form-columns-3 {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2rem;
+      grid-template-columns: repeat(2, minmax(10em, max-content));
+    }
+
+    & .formkit-asterisk {
+      color: var(--red-500);
+      margin-left: 3px;
+    }
+
+    & .toast-error-form {
+      display: flex;
+      justify-content: center;
+      width: fit-content;
+      margin: auto;
+      margin-bottom: 20px;
+
+      &>.formkit-messages {
+        position: absolute;
+        margin-top: -10px;
+
+        &>li {
+          font-size: 1rem !important;
+        }
+      }
+
+
+    }
+
+    .formkit-messages {
+      margin-top: 5px;
+
+      &>li {
+        font-size: .85rem;
+      }
+    }
+  }
+
+  & .q-field__native,
+  .q-field__prefix,
+  .q-field__suffix,
+  .q-field__input {
+    color: $text-color;
+  }
+}
+
+.q-field__native.row {
+  display: flex;
+  overflow: hidden;
+  // white-space: ;
+  // align-content: center;
+}
+
+.q-field--auto-height.q-field--dense .q-field__control,
+.q-field--auto-height.q-field--dense .q-field__native {
+  // min-height: 35px;
+}
+
+
+fieldset {
+  width: fit-content;
+  // border: none;
+  // border: $border;
+  padding: 2rem 1rem;
+
+  // box-shadow: $shadow-2;
+  border: 1px solid $surface-3;
+
+  &>legend {
+    font-size: 1.1rem;
+    border: $border;
+    padding: 5px 18px;
+  }
+
+  &>span {
+    // display: flex;
+    width: fit-content;
+    justify-content: center;
+  }
+}
+
+.crud-button-wraper>.q-item {
+  &>.q-item__section--side {
+    padding-right: 10px;
+
+    &>.fdn-icon {
+      // font-weight: 200;
+      // font-size: 24px;
+    }
+  }
+}
