@@ -2,3 +2,9 @@ services:
   database:
     ports:
       - "3254:5432"
+
+###> symfony/mercure-bundle ###
+  mercure:
+    ports:
+      - "80"
+###< symfony/mercure-bundle ###

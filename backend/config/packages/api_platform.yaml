@@ -1,7 +1,69 @@
 api_platform:
-    title: Sistema de Gestión de Transporte de Pasajeros
-    version: 1.0.0
+    title: API Transporte Fuentes del Norte (FDN)
+    version: 0.2
+    description: |
+        Nota: Este schema esta sujeto a cambio y probable la versión GraphQl no será publica.
+    # Mercure integration, remove if unwanted
+    mercure:
+        include_type: true
+    collection:
+        pagination:
+            page_parameter_name: currentPage
+    graphql:
+        # introspection: false
+        # graphql_playground:
+        # enabled: false
+        collection:
+            pagination:
+                enabled: true
+    formats:
+        jsonld: ["application/ld+json"]
+        graphql: ["application/graphql"]
+    docs_formats:
+        jsonld: ["application/ld+json"]
+        jsonopenapi: ["application/vnd.openapi+json"]
+        html: ["text/html"]
+    http_cache:
+        public: true
+    # Good defaults for REST APIs
     defaults:
+        pagination_enabled: true
+        pagination_client_items_per_page: true
+        pagination_client_enabled: false
+        route_prefixfi: "api"
         stateless: true
+        # standard_put: false
         cache_headers:
-            vary: ['Content-Type', 'Authorization', 'Origin']
+            vary: ["Content-Type", "Authorization", "Origin"]
+        extra_properties:
+            standard_put: true
+            rfc_7807_compliant_errors: true
+        collection:
+            pagination:
+                enabled_parameter_name: pagination
+
+    # event_listeners_backward_compatibility_layer: false
+    # keep_legacy_inflector: false
+
+    swagger:
+        api_keys:
+            access_token:
+                name: Authorization
+                type: header
+    # mapping:
+    #     paths:
+    #         - '%kernel.project_dir%/src/Entity'
+    #         - '%kernel.project_dir%/src/Form'
+    # resource_class_directories:
+    #     - '%kernel.project_dir%/src/Entity'
+    # state:
+    #     error_provider:
+    #         class: 'App\Error\ErrorProvider'
+    #         tags:
+    #             - key: "api_platform.state.error_provider"
+    #             name: "api_platform.state_provider"
+services:
+    _defaults:
+        autowire: false
+        autoconfigure: false
+        public: false

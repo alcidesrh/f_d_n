@@ -67,8 +67,7 @@
     @frontend expression `(
           
 						 !path(
-                 '/index*','/logout', '/docs*', '/borrar*', '/api*', '/graphql*', '/schema.graphql', '/bundles*', '/contexts*', '/_profiler*', '/_wdt*', '/test_event',
-                '*.json*', '*.html', '*.csv', '*.yml', '*.yaml', '*.xml', '/auth', '/nuxt.svg'
+                 '/index*','/logout', '/docs*', '/borrar*', '/api*', '/graphql*', '/schema.graphql', '/bundles*', '/contexts*', '/_profiler*', '/_wdt*', '/test_event', '/assets*', '*.json*', '*.html', '*.csv', '*.yml', '*.yaml', '*.xml', '/auth', '/nuxt.svg'
             )
         )`
 

@@ -166,7 +166,7 @@ wait-for-elasticsearch: ## Wait for Elasticsearch to be ready
 	@bin/wait-for-elasticsearch.sh
 
 bash: ## Connect to the application container
-	@$(DOCKER) container exec -it fdn-php-1 bash
+	@$(DOCKER) container exec -it backend bash
 
 ## —— Project 🐝 ———————————————————————————————————————————————————————————————
 #start: up wait-for-mysql load-fixtures wait-for-elasticsearch populate serve ## Start docker, load fixtures, populate the Elasticsearch index and start the webserver
