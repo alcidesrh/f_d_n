@@ -30,7 +30,7 @@ api_platform:
         pagination_enabled: true
         pagination_client_items_per_page: true
         pagination_client_enabled: false
-        route_prefixfi: "api"
+        route_prefix: "api"
         stateless: true
         # standard_put: false
         cache_headers:
