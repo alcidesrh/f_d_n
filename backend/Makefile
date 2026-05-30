@@ -130,7 +130,7 @@ check: ## Docker check
 # Snippet L126+2 => templates/snippet/code/_135.html.twig
 
 sh: ## Log to the docker container
-	$(DOCKER) exec -it bigpiclke-php-1 sh
+	$(DOCKER) exec -it modelo-php-1 sh
 
 
 caddy: ## Log to the docker container

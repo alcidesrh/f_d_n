@@ -16,6 +16,8 @@ doctrine:
                 options:
                     trustServerCertificate: true
                     encrypt: false
+                    ConnectTimeout: 5
+                    ReturnDatesAsStrings: true
                 dbname: "%env(systemfdn_dbname)%"
                 user: "%env(systemfdn_user)%"
                 password: "%env(systemfdn_password)%"
@@ -42,6 +44,9 @@ doctrine:
             systemfdn:
                 naming_strategy: doctrine.orm.naming_strategy.underscore
                 connection: systemfdn
+                dql:
+                    string_functions:
+                        CAST: App\Doctrine\CastFunction
                 mappings:
                     systemfdn:
                         is_bundle: false

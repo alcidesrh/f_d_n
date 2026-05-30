@@ -4,6 +4,9 @@ services:
     build:
       context: ./backend
       target: frankenphp_dev
+    mem_limit: 512m
+    mem_reservation: 256m
+    cpus: 0.5
     volumes:
       - ./backend:/app
       - /app/var
@@ -38,6 +41,8 @@ services:
 
   ###> doctrine/doctrine-bundle ###
   database:
+    mem_limit: 512m
+    cpus: 0.5
     ports:
       - target: 5432
         published: 5432

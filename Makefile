@@ -309,7 +309,7 @@ db_port: ## up with xdebug
 	symfony var:export --multiline | grep DATABASE_SERVER
 
 debug-build:
-	SERVER_NAME=:80 XDEBUG_MODE=debug  APP_ENV=dev $(DOCKER_COMP) up --build  -d
+	SERVER_NAME=:80 MERCURE_PUBLIC_URL=http://localhost/.well-known/mercure XDEBUG_MODE=debug  APP_ENV=dev $(DOCKER_COMP) up --build  -d
 debug:
 	SERVER_NAME=http://localhost MERCURE_PUBLIC_URL=http://localhost/.well-known/mercure XDEBUG_MODE=debug  APP_ENV=dev $(DOCKER_COMP) up -d
 	
