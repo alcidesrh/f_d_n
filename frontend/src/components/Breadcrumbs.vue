@@ -14,9 +14,3 @@
 <script setup>
 	const { breadcrumbs } = useBreadcrumbs()
 </script>
-<style scoped lang="scss">
-	.layout-topbar-sticky .bradcrumbs {
-		// color: $surface-9;
-		// font-weight: 500;s
-	}
-</style>

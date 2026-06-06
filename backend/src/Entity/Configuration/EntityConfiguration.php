@@ -3,6 +3,8 @@
 namespace App\Entity\Configuration;
 
 use ApiPlatform\Doctrine\Orm\Filter\ExactFilter;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\GetCollection;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -13,14 +15,12 @@ use ApiPlatform\Metadata\QueryParameter;
 use App\Attribute\ApiResourceNoPagination;
 use App\Repository\EntityConfigurationRepository;
 use App\Resolver\UpdateEntityConfigurationFieldsResolver;
-use Symfony\Component\ObjectMapper\Attribute\Map;
-use Symfony\Component\ObjectMapper\Condition\TargetClass;
-use Symfony\Component\ObjectMapper\Transform\MapCollection;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: EntityConfigurationRepository::class)]
-#[ApiResourceNoPagination(
-  order: ['collectionFieldConfig.position' => 'ASC'],
+#[ORM\HasLifecycleCallbacks]
+#[ApiResource(
+  order: ['collectionFieldConfig.position' => 'ASC', 'formFields.position' => 'ASC'],
   graphQlOperations: [
     new Query(name: 'item_query'),
     new QueryCollection(
@@ -65,6 +65,19 @@ use Symfony\Component\Serializer\Attribute\Groups;
       ]
     )
   ],
+  operations: [
+    new GetCollection(
+      normalizationContext: ['groups' => ['read:dto']],
+      order: ['collectionFieldConfig.position' => 'ASC', 'formFields.position' => 'ASC'],
+      paginationEnabled: false,
+      parameters: [
+        'entityClass' => new QueryParameter(
+          filter: new ExactFilter(),
+          property: 'entityClass'
+        ),
+      ],
+    ),
+  ]
 )]
 class EntityConfiguration {
   #[ORM\Id]
@@ -74,6 +87,9 @@ class EntityConfiguration {
 
   #[ORM\Column(length: 255, unique: true)]
   public string $entityClass;
+
+  #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+  private ?\DateTimeImmutable $updatedAt = null;
 
   #[ORM\OneToMany(mappedBy: 'entityConfig', targetEntity: CollectionFieldConfig::class, cascade: ['persist', 'remove'], orphanRemoval: true, fetch: 'LAZY')]
   #[Groups(['read:dto'])]
@@ -88,6 +104,13 @@ class EntityConfiguration {
     $this->entityClass = $entityClass;
     $this->collectionFieldConfig = new ArrayCollection();
     $this->formFields = new ArrayCollection();
+    $this->updatedAt = new \DateTimeImmutable();
+  }
+
+  #[ORM\PrePersist]
+  #[ORM\PreUpdate]
+  public function markAsUpdated(): void {
+    $this->updatedAt = new \DateTimeImmutable();
   }
 
   public function getId(): ?int {
@@ -101,6 +124,10 @@ class EntityConfiguration {
 
   public function getEntityClass(): string {
     return $this->entityClass;
+  }
+
+  public function getUpdatedAt(): ?\DateTimeImmutable {
+    return $this->updatedAt;
   }
 
   /**

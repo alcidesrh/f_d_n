@@ -55,94 +55,10 @@ export const useSchemaStore = defineStore('schemaStore', {
 		// mutations: {},
 		// payloads: {},
 	}),
-
+	getters: {
+		isLoaded: (store) => Object.keys(store.entities).length != 0,
+	},
 	actions: {
-		async getSchema() {
-			// if (Object.keys(this.entities).length == 0) {
-			const introspectionQuery = gql`
-				query IntrospectionQuery {
-					__schema {
-						types {
-							...FullType
-						}
-					}
-				}
-
-				fragment FullType on __Type {
-					...TypeRef
-					fields {
-						name
-						args {
-							...InputValue
-						}
-						type {
-							...TypeRef
-						}
-					}
-					possibleTypes {
-						...TypeRef
-					}
-					inputFields {
-						...InputValue
-					}
-				}
-
-				fragment InputValue on __InputValue {
-					name
-					type {
-						...TypeRef
-					}
-				}
-
-				fragment TypeRef on __Type {
-					kind
-					name
-					ofType {
-						kind
-						name
-						ofType {
-							kind
-							name
-							ofType {
-								kind
-								name
-								ofType {
-									kind
-									name
-									ofType {
-										kind
-										name
-										ofType {
-											kind
-											name
-											ofType {
-												kind
-												name
-												ofType {
-													kind
-													name
-													ofType {
-														kind
-														name
-													}
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			`
-			const apollo = useApolloStore()
-
-			const { data } = await apollo.client.query({
-				query: introspectionQuery,
-			})
-			return data.__schema
-			// }
-		},
 		async loadEntities(store) {
 			if (Object.keys(this.entities).length == 0) {
 				const introspectionQuery = gql`
@@ -317,7 +233,8 @@ export const useSchemaStore = defineStore('schemaStore', {
 						args[v.name] = { type: argName }
 					}
 				})
-				let t = schema.types.find((v) => v.name == temp.type.name || temp.type.ofType?.name)
+
+				let t = schema.types.find((v) => v.name == (temp.type.name || temp.type.ofType?.name))
 				let f = []
 				t.fields.map((v) => {
 					f.push({
@@ -333,8 +250,6 @@ export const useSchemaStore = defineStore('schemaStore', {
 					fields: f,
 				}
 			}
-			// cl(collectionQuery);
-
 			return { queries: { collection: collectionQuery, item: itemQuery } }
 		},
 		setMutations(schema, entity: Entity) {

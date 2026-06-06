@@ -3,10 +3,10 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use App\Attribute\ApiResourcePaginationPage;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
-#[ApiResource]
-class Parada extends Enclave
-{
+#[ApiResourcePaginationPage()]
+class Parada extends Enclave {
 }

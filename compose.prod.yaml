@@ -1,6 +1,6 @@
 # Production environment override
 services:
-  php:
+  backend:
     build:
       context: ./backend
       target: frankenphp_prod

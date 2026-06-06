@@ -16,20 +16,8 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: LocalidadRepository::class)]
 #[ApiResourcePaginationPage]
-
 #[ApiFilter(OrFilter::class, alias: 'or.filter', properties: ['id', 'nombre'], arguments: ['searchFilterProperties' => ['id' => SearchFilterInterface::STRATEGY_EXACT,  'nombre' => SearchFilterInterface::STRATEGY_IPARTIAL]])]
-
 #[ApiFilter(OrderFilter::class, alias: 'order.filter', properties: ['id'], arguments: ['orderParameterName' => 'order'])]
-
-#[CollectionMetadataAttribute(
-    class: 'col-wraper',
-    props: [
-        ['name' => 'id', 'label' => 'Id', 'sort' => true, 'filter' => true,],
-        ['name' => 'nombre', 'label' => 'Nombre', 'sort' => true, 'filter' => true],
-        ['name' => 'nacion', 'label' => 'Pais', 'sort' => false],
-    ]
-)]
-
 class Localidad extends Base {
 
     use LegacyTrait;

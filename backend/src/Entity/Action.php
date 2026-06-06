@@ -14,16 +14,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: ActionRepository::class)]
 #[ApiResourceNoPagination]
-#[FormMetadataAttribute(order: ['nombre', 'ruta', 'roles'])]
-#[CollectionMetadataAttribute(
-    class: 'col-wraper',
-    props: [
-        ['name' => 'id', 'class' => ' col-small'],
-        ['name' => 'nombre', 'class' => 'col-wraper'],
-        ['name' => 'ruta'],
-        ['name' => 'roles']
-    ]
-)]
+
 class Action extends Base {
 
     use StatusTrait;

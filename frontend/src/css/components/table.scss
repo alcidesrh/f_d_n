@@ -9,6 +9,11 @@
 		opacity: 0.5;
 	}
 
+	&>.q-table__top,
+	&>.q-table__bottom {
+		// background-color: $topbar-sidebar-bg;
+	}
+
 	& table {
 
 		&>thead>tr>th,
@@ -32,6 +37,7 @@
 		&>thead {
 
 			&>tr>th {
+				// background-color: $topbar-sidebar-bg;
 				position: sticky;
 				z-index: 10;
 				top: 35px;
@@ -129,10 +135,10 @@
 	}
 
 	& table>thead>tr:last-child>th {
-		background-color: $surface-1 ;
+		// background-color: $surface-1 ;
 
 		&:last-child {
-			background-color: -alpha($surface-1, 0.6);
+			// background-color: -alpha($surface-1, 0.6);
 		}
 
 		& .form-outer {

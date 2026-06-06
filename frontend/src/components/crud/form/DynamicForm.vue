@@ -1,12 +1,12 @@
 <template>
 	<div class="h-full w-full @container" :class="{ 'opacity-50': loading }">
-		<!-- <pre v-if="store">{{ store.formSchema }}</pre> -->
+		<!-- <pre v-if="store">{{ store.item }}</pre> -->
 		<div v-if="store?.formSchema && store.formSchema.length" class="form-container">
 			<FormKit id="form" ref="form" type="form" @submit="submit" v-model="store.item" :actions="false">
 				<div>
 					<FormKitMessages />
 				</div>
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+				<div class="">
 					<FormKitSchema :schema="store.formSchema" :data="store.formData" :library="library">
 						<template #crudBtn>
 							<div class="flex flex-wrap justify-start gap-5 align-middle col-span-full mt-2">
@@ -76,7 +76,7 @@
 
 			router.push({ name: 'list', params: { entity: store.value.name } })
 		} catch (error) {
-			cl.error(error)
+			e(error)
 		}
 	}
 	function cancel() {

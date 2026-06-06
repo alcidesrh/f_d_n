@@ -56,14 +56,14 @@ class ResetDbCommand extends Command {
             // ($p = new Process($value))->run();
             // $io->block($p->getOutput());
             // }
-            $p1 = Process::fromShellCommandline('docker exec backend php bin/console doctrine:database:drop -nf --if-exists --quiet');
+            $p1 = Process::fromShellCommandline('docker exec backend php bin/console doctrine:database:drop -f --if-exists --quiet');
             $p2 = Process::fromShellCommandline('docker exec backend php bin/console doctrine:database:create');
             $p3 = Process::fromShellCommandline('docker exec backend rm -r migrations/*');
             $p4 = Process::fromShellCommandline('docker exec backend php bin/console doctrine:migrations:diff');
-            // $p5 = Process::fromShellCommandline('docker exec backend php bin/console doctrine:migrations:migrate');
+            $p5 = Process::fromShellCommandline('docker exec backend php bin/console doctrine:migrations:migrate');
             $p6 = Process::fromShellCommandline('docker exec backend php bin/console migrar');
-            $p7 = Process::fromShellCommandline('docker exec backend php bin/console migrar:boletos 100');
-            foreach ([$p1, $p2, $p3, $p4, $p6, $p7,] as $key => $value) {
+            // $p7 = Process::fromShellCommandline('docker exec backend php bin/console migrar:boletos 100');
+            foreach ([$p1, $p2, $p3, $p4, $p5] as $key => $value) {
                 $value->setTimeout(120);
                 $value->run();
             }

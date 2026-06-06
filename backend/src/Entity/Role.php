@@ -14,7 +14,6 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: RoleRepository::class)]
 #[ApiResourceNoPagination]
-
 class Role extends Base {
 
     use RolesTrait;

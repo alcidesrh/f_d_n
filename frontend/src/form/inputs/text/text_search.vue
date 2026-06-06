@@ -15,6 +15,7 @@
 
 	const typing = ref(props.context._value || '')
 	const loading = ref(false)
+	const flag = ref(false)
 	const {
 		start: startError,
 		isPending: isPendingError,
@@ -22,6 +23,7 @@
 	} = useTimeoutFn(
 		() => {
 			loading.value = false
+			flag.value = false
 		},
 		5000,
 		{ immediate: false },
@@ -29,12 +31,12 @@
 	const { start, isPending, stop } = useTimeoutFn(
 		async () => {
 			let value = typing.value
-			if (value) {
-				loading.value = true
-			}
+			flag.value = true
+			// if (value) {
+			// 	loading.value = true
+			// }
 
 			await props.context.node.input(value)
-			cl.info(props.context)
 			if (props.context.store) {
 				props.context.store.collection()
 			}
@@ -69,6 +71,9 @@
 					stopError()
 				}
 				loading.value = false
+				flag.value = false
+			} else if (flag.value) {
+				loading.value = true
 			}
 		},
 	)

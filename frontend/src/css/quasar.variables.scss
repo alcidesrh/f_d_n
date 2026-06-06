@@ -26,6 +26,9 @@ $topbar-sidebar-bg: $surface-2;
 $text-color: $surface-8;
 $topbar: 70px;
 $border: 1px solid $surface-4;
+$tootik-bg: -alpha($surface-1, 0.9);
+$tootik-border: 1px solid $surface-4;
+$tootik-arrow: $surface-5;
 $sidebar-width: calc(200px - 16px);
 $sidebar-mini-width: 57px;
 

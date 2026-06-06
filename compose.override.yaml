@@ -1,12 +1,12 @@
 # Development environment override
 services:
-  php:
+  backend:
     build:
       context: ./backend
       target: frankenphp_dev
-    mem_limit: 512m
-    mem_reservation: 256m
-    cpus: 0.5
+    # mem_limit: 512m
+    # mem_reservation: 256m
+    # cpus: 0.5
     volumes:
       - ./backend:/app
       - /app/var
@@ -33,7 +33,7 @@ services:
       - ./frontend:/frontend
       - ./frontend/node_modules:/frontend/node_modules
     environment:
-      API_PLATFORM_CREATE_CLIENT_ENTRYPOINT: http://php
+      API_PLATFORM_CREATE_CLIENT_ENTRYPOINT: http://backend
       API_PLATFORM_CREATE_CLIENT_OUTPUT: .
       # Development usage only
       NODE_TLS_REJECT_UNAUTHORIZED: '0'

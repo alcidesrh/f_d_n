@@ -9,6 +9,9 @@ export default defineBoot(async ({ router }) => {
 		}
 		const store = await getStore(entity)
 		if (to.meta?.action == 'listar') {
+			if (!store) {
+				return 'listar/' + entity + '/404'
+			}
 			store.collection()
 		} else if (to.meta.action == 'form') {
 			await store.getFormSchema()

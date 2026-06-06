@@ -1,19 +1,21 @@
 services:
-  php:
+  backend:
     image: ${IMAGES_PREFIX:-}app-php
-    restart: unless-stopped
+    # restart: unless-stopped
+    restart: "no"
     container_name: backend
     depends_on:
       - database
     environment:
+      TZ: America/Guatemala
       FRONTEND_UPSTREAM: frontend:9000
-      SERVER_NAME: ${SERVER_NAME:-localhost}, php:80
+      SERVER_NAME: ${SERVER_NAME:-localhost}, backend:80
       MERCURE_PUBLISHER_JWT_KEY: ${CADDY_MERCURE_JWT_SECRET:-!ChangeThisMercureHubJWTSecretKey!}
       MERCURE_SUBSCRIBER_JWT_KEY: ${CADDY_MERCURE_JWT_SECRET:-!ChangeThisMercureHubJWTSecretKey!}
       TRUSTED_PROXIES: ${TRUSTED_PROXIES:-127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16}
-      TRUSTED_HOSTS: ${TRUSTED_HOSTS:-^${SERVER_NAME:-example\.com|localhost}|php$$}
+      TRUSTED_HOSTS: ${TRUSTED_HOSTS:-^${SERVER_NAME:-example\.com|localhost}|backend$$}
       DATABASE_URL: postgresql://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-!ChangeMe!}@database:5432/${POSTGRES_DB:-app}?serverVersion=${POSTGRES_VERSION:-16}&charset=${POSTGRES_CHARSET:-utf8}
-      MERCURE_URL: ${CADDY_MERCURE_URL:-http://php/.well-known/mercure}
+      MERCURE_URL: ${CADDY_MERCURE_URL:-http://backend/.well-known/mercure}
       MERCURE_PUBLIC_URL: ${CADDY_MERCURE_PUBLIC_URL:-https://${SERVER_NAME:-localhost}:${HTTPS_PORT:-443}/.well-known/mercure}
       MERCURE_JWT_SECRET: ${CADDY_MERCURE_JWT_SECRET:-!ChangeThisMercureHubJWTSecretKey!}
     volumes:
@@ -41,6 +43,8 @@ services:
   frontend:
     image: ${IMAGES_PREFIX:-}app-frontend
     container_name: frontend
+    environment:
+      TZ: America/Guatemala
     healthcheck:
       test: curl -f http://localhost:3000 || exit 1
       timeout: 5s
@@ -52,6 +56,7 @@ services:
     image: postgres:${POSTGRES_VERSION:-16}-alpine
     container_name: database
     environment:
+      - TZ=America/Guatemala
       - POSTGRES_DB=${POSTGRES_DB:-app}
       # You should definitely change the password in production
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-!ChangeMe!}

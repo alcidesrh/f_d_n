@@ -5,18 +5,16 @@ namespace App\Entity;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
+use App\Attribute\ApiResourcePaginationPage;
+use App\Entity\Base\Base;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
-#[ApiResource]
-class Bus
-{
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+#[ApiResourcePaginationPage()]
+class Bus extends Base {
+
 
     #[ORM\Column(length: 50)]
     private ?string $matricula = null;
@@ -34,64 +32,53 @@ class Bus
     #[ORM\OneToMany(targetEntity: Asiento::class, mappedBy: 'bus', cascade: ['persist', 'remove'])]
     private Collection $asientos;
 
-    public function __construct()
-    {
+    public function __construct() {
         $this->asientos = new ArrayCollection();
     }
 
-    public function getId(): ?int
-    {
+    public function getId(): ?int {
         return $this->id;
     }
 
-    public function getMatricula(): ?string
-    {
+    public function getMatricula(): ?string {
         return $this->matricula;
     }
 
-    public function setMatricula(string $matricula): static
-    {
+    public function setMatricula(string $matricula): static {
         $this->matricula = $matricula;
 
         return $this;
     }
 
-    public function getGama(): ?string
-    {
+    public function getGama(): ?string {
         return $this->gama;
     }
 
-    public function setGama(?string $gama): static
-    {
+    public function setGama(?string $gama): static {
         $this->gama = $gama;
 
         return $this;
     }
 
-    public function getEmpresa(): ?Empresa
-    {
+    public function getEmpresa(): ?Empresa {
         return $this->empresa;
     }
 
-    public function setEmpresa(?Empresa $empresa): static
-    {
+    public function setEmpresa(?Empresa $empresa): static {
         $this->empresa = $empresa;
 
         return $this;
     }
 
-    public function getAsientos(): Collection
-    {
+    public function getAsientos(): Collection {
         return $this->asientos;
     }
 
-    public function getLegacyId(): ?string
-    {
+    public function getLegacyId(): ?string {
         return $this->legacyId;
     }
 
-    public function setLegacyId(?string $legacyId): static
-    {
+    public function setLegacyId(?string $legacyId): static {
         $this->legacyId = $legacyId;
 
         return $this;

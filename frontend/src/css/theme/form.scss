@@ -223,3 +223,13 @@ fieldset {
     }
   }
 }
+
+.formkit-id {
+  max-width: 120px;
+}
+
+.formkit-username,
+.formkit-nombre,
+.formkit-apellido {
+  max-width: 160px;
+}

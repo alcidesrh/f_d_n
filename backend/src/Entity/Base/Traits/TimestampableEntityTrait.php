@@ -7,11 +7,8 @@
  * file that was distributed with this source code.
  */
 
-namespace App\Entity\Base;
+namespace App\Entity\Base\Traits;
 
-use ApiPlatform\Metadata\ApiProperty;
-use App\Attribute\ExcludeAttribute;
-use DateTime;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
@@ -21,13 +18,11 @@ use Gedmo\Mapping\Annotation as Gedmo;
  *
  * @author Gediminas Morkevicius <gediminas.morkevicius@gmail.com>
  */
-trait TimestampableEntity {
-    #[ExcludeAttribute]
+trait TimestampableEntityTrait {
     #[Gedmo\Timestampable(on: 'create')]
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     protected \DateTime $createdAt;
 
-    #[ExcludeAttribute]
     #[Gedmo\Timestampable(on: 'update')]
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     protected \DateTime $updatedAt;

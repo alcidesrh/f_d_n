@@ -32,7 +32,6 @@ api_platform:
         pagination_client_enabled: false
         route_prefix: "api"
         stateless: true
-        # standard_put: false
         cache_headers:
             vary: ["Content-Type", "Authorization", "Origin"]
         extra_properties:

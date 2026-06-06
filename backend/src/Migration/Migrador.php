@@ -30,7 +30,7 @@ class Migrador {
             'tarifa' => 0,
             'salida' => 0,
             'boleto' => 0,
-            'usuarios' => 0
+            'usuario' => 0
         ];
 
         $offset = 0;
@@ -137,13 +137,21 @@ class Migrador {
         return $result !== false;
     }
 
-    private function getNewId(string $tabla, string $legacyId): ?int {
-        $sql = match ($tabla) {
-            'estacion' => 'SELECT id FROM enclave WHERE legacy_id = :lid',
-            default => "SELECT id FROM {$tabla} WHERE legacy_id = :lid",
-        };
-        $result = $this->newConn->fetchOne($sql, ['lid' => $legacyId]);
+    private function getNewId(string $tabla, string $legacyId, array $fields = ['id']): int | array | null {
+        $select = implode(' , ', $fields);
 
+        $sql = match ($tabla) {
+            'estacion' => "SELECT $select FROM enclave WHERE legacy_id = :lid",
+            default => "SELECT $select FROM \"{$tabla}\" WHERE legacy_id = :lid",
+        };
+        if (is_numeric($legacyId)) {
+            $sql .= ' or id = :lid';
+        }
+        if (\count($fields) > 1 || $fields[0] != 'id') {
+            $result = $this->newConn->fetchAllAssociative($sql, ['lid' => $legacyId]);
+            return $result[0] ?? null;
+        }
+        $result = $this->newConn->fetchOne($sql, ['lid' => $legacyId]);
         return $result !== false ? (int) $result : null;
     }
 
@@ -167,6 +175,12 @@ class Migrador {
 
     private function fetchSalida(int|string $id): ?array {
         $result = $this->fetchOld('SELECT * FROM salida WHERE id = :id', ['id' => $id]);
+
+        return $result[0] ?? null;
+    }
+
+    private function fetchUsuario(int|string $id): ?array {
+        $result = $this->fetchOld('SELECT * FROM custom_user WHERE id = :id', ['id' => $id]);
 
         return $result[0] ?? null;
     }
@@ -252,7 +266,7 @@ class Migrador {
     // ─── Migration helpers ─────────────────────────────────────────
 
     private function migrarBoleto(array $boletoOld, array &$contadores): void {
-        $existing = $this->getNewId('salida', $boletoOld['salida_id']);
+        $existing = $this->getNewId('salida', $boletoOld['salida_id'], ['id', 'ruta_id']);
         if (!$existing) {
 
             $salidaOld = $this->fetchSalida($boletoOld['salida_id']);
@@ -265,7 +279,7 @@ class Migrador {
             $asientoId = null;
             if ($salidaOld['bus_codigo']) {
                 $busId = $this->migrarBus($salidaOld['bus_codigo'], $empresaId, $contadores);
-                $asientoId = $this->migrarAsientosParaBus($salidaOld['bus_codigo'], $busId, $contadores);
+                $this->migrarAsientosParaBus($salidaOld['bus_codigo'], $busId, $contadores);
             }
             $trayectoId = null;
             if ($itinerarioOld && $itinerarioOld['ruta_codigo']) {
@@ -288,17 +302,20 @@ class Migrador {
                 $tarifaId,
                 $contadores
             );
+            $estacionId = $this->migrarEstacion($boletoOld['estacion_origen_id'], $contadores);
         } else {
-            $salidaId = $existing;
+            $salidaId = $existing['id'];
+            $trayectoId = $this->getNewId('salida', $salidaId, ['ruta_id'])['ruta_id'] ?? null;
+            $estacionId =  $this->getNewId('trayecto', $trayectoId, ['origen_id'])['origen_id'] ?? null;
+
             // $itinerarioOld = $salidaOld['itinerario_id'] ? $this->fetchItinerario($salidaOld['itinerario_id']) : null;
             // $empresaId = $this->get($salidaOld['empresa_id'], $contadores);
         }
-        $estacionId = $this->migrarEstacion($boletoOld['estacion_origen_id'], $contadores);
-
         $clienteId = $this->migrarCliente($boletoOld, $contadores);
+        $asientoId = $this->getNewId('asiento', (string) ($boletoOld['asiento_id'] ?? ''));
+        $usuarioId = $this->migrarUsuario($boletoOld, $contadores);
 
-
-        $boletoId = $this->insertarBoleto($boletoOld, $salidaId, $clienteId, $estacionId, $trayectoId);
+        $boletoId = $this->insertarBoleto($boletoOld, $salidaId, $clienteId, $estacionId, $trayectoId, $usuarioId);
 
         if ($asientoId && $boletoId) {
             $this->newConn->executeStatement(
@@ -450,12 +467,43 @@ class Migrador {
 
         $data = $this->mapeador->cliente($old);
         $id = $this->newConn->fetchOne(
-            'INSERT INTO cliente (nombre, apellidos, nif, email, telefono, legacy_id) VALUES (:nombre, :apellidos, :nif, :email, :telefono, :legacy_id) RETURNING id',
+            'INSERT INTO cliente (nombre, apellido, nit, email, telefono, legacy_id) VALUES (:nombre, :apellido, :nit, :email, :telefono, :legacy_id) RETURNING id',
             $data
         );
         $contadores['cliente']++;
 
         return (int) $id;
+    }
+
+    private function migrarUsuario(array $boletoOld, array &$contadores): ?int {
+        $usuarioId = [$boletoOld['usuario_creacion_id']];
+        if ($boletoOld['usuario_actualizacion_id'] && ($boletoOld['usuario_creacion_id'] != $boletoOld['usuario_actualizacion_id'])) {
+            $usuarioId[] = $boletoOld['usuario_actualizacion_id'];
+        }
+        foreach ($usuarioId as $key => $idOld) {
+            $existing = $this->getNewId('usuario', $idOld);
+            if ($existing) {
+                continue;
+            }
+            $old = $this->fetchUsuario($idOld);
+            if (!$old) {
+                continue;
+            }
+
+            $data = $this->mapeador->usuario($old);
+            $fields = \implode(' , ', \array_keys($data));
+            $args = \implode(' , ', \array_map(fn($k) => ":$k", \array_keys($data)));
+            $id = $this->newConn->fetchOne(
+                "INSERT INTO usuario ( $fields ) VALUES ( $args ) RETURNING id",
+                $data
+            );
+            $contadores['usuario']++;
+        }
+
+
+
+
+        return $boletoOld['usuario_creacion_id'];
     }
 
     private function migrarTrayecto(string $rutaCodigo, array &$contadores): ?int {
@@ -580,14 +628,15 @@ class Migrador {
         return (int) $id;
     }
 
-    private function insertarBoleto(array $boletoOld, ?int $salidaId, ?int $clienteId, ?int $estacionId, ?int $trayectoId): ?int {
+    private function insertarBoleto(array $boletoOld, ?int $salidaId, ?int $clienteId, ?int $estacionId, ?int $trayectoId, ?int $usuarioId): ?int {
         $data = $this->mapeador->boleto(
             $boletoOld,
             $salidaId,
             $clienteId,
             $estacionId,
             $trayectoId,
-            $boletoOld['asiento_bus_id'] ?? null
+            $boletoOld['asiento_bus_id'] ?? null,
+            $usuarioId
         );
 
         return (int) $this->newConn->fetchOne(

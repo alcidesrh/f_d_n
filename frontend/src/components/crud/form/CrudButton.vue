@@ -1,7 +1,7 @@
 <template>
 	<div class="h-fit w-full flex justify-end gap-5 crud-button-wraper">
 		<slot name="CrudSubmitButton">
-			<q-btn-dropdown split outline class="bg-surface-2" label="Guardar" icon="sym_o_save" type="submit">
+			<q-btn-dropdown split outline class="bg-surface-1" label="Guardar" icon="sym_o_save" type="submit">
 				<q-list class="crud-button-wraper">
 					<q-item clickable v-close-popup @click="$emit('submit', 'reset')">
 						<q-item-section side>

@@ -22,6 +22,7 @@ export default defineConfig((ctx) => {
 
 			'introspection',
 			'middleware',
+			'static-data-gateway',
 			'i18n',
 			'responsive',
 			'gsap',

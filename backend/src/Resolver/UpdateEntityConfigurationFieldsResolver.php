@@ -6,10 +6,15 @@ use ApiPlatform\GraphQl\Resolver\MutationResolverInterface;
 use ApiPlatform\Metadata\IriConverterInterface;
 use App\Entity\Configuration\EntityConfiguration;
 use App\Entity\Configuration\collectionFieldConfigConfig;
+use App\Services\ConfigChangePublisher;
 use Doctrine\ORM\EntityManagerInterface;
 
 final class UpdateEntityConfigurationFieldsResolver implements MutationResolverInterface {
-  public function __construct(private EntityManagerInterface $entityManager, private IriConverterInterface $iriConverter) {
+  public function __construct(
+    private EntityManagerInterface $entityManager,
+    private IriConverterInterface $iriConverter,
+    private ConfigChangePublisher $configChangePublisher,
+  ) {
   }
 
   public function __invoke($item, array $context): EntityConfiguration {
@@ -37,6 +42,8 @@ final class UpdateEntityConfigurationFieldsResolver implements MutationResolverI
       }
     }
     $this->entityManager->flush();
+
+    $this->configChangePublisher->entityConfigChanged($entity->getEntityClass());
 
     return $entity;
   }

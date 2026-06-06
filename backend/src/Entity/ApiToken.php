@@ -2,16 +2,18 @@
 
 namespace App\Entity;
 
+use App\Attribute\ApiResourceNoPagination;
+use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
-use App\Entity\Base\TimestampableEntity;
+use App\Entity\Base\Traits\TimestampableEntityTrait;
 use App\Repository\ApiTokenRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
-
+#[ApiResourceNoPagination]
 #[ORM\Entity(repositoryClass: ApiTokenRepository::class)]
 class ApiToken extends Base {
-    use TimestampableEntity;
+    use TimestampableEntityTrait;
 
     private const PERSONAL_ACCESS_TOKEN_PREFIX = 'fdn_';
 
@@ -27,7 +29,7 @@ class ApiToken extends Base {
 
     #[ORM\ManyToOne(inversedBy: 'apiTokens')]
     #[ORM\JoinColumn(nullable: false, onDelete: 'cascade')]
-    private ?User $usuario = null;
+    private ?Usuario $usuario = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $expira = null;
@@ -46,11 +48,11 @@ class ApiToken extends Base {
     }
 
 
-    public function getUsuario(): ?User {
+    public function getUsuario(): ?Usuario {
         return $this->usuario;
     }
 
-    public function setUsuario(?User $usuario): self {
+    public function setUsuario(?Usuario $usuario): self {
         $this->usuario = $usuario;
 
         return $this;

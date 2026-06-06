@@ -1,6 +1,6 @@
 <?php
 
-namespace App\DTO;
+namespace App\ApiResource;
 
 use ApiPlatform\Doctrine\Orm\Filter\ExactFilter;
 use ApiPlatform\Doctrine\Orm\State\Options;
@@ -9,11 +9,8 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\QueryParameter;
 use App\Entity\Configuration\CollectionFieldConfig;
 use App\Entity\Configuration\EntityConfiguration;
-use App\Entity\Configuration\FieldConfig;
 use App\Entity\Configuration\FormFieldConfig;
 use Doctrine\Common\Collections\Collection;
-use Symfony\Component\HttpFoundation\JsonResponse;
-// use Doctrine\Common\Collections\Collection;
 use Symfony\Component\ObjectMapper\Attribute\Map;
 use Symfony\Component\Serializer\Attribute\Groups;
 
@@ -21,28 +18,28 @@ use Symfony\Component\Serializer\Attribute\Groups;
   shortName: 'EntityConfigurationDto',
   normalizationContext: ['groups' => ['read:dto']],
   stateOptions: new Options(entityClass: EntityConfiguration::class),
-  operations: [
-    new GetCollection(
-      order: ['collectionFieldConfig.position' => 'ASC', 'formFields.position' => 'ASC'],
-      paginationEnabled: false,
-      parameters: [
-        'entityClass' => new QueryParameter(
-          filter: new ExactFilter(),
-          property: 'entityClass'
-        ),
-      ],
-    ),
-  ]
+  // operations: [
+  //   new GetCollection(
+  //     order: ['collectionFieldConfig.position' => 'ASC', 'formFields.position' => 'ASC'],
+  //     paginationEnabled: false,
+  //     parameters: [
+  //       'entityClass' => new QueryParameter(
+  //         filter: new ExactFilter(),
+  //         property: 'entityClass'
+  //       ),
+  //     ],
+  //   ),
+  // ]
 )]
 #[Map(source: EntityConfiguration::class)]
 final class EntityConfigurationDto {
 
   #[Groups(['read:dto'])]
-  #[Map(transform: [self::class, 'collectionFieldConfiToArray'])]
+  // #[Map(transform: [self::class, 'collectionFieldConfiToArray'])]
   public array $collectionFieldConfig;
 
   #[Groups(['read:dto'])]
-  #[Map(transform: [self::class, 'formFieldsToArray'])]
+  // #[Map(transform: [self::class, 'formFieldsToArray'])]
   public array $formFields;
 
   public static function formFieldsToArray(Collection  $formFields, object $source): mixed {
@@ -63,7 +60,5 @@ final class EntityConfigurationDto {
 
   public static function collectionFieldConfiToArray(Collection $collectionFieldConfig, object $source): mixed {
     return $collectionFieldConfig->filter(fn(CollectionFieldConfig $v) => $v->isVisible())->toArray();
-    // unset($temp['entityConfig']);
-    return $temp;
   }
 }

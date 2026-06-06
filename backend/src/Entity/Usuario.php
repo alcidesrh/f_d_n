@@ -9,7 +9,6 @@ use ApiPlatform\Doctrine\Orm\Filter\PartialSearchFilter;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Metadata\ApiFilter;
 use App\Attribute\ApiResourcePaginationPage;
-use App\Repository\UserRepository;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -18,29 +17,24 @@ use ApiPlatform\Metadata\GraphQl\Mutation;
 use ApiPlatform\Metadata\GraphQl\Query;
 use ApiPlatform\Metadata\GraphQl\QueryCollection;
 use ApiPlatform\Metadata\QueryParameter;
-use App\Attribute\CollectionMetadataAttribute;
 use App\Attribute\FormMetadataAttribute;
-use App\Entity\Base\UserBase;
+use App\Entity\Base\PersonaBase;
 use App\Filter\IdPartialSearchFilter;
+use App\Repository\UsuarioRepository;
 use App\Resolver\UserByUsernameResolver;
 use App\Services\Collection as ServicesCollection;
-use App\State\UserPasswordHasher;
+use App\Services\UsuarioPasswordHasher;
 use Symfony\Component\Serializer\Attribute\Ignore;
 
-#[ORM\Entity(repositoryClass: UserRepository::class)]
-#[ORM\Table(name: '"user"')]
+#[ORM\Entity(repositoryClass: UsuarioRepository::class)]
 #[ApiResourcePaginationPage(
     graphQlOperations: [
         new Query(),
-        new Mutation(name: 'create', processor: UserPasswordHasher::class),
-        new Mutation(name: 'update', processor: UserPasswordHasher::class),
+        new Mutation(name: 'create', processor: UsuarioPasswordHasher::class),
+        new Mutation(name: 'update', processor: UsuarioPasswordHasher::class),
         new QueryCollection(
             paginationType: 'page',
             parameters: [
-                // 'search[:property]' => new QueryParameter(
-                //     properties: ['username', 'nombre', 'apellido', 'email'], // Only these properties get parameters created
-                //     filter: new OrFilter(new PartialSearchFilter())
-                // ),
                 'id' => new QueryParameter(
                     filter: new OrFilter(new IdPartialSearchFilter()),
                     property: 'id',
@@ -74,146 +68,11 @@ use Symfony\Component\Serializer\Attribute\Ignore;
         ),
     ]
 )]
-#[ApiFilter(DateFilter::class, properties: ['createdAt'])]
-#[ApiFilter(SearchFilter::class, properties: ['permisos.id' => 'exact', 'userRoles.id' => 'exact', 'localidad.id' => 'exact'])]
+#[ApiFilter(DateFilter::class, properties: ['createdAt', 'updatedAt'])]
+#[ApiFilter(SearchFilter::class, properties: ['permisos.id' => 'exact', 'userRoles.id' => 'exact', 'localidad.id' => 'exact', 'status.id' => 'exact'])]
 #[ApiFilter(OrderFilter::class, properties: ['id', 'nombre', 'apellido', 'username', 'createdAt', 'email'], arguments: ['orderParameterName' => 'order'])]
 
-#[CollectionMetadataAttribute(
-    class: 'col-wraper',
-    props: [
-        ['name' => 'id', 'filter' => ['inputType' => 'number'], 'label' => 'Id', 'sortable' => true, 'class' => 'col-small'],
-        ['name' => 'username', 'label' => 'Usuario', 'sortable' => true, 'filter' => true, 'class' => 'col-medium'],
-        ['name' => 'nombre', 'label' => 'Nombre', 'sortable' => true, 'filter' => true, 'class' => 'col-medium'],
-        ['name' => 'apellido', 'class' => 'col-medium', 'label' => 'Apellido', 'sortable' => true, 'filter' => true],
-        ['name' => 'email', 'label' => 'Correo', 'sortable' => true, 'filter' => true, 'class' => 'col-medium'],
-        ['name' => 'createdAt', 'label' => 'Fecha creación', 'sortable' => true, 'filter' => true],
-        ['name' => 'userRoles', 'label' => 'Roles',  'class' => 'col-medium'],
-        ['name' => 'status', 'label' => 'Status',]
-    ]
-)]
-
-#[FormMetadataAttribute(
-    exclude: ['fullName', 'apiTokens', 'legacyId'],
-    order: ['nombre', 'apellido', 'email', 'telefono', 'nit', 'direccion', 'localidad', 'status', 'userRoles', 'permisos'],
-    schema: [
-        // 'form' =>  [
-        //     'plugins' => '$filterprop',
-        //     'children' => [
-        [
-            'div' =>
-            [
-                'class' => 'form-header',
-                'children' => [
-                    [
-                        'span' =>
-                        [
-                            'class' => 'font-medium u-text-1',
-                            'children' => '$slots.header'
-                        ]
-                    ],
-                    [
-                        'div' => [
-                            'children' => '$slots.crudBtn'
-                        ]
-                    ],
-                ]
-            ]
-        ],
-        [
-            'div' => [
-                'class' => 'toast-error-form',
-                'children' => [
-                    'component' => 'FormKitMessages'
-                ]
-            ]
-        ],
-        [
-            'div' => [
-                'class' => 'form-row',
-                'children' => [
-                    [
-                        'div' => [
-                            'class' => 'form-col',
-                            'children' => [
-                                '$el' => [
-                                    'type' => 'fieldset',
-                                    'children' => [
-                                        [
-                                            '$el' => [
-                                                'type' => 'legend',
-                                                'children' => 'Información básica'
-                                            ]
-                                        ],
-                                        [
-                                            '$el' => [
-                                                'type' => 'div',
-                                                'children' => 7
-                                            ]
-                                        ]
-                                    ]
-                                ]
-                            ],
-                        ]
-                    ],
-                    [
-                        'div' => [
-                            'class' => 'form-col',
-                            'children' => [
-                                '$el' => [
-                                    'type' => 'fieldset',
-                                    'children' => [
-                                        [
-                                            '$el' => [
-                                                'type' => 'legend',
-                                                'children' => 'Roles & Privilegios'
-                                            ]
-                                        ],
-                                        [
-                                            '$el' => [
-                                                'type' => 'div',
-                                                'children' => 2
-                                            ]
-                                        ]
-                                    ]
-                                ]
-                            ]
-                        ]
-                    ],
-                    [
-                        'div' => [
-                            'class' => 'form-col',
-                            'children' => [
-                                [
-                                    '$el' => [
-                                        'type' => 'fieldset',
-                                        'children' => [
-                                            '$el' => [
-                                                'type' => 'legend',
-                                                'children' => 'Credenciales'
-                                            ],
-                                            'div' => [
-                                                'children' => [
-                                                    ['username' => ['label' => 'Usuario']],
-                                                    ['plainPassword' => ['validation' => false, 'type' => 'password', 'label' => 'Nueva contraseña', 'inputProps' => ['autocomplete' => 'new-password']]],
-                                                    ['plainPassword' => ['type' => 'password', 'name' => 'password_confirm', 'label' => 'Repita la contraseña', 'validation' => 'confirm']]
-                                                ]
-                                            ]
-                                        ]
-                                    ]
-                                ]
-                            ]
-                        ],
-                    ],
-                ]
-            ]
-        ]
-        // ]
-        // ],
-    ]
-)]
-
-class User extends UserBase implements UserInterface, PasswordAuthenticatedUserInterface {
-
+class Usuario extends PersonaBase implements UserInterface, PasswordAuthenticatedUserInterface {
 
     #[ORM\Column(length: 180, unique: true, nullable: false)]
     private string $username;
@@ -228,11 +87,8 @@ class User extends UserBase implements UserInterface, PasswordAuthenticatedUserI
 
     #[Assert\NotBlank()]
     private ?string $plainPassword = null;
-
-
     private ?string $fullName;
 
-    #[Ignore]
     #[ORM\OneToMany(mappedBy: 'usuario', targetEntity: ApiToken::class)]
     private Collection $apiTokens;
 

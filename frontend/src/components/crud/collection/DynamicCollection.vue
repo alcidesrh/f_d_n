@@ -5,7 +5,6 @@
 		</div> -->
 		<FormKit v-model="store.filters" type="form" :actions="false" form-class="block m-auto" :config="{ wrapperClass: 'mb-0!' }">
 			<q-table
-				:bordered="$q.screen.xs"
 				:grid="$q.screen.xs"
 				:dense="$q.screen.sm"
 				flat
@@ -135,7 +134,7 @@
 	})
 </script>
 
-<style scoped lang="scss">
+<style lang="scss">
 	::highlight(highlight-0),
 	::highlight(highlight-1),
 	::highlight(highlight-2),

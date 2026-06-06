@@ -130,7 +130,7 @@ check: ## Docker check
 # Snippet L126+2 => templates/snippet/code/_135.html.twig
 
 sh: ## Log to the docker container
-	$(DOCKER) exec -it modelo-php-1 sh
+	$(DOCKER) exec -it backend sh
 
 
 caddy: ## Log to the docker container
@@ -163,7 +163,7 @@ wait-for-elasticsearch: ## Wait for Elasticsearch to be ready
 	@bin/wait-for-elasticsearch.sh
 
 bash: ## Connect to the application container
-	@$(DOCKER) container exec -it php bash
+	@$(DOCKER) exec -it backend bash
 
 ## —— Project 🐝 ———————————————————————————————————————————————————————————————
 #start: up wait-for-mysql load-fixtures wait-for-elasticsearch populate serve ## Start docker, load fixtures, populate the Elasticsearch index and start the webserver
@@ -324,10 +324,10 @@ prod-build:
 	SERVER_NAME=transportesfuentedelnorte.com  APP_SECRET=fdn.transportesfuentedelnorte.com CADDY_MERCURE_JWT_SECRET=fdn.transportesfuentedelnorte.com $(DOCKER_COMP)  -f docker-compose.yml -f docker-compose.prod.yml up --build -d
 
 pcl:
-	@$(DOCKER) logs --follow transportesfuentedelnortecom-php-1
+	@$(DOCKER) logs --follow transportesfuentedelnortecom-backend-1
 reset_database:
-	@$(DOCKER_COMP) exec php sh php bin/console doctrine:database:drop -nf --if-exists ; rm -r migrations/*; php bin/console doctrine:database:create -n; php bin/console doctrine:migrations:diff -n; php bin/console doctrine:migrations:migrate -n
+	@$(DOCKER_COMP) exec backend sh php bin/console doctrine:database:drop -nf --if-exists ; rm -r migrations/*; php bin/console doctrine:database:create -n; php bin/console doctrine:migrations:diff -n; php bin/console doctrine:migrations:migrate -n
 
 schema:
-	@$(DOCKER_COMP) exec php bin/console api:graphql:export > ../api/public/schema.graphql
+	@$(DOCKER_COMP) exec backend bin/console api:graphql:export > ../api/public/schema.graphql
 

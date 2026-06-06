@@ -23,8 +23,8 @@ const routes: RouteRecordRaw[] = [
 						const params = v.params
 						return [
 							{
-								label: 'lista',
-								to: false,
+								label: 'entidades',
+								to: '/admin/entities',
 								icon: 'lists',
 							},
 							{
@@ -81,6 +81,10 @@ const routes: RouteRecordRaw[] = [
 
 	// Always leave this as last one,
 	// but you can also remove it
+	{
+		path: '/:action/:entity',
+		component: () => import('pages/ErrorNotFound.vue'),
+	},
 	{
 		path: '/:catchAll(.*)*',
 		component: () => import('pages/ErrorNotFound.vue'),

@@ -13,18 +13,6 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: PermisoRepository::class)]
 #[ApiResourceNoPagination]
-#[FormMetadataAttribute(order: ['nombre', 'roles', 'parents', 'children', 'status', 'nota'])]
-
-#[CollectionMetadataAttribute(
-    class: 'col-wraper',
-    props: [
-        ['name' => 'id', 'class' => ' col-small'],
-        ['name' => 'nombre', 'class' => 'col-wraper'],
-        ['name' => 'parents', 'label' => 'Padre'],
-        ['name' => 'children', 'label' => 'Hijos'],
-        ['name' => 'roles']
-    ]
-)]
 class Permiso extends NombreNotaStatusBase {
 
 

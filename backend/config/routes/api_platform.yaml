@@ -1,3 +1,6 @@
 api_platform:
     resource: .
     type: api_platform
+# api_graphql_entrypoint:
+#     path: /api
+#     controller: api_platform.graphql.action.entrypoint

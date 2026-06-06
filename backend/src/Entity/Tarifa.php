@@ -5,20 +5,17 @@ namespace App\Entity;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
+use App\Attribute\ApiResourcePaginationPage;
+use App\Entity\Base\Base;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
-#[ApiResource]
-class Tarifa
-{
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+#[ApiResourcePaginationPage]
+class Tarifa extends Base {
 
-    #[ORM\Column(length: 255, unique: true)]
+    #[ORM\Column(length: 255)]
     private ?string $nombre = null;
 
     #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
@@ -28,7 +25,6 @@ class Tarifa
     private ?string $precioClaseB = null;
 
     #[ORM\ManyToOne]
-    #[ORM\JoinColumn(nullable: false)]
     private ?Empresa $empresa = null;
 
     #[ORM\ManyToOne]
@@ -40,88 +36,73 @@ class Tarifa
     #[ORM\Column(type: 'string', length: 50, nullable: true)]
     private ?string $legacyId = null;
 
-    public function __construct()
-    {
+    public function __construct() {
         $this->trayectos = new ArrayCollection();
     }
 
-    public function getId(): ?int
-    {
+    public function getId(): ?int {
         return $this->id;
     }
 
-    public function getNombre(): ?string
-    {
+    public function getNombre(): ?string {
         return $this->nombre;
     }
 
-    public function setNombre(string $nombre): static
-    {
+    public function setNombre(string $nombre): static {
         $this->nombre = $nombre;
 
         return $this;
     }
 
-    public function getPrecioClaseA(): ?string
-    {
+    public function getPrecioClaseA(): ?string {
         return $this->precioClaseA;
     }
 
-    public function setPrecioClaseA(string $precioClaseA): static
-    {
+    public function setPrecioClaseA(string $precioClaseA): static {
         $this->precioClaseA = $precioClaseA;
 
         return $this;
     }
 
-    public function getPrecioClaseB(): ?string
-    {
+    public function getPrecioClaseB(): ?string {
         return $this->precioClaseB;
     }
 
-    public function setPrecioClaseB(?string $precioClaseB): static
-    {
+    public function setPrecioClaseB(?string $precioClaseB): static {
         $this->precioClaseB = $precioClaseB;
 
         return $this;
     }
 
-    public function getEmpresa(): ?Empresa
-    {
+    public function getEmpresa(): ?Empresa {
         return $this->empresa;
     }
 
-    public function setEmpresa(?Empresa $empresa): static
-    {
+    public function setEmpresa(?Empresa $empresa): static {
         $this->empresa = $empresa;
 
         return $this;
     }
 
-    public function getBus(): ?Bus
-    {
+    public function getBus(): ?Bus {
         return $this->bus;
     }
 
-    public function setBus(?Bus $bus): static
-    {
+    public function setBus(?Bus $bus): static {
         $this->bus = $bus;
 
         return $this;
     }
 
-    public function getTrayectos(): Collection
-    {
+    public function getTrayectos(): Collection {
         return $this->trayectos;
     }
 
-    public function getLegacyId(): ?string
-    {
+    public function getLegacyId(): ?string {
         return $this->legacyId;
     }
 
-    public function setLegacyId(?string $legacyId): static
-    {
+    public function setLegacyId(?string $legacyId): static {
         $this->legacyId = $legacyId;
 
         return $this;

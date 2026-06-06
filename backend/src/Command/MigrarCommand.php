@@ -12,25 +12,22 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(name: 'app:migrar', description: 'Migra boletos del sistema FDN al nuevo sistema')]
-class MigrarCommand extends Command
-{
+class MigrarCommand extends Command {
     public function __construct(
         private Migrador $migrador,
     ) {
         parent::__construct();
     }
 
-    protected function configure(): void
-    {
+    protected function configure(): void {
         $this
-            ->addArgument('cantidad', InputArgument::OPTIONAL, 'Número de boletos a migrar', '100')
-            ->addOption('limpiar', null, InputOption::VALUE_NONE, 'Limpia la base de datos nueva antes de migrar');
+            ->addArgument('c', InputArgument::OPTIONAL, 'Número de boletos a migrar', '100')
+            ->addOption('r', null, InputOption::VALUE_NONE, 'Limpia la base de datos nueva antes de migrar');
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output): int
-    {
-        $cantidad = (int) $input->getArgument('cantidad');
-        $limpiar = (bool) $input->getOption('limpiar');
+    protected function execute(InputInterface $input, OutputInterface $output): int {
+        $cantidad = (int) $input->getArgument('c');
+        $limpiar = (bool) $input->getOption('r');
 
         $output->writeln(sprintf(
             '<info>Migrando hasta %d boletos%s...</info>',

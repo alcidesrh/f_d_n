@@ -5,13 +5,16 @@ namespace App\Entity;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
+use App\Attribute\ApiResourcePaginationPage;
 use App\Enum\TipoAsiento;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
-#[ApiResource]
-class Asiento
-{
+#[ApiResourcePaginationPage()]
+class Asiento {
+    public const ASIENTO_CLASE_A = 'A';
+    public const ASIENTO_CLASE_B = 'B';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -36,78 +39,65 @@ class Asiento
     #[ORM\Column(type: 'string', length: 50, nullable: true)]
     private ?string $legacyId = null;
 
-    public function getId(): ?int
-    {
+    public function getId(): ?int {
         return $this->id;
     }
 
-    public function getNumero(): ?int
-    {
+    public function getNumero(): ?int {
         return $this->numero;
     }
 
-    public function setNumero(int $numero): static
-    {
+    public function setNumero(int $numero): static {
         $this->numero = $numero;
 
         return $this;
     }
 
-    public function getClase(): ?TipoAsiento
-    {
+    public function getClase(): ?TipoAsiento {
         return $this->clase;
     }
 
-    public function setClase(TipoAsiento $clase): static
-    {
+    public function setClase(TipoAsiento $clase): static {
         $this->clase = $clase;
 
         return $this;
     }
 
-    public function getFila(): ?int
-    {
+    public function getFila(): ?int {
         return $this->fila;
     }
 
-    public function setFila(?int $fila): static
-    {
+    public function setFila(?int $fila): static {
         $this->fila = $fila;
 
         return $this;
     }
 
-    public function getColumna(): ?int
-    {
+    public function getColumna(): ?int {
         return $this->columna;
     }
 
-    public function setColumna(?int $columna): static
-    {
+    public function setColumna(?int $columna): static {
         $this->columna = $columna;
 
         return $this;
     }
 
-    public function getBus(): ?Bus
-    {
+    public function getBus(): ?Bus {
         return $this->bus;
     }
 
-    public function setBus(?Bus $bus): static
-    {
+    public function setBus(?Bus $bus): static {
         $this->bus = $bus;
 
         return $this;
     }
 
-    public function getLegacyId(): ?string
-    {
+    public function getLegacyId(): ?string {
         return $this->legacyId;
     }
 
-    public function setLegacyId(?string $legacyId): static
-    {
+    public function setLegacyId(?string $legacyId): static {
         $this->legacyId = $legacyId;
 
         return $this;

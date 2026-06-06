@@ -1,7 +1,7 @@
 import { Log } from '@kitql/helpers'
 import voca from 'voca'
 
-export const cl = new Log('Console Log', {
+const console = new Log('Console Log', {
 	levelsToShow: 3,
 	withDate: 'time',
 })
@@ -25,13 +25,17 @@ function customLog(...args: any[]) {
 		}
 	})
 }
-export const cl2 = (...args: any[]) => customLog(args)
+export const ccustom = (...args: any[]) => customLog(args)
 
-export const cle = (...data: any[]) => {
-	cl.error(...data)
+export const cl = (...data: any[]) => {
+	console.info(...data)
 }
-export const cls = (...data: any[]) => {
-	cl.success(...data)
+
+export const e = (...data: any[]) => {
+	console.error(...data)
+}
+export const s = (...data: any[]) => {
+	console.success(...data)
 }
 
 export const str = voca

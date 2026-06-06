@@ -1,16 +1,19 @@
-import { defineStore } from 'pinia'
-// import { router } from "@/router";
+import { useSchemaStore } from '@/stores/autoimport/schemaStore'
 import { gql } from '@apollo/client/core'
 import { useCloned } from '@vueuse/core'
 import * as queryBuilder from 'gql-query-builder'
+import { defineStore } from 'pinia'
 import { Dialog } from 'quasar'
-import { nextTick } from 'vue'
-import persist from './persist'
+import { nextTick, watch } from 'vue'
+// import persist from './persist'
 
 export default async (name: string) => {
+	if (typeof entities.value[str.capitalize(name)] == 'undefined') {
+		return false
+	}
 	const state = {
 		name: name,
-		entity: useCloned(entities.value[name]).cloned.value,
+		entity: useCloned(entities.value[str.capitalize(name)]).cloned.value,
 		config: {},
 		items: [],
 		item: {},
@@ -45,9 +48,9 @@ export default async (name: string) => {
 		}
 	}
 	return await defineStore(name, {
-		persist: {
-			...persist,
-		},
+		// persist: {
+		// 	...persist,
+		// },
 		state: () => state,
 		getters: {
 			computedColumns: (store) =>
@@ -59,6 +62,7 @@ export default async (name: string) => {
 					},
 					...store.visibleColumns.find((v2) => v2 == v.field),
 				]),
+			computedFormFields: (s) => s.config.formFields.filter((v) => v.visible),
 			nameDecapitalize: (store) => str.decapitalize(store.name),
 			collectionEndpoint(store) {
 				if (store.name == 'Status') {
@@ -77,22 +81,23 @@ export default async (name: string) => {
 
 			collectionVariables(store): Record<string, {}> {
 				if (!store.entity) return {}
-				const variables = {
-					currentPage: {
+				const variables = {}
+				if (store.entity?.queries.collection?.args && typeof store.entity?.queries.collection.args['currentPage'] != 'undefined') {
+					variables.currentPage = {
 						...store.entity?.queries.collection.args['currentPage'],
 						value: store.pagination?.currentPage,
-					},
-					itemsPerPage: {
+					}
+					variables.itemsPerPage = {
 						...store.entity?.queries.collection.args['itemsPerPage'],
 						value: store.pagination?.itemsPerPage,
-					},
+					}
 				}
 
 				const filters = useCloned(store.filters).cloned.value
-				const args = useCloned(store.entity?.queries.collection.args).cloned.value
+				const args = store.entity?.queries.collection.args //useCloned(store.entity?.queries.collection.args).cloned.value
 				// ⚠️ getters no tienen acceso directo a otros getters vía store
 				// necesitas usar `this`
-				const columns = (this as any).computedColumns
+				const columns = this.computedColumns
 
 				columns
 					.filter((v) => v.filterable)
@@ -103,9 +108,8 @@ export default async (name: string) => {
 							if (v.field in filters && filters[v.field]) {
 								variables[`${v.field}_id_list`].value = filters[v.field].map((i) => getIdFromIri(i.id))
 							}
-						} else {
+						} else if (typeof args[v.field] != 'undefined') {
 							variables[v.field] = args[v.field]
-
 							if (v.field in filters) {
 								variables[v.field].value = filters[v.field]
 							}
@@ -117,7 +121,7 @@ export default async (name: string) => {
 					order[store.orderField] = store.orderType
 					variables.order = { ...args?.order, value: [order] }
 				}
-				return variables
+				return util.isEmpty(variables) ? null : variables
 			},
 
 			collectionFields(store): Array<{}> {
@@ -125,7 +129,6 @@ export default async (name: string) => {
 
 				const collectionQuery = store.entity?.queries.collection
 				const entityFields = store.entity?.fields
-
 				const fields: any[] = []
 
 				const columns = (this as any).computedColumns
@@ -155,8 +158,22 @@ export default async (name: string) => {
 		actions: {
 			async init() {
 				if (!Object.keys(this.config).length) {
+					const schemaStore = useSchemaStore()
+					if (!schemaStore.isLoaded) {
+						await new Promise<void>((resolve) => {
+							const unwatch = watch(
+								() => schemaStore.isLoaded,
+								(val) => {
+									if (val) {
+										unwatch()
+										resolve()
+									}
+								},
+							)
+						})
+					}
 					const restApi = await useApi()
-					const response = await restApi.value.get('/entity_configuration_dtos?entityClass=' + this.name)
+					const response = await restApi.value.get('/entity_configurations?entityClass=' + this.name)
 					this.config = response['member'][0]
 				}
 			},
@@ -166,12 +183,10 @@ export default async (name: string) => {
 				for (const v of this.config.collectionFieldConfig.filter((v) => v.visible)) {
 					const item = this.columns.find((v2) => v2.field === v.field)
 					if (!item) continue
-
 					item.position = v.position
 					item.visible = true
 					t.push(item)
 				}
-
 				this.columns = t
 				this.visibleColumns = this.columns.map((v) => v.field)
 			},
@@ -179,7 +194,8 @@ export default async (name: string) => {
 				for (let v of this.config.collectionFieldConfig.filter((v) => v.visible)) {
 					v = useCloned(v).cloned.value
 					const field = this.entity.fields[v.field]
-					if (v.filterable) {
+					const args = this.entity.queries.collection.args
+					if (v.filterable && typeof args[v.field] != 'undefined') {
 						const input = { ...field.input }
 						delete input.label
 						v.schema = {
@@ -187,7 +203,7 @@ export default async (name: string) => {
 							name: v.field,
 							id: v.id,
 							loading: '$loading',
-							outerClass: 'mb-0! col-wraper',
+							outerClass: `mb-0! col-wraper formkit-${v.field}`,
 							dense: true,
 						}
 						if (v.schema['$formkit'] === 'text') {
@@ -245,7 +261,7 @@ export default async (name: string) => {
 					variables[key] = { ...value, value: id }
 				}
 				const fields = ['id']
-				this.config.formFields.forEach((v) => {
+				this.computedFormFields.forEach((v) => {
 					if (this.entity.fields[v.field]?.relatedTo) {
 						const temp = {}
 						temp[v.field] = ['label', 'id']
@@ -278,48 +294,48 @@ export default async (name: string) => {
 							this.formData[temp.nameDecapitalize + 's'] = temp.options
 						}
 					}
-
 					return
 				}
 				let fields: any[] = []
-
-				if (this.config.formFields?.length) {
-					for (const v of this.config.formFields) {
-						if (!v.visible) continue
-
-						const field = this.entity.fields[v.field]
-						if (!field) continue
-
-						if (field.relatedTo) {
-							const temp = await getStore(field.relatedTo)
-							await temp.getOptions()
-							this.formData[temp.nameDecapitalize + 's'] = temp.options
-						}
-						fields.push({
-							...v,
-							input: { ...field.input, ...v.input },
-						})
+				for (const v of this.computedFormFields) {
+					const field = this.entity.fields[v.field]
+					if (!field) {
+						continue
 					}
-				} else {
+					if (field.relatedTo) {
+						const temp = await getStore(field.relatedTo)
+						await temp.getOptions()
+						this.formData[temp.nameDecapitalize + 's'] = temp.options
+					}
+					fields.push({
+						...v,
+						input: { ...field.input, ...v.input },
+					})
+				}
+				if (fields.length == 0) {
 					fields = Object.values(this.entity.fields)
 				}
 
 				this.formSchema = [
 					{
-						$el: 'group',
-						attrs: { class: 'md:col-span-2' },
+						$el: 'div',
 						children: '$slots.crudBtn',
 					},
-					...fields.map((v) => {
-						const input = v.input
-						if (input?.$el === 'fieldset' || input?.$formkit === 'group') {
-							return {
-								...input,
-								attrs: { ...input.attrs, class: 'md:col-span-2' },
+					{
+						$el: 'div',
+						attrs: { class: 'grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2' },
+						children: fields.map((v) => {
+							const input = v.input
+							input.attrs = { class: 'alcides' }
+							if (input?.$el === 'fieldset') {
+								return {
+									...input,
+									attrs: { ...input.attrs, class: 'md:col-span-2' },
+								}
 							}
-						}
-						return input
-					}),
+							return input
+						}),
+					},
 				]
 				return this.formSchema
 			},

@@ -20,7 +20,6 @@
 		data: any
 		selectionMode: any
 	}
-	cl.info(data)
 	const { data, selectionMode } = defineProps<Props>()
 	const selected = ref([])
 </script>

@@ -6,16 +6,16 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Ignore;
 
 trait LegacyTrait {
-  #[ORM\Column(nullable: true)]
+  #[ORM\Column(nullable: true, unique: true)]
   #[Ignore]
-  protected ?int $legacyId = null;
+  protected ?string $legacyId = null;
 
   #[Ignore]
-  public function getLegacyId(): ?int {
+  public function getLegacyId(): ?string {
     return $this->legacyId;
   }
 
-  public function setLegacyId(int $legacyId): ?int {
+  public function setLegacyId(?string $legacyId): ?string {
     return $this->legacyId = $legacyId;
   }
 }

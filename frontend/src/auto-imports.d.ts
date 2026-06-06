@@ -9,12 +9,15 @@ declare global {
   const EffectScope: typeof import('vue').EffectScope
   const GraphQLQueryBuilder: typeof import('./graphql/GraphQueryBuilder').GraphQLQueryBuilder
   const GraphQueryBuilder: typeof import('./graphql/GraphQueryBuilder').GraphQueryBuilder
+  const StaticDataGateway: typeof import('./services/StaticDataGateway').StaticDataGateway
   const acceptHMRUpdate: typeof import('pinia').acceptHMRUpdate
   const api: typeof import('./services/api').default
   const breakpointNames: typeof import('./config/breakpoints').breakpointNames
   const breakpoints: typeof import('./config/breakpoints').breakpoints
   const buildListQuery: typeof import('./graphql/Request').buildListQuery
   const bus: typeof import('./services/bus').bus
+  const c: typeof import('./utils/autoimport/miscellaneous').c
+  const ccustom: typeof import('./utils/autoimport/miscellaneous').ccustom
   const cformat: typeof import('./utils/autoimport/date').cformat
   const cl: typeof import('./utils/autoimport/miscellaneous').cl
   const cl2: typeof import('./utils/autoimport/miscellaneous').cl2
@@ -31,7 +34,9 @@ declare global {
   const defineAsyncComponent: typeof import('vue').defineAsyncComponent
   const defineComponent: typeof import('vue').defineComponent
   const defineStore: typeof import('pinia').defineStore
+  const destroyStaticDataGateway: typeof import('./services/StaticDataGateway').destroyStaticDataGateway
   const dformat: typeof import('./utils/autoimport/date').dformat
+  const e: typeof import('./utils/autoimport/miscellaneous').e
   const effectScope: typeof import('vue').effectScope
   const entities: typeof import('./composables/useEntity').entities
   const getActivePinia: typeof import('pinia').getActivePinia
@@ -46,6 +51,7 @@ declare global {
   const gsap: typeof import('./composables/useGsap').gsap
   const h: typeof import('vue').h
   const highlighted: typeof import('./utils/autoimport/miscellaneous').highlighted
+  const i: typeof import('./utils/autoimport/miscellaneous').i
   const inject: typeof import('vue').inject
   const isDesktop: typeof import('./services/ResponsiveService').isDesktop
   const isMobile: typeof import('./services/ResponsiveService').isMobile
@@ -94,6 +100,7 @@ declare global {
   const resolveComponent: typeof import('vue').resolveComponent
   const responsiveService: typeof import('./services/ResponsiveService').responsiveService
   const restApi: typeof import('./composables/useApiRest').restApi
+  const s: typeof import('./utils/autoimport/miscellaneous').s
   const setActivePinia: typeof import('pinia').setActivePinia
   const setApi: typeof import('./composables/useApiRest').setApi
   const setMapStoreSuffix: typeof import('pinia').setMapStoreSuffix
@@ -132,8 +139,10 @@ declare global {
   const useQuasar: typeof import('quasar').useQuasar
   const useRoute: typeof import('./composables/useRouter').useRoute
   const useRouter: typeof import('./composables/useRouter').useRouter
+  const useSchemaStore: typeof import('./stores/autoimport/schemaStore').useSchemaStore
   const useSidebarStore: typeof import('./stores/autoimport/sidebar').useSidebarStore
   const useSlots: typeof import('vue').useSlots
+  const useStaticDataGateway: typeof import('./services/StaticDataGateway').useStaticDataGateway
   const useTemplateRef: typeof import('vue').useTemplateRef
   const useWatchErrors: typeof import('./composables/errors').useWatchErrors
   const util: typeof import('./utils/autoimport/miscellaneous').util
@@ -156,6 +165,9 @@ declare global {
   // @ts-ignore
   export type { SidebarState } from './stores/autoimport/sidebar'
   import('./stores/autoimport/sidebar')
+  // @ts-ignore
+  export type { StaticDataGateway } from './services/StaticDataGateway'
+  import('./services/StaticDataGateway')
 }
 
 // for vue template auto import
@@ -164,18 +176,17 @@ declare module 'vue' {
   interface GlobalComponents {}
   interface ComponentCustomProperties {
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
+    readonly StaticDataGateway: UnwrapRef<typeof import('./services/StaticDataGateway')['StaticDataGateway']>
     readonly acceptHMRUpdate: UnwrapRef<typeof import('pinia')['acceptHMRUpdate']>
     readonly api: UnwrapRef<typeof import('./services/api')['default']>
     readonly breakpointNames: UnwrapRef<typeof import('./config/breakpoints')['breakpointNames']>
     readonly breakpoints: UnwrapRef<typeof import('./config/breakpoints')['breakpoints']>
     readonly buildListQuery: UnwrapRef<typeof import('./graphql/Request')['buildListQuery']>
     readonly bus: UnwrapRef<typeof import('./services/bus')['bus']>
+    readonly ccustom: UnwrapRef<typeof import('./utils/autoimport/miscellaneous')['ccustom']>
     readonly cformat: UnwrapRef<typeof import('./utils/autoimport/date')['cformat']>
-    readonly cl2: UnwrapRef<typeof import('./utils/autoimport/miscellaneous')['cl2']>
     readonly cl: UnwrapRef<typeof import('./utils/autoimport/miscellaneous')['cl']>
-    readonly cle: UnwrapRef<typeof import('./utils/autoimport/miscellaneous')['cle']>
     readonly cloading: UnwrapRef<typeof import('./utils/autoimport/miscellaneous')['cloading']>
-    readonly cls: UnwrapRef<typeof import('./utils/autoimport/miscellaneous')['cls']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
     readonly config: UnwrapRef<typeof import('./config/config')['default']>
     readonly createApi: UnwrapRef<typeof import('./composables/useApiRest')['createApi']>
@@ -185,7 +196,9 @@ declare module 'vue' {
     readonly defineAsyncComponent: UnwrapRef<typeof import('vue')['defineAsyncComponent']>
     readonly defineComponent: UnwrapRef<typeof import('vue')['defineComponent']>
     readonly defineStore: UnwrapRef<typeof import('pinia')['defineStore']>
+    readonly destroyStaticDataGateway: UnwrapRef<typeof import('./services/StaticDataGateway')['destroyStaticDataGateway']>
     readonly dformat: UnwrapRef<typeof import('./utils/autoimport/date')['dformat']>
+    readonly e: UnwrapRef<typeof import('./utils/autoimport/miscellaneous')['e']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
     readonly entities: UnwrapRef<typeof import('./composables/useEntity')['entities']>
     readonly getActivePinia: UnwrapRef<typeof import('pinia')['getActivePinia']>
@@ -248,6 +261,7 @@ declare module 'vue' {
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
     readonly responsiveService: UnwrapRef<typeof import('./services/ResponsiveService')['responsiveService']>
     readonly restApi: UnwrapRef<typeof import('./composables/useApiRest')['restApi']>
+    readonly s: UnwrapRef<typeof import('./utils/autoimport/miscellaneous')['s']>
     readonly setActivePinia: UnwrapRef<typeof import('pinia')['setActivePinia']>
     readonly setApi: UnwrapRef<typeof import('./composables/useApiRest')['setApi']>
     readonly setMapStoreSuffix: UnwrapRef<typeof import('pinia')['setMapStoreSuffix']>
@@ -286,8 +300,10 @@ declare module 'vue' {
     readonly useQuasar: UnwrapRef<typeof import('quasar')['useQuasar']>
     readonly useRoute: UnwrapRef<typeof import('./composables/useRouter')['useRoute']>
     readonly useRouter: UnwrapRef<typeof import('./composables/useRouter')['useRouter']>
+    readonly useSchemaStore: UnwrapRef<typeof import('./stores/autoimport/schemaStore')['useSchemaStore']>
     readonly useSidebarStore: UnwrapRef<typeof import('./stores/autoimport/sidebar')['useSidebarStore']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
+    readonly useStaticDataGateway: UnwrapRef<typeof import('./services/StaticDataGateway')['useStaticDataGateway']>
     readonly useTemplateRef: UnwrapRef<typeof import('vue')['useTemplateRef']>
     readonly useWatchErrors: UnwrapRef<typeof import('./composables/errors')['useWatchErrors']>
     readonly util: UnwrapRef<typeof import('./utils/autoimport/miscellaneous')['util']>
