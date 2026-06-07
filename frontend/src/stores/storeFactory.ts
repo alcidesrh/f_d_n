@@ -195,9 +195,7 @@ export default async (name: string) => {
 				this.visibleColumns = this.columns.map((v) => v.field)
 			},
 			async setColumns(refresh = false) {
-				if (this.columns.length && refresh) {
-					this.resetColumns()
-				} else if (!this.columns.length || refresh) {
+				if (!this.columns.length || refresh) {
 					this.columns = []
 					for (let v of this.config.collectionFieldConfig.filter((v) => v.visible)) {
 						v = useCloned(v).cloned.value
@@ -248,7 +246,7 @@ export default async (name: string) => {
 				const { data } = await apollo.client.query({
 					query: gql(qb.query),
 					variables: qb.variables,
-					fetchPolicy: !force ? 'cache-first' : 'cache-and-network',
+					fetchPolicy: !force ? 'cache-first' : 'network-only',
 				})
 				if (this.pagination) {
 					this.items = data[this.collectionEndpoint].collection

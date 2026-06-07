@@ -87,7 +87,7 @@ class Usuario extends PersonaBase implements UserInterface, PasswordAuthenticate
 
     #[Assert\NotBlank()]
     private ?string $plainPassword = null;
-    private ?string $fullNamene;
+    private ?string $fullName;
 
     #[ORM\OneToMany(mappedBy: 'usuario', targetEntity: ApiToken::class)]
     private Collection $apiTokens;
@@ -118,7 +118,7 @@ class Usuario extends PersonaBase implements UserInterface, PasswordAuthenticate
         $this->permisos = new ServicesCollection();
     }
 
-    public function getFullNamene() {
+    public function getFullName() {
         return $this->nombre . ' ' . $this->apellido;
     }
 
