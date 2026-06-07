@@ -41,9 +41,10 @@ final class UpdateEntityConfigurationFieldsResolver implements MutationResolverI
         $field->loadData($data);
       }
     }
+    $entity->markAsUpdated();
     $this->entityManager->flush();
 
-    $this->configChangePublisher->entityConfigChanged($entity->getEntityClass());
+    $this->configChangePublisher->entityConfigChanged($entity);
 
     return $entity;
   }

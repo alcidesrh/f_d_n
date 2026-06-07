@@ -5,7 +5,7 @@ import * as queryBuilder from 'gql-query-builder'
 import { defineStore } from 'pinia'
 import { Dialog } from 'quasar'
 import { nextTick, watch } from 'vue'
-// import persist from './persist'
+import persist from './persist'
 
 export default async (name: string) => {
 	if (typeof entities.value[str.capitalize(name)] == 'undefined') {
@@ -48,9 +48,9 @@ export default async (name: string) => {
 		}
 	}
 	return await defineStore(name, {
-		// persist: {
-		// 	...persist,
-		// },
+		persist: {
+			...persist,
+		},
 		state: () => state,
 		getters: {
 			computedColumns: (store) =>
@@ -156,8 +156,8 @@ export default async (name: string) => {
 			},
 		},
 		actions: {
-			async init() {
-				if (!Object.keys(this.config).length) {
+			async init(refresh = false) {
+				if (!Object.keys(this.config).length || refresh) {
 					const schemaStore = useSchemaStore()
 					if (!schemaStore.isLoaded) {
 						await new Promise<void>((resolve) => {
@@ -175,6 +175,10 @@ export default async (name: string) => {
 					const restApi = await useApi()
 					const response = await restApi.value.get('/entity_configurations?entityClass=' + this.name)
 					this.config = response['member'][0]
+					if (refresh) {
+						this.setColumns(true)
+						this.getFormSchema(true)
+					}
 				}
 			},
 			resetColumns() {
@@ -190,42 +194,45 @@ export default async (name: string) => {
 				this.columns = t
 				this.visibleColumns = this.columns.map((v) => v.field)
 			},
-			async setColumns() {
-				for (let v of this.config.collectionFieldConfig.filter((v) => v.visible)) {
-					v = useCloned(v).cloned.value
-					const field = this.entity.fields[v.field]
-					const args = this.entity.queries.collection.args
-					if (v.filterable && typeof args[v.field] != 'undefined') {
-						const input = { ...field.input }
-						delete input.label
-						v.schema = {
-							...input,
-							name: v.field,
-							id: v.id,
-							loading: '$loading',
-							outerClass: `mb-0! col-wraper formkit-${v.field}`,
-							dense: true,
+			async setColumns(refresh = false) {
+				if (this.columns.length && refresh) {
+					this.resetColumns()
+				} else if (!this.columns.length || refresh) {
+					this.columns = []
+					for (let v of this.config.collectionFieldConfig.filter((v) => v.visible)) {
+						v = useCloned(v).cloned.value
+						const field = this.entity.fields[v.field]
+						const args = this.entity.queries.collection.args
+						if (v.filterable && typeof args[v.field] != 'undefined') {
+							const input = { ...field.input }
+							delete input.label
+							v.schema = {
+								...input,
+								name: v.field,
+								id: v.id,
+								loading: '$loading',
+								outerClass: `mb-0! col-wraper formkit-${v.field}`,
+								dense: true,
+							}
+							if (v.schema['$formkit'] === 'text') {
+								v.schema['$formkit'] = 'text_search'
+							}
+							if (field.type === 'Date') {
+								v.schema.range = true
+							}
+							if (v.schema.$formkit === 'select') {
+								const storeTemp = await getStore(field.relatedTo)
+								v.schema.options = await storeTemp.getOptions()
+								v.relatedTo = field.relatedTo
+							}
 						}
-						if (v.schema['$formkit'] === 'text') {
-							v.schema['$formkit'] = 'text_search'
-						}
-						if (field.type === 'Date') {
-							v.schema.range = true
-						}
-						if (v.schema.$formkit === 'select') {
-							const storeTemp = await getStore(field.relatedTo)
-							v.schema.options = await storeTemp.getOptions()
-							v.relatedTo = field.relatedTo
-						}
+						this.columns.push(v)
+						this.visibleColumns.push(v.field)
 					}
-					this.columns.push(v)
-					this.visibleColumns.push(v.field)
 				}
 			},
 			async collection(force = false) {
-				if (!this.columns.length) {
-					await this.setColumns()
-				}
+				await this.setColumns()
 				const qb = queryBuilder.query(
 					{
 						operation: this.collectionEndpoint,
@@ -283,25 +290,48 @@ export default async (name: string) => {
 
 				this.item = useCloned(data[this.nameDecapitalize]).cloned.value
 			},
-			async getFormSchema() {
-				this.item = {}
-				if (this.formSchema.length) {
-					for (let index = 0, relatedTo = null; index < this.formSchema.length; index++) {
-						const v = this.formSchema[index]
-						if (v.name && (relatedTo = this.entity.fields[v.name]?.relatedTo)) {
-							const temp = await getStore(relatedTo)
-							await temp.getOptions()
-							this.formData[temp.nameDecapitalize + 's'] = temp.options
-						}
+			async selectOptions(v) {
+				if (v?.children && Array.isArray(v.children)) {
+					for (let index = 0; index < v.children.length; index++) {
+						await this.selectOptions(v.children[index])
 					}
+				} else if (Array.isArray(v)) {
+					for (let index = 0; index < v.length; index++) {
+						await this.selectOptions(v[index])
+					}
+				} else if (v.name && this.entity.fields[v.name]?.relatedTo) {
+					const temp = await getStore(this.entity.fields[v.name]?.relatedTo)
+					await temp.getOptions()
+					this.formData[temp.nameDecapitalize + 's'] = temp.options
+				}
+			},
+			async getFormSchema(refresh = false) {
+				if (refresh) {
+					this.formSchema = []
+				} else {
+					this.item = {}
+				}
+
+				if (this.formSchema.length) {
+					await this.selectOptions(this.formSchema)
+					// for (let index = 0, relatedTo = null; index < this.formSchema.length; index++) {
+					// 	const v = this.formSchema[index]
+					// 	if (v.name && (relatedTo = this.entity.fields[v.name]?.relatedTo)) {
+					// 		const temp = await getStore(relatedTo)
+					// 		await temp.getOptions()
+					// 		this.formData[temp.nameDecapitalize + 's'] = temp.options
+					// 	}
+					// }
 					return
 				}
+
 				let fields: any[] = []
 				for (const v of this.computedFormFields) {
 					const field = this.entity.fields[v.field]
 					if (!field) {
 						continue
 					}
+
 					if (field.relatedTo) {
 						const temp = await getStore(field.relatedTo)
 						await temp.getOptions()
@@ -312,6 +342,7 @@ export default async (name: string) => {
 						input: { ...field.input, ...v.input },
 					})
 				}
+
 				if (fields.length == 0) {
 					fields = Object.values(this.entity.fields)
 				}

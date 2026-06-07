@@ -1,14 +1,14 @@
 // Configuration for your app
 // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file
 
-import { defineConfig } from '#q-app/wrappers';
-import { fileURLToPath } from 'node:url';
-import path from 'path';
-import UnoCSS from 'unocss/vite';
-import AutoImport from 'unplugin-auto-import/vite';
-import Components from 'unplugin-vue-components/vite';
+import { defineConfig } from '#q-app/wrappers'
+import { fileURLToPath } from 'node:url'
+import path from 'path'
+import UnoCSS from 'unocss/vite'
+import AutoImport from 'unplugin-auto-import/vite'
+import Components from 'unplugin-vue-components/vite'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig((ctx) => {
 	return {
@@ -19,7 +19,6 @@ export default defineConfig((ctx) => {
 			'apollo',
 			'server-response-listener',
 			'formkit',
-
 			'introspection',
 			'middleware',
 			'static-data-gateway',
@@ -163,9 +162,9 @@ export default defineConfig((ctx) => {
 					...(viteConf.resolve.alias || {}),
 					'@': path.resolve(__dirname, './src'),
 					// "~": path.resolve(__dirname, "./src"),
-				};
+				}
 
-				viteConf.plugins.push(UnoCSS());
+				viteConf.plugins.push(UnoCSS())
 				// if (process.env.NODE_ENV === "development") {
 				//   viteConf.plugins.push(
 				//     VueDevTools({
@@ -176,15 +175,13 @@ export default defineConfig((ctx) => {
 				//   );
 				// }
 
-				viteConf.css = viteConf.css || {};
-				viteConf.css.postcss = viteConf.css.postcss || {};
-				viteConf.css.postcss.plugins = viteConf.css.postcss.plugins || [];
+				viteConf.css = viteConf.css || {}
+				viteConf.css.postcss = viteConf.css.postcss || {}
+				viteConf.css.postcss.plugins = viteConf.css.postcss.plugins || []
 
-				viteConf.css = viteConf.css || {};
-				viteConf.css.preprocessorOptions =
-					viteConf.css.preprocessorOptions || {};
-				viteConf.css.preprocessorOptions.scss =
-					viteConf.css.preprocessorOptions.scss || {};
+				viteConf.css = viteConf.css || {}
+				viteConf.css.preprocessorOptions = viteConf.css.preprocessorOptions || {}
+				viteConf.css.preprocessorOptions.scss = viteConf.css.preprocessorOptions.scss || {}
 				viteConf.css.preprocessorOptions.scss.additionalData = `
         @function -alpha($color, $alpha) {
           @if unit($alpha) == '%' {
@@ -201,7 +198,7 @@ export default defineConfig((ctx) => {
           }
           @return $string;
         }
-        `;
+        `
 			},
 		},
 
@@ -350,5 +347,5 @@ export default defineConfig((ctx) => {
 			 */
 			extraScripts: [],
 		},
-	};
-});
+	}
+})
