@@ -2,7 +2,7 @@
 
 namespace App\Entity\Base\Traits;
 
-use App\Attribute\FormMetadataAttribute;
+
 use App\Entity\Localidad;
 use Doctrine\ORM\Mapping as ORM;
 

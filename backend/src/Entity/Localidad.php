@@ -6,8 +6,8 @@ use ApiPlatform\Doctrine\Common\Filter\SearchFilterInterface;
 use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 use ApiPlatform\Metadata\ApiFilter;
 use App\Attribute\ApiResourcePaginationPage;
-use App\Attribute\CollectionMetadataAttribute;
-use App\Attribute\FormMetadataAttribute;
+
+
 use App\Entity\Base\Base;
 use App\Entity\Base\Traits\LegacyTrait;
 use App\Filter\OrFilter;
@@ -25,7 +25,6 @@ class Localidad extends Base {
     #[ORM\Column(length: 255)]
     private ?string $nombre = null;
 
-    #[FormMetadataAttribute(merge: ['options' => '$naciones', 'label' => 'país'])]
     #[ORM\ManyToOne]
     private ?Nacion $nacion = null;
 

@@ -6,8 +6,8 @@ This project is a Symfony application exposing a GraphQL API backed by PostgreSQ
 
 Main stack:
 
-- PHP 8.3+
-- Symfony 7+
+- PHP 8.4+
+- Symfony 8+
 - GraphQL
 - Doctrine ORM
 - PostgreSQL
@@ -200,6 +200,21 @@ findByEmail()
 ## Testing
 
 Whenever code changes:
+
+### Data Fixture
+
+```bash
+docker compose exec backend php bin/console doctrine:fixtures:load --append --no-interaction
+```
+
+#### Resultado
+
+| Usuario                | Features demostradas                         | Actions count |
+| :--------------------- | :------------------------------------------- | :-----------: |
+| superadmin / super123  | Role full access via ROLE_SUPER_ADMIN        |      31       |
+| admin / admin123       | Rol + direct permiso Gestion Acciones        |      26       |
+| operador / operador123 | Rol + direct action usuario.ver              |       7       |
+| consulta / consulta123 | Direct permiso + denied action boleto.anular |       5       |
 
 ### Unit Tests
 

@@ -3,8 +3,8 @@
 namespace App\Entity;
 
 use App\Attribute\ApiResourceNoPagination;
-use App\Attribute\CollectionMetadataAttribute;
-use App\Attribute\FormMetadataAttribute;
+
+
 use App\Entity\Base\NombreNotaStatusBase;
 use App\Repository\PermisoRepository;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -14,7 +14,6 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: PermisoRepository::class)]
 #[ApiResourceNoPagination]
 class Permiso extends NombreNotaStatusBase {
-
 
     // use StatusTrait;
 
@@ -27,7 +26,6 @@ class Permiso extends NombreNotaStatusBase {
     /**
      * @var Collection<int, self>
      */
-    #[FormMetadataAttribute(merge: ['options' => '$parents'])]
     #[ORM\ManyToMany(targetEntity: self::class, inversedBy: 'children')]
     #[ORM\JoinColumn(onDelete: 'CASCADE')]
     #[ORM\InverseJoinColumn(onDelete: 'CASCADE')]
@@ -36,14 +34,22 @@ class Permiso extends NombreNotaStatusBase {
     /**
      * @var Collection<int, self>
      */
-    #[FormMetadataAttribute(merge: ['options' => '$children'])]
     #[ORM\ManyToMany(targetEntity: self::class, mappedBy: 'parents')]
     private ?Collection $children;
+
+    /**
+     * @var Collection<int, Action>
+     */
+    #[ORM\ManyToMany(targetEntity: Action::class, inversedBy: 'permisos')]
+    #[ORM\JoinColumn(onDelete: 'CASCADE')]
+    #[ORM\InverseJoinColumn(onDelete: 'CASCADE')]
+    private Collection $actions;
 
     public function __construct() {
         $this->roles = new ArrayCollection();
         $this->parents = new ArrayCollection();
         $this->children = new ArrayCollection();
+        $this->actions = new ArrayCollection();
     }
 
     public function getId(): ?int {
@@ -111,6 +117,30 @@ class Permiso extends NombreNotaStatusBase {
     public function removeChild(self $child): static {
         if ($this->children->removeElement($child)) {
             $child->removeParent($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Action>
+     */
+    public function getActions(): Collection {
+        return $this->actions;
+    }
+
+    public function addAction(Action $action): static {
+        if (!$this->actions->contains($action)) {
+            $this->actions->add($action);
+            $action->addPermiso($this);
+        }
+
+        return $this;
+    }
+
+    public function removeAction(Action $action): static {
+        if ($this->actions->removeElement($action)) {
+            $action->removePermiso($this);
         }
 
         return $this;

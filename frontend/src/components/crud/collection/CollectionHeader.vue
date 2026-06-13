@@ -10,7 +10,7 @@
 						fill
 						v-if="i > 0"
 						name="arrow_back_2"
-						class="text-12px lg:text-16px font-700 text-surface-4 hover:(text-surface-7 font-700) rosdtate-90"
+						class="text-12px lg:text-16px font-700 text-slate-4 hover:(text-surface-7 font-700) rosdtate-90"
 						@click.stop="$emit('orderColumns', i, 'left')"
 					/>
 					<icon

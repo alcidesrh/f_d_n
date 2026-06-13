@@ -1,7 +1,7 @@
 <template>
 	<div v-if="store" class="flex justify-between w-full ml-auto mb-20px">
 		<span data-tootik="Tootik Text" data-tootik-conf="shadow right">{{ store.name }}</span>
-		<div class="flex table-options">
+		<div class="flex table-options text-surface-2">
 			<div @click="$router.push({ path: `/form/${store.nameDecapitalize}` })" :data-tootik="`Agregar ${store.name}`" data-tootik-conf="">
 				<icon name="add" />
 			</div>
@@ -163,6 +163,8 @@
 			}
 			& > .fdn-icon {
 				font-size: 1.2rem;
+				font-weight: 500;
+				color: $surface-6;
 			}
 			&.active {
 				background-color: $surface-6;

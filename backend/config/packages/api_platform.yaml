@@ -31,7 +31,6 @@ api_platform:
         pagination_client_items_per_page: true
         pagination_client_enabled: false
         route_prefix: "api"
-        stateless: true
         cache_headers:
             vary: ["Content-Type", "Authorization", "Origin"]
         extra_properties:

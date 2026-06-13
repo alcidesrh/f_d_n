@@ -17,7 +17,6 @@ use ApiPlatform\Metadata\GraphQl\Mutation;
 use ApiPlatform\Metadata\GraphQl\Query;
 use ApiPlatform\Metadata\GraphQl\QueryCollection;
 use ApiPlatform\Metadata\QueryParameter;
-use App\Attribute\FormMetadataAttribute;
 use App\Entity\Base\PersonaBase;
 use App\Filter\IdPartialSearchFilter;
 use App\Repository\UsuarioRepository;
@@ -92,7 +91,6 @@ class Usuario extends PersonaBase implements UserInterface, PasswordAuthenticate
     #[ORM\OneToMany(mappedBy: 'usuario', targetEntity: ApiToken::class)]
     private Collection $apiTokens;
 
-    #[FormMetadataAttribute(merge: ['options' => '$roles', 'label' => 'Roles'])]
     #[ORM\JoinTable(name: 'user_role')]
     #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
     #[ORM\InverseJoinColumn(name: 'role_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
@@ -102,10 +100,26 @@ class Usuario extends PersonaBase implements UserInterface, PasswordAuthenticate
     /**
      * @var Collection<int, Permiso>
      */
-
-    #[FormMetadataAttribute(merge: ['options' => '$permisos'])]
     #[ORM\ManyToMany(targetEntity: Permiso::class)]
     private Collection $permisos;
+
+    /**
+     * @var Collection<int, Action>
+     */
+    #[ORM\ManyToMany(targetEntity: Action::class)]
+    #[ORM\JoinTable(name: 'user_direct_action')]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
+    #[ORM\InverseJoinColumn(name: 'action_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
+    private Collection $directActions;
+
+    /**
+     * @var Collection<int, Action>
+     */
+    #[ORM\ManyToMany(targetEntity: Action::class)]
+    #[ORM\JoinTable(name: 'user_denied_action')]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
+    #[ORM\InverseJoinColumn(name: 'action_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
+    private Collection $deniedActions;
 
     public function __construct($data = []) {
 
@@ -116,6 +130,8 @@ class Usuario extends PersonaBase implements UserInterface, PasswordAuthenticate
         $this->apiTokens = new ServicesCollection();
         $this->userRoles = new ServicesCollection();
         $this->permisos = new ServicesCollection();
+        $this->directActions = new ServicesCollection();
+        $this->deniedActions = new ServicesCollection();
     }
 
     public function getFullName() {
@@ -269,6 +285,48 @@ class Usuario extends PersonaBase implements UserInterface, PasswordAuthenticate
 
     public function removePermiso(Permiso $permiso): static {
         $this->permisos->removeElement($permiso);
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Action>
+     */
+    public function getDirectActions(): Collection {
+        return $this->directActions;
+    }
+
+    public function addDirectAction(Action $action): static {
+        if (!$this->directActions->contains($action)) {
+            $this->directActions->add($action);
+        }
+
+        return $this;
+    }
+
+    public function removeDirectAction(Action $action): static {
+        $this->directActions->removeElement($action);
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Action>
+     */
+    public function getDeniedActions(): Collection {
+        return $this->deniedActions;
+    }
+
+    public function addDeniedAction(Action $action): static {
+        if (!$this->deniedActions->contains($action)) {
+            $this->deniedActions->add($action);
+        }
+
+        return $this;
+    }
+
+    public function removeDeniedAction(Action $action): static {
+        $this->deniedActions->removeElement($action);
 
         return $this;
     }

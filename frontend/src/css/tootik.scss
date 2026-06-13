@@ -17,7 +17,7 @@
 	font-size: 13px;
 	line-height: 14px;
 	border-radius: 7px;
-	color: $text;
+	color: $surface-7;
 	-webkit-transition:
 		opacity 0.3s cubic-bezier(0.73, 0.01, 0, 1),
 		-webkit-transform 0.3s cubic-bezier(0.73, 0.01, 0, 1);
@@ -41,7 +41,7 @@
 	text-overflow: ellipsis;
 	overflow: hidden;
 	border: $tootik-border;
-	font-weight: 300;
+	// font-weight: 300;
 	font-family: $font-family;
 	opacity: .6;
 	// display: flex;

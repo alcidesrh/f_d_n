@@ -81,6 +81,108 @@ La necesidad de un sistema para le gestion administrativa, logistica, estructura
 - `frontend/src/form/formkit-theme-fdn/CLAUDE.md`: this subtree is a FormKit starter theme package with its own development model.
 - `frontend/src/form/formkit-theme-fdn/.dmux-hooks/AGENTS.md` and `CLAUDE.md`: if editing hook scripts there, treat them as executable Bash hooks with dmux lifecycle/env-variable conventions.
 
+## IAM (Identity & Access Management)
+
+### Arquitectura — Flat Permission Set
+
+Sistema IAM granular implementado con **Symfony Voters** + **PermissionManager** (backend) y **action codes planos** (frontend). No se usa Apache Casbin.
+
+### Modelo de datos
+
+```
+Usuario ──ManyToMany──> Role ──ManyToMany──> Permiso ──ManyToMany──> Action
+  │                      │ (jerarquía via parents/children)
+  ├──ManyToMany──> Permiso (directo, bypass roles)
+  ├──ManyToMany──> Action (directActions — grant override)
+  └──ManyToMany──> Action (deniedActions — deny override)
+```
+
+**Action** tiene campos: `codigo` (único, ej: "boleto.crear"), `recurso` ("Boleto"), `operacion` ("create"), `grupo` ("Boletos"), `ruta` (opcional).
+
+### Flujo de autorización
+
+1. **Backend**: `PermissionManager::getEffectiveActions(user)` resuelve roles → permisos → actions + directActions − deniedActions → array plano de action codes
+2. **Backend**: `ActionVoter` evalúa `is_granted('boleto.crear')` contra este array. `EntityVoter` hace lo mismo para operaciones CRUD estándar.
+3. **Frontend**: Al login, `GET /api/me/permissions` devuelve el array plano. `sessionStore.permissions` lo almacena. `usePermission().can(code)` hace `includes()`.
+4. **Enforcement**: Backend bloquea vía Voters + `access_control` en security.yaml. Frontend oculta UI vía `v-if="can('boleto.editar')"` y route guards.
+
+### Backend — archivos clave
+
+| Archivo | Propósito |
+|---|---|
+| `src/Security/PermissionManager.php` | Resolución de acciones efectivas |
+| `src/Security/Voter/ActionVoter.php` | Voter por action code (`boleto.crear`) |
+| `src/Security/Voter/EntityVoter.php` | Voter CRUD genérico |
+| `src/Security/ActionExpressionProvider.php` | Función `is_granted_action()` para ExpressionLanguage |
+| `src/Controller/PermissionController.php` | `GET /api/me/permissions` |
+| `config/packages/security.yaml` | `access_control` + `access_decision_manager` + role_hierarchy |
+
+### Frontend — archivos clave
+
+| Archivo | Propósito |
+|---|---|
+| `src/stores/session.ts` | `permissions[]`, `can()`, `canAny()`, `canAll()` |
+| `src/composables/usePermission.ts` | Composable `can(code)` |
+| `src/composables/useAuth.ts` | `login()`, `logout()` |
+| `src/pages/auth/LoginPage.vue` | Página de login |
+| `src/boot/middleware.ts` | Route guard + auth check + perm check |
+| `src/layouts/MainLayout.vue` | Menú filtrado por permisos |
+| `src/types/action.ts` | Tipo Action |
+
+### Comandos relacionados con IAM
+
+- Sincronizar permisos de metadata: backend resuelve automáticamente vía `PermissionManager`
+- Para debug: `docker compose exec backend php bin/console debug:security`
+- Para ver Voters: `docker compose exec backend php bin/console debug:container App\\Security\\Voter\\ActionVoter`
+
+### Reglas IAM
+
+- ROLE_ADMIN tiene todos los permisos (bypassea Voters)
+- Los Voters usan estrategia `unanimous` (todos deben aprobar)
+- Los `deniedActions` siempre anulan cualquier permiso (grant override)
+- Para añadir nuevas acciones, crearlas como entidades Action con codigo único y asignarlas a Permisos via la UI de admin
+
+## Xdebug + FrankenPHP workers
+
+### Problema
+
+En dev, los workers persistentes de FrankenPHP (`worker {}` en Caddyfile) causan que Xdebug se desincronice al remover y re-agregar breakpoints sin modificar el archivo. El proceso PHP persiste entre requests y el estado DBGp (breakpoint_set / breakpoint_remove) se corrompe.
+
+### Solución
+
+Se usan **dos Caddyfiles**:
+
+| Archivo | Propósito |
+|---|---|
+| `frankenphp/Caddyfile` | Producción — incluye `worker {}` para performance |
+| `frankenphp/Caddyfile.dev` | Desarrollo — **sin** bloque `worker {}` (cada request arranca un proceso PHP limpio) |
+
+En desarrollo, `compose.override.yaml` monta `Caddyfile.dev` sobre `/etc/frankenphp/Caddyfile`:
+```yaml
+volumes:
+  - ./backend/frankenphp/Caddyfile.dev:/etc/frankenphp/Caddyfile:ro
+```
+
+Si necesitas workers en dev (ej. probar performance), reinicia el contenedor tras togglear breakpoints.
+
+### file_link_format para stack traces en VSCode
+
+El `20-app.dev.ini` configura:
+```ini
+xdebug.file_link_format = vscode://file/%f:%l
+```
+
+Requiere `pathMappings` en `.vscode/launch.json` para traducir rutas del container al host:
+```json
+{
+    "pathMappings": {
+        "/app": "${workspaceFolder}/backend"
+    }
+}
+```
+
 ## Practical caveats
 - Root and backend `Makefile` include legacy targets (for tools like phpstan/php-cs-fixer) that are not currently present in `backend/vendor/bin`; verify tool availability before relying on those targets.
 - Frontend has both `pnpm-lock.yaml` and `package-lock.json`, but Docker/dev flow in this repository uses `npm`.
+
+## TODO

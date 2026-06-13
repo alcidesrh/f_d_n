@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<div class="topbar">
+		<div class="topbar px-2rem">
 			<div class="left-section">
 				<clock />
 			</div>
@@ -10,14 +10,21 @@
 			</div>
 
 			<div class="right-section">
-				<clock />
+				<Icon class="cursor-pointer" name="logout" @click="logout" />
 			</div>
 		</div>
 		<div id="intersectionObservertarget" class="absolute" />
 	</div>
 </template>
 <script setup lang="ts">
-	// const breadcrumb = useBreadcrumbs()
+	async function logout() {
+		const restApi = useApi()
+		restApi.post('/logout').then(async (resp) => {
+			useUserSessionStore().clear()
+			const router = useRouter()
+			router.push({ path: '/login' })
+		})
+	}
 	const observer = new IntersectionObserver(
 		(e) => {
 			const el = document.querySelector('.topbar')
@@ -36,3 +43,13 @@
 	})
 	onUnmounted(() => observer.disconnect())
 </script>
+
+<style scoped lang="scss">
+	.right-section {
+		& > .fdn-icon {
+			font-size: 24px;
+			// font-weight: 400;
+			color: $surface-6;
+		}
+	}
+</style>

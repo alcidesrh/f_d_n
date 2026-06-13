@@ -3,8 +3,9 @@ export default {
 	// 	type: null,
 	// 	default: undefined,
 	// },
-	store: {
-		type: Object,
+
+	labelQuasar: {
+		type: String,
 		default: undefined,
 	},
 	validation: {

@@ -1,8 +1,8 @@
 <template>
-	<div v-if="!schemaStore.isLoaded" class="fullscreen flex flex-center bg-neutral-1">
+	<!-- <div v-if="!schemaStore.isLoaded" class="fullscreen flex flex-center bg-neutral-1">
 		<q-spinner size="3rem" />
-	</div>
-	<router-view v-else />
+	</div> -->
+	<router-view />
 </template>
 
 <script setup lang="ts">

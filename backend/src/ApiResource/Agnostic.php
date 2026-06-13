@@ -3,15 +3,10 @@
 namespace App\ApiResource;
 
 use ApiPlatform\Metadata\ApiResource;
-use App\Attribute\ApiResourcePaginationPage;
-use ApiPlatform\Metadata\GraphQl\Mutation;
 use ApiPlatform\Metadata\GraphQl\Query;
-use App\DTO\DeleteMultipleDTO;
-use App\DTO\MetadataDTO;
 use App\Resolver\CollectionResolver;
-use App\Resolver\DeleteMultipleMutationResolver;
-use App\Resolver\ItemResolver;
 use ApiPlatform\Metadata\ApiProperty;
+use App\DTO\MetadataDTO;
 
 #[ApiResource(
   graphQlOperations: [

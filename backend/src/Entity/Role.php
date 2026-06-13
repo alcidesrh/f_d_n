@@ -4,7 +4,7 @@ namespace App\Entity;
 
 use App\Attribute\ApiResourceNoPagination;
 use App\Attribute\ApiResourcePaginationPage;
-use App\Attribute\FormMetadataAttribute;
+
 use App\Entity\Base\Base;
 use App\Entity\Base\Constants\RolesTrait;
 use App\Repository\RoleRepository;
@@ -24,7 +24,6 @@ class Role extends Base {
     /**
      * @var Collection<int, self>
      */
-    #[FormMetadataAttribute(merge: ['options' => '$parents'])]
     #[ORM\ManyToMany(targetEntity: self::class, inversedBy: 'children')]
     #[ORM\JoinColumn(onDelete: 'CASCADE')]
     #[ORM\InverseJoinColumn(onDelete: 'CASCADE')]
@@ -33,14 +32,12 @@ class Role extends Base {
     /**
      * @var Collection<int, self>
      */
-    #[FormMetadataAttribute(merge: ['options' => '$children'])]
     #[ORM\ManyToMany(targetEntity: self::class, mappedBy: 'parents')]
     private ?Collection $children;
 
     /**
      * @var Collection<int, Permiso>
      */
-    #[FormMetadataAttribute(merge: ['options' => '$permisos'])]
     #[ORM\ManyToMany(targetEntity: Permiso::class, inversedBy: 'roles')]
     #[ORM\JoinColumn(onDelete: 'CASCADE')]
     #[ORM\InverseJoinColumn(onDelete: 'CASCADE')]

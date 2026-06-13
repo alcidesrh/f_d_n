@@ -1,10 +1,17 @@
 import type { RouteRecordRaw } from 'vue-router'
+import actionRoutes from './action'
 import adminRoutes from './admin'
 import roleRoutes from './role'
 import testRoutes from './test'
 import userRoutes from './user'
 
 const routes: RouteRecordRaw[] = [
+	{
+		path: '/login',
+		name: 'login',
+		component: () => import('pages/auth/LoginPage.vue'),
+		meta: { public: true },
+	},
 	{
 		path: '/',
 		component: () => import('layouts/MainLayout.vue'),
@@ -72,6 +79,7 @@ const routes: RouteRecordRaw[] = [
 				component: () => import('@/pages/Test.vue'),
 			},
 
+			...actionRoutes,
 			...userRoutes,
 			...roleRoutes,
 			...testRoutes,

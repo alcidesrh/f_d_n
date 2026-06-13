@@ -14,12 +14,11 @@ class ApiTokenHandler implements AccessTokenHandlerInterface {
 
   public function getUserBadgeFrom(#[\SensitiveParameter] string $accessToken): UserBadge {
     $token = $this->apiTokenRepository->findOneBy(['token' => $accessToken]);
-
     if (!$token) {
       throw new BadCredentialsException();
     }
     if (!$token->isValid()) {
-      throw new CustomUserMessageAuthenticationException('La sessión a caducado.');
+      throw new CustomUserMessageAuthenticationException('La sessión a caducado. ');
     }
     return new UserBadge($token->getUsuario()->getUserIdentifier(), fn() => $token->getUsuario());
   }

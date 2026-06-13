@@ -1,21 +1,9 @@
-import {
-	defineConfig,
-	presetUno,
-	presetAttributify,
-	Rule,
-	transformerDirectives,
-	transformerVariantGroup,
-	presetWind4,
-} from 'unocss';
-import { utopia_rules, color_rules } from './src/utils/unocss_rules';
-import { colors } from './src/utils/colors';
-import { theme } from '@unocss/preset-wind4';
+import { defineConfig, presetAttributify, presetUno, presetWind4, Rule, transformerDirectives, transformerVariantGroup } from 'unocss'
+import { colors } from './src/utils/colors'
+import { color_rules, utopia_rules } from './src/utils/unocss_rules'
 
 export default defineConfig({
-	rules: [
-		...(utopia_rules as Rule<object>[]),
-		...(color_rules as Rule<object>[]),
-	],
+	rules: [...(utopia_rules as Rule<object>[]), ...(color_rules as Rule<object>[])],
 	presets: [
 		presetUno(),
 		presetAttributify(),
@@ -34,7 +22,7 @@ export default defineConfig({
 				...theme.colors,
 				...colors,
 			},
-		};
+		}
 	},
 	// layers: {
 	//   reset: -10,
@@ -69,4 +57,4 @@ export default defineConfig({
 			// './node_modules/@primevue/**/*.{vue,js,ts,jsx,tsx}'
 		],
 	},
-});
+})

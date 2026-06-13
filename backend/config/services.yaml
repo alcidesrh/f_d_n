@@ -31,6 +31,20 @@ services:
             $username: "%env(systemfdn_user)%"
             $password: "%env(systemfdn_password)%"
 
+    App\Security\Voter\ActionVoter:
+        tags: ['security.voter']
+        arguments:
+            $permissionManager: '@App\Security\PermissionManager'
+
+    App\Security\Voter\EntityVoter:
+        tags: ['security.voter']
+        arguments:
+            $permissionManager: '@App\Security\PermissionManager'
+
+    App\Security\ActionExpressionProvider:
+        tags:
+            - { name: 'security.expression_language_provider' }
+
     App\Services\UsuarioPasswordHasher:
         bind:
             $processor: "@api_platform.doctrine.orm.state.persist_processor"

@@ -8,7 +8,7 @@ export default defineBoot(async ({ router }) => {
 	const restApi = useApi()
 
 	try {
-		const response: any = await restApi.value.get('/config-versions')
+		const response: any = await restApi.get('/config-versions')
 		const member = response?.['member']?.[0]
 		const serverVersions = member?.versions || {}
 		const localVersions = getVersions()

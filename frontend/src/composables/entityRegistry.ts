@@ -23,14 +23,6 @@ function waitForSchema(): Promise<void> {
 	})
 }
 
-export function registerEntity(entity) {
-	entities.value[entity.name] = entity
-}
-
-export function getEntity(name) {
-	return entities.value[name]
-}
-
 export async function getStore(entity?): StateStore {
 	if (!entity && !(entity = useRoute().params.entity)) {
 		throw Error(`No nombre de entidad`)

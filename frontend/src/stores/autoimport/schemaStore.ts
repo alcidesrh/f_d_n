@@ -40,12 +40,6 @@ interface Entity {
 export const useSchemaStore = defineStore('schemaStore', {
 	persist: {
 		pick: ['entities', 'types'],
-		afterHydrate: (ctx) => {
-			entities.value = ctx.store.$state.entities
-			types.value = ctx.store.$state.types
-			//     mutations.value = ctx.store.$state.mutations;
-			//     queries.value = ctx.store.$state.queries;
-		},
 	},
 	// persist: true,
 	state: (): SchemaStore => ({
@@ -143,9 +137,7 @@ export const useSchemaStore = defineStore('schemaStore', {
 					query: introspectionQuery,
 				})
 				this.setEntities(data.__schema)
-				entities.value = this.entities
 				this.setTypes(data.__schema)
-				types.value = this.types
 				return
 			}
 

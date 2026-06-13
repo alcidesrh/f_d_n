@@ -8,12 +8,13 @@ import { nextTick, watch } from 'vue'
 import persist from './persist'
 
 export default async (name: string) => {
-	if (typeof entities.value[str.capitalize(name)] == 'undefined') {
+	const schema = useSchemaStore()
+	if (typeof schema.entities[name] == 'undefined') {
 		return false
 	}
 	const state = {
 		name: name,
-		entity: useCloned(entities.value[str.capitalize(name)]).cloned.value,
+		// entity: useCloned(schema.entities[name]).cloned.value,
 		config: {},
 		items: [],
 		item: {},
@@ -38,7 +39,7 @@ export default async (name: string) => {
 			  }
 			| undefined,
 	}
-	if (entities.value[name]?.pagination) {
+	if (schema.entities[name]?.pagination) {
 		state.pagination = {
 			itemsPerPage: 25,
 			lastPage: null,
@@ -53,6 +54,7 @@ export default async (name: string) => {
 		},
 		state: () => state,
 		getters: {
+			entity: (store) => schema.entities[store.name], //useCloned(schema.entities[name]).cloned.value,
 			computedColumns: (store) =>
 				store.columns.filter((v) => [
 					{
@@ -148,10 +150,10 @@ export default async (name: string) => {
 							return col.field
 						})
 					} else {
-						fields[i][v.name] = types.value[v.type]
+						fields[i][v.name] = schema.types[v.type]
 					}
 				})
-
+				cl(fields)
 				return fields
 			},
 		},
@@ -173,7 +175,7 @@ export default async (name: string) => {
 						})
 					}
 					const restApi = await useApi()
-					const response = await restApi.value.get('/entity_configurations?entityClass=' + this.name)
+					const response = await restApi.get('/entity_configurations?entityClass=' + this.name)
 					this.config = response['member'][0]
 					if (refresh) {
 						this.setColumns(true)
@@ -231,6 +233,11 @@ export default async (name: string) => {
 			},
 			async collection(force = false) {
 				await this.setColumns()
+				cl({
+					operation: this.collectionEndpoint,
+					variables: this.collectionVariables,
+					fields: this.collectionFields,
+				})
 				const qb = queryBuilder.query(
 					{
 						operation: this.collectionEndpoint,

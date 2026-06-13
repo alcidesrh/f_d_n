@@ -1,8 +1,5 @@
 .sidebar-wraper {
-	// border: $border;
-	// border-top: none;
-	// padding-top: 0.8rem;
-	// box-shadow: $shadow-3;
+	box-shadow: 3px 2px 5px $surface-5;
 	background-color: $topbar-sidebar-bg;
 	height: 100%;
 	position: fixed;
@@ -10,9 +7,8 @@
 	left: 0px;
 	transition: translate 0.3s;
 	width: $sidebar-width;
-	// box-shadow: -5px 5px 10px 0px $surface-7 inset;
-	// border: $border;
 	border-top: none;
+	z-index: 1;
 
 	&>aside {
 		padding-top: .5rem;
@@ -20,7 +16,6 @@
 
 	&.mini {
 		translate: calc(($sidebar-width) - $sidebar-mini-width) * -1;
-		// box-shadow: 5px 15px 10px 0px $surface-7 ;
 	}
 
 	&.close {
@@ -29,49 +24,37 @@
 }
 
 .sidebar-control {
+	box-shadow: 4px 3px 5px $surface-5;
 	transition-property: translate;
 	transition-property: width;
 	transition-property: padding;
-	// translate: 0;
 	transition-duration: .3s;
-	display: flex;
+	display: grid;
 	justify-content: end;
 	align-items: center;
-	width: $sidebar-width;
-	// align-content: center; // justify-items: ar;
+	width: fit-content;
 	position: absolute;
-	left: 0px;
-	top: .5rem;
+	right: 0px;
+	margin-right: -24px;
+	background-color: $topbar-sidebar-bg;
 	z-index: 20;
-	gap: 7px;
-	padding: 0px .5rem;
 
 	&>.toogle-wraper,
 	&>.close-wraper {
-		// box-shadow: $shadow-2;
 		cursor: pointer;
 		display: flex;
 		justify-content: center;
 		align-items: center;
 		padding: 2px;
-		background-color: white;
-		// border: 1px solid $surface-3;
-		// box-shadow: $shadow-1;
-		border-radius: 98px;
-		border: 1px solid $surface-5;
-
-		&:hover {
-			background-color: $surface-2;
-
-		}
 
 		&>.fdn-icon {
 			transition: all .3s;
 			font-weight: 300;
-			font-size: 18px;
-			color: $surface-7;
+			color: $surface-6;
 
-
+			&:hover {
+				color: $surface-5;
+			}
 		}
 
 		&.toogle-wraper>.fdn-icon {
@@ -85,35 +68,24 @@
 	}
 
 	&.mini {
-		width: $sidebar-mini-width;
-		padding: 0px 0px;
-		// top: 0rem;
 		gap: 0px;
-		translate: calc(($sidebar-width) - ($sidebar-mini-width)) * 1;
 		justify-content: space-around;
-
-		&>.toogle-wraper,
-		&>.close-wraper {
-			// padding: 0px;
-			background-color: white;
-		}
 	}
 
 	&.close {
-		translate: calc($sidebar-width + 5px) * 1;
+		margin-right: -30px;
 		width: 30px;
 		padding: 0px;
-		// top: 0rem;
+		top: 0rem;
+		box-shadow: $shadow-2;
 
 		&>.close-wraper {
 			display: none;
 		}
 
 		&>.toogle-wraper {
-			// box-shadow: 1px 3px 8px 0px $surface-5;
-
 			&>.fdn-icon {
-				font-size: 25px;
+				font-size: 30px;
 			}
 		}
 	}

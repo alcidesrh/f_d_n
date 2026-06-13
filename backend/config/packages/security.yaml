@@ -11,8 +11,10 @@ security:
                 property: username
 
     role_hierarchy:
-        ROLE_ADMIN:
-            - ROLE_USER
+        ROLE_SUPER_ADMIN: [ROLE_ADMIN]
+        ROLE_ADMIN: [ROLE_OPERADOR, ROLE_USER]
+        ROLE_OPERADOR: [ROLE_CONSULTA, ROLE_USER]
+        ROLE_CONSULTA: [ROLE_USER]
         ROLE_FULL_USER:
             [ROLE_USER_EDIT, ROLE_TREASURE_CREATE, ROLE_TREASURE_EDIT]
 
@@ -24,11 +26,11 @@ security:
             lazy: true
             provider: app_user_provider
             json_login:
-                check_path: /login
+                check_path: /api/login
                 username_path: username
                 password_path: password
             logout:
-                path: /logout
+                path: /api/logout
                 target: /user-invalid
                 # clear_site_data:
                 #     - cache
@@ -45,19 +47,24 @@ security:
 
     # Easy way to control access for large sections of your site
     # Note: Only the *first* access control that matches will be used
-    access_control:
-        # - { path: "^/api/graphiql*", roles: PUBLIC_ACCESS }
-        # - { path: "^/_wdt*", roles: PUBLIC_ACCESS }
-        # - { path: "^/docs/graphql*", roles: PUBLIC_ACCESS }
-        # # - { path: "^/api/graphql*", roles: PUBLIC_ACCESS }
+    access_decision_manager:
+        strategy: unanimous
 
-        # - { path: "^/_profiler*", roles: PUBLIC_ACCESS }
-        # - { path: "^/bundles*", roles: PUBLIC_ACCESS }
-        # - { path: "^/docs*", roles: PUBLIC_ACCESS }
-        # - { path: "^/login*", roles: PUBLIC_ACCESS }
-        # - { path: "^/.*", roles: ROLE_USER }
-        # - { path: ^/admin, roles: ROLE_ADMIN }
-        # - { path: ^/(^logout), roles: ROLE_USER }
+    access_control:
+        - { path: "^/api/graphiql", roles: PUBLIC_ACCESS }
+        - { path: "^/_wdt", roles: PUBLIC_ACCESS }
+        - { path: "^/docs/graphql", roles: PUBLIC_ACCESS }
+        - { path: "^/graphql/graphiql", roles: PUBLIC_ACCESS }
+        - { path: "^/_profiler", roles: PUBLIC_ACCESS }
+        - { path: "^/bundles", roles: PUBLIC_ACCESS }
+        - { path: "^/docs", roles: PUBLIC_ACCESS }
+        - { path: "^/login*", roles: PUBLIC_ACCESS }
+        # - { path: "^/login$", roles: PUBLIC_ACCESS }
+        - { path: "^/api/me/permissions", roles: ROLE_USER }
+        - { path: "^/api/contexts", roles: PUBLIC_ACCESS }
+        - { path: "^/api$", roles: PUBLIC_ACCESS }
+        - { path: "^/api/", roles: ROLE_USER }
+        - { path: "^/", roles: ROLE_USER }
 
 when@test:
     security:

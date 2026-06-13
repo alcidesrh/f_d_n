@@ -1,7 +1,7 @@
 <template>
 	<div class="q-pa-md">
 		<q-list bordered separator>
-			<q-item v-for="(v, i) in entities" :key="i" v-ripple>
+			<q-item v-for="(v, i) in useSchemaStore().entities" :key="i" v-ripple>
 				<q-item-section class="u-text-1">{{ v.name }}</q-item-section>
 				<q-item-section class="items-end">
 					<div class="flex w-fit gap-x-5">
@@ -39,3 +39,4 @@
 		</q-list>
 	</div>
 </template>
+<script setup lang="ts"></script>

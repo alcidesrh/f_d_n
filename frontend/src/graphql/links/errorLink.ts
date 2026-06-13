@@ -14,7 +14,7 @@ export function createErrorLink() {
         temp = {
           message: "Acceso no permitido.",
         };
-        router.push({ name: "Login" });
+        router.push({ name: "login" });
       } else if (error.statusCode == 500) {
         const { status, title, detail } = JSON.parse(error.bodyText);
         temp = {
@@ -62,7 +62,6 @@ export function createErrorLink() {
         }
       });
     } else if (ServerParseError.is(error)) {
-      // Access the original parse error
       temp = {
         caption: `Failed to parse response from ${error.response.url}`,
         message: `${error.bodyText} Status code: ${error.statusCode}`,

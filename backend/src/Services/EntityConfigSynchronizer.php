@@ -42,7 +42,7 @@ final class EntityConfigSynchronizer {
     $this->syncFormFields($config, $currentFields);
 
     $this->entityManager->flush();
-    $this->configChangePublisher->entityConfigChanged($entityClass);
+    $this->configChangePublisher->entityConfigChanged($config);
     $this->logger->debug('Sincronización completada para {entity}', ['entity' => $entityClass]);
   }
 

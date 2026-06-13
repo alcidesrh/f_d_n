@@ -1,5 +1,5 @@
 <template>
-	<q-tree :nodes="menu" node-key="label" default-expand-all class="text-surface-4 mt-20px">
+	<q-tree :nodes="menu" node-key="label" default-expand-all>
 		<template v-slot:default-header="prop">
 			<div class="row items-center cursor-pointer">
 				<icon :name="prop.node.icon || 'sym_o_star'" class="mr-10px" />
