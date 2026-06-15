@@ -32,7 +32,7 @@ final class EntityConfigSynchronizer {
     if (!$config) {
       $config = new EntityConfiguration($entityClass);
       $this->entityManager->persist($config);
-      $this->logger->info('Configuración inicial creada para {entity}', ['entity' => $entityClass]);
+      // $this->logger->info('Configuración inicial creada para {entity}', ['entity' => $entityClass]);
     }
 
     $metadata = $this->entityManager->getClassMetadata('App\\Entity\\' . $entityClass);
@@ -43,7 +43,7 @@ final class EntityConfigSynchronizer {
 
     $this->entityManager->flush();
     $this->configChangePublisher->entityConfigChanged($config);
-    $this->logger->debug('Sincronización completada para {entity}', ['entity' => $entityClass]);
+    // $this->logger->debug('Sincronización completada para {entity}', ['entity' => $entityClass]);
   }
 
   public function getAllFieldNames(ClassMetadata $metadata): array {
@@ -65,25 +65,27 @@ final class EntityConfigSynchronizer {
       if (\in_array($campo, ['legacyId', 'password', 'apiTokens'])) {
         continue;
       }
-      $detalle[] = [$campo, match ($metadata->getFieldMapping($campo)['type']) {
+      $mapping = $metadata->getFieldMapping($campo);
+      $detalle[] = [$campo, match ($mapping->type) {
         'string', 'text'  => 'text',
         'integer', 'float' => 'number',
-        default => $metadata->getFieldMapping($campo)['type'],
+        default => $mapping->type,
       }];
     }
 
     foreach ($relaciones as $relacion) {
-      $temp = $metadata->getAssociationTargetClass($relacion);
+      $targetClass = $metadata->getAssociationTargetClass($relacion);
+      $assocMapping = $metadata->getAssociationMapping($relacion);
       $detalle[] = [
         $relacion,
-        match ($metadata->getAssociationMapping($relacion)['type']) {
-          \Doctrine\ORM\Mapping\ClassMetadata::ONE_TO_ONE   => 'select', //'OneToOne',
-          \Doctrine\ORM\Mapping\ClassMetadata::MANY_TO_ONE  => 'select', //'ManyToOne',
-          \Doctrine\ORM\Mapping\ClassMetadata::ONE_TO_MANY  => 'multiple', //OneToMany',
-          \Doctrine\ORM\Mapping\ClassMetadata::MANY_TO_MANY => 'multiple', //'ManyToMany',
+        match ($assocMapping->type()) {
+          \Doctrine\ORM\Mapping\ClassMetadata::ONE_TO_ONE   => 'select',
+          \Doctrine\ORM\Mapping\ClassMetadata::MANY_TO_ONE  => 'select',
+          \Doctrine\ORM\Mapping\ClassMetadata::ONE_TO_MANY  => 'multiple',
+          \Doctrine\ORM\Mapping\ClassMetadata::MANY_TO_MANY => 'multiple',
           default => 'Desconocido',
         },
-        substr($temp, strrpos($temp, '\\') + 1)
+        substr($targetClass, strrpos($targetClass, '\\') + 1)
       ];
     }
     return $detalle;
@@ -106,10 +108,10 @@ final class EntityConfigSynchronizer {
         $collectionFieldConfig->setData($data);
       }
       $config->addcollectionFieldConfig($collectionFieldConfig);
-      $this->logger->info('Campo de listado añadido automáticamente: {field} en {entity}', [
-        'field' => $data[0],
-        'entity' => $config->getEntityClass()
-      ]);
+      // $this->logger->info('Campo de listado añadido automáticamente: {field} en {entity}', [
+      //   'field' => $data[0],
+      //   'entity' => $config->getEntityClass()
+      // ]);
     }
     $config->orderFields($config->getCollectionFieldConfig());
   }
@@ -132,10 +134,10 @@ final class EntityConfigSynchronizer {
 
       $config->addFormField($formField);
 
-      $this->logger->info('Campo de formulario añadido automáticamente: {field} en {entity}', [
-        'field' => $data[0],
-        'entity' => $config->getEntityClass()
-      ]);
+      // $this->logger->info('Campo de formulario añadido automáticamente: {field} en {entity}', [
+      //   'field' => $data[0],
+      //   'entity' => $config->getEntityClass()
+      // ]);
     }
     $config->orderFields($config->getFormFields());
   }

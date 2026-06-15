@@ -36,9 +36,6 @@ class Asiento {
     #[ORM\JoinColumn(nullable: false)]
     private ?Bus $bus = null;
 
-    #[ORM\Column(type: 'string', length: 50, nullable: true)]
-    private ?string $legacyId = null;
-
     public function getId(): ?int {
         return $this->id;
     }
@@ -93,13 +90,4 @@ class Asiento {
         return $this;
     }
 
-    public function getLegacyId(): ?string {
-        return $this->legacyId;
-    }
-
-    public function setLegacyId(?string $legacyId): static {
-        $this->legacyId = $legacyId;
-
-        return $this;
-    }
 }

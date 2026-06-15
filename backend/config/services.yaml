@@ -48,21 +48,8 @@ services:
     App\Services\UsuarioPasswordHasher:
         bind:
             $processor: "@api_platform.doctrine.orm.state.persist_processor"
-    # App\Services\EntityConfigSynchronizer:
-    #     arguments:
-    #         $logger: "@logger"
 
-    # App\EventListener\EntityConfigSyncListener:
-    #     tags:
-    #         - { name: doctrine.event_subscriber }
+    App\Replication\ReplicationService:
+        tags:
+            - { name: 'doctrine.event_subscriber', connection: 'default' }
 
-    # App\GraphQL\Type\Converter\DateTypeConverter:
-    #     decorates: "api_platform.graphql.type_converter"
-    #     arguments:
-    #         $decorated: '@App\GraphQL\Type\Converter\DateTypeConverter.inner'
-    #         $types: "@api_platform.graphql.types_container"
-    #     autoconfigure: false
-
-    # App\GraphQL\Type\Definition\DateType:
-    #     tags:
-    #         - { name: api_platform.graphql.type }

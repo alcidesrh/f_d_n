@@ -25,7 +25,7 @@ class SincronizarCommand extends Command
         $start = microtime(true);
 
         try {
-            $contadores = $this->migrador->migrarBoletosRecientes();
+            $contadores = $this->migrador->migrarBoletosRecientes(output: $output);
         } catch (\Throwable $e) {
             $output->writeln("<error>Error: {$e->getMessage()}</error>");
 

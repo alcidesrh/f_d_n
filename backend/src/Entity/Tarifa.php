@@ -33,9 +33,6 @@ class Tarifa extends Base {
     #[ORM\ManyToMany(targetEntity: Trayecto::class, inversedBy: 'tarifas')]
     private Collection $trayectos;
 
-    #[ORM\Column(type: 'string', length: 50, nullable: true)]
-    private ?string $legacyId = null;
-
     public function __construct() {
         $this->trayectos = new ArrayCollection();
     }
@@ -98,13 +95,4 @@ class Tarifa extends Base {
         return $this->trayectos;
     }
 
-    public function getLegacyId(): ?string {
-        return $this->legacyId;
-    }
-
-    public function setLegacyId(?string $legacyId): static {
-        $this->legacyId = $legacyId;
-
-        return $this;
-    }
 }

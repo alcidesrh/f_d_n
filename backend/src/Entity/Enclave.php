@@ -27,9 +27,6 @@ class Enclave extends Base {
     #[ORM\Column(type: 'decimal', precision: 10, scale: 7, nullable: true)]
     private ?string $longitud = null;
 
-    #[ORM\Column(type: 'string', length: 50, nullable: true)]
-    private ?string $legacyId = null;
-
     public function getId(): ?int {
         return $this->id;
     }
@@ -70,16 +67,6 @@ class Enclave extends Base {
 
     public function setLongitud(?string $longitud): static {
         $this->longitud = $longitud;
-
-        return $this;
-    }
-
-    public function getLegacyId(): ?string {
-        return $this->legacyId;
-    }
-
-    public function setLegacyId(?string $legacyId): static {
-        $this->legacyId = $legacyId;
 
         return $this;
     }

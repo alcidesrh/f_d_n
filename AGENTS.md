@@ -173,13 +173,15 @@ xdebug.file_link_format = vscode://file/%f:%l
 ```
 
 Requiere `pathMappings` en `.vscode/launch.json` para traducir rutas del container al host:
-```json
-{
-    "pathMappings": {
-        "/app": "${workspaceFolder}/backend"
-    }
-}
-```
+- Si abrís `backend/` como raíz del workspace en VSCode:
+  ```json
+  "pathMappings": { "/app": "${workspaceFolder}" }
+  ```
+- Si abrís el repo raíz (`modelo/`):
+  ```json
+  "pathMappings": { "/app": "${workspaceFolder}/backend" }
+  ```
+  (o simpler: abrí `backend/` directamente y usá el primer mapping)
 
 ## Practical caveats
 - Root and backend `Makefile` include legacy targets (for tools like phpstan/php-cs-fixer) that are not currently present in `backend/vendor/bin`; verify tool availability before relying on those targets.

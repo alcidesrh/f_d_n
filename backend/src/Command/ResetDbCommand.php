@@ -2,9 +2,10 @@
 
 namespace App\Command;
 
+use App\Migration\Limpiador;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -12,67 +13,57 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Process\Process;
 
 #[AsCommand(
-    name: 'reset-db',
-    description: 'Add a short description for your command',
+    name: 'app:reset-db',
+    description: 'Reinicia la base de datos nueva: --hard dropea y recrea, --soft solo trunca tablas migrables'
 )]
 class ResetDbCommand extends Command {
-    public function __construct() {
+    public function __construct(
+        private Limpiador $limpiador,
+        private EntityManagerInterface $entityManager,
+    ) {
         parent::__construct();
     }
 
     protected function configure(): void {
         $this
-            ->addArgument('arg1', InputArgument::OPTIONAL, 'Argument description')
-            ->addOption('option1', null, InputOption::VALUE_NONE, 'Option description');
+            ->addOption('hard', null, InputOption::VALUE_NONE, 'Dropea la BD, la recrea y corre migraciones')
+            ->addOption('soft', null, InputOption::VALUE_NONE, 'Solo trunca las tablas migrables (por defecto)');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int {
         $io = new SymfonyStyle($input, $output);
-        $arg1 = $input->getArgument('arg1');
+        $hard = (bool) $input->getOption('hard');
+        $soft = (bool) $input->getOption('soft') || !$hard;
 
-        if ($arg1) {
-            $io->note(sprintf('You passed an argument: %s', $arg1));
-        }
-
-        if ($input->getOption('option1')) {
-            // ...
-        }
-
-        try {
-            $io = new SymfonyStyle($input, $output);
-            // $phpBinaryFinder = new PhpExecutableFinder();
-            // $phpBinaryPath = $phpBinaryFinder->find();
-
-            // $process = [
-            // [$phpBinaryPath, 'bin/console', 'doctrine:database:drop', '-nf', '--if-exists', '--quiet'],
-            // [$phpBinaryPath, 'bin/console', 'doctrine:database:create', '-n', '--quiet'],
-            // ['rm', '-r', 'migrations/*'],
-            // [$phpBinaryPath, 'bin/console', 'doctrine:migrations:diff', '-n', '--quiet'],
-            // [$phpBinaryPath, 'bin/console', 'doctrine:migrations:migrate', '-n', '--quiet'],
-            // ];
-            // $io->progressStart(100);
-            // foreach ($process as $key => $value) {
-            // $io->progressAdvance(20);
-            // ($p = new Process($value))->run();
-            // $io->block($p->getOutput());
-            // }
-            $p1 = Process::fromShellCommandline('docker exec backend php bin/console doctrine:database:drop -f --if-exists --quiet');
-            $p2 = Process::fromShellCommandline('docker exec backend php bin/console doctrine:database:create');
-            $p3 = Process::fromShellCommandline('docker exec backend rm -r migrations/*');
-            $p4 = Process::fromShellCommandline('docker exec backend php bin/console doctrine:migrations:diff');
-            $p5 = Process::fromShellCommandline('docker exec backend php bin/console doctrine:migrations:migrate');
-            $p6 = Process::fromShellCommandline('docker exec backend php bin/console migrar');
-            // $p7 = Process::fromShellCommandline('docker exec backend php bin/console migrar:boletos 100');
-            foreach ([$p1, $p2, $p3, $p4, $p5] as $key => $value) {
-                $value->setTimeout(120);
-                $value->run();
+        if ($hard) {
+            $io->warning('HARD RESET: se dropeará y recreará la base de datos');
+            if (!$io->confirm('¿Continuar?', false)) {
+                return Command::SUCCESS;
             }
-            // $p->run();
-            $io->success('Base de datos generada!');
-        } catch (\Throwable $th) {
-            throw $th;
+
+            $io->section('Dropeando base de datos...');
+            $this->entityManager->getConnection()->executeStatement('DROP SCHEMA public CASCADE');
+            $this->entityManager->getConnection()->executeStatement('CREATE SCHEMA public');
+            $this->entityManager->getConnection()->executeStatement('GRANT ALL ON SCHEMA public TO PUBLIC');
+
+            $io->section('Generando migraciones...');
+            $p = new Process(['php', 'bin/console', 'doctrine:migrations:diff', '--no-interaction']);
+            $p->setTimeout(120);
+            $p->run(fn($type, $buf) => $io->write($buf));
+
+            $io->section('Ejecutando migraciones...');
+            $p = new Process(['php', 'bin/console', 'doctrine:migrations:migrate', '--no-interaction']);
+            $p->setTimeout(120);
+            $p->run(fn($type, $buf) => $io->write($buf));
+
+            $io->success('Base de datos recreada y migraciones ejecutadas');
         }
-        $io->success('You have a new command! Now make it your own! Pass --help to see your options.');
+
+        if ($soft) {
+            $io->section('Truncando tablas migrables...');
+            $this->limpiador->limpiar();
+            $io->success('Tablas migrables truncadas');
+        }
 
         return Command::SUCCESS;
     }

@@ -2,7 +2,6 @@
 
 namespace App\Entity\Base;
 
-use App\Entity\Base\Traits\LegacyTrait;
 use App\Entity\Base\Traits\StatusTrait;
 use App\Entity\Base\Traits\TimestampableEntityTrait;
 use App\Entity\Localidad;
@@ -11,8 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\MappedSuperclass]
 class PersonaBase extends Base {
   use TimestampableEntityTrait,
-    StatusTrait,
-    LegacyTrait;
+    StatusTrait;
 
   #[ORM\Column(length: 255)]
   protected ?string $nombre = null;

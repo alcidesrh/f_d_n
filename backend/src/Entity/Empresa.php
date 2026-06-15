@@ -27,9 +27,6 @@ class Empresa extends Base {
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $email = null;
 
-    #[ORM\Column(type: 'string', length: 50, nullable: true)]
-    private ?string $legacyId = null;
-
     #[ORM\OneToMany(targetEntity: Bus::class, mappedBy: 'empresa')]
     private Collection $buses;
 
@@ -93,15 +90,5 @@ class Empresa extends Base {
 
     public function getBuses(): Collection {
         return $this->buses;
-    }
-
-    public function getLegacyId(): ?string {
-        return $this->legacyId;
-    }
-
-    public function setLegacyId(?string $legacyId): static {
-        $this->legacyId = $legacyId;
-
-        return $this;
     }
 }
