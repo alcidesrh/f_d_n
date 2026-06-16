@@ -3,10 +3,13 @@
 namespace App\Controller;
 
 use ApiPlatform\Metadata\IriConverterInterface;
+use App\Entity\ApiToken;
 use App\Entity\Role;
 use App\Repository\ApiTokenRepository;
 use App\Repository\RoleRepository;
 use App\Security\PermissionManager;
+use Doctrine\ORM\EntityManagerInterface;
+use Dom\Entity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -14,7 +17,7 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 class SecurityController extends AbstractController {
 
-  public function __construct(private ApiTokenRepository $apiTokenRepository, private RoleRepository $roleRepo) {
+  public function __construct(private ApiTokenRepository $apiTokenRepository, private RoleRepository $roleRepo, private EntityManagerInterface $manager) {
   }
 
   #[Route('/api/login', name: 'app_login', methods: ['POST'])]
@@ -36,9 +39,17 @@ class SecurityController extends AbstractController {
       $user->addUserRole($role);
       $this->roleRepo->flush();
     }
-    $token = $user->getToken();
-    $token->setActivo(true);
-    $this->apiTokenRepository->persist($token)->flush();
+    if (!$token = $user->getToken()) {
+      $token = new ApiToken();
+      $token->setUsuario($user);
+      $token->setActivo(true);
+      $user->addApiToken($token);
+      $this->manager->persist($token);
+      $this->apiTokenRepository->persist($token)->flush();
+    } else {
+      $token->setActivo(true);
+      $this->apiTokenRepository->flush();
+    }
     return $this->json([
       'token' => $token->getToken(),
       'username' => $user->getUsername(),

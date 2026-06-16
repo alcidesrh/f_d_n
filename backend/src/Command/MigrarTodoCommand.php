@@ -18,7 +18,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 #[AsCommand(
-    name: 'migrar',
+    name: 'app:migrar:todo',
     description: 'Ejecuta la migración completa: 1) reset, 2) estáticos, 3) IAM, 4) config, 5) boletos'
 )]
 class MigrarTodoCommand extends Command {

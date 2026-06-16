@@ -106,7 +106,9 @@ class Mapeador {
             'apellido' => $this->truncate($old['surnames'] ?? '', 50),
             'email' => $this->truncate($old['email'] ?? null, 50),
             'telefono' => $this->truncate($old['phone'] ?? null, 15),
-            'password' => $old['password'] ?? null,
+            'password' => isset($old['password'], $old['salt'])
+                ? '$sha512$' . $old['password'] . '$' . $old['salt']
+                : ($old['password'] ?? null),
             'created_at' => $this->formatDatetime($old['dateCreate'] ?? null),
             'updated_at' => $this->formatDatetime($old['dateLastUdate'] ?? null),
         ];

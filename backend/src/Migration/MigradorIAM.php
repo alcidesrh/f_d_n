@@ -277,7 +277,7 @@ class MigradorIAM {
                 continue;
             }
 
-            $roleNames = json_decode($row['roles'], true);
+            $roleNames = unserialize($row['roles']);
             if (!is_array($roleNames)) {
                 continue;
             }
