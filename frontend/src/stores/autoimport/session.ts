@@ -21,6 +21,9 @@ export const useUserSessionStore = defineStore(
 		const violations = ref<SubmissionErrors | undefined>(undefined)
 		const redirectTo = ref('/')
 		const isAuthenticated = computed(() => user.value && token.value)
+		const isAdmin = computed(() =>
+			permissions.value.some((p) => p.startsWith('admin.') || p === 'ROLE_ADMIN'),
+		)
 
 		function can(code: string): boolean {
 			if (!permissions.value) return false
@@ -101,6 +104,7 @@ export const useUserSessionStore = defineStore(
 			token,
 			permissions,
 			isAuthenticated,
+			isAdmin,
 			error,
 			violations,
 			redirectTo,

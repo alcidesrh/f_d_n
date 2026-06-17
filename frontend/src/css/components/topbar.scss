@@ -35,8 +35,8 @@
 
 	&.layout-topbar-sticky {
 		box-shadow: $shadow-1;
-		background-color: -alpha($white, 0.8);
+		background-color: -alpha($white, 0.2);
 		// background-color: -alpha($surface-1, 0.8);
-		backdrop-filter: blur(3px);
+		backdrop-filter: blur(13px);
 	}
 }

@@ -1,11 +1,9 @@
-import { defineConfig, presetAttributify, presetUno, presetWind4, Rule, transformerDirectives, transformerVariantGroup } from 'unocss'
+import { defineConfig, presetAttributify, presetWind4, Rule, transformerDirectives, transformerVariantGroup } from 'unocss'
 import { colors } from './src/utils/colors'
 import { color_rules, utopia_rules } from './src/utils/unocss_rules'
-
 export default defineConfig({
 	rules: [...(utopia_rules as Rule<object>[]), ...(color_rules as Rule<object>[])],
 	presets: [
-		presetUno(),
 		presetAttributify(),
 		presetWind4({
 			preflights: {
@@ -14,16 +12,37 @@ export default defineConfig({
 			},
 		}),
 	],
-	// theme
-	extendTheme: (theme) => {
-		return {
-			...theme,
-			colors: {
-				...theme.colors,
-				...colors,
-			},
-		}
+	theme: {
+		colors: {
+			...colors,
+		},
 	},
+	preflights: [
+		{
+			getCSS: () => {
+				const vars = Object.entries(colors.surface)
+					.map(([k, v]) => `--colors-surface-${k}: ${v};`)
+					.join('\n')
+
+				return `
+          :root {
+            ${vars}
+          }
+        `
+			},
+		},
+	],
+	// theme
+	// extendTheme: (theme) => {
+	// 	const result = {
+	// 		...theme,
+	// 		colors: {
+	// 			...theme.colors,
+	// 			...colors,
+	// 		},
+	// 	}
+	// 	return result
+	// },
 	// layers: {
 	//   reset: -10,
 	//   quasar: -5,
@@ -37,6 +56,7 @@ export default defineConfig({
 		pipeline: {
 			include: [
 				'src/form/formkit.theme.ts',
+				'src/form/inputs/**/*.{ts,js,vue}',
 				/\.(vue|svelte|[jt]sx|mdx?|astro|elm|php|phtml|html)($|\?)/,
 				'src/utils/**/*.{ts,js,vue}',
 				'src/composables/**/*.{ts,js,vue}',
@@ -44,7 +64,6 @@ export default defineConfig({
 				'src/pages/**/*.{ts,js,vue}',
 				'src/layouts/**/*.{ts,js,vue}',
 				'src/components/**/*.{ts,js,vue}',
-				'src/models/**/*.{ts,js,vue}',
 			],
 			// exclude files
 			// exclude: []

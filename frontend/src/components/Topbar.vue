@@ -10,6 +10,7 @@
 			</div>
 
 			<div class="right-section">
+				<Icon class="cursor-pointer" name="dashboard" @click="useRouter().router.push({ name: 'home' })" />
 				<Icon class="cursor-pointer" name="logout" @click="logout" />
 			</div>
 		</div>

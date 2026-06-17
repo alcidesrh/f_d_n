@@ -1,5 +1,5 @@
 .sidebar-wraper {
-	box-shadow: 3px 2px 5px $surface-5;
+	box-shadow: 5px 3px 4px $surface-4;
 	background-color: $topbar-sidebar-bg;
 	height: 100%;
 	position: fixed;
@@ -11,7 +11,7 @@
 	z-index: 1;
 
 	&>aside {
-		padding-top: .5rem;
+		padding-top: 1.5rem;
 	}
 
 	&.mini {
@@ -24,7 +24,7 @@
 }
 
 .sidebar-control {
-	box-shadow: 4px 3px 5px $surface-5;
+	box-shadow: 5px 3px 4px $surface-4;
 	transition-property: translate;
 	transition-property: width;
 	transition-property: padding;
@@ -38,22 +38,25 @@
 	margin-right: -24px;
 	background-color: $topbar-sidebar-bg;
 	z-index: 20;
+	padding: 5px 0;
+	width: 30px;
 
 	&>.toogle-wraper,
 	&>.close-wraper {
 		cursor: pointer;
-		display: flex;
+		// display: flex;
 		justify-content: center;
 		align-items: center;
 		padding: 2px;
 
 		&>.fdn-icon {
 			transition: all .3s;
-			font-weight: 300;
-			color: $surface-6;
+			// font-weight: 700;
+			color: $surface-4;
+			font-size: 20px;
 
 			&:hover {
-				color: $surface-5;
+				color: $surface-6;
 			}
 		}
 

@@ -1,4 +1,32 @@
 {
   "files.autoSave": "onFocusChange",
-  "editor.formatOnSave": false
+  "editor.formatOnSave": true,
+  "workbench.colorCustomizations": {
+    // "editor.background": "#E6E7ED",
+    "editor.background": "#f5f5f5",
+    "sideBar.background": "#E6E7ED",
+    "terminal.background": "#020617",
+    "terminal.foreground": "#fef08a",
+    "tab.activeForeground": "#ff0000",
+    "activityBar.activeBackground": "#1e40af",
+    "activityBar.background": "#1e40af",
+    "activityBar.foreground": "#f8fafc",
+    "activityBar.inactiveForeground": "#f8fafc99",
+    "activityBarBadge.background": "#f8fafc",
+    "activityBarBadge.foreground": "#15202b",
+    "commandCenter.border": "#f8fafc99",
+    "sash.hoverBorder": "#1e40af",
+    "statusBar.background": "#334155",
+    "statusBar.foreground": "#f8fafc",
+    "statusBarItem.hoverBackground": "#b",
+    "statusBarItem.remoteBackground": "#334155",
+    "statusBarItem.remoteForeground": "#f8fafc",
+    "titleBar.activeBackground": "#1e40af",
+    "titleBar.activeForeground": "#f8fafc",
+    "titleBar.inactiveBackground": "#1e40af",
+    // "editor.selectionBackground": "#004b87",
+    // "editor.wordHighlightBackground": "#f1f5f9",
+    // "editor.selectionForeground": "#ffffff", // Forces active selection text to White
+    // "editor.selectionHighlightForeground": "#ffffff"
+  },
 }

@@ -4,12 +4,19 @@ import adminRoutes from './admin'
 import roleRoutes from './role'
 import testRoutes from './test'
 import userRoutes from './user'
+import boletoRoutes from './boleto'
 
 const routes: RouteRecordRaw[] = [
 	{
 		path: '/login',
 		name: 'login',
 		component: () => import('pages/auth/LoginPage.vue'),
+		meta: { public: true },
+	},
+	{
+		path: '/forbidden',
+		name: 'forbidden',
+		component: () => import('@/pages/error/Forbidden.vue'),
 		meta: { public: true },
 	},
 	{
@@ -20,7 +27,7 @@ const routes: RouteRecordRaw[] = [
 			icon: 'home',
 		},
 		children: [
-			{ path: '', component: () => import('pages/IndexPage.vue') },
+			{ path: '', name: 'home', component: () => import('@/pages/admin/DashboardPage.vue') },
 			{
 				path: '/lista/:entity',
 				name: 'list',
@@ -78,12 +85,22 @@ const routes: RouteRecordRaw[] = [
 				name: 'test',
 				component: () => import('@/pages/Test.vue'),
 			},
+			{
+				path: '/venta/boleto',
+				name: 'venta_boleto',
+				component: () => import('@/pages/venta/BoletoVentaPage.vue'),
+				meta: {
+					breadcrumb: 'Venta de Boletos',
+					icon: 'sym_o_airplane_ticket',
+				},
+			},
 
 			...actionRoutes,
 			...userRoutes,
 			...roleRoutes,
 			...testRoutes,
 			...adminRoutes,
+			...boletoRoutes
 		],
 	},
 

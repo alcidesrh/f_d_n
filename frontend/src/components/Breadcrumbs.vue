@@ -6,7 +6,7 @@
 				{{ crumb.label }}
 			</span>
 			<span v-else>{{ crumb.label }}</span>
-			<icon v-if="index < breadcrumbs.length - 1" name="arrow_forward_ios" class="text-14px mx-5px text-surface-5" />
+			<icon v-if="index < breadcrumbs.length - 1" name="arrow_forward_ios" class="text-14px mx-5px text-surface-5 font-200" />
 		</div>
 	</div>
 </template>

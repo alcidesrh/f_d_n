@@ -40,15 +40,15 @@
 	const { mode, modeStates } = storeToRefs(sidebarStore)
 
 	const menu = [
-		{
-			label: 'Limpiar cache',
-			icon: 'cached',
-			name: 'refresh',
-			type: 'action',
-			command: () => {
-				fdn.value.refresh()
-			},
-		},
+		// {
+		// 	label: 'Limpiar cache',
+		// 	icon: 'cached',
+		// 	name: 'refresh',
+		// 	type: 'action',
+		// 	command: () => {
+		// 		fdn.value.refresh()
+		// 	},
+		// },
 		{
 			label: 'Mi cuenta',
 			icon: 'account_circle',
@@ -78,6 +78,12 @@
 		icon: 'security',
 		open: false,
 		children: [
+			{
+				label: 'Dashboard',
+				icon: 'dashboard',
+				name: 'home',
+				perm: 'admin.dashboard',
+			},
 			{
 				label: 'Usuarios',
 				icon: 'people',
@@ -118,10 +124,7 @@
 		const filteredAdminChildren = adminMenu.children.filter((item) => !item.perm || can(item.perm))
 
 		if (filteredAdminChildren.length > 0) {
-			base.push({
-				...adminMenu,
-				children: filteredAdminChildren,
-			})
+			base.push(adminMenu)
 		}
 
 		return base

@@ -37,7 +37,7 @@ export default defineBoot(async ({ router }) => {
 		for (const [entityClass, timestamp] of Object.entries(serverVersions)) {
 			setVersion(entityClass, timestamp)
 		}
-	} catch {}
+	} catch (e) {}
 
 	gateway.register('entity_configuration', async (payload) => {
 		const entityClass = payload.entityClass as string

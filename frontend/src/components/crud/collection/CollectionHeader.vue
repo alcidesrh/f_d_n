@@ -10,13 +10,13 @@
 						fill
 						v-if="i > 0"
 						name="arrow_back_2"
-						class="text-12px lg:text-16px font-700 text-slate-4 hover:(text-surface-7 font-700) rosdtate-90"
+						class="text-12px lg:text-16px font-700 text-surface-4 hover:(text-surface-5 font-700) rosdtate-90"
 						@click.stop="$emit('orderColumns', i, 'left')"
 					/>
 					<icon
 						fill
 						v-if="i + 1 < data.cols.length"
-						class="text-12px rotate-180deg lg:text-16px font-700 text-surface-4 hover:(text-surface-7 font-700) rosdtsate-45"
+						class="text-12px rotate-180deg lg:text-16px font-700 text-surface-4 hover:(text-surface-5 font-700) rosdtsate-45"
 						name="arrow_back_2"
 						@click.stop="$emit('orderColumns', i, 'right')"
 					/>

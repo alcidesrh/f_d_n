@@ -143,3 +143,9 @@ schema:
 	
 frontend-fdn-quasar-restart:
 	@$(DOCKER_COMP) restart frontend-fdn-quasar
+
+migrar:
+	@$(DOCKER_COMP) exec backend bin/console --env=prod app:migrar:todo --clean 100
+	
+clean:
+	@$(DOCKER_COMP) exec backend bin/console --env=prod app:reset-db --hard

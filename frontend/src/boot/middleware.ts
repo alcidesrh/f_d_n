@@ -4,7 +4,6 @@ import { useUserSessionStore } from '@/stores/autoimport/session'
 export default defineBoot(async ({ router }) => {
 	router.beforeEach(async (to, from) => {
 		const session = useUserSessionStore()
-
 		// Rutas públicas que no requieren autenticación
 		const publicRoutes = ['login']
 		if (publicRoutes.includes(to.name as string)) {

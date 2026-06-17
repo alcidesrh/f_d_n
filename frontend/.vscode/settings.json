@@ -59,9 +59,6 @@
     // "editor.findMatchHighlightBackground": "#FBBF2433", // Lighter yellow for all matches
     // "editor.wordHighlightBackground": "#e2e8f0",
   },
-  "files.exclude": {
-    "**/src/form/formkit-theme-fdn/**": true,
-  },
   "editor.hover.enabled": "off",
   "workbench.tips.enabled": false,
   "cSpell.words": [

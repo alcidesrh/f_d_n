@@ -14,9 +14,9 @@
 		label="Contraseña"
 		:type="show ? 'text' : 'password'"
 	>
-		<template v-slot:prepend> <icon name="key" /> </template>
+		<template v-slot:prepend> <icon name="key" class="font-300" /> </template>
 
-		<template v-slot:append> <icon @click="show = !show" :name="show ? 'visibility' : 'visibility_off'" /> </template>
+		<template v-slot:append> <icon @click="show = !show" :name="show ? 'visibility' : 'visibility_off'" class="font-300" /> </template>
 	</q-input>
 </template>
 <script setup>

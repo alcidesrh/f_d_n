@@ -18,6 +18,12 @@
 
 		&>thead>tr>th,
 		&>tbody>tr>td {
+			&>* {
+				max-height: 70px;
+				overflow: scroll;
+				padding: 5px 0;
+			}
+
 			&>.col-small {
 				max-width: 120px;
 			}

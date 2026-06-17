@@ -31,11 +31,13 @@ declare global {
   const dformat: typeof import('./utils/autoimport/date').dformat
   const e: typeof import('./utils/autoimport/miscellaneous').e
   const effectScope: typeof import('vue').effectScope
+  const entityIcons: typeof import('./config/entityIcons').entityIcons
   const getActivePinia: typeof import('pinia').getActivePinia
   const getAlertText: typeof import('./utils/autoimport/miscellaneous').getAlertText
   const getCurrentInstance: typeof import('vue').getCurrentInstance
   const getCurrentScope: typeof import('vue').getCurrentScope
   const getCurrentWatcher: typeof import('vue').getCurrentWatcher
+  const getEntityIcon: typeof import('./config/entityIcons').getEntityIcon
   const getIdFromIri: typeof import('./utils/autoimport/miscellaneous').getIdFromIri
   const getStore: typeof import('./composables/entityRegistry').getStore
   const gloading: typeof import('./utils/autoimport/miscellaneous').gloading
@@ -190,11 +192,13 @@ declare module 'vue' {
     readonly dformat: UnwrapRef<typeof import('./utils/autoimport/date')['dformat']>
     readonly e: UnwrapRef<typeof import('./utils/autoimport/miscellaneous')['e']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
+    readonly entityIcons: UnwrapRef<typeof import('./config/entityIcons')['entityIcons']>
     readonly getActivePinia: UnwrapRef<typeof import('pinia')['getActivePinia']>
     readonly getAlertText: UnwrapRef<typeof import('./utils/autoimport/miscellaneous')['getAlertText']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
     readonly getCurrentWatcher: UnwrapRef<typeof import('vue')['getCurrentWatcher']>
+    readonly getEntityIcon: UnwrapRef<typeof import('./config/entityIcons')['getEntityIcon']>
     readonly getIdFromIri: UnwrapRef<typeof import('./utils/autoimport/miscellaneous')['getIdFromIri']>
     readonly getStore: UnwrapRef<typeof import('./composables/entityRegistry')['getStore']>
     readonly gloading: UnwrapRef<typeof import('./utils/autoimport/miscellaneous')['gloading']>

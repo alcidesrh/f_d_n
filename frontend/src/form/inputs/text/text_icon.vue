@@ -14,7 +14,7 @@
 		:stack-label="!context.labelQuasar"
 		:label="context.labelQuasar"
 	>
-		<template v-slot:prepend> <icon :name="context.prepend" /> </template>
+		<template v-slot:prepend> <icon :name="context.prepend" class="font-300" /> </template>
 	</q-input>
 </template>
 <script setup>

@@ -7,6 +7,12 @@ export default [
 		meta: { breadcrumb: 'admin', icon: 'security' },
 		children: [
 			{
+				path: 'dashboard',
+				name: 'admin_dashboard',
+				meta: { breadcrumb: 'Dashboard', icon: 'dashboard' },
+				component: () => import('@/pages/admin/DashboardPage.vue'),
+			},
+			{
 				path: 'entities',
 				meta: { breadcrumb: 'entidades', icon: 'format_list_bulleted' },
 				children: [

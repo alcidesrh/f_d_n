@@ -8,7 +8,7 @@
 				<icon fill name="double_arrow" class="text-20px font-medium" />
 			</div>
 		</div>
-		<aside id="sidebar-body" ref="sidebar">
+		<aside id="sidebar-body" ref="sidebar" class="pt-20px">
 			<slot
 				name="content"
 				:data="{

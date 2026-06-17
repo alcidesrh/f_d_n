@@ -101,14 +101,17 @@ export function createApi(options: ApiOptions) {
 						await sleep(cfg.retryDelay ?? 500)
 						return request({ ...cfg, retry: (cfg.retry ?? 0) - 1 })
 					}
-					// if (res.status === 401) {
-					// 	throw '*usuario o contraseña incorrecto'
-					// 	if (!refreshToken) {
-					// 		const newToken = await refreshing
-					// 		refreshing = null
-					// 		if (newToken) return exec()
-					// 	}
-					// }
+					if (res.status === 401) {
+						const session = useUserSessionStore()
+						session.clear()
+
+						throw 'Usuario o contraseña incorrecto.'
+						// if (!refreshToken) {
+						// 	const newToken = await refreshing
+						// 	refreshing = null
+						// 	if (newToken) return exec()
+						// }
+					}
 					throw err?.error || err
 				}
 
