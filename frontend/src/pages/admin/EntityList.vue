@@ -6,7 +6,7 @@
 				<q-item-section class="items-end">
 					<div class="flex w-fit gap-x-5">
 						<icon
-							name="format_list_bulleted"
+							name="search"
 							@click="
 								$router.push({
 									name: 'list',

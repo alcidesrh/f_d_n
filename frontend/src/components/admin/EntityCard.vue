@@ -1,13 +1,13 @@
 <template>
 	<div class="entity-card">
 		<div class="entity-card__icon">
-			<Icon :name="icon" fill />
+			<icon :name="icon_name" fill />
 		</div>
 		<span class="entity-card__name">{{ entity.name }}</span>
-		<span v-if="entity.fields" class="entity-card__count">{{ entity.fields.length }} campos</span>
-		<div class="flex gap-x-5 mt-10px justify-center w-full">
-			<Icon name="format_list_bulleted" @click="$router.push({ name: 'list', params: { entity: entity.name } })" />
-			<Icon name="list_alt_add" @click="$router.push({ name: 'form', params: { entity: entity.name } })"></Icon>
+		<span v-if="entity.fields" class="entity-card__count">{{ Object.keys(entity.fields).length }} campos</span>
+		<div class="flex gap-x-3 mt-10px justify-center w-full">
+			<icon name="search" @click="$router.push({ name: 'list', params: { entity: entity.name } })" />
+			<Icon name="add" @click="$router.push({ name: 'form', params: { entity: entity.name } })"></Icon>
 			<Icon
 				name="settings"
 				@click="
@@ -17,12 +17,6 @@
 					})
 				"
 			></Icon>
-			<!-- <q-btn flat round icon="sym_o_list_alt_add" size="lg" @click="$router.push({ name: 'form', params: { entity: entity.name } })">
-				<q-tooltip anchor="top middle" self="bottom middle">Crear</q-tooltip>
-			</q-btn>
-			<q-btn flat round icon="sym_o_settings" size="lg" @click="$router.push({ name: 'form', params: { entity: entity.name } })">
-				<q-tooltip anchor="top middle" self="bottom middle">Crear</q-tooltip>
-			</q-btn> -->
 		</div>
 	</div>
 </template>
@@ -32,7 +26,7 @@
 
 	defineProps<{
 		entity: Entity
-		icon: string
+		icon_name: string
 	}>()
 </script>
 

@@ -25,7 +25,6 @@ use App\DTO\MetadataDTO;
       read: false,
       args: ['resource' => ['type' => 'String']],
       output: Agnostic::class,
-
     ),
     // new Query(
     //   name: 'crud',
