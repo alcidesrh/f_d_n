@@ -43,6 +43,29 @@ export const useSchemaStore = defineStore('schemaStore', {
 	},
 	// persist: true,
 	state: (): SchemaStore => ({
+		editables: [
+			'Action',
+			'Role',
+			'Permiso',
+			'Status',
+			'ApiToken',
+			'Usuario',
+			'Localidad',
+			'Nacion',
+			'Asiento',
+			'Bus',
+			'Empresa',
+			'Piloto',
+			'BusMarca',
+			'Boleto',
+			'Salida',
+			'Trayecto',
+			'Enclave',
+			'Tarifa',
+			'Cliente',
+			'Estacion',
+			'Parada',
+		],
 		entities: {},
 		types: {},
 		// queries: {},
@@ -173,7 +196,8 @@ export const useSchemaStore = defineStore('schemaStore', {
 				let temp
 				schema.types
 					.find((v) => v.kind == 'INTERFACE')
-					.possibleTypes.forEach((v) => {
+					.possibleTypes?.filter((v) => this.editables.includes(v.name))
+					.forEach((v) => {
 						const type = schema.types.find((v2) => v.name == v2.name)
 						const fields = {}
 						let typeName, input, field

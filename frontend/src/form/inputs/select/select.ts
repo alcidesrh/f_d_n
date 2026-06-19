@@ -1,30 +1,34 @@
-import { createInput } from "@formkit/vue";
-import cmp from "./select.vue";
-import BaseProps from "../BaseProps";
+import { createInput } from '@formkit/vue'
+import BaseProps from '../BaseProps'
+import cmp from './select.vue'
 const props = {
-  multiple: {
-    type: Boolean,
-    default: false,
-  },
-  options: {
-    type: Array,
-    default: [],
-  },
-  target: {
-    type: "String",
-  },
-  optionLabel: {
-    type: String,
-    default: "label",
-  },
-  optionValue: {
-    type: String,
-    default: "value",
-  },
-  placeholder: {
-    type: String,
-    default: null,
-  },
-};
-const select = createInput(cmp, { props: { ...BaseProps, ...props } });
-export default select;
+	autocomplete: {
+		type: Boolean,
+		default: false,
+	},
+	multiple: {
+		type: Boolean,
+		default: false,
+	},
+	options: {
+		type: Array,
+		default: [],
+	},
+	target: {
+		type: 'String',
+	},
+	optionLabel: {
+		type: String,
+		default: 'label',
+	},
+	optionValue: {
+		type: String,
+		default: 'value',
+	},
+	placeholder: {
+		type: String,
+		default: null,
+	},
+}
+const select = createInput(cmp, { props: { ...BaseProps, ...props } })
+export default select

@@ -3,7 +3,7 @@
 		<div id="login" ref="login" class="animate__animated animate__fast">
 			<q-card class="q-pa-lg shadow-12" style="width: 400px; max-width: 90vw" :class="{ 'opacity-50': loading }">
 				<div class="text-center w-full mb-15px">
-					<div class="text-4rem opacity-80 text-zinc-1" style="font-family: Faster One">F D N</div>
+					<div class="text-4rem opacity-80" style="font-family: Faster One">F D N</div>
 
 					<div class="text-1rem opacity-80 font-medium" style="font-weight: 600">Transportes Fuentes del Norte</div>
 				</div>
@@ -130,9 +130,9 @@
 	}
 	#login {
 		z-index: 3;
-		background-color: white; //-alpha($surface-3, 0.3);
+		background-color: -alpha($surface-1, 0.5);
 		// background: #64748b;
-		background: linear-gradient(180deg, rgba(100, 116, 139, 0.51) 0%, rgba(249, 250, 251, 1) 99%);
+		// background: linear-gradient(180deg, rgba(100, 116, 139, 0.51) 0%, rgba(249, 250, 251, 1) 99%);
 		& > div {
 			background-color: transparent;
 		}
@@ -140,7 +140,7 @@
 	#layout-login2 {
 		width: 100vw;
 		height: 100vh;
-		// background-color: -alpha($neutral-8, 0.5);
+		// background-color: -alpha($neutral-1, 0.2);
 		position: absolute;
 		z-index: 2;
 	}

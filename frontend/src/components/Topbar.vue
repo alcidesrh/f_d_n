@@ -1,6 +1,6 @@
 <template>
-	<div>
-		<div class="topbar px-2rem">
+	<div class="topbar">
+		<div class="topbar-content px-2rem">
 			<div class="left-section">
 				<clock />
 			</div>
@@ -14,7 +14,6 @@
 				<Icon class="cursor-pointer" name="logout" @click="logout" />
 			</div>
 		</div>
-		<div id="intersectionObservertarget" class="absolute" />
 	</div>
 </template>
 <script setup lang="ts">
@@ -26,28 +25,13 @@
 			router.push({ path: '/login' })
 		})
 	}
-	const observer = new IntersectionObserver(
-		(e) => {
-			const el = document.querySelector('.topbar')
-			if (e[0].intersectionRatio < 1) el.classList.add('layout-topbar-sticky')
-			else el.classList.remove('layout-topbar-sticky')
-		},
-		{
-			threshold: 1,
-			// box-shadow: $shadow-3;
-		},
-	)
-
-	onMounted(async () => {
-		const el = document.querySelector('#intersectionObservertarget')
-		observer.observe(el)
-	})
-	onUnmounted(() => observer.disconnect())
 </script>
 
 <style scoped lang="scss">
 	.right-section {
+		display: flex;
 		& > .fdn-icon {
+			margin: 0px 10px;
 			font-size: 24px;
 			// font-weight: 400;
 			color: $surface-6;

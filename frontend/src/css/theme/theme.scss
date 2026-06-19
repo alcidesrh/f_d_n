@@ -59,18 +59,18 @@ body {
 }
 
 .main-content {
-    top: 70px;
-    flex-grow: 1;
-    transition-property: padding-left;
-    transition-duration: 0.3s;
-    width: auto;
-    padding-left: $sidebar-width;
+  top: 70px;
+  flex-grow: 1;
+  transition-property: padding-left, padding-right;
+  transition-duration: 0.3s;
+  width: auto;
+  padding-left: $sidebar-width;
 
-    &.mini {
-        padding-left: $sidebar-mini-width;
-    }
+  &.mini {
+    padding-left: $sidebar-mini-width;
+  }
 
-    &.close {
-        padding-left: 0;
-    }
+  &.close {
+    padding-left: 0;
+  }
 }

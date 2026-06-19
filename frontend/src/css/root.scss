@@ -4,6 +4,14 @@
   // color-scheme: light;
   font-size: 16px;
 
+  --topbar-height: 70px;
+  --sidebar-large: 250px;
+  --sidebar-mini: 70px;
+  --sidebar-close: 0px;
+  --topbar-sidebar-bg: #{$surface-1};
+
+  --transition: 250ms ease;
+
   --primary: #{$primary};
   --secondary: #{$secondary};
   --accent: #{$accent};

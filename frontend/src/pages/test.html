@@ -1,0 +1,204 @@
+<html dir="ltr" lang="es"></html>
+<head>
+
+	<title>Quasar App</title>
+
+	<meta charset="utf-8">
+	<meta name="description" content="A Quasar Project">
+	<meta name="format-detection" content="telephone=no">
+	<meta name="msapplication-tap-highlight" content="no">
+	<meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
+	<script>
+		let layout = null
+		window.addEventListener('load', (event) => {
+			layout = document.getElementById('layout')
+		})
+
+		let leftState = 'large',
+			rightState = 'large'
+		function setLeft(state) {
+			leftState = leftState == 'large' ? 'mini' : 'large'
+			layout.classList.remove('left-large', 'left-mini', 'left-close')
+
+			layout.classList.add(`left-${leftState}`)
+		}
+
+		function setRight(state) {
+			rightState = rightState == 'large' ? 'mini' : 'large'
+
+			layout.classList.remove('right-large', 'right-mini', 'right-close')
+
+			layout.classList.add(`right-${rightState}`)
+		}
+
+		// ejemplos
+
+		// setLeft('mini')
+		// setRight('close')
+
+		// setLeft('large')
+		// setRight('large')
+	</script>
+	<style>
+		* {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 0;
+		}
+
+		:root {
+			--topbar-height: 70px;
+			--sidebar-large: 200px;
+			--sidebar-mini: 70px;
+			--sidebar-close: 0px;
+
+			--transition: 250ms ease;
+		}
+
+		html,
+		body {
+			width: 100%;
+			height: 100%;
+			overflow: hidden;
+			font-family: sans-serif;
+		}
+
+		.layout {
+			height: 100vh;
+
+			--left-width: var(--sidebar-large);
+			--right-width: var(--sidebar-large);
+
+			display: grid;
+
+			grid-template-columns:
+				var(--left-width)
+				minmax(0, 1fr)
+				var(--right-width);
+
+			grid-template-rows:
+				var(--topbar-height)
+				minmax(0, 1fr);
+
+			grid-template-areas:
+				'topbar topbar topbar'
+				'left main right';
+
+			transition: grid-template-columns var(--transition);
+		}
+
+		/* ---------- Topbar ---------- */
+
+		.topbar {
+			grid-area: topbar;
+
+			display: flex;
+			align-items: center;
+			padding-inline: 1rem;
+
+			border-bottom: 1px solid #ddd;
+			background: white;
+		}
+
+		/* ---------- Sidebars ---------- */
+
+		.left-sidebar,
+		.right-sidebar {
+			overflow: hidden;
+
+			background: #f8fafc;
+
+			transition:
+				width var(--transition),
+				opacity var(--transition);
+		}
+
+		.left-sidebar {
+			grid-area: left;
+			border-right: 1px solid #ddd;
+		}
+
+		.right-sidebar {
+			grid-area: right;
+			border-left: 1px solid #ddd;
+		}
+
+		/* ---------- Main ---------- */
+
+		.main-content {
+			grid-area: main;
+
+			overflow: auto;
+			min-width: 0;
+
+			padding: 1rem;
+		}
+
+		/* ===================================================== */
+		/* LEFT STATES                                            */
+		/* ===================================================== */
+
+		.layout.left-large {
+			--left-width: var(--sidebar-large);
+		}
+
+		.layout.left-mini {
+			--left-width: var(--sidebar-mini);
+		}
+
+		.layout.left-close {
+			--left-width: var(--sidebar-close);
+		}
+
+		/* ===================================================== */
+		/* RIGHT STATES                                           */
+		/* ===================================================== */
+
+		.layout.right-large {
+			--right-width: var(--sidebar-large);
+		}
+
+		.layout.right-mini {
+			--right-width: var(--sidebar-mini);
+		}
+
+		.layout.right-close {
+			--right-width: var(--sidebar-close);
+		}
+
+		/* ===================================================== */
+		/* RESPONSIVE                                             */
+		/* ===================================================== */
+
+		/* Tablet */
+
+		@media (max-width: 1200px) {
+			.layout {
+				--left-width: var(--sidebar-mini);
+				--right-width: var(--sidebar-mini);
+			}
+		}
+
+		/* Mobile */
+
+		@media (max-width: 768px) {
+			.layout {
+				--left-width: 0px;
+				--right-width: 0px;
+			}
+		}
+	</style>
+</head>
+<body>
+
+	<div class="layout left-large right-large" id="layout">
+		<header class="topbar">Topbar</header>
+
+		<aside class="left-sidebar" onclick="setLeft('mini')">Left Sidebar</aside>
+
+		<main class="main-content">Main Content</main>
+
+		<aside class="right-sidebar" onclick="setRight('u')">Right Sidebar</aside>
+	</div>
+</body>
+</html

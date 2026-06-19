@@ -2,15 +2,9 @@
 	<q-layout view="hHh LpR fFf">
 		<Notify />
 		<Topbar />
-		<SidebarDrawer store-id="sidebarLeft" position="left" v-once>
-			<template #content="{ data }">
-				<nav>
-					<MenuLarge v-if="data.mode == data.modeStates.large" :store="data" :menu="filteredMenu" />
-					<MenuMini v-else-if="data.mode == data.modeStates.mini" :items="filteredMenu"> </MenuMini>
-				</nav>
-			</template>
-		</SidebarDrawer>
-		<q-page-container class="main-content h-[100vh] relative" :class="[sidebarStore.position, mode]">
+		<SidebarLeft />
+
+		<q-page-container class="main-content h-[100vh] relative" :class="[sidebarStore.position, mode]" :style="rightPadStyle">
 			<q-page class="h-full u-p-xs lg:u-px-l m-auto relative">
 				<RouterView v-slot="{ Component, route }">
 					<transition :name="route.meta.transition || 'route'" mode="out-in">
@@ -19,7 +13,7 @@
 				</RouterView>
 			</q-page>
 		</q-page-container>
-
+		<SidebarRight />
 		<q-inner-loading :showing="loadingStore.loading">
 			<q-spinner-dots color="primary" size="3em" />
 		</q-inner-loading>
@@ -33,11 +27,19 @@
 	import { computed, ref } from 'vue'
 
 	const sidebarStore = useSidebarStore('sidebarLeft', 'left')
+	const rightSidebar = useSidebarStore('sidebarRight', 'right')
 	const loadingStore = useLoadingStore()
 	const session = useUserSessionStore()
 	const { can } = usePermission()
 
 	const { mode, modeStates } = storeToRefs(sidebarStore)
+
+	const SMALL = 57
+	const LARGE = 184
+	const rightPadStyle = computed(() => {
+		const m = rightSidebar.mode
+		return { paddingRight: m === 'close' ? '0px' : m === 'mini' ? SMALL + 'px' : LARGE + 'px' }
+	})
 
 	const menu = [
 		// {
@@ -129,12 +131,6 @@
 
 		return base
 	})
-
-	const menuStore = useMenuStateStore('menu-left', menu)
-	const { toggle } = storeToRefs(menuStore)
-
-	const leftDrawerOpen = ref(false)
-	const rightDrawerOpen = ref(false)
 
 	const customize = ref([
 		{

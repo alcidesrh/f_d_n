@@ -26,7 +26,7 @@ function defineSidebarStore<Id extends string, Position extends string>(
     persist: true,
     state: (): SidebarState => {
       return {
-        mode: $q.screen.lt.sm ? "close" : "large",
+        mode: position === "right" ? "close" : ($q.screen.lt.sm ? "close" : "large"),
         position,
         w: 200,
         t: 70,

@@ -13,6 +13,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     Breadcrumbs: typeof import('./components/Breadcrumbs.vue')['default']
     ButtonPreload: typeof import('./components/preload/ButtonPreload.vue')['default']
+    ChangePasswordModal: typeof import('./components/ChangePasswordModal.vue')['default']
     Clock: typeof import('./components/Clock.vue')['default']
     CollectionBody: typeof import('./components/crud/collection/CollectionBody.vue')['default']
     CollectionCell: typeof import('./components/crud/collection/CollectionCell.vue')['default']
@@ -48,6 +49,8 @@ declare module 'vue' {
     RoleUpdate: typeof import('./components/role/RoleUpdate.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SectionMini: typeof import('./components/sidebar/SectionMini.vue')['default']
+    SectionTree: typeof import('./components/sidebar/SectionTree.vue')['default']
     SidebarDrawer: typeof import('./components/SidebarDrawer.vue')['default']
     SidebarLeft: typeof import('./components/SidebarLeft.vue')['default']
     SidebarRight: typeof import('./components/SidebarRight.vue')['default']

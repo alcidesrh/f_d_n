@@ -1,10 +1,10 @@
 import type { RouteRecordRaw } from 'vue-router'
 import actionRoutes from './action'
 import adminRoutes from './admin'
+import boletoRoutes from './boleto'
 import roleRoutes from './role'
 import testRoutes from './test'
 import userRoutes from './user'
-import boletoRoutes from './boleto'
 
 const routes: RouteRecordRaw[] = [
 	{
@@ -21,7 +21,7 @@ const routes: RouteRecordRaw[] = [
 	},
 	{
 		path: '/',
-		component: () => import('layouts/MainLayout.vue'),
+		component: () => import('layouts/MainLayout2.vue'),
 		meta: {
 			breadcrumb: 'Inicio',
 			icon: 'home',
@@ -100,7 +100,7 @@ const routes: RouteRecordRaw[] = [
 			...roleRoutes,
 			...testRoutes,
 			...adminRoutes,
-			...boletoRoutes
+			...boletoRoutes,
 		],
 	},
 
