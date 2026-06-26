@@ -12,21 +12,31 @@
 		</header>
 
 		<section class="dashboard__section">
-			<h2 class="dashboard__section-title">Resumen</h2>
-			<div class="stats-grid">
-				<StatsCard v-for="stat in stats" :key="stat.label" v-bind="stat" />
+			<div class="dashboard__section-header" @click="toggleSection('resumen')">
+				<h2 class="dashboard__section-title">Resumen</h2>
+				<icon :name="expandedSections.has('resumen') ? 'expand_less' : 'expand_more'" class="section-chevron" />
+			</div>
+			<div v-if="expandedSections.has('resumen')" class="dashboard__section-body">
+				<div class="stats-grid">
+					<StatsCard v-for="stat in stats" :key="stat.label" v-bind="stat" />
+				</div>
 			</div>
 		</section>
 
 		<section class="dashboard__section">
-			<h2 class="dashboard__section-title">Gestión de Entidades</h2>
-			<p class="dashboard__section-desc">Acceda a las operaciones CRUD de cada entidad del sistema</p>
-			<div v-if="entities.length" class="entities-grid">
-				<EntityCard v-for="entity in entities" :key="entity.name" :entity="entity" :icon_name="getEntityIcon(entity.name)" />
+			<div class="dashboard__section-header" @click="toggleSection('entities')">
+				<h2 class="dashboard__section-title">Gestión de Entidades</h2>
+				<icon :name="expandedSections.has('entities') ? 'expand_less' : 'expand_more'" class="section-chevron" />
 			</div>
-			<div v-else class="dashboard__empty">
-				<q-spinner-dots color="primary" size="2em" />
-				<span>Cargando entidades...</span>
+			<div v-if="expandedSections.has('entities')" class="dashboard__section-body">
+				<p class="dashboard__section-desc">Acceda a las operaciones CRUD de cada entidad del sistema</p>
+				<div v-if="entities.length" class="entities-grid">
+					<EntityCard v-for="entity in entities" :key="entity.name" :entity="entity" :icon_name="getEntityIcon(entity.name)" :record-count="recordCounts[entity.name]" :loading="loadingCounts" />
+				</div>
+				<div v-else class="dashboard__empty">
+					<q-spinner-dots color="primary" size="2em" />
+					<span>Cargando entidades...</span>
+				</div>
 			</div>
 		</section>
 	</q-page>
@@ -48,6 +58,16 @@
 	const schemaStore = useSchemaStore()
 	const today = computed(() => new Date().toLocaleDateString('es-BO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }))
 
+	const expandedSections = reactive(new Set(['resumen']))
+
+	function toggleSection(name: string) {
+		if (expandedSections.has(name)) {
+			expandedSections.delete(name)
+		} else {
+			expandedSections.add(name)
+		}
+	}
+
 	function isEntity(name: string): boolean {
 		return (
 			!name.endsWith('Connection') &&
@@ -66,6 +86,21 @@
 			.filter(([name]) => isEntity(name))
 			.map(([, entity]) => entity),
 	)
+
+	const recordCounts = ref<Record<string, number>>({})
+	const loadingCounts = ref(true)
+
+	onMounted(async () => {
+		try {
+			const api = useApi()
+			const data = await api.get('/entity-record-counts')
+			recordCounts.value = data
+		} catch {
+			// silently fail; cards show placeholder
+		} finally {
+			loadingCounts.value = false
+		}
+	})
 
 	function rand(min: number, max: number): number {
 		return Math.floor(Math.random() * (max - min + 1)) + min
@@ -170,14 +205,42 @@
 		}
 
 		&__section {
-			margin-bottom: 2.5rem;
+			margin-bottom: 1rem;
+			border: 1px solid $surface-4;
+			border-radius: 10px;
+			background: #fff;
+			overflow: hidden;
+		}
+
+		&__section-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 0.75rem 1rem;
+			cursor: pointer;
+			user-select: none;
+			transition: background 0.15s;
+
+			&:hover {
+				background: $surface-1;
+			}
 		}
 
 		&__section-title {
-			font-size: 1.125rem;
+			font-size: 1rem;
 			font-weight: 600;
 			color: $dark;
-			margin: 0 0 0.25rem;
+			margin: 0;
+		}
+
+		.section-chevron {
+			font-size: 1.25rem;
+			color: $surface-6;
+			transition: transform 0.2s;
+		}
+
+		&__section-body {
+			padding: 0.25rem 1rem 1rem;
 		}
 
 		&__section-desc {

@@ -2,25 +2,22 @@
 
 namespace App\Repository;
 
-use App\Entity\Salida;
+use App\Entity\Servicio;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends CustomEntityRepository<Salida>
- *
- * @method Salida|null find($id, $lockMode = null, $lockVersion = null)
- * @method Salida|null findOneBy(array $criteria, array $orderBy = null)
- * @method Salida[]    findAll()
- * @method Salida[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ * @extends ServiceEntityRepository<Servicio>
  */
-class SalidaRepository extends CustomEntityRepository {
-    public function __construct(ManagerRegistry $registry) {
-        parent::__construct($registry, Salida::class);
+class ServicioRepository extends ServiceEntityRepository
+{
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, Servicio::class);
     }
 
     //    /**
-    //     * @return Salida[] Returns an array of Salida objects
+    //     * @return Servicio[] Returns an array of Servicio objects
     //     */
     //    public function findByExampleField($value): array
     //    {
@@ -34,7 +31,7 @@ class SalidaRepository extends CustomEntityRepository {
     //        ;
     //    }
 
-    //    public function findOneBySomeField($value): ?Salida
+    //    public function findOneBySomeField($value): ?Servicio
     //    {
     //        return $this->createQueryBuilder('s')
     //            ->andWhere('s.exampleField = :val')

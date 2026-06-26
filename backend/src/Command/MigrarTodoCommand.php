@@ -6,16 +6,22 @@ use App\Migration\Limpiador;
 use App\Migration\Migrador;
 use App\Migration\MigradorEstaticos;
 use App\Migration\MigradorIAM;
+use App\Repository\TarifaRepository;
 use App\Services\EntityConfigSynchronizer;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Tools\SchemaTool;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Console\Attribute\Argument;
+use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
+use Doctrine\DBAL\Connection;
 
 #[AsCommand(
     name: 'app:migrar:todo',
@@ -36,20 +42,35 @@ class MigrarTodoCommand extends Command {
     protected function configure(): void {
         $this
             ->addOption('clean', null, InputOption::VALUE_NONE, 'Limpia la BD antes de migrar')
+            ->addOption('skip-estaticos', null, InputOption::VALUE_NONE, 'Salta la migración Estaticos')
             ->addOption('skip-iam', null, InputOption::VALUE_NONE, 'Salta la migración IAM')
             ->addOption('skip-config', null, InputOption::VALUE_NONE, 'Salta la sincronización de EntityConfiguration')
-            ->addArgument('boletos', InputArgument::OPTIONAL, 'Cantidad de boletos a migrar', '100');
+            ->addOption('boletos', null, InputOption::VALUE_OPTIONAL, 'Cantidad de boletos a migrar', '100')
+            ->addOption(
+                'entities',
+                null,
+                InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY,
+                'Who do you want to greet (separate multiple names with a space)?',
+                []
+            );
+        // ->addArgument('boletos', InputArgument::OPTIONAL, 'Cantidad de boletos a migrar', '100')
+        // ->addArgument(
+        //     'entities',
+        //     InputArgument::IS_ARRAY,
+        //     'Who do you want to greet (separate multiple names with a space)?'
+        // );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int {
         $clean = (bool) $input->getOption('clean');
+        $skipEstatico = (bool) $input->getOption('skip-estaticos');
         $skipIam = (bool) $input->getOption('skip-iam');
         $skipConfig = (bool) $input->getOption('skip-config');
-        $boletos = (int) $input->getArgument('boletos');
+        $boletos = (int) $input->getOption('boletos');
+        $entities =  $input->getOption('entities');
         // Reset the debug data holder to avoid memory exhaustion from
         // BacktraceDebugDataHolder accumulating all migration queries.
         $this->resetDebugDataHolder();
-
         $start = microtime(true);
         $allCounters = [];
         $steps = [];
@@ -64,16 +85,17 @@ class MigrarTodoCommand extends Command {
 
         // ─── Paso 2: Datos estáticos ──────────────────────────────
         $this->resetDebugDataHolder();
-        $output->writeln('<info>[2/5] Migrando datos estáticos...</info>');
-        try {
-            $contadores = $this->migradorEstaticos->migrar($output);
-            $allCounters = array_merge($allCounters, $contadores);
-            $steps[] = 'estaticos';
-        } catch (\Throwable $e) {
-            $output->writeln("<error>Error en datos estáticos: {$e->getMessage()}</error>");
-            return Command::FAILURE;
+        if (!$skipEstatico) {
+            $output->writeln('<info>[2/5] Migrando datos estáticos...</info>');
+            try {
+                $contadores = $this->migradorEstaticos->migrar($output);
+                $allCounters = array_merge($allCounters, $contadores);
+                $steps[] = 'estaticos';
+            } catch (\Throwable $e) {
+                $output->writeln("<error>Error en datos estáticos: {$e->getMessage()}</error>");
+                return Command::FAILURE;
+            }
         }
-
         // ─── Paso 3: IAM ──────────────────────────────────────────
         if (!$skipIam) {
             $this->resetDebugDataHolder();
@@ -87,7 +109,6 @@ class MigrarTodoCommand extends Command {
                 return Command::FAILURE;
             }
         }
-
         // ─── Paso 4: EntityConfiguration ─────────────────────────
         if (!$skipConfig) {
             $output->writeln('<info>[4/5] Sincronizando EntityConfiguration...</info>');
@@ -114,7 +135,9 @@ class MigrarTodoCommand extends Command {
         // ─── Paso 5: Boletos (datos variables) ────────────────────
         $output->writeln(sprintf('<info>[5/5] Migrando hasta %d boletos...</info>', $boletos));
         try {
-            $contadores = $this->migrador->migrarBoletos($boletos, false, $output);
+            // $contadores = $this->migrador->migrarBoletos($boletos, false, $output);
+            $contadores = $this->migrador->migrarServicio($output);
+
             $allCounters = array_merge($allCounters, $contadores);
             $steps[] = 'boletos';
         } catch (\Throwable $e) {
@@ -152,5 +175,49 @@ class MigrarTodoCommand extends Command {
         if ($container && $container->has('doctrine.debug_data_holder')) {
             $container->get('doctrine.debug_data_holder')->reset();
         }
+    }
+    // #[AsCommand('app:reset-db')]
+    public function resetDB(#[Option] bool $hard = false, ?InputInterface $input = null, ?OutputInterface $output = null): int {
+        $io = new SymfonyStyle($input, $output);
+        $hard = (bool) $input->getOption('hard');
+        if ($hard) {
+            // $io->warning('HARD RESET: se dropeará y recreará la base de datos');
+            // if (!$io->confirm('¿Continuar?', false)) {
+            //     return Command::SUCCESS;
+            // }
+
+            $io->section('Dropeando base de datos...');
+            $this->entityManager->getConnection()->executeStatement('DROP SCHEMA public CASCADE');
+            $this->entityManager->getConnection()->executeStatement('CREATE SCHEMA public');
+            $this->entityManager->getConnection()->executeStatement('GRANT ALL ON SCHEMA public TO PUBLIC');
+            $io = new SymfonyStyle($input, $output);
+
+            $metadata = $this->entityManager
+                ->getMetadataFactory()
+                ->getAllMetadata();
+
+            $tool = new SchemaTool($this->entityManager);
+            $tool->createSchema($metadata);
+
+            $io->success('Base de datos recreada y migraciones ejecutadas');
+        } else {
+            $io->section('Truncando tablas migrables...');
+            $this->limpiador->limpiar();
+            $io->success('Tablas migrables truncadas');
+        }
+
+        return Command::SUCCESS;
+    }
+
+    // #[AsCommand('app:migrar:estaticos')]
+    public function estaticos(#[Argument] array $entities = [], ?OutputInterface $output = null): int {
+        $output->writeln('<info>Migrando datos estáticos...</info>');
+        try {
+            $contadores = $this->migradorEstaticos->migrar($output, $entities);
+        } catch (\Throwable $e) {
+            $output->writeln("<error>Error en datos estáticos: {$e->getMessage()}</error>");
+            return Command::FAILURE;
+        }
+        return Command::SUCCESS;
     }
 }

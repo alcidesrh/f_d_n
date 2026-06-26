@@ -8,7 +8,7 @@ class Limpiador {
     private array $tables = [
         'boleto_asiento',
         'boleto',
-        'salida',
+        'servicio',
         'tarifa_trayecto',
         'tarifa',
         'trayecto_trayecto',
@@ -35,7 +35,7 @@ class Limpiador {
 
     private array $sequences = [
         'boleto_id_seq',
-        'salida_id_seq',
+        'servicio_id_seq',
         'tarifa_id_seq',
         'trayecto_id_seq',
         'asiento_id_seq',

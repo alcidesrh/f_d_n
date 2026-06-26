@@ -2,8 +2,11 @@
 
 namespace App\Migration;
 
+use App\EntitySistemaFdn\Salida;
 use Doctrine\DBAL\Connection;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\DependencyInjection\Attribute\Target;
 
 class Migrador {
     /**
@@ -14,16 +17,20 @@ class Migrador {
     /**
      * Tables that keep legacy_id column (old PK is string or variable data).
      */
-    private const LEGACY_MAP = ['bus', 'trayecto', 'salida', 'boleto'];
+    private const LEGACY_MAP = ['bus', 'trayecto', 'servicio', 'boleto'];
 
     public function __construct(
         private Connection $newConn,
-        private \PDO $oldPdo,
+        // #[Target('oldPdo')] private \PDO $oldPdo,
         private Mapeador $mapeador,
         private Limpiador $limpiador,
+        private EntityManagerInterface $entityManager,
+        #[Target('doctrine.orm.systemfdn_entity_manager')]
+        private EntityManagerInterface $systemfdnEm,
+
     ) {
-        $this->oldPdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-        $this->oldPdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
+        // $this->oldPdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        // $this->oldPdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
     }
 
     public function migrarBoletos(int $cantidad, bool $limpiar = false, ?OutputInterface $output = null): array {
@@ -76,6 +83,26 @@ class Migrador {
             $output->writeln('');
         }
         return $contadores;
+    }
+
+    public function migrarServicio(?OutputInterface $output = null): array {
+
+        $conn = $this->systemfdnEm->getConnection();
+
+        try {
+            $conn->executeQuery('SELECT 1')->fetchOne();
+            dump('Conectó correctamente');
+        } catch (\Throwable $e) {
+            dump(get_class($e));
+            dump($e->getMessage());
+            throw $e;
+        }
+        $repo = $this->systemfdnEm->getRepository(Salida::class);
+        $result = $repo->createQueryBuilder('e')->where('e.fecha > :fecha')
+            ->setParameter('fecha', '20260701')
+            ->getQuery()
+            ->getResult();
+        return $result;
     }
 
     public function getUltimaFechaMigracion(): ?string {
@@ -192,9 +219,10 @@ class Migrador {
     // ─── Fetch helpers ─────────────────────────────────────────────
 
     private function fetchOld(string $sql, array $params = []): array {
-        $stmt = $this->oldPdo->prepare($sql);
-        $stmt->execute($params);
-        return $stmt->fetchAll();
+        return $this->systemfdnEm->getConnection()->executeQuery($sql, $params)->fetchAllAssociative();
+        // $stmt = $this->oldPdo->prepare($sql);
+        // $stmt->execute($params);
+        // return $stmt->fetchAll();
     }
 
     private function fetchBoletos(int $limit, int $offset): array {
@@ -206,8 +234,8 @@ class Migrador {
         return $this->fetchOld($sql);
     }
 
-    private function fetchSalida(int|string $id): ?array {
-        $result = $this->fetchOld('SELECT * FROM salida WHERE id = :id', ['id' => $id]);
+    private function fetchServicio(int|string $id): ?array {
+        $result = $this->fetchOld('SELECT * FROM servicio WHERE id = :id', ['id' => $id]);
         return $result[0] ?? null;
     }
 
@@ -287,19 +315,19 @@ class Migrador {
     // ─── Migration core ────────────────────────────────────────────
 
     private function migrarBoleto(array $boletoOld, array &$contadores): void {
-        $existing = $this->getNewId('salida', (string) $boletoOld['salida_id'], ['id', 'ruta_id']);
+        $existing = $this->getNewId('servicio', (string) $boletoOld['servicio_id'], ['id', 'recorrido_id']);
         if (!$existing) {
-            $salidaOld = $this->fetchSalida($boletoOld['salida_id']);
-            if (!$salidaOld) {
+            $servicioOld = $this->fetchServicio($boletoOld['servicio_id']);
+            if (!$servicioOld) {
                 return;
             }
-            $itinerarioOld = $salidaOld['itinerario_id'] ? $this->fetchItinerario($salidaOld['itinerario_id']) : null;
-            $empresaId = $this->migrarEmpresa($salidaOld['empresa_id'], $contadores);
+            $itinerarioOld = $servicioOld['itinerario_id'] ? $this->fetchItinerario($servicioOld['itinerario_id']) : null;
+            $empresaId = $this->migrarEmpresa($servicioOld['empresa_id'], $contadores);
 
             $busId = null;
-            if ($salidaOld['bus_codigo']) {
-                $busId = $this->migrarBus($salidaOld['bus_codigo'], $empresaId, $contadores);
-                $this->migrarAsientosParaBus($salidaOld['bus_codigo'], $busId, $contadores);
+            if ($servicioOld['bus_codigo']) {
+                $busId = $this->migrarBus($servicioOld['bus_codigo'], $empresaId, $contadores);
+                $this->migrarAsientosParaBus($servicioOld['bus_codigo'], $busId, $contadores);
             }
 
             $trayectoId = null;
@@ -310,31 +338,30 @@ class Migrador {
             $tarifaId = $this->migrarTarifa(
                 $boletoOld['estacion_origen_id'],
                 $boletoOld['estacion_destino_id'],
-                $salidaOld['empresa_id'],
+                $servicioOld['empresa_id'],
                 $contadores
             );
-
-            $salidaId = $this->migrarSalidaRecord(
-                $boletoOld['salida_id'],
-                $salidaOld,
-                $trayectoId,
+            $idRecorrido = $this->migrarRecorrido($trayectoId, $tarifaId);
+            $servicioId = $this->migrarServicioRecord(
+                $boletoOld['servicio_id'],
+                $servicioOld,
+                $idRecorrido,
                 $busId,
                 $empresaId,
-                $tarifaId,
                 $contadores
             );
-            $estacionId = $this->migrarEstacion($boletoOld['estacion_origen_id'], $contadores);
+            // $estacionId = $this->migrarEstacions($boletoOld['estacion_origen_id'], $contadores);
         } else {
-            $salidaId = $existing['id'];
-            $trayectoId = $this->getNewId('salida', (string) $salidaId, ['ruta_id'])['ruta_id'] ?? null;
-            $estacionId = $trayectoId ? ($this->getNewId('trayecto', (string) $trayectoId, ['origen_id'])['origen_id'] ?? null) : null;
+            $servicioId = $existing['id'];
+            $idRecorrido = $this->getNewId('servicio', (string) $servicioId, ['recorrido_id'])['recorrido_id'] ?? null;
+            // $estacionId = $idRecorrido ? ($this->getNewId('recorrido', (string) $idRecorrido, ['origen_id'])['origen_id'] ?? null) : null;
         }
-
+        $estacionId = $boletoOld['estacion_creacion_id'] ? $this->migrarEstacions($boletoOld['estacion_origen_id'], $contadores) : null;
         $clienteId = $this->migrarCliente($boletoOld, $contadores);
         $asientoId = $this->getNewId('asiento', (string) ($boletoOld['asiento_bus_id'] ?? ''));
         $usuarioId = $this->migrarUsuario($boletoOld, $contadores);
 
-        $boletoId = $this->insertarBoleto($boletoOld, $salidaId, $clienteId, $estacionId, $trayectoId, $usuarioId);
+        $boletoId = $this->insertarBoleto($boletoOld, $servicioId, $clienteId, $estacionId, $idRecorrido, $usuarioId);
 
         if ($asientoId && $boletoId) {
             $this->newConn->executeStatement(
@@ -371,7 +398,7 @@ class Migrador {
         return (int) $data['id'];
     }
 
-    private function migrarEstacion(?int $oldId, array &$contadores): ?int {
+    private function migrarEstacions(?int $oldId, array &$contadores): ?int {
         if (!$oldId) {
             return null;
         }
@@ -493,8 +520,10 @@ class Migrador {
 
     private function migrarUsuario(array $boletoOld, array &$contadores): ?int {
         $usuarioIds = [$boletoOld['usuario_creacion_id']];
-        if ($boletoOld['usuario_actualizacion_id']
-            && $boletoOld['usuario_actualizacion_id'] !== $boletoOld['usuario_creacion_id']) {
+        if (
+            $boletoOld['usuario_actualizacion_id']
+            && $boletoOld['usuario_actualizacion_id'] !== $boletoOld['usuario_creacion_id']
+        ) {
             $usuarioIds[] = $boletoOld['usuario_actualizacion_id'];
         }
 
@@ -544,8 +573,8 @@ class Migrador {
             return null;
         }
 
-        $origenId = $this->migrarEstacion($oldRuta['estacion_origen_id'], $contadores);
-        $destinoId = $this->migrarEstacion($oldRuta['estacion_destino_id'], $contadores);
+        $origenId = $this->migrarEstacions($oldRuta['estacion_origen_id'], $contadores);
+        $destinoId = $this->migrarEstacions($oldRuta['estacion_destino_id'], $contadores);
         if (!$origenId || !$destinoId) {
             return null;
         }
@@ -570,7 +599,7 @@ class Migrador {
 
         $stationIds = [$rutaOrigenId];
         foreach ($items as $item) {
-            $estId = $this->migrarEstacion($item['estacion_id'], $contadores);
+            $estId = $this->migrarEstacions($item['estacion_id'], $contadores);
             if ($estId) {
                 $stationIds[] = $estId;
             }
@@ -607,7 +636,16 @@ class Migrador {
             ['padre' => $padreId, 'hijo' => $hijoId]
         );
     }
-
+    private function migrarRecorrido(?int $idTrayecto, ?int $idTarifa): ?int {
+        $sql = 'Select id from recorrido where trayecto_id = :trayecto and tarifa_id = :tarifa';
+        if ($result = $this->newConn->fetchOne($sql, ['trayecto' => $idTrayecto, 'tarifa' => $idTarifa])) {
+            return (int) $result;
+        }
+        return $this->newConn->fetchOne(
+            'INSERT INTO recorrido (trayecto_id, tarifa_id) VALUES (:trayecto, :tarifa) RETURNING id',
+            ['trayecto' => $idTrayecto, 'tarifa' => $idTarifa]
+        );
+    }
     private function migrarTarifa(?int $origenId, ?int $destinoId, ?int $empresaOldId, array &$contadores): ?int {
         if (!$origenId || !$destinoId || !$empresaOldId) {
             return null;
@@ -630,7 +668,7 @@ class Migrador {
 
         $data = $this->mapeador->tarifa($tarifaOld, $empresaId);
         $this->newConn->executeStatement(
-            'INSERT INTO tarifa (id, nombre, precio_clase_a, precio_clase_b, empresa_id, bus_id) VALUES (:id, :nombre, :precio_clase_a, :precio_clase_b, :empresa_id, :bus_id)',
+            'INSERT INTO tarifa (id, nombre, precio_clase_a_monto, precio_clase_b_monto, precio_clase_a_moneda, precio_clase_b_moneda, empresa_id, bus_id) VALUES (:id, :nombre, :precio_clase_a_monto, :precio_clase_b_monto,:precio_clase_a_moneda, :precio_clase_b_moneda, :empresa_id, :bus_id)',
             $data
         );
         $contadores['tarifa']++;
@@ -638,35 +676,35 @@ class Migrador {
         return (int) $data['id'];
     }
 
-    private function migrarSalidaRecord(int|string $salidaOldId, array $salidaOld, ?int $trayectoId, ?int $busId, int $empresaId, ?int $tarifaId, array &$contadores): ?int {
-        $legacyId = (string) $salidaOldId;
-        if ($this->yaMigrado('salida', $legacyId)) {
-            return $this->getNewId('salida', $legacyId);
+    private function migrarServicioRecord(int|string $servicioOldId, array $servicioOld, ?int $idRecorrido, ?int $busId, int $empresaId, array &$contadores): ?int {
+        $legacyId = (string) $servicioOldId;
+        if ($this->yaMigrado('servicio', $legacyId)) {
+            return $this->getNewId('servicio', $legacyId);
         }
 
-        $data = $this->mapeador->salida($salidaOld, $trayectoId, $busId, $empresaId, $tarifaId);
+        $data = $this->mapeador->servicio($servicioOld, $idRecorrido, $busId, $empresaId);
         $id = $this->newConn->fetchOne(
-            'INSERT INTO salida (hora_partida, ruta_id, bus_id, empresa_id, tarifa_id, activa, legacy_id) VALUES (:hora_partida, :ruta_id, :bus_id, :empresa_id, :tarifa_id, :activa, :legacy_id) RETURNING id',
+            'INSERT INTO servicio (hora_partida, recorrido_id, bus_id, empresa_id legacy_id) VALUES (:hora_partida, :recorrido_id, :bus_id, :empresa_id :legacy_id) RETURNING id',
             $data
         );
-        $contadores['salida']++;
+        $contadores['servicio']++;
 
         return (int) $id;
     }
 
-    private function insertarBoleto(array $boletoOld, ?int $salidaId, ?int $clienteId, ?int $estacionId, ?int $trayectoId, ?int $usuarioId): ?int {
+    private function insertarBoleto(array $boletoOld, ?int $servicioId, ?int $clienteId, ?int $estacionId, ?int $idRecorrido, ?int $usuarioId): ?int {
         $data = $this->mapeador->boleto(
             $boletoOld,
-            $salidaId,
+            $servicioId,
             $clienteId,
             $estacionId,
-            $trayectoId,
+            $idRecorrido,
             $boletoOld['asiento_bus_id'] ?? null,
             $usuarioId
         );
 
         return (int) $this->newConn->fetchOne(
-            'INSERT INTO boleto (fecha_compra, salida_id, trayecto_id, cliente_id, estacion_id, usuario_creador, legacy_id) VALUES (:fecha_compra, :salida_id, :trayecto_id, :cliente_id, :estacion_id, :usuario_creador, :legacy_id) RETURNING id',
+            'INSERT INTO boleto (fecha_compra, servicio_id, recorrido_id, cliente_id, estacion_id, usuario_creador, legacy_id) VALUES (:fecha_compra, :servicio_id, :recorrido_id, :cliente_id, :estacion_id, :usuario_creador, :legacy_id) RETURNING id',
             $data
         );
     }
@@ -680,7 +718,7 @@ class Migrador {
             'cliente' => 0,
             'trayecto' => 0,
             'tarifa' => 0,
-            'salida' => 0,
+            'servicio' => 0,
             'boleto' => 0,
             'usuario' => 0,
         ];

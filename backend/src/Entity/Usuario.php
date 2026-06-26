@@ -9,6 +9,7 @@ use ApiPlatform\Doctrine\Orm\Filter\PartialSearchFilter;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Metadata\ApiFilter;
 use App\Attribute\ApiResourcePaginationPage;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -121,6 +122,12 @@ class Usuario extends PersonaBase implements UserInterface, PasswordAuthenticate
     #[ORM\InverseJoinColumn(name: 'action_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
     private Collection $deniedActions;
 
+    /**
+     * @var Collection<int, Venta>
+     */
+    #[ORM\OneToMany(targetEntity: Venta::class, mappedBy: 'usuario')]
+    private Collection $ventas;
+
     public function __construct($data = []) {
 
         if (!empty($data)) {
@@ -132,6 +139,7 @@ class Usuario extends PersonaBase implements UserInterface, PasswordAuthenticate
         $this->permisos = new ServicesCollection();
         $this->directActions = new ServicesCollection();
         $this->deniedActions = new ServicesCollection();
+        $this->ventas = new ArrayCollection();
     }
 
     public function getFullName() {
@@ -334,5 +342,35 @@ class Usuario extends PersonaBase implements UserInterface, PasswordAuthenticate
     public function getLabel() {
         $temp = explode(' ', $this->apellido);
         return $this->username . ': ' . $this->nombre . ' ' . $temp[0] ?? $this->apellido;
+    }
+
+    /**
+     * @return Collection<int, Venta>
+     */
+    public function getVentas(): Collection
+    {
+        return $this->ventas;
+    }
+
+    public function addVenta(Venta $venta): static
+    {
+        if (!$this->ventas->contains($venta)) {
+            $this->ventas->add($venta);
+            $venta->setUsuario($this);
+        }
+
+        return $this;
+    }
+
+    public function removeVenta(Venta $venta): static
+    {
+        if ($this->ventas->removeElement($venta)) {
+            // set the owning side to null (unless already changed)
+            if ($venta->getUsuario() === $this) {
+                $venta->setUsuario(null);
+            }
+        }
+
+        return $this;
     }
 }

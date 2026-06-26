@@ -2,7 +2,9 @@
 
 namespace App\Migration;
 
+use App\Repository\TarifaRepository;
 use Doctrine\DBAL\Connection;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
@@ -16,16 +18,20 @@ use Symfony\Component\Console\Output\OutputInterface;
  * keep a legacy_id column.
  */
 class MigradorEstaticos {
+
     public function __construct(
         private Connection $newConn,
-        private \PDO $oldPdo,
+        // #[Target('oldPdo')] private \PDO $oldPdo,
+        #[Target('doctrine.orm.systemfdn_entity_manager')]
+        private EntityManagerInterface $systemfdnEm,
         private Mapeador $mapeador,
+        private TarifaRepository $tarifaRepository
     ) {
-        $this->oldPdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-        $this->oldPdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
+        // $this->oldPdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        // $this->oldPdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
     }
 
-    public function migrar(?OutputInterface $output = null): array {
+    public function migrar(?OutputInterface $output = null, $entities = []): array {
         $contadores = [
             'empresa' => 0,
             'estacion' => 0,
@@ -42,20 +48,26 @@ class MigradorEstaticos {
 
         $this->newConn->beginTransaction();
         try {
-            $contadores['empresa'] = $this->migrarEmpresas($output);
-            $contadores['piloto'] = $this->migrarPilotos($output);
-            $contadores['localidad'] = $this->migrarLocalidades($output);
-            $contadores['estacion'] = $this->migrarEstaciones($output);
-            $contadores['cliente'] = $this->migrarClientes($output);
-            $contadores['usuario'] = $this->migrarUsuarios($output);
-            $contadores['bus_marca'] = $this->migrarMarcas($output);
-            $contadores['bus'] = $this->migrarBuses($output);
-            $contadores['asiento'] = $this->migrarAsientos($output);
-            $contadores['trayecto'] = $this->migrarTrayectos($output);
-            $contadores['tarifa'] = $this->migrarTarifas($output);
+            if (!empty($entities)) {
+                $output->writeln('<comment>Migrando solo entidades: ' . implode(', ', $entities) . '</comment>');
+                foreach ($entities as $key => $value) {
+                    $funcName = 'migrar' . ucfirst($value) . 's';
+                    $contadores[$value] = $this->$funcName($output);
+                }
+            } else {
 
-
-
+                $contadores['empresa'] = $this->migrarEmpresas($output);
+                $contadores['piloto'] = $this->migrarPilotos($output);
+                $contadores['localidad'] = $this->migrarLocalidads($output);
+                $contadores['estacion'] = $this->migrarEstacions($output);
+                $contadores['cliente'] = $this->migrarClientes($output);
+                $contadores['usuario'] = $this->migrarUsuarios($output);
+                $contadores['bus_marca'] = $this->migrarMarcas($output);
+                $contadores['bus'] = $this->migrarBuss($output);
+                $contadores['asiento'] = $this->migrarAsientos($output);
+                $contadores['trayecto'] = $this->migrarTrayectos($output);
+                // $contadores['tarifa'] = $this->migrarTarifas($output);
+            }
             $this->newConn->commit();
         } catch (\Throwable $e) {
             $this->newConn->rollBack();
@@ -90,7 +102,7 @@ class MigradorEstaticos {
 
     // ─── Estacion → Enclave ────────────────────────────────────────
 
-    private function migrarEstaciones(?OutputInterface $output = null): int {
+    private function migrarEstacions(?OutputInterface $output = null): int {
         if ($output) $output->write('<info>Estaciones...</info>');
         $rows = $this->fetchOld('SELECT * FROM estacion WHERE activo = 1');
         $count = 0;
@@ -116,7 +128,7 @@ class MigradorEstaticos {
 
     private function migrarClientes(?OutputInterface $output = null): int {
         if ($output) $output->write('<info>Clientes...</info>');
-        $rows = $this->fetchOld('SELECT TOP 100 * FROM cliente');
+        $rows = $this->fetchOld('SELECT TOP 1000 * FROM cliente');
         $count = 0;
 
         foreach ($rows as $row) {
@@ -167,7 +179,7 @@ class MigradorEstaticos {
 
     // ─── Bus ───────────────────────────────────────────────────────
 
-    private function migrarBuses(?OutputInterface $output = null): int {
+    private function migrarBuss(?OutputInterface $output = null): int {
         if ($output) $output->write('<info>Buses...</info>');
         $rows = $this->fetchOld('SELECT b.*, bt.descripcion AS tipo_desc FROM bus b LEFT JOIN bus_tipo bt ON bt.id = b.tipo_id');
         $count = 0;
@@ -358,11 +370,12 @@ class MigradorEstaticos {
         $estacionIds = array_unique($estacionIds);
 
         $rutaInversaLegacy = sprintf('REV-%s', $rutaCodigo);
-
+        $conn = $this->systemfdnEm->getConnection();
         if (!$this->existe('trayecto', $rutaInversaLegacy)) {
-            $stmt = $this->oldPdo->prepare('SELECT * FROM ruta WHERE codigo = :codigo');
-            $stmt->execute(['codigo' => $rutaCodigo]);
-            $oldRuta = $stmt->fetch() ?: [];
+            // $stmt = $this->oldPdo->prepare('SELECT * FROM ruta WHERE codigo = :codigo');
+            // $stmt->execute(['codigo' => $rutaCodigo]);
+            // $oldRuta = $stmt->fetch() ?: [];
+            $oldRuta = $conn->executeQuery('SELECT * FROM ruta WHERE codigo = :codigo', ['codigo' => $rutaCodigo])->fetchAllAssociative() ?: [];
             $data = $this->mapeador->trayecto(
                 $oldRuta,
                 $rutaDestinoId,
@@ -393,9 +406,11 @@ class MigradorEstaticos {
 
     // ─── Tarifa ────────────────────────────────────────────────────
 
-    private function migrarTarifas(?OutputInterface $output = null): int {
+    private function migrarTarifas(?OutputInterface $output = null,): int {
+
         if ($output) $output->write('<info>Tarifas...</info>');
-        $rows = $this->fetchOld('SELECT tb.*, e.id AS empresa_id FROM tarifas_boleto tb CROSS JOIN (SELECT MIN(id) AS id FROM empresa WHERE activo = 1) e');
+        $rows = $this->fetchOld('SELECT tb.*, e.id AS empresa_id FROM tarifas_boleto tb CROSS JOIN (SELECT MIN(id) AS id FROM empresa WHERE activo = 1) e AND tb.clase_asiento = 1 ORDER BY tb.id DESC');
+
         $count = 0;
 
         foreach ($rows as $row) {
@@ -414,7 +429,7 @@ class MigradorEstaticos {
 
             $data = $this->mapeador->tarifa($row, $empresaId);
             $this->newConn->executeStatement(
-                'INSERT INTO tarifa (id, nombre, precio_clase_a, precio_clase_b, empresa_id, bus_id) VALUES (:id, :nombre, :precio_clase_a, :precio_clase_b, :empresa_id, :bus_id)',
+                'INSERT INTO tarifa (id, nombre, precio_clase_a_monto, precio_clase_b_monto, precio_clase_a_moneda, precio_clase_b_moneda, empresa_id, bus_id) VALUES (:id, :nombre, :precio_clase_a_monto, :precio_clase_b_monto, :precio_clase_a_moneda, :precio_clase_b_moneda, :empresa_id, :bus_id)',
                 $data
             );
             $count++;
@@ -481,7 +496,7 @@ class MigradorEstaticos {
 
     // ─── Localidad ─────────────────────────────────────────────────
 
-    private function migrarLocalidades(?OutputInterface $output = null): int {
+    private function migrarLocalidads(?OutputInterface $output = null): int {
         if ($output) $output->write('<info>Localidades...</info>');
         try {
             $rows = $this->fetchOld('SELECT * FROM departamento');
@@ -554,10 +569,15 @@ class MigradorEstaticos {
     }
 
     private function fetchOld(string $sql, array $params = []): \Generator {
-        $stmt = $this->oldPdo->prepare($sql);
-        $stmt->execute($params);
-        while ($row = $stmt->fetch()) {
-            yield $row;
+        $conn = $this->systemfdnEm->getConnection();
+        $results = $conn->executeQuery($sql, $params)->fetchAllAssociative() ?: [];
+        // $stmt = $this->oldPdo->prepare($s ql);
+        // $stmt->execute($params);
+        // while ($row = $stmt->fetch()) {
+        //     yield $row;
+        // }
+        foreach ($$results as $key => $value) {
+            yield $value;
         }
     }
 

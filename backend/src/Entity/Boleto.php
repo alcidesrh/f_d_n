@@ -4,82 +4,59 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
 use App\Attribute\ApiResourcePaginationPage;
+use App\Entity\Base\TimeLegacyStatusBase;
+use App\Entity\Embeddable\Precio;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Money\Money;
 
 #[ORM\Entity]
 #[ApiResourcePaginationPage()]
-class Boleto {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
-
-    #[ORM\Column(type: 'datetime')]
-    private ?\DateTimeInterface $fechaCompra = null;
-
-    #[ORM\ManyToOne(inversedBy: 'boletos')]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Salida $salida = null;
+class Boleto extends TimeLegacyStatusBase {
 
     #[ORM\ManyToOne]
-    private ?Trayecto $trayecto = null;
+    private ?Recorrido $recorrido = null;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
     private ?Cliente $cliente = null;
 
-    #[ORM\ManyToMany(targetEntity: Asiento::class)]
-    private Collection $asientos;
-
-    #[ORM\ManyToOne]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Estacion $estacion = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $usuarioCreador = null;
 
     #[ORM\Column(type: 'string', length: 50, nullable: true)]
     private ?string $legacyId = null;
 
+    #[ORM\ManyToOne(inversedBy: 'boletos')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Venta $venta = null;
+
+    #[ORM\Embedded(class: Precio::class)]
+    private Precio $precio;
+
     #[ORM\ManyToOne]
-    private ?Status $status = null;
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Asiento $asiento = null;
 
-    public function __construct() {
-        $this->asientos = new ArrayCollection();
+    #[ORM\ManyToOne(inversedBy: 'boletos')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Servicio $servicio = null;
+
+    public function getPrice(): Money {
+        return $this->precio->toMoney();
     }
 
-    public function getId(): ?int {
-        return $this->id;
-    }
-
-    public function getFechaCompra(): ?\DateTimeInterface {
-        return $this->fechaCompra;
-    }
-
-    public function setFechaCompra(\DateTimeInterface $fechaCompra): static {
-        $this->fechaCompra = $fechaCompra;
+    public function setPrice(Money $money): self {
+        $this->precio = Precio::fromMoney($money);
 
         return $this;
     }
 
-    public function getSalida(): ?Salida {
-        return $this->salida;
+    public function getRecorrido(): ?Recorrido {
+        return $this->recorrido;
     }
 
-    public function setSalida(?Salida $salida): static {
-        $this->salida = $salida;
-
-        return $this;
-    }
-
-    public function getTrayecto(): ?Trayecto {
-        return $this->trayecto;
-    }
-
-    public function setTrayecto(?Trayecto $trayecto): static {
-        $this->trayecto = $trayecto;
+    public function setRecorrido(?Recorrido $recorrido): static {
+        $this->recorrido = $recorrido;
 
         return $this;
     }
@@ -94,30 +71,6 @@ class Boleto {
         return $this;
     }
 
-    public function getAsientos(): Collection {
-        return $this->asientos;
-    }
-
-    public function getEstacion(): ?Estacion {
-        return $this->estacion;
-    }
-
-    public function setEstacion(?Estacion $estacion): static {
-        $this->estacion = $estacion;
-
-        return $this;
-    }
-
-    public function getUsuarioCreador(): ?string {
-        return $this->usuarioCreador;
-    }
-
-    public function setUsuarioCreador(?string $usuarioCreador): static {
-        $this->usuarioCreador = $usuarioCreador;
-
-        return $this;
-    }
-
     public function getLegacyId(): ?string {
         return $this->legacyId;
     }
@@ -128,12 +81,32 @@ class Boleto {
         return $this;
     }
 
-    public function getStatus(): ?Status {
-        return $this->status;
+    public function getVenta(): ?Venta {
+        return $this->venta;
     }
 
-    public function setStatus(?Status $status): static {
-        $this->status = $status;
+    public function setVenta(?Venta $venta): static {
+        $this->venta = $venta;
+
+        return $this;
+    }
+
+    public function getAsiento(): ?Asiento {
+        return $this->asiento;
+    }
+
+    public function setAsiento(?Asiento $asiento): static {
+        $this->asiento = $asiento;
+
+        return $this;
+    }
+
+    public function getServicio(): ?Servicio {
+        return $this->servicio;
+    }
+
+    public function setServicio(?Servicio $servicio): static {
+        $this->servicio = $servicio;
 
         return $this;
     }

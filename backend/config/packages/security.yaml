@@ -68,6 +68,7 @@ security:
         # - { path: "^/login$", roles: PUBLIC_ACCESS }
         - { path: "^/api/change-password", roles: ROLE_ADMIN }
         - { path: "^/api/users-brief", roles: ROLE_ADMIN }
+        - { path: "^/api/entity-record-counts", roles: ROLE_ADMIN }
         - { path: "^/api/me/permissions", roles: ROLE_USER }
         - { path: "^/api/contexts", roles: PUBLIC_ACCESS }
         - { path: "^/api$", roles: PUBLIC_ACCESS }

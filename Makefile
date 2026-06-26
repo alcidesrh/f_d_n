@@ -41,14 +41,21 @@ entity-setup: ## Sync dynamic entity config metadata
 entity: ## Create/modify an entity
 	@$(CONSOLE) make:entity
 
-migrar: ## Migrate tickets from old FDN system (usage: make migrar C=500 R=1)
-	@$(CONSOLE) app:migrar $(if $(C),$(C),100) $(if $(R),--r)
+# migrar: ## Migrate tickets from old FDN system (usage: make migrar C=500 R=1)
+# 	$(CONSOLE) app:migrar $(if $(C),$(C),100) $(if $(R),--r)
+
+migrar-entities: ## make migrar-entities entities='Empresa Localidad Estacion Piloto Marca Bus Asiento cliente usuario trayecto tarifa'
+	$(CONSOLE) app:migrar:estaticos $(if $(entities),$(entities))
+
+.PHONY: migrar-todo
+migrar-todo:
+	$(CONSOLE) $(if $(prod),--env=prod) app:migrar:todo $(if $(clean),--clean) $(if $(skip-estaticos),--skip-estaticos) $(if $(skip-iam),--skip-iam) $(if $(skip-config),--skip-config)  $(if $(boletos),--boletos=$(boletos)) $(foreach u,$(entities),--entities=$(u))
 
 sincronizar: ## Sync new tickets from old FDN system
 	@$(CONSOLE) app:sincronizar
 
 reset-db: ## Reset database (drop, create, migrations, then migrate old data)
-	@$(CONSOLE) reset-db
+	@$(CONSOLE) app:reset-db  $(if $(soft),--soft,--hard)
 
 test: ## Run all tests
 	@$(DOCKER_COMP) exec backend vendor/bin/phpunit -c phpunit.dist.xml

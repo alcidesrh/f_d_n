@@ -2,6 +2,8 @@
 
 namespace App\Migration;
 
+use App\Entity\Servicio;
+
 class Mapeador {
     /**
      * Static data with numeric old PK → use old ID as new PK, no legacy_id.
@@ -148,18 +150,14 @@ class Mapeador {
     }
 
     /**
-     * Salida is variable data → keep legacy_id.
+     * Servicio is variable data → keep legacy_id.
      */
-    public function salida(array $old, ?int $rutaId, ?int $busId, int $empresaId, ?int $tarifaId): array {
-        $cancelada = (int) ($old['estado_id'] ?? 0) === 4;
-
+    public function servicio(array $old, ?int $idRecorrido, ?int $busId, int $empresaId): array {
         return [
             'hora_partida' => $this->formatDatetime($old['fecha']),
-            'ruta_id' => $rutaId,
+            'recorrido_id' => $idRecorrido,
             'bus_id' => $busId,
             'empresa_id' => $empresaId,
-            'tarifa_id' => $tarifaId,
-            'activa' => $this->toBool(!$cancelada),
             'legacy_id' => (string) $old['id'],
         ];
     }
@@ -167,11 +165,11 @@ class Mapeador {
     /**
      * Boleto is variable data → keep legacy_id.
      */
-    public function boleto(array $old, int $salidaId, ?int $clienteId, int $estacionId, ?int $trayectoId, ?int $asientoId, ?int $usuarioId): array {
+    public function boleto(array $old, int $servicioId, ?int $clienteId, int $estacionId, ?int $idRecorrido, ?int $asientoId, ?int $usuarioId): array {
         return [
             'fecha_compra' => $this->formatDatetime($old['fecha_creacion']),
-            'salida_id' => $salidaId,
-            'trayecto_id' => $trayectoId,
+            'servicio_id' => $servicioId,
+            'recorrido_id' => $idRecorrido,
             'cliente_id' => $clienteId,
             'estacion_id' => $estacionId,
             'usuario_creador' => $usuarioId,
@@ -188,12 +186,15 @@ class Mapeador {
         return [
             'id' => (int) $old['id'],
             'nombre' => $nombre,
-            'precio_clase_a' => $old['tarifaValor'] ?? '0',
-            'precio_clase_b' => null,
+            'precio_clase_a_monto' => ($old['tarifaValor'] * 100) ?? '0',
+            'precio_clase_b_monto' => 0,
+            'precio_clase_a_moneda' => 'GTQ',
+            'precio_clase_b_moneda' => 'GTQ',
             'empresa_id' => $empresaId,
             'bus_id' => null,
         ];
     }
+
 
     private function truncate(?string $value, int $maxLength): ?string {
         if ($value === null) {

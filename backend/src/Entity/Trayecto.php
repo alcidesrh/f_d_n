@@ -43,13 +43,10 @@ class Trayecto extends Base {
     #[ORM\ManyToMany(targetEntity: self::class, mappedBy: 'trayectosHijos')]
     private Collection $trayectosPadres;
 
-    #[ORM\ManyToMany(targetEntity: Tarifa::class, mappedBy: 'trayectos')]
-    private Collection $tarifas;
 
     public function __construct() {
         $this->trayectosHijos = new ArrayCollection();
         $this->trayectosPadres = new ArrayCollection();
-        $this->tarifas = new ArrayCollection();
     }
 
     public function getId(): ?int {
@@ -124,9 +121,6 @@ class Trayecto extends Base {
         return $this->trayectosPadres;
     }
 
-    public function getTarifas(): Collection {
-        return $this->tarifas;
-    }
 
     public function getLegacyId(): ?string {
         return $this->legacyId;

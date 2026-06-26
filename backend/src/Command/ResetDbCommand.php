@@ -11,9 +11,10 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Process\Process;
+use Doctrine\ORM\Tools\SchemaTool;
 
 #[AsCommand(
-    name: 'app:reset-db',
+    name: 'app:reset-db2',
     description: 'Reinicia la base de datos nueva: --hard dropea y recrea, --soft solo trunca tablas migrables'
 )]
 class ResetDbCommand extends Command {
@@ -36,25 +37,33 @@ class ResetDbCommand extends Command {
         $soft = (bool) $input->getOption('soft') || !$hard;
 
         if ($hard) {
-            $io->warning('HARD RESET: se dropeará y recreará la base de datos');
-            if (!$io->confirm('¿Continuar?', false)) {
-                return Command::SUCCESS;
-            }
+            // $io->warning('HARD RESET: se dropeará y recreará la base de datos');
+            // if (!$io->confirm('¿Continuar?', false)) {
+            //     return Command::SUCCESS;
+            // }
 
             $io->section('Dropeando base de datos...');
             $this->entityManager->getConnection()->executeStatement('DROP SCHEMA public CASCADE');
             $this->entityManager->getConnection()->executeStatement('CREATE SCHEMA public');
             $this->entityManager->getConnection()->executeStatement('GRANT ALL ON SCHEMA public TO PUBLIC');
+            $io = new SymfonyStyle($input, $output);
 
-            $io->section('Generando migraciones...');
-            $p = new Process(['php', 'bin/console', 'doctrine:migrations:diff', '--no-interaction']);
-            $p->setTimeout(120);
-            $p->run(fn($type, $buf) => $io->write($buf));
+            $metadata = $this->entityManager
+                ->getMetadataFactory()
+                ->getAllMetadata();
 
-            $io->section('Ejecutando migraciones...');
-            $p = new Process(['php', 'bin/console', 'doctrine:migrations:migrate', '--no-interaction']);
-            $p->setTimeout(120);
-            $p->run(fn($type, $buf) => $io->write($buf));
+            $tool = new SchemaTool($this->entityManager);
+            $tool->createSchema($metadata);
+
+            // $io->section('Generando migraciones...');
+            // $p = new Process(['php', 'bin/console', 'doctrine:migrations:diff', '--no-interaction']);
+            // $p->setTimeout(120);
+            // $p->run(fn($type, $buf) => $io->write($buf));
+
+            // $io->section('Ejecutando migraciones...');
+            // $p = new Process(['php', 'bin/console', 'doctrine:migrations:migrate', '--no-interaction']);
+            // $p->setTimeout(120);
+            // $p->run(fn($type, $buf) => $io->write($buf));
 
             $io->success('Base de datos recreada y migraciones ejecutadas');
         }

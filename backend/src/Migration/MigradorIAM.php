@@ -29,10 +29,10 @@ class MigradorIAM {
         ['boleto.editar', 'Boleto', 'update', 'Boletos'],
         ['boleto.anular', 'Boleto', 'delete', 'Boletos'],
         ['boleto.reasignar', 'Boleto', 'reassign', 'Boletos'],
-        ['salida.crear', 'Salida', 'create', 'Salidas'],
-        ['salida.ver', 'Salida', 'read', 'Salidas'],
-        ['salida.editar', 'Salida', 'update', 'Salidas'],
-        ['salida.cancelar', 'Salida', 'cancel', 'Salidas'],
+        ['servicio.crear', 'Servicio', 'create', 'Servicios'],
+        ['servicio.ver', 'Servicio', 'read', 'Servicios'],
+        ['servicio.editar', 'Servicio', 'update', 'Servicios'],
+        ['servicio.cancelar', 'Servicio', 'cancel', 'Servicios'],
         ['ruta.ver', 'Ruta', 'read', 'Rutas'],
         ['ruta.editar', 'Ruta', 'update', 'Rutas'],
         ['empresa.ver', 'Empresa', 'read', 'Empresas'],
@@ -52,9 +52,22 @@ class MigradorIAM {
     ];
 
     private const BASE_PERMISOS = [
-        'Gestion Acciones' => ['boleto.crear', 'boleto.ver', 'boleto.editar', 'boleto.anular', 'boleto.reasignar',
-                                'salida.crear', 'salida.ver', 'salida.editar', 'salida.cancelar',
-                                'ruta.ver', 'empresa.ver', 'cliente.ver', 'cliente.crear', 'tarifa.ver'],
+        'Gestion Acciones' => [
+            'boleto.crear',
+            'boleto.ver',
+            'boleto.editar',
+            'boleto.anular',
+            'boleto.reasignar',
+            'servicio.crear',
+            'servicio.ver',
+            'servicio.editar',
+            'servicio.cancelar',
+            'ruta.ver',
+            'empresa.ver',
+            'cliente.ver',
+            'cliente.crear',
+            'tarifa.ver'
+        ],
         'Gestion Usuarios' => ['usuario.ver', 'usuario.editar', 'iam.ver', 'iam.editar'],
         'Gestion Reportes' => ['reporte.ventas', 'config.ver'],
         'Gestion Config' => ['config.ver', 'config.editar', 'empresa.editar', 'ruta.editar', 'tarifa.editar'],
@@ -63,10 +76,10 @@ class MigradorIAM {
 
     public function __construct(
         private Connection $newConn,
-        private \PDO $oldPdo,
+        #[Target('doctrine.dbal.systemfdn_connection')] private Connection $oldConn,
     ) {
-        $this->oldPdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-        $this->oldPdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
+        // $this->oldPdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        // $this->oldPdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
     }
 
     public function migrar(?OutputInterface $output = null): array {
@@ -303,9 +316,12 @@ class MigradorIAM {
     }
 
     private function fetchOld(string $sql, array $params = []): \Generator {
-        $stmt = $this->oldPdo->prepare($sql);
-        $stmt->execute($params);
-        while ($row = $stmt->fetch()) {
+        $stmt = $this->oldConn->executeQuery($sql, $params)->fetchAllAssociative();
+        // $stmt->execute($params);
+        // while ($row = $stmt->fetch()) {
+        //     yield $row;
+        // }
+        foreach ($$stmt as $key => $value) {
             yield $row;
         }
     }

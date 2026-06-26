@@ -2,27 +2,28 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
-use ApiPlatform\Metadata\ApiFilter;
-use ApiPlatform\Metadata\ApiResource;
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
+use App\Entity\Embeddable\Precio;
+use App\Repository\TarifaRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Money\Money;
 
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: TarifaRepository::class)]
 #[ApiResourcePaginationPage]
 class Tarifa extends Base {
 
     #[ORM\Column(length: 255)]
     private ?string $nombre = null;
 
-    #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    private ?string $precioClaseA = null;
+    #[ORM\Embedded(class: Precio::class)]
+    private ?Precio $precioClaseA = null;
 
-    #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: true)]
-    private ?string $precioClaseB = null;
+    #[ORM\Embedded(class: Precio::class)]
+    private ?Precio $precioClaseB = null;
+
 
     #[ORM\ManyToOne]
     private ?Empresa $empresa = null;
@@ -30,11 +31,11 @@ class Tarifa extends Base {
     #[ORM\ManyToOne]
     private ?Bus $bus = null;
 
-    #[ORM\ManyToMany(targetEntity: Trayecto::class, inversedBy: 'tarifas')]
-    private Collection $trayectos;
+    #[ORM\ManyToMany(targetEntity: Recorrido::class, inversedBy: 'tarifas')]
+    private Collection $recorridos;
 
     public function __construct() {
-        $this->trayectos = new ArrayCollection();
+        $this->recorridos = new ArrayCollection();
     }
 
     public function getId(): ?int {
@@ -51,23 +52,21 @@ class Tarifa extends Base {
         return $this;
     }
 
-    public function getPrecioClaseA(): ?string {
-        return $this->precioClaseA;
+    public function getPrecioClaseA(): ?Money {
+        return $this->precioClaseA ? $this->precioClaseA->toMoney() : null;
     }
 
-    public function setPrecioClaseA(string $precioClaseA): static {
-        $this->precioClaseA = $precioClaseA;
-
+    public function setPrecioClaseA(Money $money): self {
+        $this->precioClaseA = Precio::fromMoney($money);
         return $this;
     }
 
-    public function getPrecioClaseB(): ?string {
-        return $this->precioClaseB;
+    public function getPrecioClaseB(): ?Money {
+        return $this->precioClaseB ? $this->precioClaseB->toMoney() : null;
     }
 
-    public function setPrecioClaseB(?string $precioClaseB): static {
-        $this->precioClaseB = $precioClaseB;
-
+    public function setPrecioClaseB(Money $money): self {
+        $this->precioClaseB = Precio::fromMoney($money);
         return $this;
     }
 
@@ -91,8 +90,7 @@ class Tarifa extends Base {
         return $this;
     }
 
-    public function getTrayectos(): Collection {
-        return $this->trayectos;
+    public function getRecorridos(): Collection {
+        return $this->recorridos;
     }
-
 }
