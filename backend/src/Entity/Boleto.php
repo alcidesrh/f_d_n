@@ -30,9 +30,6 @@ class Boleto extends TimeLegacyStatusBase {
     #[ORM\JoinColumn(nullable: false)]
     private ?Venta $venta = null;
 
-    #[ORM\Embedded(class: Precio::class)]
-    private Precio $precio;
-
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
     private ?Asiento $asiento = null;
@@ -41,15 +38,6 @@ class Boleto extends TimeLegacyStatusBase {
     #[ORM\JoinColumn(nullable: false)]
     private ?Servicio $servicio = null;
 
-    public function getPrice(): Money {
-        return $this->precio->toMoney();
-    }
-
-    public function setPrice(Money $money): self {
-        $this->precio = Precio::fromMoney($money);
-
-        return $this;
-    }
 
     public function getRecorrido(): ?Recorrido {
         return $this->recorrido;

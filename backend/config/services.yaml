@@ -45,6 +45,9 @@ services:
         tags:
             - { name: 'security.expression_language_provider' }
 
+    App\Security\GraphiQLRequestMatcher:
+        tags: ['security.request_matcher']
+
     App\Services\UsuarioPasswordHasher:
         bind:
             $processor: "@api_platform.doctrine.orm.state.persist_processor"

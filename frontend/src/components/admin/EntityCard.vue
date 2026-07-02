@@ -7,10 +7,11 @@
 		<span v-if="recordCount != null" class="entity-card__count">{{ recordCount.toLocaleString('es-BO') }} registros</span>
 		<span v-else-if="loading" class="entity-card__count">cargando...</span>
 		<div class="flex gap-x-3 mt-10px justify-center w-full">
-			<icon name="search" @click="$router.push({ name: 'list', params: { entity: entity.name } })" />
-			<Icon name="add" @click="$router.push({ name: 'form', params: { entity: entity.name } })"></Icon>
+			<icon name="search" class="hover" @click="$router.push({ name: 'list', params: { entity: entity.name } })" />
+			<Icon name="docs_add_on" class="hover" @click="$router.push({ name: 'form', params: { entity: entity.name } })"></Icon>
 			<Icon
 				name="settings"
+				class="hover"
 				@click="
 					$router.push({
 						name: 'entity_config',
@@ -50,7 +51,7 @@
 		cursor: default;
 
 		&:hover {
-			box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+			box-shadow: 0 4px 16px 2px $surface-3;
 			transform: translateY(-2px);
 		}
 

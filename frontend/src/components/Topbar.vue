@@ -26,15 +26,3 @@
 		})
 	}
 </script>
-
-<style scoped lang="scss">
-	.right-section {
-		display: flex;
-		& > .fdn-icon {
-			margin: 0px 10px;
-			font-size: 24px;
-			// font-weight: 400;
-			color: $surface-6;
-		}
-	}
-</style>

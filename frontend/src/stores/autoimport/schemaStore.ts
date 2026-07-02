@@ -61,10 +61,13 @@ export const useSchemaStore = defineStore('schemaStore', {
 			'Salida',
 			'Trayecto',
 			'Enclave',
-			'Tarifa',
 			'Cliente',
 			'Estacion',
 			'Parada',
+			'Venta',
+			'Recorrido',
+			'Icon',
+			'IconCategory',
 		],
 		entities: {},
 		types: {},
@@ -77,43 +80,46 @@ export const useSchemaStore = defineStore('schemaStore', {
 	},
 	actions: {
 		async loadEntities(store) {
-			if (Object.keys(this.entities).length == 0) {
-				const introspectionQuery = gql`
-					query IntrospectionQuery {
-						__schema {
-							types {
-								...FullType
-							}
+			// if (Object.keys(this.entities).length == 0) {
+			const introspectionQuery = gql`
+				query IntrospectionQuery {
+					__schema {
+						types {
+							...FullType
 						}
 					}
+				}
 
-					fragment FullType on __Type {
-						...TypeRef
-						fields {
-							name
-							args {
-								...InputValue
-							}
-							type {
-								...TypeRef
-							}
-						}
-						possibleTypes {
-							...TypeRef
-						}
-						inputFields {
+				fragment FullType on __Type {
+					...TypeRef
+					fields {
+						name
+						args {
 							...InputValue
 						}
-					}
-
-					fragment InputValue on __InputValue {
-						name
 						type {
 							...TypeRef
 						}
 					}
+					possibleTypes {
+						...TypeRef
+					}
+					inputFields {
+						...InputValue
+					}
+				}
 
-					fragment TypeRef on __Type {
+				fragment InputValue on __InputValue {
+					name
+					type {
+						...TypeRef
+					}
+				}
+
+				fragment TypeRef on __Type {
+					kind
+					name
+					ofType {
 						kind
 						name
 						ofType {
@@ -140,10 +146,6 @@ export const useSchemaStore = defineStore('schemaStore', {
 													ofType {
 														kind
 														name
-														ofType {
-															kind
-															name
-														}
 													}
 												}
 											}
@@ -153,16 +155,18 @@ export const useSchemaStore = defineStore('schemaStore', {
 							}
 						}
 					}
-				`
-				const apollo = useApolloStore()
+				}
+			`
+			const apollo = useApolloStore()
 
-				const { data } = await apollo.client.query({
-					query: introspectionQuery,
-				})
-				this.setEntities(data.__schema)
-				this.setTypes(data.__schema)
-				return
-			}
+			const { data } = await apollo.client.query({
+				query: introspectionQuery,
+				fetchPolicy: 'network-only',
+			})
+			this.setEntities(data.__schema)
+			this.setTypes(data.__schema)
+			return
+			// }
 
 			// await this.createStores();
 			// await this.createRoutes();
@@ -191,29 +195,31 @@ export const useSchemaStore = defineStore('schemaStore', {
 		},
 
 		setEntities(schema: Record<'types', Array<Entity>>) {
-			if (Object.keys(this.entities).length == 0) {
-				const entities = {}
-				let temp
-				schema.types
-					.find((v) => v.kind == 'INTERFACE')
-					.possibleTypes?.filter((v) => this.editables.includes(v.name))
-					.forEach((v) => {
-						const type = schema.types.find((v2) => v.name == v2.name)
-						const fields = {}
-						let typeName, input, field
-						for (const f of type.fields) {
-							temp = this.getInput(f)
-							fields[temp.name] = temp
-						}
-						this.entities[type.name] = {
-							name: type.name,
-							fields,
-							...this.setQueries(schema, type),
-							...this.setMutations(schema, type),
-							pagination: schema.types.some((v2) => v2.name == `${v.name}PageConnection`),
-						}
-					})
-			}
+			// if (Object.keys(this.entities).length == 0) {
+			const entities = {}
+			let temp
+
+			schema.types
+				.find((v) => v.kind == 'INTERFACE')
+				.possibleTypes?.filter((v) => this.editables.includes(v.name))
+				.forEach((v) => {
+					const type = schema.types.find((v2) => v.name == v2.name)
+					const fields = {}
+					let typeName, input, field
+
+					for (const f of type.fields) {
+						temp = this.getInput(f)
+						fields[temp.name] = temp
+					}
+					this.entities[type.name] = {
+						name: type.name,
+						fields,
+						...this.setQueries(schema, type),
+						...this.setMutations(schema, type),
+						pagination: schema.types.some((v2) => v2.name == `${v.name}PageConnection`),
+					}
+				})
+			// }
 		},
 		setQueries(schema, entity: Entity) {
 			let itemQuery = {},
@@ -326,8 +332,12 @@ export const useSchemaStore = defineStore('schemaStore', {
 				}
 			} else if (['LIST', 'OBJECT', 'ENUM'].includes(f.type.kind)) {
 				field.type = f.type.kind
+
 				if (f.type.kind == 'LIST') {
 					field.relatedTo = f.type.ofType.name
+					field.input.multiple = true
+				} else if (f.type.kind == 'OBJECT' && f.type.name.endsWith('PageConnection')) {
+					field.relatedTo = f.type.name.replace('PageConnection', '')
 					field.input.multiple = true
 				} else {
 					field.relatedTo = f.type.name

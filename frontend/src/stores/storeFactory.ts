@@ -132,29 +132,24 @@ export default async (name: string) => {
 				const collectionQuery = store.entity?.queries.collection
 				const entityFields = store.entity?.fields
 				const fields: any[] = []
-
 				const columns = (this as any).computedColumns
-
-				collectionQuery?.fields.forEach((v, i) => {
-					fields[i] = {}
-
-					if (v.name === 'collection') {
-						fields[i][v.name] = columns.map((col) => {
-							const f = entityFields[col.field]
-							if (f.relatedTo && f.type !== 'ENUM') {
-								return {
-									[str.decapitalize(col.field)]: ['id', 'label'],
-								}
-							}
-
-							return col.field
-						})
-					} else {
-						fields[i][v.name] = schema.types[v.type]
+				const temp = columns.map((col) => {
+					const f = entityFields[col.field]
+					if (f.relatedTo && f.type !== 'ENUM') {
+						return {
+							[str.decapitalize(col.field)]: ['id', 'label'],
+						}
 					}
+					return col.field
 				})
-				cl(fields)
-				return fields
+				return collectionQuery?.fields.find((v) => v.name == 'collection')
+					? [
+							{
+								collection: temp,
+							},
+							{ paginationInfo: schema.types[store.name + 'PaginationInfo'] },
+						]
+					: temp
 			},
 		},
 		actions: {
@@ -202,6 +197,10 @@ export default async (name: string) => {
 					for (let v of this.config.collectionFieldConfig.filter((v) => v.visible)) {
 						v = useCloned(v).cloned.value
 						const field = this.entity.fields[v.field]
+
+						if (field?.relatedTo && field.relatedTo.endsWith('PageConnection')) {
+							continue
+						}
 						const args = this.entity.queries.collection.args
 						if (v.filterable && typeof args[v.field] != 'undefined') {
 							const input = { ...field.input }

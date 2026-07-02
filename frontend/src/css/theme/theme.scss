@@ -14,8 +14,7 @@ body {
   background-color: $background;
   color: $text-color;
   line-height: normal;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden;
   height: 100%;
   // @include mq;
 }

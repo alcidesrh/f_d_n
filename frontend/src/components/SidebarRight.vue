@@ -1,12 +1,12 @@
 <template>
 	<aside class="right-sidebar">
-		<div v-if="sidebarStore.mode === 'close'" class="sidebar-right-trigger" @click="sidebarStore.setMode('large')">
+		<div @click="sidebarStore.setMode()" class="sidebar-right-trigger" :class="{ close: sidebarStore.mode === 'close' }">
 			<icon name="tune" wght="300" class="trigger-icon" />
 		</div>
 
 		<div class="sidebar-control" :class="[mode]">
 			<div class="toogle-wraper large" @click="sidebarStore.setMode(mode == modeStates.close ? modeStates.prev : mode == modeStates.large ? modeStates.mini : modeStates.large)">
-				<icon fill name="switch_right" class="text-20px font-medium" />
+				<icon fill name="switch_left" class="text-20px font-medium" />
 			</div>
 			<div class="close-wraper" @click="sidebarStore.setMode(mode == modeStates.close ? modeStates.prev : modeStates.close)">
 				<icon name="close_small" class="text-20px font-medium" />
@@ -35,6 +35,35 @@
 				<SectionMini :items="filteredSections" @action="handleAction" />
 			</div>
 		</div>
+
+		<div v-if="sidebarStore.mode === sidebarStore.modeStates.large" class="sidebar-dev-controls">
+			<div class="dev-row">
+				<q-btn flat dense icon="sym_o_sync" label="Refrescar Entidades" class="full-width dev-btn" @click="refreshSchema" />
+			</div>
+			<div class="dev-row entity-row">
+				<q-select v-model="selectedEntity" :options="entityOptions" dense outlined placeholder="Entidad..." class="col" />
+				<q-btn flat dense icon="sym_o_refresh" class="dev-icon-btn" @click="refreshEntityStore" :disable="!selectedEntity" />
+			</div>
+		</div>
+		<div v-else-if="sidebarStore.mode === sidebarStore.modeStates.mini" class="sidebar-dev-controls sidebar-dev-controls-mini">
+			<q-btn flat dense icon="sync" size="sm" @click="refreshSchema" />
+			<q-btn flat dense icon="refresh" size="sm" @click="entityDialog = true" />
+		</div>
+
+		<q-dialog v-model="entityDialog" position="bottom">
+			<q-card style="min-width: 220px">
+				<q-card-section class="q-pt-md">
+					<div class="text-h6">Refrescar entidad</div>
+				</q-card-section>
+				<q-card-section>
+					<q-select v-model="selectedEntity" :options="entityOptions" dense outlined label="Entidad" />
+				</q-card-section>
+				<q-card-actions align="right" class="q-px-md q-pb-md">
+					<q-btn flat label="Cancelar" v-close-popup />
+					<q-btn flat label="Refrescar" color="primary" v-close-popup @click="refreshEntityStore" :disable="!selectedEntity" />
+				</q-card-actions>
+			</q-card>
+		</q-dialog>
 
 		<ChangePasswordModal v-model="changePasswordModal" />
 	</aside>
@@ -218,6 +247,34 @@
 			timeout: 2000,
 		})
 	}
+
+	const schemaStore = useSchemaStore()
+	const selectedEntity = ref<string | null>(null)
+	const entityDialog = ref(false)
+	const entityOptions = computed(() => {
+		return Object.keys(schemaStore.entities).sort()
+	})
+
+	async function refreshSchema() {
+		try {
+			await schemaStore.loadEntities()
+			$q.notify({ type: 'positive', message: 'Metadata de entidades actualizada', timeout: 2000 })
+		} catch {
+			$q.notify({ type: 'negative', message: 'Error al refrescar metadata', timeout: 3000 })
+		}
+	}
+
+	async function refreshEntityStore() {
+		if (!selectedEntity.value) return
+		try {
+			const store = await getStore(selectedEntity.value, true)
+			if (store) {
+				$q.notify({ type: 'positive', message: `Store "${selectedEntity.value}" actualizada`, timeout: 2000 })
+			}
+		} catch {
+			$q.notify({ type: 'negative', message: `Error al refrescar "${selectedEntity.value}"`, timeout: 3000 })
+		}
+	}
 </script>
 
 <style scoped lang="scss">
@@ -254,8 +311,56 @@
 
 	.sidebar-panel {
 		padding: 0.5rem;
-		height: 100%;
 		overflow-y: auto;
+	}
+
+	.sidebar-dev-controls {
+		.dev-row {
+			margin-bottom: 0.25rem;
+
+			&:last-child {
+				margin-bottom: 0;
+			}
+		}
+
+		.dev-btn {
+			font-size: 0.75rem;
+			padding: 0.25rem;
+			min-height: 28px;
+		}
+
+		.entity-row {
+			display: flex;
+			align-items: center;
+			gap: 0.25rem;
+		}
+
+		.dev-icon-btn {
+			font-size: 18px;
+			padding: 4px;
+		}
+
+		:deep(.q-select) {
+			font-size: 0.75rem;
+		}
+
+		:deep(.q-field__control) {
+			min-height: 28px;
+			padding: 0 6px;
+		}
+
+		:deep(.q-field__native) {
+			padding: 0;
+			min-height: 28px;
+		}
+	}
+
+	.sidebar-dev-controls-mini {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.125rem;
+		padding: 0.375rem 0;
 	}
 
 	.panel-content {

@@ -2,57 +2,103 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiResource;
+use App\Attribute\ApiResourcePaginationPage;
+use App\Entity\Base\Base;
+use App\Entity\Embeddable\Precio;
 use App\Repository\RecorridoRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Money\Money;
 
 #[ORM\Entity(repositoryClass: RecorridoRepository::class)]
-#[ApiResource]
-class Recorrido
-{
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
+#[ApiResourcePaginationPage]
+class Recorrido extends Base {
 
-    #[ORM\ManyToOne]
-    private ?Tarifa $tarifa = null;
-
-    #[ORM\ManyToOne]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Trayecto $trayecto = null;
-
-    #[ORM\Column(length: 255, nullable: true)]
+    #[ORM\Column(length: 255)]
     private ?string $nombre = null;
 
+    #[ORM\Embedded(class: Precio::class)]
+    private ?Precio $precioClaseA = null;
+
+    #[ORM\Embedded(class: Precio::class)]
+    private ?Precio $precioClaseB = null;
+
+
+    #[ORM\ManyToOne]
+    private ?Empresa $empresa = null;
+
+    #[ORM\ManyToOne]
+    private ?Bus $bus = null;
+
+    #[ORM\ManyToOne(inversedBy: 'recorridos')]
+    private ?Trayecto $trayecto = null;
+
     /**
-     * @var Collection<int, Servicio>
+     * @var Collection<int, RecorridoMatrioska>
      */
-    #[ORM\OneToMany(targetEntity: Servicio::class, mappedBy: 'recorrido')]
-    private Collection $servicios;
+    #[ORM\OneToMany(targetEntity: RecorridoMatrioska::class, mappedBy: 'recorrido', orphanRemoval: true)]
+    private Collection $subrecorridos;
 
     public function __construct()
     {
-        $this->servicios = new ArrayCollection();
+        $this->subrecorridos = new ArrayCollection();
     }
 
-    public function getId(): ?int
-    {
+    public function getId(): ?int {
         return $this->id;
     }
 
-    public function getTarifa(): ?Tarifa
-    {
-        return $this->tarifa;
+    public function getNombre(): ?string {
+        return $this->nombre;
     }
 
-    public function setTarifa(?Tarifa $tarifa): static
-    {
-        $this->tarifa = $tarifa;
+    public function setNombre(string $nombre): static {
+        $this->nombre = $nombre;
 
         return $this;
+    }
+
+    public function getPrecioClaseA(): ?Money {
+        return $this->precioClaseA ? $this->precioClaseA->toMoney() : null;
+    }
+
+    public function setPrecioClaseA(Money $money): self {
+        $this->precioClaseA = Precio::fromMoney($money);
+        return $this;
+    }
+
+    public function getPrecioClaseB(): ?Money {
+        return $this->precioClaseB ? $this->precioClaseB->toMoney() : null;
+    }
+
+    public function setPrecioClaseB(Money $money): self {
+        $this->precioClaseB = Precio::fromMoney($money);
+        return $this;
+    }
+
+    public function getEmpresa(): ?Empresa {
+        return $this->empresa;
+    }
+
+    public function setEmpresa(?Empresa $empresa): static {
+        $this->empresa = $empresa;
+
+        return $this;
+    }
+
+    public function getBus(): ?Bus {
+        return $this->bus;
+    }
+
+    public function setBus(?Bus $bus): static {
+        $this->bus = $bus;
+
+        return $this;
+    }
+
+    public function getRecorridos(): Collection {
+        return $this->recorridos;
     }
 
     public function getTrayecto(): ?Trayecto
@@ -67,42 +113,30 @@ class Recorrido
         return $this;
     }
 
-    public function getNombre(): ?string
-    {
-        return $this->nombre;
-    }
-
-    public function setNombre(?string $nombre): static
-    {
-        $this->nombre = $nombre;
-
-        return $this;
-    }
-
     /**
-     * @return Collection<int, Servicio>
+     * @return Collection<int, RecorridoMatrioska>
      */
-    public function getServicios(): Collection
+    public function getSubrecorridos(): Collection
     {
-        return $this->servicios;
+        return $this->subrecorridos;
     }
 
-    public function addServicio(Servicio $servicio): static
+    public function addSubrecorrido(RecorridoMatrioska $subrecorrido): static
     {
-        if (!$this->servicios->contains($servicio)) {
-            $this->servicios->add($servicio);
-            $servicio->setRecorrido($this);
+        if (!$this->subrecorridos->contains($subrecorrido)) {
+            $this->subrecorridos->add($subrecorrido);
+            $subrecorrido->setRecorrido($this);
         }
 
         return $this;
     }
 
-    public function removeServicio(Servicio $servicio): static
+    public function removeSubrecorrido(RecorridoMatrioska $subrecorrido): static
     {
-        if ($this->servicios->removeElement($servicio)) {
+        if ($this->subrecorridos->removeElement($subrecorrido)) {
             // set the owning side to null (unless already changed)
-            if ($servicio->getRecorrido() === $this) {
-                $servicio->setRecorrido(null);
+            if ($subrecorrido->getRecorrido() === $this) {
+                $subrecorrido->setRecorrido(null);
             }
         }
 

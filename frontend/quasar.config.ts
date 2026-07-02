@@ -20,7 +20,7 @@ export default defineConfig((ctx) => {
 			'apollo',
 			'server-response-listener',
 			'formkit',
-			'introspection',
+			// 'introspection',
 			'middleware',
 			'static-data-gateway',
 			'i18n',

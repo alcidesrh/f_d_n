@@ -18,7 +18,19 @@ RUN <<-EOF
 	apt-get update
 	apt-get install -y --no-install-recommends \
 		file \
-		git
+		git \
+		curl \
+		gnupg
+	curl -sSL https://packages.microsoft.com/keys/microsoft-2025.asc | gpg --dearmor --yes --output /usr/share/keyrings/microsoft-prod.gpg
+	curl -sSL -o /etc/apt/sources.list.d/mssql-release.list https://packages.microsoft.com/config/debian/13/prod.list
+	apt-get update
+	ACCEPT_EULA=Y apt-get install -y --no-install-recommends msodbcsql17
+	rm -rf /var/lib/apt/lists/*
+EOF
+
+RUN <<-EOF
+	# Register MS ODBC Driver 17 in system odbcinst.ini
+	odbcinst -i -d -f /opt/microsoft/msodbcsql17/etc/odbcinst.ini
 	install-php-extensions \
 		@composer \
 		apcu \
@@ -27,8 +39,9 @@ RUN <<-EOF
 		zip \
 		pdo_pgsql \
 		pgsql \
-		pdo_dblib
-	rm -rf /var/lib/apt/lists/*
+		pdo_dblib \
+		sqlsrv \
+		pdo_sqlsrv
 EOF
 
 ENV COMPOSER_ALLOW_SUPERUSER=1
@@ -146,6 +159,18 @@ RUN <<-EOF
 	chown -R www-data:www-data /data /config
 	# Remove setuid/setgid bits
 	find / -perm /6000 -type f -exec chmod a-s {} + 2>/dev/null || true
+EOF
+
+# Install Microsoft ODBC driver (required by sqlsrv extension at runtime)
+RUN <<-EOF
+	apt-get update
+	apt-get install -y --no-install-recommends curl gnupg
+	curl -sSL https://packages.microsoft.com/keys/microsoft-2025.asc | gpg --dearmor --yes --output /usr/share/keyrings/microsoft-prod.gpg
+	curl -sSL -o /etc/apt/sources.list.d/mssql-release.list https://packages.microsoft.com/config/debian/13/prod.list
+	apt-get update
+	ACCEPT_EULA=Y apt-get install -y --no-install-recommends msodbcsql17
+	odbcinst -i -d -f /opt/microsoft/msodbcsql17/etc/odbcinst.ini
+	rm -rf /var/lib/apt/lists/*
 EOF
 
 COPY --link --exclude=var --from=frankenphp_prod_builder /app /app

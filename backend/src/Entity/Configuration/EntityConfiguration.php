@@ -13,6 +13,7 @@ use ApiPlatform\Metadata\GraphQl\Mutation;
 use ApiPlatform\Metadata\GraphQl\Query;
 use ApiPlatform\Metadata\QueryParameter;
 use App\Attribute\ApiResourceNoPagination;
+use App\Entity\Icon;
 use App\Repository\EntityConfigurationRepository;
 use App\Resolver\UpdateEntityConfigurationFieldsResolver;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -99,6 +100,9 @@ class EntityConfiguration {
   #[Groups(['read:dto'])]
   private Collection $formFields;
 
+
+  #[ORM\ManyToOne]
+  private ?Icon $icon = null;
 
   public function __construct(string $entityClass) {
     $this->entityClass = $entityClass;
@@ -187,5 +191,15 @@ class EntityConfiguration {
       if ($field->isVisible()) continue;
       $field->setPosition($position++);
     }
+  }
+
+  public function getIcon(): ?Icon {
+    return $this->icon;
+  }
+
+  public function setIcon(?Icon $icon): static {
+    $this->icon = $icon;
+
+    return $this;
   }
 }

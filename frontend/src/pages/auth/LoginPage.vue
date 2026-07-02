@@ -1,14 +1,12 @@
 <template>
 	<div class="flex flex-center w-full h-full">
 		<div id="login" ref="login" class="animate__animated animate__fast">
-			<q-card class="q-pa-lg shadow-12" style="width: 400px; max-width: 90vw" :class="{ 'opacity-50': loading }">
+			<q-card class="q-pa-lg card-login" style="width: 400px; max-width: 90vw" :class="{ 'opacity-50': loading }">
 				<div class="text-center w-full mb-15px">
 					<div class="text-4rem opacity-80" style="font-family: Faster One">F D N</div>
 
 					<div class="text-1rem opacity-80 font-medium" style="font-weight: 600">Transportes Fuentes del Norte</div>
 				</div>
-
-				<!-- </q-card-section> -->
 
 				<q-card-section>
 					<FormKit ref="form" type="form" :actions="false" @submit-invalid="shake" @submit="handleSubmit">
@@ -25,20 +23,89 @@
 			</q-card>
 		</div>
 		<div id="layout-login2"></div>
-		<div id="layout-login" :style="{ backgroundImage: `url('images/login${img}.png')` }"></div>
+		<div ref="layer0" class="bg-layer" :style="{ backgroundImage: `url('images/login${a}.png')` }"></div>
+		<div ref="layer1" class="bg-layer" :style="{ backgroundImage: `url('images/login${b}.png')`, opacity: 0 }"></div>
 	</div>
 </template>
 
 <script lang="ts" setup>
 	import { useUserSessionStore } from '@/stores/autoimport/session'
 	import { FormKitMessages } from '@formkit/vue'
+	import { gsap } from 'gsap'
 	import { ref } from 'vue'
-	const img = computed(() => Math.floor(Math.random() * 10) + 1)
+
+	const INTERVAL_MS = 5000
+	const CROSSFADE_MS = 1
+
 	const form = useTemplateRef('form')
 	const card = useTemplateRef('login')
+	const layer0 = useTemplateRef<HTMLElement>('layer0')
+	const layer1 = useTemplateRef<HTMLElement>('layer1')
 	const error = ref(false)
 	const loadingStore = useLoadingStore()
 	const { loading } = storeToRefs(loadingStore)
+
+	const start = Math.floor(Math.random() * 10) + 1
+	const a = ref(start)
+	const b = ref((start % 10) + 1)
+	let activeIsA = true
+
+	let intervalId: ReturnType<typeof setInterval> | null = null
+	let tween: gsap.core.Tween | null = null
+
+	function preload(src: string) {
+		const img = new Image()
+		img.src = src
+	}
+
+	function advance() {
+		const from = activeIsA ? layer0.value : layer1.value
+		const to = activeIsA ? layer1.value : layer0.value
+		const current = activeIsA ? a.value : b.value
+		const next = (current % 10) + 1
+
+		if (activeIsA) {
+			b.value = next
+		} else {
+			a.value = next
+		}
+
+		to!.style.opacity = '0'
+
+		preload(`images/login${(next % 10) + 1}.png`)
+
+		tween = gsap.to(from, {
+			opacity: 0,
+			duration: CROSSFADE_MS,
+			ease: 'power2.inOut',
+		})
+		gsap.to(to, {
+			opacity: 1,
+			duration: CROSSFADE_MS,
+			ease: 'power2.inOut',
+			onComplete: () => {
+				activeIsA = !activeIsA
+				from!.style.opacity = '0'
+			},
+		})
+	}
+
+	onMounted(() => {
+		const second = activeIsA ? b.value : a.value
+		preload(`images/login${second}.png`)
+		preload(`images/login${(second % 10) + 1}.png`)
+		intervalId = setInterval(advance, INTERVAL_MS)
+		card.value.addEventListener('animationend', removeAnimation)
+	})
+
+	onBeforeUnmount(() => {
+		if (intervalId) clearInterval(intervalId)
+		if (tween) tween.kill()
+		gsap.killTweensOf(layer0.value)
+		gsap.killTweensOf(layer1.value)
+		card.value.removeEventListener('animationend', removeAnimation)
+	})
+
 	const schema = [
 		{
 			$el: 'div',
@@ -112,27 +179,19 @@
 	function removeAnimation() {
 		card.value.classList.remove('animate__shakeX')
 	}
-	onMounted(() => {
-		card.value.addEventListener('animationend', removeAnimation)
-	})
-	onBeforeUnmount(() => {
-		card.value.removeEventListener('animationend', removeAnimation)
-	})
 </script>
 <style scoped lang="scss">
 	img {
-		// opacity: 0.5;
 		&.logo {
 			opacity: 0.4;
 		}
-		// border-radius: 9px;
-		// box-shadow: $shadow-10;
 	}
 	#login {
+		& > .card-login {
+			box-shadow: 0px 0px 18px 0px $surface-8;
+		}
 		z-index: 3;
-		background-color: -alpha($surface-1, 0.5);
-		// background: #64748b;
-		// background: linear-gradient(180deg, rgba(100, 116, 139, 0.51) 0%, rgba(249, 250, 251, 1) 99%);
+		background-color: -alpha($surface-1, 0.7);
 		& > div {
 			background-color: transparent;
 		}
@@ -140,25 +199,20 @@
 	#layout-login2 {
 		width: 100vw;
 		height: 100vh;
-		// background-color: -alpha($neutral-1, 0.2);
 		position: absolute;
 		z-index: 2;
+		// background-color: -alpha($surface-1, 0.4);
 	}
-	#layout-login {
+	.bg-layer {
 		filter: blur(10px);
 		position: absolute;
 		width: 100vw;
-		z-index: 1;
-		/* Prevents the image from repeating like a tile grid */
-		background-repeat: no-repeat;
-		/* Centers the image horizontally and vertically */
-		background-position: center;
-		/* Scales the image to completely cover the entire screen */
-		background-size: cover;
-		/* Makes the image stick in place while scrolling content */
-		background-attachment: fixed;
-		/* Ensures the body takes up at least the full window height */
 		min-height: 100vh;
+		z-index: 1;
+		background-repeat: no-repeat;
+		background-position: center;
+		background-size: cover;
+		background-attachment: fixed;
 		margin: 0;
 	}
 </style>

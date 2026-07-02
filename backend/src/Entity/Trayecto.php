@@ -30,9 +30,6 @@ class Trayecto extends Base {
     #[ORM\Column]
     private ?bool $activo = true;
 
-    #[ORM\Column]
-    private ?bool $esRuta = false;
-
     #[ORM\Column(type: 'string', length: 50, nullable: true)]
     private ?string $legacyId = null;
 
@@ -43,10 +40,17 @@ class Trayecto extends Base {
     #[ORM\ManyToMany(targetEntity: self::class, mappedBy: 'trayectosHijos')]
     private Collection $trayectosPadres;
 
+    /**
+     * @var Collection<int, Recorrido>
+     */
+    #[ORM\OneToMany(targetEntity: Recorrido::class, mappedBy: 'trayecto')]
+    private Collection $recorridos;
+
 
     public function __construct() {
         $this->trayectosHijos = new ArrayCollection();
         $this->trayectosPadres = new ArrayCollection();
+        $this->recorridos = new ArrayCollection();
     }
 
     public function getId(): ?int {
@@ -102,17 +106,6 @@ class Trayecto extends Base {
 
         return $this;
     }
-
-    public function getEsRuta(): ?bool {
-        return $this->esRuta;
-    }
-
-    public function setEsRuta(bool $esRuta): static {
-        $this->esRuta = $esRuta;
-
-        return $this;
-    }
-
     public function getTrayectosHijos(): Collection {
         return $this->trayectosHijos;
     }
@@ -128,6 +121,33 @@ class Trayecto extends Base {
 
     public function setLegacyId(?string $legacyId): static {
         $this->legacyId = $legacyId;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Recorrido>
+     */
+    public function getRecorridos(): Collection {
+        return $this->recorridos;
+    }
+
+    public function addRecorrido(Recorrido $recorrido): static {
+        if (!$this->recorridos->contains($recorrido)) {
+            $this->recorridos->add($recorrido);
+            $recorrido->setTrayecto($this);
+        }
+
+        return $this;
+    }
+
+    public function removeRecorrido(Recorrido $recorrido): static {
+        if ($this->recorridos->removeElement($recorrido)) {
+            // set the owning side to null (unless already changed)
+            if ($recorrido->getTrayecto() === $this) {
+                $recorrido->setTrayecto(null);
+            }
+        }
 
         return $this;
     }

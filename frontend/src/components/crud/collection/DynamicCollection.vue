@@ -86,7 +86,7 @@
 	const store = ref() as Ref<StateStore>
 	const paginationQuasar = ref({}) as Ref<PaginationQuasar>
 	watchEffect(() => {
-		if (store.value) {
+		if (store.value && store.value.pagination) {
 			paginationQuasar.value.page = store.value.pagination.currentPage
 			paginationQuasar.value.rowsPerPage = store.value.pagination.itemsPerPage
 			paginationQuasar.value.rowsNumber = store.value.pagination.totalCount
@@ -109,9 +109,11 @@
 	}
 
 	function onRequest({ pagination, filter }: Record<'pagination', PaginationQuasar>) {
-		store.value.pagination.currentPage = pagination.page
-		store.value.pagination.itemsPerPage = pagination.rowsPerPage
-		store.value.pagination.totalCount = pagination.rowsNumber
+		if (store.value.pagination) {
+			store.value.pagination.currentPage = pagination.page
+			store.value.pagination.itemsPerPage = pagination.rowsPerPage
+			store.value.pagination.totalCount = pagination.rowsNumber
+		}
 		store.value.orderField = pagination.sortBy
 		store.value.orderType = pagination.descending ? 'DESC' : 'ASC'
 		store.value.collection()
@@ -128,9 +130,11 @@
 		// const { items } = storeToRefs(store.value);
 		paginationQuasar.value.sortBy = store.value.orderField
 		paginationQuasar.value.descending = store.value.orderType == 'DESC'
-		paginationQuasar.value.page = store.value.pagination.currentPage
-		paginationQuasar.value.rowsPerPage = store.value.pagination.itemsPerPage
-		paginationQuasar.value.rowsNumber = store.value.pagination.totalCount
+		if (store.value.pagination) {
+			paginationQuasar.value.page = store.value.pagination.currentPage
+			paginationQuasar.value.rowsPerPage = store.value.pagination.itemsPerPage
+			paginationQuasar.value.rowsNumber = store.value.pagination.totalCount
+		}
 	})
 </script>
 

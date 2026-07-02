@@ -3,6 +3,7 @@
 namespace App\Migration;
 
 use App\Repository\TarifaRepository;
+use DateTime;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -21,14 +22,13 @@ class MigradorEstaticos {
 
     public function __construct(
         private Connection $newConn,
-        // #[Target('oldPdo')] private \PDO $oldPdo,
+        #[Target('oldPdo')] private \PDO $oldPdo,
         #[Target('doctrine.orm.systemfdn_entity_manager')]
         private EntityManagerInterface $systemfdnEm,
         private Mapeador $mapeador,
-        private TarifaRepository $tarifaRepository
     ) {
-        // $this->oldPdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-        // $this->oldPdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
+        $this->oldPdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        $this->oldPdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
     }
 
     public function migrar(?OutputInterface $output = null, $entities = []): array {
@@ -90,7 +90,7 @@ class MigradorEstaticos {
             }
             $data = $this->mapeador->empresa($row);
             $this->newConn->executeStatement(
-                'INSERT INTO empresa (id, nombre, nif, direccion, telefono, email) VALUES (:id, :nombre, :nif, :direccion, :telefono, :email)',
+                'INSERT INTO empresa (id, nombre, nit, direccion, telefono, email) VALUES (:id, :nombre, :nit, :direccion, :telefono, :email)',
                 $data
             );
             $count++;
@@ -157,7 +157,7 @@ class MigradorEstaticos {
         if ($output) $output->write('<info>Usuarios...</info>');
         $rows = $this->fetchOld('SELECT * FROM custom_user');
         $count = 0;
-
+        $date = new DateTime()->format('Y-m-d H:i:s');
         foreach ($rows as $row) {
             $lid = (string) $row['id'];
             if ($this->existe('usuario', $lid)) {
@@ -166,8 +166,16 @@ class MigradorEstaticos {
             $data = $this->mapeador->usuario($row);
             $fields = implode(', ', array_keys($data));
             $args = implode(', ', array_map(fn($k) => ":{$k}", array_keys($data)));
-            $this->newConn->executeStatement(
+            $id = $this->newConn->executeStatement(
                 "INSERT INTO usuario ({$fields}) VALUES ({$args})",
+                $data
+            );
+            $token = 'fdn_' . bin2hex(random_bytes(32));
+            $data = ['expira' => null, 'token' => $token, 'activo' => 1, 'created_at' => $date, 'updated_at' => $date, 'usuario_id' => $id];
+            $fields = implode(', ', array_keys($data));
+            $args = implode(', ', array_map(fn($k) => ":{$k}", array_keys($data)));
+            $this->newConn->executeStatement(
+                "INSERT INTO api_token  ({$fields}) VALUES ({$args})",
                 $data
             );
             $count++;
@@ -256,6 +264,9 @@ class MigradorEstaticos {
         $count = 0;
 
         foreach ($rutas as $ruta) {
+            if (empty($ruta['codigo'])) {
+                continue;
+            }
             $rutaCodigo = $ruta['codigo'];
             if ($this->existe('trayecto', $rutaCodigo)) {
                 continue;
@@ -269,7 +280,7 @@ class MigradorEstaticos {
 
             $data = $this->mapeador->trayecto($ruta, $origenId, $destinoId, true);
             $trayectoId = $this->newConn->fetchOne(
-                'INSERT INTO trayecto (origen_id, destino_id, distancia_km, duracion_estimada_minutos, activo, es_ruta, legacy_id) VALUES (:origen_id, :destino_id, :distancia_km, :duracion_estimada_minutos, :activo, :es_ruta, :legacy_id) RETURNING id',
+                'INSERT INTO trayecto (origen_id, destino_id, distancia_km, duracion_estimada_minutos, activo, legacy_id) VALUES (:origen_id, :destino_id, :distancia_km, :duracion_estimada_minutos, :activo,  :legacy_id) RETURNING id',
                 $data
             );
             $count++;
@@ -334,7 +345,7 @@ class MigradorEstaticos {
                 }
 
                 $subId = $this->newConn->fetchOne(
-                    'INSERT INTO trayecto (origen_id, destino_id, activo, es_ruta, legacy_id) VALUES (:origen_id, :destino_id, true, false, :legacy_id) RETURNING id',
+                    'INSERT INTO trayecto (origen_id, destino_id, activo,  legacy_id) VALUES (:origen_id, :destino_id, true, :legacy_id) RETURNING id',
                     [
                         'origen_id' => $origen,
                         'destino_id' => $destino,
@@ -370,12 +381,14 @@ class MigradorEstaticos {
         $estacionIds = array_unique($estacionIds);
 
         $rutaInversaLegacy = sprintf('REV-%s', $rutaCodigo);
-        $conn = $this->systemfdnEm->getConnection();
         if (!$this->existe('trayecto', $rutaInversaLegacy)) {
-            // $stmt = $this->oldPdo->prepare('SELECT * FROM ruta WHERE codigo = :codigo');
-            // $stmt->execute(['codigo' => $rutaCodigo]);
-            // $oldRuta = $stmt->fetch() ?: [];
-            $oldRuta = $conn->executeQuery('SELECT * FROM ruta WHERE codigo = :codigo', ['codigo' => $rutaCodigo])->fetchAllAssociative() ?: [];
+            $stmt = $this->oldPdo->prepare('SELECT * FROM ruta WHERE codigo = :codigo');
+            $stmt->execute(['codigo' => $rutaCodigo]);
+            $oldRuta = $stmt->fetch();
+            if (!$oldRuta) {
+                return 0;
+            }
+            $oldRuta = $this->sanitizeUtf8($oldRuta);
             $data = $this->mapeador->trayecto(
                 $oldRuta,
                 $rutaDestinoId,
@@ -386,7 +399,7 @@ class MigradorEstaticos {
             $data['distancia_km'] = $oldRuta['kilometros'] ?? null;
 
             $revId = $this->newConn->fetchOne(
-                'INSERT INTO trayecto (origen_id, destino_id, distancia_km, duracion_estimada_minutos, activo, es_ruta, legacy_id) VALUES (:origen_id, :destino_id, :distancia_km, :duracion_estimada_minutos, :activo, :es_ruta, :legacy_id) RETURNING id',
+                'INSERT INTO trayecto (origen_id, destino_id, distancia_km, duracion_estimada_minutos, activo,  legacy_id) VALUES (:origen_id, :destino_id, :distancia_km, :duracion_estimada_minutos, :activo, :legacy_id) RETURNING id',
                 $data
             );
             $this->linkTrayecto($trayectoPadreId, (int) $revId);
@@ -568,22 +581,26 @@ class MigradorEstaticos {
         return $id !== false ? (int) $id : null;
     }
 
+    private function sanitizeUtf8(array $row): array {
+        $clean = [];
+        foreach ($row as $k => $v) {
+            $clean[$k] = is_string($v) ? mb_convert_encoding($v, 'UTF-8', 'ISO-8859-1') : $v;
+        }
+        return $clean;
+    }
+
     private function fetchOld(string $sql, array $params = []): \Generator {
-        $conn = $this->systemfdnEm->getConnection();
-        $results = $conn->executeQuery($sql, $params)->fetchAllAssociative() ?: [];
-        // $stmt = $this->oldPdo->prepare($s ql);
-        // $stmt->execute($params);
-        // while ($row = $stmt->fetch()) {
-        //     yield $row;
-        // }
-        foreach ($$results as $key => $value) {
-            yield $value;
+        $stmt = $this->oldPdo->prepare($sql);
+        $stmt->execute($params);
+        while ($row = $stmt->fetch()) {
+            yield $this->sanitizeUtf8($row);
         }
     }
 
-    private function fetchOldNoGenerator(string $sql, array $params = []) {
+    private function fetchOldNoGenerator(string $sql, array $params = []): array {
         $stmt = $this->oldPdo->prepare($sql);
         $stmt->execute($params);
-        return $stmt->fetchAll();
+        $rows = $stmt->fetchAll();
+        return array_map(fn(array $r) => $this->sanitizeUtf8($r), $rows);
     }
 }

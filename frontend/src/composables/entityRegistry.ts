@@ -23,24 +23,24 @@ function waitForSchema(): Promise<void> {
 	})
 }
 
-export async function getStore(entity?): StateStore {
+export async function getStore(entity?, refresh?): StateStore {
 	if (!entity && !(entity = useRoute().params.entity)) {
 		throw Error(`No nombre de entidad`)
 	}
 	let store
 	const storeId = `${str.capitalize(entity)}`
 
-	if (!(store = stores.get(storeId))) {
+	if (!(store = stores.get(storeId)) || refresh) {
 		const pinia = await getActivePinia()
 
-		if (!pinia || !(storeId in pinia.state.value)) {
+		if (!pinia || !(storeId in pinia.state.value) || refresh) {
 			await waitForSchema()
 
 			if (!(store = await storeFactory(storeId))) {
 				// throw Error(`entityRegistry linea 28: No se pudo crear la store de nombre ${entity}`)
 				return false
 			} else {
-				await store.init()
+				await store.init(refresh)
 				stores.set(storeId, store)
 			}
 		} else {

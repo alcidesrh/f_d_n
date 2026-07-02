@@ -25,7 +25,7 @@ use Doctrine\DBAL\Connection;
 
 #[AsCommand(
     name: 'app:migrar:todo',
-    description: 'Ejecuta la migración completa: 1) reset, 2) estáticos, 3) IAM, 4) config, 5) boletos'
+    description: 'Ejecuta la migración completa: 1) reset, 2) estáticos, 3) IAM, 4) config, 5) servicios+boletos'
 )]
 class MigrarTodoCommand extends Command {
     public function __construct(
@@ -45,7 +45,7 @@ class MigrarTodoCommand extends Command {
             ->addOption('skip-estaticos', null, InputOption::VALUE_NONE, 'Salta la migración Estaticos')
             ->addOption('skip-iam', null, InputOption::VALUE_NONE, 'Salta la migración IAM')
             ->addOption('skip-config', null, InputOption::VALUE_NONE, 'Salta la sincronización de EntityConfiguration')
-            ->addOption('boletos', null, InputOption::VALUE_OPTIONAL, 'Cantidad de boletos a migrar', '100')
+            ->addOption('servicios', null, InputOption::VALUE_OPTIONAL, 'Cantidad de boletos a migrar', '100')
             ->addOption(
                 'entities',
                 null,
@@ -66,8 +66,9 @@ class MigrarTodoCommand extends Command {
         $skipEstatico = (bool) $input->getOption('skip-estaticos');
         $skipIam = (bool) $input->getOption('skip-iam');
         $skipConfig = (bool) $input->getOption('skip-config');
-        $boletos = (int) $input->getOption('boletos');
+        $servicios = (int) $input->getOption('servicios');
         $entities =  $input->getOption('entities');
+        ini_set('memory_limit', '2G');
         // Reset the debug data holder to avoid memory exhaustion from
         // BacktraceDebugDataHolder accumulating all migration queries.
         $this->resetDebugDataHolder();
@@ -78,7 +79,8 @@ class MigrarTodoCommand extends Command {
         // ─── Paso 1: Reset (opcional) ─────────────────────────────
         if ($clean) {
             $output->writeln('<info>[1/5] Limpiando base de datos...</info>');
-            $this->limpiador->limpiar();
+            // $this->limpiador->limpiar();
+            $this->resetDB($input, $output, true);
             $output->writeln('<info>✓ Base de datos limpiada</info>');
             $steps[] = 'reset';
         }
@@ -89,9 +91,11 @@ class MigrarTodoCommand extends Command {
             $output->writeln('<info>[2/5] Migrando datos estáticos...</info>');
             try {
                 $contadores = $this->migradorEstaticos->migrar($output);
+                $this->resetDebugDataHolder();
                 $allCounters = array_merge($allCounters, $contadores);
                 $steps[] = 'estaticos';
             } catch (\Throwable $e) {
+                $this->resetDebugDataHolder();
                 $output->writeln("<error>Error en datos estáticos: {$e->getMessage()}</error>");
                 return Command::FAILURE;
             }
@@ -132,14 +136,18 @@ class MigrarTodoCommand extends Command {
             }
         }
 
-        // ─── Paso 5: Boletos (datos variables) ────────────────────
-        $output->writeln(sprintf('<info>[5/5] Migrando hasta %d boletos...</info>', $boletos));
+        // ─── Paso 5: Servicios + Boletos (desde salida) ───────────
+        $this->resetDebugDataHolder();
+        $output->writeln('<info>[5/5] Migrando servicios y boletos desde salidas...</info>');
+        $resetFn = function () {
+            $this->resetDebugDataHolder();
+        };
         try {
-            // $contadores = $this->migrador->migrarBoletos($boletos, false, $output);
-            $contadores = $this->migrador->migrarServicio($output);
+            $contadores = $this->migrador->migrarServicio($servicios, $output, $resetFn);
+            $this->resetDebugDataHolder();
 
             $allCounters = array_merge($allCounters, $contadores);
-            $steps[] = 'boletos';
+            $steps[] = 'servicios+boletos';
         } catch (\Throwable $e) {
             $output->writeln("<error>Error en boletos: {$e->getMessage()}</error>");
             return Command::FAILURE;
@@ -176,10 +184,8 @@ class MigrarTodoCommand extends Command {
             $container->get('doctrine.debug_data_holder')->reset();
         }
     }
-    // #[AsCommand('app:reset-db')]
-    public function resetDB(#[Option] bool $hard = false, ?InputInterface $input = null, ?OutputInterface $output = null): int {
+    public function resetDB(InputInterface $input,  ?OutputInterface $output, ?bool $hard): int {
         $io = new SymfonyStyle($input, $output);
-        $hard = (bool) $input->getOption('hard');
         if ($hard) {
             // $io->warning('HARD RESET: se dropeará y recreará la base de datos');
             // if (!$io->confirm('¿Continuar?', false)) {

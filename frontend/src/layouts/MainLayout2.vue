@@ -9,7 +9,7 @@
 
 		<q-page-container class="layout-main-content">
 			<q-page class="h-full u-p-xs lg:u-px-l m-auto relative">
-				<!-- <div id="intersectionObservertarget" class="absolute top-78px w-20px h-20px bg-black" /> -->
+				<div id="intersectionObservertarget" class="absolute top-0px" />
 
 				<RouterView v-slot="{ Component, route }">
 					<transition :name="route.meta.transition || 'route'" mode="out-in">
@@ -18,8 +18,8 @@
 				</RouterView>
 			</q-page>
 		</q-page-container>
-
 		<SidebarRight />
+		<!-- <ProfilerFooter /> -->
 	</q-layout>
 </template>
 
@@ -37,7 +37,6 @@
 
 	const observer = new IntersectionObserver(
 		(e) => {
-			cl(e)
 			const el = document.querySelector('.topbar')
 			if (e[0].intersectionRatio < 1) el.classList.add('layout-topbar-sticky')
 			else el.classList.remove('layout-topbar-sticky')

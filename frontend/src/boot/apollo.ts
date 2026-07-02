@@ -14,9 +14,21 @@ import { DefaultApolloClient } from '@vue/apollo-composable'
 
 // export { tabId }
 
+function createProfilerFetch() {
+	return async (uri: RequestInfo | URL, options: RequestInit) => {
+		const response = await fetch(uri, options)
+		const token = response.headers.get('X-Debug-Token')
+		if (token) {
+			useProfilerStore().setToken(token)
+		}
+		return response
+	}
+}
+
 export default defineBoot(async ({ app, pinia }) => {
 	const httpLink = new HttpLink({
 		uri: config.ENTRYPOINT_GRAPHQL,
+		fetch: createProfilerFetch(),
 	})
 
 	const debugLink = new ApolloLink((operation, forward) => {

@@ -89,6 +89,11 @@ export function createApi(options: ApiOptions) {
 					signal: cfg.signal || controller.signal,
 				})
 
+				const profilerToken = res.headers.get('X-Debug-Token')
+				if (profilerToken) {
+					useProfilerStore().setToken(profilerToken)
+				}
+
 				if (!res.ok) {
 					const text = await res.text()
 					let err

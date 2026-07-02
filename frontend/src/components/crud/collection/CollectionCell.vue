@@ -21,7 +21,7 @@
 		</div>
 		<div v-else-if="Array.isArray(data[column.name])" class="flex flex-wrap gap-1">
 			<q-chip class="py-2 px-3 u--text-1! font-semibold" dense size="md" v-for="v in data[column.name]" :key="v.id">
-				{{ v.label }}
+				{{ v.label || v }}
 			</q-chip>
 		</div>
 		<div v-else class="overflow-hidden text-ellipsis" :class="[column.schema ? `highlight-${index}` : '']" :data-property="column.name">

@@ -9,15 +9,10 @@ doctrine:
                 profiling_collect_backtrace: "%kernel.debug%"
 
             systemfdn:
-                driver: sqlsrv
+                driver_class: App\Doctrine\Driver\PDODblib\Driver
                 host: "%env(systemfdn_host)%"
                 port: "%env(systemfdn_port)%"
                 charset: UTF-8
-                options:
-                    trustServerCertificate: true
-                    encrypt: false
-                    ConnectTimeout: 5
-                    ReturnDatesAsStrings: true
                 dbname: "%env(systemfdn_dbname)%"
                 user: "%env(systemfdn_user)%"
                 password: "%env(systemfdn_password)%"

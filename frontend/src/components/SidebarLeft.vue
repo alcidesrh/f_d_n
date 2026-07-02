@@ -1,11 +1,11 @@
 <template>
 	<aside class="left-sidebar">
-		<div v-if="sidebarStore.mode === 'close'" class="sidebar-left-trigger" @click="sidebarStore.setMode('large')">
+		<div @click="sidebarStore.setMode()" class="sidebar-left-trigger" :class="{ close: sidebarStore.mode === 'close' }">
 			<icon name="departure_board" class="trigger-icon" />
 		</div>
 		<div class="sidebar-control" :class="[mode]">
 			<div class="toogle-wraper large" @click="sidebarStore.setMode(mode == modeStates.close ? modeStates.prev : mode == modeStates.large ? modeStates.mini : modeStates.large)">
-				<icon fill name="switch_right" class="text-20px font-medium" />
+				<icon fill name="switch_left" class="text-20px font-medium" />
 			</div>
 			<div class="close-wraper" @click="sidebarStore.setMode(mode == modeStates.close ? modeStates.prev : modeStates.close)">
 				<icon name="close_small" class="text-20px font-medium" />

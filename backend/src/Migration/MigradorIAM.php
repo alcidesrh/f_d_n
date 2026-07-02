@@ -4,6 +4,7 @@ namespace App\Migration;
 
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\DependencyInjection\Attribute\Target;
 
 /**
  * Adapts the legacy role/user model to the new Flat Permission Set architecture.
@@ -76,10 +77,10 @@ class MigradorIAM {
 
     public function __construct(
         private Connection $newConn,
-        #[Target('doctrine.dbal.systemfdn_connection')] private Connection $oldConn,
+        #[Target('oldPdo')] private \PDO $oldPdo,
     ) {
-        // $this->oldPdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-        // $this->oldPdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
+        $this->oldPdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        $this->oldPdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
     }
 
     public function migrar(?OutputInterface $output = null): array {
@@ -315,14 +316,19 @@ class MigradorIAM {
         return $count;
     }
 
+    private function sanitizeUtf8(array $row): array {
+        $clean = [];
+        foreach ($row as $k => $v) {
+            $clean[$k] = is_string($v) ? mb_convert_encoding($v, 'UTF-8', 'ISO-8859-1') : $v;
+        }
+        return $clean;
+    }
+
     private function fetchOld(string $sql, array $params = []): \Generator {
-        $stmt = $this->oldConn->executeQuery($sql, $params)->fetchAllAssociative();
-        // $stmt->execute($params);
-        // while ($row = $stmt->fetch()) {
-        //     yield $row;
-        // }
-        foreach ($$stmt as $key => $value) {
-            yield $row;
+        $stmt = $this->oldPdo->prepare($sql);
+        $stmt->execute($params);
+        while ($row = $stmt->fetch()) {
+            yield $this->sanitizeUtf8($row);
         }
     }
 }

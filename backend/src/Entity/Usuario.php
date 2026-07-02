@@ -347,13 +347,11 @@ class Usuario extends PersonaBase implements UserInterface, PasswordAuthenticate
     /**
      * @return Collection<int, Venta>
      */
-    public function getVentas(): Collection
-    {
+    public function getVentas(): Collection {
         return $this->ventas;
     }
 
-    public function addVenta(Venta $venta): static
-    {
+    public function addVenta(Venta $venta): static {
         if (!$this->ventas->contains($venta)) {
             $this->ventas->add($venta);
             $venta->setUsuario($this);
@@ -362,8 +360,7 @@ class Usuario extends PersonaBase implements UserInterface, PasswordAuthenticate
         return $this;
     }
 
-    public function removeVenta(Venta $venta): static
-    {
+    public function removeVenta(Venta $venta): static {
         if ($this->ventas->removeElement($venta)) {
             // set the owning side to null (unless already changed)
             if ($venta->getUsuario() === $this) {

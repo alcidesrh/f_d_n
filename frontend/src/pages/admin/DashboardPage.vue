@@ -1,45 +1,89 @@
 <template>
-	<q-page class="dashboard">
-		<header class="dashboard__header">
+	<div class="dashboard">
+		<div class="dashboard__header">
 			<div>
-				<h1 class="dashboard__title">Panel de Administración</h1>
+				<h1 class="dashboard__title text-blue-grey-6">Panel de Administración</h1>
 				<p class="dashboard__subtitle">Gestión y monitoreo del sistema de transporte</p>
 			</div>
 			<div class="dashboard__date">
 				<Icon name="calendar_today" />
 				{{ today }}
 			</div>
-		</header>
+		</div>
+		<IconPicker v-model="selectedIconId" />
+		<div class="accordion">
+			<article class="item active">
+				<button class="header">
+					<span>Resumen</span>
 
-		<section class="dashboard__section">
-			<div class="dashboard__section-header" @click="toggleSection('resumen')">
-				<h2 class="dashboard__section-title">Resumen</h2>
-				<icon :name="expandedSections.has('resumen') ? 'expand_less' : 'expand_more'" class="section-chevron" />
-			</div>
-			<div v-if="expandedSections.has('resumen')" class="dashboard__section-body">
-				<div class="stats-grid">
-					<StatsCard v-for="stat in stats" :key="stat.label" v-bind="stat" />
-				</div>
-			</div>
-		</section>
+					<svg class="icon" viewBox="0 0 24 24">
+						<path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none" />
+					</svg>
+				</button>
 
-		<section class="dashboard__section">
-			<div class="dashboard__section-header" @click="toggleSection('entities')">
-				<h2 class="dashboard__section-title">Gestión de Entidades</h2>
-				<icon :name="expandedSections.has('entities') ? 'expand_less' : 'expand_more'" class="section-chevron" />
-			</div>
-			<div v-if="expandedSections.has('entities')" class="dashboard__section-body">
-				<p class="dashboard__section-desc">Acceda a las operaciones CRUD de cada entidad del sistema</p>
-				<div v-if="entities.length" class="entities-grid">
-					<EntityCard v-for="entity in entities" :key="entity.name" :entity="entity" :icon_name="getEntityIcon(entity.name)" :record-count="recordCounts[entity.name]" :loading="loadingCounts" />
+				<div class="body">
+					<div class="content">
+						<!-- <div class="dashboard__section-body" :class="{ collapse: !expandedSections.has('resumen') }"> -->
+						<div class="stats-grid">
+							<StatsCard v-for="stat in stats" :key="stat.label" v-bind="stat" />
+						</div>
+						<!-- </div> -->
+					</div>
 				</div>
-				<div v-else class="dashboard__empty">
-					<q-spinner-dots color="primary" size="2em" />
-					<span>Cargando entidades...</span>
+			</article>
+
+			<article class="item">
+				<button class="header">
+					<span>Gestión de Entidades</span>
+
+					<svg class="icon" viewBox="0 0 24 24">
+						<path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none" />
+					</svg>
+				</button>
+				<div class="body">
+					<div class="content">
+						<!-- <div class="dashboard__section-body"> -->
+						<div class="mb-1rem flex justify-end">
+							<q-select
+								clearable
+								outlined
+								dense
+								bg-color="white"
+								v-model="model"
+								use-input
+								input-debounce="0"
+								label="Filtrar"
+								:options="options"
+								@filter="filterFn"
+								style="width: 250px"
+							>
+								<template v-slot:no-option>
+									<q-item>
+										<q-item-section class="text-grey"> No hay resultados </q-item-section>
+									</q-item>
+								</template>
+							</q-select>
+						</div>
+						<div v-if="entities.length" class="entities-grid">
+							<EntityCard
+								v-for="entity in options"
+								:key="entity"
+								:entity="schemaStore.entities[entity]"
+								:icon_name="getEntityIcon(schemaStore.entities[entity])"
+								:record-count="recordCounts[entity]"
+								:loading="loadingCounts"
+							/>
+						</div>
+						<div v-else class="empty">
+							<q-spinner-dots color="primary" size="2em" />
+							<span>Cargando entidades...</span>
+						</div>
+						<!-- </div> -->
+					</div>
 				</div>
-			</div>
-		</section>
-	</q-page>
+			</article>
+		</div>
+	</div>
 </template>
 
 <script setup lang="ts">
@@ -80,12 +124,39 @@
 			!name.startsWith('__')
 		)
 	}
-
+	const selectedIconId = ref(null)
+	const model = ref(null)
+	const options = ref(Object.keys(schemaStore.entities))
+	const stringOptions = ref(options.value)
 	const entities = computed<Entity[]>(() =>
 		Object.entries(schemaStore.entities)
 			.filter(([name]) => isEntity(name))
 			.map(([, entity]) => entity),
 	)
+	watch(
+		() => model.value,
+		(v) => {
+			if (!v) {
+				options.value = stringOptions.value
+			}
+		},
+	)
+	function filterFn(val, update) {
+		if (val === '') {
+			update(() => {
+				options.value = stringOptions.value
+
+				// here you have access to "ref" which
+				// is the Vue reference of the QSelect
+			})
+			return
+		}
+
+		update(() => {
+			const needle = val.toLowerCase()
+			options.value = stringOptions.value.filter((v) => v.toLowerCase().includes(needle))
+		})
+	}
 
 	const recordCounts = ref<Record<string, number>>({})
 	const loadingCounts = ref(true)
@@ -95,6 +166,146 @@
 			const api = useApi()
 			const data = await api.get('/entity-record-counts')
 			recordCounts.value = data
+
+			gsap.value.registerPlugin()
+
+			const items = document.querySelectorAll('.item')
+
+			items.forEach((item) => {
+				const header = item.querySelector('.header')
+				const body = item.querySelector('.body')
+				const icon = item.querySelector('.icon')
+
+				if (item.classList.contains('active')) {
+					gsap.value.set(body, {
+						height: 'auto',
+					})
+
+					gsap.value.set(icon, {
+						rotate: 45,
+					})
+
+					// gsap.value.set(item, {
+					// 	boxShadow: '0 4px 4px -1px oklch(92.9% 0.013 255.508deg);',
+					// })
+				}
+
+				header.addEventListener('click', () => {
+					const opened = item.classList.contains('active')
+
+					// items.forEach(closeItem)
+
+					if (!opened) {
+						openItem(item)
+					} else {
+						closeItem(item)
+					}
+				})
+			})
+
+			function openItem(item) {
+				const body = item.querySelector('.body')
+				const icon = item.querySelector('.icon')
+
+				item.classList.add('active')
+
+				gsap.value
+					.timeline({
+						defaults: {
+							ease: 'power3.out',
+						},
+					})
+
+					// .to(
+					// 	item,
+					// 	{
+					// 		boxShadow: '0 4px 4px -1px oklch(92.9% 0.013 255.508deg);',
+					// 		duration: 0.35,
+					// 	},
+					// 	0,
+					// )
+
+					.to(
+						icon,
+						{
+							rotate: 45,
+							duration: 0.45,
+							ease: 'back.out(2)',
+						},
+						0,
+					)
+
+					.to(
+						body,
+						{
+							height: 'auto',
+							duration: 0.55,
+							ease: 'expo.out',
+						},
+						0,
+					)
+
+					.fromTo(
+						body.firstElementChild,
+						{
+							opacity: 0,
+							y: -16,
+						},
+						{
+							opacity: 1,
+							y: 0,
+							duration: 0.35,
+							ease: 'power2.out',
+						},
+						'-=.25',
+					)
+			}
+
+			function closeItem(item) {
+				if (!item.classList.contains('active')) return
+
+				item.classList.remove('active')
+
+				const body = item.querySelector('.body')
+				const icon = item.querySelector('.icon')
+
+				gsap.value
+					.timeline()
+
+					.to(body.firstElementChild, {
+						opacity: 0,
+						y: -12,
+						duration: 0.18,
+					})
+
+					.to(
+						body,
+						{
+							height: 0,
+							duration: 0.42,
+							ease: 'expo.inOut',
+						},
+						'<',
+					)
+
+					.to(
+						icon,
+						{
+							rotate: 0,
+							duration: 0.3,
+						},
+						'<',
+					)
+
+				// .to(
+				// 	item,
+				// 	{
+				// 		boxShadow: '0 4px 4px -1px oklch(92.9% 0.013 255.508deg);',
+				// 		duration: 0.3,
+				// 	},
+				// 	'<',
+				// )
+			}
 		} catch {
 			// silently fail; cards show placeholder
 		} finally {
@@ -167,7 +378,7 @@
 	])
 </script>
 
-<style scoped lang="scss">
+<style lang="scss">
 	.dashboard {
 		padding: 1.5rem;
 
@@ -203,89 +414,89 @@
 			white-space: nowrap;
 			padding-top: 0.25rem;
 		}
+	}
+	.accordion {
+		// width: min(700px, 95%);
+		margin: 60px auto;
 
-		&__section {
-			margin-bottom: 1rem;
-			border: 1px solid $surface-4;
-			border-radius: 10px;
-			background: #fff;
+		& > .item {
 			overflow: hidden;
-		}
 
-		&__section-header {
-			display: flex;
-			align-items: center;
-			justify-content: space-between;
-			padding: 0.75rem 1rem;
-			cursor: pointer;
-			user-select: none;
-			transition: background 0.15s;
+			border-radius: 16px;
 
-			&:hover {
+			margin-bottom: 2rem;
+
+			background: white;
+			// border: 1px solid #e7ebf2;
+			border: 1px solid $surface-3;
+			border-radius: 10px;
+			// box-shadow: 0 4px 4px -1px $neutral-3;
+
+			& > .header {
+				width: 100%;
+				padding: 22px 26px;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				cursor: pointer;
+				border: none;
 				background: $surface-1;
+				font-size: 18px;
+				font-weight: 600;
+				& > .icon {
+					width: 20px;
+					height: 20px;
+				}
+				&:hover {
+					background: $surface-2;
+				}
+			}
+			& > .body {
+				height: 0;
+				overflow: hidden;
+				& > .content {
+					padding: 2rem;
+					display: grid;
+					grid-template-rows: 1fr;
+					transition: grid-template-rows 1s ease-out;
+					overflow: hidden;
+					// min-height: 0;
+					& > .stats-grid {
+						display: grid;
+						grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+						gap: 1rem;
+					}
+
+					& > .entities-grid {
+						display: grid;
+						grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+						gap: 1rem;
+					}
+					& > .empty {
+						display: flex;
+						align-items: center;
+						gap: 1rem;
+						justify-content: center;
+						padding: 3rem;
+						color: $surface-6;
+						font-size: 0.9rem;
+					}
+				}
 			}
 		}
-
-		&__section-title {
-			font-size: 1rem;
-			font-weight: 600;
-			color: $dark;
-			margin: 0;
-		}
-
-		.section-chevron {
-			font-size: 1.25rem;
-			color: $surface-6;
-			transition: transform 0.2s;
-		}
-
-		&__section-body {
-			padding: 0.25rem 1rem 1rem;
-		}
-
-		&__section-desc {
-			font-size: 0.85rem;
-			color: $surface-6;
-			margin: 0 0 1rem;
-		}
-
-		&__empty {
-			display: flex;
-			align-items: center;
-			gap: 1rem;
-			justify-content: center;
-			padding: 3rem;
-			color: $surface-6;
-			font-size: 0.9rem;
-		}
 	}
-
-	.stats-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-		gap: 1rem;
-	}
-
-	.entities-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-		gap: 1rem;
-	}
-
 	@media (max-width: 599px) {
 		.dashboard {
 			padding: 1rem;
-
-			&__header {
-				flex-direction: column;
-			}
 		}
-
-		.stats-grid {
+		.accordion > .item > .header {
+			flex-direction: column;
+		}
+		.accordion > .item > .body > .content > .stats-grid {
 			grid-template-columns: 1fr;
 		}
 
-		.entities-grid {
+		.accordion > .item > .body > .content > .entities-grid {
 			grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
 		}
 	}

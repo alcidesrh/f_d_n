@@ -118,6 +118,7 @@ declare global {
   const useCssVars: typeof import('vue').useCssVars
   const useEntityConfig: typeof import('./composables/useEntityConfig').useEntityConfig
   const useGsap: typeof import('./composables/useGsap').useGsap
+  const useIcons: typeof import('./composables/useIcons').useIcons
   const useId: typeof import('vue').useId
   const useLink: typeof import('vue-router').useLink
   const useLoadingStore: typeof import('./stores/autoimport/loadingStore').useLoadingStore
@@ -127,6 +128,7 @@ declare global {
   const useModel: typeof import('vue').useModel
   const useNotifications: typeof import('./composables/notifications').useNotifications
   const usePermission: typeof import('./composables/usePermission').usePermission
+  const useProfilerStore: typeof import('./stores/autoimport/profilerStore').useProfilerStore
   const useQuasar: typeof import('quasar').useQuasar
   const useRoute: typeof import('./composables/useRouter').useRoute
   const useRouter: typeof import('./composables/useRouter').useRouter
@@ -151,6 +153,9 @@ declare global {
   // @ts-ignore
   export type { CollectionFieldConfig, FormField, EntityConfig } from './composables/useEntityConfig'
   import('./composables/useEntityConfig')
+  // @ts-ignore
+  export type { IconItem, CategoryItem } from './composables/useIcons'
+  import('./composables/useIcons')
   // @ts-ignore
   export type { Menu } from './stores/autoimport/menu'
   import('./stores/autoimport/menu')
@@ -278,6 +283,7 @@ declare module 'vue' {
     readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
     readonly useEntityConfig: UnwrapRef<typeof import('./composables/useEntityConfig')['useEntityConfig']>
     readonly useGsap: UnwrapRef<typeof import('./composables/useGsap')['useGsap']>
+    readonly useIcons: UnwrapRef<typeof import('./composables/useIcons')['useIcons']>
     readonly useId: UnwrapRef<typeof import('vue')['useId']>
     readonly useLink: UnwrapRef<typeof import('vue-router')['useLink']>
     readonly useLoadingStore: UnwrapRef<typeof import('./stores/autoimport/loadingStore')['useLoadingStore']>
@@ -287,6 +293,7 @@ declare module 'vue' {
     readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
     readonly useNotifications: UnwrapRef<typeof import('./composables/notifications')['useNotifications']>
     readonly usePermission: UnwrapRef<typeof import('./composables/usePermission')['usePermission']>
+    readonly useProfilerStore: UnwrapRef<typeof import('./stores/autoimport/profilerStore')['useProfilerStore']>
     readonly useQuasar: UnwrapRef<typeof import('quasar')['useQuasar']>
     readonly useRoute: UnwrapRef<typeof import('./composables/useRouter')['useRoute']>
     readonly useRouter: UnwrapRef<typeof import('./composables/useRouter')['useRouter']>

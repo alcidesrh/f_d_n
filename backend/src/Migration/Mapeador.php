@@ -12,7 +12,7 @@ class Mapeador {
         return [
             'id' => (int) $old['id'],
             'nombre' => $this->truncate($old['nombre'] ?? '', 255),
-            'nif' => $this->truncate($old['nit'] ?? null, 20),
+            'nit' => $this->truncate($old['nit'] ?? null, 20),
             'direccion' => $this->truncate($old['direccion'] ?? null, 255),
             'telefono' => $this->truncate($old['telefonos'] ?? null, 20),
             'email' => null,
@@ -144,7 +144,6 @@ class Mapeador {
             'distancia_km' => $esRuta ? ($oldRuta['kilometros'] ?? null) : null,
             'duracion_estimada_minutos' => null,
             'activo' => $this->toBool($esRuta ? ($oldRuta['activo'] ?? true) : true),
-            'es_ruta' => $this->toBool($esRuta),
             'legacy_id' => $esRuta ? $oldRuta['codigo'] : null,
         ];
     }
@@ -152,12 +151,13 @@ class Mapeador {
     /**
      * Servicio is variable data → keep legacy_id.
      */
-    public function servicio(array $old, ?int $idRecorrido, ?int $busId, int $empresaId): array {
+    public function servicio(array $old, ?int $idRecorrido, ?int $busId, ?int $empresaId, ?int $pilotoId = null): array {
         return [
-            'hora_partida' => $this->formatDatetime($old['fecha']),
+            'fecha' => $this->formatDatetime($old['fecha']),
             'recorrido_id' => $idRecorrido,
             'bus_id' => $busId,
             'empresa_id' => $empresaId,
+            'piloto_id' => $pilotoId,
             'legacy_id' => (string) $old['id'],
         ];
     }
@@ -165,15 +165,30 @@ class Mapeador {
     /**
      * Boleto is variable data → keep legacy_id.
      */
-    public function boleto(array $old, int $servicioId, ?int $clienteId, int $estacionId, ?int $idRecorrido, ?int $asientoId, ?int $usuarioId): array {
+    public function boleto(array $old, int $servicioId, int $clienteId, int $ventaId, int $asientoId, ?int $idRecorrido): array {
+        $precio = (int) (($old['precioCalculado'] ?? 0) * 100);
+
         return [
-            'fecha_compra' => $this->formatDatetime($old['fecha_creacion']),
+            // 'precio_monto' => $precio ?: 0,
+            // 'precio_moneda' => 'GTQ',
             'servicio_id' => $servicioId,
             'recorrido_id' => $idRecorrido,
             'cliente_id' => $clienteId,
-            'estacion_id' => $estacionId,
-            'usuario_creador' => $usuarioId,
+            'venta_id' => $ventaId,
+            'asiento_id' => $asientoId,
+            'created_at' => $this->formatDatetime($old['fecha_creacion']),
             'legacy_id' => (string) $old['id'],
+        ];
+    }
+
+    /**
+     * Venta wrapper for a group of boletos.
+     */
+    public function venta(int $usuarioId, ?int $enclaveId, ?int $empresaId): array {
+        return [
+            'usuario_id' => $usuarioId,
+            'enclave_id' => $enclaveId,
+            'empresa_id' => $empresaId,
         ];
     }
 

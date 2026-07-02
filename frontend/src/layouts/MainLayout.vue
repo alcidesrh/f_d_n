@@ -17,6 +17,7 @@
 		<q-inner-loading :showing="loadingStore.loading">
 			<q-spinner-dots color="primary" size="3em" />
 		</q-inner-loading>
+		<ProfilerFooter />
 	</q-layout>
 </template>
 

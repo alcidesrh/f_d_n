@@ -37,8 +37,8 @@ class ApiToken extends Base {
     #[ORM\Column(length: 68)]
     private string $token;
 
-    #[ORM\Column]
-    private array $scopes = [];
+    // #[ORM\Column]
+    // private array $scopes = [];
 
     #[ORM\Column(nullable: true)]
     private ?bool $activo = null;
@@ -78,15 +78,15 @@ class ApiToken extends Base {
         return $this;
     }
 
-    public function getScopes(): array {
-        return $this->scopes;
-    }
+    // public function getScopes(): array {
+    //     return $this->scopes;
+    // }
 
-    public function setScopes(array $scopes): self {
-        $this->scopes = $scopes;
+    // public function setScopes(array $scopes): self {
+    //     $this->scopes = $scopes;
 
-        return $this;
-    }
+    //     return $this;
+    // }
 
     public function isValid(): ?bool {
         return $this->activo; //($this->expira === null || $this->expira > new \DateTimeInterface()) && $this->activo;
