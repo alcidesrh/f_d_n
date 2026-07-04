@@ -18,7 +18,8 @@ framework:
         #pools:
         #my.dedicated.cache: null
 
-# when@dev:
-#     framework:
-#         cache:
-#             system: cache.adapter.apcu
+when@dev:
+    framework:
+        cache:
+            app: cache.adapter.array
+            system: cache.adapter.array

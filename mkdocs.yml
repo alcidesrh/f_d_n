@@ -1,0 +1,255 @@
+site_name: FDN Transportes
+site_description: Documentación del sistema FDN — monorepo backend (Symfony + API Platform) + frontend (Quasar/Vue 3)
+site_author: Alcides Rodríguez
+site_url: ""
+docs_dir: docs
+site_dir: ../site
+theme:
+  name: material
+  language: es
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Modo oscuro
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Modo claro
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+    - content.tabs.link
+  icon:
+    repo: fontawesome/brands/github
+repo_url: ""
+edit_uri: ""
+plugins:
+  - search:
+      lang: es
+  - awesome-pages
+  - mermaid2:
+      version: 11.6.0
+      arguments:
+        theme: base
+        themeVariables:
+          primaryColor: "#3949ab"
+          primaryTextColor: "#fff"
+          primaryBorderColor: "#283593"
+          lineColor: "#5c6bc0"
+          secondaryColor: "#e8eaf6"
+          tertiaryColor: "#c5cae9"
+  - glightbox:
+      touchNavigation: true
+      loop: false
+      effect: zoom
+      slide_effect: slide
+      width: 100%
+      height: auto
+      zoomable: true
+      draggable: true
+  - gen-files:
+      scripts:
+        - scripts/gen-dirtree.py
+        - scripts/gen-makefile-docs.py
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:mermaid2.fence_mermaid
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.tilde
+  - pymdownx.critic
+  - pymdownx.caret
+  - pymdownx.mark
+  - pymdownx.keys
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+      toc_depth: 3
+extra:
+  generator: false
+  social:
+    - icon: fontawesome/solid/envelope
+      link: mailto:alcidesrh@gmail.com
+  copyright: Copyright &copy; 2026 Alcides Rodríguez
+nav:
+  - Inicio: index.md
+  - Arquitectura:
+      - Overview: architecture/overview.md
+      - Decisiones (ADRs): architecture/decisions/index.md
+      - ADR-001: architecture/decisions/ADR-001-api-platform-graphql.md
+      - ADR-002: architecture/decisions/ADR-002-dual-entity-manager.md
+      - ADR-003: architecture/decisions/ADR-003-flat-permission-set.md
+      - ADR-004: architecture/decisions/ADR-004-dynamic-crud-store-factory.md
+      - ADR-005: architecture/decisions/ADR-005-frankenphp-mercure.md
+      - ADR-006: architecture/decisions/ADR-006-subdomains-bounded-contexts.md
+      - ADR-007: architecture/decisions/ADR-007-formkit-custom-theme.md
+      - ADR-008: architecture/decisions/ADR-008-legacy-migration-strategy.md
+      - ADR-009: architecture/decisions/ADR-009-autoimport-system.md
+      - ADR-010: architecture/decisions/ADR-010-dynamic-entity-config.md
+      - Diagramas C4: architecture/c4/index.md
+  - Docker:
+      - Overview: docker/overview.md
+      - Entornos: docker/environments.md
+      - Comandos: docker/commands.md
+      - Troubleshooting: docker/troubleshooting.md
+      - Referencia Compose: docker/compose-reference.md
+  - Makefile:
+      - Overview: makefile/overview.md
+      - Docker: makefile/docker.md
+      - Backend: makefile/backend.md
+      - Frontend: makefile/frontend.md
+      - Documentación: makefile/docs.md
+      - Otros: makefile/other.md
+  - Tecnologías: technologies.md
+  - Estructura del proyecto: directory-structure.md
+  - Glosario: glossary.md
+  - Frontend:
+      - Arquitectura:
+          - Overview: frontend/architecture/overview.md
+          - Boot Sequence: frontend/architecture/boot-sequence.md
+          - Dynamic CRUD: frontend/architecture/dynamic-crud.md
+          - Data Layer: frontend/architecture/data-layer.md
+          - Routing: frontend/architecture/routing.md
+      - Patrones:
+          - Overview: frontend/patterns/overview.md
+          - Dynamic CRUD: frontend/patterns/dynamic-crud.md
+          - Composables: frontend/patterns/composables.md
+          - FormKit Metadata: frontend/patterns/formkit-metadata.md
+          - UnoCSS: frontend/patterns/unocss.md
+          - i18n: frontend/patterns/i18n.md
+      - Módulos:
+          - Overview: frontend/modules/overview.md
+          - Transporte: frontend/modules/transporte.md
+          - Flota: frontend/modules/flota.md
+          - Venta: frontend/modules/venta.md
+          - Personal: frontend/modules/personal.md
+          - Configuración: frontend/modules/configuracion.md
+          - Infraestructura: frontend/modules/infraestructura.md
+          - Seguridad: frontend/modules/seguridad.md
+          - Dashboard: frontend/modules/dashboard.md
+      - Componentes:
+          - Overview: frontend/components/overview.md
+          - CRUD Collection: frontend/components/crud-collection.md
+          - CRUD Form: frontend/components/crud-form.md
+          - Dynamic: frontend/components/dynamic.md
+          - Admin: frontend/components/admin.md
+          - Auth: frontend/components/auth.md
+          - UI Commons: frontend/components/ui-commons.md
+      - Stores:
+          - Overview: frontend/stores/overview.md
+          - Store Factory: frontend/stores/store-factory.md
+          - Auto-import: frontend/stores/autoimport.md
+          - Session: frontend/stores/session.md
+          - Schema: frontend/stores/schema.md
+      - GraphQL:
+          - Overview: frontend/graphql/overview.md
+          - Apollo Config: frontend/graphql/apollo-config.md
+          - Links: frontend/graphql/links.md
+          - Codegen: frontend/graphql/codegen.md
+      - Estilos:
+          - Overview: frontend/styling/overview.md
+          - UnoCSS Config: frontend/styling/unocss-config.md
+          - Colors: frontend/styling/colors.md
+          - Custom Rules: frontend/styling/custom-rules.md
+      - Build & Deploy:
+          - Overview: frontend/build-deploy/overview.md
+          - Docker: frontend/build-deploy/docker.md
+          - Vite: frontend/build-deploy/vite.md
+          - Production: frontend/build-deploy/production.md
+  - Backend:
+      - Arquitectura:
+          - Overview: backend/architecture/overview.md
+          - API Platform: backend/architecture/api-platform.md
+          - Doctrine Dual EM: backend/architecture/doctrine-dual-em.md
+          - Messenger: backend/architecture/messenger.md
+          - Mercure: backend/architecture/mercure.md
+      - IAM:
+          - Overview: backend/iam/overview.md
+          - Voters: backend/iam/voters.md
+          - Permission Manager: backend/iam/permission-manager.md
+          - API Tokens: backend/iam/api-tokens.md
+          - Permission Matrix: backend/iam/permission-matrix.md
+      - Base de Datos:
+          - Overview: backend/database/overview.md
+          - Entity Map: backend/database/entity-map.md
+          - Migraciones: backend/database/migrations.md
+          - Legacy SQL Server: backend/database/legacy-sqlserver.md
+          - Índices: backend/database/indexing.md
+          - Análisis Modelado: backend/database/modeling-analysis.md
+      - Migración:
+          - Overview: backend/migration/overview.md
+          - Pipeline: backend/migration/pipeline.md
+          - Entidades Estáticas: backend/migration/static-entities.md
+          - IAM: backend/migration/iam.md
+          - Config: backend/migration/config.md
+          - Boletos: backend/migration/tickets.md
+      - Subdominios:
+          - Overview: backend/subdomains/overview.md
+          - Transporte:
+              - Overview: backend/subdomains/transporte/index.md
+              - Entidades: backend/subdomains/transporte/entities.md
+          - Flota:
+              - Overview: backend/subdomains/flota/index.md
+              - Entidades: backend/subdomains/flota/entities.md
+          - Venta:
+              - Overview: backend/subdomains/venta/index.md
+              - Entidades: backend/subdomains/venta/entities.md
+          - Personal:
+              - Overview: backend/subdomains/personal/index.md
+              - Entidades: backend/subdomains/personal/entities.md
+          - Configuración:
+              - Overview: backend/subdomains/configuracion/index.md
+              - Entidades: backend/subdomains/configuracion/entities.md
+          - Infraestructura:
+              - Overview: backend/subdomains/infraestructura/index.md
+              - Entidades: backend/subdomains/infraestructura/entities.md
+          - Seguridad:
+              - Overview: backend/subdomains/seguridad/index.md
+              - Entidades: backend/subdomains/seguridad/entities.md
+      - Comandos:
+          - Overview: backend/commands/overview.md
+          - Migración: backend/commands/migration.md
+          - Sincronización: backend/commands/sync.md
+          - Fixtures: backend/commands/fixtures.md
+      - GraphQL:
+          - Overview: backend/graphql/overview.md
+          - Resolvers: backend/graphql/resolvers.md
+          - Schema: backend/graphql/schema.md
+          - N+1: backend/graphql/nplus1.md
+      - Testing:
+          - Overview: backend/testing/overview.md
+          - Unit: backend/testing/unit.md
+          - Integration: backend/testing/integration.md
+          - Fixtures: backend/testing/fixtures.md
+      - Performance:
+          - Overview: backend/performance/overview.md
+          - Caching: backend/performance/caching.md
+          - Queries: backend/performance/queries.md
+          - Profiling: backend/performance/profiling.md

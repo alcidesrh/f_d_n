@@ -1,5 +1,15 @@
 <template>
 	<div class="flex flex-center w-full h-full">
+		<!-- <img
+			v-for="name in ['lapionera', 'rosita', 'mayadeoro', 'starbus', 'corporacionlapionera']"
+			:src="`images/logos/copiloto/${name}5.png`"
+			width="100px"
+			class="logo"
+			:style="{ position: 'absolute', top: `${random(0, 100)}vh`, left: `${random(0, 100)}vw` }"
+		/> -->
+		<div class="background">
+			<img v-for="(image, index) in backgroundImages" :key="index" :src="image.src" :style="image.style" alt="" />
+		</div>
 		<div id="login" ref="login" class="animate__animated animate__fast">
 			<q-card class="q-pa-lg card-login" style="width: 400px; max-width: 90vw" :class="{ 'opacity-50': loading }">
 				<div class="text-center w-full mb-15px">
@@ -18,7 +28,13 @@
 					</FormKit>
 				</q-card-section>
 				<div class="flex justify-center gap-4">
-					<img v-for="name in ['lapionera', 'rosita', 'mayadeoro', 'starbus', 'corporacionlapionera']" :src="`images/logos/copiloto/${name}5.png`" width="100px" class="logo" />
+					<!-- <img
+						v-for="name in ['lapionera', 'rosita', 'mayadeoro', 'starbus', 'corporacionlapionera']"
+						:src="`images/logos/copiloto/${name}5.png`"
+						width="100px"
+						class="logo"
+						:style="{ position: 'fixed', top: `${random(0, 100)}vh`, left: `${random(0, 100)}vw` }"
+					/> -->
 				</div>
 			</q-card>
 		</div>
@@ -89,13 +105,66 @@
 			},
 		})
 	}
+	// 'lapionera', 'rosita', 'mayadeoro', 'starbus', 'corporacionlapionera'
+	const images = [
+		'images/logos/copiloto/lapionera5.png',
+		'images/logos/copiloto/rosita5.png',
+		'images/logos/copiloto/mayadeoro5.png',
+		'images/logos/copiloto/starbus5.png',
+		'images/logos/copiloto/corporacionlapionera5.png',
+	]
 
+	const backgroundImages = ref([])
+	function generateLayout() {
+		const cols = 4
+		const rows = 3
+
+		const cells = []
+
+		for (let y = 0; y < rows; y++) {
+			for (let x = 0; x < cols; x++) {
+				cells.push({ x, y })
+			}
+		}
+
+		shuffle(cells)
+
+		backgroundImages.value = images.map((src, index) => {
+			const cell = cells[index % cells.length]
+
+			return {
+				src,
+				style: {
+					left: `${(cell.x + Math.random()) * (100 / cols)}vw`,
+					top: `${(cell.y + Math.random()) * (100 / rows)}vh`,
+					width: `${random(150, 250)}px`,
+					transform: `
+								translate(-50%, -50%)
+								rotate(${random(-25, 25)}deg)
+						`,
+					opacity: random(0.1, 0.4),
+				},
+			}
+		})
+	}
+
+	function random(min, max) {
+		return Math.random() * (max - min) + min
+	}
+
+	function shuffle(array) {
+		for (let i = array.length - 1; i > 0; i--) {
+			const j = Math.floor(Math.random() * (i + 1))
+			;[array[i], array[j]] = [array[j], array[i]]
+		}
+	}
 	onMounted(() => {
 		const second = activeIsA ? b.value : a.value
 		preload(`images/login${second}.png`)
 		preload(`images/login${(second % 10) + 1}.png`)
 		intervalId = setInterval(advance, INTERVAL_MS)
 		card.value.addEventListener('animationend', removeAnimation)
+		cl(generateLayout())
 	})
 
 	onBeforeUnmount(() => {
@@ -183,7 +252,7 @@
 <style scoped lang="scss">
 	img {
 		&.logo {
-			opacity: 0.4;
+			// opacity: 0.4;
 		}
 	}
 	#login {
@@ -191,7 +260,7 @@
 			box-shadow: 0px 0px 18px 0px $surface-8;
 		}
 		z-index: 3;
-		background-color: -alpha($surface-1, 0.7);
+		background-color: -alpha($surface-1, 0.3);
 		& > div {
 			background-color: transparent;
 		}
@@ -201,10 +270,10 @@
 		height: 100vh;
 		position: absolute;
 		z-index: 2;
-		// background-color: -alpha($surface-1, 0.4);
+		background-color: -alpha($surface-1, 0.9);
 	}
 	.bg-layer {
-		filter: blur(10px);
+		// filter: blur(13px);
 		position: absolute;
 		width: 100vw;
 		min-height: 100vh;
@@ -214,5 +283,18 @@
 		background-size: cover;
 		background-attachment: fixed;
 		margin: 0;
+	}
+
+	.background {
+		position: fixed;
+		inset: 0;
+		overflow: hidden;
+		pointer-events: none;
+		z-index: 90;
+	}
+
+	.background img {
+		position: absolute;
+		user-select: none;
 	}
 </style>

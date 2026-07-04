@@ -105,6 +105,30 @@ bash: ## Connect to the application container
 
 commands: ## Display all commands in the project namespace
 	@$(SYMFONY) list $(PROJECT)
+## —— Documentación 📖 ——————————————————————————————————————————————————————
+docs-serve: ## Serve documentation at http://localhost:8000
+	@mkdocs serve -f docs/mkdocs.yml
+
+docs-build: ## Build documentation site
+	@mkdocs build -f docs/mkdocs.yml
+
+docs-gen-dirtree: ## Regenerate directory structure
+	@python3 docs/scripts/gen_dirtree.py
+
+docs-gen-makefile: ## Regenerate Makefile documentation
+	@python3 docs/scripts/gen-makefile-docs.py
+
+docs-gen-entity-map: ## Regenerate entity map per subdomain
+	@python3 docs/scripts/gen-entity-map.py
+
+docs-gen-erd: ## Regenerate Mermaid ERD from Doctrine entities
+	@python3 docs/scripts/gen-erd.py
+
+docs-gen-all: docs-gen-dirtree docs-gen-makefile docs-gen-entity-map docs-gen-erd ## Regenerate all auto-generated docs
+
+docs-validate: ## Validate documentation (markdown, links, mermaid, nav)
+	@bash docs/scripts/validate-docs.sh
+
 ##—————————————————————————————————————————————————————————————————
 stats: ## Commits by the hour for the main author of this project
 	@$(GIT) log --author="$(GIT_AUTHOR)" --date=iso | perl -nalE 'if (/^Date:\s+[\d-]{10}\s(\d{2})/) { say $$1+0 }' | sort | uniq -c|perl -MList::Util=max -nalE '$$h{$$F[1]} = $$F[0]; }{ $$m = max values %h; foreach (0..23) { $$h{$$_} = 0 if not exists $$h{$$_} } foreach (sort {$$a <=> $$b } keys %h) { say sprintf "%02d - %4d %s", $$_, $$h{$$_}, "*"x ($$h{$$_} / $$m * 50); }'

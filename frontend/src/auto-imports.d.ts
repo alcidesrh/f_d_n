@@ -53,7 +53,7 @@ declare global {
   const isRef: typeof import('vue').isRef
   const isShallow: typeof import('vue').isShallow
   const isTablet: typeof import('./services/ResponsiveService').isTablet
-  const loading: typeof import('./composables/useLoading.').loading
+  const loading: typeof import('./composables/useLoading').loading
   const mapActions: typeof import('pinia').mapActions
   const mapGetters: typeof import('pinia').mapGetters
   const mapState: typeof import('pinia').mapState
@@ -219,7 +219,7 @@ declare module 'vue' {
     readonly isRef: UnwrapRef<typeof import('vue')['isRef']>
     readonly isShallow: UnwrapRef<typeof import('vue')['isShallow']>
     readonly isTablet: UnwrapRef<typeof import('./services/ResponsiveService')['isTablet']>
-    readonly loading: UnwrapRef<typeof import('./composables/useLoading.')['loading']>
+    readonly loading: UnwrapRef<typeof import('./composables/useLoading')['loading']>
     readonly mapActions: UnwrapRef<typeof import('pinia')['mapActions']>
     readonly mapGetters: UnwrapRef<typeof import('pinia')['mapGetters']>
     readonly mapState: UnwrapRef<typeof import('pinia')['mapState']>

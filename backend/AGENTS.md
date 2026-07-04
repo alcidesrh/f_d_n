@@ -1,5 +1,25 @@
 # AGENTS.md
 
+## Documentation
+
+Documentación técnica del backend en MkDocs:
+
+```bash
+# Desde la raíz del monorepo
+make docs-serve     # Servir documentación
+make docs-gen-all   # Regenerar docs automáticas (entity-map, ERD)
+```
+
+| Área | Ruta |
+|------|------|
+| Arquitectura | `docs/docs/backend/architecture/overview.md` |
+| IAM | `docs/docs/backend/iam/overview.md` |
+| Base de datos | `docs/docs/backend/database/overview.md` |
+| Migración | `docs/docs/backend/migration/overview.md` |
+| Subdominios | `docs/docs/backend/subdomains/overview.md` |
+
+---
+
 ## Project Overview
 
 This project is a Symfony application exposing a GraphQL API backed by PostgreSQL and running in Docker Compose.

@@ -21,7 +21,7 @@ class Servicio extends TimeLegacyStatusBase {
     #[ORM\ManyToOne]
     private ?Empresa $empresa = null;
 
-    #[ORM\ManyToOne(inversedBy: 'servicios')]
+    #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
     private ?Recorrido $recorrido = null;
 

@@ -1,29 +1,42 @@
-# Quasar Enterprise Starter Kit
+# Frontend — FDN Transportes
 
-Arquitectura profesional para proyectos grandes con **Quasar + Vite + Pinia**, autoimportación completa y módulos escalables.
+SPA construida con **Quasar 2 + Vue 3 + Pinia + Apollo Client 4**.
 
----
+## Stack
 
-## 🚀 Características principales
+- Vue 3 (Composition API, `<script setup>`)
+- Quasar 2 (UI framework)
+- Pinia (state management)
+- Apollo Client 4 (GraphQL)
+- FormKit (form builder)
+- UnoCSS (utility-first styling)
+- TypeScript (strict mode)
 
-- ✔ Autoimportación de composables, stores, helpers, utils y módulos
-- ✔ Alias `@` y `~`
-- ✔ Estructura modular por dominios (`modules/users`, `modules/products`, etc.)
-- ✔ Integración con Quasar (layouts, componentes, assets)
-- ✔ Servicios limpios con Axios
-- ✔ Stores globales + stores por módulo (Pinia)
-- ✔ Composables reutilizables
+## Documentación
 
----
+La documentación completa del frontend está en `docs/docs/frontend/` (raíz del repo):
 
-## 📁 Estructura del proyecto
+```bash
+make docs-serve  # desde la raíz del repo
+```
 
-Ver carpeta `src/` generada en el starter kit.
-
----
-
-## 🛠 Instalación
+## Inicio rápido
 
 ```bash
 npm install
+npm run dev      # servidor de desarrollo en :9000
+npm run build    # build producción → .output/
+npm run format   # Prettier
 ```
+
+## Arquitectura
+
+Esta app utiliza un sistema **CRUD dinámico** impulsado por metadatos del backend:
+
+- Las rutas `/lista/:entity` y `/form/:entity/:id?` renderizan componentes genéricos
+- Las stores se crean en tiempo de ejecución via `storeFactory()`
+- Las definiciones de entidades se registran en `entityRegistry.ts`
+
+## Boot order
+
+unocss → api-rest → apollo → server-response-listener → formkit → introspection → middleware → i18n → responsive → gsap

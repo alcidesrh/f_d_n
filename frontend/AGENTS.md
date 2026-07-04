@@ -1,5 +1,23 @@
 # AGENTS.md — frontend (Quasar + Vue 3 + Pinia)
 
+## Documentation
+
+Documentación técnica del frontend en MkDocs (desde la raíz del monorepo):
+
+```bash
+make docs-serve   # http://localhost:8000
+```
+
+| Área | Ruta |
+|------|------|
+| Arquitectura | `docs/docs/frontend/architecture/overview.md` |
+| Patrones | `docs/docs/frontend/patterns/overview.md` |
+| Módulos | `docs/docs/frontend/modules/overview.md` |
+| Componentes | `docs/docs/frontend/components/overview.md` |
+| Stores | `docs/docs/frontend/stores/overview.md` |
+
+---
+
 ## Developer Commands
 
 ```
