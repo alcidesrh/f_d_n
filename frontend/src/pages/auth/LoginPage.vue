@@ -458,7 +458,7 @@ img {
 	position: absolute;
 	z-index: 2;
 
-	//background-color: -alpha($surface-1, 0.7);s
+	background-color: -alpha($surface-1, 0.4);
 }
 .bg-layer {
 	// filter: blur(13px);
@@ -484,7 +484,6 @@ img {
 .background img {
 	position: absolute;
 	user-select: none;
-	background-color: black;
-	border: 2px solid red;
+	opacity: 0.4;
 }
 </style>
