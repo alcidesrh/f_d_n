@@ -1,1 +1,1 @@
-export const loading = ref(false)
+export const loading = ref(false);

@@ -7,5 +7,5 @@
 </template>
 
 <script setup lang="ts">
-import Update from 'components/role/RoleUpdate.vue';
+import Update from "components/role/RoleUpdate.vue";
 </script>

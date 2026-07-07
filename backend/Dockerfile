@@ -34,6 +34,7 @@ RUN <<-EOF
 	install-php-extensions \
 		@composer \
 		apcu \
+		bcmath \
 		intl \
 		opcache \
 		zip \

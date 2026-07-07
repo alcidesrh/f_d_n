@@ -1,6 +1,7 @@
 # Plan: Responsive Two-Column Layout for DynamicForm.vue
 
 ## Current State
+
 - Form inputs render in a single vertical stack via `<FormKitSchema>`
 - Schema generated in `storeFactory.ts:277-283` as flat array of inputs
 - FormKit theme at `formkit.theme.ts` controls individual input styling
@@ -11,6 +12,7 @@
 ### 1. `src/components/crud/form/DynamicForm.vue`
 
 Wrap `<FormKitSchema>` in a CSS grid container. The grid will be:
+
 - **Mobile**: 1 column (`grid-cols-1`)
 - **Tablet+**: 2 columns (`md:grid-cols-2`)
 - Gap: `gap-x-4 gap-y-2`
@@ -50,7 +52,7 @@ generateClasses({
     outer: "md:col-span-2",
   },
   // Fieldset $el elements get span via schema (handled in storeFactory)
-})
+});
 ```
 
 ### 3. `src/stores/storeFactory.ts` (line ~277)
@@ -60,24 +62,25 @@ When building `formSchema`, add `md:col-span-2` class to `$el: 'div'` and `$el: 
 ```ts
 this.formSchema = [
   {
-    $el: 'div',
-    attrs: { class: 'md:col-span-2' },
-    children: '$slots.crudBtn',
+    $el: "div",
+    attrs: { class: "md:col-span-2" },
+    children: "$slots.crudBtn",
   },
   ...fields.map((v) => {
     // If field is a group/fieldset, make it span 2 columns
-    if (v.input?.$el === 'fieldset') {
+    if (v.input?.$el === "fieldset") {
       return {
         ...v.input,
-        attrs: { ...v.input.attrs, class: 'md:col-span-2' },
-      }
+        attrs: { ...v.input.attrs, class: "md:col-span-2" },
+      };
     }
-    return v.input
+    return v.input;
   }),
-]
+];
 ```
 
 ## Result
+
 - **Mobile (< 768px)**: All inputs single column
 - **Tablet+ (≥ 768px)**: Two columns, textareas/fieldsets/buttons span full width
 - No backend changes needed

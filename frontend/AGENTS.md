@@ -8,13 +8,13 @@ Documentación técnica del frontend en MkDocs (desde la raíz del monorepo):
 make docs-serve   # http://localhost:8000
 ```
 
-| Área | Ruta |
-|------|------|
+| Área         | Ruta                                          |
+| ------------ | --------------------------------------------- |
 | Arquitectura | `docs/docs/frontend/architecture/overview.md` |
-| Patrones | `docs/docs/frontend/patterns/overview.md` |
-| Módulos | `docs/docs/frontend/modules/overview.md` |
-| Componentes | `docs/docs/frontend/components/overview.md` |
-| Stores | `docs/docs/frontend/stores/overview.md` |
+| Patrones     | `docs/docs/frontend/patterns/overview.md`     |
+| Módulos      | `docs/docs/frontend/modules/overview.md`      |
+| Componentes  | `docs/docs/frontend/components/overview.md`   |
+| Stores       | `docs/docs/frontend/stores/overview.md`       |
 
 ---
 
@@ -44,6 +44,7 @@ This is **not** a conventional page-per-feature app. It uses a **dynamic entity-
 - Per-entity route files (e.g., `src/router/user.ts`, `src/router/role.ts`) add static overrides on top of dynamic routes
 
 **Key stores:**
+
 - `storeFactory.ts` — primary, active factory for dynamic entity stores (collection, form, CRUD operations via GraphQL)
 - `storeFactory copy.ts`, `storeFactory2.ts` — stale copies, ignore
 - `stores/autoimport/` — auto-imported global stores (loading, menu, sidebar)
@@ -59,6 +60,7 @@ Both layers point to `http://localhost/api` (REST) and `http://localhost/api/gra
 ## Auto-Imports
 
 `unplugin-auto-import` auto-imports from these directories (no manual imports needed):
+
 - `src/composables/`
 - `src/stores/autoimport/**/*`
 - `src/utils/autoimport/**/*`
@@ -81,6 +83,7 @@ FormKit with custom theme at `src/form/formkit-theme-fdn/`. Theme definition: `s
 ## Quasar Boot Order
 
 Boot files run in this order (see `quasar.config.ts`):
+
 1. unocss → api-rest → apollo → server-response-listener → formkit → introspection → middleware → i18n → responsive → gsap
 
 `pinia` boot is commented out; Pinia is used directly without a dedicated boot file.
@@ -126,6 +129,7 @@ No test framework is installed. `npm run test` exits 0 with no output. If adding
 ## Backend Dependency
 
 This frontend requires a running API backend at `http://localhost/api`. Without it:
+
 - Entity configuration cannot load → dynamic stores fail
 - GraphQL queries return errors
 - Auth/refresh will fail

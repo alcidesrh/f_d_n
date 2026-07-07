@@ -26,7 +26,6 @@
 
 /* XS */
 @media (max-width: 599px) {
-
   .mobile-only {
     display: block;
   }
@@ -34,43 +33,34 @@
   .desktop-only {
     display: none;
   }
-
 }
 
 /* SM */
 @media (min-width: 600px) and (max-width: 1023px) {
-
-  .form-container>form {
+  .form-container > form {
     & .form-header {
       width: 90%;
     }
-
   }
 }
 
 /* MD */
 @media (min-width: 1024px) and (max-width: 1439px) {
-
   .desktop-md {
     display: block;
   }
-
 }
 
 /* LG */
 @media (min-width: 1440px) and (max-width: 1919px) {
-
   .desktop-lg {
     display: block;
   }
-
 }
 
 /* XL */
 @media (min-width: 1920px) {
-
   .desktop-xl {
     display: block;
   }
-
 }

@@ -7,5 +7,5 @@
 </template>
 
 <script setup lang="ts">
-import Create from 'components/role/RoleCreate.vue';
+import Create from "components/role/RoleCreate.vue";
 </script>

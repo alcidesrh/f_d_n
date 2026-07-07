@@ -7,5 +7,5 @@
 </template>
 
 <script setup lang="ts">
-import Create from 'components/permiso/PermisoCreate.vue';
+import Create from "components/permiso/PermisoCreate.vue";
 </script>

@@ -9,53 +9,56 @@
     <q-markup-table>
       <thead>
         <tr>
-          <th>{{ $t('field') }}</th>
-          <th>{{ $t('value') }}</th>
+          <th>{{ $t("field") }}</th>
+          <th>{{ $t("value") }}</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td>{{ $t('user.username') }}</td>
+          <td>{{ $t("user.username") }}</td>
 
           <td>
             {{ item.username }}
           </td>
         </tr>
         <tr>
-          <td>{{ $t('user.password') }}</td>
+          <td>{{ $t("user.password") }}</td>
 
           <td>
             {{ item.password }}
           </td>
         </tr>
         <tr>
-          <td>{{ $t('user.plainPassword') }}</td>
+          <td>{{ $t("user.plainPassword") }}</td>
 
           <td>
             {{ item.plainPassword }}
           </td>
         </tr>
         <tr>
-          <td>{{ $t('user.apiTokens') }}</td>
+          <td>{{ $t("user.apiTokens") }}</td>
 
           <td>
             {{ item.apiTokens }}
           </td>
         </tr>
         <tr>
-          <td>{{ $t('user.userRoles') }}</td>
+          <td>{{ $t("user.userRoles") }}</td>
 
           <td>
             {{ item.userRoles }}
           </td>
         </tr>
         <tr>
-          <td>{{ $t('user.permisos') }}</td>
+          <td>{{ $t("user.permisos") }}</td>
 
           <td>
             <template v-if="router.hasRoute('PermisoShow')">
-              <router-link v-for="permiso in item.permisos" :to="{ name: 'PermisoShow', params: { id: permiso } }"
-                :key="permiso">
+              <router-link
+                v-for="permiso in item.permisos"
+                :to="{ name: 'PermisoShow', params: { id: permiso } }"
+                :key="permiso"
+              >
                 {{ permiso }}
 
                 <br />
@@ -70,88 +73,90 @@
           </td>
         </tr>
         <tr>
-          <td>{{ $t('user.label') }}</td>
+          <td>{{ $t("user.label") }}</td>
 
           <td>
             {{ item.label }}
           </td>
         </tr>
         <tr>
-          <td>{{ $t('user.createdAt') }}</td>
+          <td>{{ $t("user.createdAt") }}</td>
 
           <td>
             {{ formatDateTime(item.createdAt) }}
           </td>
         </tr>
         <tr>
-          <td>{{ $t('user.updatedAt') }}</td>
+          <td>{{ $t("user.updatedAt") }}</td>
 
           <td>
             {{ formatDateTime(item.updatedAt) }}
           </td>
         </tr>
         <tr>
-          <td>{{ $t('user.status') }}</td>
+          <td>{{ $t("user.status") }}</td>
 
           <td>
             {{ item.status }}
           </td>
         </tr>
         <tr>
-          <td>{{ $t('user.legacyId') }}</td>
+          <td>{{ $t("user.legacyId") }}</td>
 
           <td>
             {{ item.legacyId }}
           </td>
         </tr>
         <tr>
-          <td>{{ $t('user.apellido') }}</td>
+          <td>{{ $t("user.apellido") }}</td>
 
           <td>
             {{ item.apellido }}
           </td>
         </tr>
         <tr>
-          <td>{{ $t('user.nombre') }}</td>
+          <td>{{ $t("user.nombre") }}</td>
 
           <td>
             {{ item.nombre }}
           </td>
         </tr>
         <tr>
-          <td>{{ $t('user.email') }}</td>
+          <td>{{ $t("user.email") }}</td>
 
           <td>
             {{ item.email }}
           </td>
         </tr>
         <tr>
-          <td>{{ $t('user.nit') }}</td>
+          <td>{{ $t("user.nit") }}</td>
 
           <td>
             {{ item.nit }}
           </td>
         </tr>
         <tr>
-          <td>{{ $t('user.telefono') }}</td>
+          <td>{{ $t("user.telefono") }}</td>
 
           <td>
             {{ item.telefono }}
           </td>
         </tr>
         <tr>
-          <td>{{ $t('user.direccion') }}</td>
+          <td>{{ $t("user.direccion") }}</td>
 
           <td>
             {{ item.direccion }}
           </td>
         </tr>
         <tr>
-          <td>{{ $t('user.localidad') }}</td>
+          <td>{{ $t("user.localidad") }}</td>
 
           <td>
-            <router-link v-if="router.hasRoute('LocalidadShow')"
-              :to="{ name: 'LocalidadShow', params: { id: item.localidad } }">
+            <router-link
+              v-if="router.hasRoute('LocalidadShow')"
+              :to="{ name: 'LocalidadShow', params: { id: item.localidad } }"
+            >
               {{ item.localidad }}
             </router-link>
 
@@ -161,32 +166,36 @@
           </td>
         </tr>
         <tr>
-          <td>{{ $t('user.fullName') }}</td>
+          <td>{{ $t("user.fullName") }}</td>
 
           <td>
             {{ item.fullName }}
           </td>
         </tr>
         <tr>
-          <td>{{ $t('user.id') }}</td>
+          <td>{{ $t("user.id") }}</td>
 
           <td>
             {{ item.id }}
           </td>
         </tr>
         <tr>
-          <td>{{ $t('user.userIdentifier') }}</td>
+          <td>{{ $t("user.userIdentifier") }}</td>
 
           <td>
             {{ item.userIdentifier }}
           </td>
         </tr>
         <tr>
-          <td>{{ $t('user.roles') }}</td>
+          <td>{{ $t("user.roles") }}</td>
 
           <td>
             <template v-if="router.hasRoute('RoleShow')">
-              <router-link v-for="role in item.roles" :to="{ name: 'RoleShow', params: { id: role } }" :key="role">
+              <router-link
+                v-for="role in item.roles"
+                :to="{ name: 'RoleShow', params: { id: role } }"
+                :key="role"
+              >
                 {{ role }}
 
                 <br />
@@ -201,14 +210,14 @@
           </td>
         </tr>
         <tr>
-          <td>{{ $t('user.token') }}</td>
+          <td>{{ $t("user.token") }}</td>
 
           <td>
             {{ item.token }}
           </td>
         </tr>
         <tr>
-          <td>{{ $t('user.validTokenStrings') }}</td>
+          <td>{{ $t("user.validTokenStrings") }}</td>
 
           <td>
             {{ item.validTokenStrings }}
@@ -222,19 +231,19 @@
 </template>
 
 <script lang="ts" setup>
-import { onBeforeUnmount } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { storeToRefs } from 'pinia';
-import { useI18n } from 'vue-i18n';
-import Toolbar from 'components/common/CommonToolbar.vue';
-import Breadcrumb from 'components/common/CommonBreadcrumb.vue';
-import Loading from 'components/common/CommonLoading.vue';
-import { useUserShowStore } from 'stores/user/show';
-import { formatDateTime } from 'src/utils/autoimport/date';
-import { useUserDeleteStore } from 'stores/user/delete';
-import { useBreadcrumb } from 'src/composables/breadcrumb';
-import { useWatchErrors } from 'src/composables/errors';
-import { useMercureItem } from 'src/composables/mercureItem';
+import { onBeforeUnmount } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { storeToRefs } from "pinia";
+import { useI18n } from "vue-i18n";
+import Toolbar from "components/common/CommonToolbar.vue";
+import Breadcrumb from "components/common/CommonBreadcrumb.vue";
+import Loading from "components/common/CommonLoading.vue";
+import { useUserShowStore } from "stores/user/show";
+import { formatDateTime } from "src/utils/autoimport/date";
+import { useUserDeleteStore } from "stores/user/delete";
+import { useBreadcrumb } from "src/composables/breadcrumb";
+import { useWatchErrors } from "src/composables/errors";
+import { useMercureItem } from "src/composables/mercureItem";
 
 const { t } = useI18n();
 const route = useRoute();
@@ -250,14 +259,14 @@ const { deleted, error: deleteError } = storeToRefs(userDeleteStore);
 useMercureItem({
   store: userShowStore,
   deleteStore: userDeleteStore,
-  redirectRouteName: 'UserList',
+  redirectRouteName: "UserList",
 });
 
 await userShowStore.retrieve(decodeURIComponent(route.params.id as string));
 
 async function deleteItem() {
   if (!item?.value) {
-    userDeleteStore.setError(t('This item does not exist anymore'));
+    userDeleteStore.setError(t("This item does not exist anymore"));
     return;
   }
 
@@ -267,7 +276,7 @@ async function deleteItem() {
     return;
   }
 
-  router.push({ name: 'UserList' });
+  router.push({ name: "UserList" });
 }
 
 useWatchErrors([error, deleteError]);

@@ -2,7 +2,7 @@ import { Ref, watch } from "vue";
 import { useNotifications } from "./notifications";
 
 export function useWatchErrors(
-  errors: (Ref<string | undefined> | undefined)[]
+  errors: (Ref<string | undefined> | undefined)[],
 ) {
   const { displayErrorNotification } = useNotifications();
 

@@ -1,53 +1,53 @@
 // entity-engine/entityRegistry.ts
-import { useSchemaStore } from '@/stores/autoimport/schemaStore'
-import { StateStore } from '@/types/graphql'
-import { watch } from 'vue'
-import storeFactory from '../stores/storeFactory'
+import { useSchemaStore } from "@/stores/autoimport/schemaStore";
+import { StateStore } from "@/types/graphql";
+import { watch } from "vue";
+import storeFactory from "../stores/storeFactory";
 
 // export const entities = ref({});
-export const stores = new Map()
+export const stores = new Map();
 
 function waitForSchema(): Promise<void> {
-	const schemaStore = useSchemaStore()
-	if (schemaStore.isLoaded) return Promise.resolve()
-	return new Promise((resolve) => {
-		const unwatch = watch(
-			() => schemaStore.isLoaded,
-			(val) => {
-				if (val) {
-					unwatch()
-					resolve()
-				}
-			},
-		)
-	})
+  const schemaStore = useSchemaStore();
+  if (schemaStore.isLoaded) return Promise.resolve();
+  return new Promise((resolve) => {
+    const unwatch = watch(
+      () => schemaStore.isLoaded,
+      (val) => {
+        if (val) {
+          unwatch();
+          resolve();
+        }
+      },
+    );
+  });
 }
 
 export async function getStore(entity?, refresh?): StateStore {
-	if (!entity && !(entity = useRoute().params.entity)) {
-		throw Error(`No nombre de entidad`)
-	}
-	let store
-	const storeId = `${str.capitalize(entity)}`
+  if (!entity && !(entity = useRoute().params.entity)) {
+    throw Error(`No nombre de entidad`);
+  }
+  let store;
+  const storeId = `${str.capitalize(entity)}`;
 
-	if (!(store = stores.get(storeId)) || refresh) {
-		const pinia = await getActivePinia()
+  if (!(store = stores.get(storeId)) || refresh) {
+    const pinia = await getActivePinia();
 
-		if (!pinia || !(storeId in pinia.state.value) || refresh) {
-			await waitForSchema()
+    if (!pinia || !(storeId in pinia.state.value) || refresh) {
+      await waitForSchema();
 
-			if (!(store = await storeFactory(storeId))) {
-				// throw Error(`entityRegistry linea 28: No se pudo crear la store de nombre ${entity}`)
-				return false
-			} else {
-				await store.init(refresh)
-				stores.set(storeId, store)
-			}
-		} else {
-			return await defineStore(storeId)()
-		}
-	} else {
-		// alert('storeId')
-	}
-	return store
+      if (!(store = await storeFactory(storeId))) {
+        // throw Error(`entityRegistry linea 28: No se pudo crear la store de nombre ${entity}`)
+        return false;
+      } else {
+        await store.init(refresh);
+        stores.set(storeId, store);
+      }
+    } else {
+      return await defineStore(storeId)();
+    }
+  } else {
+    // alert('storeId')
+  }
+  return store;
 }

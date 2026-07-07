@@ -12,16 +12,16 @@
 
 <script lang="ts" setup>
 import { onBeforeUnmount } from "vue";
-import { useRouter } from 'vue-router';
-import { storeToRefs } from 'pinia';
-import Toolbar from 'components/common/CommonToolbar.vue';
-import Breadcrumb from 'components/common/CommonBreadcrumb.vue';
-import Loading from 'components/common/CommonLoading.vue';
-import Form from 'components/user/UserForm.vue';
-import { useUserCreateStore } from 'stores/user/create';
-import { useBreadcrumb } from 'src/composables/breadcrumb';
-import { useWatchErrors } from 'src/composables/errors';
-import type { User } from 'src/types/user';
+import { useRouter } from "vue-router";
+import { storeToRefs } from "pinia";
+import Toolbar from "components/common/CommonToolbar.vue";
+import Breadcrumb from "components/common/CommonBreadcrumb.vue";
+import Loading from "components/common/CommonLoading.vue";
+import Form from "components/user/UserForm.vue";
+import { useUserCreateStore } from "stores/user/create";
+import { useBreadcrumb } from "src/composables/breadcrumb";
+import { useWatchErrors } from "src/composables/errors";
+import type { User } from "src/types/user";
 
 const router = useRouter();
 const breadcrumb = useBreadcrumb();
@@ -36,7 +36,7 @@ async function create(item: User) {
     return;
   }
 
-  router.push({ name: 'UserUpdate', params: { id: created?.value?.['@id'] } });
+  router.push({ name: "UserUpdate", params: { id: created?.value?.["@id"] } });
 }
 
 useWatchErrors([error]);

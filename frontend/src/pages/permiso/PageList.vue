@@ -7,5 +7,5 @@
 </template>
 
 <script setup lang="ts">
-import List from 'components/permiso/PermisoList.vue';
+import List from "components/permiso/PermisoList.vue";
 </script>

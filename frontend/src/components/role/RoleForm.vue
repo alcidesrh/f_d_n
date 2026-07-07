@@ -125,18 +125,18 @@
 </template>
 
 <script lang="ts" setup>
-import { Ref, ref, toRef } from 'vue';
-import FormRepeater from 'components/common/CommonFormRepeater.vue';
-import type { Item } from 'src/types/item';
-import type { Role } from 'src/types/role';
-import type { SubmissionErrors } from 'src/types/error';
+import { Ref, ref, toRef } from "vue";
+import FormRepeater from "components/common/CommonFormRepeater.vue";
+import type { Item } from "src/types/item";
+import type { Role } from "src/types/role";
+import type { SubmissionErrors } from "src/types/error";
 
 let props = defineProps<{
   values?: Role;
   errors?: SubmissionErrors;
 }>();
 
-const violations = toRef(props, 'errors');
+const violations = toRef(props, "errors");
 
 let item: Ref<Role> = ref({});
 
@@ -151,10 +151,10 @@ function resetForm() {
 }
 
 let emit = defineEmits<{
-  (e: 'submit', item: Role): void;
+  (e: "submit", item: Role): void;
 }>();
 
 function emitSubmit() {
-  emit('submit', item.value);
+  emit("submit", item.value);
 }
 </script>

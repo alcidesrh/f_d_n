@@ -1,19 +1,19 @@
-import { useUserSessionStore } from '@/stores/autoimport/session'
+import { useUserSessionStore } from "@/stores/autoimport/session";
 
 export function usePermission() {
-	const session = useUserSessionStore()
+  const session = useUserSessionStore();
 
-	function can(code: string): boolean {
-		return session.can(code)
-	}
+  function can(code: string): boolean {
+    return session.can(code);
+  }
 
-	function canAny(codes: string[]): boolean {
-		return session.canAny(codes)
-	}
+  function canAny(codes: string[]): boolean {
+    return session.canAny(codes);
+  }
 
-	function canAll(codes: string[]): boolean {
-		return session.canAll(codes)
-	}
+  function canAll(codes: string[]): boolean {
+    return session.canAll(codes);
+  }
 
-	return { can, canAny, canAll }
+  return { can, canAny, canAll };
 }

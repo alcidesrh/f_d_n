@@ -7,5 +7,5 @@
 </template>
 
 <script setup lang="ts">
-import Update from 'components/permiso/PermisoUpdate.vue';
+import Update from "components/permiso/PermisoUpdate.vue";
 </script>

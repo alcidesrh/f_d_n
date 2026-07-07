@@ -38,7 +38,7 @@ export function useMercureList({
     mercureSub = mercureSubscribe(
       state.hubUrl,
       state.items.map((i: any) => i["@id"] ?? ""),
-      mercureEl
+      mercureEl,
     );
   });
 

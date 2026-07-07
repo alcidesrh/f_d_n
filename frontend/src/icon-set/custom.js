@@ -17,10 +17,8 @@ export default {
   },
 };
 
-
 // import custom from "../icon-set/custom.js";
 
 // export default ({ app }) => {
 //   app.config.globalProperties.$q.iconSet = custom;
 // };
-

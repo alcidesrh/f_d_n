@@ -9,13 +9,13 @@
     <q-markup-table>
       <thead>
         <tr>
-          <th>{{ $t('field') }}</th>
-          <th>{{ $t('value') }}</th>
+          <th>{{ $t("field") }}</th>
+          <th>{{ $t("value") }}</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td>{{ $t('permiso.roles') }}</td>
+          <td>{{ $t("permiso.roles") }}</td>
 
           <td>
             <template v-if="router.hasRoute('RoleShow')">
@@ -31,63 +31,60 @@
             </template>
 
             <template v-else>
-              <p
-                v-for="role in item.roles"
-                :key="role"
-              >
+              <p v-for="role in item.roles" :key="role">
                 {{ role }}
               </p>
             </template>
           </td>
         </tr>
         <tr>
-          <td>{{ $t('permiso.parents') }}</td>
+          <td>{{ $t("permiso.parents") }}</td>
 
           <td>
             {{ item.parents }}
-                      </td>
+          </td>
         </tr>
         <tr>
-          <td>{{ $t('permiso.children') }}</td>
+          <td>{{ $t("permiso.children") }}</td>
 
           <td>
             {{ item.children }}
-                      </td>
+          </td>
         </tr>
         <tr>
-          <td>{{ $t('permiso.nombre') }}</td>
+          <td>{{ $t("permiso.nombre") }}</td>
 
           <td>
             {{ item.nombre }}
-                      </td>
+          </td>
         </tr>
         <tr>
-          <td>{{ $t('permiso.nota') }}</td>
+          <td>{{ $t("permiso.nota") }}</td>
 
           <td>
             {{ item.nota }}
-                      </td>
+          </td>
         </tr>
         <tr>
-          <td>{{ $t('permiso.label') }}</td>
+          <td>{{ $t("permiso.label") }}</td>
 
           <td>
             {{ item.label }}
-                      </td>
+          </td>
         </tr>
         <tr>
-          <td>{{ $t('permiso.status') }}</td>
+          <td>{{ $t("permiso.status") }}</td>
 
           <td>
             {{ item.status }}
-                      </td>
+          </td>
         </tr>
         <tr>
-          <td>{{ $t('permiso.id') }}</td>
+          <td>{{ $t("permiso.id") }}</td>
 
           <td>
             {{ item.id }}
-                      </td>
+          </td>
         </tr>
       </tbody>
     </q-markup-table>
@@ -97,18 +94,18 @@
 </template>
 
 <script lang="ts" setup>
-import { onBeforeUnmount } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { storeToRefs } from 'pinia';
-import { useI18n } from 'vue-i18n';
-import Toolbar from 'components/common/CommonToolbar.vue';
-import Breadcrumb from 'components/common/CommonBreadcrumb.vue';
-import Loading from 'components/common/CommonLoading.vue';
-import { usePermisoShowStore } from 'stores/permiso/show';
-import { usePermisoDeleteStore } from 'stores/permiso/delete';
-import { useBreadcrumb } from 'src/composables/breadcrumb';
-import { useWatchErrors } from 'src/composables/errors';
-import { useMercureItem } from 'src/composables/mercureItem';
+import { onBeforeUnmount } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { storeToRefs } from "pinia";
+import { useI18n } from "vue-i18n";
+import Toolbar from "components/common/CommonToolbar.vue";
+import Breadcrumb from "components/common/CommonBreadcrumb.vue";
+import Loading from "components/common/CommonLoading.vue";
+import { usePermisoShowStore } from "stores/permiso/show";
+import { usePermisoDeleteStore } from "stores/permiso/delete";
+import { useBreadcrumb } from "src/composables/breadcrumb";
+import { useWatchErrors } from "src/composables/errors";
+import { useMercureItem } from "src/composables/mercureItem";
 
 const { t } = useI18n();
 const route = useRoute();
@@ -124,14 +121,14 @@ const { deleted, error: deleteError } = storeToRefs(permisoDeleteStore);
 useMercureItem({
   store: permisoShowStore,
   deleteStore: permisoDeleteStore,
-  redirectRouteName: 'PermisoList',
+  redirectRouteName: "PermisoList",
 });
 
 await permisoShowStore.retrieve(decodeURIComponent(route.params.id as string));
 
 async function deleteItem() {
   if (!item?.value) {
-    permisoDeleteStore.setError(t('This item does not exist anymore'));
+    permisoDeleteStore.setError(t("This item does not exist anymore"));
     return;
   }
 
@@ -141,7 +138,7 @@ async function deleteItem() {
     return;
   }
 
-  router.push({ name: 'PermisoList' });
+  router.push({ name: "PermisoList" });
 }
 
 useWatchErrors([error, deleteError]);

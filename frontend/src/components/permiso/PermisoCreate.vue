@@ -12,22 +12,23 @@
 
 <script lang="ts" setup>
 import { onBeforeUnmount } from "vue";
-import { useRouter } from 'vue-router';
-import { storeToRefs } from 'pinia';
-import Toolbar from 'components/common/CommonToolbar.vue';
-import Breadcrumb from 'components/common/CommonBreadcrumb.vue';
-import Loading from 'components/common/CommonLoading.vue';
-import Form from 'components/permiso/PermisoForm.vue';
-import { usePermisoCreateStore } from 'stores/permiso/create';
-import { useBreadcrumb } from 'src/composables/breadcrumb';
-import { useWatchErrors } from 'src/composables/errors';
-import type { Permiso } from 'src/types/permiso';
+import { useRouter } from "vue-router";
+import { storeToRefs } from "pinia";
+import Toolbar from "components/common/CommonToolbar.vue";
+import Breadcrumb from "components/common/CommonBreadcrumb.vue";
+import Loading from "components/common/CommonLoading.vue";
+import Form from "components/permiso/PermisoForm.vue";
+import { usePermisoCreateStore } from "stores/permiso/create";
+import { useBreadcrumb } from "src/composables/breadcrumb";
+import { useWatchErrors } from "src/composables/errors";
+import type { Permiso } from "src/types/permiso";
 
 const router = useRouter();
 const breadcrumb = useBreadcrumb();
 
 const permisoCreateStore = usePermisoCreateStore();
-const { created, isLoading, violations, error } = storeToRefs(permisoCreateStore);
+const { created, isLoading, violations, error } =
+  storeToRefs(permisoCreateStore);
 
 async function create(item: Permiso) {
   await permisoCreateStore.create(item);
@@ -36,7 +37,10 @@ async function create(item: Permiso) {
     return;
   }
 
-  router.push({ name: 'PermisoUpdate', params: { id: created?.value?.['@id'] } });
+  router.push({
+    name: "PermisoUpdate",
+    params: { id: created?.value?.["@id"] },
+  });
 }
 
 useWatchErrors([error]);

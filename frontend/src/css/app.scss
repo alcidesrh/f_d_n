@@ -3,19 +3,19 @@
 // @import './quasar.variables.sass';
 // @import 'quasar/src/css/index.sass';
 // @import './tokens.scss';
-@import 'animate.css';
-@import 'tootik.scss';
-@import 'utopia.scss';
-@import 'material-symbols/index.css';
-@import '_fonts.scss';
+@import "animate.css";
+@import "tootik.scss";
+@import "utopia.scss";
+@import "material-symbols/index.css";
+@import "_fonts.scss";
 
-@import 'root.scss';
-@import 'layout.scss';
-@import 'components/index.scss';
-@import './theme/index.scss';
+@import "root.scss";
+@import "layout.scss";
+@import "components/index.scss";
+@import "./theme/index.scss";
 // @import './media-form.scss';
 // @import './media-grid-form.scss';
-@import './media-queries.scss';
+@import "./media-queries.scss";
 
 // .route-enter-active,
 // .route-leave-active {
@@ -36,9 +36,11 @@
 
 .route-enter-active,
 .route-leave-active {
-  transition: transform 0.3s ease, opacity 0.2s ease, scale .2s ease;
+  transition:
+    transform 0.3s ease,
+    opacity 0.2s ease,
+    scale 0.2s ease;
 }
-
 
 .route-enter-from {
   // transform: translateX(20px);
@@ -102,7 +104,6 @@ fade-enter-active,
   opacity: 0;
   transform: translateX(100%);
 }
-
 
 .slide-right-enter-active {
   transition: all 0.3s ease;

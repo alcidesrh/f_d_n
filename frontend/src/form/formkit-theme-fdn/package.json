@@ -34,7 +34,6 @@
     "test": "vitest",
     "lint": "eslint",
     "generate": "pnpm build && npx formkit@latest theme --theme=dist/theme.js && mv formkit.theme.ts ../"
-
   },
   "files": [
     "dist"

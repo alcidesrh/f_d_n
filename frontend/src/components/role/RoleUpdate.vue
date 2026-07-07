@@ -13,21 +13,21 @@
 </template>
 
 <script lang="ts" setup>
-import { onBeforeUnmount } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { storeToRefs } from 'pinia';
-import { useI18n } from 'vue-i18n';
-import Toolbar from 'components/common/CommonToolbar.vue';
-import Breadcrumb from 'components/common/CommonBreadcrumb.vue';
-import Loading from 'components/common/CommonLoading.vue';
-import Form from 'components/role/RoleForm.vue';
-import { useRoleUpdateStore } from 'stores/role/update';
-import { useRoleDeleteStore } from 'stores/role/delete';
-import { useNotifications } from 'src/composables/notifications';
-import { useBreadcrumb } from 'src/composables/breadcrumb';
-import { useWatchErrors } from 'src/composables/errors';
-import { useMercureItem } from 'src/composables/mercureItem';
-import type { Role } from 'src/types/role';
+import { onBeforeUnmount } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { storeToRefs } from "pinia";
+import { useI18n } from "vue-i18n";
+import Toolbar from "components/common/CommonToolbar.vue";
+import Breadcrumb from "components/common/CommonBreadcrumb.vue";
+import Loading from "components/common/CommonLoading.vue";
+import Form from "components/role/RoleForm.vue";
+import { useRoleUpdateStore } from "stores/role/update";
+import { useRoleDeleteStore } from "stores/role/delete";
+import { useNotifications } from "src/composables/notifications";
+import { useBreadcrumb } from "src/composables/breadcrumb";
+import { useWatchErrors } from "src/composables/errors";
+import { useMercureItem } from "src/composables/mercureItem";
+import type { Role } from "src/types/role";
 
 const { t } = useI18n();
 const route = useRoute();
@@ -51,20 +51,20 @@ const { isLoading: deleteLoading, error: deleteError } =
 useMercureItem({
   store: roleUpdateStore,
   deleteStore: roleDeleteStore,
-  redirectRouteName: 'RoleList',
+  redirectRouteName: "RoleList",
 });
 
 await roleUpdateStore.retrieve(decodeURIComponent(route.params.id as string));
 
 async function deleteItem() {
   if (!item?.value) {
-    roleUpdateStore.setError('No role found. Please reload');
+    roleUpdateStore.setError("No role found. Please reload");
     return;
   }
 
   await roleDeleteStore.deleteItem(item?.value);
 
-  router.push({ name: 'RoleList' });
+  router.push({ name: "RoleList" });
 }
 
 async function update(item: Role) {
@@ -74,7 +74,7 @@ async function update(item: Role) {
     return;
   }
 
-  displaySuccessNotification(`${item['@id']} ${t('updated')}.`);
+  displaySuccessNotification(`${item["@id"]} ${t("updated")}.`);
 }
 
 useWatchErrors([error, deleteError]);

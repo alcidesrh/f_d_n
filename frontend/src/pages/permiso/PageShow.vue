@@ -7,5 +7,5 @@
 </template>
 
 <script setup lang="ts">
-import Show from 'components/permiso/PermisoShow.vue';
+import Show from "components/permiso/PermisoShow.vue";
 </script>

@@ -1,3 +1,3 @@
-import { RemoveTypenameFromVariablesLink } from '@apollo/client/link/remove-typename'
+import { RemoveTypenameFromVariablesLink } from "@apollo/client/link/remove-typename";
 
-export default new RemoveTypenameFromVariablesLink()
+export default new RemoveTypenameFromVariablesLink();

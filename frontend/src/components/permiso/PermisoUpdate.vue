@@ -13,21 +13,21 @@
 </template>
 
 <script lang="ts" setup>
-import { onBeforeUnmount } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { storeToRefs } from 'pinia';
-import { useI18n } from 'vue-i18n';
-import Toolbar from 'components/common/CommonToolbar.vue';
-import Breadcrumb from 'components/common/CommonBreadcrumb.vue';
-import Loading from 'components/common/CommonLoading.vue';
-import Form from 'components/permiso/PermisoForm.vue';
-import { usePermisoUpdateStore } from 'stores/permiso/update';
-import { usePermisoDeleteStore } from 'stores/permiso/delete';
-import { useNotifications } from 'src/composables/notifications';
-import { useBreadcrumb } from 'src/composables/breadcrumb';
-import { useWatchErrors } from 'src/composables/errors';
-import { useMercureItem } from 'src/composables/mercureItem';
-import type { Permiso } from 'src/types/permiso';
+import { onBeforeUnmount } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { storeToRefs } from "pinia";
+import { useI18n } from "vue-i18n";
+import Toolbar from "components/common/CommonToolbar.vue";
+import Breadcrumb from "components/common/CommonBreadcrumb.vue";
+import Loading from "components/common/CommonLoading.vue";
+import Form from "components/permiso/PermisoForm.vue";
+import { usePermisoUpdateStore } from "stores/permiso/update";
+import { usePermisoDeleteStore } from "stores/permiso/delete";
+import { useNotifications } from "src/composables/notifications";
+import { useBreadcrumb } from "src/composables/breadcrumb";
+import { useWatchErrors } from "src/composables/errors";
+import { useMercureItem } from "src/composables/mercureItem";
+import type { Permiso } from "src/types/permiso";
 
 const { t } = useI18n();
 const route = useRoute();
@@ -51,20 +51,22 @@ const { isLoading: deleteLoading, error: deleteError } =
 useMercureItem({
   store: permisoUpdateStore,
   deleteStore: permisoDeleteStore,
-  redirectRouteName: 'PermisoList',
+  redirectRouteName: "PermisoList",
 });
 
-await permisoUpdateStore.retrieve(decodeURIComponent(route.params.id as string));
+await permisoUpdateStore.retrieve(
+  decodeURIComponent(route.params.id as string),
+);
 
 async function deleteItem() {
   if (!item?.value) {
-    permisoUpdateStore.setError('No permiso found. Please reload');
+    permisoUpdateStore.setError("No permiso found. Please reload");
     return;
   }
 
   await permisoDeleteStore.deleteItem(item?.value);
 
-  router.push({ name: 'PermisoList' });
+  router.push({ name: "PermisoList" });
 }
 
 async function update(item: Permiso) {
@@ -74,7 +76,7 @@ async function update(item: Permiso) {
     return;
   }
 
-  displaySuccessNotification(`${item['@id']} ${t('updated')}.`);
+  displaySuccessNotification(`${item["@id"]} ${t("updated")}.`);
 }
 
 useWatchErrors([error, deleteError]);

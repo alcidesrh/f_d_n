@@ -17,5 +17,5 @@ export default tseslint.config(
       "no-var": "off",
       "@typescript-eslint/no-explicit-any": "off",
     },
-  }
+  },
 );

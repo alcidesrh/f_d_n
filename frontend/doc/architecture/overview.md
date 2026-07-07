@@ -4,7 +4,7 @@ El frontend está construido sobre **Vue 3** y **Quasar Framework**, operando co
 
 ## Filosofía Principal
 
-El código base se estructura priorizando la escalabilidad y la fácil localización del código. En lugar de un enfoque técnico estricto (ej. todo en `components/`, todo en `views/`), la estructura tiende a dividirse por **subdominios lógicos** (ej. Ventas, Flota, Configuración). 
+El código base se estructura priorizando la escalabilidad y la fácil localización del código. En lugar de un enfoque técnico estricto (ej. todo en `components/`, todo en `views/`), la estructura tiende a dividirse por **subdominios lógicos** (ej. Ventas, Flota, Configuración).
 
 ## Boot Order (Secuencia de Inicio)
 
@@ -21,6 +21,7 @@ La aplicación inicializa sus capacidades en una secuencia estricta controlada p
 ## Introspección y CRUD Dinámico
 
 El Frontend está diseñado para evitar escribir pantallas repetitivas ("boilerplate") para mantenimientos. Utilizando la introspección GraphQL proporcionada por el servidor, los componentes genéricos (`DynamicTable`, `DynamicForm`) pueden inferir:
+
 - Tipos de campo (Texto, Fecha, Selectores de relaciones).
 - Validaciones requeridas.
 - Nombres y etiquetas.

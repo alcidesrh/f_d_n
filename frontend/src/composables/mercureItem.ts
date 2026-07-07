@@ -42,7 +42,7 @@ export function useMercureItem({
     mercureSub = mercureSubscribe(
       state.hubUrl,
       [state.retrieved["@id"] ?? ""],
-      mercureEl
+      mercureEl,
     );
   });
 

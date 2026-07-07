@@ -1,8 +1,8 @@
-import { router } from '@/router'
+import { router } from "@/router";
 export function useRouter() {
-	return router
+  return router;
 }
 
 export function useRoute() {
-	return router.currentRoute.value
+  return router.currentRoute.value;
 }

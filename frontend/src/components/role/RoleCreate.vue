@@ -12,16 +12,16 @@
 
 <script lang="ts" setup>
 import { onBeforeUnmount } from "vue";
-import { useRouter } from 'vue-router';
-import { storeToRefs } from 'pinia';
-import Toolbar from 'components/common/CommonToolbar.vue';
-import Breadcrumb from 'components/common/CommonBreadcrumb.vue';
-import Loading from 'components/common/CommonLoading.vue';
-import Form from 'components/role/RoleForm.vue';
-import { useRoleCreateStore } from 'stores/role/create';
-import { useBreadcrumb } from 'src/composables/breadcrumb';
-import { useWatchErrors } from 'src/composables/errors';
-import type { Role } from 'src/types/role';
+import { useRouter } from "vue-router";
+import { storeToRefs } from "pinia";
+import Toolbar from "components/common/CommonToolbar.vue";
+import Breadcrumb from "components/common/CommonBreadcrumb.vue";
+import Loading from "components/common/CommonLoading.vue";
+import Form from "components/role/RoleForm.vue";
+import { useRoleCreateStore } from "stores/role/create";
+import { useBreadcrumb } from "src/composables/breadcrumb";
+import { useWatchErrors } from "src/composables/errors";
+import type { Role } from "src/types/role";
 
 const router = useRouter();
 const breadcrumb = useBreadcrumb();
@@ -36,7 +36,7 @@ async function create(item: Role) {
     return;
   }
 
-  router.push({ name: 'RoleUpdate', params: { id: created?.value?.['@id'] } });
+  router.push({ name: "RoleUpdate", params: { id: created?.value?.["@id"] } });
 }
 
 useWatchErrors([error]);

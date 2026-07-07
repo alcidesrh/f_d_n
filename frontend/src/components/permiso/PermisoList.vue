@@ -6,12 +6,11 @@
   </Toolbar>
 
   <q-banner v-if="deleted" class="bg-positive text-white q-ma-md">
-    {{ deleted['@id'] }} deleted.
+    {{ deleted["@id"] }} deleted.
   </q-banner>
   <q-banner v-if="mercureDeleted" class="bg-positive text-white q-ma-md">
-    {{ mercureDeleted['@id'] }} deleted by another user.
+    {{ mercureDeleted["@id"] }} deleted by another user.
   </q-banner>
-
 
   <q-table
     :pagination="pagination"
@@ -113,20 +112,20 @@
 </template>
 
 <script lang="ts" setup>
-import { onBeforeUnmount, ref, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { storeToRefs } from 'pinia';
-import { useI18n } from 'vue-i18n';
-import Toolbar from 'components/common/CommonToolbar.vue';
-import Breadcrumb from 'components/common/CommonBreadcrumb.vue';
-import ActionCell from 'components/common/CommonActionCell.vue';
-import { usePermisoListStore } from 'stores/permiso/list';
-import { usePermisoDeleteStore } from 'stores/permiso/delete';
-import { useBreadcrumb } from 'src/composables/breadcrumb';
-import { useWatchErrors } from 'src/composables/errors';
-import { useMercureList } from 'src/composables/mercureList';
-import type { Permiso } from 'src/types/permiso';
-import type { Pagination } from 'src/types/list';
+import { onBeforeUnmount, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { storeToRefs } from "pinia";
+import { useI18n } from "vue-i18n";
+import Toolbar from "components/common/CommonToolbar.vue";
+import Breadcrumb from "components/common/CommonBreadcrumb.vue";
+import ActionCell from "components/common/CommonActionCell.vue";
+import { usePermisoListStore } from "stores/permiso/list";
+import { usePermisoDeleteStore } from "stores/permiso/delete";
+import { useBreadcrumb } from "src/composables/breadcrumb";
+import { useWatchErrors } from "src/composables/errors";
+import { useMercureList } from "src/composables/mercureList";
+import type { Permiso } from "src/types/permiso";
+import type { Pagination } from "src/types/list";
 
 const { t } = useI18n();
 const route = useRoute();
@@ -134,12 +133,13 @@ const router = useRouter();
 const breadcrumb = useBreadcrumb();
 
 const permisoListStore = usePermisoListStore();
-const { items, totalItems, view, error, isLoading } = storeToRefs(permisoListStore);
+const { items, totalItems, view, error, isLoading } =
+  storeToRefs(permisoListStore);
 
 const permisoDeleteStore = usePermisoDeleteStore();
 const { deleted, mercureDeleted } = storeToRefs(permisoDeleteStore);
 
-const page = ref('1');
+const page = ref("1");
 const pagination: Pagination = {
   sortBy: undefined,
   descending: false,
@@ -148,47 +148,47 @@ const pagination: Pagination = {
   rowsNumber: 1,
 };
 const columns = [
-  { name: 'actions', label: t('actions'), field: '' },
-  { name: 'id', field: '@id', label: t('id') },
+  { name: "actions", label: t("actions"), field: "" },
+  { name: "id", field: "@id", label: t("id") },
   {
-    name: 'roles',
-    field: 'roles',
-    label: t('permiso.roles'),
+    name: "roles",
+    field: "roles",
+    label: t("permiso.roles"),
   },
   {
-    name: 'parents',
-    field: 'parents',
-    label: t('permiso.parents'),
+    name: "parents",
+    field: "parents",
+    label: t("permiso.parents"),
   },
   {
-    name: 'children',
-    field: 'children',
-    label: t('permiso.children'),
+    name: "children",
+    field: "children",
+    label: t("permiso.children"),
   },
   {
-    name: 'nombre',
-    field: 'nombre',
-    label: t('permiso.nombre'),
+    name: "nombre",
+    field: "nombre",
+    label: t("permiso.nombre"),
   },
   {
-    name: 'nota',
-    field: 'nota',
-    label: t('permiso.nota'),
+    name: "nota",
+    field: "nota",
+    label: t("permiso.nota"),
   },
   {
-    name: 'label',
-    field: 'label',
-    label: t('permiso.label'),
+    name: "label",
+    field: "label",
+    label: t("permiso.label"),
   },
   {
-    name: 'status',
-    field: 'status',
-    label: t('permiso.status'),
+    name: "status",
+    field: "status",
+    label: t("permiso.status"),
   },
   {
-    name: 'id',
-    field: 'id',
-    label: t('permiso.id'),
+    name: "id",
+    field: "id",
+    label: t("permiso.id"),
   },
 ];
 
@@ -198,11 +198,11 @@ watch(
     page.value = newPage as string;
     sendRequest();
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 async function sendRequest() {
-  await permisoListStore.getItems(page.value, {  });
+  await permisoListStore.getItems(page.value, {});
 }
 
 useMercureList({ store: permisoListStore, deleteStore: permisoDeleteStore });
@@ -212,22 +212,21 @@ await sendRequest();
 pagination.rowsPerPage = items.value.length;
 pagination.rowsNumber = totalItems.value;
 
-
 function goToCreatePage() {
-  router.push({ name: 'PermisoCreate' });
+  router.push({ name: "PermisoCreate" });
 }
 
 function goToShowPage(item: Permiso) {
   router.push({
-    name: 'PermisoShow',
-    params: { id: item['@id'] },
+    name: "PermisoShow",
+    params: { id: item["@id"] },
   });
 }
 
 function goToUpdatePage(item: Permiso) {
   router.push({
-    name: 'PermisoUpdate',
-    params: { id: item['@id'] },
+    name: "PermisoUpdate",
+    params: { id: item["@id"] },
   });
 }
 

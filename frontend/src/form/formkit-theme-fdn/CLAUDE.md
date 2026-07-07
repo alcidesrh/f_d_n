@@ -5,6 +5,7 @@ Minimal, heavily-commented FormKit theme template. Use this as a starting point 
 ## Purpose
 
 Unlike `theme-regenesis` (fully styled), this package is:
+
 - **Educational** - extensive comments explaining every decision
 - **Minimal** - bare-bones styles, many empty sections
 - **Template** - meant to be copied and customized
@@ -33,12 +34,12 @@ src/
 
 ## Key Differences from theme-regenesis
 
-| Aspect | theme-starter | theme-regenesis |
-|--------|---------------|-----------------|
-| Comments | 25-50+ per file | Minimal |
-| Styling | Bare-bones | Fully styled |
-| Purpose | Learning/template | Production use |
-| Complexity | Simple | Complete |
+| Aspect     | theme-starter     | theme-regenesis |
+| ---------- | ----------------- | --------------- |
+| Comments   | 25-50+ per file   | Minimal         |
+| Styling    | Bare-bones        | Fully styled    |
+| Purpose    | Learning/template | Production use  |
+| Complexity | Simple            | Complete        |
 
 ## Theme Variables
 
@@ -79,6 +80,7 @@ pnpm test     # vitest
 ## Educational Comments
 
 Files include detailed explanations:
+
 - Why certain styles are needed
 - Browser quirks (Safari flex, webkit color)
 - Tailwind Forms plugin conflicts
@@ -89,22 +91,26 @@ Look for `⚠️ CAUTION:` blocks throughout.
 ## Creating a Custom Theme
 
 ### Step 1: Scaffold
+
 ```bash
 npx formkit create-theme MyTheme
 ```
 
 ### Step 2: Understand Structure
+
 - Read comments in `theme.ts` and `globals.ts`
 - Review family definitions
 - Check individual inputs for section names
 
 ### Step 3: Customize
+
 1. **Variables** - Modify in `theme.ts`
 2. **Globals** - Base styles in `globals.ts`
 3. **Families** - Shared styles in `families/`
 4. **Inputs** - Override in `inputs/`
 
 ### Step 4: Test
+
 ```bash
 pnpm dev
 # Red text = missing styles
@@ -113,6 +119,7 @@ pnpm dev
 ```
 
 ### Step 5: Publish
+
 ```bash
 pnpm build
 pnpm release  # bumpp + publish
@@ -139,6 +146,7 @@ theme-starter (this package)
 ### Understanding a section
 
 Each section key in theme files corresponds to a FormKit section:
+
 - `outer` - outermost wrapper
 - `wrapper` - inner wrapper
 - `label` - input label
@@ -158,6 +166,7 @@ See FormKit docs for full section list per input type.
 ### Removing Pro inputs
 
 If not using @formkit/pro:
+
 1. Remove `pro/` directory
 2. Remove pro imports from `theme.ts`
 3. Remove from `meta.supportedInputs`

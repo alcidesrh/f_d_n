@@ -7,5 +7,5 @@
 </template>
 
 <script setup lang="ts">
-import Show from 'components/role/RoleShow.vue';
+import Show from "components/role/RoleShow.vue";
 </script>

@@ -111,7 +111,7 @@ declare global {
   const useApi: typeof import('./composables/useApiRest').useApi
   const useApolloStore: typeof import('./stores/autoimport/useApolloStore').useApolloStore
   const useAttrs: typeof import('vue').useAttrs
-  const useAuth: typeof import('./composables/useAuth').useAuth
+  const useAuth: typeof import("./composables/useAuth").useAuth
   const useBreadcrumbs: typeof import('./composables/breadcrumb').useBreadcrumbs
   const useBreakpoint: typeof import('./composables/useBreakpoints').useBreakpoint
   const useCssModule: typeof import('vue').useCssModule

@@ -7,5 +7,5 @@
 </template>
 
 <script setup lang="ts">
-import List from 'components/role/RoleList.vue';
+import List from "components/role/RoleList.vue";
 </script>
