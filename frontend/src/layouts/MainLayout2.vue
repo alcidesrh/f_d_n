@@ -27,7 +27,10 @@
 import { usePermission } from "@/composables/usePermission";
 import { useUserSessionStore } from "@/stores/autoimport/session";
 import { useSidebarStore } from "@/stores/autoimport/sidebar";
+import { computed, nextTick, onMounted, onUnmounted, watch } from "vue";
+import { useRoute } from "vue-router";
 
+const route = useRoute();
 const sidebarLeftStore = useSidebarStore("sidebarLeft", "left");
 const sidebarRightStore = useSidebarStore("sidebarRight", "right");
 const layoutClass = computed(
@@ -36,6 +39,22 @@ const layoutClass = computed(
 const loadingStore = useLoadingStore();
 const session = useUserSessionStore();
 const { can } = usePermission();
+
+const scrollMainContentToTop = () => {
+  const container = document.querySelector<HTMLElement>(
+    ".main-content, .layout-main-content",
+  );
+
+  container?.scrollTo({ top: 0, behavior: "smooth" });
+};
+
+watch(
+  () => route.fullPath,
+  () => {
+    nextTick(scrollMainContentToTop);
+  },
+  { flush: "post" },
+);
 
 const observer = new IntersectionObserver(
   (e) => {

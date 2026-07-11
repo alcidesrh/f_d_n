@@ -3,14 +3,16 @@
     <div class="entity-card__icon">
       <icon :name="icon_name" fill />
     </div>
-    <span class="entity-card__name">{{ entity.name }}</span>
-    <span v-if="recordCount != null" class="entity-card__count"
-      >{{ recordCount.toLocaleString("es-BO") }} registros</span
+    <div class="h-33px">
+      <div class="entity-card__name">{{ entity.name }}</div>
+    <div v-if="recordCount != null" class="entity-card__count mt-5px"
+      >{{ recordCount.toLocaleString("es-BO") }} registros</div
     >
-    <span v-else-if="loading" class="entity-card__count">cargando...</span>
-    <div class="flex gap-x-3 mt-10px justify-center w-full">
+    <div v-else-if="loading" class="entity-card__count">cargando...</div>
+    </div>
+    <div class="entity-card__action flex gap-x-3 mt-10px justify-around w-full max-w-150px">
       <icon
-        name="search"
+        name="reorder"
         class="hover"
         @click="$router.push({ name: 'list', params: { entity: entity.name } })"
       />
@@ -81,6 +83,18 @@ defineProps<{
     font-weight: 600;
     font-size: 1rem;
     color: $dark;
+  }
+  &__action {
+    & > .hover {
+      padding: 0.25rem;
+      border-radius: 6px;
+      // cursor: pointer;
+      color: $surface-6;
+      // transition: color 0.2s;
+      // &:hover {
+        // color: $primary;
+      // }
+    }
   }
 
   &__count {

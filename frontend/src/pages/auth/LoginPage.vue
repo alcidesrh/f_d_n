@@ -8,7 +8,8 @@
 			:style="{ position: 'absolute', top: `${random(0, 100)}vh`, left: `${random(0, 100)}vw` }"
 		/> -->
 		<div class="background">
-			<img v-for="(image, index) in backgroundImages" :key="index" :src="image.src" alt="" />
+			<div class="img" v-for="(image, index) in backgroundImages" :key="index" :style="{ backgroundImage: `url('${image.src}')` }"></div>
+			<!-- <img v-for="(image, index) in backgroundImages" :key="index" :src="image.src" alt="" /> -->
 		</div>
 		<div id="login" ref="login" class="animate__animated animate__fast">
 			<q-card class="q-pa-lg card-login" style="width: 400px; max-width: 90vw" :class="{ 'opacity-50': loading }">
@@ -27,20 +28,12 @@
 						</div>
 					</FormKit>
 				</q-card-section>
-				<div class="flex justify-center gap-4">
-					<!-- <img
-						v-for="name in ['lapionera', 'rosita', 'mayadeoro', 'starbus', 'corporacionlapionera']"
-						:src="`images/logos/copiloto/${name}5.png`"
-						width="100px"
-						class="logo"
-						:style="{ position: 'fixed', top: `${random(0, 100)}vh`, left: `${random(0, 100)}vw` }"
-					/> -->
-				</div>
+				<div class="card-carpet"></div>
 			</q-card>
 		</div>
 		<div id="layout-login2"></div>
 		<div ref="layer0" class="bg-layer" :style="{ backgroundImage: `url('images/login${a}.png')` }"></div>
-		<div ref="layer1" class="bg-layer" :style="{ backgroundImage: `url('images/login${b}.png')`, opacity: 0 }"></div>
+		<div ref="layer1" class="bg-layer" :style="{ backgroundImage: `url('images/login${b}.png')` }"></div>
 	</div>
 </template>
 
@@ -49,9 +42,8 @@ import { useUserSessionStore } from '@/stores/autoimport/session'
 import { FormKitMessages } from '@formkit/vue'
 import { gsap } from 'gsap'
 import { ref } from 'vue'
-
+import { router } from '@/router'
 const INTERVAL_MS = 5000
-const CROSSFADE_MS = 1
 
 const form = useTemplateRef('form')
 const card = useTemplateRef('login')
@@ -67,7 +59,8 @@ const b = ref((start % 10) + 1)
 let activeIsA = true
 
 let intervalId: ReturnType<typeof setInterval> | null = null
-let tween: gsap.core.Tween | null = null
+let tween: gsap.core.Timeline | null = null
+let currentBgClass = ''
 
 function preload(src: string) {
 	const img = new Image()
@@ -86,34 +79,62 @@ function advance() {
 		a.value = next
 	}
 
-	to!.style.opacity = '0'
-
 	preload(`images/login${(next % 10) + 1}.png`)
 
-	tween = gsap.to(from, {
-		opacity: 0,
-		duration: CROSSFADE_MS,
-		ease: 'power2.inOut',
-	})
-	gsap.to(to, {
-		opacity: 0.5,
-		duration: CROSSFADE_MS,
-		ease: 'power2.inOut',
+	gsap.set(from, { clearProps: 'transform' })
+	gsap.set(to, { opacity: 0, clearProps: 'transform' })
+
+	const tl = gsap.timeline({
 		onComplete: () => {
 			activeIsA = !activeIsA
-			from!.style.opacity = '0'
+			gsap.set(from, { opacity: 0, clearProps: 'transform' })
+
+			const imgNum = activeIsA ? a.value : b.value
+			const newClass = `login${imgNum}`
+			balls.forEach((ball) => {
+				if (ball.el) {
+					ball.el.classList.remove(currentBgClass)
+					ball.el.classList.add(newClass)
+				}
+			})
+			currentBgClass = newClass
 		},
 	})
 
-	moveImages()
+	tl.to(
+		from,
+		{
+			y: -280,
+			rotation: 5,
+			scale: 0.95,
+			opacity: 0,
+			duration: 0.4,
+			ease: 'back.in(1.7)',
+		},
+		0,
+	)
+
+	tl.to(
+		to,
+		{
+			opacity: 1,
+			duration: 0.25,
+			ease: 'power2.out',
+		},
+		0.05,
+	)
+
+	tl.call(() => moveImages(), [], 0.12)
+
+	tween = tl
 }
 
 // ── Physics constants ──
 const FRICTION = 0.991
 const WALL_RESTITUTION = 0.75
 const BALL_RESTITUTION = 0.92
-const IMPULSE_SPEED_MIN = 10
-const IMPULSE_SPEED_MAX = 18
+const IMPULSE_SPEED_MIN = 12
+const IMPULSE_SPEED_MAX = 24
 
 interface Ball {
 	x: number
@@ -170,6 +191,34 @@ function resolveBallCollision(a: Ball, b: Ball) {
 	b.rotationSpeed -= tangentSpeed * 0.06
 }
 
+// ── Circle vs rectangle (login card) collision ──
+function resolveRectCollision(ball: Ball, rect: DOMRect) {
+	const closestX = Math.max(rect.left, Math.min(ball.x, rect.right))
+	const closestY = Math.max(rect.top, Math.min(ball.y, rect.bottom))
+
+	const dx = ball.x - closestX
+	const dy = ball.y - closestY
+	const distSq = dx * dx + dy * dy
+
+	if (distSq >= ball.radius * ball.radius || distSq === 0) return
+
+	const dist = Math.sqrt(distSq)
+	const nx = dx / dist
+	const ny = dy / dist
+	const overlap = ball.radius - dist
+
+	ball.x += nx * overlap
+	ball.y += ny * overlap
+
+	const vDotN = ball.vx * nx + ball.vy * ny
+	if (vDotN < 0) {
+		ball.vx -= (1 + WALL_RESTITUTION) * vDotN * nx
+		ball.vy -= (1 + WALL_RESTITUTION) * vDotN * ny
+	}
+
+	ball.rotationSpeed += (ball.vy * nx - ball.vx * ny) * 0.03
+}
+
 // ── Physics loop (requestAnimationFrame) ──
 function startPhysicsLoop() {
 	let lastTime = performance.now()
@@ -181,6 +230,7 @@ function startPhysicsLoop() {
 
 		const W = window.innerWidth
 		const H = window.innerHeight
+		const loginRect = card.value?.getBoundingClientRect()
 
 		// Integrate velocities
 		for (const ball of balls) {
@@ -213,6 +263,9 @@ function startPhysicsLoop() {
 				ball.vy = -Math.abs(ball.vy) * WALL_RESTITUTION
 				ball.rotationSpeed += ball.vx * 0.02
 			}
+
+			// ── Login card collision (balls bounce off the form) ──
+			if (loginRect) resolveRectCollision(ball, loginRect)
 		}
 
 		// Ball-ball collisions (O(n²) is fine for 5 elements)
@@ -301,20 +354,26 @@ function generateLayout() {
 	nextTick(() => {
 		const W = window.innerWidth
 		const H = window.innerHeight
-		const imgElements = document.querySelectorAll('.background img')
+		const imgElements = document.querySelectorAll('.background .img')
+
+		const imgNum = activeIsA ? a.value : b.value
+		currentBgClass = `login${imgNum}`
 
 		balls.length = 0
 		imgElements.forEach((el, index) => {
 			const cell = cells[index % cells.length]
 			const x = (cell.x + Math.random()) * (W / cols)
 			const y = (cell.y + Math.random()) * (H / rows)
-			const width = random(150, 250)
+			const width = 150 //random(150, 250)
+			const height = 150 //random(150, 250)
 			const rotation = random(-25, 25)
 
 			const htmlEl = el as HTMLElement
+			htmlEl.classList.add(currentBgClass)
 			htmlEl.style.left = `${x}px`
 			htmlEl.style.top = `${y}px`
 			htmlEl.style.width = `${width}px`
+			htmlEl.style.height = `${height}px`
 			htmlEl.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`
 
 			balls.push({
@@ -350,7 +409,8 @@ onMounted(() => {
 	preload(`images/login${(second % 10) + 1}.png`)
 	intervalId = setInterval(advance, INTERVAL_MS)
 	card.value.addEventListener('animationend', removeAnimation)
-	cl(generateLayout())
+	layer1.value!.style.opacity = '0'
+	generateLayout()
 })
 
 onBeforeUnmount(() => {
@@ -418,7 +478,7 @@ async function handleSubmit(credentials: Record<string, string>, node: Record<an
 			store.user = resp.username
 			store.permissions = resp.permissions
 			store.token = resp.token
-			const router = useRouter()
+			// const router = useRouter()
 			router.push({ path: store.redirectTo })
 		})
 		.catch((e: FetchError | string) => {
@@ -437,17 +497,13 @@ function removeAnimation() {
 }
 </script>
 <style scoped lang="scss">
-img {
-	&.logo {
-		// opacity: 0.4;
-	}
-}
 #login {
 	& > .card-login {
 		box-shadow: 0px 0px 18px 0px $surface-8;
 	}
 	z-index: 4;
-	background-color: -alpha($surface-1, 0.3);
+	background-color: -alpha($surface-1, 0.6);
+	backdrop-filter: blur(5px);
 	& > div {
 		background-color: transparent;
 	}
@@ -458,10 +514,10 @@ img {
 	position: absolute;
 	z-index: 2;
 
-	background-color: -alpha($surface-1, 0.4);
+	// background-color: -alpha($surface-7, 0.4);
 }
 .bg-layer {
-	// filter: blur(13px);
+	filter: blur(5px);
 	position: absolute;
 	width: 100vw;
 	min-height: 100vh;
@@ -471,6 +527,7 @@ img {
 	background-size: cover;
 	background-attachment: fixed;
 	margin: 0;
+	will-change: transform, opacity;
 }
 
 .background {
@@ -479,11 +536,61 @@ img {
 	overflow: hidden;
 	pointer-events: none;
 	z-index: 3;
+	padding: 30px;
 }
 
-.background img {
+.background .img {
+	// transition: border 2s ease-in-out;
+	border: 15px solid $surface-1;
+	// background-color: $surface-2;
+	background-color: -alpha($surface-1, 0.5);
+	backdrop-filter: blur(8px);
+	z-index: 9999;
+	border-radius: 999px;
+	width: 50px;
+	height: 50px;
+	padding: 20px;
 	position: absolute;
 	user-select: none;
-	opacity: 0.4;
+	// opacity: 0.4;
+	// width: 100vw;
+	// min-height: 100vh;
+	z-index: 1;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: contain;
+	// background-attachment: fixed;
+	margin: 0;
+	&.login2,
+	&.login9,
+	&.login1,
+	&.login8,
+	&.login3 {
+		border: 15px solid $surface-8;
+	}
+	&:nth-child(1) {
+		transition: border 2s 0.5s ease-in-out;
+
+		// transition-delay: 0.1s;
+	}
+	&:nth-child(2) {
+		transition: border 2s 1s ease-in-out;
+
+		// transition-delay: 0.2s;
+	}
+	&:nth-child(3) {
+		transition: border 2s 1.5s ease-in-out;
+
+		// transition-delay: 0.3s;
+	}
+	&:nth-child(4) {
+		transition: border 2s 2s ease-in-out;
+
+		// transition-delay: 0.4s;
+	}
+	&:nth-child(5) {
+		transition: border 2s 2.5s ease-in-out;
+		// transition-delay: 0.5s;
+	}
 }
 </style>

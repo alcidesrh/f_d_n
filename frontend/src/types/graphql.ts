@@ -190,7 +190,5 @@ export interface TypeStore extends StateStore {
 }
 export interface SchemaStore {
   entities: Record<string, Entity>;
-  mutations: Entity[];
-  queries: Entity[];
-  payloads: any;
+  types: Record<string, Entity>;
 }

@@ -180,3 +180,24 @@ migrar:
 	
 clean:
 	@$(DOCKER_COMP) exec backend bin/console --env=prod app:reset-db --hard
+
+## —— Monitorización 📊 ——————————————————————————————————————————————————
+MON_O=compose.override.yaml
+MON_M=compose.monitoring.yaml
+MON_UP     = $(DOCKER_COMP) -f $(MON_M)
+MON_FULL   = $(DOCKER_COMP) -f compose.yaml -f $(MON_O) -f $(MON_M)
+
+mon-up: ## Start monitoring only (cAdvisor:8080, Prometheus:9090, Grafana:3000). Safe to run alongside `make dev`
+	$(MON_UP) up --detach
+
+mon-down: ## Stop monitoring only (app stack stays up)
+	$(MON_UP) down
+
+mon-logs: ## Show monitoring logs
+	$(MON_UP) logs --tail=0 --follow
+
+mon-restart: ## Restart monitoring
+	$(MON_UP) restart
+
+mon-debug: ## Start full stack (app + monitoring) with Xdebug
+	SERVER_NAME=:80 MERCURE_PUBLIC_URL=http://localhost/.well-known/mercure XDEBUG_MODE=debug  APP_ENV=dev $(MON_FULL) up --detach

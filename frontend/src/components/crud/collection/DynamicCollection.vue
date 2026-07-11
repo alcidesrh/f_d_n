@@ -1,8 +1,8 @@
 <template>
   <div v-if="store && store.columns.length" class="relative">
-    <!-- <div class="absolute left-50% top-20px z-2000 bg-slate-2">
+    <div class="absolute left-50% top-20px z-2000 bg-slate-2">
 			<pre>  {{ store.filters }}</pre>
-		</div> -->
+		</div>
     <FormKit
       v-model="store.filters"
       type="form"

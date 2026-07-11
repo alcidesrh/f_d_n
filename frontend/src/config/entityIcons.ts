@@ -17,7 +17,6 @@ export const entityIcons: Record<string, string> = {
   Boleto: "transit_ticket",
   Ruta: "route",
   Bus: "directions_bus",
-  Estacion: "location_on",
   Viaje: "departure_board",
   Encomienda: "inventory_2",
   Cliente: "people",
@@ -36,7 +35,6 @@ export const entityIcons: Record<string, string> = {
   Status: "badge",
   Usuario: "person",
   ApiToken: "key",
-  User: "person",
 };
 
 export function getEntityIcon(name: string): string {

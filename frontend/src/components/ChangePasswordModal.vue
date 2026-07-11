@@ -64,16 +64,16 @@ const submitting = ref(false);
 const userOptions = ref<{ id: string; label: string }[]>([]);
 
 onMounted(async () => {
-  try {
-    const api = useApi();
-    const users = await api.get("/users-brief");
-    userOptions.value = users.map((u: any) => ({
-      id: u.username,
-      label: u.label,
-    }));
-  } catch {
-    userOptions.value = [];
-  }
+  // try {
+  //   const api = useApi();
+  //   const users = await api.get("/users-brief");
+  //   userOptions.value = users.map((u: any) => ({
+  //     id: u.username,
+  //     label: u.label,
+  //   }));
+  // } catch {
+  //   userOptions.value = [];
+  // }
 });
 
 async function handleSubmit(formData: any) {

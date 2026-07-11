@@ -288,7 +288,6 @@ backend/
             EntityConfigurationRepository.php
             EstacionRepository.php
             FacturaRepository.php
-            IconCategoryRepository.php
             IconRepository.php
             LocalidadRepository.php
             PermisoRepository.php
@@ -318,7 +317,6 @@ backend/
             Estacion.php
             Factura.php
             Icon.php
-            IconCategory.php
             Localidad.php
             Nacion.php
             Parada.php

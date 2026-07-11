@@ -274,7 +274,6 @@ frontend/
             ChangePasswordModal.vue
             Clock.vue
             Icon.vue
-            IconPicker.vue
             Notify.vue
             ProfilerFooter.vue
             ResponsiveComponent.vue

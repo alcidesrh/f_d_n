@@ -14,7 +14,6 @@
         {{ today }}
       </div>
     </div>
-    <IconPicker v-model="selectedIconId" />
     <div class="accordion">
       <article class="item active">
         <button class="header">
@@ -91,7 +90,7 @@
                 v-for="entity in options"
                 :key="entity"
                 :entity="schemaStore.entities[entity]"
-                :icon_name="getEntityIcon(schemaStore.entities[entity])"
+                :icon_name="getEntityIcon(entity)"
                 :record-count="recordCounts[entity]"
                 :loading="loadingCounts"
               />

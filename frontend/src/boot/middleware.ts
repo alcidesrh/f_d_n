@@ -31,7 +31,7 @@ export default defineBoot(async ({ router }) => {
     if (!entity) {
       return true;
     }
-    const store = await getStore(entity);
+    const store = await getStore(entity, false, router);
     if (to.meta?.action == "listar") {
       if (!store) {
         return "lista/" + entity + "/404";

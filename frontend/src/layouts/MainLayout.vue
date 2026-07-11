@@ -29,13 +29,30 @@
 import { usePermission } from "@/composables/usePermission";
 import { useUserSessionStore } from "@/stores/autoimport/session";
 import { useSidebarStore } from "@/stores/autoimport/sidebar";
-import { computed, ref } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 
+const route = useRoute();
 const sidebarStore = useSidebarStore("sidebarLeft", "left");
 const rightSidebar = useSidebarStore("sidebarRight", "right");
 const loadingStore = useLoadingStore();
 const session = useUserSessionStore();
 const { can } = usePermission();
+
+const scrollMainContentToTop = () => {
+  const container = document.querySelector<HTMLElement>(
+    ".main-content, .layout-main-content",
+  );
+
+  container?.scrollTo({ top: 0, behavior: "smooth" });
+};
+
+watch(
+  () => route.fullPath,
+  () => {
+    nextTick(scrollMainContentToTop);
+  },
+  { flush: "post" },
+);
 
 const { mode, modeStates } = storeToRefs(sidebarStore);
 

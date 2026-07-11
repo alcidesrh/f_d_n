@@ -2,7 +2,6 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiResource;
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -11,7 +10,8 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
 #[ApiResourcePaginationPage]
-class Trayecto extends Base {
+class Trayecto extends Base
+{
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
@@ -47,79 +47,95 @@ class Trayecto extends Base {
     private Collection $recorridos;
 
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->trayectosHijos = new ArrayCollection();
         $this->trayectosPadres = new ArrayCollection();
         $this->recorridos = new ArrayCollection();
     }
 
-    public function getId(): ?int {
+    public function getId(): ?int
+    {
         return $this->id;
     }
 
-    public function getOrigen(): ?Enclave {
+    public function getOrigen(): ?Enclave
+    {
         return $this->origen;
     }
 
-    public function setOrigen(?Enclave $origen): static {
+    public function setOrigen(?Enclave $origen): static
+    {
         $this->origen = $origen;
 
         return $this;
     }
 
-    public function getDestino(): ?Enclave {
+    public function getDestino(): ?Enclave
+    {
         return $this->destino;
     }
 
-    public function setDestino(?Enclave $destino): static {
+    public function setDestino(?Enclave $destino): static
+    {
         $this->destino = $destino;
 
         return $this;
     }
 
-    public function getDistanciaKm(): ?string {
+    public function getDistanciaKm(): ?string
+    {
         return $this->distanciaKm;
     }
 
-    public function setDistanciaKm(?string $distanciaKm): static {
+    public function setDistanciaKm(?string $distanciaKm): static
+    {
         $this->distanciaKm = $distanciaKm;
 
         return $this;
     }
 
-    public function getDuracionEstimadaMinutos(): ?int {
+    public function getDuracionEstimadaMinutos(): ?int
+    {
         return $this->duracionEstimadaMinutos;
     }
 
-    public function setDuracionEstimadaMinutos(?int $duracionEstimadaMinutos): static {
+    public function setDuracionEstimadaMinutos(?int $duracionEstimadaMinutos): static
+    {
         $this->duracionEstimadaMinutos = $duracionEstimadaMinutos;
 
         return $this;
     }
 
-    public function getActivo(): ?bool {
+    public function getActivo(): ?bool
+    {
         return $this->activo;
     }
 
-    public function setActivo(bool $activo): static {
+    public function setActivo(bool $activo): static
+    {
         $this->activo = $activo;
 
         return $this;
     }
-    public function getTrayectosHijos(): Collection {
+    public function getTrayectosHijos(): Collection
+    {
         return $this->trayectosHijos;
     }
 
-    public function getTrayectosPadres(): Collection {
+    public function getTrayectosPadres(): Collection
+    {
         return $this->trayectosPadres;
     }
 
 
-    public function getLegacyId(): ?string {
+    public function getLegacyId(): ?string
+    {
         return $this->legacyId;
     }
 
-    public function setLegacyId(?string $legacyId): static {
+    public function setLegacyId(?string $legacyId): static
+    {
         $this->legacyId = $legacyId;
 
         return $this;
@@ -128,11 +144,13 @@ class Trayecto extends Base {
     /**
      * @return Collection<int, Recorrido>
      */
-    public function getRecorridos(): Collection {
+    public function getRecorridos(): Collection
+    {
         return $this->recorridos;
     }
 
-    public function addRecorrido(Recorrido $recorrido): static {
+    public function addRecorrido(Recorrido $recorrido): static
+    {
         if (!$this->recorridos->contains($recorrido)) {
             $this->recorridos->add($recorrido);
             $recorrido->setTrayecto($this);
@@ -141,7 +159,8 @@ class Trayecto extends Base {
         return $this;
     }
 
-    public function removeRecorrido(Recorrido $recorrido): static {
+    public function removeRecorrido(Recorrido $recorrido): static
+    {
         if ($this->recorridos->removeElement($recorrido)) {
             // set the owning side to null (unless already changed)
             if ($recorrido->getTrayecto() === $this) {

@@ -7,9 +7,11 @@ use ApiPlatform\Metadata\Operations;
 use Attribute;
 
 #[\Attribute(\Attribute::TARGET_CLASS | \Attribute::IS_REPEATABLE)]
-final class ApiResourceNoPagination extends ApiResourceBase {
+final class ApiResourceNoPagination extends ApiResourceBase
+{
 
-    public function __construct(protected ?array $graphQlOperations = null, ...$data) {
+    public function __construct(protected ?array $graphQlOperations = null, protected ?Operations $operations = null, ...$data)
+    {
 
         $default = [
             new QueryCollection(
@@ -18,5 +20,10 @@ final class ApiResourceNoPagination extends ApiResourceBase {
             ...($graphQlOperations ?? []),
         ];
         parent::__construct(...$data, graphQlOperations: $default);
+        if ($operations) {
+            parent::__construct(...$data, graphQlOperations: $default, operations: new Operations((array)($operations)));
+        } else {
+            parent::__construct(...$data, graphQlOperations: $default);
+        }
     }
 }

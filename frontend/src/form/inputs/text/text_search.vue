@@ -53,8 +53,14 @@ const { start, isPending, stop } = useTimeoutFn(
     // }
 
     await props.context.node.input(value);
-    if (props.context.store) {
-      props.context.store.collection();
+
+    try {
+      const store = await getStore();
+      if (store) {
+        await store.collection();
+      }
+    } catch {
+      // Ignore when no entity is available in the current route.
     }
 
     startError();

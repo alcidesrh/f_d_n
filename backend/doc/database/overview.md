@@ -5,9 +5,11 @@ Este documento abstrae el modelo de datos analizando las entidades de Symfony.
 ## Entidades Detectadas
 
 ### Action
+
 - Atributos principales: `roles`, `permisos`
 
 ### ApiToken
+
 - Atributos principales: `token`
 
 ### Asiento
@@ -31,9 +33,11 @@ Este documento abstrae el modelo de datos analizando las entidades de Symfony.
 ### Boleto
 
 ### Bus
+
 - Atributos principales: `asientos`, `codigo`, `anoFabricacion`
 
 ### BusMarca
+
 - Atributos principales: `nombre`
 
 ### Cliente
@@ -41,6 +45,7 @@ Este documento abstrae el modelo de datos analizando las entidades de Symfony.
 ### CollectionFieldConfig
 
 ### EntityConfiguration
+
 - Atributos principales: `collectionFieldConfig`, `formFields`
 
 ### FieldConfig
@@ -48,12 +53,15 @@ Este documento abstrae el modelo de datos analizando las entidades de Symfony.
 ### FormFieldConfig
 
 ### Precio
+
 - Atributos principales: `monto`, `moneda`
 
 ### Empresa
+
 - Atributos principales: `buses`, `ventas`
 
 ### Enclave
+
 - Atributos principales: `ventas`
 
 ### Estacion
@@ -62,9 +70,6 @@ Este documento abstrae el modelo de datos analizando las entidades de Symfony.
 
 ### Icon
 
-### IconCategory
-- Atributos principales: `icons`
-
 ### Localidad
 
 ### Nacion
@@ -72,30 +77,37 @@ Este documento abstrae el modelo de datos analizando las entidades de Symfony.
 ### Parada
 
 ### Permiso
+
 - Atributos principales: `roles`, `parents`, `children`, `actions`
 
 ### Piloto
+
 - Atributos principales: `codigo`
 
 ### Recorrido
+
 - Atributos principales: `subrecorridos`
 
 ### RecorridoMatrioska
 
 ### Role
+
 - Atributos principales: `parents`, `children`, `permisos`, `actions`
 
 ### Servicio
+
 - Atributos principales: `boletos`
 
 ### Status
 
 ### Trayecto
+
 - Atributos principales: `trayectosHijos`, `trayectosPadres`, `recorridos`
 
 ### Usuario
+
 - Atributos principales: `username`, `fullName`, `apiTokens`, `userRoles`, `permisos`, `directActions`, `deniedActions`, `ventas`
 
 ### Venta
-- Atributos principales: `boletos`
 
+- Atributos principales: `boletos`
