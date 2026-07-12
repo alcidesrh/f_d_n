@@ -5,13 +5,14 @@ namespace App\Entity;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
+use App\Attribute\ApiResourceNoPagination;
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
 use App\Enum\TipoAsiento;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
-#[ApiResourcePaginationPage()]
+#[ApiResourceNoPagination]
 class Asiento extends Base
 {
     public const ASIENTO_CLASE_A = 'A';

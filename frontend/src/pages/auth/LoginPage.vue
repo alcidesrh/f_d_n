@@ -541,7 +541,7 @@ function removeAnimation() {
 
 .background .img {
 	// transition: border 2s ease-in-out;
-	border: 15px solid $surface-1;
+	border: 20px solid $surface-1;
 	// background-color: $surface-2;
 	background-color: -alpha($surface-1, 0.5);
 	backdrop-filter: blur(8px);
@@ -566,30 +566,37 @@ function removeAnimation() {
 	&.login1,
 	&.login8,
 	&.login3 {
-		border: 15px solid $surface-8;
+		border: 20px solid $surface-9;
+		background-color: -alpha($surface-1, 0.8);
 	}
 	&:nth-child(1) {
-		transition: border 2s 0.5s ease-in-out;
-
+		transition:
+			border 0.2s 0.5s,
+			background-color 0.2s 0.5s;
 		// transition-delay: 0.1s;
 	}
 	&:nth-child(2) {
-		transition: border 2s 1s ease-in-out;
-
-		// transition-delay: 0.2s;
+		transition:
+			border 0.2s 0.7s,
+			background-color 0.2s 0.7s;
+		// transition-delay: 0..5s;
 	}
 	&:nth-child(3) {
-		transition: border 2s 1.5s ease-in-out;
-
+		transition:
+			border 0.2s 0.9s,
+			background-color 0.2s 0.9s;
 		// transition-delay: 0.3s;
 	}
 	&:nth-child(4) {
-		transition: border 2s 2s ease-in-out;
-
+		transition:
+			border 0.2s 1.12s,
+			background-color 0.2s 1.12s;
 		// transition-delay: 0.4s;
 	}
 	&:nth-child(5) {
-		transition: border 2s 2.5s ease-in-out;
+		transition:
+			border 0.2s 1.24s,
+			background-color 0.2s 1.24s;
 		// transition-delay: 0.5s;
 	}
 }

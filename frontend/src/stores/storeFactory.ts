@@ -136,7 +136,6 @@ export default async (name: string) => {
 				const fields: any[] = []
 				const columns = (this as any).computedColumns
 				const temp = columns.map((col) => {
-					cl(col.field, entityFields)
 					const f = entityFields[col.field]
 					if (f.relatedTo && f.type !== 'ENUM') {
 						return {
@@ -180,7 +179,6 @@ export default async (name: string) => {
 							collectionFieldConfig: response['collectionFieldConfig'],
 							formFields: response['formFields'],
 						}
-						cl(this.config)
 						if (refresh) {
 							this.setColumns(true)
 							this.getFormSchema(true)
@@ -209,6 +207,7 @@ export default async (name: string) => {
 					this.columns = []
 					for (let v of this.config.collectionFieldConfig.filter((v) => v.visible)) {
 						v = useCloned(v).cloned.value
+						v.align = 'left'
 						const field = this.entity.fields[v.field]
 
 						if (field?.relatedTo && field.relatedTo.endsWith('PageConnection')) {
@@ -246,11 +245,6 @@ export default async (name: string) => {
 			},
 			async collection(force = false) {
 				await this.setColumns()
-				cl({
-					operation: this.collectionEndpoint,
-					variables: this.collectionVariables,
-					fields: this.collectionFields,
-				})
 				const qb = queryBuilder.query(
 					{
 						operation: this.collectionEndpoint,

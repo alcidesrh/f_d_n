@@ -70,6 +70,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
     ],
     operations: [
         new Get(
+            normalizationContext: ['groups' => ['read:dto']],
             name: 'refresh',
             uriTemplate: '/entity_configurations/refresh',
             provider: EntityConfigurationByEntityClassProvider::class,
