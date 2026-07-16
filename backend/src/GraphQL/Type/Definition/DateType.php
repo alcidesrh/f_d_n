@@ -1,5 +1,5 @@
 <?php
-// src/GraphQL/Type/DateOnlyType.php
+// src/GraphQL/Type/DateTypeType.php
 
 namespace App\GraphQL\Type\Definition;
 
@@ -8,40 +8,46 @@ use GraphQL\Type\Definition\ScalarType;
 use GraphQL\Language\AST\StringValueNode;
 use GraphQL\Error\Error;
 
-final class DateType extends ScalarType implements TypeInterface {
-  public string $name = 'Date';
+final class DateType extends ScalarType implements TypeInterface
+{
+    public string $name = 'Date';
 
 
-  public function getName(): string {
-    return $this->name;
-  }
-
-  public function serialize($value): ?string {
-    // if (!$value instanceof \DateTimeInterface) {
-    //   return null;
-    // }
-    return $value; //
-  }
-
-  public function parseValue($value): \DateTimeImmutable {
-    return $this->parse($value);
-  }
-
-  public function parseLiteral($valueNode, ?array $variables = null): \DateTimeImmutable {
-    if (!$valueNode instanceof StringValueNode) {
-      throw new Error('DateOnly must be string YYYY-MM-DD');
+    public function getName(): string
+    {
+        return $this->name;
     }
 
-    return $this->parse($valueNode->value);
-  }
-
-  private function parse(string $value): \DateTimeImmutable {
-    $date = \DateTimeImmutable::createFromFormat('Y-m-d', $value);
-
-    if (!$date || $date->format('Y-m-d') !== $value) {
-      throw new Error('Invalid DateOnly format, expected YYYY-MM-DD');
+    public function serialize($value): ?string
+    {
+        // if (!$value instanceof \DateTimeInterface) {
+        //   return null;
+        // }
+        return $value; //
     }
 
-    return $date;
-  }
+    public function parseValue($value): \DateTimeImmutable
+    {
+        return $this->parse($value);
+    }
+
+    public function parseLiteral($valueNode, ?array $variables = null): \DateTimeImmutable
+    {
+        if (!$valueNode instanceof StringValueNode) {
+            throw new Error('DateType must be string YYYY-MM-DD');
+        }
+
+        return $this->parse($valueNode->value);
+    }
+
+    private function parse(string $value): \DateTimeImmutable
+    {
+        $date = \DateTimeImmutable::createFromFormat('Y-m-d', $value);
+
+        if (!$date || $date->format('Y-m-d') !== $value) {
+            throw new Error('Invalid DateType format, expected YYYY-MM-DD');
+        }
+
+        return $date;
+    }
 }

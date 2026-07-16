@@ -4,17 +4,18 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Entity\Configuration\EntityConfiguration;
+use App\Entity\EntityConfiguration;
 use Symfony\Component\Mercure\HubInterface;
 use Symfony\Component\Mercure\Update;
 
-final class ConfigChangePublisher {
+final class ConfigChangePublisher
+{
   public function __construct(
     private readonly HubInterface $hub
-  ) {
-  }
+  ) {}
 
-  public function entityConfigChanged(EntityConfiguration $entityClass): void {
+  public function entityConfigChanged(EntityConfiguration $entityClass): void
+  {
     try {
       $this->hub->publish(new Update(
         'entity_configuration',
@@ -24,7 +25,8 @@ final class ConfigChangePublisher {
     }
   }
 
-  public function graphqlSchemaChanged(): void {
+  public function graphqlSchemaChanged(): void
+  {
     try {
       $this->hub->publish(new Update(
         'graphql_schema',

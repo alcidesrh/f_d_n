@@ -1,53 +1,46 @@
 .layout {
 	height: 100vh;
-
 	--left-width: var(--sidebar-large);
 	--right-width: var(--sidebar-large);
-
 	display: grid;
-
 	grid-template-columns: var(--left-width) minmax(0, 1fr) var(--right-width);
-
-	grid-template-rows:
-		// var(--topbar-height)
-		minmax(0, 1fr);
-
+	grid-template-rows: minmax(0, 1fr);
 	grid-template-areas:
 		'topbar topbar topbar'
 		'left main right';
-
-	transition: grid-template-columns var(--transition);
+	transition: grid-template-columns $transition-time;
+	// background-color: $background;
 
 	/* ---------- Topbar ---------- */
-
 	& > .topbar {
-		z-index: 30;
+		z-index: 15;
+		position: fixed;
 
 		& > .topbar-content {
-			transition: box-shadow 0.5s;
-			// grid-area: topbar;
+			// background-color: $background;
+			transition:
+				box-shadow 1s,
+				background-color $transition-time;
 			width: 100%;
 			position: fixed;
 			display: grid;
 			grid-template-columns: 1fr auto 1fr;
 			align-items: center;
 			height: var(--topbar-height);
-			background-color: var(--topbar-sidebar-bg);
-
+			// border: $border;
+			border-top: none;
 			& > .left-section {
 				justify-self: start;
 				display: flex;
 				align-items: center;
 				min-width: 0;
 			}
-
 			& > .center-section {
 				justify-self: center;
 				min-width: 0;
 				max-width: 100%;
 				overflow: hidden;
 			}
-
 			/* derecha */
 			& > .right-section {
 				justify-self: end;
@@ -56,73 +49,63 @@
 				min-width: 0;
 			}
 		}
-
 		&.layout-topbar-sticky > .topbar-content {
-			box-shadow: 0px 3px 8px 0px $surface-4;
-			// box-shadow: 0px 3px 8px .5px $surface-4;
-			background-color: -alpha($surface-2, 0.5);
-			// background-color: -alpha($surface-1, 0.8);
-			backdrop-filter: blur(5px);
+			border-bottom: $border;
+			background-color: $background2; // -alpha($surface-3, 1);
+			backdrop-filter: blur(1px);
 		}
 	}
-
 	/* ---------- Sidebars ---------- */
 	& > .left-sidebar,
 	& > .right-sidebar {
+		background-color: white;
 		scrollbar-width: none;
 		-ms-overflow-style: none;
-		// padding: 3px;
-		padding-top: calc(var(--topbar-height) + 0.5rem);
-
-		&::-webkit-scrollbar {
-			display: none;
-		}
-
-		background-color: var(--topbar-sidebar-bg);
 		position: sticky;
 		top: 0;
 		height: 100%;
 		overflow-y: auto;
 		z-index: 20;
 		transition:
-			width var(--transition),
-			opacity var(--transition);
+			width $transition-time,
+			opacity $transition-time;
+		&::-webkit-scrollbar {
+			display: none;
+		}
 
-		& > .sidebar-control {
+		& > div {
+			padding: 0.5rem;
+			padding-top: calc(var(--topbar-height) + 0.5rem);
+
+			background-color: $background;
+		}
+		& > div > .sidebar-control {
 			display: flex;
 			justify-content: center;
 			align-items: center;
 			gap: 0px;
 			z-index: 30;
-			// margin: 0 5px;
 			margin-left: auto;
-			width: 70px;
-			// margin-right: 10px;
-			// padding: 5px 10px;
-
+			width: fit-content;
 			& > * {
-				transition: box-shadow 0.2s ease;
+				transition: box-shadow $transition-time;
 				cursor: pointer;
 				border-radius: 999px;
-
 				& > .fdn-icon {
-					transition: font-weight 0.5s;
+					transition: font-weight $transition-time;
 					color: $surface-6;
 					font-size: 30px;
 					font-weight: 250;
 				}
-
 				&.toogle-wraper > .fdn-icon {
-					transition: rotate 0.3s;
+					transition: rotate $transition-time;
 					rotate: 0deg;
 				}
-
 				&:hover {
 					background-color: white; // border: $border ;
 					box-shadow: 0px 0px 3px $surface-6;
 				}
 			}
-
 			&.mini {
 				gap: 0;
 				// padding: 0px;
@@ -134,40 +117,35 @@
 				rotate: 0deg;
 			}
 		}
-
-		& > .sidebar-right-trigger,
-		& > .sidebar-left-trigger {
+		& > div > .sidebar-right-trigger,
+		& > div > .sidebar-left-trigger {
 			padding: 10px;
 			position: fixed;
 			right: 1rem;
-			// bottom: 1rem;
 			top: 50%;
 			transition:
-				transform 0.6s,
-				// cubic-bezier(0.68, -0.6, 0.32, 2.6),
-				opacity 0.2s,
-				width 0.2s,
-				scale 0.3s,
-				margin-right 0.2s,
-				margin-left 0.2s;
+				transform $transition-time,
+				opacity $transition-time,
+				width $transition-time,
+				scale $transition-time,
+				margin-right $transition-time,
+				margin-left $transition-time;
 			transform: translateX(150px);
 			z-index: 9999;
 			display: flex;
 			align-items: center;
 			justify-content: center;
 			width: fit-content;
-			background: $surface-4;
+			background: $surface-2;
 			// opacity: 0.6;
 			border-radius: 6px;
-			border: 1px solid $surface-6;
+			border: 1px solid $surface-5;
 			cursor: pointer;
-			box-shadow: -4px 4px 6px $surface-5;
-
+			box-shadow: -2px 3px 6px $surface-7;
 			&.close {
 				width: fit-content;
 				transform: translateX(40px);
 			}
-
 			&:hover {
 				margin-right: 10px !important;
 				width: 75px;
@@ -175,89 +153,156 @@
 				box-shadow: 6px 6px 10px $surface-6;
 				opacity: 1;
 			}
-
 			.trigger-icon {
 				color: $surface-7;
 				font-size: 35px;
 				font-weight: 250;
 			}
-		}
+			&.sidebar-left-trigger {
+				left: 0rem;
+				transform: translateX(-150px);
+				box-shadow: 2px 3px 6px $surface-7;
 
-		& > .sidebar-left-trigger {
-			left: 0rem;
-			transform: translateX(-150px);
-			box-shadow: 4px 4px 6px $surface-5;
+				&.close {
+					transform: translateX(-20px);
+				}
 
-			&.close {
-				transform: translateX(-20px);
+				&:hover {
+					margin-left: 15px !important;
+				}
 			}
+		}
+		&.left-sidebar {
+			background-color: white; //$background;
 
-			&:hover {
-				margin-left: 15px !important;
+			grid-area: left;
+			& > div > .sidebar-control {
+				& > .toogle-wraper > .fdn-icon {
+					rotate: 0deg;
+				}
+
+				&:not(.large) > .toogle-wraper > .fdn-icon {
+					rotate: 180deg;
+				}
+			}
+			& > div > #clock {
+				// border: 1px solid $surface-3;
+				// box-shadow: $shadow-inset; // 0px 0px 12px 2px $surface-6 inset;
+				// background-color: white; // $background2;
+				transition: width $transition-time;
+				position: fixed;
+				display: flex;
+				width: calc($sidebar-width + 50px);
+				height: $topbar;
+				align-items: center;
+				justify-content: center;
+				overflow: hidden;
+				position: fixed;
+				left: 0;
+				top: 0px;
+				& > .datetime {
+					transition: font-size $transition-time;
+					cursor: pointer;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					font-size: 1.4rem;
+					// position: absolute;
+					color: $surface-7;
+					font-weight: 700;
+					letter-spacing: 2px;
+					z-index: 10;
+				}
+
+				& > .logo-fdn {
+					transition: font-size $transition-time;
+					position: absolute;
+					color: -alpha($surface-4, 0.5);
+					font-size: 35px;
+					letter-spacing: 15px;
+					font-family: 'diplomata-sc-regular';
+					transform: scaleY(2);
+				}
+			}
+			&.mini #clock {
+				width: calc($sidebar-mini-width);
+				padding: 5px 0;
+				display: grid;
+				justify-items: center;
+				align-content: space-around;
+				& > .datetime {
+					position: relative;
+					display: grid;
+					font-size: 1rem;
+					justify-items: center;
+					align-content: space-between;
+					& > span:nth-child(2) {
+						display: none;
+					}
+				}
+				& > .logo-fdn {
+					position: relative;
+					font-size: 10px;
+					letter-spacing: 3px; // 15px;
+					// color: -alpha($surface-5, 0.7);
+				}
+			}
+		}
+		&.right-sidebar {
+			grid-area: right;
+			& > div {
+				display: flex;
+				flex-direction: column;
+				& > .sidebar-control {
+					& > .toogle-wraper > .fdn-icon {
+						rotate: 180deg;
+					}
+
+					&:not(.large) > .toogle-wraper > .fdn-icon {
+						rotate: 0deg;
+					}
+				}
+
+				& > .sidebar-panel {
+					flex: 1;
+					overflow-y: auto;
+				}
+
+				& > .sidebar-dev-controls {
+					flex-shrink: 0;
+					padding: 0.375rem 0.5rem;
+					border-top: 1px solid $surface-4;
+				}
 			}
 		}
 	}
-
-	& > .left-sidebar {
-		grid-area: left;
-		box-shadow: 3px 0px 8px 0px $surface-4;
-
-		// box-shadow: -2.7px 0px 5px $surface-5;
-
-		& > .sidebar-control {
-			& > .toogle-wraper > .fdn-icon {
-				rotate: 0deg;
-			}
-
-			&:not(.large) > .toogle-wraper > .fdn-icon {
-				rotate: 180deg;
-			}
-		}
-	}
-
-	& > .right-sidebar {
-		grid-area: right;
-		// box-shadow: -2.7px 0px 5px $surface-4;
-		box-shadow: -3px 0px 8px 0px $surface-4;
-
-		display: flex;
-		flex-direction: column;
-
-		& > .sidebar-control {
-			& > .toogle-wraper > .fdn-icon {
-				rotate: 180deg;
-			}
-
-			&:not(.large) > .toogle-wraper > .fdn-icon {
-				rotate: 0deg;
-			}
-		}
-
-		& > .sidebar-panel {
-			flex: 1;
-			overflow-y: auto;
-		}
-
-		& > .sidebar-dev-controls {
-			flex-shrink: 0;
-			padding: 0.375rem 0.5rem;
-			border-top: 1px solid $surface-4;
-		}
-	}
-
 	/* ---------- Main ---------- */
-
 	& > .layout-main-content {
+		background-color: $background;
+
 		grid-area: main;
 		z-index: 10;
 		padding: 1rem;
-		padding-top: calc(var(--topbar-height) + 0.5rem);
+		padding-top: var(--topbar-height);
 		overflow-y: auto;
 		scrollbar-width: none;
 		-ms-overflow-style: none;
-
 		&::-webkit-scrollbar {
 			display: none;
+		}
+		& > main {
+			height: 100%;
+			background-color: white;
+			box-shadow: $shadow-inset2;
+			& > div {
+				height: 100%;
+
+				background-color: $background2;
+				// border: 1px solid $surface-4;
+				padding: 2rem;
+				// box-shadow: -0px 0px 10px 0px $surface-6;
+				// background-color: $surface-1;
+			}
 		}
 	}
 }

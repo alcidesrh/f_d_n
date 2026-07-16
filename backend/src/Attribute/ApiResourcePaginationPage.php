@@ -17,13 +17,17 @@ final class ApiResourcePaginationPage extends ApiResourceBase
     public function __construct(protected ?array $graphQlOperations = null, protected ?Operations $operations = null, ...$data)
     {
         $default = [
+
             new QueryCollection(
-                paginationType: 'page',
                 filters: ['order.filter'],
             ),
             ...($graphQlOperations ?? []),
         ];
-
+        if (empty($data)) {
+            $data = ['paginationType' => 'page'];
+        } else {
+            $data['paginationType'] = 'page';
+        }
         if ($operations) {
             parent::__construct(...$data, graphQlOperations: $default, operations: new Operations((array)($operations)));
         } else {

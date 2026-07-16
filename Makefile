@@ -152,7 +152,7 @@ debug:
 	SERVER_NAME=:80 MERCURE_PUBLIC_URL=http://localhost/.well-known/mercure XDEBUG_MODE=debug  APP_ENV=dev $(DOCKER_COMP) up -d
 	
 dev:
-	SERVER_NAME=http://localhost MERCURE_PUBLIC_URL=http://localhost/.well-known/mercure APP_ENV=dev $(DOCKER_COMP) up -d
+	SERVER_NAME=:80 MERCURE_PUBLIC_URL=http://localhost/.well-known/mercure APP_ENV=dev $(DOCKER_COMP) up -d
 
 restart_debug:
 	$(DOCKER_COMP) down --remove-orphans && XDEBUG_MODE=debug  APP_ENV=dev $(DOCKER_COMP) up -d

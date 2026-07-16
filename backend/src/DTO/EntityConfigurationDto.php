@@ -7,10 +7,10 @@ use ApiPlatform\Doctrine\Orm\State\Options;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\QueryParameter;
-use App\Entity\Configuration\CollectionFieldConfig;
-use App\Entity\Configuration\EntityConfiguration;
-use App\Entity\Configuration\FieldConfig;
-use App\Entity\Configuration\FormFieldConfig;
+use App\Entity\CollectionFieldConfig;
+use App\Entity\EntityConfiguration;
+use App\Entity\FieldConfig;
+use App\Entity\FormFieldConfig;
 use Doctrine\Common\Collections\Collection;
 use Symfony\Component\HttpFoundation\JsonResponse;
 // use Doctrine\Common\Collections\Collection;
@@ -35,7 +35,8 @@ use Symfony\Component\Serializer\Attribute\Groups;
   ]
 )]
 #[Map(source: EntityConfiguration::class)]
-final class EntityConfigurationDto {
+final class EntityConfigurationDto
+{
 
   #[Groups(['read:dto'])]
   #[Map(transform: [self::class, 'collectionFieldConfiToArray'])]
@@ -45,7 +46,8 @@ final class EntityConfigurationDto {
   #[Map(transform: [self::class, 'formFieldsToArray'])]
   public array $formFields;
 
-  public static function formFieldsToArray(Collection  $formFields, object $source): mixed {
+  public static function formFieldsToArray(Collection  $formFields, object $source): mixed
+  {
     return $formFields->filter(fn(FormFieldConfig $formField) => $formField->isVisible())->map(function (FormFieldConfig $formField) {
       $temp = (array) $formField;
       $temp2 = ['input' => ['id' => $formField->getField()]];
@@ -61,7 +63,8 @@ final class EntityConfigurationDto {
     })->toArray();
   }
 
-  public static function collectionFieldConfiToArray(Collection $collectionFieldConfig, object $source): mixed {
+  public static function collectionFieldConfiToArray(Collection $collectionFieldConfig, object $source): mixed
+  {
     return $collectionFieldConfig->filter(fn(CollectionFieldConfig $v) => $v->isVisible())->toArray();
     // unset($temp['entityConfig']);
     return $temp;

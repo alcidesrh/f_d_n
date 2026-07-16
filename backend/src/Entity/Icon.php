@@ -9,16 +9,17 @@ use ApiPlatform\Doctrine\Orm\Filter\PartialSearchFilter;
 use ApiPlatform\Metadata\GraphQl\QueryCollection;
 use ApiPlatform\Metadata\QueryParameter;
 use App\Attribute\ApiResourceNoPagination;
+use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
 use App\Repository\IconRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: IconRepository::class)]
-#[ApiResourceNoPagination(
+#[ApiResourcePaginationPage(
     graphQlOperations: [
         new QueryCollection(
-            paginationEnabled: false,
+            // paginationEnabled: false,
             parameters: [
                 'icon' => new QueryParameter(
                     filter: new OrFilter(new PartialSearchFilter()),

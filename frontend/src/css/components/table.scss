@@ -1,28 +1,34 @@
 .sticky-header-table {
-	/* height or max-height is important */
-	// max-height: 800px;
 	width: 100%;
 	color: $text-color; // table-layout: fixed;
-	// background-color: $white;
-
+	background-color: transparent;
 	&.loading tbody {
 		opacity: 0.5;
 	}
-
-	& > .q-table__top,
-	& > .q-table__bottom {
-		// background-color: $topbar-sidebar-bg;
+	& > .q-table__top {
+		background-color: white;
+		margin-bottom: 20px;
+		border: $border;
+		border-radius: 4px;
 	}
-
 	& table {
 		& > thead > tr > th,
 		& > tbody > tr > td {
-			& > div > .collection-cell-wrap {
+			& > div.collection-cell-wrap {
 				max-height: 50px;
 				font-size: 0.875rem;
-				// overflow: scroll;
+				// display: none;
+				overflow: hidden;
 				// padding: 5px 0;
-				// overflow-y: auto;
+				overflow-y: auto;
+				& > .fdn-icon {
+					position: relative;
+				}
+				text-overflow: ellipsis;
+				white-space: nowrap;
+				overflow: hidden;
+				padding-right: 5px;
+				// display: none !important;
 			}
 
 			& > .col-small {
@@ -33,22 +39,22 @@
 				max-width: 180px;
 
 				& > div.collection-cell-wrap {
-					text-overflow: ellipsis;
-					white-space: nowrap;
-					overflow: hidden;
-					padding-right: 5px;
+					// text-overflow: ellipsis;
+					// white-space: nowrap;
+					// overflow: hidden;
+					// padding-right: 5px;
+					// display: none !important;
 				}
 			}
 		}
 
 		& > thead {
 			& > tr > th {
-				// background-color: $topbar-sidebar-bg;
 				position: sticky;
 				z-index: 10;
 				top: 35px;
-				background-color: white;
-				padding: 3px 15px;
+				// background-color: white;
+				// padding: 3px 15px;
 
 				&.sortable {
 					& > div {
@@ -58,11 +64,12 @@
 
 					& > i {
 						font-size: 16px;
-						left: 5px;
+						left: 0px;
 						color: $surface-4;
 						position: absolute;
 						font-weight: 500;
 						opacity: 1 !important;
+						top: calc(50% - 8px);
 
 						&:hover {
 							color: $surface-7;
@@ -79,7 +86,7 @@
 					position: sticky;
 					right: 0;
 					z-index: 20;
-					background-color: -alpha($surface-1, 0.6);
+					// background-color: -alpha($surface-1, 0.6);
 					border-bottom: 1px solid $surface-3;
 					border-left: 1px solid $surface-3;
 					width: 50px;
@@ -91,7 +98,7 @@
 						transition: padding 0.2s;
 
 						&:hover {
-							background-color: white;
+							// background-color: white;
 							border: 1px solid $surface-4;
 							padding: 4px;
 							cursor: pointer;
@@ -110,14 +117,14 @@
 			scroll-margin-top: 48px;
 
 			& > tr > td {
-				padding: 3px 15px;
+				padding: 0px 15px;
 				// font-size: 1rem;
 
 				&:last-child {
 					position: sticky;
 					right: 0;
 					z-index: 1;
-					background-color: -alpha($surface-1, 0.6);
+					// background-color: -alpha($surface-1, 0.6);
 					border-bottom: 1px solid $surface-3;
 					border-left: 1px solid $surface-3;
 					width: 75px;
@@ -140,28 +147,10 @@
 	}
 
 	& table > thead > tr:last-child > th {
-		// background-color: $surface-1 ;
-
-		&:last-child {
-			// background-color: -alpha($surface-1, 0.6);
-		}
-
 		& .form-outer {
 			margin-bottom: 0px;
 		}
 	}
-}
-
-table {
-	border-collapse: collapse;
-
-	// & tr:nth-child(even) {
-	// 	background: #f5f5f5;
-	// }
-
-	// & tr:nth-child(odd) {
-	// 	background: #ffffff;
-	// }
 }
 
 td,

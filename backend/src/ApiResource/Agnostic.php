@@ -6,48 +6,55 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GraphQl\Query;
 use App\Resolver\CollectionResolver;
 use ApiPlatform\Metadata\ApiProperty;
+use ApiPlatform\Metadata\GraphQl\Mutation;
+use App\DTO\DeleteMultipleDTO;
 use App\DTO\MetadataDTO;
+use App\Resolver\DeleteMultipleMutationResolver;
 
 #[ApiResource(
-  graphQlOperations: [
-    // new Mutation(
-    //   name: 'delete',
-    //   resolver: DeleteMultipleMutationResolver::class,
-    //   args: ['ids' => ['type' => '[ID]'], 'resource' => ['type' => 'String']],
-    //   read: false,
-    //   write: false,
-    //   output: DeleteMultipleDTO::class,
-    // ),
-    new Query(),
-    new Query(
-      name: 'collection',
-      resolver: CollectionResolver::class,
-      read: false,
-      args: ['resource' => ['type' => 'String']],
-      output: Agnostic::class,
-    ),
-    // new Query(
-    //   name: 'crud',
-    //   resolver: ItemResolver::class,
-    //   read: false,
-    //   args: ['entity' => ['type' => 'String'], 'form' => ['type' => 'Boolean!'], 'id' => ['type' => 'ID']],
-    //   output: MetadataDTO::class,
-    // ),
+    graphQlOperations: [
+        new Mutation(
+            name: 'delete',
+            resolver: DeleteMultipleMutationResolver::class,
+            args: ['ids' => ['type' => '[ID]'], 'resource' => ['type' => 'String']],
+            read: false,
+            write: false,
+            output: DeleteMultipleDTO::class,
+        ),
+        new Query(),
+        new Query(
+            name: 'collection',
+            resolver: CollectionResolver::class,
+            read: false,
+            args: ['resource' => ['type' => 'String']],
+            output: Agnostic::class,
+        ),
+        // new Query(
+        //   name: 'crud',
+        //   resolver: ItemResolver::class,
+        //   read: false,
+        //   args: ['entity' => ['type' => 'String'], 'form' => ['type' => 'Boolean!'], 'id' => ['type' => 'ID']],
+        //   output: MetadataDTO::class,
+        // ),
 
-  ]
+    ]
 )]
-class Agnostic {
+class Agnostic
+{
 
-  #[ApiProperty(identifier: true, writable: false)]
-  public function getId(): string {
-    return (new \DateTime())->format('Ymdms');
-  }
+    #[ApiProperty(identifier: true, writable: false)]
+    public function getId(): string
+    {
+        return (new \DateTime())->format('Ymdms');
+    }
 
-  public function __construct(public array $data = []) {
-    $id = new \DateTime();
-  }
+    public function __construct(public array $data = [])
+    {
+        $id = new \DateTime();
+    }
 
-  public function getData(): array {
-    return $this->data;
-  }
+    public function getData(): array
+    {
+        return $this->data;
+    }
 }

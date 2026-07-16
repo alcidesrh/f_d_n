@@ -86,7 +86,7 @@ const mxh = computed(() => $q.screen.height - 270)
 const store = ref() as Ref<StateStore>
 const paginationQuasar = ref({}) as Ref<PaginationQuasar>
 watchEffect(() => {
-	if (store.value && store.value.pagination) {
+	if (store.value && store.value.hasPagination) {
 		paginationQuasar.value.page = store.value.pagination.currentPage
 		paginationQuasar.value.rowsPerPage = store.value.pagination.itemsPerPage
 		paginationQuasar.value.rowsNumber = store.value.pagination.totalCount
@@ -109,7 +109,7 @@ function removeMultiple() {
 }
 
 function onRequest({ pagination, filter }: Record<'pagination', PaginationQuasar>) {
-	if (store.value.pagination) {
+	if (store.value.hasPagination) {
 		store.value.pagination.currentPage = pagination.page
 		store.value.pagination.itemsPerPage = pagination.rowsPerPage
 		store.value.pagination.totalCount = pagination.rowsNumber
@@ -130,7 +130,7 @@ onBeforeMount(async () => {
 	// const { items } = storeToRefs(store.value);
 	paginationQuasar.value.sortBy = store.value.orderField
 	paginationQuasar.value.descending = store.value.orderType == 'DESC'
-	if (store.value.pagination) {
+	if (store.value.hasPagination) {
 		paginationQuasar.value.page = store.value.pagination.currentPage
 		paginationQuasar.value.rowsPerPage = store.value.pagination.itemsPerPage
 		paginationQuasar.value.rowsNumber = store.value.pagination.totalCount

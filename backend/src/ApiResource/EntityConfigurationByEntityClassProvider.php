@@ -7,9 +7,9 @@ namespace App\ApiResource;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProviderInterface;
 use App\Command\SyncEntityConfigurationCommand;
-use App\Entity\Configuration\CollectionFieldConfig;
-use App\Entity\Configuration\EntityConfiguration;
-use App\Entity\Configuration\FormFieldConfig;
+use App\Entity\CollectionFieldConfig;
+use App\Entity\EntityConfiguration;
+use App\Entity\FormFieldConfig;
 use App\Repository\EntityConfigurationRepository;
 use App\Services\Collection;
 use App\Services\EntityConfigSynchronizer;
@@ -36,6 +36,15 @@ final class EntityConfigurationByEntityClassProvider implements ProviderInterfac
         if (!is_string($entityClass) || $entityClass === '') {
             return null;
         }
-        return $this->configSynchronizer->syncEntity($entityClass, false);
+
+
+        $config = $this->entityManager->getRepository(EntityConfiguration::class)
+            ->findOneBy(['entityClass' => $entityClass]);
+
+        if (!$config) {
+            return $this->configSynchronizer->syncEntity($entityClass, false);
+        }
+
+        return $config;
     }
 }

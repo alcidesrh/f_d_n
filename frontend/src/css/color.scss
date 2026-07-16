@@ -1,5 +1,5 @@
-@use "quasar/src/css/variables" as q;
-@use "sass:map";
+@use 'quasar/src/css/variables' as q;
+@use 'sass:map';
 $deep-orange-1: oklch(97.1% 0.013 17.38);
 $deep-orange-2: oklch(93.6% 0.032 17.717);
 $deep-orange-3: oklch(88.5% 0.062 18.334);
@@ -427,7 +427,7 @@ $surface-11: oklch(13% 0.028 261.692);
 // $surface-11: oklch(14.7% 0.004 49.25);
 // //********************SURFACE STONE*****************
 
-//********************SURFACE NEUTRAL*****************
+// ********************SURFACE NEUTRAL*****************
 // $surface-1: oklch(98.5% 0 0);
 // $surface-2: oklch(97% 0 0);
 // $surface-3: oklch(92.2% 0 0);
@@ -440,7 +440,7 @@ $surface-11: oklch(13% 0.028 261.692);
 // $surface-9: oklch(26.9% 0 0);
 // $surface-10: oklch(20.5% 0 0);
 // $surface-11: oklch(14.5% 0 0);
-//********************SURFACE NEUTRAL*****************
+// ********************SURFACE NEUTRAL*****************
 
 //********************SURFACE ZINC*****************
 // $surface-1: oklch(98.5% 0 0);
@@ -454,7 +454,7 @@ $surface-11: oklch(13% 0.028 261.692);
 // $surface-8: oklch(37% 0.013 285.805);
 // $surface-9: oklch(27.4% 0.006 286.033);
 // $surface-10: oklch(21% 0.006 285.885);
-// // $surface-11: oklch(14.1% 0.005 285.823);
+// $surface-11: oklch(14.1% 0.005 285.823);
 //********************SURFACE ZINC*****************
 //\$[a-z}-]+: .+; --eleminar default--
 // ((\$[a-z].+)-7:( .+;)) -> $1\n$2:$3 --asignar default--

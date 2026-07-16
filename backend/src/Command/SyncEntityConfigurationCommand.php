@@ -2,9 +2,9 @@
 
 namespace App\Command;
 
-use App\Entity\Configuration\CollectionFieldConfig;
-use App\Entity\Configuration\EntityConfiguration;
-use App\Entity\Configuration\FormFieldConfig;
+use App\Entity\CollectionFieldConfig;
+use App\Entity\EntityConfiguration;
+use App\Entity\FormFieldConfig;
 use App\Services\EntityConfigSynchronizer;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
@@ -30,7 +30,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
   name: 'app:config:sync-metadata',
   description: 'Sincroniza la configuración dinámica de entidades: crea configuración inicial y añade campos nuevos detectados en Doctrine.'
 )]
-class SyncEntityConfigurationCommand extends Command {
+class SyncEntityConfigurationCommand extends Command
+{
   public function __construct(
     private readonly EntityConfigSynchronizer $synchronizer,
     private readonly EntityManagerInterface $entityManager,
@@ -39,13 +40,15 @@ class SyncEntityConfigurationCommand extends Command {
     parent::__construct();
   }
 
-  protected function configure(): void {
+  protected function configure(): void
+  {
     $this
       ->addArgument('entity', InputArgument::OPTIONAL, 'Clase de entidad específica a sincronizar (ej: App\Entity\Cliente)')
       ->addOption('remove-obsolete', null, InputOption::VALUE_NONE, 'Eliminar campos que ya no existen en la entidad');
   }
 
-  protected function execute(InputInterface $input, OutputInterface $output): int {
+  protected function execute(InputInterface $input, OutputInterface $output): int
+  {
     $io = new SymfonyStyle($input, $output);
     $entityClass = $input->getArgument('entity');
     $removeObsolete = $input->getOption('remove-obsolete');
@@ -68,7 +71,8 @@ class SyncEntityConfigurationCommand extends Command {
     return Command::SUCCESS;
   }
 
-  private function getAllEntityClasses(): array {
+  private function getAllEntityClasses(): array
+  {
     $classes = [];
     $metadataFactory = $this->entityManager->getMetadataFactory();
 
@@ -83,7 +87,8 @@ class SyncEntityConfigurationCommand extends Command {
     return $classes;
   }
 
-  private function getAllFieldNames(ClassMetadata $metadata): array {
+  private function getAllFieldNames(ClassMetadata $metadata): array
+  {
     $fields = array_merge(
       $metadata->getFieldNames(),
       $metadata->getAssociationNames()
@@ -95,7 +100,8 @@ class SyncEntityConfigurationCommand extends Command {
     return $fields;
   }
 
-  private function synccollectionFieldConfig(EntityConfiguration $config, array $currentFields, bool $removeObsolete, SymfonyStyle $io): void {
+  private function synccollectionFieldConfig(EntityConfiguration $config, array $currentFields, bool $removeObsolete, SymfonyStyle $io): void
+  {
     $existing = [];
     foreach ($config->getcollectionFieldConfig() as $field) {
       $existing[$field->getFieldName()] = $field;
@@ -130,7 +136,8 @@ class SyncEntityConfigurationCommand extends Command {
     }
   }
 
-  private function syncFormFields(EntityConfiguration $config, array $currentFields, bool $removeObsolete, SymfonyStyle $io): void {
+  private function syncFormFields(EntityConfiguration $config, array $currentFields, bool $removeObsolete, SymfonyStyle $io): void
+  {
     $existing = [];
     foreach ($config->getFormFields() as $field) {
       $existing[$field->getFieldName()] = $field;

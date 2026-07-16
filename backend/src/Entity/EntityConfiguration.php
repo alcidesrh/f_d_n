@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Entity\Configuration;
+namespace App\Entity;
 
 use ApiPlatform\Doctrine\Orm\Filter\ExactFilter;
 use ApiPlatform\Metadata\ApiResource;
@@ -24,6 +24,35 @@ use Symfony\Component\Serializer\Attribute\Groups;
 #[ORM\HasLifecycleCallbacks]
 #[ApiResource(
     order: ['collectionFieldConfig.position' => 'ASC', 'formFields.position' => 'ASC'],
+    operations: [
+        new Get(
+            requirements: ['id' => '\d+'],
+        ),
+        new Get(
+            normalizationContext: ['groups' => ['read:dto']],
+            name: 'refresh',
+            uriTemplate: '/entity_configurations/refresh',
+            provider: EntityConfigurationByEntityClassProvider::class,
+            // read: false,
+            // parameters: [
+            //     'entityClass' => new QueryParameter(
+            //         filter: new ExactFilter(),
+            //         property: 'entityClass'
+            //     ),
+            // ],
+        ),
+        new GetCollection(
+            normalizationContext: ['groups' => ['read:dto']],
+            order: ['collectionFieldConfig.position' => 'ASC', 'formFields.position' => 'ASC'],
+            paginationEnabled: false,
+            parameters: [
+                'entityClass' => new QueryParameter(
+                    filter: new ExactFilter(),
+                    property: 'entityClass'
+                ),
+            ],
+        ),
+    ],
     graphQlOperations: [
         new Query(name: 'item_query'),
         new QueryCollection(
@@ -68,33 +97,9 @@ use Symfony\Component\Serializer\Attribute\Groups;
             ]
         )
     ],
-    operations: [
-        new Get(
-            normalizationContext: ['groups' => ['read:dto']],
-            name: 'refresh',
-            uriTemplate: '/entity_configurations/refresh',
-            provider: EntityConfigurationByEntityClassProvider::class,
-            // read: false,
-            parameters: [
-                'entityClass' => new QueryParameter(
-                    filter: new ExactFilter(),
-                    property: 'entityClass'
-                ),
-            ],
-        ),
-        new GetCollection(
-            normalizationContext: ['groups' => ['read:dto']],
-            order: ['collectionFieldConfig.position' => 'ASC', 'formFields.position' => 'ASC'],
-            paginationEnabled: false,
-            parameters: [
-                'entityClass' => new QueryParameter(
-                    filter: new ExactFilter(),
-                    property: 'entityClass'
-                ),
-            ],
-        ),
-    ]
+
 )]
+
 class EntityConfiguration
 {
     #[ORM\Id]
@@ -109,10 +114,12 @@ class EntityConfiguration
     private ?\DateTimeImmutable $updatedAt = null;
 
     #[ORM\OneToMany(mappedBy: 'entityConfig', targetEntity: CollectionFieldConfig::class, cascade: ['persist', 'remove'], orphanRemoval: true, fetch: 'LAZY')]
+    #[ORM\OrderBy(['position' => 'ASC'])]
     #[Groups(['read:dto'])]
     private Collection $collectionFieldConfig;
 
     #[ORM\OneToMany(mappedBy: 'entityConfig', targetEntity: FormFieldConfig::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[ORM\OrderBy(['position' => 'ASC'])]
     #[Groups(['read:dto'])]
     private Collection $formFields;
 

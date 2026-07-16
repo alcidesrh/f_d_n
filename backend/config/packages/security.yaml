@@ -58,24 +58,24 @@ security:
 
     access_control:
         - { path: "^/", roles: PUBLIC_ACCESS }
-        - { path: "^/api/graphiql", roles: PUBLIC_ACCESS }
-        - { path: "^/_wdt", roles: PUBLIC_ACCESS }
-        - { path: "^/docs/graphql", roles: PUBLIC_ACCESS }
-        - { path: "^/graphql/graphiql", roles: PUBLIC_ACCESS }
-        - { path: "^/_profiler", roles: PUBLIC_ACCESS }
-        - { path: "^/bundles", roles: PUBLIC_ACCESS }
-        - { path: "^/docs", roles: PUBLIC_ACCESS }
-        - { path: "^/login*", roles: PUBLIC_ACCESS }
-        # - { path: "^/login$", roles: PUBLIC_ACCESS }
-        - { path: "^/api/change-password", roles: ROLE_ADMIN }
-        - { path: "^/api/users-brief", roles: ROLE_ADMIN }
-        - { path: "^/api/entity-record-counts", roles: ROLE_ADMIN }
-        - { path: "^/api/me/permissions", roles: ROLE_USER }
-        - { path: "^/api/contexts", roles: PUBLIC_ACCESS }
-        - { path: "^/api$", roles: PUBLIC_ACCESS }
-        - { path: "^/api/", roles: ROLE_USER }
-        - { request_matcher: App\Security\GraphiQLRequestMatcher, roles: PUBLIC_ACCESS }
-        - { path: "^/", roles: ROLE_USER }
+        # - { path: "^/api/graphiql", roles: PUBLIC_ACCESS }
+        # - { path: "^/_wdt", roles: PUBLIC_ACCESS }
+        # - { path: "^/docs/graphql", roles: PUBLIC_ACCESS }
+        # - { path: "^/graphql/graphiql", roles: PUBLIC_ACCESS }
+        # - { path: "^/_profiler", roles: PUBLIC_ACCESS }
+        # - { path: "^/bundles", roles: PUBLIC_ACCESS }
+        # - { path: "^/docs", roles: PUBLIC_ACCESS }
+        # - { path: "^/login*", roles: PUBLIC_ACCESS }
+        # # - { path: "^/login$", roles: PUBLIC_ACCESS }
+        # - { path: "^/api/change-password", roles: ROLE_ADMIN }
+        # - { path: "^/api/users-brief", roles: ROLE_ADMIN }
+        # - { path: "^/api/entity-record-counts", roles: ROLE_ADMIN }
+        # - { path: "^/api/me/permissions", roles: ROLE_USER }
+        # - { path: "^/api/contexts", roles: PUBLIC_ACCESS }
+        # - { path: "^/api$", roles: PUBLIC_ACCESS }
+        # - { path: "^/api/", roles: ROLE_USER }
+        # - { request_matcher: App\Security\GraphiQLRequestMatcher, roles: PUBLIC_ACCESS }
+        # - { path: "^/", roles: ROLE_USER }
 
 when@test:
     security:

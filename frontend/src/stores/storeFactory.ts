@@ -29,15 +29,13 @@ export default async (name: string) => {
 		formSchema: [],
 		formData: {},
 		formGroups: [],
-		pagination: undefined as
-			| {
-					itemsPerPage: number
-					lastPage: number | null
-					totalCount: number | null
-					currentPage: number
-					hasNextPage: boolean | null
-			  }
-			| undefined,
+		pagination: {} as {
+			itemsPerPage: number
+			lastPage: number | null
+			totalCount: number | null
+			currentPage: number
+			hasNextPage: boolean | null
+		},
 	}
 	// schema.types[`${name}PageConnection`]
 	if (schema.types[`${name}PageConnection`]) {
@@ -55,16 +53,18 @@ export default async (name: string) => {
 		},
 		state: () => state,
 		getters: {
+			hasPagination: (store) => store.pagination?.currentPage,
 			entity: (store) => schema.entities[store.name], //useCloned(schema.entities[name]).cloned.value,
-			computedColumns: (store) =>
-				store.columns.filter((v) => [
-					{
-						name: 'index',
-						label: '#',
-						field: 'index',
-					},
-					...store.visibleColumns.find((v2) => v2 == v.field),
-				]),
+			computedColumns: (store) => {
+				return store.columns.filter((v) =>
+					// {
+					// 	name: 'index',
+					// 	label: '#',
+					// 	field: 'index',
+					// },
+					store.visibleColumns.find((v2) => v2 == v.field),
+				)
+			},
 			computedFormFields: (s) => s.config.formFields.filter((v) => v.visible),
 			nameDecapitalize: (store) => str.decapitalize(store.name),
 			collectionEndpoint(store) {
@@ -182,9 +182,17 @@ export default async (name: string) => {
 						if (refresh) {
 							this.setColumns(true)
 							this.getFormSchema(true)
-
-							console.log(this.formSchema)
-							console.log(this.columns)
+							if (schema.types[`${this.name}PageConnection`]) {
+								state.pagination = {
+									itemsPerPage: 25,
+									lastPage: null,
+									totalCount: null,
+									currentPage: 1,
+									hasNextPage: null,
+								}
+							} else {
+								state.pagination = {}
+							}
 						}
 					}
 				}
@@ -205,6 +213,9 @@ export default async (name: string) => {
 			async setColumns(refresh = false) {
 				if (!this.columns.length || refresh) {
 					this.columns = []
+					if (!this.config.collectionFieldConfig) {
+						await this.init(true)
+					}
 					for (let v of this.config.collectionFieldConfig.filter((v) => v.visible)) {
 						v = useCloned(v).cloned.value
 						v.align = 'left'
@@ -253,7 +264,7 @@ export default async (name: string) => {
 					},
 					null,
 					{
-						operationName: 'getUsers',
+						operationName: this.collectionEndpoint,
 					},
 				)
 				const apollo = useApolloStore()
@@ -262,7 +273,7 @@ export default async (name: string) => {
 					variables: qb.variables,
 					fetchPolicy: !force ? 'cache-first' : 'network-only',
 				})
-				if (this.pagination) {
+				if (this.hasPagination) {
 					this.items = data[this.collectionEndpoint].collection
 					Object.assign(this.pagination, data[this.collectionEndpoint].paginationInfo)
 				} else {

@@ -1,21 +1,15 @@
 <?php
 
-namespace App\Entity\Configuration;
+namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GraphQl\QueryCollection;
 use App\Attribute\ApiResourceNoPagination;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity]
-#[ApiResourceNoPagination(
-    graphQlOperations: [
-        new QueryCollection(
-            paginationEnabled: false,
-            order: ['position' => 'ASC'],
-        ),
-    ]
-)]
+#[ApiResourceNoPagination]
 class FormFieldConfig extends FieldConfig
 {
 

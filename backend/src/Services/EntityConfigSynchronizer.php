@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Entity\Configuration\CollectionFieldConfig;
-use App\Entity\Configuration\EntityConfiguration;
-use App\Entity\Configuration\FormFieldConfig;
+use App\Entity\CollectionFieldConfig;
+use App\Entity\EntityConfiguration;
+use App\Entity\FormFieldConfig;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Psr\Log\LoggerInterface;

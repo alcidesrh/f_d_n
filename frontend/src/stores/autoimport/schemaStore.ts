@@ -37,6 +37,7 @@ interface Entity {
 	fields: Array<Field> | null
 	possibleTypes: OfType[] | null
 }
+
 export const useSchemaStore = defineStore('schemaStore', {
 	persist: {
 		pick: ['entities', 'types'],
@@ -370,37 +371,37 @@ export const useSchemaStore = defineStore('schemaStore', {
 			return field
 		},
 		setTypes(schema: Record<'types', Array<Entity>>) {
-			if (Object.keys(this.types).length == 0) {
-				const entities = {}
-				let temp
-				const exclude = [
-					...schema.types.find((v) => v.kind == 'INTERFACE').possibleTypes.map((v) => v.name),
-					...schema.types.find((v) => v.name == 'Query').fields?.map((v) => v.name),
-					...schema.types.find((v) => v.name == 'Mutation').fields?.map((v) => v.name),
-					'Query',
-					'ID',
-					'Node',
-					'Iterable',
-					'String',
-					'Boolean',
-					'Int',
-					'__Schema',
-					'__Type',
-					'__TypeKind',
-					'__InputValue',
-					'__Field',
-					'__EnumValue',
-					'__InputValue',
-					'__Directive',
-					'__DirectiveLocation',
-				]
+			// if (Object.keys(this.types).length == 0) {
+			const entities = {}
+			let temp
+			const exclude = [
+				...schema.types.find((v) => v.kind == 'INTERFACE').possibleTypes.map((v) => v.name),
+				...schema.types.find((v) => v.name == 'Query').fields?.map((v) => v.name),
+				...schema.types.find((v) => v.name == 'Mutation').fields?.map((v) => v.name),
+				'Query',
+				'ID',
+				'Node',
+				'Iterable',
+				'String',
+				'Boolean',
+				'Int',
+				'__Schema',
+				'__Type',
+				'__TypeKind',
+				'__InputValue',
+				'__Field',
+				'__EnumValue',
+				'__InputValue',
+				'__Directive',
+				'__DirectiveLocation',
+			]
 
-				schema.types.forEach((v) => {
-					if (!['Scalar'].includes(v.kind) && !exclude.includes(v.name)) {
-						this.types[v.name] = v.fields ? v.fields.map((v) => v.name) : v
-					}
-				})
-			}
+			schema.types.forEach((v) => {
+				if (!['Scalar'].includes(v.kind) && !exclude.includes(v.name)) {
+					this.types[v.name] = v.fields ? v.fields.map((v) => v.name) : v
+				}
+			})
+			// }
 		},
 	},
 })
