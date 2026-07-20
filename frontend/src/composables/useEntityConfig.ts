@@ -6,7 +6,7 @@ export interface CollectionFieldConfig {
 	field: string
 	position: number
 	visible: boolean
-	sortable?: boolean
+	isSortable?: boolean
 	filterable?: boolean
 	label: string
 	attrs: null

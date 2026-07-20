@@ -20,7 +20,7 @@ class CollectionFieldConfig  extends FieldConfig
 
     #[ORM\Column(nullable: true)]
     #[Groups(['read:dto'])]
-    private bool $sortable = false;
+    private bool $isSortable = false;
 
     #[ORM\Column(nullable: true)]
     #[Groups(['read:dto'])]
@@ -31,23 +31,23 @@ class CollectionFieldConfig  extends FieldConfig
         $this->setData($data);
     }
 
-    public function setData(array $data)
+    // public function setData(array $data)
+    // {
+    //     $this->setField($data[0])->setVisible(true)
+    //         ->setIsSortable(false)->setLabel($data[0])->setAttrs(null);
+    //     if (\in_array($data[0], ['legacyId', 'apiTokens'])) {
+    //         $this->visible = false;
+    //     }
+    // }
+
+    public function getIsSortable(): bool
     {
-        $this->setField($data[0])->setVisible(true)
-            ->setSortable(false)->setLabel($data[0])->setAttrs(null);
-        if (\in_array($data[0], ['legacyId', 'apiTokens'])) {
-            $this->visible = false;
-        }
+        return $this->isSortable;
     }
 
-    public function isSortable(): bool
+    public function setIsSortable(bool $isSortable): self
     {
-        return $this->sortable;
-    }
-
-    public function setSortable(bool $sortable): self
-    {
-        $this->sortable = $sortable;
+        $this->isSortable = $isSortable;
         return $this;
     }
 

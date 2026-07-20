@@ -1,45 +1,44 @@
 <template>
 	<div v-if="store" class="flex justify-between w-full ml-auto">
-		<span data-tootik="Tootik Text" data-tootik-conf="shadow right">{{ store.name }}</span>
+		<span class="text-h5 font-medium">{{ store.name }}</span>
 		<div class="flex table-options text-surface-2">
 			<div @click="$router.push({ path: `/form/${store.nameDecapitalize}` })" :data-tootik="`Agregar ${store.name}`" data-tootik-conf="">
 				<icon name="add" />
 			</div>
 			<div :class="{ active: open }" class="relative" data-tootik="Ocultar columnas">
-				<icon name="add_column_right" class="">
-					<q-badge v-if="!visibleAllColumns" color="primary" floating class="font-medium" rounded>{{ store.columns.length - store.visibleColumns.length }}</q-badge>
-					<q-menu v-model="open" transition-show="flip-left" transition-hide="flip-right">
-						<q-card class="my-card" style="width: 100%; max-width: 500px; min-width: 230px">
-							<q-card-section>
-								<div class="row items-center gap-5" :class="{ 'opacity-50': visibleAllColumns }">
-									<div class="col font-semibold">Mostrar todas</div>
-									<div class="col-auto">
-										<q-toggle size="xs" v-model="visibleAllColumns" :disable="visibleAllColumns" />
-									</div>
+				<icon name="add_column_right" class=""> </icon>
+				<q-badge v-if="!visibleAllColumns" color="primary" floating class="font-medium" rounded>{{ store.columns.length - store.visibleColumns.length }}</q-badge>
+				<q-menu v-model="open" transition-show="flip-left" transition-hide="flip-right">
+					<q-card class="my-card" style="width: 100%; max-width: 500px; min-width: 230px">
+						<q-card-section>
+							<div class="row items-center gap-5" :class="{ 'opacity-50': visibleAllColumns }">
+								<div class="col font-semibold">Mostrar todas</div>
+								<div class="col-auto">
+									<q-toggle size="xs" v-model="visibleAllColumns" :disable="visibleAllColumns" />
 								</div>
-								<q-separator inset my-2 />
-								<template v-for="(col, i) in store.config.collectionFieldConfig.filter((v) => v.visible)" :key="i">
-									<div class="u-px-sm">
-										<div class="row items-center gap-5 mb-3">
-											<div class="col u-text-0 font-medium">
-												{{ col.label }}
-											</div>
-											<div class="col-auto">
-												<q-toggle size="xs" v-model="store.visibleColumns" :val="col.field" :disable="store.visibleColumns.length == 1 && store.visibleColumns[0] == col.field" />
-											</div>
+							</div>
+							<q-separator inset my-2 />
+							<template v-for="(col, i) in store.config.collectionFieldConfig.filter((v) => v.visible)" :key="i">
+								<div class="u-px-sm">
+									<div class="row items-center gap-5 mb-3">
+										<div class="col u-text-0 font-medium">
+											{{ col.label }}
+										</div>
+										<div class="col-auto">
+											<q-toggle size="xs" v-model="store.visibleColumns" :val="col.field" :disable="store.visibleColumns.length == 1 && store.visibleColumns[0] == col.field" />
 										</div>
 									</div>
-								</template>
-							</q-card-section>
-						</q-card>
-					</q-menu>
-				</icon>
+								</div>
+							</template>
+						</q-card-section>
+					</q-card>
+				</q-menu>
 			</div>
-			<div :class="{ active: !toggleAction }" data-tootik="Seleccionar filas">
-				<icon @click="setToggleAction" name="checklist_rtl" />
+			<div @click="setToggleAction" :class="{ active: !toggleAction }" data-tootik="Seleccionar filas">
+				<icon name="checklist_rtl" />
 			</div>
-			<div :class="{ active: inFullscreen }" data-tootik="Pantalla completa">
-				<icon :name="inFullscreen ? 'recenter' : 'fullscreen'" @click="$emit('toggleFullscreen')" />
+			<div @click="$emit('toggleFullscreen')" :class="{ active: inFullscreen }" data-tootik="Pantalla completa">
+				<icon :name="inFullscreen ? 'recenter' : 'fullscreen'" />
 			</div>
 
 			<div data-tootik="Valores por defecto">
@@ -142,42 +141,76 @@ onBeforeMount(async () => {
 .table-options {
 	display: flex;
 	align-items: center;
+	gap: 7px;
 	& > div {
-		// box-shadow: 1px 3px 1px $surface-5;
-		border-left: 1px solid $surface-4;
-		border-radius: 4px;
-		margin: 3px;
-		margin-top: 0px;
-		cursor: pointer;
-		// width: 40px;
-		height: 100%;
-		text-align: center;
-		display: flex;
-		align-items: center;
-		justify-content: center;
+		padding: 6px 12px;
+		font-size: 16px;
+		font-weight: 600;
+		color: #222;
+		background: #f5f5f5;
+		background-color: #fff;
+
 		// border: 1px solid $surface-4;
-		// background-color: white;
-		transition: box-shadow 0.2s;
-		padding: 3px 10px;
-		&:hover {
-			//background-color: $surface-2;
-			border: 1px solid $surface-5;
-			box-shadow: 0px 0px 3px $surface-1;
-		}
-		& > .fdn-icon {
-			font-size: 1.2rem;
-			font-weight: 500;
-			color: $surface-6;
-		}
+		border-radius: 4px;
+		cursor: pointer;
+		box-shadow: 0 1px 2px 0.5px $surface-5;
+		// 0 2px 4pxs 0px $surface-4,
+		// 0 2px 1px 0px $surface-4;
+		transition:
+			box-shadow 1.5s,
+			transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 		&.active {
-			background-color: $surface-6;
-			font-weight: 600;
-			border-right: 1px solid $surface-4;
-			border-left: 1px solid $surface-5;
-			& > .fdn-icon {
-				color: $surface-1;
-			}
+			background-color: $surface-2;
+			opacity: 0.6;
+			box-shadow:
+				// inset 0 2px 4px 0 $surface-4,
+				inset 0 1.5px 3px 0.5px $surface-5;
+			transform: translateY(2px);
 		}
 	}
+	// & > div {
+
+	// 	box-shadow: 1.5px 1.5px 2.5px 0px $surface-5;
+	// 	border: 1px solid $surface-4;
+	// 	border-right: none;
+	// 	&:last-child {
+	// 		border-right: 1px solid $surface-4;
+	// 	}
+	// 	// border-radius: 4px;
+	// 	// margin: 5px;
+	// 	margin-top: 0px;
+	// 	cursor: pointer;
+	// 	text-align: center;
+	// 	display: flex;
+	// 	align-items: center;
+	// 	justify-content: center;
+	// 	background-color: $surface-2;
+	// 	transition:
+	// 		background-color $transition-time,
+	// 		font-weight $transition-time;
+	// 	padding: 6px 12px;
+	// 	&:hover {
+	// 		background-color: $surface-3;
+	// 		& > .fdn-icon {
+	// 			font-weight: 700;
+	// 		}
+	// 	}
+	// 	& > .fdn-icon {
+	// 		// font-size: 0.8rem;
+	// 		// font-weight: 700;
+	// 		color: $surface-6;
+	// 	}
+	// 	&.active {
+	// 		// background-color: $surface-6;
+	// 		box-shadow: 1px 1px 3.5px 0px $surface-6 inset;
+
+	// 		// font-weight: 600;
+	// 		// border-right: 1px solid $surface-4;
+	// 		// border-left: 1px solid $surface-5;
+	// 		& > .fdn-icon {
+	// 			// color: $surface-2;
+	// 		}
+	// 	}
+	// }
 }
 </style>

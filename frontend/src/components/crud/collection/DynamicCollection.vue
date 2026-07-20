@@ -44,6 +44,7 @@
 						@order-columns="store.orderColumns"
 					/>
 				</template>
+
 				<template v-slot:body="props">
 					<CollectionBody :data="props" :selection-mode="selectionMode" :class="{ 'opacity-50': loading }">
 						<template #actions_row>

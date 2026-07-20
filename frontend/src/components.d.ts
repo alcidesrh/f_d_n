@@ -19,6 +19,7 @@ declare module 'vue' {
     CollectionCell: typeof import('./components/crud/collection/CollectionCell.vue')['default']
     CollectionFieldEditor: typeof import('./components/admin/CollectionFieldEditor.vue')['default']
     CollectionHeader: typeof import('./components/crud/collection/CollectionHeader.vue')['default']
+    CollectionHeaderCell: typeof import('./components/crud/collection/CollectionHeaderCell.vue')['default']
     CollectionTop: typeof import('./components/crud/collection/CollectionTop.vue')['default']
     CommonBreadcrumb: typeof import('./components/common/CommonBreadcrumb.vue')['default']
     CrudButton: typeof import('./components/crud/form/CrudButton.vue')['default']

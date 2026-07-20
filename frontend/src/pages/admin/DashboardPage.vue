@@ -31,7 +31,6 @@
 			<article class="item active">
 				<button class="header">
 					<span>Gestión de Entidades</span>
-
 					<svg class="icon" viewBox="0 0 24 24">
 						<path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none" />
 					</svg>

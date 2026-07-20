@@ -279,10 +279,8 @@
 	/* ---------- Main ---------- */
 	& > .layout-main-content {
 		background-color: $background;
-
 		grid-area: main;
 		z-index: 10;
-		padding: 1rem;
 		padding-top: var(--topbar-height);
 		overflow-y: auto;
 		scrollbar-width: none;
@@ -293,15 +291,11 @@
 		& > main {
 			height: 100%;
 			background-color: white;
-			box-shadow: $shadow-inset2;
+			border: $border;
 			& > div {
 				height: 100%;
-
 				background-color: $background2;
-				// border: 1px solid $surface-4;
-				padding: 2rem;
-				// box-shadow: -0px 0px 10px 0px $surface-6;
-				// background-color: $surface-1;
+				padding: 1rem 2rem;
 			}
 		}
 	}
@@ -314,7 +308,6 @@
 .layout.left-large {
 	--left-width: var(--sidebar-large);
 }
-
 .layout.left-mini {
 	--left-width: var(--sidebar-mini);
 }

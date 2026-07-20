@@ -20,11 +20,11 @@ $highlight: #fbf5a7;
 $primary-foreground: $white;
 
 /* BACKGROUND -----*/
-$background: -alpha($surface-3, 0.5);
-$background2: -alpha($surface-2, 0.7);
+$background: -alpha($surface-2, 0.7);
+$background2: -alpha($surface-1, 0.7);
 // $background3: -alpha($surface-2, 0.3);
 $shadow-inset: 0px 2px 5px 1px -alpha($surface-7, 0.9) inset;
-$shadow-inset2: 0px 3px 10px 0px $surface-6;
+$shadow-inset2: 0px 1px 5px 2px $surface-4;
 
 /* Texto*/
 $text-color: $surface-8;

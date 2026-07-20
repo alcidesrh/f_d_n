@@ -1,7 +1,7 @@
 <template>
 	<div class="content">
 		<!-- <div class="dashboard__section-body"> -->
-		<div class="mb-1rem flex justify-end">
+		<div class="mb-2rem flex justify-end">
 			<q-select clearable outlined dense bg-color="white" v-model="model" use-input input-debounce="0" label="Filtrar" :options="options" @filter="filterFn" style="width: 250px">
 				<template v-slot:no-option>
 					<q-item>

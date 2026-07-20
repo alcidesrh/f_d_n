@@ -2,7 +2,15 @@
 	<q-tr :props="data" class="h-35px!">
 		<q-th v-for="(col, i) in data.cols" :key="col.name" :props="data" :class="['sortable' ? col.sortable : '']">
 			<div class="flex w-full flex-nowrap items-center" @click.stop>
-				<div class="u-text-1 w-fit" :class="[col?.class, col.sortable ? 'ml-15px' : '', i == 0 ? 'ml-10px!' : '']">
+				<icon
+					@click="data.sort(col)"
+					v-if="store && col.isSortable"
+					name="arrow_back_2"
+					class="is-sortable"
+					:class="[store.orderField == col.name && `sorted ${store.orderType}`]"
+					fill
+				/>
+				<div class="u-text-0 w-fit" :class="[col?.class, col.sortable ? 'ml-25px' : 'ml-5px']">
 					{{ col?.label || col.name }}
 				</div>
 				<div class="w-fit ml-10px" @click.stop="">
@@ -10,13 +18,13 @@
 						fill
 						v-if="i > 0"
 						name="arrow_back_2"
-						class="text-12px lg:text-16px font-700 text-surface-5 hover:(text-surface-7 font-700) rosdtate-90"
+						class="text-12px lg:text-16px font-700 text-surface-4 hover:(text-surface-7 font-700) rosdtate-90"
 						@click.stop="$emit('orderColumns', i, 'left')"
 					/>
 					<icon
 						fill
 						v-if="i + 1 < data.cols.length"
-						class="text-12px rotate-180deg lg:text-16px font-700 text-surface-5 hover:(text-surface-7 font-700) rosdtsate-45"
+						class="text-12px rotate-180deg lg:text-16px font-700 text-surface-4 hover:(text-surface-7 font-700) rosdtsate-45"
 						name="arrow_back_2"
 						@click.stop="$emit('orderColumns', i, 'right')"
 					/>
@@ -55,6 +63,16 @@ const { clear, data, selectionMode } = defineProps<Props>()
 const emit = defineEmits(['removeMultiple', 'orderColumns'])
 
 const store = ref()
+// store.value = await getStore()
+const sortIcon = (col) => {
+	return 'keyboard_arrow_down'
+	if (data.pagination.sortBy !== col.name) {
+		return 'arrow_back_2'
+	}
+
+	return data.pagination.descending ? 'keyboard_arrow_down' : 'keyboard_arrow_up'
+}
+
 onBeforeMount(async () => {
 	store.value = await getStore()
 })
