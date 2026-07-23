@@ -9,15 +9,11 @@
 		'topbar topbar topbar'
 		'left main right';
 	transition: grid-template-columns $transition-time;
-	// background-color: $background;
-
 	/* ---------- Topbar ---------- */
 	& > .topbar {
 		z-index: 15;
 		position: fixed;
-
 		& > .topbar-content {
-			// background-color: $background;
 			transition:
 				box-shadow 1s,
 				background-color $transition-time;
@@ -72,7 +68,6 @@
 		&::-webkit-scrollbar {
 			display: none;
 		}
-
 		& > div {
 			padding: 0.5rem;
 			padding-top: calc(var(--topbar-height) + 0.5rem);
@@ -186,9 +181,6 @@
 				}
 			}
 			& > div > #clock {
-				// border: 1px solid $surface-3;
-				// box-shadow: $shadow-inset; // 0px 0px 12px 2px $surface-6 inset;
-				// background-color: white; // $background2;
 				transition: width $transition-time;
 				position: fixed;
 				display: flex;
@@ -198,7 +190,7 @@
 				justify-content: center;
 				overflow: hidden;
 				position: fixed;
-				left: 0;
+				left: 0px;
 				top: 0px;
 				& > .datetime {
 					transition: font-size $transition-time;
@@ -206,19 +198,17 @@
 					display: flex;
 					align-items: center;
 					justify-content: center;
-					font-size: 1.4rem;
-					// position: absolute;
-					color: $surface-7;
-					font-weight: 700;
+					font-size: 1.2rem;
+					color: $surface-6;
+					font-weight: 690;
 					letter-spacing: 2px;
 					z-index: 10;
 				}
-
 				& > .logo-fdn {
 					transition: font-size $transition-time;
 					position: absolute;
-					color: -alpha($surface-4, 0.5);
-					font-size: 35px;
+					color: -alpha($surface-4, 0.6);
+					font-size: 30px;
 					letter-spacing: 15px;
 					font-family: 'diplomata-sc-regular';
 					transform: scaleY(2);
@@ -229,22 +219,30 @@
 				padding: 5px 0;
 				display: grid;
 				justify-items: center;
-				align-content: space-around;
+				align-content: center;
+				gap: 8px;
 				& > .datetime {
 					position: relative;
 					display: grid;
-					font-size: 1rem;
+					font-size: 1.2rem;
 					justify-items: center;
 					align-content: space-between;
+					color: $surface-6;
+					& > span:nth-child(3) {
+						font-size: 14px;
+					}
 					& > span:nth-child(2) {
 						display: none;
 					}
 				}
 				& > .logo-fdn {
-					position: relative;
-					font-size: 10px;
+					// display: none;
+					position: absolute;
+					// rotate: -45deg;
+					font-size: 1rem;
+					transform: scale(1.1, 4);
 					letter-spacing: 3px; // 15px;
-					// color: -alpha($surface-5, 0.7);
+					color: -alpha($surface-4, 0.5);
 				}
 			}
 		}
@@ -263,7 +261,7 @@
 					}
 				}
 
-				& > .sidebar-panel {
+				& > .sidebar-content {
 					flex: 1;
 					overflow-y: auto;
 				}
@@ -291,7 +289,7 @@
 		& > main {
 			height: 100%;
 			background-color: white;
-			border: $border;
+			border: 1px solid $surface-3;
 			& > div {
 				height: 100%;
 				background-color: $background2;
@@ -300,11 +298,9 @@
 		}
 	}
 }
-
 /* ===================================================== */
 /* LEFT STATES                                            */
 /* ===================================================== */
-
 .layout.left-large {
 	--left-width: var(--sidebar-large);
 }
@@ -315,35 +311,27 @@
 .layout.left-close {
 	--left-width: var(--sidebar-close);
 }
-
 /* ===================================================== */
 /* RIGHT STATES                                           */
 /* ===================================================== */
-
 .layout.right-large {
 	--right-width: var(--sidebar-large);
 }
-
 .layout.right-mini {
 	--right-width: var(--sidebar-mini);
 }
-
 .layout.right-close {
 	--right-width: var(--sidebar-close);
 }
-
 .fdn-icon.hover:hover {
 	background-color: white; // border: $border ;
 	box-shadow: 0px 0px 3px $surface-6;
 	cursor: pointer;
 }
-
 /* ===================================================== */
 /* RESPONSIVE                                             */
 /* ===================================================== */
-
 /* Tablet */
-
 @media (max-width: 1200px) {
 	.layout {
 		--left-width: var(--sidebar-mini);

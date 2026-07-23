@@ -4,7 +4,6 @@
 			<div @click="sidebarStore.setMode()" class="sidebar-right-trigger" :class="{ close: sidebarStore.mode === 'close' }">
 				<icon name="tune" wght="300" class="trigger-icon" />
 			</div>
-
 			<div class="sidebar-control" :class="[mode]">
 				<div class="toogle-wraper large" @click="sidebarStore.setMode(mode == modeStates.close ? modeStates.prev : mode == modeStates.large ? modeStates.mini : modeStates.large)">
 					<icon fill name="switch_left" class="text-20px font-medium" />
@@ -13,7 +12,7 @@
 					<icon name="close_small" class="text-20px font-medium" />
 				</div>
 			</div>
-			<div class="sidebar-panel">
+			<nav class="sidebar-content">
 				<!-- Large mode -->
 				<div v-if="sidebarStore.mode === sidebarStore.modeStates.large" class="panel-content">
 					<div class="change-password-item" @click="changePasswordModal = true">
@@ -35,7 +34,7 @@
 
 					<SectionMini :items="filteredSections" @action="handleAction" />
 				</div>
-			</div>
+			</nav>
 
 			<div v-if="sidebarStore.mode === sidebarStore.modeStates.large" class="sidebar-dev-controls">
 				<div class="dev-row">
@@ -331,7 +330,7 @@ async function refreshEntityStore() {
 	color: $primary !important;
 }
 
-.sidebar-panel {
+.sidebar-content {
 	padding: 0.5rem;
 	overflow-y: auto;
 }

@@ -7,8 +7,8 @@
 		</div>
 		<span class="datetime" @click="sidebarStore.setMode(mode == modeStates.close ? modeStates.prev : mode == modeStates.large ? modeStates.mini : modeStates.large)">
 			<span>{{ time }}</span>
-			<span class="text-12px mt-5px">{{ seconds }}</span>
-			<span>{{ ampm }}</span>
+			<span class="text-10px mt-7px mx-3px">{{ seconds }}</span>
+			<span class="font-semibold">{{ ampm }}</span>
 		</span>
 	</span>
 </template>

@@ -1,18 +1,15 @@
 <template>
 	<div class="topbar">
 		<div class="topbar-content px-2rem">
-			<div class="left-section">
-				<!-- <clock /> -->
-			</div>
+			<nav class="left-section left-content"></nav>
 
-			<div class="center-section">
+			<div class="center-section center-content">
 				<Breadcrumbs />
 			</div>
 
-			<div class="right-section">
-				<Icon class="cursor-pointer" name="dashboard" @click="useRouter().router.push({ name: 'home' })" />
+			<nav class="right-section right-content">
 				<Icon class="cursor-pointer" name="logout" @click="logout" />
-			</div>
+			</nav>
 		</div>
 	</div>
 </template>

@@ -2,7 +2,6 @@
 	<aside class="left-sidebar" :class="sidebarStore.mode">
 		<div class="h-full">
 			<clock />
-
 			<div @click="sidebarStore.setMode()" class="sidebar-left-trigger" :class="{ close: sidebarStore.mode === 'close' }">
 				<icon name="departure_board" class="trigger-icon" />
 			</div>
@@ -14,10 +13,9 @@
 					<icon name="close_small" class="text-20px font-medium" />
 				</div>
 			</div>
-
-			<nav>
-				<MenuLarge v-if="sidebarStore.mode == sidebarStore.modeStates.large" :store="sidebarStore" :menu="filteredMenu" />
-				<MenuMini v-else-if="sidebarStore.mode == sidebarStore.modeStates.mini" :items="filteredMenu"> </MenuMini>
+			<nav class="sidebar-content">
+				<!-- <MenuLarge v-if="sidebarStore.mode == sidebarStore.modeStates.large" :store="sidebarStore" :menu="filteredMenu" /> -->
+				<!-- <MenuMini v-else-if="sidebarStore.mode == sidebarStore.modeStates.mini" :items="filteredMenu"> </MenuMini> -->
 			</nav>
 		</div>
 	</aside>

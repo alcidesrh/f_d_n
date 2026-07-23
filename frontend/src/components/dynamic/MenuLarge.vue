@@ -3,7 +3,7 @@
 		<template v-slot:default-header="prop">
 			<div class="row items-center cursor-pointer">
 				<icon :name="prop.node.icon || 'sym_o_star'" class="mr-10px" />
-				<div class="text-codlor">{{ prop.node.label }}</div>
+				<div class="text-color">{{ prop.node.label }}</div>
 			</div>
 		</template>
 	</q-tree>
