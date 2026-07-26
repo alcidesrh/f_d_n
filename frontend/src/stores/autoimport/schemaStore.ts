@@ -69,6 +69,7 @@ export const useSchemaStore = defineStore('schemaStore', {
 			'Recorrido',
 			'Icon',
 			'IconCategory',
+			'VueRoute',
 		],
 		entities: {},
 		types: {},
@@ -212,6 +213,7 @@ export const useSchemaStore = defineStore('schemaStore', {
 						temp = this.getInput(f)
 						fields[temp.name] = temp
 					}
+
 					this.entities[type.name] = {
 						name: type.name,
 						fields,
@@ -220,6 +222,9 @@ export const useSchemaStore = defineStore('schemaStore', {
 						// pagination: schema.types.some(
 						//   (v2) => v2.name == `${v.name}PageConnection`,
 						// ),
+					}
+					if (v.name == 'VueRoute') {
+						cl(this.entities[type.name])
 					}
 				})
 			// }

@@ -101,6 +101,7 @@ declare global {
   const storeToRefs: typeof import('pinia').storeToRefs
   const stores: typeof import('./composables/entityRegistry').stores
   const str: typeof import('./utils/autoimport/miscellaneous').str
+  const syncVueRoutes: typeof import('./services/vueRouteSync').syncVueRoutes
   const toRaw: typeof import('vue').toRaw
   const toRef: typeof import('vue').toRef
   const toRefs: typeof import('vue').toRefs
@@ -263,6 +264,7 @@ declare module 'vue' {
     readonly storeToRefs: UnwrapRef<typeof import('pinia')['storeToRefs']>
     readonly stores: UnwrapRef<typeof import('./composables/entityRegistry')['stores']>
     readonly str: UnwrapRef<typeof import('./utils/autoimport/miscellaneous')['str']>
+    readonly syncVueRoutes: UnwrapRef<typeof import('./services/vueRouteSync')['syncVueRoutes']>
     readonly toRaw: UnwrapRef<typeof import('vue')['toRaw']>
     readonly toRef: UnwrapRef<typeof import('vue')['toRef']>
     readonly toRefs: UnwrapRef<typeof import('vue')['toRefs']>

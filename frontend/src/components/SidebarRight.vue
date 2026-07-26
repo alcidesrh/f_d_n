@@ -38,8 +38,12 @@
 
 			<div v-if="sidebarStore.mode === sidebarStore.modeStates.large" class="sidebar-dev-controls">
 				<div class="dev-row">
-					<q-btn flat dense icon="sym_o_sync" label="Refrescar Entidades" class="full-width dev-btn" @click="refreshSchema" />
+					<q-btn icon="sym_o_sync" label="Refrescar Entidades" class="full-width dev-btn" @click="refreshSchema" />
 				</div>
+				<q-separator />
+				<q-btn icon="sym_o_sync" label="Sync. Rutas" class="w-fit m-auto dev-btn" @click="syncVueRoutes" />
+				<q-separator />
+
 				<div class="dev-row entity-row">
 					<q-select v-model="selectedEntity" :options="entityOptions" dense outlined placeholder="Entidad..." class="col" />
 					<q-btn flat dense icon="sym_o_refresh" class="dev-icon-btn" @click="refreshEntityStore" :disable="!selectedEntity" />
@@ -75,6 +79,7 @@ import { useUserSessionStore } from '@/stores/autoimport/session'
 import { useSidebarStore } from '@/stores/autoimport/sidebar'
 import type { Seccion } from '@/types/seccion'
 import { useQuasar } from 'quasar'
+import { syncVueRoutes } from '@/services/vueRouteSync'
 
 const sidebarStore = useSidebarStore('sidebarRight', 'right')
 const { mode, modeStates } = storeToRefs(sidebarStore)

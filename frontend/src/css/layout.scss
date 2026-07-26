@@ -289,7 +289,7 @@
 		& > main {
 			height: 100%;
 			background-color: white;
-			border: 1px solid $surface-3;
+			border: 1px solid -alpha($surface-3, 0.7);
 			& > div {
 				height: 100%;
 				background-color: $background2;

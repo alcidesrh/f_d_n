@@ -13,22 +13,22 @@
 		background-color: white;
 		padding-top: 0px;
 		& > table {
-			& > thead > tr {
-				& > th {
-					background-color: #fff;
-				}
-				& > th:nth-child(odd) {
-					background-color: -alpha($neutral-2, 1);
-				}
-			}
+			// & > thead > tr {
+			// & > th {
+			// 	background-color: #fff;
+			// }
+			// & > th:nth-child(odd) {
+			// 	background-color: -alpha($neutral-2, 1);
+			// }
+			// }
 			& > tbody > tr {
-				& > td:nth-child(odd) {
-					background-color: -alpha($neutral-2, 0.7);
+				&:nth-child(odd) {
+					background-color: -alpha($neutral-1, 0.5);
 				}
-				& > th:nth-child(odd),
-				& > td:nth-child(odd) {
-					background-color: -alpha($neutral-2, 0.7);
-				}
+				// & > th:nth-child(odd),
+				// & > td:nth-child(odd) {
+				// 	background-color: -alpha($neutral-2, 0.7);
+				// }
 			}
 			& > thead > tr > th,
 			& > tbody > tr > td {

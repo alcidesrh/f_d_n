@@ -20,8 +20,8 @@ $highlight: #fbf5a7;
 $primary-foreground: $white;
 
 /* BACKGROUND -----*/
-$background: -alpha($surface-2, 0.7);
-$background2: -alpha($surface-1, 0.7);
+$background: -alpha($surface-1, 1);
+$background2: -alpha($surface-1, 0.5);
 // $background3: -alpha($surface-2, 0.3);
 $shadow-inset: 0px 2px 5px 1px -alpha($surface-7, 0.9) inset;
 $shadow-inset2: 0px 1px 5px 2px $surface-4;
@@ -32,7 +32,7 @@ $tootik-bg: -alpha($surface-1, 0.9);
 
 /* LAYOUT */
 $topbar: 70px;
-$border: 1px solid -alpha($surface-4, 1);
+$border: 1px solid -alpha($surface-3, 1);
 // $border: 1px solid $surface-4;
 $tootik-border: 1px solid $surface-4;
 $tootik-arrow: $surface-5;
