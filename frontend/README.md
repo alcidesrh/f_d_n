@@ -1,42 +1,73 @@
-# Frontend — FDN Transportes
+# aaaa
 
-SPA construida con **Quasar 2 + Vue 3 + Pinia + Apollo Client 4**.
+This template should help get you started developing with Vue 3 in Vite.
 
-## Stack
+## Recommended IDE Setup
 
-- Vue 3 (Composition API, `<script setup>`)
-- Quasar 2 (UI framework)
-- Pinia (state management)
-- Apollo Client 4 (GraphQL)
-- FormKit (form builder)
-- UnoCSS (utility-first styling)
-- TypeScript (strict mode)
+[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
 
-## Documentación
+## Recommended Browser Setup
 
-La documentación completa del frontend está en `docs/docs/frontend/` (raíz del repo):
+- Chromium-based browsers (Chrome, Edge, Brave, etc.):
+  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
+  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
+- Firefox:
+  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
+  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
 
-```bash
-make docs-serve  # desde la raíz del repo
+## Type Support for `.vue` Imports in TS
+
+TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+
+## Customize configuration
+
+See [Vite Configuration Reference](https://vite.dev/config/).
+
+## Project Setup
+
+```sh
+bun install
 ```
 
-## Inicio rápido
+### Compile and Hot-Reload for Development
 
-```bash
-npm install
-npm run dev      # servidor de desarrollo en :9000
-npm run build    # build producción → .output/
-npm run format   # Prettier
+```sh
+bun dev
 ```
 
-## Arquitectura
+### Type-Check, Compile and Minify for Production
 
-Esta app utiliza un sistema **CRUD dinámico** impulsado por metadatos del backend:
+```sh
+bun run build
+```
 
-- Las rutas `/lista/:entity` y `/form/:entity/:id?` renderizan componentes genéricos
-- Las stores se crean en tiempo de ejecución via `storeFactory()`
-- Las definiciones de entidades se registran en `entityRegistry.ts`
+### Run Unit Tests with [Vitest](https://vitest.dev/)
 
-## Boot order
+```sh
+bun test:unit
+```
 
-unocss → api-rest → apollo → server-response-listener → formkit → introspection → middleware → i18n → responsive → gsap
+### Run End-to-End Tests with [Playwright](https://playwright.dev)
+
+```sh
+# Install browsers for the first run
+npx playwright install
+
+# When testing on CI, must build the project first
+bun run build
+
+# Runs the end-to-end tests
+bun test:e2e
+# Runs the tests only on Chromium
+bun test:e2e --project=chromium
+# Runs the tests of a specific file
+bun test:e2e tests/example.spec.ts
+# Runs the tests in debug mode
+bun test:e2e --debug
+```
+
+### Lint with [ESLint](https://eslint.org/)
+
+```sh
+bun lint
+```

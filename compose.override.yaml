@@ -35,8 +35,8 @@ services:
       API_PLATFORM_CREATE_CLIENT_ENTRYPOINT: http://backend
       API_PLATFORM_CREATE_CLIENT_OUTPUT: .
       # Development usage only
-      NODE_TLS_REJECT_UNAUTHORIZED: '0'
-      WATCHPACK_POLLING: 'true'
+      # NODE_TLS_REJECT_UNAUTHORIZED: '0'
+
 
   ###> doctrine/doctrine-bundle ###
   database:

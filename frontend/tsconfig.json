@@ -1,13 +1,14 @@
 {
-  "extends": "./.quasar/tsconfig.json",
-  "compilerOptions": {
-    "noImplicitAny": false,          // Permite usar 'any' implícitos
-    "noUnusedLocals": false,         // No da warnings por variables declaradas pero no usadas
-    "noUnusedParameters": false,     // No da warnings por parámetros de funciones no usados
-    "strict": false,
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
+  "files": [],
+  "references": [
+    {
+      "path": "./tsconfig.node.json"
+    },
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.vitest.json"
     }
-  }
+  ]
 }

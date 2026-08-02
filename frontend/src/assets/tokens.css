@@ -1,0 +1,33 @@
+:root {
+  --bg: var(--s-50);
+  --bg1: var(--s-100);
+  --bg2: var(--s-200);
+  --bg3: var(--s-300);
+
+  --text-muted: var(--s-200);
+  --p-text-color: var(--s-200);
+  --border: 1px solid var(--s-300);
+  --shadow: 0 1px 2px var(--s-500), 0 1px 3px rgba(15, 23, 42, 0.06);
+
+  --c-success: #10b981;
+  --c-success-soft: rgba(16, 185, 129, 0.12);
+  --c-warning: #f59e0b;
+  --c-warning-soft: rgba(245, 158, 11, 0.14);
+  --c-danger: #ef4444;
+  --c-danger-soft: rgba(239, 68, 68, 0.12);
+  --c-info: #3b82f6;
+  --c-info-soft: rgba(59, 130, 246, 0.12);
+
+  --header-h: 70px;
+  --sb-open: 250px;
+  --sb-mini: 70px;
+  --sb-close: 0px;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
+  }
+}

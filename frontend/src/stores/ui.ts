@@ -1,0 +1,105 @@
+import { defineStore } from "pinia";
+import type { PanelState, PrimaryColor, SurfacePalette, ThemeMode, ThemePreset } from "@/types";
+import { usePreset } from "@primeuix/themes";
+import { PRESET_OPTIONS, SURFACE_OPTIONS, PRIMARY_OPTIONS } from "@/config/theme";
+
+const MOBILE_BREAKPOINT = 1024;
+
+export interface UiState {
+  mode: ThemeMode;
+  primary: PrimaryColor;
+  surface: SurfacePalette;
+  preset: ThemePreset;
+  leftState: PanelState;
+  rightState: PanelState;
+  isMobile: boolean;
+  mobileLeftOpen: boolean;
+  mobileRightOpen: boolean;
+}
+
+/**
+ * Global UI store: theme (mode / primary / surface) and the tri-state
+ * left & right panels. Kept separate from domain stores (fleet, routes,
+ * tickets, etc.) so it can be persisted independently later (e.g. to a
+ * user-preferences endpoint) without touching business data.
+ */
+export const useUiStore = defineStore("ui", {
+  persist: true,
+  state: (): UiState => ({
+    mode: "light",
+    primary: "blue",
+    surface: "slate",
+    preset: "material",
+    leftState: "open",
+    rightState: "mini",
+    isMobile: typeof window !== "undefined" ? window.innerWidth <= MOBILE_BREAKPOINT : false,
+    mobileLeftOpen: false,
+    mobileRightOpen: false,
+  }),
+
+  getters: {
+    leftWidth: (state): string => ({ open: "250px", mini: "70px", close: "0px" })[state.leftState],
+    rightWidth: (state): string =>
+      ({ open: "250px", mini: "70px", close: "0px" })[state.rightState],
+  },
+
+  actions: {
+    setMode(mode: ThemeMode) {
+      this.mode = mode;
+    },
+    setPrimary(primary: PrimaryColor) {
+      this.primary = primary;
+    },
+    setSurface(surface: SurfacePalette) {
+      this.surface = surface;
+    },
+    setPreset(preset: string) {
+      this.preset = preset;
+      const option = PRESET_OPTIONS.find((o) => o.key === this.preset);
+      // const theme = {
+      //   preset: option.value,
+      //   options: {
+      //     darkModeSelector: 'html[data-mode="dark"]',
+      //   },
+      // };
+      if (option) usePreset(option.value);
+    },
+    setLeft(state: PanelState) {
+      this.leftState = state;
+    },
+    setRight(state: PanelState) {
+      this.rightState = state;
+    },
+    /** Cycles open -> mini -> close -> open. On mobile it toggles the overlay drawer instead. */
+    cycleLeft() {
+      if (this.isMobile) {
+        this.mobileLeftOpen = !this.mobileLeftOpen;
+        return;
+      }
+      this.leftState =
+        this.leftState === "open" ? "mini" : this.leftState === "mini" ? "close" : "open";
+    },
+    cycleRight() {
+      if (this.isMobile) {
+        this.mobileRightOpen = !this.mobileRightOpen;
+        return;
+      }
+      this.rightState =
+        this.rightState === "open" ? "mini" : this.rightState === "mini" ? "close" : "open";
+    },
+    closeMobileOverlays() {
+      if (this.isMobile) {
+        this.mobileLeftOpen = false;
+        this.mobileRightOpen = false;
+      }
+    },
+    syncViewport() {
+      const mobile = window.innerWidth <= MOBILE_BREAKPOINT;
+      this.isMobile = mobile;
+      if (!mobile) {
+        this.mobileLeftOpen = false;
+        this.mobileRightOpen = false;
+      }
+    },
+  },
+});

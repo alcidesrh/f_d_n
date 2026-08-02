@@ -1,54 +1,53 @@
 #syntax=docker/dockerfile:1.4
 
 # Versions
-FROM node:24-alpine AS node_upstream
+FROM oven/bun:1-alpine AS bun_upstream
 
 # Base stage
-FROM node_upstream AS base
-
-RUN apk add --no-cache libc6-compat
+FROM bun_upstream AS base
 
 WORKDIR /frontend
 
-# 🔴 Eliminamos corepack + pnpm
-# (npm ya viene con Node)
-
 # Development image
-FROM base as dev
+FROM base AS dev
 
 EXPOSE 9000
 ENV PORT 9000
-ENV HOSTNAME localhost
+ENV HOSTNAME 0.0.0.0
 
-CMD ["sh", "-c", "npm install && npm run dev"]
+# node_modules se resuelve vía bind-mount de compose.override.yaml
+CMD ["sh", "-c", "bun install && bun run dev"]
 
 # Build stage
 FROM base AS builder
 
-# Copiar package.json y lock
-COPY package*.json ./
+# Copiar lockfile y manifest antes que el código para cachear capas
+COPY bun.lock package.json ./
 
-# Instalar dependencias
-RUN npm install --omit=dev
+# Instalar dependencias (incluye dev: vue-tsc, vite)
+RUN bun install --frozen-lockfile
 
 # Copiar el resto del proyecto
 COPY . .
 
-# Build
-RUN npm run build
+# Build (vue-tsc --noEmit && vite build) -> dist/
+RUN bun run build
 
 # Production image
-FROM node_upstream AS prod
+FROM bun_upstream AS prod
 
 WORKDIR /frontend
 
 ENV NODE_ENV production
+ENV PORT 9000
+ENV HOSTNAME 0.0.0.0
 
-COPY --from=builder /frontend/.output ./.output
-COPY --from=builder /frontend/public ./public
+COPY --from=builder /frontend/dist ./dist
+COPY server.ts ./
 
 EXPOSE 9000
-ENV PORT 9000
-ENV HOSTNAME "0.0.0.0"
 
-CMD ["node", ".output/server/index.mjs"]
+# Ejecutar como usuario no root (ya definido en la imagen de bun)
+USER bun
+
+CMD ["bun", "run", "server.ts"]
