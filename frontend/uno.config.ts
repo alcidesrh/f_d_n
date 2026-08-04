@@ -66,6 +66,7 @@ export default defineConfig({
           });
           return [...numeric, `--colors-${name}-DEFAULT: ${shades["600"]};`];
         });
+        console.log("darkRules", darkRules);
         return `html.dark {\n  ${darkRules.join("\n  ")}\n}`;
       },
     },

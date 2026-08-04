@@ -22,12 +22,14 @@
     "pinia-plugin-persistedstate": "^4.7.1",
     "primeicons": "^8.0.0",
     "primevue": "4.5.5",
+    "tailwindcss-primeui": "^0.6.1",
     "vue": "^3.5.40",
     "vue-router": "^5.2.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
     "@primevue/auto-import-resolver": "^5.0.0",
+    "@tailwindcss/vite": "^4.3.3",
     "@tsconfig/node24": "^24.0.4",
     "@types/jsdom": "^28.0.3",
     "@types/node": "^24.13.3",
@@ -47,6 +49,7 @@
     "npm-run-all2": "^9.0.2",
     "oxfmt": "^0.59.0",
     "oxlint": "~1.74.0",
+    "tailwindcss": "^4.3.3",
     "typescript": "~6.0.0",
     "unocss": "^66.7.5",
     "unplugin-auto-import": "^21.0.0",

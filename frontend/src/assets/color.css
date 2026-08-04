@@ -126,8 +126,8 @@ html.light {
   --bg-alt: var(--s-200);
   --text: var(--s-00);
   --hover: var(--s-100);
-  --primary: var(--p-600);
-  --primary-soft: var(--p-50);
+  --p-primary-color: var(--p-600);
+  --p-primary-color-soft: var(--p-primary-color-50);
   --on-primary: #ffffff;
   --overlay: rgba(15, 23, 42, 0.45);
 }

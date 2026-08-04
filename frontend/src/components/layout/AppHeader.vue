@@ -92,7 +92,7 @@
 import { NOTIFICATIONS } from "@/data/mock";
 
 defineProps<{ crumbs: string[] }>();
-type PopoverName = "notif" | "customizer" | "user" | null;
+type PopoverName = "notif" | "customizer" | "user" | "fullscreen" | null;
 const openPopover = ref<PopoverName>(null);
 const ui = useUiStore();
 

@@ -6,7 +6,8 @@
   right: 0;
   height: var(--header-h);
   z-index: 50;
-  background: var(--s-600);
+  background: rgba(255, 255, 255, 0.85);
+  /* var(--bg); */
   border-bottom: var(--border);
   display: flex;
   align-items: center;
@@ -24,7 +25,7 @@
   height: 36px;
   flex: 0 0 auto;
   border-radius: 10px;
-  background: var(--primary);
+  background: var(--p-primary-color);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -62,8 +63,8 @@
   color: var(--text);
 }
 .icon-btn.active-state {
-  color: var(--primary);
-  background: var(--primary-soft);
+  color: var(--p-primary-color);
+  background: var(--p-primary-color-soft);
 }
 .header-crumbs {
   flex: 1;
@@ -133,8 +134,8 @@
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: var(--primary-soft);
-  color: var(--primary);
+  background: var(--p-primary-color-soft);
+  color: var(--p-primary-color);
   display: flex;
   align-items: center;
   justify-content: center;

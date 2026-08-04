@@ -36,12 +36,13 @@ onMounted(() => window.addEventListener("resize", handleResize));
 onBeforeUnmount(() => window.removeEventListener("resize", handleResize));
 
 watchEffect(() => {
-  const el = document.documentElement;
-  el.className = ui.mode;
-  el.classList.add(`primary-${ui.primary}`);
-  el.classList.add(`surface-${ui.surface}`);
-  // el.classList.contains(`mode-${ui.mode}`);
-  // el.classList.toggle(`mode-${ui.mode}`);
-  // el.classList.toggle(`dark`);
+  // const el = document.documentElement;
+  // el.className = ui.mode;
+  // el.classList.add(`primary-${ui.primary}`);
+  // el.classList.add(`surface-${ui.surface}`);
+});
+
+onBeforeMount(() => {
+  ui.init();
 });
 </script>

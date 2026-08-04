@@ -1,6 +1,11 @@
+@import "tailwindcss";
+@import "tailwindcss-primeui";
+
 @import "primeicons/primeicons.css";
-@import "./color.css";
+
+/* @import "./color.css"; */
 @import "./tokens.css";
+@import "./animations.css";
 @import "./fonts.css";
 @import "./header.css";
 @import "./theme-editor.css";
@@ -8,19 +13,20 @@
 @import "./content.css";
 
 /* ============================= RESET ============================= */
-*,
+/* *,
 *::before,
 *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-}
+} */
 html,
 body {
   height: 100%;
 }
 body {
   font-family: "Roboto Flex Variable", sans-serif;
+  font-size: 1rem;
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
@@ -52,7 +58,7 @@ a {
   background: var(--text-muted);
 }
 :focus-visible {
-  outline: 2px solid var(--primary);
+  outline: 2px solid var(--p-primary-color);
   outline-offset: 2px;
   border-radius: 4px;
 }

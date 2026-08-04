@@ -23,7 +23,6 @@
   min-width: 0;
   overflow-y: auto;
   background: var(--bg);
-  /* background: var(--s-50); */
 }
 .main-inner {
   padding: 24px 28px 60px;

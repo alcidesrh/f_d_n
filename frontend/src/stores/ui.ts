@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import type { PanelState, PrimaryColor, SurfacePalette, ThemeMode, ThemePreset } from "@/types";
 import { usePreset } from "@primeuix/themes";
-import { PRESET_OPTIONS, SURFACE_OPTIONS, PRIMARY_OPTIONS } from "@/config/theme";
+import { invertPalette, PRESET_OPTIONS, TAILWIND_COLORS } from "@/config/theme";
 
 const MOBILE_BREAKPOINT = 1024;
 
@@ -29,7 +29,7 @@ export const useUiStore = defineStore("ui", {
     mode: "light",
     primary: "blue",
     surface: "slate",
-    preset: "material",
+    preset: "tailwind",
     leftState: "open",
     rightState: "mini",
     isMobile: typeof window !== "undefined" ? window.innerWidth <= MOBILE_BREAKPOINT : false,
@@ -46,6 +46,7 @@ export const useUiStore = defineStore("ui", {
   actions: {
     setMode(mode: ThemeMode) {
       this.mode = mode;
+      this.applyTheme();
     },
     setPrimary(primary: PrimaryColor) {
       this.primary = primary;
@@ -53,16 +54,19 @@ export const useUiStore = defineStore("ui", {
     setSurface(surface: SurfacePalette) {
       this.surface = surface;
     },
-    setPreset(preset: string) {
+    setPreset(preset: ThemePreset) {
       this.preset = preset;
+      this.applyTheme();
+    },
+    applyTheme() {
       const option = PRESET_OPTIONS.find((o) => o.key === this.preset);
-      // const theme = {
-      //   preset: option.value,
-      //   options: {
-      //     darkModeSelector: 'html[data-mode="dark"]',
-      //   },
-      // };
-      if (option) usePreset(option.value);
+      if (option) {
+        const primitive = { ...option.value.primitive, ...TAILWIND_COLORS };
+        usePreset({
+          ...option.value,
+          // primitive: this.mode === "dark" ? invertPalette(primitive) : primitive,
+        });
+      }
     },
     setLeft(state: PanelState) {
       this.leftState = state;
@@ -100,6 +104,10 @@ export const useUiStore = defineStore("ui", {
         this.mobileLeftOpen = false;
         this.mobileRightOpen = false;
       }
+    },
+    init() {
+      this.syncViewport();
+      this.applyTheme();
     },
   },
 });

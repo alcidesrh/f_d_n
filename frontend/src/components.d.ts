@@ -11,17 +11,25 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    Accordion: typeof import('primevue/accordion')['default']
+    AccordionContent: typeof import('primevue/accordioncontent')['default']
+    AccordionHeader: typeof import('primevue/accordionheader')['default']
+    AccordionPanel: typeof import('primevue/accordionpanel')['default']
     AppHeader: typeof import('./components/layout/AppHeader.vue')['default']
     AppIcon: typeof import('./components/icons/AppIcon.vue')['default']
+    Avatar: typeof import('primevue/avatar')['default']
     Button: typeof import('primevue/button')['default']
     Card: typeof import('primevue/card')['default']
+    Dialog: typeof import('primevue/dialog')['default']
     Divider: typeof import('primevue/divider')['default']
+    InputText: typeof import('primevue/inputtext')['default']
     PageHead: typeof import('./components/common/PageHead.vue')['default']
     Popover: typeof import('primevue/popover')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SidebarLeft: typeof import('./components/layout/SidebarLeft.vue')['default']
     SidebarRight: typeof import('./components/layout/SidebarRight.vue')['default']
+    Tag: typeof import('primevue/tag')['default']
     ThemeEditor: typeof import('./components/ThemeEditor.vue')['default']
   }
 }

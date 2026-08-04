@@ -90,7 +90,7 @@ const ui = useUiStore();
 const op = ref();
 const focus = ref();
 
-const toggle = (event) => {
+const toggle = (event: MouseEvent) => {
   op.value.toggle(event);
 };
 </script>

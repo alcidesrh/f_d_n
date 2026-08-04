@@ -1,13 +1,14 @@
 :root {
-  --bg: var(--s-50);
-  --bg1: var(--s-100);
-  --bg2: var(--s-200);
-  --bg3: var(--s-300);
+  --bg: var(--p-surface-50);
+  --bg1: var(--p-surface-100);
+  --bg2: var(--p-surface-200);
+  --bg3: var(--p-surface-300);
 
-  --text-muted: var(--s-200);
-  --p-text-color: var(--s-200);
-  --border: 1px solid var(--s-300);
-  --shadow: 0 1px 2px var(--s-500), 0 1px 3px rgba(15, 23, 42, 0.06);
+  --text-muted: var(--p-surface-600);
+  --border: 1px solid var(--p-surface-300);
+  --shadow: 0px 0.5px 3px 0px var(--p-surface-500);
+  --shadow-inset: 0 0px 12px 0px var(--p-surface-500) inset;
+  /* , 0 1px 10px -6px var(--p-surface-400) inset; */
 
   --c-success: #10b981;
   --c-success-soft: rgba(16, 185, 129, 0.12);
@@ -23,6 +24,7 @@
   --sb-mini: 70px;
   --sb-close: 0px;
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --transition: 0.2s var(--ease);
 }
 
 @media (prefers-reduced-motion: reduce) {
