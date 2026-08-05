@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
 Generate entity documentation per subdomain from Doctrine entities.
-Creates: docs/docs/backend/subdomains/{transporte,flota,venta,...}/entities.md
+Creates: docs/backend/subdomains/{transporte,flota,venta,...}/entities.md
 """
 import re
 from pathlib import Path
 from typing import Dict, List, Optional
 
-ROOT = Path(__file__).parent.parent.parent
+ROOT = Path(__file__).parent.parent
 ENTITY_DIR = ROOT / "backend" / "src" / "Entity"
-OUTPUT_BASE = ROOT / "docs" / "docs" / "backend" / "subdomains"
+OUTPUT_BASE = ROOT / "docs" / "backend" / "subdomains"
 
 SUBDOMAINS = {
     "transporte": ["Boleto", "Trayecto", "Recorrido", "RecorridoMatrioska", "Servicio", "Venta", "Factura", "Cliente", "Status"],

@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""
+r"""
 Generate Mermaid ERD from Doctrine entities.
 Scans backend/src/Entity/ for #[ORM\Entity] classes and their #[ORM\Column], #[ORM\ManyToOne], #[ORM\OneToMany], etc.
-Outputs: docs/docs/backend/database/entity-map.mmd
+Outputs: docs/backend/database/entity-map.mmd
 """
 import re
 import os
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 
-ROOT = Path(__file__).parent.parent.parent  # modelo/
+ROOT = Path(__file__).parent.parent
 ENTITY_DIR = ROOT / "backend" / "src" / "Entity"
-OUTPUT_FILE = ROOT / "docs" / "docs" / "backend" / "database" / "entity-map.mmd"
+OUTPUT_FILE = ROOT / "docs" / "backend" / "database" / "entity-map.mmd"
 
 # Subdominios para agrupar
 SUBDOMAINS = {

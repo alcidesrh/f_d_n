@@ -5,8 +5,8 @@ Generate directory tree documentation.
 import os
 from pathlib import Path
 
-ROOT = Path(__file__).parent.parent.parent
-OUTPUT_FILE = ROOT / "docs" / "docs" / "directory-structure.md"
+ROOT = Path(__file__).parent.parent
+OUTPUT_FILE = ROOT / "docs" / "directory-structure.md"
 
 EXCLUDE_DIRS = {'.git', '.venv', 'node_modules', 'vendor', 'var', 'site', '__pycache__', '.pytest_cache', '.phpunit.cache', 'TerminalOmnibus', 'dist', 'build', '.quasar'}
 EXCLUDE_FILES = {'.gitignore', '.editorconfig', '.env', '.env.*', 'composer.lock', 'package-lock.json', 'pnpm-lock.yaml', 'yarn.lock', '*.log', '*.png', '*.jpg', '*.jpeg', '*.ico', '*.svg', '*.woff', '*.woff2'}

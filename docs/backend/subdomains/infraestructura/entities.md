@@ -1,7 +1,7 @@
 # Entidades — Infraestructura
 
 > Generado automáticamente: `make docs-gen-entity-map`
-> Total entidades en este subdominio: 7
+> Total entidades en este subdominio: 6
 
 ## Empresa
 
@@ -25,13 +25,6 @@
 ## Icon
 
 **Tabla**: `icon`  
-**Subdominios**: infraestructura  
-
----
-
-## IconCategory
-
-**Tabla**: `iconcategory`  
 **Subdominios**: infraestructura  
 
 ---

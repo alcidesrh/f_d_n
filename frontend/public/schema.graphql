@@ -1,0 +1,3375 @@
+type Query {
+  node(id: ID!): Node
+  agnostic(id: ID!): Agnostic
+  collectionAgnostic(resource: String): Agnostic
+  configVersions(id: ID!): ConfigVersions
+  entityConfigurationDto(id: ID!): EntityConfigurationDto
+  entityConfigurationDtos(
+    "Returns the first n elements from the list."
+    first: Int
+
+    "Returns the last n elements from the list."
+    last: Int
+
+    "Returns the elements in the list that come before the specified cursor."
+    before: String
+
+    "Returns the elements in the list that come after the specified cursor."
+    after: String
+  ): EntityConfigurationDtoCursorConnection
+  action(id: ID!): Action
+  actions: [Action]
+  apiToken(id: ID!): ApiToken
+  apiTokens: [ApiToken]
+  asiento(id: ID!): Asiento
+  asientos: [Asiento]
+  boleto(id: ID!): Boleto
+  boletos(
+    "Returns the current page."
+    currentPage: Int
+
+    "Returns the number of items per page."
+    itemsPerPage: Int
+
+    order: [BoletoFilter_order]
+  ): BoletoPageConnection
+  bus(id: ID!): Bus
+  buses(
+    "Returns the current page."
+    currentPage: Int
+
+    "Returns the number of items per page."
+    itemsPerPage: Int
+
+    order: [BusFilter_order]
+  ): BusPageConnection
+  busMarca(id: ID!): BusMarca
+  busMarcas: [BusMarca]
+  cliente(id: ID!): Cliente
+  clientes(
+    "Returns the current page."
+    currentPage: Int
+
+    "Returns the number of items per page."
+    itemsPerPage: Int
+
+    order: [ClienteFilter_order]
+  ): ClientePageConnection
+  collectionFieldConfig(id: ID!): CollectionFieldConfig
+  collectionFieldConfigs: [CollectionFieldConfig]
+  empresa(id: ID!): Empresa
+  empresas: [Empresa]
+  enclave(id: ID!): Enclave
+  enclaves(
+    "Returns the current page."
+    currentPage: Int
+
+    "Returns the number of items per page."
+    itemsPerPage: Int
+
+    order: [EnclaveFilter_order]
+  ): EnclavePageConnection
+  entityConfiguration(id: ID!): EntityConfiguration
+  entityConfigurations(entityClass: String): [EntityConfiguration]
+  getEntityConfigurations(entityClass: String): [EntityConfiguration]
+  estacion(id: ID!): Estacion
+  estacions(
+    "Returns the current page."
+    currentPage: Int
+
+    "Returns the number of items per page."
+    itemsPerPage: Int
+
+    order: [EstacionFilter_order]
+  ): EstacionPageConnection
+  factura(id: ID!): Factura
+  facturas(
+    "Returns the first n elements from the list."
+    first: Int
+
+    "Returns the last n elements from the list."
+    last: Int
+
+    "Returns the elements in the list that come before the specified cursor."
+    before: String
+
+    "Returns the elements in the list that come after the specified cursor."
+    after: String
+  ): FacturaCursorConnection
+  formFieldConfig(id: ID!): FormFieldConfig
+  formFieldConfigs: [FormFieldConfig]
+  icon(id: ID!): Icon
+  icons(
+    "Returns the current page."
+    currentPage: Int
+
+    "Returns the number of items per page."
+    itemsPerPage: Int
+
+    icon: String
+    name: String
+  ): IconPageConnection
+  layoutProfile(id: ID!): LayoutProfile
+  layoutProfiles: [LayoutProfile]
+  layoutProfileRole(id: ID!): LayoutProfileRole
+  layoutProfileRoles: [LayoutProfileRole]
+  layoutProfileUsuario(id: ID!): LayoutProfileUsuario
+  layoutProfileUsuarios: [LayoutProfileUsuario]
+  layoutSchema(id: ID!): LayoutSchema
+  layoutSchemas: [LayoutSchema]
+  layoutSchemaItem(id: ID!): LayoutSchemaItem
+  layoutSchemaItems: [LayoutSchemaItem]
+  localidad(id: ID!): Localidad
+  localidads(
+    "Returns the current page."
+    currentPage: Int
+
+    "Returns the number of items per page."
+    itemsPerPage: Int
+
+    order: [LocalidadFilter_order]
+  ): LocalidadPageConnection
+  nacion(id: ID!): Nacion
+  nacions(
+    "Returns the current page."
+    currentPage: Int
+
+    "Returns the number of items per page."
+    itemsPerPage: Int
+
+    order: [NacionFilter_order]
+  ): NacionPageConnection
+  parada(id: ID!): Parada
+  paradas(
+    "Returns the current page."
+    currentPage: Int
+
+    "Returns the number of items per page."
+    itemsPerPage: Int
+
+    order: [ParadaFilter_order]
+  ): ParadaPageConnection
+  permiso(id: ID!): Permiso
+  permisos: [Permiso]
+  piloto(id: ID!): Piloto
+  pilotos(
+    "Returns the current page."
+    currentPage: Int
+
+    "Returns the number of items per page."
+    itemsPerPage: Int
+
+    order: [PilotoFilter_order]
+  ): PilotoPageConnection
+  recorrido(id: ID!): Recorrido
+  recorridos(
+    "Returns the current page."
+    currentPage: Int
+
+    "Returns the number of items per page."
+    itemsPerPage: Int
+
+    order: [RecorridoFilter_order]
+  ): RecorridoPageConnection
+  recorridoMatrioska(id: ID!): RecorridoMatrioska
+  recorridoMatrioskas(
+    "Returns the first n elements from the list."
+    first: Int
+
+    "Returns the last n elements from the list."
+    last: Int
+
+    "Returns the elements in the list that come before the specified cursor."
+    before: String
+
+    "Returns the elements in the list that come after the specified cursor."
+    after: String
+  ): RecorridoMatrioskaCursorConnection
+  role(id: ID!): Role
+  roles: [Role]
+  servicio(id: ID!): Servicio
+  servicios(
+    "Returns the current page."
+    currentPage: Int
+
+    "Returns the number of items per page."
+    itemsPerPage: Int
+
+    order: [ServicioFilter_order]
+  ): ServicioPageConnection
+  status(id: ID!): Status
+  statuses: [Status]
+  trayecto(id: ID!): Trayecto
+  trayectos(
+    "Returns the current page."
+    currentPage: Int
+
+    "Returns the number of items per page."
+    itemsPerPage: Int
+
+    order: [TrayectoFilter_order]
+  ): TrayectoPageConnection
+  usuario(id: ID!): Usuario
+  usuarios(
+    "Returns the current page."
+    currentPage: Int
+
+    "Returns the number of items per page."
+    itemsPerPage: Int
+
+    createdAt: [UsuarioFilter_createdAt]
+    updatedAt: [UsuarioFilter_updatedAt]
+    permisos_id: Int
+    permisos_id_list: [Int]
+    userRoles_id: Int
+    userRoles_id_list: [Int]
+    localidad_id: Int
+    localidad_id_list: [Int]
+    status_id: Int
+    status_id_list: [Int]
+    order: [UsuarioFilter_order]
+    id: String
+    username: String
+    nombre: String
+    apellido: String
+    nit: String
+    email: String
+  ): UsuarioPageConnection
+  getByUsernameUsuario(username: String): Usuario
+  venta(id: ID!): Venta
+  ventas(
+    "Returns the current page."
+    currentPage: Int
+
+    "Returns the number of items per page."
+    itemsPerPage: Int
+
+    order: [VentaFilter_order]
+  ): VentaPageConnection
+  vueRoute(id: ID!): VueRoute
+  vueRoutes: [VueRoute]
+}
+
+"A node, according to the Relay specification."
+interface Node {
+  "The id of this node."
+  id: ID!
+}
+
+type Agnostic implements Node {
+  id: ID!
+  data: Iterable!
+  _id: String!
+}
+
+"The `Iterable` scalar type represents an array or a Traversable with any kind of data."
+scalar Iterable
+
+type ConfigVersions implements Node {
+  id: ID!
+
+  "entityClass → updatedAt ISO8601"
+  versions: Iterable!
+}
+
+type EntityConfigurationDto implements Node {
+  id: ID!
+  collectionFieldConfig: Iterable!
+  formFields: Iterable!
+}
+
+"Cursor connection for EntityConfigurationDto."
+type EntityConfigurationDtoCursorConnection {
+  edges: [EntityConfigurationDtoEdge]
+  pageInfo: EntityConfigurationDtoPageInfo!
+  totalCount: Int!
+}
+
+"Edge of EntityConfigurationDto."
+type EntityConfigurationDtoEdge {
+  node: EntityConfigurationDto
+  cursor: String!
+}
+
+"Information about the current page."
+type EntityConfigurationDtoPageInfo {
+  endCursor: String
+  startCursor: String
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+}
+
+type Action implements Node {
+  id: ID!
+  ruta: String
+  nombre: String
+  roles: [Role]
+  permisos: [Permiso]
+  icon: Icon
+  rutaParams: Iterable
+  _id: Int!
+  label: String
+  status: Status
+}
+
+type Role implements Node {
+  id: ID!
+  nombre: String!
+  parents: [Role]
+  children: [Role]
+  permisos: [Permiso]
+  actions: [Action]
+  _id: Int!
+  label: String
+}
+
+type Permiso implements Node {
+  id: ID!
+  roles: [Role]
+  parents: [Permiso]
+  children: [Permiso]
+  actions: [Action]
+  nombre: String
+  nota: String
+  _id: Int!
+  label: String
+  status: Status
+}
+
+type Status implements Node {
+  id: ID!
+  nombre: String!
+  _id: Int!
+  label: String
+}
+
+type Icon implements Node {
+  id: ID!
+  icon: String!
+  name: String
+  _id: Int!
+  label: String
+}
+
+type ApiToken implements Node {
+  id: ID!
+  usuario: Usuario!
+  expira: Date
+  token: String!
+  activo: Boolean
+  _id: Int!
+  label: String
+  createdAt: Date
+
+  "Returns updatedAt."
+  updatedAt: Date
+
+  valid: Boolean
+}
+
+type Usuario implements Node {
+  id: ID!
+  username: String!
+  plainPassword: String
+  fullName: String
+  apiTokens: [ApiToken]
+  userRoles: [Role]
+  permisos: [Permiso]
+  directActions: [Action]
+  deniedActions: [Action]
+  ventas(
+    "Returns the current page."
+    currentPage: Int
+
+    "Returns the number of items per page."
+    itemsPerPage: Int
+
+    order: [VentaFilter_order]
+  ): VentaPageConnection
+  nombre: String!
+  apellido: String
+  email: String
+  nit: String
+  telefono: String
+  direccion: String
+  localidad: Localidad
+  _id: Int!
+  label: String
+  createdAt: Date
+
+  "Returns updatedAt."
+  updatedAt: Date
+
+  status: Status
+  token: ApiToken
+}
+
+input VentaFilter_order {
+  id: String
+}
+
+"Page connection for Venta."
+type VentaPageConnection {
+  collection: [Venta]
+  paginationInfo: VentaPaginationInfo!
+}
+
+type Venta implements Node {
+  id: ID!
+  usuario: Usuario!
+  boletos(
+    "Returns the current page."
+    currentPage: Int
+
+    "Returns the number of items per page."
+    itemsPerPage: Int
+
+    order: [BoletoFilter_order]
+  ): BoletoPageConnection
+  factura: Factura
+  enclave: Enclave
+  empresa: Empresa
+  _id: Int!
+  label: String
+  createdAt: Date
+
+  "Returns updatedAt."
+  updatedAt: Date
+
+  status: Status
+}
+
+input BoletoFilter_order {
+  id: String
+}
+
+"Page connection for Boleto."
+type BoletoPageConnection {
+  collection: [Boleto]
+  paginationInfo: BoletoPaginationInfo!
+}
+
+type Boleto implements Node {
+  id: ID!
+  recorrido: Recorrido
+  cliente: Cliente!
+  legacyId: String
+  venta: Venta!
+  asiento: Asiento!
+  servicio: Servicio!
+  _id: Int!
+  label: String
+  createdAt: Date
+
+  "Returns updatedAt."
+  updatedAt: Date
+
+  status: Status
+}
+
+type Recorrido implements Node {
+  id: ID!
+  nombre: String!
+  empresa: Empresa
+  bus: Bus
+  trayecto: Trayecto
+  subrecorridos(
+    "Returns the first n elements from the list."
+    first: Int
+
+    "Returns the last n elements from the list."
+    last: Int
+
+    "Returns the elements in the list that come before the specified cursor."
+    before: String
+
+    "Returns the elements in the list that come after the specified cursor."
+    after: String
+  ): RecorridoMatrioskaCursorConnection
+  _id: Int!
+  label: String
+}
+
+type Empresa implements Node {
+  id: ID!
+  nombre: String!
+  nit: String
+  direccion: String
+  telefono: String
+  email: String
+  buses(
+    "Returns the current page."
+    currentPage: Int
+
+    "Returns the number of items per page."
+    itemsPerPage: Int
+
+    order: [BusFilter_order]
+  ): BusPageConnection
+  ventas(
+    "Returns the current page."
+    currentPage: Int
+
+    "Returns the number of items per page."
+    itemsPerPage: Int
+
+    order: [VentaFilter_order]
+  ): VentaPageConnection
+  _id: Int!
+  label: String
+}
+
+input BusFilter_order {
+  id: String
+}
+
+"Page connection for Bus."
+type BusPageConnection {
+  collection: [Bus]
+  paginationInfo: BusPaginationInfo!
+}
+
+type Bus implements Node {
+  id: ID!
+  matricula: String!
+  gama: String
+  empresa: Empresa!
+  asientos: [Asiento]
+  piloto: Piloto
+  pilotoAux: Piloto
+  marca: BusMarca
+  codigo: String!
+  anoFabricacion: Int!
+  numeroSeguro: String
+  fechaVencimientoTarjetaOperaciones: Date
+  numeroTarjetaRodaje: String
+  numeroTarjetaOperaciones: String
+  descripcion: String
+  _id: Int!
+  label: String
+}
+
+type Asiento implements Node {
+  id: ID!
+  numero: Int!
+  clase: TipoAsiento!
+  fila: Int
+  columna: Int
+  bus: Bus!
+  _id: Int!
+  label: String
+}
+
+enum TipoAsiento {
+  A
+  B
+}
+
+type Piloto implements Node {
+  id: ID!
+  fechaNacimiento: Date
+  numeroLicencia: String
+  fechaVencimientoLicencia: Date
+  dpi: String
+  seguroSocial: String
+  codigo: String!
+  empresa: Empresa
+  nombre: String!
+  apellido: String
+  email: String
+  nit: String
+  telefono: String
+  direccion: String
+  localidad: Localidad
+  _id: Int!
+  label: String
+  createdAt: Date
+
+  "Returns updatedAt."
+  updatedAt: Date
+
+  status: Status
+}
+
+scalar Date
+
+type Localidad implements Node {
+  id: ID!
+  nombre: String!
+  nacion: Nacion
+  _id: Int!
+  label: String
+}
+
+type Nacion implements Node {
+  id: ID!
+  nombre: String!
+  _id: Int!
+  label: String
+}
+
+type BusMarca implements Node {
+  id: ID!
+  nombre: String!
+  _id: Int!
+  label: String
+}
+
+"Information about the pagination."
+type BusPaginationInfo {
+  itemsPerPage: Int!
+  lastPage: Int!
+  totalCount: Int!
+  currentPage: Int!
+  hasNextPage: Boolean!
+}
+
+type Trayecto implements Node {
+  id: ID!
+  origen: Enclave!
+  destino: Enclave!
+  distanciaKm: String
+  duracionEstimadaMinutos: Int
+  activo: Boolean!
+  legacyId: String
+  trayectosHijos(
+    "Returns the current page."
+    currentPage: Int
+
+    "Returns the number of items per page."
+    itemsPerPage: Int
+
+    order: [TrayectoFilter_order]
+  ): TrayectoPageConnection
+  trayectosPadres(
+    "Returns the current page."
+    currentPage: Int
+
+    "Returns the number of items per page."
+    itemsPerPage: Int
+
+    order: [TrayectoFilter_order]
+  ): TrayectoPageConnection
+  recorridos(
+    "Returns the current page."
+    currentPage: Int
+
+    "Returns the number of items per page."
+    itemsPerPage: Int
+
+    order: [RecorridoFilter_order]
+  ): RecorridoPageConnection
+  _id: Int!
+  label: String
+}
+
+type Enclave implements Node {
+  id: ID!
+  nombre: String!
+  direccion: String
+  latitud: String
+  longitud: String
+  ventas(
+    "Returns the current page."
+    currentPage: Int
+
+    "Returns the number of items per page."
+    itemsPerPage: Int
+
+    order: [VentaFilter_order]
+  ): VentaPageConnection
+  _id: Int!
+  label: String
+}
+
+input TrayectoFilter_order {
+  id: String
+}
+
+"Page connection for Trayecto."
+type TrayectoPageConnection {
+  collection: [Trayecto]
+  paginationInfo: TrayectoPaginationInfo!
+}
+
+"Information about the pagination."
+type TrayectoPaginationInfo {
+  itemsPerPage: Int!
+  lastPage: Int!
+  totalCount: Int!
+  currentPage: Int!
+  hasNextPage: Boolean!
+}
+
+input RecorridoFilter_order {
+  id: String
+}
+
+"Page connection for Recorrido."
+type RecorridoPageConnection {
+  collection: [Recorrido]
+  paginationInfo: RecorridoPaginationInfo!
+}
+
+"Information about the pagination."
+type RecorridoPaginationInfo {
+  itemsPerPage: Int!
+  lastPage: Int!
+  totalCount: Int!
+  currentPage: Int!
+  hasNextPage: Boolean!
+}
+
+"Cursor connection for RecorridoMatrioska."
+type RecorridoMatrioskaCursorConnection {
+  edges: [RecorridoMatrioskaEdge]
+  pageInfo: RecorridoMatrioskaPageInfo!
+  totalCount: Int!
+}
+
+"Edge of RecorridoMatrioska."
+type RecorridoMatrioskaEdge {
+  node: RecorridoMatrioska
+  cursor: String!
+}
+
+type RecorridoMatrioska implements Node {
+  id: ID!
+  _id: Int!
+  recorrido: Recorrido!
+  subrecorridos: Recorrido!
+  posicion: Int
+}
+
+"Information about the current page."
+type RecorridoMatrioskaPageInfo {
+  endCursor: String
+  startCursor: String
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+}
+
+type Cliente implements Node {
+  id: ID!
+  nombre: String!
+  apellido: String
+  email: String
+  nit: String
+  telefono: String
+  direccion: String
+  localidad: Localidad
+  _id: Int!
+  label: String
+  createdAt: Date
+
+  "Returns updatedAt."
+  updatedAt: Date
+
+  status: Status
+}
+
+type Servicio implements Node {
+  id: ID!
+  fecha: Date!
+  legacyId: String
+  empresa: Empresa
+  recorrido: Recorrido!
+  bus: Bus
+  piloto: Piloto
+  boletos(
+    "Returns the current page."
+    currentPage: Int
+
+    "Returns the number of items per page."
+    itemsPerPage: Int
+
+    order: [BoletoFilter_order]
+  ): BoletoPageConnection
+  _id: Int!
+  label: String
+  createdAt: Date
+
+  "Returns updatedAt."
+  updatedAt: Date
+
+  status: Status
+}
+
+"Information about the pagination."
+type BoletoPaginationInfo {
+  itemsPerPage: Int!
+  lastPage: Int!
+  totalCount: Int!
+  currentPage: Int!
+  hasNextPage: Boolean!
+}
+
+type Factura implements Node {
+  id: ID!
+  _id: Int!
+  dte: Int!
+  serie: String!
+  fecha: Date!
+  emisorNit: String
+  emisorNombre: String!
+  establecimientoCodigo: String
+  emisorNombreComercial: String
+  receptopNit: String!
+  receptorNombre: String!
+  createdAt: Date
+
+  "Returns updatedAt."
+  updatedAt: Date
+}
+
+"Information about the pagination."
+type VentaPaginationInfo {
+  itemsPerPage: Int!
+  lastPage: Int!
+  totalCount: Int!
+  currentPage: Int!
+  hasNextPage: Boolean!
+}
+
+input ClienteFilter_order {
+  id: String
+}
+
+"Page connection for Cliente."
+type ClientePageConnection {
+  collection: [Cliente]
+  paginationInfo: ClientePaginationInfo!
+}
+
+"Information about the pagination."
+type ClientePaginationInfo {
+  itemsPerPage: Int!
+  lastPage: Int!
+  totalCount: Int!
+  currentPage: Int!
+  hasNextPage: Boolean!
+}
+
+type CollectionFieldConfig implements Node {
+  id: ID!
+  entityConfig: EntityConfiguration
+  isSortable: Boolean
+  filterable: Boolean
+  _id: Int!
+  field: String!
+  position: Int!
+  visible: Boolean
+  label: String
+  attrs: Iterable
+  name: String!
+}
+
+type EntityConfiguration implements Node {
+  id: ID!
+  _id: Int!
+  entityClass: String!
+  updatedAt: Date
+  collectionFieldConfig: [CollectionFieldConfig]
+  formFields: [FormFieldConfig]
+  icon: Icon
+}
+
+type FormFieldConfig implements Node {
+  id: ID!
+  groupName: String
+  entityConfig: EntityConfiguration
+  _id: Int!
+  field: String!
+  position: Int!
+  visible: Boolean
+  label: String
+  attrs: Iterable
+  name: String!
+}
+
+input EnclaveFilter_order {
+  id: String
+}
+
+"Page connection for Enclave."
+type EnclavePageConnection {
+  collection: [Enclave]
+  paginationInfo: EnclavePaginationInfo!
+}
+
+"Information about the pagination."
+type EnclavePaginationInfo {
+  itemsPerPage: Int!
+  lastPage: Int!
+  totalCount: Int!
+  currentPage: Int!
+  hasNextPage: Boolean!
+}
+
+type Estacion implements Node {
+  id: ID!
+  _id: Int!
+  label: String
+  nombre: String!
+  direccion: String
+  latitud: String
+  longitud: String
+  ventas(
+    "Returns the current page."
+    currentPage: Int
+
+    "Returns the number of items per page."
+    itemsPerPage: Int
+
+    order: [VentaFilter_order]
+  ): VentaPageConnection
+}
+
+input EstacionFilter_order {
+  id: String
+}
+
+"Page connection for Estacion."
+type EstacionPageConnection {
+  collection: [Estacion]
+  paginationInfo: EstacionPaginationInfo!
+}
+
+"Information about the pagination."
+type EstacionPaginationInfo {
+  itemsPerPage: Int!
+  lastPage: Int!
+  totalCount: Int!
+  currentPage: Int!
+  hasNextPage: Boolean!
+}
+
+"Cursor connection for Factura."
+type FacturaCursorConnection {
+  edges: [FacturaEdge]
+  pageInfo: FacturaPageInfo!
+  totalCount: Int!
+}
+
+"Edge of Factura."
+type FacturaEdge {
+  node: Factura
+  cursor: String!
+}
+
+"Information about the current page."
+type FacturaPageInfo {
+  endCursor: String
+  startCursor: String
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+}
+
+"Page connection for Icon."
+type IconPageConnection {
+  collection: [Icon]
+  paginationInfo: IconPaginationInfo!
+}
+
+"Information about the pagination."
+type IconPaginationInfo {
+  itemsPerPage: Int!
+  lastPage: Int!
+  totalCount: Int!
+  currentPage: Int!
+  hasNextPage: Boolean!
+}
+
+type LayoutProfile implements Node {
+  id: ID!
+  enabled: Boolean!
+  layoutSchema: LayoutSchema!
+  roleAssignments: [LayoutProfileRole]
+  usuarioAssignments: [LayoutProfileUsuario]
+  nombre: String
+  nota: String
+  _id: Int!
+  label: String
+  status: Status
+  createdAt: Date
+
+  "Returns updatedAt."
+  updatedAt: Date
+}
+
+type LayoutSchema implements Node {
+  id: ID!
+  area: LayoutArea!
+  items: [LayoutSchemaItem]
+  nombre: String
+  nota: String
+  _id: Int!
+  label: String
+  status: Status
+  createdAt: Date
+
+  "Returns updatedAt."
+  updatedAt: Date
+}
+
+enum LayoutArea {
+  TopbarRight
+  SidebarLeft
+  SidebarRight
+}
+
+type LayoutSchemaItem implements Node {
+  id: ID!
+  layoutSchema: LayoutSchema!
+  vueRoute: VueRoute!
+  position: Int!
+  _id: Int!
+  label: String
+}
+
+type VueRoute implements Node {
+  id: ID!
+  _id: Int!
+  nombre: String!
+  vueRouteName: String
+  path: String
+  params: Iterable
+  icon: Icon
+  roles: [Role]
+  usuariosPermitidos(
+    "Returns the current page."
+    currentPage: Int
+
+    "Returns the number of items per page."
+    itemsPerPage: Int
+
+    createdAt: [UsuarioFilter_createdAt]
+    updatedAt: [UsuarioFilter_updatedAt]
+    permisos_id: Int
+    permisos_id_list: [Int]
+    userRoles_id: Int
+    userRoles_id_list: [Int]
+    localidad_id: Int
+    localidad_id_list: [Int]
+    status_id: Int
+    status_id_list: [Int]
+    order: [UsuarioFilter_order]
+  ): UsuarioPageConnection
+  usuariosDenegados(
+    "Returns the current page."
+    currentPage: Int
+
+    "Returns the number of items per page."
+    itemsPerPage: Int
+
+    createdAt: [UsuarioFilter_createdAt]
+    updatedAt: [UsuarioFilter_updatedAt]
+    permisos_id: Int
+    permisos_id_list: [Int]
+    userRoles_id: Int
+    userRoles_id_list: [Int]
+    localidad_id: Int
+    localidad_id_list: [Int]
+    status_id: Int
+    status_id_list: [Int]
+    order: [UsuarioFilter_order]
+  ): UsuarioPageConnection
+  vueRoute: VueRoute
+  hijos: [VueRoute]
+}
+
+input UsuarioFilter_createdAt {
+  before: String
+  strictly_before: String
+  after: String
+  strictly_after: String
+}
+
+input UsuarioFilter_updatedAt {
+  before: String
+  strictly_before: String
+  after: String
+  strictly_after: String
+}
+
+input UsuarioFilter_order {
+  id: String
+  nombre: String
+  apellido: String
+  username: String
+  createdAt: String
+  email: String
+}
+
+"Page connection for Usuario."
+type UsuarioPageConnection {
+  collection: [Usuario]
+  paginationInfo: UsuarioPaginationInfo!
+}
+
+"Information about the pagination."
+type UsuarioPaginationInfo {
+  itemsPerPage: Int!
+  lastPage: Int!
+  totalCount: Int!
+  currentPage: Int!
+  hasNextPage: Boolean!
+}
+
+type LayoutProfileRole implements Node {
+  id: ID!
+  layoutProfile: LayoutProfile!
+  role: Role!
+  position: Int!
+  _id: Int!
+  label: String
+}
+
+type LayoutProfileUsuario implements Node {
+  id: ID!
+  layoutProfile: LayoutProfile!
+  usuario: Usuario!
+  position: Int!
+  _id: Int!
+  label: String
+}
+
+input LocalidadFilter_order {
+  id: String
+}
+
+"Page connection for Localidad."
+type LocalidadPageConnection {
+  collection: [Localidad]
+  paginationInfo: LocalidadPaginationInfo!
+}
+
+"Information about the pagination."
+type LocalidadPaginationInfo {
+  itemsPerPage: Int!
+  lastPage: Int!
+  totalCount: Int!
+  currentPage: Int!
+  hasNextPage: Boolean!
+}
+
+input NacionFilter_order {
+  id: String
+}
+
+"Page connection for Nacion."
+type NacionPageConnection {
+  collection: [Nacion]
+  paginationInfo: NacionPaginationInfo!
+}
+
+"Information about the pagination."
+type NacionPaginationInfo {
+  itemsPerPage: Int!
+  lastPage: Int!
+  totalCount: Int!
+  currentPage: Int!
+  hasNextPage: Boolean!
+}
+
+type Parada implements Node {
+  id: ID!
+  _id: Int!
+  label: String
+  nombre: String!
+  direccion: String
+  latitud: String
+  longitud: String
+  ventas(
+    "Returns the current page."
+    currentPage: Int
+
+    "Returns the number of items per page."
+    itemsPerPage: Int
+
+    order: [VentaFilter_order]
+  ): VentaPageConnection
+}
+
+input ParadaFilter_order {
+  id: String
+}
+
+"Page connection for Parada."
+type ParadaPageConnection {
+  collection: [Parada]
+  paginationInfo: ParadaPaginationInfo!
+}
+
+"Information about the pagination."
+type ParadaPaginationInfo {
+  itemsPerPage: Int!
+  lastPage: Int!
+  totalCount: Int!
+  currentPage: Int!
+  hasNextPage: Boolean!
+}
+
+input PilotoFilter_order {
+  id: String
+}
+
+"Page connection for Piloto."
+type PilotoPageConnection {
+  collection: [Piloto]
+  paginationInfo: PilotoPaginationInfo!
+}
+
+"Information about the pagination."
+type PilotoPaginationInfo {
+  itemsPerPage: Int!
+  lastPage: Int!
+  totalCount: Int!
+  currentPage: Int!
+  hasNextPage: Boolean!
+}
+
+input ServicioFilter_order {
+  id: String
+}
+
+"Page connection for Servicio."
+type ServicioPageConnection {
+  collection: [Servicio]
+  paginationInfo: ServicioPaginationInfo!
+}
+
+"Information about the pagination."
+type ServicioPaginationInfo {
+  itemsPerPage: Int!
+  lastPage: Int!
+  totalCount: Int!
+  currentPage: Int!
+  hasNextPage: Boolean!
+}
+
+type Mutation {
+  "Deletes a Agnostic."
+  deleteAgnostic(input: deleteAgnosticInput!): deleteAgnosticPayload
+
+  "Updates a ConfigVersions."
+  updateConfigVersions(input: updateConfigVersionsInput!): updateConfigVersionsPayload
+
+  "Deletes a ConfigVersions."
+  deleteConfigVersions(input: deleteConfigVersionsInput!): deleteConfigVersionsPayload
+
+  "Creates a ConfigVersions."
+  createConfigVersions(input: createConfigVersionsInput!): createConfigVersionsPayload
+
+  "Updates a EntityConfigurationDto."
+  updateEntityConfigurationDto(input: updateEntityConfigurationDtoInput!): updateEntityConfigurationDtoPayload
+
+  "Deletes a EntityConfigurationDto."
+  deleteEntityConfigurationDto(input: deleteEntityConfigurationDtoInput!): deleteEntityConfigurationDtoPayload
+
+  "Creates a EntityConfigurationDto."
+  createEntityConfigurationDto(input: createEntityConfigurationDtoInput!): createEntityConfigurationDtoPayload
+
+  "Creates a Action."
+  createAction(input: createActionInput!): createActionPayload
+
+  "Updates a Action."
+  updateAction(input: updateActionInput!): updateActionPayload
+
+  "Deletes a Action."
+  deleteAction(input: deleteActionInput!): deleteActionPayload
+
+  "Creates a ApiToken."
+  createApiToken(input: createApiTokenInput!): createApiTokenPayload
+
+  "Updates a ApiToken."
+  updateApiToken(input: updateApiTokenInput!): updateApiTokenPayload
+
+  "Deletes a ApiToken."
+  deleteApiToken(input: deleteApiTokenInput!): deleteApiTokenPayload
+
+  "Creates a Asiento."
+  createAsiento(input: createAsientoInput!): createAsientoPayload
+
+  "Updates a Asiento."
+  updateAsiento(input: updateAsientoInput!): updateAsientoPayload
+
+  "Deletes a Asiento."
+  deleteAsiento(input: deleteAsientoInput!): deleteAsientoPayload
+
+  "Creates a Boleto."
+  createBoleto(input: createBoletoInput!): createBoletoPayload
+
+  "Updates a Boleto."
+  updateBoleto(input: updateBoletoInput!): updateBoletoPayload
+
+  "Deletes a Boleto."
+  deleteBoleto(input: deleteBoletoInput!): deleteBoletoPayload
+
+  "Creates a Bus."
+  createBus(input: createBusInput!): createBusPayload
+
+  "Updates a Bus."
+  updateBus(input: updateBusInput!): updateBusPayload
+
+  "Deletes a Bus."
+  deleteBus(input: deleteBusInput!): deleteBusPayload
+
+  "Creates a BusMarca."
+  createBusMarca(input: createBusMarcaInput!): createBusMarcaPayload
+
+  "Updates a BusMarca."
+  updateBusMarca(input: updateBusMarcaInput!): updateBusMarcaPayload
+
+  "Deletes a BusMarca."
+  deleteBusMarca(input: deleteBusMarcaInput!): deleteBusMarcaPayload
+
+  "Creates a Cliente."
+  createCliente(input: createClienteInput!): createClientePayload
+
+  "Updates a Cliente."
+  updateCliente(input: updateClienteInput!): updateClientePayload
+
+  "Deletes a Cliente."
+  deleteCliente(input: deleteClienteInput!): deleteClientePayload
+
+  "Creates a CollectionFieldConfig."
+  createCollectionFieldConfig(input: createCollectionFieldConfigInput!): createCollectionFieldConfigPayload
+
+  "Updates a CollectionFieldConfig."
+  updateCollectionFieldConfig(input: updateCollectionFieldConfigInput!): updateCollectionFieldConfigPayload
+
+  "Deletes a CollectionFieldConfig."
+  deleteCollectionFieldConfig(input: deleteCollectionFieldConfigInput!): deleteCollectionFieldConfigPayload
+
+  "Creates a Empresa."
+  createEmpresa(input: createEmpresaInput!): createEmpresaPayload
+
+  "Updates a Empresa."
+  updateEmpresa(input: updateEmpresaInput!): updateEmpresaPayload
+
+  "Deletes a Empresa."
+  deleteEmpresa(input: deleteEmpresaInput!): deleteEmpresaPayload
+
+  "Creates a Enclave."
+  createEnclave(input: createEnclaveInput!): createEnclavePayload
+
+  "Updates a Enclave."
+  updateEnclave(input: updateEnclaveInput!): updateEnclavePayload
+
+  "Deletes a Enclave."
+  deleteEnclave(input: deleteEnclaveInput!): deleteEnclavePayload
+
+  "Updates a EntityConfiguration."
+  updateEntityConfiguration(input: updateEntityConfigurationInput!): updateEntityConfigurationPayload
+
+  "UpdateWithRelationss a EntityConfiguration."
+  updateWithRelationsEntityConfiguration(input: updateWithRelationsEntityConfigurationInput!): updateWithRelationsEntityConfigurationPayload
+
+  "Creates a Estacion."
+  createEstacion(input: createEstacionInput!): createEstacionPayload
+
+  "Updates a Estacion."
+  updateEstacion(input: updateEstacionInput!): updateEstacionPayload
+
+  "Deletes a Estacion."
+  deleteEstacion(input: deleteEstacionInput!): deleteEstacionPayload
+
+  "Updates a Factura."
+  updateFactura(input: updateFacturaInput!): updateFacturaPayload
+
+  "Deletes a Factura."
+  deleteFactura(input: deleteFacturaInput!): deleteFacturaPayload
+
+  "Creates a Factura."
+  createFactura(input: createFacturaInput!): createFacturaPayload
+
+  "Creates a FormFieldConfig."
+  createFormFieldConfig(input: createFormFieldConfigInput!): createFormFieldConfigPayload
+
+  "Updates a FormFieldConfig."
+  updateFormFieldConfig(input: updateFormFieldConfigInput!): updateFormFieldConfigPayload
+
+  "Deletes a FormFieldConfig."
+  deleteFormFieldConfig(input: deleteFormFieldConfigInput!): deleteFormFieldConfigPayload
+
+  "Creates a Icon."
+  createIcon(input: createIconInput!): createIconPayload
+
+  "Updates a Icon."
+  updateIcon(input: updateIconInput!): updateIconPayload
+
+  "Deletes a Icon."
+  deleteIcon(input: deleteIconInput!): deleteIconPayload
+
+  "Creates a LayoutProfile."
+  createLayoutProfile(input: createLayoutProfileInput!): createLayoutProfilePayload
+
+  "Updates a LayoutProfile."
+  updateLayoutProfile(input: updateLayoutProfileInput!): updateLayoutProfilePayload
+
+  "Deletes a LayoutProfile."
+  deleteLayoutProfile(input: deleteLayoutProfileInput!): deleteLayoutProfilePayload
+
+  "Creates a LayoutProfileRole."
+  createLayoutProfileRole(input: createLayoutProfileRoleInput!): createLayoutProfileRolePayload
+
+  "Updates a LayoutProfileRole."
+  updateLayoutProfileRole(input: updateLayoutProfileRoleInput!): updateLayoutProfileRolePayload
+
+  "Deletes a LayoutProfileRole."
+  deleteLayoutProfileRole(input: deleteLayoutProfileRoleInput!): deleteLayoutProfileRolePayload
+
+  "Creates a LayoutProfileUsuario."
+  createLayoutProfileUsuario(input: createLayoutProfileUsuarioInput!): createLayoutProfileUsuarioPayload
+
+  "Updates a LayoutProfileUsuario."
+  updateLayoutProfileUsuario(input: updateLayoutProfileUsuarioInput!): updateLayoutProfileUsuarioPayload
+
+  "Deletes a LayoutProfileUsuario."
+  deleteLayoutProfileUsuario(input: deleteLayoutProfileUsuarioInput!): deleteLayoutProfileUsuarioPayload
+
+  "Creates a LayoutSchema."
+  createLayoutSchema(input: createLayoutSchemaInput!): createLayoutSchemaPayload
+
+  "Updates a LayoutSchema."
+  updateLayoutSchema(input: updateLayoutSchemaInput!): updateLayoutSchemaPayload
+
+  "Deletes a LayoutSchema."
+  deleteLayoutSchema(input: deleteLayoutSchemaInput!): deleteLayoutSchemaPayload
+
+  "Creates a LayoutSchemaItem."
+  createLayoutSchemaItem(input: createLayoutSchemaItemInput!): createLayoutSchemaItemPayload
+
+  "Updates a LayoutSchemaItem."
+  updateLayoutSchemaItem(input: updateLayoutSchemaItemInput!): updateLayoutSchemaItemPayload
+
+  "Deletes a LayoutSchemaItem."
+  deleteLayoutSchemaItem(input: deleteLayoutSchemaItemInput!): deleteLayoutSchemaItemPayload
+
+  "Creates a Localidad."
+  createLocalidad(input: createLocalidadInput!): createLocalidadPayload
+
+  "Updates a Localidad."
+  updateLocalidad(input: updateLocalidadInput!): updateLocalidadPayload
+
+  "Deletes a Localidad."
+  deleteLocalidad(input: deleteLocalidadInput!): deleteLocalidadPayload
+
+  "Creates a Nacion."
+  createNacion(input: createNacionInput!): createNacionPayload
+
+  "Updates a Nacion."
+  updateNacion(input: updateNacionInput!): updateNacionPayload
+
+  "Deletes a Nacion."
+  deleteNacion(input: deleteNacionInput!): deleteNacionPayload
+
+  "Creates a Parada."
+  createParada(input: createParadaInput!): createParadaPayload
+
+  "Updates a Parada."
+  updateParada(input: updateParadaInput!): updateParadaPayload
+
+  "Deletes a Parada."
+  deleteParada(input: deleteParadaInput!): deleteParadaPayload
+
+  "Creates a Permiso."
+  createPermiso(input: createPermisoInput!): createPermisoPayload
+
+  "Updates a Permiso."
+  updatePermiso(input: updatePermisoInput!): updatePermisoPayload
+
+  "Deletes a Permiso."
+  deletePermiso(input: deletePermisoInput!): deletePermisoPayload
+
+  "Creates a Piloto."
+  createPiloto(input: createPilotoInput!): createPilotoPayload
+
+  "Updates a Piloto."
+  updatePiloto(input: updatePilotoInput!): updatePilotoPayload
+
+  "Deletes a Piloto."
+  deletePiloto(input: deletePilotoInput!): deletePilotoPayload
+
+  "Creates a Recorrido."
+  createRecorrido(input: createRecorridoInput!): createRecorridoPayload
+
+  "Updates a Recorrido."
+  updateRecorrido(input: updateRecorridoInput!): updateRecorridoPayload
+
+  "Deletes a Recorrido."
+  deleteRecorrido(input: deleteRecorridoInput!): deleteRecorridoPayload
+
+  "Updates a RecorridoMatrioska."
+  updateRecorridoMatrioska(input: updateRecorridoMatrioskaInput!): updateRecorridoMatrioskaPayload
+
+  "Deletes a RecorridoMatrioska."
+  deleteRecorridoMatrioska(input: deleteRecorridoMatrioskaInput!): deleteRecorridoMatrioskaPayload
+
+  "Creates a RecorridoMatrioska."
+  createRecorridoMatrioska(input: createRecorridoMatrioskaInput!): createRecorridoMatrioskaPayload
+
+  "Creates a Role."
+  createRole(input: createRoleInput!): createRolePayload
+
+  "Updates a Role."
+  updateRole(input: updateRoleInput!): updateRolePayload
+
+  "Deletes a Role."
+  deleteRole(input: deleteRoleInput!): deleteRolePayload
+
+  "Creates a Servicio."
+  createServicio(input: createServicioInput!): createServicioPayload
+
+  "Updates a Servicio."
+  updateServicio(input: updateServicioInput!): updateServicioPayload
+
+  "Deletes a Servicio."
+  deleteServicio(input: deleteServicioInput!): deleteServicioPayload
+
+  "Creates a Status."
+  createStatus(input: createStatusInput!): createStatusPayload
+
+  "Updates a Status."
+  updateStatus(input: updateStatusInput!): updateStatusPayload
+
+  "Deletes a Status."
+  deleteStatus(input: deleteStatusInput!): deleteStatusPayload
+
+  "Creates a Trayecto."
+  createTrayecto(input: createTrayectoInput!): createTrayectoPayload
+
+  "Updates a Trayecto."
+  updateTrayecto(input: updateTrayectoInput!): updateTrayectoPayload
+
+  "Deletes a Trayecto."
+  deleteTrayecto(input: deleteTrayectoInput!): deleteTrayectoPayload
+
+  "Creates a Usuario."
+  createUsuario(input: createUsuarioInput!): createUsuarioPayload
+
+  "Updates a Usuario."
+  updateUsuario(input: updateUsuarioInput!): updateUsuarioPayload
+
+  "Deletes a Usuario."
+  deleteUsuario(input: deleteUsuarioInput!): deleteUsuarioPayload
+
+  "Creates a Venta."
+  createVenta(input: createVentaInput!): createVentaPayload
+
+  "Updates a Venta."
+  updateVenta(input: updateVentaInput!): updateVentaPayload
+
+  "Deletes a Venta."
+  deleteVenta(input: deleteVentaInput!): deleteVentaPayload
+
+  "Creates a VueRoute."
+  createVueRoute(input: createVueRouteInput!): createVueRoutePayload
+
+  "Updates a VueRoute."
+  updateVueRoute(input: updateVueRouteInput!): updateVueRoutePayload
+
+  "Deletes a VueRoute."
+  deleteVueRoute(input: deleteVueRouteInput!): deleteVueRoutePayload
+}
+
+"Deletes a Agnostic."
+input deleteAgnosticInput {
+  ids: [ID]
+  resource: String
+  clientMutationId: String
+}
+
+"Deletes a Agnostic."
+type deleteAgnosticPayload {
+  agnostic: Agnostic
+  clientMutationId: String
+}
+
+"Updates a ConfigVersions."
+input updateConfigVersionsInput {
+  id: ID!
+
+  "entityClass → updatedAt ISO8601"
+  versions: Iterable
+  clientMutationId: String
+}
+
+"Updates a ConfigVersions."
+type updateConfigVersionsPayload {
+  configVersions: ConfigVersions
+  clientMutationId: String
+}
+
+"Deletes a ConfigVersions."
+input deleteConfigVersionsInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a ConfigVersions."
+type deleteConfigVersionsPayload {
+  configVersions: ConfigVersions
+  clientMutationId: String
+}
+
+"Creates a ConfigVersions."
+input createConfigVersionsInput {
+  "entityClass → updatedAt ISO8601"
+  versions: Iterable!
+  clientMutationId: String
+}
+
+"Creates a ConfigVersions."
+type createConfigVersionsPayload {
+  configVersions: ConfigVersions
+  clientMutationId: String
+}
+
+"Updates a EntityConfigurationDto."
+input updateEntityConfigurationDtoInput {
+  id: ID!
+  collectionFieldConfig: Iterable
+  formFields: Iterable
+  clientMutationId: String
+}
+
+"Updates a EntityConfigurationDto."
+type updateEntityConfigurationDtoPayload {
+  entityConfigurationDto: EntityConfigurationDto
+  clientMutationId: String
+}
+
+"Deletes a EntityConfigurationDto."
+input deleteEntityConfigurationDtoInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a EntityConfigurationDto."
+type deleteEntityConfigurationDtoPayload {
+  entityConfigurationDto: EntityConfigurationDto
+  clientMutationId: String
+}
+
+"Creates a EntityConfigurationDto."
+input createEntityConfigurationDtoInput {
+  collectionFieldConfig: Iterable!
+  formFields: Iterable!
+  clientMutationId: String
+}
+
+"Creates a EntityConfigurationDto."
+type createEntityConfigurationDtoPayload {
+  entityConfigurationDto: EntityConfigurationDto
+  clientMutationId: String
+}
+
+"Creates a Action."
+input createActionInput {
+  ruta: String
+  nombre: String
+  roles: [String]
+  permisos: [String]
+  icon: String
+  rutaParams: Iterable
+  label: String
+  status: String
+  clientMutationId: String
+}
+
+"Creates a Action."
+type createActionPayload {
+  action: Action
+  clientMutationId: String
+}
+
+"Updates a Action."
+input updateActionInput {
+  id: ID!
+  ruta: String
+  nombre: String
+  roles: [String]
+  permisos: [String]
+  icon: String
+  rutaParams: Iterable
+  label: String
+  status: String
+  clientMutationId: String
+}
+
+"Updates a Action."
+type updateActionPayload {
+  action: Action
+  clientMutationId: String
+}
+
+"Deletes a Action."
+input deleteActionInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a Action."
+type deleteActionPayload {
+  action: Action
+  clientMutationId: String
+}
+
+"Creates a ApiToken."
+input createApiTokenInput {
+  usuario: String!
+  expira: Date
+  token: String!
+  activo: Boolean
+  label: String
+  createdAt: Date
+
+  "Returns updatedAt."
+  updatedAt: Date
+  clientMutationId: String
+}
+
+"Creates a ApiToken."
+type createApiTokenPayload {
+  apiToken: ApiToken
+  clientMutationId: String
+}
+
+"Updates a ApiToken."
+input updateApiTokenInput {
+  id: ID!
+  usuario: String
+  expira: Date
+  token: String
+  activo: Boolean
+  label: String
+  createdAt: Date
+
+  "Returns updatedAt."
+  updatedAt: Date
+  clientMutationId: String
+}
+
+"Updates a ApiToken."
+type updateApiTokenPayload {
+  apiToken: ApiToken
+  clientMutationId: String
+}
+
+"Deletes a ApiToken."
+input deleteApiTokenInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a ApiToken."
+type deleteApiTokenPayload {
+  apiToken: ApiToken
+  clientMutationId: String
+}
+
+"Creates a Asiento."
+input createAsientoInput {
+  numero: Int!
+  clase: TipoAsiento!
+  fila: Int
+  columna: Int
+  bus: String!
+  label: String
+  clientMutationId: String
+}
+
+"Creates a Asiento."
+type createAsientoPayload {
+  asiento: Asiento
+  clientMutationId: String
+}
+
+"Updates a Asiento."
+input updateAsientoInput {
+  id: ID!
+  numero: Int
+  clase: TipoAsiento
+  fila: Int
+  columna: Int
+  bus: String
+  label: String
+  clientMutationId: String
+}
+
+"Updates a Asiento."
+type updateAsientoPayload {
+  asiento: Asiento
+  clientMutationId: String
+}
+
+"Deletes a Asiento."
+input deleteAsientoInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a Asiento."
+type deleteAsientoPayload {
+  asiento: Asiento
+  clientMutationId: String
+}
+
+"Creates a Boleto."
+input createBoletoInput {
+  recorrido: String
+  cliente: String!
+  legacyId: String
+  venta: String!
+  asiento: String!
+  servicio: String!
+  label: String
+  createdAt: Date
+
+  "Returns updatedAt."
+  updatedAt: Date
+  status: String
+  clientMutationId: String
+}
+
+"Creates a Boleto."
+type createBoletoPayload {
+  boleto: Boleto
+  clientMutationId: String
+}
+
+"Updates a Boleto."
+input updateBoletoInput {
+  id: ID!
+  recorrido: String
+  cliente: String
+  legacyId: String
+  venta: String
+  asiento: String
+  servicio: String
+  label: String
+  createdAt: Date
+
+  "Returns updatedAt."
+  updatedAt: Date
+  status: String
+  clientMutationId: String
+}
+
+"Updates a Boleto."
+type updateBoletoPayload {
+  boleto: Boleto
+  clientMutationId: String
+}
+
+"Deletes a Boleto."
+input deleteBoletoInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a Boleto."
+type deleteBoletoPayload {
+  boleto: Boleto
+  clientMutationId: String
+}
+
+"Creates a Bus."
+input createBusInput {
+  matricula: String!
+  gama: String
+  empresa: String!
+  asientos: [String]
+  piloto: String
+  pilotoAux: String
+  marca: String
+  codigo: String!
+  anoFabricacion: Int!
+  numeroSeguro: String
+  fechaVencimientoTarjetaOperaciones: Date
+  numeroTarjetaRodaje: String
+  numeroTarjetaOperaciones: String
+  descripcion: String
+  label: String
+  clientMutationId: String
+}
+
+"Creates a Bus."
+type createBusPayload {
+  bus: Bus
+  clientMutationId: String
+}
+
+"Updates a Bus."
+input updateBusInput {
+  id: ID!
+  matricula: String
+  gama: String
+  empresa: String
+  asientos: [String]
+  piloto: String
+  pilotoAux: String
+  marca: String
+  codigo: String
+  anoFabricacion: Int
+  numeroSeguro: String
+  fechaVencimientoTarjetaOperaciones: Date
+  numeroTarjetaRodaje: String
+  numeroTarjetaOperaciones: String
+  descripcion: String
+  label: String
+  clientMutationId: String
+}
+
+"Updates a Bus."
+type updateBusPayload {
+  bus: Bus
+  clientMutationId: String
+}
+
+"Deletes a Bus."
+input deleteBusInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a Bus."
+type deleteBusPayload {
+  bus: Bus
+  clientMutationId: String
+}
+
+"Creates a BusMarca."
+input createBusMarcaInput {
+  label: String
+  clientMutationId: String
+}
+
+"Creates a BusMarca."
+type createBusMarcaPayload {
+  busMarca: BusMarca
+  clientMutationId: String
+}
+
+"Updates a BusMarca."
+input updateBusMarcaInput {
+  id: ID!
+  label: String
+  clientMutationId: String
+}
+
+"Updates a BusMarca."
+type updateBusMarcaPayload {
+  busMarca: BusMarca
+  clientMutationId: String
+}
+
+"Deletes a BusMarca."
+input deleteBusMarcaInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a BusMarca."
+type deleteBusMarcaPayload {
+  busMarca: BusMarca
+  clientMutationId: String
+}
+
+"Creates a Cliente."
+input createClienteInput {
+  nombre: String!
+  apellido: String
+  email: String
+  nit: String
+  telefono: String
+  direccion: String
+  localidad: String
+  label: String
+  createdAt: Date
+
+  "Returns updatedAt."
+  updatedAt: Date
+  status: String
+  clientMutationId: String
+}
+
+"Creates a Cliente."
+type createClientePayload {
+  cliente: Cliente
+  clientMutationId: String
+}
+
+"Updates a Cliente."
+input updateClienteInput {
+  id: ID!
+  nombre: String
+  apellido: String
+  email: String
+  nit: String
+  telefono: String
+  direccion: String
+  localidad: String
+  label: String
+  createdAt: Date
+
+  "Returns updatedAt."
+  updatedAt: Date
+  status: String
+  clientMutationId: String
+}
+
+"Updates a Cliente."
+type updateClientePayload {
+  cliente: Cliente
+  clientMutationId: String
+}
+
+"Deletes a Cliente."
+input deleteClienteInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a Cliente."
+type deleteClientePayload {
+  cliente: Cliente
+  clientMutationId: String
+}
+
+"Creates a CollectionFieldConfig."
+input createCollectionFieldConfigInput {
+  entityConfig: String
+  isSortable: Boolean
+  filterable: Boolean
+  field: String!
+  position: Int!
+  visible: Boolean
+  label: String
+  attrs: Iterable
+  clientMutationId: String
+}
+
+"Creates a CollectionFieldConfig."
+type createCollectionFieldConfigPayload {
+  collectionFieldConfig: CollectionFieldConfig
+  clientMutationId: String
+}
+
+"Updates a CollectionFieldConfig."
+input updateCollectionFieldConfigInput {
+  id: ID!
+  entityConfig: String
+  isSortable: Boolean
+  filterable: Boolean
+  field: String
+  position: Int
+  visible: Boolean
+  label: String
+  attrs: Iterable
+  clientMutationId: String
+}
+
+"Updates a CollectionFieldConfig."
+type updateCollectionFieldConfigPayload {
+  collectionFieldConfig: CollectionFieldConfig
+  clientMutationId: String
+}
+
+"Deletes a CollectionFieldConfig."
+input deleteCollectionFieldConfigInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a CollectionFieldConfig."
+type deleteCollectionFieldConfigPayload {
+  collectionFieldConfig: CollectionFieldConfig
+  clientMutationId: String
+}
+
+"Creates a Empresa."
+input createEmpresaInput {
+  nombre: String!
+  nit: String
+  direccion: String
+  telefono: String
+  email: String
+  ventas: [String]
+  label: String
+  clientMutationId: String
+}
+
+"Creates a Empresa."
+type createEmpresaPayload {
+  empresa: Empresa
+  clientMutationId: String
+}
+
+"Updates a Empresa."
+input updateEmpresaInput {
+  id: ID!
+  nombre: String
+  nit: String
+  direccion: String
+  telefono: String
+  email: String
+  ventas: [String]
+  label: String
+  clientMutationId: String
+}
+
+"Updates a Empresa."
+type updateEmpresaPayload {
+  empresa: Empresa
+  clientMutationId: String
+}
+
+"Deletes a Empresa."
+input deleteEmpresaInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a Empresa."
+type deleteEmpresaPayload {
+  empresa: Empresa
+  clientMutationId: String
+}
+
+"Creates a Enclave."
+input createEnclaveInput {
+  nombre: String!
+  direccion: String
+  latitud: String
+  longitud: String
+  ventas: [String]
+  label: String
+  clientMutationId: String
+}
+
+"Creates a Enclave."
+type createEnclavePayload {
+  enclave: Enclave
+  clientMutationId: String
+}
+
+"Updates a Enclave."
+input updateEnclaveInput {
+  id: ID!
+  nombre: String
+  direccion: String
+  latitud: String
+  longitud: String
+  ventas: [String]
+  label: String
+  clientMutationId: String
+}
+
+"Updates a Enclave."
+type updateEnclavePayload {
+  enclave: Enclave
+  clientMutationId: String
+}
+
+"Deletes a Enclave."
+input deleteEnclaveInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a Enclave."
+type deleteEnclavePayload {
+  enclave: Enclave
+  clientMutationId: String
+}
+
+"Updates a EntityConfiguration."
+input updateEntityConfigurationInput {
+  id: ID!
+  entityClass: String
+  collectionFieldConfig: [String]
+  formFields: [String]
+  icon: String
+  clientMutationId: String
+}
+
+"Updates a EntityConfiguration."
+type updateEntityConfigurationPayload {
+  entityConfiguration: EntityConfiguration
+  clientMutationId: String
+}
+
+"UpdateWithRelationss a EntityConfiguration."
+input updateWithRelationsEntityConfigurationInput {
+  "IRI o ID de la entidad (ej: \"/api/entity_configurations/97\")"
+  entityClass: String!
+  formFields: [updateFormFieldConfigInput]
+  collectionFieldConfig: [updateCollectionFieldConfigInput]
+  clientMutationId: String
+}
+
+"Updates a FormFieldConfig."
+input updateFormFieldConfigInput {
+  id: ID!
+  groupName: String
+  entityConfig: String
+  field: String
+  position: Int
+  visible: Boolean
+  label: String
+  attrs: Iterable
+  data: Iterable
+  clientMutationId: String
+}
+
+"UpdateWithRelationss a EntityConfiguration."
+type updateWithRelationsEntityConfigurationPayload {
+  entityConfiguration: EntityConfiguration
+  clientMutationId: String
+}
+
+"Creates a Estacion."
+input createEstacionInput {
+  label: String
+  nombre: String!
+  direccion: String
+  latitud: String
+  longitud: String
+  ventas: [String]
+  clientMutationId: String
+}
+
+"Creates a Estacion."
+type createEstacionPayload {
+  estacion: Estacion
+  clientMutationId: String
+}
+
+"Updates a Estacion."
+input updateEstacionInput {
+  id: ID!
+  label: String
+  nombre: String
+  direccion: String
+  latitud: String
+  longitud: String
+  ventas: [String]
+  clientMutationId: String
+}
+
+"Updates a Estacion."
+type updateEstacionPayload {
+  estacion: Estacion
+  clientMutationId: String
+}
+
+"Deletes a Estacion."
+input deleteEstacionInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a Estacion."
+type deleteEstacionPayload {
+  estacion: Estacion
+  clientMutationId: String
+}
+
+"Updates a Factura."
+input updateFacturaInput {
+  id: ID!
+  dte: Int
+  serie: String
+  fecha: Date
+  emisorNit: String
+  emisorNombre: String
+  establecimientoCodigo: String
+  emisorNombreComercial: String
+  receptopNit: String
+  receptorNombre: String
+  createdAt: Date
+
+  "Returns updatedAt."
+  updatedAt: Date
+  clientMutationId: String
+}
+
+"Updates a Factura."
+type updateFacturaPayload {
+  factura: Factura
+  clientMutationId: String
+}
+
+"Deletes a Factura."
+input deleteFacturaInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a Factura."
+type deleteFacturaPayload {
+  factura: Factura
+  clientMutationId: String
+}
+
+"Creates a Factura."
+input createFacturaInput {
+  dte: Int!
+  serie: String!
+  fecha: Date!
+  emisorNit: String
+  emisorNombre: String!
+  establecimientoCodigo: String
+  emisorNombreComercial: String
+  receptopNit: String!
+  receptorNombre: String!
+  createdAt: Date
+
+  "Returns updatedAt."
+  updatedAt: Date
+  clientMutationId: String
+}
+
+"Creates a Factura."
+type createFacturaPayload {
+  factura: Factura
+  clientMutationId: String
+}
+
+"Creates a FormFieldConfig."
+input createFormFieldConfigInput {
+  groupName: String
+  entityConfig: String
+  field: String!
+  position: Int!
+  visible: Boolean
+  label: String
+  attrs: Iterable
+  data: Iterable!
+  clientMutationId: String
+}
+
+"Creates a FormFieldConfig."
+type createFormFieldConfigPayload {
+  formFieldConfig: FormFieldConfig
+  clientMutationId: String
+}
+
+"Updates a FormFieldConfig."
+type updateFormFieldConfigPayload {
+  formFieldConfig: FormFieldConfig
+  clientMutationId: String
+}
+
+"Deletes a FormFieldConfig."
+input deleteFormFieldConfigInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a FormFieldConfig."
+type deleteFormFieldConfigPayload {
+  formFieldConfig: FormFieldConfig
+  clientMutationId: String
+}
+
+"Creates a Icon."
+input createIconInput {
+  icon: String!
+  name: String
+  label: String
+  clientMutationId: String
+}
+
+"Creates a Icon."
+type createIconPayload {
+  icon: Icon
+  clientMutationId: String
+}
+
+"Updates a Icon."
+input updateIconInput {
+  id: ID!
+  icon: String
+  name: String
+  label: String
+  clientMutationId: String
+}
+
+"Updates a Icon."
+type updateIconPayload {
+  icon: Icon
+  clientMutationId: String
+}
+
+"Deletes a Icon."
+input deleteIconInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a Icon."
+type deleteIconPayload {
+  icon: Icon
+  clientMutationId: String
+}
+
+"Creates a LayoutProfile."
+input createLayoutProfileInput {
+  enabled: Boolean!
+  layoutSchema: String!
+  roleAssignments: [String]
+  usuarioAssignments: [String]
+  nombre: String
+  nota: String
+  label: String
+  status: String
+  createdAt: Date
+
+  "Returns updatedAt."
+  updatedAt: Date
+  clientMutationId: String
+}
+
+"Creates a LayoutProfile."
+type createLayoutProfilePayload {
+  layoutProfile: LayoutProfile
+  clientMutationId: String
+}
+
+"Updates a LayoutProfile."
+input updateLayoutProfileInput {
+  id: ID!
+  enabled: Boolean
+  layoutSchema: String
+  roleAssignments: [String]
+  usuarioAssignments: [String]
+  nombre: String
+  nota: String
+  label: String
+  status: String
+  createdAt: Date
+
+  "Returns updatedAt."
+  updatedAt: Date
+  clientMutationId: String
+}
+
+"Updates a LayoutProfile."
+type updateLayoutProfilePayload {
+  layoutProfile: LayoutProfile
+  clientMutationId: String
+}
+
+"Deletes a LayoutProfile."
+input deleteLayoutProfileInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a LayoutProfile."
+type deleteLayoutProfilePayload {
+  layoutProfile: LayoutProfile
+  clientMutationId: String
+}
+
+"Creates a LayoutProfileRole."
+input createLayoutProfileRoleInput {
+  layoutProfile: String!
+  role: String!
+  position: Int!
+  label: String
+  clientMutationId: String
+}
+
+"Creates a LayoutProfileRole."
+type createLayoutProfileRolePayload {
+  layoutProfileRole: LayoutProfileRole
+  clientMutationId: String
+}
+
+"Updates a LayoutProfileRole."
+input updateLayoutProfileRoleInput {
+  id: ID!
+  layoutProfile: String
+  role: String
+  position: Int
+  label: String
+  clientMutationId: String
+}
+
+"Updates a LayoutProfileRole."
+type updateLayoutProfileRolePayload {
+  layoutProfileRole: LayoutProfileRole
+  clientMutationId: String
+}
+
+"Deletes a LayoutProfileRole."
+input deleteLayoutProfileRoleInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a LayoutProfileRole."
+type deleteLayoutProfileRolePayload {
+  layoutProfileRole: LayoutProfileRole
+  clientMutationId: String
+}
+
+"Creates a LayoutProfileUsuario."
+input createLayoutProfileUsuarioInput {
+  layoutProfile: String!
+  usuario: String!
+  position: Int!
+  label: String
+  clientMutationId: String
+}
+
+"Creates a LayoutProfileUsuario."
+type createLayoutProfileUsuarioPayload {
+  layoutProfileUsuario: LayoutProfileUsuario
+  clientMutationId: String
+}
+
+"Updates a LayoutProfileUsuario."
+input updateLayoutProfileUsuarioInput {
+  id: ID!
+  layoutProfile: String
+  usuario: String
+  position: Int
+  label: String
+  clientMutationId: String
+}
+
+"Updates a LayoutProfileUsuario."
+type updateLayoutProfileUsuarioPayload {
+  layoutProfileUsuario: LayoutProfileUsuario
+  clientMutationId: String
+}
+
+"Deletes a LayoutProfileUsuario."
+input deleteLayoutProfileUsuarioInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a LayoutProfileUsuario."
+type deleteLayoutProfileUsuarioPayload {
+  layoutProfileUsuario: LayoutProfileUsuario
+  clientMutationId: String
+}
+
+"Creates a LayoutSchema."
+input createLayoutSchemaInput {
+  area: LayoutArea!
+  items: [String]
+  nombre: String
+  nota: String
+  label: String
+  status: String
+  createdAt: Date
+
+  "Returns updatedAt."
+  updatedAt: Date
+  clientMutationId: String
+}
+
+"Creates a LayoutSchema."
+type createLayoutSchemaPayload {
+  layoutSchema: LayoutSchema
+  clientMutationId: String
+}
+
+"Updates a LayoutSchema."
+input updateLayoutSchemaInput {
+  id: ID!
+  area: LayoutArea
+  items: [String]
+  nombre: String
+  nota: String
+  label: String
+  status: String
+  createdAt: Date
+
+  "Returns updatedAt."
+  updatedAt: Date
+  clientMutationId: String
+}
+
+"Updates a LayoutSchema."
+type updateLayoutSchemaPayload {
+  layoutSchema: LayoutSchema
+  clientMutationId: String
+}
+
+"Deletes a LayoutSchema."
+input deleteLayoutSchemaInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a LayoutSchema."
+type deleteLayoutSchemaPayload {
+  layoutSchema: LayoutSchema
+  clientMutationId: String
+}
+
+"Creates a LayoutSchemaItem."
+input createLayoutSchemaItemInput {
+  layoutSchema: String!
+  vueRoute: String!
+  position: Int!
+  label: String
+  clientMutationId: String
+}
+
+"Creates a LayoutSchemaItem."
+type createLayoutSchemaItemPayload {
+  layoutSchemaItem: LayoutSchemaItem
+  clientMutationId: String
+}
+
+"Updates a LayoutSchemaItem."
+input updateLayoutSchemaItemInput {
+  id: ID!
+  layoutSchema: String
+  vueRoute: String
+  position: Int
+  label: String
+  clientMutationId: String
+}
+
+"Updates a LayoutSchemaItem."
+type updateLayoutSchemaItemPayload {
+  layoutSchemaItem: LayoutSchemaItem
+  clientMutationId: String
+}
+
+"Deletes a LayoutSchemaItem."
+input deleteLayoutSchemaItemInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a LayoutSchemaItem."
+type deleteLayoutSchemaItemPayload {
+  layoutSchemaItem: LayoutSchemaItem
+  clientMutationId: String
+}
+
+"Creates a Localidad."
+input createLocalidadInput {
+  nombre: String!
+  nacion: String
+  label: String
+  clientMutationId: String
+}
+
+"Creates a Localidad."
+type createLocalidadPayload {
+  localidad: Localidad
+  clientMutationId: String
+}
+
+"Updates a Localidad."
+input updateLocalidadInput {
+  id: ID!
+  nombre: String
+  nacion: String
+  label: String
+  clientMutationId: String
+}
+
+"Updates a Localidad."
+type updateLocalidadPayload {
+  localidad: Localidad
+  clientMutationId: String
+}
+
+"Deletes a Localidad."
+input deleteLocalidadInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a Localidad."
+type deleteLocalidadPayload {
+  localidad: Localidad
+  clientMutationId: String
+}
+
+"Creates a Nacion."
+input createNacionInput {
+  nombre: String!
+  label: String
+  clientMutationId: String
+}
+
+"Creates a Nacion."
+type createNacionPayload {
+  nacion: Nacion
+  clientMutationId: String
+}
+
+"Updates a Nacion."
+input updateNacionInput {
+  id: ID!
+  nombre: String
+  label: String
+  clientMutationId: String
+}
+
+"Updates a Nacion."
+type updateNacionPayload {
+  nacion: Nacion
+  clientMutationId: String
+}
+
+"Deletes a Nacion."
+input deleteNacionInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a Nacion."
+type deleteNacionPayload {
+  nacion: Nacion
+  clientMutationId: String
+}
+
+"Creates a Parada."
+input createParadaInput {
+  label: String
+  nombre: String!
+  direccion: String
+  latitud: String
+  longitud: String
+  ventas: [String]
+  clientMutationId: String
+}
+
+"Creates a Parada."
+type createParadaPayload {
+  parada: Parada
+  clientMutationId: String
+}
+
+"Updates a Parada."
+input updateParadaInput {
+  id: ID!
+  label: String
+  nombre: String
+  direccion: String
+  latitud: String
+  longitud: String
+  ventas: [String]
+  clientMutationId: String
+}
+
+"Updates a Parada."
+type updateParadaPayload {
+  parada: Parada
+  clientMutationId: String
+}
+
+"Deletes a Parada."
+input deleteParadaInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a Parada."
+type deleteParadaPayload {
+  parada: Parada
+  clientMutationId: String
+}
+
+"Creates a Permiso."
+input createPermisoInput {
+  roles: [String]
+  parents: [String]
+  children: [String]
+  actions: [String]
+  nombre: String
+  nota: String
+  label: String
+  status: String
+  clientMutationId: String
+}
+
+"Creates a Permiso."
+type createPermisoPayload {
+  permiso: Permiso
+  clientMutationId: String
+}
+
+"Updates a Permiso."
+input updatePermisoInput {
+  id: ID!
+  roles: [String]
+  parents: [String]
+  children: [String]
+  actions: [String]
+  nombre: String
+  nota: String
+  label: String
+  status: String
+  clientMutationId: String
+}
+
+"Updates a Permiso."
+type updatePermisoPayload {
+  permiso: Permiso
+  clientMutationId: String
+}
+
+"Deletes a Permiso."
+input deletePermisoInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a Permiso."
+type deletePermisoPayload {
+  permiso: Permiso
+  clientMutationId: String
+}
+
+"Creates a Piloto."
+input createPilotoInput {
+  nombre: String!
+  apellido: String
+  email: String
+  nit: String
+  telefono: String
+  direccion: String
+  localidad: String
+  label: String
+  createdAt: Date
+
+  "Returns updatedAt."
+  updatedAt: Date
+  status: String
+  clientMutationId: String
+}
+
+"Creates a Piloto."
+type createPilotoPayload {
+  piloto: Piloto
+  clientMutationId: String
+}
+
+"Updates a Piloto."
+input updatePilotoInput {
+  id: ID!
+  nombre: String
+  apellido: String
+  email: String
+  nit: String
+  telefono: String
+  direccion: String
+  localidad: String
+  label: String
+  createdAt: Date
+
+  "Returns updatedAt."
+  updatedAt: Date
+  status: String
+  clientMutationId: String
+}
+
+"Updates a Piloto."
+type updatePilotoPayload {
+  piloto: Piloto
+  clientMutationId: String
+}
+
+"Deletes a Piloto."
+input deletePilotoInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a Piloto."
+type deletePilotoPayload {
+  piloto: Piloto
+  clientMutationId: String
+}
+
+"Creates a Recorrido."
+input createRecorridoInput {
+  nombre: String!
+  empresa: String
+  bus: String
+  trayecto: String
+  subrecorridos: [String]
+  label: String
+  clientMutationId: String
+}
+
+"Creates a Recorrido."
+type createRecorridoPayload {
+  recorrido: Recorrido
+  clientMutationId: String
+}
+
+"Updates a Recorrido."
+input updateRecorridoInput {
+  id: ID!
+  nombre: String
+  empresa: String
+  bus: String
+  trayecto: String
+  subrecorridos: [String]
+  label: String
+  clientMutationId: String
+}
+
+"Updates a Recorrido."
+type updateRecorridoPayload {
+  recorrido: Recorrido
+  clientMutationId: String
+}
+
+"Deletes a Recorrido."
+input deleteRecorridoInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a Recorrido."
+type deleteRecorridoPayload {
+  recorrido: Recorrido
+  clientMutationId: String
+}
+
+"Updates a RecorridoMatrioska."
+input updateRecorridoMatrioskaInput {
+  id: ID!
+  recorrido: String
+  subrecorridos: String
+  posicion: Int
+  clientMutationId: String
+}
+
+"Updates a RecorridoMatrioska."
+type updateRecorridoMatrioskaPayload {
+  recorridoMatrioska: RecorridoMatrioska
+  clientMutationId: String
+}
+
+"Deletes a RecorridoMatrioska."
+input deleteRecorridoMatrioskaInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a RecorridoMatrioska."
+type deleteRecorridoMatrioskaPayload {
+  recorridoMatrioska: RecorridoMatrioska
+  clientMutationId: String
+}
+
+"Creates a RecorridoMatrioska."
+input createRecorridoMatrioskaInput {
+  recorrido: String!
+  subrecorridos: String!
+  posicion: Int
+  clientMutationId: String
+}
+
+"Creates a RecorridoMatrioska."
+type createRecorridoMatrioskaPayload {
+  recorridoMatrioska: RecorridoMatrioska
+  clientMutationId: String
+}
+
+"Creates a Role."
+input createRoleInput {
+  nombre: String!
+  parents: [String]
+  children: [String]
+  permisos: [String]
+  actions: [String]
+  label: String
+  clientMutationId: String
+}
+
+"Creates a Role."
+type createRolePayload {
+  role: Role
+  clientMutationId: String
+}
+
+"Updates a Role."
+input updateRoleInput {
+  id: ID!
+  nombre: String
+  parents: [String]
+  children: [String]
+  permisos: [String]
+  actions: [String]
+  label: String
+  clientMutationId: String
+}
+
+"Updates a Role."
+type updateRolePayload {
+  role: Role
+  clientMutationId: String
+}
+
+"Deletes a Role."
+input deleteRoleInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a Role."
+type deleteRolePayload {
+  role: Role
+  clientMutationId: String
+}
+
+"Creates a Servicio."
+input createServicioInput {
+  fecha: Date!
+  legacyId: String
+  empresa: String
+  recorrido: String!
+  bus: String
+  piloto: String
+  boletos: [String]
+  label: String
+  createdAt: Date
+
+  "Returns updatedAt."
+  updatedAt: Date
+  status: String
+  clientMutationId: String
+}
+
+"Creates a Servicio."
+type createServicioPayload {
+  servicio: Servicio
+  clientMutationId: String
+}
+
+"Updates a Servicio."
+input updateServicioInput {
+  id: ID!
+  fecha: Date
+  legacyId: String
+  empresa: String
+  recorrido: String
+  bus: String
+  piloto: String
+  boletos: [String]
+  label: String
+  createdAt: Date
+
+  "Returns updatedAt."
+  updatedAt: Date
+  status: String
+  clientMutationId: String
+}
+
+"Updates a Servicio."
+type updateServicioPayload {
+  servicio: Servicio
+  clientMutationId: String
+}
+
+"Deletes a Servicio."
+input deleteServicioInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a Servicio."
+type deleteServicioPayload {
+  servicio: Servicio
+  clientMutationId: String
+}
+
+"Creates a Status."
+input createStatusInput {
+  nombre: String!
+  label: String
+  clientMutationId: String
+}
+
+"Creates a Status."
+type createStatusPayload {
+  status: Status
+  clientMutationId: String
+}
+
+"Updates a Status."
+input updateStatusInput {
+  id: ID!
+  nombre: String
+  label: String
+  clientMutationId: String
+}
+
+"Updates a Status."
+type updateStatusPayload {
+  status: Status
+  clientMutationId: String
+}
+
+"Deletes a Status."
+input deleteStatusInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a Status."
+type deleteStatusPayload {
+  status: Status
+  clientMutationId: String
+}
+
+"Creates a Trayecto."
+input createTrayectoInput {
+  origen: String!
+  destino: String!
+  distanciaKm: String
+  duracionEstimadaMinutos: Int
+  activo: Boolean!
+  legacyId: String
+  recorridos: [String]
+  label: String
+  clientMutationId: String
+}
+
+"Creates a Trayecto."
+type createTrayectoPayload {
+  trayecto: Trayecto
+  clientMutationId: String
+}
+
+"Updates a Trayecto."
+input updateTrayectoInput {
+  id: ID!
+  origen: String
+  destino: String
+  distanciaKm: String
+  duracionEstimadaMinutos: Int
+  activo: Boolean
+  legacyId: String
+  recorridos: [String]
+  label: String
+  clientMutationId: String
+}
+
+"Updates a Trayecto."
+type updateTrayectoPayload {
+  trayecto: Trayecto
+  clientMutationId: String
+}
+
+"Deletes a Trayecto."
+input deleteTrayectoInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a Trayecto."
+type deleteTrayectoPayload {
+  trayecto: Trayecto
+  clientMutationId: String
+}
+
+"Creates a Usuario."
+input createUsuarioInput {
+  username: String!
+  plainPassword: String
+  apiTokens: [String]
+  userRoles: [String]
+  permisos: [String]
+  directActions: [String]
+  deniedActions: [String]
+  ventas: [String]
+  nombre: String!
+  apellido: String
+  email: String
+  nit: String
+  telefono: String
+  direccion: String
+  localidad: String
+  label: String
+  createdAt: Date
+
+  "Returns updatedAt."
+  updatedAt: Date
+  status: String
+  clientMutationId: String
+}
+
+"Creates a Usuario."
+type createUsuarioPayload {
+  usuario: Usuario
+  clientMutationId: String
+}
+
+"Updates a Usuario."
+input updateUsuarioInput {
+  id: ID!
+  username: String
+  plainPassword: String
+  apiTokens: [String]
+  userRoles: [String]
+  permisos: [String]
+  directActions: [String]
+  deniedActions: [String]
+  ventas: [String]
+  nombre: String
+  apellido: String
+  email: String
+  nit: String
+  telefono: String
+  direccion: String
+  localidad: String
+  label: String
+  createdAt: Date
+
+  "Returns updatedAt."
+  updatedAt: Date
+  status: String
+  clientMutationId: String
+}
+
+"Updates a Usuario."
+type updateUsuarioPayload {
+  usuario: Usuario
+  clientMutationId: String
+}
+
+"Deletes a Usuario."
+input deleteUsuarioInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a Usuario."
+type deleteUsuarioPayload {
+  usuario: Usuario
+  clientMutationId: String
+}
+
+"Creates a Venta."
+input createVentaInput {
+  usuario: String!
+  boletos: [String]
+  factura: String
+  enclave: String
+  empresa: String
+  label: String
+  createdAt: Date
+
+  "Returns updatedAt."
+  updatedAt: Date
+  status: String
+  clientMutationId: String
+}
+
+"Creates a Venta."
+type createVentaPayload {
+  venta: Venta
+  clientMutationId: String
+}
+
+"Updates a Venta."
+input updateVentaInput {
+  id: ID!
+  usuario: String
+  boletos: [String]
+  factura: String
+  enclave: String
+  empresa: String
+  label: String
+  createdAt: Date
+
+  "Returns updatedAt."
+  updatedAt: Date
+  status: String
+  clientMutationId: String
+}
+
+"Updates a Venta."
+type updateVentaPayload {
+  venta: Venta
+  clientMutationId: String
+}
+
+"Deletes a Venta."
+input deleteVentaInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a Venta."
+type deleteVentaPayload {
+  venta: Venta
+  clientMutationId: String
+}
+
+"Creates a VueRoute."
+input createVueRouteInput {
+  nombre: String!
+  vueRouteName: String
+  path: String
+  params: Iterable
+  icon: String
+  roles: [String]
+  usuariosPermitidos: [String]
+  usuariosDenegados: [String]
+  vueRoute: String
+  hijos: [String]
+  clientMutationId: String
+}
+
+"Creates a VueRoute."
+type createVueRoutePayload {
+  vueRoute: VueRoute
+  clientMutationId: String
+}
+
+"Updates a VueRoute."
+input updateVueRouteInput {
+  id: ID!
+  nombre: String
+  vueRouteName: String
+  path: String
+  params: Iterable
+  icon: String
+  roles: [String]
+  usuariosPermitidos: [String]
+  usuariosDenegados: [String]
+  vueRoute: String
+  hijos: [String]
+  clientMutationId: String
+}
+
+"Updates a VueRoute."
+type updateVueRoutePayload {
+  vueRoute: VueRoute
+  clientMutationId: String
+}
+
+"Deletes a VueRoute."
+input deleteVueRouteInput {
+  id: ID!
+  clientMutationId: String
+}
+
+"Deletes a VueRoute."
+type deleteVueRoutePayload {
+  vueRoute: VueRoute
+  clientMutationId: String
+}

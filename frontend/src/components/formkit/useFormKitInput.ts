@@ -11,8 +11,8 @@ export function useFormKitInput(props: FormKitInputProps) {
     props.context.node.input(value);
   };
 
-  const blur = (e?: FocusEvent) => {
-    props.context.handlers.blur(e);
+  const blur = (e?: unknown) => {
+    props.context.handlers.blur(e as FocusEvent | undefined);
   };
 
   const invalid = computed(() => props.context.state.invalid === true);

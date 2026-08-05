@@ -1,44 +1,59 @@
 erDiagram
     %% ===== CONFIGURACION =====
-    CollectionFieldConfig {
-    }
     FormFieldConfig {
+    }
+    CollectionFieldConfig {
     }
     EntityConfiguration {
         string string PK NOT NULL
     }
     %% ===== FLOTA =====
-    Bus {
-        string string NOT NULL
-        string int NOT NULL
-    }
     Piloto {
         string string NOT NULL
-    }
-    Asiento {
     }
     BusMarca {
         string string NOT NULL
     }
     Enclave {
     }
-    %% ===== INFRAESTRUCTURA =====
-    IconCategory {
+    Asiento {
     }
+    Bus {
+        string string NOT NULL
+        string int NOT NULL
+    }
+    %% ===== INFRAESTRUCTURA =====
     Icon {
     }
     %% ===== ORGANIZACION =====
-    Localidad {
-    }
     Nacion {
-    }
-    Parada {
-    }
-    Empresa {
     }
     Estacion {
     }
+    Localidad {
+    }
+    Empresa {
+    }
+    Parada {
+    }
     %% ===== OTROS =====
+    LayoutProfile {
+        string bool NOT NULL
+    }
+    LayoutSchemaItem {
+        string int NOT NULL
+    }
+    VueRoute {
+    }
+    LayoutSchema {
+        string LayoutArea NOT NULL
+    }
+    LayoutProfileUsuario {
+        string int NOT NULL
+    }
+    LayoutProfileRole {
+        string int NOT NULL
+    }
     Permiso {
     }
     %% ===== PERSONAL =====
@@ -48,45 +63,47 @@ erDiagram
     %% ===== SEGURIDAD =====
     Action {
     }
-    Role {
-    }
     ApiToken {
         string string NOT NULL
     }
+    Role {
+    }
     %% ===== TRANSPORTE =====
-    Boleto {
+    Status {
     }
     Servicio {
     }
     Factura {
     }
-    Status {
+    Cliente {
     }
-    Recorrido {
+    Boleto {
     }
     Trayecto {
     }
-    Cliente {
-    }
-    RecorridoMatrioska {
+    Recorrido {
     }
     Venta {
     }
+    RecorridoMatrioska {
+    }
     %% ===== RELATIONSHIPS =====
-    Usuario ||--o{ Collection : "Collection"
-    Usuario ||--o{ Collection : "Collection"
-    Usuario }{o--o{ Collection : "Collection"
-    Usuario }{o--o{ Collection : "Collection"
+    VueRoute ||--o{ Collection : "Collection"
+    VueRoute }{o--o{ Collection : "Collection"
+    Action }{o--o{ Collection : "Collection"
+    Action }{o--o{ Collection : "Collection"
     Servicio ||--o{ Collection : "Collection"
-    Bus ||--o{ Collection : "Collection"
-    Action }{o--o{ Collection : "Collection"
-    Action }{o--o{ Collection : "Collection"
-    Recorrido ||--o{ Collection : "Collection"
+    Usuario ||--o{ Collection : "Collection"
+    Usuario ||--o{ Collection : "Collection"
+    Usuario }{o--o{ Collection : "Collection"
+    Usuario }{o--o{ Collection : "Collection"
+    FormFieldConfig }|--|| EntityConfiguration : "EntityConfiguration"
+    Enclave ||--o{ Collection : "Collection"
     Trayecto ||--o{ Collection : "Collection"
     Trayecto }{o--o{ Collection : "Collection"
-    Empresa ||--o{ Collection : "Collection"
-    Empresa ||--o{ Collection : "Collection"
+    Recorrido ||--o{ Collection : "Collection"
     Venta ||--o{ Collection : "Collection"
-    Enclave ||--o{ Collection : "Collection"
+    Empresa ||--o{ Collection : "Collection"
+    Empresa ||--o{ Collection : "Collection"
     CollectionFieldConfig }|--|| EntityConfiguration : "EntityConfiguration"
-    FormFieldConfig }|--|| EntityConfiguration : "EntityConfiguration"
+    Bus ||--o{ Collection : "Collection"

@@ -11,6 +11,11 @@
 | `make migrar-entities` | make migrar-entities entities='Empresa Localidad Estacion Piloto Marca Bus Asiento cliente usuario trayecto tarifa' |
 | `make migrate` | Run pending migrations |
 | `make migration` | Create a new migration |
+| `make mon-debug` | Start full stack (app + monitoring) with Xdebug |
+| `make mon-down` | Stop monitoring only (app stack stays up) |
+| `make mon-logs` | Show monitoring logs |
+| `make mon-restart` | Restart monitoring |
+| `make mon-up` | Start monitoring only (cAdvisor:8080, Prometheus:9090, Grafana:3000). Safe to run alongside `make dev` |
 | `make reset-db` | Reset database (drop, create, migrations, then migrate old data) |
 | `make sincronizar` | Sync new tickets from old FDN system |
 | `make test` | Run all tests |

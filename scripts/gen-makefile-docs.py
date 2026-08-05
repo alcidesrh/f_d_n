@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
 Generate Makefile documentation from Makefile help parsing.
-Creates: docs/docs/makefile/*.md
+Creates: docs/makefile/*.md
 """
 import re
 import subprocess
 from pathlib import Path
 
-ROOT = Path(__file__).parent.parent.parent
+ROOT = Path(__file__).parent.parent
 MAKEFILE = ROOT / "Makefile"
-OUTPUT_DIR = ROOT / "docs" / "docs" / "makefile"
+OUTPUT_DIR = ROOT / "docs" / "makefile"
 
 CATEGORIES = {
     "docker": ["up", "build", "down", "check", "sh", "sqlserver", "kill", "start", "stop", "restart", "logs", "bash", "commands", "b", "d", "db_port", "debug-build", "debug", "dev", "restart_debug", "prod", "prod-build", "sf_sqlserver", "schema", "frontend-fdn-quasar-restart", "migrar", "clean"],

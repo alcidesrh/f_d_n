@@ -1,10 +1,10 @@
 # Estructura del Proyecto
 
 > Generado automáticamente: `make docs-gen-dirtree`
-> Raíz: `modelo`
+> Raíz: `f_d_n`
 
 ```text
-modelo/
+f_d_n/
 ├── .vscode/
 │   └── settings.json
 ├── backend/
@@ -53,6 +53,18 @@ modelo/
 │   │   ├── routes.yaml
 │   │   └── services.yaml
 │   ├── doc/
+│   │   ├── architecture/
+│   │   │   ├── directories.md
+│   │   │   └── overview.md
+│   │   ├── database/
+│   │   │   ├── erd.md
+│   │   │   └── overview.md
+│   │   ├── iam/
+│   │   │   └── overview.md
+│   │   ├── migration/
+│   │   │   └── overview.md
+│   │   ├── subdomains/
+│   │   │   └── overview.md
 │   │   └── README.md
 │   ├── docker/
 │   │   └── php/
@@ -66,11 +78,10 @@ modelo/
 │   │   ├── Caddyfile.dev
 │   │   └── docker-entrypoint.sh
 │   ├── migrations/
-│   │   ├── Version20260630180058.php
-│   │   ├── Version20260630180503.php
-│   │   ├── Version20260630195127.php
-│   │   ├── Version20260630223834.php
-│   │   └── Version20260701162009.php
+│   │   ├── Version20260709070901.php
+│   │   ├── Version20260717211434.php
+│   │   ├── Version20260723084919.php
+│   │   └── Version20260723095214.php
 │   ├── public/
 │   │   ├── bundles/
 │   │   │   └── apiplatform/
@@ -80,13 +91,14 @@ modelo/
 │   │   │   ├── Agnostic.php
 │   │   │   ├── ConfigVersions.php
 │   │   │   ├── ConfigVersionsProvider.php
+│   │   │   ├── EntityConfigurationByEntityClassProvider.php
 │   │   │   └── EntityConfigurationDto.php
 │   │   ├── Attribute/
 │   │   │   ├── ApiResourceBase.php
 │   │   │   ├── ApiResourceNoPagination.php
 │   │   │   └── ApiResourcePaginationPage.php
 │   │   ├── Command/
-│   │   │   ├── FetchIconsCommand.php
+│   │   │   ├── DebugGraphQlOpsCommand.php
 │   │   │   ├── MigracionCommand.php
 │   │   │   ├── MigrarCommand.php
 │   │   │   ├── MigrarEstaticosCommand.php
@@ -100,7 +112,8 @@ modelo/
 │   │   │   ├── EntityRecordCountsController.php
 │   │   │   ├── ListarUsuariosController.php
 │   │   │   ├── PermissionController.php
-│   │   │   └── SecurityController.php
+│   │   │   ├── SecurityController.php
+│   │   │   └── SyncVueRoutesController.php
 │   │   ├── DataFixtures/
 │   │   │   ├── ActionFixtures.php
 │   │   │   ├── PermisoFixtures.php
@@ -118,8 +131,8 @@ modelo/
 │   │   │   └── MetadataDTO.php
 │   │   ├── Entity/
 │   │   │   ├── Base/
-│   │   │   ├── Configuration/
 │   │   │   ├── Embeddable/
+│   │   │   ├── Enum/
 │   │   │   ├── Action.php
 │   │   │   ├── ApiToken.php
 │   │   │   ├── Asiento.php
@@ -127,12 +140,20 @@ modelo/
 │   │   │   ├── Bus.php
 │   │   │   ├── BusMarca.php
 │   │   │   ├── Cliente.php
+│   │   │   ├── CollectionFieldConfig.php
 │   │   │   ├── Empresa.php
 │   │   │   ├── Enclave.php
+│   │   │   ├── EntityConfiguration.php
 │   │   │   ├── Estacion.php
 │   │   │   ├── Factura.php
+│   │   │   ├── FieldConfig.php
+│   │   │   ├── FormFieldConfig.php
 │   │   │   ├── Icon.php
-│   │   │   ├── IconCategory.php
+│   │   │   ├── LayoutProfile.php
+│   │   │   ├── LayoutProfileRole.php
+│   │   │   ├── LayoutProfileUsuario.php
+│   │   │   ├── LayoutSchema.php
+│   │   │   ├── LayoutSchemaItem.php
 │   │   │   ├── Localidad.php
 │   │   │   ├── Nacion.php
 │   │   │   ├── Parada.php
@@ -145,7 +166,8 @@ modelo/
 │   │   │   ├── Status.php
 │   │   │   ├── Trayecto.php
 │   │   │   ├── Usuario.php
-│   │   │   └── Venta.php
+│   │   │   ├── Venta.php
+│   │   │   └── VueRoute.php
 │   │   ├── EntitySistemaFdn/
 │   │   │   ├── Alquiler.php
 │   │   │   ├── AsientoBus.php
@@ -261,6 +283,8 @@ modelo/
 │   │   │   └── VoucherInternet.php
 │   │   ├── Enum/
 │   │   │   └── TipoAsiento.php
+│   │   ├── Error/
+│   │   │   └── ErrorHandler.php
 │   │   ├── Filter/
 │   │   │   ├── IdPartialSearchFilter.php
 │   │   │   └── OrFilter.php
@@ -284,8 +308,8 @@ modelo/
 │   │   │   ├── EntityConfigurationRepository.php
 │   │   │   ├── EstacionRepository.php
 │   │   │   ├── FacturaRepository.php
-│   │   │   ├── IconCategoryRepository.php
 │   │   │   ├── IconRepository.php
+│   │   │   ├── LayoutSchemaRepository.php
 │   │   │   ├── LocalidadRepository.php
 │   │   │   ├── PermisoRepository.php
 │   │   │   ├── RecorridoMatrioskaRepository.php
@@ -294,9 +318,12 @@ modelo/
 │   │   │   ├── ServicioRepository.php
 │   │   │   ├── StatusRepository.php
 │   │   │   ├── UsuarioRepository.php
-│   │   │   └── VentaRepository.php
+│   │   │   ├── VentaRepository.php
+│   │   │   └── VueRouteRepository.php
 │   │   ├── Resolver/
 │   │   │   ├── CollectionResolver.php
+│   │   │   ├── DeleteMultipleMutationResolver.php
+│   │   │   ├── EntityConfigurationRefresh.php
 │   │   │   ├── UpdateEntityConfigurationFieldsResolver.php
 │   │   │   └── UserByUsernameResolver.php
 │   │   ├── Security/
@@ -312,7 +339,8 @@ modelo/
 │   │   │   ├── ConversorDivisas.php
 │   │   │   ├── EntityConfigSynchronizer.php
 │   │   │   ├── ServerSentEvent.php
-│   │   │   └── UsuarioPasswordHasher.php
+│   │   │   ├── UsuarioPasswordHasher.php
+│   │   │   └── VueRouteSynchronizer.php
 │   │   ├── Useful/
 │   │   │   └── Doctrine.php
 │   │   └── Kernel.php
@@ -334,249 +362,268 @@ modelo/
 │   ├── README.md
 │   └── symfony.lock
 ├── docs/
-│   ├── docs/
+│   ├── architecture/
+│   │   ├── c4/
+│   │   │   └── index.md
+│   │   ├── decisions/
+│   │   │   ├── ADR-001-api-platform-graphql.md
+│   │   │   ├── ADR-002-dual-entity-manager.md
+│   │   │   ├── ADR-003-flat-permission-set.md
+│   │   │   ├── ADR-004-dynamic-crud-store-factory.md
+│   │   │   ├── ADR-005-frankenphp-mercure.md
+│   │   │   ├── ADR-006-subdomains-bounded-contexts.md
+│   │   │   ├── ADR-007-formkit-custom-theme.md
+│   │   │   ├── ADR-008-legacy-migration-strategy.md
+│   │   │   ├── ADR-009-autoimport-system.md
+│   │   │   ├── ADR-010-dynamic-entity-config.md
+│   │   │   └── index.md
+│   │   └── overview.md
+│   ├── backend/
 │   │   ├── architecture/
-│   │   │   ├── c4/
-│   │   │   ├── decisions/
+│   │   │   ├── api-platform.md
+│   │   │   ├── doctrine-dual-em.md
+│   │   │   ├── mercure.md
+│   │   │   ├── messenger.md
 │   │   │   └── overview.md
-│   │   ├── backend/
-│   │   │   ├── architecture/
-│   │   │   ├── commands/
-│   │   │   ├── database/
-│   │   │   ├── graphql/
-│   │   │   ├── iam/
-│   │   │   ├── migration/
-│   │   │   ├── performance/
-│   │   │   ├── subdomains/
-│   │   │   └── testing/
-│   │   ├── docker/
-│   │   │   ├── commands.md
-│   │   │   ├── compose-reference.md
-│   │   │   ├── environments.md
+│   │   ├── commands/
+│   │   │   ├── fixtures.md
+│   │   │   ├── migration.md
 │   │   │   ├── overview.md
-│   │   │   └── troubleshooting.md
-│   │   ├── frontend/
-│   │   │   ├── architecture/
-│   │   │   ├── build-deploy/
-│   │   │   ├── components/
-│   │   │   ├── graphql/
-│   │   │   ├── modules/
-│   │   │   ├── patterns/
-│   │   │   ├── stores/
-│   │   │   └── styling/
-│   │   ├── makefile/
-│   │   │   ├── backend.md
-│   │   │   ├── docker.md
-│   │   │   ├── docs.md
-│   │   │   ├── frontend.md
-│   │   │   ├── other.md
+│   │   │   └── sync.md
+│   │   ├── database/
+│   │   │   ├── entity-map.md
+│   │   │   ├── entity-map.mmd
+│   │   │   ├── indexing.md
+│   │   │   ├── legacy-sqlserver.md
+│   │   │   ├── migrations.md
+│   │   │   ├── modeling-analysis.md
 │   │   │   └── overview.md
-│   │   ├── directory-structure.md
-│   │   ├── glossary.md
-│   │   ├── index.md
-│   │   └── technologies.md
-│   ├── scripts/
-│   │   ├── gen-dirtree.py
-│   │   ├── gen-entity-map.py
-│   │   ├── gen-erd.py
-│   │   ├── gen-makefile-docs.py
-│   │   ├── gen_dirtree.py
-│   │   └── validate-docs.sh
-│   └── mkdocs.yml
+│   │   ├── graphql/
+│   │   │   ├── nplus1.md
+│   │   │   ├── overview.md
+│   │   │   ├── resolvers.md
+│   │   │   └── schema.md
+│   │   ├── iam/
+│   │   │   ├── api-tokens.md
+│   │   │   ├── overview.md
+│   │   │   ├── permission-manager.md
+│   │   │   ├── permission-matrix.md
+│   │   │   └── voters.md
+│   │   ├── migration/
+│   │   │   ├── config.md
+│   │   │   ├── iam.md
+│   │   │   ├── overview.md
+│   │   │   ├── pipeline.md
+│   │   │   ├── static-entities.md
+│   │   │   └── tickets.md
+│   │   ├── performance/
+│   │   │   ├── caching.md
+│   │   │   ├── overview.md
+│   │   │   ├── profiling.md
+│   │   │   └── queries.md
+│   │   ├── subdomains/
+│   │   │   ├── configuracion/
+│   │   │   ├── flota/
+│   │   │   ├── general/
+│   │   │   ├── infraestructura/
+│   │   │   ├── personal/
+│   │   │   ├── seguridad/
+│   │   │   ├── transporte/
+│   │   │   ├── venta/
+│   │   │   └── overview.md
+│   │   └── testing/
+│   │       ├── fixtures.md
+│   │       ├── integration.md
+│   │       ├── overview.md
+│   │       └── unit.md
+│   ├── docker/
+│   │   ├── commands.md
+│   │   ├── compose-reference.md
+│   │   ├── environments.md
+│   │   ├── overview.md
+│   │   └── troubleshooting.md
+│   ├── frontend/
+│   │   ├── architecture/
+│   │   │   ├── boot-sequence.md
+│   │   │   ├── data-layer.md
+│   │   │   ├── dynamic-crud.md
+│   │   │   ├── overview.md
+│   │   │   └── routing.md
+│   │   ├── build-deploy/
+│   │   │   ├── docker.md
+│   │   │   ├── overview.md
+│   │   │   ├── production.md
+│   │   │   └── vite.md
+│   │   ├── components/
+│   │   │   ├── admin.md
+│   │   │   ├── auth.md
+│   │   │   ├── crud-collection.md
+│   │   │   ├── crud-form.md
+│   │   │   ├── dynamic.md
+│   │   │   ├── overview.md
+│   │   │   └── ui-commons.md
+│   │   ├── graphql/
+│   │   │   ├── apollo-config.md
+│   │   │   ├── codegen.md
+│   │   │   ├── links.md
+│   │   │   └── overview.md
+│   │   ├── modules/
+│   │   │   ├── configuracion.md
+│   │   │   ├── dashboard.md
+│   │   │   ├── flota.md
+│   │   │   ├── infraestructura.md
+│   │   │   ├── overview.md
+│   │   │   ├── personal.md
+│   │   │   ├── seguridad.md
+│   │   │   ├── transporte.md
+│   │   │   └── venta.md
+│   │   ├── patterns/
+│   │   │   ├── composables.md
+│   │   │   ├── dynamic-crud.md
+│   │   │   ├── formkit-metadata.md
+│   │   │   ├── i18n.md
+│   │   │   ├── overview.md
+│   │   │   └── unocss.md
+│   │   ├── stores/
+│   │   │   ├── autoimport.md
+│   │   │   ├── overview.md
+│   │   │   ├── schema.md
+│   │   │   ├── session.md
+│   │   │   └── store-factory.md
+│   │   └── styling/
+│   │       ├── colors.md
+│   │       ├── custom-rules.md
+│   │       ├── overview.md
+│   │       └── unocss-config.md
+│   ├── makefile/
+│   │   ├── backend.md
+│   │   ├── docker.md
+│   │   ├── docs.md
+│   │   ├── frontend.md
+│   │   ├── other.md
+│   │   └── overview.md
+│   ├── directory-structure.md
+│   ├── glossary.md
+│   ├── index.md
+│   └── technologies.md
 ├── frontend/
-│   ├── .opencode/
-│   │   ├── plans/
-│   │   │   └── dynamic-form-two-column.md
-│   │   └── package.json
 │   ├── .vscode/
 │   │   ├── extensions.json
 │   │   ├── launch.json
 │   │   └── settings.json
-│   ├── doc/
-│   │   └── README.md
+│   ├── e2e/
+│   │   ├── tsconfig.json
+│   │   └── vue.spec.ts
+│   ├── icons/
+│   │   ├── AppIcon.vue
+│   │   └── icon-paths.ts
+│   ├── packages/
+│   │   ├── graphql-orm-core/
+│   │   │   ├── src/
+│   │   │   └── test/
+│   │   └── graphql-orm-vue/
+│   │       └── src/
 │   ├── public/
 │   │   ├── fonts/
 │   │   │   ├── DiplomataSC-Regular.ttf
 │   │   │   └── FasterOne-Regular.ttf
-│   │   ├── icons/
 │   │   └── images/
 │   │       └── logos/
 │   ├── src/
 │   │   ├── assets/
-│   │   ├── boot/
-│   │   │   ├── .gitkeep
-│   │   │   ├── api-rest.ts
-│   │   │   ├── apollo.ts
-│   │   │   ├── formkit.ts
-│   │   │   ├── gsap.ts
-│   │   │   ├── i18n.ts
-│   │   │   ├── introspection.ts
-│   │   │   ├── middleware.ts
-│   │   │   ├── responsive.ts
-│   │   │   ├── server-response-listener.ts
-│   │   │   ├── static-data-gateway.ts
-│   │   │   └── unocss.ts
+│   │   │   ├── animations.css
+│   │   │   ├── color.css
+│   │   │   ├── content.css
+│   │   │   ├── fonts.css
+│   │   │   ├── header.css
+│   │   │   ├── main.css
+│   │   │   ├── sidebar.css
+│   │   │   ├── tailwind.css
+│   │   │   ├── theme-editor.css
+│   │   │   └── tokens.css
 │   │   ├── components/
-│   │   │   ├── admin/
 │   │   │   ├── common/
-│   │   │   ├── crud/
-│   │   │   ├── dynamic/
-│   │   │   ├── permiso/
-│   │   │   ├── preload/
-│   │   │   ├── role/
-│   │   │   ├── sidebar/
-│   │   │   ├── user/
-│   │   │   ├── Breadcrumbs.vue
-│   │   │   ├── ChangePasswordModal.vue
-│   │   │   ├── Clock.vue
-│   │   │   ├── Icon.vue
-│   │   │   ├── IconPicker.vue
-│   │   │   ├── Notify.vue
-│   │   │   ├── ProfilerFooter.vue
-│   │   │   ├── ResponsiveComponent.vue
-│   │   │   ├── ResponsiveLayout.vue
-│   │   │   ├── SidebarDrawer.vue
-│   │   │   ├── SidebarLeft.vue
-│   │   │   ├── SidebarRight.vue
-│   │   │   ├── SubMenuMini.vue
-│   │   │   └── Topbar.vue
-│   │   ├── composables/
-│   │   │   ├── breadcrumb.ts
-│   │   │   ├── entityRegistry.ts
-│   │   │   ├── errors.ts
-│   │   │   ├── mercureItem.ts
-│   │   │   ├── mercureList.ts
-│   │   │   ├── notifications.ts
-│   │   │   ├── useApiRest copy.ts
-│   │   │   ├── useApiRest.ts
-│   │   │   ├── useBreakpoints.ts
-│   │   │   ├── useEntityConfig.ts
-│   │   │   ├── useGsap.ts
-│   │   │   ├── useIcons.ts
-│   │   │   ├── useLoading.ts
-│   │   │   ├── usePermission.ts
-│   │   │   └── useRouter.ts
+│   │   │   ├── formkit/
+│   │   │   ├── icons/
+│   │   │   ├── layout/
+│   │   │   ├── DemoPlugingGraphql.vue
+│   │   │   ├── GraphQLOrmDemo.vue
+│   │   │   └── ThemeEditor.vue
 │   │   ├── config/
-│   │   │   ├── breakpoints.ts
+│   │   │   ├── nav.ts
+│   │   │   └── theme.ts
+│   │   ├── data/
+│   │   │   └── mock.ts
+│   │   ├── ragf/
+│   │   │   ├── __tests__/
+│   │   │   ├── transport/
 │   │   │   ├── config.ts
-│   │   │   └── entityIcons.ts
-│   │   ├── css/
-│   │   │   ├── components/
-│   │   │   ├── theme/
-│   │   │   ├── variables/
-│   │   │   ├── _fonts.scss
-│   │   │   ├── _helpers.scss
-│   │   │   ├── app.scss
-│   │   │   ├── color.scss
-│   │   │   ├── layout.scss
-│   │   │   ├── media-queries.scss
-│   │   │   ├── quasar.variables.scss
-│   │   │   ├── root.scss
-│   │   │   ├── tootik.scss
-│   │   │   └── utopia.scss
-│   │   ├── form/
-│   │   │   ├── formkit-theme-fdn/
-│   │   │   ├── input-schemas/
-│   │   │   ├── inputs/
-│   │   │   ├── plugins/
-│   │   │   └── formkit.theme.ts
-│   │   ├── graphql/
-│   │   │   ├── links/
-│   │   │   └── Request.ts
-│   │   ├── i18n/
-│   │   │   ├── en-US/
 │   │   │   ├── index.ts
-│   │   │   └── useActiveStore.ts
-│   │   ├── icon-set/
-│   │   │   └── custom.js
-│   │   ├── layouts/
-│   │   │   ├── lang/
-│   │   │   ├── MainLayout.vue
-│   │   │   └── MainLayout2.vue
-│   │   ├── pages/
-│   │   │   ├── action/
-│   │   │   ├── admin/
-│   │   │   ├── auth/
-│   │   │   ├── error/
-│   │   │   ├── permiso/
-│   │   │   ├── role/
-│   │   │   ├── user/
-│   │   │   ├── venta/
-│   │   │   ├── ErrorNotFound.vue
-│   │   │   ├── IndexPage.vue
-│   │   │   ├── test.html
-│   │   │   └── Test.vue
+│   │   │   └── types.ts
 │   │   ├── router/
-│   │   │   ├── action.ts
-│   │   │   ├── admin.ts
-│   │   │   ├── boleto.ts
-│   │   │   ├── index.ts
-│   │   │   ├── permiso.ts
-│   │   │   ├── role.ts
-│   │   │   ├── routes.ts
-│   │   │   ├── test.ts
-│   │   │   └── user.ts
-│   │   ├── services/
-│   │   │   ├── api.ts
-│   │   │   ├── bus.ts
-│   │   │   ├── ResponsiveService.ts
-│   │   │   └── StaticDataGateway.ts
+│   │   │   └── index.ts
 │   │   ├── stores/
-│   │   │   ├── action/
-│   │   │   ├── autoimport/
-│   │   │   ├── localidad/
-│   │   │   ├── permiso/
-│   │   │   ├── role/
-│   │   │   ├── user/
-│   │   │   ├── index.ts
-│   │   │   ├── persist.ts
-│   │   │   └── storeFactory.ts
+│   │   │   ├── __tests__/
+│   │   │   ├── ragf.ts
+│   │   │   └── ui.ts
 │   │   ├── types/
-│   │   │   ├── action.ts
-│   │   │   ├── apollo.d.ts
-│   │   │   ├── breadcrumb.ts
-│   │   │   ├── collection.ts
-│   │   │   ├── entity.ts
-│   │   │   ├── error.ts
-│   │   │   ├── fdn.ts
-│   │   │   ├── graphql.ts
-│   │   │   ├── item.ts
-│   │   │   ├── permiso.ts
-│   │   │   ├── role.ts
-│   │   │   ├── seccion.ts
-│   │   │   ├── user.ts
-│   │   │   └── view.ts
-│   │   ├── utils/
-│   │   │   ├── autoimport/
-│   │   │   ├── colors.ts
-│   │   │   ├── configVersions.ts
-│   │   │   ├── error.ts
-│   │   │   ├── mercure.ts
-│   │   │   └── unocss_rules.ts
+│   │   │   ├── formkit-inputs.d.ts
+│   │   │   ├── index.ts
+│   │   │   └── vue-router.d.ts
+│   │   ├── views/
+│   │   │   ├── Dashboard.vue
+│   │   │   ├── FormKitDemo.vue
+│   │   │   └── test.vue
 │   │   ├── App.vue
 │   │   ├── auto-imports.d.ts
 │   │   ├── components.d.ts
-│   │   └── env.d.ts
-│   ├── .dockerignore
-│   ├── .npmrc
+│   │   ├── entities.ts
+│   │   ├── formkit.config.ts
+│   │   └── main.ts
+│   ├── .eslintcache
+│   ├── .gitattributes
+│   ├── .oxfmtrc.json
+│   ├── .oxlintrc.json
 │   ├── AGENTS.md
+│   ├── bun.lock
 │   ├── Dockerfile
-│   ├── formkit.config.ts
+│   ├── env.d.ts
+│   ├── eslint.config.ts
 │   ├── index.html
 │   ├── package.json
-│   ├── postcss.config.js
-│   ├── quasar.config.ts
-│   ├── quasar.config.ts.temporary.compiled.1781627975923.mjs
+│   ├── playwright.config.ts
 │   ├── README.md
-│   ├── tailwind.config.ts
+│   ├── smoke-test.ts
+│   ├── tsconfig.app.json
 │   ├── tsconfig.json
+│   ├── tsconfig.node.json
+│   ├── tsconfig.vitest.json
 │   ├── uno.config.ts
-│   └── uno.css
+│   ├── vite.config.ts
+│   └── vitest.config.ts
+├── monitoring/
+│   ├── grafana/
+│   │   ├── dashboards/
+│   │   │   ├── dashboard.yml
+│   │   │   └── docker-containers.json
+│   │   └── datasources/
+│   │       └── datasource.yml
+│   └── prometheus/
+│       └── prometheus.yml
+├── scripts/
+│   ├── gen-dirtree.py
+│   ├── gen-entity-map.py
+│   ├── gen-erd.py
+│   ├── gen-makefile-docs.py
+│   ├── gen_dirtree.py
+│   └── validate-docs.sh
 ├── AGENTS.md
+├── compose.monitoring.yaml
 ├── compose.override.yaml
 ├── compose.prod.yaml
 ├── compose.yaml
 ├── Makefile
+├── mkdocs.yml
 ├── opencode.js
 ├── opencode.json
 ├── opencode.json.tui-migration.bak

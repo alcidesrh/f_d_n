@@ -1,4 +1,3 @@
-// import "./assets/tailwind.css";
 import "./assets/main.css";
 // import "virtual:uno.css";
 import { createApp } from "vue";
@@ -16,8 +15,25 @@ const pinia = createPinia();
 pinia.use(piniaPluginPersistedstate);
 const app = createApp(App);
 
+import { VueQueryPlugin } from '@tanstack/vue-query';
+import { createGraphQLOrm } from '@graphql-orm/vue';
+import { LiveIntrospectionSource, SdlSnapshotSource } from '@graphql-orm/core';
+
+const isProd = import.meta.env.PROD;
+const graphqlEndpoint = import.meta.env.VITE_GRAPHQL_ENDPOINT || 'http://localhost/graphql';
+
+const orm = createGraphQLOrm({
+  endpoint: graphqlEndpoint,
+  source: isProd
+    ? new SdlSnapshotSource('/schema.graphql')
+    : new LiveIntrospectionSource(graphqlEndpoint),
+  entities: ['Status', 'Empresa', 'Piloto', 'Trayecto', 'Servicio', 'Usuario'],
+});
+
 app.use(pinia);
 app.use(router);
+app.use(VueQueryPlugin);
+app.use(orm);
 app.use(formkitPlugin, formkitDefaultConfig(formkitConfig()));
 app.use(PrimeVue, {
   theme: {

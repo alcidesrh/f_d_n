@@ -2,9 +2,9 @@
 # Validate documentation: markdownlint, link check, mermaid syntax
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-DOCS_DIR="$ROOT/docs/docs"
-SCRIPTS_DIR="$ROOT/docs/scripts"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+DOCS_DIR="$ROOT/docs"
+SCRIPTS_DIR="$ROOT/scripts"
 
 echo "🔍 Validating documentation..."
 
@@ -34,7 +34,7 @@ fi
 if check_tool "mmdc" "mermaid validation"; then
     echo "🎨 Validating Mermaid diagrams..."
     find "$DOCS_DIR" -name "*.mmd" -o -name "*.md" | while read -r file; do
-        if grep -q "^```mermaid" "$file" || [[ "$file" == *.mmd ]]; then
+        if grep -q '^```mermaid' "$file" || [[ "$file" == *.mmd ]]; then
             mmdc -i "$file" -o /dev/null 2>/dev/null || echo "⚠️  Mermaid error in $file"
         fi
     done
@@ -48,11 +48,15 @@ import yaml, sys
 from pathlib import Path
 
 ROOT = Path('$ROOT')
-MKDOCS = ROOT / 'docs' / 'mkdocs.yml'
-DOCS = ROOT / 'docs' / 'docs'
+MKDOCS = ROOT / 'mkdocs.yml'
+DOCS = ROOT / 'docs'
 
 with open(MKDOCS) as f:
-    config = yaml.safe_load(f)
+    text = f.read()
+
+import re
+text = re.sub(r'!!python/name:[^\s]+', '""', text)
+config = yaml.safe_load(text)
 
 def check_nav(nav, prefix=''):
     errors = []

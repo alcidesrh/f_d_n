@@ -19,13 +19,16 @@
   "dependencies": {
     "@formkit/vue": "^2.1.2",
     "@primevue/themes": "4.5.4",
+    "@tanstack/vue-query": "^5.101.4",
+    "graphql": "^17.0.2",
     "pinia": "^4.0.2",
     "pinia-plugin-persistedstate": "^4.7.1",
     "primeicons": "^8.0.0",
     "primevue": "4.5.5",
     "tailwindcss-primeui": "^0.6.1",
     "vue": "^3.5.40",
-    "vue-router": "^5.2.0"
+    "vue-router": "^5.2.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",

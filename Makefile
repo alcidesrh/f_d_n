@@ -110,24 +110,24 @@ docs-serve: ## Serve documentation at http://localhost:8000
 	@mkdocs serve -f docs/mkdocs.yml
 
 docs-build: ## Build documentation site
-	@mkdocs build -f docs/mkdocs.yml
+	@mkdocs build -f ./mkdocs.yml
 
 docs-gen-dirtree: ## Regenerate directory structure
-	@python3 docs/scripts/gen_dirtree.py
+	@python3 scripts/gen_dirtree.py
 
 docs-gen-makefile: ## Regenerate Makefile documentation
-	@python3 docs/scripts/gen-makefile-docs.py
+	@python3 scripts/gen-makefile-docs.py
 
 docs-gen-entity-map: ## Regenerate entity map per subdomain
-	@python3 docs/scripts/gen-entity-map.py
+	@python3 scripts/gen-entity-map.py
 
 docs-gen-erd: ## Regenerate Mermaid ERD from Doctrine entities
-	@python3 docs/scripts/gen-erd.py
+	@python3 scripts/gen-erd.py
 
 docs-gen-all: docs-gen-dirtree docs-gen-makefile docs-gen-entity-map docs-gen-erd ## Regenerate all auto-generated docs
 
 docs-validate: ## Validate documentation (markdown, links, mermaid, nav)
-	@bash docs/scripts/validate-docs.sh
+	@bash scripts/validate-docs.sh
 
 ##—————————————————————————————————————————————————————————————————
 stats: ## Commits by the hour for the main author of this project

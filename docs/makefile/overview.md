@@ -6,7 +6,7 @@ El `Makefile` raíz orquesta todo el stack: Docker, Backend (Symfony), Frontend 
 
 - **Docker**: 13 comandos → [`docker.md`](docker.md)
 - **Docs**: 8 comandos → [`docs.md`](docs.md)
-- **Other**: 14 comandos → [`other.md`](other.md)
+- **Other**: 19 comandos → [`other.md`](other.md)
 
 ## Uso Rápido
 

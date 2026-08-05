@@ -19,6 +19,18 @@ const router = createRouter({
       meta: { crumbs: ["Andén", "Resumen"], title: "Resumen operativo" },
     },
     {
+      path: "/demo-graphql",
+      name: "dashboard",
+      component: () => import("@/components/GraphQLOrmDemo.vue"),
+      meta: { crumbs: ["Andén", "Resumen"], title: "Resumen operativo" },
+    },
+      {
+      path: "/demo-graphql-plugin",
+      name: "dashboard2",
+      component: () => import("@/components/DemoPlugingGraphql.vue"),
+      meta: { crumbs: ["Andén", "Resumen"], title: "Resumen operativo" },
+    },
+    {
       path: "/:pathMatch(.*)*",
       redirect: "/",
     },

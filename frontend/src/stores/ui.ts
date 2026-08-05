@@ -29,7 +29,7 @@ export const useUiStore = defineStore("ui", {
     mode: "light",
     primary: "blue",
     surface: "slate",
-    preset: "tailwind",
+    preset: "lara",
     leftState: "open",
     rightState: "mini",
     isMobile: typeof window !== "undefined" ? window.innerWidth <= MOBILE_BREAKPOINT : false,

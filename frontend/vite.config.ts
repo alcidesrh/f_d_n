@@ -33,6 +33,8 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
+      "@graphql-orm/core": fileURLToPath(new URL("./packages/graphql-orm-core/src/index.ts", import.meta.url)),
+      "@graphql-orm/vue": fileURLToPath(new URL("./packages/graphql-orm-vue/src/index.ts", import.meta.url)),
     },
   },
   server: {
