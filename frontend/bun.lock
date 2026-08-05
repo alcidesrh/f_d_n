@@ -5,6 +5,7 @@
     "": {
       "name": "aaaa",
       "dependencies": {
+        "@formkit/vue": "^2.1.2",
         "@primevue/themes": "4.5.4",
         "pinia": "^4.0.2",
         "pinia-plugin-persistedstate": "^4.7.1",
@@ -156,6 +157,26 @@
     "@eslint/plugin-kit": ["@eslint/plugin-kit@0.7.2", "", { "dependencies": { "@eslint/core": "^1.2.1", "levn": "^0.4.1" } }, "sha512-+CNAzxglkrpNf/kKywqQfk74QjtceuOE7Qm+AF8miRvPF/wmmK5+OJOgVh3AVTT3RP2mH3+FOaxlE5v72owk0A=="],
 
     "@exodus/bytes": ["@exodus/bytes@1.15.1", "", { "peerDependencies": { "@noble/hashes": "^1.8.0 || ^2.0.0" }, "optionalPeers": ["@noble/hashes"] }, "sha512-S6mL0yNB/Abt9Ei4tq8gDhcczc4S3+vQ4ra7vxnAf+YHC02srtqxKKZghx2Dq6p0e66THKwR6r8N6P95wEty7Q=="],
+
+    "@formkit/core": ["@formkit/core@2.1.2", "", { "dependencies": { "@formkit/utils": "^2.1.2" } }, "sha512-uv3NUXQkqyjvT2VILdcDWvO99Ql69zA93RiInqBXMyuA6UyFTJvc/LQt352diP951k0bDGWG4ar0g1GI2/EtYQ=="],
+
+    "@formkit/dev": ["@formkit/dev@2.1.2", "", { "dependencies": { "@formkit/core": "^2.1.2", "@formkit/utils": "^2.1.2" } }, "sha512-cYFyx6zcOoQ8wzxQlsk2QFkHmDzPp+JJmuDopyvNvHl3fd9fgsgMHbLElk55IstEHXCCQJqFS17lN+Q9a88bkQ=="],
+
+    "@formkit/i18n": ["@formkit/i18n@2.1.2", "", { "dependencies": { "@formkit/core": "^2.1.2", "@formkit/utils": "^2.1.2", "@formkit/validation": "^2.1.2" } }, "sha512-nS331IGfE3SzpcZMRqXtCqnv/niP+NHmK6jurRiuNoRUERhLTzi9dbhltzQshrP7sBkCtmtV0GU8lsYpWheliA=="],
+
+    "@formkit/inputs": ["@formkit/inputs@2.1.2", "", { "dependencies": { "@formkit/core": "^2.1.2", "@formkit/utils": "^2.1.2" } }, "sha512-UskS/aUnO/xGXzBaERC11H98xP4fpTcJaVSJenyylf/dX47QbKatYHjAtF4zny9AFkspfLDLXy4aAocjtZgrrg=="],
+
+    "@formkit/observer": ["@formkit/observer@2.1.2", "", { "dependencies": { "@formkit/core": "^2.1.2", "@formkit/utils": "^2.1.2" } }, "sha512-LOf8wlYdqNBLcq/9UNd6KiIpvy5ZmJm24+G+KeIr8fTzb5dBmvEtg7ptCJEQ6sHdGzouzxXB7MeJwkDlMlTCPQ=="],
+
+    "@formkit/rules": ["@formkit/rules@2.1.2", "", { "dependencies": { "@formkit/core": "^2.1.2", "@formkit/utils": "^2.1.2", "@formkit/validation": "^2.1.2" } }, "sha512-gZYwqUW8cM+KStAR1aPTQYxQNDyz9SE8nMVijrCG7m6TeXIatX60eQdp75eIZWFwpwTL/I9avfFKKsAL8FJEhA=="],
+
+    "@formkit/themes": ["@formkit/themes@2.1.2", "", { "dependencies": { "@formkit/core": "^2.1.2" } }, "sha512-hcrrr6O0xt1MDGtHFRjpz2GuH0n79m555/ggmzI8SU96PDOJdtC6VHSw2ZGDFQx3kdT37HY+J+ZxWct93OPpDw=="],
+
+    "@formkit/utils": ["@formkit/utils@2.1.2", "", {}, "sha512-ZbPWhmQKkx5ojGW+r14WfrubnhWWdeTlm/rTiVjZExFQhsmQa6hCu35l0z/EeLb04UhXjoZP/IXBJ+/QU5ZMGw=="],
+
+    "@formkit/validation": ["@formkit/validation@2.1.2", "", { "dependencies": { "@formkit/core": "^2.1.2", "@formkit/observer": "^2.1.2", "@formkit/utils": "^2.1.2" } }, "sha512-POPh16pcnpFU2bqkd0xeTz4YNxGVMOi9ykpbaTuc28oxE6l7vPNoRfKQLTp4jhuDfMoUQ9We2jOHsz3GbqA/FQ=="],
+
+    "@formkit/vue": ["@formkit/vue@2.1.2", "", { "dependencies": { "@formkit/core": "^2.1.2", "@formkit/dev": "^2.1.2", "@formkit/i18n": "^2.1.2", "@formkit/inputs": "^2.1.2", "@formkit/observer": "^2.1.2", "@formkit/rules": "^2.1.2", "@formkit/themes": "^2.1.2", "@formkit/utils": "^2.1.2", "@formkit/validation": "^2.1.2" }, "peerDependencies": { "vue": "^3.4.0" } }, "sha512-KmFeJRJrVhn08jl8ZM18dbuiAbhv9nta8eSBU2s0GRrvzF8Q4zzzE39bxo/i8NviKyHcpjy5uxCgHu73M9KQoA=="],
 
     "@humanfs/core": ["@humanfs/core@0.19.2", "", { "dependencies": { "@humanfs/types": "^0.15.0" } }, "sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA=="],
 

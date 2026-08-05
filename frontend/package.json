@@ -17,6 +17,7 @@
     "format": "oxfmt src/"
   },
   "dependencies": {
+    "@formkit/vue": "^2.1.2",
     "@primevue/themes": "4.5.4",
     "pinia": "^4.0.2",
     "pinia-plugin-persistedstate": "^4.7.1",

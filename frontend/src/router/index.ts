@@ -13,6 +13,12 @@ const router = createRouter({
       meta: { crumbs: ["Andén", "Resumen"], title: "Resumen operativo" },
     },
     {
+      path: "/demo",
+      name: "dashboard",
+      component: () => import("@/views/FormKitDemo.vue"),
+      meta: { crumbs: ["Andén", "Resumen"], title: "Resumen operativo" },
+    },
+    {
       path: "/:pathMatch(.*)*",
       redirect: "/",
     },

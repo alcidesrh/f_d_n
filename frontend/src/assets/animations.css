@@ -12,14 +12,14 @@ Anchored overlays are the components that have a floating ui positioned relative
 @keyframes demo-overlay-in {
     from {
         opacity: 0;
-        transform: translateY(10%);
+        transform: translateY(-10%);
     }
 }
 
 @keyframes demo-overlay-out {
     to {
         opacity: 0;
-        transform: translateY(10%);
+        transform: translateY(-10%);
     }
 }
 /* Collapsibles-----------------------------------------------------------------------------
