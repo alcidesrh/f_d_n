@@ -64,7 +64,7 @@ export const useUiStore = defineStore("ui", {
         const primitive = { ...option.value.primitive, ...TAILWIND_COLORS };
         usePreset({
           ...option.value,
-          // primitive: this.mode === "dark" ? invertPalette(primitive) : primitive,
+          primitive: this.mode === "dark" ? invertPalette(primitive) : primitive,
         });
       }
     },
