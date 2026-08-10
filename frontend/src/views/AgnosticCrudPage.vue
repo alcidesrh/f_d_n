@@ -72,19 +72,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, ref } from "vue";
+import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { GRAPHQL_ORM_KEY } from "@graphql-orm/vue";
+import { useOrm } from "@/composables/use-orm";
 import { listEntities } from "@/crud/list-entities";
 
 const route = useRoute();
 const router = useRouter();
 
-const ctx = inject(GRAPHQL_ORM_KEY);
-if (!ctx)
-  throw new Error(
-    "GraphQLOrm no está instalado — llama a app.use(createGraphQLOrm(...)) en main.ts.",
-  );
+const ctx = useOrm();
 
 const schema = computed(() => ctx.schema.value);
 const entities = computed(() => (schema.value ? listEntities(schema.value) : []));

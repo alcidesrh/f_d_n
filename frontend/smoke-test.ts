@@ -1,7 +1,7 @@
-import { LiveIntrospectionSource } from './packages/graphql-orm-core/src/introspection/introspection-source';
-import { SchemaRegistry } from './packages/graphql-orm-core/src/schema/schema-registry';
-import { FetchTransport } from './packages/graphql-orm-core/src/transport/graphql-transport';
-import { createRepository } from './packages/graphql-orm-core/src/repository/create-repository';
+import { LiveIntrospectionSource } from './src/features/graphql-orm/core/src/introspection/introspection-source';
+import { SchemaRegistry } from './src/features/graphql-orm/core/src/schema/schema-registry';
+import { FetchTransport } from './src/features/graphql-orm/core/src/transport/graphql-transport';
+import { createRepository } from './src/features/graphql-orm/core/src/repository/create-repository';
 
 async function main() {
   console.log('--- GraphQL-ORM Smoke Test ---');

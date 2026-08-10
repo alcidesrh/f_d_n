@@ -1,7 +1,3 @@
-<script setup lang="ts">
-withDefaults(defineProps<{ title: string; subtitle?: string }>(), { subtitle: "" });
-</script>
-
 <template>
   <div class="page-head">
     <div>
@@ -13,3 +9,6 @@ withDefaults(defineProps<{ title: string; subtitle?: string }>(), { subtitle: ""
     </div>
   </div>
 </template>
+<script setup lang="ts">
+withDefaults(defineProps<{ title: string; subtitle?: string }>(), { subtitle: "" });
+</script>

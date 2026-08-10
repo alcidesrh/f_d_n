@@ -5,8 +5,9 @@
   </ul>
 </template>
 <script setup lang="ts">
-import { useCollection, useItem } from "@graphql-orm/vue";
-import type { EntityMap } from "@/entities";
+import { useCollection } from "@/composables/use-collection";
+import { useItem } from "@/composables/use-item";
+import type { EntityMap } from "@/types/entities";
 
 // 1. Fetch collection (automatically reactive, cached via TanStack Query)
 const {

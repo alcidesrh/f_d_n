@@ -1,54 +1,3 @@
-<script setup lang="ts">
-import { ref } from 'vue';
-import { useCollection, useEntityMutations } from '@graphql-orm/vue';
-import { ClientValidationError, GraphQLApiError } from '@graphql-orm/core';
-import type { EntityMap } from '@/entities';
-
-const statusName = ref('');
-const statusLabel = ref('');
-const errorMessage = ref<string | null>(null);
-const fieldViolations = ref<Array<{ propertyPath: string; message: string }>>([]);
-
-const { data, isLoading, error } = useCollection<EntityMap['Status']>('Status');
-const { create, remove } = useEntityMutations<EntityMap['Status']>('Status');
-
-async function handleAddStatus() {
-  errorMessage.value = null;
-  fieldViolations.value = [];
-
-  if (!statusName.value.trim()) {
-    errorMessage.value = 'El nombre es obligatorio.';
-    return;
-  }
-
-  try {
-    await create({
-      nombre: statusName.value,
-      label: statusLabel.value || undefined,
-    });
-    statusName.value = '';
-    statusLabel.value = '';
-  } catch (e) {
-    if (e instanceof ClientValidationError) {
-      errorMessage.value = `Validación cliente falló: ${e.message}`;
-    } else if (e instanceof GraphQLApiError) {
-      errorMessage.value = `El backend rechazó la mutación: ${e.message}`;
-      fieldViolations.value = e.violations;
-    } else {
-      errorMessage.value = (e as Error).message;
-    }
-  }
-}
-
-async function handleRemoveStatus(id: string) {
-  try {
-    await remove(id);
-  } catch (e) {
-    errorMessage.value = `Error al eliminar: ${(e as Error).message}`;
-  }
-}
-</script>
-
 <template>
   <div class="p-6 max-w-2xl mx-auto bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-200 dark:border-slate-800">
     <h2 class="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-4 flex items-center gap-2">
@@ -124,3 +73,54 @@ async function handleRemoveStatus(id: string) {
     </div>
   </div>
 </template>
+<script setup lang="ts">
+import { ref } from 'vue';
+import { useCollection } from '@/composables/use-collection';
+import { useEntityMutations } from '@/composables/use-entity-mutations';
+import { ClientValidationError, GraphQLApiError } from '@graphql-orm/core';
+import type { EntityMap } from '@/types/entities';
+
+const statusName = ref('');
+const statusLabel = ref('');
+const errorMessage = ref<string | null>(null);
+const fieldViolations = ref<Array<{ propertyPath: string; message: string }>>([]);
+
+const { data, isLoading, error } = useCollection<EntityMap['Status']>('Status');
+const { create, remove } = useEntityMutations<EntityMap['Status']>('Status');
+
+async function handleAddStatus() {
+  errorMessage.value = null;
+  fieldViolations.value = [];
+
+  if (!statusName.value.trim()) {
+    errorMessage.value = 'El nombre es obligatorio.';
+    return;
+  }
+
+  try {
+    await create({
+      nombre: statusName.value,
+      label: statusLabel.value || undefined,
+    });
+    statusName.value = '';
+    statusLabel.value = '';
+  } catch (e) {
+    if (e instanceof ClientValidationError) {
+      errorMessage.value = `Validación cliente falló: ${e.message}`;
+    } else if (e instanceof GraphQLApiError) {
+      errorMessage.value = `El backend rechazó la mutación: ${e.message}`;
+      fieldViolations.value = e.violations;
+    } else {
+      errorMessage.value = (e as Error).message;
+    }
+  }
+}
+
+async function handleRemoveStatus(id: string) {
+  try {
+    await remove(id);
+  } catch (e) {
+    errorMessage.value = `Error al eliminar: ${(e as Error).message}`;
+  }
+}
+</script>

@@ -1,22 +1,3 @@
-<script setup lang="ts">
-import { computed } from "vue";
-import { useUiStore } from "@/stores/ui";
-import { NAV_MAIN, NAV_OPS } from "@/config/nav";
-import AppIcon from "@/components/icons/AppIcon.vue";
-
-// const ui = useUiStore();
-
-const sidebarClasses = computed(() => [
-  "sidebar",
-  "left-side",
-  { mini: ui.leftState === "mini" },
-  { closed: ui.leftState === "close" && !ui.isMobile },
-  { "mobile-hidden": ui.isMobile && !ui.mobileLeftOpen },
-]);
-
-const sidebarStyle = computed(() => (!ui.isMobile ? { width: ui.leftWidth } : {}));
-</script>
-
 <template>
   <aside :class="sidebarClasses" :style="sidebarStyle">
     <div class="sidebar-footer">
@@ -83,3 +64,21 @@ const sidebarStyle = computed(() => (!ui.isMobile ? { width: ui.leftWidth } : {}
 
   </aside>
 </template>
+<script setup lang="ts">
+import { computed } from "vue";
+import { useUiStore } from "@/stores/ui";
+import { NAV_MAIN, NAV_OPS } from "@/config/nav";
+import AppIcon from "@/components/icons/AppIcon.vue";
+
+// const ui = useUiStore();
+
+const sidebarClasses = computed(() => [
+  "sidebar",
+  "left-side",
+  { mini: ui.leftState === "mini" },
+  { closed: ui.leftState === "close" && !ui.isMobile },
+  { "mobile-hidden": ui.isMobile && !ui.mobileLeftOpen },
+]);
+
+const sidebarStyle = computed(() => (!ui.isMobile ? { width: ui.leftWidth } : {}));
+</script>

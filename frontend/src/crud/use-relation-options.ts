@@ -1,7 +1,8 @@
-import { inject, ref, type Ref } from 'vue';
-import { GRAPHQL_ORM_KEY, type GraphQLOrmContext } from '@graphql-orm/vue';
+import { ref, type Ref } from 'vue';
+import type { GraphQLOrmContext } from '@graphql-orm/vue';
 import { buildEntityDescriptor, type FindAllParams } from '@graphql-orm/core';
 import type { GraphQLSchema } from 'graphql';
+import { useOrm } from '@/composables/use-orm';
 import { displayName } from './relation-display';
 
 export interface RelationOption {
@@ -39,9 +40,7 @@ async function loadOptions(ctx: GraphQLOrmContext, typeName: string, entry: Opti
 }
 
 export function useRelationOptions() {
-  const injected = inject(GRAPHQL_ORM_KEY);
-  if (!injected) throw new Error('GraphQLOrm no está instalado — llama a app.use(createGraphQLOrm(...)) en main.ts.');
-  const ctx: GraphQLOrmContext = injected;
+  const ctx = useOrm();
 
   function optionsFor(typeName: string): Ref<RelationOption[]> {
     let entry = cache.get(typeName);

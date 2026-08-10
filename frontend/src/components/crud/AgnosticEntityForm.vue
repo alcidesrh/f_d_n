@@ -1,8 +1,26 @@
+<template>
+  <div class="space-y-3">
+    <div v-if="errorMessage" class="p-3 rounded border border-red-200 dark:border-red-800 text-sm text-red-600 dark:text-red-400">
+      {{ errorMessage }}
+    </div>
+    <FormKit
+      type="form"
+      :schema="formSchema"
+      v-model="formData"
+      :submit-label="mode === 'create' ? 'Crear' : 'Guardar'"
+      :disabled="submitting"
+      @submit="onSubmit"
+    />
+    <div class="flex justify-end gap-2">
+      <Button label="Cancelar" severity="secondary" text @click="emit('cancel')" />
+    </div>
+  </div>
+</template>
 <script setup lang="ts">
 import { computed, ref, watch, watchEffect } from 'vue';
 import type { GraphQLSchema } from 'graphql';
 import type { FormKitSchemaNode } from '@formkit/core';
-import { useEntityMutations } from '@graphql-orm/vue';
+import { useEntityMutations } from '@/composables/use-entity-mutations';
 import { ClientValidationError, GraphQLApiError, shortId } from '@graphql-orm/core';
 import { buildFormSchema, isRelationNode, type FormMode } from '@/crud/form-schema';
 import { buildColumns } from '@/crud/entity-meta';
@@ -131,22 +149,3 @@ async function onSubmit(data: Record<string, unknown>, node: { setErrors: (error
   }
 }
 </script>
-
-<template>
-  <div class="space-y-3">
-    <div v-if="errorMessage" class="p-3 rounded border border-red-200 dark:border-red-800 text-sm text-red-600 dark:text-red-400">
-      {{ errorMessage }}
-    </div>
-    <FormKit
-      type="form"
-      :schema="formSchema"
-      v-model="formData"
-      :submit-label="mode === 'create' ? 'Crear' : 'Guardar'"
-      :disabled="submitting"
-      @submit="onSubmit"
-    />
-    <div class="flex justify-end gap-2">
-      <Button label="Cancelar" severity="secondary" text @click="emit('cancel')" />
-    </div>
-  </div>
-</template>

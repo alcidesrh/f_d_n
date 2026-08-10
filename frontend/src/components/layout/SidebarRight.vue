@@ -1,24 +1,3 @@
-<script setup lang="ts">
-import { computed } from 'vue'
-// import { useUiStore } from '@/stores/ui'
-import { DEPARTURES, NOTIFICATIONS } from '@/data/mock'
-import AppIcon from '@/components/icons/AppIcon.vue'
-
-// const ui = useUiStore()
-
-const sidebarClasses = computed(() => [
-  'sidebar',
-  'right-side',
-  { mini: ui.rightState === 'mini' },
-  { closed: ui.rightState === 'close' && !ui.isMobile },
-  { 'mobile-hidden': ui.isMobile && !ui.mobileRightOpen }
-])
-
-const sidebarStyle = computed(() => (!ui.isMobile ? { width: ui.rightWidth } : {}))
-const showMiniRail = computed(() => ui.rightState === 'mini' && !ui.isMobile)
-const recentActivity = computed(() => NOTIFICATIONS.slice(0, 3))
-</script>
-
 <template>
   <aside :class="sidebarClasses" :style="sidebarStyle">
     <template v-if="showMiniRail">
@@ -85,3 +64,23 @@ const recentActivity = computed(() => NOTIFICATIONS.slice(0, 3))
     </div>
   </aside>
 </template>
+<script setup lang="ts">
+import { computed } from 'vue'
+// import { useUiStore } from '@/stores/ui'
+import { DEPARTURES, NOTIFICATIONS } from '@/data/mock'
+import AppIcon from '@/components/icons/AppIcon.vue'
+
+// const ui = useUiStore()
+
+const sidebarClasses = computed(() => [
+  'sidebar',
+  'right-side',
+  { mini: ui.rightState === 'mini' },
+  { closed: ui.rightState === 'close' && !ui.isMobile },
+  { 'mobile-hidden': ui.isMobile && !ui.mobileRightOpen }
+])
+
+const sidebarStyle = computed(() => (!ui.isMobile ? { width: ui.rightWidth } : {}))
+const showMiniRail = computed(() => ui.rightState === 'mini' && !ui.isMobile)
+const recentActivity = computed(() => NOTIFICATIONS.slice(0, 3))
+</script>

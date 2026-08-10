@@ -1,13 +1,3 @@
-<script setup lang="ts">
-import type { FormKitFrameworkContext } from "@formkit/core";
-import { useFormKitInput } from "./useFormKitInput";
-
-defineOptions({ name: "FkDatePicker" });
-
-const props = defineProps<{ context: FormKitFrameworkContext }>();
-const { context, update, blur, invalid, disabled } = useFormKitInput(props);
-</script>
-
 <template>
   <DatePicker
     v-bind="context.attrs"
@@ -21,3 +11,12 @@ const { context, update, blur, invalid, disabled } = useFormKitInput(props);
     @blur="blur"
   />
 </template>
+<script setup lang="ts">
+import type { FormKitFrameworkContext } from "@formkit/core";
+import { useFormKitInput } from "./useFormKitInput";
+
+defineOptions({ name: "FkDatePicker" });
+
+const props = defineProps<{ context: FormKitFrameworkContext }>();
+const { context, update, blur, invalid, disabled } = useFormKitInput(props);
+</script>

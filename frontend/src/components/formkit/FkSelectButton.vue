@@ -1,13 +1,3 @@
-<script setup lang="ts">
-import type { FormKitFrameworkContext } from "@formkit/core";
-import { useFormKitInput } from "./useFormKitInput";
-
-defineOptions({ name: "FkSelectButton" });
-
-const props = defineProps<{ context: FormKitFrameworkContext }>();
-const { context, update, blur, invalid, disabled } = useFormKitInput(props);
-</script>
-
 <template>
   <SelectButton
     v-bind="context.attrs"
@@ -20,3 +10,12 @@ const { context, update, blur, invalid, disabled } = useFormKitInput(props);
     @blur="blur"
   />
 </template>
+<script setup lang="ts">
+import type { FormKitFrameworkContext } from "@formkit/core";
+import { useFormKitInput } from "./useFormKitInput";
+
+defineOptions({ name: "FkSelectButton" });
+
+const props = defineProps<{ context: FormKitFrameworkContext }>();
+const { context, update, blur, invalid, disabled } = useFormKitInput(props);
+</script>

@@ -150,7 +150,8 @@
 import { computed, reactive, ref, toValue } from "vue";
 import type { GraphQLSchema } from "graphql";
 import { isEnumType } from "graphql";
-import { useCollection, useEntityMutations } from "@graphql-orm/vue";
+import { useCollection } from "@/composables/use-collection";
+import { useEntityMutations } from "@/composables/use-entity-mutations";
 import { buildEntityDescriptor, shortId, type FindAllParams } from "@graphql-orm/core";
 import { buildColumns, type CrudColumn } from "@/crud/entity-meta";
 import { matchesFilters, type ColumnFilter, type GlobalOperator } from "@/crud/filters";

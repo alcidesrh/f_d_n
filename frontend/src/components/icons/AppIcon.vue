@@ -1,19 +1,3 @@
-<script setup lang="ts">
-import { computed } from 'vue'
-import { ICON_PATHS } from './icon-paths'
-
-const props = withDefaults(
-  defineProps<{
-    name: string
-    size?: number | string
-    filled?: boolean
-  }>(),
-  { size: 18, filled: false }
-)
-
-const markup = computed(() => ICON_PATHS[props.name] ?? '')
-</script>
-
 <template>
   <!--
     `markup` only ever comes from the static ICON_PATHS map above, never from
@@ -34,3 +18,18 @@ const markup = computed(() => ICON_PATHS[props.name] ?? '')
     v-html="markup"
   />
 </template>
+<script setup lang="ts">
+import { computed } from 'vue'
+import { ICON_PATHS } from './icon-paths'
+
+const props = withDefaults(
+  defineProps<{
+    name: string
+    size?: number | string
+    filled?: boolean
+  }>(),
+  { size: 18, filled: false }
+)
+
+const markup = computed(() => ICON_PATHS[props.name] ?? '')
+</script>
