@@ -1,16 +1,7 @@
 <template>
-  <div>
-    <button
-      class="icon-btn"
-      :class="{ 'active-state': focus }"
-      title="Personalizar apariencia"
-      @click.stop="toggle"
-    >
-      <AppIcon name="palette" :size="18" />
-    </button>
-    <Popover ref="op" @show="focus = true" @hide="focus = false">
-      <div class="pop customizer" style="right: 0">
+    <div class="pop customizer" style="right: 0">
         <div class="cz-label">Color primario</div>
+
         <div class="swatch-grid">
           <button
             v-for="p in PRIMARY_OPTIONS"
@@ -22,24 +13,22 @@
           >
             <span
               :style="{
-                width: '100%',
-                height: '100%',
-                borderRadius: '8px',
-                display: 'block',
                 background: p.swatch,
               }"
             ></span>
           </button>
         </div>
         <Divider />
+
         <div class="cz-label">Paleta de superficie</div>
+
         <div class="surface-row">
+
           <button
             v-for="s in SURFACE_OPTIONS"
             :key="s.key"
             class="surf-swatch cursor-pointer"
             :class="{ selected: ui.surface === s.key }"
-            :style="{ background: s.bg }"
             :title="s.label"
             @click="ui.setSurface(s.key)"
           >
@@ -47,7 +36,6 @@
           </button>
         </div>
         <Divider />
-
         <div class="cz-label">Modo</div>
         <div class="mode-toggle">
           <button
@@ -66,6 +54,7 @@
           </button>
         </div>
         <Divider />
+
         <div class="cz-label">Preset</div>
         <div class="mode-toggle">
           <button
@@ -80,17 +69,10 @@
           </button>
         </div>
       </div>
-    </Popover>
-  </div>
 </template>
 <script setup lang="ts">
 import { PRESET_OPTIONS, SURFACE_OPTIONS, PRIMARY_OPTIONS } from "@/config/theme";
 
-const ui = useUiStore();
-const op = ref();
-const focus = ref();
+// const ui = useUiStore();
 
-const toggle = (event: MouseEvent) => {
-  op.value.toggle(event);
-};
 </script>

@@ -19,10 +19,10 @@
 
       <div class="backdrop" :class="{ show: showBackdrop }" @click="ui.closeMobileOverlays()"></div>
     </div>
+    <DynamicDialog />
   </div>
 </template>
 <script setup lang="ts">
-const ui = useUiStore();
 const route = useRoute();
 
 const crumbs = computed(() => route.meta.crumbs ?? ["Andén"]);
@@ -36,13 +36,10 @@ onMounted(() => window.addEventListener("resize", handleResize));
 onBeforeUnmount(() => window.removeEventListener("resize", handleResize));
 
 watchEffect(() => {
-  // const el = document.documentElement;
-  // el.className = ui.mode;
-  // el.classList.add(`primary-${ui.primary}`);
-  // el.classList.add(`surface-${ui.surface}`);
+  const el = document.documentElement;
+  el.className = ui.mode;
+  el.classList.add(`primary-${ui.primary}`);
+  el.classList.add(`surface-${ui.surface}`);
 });
 
-onBeforeMount(() => {
-  ui.init();
-});
 </script>

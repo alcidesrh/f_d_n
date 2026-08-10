@@ -6,7 +6,8 @@
   right: 0;
   height: var(--header-h);
   z-index: 50;
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--p-surface-50);
+  /* rgba(255, 255, 255, 0.85); */
   /* var(--bg); */
   border-bottom: var(--border);
   display: flex;

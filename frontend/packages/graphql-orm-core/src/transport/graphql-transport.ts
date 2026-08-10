@@ -34,7 +34,7 @@ export class FetchTransport implements GraphQLTransport {
       async (req) => {
         const res = await this.fetchImpl(this.endpoint, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...(req.headers ?? {}) },
+          headers: { 'Content-Type': 'application/json', ...req.headers },
           body: JSON.stringify({ query: req.document, variables: req.variables }),
         });
 
@@ -56,7 +56,7 @@ export const headersMiddleware = (
 ): TransportMiddleware => {
   return async (req, next) => {
     const extra = await getHeaders();
-    req.headers = { ...(req.headers ?? {}), ...extra };
+    req.headers = { ...req.headers, ...extra };
     return next(req);
   };
 };
@@ -66,7 +66,7 @@ export const authMiddleware = (getToken: () => string | null): TransportMiddlewa
   return async (req, next) => {
     const token = getToken();
     if (token) {
-      req.headers = { ...(req.headers ?? {}), Authorization: `Bearer ${token}` };
+      req.headers = { ...req.headers, Authorization: `Bearer ${token}` };
     }
     return next(req);
   };

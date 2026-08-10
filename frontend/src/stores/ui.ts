@@ -1,7 +1,19 @@
 import { defineStore } from "pinia";
 import type { PanelState, PrimaryColor, SurfacePalette, ThemeMode, ThemePreset } from "@/types";
-import { usePreset } from "@primeuix/themes";
-import { invertPalette, PRESET_OPTIONS, TAILWIND_COLORS } from "@/config/theme";
+import {
+  usePreset,
+  updatePrimaryPalette,
+  updateSurfacePalette,
+  updatePreset,
+} from "@primeuix/themes";
+import {
+  invertPalette,
+  PRESET_OPTIONS,
+  TAILWIND_COLORS,
+  componentsPreset,
+  themeColors,
+} from "@/config/theme";
+// import colors from "tailwindcss/colors";
 
 const MOBILE_BREAKPOINT = 1024;
 
@@ -50,23 +62,31 @@ export const useUiStore = defineStore("ui", {
     },
     setPrimary(primary: PrimaryColor) {
       this.primary = primary;
+      this.applyTheme();
     },
     setSurface(surface: SurfacePalette) {
       this.surface = surface;
+      this.applyTheme();
     },
     setPreset(preset: ThemePreset) {
       this.preset = preset;
       this.applyTheme();
     },
-    applyTheme() {
-      const option = PRESET_OPTIONS.find((o) => o.key === this.preset);
-      if (option) {
-        const primitive = { ...option.value.primitive, ...TAILWIND_COLORS };
-        usePreset({
-          ...option.value,
-          primitive: this.mode === "dark" ? invertPalette(primitive) : primitive,
-        });
+    async applyTheme() {
+      await usePreset(themeColors(this.preset, this.primary, this.surface, this.mode));
+      const p = updatePreset({
+        semantic: {
+          // colorScheme:{
+            // light: {
+              navigation:{
+                item:{
+                  background: "{surface.800}"
+              }
+            // }
+          // }
+        },
       }
+      });
     },
     setLeft(state: PanelState) {
       this.leftState = state;

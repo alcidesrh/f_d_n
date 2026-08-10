@@ -2,8 +2,11 @@ import Aura from "@primeuix/themes/aura";
 import Lara from "@primeuix/themes/lara";
 import Material from "@primeuix/themes/material";
 import Nora from "@primeuix/themes/nora";
+import { definePreset } from "@primeuix/themes";
 import type { Preset } from "@primeuix/themes/types";
 import type { PrimaryColor, SurfacePalette, ThemeMode, ThemePreset } from "@/types";
+import colors from "tailwindcss/colors";
+import pick from "ramda/src/pick";
 
 const RAMP_STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950] as const;
 
@@ -62,7 +65,7 @@ export const PRIMARY_OPTIONS: PrimaryOption[] = [
   { key: "slate", label: "Slate", swatch: "oklch(0.45 0.04 257)" },
   // { key: "zinc", label: "Zinc", swatch: "oklch(0.44 0.01 286)" },
 
-  { key: "verde", label: "Verde", swatch: "oklch(0.63 0.17 149)" },
+  { key: "green", label: "Verde", swatch: "oklch(0.63 0.17 149)" },
   { key: "emerald", label: "Esmeralda", swatch: "oklch(0.60 0.13 163)" },
   { key: "teal", label: "Teal", swatch: "oklch(0.60 0.10 185)" },
   { key: "cyan", label: "Cyan", swatch: "oklch(0.61 0.11 222)" },
@@ -373,4 +376,201 @@ export const TAILWIND_COLORS = {
     900: "oklch(21.6% 0.006 56.043)",
     950: "oklch(14.7% 0.004 49.25)",
   },
+};
+
+export const themeColors = (theme, primary, surface, dark) => {
+  const option = PRESET_OPTIONS.find((o) => o.key === theme);
+  let primitive = "";
+  PRESET_OPTIONS.forEach((o) => console.log(o.key, o.value));
+  if (dark == "dark") {
+    primitive = invertPalette({ ...option.value.primitive, ...colors });
+    primary = invertPalette(pick([primary], colors))[primary];
+    surface = invertPalette(pick([surface], colors))[surface];
+    surface = { "0": surface[50], ...surface };
+  } else {
+    primitive = { ...option.value.primitive, ...colors };
+    primary = colors[primary];
+    surface = { "0": colors[surface][50], ...colors[surface] };
+  }
+  return {
+    ...option.value,
+    primitive: primitive,
+    semantic: {
+      ...option.value.semantic,
+      transitionDuration: ".2s",
+      primary: primary,
+      colorScheme: {
+        ...option.value.semantic?.colorScheme?.light,
+        surface: surface,
+        primary: {
+          // color: "{primary.500}",
+          // colorAccent: "{primary.700}",
+          // contrastColor: "#ffffff",
+          // hoverColor: "{primary.50}",
+          // activeColor: "{primary.700}",
+          // highlight: "{primary.50}",
+          color: "{primary.500}",
+          contrastColor: "#ffffff",
+          hoverColor: "{primary.600}",
+          activeColor: "{primary.700}"
+
+
+        },
+        highlight: {
+          background: "{surface.200}",
+          hover: "{surface.100}",
+          focusBackground: "{surface.100}",
+          color: "{surface.700}",
+          focusColor: "{surface.300}",
+        },
+        text: {
+          color: "{surface.700}",
+          hoverColor: "{surface.800}",
+          mutedColor: "{surface.500}",
+          hoverMutedColor: "{surface.600}",
+        },
+        content: {
+          background: "#fff",
+          hoverBackground: "{surface.200}",
+          borderColor: "{surface.300}",
+          color: "{text.color}",
+          hoverColor: "{text.hover.color}",
+        },
+        navigation: {
+          item: {
+            focusBackground: "{surface.200}",
+            activeBackground: "{surface.200}",
+            color: "{text.color}",
+            focusColor: "{text.hover.color}",
+            activeColor: "{text.hover.color}",
+            icon: {
+              color: "{surface.400}",
+              inactive: "{surface.200}",
+              focusColor: "{surface.500}",
+              activeColor: "{surface.500}",
+            },
+          },
+          submenuLabel: {
+            background: "transparent",
+            color: "{text.color}",
+          },
+          submenuIcon: {
+            color: "{surface.400}",
+            focusColor: "{surface.500}",
+            activeColor: "{surface.500}",
+          },
+        },
+        overlay: {
+          select: {
+            background: "{surface.100}",
+            borderColor: "{surface.300}",
+            color: "{text.color}"
+          },
+          popover: {
+            background: "{surface.100}",
+            borderColor: "{surface.300}",
+            color: "{text.color}"
+          },
+          modal: {
+            background: "{surface.100}",
+            borderColor: "{surface.300}",
+            color: "{text.color}"
+          }
+        },
+      },
+
+    },
+    components: { ...option.value.components, ...componentsPreset(theme) },
+  };
+
+  return {
+    tailwindPalete: colors,
+    primitive: { ...option.value.primitive, ...colors },
+    primary: primary,
+  };
+};
+export const componentsPreset = (parent: string) => {
+  const option = PRESET_OPTIONS.find((o) => o.key === parent);
+  return {
+    multiselect: {
+      ...option.value.components.multiselect,
+      colorScheme: {
+        ...option.value.components.multiselect?.colorScheme,
+        dark: {
+          ...option.value.components.multiselect?.colorScheme?.dark,
+          background: "{surface.50}",
+          "border.color": "{surface.400}",
+        },
+      },
+    },
+    inputtext: {
+      ...option.value.components.inputtext,
+      colorScheme: {
+        ...option.value.components.inputtext?.colorScheme,
+        dark: {
+          ...option.value.components.inputtext?.colorScheme?.dark,
+          background: "{surface.50}",
+          "border.color": "{surface.400}",
+        },
+      },
+    },
+    datatable: {
+      ...option.value.components.datatable,
+      colorScheme: {
+        ...option.value.components.datatable?.colorScheme,
+        dark: {
+          ...option.value.components.datatable?.colorScheme.dark,
+          header: {
+            background: "{surface.100}",
+            "cell.background": "{surface.100}",
+          },
+          row: {
+            background: "{surface.100}",
+            "striped.background": "{surface.200}",
+          },
+        },
+      },
+    },
+    select: {
+      ...option.value.components.select,
+      root: {
+        ...option.value.components.select?.root,
+        background: "{surface.50}",
+        "border.color": "{surface.400}",
+      },
+    },
+    popover: {
+      ...option.value.components.popover,
+      root: {
+        ...option.value.components.popover?.root,
+        background: "{surface.50}",
+        "border.color": "{surface.300}",
+      },
+      // colorScheme: {
+      // ...option.value.components.popover?.colorScheme,
+      //   dark: {
+      //     ...option.value.components.popover.dark,
+      //     background: "{surface.100}",
+      //   },
+      // },
+    },
+    divider: {
+      ...option.value.components.divider,
+      root: {
+        ...option.value.components.divider?.root,
+        border: {
+          color: "{surface.200}",
+        },
+      },
+    },
+    dialog: {
+      ...option.value.components.dialog,
+      root: {
+        ...option.value.components.dialog?.root,
+        background: "{overlay.modal.background}",
+      },
+    },
+
+    // },
+  };
 };

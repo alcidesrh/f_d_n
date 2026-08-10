@@ -1,7 +1,7 @@
 /* ---- SIDEBARS ---- */
 .sidebar {
   /* background: var(--card); */
-  background: var(--bg1);
+  background: var(--p-surface-50);
   border-right: var(--border);
   flex: 0 0 auto;
   display: flex;
@@ -41,7 +41,7 @@
   padding: 7px 0;
   border-radius: 7px;
   color: var(--text-muted);
-  cursor:pointer;
+  cursor: pointer;
 }
 .state-switch button.active {
   background: var(--card);
@@ -71,7 +71,7 @@
   top: 4px;
   bottom: 4px;
   width: 2px;
-  background: var(--border);
+  background: var(--p-surface-200);
   border-radius: 2px;
 }
 .nav-item {
@@ -88,33 +88,41 @@
   overflow: hidden;
 }
 .nav-item:hover {
-  background: var(--hover);
-  color: var(--text);
+  background-color: var(--p-highlight-hover);
+  & > .stop-dot {
+    border-color: var(--p-highlight-focus-color);
+  }
 }
 .nav-item.router-link-exact-active {
-  background: var(--p-highlight-emphasis-background);
-  color: var(--p-primary-color);
+  background: var(--p-primary-highlight);
+  color: var(--p-primary-color-accent);
   font-weight: 600;
+  & > .stop-dot {
+    background: var(--p-primary-500);
+  }
+  &>.nav-ic>*{
+    color: var(--p-primary-700);
+  }
 }
 .stop-dot {
   width: 11px;
   height: 11px;
   border-radius: 50%;
-  background: var(--card);
-  border: 2px solid var(--border);
+  border: 2px solid var(--p-navigation-item-icon-inactive);
   flex: 0 0 auto;
   position: relative;
   z-index: 2;
   transition: all 0.2s var(--ease);
 }
 .nav-item.router-link-exact-active .stop-dot {
-  background: var(--p-primary-color);
+  /* background: var(--p-highlight-background); */
   border-color: var(--p-primary-color);
   box-shadow: 0 0 0 3px var(--p-primary-color-soft);
 }
 .nav-item .nav-ic {
   display: flex;
   flex: 0 0 auto;
+  color: var(--p-navigation-item-icon-color)
 }
 .nav-item .nav-label {
   /* font-size: 13.5px; */

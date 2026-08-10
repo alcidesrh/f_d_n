@@ -1,5 +1,6 @@
 import type { App, InjectionKey, Ref } from 'vue';
 import { ref, shallowRef } from 'vue';
+import type { GraphQLSchema } from 'graphql';
 import { SchemaRegistry } from '../../graphql-orm-core/src/schema/schema-registry';
 import { FetchTransport, headersMiddleware } from '../../graphql-orm-core/src/transport/graphql-transport';
 import { createRepository, type Repository } from '../../graphql-orm-core/src/repository/create-repository';
@@ -15,6 +16,8 @@ export interface GraphQLOrmOptions {
 export interface GraphQLOrmContext {
   isReady: Ref<boolean>;
   error: Ref<unknown>;
+  /** Schema GraphQL resuelto por la fuente de introspección (null hasta estar listo). */
+  schema: Ref<GraphQLSchema | null>;
   repository<T = Record<string, unknown>>(typeName: string): Repository<T>;
 }
 
@@ -29,10 +32,12 @@ export function createGraphQLOrm(options: GraphQLOrmOptions) {
     transport.use(headersMiddleware(options.authHeaders));
   }
   const repoCache = new Map<string, Repository<any>>();
+  const schemaRef = shallowRef<GraphQLSchema | null>(null);
 
   const context: GraphQLOrmContext = {
     isReady,
     error,
+    schema: schemaRef,
     repository<T>(typeName: string) {
       if (!registryRef.value) {
         throw new Error('GraphQLOrm todavía no está listo — espera "isReady" o "readyPromise" antes de consultar el repositorio.');
@@ -50,6 +55,7 @@ export function createGraphQLOrm(options: GraphQLOrmOptions) {
       const registry = new SchemaRegistry(schema);
       registry.warmUp(options.entities);
       registryRef.value = registry;
+      schemaRef.value = schema;
       isReady.value = true;
     })
     .catch((e) => {

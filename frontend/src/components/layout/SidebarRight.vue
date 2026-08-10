@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useUiStore } from '@/stores/ui'
+// import { useUiStore } from '@/stores/ui'
 import { DEPARTURES, NOTIFICATIONS } from '@/data/mock'
 import AppIcon from '@/components/icons/AppIcon.vue'
 
-const ui = useUiStore()
+// const ui = useUiStore()
 
 const sidebarClasses = computed(() => [
   'sidebar',

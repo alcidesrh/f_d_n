@@ -16,7 +16,7 @@ export default defineConfig({
     // UnoCSS(),
     tailwindcss(),
     AutoImport({
-      imports: ["vue", "vue-router", "pinia"],
+      imports: ["vue", "vue-router", "pinia", { '@/store/globals': ['ui']}],
 
       dts: "src/auto-imports.d.ts",
 

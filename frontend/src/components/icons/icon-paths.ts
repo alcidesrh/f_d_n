@@ -33,7 +33,8 @@ export const ICON_PATHS: Record<string, string> = {
   filter: '<path d="M4 5h16l-6.2 7.4v5.4l-3.6 2v-7.4z"/>',
   wrench: '<path d="M14.5 6.5a4 4 0 0 0-5.4 4.7L4 16.3V20h3.7l5.1-5.1a4 4 0 0 0 4.7-5.4l-2.6 2.6-2-2z"/>',
   trend: '<polyline points="4 15 9.5 9.5 13.5 13.5 20 6"/><polyline points="14.5 6 20 6 20 11.5"/>',
-  gauge: '<circle cx="12" cy="13" r="8.3"/><line x1="12" y1="13" x2="15.5" y2="9.3"/><line x1="6.2" y1="6.5" x2="7.5" y2="7.8"/><line x1="17.8" y1="6.5" x2="16.5" y2="7.8"/>'
+  gauge: '<circle cx="12" cy="13" r="8.3"/><line x1="12" y1="13" x2="15.5" y2="9.3"/><line x1="6.2" y1="6.5" x2="7.5" y2="7.8"/><line x1="17.8" y1="6.5" x2="16.5" y2="7.8"/>',
+  table: '<rect x="3.5" y="4" width="17" height="16" rx="2"/><line x1="3.5" y1="9.5" x2="20.5" y2="9.5"/><line x1="9.5" y1="4" x2="9.5" y2="20"/><line x1="14.5" y1="4" x2="14.5" y2="20"/>'
 }
 
 export type IconName = keyof typeof ICON_PATHS

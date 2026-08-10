@@ -2,6 +2,8 @@
 
 Implemented a framework-agnostic core (`@graphql-orm/core`) and Vue 3 integration package (`@graphql-orm/vue`) for dynamic, runtime introspection-driven GraphQL ORM operations against Symfony 8 / API Platform 4.
 
+Full requirements details: [requirements.md](./requirements.md)
+
 ## Key Accomplishments
 
 ### 1. Framework-Agnostic Core (`@graphql-orm/core`)

@@ -78,7 +78,7 @@ export function createRepository<T = Record<string, unknown>>(
         last: params.last,
         before: params.before,
         order: params.order,
-        ...(params.filters ?? {}),
+        ...params.filters,
       };
 
       const variables: Record<string, unknown> = {};

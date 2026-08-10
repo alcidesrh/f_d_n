@@ -32,7 +32,14 @@
           </button> -->
 
       <!-- Appearance customizer: 4th icon counting from the right, as in PrimeVue's Sakai template -->
-      <ThemeEditor />
+      <!-- <ThemeEditor /> -->
+        <button
+      class="icon-btn cursor-pointer"
+      title="Personalizar apariencia"
+      @click.stop="showThemeEditor()"
+    >
+      <AppIcon name="palette" :size="18" />
+    </button>
 
       <button
         class="icon-btn"
@@ -90,11 +97,14 @@
 </template>
 <script setup lang="ts">
 import { NOTIFICATIONS } from "@/data/mock";
-
+import ThemeEditor from "@/components/ThemeEditor.vue"
+import { useDialog } from 'primevue/usedialog';
+const dialog = useDialog();
+const showThemeEditor = () => dialog.open(ThemeEditor, {props: {header:"Edit Profile"}})
 defineProps<{ crumbs: string[] }>();
 type PopoverName = "notif" | "customizer" | "user" | "fullscreen" | null;
 const openPopover = ref<PopoverName>(null);
-const ui = useUiStore();
+// const ui = useUiStore();
 
 function toggleFullscreen() {
   if (!document.fullscreenElement) {

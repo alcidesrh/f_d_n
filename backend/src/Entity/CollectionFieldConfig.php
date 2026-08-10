@@ -19,12 +19,12 @@ class CollectionFieldConfig  extends FieldConfig
     public EntityConfiguration $entityConfig;
 
     #[ORM\Column(nullable: true)]
-    #[Groups(['read:dto'])]
-    private bool $isSortable = false;
+    private ?bool $sortable = null;
 
     #[ORM\Column(nullable: true)]
-    #[Groups(['read:dto'])]
-    private bool $filterable = false;
+    private ?bool $filterable = null;
+
+
 
     public function __construct(array $data)
     {
@@ -40,27 +40,6 @@ class CollectionFieldConfig  extends FieldConfig
     //     }
     // }
 
-    public function getIsSortable(): bool
-    {
-        return $this->isSortable;
-    }
-
-    public function setIsSortable(bool $isSortable): self
-    {
-        $this->isSortable = $isSortable;
-        return $this;
-    }
-
-    public function isFilterable(): bool
-    {
-        return $this->filterable;
-    }
-
-    public function setFilterable(bool $filterable): self
-    {
-        $this->filterable = $filterable;
-        return $this;
-    }
 
     public function getEntityConfig(): EntityConfiguration
     {
@@ -70,6 +49,30 @@ class CollectionFieldConfig  extends FieldConfig
     public function setEntityConfig(EntityConfiguration $entityConfig): static
     {
         $this->entityConfig = $entityConfig;
+
+        return $this;
+    }
+
+    public function isSortable(): ?bool
+    {
+        return $this->sortable;
+    }
+
+    public function setSortable(?bool $sortable): static
+    {
+        $this->sortable = $sortable;
+
+        return $this;
+    }
+
+    public function isFilterable(): ?bool
+    {
+        return $this->filterable;
+    }
+
+    public function setFilterable(?bool $filterable): static
+    {
+        $this->filterable = $filterable;
 
         return $this;
     }

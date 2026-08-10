@@ -4,7 +4,7 @@ import { useUiStore } from "@/stores/ui";
 import { NAV_MAIN, NAV_OPS } from "@/config/nav";
 import AppIcon from "@/components/icons/AppIcon.vue";
 
-const ui = useUiStore();
+// const ui = useUiStore();
 
 const sidebarClasses = computed(() => [
   "sidebar",
