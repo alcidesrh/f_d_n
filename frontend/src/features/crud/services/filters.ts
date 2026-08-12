@@ -1,20 +1,5 @@
-import type { CrudColumn } from './entity-meta';
+import type { ColumnFilter, CrudColumn, GlobalOperator } from '../types';
 import { displayName, relationId } from './relation-display';
-
-export interface ColumnFilter {
-  /** Búsqueda por texto (contiene, case-insensitive) para columnas string/number/enum. */
-  text?: string;
-  /** Multi-select: ids (relaciones), valores de enum o true/false. */
-  values?: Array<string | number | boolean>;
-  /** Combina los valores seleccionados de una misma columna. */
-  valuesOperator?: 'OR' | 'AND';
-  /** Rango de fecha (desde). */
-  from?: string;
-  /** Rango de fecha (hasta). */
-  to?: string;
-}
-
-export type GlobalOperator = 'OR' | 'AND';
 
 function toCompareValues(value: unknown): string[] {
   const arr = Array.isArray(value) ? value : [value];

@@ -66,7 +66,7 @@ declare module 'vue' {
     SidebarRight: typeof import('./components/layout/SidebarRight.vue')['default']
     Tag: typeof import('primevue/tag')['default']
     Textarea: typeof import('primevue/textarea')['default']
-    ThemeEditor: typeof import('./components/ThemeEditor.vue')['default']
+    ThemeEditor: typeof import('./components/common/ThemeEditor.vue')['default']
     ToggleSwitch: typeof import('primevue/toggleswitch')['default']
     TreeSelect: typeof import('primevue/treeselect')['default']
   }

@@ -29,7 +29,7 @@
       Error al eliminar: {{ actionError }}
     </div>
 
-    <Fluid>
+    <Fluid class="bg-white p-8 shadasow-sm border border-surface-300">
       <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
         <template v-for="col in columns.filter((c) => c.filterable)" :key="col.field">
           <div class="relative">
@@ -79,58 +79,58 @@
       Error: {{ (error as Error).message }}
     </div>
 
-    <div v-else class="card overflow-hidden">
+    <div v-else class="card overflow-hidden bg-white p-8 inset-shadow-sky-900 border border-surface-300">
       <!-- <card>
         <template #content> -->
-          <DataTable
-            :value="visibleRows"
-            scrollable
-            scroll-height="flex"
-            striped-rows
-            size="small"
-            sort-mode="custom"
-            v-model:sort-field="sortField"
-            v-model:sort-order="sortOrder"
-            empty-message="Sin registros"
-          >
-            <Column
-              v-for="col in columns"
-              :key="col.field"
-              :field="col.field"
-              :header="col.label"
-              :sortable="col.sortable"
-            >
-              <template #body="{ data }">
-                <span class="text-sm">{{ cellValue(col, data[col.field]) }}</span>
-              </template>
-            </Column>
-            <Column header="" frozen align-frozen="right" :style="{ minWidth: '96px' }">
-              <template #body="{ data }">
-                <div class="flex justify-end gap-1">
-                  <Button
-                    v-if="canUpdate"
-                    icon="pi pi-pencil"
-                    text
-                    rounded
-                    size="small"
-                    title="Editar"
-                    @click="emit('edit', data)"
-                  />
-                  <Button
-                    v-if="canDelete"
-                    icon="pi pi-trash"
-                    text
-                    rounded
-                    size="small"
-                    severity="danger"
-                    title="Eliminar"
-                    @click="confirmRemove(data)"
-                  />
-                </div>
-              </template>
-            </Column>
-          </DataTable>
-        <!-- </template>
+      <DataTable
+        :value="visibleRows"
+        scrollable
+        scroll-height="flex"
+        striped-rows
+        size="small"
+        sort-mode="custom"
+        v-model:sort-field="sortField"
+        v-model:sort-order="sortOrder"
+        empty-message="Sin registros"
+      >
+        <Column
+          v-for="col in columns"
+          :key="col.field"
+          :field="col.field"
+          :header="col.label"
+          :sortable="col.sortable"
+        >
+          <template #body="{ data }">
+            <span class="text-sm">{{ cellValue(col, data[col.field]) }}</span>
+          </template>
+        </Column>
+        <Column header="" frozen align-frozen="right" :style="{ minWidth: '96px' }">
+          <template #body="{ data }">
+            <div class="flex justify-end gap-1">
+              <Button
+                v-if="canUpdate"
+                icon="pi pi-pencil"
+                text
+                rounded
+                size="small"
+                title="Editar"
+                @click="emit('edit', data)"
+              />
+              <Button
+                v-if="canDelete"
+                icon="pi pi-trash"
+                text
+                rounded
+                size="small"
+                severity="danger"
+                title="Eliminar"
+                @click="confirmRemove(data)"
+              />
+            </div>
+          </template>
+        </Column>
+      </DataTable>
+      <!-- </template>
       </card> -->
     </div>
 
@@ -150,13 +150,16 @@
 import { computed, reactive, ref, toValue } from "vue";
 import type { GraphQLSchema } from "graphql";
 import { isEnumType } from "graphql";
-import { useCollection } from "@/composables/use-collection";
-import { useEntityMutations } from "@/composables/use-entity-mutations";
+import { useCollection } from "@/features/crud/composables/use-collection";
+import { useEntityMutations } from "@/features/crud/composables/use-entity-mutations";
 import { buildEntityDescriptor, shortId, type FindAllParams } from "@graphql-orm/core";
-import { buildColumns, type CrudColumn } from "@/crud/entity-meta";
-import { matchesFilters, type ColumnFilter, type GlobalOperator } from "@/crud/filters";
-import { displayName, numericSortId } from "@/crud/relation-display";
-import { useRelationOptions, type RelationOption } from "@/crud/use-relation-options";
+import { buildColumns } from "@/features/crud/services/entity-meta";
+import type { CrudColumn } from "@/features/crud/types";
+import { matchesFilters } from "@/features/crud/services/filters";
+import type { ColumnFilter, GlobalOperator } from "@/features/crud/types";
+import { displayName, numericSortId } from "@/features/crud/services/relation-display";
+import { useRelationOptions } from "@/features/crud/composables/use-relation-options";
+import type { RelationOption } from "@/features/crud/types";
 
 const props = defineProps<{ entity: string; schema: GraphQLSchema }>();
 

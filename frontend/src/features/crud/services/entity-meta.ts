@@ -1,19 +1,7 @@
 import type { GraphQLSchema } from 'graphql';
 import { isObjectType } from 'graphql';
 import { buildEntityDescriptor, describeField, type FieldDescriptor } from '@graphql-orm/core';
-
-export type ColumnKind = 'string' | 'number' | 'boolean' | 'date' | 'enum' | 'relation';
-
-export interface CrudColumn {
-  field: string;
-  label: string;
-  kind: ColumnKind;
-  isList: boolean;
-  isRelation: boolean;
-  sortable: boolean;
-  filterable: boolean;
-  typeName: string;
-}
+import type { ColumnKind, CrudColumn } from '../types';
 
 /** Campos sensibles que nunca se muestran como columna ni se editan en el formulario. */
 export const SENSITIVE_FIELDS = new Set([

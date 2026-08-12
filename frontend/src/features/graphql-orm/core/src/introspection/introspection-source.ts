@@ -17,6 +17,7 @@ export class LiveIntrospectionSource implements IntrospectionSource {
   async load(): Promise<GraphQLSchema> {
     const customHeaders = this.headers ? await this.headers() : {};
     const headers = { 'Content-Type': 'application/json', ...customHeaders };
+
     const res = await this.fetchImpl(this.endpoint, {
       method: 'POST',
       headers,

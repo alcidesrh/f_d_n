@@ -75,8 +75,8 @@
 </template>
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useCollection } from '@/composables/use-collection';
-import { useEntityMutations } from '@/composables/use-entity-mutations';
+import { useCollection } from '@/features/crud/composables/use-collection';
+import { useEntityMutations } from '@/features/crud/composables/use-entity-mutations';
 import { ClientValidationError, GraphQLApiError } from '@graphql-orm/core';
 import type { EntityMap } from '@/types/entities';
 

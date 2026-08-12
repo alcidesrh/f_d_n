@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildSchema } from 'graphql';
-import { listEntities } from '../list-entities';
+import { listEntities } from '../services/list-entities';
 
 const SDL = `
   type Status { id: ID!, nombre: String! }

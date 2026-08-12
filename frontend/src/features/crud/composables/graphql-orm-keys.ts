@@ -1,4 +1,4 @@
-import type { FindAllParams, SelectionOptions } from '../features/graphql-orm/types';
+import type { FindAllParams, SelectionOptions } from '../../graphql-orm/types';
 
 export function ormKeys(entity: string) {
   return {

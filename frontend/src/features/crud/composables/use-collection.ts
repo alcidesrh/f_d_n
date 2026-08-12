@@ -2,7 +2,7 @@ import { computed, type MaybeRefOrGetter, toValue } from 'vue';
 import { useQuery } from '@tanstack/vue-query';
 import { useOrm } from './use-orm';
 import { ormKeys } from './graphql-orm-keys';
-import type { FindAllParams, SelectionOptions } from '../features/graphql-orm/types';
+import type { FindAllParams, SelectionOptions } from '../../graphql-orm/types';
 
 export function useCollection<T = Record<string, unknown>>(
   entity: string,

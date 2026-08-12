@@ -20,11 +20,13 @@
 import { computed, ref, watch, watchEffect } from 'vue';
 import type { GraphQLSchema } from 'graphql';
 import type { FormKitSchemaNode } from '@formkit/core';
-import { useEntityMutations } from '@/composables/use-entity-mutations';
+import { useEntityMutations } from '@/features/crud/composables/use-entity-mutations';
 import { ClientValidationError, GraphQLApiError, shortId } from '@graphql-orm/core';
-import { buildFormSchema, isRelationNode, type FormMode } from '@/crud/form-schema';
-import { buildColumns } from '@/crud/entity-meta';
-import { useRelationOptions, type RelationOption } from '@/crud/use-relation-options';
+import { buildFormSchema, isRelationNode } from '@/features/crud/services/form-schema';
+import type { FormMode } from '@/features/crud/types';
+import { buildColumns } from '@/features/crud/services/entity-meta';
+import { useRelationOptions } from '@/features/crud/composables/use-relation-options';
+import type { RelationOption } from '@/features/crud/types';
 
 const props = defineProps<{
   entity: string;

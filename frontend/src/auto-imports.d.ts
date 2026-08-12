@@ -52,7 +52,7 @@ declare global {
   const onUnmounted: typeof import('vue').onUnmounted
   const onUpdated: typeof import('vue').onUpdated
   const onWatcherCleanup: typeof import('vue').onWatcherCleanup
-  const ormKeys: typeof import('./composables/graphql-orm-keys').ormKeys
+  const ormKeys: typeof import('./features/crud/composables/graphql-orm-keys').ormKeys
   const pinia: typeof import('./stores/pinia').pinia
   const provide: typeof import('vue').provide
   const reactive: typeof import('vue').reactive
@@ -74,15 +74,15 @@ declare global {
   const ui: typeof import('./stores/global').ui
   const unref: typeof import('vue').unref
   const useAttrs: typeof import('vue').useAttrs
-  const useCollection: typeof import('./composables/use-collection').useCollection
+  const useCollection: typeof import('./features/crud/composables/use-collection').useCollection
   const useCssModule: typeof import('vue').useCssModule
   const useCssVars: typeof import('vue').useCssVars
-  const useEntityMutations: typeof import('./composables/use-entity-mutations').useEntityMutations
+  const useEntityMutations: typeof import('./features/crud/composables/use-entity-mutations').useEntityMutations
   const useId: typeof import('vue').useId
-  const useItem: typeof import('./composables/use-item').useItem
+  const useItem: typeof import('./features/crud/composables/use-item').useItem
   const useLink: typeof import('vue-router').useLink
   const useModel: typeof import('vue').useModel
-  const useOrm: typeof import('./composables/use-orm').useOrm
+  const useOrm: typeof import('./features/crud/composables/use-orm').useOrm
   const useRagf: typeof import('./stores/ragf').useRagf
   const useRoute: typeof import('vue-router').useRoute
   const useRouter: typeof import('vue-router').useRouter
@@ -154,7 +154,6 @@ declare module 'vue' {
     readonly onUnmounted: UnwrapRef<typeof import('vue')['onUnmounted']>
     readonly onUpdated: UnwrapRef<typeof import('vue')['onUpdated']>
     readonly onWatcherCleanup: UnwrapRef<typeof import('vue')['onWatcherCleanup']>
-    readonly ormKeys: UnwrapRef<typeof import('./composables/graphql-orm-keys')['ormKeys']>
     readonly pinia: UnwrapRef<typeof import('./stores/pinia')['pinia']>
     readonly provide: UnwrapRef<typeof import('vue')['provide']>
     readonly reactive: UnwrapRef<typeof import('vue')['reactive']>
@@ -176,15 +175,11 @@ declare module 'vue' {
     readonly ui: UnwrapRef<typeof import('./stores/global')['ui']>
     readonly unref: UnwrapRef<typeof import('vue')['unref']>
     readonly useAttrs: UnwrapRef<typeof import('vue')['useAttrs']>
-    readonly useCollection: UnwrapRef<typeof import('./composables/use-collection')['useCollection']>
     readonly useCssModule: UnwrapRef<typeof import('vue')['useCssModule']>
     readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
-    readonly useEntityMutations: UnwrapRef<typeof import('./composables/use-entity-mutations')['useEntityMutations']>
     readonly useId: UnwrapRef<typeof import('vue')['useId']>
-    readonly useItem: UnwrapRef<typeof import('./composables/use-item')['useItem']>
     readonly useLink: UnwrapRef<typeof import('vue-router')['useLink']>
     readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
-    readonly useOrm: UnwrapRef<typeof import('./composables/use-orm')['useOrm']>
     readonly useRagf: UnwrapRef<typeof import('./stores/ragf')['useRagf']>
     readonly useRoute: UnwrapRef<typeof import('vue-router')['useRoute']>
     readonly useRouter: UnwrapRef<typeof import('vue-router')['useRouter']>

@@ -381,7 +381,6 @@ export const TAILWIND_COLORS = {
 export const themeColors = (theme, primary, surface, dark) => {
   const option = PRESET_OPTIONS.find((o) => o.key === theme);
   let primitive = "";
-  PRESET_OPTIONS.forEach((o) => console.log(o.key, o.value));
   if (dark == "dark") {
     primitive = invertPalette({ ...option.value.primitive, ...colors });
     primary = invertPalette(pick([primary], colors))[primary];
@@ -408,8 +407,8 @@ export const themeColors = (theme, primary, surface, dark) => {
           // contrastColor: "#ffffff",
           // hoverColor: "{primary.50}",
           // activeColor: "{primary.700}",
-          // highlight: "{primary.50}",
-          color: "{primary.500}",
+          highlight: "{primary.50}",
+          color: "{primary.700}",
           contrastColor: "#ffffff",
           hoverColor: "{primary.600}",
           activeColor: "{primary.700}"

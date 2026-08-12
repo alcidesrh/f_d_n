@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildSchema } from 'graphql';
-import { buildColumns, humanize, scalarKind, getNodeTypeName } from '../entity-meta';
+import { buildColumns, humanize, scalarKind, getNodeTypeName } from '../services/entity-meta';
 
 const SDL = `
   enum EstadoCivil { SOLTERO, CASADO }

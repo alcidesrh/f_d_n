@@ -5,8 +5,8 @@
   </ul>
 </template>
 <script setup lang="ts">
-import { useCollection } from "@/composables/use-collection";
-import { useItem } from "@/composables/use-item";
+import { useCollection } from "@/features/crud/composables/use-collection";
+import { useItem } from "@/features/crud/composables/use-item";
 import type { EntityMap } from "@/types/entities";
 
 // 1. Fetch collection (automatically reactive, cached via TanStack Query)

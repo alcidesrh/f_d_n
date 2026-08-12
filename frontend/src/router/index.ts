@@ -33,7 +33,7 @@ const router = createRouter({
     {
       path: "/agnostic/:entity?",
       name: "agnostic-crud",
-      component: () => import("@/views/AgnosticCrudPage.vue"),
+      component: () => import("@/features/crud/views/AgnosticCrudPage.vue"),
       meta: { crumbs: ["Andén", "CRUD dinámico"], title: "CRUD dinámico" },
     },
     {

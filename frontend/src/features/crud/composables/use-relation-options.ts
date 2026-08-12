@@ -2,13 +2,9 @@ import { ref, type Ref } from 'vue';
 import type { GraphQLOrmContext } from '@graphql-orm/vue';
 import { buildEntityDescriptor, type FindAllParams } from '@graphql-orm/core';
 import type { GraphQLSchema } from 'graphql';
-import { useOrm } from '@/composables/use-orm';
-import { displayName } from './relation-display';
-
-export interface RelationOption {
-  label: string;
-  value: string | number | boolean;
-}
+import { useOrm } from '@/features/crud/composables/use-orm';
+import { displayName } from '../services/relation-display';
+import type { RelationOption } from '../types';
 
 interface OptionsEntry {
   options: Ref<RelationOption[]>;

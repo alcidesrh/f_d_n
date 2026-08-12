@@ -97,7 +97,6 @@
 </template>
 <script setup lang="ts">
 import { NOTIFICATIONS } from "@/data/mock";
-import ThemeEditor from "@/components/ThemeEditor.vue"
 import { useDialog } from 'primevue/usedialog';
 const dialog = useDialog();
 const showThemeEditor = () => dialog.open(ThemeEditor, {props: {header:"Edit Profile"}})

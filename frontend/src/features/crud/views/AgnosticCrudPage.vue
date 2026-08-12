@@ -27,7 +27,7 @@
       Cargando schema…
     </div>
 
-    <div v-else-if="!current" class="card">
+    <div v-else-if="!current" class="card bg-white p-8 shadow-sm border border-surface-300">
       <p class="text-sm text-muted-color mb-4">Elige una entidad para ver su CRUD dinámico.</p>
       <div class="flex flex-wrap gap-2">
         <Button
@@ -74,8 +74,11 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { useOrm } from "@/composables/use-orm";
-import { listEntities } from "@/crud/list-entities";
+import { useOrm } from "@/features/crud/composables/use-orm.ts";
+import { listEntities } from "@/features/crud/services/list-entities";
+import AgnosticEntityList from "../components/AgnosticEntityList.vue";
+import AgnosticEntityForm from "../components/AgnosticEntityForm.vue";
+import type { FormMode } from "@/features/crud/types";
 
 const route = useRoute();
 const router = useRouter();
@@ -94,7 +97,7 @@ const selectedEntity = computed({
 });
 
 const dialogOpen = ref(false);
-const dialogState = ref<"create" | "edit" | null>(null);
+const dialogState = ref<FormMode | null>(null);
 const editingItem = ref<Record<string, unknown> | null>(null);
 
 const dialogHeader = computed(() => {
@@ -116,7 +119,7 @@ function openCreate() {
 
 function openEdit(row: Record<string, unknown>) {
   editingItem.value = row;
-  dialogState.value = "edit";
+  dialogState.value = "update";
   dialogOpen.value = true;
 }
 

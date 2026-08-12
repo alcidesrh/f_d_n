@@ -3,8 +3,7 @@ import { isEnumType, isInputObjectType, type GraphQLInputObjectType } from 'grap
 import type { FormKitSchemaNode } from '@formkit/core';
 import { buildEntityDescriptor, describeField, type FieldDescriptor } from '@graphql-orm/core';
 import { getNodeFields, humanize, SENSITIVE_FIELDS, scalarKind } from './entity-meta';
-
-export type FormMode = 'create' | 'update';
+import type { FormMode } from '../types';
 
 interface RelationMarker {
   typeName: string;

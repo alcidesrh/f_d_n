@@ -18,5 +18,6 @@ export class SchemaRegistry {
 
   warmUp(typeNames: string[]): void {
     typeNames.forEach((t) => this.describe(t));
+    console.log(this.cache)
   }
 }

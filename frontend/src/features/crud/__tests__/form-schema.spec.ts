@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { buildSchema } from 'graphql';
 import type { FormKitSchemaNode } from '@formkit/core';
-import { buildFormSchema, isRelationNode } from '../form-schema';
+import { buildFormSchema, isRelationNode } from '../services/form-schema';
 
 const SDL = `
   enum EstadoCivil { SOLTERO, CASADO }

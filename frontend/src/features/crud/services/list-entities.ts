@@ -1,15 +1,7 @@
 import { isObjectType, type GraphQLObjectType } from 'graphql';
 import type { GraphQLSchema } from 'graphql';
 import { describeField, type CollectionShape } from '@graphql-orm/core';
-
-export interface CrudEntityInfo {
-  /** Nombre del tipo GraphQL (p. ej. "Status") — clave para repository/descriptor. */
-  typeName: string;
-  /** Campo de Query que lista la colección (p. ej. "statuses"). */
-  collectionField: string;
-  /** Forma de paginación real detectada en el schema. */
-  shape: CollectionShape;
-}
+import type { CrudEntityInfo } from '../types';
 
 const WRAPPER_SUFFIXES = [
   'Connection',

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { matchesFilters, matchesValues, isColumnFilterActive } from '../filters';
-import type { CrudColumn } from '../entity-meta';
+import { matchesFilters, matchesValues, isColumnFilterActive } from '../services/filters';
+import type { CrudColumn } from '../types';
 
 const columns: CrudColumn[] = [
   { field: 'nombre', label: 'Nombre', kind: 'string', isList: false, isRelation: false, sortable: true, filterable: true, typeName: 'String' },
