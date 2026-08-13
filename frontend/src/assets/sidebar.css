@@ -1,7 +1,7 @@
 /* ---- SIDEBARS ---- */
 .sidebar {
   /* background: var(--card); */
-  background: var(--p-surface-50);
+  /* background: var(--p-surface-50); */
   border-right: var(--border);
   flex: 0 0 auto;
   display: flex;

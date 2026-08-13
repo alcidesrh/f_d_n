@@ -9,7 +9,6 @@ import {
 import {
   invertPalette,
   PRESET_OPTIONS,
-  TAILWIND_COLORS,
   componentsPreset,
   themeColors,
 } from "@/config/theme";
@@ -74,19 +73,6 @@ export const useUiStore = defineStore("ui", {
     },
     async applyTheme() {
       await usePreset(themeColors(this.preset, this.primary, this.surface, this.mode));
-      const p = updatePreset({
-        semantic: {
-          // colorScheme:{
-            // light: {
-              navigation:{
-                item:{
-                  background: "{surface.800}"
-              }
-            // }
-          // }
-        },
-      }
-      });
     },
     setLeft(state: PanelState) {
       this.leftState = state;

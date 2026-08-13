@@ -3,7 +3,7 @@ import { setActivePinia, createPinia } from 'pinia'
 import { useUiStore } from '@/stores/ui'
 
 describe('useUiStore', () => {
-  // beforeEach(() => {
+  beforeEach(() => {
     setActivePinia(createPinia())
   })
 

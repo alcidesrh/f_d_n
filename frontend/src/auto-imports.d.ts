@@ -8,6 +8,7 @@ export {}
 declare global {
   const EffectScope: typeof import('vue').EffectScope
   const ICON_PATHS: typeof import('./components/icons/icon-paths').ICON_PATHS
+  const SCHEMA_REPOSITORY_VERSION: typeof import('./stores/schemaRepository').SCHEMA_REPOSITORY_VERSION
   const acceptHMRUpdate: typeof import('pinia').acceptHMRUpdate
   const computed: typeof import('vue').computed
   const createApp: typeof import('vue').createApp
@@ -21,6 +22,7 @@ declare global {
   const getCurrentInstance: typeof import('vue').getCurrentInstance
   const getCurrentScope: typeof import('vue').getCurrentScope
   const getCurrentWatcher: typeof import('vue').getCurrentWatcher
+  const getEntity: typeof import('./composables/useEntityRegistry').getEntity
   const h: typeof import('vue').h
   const initGlobalStores: typeof import('./stores/global').initGlobalStores
   const inject: typeof import('vue').inject
@@ -59,6 +61,7 @@ declare global {
   const readonly: typeof import('vue').readonly
   const ref: typeof import('vue').ref
   const resolveComponent: typeof import('vue').resolveComponent
+  const schemaRepository: typeof import('./stores/global').schemaRepository
   const setActivePinia: typeof import('pinia').setActivePinia
   const setMapStoreSuffix: typeof import('pinia').setMapStoreSuffix
   const shallowReactive: typeof import('vue').shallowReactive
@@ -78,6 +81,7 @@ declare global {
   const useCssModule: typeof import('vue').useCssModule
   const useCssVars: typeof import('vue').useCssVars
   const useEntityMutations: typeof import('./features/crud/composables/use-entity-mutations').useEntityMutations
+  const useEntityRegistry: typeof import('./composables/useEntityRegistry').useEntityRegistry
   const useId: typeof import('vue').useId
   const useItem: typeof import('./features/crud/composables/use-item').useItem
   const useLink: typeof import('vue-router').useLink
@@ -86,6 +90,7 @@ declare global {
   const useRagf: typeof import('./stores/ragf').useRagf
   const useRoute: typeof import('vue-router').useRoute
   const useRouter: typeof import('vue-router').useRouter
+  const useSchemaRepositoryStore: typeof import('./stores/schemaRepository').useSchemaRepositoryStore
   const useSlots: typeof import('vue').useSlots
   const useTemplateRef: typeof import('vue').useTemplateRef
   const useUiStore: typeof import('./stores/ui').useUiStore
@@ -100,6 +105,9 @@ declare global {
   export type { Component, Slot, Slots, ComponentPublicInstance, ComputedRef, DirectiveBinding, ExtractDefaultPropTypes, ExtractPropTypes, ExtractPublicPropTypes, InjectionKey, PropType, Ref, ShallowRef, MaybeRef, MaybeRefOrGetter, VNode, WritableComputedRef } from 'vue'
   import('vue')
   // @ts-ignore
+  export type { SchemaRepositoryState } from './stores/schemaRepository'
+  import('./stores/schemaRepository')
+  // @ts-ignore
   export type { UiState } from './stores/ui'
   import('./stores/ui')
 }
@@ -110,6 +118,7 @@ declare module 'vue' {
   interface GlobalComponents {}
   interface ComponentCustomProperties {
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
+    readonly SCHEMA_REPOSITORY_VERSION: UnwrapRef<typeof import('./stores/schemaRepository')['SCHEMA_REPOSITORY_VERSION']>
     readonly acceptHMRUpdate: UnwrapRef<typeof import('pinia')['acceptHMRUpdate']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
     readonly createApp: UnwrapRef<typeof import('vue')['createApp']>
@@ -123,6 +132,7 @@ declare module 'vue' {
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
     readonly getCurrentWatcher: UnwrapRef<typeof import('vue')['getCurrentWatcher']>
+    readonly getEntity: UnwrapRef<typeof import('./composables/useEntityRegistry')['getEntity']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
     readonly initGlobalStores: UnwrapRef<typeof import('./stores/global')['initGlobalStores']>
     readonly inject: UnwrapRef<typeof import('vue')['inject']>
@@ -160,6 +170,7 @@ declare module 'vue' {
     readonly readonly: UnwrapRef<typeof import('vue')['readonly']>
     readonly ref: UnwrapRef<typeof import('vue')['ref']>
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
+    readonly schemaRepository: UnwrapRef<typeof import('./stores/global')['schemaRepository']>
     readonly setActivePinia: UnwrapRef<typeof import('pinia')['setActivePinia']>
     readonly setMapStoreSuffix: UnwrapRef<typeof import('pinia')['setMapStoreSuffix']>
     readonly shallowReactive: UnwrapRef<typeof import('vue')['shallowReactive']>
@@ -177,11 +188,13 @@ declare module 'vue' {
     readonly useAttrs: UnwrapRef<typeof import('vue')['useAttrs']>
     readonly useCssModule: UnwrapRef<typeof import('vue')['useCssModule']>
     readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
+    readonly useEntityRegistry: UnwrapRef<typeof import('./composables/useEntityRegistry')['useEntityRegistry']>
     readonly useId: UnwrapRef<typeof import('vue')['useId']>
     readonly useLink: UnwrapRef<typeof import('vue-router')['useLink']>
     readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
     readonly useRoute: UnwrapRef<typeof import('vue-router')['useRoute']>
     readonly useRouter: UnwrapRef<typeof import('vue-router')['useRouter']>
+    readonly useSchemaRepositoryStore: UnwrapRef<typeof import('./stores/schemaRepository')['useSchemaRepositoryStore']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
     readonly useTemplateRef: UnwrapRef<typeof import('vue')['useTemplateRef']>
     readonly useUiStore: UnwrapRef<typeof import('./stores/ui')['useUiStore']>

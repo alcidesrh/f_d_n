@@ -1,0 +1,381 @@
+import { describe, it, expect } from 'vitest'
+import {
+  buildCollectionQuery,
+  buildItemQuery,
+  buildMutation,
+  buildSelection,
+  toMutationInput,
+} from '@/lib/apollo/documents'
+import type { EntitySchema } from '@/lib/apollo/types'
+
+const boletoSchema: EntitySchema = {
+  name: 'Boleto',
+  queryItem: 'boleto',
+  queryCollection: 'boletos',
+  collectionKind: 'page-connection',
+  collectionType: 'BoletoPageConnection',
+  paginationType: 'BoletoPaginationInfo',
+  orderInput: 'BoletoFilter_order',
+  orderFields: ['numero', 'total'],
+  itemArgs: [{ name: 'id', type: 'ID!', namedType: 'ID', required: true, isList: false }],
+  collectionArgs: [
+    { name: 'currentPage', type: 'Int', namedType: 'Int', required: false, isList: false },
+    { name: 'itemsPerPage', type: 'Int', namedType: 'Int', required: false, isList: false },
+    { name: 'numero', type: 'String', namedType: 'String', required: false, isList: false },
+    {
+      name: 'order',
+      type: '[BoletoFilter_order]',
+      namedType: 'BoletoFilter_order',
+      required: false,
+      isList: true,
+    },
+  ],
+  filterArgs: [
+    { name: 'numero', type: 'String', namedType: 'String', required: false, isList: false },
+  ],
+  fields: [
+    {
+      name: 'id',
+      type: 'ID!',
+      namedType: 'ID',
+      kind: 'SCALAR',
+      required: true,
+      isList: false,
+      isRelation: false,
+      isSubcollection: false,
+    },
+    {
+      name: 'numero',
+      type: 'String!',
+      namedType: 'String',
+      kind: 'SCALAR',
+      required: true,
+      isList: false,
+      isRelation: false,
+      isSubcollection: false,
+    },
+    {
+      name: 'total',
+      type: 'Float',
+      namedType: 'Float',
+      kind: 'SCALAR',
+      required: false,
+      isList: false,
+      isRelation: false,
+      isSubcollection: false,
+    },
+    {
+      name: 'label',
+      type: 'String',
+      namedType: 'String',
+      kind: 'SCALAR',
+      required: false,
+      isList: false,
+      isRelation: false,
+      isSubcollection: false,
+    },
+    {
+      name: 'ruta',
+      type: 'Ruta',
+      namedType: 'Ruta',
+      kind: 'OBJECT',
+      required: false,
+      isList: false,
+      isRelation: true,
+      isSubcollection: false,
+    },
+    {
+      name: 'boletas',
+      type: '[Boleta]',
+      namedType: 'Boleta',
+      kind: 'OBJECT',
+      required: false,
+      isList: true,
+      isRelation: true,
+      isSubcollection: false,
+    },
+    {
+      name: 'ventas',
+      type: 'VentaPageConnection',
+      namedType: 'VentaPageConnection',
+      kind: 'OBJECT',
+      required: false,
+      isList: false,
+      isRelation: false,
+      isSubcollection: true,
+    },
+  ],
+  scalarFields: ['id', 'numero', 'total', 'label'],
+  relations: [
+    {
+      name: 'ruta',
+      type: 'Ruta',
+      namedType: 'Ruta',
+      kind: 'OBJECT',
+      required: false,
+      isList: false,
+      isRelation: true,
+      isSubcollection: false,
+    },
+    {
+      name: 'boletas',
+      type: '[Boleta]',
+      namedType: 'Boleta',
+      kind: 'OBJECT',
+      required: false,
+      isList: true,
+      isRelation: true,
+      isSubcollection: false,
+    },
+  ],
+  subcollections: [
+    {
+      name: 'ventas',
+      type: 'VentaPageConnection',
+      namedType: 'VentaPageConnection',
+      kind: 'OBJECT',
+      required: false,
+      isList: false,
+      isRelation: false,
+      isSubcollection: true,
+    },
+  ],
+  create: {
+    kind: 'create',
+    field: 'createBoleto',
+    inputType: 'createBoletoInput',
+    payloadType: 'createBoletoPayload',
+    returnsField: 'boleto',
+    inputFields: [
+      {
+        name: 'clientMutationId',
+        type: 'String',
+        namedType: 'String',
+        kind: 'SCALAR',
+        required: false,
+        isList: false,
+        isRelation: false,
+      },
+      {
+        name: 'numero',
+        type: 'String!',
+        namedType: 'String',
+        kind: 'SCALAR',
+        required: true,
+        isList: false,
+        isRelation: false,
+      },
+      {
+        name: 'total',
+        type: 'Float',
+        namedType: 'Float',
+        kind: 'SCALAR',
+        required: false,
+        isList: false,
+        isRelation: false,
+      },
+      {
+        name: 'ruta',
+        type: 'String',
+        namedType: 'String',
+        kind: 'SCALAR',
+        required: false,
+        isList: false,
+        isRelation: false,
+      },
+    ],
+  },
+  update: {
+    kind: 'update',
+    field: 'updateBoleto',
+    inputType: 'updateBoletoInput',
+    payloadType: 'updateBoletoPayload',
+    returnsField: 'boleto',
+    inputFields: [
+      {
+        name: 'clientMutationId',
+        type: 'String',
+        namedType: 'String',
+        kind: 'SCALAR',
+        required: false,
+        isList: false,
+        isRelation: false,
+      },
+      {
+        name: 'id',
+        type: 'ID!',
+        namedType: 'ID',
+        kind: 'SCALAR',
+        required: true,
+        isList: false,
+        isRelation: false,
+      },
+      {
+        name: 'numero',
+        type: 'String',
+        namedType: 'String',
+        kind: 'SCALAR',
+        required: false,
+        isList: false,
+        isRelation: false,
+      },
+      {
+        name: 'ruta',
+        type: 'Ruta',
+        namedType: 'Ruta',
+        kind: 'OBJECT',
+        required: false,
+        isList: false,
+        isRelation: true,
+      },
+    ],
+  },
+  delete: {
+    kind: 'delete',
+    field: 'deleteBoleto',
+    inputType: 'deleteBoletoInput',
+    payloadType: 'deleteBoletoPayload',
+    returnsField: 'boleto',
+    inputFields: [
+      {
+        name: 'clientMutationId',
+        type: 'String',
+        namedType: 'String',
+        kind: 'SCALAR',
+        required: false,
+        isList: false,
+        isRelation: false,
+      },
+      {
+        name: 'id',
+        type: 'ID!',
+        namedType: 'ID',
+        kind: 'SCALAR',
+        required: true,
+        isList: false,
+        isRelation: false,
+      },
+    ],
+  },
+}
+
+describe('buildSelection', () => {
+  it('selecciona scalars y relaciones a un nivel', () => {
+    const selection = buildSelection(boletoSchema, { includeRelations: true })
+    expect(selection).toContain('numero')
+    expect(selection).toContain('ruta {\n  id\n  label\n}')
+    expect(selection).not.toContain('ventas')
+  })
+})
+
+describe('buildItemQuery', () => {
+  it('construye la query de item con variable id', () => {
+    const { query, variables } = buildItemQuery(boletoSchema)
+    expect(query).toContain('query Item($id: ID!)')
+    expect(query).toContain('boleto(id: $id)')
+    expect(query).toContain('numero')
+    expect(variables).toEqual({})
+  })
+
+  it('lanza si no hay query item', () => {
+    expect(() => buildItemQuery({ ...boletoSchema, queryItem: null })).toThrow(
+      /no expone query item/,
+    )
+  })
+})
+
+describe('buildCollectionQuery', () => {
+  it('incluye paginación, filtros y orden con sus variables', () => {
+    const { query, variables } = buildCollectionQuery(boletoSchema, {
+      currentPage: 2,
+      itemsPerPage: 25,
+      filters: { numero: 'AB' },
+      order: [{ numero: 'ASC' }],
+    })
+    expect(variables).toEqual({
+      currentPage: 2,
+      itemsPerPage: 25,
+      f_numero: 'AB',
+      order: [{ numero: 'ASC' }],
+    })
+    expect(query).toContain(
+      '$currentPage: Int, $itemsPerPage: Int, $f_numero: String, $order: [BoletoFilter_order]',
+    )
+    expect(query).toContain(
+      'boletos(currentPage: $currentPage, itemsPerPage: $itemsPerPage, numero: $f_numero, order: $order)',
+    )
+    expect(query).toContain('collection {')
+    expect(query).toContain('paginationInfo {')
+  })
+
+  it('omite filtros sin valor', () => {
+    const { variables } = buildCollectionQuery(boletoSchema, { filters: { numero: undefined } })
+    expect(variables.f_numero).toBeUndefined()
+  })
+
+  it('lanza si no hay query collection', () => {
+    expect(() => buildCollectionQuery({ ...boletoSchema, queryCollection: null })).toThrow(
+      /no expone query collection/,
+    )
+  })
+})
+
+describe('buildMutation', () => {
+  it('construye la mutación relay con input y selección del retorno', () => {
+    const { query } = buildMutation(boletoSchema, boletoSchema.create!)
+    expect(query).toContain('mutation Create($input: createBoletoInput!)')
+    expect(query).toContain('createBoleto(input: $input)')
+    expect(query).toContain('boleto {')
+    expect(query).toContain('numero')
+  })
+
+  it('selecciona solo id para delete', () => {
+    const { query } = buildMutation(boletoSchema, boletoSchema.delete!)
+    expect(query).toContain('mutation Delete($input: deleteBoletoInput!)')
+    expect(query).toContain('boleto {\n    id\n    }')
+  })
+})
+
+describe('toMutationInput', () => {
+  const entities: Record<string, EntitySchema> = {
+    Boleto: boletoSchema,
+    Ruta: {
+      ...boletoSchema,
+      name: 'Ruta',
+      queryCollection: 'rutas',
+      create: null,
+      update: null,
+      delete: null,
+    },
+  }
+
+  it('descarta claves ajenas al input y clientMutationId', () => {
+    const input = toMutationInput(
+      boletoSchema,
+      boletoSchema.create!,
+      { numero: 'AB', extra: 'x', clientMutationId: 'c' },
+      entities,
+    )
+    expect(input).toEqual({ numero: 'AB' })
+  })
+
+  it('no envía id en create', () => {
+    const input = toMutationInput(
+      boletoSchema,
+      boletoSchema.create!,
+      { id: 7, numero: 'AB' },
+      entities,
+    )
+    expect(input.id).toBeUndefined()
+  })
+
+  it('resuelve relaciones a IRIs de API Platform', () => {
+    const input = toMutationInput(
+      boletoSchema,
+      boletoSchema.update!,
+      { id: 7, ruta: { id: 5 } },
+      entities,
+    )
+    expect(input).toEqual({ id: 7, ruta: '/api/rutas/5' })
+  })
+})

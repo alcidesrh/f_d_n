@@ -5,7 +5,7 @@
     <div class="body-row">
       <SidebarLeft />
 
-      <main class="main" @click="ui.closeMobileOverlays()">
+      <main class="main bg-surface-100" @click="ui.closeMobileOverlays()">
         <div class="main-inner">
           <router-view v-slot="{ Component }">
             <transition name="fade" mode="out-in">

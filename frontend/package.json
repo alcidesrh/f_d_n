@@ -17,6 +17,7 @@
     "format": "oxfmt src/"
   },
   "dependencies": {
+    "@apollo/client": "^4.2.11",
     "@formkit/vue": "^2.1.2",
     "@primevue/themes": "4.5.4",
     "@types/ramda": "^0.32.0",

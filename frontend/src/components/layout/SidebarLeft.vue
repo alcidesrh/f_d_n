@@ -74,6 +74,7 @@ import AppIcon from "@/components/icons/AppIcon.vue";
 
 const sidebarClasses = computed(() => [
   "sidebar",
+  "bg-surface-50",
   "left-side",
   { mini: ui.leftState === "mini" },
   { closed: ui.leftState === "close" && !ui.isMobile },

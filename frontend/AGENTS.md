@@ -1,7 +1,3 @@
-# AGENTS.md — Frontend (RAGF)
-
-Frontend del monorepo: SPA Vue 3 sobre Quasar-style layout (Quasar no se usa), con CRUD dinámico impulsado por GraphQL. Se ejecuta dentro del contenedor Docker `frontend` (bun + vite) o en host con `npm run dev`.
-
 ---
 
 ## Comandos
@@ -24,25 +20,19 @@ Nota: el contenedor usa `bun install && bun run dev`; el host usa npm. Hay `pnpm
 ## Stack
 
 - **Runtime**: Vue 3.5 (Composition API, `<script setup lang="ts">`), TypeScript ~6, vite 8 (rolldown)
-- **UI**: PrimeVue 4.5 (auto-import via resolver) + PrimeIcons + Tailwind CSS v4 (`@tailwindcss/vite`) + unocss (preset wind4)
+- **UI**: PrimeVue 4.5 (auto-import via resolver) + PrimeIcons + Tailwind CSS v4 (`@tailwindcss/vite`) 
 - **Forms**: FormKit 2 — wrappers `Fk*` sobre componentes PrimeVue
 - **Estado**: Pinia 4 (con `pinia-plugin-persistedstate`)
 - **Router**: vue-router 5
-- **Datos**: RAGF (capa propia de transporte GraphQL) + `@tanstack/vue-query` + `zod` + `graphql` 17
 - **Calidad**: oxlint + eslint (`@vue/eslint-config-typescript`) + oxfmt + vitest (jsdom) + playwright
 
 ---
 
 ## Arquitectura
 
-- **RAGF** (`src/ragf/`): capa de transporte GraphQL/REST propia (sin Apollo). M1 (transport) hecho; M2 (introspection → Schema AST → Metadata Registry) en curso.
-  - `types.ts` / `config.ts`: contratos + `resolveConfig()`
-  - `transport/`: `client.ts` (GraphQLClient/RestClient), `errors.ts` (RagfError/RagfTransportError/RagfGraphQLError)
-  - `index.ts`: `createRagf()`; store de ciclo de vida en `src/stores/ragf.ts` (se bootstrapea en `src/main.ts`)
-- **GraphQL-ORM dinámico** (`packages/graphql-orm-core/` + `packages/graphql-orm-vue/`): cliente ORM por introspección en runtime (fuentes Live/SDL-snapshot/JSON), registrado en `main.ts` con `createGraphQLOrm`. No son packages npm — se consumen por alias (`@graphql-orm/core`, `@graphql-orm/vue`) en `vite.config.ts`/`tsconfig.app.json`; la capa vue importa el core por ruta relativa. Ver `packages/readme.md` (características, testing, limitaciones) y `src/components/GraphQLOrmDemo.vue` (demo `/demo-graphql`). El snapshot SDL vive en `public/schema.graphql` (regenerar con `api:graphql:export`). Tests: `npx vitest run packages/graphql-orm-core/test` + smoke E2E `npx jiti smoke-test.ts`.
 - **Auto-imports** (unplugin-auto-import + unplugin-vue-components): Vue/Router/Pinia y dirs `./src/stores`, `./src/composables`, `./src/utils` se importan solos. `auto-imports.d.ts` y `components.d.ts` son **generados** — no editar a mano.
 - **Componentes PrimeVue/FormKit**: resueltos por resolver de auto-import; los componentes locales de `src/components/` también se registran automáticamente.
-- **Vistas**: `src/views/` (Dashboard, FormKitDemo), demos en `src/components/` (DemoPlugingGraphql, GraphQLOrmDemo, ThemeEditor).
+- **Vistas**: `src/views/` (Dashboard, FormKitDemo), demos en `src/components/` 
 
 ---
 
@@ -51,10 +41,10 @@ Nota: el contenedor usa `bun install && bun run dev`; el host usa npm. Hay `pnpm
 - Siempre `<script setup lang="ts">`; componentes multi-palabra (regla `vue/multi-word-component-names` desactivada, pero seguirla).
 - En stores dentro de `src/stores/` **no usar** el parámetro `state` en getters: unplugin-auto-import inyecta un símbolo `state` bogus desde `./stores/ui`. Usar `st`.
 - `src` se compila también bajo `tsconfig.vitest.json` que define `"lib": []` → el código de `src/` debe ser lib-agnostic (ej.: `super(message)` de un solo argumento en `errors.ts`, no opciones ES2022).
-- Errores RAGF: usar `RagfError`/`RagfTransportError`/`RagfGraphQLError` + `formatGraphQlErrors`, nunca `Error` a pelo.
+
 - Las colecciones GraphQL del backend son hulls `PageConnection` (`buses { collection { id } paginationInfo { totalCount } }`), no arrays planos.
 - REST requiere header `Accept: application/ld+json` (sin él → 406).
-- Tests contra backend real: opt-in con `LIVE_BACKEND=1` (ver `src/ragf/__tests__/live.smoke.spec.ts`); el resto de tests son puros (vitest + jsdom + `@vue/test-utils`).
+
 
 ---
 

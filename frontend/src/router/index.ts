@@ -1,28 +1,28 @@
-import { createRouter, createWebHistory } from "vue-router";
+import { createRouter, createWebHistory } from 'vue-router'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   scrollBehavior() {
-    return { top: 0 };
+    return { top: 0 }
   },
   routes: [
     {
-      path: "/",
-      name: "dashboard",
-      component: () => import("@/views/Dashboard.vue"),
-      meta: { crumbs: ["Andén", "Resumen"], title: "Resumen operativo" },
+      path: '/',
+      name: 'dashboard',
+      component: () => import('@/views/Dashboard.vue'),
+      meta: { crumbs: ['Andén', 'Resumen'], title: 'Resumen operativo' },
     },
     {
-      path: "/demo",
-      name: "dashboard",
-      component: () => import("@/views/FormKitDemo.vue"),
-      meta: { crumbs: ["Andén", "Resumen"], title: "Resumen operativo" },
+      path: '/demo',
+      name: 'demo',
+      component: () => import('@/views/FormKitDemo.vue'),
+      meta: { crumbs: ['Andén', 'Resumen'], title: 'Resumen operativo' },
     },
     {
-      path: "/:pathMatch(.*)*",
-      redirect: "/",
+      path: '/:pathMatch(.*)*',
+      redirect: '/',
     },
   ],
-});
+})
 
-export default router;
+export default router

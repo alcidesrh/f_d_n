@@ -1,5 +1,5 @@
 <template>
-  <header class="app-header">
+  <header class="app-header bg-surface-50">
     <div class="brand">
       <button class="icon-btn" title="Mostrar/ocultar menú" @click="ui.cycleLeft()">
         <AppIcon name="menu" :size="19" />
@@ -98,6 +98,7 @@
 <script setup lang="ts">
 import { NOTIFICATIONS } from "@/data/mock";
 import { useDialog } from 'primevue/usedialog';
+import ThemeEditor from '@/components/common/ThemeEditor.vue'
 const dialog = useDialog();
 const showThemeEditor = () => dialog.open(ThemeEditor, {props: {header:"Edit Profile"}})
 defineProps<{ crumbs: string[] }>();
