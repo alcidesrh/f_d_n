@@ -9,8 +9,6 @@
     // Path mapping for cleaner imports.
     "paths": {
       "@/*": ["./src/*"],
-      "@graphql-orm/core": ["./src/features/graphql-orm/core/src/index.ts"],
-      "@graphql-orm/vue": ["./src/features/graphql-orm/vue/src/index.ts"]
     },
 
     // `vue-tsc --build` produces a .tsbuildinfo file for incremental type-checking.

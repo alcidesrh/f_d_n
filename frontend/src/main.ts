@@ -20,20 +20,12 @@ import { initGlobalStores } from "@/stores/global.ts";
 
 // App---------------------------
 import { VueQueryPlugin } from "@tanstack/vue-query";
-import { createGraphQLOrm } from "@graphql-orm/vue";
-import { LiveIntrospectionSource, SdlSnapshotSource } from "@graphql-orm/core";
 
 async function bootstrap() {
 
   const isProd = import.meta.env.PROD;
   const graphqlEndpoint = import.meta.env.VITE_GRAPHQL_ENDPOINT || "http://localhost/graphql";
-  const orm = createGraphQLOrm({
-    endpoint: graphqlEndpoint,
-    source: isProd
-      ? new SdlSnapshotSource("/schema.graphql")
-      : new LiveIntrospectionSource(graphqlEndpoint),
-    entities: ["Status", "Empresa", "Piloto", "Trayecto", "Servicio", "Usuario"],
-  });
+
 
   const app = createApp(App);
   app.use(pinia);
