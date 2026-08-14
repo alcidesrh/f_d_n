@@ -9,6 +9,7 @@
 
 import { defineStore } from 'pinia'
 import type { StoreDefinition } from 'pinia'
+import type { AgnosticOption } from '@/lib/apollo/types'
 import { rest } from '@/lib/apollo/rest'
 import { useSchemaRepositoryStore } from '@/stores/schemaRepository'
 import type { CollectionFieldConfig, EntityStore, EntityStoreState } from './types'
@@ -26,6 +27,9 @@ export function defineEntityStore(name: string): StoreDefinition {
 
 function createEntityStore(name: string): StoreDefinition {
   return defineStore(`entity:${name}`, {
+    // Todo el estado de la entidad persiste (paginación, filtros, orden,
+    // columnas con su orden/visibilidad, fullList) para reencontrar el
+    // listado como se dejó al reabrir el navegador.
     persist: true,
     state: (): EntityStoreState => ({
       name,
@@ -41,6 +45,7 @@ function createEntityStore(name: string): StoreDefinition {
       filters: {},
       order: [],
       item: null,
+      fullList: [],
     }),
 
     actions: {
@@ -87,6 +92,14 @@ function createEntityStore(name: string): StoreDefinition {
 
       async remove<T>(this: EntityStore<T>, id: string | number): Promise<T> {
         return useSchemaRepositoryStore().delete(this, id)
+      },
+
+      /**
+       * Carga la lista completa de la entidad (`collectionAgnostic`). Con
+       * `force: true` omite la caché en memoria y re-consulta el backend.
+       */
+      async loadFullList(this: EntityStore, force = false): Promise<AgnosticOption[]> {
+        return useSchemaRepositoryStore().fullList(this, { force })
       },
     },
   })

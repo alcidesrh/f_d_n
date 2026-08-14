@@ -109,3 +109,9 @@ export interface CollectionResult<T> {
   items: T[]
   pagination: CollectionPagination
 }
+
+/** Opción de `fullList` (query `collectionAgnostic`): `{ id: IRI, label }`. */
+export interface AgnosticOption {
+  id: string
+  label: string
+}

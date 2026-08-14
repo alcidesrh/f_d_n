@@ -22,7 +22,7 @@ final class CollectionResolver implements QueryItemResolverInterface {
     //   $metadata->data = \array_map(fn($item) => ['id' => $item, 'label' => $item], Status::cases());
     //   return $metadata;
     // } else {
-    $metadata->data = (new ArrayCollection($this->entityManagerInterface->getRepository(Doctrine::entityNamespace($context['args']['    ']))->findAll()))->map(fn($v) => ['id' => $this->iriConverter->getIriFromResource($v), 'label' => $v->getLabel()])->toArray();
+    $metadata->data = (new ArrayCollection($this->entityManagerInterface->getRepository(Doctrine::entityNamespace($context['args']['resource']))->findAll()))->map(fn($v) => ['id' => $this->iriConverter->getIriFromResource($v), 'label' => $v->getLabel()])->toArray();
     // }
     return $metadata;
   }

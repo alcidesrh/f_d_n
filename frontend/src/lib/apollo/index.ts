@@ -25,6 +25,7 @@ export {
 } from './documents'
 export type { CollectionQuerySpec, BuiltDocument, SelectionOptions } from './documents'
 export type {
+  AgnosticOption,
   CollectionKind,
   CollectionPagination,
   CollectionResult,

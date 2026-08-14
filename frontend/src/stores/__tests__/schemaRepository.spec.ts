@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useSchemaRepositoryStore, SCHEMA_REPOSITORY_VERSION } from '@/stores/schemaRepository'
 import type { CollectionFieldConfig, EntityStore, EntityStoreState } from '@/stores/entities/types'
-import type { EntitySchema } from '@/lib/apollo/types'
+import type { AgnosticOption, EntitySchema } from '@/lib/apollo/types'
 
 const { apolloMock } = vi.hoisted(() => ({
   apolloMock: {
@@ -12,6 +12,7 @@ const { apolloMock } = vi.hoisted(() => ({
     create: vi.fn<(entity: EntitySchema, input: Record<string, unknown>) => Promise<unknown>>(),
     update: vi.fn<(entity: EntitySchema, input: Record<string, unknown>) => Promise<unknown>>(),
     delete: vi.fn<(entity: EntitySchema, id: string | number) => Promise<unknown>>(),
+    agnosticList: vi.fn<(resource: string) => Promise<AgnosticOption[]>>(),
   },
 }))
 
@@ -145,7 +146,9 @@ function makeStore(): EntityStore<{ id: number; numero: string }> {
     filters: {},
     order: [],
     item: null,
+    fullList: [],
     loadColumns: vi.fn<() => Promise<CollectionFieldConfig[]>>().mockResolvedValue([]),
+    loadFullList: vi.fn<() => Promise<AgnosticOption[]>>().mockResolvedValue([]),
     fetchItems: vi.fn<() => Promise<Array<{ id: number; numero: string }>>>(),
     fetchItem: vi.fn<(id: string | number) => Promise<{ id: number; numero: string }>>(),
     create: vi.fn<(data: Record<string, unknown>) => Promise<{ id: number; numero: string }>>(),
@@ -266,6 +269,22 @@ describe('useSchemaRepositoryStore', () => {
     await store.delete(entityStore, 2)
     expect(entityStore.items.map((i) => i.id)).toEqual([1])
     expect(entityStore.item).toBeNull()
+  })
+
+  it('carga fullList desde collectionAgnostic y cachea hasta pedir fuerza', async () => {
+    const options: AgnosticOption[] = [{ id: '/api/buses/1', label: 'Bus A' }]
+    apolloMock.agnosticList.mockResolvedValue(options)
+    const store = useSchemaRepositoryStore()
+    await store.init()
+    const entityStore = makeStore()
+    const first = await store.fullList(entityStore)
+    expect(apolloMock.agnosticList).toHaveBeenCalledWith('Boleto')
+    expect(first).toEqual(options)
+    expect(entityStore.fullList).toEqual(options)
+    await store.fullList(entityStore)
+    expect(apolloMock.agnosticList).toHaveBeenCalledOnce()
+    await store.fullList(entityStore, { force: true })
+    expect(apolloMock.agnosticList).toHaveBeenCalledTimes(2)
   })
 
   it('lanza para entidades sin metadatos', async () => {

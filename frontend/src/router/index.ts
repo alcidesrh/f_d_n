@@ -19,6 +19,13 @@ const router = createRouter({
       meta: { crumbs: ['Andén', 'Resumen'], title: 'Resumen operativo' },
     },
     {
+      path: '/lista/:entity',
+      name: 'entity-list',
+      props: true,
+      component: () => import('@/components/crud/List.vue'),
+      meta: { crumbs: ['Andén', 'Listado'], title: 'Listado' },
+    },
+    {
       path: '/:pathMatch(.*)*',
       redirect: '/',
     },

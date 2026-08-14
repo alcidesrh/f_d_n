@@ -17,7 +17,13 @@ import {
   type CollectionQuerySpec,
 } from './documents'
 import { parseIntrospection, type IntrospectionSchemaLike } from './parseIntrospection'
-import type { CollectionPagination, CollectionResult, EntitySchema, MutationSchema } from './types'
+import type {
+  AgnosticOption,
+  CollectionPagination,
+  CollectionResult,
+  EntitySchema,
+  MutationSchema,
+} from './types'
 
 const GRAPHQL_URI = import.meta.env.VITE_GRAPHQL_ENDPOINT ?? 'http://localhost/graphql'
 
@@ -138,6 +144,22 @@ export class ApiPlatformClient {
       variables,
     })
     return normalizeCollection<T>(entity, result.data![entity.queryCollection])
+  }
+
+  /**
+   * Lista completa de una entidad (`collectionAgnostic(resource)`): todos los
+   * registros como `{ id: IRI, label }` para options de selects de relaciones.
+   */
+  async agnosticList(resource: string): Promise<AgnosticOption[]> {
+    const query = toDocument(
+      `query FullList($resource: String!) {\n  collectionAgnostic(resource: $resource) {\n    data\n  }\n}`,
+    )
+    const result = await this.client.query<{ collectionAgnostic: { data: unknown } }>({
+      query,
+      variables: { resource },
+    })
+    const data = result.data?.collectionAgnostic?.data
+    return Array.isArray(data) ? (data as AgnosticOption[]) : []
   }
 
   async create<T>(entity: EntitySchema, input: Record<string, unknown>): Promise<T> {

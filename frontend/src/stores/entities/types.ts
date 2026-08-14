@@ -8,7 +8,7 @@
  * `useSchemaRepositoryStore`, que es el punto de entrada a la API GraphQL.
  */
 
-import type { OrderCondition } from '@/lib/apollo/types'
+import type { AgnosticOption, OrderCondition } from '@/lib/apollo/types'
 
 export type OrderDirection = 'ASC' | 'DESC'
 
@@ -49,6 +49,8 @@ export interface EntityStoreState<T = unknown> {
   order: OrderCondition[]
   /** Elemento obtenido por `get` (ver o editar). */
   item: T | null
+  /** Lista completa de la entidad (`collectionAgnostic`), cacheada en LocalStorage. */
+  fullList: AgnosticOption[]
 }
 
 export interface EntityStore<T = unknown> extends EntityStoreState<T> {
@@ -64,4 +66,6 @@ export interface EntityStore<T = unknown> extends EntityStoreState<T> {
   create(data: Record<string, unknown>): Promise<T>
   update(data: Record<string, unknown>): Promise<T>
   remove(id: string | number): Promise<T>
+  /** Carga (o reusa la cacheada) la lista completa de la entidad. */
+  loadFullList(force?: boolean): Promise<AgnosticOption[]>
 }
