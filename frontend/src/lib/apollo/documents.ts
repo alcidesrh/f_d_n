@@ -20,18 +20,21 @@ export interface SelectionOptions {
   fields?: string[]
 }
 
-/** Selección hoja de una entidad: scalars + (opcional) relaciones a 1 nivel. */
+/** Selección hoja de una entidad: scalars + relaciones a 1 nivel. Si `fields`
+ * se pasa, solo se incluyen los campos pedidos (relaciones como `{ id label }`). */
 export function buildSelection(entity: EntitySchema, options: SelectionOptions = {}): string {
+  const requested = options.fields ? new Set(options.fields) : null
+  const want = (name: string): boolean => requested === null || requested.has(name)
   const lines: string[] = []
   const seen = new Set<string>()
-  for (const field of options.fields ?? entity.scalarFields) {
-    if (seen.has(field)) continue
+  for (const field of entity.scalarFields) {
+    if (!want(field) || seen.has(field)) continue
     seen.add(field)
     lines.push(field)
   }
-  if (options.includeRelations) {
+  if (options.includeRelations || requested !== null) {
     for (const relation of entity.relations) {
-      if (seen.has(relation.name)) continue
+      if (!want(relation.name) || seen.has(relation.name)) continue
       seen.add(relation.name)
       lines.push(`${relation.name} {\n  id\n  label\n}`)
     }

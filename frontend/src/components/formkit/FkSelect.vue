@@ -6,6 +6,7 @@
     :name="context.node.name"
     :disabled="disabled"
     :invalid="invalid"
+    class="w-full"
     :class="context.classes.input"
     @update:model-value="update"
     @blur="blur"

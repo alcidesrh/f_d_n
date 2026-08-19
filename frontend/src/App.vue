@@ -20,6 +20,7 @@
       <div class="backdrop" :class="{ show: showBackdrop }" @click="ui.closeMobileOverlays()"></div>
     </div>
     <DynamicDialog />
+    <Toasts />
   </div>
 </template>
 <script setup lang="ts">

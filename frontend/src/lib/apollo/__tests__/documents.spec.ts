@@ -266,6 +266,19 @@ describe('buildSelection', () => {
     expect(selection).toContain('ruta {\n  id\n  label\n}')
     expect(selection).not.toContain('ventas')
   })
+
+  it('con fields solo selecciona los pedidos (scalars y relaciones)', () => {
+    const selection = buildSelection(boletoSchema, { fields: ['numero', 'ruta'] })
+    expect(selection).toContain('numero')
+    expect(selection).not.toContain('total')
+    expect(selection).not.toContain('boletas')
+    expect(selection).toContain('ruta {\n  id\n  label\n}')
+    expect(selection.split('\n').filter((line) => line === 'label')).toHaveLength(0)
+  })
+
+  it('con fields vacíos cae a id', () => {
+    expect(buildSelection(boletoSchema, { fields: [] })).toBe('id')
+  })
 })
 
 describe('buildItemQuery', () => {

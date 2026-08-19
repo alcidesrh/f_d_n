@@ -89,7 +89,7 @@ export const SURFACE_OPTIONS: SurfaceOption[] = [
   { key: "stone", label: "Stone", bg: "#e7e5e4", accent: "#44403c" },
 ];
 
-
+// console.log(PRESET_OPTIONS.map(v => v.value))
 export const themeColors = (theme, primary, surface, dark) => {
   const option = PRESET_OPTIONS.find((o) => o.key === theme);
   let primitive = "";
@@ -97,11 +97,11 @@ export const themeColors = (theme, primary, surface, dark) => {
     primitive = invertPalette({ ...option.value.primitive, ...colors });
     primary = invertPalette(pick([primary], colors))[primary];
     surface = invertPalette(pick([surface], colors))[surface];
-    surface = { "0": '#000000', ...surface };
+    surface = { "0": "#000000", ...surface };
   } else {
     primitive = { ...option.value.primitive, ...colors };
     primary = colors[primary];
-    surface = { "0": '#ffffff', ...colors[surface] };
+    surface = { "0": "#ffffff", ...colors[surface] };
   }
   return {
     ...option.value,
@@ -123,9 +123,7 @@ export const themeColors = (theme, primary, surface, dark) => {
           color: "{primary.700}",
           contrastColor: "{primary.50}",
           hoverColor: "{primary.600}",
-          activeColor: "{primary.700}"
-
-
+          activeColor: "{primary.700}",
         },
         highlight: {
           background: "{surface.200}",
@@ -175,21 +173,20 @@ export const themeColors = (theme, primary, surface, dark) => {
           select: {
             background: "{surface.100}",
             borderColor: "{surface.300}",
-            color: "{text.color}"
+            color: "{text.color}",
           },
           popover: {
             background: "{surface.100}",
             borderColor: "{surface.300}",
-            color: "{text.color}"
+            color: "{text.color}",
           },
           modal: {
             background: "{surface.100}",
             borderColor: "{surface.300}",
-            color: "{text.color}"
-          }
+            color: "{text.color}",
+          },
         },
       },
-
     },
     components: { ...option.value.components, ...componentsPreset(theme) },
   };
@@ -200,6 +197,7 @@ export const themeColors = (theme, primary, surface, dark) => {
     primary: primary,
   };
 };
+//#region Componentes
 export const componentsPreset = (parent: string) => {
   const option = PRESET_OPTIONS.find((o) => o.key === parent);
   return {
@@ -227,14 +225,19 @@ export const componentsPreset = (parent: string) => {
     },
     datatable: {
       ...option.value.components.datatable,
+      header: {
+        cell: {
+          padding: "5px 1rem",
+        },
+      },
       colorScheme: {
         ...option.value.components.datatable?.colorScheme,
         dark: {
           ...option.value.components.datatable?.colorScheme.dark,
-          header: {
-            background: "{surface.100}",
-            "cell.background": "{surface.100}",
-          },
+          // header: {
+          //   background: "{surface.100}",
+          //   "cell.background": "{surface.100}",
+          // },
           row: {
             background: "{surface.100}",
             "striped.background": "{surface.200}",
@@ -246,8 +249,8 @@ export const componentsPreset = (parent: string) => {
       ...option.value.components.select,
       root: {
         ...option.value.components.select?.root,
-        background: "{surface.50}",
-        "border.color": "{surface.400}",
+        // background: "{surface.50}",
+        // "border.color": "{surface.400}",
       },
     },
     popover: {
@@ -285,3 +288,4 @@ export const componentsPreset = (parent: string) => {
     // },
   };
 };
+//#endregion

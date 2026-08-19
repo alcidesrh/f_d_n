@@ -23,7 +23,7 @@ const router = createRouter({
       name: 'entity-list',
       props: true,
       component: () => import('@/components/crud/List.vue'),
-      meta: { crumbs: ['Andén', 'Listado'], title: 'Listado' },
+      meta: { crumbs: ['Andén', 'Listado'], title: 'Lista:' },
     },
     {
       path: '/:pathMatch(.*)*',

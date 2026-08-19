@@ -37,6 +37,9 @@ class FieldConfig
     #[Groups(['read:dto'])]
     public ?array $attrs = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    public ?string $kind = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -97,6 +100,19 @@ class FieldConfig
     public function setAttrs(?array $attrs): self
     {
         $this->attrs = $attrs;
+        return $this;
+    }
+
+
+    public function getKind(): ?string
+    {
+        return $this->kind;
+    }
+
+    public function setKind(string $kind): static
+    {
+        $this->kind = $kind;
+
         return $this;
     }
 }

@@ -42,13 +42,13 @@ export function cellValue(item: unknown, field: string): string {
 export function idDisplay(value: unknown): string {
   const label = cellLabel(value)
   const match = label.match(/\/(\d+)$/)
-  return match ? match[1] : label
+  return match ? (match[1] ?? label) : label
 }
 
 /** Valor de display de una celda; los campos `id`/`_id` muestran el número, no el IRI. */
-export function cellDisplay(item: unknown, field: string): string {
-  const label = cellValue(item, field)
-  if (field === 'id' || field === '_id') return idDisplay(label)
+export function cellDisplay(item: unknown, column: { field: string }): string {
+  const label = cellValue(item, column.field)
+  if (column.field === 'id' || column.field === '_id') return idDisplay(label)
   return label
 }
 

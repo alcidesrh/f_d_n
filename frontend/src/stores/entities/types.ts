@@ -8,7 +8,7 @@
  * `useSchemaRepositoryStore`, que es el punto de entrada a la API GraphQL.
  */
 
-import type { AgnosticOption, OrderCondition } from '@/lib/apollo/types'
+import type { AgnosticOption, EntitySchema, OrderCondition } from '@/lib/apollo/types'
 
 export type OrderDirection = 'ASC' | 'DESC'
 
@@ -60,7 +60,10 @@ export interface EntityStore<T = unknown> extends EntityStoreState<T> {
   $reset: () => void
   $dispose: () => void
 
-  loadColumns(): Promise<CollectionFieldConfig[]>
+  /** Schema GraphQL de la entidad, de `useSchemaRepositoryStore` (getter). */
+  metadata: EntitySchema | null
+
+  loadColumns(force?: boolean): Promise<CollectionFieldConfig[]>
   fetchItems(): Promise<T[]>
   fetchItem(id: string | number): Promise<T>
   create(data: Record<string, unknown>): Promise<T>

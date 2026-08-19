@@ -44,6 +44,9 @@ class Action extends Base
     #[ORM\Column(type: Types::SIMPLE_ARRAY, nullable: true)]
     private ?array $rutaParams = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $codigo = null;
+
     public function __construct()
     {
         parent::__construct();
@@ -141,6 +144,18 @@ class Action extends Base
     public function setRutaParams(?array $rutaParams): static
     {
         $this->rutaParams = $rutaParams;
+
+        return $this;
+    }
+
+    public function getCodigo(): ?string
+    {
+        return $this->codigo;
+    }
+
+    public function setCodigo(?string $codigo): static
+    {
+        $this->codigo = $codigo;
 
         return $this;
     }

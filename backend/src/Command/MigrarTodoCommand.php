@@ -27,7 +27,8 @@ use Doctrine\DBAL\Connection;
     name: 'app:migrar:todo',
     description: 'Ejecuta la migración completa: 1) reset, 2) estáticos, 3) IAM, 4) config, 5) servicios+boletos'
 )]
-class MigrarTodoCommand extends Command {
+class MigrarTodoCommand extends Command
+{
     public function __construct(
         private Limpiador $limpiador,
         private MigradorEstaticos $migradorEstaticos,
@@ -39,12 +40,14 @@ class MigrarTodoCommand extends Command {
         parent::__construct();
     }
 
-    protected function configure(): void {
+    protected function configure(): void
+    {
         $this
             ->addOption('clean', null, InputOption::VALUE_NONE, 'Limpia la BD antes de migrar')
-            ->addOption('skip-estaticos', null, InputOption::VALUE_NONE, 'Salta la migración Estaticos')
-            ->addOption('skip-iam', null, InputOption::VALUE_NONE, 'Salta la migración IAM')
-            ->addOption('skip-config', null, InputOption::VALUE_NONE, 'Salta la sincronización de EntityConfiguration')
+            ->addOption('estaticos', null, InputOption::VALUE_NONE, 'Salta la migración Estaticos')
+            ->addOption('iam', null, InputOption::VALUE_NONE, 'Salta la migración IAM')
+            ->addOption('config', null, InputOption::VALUE_NONE, 'Salta la sincronización de EntityConfiguration')
+            ->addOption('data', null, InputOption::VALUE_NONE, 'Salta la sincronización de EntityConfiguration')
             ->addOption('servicios', null, InputOption::VALUE_OPTIONAL, 'Cantidad de boletos a migrar', '100')
             ->addOption(
                 'entities',
@@ -61,13 +64,15 @@ class MigrarTodoCommand extends Command {
         // );
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output): int {
+    protected function execute(InputInterface $input, OutputInterface $output): int
+    {
+        //php bin/console app:migrar:todo --flag-clean --flag-estaticos --flag-iam --flag-data
         $clean = (bool) $input->getOption('clean');
-        $skipEstatico = (bool) $input->getOption('skip-estaticos');
-        $skipIam = (bool) $input->getOption('skip-iam');
-        $skipConfig = (bool) $input->getOption('skip-config');
+        $flagEstatico = (bool) $input->getOption('estaticos');
+        $flagIam = (bool) $input->getOption('iam');
+        $flagConfig = (bool) $input->getOption('config');
+        $flagData = (bool) $input->getOption('data');
         $servicios = (int) $input->getOption('servicios');
-        $entities =  $input->getOption('entities');
         ini_set('memory_limit', '2G');
         // Reset the debug data holder to avoid memory exhaustion from
         // BacktraceDebugDataHolder accumulating all migration queries.
@@ -87,7 +92,7 @@ class MigrarTodoCommand extends Command {
 
         // ─── Paso 2: Datos estáticos ──────────────────────────────
         $this->resetDebugDataHolder();
-        if (!$skipEstatico) {
+        if ($flagEstatico) {
             $output->writeln('<info>[2/5] Migrando datos estáticos...</info>');
             try {
                 $contadores = $this->migradorEstaticos->migrar($output);
@@ -101,7 +106,7 @@ class MigrarTodoCommand extends Command {
             }
         }
         // ─── Paso 3: IAM ──────────────────────────────────────────
-        if (!$skipIam) {
+        if ($flagIam) {
             $this->resetDebugDataHolder();
             $output->writeln('<info>[3/5] Migrando IAM (roles, permisos, acciones)...</info>');
             try {
@@ -114,7 +119,7 @@ class MigrarTodoCommand extends Command {
             }
         }
         // ─── Paso 4: EntityConfiguration ─────────────────────────
-        if (!$skipConfig) {
+        if ($flagConfig) {
             $output->writeln('<info>[4/5] Sincronizando EntityConfiguration...</info>');
             try {
                 $metadataFactory = $this->entityManager->getMetadataFactory();
@@ -135,35 +140,36 @@ class MigrarTodoCommand extends Command {
                 return Command::FAILURE;
             }
         }
-
-        // ─── Paso 5: Servicios + Boletos (desde salida) ───────────
-        $this->resetDebugDataHolder();
-        $output->writeln('<info>[5/5] Migrando servicios y boletos desde salidas...</info>');
-        $resetFn = function () {
+        if ($flagData) {
+            // ─── Paso 5: Servicios + Boletos (desde salida) ───────────
             $this->resetDebugDataHolder();
-        };
-        try {
-            $contadores = $this->migrador->migrarServicio($servicios, $output, $resetFn);
-            $this->resetDebugDataHolder();
+            $output->writeln('<info>[5/5] Migrando servicios y boletos desde salidas...</info>');
+            $resetFn = function () {
+                $this->resetDebugDataHolder();
+            };
+            try {
+                $contadores = $this->migrador->migrarServicio($servicios, $output, $resetFn);
+                $this->resetDebugDataHolder();
 
-            $allCounters = array_merge($allCounters, $contadores);
-            $steps[] = 'servicios+boletos';
-        } catch (\Throwable $e) {
-            $output->writeln("<error>Error en boletos: {$e->getMessage()}</error>");
-            return Command::FAILURE;
-        }
-
-        // ─── Resumen final ────────────────────────────────────────
-        $elapsed = microtime(true) - $start;
-
-        $table = new Table($output);
-        $table->setHeaders(['Entidad', 'Registros']);
-        foreach ($allCounters as $entity => $count) {
-            if ($count > 0) {
-                $table->addRow([$entity, $count]);
+                $allCounters = array_merge($allCounters, $contadores);
+                $steps[] = 'servicios+boletos';
+            } catch (\Throwable $e) {
+                $output->writeln("<error>Error en boletos: {$e->getMessage()}</error>");
+                return Command::FAILURE;
             }
+
+            // ─── Resumen final ────────────────────────────────────────
+
+            $table = new Table($output);
+            $table->setHeaders(['Entidad', 'Registros']);
+            foreach ($allCounters as $entity => $count) {
+                if ($count > 0) {
+                    $table->addRow([$entity, $count]);
+                }
+            }
+            $table->render();
         }
-        $table->render();
+        $elapsed = microtime(true) - $start;
 
         $total = array_sum($allCounters);
         $output->writeln('');
@@ -174,7 +180,8 @@ class MigrarTodoCommand extends Command {
         return Command::SUCCESS;
     }
 
-    private function resetDebugDataHolder(): void {
+    private function resetDebugDataHolder(): void
+    {
         $app = $this->getApplication();
         if (!$app instanceof Application) {
             return;
@@ -184,7 +191,8 @@ class MigrarTodoCommand extends Command {
             $container->get('doctrine.debug_data_holder')->reset();
         }
     }
-    public function resetDB(InputInterface $input,  ?OutputInterface $output, ?bool $hard): int {
+    public function resetDB(InputInterface $input,  ?OutputInterface $output, ?bool $hard): int
+    {
         $io = new SymfonyStyle($input, $output);
         if ($hard) {
             // $io->warning('HARD RESET: se dropeará y recreará la base de datos');
@@ -216,7 +224,8 @@ class MigrarTodoCommand extends Command {
     }
 
     // #[AsCommand('app:migrar:estaticos')]
-    public function estaticos(#[Argument] array $entities = [], ?OutputInterface $output = null): int {
+    public function estaticos(#[Argument] array $entities = [], ?OutputInterface $output = null): int
+    {
         $output->writeln('<info>Migrando datos estáticos...</info>');
         try {
             $contadores = $this->migradorEstaticos->migrar($output, $entities);

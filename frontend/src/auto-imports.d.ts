@@ -69,6 +69,7 @@ declare global {
   const shallowRef: typeof import('vue').shallowRef
   const state: typeof import('./stores/ui').state
   const storeToRefs: typeof import('pinia').storeToRefs
+  const stores: typeof import('./composables/useEntityRegistry').stores
   const toRaw: typeof import('vue').toRaw
   const toRef: typeof import('vue').toRef
   const toRefs: typeof import('vue').toRefs
@@ -93,6 +94,7 @@ declare global {
   const useSchemaRepositoryStore: typeof import('./stores/schemaRepository').useSchemaRepositoryStore
   const useSlots: typeof import('vue').useSlots
   const useTemplateRef: typeof import('vue').useTemplateRef
+  const useToasts: typeof import('./composables/useToasts').useToasts
   const useUiStore: typeof import('./stores/ui').useUiStore
   const watch: typeof import('vue').watch
   const watchEffect: typeof import('vue').watchEffect
@@ -104,6 +106,9 @@ declare global {
   // @ts-ignore
   export type { Component, Slot, Slots, ComponentPublicInstance, ComputedRef, DirectiveBinding, ExtractDefaultPropTypes, ExtractPropTypes, ExtractPublicPropTypes, InjectionKey, PropType, Ref, ShallowRef, MaybeRef, MaybeRefOrGetter, VNode, WritableComputedRef } from 'vue'
   import('vue')
+  // @ts-ignore
+  export type { ToastType, ToastMessage } from './composables/useToasts'
+  import('./composables/useToasts')
   // @ts-ignore
   export type { SchemaRepositoryState } from './stores/schemaRepository'
   import('./stores/schemaRepository')
@@ -178,6 +183,7 @@ declare module 'vue' {
     readonly shallowRef: UnwrapRef<typeof import('vue')['shallowRef']>
     readonly state: UnwrapRef<typeof import('./stores/ui')['state']>
     readonly storeToRefs: UnwrapRef<typeof import('pinia')['storeToRefs']>
+    readonly stores: UnwrapRef<typeof import('./composables/useEntityRegistry')['stores']>
     readonly toRaw: UnwrapRef<typeof import('vue')['toRaw']>
     readonly toRef: UnwrapRef<typeof import('vue')['toRef']>
     readonly toRefs: UnwrapRef<typeof import('vue')['toRefs']>
@@ -197,6 +203,7 @@ declare module 'vue' {
     readonly useSchemaRepositoryStore: UnwrapRef<typeof import('./stores/schemaRepository')['useSchemaRepositoryStore']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
     readonly useTemplateRef: UnwrapRef<typeof import('vue')['useTemplateRef']>
+    readonly useToasts: UnwrapRef<typeof import('./composables/useToasts')['useToasts']>
     readonly useUiStore: UnwrapRef<typeof import('./stores/ui')['useUiStore']>
     readonly watch: UnwrapRef<typeof import('vue')['watch']>
     readonly watchEffect: UnwrapRef<typeof import('vue')['watchEffect']>

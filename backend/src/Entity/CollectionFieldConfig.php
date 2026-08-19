@@ -2,9 +2,7 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Metadata\GraphQl\Mutation;
-use ApiPlatform\Metadata\GraphQl\QueryCollection;
+use ApiPlatform\Metadata\ApiProperty;
 use App\Attribute\ApiResourceNoPagination;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -19,11 +17,12 @@ class CollectionFieldConfig  extends FieldConfig
     public EntityConfiguration $entityConfig;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['read:dto'])]
     private ?bool $sortable = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['read:dto'])]
     private ?bool $filterable = null;
-
 
 
     public function __construct(array $data)
@@ -31,14 +30,19 @@ class CollectionFieldConfig  extends FieldConfig
         $this->setData($data);
     }
 
-    // public function setData(array $data)
-    // {
-    //     $this->setField($data[0])->setVisible(true)
-    //         ->setIsSortable(false)->setLabel($data[0])->setAttrs(null);
-    //     if (\in_array($data[0], ['legacyId', 'apiTokens'])) {
-    //         $this->visible = false;
-    //     }
-    // }
+    public function setData(array $data)
+    {
+        $this->setSortable(false)->setFilterable(false)->setField($data[0])->setVisible(true)->setLabel($data[0])->setAttrs(null);
+        $this->kind = match ($data[1]) {
+            'select', 'multiple', 'simple_array' => 'list',
+            'datetime', 'date' => 'date',
+            default => 'scalar'
+        };
+
+        if (\in_array($data[0], ['legacyId', 'apiTokens'])) {
+            $this->visible = false;
+        }
+    }
 
 
     public function getEntityConfig(): EntityConfiguration
@@ -76,4 +80,5 @@ class CollectionFieldConfig  extends FieldConfig
 
         return $this;
     }
+
 }

@@ -25,8 +25,8 @@
   /* background: var(--p-surface-100); */
 }
 .main-inner {
-  padding: 24px 28px 60px;
-  max-width: 1400px;
+  padding: 24px 4rem 60px;
+  /* max-width: 1400px; */
   margin: 0 auto;
 }
 .page-head {
@@ -34,13 +34,22 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 22px;
+  /* margin-bottom: 22px; */
   flex-wrap: wrap;
 }
 .page-title {
-  /* font-family: "Space Grotesk", sans-serif; */
-  font-size: 24px;
-  font-weight: 700;
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.2rem;
+  color: var(--p-surface-700);
+  font-weight: 600;
+  display: flex;
+    text-transform: capitalize;
+
+  gap: 0.5rem;
+  & > :nth-child(1) {
+    font-weight: 500;
+    color: var(--p-surface-500);
+  }
 }
 .page-sub {
   color: var(--text-muted);
@@ -48,10 +57,10 @@
   margin-top: 3px;
 }
 
-.grid {
+/* .grid {
   display: grid;
   gap: 18px;
-}
+} */
 .grid-kpi {
   grid-template-columns: repeat(4, 1fr);
 }
@@ -64,4 +73,9 @@
 }
 .grid-3 {
   grid-template-columns: repeat(3, 1fr);
+}
+
+/* ---- Resaltado de coincidencias de filtro (CSS Custom Highlight API) ---- */
+::highlight(list-filter-match) {
+  background-color: #fef08a;
 }

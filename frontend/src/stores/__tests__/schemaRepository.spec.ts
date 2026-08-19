@@ -147,6 +147,7 @@ function makeStore(): EntityStore<{ id: number; numero: string }> {
     order: [],
     item: null,
     fullList: [],
+    metadata: null,
     loadColumns: vi.fn<() => Promise<CollectionFieldConfig[]>>().mockResolvedValue([]),
     loadFullList: vi.fn<() => Promise<AgnosticOption[]>>().mockResolvedValue([]),
     fetchItems: vi.fn<() => Promise<Array<{ id: number; numero: string }>>>(),
@@ -285,6 +286,49 @@ describe('useSchemaRepositoryStore', () => {
     expect(apolloMock.agnosticList).toHaveBeenCalledOnce()
     await store.fullList(entityStore, { force: true })
     expect(apolloMock.agnosticList).toHaveBeenCalledTimes(2)
+  })
+
+  it('pide solo las columnas visibles (+ id) al cargar una colección', async () => {
+    const store = useSchemaRepositoryStore()
+    await store.init()
+    const entityStore = makeStore()
+    entityStore.columns = [
+      { field: 'id', label: 'ID', visible: true },
+      { field: 'numero', label: 'Número', visible: true },
+      { field: 'total', label: 'Total', visible: false },
+    ]
+    await store.collection(entityStore)
+    expect(apolloMock.collection).toHaveBeenCalledWith(
+      boletoSchema,
+      expect.objectContaining({ fields: ['id', 'numero'] }),
+    )
+  })
+
+  it('si no hay columnas cargadas no restringe los campos', async () => {
+    const store = useSchemaRepositoryStore()
+    await store.init()
+    const entityStore = makeStore()
+    await store.collection(entityStore)
+    const spec = apolloMock.collection.mock.calls[0]![1] as { fields?: string[] }
+    expect(spec.fields).toBeUndefined()
+  })
+
+  it('descarta condiciones de orden sobre campos no soportados', async () => {
+    const orderable = {
+      ...boletoSchema,
+      orderInput: 'BoletoFilter_order',
+      orderFields: ['numero'],
+    }
+    apolloMock.introspect.mockResolvedValue({ Boleto: orderable })
+    const store = useSchemaRepositoryStore()
+    await store.init()
+    const entityStore = makeStore()
+    entityStore.order = [{ numero: 'ASC' }, { total: 'DESC' }]
+    await store.collection(entityStore)
+    expect(apolloMock.collection).toHaveBeenCalledWith(
+      orderable,
+      expect.objectContaining({ order: [{ numero: 'ASC' }] }),
+    )
   })
 
   it('lanza para entidades sin metadatos', async () => {

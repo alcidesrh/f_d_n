@@ -17,8 +17,7 @@ export async function initGlobalStores() {
   schemaRepository = useSchemaRepositoryStore()
   try {
     await schemaRepository.init()
-    const user = await getEntity('Usuario')
-    console.log(user)
+    // const user = await getEntity('Usuario')
   } catch (error) {
     console.error('[schemaRepository] falló la carga del schema:', error)
   }

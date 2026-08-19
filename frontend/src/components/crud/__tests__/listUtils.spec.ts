@@ -108,13 +108,13 @@ describe('idDisplay', () => {
 
 describe('cellDisplay', () => {
   it('muestra el id como número, no como IRI', () => {
-    expect(cellDisplay({ id: '/api/icons/1' }, 'id')).toBe('1')
-    expect(cellDisplay({ _id: '/api/icons/2' }, '_id')).toBe('2')
+    expect(cellDisplay({ id: '/api/icons/1' }, { field: 'id' })).toBe('1')
+    expect(cellDisplay({ _id: '/api/icons/2' }, { field: '_id' })).toBe('2')
   })
 
   it('delega en cellValue para el resto de campos', () => {
-    expect(cellDisplay({ name: 'home' }, 'name')).toBe('home')
-    expect(cellDisplay({ category: { label: 'Ventas' } }, 'category')).toBe('Ventas')
+    expect(cellDisplay({ name: 'home' }, { field: 'name' })).toBe('home')
+    expect(cellDisplay({ category: { label: 'Ventas' } }, { field: 'category' })).toBe('Ventas')
   })
 })
 
