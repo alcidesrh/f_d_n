@@ -4,7 +4,6 @@
       title="Formulario dinámico"
       subtitle="EntitySchema → FormKit Schema serializado on demand"
     />
-
     <div class="card mb-4">
       <label class="block text-sm font-medium mb-1.5">Entidad</label>
       <Select

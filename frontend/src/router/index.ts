@@ -9,7 +9,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'dashboard',
-      component: () => import('@/views/Dashboard.vue'),
+      component: () => import('@/pages/Dashboard.vue'),
       meta: {
         layout: 'default',
         crumbs: ['Andén', 'Resumen'],
@@ -29,7 +29,7 @@ const router = createRouter({
     {
       path: '/demo',
       name: 'demo',
-      component: () => import('@/views/FormKitDemo.vue'),
+      component: () => import('@/pages/form/FormKitDemo.vue'),
       meta: {
         layout: 'formdemo',
         crumbs: ['Andén', 'Demostración'],
@@ -37,13 +37,13 @@ const router = createRouter({
       },
     },
     {
-      path: '/entity-form/:entity?',
-      name: 'entity-form',
-      component: () => import('@/views/FormKitDemo.vue'),
+      path: '/form/build',
+      name: 'form_build ',
+      component: () => import('@/pages/form/FormBuilder.vue'),
       meta: {
-        layout: 'default',
-        crumbs: ['Andén', 'Formulario'],
-        title: 'Formulario dinámico',
+        layout: 'formdemo',
+        crumbs: ['Andén', 'Demostración'],
+        title: 'FormKit & PrimeVue Demo',
       },
     },
     {
@@ -52,7 +52,7 @@ const router = createRouter({
       props: true,
       component: () => import('@/components/crud/List.vue'),
       meta: {
-        layout: 'formdemo',
+        layout: 'default',
         crumbs: ['Andén', 'Listado'],
         title: 'Lista de entidad',
       },
