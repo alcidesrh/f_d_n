@@ -75,6 +75,7 @@ function field(name: string, namedType: string, isRelation = false) {
     isList: false,
     isRelation,
     isSubcollection: false,
+    enumValues: [],
   }
 }
 
@@ -128,6 +129,7 @@ const editableSchema: EntitySchema = {
         required: false,
         isList: false,
         isRelation: false,
+        enumValues: [],
       },
       {
         name: 'icon',
@@ -137,6 +139,7 @@ const editableSchema: EntitySchema = {
         required: false,
         isList: false,
         isRelation: false,
+        enumValues: [],
       },
       {
         name: 'createdAt',
@@ -146,6 +149,7 @@ const editableSchema: EntitySchema = {
         required: false,
         isList: false,
         isRelation: false,
+        enumValues: [],
       },
       {
         name: 'category',
@@ -155,6 +159,7 @@ const editableSchema: EntitySchema = {
         required: false,
         isList: false,
         isRelation: false,
+        enumValues: [],
       },
     ],
   },

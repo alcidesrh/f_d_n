@@ -58,7 +58,10 @@
   },
   "editor.hover.enabled": "off",
   "workbench.tips.enabled": false,
-  "cSpell.words": ["opsz", "wght"]
+  "cSpell.words": [
+    "opsz",
+    "wght"
+  ]
   // Syntax highlighting for TypeScript and PHP
   // "editor.tokenColorCustomizations": {
   //   "textMateRules": [

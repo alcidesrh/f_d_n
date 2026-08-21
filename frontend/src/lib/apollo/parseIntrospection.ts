@@ -281,6 +281,7 @@ export function parseIntrospection(schema: IntrospectionSchemaLike): Record<stri
         isList: info.isList,
         isRelation: !isScalar && !isConnection,
         isSubcollection: !isScalar && isConnection,
+        enumValues: kind === 'ENUM' ? (namedInfo?.enumValues ?? []).map((v) => v.name) : [],
       }
       schema.fields.push(entry)
       if (isScalar) schema.scalarFields.push(field.name)
@@ -318,7 +319,7 @@ export function parseIntrospection(schema: IntrospectionSchemaLike): Record<stri
     const payloadTypeName = describeType(field.type).namedType
     const payloadType = types.get(payloadTypeName)
     const inputType = types.get(inputTypeName)
-
+    const schema = entities.get(entityName)
     let returnsField = ''
     for (const payloadField of payloadType?.fields ?? []) {
       if (describeType(payloadField.type).namedType === entityName) {
@@ -336,19 +337,25 @@ export function parseIntrospection(schema: IntrospectionSchemaLike): Record<stri
       inputFields: (inputType?.inputFields ?? []).map((inputField) => {
         const info = describeType(inputField.type)
         const namedKind = types.get(info.namedType)?.kind ?? 'SCALAR'
+        // API Platform tipa las relaciones del input como IRIs (String/[String]);
+        // el tipo real se resuelve contra los campos de la entidad ya parseados.
+        const entityField = schema?.fields.find((f) => f.name === inputField.name && f.isRelation)
         return {
           name: inputField.name,
           type: info.type,
-          namedType: info.namedType,
-          kind: namedKind,
+          namedType: entityField ? entityField.namedType : info.namedType,
+          kind: entityField ? 'OBJECT' : namedKind,
           required: info.required,
           isList: info.isList,
-          isRelation: namedKind === 'OBJECT',
+          isRelation: Boolean(entityField),
+          enumValues:
+            entityField || namedKind !== 'ENUM'
+              ? []
+              : (types.get(info.namedType)?.enumValues ?? []).map((v) => v.name),
         }
       }),
     }
 
-    const schema = entities.get(entityName)
     if (schema) schema[kind] = mutation
   }
 

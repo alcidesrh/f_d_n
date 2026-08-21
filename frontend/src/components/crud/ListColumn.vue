@@ -22,24 +22,24 @@
 </template>
 
 <script setup lang="ts">
-import type { FormKitSchemaNode } from "@formkit/core";
-import type { EntitySchema } from "@/lib/apollo/types";
-import type { CollectionFieldConfig } from "@/stores/entities/types";
+import type { FormKitSchemaNode } from '@formkit/core'
+import type { EntitySchema } from '@/lib/apollo/types'
+import type { CollectionFieldConfig } from '@/stores/entities/types'
 
-defineOptions({ name: "ListColumn" });
+defineOptions({ name: 'ListColumn' })
 
 const props = defineProps<{
-  column: CollectionFieldConfig;
-  filterNode: FormKitSchemaNode | null;
-  editable: boolean;
-  sortState: "asc" | "desc" | null;
-}>();
+  column: CollectionFieldConfig
+  filterNode: FormKitSchemaNode | null
+  editable: boolean
+  sortState: 'asc' | 'desc' | null
+}>()
 
 const emit = defineEmits<{
-  hide: [field: string];
-}>();
+  hide: [field: string]
+}>()
 
 function isSortable(col: CollectionFieldConfig): boolean {
-  return col.sortable === true || col.sortable === null || col.sortable === undefined;
+  return col.sortable === true || col.sortable === null || col.sortable === undefined
 }
 </script>

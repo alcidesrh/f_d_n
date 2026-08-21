@@ -1,6 +1,6 @@
 <template>
   <Select
-    v-bind="context.attrs"
+    v-bind="attrs"
     :model-value="context._value"
     :input-id="context.id"
     :name="context.node.name"
@@ -8,16 +8,26 @@
     :invalid="invalid"
     class="w-full"
     :class="context.classes.input"
-    @update:model-value="update"
+    @update:model-value="onUpdate"
     @blur="blur"
   />
 </template>
 <script setup lang="ts">
-import type { FormKitFrameworkContext } from "@formkit/core";
-import { useFormKitInput } from "./useFormKitInput";
+import type { FormKitFrameworkContext } from '@formkit/core'
+import { useFormKitInput, normalizeOptions, toScalarArray } from './useFormKitInput'
 
-defineOptions({ name: "FkSelect" });
+defineOptions({ name: 'FkSelect' })
 
-const props = defineProps<{ context: FormKitFrameworkContext }>();
-const { context, update, blur, invalid, disabled } = useFormKitInput(props);
+const props = defineProps<{ context: FormKitFrameworkContext }>()
+const { context, update, blur, invalid, disabled } = useFormKitInput(props)
+
+const attrs = computed(() => {
+  const result = { ...context.value.attrs }
+  result.options = normalizeOptions(result.options)
+  if (result.optionLabel == null) result.optionLabel = 'label'
+  if (result.optionValue == null) result.optionValue = 'value'
+  return result
+})
+
+const onUpdate = (value: unknown) => update(toScalarArray(value))
 </script>

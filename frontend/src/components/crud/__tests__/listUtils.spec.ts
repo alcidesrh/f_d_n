@@ -22,6 +22,7 @@ function field(name: string, namedType: string, isRelation = false): EntityField
     isList: false,
     isRelation,
     isSubcollection: false,
+    enumValues: [],
   }
 }
 

@@ -6,12 +6,7 @@ import {
   updateSurfacePalette,
   updatePreset,
 } from "@primeuix/themes";
-import {
-  invertPalette,
-  PRESET_OPTIONS,
-  componentsPreset,
-  themeColors,
-} from "@/config/theme";
+import { invertPalette, PRESET_OPTIONS, componentsPreset, themeColors } from "@/config/theme";
 // import colors from "tailwindcss/colors";
 
 const MOBILE_BREAKPOINT = 1024;
@@ -26,6 +21,8 @@ export interface UiState {
   isMobile: boolean;
   mobileLeftOpen: boolean;
   mobileRightOpen: boolean;
+  prevLeftState: PanelState;
+  prevRightState: PanelState;
 }
 
 /**
@@ -42,7 +39,9 @@ export const useUiStore = defineStore("ui", {
     surface: "slate",
     preset: "lara",
     leftState: "open",
-    rightState: "mini",
+    prevLeftState: "open",
+    prevRightState: "open",
+    rightState: "open",
     isMobile: typeof window !== "undefined" ? window.innerWidth <= MOBILE_BREAKPOINT : false,
     mobileLeftOpen: false,
     mobileRightOpen: false,
@@ -75,9 +74,11 @@ export const useUiStore = defineStore("ui", {
       await usePreset(themeColors(this.preset, this.primary, this.surface, this.mode));
     },
     setLeft(state: PanelState) {
+      this.prevLeftState = this.leftState;
       this.leftState = state;
     },
     setRight(state: PanelState) {
+      this.prevRightState = this.rightState;
       this.rightState = state;
     },
     /** Cycles open -> mini -> close -> open. On mobile it toggles the overlay drawer instead. */
@@ -86,16 +87,24 @@ export const useUiStore = defineStore("ui", {
         this.mobileLeftOpen = !this.mobileLeftOpen;
         return;
       }
-      this.leftState =
-        this.leftState === "open" ? "mini" : this.leftState === "mini" ? "close" : "open";
+      if (this.leftState == "close") {
+        this.leftState = this.prevLeftState;
+      } else {
+        this.leftState =
+          this.leftState === "open" ? "mini" : this.leftState === "mini" ? "close" : "open";
+      }
     },
     cycleRight() {
       if (this.isMobile) {
         this.mobileRightOpen = !this.mobileRightOpen;
         return;
       }
-      this.rightState =
-        this.rightState === "open" ? "mini" : this.rightState === "mini" ? "close" : "open";
+      if (this.rightState == "close") {
+        this.rightState = this.prevRightState;
+      } else {
+        this.rightState =
+          this.rightState === "open" ? "mini" : this.rightState === "mini" ? "close" : "open";
+      }
     },
     closeMobileOverlays() {
       if (this.isMobile) {

@@ -40,47 +40,44 @@
   />
 </template>
 <script setup lang="ts">
-import { computed } from "vue";
-import type { CollectionFieldConfig } from "@/stores/entities/types";
-import { useEntityRegistry } from "@/composables/useEntityRegistry";
-defineOptions({ name: "ListCellEditor" });
+import { computed } from 'vue'
+import type { CollectionFieldConfig } from '@/stores/entities/types'
+import { useEntityRegistry } from '@/composables/useEntityRegistry'
+defineOptions({ name: 'ListCellEditor' })
 const props = defineProps<{
-  column: CollectionFieldConfig;
-  data: Record<string, unknown>;
-}>();
-const registry = useEntityRegistry();
-const store = registry.getEntity();
+  column: CollectionFieldConfig
+  data: Record<string, unknown>
+}>()
+const registry = useEntityRegistry()
+const store = registry.getEntity()
 const options = ref([])
-const kind = store.getFieldKind(props.column.field);
+const kind = store.getFieldKind(props.column.field)
 // computed<FilterFieldKind>(() => store.getFieldKind(props.column.field));
-if (kind == "relation") {
+if (kind == 'relation') {
+  const entry = store.metadata.fields.find((f) => f.name === props.column.field)
+  // if (!entry) return [];
 
-    const entry = store.metadata.fields.find((f) => f.name === props.column.field);
-    // if (!entry) return [];
+  const target = await registry.getEntity(entry.namedType)
+  await target.loadFullList()
 
-    const target = await registry.getEntity(entry.namedType);
-    await target.loadFullList();
-
-    options.value = target.fullList.map((option) => ({ label: option.label, value: option.id }));
-
+  options.value = target.fullList.map((option) => ({ label: option.label, value: option.id }))
 }
 
 const booleanOptions = [
-  { label: "Sí", value: true },
-  { label: "No", value: false },
-];
+  { label: 'Sí', value: true },
+  { label: 'No', value: false },
+]
 
 const relationId = computed(() => {
-  const value = props.data[props.column.field];
-  if (value && typeof value === "object") return (value as { id?: unknown }).id ?? null;
-  return null;
-});
+  const value = props.data[props.column.field]
+  if (value && typeof value === 'object') return (value as { id?: unknown }).id ?? null
+  return null
+})
 function setRelation(value: string | null) {
-  props.data[props.column.field] = value ? (options.find((o) => o.value === value) ?? null) : null;
+  props.data[props.column.field] = value ? (options.find((o) => o.value === value) ?? null) : null
 }
 
 function setValue(value: unknown) {
-  props.data[props.column.field] = value;
+  props.data[props.column.field] = value
 }
 </script>
-

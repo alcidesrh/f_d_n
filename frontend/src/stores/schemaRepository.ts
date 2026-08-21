@@ -11,38 +11,38 @@
  * (paginación/filtros/orden) y actualizan sus items/item.
  */
 
-import { defineStore } from "pinia";
-import { apollo } from "@/lib/apollo";
-import { toMutationInput } from "@/lib/apollo/documents";
-import type { AgnosticOption, CollectionResult, EntitySchema } from "@/lib/apollo/types";
-import type { EntityStore } from "./entities/types";
+import { defineStore } from 'pinia'
+import { apollo } from '@/lib/apollo'
+import { toMutationInput } from '@/lib/apollo/documents'
+import type { AgnosticOption, CollectionResult, EntitySchema } from '@/lib/apollo/types'
+import type { EntityStore } from './entities/types'
 
 /** Bump para invalidar el schema persistido cuando cambia el formato de metadatos. */
-export const SCHEMA_REPOSITORY_VERSION = 1;
+export const SCHEMA_REPOSITORY_VERSION = 3
 
 export interface SchemaRepositoryState {
-  status: "idle" | "loading" | "ready" | "error";
-  error: string;
-  entities: Record<string, EntitySchema>;
-  schemaVersion: number;
-  loadedAt: string | null;
+  status: 'idle' | 'loading' | 'ready' | 'error'
+  error: string
+  entities: Record<string, EntitySchema>
+  schemaVersion: number
+  loadedAt: string | null
 }
 
-export const useSchemaRepositoryStore = defineStore("schemaRepository", {
+export const useSchemaRepositoryStore = defineStore('schemaRepository', {
   persist: {
-    pick: ["entities", "schemaVersion", "loadedAt"],
+    pick: ['entities', 'schemaVersion', 'loadedAt'],
   },
 
   state: (): SchemaRepositoryState => ({
-    status: "idle",
-    error: "",
+    status: 'idle',
+    error: '',
     entities: {},
     schemaVersion: SCHEMA_REPOSITORY_VERSION,
     loadedAt: null,
   }),
 
   getters: {
-    ready: (st): boolean => st.status === "ready",
+    ready: (st): boolean => st.status === 'ready',
     hasEntities: (st): boolean => Object.keys(st.entities).length > 0,
   },
 
@@ -52,62 +52,67 @@ export const useSchemaRepositoryStore = defineStore("schemaRepository", {
      * vez en el bootstrap, antes de renderizar las vistas.
      */
     async init() {
-      if (this.status === "loading") return;
-      if (this.schemaVersion !== SCHEMA_REPOSITORY_VERSION) this.entities = {};
+      if (this.status === 'loading') return
+      if (this.schemaVersion !== SCHEMA_REPOSITORY_VERSION) this.entities = {}
       if (this.hasEntities) {
-        this.status = "ready";
-        return;
+        this.status = 'ready'
+        return
       }
-      this.status = "loading";
-      this.error = "";
+      this.status = 'loading'
+      this.error = ''
       try {
-        this.entities = await apollo.introspect();
-        this.loadedAt = new Date().toISOString();
-        this.schemaVersion = SCHEMA_REPOSITORY_VERSION;
-        this.status = "ready";
+        this.entities = await apollo.introspect()
+        this.loadedAt = new Date().toISOString()
+        this.schemaVersion = SCHEMA_REPOSITORY_VERSION
+        this.status = 'ready'
       } catch (error) {
-        this.status = "error";
-        this.error = error instanceof Error ? error.message : String(error);
-        console.error("[schemaRepository] no se pudo cargar el schema GraphQL:", error);
+        this.status = 'error'
+        this.error = error instanceof Error ? error.message : String(error)
+        console.error('[schemaRepository] no se pudo cargar el schema GraphQL:', error)
       }
     },
 
     getEntityMetadata(name: string): EntitySchema | null {
-      name = name.toLowerCase().replace(/[-_ ]+(.)/g, (_, letra) => letra.toUpperCase()).charAt(0).toUpperCase() + name.slice(1);
+      name =
+        name
+          .toLowerCase()
+          .replace(/[-_ ]+(.)/g, (_, letra) => letra.toUpperCase())
+          .charAt(0)
+          .toUpperCase() + name.slice(1)
 
       if (!this.entities[name]) {
-        throw new Error(`No existe la entidad: ${name}`);
-        return null;
+        throw new Error(`No existe la entidad: ${name}`)
+        return null
       }
-      return this.entities[name] ?? null;
+      return this.entities[name] ?? null
     },
 
     has(name: string): boolean {
-      return Boolean(this.entities[name]);
+      return Boolean(this.entities[name])
     },
 
     requireEntity<T>(store: EntityStore<T>): EntitySchema {
-      const entity = this.entities[store.name];
+      const entity = this.entities[store.name]
       if (!entity) {
-        throw new Error(`[schemaRepository] no hay metadatos para "${store.name}"`);
+        throw new Error(`[schemaRepository] no hay metadatos para "${store.name}"`)
       }
-      return entity;
+      return entity
     },
 
     async item<T>(store: EntityStore<T>, id: string | number): Promise<T> {
-      const entity = this.requireEntity(store);
-      store.item = await apollo.item<T>(entity, id);
-      return store.item;
+      const entity = this.requireEntity(store)
+      store.item = await apollo.item<T>(entity, id)
+      return store.item
     },
 
     async collection<T>(store: EntityStore<T>): Promise<CollectionResult<T>> {
-      const entity = this.requireEntity(store);
+      const entity = this.requireEntity(store)
       // Las queries de listado piden solo los datos de las columnas visibles
       // (+ id, necesario para row-key y acciones). Si aún no hay columnas
       // cargadas se cae al comportamiento por defecto (todas las propiedades).
-      const visible = store.columns.filter((col) => col.visible !== false).map((col) => col.field);
+      const visible = store.columns.filter((col) => col.visible !== false).map((col) => col.field)
       const fields =
-        visible.length > 0 ? (visible.includes("id") ? visible : ["id", ...visible]) : undefined;
+        visible.length > 0 ? (visible.includes('id') ? visible : ['id', ...visible]) : undefined
       // Solo se envían condiciones de orden sobre campos aceptados por el input
       // de orden del backend (descarta órdenes inválidos persistidos/heredados).
       const order =
@@ -115,60 +120,60 @@ export const useSchemaRepositoryStore = defineStore("schemaRepository", {
           ? store.order.filter((cond) =>
               Object.keys(cond).every((field) => entity.orderFields.includes(field)),
             )
-          : [];
+          : []
       const result = await apollo.collection<T>(entity, {
         currentPage: store.pagination.currentPage,
         itemsPerPage: store.pagination.itemsPerPage,
         filters: store.filters,
         order,
         fields,
-      });
-      store.items = result.items;
+      })
+      store.items = result.items
       store.pagination = {
         ...result.pagination,
         itemsPerPage: store.pagination.itemsPerPage || result.pagination.itemsPerPage,
-      };
-      return result;
+      }
+      return result
     },
 
     async create<T>(store: EntityStore<T>, data: Record<string, unknown>): Promise<T> {
-      const entity = this.requireEntity(store);
+      const entity = this.requireEntity(store)
       if (!entity.create) {
-        throw new Error(`[schemaRepository] "${store.name}" no expone create`);
+        throw new Error(`[schemaRepository] "${store.name}" no expone create`)
       }
-      const input = toMutationInput(entity, entity.create, data, this.entities);
-      const created = await apollo.create<T>(entity, input);
-      store.item = created;
-      store.items = [created, ...store.items];
-      return created;
+      const input = toMutationInput(entity, entity.create, data, this.entities)
+      const created = await apollo.create<T>(entity, input)
+      store.item = created
+      store.items = [created, ...store.items]
+      return created
     },
 
     async update<T>(store: EntityStore<T>, data: Record<string, unknown>): Promise<T> {
-      const entity = this.requireEntity(store);
+      const entity = this.requireEntity(store)
       if (!entity.update) {
-        throw new Error(`[schemaRepository] "${store.name}" no expone update`);
+        throw new Error(`[schemaRepository] "${store.name}" no expone update`)
       }
-      const input = toMutationInput(entity, entity.update, data, this.entities);
-      const updated = await apollo.update<T>(entity, input);
-      store.item = updated;
-      const id = (updated as { id?: unknown } | null)?.id;
+      const input = toMutationInput(entity, entity.update, data, this.entities)
+      const updated = await apollo.update<T>(entity, input)
+      store.item = updated
+      const id = (updated as { id?: unknown } | null)?.id
       if (id !== undefined) {
         store.items = store.items.map((item) =>
           (item as { id?: unknown } | null)?.id === id ? updated : item,
-        );
+        )
       }
-      return updated;
+      return updated
     },
 
     async delete<T>(store: EntityStore<T>, id: string | number): Promise<T> {
-      const entity = this.requireEntity(store);
+      const entity = this.requireEntity(store)
       if (!entity.delete) {
-        throw new Error(`[schemaRepository] "${store.name}" no expone delete`);
+        throw new Error(`[schemaRepository] "${store.name}" no expone delete`)
       }
-      const deleted = await apollo.delete<T>(entity, id);
-      store.items = store.items.filter((item) => (item as { id?: unknown } | null)?.id !== id);
-      if ((store.item as { id?: unknown } | null)?.id === id) store.item = null;
-      return deleted;
+      const deleted = await apollo.delete<T>(entity, id)
+      store.items = store.items.filter((item) => (item as { id?: unknown } | null)?.id !== id)
+      if ((store.item as { id?: unknown } | null)?.id === id) store.item = null
+      return deleted
     },
 
     /**
@@ -180,10 +185,10 @@ export const useSchemaRepositoryStore = defineStore("schemaRepository", {
       store: EntityStore<T>,
       opts: { force?: boolean } = {},
     ): Promise<AgnosticOption[]> {
-      if (!opts.force && store.fullList.length > 0) return store.fullList;
-      const list = await apollo.agnosticList(store.name);
-      store.fullList = list;
-      return list;
+      if (!opts.force && store.fullList.length > 0) return store.fullList
+      const list = await apollo.agnosticList(store.name)
+      store.fullList = list
+      return list
     },
   },
-});
+})

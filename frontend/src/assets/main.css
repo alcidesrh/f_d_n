@@ -1,15 +1,15 @@
-@import "tailwindcss";
-@import "tailwindcss-primeui";
+@import 'tailwindcss';
+@import 'tailwindcss-primeui';
 
-@import "primeicons/primeicons.css";
+@import 'primeicons/primeicons.css';
 
-@import "./tokens.css";
-@import "./animations.css";
-@import "./fonts.css";
-@import "./header.css";
-@import "./theme-editor.css";
-@import "./sidebar.css";
-@import "./content.css";
+@import './tokens.css';
+@import './animations.css';
+@import './fonts.css';
+@import './header.css';
+@import './theme-editor.css';
+@import './sidebar.css';
+@import './content.css';
 
 /* ============================= RESET ============================= */
 /* *,
@@ -22,14 +22,15 @@
 html,
 body {
   height: 100%;
+  font-size: 14px;
 }
-html.dark{
-  &>body{
+html.dark {
+  & > body {
     background-color: #000000;
   }
 }
 body {
-  font-family: "Roboto Flex Variable", sans-serif;
+  font-family: 'Roboto Flex Variable', sans-serif;
   font-size: 1rem;
   background: #ffffff;
   /* var(--p-surface-50); */

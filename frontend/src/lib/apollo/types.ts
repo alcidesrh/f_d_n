@@ -37,6 +37,8 @@ export interface EntityFieldSchema {
   isRelation: boolean
   /** Subrecurso tipo connection (ej: `ventas(...): VentaPageConnection`). */
   isSubcollection: boolean
+  /** Valores de un ENUM (vacío si no aplica), para selects de formularios. */
+  enumValues: string[]
 }
 
 export interface SchemaInputField {
@@ -48,6 +50,8 @@ export interface SchemaInputField {
   isList: boolean
   /** La entrada espera un IRI/id de una entidad (relación). */
   isRelation: boolean
+  /** Valores de un ENUM (vacío si no aplica), para selects de formularios. */
+  enumValues: string[]
 }
 
 export interface MutationSchema {

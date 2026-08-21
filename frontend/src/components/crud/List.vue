@@ -101,39 +101,40 @@
           :key="col.field"
           :field="col.field"
           :sortable="col.sortable"
-
         >
           <!-- #region Datatable:header -->
           <template #header>
             <div class="flex">
-              <Divider v-if="i" layout="vertical" class="ml-[0px]!"/>
-              <div class="grid auto-rows-fr w-full" >
-              <div class="flex items-center gap-1">
-                <span class="truncate font-semibold capitalize">{{ col.label ?? col.field }}</span>
-                <i
-                  v-if="col.sortable == true"
-                  class="text-xs"
-                  :class="getSortIcon(col.field)"
-                  aria-hidden="true"
-                />
-                <Button
-                  icon="pi pi-eye-slash"
-                  rounded
-                  text
-                  severity="secondary"
-                  size="small"
-                  class="ml-auto h-6 w-6 shrink-0"
-                  :aria-label="`Ocultar columna ${col.label ?? col.field}`"
-                  @click="hideColumn(col.field)"
-                />
+              <Divider v-if="i" layout="vertical" class="ml-[0px]!" />
+              <div class="grid auto-rows-fr w-full">
+                <div class="flex items-center gap-1">
+                  <span class="truncate font-semibold capitalize">{{
+                    col.label ?? col.field
+                  }}</span>
+                  <i
+                    v-if="col.sortable == true"
+                    class="text-xs"
+                    :class="getSortIcon(col.field)"
+                    aria-hidden="true"
+                  />
+                  <Button
+                    icon="pi pi-eye-slash"
+                    rounded
+                    text
+                    severity="secondary"
+                    size="small"
+                    class="ml-auto h-6 w-6 shrink-0"
+                    :aria-label="`Ocultar columna ${col.label ?? col.field}`"
+                    @click="hideColumn(col.field)"
+                  />
+                </div>
+                <div @click.stop>
+                  <FormKitSchema
+                    v-if="filterNodes.has(col.field)"
+                    :schema="[filterNodes.get(col.field)]"
+                  />
+                </div>
               </div>
-              <div @click.stop>
-                <FormKitSchema
-                  v-if="filterNodes.has(col.field)"
-                  :schema="[filterNodes.get(col.field)]"
-                />
-              </div>
-            </div>
             </div>
           </template>
           <!-- #endregion -->
@@ -216,18 +217,18 @@
 <!-- #endregion-->
 <!-- #region Script -->
 <script setup lang="ts">
-import { computed, reactive, ref, useId, watch } from "vue";
-import type { FormKitSchemaNode } from "@formkit/core";
+import { computed, reactive, ref, useId, watch } from 'vue'
+import type { FormKitSchemaNode } from '@formkit/core'
 import type {
   DataTableCellEditCompleteEvent,
   DataTableColumnReorderEvent,
   DataTableSortEvent,
-} from "primevue/datatable";
-import { useSchemaRepositoryStore } from "@/stores/schemaRepository";
-import { useEntityRegistry } from "@/composables/useEntityRegistry";
-import { useToasts } from "@/composables/useToasts";
-import type { EntitySchema } from "@/lib/apollo/types";
-import type { CollectionFieldConfig, EntityStore } from "@/stores/entities/types";
+} from 'primevue/datatable'
+import { useSchemaRepositoryStore } from '@/stores/schemaRepository'
+import { useEntityRegistry } from '@/composables/useEntityRegistry'
+import { useToasts } from '@/composables/useToasts'
+import type { EntitySchema } from '@/lib/apollo/types'
+import type { CollectionFieldConfig, EntityStore } from '@/stores/entities/types'
 import {
   cellLabel,
   cellValue,
@@ -237,45 +238,45 @@ import {
   rangeToIso,
   resolveFilterArgs,
   type FilterFieldKind,
-} from "./listUtils";
-import type { Popover } from "primevue";
+} from './listUtils'
+import type { Popover } from 'primevue'
 // ---------------------------------------------------------------------------
 // Props y eventos expuestos al padre (alta/edición).
 // ---------------------------------------------------------------------------
 const emit = defineEmits<{
-  edit: [item: unknown];
-  create: [];
-}>();
-const props = withDefaults(defineProps<{ entity: string | string[] }>(), { entity: "" });
+  edit: [item: unknown]
+  create: []
+}>()
+const props = withDefaults(defineProps<{ entity: string | string[] }>(), { entity: '' })
 // ---------------------------------------------------------------------------
 // Stores y contexto: schema introspectado, registry de stores y toasts.
 // ---------------------------------------------------------------------------
 //#region Variables
-const schemaRepo = useSchemaRepositoryStore();
-const registry = useEntityRegistry();
-const toasts = useToasts();
-const hiddenPopover = ref<InstanceType<typeof Popover> | null>(null);
+const schemaRepo = useSchemaRepositoryStore()
+const registry = useEntityRegistry()
+const toasts = useToasts()
+const hiddenPopover = ref<InstanceType<typeof Popover> | null>(null)
 
 const entityName = computed(() => {
-  const raw = Array.isArray(props.entity) ? props.entity[0] : props.entity;
-  return raw ?? "";
-});
-const store = computed<EntityStore | null>(() => registry.getEntity(entityName.value) ?? null);
+  const raw = Array.isArray(props.entity) ? props.entity[0] : props.entity
+  return raw ?? ''
+})
+const store = computed<EntityStore | null>(() => registry.getEntity(entityName.value) ?? null)
 // ---------------------------------------------------------------------------
 // Estado local: carga, filtros en vivo (con debounce), clave de remount de
 // los inputs de filtro, modo selección y diálogo de confirmación.
 // ---------------------------------------------------------------------------
-const loading = ref(false);
-const resetKey = ref(0);
+const loading = ref(false)
+const resetKey = ref(0)
 
 /** Id único por instancia: evita colisiones del memo global de FormKitSchema. */
-const uid = useId();
+const uid = useId()
 
-const confirmVisible = ref(false);
-const deleting = ref(false);
-const deleteTarget = ref<Record<string, unknown> | null>(null);
+const confirmVisible = ref(false)
+const deleting = ref(false)
+const deleteTarget = ref<Record<string, unknown> | null>(null)
 
-let textTimer: ReturnType<typeof setTimeout> | undefined;
+let textTimer: ReturnType<typeof setTimeout> | undefined
 //#endregion
 /**
  * Snapshot debounced de los filtros SIN arg de servidor (aplicados en cliente
@@ -288,11 +289,11 @@ let textTimer: ReturnType<typeof setTimeout> | undefined;
 // ---------------------------------------------------------------------------
 // Computadas de cabecera, editabilidad y tipo de colección.
 // ---------------------------------------------------------------------------
-const pageTitle = computed(() => entityName.value || "Listado");
+const pageTitle = computed(() => entityName.value || 'Listado')
 const subtitle = computed(() =>
-  store.value.metadata?.queryCollection ? `${entityName.value} · lista dinámica` : "",
-);
-const canEdit = computed(() => Boolean(store.value.metadata?.update));
+  store.value.metadata?.queryCollection ? `${entityName.value} · lista dinámica` : '',
+)
+const canEdit = computed(() => Boolean(store.value.metadata?.update))
 
 // ---------------------------------------------------------------------------
 // Columnas visibles/ocultas y detección de una vista "activa" (para reset).
@@ -300,41 +301,41 @@ const canEdit = computed(() => Boolean(store.value.metadata?.update));
 // #region Columnas visibilidad
 
 const hasActiveView = computed(() => {
-  const currentStore = store.value;
-  if (!currentStore) return false;
-  if (store.value.hiddenColumns.value > 0) return true;
-  if (selectionMode.value) return true;
-  if (currentStore.order.length > 0) return true;
-  if (Object.keys(currentStore.filters).length > 0) return true;
-  if (currentStore.pagination.currentPage > 1) return true;
-  if (currentStore.pagination.itemsPerPage !== 10) return true;
-  return false;
-});
+  const currentStore = store.value
+  if (!currentStore) return false
+  if (store.value.hiddenColumns.value > 0) return true
+  if (selectionMode.value) return true
+  if (currentStore.order.length > 0) return true
+  if (Object.keys(currentStore.filters).length > 0) return true
+  if (currentStore.pagination.currentPage > 1) return true
+  if (currentStore.pagination.itemsPerPage !== 10) return true
+  return false
+})
 
 function hideColumn(field: string) {
-  const currentStore = store.value;
-  const col = currentStore?.columns.find((c) => c.field === field);
-  if (col) col.visible = false;
-  rebuildFilterNodes();
+  const currentStore = store.value
+  const col = currentStore?.columns.find((c) => c.field === field)
+  if (col) col.visible = false
+  rebuildFilterNodes()
 }
 
 function restoreColumn(field: string) {
-  const currentStore = store.value;
-  const col = currentStore?.columns.find((c) => c.field === field);
-  if (col) col.visible = true;
-  rebuildFilterNodes();
+  const currentStore = store.value
+  const col = currentStore?.columns.find((c) => c.field === field)
+  if (col) col.visible = true
+  rebuildFilterNodes()
 }
 // #endregion
 // #region Selection mode
 // ---------------------------------------------------------------------------
 // Modo selección múltiple: sustituye las acciones de fila por checkboxes.
 // ---------------------------------------------------------------------------
-const selectionMode = ref(false);
-const selection = ref<unknown[]>([]);
+const selectionMode = ref(false)
+const selection = ref<unknown[]>([])
 
 function toggleSelection() {
-  selectionMode.value = !selectionMode.value;
-  if (!selectionMode.value) selection.value = [];
+  selectionMode.value = !selectionMode.value
+  if (!selectionMode.value) selection.value = []
 }
 // #endregion
 // #region Filter
@@ -348,158 +349,158 @@ function toggleSelection() {
 // así que los nodos deben llevar SIEMPRE el valor actual de `filters` para que
 // el input re-parseado no aparezca vacío.
 // ---------------------------------------------------------------------------
-const filters = reactive<Record<string, unknown>>({});
+const filters = reactive<Record<string, unknown>>({})
 
-const filterNodes = ref<Map<string, FormKitSchemaNode>>(new Map());
+const filterNodes = ref<Map<string, FormKitSchemaNode>>(new Map())
 
 function buildFilterNode(field: string): FormKitSchemaNode | null {
-  const col = store.value.getColumnByFieldName(field); // columnsByField.value.get(field)
-  const entity = store.value.metadata;
-  if (!col || col.filterable === false || !entity) return null;
-  const kind = store.value.getFieldKind(field);
-  const name = `filter_${field}`;
-  const base = { key: `${name}_${uid}_${resetKey.value}` };
+  const col = store.value.getColumnByFieldName(field) // columnsByField.value.get(field)
+  const entity = store.value.metadata
+  if (!col || col.filterable === false || !entity) return null
+  const kind = store.value.getFieldKind(field)
+  const name = `filter_${field}`
+  const base = { key: `${name}_${uid}_${resetKey.value}` }
 
   switch (kind) {
-    case "relation":
+    case 'relation':
       return {
         ...base,
-        $cmp: "FormKit",
+        $cmp: 'FormKit',
         props: {
-          type: "Select",
+          type: 'Select',
           name,
-          placeholder: "Todos",
+          placeholder: 'Todos',
           showClear: true,
           value: filters[field],
           options: relationOptionsFor(field),
-          size: "small",
+          size: 'small',
           onInput: (value: unknown) => applyFilter(field, kind, value),
-          outerClass: "mb-0!",
+          outerClass: 'mb-0!',
         },
-      };
-    case "date":
+      }
+    case 'date':
       return {
         ...base,
-        $cmp: "FormKit",
+        $cmp: 'FormKit',
         props: {
-          type: "DatePicker",
+          type: 'DatePicker',
           name,
-          placeholder: "Rango",
-          selectionMode: "range",
+          placeholder: 'Rango',
+          selectionMode: 'range',
           showIcon: true,
           showClear: true,
           value: filters[field],
-          size: "small",
+          size: 'small',
           onInput: (value: unknown) => applyFilter(field, kind, value),
-          outerClass: "mb-0!",
+          outerClass: 'mb-0!',
         },
-      };
-    case "number":
+      }
+    case 'number':
       return {
         ...base,
-        $cmp: "FormKit",
+        $cmp: 'FormKit',
         props: {
-          type: "InputNumber",
+          type: 'InputNumber',
           name,
-          placeholder: "Todos",
+          placeholder: 'Todos',
           showClear: true,
           value: filters[field],
-          size: "small",
+          size: 'small',
           onInput: (value: unknown) => applyFilter(field, kind, value),
-          outerClass: "mb-0!",
+          outerClass: 'mb-0!',
         },
-      };
-    case "boolean":
+      }
+    case 'boolean':
       return {
         ...base,
-        $cmp: "FormKit",
+        $cmp: 'FormKit',
         props: {
-          type: "Select",
+          type: 'Select',
           name,
-          placeholder: "Todos",
+          placeholder: 'Todos',
           showClear: true,
           value: filters[field],
           options: [
-            { label: "Sí", value: true },
-            { label: "No", value: false },
+            { label: 'Sí', value: true },
+            { label: 'No', value: false },
           ],
-          size: "small",
+          size: 'small',
           onInput: (value: unknown) => applyFilter(field, kind, value),
-          outerClass: "mb-0!",
+          outerClass: 'mb-0!',
         },
-      };
+      }
     default:
       return {
         ...base,
-        $cmp: "FormKit",
+        $cmp: 'FormKit',
         props: {
-          type: "InputText",
+          type: 'InputText',
           name,
-          placeholder: "Buscar…",
+          placeholder: 'Buscar…',
           clearable: true,
           value: filters[field],
-          size: "small",
+          size: 'small',
           onInput: (value: unknown) => applyFilter(field, kind, value),
-          outerClass: "mb-0!",
+          outerClass: 'mb-0!',
         },
-      };
+      }
   }
 }
 
 /** (Re)construye el mapa de nodos de filtro con los valores vigentes de `filters`. */
 function rebuildFilterNodes() {
-  const next = new Map<string, FormKitSchemaNode>();
+  const next = new Map<string, FormKitSchemaNode>()
   for (const col of store.value.visibleColumns.filter((v) => v.filterable)) {
-    const node = buildFilterNode(col.field);
-    if (node) next.set(col.field, node);
+    const node = buildFilterNode(col.field)
+    if (node) next.set(col.field, node)
   }
-  filterNodes.value = next;
+  filterNodes.value = next
 }
 
 function applyFilter(field: string, kind: FilterFieldKind, value: unknown) {
-  filters[field] = value;
-  clearTimeout(textTimer);
+  filters[field] = value
+  clearTimeout(textTimer)
   if (isEmptyFilterValue(value)) {
-    commitFilters();
-    return;
+    commitFilters()
+    return
   }
-  if (kind === "text" || kind === "number") {
-    textTimer = setTimeout(commitFilters, 500);
+  if (kind === 'text' || kind === 'number') {
+    textTimer = setTimeout(commitFilters, 500)
   } else {
-    commitFilters();
+    commitFilters()
   }
 }
 
 function commitFilters() {
-  const entity = store.value.metadata;
-  const currentStore = store.value;
-  if (!entity || !currentStore) return;
-  const server: Record<string, unknown> = {};
+  const entity = store.value.metadata
+  const currentStore = store.value
+  if (!entity || !currentStore) return
+  const server: Record<string, unknown> = {}
   for (const [field, value] of Object.entries(filters)) {
-    if (isEmptyFilterValue(value)) continue;
-    const kind = store.value.getFieldKind(field);
-    const args = resolveFilterArgs(entity, field);
+    if (isEmptyFilterValue(value)) continue
+    const kind = store.value.getFieldKind(field)
+    const args = resolveFilterArgs(entity, field)
 
-    if (kind === "date") {
-      const { after, before } = rangeToIso(value);
-      if (args.after && after) server[args.after] = after;
-      if (args.before && before) server[args.before] = before;
+    if (kind === 'date') {
+      const { after, before } = rangeToIso(value)
+      if (args.after && after) server[args.after] = after
+      if (args.before && before) server[args.before] = before
     } else if (args.single) {
-      server[args.single] = serverValue(value, kind);
+      server[args.single] = serverValue(value, kind)
     }
   }
-  currentStore.filters = server;
-  currentStore.pagination.currentPage = 1;
-  void currentStore.fetchItems();
+  currentStore.filters = server
+  currentStore.pagination.currentPage = 1
+  void currentStore.fetchItems()
 }
 
 function serverValue(value: unknown, kind: FilterFieldKind): unknown {
-  if (kind === "boolean") return value === true || value === "true";
-  if (kind === "number") {
-    const num = typeof value === "number" ? value : Number(value);
-    return Number.isNaN(num) ? value : num;
+  if (kind === 'boolean') return value === true || value === 'true'
+  if (kind === 'number') {
+    const num = typeof value === 'number' ? value : Number(value)
+    return Number.isNaN(num) ? value : num
   }
-  return value;
+  return value
 }
 // ---------------------------------------------------------------------------
 // Filtros cliente (campos sin arg de servidor): se aplican sobre la página ya
@@ -507,49 +508,49 @@ function serverValue(value: unknown, kind: FilterFieldKind): unknown {
 // ---------------------------------------------------------------------------
 const hasLocalFilter = computed(() =>
   Object.entries(filters).some(([field, value]) => {
-    if (isEmptyFilterValue(value)) return false;
-    const entity = store.value.metadata;
-    const args = entity ? resolveFilterArgs(entity, field) : null;
-    return args ? noServerFilter(args) : true;
+    if (isEmptyFilterValue(value)) return false
+    const entity = store.value.metadata
+    const args = entity ? resolveFilterArgs(entity, field) : null
+    return args ? noServerFilter(args) : true
   }),
-);
+)
 
 const visibleItems = computed<unknown[]>(() => {
-  const items = store.value?.items ?? [];
-  const entity = store.value.metadata;
-  if (!hasLocalFilter.value || !entity) return items;
-  return items.filter((item) => matchesClientFilter(item, entity));
-});
+  const items = store.value?.items ?? []
+  const entity = store.value.metadata
+  if (!hasLocalFilter.value || !entity) return items
+  return items.filter((item) => matchesClientFilter(item, entity))
+})
 
 function matchesClientFilter(item: unknown, entity: EntitySchema): boolean {
   return Object.entries(filters).every(([field, value]) => {
-    if (isEmptyFilterValue(value)) return true;
-    const kind = store.value.getFieldKind(field);
-    const raw = (item as Record<string, unknown>)[field];
-    if (kind === "date") {
-      const { after, before } = rangeToIso(value);
-      if (!after && !before) return true;
-      const timestamp = new Date(String(raw ?? "")).getTime();
-      if (Number.isNaN(timestamp)) return false;
-      const start = after ? new Date(after).getTime() : Number.NEGATIVE_INFINITY;
-      const end = before ? new Date(before).getTime() + 86_400_000 : Number.POSITIVE_INFINITY;
-      return timestamp >= start && timestamp <= end;
+    if (isEmptyFilterValue(value)) return true
+    const kind = store.value.getFieldKind(field)
+    const raw = (item as Record<string, unknown>)[field]
+    if (kind === 'date') {
+      const { after, before } = rangeToIso(value)
+      if (!after && !before) return true
+      const timestamp = new Date(String(raw ?? '')).getTime()
+      if (Number.isNaN(timestamp)) return false
+      const start = after ? new Date(after).getTime() : Number.NEGATIVE_INFINITY
+      const end = before ? new Date(before).getTime() + 86_400_000 : Number.POSITIVE_INFINITY
+      return timestamp >= start && timestamp <= end
     }
-    if (kind === "relation") {
-      const entries = Array.isArray(raw) ? raw : [raw];
-      const needle = String(value);
+    if (kind === 'relation') {
+      const entries = Array.isArray(raw) ? raw : [raw]
+      const needle = String(value)
       return entries.some((entry) => {
-        const record = entry as Record<string, unknown> | null;
-        if (!record) return false;
+        const record = entry as Record<string, unknown> | null
+        if (!record) return false
         return (
-          String(record.id ?? "") === needle ||
+          String(record.id ?? '') === needle ||
           cellLabel(record).toLowerCase().includes(needle.toLowerCase())
-        );
-      });
+        )
+      })
     }
-    const needle = String(value).toLowerCase();
-    return cellValue(item, field).toLowerCase().includes(needle);
-  });
+    const needle = String(value).toLowerCase()
+    return cellValue(item, field).toLowerCase().includes(needle)
+  })
 }
 
 // ---------------------------------------------------------------------------
@@ -559,40 +560,40 @@ function matchesClientFilter(item: unknown, entity: EntitySchema): boolean {
 // resaltado aparece SIEMPRE tras renderizar el resultado de fetchItems y el
 // tecleo no re-renderiza las celdas (que le robaban el foco al input).
 // ---------------------------------------------------------------------------
-const highlightFilters = ref<Record<string, unknown>>({});
+const highlightFilters = ref<Record<string, unknown>>({})
 
 function filterValueFor(field: string): unknown {
-  const entity = store.value.metadata;
-  if (!entity) return undefined;
-  const kind = store.value.getFieldKind(entity, field);
-  if (kind !== "text" && kind !== "number") return undefined;
-  const args = resolveFilterArgs(entity, field);
-  if (noServerFilter(args)) return filters[field];
-  return highlightFilters.value[field];
+  const entity = store.value.metadata
+  if (!entity) return undefined
+  const kind = store.value.getFieldKind(entity, field)
+  if (kind !== 'text' && kind !== 'number') return undefined
+  const args = resolveFilterArgs(entity, field)
+  if (noServerFilter(args)) return filters[field]
+  return highlightFilters.value[field]
 }
 
 function buildHighlightFilters() {
-  const entity = store.value.metadata;
-  const currentStore = store.value;
-  if (!entity || !currentStore) return;
-  const next: Record<string, unknown> = {};
+  const entity = store.value.metadata
+  const currentStore = store.value
+  if (!entity || !currentStore) return
+  const next: Record<string, unknown> = {}
   for (const fieldEntry of entity.fields) {
-    const field = fieldEntry.name;
-    const kind = store.value.getFieldKind(field);
-    if (kind !== "text" && kind !== "number") continue;
-    const args = resolveFilterArgs(entity, field);
-    if (noServerFilter(args)) continue;
-    const value = args.single ? currentStore.filters[args.single] : undefined;
-    if (value !== undefined) next[field] = value;
+    const field = fieldEntry.name
+    const kind = store.value.getFieldKind(field)
+    if (kind !== 'text' && kind !== 'number') continue
+    const args = resolveFilterArgs(entity, field)
+    if (noServerFilter(args)) continue
+    const value = args.single ? currentStore.filters[args.single] : undefined
+    if (value !== undefined) next[field] = value
   }
-  highlightFilters.value = next;
+  highlightFilters.value = next
 }
 
-watch(() => store.value?.items, buildHighlightFilters, { flush: "post" });
+watch(() => store.value?.items, buildHighlightFilters, { flush: 'post' })
 
 function resetFilters() {
-  Object.keys(filters).forEach((key) => delete filters[key]);
-  resetKey.value += 1;
+  Object.keys(filters).forEach((key) => delete filters[key])
+  resetKey.value += 1
 }
 
 /**
@@ -600,23 +601,23 @@ function resetFilters() {
  * store (args de servidor), para que los inputs muestren los filtros guardados.
  */
 function hydrateFilters(entity: EntitySchema) {
-  const currentStore = store.value;
-  if (!currentStore) return;
-  Object.keys(filters).forEach((key) => delete filters[key]);
-  const server = currentStore.filters;
+  const currentStore = store.value
+  if (!currentStore) return
+  Object.keys(filters).forEach((key) => delete filters[key])
+  const server = currentStore.filters
   for (const fieldEntry of entity.fields) {
-    const field = fieldEntry.name;
-    const kind = store.value.getFieldKind(field);
-    const args = resolveFilterArgs(entity, field);
-    if (kind === "date") {
-      const after = args.after ? server[args.after] : undefined;
-      const before = args.before ? server[args.before] : undefined;
-      if (typeof after === "string" && typeof before === "string") {
-        filters[field] = [new Date(after), new Date(before)];
+    const field = fieldEntry.name
+    const kind = store.value.getFieldKind(field)
+    const args = resolveFilterArgs(entity, field)
+    if (kind === 'date') {
+      const after = args.after ? server[args.after] : undefined
+      const before = args.before ? server[args.before] : undefined
+      if (typeof after === 'string' && typeof before === 'string') {
+        filters[field] = [new Date(after), new Date(before)]
       }
     } else if (args.single) {
-      const value = server[args.single];
-      if (value !== undefined) filters[field] = value;
+      const value = server[args.single]
+      if (value !== undefined) filters[field] = value
     }
   }
 }
@@ -625,52 +626,52 @@ function hydrateFilters(entity: EntitySchema) {
 // ---------------------------------------------------------------------------
 // Orden (estado de la flecha), paginación y reorden de columnas por drag.
 // ---------------------------------------------------------------------------
-function sortStateFor(field: string): "asc" | "desc" | null {
-  const order = store.value?.order[0];
-  if (!order) return null;
-  const direction = order[field];
-  return direction === "ASC" ? "asc" : direction === "DESC" ? "desc" : null;
+function sortStateFor(field: string): 'asc' | 'desc' | null {
+  const order = store.value?.order[0]
+  if (!order) return null
+  const direction = order[field]
+  return direction === 'ASC' ? 'asc' : direction === 'DESC' ? 'desc' : null
 }
 function getSortIcon(field) {
-  const sortState = sortStateFor(field);
-  if (sortState === "asc") return "pi pi-sort-amount-up-alt text-surface-500";
-  if (sortState === "desc") return "pi pi-sort-amount-down text-surface-500";
-  return "pi pi-sort text-surface-300";
+  const sortState = sortStateFor(field)
+  if (sortState === 'asc') return 'pi pi-sort-amount-up-alt text-surface-500'
+  if (sortState === 'desc') return 'pi pi-sort-amount-down text-surface-500'
+  return 'pi pi-sort text-surface-300'
 }
 function onSort(event: DataTableSortEvent) {
-  const currentStore = store.value;
-  const field = event.sortField;
-  if (!currentStore || typeof field !== "string") return;
+  const currentStore = store.value
+  const field = event.sortField
+  if (!currentStore || typeof field !== 'string') return
   currentStore.order =
     event.sortOrder === 0 || event.sortOrder === undefined
       ? []
-      : [{ [field]: event.sortOrder === 1 ? "ASC" : "DESC" }];
-  void currentStore.fetchItems();
+      : [{ [field]: event.sortOrder === 1 ? 'ASC' : 'DESC' }]
+  void currentStore.fetchItems()
 }
 
 function onPage(event: { page: number; rows: number }) {
-  const currentStore = store.value;
-  if (!currentStore) return;
-  currentStore.pagination.currentPage = event.page + 1;
-  currentStore.pagination.itemsPerPage = event.rows;
-  void currentStore.fetchItems();
+  const currentStore = store.value
+  if (!currentStore) return
+  currentStore.pagination.currentPage = event.page + 1
+  currentStore.pagination.itemsPerPage = event.rows
+  void currentStore.fetchItems()
 }
 
 /** Reordena `store.columns` según el drag de PrimeVue, preservando las ocultas. */
 function onColumnReorder(event: DataTableColumnReorderEvent) {
-  const currentStore = store.value;
-  if (!currentStore) return;
-  const visible = [...store.value.visibleColumns];
-  const [moved] = visible.splice(event.dragIndex, 1);
-  if (!moved) return;
-  visible.splice(event.dropIndex, 0, moved);
-  const visibleFields = new Set(visible.map((col) => col.field));
-  const reordered: CollectionFieldConfig[] = [];
-  let index = 0;
+  const currentStore = store.value
+  if (!currentStore) return
+  const visible = [...store.value.visibleColumns]
+  const [moved] = visible.splice(event.dragIndex, 1)
+  if (!moved) return
+  visible.splice(event.dropIndex, 0, moved)
+  const visibleFields = new Set(visible.map((col) => col.field))
+  const reordered: CollectionFieldConfig[] = []
+  let index = 0
   for (const col of currentStore.columns) {
-    reordered.push(visibleFields.has(col.field) ? (visible[index++] ?? col) : col);
+    reordered.push(visibleFields.has(col.field) ? (visible[index++] ?? col) : col)
   }
-  currentStore.columns = reordered;
+  currentStore.columns = reordered
 }
 // #endregion
 // #region Cell live editing
@@ -679,38 +680,38 @@ function onColumnReorder(event: DataTableColumnReorderEvent) {
 // normalización de fechas/relaciones para el input GraphQL.
 // ---------------------------------------------------------------------------
 function canEditCell(col: CollectionFieldConfig): boolean {
-  const entity = store.value.metadata;
-  const mutation = entity?.update;
-  if (!entity || !mutation) return false;
-  if (col.field === "id") return false;
-  return mutation.inputFields.some((field) => field.name === col.field);
+  const entity = store.value.metadata
+  const mutation = entity?.update
+  if (!entity || !mutation) return false
+  if (col.field === 'id') return false
+  return mutation.inputFields.some((field) => field.name === col.field)
 }
 
 function relationOptionsFor(field: string): Array<{ label: string; value: string }> {
-  const entity = store.value.metadata;
+  const entity = store.value.metadata
   // console.log(entity)
-  if (!entity) return [];
-  const entry = entity.fields.find((f) => f.name === field);
-  if (!entry) return [];
+  if (!entity) return []
+  const entry = entity.fields.find((f) => f.name === field)
+  if (!entry) return []
 
-  const target = registry.getEntity(entry.namedType);
-  return target.fullList.map((option) => ({ label: option.label, value: option.id }));
+  const target = registry.getEntity(entry.namedType)
+  return target.fullList.map((option) => ({ label: option.label, value: option.id }))
 }
 
 async function onCellEditComplete(event: DataTableCellEditCompleteEvent) {
-  const currentStore = store.value;
-  if (!currentStore) return;
-  if (event.value === event.newValue) return;
+  const currentStore = store.value
+  if (!currentStore) return
+  if (event.value === event.newValue) return
   const payload = {
     id: (event.data as Record<string, unknown>).id,
     [event.field]: normalizeEditedValue(event.field, event.newValue),
-  };
+  }
   try {
-    await currentStore.update(payload);
-    await currentStore.fetchItems();
-    toasts.success("Cambio guardado");
+    await currentStore.update(payload)
+    await currentStore.fetchItems()
+    toasts.success('Cambio guardado')
   } catch (err) {
-    toasts.error(err instanceof Error ? err.message : String(err));
+    toasts.error(err instanceof Error ? err.message : String(err))
   }
 }
 
@@ -720,22 +721,22 @@ async function onCellEditComplete(event: DataTableCellEditCompleteEvent) {
  * relaciones se reducen a su IRI (`{ label, value }` → `/api/{plural}/{id}`).
  */
 function normalizeEditedValue(field: string, value: unknown): unknown {
-  const entity = store.value.metadata;
-  if (!entity) return value;
-  const entry = entity.fields.find((f) => f.name === field);
-  if (!entry) return value;
+  const entity = store.value.metadata
+  if (!entity) return value
+  const entry = entity.fields.find((f) => f.name === field)
+  if (!entry) return value
   if (entry.isRelation) {
-    if (value && typeof value === "object") {
-      const record = value as Record<string, unknown>;
-      return record.value ?? record.id ?? null;
+    if (value && typeof value === 'object') {
+      const record = value as Record<string, unknown>
+      return record.value ?? record.id ?? null
     }
-    return value;
+    return value
   }
   if (/date/i.test(entry.namedType)) {
-    if (value instanceof Date) return value.toISOString().slice(0, 10);
-    if (typeof value === "string") return value.slice(0, 10);
+    if (value instanceof Date) return value.toISOString().slice(0, 10)
+    if (typeof value === 'string') return value.slice(0, 10)
   }
-  return value;
+  return value
 }
 // #endregion
 // #region Delete
@@ -743,25 +744,25 @@ function normalizeEditedValue(field: string, value: unknown): unknown {
 // Borrado con diálogo de confirmación.
 // ---------------------------------------------------------------------------
 function askDelete(item: unknown) {
-  deleteTarget.value = (item ?? {}) as Record<string, unknown>;
-  confirmVisible.value = true;
+  deleteTarget.value = (item ?? {}) as Record<string, unknown>
+  confirmVisible.value = true
 }
 
 async function confirmDelete() {
-  const currentStore = store.value;
-  const target = deleteTarget.value;
-  if (!currentStore || !target) return;
-  deleting.value = true;
+  const currentStore = store.value
+  const target = deleteTarget.value
+  if (!currentStore || !target) return
+  deleting.value = true
   try {
-    await currentStore.remove(target.id as string | number);
-    confirmVisible.value = false;
-    deleteTarget.value = null;
-    await currentStore.fetchItems();
-    toasts.success("Registro eliminado");
+    await currentStore.remove(target.id as string | number)
+    confirmVisible.value = false
+    deleteTarget.value = null
+    await currentStore.fetchItems()
+    toasts.success('Registro eliminado')
   } catch (err) {
-    toasts.error(err instanceof Error ? err.message : String(err));
+    toasts.error(err instanceof Error ? err.message : String(err))
   } finally {
-    deleting.value = false;
+    deleting.value = false
   }
 }
 // #endregion
@@ -769,23 +770,23 @@ async function confirmDelete() {
 // Restablecer la vista: filtros, orden, paginación, ocultas y selección.
 // ---------------------------------------------------------------------------
 async function resetView() {
-  const currentStore = store.value;
-  const entity = store.value.metadata;
-  if (!currentStore || !entity) return;
-  resetFilters();
-  currentStore.filters = {};
-  currentStore.order = [];
-  currentStore.pagination.currentPage = 1;
-  currentStore.pagination.itemsPerPage = 10;
-  selectionMode.value = false;
-  selection.value = [];
-  loading.value = true;
+  const currentStore = store.value
+  const entity = store.value.metadata
+  if (!currentStore || !entity) return
+  resetFilters()
+  currentStore.filters = {}
+  currentStore.order = []
+  currentStore.pagination.currentPage = 1
+  currentStore.pagination.itemsPerPage = 10
+  selectionMode.value = false
+  selection.value = []
+  loading.value = true
   try {
-    await currentStore.loadColumns(true);
-    rebuildFilterNodes();
-    await currentStore.fetchItems();
+    await currentStore.loadColumns(true)
+    rebuildFilterNodes()
+    await currentStore.fetchItems()
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 
@@ -795,58 +796,58 @@ async function resetView() {
 // ---------------------------------------------------------------------------
 
 function preloadRelationLists() {
-  const entity = store.value.metadata;
-  const currentStore = store.value;
-  if (!entity || !currentStore) return [];
-  const loads: Promise<void>[] = [];
+  const entity = store.value.metadata
+  const currentStore = store.value
+  if (!entity || !currentStore) return []
+  const loads: Promise<void>[] = []
   for (const col of currentStore.columns) {
-    if (col.filterable === false) continue;
-    const entry = entity.fields.find((f) => f.name === col.field);
-    if (entry?.isRelation) loads.push(registry.getEntity(entry.namedType).loadFullList());
+    if (col.filterable === false) continue
+    const entry = entity.fields.find((f) => f.name === col.field)
+    if (entry?.isRelation) loads.push(registry.getEntity(entry.namedType).loadFullList())
   }
-  return loads;
+  return loads
 }
 
 watch(
   entityName,
   async (name) => {
-    confirmVisible.value = false;
-    deleteTarget.value = null;
-    highlightFilters.value = {};
+    confirmVisible.value = false
+    deleteTarget.value = null
+    highlightFilters.value = {}
     if (!name) {
-      toasts.error("Entidad no especificada");
-      return;
+      toasts.error('Entidad no especificada')
+      return
     }
-    const entity = schemaRepo.getEntityMetadata(name);
+    const entity = schemaRepo.getEntityMetadata(name)
     if (!entity) {
-      toasts.error(`Entidad "${name}" no encontrada en el schema GraphQL`);
-      return;
+      toasts.error(`Entidad "${name}" no encontrada en el schema GraphQL`)
+      return
     }
     if (!entity.queryCollection) {
-      toasts.error(`"${name}" no expone una colección consultable (queryCollection)`);
-      return;
+      toasts.error(`"${name}" no expone una colección consultable (queryCollection)`)
+      return
     }
-    resetFilters();
-    const currentStore = registry.getEntity(name);
-    loading.value = true;
+    resetFilters()
+    const currentStore = registry.getEntity(name)
+    loading.value = true
     try {
       // El store persiste su estado (incluido el orden/visibilidad de columnas);
       // `loadColumns` devuelve las ya cargadas si no se fuerza (ver factory.ts).
-      await currentStore.loadColumns();
-      hydrateFilters(entity);
-      rebuildFilterNodes();
-      await currentStore.fetchItems();
+      await currentStore.loadColumns()
+      hydrateFilters(entity)
+      rebuildFilterNodes()
+      await currentStore.fetchItems()
       // Precarga las listas de relaciones para los Select de filtro. Se esperan
       // ANTES de reconstruir los nodos (una sola vez, al cargar): reconstruir al
       // terminar cada lista remontaba todos los inputs y les borraba el valor.
-      await Promise.all(preloadRelationLists());
-      rebuildFilterNodes();
+      await Promise.all(preloadRelationLists())
+      rebuildFilterNodes()
     } finally {
-      loading.value = false;
+      loading.value = false
     }
   },
   { immediate: true },
-);
+)
 </script>
 <!-- #endregion -->
 <style scoped>

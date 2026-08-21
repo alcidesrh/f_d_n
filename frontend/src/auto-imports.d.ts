@@ -81,10 +81,12 @@ declare global {
   const useCollection: typeof import('./features/crud/composables/use-collection').useCollection
   const useCssModule: typeof import('vue').useCssModule
   const useCssVars: typeof import('vue').useCssVars
+  const useEntityForm: typeof import('./composables/useEntityForm').useEntityForm
   const useEntityMutations: typeof import('./features/crud/composables/use-entity-mutations').useEntityMutations
   const useEntityRegistry: typeof import('./composables/useEntityRegistry').useEntityRegistry
   const useId: typeof import('vue').useId
   const useItem: typeof import('./features/crud/composables/use-item').useItem
+  const useLayout: typeof import('./composables/useLayout').useLayout
   const useLink: typeof import('vue-router').useLink
   const useModel: typeof import('vue').useModel
   const useOrm: typeof import('./features/crud/composables/use-orm').useOrm
@@ -106,6 +108,9 @@ declare global {
   // @ts-ignore
   export type { Component, Slot, Slots, ComponentPublicInstance, ComputedRef, DirectiveBinding, ExtractDefaultPropTypes, ExtractPropTypes, ExtractPublicPropTypes, InjectionKey, PropType, Ref, ShallowRef, MaybeRef, MaybeRefOrGetter, VNode, WritableComputedRef } from 'vue'
   import('vue')
+  // @ts-ignore
+  export type { EntityFormMode, UseEntityFormOptions } from './composables/useEntityForm'
+  import('./composables/useEntityForm')
   // @ts-ignore
   export type { ToastType, ToastMessage } from './composables/useToasts'
   import('./composables/useToasts')
@@ -194,8 +199,10 @@ declare module 'vue' {
     readonly useAttrs: UnwrapRef<typeof import('vue')['useAttrs']>
     readonly useCssModule: UnwrapRef<typeof import('vue')['useCssModule']>
     readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
+    readonly useEntityForm: UnwrapRef<typeof import('./composables/useEntityForm')['useEntityForm']>
     readonly useEntityRegistry: UnwrapRef<typeof import('./composables/useEntityRegistry')['useEntityRegistry']>
     readonly useId: UnwrapRef<typeof import('vue')['useId']>
+    readonly useLayout: UnwrapRef<typeof import('./composables/useLayout')['useLayout']>
     readonly useLink: UnwrapRef<typeof import('vue-router')['useLink']>
     readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
     readonly useRoute: UnwrapRef<typeof import('vue-router')['useRoute']>

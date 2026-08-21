@@ -28,7 +28,7 @@ const props = withDefaults(
     size?: number | string
     filled?: boolean
   }>(),
-  { size: 18, filled: false }
+  { size: 18, filled: false },
 )
 
 const markup = computed(() => ICON_PATHS[props.name] ?? '')

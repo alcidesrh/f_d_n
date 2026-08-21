@@ -21,7 +21,7 @@
   </span>
 
   <InputNumber
-  v-else
+    v-else
     v-bind="context.attrs"
     :model-value="context._value"
     :input-id="context.id"
@@ -34,13 +34,13 @@
   />
 </template>
 <script setup lang="ts">
-import type { FormKitFrameworkContext } from "@formkit/core";
-import { useFormKitInput } from "./useFormKitInput";
+import type { FormKitFrameworkContext } from '@formkit/core'
+import { useFormKitInput } from './useFormKitInput'
 
-defineOptions({ name: "FkInputNumber" });
+defineOptions({ name: 'FkInputNumber' })
 
-const props = defineProps<{ context: FormKitFrameworkContext }>();
-const { context, update, blur, invalid, disabled } = useFormKitInput(props);
+const props = defineProps<{ context: FormKitFrameworkContext }>()
+const { context, update, blur, invalid, disabled } = useFormKitInput(props)
 
-const clearable = computed(() => props.context.node.props.attrs.clearable === true);
+const clearable = computed(() => props.context.node.props.attrs.clearable === true)
 </script>

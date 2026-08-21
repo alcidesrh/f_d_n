@@ -101,6 +101,12 @@ function schema(): IntrospectionSchemaLike {
         fields: null,
         enumValues: [{ name: 'ASC' }, { name: 'DESC' }],
       },
+      {
+        kind: 'ENUM',
+        name: 'EstadoRuta',
+        fields: null,
+        enumValues: [{ name: 'ACTIVA' }, { name: 'INACTIVA' }],
+      },
       // Entidades (implementan Node)
       {
         kind: 'OBJECT',
@@ -129,6 +135,7 @@ function schema(): IntrospectionSchemaLike {
         fields: [
           { name: 'id', type: ID(), args: [] },
           { name: 'codigo', type: NAMED('String'), args: [] },
+          { name: 'estado', type: NULLABLE('EstadoRuta'), args: [] },
           { name: 'label', type: STRING(), args: [] },
         ],
       },
@@ -264,6 +271,7 @@ function schema(): IntrospectionSchemaLike {
           { name: 'numero', type: STRING() },
           { name: 'total', type: NULLABLE('Float') },
           { name: 'ruta', type: STRING() },
+          { name: 'estado', type: NULLABLE('EstadoRuta') },
         ],
       },
       {
@@ -364,5 +372,40 @@ describe('parseIntrospection', () => {
   it('no crea entidades para queries de tipos sin Node', () => {
     const result = parseIntrospection(schema())
     expect(result.Action).toBeUndefined()
+  })
+
+  it('captura enumValues en campos de entidad y de inputs de mutación', () => {
+    const result = parseIntrospection(schema())
+    const ruta = result.Ruta!
+    expect(ruta.fields.find((f) => f.name === 'estado')).toMatchObject({
+      namedType: 'EstadoRuta',
+      kind: 'ENUM',
+      enumValues: ['ACTIVA', 'INACTIVA'],
+    })
+    expect(ruta.scalarFields).toContain('estado')
+    expect(result.Boleto?.update?.inputFields.find((f) => f.name === 'estado')?.enumValues).toEqual(
+      ['ACTIVA', 'INACTIVA'],
+    )
+  })
+
+  it('resuelve relaciones del input de mutación desde los campos de la entidad', () => {
+    const boleto = parseIntrospection(schema()).Boleto!
+    // API Platform tipa las relaciones del input como IRI (String/[String]);
+    // el parser debe cruzarlas con los campos de la entidad para marcarlas.
+    for (const mutation of [boleto.create!, boleto.update!]) {
+      const ruta = mutation.inputFields.find((f) => f.name === 'ruta')
+      expect(ruta).toMatchObject({
+        type: 'String',
+        namedType: 'Ruta',
+        kind: 'OBJECT',
+        isRelation: true,
+        isList: false,
+        enumValues: [],
+      })
+    }
+    const numero = boleto.create?.inputFields.find((f) => f.name === 'numero')
+    expect(numero).toMatchObject({ namedType: 'String', kind: 'SCALAR', isRelation: false })
+    const clientMutationId = boleto.create?.inputFields.find((f) => f.name === 'clientMutationId')
+    expect(clientMutationId?.isRelation).toBe(false)
   })
 })

@@ -49,6 +49,7 @@ const boletoSchema: EntitySchema = {
         required: false,
         isList: false,
         isRelation: false,
+        enumValues: [],
       },
       {
         name: 'numero',
@@ -58,6 +59,7 @@ const boletoSchema: EntitySchema = {
         required: true,
         isList: false,
         isRelation: false,
+        enumValues: [],
       },
     ],
   },
@@ -76,6 +78,7 @@ const boletoSchema: EntitySchema = {
         required: false,
         isList: false,
         isRelation: false,
+        enumValues: [],
       },
       {
         name: 'id',
@@ -85,6 +88,7 @@ const boletoSchema: EntitySchema = {
         required: true,
         isList: false,
         isRelation: false,
+        enumValues: [],
       },
       {
         name: 'numero',
@@ -94,6 +98,7 @@ const boletoSchema: EntitySchema = {
         required: false,
         isList: false,
         isRelation: false,
+        enumValues: [],
       },
     ],
   },
@@ -112,6 +117,7 @@ const boletoSchema: EntitySchema = {
         required: false,
         isList: false,
         isRelation: false,
+        enumValues: [],
       },
       {
         name: 'id',
@@ -121,6 +127,7 @@ const boletoSchema: EntitySchema = {
         required: true,
         isList: false,
         isRelation: false,
+        enumValues: [],
       },
     ],
   },

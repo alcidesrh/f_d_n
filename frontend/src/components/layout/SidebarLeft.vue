@@ -1,27 +1,26 @@
 <template>
   <aside :class="sidebarClasses" :style="sidebarStyle">
-    <div class="sidebar-footer">
+    <div class="sidebar-control">
       <div class="state-switch" role="radiogroup" aria-label="Estado del panel izquierdo">
         <button
-          :class="{ 'active bg-highlight': ui.leftState === 'close' }"
           title="Cerrar"
           @click="ui.setLeft('close')"
         >
-          <AppIcon name="x" :size="15" />
+            <i class="pi pi-times"></i>
         </button>
-        <button
+        <button v-if="ui.leftState != 'mini'"
           :class="{ 'active bg-highlight': ui.leftState === 'mini' }"
           title="Minimizado"
           @click="ui.setLeft('mini')"
         >
-          <AppIcon name="minus" :size="15" />
+            <i class="pi pi-chevron-left"></i>
         </button>
-        <button
+        <button v-if="ui.leftState != 'open'"
           :class="{ 'active bg-highlight': ui.leftState === 'open' }"
           title="Expandido"
           @click="ui.setLeft('open')"
         >
-          <AppIcon name="menu" :size="15" />
+            <i class="pi pi-chevron-right"></i>
         </button>
       </div>
     </div>
@@ -60,26 +59,24 @@
         </router-link>
       </nav>
     </div>
-
-
   </aside>
 </template>
 <script setup lang="ts">
-import { computed } from "vue";
-import { useUiStore } from "@/stores/ui";
-import { NAV_MAIN, NAV_OPS } from "@/config/nav";
-import AppIcon from "@/components/icons/AppIcon.vue";
+import { computed } from 'vue'
+import { useUiStore } from '@/stores/ui'
+import { NAV_MAIN, NAV_OPS } from '@/config/nav'
+import AppIcon from '@/components/icons/AppIcon.vue'
 
 // const ui = useUiStore();
 
 const sidebarClasses = computed(() => [
-  "sidebar",
-  "bg-surface-50",
-  "left-side",
-  { mini: ui.leftState === "mini" },
-  { closed: ui.leftState === "close" && !ui.isMobile },
-  { "mobile-hidden": ui.isMobile && !ui.mobileLeftOpen },
-]);
+  'sidebar',
+  'bg-surface-50',
+  'left-side',
+  { mini: ui.leftState === 'mini' },
+  { closed: ui.leftState === 'close' && !ui.isMobile },
+  { 'mobile-hidden': ui.isMobile && !ui.mobileLeftOpen },
+])
 
-const sidebarStyle = computed(() => (!ui.isMobile ? { width: ui.leftWidth } : {}));
+const sidebarStyle = computed(() => (!ui.isMobile ? { width: ui.leftWidth } : {}))
 </script>

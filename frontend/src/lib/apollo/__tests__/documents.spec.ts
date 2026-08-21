@@ -43,6 +43,7 @@ const boletoSchema: EntitySchema = {
       isList: false,
       isRelation: false,
       isSubcollection: false,
+      enumValues: [],
     },
     {
       name: 'numero',
@@ -53,6 +54,7 @@ const boletoSchema: EntitySchema = {
       isList: false,
       isRelation: false,
       isSubcollection: false,
+      enumValues: [],
     },
     {
       name: 'total',
@@ -63,6 +65,7 @@ const boletoSchema: EntitySchema = {
       isList: false,
       isRelation: false,
       isSubcollection: false,
+      enumValues: [],
     },
     {
       name: 'label',
@@ -73,6 +76,7 @@ const boletoSchema: EntitySchema = {
       isList: false,
       isRelation: false,
       isSubcollection: false,
+      enumValues: [],
     },
     {
       name: 'ruta',
@@ -83,6 +87,7 @@ const boletoSchema: EntitySchema = {
       isList: false,
       isRelation: true,
       isSubcollection: false,
+      enumValues: [],
     },
     {
       name: 'boletas',
@@ -93,6 +98,7 @@ const boletoSchema: EntitySchema = {
       isList: true,
       isRelation: true,
       isSubcollection: false,
+      enumValues: [],
     },
     {
       name: 'ventas',
@@ -103,6 +109,7 @@ const boletoSchema: EntitySchema = {
       isList: false,
       isRelation: false,
       isSubcollection: true,
+      enumValues: [],
     },
   ],
   scalarFields: ['id', 'numero', 'total', 'label'],
@@ -116,6 +123,7 @@ const boletoSchema: EntitySchema = {
       isList: false,
       isRelation: true,
       isSubcollection: false,
+      enumValues: [],
     },
     {
       name: 'boletas',
@@ -126,6 +134,7 @@ const boletoSchema: EntitySchema = {
       isList: true,
       isRelation: true,
       isSubcollection: false,
+      enumValues: [],
     },
   ],
   subcollections: [
@@ -138,6 +147,7 @@ const boletoSchema: EntitySchema = {
       isList: false,
       isRelation: false,
       isSubcollection: true,
+      enumValues: [],
     },
   ],
   create: {
@@ -155,6 +165,7 @@ const boletoSchema: EntitySchema = {
         required: false,
         isList: false,
         isRelation: false,
+        enumValues: [],
       },
       {
         name: 'numero',
@@ -164,6 +175,7 @@ const boletoSchema: EntitySchema = {
         required: true,
         isList: false,
         isRelation: false,
+        enumValues: [],
       },
       {
         name: 'total',
@@ -173,6 +185,7 @@ const boletoSchema: EntitySchema = {
         required: false,
         isList: false,
         isRelation: false,
+        enumValues: [],
       },
       {
         name: 'ruta',
@@ -182,6 +195,7 @@ const boletoSchema: EntitySchema = {
         required: false,
         isList: false,
         isRelation: false,
+        enumValues: [],
       },
     ],
   },
@@ -200,6 +214,7 @@ const boletoSchema: EntitySchema = {
         required: false,
         isList: false,
         isRelation: false,
+        enumValues: [],
       },
       {
         name: 'id',
@@ -209,6 +224,7 @@ const boletoSchema: EntitySchema = {
         required: true,
         isList: false,
         isRelation: false,
+        enumValues: [],
       },
       {
         name: 'numero',
@@ -218,6 +234,7 @@ const boletoSchema: EntitySchema = {
         required: false,
         isList: false,
         isRelation: false,
+        enumValues: [],
       },
       {
         name: 'ruta',
@@ -227,6 +244,7 @@ const boletoSchema: EntitySchema = {
         required: false,
         isList: false,
         isRelation: true,
+        enumValues: [],
       },
     ],
   },
@@ -245,6 +263,7 @@ const boletoSchema: EntitySchema = {
         required: false,
         isList: false,
         isRelation: false,
+        enumValues: [],
       },
       {
         name: 'id',
@@ -254,6 +273,7 @@ const boletoSchema: EntitySchema = {
         required: true,
         isList: false,
         isRelation: false,
+        enumValues: [],
       },
     ],
   },

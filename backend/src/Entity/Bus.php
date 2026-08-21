@@ -10,6 +10,7 @@ use App\Entity\Base\Base;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Override;
 
 #[ORM\Entity]
 #[ApiResourcePaginationPage()]
@@ -63,6 +64,11 @@ class Bus extends Base {
 
     public function __construct() {
         $this->asientos = new ArrayCollection();
+    }
+    #[Override]
+    public function getLabel()
+    {
+        return $this->codigo;
     }
 
     public function getId(): ?int {
