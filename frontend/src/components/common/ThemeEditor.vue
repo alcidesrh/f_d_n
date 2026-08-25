@@ -42,14 +42,14 @@
         :class="{ active: ui.mode === 'light' }"
         @click="ui.setMode('light')"
       >
-        <AppIcon name="sun" :size="14" /> Claro
+        <icon-lucide-sun /> Claro
       </button>
       <button
         class="cursor-pointer"
         :class="{ active: ui.mode === 'dark' }"
         @click="ui.setMode('dark')"
       >
-        <AppIcon name="moon" :size="14" /> Oscuro
+        <icon-lucide-moon class="font-bold" /> Oscuro
       </button>
     </div>
     <Divider />
@@ -70,7 +70,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { PRESET_OPTIONS, SURFACE_OPTIONS, PRIMARY_OPTIONS } from '@/config/theme'
+import { PRESET_OPTIONS, SURFACE_OPTIONS, PRIMARY_OPTIONS } from "@/config/theme";
 
 // const ui = useUiStore();
 </script>

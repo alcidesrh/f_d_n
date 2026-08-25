@@ -1,30 +1,19 @@
 <template>
   <aside :class="sidebarClasses" :style="sidebarStyle">
+    <!-- <div class="h-[32px] w-full"></div> -->
     <div class="sidebar-control">
-      <div class="state-switch" role="radiogroup" aria-label="Estado del panel izquierdo">
-        <button
-          title="Cerrar"
-          @click="ui.setLeft('close')"
-        >
-            <i class="pi pi-times"></i>
-        </button>
-        <button v-if="ui.leftState != 'mini'"
-          :class="{ 'active bg-highlight': ui.leftState === 'mini' }"
-          title="Minimizado"
-          @click="ui.setLeft('mini')"
-        >
-            <i class="pi pi-chevron-left"></i>
-        </button>
-        <button v-if="ui.leftState != 'open'"
-          :class="{ 'active bg-highlight': ui.leftState === 'open' }"
-          title="Expandido"
-          @click="ui.setLeft('open')"
-        >
-            <i class="pi pi-chevron-right"></i>
-        </button>
+      <div @click="ui.setLeft('close')">
+        <icon name="x" sw="2" />
+      </div>
+      <div @click="ui.setLeft(ui.leftState == 'mini' ? 'open' : 'mini')">
+        <icon :name="ui.leftState != 'mini' ? 'chevrons-left' : 'chevrons-right'" sw="2" />
+        <!-- <i
+          :class="[ui.leftState != 'mini' ? 'pi pi-angle-double-left' : 'pi pi-chevron-right']"
+        ></i> -->
       </div>
     </div>
-    <div class="sidebar-scroll">
+
+    <div class="sidebar-content">
       <div class="nav-group-label">Operación</div>
       <nav class="nav">
         <div class="nav-rail" aria-hidden="true"></div>
@@ -62,21 +51,20 @@
   </aside>
 </template>
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useUiStore } from '@/stores/ui'
-import { NAV_MAIN, NAV_OPS } from '@/config/nav'
-import AppIcon from '@/components/icons/AppIcon.vue'
+import { computed } from "vue";
+import { useUiStore } from "@/stores/ui";
+import { NAV_MAIN, NAV_OPS } from "@/config/nav";
+import AppIcon from "@/components/icons/AppIcon.vue";
 
 // const ui = useUiStore();
 
 const sidebarClasses = computed(() => [
-  'sidebar',
-  'bg-surface-50',
-  'left-side',
-  { mini: ui.leftState === 'mini' },
-  { closed: ui.leftState === 'close' && !ui.isMobile },
-  { 'mobile-hidden': ui.isMobile && !ui.mobileLeftOpen },
-])
+  "sidebar",
+  "left-side",
+  { mini: ui.leftState === "mini" },
+  { closed: ui.leftState === "close" && !ui.isMobile },
+  { "mobile-hidden": ui.isMobile && !ui.mobileLeftOpen },
+]);
 
-const sidebarStyle = computed(() => (!ui.isMobile ? { width: ui.leftWidth } : {}))
+const sidebarStyle = computed(() => (!ui.isMobile ? { width: ui.leftWidth } : {}));
 </script>

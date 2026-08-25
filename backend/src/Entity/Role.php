@@ -25,8 +25,9 @@ class Role extends Base {
      * @var Collection<int, self>
      */
     #[ORM\ManyToMany(targetEntity: self::class, inversedBy: 'children')]
-    #[ORM\JoinColumn(onDelete: 'CASCADE')]
-    #[ORM\InverseJoinColumn(onDelete: 'CASCADE')]
+    #[ORM\JoinTable(name: 'role_role')]
+    #[ORM\JoinColumn(name: 'parent_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
+    #[ORM\InverseJoinColumn(name: 'child_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
     private ?Collection $parents;
 
     /**

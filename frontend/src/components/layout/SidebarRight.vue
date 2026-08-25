@@ -1,21 +1,22 @@
 <template>
   <aside :class="sidebarClasses" :style="sidebarStyle">
     <div class="sidebar-control">
-      <div class="state-switch" role="radiogroup" aria-label="Estado del panel derecho">
-
-        <button v-if="ui.rightState != 'mini' && !nomini"
+      <!-- <div class="state-switch" role="radiogroup" aria-label="Estado del panel derecho">
+        <button
+          v-if="ui.rightState != 'mini' && !nomini"
           :class="{ active: ui.rightState === 'mini' }"
           title="Minimizado"
           @click="ui.setRight('mini')"
         >
           <i class="pi pi-chevron-left"></i>
         </button>
-        <button v-if="ui.rightState != 'open'"
+        <button
+          v-if="ui.rightState != 'open'"
           :class="{ active: ui.rightState === 'open' }"
           title="Expandido"
           @click="ui.setRight('open')"
         >
-        <i class="pi pi-chevron-right"></i>
+          <i class="pi pi-chevron-right"></i>
         </button>
         <button
           :class="{ active: ui.rightState === 'close' }"
@@ -24,110 +25,118 @@
         >
           <i class="pi pi-times"></i>
         </button>
+      </div> -->
+      <div @click="ui.setRight('close')">
+        <i class="pi pi-times"></i>
+      </div>
+      <div @click="ui.setRight(ui.rightState == 'mini' ? 'open' : 'mini')">
+        <i :class="[ui.rightState == 'mini' ? 'pi pi-chevron-left' : 'pi pi-chevron-right']"></i>
       </div>
     </div>
-    <slot>
-      <template v-if="showMiniRail">
-        <div class="sidebar-scroll">
-          <div class="mini-quick">
-            <button class="icon-btn" title="Próximas salidas">
-              <AppIcon name="clock" :size="18" />
-            </button>
-            <button class="icon-btn" title="Notificaciones">
-              <AppIcon name="bell" :size="18" />
-              <span class="badge-dot"></span>
-            </button>
-            <button class="icon-btn" title="Nuevo boleto">
-              <AppIcon name="plus" :size="18" />
-            </button>
-            <button class="icon-btn" title="Reportar incidente">
-              <AppIcon name="alert" :size="18" />
-            </button>
-          </div>
-        </div>
-      </template>
-
-      <template v-else>
-        <div class="sidebar-scroll">
-          <div class="side-block">
-            <div class="side-block-title">
-              <b>Próximas salidas</b><AppIcon name="clock" :size="14" />
-            </div>
-            <div v-for="(d, i) in DEPARTURES" :key="i" class="dep-row">
-              <div class="dep-time">{{ d.time }}</div>
-              <div class="dep-info">
-                <b>{{ d.route }}</b>
-                <span>{{ d.bus }} · {{ d.driver }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="side-block">
-            <div class="side-block-title"><b>Acciones rápidas</b></div>
-            <div class="quick-actions">
-              <button class="qa-btn">
-                <span class="nav-ic"><AppIcon name="plus" :size="15" /></span> Nuevo boleto
+    <div class="p-3 sidebar-content">
+      <slot>
+        <template v-if="showMiniRail">
+          <div class="sidebar-scroll">
+            <div class="mini-quick">
+              <button class="icon-btn" title="Próximas salidas">
+                <AppIcon name="clock" :size="18" />
               </button>
-              <button class="qa-btn">
-                <span class="nav-ic"><AppIcon name="alert" :size="15" /></span> Reportar incidente
+              <button class="icon-btn" title="Notificaciones">
+                <AppIcon name="bell" :size="18" />
+                <span class="badge-dot"></span>
               </button>
-              <button class="qa-btn">
-                <span class="nav-ic"><AppIcon name="users" :size="15" /></span> Asignar chofer
+              <button class="icon-btn" title="Nuevo boleto">
+                <AppIcon name="plus" :size="18" />
+              </button>
+              <button class="icon-btn" title="Reportar incidente">
+                <AppIcon name="alert" :size="18" />
               </button>
             </div>
           </div>
+        </template>
 
-          <div class="side-block">
-            <div class="side-block-title"><b>Actividad reciente</b></div>
-            <div
-              v-for="(n, i) in recentActivity"
-              :key="i"
-              class="notif-item"
-              style="padding: 10px 0"
-            >
-              <div class="notif-ic" :style="{ color: n.color, background: n.bg }">
-                <AppIcon :name="n.icon" :size="14" />
+        <template v-else>
+          <div class="sidebar-scroll">
+            <div class="side-block">
+              <div class="side-block-title">
+                <b>Próximas salidas</b><AppIcon name="clock" :size="14" />
               </div>
-              <div class="notif-body">
-                <b style="font-size: 12.5px">{{ n.title }}</b>
-                <time>{{ n.time }}</time>
+              <div v-for="(d, i) in DEPARTURES" :key="i" class="dep-row">
+                <div class="dep-time">{{ d.time }}</div>
+                <div class="dep-info">
+                  <b>{{ d.route }}</b>
+                  <span>{{ d.bus }} · {{ d.driver }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="side-block">
+              <div class="side-block-title"><b>Acciones rápidas</b></div>
+              <div class="quick-actions">
+                <button class="qa-btn">
+                  <span class="nav-ic"><AppIcon name="plus" :size="15" /></span> Nuevo boleto
+                </button>
+                <button class="qa-btn">
+                  <span class="nav-ic"><AppIcon name="alert" :size="15" /></span> Reportar incidente
+                </button>
+                <button class="qa-btn">
+                  <span class="nav-ic"><AppIcon name="users" :size="15" /></span> Asignar chofer
+                </button>
+              </div>
+            </div>
+
+            <div class="side-block">
+              <div class="side-block-title"><b>Actividad reciente</b></div>
+              <div
+                v-for="(n, i) in recentActivity"
+                :key="i"
+                class="notif-item"
+                style="padding: 10px 0"
+              >
+                <div class="notif-ic" :style="{ color: n.color, background: n.bg }">
+                  <AppIcon :name="n.icon" :size="14" />
+                </div>
+                <div class="notif-body">
+                  <b style="font-size: 12.5px">{{ n.title }}</b>
+                  <time>{{ n.time }}</time>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </template>
-    </slot>
+        </template>
+      </slot>
+    </div>
   </aside>
 </template>
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed } from "vue";
 // import { useUiStore } from '@/stores/ui'
-import { DEPARTURES, NOTIFICATIONS } from '@/data/mock'
-import AppIcon from '@/components/icons/AppIcon.vue'
+import { DEPARTURES, NOTIFICATIONS } from "@/data/mock";
+import AppIcon from "@/components/icons/AppIcon.vue";
 
 const props = defineProps<{
-  w?: number,
-  nomini?: boolean
-}>()
+  w?: number;
+  nomini?: boolean;
+}>();
 // const ui = useUiStore()
 
 const sidebarClasses = computed(() => [
-  'sidebar',
-  'bg-surface-50',
-  'right-side',
-  { mini: ui.rightState === 'mini' },
-  { closed: ui.rightState === 'close' && !ui.isMobile },
-  { 'mobile-hidden': ui.isMobile && !ui.mobileRightOpen },
-])
+  "sidebar",
+  "bg-surface-50",
+  "right-side",
+  { mini: ui.rightState === "mini" },
+  { closed: ui.rightState === "close" && !ui.isMobile },
+  { "mobile-hidden": ui.isMobile && !ui.mobileRightOpen },
+]);
 
 const sidebarStyle = computed(() => {
-  if(props.w){
+  if (props.w) {
     // if(nomini && ui.rightState == 'mini')
-  return (!ui.isMobile ? { width: props.w+'px'} : {})
-}
-  return (!ui.isMobile ? { width: ui.rightWidth } : {})
-})
+    return !ui.isMobile ? { width: props.w + "px" } : {};
+  }
+  return !ui.isMobile ? { width: ui.rightWidth } : {};
+});
 // const sidebarStyle = computed(() => (!ui.isMobile ? { width: ui.rightWidth } : {}))
-const showMiniRail = computed(() => ui.rightState === 'mini' && !ui.isMobile)
-const recentActivity = computed(() => NOTIFICATIONS.slice(0, 3))
+const showMiniRail = computed(() => ui.rightState === "mini" && !ui.isMobile);
+const recentActivity = computed(() => NOTIFICATIONS.slice(0, 3));
 </script>

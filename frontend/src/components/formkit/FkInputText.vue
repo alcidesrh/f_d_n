@@ -12,10 +12,11 @@
         @update:model-value="update"
         @blur="blur"
       />
-      <InputIcon
+      <icon
         v-if="hasValue"
         @click="clearValue"
-        class="pi pi-times cursor-pointer text-surface-500"
+        name="x"
+        class="top-[6px] right-[5px] absolute text-surface-500"
       />
     </IconField>
   </span>

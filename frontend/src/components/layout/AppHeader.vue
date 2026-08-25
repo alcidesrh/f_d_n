@@ -1,9 +1,18 @@
 <template>
-  <header class="app-header bg-surface-50">
-    <div class="brand">
-      <button class="icon-btn" :class="[ui.leftState]" title="Mostrar/ocultar menú" @click="ui.cycleLeft()">
+  <header class="app-header">
+    <div class="flex btn-siderbar-header" :class="[ui.leftState]">
+    <button
+        class="icon-btn"
+        title="Mostrar/ocultar menú"
+        @click="ui.cycleLeft()"
+      >
         <AppIcon name="menu" :size="19" />
       </button>
+      <Divider layout="vertical" class="mx-[5px]!" />
+
+    </div>
+    <div class="brand">
+
       <div style="min-width: 0">
         <div class="brand-name">FDN</div>
       </div>
@@ -93,31 +102,39 @@
         </div>
       </div>
     </div>
-      <button class="icon-btn right" :class="[ui.rightState]" title="Mostrar/ocultar menú" @click="ui.cycleRight()">
+    <div class="flex btn-siderbar-header" :class="[ui.rightState]">
+      <Divider layout="vertical" class="mx-[5px]!" />
+      <button
+        class="icon-btn right"
+
+        title="Mostrar/ocultar menú"
+        @click="ui.cycleRight()"
+      >
         <AppIcon name="menu" :size="19" />
       </button>
+    </div>
   </header>
 </template>
 <script setup lang="ts">
-import { NOTIFICATIONS } from '@/data/mock'
-import { useDialog } from 'primevue/usedialog'
-import ThemeEditor from '@/components/common/ThemeEditor.vue'
-const dialog = useDialog()
-const showThemeEditor = () => dialog.open(ThemeEditor, { props: { header: 'Edit Profile' } })
-defineProps<{ crumbs: string[] }>()
-type PopoverName = 'notif' | 'customizer' | 'user' | 'fullscreen' | null
-const openPopover = ref<PopoverName>(null)
+import { NOTIFICATIONS } from "@/data/mock";
+import { useDialog } from "primevue/usedialog";
+import ThemeEditor from "@/components/common/ThemeEditor.vue";
+const dialog = useDialog();
+const showThemeEditor = () => dialog.open(ThemeEditor, { props: { header: "Edit Profile" } });
+defineProps<{ crumbs: string[] }>();
+type PopoverName = "notif" | "customizer" | "user" | "fullscreen" | null;
+const openPopover = ref<PopoverName>(null);
 // const ui = useUiStore();
 
 function toggleFullscreen() {
   if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen?.()
+    document.documentElement.requestFullscreen?.();
   } else {
-    document.exitFullscreen?.()
+    document.exitFullscreen?.();
   }
-  toggle('fullscreen')
+  toggle("fullscreen");
 }
 function toggle(name: Exclude<PopoverName, null>) {
-  openPopover.value = openPopover.value === name ? null : name
+  openPopover.value = openPopover.value === name ? null : name;
 }
 </script>

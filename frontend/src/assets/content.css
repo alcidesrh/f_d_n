@@ -2,11 +2,6 @@
 #app {
   height: 100vh;
 }
-.shell {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
 
 /* ---- BODY ROW ---- */
 .body-row {
@@ -22,12 +17,15 @@
   flex: 1;
   min-width: 0;
   overflow-y: auto;
-  /* background: var(--p-surface-100); */
+  background: var(--p-surface-100);
 }
 .main-inner {
-  padding: 24px 4rem 60px;
+  padding: 2rem;
   /* max-width: 1400px; */
   margin: 0 auto;
+  & > div {
+    border: var(--border);
+  }
 }
 .page-head {
   display: flex;
@@ -36,9 +34,10 @@
   gap: 16px;
   /* margin-bottom: 22px; */
   flex-wrap: wrap;
+  margin-bottom: 1rem;
 }
 .page-title {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: "Space Grotesk", sans-serif;
   font-size: 1.2rem;
   color: var(--p-surface-700);
   font-weight: 600;
@@ -55,24 +54,6 @@
   color: var(--text-muted);
   font-size: 13.5px;
   margin-top: 3px;
-}
-
-/* .grid {
-  display: grid;
-  gap: 18px;
-} */
-.grid-kpi {
-  grid-template-columns: repeat(4, 1fr);
-}
-.grid-2col {
-  grid-template-columns: 1.5fr 1fr;
-  align-items: start;
-}
-.grid-2 {
-  grid-template-columns: repeat(2, 1fr);
-}
-.grid-3 {
-  grid-template-columns: repeat(3, 1fr);
 }
 
 /* ---- Resaltado de coincidencias de filtro (CSS Custom Highlight API) ---- */

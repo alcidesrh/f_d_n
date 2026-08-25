@@ -5,14 +5,16 @@
     <div class="body-row">
       <SidebarLeft />
 
-      <main class="main bg-surface-100" @click="ui.closeMobileOverlays()">
+      <main class="main " @click="ui.closeMobileOverlays()">
         <div class="main-inner">
           <slot />
         </div>
       </main>
 
       <SidebarRight :w="400" nomini>
-        <template #default>  </template>
+        <template #default>
+          <FormBuilderPanel />
+        </template>
       </SidebarRight>
 
       <div class="backdrop" :class="{ show: showBackdrop }" @click="ui.closeMobileOverlays()"></div>

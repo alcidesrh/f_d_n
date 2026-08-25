@@ -11,6 +11,9 @@ WORKDIR /frontend
 # Development image
 FROM base AS dev
 
+# curl para el healthcheck de compose
+RUN apk add --no-cache curl
+
 EXPOSE 9000
 ENV PORT 9000
 ENV HOSTNAME 0.0.0.0
@@ -44,6 +47,9 @@ ENV HOSTNAME 0.0.0.0
 
 COPY --from=builder /frontend/dist ./dist
 COPY server.ts ./
+
+# curl para el healthcheck de compose (antes de bajar a USER bun)
+RUN apk add --no-cache curl
 
 EXPOSE 9000
 

@@ -77,11 +77,6 @@ f_d_n/
 │   │   ├── Caddyfile
 │   │   ├── Caddyfile.dev
 │   │   └── docker-entrypoint.sh
-│   ├── migrations/
-│   │   ├── Version20260709070901.php
-│   │   ├── Version20260717211434.php
-│   │   ├── Version20260723084919.php
-│   │   └── Version20260723095214.php
 │   ├── public/
 │   │   ├── bundles/
 │   │   │   └── apiplatform/
@@ -511,76 +506,85 @@ f_d_n/
 │   │   ├── extensions.json
 │   │   ├── launch.json
 │   │   └── settings.json
+│   ├── agents/
+│   │   ├── formularios.md
+│   │   ├── layout.md
+│   │   └── Promt-refactorizacion.md
 │   ├── e2e/
 │   │   ├── tsconfig.json
 │   │   └── vue.spec.ts
-│   ├── icons/
-│   │   ├── AppIcon.vue
-│   │   └── icon-paths.ts
-│   ├── packages/
-│   │   ├── graphql-orm-core/
-│   │   │   ├── src/
-│   │   │   └── test/
-│   │   └── graphql-orm-vue/
-│   │       └── src/
 │   ├── public/
 │   │   ├── fonts/
 │   │   │   ├── DiplomataSC-Regular.ttf
 │   │   │   └── FasterOne-Regular.ttf
-│   │   └── images/
-│   │       └── logos/
+│   │   ├── images/
+│   │   │   ├── logo/
+│   │   │   └── logos/
+│   │   └── schema.graphql
 │   ├── src/
 │   │   ├── assets/
 │   │   │   ├── animations.css
-│   │   │   ├── color.css
 │   │   │   ├── content.css
 │   │   │   ├── fonts.css
 │   │   │   ├── header.css
 │   │   │   ├── main.css
 │   │   │   ├── sidebar.css
-│   │   │   ├── tailwind.css
 │   │   │   ├── theme-editor.css
 │   │   │   └── tokens.css
 │   │   ├── components/
 │   │   │   ├── common/
+│   │   │   ├── crud/
+│   │   │   ├── formbuilder/
 │   │   │   ├── formkit/
 │   │   │   ├── icons/
 │   │   │   ├── layout/
-│   │   │   ├── DemoPlugingGraphql.vue
-│   │   │   ├── GraphQLOrmDemo.vue
-│   │   │   └── ThemeEditor.vue
+│   │   │   └── Toasts.vue
+│   │   ├── composables/
+│   │   │   ├── __tests__/
+│   │   │   ├── useEntityForm.ts
+│   │   │   ├── useEntityRegistry.ts
+│   │   │   ├── useLayout.ts
+│   │   │   └── useToasts.ts
 │   │   ├── config/
 │   │   │   ├── nav.ts
 │   │   │   └── theme.ts
 │   │   ├── data/
 │   │   │   └── mock.ts
-│   │   ├── ragf/
-│   │   │   ├── __tests__/
-│   │   │   ├── transport/
-│   │   │   ├── config.ts
-│   │   │   ├── index.ts
-│   │   │   └── types.ts
+│   │   ├── layouts/
+│   │   │   ├── auth.vue
+│   │   │   ├── auth2.vue
+│   │   │   ├── blank.vue
+│   │   │   ├── default.vue
+│   │   │   └── formdemo.vue
+│   │   ├── lib/
+│   │   │   └── apollo/
+│   │   ├── pages/
+│   │   │   ├── auth/
+│   │   │   ├── errors/
+│   │   │   ├── form/
+│   │   │   └── Dashboard.vue
 │   │   ├── router/
 │   │   │   └── index.ts
 │   │   ├── stores/
 │   │   │   ├── __tests__/
-│   │   │   ├── ragf.ts
+│   │   │   ├── entities/
+│   │   │   ├── formBuilder.ts
+│   │   │   ├── global.ts
+│   │   │   ├── pinia.ts
+│   │   │   ├── schemaRepository.ts
 │   │   │   └── ui.ts
 │   │   ├── types/
+│   │   │   ├── entities/
 │   │   │   ├── formkit-inputs.d.ts
 │   │   │   ├── index.ts
 │   │   │   └── vue-router.d.ts
-│   │   ├── views/
-│   │   │   ├── Dashboard.vue
-│   │   │   ├── FormKitDemo.vue
-│   │   │   └── test.vue
+│   │   ├── utils/
+│   │   │   └── formkit/
 │   │   ├── App.vue
 │   │   ├── auto-imports.d.ts
 │   │   ├── components.d.ts
-│   │   ├── entities.ts
 │   │   ├── formkit.config.ts
 │   │   └── main.ts
-│   ├── .eslintcache
 │   ├── .gitattributes
 │   ├── .oxfmtrc.json
 │   ├── .oxlintrc.json
@@ -593,7 +597,6 @@ f_d_n/
 │   ├── package.json
 │   ├── playwright.config.ts
 │   ├── README.md
-│   ├── smoke-test.ts
 │   ├── tsconfig.app.json
 │   ├── tsconfig.json
 │   ├── tsconfig.node.json
@@ -617,18 +620,22 @@ f_d_n/
 │   ├── gen-makefile-docs.py
 │   ├── gen_dirtree.py
 │   └── validate-docs.sh
+├── .workshop.lock
 ├── AGENTS.md
+├── borrar.json
 ├── compose.monitoring.yaml
 ├── compose.override.yaml
 ├── compose.prod.yaml
 ├── compose.yaml
+├── kitty
 ├── Makefile
 ├── mkdocs.yml
 ├── opencode.js
 ├── opencode.json
 ├── opencode.json.tui-migration.bak
 ├── tui.json
-└── update-deps.sh
+├── update-deps.sh
+└── workshop.yaml
 ```
 
 ## Directorios Principales

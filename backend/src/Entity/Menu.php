@@ -1,33 +1,42 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Entity;
 
 use App\Attribute\ApiResourceNoPagination;
-
-
-use App\Entity\Base\NombreNotaStatusBase;
-use App\Repository\PermisoRepository;
+use App\Entity\Base\Base;
+use App\Repository\MenuRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: PermisoRepository::class)]
+#[ORM\Entity(repositoryClass: MenuRepository::class)]
+#[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_NOMBRE', fields: ['nombre'])]
+#[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_RUTA', fields: ['ruta'])]
 #[ApiResourceNoPagination]
-class Permiso extends NombreNotaStatusBase {
+class Menu extends Base {
 
-    // use StatusTrait;
+    #[ORM\Column(length: 255)]
+    private ?string $nombre = null;
 
-    /**
-     * @var Collection<int, Role>
-     */
-    #[ORM\ManyToMany(targetEntity: Role::class,  mappedBy: 'permisos')]
-    private ?Collection $roles;
+    #[ORM\Column(length: 255, nullable: true)]
+    public ?string $label = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $ruta = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $icon = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $sort = null;
 
     /**
      * @var Collection<int, self>
      */
     #[ORM\ManyToMany(targetEntity: self::class, inversedBy: 'children')]
-    #[ORM\JoinTable(name: 'permiso_permiso')]
+    #[ORM\JoinTable(name: 'menu_menu')]
     #[ORM\JoinColumn(name: 'parent_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
     #[ORM\InverseJoinColumn(name: 'child_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
     private ?Collection $parents;
@@ -38,42 +47,61 @@ class Permiso extends NombreNotaStatusBase {
     #[ORM\ManyToMany(targetEntity: self::class, mappedBy: 'parents')]
     private ?Collection $children;
 
-    /**
-     * @var Collection<int, Action>
-     */
-    #[ORM\ManyToMany(targetEntity: Action::class, inversedBy: 'permisos')]
-    #[ORM\JoinColumn(onDelete: 'CASCADE')]
-    #[ORM\InverseJoinColumn(onDelete: 'CASCADE')]
-    private Collection $actions;
-
     public function __construct() {
-        $this->roles = new ArrayCollection();
         $this->parents = new ArrayCollection();
         $this->children = new ArrayCollection();
-        $this->actions = new ArrayCollection();
     }
 
     public function getId(): ?int {
         return $this->id;
     }
 
-    /**
-     * @return Collection<int, Role>
-     */
-    public function getRoles(): Collection {
-        return $this->roles;
+    public function getNombre(): ?string {
+        return $this->nombre;
     }
 
-    public function addRole(Role $role): static {
-        if (!$this->roles->contains($role)) {
-            $this->roles->add($role);
-        }
+    public function setNombre(string $nombre): static {
+        $this->nombre = $nombre;
 
         return $this;
     }
 
-    public function removeRole(Role $role): static {
-        $this->roles->removeElement($role);
+    public function getLabel(): ?string {
+        return $this->label ?? $this->nombre;
+    }
+
+    public function setLabel(?string $label): static {
+        $this->label = $label;
+
+        return $this;
+    }
+
+    public function getRuta(): ?string {
+        return $this->ruta;
+    }
+
+    public function setRuta(string $ruta): static {
+        $this->ruta = $ruta;
+
+        return $this;
+    }
+
+    public function getIcon(): ?string {
+        return $this->icon;
+    }
+
+    public function setIcon(?string $icon): static {
+        $this->icon = $icon;
+
+        return $this;
+    }
+
+    public function getSort(): ?int {
+        return $this->sort;
+    }
+
+    public function setSort(?int $sort): static {
+        $this->sort = $sort;
 
         return $this;
     }
@@ -123,27 +151,7 @@ class Permiso extends NombreNotaStatusBase {
         return $this;
     }
 
-    /**
-     * @return Collection<int, Action>
-     */
-    public function getActions(): Collection {
-        return $this->actions;
-    }
-
-    public function addAction(Action $action): static {
-        if (!$this->actions->contains($action)) {
-            $this->actions->add($action);
-            $action->addPermiso($this);
-        }
-
-        return $this;
-    }
-
-    public function removeAction(Action $action): static {
-        if ($this->actions->removeElement($action)) {
-            $action->removePermiso($this);
-        }
-
-        return $this;
+    public function __toString(): string {
+        return $this->getNombre() ?? '';
     }
 }

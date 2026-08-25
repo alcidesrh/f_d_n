@@ -1,6 +1,7 @@
 import { createInput, defineFormKitConfig } from '@formkit/vue'
 
 import FkAutoComplete from '@/components/formkit/FkAutoComplete.vue'
+import FkButton from '@/components/formkit/FkButton.vue'
 import FkCascadeSelect from '@/components/formkit/FkCascadeSelect.vue'
 import FkCheckbox from '@/components/formkit/FkCheckbox.vue'
 import FkDatePicker from '@/components/formkit/FkDatePicker.vue'
@@ -33,6 +34,8 @@ export default defineFormKitConfig({
     TextArea: createInput(FkTextArea),
     TreeSelect: createInput(FkTreeSelect),
     ToggleSwitch: createInput(FkToggleSwitch),
+    // El label se pinta en el botón PrimeVue: se suprime la sección `label` de FormKit.
+    Button: createInput(FkButton, {}, { label: null }),
   },
   config: {
     classes: {

@@ -31,7 +31,7 @@ const router = createRouter({
       name: 'demo',
       component: () => import('@/pages/form/FormKitDemo.vue'),
       meta: {
-        layout: 'formdemo',
+        layout: 'default',
         crumbs: ['Andén', 'Demostración'],
         title: 'FormKit & PrimeVue Demo',
       },

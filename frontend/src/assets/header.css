@@ -6,14 +6,12 @@
   right: 0;
   height: var(--header-h);
   z-index: 50;
-  /* background: var(--p-surface-50); */
-  /* rgba(255, 255, 255, 0.85); */
-  /* var(--bg); */
+  background: var(--bg);
   border-bottom: var(--border);
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 0 18px;
+  padding: 0 .5rem;
 }
 .brand {
   display: flex;
@@ -33,7 +31,7 @@
   color: var(--on-primary);
 }
 .brand-name {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: "Space Grotesk", sans-serif;
   font-weight: 700;
   font-size: 18px;
   letter-spacing: 0.2px;
@@ -44,6 +42,16 @@
   color: var(--text-muted);
   white-space: nowrap;
   margin-top: -2px;
+}
+.btn-siderbar-header {
+  transition: width var(--transition);
+  width: 50px;
+  overflow: hidden;
+  &.open,
+  &.mini {
+    width: 0;
+    /* transform: translate(-120px, 0) rotate(45deg) scale(1.5); */
+  }
 }
 .icon-btn {
   width: 38px;
@@ -56,15 +64,9 @@
   cursor: pointer;
   transition:
     background var(--transition),
-    color var(--transition),
-    width var(--transition);
+    color var(--transition);
   position: relative;
   flex: 0 0 auto;
-  &.open,
-  &.mini{
-    width: 0;
-    /* transform: translate(-120px, 0) rotate(45deg) scale(1.5); */
-  }
 }
 .icon-btn:hover {
   background: var(--hover);
@@ -149,7 +151,7 @@
   justify-content: center;
   font-weight: 700;
   font-size: 13px;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: "Space Grotesk", sans-serif;
 }
 .header-user {
   display: flex;

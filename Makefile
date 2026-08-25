@@ -107,7 +107,7 @@ commands: ## Display all commands in the project namespace
 	@$(SYMFONY) list $(PROJECT)
 ## —— Documentación 📖 ——————————————————————————————————————————————————————
 docs-serve: ## Serve documentation at http://localhost:8000
-	@mkdocs serve -f docs/mkdocs.yml
+	@mkdocs serve -f mkdocs.yml
 
 docs-build: ## Build documentation site
 	@mkdocs build -f ./mkdocs.yml
@@ -150,7 +150,8 @@ debug-build:
 	SERVER_NAME=:80 MERCURE_PUBLIC_URL=http://localhost/.well-known/mercure XDEBUG_MODE=debug  APP_ENV=dev $(DOCKER_COMP) up --build  -d
 debug:
 	SERVER_NAME=:80 MERCURE_PUBLIC_URL=http://localhost/.well-known/mercure XDEBUG_MODE=debug  APP_ENV=dev $(DOCKER_COMP) up -d
-	
+dev-build:
+	SERVER_NAME=:80 MERCURE_PUBLIC_URL=http://localhost/.well-known/mercure APP_ENV=dev $(DOCKER_COMP) up --build  -d
 dev:
 	SERVER_NAME=:80 MERCURE_PUBLIC_URL=http://localhost/.well-known/mercure APP_ENV=dev $(DOCKER_COMP) up -d
 
