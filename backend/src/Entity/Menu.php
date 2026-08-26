@@ -47,9 +47,23 @@ class Menu extends Base {
     #[ORM\ManyToMany(targetEntity: self::class, mappedBy: 'parents')]
     private ?Collection $children;
 
+    /**
+     * @var Collection<int, Role>
+     */
+    #[ORM\ManyToMany(targetEntity: Role::class)]
+    private Collection $allowRoles;
+
+    /**
+     * @var Collection<int, Permiso>
+     */
+    #[ORM\ManyToMany(targetEntity: Permiso::class)]
+    private Collection $allowPermiso;
+
     public function __construct() {
         $this->parents = new ArrayCollection();
         $this->children = new ArrayCollection();
+        $this->allowRoles = new ArrayCollection();
+        $this->allowPermiso = new ArrayCollection();
     }
 
     public function getId(): ?int {
@@ -153,5 +167,53 @@ class Menu extends Base {
 
     public function __toString(): string {
         return $this->getNombre() ?? '';
+    }
+
+    /**
+     * @return Collection<int, Role>
+     */
+    public function getAllowRoles(): Collection
+    {
+        return $this->allowRoles;
+    }
+
+    public function addAllowRole(Role $allowRole): static
+    {
+        if (!$this->allowRoles->contains($allowRole)) {
+            $this->allowRoles->add($allowRole);
+        }
+
+        return $this;
+    }
+
+    public function removeAllowRole(Role $allowRole): static
+    {
+        $this->allowRoles->removeElement($allowRole);
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Permiso>
+     */
+    public function getAllowPermiso(): Collection
+    {
+        return $this->allowPermiso;
+    }
+
+    public function addAllowPermiso(Permiso $allowPermiso): static
+    {
+        if (!$this->allowPermiso->contains($allowPermiso)) {
+            $this->allowPermiso->add($allowPermiso);
+        }
+
+        return $this;
+    }
+
+    public function removeAllowPermiso(Permiso $allowPermiso): static
+    {
+        $this->allowPermiso->removeElement($allowPermiso);
+
+        return $this;
     }
 }
