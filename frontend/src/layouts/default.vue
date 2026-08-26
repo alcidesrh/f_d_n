@@ -1,7 +1,11 @@
 <template>
   <div class="body-row">
-    <AppHeader :crumbs="crumbs" />
-    <SidebarLeft />
+    <AppHeader :crumbs="crumbs">
+      <template #menu-content></template>
+    </AppHeader>
+    <SidebarLeft>
+      <template #menu-content></template>
+    </SidebarLeft>
 
     <main class="main" @click="ui.closeMobileOverlays()">
       <div class="main-inner">
@@ -9,7 +13,9 @@
       </div>
     </main>
 
-    <SidebarRight />
+    <SidebarRight>
+      <template #menu-content></template>
+    </SidebarRight>
 
     <!-- <div class="body-row">
       <div class="backdrop" :class="{ show: showBackdrop }" @click="ui.closeMobileOverlays()"></div>

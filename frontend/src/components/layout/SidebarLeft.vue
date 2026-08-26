@@ -14,6 +14,7 @@
     </div>
 
     <div class="sidebar-content">
+      <slot name="menu-content"></slot>
       <div class="nav-group-label">Operación</div>
       <nav class="nav">
         <div class="nav-rail" aria-hidden="true"></div>
@@ -21,13 +22,15 @@
           v-for="item in NAV_MAIN"
           :key="item.to"
           :to="item.to"
-          class="nav-item"
+          class="a-nav-item"
           :data-tip="item.label"
         >
-          <span class="stop-dot" aria-hidden="true"></span>
-          <span class="nav-ic"><AppIcon :name="item.icon" :size="18" /></span>
-          <span class="nav-label">{{ item.label }}</span>
-          <span v-if="item.count" class="nav-count">{{ item.count }}</span>
+          <div class="nav-item">
+            <span class="stop-dot" aria-hidden="true"></span>
+            <span class="nav-ic"><AppIcon :name="item.icon" :size="18" /></span>
+            <span class="nav-label">{{ item.label }}</span>
+            <span v-if="item.count" class="nav-count">{{ item.count }}</span>
+          </div>
         </router-link>
       </nav>
 
@@ -38,13 +41,15 @@
           v-for="item in NAV_OPS"
           :key="item.to"
           :to="item.to"
-          class="nav-item"
+          class="a-nav-item"
           :data-tip="item.label"
         >
-          <span class="stop-dot" aria-hidden="true"></span>
-          <span class="nav-ic"><AppIcon :name="item.icon" :size="18" /></span>
-          <span class="nav-label">{{ item.label }}</span>
-          <span v-if="item.count" class="nav-count">{{ item.count }}</span>
+          <div class="nav-item">
+            <span class="stop-dot" aria-hidden="true"></span>
+            <span class="nav-ic"><AppIcon :name="item.icon" :size="18" /></span>
+            <span class="nav-label">{{ item.label }}</span>
+            <span v-if="item.count" class="nav-count">{{ item.count }}</span>
+          </div>
         </router-link>
       </nav>
     </div>

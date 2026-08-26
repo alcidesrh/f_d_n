@@ -1,38 +1,15 @@
 <template>
   <aside :class="sidebarClasses" :style="sidebarStyle">
     <div class="sidebar-control">
-      <!-- <div class="state-switch" role="radiogroup" aria-label="Estado del panel derecho">
-        <button
-          v-if="ui.rightState != 'mini' && !nomini"
-          :class="{ active: ui.rightState === 'mini' }"
-          title="Minimizado"
-          @click="ui.setRight('mini')"
-        >
-          <i class="pi pi-chevron-left"></i>
-        </button>
-        <button
-          v-if="ui.rightState != 'open'"
-          :class="{ active: ui.rightState === 'open' }"
-          title="Expandido"
-          @click="ui.setRight('open')"
-        >
-          <i class="pi pi-chevron-right"></i>
-        </button>
-        <button
-          :class="{ active: ui.rightState === 'close' }"
-          title="Cerrar"
-          @click="ui.setRight('close')"
-        >
-          <i class="pi pi-times"></i>
-        </button>
-      </div> -->
-      <div @click="ui.setRight('close')">
-        <i class="pi pi-times"></i>
-      </div>
       <div @click="ui.setRight(ui.rightState == 'mini' ? 'open' : 'mini')">
-        <i :class="[ui.rightState == 'mini' ? 'pi pi-chevron-left' : 'pi pi-chevron-right']"></i>
+        <icon :name="ui.rightState != 'mini' ? 'chevrons-right' : 'chevrons-left'" sw="2" />
+      </div>
+      <div @click="ui.setRight('close')">
+        <icon name="x" sw="2" />
       </div>
     </div>
+    <slot name="menu-content"></slot>
+
     <div class="p-3 sidebar-content">
       <slot>
         <template v-if="showMiniRail">
