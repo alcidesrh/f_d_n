@@ -58,6 +58,7 @@ const router = createRouter({
       },
     },
     {
+<<<<<<< Updated upstream
       path: "/:pathMatch(.*)*",
       name: "not-found",
       component: () => import("@/pages/errors/NotFoundPage.vue"),
@@ -65,6 +66,17 @@ const router = createRouter({
         layout: "blank",
         title: "Página no encontrada",
       },
+=======
+      path: '/form/:entity/:id?',
+      name: 'entity-form',
+      props: true,
+      component: () => import('@/components/crud/Form.vue'),
+      meta: { crumbs: ['Andén', 'Formulario'], title: 'Formulario:' },
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      redirect: '/',
+>>>>>>> Stashed changes
     },
   ],
 });

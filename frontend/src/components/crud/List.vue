@@ -102,6 +102,7 @@
           </template>
           <template #sorticon></template>
         </Column>
+        <!-- #region Editar y Eliminar.  -->
         <Column
           alignFrozen="right"
           frozen
@@ -112,9 +113,10 @@
           :selection-mode="selectionMode ? 'multiple' : undefined"
         >
           <template v-if="!selectionMode" #body="{ data }">
-            <ListActions :item="data" @edit="(item) => emit('edit', item)" @delete="askDelete" />
+            <ListActions :item="data" @edit="onEdit" @delete="askDelete" />
           </template>
         </Column>
+        <!-- #endregion -->
       </DataTable>
 
       <div class="flex flex-wrap items-center justify-between gap-3 border-t p-2">
@@ -175,6 +177,7 @@ import type {
 import { useSchemaRepositoryStore } from "@/stores/schemaRepository";
 import { useEntityRegistry } from "@/composables/useEntityRegistry";
 import { useToasts } from "@/composables/useToasts";
+import router from "@/router";
 import type { EntitySchema } from "@/lib/apollo/types";
 import type { CollectionFieldConfig, EntityStore } from "@/stores/entities/types";
 import {
@@ -188,12 +191,8 @@ import {
 } from "./listUtils";
 import type { Popover } from "primevue";
 // ---------------------------------------------------------------------------
-// Props y eventos expuestos al padre (alta/edición).
+// Props expuestos al padre.
 // ---------------------------------------------------------------------------
-const emit = defineEmits<{
-  edit: [item: unknown];
-  create: [];
-}>();
 const props = withDefaults(defineProps<{ entity: string | string[] }>(), { entity: "" });
 // ---------------------------------------------------------------------------
 // Stores y contexto: schema introspectado, registry de stores y toasts.
@@ -690,6 +689,14 @@ function normalizeEditedValue(field: string, value: unknown): unknown {
 // ---------------------------------------------------------------------------
 // Borrado con diálogo de confirmación.
 // ---------------------------------------------------------------------------
+function onEdit(item: unknown) {
+  const record = (item ?? {}) as Record<string, unknown>;
+  void router.push({
+    name: "entity-form",
+    params: { entity: entityName.value, id: String(record.id) },
+  });
+}
+
 function askDelete(item: unknown) {
   deleteTarget.value = (item ?? {}) as Record<string, unknown>;
   confirmVisible.value = true;

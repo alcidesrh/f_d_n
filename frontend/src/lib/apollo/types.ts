@@ -37,8 +37,13 @@ export interface EntityFieldSchema {
   isRelation: boolean
   /** Subrecurso tipo connection (ej: `ventas(...): VentaPageConnection`). */
   isSubcollection: boolean
+<<<<<<< Updated upstream
   /** Valores de un ENUM (vacío si no aplica), para selects de formularios. */
   enumValues: string[]
+=======
+  /** Valores posibles si el tipo es ENUM (ej: ['ACTIVO', 'INACTIVO']). */
+  enumValues?: string[]
+>>>>>>> Stashed changes
 }
 
 export interface SchemaInputField {
@@ -50,8 +55,13 @@ export interface SchemaInputField {
   isList: boolean
   /** La entrada espera un IRI/id de una entidad (relación). */
   isRelation: boolean
+<<<<<<< Updated upstream
   /** Valores de un ENUM (vacío si no aplica), para selects de formularios. */
   enumValues: string[]
+=======
+  /** Valores posibles si el tipo es ENUM. */
+  enumValues?: string[]
+>>>>>>> Stashed changes
 }
 
 export interface MutationSchema {
@@ -83,6 +93,7 @@ export interface EntitySchema {
   orderInput: string | null
   /** Campos ordenables según el input de orden. */
   orderFields: string[]
+  slug: string | null
   itemArgs: SchemaArg[]
   collectionArgs: SchemaArg[]
   /** Argumentos de colección que son filtros (paginación/orden excluidos). */

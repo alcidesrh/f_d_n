@@ -28,10 +28,17 @@ export interface SchemaRepositoryState {
   loadedAt: string | null
 }
 
+<<<<<<< Updated upstream
 export const useSchemaRepositoryStore = defineStore('schemaRepository', {
   persist: {
     pick: ['entities', 'schemaVersion', 'loadedAt'],
   },
+=======
+export const useSchemaRepositoryStore = defineStore("schemaRepository", {
+  // persist: {
+  //   pick: ["entities", "schemaVersion", "loadedAt"],
+  // },
+>>>>>>> Stashed changes
 
   state: (): SchemaRepositoryState => ({
     status: 'idle',

@@ -50,7 +50,9 @@ declare module 'vue' {
     FkToggleSwitch: typeof import('./components/formkit/FkToggleSwitch.vue')['default']
     FkTreeSelect: typeof import('./components/formkit/FkTreeSelect.vue')['default']
     Fluid: typeof import('primevue/fluid')['default']
+    Form: typeof import('./components/crud/Form.vue')['default']
     FormBuilderPanel: typeof import('./components/formbuilder/FormBuilderPanel.vue')['default']
+    GraphQLOrmDemo: typeof import('./components/GraphQLOrmDemo.vue')['default']
     Icon: typeof import('./components/common/Icon.vue')['default']
     IconField: typeof import('primevue/iconfield')['default']
     IconLucideEclipse: typeof import('~icons/lucide/eclipse')['default']
@@ -73,6 +75,7 @@ declare module 'vue' {
     ListCellEditor: typeof import('./components/crud/ListCellEditor.vue')['default']
     ListColumn: typeof import('./components/crud/ListColumn.vue')['default']
     ListHeader: typeof import('./components/crud/ListHeader.vue')['default']
+    MenuForm: typeof import('./components/menu/MenuForm.vue')['default']
     Message: typeof import('primevue/message')['default']
     MultiSelect: typeof import('primevue/multiselect')['default']
     OverlayBadge: typeof import('primevue/overlaybadge')['default']
@@ -89,6 +92,7 @@ declare module 'vue' {
     SidebarLeft: typeof import('./components/layout/SidebarLeft.vue')['default']
     SidebarRight: typeof import('./components/layout/SidebarRight.vue')['default']
     Skeleton: typeof import('primevue/skeleton')['default']
+    SplitButton: typeof import('primevue/splitbutton')['default']
     Tab: typeof import('primevue/tab')['default']
     TabList: typeof import('primevue/tablist')['default']
     TabPanel: typeof import('primevue/tabpanel')['default']
@@ -102,6 +106,7 @@ declare module 'vue' {
     Toasts: typeof import('./components/Toasts.vue')['default']
     ToggleSwitch: typeof import('primevue/toggleswitch')['default']
     Toolbar: typeof import('primevue/toolbar')['default']
+    TopLoadingBar: typeof import('./components/common/TopLoadingBar.vue')['default']
     TreeSelect: typeof import('primevue/treeselect')['default']
   }
 }

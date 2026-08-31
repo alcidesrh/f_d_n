@@ -18,6 +18,9 @@ declare global {
   const defineComponent: typeof import('vue').defineComponent
   const defineStore: typeof import('pinia').defineStore
   const effectScope: typeof import('vue').effectScope
+  const entityNameFromSlug: typeof import('./utils/entitySlug').entityNameFromSlug
+  const entitySlug: typeof import('./utils/entitySlug').entitySlug
+  const extractVueRoutes: typeof import('./utils/vueRoutesSync').extractVueRoutes
   const getActivePinia: typeof import('pinia').getActivePinia
   const getCurrentInstance: typeof import('vue').getCurrentInstance
   const getCurrentScope: typeof import('vue').getCurrentScope
@@ -70,11 +73,14 @@ declare global {
   const state: typeof import('./stores/ui').state
   const storeToRefs: typeof import('pinia').storeToRefs
   const stores: typeof import('./composables/useEntityRegistry').stores
+  const syncVueRoutes: typeof import('./utils/vueRoutesSync').syncVueRoutes
   const toRaw: typeof import('vue').toRaw
   const toRef: typeof import('vue').toRef
   const toRefs: typeof import('vue').toRefs
   const toValue: typeof import('vue').toValue
+  const toVueRouteDTO: typeof import('./utils/vueRoutesSync').toVueRouteDTO
   const triggerRef: typeof import('vue').triggerRef
+  const triggerToast: typeof import('./utils/autoimport').triggerToast
   const ui: typeof import('./stores/global').ui
   const unref: typeof import('vue').unref
   const useAttrs: typeof import('vue').useAttrs
@@ -85,10 +91,13 @@ declare global {
   const useEntityMutations: typeof import('./features/crud/composables/use-entity-mutations').useEntityMutations
   const useEntityRegistry: typeof import('./composables/useEntityRegistry').useEntityRegistry
   const useFormBuilderStore: typeof import('./stores/formBuilder').useFormBuilderStore
+  const useFormKitSchema: typeof import('./composables/useFormKitSchema').useFormKitSchema
   const useId: typeof import('vue').useId
   const useItem: typeof import('./features/crud/composables/use-item').useItem
   const useLayout: typeof import('./composables/useLayout').useLayout
   const useLink: typeof import('vue-router').useLink
+  const useLoadingStore: typeof import('./stores/loadingStore').useLoadingStore
+  const useMenusStore: typeof import('./stores/menus').useMenusStore
   const useModel: typeof import('vue').useModel
   const useOrm: typeof import('./features/crud/composables/use-orm').useOrm
   const useRagf: typeof import('./stores/ragf').useRagf
@@ -99,6 +108,7 @@ declare global {
   const useTemplateRef: typeof import('vue').useTemplateRef
   const useToasts: typeof import('./composables/useToasts').useToasts
   const useUiStore: typeof import('./stores/ui').useUiStore
+  const useUserSessionStore: typeof import('./stores/session').useUserSessionStore
   const watch: typeof import('vue').watch
   const watchEffect: typeof import('vue').watchEffect
   const watchPostEffect: typeof import('vue').watchPostEffect
@@ -113,17 +123,26 @@ declare global {
   export type { EntityFormMode, UseEntityFormOptions } from './composables/useEntityForm'
   import('./composables/useEntityForm')
   // @ts-ignore
+  export type { UseFormKitSchemaReturn } from './composables/useFormKitSchema'
+  import('./composables/useFormKitSchema')
+  // @ts-ignore
   export type { ToastType, ToastMessage } from './composables/useToasts'
   import('./composables/useToasts')
   // @ts-ignore
   export type { FormBuilderState } from './stores/formBuilder'
   import('./stores/formBuilder')
   // @ts-ignore
+  export type { MenuItem, MenuArea, MenusState } from './stores/menus'
+  import('./stores/menus')
+  // @ts-ignore
   export type { SchemaRepositoryState } from './stores/schemaRepository'
   import('./stores/schemaRepository')
   // @ts-ignore
   export type { UiState } from './stores/ui'
   import('./stores/ui')
+  // @ts-ignore
+  export type { VueRouteDTO, VueRoutesSyncResult } from './utils/vueRoutesSync'
+  import('./utils/vueRoutesSync')
 }
 
 // for vue template auto import
@@ -142,6 +161,9 @@ declare module 'vue' {
     readonly defineComponent: UnwrapRef<typeof import('vue')['defineComponent']>
     readonly defineStore: UnwrapRef<typeof import('pinia')['defineStore']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
+    readonly entityNameFromSlug: UnwrapRef<typeof import('./utils/entitySlug')['entityNameFromSlug']>
+    readonly entitySlug: UnwrapRef<typeof import('./utils/entitySlug')['entitySlug']>
+    readonly extractVueRoutes: UnwrapRef<typeof import('./utils/vueRoutesSync')['extractVueRoutes']>
     readonly getActivePinia: UnwrapRef<typeof import('pinia')['getActivePinia']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
@@ -193,11 +215,14 @@ declare module 'vue' {
     readonly state: UnwrapRef<typeof import('./stores/ui')['state']>
     readonly storeToRefs: UnwrapRef<typeof import('pinia')['storeToRefs']>
     readonly stores: UnwrapRef<typeof import('./composables/useEntityRegistry')['stores']>
+    readonly syncVueRoutes: UnwrapRef<typeof import('./utils/vueRoutesSync')['syncVueRoutes']>
     readonly toRaw: UnwrapRef<typeof import('vue')['toRaw']>
     readonly toRef: UnwrapRef<typeof import('vue')['toRef']>
     readonly toRefs: UnwrapRef<typeof import('vue')['toRefs']>
     readonly toValue: UnwrapRef<typeof import('vue')['toValue']>
+    readonly toVueRouteDTO: UnwrapRef<typeof import('./utils/vueRoutesSync')['toVueRouteDTO']>
     readonly triggerRef: UnwrapRef<typeof import('vue')['triggerRef']>
+    readonly triggerToast: UnwrapRef<typeof import('./utils/autoimport')['triggerToast']>
     readonly ui: UnwrapRef<typeof import('./stores/global')['ui']>
     readonly unref: UnwrapRef<typeof import('vue')['unref']>
     readonly useAttrs: UnwrapRef<typeof import('vue')['useAttrs']>
@@ -206,9 +231,12 @@ declare module 'vue' {
     readonly useEntityForm: UnwrapRef<typeof import('./composables/useEntityForm')['useEntityForm']>
     readonly useEntityRegistry: UnwrapRef<typeof import('./composables/useEntityRegistry')['useEntityRegistry']>
     readonly useFormBuilderStore: UnwrapRef<typeof import('./stores/formBuilder')['useFormBuilderStore']>
+    readonly useFormKitSchema: UnwrapRef<typeof import('./composables/useFormKitSchema')['useFormKitSchema']>
     readonly useId: UnwrapRef<typeof import('vue')['useId']>
     readonly useLayout: UnwrapRef<typeof import('./composables/useLayout')['useLayout']>
     readonly useLink: UnwrapRef<typeof import('vue-router')['useLink']>
+    readonly useLoadingStore: UnwrapRef<typeof import('./stores/loadingStore')['useLoadingStore']>
+    readonly useMenusStore: UnwrapRef<typeof import('./stores/menus')['useMenusStore']>
     readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
     readonly useRoute: UnwrapRef<typeof import('vue-router')['useRoute']>
     readonly useRouter: UnwrapRef<typeof import('vue-router')['useRouter']>
@@ -217,6 +245,7 @@ declare module 'vue' {
     readonly useTemplateRef: UnwrapRef<typeof import('vue')['useTemplateRef']>
     readonly useToasts: UnwrapRef<typeof import('./composables/useToasts')['useToasts']>
     readonly useUiStore: UnwrapRef<typeof import('./stores/ui')['useUiStore']>
+    readonly useUserSessionStore: UnwrapRef<typeof import('./stores/session')['useUserSessionStore']>
     readonly watch: UnwrapRef<typeof import('vue')['watch']>
     readonly watchEffect: UnwrapRef<typeof import('vue')['watchEffect']>
     readonly watchPostEffect: UnwrapRef<typeof import('vue')['watchPostEffect']>
