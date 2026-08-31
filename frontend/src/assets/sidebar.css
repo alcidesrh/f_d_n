@@ -16,7 +16,11 @@
 }
 .sidebar-control {
   /*border-bottom: var(--border-200);*/
+<<<<<<< Updated upstream
   background-color: var(--p-surface-200);
+=======
+  background-color: var(--p-surface-100);
+>>>>>>> Stashed changes
   position: relative;
   z-index: 999;
   width: 100%;

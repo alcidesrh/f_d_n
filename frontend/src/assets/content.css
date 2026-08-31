@@ -17,7 +17,11 @@
   flex: 1;
   min-width: 0;
   overflow-y: auto;
+<<<<<<< Updated upstream
   background: var(--p-surface-50);
+=======
+  background: var(--bg);
+>>>>>>> Stashed changes
 }
 .main-inner {
   padding: 2rem;

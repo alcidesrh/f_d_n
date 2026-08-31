@@ -1,17 +1,18 @@
 import { describe, it, expect } from 'vitest'
 import type { FormKitSchemaNode } from '@formkit/core'
-import {
-  buildFieldOptions,
-  capitalizeLabel,
-  humanizeLabel,
-  hydrateInitialValues,
-  inferInputType,
-  serializeEntityForm,
-  serializeSubmitValue,
-  validationFor,
-  type FormFieldSource,
-} from '@/utils/formkit/schemaSerializer'
+import { FormSchemaSerializer, type FormFieldSource } from '@/utils/formkit/schemaSerializer'
 import type { AgnosticOption } from '@/lib/apollo/types'
+
+const {
+  humanizeLabel,
+  capitalizeLabel,
+  inferInputType,
+  buildFieldOptions,
+  validationFor,
+  hydrateInitialValues,
+  serializeSubmitValue,
+  serializeEntityForm,
+} = FormSchemaSerializer
 
 function field(
   overrides: Partial<FormFieldSource> & Pick<FormFieldSource, 'name' | 'namedType'>,

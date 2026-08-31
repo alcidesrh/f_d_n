@@ -14,12 +14,16 @@ import type { MaybeRefOrGetter } from "vue";
 import type { FormKitSchemaNode } from "@formkit/core";
 import { useSchemaRepositoryStore } from "@/stores/schemaRepository";
 import { useEntityRegistry } from "./useEntityRegistry";
+<<<<<<< Updated upstream
 import {
   hydrateInitialValues,
   serializeEntityForm,
   serializeSubmitValue,
   type FormFieldSource,
 } from "@/utils/formkit/schemaSerializer";
+=======
+import { FormSchemaSerializer, type FormFieldSource } from "@/utils/formkit/schemaSerializer";
+>>>>>>> Stashed changes
 import type { AgnosticOption } from "@/lib/apollo/types";
 import type { EntityStore } from "@/stores/entities/types";
 
@@ -112,11 +116,15 @@ export function useEntityForm(
 
       fields = selected;
       resetKey += 1;
+<<<<<<< Updated upstream
       schema.value = serializeEntityForm(ent.name, fields, {
+=======
+      schema.value = FormSchemaSerializer.serializeEntityForm(ent.name, fields, {
+>>>>>>> Stashed changes
         mode: mode.value,
         labels: labelMap,
         relationOptions,
-        values: hydrateInitialValues(fields, initialData.value, mode.value),
+        values: FormSchemaSerializer.hydrateInitialValues(fields, initialData.value, mode.value),
         resetKey,
       });
     } catch (cause) {
@@ -133,7 +141,11 @@ export function useEntityForm(
     submitting.value = true;
     error.value = "";
     try {
+<<<<<<< Updated upstream
       const payload = serializeSubmitValue(fields, data);
+=======
+      const payload = FormSchemaSerializer.serializeSubmitValue(fields, data);
+>>>>>>> Stashed changes
       return mode.value === "update" ? await target.update(payload) : await target.create(payload);
     } catch (cause) {
       error.value = cause instanceof Error ? cause.message : String(cause);
