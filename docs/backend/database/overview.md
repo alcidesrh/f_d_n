@@ -32,10 +32,10 @@ erDiagram
     RecorridoMatrioska }o--|| Recorrido : "padre"
     RecorridoMatrioska }o--|| Recorrido : "hijo"
 
-    Servicio }o--|| Recorrido : "ejecuta"
-    Servicio }o--o| Bus : "usa"
-    Servicio }o--o| Piloto : "conductor"
-    Servicio ||--o{ Boleto : "tiene"
+    Salida }o--|| Recorrido : "ejecuta"
+    Salida }o--o| Bus : "usa"
+    Salida }o--o| Piloto : "conductor"
+    Salida ||--o{ Boleto : "tiene"
 
     Venta ||--o{ Boleto : "contiene"
     Venta }o--|| Usuario : "vendedor"
@@ -87,7 +87,7 @@ Agrupadas por subdominio:
 
 | Subdominio | Tablas |
 |-----------|--------|
-| Transporte | `boleto`, `trayecto`, `recorrido`, `recorrido_matrioska`, `servicio`, `status` |
+| Transporte | `boleto`, `trayecto`, `recorrido`, `recorrido_matrioska`, `salida`, `status` |
 | Flota | `bus`, `bus_marca`, `asiento`, `piloto`, `enclave` |
 | Venta | `venta`, `factura`, `cliente` |
 | Personal | `usuario`, `piloto` |

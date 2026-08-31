@@ -10,7 +10,7 @@ Listado completo de entidades del dominio agrupadas por subdominio.
 | **Trayecto** | `src/Entity/Trayecto.php` | `trayecto` | Segmento de ruta entre dos enclaves (origen-destino) |
 | **Recorrido** | `src/Entity/Recorrido.php` | `recorrido` | Combinación de trayecto + empresa + precios |
 | **RecorridoMatrioska** | `src/Entity/RecorridoMatrioska.php` | `recorrido_matrioska` | Relación recursiva entre recorridos padres e hijos |
-| **Servicio** | `src/Entity/Servicio.php` | `servicio` | Viaje programado: fecha, recorrido, bus, piloto |
+| **Salida** | `src/Entity/Salida.php` | `salida` | Viaje programado: fecha, recorrido, bus, piloto |
 | **Status** | `src/Entity/Status.php` | `status` | Catálogo de estados (activo/inactivo) |
 
 ## Flota

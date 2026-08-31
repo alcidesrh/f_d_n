@@ -13,7 +13,6 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: MenuRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_NOMBRE', fields: ['nombre'])]
-#[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_RUTA', fields: ['ruta'])]
 #[ApiResourceNoPagination]
 class Menu extends Base {
 
@@ -23,8 +22,8 @@ class Menu extends Base {
     #[ORM\Column(length: 255, nullable: true)]
     public ?string $label = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $ruta = null;
+    #[ORM\ManyToOne(targetEntity: VueRoute::class)]
+    private ?VueRoute $referenciaVueRoute = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $icon = null;
@@ -59,11 +58,19 @@ class Menu extends Base {
     #[ORM\ManyToMany(targetEntity: Permiso::class)]
     private Collection $allowPermiso;
 
+    /**
+     * @var Collection<int, MenuLayoutAssignment>
+     */
+    #[ORM\OneToMany(targetEntity: MenuLayoutAssignment::class, mappedBy: 'menu', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[ORM\OrderBy(['position' => 'ASC'])]
+    private Collection $layoutAssignments;
+
     public function __construct() {
         $this->parents = new ArrayCollection();
         $this->children = new ArrayCollection();
         $this->allowRoles = new ArrayCollection();
         $this->allowPermiso = new ArrayCollection();
+        $this->layoutAssignments = new ArrayCollection();
     }
 
     public function getId(): ?int {
@@ -90,12 +97,12 @@ class Menu extends Base {
         return $this;
     }
 
-    public function getRuta(): ?string {
-        return $this->ruta;
+    public function getReferenciaVueRoute(): ?VueRoute {
+        return $this->referenciaVueRoute;
     }
 
-    public function setRuta(string $ruta): static {
-        $this->ruta = $ruta;
+    public function setReferenciaVueRoute(?VueRoute $referenciaVueRoute): static {
+        $this->referenciaVueRoute = $referenciaVueRoute;
 
         return $this;
     }
@@ -213,6 +220,35 @@ class Menu extends Base {
     public function removeAllowPermiso(Permiso $allowPermiso): static
     {
         $this->allowPermiso->removeElement($allowPermiso);
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, MenuLayoutAssignment>
+     */
+    public function getLayoutAssignments(): Collection
+    {
+        return $this->layoutAssignments;
+    }
+
+    public function addLayoutAssignment(MenuLayoutAssignment $layoutAssignment): static
+    {
+        if (!$this->layoutAssignments->contains($layoutAssignment)) {
+            $this->layoutAssignments->add($layoutAssignment);
+            $layoutAssignment->setMenu($this);
+        }
+
+        return $this;
+    }
+
+    public function removeLayoutAssignment(MenuLayoutAssignment $layoutAssignment): static
+    {
+        if ($this->layoutAssignments->removeElement($layoutAssignment)) {
+            if ($layoutAssignment->getMenu() === $this) {
+                $layoutAssignment->setMenu(null);
+            }
+        }
 
         return $this;
     }

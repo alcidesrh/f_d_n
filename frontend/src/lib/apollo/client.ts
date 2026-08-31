@@ -8,33 +8,46 @@
  * devuelven ya "aplanados" (sin el hull de las PageConnection/CursorConnection).
  */
 
-import { ApolloClient, HttpLink, InMemoryCache, gql, type DocumentNode } from '@apollo/client'
-import { getIntrospectionQuery, parse } from 'graphql'
+import {
+  ApolloClient,
+  ApolloLink,
+  HttpLink,
+  InMemoryCache,
+  gql,
+  type DocumentNode,
+} from "@apollo/client";
+import { createAuthLink } from "./links/authLink";
+import { createErrorLink } from "./links/errorLink";
+import { createLoadingLink } from "./links/loadingLink";
+import { createMutationLink } from "./links/mutationLink";
+import { createQueryLink } from "./links/queryLink";
+import removeTypenameLink from "./links/removeTypenameLink";
+import { getIntrospectionQuery, parse } from "graphql";
 import {
   buildCollectionQuery,
   buildItemQuery,
   buildMutation,
   type CollectionQuerySpec,
-} from './documents'
-import { parseIntrospection, type IntrospectionSchemaLike } from './parseIntrospection'
+} from "./documents";
+import { parseIntrospection, type IntrospectionSchemaLike } from "./parseIntrospection";
 import type {
   AgnosticOption,
   CollectionPagination,
   CollectionResult,
   EntitySchema,
   MutationSchema,
-} from './types'
+} from "./types";
 
-const GRAPHQL_URI = import.meta.env.VITE_GRAPHQL_ENDPOINT ?? 'http://localhost/graphql'
+const GRAPHQL_URI = import.meta.env.VITE_GRAPHQL_ENDPOINT ?? "http://localhost/graphql";
 
 /** Los builders de `documents.ts` emiten SDL en string; Apollo requiere DocumentNode. */
 function toDocument(source: string): DocumentNode {
-  return parse(source)
+  return parse(source);
 }
 
 export interface ApiPlatformClientOptions {
-  uri?: string
-  fetch?: typeof fetch
+  uri?: string;
+  fetch?: typeof fetch;
 }
 
 function emptyPagination(totalCount = 0): CollectionPagination {
@@ -44,16 +57,16 @@ function emptyPagination(totalCount = 0): CollectionPagination {
     lastPage: 1,
     totalCount,
     hasNextPage: false,
-  }
+  };
 }
 
 function normalizeCollection<T>(entity: EntitySchema, raw: unknown): CollectionResult<T> {
-  if (entity.collectionKind === 'page-connection') {
+  if (entity.collectionKind === "page-connection") {
     const record = (raw ?? {}) as {
-      collection?: T[]
-      paginationInfo?: Partial<CollectionPagination>
-    }
-    const pagination = record.paginationInfo ?? {}
+      collection?: T[];
+      paginationInfo?: Partial<CollectionPagination>;
+    };
+    const pagination = record.paginationInfo ?? {};
     return {
       items: record.collection ?? [],
       pagination: {
@@ -63,72 +76,82 @@ function normalizeCollection<T>(entity: EntitySchema, raw: unknown): CollectionR
         totalCount: pagination.totalCount ?? 0,
         hasNextPage: pagination.hasNextPage ?? false,
       },
-    }
+    };
   }
-  if (entity.collectionKind === 'cursor-connection') {
-    const record = (raw ?? {}) as { edges?: Array<{ node?: T }>; totalCount?: number }
+  if (entity.collectionKind === "cursor-connection") {
+    const record = (raw ?? {}) as { edges?: Array<{ node?: T }>; totalCount?: number };
     const nodes = (record.edges ?? [])
       .map((edge) => edge.node)
-      .filter((node): node is T => node != null)
-    const totalCount = record.totalCount ?? nodes.length
+      .filter((node): node is T => node != null);
+    const totalCount = record.totalCount ?? nodes.length;
     return {
       items: nodes,
       pagination: { ...emptyPagination(totalCount), itemsPerPage: nodes.length },
-    }
+    };
   }
-  if (entity.collectionKind === 'single') {
+  if (entity.collectionKind === "single") {
     return raw
       ? { items: [raw as T], pagination: emptyPagination(1) }
-      : { items: [], pagination: emptyPagination(0) }
+      : { items: [], pagination: emptyPagination(0) };
   }
-  const list = Array.isArray(raw) ? (raw as T[]) : []
-  return { items: list, pagination: emptyPagination(list.length) }
+  const list = Array.isArray(raw) ? (raw as T[]) : [];
+  return { items: list, pagination: emptyPagination(list.length) };
 }
 
 export class ApiPlatformClient {
-  readonly client: ApolloClient
-  readonly uri: string
+  readonly client: ApolloClient;
+  readonly uri: string;
 
   constructor(options: ApiPlatformClientOptions = {}) {
-    this.uri = options.uri ?? GRAPHQL_URI
+    this.uri = options.uri ?? GRAPHQL_URI;
     this.client = new ApolloClient({
-      link: new HttpLink({ uri: this.uri, fetch: options.fetch }),
+      link: ApolloLink.from([
+        removeTypenameLink,
+        // createQueryLink(),
+        // debugLink(),
+        // createMutationLink(),
+        // createAuthLink(),
+        createErrorLink(),
+        createLoadingLink(pinia),
+        // removeTypenameLink,
+        new HttpLink({ uri: this.uri, fetch: options.fetch }),
+      ]),
       cache: new InMemoryCache(),
       devtools: {
         enabled: import.meta.env.DEV,
-        name: 'api-platform',
+        name: "api-platform",
       },
-    })
+    });
   }
 
   /** Ejecuta la introspección y la traduce a metadatos planos por entidad. */
   async introspect(): Promise<Record<string, EntitySchema>> {
-    const query = gql(getIntrospectionQuery({ descriptions: true }))
-    const result = await this.client.query<{ __schema: IntrospectionSchemaLike }>({ query })
-    return parseIntrospection(result.data!.__schema)
+    const query = gql(getIntrospectionQuery({ descriptions: true }));
+    const result = await this.client.query<{ __schema: IntrospectionSchemaLike }>({ query });
+    return parseIntrospection(result.data!.__schema);
   }
 
   /** Ejecuta un documento arbitrario (passthrough a Apollo). */
   async query<T>(document: DocumentNode, variables?: Record<string, unknown>): Promise<T> {
-    const result = await this.client.query<T>({ query: document, variables })
-    return result.data as T
+    const result = await this.client.query<T>({ query: document, variables });
+    return result.data as T;
   }
 
   /** Ejecuta una mutación arbitraria (passthrough a Apollo). */
   async mutate<T>(document: DocumentNode, variables?: Record<string, unknown>): Promise<T> {
-    const result = await this.client.mutate<T>({ mutation: document, variables })
-    return result.data as T
+    const result = await this.client.mutate<T>({ mutation: document, variables });
+    return result.data as T;
   }
 
   /** Item por id. */
   async item<T>(entity: EntitySchema, id: string | number): Promise<T> {
-    if (!entity.queryItem) throw new Error(`[apollo] "${entity.name}" no expone query item`)
-    const { query } = buildItemQuery(entity)
+    if (!entity.queryItem) throw new Error(`[apollo] "${entity.name}" no expone query item`);
+    const { query } = buildItemQuery(entity);
     const result = await this.client.query<Record<string, T>>({
       query: toDocument(query),
       variables: { id },
-    })
-    return result.data![entity.queryItem] as T
+    });
+    return result.data![entity.queryItem] as T;
   }
 
   /** Colección con paginación/filtros/orden normalizada a `{ items, pagination }`. */
@@ -137,13 +160,14 @@ export class ApiPlatformClient {
     spec: CollectionQuerySpec = {},
   ): Promise<CollectionResult<T>> {
     if (!entity.queryCollection)
-      throw new Error(`[apollo] "${entity.name}" no expone query collection`)
-    const { query, variables } = buildCollectionQuery(entity, spec)
+      throw new Error(`[apollo] "${entity.name}" no expone query collection`);
+    const { query, variables } = buildCollectionQuery(entity, spec);
     const result = await this.client.query<Record<string, unknown>>({
       query: toDocument(query),
       variables,
-    })
-    return normalizeCollection<T>(entity, result.data![entity.queryCollection])
+    });
+
+    return normalizeCollection<T>(entity, result.data![entity.queryCollection]);
   }
 
   /**
@@ -153,25 +177,25 @@ export class ApiPlatformClient {
   async agnosticList(resource: string): Promise<AgnosticOption[]> {
     const query = toDocument(
       `query FullList($resource: String!) {\n  collectionAgnostic(resource: $resource) {\n    data\n  }\n}`,
-    )
+    );
     const result = await this.client.query<{ collectionAgnostic: { data: unknown } }>({
       query,
       variables: { resource },
-    })
-    const data = result.data?.collectionAgnostic?.data
-    return Array.isArray(data) ? (data as AgnosticOption[]) : []
+    });
+    const data = result.data?.collectionAgnostic?.data;
+    return Array.isArray(data) ? (data as AgnosticOption[]) : [];
   }
 
   async create<T>(entity: EntitySchema, input: Record<string, unknown>): Promise<T> {
-    return this.runMutation<T>(entity, entity.create, input)
+    return this.runMutation<T>(entity, entity.create, input);
   }
 
   async update<T>(entity: EntitySchema, input: Record<string, unknown>): Promise<T> {
-    return this.runMutation<T>(entity, entity.update, input)
+    return this.runMutation<T>(entity, entity.update, input);
   }
 
   async delete<T>(entity: EntitySchema, id: string | number): Promise<T> {
-    return this.runMutation<T>(entity, entity.delete, { id })
+    return this.runMutation<T>(entity, entity.delete, { id });
   }
 
   private async runMutation<T>(
@@ -179,19 +203,19 @@ export class ApiPlatformClient {
     mutation: MutationSchema | null,
     input: Record<string, unknown>,
   ): Promise<T> {
-    if (!mutation) throw new Error(`[apollo] "${entity.name}" no expone mutación`)
-    const { query } = buildMutation(entity, mutation)
+    if (!mutation) throw new Error(`[apollo] "${entity.name}" no expone mutación`);
+    const { query } = buildMutation(entity, mutation);
     const result = await this.client.mutate<Record<string, Record<string, T>>>({
       mutation: toDocument(query),
       variables: { input },
-    })
-    return result.data?.[mutation.field]?.[mutation.returnsField] as T
+    });
+    return result.data?.[mutation.field]?.[mutation.returnsField] as T;
   }
 }
 
 export function createApiPlatformClient(options: ApiPlatformClientOptions = {}): ApiPlatformClient {
-  return new ApiPlatformClient(options)
+  return new ApiPlatformClient(options);
 }
 
 /** Cliente GraphQL singleton de acceso global. */
-export const apollo = createApiPlatformClient()
+export const apollo = createApiPlatformClient();

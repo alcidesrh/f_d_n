@@ -7,7 +7,7 @@
     <div class="card my-[2rem] max-w-[20rem]">
       <label class="block text-sm font-medium mb-1.5">Entidad</label>
       <Select
-      size="small"
+        size="small"
         v-model="entityName"
         :options="entityOptions"
         option-label="label"
@@ -28,7 +28,6 @@
       </div>
     </div>
     <div class="my-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
-
       <div class="card">
         <h3 class="font-semibold mb-2">Schema serializado (JSON)</h3>
         <div class="relative">
@@ -40,8 +39,7 @@
             @click="handleCopy"
           />
           <pre id="schema" class="p-4 rounded-lg bg-surface-100 text-sm overflow-auto max-h-96">
-          {{ schemaJson }}</pre
-          >
+          {{ schemaJson }}</pre>
         </div>
       </div>
       <div class="card">
@@ -75,13 +73,13 @@ import { useRoute } from "vue-router";
 import { useSchemaRepositoryStore } from "@/stores/schemaRepository";
 import FkEntityForm from "@/components/formkit/FkEntityForm.vue";
 import type { EntityFormMode } from "@/composables/useEntityForm";
-import { useToast } from 'primevue/usetoast';
+import { useToast } from "primevue/usetoast";
 
 const route = useRoute();
 const toast = useToast();
 
 const schemaRepo = useSchemaRepositoryStore();
-const isCopied = ref(false)
+const isCopied = ref(false);
 const entityName = ref<string | undefined>(
   typeof route.params.entity === "string" ? route.params.entity : undefined,
 );
@@ -109,17 +107,22 @@ const schemaJson = computed(() => {
 const handleCopy = async () => {
   try {
     // Native browser Clipboard API
-    await navigator.clipboard.writeText(document.querySelector('#schema')?.textContent)
-    isCopied.value = true
-    toast.add({ severity: 'info', summary: 'Info', detail: 'Copiado!', life: 3000 });
+    await navigator.clipboard.writeText(document.querySelector("#schema")?.textContent);
+    isCopied.value = true;
+    toast.add({ severity: "info", summary: "Info", detail: "Copiado!", life: 3000 });
     // Reset status indicator after 2 seconds
     setTimeout(() => {
-      isCopied.value = false
-    }, 2000)
+      isCopied.value = false;
+    }, 2000);
   } catch (error) {
-    console.error('Failed to copy text: ', error)
+    console.error("Failed to copy text: ", error);
   }
-}
+};
+
+watch(
+  () => entityName.value,
+  () => (formData.value = {}),
+);
 function pretty(value: unknown): string {
   return JSON.stringify(value ?? {}, null, 2);
 }

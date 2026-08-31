@@ -187,16 +187,16 @@ type Query {
   ): RecorridoMatrioskaCursorConnection
   role(id: ID!): Role
   roles: [Role]
-  servicio(id: ID!): Servicio
-  servicios(
+  salida(id: ID!): Salida
+  salidas(
     "Returns the current page."
     currentPage: Int
 
     "Returns the number of items per page."
     itemsPerPage: Int
 
-    order: [ServicioFilter_order]
-  ): ServicioPageConnection
+    order: [SalidaFilter_order]
+  ): SalidaPageConnection
   status(id: ID!): Status
   statuses: [Status]
   trayecto(id: ID!): Trayecto
@@ -456,7 +456,7 @@ type Boleto implements Node {
   legacyId: String
   venta: Venta!
   asiento: Asiento!
-  servicio: Servicio!
+  salida: Salida!
   _id: Int!
   label: String
   createdAt: Date
@@ -768,7 +768,7 @@ type Cliente implements Node {
   status: Status
 }
 
-type Servicio implements Node {
+type Salida implements Node {
   id: ID!
   fecha: Date!
   legacyId: String
@@ -1229,18 +1229,18 @@ type PilotoPaginationInfo {
   hasNextPage: Boolean!
 }
 
-input ServicioFilter_order {
+input SalidaFilter_order {
   id: String
 }
 
-"Page connection for Servicio."
-type ServicioPageConnection {
-  collection: [Servicio]
-  paginationInfo: ServicioPaginationInfo!
+"Page connection for Salida."
+type SalidaPageConnection {
+  collection: [Salida]
+  paginationInfo: SalidaPaginationInfo!
 }
 
 "Information about the pagination."
-type ServicioPaginationInfo {
+type SalidaPaginationInfo {
   itemsPerPage: Int!
   lastPage: Int!
   totalCount: Int!
@@ -1519,14 +1519,14 @@ type Mutation {
   "Deletes a Role."
   deleteRole(input: deleteRoleInput!): deleteRolePayload
 
-  "Creates a Servicio."
-  createServicio(input: createServicioInput!): createServicioPayload
+  "Creates a Salida."
+  createSalida(input: createSalidaInput!): createSalidaPayload
 
-  "Updates a Servicio."
-  updateServicio(input: updateServicioInput!): updateServicioPayload
+  "Updates a Salida."
+  updateSalida(input: updateSalidaInput!): updateSalidaPayload
 
-  "Deletes a Servicio."
-  deleteServicio(input: deleteServicioInput!): deleteServicioPayload
+  "Deletes a Salida."
+  deleteSalida(input: deleteSalidaInput!): deleteSalidaPayload
 
   "Creates a Status."
   createStatus(input: createStatusInput!): createStatusPayload
@@ -1824,7 +1824,7 @@ input createBoletoInput {
   legacyId: String
   venta: String!
   asiento: String!
-  servicio: String!
+  salida: String!
   label: String
   createdAt: Date
 
@@ -1848,7 +1848,7 @@ input updateBoletoInput {
   legacyId: String
   venta: String
   asiento: String
-  servicio: String
+  salida: String
   label: String
   createdAt: Date
 
@@ -3034,8 +3034,8 @@ type deleteRolePayload {
   clientMutationId: String
 }
 
-"Creates a Servicio."
-input createServicioInput {
+"Creates a Salida."
+input createSalidaInput {
   fecha: Date!
   legacyId: String
   empresa: String
@@ -3052,14 +3052,14 @@ input createServicioInput {
   clientMutationId: String
 }
 
-"Creates a Servicio."
-type createServicioPayload {
-  servicio: Servicio
+"Creates a Salida."
+type createSalidaPayload {
+  salida: Salida
   clientMutationId: String
 }
 
-"Updates a Servicio."
-input updateServicioInput {
+"Updates a Salida."
+input updateSalidaInput {
   id: ID!
   fecha: Date
   legacyId: String
@@ -3077,21 +3077,21 @@ input updateServicioInput {
   clientMutationId: String
 }
 
-"Updates a Servicio."
-type updateServicioPayload {
-  servicio: Servicio
+"Updates a Salida."
+type updateSalidaPayload {
+  salida: Salida
   clientMutationId: String
 }
 
-"Deletes a Servicio."
-input deleteServicioInput {
+"Deletes a Salida."
+input deleteSalidaInput {
   id: ID!
   clientMutationId: String
 }
 
-"Deletes a Servicio."
-type deleteServicioPayload {
-  servicio: Servicio
+"Deletes a Salida."
+type deleteSalidaPayload {
+  salida: Salida
   clientMutationId: String
 }
 

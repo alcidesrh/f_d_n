@@ -12,9 +12,9 @@ ENTITY_DIR = ROOT / "backend" / "src" / "Entity"
 OUTPUT_BASE = ROOT / "docs" / "backend" / "subdomains"
 
 SUBDOMAINS = {
-    "transporte": ["Boleto", "Trayecto", "Recorrido", "RecorridoMatrioska", "Servicio", "Venta", "Factura", "Cliente", "Status"],
+    "transporte": ["Boleto", "Trayecto", "Recorrido", "RecorridoMatrioska", "Salida", "Venta", "Factura", "Cliente", "Status"],
     "flota": ["Bus", "Marca", "Asiento", "Piloto", "Enclave", "BusMarca"],
-    "venta": ["Venta", "Factura", "Cliente", "Boleto", "Servicio"],
+    "venta": ["Venta", "Factura", "Cliente", "Boleto", "Salida"],
     "personal": ["Usuario", "Piloto"],
     "configuracion": ["EntityConfiguration", "CollectionFieldConfig", "FormFieldConfig"],
     "infraestructura": ["Icon", "IconCategory", "Empresa", "Localidad", "Estacion", "Parada", "Nacion"],

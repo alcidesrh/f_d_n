@@ -9,10 +9,10 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
+#[ORM\UniqueConstraint(name: "uq_trayecto_origen_destino", columns: ["origen_id", "destino_id"])]
 #[ApiResourcePaginationPage]
 class Trayecto extends Base
 {
-
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
     private ?Enclave $origen = null;
@@ -21,7 +21,7 @@ class Trayecto extends Base
     #[ORM\JoinColumn(nullable: false)]
     private ?Enclave $destino = null;
 
-    #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: true)]
+    #[ORM\Column(type: "decimal", precision: 10, scale: 2, nullable: true)]
     private ?string $distanciaKm = null;
 
     #[ORM\Column(nullable: true)]
@@ -30,28 +30,21 @@ class Trayecto extends Base
     #[ORM\Column]
     private ?bool $activo = true;
 
-    #[ORM\Column(type: 'string', length: 50, nullable: true)]
+    #[ORM\Column(type: "string", length: 50, nullable: true)]
     private ?string $legacyId = null;
 
-    #[ORM\ManyToMany(targetEntity: self::class, inversedBy: 'trayectosPadres')]
-    #[ORM\JoinTable(name: 'trayecto_trayecto')]
-    private Collection $trayectosHijos;
-
-    #[ORM\ManyToMany(targetEntity: self::class, mappedBy: 'trayectosHijos')]
-    private Collection $trayectosPadres;
-
     /**
-     * @var Collection<int, Recorrido>
+     * @var Collection<int, Subtrayecto>
      */
-    #[ORM\OneToMany(targetEntity: Recorrido::class, mappedBy: 'trayecto')]
-    private Collection $recorridos;
+    #[ORM\OneToMany(targetEntity: Subtrayecto::class, mappedBy: 'belowTo', orphanRemoval: true)]
+    private Collection $subtrayectos;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $nombre = null;
 
     public function __construct()
     {
-        $this->trayectosHijos = new ArrayCollection();
-        $this->trayectosPadres = new ArrayCollection();
-        $this->recorridos = new ArrayCollection();
+        $this->subtrayectos = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -100,8 +93,9 @@ class Trayecto extends Base
         return $this->duracionEstimadaMinutos;
     }
 
-    public function setDuracionEstimadaMinutos(?int $duracionEstimadaMinutos): static
-    {
+    public function setDuracionEstimadaMinutos(
+        ?int $duracionEstimadaMinutos,
+    ): static {
         $this->duracionEstimadaMinutos = $duracionEstimadaMinutos;
 
         return $this;
@@ -118,16 +112,6 @@ class Trayecto extends Base
 
         return $this;
     }
-    public function getTrayectosHijos(): Collection
-    {
-        return $this->trayectosHijos;
-    }
-
-    public function getTrayectosPadres(): Collection
-    {
-        return $this->trayectosPadres;
-    }
-
 
     public function getLegacyId(): ?string
     {
@@ -142,31 +126,43 @@ class Trayecto extends Base
     }
 
     /**
-     * @return Collection<int, Recorrido>
+     * @return Collection<int, Subtrayecto>
      */
-    public function getRecorridos(): Collection
+    public function getSubtrayectos(): Collection
     {
-        return $this->recorridos;
+        return $this->subtrayectos;
     }
 
-    public function addRecorrido(Recorrido $recorrido): static
+    public function addSubtrayecto(Subtrayecto $subtrayecto): static
     {
-        if (!$this->recorridos->contains($recorrido)) {
-            $this->recorridos->add($recorrido);
-            $recorrido->setTrayecto($this);
+        if (!$this->subtrayectos->contains($subtrayecto)) {
+            $this->subtrayectos->add($subtrayecto);
+            $subtrayecto->setBelowTo($this);
         }
 
         return $this;
     }
 
-    public function removeRecorrido(Recorrido $recorrido): static
+    public function removeSubtrayecto(Subtrayecto $subtrayecto): static
     {
-        if ($this->recorridos->removeElement($recorrido)) {
+        if ($this->subtrayectos->removeElement($subtrayecto)) {
             // set the owning side to null (unless already changed)
-            if ($recorrido->getTrayecto() === $this) {
-                $recorrido->setTrayecto(null);
+            if ($subtrayecto->getBelowTo() === $this) {
+                $subtrayecto->setBelowTo(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getNombre(): ?string
+    {
+        return $this->nombre;
+    }
+
+    public function setNombre(?string $nombre): static
+    {
+        $this->nombre = $nombre;
 
         return $this;
     }

@@ -1,6 +1,5 @@
 import App from "./App.vue";
 import router from "./router";
-
 // CSS-------------------
 import "./assets/main.css";
 // import "virtual:uno.css";
@@ -8,6 +7,7 @@ import { createApp } from "vue";
 
 //Primevue-------------------
 import PrimeVue from "primevue/config";
+import { es } from "primelocale/js/es.js";
 import DialogService from "primevue/dialogservice";
 import ConfirmationService from "primevue/confirmationservice";
 import ToastService from "primevue/toastservice";
@@ -30,6 +30,7 @@ async function bootstrap() {
   app.use(router);
   app.use(formkitPlugin, formkitDefaultConfig(formkitConfig()));
   app.use(PrimeVue, {
+    locale: es,
     theme: {
       options: {
         darkModeSelector: ".darks",

@@ -1,10 +1,8 @@
-<!-- src/components/Icon.vue -->
 <template>
-  <!-- Renderiza dinámicamente el ícono de Iconify aplicando tus atributos -->
   <IconifyInstance
     :icon="iconName"
     :stroke-width="props.sw"
-    :style="{ width: `${size}px`, height: `${size}px` }"
+    :style="{ width: `${size}`, height: `${size}` }"
     :class="clases"
     v-bind="$attrs"
   />
@@ -21,11 +19,11 @@ const props = defineProps({
   },
   sw: {
     type: [String, Number],
-    default: 1.5, // Permite usar el de defecto del ícono si no se pasa ninguno
+    default: 1.8, // Permite usar el de defecto del ícono si no se pasa ninguno
   },
   size: {
     type: String,
-    default: '14',
+    default: "16px",
   },
   color: {
     type: String,
@@ -40,17 +38,16 @@ const props = defineProps({
 // Normaliza el nombre: transforma "tabler_database-cog" o "tabler-database-cog"
 // al formato estándar de Iconify "tabler:database-cog"
 const iconName = computed(() => {
-  const temp = props.name.replace(/^([a-zA-Oq-z0-9]+)[_]/, "$1:");
-  if (props.name == temp) {
-    return `lucide:${temp}`;
+  if (props.name.includes(":")) {
+    return props.name;
   }
-  return temp;
+  return `tabler:${props.name}`;
 });
 const clases = computed(() => {
   if (!props.color && !props.class) {
     return ["cursor-pointer text-surface-600"];
   }
-  return ['cursor-pointer ' + props.class + " " + props.color];
+  return ["cursor-pointer " + props.class + " " + props.color];
 });
 </script>
 

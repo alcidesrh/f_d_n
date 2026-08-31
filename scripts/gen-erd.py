@@ -15,7 +15,7 @@ OUTPUT_FILE = ROOT / "docs" / "backend" / "database" / "entity-map.mmd"
 
 # Subdominios para agrupar
 SUBDOMAINS = {
-    "Transporte": ["Boleto", "Trayecto", "Recorrido", "RecorridoMatrioska", "Servicio", "Venta", "Factura", "Cliente", "Status"],
+    "Transporte": ["Boleto", "Trayecto", "Recorrido", "RecorridoMatrioska", "Salida", "Venta", "Factura", "Cliente", "Status"],
     "Flota": ["Bus", "Marca", "Asiento", "Piloto", "Enclave", "BusMarca"],
     "Personal": ["Usuario", "Piloto"],  # Piloto aparece en ambos
     "Organizacion": ["Empresa", "Localidad", "Estacion", "Parada", "Nacion"],

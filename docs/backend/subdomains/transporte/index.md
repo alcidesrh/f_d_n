@@ -9,9 +9,9 @@ Núcleo del dominio de FDN Transportes. Gestiona la operación de transporte de 
 Archivo: `src/Entity/Boleto.php`
 
 - Representa un boleto de pasaje vendido
-- Relacionado a: `Servicio` (viaje), `Cliente` (comprador), `Asiento` (asiento asignado), `Venta` (transacción), `Recorrido` (ruta)
+- Relacionado a: `Salida` (viaje), `Cliente` (comprador), `Asiento` (asiento asignado), `Venta` (transacción), `Recorrido` (ruta)
 - Campos principales: `legacyId`, `createdAt`
-- El precio se maneja via `Servicio.Recorrido` (precios embeddables)
+- El precio se maneja via `Salida.Recorrido` (precios embeddables)
 
 ### Trayecto
 
@@ -40,9 +40,9 @@ Archivo: `src/Entity/RecorridoMatrioska.php`
 - Permite composición de recorridos complejos
 - Incluye `posicion` para ordenamiento
 
-### Servicio
+### Salida
 
-Archivo: `src/Entity/Servicio.php`
+Archivo: `src/Entity/Salida.php`
 
 - Viaje programado con fecha, recorrido, bus y piloto
 - Una instancia concreta de un recorrido en una fecha específica
@@ -64,16 +64,16 @@ erDiagram
     Trayecto ||--o{ Recorrido : "tiene"
     Recorrido ||--o{ RecorridoMatrioska : "compuesto por"
     RecorridoMatrioska }o--|| Recorrido : "sub-recorrido"
-    Recorrido ||--o{ Servicio : "programa"
-    Servicio ||--o{ Boleto : "contiene"
-    Status ||--o{ Servicio : "estado"
+    Recorrido ||--o{ Salida : "programa"
+    Salida ||--o{ Boleto : "contiene"
+    Status ||--o{ Salida : "estado"
     Status ||--o{ Boleto : "estado"
 ```
 
 ## Reglas de negocio
 
-1. Un boleto siempre pertenece a un servicio y una venta
+1. Un boleto siempre pertenece a una salida y una venta
 2. Un trayecto debe tener origen y destino distintos
 3. Los precios de un recorrido se expresan en dos clases (A y B)
-4. Un servicio no puede tener más boletos que asientos disponibles en el bus asignado
+4. Una salida no puede tener más boletos que asientos disponibles en el bus asignado
 5. Los sub-trayectos se generan automáticamente durante la migración desde rutas legacy

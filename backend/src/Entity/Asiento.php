@@ -2,27 +2,20 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
-use ApiPlatform\Metadata\ApiFilter;
-use ApiPlatform\Metadata\ApiResource;
 use App\Attribute\ApiResourceNoPagination;
-use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
-use App\Enum\TipoAsiento;
+use App\Entity\Enum\AsientoClase;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
 #[ApiResourceNoPagination]
 class Asiento extends Base
 {
-    public const ASIENTO_CLASE_A = 'A';
-    public const ASIENTO_CLASE_B = 'B';
-
     #[ORM\Column]
     private ?int $numero = null;
 
-    #[ORM\Column(type: 'string', length: 1, enumType: TipoAsiento::class)]
-    private ?TipoAsiento $clase = null;
+    #[ORM\Column(type: "string", length: 1, enumType: AsientoClase::class)]
+    private AsientoClase $clase;
 
     #[ORM\Column(nullable: true)]
     private ?int $fila = null;
@@ -30,7 +23,7 @@ class Asiento extends Base
     #[ORM\Column(nullable: true)]
     private ?int $columna = null;
 
-    #[ORM\ManyToOne(inversedBy: 'asientos')]
+    #[ORM\ManyToOne(inversedBy: "asientos")]
     #[ORM\JoinColumn(nullable: false)]
     private ?Bus $bus = null;
 
@@ -42,18 +35,6 @@ class Asiento extends Base
     public function setNumero(int $numero): static
     {
         $this->numero = $numero;
-
-        return $this;
-    }
-
-    public function getClase(): ?TipoAsiento
-    {
-        return $this->clase;
-    }
-
-    public function setClase(TipoAsiento $clase): static
-    {
-        $this->clase = $clase;
 
         return $this;
     }
@@ -90,6 +71,17 @@ class Asiento extends Base
     public function setBus(?Bus $bus): static
     {
         $this->bus = $bus;
+
+        return $this;
+    }
+    public function getClase(): AsientoClase
+    {
+        return $this->clase;
+    }
+
+    public function setClase(AsientoClase $clase): static
+    {
+        $this->clase = $clase;
 
         return $this;
     }

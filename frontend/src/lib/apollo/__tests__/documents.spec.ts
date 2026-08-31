@@ -346,6 +346,52 @@ describe('buildCollectionQuery', () => {
     expect(variables.f_numero).toBeUndefined()
   })
 
+  it('para list no emite args de paginación pero sí filtros y orden', () => {
+    const rutaSchema: EntitySchema = {
+      ...boletoSchema,
+      collectionKind: 'list',
+      collectionType: null,
+      paginationType: null,
+    }
+    const { query, variables } = buildCollectionQuery(rutaSchema, {
+      currentPage: 2,
+      itemsPerPage: 25,
+      filters: { numero: 'AB' },
+      order: [{ numero: 'ASC' }],
+    })
+    expect(variables.currentPage).toBeUndefined()
+    expect(variables.itemsPerPage).toBeUndefined()
+    expect(variables.f_numero).toBe('AB')
+    expect(variables.order).toEqual([{ numero: 'ASC' }])
+    expect(query).not.toContain('currentPage')
+    expect(query).not.toContain('itemsPerPage')
+    expect(query).not.toContain('collection {')
+    expect(query).not.toContain('paginationInfo {')
+    expect(query).toContain('numero: $f_numero')
+  })
+
+  it('para cursor-connection selecciona edges/totalCount sin paginación', () => {
+    const cursorSchema: EntitySchema = {
+      ...boletoSchema,
+      collectionKind: 'cursor-connection',
+    }
+    const { query } = buildCollectionQuery(cursorSchema, { currentPage: 2, itemsPerPage: 25 })
+    expect(query).toContain('edges {')
+    expect(query).toContain('totalCount')
+    expect(query).not.toContain('currentPage')
+    expect(query).not.toContain('itemsPerPage')
+  })
+
+  it('para single selecciona el objeto directo sin paginación', () => {
+    const singleSchema: EntitySchema = {
+      ...boletoSchema,
+      collectionKind: 'single',
+    }
+    const { query } = buildCollectionQuery(singleSchema, { currentPage: 2 })
+    expect(query).not.toContain('currentPage')
+    expect(query).not.toContain('collection {')
+  })
+
   it('lanza si no hay query collection', () => {
     expect(() => buildCollectionQuery({ ...boletoSchema, queryCollection: null })).toThrow(
       /no expone query collection/,

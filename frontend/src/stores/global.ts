@@ -2,9 +2,12 @@ import { setActivePinia } from 'pinia'
 import { pinia } from './pinia'
 import { useUiStore } from '@/stores/ui'
 import { useSchemaRepositoryStore } from '@/stores/schemaRepository'
+import { useMenusStore } from '@/stores/menus'
+import { syncVueRoutes } from '@/utils/vueRoutesSync'
 
 export let ui: ReturnType<typeof useUiStore>
 export let schemaRepository: ReturnType<typeof useSchemaRepositoryStore>
+export let menus: ReturnType<typeof useMenusStore>
 
 export async function initGlobalStores() {
   setActivePinia(pinia) // necesario para usar la store fuera de un componente
@@ -17,8 +20,24 @@ export async function initGlobalStores() {
   schemaRepository = useSchemaRepositoryStore()
   try {
     await schemaRepository.init()
-    // const user = await getEntity('Usuario')
   } catch (error) {
     console.error('[schemaRepository] falló la carga del schema:', error)
   }
+
+  // Menús por área de layout: se carga en background (no bloquea el bootstrap).
+  menus = useMenusStore()
+  if (!menus.fetched) {
+    menus.fetchMenusByArea().catch((e) => {
+      console.error('[menus] falló la carga de menús:', e)
+    })
+  }
+
+  // Sincroniza las rutas del router con la entidad VueRoute del backend.
+  // Se lanza sin bloquear; también puede dispararse a voluntad llamando a
+  // `syncVueRoutes()` desde cualquier módulo.
+  syncVueRoutes().then((result) => {
+    if (!result.ok) {
+      console.warn('[vueRoutes] no se pudo sincronizar rutas:', result.error)
+    }
+  })
 }

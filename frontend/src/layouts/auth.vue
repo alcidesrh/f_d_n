@@ -59,19 +59,16 @@
         >
       </div>
     </footer>
-
-    <DynamicDialog />
-    <Toasts />
   </div>
 </template>
 
 <script setup lang="ts">
-const currentYear = new Date().getFullYear()
+const currentYear = new Date().getFullYear();
 
 watchEffect(() => {
-  const el = document.documentElement
-  el.className = ui.mode
-  el.classList.add(`primary-${ui.primary}`)
-  el.classList.add(`surface-${ui.surface}`)
-})
+  const el = document.documentElement;
+  el.className = ui.mode;
+  el.classList.add(`primary-${ui.primary}`);
+  el.classList.add(`surface-${ui.surface}`);
+});
 </script>

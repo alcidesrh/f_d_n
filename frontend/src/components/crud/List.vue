@@ -2,21 +2,21 @@
 <template>
   <div>
     <div v-if="store.metadata" class="card flex flex-col overflow-hidden" style="min-height: 400px">
-      <!-- #region Toolbar -->
       <Toolbar class="rounded-none border-none! bg-transparent px-2">
         <template #start>
           <span v-if="selectionMode" class="text-sm font-medium text-surface-600">
             {{ selection.length }} seleccionados
           </span>
-          <PageHead v-else />
+          <PageHead v-else></PageHead>
         </template>
         <template #end>
           <div class="flex items-center justify-between gap-5 my-4">
             <icon name="square-check" @click="toggleSelection" />
             <OverlayBadge
               v-if="store.hiddenColumns > 0"
+              ``
               :value="String(store.hiddenColumns)"
-              severity="info"
+              severity="primary"
               size="small"
             >
               <div @click="hiddenPopover?.toggle($event)">
@@ -45,47 +45,58 @@
           </div>
         </template>
       </Toolbar>
-
-      <!-- #endregion -->
-      <!-- #region datatable -->
       <DataTable
         v-model:selection="selection"
         :value="visibleItems"
-        :loading="loading"
+        :loading="loadingStore.loading"
         row-key="id"
         scrollable
         scroll-height="flex"
         :removable-sort="true"
         reorderable-columns
         :edit-mode="canEdit ? 'cell' : undefined"
-        @sort="onSort"
         @column-reorder="onColumnReorder"
         @cell-edit-complete="onCellEditComplete"
       >
-        <Column
-          v-for="(col) in store.visibleColumns"
-          :key="col.field"
-          :field="col.field"
-          :sortable="col.sortable"
-        >
-          <!-- #region Datatable:header -->
+        <Column v-for="col in store.visibleColumns" :key="col.field" :field="col.field">
           <template #header>
-            <!-- <Divider v-if="i" layout="vertical" class="ml-[0px]!" /> -->
-            <div class="grid auto-rows-fr w-full">
-              <div class="flex items-center gap-1 relative">
-                <span class="truncate font-semibold capitalize">{{ col.label ?? col.field }}</span>
-                <icon :name="getSortIcon(col.field)" @click="hideColumn(col.field)" />
-                <icon name="eye" @click="hideColumn(col.field)" class="absolute right-[0px]" />
+            <div class="relative">
+              <div class="col-head">
+                <div class="flex items-center justify-between gap-1 relative">
+                  <span class="truncate font-semibold capitalize">{{
+                    col.label ?? col.field
+                  }}</span>
+                  <span class="flex gap-3">
+                    <icon
+                      class="ml-3"
+                      @click.stop="toggleSort(col.field)"
+                      v-if="col.sortable"
+                      :name="getSortIcon(col.field)"
+                    />
+                    <icon
+                      v-if="filterNodes.has(col.field)"
+                      :name="filters[col.field] ? 'filter-filled' : 'filter'"
+                      class=""
+                      :class="{ 'text-primary': filters[col.field] }"
+                      @click.stop="col.showFilter = !col.showFilter"
+                    />
+                    <icon name="eye" @click="hideColumn(col.field)" class="" />
+                  </span>
+                </div>
+                <div
+                  @click.stop
+                  class="column-filter-input"
+                  :class="{ 'show-filter': col.showFilter }"
+                >
+                  <FormKitSchema
+                    v-if="filterNodes.has(col.field)"
+                    :schema="[filterNodes.get(col.field)]"
+                  />
+                </div>
               </div>
-              <div @click.stop class="h-[35px]">
-                <FormKitSchema
-                  v-if="filterNodes.has(col.field)"
-                  :schema="[filterNodes.get(col.field)]"
-                />
-              </div>
+              <div class="absolute bottom-0 border-r border-r-surface-200 h-[40px] w-[3px]"></div>
             </div>
           </template>
-          <!-- #endregion -->
           <!-- #region Datatable:body -->
           <template #body="{ data }">
             <ListCell :column="col" :data="data" :filter-value="filterValueFor(col.field)" />
@@ -100,7 +111,6 @@
               />
             </Suspense>
           </template>
-          <template #sorticon></template>
         </Column>
         <!-- #region Editar y Eliminar.  -->
         <Column
@@ -124,7 +134,7 @@
           Filtro local: aplica sobre la página cargada
         </span>
         <span v-else-if="!store.pagination" class="text-xs text-surface-500">
-          {{ store?.pagination.totalCount ?? 0 }} registros
+          {{ store?.items.length ?? 0 }} registros
         </span>
         <span v-else></span>
         <!-- #region Datatable:paginator -->
@@ -135,16 +145,38 @@
           :first="(store.pagination.currentPage - 1) * store.pagination.itemsPerPage"
           :total-records="store.pagination.totalCount"
           :rows-per-page-options="[10, 25, 50]"
-          template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+          template=" FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown "
+          currentPageReportTemplate="{first} al {last} de {totalRecords}"
           @page="onPage"
-        />
+        >
+          <template #end="slotProps">
+            <span class="ml-[10px] font-semibold text-surface-500">{{
+              slotProps.state.page * slotProps.state.rows + 1
+            }}</span>
+            <span class="font-semsibold text-surface-500 mx-[1px]"> al </span>
+            <span class="font-semibold text-surface-500">
+              {{
+                slotProps.state.page * slotProps.state.rows + slotProps.state.rows <
+                store.pagination.totalCount
+                  ? slotProps.state.page * slotProps.state.rows + slotProps.state.rows
+                  : store.pagination.totalCount
+              }}
+            </span>
+            <span class="font-semibqqld text-surface-500 mx-[1px]"> de </span>
+
+            <span class="font-semibold text-surface-500">
+              {{ store.pagination.totalCount }}
+            </span>
+            <!-- {{ slotProps.state.rows }} -->
+          </template>
+        </Paginator>
         <!-- #endregion Datatable:paginator -->
       </div>
       <!-- #endregion -->
     </div>
 
     <div v-else class="card flex items-center justify-center py-12">
-      <ProgressSpinner v-if="loading" style="width: 2rem; height: 2rem" />
+      <ProgressSpinner v-if="loadingStore.loading" style="width: 2rem; height: 2rem" />
       <span v-else class="text-surface-500">Sin entidad</span>
     </div>
 
@@ -164,15 +196,12 @@
     </Dialog>
   </div>
 </template>
-<!-- #endregion-->
-<!-- #region Script -->
 <script setup lang="ts">
 import { computed, reactive, ref, useId, watch } from "vue";
 import type { FormKitSchemaNode } from "@formkit/core";
 import type {
   DataTableCellEditCompleteEvent,
   DataTableColumnReorderEvent,
-  DataTableSortEvent,
 } from "primevue/datatable";
 import { useSchemaRepositoryStore } from "@/stores/schemaRepository";
 import { useEntityRegistry } from "@/composables/useEntityRegistry";
@@ -198,6 +227,7 @@ const props = withDefaults(defineProps<{ entity: string | string[] }>(), { entit
 // Stores y contexto: schema introspectado, registry de stores y toasts.
 // ---------------------------------------------------------------------------
 //#region Variables
+const loadingStore = useLoadingStore();
 const schemaRepo = useSchemaRepositoryStore();
 const registry = useEntityRegistry();
 const toasts = useToasts();
@@ -205,14 +235,13 @@ const hiddenPopover = ref<InstanceType<typeof Popover> | null>(null);
 
 const entityName = computed(() => {
   const raw = Array.isArray(props.entity) ? props.entity[0] : props.entity;
-  return raw ?? "";
+  return entityNameFromSlug(raw) ?? "";
 });
 const store = computed<EntityStore | null>(() => registry.getEntity(entityName.value) ?? null);
 // ---------------------------------------------------------------------------
 // Estado local: carga, filtros en vivo (con debounce), clave de remount de
 // los inputs de filtro, modo selección y diálogo de confirmación.
 // ---------------------------------------------------------------------------
-const loading = ref(false);
 const resetKey = ref(0);
 
 /** Id único por instancia: evita colisiones del memo global de FormKitSchema. */
@@ -253,8 +282,8 @@ const hasActiveView = computed(() => {
   if (selectionMode.value) return true;
   if (currentStore.order.length > 0) return true;
   if (Object.keys(currentStore.filters).length > 0) return true;
-  if (currentStore.pagination.currentPage > 1) return true;
-  if (currentStore.pagination.itemsPerPage !== 10) return true;
+  if ((currentStore.pagination?.currentPage ?? 1) > 1) return true;
+  if ((currentStore.pagination?.itemsPerPage ?? 10) !== 10) return true;
   return false;
 });
 
@@ -321,7 +350,8 @@ function buildFilterNode(field: string): FormKitSchemaNode | null {
           options: relationOptionsFor(field),
           size: "small",
           onInput: (value: unknown) => applyFilter(field, kind, value),
-          outerClass: "mb-0!",
+          outerClass: "mb-0! w-full",
+          class: "w-full",
         },
       };
     case "date":
@@ -338,7 +368,8 @@ function buildFilterNode(field: string): FormKitSchemaNode | null {
           value: filters[field],
           size: "small",
           onInput: (value: unknown) => applyFilter(field, kind, value),
-          outerClass: "mb-0!",
+          outerClass: "mb-0! w-full",
+          class: "w-full",
         },
       };
     case "number":
@@ -353,7 +384,8 @@ function buildFilterNode(field: string): FormKitSchemaNode | null {
           value: filters[field],
           size: "small",
           onInput: (value: unknown) => applyFilter(field, kind, value),
-          outerClass: "mb-0!",
+          outerClass: "mb-0! w-full",
+          class: "w-full",
         },
       };
     case "boolean":
@@ -373,6 +405,7 @@ function buildFilterNode(field: string): FormKitSchemaNode | null {
           size: "small",
           onInput: (value: unknown) => applyFilter(field, kind, value),
           outerClass: "mb-0!",
+          class: "w-full",
         },
       };
     default:
@@ -382,12 +415,12 @@ function buildFilterNode(field: string): FormKitSchemaNode | null {
         props: {
           type: "InputText",
           name,
-          placeholder: "Buscar…",
           clearable: true,
           value: filters[field],
           size: "small",
           onInput: (value: unknown) => applyFilter(field, kind, value),
           outerClass: "mb-0!",
+          class: "w-full",
         },
       };
   }
@@ -436,7 +469,7 @@ function commitFilters() {
     }
   }
   currentStore.filters = server;
-  currentStore.pagination.currentPage = 1;
+  if (currentStore.pagination) currentStore.pagination.currentPage = 1;
   void currentStore.fetchItems();
 }
 
@@ -580,18 +613,18 @@ function sortStateFor(field: string): "asc" | "desc" | null {
 }
 function getSortIcon(field) {
   const sortState = sortStateFor(field);
-  if (sortState === "asc") return "arrow-up-narrow-wide";
-  if (sortState === "desc") return "arrow-down-wide-narrow";
-  return "arrow-down-up";
+  if (sortState === "asc") return "sort-ascending";
+  if (sortState === "desc") return "sort-descending";
+  return "arrows-sort";
 }
-function onSort(event: DataTableSortEvent) {
+function toggleSort(field: string) {
   const currentStore = store.value;
-  const field = event.sortField;
-  if (!currentStore || typeof field !== "string") return;
-  currentStore.order =
-    event.sortOrder === 0 || event.sortOrder === undefined
-      ? []
-      : [{ [field]: event.sortOrder === 1 ? "ASC" : "DESC" }];
+  if (!currentStore) return;
+  const current = sortStateFor(field);
+  let order: string | null = null;
+  if (current === null) order = "ASC";
+  else if (current === "asc") order = "DESC";
+  currentStore.order = order ? [{ [field]: order }] : [];
   void currentStore.fetchItems();
 }
 
@@ -660,7 +693,6 @@ async function onCellEditComplete(event: DataTableCellEditCompleteEvent) {
     toasts.error(err instanceof Error ? err.message : String(err));
   }
 }
-toasts.success("Cambio guardado");
 /**
  * Normaliza el valor editado antes de mandarlo al input GraphQL: las fechas se
  * serializan a `YYYY-MM-DD` (el backend rechaza datetime completo) y las
@@ -730,17 +762,17 @@ async function resetView() {
   resetFilters();
   currentStore.filters = {};
   currentStore.order = [];
-  currentStore.pagination.currentPage = 1;
-  currentStore.pagination.itemsPerPage = 10;
+  if (currentStore.pagination) {
+    currentStore.pagination.currentPage = 1;
+    currentStore.pagination.itemsPerPage = 10;
+  }
   selectionMode.value = false;
   selection.value = [];
-  loading.value = true;
   try {
     await currentStore.loadColumns(true);
     rebuildFilterNodes();
     await currentStore.fetchItems();
   } finally {
-    loading.value = false;
   }
 }
 
@@ -783,7 +815,6 @@ watch(
     }
     resetFilters();
     const currentStore = registry.getEntity(name);
-    loading.value = true;
     try {
       // El store persiste su estado (incluido el orden/visibilidad de columnas);
       // `loadColumns` devuelve las ya cargadas si no se fuerza (ver factory.ts).
@@ -797,7 +828,6 @@ watch(
       await Promise.all(preloadRelationLists());
       rebuildFilterNodes();
     } finally {
-      loading.value = false;
     }
   },
   { immediate: true },
@@ -805,6 +835,23 @@ watch(
 </script>
 <!-- #endregion -->
 <style scoped>
+.col-head {
+  display: flex;
+  flex-direction: column; /* Stacks children vertically from top to bottom */
+  min-width: 300px;
+  justify-content: end;
+  padding: 0 15px;
+  gap: 5px;
+}
+.column-filter-input {
+  height: 0px;
+  overflow: hidden;
+  transition: height var(--transition);
+  &.show-filter {
+    height: 42px;
+  }
+}
+
 :deep(.col-actions) {
   /* position: sticky; */
   /* right: 0; */
@@ -825,5 +872,11 @@ watch(
   /* z-index: 2; */
   /* background: var(--p-datatable-row-background); */
   background: transparent;
+}
+:deep(.p-datatable-mask) {
+  /*background-color: var(--p-surface-500);*/
+  /*opacity: 0.8;*/
+  backdrop-filter: blur(6px);
+  background: transparent !important;
 }
 </style>

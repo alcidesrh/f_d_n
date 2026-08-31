@@ -49,7 +49,7 @@ migrar-entities: ## make migrar-entities entities='Empresa Localidad Estacion Pi
 
 .PHONY: migrar-todo
 migrar-todo:
-	$(CONSOLE) $(if $(prod),--env=prod) app:migrar:todo $(if $(clean),--clean) $(if $(estaticos),--estaticos) $(if $(iam),--iam) $(if $(config),--config)  $(if $(boletos),boletos=$(boletos)) $(foreach u,$(entities),--entities=$(u))
+	$(CONSOLE) $(if $(prod),--env=prod) app:migrar:todo $(if $(clean),--clean) $(if $(estaticos),--estaticos) $(if $(iam),--iam) $(if $(config),--config) $(if $(data),--data) $(if $(boletos),boletos=$(boletos)) $(foreach u,$(entities),--entities=$(u))
 
 sincronizar: ## Sync new tickets from old FDN system
 	@$(CONSOLE) app:sincronizar

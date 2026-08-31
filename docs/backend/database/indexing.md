@@ -18,10 +18,10 @@ Basado en los filtros de API Platform y las consultas más frecuentes:
 | Usuario | `username` | Búsqueda exacta (login) | Índice único (ya existe) |
 | Usuario | `nombre`, `apellido`, `email` | Búsqueda parcial (OR filter) | Índice GIN con trigramas |
 | Boleto | `legacy_id` | Búsqueda exacta (migración) | Índice único |
-| Boleto | `servicio_id` | FK lookup (boletos de un servicio) | Índice (ya existe por FK) |
+| Boleto | `salida_id` | FK lookup (boletos de una salida) | Índice (ya existe por FK) |
 | Boleto | `cliente_id` | FK lookup | Índice |
-| Servicio | `fecha` | Rango de fechas | Índice B-tree |
-| Servicio | `legacy_id` | Búsqueda exacta | Índice único |
+| Salida | `fecha` | Rango de fechas | Índice B-tree |
+| Salida | `legacy_id` | Búsqueda exacta | Índice único |
 | Trayecto | `legacy_id` | Búsqueda exacta (migración) | Índice único |
 | Trayecto | `origen_id`, `destino_id` | FK lookup | Índices compuestos |
 | Recorrido | `trayecto_id`, `empresa_id` | FK composite lookup | Índice compuesto |
@@ -31,10 +31,10 @@ Basado en los filtros de API Platform y las consultas más frecuentes:
 
 ## Patrones de consulta comunes
 
-### Consulta principal: boletos por servicio
+### Consulta principal: boletos por salida
 
 ```sql
-SELECT b.* FROM boleto b WHERE b.servicio_id = ? ORDER BY b.id
+SELECT b.* FROM boleto b WHERE b.salida_id = ? ORDER BY b.id
 ```
 
 ### Consulta de ventas por usuario y rango
@@ -43,10 +43,10 @@ SELECT b.* FROM boleto b WHERE b.servicio_id = ? ORDER BY b.id
 SELECT v.* FROM venta v WHERE v.usuario_id = ? AND v.created_at BETWEEN ? AND ?
 ```
 
-### Consulta de servicios por fecha
+### Consulta de salidas por fecha
 
 ```sql
-SELECT s.* FROM servicio s WHERE s.fecha::date = ? ORDER BY s.fecha
+SELECT s.* FROM salida s WHERE s.fecha::date = ? ORDER BY s.fecha
 ```
 
 ### Búsqueda de usuarios
@@ -62,8 +62,8 @@ WHERE u.nombre ILIKE '%termino%' OR u.apellido ILIKE '%termino%' OR u.email ILIK
 -- Búsqueda eficiente de boletos por legacy_id
 CREATE UNIQUE INDEX IF NOT EXISTS idx_boleto_legacy ON boleto(legacy_id) WHERE legacy_id IS NOT NULL;
 
--- Búsqueda de servicios por fecha
-CREATE INDEX IF NOT EXISTS idx_servicio_fecha ON servicio(fecha);
+-- Búsqueda de salidas por fecha
+CREATE INDEX IF NOT EXISTS idx_salida_fecha ON salida(fecha);
 
 -- Búsqueda textual en usuario (trigramas)
 CREATE INDEX IF NOT EXISTS idx_usuario_nombre_trgm ON usuario USING GIN (nombre gin_trgm_ops);

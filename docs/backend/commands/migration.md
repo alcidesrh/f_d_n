@@ -31,7 +31,7 @@ Ejecuta la migración completa. Ver [Pipeline](../migration/pipeline.md) para de
 | `--skip-estaticos` | Salta entidades estáticas |
 | `--skip-iam` | Salta migración IAM |
 | `--skip-config` | Salta EntityConfiguration |
-| `--servicios=N` | Cantidad de servicios (default: 100) |
+| `--salidas=N` | Cantidad de salidas (default: 100) |
 | `--entities=[]` | Entidades estáticas específicas |
 
 ## app:migrar:estaticos

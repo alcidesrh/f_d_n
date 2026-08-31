@@ -1,22 +1,20 @@
+##### *<u>Actua como arquitecto senior especialista en base de datos,patrones de diseños y desarrollo fullstack de Apis Rest y Graphql</u>*
+
 ##### **Contexto**
 
-Consorcio de empresas que brindan un servicio de buses para el transporte de pasajeros en trayectos largos, medianos y cortos. También proveen un servicio secundario de envío de paquetes o encomiendas que son recibidas y entregadas siempre en las estaciones de los trayectos.  Los trayectos pueden ser itinerarios exclusivos de una empresa o pueden estar compartido en cuyo caso las empresas involucradas se alternan los días para dar el servicio. Cada empresa gestiona un flujo de datos independiente propio de la empresa como las finanzas, su inventario de buses, estaciones y empleados. Sin embargo todas operan y gestionan el negocio de la misma manera y no hay procesos personalizados.
+Un grupo de empresas brindan un servicio de buses para el transporte de pasajeros en trayectos largos, medianos y cortos. También proveen un servicio secundario de envío de paquetes o encomiendas que son recibidas y entregadas siempre en las estaciones de los trayectos.  Los trayectos pueden ser itinerarios exclusivos de una empresa o pueden estar compartido en cuyo caso las empresas involucradas se alternan los días para dar el servicio. Cada empresa gestiona un flujo de datos independiente propio de la empresa como las finanzas, su inventario de buses, estaciones y empleados. Sin embargo todas operan y gestionan el negocio de la misma manera y no hay procesos personalizados.
 
+##### Objetivos
 
+1. Analizar el modelo de datos  e identificar, en caso que hubiera, mejoras que admite el modelo.
 
-##### Objetivo
-
-Implementacion de un sistema fullstack multiusuario que de soporte a la gestion empresarial de la administracion, la logistica y de los procesos operativos de un servicio de buses para el transporte de pasajeros que incluye un servicio secundario de paqueteria o encomienda.
-
-
+2. Valorar si es apropiado hacerlo multi-tenant (empresa = tenant). Si es el caso implementar el patron .
 
 ##### Glosario de conceptos y terminos propios del dominio.
 
 - **<mark>enclave</mark>**: cualquier ubicacion geografica de interes. Inmuebles, sitios y emplazamientos geolocalizables relacionados con el negocio.
 
 - **<mark>trayecto</mark>**:  tramos delimitados por dos enclaves. Un trayecto puede estar contenido parcial o totalmente dentro de otro trayecto. Los trayectos son vectoriales en el sentido matematico, quiere decir que si se tiene dos enclave A y B  los trayectos A->B y B->A  son en escencia distintos.
-
-- **<mark>recorrido</mark>**: esta compuesto por un trayecto delimitado por dos estaciones y un timestamp, pasado o futuro, que establece el momento en que un bus comienza a recorrer el trayecto. 
 
 - **<mark>parada</mark>**: enclave dentro de un trayecto donde temporalmente el bus detiene la marcha. Ya sea para bajar o abordar pasajeros o abastecer combustible.
 
@@ -46,4 +44,6 @@ Implementacion de un sistema fullstack multiusuario que de soporte a la gestion 
 
 - **<mark>manifiesto\<de pasajero, de venta, ...\></mark>**: son reportes que se generan en formato pdf
 
+**Estado del arte**
 
+El proyecto se encuentra en un punto de inflexion . El modelo de datos 

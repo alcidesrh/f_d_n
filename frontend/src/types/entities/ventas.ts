@@ -32,7 +32,7 @@ export interface Boleto {
   legacyId?: any
   venta?: any
   asiento?: string
-  servicio?: string
+  salida?: string
   label?: any
   createdAt?: any
   updatedAt?: any

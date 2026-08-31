@@ -72,7 +72,7 @@ export const useSchemaRepositoryStore = defineStore("schemaRepository", {
       }
     },
 
-    getEntityMetadata(name: string): EntitySchema | null {
+    getEntityMetadata(name: string): EntitySchema {
       name =
         name
           .toLowerCase()
@@ -121,18 +121,31 @@ export const useSchemaRepositoryStore = defineStore("schemaRepository", {
               Object.keys(cond).every((field) => entity.orderFields.includes(field)),
             )
           : [];
+      // Solo las entidades paginadas llevan estado de paginación en el store
+      // (ver createEntityStore: solo collectionKind 'page-connection'). Las
+      // entidades sin paginado (list/cursor-connection/single) se cargan
+      // completas: no se envían args de paginación ni se escribe el estado.
+      const paginated = Boolean(store.pagination);
+
       const result = await apollo.collection<T>(entity, {
-        currentPage: store.pagination.currentPage,
-        itemsPerPage: store.pagination.itemsPerPage,
+        ...(paginated
+          ? {
+              currentPage: store.pagination.currentPage,
+              itemsPerPage: store.pagination.itemsPerPage,
+            }
+          : {}),
         filters: store.filters,
         order,
         fields,
       });
       store.items = result.items;
-      store.pagination = {
-        ...result.pagination,
-        itemsPerPage: store.pagination.itemsPerPage || result.pagination.itemsPerPage,
-      };
+
+      if (paginated) {
+        store.pagination = {
+          ...result.pagination,
+          itemsPerPage: store.pagination.itemsPerPage || result.pagination.itemsPerPage,
+        };
+      }
       return result;
     },
 
@@ -142,9 +155,14 @@ export const useSchemaRepositoryStore = defineStore("schemaRepository", {
         throw new Error(`[schemaRepository] "${store.name}" no expone create`);
       }
       const input = toMutationInput(entity, entity.create, data, this.entities);
+
+      console.log(input);
       const created = await apollo.create<T>(entity, input);
       store.item = created;
       store.items = [created, ...store.items];
+      if (store.fullList.length) {
+        this.fullList(store, { force: true });
+      }
       return created;
     },
 

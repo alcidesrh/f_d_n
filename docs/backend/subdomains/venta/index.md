@@ -70,6 +70,6 @@ flowchart LR
     V -->|genera| B[Boleto]
     V -->|opcional| F[Factura DTE]
     B -->|asigna| A[Asiento]
-    B -->|asocia| S[Servicio]
+    B -->|asocia| S[Salida]
     V -->|registra| U[Usuario vendedor]
 ```

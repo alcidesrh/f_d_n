@@ -2,8 +2,6 @@
 
 namespace App\Migration;
 
-use App\Entity\Servicio;
-
 class Mapeador {
     /**
      * Static data with numeric old PK → use old ID as new PK, no legacy_id.
@@ -149,12 +147,11 @@ class Mapeador {
     }
 
     /**
-     * Servicio is variable data → keep legacy_id.
+     * Salida is variable data → keep legacy_id.
      */
-    public function servicio(array $old, ?int $idRecorrido, ?int $busId, ?int $empresaId, ?int $pilotoId = null): array {
+    public function salida(array $old, ?int $busId, ?int $empresaId, ?int $pilotoId = null): array {
         return [
             'fecha' => $this->formatDatetime($old['fecha']),
-            'recorrido_id' => $idRecorrido,
             'bus_id' => $busId,
             'empresa_id' => $empresaId,
             'piloto_id' => $pilotoId,
@@ -163,51 +160,68 @@ class Mapeador {
     }
 
     /**
-     * Boleto is variable data → keep legacy_id.
+     * BoletoAsiento is variable data → keep legacy_id.
+     * Payload mínimo y desacoplado: cada boleto legacy se convierte en un
+     * asiento vendido, enlazado a su venta, salida, cliente, trayecto y status.
      */
-    public function boleto(array $old, int $servicioId, int $clienteId, int $ventaId, int $asientoId, ?int $idRecorrido): array {
+    public function boletoAsiento(
+        array $old,
+        int $salidaId,
+        int $asientoId,
+        int $clienteId,
+        int $trayectoId,
+        int $statusId,
+        int $boletoVentaId,
+    ): array {
         $precio = (int) (($old['precioCalculado'] ?? 0) * 100);
 
         return [
-            // 'precio_monto' => $precio ?: 0,
-            // 'precio_moneda' => 'GTQ',
-            'servicio_id' => $servicioId,
-            'recorrido_id' => $idRecorrido,
-            'cliente_id' => $clienteId,
-            'venta_id' => $ventaId,
+            'salida_id' => $salidaId,
             'asiento_id' => $asientoId,
-            'created_at' => $this->formatDatetime($old['fecha_creacion']),
+            'cliente_id' => $clienteId,
+            'trayecto_id' => $trayectoId,
+            'status_id' => $statusId,
+            'boleto_venta_id' => $boletoVentaId,
+            'precio_monto' => $precio ?: 0,
+            'precio_moneda' => 'GTQ',
             'legacy_id' => (string) $old['id'],
         ];
     }
 
     /**
-     * Venta wrapper for a group of boletos.
+     * BoletoVenta wrapper for a boleto (1:1:1 con BoletoAsiento).
      */
-    public function venta(int $usuarioId, ?int $enclaveId, ?int $empresaId): array {
+    public function boletoVenta(int $usuarioId): array {
         return [
             'usuario_id' => $usuarioId,
-            'enclave_id' => $enclaveId,
-            'empresa_id' => $empresaId,
         ];
     }
 
     /**
-     * Tarifa old PK is numeric → use as new PK, no legacy_id.
+     * BoletoTarifa old PK is numeric → use as new PK, no legacy_id.
+     * `clase_asiento` legacy: 1 = A, 2 = B (ver ClaseAsiento::A/B).
      */
-    public function tarifa(array $old, int $empresaId): array {
+    public function boletoTarifa(array $old, int $empresaId, string $clase, int $usuarioId, ?int $trayectoId = null): array {
         $nombre = sprintf('Tarifa-%s-%s-%s', $old['estacion_origen_id'] ?? '?', $old['estacion_destino_id'] ?? '?', $old['id']);
 
         return [
             'id' => (int) $old['id'],
             'nombre' => $nombre,
-            'precio_clase_a_monto' => ($old['tarifaValor'] * 100) ?? '0',
-            'precio_clase_b_monto' => 0,
-            'precio_clase_a_moneda' => 'GTQ',
-            'precio_clase_b_moneda' => 'GTQ',
+            'precio_monto' => (int) (($old['tarifaValor'] ?? 0) * 100),
+            'precio_moneda' => 'GTQ',
+            'clase' => $clase,
             'empresa_id' => $empresaId,
             'bus_id' => null,
+            'trayecto_id' => $trayectoId,
+            'usuario_id' => $usuarioId,
         ];
+    }
+
+    /**
+     * @deprecated Legacy alias kept for the standalone `migracion` command.
+     */
+    public function tarifa(array $old, int $empresaId): array {
+        return $this->boletoTarifa($old, $empresaId, 'A', 1);
     }
 
 

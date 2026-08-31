@@ -2,7 +2,6 @@
 
 namespace App\Migration;
 
-use App\Repository\TarifaRepository;
 use DateTime;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -66,7 +65,7 @@ class MigradorEstaticos {
                 $contadores['bus'] = $this->migrarBuss($output);
                 $contadores['asiento'] = $this->migrarAsientos($output);
                 $contadores['trayecto'] = $this->migrarTrayectos($output);
-                // $contadores['tarifa'] = $this->migrarTarifas($output);
+                $contadores['tarifa'] = $this->migrarTarifas($output);
             }
             $this->newConn->commit();
         } catch (\Throwable $e) {
@@ -411,38 +410,48 @@ class MigradorEstaticos {
     }
 
     private function linkTrayecto(int $padreId, int $hijoId): void {
-        $this->newConn->executeStatement(
-            'INSERT INTO trayecto_trayecto (trayecto_source, trayecto_target) VALUES (:padre, :hijo) ON CONFLICT DO NOTHING',
+        $exists = $this->newConn->fetchOne(
+            'SELECT id FROM subtrayecto WHERE below_to_id = :padre AND trayecto_id = :hijo',
             ['padre' => $padreId, 'hijo' => $hijoId]
+        );
+        if ($exists) {
+            return;
+        }
+
+        $this->newConn->executeStatement(
+            'INSERT INTO subtrayecto (trayecto_id, below_to_id, activo) VALUES (:hijo, :padre, true)',
+            ['hijo' => $hijoId, 'padre' => $padreId]
         );
     }
 
     // ─── Tarifa ────────────────────────────────────────────────────
 
     private function migrarTarifas(?OutputInterface $output = null,): int {
-
         if ($output) $output->write('<info>Tarifas...</info>');
-        $rows = $this->fetchOld('SELECT tb.*, e.id AS empresa_id FROM tarifas_boleto tb CROSS JOIN (SELECT MIN(id) AS id FROM empresa WHERE activo = 1) e AND tb.clase_asiento = 1 ORDER BY tb.id DESC');
+        $rows = $this->fetchOld('SELECT tb.* FROM tarifas_boleto tb ORDER BY tb.id DESC');
 
         $count = 0;
+        $defaultUsuarioId = $this->getFirstUsuarioId();
 
         foreach ($rows as $row) {
             $lid = (string) $row['id'];
-            if ($this->existe('tarifa', $lid)) {
+            if ($this->existe('boleto_tarifa', $lid)) {
                 continue;
             }
 
-            $empresaId = $this->resolveEmpresaId((int) ($row['empresa_id'] ?? 0));
+            $empresaId = $this->getFirstEmpresaId();
             if (!$empresaId) {
-                $empresaId = $this->getFirstEmpresaId();
-                if (!$empresaId) {
-                    continue;
-                }
+                continue;
             }
 
-            $data = $this->mapeador->tarifa($row, $empresaId);
+            $clase = ((int) ($row['clase_asiento'] ?? 0)) === 2 ? 'B' : 'A';
+            $trayectoId = $this->findTrayectoIdPorTarifa($row);
+            $usuarioId = $defaultUsuarioId ?? 1;
+
+            $data = $this->mapeador->boletoTarifa($row, $empresaId, $clase, $usuarioId, $trayectoId);
             $this->newConn->executeStatement(
-                'INSERT INTO tarifa (id, nombre, precio_clase_a_monto, precio_clase_b_monto, precio_clase_a_moneda, precio_clase_b_moneda, empresa_id, bus_id) VALUES (:id, :nombre, :precio_clase_a_monto, :precio_clase_b_monto, :precio_clase_a_moneda, :precio_clase_b_moneda, :empresa_id, :bus_id)',
+                'INSERT INTO boleto_tarifa (id, nombre, precio_monto, precio_moneda, clase, empresa_id, bus_id, trayecto_id, usuario_id)
+                 VALUES (:id, :nombre, :precio_monto, :precio_moneda, :clase, :empresa_id, :bus_id, :trayecto_id, :usuario_id)',
                 $data
             );
             $count++;
@@ -450,6 +459,29 @@ class MigradorEstaticos {
 
         if ($output) $output->writeln(" <info>{$count}</info>");
         return $count;
+    }
+
+    private function getFirstUsuarioId(): ?int {
+        $id = $this->newConn->fetchOne('SELECT id FROM usuario ORDER BY id ASC LIMIT 1');
+        return $id !== false ? (int) $id : null;
+    }
+
+    /**
+     * Busca un trayecto cuyo origen/destino coincidan con la tarifa legacy
+     * (las estaciones reutilizan su id legacy como id de enclave).
+     */
+    private function findTrayectoIdPorTarifa(array $row): ?int {
+        $origen = $this->resolveEstacionId((int) ($row['estacion_origen_id'] ?? 0));
+        $destino = $this->resolveEstacionId((int) ($row['estacion_destino_id'] ?? 0));
+        if (!$origen || !$destino) {
+            return null;
+        }
+
+        $id = $this->newConn->fetchOne(
+            'SELECT id FROM trayecto WHERE origen_id = :origen AND destino_id = :destino ORDER BY id LIMIT 1',
+            ['origen' => $origen, 'destino' => $destino]
+        );
+        return $id !== false ? (int) $id : null;
     }
 
     // ─── Piloto ────────────────────────────────────────────────────
@@ -550,7 +582,7 @@ class MigradorEstaticos {
 
     private function existe(string $tabla, string $legacyId): bool {
         $sql = match ($tabla) {
-            'empresa', 'enclave', 'asiento', 'cliente', 'usuario', 'tarifa', 'piloto', 'localidad', 'bus_marca' => "SELECT 1 FROM {$tabla} WHERE id = :lid",
+            'empresa', 'enclave', 'asiento', 'cliente', 'usuario', 'boleto_tarifa', 'piloto', 'localidad', 'bus_marca' => "SELECT 1 FROM {$tabla} WHERE id = :lid",
             'bus' => "SELECT 1 FROM {$tabla} WHERE codigo = :lid",
             'trayecto' => "SELECT 1 FROM {$tabla} WHERE legacy_id = :lid",
             default => "SELECT 1 FROM {$tabla} WHERE legacy_id = :lid",

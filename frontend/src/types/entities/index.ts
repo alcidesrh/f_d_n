@@ -33,7 +33,7 @@ import type { Piloto } from './flota'
 import type { Recorrido } from './flota'
 import type { RecorridoMatrioska } from './flota'
 import type { Role } from './seguridad'
-import type { Servicio } from './flota'
+import type { Salida } from './flota'
 import type { Status } from './core'
 import type { Trayecto } from './flota'
 import type { Usuario } from './seguridad'
@@ -69,7 +69,7 @@ export interface EntityMap {
   Recorrido: Recorrido
   RecorridoMatrioska: RecorridoMatrioska
   Role: Role
-  Servicio: Servicio
+  Salida: Salida
   Status: Status
   Trayecto: Trayecto
   Usuario: Usuario
@@ -106,7 +106,7 @@ export type {
   Recorrido,
   RecorridoMatrioska,
   Role,
-  Servicio,
+  Salida,
   Status,
   Trayecto,
   Usuario,

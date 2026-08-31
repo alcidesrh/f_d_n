@@ -16,19 +16,11 @@
     <SidebarRight>
       <template #menu-content></template>
     </SidebarRight>
-
-    <!-- <div class="body-row">
-      <div class="backdrop" :class="{ show: showBackdrop }" @click="ui.closeMobileOverlays()"></div>
-    </div> -->
-    <DynamicDialog />
-    <Toasts />
   </div>
 </template>
 <script setup lang="ts">
 const route = useRoute();
-
 const crumbs = computed(() => route.meta.crumbs ?? ["Andén"]);
-const showBackdrop = computed(() => ui.isMobile && (ui.mobileLeftOpen || ui.mobileRightOpen));
 
 function handleResize() {
   ui.syncViewport();

@@ -6,8 +6,8 @@
 
 1. **Login**: `SELECT * FROM usuario WHERE username = ?`
 2. **Listar boletos**: `SELECT * FROM boleto ORDER BY id LIMIT ? OFFSET ?`
-3. **Boletos de un servicio**: `SELECT * FROM boleto WHERE servicio_id = ?`
-4. **Servicios por fecha**: `SELECT * FROM servicio WHERE fecha::date = ?`
+3. **Boletos de una salida**: `SELECT * FROM boleto WHERE salida_id = ?`
+4. **Salidas por fecha**: `SELECT * FROM salida WHERE fecha::date = ?`
 5. **Ventas por usuario**: `SELECT * FROM venta WHERE usuario_id = ? ORDER BY created_at DESC`
 6. **Búsqueda de usuarios**: Búsqueda OR con ILIKE en múltiples campos
 
@@ -35,7 +35,7 @@ Durante la migración, se usan lotes para evitar agotar memoria:
 
 ```php
 // Migrador: procesa N salidas a la vez
-private $servicios = 100; // Default
+private $salidas = 100; // Default
 
 // Limpiar debug data holder entre lotes
 $this->resetDebugDataHolder();
@@ -62,7 +62,7 @@ LIMIT 10;
 
 ## Recomendaciones
 
-1. **Siempre paginar** colecciones grandes (boleto, venta, servicio)
+1. **Siempre paginar** colecciones grandes (boleto, venta, salida)
 2. **Usar JOINs con addSelect** en lugar de lazy loading
 3. **Evitar SELECT *** cuando solo se necesitan campos específicos
 4. **Usar índices compuestos** para consultas multi-campo

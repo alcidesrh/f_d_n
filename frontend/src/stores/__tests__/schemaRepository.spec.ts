@@ -155,6 +155,7 @@ function makeStore(): EntityStore<{ id: number; numero: string }> {
     item: null,
     fullList: [],
     metadata: null,
+    slug: 'boleto-asiento',
     loadColumns: vi.fn<() => Promise<CollectionFieldConfig[]>>().mockResolvedValue([]),
     loadFullList: vi.fn<() => Promise<AgnosticOption[]>>().mockResolvedValue([]),
     fetchItems: vi.fn<() => Promise<Array<{ id: number; numero: string }>>>(),
@@ -226,6 +227,34 @@ describe('useSchemaRepositoryStore', () => {
     )
     expect(entityStore.items).toEqual([{ id: 1, numero: 'AB' }])
     expect(entityStore.pagination.totalCount).toBe(1)
+    expect(result.items).toHaveLength(1)
+  })
+
+  it('carga una colección sin paginado (entidad sin estado pagination)', async () => {
+    const listSchema: EntitySchema = {
+      ...boletoSchema,
+      collectionKind: 'list',
+      collectionType: null,
+      paginationType: null,
+    }
+    apolloMock.introspect.mockResolvedValue({ Boleto: listSchema })
+    apolloMock.collection.mockResolvedValue({
+      items: [{ id: 1, numero: 'AB' }],
+      pagination: { currentPage: 1, itemsPerPage: 1, lastPage: 1, totalCount: 1, hasNextPage: false },
+    })
+    const store = useSchemaRepositoryStore()
+    await store.init()
+    const entityStore = makeStore()
+    delete (entityStore as { pagination?: unknown }).pagination
+    const result = await store.collection(entityStore)
+    const spec = apolloMock.collection.mock.calls[0]![1] as {
+      currentPage?: number
+      itemsPerPage?: number
+    }
+    expect(spec.currentPage).toBeUndefined()
+    expect(spec.itemsPerPage).toBeUndefined()
+    expect(entityStore.items).toEqual([{ id: 1, numero: 'AB' }])
+    expect((entityStore as { pagination?: unknown }).pagination).toBeUndefined()
     expect(result.items).toHaveLength(1)
   })
 

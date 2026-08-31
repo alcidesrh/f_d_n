@@ -48,7 +48,7 @@ export interface Piloto {
   readonly id?: any
 }
 
-export interface Servicio {
+export interface Salida {
   '@id'?: string
   fecha?: any
   legacyId?: any

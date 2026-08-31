@@ -16,7 +16,7 @@ Se organiza el backend en **subdominios como bounded contexts** siguiendo los pr
 |---|---|
 | Transporte | Trayecto, Recorrido, RecorridoMatrioska |
 | Flota | Bus, BusMarca, Asiento, Piloto |
-| Venta | Boleto, Venta, Factura, Cliente, Servicio |
+| Venta | Boleto, Venta, Factura, Cliente, Salida |
 | Personal | Usuario, Piloto |
 | Configuración | Empresa, Localidad, Nacion, Tarifa, Parada |
 | Infraestructura | Estacion, Enclave, Parada |

@@ -1,23 +1,7 @@
 <template>
-  <div class="flex justify-between gap-5 px-3">
-    <!-- <Button
-      icon="pi pi-pencil"
-      rounded
-      text
-      severity="primary"
-      aria-label="Editar"
-      @click="emit('edit', item)"
-    /> -->
-    <icon name="pencil" @click="emit('edit', item)" size="14" sw="1.8" color="text-teal-700" />
-    <icon name="trash-2" @click="emit('delete', item)" size="14" sw="1.8" color="text-red-700" />
-    <!-- <Button
-      icon="pi pi-trash"
-      rounded
-      text
-      severity="danger"
-      aria-label="Eliminar"
-      @click="emit('delete', item)"
-    /> -->
+  <div class="flex justify-center gap-3 px-3">
+    <icon @click="emit('edit', item)" name="pencil" />
+    <icon name="trash" @click="emit('delete', item)" />
   </div>
 </template>
 

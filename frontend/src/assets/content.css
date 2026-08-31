@@ -17,15 +17,12 @@
   flex: 1;
   min-width: 0;
   overflow-y: auto;
-  background: var(--p-surface-100);
+  background: var(--p-surface-50);
 }
 .main-inner {
   padding: 2rem;
   /* max-width: 1400px; */
   margin: 0 auto;
-  & > div {
-    border: var(--border);
-  }
 }
 .page-head {
   display: flex;

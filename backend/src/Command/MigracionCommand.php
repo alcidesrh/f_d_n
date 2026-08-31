@@ -2,7 +2,7 @@
 
 namespace App\Command;
 
-use App\Entity\Servicio;
+use App\Entity\Salida;
 use App\Migration\Mapeador;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -49,13 +49,13 @@ class MigracionCommand extends Command {
 
     protected function execute(InputInterface $input, OutputInterface $output): int {
 
-        if ($output) $output->write('<info>Servicios...</info>');
+        if ($output) $output->write('<info>Salidas...</info>');
 
         $rows = $this->fetchOld(self::SQL_TODO);
         foreach ($rows as $row) {
-            $servicio = new Servicio();
+            $salida = new Salida();
             // $data = $this->mapeador->asiento();
-            // $servicio->setLegacyId();
+            // $salida->setLegacyId();
         }
 
         $rows = $this->fetchOld('SELECT tb.*, e.id AS empresa_id FROM tarifas_boleto tb CROSS JOIN (SELECT MIN(id) AS id FROM empresa WHERE activo = 1) e AND tb.clase_asiento = 1 ORDER BY tb.id DESC');

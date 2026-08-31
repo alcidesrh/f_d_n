@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
 use App\Attribute\ApiResourceNoPagination;
+use App\Entity\Base\Base;
 use App\Repository\VueRouteRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -12,13 +13,8 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: VueRouteRepository::class)]
 #[ApiResourceNoPagination]
-class VueRoute
+class VueRoute extends Base
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
-
     #[ORM\Column(length: 255)]
     private ?string $nombre = null;
 
@@ -44,23 +40,23 @@ class VueRoute
      * @var Collection<int, Usuario>
      */
     #[ORM\ManyToMany(targetEntity: Usuario::class)]
-    #[ORM\JoinTable(name: 'vue_route_usuario_permitidos')]
+    #[ORM\JoinTable(name: "vue_route_usuario_permitidos")]
     private Collection $usuariosPermitidos;
 
     /**
      * @var Collection<int, Usuario>
      */
     #[ORM\ManyToMany(targetEntity: Usuario::class)]
-    #[ORM\JoinTable(name: 'vue_route_usuario_denegados')]
+    #[ORM\JoinTable(name: "vue_route_usuario_denegados")]
     private Collection $usuariosDenegados;
 
-    #[ORM\ManyToOne(targetEntity: self::class, inversedBy: 'hijos')]
+    #[ORM\ManyToOne(targetEntity: self::class, inversedBy: "hijos")]
     private ?self $vueRoute = null;
 
     /**
      * @var Collection<int, self>
      */
-    #[ORM\OneToMany(targetEntity: self::class, mappedBy: 'vueRoute')]
+    #[ORM\OneToMany(targetEntity: self::class, mappedBy: "vueRoute")]
     private Collection $hijos;
 
     public function __construct()
@@ -69,11 +65,6 @@ class VueRoute
         $this->usuariosPermitidos = new ArrayCollection();
         $this->usuariosDenegados = new ArrayCollection();
         $this->hijos = new ArrayCollection();
-    }
-
-    public function getId(): ?int
-    {
-        return $this->id;
     }
 
     public function getNombre(): ?string

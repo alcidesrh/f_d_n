@@ -29,54 +29,85 @@ use Symfony\Component\Serializer\Attribute\Ignore;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: UsuarioRepository::class)]
-#[ApiResourcePaginationPage(
-    graphQlOperations: [
-        new Query(),
-        new Mutation(name: 'create', processor: UsuarioPasswordHasher::class),
-        new Mutation(name: 'update', processor: UsuarioPasswordHasher::class),
-        new QueryCollection(
-            paginationType: 'page',
-            parameters: [
-                'id' => new QueryParameter(
-                    filter: new OrFilter(new IdPartialSearchFilter()),
-                    property: 'id',
-                ),
-                'username' => new QueryParameter(
-                    filter: new OrFilter(new PartialSearchFilter()),
-                    property: 'username'
-                ),
-                'nombre' => new QueryParameter(
-                    filter: new OrFilter(new PartialSearchFilter()),
-                    property: 'nombre'
-                ),
-                'apellido' => new QueryParameter(
-                    filter: new OrFilter(new PartialSearchFilter()),
-                    property: 'apellido'
-                ),
-                'nit' => new QueryParameter(
-                    filter: new OrFilter(new PartialSearchFilter()),
-                    property: 'nit'
-                ),
-                'email' => new QueryParameter(
-                    filter: new OrFilter(new PartialSearchFilter()),
-                    property: 'email'
-                ),
-            ],
-        ),
-        new Query(
-            name: 'getByUsername',
-            resolver: UserByUsernameResolver::class,
-            args: ['username' => ['type' => 'String']],
-        ),
-    ]
-)]
-#[ApiFilter(DateFilter::class, properties: ['createdAt', 'updatedAt'])]
-#[ApiFilter(SearchFilter::class, properties: ['permisos.id' => 'exact', 'userRoles.id' => 'exact', 'localidad.id' => 'exact', 'status.id' => 'exact'])]
-#[ApiFilter(OrderFilter::class, properties: ['id', 'nombre', 'apellido', 'username', 'createdAt', 'email'], arguments: ['orderParameterName' => 'order'])]
-
-class Usuario extends PersonaBase implements UserInterface, PasswordAuthenticatedUserInterface
+#[
+    ApiResourcePaginationPage(
+        graphQlOperations: [
+            new Query(),
+            new Mutation(
+                name: "create",
+                processor: UsuarioPasswordHasher::class,
+            ),
+            new Mutation(
+                name: "update",
+                processor: UsuarioPasswordHasher::class,
+            ),
+            new QueryCollection(
+                paginationType: "page",
+                parameters: [
+                    "id" => new QueryParameter(
+                        filter: new OrFilter(new IdPartialSearchFilter()),
+                        property: "id",
+                    ),
+                    "username" => new QueryParameter(
+                        filter: new OrFilter(new PartialSearchFilter()),
+                        property: "username",
+                    ),
+                    "nombre" => new QueryParameter(
+                        filter: new OrFilter(new PartialSearchFilter()),
+                        property: "nombre",
+                    ),
+                    "apellido" => new QueryParameter(
+                        filter: new OrFilter(new PartialSearchFilter()),
+                        property: "apellido",
+                    ),
+                    "nit" => new QueryParameter(
+                        filter: new OrFilter(new PartialSearchFilter()),
+                        property: "nit",
+                    ),
+                    "email" => new QueryParameter(
+                        filter: new OrFilter(new PartialSearchFilter()),
+                        property: "email",
+                    ),
+                ],
+            ),
+            new Query(
+                name: "getByUsername",
+                resolver: UserByUsernameResolver::class,
+                args: ["username" => ["type" => "String"]],
+            ),
+        ],
+    ),
+]
+#[ApiFilter(DateFilter::class, properties: ["createdAt", "updatedAt"])]
+#[
+    ApiFilter(
+        SearchFilter::class,
+        properties: [
+            "permisos.id" => "exact",
+            "userRoles.id" => "exact",
+            "localidad.id" => "exact",
+            "status.id" => "exact",
+        ],
+    ),
+]
+#[
+    ApiFilter(
+        OrderFilter::class,
+        properties: [
+            "id",
+            "nombre",
+            "apellido",
+            "username",
+            "createdAt",
+            "email",
+        ],
+        arguments: ["orderParameterName" => "order"],
+    ),
+]
+class Usuario extends PersonaBase implements
+    UserInterface,
+    PasswordAuthenticatedUserInterface
 {
-
     #[ORM\Column(length: 180, unique: true, nullable: false)]
     private string $username;
 
@@ -88,16 +119,28 @@ class Usuario extends PersonaBase implements UserInterface, PasswordAuthenticate
     #[Ignore]
     private ?string $password = null;
 
-    #[Assert\NotBlank()]
+    #[Assert\NotBlank]
     private ?string $plainPassword = null;
     private ?string $fullName;
 
-    #[ORM\OneToMany(mappedBy: 'usuario', targetEntity: ApiToken::class)]
+    #[ORM\OneToMany(mappedBy: "usuario", targetEntity: ApiToken::class)]
     private Collection $apiTokens;
 
-    #[ORM\JoinTable(name: 'user_role')]
-    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
-    #[ORM\InverseJoinColumn(name: 'role_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
+    #[ORM\JoinTable(name: "user_role")]
+    #[
+        ORM\JoinColumn(
+            name: "user_id",
+            referencedColumnName: "id",
+            onDelete: "CASCADE",
+        ),
+    ]
+    #[
+        ORM\InverseJoinColumn(
+            name: "role_id",
+            referencedColumnName: "id",
+            onDelete: "CASCADE",
+        ),
+    ]
     #[ORM\ManyToMany(targetEntity: Role::class)]
     private Collection $userRoles;
 
@@ -111,29 +154,46 @@ class Usuario extends PersonaBase implements UserInterface, PasswordAuthenticate
      * @var Collection<int, Action>
      */
     #[ORM\ManyToMany(targetEntity: Action::class)]
-    #[ORM\JoinTable(name: 'user_direct_action')]
-    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
-    #[ORM\InverseJoinColumn(name: 'action_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
+    #[ORM\JoinTable(name: "user_direct_action")]
+    #[
+        ORM\JoinColumn(
+            name: "user_id",
+            referencedColumnName: "id",
+            onDelete: "CASCADE",
+        ),
+    ]
+    #[
+        ORM\InverseJoinColumn(
+            name: "action_id",
+            referencedColumnName: "id",
+            onDelete: "CASCADE",
+        ),
+    ]
     private Collection $directActions;
 
     /**
      * @var Collection<int, Action>
      */
     #[ORM\ManyToMany(targetEntity: Action::class)]
-    #[ORM\JoinTable(name: 'user_denied_action')]
-    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
-    #[ORM\InverseJoinColumn(name: 'action_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
+    #[ORM\JoinTable(name: "user_denied_action")]
+    #[
+        ORM\JoinColumn(
+            name: "user_id",
+            referencedColumnName: "id",
+            onDelete: "CASCADE",
+        ),
+    ]
+    #[
+        ORM\InverseJoinColumn(
+            name: "action_id",
+            referencedColumnName: "id",
+            onDelete: "CASCADE",
+        ),
+    ]
     private Collection $deniedActions;
-
-    /**
-     * @var Collection<int, Venta>
-     */
-    #[ORM\OneToMany(targetEntity: Venta::class, mappedBy: 'usuario')]
-    private Collection $ventas;
 
     public function __construct($data = [])
     {
-
         if (!empty($data)) {
             $this->loadData($data);
         }
@@ -143,12 +203,11 @@ class Usuario extends PersonaBase implements UserInterface, PasswordAuthenticate
         $this->permisos = new ServicesCollection();
         $this->directActions = new ServicesCollection();
         $this->deniedActions = new ServicesCollection();
-        $this->ventas = new ArrayCollection();
     }
 
     public function getFullName()
     {
-        return $this->nombre . ' ' . $this->apellido;
+        return $this->nombre . " " . $this->apellido;
     }
 
     public function getUsername(): string
@@ -180,9 +239,10 @@ class Usuario extends PersonaBase implements UserInterface, PasswordAuthenticate
     #[Ignore]
     public function getRoles(): array
     {
-        return $this->userRoles->map(fn(Role $role) => $role->getNombre())->toArray();
+        return $this->userRoles
+            ->map(fn(Role $role) => $role->getNombre())
+            ->toArray();
     }
-
 
     /**
      * @see PasswordAuthenticatedUserInterface
@@ -211,7 +271,6 @@ class Usuario extends PersonaBase implements UserInterface, PasswordAuthenticate
         return $this;
     }
 
-
     /**
      * @see UserInterface
      */
@@ -220,8 +279,6 @@ class Usuario extends PersonaBase implements UserInterface, PasswordAuthenticate
         // If you store any temporary, sensitive data on the user, clear it here
         // $this->plainPassword = null;
     }
-
-
 
     // public static function createFromPayload($username, array $payload): User {
     //     return new self(
@@ -270,7 +327,8 @@ class Usuario extends PersonaBase implements UserInterface, PasswordAuthenticate
             // ->filter(
             //     fn(ApiToken $apiToken) => $apiToken->isActivo()
             // )
-            ->first() ?: null;
+            ->first() ?:
+            null;
     }
 
     #[Ignore]
@@ -281,7 +339,6 @@ class Usuario extends PersonaBase implements UserInterface, PasswordAuthenticate
             ->map(fn(ApiToken $token) => $token->getToken())
             ->first();
     }
-
 
     public function addUserRole(Role $role): static
     {
@@ -373,37 +430,8 @@ class Usuario extends PersonaBase implements UserInterface, PasswordAuthenticate
 
     public function getLabel()
     {
-        $temp = explode(' ', $this->apellido);
-        return $this->username . ': ' . $this->nombre . ' ' . $temp[0] ?? $this->apellido;
-    }
-
-    /**
-     * @return Collection<int, Venta>
-     */
-    public function getVentas(): Collection
-    {
-        return $this->ventas;
-    }
-
-    public function addVenta(Venta $venta): static
-    {
-        if (!$this->ventas->contains($venta)) {
-            $this->ventas->add($venta);
-            $venta->setUsuario($this);
-        }
-
-        return $this;
-    }
-
-    public function removeVenta(Venta $venta): static
-    {
-        if ($this->ventas->removeElement($venta)) {
-            // set the owning side to null (unless already changed)
-            if ($venta->getUsuario() === $this) {
-                $venta->setUsuario(null);
-            }
-        }
-
-        return $this;
+        $temp = explode(" ", $this->apellido);
+        return $this->username . ": " . $this->nombre . " " . $temp[0] ??
+            $this->apellido;
     }
 }

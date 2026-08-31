@@ -22,7 +22,7 @@ flowchart TD
     end
 
     subgraph New[PostgreSQL]
-        SE[Servicio]
+        SE[Salida]
         RE[Recorrido]
         TR[Trayecto]
         BU[Bus]
@@ -46,12 +46,12 @@ flowchart TD
 
 ## Algoritmo principal
 
-`Migrador::migrarServicio()` (en `src/Migration/Migrador.php`):
+`Migrador::migrarSalida()` (en `src/Migration/Migrador.php`):
 
 ```php
-public function migrarServicio($servicios = 100): array {
+public function migrarSalida($salidas = 100): array {
     // 1. Fetch N salidas desde legacy
-    $salidas = $this->fetchSalidas($servicios);
+    $salidas = $this->fetchSalidas($salidas);
 
     // 2. Por cada salida:
     foreach ($salidas as $salida) {
@@ -59,7 +59,7 @@ public function migrarServicio($servicios = 100): array {
         // b) Migrar trayecto (ruta → trayecto + subtrayectos)
         // c) Crear o reusar recorrido
         // d) Migrar bus + asientos
-        // e) Crear servicio
+        // e) Crear salida
         // f) Migrar todos los boletos de la salida
     }
 }
@@ -68,7 +68,7 @@ public function migrarServicio($servicios = 100): array {
 ### Fetch de salidas
 
 ```sql
-SELECT TOP $servicios s.*, i.ruta_codigo, i.tipo_bus_id, i.empresa_id
+SELECT TOP $salidas s.*, i.ruta_codigo, i.tipo_bus_id, i.empresa_id
 FROM salida s
 LEFT JOIN itineario i ON i.id = s.itinerario_id
 WHERE s.estado_id in (1,2)
@@ -90,8 +90,8 @@ Por cada boleto en la salida:
 7. **Insertar boleto**:
 
 ```php
-INSERT INTO boleto (servicio_id, recorrido_id, cliente_id, venta_id, asiento_id, created_at, legacy_id)
-VALUES (:servicio_id, :recorrido_id, :cliente_id, :venta_id, :asiento_id, :created_at, :legacy_id)
+INSERT INTO boleto (salida_id, recorrido_id, cliente_id, venta_id, asiento_id, created_at, legacy_id)
+VALUES (:salida_id, :recorrido_id, :cliente_id, :venta_id, :asiento_id, :created_at, :legacy_id)
 ```
 
 ### Manejo transaccional
@@ -124,7 +124,7 @@ if (($i + 1) % 50 === 0) {
 
 ### Escalabilidad
 
-- El parámetro `$servicios` controla cuántas salidas (y sus boletos) se migran por lote
+- El parámetro `$salidas` controla cuántas salidas (y sus boletos) se migran por lote
 - Cada salida puede tener múltiples boletos (decenas o cientos)
 - Se recomienda comenzar con valores pequeños (100) e incrementar según el rendimiento
 - Memory limit configurado a 2G: `ini_set('memory_limit', '2G')`

@@ -42,9 +42,9 @@
 
 ---
 
-## Servicio
+## Salida
 
-**Tabla**: `servicio`  
+**Tabla**: `salida`  
 **Subdominios**: transporte, venta  
 
 ### Relaciones

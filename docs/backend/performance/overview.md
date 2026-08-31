@@ -2,7 +2,7 @@
 
 ## Consideraciones generales
 
-El backend de FDN Transportes maneja datos transaccionales (boletos, ventas, servicios) que pueden crecer significativamente. Las principales consideraciones de rendimiento son:
+El backend de FDN Transportes maneja datos transaccionales (boletos, ventas, salidas) que pueden crecer significativamente. Las principales consideraciones de rendimiento son:
 
 | Aspecto | Riesgo | Estrategia |
 |---------|--------|------------|

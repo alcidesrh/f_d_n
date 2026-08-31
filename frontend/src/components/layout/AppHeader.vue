@@ -22,6 +22,17 @@
     </div>
 
     <div class="header-actions">
+      <template v-if="topbarMenuItems.length > 0">
+        <router-link
+          v-for="item in topbarMenuItems"
+          :key="item.id"
+          :to="item.ruta ?? '#'"
+          class="icon-btn"
+          :title="item.label"
+        >
+          <AppIcon :name="item.icon ?? 'circle'" :size="18" />
+        </router-link>
+      </template>
       <slot name="menu-content"></slot>
 
       <button
@@ -70,6 +81,8 @@
   </header>
 </template>
 <script setup lang="ts">
+import { computed } from "vue";
+import { useMenusStore } from "@/stores/menus";
 import { NOTIFICATIONS } from "@/data/mock";
 import { useDialog } from "primevue/usedialog";
 import ThemeEditor from "@/components/common/ThemeEditor.vue";
@@ -78,7 +91,9 @@ const showThemeEditor = () => dialog.open(ThemeEditor, { props: { header: "Edit 
 defineProps<{ crumbs: string[] }>();
 type PopoverName = "notif" | "customizer" | "user" | "fullscreen" | null;
 const openPopover = ref<PopoverName>(null);
-// const ui = useUiStore();
+
+const menusStore = useMenusStore();
+const topbarMenuItems = computed(() => menusStore.topbarRightItems);
 
 function toggleFullscreen() {
   if (!document.fullscreenElement) {

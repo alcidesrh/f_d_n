@@ -16,10 +16,10 @@ final class VueRouteSynchronizer
     public function sync(array $routes, ?VueRoute $parent = null): array
     {
         $existingByParent = $this->getExistingByParent($parent);
-        $handledIds = [];
+        $handledNames = [];
 
         foreach ($routes as $route) {
-            $vueRouteName = $route['name'] ?? '';
+            $vueRouteName = (string) ($route['name'] ?? '');
             $existing = $existingByParent[$vueRouteName] ?? null;
 
             if ($existing) {
@@ -29,17 +29,22 @@ final class VueRouteSynchronizer
                 $entity = $this->createRoute($route, $parent);
             }
 
-            $handledIds[] = $entity->getId();
+            $handledNames[] = $vueRouteName;
 
             if (!empty($route['children'])) {
-                $childIds = $this->sync($route['children'], $entity);
-                $handledIds = array_merge($handledIds, $childIds);
+                if ($entity->getId() === null) {
+                    $this->entityManager->flush();
+                }
+
+                $this->sync($route['children'], $entity);
             }
         }
 
-        $this->deleteRemoved($existingByParent, $handledIds);
+        $this->deleteRemoved($existingByParent, $handledNames);
 
-        return $handledIds;
+        $this->entityManager->flush();
+
+        return $handledNames;
     }
 
     private function createRoute(array $route, ?VueRoute $parent): VueRoute
@@ -52,7 +57,6 @@ final class VueRouteSynchronizer
         $entity->setVueRoute($parent);
 
         $this->entityManager->persist($entity);
-        $this->entityManager->flush();
 
         return $entity;
     }
@@ -63,19 +67,29 @@ final class VueRouteSynchronizer
         $entity->setNombre($route['name'] ?? $entity->getNombre());
         $entity->setPath($route['path'] ?? $entity->getPath());
         $entity->setParams(self::extractParams($route['path'] ?? ''));
-
-        $this->entityManager->flush();
     }
 
-    private function deleteRemoved(array $existingByParent, array $handledIds): void
+    private function deleteRemoved(array $existingByParent, array $handledNames): void
     {
         foreach ($existingByParent as $entity) {
-            if (!in_array($entity->getId(), $handledIds, true)) {
-                $this->entityManager->remove($entity);
+            if (!in_array($entity->getVueRouteName(), $handledNames, true)) {
+                $this->removeRouteWithDescendants($entity);
             }
         }
+    }
 
-        $this->entityManager->flush();
+    /**
+     * Elimina una ruta y todos sus descendientes de abajo hacia arriba para
+     * respetar la restricción de clave foránea auto-referencial
+     * (`vue_route.vue_route_id` no tiene ON DELETE en cascada).
+     */
+    private function removeRouteWithDescendants(VueRoute $entity): void
+    {
+        foreach ($entity->getHijos() as $hijo) {
+            $this->removeRouteWithDescendants($hijo);
+        }
+
+        $this->entityManager->remove($entity);
     }
 
     /**

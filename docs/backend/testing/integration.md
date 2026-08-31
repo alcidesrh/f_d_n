@@ -73,11 +73,11 @@ class PermissionManagerIntegrationTest extends KernelTestCase {
 
 ```php
 class MigradorIntegrationTest extends KernelTestCase {
-    public function testMigrarServicio(): void {
+    public function testMigrarSalida(): void {
         $migrador = static::getContainer()->get(Migrador::class);
-        $contadores = $migrador->migrarServicio(1);
+        $contadores = $migrador->migrarSalida(1);
 
-        $this->assertArrayHasKey('servicio', $contadores);
+        $this->assertArrayHasKey('salida', $contadores);
         $this->assertArrayHasKey('boleto', $contadores);
     }
 }

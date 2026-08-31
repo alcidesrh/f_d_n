@@ -27,7 +27,7 @@
   --sb-mini: 70px;
   --sb-close: 0px;
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
-  --transition: 0.2s var(--ease);
+  --transition: 2s var(--ease);
 }
 
 /* NOTA: el bloque anterior `prefers-reduced-motion: reduce` con

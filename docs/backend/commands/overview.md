@@ -4,7 +4,7 @@ Listado completo de comandos Symfony personalizados en `src/Command/`.
 
 | Comando | Clase | Descripción |
 |---------|-------|-------------|
-| `app:migrar` | `MigrarCommand` | Migra boletos (servicios) desde legacy |
+| `app:migrar` | `MigrarCommand` | Migra boletos (salidas) desde legacy |
 | `app:migrar:todo` | `MigrarTodoCommand` | Migración completa en 5 pasos |
 | `app:migrar:estaticos` | `MigrarEstaticosCommand` | Migra entidades estáticas |
 | `app:migrar:iam` | `MigrarIAMCommand` | Migra roles, permisos, acciones |

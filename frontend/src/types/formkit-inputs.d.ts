@@ -116,7 +116,11 @@ declare module '@formkit/inputs' {
       options?: unknown[]
       selectionMode?: 'single' | 'multiple' | 'checkbox'
       filter?: boolean
+      filterPlaceholder?: string
       showClear?: boolean
+      expandedKeys?: Record<string, boolean>
+      autoExpand?: boolean
+      placeholder?: string
     }
     ToggleSwitch: {
       type: 'ToggleSwitch'

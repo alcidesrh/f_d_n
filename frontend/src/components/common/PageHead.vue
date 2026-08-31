@@ -8,14 +8,14 @@
   </div>
 </template>
 <script setup lang="ts">
-import router from '@/router'
+import router from "@/router";
 
-const props = withDefaults(defineProps<{ title: string; subtitle?: string }>(), { subtitle: '' })
+const props = withDefaults(defineProps<{ title: string; subtitle?: string }>(), { subtitle: "" });
 
 const computedTitle = computed(() => {
-  const route = router.currentRoute.value
+  const route = router.currentRoute.value;
 
-  return `${route.meta?.title || ''}${router.currentRoute.value.params?.entity || ''}${props.title || ''}`
+  return `${route.meta?.title || ""} ${router.currentRoute.value.params?.entity || ""}${props.title || ""}`;
 
   // let t = "";
   // if (route.meta.title) {
@@ -28,5 +28,5 @@ const computedTitle = computed(() => {
   //   t = `${t} ${props.title}`
   // }
   // return t;
-})
+});
 </script>

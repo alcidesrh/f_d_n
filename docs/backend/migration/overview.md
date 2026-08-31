@@ -21,7 +21,7 @@ flowchart LR
         P3[MigradorEstaticos<br/>Empresa, Bus, etc.]
         P4[MigradorIAM<br/>Roles, Permisos, Actions]
         P5[EntityConfigSync<br/>Metadata]
-        P6[Migrador<br/>Servicios + Boletos]
+        P6[Migrador<br/>Salidas + Boletos]
     end
 
     subgraph New[PostgreSQL 16]
@@ -50,7 +50,7 @@ flowchart LR
 | Tipo | Tablas | Estrategia |
 |------|--------|------------|
 | **ID_MAP** | empresa, enclave, asiento, cliente, usuario, tarifa | Usan el PK numérico legacy como nuevo PK. Sin columna `legacy_id`. |
-| **LEGACY_MAP** | bus, trayecto, servicio, boleto | El PK legacy es string o variable. Mantienen columna `legacy_id`. Nuevo PK autoincremental. |
+| **LEGACY_MAP** | bus, trayecto, salida, boleto | El PK legacy es string o variable. Mantienen columna `legacy_id`. Nuevo PK autoincremental. |
 
 ## Clases del pipeline
 
@@ -60,7 +60,7 @@ flowchart LR
 | `Mapeador` | `src/Migration/Mapeador.php` | Transforma registros legacy al formato nuevo |
 | `MigradorEstaticos` | `src/Migration/MigradorEstaticos.php` | Migra entidades estáticas (empresa, bus, cliente, piloto, marcas, localidad, trayectos, tarifas) |
 | `MigradorIAM` | `src/Migration/MigradorIAM.php` | Crea Actions base, Permisos, Roles y asigna usuarios |
-| `Migrador` | `src/Migration/Migrador.php` | Migra servicios (salidas) y boletos. Es el paso transaccional más pesado. |
+| `Migrador` | `src/Migration/Migrador.php` | Migra salidas y boletos. Es el paso transaccional más pesado. |
 
 ## Orden de migración
 
@@ -68,7 +68,7 @@ flowchart LR
 2. Datos estáticos — Empresa → Piloto → Localidad → Estacion → Cliente → Usuario → BusMarca → Bus → Asiento → Trayecto
 3. IAM — Actions base → Permisos → Roles base → Roles legacy → User-Role
 4. EntityConfiguration — sincronización de metadatos
-5. Servicios + Boletos — desde salidas legacy
+5. Salidas + Boletos — desde salidas legacy
 
 ## Manejo de encoding
 

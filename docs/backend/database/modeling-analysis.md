@@ -14,9 +14,9 @@ Este documento analiza el modelo de entidades actual y propone mejoras.
 
 ### 1. Relaciones débiles en Boleto
 
-**Problema**: `Boleto.recorrido` es nullable y opcional. El recorrido se puede derivar del servicio, pero tenerlo como nullable puede generar inconsistencias.
+**Problema**: `Boleto.recorrido` es nullable y opcional. El recorrido se puede derivar de la salida, pero tenerlo como nullable puede generar inconsistencias.
 
-**Sugerencia**: Hacer `recorrido_id` NOT NULL en boleto o eliminarlo y derivarlo siempre desde `servicio.recorrido`.
+**Sugerencia**: Hacer `recorrido_id` NOT NULL en boleto o eliminarlo y derivarlo siempre desde `salida.recorrido`.
 
 ```php
 // Actual: nullable
@@ -51,7 +51,7 @@ private Recorrido $recorrido;
 
 **Problema**: No hay índices explícitos para patrones de consulta comunes:
 - Búsqueda ILIKE en nombre/apellido de usuario
-- Búsqueda por rango de fechas en venta y servicio
+- Búsqueda por rango de fechas en venta y salida
 - Búsqueda por legacy_id en boleto y trayecto
 
 **Sugerencia**: Ver [Indexing](indexing.md) para la lista de índices recomendados.
@@ -82,7 +82,7 @@ private Recorrido $recorrido;
 
 ### 10. Carencia de auditoría
 
-**Problema**: Solo `Venta` y `Factura` tienen timestamps de creación/actualización via traits. Otras entidades transaccionales como `Servicio` y `Boleto` carecen de `updated_at`.
+**Problema**: Solo `Venta` y `Factura` tienen timestamps de creación/actualización via traits. Otras entidades transaccionales como `Salida` y `Boleto` carecen de `updated_at`.
 
 **Sugerencia**: Añadir `TimestampableEntityTrait` a todas las entidades transaccionales.
 

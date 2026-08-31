@@ -153,9 +153,9 @@ Distribuidas en 7 subdominios:
 
 | Subdominio | Entidades |
 |-----------|-----------|
-| **Transporte** | Boleto, Trayecto, Recorrido, RecorridoMatrioska, Servicio, Status |
+| **Transporte** | Boleto, Trayecto, Recorrido, RecorridoMatrioska, Salida, Status |
 | **Flota** | Bus, BusMarca, Asiento, Piloto, Enclave |
-| **Venta** | Venta, Factura, Cliente, Boleto, Servicio |
+| **Venta** | Venta, Factura, Cliente, Boleto, Salida |
 | **Personal** | Usuario, Piloto |
 | **Configuración** | EntityConfiguration, CollectionFieldConfig, FormFieldConfig |
 | **Infraestructura** | Icon, IconCategory, Empresa, Localidad, Estacion, Parada, Nacion |

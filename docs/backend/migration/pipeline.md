@@ -18,7 +18,7 @@ docker compose exec backend php bin/console app:migrar:todo [options]
 | `--skip-estaticos` | Salta migración de entidades estáticas |
 | `--skip-iam` | Salta migración de IAM |
 | `--skip-config` | Salta sincronización de EntityConfiguration |
-| `--servicios=N` | Cantidad de servicios a migrar (default: 100) |
+| `--salidas=N` | Cantidad de salidas a migrar (default: 100) |
 | `--entities=[]` | Lista de entidades estáticas específicas a migrar |
 
 ### Paso 1: Reset/Clean
@@ -66,16 +66,16 @@ foreach ($metadataFactory->getAllMetadata() as $metadata) {
 }
 ```
 
-### Paso 5: Servicios + Boletos
+### Paso 5: Salidas + Boletos
 
-Ejecuta `Migrador::migrarServicio()`:
+Ejecuta `Migrador::migrarSalida()`:
 1. Fetch salidas desde legacy (TOP N)
 2. Por cada salida:
    - Migrar empresa (si no existe)
    - Migrar trayecto (si no existe)
    - Crear o reusar recorrido
    - Migrar bus y asientos
-   - Crear servicio
+   - Crear salida
    - Migrar boletos de la salida (con venta, cliente, usuario)
 
 ## Control de memoria

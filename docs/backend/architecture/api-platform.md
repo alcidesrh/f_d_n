@@ -43,7 +43,7 @@ En `src/Attribute/` existen tres atributos reutilizables:
 
 | Atributo | Propósito |
 |----------|-----------|
-| `#[ApiResourcePaginationPage]` | Activa paginación tipo `page` para todas las operaciones GraphQL con filtros OR por campo. Usado en entidades de alto volumen (Boleto, Servicio, Venta, Usuario). |
+| `#[ApiResourcePaginationPage]` | Activa paginación tipo `page` para todas las operaciones GraphQL con filtros OR por campo. Usado en entidades de alto volumen (Boleto, Salida, Venta, Usuario). |
 | `#[ApiResourceNoPagination]` | Desactiva paginación. Usado en entidades pequeñas y catálogos (Role, Permiso, Action, Status, Icon, Empresa, BusMarca). |
 | `#[ApiResourceBase]` | Configuración base mínima para entidades simples. |
 
@@ -106,7 +106,7 @@ En `src/ApiResource/`:
 
 ### Paginación
 
-- **Tipo `page`**: usado en entidades transaccionales (Boleto, Servicio, Venta, Usuario). Parámetros: `currentPage`, `itemsPerPage`.
+- **Tipo `page`**: usado en entidades transaccionales (Boleto, Salida, Venta, Usuario). Parámetros: `currentPage`, `itemsPerPage`.
 - **Sin paginación**: usado en catálogos pequeños (Role, Permiso, Action, Status, Icon, Empresa, BusMarca).
 
 ### Formatos de entrada/salida
