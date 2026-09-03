@@ -6,7 +6,7 @@
 
   --text: var(--p-surface-600);
   --text-muted: var(--p-surface-600);
-  --border: 4.1px double var(--p-surface-300);
+  --border: 0.1px solid var(--p-surface-200);
   --border-200: 0.1px solid var(--p-surface-200);
   --border-400: 0.1px solid var(--p-surface-400);
   --shadow: 0px 0.5px 3px 0px var(--p-surface-500);
@@ -23,11 +23,12 @@
   --c-info-soft: rgba(59, 130, 246, 0.12);
 
   --header-h: 70px;
-  --sb-open: 250px;
+  --sidebar-width: 250px;
   --sb-mini: 70px;
   --sb-close: 0px;
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
-  --transition: 2s var(--ease);
+  --transition: 0.2s;
+  /*var(--ease);*/
 }
 
 /* NOTA: el bloque anterior `prefers-reduced-motion: reduce` con

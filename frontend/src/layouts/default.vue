@@ -1,9 +1,9 @@
 <template>
-  <div class="body-row">
+  <div class="body-row" :data-sidebar-l="ui.leftState" :data-sidebar-r="ui.rightState">
     <AppHeader :crumbs="crumbs">
       <template #menu-content></template>
     </AppHeader>
-    <SidebarLeft>
+    <SidebarLeft side="left">
       <template #menu-content></template>
     </SidebarLeft>
 
@@ -13,9 +13,9 @@
       </div>
     </main>
 
-    <SidebarRight>
+    <SidebarLeft side="right">
       <template #menu-content></template>
-    </SidebarRight>
+    </SidebarLeft>
   </div>
 </template>
 <script setup lang="ts">

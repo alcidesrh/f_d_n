@@ -108,13 +108,11 @@ export const themeColors = (theme, primary, surface, dark) => {
     primitive: primitive,
     semantic: {
       ...option.value.semantic,
-<<<<<<< Updated upstream
       formField: {
         ...option.value.semantic.formField,
         borderRadius: "4px",
       },
-=======
->>>>>>> Stashed changes
+
       transitionDuration: ".2s",
       primary: primary,
       secondary: {
@@ -157,11 +155,7 @@ export const themeColors = (theme, primary, surface, dark) => {
           hoverMutedColor: "{surface.600}",
         },
         content: {
-<<<<<<< Updated upstream
-          background: "{surface.0}",
-=======
           background: "{surface.50}",
->>>>>>> Stashed changes
           hoverBackground: "{surface.200}",
           borderColor: "{surface.300}",
           color: "{text.color}",
@@ -212,15 +206,6 @@ export const themeColors = (theme, primary, surface, dark) => {
     },
     components: { ...option.value.components, ...componentsPreset(theme) },
   };
-<<<<<<< Updated upstream
-=======
-
-  return {
-    tailwindPalete: colors,
-    primitive: { ...option.value.primitive, ...colors },
-    primary: primary,
-  };
->>>>>>> Stashed changes
 };
 //#region Componentes
 export const componentsPreset = (parent: string) => {
@@ -257,11 +242,7 @@ export const componentsPreset = (parent: string) => {
       ...option.value.components.datatable,
       header: {
         cell: {
-<<<<<<< Updated upstream
           padding: "5px 0",
-=======
-          padding: "5px 1rem",
->>>>>>> Stashed changes
         },
       },
       colorScheme: {
@@ -316,7 +297,6 @@ export const componentsPreset = (parent: string) => {
       root: {
         ...option.value.components.dialog?.root,
         background: "{overlay.modal.background}",
-<<<<<<< Updated upstream
       },
     },
     progressbar: {
@@ -327,13 +307,6 @@ export const componentsPreset = (parent: string) => {
       },
       value: {
         background: "{surface.800}",
-      },
-    },
-    form: {
-      field: {
-        border: {
-          radius: "1px",
-        },
       },
     },
     button: {
@@ -351,11 +324,6 @@ export const componentsPreset = (parent: string) => {
             },
           },
         },
-      },
-    },
-  };
-};
-=======
       },
     },
     tabs: {
@@ -381,9 +349,5 @@ export const componentsPreset = (parent: string) => {
         },
       },
     },
-
-    // },
   };
 };
-//#endregion
->>>>>>> Stashed changes

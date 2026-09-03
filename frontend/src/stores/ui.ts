@@ -89,6 +89,7 @@ export const useUiStore = defineStore("ui", {
       }
       if (this.leftState == "close") {
         this.leftState = this.prevLeftState;
+        this.prevLeftState = "close";
       } else {
         this.leftState =
           this.leftState === "open" ? "mini" : this.leftState === "mini" ? "close" : "open";

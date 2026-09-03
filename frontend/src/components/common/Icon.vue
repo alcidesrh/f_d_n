@@ -2,7 +2,7 @@
   <IconifyInstance
     :icon="iconName"
     :stroke-width="props.sw"
-    :style="{ width: `${size}`, height: `${size}` }"
+    :style="{ width: `${size}`, height: `${size}`, minWidth: `${size}`, minHeight: `${size}` }"
     :class="clases"
     v-bind="$attrs"
   />

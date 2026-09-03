@@ -37,7 +37,11 @@ export interface PaginationState {
   lastPage: number;
   hasNextPage: boolean;
 }
-
+export interface SidebarStoreState<T = unknown> {
+  side: string;
+  mode: "open" | "mini" | "close";
+  prevMode: "open" | "mini" | "close";
+}
 export interface EntityStoreState<T = unknown> {
   /** Nombre de la entidad tal cual (ej: `Boleto`). */
   name: string;
@@ -45,7 +49,7 @@ export interface EntityStoreState<T = unknown> {
   columns: CollectionFieldConfig[];
   /** Elementos del listado actual. */
   items: T[];
-  pagination: PaginationState;
+  pagination?: PaginationState;
   filters: Record<string, unknown>;
   order: OrderCondition[];
   /** Elemento obtenido por `get` (ver o editar). */

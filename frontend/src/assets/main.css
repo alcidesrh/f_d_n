@@ -1,7 +1,6 @@
 /* Order */
 /* Define el orden de precedencia de las capas */
 
-
 /* Reset CSS */
 
 @import "tailwindcss";
@@ -55,7 +54,7 @@ a {
   text-decoration: none;
 }
 svg[stroke-width] g,
-svg[stroke-width] path{
+svg[stroke-width] path {
   stroke-width: inherit !important;
   color: inherit !important;
 }
@@ -99,27 +98,27 @@ svg[stroke-width] path{
     z-index: 45;
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
   }
-  .sidebar.left-side {
+  .sidebar.left {
     left: 0;
   }
-  .sidebar.right-side {
+  .sidebar.right {
     right: 0;
   }
-  .sidebar.left-side.closed,
-  .sidebar.left-side.mobile-hidden {
+  .sidebar.left.closed,
+  .sidebar.left.mobile-hidden {
     transform: translateX(-100%);
     width: var(--sb-open) !important;
   }
-  .sidebar.right-side.closed,
-  .sidebar.right-side.mobile-hidden {
+  .sidebar.right.closed,
+  .sidebar.right.mobile-hidden {
     transform: translateX(100%);
     width: var(--sb-open) !important;
   }
-  .sidebar.left-side:not(.mobile-hidden):not(.closed) {
+  .sidebar.left:not(.mobile-hidden):not(.closed) {
     transform: translateX(0);
     width: var(--sb-open) !important;
   }
-  .sidebar.right-side:not(.mobile-hidden):not(.closed) {
+  .sidebar.right:not(.mobile-hidden):not(.closed) {
     transform: translateX(0);
     width: var(--sb-open) !important;
   }

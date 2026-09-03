@@ -72,7 +72,7 @@ function describeType(ref: IntrospectionRef): {
 } {
   const named = unwrap(ref);
 
-  console.log(signature(ref))
+  console.log(signature(ref));
   return {
     namedType: named.name ?? "",
     required: ref.kind === "NON_NULL" || (ref.ofType?.kind === "NON_NULL" && ref.kind === "LIST"),
@@ -294,13 +294,9 @@ export function parseIntrospection(schema: IntrospectionSchemaLike): Record<stri
         isList: info.isList,
         isRelation: !isScalar && !isConnection,
         isSubcollection: !isScalar && isConnection,
-<<<<<<< Updated upstream
-        enumValues: kind === 'ENUM' ? (namedInfo?.enumValues ?? []).map((v) => v.name) : [],
-=======
       };
       if (kind === "ENUM" && namedInfo?.enumValues) {
         entry.enumValues = namedInfo.enumValues.map((ev) => ev.name);
->>>>>>> Stashed changes
       }
       schema.fields.push(entry);
       if (isScalar) schema.scalarFields.push(field.name);
@@ -334,21 +330,12 @@ export function parseIntrospection(schema: IntrospectionSchemaLike): Record<stri
     const entityName = field.name.slice(kind.length);
     if (!nodeTypes.has(entityName)) continue;
 
-<<<<<<< Updated upstream
-    const inputTypeName = field.args[0] ? describeType(field.args[0].type).namedType : ''
-    const payloadTypeName = describeType(field.type).namedType
-    const payloadType = types.get(payloadTypeName)
-    const inputType = types.get(inputTypeName)
-    const schema = entities.get(entityName)
-    let returnsField = ''
-=======
     const inputTypeName = field.args[0] ? describeType(field.args[0].type).namedType : "";
     const payloadTypeName = describeType(field.type).namedType;
     const payloadType = types.get(payloadTypeName);
     const inputType = types.get(inputTypeName);
 
     let returnsField = "";
->>>>>>> Stashed changes
     for (const payloadField of payloadType?.fields ?? []) {
       if (describeType(payloadField.type).namedType === entityName) {
         returnsField = payloadField.name;
@@ -363,48 +350,28 @@ export function parseIntrospection(schema: IntrospectionSchemaLike): Record<stri
       payloadType: payloadTypeName,
       returnsField,
       inputFields: (inputType?.inputFields ?? []).map((inputField) => {
-<<<<<<< Updated upstream
-        const info = describeType(inputField.type)
-        const namedKind = types.get(info.namedType)?.kind ?? 'SCALAR'
-        // API Platform tipa las relaciones del input como IRIs (String/[String]);
-        // el tipo real se resuelve contra los campos de la entidad ya parseados.
-        const entityField = schema?.fields.find((f) => f.name === inputField.name && f.isRelation)
-        return {
-=======
         const info = describeType(inputField.type);
         const namedType = types.get(info.namedType);
         const namedKind = namedType?.kind ?? "SCALAR";
         const result: import("./types").SchemaInputField = {
->>>>>>> Stashed changes
           name: inputField.name,
           type: info.type,
           namedType: entityField ? entityField.namedType : info.namedType,
-          kind: entityField ? 'OBJECT' : namedKind,
+          kind: entityField ? "OBJECT" : namedKind,
           required: info.required,
           isList: info.isList,
-<<<<<<< Updated upstream
-          isRelation: Boolean(entityField),
-          enumValues:
-            entityField || namedKind !== 'ENUM'
-              ? []
-              : (types.get(info.namedType)?.enumValues ?? []).map((v) => v.name),
-=======
+
           isRelation: namedKind === "OBJECT",
         };
         if (namedKind === "ENUM" && namedType?.enumValues) {
           result.enumValues = namedType.enumValues.map((ev) => ev.name);
->>>>>>> Stashed changes
         }
         return result;
       }),
     };
 
-<<<<<<< Updated upstream
-    if (schema) schema[kind] = mutation
-=======
     const schema = entities.get(entityName);
     if (schema) schema[kind] = mutation;
->>>>>>> Stashed changes
   }
 
   const result: Record<string, EntitySchema> = {};

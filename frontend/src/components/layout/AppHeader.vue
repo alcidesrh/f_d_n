@@ -1,7 +1,7 @@
 <template>
   <header class="app-header">
-    <div class="flex btn-siderbar-header" :class="[ui.leftState]">
-      <button class="icon-btn" title="Mostrar/ocultar menú" @click="ui.cycleLeft()">
+    <div class="flex btn-siderbar-header" :class="[sidebarStore.mode]">
+      <button class="icon-btn" title="Mostrar/ocultar menú" @click="sidebarStore.setMode()">
         <AppIcon name="menu" :size="19" />
       </button>
       <Divider layout="vertical" class="mx-[5px]!" />
@@ -71,6 +71,12 @@
           <AppIcon name="chevrondown" :size="14" />
         </div>
       </div>
+      <div class="flex btn-siderbar-header" :class="[sidebarStoreR.mode]">
+        <button class="icon-btn" title="Mostrar/ocultar menú" @click="sidebarStoreR.setMode()">
+          <AppIcon name="menu" :size="19" />
+        </button>
+        <Divider layout="vertical" class="mx-[5px]!" />
+      </div>
     </div>
     <div class="flex btn-siderbar-header" :class="[ui.rightState]">
       <Divider layout="vertical" class="mx-[5px]!" />
@@ -89,6 +95,8 @@ import ThemeEditor from "@/components/common/ThemeEditor.vue";
 const dialog = useDialog();
 const showThemeEditor = () => dialog.open(ThemeEditor, { props: { header: "Edit Profile" } });
 defineProps<{ crumbs: string[] }>();
+const sidebarStore = defineSidebarStore("left")();
+const sidebarStoreR = defineSidebarStore("right")();
 type PopoverName = "notif" | "customizer" | "user" | "fullscreen" | null;
 const openPopover = ref<PopoverName>(null);
 

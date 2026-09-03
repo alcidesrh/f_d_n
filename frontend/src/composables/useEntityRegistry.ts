@@ -10,9 +10,10 @@
 import { defineEntityStore } from "@/stores/entities/factory";
 import type { EntityStore } from "@/stores/entities/types";
 import router from "@/router";
-export const stores = new Map<string, EntityStore<unknown>>();
 import { useSchemaRepositoryStore } from "@/stores/schemaRepository";
 import type { EntitySchema } from "@/lib/apollo";
+
+export const stores = new Map<string, EntityStore<unknown>>();
 
 export function getEntity<T = unknown>(entityName?: string): EntityStore<T> {
   const schemaRepo = useSchemaRepositoryStore();

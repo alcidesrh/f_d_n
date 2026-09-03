@@ -19,23 +19,14 @@
 </template>
 
 <script setup lang="ts">
-<<<<<<< Updated upstream
-import type { FormKitFrameworkContext } from '@formkit/core'
-import { useFormKitInput } from './useFormKitInput'
-=======
 import { computed, ref } from "vue";
 import type { FormKitFrameworkContext } from "@formkit/core";
 import { useFormKitInput } from "./useFormKitInput";
 import { getEntity } from "@/composables/useEntityRegistry";
 import type { AgnosticOption } from "@/lib/apollo/types";
->>>>>>> Stashed changes
 
-defineOptions({ name: 'FkAutoComplete' })
+defineOptions({ name: "FkAutoComplete" });
 
-<<<<<<< Updated upstream
-const props = defineProps<{ context: FormKitFrameworkContext }>()
-const { context, update, blur, invalid, disabled } = useFormKitInput(props)
-=======
 const props = defineProps<{ context: FormKitFrameworkContext }>();
 const { context, update, blur, invalid, disabled } = useFormKitInput(props);
 
@@ -44,9 +35,7 @@ const entityName = computed<string | undefined>(
   () => props.context.attrs.entityName as string | undefined,
 );
 
-const multiple = computed<boolean>(
-  () => props.context.attrs.multiple === true,
-);
+const multiple = computed<boolean>(() => props.context.attrs.multiple === true);
 
 /** Etiqueta para mostrar en las sugerencias (por defecto "label" de AgnosticOption). */
 const optionLabel = computed<string>(
@@ -88,5 +77,4 @@ const cleanAttrs = computed(() => {
   } = props.context.attrs;
   return rest;
 });
->>>>>>> Stashed changes
 </script>
