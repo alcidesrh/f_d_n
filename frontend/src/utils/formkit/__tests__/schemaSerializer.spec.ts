@@ -136,6 +136,19 @@ describe('buildFieldOptions', () => {
     ])
   })
 
+  it('soporta la forma real del backend `{ value: IRI, label }` (regresión)', () => {
+    const entry = field({ name: 'ruta', namedType: 'Ruta', kind: 'OBJECT', isRelation: true })
+    expect(
+      buildFieldOptions(entry, [
+        { value: '/api/rutas/1', label: 'Ruta 1' },
+        { value: '/api/rutas/2', label: 'Ruta 2' },
+      ]),
+    ).toEqual([
+      { label: 'Ruta 1', value: '/api/rutas/1' },
+      { label: 'Ruta 2', value: '/api/rutas/2' },
+    ])
+  })
+
   it('usa enumValues como opciones de enums', () => {
     const entry = field({
       name: 'estado',
@@ -354,6 +367,8 @@ describe('serializeSubmitValue', () => {
   const fields = [
     field({ name: 'fecha', namedType: 'Date' }),
     field({ name: 'total', namedType: 'Float' }),
+    field({ name: 'ruta', namedType: 'Ruta', kind: 'OBJECT', isRelation: true }),
+    field({ name: 'boletas', namedType: 'Boleta', kind: 'OBJECT', isRelation: true, isList: true }),
   ]
 
   it('normaliza fechas Date e ISO a YYYY-MM-DD local y pasa el resto', () => {
@@ -370,5 +385,17 @@ describe('serializeSubmitValue', () => {
     const out = serializeSubmitValue(fields, { fecha: '2024-02-20T23:59:59Z', total: null })
     expect(out.fecha).toBe('2024-02-20')
     expect(out.total).toBeNull()
+  })
+
+  it('reduce relaciones a IRIs escalares sin importar la forma del valor (regresión)', () => {
+    const local = new Date(2024, 0, 15, 12, 0, 0)
+    const out = serializeSubmitValue(fields, {
+      fecha: local,
+      ruta: { label: 'Ruta 1', value: '/api/rutas/1' },
+      boletas: ['/api/boletas/1', { id: '/api/boletas/2' }, { value: '/api/boletas/3' }, null],
+    })
+    expect(out.ruta).toBe('/api/rutas/1')
+    expect(out.boletas).toEqual(['/api/boletas/1', '/api/boletas/2', '/api/boletas/3'])
+    expect(out.fecha).toBe('2024-01-15')
   })
 })

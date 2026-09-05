@@ -14,7 +14,7 @@
 </template>
 <script setup lang="ts">
 import type { FormKitFrameworkContext } from '@formkit/core'
-import { useFormKitInput, normalizeOptions, toScalarArray } from './useFormKitInput'
+import { useFormKitInput, normalizeOptions, resolveOptions, toScalarArray } from './useFormKitInput'
 
 defineOptions({ name: 'FkSelect' })
 
@@ -23,7 +23,7 @@ const { context, update, blur, invalid, disabled } = useFormKitInput(props)
 
 const attrs = computed(() => {
   const result = { ...context.value.attrs }
-  result.options = normalizeOptions(result.options)
+  result.options = normalizeOptions(resolveOptions(result.options))
   if (result.optionLabel == null) result.optionLabel = 'label'
   if (result.optionValue == null) result.optionValue = 'value'
   return result

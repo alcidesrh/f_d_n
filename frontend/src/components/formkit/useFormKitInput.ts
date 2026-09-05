@@ -37,6 +37,21 @@ export function normalizeOptions(options: unknown): NormalizedOption[] {
   })
 }
 
+/**
+ * Resuelve las options de un input pudiendo ser un array o una función getter.
+ * Si es función se invoca (registrando sus dependencias reactivas), de modo
+ * que los cambios en los refs que la función lee se reflejan al re-evaluarse el
+ * `computed` del wrapper — FormKit congela `attrs.options`, por lo que una
+ * función estable con closure reactivo es la vía para actualizar options sin
+ * remontar el componente.
+ */
+export function resolveOptions(options: unknown): unknown[] {
+  if (typeof options === 'function') {
+    return (options as () => unknown)() as unknown[]
+  }
+  return Array.isArray(options) ? options : []
+}
+
 export function useFormKitInput(props: FormKitInputProps) {
   const context = toRef(props, 'context')
 

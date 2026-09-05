@@ -87,3 +87,15 @@ make docs-gen-all # Regenerar docs automáticas
 - El frontend tiene `pnpm-lock.yaml` y `package-lock.json` — Docker usa `npm`
 - La migración completa desde TerminalOmnibus toma horas (6679 salidas)
 - Para debug con Xdebug: usar `make debug` (usa Caddyfile.dev sin workers)
+
+---
+
+## Agent skills
+
+### Issue tracker
+
+Work is tracked as GitHub issues in this repo. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` at the repo root; ADRs live under `docs/docs/architecture/decisions/`. See `docs/agents/domain.md`.

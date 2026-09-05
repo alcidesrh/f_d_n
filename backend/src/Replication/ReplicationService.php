@@ -16,7 +16,7 @@ use Doctrine\ORM\Events;
  * Flow: New system event → ReplicationService → legacy system
  * Reverse: SincronizarCommand + Migrador → new system
  *
- * Key entities to sync: salida, boleto, asiento occupancy.
+ * Key entities to sync: itinerario, boleto, asiento occupancy.
  *
  * Registered as a Doctrine event subscriber — postPersist/postUpdate
  * trigger replication to the legacy system automatically.
@@ -40,17 +40,17 @@ class ReplicationService implements EventSubscriber
     /**
      * Sync a new Salida to the legacy system.
      */
-    public function syncSalidaToLegacy(int $salidaId): void
+    public function syncSalidaToLegacy(int $itinerarioId): void
     {
-        $salida = $this->newConn->fetchAssociative(
-            "SELECT s.*, t.legacy_id AS ruta_legacy_id FROM salida s LEFT JOIN trayecto t ON t.id = s.ruta_id WHERE s.id = :id",
-            ["id" => $salidaId],
+        $itinerario = $this->newConn->fetchAssociative(
+            "SELECT s.*, t.legacy_id AS ruta_legacy_id FROM itinerario s LEFT JOIN trayecto t ON t.id = s.ruta_id WHERE s.id = :id",
+            ["id" => $itinerarioId],
         );
-        if (!$salida) {
+        if (!$itinerario) {
             return;
         }
 
-        $legacySalidaId = $salida["legacy_id"];
+        $legacySalidaId = $itinerario["legacy_id"];
         if ($legacySalidaId) {
             $existing = $this->fetchOldOne(
                 "SELECT id FROM servicio WHERE id = :id",
@@ -60,9 +60,9 @@ class ReplicationService implements EventSubscriber
                 $this->updateOld(
                     "UPDATE servicio SET fecha = :fecha, bus_codigo = :bus, estado_id = :estado WHERE id = :id",
                     [
-                        "fecha" => $salida["hora_partida"],
-                        "bus" => $this->getLegacyBusCode($salida["bus_id"]),
-                        "estado" => $salida["activa"] ? 1 : 4,
+                        "fecha" => $itinerario["hora_partida"],
+                        "bus" => $this->getLegacyBusCode($itinerario["bus_id"]),
+                        "estado" => $itinerario["activa"] ? 1 : 4,
                         "id" => $legacySalidaId,
                     ],
                 );
@@ -77,18 +77,18 @@ class ReplicationService implements EventSubscriber
             "INSERT INTO servicio (id, fecha, empresa_id, estado_id, bus_codigo) VALUES (:id, :fecha, :empresa, :estado, :bus)",
             [
                 "id" => $newId,
-                "fecha" => $salida["hora_partida"],
+                "fecha" => $itinerario["hora_partida"],
                 "empresa" => $this->getLegacyEmpresaId(
-                    (int) $salida["empresa_id"],
+                    (int) $itinerario["empresa_id"],
                 ),
-                "estado" => $salida["activa"] ? 1 : 4,
-                "bus" => $this->getLegacyBusCode($salida["bus_id"]),
+                "estado" => $itinerario["activa"] ? 1 : 4,
+                "bus" => $this->getLegacyBusCode($itinerario["bus_id"]),
             ],
         );
 
         $this->newConn->executeStatement(
-            "UPDATE salida SET legacy_id = :lid WHERE id = :id",
-            ["lid" => $newId, "id" => $salidaId],
+            "UPDATE itinerario SET legacy_id = :lid WHERE id = :id",
+            ["lid" => $newId, "id" => $itinerarioId],
         );
     }
 
@@ -100,7 +100,7 @@ class ReplicationService implements EventSubscriber
         $boleto = $this->newConn->fetchAssociative(
             'SELECT b.*, s.legacy_id AS servicio_legacy_id, e.id AS estacion_id
              FROM boleto b
-             JOIN salida s ON s.id = b.servicio_id
+             JOIN itinerario s ON s.id = b.servicio_id
              LEFT JOIN enclave e ON e.id = b.estacion_id
              WHERE b.id = :id',
             ["id" => $boletoId],
@@ -148,18 +148,18 @@ class ReplicationService implements EventSubscriber
      * Returns true if available, false if already sold.
      */
     public function checkAsientoDisponible(
-        int $salidaId,
+        int $itinerarioId,
         int $asientoId,
     ): bool {
-        $salida = $this->newConn->fetchAssociative(
-            "SELECT legacy_id FROM salida WHERE id = :id",
-            ["id" => $salidaId],
+        $itinerario = $this->newConn->fetchAssociative(
+            "SELECT legacy_id FROM itinerario WHERE id = :id",
+            ["id" => $itinerarioId],
         );
-        if (!$salida || !$salida["legacy_id"]) {
+        if (!$itinerario || !$itinerario["legacy_id"]) {
             return true;
         }
 
-        $legacySalidaId = (int) $salida["legacy_id"];
+        $legacySalidaId = (int) $itinerario["legacy_id"];
         $legacyAsiento = $this->newConn->fetchOne(
             "SELECT legacy_id FROM asiento WHERE id = :id",
             ["id" => $asientoId],
@@ -180,7 +180,7 @@ class ReplicationService implements EventSubscriber
              JOIN boleto b ON b.id = ba.boleto_id
              WHERE b.servicio_id = :sid AND ba.asiento_id = :aid AND b.status_id IS DISTINCT FROM :cancelado
              LIMIT 1',
-            ["sid" => $salidaId, "aid" => $asientoId, "cancelado" => 4],
+            ["sid" => $itinerarioId, "aid" => $asientoId, "cancelado" => 4],
         );
 
         return $soldNew === false;

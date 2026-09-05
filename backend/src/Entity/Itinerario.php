@@ -4,14 +4,14 @@ namespace App\Entity;
 
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\TimeLegacyStatusBase;
-use App\Repository\SalidaRepository;
+use App\Repository\ItinerarioRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: SalidaRepository::class)]
+#[ORM\Entity(repositoryClass: ItinerarioRepository::class)]
 #[ApiResourcePaginationPage]
-class Salida extends TimeLegacyStatusBase
+class Itinerario extends TimeLegacyStatusBase
 {
     #[ORM\Column]
     private ?\DateTime $fecha = null;
@@ -31,8 +31,12 @@ class Salida extends TimeLegacyStatusBase
     /**
      * @var Collection<int, BoletoAsiento>
      */
-    #[ORM\OneToMany(targetEntity: BoletoAsiento::class, mappedBy: "salida")]
+    #[ORM\OneToMany(targetEntity: BoletoAsiento::class, mappedBy: "itinerario")]
     private Collection $boletoAsientos;
+
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Trayecto $trayecto = null;
 
     public function __construct()
     {
@@ -111,7 +115,7 @@ class Salida extends TimeLegacyStatusBase
     {
         if (!$this->boletoAsientos->contains($boletoAsiento)) {
             $this->boletoAsientos->add($boletoAsiento);
-            $boletoAsiento->setSalida($this);
+            $boletoAsiento->setItinerario($this);
         }
 
         return $this;
@@ -121,10 +125,22 @@ class Salida extends TimeLegacyStatusBase
     {
         if ($this->boletoAsientos->removeElement($boletoAsiento)) {
             // set the owning side to null (unless already changed)
-            if ($boletoAsiento->getSalida() === $this) {
-                $boletoAsiento->setSalida(null);
+            if ($boletoAsiento->getItinerario() === $this) {
+                $boletoAsiento->setItinerario(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getTrayecto(): ?Trayecto
+    {
+        return $this->trayecto;
+    }
+
+    public function setTrayecto(?Trayecto $trayecto): static
+    {
+        $this->trayecto = $trayecto;
 
         return $this;
     }

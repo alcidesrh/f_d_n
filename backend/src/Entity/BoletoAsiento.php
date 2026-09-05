@@ -36,7 +36,7 @@ class BoletoAsiento
 
     #[ORM\ManyToOne(inversedBy: "boletoAsientos")]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Salida $salida = null;
+    private ?Itinerario $itinerario = null;
 
     #[ORM\Embedded(class: Precio::class)]
     private ?Precio $precio = null;
@@ -109,14 +109,14 @@ class BoletoAsiento
         return $this;
     }
 
-    public function getSalida(): ?Salida
+    public function getItinerario(): ?Itinerario
     {
-        return $this->salida;
+        return $this->itinerario;
     }
 
-    public function setSalida(?Salida $salida): static
+    public function setItinerario(?Itinerario $itinerario): static
     {
-        $this->salida = $salida;
+        $this->itinerario = $itinerario;
 
         return $this;
     }

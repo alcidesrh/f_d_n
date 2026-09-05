@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use App\Entity\Base\TimeLegacyStatusBase;
 use App\Repository\BoletoVentaRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -10,13 +11,8 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: BoletoVentaRepository::class)]
 #[ApiResource]
-class BoletoVenta
+class BoletoVenta extends TimeLegacyStatusBase
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
-
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
     private ?Usuario $usuario = null;
@@ -39,11 +35,6 @@ class BoletoVenta
     public function __construct()
     {
         $this->asientos = new ArrayCollection();
-    }
-
-    public function getId(): ?int
-    {
-        return $this->id;
     }
 
     public function getUsuario(): ?Usuario

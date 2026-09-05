@@ -5,6 +5,7 @@ import PrimeVue from 'primevue/config'
 import formkitConfig from '@/formkit.config'
 import type { FormKitSchemaNode } from '@formkit/core'
 import { normalizeOptions, toScalarArray, toScalarValue } from '../useFormKitInput'
+import { computed, ref } from 'vue'
 
 if (typeof window.matchMedia !== 'function') {
   window.matchMedia = (query: string) =>
@@ -109,6 +110,9 @@ describe('FkSelect / FkMultiSelect: normalizacion de options y valores', () => {
         { label: 'A', value: '/api/a/1' },
       ])
       expect(normalizeOptions([{ id: '/api/a/1', label: 'A' }])).toEqual([
+        { label: 'A', value: '/api/a/1' },
+      ])
+      expect(normalizeOptions([{ value: '/api/a/1', label: 'A' }])).toEqual([
         { label: 'A', value: '/api/a/1' },
       ])
       expect(normalizeOptions([{ '@id': '/api/a/1', name: 'A' }])).toEqual([
@@ -229,6 +233,110 @@ describe('FkSelect / FkMultiSelect: normalizacion de options y valores', () => {
       expect(
         (wrapper.vm as unknown as { formData: Record<string, unknown> }).formData.permisos,
       ).toEqual(['/api/permisos/1', '/api/permisos/2'])
+      wrapper.unmount()
+    })
+  })
+
+  describe('exclusión mutua (parents/children) ocultando opciones', () => {
+    const ALL = ['/api/menus/1', '/api/menus/2', '/api/menus/3', '/api/menus/4']
+    const allOpts = () => ALL.map((v) => ({ label: `Menu ${v.slice(-1)}`, value: v }))
+    const exclude = (options: unknown[], ids: unknown[]) => {
+      const set = new Set(ids.map(String))
+      return (options as Array<{ label: string; value: string }>).filter(
+        (o) => !set.has(String(o.value)),
+      )
+    }
+
+    it('un parent elegido deja de aparecer como opción en children y conserva su valor', async () => {
+      const formData = ref<Record<string, unknown>>({})
+      const parentsSelected = computed(() =>
+        Array.isArray(formData.value.parents) ? (formData.value.parents as []) : [],
+      )
+      const childrenSelected = computed(() =>
+        Array.isArray(formData.value.children) ? (formData.value.children as []) : [],
+      )
+      const getFilteredParents = () => exclude(allOpts(), childrenSelected.value)
+      const getFilteredChildren = () => exclude(allOpts(), parentsSelected.value)
+
+      const renderSchema = computed<FormKitSchemaNode[]>(() => {
+        const mk = (
+          name: string,
+          getOptions: () => unknown[],
+          getDisabled: (opt: { value: unknown }) => boolean,
+        ): FormKitSchemaNode =>
+          ({
+            key: `Menu.${name}_1`,
+            $formkit: 'MultiSelect',
+            name,
+            label: name,
+            options: getOptions,
+            optionLabel: 'label',
+            optionValue: 'value',
+            display: 'chip',
+            filter: true,
+            optionDisabled: getDisabled,
+          }) as FormKitSchemaNode
+        return [
+          mk(
+            'parents',
+            getFilteredParents,
+            (opt) => childrenSelected.value.map(String).includes(String(opt.value)),
+          ),
+          mk(
+            'children',
+            getFilteredChildren,
+            (opt) => parentsSelected.value.map(String).includes(String(opt.value)),
+          ),
+        ]
+      })
+
+      const wrapper = mount(
+        {
+          template: `
+            <FormKit type="form" v-model="fd">
+              <FormKitSchema :schema="schema" />
+            </FormKit>
+          `,
+          setup() {
+            return { fd: formData, schema: renderSchema }
+          },
+        },
+        {
+          attachTo: document.body,
+          global: { plugins: [PrimeVue, [formkitPlugin, defaultConfig(formkitConfig())]] },
+        },
+      )
+      await flushPromises()
+
+      const open = (el: Element) =>
+        el.dispatchEvent(new window.MouseEvent('click', { bubbles: true, cancelable: true }))
+
+      const parents = () => wrapper.findAll('.p-multiselect')[0]
+      const children = () => wrapper.findAll('.p-multiselect')[1]
+      const clickOpt = (index: number) =>
+        (bodyItems('.p-multiselect-option')[index] as HTMLElement).dispatchEvent(
+          new window.MouseEvent('click', { bubbles: true, cancelable: true }),
+        )
+
+      open((parents() as unknown as { element: Element }).element)
+      await flushPromises()
+      await flushPromises()
+      clickOpt(0)
+      await flushPromises()
+      await flushPromises()
+
+      expect(JSON.parse(JSON.stringify(formData.value)).parents).toEqual(['/api/menus/1'])
+
+      open((children() as unknown as { element: Element }).element)
+      await flushPromises()
+      await flushPromises()
+      const labels = bodyItems('.p-multiselect-option').map((i) => i.textContent)
+
+      // parents muestra todos (sin children). Si children NO ocultara el parent ya
+      // elegido, "Menu 1" aparecería 2 veces (una en cada panel). Ocultándolo, solo
+      // aparece 1 vez (en parents).
+      expect(labels.filter((l) => l === 'Menu 1').length).toBe(1)
+      expect(labels.filter((l) => l === 'Menu 2').length).toBe(2)
       wrapper.unmount()
     })
   })
