@@ -37,6 +37,16 @@ const router = createRouter({
       },
     },
     {
+      path: "/demo/picklist",
+      name: "picklist-preview",
+      component: () => import("@/pages/preview/PickListDemo.vue"),
+      meta: {
+        layout: "default",
+        crumbs: ["Andén", "Demostración", "PickList"],
+        title: "PickList Drag & Drop",
+      },
+    },
+    {
       path: "/form/build",
       name: "form_build ",
       component: () => import("@/pages/form/FormBuilder.vue"),

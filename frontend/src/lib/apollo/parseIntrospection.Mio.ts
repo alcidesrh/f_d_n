@@ -62,7 +62,7 @@ function slugify(text) {
     .trim() // Remove leading and trailing spaces
     .replace(/\s+/g, "-") // Replace spaces with hyphens
     .replace(/[^\w-]+/g, "") // Remove all non-word characters except hyphens
-    .replace(/-\-+/g, "-"); // Replace multiple consecutive hyphens with a single one
+    .replace(/--+/g, "-"); // Replace multiple consecutive hyphens with a single one
 }
 function describeType(ref: IntrospectionRef): {
   namedType: string;

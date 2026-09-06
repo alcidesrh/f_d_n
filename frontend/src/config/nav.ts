@@ -3,6 +3,7 @@ import type { NavItem } from '@/types'
 export const NAV_MAIN: NavItem[] = [
   { to: '/', label: 'Resumen', icon: 'grid' },
   { to: '/demo', label: 'Demo FormKit', icon: 'layout' },
+  { to: '/demo/picklist', label: 'PickList DnD', icon: 'columns' },
   { to: '/flota', label: 'Flota de buses', icon: 'bus', count: 8 },
   { to: '/rutas', label: 'Rutas', icon: 'route' },
   { to: '/choferes', label: 'Choferes', icon: 'users' },
