@@ -218,4 +218,3 @@ export function createApiPlatformClient(options: ApiPlatformClientOptions = {}):
 }
 
 /** Cliente GraphQL singleton de acceso global. */
-export const apollo = createApiPlatformClient();

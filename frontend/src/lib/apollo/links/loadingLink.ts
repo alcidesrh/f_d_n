@@ -9,10 +9,8 @@ type Ctx = {
   priority?: number;
   delayMs?: number; // anti-flicker
 };
-let loadingStore = ref({});
 export function createLoadingLink(pinia) {
   return new ApolloLink((operation, forward) => {
-    loadingStore.value = useLoadingStore();
     const ctx = operation.getContext() as Ctx;
     if (ctx.noLoading) return forward(operation);
     const key =
@@ -30,7 +28,7 @@ export function createLoadingLink(pinia) {
     // anti-flicker: solo iniciar si supera delay
     timer = setTimeout(() => {
       // loading.value = true;
-      loadingStore.value.start(key, priority);
+      loadingStore.start(key, priority);
       started = true;
     }, delayMs);
 
@@ -40,13 +38,13 @@ export function createLoadingLink(pinia) {
         error: (e) => {
           if (timer) clearTimeout(timer);
           // loading.value = false;
-          if (started) loadingStore.value.stop(key);
+          if (started) loadingStore.stop(key);
           observer.error(e);
         },
         complete: () => {
           if (timer) clearTimeout(timer);
           // loading.value = false;
-          if (started) loadingStore.value.stop(key);
+          if (started) loadingStore.stop(key);
           observer.complete();
         },
       });
@@ -54,7 +52,7 @@ export function createLoadingLink(pinia) {
       return () => {
         if (timer) clearTimeout(timer);
         // loading.value = false;
-        if (started) loadingStore.value.stop(key);
+        if (started) loadingStore.stop(key);
         sub.unsubscribe();
       };
     });
@@ -65,18 +63,18 @@ export function createLoadingLink(pinia) {
 //   size: "5px",
 //   // position: "bottom",
 // });
-watch(
-  () => ({
-    loading: loadingStore.value?.loading,
-    p: loadingStore.value?.highestPriority,
-  }),
-  ({ loading, p }) => {
-    // ejemplo de política:
-    // p>=3: barra + overlay (lo decides en layout)
-    // p=2: barra
-    // p=1: nada (o spinner local)
-    // if (loading && p >= 1) LoadingBar.start();
-    // else LoadingBar.stop();
-  },
-  { deep: true },
-);
+// watch(
+//   () => ({
+//     loading: loadingStore?.loading,
+//     p: loadingStore?.highestPriority,
+//   }),
+//   ({ loading, p }) => {
+//     // ejemplo de política:
+//     // p>=3: barra + overlay (lo decides en layout)
+//     // p=2: barra
+//     // p=1: nada (o spinner local)
+//     // if (loading && p >= 1) LoadingBar.start();
+//     // else LoadingBar.stop();
+//   },
+//   { deep: true },
+// );

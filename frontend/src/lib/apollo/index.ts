@@ -7,23 +7,23 @@
  * - Parsing de introspección a metadata semántica plana.
  */
 
-export { ApiPlatformClient, apollo, createApiPlatformClient } from './client'
-export type { ApiPlatformClientOptions } from './client'
-export { RestClient, rest, createRestClient } from './rest'
-export { parseIntrospection } from './parseIntrospection'
+// export { ApiPlatformClient, apollo, createApiPlatformClient } from './client'
+export type { ApiPlatformClientOptions } from "./client";
+// export { RestClient, rest, createRestClient } from './rest'
+export { parseIntrospection } from "./parseIntrospection";
 export type {
   IntrospectionRef,
   IntrospectionSchemaLike,
   IntrospectionType,
-} from './parseIntrospection'
+} from "./parseIntrospection";
 export {
   buildCollectionQuery,
   buildItemQuery,
   buildMutation,
   buildSelection,
   toMutationInput,
-} from './documents'
-export type { CollectionQuerySpec, BuiltDocument, SelectionOptions } from './documents'
+} from "./documents";
+export type { CollectionQuerySpec, BuiltDocument, SelectionOptions } from "./documents";
 export type {
   AgnosticOption,
   CollectionKind,
@@ -36,4 +36,4 @@ export type {
   OrderDirection,
   SchemaArg,
   SchemaInputField,
-} from './types'
+} from "./types";

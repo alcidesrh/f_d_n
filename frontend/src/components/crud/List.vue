@@ -203,8 +203,6 @@ import type {
   DataTableCellEditCompleteEvent,
   DataTableColumnReorderEvent,
 } from "primevue/datatable";
-import { useSchemaRepositoryStore } from "@/stores/schemaRepository";
-import { useEntityRegistry } from "@/composables/useEntityRegistry";
 import { useToasts } from "@/composables/useToasts";
 import router from "@/router";
 import type { EntitySchema } from "@/lib/apollo/types";
@@ -227,8 +225,7 @@ const props = withDefaults(defineProps<{ entity: string | string[] }>(), { entit
 // Stores y contexto: schema introspectado, registry de stores y toasts.
 // ---------------------------------------------------------------------------
 //#region Variables
-const loadingStore = useLoadingStore();
-const schemaRepo = useSchemaRepositoryStore();
+
 const registry = useEntityRegistry();
 const toasts = useToasts();
 const hiddenPopover = ref<InstanceType<typeof Popover> | null>(null);
@@ -804,7 +801,7 @@ watch(
       toasts.error("Entidad no especificada");
       return;
     }
-    const entity = schemaRepo.getEntityMetadata(name);
+    const entity = schemaRepository.getEntityMetadata(name);
     if (!entity) {
       toasts.error(`Entidad "${name}" no encontrada en el schema GraphQL`);
       return;

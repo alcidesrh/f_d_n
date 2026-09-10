@@ -14,10 +14,8 @@ if [ "$1" = 'frankenphp' ] || [ "$1" = 'php' ] || [ "$1" = 'bin/console' ]; then
 		echo 'Waiting for database to be ready...'
 		ATTEMPTS_LEFT_TO_REACH_DATABASE=60
 		until [ $ATTEMPTS_LEFT_TO_REACH_DATABASE -eq 0 ] || DATABASE_ERROR=$(php bin/console dbal:run-sql -q "SELECT 1" 2>&1); do
-			if [ $? -eq 255 ]; then
-				ATTEMPTS_LEFT_TO_REACH_DATABASE=0
-				break
-			fi
+			# Retry for the full window: transient failures (e.g. "Temporary failure
+			# in name resolution" reported as exit 255) must not abort startup early.
 			sleep 1
 			ATTEMPTS_LEFT_TO_REACH_DATABASE=$((ATTEMPTS_LEFT_TO_REACH_DATABASE - 1))
 		done
@@ -30,8 +28,14 @@ if [ "$1" = 'frankenphp' ] || [ "$1" = 'php' ] || [ "$1" = 'bin/console' ]; then
 			echo 'The database is now ready and reachable'
 		fi
 
-		if [ "$(find ./migrations -iname '*.php' -print -quit)" ]; then
+		# Run schema migrations only on a legacy database (one that still has the old
+		# "salida" table). Modern databases are built directly from the Doctrine
+		# entities (schema:create via app:migrar:todo --clean / app:reset-db2 --hard);
+		# the committed migrations rename salida->itinerario and would fail elsewhere.
+		if php bin/console dbal:run-sql -q "SELECT 1 FROM salida WHERE false" >/dev/null 2>&1 && [ -n "$(find ./migrations -iname '*.php' -print -quit)" ]; then
 			php bin/console doctrine:migrations:migrate --no-interaction --all-or-nothing
+		else
+			echo 'No legacy schema detected: skipping schema migrations.'
 		fi
 	fi
 

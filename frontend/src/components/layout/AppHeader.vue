@@ -71,16 +71,10 @@
           <AppIcon name="chevrondown" :size="14" />
         </div>
       </div>
-      <div class="flex btn-siderbar-header" :class="[sidebarStoreR.mode]">
-        <button class="icon-btn" title="Mostrar/ocultar menú" @click="sidebarStoreR.setMode()">
-          <AppIcon name="menu" :size="19" />
-        </button>
-        <Divider layout="vertical" class="mx-[5px]!" />
-      </div>
     </div>
-    <div class="flex btn-siderbar-header" :class="[ui.rightState]">
+    <div class="flex btn-siderbar-header" :class="[sidebarStoreR.mode]">
       <Divider layout="vertical" class="mx-[5px]!" />
-      <button class="icon-btn right" title="Mostrar/ocultar menú" @click="ui.cycleRight()">
+      <button class="icon-btn right" title="Mostrar/ocultar menú" @click="sidebarStoreR.setMode()">
         <AppIcon name="menu" :size="19" />
       </button>
     </div>

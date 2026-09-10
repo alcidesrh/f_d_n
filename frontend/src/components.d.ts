@@ -11,6 +11,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    1: typeof import('./components/layout/SidebarLeft copy 1.vue')['default']
     Accordion: typeof import('primevue/accordion')['default']
     AccordionContent: typeof import('primevue/accordioncontent')['default']
     AccordionHeader: typeof import('primevue/accordionheader')['default']
@@ -69,11 +70,13 @@ declare module 'vue' {
     MenuForm: typeof import('./components/menu/MenuForm.vue')['default']
     Message: typeof import('primevue/message')['default']
     MultiSelect: typeof import('primevue/multiselect')['default']
+    NewComponent: typeof import('./components/layout/NewComponent.vue')['default']
     OverlayBadge: typeof import('primevue/overlaybadge')['default']
     PageHead: typeof import('./components/common/PageHead.vue')['default']
     Paginator: typeof import('primevue/paginator')['default']
     Password: typeof import('primevue/password')['default']
     Popover: typeof import('primevue/popover')['default']
+    ProfilerFooter: typeof import('./components/ProfilerFooter.vue')['default']
     ProgressBar: typeof import('primevue/progressbar')['default']
     ProgressSpinner: typeof import('primevue/progressspinner')['default']
     RadioButton: typeof import('primevue/radiobutton')['default']
@@ -81,6 +84,7 @@ declare module 'vue' {
     RouterView: typeof import('vue-router')['RouterView']
     Select: typeof import('primevue/select')['default']
     SelectButton: typeof import('primevue/selectbutton')['default']
+    Sidebar: typeof import('./components/layout/Sidebar.vue')['default']
     SidebarLeft: typeof import('./components/layout/SidebarLeft.vue')['default']
     'SidebarLeft copy': typeof import('./components/layout/SidebarLeft copy.vue')['default']
     SidebarRight: typeof import('./components/layout/SidebarRight.vue')['default']

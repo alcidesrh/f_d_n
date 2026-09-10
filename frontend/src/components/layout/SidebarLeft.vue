@@ -1,61 +1,37 @@
 <template>
-  <aside :class="sidebarClasses">
-    <template v-if="dynamicMenus.length > 0">
-      <template v-for="group in groupedMenus" :key="group.label">
-        <nav class="">
-          <div class="sidebar-header">
-            <span class="menu-icon">⚡</span>
-            <span class="menu-text" style="font-weight: bold; font-size: 1.1rem">Dashboard</span>
-          </div>
-          <ul class="sidebar-menu">
-            <li class="menu-item">
-              <a href="#" class="menu-link">
-                <span class="menu-icon">🏠</span>
-                <span class="menu-text">Inicio</span>
-              </a>
-            </li>
-            <li class="menu-item">
-              <a href="#" class="menu-link">
-                <span class="menu-icon">📊</span>
-                <span class="menu-text">Analíticas</span>
-              </a>
-            </li>
-            <li class="menu-item">
-              <a href="#" class="menu-link">
-                <span class="menu-icon">⚙️</span>
-                <span class="menu-text">Configuración</span>
-              </a>
-            </li>
-          </ul>
-        </nav>
+  <Sidebar :side="side">
+    <template #menu-content>
+      <template v-if="dynamicMenus.length > 0">
+        <template v-for="group in groupedMenus" :key="group.label">
+          <nav class="">
+            <div class="sidebar-header">
+              <span class="menu-icon">⚡</span>
+              <span class="menu-text" style="font-weight: bold; font-size: 1.1rem">Dashboard</span>
+            </div>
+            <ul class="sidebar-menu">
+              <li class="menu-item">
+                <a href="#" class="menu-link">
+                  <span class="menu-icon">🏠</span>
+                  <span class="menu-text">Inicio</span>
+                </a>
+              </li>
+              <li class="menu-item">
+                <a href="#" class="menu-link">
+                  <span class="menu-icon">📊</span>
+                  <span class="menu-text">Analíticas</span>
+                </a>
+              </li>
+              <li class="menu-item">
+                <a href="#" class="menu-link">
+                  <span class="menu-icon">⚙️</span>
+                  <span class="menu-text">Configuración</span>
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </template>
       </template>
-    </template>
-
-    <template v-else>
-      <!-- <div class="nav-group-label">Operación</div> -->
-      <nav>
-        <div v-if="sidebarStore.side == 'left'" class="sidebar-control">
-          <div class="p-[5px]" @click="sidebarStore.setMode('close')">
-            <icon name="x" />
-          </div>
-          <div
-            class="p-[5px]"
-            @click="sidebarStore.setMode(sidebarStore.mode == 'mini' ? 'open' : 'mini')"
-          >
-            <icon :name="sidebarStore.mode != 'mini' ? 'chevrons-left' : 'chevrons-right'" />
-          </div>
-        </div>
-        <div v-else class="sidebar-control">
-          <div
-            class="p-[5px]"
-            @click="sidebarStore.setMode(sidebarStore.mode == 'mini' ? 'open' : 'mini')"
-          >
-            <icon :name="sidebarStore.mode != 'mini' ? 'chevrons-right' : 'chevrons-left'" />
-          </div>
-          <div class="p-[5px]" @click="sidebarStore.setMode('close')">
-            <icon name="x" />
-          </div>
-        </div>
+      <template v-else>
         <ul class="sidebar-menu">
           <li class="menu-item">
             <a
@@ -97,19 +73,17 @@
             </a>
           </li>
         </ul>
-      </nav>
+      </template>
     </template>
-  </aside>
+  </Sidebar>
 </template>
 <script setup lang="ts">
-import { computed } from "vue";
-import { useMenusStore, type MenuItem } from "@/stores/menus";
-import { NAV_MAIN, NAV_OPS } from "@/config/nav";
-import AppIcon from "@/components/icons/AppIcon.vue";
 import { gsap } from "gsap";
 import { CustomBounce } from "gsap/CustomBounce";
 import { CustomEase } from "gsap/CustomEase";
 const props = defineProps<{ side: "left" | "right" }>();
+
+const sidebarStore = defineSidebarStore(props.side)();
 
 const menusStore = useMenusStore();
 const dynamicMenus = computed(() => menusStore.sidebarLeftItems);
@@ -125,21 +99,11 @@ const groupedMenus = computed<MenuGroup[]>(() => {
   return [{ label: "Navegación", items }];
 });
 
-const sidebarStore = defineSidebarStore(props.side)();
-
-const sidebarClasses = computed(() => [
-  "sidebar",
-  sidebarStore.side,
-  sidebarStore.mode === "mini" ? "mini" : sidebarStore.mode === "close" ? "close" : "open",
-  { closed: sidebarStore.mode === "close" && !ui.isMobile },
-  { "mobile-hidden": ui.isMobile && !ui.mobileLeftOpen },
-]);
-
 watch(
   () => sidebarStore.mode,
   () => sidebarUpdate(),
 );
-gsap.registerPlugin(CustomBounce, CustomEase);
+// gsap.registerPlugin(CustomBounce, CustomEase);
 function sidebarUpdate() {
   const targets = {
     sidebar: `.sidebar.${sidebarStore.side}`,
@@ -147,8 +111,9 @@ function sidebarUpdate() {
     menu: `.sidebar.${sidebarStore.side} .menu-text`,
   };
   const duration = 0.3;
-  // const ease = "power2.inOut";
+  // const ease = "circ.out";
   const ease = "expoScale(0.5,7, none)";
+
   if (sidebarStore.mode === "open") {
     gsap.to(targets.sidebar, { width: sidebarStore.width, duration, ease });
     if (sidebarStore.side == "left") {
@@ -186,12 +151,10 @@ function sidebarUpdate() {
 // Eventos Hover para el desbordamiento fluido en estado "mini"
 const handleMouseEnter = (e) => {
   const rootStyles = window.getComputedStyle(document.documentElement);
-  const bg = rootStyles.getPropertyValue("--bg");
   const shadow = rootStyles.getPropertyValue("--p-surface-300");
 
   if (sidebarStore.mode === "mini") {
     const temp = {
-      backgroundColor: bg,
       borderRadius: "0 8px 8px 0",
       duration: 0.25,
       ease: "power1.out",
@@ -210,6 +173,7 @@ const handleMouseEnter = (e) => {
         e.target,
         {
           ...temp,
+          borderRadius: "8 0px 0px 8",
           display: "flex",
           width: 200,
           flexDirection: "row-reverse",
@@ -220,7 +184,7 @@ const handleMouseEnter = (e) => {
           duration: 0.4,
 
           // x: -130,
-          boxShadow: `1px 0px 3px ${shadow}`,
+          boxShadow: `-1px 0px 3px ${shadow}`,
         },
       );
     }
@@ -257,67 +221,5 @@ const handleMouseLeave = (e) => {
 };
 onMounted(() => {
   sidebarUpdate();
-  return;
-  const menuLinks = document.querySelectorAll(".menu-link");
-  const rootStyles = window.getComputedStyle(document.documentElement);
-  const bg = rootStyles.getPropertyValue("--bg");
-  const shadow = rootStyles.getPropertyValue("--p-surface-300");
-  menuLinks.forEach((link) => {
-    const text = link.querySelector(".menu-text");
-    link.addEventListener("mouseenter", () => {
-      if (sidebarStore.mode === "mini") {
-        const temp = {
-          backgroundColor: bg,
-          // border: `1px solid ${border}`,
-          // width: 200,
-          borderRadius: "0 8px 8px 0",
-          duration: 0.25,
-          ease: "power1.out",
-          zIndex: 999,
-          width: "0px",
-        };
-        if (sidebarStore.side == "left") {
-          alert(sidebarStore.side);
-
-          gsap.fromTo(
-            link,
-            { ...temp },
-            { duration: 0.4, width: 200, boxShadow: `1px 0px 3px ${shadow}` },
-          );
-        } else {
-          alert(sidebarStore.side);
-          gsap.fromTo(
-            link,
-            { ...temp },
-            { duration: 0.4, width: 200, x: -200, boxShadow: `1px 0px 3px ${shadow}` },
-          );
-        }
-
-        gsap.fromTo(
-          text,
-          { opacity: 1, width: "0px", overflow: "hidden" },
-          { width: "100%", duration: 0.4 },
-        );
-      } else if (sidebarStore.mode === "open") {
-      }
-    });
-
-    link.addEventListener("mouseleave", () => {
-      if (sidebarStore.mode === "mini") {
-        const to = {
-          border: "none",
-          borderRadius: "none",
-          ease: "power1.out",
-          zIndex: 999,
-          width: "auto",
-          duration: 0.4,
-          boxShadow: "none",
-        };
-        gsap.to(link, to);
-      } else if (sidebarStore.mode === "open") {
-        // gsap.to(link, { backgroundColor: bg });
-      }
-    });
-  });
 });
 </script>

@@ -23,7 +23,7 @@ function createSidebarStore(side: string): StoreDefinition {
       prevMode: "mini",
     }),
     getters: {
-      width: (s: SidebarStoreState): number => ({ open: 250, mini: 70, close: 0 })[s.mode],
+      width: (s: SidebarStoreState): number => ({ open: 250, mini: 71, close: 0 })[s.mode],
     },
     actions: {
       setMode(mode?: "open" | "mini" | "close") {

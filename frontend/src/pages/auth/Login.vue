@@ -9,24 +9,26 @@
 		/> -->
     <div class="background">
       <div
-        class="img"
+        class="img bg-surface-300/50"
         v-for="(image, index) in backgroundImages"
         :key="index"
         :style="{ backgroundImage: `url('${image.src}')` }"
       ></div>
       <!-- <img v-for="(image, index) in backgroundImages" :key="index" :src="image.src" alt="" /> -->
     </div>
-    <div id="login" ref="login" class="animate__animated animate__fast bg-surface-100/60 m-auto">
+    <div id="login" ref="login" class="bg-white/90 m-auto">
       <Card
-        class="card-login"
+        class="card-login p-4"
         style="width: 400px; max-width: 90vw"
         :class="{ 'opacity-50': loading }"
       >
         <template #title>
           <div class="text-center w-full mb-[15px]">
-            <div class="text-[4rem] opacity-[80]" style="font-family: Faster One">F D N</div>
+            <div class="text-[4rem] opacity-[80]" style="font-family: Faster One; line-height: 1">
+              F D N
+            </div>
 
-            <div class="text-[1rem] opacity-[80] font-medium" style="font-weight: 600">
+            <div class="texst-[1rem] opacity-[80] font-medium" style="font-weight: 600">
               Transportes Fuentes del Norte
             </div>
           </div>
@@ -66,7 +68,10 @@
 <script lang="ts" setup>
 import { FormKitMessages } from "@formkit/vue";
 import { gsap } from "gsap";
-import { ref } from "vue";
+import { CustomWiggle } from "gsap/CustomWiggle";
+
+gsap.registerPlugin(CustomWiggle);
+
 // import { router } from "@/router";
 const INTERVAL_MS = 5000;
 
@@ -75,8 +80,8 @@ const card = useTemplateRef("login");
 const layer0 = useTemplateRef<HTMLElement>("layer0");
 const layer1 = useTemplateRef<HTMLElement>("layer1");
 const error = ref(false);
-// const loadingStore = useLoadingStore();
-// const { loading } = storeToRefs(loadingStore);
+const loadingStore = useLoadingStore();
+const { loading } = storeToRefs(loadingStore);
 
 const start = Math.floor(Math.random() * 10) + 1;
 const a = ref(start);
@@ -454,50 +459,47 @@ const schema = [
       class: "grid gap-20px",
     },
     children: [
-    {
+      {
         $formkit: "InputText",
-        name: "username3",
-        labelQuasar: "Usuario",
+        name: "username",
         validation: "required",
         prepend: "person",
-        fluid: true
+        placeholder: "Usuario",
+        fluid: true,
       },
       {
         $formkit: "Password",
         name: "password",
         validation: "required",
-        fluid: true
-
+        placeholder: "Contraseña",
+        fluid: true,
+        class: "mt-2",
       },
     ],
   },
 
   {
-    $formkit: "button",
+    $formkit: "Button",
     loading: "$loading",
-    binds: {
-      label: "Aceptar",
-      type: "button",
-      class: "full-width u-mt-s ",
-      onClick: "$submit",
-    },
+    label: "Aceptar",
+    class: "mt-6 flex w-full ",
+    innerClass: "flex",
+    onClick: "$submit",
+    type: "submit",
   },
 ];
 
-// const submit = () => {
-//   form.value.node.submit();
-//   if (!form.value.node.context.state.valid) {
-//     shake();
-//   }
-// };
-// const data = ref({ submit, loading: computed(() => loading && loadingStore.isOpLoading("login")) });
-
+const submit = () => {
+  form.value.node.submit();
+  if (!form.value.node.context.state.valid) {
+    shake();
+  }
+};
+const data = ref({ submit, loading: computed(() => loading && loadingStore.isOpLoading("login")) });
 async function handleSubmit(credentials: Record<string, string>, node: Record<any, any>) {
-  const restApi = await useApi();
-
   error.value = false;
   node.clearErrors();
-  restApi
+  apiRest
     .post("/login", credentials, { key: "login" })
     .then(async (resp) => {
       const store = useUserSessionStore();
@@ -517,7 +519,15 @@ async function handleSubmit(credentials: Record<string, string>, node: Record<an
     });
 }
 function shake() {
-  card.value.classList.add("animate__shakeX");
+  // let tl = gsap.timeline({ repeat: 10 });
+  gsap.to("#login", {
+    x: -25,
+    duration: 1.5,
+    // yoyo: false,
+    // repeat: 10,
+    ease: CustomWiggle.create("myWiggle", { wiggles: 10, type: "easeInOut" }),
+  });
+  // .to("#login", { x: 20, duration: 0.2 });
 }
 
 function removeAnimation() {
@@ -530,7 +540,7 @@ function removeAnimation() {
     box-shadow: 0px 0px 18px 0px var(--p-surface-800);
   }
   z-index: 4;
-  backdrop-filter: blur(5px);
+  /*backdrop-filter: blur(5px);*/
   & > div {
     background-color: transparent;
   }
@@ -542,7 +552,7 @@ function removeAnimation() {
   z-index: 2;
 }
 .bg-layer {
-  filter: blur(5px);
+  /*filter: blur(5px);*/
   position: absolute;
   width: 100vw;
   min-height: 100vh;
@@ -566,7 +576,7 @@ function removeAnimation() {
 
 .background .img {
   border: 20px solid var(--p-surface-100);
-  backdrop-filter: blur(8px);
+  /*backdrop-filter: blur(8px);*/
   z-index: 9999;
   border-radius: 999px;
   width: 50px;
@@ -584,7 +594,7 @@ function removeAnimation() {
   &.login1,
   &.login8,
   &.login3 {
-    border: 20px solid var(--p-surface-900)
+    border: 20px solid var(--p-surface-900);
     /* // background-color: -alpha($surface-1, 0.8); */
   }
   &:nth-child(1) {

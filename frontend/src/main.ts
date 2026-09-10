@@ -18,11 +18,10 @@ import formkitConfig from "@/formkit.config";
 
 // Pinia--------------------
 import { pinia } from "@/stores/pinia.ts";
-import { initGlobalStores } from "@/stores/global.ts";
+import { init } from "@/init";
 
 // Apollo------------------------
 // Cliente GraphQL singleton (se crea al importar; acceso global vía `apollo`).
-import "@/lib/apollo";
 
 async function bootstrap() {
   const app = createApp(App);
@@ -41,7 +40,7 @@ async function bootstrap() {
   app.use(ConfirmationService);
   app.use(ToastService);
 
-  await initGlobalStores();
+  await init();
 
   app.mount("#app");
 }

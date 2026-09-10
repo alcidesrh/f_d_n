@@ -17,7 +17,12 @@ export default defineConfig({
     vueDevTools(),
     tailwindcss(),
     AutoImport({
-      imports: ["vue", "vue-router", "pinia", { "@/store/globals": ["ui"] }],
+      imports: [
+        "vue",
+        "vue-router",
+        "pinia",
+        { "@/init": ["ui", "session", "apiRest", "apollo", "loadingStore"] },
+      ],
 
       dts: "src/auto-imports.d.ts",
 
@@ -37,7 +42,7 @@ export default defineConfig({
       ],
     }),
     Icons({
-      compiler: 'vue3',
+      compiler: "vue3",
       autoInstall: true,
     }),
   ],

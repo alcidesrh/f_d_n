@@ -367,7 +367,6 @@ export function parseIntrospection(schema: IntrospectionSchemaLike): Record<stri
               ? []
               : (types.get(info.namedType)?.enumValues ?? []).map((v) => v.name),
         };
-        return result;
       }),
     };
 

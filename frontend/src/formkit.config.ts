@@ -1,5 +1,5 @@
 import { createInput, defineFormKitConfig } from "@formkit/vue";
-
+import { es } from "@formkit/i18n";
 import FkAutoComplete from "@/components/formkit/FkAutoComplete.vue";
 import FkButton from "@/components/formkit/FkButton.vue";
 import FkCascadeSelect from "@/components/formkit/FkCascadeSelect.vue";
@@ -18,6 +18,8 @@ import FkToggleSwitch from "@/components/formkit/FkToggleSwitch.vue";
 import FkTreeSelect from "@/components/formkit/FkTreeSelect.vue";
 
 export default defineFormKitConfig({
+  locales: { es },
+  locale: "es",
   inputs: {
     InputText: createInput(FkInputText),
     InputMask: createInput(FkInputMask),

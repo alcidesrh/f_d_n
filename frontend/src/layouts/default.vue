@@ -4,7 +4,7 @@
       <template #menu-content></template>
     </AppHeader>
     <SidebarLeft side="left">
-      <template #menu-content></template>
+      <!-- <template #menu-content></template> -->
     </SidebarLeft>
 
     <main class="main" @click="ui.closeMobileOverlays()">
@@ -13,9 +13,9 @@
       </div>
     </main>
 
-    <SidebarLeft side="right">
-      <template #menu-content></template>
-    </SidebarLeft>
+    <SidebarLeft side="right"> </SidebarLeft>
+
+    <ProfilerFooter />
   </div>
 </template>
 <script setup lang="ts">

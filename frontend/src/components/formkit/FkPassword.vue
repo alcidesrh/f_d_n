@@ -6,17 +6,19 @@
     :name="context.node.name"
     :disabled="disabled"
     :invalid="invalid"
+    :feedback="false"
     :class="context.classes.input"
     @update:model-value="update"
     @blur="blur"
+    toggleMask
   />
 </template>
 <script setup lang="ts">
-import type { FormKitFrameworkContext } from '@formkit/core'
-import { useFormKitInput } from './useFormKitInput'
+import type { FormKitFrameworkContext } from "@formkit/core";
+import { useFormKitInput } from "./useFormKitInput";
 
-defineOptions({ name: 'FkPassword' })
+defineOptions({ name: "FkPassword" });
 
-const props = defineProps<{ context: FormKitFrameworkContext }>()
-const { context, update, blur, invalid, disabled } = useFormKitInput(props)
+const props = defineProps<{ context: FormKitFrameworkContext }>();
+const { context, update, blur, invalid, disabled } = useFormKitInput(props);
 </script>

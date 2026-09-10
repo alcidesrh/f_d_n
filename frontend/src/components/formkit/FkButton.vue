@@ -1,6 +1,5 @@
 <template>
   <Button
-    type="submit"
     v-bind="context.attrs"
     :label="buttonLabel"
     :disabled="disabled || context.attrs.disabled === true"

@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { useUserSessionStore } from "@/stores/session";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -24,6 +25,7 @@ const router = createRouter({
       meta: {
         layout: "blank",
         title: "Iniciar Sesión",
+        public: true,
       },
     },
     {
@@ -124,12 +126,21 @@ const router = createRouter({
 });
 
 router.beforeEach((to) => {
-  // Update document title dynamically
+  const session = useUserSessionStore();
+
+  // DocumentDocument title
   const title = to.meta.title;
-  if (title) {
-    document.title = `${title} | FDN`;
-  } else {
-    document.title = "FDN - Flotas de la Nación";
+  document.title = title ? `${title} | FDN` : "FDN - Flotas de la Nación";
+
+  // Auth guard
+  const isPublic = to.meta.public === true;
+
+  if (!session.isAuthenticated && !isPublic) {
+    return { name: "login" };
+  }
+
+  if (session.isAuthenticated && isPublic) {
+    return { name: "dashboard" };
   }
 });
 

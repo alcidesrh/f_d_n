@@ -12,7 +12,6 @@
  */
 
 import { defineStore } from "pinia";
-import { apollo } from "@/lib/apollo";
 import { toMutationInput } from "@/lib/apollo/documents";
 import type { AgnosticOption, CollectionResult, EntitySchema } from "@/lib/apollo/types";
 import type { EntityStore } from "./entities/types";

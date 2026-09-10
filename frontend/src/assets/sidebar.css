@@ -16,9 +16,7 @@
     right: 0;
   }
 }
-.sidebar.mini .sidebar-control {
-  justify-content: center;
-}
+
 .sidebar-menu {
   list-style: none;
   padding: 10px 0;
@@ -43,8 +41,11 @@
       background-color: var(--p-surface-100);
     }
   }
-  & + * {
-    margin-top: 1rem;
+  &.right {
+    /*flex-direction: row-reverse;*/
+    & > div:last-child {
+      rotate: 180deg;
+    }
   }
 }
 
@@ -64,6 +65,9 @@
   color: var(--text-color);
   text-decoration: none;
   white-space: nowrap;
+  &:hover {
+    background-color: var(--bg);
+  }
   /*transition: background-color 0.2s ease;*/
 }
 
