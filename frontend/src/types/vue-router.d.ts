@@ -1,14 +1,15 @@
-import 'vue-router'
+import "vue-router";
 
-export type LayoutName = 'default' | 'auth' | 'blank' | 'formdemo'
+export type LayoutName = "default" | "auth" | "blank" | "formdemo";
 
-declare module 'vue-router' {
+declare module "vue-router" {
   interface RouteMeta {
-    crumbs?: string[]
-    title?: string
-    subtitle?: string
-    layout?: LayoutName
-    requiresAuth?: boolean
-    icon?: string
+    crumbs?: string[];
+    title?: string;
+    subtitle?: string;
+    layout?: LayoutName;
+    requiresAuth?: boolean;
+    icon?: string;
+    label?: string;
   }
 }

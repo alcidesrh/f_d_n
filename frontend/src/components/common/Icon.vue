@@ -2,7 +2,7 @@
   <IconifyInstance
     :icon="iconName"
     :stroke-width="props.sw"
-    :style="{ width: `${size}`, height: `${size}`, minWidth: `${size}`, minHeight: `${size}` }"
+    :style="sizeComputed"
     :class="clases"
     v-bind="$attrs"
   />
@@ -23,15 +23,31 @@ const props = defineProps({
   },
   size: {
     type: String,
-    default: "16px",
+    default: "1rem",
   },
   color: {
     type: String,
     default: "",
   },
-  class: {
-    type: String,
-    default: "",
+  xs: {
+    type: Boolean,
+    default: false,
+  },
+  sm: {
+    type: Boolean,
+    default: false,
+  },
+  md: {
+    type: Boolean,
+    default: false,
+  },
+  lg: {
+    type: Boolean,
+    default: false,
+  },
+  xl: {
+    type: Boolean,
+    default: false,
   },
 });
 
@@ -42,6 +58,28 @@ const iconName = computed(() => {
     return props.name;
   }
   return `tabler:${props.name}`;
+});
+const sizeComputed = computed(() => {
+  let size;
+  if (props.xs) {
+    size = ".80rem";
+  } else if (props.sm) {
+    size = ".95rem";
+  } else if (props.md) {
+    size = "1rem";
+  } else if (props.lg) {
+    size = "1.5rem";
+  } else if (props.xl) {
+    size = "2rem";
+  } else {
+    size = props.size;
+  }
+  return {
+    width: `${size}`,
+    height: `${size}`,
+    minWidth: `${size}`,
+    minHeight: `${size}`,
+  };
 });
 const clases = computed(() => {
   if (!props.color && !props.class) {

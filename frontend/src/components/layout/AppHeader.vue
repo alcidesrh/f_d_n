@@ -40,7 +40,7 @@
         title="Personalizar apariencia"
         @click.stop="showThemeEditor()"
       >
-        <AppIcon name="palette" :size="18" />
+        <icon name="palette" />
       </button>
 
       <button
@@ -49,33 +49,24 @@
         @click="toggleFullscreen"
         :class="{ 'active-state': openPopover === 'fullscreen' }"
       >
-        <AppIcon name="maximize" :size="18" />
+        <icon name="arrows-maximize" />
       </button>
       <div style="position: relative">
-        <button
-          class="icon-btn"
-          :class="{ 'active-state': openPopover === 'notif' }"
-          title="Notificaciones"
-          @click.stop="toggle('notif')"
-        >
-          <AppIcon name="bell" :size="18" />
-          <span class="badge-dot"></span>
+        <button class="icon-btn" title="Notificaciones" @click.stop="toggle('notif')">
+          <icon name="bell" />
         </button>
       </div>
 
       <div style="position: relative">
-        <div class="header-user">
-          <div class="who">
-            <span>username</span>
-          </div>
-          <AppIcon name="chevrondown" :size="14" />
-        </div>
+        <button class="icon-btn" @click.stop="logout">
+          <icon name="logout" />
+        </button>
       </div>
     </div>
     <div class="flex btn-siderbar-header" :class="[sidebarStoreR.mode]">
       <Divider layout="vertical" class="mx-[5px]!" />
       <button class="icon-btn right" title="Mostrar/ocultar menú" @click="sidebarStoreR.setMode()">
-        <AppIcon name="menu" :size="19" />
+        <icon name="menu-2" />
       </button>
     </div>
   </header>
@@ -107,5 +98,13 @@ function toggleFullscreen() {
 }
 function toggle(name: Exclude<PopoverName, null>) {
   openPopover.value = openPopover.value === name ? null : name;
+}
+
+async function logout() {
+  apiRest.post("/logout").then(async (resp) => {
+    useUserSessionStore().clear();
+    // const router = useRouter();
+    router.push({ path: "/login" });
+  });
 }
 </script>

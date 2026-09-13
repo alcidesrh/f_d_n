@@ -133,7 +133,6 @@
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { gql } from "@apollo/client/core";
-import { apollo } from "@/lib/apollo";
 import { useEntityRegistry } from "@/composables/useEntityRegistry";
 import { useToast } from "primevue/usetoast";
 

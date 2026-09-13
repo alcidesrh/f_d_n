@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useUserSessionStore } from "@/stores/session";
 
-const router = createRouter({
+export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   scrollBehavior() {
     return { top: 0 };
@@ -50,7 +50,7 @@ const router = createRouter({
     },
     {
       path: "/form/build",
-      name: "form_build ",
+      name: "form_build",
       component: () => import("@/pages/form/FormBuilder.vue"),
       meta: {
         layout: "formdemo",
@@ -127,7 +127,6 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const session = useUserSessionStore();
-
   // DocumentDocument title
   const title = to.meta.title;
   document.title = title ? `${title} | FDN` : "FDN - Flotas de la Nación";

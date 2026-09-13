@@ -14,65 +14,19 @@
   </aside>
 </template>
 <script setup lang="ts">
-import { gsap } from "gsap";
-import { CustomBounce } from "gsap/CustomBounce";
-import { CustomEase } from "gsap/CustomEase";
-import { Flip } from "gsap/Flip";
-gsap.registerPlugin(Flip);
-const props = defineProps<{ side: "left" | "right" }>();
+import type { StoreDefinition } from "pinia";
 
-const sidebarStore = defineSidebarStore(props.side)();
+const props = defineProps<{ side: "left" | "right"; store?: StoreDefinition }>();
 
-// watch(
-//   () => sidebarStore.mode,
-//   () => sidebarUpdate(),
-// );
-gsap.registerPlugin(CustomBounce, CustomEase);
+const sidebarStore = props.store || defineSidebarStore(props.side)();
 
-function sidebarUpdate() {
-  const targets = {
-    sidebar: `.sidebar.${sidebarStore.side}`,
-    main: `.main`,
-    menu: `.sidebar.${sidebarStore.side} .menu-text`,
-  };
-  const duration = 0.3;
-  // const ease = "power2.inOut";
-  const ease = "expoScale(0.5,7, none)";
+watch(
+  () => sidebarStore.mode,
+  () => sidebarStore.sidebarUpdate(),
+);
+// gsap.registerPlugin(CustomBounce, CustomEase);
 
-  if (sidebarStore.mode === "open") {
-    gsap.to(targets.sidebar, { width: sidebarStore.width, duration, ease });
-    if (sidebarStore.side == "left") {
-      gsap.to(targets.main, { marginLeft: sidebarStore.width, duration, ease: ease });
-    } else {
-      gsap.to(targets.main, { marginRight: sidebarStore.width, duration, ease });
-    }
-    gsap.to(targets.menu, { opacity: 1, duration: duration * 0.8, ease });
-  } else if (sidebarStore.mode === "mini") {
-    gsap.to(targets.sidebar, { width: sidebarStore.width, overflow: "visible", duration, ease });
-
-    if (sidebarStore.side == "left") {
-      gsap.to(targets.main, { marginLeft: sidebarStore.width, duration, ease });
-    } else {
-      gsap.to(targets.main, { marginRight: sidebarStore.width, duration, ease });
-    }
-    gsap.to(targets.menu, { opacity: 0, duration: duration * 0.5, ease });
-  } else if (sidebarStore.mode === "close") {
-    gsap.to(targets.sidebar, {
-      width: sidebarStore.width,
-      opacity: 1,
-      overflow: "hidden",
-      duration,
-      ease,
-    });
-    if (sidebarStore.side == "left") {
-      gsap.to(targets.main, { marginLeft: 0, duration, ease: ease });
-    } else {
-      gsap.to(targets.main, { marginRight: 0, duration, ease });
-    }
-    gsap.to(targets.menu, { opacity: 0, duration: duration * 0.5, ease });
-  }
-}
 onMounted(() => {
-  // sidebarUpdate();
+  sidebarStore.sidebarUpdate();
 });
 </script>

@@ -1,12 +1,5 @@
 <template>
   <div class="flex flex-center w-dvw h-dvh">
-    <!-- <img
-			v-for="name in ['lapionera', 'rosita', 'mayadeoro', 'starbus', 'corporacionlapionera']"
-			:src="`images/logos/copiloto/${name}5.png`"
-			width="100px"
-			class="logo"
-			:style="{ position: 'absolute', top: `${random(0, 100)}vh`, left: `${random(0, 100)}vw` }"
-		/> -->
     <div class="background">
       <div
         class="img bg-surface-300/50"
@@ -14,7 +7,6 @@
         :key="index"
         :style="{ backgroundImage: `url('${image.src}')` }"
       ></div>
-      <!-- <img v-for="(image, index) in backgroundImages" :key="index" :src="image.src" alt="" /> -->
     </div>
     <div id="login" ref="login" class="bg-white/90 m-auto">
       <Card
@@ -71,8 +63,6 @@ import { gsap } from "gsap";
 import { CustomWiggle } from "gsap/CustomWiggle";
 
 gsap.registerPlugin(CustomWiggle);
-
-// import { router } from "@/router";
 const INTERVAL_MS = 5000;
 
 const form = useTemplateRef("form");
@@ -82,6 +72,71 @@ const layer1 = useTemplateRef<HTMLElement>("layer1");
 const error = ref(false);
 const loadingStore = useLoadingStore();
 const { loading } = storeToRefs(loadingStore);
+
+const schema = [
+  {
+    $el: "div",
+    attrs: {
+      class: "grid gap-20px",
+    },
+    children: [
+      {
+        $formkit: "InputText",
+        name: "username",
+        validation: "required",
+        prepend: "person",
+        placeholder: "Usuario",
+        fluid: true,
+      },
+      {
+        $formkit: "Password",
+        name: "password",
+        validation: "required",
+        placeholder: "Contraseña",
+        fluid: true,
+        class: "mt-2",
+      },
+    ],
+  },
+
+  {
+    $formkit: "Button",
+    loading: "$loading",
+    label: "Aceptar",
+    class: "mt-6 flex w-full ",
+    innerClass: "flex",
+    onClick: "$submit",
+    type: "submit",
+  },
+];
+
+const submit = () => {
+  form.value.node.submit();
+  if (!form.value.node.context.state.valid) {
+    shake();
+  }
+};
+const data = ref({ submit, loading: computed(() => loading && loadingStore.isOpLoading("login")) });
+async function handleSubmit(credentials: Record<string, string>, node: Record<any, any>) {
+  error.value = false;
+  node.clearErrors();
+  apiRest
+    .post("/login", credentials, { key: "login" })
+    .then(async (resp) => {
+      const store = useUserSessionStore();
+      store.user = resp.username;
+      store.permissions = resp.permissions;
+      store.token = resp.token;
+      // const router = useRouter()
+      router.push({ path: store.redirectTo });
+    })
+    .catch((e: FetchError | string) => {
+      console.log(e);
+      error.value = true;
+      node.setErrors([e]);
+      shake();
+    });
+}
 
 const start = Math.floor(Math.random() * 10) + 1;
 const a = ref(start);
@@ -452,72 +507,6 @@ onBeforeUnmount(() => {
   card.value.removeEventListener("animationend", removeAnimation);
 });
 
-const schema = [
-  {
-    $el: "div",
-    attrs: {
-      class: "grid gap-20px",
-    },
-    children: [
-      {
-        $formkit: "InputText",
-        name: "username",
-        validation: "required",
-        prepend: "person",
-        placeholder: "Usuario",
-        fluid: true,
-      },
-      {
-        $formkit: "Password",
-        name: "password",
-        validation: "required",
-        placeholder: "Contraseña",
-        fluid: true,
-        class: "mt-2",
-      },
-    ],
-  },
-
-  {
-    $formkit: "Button",
-    loading: "$loading",
-    label: "Aceptar",
-    class: "mt-6 flex w-full ",
-    innerClass: "flex",
-    onClick: "$submit",
-    type: "submit",
-  },
-];
-
-const submit = () => {
-  form.value.node.submit();
-  if (!form.value.node.context.state.valid) {
-    shake();
-  }
-};
-const data = ref({ submit, loading: computed(() => loading && loadingStore.isOpLoading("login")) });
-async function handleSubmit(credentials: Record<string, string>, node: Record<any, any>) {
-  error.value = false;
-  node.clearErrors();
-  apiRest
-    .post("/login", credentials, { key: "login" })
-    .then(async (resp) => {
-      const store = useUserSessionStore();
-      const schemaStore = useSchemaStore();
-      await schemaStore.loadEntities();
-      store.user = resp.username;
-      store.permissions = resp.permissions;
-      store.token = resp.token;
-      // const router = useRouter()
-      router.push({ path: store.redirectTo });
-    })
-    .catch((e: FetchError | string) => {
-      console.log(e);
-      error.value = true;
-      node.setErrors([e]);
-      shake();
-    });
-}
 function shake() {
   // let tl = gsap.timeline({ repeat: 10 });
   gsap.to("#login", {

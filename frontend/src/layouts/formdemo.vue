@@ -11,11 +11,11 @@
         </div>
       </main>
 
-      <SidebarRight :w="400" nomini>
-        <template #default>
+      <Sidebar :store="sidebarStore">
+        <template #menu-content>
           <FormBuilderPanel />
         </template>
-      </SidebarRight>
+      </Sidebar>
     </div>
   </div>
 </template>
@@ -23,7 +23,8 @@
 import SidebarLeft from "@/components/layout/SidebarLeft.vue";
 import SidebarRight from "@/components/layout/SidebarRight.vue";
 const route = useRoute();
-
+const sidebarStore = defineSidebarStore("right", "formBuild")();
+sidebarStore.open = 350;
 const crumbs = computed(() => route.meta.crumbs ?? ["Andén"]);
 
 function handleResize() {

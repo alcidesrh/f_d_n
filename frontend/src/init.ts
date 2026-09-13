@@ -9,7 +9,7 @@ import { syncVueRoutes } from "@/utils/vueRoutesSync";
 import { createApi, setApi } from "@/lib/useApiRest";
 import { useLoadingStore } from "@/stores/loadingStore";
 import { ApiPlatformClient, createApiPlatformClient } from "@/lib/apollo/client";
-import "@/lib/apollo";
+// import "@/lib/apollo";
 
 export let ui: ReturnType<typeof useUiStore>;
 export let schemaRepository: ReturnType<typeof useSchemaRepositoryStore>;

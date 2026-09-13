@@ -78,6 +78,7 @@ declare global {
   const ref: typeof import('vue').ref
   const resolveComponent: typeof import('vue').resolveComponent
   const restApi: typeof import("./composables/useApiRest").restApi
+  const router: typeof import('@/router').router
   const schemaRepository: typeof import('./stores/global').schemaRepository
   const session: typeof import('@/init').session
   const setActivePinia: typeof import('pinia').setActivePinia
@@ -228,6 +229,7 @@ declare module 'vue' {
     readonly readonly: UnwrapRef<typeof import('vue')['readonly']>
     readonly ref: UnwrapRef<typeof import('vue')['ref']>
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
+    readonly router: UnwrapRef<typeof import('@/router')['router']>
     readonly session: UnwrapRef<typeof import('@/init')['session']>
     readonly setActivePinia: UnwrapRef<typeof import('pinia')['setActivePinia']>
     readonly setMapStoreSuffix: UnwrapRef<typeof import('pinia')['setMapStoreSuffix']>

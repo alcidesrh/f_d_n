@@ -3,9 +3,7 @@
     <AppHeader :crumbs="crumbs">
       <template #menu-content></template>
     </AppHeader>
-    <SidebarLeft side="left">
-      <!-- <template #menu-content></template> -->
-    </SidebarLeft>
+    <SidebarLeft />
 
     <main class="main" @click="ui.closeMobileOverlays()">
       <div class="main-inner">
@@ -13,7 +11,7 @@
       </div>
     </main>
 
-    <SidebarLeft side="right"> </SidebarLeft>
+    <SidebarRight />
 
     <ProfilerFooter />
   </div>

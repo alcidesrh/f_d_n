@@ -1,5 +1,5 @@
 <template>
-  <Sidebar :side="side">
+  <Sidebar side="left">
     <template #menu-content>
       <template v-if="dynamicMenus.length > 0">
         <template v-for="group in groupedMenus" :key="group.label">
@@ -37,8 +37,8 @@
             <a
               href="#"
               class="menu-link"
-              @mouseenter="handleMouseEnter"
-              @mouseleave="handleMouseLeave"
+              @mouseenter="sidebarStore.handleMouseEnter"
+              @mouseleave="sidebarStore.handleMouseLeave"
             >
               <span>
                 <icon name="settings" size="1.5rem" />
@@ -50,8 +50,8 @@
             <a
               href="#"
               class="menu-link"
-              @mouseenter="handleMouseEnter"
-              @mouseleave="handleMouseLeave"
+              @mouseenter="sidebarStore.handleMouseEnter"
+              @mouseleave="sidebarStore.handleMouseLeave"
             >
               <span>
                 <icon name="settings" size="1.5rem" />
@@ -63,8 +63,8 @@
             <a
               href="#"
               class="menu-link"
-              @mouseenter="handleMouseEnter"
-              @mouseleave="handleMouseLeave"
+              @mouseenter="sidebarStore.handleMouseEnter"
+              @mouseleave="sidebarStore.handleMouseLeave"
             >
               <!-- <span> -->
               <icon name="settings" size="1.5rem" />
@@ -78,12 +78,7 @@
   </Sidebar>
 </template>
 <script setup lang="ts">
-import { gsap } from "gsap";
-import { CustomBounce } from "gsap/CustomBounce";
-import { CustomEase } from "gsap/CustomEase";
-const props = defineProps<{ side: "left" | "right" }>();
-
-const sidebarStore = defineSidebarStore(props.side)();
+const sidebarStore = defineSidebarStore("left")();
 
 const menusStore = useMenusStore();
 const dynamicMenus = computed(() => menusStore.sidebarLeftItems);
@@ -99,127 +94,75 @@ const groupedMenus = computed<MenuGroup[]>(() => {
   return [{ label: "Navegación", items }];
 });
 
-watch(
-  () => sidebarStore.mode,
-  () => sidebarUpdate(),
-);
-// gsap.registerPlugin(CustomBounce, CustomEase);
-function sidebarUpdate() {
-  const targets = {
-    sidebar: `.sidebar.${sidebarStore.side}`,
-    main: `.main`,
-    menu: `.sidebar.${sidebarStore.side} .menu-text`,
-  };
-  const duration = 0.3;
-  // const ease = "circ.out";
-  const ease = "expoScale(0.5,7, none)";
+// // Eventos Hover para el desbordamiento fluido en estado "mini"
+// const handleMouseEnter = (e) => {
+//   const rootStyles = window.getComputedStyle(document.documentElement);
+//   const shadow = rootStyles.getPropertyValue("--p-surface-300");
 
-  if (sidebarStore.mode === "open") {
-    gsap.to(targets.sidebar, { width: sidebarStore.width, duration, ease });
-    if (sidebarStore.side == "left") {
-      gsap.to(targets.main, { marginLeft: sidebarStore.width, duration, ease: ease });
-    } else {
-      gsap.to(targets.main, { marginRight: sidebarStore.width, duration, ease });
-    }
-    gsap.to(targets.menu, { opacity: 1, duration: duration * 0.8, ease });
-  } else if (sidebarStore.mode === "mini") {
-    gsap.to(targets.sidebar, { width: sidebarStore.width, overflow: "visible", duration, ease });
+//   if (sidebarStore.mode === "mini") {
+//     const temp = {
+//       borderRadius: "0 8px 8px 0",
+//       duration: 0.25,
+//       ease: "power1.out",
+//       zIndex: 999,
+//       width: "0px",
+//     };
+//     if (sidebarStore.side == "left") {
+//       gsap.fromTo(
+//         e.target,
+//         { ...temp },
+//         { duration: 0.4, width: 200, boxShadow: `1px 0px 3px ${shadow}` },
+//       );
+//     } else {
+//       temp.flexDirection = "row-reverse";
+//       gsap.fromTo(
+//         e.target,
+//         {
+//           ...temp,
+//           borderRadius: "8 0px 0px 8",
+//           display: "flex",
+//           width: 200,
+//           flexDirection: "row-reverse",
+//           x: -130,
+//           justifyContent: "end",
+//         },
+//         {
+//           duration: 0.4,
 
-    if (sidebarStore.side == "left") {
-      gsap.to(targets.main, { marginLeft: sidebarStore.width, duration, ease });
-    } else {
-      gsap.to(targets.main, { marginRight: sidebarStore.width, duration, ease });
-    }
-    gsap.to(targets.menu, { opacity: 0, duration: duration * 0.5, ease });
-  } else if (sidebarStore.mode === "close") {
-    gsap.to(targets.sidebar, {
-      width: sidebarStore.width,
-      opacity: 1,
-      overflow: "hidden",
-      duration,
-      ease,
-    });
-    if (sidebarStore.side == "left") {
-      gsap.to(targets.main, { marginLeft: 0, duration, ease: ease });
-    } else {
-      gsap.to(targets.main, { marginRight: 0, duration, ease });
-    }
-    gsap.to(targets.menu, { opacity: 0, duration: duration * 0.5, ease });
-  }
-}
+//           // x: -130,
+//           boxShadow: `-1px 0px 3px ${shadow}`,
+//         },
+//       );
+//     }
 
-// Eventos Hover para el desbordamiento fluido en estado "mini"
-const handleMouseEnter = (e) => {
-  const rootStyles = window.getComputedStyle(document.documentElement);
-  const shadow = rootStyles.getPropertyValue("--p-surface-300");
+//     gsap.fromTo(
+//       e.currentTarget.querySelector(".menu-text"),
+//       { opacity: 1, width: "0px", overflow: "hidden" },
+//       { width: "100%", duration: 0.4 },
+//     );
+//   } else if (sidebarStore.mode === "open") {
+//   }
+// };
 
-  if (sidebarStore.mode === "mini") {
-    const temp = {
-      borderRadius: "0 8px 8px 0",
-      duration: 0.25,
-      ease: "power1.out",
-      zIndex: 999,
-      width: "0px",
-    };
-    if (sidebarStore.side == "left") {
-      gsap.fromTo(
-        e.target,
-        { ...temp },
-        { duration: 0.4, width: 200, boxShadow: `1px 0px 3px ${shadow}` },
-      );
-    } else {
-      temp.flexDirection = "row-reverse";
-      gsap.fromTo(
-        e.target,
-        {
-          ...temp,
-          borderRadius: "8 0px 0px 8",
-          display: "flex",
-          width: 200,
-          flexDirection: "row-reverse",
-          x: -130,
-          justifyContent: "end",
-        },
-        {
-          duration: 0.4,
-
-          // x: -130,
-          boxShadow: `-1px 0px 3px ${shadow}`,
-        },
-      );
-    }
-
-    gsap.fromTo(
-      e.currentTarget.querySelector(".menu-text"),
-      { opacity: 1, width: "0px", overflow: "hidden" },
-      { width: "100%", duration: 0.4 },
-    );
-  } else if (sidebarStore.mode === "open") {
-  }
-};
-
-const handleMouseLeave = (e) => {
-  if (sidebarStore.mode === "mini") {
-    const to = {
-      border: "none",
-      borderRadius: "none",
-      ease: "power1.out",
-      zIndex: 999,
-      width: "auto",
-      duration: 0.4,
-      boxShadow: "none",
-    };
-    if (sidebarStore.side == "left") {
-      gsap.to(e.target, to);
-    } else {
-      to.x = 0;
-      gsap.to(e.target, to);
-    }
-  } else if (sidebarStore.mode === "open") {
-    // gsap.to(link, { backgroundColor: bg });
-  }
-};
-onMounted(() => {
-  sidebarUpdate();
-});
+// const handleMouseLeave = (e) => {
+//   if (sidebarStore.mode === "mini") {
+//     const to = {
+//       border: "none",
+//       borderRadius: "none",
+//       ease: "power1.out",
+//       zIndex: 999,
+//       width: "auto",
+//       duration: 0.4,
+//       boxShadow: "none",
+//     };
+//     if (sidebarStore.side == "left") {
+//       gsap.to(e.target, to);
+//     } else {
+//       to.x = 0;
+//       gsap.to(e.target, to);
+//     }
+//   } else if (sidebarStore.mode === "open") {
+//     // gsap.to(link, { backgroundColor: bg });
+//   }
+// };
 </script>

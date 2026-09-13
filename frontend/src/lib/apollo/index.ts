@@ -7,7 +7,7 @@
  * - Parsing de introspección a metadata semántica plana.
  */
 
-// export { ApiPlatformClient, apollo, createApiPlatformClient } from './client'
+export { ApiPlatformClient, createApiPlatformClient } from "./client";
 export type { ApiPlatformClientOptions } from "./client";
 // export { RestClient, rest, createRestClient } from './rest'
 export { parseIntrospection } from "./parseIntrospection";

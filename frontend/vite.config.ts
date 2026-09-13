@@ -22,6 +22,7 @@ export default defineConfig({
         "vue-router",
         "pinia",
         { "@/init": ["ui", "session", "apiRest", "apollo", "loadingStore"] },
+        { "@/router": ["router"] },
       ],
 
       dts: "src/auto-imports.d.ts",
