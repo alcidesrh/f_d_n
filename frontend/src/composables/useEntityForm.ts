@@ -12,7 +12,6 @@
 import { computed, ref, toRef, watch } from "vue";
 import type { MaybeRefOrGetter } from "vue";
 import type { FormKitSchemaNode } from "@formkit/core";
-import { useSchemaRepositoryStore } from "@/stores/schemaRepository";
 import { useEntityRegistry } from "./useEntityRegistry";
 
 import { FormSchemaSerializer, type FormFieldSource } from "@/utils/formkit/schemaSerializer";
@@ -33,7 +32,6 @@ export function useEntityForm(
   entityName: MaybeRefOrGetter<string>,
   options: UseEntityFormOptions = {},
 ) {
-  const schemaRepo = useSchemaRepositoryStore();
   const registry = useEntityRegistry();
 
   const name = toRef(entityName);
@@ -49,7 +47,7 @@ export function useEntityForm(
   let fields: FormFieldSource[] = [];
   let resetKey = 0;
 
-  const entity = computed(() => schemaRepo.getEntityMetadata(name.value));
+  const entity = computed(() => apiGraphql.getEntityMetadata(name.value));
   const store = computed<EntityStore<Record<string, unknown>> | null>(() => {
     try {
       return registry.getEntity<Record<string, unknown>>(name.value);

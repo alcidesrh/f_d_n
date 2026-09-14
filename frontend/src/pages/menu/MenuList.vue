@@ -45,6 +45,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import { manejarNoAutorizado } from "@/lib/manejar401";
 
 defineOptions({ name: "MenuList" });
 
@@ -63,6 +64,10 @@ onMounted(async () => {
   try {
     const base = import.meta.env.VITE_REST_ENDPOINT ?? "http://localhost/api";
     const res = await fetch(`${base}/menus`);
+    if (res.status === 401) {
+      manejarNoAutorizado();
+      throw new Error("Sesión expirada");
+    }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     menus.value = (data["hydra:member"] ?? data["member"] ?? []).map(

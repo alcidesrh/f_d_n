@@ -25,29 +25,37 @@ services:
         arguments:
             $newConn: "@doctrine.dbal.default_connection"
 
+    # Conexión al SQL Server legacy con preflight TCP no bloqueante (SondaLegado):
+    # si el host no responde, el PDO falla en ~1.5s en vez de colgar ~130s (kernel TCP).
     PDO $oldPdo:
         class: \PDO
+        factory: ['@App\Migration\SondaLegado', "crearPdo"]
+
+    App\Migration\SondaLegado:
         arguments:
-            $dsn: "dblib:host=%env(systemfdn_host)%:%env(systemfdn_port)%;dbname=%env(systemfdn_dbname)%"
+            $host: "%env(systemfdn_host)%"
+            $port: "%env(systemfdn_port)%"
+            $dbname: "%env(systemfdn_dbname)%"
             $username: "%env(systemfdn_user)%"
             $password: "%env(systemfdn_password)%"
+            $timeout: 5
 
     App\Security\Voter\ActionVoter:
-        tags: ['security.voter']
+        tags: ["security.voter"]
         arguments:
             $permissionManager: '@App\Security\PermissionManager'
 
     App\Security\Voter\EntityVoter:
-        tags: ['security.voter']
+        tags: ["security.voter"]
         arguments:
             $permissionManager: '@App\Security\PermissionManager'
 
     App\Security\ActionExpressionProvider:
         tags:
-            - { name: 'security.expression_language_provider' }
+            - { name: "security.expression_language_provider" }
 
     App\Security\GraphiQLRequestMatcher:
-        tags: ['security.request_matcher']
+        tags: ["security.request_matcher"]
 
     App\Services\UsuarioPasswordHasher:
         bind:
@@ -55,7 +63,7 @@ services:
 
     App\Replication\ReplicationService:
         tags:
-            - { name: 'doctrine.event_subscriber', connection: 'default' }
+            - { name: "doctrine.event_subscriber", connection: "default" }
 
     # App\Error\ErrorHandler:
     #     decorates: api_platform.graphql.error_handler
@@ -78,4 +86,3 @@ services:
     App\GraphQL\Type\Definition\DateType:
         tags:
             - { name: api_platform.graphql.type }
-

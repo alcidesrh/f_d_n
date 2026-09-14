@@ -8,11 +8,11 @@ import { useUserSessionStore } from "@/stores/session";
 import { syncVueRoutes } from "@/utils/vueRoutesSync";
 import { createApi, setApi } from "@/lib/useApiRest";
 import { useLoadingStore } from "@/stores/loadingStore";
-import { ApiPlatformClient, createApiPlatformClient } from "@/lib/apollo/client";
+import { createApiPlatformClient } from "@/lib/apollo/client";
 // import "@/lib/apollo";
 
 export let ui: ReturnType<typeof useUiStore>;
-export let schemaRepository: ReturnType<typeof useSchemaRepositoryStore>;
+export let apiGraphql: ReturnType<typeof useSchemaRepositoryStore>;
 export let menus: ReturnType<typeof useMenusStore>;
 export let session: ReturnType<typeof useUserSessionStore>;
 export let apiRest: ReturnType<typeof createApi>;
@@ -26,7 +26,7 @@ export async function init() {
   loadingStore = useLoadingStore();
   session = useUserSessionStore();
   apollo = createApiPlatformClient();
-  schemaRepository = useSchemaRepositoryStore();
+  apiGraphql = useSchemaRepositoryStore();
   apiRest = createApi({
     baseURL: import.meta.env.VITE_REST_ENDPOINT,
 
@@ -48,9 +48,9 @@ export async function init() {
     },
   });
   try {
-    await schemaRepository.init();
+    await apiGraphql.init();
   } catch (error) {
-    console.error("[schemaRepository] falló la carga del schema:", error);
+    console.error("[apiGraphql] falló la carga del schema:", error);
   }
 
   // Menús por área de layout: se carga en background (no bloquea el bootstrap).

@@ -59,6 +59,17 @@ export const router = createRouter({
       },
     },
     {
+      path: "/migracion",
+      name: "migracion",
+      component: () => import("@/pages/migracion/MigracionView.vue"),
+      meta: {
+        layout: "migracion",
+        crumbs: ["Andén", "Operación", "Migración"],
+        title: "Migración legado → nuevo",
+        requiresAuth: true,
+      },
+    },
+    {
       path: "/menu",
       name: "menu-list",
       component: () => import("@/pages/menu/MenuList.vue"),

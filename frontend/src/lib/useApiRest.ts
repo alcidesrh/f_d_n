@@ -1,3 +1,4 @@
+import { manejarNoAutorizado } from "@/lib/manejar401";
 import { useProfilerStore } from "@/stores/profilerStore";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -121,8 +122,14 @@ export function createApi(options: ApiOptions): ApiClient {
             return request({ ...cfg, retry: (cfg.retry ?? 0) - 1 });
           }
           if (res.status === 401) {
-            const session = useUserSessionStore();
-            session.clear();
+            // El propio POST /login responde 401 con credenciales inválidas:
+            // ahí NO se redirige (sería un loop). El resto de 401 (token
+            // desconocido/expirado) se manejan de forma central.
+            if (cfg.url.startsWith("/login")) {
+              useUserSessionStore().clear();
+            } else {
+              manejarNoAutorizado();
+            }
 
             throw "Usuario o contraseña incorrecto.";
             // if (!refreshToken) {

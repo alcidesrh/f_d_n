@@ -53,15 +53,19 @@ class Migrador
 
     /**
      * @param \Closure|null $onProgress Optional callback invoked every N iterations: fn(int $done, int $total) => void
+     * @param \Closure|null $debeCancelar Optional callback consulted at the top of each iteration: fn() => bool
+     * @param array|null    $salidasPrefetchadas Filas ya obtenidas (fetchSalidasPendientes): evita un segundo fetch
      */
     public function migrarSalida(
         $salidas = 100,
         ?OutputInterface $output = null,
         ?\Closure $onProgress = null,
+        ?\Closure $debeCancelar = null,
+        ?array $salidasPrefetchadas = null,
     ): array {
         $contadores = $this->contadoresIniciales();
 
-        $salidas = $this->fetchSalidas($salidas);
+        $salidas = $salidasPrefetchadas ?? $this->fetchSalidas($salidas);
         if ($output) {
             $output->writeln(
                 sprintf("<info>Salidas a migrar: %d</info>", count($salidas)),
@@ -70,6 +74,15 @@ class Migrador
 
         $total = count($salidas);
         foreach ($salidas as $i => $salida) {
+            if ($debeCancelar && $debeCancelar()) {
+                if ($output) {
+                    $output->writeln(
+                        "<comment>Migración cancelada por el usuario.</comment>",
+                    );
+                }
+                break;
+            }
+
             $legacyId = (string) $salida["id"];
             if ($this->yaMigrado("itinerario", $legacyId)) {
                 continue;
@@ -147,9 +160,9 @@ class Migrador
                 }
             }
 
-            if (($i + 1) % 50 === 0) {
+            if (($i + 1) % 25 === 0) {
                 if ($onProgress) {
-                    $onProgress();
+                    $onProgress(min($i + 1, $total), $total);
                 }
             }
             if ($output && ($i + 1) % 10 === 0) {
@@ -684,16 +697,131 @@ class Migrador
 
     // ─── Salida-driven migration helpers ───────────────────────────
 
-    private function fetchSalidas(int $salidas): array
-    {
-        return $this->fetchOld(
+    private function fetchSalidas(
+        int $salidas,
+        ?string $desde = null,
+        ?string $hasta = null,
+    ): array {
+        $sql =
             "SELECT TOP $salidas s.*, i.ruta_codigo, i.tipo_bus_id AS it_tipo_bus_id, i.empresa_id AS it_empresa_id
              FROM salida s
              LEFT JOIN itineario i ON i.id = s.itinerario_id
-             WHERE s.estado_id in (1,2)
-             ORDER BY s.fecha DESC",
-        );
+             WHERE s.estado_id in (1,2)";
+        $params = [];
+        if ($desde) {
+            $sql .= " AND s.fecha >= :desde";
+            $params["desde"] = $desde;
+        }
+        if ($hasta) {
+            $sql .= " AND s.fecha <= :hasta";
+            $params["hasta"] = $hasta;
+        }
+        $sql .= " ORDER BY s.fecha DESC";
+
+        return $this->fetchOld($sql, $params);
     }
+
+    private function fetchSalidasVentana(
+        int $cantidad,
+        int $offset,
+        ?string $desde = null,
+        ?string $hasta = null,
+    ): array {
+        $sql = "SELECT s.*, i.ruta_codigo, i.tipo_bus_id AS it_tipo_bus_id, i.empresa_id AS it_empresa_id
+             FROM salida s
+             LEFT JOIN itineario i ON i.id = s.itinerario_id
+             WHERE s.estado_id in (1,2)";
+        $params = [];
+        if ($desde) {
+            $sql .= " AND s.fecha >= :desde";
+            $params["desde"] = $desde;
+        }
+        if ($hasta) {
+            $sql .= " AND s.fecha <= :hasta";
+            $params["hasta"] = $hasta;
+        }
+        $sql .= " ORDER BY s.fecha DESC OFFSET {$offset} ROWS FETCH NEXT {$cantidad} ROWS ONLY";
+
+        return $this->fetchOld($sql, $params);
+    }
+
+    /**
+     * Salidas del legado aún no migradas (fecha DESC), para que la operación
+     * "migrar N más" avance entre ejecuciones sucesivas sin depender de un TOP fijo.
+     */
+    public function fetchSalidasPendientes(
+        int $cantidad,
+        ?string $desde = null,
+        ?string $hasta = null,
+    ): array {
+        // Set de legacy_id ya migrados en el nuevo itinerario (evita N+1).
+        $migradas = [];
+        $rows = $this->newConn
+            ->executeQuery(
+                "SELECT legacy_id FROM itinerario WHERE legacy_id IS NOT NULL",
+            )
+            ->fetchFirstColumn();
+        foreach ($rows as $legacyId) {
+            $migradas[(string) $legacyId] = true;
+        }
+
+        $pendientes = [];
+        $ventana = max(100, min($cantidad * 2, 500));
+        $offset = 0;
+        // Techo de seguridad: nunca escanear más de 20× la cantidad pedida.
+        $maxEscaneadas = max(2000, $cantidad * 20);
+
+        while (count($pendientes) < $cantidad && $maxEscaneadas > 0) {
+            $rows = $this->fetchSalidasVentana(
+                $ventana,
+                $offset,
+                $desde,
+                $hasta,
+            );
+            if ([] === $rows) {
+                break;
+            }
+            foreach ($rows as $row) {
+                $maxEscaneadas--;
+                if (!isset($migradas[(string) $row["id"]])) {
+                    $pendientes[] = $row;
+                    if (count($pendientes) >= $cantidad) {
+                        break 2;
+                    }
+                }
+            }
+            if (count($rows) < $ventana) {
+                break; // última página
+            }
+            $offset += $ventana;
+        }
+
+        return $pendientes;
+    }
+
+    /**
+     * Total de salidas fuente (legado) con los mismos filtros que fetchSalidas.
+     */
+    public function contarSalidas(
+        ?string $desde = null,
+        ?string $hasta = null,
+    ): int {
+        $sql = "SELECT COUNT(*) FROM salida s WHERE s.estado_id IN (1,2)";
+        $params = [];
+        if ($desde) {
+            $sql .= " AND s.fecha >= :desde";
+            $params["desde"] = $desde;
+        }
+        if ($hasta) {
+            $sql .= " AND s.fecha <= :hasta";
+            $params["hasta"] = $hasta;
+        }
+        $stmt = $this->oldPdo->prepare($sql);
+        $stmt->execute($params);
+
+        return (int) $stmt->fetchColumn();
+    }
+
 
     private function crearSalida(
         array $salida,

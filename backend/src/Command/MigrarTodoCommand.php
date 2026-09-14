@@ -2,13 +2,12 @@
 
 namespace App\Command;
 
-use App\Migration\Limpiador;
 use App\Migration\Migrador;
 use App\Migration\MigradorEstaticos;
 use App\Migration\MigradorIAM;
+use App\Migration\Reseteador;
 use App\Services\EntityConfigSynchronizer;
 use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\Tools\SchemaTool;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Argument;
@@ -31,7 +30,7 @@ use Doctrine\DBAL\Connection;
 class MigrarTodoCommand extends Command
 {
     public function __construct(
-        private Limpiador $limpiador,
+        private Reseteador $reseteador,
         private MigradorEstaticos $migradorEstaticos,
         private MigradorIAM $migradorIAM,
         private Migrador $migrador,
@@ -273,34 +272,12 @@ class MigrarTodoCommand extends Command
     ): int {
         $io = new SymfonyStyle($input, $output);
         if ($hard) {
-            // $io->warning('HARD RESET: se dropeará y recreará la base de datos');
-            // if (!$io->confirm('¿Continuar?', false)) {
-            //     return Command::SUCCESS;
-            // }
-
             $io->section("Dropeando base de datos...");
-            $this->entityManager
-                ->getConnection()
-                ->executeStatement("DROP SCHEMA public CASCADE");
-            $this->entityManager
-                ->getConnection()
-                ->executeStatement("CREATE SCHEMA public");
-            $this->entityManager
-                ->getConnection()
-                ->executeStatement("GRANT ALL ON SCHEMA public TO PUBLIC");
-            $io = new SymfonyStyle($input, $output);
-
-            $metadata = $this->entityManager
-                ->getMetadataFactory()
-                ->getAllMetadata();
-
-            $tool = new SchemaTool($this->entityManager);
-            $tool->createSchema($metadata);
-
+            $this->reseteador->hard();
             $io->success("Base de datos recreada y migraciones ejecutadas");
         } else {
             $io->section("Truncando tablas migrables...");
-            $this->limpiador->limpiar();
+            $this->reseteador->soft();
             $io->success("Tablas migrables truncadas");
         }
 

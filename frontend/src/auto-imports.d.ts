@@ -11,6 +11,7 @@ declare global {
   const ICON_PATHS: typeof import("./components/icons/icon-paths").ICON_PATHS
   const SCHEMA_REPOSITORY_VERSION: typeof import('./stores/schemaRepository').SCHEMA_REPOSITORY_VERSION
   const acceptHMRUpdate: typeof import('pinia').acceptHMRUpdate
+  const apiGraphql: typeof import('@/init').apiGraphql
   const apiRest: typeof import('@/init').apiRest
   const apollo: typeof import('@/init').apollo
   const buildFallbackColumns: typeof import("./stores/sidebarFactoryStore").buildFallbackColumns
@@ -79,7 +80,7 @@ declare global {
   const resolveComponent: typeof import('vue').resolveComponent
   const restApi: typeof import("./composables/useApiRest").restApi
   const router: typeof import('@/router').router
-  const schemaRepository: typeof import('./stores/global').schemaRepository
+  const schemaRepository: typeof import('@/init').schemaRepository
   const session: typeof import('@/init').session
   const setActivePinia: typeof import('pinia').setActivePinia
   const setApi: typeof import("./composables/useApiRest").setApi
@@ -117,6 +118,7 @@ declare global {
   const useLink: typeof import('vue-router').useLink
   const useLoadingStore: typeof import('./stores/loadingStore').useLoadingStore
   const useMenusStore: typeof import('./stores/menus').useMenusStore
+  const useMigracionStore: typeof import('./stores/migracion').useMigracionStore
   const useModel: typeof import('vue').useModel
   const useOrm: typeof import("./features/crud/composables/use-orm").useOrm
   const useProfilerStore: typeof import('./stores/profilerStore').useProfilerStore
@@ -173,6 +175,7 @@ declare module 'vue' {
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
     readonly SCHEMA_REPOSITORY_VERSION: UnwrapRef<typeof import('./stores/schemaRepository')['SCHEMA_REPOSITORY_VERSION']>
     readonly acceptHMRUpdate: UnwrapRef<typeof import('pinia')['acceptHMRUpdate']>
+    readonly apiGraphql: UnwrapRef<typeof import('@/init')['apiGraphql']>
     readonly apiRest: UnwrapRef<typeof import('@/init')['apiRest']>
     readonly apollo: UnwrapRef<typeof import('@/init')['apollo']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
@@ -261,6 +264,7 @@ declare module 'vue' {
     readonly useLink: UnwrapRef<typeof import('vue-router')['useLink']>
     readonly useLoadingStore: UnwrapRef<typeof import('./stores/loadingStore')['useLoadingStore']>
     readonly useMenusStore: UnwrapRef<typeof import('./stores/menus')['useMenusStore']>
+    readonly useMigracionStore: UnwrapRef<typeof import('./stores/migracion')['useMigracionStore']>
     readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
     readonly useProfilerStore: UnwrapRef<typeof import('./stores/profilerStore')['useProfilerStore']>
     readonly useRoute: UnwrapRef<typeof import('vue-router')['useRoute']>

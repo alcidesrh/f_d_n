@@ -4,6 +4,7 @@
  * `Accept: application/ld+json` (sin él el backend responde 406).
  */
 
+import { manejarNoAutorizado } from '@/lib/manejar401'
 import type { CollectionFieldConfig } from '@/stores/entities/types'
 
 const REST_URI = import.meta.env.VITE_REST_ENDPOINT ?? 'http://localhost/api'
@@ -31,6 +32,9 @@ export class RestClient {
     const response = await fetch(`${this.baseUrl}${path}`, {
       headers: { Accept: 'application/ld+json' },
     })
+    if (response.status === 401) {
+      manejarNoAutorizado()
+    }
     if (!response.ok) {
       throw new Error(`REST ${response.status} ${response.statusText} en ${path}`)
     }

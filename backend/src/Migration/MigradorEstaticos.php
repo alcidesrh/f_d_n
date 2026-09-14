@@ -2,6 +2,7 @@
 
 namespace App\Migration;
 
+use App\Migration\Job\Progreso;
 use DateTime;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -42,6 +43,7 @@ class MigradorEstaticos
     public function migrar(
         ?OutputInterface $output = null,
         $entities = [],
+        ?Progreso $progreso = null,
     ): array {
         $contadores = [
             "empresa" => 0,
@@ -60,13 +62,23 @@ class MigradorEstaticos
         $this->newConn->beginTransaction();
         try {
             if (!empty($entities)) {
-                $output->writeln(
-                    "<comment>Migrando solo entidades: " .
-                        implode(", ", $entities) .
-                        "</comment>",
-                );
-                foreach ($entities as $key => $value) {
-                    $funcName = "migrar" . ucfirst($value) . "s";
+                if ($output) {
+                    $output->writeln(
+                        "<comment>Migrando solo entidades: " .
+                            implode(", ", $entities) .
+                            "</comment>",
+                    );
+                }
+                foreach ($entities as $value) {
+                    if ($progreso && $progreso->debeCancelar()) {
+                        break;
+                    }
+                    if (!isset(self::ENTIDAD_A_METODO[$value])) {
+                        throw new \InvalidArgumentException(
+                            "Entidad estática desconocida: {$value}",
+                        );
+                    }
+                    $funcName = self::ENTIDAD_A_METODO[$value];
                     $contadores[$value] = $this->$funcName($output);
                 }
             } else {
@@ -89,6 +101,76 @@ class MigradorEstaticos
         }
 
         return $contadores;
+    }
+
+    /**
+     * Nombre canónico de entidad → método migrador.
+     * Evita el patrón "migrar".ucfirst($x)."s" que rompe con bus_marca.
+     */
+    private const ENTIDAD_A_METODO = [
+        "empresa" => "migrarEmpresas",
+        "estacion" => "migrarEstacions",
+        "cliente" => "migrarClientes",
+        "usuario" => "migrarUsuarios",
+        "bus" => "migrarBuss",
+        "asiento" => "migrarAsientos",
+        "trayecto" => "migrarTrayectos",
+        "tarifa" => "migrarTarifas",
+        "piloto" => "migrarPilotos",
+        "marca" => "migrarMarcas",
+        "localidad" => "migrarLocalidads",
+    ];
+
+    /**
+     * Migra una única entidad estática.
+     *
+     * @return array<string, int> contadores con clave = nombre de entidad
+     */
+    public function migrarEntidad(
+        string $nombre,
+        ?OutputInterface $output = null,
+        ?Progreso $progreso = null,
+        ?int $limiteClientes = null,
+    ): array {
+        if (!isset(self::ENTIDAD_A_METODO[$nombre])) {
+            throw new \InvalidArgumentException(
+                "Entidad estática desconocida: {$nombre}",
+            );
+        }
+
+        // Clientes es la única tabla grande: el lote controlado respeta la
+        // cantidad pedida y su propia transacción (fuera del bucle de migrar()).
+        if ("cliente" === $nombre && null !== $limiteClientes) {
+            $count = $this->migrarClienteLote(
+                $output,
+                $limiteClientes,
+                $progreso,
+            );
+
+            return ["cliente" => $count];
+        }
+
+        return $this->migrar($output, [$nombre], $progreso);
+    }
+
+    /**
+     * Lote controlado de clientes (TOP {limite} ORDER BY id) en su propia transacción.
+     */
+    public function migrarClienteLote(
+        ?OutputInterface $output = null,
+        int $limite = 1000,
+        ?Progreso $progreso = null,
+    ): int {
+        $this->newConn->beginTransaction();
+        try {
+            $count = $this->migrarClientes($output, $limite, $progreso);
+            $this->newConn->commit();
+        } catch (\Throwable $e) {
+            $this->newConn->rollBack();
+            throw $e;
+        }
+
+        return $count;
     }
 
     // ─── Empresa ───────────────────────────────────────────────────
@@ -150,15 +232,22 @@ class MigradorEstaticos
 
     // ─── Cliente ───────────────────────────────────────────────────
 
-    private function migrarClientes(?OutputInterface $output = null): int
-    {
+    private function migrarClientes(
+        ?OutputInterface $output = null,
+        ?int $limite = null,
+        ?Progreso $progreso = null,
+    ): int {
         if ($output) {
             $output->write("<info>Clientes...</info>");
         }
-        $rows = $this->fetchOld("SELECT TOP 1000 * FROM cliente");
+        $top = $limite ?? 1000;
+        $rows = $this->fetchOld("SELECT TOP {$top} * FROM cliente ORDER BY id");
         $count = 0;
 
         foreach ($rows as $row) {
+            if ($progreso && $progreso->debeCancelar()) {
+                break;
+            }
             $lid = (string) $row["id"];
             if ($this->existe("cliente", $lid)) {
                 continue;

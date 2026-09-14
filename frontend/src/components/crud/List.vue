@@ -801,7 +801,7 @@ watch(
       toasts.error("Entidad no especificada");
       return;
     }
-    const entity = schemaRepository.getEntityMetadata(name);
+    const entity = apiGraphql.getEntityMetadata(name);
     if (!entity) {
       toasts.error(`Entidad "${name}" no encontrada en el schema GraphQL`);
       return;

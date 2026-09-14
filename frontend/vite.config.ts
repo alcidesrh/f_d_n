@@ -21,7 +21,7 @@ export default defineConfig({
         "vue",
         "vue-router",
         "pinia",
-        { "@/init": ["ui", "session", "apiRest", "apollo", "loadingStore"] },
+        { "@/init": ["ui", "session", "apiRest", "apollo", "loadingStore", "apiGraphql"] },
         { "@/router": ["router"] },
       ],
 

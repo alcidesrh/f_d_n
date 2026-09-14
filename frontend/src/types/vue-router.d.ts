@@ -1,6 +1,6 @@
 import "vue-router";
 
-export type LayoutName = "default" | "auth" | "blank" | "formdemo";
+export type LayoutName = "default" | "auth" | "blank" | "formdemo" | "migracion";
 
 declare module "vue-router" {
   interface RouteMeta {

@@ -1,4 +1,5 @@
 import { defineStore } from "pinia";
+import { manejarNoAutorizado } from "@/lib/manejar401";
 const API_BASE = import.meta.env.VITE_REST_ENDPOINT ?? "http://localhost/api";
 
 export interface MenuItem {
@@ -65,6 +66,10 @@ export const useMenusStore = defineStore("menus", {
       this.error = "";
       try {
         const res = await fetch(`${API_BASE}/menus-by-area`);
+        if (res.status === 401) {
+          manejarNoAutorizado();
+          return;
+        }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data: { areas: MenuArea[] } = await res.json();
         this.areas = data.areas ?? [];

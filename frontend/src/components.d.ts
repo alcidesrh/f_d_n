@@ -11,7 +11,6 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    1: typeof import('./components/layout/SidebarLeft copy 1.vue')['default']
     Accordion: typeof import('primevue/accordion')['default']
     AccordionContent: typeof import('primevue/accordioncontent')['default']
     AccordionHeader: typeof import('primevue/accordionheader')['default']
@@ -69,6 +68,7 @@ declare module 'vue' {
     ListHeader: typeof import('./components/crud/ListHeader.vue')['default']
     MenuForm: typeof import('./components/menu/MenuForm.vue')['default']
     Message: typeof import('primevue/message')['default']
+    MigracionPanel: typeof import('./components/migracion/MigracionPanel.vue')['default']
     MultiSelect: typeof import('primevue/multiselect')['default']
     NewComponent: typeof import('./components/layout/NewComponent.vue')['default']
     OverlayBadge: typeof import('primevue/overlaybadge')['default']
