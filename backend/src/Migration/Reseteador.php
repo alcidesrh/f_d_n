@@ -13,6 +13,9 @@ use Doctrine\ORM\Tools\SchemaTool;
  * - hard(): DROP SCHEMA public CASCADE + recreate + SchemaTool (esquema completo).
  * - soft(): Limpiador → truncado de tablas migrables e IAM, sin tocar el esquema.
  *
+ * Tras vaciar la BD (incluida la tabla `usuario`), ambos modos regeneran el
+ * usuario de respaldo `admin` (ROLE_SUPER_ADMIN) vía AsegurarUsuarioAdmin.
+ *
  * Extraído de MigrarTodoCommand::resetDB para que el panel /migracion
  * ofrezca ambos modos sin alterar el comportamiento del comando CLI.
  */
@@ -21,6 +24,7 @@ final class Reseteador
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly Limpiador $limpiador,
+        private readonly AsegurarUsuarioAdmin $asegurarUsuarioAdmin,
     ) {}
 
     public function hard(): void
@@ -33,10 +37,13 @@ final class Reseteador
         $metadata = $this->em->getMetadataFactory()->getAllMetadata();
         $tool = new SchemaTool($this->em);
         $tool->createSchema($metadata);
+
+        $this->asegurarUsuarioAdmin->asegurar();
     }
 
     public function soft(): void
     {
         $this->limpiador->limpiar();
+        $this->asegurarUsuarioAdmin->asegurar();
     }
 }

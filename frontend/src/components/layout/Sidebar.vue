@@ -16,7 +16,7 @@
 <script setup lang="ts">
 import type { StoreDefinition } from "pinia";
 
-const props = defineProps<{ side: "left" | "right"; store?: StoreDefinition }>();
+const props = defineProps<{ side?: "left" | "right"; store?: StoreDefinition }>();
 
 const sidebarStore = props.store || defineSidebarStore(props.side)();
 
