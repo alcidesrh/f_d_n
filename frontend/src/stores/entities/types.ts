@@ -41,6 +41,9 @@ export interface SidebarStoreState<T = unknown> {
   side: string;
   mode: "open" | "mini" | "close";
   prevMode: "open" | "mini" | "close";
+  open: number;
+  mini: number;
+  close: number;
 }
 export interface EntityStoreState<T = unknown> {
   /** Nombre de la entidad tal cual (ej: `Boleto`). */

@@ -11,7 +11,7 @@
         </div>
       </main>
 
-      <Sidebar :store="sidebarStore">
+      <Sidebar :store="sidebarStore" :nomini="true">
         <template #menu-content>
           <FormBuilderPanel />
         </template>

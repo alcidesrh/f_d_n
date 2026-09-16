@@ -42,7 +42,12 @@
     }
   }
   &.right {
-    flex-direction: row-reverse;
+    &:not(.nomini) {
+      flex-direction: row-reverse;
+    }
+    &.nomini > .toggle-sidebar {
+      display: none;
+    }
     & > div:last-child {
       rotate: 180deg;
     }

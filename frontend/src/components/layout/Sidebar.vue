@@ -1,11 +1,14 @@
 <template>
   <aside class="sidebar" :class="[sidebarStore.side, sidebarStore.mode]">
     <nav>
-      <div :class="[sidebarStore.side]" class="sidebar-control">
-        <div @click="sidebarStore.setMode('close')">
+      <div :class="[sidebarStore.side, nomini ? 'nomini' : '']" class="sidebar-control">
+        <div class="close-sidebar" @click="sidebarStore.setMode('close')">
           <icon name="x" />
         </div>
-        <div @click="sidebarStore.setMode(sidebarStore.mode == 'mini' ? 'open' : 'mini')">
+        <div
+          class="toggle-sidebar"
+          @click="sidebarStore.setMode(sidebarStore.mode == 'mini' ? 'open' : 'mini')"
+        >
           <icon :name="sidebarStore.mode != 'mini' ? 'chevrons-left' : 'chevrons-right'" />
         </div>
       </div>
@@ -16,7 +19,7 @@
 <script setup lang="ts">
 import type { StoreDefinition } from "pinia";
 
-const props = defineProps<{ side?: "left" | "right"; store?: StoreDefinition }>();
+const props = defineProps<{ side?: "left" | "right"; store?: StoreDefinition; nomini?: boolean }>();
 
 const sidebarStore = props.store || defineSidebarStore(props.side)();
 

@@ -10,17 +10,21 @@
 import { defineEntityStore } from "@/stores/entities/factory";
 import type { EntityStore } from "@/stores/entities/types";
 import router from "@/router";
-import { useSchemaRepositoryStore } from "@/stores/schemaRepository";
 import type { EntitySchema } from "@/lib/apollo";
 
 export const stores = new Map<string, EntityStore<unknown>>();
 
 export function getEntity<T = unknown>(entityName?: string): EntityStore<T> {
-  const schemaRepo = useSchemaRepositoryStore();
   let entity: EntitySchema | null = null;
   if (
-    !(entity = schemaRepo.getEntityMetadata(entityName || router.currentRoute.value.params?.entity))
+    !(entity = apiGraphql.getEntityMetadata(entityName || router.currentRoute.value.params?.entity))
   ) {
+    triggerToast({
+      severity: "error",
+      summary: "Error",
+      detail: `No existe la entidad: ${entityName}`,
+      life: 0,
+    });
     throw new Error(`No existe la entidad: ${entityName}`);
     return null;
   }

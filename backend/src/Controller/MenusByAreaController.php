@@ -14,7 +14,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 #[AsController]
-#[Route('/api/menus-by-area', name: 'api_menus_by_area', methods: ['GET'])]
+#[Route("/api/menus-by-area", name: "api_menus_by_area", methods: ["GET"])]
 class MenusByAreaController extends AbstractController
 {
     public function __invoke(
@@ -23,7 +23,7 @@ class MenusByAreaController extends AbstractController
         MenuRepository $menuRepository,
     ): JsonResponse {
         if (!$user) {
-            return $this->json(['areas' => []]);
+            return $this->json(["areas" => []]);
         }
 
         $roles = $user->getUserRoles()->toArray();
@@ -36,36 +36,50 @@ class MenusByAreaController extends AbstractController
 
         $result = [];
         foreach ($grouped as $area => $data) {
-            $items = array_map(fn($menu) => [
-                'id' => $menu->getId(),
-                'nombre' => $menu->getNombre(),
-                'label' => $menu->getLabel(),
-                'icon' => $menu->getIcon(),
-                'sort' => $menu->getSort(),
-                'ruta' => $menu->getReferenciaVueRoute()?->getPath(),
-                'routeName' => $menu->getReferenciaVueRoute()?->getVueRouteName(),
-                'children' => array_map(fn($child) => [
-                    'id' => $child->getId(),
-                    'nombre' => $child->getNombre(),
-                    'label' => $child->getLabel(),
-                    'icon' => $child->getIcon(),
-                    'sort' => $child->getSort(),
-                    'ruta' => $child->getReferenciaVueRoute()?->getPath(),
-                    'routeName' => $child->getReferenciaVueRoute()?->getVueRouteName(),
-                ], $menu->getChildren()->toArray()),
-            ], $data['items']);
+            $items = array_map(
+                fn($menu) => [
+                    "id" => $menu->getId(),
+                    "nombre" => $menu->getNombre(),
+                    "label" => $menu->getLabel(),
+                    "icon" => $menu->getIcon(),
+                    "sort" => $menu->getSort(),
+                    "ruta" => $menu->getReferenciaVueRoute()?->getPath(),
+                    "routeName" => $menu
+                        ->getReferenciaVueRoute()
+                        ?->getVueRouteName(),
+                    "children" => array_map(
+                        fn($child) => [
+                            "id" => $child->getId(),
+                            "nombre" => $child->getNombre(),
+                            "label" => $child->getLabel(),
+                            "icon" => $child->getIcon(),
+                            "sort" => $child->getSort(),
+                            "ruta" => $child
+                                ->getReferenciaVueRoute()
+                                ?->getPath(),
+                            "routeName" => $child
+                                ->getReferenciaVueRoute()
+                                ?->getVueRouteName(),
+                        ],
+                        $menu->getChildren()->toArray(),
+                    ),
+                ],
+                $data["items"],
+            );
 
             $result[] = [
-                'area' => $area,
-                'items' => $items,
+                "area" => $area,
+                "items" => $items,
             ];
         }
 
-        return $this->json(['areas' => $result]);
+        return $this->json(["areas" => $result]);
     }
 
-    private function collectRoleWithParents(\App\Entity\Role $role, array &$collection): void
-    {
+    private function collectRoleWithParents(
+        \App\Entity\Role $role,
+        array &$collection,
+    ): void {
         if (isset($collection[$role->getId()])) {
             return;
         }

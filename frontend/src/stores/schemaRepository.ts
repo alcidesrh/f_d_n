@@ -78,8 +78,14 @@ export const useSchemaRepositoryStore = defineStore("schemaRepository", {
           .replace(/[-_ ]+(.)/g, (_, letra) => letra.toUpperCase())
           .charAt(0)
           .toUpperCase() + name.slice(1);
-
       if (!this.entities[name]) {
+        triggerToast({
+          severity: "error",
+          summary: "Error",
+          detail: `No existe la entidad: ${name}`,
+          life: 0,
+        });
+
         throw new Error(`No existe la entidad: ${name}`);
         return null;
       }

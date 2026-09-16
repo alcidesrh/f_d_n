@@ -1,5 +1,5 @@
 <template>
-  <header class="app-header">
+  <header class="app-header" @click="toastTest">
     <div class="flex btn-siderbar-header" :class="[sidebarStore.mode]">
       <button class="icon-btn" title="Mostrar/ocultar menú" @click="sidebarStore.setMode()">
         <AppIcon name="menu" :size="19" />
@@ -88,6 +88,14 @@ const openPopover = ref<PopoverName>(null);
 const menusStore = useMenusStore();
 const topbarMenuItems = computed(() => menusStore.topbarRightItems);
 
+function toastTest() {
+  triggerToast({
+    severity: "error",
+    summary: "Error",
+    detail: `No existe la entidad`,
+    life: 0,
+  });
+}
 function toggleFullscreen() {
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen?.();

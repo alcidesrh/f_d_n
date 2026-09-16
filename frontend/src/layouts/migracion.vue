@@ -11,7 +11,7 @@
         </div>
       </main>
 
-      <Sidebar :store="sidebarStore">
+      <Sidebar :store="sidebarStore" nomini="true">
         <template #menu-content>
           <MigracionPanel />
         </template>
@@ -24,7 +24,7 @@ import SidebarLeft from "@/components/layout/SidebarLeft.vue";
 import MigracionPanel from "@/components/migracion/MigracionPanel.vue";
 
 const route = useRoute();
-const sidebarStore = defineSidebarStore("right", "migracion")();
+const sidebarStore = defineSidebarStore("right", "migracionSidebar")();
 sidebarStore.open = 340;
 const crumbs = computed(() => route.meta.crumbs ?? ["Andén"]);
 

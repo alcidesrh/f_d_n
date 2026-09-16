@@ -37,7 +37,8 @@ class MenuRepository extends ServiceEntityRepository
             ->innerJoin('m.layoutAssignments', 'la')
             ->where('r IN (:roles)')
             ->setParameter('roles', $roles)
-            ->orderBy('la.position', 'ASC')
+            ->addSelect('la.position AS HIDDEN hidden_position')
+            ->orderBy('hidden_position', 'ASC')
             ->addOrderBy('m.sort', 'ASC')
             ->addOrderBy('m.nombre', 'ASC')
             ->distinct();
@@ -82,7 +83,8 @@ class MenuRepository extends ServiceEntityRepository
             ->where('r IN (:roles)')
             ->andWhere('p IS NULL')
             ->setParameter('roles', $roles)
-            ->orderBy('la.position', 'ASC')
+            ->addSelect('la.position AS HIDDEN hidden_position')
+            ->orderBy('hidden_position', 'ASC')
             ->addOrderBy('m.sort', 'ASC')
             ->addOrderBy('m.nombre', 'ASC')
             ->distinct();

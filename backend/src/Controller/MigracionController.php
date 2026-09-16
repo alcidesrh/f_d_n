@@ -31,7 +31,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
  * construir el PDO legacy, así que el catálogo y los indicadores degradan en
  * ~1.5s (503 informativo con legadoAccesible: false) en vez de colgarse ~130s.
  */
-//#[IsGranted("ROLE_SUPER_ADMIN")]
+#[IsGranted("ROLE_SUPER_ADMIN")]
 #[AsController]
 #[Route("/api/migracion")]
 class MigracionController extends AbstractController

@@ -126,7 +126,10 @@ class MigradorIAM {
     private function crearActionsBase(): int {
         $count = 0;
 
-        foreach (self::BASE_ACTIONS as [$codigo, $recurso, $operacion, $grupo]) {
+        // Las tuplas de BASE_ACTIONS conservan [codigo, recurso, operacion,
+        // grupo] como referencia, pero la tabla `action` actual (entidad
+        // Action) solo persiste codigo + nombre.
+        foreach (self::BASE_ACTIONS as [$codigo]) {
             $exists = $this->newConn->fetchOne(
                 'SELECT 1 FROM action WHERE codigo = :codigo',
                 ['codigo' => $codigo]
@@ -136,12 +139,9 @@ class MigradorIAM {
             }
 
             $this->newConn->executeStatement(
-                'INSERT INTO action (codigo, recurso, operacion, grupo, nombre) VALUES (:codigo, :recurso, :operacion, :grupo, :nombre)',
+                'INSERT INTO action (codigo, nombre) VALUES (:codigo, :nombre)',
                 [
                     'codigo' => $codigo,
-                    'recurso' => $recurso,
-                    'operacion' => $operacion,
-                    'grupo' => $grupo,
                     'nombre' => $codigo,
                 ]
             );

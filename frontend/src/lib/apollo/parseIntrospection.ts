@@ -72,7 +72,6 @@ function describeType(ref: IntrospectionRef): {
 } {
   const named = unwrap(ref);
 
-  console.log(signature(ref));
   return {
     namedType: named.name ?? "",
     required: ref.kind === "NON_NULL" || (ref.ofType?.kind === "NON_NULL" && ref.kind === "LIST"),

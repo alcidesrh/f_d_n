@@ -5,15 +5,13 @@
     </AppHeader>
     <SidebarLeft />
 
-    <main class="main" @click="ui.closeMobileOverlays()">
+    <main class="main">
       <div class="main-inner">
         <slot />
       </div>
     </main>
 
     <SidebarRight />
-
-    <ProfilerFooter />
   </div>
 </template>
 <script setup lang="ts">

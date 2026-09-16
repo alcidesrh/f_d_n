@@ -31,6 +31,7 @@ declare module 'vue' {
     DatePicker: typeof import('primevue/datepicker')['default']
     Dialog: typeof import('primevue/dialog')['default']
     Divider: typeof import('primevue/divider')['default']
+    Dock: typeof import('primevue/dock')['default']
     DynamicDialog: typeof import('primevue/dynamicdialog')['default']
     FkAutoComplete: typeof import('./components/formkit/FkAutoComplete.vue')['default']
     'FkAutoComplete.MIO': typeof import('./components/formkit/FkAutoComplete.MIO.vue')['default']
@@ -106,5 +107,8 @@ declare module 'vue' {
     Toolbar: typeof import('primevue/toolbar')['default']
     TopLoadingBar: typeof import('./components/common/TopLoadingBar.vue')['default']
     TreeSelect: typeof import('primevue/treeselect')['default']
+  }
+  export interface GlobalDirectives {
+    Tooltip: typeof import('primevue/tooltip')['default']
   }
 }

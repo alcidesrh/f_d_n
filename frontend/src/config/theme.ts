@@ -301,7 +301,7 @@ export const componentsPreset = (parent: string) => {
     },
     progressbar: {
       background: "transparent",
-      height: "7px",
+      height: "12px",
       label: {
         color: "{surface.0}",
       },
