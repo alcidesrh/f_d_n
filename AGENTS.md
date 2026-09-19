@@ -15,30 +15,34 @@ Orquestación vía Docker Compose (`compose.yaml` + overrides).
 
 ### Domain terminology
 
-| Concepto                                | Definición                                                                                                                                                                                                                                                                       | Evitar                  |
-| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
-| **Enclave**                             | Ubicacion geografica de interes para el negocio. Inmuebles, sitios y emplazamientos geolocalizables relacionados con el negocio.                                                                                                                                                 | lugar, punto            |
-| **Estacion**                            | Enclaves que cumplen diferentes funciones como venta de boletos en taquilla, salida o destino de los buses y demás.                                                                                                                                                              | terminal                |
-| **Parada**                              | Enclave dentro de un trayecto donde temporalmente el bus detiene la marcha. Ya sea para bajar o abordar pasajeros o abastecer combustible.                                                                                                                                       | punto de parada         |
-| **Trayecto**                            | Tramos delimitados por dos enclaves. Un trayecto puede estar contenido parcial o totalmente dentro de otro trayecto. Los trayectos son vectoriales en el sentido matematico, quiere decir que si se tiene dos enclave A y B los trayectos A->B y B->A son en escencia distintos. | ruta, recorrido         |
-| **Subtrayecto**                         | Un segmento de un trayecto compuesto: un trayecto hijo con posición dentro de su trayecto padre.                                                                                                                                                                                 |                         |
-| **Bus**                                 | Vehículo de la flota con disposición de asientos                                                                                                                                                                                                                                 | unidad, vehículo        |
-| **Piloto**                              | Conductor asignado a un itinerario                                                                                                                                                                                                                                               | conductor, chofer       |
-| **Itinerario**                          | Salida concreta: trayecto + fecha + bus + piloto                                                                                                                                                                                                                                 | salida, servicio, viaje |
-| **Asiento**                             | Asiento de bus. Estan enumerados y tienen coordenadas con respecto al bus de su ubicacion. Hay dos clase A y B segun sus prestaciones siendo B la de mejor confort y mas cara.                                                                                                   | boleto, ticket          |
-| **BoletoAsiento**                       | Asiento vendido para un trayecto.                                                                                                                                                                                                                                                | boleto, ticket          |
-| **BoletoVenta**                         | Agrupa boletos, usuario quien lo emite, cliente, factura tributaria.                                                                                                                                                                                                             | venta, tiquetera        |
-| **BoletoTarifa**                        | Precio del BoletoAsiento. La tarifa se decide por la que mayor cantidad de atributos iguales tenga una BoletoTarifa con el entorno de un BoletoAsiento: empresa, trayecto, hora, clase de asiento, bus.                                                                          | tarifa, precio          |
-| **Factura**                             | Documento fiscal con snapshot inmutable de emisor/receptor                                                                                                                                                                                                                       | recibo, comprobante     |
-| **Cliente**                             | Persona que compra un boleto. Son los pasajeros.                                                                                                                                                                                                                                 | pasajero, comprador     |
-| **Empresa**                             | Línea transportista dueña de la operación                                                                                                                                                                                                                                        | compañía, operador      |
-| **Encomienda**                          | se refiere a una solicitud aceptada y registrada del servicio de paqueteria                                                                                                                                                                                                      | paquete, envio          |
-| **Voucher**                             | Es un boleto o encomienda que no se cobra. La razon puede ser desde desicion administrativa hasta restitucion de un por un viaje cancelado.                                                                                                                                      |                         |
-| **Reasignacion**                        | Cambio de asiento                                                                                                                                                                                                                                                                |                         |
-| **Anulacion**                           | Cuando se invalida la compra de un asiento asi como su registro en la oficina tributaria.                                                                                                                                                                                        |                         |
-| **Usuario**                             | Empleado de alguna empresa. Usan el sistema para la venta de boletos o encomiendas, crean el calendarios de recorrido, generan reportes y demas procesos del negocio segun el rol asignado                                                                                       |                         |
-| **Agencia**                             | Un tipo de usuario que representa una entidad externa asociada a una empresa. La diferencia es que solo estan limitado a la venta de boletos.                                                                                                                                    |                         |
-| **Manifiesto<de pasajero, de venta, …** | son reportes que se generan en formato pdf                                                                                                                                                                                                                                       |                         |
+Columna **Modelo**: `nuevo` = entidad viva en `backend/src/Entity/`; `legacy` = solo existe en `backend/src/EntitySistemaFdn/` (sistema TerminalOmnibus), sin equivalente todavía en el modelo nuevo; `concepto` = término de negocio vigente sin entidad dedicada (absorbido por otra entidad o pendiente de modelar).
+
+| Concepto                                | Definición                                                                                                                                                                                                                                                                       | Evitar                  | Modelo |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- | ------ |
+| **Enclave**                             | Ubicacion geografica de interes para el negocio. Inmuebles, sitios y emplazamientos geolocalizables relacionados con el negocio.                                                                                                                                                 | lugar, punto            | nuevo |
+| **Estacion**                            | Enclaves que cumplen diferentes funciones como venta de boletos en taquilla, salida o destino de los buses y demás.                                                                                                                                                              | terminal                | nuevo |
+| **Parada**                              | Enclave dentro de un trayecto donde temporalmente el bus detiene la marcha. Ya sea para bajar o abordar pasajeros o abastecer combustible.                                                                                                                                       | punto de parada         | concepto — hoy `Enclave` solo distingue `Enclave`/`Estacion` (discriminator map), sin subtipo `Parada` |
+| **Trayecto**                            | Tramos delimitados por dos enclaves. Un trayecto puede estar contenido parcial o totalmente dentro de otro trayecto. Los trayectos son vectoriales en el sentido matematico, quiere decir que si se tiene dos enclave A y B los trayectos A->B y B->A son en escencia distintos. Único por par `(origen, destino)`. | ruta, recorrido         | nuevo |
+| **Subtrayecto**                         | Un segmento de un trayecto compuesto: un trayecto hijo (`Trayecto`) con posición dentro de su trayecto padre (`belowTo`).                                                                                                                                                        |                         | nuevo |
+| **Bus**                                 | Vehículo de la flota con disposición de asientos                                                                                                                                                                                                                                 | unidad, vehículo        | nuevo |
+| **Piloto**                              | Conductor asignado a un servicio                                                                                                                                                                                                                                                  | conductor, chofer       | nuevo |
+| **Servicio**                            | Salida concreta: trayecto + fecha + bus + piloto + lista de BoletoAsiento vendidos. Es el "recorrido" del glosario de negocio — no confundir con la entidad `Recorrido`, que ya no existe (ver ADR-011).                                                                        | itinerario, recorrido, salida | nuevo |
+| **Asiento**                             | Asiento de bus. Estan enumerados y tienen coordenadas con respecto al bus de su ubicacion. Hay dos clase A y B segun sus prestaciones siendo B la de mejor confort y mas cara.                                                                                                   | boleto, ticket          | nuevo |
+| **BoletoAsiento**                       | Asiento vendido para un trayecto (puede ser un subtramo del trayecto completo del servicio) dentro de un servicio determinado.                                                                                                                                                   | boleto, ticket          | nuevo |
+| **BoletoVenta**                         | Agrupa boletos, usuario quien lo emite, cliente, factura tributaria.                                                                                                                                                                                                             | venta, tiquetera        | nuevo |
+| **BoletoTarifa**                        | Precio de referencia de un BoletoAsiento. La tarifa se decide por la que mayor cantidad de atributos iguales tenga una BoletoTarifa con el entorno de un BoletoAsiento: empresa, trayecto, hora, clase de asiento, bus. **El resolver de especificidad aún no está implementado en código** — hoy `BoletoTarifa` solo se usa desde el migrador legacy. | tarifa, precio          | nuevo (sin lógica de resolución) |
+| **Factura**                             | Documento fiscal con snapshot inmutable de emisor/receptor                                                                                                                                                                                                                       | recibo, comprobante     | nuevo |
+| **Cliente**                             | Persona que compra un boleto. Son los pasajeros.                                                                                                                                                                                                                                 | pasajero, comprador     | nuevo |
+| **Empresa**                             | Línea transportista dueña de la operación                                                                                                                                                                                                                                        | compañía, operador      | nuevo |
+| **Encomienda**                          | se refiere a una solicitud aceptada y registrada del servicio de paqueteria                                                                                                                                                                                                      | paquete, envio          | legacy |
+| **Voucher**                             | Es un boleto o encomienda que no se cobra. La razon puede ser desde desicion administrativa hasta restitucion de un por un viaje cancelado.                                                                                                                                      |                         | legacy |
+| **Reasignacion**                        | Cambio de asiento                                                                                                                                                                                                                                                                |                         | legacy (sin operación de dominio equivalente hoy) |
+| **Anulacion**                           | Cuando se invalida la compra de un asiento asi como su registro en la oficina tributaria.                                                                                                                                                                                        |                         | legacy (sin operación de dominio equivalente hoy) |
+| **Usuario**                             | Empleado de alguna empresa. Usan el sistema para la venta de boletos o encomiendas, crean el calendarios de recorrido, generan reportes y demas procesos del negocio segun el rol asignado                                                                                       |                         | nuevo |
+| **Agencia**                             | Un tipo de usuario que representa una entidad externa asociada a una empresa. La diferencia es que solo estan limitado a la venta de boletos.                                                                                                                                    |                         | legacy |
+| **Manifiesto\<de pasajero, de venta, ...\>** | son reportes que se generan en formato pdf                                                                                                                                                                                                                                  |                         | legacy |
+
+> **Estado del modelo (2026-09):** el modelo nuevo (`src/Entity/`, ~30 clases) cubre geografía, flota y venta básica de asientos. `Agencia`, `Voucher`, `Encomienda`, `Reasignación`, `Anulación` y `Manifiesto` solo existen en el legacy (`src/EntitySistemaFdn/`, ~112 clases) — son el trabajo de dominio pendiente, no features ya resueltas. No asumas que existe un endpoint/servicio para ellas sin verificarlo primero.
 
 ---
 
@@ -85,14 +89,6 @@ Despliegue
 | `npm run test:unit` | Vitest                   |
 | `npm run test:e2e`  | Playwright               |
 
-### Documentación (desde raíz)
-
-| Comando             | Descripción                                        |
-| ------------------- | -------------------------------------------------- |
-| `make docs-serve`   | MkDocs en localhost:8000                           |
-| `make docs-build`   | Generar site estático                              |
-| `make docs-gen-all` | Regenerar docs automáticas (ERD, entity-map, etc.) |
-
 ---
 
 #### Architecture critical facts
@@ -111,7 +107,7 @@ Despliegue
 2. **Cambios mínimos.** Preferir ediciones quirúrgicas sobre rewrites. No refactorizar código funcional sin razón.
 3. **Preservar compatibilidad.** No romper interfaces existentes.
 4. **Seguridad.** No commitear secrets, `.env.local`, passwords o JWT secrets. Todo input externo es untrusted.
-5. **Verificar.** Tests, GraphQL schema válido, PHPStan (backend), lint (frontend).
+5. **Verificar.** Tests, GraphQL schema válido, lint (frontend). `phpstan/phpstan` **no está instalado** en `backend/composer.json` (solo la dependencia transitiva `phpstan/phpdoc-parser`) — no asumas que hay static analysis corriendo en backend hasta que se agregue.
 6. **Lenguaje del dominio.** Usar terminología exacta de `CONTEXT.md` en títulos, commits y propuestas.
 7. **No inventar dependencias.** Evitar nuevas sin justificación explícita.
 8. **Explicar tradeoffs** cuando una decisión tiene implicaciones arquitectónicas.
@@ -132,20 +128,19 @@ Despliegue
 
 ## Documentation map
 
-| Área                | Ruta                                          |
-| ------------------- | --------------------------------------------- |
-| Contexto de dominio | `CONTEXT.md`                                  |
-| Arquitectura        | `docs/docs/architecture/overview.md`          |
-| ADRs                | `docs/docs/architecture/decisions/`           |
-| Docker              | `docs/docs/docker/overview.md`                |
-| Backend             | `docs/docs/backend/architecture/overview.md`  |
-| IAM                 | `docs/docs/backend/iam/overview.md`           |
-| Base de datos       | `docs/docs/backend/database/overview.md`      |
-| Migración legacy    | `docs/docs/backend/migration/overview.md`     |
-| Subdominios         | `docs/docs/backend/subdomains/overview.md`    |
-| Frontend            | `docs/docs/frontend/architecture/overview.md` |
-| Glosario            | `docs/docs/glossary.md`                       |
-| Agent skills        | `docs/agents/`                                |
+No existe un sitio MkDocs — se eliminó el 2026-09 por documentar un modelo de datos obsoleto (`Recorrido`, `Boleto`, `Venta`, `Parada`, `RecorridoMatrioska`). La documentación vigente es solo esta:
+
+| Área                | Ruta                                    |
+| ------------------- | ---------------------------------------- |
+| Contexto de dominio | `CONTEXT.md`                             |
+| Terminología + estado del modelo | `AGENTS.md` (este archivo, sección "Domain terminology") |
+| ADRs (decisiones de arquitectura) | `docs/architecture/decisions/` (ADR-001 a ADR-012, ver `index.md`) |
+| Convención de exploración de dominio para skills | `docs/agents/domain.md` |
+| Convención de issue tracker | `docs/agents/issue-tracker.md` |
+| Backend (Symfony, Doctrine, GraphQL) | `backend/AGENTS.md` |
+| Frontend (Quasar, Vue, stores) | `frontend/AGENTS.md` |
+
+Si necesitas documentación de un tema que no está en esta lista (ERD, mapa de entidades por subdominio, guía de performance, etc.), **no asumas que existe en `docs/`** — verifícalo primero; probablemente haya que escribirla desde cero contra el estado actual del código.
 
 ### Sub-AGENTS.md
 

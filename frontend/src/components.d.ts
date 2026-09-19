@@ -24,6 +24,7 @@ declare module 'vue' {
     Card: typeof import('primevue/card')['default']
     CascadeSelect: typeof import('primevue/cascadeselect')['default']
     Checkbox: typeof import('primevue/checkbox')['default']
+    Chip: typeof import('primevue/chip')['default']
     Column: typeof import('primevue/column')['default']
     ConfirmDialog: typeof import('primevue/confirmdialog')['default']
     copy: typeof import('./components/layout/SidebarLeft copy.vue')['default']

@@ -84,7 +84,7 @@ class Migrador
             }
 
             $legacyId = (string) $salida["id"];
-            if ($this->yaMigrado("itinerario", $legacyId)) {
+            if ($this->yaMigrado("servicio", $legacyId)) {
                 continue;
             }
 
@@ -702,10 +702,9 @@ class Migrador
         ?string $desde = null,
         ?string $hasta = null,
     ): array {
-        $sql =
-            "SELECT TOP $salidas s.*, i.ruta_codigo, i.tipo_bus_id AS it_tipo_bus_id, i.empresa_id AS it_empresa_id
+        $sql = "SELECT TOP $salidas s.*, i.ruta_codigo, i.tipo_bus_id AS it_tipo_bus_id, i.empresa_id AS it_empresa_id
              FROM salida s
-             LEFT JOIN itineario i ON i.id = s.itinerario_id
+             LEFT JOIN itineario i ON i.id = s.servicio_id
              WHERE s.estado_id in (1,2)";
         $params = [];
         if ($desde) {
@@ -729,7 +728,7 @@ class Migrador
     ): array {
         $sql = "SELECT s.*, i.ruta_codigo, i.tipo_bus_id AS it_tipo_bus_id, i.empresa_id AS it_empresa_id
              FROM salida s
-             LEFT JOIN itineario i ON i.id = s.itinerario_id
+             LEFT JOIN itineario i ON i.id = s.servicio_id
              WHERE s.estado_id in (1,2)";
         $params = [];
         if ($desde) {
@@ -754,11 +753,11 @@ class Migrador
         ?string $desde = null,
         ?string $hasta = null,
     ): array {
-        // Set de legacy_id ya migrados en el nuevo itinerario (evita N+1).
+        // Set de legacy_id ya migrados en el nuevo servicio (evita N+1).
         $migradas = [];
         $rows = $this->newConn
             ->executeQuery(
-                "SELECT legacy_id FROM itinerario WHERE legacy_id IS NOT NULL",
+                "SELECT legacy_id FROM servicio WHERE legacy_id IS NOT NULL",
             )
             ->fetchFirstColumn();
         foreach ($rows as $legacyId) {
@@ -822,7 +821,6 @@ class Migrador
         return (int) $stmt->fetchColumn();
     }
 
-
     private function crearSalida(
         array $salida,
         ?int $busId,
@@ -832,7 +830,7 @@ class Migrador
     ): ?int {
         $pilotoId = $salida["piloto_id"] ? (int) $salida["piloto_id"] : null;
 
-        $data = $this->mapeador->itinerario(
+        $data = $this->mapeador->servicio(
             $salida,
             $busId,
             $empresaId,
@@ -840,7 +838,7 @@ class Migrador
             $trayectoId,
         );
         $id = $this->newConn->fetchOne(
-            "INSERT INTO itinerario (fecha, bus_id, empresa_id, piloto_id, trayecto_id, legacy_id) VALUES (:fecha, :bus_id, :empresa_id, :piloto_id, :trayecto_id, :legacy_id) RETURNING id",
+            "INSERT INTO servicio (fecha, bus_id, empresa_id, piloto_id, trayecto_id, legacy_id) VALUES (:fecha, :bus_id, :empresa_id, :piloto_id, :trayecto_id, :legacy_id) RETURNING id",
             $data,
         );
         $contadores["salida"]++;
@@ -938,8 +936,8 @@ class Migrador
                 $ventaId,
             );
             $this->newConn->executeStatement(
-                'INSERT INTO boleto_asiento (itinerario_id, asiento_id, cliente_id, trayecto_id, status_id, boleto_venta_id, precio_monto, precio_moneda, legacy_id)
-                 VALUES (:itinerario_id, :asiento_id, :cliente_id, :trayecto_id, :status_id, :boleto_venta_id, :precio_monto, :precio_moneda, :legacy_id)',
+                'INSERT INTO boleto_asiento (servicio_id, asiento_id, cliente_id, trayecto_id, status_id, boleto_venta_id, precio_monto, precio_moneda, legacy_id)
+                 VALUES (:servicio_id, :asiento_id, :cliente_id, :trayecto_id, :status_id, :boleto_venta_id, :precio_monto, :precio_moneda, :legacy_id)',
                 $data,
             );
             $contadores["boleto_asiento"]++;

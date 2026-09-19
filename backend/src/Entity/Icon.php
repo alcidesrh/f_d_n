@@ -8,39 +8,39 @@ use ApiPlatform\Doctrine\Orm\Filter\OrFilter;
 use ApiPlatform\Doctrine\Orm\Filter\PartialSearchFilter;
 use ApiPlatform\Metadata\GraphQl\QueryCollection;
 use ApiPlatform\Metadata\QueryParameter;
-use App\Attribute\ApiResourceNoPagination;
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
 use App\Repository\IconRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
+// paginationEnabled: false,
 #[ORM\Entity(repositoryClass: IconRepository::class)]
-#[ApiResourcePaginationPage(
-    graphQlOperations: [
-        new QueryCollection(
-            // paginationEnabled: false,
-            parameters: [
-                'icon' => new QueryParameter(
-                    filter: new OrFilter(new PartialSearchFilter()),
-                    property: 'icon'
-                ),
-                'name' => new QueryParameter(
-                    filter: new OrFilter(new PartialSearchFilter()),
-                    property: 'name'
-                ),
-            ]
-        )
-    ]
-)]
+#[
+    ApiResourcePaginationPage(
+        graphQlOperations: [
+            new QueryCollection(
+                parameters: [
+                    "icon" => new QueryParameter(
+                        filter: new OrFilter(new PartialSearchFilter()),
+                        property: "icon",
+                    ),
+                    "name" => new QueryParameter(
+                        filter: new OrFilter(new PartialSearchFilter()),
+                        property: "name",
+                    ),
+                ],
+            ),
+        ],
+    ),
+]
 class Icon extends Base
 {
-
-    #[Groups(['read', 'write', 'icon:read', 'icon:write'])]
+    #[Groups(["read", "write", "icon:read", "icon:write"])]
     #[ORM\Column(length: 50)]
     private ?string $icon = null;
 
-    #[Groups(['read', 'write', 'icon:read', 'icon:write'])]
+    #[Groups(["read", "write", "icon:read", "icon:write"])]
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $name = null;
 

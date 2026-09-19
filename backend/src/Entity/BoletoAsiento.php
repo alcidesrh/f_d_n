@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Entity\Embeddable\Precio;
 use App\Repository\BoletoAsientoRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Money\Money;
 
 #[ORM\Entity(repositoryClass: BoletoAsientoRepository::class)]
 class BoletoAsiento
@@ -36,7 +37,7 @@ class BoletoAsiento
 
     #[ORM\ManyToOne(inversedBy: "boletoAsientos")]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Itinerario $itinerario = null;
+    private ?Servicio $servicio = null;
 
     #[ORM\Embedded(class: Precio::class)]
     private ?Precio $precio = null;
@@ -109,14 +110,14 @@ class BoletoAsiento
         return $this;
     }
 
-    public function getItinerario(): ?Itinerario
+    public function getServicio(): ?Servicio
     {
-        return $this->itinerario;
+        return $this->servicio;
     }
 
-    public function setItinerario(?Itinerario $itinerario): static
+    public function setServicio(?Servicio $servicio): static
     {
-        $this->itinerario = $itinerario;
+        $this->servicio = $servicio;
 
         return $this;
     }

@@ -6,7 +6,7 @@ How the engineering skills should consume this repo's domain documentation when 
 
 - **`CONTEXT.md`** at the repo root, or
 - **`CONTEXT-MAP.md`** at the repo root if it exists — it points at one `CONTEXT.md` per context. Read each one relevant to the topic.
-- **`docs/docs/architecture/decisions/`** — read ADRs that touch the area you're about to work in. In multi-context repos, also check `src/<context>/docs/adr/` for context-scoped decisions.
+- **`docs/architecture/decisions/`** — read ADRs that touch the area you're about to work in. In multi-context repos, also check `src/<context>/docs/adr/` for context-scoped decisions.
 
 If any of these files don't exist, **proceed silently**. Don't flag their absence; don't suggest creating them upfront. The `/domain-modeling` skill (reached via `/grill-with-docs` and `/improve-codebase-architecture`) creates them lazily when terms or decisions actually get resolved.
 
@@ -16,10 +16,11 @@ Single-context repo (this repo):
 
 ```
 /
+├── AGENTS.md
 ├── CONTEXT.md
-├── docs/docs/architecture/decisions/   ← repo ADR home (MkDocs convention; not docs/adr/)
-│   ├── 0001-itinerario-lleva-trayecto.md
-│   └── 0002-trayecto-canonico-por-enclaves.md
+├── docs/architecture/decisions/   ← repo ADR home, numbered ADR-001, ADR-002, ...
+│   ├── ADR-011-servicio-lleva-trayecto.md
+│   └── ADR-012-trayecto-canonico-por-enclaves.md
 └── backend/
 └── frontend/
 ```
@@ -29,7 +30,7 @@ Multi-context repo (presence of `CONTEXT-MAP.md` at the root):
 ```
 /
 ├── CONTEXT-MAP.md
-└── docs/docs/architecture/decisions/   ← system-wide decisions
+└── docs/architecture/decisions/   ← system-wide decisions
 ```
 
 ## Use the glossary's vocabulary
@@ -42,4 +43,4 @@ If the concept you need isn't in the glossary yet, that's a signal — either yo
 
 If your output contradicts an existing ADR, surface it explicitly rather than silently overriding:
 
-> _Contradicts ADR-0001 (itinerario lleva trayecto) — but worth reopening because…_
+> _Contradicts ADR-011 (servicio lleva trayecto) — but worth reopening because…_

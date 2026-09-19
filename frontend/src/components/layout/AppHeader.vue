@@ -1,8 +1,8 @@
 <template>
-  <header class="app-header" @click="toastTest">
+  <header class="app-header">
     <div class="flex btn-siderbar-header" :class="[sidebarStore.mode]">
-      <button class="icon-btn" title="Mostrar/ocultar menú" @click="sidebarStore.setMode()">
-        <AppIcon name="menu" :size="19" />
+      <button class="icon-btn" @click="sidebarStore.setMode()">
+        <icon name="menu-2" />
       </button>
       <Divider layout="vertical" class="mx-[5px]!" />
     </div>
@@ -58,9 +58,13 @@
       </div>
 
       <div style="position: relative">
-        <button class="icon-btn" @click.stop="logout">
-          <icon name="logout" />
-        </button>
+        <Chip :label="useUserSessionStore().user" removable>
+          <template #removeicon>
+            <!-- <button class="icon-btn" @click.stop="logout"> -->
+            <icon name="logout" @click.stop="logout" />
+            <!-- </button -->
+          </template>
+        </Chip>
       </div>
     </div>
     <div class="flex btn-siderbar-header" :class="[sidebarStoreR.mode]">
@@ -88,14 +92,6 @@ const openPopover = ref<PopoverName>(null);
 const menusStore = useMenusStore();
 const topbarMenuItems = computed(() => menusStore.topbarRightItems);
 
-function toastTest() {
-  triggerToast({
-    severity: "error",
-    summary: "Error",
-    detail: `No existe la entidad`,
-    life: 0,
-  });
-}
 function toggleFullscreen() {
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen?.();

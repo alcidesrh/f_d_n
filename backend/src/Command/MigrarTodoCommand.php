@@ -24,7 +24,7 @@ use Doctrine\DBAL\Connection;
 #[
     AsCommand(
         name: "app:migrar:todo",
-        description: "Ejecuta la migración completa: 1) reset, 2) estáticos, 3) IAM, 4) config, 5) itinerarios + boletos/asientos vendidos",
+        description: "Ejecuta la migración completa: 1) reset, 2) estáticos, 3) IAM, 4) config, 5) servicios + boletos/asientos vendidos",
     ),
 ]
 class MigrarTodoCommand extends Command
@@ -73,7 +73,7 @@ class MigrarTodoCommand extends Command
                 "Salta la sincronización de EntityConfiguration",
             )
             ->addOption(
-                "itinerarios",
+                "servicios",
                 null,
                 InputOption::VALUE_OPTIONAL,
                 "Cantidad de boletos a migrar",
@@ -104,7 +104,7 @@ class MigrarTodoCommand extends Command
         $flagIam = (bool) $input->getOption("iam");
         $flagConfig = (bool) $input->getOption("config");
         $flagData = (bool) $input->getOption("data");
-        $itinerarios = (int) $input->getOption("itinerarios");
+        $servicios = (int) $input->getOption("servicios");
         ini_set("memory_limit", "2G");
         // Reset the debug data holder to avoid memory exhaustion from
         // BacktraceDebugDataHolder accumulating all migration queries.
@@ -200,24 +200,24 @@ class MigrarTodoCommand extends Command
             }
         }
         if ($flagData) {
-            // ─── Paso 5: Salidas + Boletos (desde itinerario) ───────────
+            // ─── Paso 5: Salidas + Boletos (desde servicio) ───────────
             $this->resetDebugDataHolder();
             $output->writeln(
-                "<info>[5/5] Migrando itinerarios y boletos desde itinerarios...</info>",
+                "<info>[5/5] Migrando servicios y boletos desde servicios...</info>",
             );
             $resetFn = function () {
                 $this->resetDebugDataHolder();
             };
             try {
                 $contadores = $this->migrador->migrarSalida(
-                    $itinerarios,
+                    $servicios,
                     $output,
                     $resetFn,
                 );
                 $this->resetDebugDataHolder();
 
                 $allCounters = array_merge($allCounters, $contadores);
-                $steps[] = "itinerarios+boletos";
+                $steps[] = "servicios+boletos";
             } catch (\Throwable $e) {
                 $output->writeln(
                     "<error>Error en boletos: {$e->getMessage()}</error>",

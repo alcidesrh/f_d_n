@@ -10,7 +10,6 @@
         <slot />
       </div>
     </main>
-
     <SidebarRight />
   </div>
 </template>

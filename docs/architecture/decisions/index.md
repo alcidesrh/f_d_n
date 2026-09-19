@@ -14,3 +14,5 @@
 | [ADR-008](ADR-008-legacy-migration-strategy.md) | Estrategia de migración desde TerminalOmnibus | Aceptada |
 | [ADR-009](ADR-009-autoimport-system.md) | Sistema de auto-import mediante unplugin | Aceptada |
 | [ADR-010](ADR-010-dynamic-entity-config.md) | Configuración dinámica de entidades vía metadatos | Aceptada |
+| [ADR-011](ADR-011-servicio-lleva-trayecto.md) | Servicio lleva el trayecto directamente (sin plantilla intermedia) | Aceptada |
+| [ADR-012](ADR-012-trayecto-canonico-por-enclaves.md) | Trayecto canónico por par de enclaves (origen, destino) | Aceptada |

@@ -18,8 +18,6 @@
   </Toast>
   <Toasts />
   <div class="backdrop" :class="{ show: showBackdrop }"></div>
-
-  <ProfilerFooter />
 </template>
 <script setup lang="ts">
 import AppLayout from "@/components/layout/AppLayout.vue";

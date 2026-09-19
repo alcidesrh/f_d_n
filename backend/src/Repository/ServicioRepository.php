@@ -2,22 +2,22 @@
 
 namespace App\Repository;
 
-use App\Entity\Itinerario;
+use App\Entity\Servicio;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<Itinerario>
+ * @extends ServiceEntityRepository<Servicio>
  */
-class ItinerarioRepository extends ServiceEntityRepository
+class ServicioRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, Itinerario::class);
+        parent::__construct($registry, Servicio::class);
     }
 
     //    /**
-    //     * @return Itinerario[] Returns an array of Itinerario objects
+    //     * @return Servicio[] Returns an array of Servicio objects
     //     */
     //    public function findByExampleField($value): array
     //    {
@@ -31,7 +31,7 @@ class ItinerarioRepository extends ServiceEntityRepository
     //        ;
     //    }
 
-    //    public function findOneBySomeField($value): ?Itinerario
+    //    public function findOneBySomeField($value): ?Servicio
     //    {
     //        return $this->createQueryBuilder('s')
     //            ->andWhere('s.exampleField = :val')

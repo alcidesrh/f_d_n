@@ -31,7 +31,7 @@ if [ "$1" = 'frankenphp' ] || [ "$1" = 'php' ] || [ "$1" = 'bin/console' ]; then
 		# Run schema migrations only on a legacy database (one that still has the old
 		# "salida" table). Modern databases are built directly from the Doctrine
 		# entities (schema:create via app:migrar:todo --clean / app:reset-db2 --hard);
-		# the committed migrations rename salida->itinerario and would fail elsewhere.
+		# the committed migrations rename salida->servicio and would fail elsewhere.
 		# if php bin/console dbal:run-sql -q "SELECT 1 FROM salida WHERE false" >/dev/null 2>&1 && [ -n "$(find ./migrations -iname '*.php' -print -quit)" ]; then
 		# 	php bin/console doctrine:migrations:migrate --no-interaction --all-or-nothing
 		# else

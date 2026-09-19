@@ -2,21 +2,13 @@
 
 ## Documentation
 
-Documentación técnica del backend en MkDocs:
-
-```bash
-# Desde la raíz del monorepo
-make docs-serve     # Servir documentación
-make docs-gen-all   # Regenerar docs automáticas (entity-map, ERD)
-```
+No hay sitio MkDocs (eliminado 2026-09 por documentar el modelo de datos viejo). Fuentes vigentes:
 
 | Área | Ruta |
 |------|------|
-| Arquitectura | `docs/docs/backend/architecture/overview.md` |
-| IAM | `docs/docs/backend/iam/overview.md` |
-| Base de datos | `docs/docs/backend/database/overview.md` |
-| Migración | `docs/docs/backend/migration/overview.md` |
-| Subdominios | `docs/docs/backend/subdomains/overview.md` |
+| Terminología de dominio + estado del modelo | `../AGENTS.md` (raíz) |
+| Contexto de dominio | `../CONTEXT.md` |
+| ADRs de arquitectura | `../docs/architecture/decisions/` |
 
 ---
 
@@ -253,6 +245,8 @@ New business logic should include tests.
 ---
 
 ## Static Analysis
+
+> **Estado actual (2026-09):** `phpstan/phpstan` no está en `composer.json` (solo la dependencia transitiva `phpstan/phpdoc-parser`). El comando de abajo fallará hasta que se instale el paquete real — no asumas que hay static analysis corriendo en CI.
 
 Before considering work complete:
 

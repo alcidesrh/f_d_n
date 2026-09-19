@@ -2,7 +2,7 @@
 
 namespace App\Command;
 
-use App\Entity\Itinerario;
+use App\Entity\Servicio;
 use App\Migration\Mapeador;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -23,9 +23,9 @@ use Symfony\Component\DependencyInjection\Attribute\Target;
 class MigracionCommand extends Command
 {
     const SQL_TODO = "select top 10
-    bt.*, * from itinerario s
-    --join boleto b on b.itinerario_id = s.id
-    join itineario i on i.id = s.itinerario_id
+    bt.*, * from servicio s
+    --join boleto b on b.servicio_id = s.id
+    join itineario i on i.id = s.servicio_id
     join bus_tipo bt on bt.id = i.tipo_bus_id
     join bus bu on bu.tipo_id = bt.id
     join empresa e on e.id = s.empresa_id
@@ -67,9 +67,9 @@ class MigracionCommand extends Command
 
         $rows = $this->fetchOld(self::SQL_TODO);
         foreach ($rows as $row) {
-            $itinerario = new Itinerario();
+            $servicio = new Servicio();
             // $data = $this->mapeador->asiento();
-            // $itinerario->setLegacyId();
+            // $servicio->setLegacyId();
         }
 
         $rows = $this->fetchOld(

@@ -4,14 +4,14 @@ namespace App\Entity;
 
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\TimeLegacyStatusBase;
-use App\Repository\ItinerarioRepository;
+use App\Repository\ServicioRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: ItinerarioRepository::class)]
+#[ORM\Entity(repositoryClass: ServicioRepository)]
 #[ApiResourcePaginationPage]
-class Itinerario extends TimeLegacyStatusBase
+class Servicio extends TimeLegacyStatusBase
 {
     #[ORM\Column]
     private ?\DateTime $fecha = null;
@@ -31,7 +31,7 @@ class Itinerario extends TimeLegacyStatusBase
     /**
      * @var Collection<int, BoletoAsiento>
      */
-    #[ORM\OneToMany(targetEntity: BoletoAsiento::class, mappedBy: "itinerario")]
+    #[ORM\OneToMany(targetEntity: BoletoAsiento::class, mappedBy: "servicio")]
     private Collection $boletoAsientos;
 
     #[ORM\ManyToOne]
@@ -115,7 +115,7 @@ class Itinerario extends TimeLegacyStatusBase
     {
         if (!$this->boletoAsientos->contains($boletoAsiento)) {
             $this->boletoAsientos->add($boletoAsiento);
-            $boletoAsiento->setItinerario($this);
+            $boletoAsiento->setServicio($this);
         }
 
         return $this;
@@ -125,8 +125,8 @@ class Itinerario extends TimeLegacyStatusBase
     {
         if ($this->boletoAsientos->removeElement($boletoAsiento)) {
             // set the owning side to null (unless already changed)
-            if ($boletoAsiento->getItinerario() === $this) {
-                $boletoAsiento->setItinerario(null);
+            if ($boletoAsiento->getServicio() === $this) {
+                $boletoAsiento->setServicio(null);
             }
         }
 

@@ -3,7 +3,6 @@
 namespace App\Entity;
 
 use App\Attribute\ApiResourceNoPagination;
-use App\Attribute\ApiResourcePaginationPage;
 
 use App\Entity\Base\Base;
 use App\Entity\Base\Constants\RolesTrait;
@@ -14,8 +13,8 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: RoleRepository::class)]
 #[ApiResourceNoPagination]
-class Role extends Base {
-
+class Role extends Base
+{
     use RolesTrait;
 
     #[ORM\Column(length: 255)]
@@ -24,50 +23,66 @@ class Role extends Base {
     /**
      * @var Collection<int, self>
      */
-    #[ORM\ManyToMany(targetEntity: self::class, inversedBy: 'children')]
-    #[ORM\JoinTable(name: 'role_role')]
-    #[ORM\JoinColumn(name: 'parent_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
-    #[ORM\InverseJoinColumn(name: 'child_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
+    #[ORM\ManyToMany(targetEntity: self::class, inversedBy: "children")]
+    #[ORM\JoinTable(name: "role_role")]
+    #[
+        ORM\JoinColumn(
+            name: "parent_id",
+            referencedColumnName: "id",
+            onDelete: "CASCADE",
+        ),
+    ]
+    #[
+        ORM\InverseJoinColumn(
+            name: "child_id",
+            referencedColumnName: "id",
+            onDelete: "CASCADE",
+        ),
+    ]
     private ?Collection $parents;
 
     /**
      * @var Collection<int, self>
      */
-    #[ORM\ManyToMany(targetEntity: self::class, mappedBy: 'parents')]
+    #[ORM\ManyToMany(targetEntity: self::class, mappedBy: "parents")]
     private ?Collection $children;
 
     /**
      * @var Collection<int, Permiso>
      */
-    #[ORM\ManyToMany(targetEntity: Permiso::class, inversedBy: 'roles')]
-    #[ORM\JoinColumn(onDelete: 'CASCADE')]
-    #[ORM\InverseJoinColumn(onDelete: 'CASCADE')]
+    #[ORM\ManyToMany(targetEntity: Permiso::class, inversedBy: "roles")]
+    #[ORM\JoinColumn(onDelete: "CASCADE")]
+    #[ORM\InverseJoinColumn(onDelete: "CASCADE")]
     private ?Collection $permisos;
 
     /**
      * @var Collection<int, Action>
      */
-    #[ORM\ManyToMany(targetEntity: Action::class, inversedBy: 'roles')]
-    #[ORM\JoinColumn(onDelete: 'CASCADE')]
-    #[ORM\InverseJoinColumn(onDelete: 'CASCADE')]
+    #[ORM\ManyToMany(targetEntity: Action::class, inversedBy: "roles")]
+    #[ORM\JoinColumn(onDelete: "CASCADE")]
+    #[ORM\InverseJoinColumn(onDelete: "CASCADE")]
     private Collection $actions;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->parents = new ArrayCollection();
         $this->children = new ArrayCollection();
         $this->permisos = new ArrayCollection();
         $this->actions = new ArrayCollection();
     }
 
-    public function getId(): ?int {
+    public function getId(): ?int
+    {
         return $this->id;
     }
 
-    public function getNombre(): ?string {
+    public function getNombre(): ?string
+    {
         return $this->nombre;
     }
 
-    public function setNombre(string $nombre): static {
+    public function setNombre(string $nombre): static
+    {
         $this->nombre = $nombre;
 
         return $this;
@@ -76,11 +91,13 @@ class Role extends Base {
     /**
      * @return Collection<int, self>
      */
-    public function getParents(): Collection {
+    public function getParents(): Collection
+    {
         return $this->parents;
     }
 
-    public function addParent(self $parent): static {
+    public function addParent(self $parent): static
+    {
         if (!$this->parents->contains($parent)) {
             $this->parents->add($parent);
         }
@@ -88,7 +105,8 @@ class Role extends Base {
         return $this;
     }
 
-    public function removeParent(self $parent): static {
+    public function removeParent(self $parent): static
+    {
         $this->parents->removeElement($parent);
 
         return $this;
@@ -97,11 +115,13 @@ class Role extends Base {
     /**
      * @return Collection<int, self>
      */
-    public function getChildren(): Collection {
+    public function getChildren(): Collection
+    {
         return $this->children;
     }
 
-    public function addChild(self $child): static {
+    public function addChild(self $child): static
+    {
         if (!$this->children->contains($child)) {
             $this->children->add($child);
             $child->addParent($this);
@@ -110,7 +130,8 @@ class Role extends Base {
         return $this;
     }
 
-    public function removeChild(self $child): static {
+    public function removeChild(self $child): static
+    {
         if ($this->children->removeElement($child)) {
             $child->removeParent($this);
         }
@@ -121,11 +142,13 @@ class Role extends Base {
     /**
      * @return Collection<int, Permiso>
      */
-    public function getPermisos(): Collection {
+    public function getPermisos(): Collection
+    {
         return $this->permisos;
     }
 
-    public function addPermiso(Permiso $permiso): static {
+    public function addPermiso(Permiso $permiso): static
+    {
         if (!$this->permisos->contains($permiso)) {
             $this->permisos->add($permiso);
             $permiso->addRole($this);
@@ -134,7 +157,8 @@ class Role extends Base {
         return $this;
     }
 
-    public function removePermiso(Permiso $permiso): static {
+    public function removePermiso(Permiso $permiso): static
+    {
         if ($this->permisos->removeElement($permiso)) {
             $permiso->removeRole($this);
         }
@@ -145,11 +169,13 @@ class Role extends Base {
     /**
      * @return Collection<int, Action>
      */
-    public function getActions(): Collection {
+    public function getActions(): Collection
+    {
         return $this->actions;
     }
 
-    public function addAction(Action $action): static {
+    public function addAction(Action $action): static
+    {
         if (!$this->actions->contains($action)) {
             $this->actions->add($action);
             $action->addRole($this);
@@ -158,7 +184,8 @@ class Role extends Base {
         return $this;
     }
 
-    public function removeAction(Action $action): static {
+    public function removeAction(Action $action): static
+    {
         if ($this->actions->removeElement($action)) {
             $action->removeRole($this);
         }
@@ -166,7 +193,8 @@ class Role extends Base {
         return $this;
     }
 
-    public function __toString(): string {
-        return $this->getNombre() ?? '';
+    public function __toString(): string
+    {
+        return $this->getNombre() ?? "";
     }
 }

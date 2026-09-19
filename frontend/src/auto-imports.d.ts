@@ -266,7 +266,6 @@ declare module 'vue' {
     readonly useMenusStore: UnwrapRef<typeof import('./stores/menus')['useMenusStore']>
     readonly useMigracionStore: UnwrapRef<typeof import('./stores/migracion')['useMigracionStore']>
     readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
-    readonly useProfilerStore: UnwrapRef<typeof import('./stores/profilerStore')['useProfilerStore']>
     readonly useRoute: UnwrapRef<typeof import('vue-router')['useRoute']>
     readonly useRouter: UnwrapRef<typeof import('vue-router')['useRouter']>
     readonly useSchemaRepositoryStore: UnwrapRef<typeof import('./stores/schemaRepository')['useSchemaRepositoryStore']>

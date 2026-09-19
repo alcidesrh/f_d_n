@@ -1,7 +1,7 @@
 # Operativo — Ventas de Transporte (FDN)
 
 Contexto que modela la operación de salidas de buses y la venta de pasajes:
-geografía (enclaves y trayectos), flota (buses y asientos) y ventas (itinerarios y boletos).
+geografía (enclaves y trayectos), flota (buses y asientos) y ventas (servicios y boletos).
 IAM/seguridad y configuración de menús son contextos separados.
 
 ## Geografía
@@ -14,18 +14,14 @@ _Avoid_: lugar, punto
 Un enclave donde los pasajeros abordan; es terminal de salida y de venta.
 _Avoid_: terminal, estación rural
 
-**Parada**:
-Un enclave de parada intermedia dentro de un trayecto.
-_Avoid_: punto de parada
-
 **Trayecto**:
-Un recorrido geográfico vectorial entre dos enclaves (origen → destino).
+Un servicio geográfico vectorial entre dos enclaves (origen → destino).
 Es único por par de enclaves y puede estar compuesto de subtrayectos.
-_Avoid_: ruta, recorrido, tramo
+_Avoid_: ruta, servicio, tramo
 
 **Subtrayecto**:
 Un segmento de un trayecto compuesto: un trayecto hijo con posición dentro de su trayecto padre.
-_Avoid_: tramo, subrecorrido, subruta
+_Avoid_: tramo, subservicio, subruta
 
 ## Flota
 
@@ -38,18 +34,18 @@ Una plaza física de un bus, con una clase determinada.
 _Avoid_: puesto
 
 **Piloto**:
-El conductor asignado a un bus en un itinerario.
+El conductor asignado a un bus en un servicio.
 _Avoid_: conductor, chofer
 
 ## Ventas
 
-**Itinerario**:
+**Servicio**:
 La salida concreta de un bus: un trayecto, una fecha, un bus y un piloto.
-Cada itinerario fija su ruta al crearse, resolviendo el trayecto de sus enclaves de origen y destino.
-_Avoid_: salida, servicio, viaje, recorrido
+Cada servicio fija su ruta al crearse, resolviendo el trayecto de sus enclaves de origen y destino.
+_Avoid_: salida, servicio, viaje, servicio
 
 **BoletoAsiento**:
-Un asiento vendido dentro de un itinerario, para un cliente y un trayecto,
+Un asiento vendido dentro de un servicio, para un cliente y un trayecto,
 con precio y estado propios.
 _Avoid_: boleto, ticket
 
@@ -71,5 +67,5 @@ La persona que compra un boleto de asiento.
 _Avoid_: pasajero, comprador
 
 **Empresa**:
-La línea transportista dueña de la operación: buses, pilotos, itinerarios y tarifas.
+La línea transportista dueña de la operación: buses, pilotos, servicios y tarifas.
 _Avoid_: compañía, operador

@@ -14,15 +14,17 @@ Se organiza el backend en **subdominios como bounded contexts** siguiendo los pr
 
 | Subdominio | Entidades principales |
 |---|---|
-| Transporte | Trayecto, Recorrido, RecorridoMatrioska |
-| Flota | Bus, BusMarca, Asiento, Piloto |
-| Venta | Boleto, Venta, Factura, Cliente, Salida |
+| Transporte | Trayecto, Subtrayecto, Servicio |
+| Flota | Bus, BusMarca, Asiento |
+| Venta | BoletoAsiento, BoletoVenta, BoletoTarifa, Factura, Cliente |
 | Personal | Usuario, Piloto |
-| Configuración | Empresa, Localidad, Nacion, Tarifa, Parada |
-| Infraestructura | Estacion, Enclave, Parada |
+| Configuración | Empresa, Localidad, Nacion, Status |
+| Infraestructura | Estacion, Enclave |
 | Seguridad | Usuario, Role, Permiso, Action, ApiToken |
 
 Cada subdominio agrupa sus entidades, servicios, repositorios y resolutores GraphQL. Las entidades de configuración dinámica (`EntityConfiguration`, `FieldConfig`) se mantienen como un contexto técnico transversal.
+
+> **Nota (2026):** `Agencia`, `Voucher`, `Encomienda`, `Reasignación`, `Anulación` y `Manifiesto` son conceptos vigentes del glosario de negocio (ver `CONTEXT.md` / `AGENTS.md`) que hoy **solo existen en el sistema legado** (`src/EntitySistemaFdn/`). Todavía no tienen entidad ni servicio equivalente en el modelo nuevo (`src/Entity/`) — son el trabajo de dominio pendiente más importante, no un subdominio ya resuelto.
 
 ## Consecuencias
 
@@ -36,7 +38,7 @@ Cada subdominio agrupa sus entidades, servicios, repositorios y resolutores Grap
 
 **Negativas:**
 
-- Las entidades con relaciones entre contextos (ej: Boleto depende de Recorrido y Cliente) requieren referencias cruzadas
+- Las entidades con relaciones entre contextos (ej: BoletoAsiento depende de Servicio y Cliente) requieren referencias cruzadas
 - No hay un límite físico estricto (misma base de datos, mismo código); es una convención organizativa
 - Algunas entidades son difíciles de clasificar en un solo subdominio (ej: Usuario aparece en Seguridad y Personal)
 - La documentación de subdominios debe mantenerse sincronizada con la estructura real

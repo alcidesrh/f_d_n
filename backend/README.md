@@ -25,16 +25,12 @@ docker compose exec backend php bin/console debug:router
 
 ## Documentación
 
-La documentación completa del backend está en `docs/docs/backend/` (raíz del repo):
+No hay sitio MkDocs. La documentación vigente del backend vive en:
 
-```bash
-make docs-serve  # desde la raíz del repo
-# → docs/docs/backend/architecture/
-# → docs/docs/backend/iam/
-# → docs/docs/backend/database/
-# → docs/docs/backend/migration/
-# → docs/docs/backend/subdomains/
-```
+- `AGENTS.md` (este directorio) — reglas Symfony/Doctrine/GraphQL/testing.
+- `../AGENTS.md` (raíz) — terminología de dominio y estado actual del modelo de datos.
+- `../CONTEXT.md` — glosario de dominio.
+- `../docs/architecture/decisions/` — ADRs (incluye Dual Entity Manager, Flat Permission Set, estrategia de migración legacy).
 
 ## Estructura
 

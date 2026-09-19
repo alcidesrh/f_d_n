@@ -1,5 +1,4 @@
 import { manejarNoAutorizado } from "@/lib/manejar401";
-import { useProfilerStore } from "@/stores/profilerStore";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -102,12 +101,6 @@ export function createApi(options: ApiOptions): ApiClient {
           body,
           signal: cfg.signal || controller.signal,
         });
-
-        const profilerToken = res.headers.get("X-Debug-Token");
-
-        if (profilerToken) {
-          useProfilerStore().setToken(profilerToken);
-        }
 
         if (!res.ok) {
           const text = await res.text();

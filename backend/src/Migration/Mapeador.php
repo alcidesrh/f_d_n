@@ -200,7 +200,7 @@ class Mapeador
     /**
      * Salida is variable data → keep legacy_id.
      */
-    public function itinerario(
+    public function servicio(
         array $old,
         ?int $busId,
         ?int $empresaId,
@@ -220,11 +220,11 @@ class Mapeador
     /**
      * BoletoAsiento is variable data → keep legacy_id.
      * Payload mínimo y desacoplado: cada boleto legacy se convierte en un
-     * asiento vendido, enlazado a su venta, itinerario, cliente, trayecto y status.
+     * asiento vendido, enlazado a su venta, servicio, cliente, trayecto y status.
      */
     public function boletoAsiento(
         array $old,
-        int $itinerarioId,
+        int $servicioId,
         int $asientoId,
         int $clienteId,
         int $trayectoId,
@@ -234,7 +234,7 @@ class Mapeador
         $precio = (int) (($old["precioCalculado"] ?? 0) * 100);
 
         return [
-            "itinerario_id" => $itinerarioId,
+            "servicio_id" => $servicioId,
             "asiento_id" => $asientoId,
             "cliente_id" => $clienteId,
             "trayecto_id" => $trayectoId,

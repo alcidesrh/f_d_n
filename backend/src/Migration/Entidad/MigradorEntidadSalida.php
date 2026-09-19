@@ -9,7 +9,7 @@ use App\Migration\Migrador;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * Migrador de salidas (itinerarios + boletos/asientos vendidos).
+ * Migrador de salidas (servicios + boletos/asientos vendidos).
  *
  * Resuelve sus propias ramificaciones (empresa, trayecto, bus, cliente, ...)
  * internamente con dedupe por legacy_id. Al conjugarse con EjecutorEntidad se
@@ -29,7 +29,7 @@ final class MigradorEntidadSalida implements MigradorEntidadInterface
 
     public function etiqueta(): string
     {
-        return "Salidas (itinerarios + boletos)";
+        return "Salidas (servicios + boletos)";
     }
 
     public function dependencias(): array
@@ -44,7 +44,7 @@ final class MigradorEntidadSalida implements MigradorEntidadInterface
 
     public function tablasDestino(): array
     {
-        return ["itinerario", "boleto_asiento", "boleto_venta"];
+        return ["servicio", "boleto_asiento", "boleto_venta"];
     }
 
     public function soportaRangoFechas(): bool
