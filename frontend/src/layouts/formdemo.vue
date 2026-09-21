@@ -1,6 +1,6 @@
 <template>
   <div class="shell">
-    <AppHeader :crumbs="crumbs" />
+    <AppHeader />
 
     <div class="body-row">
       <SidebarLeft />
@@ -21,11 +21,8 @@
 </template>
 <script setup lang="ts">
 import SidebarLeft from "@/components/layout/SidebarLeft.vue";
-import SidebarRight from "@/components/layout/SidebarRight.vue";
-const route = useRoute();
 const sidebarStore = defineSidebarStore("right", "formBuild")();
 sidebarStore.open = 350;
-const crumbs = computed(() => route.meta.crumbs ?? ["Andén"]);
 
 function handleResize() {
   ui.syncViewport();

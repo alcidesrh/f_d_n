@@ -7,18 +7,14 @@
       <Divider layout="vertical" class="mx-[5px]!" />
     </div>
     <div class="brand">
-      <div style="min-width: 0">
-        <div class="brand-name">FDN</div>
-      </div>
+      <!-- <div style="min-width: 0; position: relative"> -->
+      <div class="header-clock" v-html="currentTime"></div>
+      <div class="brand-name">FDN</div>
+      <!-- </div> -->
     </div>
 
     <div class="header-crumbs">
-      <nav class="crumbs" aria-label="Breadcrumb">
-        <template v-for="(crumb, i) in crumbs" :key="crumb + i">
-          <span v-if="i > 0" class="crumb-sep" aria-hidden="true"></span>
-          <span :class="i === crumbs.length - 1 ? 'crumb-current' : ''">{{ crumb }}</span>
-        </template>
-      </nav>
+      <nav class="crumbs" aria-label="Breadcrumb"></nav>
     </div>
 
     <div class="header-actions">
@@ -30,7 +26,7 @@
           class="icon-btn"
           :title="item.label"
         >
-          <AppIcon :name="item.icon ?? 'circle'" :size="18" />
+          <icon :name="item.icon ?? 'circle'" />
         </router-link>
       </template>
       <slot name="menu-content"></slot>
@@ -52,7 +48,11 @@
         <icon name="arrows-maximize" />
       </button>
       <div style="position: relative">
-        <button class="icon-btn" title="Notificaciones" @click.stop="toggle('notif')">
+        <button
+          class="icon-btn"
+          title="Notificaciones"
+          @click.stop="toggle('notif')"
+        >
           <icon name="bell" />
         </button>
       </div>
@@ -69,7 +69,11 @@
     </div>
     <div class="flex btn-siderbar-header" :class="[sidebarStoreR.mode]">
       <Divider layout="vertical" class="mx-[5px]!" />
-      <button class="icon-btn right" title="Mostrar/ocultar menú" @click="sidebarStoreR.setMode()">
+      <button
+        class="icon-btn right"
+        title="Mostrar/ocultar menú"
+        @click="sidebarStoreR.setMode()"
+      >
         <icon name="menu-2" />
       </button>
     </div>
@@ -81,16 +85,42 @@ import { useMenusStore } from "@/stores/menus";
 import { NOTIFICATIONS } from "@/data/mock";
 import { useDialog } from "primevue/usedialog";
 import ThemeEditor from "@/components/common/ThemeEditor.vue";
+import type { SidebarStoreState } from "@/stores/entities/types";
+
+const props = defineProps<{
+  sidebarStoreR?: SidebarStoreState;
+}>();
+
 const dialog = useDialog();
-const showThemeEditor = () => dialog.open(ThemeEditor, { props: { header: "Edit Profile" } });
-defineProps<{ crumbs: string[] }>();
+
+const showThemeEditor = () =>
+  dialog.open(ThemeEditor, { props: { header: "Edit Profile" } });
+
 const sidebarStore = defineSidebarStore("left")();
-const sidebarStoreR = defineSidebarStore("right")();
+const sidebarStoreR = props.sidebarStoreR
+  ? props.sidebarStoreR
+  : defineSidebarStore("right")();
 type PopoverName = "notif" | "customizer" | "user" | "fullscreen" | null;
 const openPopover = ref<PopoverName>(null);
 
 const menusStore = useMenusStore();
 const topbarMenuItems = computed(() => menusStore.topbarRightItems);
+
+function formatClock(date: Date) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const hours12 = date.getHours() % 12 || 12;
+  const seconds10 = Math.floor(date.getSeconds() / 10) * 10;
+  const ampm = date.getHours() >= 12 ? "pm" : "am";
+  return `${pad(hours12)}:${pad(date.getMinutes())} <span class="text-[.8rem] font-bold">${pad(seconds10)}</span> ${ampm}`;
+}
+const currentTime = ref(formatClock(new Date()));
+let clockTimer: ReturnType<typeof setInterval>;
+onMounted(() => {
+  clockTimer = setInterval(() => {
+    currentTime.value = formatClock(new Date());
+  }, 1000);
+});
+onUnmounted(() => clearInterval(clockTimer));
 
 function toggleFullscreen() {
   if (!document.fullscreenElement) {

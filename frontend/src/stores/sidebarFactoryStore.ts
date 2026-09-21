@@ -1,19 +1,14 @@
 import { defineStore } from "pinia";
 import type { StoreDefinition } from "pinia";
-import type { SidebarStoreState } from "./entities/types";
+import type { SidebarStoreState, SidebarStore } from "./entities/types";
 import { gsap } from "gsap";
 
-interface SidebarStore extends StoreDefinition {
-  side: string;
-  mode: string;
-  prevMode: string;
-  open: number;
-  mini: number;
-  close: number;
-}
 const definitions = new Map<string, StoreDefinition>();
 
-export function defineSidebarStore(side: "left" | "right", name?: string): SidebarStore {
+export function defineSidebarStore(
+  side: "left" | "right",
+  name?: string,
+): SidebarStore {
   name = name ?? side;
   let definition = definitions.get(name);
   if (!definition) {
@@ -82,7 +77,11 @@ export function defineSidebarStore(side: "left" | "right", name?: string): Sideb
               gsap.fromTo(
                 e.target,
                 { ...temp },
-                { duration: 0.4, width: 200, boxShadow: `1px 0px 3px ${shadow}` },
+                {
+                  duration: 0.4,
+                  width: 200,
+                  boxShadow: `1px 0px 3px ${shadow}`,
+                },
               );
             } else {
               temp.flexDirection = "row-reverse";
@@ -120,26 +119,51 @@ export function defineSidebarStore(side: "left" | "right", name?: string): Sideb
             menu: `.sidebar.${this.side} .menu-text`,
           };
           const duration = 0.3;
-          // const ease = "";s
-          const ease = "expoScale(0.5,7, none)";
+          const ease = "expoScale(1, 2)";
+          // const ease = "expoScale(0.5,7, none)";
 
           if (this.mode === "open") {
             gsap.to(targets.sidebar, { width: this.width, duration, ease });
             if (this.side == "left") {
-              gsap.to(targets.main, { marginLeft: this.width, duration, ease: ease });
+              gsap.to(targets.main, {
+                marginLeft: this.width,
+                duration,
+                ease: ease,
+              });
             } else {
-              gsap.to(targets.main, { marginRight: this.width, duration, ease });
+              gsap.to(targets.main, {
+                marginRight: this.width,
+                duration,
+                ease,
+              });
             }
-            gsap.to(targets.menu, { opacity: 1, duration: duration * 0.8, ease });
+            gsap.to(targets.menu, {
+              opacity: 1,
+              duration: duration * 0.8,
+              ease,
+            });
           } else if (this.mode === "mini") {
-            gsap.to(targets.sidebar, { width: this.width, overflow: "visible", duration, ease });
+            gsap.to(targets.sidebar, {
+              width: this.width,
+              overflow: "visible",
+              duration,
+              ease,
+            });
 
             if (this.side == "left") {
               gsap.to(targets.main, { marginLeft: this.width, duration, ease });
             } else {
-              gsap.to(targets.main, { marginRight: this.width, duration, ease });
+              gsap.to(targets.main, {
+                marginRight: this.width,
+                duration,
+                ease,
+              });
             }
-            gsap.to(targets.menu, { opacity: 0, duration: duration * 0.5, ease });
+            gsap.to(targets.menu, {
+              opacity: 0,
+              duration: duration * 0.5,
+              ease,
+            });
           } else if (this.mode === "close") {
             gsap.to(targets.sidebar, {
               width: this.width,
@@ -153,7 +177,11 @@ export function defineSidebarStore(side: "left" | "right", name?: string): Sideb
             } else {
               gsap.to(targets.main, { marginRight: 0, duration, ease });
             }
-            gsap.to(targets.menu, { opacity: 0, duration: duration * 0.5, ease });
+            gsap.to(targets.menu, {
+              opacity: 0,
+              duration: duration * 0.5,
+              ease,
+            });
           }
         },
       },

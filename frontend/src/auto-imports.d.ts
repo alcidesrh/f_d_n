@@ -260,7 +260,6 @@ declare module 'vue' {
     readonly useFormBuilderStore: UnwrapRef<typeof import('./stores/formBuilder')['useFormBuilderStore']>
     readonly useFormKitSchema: UnwrapRef<typeof import('./composables/useFormKitSchema')['useFormKitSchema']>
     readonly useId: UnwrapRef<typeof import('vue')['useId']>
-    readonly useLayout: UnwrapRef<typeof import('./composables/useLayout')['useLayout']>
     readonly useLink: UnwrapRef<typeof import('vue-router')['useLink']>
     readonly useLoadingStore: UnwrapRef<typeof import('./stores/loadingStore')['useLoadingStore']>
     readonly useMenusStore: UnwrapRef<typeof import('./stores/menus')['useMenusStore']>

@@ -63,14 +63,17 @@
         class="cursor-pointer"
         @click="ui.setPreset(v.key)"
       >
-        <!-- <AppIcon name="sun" :size="14" /> Claro -->
         {{ v.label }}
       </button>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { PRESET_OPTIONS, SURFACE_OPTIONS, PRIMARY_OPTIONS } from "@/config/theme";
+import {
+  PRESET_OPTIONS,
+  SURFACE_OPTIONS,
+  PRIMARY_OPTIONS,
+} from "@/config/theme";
 
 // const ui = useUiStore();
 </script>

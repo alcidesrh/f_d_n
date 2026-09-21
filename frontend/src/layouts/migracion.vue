@@ -1,6 +1,6 @@
 <template>
   <div class="shell">
-    <AppHeader :crumbs="crumbs" />
+    <AppHeader :sidebar-store-r="sidebarStore" />
 
     <div class="body-row">
       <SidebarLeft />
@@ -11,7 +11,7 @@
         </div>
       </main>
 
-      <Sidebar :store="sidebarStore" nomini="true">
+      <Sidebar :store="sidebarStore" :nomini="true">
         <template #menu-content>
           <MigracionPanel />
         </template>
@@ -26,7 +26,6 @@ import MigracionPanel from "@/components/migracion/MigracionPanel.vue";
 const route = useRoute();
 const sidebarStore = defineSidebarStore("right", "migracionSidebar")();
 sidebarStore.open = 340;
-const crumbs = computed(() => route.meta.crumbs ?? ["Andén"]);
 
 function handleResize() {
   ui.syncViewport();

@@ -1,6 +1,10 @@
 <template>
-  <div class="body-row" :data-sidebar-l="ui.leftState" :data-sidebar-r="ui.rightState">
-    <AppHeader :crumbs="crumbs">
+  <div
+    class="body-row"
+    :data-sidebar-l="ui.leftState"
+    :data-sidebar-r="ui.rightState"
+  >
+    <AppHeader>
       <template #menu-content></template>
     </AppHeader>
     <SidebarLeft />
@@ -15,7 +19,6 @@
 </template>
 <script setup lang="ts">
 const route = useRoute();
-const crumbs = computed(() => route.meta.crumbs ?? ["Andén"]);
 
 function handleResize() {
   ui.syncViewport();

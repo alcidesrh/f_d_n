@@ -25,7 +25,7 @@
 html,
 body {
   height: 100%;
-  font-size: 14px;
+  font-size: 16px;
 }
 html.dark {
   & > body {
@@ -141,9 +141,6 @@ svg[stroke-width] path {
   }
   .main-inner {
     padding: 18px 14px 50px;
-  }
-  .crumbs {
-    display: none;
   }
   .page-title {
     font-size: 20px;

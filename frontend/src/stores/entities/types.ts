@@ -1,3 +1,4 @@
+import type { StoreDefinition } from "pinia";
 /**
  * Contratos de los stores de entidades dinámicos (`use{EntityName}Store`).
  *
@@ -8,7 +9,11 @@
  * `useSchemaRepositoryStore`, que es el punto de entrada a la API GraphQL.
  */
 
-import type { AgnosticOption, EntitySchema, OrderCondition } from "@/lib/apollo/types";
+import type {
+  AgnosticOption,
+  EntitySchema,
+  OrderCondition,
+} from "@/lib/apollo/types";
 
 export type OrderDirection = "ASC" | "DESC";
 
@@ -82,4 +87,13 @@ export interface EntityStore<T = unknown> extends EntityStoreState<T> {
   remove(id: string | number): Promise<T>;
   /** Carga (o reusa la cacheada) la lista completa de la entidad. */
   loadFullList(force?: boolean): Promise<AgnosticOption[]>;
+}
+
+export interface SidebarStore extends StoreDefinition {
+  side: string;
+  mode: string;
+  prevMode: string;
+  open: number;
+  mini: number;
+  close: number;
 }

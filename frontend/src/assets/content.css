@@ -18,11 +18,19 @@
   min-width: 0;
   overflow-y: auto;
   background: var(--p-surface-50);
+  container-type: inline-size;
+  container-name: main;
 }
+
 .main-inner {
-  padding: 2rem;
+  padding: 4rem;
   /* max-width: 1400px; */
   margin: 0 auto;
+}
+@container main (width < 800px) {
+  .main-inner {
+    padding: 2rem;
+  }
 }
 .page-head {
   display: flex;

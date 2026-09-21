@@ -10,7 +10,6 @@ Hemos implementado un sistema modular, extensible y de tipado estricto para el m
   - `layout`: `'default' | 'auth' | 'blank' | 'formdemo'`
     index - `title`: Título de la página
   - `subtitle`: Subtítulo contextual
-  - `crumbs`: Lista de migas de pan (breadcrumbs)
   - `requiresAuth`: Control de acceso por autenticación
 
 ### 2. Componente Envoltorio de Layouts (`AppLayout.vue`)

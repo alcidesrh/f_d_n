@@ -11,7 +11,9 @@
     ></div>
 
     <!-- Header / Brand Bar -->
-    <header class="w-full max-w-7xl mx-auto px-6 py-4 flex items-center justify-between z-10">
+    <header
+      class="w-full max-w-7xl mx-auto px-6 py-4 flex items-center justify-between z-10"
+    >
       <div class="flex items-center gap-3">
         <div
           class="w-10 h-10 rounded-xl bg-primary-600 flex items-center justify-center text-white font-bold text-xl shadow-md"
@@ -19,8 +21,12 @@
           F
         </div>
         <div class="flex flex-col">
-          <span class="font-bold text-lg leading-tight tracking-tight">FDN</span>
-          <span class="text-xs text-surface-500 font-medium">Flotas de la Nación</span>
+          <span class="font-bold text-lg leading-tight tracking-tight"
+            >FDN</span
+          >
+          <span class="text-xs text-surface-500 font-medium"
+            >Flotas de la Nación</span
+          >
         </div>
       </div>
 
@@ -30,7 +36,7 @@
           title="Cambiar modo"
           @click="ui.setMode(ui.mode === 'light' ? 'dark' : 'light')"
         >
-          <AppIcon :name="ui.mode === 'light' ? 'moon' : 'sun'" :size="18" />
+          <icon :name="ui.mode === 'light' ? 'moon' : 'sun'" />
         </button>
       </div>
     </header>
@@ -46,15 +52,24 @@
     <footer
       class="w-full max-w-7xl mx-auto px-6 py-4 flex flex-col sm:flex-row items-center justify-between text-xs text-surface-500 gap-2 z-10"
     >
-      <div>&copy; {{ currentYear }} Flotas de la Nación. Todos los derechos reservados.</div>
+      <div>
+        &copy; {{ currentYear }} Flotas de la Nación. Todos los derechos
+        reservados.
+      </div>
       <div class="flex items-center gap-4">
-        <a href="#" class="hover:underline hover:text-surface-700 dark:hover:text-surface-300"
+        <a
+          href="#"
+          class="hover:underline hover:text-surface-700 dark:hover:text-surface-300"
           >Términos</a
         >
-        <a href="#" class="hover:underline hover:text-surface-700 dark:hover:text-surface-300"
+        <a
+          href="#"
+          class="hover:underline hover:text-surface-700 dark:hover:text-surface-300"
           >Privacidad</a
         >
-        <a href="#" class="hover:underline hover:text-surface-700 dark:hover:text-surface-300"
+        <a
+          href="#"
+          class="hover:underline hover:text-surface-700 dark:hover:text-surface-300"
           >Soporte</a
         >
       </div>

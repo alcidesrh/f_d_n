@@ -13,7 +13,6 @@ export const router = createRouter({
       component: () => import("@/pages/Dashboard.vue"),
       meta: {
         layout: "default",
-        crumbs: ["Andén", "Resumen"],
         title: "Resumen operativo",
         requiresAuth: true,
       },
@@ -34,7 +33,6 @@ export const router = createRouter({
       component: () => import("@/pages/form/index.vue"),
       meta: {
         layout: "formdemo",
-        crumbs: ["Andén", "Demostración"],
         title: "FormKit & PrimeVue Demo",
       },
     },
@@ -44,7 +42,6 @@ export const router = createRouter({
       component: () => import("@/pages/preview/PickListDemo.vue"),
       meta: {
         layout: "default",
-        crumbs: ["Andén", "Demostración", "PickList"],
         title: "PickList Drag & Drop",
       },
     },
@@ -54,7 +51,6 @@ export const router = createRouter({
       component: () => import("@/pages/form/FormBuilder.vue"),
       meta: {
         layout: "formdemo",
-        crumbs: ["Andén", "Demostración"],
         title: "FormKit & PrimeVue Demo",
       },
     },
@@ -64,7 +60,6 @@ export const router = createRouter({
       component: () => import("@/pages/migracion/MigracionView.vue"),
       meta: {
         layout: "migracion",
-        crumbs: ["Andén", "Operación", "Migración"],
         title: "Migración legado → nuevo",
         requiresAuth: true,
       },
@@ -75,7 +70,6 @@ export const router = createRouter({
       component: () => import("@/pages/menu/MenuList.vue"),
       meta: {
         layout: "default",
-        crumbs: ["Andén", "Gestión", "Menús"],
         title: "Gestión de menús",
         requiresAuth: true,
       },
@@ -86,7 +80,6 @@ export const router = createRouter({
       component: () => import("@/pages/menu/MenuForm.vue"),
       meta: {
         layout: "default",
-        crumbs: ["Andén", "Gestión", "Menús", "Crear"],
         title: "Crear menú",
         requiresAuth: true,
       },
@@ -97,7 +90,6 @@ export const router = createRouter({
       component: () => import("@/pages/menu/MenuForm.vue"),
       meta: {
         layout: "default",
-        crumbs: ["Andén", "Gestión", "Menús", "Editar"],
         title: "Editar menú",
         requiresAuth: true,
       },
@@ -109,7 +101,6 @@ export const router = createRouter({
       component: () => import("@/components/crud/List.vue"),
       meta: {
         layout: "default",
-        crumbs: ["Andén", "Listado"],
         title: "Lista de entidad",
       },
     },
@@ -120,7 +111,6 @@ export const router = createRouter({
       component: () => import("@/components/crud/Form.vue"),
       meta: {
         layout: "default",
-        crumbs: ["Andén", "Listado"],
         title: "Lista de entidad",
       },
     },

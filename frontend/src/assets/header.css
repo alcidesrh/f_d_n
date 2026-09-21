@@ -16,8 +16,9 @@
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-width: 0;
+  justify-content: center;
+  justify-items: center;
+  position: relative;
 }
 .brand-mark {
   width: 36px;
@@ -30,12 +31,27 @@
   justify-content: center;
   color: var(--on-primary);
 }
+.header-clock {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-family: "Space Grotesk", "SFMono-Regular", Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--p-surface-600);
+  white-space: nowrap;
+  line-height: 1.2;
+}
 .brand-name {
   font-family: "diplomata-sc-regular", sans-serif;
   /*font-weight: 700;*/
   font-size: 2rem;
-  opacity: 0.3;
-  /*letter-spacing: 0.2px;*/
+  opacity: 0.1;
+  letter-spacing: 0.5rem;
+  transform: scaleY(2);
   /*white-space: nowrap;*/
   /*color: var(--p-surface-200);*/
   /*position: absolute;*/
@@ -78,34 +94,6 @@
 .icon-btn.active-state {
   color: var(--p-primary-color);
   background: var(--p-primary-color-soft);
-}
-.header-crumbs {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 0;
-}
-.crumbs {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--text-muted);
-  font-size: 13px;
-  overflow: hidden;
-  white-space: nowrap;
-}
-.crumbs .crumb-current {
-  color: var(--text);
-  font-weight: 600;
-}
-.crumb-sep {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--text-muted);
-  opacity: 0.6;
-  flex: 0 0 auto;
 }
 .header-actions {
   display: flex;

@@ -3,7 +3,9 @@
     class="bg-surface-0 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl p-8 shadow-xl backdrop-blur-md"
   >
     <div class="text-center mb-8">
-      <h1 class="text-2xl font-bold text-surface-900 dark:text-surface-0 tracking-tight">
+      <h1
+        class="text-2xl font-bold text-surface-900 dark:text-surface-0 tracking-tight"
+      >
         Bienvenido de nuevo
       </h1>
       <p class="text-sm text-surface-500 mt-1">
@@ -13,7 +15,10 @@
 
     <form @submit.prevent="handleLogin" class="flex flex-col gap-5">
       <div class="flex flex-col gap-2">
-        <label for="username" class="text-sm font-semibold text-surface-700 dark:text-surface-200">
+        <label
+          for="username"
+          class="text-sm font-semibold text-surface-700 dark:text-surface-200"
+        >
           Usuario o Correo Electrónico
         </label>
         <InputText
@@ -69,7 +74,7 @@
         v-if="errorMessage"
         class="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-600 dark:text-red-400 text-xs flex items-center gap-2"
       >
-        <AppIcon name="alert" :size="16" />
+        <icon name="alert" />
         <span>{{ errorMessage }}</span>
       </div>
 
@@ -82,7 +87,9 @@
       />
     </form>
 
-    <div class="mt-8 pt-6 border-t border-surface-200 dark:border-surface-800 text-center">
+    <div
+      class="mt-8 pt-6 border-t border-surface-200 dark:border-surface-800 text-center"
+    >
       <p class="text-xs text-surface-500 mb-3">Acceso rápido de prueba:</p>
       <div class="flex gap-2 justify-center">
         <Button
@@ -105,36 +112,37 @@
 </template>
 
 <script setup lang="ts">
-const router = useRouter()
+const router = useRouter();
 
-const username = ref('')
-const password = ref('')
-const rememberMe = ref(true)
-const loading = ref(false)
-const errorMessage = ref('')
+const username = ref("");
+const password = ref("");
+const rememberMe = ref(true);
+const loading = ref(false);
+const errorMessage = ref("");
 
 function fillDemo(user: string) {
-  username.value = user
-  password.value = 'admin123'
+  username.value = user;
+  password.value = "admin123";
 }
 
 async function handleLogin() {
-  errorMessage.value = ''
+  errorMessage.value = "";
   if (!username.value || !password.value) {
-    errorMessage.value = 'Por favor completa todos los campos'
-    return
+    errorMessage.value = "Por favor completa todos los campos";
+    return;
   }
 
-  loading.value = true
+  loading.value = true;
   try {
     // Simulate auth API call
-    await new Promise((resolve) => setTimeout(resolve, 800))
+    await new Promise((resolve) => setTimeout(resolve, 800));
     // Redirect to home/dashboard page upon successful login
-    router.push({ name: 'dashboard' })
+    router.push({ name: "dashboard" });
   } catch (err: unknown) {
-    errorMessage.value = err instanceof Error ? err.message : 'Error al iniciar sesión'
+    errorMessage.value =
+      err instanceof Error ? err.message : "Error al iniciar sesión";
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 </script>

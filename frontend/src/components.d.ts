@@ -88,7 +88,6 @@ declare module 'vue' {
     SelectButton: typeof import('primevue/selectbutton')['default']
     Sidebar: typeof import('./components/layout/Sidebar.vue')['default']
     SidebarLeft: typeof import('./components/layout/SidebarLeft.vue')['default']
-    'SidebarLeft copy': typeof import('./components/layout/SidebarLeft copy.vue')['default']
     SidebarRight: typeof import('./components/layout/SidebarRight.vue')['default']
     Skeleton: typeof import('primevue/skeleton')['default']
     SortablePickList: typeof import('./components/common/SortablePickList.vue')['default']
