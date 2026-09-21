@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useUserSessionStore } from "@/stores/session";
+import { useNavigationHistoryStore } from "@/stores/navigationHistory";
 
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -142,6 +143,10 @@ router.beforeEach((to) => {
   if (session.isAuthenticated && isPublic) {
     return { name: "dashboard" };
   }
+});
+
+router.afterEach((to) => {
+  useNavigationHistoryStore().push(to);
 });
 
 export default router;

@@ -40,8 +40,8 @@
   font-variant-numeric: tabular-nums;
   font-size: 1.3rem;
   font-weight: 700;
-  letter-spacing: 0.1em;
-  color: var(--p-surface-600);
+  letter-spacing: 0.06em;
+  color: var(--p-surface-500);
   white-space: nowrap;
   line-height: 1.2;
 }
@@ -95,6 +95,35 @@
   color: var(--p-primary-color);
   background: var(--p-primary-color-soft);
 }
+.header-crumbs {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.crumb-link {
+  color: var(--p-surface-400);
+  text-decoration: none;
+  transition: color var(--transition);
+}
+.crumb-link:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+.crumbs .crumb-current {
+  color: var(--p-surface-600);
+}
+
 .header-actions {
   display: flex;
   align-items: center;

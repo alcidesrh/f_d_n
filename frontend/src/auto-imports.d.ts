@@ -120,6 +120,7 @@ declare global {
   const useMenusStore: typeof import('./stores/menus').useMenusStore
   const useMigracionStore: typeof import('./stores/migracion').useMigracionStore
   const useModel: typeof import('vue').useModel
+  const useNavigationHistoryStore: typeof import('./stores/navigationHistory').useNavigationHistoryStore
   const useOrm: typeof import("./features/crud/composables/use-orm").useOrm
   const useProfilerStore: typeof import('./stores/profilerStore').useProfilerStore
   const useRagf: typeof import("./stores/ragf").useRagf
@@ -156,6 +157,9 @@ declare global {
   // @ts-ignore
   export type { MenuItem, MenuArea, MenusState } from './stores/menus'
   import('./stores/menus')
+  // @ts-ignore
+  export type { BreadcrumbEntry, NavigationHistoryState } from './stores/navigationHistory'
+  import('./stores/navigationHistory')
   // @ts-ignore
   export type { SchemaRepositoryState } from './stores/schemaRepository'
   import('./stores/schemaRepository')
@@ -265,6 +269,7 @@ declare module 'vue' {
     readonly useMenusStore: UnwrapRef<typeof import('./stores/menus')['useMenusStore']>
     readonly useMigracionStore: UnwrapRef<typeof import('./stores/migracion')['useMigracionStore']>
     readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
+    readonly useNavigationHistoryStore: UnwrapRef<typeof import('./stores/navigationHistory')['useNavigationHistoryStore']>
     readonly useRoute: UnwrapRef<typeof import('vue-router')['useRoute']>
     readonly useRouter: UnwrapRef<typeof import('vue-router')['useRouter']>
     readonly useSchemaRepositoryStore: UnwrapRef<typeof import('./stores/schemaRepository')['useSchemaRepositoryStore']>

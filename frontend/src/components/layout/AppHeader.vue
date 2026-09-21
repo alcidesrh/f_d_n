@@ -14,7 +14,27 @@
     </div>
 
     <div class="header-crumbs">
-      <nav class="crumbs" aria-label="Breadcrumb"></nav>
+      <nav class="crumbs" aria-label="Breadcrumb">
+        <template
+          v-for="(crumb, i) in navigationHistory.entries"
+          :key="crumb.path + i"
+        >
+          <icon v-if="i > 0" name="chevron-right" size=".8rem"></icon>
+          <router-link
+            :to="
+              crumb.name
+                ? { name: crumb.name, params: crumb.params }
+                : crumb.path
+            "
+            class="crumb-link"
+            :class="{
+              'crumb-current': i === navigationHistory.entries.length - 1,
+            }"
+          >
+            {{ crumb.label }}
+          </router-link>
+        </template>
+      </nav>
     </div>
 
     <div class="header-actions">
@@ -82,6 +102,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useMenusStore } from "@/stores/menus";
+import { useNavigationHistoryStore } from "@/stores/navigationHistory";
 import { NOTIFICATIONS } from "@/data/mock";
 import { useDialog } from "primevue/usedialog";
 import ThemeEditor from "@/components/common/ThemeEditor.vue";
@@ -105,6 +126,7 @@ const openPopover = ref<PopoverName>(null);
 
 const menusStore = useMenusStore();
 const topbarMenuItems = computed(() => menusStore.topbarRightItems);
+const navigationHistory = useNavigationHistoryStore();
 
 function formatClock(date: Date) {
   const pad = (n: number) => String(n).padStart(2, "0");
