@@ -4,55 +4,60 @@ namespace App\Entity\Base;
 
 use App\Entity\Base\Traits\DataLoader;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\PropertyInfo\Extractor\ReflectionExtractor;
-use Symfony\Component\PropertyInfo\PropertyInfoExtractor;
 
 #[ORM\MappedSuperclass]
-class Base {
+class Base
+{
     use DataLoader;
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     protected int $id;
 
+    /**
+     * Getter usado por getLabel() para cada clase concreta, resuelto una sola
+     * vez por clase (evita reflexión/PropertyInfo en cada llamada).
+     *
+     * @var array<class-string, string|null>
+     */
+    private static array $labelMethodCache = [];
+
     public ?string $label = null;
-    public function setId($id): self {
+    public function setId(int $id): self
+    {
         $this->id = $id;
         return $this;
     }
-    public function __construct() {
-        $this->id = 9;
-    }
-    public function getId(): ?int {
+    public function getId(): ?int
+    {
         return $this->id;
     }
-    public function getLabel() {
+    public function getLabel(): string
+    {
+        $class = static::class;
 
-        $class = \get_class($this);
+        $labelMethod = self::$labelMethodCache[
+            $class
+        ] ??= self::resolveLabelMethod($class);
 
-        $extractor = [new ReflectionExtractor()];
-        $info = new PropertyInfoExtractor(typeExtractors: $extractor, accessExtractors: $extractor, initializableExtractors: $extractor, listExtractors: $extractor);
-
-        $properties = $info->getProperties($class);
-        if (!empty(\array_intersect($properties, ['nombre', 'name']))) {
-            try {
-                if ($nombre =  $this->getNombre()) {
-                    return $nombre;
-                }
-            } catch (\Throwable $th) {
-                try {
-                    if ($name = $this->getName()) {
-                        return $name;
-                    }
-                } catch (\Throwable $th) {
-                    throw $th;
-                }
-            }
+        if ($labelMethod !== null && ($value = $this->$labelMethod())) {
+            return $value;
         }
+
         return $this->getId() ?? $class;
     }
-    public function __toString() {
 
+    private static function resolveLabelMethod(string $class): ?string
+    {
+        return match (true) {
+            method_exists($class, "getNombre") => "getNombre",
+            method_exists($class, "getName") => "getName",
+            default => null,
+        };
+    }
+
+    public function __toString(): string
+    {
         return $this->getLabel();
     }
 }

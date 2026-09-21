@@ -1,7 +1,7 @@
 # Operativo — Ventas de Transporte (FDN)
 
 Contexto que modela la operación de salidas de buses y la venta de pasajes:
-geografía (enclaves y trayectos), flota (buses y asientos) y ventas (servicios y boletos).
+geografía (enclaves y trayectos), flota (buses y asientos) y ventas (recorridos y boletos).
 IAM/seguridad y configuración de menús son contextos separados.
 
 ## Geografía
@@ -34,19 +34,25 @@ Una plaza física de un bus, con una clase determinada.
 _Avoid_: puesto
 
 **Piloto**:
-El conductor asignado a un bus en un servicio.
+El conductor (o copiloto) asignado a un bus. La asignación es del bus, no del recorrido.
 _Avoid_: conductor, chofer
 
 ## Ventas
 
-**Servicio**:
-La salida concreta de un bus: un trayecto, una fecha, un bus y un piloto.
-Cada servicio fija su ruta al crearse, resolviendo el trayecto de sus enclaves de origen y destino.
-_Avoid_: salida, servicio, viaje, servicio
+**Recorrido**:
+La salida concreta de un bus: un trayecto, una fecha y un bus.
+Cada recorrido fija su ruta al crearse, resolviendo el trayecto de sus enclaves de origen y destino.
+Estado (`EstadoRecorrido`): `programada → abordando → iniciada → finalizada` en ese orden;
+`cancelada` solo es alcanzable desde `programada`.
+_Avoid_: servicio, itinerario, salida, viaje
 
 **BoletoAsiento**:
-Un asiento vendido dentro de un servicio, para un cliente y un trayecto,
-con precio y estado propios.
+Un asiento vendido dentro de un recorrido, para un cliente y un trayecto
+(puede ser un subtramo del recorrido completo), con precio y estado propios.
+Único por `(asiento, trayecto, recorrido)`: el mismo asiento puede venderse dos veces
+en el mismo recorrido solo si es para trayectos (subtramos) distintos.
+Estado (`EstadoBoletoAsiento`): `emitido → chequeado → transito → finalizado` en ese orden;
+`anulado` y `reasignado` solo son alcanzables desde `emitido`.
 _Avoid_: boleto, ticket
 
 **BoletoVenta**:
@@ -67,5 +73,5 @@ La persona que compra un boleto de asiento.
 _Avoid_: pasajero, comprador
 
 **Empresa**:
-La línea transportista dueña de la operación: buses, pilotos, servicios y tarifas.
+La línea transportista dueña de la operación: buses, pilotos, recorridos y tarifas.
 _Avoid_: compañía, operador

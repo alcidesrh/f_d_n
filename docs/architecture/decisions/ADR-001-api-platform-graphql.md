@@ -4,7 +4,7 @@
 
 ## Contexto
 
-FDN Transportes maneja decenas de entidades de negocio (BoletoAsiento, Servicio, Trayecto, Asiento, Cliente, etc.) con relaciones complejas. El frontend necesita consultar datos de múltiples entidades en una sola pantalla (ej: lista de boletos con datos del cliente, asiento, servicio y piloto). Usar REST tradicional implicaría múltiples peticiones o endpoints altamente especializados, lo que incrementa la complejidad del mantenimiento y el overhead de red.
+FDN Transportes maneja decenas de entidades de negocio (BoletoAsiento, Recorrido, Trayecto, Asiento, Cliente, etc.) con relaciones complejas. El frontend necesita consultar datos de múltiples entidades en una sola pantalla (ej: lista de boletos con datos del cliente, asiento, recorrido y piloto). Usar REST tradicional implicaría múltiples peticiones o endpoints altamente especializados, lo que incrementa la complejidad del mantenimiento y el overhead de red.
 
 Se evaluaron tres opciones: REST puro con API Platform, GraphQL puro con schema manual, y la combinación REST + GraphQL que ofrece API Platform 4.x.
 

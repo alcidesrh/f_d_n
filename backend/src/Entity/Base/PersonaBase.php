@@ -6,12 +6,12 @@ use App\Entity\Base\Traits\StatusTrait;
 use App\Entity\Base\Traits\TimestampableEntityTrait;
 use App\Entity\Localidad;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\MappedSuperclass]
 class PersonaBase extends Base
 {
-    use TimestampableEntityTrait,
-        StatusTrait;
+    use TimestampableEntityTrait, StatusTrait;
 
     #[ORM\Column(length: 255)]
     protected ?string $nombre = null;
@@ -19,7 +19,7 @@ class PersonaBase extends Base
     #[ORM\Column(length: 50, nullable: true)]
     protected ?string $apellido = null;
 
-    #[Assert\Email(message: 'The email {{ value }} is not a valid email.')]
+    #[Assert\Email(message: "The email {{ value }} is not a valid email.")]
     #[ORM\Column(length: 50, nullable: true)]
     protected ?string $email = null;
 

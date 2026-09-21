@@ -9,21 +9,31 @@ use ApiPlatform\State\ProviderInterface;
 use App\Entity\EntityConfiguration;
 use Doctrine\ORM\EntityManagerInterface;
 
+/**
+ * @implements ProviderInterface<EntityConfiguration>
+ */
 final class ConfigVersionsProvider implements ProviderInterface
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
     ) {}
 
-    public function provide(Operation $operation, array $uriVariables = [], array $context = []): object|array|null
-    {
-        $repository = $this->entityManager->getRepository(EntityConfiguration::class);
+    public function provide(
+        Operation $operation,
+        array $uriVariables = [],
+        array $context = [],
+    ): object|array|null {
+        $repository = $this->entityManager->getRepository(
+            EntityConfiguration::class,
+        );
         $configs = $repository->findAll();
 
         $versions = [];
         foreach ($configs as $config) {
             $updatedAt = $config->getUpdatedAt();
-            $versions[$config->getEntityClass()] = $updatedAt ? $updatedAt->format('c') : '';
+            $versions[$config->getEntityClass()] = $updatedAt
+                ? $updatedAt->format("c")
+                : "";
         }
 
         return [new ConfigVersions($versions)];

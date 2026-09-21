@@ -12,10 +12,10 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: MenuRepository::class)]
-#[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_NOMBRE', fields: ['nombre'])]
+#[ORM\UniqueConstraint(name: "UNIQ_IDENTIFIER_NOMBRE", fields: ["nombre"])]
 #[ApiResourceNoPagination]
-class Menu extends Base {
-
+class Menu extends Base
+{
     #[ORM\Column(length: 255)]
     private ?string $nombre = null;
 
@@ -34,16 +34,28 @@ class Menu extends Base {
     /**
      * @var Collection<int, self>
      */
-    #[ORM\ManyToMany(targetEntity: self::class, inversedBy: 'children')]
-    #[ORM\JoinTable(name: 'menu_menu')]
-    #[ORM\JoinColumn(name: 'parent_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
-    #[ORM\InverseJoinColumn(name: 'child_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
+    #[ORM\ManyToMany(targetEntity: self::class, inversedBy: "children")]
+    #[ORM\JoinTable(name: "menu_menu")]
+    #[
+        ORM\JoinColumn(
+            name: "parent_id",
+            referencedColumnName: "id",
+            onDelete: "CASCADE",
+        ),
+    ]
+    #[
+        ORM\InverseJoinColumn(
+            name: "child_id",
+            referencedColumnName: "id",
+            onDelete: "CASCADE",
+        ),
+    ]
     private ?Collection $parents;
 
     /**
      * @var Collection<int, self>
      */
-    #[ORM\ManyToMany(targetEntity: self::class, mappedBy: 'parents')]
+    #[ORM\ManyToMany(targetEntity: self::class, mappedBy: "parents")]
     private ?Collection $children;
 
     /**
@@ -61,11 +73,19 @@ class Menu extends Base {
     /**
      * @var Collection<int, MenuLayoutAssignment>
      */
-    #[ORM\OneToMany(targetEntity: MenuLayoutAssignment::class, mappedBy: 'menu', cascade: ['persist', 'remove'], orphanRemoval: true)]
-    #[ORM\OrderBy(['position' => 'ASC'])]
+    #[
+        ORM\OneToMany(
+            targetEntity: MenuLayoutAssignment::class,
+            mappedBy: "menu",
+            cascade: ["persist", "remove"],
+            orphanRemoval: true,
+        ),
+    ]
+    #[ORM\OrderBy(["position" => "ASC"])]
     private Collection $layoutAssignments;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->parents = new ArrayCollection();
         $this->children = new ArrayCollection();
         $this->allowRoles = new ArrayCollection();
@@ -73,55 +93,66 @@ class Menu extends Base {
         $this->layoutAssignments = new ArrayCollection();
     }
 
-    public function getId(): ?int {
+    public function getId(): ?int
+    {
         return $this->id;
     }
 
-    public function getNombre(): ?string {
+    public function getNombre(): ?string
+    {
         return $this->nombre;
     }
 
-    public function setNombre(string $nombre): static {
+    public function setNombre(string $nombre): static
+    {
         $this->nombre = $nombre;
 
         return $this;
     }
 
-    public function getLabel(): ?string {
+    public function getLabel(): string
+    {
         return $this->label ?? $this->nombre;
     }
 
-    public function setLabel(?string $label): static {
+    public function setLabel(?string $label): static
+    {
         $this->label = $label;
 
         return $this;
     }
 
-    public function getReferenciaVueRoute(): ?VueRoute {
+    public function getReferenciaVueRoute(): ?VueRoute
+    {
         return $this->referenciaVueRoute;
     }
 
-    public function setReferenciaVueRoute(?VueRoute $referenciaVueRoute): static {
+    public function setReferenciaVueRoute(?VueRoute $referenciaVueRoute): static
+    {
         $this->referenciaVueRoute = $referenciaVueRoute;
 
         return $this;
     }
 
-    public function getIcon(): ?string {
+    public function getIcon(): ?string
+    {
         return $this->icon;
     }
 
-    public function setIcon(?string $icon): static {
+    public function setIcon(?string $icon): static
+    {
         $this->icon = $icon;
 
         return $this;
     }
 
-    public function getSort(): ?int {
+    public function getSort(): ?int
+    {
         return $this->sort;
     }
 
-    public function setSort(?int $sort): static {
+    public function setSort(?int $sort): static
+    {
         $this->sort = $sort;
 
         return $this;
@@ -130,11 +161,13 @@ class Menu extends Base {
     /**
      * @return Collection<int, self>
      */
-    public function getParents(): Collection {
+    public function getParents(): Collection
+    {
         return $this->parents;
     }
 
-    public function addParent(self $parent): static {
+    public function addParent(self $parent): static
+    {
         if (!$this->parents->contains($parent)) {
             $this->parents->add($parent);
         }
@@ -142,7 +175,8 @@ class Menu extends Base {
         return $this;
     }
 
-    public function removeParent(self $parent): static {
+    public function removeParent(self $parent): static
+    {
         $this->parents->removeElement($parent);
 
         return $this;
@@ -151,11 +185,13 @@ class Menu extends Base {
     /**
      * @return Collection<int, self>
      */
-    public function getChildren(): Collection {
+    public function getChildren(): Collection
+    {
         return $this->children;
     }
 
-    public function addChild(self $child): static {
+    public function addChild(self $child): static
+    {
         if (!$this->children->contains($child)) {
             $this->children->add($child);
             $child->addParent($this);
@@ -164,7 +200,8 @@ class Menu extends Base {
         return $this;
     }
 
-    public function removeChild(self $child): static {
+    public function removeChild(self $child): static
+    {
         if ($this->children->removeElement($child)) {
             $child->removeParent($this);
         }
@@ -172,8 +209,9 @@ class Menu extends Base {
         return $this;
     }
 
-    public function __toString(): string {
-        return $this->getNombre() ?? '';
+    public function __toString(): string
+    {
+        return $this->getNombre() ?? "";
     }
 
     /**
@@ -232,8 +270,9 @@ class Menu extends Base {
         return $this->layoutAssignments;
     }
 
-    public function addLayoutAssignment(MenuLayoutAssignment $layoutAssignment): static
-    {
+    public function addLayoutAssignment(
+        MenuLayoutAssignment $layoutAssignment,
+    ): static {
         if (!$this->layoutAssignments->contains($layoutAssignment)) {
             $this->layoutAssignments->add($layoutAssignment);
             $layoutAssignment->setMenu($this);
@@ -242,8 +281,9 @@ class Menu extends Base {
         return $this;
     }
 
-    public function removeLayoutAssignment(MenuLayoutAssignment $layoutAssignment): static
-    {
+    public function removeLayoutAssignment(
+        MenuLayoutAssignment $layoutAssignment,
+    ): static {
         if ($this->layoutAssignments->removeElement($layoutAssignment)) {
             if ($layoutAssignment->getMenu() === $this) {
                 $layoutAssignment->setMenu(null);

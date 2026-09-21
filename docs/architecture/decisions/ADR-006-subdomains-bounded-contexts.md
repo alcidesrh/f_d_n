@@ -14,7 +14,7 @@ Se organiza el backend en **subdominios como bounded contexts** siguiendo los pr
 
 | Subdominio | Entidades principales |
 |---|---|
-| Transporte | Trayecto, Subtrayecto, Servicio |
+| Transporte | Trayecto, Subtrayecto, Recorrido |
 | Flota | Bus, BusMarca, Asiento |
 | Venta | BoletoAsiento, BoletoVenta, BoletoTarifa, Factura, Cliente |
 | Personal | Usuario, Piloto |
@@ -38,7 +38,7 @@ Cada subdominio agrupa sus entidades, servicios, repositorios y resolutores Grap
 
 **Negativas:**
 
-- Las entidades con relaciones entre contextos (ej: BoletoAsiento depende de Servicio y Cliente) requieren referencias cruzadas
+- Las entidades con relaciones entre contextos (ej: BoletoAsiento depende de Recorrido y Cliente) requieren referencias cruzadas
 - No hay un límite físico estricto (misma base de datos, mismo código); es una convención organizativa
 - Algunas entidades son difíciles de clasificar en un solo subdominio (ej: Usuario aparece en Seguridad y Personal)
 - La documentación de subdominios debe mantenerse sincronizada con la estructura real

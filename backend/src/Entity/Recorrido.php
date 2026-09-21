@@ -3,16 +3,21 @@
 namespace App\Entity;
 
 use App\Attribute\ApiResourcePaginationPage;
-use App\Entity\Base\TimeLegacyStatusBase;
-use App\Repository\ServicioRepository;
+use App\Entity\Base\Base;
+use App\Entity\Base\Traits\TimestampableEntityTrait;
+use App\Entity\Enum\EstadoRecorrido;
+use App\Repository\RecorridoRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: ServicioRepository)]
+#[ORM\Entity(repositoryClass: RecorridoRepository::class)]
+#[ORM\Index(columns: ["fecha", "empresa_id", "trayecto_id"], name: "idx_recorrido_fecha_empresa_trayecto")]
 #[ApiResourcePaginationPage]
-class Servicio extends TimeLegacyStatusBase
+class Recorrido extends Base
 {
+    use TimestampableEntityTrait;
+
     #[ORM\Column]
     private ?\DateTime $fecha = null;
 
@@ -25,13 +30,13 @@ class Servicio extends TimeLegacyStatusBase
     #[ORM\ManyToOne]
     private ?Bus $bus = null;
 
-    #[ORM\ManyToOne]
-    private ?Piloto $piloto = null;
+    #[ORM\Column(type: "string", length: 20, enumType: EstadoRecorrido::class)]
+    private EstadoRecorrido $estado = EstadoRecorrido::PROGRAMADA;
 
     /**
      * @var Collection<int, BoletoAsiento>
      */
-    #[ORM\OneToMany(targetEntity: BoletoAsiento::class, mappedBy: "servicio")]
+    #[ORM\OneToMany(targetEntity: BoletoAsiento::class, mappedBy: "recorrido")]
     private Collection $boletoAsientos;
 
     #[ORM\ManyToOne]
@@ -40,7 +45,6 @@ class Servicio extends TimeLegacyStatusBase
 
     public function __construct()
     {
-        parent::__construct();
         $this->boletoAsientos = new ArrayCollection();
     }
 
@@ -80,14 +84,34 @@ class Servicio extends TimeLegacyStatusBase
         return $this;
     }
 
-    public function getPiloto(): ?Piloto
+    public function getEstado(): EstadoRecorrido
     {
-        return $this->piloto;
+        return $this->estado;
     }
 
-    public function setPiloto(?Piloto $piloto): static
+    /**
+     * Transiciona el recorrido al nuevo estado, validando la máquina de estados:
+     * programada -> abordando -> iniciada -> finalizada (lineal),
+     * y programada -> cancelada (solo desde programada).
+     *
+     * @throws \DomainException si la transición no está permitida
+     */
+    public function setEstado(EstadoRecorrido $estado): static
     {
-        $this->piloto = $piloto;
+        if (
+            $estado !== $this->estado &&
+            !$this->estado->puedeTransicionarA($estado)
+        ) {
+            throw new \DomainException(
+                sprintf(
+                    "Transición de Recorrido inválida: %s -> %s",
+                    $this->estado->value,
+                    $estado->value,
+                ),
+            );
+        }
+
+        $this->estado = $estado;
 
         return $this;
     }
@@ -115,7 +139,7 @@ class Servicio extends TimeLegacyStatusBase
     {
         if (!$this->boletoAsientos->contains($boletoAsiento)) {
             $this->boletoAsientos->add($boletoAsiento);
-            $boletoAsiento->setServicio($this);
+            $boletoAsiento->setRecorrido($this);
         }
 
         return $this;
@@ -125,8 +149,8 @@ class Servicio extends TimeLegacyStatusBase
     {
         if ($this->boletoAsientos->removeElement($boletoAsiento)) {
             // set the owning side to null (unless already changed)
-            if ($boletoAsiento->getServicio() === $this) {
-                $boletoAsiento->setServicio(null);
+            if ($boletoAsiento->getRecorrido() === $this) {
+                $boletoAsiento->setRecorrido(null);
             }
         }
 

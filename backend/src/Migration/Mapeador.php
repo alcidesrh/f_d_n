@@ -2,6 +2,8 @@
 
 namespace App\Migration;
 
+use App\Entity\Enum\EstadoRecorrido;
+
 class Mapeador
 {
     /**
@@ -49,7 +51,7 @@ class Mapeador
             "piloto_id" => isset($old["piloto_id"])
                 ? (int) $old["piloto_id"]
                 : null,
-            "piloto_aux_id" => isset($old["piloto_aux_id"])
+            "copiloto_id" => isset($old["piloto_aux_id"])
                 ? (int) $old["piloto_aux_id"]
                 : null,
 
@@ -199,20 +201,23 @@ class Mapeador
 
     /**
      * Salida is variable data → keep legacy_id.
+     * `estado` fija PROGRAMADA: `fetchSalidas`/`fetchSalidasVentana` solo traen
+     * salidas legacy con estado_id 1 o 2 (Emitido/Chequeado), es decir, salidas
+     * legacy aún no completadas — PROGRAMADA es su equivalente razonable en el
+     * enum nuevo (ver EstadoRecorrido).
      */
-    public function servicio(
+    public function recorrido(
         array $old,
         ?int $busId,
         ?int $empresaId,
-        ?int $pilotoId = null,
         ?int $trayectoId = null,
     ): array {
         return [
             "fecha" => $this->formatDatetime($old["fecha"]),
             "bus_id" => $busId,
             "empresa_id" => $empresaId,
-            "piloto_id" => $pilotoId,
             "trayecto_id" => $trayectoId,
+            "estado" => EstadoRecorrido::PROGRAMADA->value,
             "legacy_id" => (string) $old["id"],
         ];
     }
@@ -220,25 +225,25 @@ class Mapeador
     /**
      * BoletoAsiento is variable data → keep legacy_id.
      * Payload mínimo y desacoplado: cada boleto legacy se convierte en un
-     * asiento vendido, enlazado a su venta, servicio, cliente, trayecto y status.
+     * asiento vendido, enlazado a su venta, recorrido, cliente y trayecto.
      */
     public function boletoAsiento(
         array $old,
-        int $servicioId,
+        int $recorridoId,
         int $asientoId,
         int $clienteId,
         int $trayectoId,
-        int $statusId,
+        string $estado,
         int $boletoVentaId,
     ): array {
         $precio = (int) (($old["precioCalculado"] ?? 0) * 100);
 
         return [
-            "servicio_id" => $servicioId,
+            "recorrido_id" => $recorridoId,
             "asiento_id" => $asientoId,
             "cliente_id" => $clienteId,
             "trayecto_id" => $trayectoId,
-            "status_id" => $statusId,
+            "estado" => $estado,
             "boleto_venta_id" => $boletoVentaId,
             "precio_monto" => $precio ?: 0,
             "precio_moneda" => "GTQ",

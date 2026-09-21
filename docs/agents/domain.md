@@ -19,7 +19,7 @@ Single-context repo (this repo):
 ├── AGENTS.md
 ├── CONTEXT.md
 ├── docs/architecture/decisions/   ← repo ADR home, numbered ADR-001, ADR-002, ...
-│   ├── ADR-011-servicio-lleva-trayecto.md
+│   ├── ADR-011-recorrido-lleva-trayecto.md
 │   └── ADR-012-trayecto-canonico-por-enclaves.md
 └── backend/
 └── frontend/
@@ -43,4 +43,4 @@ If the concept you need isn't in the glossary yet, that's a signal — either yo
 
 If your output contradicts an existing ADR, surface it explicitly rather than silently overriding:
 
-> _Contradicts ADR-011 (servicio lleva trayecto) — but worth reopening because…_
+> _Contradicts ADR-011 (recorrido lleva trayecto) — but worth reopening because…_

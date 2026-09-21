@@ -9,7 +9,7 @@ class Limpiador
     private array $tables = [
         "boleto_asiento",
         "boleto",
-        "servicio",
+        "recorrido",
         "subtrayecto",
         "trayecto",
         "asiento",
@@ -34,7 +34,7 @@ class Limpiador
 
     private array $sequences = [
         "boleto_id_seq",
-        "servicio_id_seq",
+        "recorrido_id_seq",
         "tarifa_id_seq",
         "trayecto_id_seq",
         "asiento_id_seq",

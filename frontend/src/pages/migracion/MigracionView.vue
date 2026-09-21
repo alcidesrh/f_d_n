@@ -346,7 +346,7 @@ onBeforeUnmount(() => {
   background: var(--p-surface-950);
   color: var(--p-surface-50);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.75rem;
+  font-size: 1.2rem;
   line-height: 1.5;
   white-space: pre-wrap;
   word-break: break-word;

@@ -3,11 +3,18 @@
 namespace App\Entity;
 
 use App\Entity\Embeddable\Precio;
+use App\Entity\Enum\EstadoBoletoAsiento;
 use App\Repository\BoletoAsientoRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Money\Money;
 
 #[ORM\Entity(repositoryClass: BoletoAsientoRepository::class)]
+#[
+    ORM\UniqueConstraint(
+        name: "uq_boleto_asiento_asiento_trayecto_recorrido",
+        columns: ["asiento_id", "trayecto_id", "recorrido_id"],
+    ),
+]
 class BoletoAsiento
 {
     #[ORM\Id]
@@ -27,9 +34,8 @@ class BoletoAsiento
     #[ORM\JoinColumn(nullable: false)]
     private ?Cliente $cliente = null;
 
-    #[ORM\ManyToOne]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Status $status = null;
+    #[ORM\Column(type: "string", length: 20, enumType: EstadoBoletoAsiento::class)]
+    private EstadoBoletoAsiento $estado = EstadoBoletoAsiento::EMITIDO;
 
     #[ORM\ManyToOne(inversedBy: "asientos")]
     #[ORM\JoinColumn(nullable: false)]
@@ -37,7 +43,7 @@ class BoletoAsiento
 
     #[ORM\ManyToOne(inversedBy: "boletoAsientos")]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Servicio $servicio = null;
+    private ?Recorrido $recorrido = null;
 
     #[ORM\Embedded(class: Precio::class)]
     private ?Precio $precio = null;
@@ -86,14 +92,34 @@ class BoletoAsiento
         return $this;
     }
 
-    public function getStatus(): ?Status
+    public function getEstado(): EstadoBoletoAsiento
     {
-        return $this->status;
+        return $this->estado;
     }
 
-    public function setStatus(?Status $status): static
+    /**
+     * Transiciona el boleto al nuevo estado, validando la máquina de estados:
+     * emitido -> chequeado -> transito -> finalizado (lineal),
+     * y emitido -> anulado / emitido -> reasignado (solo desde emitido).
+     *
+     * @throws \DomainException si la transición no está permitida
+     */
+    public function setEstado(EstadoBoletoAsiento $estado): static
     {
-        $this->status = $status;
+        if (
+            $estado !== $this->estado &&
+            !$this->estado->puedeTransicionarA($estado)
+        ) {
+            throw new \DomainException(
+                sprintf(
+                    "Transición de BoletoAsiento inválida: %s -> %s",
+                    $this->estado->value,
+                    $estado->value,
+                ),
+            );
+        }
+
+        $this->estado = $estado;
 
         return $this;
     }
@@ -110,14 +136,14 @@ class BoletoAsiento
         return $this;
     }
 
-    public function getServicio(): ?Servicio
+    public function getRecorrido(): ?Recorrido
     {
-        return $this->servicio;
+        return $this->recorrido;
     }
 
-    public function setServicio(?Servicio $servicio): static
+    public function setRecorrido(?Recorrido $recorrido): static
     {
-        $this->servicio = $servicio;
+        $this->recorrido = $recorrido;
 
         return $this;
     }

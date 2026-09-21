@@ -192,6 +192,9 @@ class Usuario extends PersonaBase implements
     ]
     private Collection $deniedActions;
 
+    #[ORM\ManyToOne]
+    private ?Empresa $empresa = null;
+
     public function __construct($data = [])
     {
         if (!empty($data)) {
@@ -428,7 +431,19 @@ class Usuario extends PersonaBase implements
         return $this;
     }
 
-    public function getLabel()
+    public function getEmpresa(): ?Empresa
+    {
+        return $this->empresa;
+    }
+
+    public function setEmpresa(?Empresa $empresa): static
+    {
+        $this->empresa = $empresa;
+
+        return $this;
+    }
+
+    public function getLabel(): string
     {
         $temp = explode(" ", $this->apellido);
         return $this->username . ": " . $this->nombre . " " . $temp[0] ??

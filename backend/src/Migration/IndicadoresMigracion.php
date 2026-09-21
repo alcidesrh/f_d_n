@@ -65,7 +65,7 @@ final class IndicadoresMigracion
             "legado" => "SELECT COUNT(*) FROM tarifas_boleto",
         ],
         "salida" => [
-            "nuevo" => "SELECT COUNT(*) FROM servicio",
+            "nuevo" => "SELECT COUNT(*) FROM recorrido",
             "legado" => "SELECT COUNT(*) FROM salida WHERE estado_id IN (1,2)",
         ],
         "boleto" => [

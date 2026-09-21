@@ -2,6 +2,7 @@
 
 namespace App\Migration;
 
+use App\Entity\Enum\EstadoBoletoAsiento;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\Attribute\Target;
@@ -25,15 +26,18 @@ class Migrador
     private const LEGACY_MAP = ["bus", "trayecto", "salida", "boleto_asiento"];
 
     /**
-     * Mapa de estados legacy → nombre de estado en la nueva tabla `status`.
+     * Mapa de estado_id legacy → EstadoBoletoAsiento. El legacy "Cancelado" (6)
+     * no tiene equivalente propio en el enum nuevo; se resuelve como ANULADO
+     * (el estado terminal más cercano semánticamente). Ajustar si el negocio
+     * llega a distinguir ambos casos.
      */
-    private const LEGACY_ESTADO_MAP = [
-        1 => "Emitido",
-        2 => "Chequeado",
-        3 => "Tránsito",
-        4 => "Anulado",
-        5 => "Reasignado",
-        6 => "Cancelado",
+    private const LEGACY_ESTADO_BOLETO_MAP = [
+        1 => EstadoBoletoAsiento::EMITIDO,
+        2 => EstadoBoletoAsiento::CHEQUEADO,
+        3 => EstadoBoletoAsiento::TRANSITO,
+        4 => EstadoBoletoAsiento::ANULADO,
+        5 => EstadoBoletoAsiento::REASIGNADO,
+        6 => EstadoBoletoAsiento::ANULADO,
     ];
 
     public function __construct(
@@ -84,7 +88,7 @@ class Migrador
             }
 
             $legacyId = (string) $salida["id"];
-            if ($this->yaMigrado("servicio", $legacyId)) {
+            if ($this->yaMigrado("recorrido", $legacyId)) {
                 continue;
             }
 
@@ -704,7 +708,7 @@ class Migrador
     ): array {
         $sql = "SELECT TOP $salidas s.*, i.ruta_codigo, i.tipo_bus_id AS it_tipo_bus_id, i.empresa_id AS it_empresa_id
              FROM salida s
-             LEFT JOIN itineario i ON i.id = s.servicio_id
+             LEFT JOIN itineario i ON i.id = s.itinerario_id
              WHERE s.estado_id in (1,2)";
         $params = [];
         if ($desde) {
@@ -728,7 +732,7 @@ class Migrador
     ): array {
         $sql = "SELECT s.*, i.ruta_codigo, i.tipo_bus_id AS it_tipo_bus_id, i.empresa_id AS it_empresa_id
              FROM salida s
-             LEFT JOIN itineario i ON i.id = s.servicio_id
+             LEFT JOIN itineario i ON i.id = s.itinerario_id
              WHERE s.estado_id in (1,2)";
         $params = [];
         if ($desde) {
@@ -753,11 +757,11 @@ class Migrador
         ?string $desde = null,
         ?string $hasta = null,
     ): array {
-        // Set de legacy_id ya migrados en el nuevo servicio (evita N+1).
+        // Set de legacy_id ya migrados en el nuevo recorrido (evita N+1).
         $migradas = [];
         $rows = $this->newConn
             ->executeQuery(
-                "SELECT legacy_id FROM servicio WHERE legacy_id IS NOT NULL",
+                "SELECT legacy_id FROM recorrido WHERE legacy_id IS NOT NULL",
             )
             ->fetchFirstColumn();
         foreach ($rows as $legacyId) {
@@ -828,17 +832,19 @@ class Migrador
         ?int $trayectoId,
         array &$contadores,
     ): ?int {
-        $pilotoId = $salida["piloto_id"] ? (int) $salida["piloto_id"] : null;
-
-        $data = $this->mapeador->servicio(
+        // Nota: el piloto de la salida legacy ya no se migra a nivel de
+        // Recorrido — la asignación de piloto/copiloto vive en Bus (ver
+        // ADR-013 y siguientes). El piloto histórico de esta salida puntual
+        // (que podía diferir del piloto habitual del bus) no tiene destino
+        // en el modelo nuevo y se descarta.
+        $data = $this->mapeador->recorrido(
             $salida,
             $busId,
             $empresaId,
-            $pilotoId,
             $trayectoId,
         );
         $id = $this->newConn->fetchOne(
-            "INSERT INTO servicio (fecha, bus_id, empresa_id, piloto_id, trayecto_id, legacy_id) VALUES (:fecha, :bus_id, :empresa_id, :piloto_id, :trayecto_id, :legacy_id) RETURNING id",
+            "INSERT INTO recorrido (fecha, bus_id, empresa_id, trayecto_id, estado, legacy_id) VALUES (:fecha, :bus_id, :empresa_id, :trayecto_id, :estado, :legacy_id) RETURNING id",
             $data,
         );
         $contadores["salida"]++;
@@ -857,8 +863,6 @@ class Migrador
         if (empty($boletos)) {
             return;
         }
-
-        $statusMap = $this->asegurarEstados($contadores);
 
         foreach ($boletos as $boletoOld) {
             $boletoLegacy = (string) $boletoOld["id"];
@@ -916,10 +920,7 @@ class Migrador
                 continue;
             }
 
-            $statusId = $this->resolverStatusId($statusMap, $boletoOld);
-            if (!$statusId) {
-                continue;
-            }
+            $estado = $this->resolverEstadoBoletoAsiento($boletoOld);
 
             $ventaId = $this->crearBoletoVenta($usuarioId, $contadores);
             if (!$ventaId) {
@@ -932,12 +933,12 @@ class Migrador
                 $asientoId,
                 $clienteId,
                 $trayectoBoletoId,
-                $statusId,
+                $estado,
                 $ventaId,
             );
             $this->newConn->executeStatement(
-                'INSERT INTO boleto_asiento (servicio_id, asiento_id, cliente_id, trayecto_id, status_id, boleto_venta_id, precio_monto, precio_moneda, legacy_id)
-                 VALUES (:servicio_id, :asiento_id, :cliente_id, :trayecto_id, :status_id, :boleto_venta_id, :precio_monto, :precio_moneda, :legacy_id)',
+                'INSERT INTO boleto_asiento (recorrido_id, asiento_id, cliente_id, trayecto_id, estado, boleto_venta_id, precio_monto, precio_moneda, legacy_id)
+                 VALUES (:recorrido_id, :asiento_id, :cliente_id, :trayecto_id, :estado, :boleto_venta_id, :precio_monto, :precio_moneda, :legacy_id)',
                 $data,
             );
             $contadores["boleto_asiento"]++;
@@ -960,37 +961,17 @@ class Migrador
     }
 
     /**
-     * Legacy estado mapping → new status. Seeds the reference statuses if missing.
-     * @return array<int,int> map legacy estado_id => status id
+     * Resuelve el EstadoBoletoAsiento a partir del estado_id legacy del boleto.
+     * Estado desconocido o ausente → fallback EMITIDO.
      */
-    private function asegurarEstados(array &$contadores): array
-    {
-        $map = [];
-        foreach (self::LEGACY_ESTADO_MAP as $legacyId => $nombre) {
-            $statusId = $this->newConn->fetchOne(
-                "SELECT id FROM status WHERE nombre = :n",
-                ["n" => $nombre],
-            );
-            if (!$statusId) {
-                $statusId = $this->newConn->fetchOne(
-                    "INSERT INTO status (nombre) VALUES (:n) RETURNING id",
-                    ["n" => $nombre],
-                );
-                $contadores["estado"] = ($contadores["estado"] ?? 0) + 1;
-            }
-            $map[$legacyId] = (int) $statusId;
-        }
-        return $map;
-    }
-
-    private function resolverStatusId(array $statusMap, array $boletoOld): ?int
+    private function resolverEstadoBoletoAsiento(array $boletoOld): string
     {
         $estadoId = (int) ($boletoOld["estado_id"] ?? 0);
-        if (isset($statusMap[$estadoId])) {
-            return $statusMap[$estadoId];
-        }
-        // Estado desconocido o ausente → fallback "Emitido" (1)
-        return $statusMap[1] ?? null;
+        $estado =
+            self::LEGACY_ESTADO_BOLETO_MAP[$estadoId] ??
+            EstadoBoletoAsiento::EMITIDO;
+
+        return $estado->value;
     }
 
     /**
