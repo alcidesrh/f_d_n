@@ -2,8 +2,6 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Metadata\GraphQl\QueryCollection;
 use App\Attribute\ApiResourceNoPagination;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -12,13 +10,12 @@ use Symfony\Component\Serializer\Attribute\Groups;
 #[ApiResourceNoPagination]
 class FormFieldConfig extends FieldConfig
 {
-
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['read:dto'])]
+    #[Groups(["read:dto"])]
     public ?string $groupName = null;
 
     #[ApiProperty(readable: false)]
-    #[ORM\ManyToOne(inversedBy: 'formFields')]
+    #[ORM\ManyToOne(inversedBy: "formFields")]
     public EntityConfiguration $entityConfig;
 
     public function __construct(array $data)
@@ -28,9 +25,20 @@ class FormFieldConfig extends FieldConfig
 
     public function setData(array $data)
     {
-        $this->setField($data[0])->setVisible(true)
-            ->setGroupName(null)->setAttrs(null)->setLabel($data[0]);
-        if (\in_array($data[0], ['legacyId', 'apiTokens', 'id', 'createdAt', 'updatedAt'])) {
+        $this->setField($data[0])
+            ->setVisible(true)
+            ->setGroupName(null)
+            ->setAttrs(null)
+            ->setLabel($data[0]);
+        if (
+            \in_array($data[0], [
+                "legacyId",
+                "apiTokens",
+                "id",
+                "createdAt",
+                "updatedAt",
+            ])
+        ) {
             $this->visible = false;
         }
     }

@@ -14,11 +14,8 @@ import type { MaybeRefOrGetter } from "vue";
 import type { FormKitSchemaNode } from "@formkit/core";
 import { useEntityRegistry } from "./useEntityRegistry";
 
-import {
-  FormSchemaSerializer,
-  type FormFieldSource,
-} from "@/utils/formkit/schemaSerializer";
-import type { AgnosticOption } from "@/lib/apollo/types";
+import { FormSchemaSerializer, type FormFieldSource } from "@/utils/formkit/schemaSerializer";
+import type { AgnosticOption, SchemaInputField } from "@/lib/apollo/types";
 import type { EntityStore } from "@/stores/entities/types";
 
 export type EntityFormMode = "create" | "update";
@@ -31,10 +28,7 @@ export interface UseEntityFormOptions {
   labels?: Record<string, string>;
 }
 
-export function useEntityForm(
-  entityName: MaybeRefOrGetter<string>,
-  options: UseEntityFormOptions = {},
-) {
+export function useEntityForm(entityName: MaybeRefOrGetter<string>, options: UseEntityFormOptions = {}) {
   const registry = useEntityRegistry();
 
   const name = toRef(entityName);
@@ -74,31 +68,30 @@ export function useEntityForm(
       if (!ent || !mut || !target) {
         throw new Error(`"${name.value}" no expone ${mode.value}`);
       }
-      const selected = mut.inputFields.filter(
-        (field) =>
-          field.name !== "clientMutationId" &&
-          !(field.name === "id" && mode.value === "create"),
-      );
+      if (target.formFields.length) {
+        const selected = [];
+        target.formFields.forEach((v) => {
+          if (v.visible) {
+            const temp = mut.inputFields.find((v2) => v2.name == v.field) as SchemaInputField;
+            if (v.label) {
+              temp.label = v.label;
+            }
+            selected.push(temp);
+          }
+        });
+      } else {
+        const selected = mut.inputFields.filter((field) => field.name !== "clientMutationId" && !(field.name === "id" && mode.value === "create"));
+      }
 
       // Precarga en paralelo las listas de relaciones; falla blando si una
       // entidad destino no expone collectionAgnostic.
-      const targets = [
-        ...new Set(
-          selected.filter((f) => f.isRelation).map((f) => f.namedType),
-        ),
-      ];
+      const targets = [...new Set(selected.filter((f) => f.isRelation).map((f) => f.namedType))];
       const lists = await Promise.all(
         targets.map(async (targetName) => {
           try {
-            return [
-              targetName,
-              await registry.getEntity(targetName).loadFullList(),
-            ] as const;
+            return [targetName, await registry.getEntity(targetName).loadFullList()] as const;
           } catch (cause) {
-            console.warn(
-              `[useEntityForm] sin lista para "${targetName}":`,
-              cause,
-            );
+            console.warn(`[useEntityForm] sin lista para "${targetName}":`, cause);
             return [targetName, [] as AgnosticOption[]] as const;
           }
         }),
@@ -120,21 +113,13 @@ export function useEntityForm(
       fields = selected;
       resetKey += 1;
 
-      schema.value = FormSchemaSerializer.serializeEntityForm(
-        ent.name,
-        fields,
-        {
-          mode: mode.value,
-          labels: labelMap,
-          relationOptions,
-          values: FormSchemaSerializer.hydrateInitialValues(
-            fields,
-            initialData.value,
-            mode.value,
-          ),
-          resetKey,
-        },
-      );
+      schema.value = FormSchemaSerializer.serializeEntityForm(ent.name, fields, {
+        mode: mode.value,
+        labels: labelMap,
+        relationOptions,
+        values: FormSchemaSerializer.hydrateInitialValues(fields, initialData.value, mode.value),
+        resetKey,
+      });
     } catch (cause) {
       error.value = cause instanceof Error ? cause.message : String(cause);
       schema.value = [];
@@ -143,18 +128,14 @@ export function useEntityForm(
     }
   }
 
-  async function submit(
-    data: Record<string, unknown>,
-  ): Promise<Record<string, unknown>> {
+  async function submit(data: Record<string, unknown>): Promise<Record<string, unknown>> {
     const target = store.value;
     if (!target) throw new Error(`No hay store para "${name.value}"`);
     submitting.value = true;
     error.value = "";
     try {
       const payload = FormSchemaSerializer.serializeSubmitValue(fields, data);
-      return mode.value === "update"
-        ? await target.update(payload)
-        : await target.create(payload);
+      return mode.value === "update" ? await target.update(payload) : await target.create(payload);
     } catch (cause) {
       error.value = cause instanceof Error ? cause.message : String(cause);
       throw cause;

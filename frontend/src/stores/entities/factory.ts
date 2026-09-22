@@ -48,10 +48,11 @@ function createEntityStore(name: string): StoreDefinition {
     // Todo el estado de la entidad persiste (paginación, filtros, orden,
     // columnas con su orden/visibilidad, fullList) para reencontrar el
     // listado como se dejó al reabrir el navegador.
-    // persist: true,
+    persist: true,
     state: (): EntityStoreState => ({
       name: entity.name,
       columns: [],
+      formFields: [],
       items: [],
       filters: {},
       order: [],
@@ -79,23 +80,23 @@ function createEntityStore(name: string): StoreDefinition {
        * "restablecer vista" del listado).
        */
       async init(force = false): void {
-        if (!force && this.columns.length > 0) return this.columns;
-        try {
-          const config = await rest.getEntityConfiguration(this.name);
-          const columns = config?.collectionFieldConfig;
-          if (columns && columns.length > 0) {
-            this.columns = columns.map((v) => ({ ...v, showFilter: false }));
-            return columns;
+        if (force || this.columns.length == 0 || this.formFields.length == 0) {
+          try {
+            const config = await rest.getEntityConfiguration(this.name);
+            this.formFields = config.formFields;
+            const columns = config?.collectionFieldConfig;
+            if (columns && columns.length > 0) {
+              this.columns = columns.map((v) => ({ ...v, showFilter: false }));
+            } else {
+              this.columns = buildFallbackColumns(this.name);
+            }
+          } catch (error) {
+            console.warn(
+              `[entity:${this.name}] falló la carga de columnas REST, usando schema:`,
+              error,
+            );
           }
-        } catch (error) {
-          console.warn(
-            `[entity:${this.name}] falló la carga de columnas REST, usando schema:`,
-            error,
-          );
         }
-        const fallback = buildFallbackColumns(this.name);
-        this.columns = fallback;
-        return fallback;
       },
 
       async fetchItems<T>(this: EntityStore<T>): Promise<T[]> {

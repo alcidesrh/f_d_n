@@ -5,10 +5,7 @@ import { gsap } from "gsap";
 
 const definitions = new Map<string, StoreDefinition>();
 
-export function defineSidebarStore(
-  side: "left" | "right",
-  name?: string,
-): SidebarStore {
+export function defineSidebarStore(side: "left" | "right", name?: string): SidebarStore {
   name = name ?? side;
   let definition = definitions.get(name);
   if (!definition) {
@@ -23,8 +20,7 @@ export function defineSidebarStore(
         close: 0,
       }),
       getters: {
-        width: (s: SidebarStoreState): number =>
-          ({ open: s.open, mini: s.mini, close: s.close })[s.mode],
+        width: (s: SidebarStoreState): number => ({ open: s.open, mini: s.mini, close: s.close })[s.mode],
       },
       actions: {
         setMode(mode?: "open" | "mini" | "close") {
@@ -105,11 +101,7 @@ export function defineSidebarStore(
               );
             }
 
-            gsap.fromTo(
-              e.currentTarget.querySelector(".menu-text"),
-              { opacity: 1, width: "0px", overflow: "hidden" },
-              { width: "100%", duration: 0.4 },
-            );
+            gsap.fromTo(e.currentTarget.querySelector(".menu-text"), { opacity: 1, width: "0px", overflow: "hidden" }, { width: "100%", duration: 0.4 });
           }
         },
         sidebarUpdate() {
@@ -118,9 +110,9 @@ export function defineSidebarStore(
             main: `.main`,
             menu: `.sidebar.${this.side} .menu-text`,
           };
-          const duration = 0.3;
-          const ease = "expoScale(1, 2)";
-          // const ease = "expoScale(0.5,7, none)";
+          const duration = 0.2;
+          // const ease = "expoScale(1, 2)";
+          const ease = "expoScale(0.5,7, none)";
 
           if (this.mode === "open") {
             gsap.to(targets.sidebar, { width: this.width, duration, ease });

@@ -14,6 +14,7 @@ import type {
   EntitySchema,
   OrderCondition,
 } from "@/lib/apollo/types";
+import type { FormFieldConfig } from "@/types/entities";
 
 export type OrderDirection = "ASC" | "DESC";
 
@@ -55,7 +56,7 @@ export interface EntityStoreState<T = unknown> {
   name: string;
   /** Columnas del listado (de `/entity_configurations` o fallback a todas las propiedades). */
   columns: CollectionFieldConfig[];
-  formFields: [];
+  formFields: FormFieldConfig[];
   /** Elementos del listado actual. */
   items: T[];
   pagination?: PaginationState;
