@@ -1,10 +1,17 @@
 <!-- #region Template -->
 <template>
   <div>
-    <div v-if="store.metadata" class="card flex flex-col overflow-hidden" style="min-height: 400px">
+    <div
+      v-if="store.metadata"
+      class="card flex flex-col overflow-hidden"
+      style="min-height: 400px"
+    >
       <Toolbar class="rounded-none border-none! bg-transparent px-2">
         <template #start>
-          <span v-if="selectionMode" class="text-sm font-medium text-surface-600">
+          <span
+            v-if="selectionMode"
+            class="text-sm font-medium text-surface-600"
+          >
             {{ selection.length }} seleccionados
           </span>
           <PageHead v-else></PageHead>
@@ -29,7 +36,9 @@
                   >Columnas ocultas</span
                 >
                 <button
-                  v-for="col in (store?.columns ?? []).filter((col) => col.visible === false)"
+                  v-for="col in (store?.columns ?? []).filter(
+                    (col) => col.visible === false,
+                  )"
                   :key="col.field"
                   class="flex cursor-pointer items-center justify-between gap-6 rounded px-2 py-1 text-left text-sm text-surface-700 hover:bg-surface-100"
                   @click="restoreColumn(col.field)"
@@ -58,7 +67,11 @@
         @column-reorder="onColumnReorder"
         @cell-edit-complete="onCellEditComplete"
       >
-        <Column v-for="col in store.visibleColumns" :key="col.field" :field="col.field">
+        <Column
+          v-for="col in store.visibleColumns"
+          :key="col.field"
+          :field="col.field"
+        >
           <template #header>
             <div class="relative">
               <div class="col-head">
@@ -68,9 +81,9 @@
                   }}</span>
                   <span class="flex gap-3">
                     <icon
+                      v-if="col.sortable"
                       class="ml-3"
                       @click.stop="toggleSort(col.field)"
-                      v-if="col.sortable"
                       :name="getSortIcon(col.field)"
                     />
                     <icon
@@ -94,12 +107,18 @@
                   />
                 </div>
               </div>
-              <div class="absolute bottom-0 border-r border-r-surface-200 h-[40px] w-[3px]"></div>
+              <div
+                class="absolute bottom-0 border-r border-r-surface-200 h-[40px] w-[3px]"
+              ></div>
             </div>
           </template>
           <!-- #region Datatable:body -->
           <template #body="{ data }">
-            <ListCell :column="col" :data="data" :filter-value="filterValueFor(col.field)" />
+            <ListCell
+              :column="col"
+              :data="data"
+              :filter-value="filterValueFor(col.field)"
+            />
           </template>
           <!-- #endregion -->
           <template v-if="canEditCell(col)" #editor="{ data }">
@@ -129,7 +148,9 @@
         <!-- #endregion -->
       </DataTable>
 
-      <div class="flex flex-wrap items-center justify-between gap-3 border-t p-2">
+      <div
+        class="flex flex-wrap items-center justify-between gap-3 border-t p-2"
+      >
         <span v-if="hasLocalFilter" class="text-xs text-surface-500">
           Filtro local: aplica sobre la página cargada
         </span>
@@ -142,7 +163,9 @@
         <Paginator
           v-if="store?.pagination"
           :rows="store.pagination.itemsPerPage"
-          :first="(store.pagination.currentPage - 1) * store.pagination.itemsPerPage"
+          :first="
+            (store.pagination.currentPage - 1) * store.pagination.itemsPerPage
+          "
           :total-records="store.pagination.totalCount"
           :rows-per-page-options="[10, 25, 50]"
           template=" FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown "
@@ -156,9 +179,11 @@
             <span class="font-semsibold text-surface-500 mx-[1px]"> al </span>
             <span class="font-semibold text-surface-500">
               {{
-                slotProps.state.page * slotProps.state.rows + slotProps.state.rows <
+                slotProps.state.page * slotProps.state.rows +
+                  slotProps.state.rows <
                 store.pagination.totalCount
-                  ? slotProps.state.page * slotProps.state.rows + slotProps.state.rows
+                  ? slotProps.state.page * slotProps.state.rows +
+                    slotProps.state.rows
                   : store.pagination.totalCount
               }}
             </span>
@@ -176,7 +201,10 @@
     </div>
 
     <div v-else class="card flex items-center justify-center py-12">
-      <ProgressSpinner v-if="loadingStore.loading" style="width: 2rem; height: 2rem" />
+      <ProgressSpinner
+        v-if="loadingStore.loading"
+        style="width: 2rem; height: 2rem"
+      />
       <span v-else class="text-surface-500">Sin entidad</span>
     </div>
 
@@ -190,8 +218,17 @@
         ¿Eliminar este registro? Esta acción no se puede deshacer.
       </span>
       <div class="flex justify-end gap-2">
-        <Button label="Cancelar" severity="secondary" @click="confirmVisible = false" />
-        <Button label="Eliminar" severity="danger" :loading="deleting" @click="confirmDelete" />
+        <Button
+          label="Cancelar"
+          severity="secondary"
+          @click="confirmVisible = false"
+        />
+        <Button
+          label="Eliminar"
+          severity="danger"
+          :loading="deleting"
+          @click="confirmDelete"
+        />
       </div>
     </Dialog>
   </div>
@@ -206,7 +243,10 @@ import type {
 import { useToasts } from "@/composables/useToasts";
 import router from "@/router";
 import type { EntitySchema } from "@/lib/apollo/types";
-import type { CollectionFieldConfig, EntityStore } from "@/stores/entities/types";
+import type {
+  CollectionFieldConfig,
+  EntityStore,
+} from "@/stores/entities/types";
 import {
   cellLabel,
   cellValue,
@@ -220,7 +260,9 @@ import type { Popover } from "primevue";
 // ---------------------------------------------------------------------------
 // Props expuestos al padre.
 // ---------------------------------------------------------------------------
-const props = withDefaults(defineProps<{ entity: string | string[] }>(), { entity: "" });
+const props = withDefaults(defineProps<{ entity: string | string[] }>(), {
+  entity: "",
+});
 // ---------------------------------------------------------------------------
 // Stores y contexto: schema introspectado, registry de stores y toasts.
 // ---------------------------------------------------------------------------
@@ -234,7 +276,9 @@ const entityName = computed(() => {
   const raw = Array.isArray(props.entity) ? props.entity[0] : props.entity;
   return entityNameFromSlug(raw) ?? "";
 });
-const store = computed<EntityStore | null>(() => registry.getEntity(entityName.value) ?? null);
+const store = computed<EntityStore | null>(
+  () => registry.getEntity(entityName.value) ?? null,
+);
 // ---------------------------------------------------------------------------
 // Estado local: carga, filtros en vivo (con debounce), clave de remount de
 // los inputs de filtro, modo selección y diálogo de confirmación.
@@ -263,7 +307,9 @@ let textTimer: ReturnType<typeof setTimeout> | undefined;
 // ---------------------------------------------------------------------------
 const pageTitle = computed(() => entityName.value || "Listado");
 const subtitle = computed(() =>
-  store.value.metadata?.queryCollection ? `${entityName.value} · lista dinámica` : "",
+  store.value.metadata?.queryCollection
+    ? `${entityName.value} · lista dinámica`
+    : "",
 );
 const canEdit = computed(() => Boolean(store.value.metadata?.update));
 
@@ -508,8 +554,12 @@ function matchesClientFilter(item: unknown, entity: EntitySchema): boolean {
       if (!after && !before) return true;
       const timestamp = new Date(String(raw ?? "")).getTime();
       if (Number.isNaN(timestamp)) return false;
-      const start = after ? new Date(after).getTime() : Number.NEGATIVE_INFINITY;
-      const end = before ? new Date(before).getTime() + 86_400_000 : Number.POSITIVE_INFINITY;
+      const start = after
+        ? new Date(after).getTime()
+        : Number.NEGATIVE_INFINITY;
+      const end = before
+        ? new Date(before).getTime() + 86_400_000
+        : Number.POSITIVE_INFINITY;
       return timestamp >= start && timestamp <= end;
     }
     if (kind === "relation") {
@@ -645,7 +695,9 @@ function onColumnReorder(event: DataTableColumnReorderEvent) {
   const reordered: CollectionFieldConfig[] = [];
   let index = 0;
   for (const col of currentStore.columns) {
-    reordered.push(visibleFields.has(col.field) ? (visible[index++] ?? col) : col);
+    reordered.push(
+      visibleFields.has(col.field) ? (visible[index++] ?? col) : col,
+    );
   }
   currentStore.columns = reordered;
 }
@@ -663,7 +715,9 @@ function canEditCell(col: CollectionFieldConfig): boolean {
   return mutation.inputFields.some((field) => field.name === col.field);
 }
 
-function relationOptionsFor(field: string): Array<{ label: string; value: string }> {
+function relationOptionsFor(
+  field: string,
+): Array<{ label: string; value: string }> {
   const entity = store.value.metadata;
   // console.log(entity)
   if (!entity) return [];
@@ -671,7 +725,10 @@ function relationOptionsFor(field: string): Array<{ label: string; value: string
   if (!entry) return [];
 
   const target = registry.getEntity(entry.namedType);
-  return target.fullList.map((option) => ({ label: option.label, value: option.id }));
+  return target.fullList.map((option) => ({
+    label: option.label,
+    value: option.id,
+  }));
 }
 
 async function onCellEditComplete(event: DataTableCellEditCompleteEvent) {
@@ -786,7 +843,8 @@ function preloadRelationLists() {
   for (const col of currentStore.columns) {
     if (col.filterable === false) continue;
     const entry = entity.fields.find((f) => f.name === col.field);
-    if (entry?.isRelation) loads.push(registry.getEntity(entry.namedType).loadFullList());
+    if (entry?.isRelation)
+      loads.push(registry.getEntity(entry.namedType).loadFullList());
   }
   return loads;
 }
@@ -807,7 +865,9 @@ watch(
       return;
     }
     if (!entity.queryCollection) {
-      toasts.error(`"${name}" no expone una colección consultable (queryCollection)`);
+      toasts.error(
+        `"${name}" no expone una colección consultable (queryCollection)`,
+      );
       return;
     }
     resetFilters();

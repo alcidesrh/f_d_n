@@ -59,6 +59,7 @@ declare module 'vue' {
     IconField: typeof import('primevue/iconfield')['default']
     IconLucideMoon: typeof import('~icons/lucide/moon')['default']
     IconLucideSun: typeof import('~icons/lucide/sun')['default']
+    InputIcon: typeof import('primevue/inputicon')['default']
     InputMask: typeof import('primevue/inputmask')['default']
     InputNumber: typeof import('primevue/inputnumber')['default']
     InputText: typeof import('primevue/inputtext')['default']

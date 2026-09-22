@@ -12,14 +12,16 @@
         @update:model-value="update"
         @blur="blur"
       />
-      <icon
-        v-if="hasValue"
-        @click="clearValue"
-        name="x"
-        sw="2"
-        size="20"
-        class="top-[6px] right-[5px] m-auto absolute text-surface-400"
-      />
+      <InputIcon>
+        <icon
+          v-if="hasValue"
+          @click="clearValue"
+          name="x"
+          sw="2"
+          size="20"
+          class=""
+        />
+      </InputIcon>
     </IconField>
   </span>
   <InputText
@@ -45,7 +47,9 @@ defineOptions({ name: "FkInputText" });
 const props = defineProps<{ context: FormKitFrameworkContext }>();
 const { context, update, blur, invalid, disabled } = useFormKitInput(props);
 /** Opt-in para listados: muestra un ✕ dentro del input para limpiar el valor. */
-const clearable = computed(() => props.context.node.props.attrs.clearable === true);
+const clearable = computed(
+  () => props.context.node.props.attrs.clearable === true,
+);
 const hasValue = computed(() => {
   const value = props.context._value;
   return (

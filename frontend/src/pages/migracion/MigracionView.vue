@@ -37,7 +37,11 @@
                 {{ formatearNumero(fila.conteo.legado) }} legado
               </span>
             </div>
-            <ProgressBar :value="porcentajeNuevo(fila.conteo)" :show-value="false" class="h-1.5" />
+            <ProgressBar
+              :value="porcentajeNuevo(fila.conteo)"
+              :show-value="false"
+              class="h-1.5"
+            />
           </div>
         </div>
       </div>
@@ -57,7 +61,9 @@
         <template v-if="store.estado.actual">
           <div class="flex flex-col gap-2 text-sm">
             <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
-              <span class="font-medium">{{ etiquetaTipo(store.estado.actual) }}</span>
+              <span class="font-medium">{{
+                etiquetaTipo(store.estado.actual)
+              }}</span>
               <span class="font-mono text-xs text-muted-color">
                 {{ store.estado.actual.id }}
               </span>
@@ -72,10 +78,16 @@
               </span>
             </div>
             <div
-              v-if="store.estado.actual.total != null && store.estado.actual.total > 0"
+              v-if="
+                store.estado.actual.total != null &&
+                store.estado.actual.total > 0
+              "
               class="flex flex-col gap-1"
             >
-              <ProgressBar :value="porcentajeProgreso(store.estado.actual)" class="h-2" />
+              <ProgressBar
+                :value="porcentajeProgreso(store.estado.actual)"
+                class="h-2"
+              />
               <div class="text-xs text-muted-color">
                 {{ formatearNumero(store.estado.actual.procesados) }} /
                 {{ formatearNumero(store.estado.actual.total) }} procesados
@@ -90,7 +102,9 @@
               class="flex flex-wrap gap-2"
             >
               <Tag
-                v-for="[clave, valor] in contadoresVisibles(store.estado.actual)"
+                v-for="[clave, valor] in contadoresVisibles(
+                  store.estado.actual,
+                )"
                 :key="clave"
                 :value="`${clave}: ${formatearNumero(valor)}`"
                 severity="secondary"
@@ -110,8 +124,8 @@
           </div>
         </template>
         <div v-else class="text-sm text-muted-color">
-          No hay ninguna migración en ejecución. Usá el panel derecho para arrancar una (entidad,
-          estáticos, IAM, configuración o completa).
+          No hay ninguna migración en ejecución. Usá el panel derecho para
+          arrancar una (entidad, estáticos, IAM, configuración o completa).
         </div>
       </div>
 
@@ -126,18 +140,32 @@
             size="small"
           />
         </div>
-        <pre ref="consola" class="consola" :class="{ vacia: !store.log && !store.logJobId }">{{
-          store.log || "Sin actividad todavía. Al lanzar una migración el log aparecerá aquí."
-        }}</pre>
+        <pre
+          ref="consola"
+          class="consola"
+          :class="{ vacia: !store.log && !store.logJobId }"
+          >{{
+            store.log ||
+            "Sin actividad todavía. Al lanzar una migración el log aparecerá aquí."
+          }}</pre>
       </div>
 
       <!-- Historial -->
       <div class="card">
         <div class="text-base font-semibold mb-3">Historial reciente</div>
-        <div v-if="store.estado.recientes.length === 0" class="text-sm text-muted-color">
+        <div
+          v-if="store.estado.recientes.length === 0"
+          class="text-sm text-muted-color"
+        >
           Sin ejecuciones registradas.
         </div>
-        <DataTable v-else :value="store.estado.recientes" size="small" striped-rows class="w-full">
+        <DataTable
+          v-else
+          :value="store.estado.recientes"
+          size="small"
+          striped-rows
+          class="w-full"
+        >
           <Column field="id" header="Job">
             <template #body="{ data }">
               <span class="font-mono text-xs">{{ data.id }}</span>
@@ -186,7 +214,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch,
+} from "vue";
 import { useMigracionStore } from "@/stores/migracion";
 import { useToasts } from "@/composables/useToasts";
 import type {
@@ -231,16 +266,19 @@ function porcentajeProgreso(job: JobMigracion): number {
 }
 
 function contadoresVisibles(job: JobMigracion): Array<[string, number]> {
-  return Object.entries(job.contadores ?? {}).filter(([, v]) => typeof v === "number") as Array<
-    [string, number]
-  >;
+  return Object.entries(job.contadores ?? {}).filter(
+    ([, v]) => typeof v === "number",
+  ) as Array<[string, number]>;
 }
 
 function formatearNumero(n: number): string {
   return new Intl.NumberFormat("es-AR").format(n);
 }
 
-function etiquetaTipo(job: { tipo: TipoJobMigracion; entidad: string | null }): string {
+function etiquetaTipo(job: {
+  tipo: TipoJobMigracion;
+  entidad: string | null;
+}): string {
   const nombre: Record<TipoJobMigracion, string> = {
     reset: "Reset duro",
     truncar: "Truncar tablas",
@@ -250,7 +288,9 @@ function etiquetaTipo(job: { tipo: TipoJobMigracion; entidad: string | null }): 
     config: "Configuración",
     todo: "Migración completa",
   };
-  return job.entidad ? `${nombre[job.tipo]} → ${job.entidad}` : nombre[job.tipo];
+  return job.entidad
+    ? `${nombre[job.tipo]} → ${job.entidad}`
+    : nombre[job.tipo];
 }
 
 function etiquetaEstado(estado: EstadoJobMigracion | string): string {
@@ -286,7 +326,9 @@ async function cancelar(): Promise<void> {
   if (!actual) return;
   try {
     await store.cancelarJob(actual.id);
-    toasts.info("Cancelación solicitada. El proceso la respetará en la próxima iteración.");
+    toasts.info(
+      "Cancelación solicitada. El proceso la respetará en la próxima iteración.",
+    );
   } catch (e) {
     toasts.error(e instanceof Error ? e.message : String(e));
   }

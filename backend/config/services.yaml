@@ -61,17 +61,6 @@ services:
         bind:
             $processor: "@api_platform.doctrine.orm.state.persist_processor"
 
-    # App\Error\ErrorHandler:
-    #     decorates: api_platform.graphql.error_handler
-
-    # App\Serializer\Normalizer\GraphqlExceptionNormalizer:
-    #     tags:
-    #         - { name: "serializer.normalizer", priority: 12 }
-
-    # App\GraphQL\Type\Definition\DateScalar:
-    #     tags:
-    #         - { name: api_platform.graphql.type }
-
     App\GraphQL\Type\Converter\DateTypeConverter:
         decorates: "api_platform.graphql.type_converter"
         arguments:
