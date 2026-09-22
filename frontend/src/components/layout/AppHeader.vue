@@ -103,7 +103,6 @@
 import { computed } from "vue";
 import { useMenusStore } from "@/stores/menus";
 import { useNavigationHistoryStore } from "@/stores/navigationHistory";
-import { NOTIFICATIONS } from "@/data/mock";
 import { useDialog } from "primevue/usedialog";
 import ThemeEditor from "@/components/common/ThemeEditor.vue";
 import type { SidebarStoreState } from "@/stores/entities/types";

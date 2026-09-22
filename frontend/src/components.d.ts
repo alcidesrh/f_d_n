@@ -16,7 +16,6 @@ declare module 'vue' {
     AccordionHeader: typeof import('primevue/accordionheader')['default']
     AccordionPanel: typeof import('primevue/accordionpanel')['default']
     AppHeader: typeof import('./components/layout/AppHeader.vue')['default']
-    AppIcon: typeof import('./components/icons/AppIcon.vue')['default']
     AppLayout: typeof import('./components/layout/AppLayout.vue')['default']
     AutoComplete: typeof import('primevue/autocomplete')['default']
     Avatar: typeof import('primevue/avatar')['default']
@@ -27,12 +26,10 @@ declare module 'vue' {
     Chip: typeof import('primevue/chip')['default']
     Column: typeof import('primevue/column')['default']
     ConfirmDialog: typeof import('primevue/confirmdialog')['default']
-    copy: typeof import('./components/layout/SidebarLeft copy.vue')['default']
     DataTable: typeof import('primevue/datatable')['default']
     DatePicker: typeof import('primevue/datepicker')['default']
     Dialog: typeof import('primevue/dialog')['default']
     Divider: typeof import('primevue/divider')['default']
-    Dock: typeof import('primevue/dock')['default']
     DynamicDialog: typeof import('primevue/dynamicdialog')['default']
     FkAutoComplete: typeof import('./components/formkit/FkAutoComplete.vue')['default']
     'FkAutoComplete.MIO': typeof import('./components/formkit/FkAutoComplete.MIO.vue')['default']
@@ -79,7 +76,6 @@ declare module 'vue' {
     Paginator: typeof import('primevue/paginator')['default']
     Password: typeof import('primevue/password')['default']
     Popover: typeof import('primevue/popover')['default']
-    ProfilerFooter: typeof import('./components/ProfilerFooter.vue')['default']
     ProgressBar: typeof import('primevue/progressbar')['default']
     ProgressSpinner: typeof import('primevue/progressspinner')['default']
     RadioButton: typeof import('primevue/radiobutton')['default']
@@ -108,8 +104,5 @@ declare module 'vue' {
     Toolbar: typeof import('primevue/toolbar')['default']
     TopLoadingBar: typeof import('./components/common/TopLoadingBar.vue')['default']
     TreeSelect: typeof import('primevue/treeselect')['default']
-  }
-  export interface GlobalDirectives {
-    Tooltip: typeof import('primevue/tooltip')['default']
   }
 }

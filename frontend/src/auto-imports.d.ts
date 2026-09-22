@@ -146,9 +146,6 @@ declare global {
   export type { EntityFormMode, UseEntityFormOptions } from './composables/useEntityForm'
   import('./composables/useEntityForm')
   // @ts-ignore
-  export type { UseFormKitSchemaReturn } from './composables/useFormKitSchema'
-  import('./composables/useFormKitSchema')
-  // @ts-ignore
   export type { ToastType, ToastMessage } from './composables/useToasts'
   import('./composables/useToasts')
   // @ts-ignore
@@ -262,7 +259,6 @@ declare module 'vue' {
     readonly useEntityForm: UnwrapRef<typeof import('./composables/useEntityForm')['useEntityForm']>
     readonly useEntityRegistry: UnwrapRef<typeof import('./composables/useEntityRegistry')['useEntityRegistry']>
     readonly useFormBuilderStore: UnwrapRef<typeof import('./stores/formBuilder')['useFormBuilderStore']>
-    readonly useFormKitSchema: UnwrapRef<typeof import('./composables/useFormKitSchema')['useFormKitSchema']>
     readonly useId: UnwrapRef<typeof import('vue')['useId']>
     readonly useLink: UnwrapRef<typeof import('vue-router')['useLink']>
     readonly useLoadingStore: UnwrapRef<typeof import('./stores/loadingStore')['useLoadingStore']>
