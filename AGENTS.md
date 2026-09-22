@@ -98,6 +98,7 @@ Despliegue
 - **CRUD dinámico**: backend expone metadatos → frontend genera forms/listas via introspection GraphQL.
 - **Boot order frontend**: unocss → api-rest → apollo → introspection → middleware → i18n → gsap.
 - **Stores frontend**: en getters **no usar** `state` como parámetro (collision con auto-import). Usar `st`.
+- **Íconos**: el repositorio de íconos es [Tabler](https://tabler.io/icons) y el único punto de uso es `frontend/src/components/common/Icon.vue` (`<icon name="grip-vertical" lg />`, prefijo `tabler:` implícito). Ver `docs/frontend/icons.md`.
 - **Multi-tenancy**: `App\Doctrine\TenantFilter` (Doctrine SQLFilter, deshabilitado por defecto en el EM `default`) aísla `Bus`/`Piloto`/`Recorrido`/`BoletoTarifa` por `empresa_id`. Se habilita por request en `App\EventListener\TenantFilterListener` según `Usuario.empresa` — si el usuario no tiene empresa asignada, navega sin filtro. Ver ADR-015.
 
 ---

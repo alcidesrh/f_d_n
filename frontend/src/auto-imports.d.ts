@@ -107,6 +107,7 @@ declare global {
   const useCollection: typeof import("./features/crud/composables/use-collection").useCollection
   const useCssModule: typeof import('vue').useCssModule
   const useCssVars: typeof import('vue').useCssVars
+  const useEntityConfigStore: typeof import('./stores/entityConfig').useEntityConfigStore
   const useEntityForm: typeof import('./composables/useEntityForm').useEntityForm
   const useEntityMutations: typeof import("./features/crud/composables/use-entity-mutations").useEntityMutations
   const useEntityRegistry: typeof import('./composables/useEntityRegistry').useEntityRegistry
@@ -148,6 +149,9 @@ declare global {
   // @ts-ignore
   export type { ToastType, ToastMessage } from './composables/useToasts'
   import('./composables/useToasts')
+  // @ts-ignore
+  export type { CollectionFieldRow, FormFieldRow, EntityConfigState } from './stores/entityConfig'
+  import('./stores/entityConfig')
   // @ts-ignore
   export type { FormBuilderState } from './stores/formBuilder'
   import('./stores/formBuilder')
@@ -256,6 +260,7 @@ declare module 'vue' {
     readonly useAttrs: UnwrapRef<typeof import('vue')['useAttrs']>
     readonly useCssModule: UnwrapRef<typeof import('vue')['useCssModule']>
     readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
+    readonly useEntityConfigStore: UnwrapRef<typeof import('./stores/entityConfig')['useEntityConfigStore']>
     readonly useEntityForm: UnwrapRef<typeof import('./composables/useEntityForm')['useEntityForm']>
     readonly useEntityRegistry: UnwrapRef<typeof import('./composables/useEntityRegistry')['useEntityRegistry']>
     readonly useFormBuilderStore: UnwrapRef<typeof import('./stores/formBuilder')['useFormBuilderStore']>

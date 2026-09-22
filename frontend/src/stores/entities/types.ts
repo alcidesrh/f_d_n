@@ -55,6 +55,7 @@ export interface EntityStoreState<T = unknown> {
   name: string;
   /** Columnas del listado (de `/entity_configurations` o fallback a todas las propiedades). */
   columns: CollectionFieldConfig[];
+  formFields: [];
   /** Elementos del listado actual. */
   items: T[];
   pagination?: PaginationState;
@@ -79,7 +80,7 @@ export interface EntityStore<T = unknown> extends EntityStoreState<T> {
   /** Slug kebab-case del nombre de la entidad para URLs (`BoletoAsiento` → `boleto-asiento`). */
   slug: string;
 
-  loadColumns(force?: boolean): Promise<CollectionFieldConfig[]>;
+  init(force?: boolean): void;
   fetchItems(): Promise<T[]>;
   fetchItem(id: string | number): Promise<T>;
   create(data: Record<string, unknown>): Promise<T>;

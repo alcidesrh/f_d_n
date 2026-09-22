@@ -96,6 +96,18 @@ export const router = createRouter({
       },
     },
     {
+      path: "/configuracion/entidades",
+      name: "entity-config",
+      component: () => import("@/pages/config/EntityConfigEditor.vue"),
+      meta: {
+        layout: "default",
+        title: "Configuración de entidades",
+        label: "Config. entidades",
+        icon: "adjustments",
+        requiresAuth: true,
+      },
+    },
+    {
       path: "/lista/:entity",
       name: "entity-list",
       props: true,

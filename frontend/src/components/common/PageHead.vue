@@ -10,7 +10,10 @@
 <script setup lang="ts">
 import router from "@/router";
 
-const props = withDefaults(defineProps<{ title: string; subtitle?: string }>(), { subtitle: "" });
+const props = withDefaults(
+  defineProps<{ title?: string; subtitle?: string }>(),
+  { subtitle: "" },
+);
 
 const computedTitle = computed(() => {
   const route = router.currentRoute.value;

@@ -17,7 +17,9 @@ export const stores = new Map<string, EntityStore<unknown>>();
 export function getEntity<T = unknown>(entityName?: string): EntityStore<T> {
   let entity: EntitySchema | null = null;
   if (
-    !(entity = apiGraphql.getEntityMetadata(entityName || router.currentRoute.value.params?.entity))
+    !(entity = apiGraphql.getEntityMetadata(
+      entityName || router.currentRoute.value.params?.entity,
+    ))
   ) {
     triggerToast({
       severity: "error",
@@ -33,7 +35,7 @@ export function getEntity<T = unknown>(entityName?: string): EntityStore<T> {
 
   const store = defineEntityStore(entity.name)() as unknown as EntityStore<T>;
   stores.set(entity.name, store as unknown as EntityStore<unknown>);
-  void store.loadColumns();
+  void store.init();
   return store;
 }
 

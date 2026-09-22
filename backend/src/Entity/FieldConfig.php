@@ -109,7 +109,7 @@ class FieldConfig
         return $this->kind;
     }
 
-    public function setKind(string $kind): static
+    public function setKind(?string $kind): static
     {
         $this->kind = $kind;
 

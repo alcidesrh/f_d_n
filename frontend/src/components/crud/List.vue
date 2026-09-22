@@ -823,7 +823,7 @@ async function resetView() {
   selectionMode.value = false;
   selection.value = [];
   try {
-    await currentStore.loadColumns(true);
+    await currentStore.init(true);
     rebuildFilterNodes();
     await currentStore.fetchItems();
   } finally {
@@ -874,8 +874,7 @@ watch(
     const currentStore = registry.getEntity(name);
     try {
       // El store persiste su estado (incluido el orden/visibilidad de columnas);
-      // `loadColumns` devuelve las ya cargadas si no se fuerza (ver factory.ts).
-      await currentStore.loadColumns();
+      //
       hydrateFilters(entity);
       rebuildFilterNodes();
       await currentStore.fetchItems();
