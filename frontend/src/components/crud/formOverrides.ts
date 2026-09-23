@@ -37,7 +37,7 @@ export type EntityFormOverride = () => Promise<{ default: Component } | Componen
  * el mismo que recibe `FkEntityForm` como prop `entity`.
  */
 export const entityFormOverrides: Record<string, EntityFormOverride> = {
-  Menu: () => import("@/components/menu/MenuForm.vue"),
+  // Menu: () => import("@/components/menu/MenuForm.vue"),
 };
 
 /** Devuelve el loader del componente dedicado de una entidad, o `undefined` si usa el genérico. */

@@ -22,34 +22,18 @@
           </template>
         </SplitButton>
       </div>
-      <FormKit
-        type="form"
-        v-model="formData"
-        :submit-label="submitLabel"
-        :disabled="submitting"
-        @submit="onSubmit"
-        :actions="false"
-      >
+      <FormKit type="form" v-model="formData" :submit-label="submitLabel" :disabled="submitting" @submit="onSubmit" :actions="false">
         <Fluid>
           <FormKitSchema :schema="schema" />
         </Fluid>
       </FormKit>
 
       <div class="mt-4 flex justify-end">
-        <Button
-          label="Restablecer"
-          severity="secondary"
-          variant="text"
-          size="small"
-          :disabled="submitting"
-          @click="onReset"
-        />
+        <Button label="Restablecer" severity="secondary" variant="text" size="small" :disabled="submitting" @click="onReset" />
       </div>
     </template>
 
-    <Message v-else severity="warn" :closable="false">
-      Sin campos serializables para {{ entity }}
-    </Message>
+    <Message v-else severity="warn" :closable="false"> Sin campos serializables para {{ entity }} </Message>
   </div>
 </template>
 
@@ -83,12 +67,11 @@ const emit = defineEmits<{
 
 const formData = defineModel<Record<string, unknown>>("formData", { default: () => ({}) });
 
-const { schema, loading, submitting, error, submit, reset, setMode, setInitialData, setLabels } =
-  useEntityForm(() => props.entity, {
-    mode: props.mode,
-    initialData: props.initialData,
-    labels: props.labels,
-  });
+const { schema, loading, submitting, error, submit, reset, setMode, setInitialData, setLabels } = useEntityForm(() => props.entity, {
+  mode: props.mode,
+  initialData: props.initialData,
+  labels: props.labels,
+});
 
 watch(() => props.mode, setMode);
 watch(() => props.initialData, setInitialData);
@@ -115,7 +98,7 @@ const items = [
     label: "Cancelar",
     icon: "cancel",
     command: () => {
-      triggerToast({
+      msg({
         severity: "success",
         summary: "Updated",
         detail: "Data Updated",
@@ -127,7 +110,7 @@ const items = [
     label: "Eliminar",
     icon: "trash",
     command: () => {
-      triggerToast({ severity: "warn", summary: "Delete", detail: "Data Deleted", life: 3000 });
+      msg({ severity: "warn", summary: "Delete", detail: "Data Deleted", life: 3000 });
     },
   },
   {

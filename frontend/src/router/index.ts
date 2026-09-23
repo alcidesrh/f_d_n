@@ -66,36 +66,6 @@ export const router = createRouter({
       },
     },
     {
-      path: "/menu",
-      name: "menu-list",
-      component: () => import("@/pages/menu/MenuList.vue"),
-      meta: {
-        layout: "default",
-        title: "Gestión de menús",
-        requiresAuth: true,
-      },
-    },
-    {
-      path: "/menu/crear",
-      name: "menu-create",
-      component: () => import("@/pages/menu/MenuForm.vue"),
-      meta: {
-        layout: "default",
-        title: "Crear menú",
-        requiresAuth: true,
-      },
-    },
-    {
-      path: "/menu/:id/editar",
-      name: "menu-edit",
-      component: () => import("@/pages/menu/MenuForm.vue"),
-      meta: {
-        layout: "default",
-        title: "Editar menú",
-        requiresAuth: true,
-      },
-    },
-    {
       path: "/configuracion/entidades",
       name: "entity-config",
       component: () => import("@/pages/config/EntityConfigEditor.vue"),

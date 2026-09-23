@@ -15,17 +15,10 @@
 
     <div class="header-crumbs">
       <nav class="crumbs" aria-label="Breadcrumb">
-        <template
-          v-for="(crumb, i) in navigationHistory.entries"
-          :key="crumb.path + i"
-        >
+        <template v-for="(crumb, i) in navigationHistory.entries" :key="crumb.path + i">
           <icon v-if="i > 0" name="chevron-right" size=".8rem"></icon>
           <router-link
-            :to="
-              crumb.name
-                ? { name: crumb.name, params: crumb.params }
-                : crumb.path
-            "
+            :to="crumb.name ? { name: crumb.name, params: crumb.params } : crumb.path"
             class="crumb-link"
             :class="{
               'crumb-current': i === navigationHistory.entries.length - 1,
@@ -38,41 +31,17 @@
     </div>
 
     <div class="header-actions">
-      <template v-if="topbarMenuItems.length > 0">
-        <router-link
-          v-for="item in topbarMenuItems"
-          :key="item.id"
-          :to="item.ruta ?? '#'"
-          class="icon-btn"
-          :title="item.label"
-        >
-          <icon :name="item.icon ?? 'circle'" />
-        </router-link>
-      </template>
       <slot name="menu-content"></slot>
 
-      <button
-        class="icon-btn cursor-pointer"
-        title="Personalizar apariencia"
-        @click.stop="showThemeEditor()"
-      >
+      <button class="icon-btn cursor-pointer" title="Personalizar apariencia" @click.stop="showThemeEditor()">
         <icon name="palette" />
       </button>
 
-      <button
-        class="icon-btn"
-        title="Pantalla completa"
-        @click="toggleFullscreen"
-        :class="{ 'active-state': openPopover === 'fullscreen' }"
-      >
+      <button class="icon-btn" title="Pantalla completa" @click="toggleFullscreen" :class="{ 'active-state': openPopover === 'fullscreen' }">
         <icon name="arrows-maximize" />
       </button>
       <div style="position: relative">
-        <button
-          class="icon-btn"
-          title="Notificaciones"
-          @click.stop="toggle('notif')"
-        >
+        <button class="icon-btn" title="Notificaciones" @click.stop="toggle('notif')">
           <icon name="bell" />
         </button>
       </div>
@@ -89,11 +58,7 @@
     </div>
     <div class="flex btn-siderbar-header" :class="[sidebarStoreR.mode]">
       <Divider layout="vertical" class="mx-[5px]!" />
-      <button
-        class="icon-btn right"
-        title="Mostrar/ocultar menú"
-        @click="sidebarStoreR.setMode()"
-      >
+      <button class="icon-btn right" title="Mostrar/ocultar menú" @click="sidebarStoreR.setMode()">
         <icon name="menu-2" />
       </button>
     </div>
@@ -101,7 +66,6 @@
 </template>
 <script setup lang="ts">
 import { computed } from "vue";
-import { useMenusStore } from "@/stores/menus";
 import { useNavigationHistoryStore } from "@/stores/navigationHistory";
 import { useDialog } from "primevue/usedialog";
 import ThemeEditor from "@/components/common/ThemeEditor.vue";
@@ -113,18 +77,12 @@ const props = defineProps<{
 
 const dialog = useDialog();
 
-const showThemeEditor = () =>
-  dialog.open(ThemeEditor, { props: { header: "Edit Profile" } });
+const showThemeEditor = () => dialog.open(ThemeEditor, { props: { header: "Edit Profile" } });
 
 const sidebarStore = defineSidebarStore("left")();
-const sidebarStoreR = props.sidebarStoreR
-  ? props.sidebarStoreR
-  : defineSidebarStore("right")();
+const sidebarStoreR = props.sidebarStoreR ? props.sidebarStoreR : defineSidebarStore("right")();
 type PopoverName = "notif" | "customizer" | "user" | "fullscreen" | null;
 const openPopover = ref<PopoverName>(null);
-
-const menusStore = useMenusStore();
-const topbarMenuItems = computed(() => menusStore.topbarRightItems);
 const navigationHistory = useNavigationHistoryStore();
 
 function formatClock(date: Date) {

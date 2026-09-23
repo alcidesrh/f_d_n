@@ -79,7 +79,7 @@ export const useSchemaRepositoryStore = defineStore("schemaRepository", {
           .charAt(0)
           .toUpperCase() + name.slice(1);
       if (!this.entities[name]) {
-        triggerToast({
+        msg({
           severity: "error",
           summary: "Error",
           detail: `No existe la entidad: ${name}`,
@@ -116,16 +116,10 @@ export const useSchemaRepositoryStore = defineStore("schemaRepository", {
       // (+ id, necesario para row-key y acciones). Si aún no hay columnas
       // cargadas se cae al comportamiento por defecto (todas las propiedades).
       const visible = store.columns.filter((col) => col.visible !== false).map((col) => col.field);
-      const fields =
-        visible.length > 0 ? (visible.includes("id") ? visible : ["id", ...visible]) : undefined;
+      const fields = visible.length > 0 ? (visible.includes("id") ? visible : ["id", ...visible]) : undefined;
       // Solo se envían condiciones de orden sobre campos aceptados por el input
       // de orden del backend (descarta órdenes inválidos persistidos/heredados).
-      const order =
-        entity.orderInput && store.order.length > 0
-          ? store.order.filter((cond) =>
-              Object.keys(cond).every((field) => entity.orderFields.includes(field)),
-            )
-          : [];
+      const order = entity.orderInput && store.order.length > 0 ? store.order.filter((cond) => Object.keys(cond).every((field) => entity.orderFields.includes(field))) : [];
       // Solo las entidades paginadas llevan estado de paginación en el store
       // (ver createEntityStore: solo collectionKind 'page-connection'). Las
       // entidades sin paginado (list/cursor-connection/single) se cargan
@@ -181,9 +175,7 @@ export const useSchemaRepositoryStore = defineStore("schemaRepository", {
       store.item = updated;
       const id = (updated as { id?: unknown } | null)?.id;
       if (id !== undefined) {
-        store.items = store.items.map((item) =>
-          (item as { id?: unknown } | null)?.id === id ? updated : item,
-        );
+        store.items = store.items.map((item) => ((item as { id?: unknown } | null)?.id === id ? updated : item));
       }
       return updated;
     },
@@ -204,10 +196,7 @@ export const useSchemaRepositoryStore = defineStore("schemaRepository", {
      * options de selects de relaciones. Sirve la caché del store salvo con
      * `force: true`; el store la persiste en LocalStorage (pinia-plugin).
      */
-    async fullList<T>(
-      store: EntityStore<T>,
-      opts: { force?: boolean } = {},
-    ): Promise<AgnosticOption[]> {
+    async fullList<T>(store: EntityStore<T>, opts: { force?: boolean } = {}): Promise<AgnosticOption[]> {
       if (!opts.force && store.fullList.length > 0) return store.fullList;
       const list = await apollo.agnosticList(store.name);
       store.fullList = list;

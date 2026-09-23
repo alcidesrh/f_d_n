@@ -16,12 +16,8 @@ export const stores = new Map<string, EntityStore<unknown>>();
 
 export function getEntity<T = unknown>(entityName?: string): EntityStore<T> {
   let entity: EntitySchema | null = null;
-  if (
-    !(entity = apiGraphql.getEntityMetadata(
-      entityName || router.currentRoute.value.params?.entity,
-    ))
-  ) {
-    triggerToast({
+  if (!(entity = apiGraphql.getEntityMetadata(entityName || router.currentRoute.value.params?.entity))) {
+    msg({
       severity: "error",
       summary: "Error",
       detail: `No existe la entidad: ${entityName}`,

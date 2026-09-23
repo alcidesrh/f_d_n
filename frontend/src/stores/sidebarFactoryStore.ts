@@ -104,6 +104,73 @@ export function defineSidebarStore(side: "left" | "right", name?: string): Sideb
             gsap.fromTo(e.currentTarget.querySelector(".menu-text"), { opacity: 1, width: "0px", overflow: "hidden" }, { width: "100%", duration: 0.4 });
           }
         },
+        handleMouseLeave2(e: MouseEvent) {
+          const link = e.currentTarget as HTMLElement;
+          const text = link.querySelector(".menu-text");
+          if (!link.dataset.expanded) return;
+          const hidden = link.offsetWidth - this.mini;
+          const reset = () => {
+            delete link.dataset.expanded;
+            gsap.set(link, { clearProps: "width,x,clipPath,boxShadow,borderRadius,flexDirection" });
+            gsap.set(link.parentElement, { clearProps: "zIndex" });
+            if (text) gsap.set(text, { clearProps: "marginLeft,marginRight" });
+          };
+
+          gsap.killTweensOf([link, text]);
+          // Si el modo cambió mientras estaba expandido, sidebarUpdate ya gestiona la opacidad del texto.
+          if (this.mode !== "mini") return reset();
+          gsap.to(text, { opacity: 0, duration: 0.15, ease: "power1.out" });
+          gsap.to(link, {
+            clipPath: this.side == "left" ? `inset(0px ${hidden}px 0px 0px)` : `inset(0px 0px 0px ${hidden}px)`,
+            boxShadow: "0px 0px 0px rgba(0,0,0,0)",
+            duration: 0.2,
+            ease: "power1.out",
+            onComplete: reset,
+          });
+        },
+        /**
+         * En modo mini expande el item bajo el cursor para mostrar icono + texto.
+         * El ancho final se fija una sola vez (un único layout) y la revelación se
+         * anima con `clip-path` + `opacity`, que no provocan re-layout por frame.
+         * En la derecha el item crece hacia la izquierda (`x` negativo + `row-reverse`)
+         * para que el icono no se mueva de su sitio.
+         */
+        handleMouseEnter2(e: MouseEvent) {
+          if (this.mode !== "mini") return;
+          const link = e.currentTarget as HTMLElement;
+          const text = link.querySelector<HTMLElement>(".menu-text");
+          const shadow = getComputedStyle(document.documentElement).getPropertyValue("--p-surface-300");
+          const left = this.side == "left";
+
+          gsap.killTweensOf([link, text]);
+          // Re-entrada durante el colapso: se conserva el ancho y el clip-path actual.
+          const reentry = !!link.dataset.expanded;
+          const expanded = reentry ? link.offsetWidth : Math.max(200, link.scrollWidth);
+          const hidden = expanded - this.mini;
+          link.dataset.expanded = "1";
+
+          gsap.set(link.parentElement, { zIndex: 10 });
+          if (text) gsap.set(text, left ? {} : { marginLeft: 0, marginRight: 15 });
+          gsap.set(link, {
+            width: expanded,
+            x: left ? 0 : -hidden,
+            flexDirection: left ? "row" : "row-reverse",
+            borderRadius: left ? "0 8px 8px 0" : "8px 0 0 8px",
+          });
+          if (!reentry) {
+            gsap.set(link, {
+              clipPath: left ? `inset(0px ${hidden}px 0px 0px)` : `inset(0px 0px 0px ${hidden}px)`,
+            });
+          }
+          gsap.to(link, {
+            // Márgenes negativos del lado expandido para que la sombra no quede recortada.
+            clipPath: left ? "inset(-6px -6px -6px 0px)" : "inset(-6px 0px -6px -6px)",
+            boxShadow: `${left ? 1 : -1}px 0px 3px ${shadow}`,
+            duration: 0.25,
+            ease: "power2.out",
+          });
+          gsap.to(text, { opacity: 1, duration: 0.2, delay: 0.05, ease: "power1.out" });
+        },
         sidebarUpdate() {
           const targets = {
             sidebar: `.sidebar.${this.side}`,

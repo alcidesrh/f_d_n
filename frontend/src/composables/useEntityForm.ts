@@ -68,8 +68,8 @@ export function useEntityForm(entityName: MaybeRefOrGetter<string>, options: Use
       if (!ent || !mut || !target) {
         throw new Error(`"${name.value}" no expone ${mode.value}`);
       }
+      let selected = [];
       if (target.formFields.length) {
-        const selected = [];
         target.formFields.forEach((v) => {
           if (v.visible) {
             const temp = mut.inputFields.find((v2) => v2.name == v.field) as SchemaInputField;
@@ -80,7 +80,7 @@ export function useEntityForm(entityName: MaybeRefOrGetter<string>, options: Use
           }
         });
       } else {
-        const selected = mut.inputFields.filter((field) => field.name !== "clientMutationId" && !(field.name === "id" && mode.value === "create"));
+        selected = mut.inputFields.filter((field) => field.name !== "clientMutationId" && !(field.name === "id" && mode.value === "create"));
       }
 
       // Precarga en paralelo las listas de relaciones; falla blando si una
@@ -123,6 +123,10 @@ export function useEntityForm(entityName: MaybeRefOrGetter<string>, options: Use
     } catch (cause) {
       error.value = cause instanceof Error ? cause.message : String(cause);
       schema.value = [];
+      msg({
+        severity: "error",
+        detail: error.value,
+      });
     } finally {
       loading.value = false;
     }

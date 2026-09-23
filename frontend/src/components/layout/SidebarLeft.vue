@@ -1,98 +1,37 @@
 <template>
   <Sidebar side="left">
     <template #menu-content>
-      <template v-if="dynamicMenus.length > 0">
-        <template v-for="group in groupedMenus" :key="group.label">
-          <nav class="">
-            <div class="sidebar-header">
-              <span class="menu-icon">⚡</span>
-              <span class="menu-text" style="font-weight: bold; font-size: 1.1rem">Dashboard</span>
-            </div>
-            <ul class="sidebar-menu">
-              <li class="menu-item">
-                <a href="#" class="menu-link">
-                  <span class="menu-icon">🏠</span>
-                  <span class="menu-text">Inicio</span>
-                </a>
-              </li>
-              <li class="menu-item">
-                <a href="#" class="menu-link">
-                  <span class="menu-icon">📊</span>
-                  <span class="menu-text">Analíticas</span>
-                </a>
-              </li>
-              <li class="menu-item">
-                <a href="#" class="menu-link">
-                  <span class="menu-icon">⚙️</span>
-                  <span class="menu-text">Configuración</span>
-                </a>
-              </li>
-            </ul>
-          </nav>
-        </template>
-      </template>
-      <template v-else>
-        <ul class="sidebar-menu">
-          <li class="menu-item">
-            <a
-              href="#"
-              class="menu-link"
-              @mouseenter="sidebarStore.handleMouseEnter"
-              @mouseleave="sidebarStore.handleMouseLeave"
-            >
-              <span>
-                <icon name="settings" size="1.5rem" />
-              </span>
-              <span class="menu-text">Inicio</span>
-            </a>
-          </li>
-          <li class="menu-item">
-            <a
-              href="#"
-              class="menu-link"
-              @mouseenter="sidebarStore.handleMouseEnter"
-              @mouseleave="sidebarStore.handleMouseLeave"
-            >
-              <span>
-                <icon name="settings" size="1.5rem" />
-              </span>
-              <span class="menu-text">Inicio</span>
-            </a>
-          </li>
-          <li class="menu-item">
-            <a
-              href="#"
-              class="menu-link"
-              @mouseenter="sidebarStore.handleMouseEnter"
-              @mouseleave="sidebarStore.handleMouseLeave"
-            >
-              <!-- <span> -->
+      <ul class="sidebar-menu">
+        <li class="menu-item">
+          <a href="#" class="menu-link" @mouseenter="sidebarStore.handleMouseEnter" @mouseleave="sidebarStore.handleMouseLeave">
+            <span>
               <icon name="settings" size="1.5rem" />
-              <!-- </span> -->
-              <span class="menu-text">Configuración</span>
-            </a>
-          </li>
-        </ul>
-      </template>
+            </span>
+            <span class="menu-text">Inicio</span>
+          </a>
+        </li>
+        <li class="menu-item">
+          <a href="#" class="menu-link" @mouseenter="sidebarStore.handleMouseEnter" @mouseleave="sidebarStore.handleMouseLeave">
+            <span>
+              <icon name="settings" size="1.5rem" />
+            </span>
+            <span class="menu-text">Inicio</span>
+          </a>
+        </li>
+        <li class="menu-item">
+          <a href="#" class="menu-link" @mouseenter="sidebarStore.handleMouseEnter" @mouseleave="sidebarStore.handleMouseLeave">
+            <!-- <span> -->
+            <icon name="settings" size="1.5rem" />
+            <!-- </span> -->
+            <span class="menu-text">Configuración</span>
+          </a>
+        </li>
+      </ul>
     </template>
   </Sidebar>
 </template>
 <script setup lang="ts">
 const sidebarStore = defineSidebarStore("left")();
-
-const menusStore = useMenusStore();
-const dynamicMenus = computed(() => menusStore.sidebarLeftItems);
-
-interface MenuGroup {
-  label: string;
-  items: MenuItem[];
-}
-
-const groupedMenus = computed<MenuGroup[]>(() => {
-  const items = dynamicMenus.value;
-  if (items.length === 0) return [];
-  return [{ label: "Navegación", items }];
-});
 
 // // Eventos Hover para el desbordamiento fluido en estado "mini"
 // const handleMouseEnter = (e) => {

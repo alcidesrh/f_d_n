@@ -11,11 +11,6 @@
   </transition>
   <ConfirmDialog></ConfirmDialog>
   <DynamicDialog />
-  <Toast>
-    <template #closeicon>
-      <icon name="x" />
-    </template>
-  </Toast>
   <Toasts />
   <div class="backdrop" :class="{ show: showBackdrop }"></div>
 </template>

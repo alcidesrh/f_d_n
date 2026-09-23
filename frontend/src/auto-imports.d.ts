@@ -39,7 +39,7 @@ declare global {
   const h: typeof import('vue').h
   const handleMouseEnter: typeof import("./utils/autoimport").handleMouseEnter
   const handleMouseLeave: typeof import("./utils/autoimport").handleMouseLeave
-  const initGlobalStores: typeof import('./stores/global').initGlobalStores
+  const initGlobalStores: typeof import("./stores/global").initGlobalStores
   const inject: typeof import('vue').inject
   const isProxy: typeof import('vue').isProxy
   const isReactive: typeof import('vue').isReactive
@@ -53,7 +53,8 @@ declare global {
   const mapStores: typeof import('pinia').mapStores
   const mapWritableState: typeof import('pinia').mapWritableState
   const markRaw: typeof import('vue').markRaw
-  const menus: typeof import('./stores/global').menus
+  const menus: typeof import("./stores/global").menus
+  const msg: typeof import('./utils/autoimport').msg
   const nextTick: typeof import('vue').nextTick
   const onActivated: typeof import('vue').onActivated
   const onBeforeMount: typeof import('vue').onBeforeMount
@@ -80,7 +81,7 @@ declare global {
   const resolveComponent: typeof import('vue').resolveComponent
   const restApi: typeof import("./composables/useApiRest").restApi
   const router: typeof import('@/router').router
-  const schemaRepository: typeof import('@/init').schemaRepository
+  const schemaRepository: typeof import("@/init").schemaRepository
   const session: typeof import('@/init').session
   const setActivePinia: typeof import('pinia').setActivePinia
   const setApi: typeof import("./composables/useApiRest").setApi
@@ -99,7 +100,6 @@ declare global {
   const toVueRouteDTO: typeof import('./utils/vueRoutesSync').toVueRouteDTO
   const toast: typeof import("./utils/autoimport").toast
   const triggerRef: typeof import('vue').triggerRef
-  const triggerToast: typeof import('./utils/autoimport').triggerToast
   const ui: typeof import('@/init').ui
   const unref: typeof import('vue').unref
   const useApi: typeof import("./composables/useApiRest").useApi
@@ -112,10 +112,10 @@ declare global {
   const useEntityMutations: typeof import("./features/crud/composables/use-entity-mutations").useEntityMutations
   const useEntityRegistry: typeof import('./composables/useEntityRegistry').useEntityRegistry
   const useFormBuilderStore: typeof import('./stores/formBuilder').useFormBuilderStore
-  const useFormKitSchema: typeof import('./composables/useFormKitSchema').useFormKitSchema
+  const useFormKitSchema: typeof import("./composables/useFormKitSchema").useFormKitSchema
   const useId: typeof import('vue').useId
   const useItem: typeof import("./features/crud/composables/use-item").useItem
-  const useLayout: typeof import('./composables/useLayout').useLayout
+  const useLayout: typeof import("./composables/useLayout").useLayout
   const useLink: typeof import('vue-router').useLink
   const useLoadingStore: typeof import('./stores/loadingStore').useLoadingStore
   const useMenusStore: typeof import('./stores/menus').useMenusStore
@@ -123,7 +123,7 @@ declare global {
   const useModel: typeof import('vue').useModel
   const useNavigationHistoryStore: typeof import('./stores/navigationHistory').useNavigationHistoryStore
   const useOrm: typeof import("./features/crud/composables/use-orm").useOrm
-  const useProfilerStore: typeof import('./stores/profilerStore').useProfilerStore
+  const useProfilerStore: typeof import("./stores/profilerStore").useProfilerStore
   const useRagf: typeof import("./stores/ragf").useRagf
   const useRoute: typeof import('vue-router').useRoute
   const useRouter: typeof import('vue-router').useRouter
@@ -155,9 +155,6 @@ declare global {
   // @ts-ignore
   export type { FormBuilderState } from './stores/formBuilder'
   import('./stores/formBuilder')
-  // @ts-ignore
-  export type { MenuItem, MenuArea, MenusState } from './stores/menus'
-  import('./stores/menus')
   // @ts-ignore
   export type { BreadcrumbEntry, NavigationHistoryState } from './stores/navigationHistory'
   import('./stores/navigationHistory')
@@ -214,6 +211,7 @@ declare module 'vue' {
     readonly mapStores: UnwrapRef<typeof import('pinia')['mapStores']>
     readonly mapWritableState: UnwrapRef<typeof import('pinia')['mapWritableState']>
     readonly markRaw: UnwrapRef<typeof import('vue')['markRaw']>
+    readonly msg: UnwrapRef<typeof import('./utils/autoimport')['msg']>
     readonly nextTick: UnwrapRef<typeof import('vue')['nextTick']>
     readonly onActivated: UnwrapRef<typeof import('vue')['onActivated']>
     readonly onBeforeMount: UnwrapRef<typeof import('vue')['onBeforeMount']>
@@ -254,7 +252,6 @@ declare module 'vue' {
     readonly toValue: UnwrapRef<typeof import('vue')['toValue']>
     readonly toVueRouteDTO: UnwrapRef<typeof import('./utils/vueRoutesSync')['toVueRouteDTO']>
     readonly triggerRef: UnwrapRef<typeof import('vue')['triggerRef']>
-    readonly triggerToast: UnwrapRef<typeof import('./utils/autoimport')['triggerToast']>
     readonly ui: UnwrapRef<typeof import('@/init')['ui']>
     readonly unref: UnwrapRef<typeof import('vue')['unref']>
     readonly useAttrs: UnwrapRef<typeof import('vue')['useAttrs']>
@@ -267,7 +264,6 @@ declare module 'vue' {
     readonly useId: UnwrapRef<typeof import('vue')['useId']>
     readonly useLink: UnwrapRef<typeof import('vue-router')['useLink']>
     readonly useLoadingStore: UnwrapRef<typeof import('./stores/loadingStore')['useLoadingStore']>
-    readonly useMenusStore: UnwrapRef<typeof import('./stores/menus')['useMenusStore']>
     readonly useMigracionStore: UnwrapRef<typeof import('./stores/migracion')['useMigracionStore']>
     readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
     readonly useNavigationHistoryStore: UnwrapRef<typeof import('./stores/navigationHistory')['useNavigationHistoryStore']>

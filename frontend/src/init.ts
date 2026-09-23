@@ -3,7 +3,6 @@ import { pinia } from "./stores/pinia";
 import { useUiStore } from "@/stores/ui";
 export { defineSidebarStore } from "@/stores/sidebarFactoryStore";
 import { useSchemaRepositoryStore } from "@/stores/schemaRepository";
-import { useMenusStore } from "@/stores/menus";
 import { useUserSessionStore } from "@/stores/session";
 import { syncVueRoutes } from "@/utils/vueRoutesSync";
 import { createApi, setApi } from "@/lib/useApiRest";
@@ -13,7 +12,6 @@ import { createApiPlatformClient } from "@/lib/apollo/client";
 
 export let ui: ReturnType<typeof useUiStore>;
 export let apiGraphql: ReturnType<typeof useSchemaRepositoryStore>;
-export let menus: ReturnType<typeof useMenusStore>;
 export let session: ReturnType<typeof useUserSessionStore>;
 export let apiRest: ReturnType<typeof createApi>;
 export let loadingStore: ReturnType<typeof useLoadingStore>;
@@ -51,14 +49,6 @@ export async function init() {
     await apiGraphql.init();
   } catch (error) {
     console.error("[apiGraphql] falló la carga del schema:", error);
-  }
-
-  // Menús por área de layout: se carga en background (no bloquea el bootstrap).
-  menus = useMenusStore();
-  if (!menus.fetched) {
-    menus.fetchMenusByArea().catch((e) => {
-      console.error("[menus] falló la carga de menús:", e);
-    });
   }
 
   // Sincroniza las rutas del router con la entidad VueRoute del backend.

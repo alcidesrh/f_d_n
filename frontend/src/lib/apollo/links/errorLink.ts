@@ -42,10 +42,7 @@ export function createErrorLink() {
           } else {
             temp = {
               caption: "GraphQL error from /home/alcides/frontend/src/graphql/apollo-client.ts",
-              message:
-                message +
-                " " +
-                (extensions && extensions.debugMessage ? extensions.debugMessage : ""),
+              message: message + " " + (extensions && extensions.debugMessage ? extensions.debugMessage : ""),
             };
           }
         }
@@ -62,7 +59,7 @@ export function createErrorLink() {
       };
     }
     if (temp) {
-      triggerToast({
+      msg({
         severity: "error",
         summary: temp.caption,
         detail: temp.message,
