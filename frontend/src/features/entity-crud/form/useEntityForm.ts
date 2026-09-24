@@ -1,7 +1,7 @@
 /**
  * `useEntityForm` — formulario dinámico on demand a partir del nombre de una
  * entidad (ej: `'Boleto'`). Lee los metadatos introspectados, precarga las
- * listas de relaciones en paralelo (`registry.getEntity(t).loadFullList()`),
+ * listas de relaciones en paralelo (`getEntity(t).loadFullList()`),
  * serializa el FormKit Schema y expone submit/reset.
  *
  * Los campos del formulario (y los que pide la query al editar) son los
@@ -16,13 +16,13 @@
 import { computed, ref, toRef, watch } from "vue";
 import type { MaybeRefOrGetter } from "vue";
 import type { FormKitSchemaNode } from "@formkit/core";
-import { useEntityRegistry } from "@/core/entities/registry";
+import { getEntity } from "@/core/entities/registry";
 
 import { FormSchemaSerializer, type FormFieldSource } from "./formSchema";
 import type { AgnosticOption } from "@/core/graphql/types";
 import { itemIri } from "@/core/graphql/documents";
 import { notify } from "@/core/notify";
-import { useSchemaRepositoryStore } from "@/core/entities/schema";
+import { useSchemaStore } from "@/core/entities/schema";
 import { formFieldEntries, pickInputFields } from "./formFields";
 import type { EntityStore } from "@/core/entities/types";
 import { createIconRelationResolver, isIconRelation } from "./iconRelation";
@@ -41,7 +41,6 @@ export interface UseEntityFormOptions {
 }
 
 export function useEntityForm(entityName: MaybeRefOrGetter<string>, options: UseEntityFormOptions = {}) {
-  const registry = useEntityRegistry();
 
   const name = toRef(entityName);
   const mode = ref<EntityFormMode>(options.mode ?? "create");
@@ -67,10 +66,10 @@ export function useEntityForm(entityName: MaybeRefOrGetter<string>, options: Use
   // al guardar se traduce a IRI buscando/creando el registro `Icon`.
   const iconRelations = createIconRelationResolver(apiIconGateway());
 
-  const entity = computed(() => useSchemaRepositoryStore().getEntityMetadata(name.value));
+  const entity = computed(() => useSchemaStore().find(name.value));
   const store = computed<EntityStore<Record<string, unknown>> | null>(() => {
     try {
-      return registry.getEntity<Record<string, unknown>>(name.value);
+      return getEntity<Record<string, unknown>>(name.value);
     } catch {
       return null;
     }
@@ -116,7 +115,7 @@ export function useEntityForm(entityName: MaybeRefOrGetter<string>, options: Use
       const lists = await Promise.all(
         targets.map(async (targetName) => {
           try {
-            return [targetName, await registry.getEntity(targetName).loadFullList()] as const;
+            return [targetName, await getEntity(targetName).loadFullList()] as const;
           } catch (cause) {
             console.warn(`[useEntityForm] sin lista para "${targetName}":`, cause);
             return [targetName, [] as AgnosticOption[]] as const;

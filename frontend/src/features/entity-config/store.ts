@@ -17,7 +17,7 @@ import {
   type EntityConfigurationDetailDto,
   type FormFieldConfigDto,
 } from "./api";
-import { stores as entityStores } from "@/core/entities/registry";
+import { entityStores } from "@/core/entities/registry";
 
 /** Fila arrastrable: el DTO más una `key` estable (el IRI) para el drag & drop. */
 export type CollectionFieldRow = CollectionFieldConfigDto & { key: string };

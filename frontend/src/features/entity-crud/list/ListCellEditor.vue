@@ -23,44 +23,53 @@
   />
   <DatePicker
     v-else-if="kind === 'date'"
-    :model-value="data[column.field]"
+    :model-value="data[column.field] as Date | null"
     :show-icon="true"
     @update:model-value="(value: unknown) => setValue(value)"
   />
   <InputNumber
     v-else-if="kind === 'number'"
-    :model-value="data[column.field]"
+    :model-value="data[column.field] as number | null"
     @update:model-value="(value: unknown) => setValue(value)"
   />
   <InputText
     size="small"
     v-else
-    :model-value="data[column.field]"
+    :model-value="data[column.field] as string | null"
     @update:model-value="(value: unknown) => setValue(value)"
   />
 </template>
 <script setup lang="ts">
-import { computed } from 'vue'
+/**
+ * Editor de una celda del listado (edición en línea de PrimeVue). Escribe en
+ * `data`, la copia de la fila que PrimeVue entrega en `#editor` y devuelve en
+ * `cell-edit-complete` como `newData`.
+ */
+import { computed, ref } from 'vue'
+import type { AgnosticOption } from '@/core/graphql/types'
+import { getEntity } from '@/core/entities/registry'
 import type { CollectionFieldConfig } from '@/core/entities/types'
-import { useEntityRegistry } from '@/core/entities/registry'
 import { fieldKind } from './listUtils'
-defineOptions({ name: 'ListCellEditor' })
+
 const props = defineProps<{
+  entity: string
   column: CollectionFieldConfig
   data: Record<string, unknown>
 }>()
-const registry = useEntityRegistry()
-const store = registry.getEntity()
-const options = ref([])
-const kind = store.metadata ? fieldKind(store.metadata, props.column.field) : 'text'
-if (kind == 'relation') {
-  const entry = store.metadata.fields.find((f) => f.name === props.column.field)
-  // if (!entry) return [];
 
-  const target = await registry.getEntity(entry.namedType)
-  await target.loadFullList()
+const metadata = getEntity(props.entity).metadata
+const kind = fieldKind(metadata, props.column.field)
+const options = ref<Array<{ label: string; value: string }>>([])
 
-  options.value = target.fullList.map((option) => ({ label: option.label, value: option.id }))
+if (kind === 'relation') {
+  const target = metadata.fields.find((field) => field.name === props.column.field)?.namedType
+  if (target) {
+    void getEntity(target)
+      .loadFullList()
+      .then((list: AgnosticOption[]) => {
+        options.value = list.map((option) => ({ label: option.label, value: option.value ?? option.id ?? '' }))
+      })
+  }
 }
 
 const booleanOptions = [
@@ -70,14 +79,16 @@ const booleanOptions = [
 
 const relationId = computed(() => {
   const value = props.data[props.column.field]
-  if (value && typeof value === 'object') return (value as { id?: unknown }).id ?? null
-  return null
+  return value && typeof value === 'object' ? ((value as { id?: unknown }).id ?? null) : null
 })
-function setRelation(value: string | null) {
-  props.data[props.column.field] = value ? (options.find((o) => o.value === value) ?? null) : null
-}
 
 function setValue(value: unknown) {
+  // eslint-disable-next-line vue/no-mutating-props -- contrato del slot #editor de PrimeVue
   props.data[props.column.field] = value
+}
+
+function setRelation(iri: string | null) {
+  const option = options.value.find((o) => o.value === iri)
+  setValue(option ? { id: option.value, label: option.label } : null)
 }
 </script>

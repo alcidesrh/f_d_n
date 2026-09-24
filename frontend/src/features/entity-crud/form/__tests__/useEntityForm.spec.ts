@@ -46,12 +46,11 @@ const { busStore, rutaStore } = vi.hoisted(() => {
 })
 
 vi.mock('@/core/entities/schema', () => ({
-  useSchemaRepositoryStore: () => ({ getEntityMetadata: () => busEntity }),
+  useSchemaStore: () => ({ find: () => busEntity }),
 }))
 vi.mock('@/core/notify', () => ({ notify: { error: vi.fn<(text: string) => void>() } }))
 vi.mock('@/core/entities/registry', () => ({
   getEntity: (name: string) => (name === 'Ruta' ? rutaStore : busStore),
-  useEntityRegistry: () => ({ getEntity: (name: string) => (name === 'Ruta' ? rutaStore : busStore) }),
 }))
 
 const { useEntityForm } = await import('@/features/entity-crud/form/useEntityForm')

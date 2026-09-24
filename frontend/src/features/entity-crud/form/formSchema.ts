@@ -5,7 +5,7 @@
  * Los nodos resultantes son JSON-plano (sin funciones), listos para
  * `<FormKit type="form" :schema="...">`. Las opciones de relaciones se
  * inyectan desde fuera (`relationOptions`) porque requieren fetch previo de
- * `registry.getEntity(target).loadFullList()`.
+ * `getEntity(target).loadFullList()`.
  */
 
 import type { FormKitSchemaNode } from "@formkit/core";

@@ -1,24 +1,24 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { getEntity, useEntityRegistry } from '@/core/entities/registry'
+import { getEntity } from '@/core/entities/registry'
 
-const { restMock, schemaRepoMock } = vi.hoisted(() => ({
+const { restMock, schemaMock } = vi.hoisted(() => ({
   restMock: { getEntityConfiguration: vi.fn<(entityClass: string) => Promise<unknown>>() },
-  schemaRepoMock: { getEntityMetadata: vi.fn<(name: string) => unknown>() },
+  schemaMock: { require: vi.fn<(name: string) => unknown>() },
 }))
 
 vi.mock('@/core/metadata/entityConfiguration', () => ({ fetchEntityConfiguration: restMock.getEntityConfiguration }))
-vi.mock('@/core/entities/schema', () => ({ useSchemaRepositoryStore: () => schemaRepoMock }))
+vi.mock('@/core/entities/schema', () => ({ useSchemaStore: () => schemaMock }))
 
-describe('useEntityRegistry', () => {
+describe('getEntity', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
     restMock.getEntityConfiguration.mockResolvedValue(null)
-    schemaRepoMock.getEntityMetadata.mockImplementation((name: string) => ({
-      name,
-      scalarFields: ['id', 'numero', 'total'],
-    }))
+    schemaMock.require.mockImplementation((name: string) => {
+      if (name === 'Nope') throw new Error('No existe la entidad: Nope')
+      return { name, scalarFields: ['id', 'numero', 'total'], orderFields: [], orderInput: null }
+    })
   })
 
   it('crea el store de la entidad por demanda', () => {
@@ -33,8 +33,8 @@ describe('useEntityRegistry', () => {
     expect(a).toBe(b)
   })
 
-  it('expone getEntity vía el composable', () => {
-    expect(useEntityRegistry().getEntity).toBe(getEntity)
+  it('lanza si la entidad no existe en el schema', () => {
+    expect(() => getEntity('Nope')).toThrow('No existe la entidad: Nope')
   })
 
   it('carga columnas desde el fallback del schema si no hay configuración REST', async () => {

@@ -5,12 +5,12 @@
  */
 import { getEntity } from "@/core/entities/registry";
 import { graphql } from "@/core/graphql/client";
-import { useSchemaRepositoryStore } from "@/core/entities/schema";
+import { useSchemaStore } from "@/core/entities/schema";
 import { ICON_ENTITY, type IconGateway } from "./iconRelation";
 
 /** Gateway sobre la API GraphQL. */
 export function apiIconGateway(): IconGateway {
-  const metadata = () => useSchemaRepositoryStore().getEntityMetadata(ICON_ENTITY);
+  const metadata = () => useSchemaStore().require(ICON_ENTITY);
   return {
     async iconName(iri) {
       const item = await graphql.item<{ icon?: string | null } | null>(metadata(), iri);

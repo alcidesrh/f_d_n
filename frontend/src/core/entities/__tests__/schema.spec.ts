@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useSchemaRepositoryStore, SCHEMA_REPOSITORY_VERSION } from '@/core/entities/schema'
+import { useSchemaStore, SCHEMA_VERSION } from '@/core/entities/schema'
+import { repository } from '@/core/entities/repository'
 import type { CollectionFieldConfig, EntityStore, EntityStoreState } from '@/core/entities/types'
 import type { AgnosticOption, EntitySchema } from '@/core/graphql/types'
 
@@ -20,6 +21,7 @@ vi.mock('@/core/graphql/client', () => ({ graphql: apolloMock }))
 
 const boletoSchema: EntitySchema = {
   name: 'Boleto',
+  slug: null,
   queryItem: 'boleto',
   queryCollection: 'boletos',
   collectionKind: 'page-connection',
@@ -136,12 +138,11 @@ const boletoSchema: EntitySchema = {
 function makeStore(): EntityStore<{ id: number; numero: string }> {
   return {
     $id: 'entity:Boleto',
-    $state: undefined as never,
     $patch: vi.fn<(partial: Partial<EntityStoreState<{ id: number; numero: string }>>) => void>(),
     $reset: vi.fn<() => void>(),
-    $dispose: vi.fn<() => void>(),
     name: 'Boleto',
     columns: [],
+    formFields: [],
     items: [],
     pagination: {
       itemsPerPage: 10,
@@ -154,9 +155,9 @@ function makeStore(): EntityStore<{ id: number; numero: string }> {
     order: [],
     item: null,
     fullList: [],
-    metadata: null,
+    metadata: boletoSchema,
     slug: 'boleto-asiento',
-    loadColumns: vi.fn<() => Promise<CollectionFieldConfig[]>>().mockResolvedValue([]),
+    init: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
     loadFullList: vi.fn<() => Promise<AgnosticOption[]>>().mockResolvedValue([]),
     fetchItems: vi.fn<() => Promise<Array<{ id: number; numero: string }>>>(),
     fetchItem: vi.fn<(id: string | number) => Promise<{ id: number; numero: string }>>(),
@@ -166,7 +167,7 @@ function makeStore(): EntityStore<{ id: number; numero: string }> {
   }
 }
 
-describe('useSchemaRepositoryStore', () => {
+describe('useSchemaStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
@@ -184,7 +185,7 @@ describe('useSchemaRepositoryStore', () => {
   })
 
   it('inicializa el schema desde la introspección', async () => {
-    const store = useSchemaRepositoryStore()
+    const store = useSchemaStore()
     expect(store.status).toBe('idle')
     await store.init()
     expect(apolloMock.introspect).toHaveBeenCalledOnce()
@@ -194,7 +195,7 @@ describe('useSchemaRepositoryStore', () => {
   })
 
   it('no reintrospecciona si ya hay entidades', async () => {
-    const store = useSchemaRepositoryStore()
+    const store = useSchemaStore()
     await store.init()
     await store.init()
     expect(apolloMock.introspect).toHaveBeenCalledOnce()
@@ -202,31 +203,31 @@ describe('useSchemaRepositoryStore', () => {
 
   it('marca error si falla la introspección', async () => {
     apolloMock.introspect.mockRejectedValueOnce(new Error('boom'))
-    const store = useSchemaRepositoryStore()
+    const store = useSchemaStore()
     await store.init()
     expect(store.status).toBe('error')
     expect(store.error).toContain('boom')
   })
 
   it('reintrospecciona si cambia la versión del schema persistido', async () => {
-    const store = useSchemaRepositoryStore()
+    const store = useSchemaStore()
     store.entities = { Boleto: boletoSchema }
-    store.schemaVersion = SCHEMA_REPOSITORY_VERSION + 1
+    store.schemaVersion = SCHEMA_VERSION + 1
     await store.init()
     expect(apolloMock.introspect).toHaveBeenCalledOnce()
   })
 
   it('carga una colección en el store de la entidad', async () => {
-    const store = useSchemaRepositoryStore()
+    const store = useSchemaStore()
     await store.init()
     const entityStore = makeStore()
-    const result = await store.collection(entityStore)
+    const result = await repository.collection(entityStore)
     expect(apolloMock.collection).toHaveBeenCalledWith(
       boletoSchema,
       expect.objectContaining({ currentPage: 1 }),
     )
     expect(entityStore.items).toEqual([{ id: 1, numero: 'AB' }])
-    expect(entityStore.pagination.totalCount).toBe(1)
+    expect(entityStore.pagination?.totalCount).toBe(1)
     expect(result.items).toHaveLength(1)
   })
 
@@ -242,11 +243,11 @@ describe('useSchemaRepositoryStore', () => {
       items: [{ id: 1, numero: 'AB' }],
       pagination: { currentPage: 1, itemsPerPage: 1, lastPage: 1, totalCount: 1, hasNextPage: false },
     })
-    const store = useSchemaRepositoryStore()
+    const store = useSchemaStore()
     await store.init()
     const entityStore = makeStore()
     delete (entityStore as { pagination?: unknown }).pagination
-    const result = await store.collection(entityStore)
+    const result = await repository.collection(entityStore)
     const spec = apolloMock.collection.mock.calls[0]![1] as {
       currentPage?: number
       itemsPerPage?: number
@@ -260,21 +261,21 @@ describe('useSchemaRepositoryStore', () => {
 
   it('obtiene un item y lo deja en el store', async () => {
     apolloMock.item.mockResolvedValue({ id: 3, numero: 'CD' })
-    const store = useSchemaRepositoryStore()
+    const store = useSchemaStore()
     await store.init()
     const entityStore = makeStore()
-    const item = await store.item(entityStore, 3)
+    const item = await repository.item(entityStore, 3)
     expect(item).toEqual({ id: 3, numero: 'CD' })
     expect(entityStore.item).toEqual({ id: 3, numero: 'CD' })
   })
 
   it('crea, antepone el item y refresca el item seleccionado', async () => {
     apolloMock.create.mockResolvedValue({ id: 9, numero: 'EF' })
-    const store = useSchemaRepositoryStore()
+    const store = useSchemaStore()
     await store.init()
     const entityStore = makeStore()
     entityStore.items = [{ id: 1, numero: 'AB' }]
-    await store.create(entityStore, { numero: 'EF' })
+    await repository.create(entityStore, { numero: 'EF' })
     expect(apolloMock.create).toHaveBeenCalledWith(boletoSchema, { numero: 'EF' })
     expect(entityStore.items.map((i) => i.id)).toEqual([9, 1])
     expect(entityStore.item).toEqual({ id: 9, numero: 'EF' })
@@ -282,20 +283,20 @@ describe('useSchemaRepositoryStore', () => {
 
   it('actualiza el item en el listado', async () => {
     apolloMock.update.mockResolvedValue({ id: 1, numero: 'ZZ' })
-    const store = useSchemaRepositoryStore()
+    const store = useSchemaStore()
     await store.init()
     const entityStore = makeStore()
     entityStore.items = [
       { id: 1, numero: 'AB' },
       { id: 2, numero: 'CD' },
     ]
-    await store.update(entityStore, { id: 1, numero: 'ZZ' })
+    await repository.update(entityStore, { id: 1, numero: 'ZZ' })
     expect(entityStore.items.map((i) => i.numero)).toEqual(['ZZ', 'CD'])
   })
 
   it('elimina el item del listado y del seleccionado', async () => {
     apolloMock.delete.mockResolvedValue({ id: 2, numero: 'CD' })
-    const store = useSchemaRepositoryStore()
+    const store = useSchemaStore()
     await store.init()
     const entityStore = makeStore()
     entityStore.items = [
@@ -303,7 +304,7 @@ describe('useSchemaRepositoryStore', () => {
       { id: 2, numero: 'CD' },
     ]
     entityStore.item = { id: 2, numero: 'CD' }
-    await store.delete(entityStore, 2)
+    await repository.delete(entityStore, 2)
     expect(entityStore.items.map((i) => i.id)).toEqual([1])
     expect(entityStore.item).toBeNull()
   })
@@ -311,21 +312,21 @@ describe('useSchemaRepositoryStore', () => {
   it('carga fullList desde collectionAgnostic y cachea hasta pedir fuerza', async () => {
     const options: AgnosticOption[] = [{ id: '/api/buses/1', label: 'Bus A' }]
     apolloMock.agnosticList.mockResolvedValue(options)
-    const store = useSchemaRepositoryStore()
+    const store = useSchemaStore()
     await store.init()
     const entityStore = makeStore()
-    const first = await store.fullList(entityStore)
+    const first = await repository.fullList(entityStore)
     expect(apolloMock.agnosticList).toHaveBeenCalledWith('Boleto')
     expect(first).toEqual(options)
     expect(entityStore.fullList).toEqual(options)
-    await store.fullList(entityStore)
+    await repository.fullList(entityStore)
     expect(apolloMock.agnosticList).toHaveBeenCalledOnce()
-    await store.fullList(entityStore, { force: true })
+    await repository.fullList(entityStore, { force: true })
     expect(apolloMock.agnosticList).toHaveBeenCalledTimes(2)
   })
 
   it('pide solo las columnas visibles (+ id) al cargar una colección', async () => {
-    const store = useSchemaRepositoryStore()
+    const store = useSchemaStore()
     await store.init()
     const entityStore = makeStore()
     entityStore.columns = [
@@ -333,7 +334,7 @@ describe('useSchemaRepositoryStore', () => {
       { field: 'numero', label: 'Número', visible: true },
       { field: 'total', label: 'Total', visible: false },
     ]
-    await store.collection(entityStore)
+    await repository.collection(entityStore)
     expect(apolloMock.collection).toHaveBeenCalledWith(
       boletoSchema,
       expect.objectContaining({ fields: ['id', 'numero'] }),
@@ -341,10 +342,10 @@ describe('useSchemaRepositoryStore', () => {
   })
 
   it('si no hay columnas cargadas no restringe los campos', async () => {
-    const store = useSchemaRepositoryStore()
+    const store = useSchemaStore()
     await store.init()
     const entityStore = makeStore()
-    await store.collection(entityStore)
+    await repository.collection(entityStore)
     const spec = apolloMock.collection.mock.calls[0]![1] as { fields?: string[] }
     expect(spec.fields).toBeUndefined()
   })
@@ -356,22 +357,31 @@ describe('useSchemaRepositoryStore', () => {
       orderFields: ['numero'],
     }
     apolloMock.introspect.mockResolvedValue({ Boleto: orderable })
-    const store = useSchemaRepositoryStore()
+    const store = useSchemaStore()
     await store.init()
     const entityStore = makeStore()
     entityStore.order = [{ numero: 'ASC' }, { total: 'DESC' }]
-    await store.collection(entityStore)
+    await repository.collection(entityStore)
     expect(apolloMock.collection).toHaveBeenCalledWith(
       orderable,
       expect.objectContaining({ order: [{ numero: 'ASC' }] }),
     )
   })
 
+  it('find acepta nombre o slug y require lanza si no existe', async () => {
+    const store = useSchemaStore()
+    await store.init()
+    expect(store.find('Boleto')).toBe(store.entities.Boleto)
+    expect(store.find('boleto')).toBe(store.entities.Boleto)
+    expect(store.find('Nope')).toBeNull()
+    expect(() => store.require('Nope')).toThrow('No existe la entidad: Nope')
+  })
+
   it('lanza para entidades sin metadatos', async () => {
-    const store = useSchemaRepositoryStore()
+    const store = useSchemaStore()
     await store.init()
     const entityStore = makeStore()
     entityStore.name = 'Nope'
-    await expect(store.collection(entityStore)).rejects.toThrow(/no hay metadatos/)
+    await expect(repository.collection(entityStore)).rejects.toThrow('No existe la entidad: Nope')
   })
 })

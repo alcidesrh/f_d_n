@@ -1,61 +1,36 @@
 /**
- * `useSchemaRepositoryStore` — punto de entrada a la API GraphQL.
- *
- * Se crea después del cliente Apollo singleton (`src/lib/apollo/client.ts`)
- * y antes de montar cualquier vista. En su primera creación ejecuta la
- * introspección GraphQL y la traduce a metadatos planos por entidad; el
- * estado persistido (pinia-plugin-persistedstate) evita reintrospeccionar.
- *
- * Sus actions (`item`, `collection`, `create`, `update`, `delete`) reciben
- * siempre el store de la entidad (`use{EntityName}Store`): leen su estado
- * (paginación/filtros/orden) y actualizan sus items/item.
+ * Metadata de las entidades de la API: la introspección GraphQL aplanada por
+ * entidad (`EntitySchema`). Se carga una vez al arrancar y se persiste; subir
+ * `SCHEMA_VERSION` invalida la copia persistida cuando cambia su formato.
  */
-
 import { defineStore } from "pinia";
 import { graphql } from "@/core/graphql/client";
-import { toMutationInput } from "@/core/graphql/documents";
-import { notify } from "@/core/notify";
-import type { AgnosticOption, CollectionResult, EntitySchema } from "@/core/graphql/types";
-import type { EntityStore } from "./types";
+import type { EntitySchema } from "@/core/graphql/types";
+import { entityNameFromSlug } from "./slug";
 
-/** Bump para invalidar el schema persistido cuando cambia el formato de metadatos. */
-export const SCHEMA_REPOSITORY_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
-export interface SchemaRepositoryState {
-  status: "idle" | "loading" | "ready" | "error";
-  error: string;
-  entities: Record<string, EntitySchema>;
-  schemaVersion: number;
-  loadedAt: string | null;
-}
+export const useSchemaStore = defineStore("schema", {
+  persist: { pick: ["entities", "schemaVersion", "loadedAt"] },
 
-export const useSchemaRepositoryStore = defineStore("schemaRepository", {
-  persist: {
-    pick: ["entities", "schemaVersion", "loadedAt"],
-  },
-
-  state: (): SchemaRepositoryState => ({
-    status: "idle",
+  state: () => ({
+    status: "idle" as "idle" | "loading" | "ready" | "error",
     error: "",
-    entities: {},
-    schemaVersion: SCHEMA_REPOSITORY_VERSION,
-    loadedAt: null,
+    entities: {} as Record<string, EntitySchema>,
+    schemaVersion: SCHEMA_VERSION,
+    loadedAt: null as string | null,
   }),
 
   getters: {
-    ready: (st): boolean => st.status === "ready",
-    hasEntities: (st): boolean => Object.keys(st.entities).length > 0,
+    ready: (st) => st.status === "ready",
   },
 
   actions: {
-    /**
-     * Carga (o reusa el persistido) del metadata de entidades. Llamar una
-     * vez en el bootstrap, antes de renderizar las vistas.
-     */
+    /** Introspección (o reutiliza la persistida). Llamar una vez al arrancar. */
     async init() {
       if (this.status === "loading") return;
-      if (this.schemaVersion !== SCHEMA_REPOSITORY_VERSION) this.entities = {};
-      if (this.hasEntities) {
+      if (this.schemaVersion !== SCHEMA_VERSION) this.entities = {};
+      if (Object.keys(this.entities).length > 0) {
         this.status = "ready";
         return;
       }
@@ -64,138 +39,25 @@ export const useSchemaRepositoryStore = defineStore("schemaRepository", {
       try {
         this.entities = await graphql.introspect();
         this.loadedAt = new Date().toISOString();
-        this.schemaVersion = SCHEMA_REPOSITORY_VERSION;
+        this.schemaVersion = SCHEMA_VERSION;
         this.status = "ready";
       } catch (error) {
         this.status = "error";
         this.error = error instanceof Error ? error.message : String(error);
-        console.error("[schemaRepository] no se pudo cargar el schema GraphQL:", error);
+        console.error("[schema] no se pudo cargar el schema GraphQL:", error);
       }
     },
 
-    getEntityMetadata(name: string): EntitySchema {
-      name =
-        name
-          .toLowerCase()
-          .replace(/[-_ ]+(.)/g, (_, letra) => letra.toUpperCase())
-          .charAt(0)
-          .toUpperCase() + name.slice(1);
-      if (!this.entities[name]) {
-        notify.error(`No existe la entidad: ${name}`);
-
-        throw new Error(`No existe la entidad: ${name}`);
-      }
-      return this.entities[name] ?? null;
+    /** Metadata por nombre (`VueRoute`) o slug (`vue-route`); `null` si no existe. */
+    find(name: string): EntitySchema | null {
+      return this.entities[name] ?? this.entities[entityNameFromSlug(name)] ?? null;
     },
 
-    has(name: string): boolean {
-      return Boolean(this.entities[name]);
-    },
-
-    requireEntity<T>(store: EntityStore<T>): EntitySchema {
-      const entity = this.entities[store.name];
-      if (!entity) {
-        throw new Error(`[schemaRepository] no hay metadatos para "${store.name}"`);
-      }
+    /** Como `find`, pero lanza si la entidad no existe. */
+    require(name: string): EntitySchema {
+      const entity = this.find(name);
+      if (!entity) throw new Error(`No existe la entidad: ${name}`);
       return entity;
-    },
-
-    async item<T>(store: EntityStore<T>, id: string | number, fields?: string[]): Promise<T> {
-      const entity = this.requireEntity(store);
-      store.item = await graphql.item<T>(entity, id, fields);
-      return store.item;
-    },
-
-    async collection<T>(store: EntityStore<T>): Promise<CollectionResult<T>> {
-      const entity = this.requireEntity(store);
-      // Las queries de listado piden solo los datos de las columnas visibles
-      // (+ id, necesario para row-key y acciones). Si aún no hay columnas
-      // cargadas se cae al comportamiento por defecto (todas las propiedades).
-      const visible = store.columns.filter((col) => col.visible !== false).map((col) => col.field);
-      const fields = visible.length > 0 ? (visible.includes("id") ? visible : ["id", ...visible]) : undefined;
-      // Solo se envían condiciones de orden sobre campos aceptados por el input
-      // de orden del backend (descarta órdenes inválidos persistidos/heredados).
-      const order = entity.orderInput && store.order.length > 0 ? store.order.filter((cond) => Object.keys(cond).every((field) => entity.orderFields.includes(field))) : [];
-      // Solo las entidades paginadas llevan estado de paginación en el store
-      // (ver createEntityStore: solo collectionKind 'page-connection'). Las
-      // entidades sin paginado (list/cursor-connection/single) se cargan
-      // completas: no se envían args de paginación ni se escribe el estado.
-      const paginated = Boolean(store.pagination);
-
-      const result = await graphql.collection<T>(entity, {
-        ...(paginated
-          ? {
-              currentPage: store.pagination.currentPage,
-              itemsPerPage: store.pagination.itemsPerPage,
-            }
-          : {}),
-        filters: store.filters,
-        order,
-        fields,
-      });
-      store.items = result.items;
-
-      if (paginated) {
-        store.pagination = {
-          ...result.pagination,
-          itemsPerPage: store.pagination.itemsPerPage || result.pagination.itemsPerPage,
-        };
-      }
-      return result;
-    },
-
-    async create<T>(store: EntityStore<T>, data: Record<string, unknown>): Promise<T> {
-      const entity = this.requireEntity(store);
-      if (!entity.create) {
-        throw new Error(`[schemaRepository] "${store.name}" no expone create`);
-      }
-      const input = toMutationInput(entity, entity.create, data, this.entities);
-
-      const created = await graphql.create<T>(entity, input);
-      store.item = created;
-      store.items = [created, ...store.items];
-      if (store.fullList.length) {
-        this.fullList(store, { force: true });
-      }
-      return created;
-    },
-
-    async update<T>(store: EntityStore<T>, data: Record<string, unknown>): Promise<T> {
-      const entity = this.requireEntity(store);
-      if (!entity.update) {
-        throw new Error(`[schemaRepository] "${store.name}" no expone update`);
-      }
-      const input = toMutationInput(entity, entity.update, data, this.entities);
-      const updated = await graphql.update<T>(entity, input);
-      store.item = updated;
-      const id = (updated as { id?: unknown } | null)?.id;
-      if (id !== undefined) {
-        store.items = store.items.map((item) => ((item as { id?: unknown } | null)?.id === id ? updated : item));
-      }
-      return updated;
-    },
-
-    async delete<T>(store: EntityStore<T>, id: string | number): Promise<T> {
-      const entity = this.requireEntity(store);
-      if (!entity.delete) {
-        throw new Error(`[schemaRepository] "${store.name}" no expone delete`);
-      }
-      const deleted = await graphql.delete<T>(entity, id);
-      store.items = store.items.filter((item) => (item as { id?: unknown } | null)?.id !== id);
-      if ((store.item as { id?: unknown } | null)?.id === id) store.item = null;
-      return deleted;
-    },
-
-    /**
-     * Lista completa de la entidad (`collectionAgnostic(resource)`) para
-     * options de selects de relaciones. Sirve la caché del store salvo con
-     * `force: true`; el store la persiste en LocalStorage (pinia-plugin).
-     */
-    async fullList<T>(store: EntityStore<T>, opts: { force?: boolean } = {}): Promise<AgnosticOption[]> {
-      if (!opts.force && store.fullList.length > 0) return store.fullList;
-      const list = await graphql.agnosticList(store.name);
-      store.fullList = list;
-      return list;
     },
   },
 });

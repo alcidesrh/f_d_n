@@ -4,11 +4,18 @@ import {
   cellLabel,
   cellValue,
   fieldKind,
+  fromServerFilters,
   idDisplay,
   isEmptyFilterValue,
+  isLocalFilter,
+  matchesFilters,
+  nextOrder,
   noServerFilter,
   rangeToIso,
   resolveFilterArgs,
+  sortDirection,
+  toEditedInput,
+  toServerFilters,
 } from '@/features/entity-crud/list/listUtils'
 import type { EntityFieldSchema, EntitySchema, SchemaArg } from '@/core/graphql/types'
 
@@ -32,6 +39,7 @@ function arg(name: string): SchemaArg {
 
 const schema: EntitySchema = {
   name: 'Icon',
+  slug: null,
   queryItem: 'icon',
   queryCollection: 'icons',
   collectionKind: 'list',
@@ -208,5 +216,52 @@ describe('isEmptyFilterValue', () => {
     expect(isEmptyFilterValue(false)).toBe(false)
     expect(isEmptyFilterValue('0')).toBe(false)
     expect(isEmptyFilterValue(['a'])).toBe(false)
+  })
+})
+
+describe('toServerFilters / fromServerFilters', () => {
+  it('traduce solo los campos con argumento en el backend y vuelve a los valores de la UI', () => {
+    const range = [new Date('2026-01-01T12:00:00'), new Date('2026-01-31T12:00:00')]
+    const server = toServerFilters(schema, { name: 'ho', description: 'x', createdAt: range, icon: '' })
+    expect(server).toEqual({ name: 'ho', createdAt_after: '2026-01-01', createdAt_before: '2026-01-31' })
+    const back = fromServerFilters(schema, server)
+    expect(back.name).toBe('ho')
+    expect((back.createdAt as Date[]).map((d) => d.toISOString().slice(0, 10))).toEqual(['2026-01-01', '2026-01-31'])
+  })
+
+  it('isLocalFilter marca los campos sin argumento', () => {
+    expect(isLocalFilter(schema, 'name')).toBe(false)
+    expect(isLocalFilter(schema, 'amount')).toBe(true)
+  })
+})
+
+describe('matchesFilters', () => {
+  const item = { name: 'Home', createdAt: '2026-01-15', category: { id: '/api/categories/1', label: 'Navegación' } }
+  it('texto contiene, relación por id o label y fecha por rango inclusivo', () => {
+    expect(matchesFilters(item, { name: 'hom' }, schema)).toBe(true)
+    expect(matchesFilters(item, { name: 'x' }, schema)).toBe(false)
+    expect(matchesFilters(item, { category: '/api/categories/1' }, schema)).toBe(true)
+    expect(matchesFilters(item, { category: 'naveg' }, schema)).toBe(true)
+    expect(matchesFilters(item, { createdAt: ['2026-01-15', '2026-01-15'] }, schema)).toBe(true)
+    expect(matchesFilters(item, { createdAt: ['2026-02-01', '2026-02-10'] }, schema)).toBe(false)
+  })
+})
+
+describe('toEditedInput', () => {
+  it('fechas a YYYY-MM-DD y relaciones a su IRI', () => {
+    expect(toEditedInput(schema, 'createdAt', '2026-01-15T10:00:00-06:00')).toBe('2026-01-15')
+    expect(toEditedInput(schema, 'category', { value: '/api/categories/2', label: 'X' })).toBe('/api/categories/2')
+    expect(toEditedInput(schema, 'name', 'abc')).toBe('abc')
+  })
+})
+
+describe('orden', () => {
+  it('cicla sin orden → ASC → DESC → sin orden', () => {
+    expect(nextOrder([], 'name')).toEqual([{ name: 'ASC' }])
+    expect(nextOrder([{ name: 'ASC' }], 'name')).toEqual([{ name: 'DESC' }])
+    expect(nextOrder([{ name: 'DESC' }], 'name')).toEqual([])
+    expect(nextOrder([{ icon: 'ASC' }], 'name')).toEqual([{ name: 'ASC' }])
+    expect(sortDirection([{ name: 'DESC' }], 'name')).toBe('desc')
+    expect(sortDirection([{ name: 'DESC' }], 'icon')).toBeNull()
   })
 })

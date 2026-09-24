@@ -1,26 +1,14 @@
-import type { StoreDefinition } from "pinia";
 /**
- * Contratos de los stores de entidades dinámicos (`use{EntityName}Store`).
- *
- * Un store de entidad es creado por demanda vía `useEntityRegistry` /
- * `defineEntityStore`, y refleja el estado de un CRUD agnóstico: columnas
- * del listado, items, paginación, filtros, orden e item seleccionado. Las
- * operaciones de datos (fetch/mutaciones) delegan en
- * `useSchemaRepositoryStore`, que es el punto de entrada a la API GraphQL.
+ * Contratos de los stores de entidad (`entity:{Nombre}`): estado de listado y
+ * formulario de una entidad de la API. Las operaciones de datos viven en
+ * `repository.ts`; el store solo las expone como acciones.
  */
-
-import type {
-  AgnosticOption,
-  EntitySchema,
-  OrderCondition,
-} from "@/core/graphql/types";
+import type { AgnosticOption, EntitySchema, OrderCondition } from "@/core/graphql/types";
 import type { FormFieldConfig } from "@/core/metadata/entityConfiguration";
 
-export type OrderDirection = "ASC" | "DESC";
+export type { OrderCondition };
 
-export { type OrderCondition };
-
-/** Configuración de una columna del listado (DTO REST de entity_configurations). */
+/** Configuración de una columna del listado (DTO REST de `entity_configurations`). */
 export interface CollectionFieldConfig {
   "@id"?: string;
   id?: number | string;
@@ -43,60 +31,42 @@ export interface PaginationState {
   lastPage: number;
   hasNextPage: boolean;
 }
-export interface SidebarStoreState<T = unknown> {
-  side: string;
-  mode: "open" | "mini" | "close";
-  prevMode: "open" | "mini" | "close";
-  open: number;
-  mini: number;
-  close: number;
-}
+
 export interface EntityStoreState<T = unknown> {
-  /** Nombre de la entidad tal cual (ej: `Boleto`). */
+  /** Nombre de la entidad (`BoletoAsiento`). */
   name: string;
-  /** Columnas del listado (de `/entity_configurations` o fallback a todas las propiedades). */
+  /** Columnas del listado (`entity_configurations` o todas las propiedades escalares). */
   columns: CollectionFieldConfig[];
+  /** Campos del formulario (`entity_configurations`); vacío = todos los del schema. */
   formFields: FormFieldConfig[];
-  /** Elementos del listado actual. */
   items: T[];
+  /** Solo en entidades paginadas (`page-connection`). */
   pagination?: PaginationState;
   filters: Record<string, unknown>;
   order: OrderCondition[];
-  /** Elemento obtenido por `get` (ver o editar). */
+  /** Último item leído o guardado. */
   item: T | null;
-  /** Lista completa de la entidad (`collectionAgnostic`), cacheada en LocalStorage. */
+  /** Todos los registros como options (`collectionAgnostic`). */
   fullList: AgnosticOption[];
 }
 
 export interface EntityStore<T = unknown> extends EntityStoreState<T> {
   $id: string;
-  $state: EntityStoreState<T>;
   $patch: (partial: Partial<EntityStoreState<T>>) => void;
   $reset: () => void;
-  $dispose: () => void;
 
-  /** Schema GraphQL de la entidad, de `useSchemaRepositoryStore` (getter). */
-  metadata: EntitySchema | null;
+  /** Metadata GraphQL de la entidad. */
+  readonly metadata: EntitySchema;
+  /** Slug para URLs (`BoletoAsiento` → `boleto-asiento`). */
+  readonly slug: string;
 
-  /** Slug kebab-case del nombre de la entidad para URLs (`BoletoAsiento` → `boleto-asiento`). */
-  slug: string;
-
-  init(force?: boolean): void;
+  /** Carga la configuración de columnas/campos (una vez, salvo `force`). */
+  init(force?: boolean): Promise<void>;
   fetchItems(): Promise<T[]>;
   /** Item por id o IRI; con `fields` solo se piden esos campos (+ `id`). */
   fetchItem(id: string | number, fields?: string[]): Promise<T>;
   create(data: Record<string, unknown>): Promise<T>;
   update(data: Record<string, unknown>): Promise<T>;
   remove(id: string | number): Promise<T>;
-  /** Carga (o reusa la cacheada) la lista completa de la entidad. */
   loadFullList(force?: boolean): Promise<AgnosticOption[]>;
-}
-
-export interface SidebarStore extends StoreDefinition {
-  side: string;
-  mode: string;
-  prevMode: string;
-  open: number;
-  mini: number;
-  close: number;
 }

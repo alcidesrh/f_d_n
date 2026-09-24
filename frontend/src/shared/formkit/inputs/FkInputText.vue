@@ -13,14 +13,9 @@
         @blur="blur"
       />
       <InputIcon>
-        <icon
-          v-if="hasValue"
-          @click="clearValue"
-          name="x"
-          sw="2"
-          size="20"
-          class=""
-        />
+        <button v-if="hasValue" type="button" aria-label="Limpiar" @click="clearValue">
+          <icon name="x" sw="2" size="20" />
+        </button>
       </InputIcon>
     </IconField>
   </span>

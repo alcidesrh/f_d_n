@@ -15,7 +15,7 @@ import { pinia } from "@/app/pinia";
 import { router } from "@/app/router";
 import formkitConfig from "@/shared/formkit/config";
 import { useUiStore } from "@/app/ui";
-import { useSchemaRepositoryStore } from "@/core/entities/schema";
+import { useSchemaStore } from "@/core/entities/schema";
 import { syncVueRoutes } from "@/app/routeSync";
 
 async function bootstrap() {
@@ -29,7 +29,7 @@ async function bootstrap() {
     .use(ToastService);
 
   await useUiStore().init();
-  await useSchemaRepositoryStore().init();
+  await useSchemaStore().init();
   app.mount("#app");
 
   void syncVueRoutes().then((result) => {

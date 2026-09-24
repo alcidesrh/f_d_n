@@ -5,7 +5,7 @@
  * de rangos de fecha del DatePicker.
  */
 
-import type { EntitySchema } from '@/core/graphql/types'
+import type { EntitySchema, OrderCondition } from '@/core/graphql/types'
 
 /** Prioridad de propiedades para etiquetar un objeto relación. */
 const LABEL_PROPS = ['name', 'label', 'id'] as const
@@ -128,4 +128,113 @@ export function isEmptyFilterValue(value: unknown): boolean {
   if (value === undefined || value === null || value === '') return true
   if (Array.isArray(value)) return value.length === 0
   return false
+}
+
+/** Filtros sin argumento en el backend: se aplican en cliente sobre la página cargada. */
+export function isLocalFilter(entity: EntitySchema, field: string): boolean {
+  return noServerFilter(resolveFilterArgs(entity, field))
+}
+
+function toServerScalar(value: unknown, kind: FilterFieldKind): unknown {
+  if (kind === 'boolean') return value === true || value === 'true'
+  if (kind === 'number') {
+    const num = Number(value)
+    return Number.isNaN(num) ? value : num
+  }
+  return value
+}
+
+/** Filtros de la UI (campo → valor) → argumentos de la colección GraphQL. */
+export function toServerFilters(entity: EntitySchema, filters: Record<string, unknown>): Record<string, unknown> {
+  const server: Record<string, unknown> = {}
+  for (const [field, value] of Object.entries(filters)) {
+    if (isEmptyFilterValue(value)) continue
+    const kind = fieldKind(entity, field)
+    const args = resolveFilterArgs(entity, field)
+    if (kind === 'date') {
+      const { after, before } = rangeToIso(value)
+      if (args.after && after) server[args.after] = after
+      if (args.before && before) server[args.before] = before
+    } else if (args.single) {
+      server[args.single] = toServerScalar(value, kind)
+    }
+  }
+  return server
+}
+
+/** Inversa de `toServerFilters`: argumentos persistidos → valores de los inputs. */
+export function fromServerFilters(entity: EntitySchema, server: Record<string, unknown>): Record<string, unknown> {
+  const filters: Record<string, unknown> = {}
+  for (const { name: field } of entity.fields) {
+    const args = resolveFilterArgs(entity, field)
+    if (fieldKind(entity, field) === 'date') {
+      const after = args.after ? server[args.after] : undefined
+      const before = args.before ? server[args.before] : undefined
+      if (typeof after === 'string' && typeof before === 'string') filters[field] = [new Date(after), new Date(before)]
+    } else if (args.single && server[args.single] !== undefined) {
+      filters[field] = server[args.single]
+    }
+  }
+  return filters
+}
+
+const DAY_MS = 86_400_000
+
+/** ¿El item cumple todos los filtros? (texto: contiene; relación: id o label; fecha: rango). */
+export function matchesFilters(item: unknown, filters: Record<string, unknown>, entity: EntitySchema): boolean {
+  return Object.entries(filters).every(([field, value]) => {
+    if (isEmptyFilterValue(value)) return true
+    const raw = (item as Record<string, unknown>)[field]
+    switch (fieldKind(entity, field)) {
+      case 'date': {
+        const { after, before } = rangeToIso(value)
+        const time = new Date(String(raw ?? '')).getTime()
+        if (Number.isNaN(time)) return !after && !before
+        return (!after || time >= new Date(after).getTime()) && (!before || time <= new Date(before).getTime() + DAY_MS)
+      }
+      case 'relation': {
+        const needle = String(value)
+        return (Array.isArray(raw) ? raw : [raw]).some(
+          (entry) =>
+            entry != null &&
+            (String((entry as { id?: unknown }).id ?? '') === needle ||
+              cellLabel(entry).toLowerCase().includes(needle.toLowerCase())),
+        )
+      }
+      default:
+        return cellValue(item, field).toLowerCase().includes(String(value).toLowerCase())
+    }
+  })
+}
+
+/**
+ * Valor editado en línea → input GraphQL: fechas a `YYYY-MM-DD` (el backend
+ * rechaza datetime completo) y relaciones a su IRI.
+ */
+export function toEditedInput(entity: EntitySchema, field: string, value: unknown): unknown {
+  const entry = entity.fields.find((f) => f.name === field)
+  if (entry?.isRelation && value && typeof value === 'object') {
+    const record = value as Record<string, unknown>
+    return record.value ?? record.id ?? null
+  }
+  if (entry && /date/i.test(entry.namedType)) {
+    if (value instanceof Date) return value.toISOString().slice(0, 10)
+    if (typeof value === 'string') return value.slice(0, 10)
+  }
+  return value
+}
+
+export type SortDirection = 'asc' | 'desc' | null
+
+export function sortDirection(order: OrderCondition[], field: string): SortDirection {
+  const direction = order[0]?.[field]
+  return direction === 'ASC' ? 'asc' : direction === 'DESC' ? 'desc' : null
+}
+
+/** Ciclo de orden de una columna: sin orden → ASC → DESC → sin orden. */
+export function nextOrder(order: OrderCondition[], field: string): OrderCondition[] {
+  const current = sortDirection(order, field)
+  if (current === null) return [{ [field]: 'ASC' }]
+  if (current === 'asc') return [{ [field]: 'DESC' }]
+  return []
 }

@@ -9,6 +9,8 @@ import {
 } from '@vue/test-utils'
 import { defaultConfig, plugin as formkitPlugin } from '@formkit/vue'
 import PrimeVue from 'primevue/config'
+import ConfirmationService from 'primevue/confirmationservice'
+import ConfirmDialog from 'primevue/confirmdialog'
 import { reactive } from 'vue'
 import formkitConfig from '@/shared/formkit/config'
 import { dismissAll } from "@/core/notify";
@@ -32,13 +34,13 @@ if (typeof window.matchMedia !== 'function') {
     }) as MediaQueryList
 }
 
-const { schemaRepoMock, registryMock } = vi.hoisted(() => ({
-  schemaRepoMock: { getEntityMetadata: vi.fn<(name: string) => EntitySchema | null>() },
+const { schemaMock, registryMock } = vi.hoisted(() => ({
+  schemaMock: { find: vi.fn<(name: string) => EntitySchema | null>() },
   registryMock: { getEntity: vi.fn<(name: string) => EntityStore>() },
 }))
 
-vi.mock('@/core/entities/schema', () => ({ useSchemaRepositoryStore: () => schemaRepoMock }))
-vi.mock('@/core/entities/registry', () => ({ useEntityRegistry: () => registryMock }))
+vi.mock('@/core/entities/schema', () => ({ useSchemaStore: () => schemaMock }))
+vi.mock('@/core/entities/registry', () => ({ getEntity: registryMock.getEntity }))
 
 interface IconItem {
   id: string
@@ -169,15 +171,13 @@ const editableSchema: EntitySchema = {
 function makeStore(): EntityStore<IconItem> {
   const base = {
     $id: 'entity:Icon',
-    $state: undefined as never,
     $patch: vi.fn<(partial: unknown) => void>(),
     $reset: vi.fn<() => void>(),
-    $dispose: vi.fn<() => void>(),
     name: 'Icon',
     columns: [],
     items: [...items],
     get metadata(): EntitySchema | null {
-      return schemaRepoMock.getEntityMetadata(this.name)
+      return schemaMock.find(this.name)
     },
     pagination: {
       itemsPerPage: 10,
@@ -190,9 +190,9 @@ function makeStore(): EntityStore<IconItem> {
     order: [],
     item: null,
     fullList: [],
-    loadColumns: vi.fn<() => Promise<CollectionFieldConfig[]>>(async () => {
-      store.columns = columns.map((col) => ({ ...col }))
-      return store.columns
+    formFields: [],
+    init: vi.fn<(force?: boolean) => Promise<void>>(async (force = false) => {
+      if (force || store.columns.length === 0) store.columns = columns.map((col) => ({ ...col }))
     }),
     fetchItems: vi.fn<() => Promise<IconItem[]>>(async () => items),
     fetchItem: vi.fn<(id: string | number) => Promise<IconItem>>(
@@ -216,15 +216,13 @@ function makeStore(): EntityStore<IconItem> {
 function makeCategoryStore(): EntityStore {
   const base = {
     $id: 'entity:Category',
-    $state: undefined as never,
     $patch: vi.fn<(partial: unknown) => void>(),
     $reset: vi.fn<() => void>(),
-    $dispose: vi.fn<() => void>(),
     name: 'Category',
     columns: [],
     items: [],
     get metadata(): EntitySchema | null {
-      return schemaRepoMock.getEntityMetadata(this.name)
+      return schemaMock.find(this.name)
     },
     pagination: {
       itemsPerPage: 10,
@@ -237,7 +235,8 @@ function makeCategoryStore(): EntityStore {
     order: [],
     item: null,
     fullList: [{ id: '/api/categories/1', label: 'Navegación' }],
-    loadColumns: vi.fn<() => Promise<CollectionFieldConfig[]>>(async () => []),
+    formFields: [],
+    init: vi.fn<() => Promise<void>>(async () => {}),
     fetchItems: vi.fn<() => Promise<unknown[]>>(async () => []),
     fetchItem: vi.fn<(id: string | number) => Promise<unknown>>(async () => ({})),
     create: vi.fn<(data: Record<string, unknown>) => Promise<unknown>>(async () => ({})),
@@ -250,28 +249,36 @@ function makeCategoryStore(): EntityStore {
   return reactive(base) as unknown as EntityStore
 }
 
+/** Las notificaciones se pintan un macrotask después (ver core/notify). */
+async function settleToasts() {
+  await new Promise((resolve) => setTimeout(resolve, 0))
+  await flushPromises()
+}
+
 const pluginMount = (): ComponentMountingOptions<typeof List> => ({
   global: {
-    plugins: [getActivePinia()!, PrimeVue, [formkitPlugin, defaultConfig(formkitConfig())]],
+    plugins: [getActivePinia()!, PrimeVue, ConfirmationService, [formkitPlugin, defaultConfig(formkitConfig())]],
   },
 })
 
-describe('List.vue', () => {
+describe('ListPage', () => {
   let store: EntityStore<IconItem>
   let categoryStore: EntityStore
   let wrapper: VueWrapper | null = null
   let toastsWrapper: VueWrapper | null = null
+  let confirmWrapper: VueWrapper | null = null
 
   beforeEach(() => {
     setActivePinia(createPinia())
     store = makeStore()
     categoryStore = makeCategoryStore()
-    schemaRepoMock.getEntityMetadata.mockReset()
+    schemaMock.find.mockReset()
     registryMock.getEntity.mockReset()
     registryMock.getEntity.mockImplementation(
       (name: string): EntityStore => (name === 'Category' ? categoryStore : (store as EntityStore)),
     )
     toastsWrapper = mount(Toasts, { global: { plugins: [PrimeVue] } })
+    confirmWrapper = mount(ConfirmDialog, { attachTo: document.body, global: { plugins: [PrimeVue, ConfirmationService] } })
   })
 
   afterEach(() => {
@@ -279,36 +286,40 @@ describe('List.vue', () => {
     wrapper = null
     toastsWrapper?.unmount()
     toastsWrapper = null
+    confirmWrapper?.unmount()
+    confirmWrapper = null
     vi.useRealTimers()
     dismissAll()
   })
 
   it('muestra error si la entidad no existe', async () => {
-    schemaRepoMock.getEntityMetadata.mockReturnValue(null)
+    schemaMock.find.mockReturnValue(null)
     wrapper = mount(List, { props: { entity: 'Nope' }, ...pluginMount() })
-    await flushPromises()
+    await settleToasts()
     expect(document.body.textContent).toContain('no encontrada')
   })
 
   it('renderiza título, filas, acciones y precarga relaciones', async () => {
-    schemaRepoMock.getEntityMetadata.mockReturnValue(iconSchema)
+    schemaMock.find.mockReturnValue(iconSchema)
+    // Entidad no paginada (collectionKind "list"): su store no lleva `pagination`.
+    delete (store as { pagination?: unknown }).pagination
     wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
     await flushPromises()
 
-    expect(store.loadColumns).toHaveBeenCalled()
+    expect(store.init).toHaveBeenCalled()
     expect(store.fetchItems).toHaveBeenCalledTimes(1)
     expect(wrapper.text()).toContain('Icon')
     expect(wrapper.text()).toContain('home')
     expect(wrapper.text()).toContain('Navegación')
-    expect(wrapper.findAll('.pi-pencil')).toHaveLength(1)
-    expect(wrapper.findAll('.pi-trash')).toHaveLength(1)
+    expect(wrapper.findAll('[aria-label="Editar"]')).toHaveLength(1)
+    expect(wrapper.findAll('[aria-label="Eliminar"]')).toHaveLength(1)
     expect(registryMock.getEntity).toHaveBeenCalledWith('Category')
     expect(categoryStore.loadFullList).toHaveBeenCalled()
     expect(wrapper.find('.p-paginator').exists()).toBe(false)
   })
 
   it('filtro de texto con debounce de 500ms aplica al store y refetcha', async () => {
-    schemaRepoMock.getEntityMetadata.mockReturnValue(iconSchema)
+    schemaMock.find.mockReturnValue(iconSchema)
     wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
     await flushPromises()
 
@@ -324,7 +335,7 @@ describe('List.vue', () => {
   })
 
   it('filtro sin arg de servidor avisa "filtro local" y no puebla filtros del servidor', async () => {
-    schemaRepoMock.getEntityMetadata.mockReturnValue(iconSchema)
+    schemaMock.find.mockReturnValue(iconSchema)
     wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
     await flushPromises()
 
@@ -337,11 +348,11 @@ describe('List.vue', () => {
   })
 
   it('confirma y elimina el registro seleccionado', async () => {
-    schemaRepoMock.getEntityMetadata.mockReturnValue(iconSchema)
+    schemaMock.find.mockReturnValue(iconSchema)
     wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
     await flushPromises()
 
-    await wrapper.findAll('.pi-trash')[0]?.trigger('click')
+    await wrapper.findAll('[aria-label="Eliminar"]')[0]?.trigger('click')
     await flushPromises()
     expect(document.body.textContent).toContain('Confirmar eliminación')
 
@@ -352,6 +363,7 @@ describe('List.vue', () => {
     await new DOMWrapper(confirmEl!).trigger('click')
     await flushPromises()
 
+    await settleToasts()
     expect(store.remove).toHaveBeenCalledWith('/api/icons/1')
     expect(store.fetchItems).toHaveBeenCalledTimes(2)
     expect(document.body.textContent).not.toContain('Confirmar eliminación')
@@ -359,7 +371,7 @@ describe('List.vue', () => {
   })
 
   it('muestra el id como número, no como IRI del resource', async () => {
-    schemaRepoMock.getEntityMetadata.mockReturnValue(iconSchema)
+    schemaMock.find.mockReturnValue(iconSchema)
     wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
     await flushPromises()
 
@@ -368,7 +380,7 @@ describe('List.vue', () => {
   })
 
   it('limpia el filtro de texto con el icono, sin esperar el debounce', async () => {
-    schemaRepoMock.getEntityMetadata.mockReturnValue(iconSchema)
+    schemaMock.find.mockReturnValue(iconSchema)
     wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
     await flushPromises()
 
@@ -377,7 +389,7 @@ describe('List.vue', () => {
     await flushPromises()
     expect(store.fetchItems).toHaveBeenCalledTimes(1)
 
-    const clear = wrapper.find('.pi-times')
+    const clear = wrapper.find('[aria-label="Limpiar"]')
     expect(clear.exists()).toBe(true)
     await clear.trigger('click')
     await flushPromises()
@@ -388,7 +400,7 @@ describe('List.vue', () => {
   })
 
   it('oculta columnas y las restaura desde el indicador', async () => {
-    schemaRepoMock.getEntityMetadata.mockReturnValue(iconSchema)
+    schemaMock.find.mockReturnValue(iconSchema)
     wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
     await flushPromises()
 
@@ -418,7 +430,7 @@ describe('List.vue', () => {
   })
 
   it('reordena columnas y sincroniza el array del store', async () => {
-    schemaRepoMock.getEntityMetadata.mockReturnValue(iconSchema)
+    schemaMock.find.mockReturnValue(iconSchema)
     wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
     await flushPromises()
 
@@ -436,7 +448,7 @@ describe('List.vue', () => {
   })
 
   it('hidrata los filtros persistidos del store', async () => {
-    schemaRepoMock.getEntityMetadata.mockReturnValue(iconSchema)
+    schemaMock.find.mockReturnValue(iconSchema)
     store.filters = { name: 'ho' }
     wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
     await flushPromises()
@@ -447,7 +459,7 @@ describe('List.vue', () => {
   })
 
   it('edita celdas en línea y persiste solo el campo editado', async () => {
-    schemaRepoMock.getEntityMetadata.mockReturnValue(editableSchema)
+    schemaMock.find.mockReturnValue(editableSchema)
     wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
     await flushPromises()
 
@@ -470,11 +482,12 @@ describe('List.vue', () => {
       expect.objectContaining({ createdAt: expect.anything() }),
     )
     expect(store.fetchItems).toHaveBeenCalledTimes(2)
+    await settleToasts()
     expect(document.body.textContent).toContain('Cambio guardado')
   })
 
   it('normaliza fechas a YYYY-MM-DD al editar una celda', async () => {
-    schemaRepoMock.getEntityMetadata.mockReturnValue(editableSchema)
+    schemaMock.find.mockReturnValue(editableSchema)
     wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
     await flushPromises()
 
@@ -497,15 +510,15 @@ describe('List.vue', () => {
   })
 
   it('modo selección: oculta acciones, marca filas y muestra el contador', async () => {
-    schemaRepoMock.getEntityMetadata.mockReturnValue(iconSchema)
+    schemaMock.find.mockReturnValue(iconSchema)
     wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
     await flushPromises()
 
-    expect(wrapper.findAll('.pi-pencil')).toHaveLength(1)
+    expect(wrapper.findAll('[aria-label="Editar"]')).toHaveLength(1)
     await wrapper.find('[aria-label="Modo selección"]').trigger('click')
     await flushPromises()
 
-    expect(wrapper.findAll('.pi-pencil')).toHaveLength(0)
+    expect(wrapper.findAll('[aria-label="Editar"]')).toHaveLength(0)
     expect(wrapper.text()).toContain('0 seleccionados')
 
     const dataTable = wrapper.findComponent({ name: 'DataTable' })
@@ -516,7 +529,7 @@ describe('List.vue', () => {
   })
 
   it('restablecer la vista limpia filtros, orden, página, ocultas y selección', async () => {
-    schemaRepoMock.getEntityMetadata.mockReturnValue(iconSchema)
+    schemaMock.find.mockReturnValue(iconSchema)
     store.filters = { name: 'ho' }
     store.order = [{ name: 'ASC' }]
     store.pagination.currentPage = 3
@@ -533,13 +546,13 @@ describe('List.vue', () => {
     await wrapper.find('[aria-label="Restablecer vista"]').trigger('click')
     await flushPromises()
 
-    expect(store.loadColumns).toHaveBeenLastCalledWith(true)
+    expect(store.init).toHaveBeenLastCalledWith(true)
     expect(store.filters).toEqual({})
     expect(store.order).toEqual([])
     expect(store.pagination.currentPage).toBe(1)
     expect(store.pagination.itemsPerPage).toBe(10)
     expect(store.columns.find((col) => col.field === 'icon')?.visible).not.toBe(false)
-    expect(wrapper.findAll('.pi-pencil')).toHaveLength(1)
+    expect(wrapper.findAll('[aria-label="Editar"]')).toHaveLength(1)
     expect(wrapper.text()).not.toContain('seleccionados')
   })
 
@@ -549,7 +562,7 @@ describe('List.vue', () => {
     vi.stubGlobal('Highlight', FakeHighlight)
     vi.stubGlobal('CSS', { highlights })
     try {
-      schemaRepoMock.getEntityMetadata.mockReturnValue(iconSchema)
+      schemaMock.find.mockReturnValue(iconSchema)
       wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
       await flushPromises()
 
@@ -572,7 +585,7 @@ describe('List.vue', () => {
     vi.stubGlobal('Highlight', FakeHighlight)
     vi.stubGlobal('CSS', { highlights })
     try {
-      schemaRepoMock.getEntityMetadata.mockReturnValue(iconSchema)
+      schemaMock.find.mockReturnValue(iconSchema)
       wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
       await flushPromises()
 
@@ -587,7 +600,7 @@ describe('List.vue', () => {
   })
 
   it('pinta la flecha de orden junto al nombre según el estado del store', async () => {
-    schemaRepoMock.getEntityMetadata.mockReturnValue({
+    schemaMock.find.mockReturnValue({
       ...iconSchema,
       orderInput: 'IconFilter_order',
       orderFields: ['name'],
@@ -596,19 +609,19 @@ describe('List.vue', () => {
     wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
     await flushPromises()
 
-    const nameHeader = wrapper.findAll('th').find((th) => th.text().includes('Nombre'))
-    expect(nameHeader?.find('.pi-sort-amount-up-alt').exists()).toBe(true)
+    const sortName = () => wrapper!.find('[aria-label="Ordenar por Nombre"]')
+    expect(sortName().attributes('data-sort')).toBe('asc')
 
-    const dataTable = wrapper.findComponent({ name: 'DataTable' })
-    dataTable.vm.$emit('sort', { originalEvent: {}, sortField: 'name', sortOrder: -1 })
+    await sortName().trigger('click')
     await flushPromises()
 
-    expect(nameHeader?.find('.pi-sort-amount-down').exists()).toBe(true)
-    expect(nameHeader?.find('.pi-sort-amount-up-alt').exists()).toBe(false)
+    expect(store.order).toEqual([{ name: 'DESC' }])
+    expect(sortName().attributes('data-sort')).toBe('desc')
+    expect(store.fetchItems).toHaveBeenCalledTimes(2)
   })
 
   it('no permite ordenar columnas fuera del input de orden del backend', async () => {
-    schemaRepoMock.getEntityMetadata.mockReturnValue({
+    schemaMock.find.mockReturnValue({
       ...iconSchema,
       orderInput: 'IconFilter_order',
       orderFields: ['name'],
@@ -616,12 +629,7 @@ describe('List.vue', () => {
     wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
     await flushPromises()
 
-    const columns = wrapper
-      .findComponent({ name: 'DataTable' })
-      .findAllComponents({ name: 'Column' })
-    const nameCol = columns.find((col) => col.props('field') === 'name')
-    const iconCol = columns.find((col) => col.props('field') === 'icon')
-    expect(nameCol?.props('sortable')).toBe(true)
-    expect(iconCol?.props('sortable')).toBe(false)
+    expect(wrapper.find('[aria-label="Ordenar por Nombre"]').exists()).toBe(true)
+    expect(wrapper.find('[aria-label="Ordenar por Icono"]').exists()).toBe(false)
   })
 })
