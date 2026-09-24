@@ -21,6 +21,8 @@ export interface FormFieldSource {
   isList: boolean;
   isRelation: boolean;
   enumValues: string[];
+  /** Label configurado (`formFields`); tiene prioridad sobre `labels` y el humanizado. */
+  label?: string;
 }
 
 export interface SerializeFormOptions {
@@ -208,14 +210,16 @@ export class FormSchemaSerializer {
     entry: FormFieldSource,
     opts: Required<Pick<SerializeFormOptions, "mode">> & SerializeFormOptions,
   ): FormKitSchemaNode {
-    const name = entry.label ?? entry.name;
+    // `name` es la clave del valor enviado (debe ser el campo real); el label
+    // configurado solo cambia el texto visible.
+    const name = entry.name;
     const inputType = FormSchemaSerializer.inferInputType(entry);
     const node: Record<string, unknown> = {
       key: `${entityName}.${name}${opts.resetKey !== undefined ? `_${String(opts.resetKey)}` : ""}`,
       $formkit: inputType,
       name,
       label: FormSchemaSerializer.capitalizeLabel(
-        opts.labels?.[name] ?? FormSchemaSerializer.humanizeLabel(name),
+        entry.label ?? opts.labels?.[name] ?? FormSchemaSerializer.humanizeLabel(name),
       ),
     };
     const validation = FormSchemaSerializer.validationFor(entry);

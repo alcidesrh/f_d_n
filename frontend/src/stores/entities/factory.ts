@@ -80,7 +80,7 @@ function createEntityStore(name: string): StoreDefinition {
             this.formFields = config.formFields;
             const columns = config?.collectionFieldConfig;
             if (columns && columns.length > 0) {
-              this.columns = columns.map((v) => ({ ...v, showFilter: false }));
+              this.columns = columns.map((v) => ({ ...v }));
             } else {
               this.columns = buildFallbackColumns(this.name);
             }
@@ -95,8 +95,8 @@ function createEntityStore(name: string): StoreDefinition {
         return this.items;
       },
 
-      async fetchItem<T>(this: EntityStore<T>, id: string | number): Promise<T> {
-        return useSchemaRepositoryStore().item(this, id);
+      async fetchItem<T>(this: EntityStore<T>, id: string | number, fields?: string[]): Promise<T> {
+        return useSchemaRepositoryStore().item(this, id, fields);
       },
 
       async create<T>(this: EntityStore<T>, data: Record<string, unknown>): Promise<T> {

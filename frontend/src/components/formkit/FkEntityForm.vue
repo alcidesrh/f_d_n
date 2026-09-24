@@ -22,7 +22,7 @@
           </template>
         </SplitButton>
       </div>
-      <FormKit type="form" v-model="formData" :submit-label="submitLabel" :disabled="submitting" @submit="onSubmit" :actions="false">
+      <FormKit :id="formId" type="form" v-model="formData" :submit-label="submitLabel" :disabled="submitting" @submit="onSubmit" :actions="false">
         <Fluid>
           <FormKitSchema :schema="schema" />
         </Fluid>
@@ -38,7 +38,8 @@
 </template>
 
 <script setup lang="ts">
-import { watch } from "vue";
+import { useId, watch } from "vue";
+import { submitForm } from "@formkit/core";
 import { useEntityForm } from "@/composables/useEntityForm";
 import type { EntityFormMode } from "@/composables/useEntityForm";
 
@@ -47,12 +48,15 @@ defineOptions({ name: "FkEntityForm" });
 const props = withDefaults(
   defineProps<{
     entity: string;
+    /** Id (número o IRI) del registro a editar; sin id el formulario es de alta. */
+    id?: string | number | null;
     mode?: EntityFormMode;
     initialData?: Record<string, unknown>;
     labels?: Record<string, string>;
     submitLabel?: string;
   }>(),
   {
+    id: null,
     mode: "create",
     initialData: () => ({}),
     labels: () => ({}),
@@ -68,6 +72,7 @@ const emit = defineEmits<{
 const formData = defineModel<Record<string, unknown>>("formData", { default: () => ({}) });
 
 const { schema, loading, submitting, error, submit, reset, setMode, setInitialData, setLabels } = useEntityForm(() => props.entity, {
+  id: () => props.id,
   mode: props.mode,
   initialData: props.initialData,
   labels: props.labels,
@@ -84,6 +89,13 @@ async function onSubmit(data: Record<string, unknown>) {
   } catch (cause) {
     emit("error", cause instanceof Error ? cause.message : String(cause));
   }
+}
+
+const formId = `entity-form-${useId()}`;
+
+/** "Guardar" del SplitButton: dispara el submit de FormKit (valida y llama a `onSubmit`). */
+function save() {
+  submitForm(formId);
 }
 
 function onReset() {

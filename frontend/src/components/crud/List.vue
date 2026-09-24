@@ -623,7 +623,6 @@ function normalizeEditedValue(field: string, value: unknown): unknown {
 // ---------------------------------------------------------------------------
 function onEdit(item: unknown) {
   const record = (item ?? {}) as Record<string, unknown>;
-  alert(idDisplay(String(record.id)));
 
   void router.push({
     name: "entity-form",

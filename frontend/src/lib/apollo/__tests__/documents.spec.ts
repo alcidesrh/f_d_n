@@ -4,6 +4,7 @@ import {
   buildItemQuery,
   buildMutation,
   buildSelection,
+  itemIri,
   toMutationInput,
 } from '@/lib/apollo/documents'
 import type { EntitySchema } from '@/lib/apollo/types'
@@ -310,10 +311,30 @@ describe('buildItemQuery', () => {
     expect(variables).toEqual({})
   })
 
+  it('con fields pide solo esos campos (+ id), relaciones como { id label }', () => {
+    const { query } = buildItemQuery(boletoSchema, { fields: ['numero', 'ruta', 'inexistente'] })
+    expect(query).toContain('boleto(id: $id)')
+    expect(query).toMatch(/\bid\b/)
+    expect(query).toContain('numero')
+    expect(query).toMatch(/ruta \{\s+id\s+label\s+\}/)
+    expect(query).not.toContain('total')
+    expect(query).not.toContain('boletas')
+    expect(query).not.toContain('inexistente')
+  })
+
   it('lanza si no hay query item', () => {
     expect(() => buildItemQuery({ ...boletoSchema, queryItem: null })).toThrow(
       /no expone query item/,
     )
+  })
+})
+
+describe('itemIri', () => {
+  it('arma /api/{colección en snake_case}/{id} y deja los IRIs tal cual', () => {
+    expect(itemIri(boletoSchema, 5)).toBe('/api/boletos/5')
+    expect(itemIri({ ...boletoSchema, queryCollection: 'boletoTarifas' }, '7')).toBe('/api/boleto_tarifas/7')
+    expect(itemIri({ ...boletoSchema, queryCollection: 'buses' }, 1)).toBe('/api/buses/1')
+    expect(itemIri(boletoSchema, '/api/boletos/9')).toBe('/api/boletos/9')
   })
 })
 

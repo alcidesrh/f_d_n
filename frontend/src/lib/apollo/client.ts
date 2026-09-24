@@ -26,6 +26,7 @@ import { getIntrospectionQuery, parse } from "graphql";
 import {
   buildCollectionQuery,
   buildItemQuery,
+  itemIri,
   buildMutation,
   type CollectionQuerySpec,
 } from "./documents";
@@ -143,13 +144,13 @@ export class ApiPlatformClient {
     return result.data as T;
   }
 
-  /** Item por id. */
-  async item<T>(entity: EntitySchema, id: string | number): Promise<T> {
+  /** Item por id numérico o IRI; con `fields` solo se piden esos campos (+ `id`). */
+  async item<T>(entity: EntitySchema, id: string | number, fields?: string[]): Promise<T> {
     if (!entity.queryItem) throw new Error(`[apollo] "${entity.name}" no expone query item`);
-    const { query } = buildItemQuery(entity);
+    const { query } = buildItemQuery(entity, { fields });
     const result = await this.client.query<Record<string, T>>({
       query: toDocument(query),
-      variables: { id },
+      variables: { id: itemIri(entity, id) },
     });
     return result.data![entity.queryItem] as T;
   }

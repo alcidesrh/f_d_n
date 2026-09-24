@@ -56,9 +56,26 @@ export interface BuiltDocument {
   variables: Record<string, unknown>;
 }
 
-export function buildItemQuery(entity: EntitySchema): BuiltDocument {
+/**
+ * IRI de API Platform de un item: `/api/{colección en snake_case}/{id}`
+ * (`boletoTarifas` → `/api/boleto_tarifas/5`). Un IRI se devuelve tal cual.
+ */
+export function itemIri(entity: EntitySchema, id: string | number): string {
+  const raw = String(id);
+  if (raw.startsWith("/")) return raw;
+  const collection = entity.queryCollection ?? `${entity.queryItem ?? entity.name}s`;
+  const resource = collection.replace(/([a-z0-9])([A-Z])/g, "$1_$2").toLowerCase();
+  return `/api/${resource}/${raw}`;
+}
+
+/**
+ * Query item. Con `fields` se piden solo esos campos (+ `id`, relaciones como
+ * `{ id label }`); sin `fields`, todos los scalars y relaciones.
+ */
+export function buildItemQuery(entity: EntitySchema, options: { fields?: string[] } = {}): BuiltDocument {
   if (!entity.queryItem) throw new Error(`[documents] "${entity.name}" no expone query item`);
-  const selection = buildSelection(entity, { includeRelations: true });
+  const fields = options.fields ? [...new Set(["id", ...options.fields])] : undefined;
+  const selection = buildSelection(entity, fields ? { fields } : { includeRelations: true });
   return {
     query: `query Item($id: ID!) {\n  ${entity.queryItem}(id: $id) {\n${indent(selection, 2)}\n  }\n}`,
     variables: {},

@@ -104,9 +104,9 @@ export const useSchemaRepositoryStore = defineStore("schemaRepository", {
       return entity;
     },
 
-    async item<T>(store: EntityStore<T>, id: string | number): Promise<T> {
+    async item<T>(store: EntityStore<T>, id: string | number, fields?: string[]): Promise<T> {
       const entity = this.requireEntity(store);
-      store.item = await apollo.item<T>(entity, id);
+      store.item = await apollo.item<T>(entity, id, fields);
       return store.item;
     },
 

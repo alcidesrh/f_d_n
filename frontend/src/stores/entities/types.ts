@@ -83,7 +83,8 @@ export interface EntityStore<T = unknown> extends EntityStoreState<T> {
 
   init(force?: boolean): void;
   fetchItems(): Promise<T[]>;
-  fetchItem(id: string | number): Promise<T>;
+  /** Item por id o IRI; con `fields` solo se piden esos campos (+ `id`). */
+  fetchItem(id: string | number, fields?: string[]): Promise<T>;
   create(data: Record<string, unknown>): Promise<T>;
   update(data: Record<string, unknown>): Promise<T>;
   remove(id: string | number): Promise<T>;

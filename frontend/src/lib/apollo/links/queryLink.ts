@@ -16,9 +16,10 @@ export function createQueryLink() {
         temp2 &&
         !temp2.selectionSet.selections.some((v) => v.name.value == "collection")
       ) {
-        if (operation.variables?.value) {
+        const isIri = (v: unknown) => typeof v === "string" && v.startsWith("/");
+        if (operation.variables?.value && !isIri(operation.variables.value)) {
           operation.variables.value = `/api/${temp2.name.value}/${operation.variables.value}`;
-        } else if (operation.variables?.id) {
+        } else if (operation.variables?.id && !isIri(operation.variables.id)) {
           operation.variables.id = `/api/${temp2.name.value}s/${operation.variables.id}`;
         }
       }
