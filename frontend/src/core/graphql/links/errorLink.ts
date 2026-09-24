@@ -7,8 +7,9 @@ import { notify } from "@/core/notify";
 export function createErrorLink() {
   return new ErrorLink(({ error }) => {
     if (ServerError.is(error)) {
-      if (error.statusCode === 401) return handleUnauthorized();
-      return notify.error(`Error ${error.statusCode} del servidor: ${error.message}`);
+      if (error.statusCode === 401) handleUnauthorized();
+      else notify.error(`Error ${error.statusCode} del servidor: ${error.message}`);
+      return;
     }
     if (CombinedGraphQLErrors.is(error)) {
       for (const { message, extensions } of error.errors) {
@@ -18,7 +19,8 @@ export function createErrorLink() {
       return;
     }
     if (ServerParseError.is(error)) {
-      return notify.error(`Respuesta inválida del servidor (HTTP ${error.statusCode}).`);
+      notify.error(`Respuesta inválida del servidor (HTTP ${error.statusCode}).`);
+      return;
     }
     notify.error("Problema con la conexión.");
   });

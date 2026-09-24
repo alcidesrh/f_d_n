@@ -1,9 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { FormKitSchemaNode } from '@formkit/core'
-import { FormSchemaSerializer, type FormFieldSource } from '@/features/entity-crud/form/formSchema'
-import type { AgnosticOption } from '@/core/graphql/types'
-
-const {
+import {
   humanizeLabel,
   capitalizeLabel,
   inferInputType,
@@ -12,7 +9,9 @@ const {
   hydrateInitialValues,
   serializeSubmitValue,
   serializeEntityForm,
-} = FormSchemaSerializer
+  type FormFieldSource,
+} from '@/features/entity-crud/form/formSchema'
+import type { AgnosticOption } from '@/core/graphql/types'
 
 function field(
   overrides: Partial<FormFieldSource> & Pick<FormFieldSource, 'name' | 'namedType'>,

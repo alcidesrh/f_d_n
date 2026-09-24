@@ -1,154 +1,114 @@
 /**
- * `useEntityForm` — formulario dinámico on demand a partir del nombre de una
- * entidad (ej: `'Boleto'`). Lee los metadatos introspectados, precarga las
- * listas de relaciones en paralelo (`getEntity(t).loadFullList()`),
- * serializa el FormKit Schema y expone submit/reset.
+ * Formulario dinámico de una entidad: arma el FormKit Schema a partir de la
+ * metadata y la configuración, y expone guardar/eliminar/restablecer.
  *
- * Los campos del formulario (y los que pide la query al editar) son los
- * `formFields` visibles del store de la entidad o, si no hay, los `fields` del
- * schema (ver `entityFormFields.ts`); de ellos se usan los que acepta la
- * mutación `create`/`update`.
- *
- * Con `id` el formulario es de edición: carga el registro con esos campos y
- * al guardar envía `update` con el IRI del registro.
+ * - Campos: los `formFields` visibles de la entidad o, si no hay, sus `fields`
+ *   del schema (`formFields.ts`); solo los que acepta la mutación.
+ * - Con `id` es de edición: carga el registro pidiendo esos campos y guarda con
+ *   `update` + el IRI del registro. Sin `id`, `create`.
+ * - Relaciones: se precargan sus opciones; las de `Icon` se editan por nombre
+ *   (`iconRelation.ts`).
  */
-
-import { computed, ref, toRef, watch } from "vue";
-import type { MaybeRefOrGetter } from "vue";
+import { computed, ref, toRef, watch, type MaybeRefOrGetter } from "vue";
 import type { FormKitSchemaNode } from "@formkit/core";
 import { getEntity } from "@/core/entities/registry";
-
-import { FormSchemaSerializer, type FormFieldSource } from "./formSchema";
-import type { AgnosticOption } from "@/core/graphql/types";
-import { itemIri } from "@/core/graphql/documents";
-import { notify } from "@/core/notify";
 import { useSchemaStore } from "@/core/entities/schema";
-import { formFieldEntries, pickInputFields } from "./formFields";
 import type { EntityStore } from "@/core/entities/types";
-import { createIconRelationResolver, isIconRelation } from "./iconRelation";
+import { itemIri } from "@/core/graphql/documents";
+import type { AgnosticOption } from "@/core/graphql/types";
+import { notify } from "@/core/notify";
+import { formFieldEntries, pickInputFields } from "./formFields";
+import { hydrateInitialValues, serializeEntityForm, serializeSubmitValue, type FormFieldSource } from "./formSchema";
 import { apiIconGateway } from "./iconGateway";
+import { createIconRelationResolver, isIconRelation } from "./iconRelation";
 
 export type EntityFormMode = "create" | "update";
 
-export interface UseEntityFormOptions {
-  mode?: EntityFormMode;
-  /** Id (número o IRI) del registro a editar: fuerza modo `update` y lo carga. */
-  id?: MaybeRefOrGetter<string | number | null | undefined>;
-  /** Item a editar (relaciones `{ id, label }` incluidas) o `{}` para alta. */
-  initialData?: Record<string, unknown>;
-  /** Labels por campo; por defecto los de `entity_configurations` y humanizados. */
-  labels?: Record<string, string>;
+type Row = Record<string, unknown>;
+
+/** Opciones de cada campo de relación (`campo → options`), sin fallar si una lista no carga. */
+async function loadRelationOptions(fields: FormFieldSource[]): Promise<Record<string, AgnosticOption[]>> {
+  const relations = fields.filter((field) => field.isRelation && !isIconRelation(field));
+  const lists = await Promise.all(
+    [...new Set(relations.map((field) => field.namedType))].map(async (target) => {
+      try {
+        return [target, await getEntity(target).loadFullList()] as const;
+      } catch (cause) {
+        console.warn(`[useEntityForm] sin opciones para "${target}":`, cause);
+        return [target, [] as AgnosticOption[]] as const;
+      }
+    }),
+  );
+  const byTarget = Object.fromEntries(lists);
+  return Object.fromEntries(relations.map((field) => [field.name, byTarget[field.namedType] ?? []]));
 }
 
-export function useEntityForm(entityName: MaybeRefOrGetter<string>, options: UseEntityFormOptions = {}) {
+/** Labels de las columnas del listado como respaldo de los del formulario. */
+function columnLabels(store: Pick<EntityStore, "columns">): Record<string, string> {
+  return Object.fromEntries(store.columns.filter((col) => col.label).map((col) => [col.field, col.label as string]));
+}
 
+export function useEntityForm(
+  entityName: MaybeRefOrGetter<string>,
+  options: { id?: MaybeRefOrGetter<string | number | null | undefined> } = {},
+) {
   const name = toRef(entityName);
-  const mode = ref<EntityFormMode>(options.mode ?? "create");
   const recordId = toRef(options.id ?? null);
-  const hasRecordId = computed(() => recordId.value !== null && recordId.value !== undefined && recordId.value !== "");
-  /** Con `id` siempre se edita, sea cual sea `mode`. */
-  const effectiveMode = computed<EntityFormMode>(() => (hasRecordId.value ? "update" : mode.value));
-  const initialData = ref<Record<string, unknown>>(options.initialData ?? {});
-  const labels = ref<Record<string, string>>(options.labels ?? {});
+  const mode = computed<EntityFormMode>(() => (recordId.value != null && recordId.value !== "" ? "update" : "create"));
 
   const schema = ref<FormKitSchemaNode[]>([]);
   const loading = ref(false);
   const submitting = ref(false);
   const error = ref("");
 
+  /** Inputs del formulario vigente (los que se envían al guardar). */
   let fields: FormFieldSource[] = [];
-  let resetKey = 0;
-  /** IRI del registro cargado por `id` (lo lleva el payload de `update`). */
+  /** IRI del registro en edición. */
   let recordIri: string | null = null;
-  /** Descarta builds viejos si cambian entidad/id mientras uno sigue en vuelo. */
+  /** Remonta los inputs en cada build (`key` de los nodos). */
+  let generation = 0;
+  /** Descarta builds viejos si cambian entidad o id con uno en vuelo. */
   let buildSeq = 0;
-  // Relaciones con `Icon`: el form edita el nombre del ícono (IconPicker) y
-  // al guardar se traduce a IRI buscando/creando el registro `Icon`.
-  const iconRelations = createIconRelationResolver(apiIconGateway());
+  const icons = createIconRelationResolver(apiIconGateway());
 
-  const entity = computed(() => useSchemaStore().find(name.value));
-  const store = computed<EntityStore<Record<string, unknown>> | null>(() => {
-    try {
-      return getEntity<Record<string, unknown>>(name.value);
-    } catch {
-      return null;
-    }
-  });
-  const mutation = computed(() => {
-    const ent = entity.value;
-    if (!ent) return null;
-    return effectiveMode.value === "update" ? ent.update : ent.create;
-  });
+  const store = () => getEntity<Row>(name.value);
 
   async function build() {
     const seq = ++buildSeq;
     loading.value = true;
     error.value = "";
     try {
-      const ent = entity.value;
-      const mut = mutation.value;
-      const target = store.value;
-      if (!ent || !mut || !target) {
-        throw new Error(`"${name.value}" no expone ${effectiveMode.value}`);
-      }
-      // `getEntity` dispara `init()` sin esperarlo: sin esto el primer build
-      // puede correr antes de que lleguen los `formFields` del REST.
+      const entity = useSchemaStore().require(name.value);
+      const mutation = entity[mode.value];
+      if (!mutation) throw new Error(`"${name.value}" no expone ${mode.value}`);
+      const target = store();
       await target.init();
-      const entries = formFieldEntries(target.formFields, ent);
-      const selected = pickInputFields(entries, mut, effectiveMode.value);
 
-      let source = initialData.value;
+      const entries = formFieldEntries(target.formFields, entity);
+      const selected = pickInputFields(entries, mutation, mode.value);
+
+      let source: Row = {};
       recordIri = null;
-      if (hasRecordId.value) {
-        const item = await target.fetchItem(
-          recordId.value as string | number,
-          entries.map((entry) => entry.name),
-        );
-        if (!item) throw new Error(`No existe ${ent.name} con id ${String(recordId.value)}`);
+      if (mode.value === "update") {
+        const id = recordId.value as string | number;
+        const item = await target.fetchItem(id, entries.map((entry) => entry.name));
+        if (!item) throw new Error(`No existe ${entity.name} con id ${String(id)}`);
         source = item;
-        recordIri = typeof item.id === "string" ? item.id : itemIri(ent, recordId.value as string | number);
+        recordIri = typeof item.id === "string" ? item.id : itemIri(entity, id);
       }
 
-      // Precarga en paralelo las listas de relaciones; falla blando si una
-      // entidad destino no expone collectionAgnostic.
-      const targets = [...new Set(selected.filter((f) => f.isRelation && !isIconRelation(f)).map((f) => f.namedType))];
-      const lists = await Promise.all(
-        targets.map(async (targetName) => {
-          try {
-            return [targetName, await getEntity(targetName).loadFullList()] as const;
-          } catch (cause) {
-            console.warn(`[useEntityForm] sin lista para "${targetName}":`, cause);
-            return [targetName, [] as AgnosticOption[]] as const;
-          }
-        }),
-      );
-      const relationOptions: Record<string, AgnosticOption[]> = {};
-      for (const [targetName, list] of lists) {
-        for (const field of selected) {
-          if (field.isRelation && field.namedType === targetName) {
-            relationOptions[field.name] = list;
-          }
-        }
-      }
-
-      const labelMap: Record<string, string> = { ...labels.value };
-      for (const col of target.columns) {
-        if (col.label && !labelMap[col.field]) labelMap[col.field] = col.label;
-      }
-
-      let values = FormSchemaSerializer.hydrateInitialValues(selected, source, effectiveMode.value);
-      if (selected.some(isIconRelation)) values = await iconRelations.hydrate(selected, values);
+      const relationOptions = await loadRelationOptions(selected);
+      let values = hydrateInitialValues(selected, source, mode.value);
+      if (selected.some(isIconRelation)) values = await icons.hydrate(selected, values);
 
       if (seq !== buildSeq) return;
       fields = selected;
-      resetKey += 1;
-
-      schema.value = FormSchemaSerializer.serializeEntityForm(ent.name, fields, {
-        mode: effectiveMode.value,
-        labels: labelMap,
+      schema.value = serializeEntityForm(entity.name, fields, {
+        mode: mode.value,
+        labels: columnLabels(target),
         relationOptions,
         values,
-        resetKey,
+        resetKey: ++generation,
       });
     } catch (cause) {
       if (seq !== buildSeq) return;
@@ -160,20 +120,11 @@ export function useEntityForm(entityName: MaybeRefOrGetter<string>, options: Use
     }
   }
 
-  async function submit(data: Record<string, unknown>): Promise<Record<string, unknown>> {
-    const target = store.value;
-    if (!target) throw new Error(`No hay store para "${name.value}"`);
+  async function run<T>(action: () => Promise<T>): Promise<T> {
     submitting.value = true;
     error.value = "";
     try {
-      const resolved = fields.some(isIconRelation) ? await iconRelations.resolve(fields, data) : data;
-      const payload = FormSchemaSerializer.serializeSubmitValue(fields, resolved);
-      if (effectiveMode.value === "update") {
-        // El `id` puede no estar entre los formFields; la mutación lo exige.
-        if (recordIri) payload.id = recordIri;
-        return await target.update(payload);
-      }
-      return await target.create(payload);
+      return await action();
     } catch (cause) {
       error.value = cause instanceof Error ? cause.message : String(cause);
       throw cause;
@@ -182,52 +133,27 @@ export function useEntityForm(entityName: MaybeRefOrGetter<string>, options: Use
     }
   }
 
-  /** Borra el registro cargado por `id`. */
-  async function remove(): Promise<void> {
-    const target = store.value;
-    if (!target || !recordIri) throw new Error("No hay registro cargado para eliminar");
-    submitting.value = true;
-    try {
-      await target.remove(recordIri);
-    } finally {
-      submitting.value = false;
-    }
+  /** Guarda (`create` o `update`) y devuelve el registro resultante. */
+  function submit(data: Row): Promise<Row> {
+    return run(async () => {
+      const resolved = fields.some(isIconRelation) ? await icons.resolve(fields, data) : data;
+      const payload = serializeSubmitValue(fields, resolved);
+      if (mode.value === "create") return store().create(payload);
+      // `id` puede no estar entre los campos visibles; la mutación lo exige.
+      if (recordIri) payload.id = recordIri;
+      return store().update(payload);
+    });
   }
 
-  function setMode(next: EntityFormMode) {
-    mode.value = next;
+  /** Elimina el registro en edición. */
+  function remove(): Promise<void> {
+    return run(async () => {
+      if (!recordIri) throw new Error("No hay registro cargado para eliminar");
+      await store().remove(recordIri);
+    });
   }
 
-  function setInitialData(data: Record<string, unknown>) {
-    initialData.value = data;
-  }
+  watch([name, recordId], () => void build(), { immediate: true });
 
-  function setLabels(next: Record<string, string>) {
-    labels.value = next;
-  }
-
-  /** Reconstruye el schema desde cero (remonta los inputs con `resetKey`). */
-  function reset() {
-    void build();
-  }
-
-  watch([name, effectiveMode, recordId, initialData, labels], () => {
-    void build();
-  });
-
-  void build();
-
-  return {
-    schema,
-    loading,
-    submitting,
-    error,
-    mode: effectiveMode,
-    submit,
-    remove,
-    reset,
-    setMode,
-    setInitialData,
-    setLabels,
-  };
+  return { schema, loading, submitting, error, mode, submit, remove, reset: build };
 }

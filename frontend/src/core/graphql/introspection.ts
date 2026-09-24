@@ -53,7 +53,7 @@ function signature(ref: IntrospectionRef): string {
   if (ref.kind === "LIST") return `[${signature(ref.ofType!)}]`;
   return ref.name ?? "unknown";
 }
-function slugify(text) {
+function slugify(text: string): string {
   return text
     .toString() // Convert to string (safeguard)
     .normalize("NFD") // Split accented characters into their base letters

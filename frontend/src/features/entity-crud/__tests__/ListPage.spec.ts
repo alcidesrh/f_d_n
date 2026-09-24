@@ -88,6 +88,7 @@ function arg(name: string) {
 
 const iconSchema: EntitySchema = {
   name: 'Icon',
+  slug: null,
   queryItem: 'icon',
   queryCollection: 'icons',
   collectionKind: 'list',
@@ -532,8 +533,8 @@ describe('ListPage', () => {
     schemaMock.find.mockReturnValue(iconSchema)
     store.filters = { name: 'ho' }
     store.order = [{ name: 'ASC' }]
-    store.pagination.currentPage = 3
-    store.pagination.itemsPerPage = 25
+    store.pagination!.currentPage = 3
+    store.pagination!.itemsPerPage = 25
     wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
     await flushPromises()
 
@@ -549,8 +550,8 @@ describe('ListPage', () => {
     expect(store.init).toHaveBeenLastCalledWith(true)
     expect(store.filters).toEqual({})
     expect(store.order).toEqual([])
-    expect(store.pagination.currentPage).toBe(1)
-    expect(store.pagination.itemsPerPage).toBe(10)
+    expect(store.pagination?.currentPage).toBe(1)
+    expect(store.pagination?.itemsPerPage).toBe(10)
     expect(store.columns.find((col) => col.field === 'icon')?.visible).not.toBe(false)
     expect(wrapper.findAll('[aria-label="Editar"]')).toHaveLength(1)
     expect(wrapper.text()).not.toContain('seleccionados')

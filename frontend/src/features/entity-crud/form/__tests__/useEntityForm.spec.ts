@@ -46,7 +46,7 @@ const { busStore, rutaStore } = vi.hoisted(() => {
 })
 
 vi.mock('@/core/entities/schema', () => ({
-  useSchemaStore: () => ({ find: () => busEntity }),
+  useSchemaStore: () => ({ find: () => busEntity, require: () => busEntity }),
 }))
 vi.mock('@/core/notify', () => ({ notify: { error: vi.fn<(text: string) => void>() } }))
 vi.mock('@/core/entities/registry', () => ({

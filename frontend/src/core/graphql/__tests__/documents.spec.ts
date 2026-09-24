@@ -11,6 +11,7 @@ import type { EntitySchema } from '@/core/graphql/types'
 
 const boletoSchema: EntitySchema = {
   name: 'Boleto',
+  slug: null,
   queryItem: 'boleto',
   queryCollection: 'boletos',
   collectionKind: 'page-connection',
