@@ -9,6 +9,13 @@ export interface NormalizedOption {
   value: unknown
 }
 
+/** Copia de `attrs` sin las claves que el wrapper consume y no deben llegar a PrimeVue. */
+export function omit(attrs: Record<string, unknown>, ...keys: string[]): Record<string, unknown> {
+  const rest = { ...attrs }
+  for (const key of keys) delete rest[key]
+  return rest
+}
+
 export function toScalarValue(value: unknown): unknown {
   if (value && typeof value === 'object' && !Array.isArray(value)) {
     const record = value as Record<string, unknown>

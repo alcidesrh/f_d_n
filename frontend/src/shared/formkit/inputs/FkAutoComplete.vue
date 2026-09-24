@@ -21,7 +21,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import type { FormKitFrameworkContext } from "@formkit/core";
-import { useFormKitInput } from "@/shared/formkit/useFormKitInput";
+import { omit, useFormKitInput } from "@/shared/formkit/useFormKitInput";
 import { getEntity } from "@/core/entities/registry";
 import type { AgnosticOption } from "@/core/graphql/types";
 
@@ -66,15 +66,7 @@ async function onComplete(event: { query: string }) {
 }
 
 /** Eliminar attrs que ya se pasan explícitamente para evitar conflictos con PrimeVue. */
-const cleanAttrs = computed(() => {
-  const {
-    entityName: _en,
-    optionLabel: _ol,
-    multiple: _m,
-    suggestions: _s,
-    completeMethod: _cm,
-    ...rest
-  } = props.context.attrs;
-  return rest;
-});
+const cleanAttrs = computed(() =>
+  omit(props.context.attrs, "entityName", "optionLabel", "multiple", "suggestions", "completeMethod"),
+);
 </script>

@@ -23,19 +23,19 @@
   />
   <DatePicker
     v-else-if="kind === 'date'"
-    :model-value="data[column.field] as Date | null"
+    :model-value="current"
     :show-icon="true"
     @update:model-value="(value: unknown) => setValue(value)"
   />
   <InputNumber
     v-else-if="kind === 'number'"
-    :model-value="data[column.field] as number | null"
+    :model-value="current"
     @update:model-value="(value: unknown) => setValue(value)"
   />
   <InputText
     size="small"
     v-else
-    :model-value="data[column.field] as string | null"
+    :model-value="current"
     @update:model-value="(value: unknown) => setValue(value)"
   />
 </template>
@@ -76,6 +76,9 @@ const booleanOptions = [
   { label: 'Sí', value: true },
   { label: 'No', value: false },
 ]
+
+/** Valor actual de la celda; el tipo depende del editor (`kind`), de ahí `never`. */
+const current = computed(() => props.data[props.column.field] as never)
 
 const relationId = computed(() => {
   const value = props.data[props.column.field]

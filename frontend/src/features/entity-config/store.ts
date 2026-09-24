@@ -42,20 +42,9 @@ function byPosition<T extends { position: number }>(fields: T[]): T[] {
   return [...fields].sort((a, b) => a.position - b.position);
 }
 
-function toCollectionRows(
-  config: EntityConfigurationDetailDto,
-): CollectionFieldRow[] {
-  return byPosition(config.collectionFieldConfig ?? []).map((field) => ({
-    ...field,
-    key: field.id,
-  }));
-}
-
-function toFormRows(config: EntityConfigurationDetailDto): FormFieldRow[] {
-  return byPosition(config.formFields ?? []).map((field) => ({
-    ...field,
-    key: field.id,
-  }));
+/** Filas arrastrables ordenadas por `position`, con el IRI como `key` estable. */
+function toRows<T extends { id: string; position: number }>(fields: T[] | undefined): Array<T & { key: string }> {
+  return byPosition(fields ?? []).map((field) => ({ ...field, key: field.id }));
 }
 
 /**
@@ -192,8 +181,8 @@ export const useEntityConfigStore = defineStore("entityConfig", {
 
     /** Vuelca la configuración en el estado y fija el snapshot de referencia. */
     applyConfig(config: EntityConfigurationDetailDto | null): void {
-      this.collectionFields = config ? toCollectionRows(config) : [];
-      this.formFields = config ? toFormRows(config) : [];
+      this.collectionFields = toRows(config?.collectionFieldConfig);
+      this.formFields = toRows(config?.formFields);
       this.baseline = config
         ? snapshot(this.collectionFields, this.formFields)
         : "";

@@ -17,7 +17,7 @@
 <script setup lang="ts">
 import type { FormKitFrameworkContext } from '@formkit/core'
 import { computed } from 'vue'
-import { useFormKitInput } from '@/shared/formkit/useFormKitInput'
+import { omit, useFormKitInput } from '@/shared/formkit/useFormKitInput'
 
 defineOptions({ name: 'FkTreeSelect' })
 
@@ -55,8 +55,7 @@ const resolvedExpandedKeys = computed(() => {
   return collectAllKeys(options)
 })
 
-const treeAttrs = computed(() => {
-  const { options, expandedKeys, filter: _f, filterPlaceholder: _fp, autoExpand: _ae, ...rest } = props.context.attrs as Record<string, unknown>
-  return rest
-})
+const treeAttrs = computed(() =>
+  omit(props.context.attrs, 'options', 'expandedKeys', 'filter', 'filterPlaceholder', 'autoExpand'),
+)
 </script>

@@ -35,7 +35,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import type { FormKitFrameworkContext } from "@formkit/core";
-import { useFormKitInput } from "@/shared/formkit/useFormKitInput";
+import { omit, useFormKitInput } from "@/shared/formkit/useFormKitInput";
 
 defineOptions({ name: "FkInputText" });
 
@@ -54,10 +54,7 @@ const hasValue = computed(() => {
     !(Array.isArray(value) && value.length === 0)
   );
 });
-const cleanAttrs = computed(() => {
-  const { clearable: _omit, ...rest } = props.context.attrs;
-  return rest;
-});
+const cleanAttrs = computed(() => omit(props.context.attrs, "clearable"));
 function clearValue() {
   props.context.node.input("");
 }
