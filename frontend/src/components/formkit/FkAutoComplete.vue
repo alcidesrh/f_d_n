@@ -23,7 +23,7 @@ import { computed, ref } from "vue";
 import type { FormKitFrameworkContext } from "@formkit/core";
 import { useFormKitInput } from "./useFormKitInput";
 import { getEntity } from "@/composables/useEntityRegistry";
-import type { AgnosticOption } from "@/lib/apollo/types";
+import type { AgnosticOption } from "@/core/graphql/types";
 
 defineOptions({ name: "FkAutoComplete" });
 

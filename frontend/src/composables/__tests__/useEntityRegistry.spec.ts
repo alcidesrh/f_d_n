@@ -4,10 +4,10 @@ import { getEntity, useEntityRegistry } from '@/composables/useEntityRegistry'
 
 const { restMock, schemaRepoMock } = vi.hoisted(() => ({
   restMock: { getEntityConfiguration: vi.fn<(entityClass: string) => Promise<unknown>>() },
-  schemaRepoMock: { getEntity: vi.fn<(name: string) => unknown>() },
+  schemaRepoMock: { getEntityMetadata: vi.fn<(name: string) => unknown>() },
 }))
 
-vi.mock('@/lib/apollo/rest', () => ({ rest: restMock }))
+vi.mock('@/core/metadata/entityConfiguration', () => ({ fetchEntityConfiguration: restMock.getEntityConfiguration }))
 vi.mock('@/stores/schemaRepository', () => ({ useSchemaRepositoryStore: () => schemaRepoMock }))
 
 describe('useEntityRegistry', () => {
@@ -15,10 +15,10 @@ describe('useEntityRegistry', () => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
     restMock.getEntityConfiguration.mockResolvedValue(null)
-    schemaRepoMock.getEntity.mockReturnValue({
-      name: 'Boleto',
+    schemaRepoMock.getEntityMetadata.mockImplementation((name: string) => ({
+      name,
       scalarFields: ['id', 'numero', 'total'],
-    })
+    }))
   })
 
   it('crea el store de la entidad por demanda', () => {

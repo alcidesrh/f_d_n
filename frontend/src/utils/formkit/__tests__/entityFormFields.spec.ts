@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { EntityFieldSchema, EntitySchema, MutationSchema, SchemaInputField } from '@/lib/apollo/types'
+import type { EntityFieldSchema, EntitySchema, MutationSchema, SchemaInputField } from '@/core/graphql/types'
 import { formFieldEntries, pickInputFields } from '@/utils/formkit/entityFormFields'
 
 function entityField(name: string, overrides: Partial<EntityFieldSchema> = {}): EntityFieldSchema {

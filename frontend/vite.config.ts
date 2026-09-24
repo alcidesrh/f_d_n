@@ -17,19 +17,11 @@ export default defineConfig({
     vueDevTools(),
     tailwindcss(),
     AutoImport({
-      imports: [
-        "vue",
-        "vue-router",
-        "pinia",
-        { "@/init": ["ui", "session", "apiRest", "apollo", "loadingStore", "apiGraphql"] },
-        { "@/router": ["router"] },
-      ],
-
+      // Solo las APIs de Vue/Router/Pinia: el código del proyecto se importa
+      // explícitamente para que cada archivo declare de qué depende.
+      imports: ["vue", "vue-router", "pinia"],
       dts: "src/auto-imports.d.ts",
-
       vueTemplate: true,
-
-      dirs: ["./src/composables", "./src/stores", "./src/utils"],
     }),
     Components({
       dirs: ["src/components"],

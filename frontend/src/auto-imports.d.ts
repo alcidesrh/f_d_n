@@ -9,11 +9,7 @@ declare global {
   const ApiPlatformClient: typeof import("./init").ApiPlatformClient
   const EffectScope: typeof import('vue').EffectScope
   const ICON_PATHS: typeof import("./components/icons/icon-paths").ICON_PATHS
-  const SCHEMA_REPOSITORY_VERSION: typeof import('./stores/schemaRepository').SCHEMA_REPOSITORY_VERSION
   const acceptHMRUpdate: typeof import('pinia').acceptHMRUpdate
-  const apiGraphql: typeof import('@/init').apiGraphql
-  const apiRest: typeof import('@/init').apiRest
-  const apollo: typeof import('@/init').apollo
   const buildFallbackColumns: typeof import("./stores/sidebarFactoryStore").buildFallbackColumns
   const computed: typeof import('vue').computed
   const createApi: typeof import("./composables/useApiRest").createApi
@@ -24,17 +20,12 @@ declare global {
   const defineAsyncComponent: typeof import('vue').defineAsyncComponent
   const defineComponent: typeof import('vue').defineComponent
   const defineEntityStore: typeof import("./stores/sidebarFactoryStore").defineEntityStore
-  const defineSidebarStore: typeof import('./stores/sidebarFactoryStore').defineSidebarStore
   const defineStore: typeof import('pinia').defineStore
   const effectScope: typeof import('vue').effectScope
-  const entityNameFromSlug: typeof import('./utils/entitySlug').entityNameFromSlug
-  const entitySlug: typeof import('./utils/entitySlug').entitySlug
-  const extractVueRoutes: typeof import('./utils/vueRoutesSync').extractVueRoutes
   const getActivePinia: typeof import('pinia').getActivePinia
   const getCurrentInstance: typeof import('vue').getCurrentInstance
   const getCurrentScope: typeof import('vue').getCurrentScope
   const getCurrentWatcher: typeof import('vue').getCurrentWatcher
-  const getEntity: typeof import('./composables/useEntityRegistry').getEntity
   const getSidebar: typeof import("./init").getSidebar
   const h: typeof import('vue').h
   const handleMouseEnter: typeof import("./utils/autoimport").handleMouseEnter
@@ -46,7 +37,6 @@ declare global {
   const isReadonly: typeof import('vue').isReadonly
   const isRef: typeof import('vue').isRef
   const isShallow: typeof import('vue').isShallow
-  const loadingStore: typeof import('@/init').loadingStore
   const mapActions: typeof import('pinia').mapActions
   const mapGetters: typeof import('pinia').mapGetters
   const mapState: typeof import('pinia').mapState
@@ -54,7 +44,6 @@ declare global {
   const mapWritableState: typeof import('pinia').mapWritableState
   const markRaw: typeof import('vue').markRaw
   const menus: typeof import("./stores/global").menus
-  const msg: typeof import('./utils/autoimport').msg
   const nextTick: typeof import('vue').nextTick
   const onActivated: typeof import('vue').onActivated
   const onBeforeMount: typeof import('vue').onBeforeMount
@@ -73,66 +62,46 @@ declare global {
   const onUpdated: typeof import('vue').onUpdated
   const onWatcherCleanup: typeof import('vue').onWatcherCleanup
   const ormKeys: typeof import("./features/crud/composables/graphql-orm-keys").ormKeys
-  const pinia: typeof import('./stores/pinia').pinia
   const provide: typeof import('vue').provide
   const reactive: typeof import('vue').reactive
   const readonly: typeof import('vue').readonly
   const ref: typeof import('vue').ref
   const resolveComponent: typeof import('vue').resolveComponent
   const restApi: typeof import("./composables/useApiRest").restApi
-  const router: typeof import('@/router').router
   const schemaRepository: typeof import("@/init").schemaRepository
-  const session: typeof import('@/init').session
   const setActivePinia: typeof import('pinia').setActivePinia
   const setApi: typeof import("./composables/useApiRest").setApi
   const setMapStoreSuffix: typeof import('pinia').setMapStoreSuffix
   const shallowReactive: typeof import('vue').shallowReactive
   const shallowReadonly: typeof import('vue').shallowReadonly
   const shallowRef: typeof import('vue').shallowRef
-  const state: typeof import('./stores/ui').state
   const storeToRefs: typeof import('pinia').storeToRefs
-  const stores: typeof import('./composables/useEntityRegistry').stores
-  const syncVueRoutes: typeof import('./utils/vueRoutesSync').syncVueRoutes
   const toRaw: typeof import('vue').toRaw
   const toRef: typeof import('vue').toRef
   const toRefs: typeof import('vue').toRefs
   const toValue: typeof import('vue').toValue
-  const toVueRouteDTO: typeof import('./utils/vueRoutesSync').toVueRouteDTO
   const toast: typeof import("./utils/autoimport").toast
   const triggerRef: typeof import('vue').triggerRef
-  const ui: typeof import('@/init').ui
   const unref: typeof import('vue').unref
   const useApi: typeof import("./composables/useApiRest").useApi
   const useAttrs: typeof import('vue').useAttrs
   const useCollection: typeof import("./features/crud/composables/use-collection").useCollection
   const useCssModule: typeof import('vue').useCssModule
   const useCssVars: typeof import('vue').useCssVars
-  const useEntityConfigStore: typeof import('./stores/entityConfig').useEntityConfigStore
-  const useEntityForm: typeof import('./composables/useEntityForm').useEntityForm
   const useEntityMutations: typeof import("./features/crud/composables/use-entity-mutations").useEntityMutations
-  const useEntityRegistry: typeof import('./composables/useEntityRegistry').useEntityRegistry
-  const useFormBuilderStore: typeof import('./stores/formBuilder').useFormBuilderStore
   const useFormKitSchema: typeof import("./composables/useFormKitSchema").useFormKitSchema
   const useId: typeof import('vue').useId
   const useItem: typeof import("./features/crud/composables/use-item").useItem
   const useLayout: typeof import("./composables/useLayout").useLayout
   const useLink: typeof import('vue-router').useLink
-  const useLoadingStore: typeof import('./stores/loadingStore').useLoadingStore
-  const useMenusStore: typeof import('./stores/menus').useMenusStore
-  const useMigracionStore: typeof import('./stores/migracion').useMigracionStore
   const useModel: typeof import('vue').useModel
-  const useNavigationHistoryStore: typeof import('./stores/navigationHistory').useNavigationHistoryStore
   const useOrm: typeof import("./features/crud/composables/use-orm").useOrm
   const useProfilerStore: typeof import("./stores/profilerStore").useProfilerStore
   const useRagf: typeof import("./stores/ragf").useRagf
   const useRoute: typeof import('vue-router').useRoute
   const useRouter: typeof import('vue-router').useRouter
-  const useSchemaRepositoryStore: typeof import('./stores/schemaRepository').useSchemaRepositoryStore
   const useSlots: typeof import('vue').useSlots
   const useTemplateRef: typeof import('vue').useTemplateRef
-  const useToasts: typeof import('./composables/useToasts').useToasts
-  const useUiStore: typeof import('./stores/ui').useUiStore
-  const useUserSessionStore: typeof import('./stores/session').useUserSessionStore
   const watch: typeof import('vue').watch
   const watchEffect: typeof import('vue').watchEffect
   const watchPostEffect: typeof import('vue').watchPostEffect
@@ -143,30 +112,6 @@ declare global {
   // @ts-ignore
   export type { Component, Slot, Slots, ComponentPublicInstance, ComputedRef, DirectiveBinding, ExtractDefaultPropTypes, ExtractPropTypes, ExtractPublicPropTypes, InjectionKey, PropType, Ref, ShallowRef, MaybeRef, MaybeRefOrGetter, VNode, WritableComputedRef } from 'vue'
   import('vue')
-  // @ts-ignore
-  export type { EntityFormMode, UseEntityFormOptions } from './composables/useEntityForm'
-  import('./composables/useEntityForm')
-  // @ts-ignore
-  export type { ToastType, ToastMessage } from './composables/useToasts'
-  import('./composables/useToasts')
-  // @ts-ignore
-  export type { CollectionFieldRow, FormFieldRow, EntityConfigState } from './stores/entityConfig'
-  import('./stores/entityConfig')
-  // @ts-ignore
-  export type { FormBuilderState } from './stores/formBuilder'
-  import('./stores/formBuilder')
-  // @ts-ignore
-  export type { BreadcrumbEntry, NavigationHistoryState } from './stores/navigationHistory'
-  import('./stores/navigationHistory')
-  // @ts-ignore
-  export type { SchemaRepositoryState } from './stores/schemaRepository'
-  import('./stores/schemaRepository')
-  // @ts-ignore
-  export type { UiState } from './stores/ui'
-  import('./stores/ui')
-  // @ts-ignore
-  export type { VueRouteDTO, VueRoutesSyncResult } from './utils/vueRoutesSync'
-  import('./utils/vueRoutesSync')
 }
 
 // for vue template auto import
@@ -175,28 +120,19 @@ declare module 'vue' {
   interface GlobalComponents {}
   interface ComponentCustomProperties {
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
-    readonly SCHEMA_REPOSITORY_VERSION: UnwrapRef<typeof import('./stores/schemaRepository')['SCHEMA_REPOSITORY_VERSION']>
     readonly acceptHMRUpdate: UnwrapRef<typeof import('pinia')['acceptHMRUpdate']>
-    readonly apiGraphql: UnwrapRef<typeof import('@/init')['apiGraphql']>
-    readonly apiRest: UnwrapRef<typeof import('@/init')['apiRest']>
-    readonly apollo: UnwrapRef<typeof import('@/init')['apollo']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
     readonly createApp: UnwrapRef<typeof import('vue')['createApp']>
     readonly createPinia: UnwrapRef<typeof import('pinia')['createPinia']>
     readonly customRef: UnwrapRef<typeof import('vue')['customRef']>
     readonly defineAsyncComponent: UnwrapRef<typeof import('vue')['defineAsyncComponent']>
     readonly defineComponent: UnwrapRef<typeof import('vue')['defineComponent']>
-    readonly defineSidebarStore: UnwrapRef<typeof import('./stores/sidebarFactoryStore')['defineSidebarStore']>
     readonly defineStore: UnwrapRef<typeof import('pinia')['defineStore']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
-    readonly entityNameFromSlug: UnwrapRef<typeof import('./utils/entitySlug')['entityNameFromSlug']>
-    readonly entitySlug: UnwrapRef<typeof import('./utils/entitySlug')['entitySlug']>
-    readonly extractVueRoutes: UnwrapRef<typeof import('./utils/vueRoutesSync')['extractVueRoutes']>
     readonly getActivePinia: UnwrapRef<typeof import('pinia')['getActivePinia']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
     readonly getCurrentWatcher: UnwrapRef<typeof import('vue')['getCurrentWatcher']>
-    readonly getEntity: UnwrapRef<typeof import('./composables/useEntityRegistry')['getEntity']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
     readonly inject: UnwrapRef<typeof import('vue')['inject']>
     readonly isProxy: UnwrapRef<typeof import('vue')['isProxy']>
@@ -204,14 +140,12 @@ declare module 'vue' {
     readonly isReadonly: UnwrapRef<typeof import('vue')['isReadonly']>
     readonly isRef: UnwrapRef<typeof import('vue')['isRef']>
     readonly isShallow: UnwrapRef<typeof import('vue')['isShallow']>
-    readonly loadingStore: UnwrapRef<typeof import('@/init')['loadingStore']>
     readonly mapActions: UnwrapRef<typeof import('pinia')['mapActions']>
     readonly mapGetters: UnwrapRef<typeof import('pinia')['mapGetters']>
     readonly mapState: UnwrapRef<typeof import('pinia')['mapState']>
     readonly mapStores: UnwrapRef<typeof import('pinia')['mapStores']>
     readonly mapWritableState: UnwrapRef<typeof import('pinia')['mapWritableState']>
     readonly markRaw: UnwrapRef<typeof import('vue')['markRaw']>
-    readonly msg: UnwrapRef<typeof import('./utils/autoimport')['msg']>
     readonly nextTick: UnwrapRef<typeof import('vue')['nextTick']>
     readonly onActivated: UnwrapRef<typeof import('vue')['onActivated']>
     readonly onBeforeMount: UnwrapRef<typeof import('vue')['onBeforeMount']>
@@ -229,52 +163,33 @@ declare module 'vue' {
     readonly onUnmounted: UnwrapRef<typeof import('vue')['onUnmounted']>
     readonly onUpdated: UnwrapRef<typeof import('vue')['onUpdated']>
     readonly onWatcherCleanup: UnwrapRef<typeof import('vue')['onWatcherCleanup']>
-    readonly pinia: UnwrapRef<typeof import('./stores/pinia')['pinia']>
     readonly provide: UnwrapRef<typeof import('vue')['provide']>
     readonly reactive: UnwrapRef<typeof import('vue')['reactive']>
     readonly readonly: UnwrapRef<typeof import('vue')['readonly']>
     readonly ref: UnwrapRef<typeof import('vue')['ref']>
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
-    readonly router: UnwrapRef<typeof import('@/router')['router']>
-    readonly session: UnwrapRef<typeof import('@/init')['session']>
     readonly setActivePinia: UnwrapRef<typeof import('pinia')['setActivePinia']>
     readonly setMapStoreSuffix: UnwrapRef<typeof import('pinia')['setMapStoreSuffix']>
     readonly shallowReactive: UnwrapRef<typeof import('vue')['shallowReactive']>
     readonly shallowReadonly: UnwrapRef<typeof import('vue')['shallowReadonly']>
     readonly shallowRef: UnwrapRef<typeof import('vue')['shallowRef']>
-    readonly state: UnwrapRef<typeof import('./stores/ui')['state']>
     readonly storeToRefs: UnwrapRef<typeof import('pinia')['storeToRefs']>
-    readonly stores: UnwrapRef<typeof import('./composables/useEntityRegistry')['stores']>
-    readonly syncVueRoutes: UnwrapRef<typeof import('./utils/vueRoutesSync')['syncVueRoutes']>
     readonly toRaw: UnwrapRef<typeof import('vue')['toRaw']>
     readonly toRef: UnwrapRef<typeof import('vue')['toRef']>
     readonly toRefs: UnwrapRef<typeof import('vue')['toRefs']>
     readonly toValue: UnwrapRef<typeof import('vue')['toValue']>
-    readonly toVueRouteDTO: UnwrapRef<typeof import('./utils/vueRoutesSync')['toVueRouteDTO']>
     readonly triggerRef: UnwrapRef<typeof import('vue')['triggerRef']>
-    readonly ui: UnwrapRef<typeof import('@/init')['ui']>
     readonly unref: UnwrapRef<typeof import('vue')['unref']>
     readonly useAttrs: UnwrapRef<typeof import('vue')['useAttrs']>
     readonly useCssModule: UnwrapRef<typeof import('vue')['useCssModule']>
     readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
-    readonly useEntityConfigStore: UnwrapRef<typeof import('./stores/entityConfig')['useEntityConfigStore']>
-    readonly useEntityForm: UnwrapRef<typeof import('./composables/useEntityForm')['useEntityForm']>
-    readonly useEntityRegistry: UnwrapRef<typeof import('./composables/useEntityRegistry')['useEntityRegistry']>
-    readonly useFormBuilderStore: UnwrapRef<typeof import('./stores/formBuilder')['useFormBuilderStore']>
     readonly useId: UnwrapRef<typeof import('vue')['useId']>
     readonly useLink: UnwrapRef<typeof import('vue-router')['useLink']>
-    readonly useLoadingStore: UnwrapRef<typeof import('./stores/loadingStore')['useLoadingStore']>
-    readonly useMigracionStore: UnwrapRef<typeof import('./stores/migracion')['useMigracionStore']>
     readonly useModel: UnwrapRef<typeof import('vue')['useModel']>
-    readonly useNavigationHistoryStore: UnwrapRef<typeof import('./stores/navigationHistory')['useNavigationHistoryStore']>
     readonly useRoute: UnwrapRef<typeof import('vue-router')['useRoute']>
     readonly useRouter: UnwrapRef<typeof import('vue-router')['useRouter']>
-    readonly useSchemaRepositoryStore: UnwrapRef<typeof import('./stores/schemaRepository')['useSchemaRepositoryStore']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
     readonly useTemplateRef: UnwrapRef<typeof import('vue')['useTemplateRef']>
-    readonly useToasts: UnwrapRef<typeof import('./composables/useToasts')['useToasts']>
-    readonly useUiStore: UnwrapRef<typeof import('./stores/ui')['useUiStore']>
-    readonly useUserSessionStore: UnwrapRef<typeof import('./stores/session')['useUserSessionStore']>
     readonly watch: UnwrapRef<typeof import('vue')['watch']>
     readonly watchEffect: UnwrapRef<typeof import('vue')['watchEffect']>
     readonly watchPostEffect: UnwrapRef<typeof import('vue')['watchPostEffect']>

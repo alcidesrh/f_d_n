@@ -43,6 +43,7 @@
 import { computed } from 'vue'
 import type { CollectionFieldConfig } from '@/stores/entities/types'
 import { useEntityRegistry } from '@/composables/useEntityRegistry'
+import { fieldKind } from './listUtils'
 defineOptions({ name: 'ListCellEditor' })
 const props = defineProps<{
   column: CollectionFieldConfig
@@ -51,8 +52,7 @@ const props = defineProps<{
 const registry = useEntityRegistry()
 const store = registry.getEntity()
 const options = ref([])
-const kind = store.getFieldKind(props.column.field)
-// computed<FilterFieldKind>(() => store.getFieldKind(props.column.field));
+const kind = store.metadata ? fieldKind(store.metadata, props.column.field) : 'text'
 if (kind == 'relation') {
   const entry = store.metadata.fields.find((f) => f.name === props.column.field)
   // if (!entry) return [];

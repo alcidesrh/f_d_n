@@ -1,23 +1,25 @@
 /**
- * `IconGateway` sobre la API GraphQL (`apollo` / `apiGraphql` de `@/init`).
+ * `IconGateway` sobre la API GraphQL.
  * Separado de `iconRelation.ts` para que este siga siendo importable sin
  * arrancar la app (tests del serializer).
  */
 import { getEntity } from "@/composables/useEntityRegistry";
+import { graphql } from "@/core/graphql/client";
+import { useSchemaRepositoryStore } from "@/stores/schemaRepository";
 import { ICON_ENTITY, type IconGateway } from "./iconRelation";
 
-/** Gateway sobre la API GraphQL (`apollo` / `apiGraphql` de `@/init`). */
+/** Gateway sobre la API GraphQL. */
 export function apiIconGateway(): IconGateway {
-  const metadata = () => apiGraphql.getEntityMetadata(ICON_ENTITY);
+  const metadata = () => useSchemaRepositoryStore().getEntityMetadata(ICON_ENTITY);
   return {
     async iconName(iri) {
-      const item = await apollo.item<{ icon?: string | null } | null>(metadata(), iri);
+      const item = await graphql.item<{ icon?: string | null } | null>(metadata(), iri);
       return item?.icon ?? null;
     },
     async findIri(name) {
       // El filtro `icon` del backend es parcial (`bus` también trae `bus-stop`):
       // se pide una página amplia y se compara exacto.
-      const { items } = await apollo.collection<{ id: string; icon: string }>(metadata(), {
+      const { items } = await graphql.collection<{ id: string; icon: string }>(metadata(), {
         filters: { icon: name },
         fields: ["id", "icon"],
         itemsPerPage: 200,

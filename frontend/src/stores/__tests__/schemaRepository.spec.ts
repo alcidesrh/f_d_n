@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useSchemaRepositoryStore, SCHEMA_REPOSITORY_VERSION } from '@/stores/schemaRepository'
 import type { CollectionFieldConfig, EntityStore, EntityStoreState } from '@/stores/entities/types'
-import type { AgnosticOption, EntitySchema } from '@/lib/apollo/types'
+import type { AgnosticOption, EntitySchema } from '@/core/graphql/types'
 
 const { apolloMock } = vi.hoisted(() => ({
   apolloMock: {
@@ -16,7 +16,7 @@ const { apolloMock } = vi.hoisted(() => ({
   },
 }))
 
-vi.mock('@/lib/apollo', () => ({ apollo: apolloMock }))
+vi.mock('@/core/graphql/client', () => ({ graphql: apolloMock }))
 
 const boletoSchema: EntitySchema = {
   name: 'Boleto',

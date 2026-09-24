@@ -12,8 +12,10 @@
  */
 
 import { defineStore } from "pinia";
-import { toMutationInput } from "@/lib/apollo/documents";
-import type { AgnosticOption, CollectionResult, EntitySchema } from "@/lib/apollo/types";
+import { graphql } from "@/core/graphql/client";
+import { toMutationInput } from "@/core/graphql/documents";
+import { notify } from "@/core/notify";
+import type { AgnosticOption, CollectionResult, EntitySchema } from "@/core/graphql/types";
 import type { EntityStore } from "./entities/types";
 
 /** Bump para invalidar el schema persistido cuando cambia el formato de metadatos. */
@@ -60,7 +62,7 @@ export const useSchemaRepositoryStore = defineStore("schemaRepository", {
       this.status = "loading";
       this.error = "";
       try {
-        this.entities = await apollo.introspect();
+        this.entities = await graphql.introspect();
         this.loadedAt = new Date().toISOString();
         this.schemaVersion = SCHEMA_REPOSITORY_VERSION;
         this.status = "ready";
@@ -79,15 +81,9 @@ export const useSchemaRepositoryStore = defineStore("schemaRepository", {
           .charAt(0)
           .toUpperCase() + name.slice(1);
       if (!this.entities[name]) {
-        msg({
-          severity: "error",
-          summary: "Error",
-          detail: `No existe la entidad: ${name}`,
-          life: 0,
-        });
+        notify.error(`No existe la entidad: ${name}`);
 
         throw new Error(`No existe la entidad: ${name}`);
-        return null;
       }
       return this.entities[name] ?? null;
     },
@@ -106,7 +102,7 @@ export const useSchemaRepositoryStore = defineStore("schemaRepository", {
 
     async item<T>(store: EntityStore<T>, id: string | number, fields?: string[]): Promise<T> {
       const entity = this.requireEntity(store);
-      store.item = await apollo.item<T>(entity, id, fields);
+      store.item = await graphql.item<T>(entity, id, fields);
       return store.item;
     },
 
@@ -126,7 +122,7 @@ export const useSchemaRepositoryStore = defineStore("schemaRepository", {
       // completas: no se envían args de paginación ni se escribe el estado.
       const paginated = Boolean(store.pagination);
 
-      const result = await apollo.collection<T>(entity, {
+      const result = await graphql.collection<T>(entity, {
         ...(paginated
           ? {
               currentPage: store.pagination.currentPage,
@@ -155,8 +151,7 @@ export const useSchemaRepositoryStore = defineStore("schemaRepository", {
       }
       const input = toMutationInput(entity, entity.create, data, this.entities);
 
-      console.log(input);
-      const created = await apollo.create<T>(entity, input);
+      const created = await graphql.create<T>(entity, input);
       store.item = created;
       store.items = [created, ...store.items];
       if (store.fullList.length) {
@@ -171,7 +166,7 @@ export const useSchemaRepositoryStore = defineStore("schemaRepository", {
         throw new Error(`[schemaRepository] "${store.name}" no expone update`);
       }
       const input = toMutationInput(entity, entity.update, data, this.entities);
-      const updated = await apollo.update<T>(entity, input);
+      const updated = await graphql.update<T>(entity, input);
       store.item = updated;
       const id = (updated as { id?: unknown } | null)?.id;
       if (id !== undefined) {
@@ -185,7 +180,7 @@ export const useSchemaRepositoryStore = defineStore("schemaRepository", {
       if (!entity.delete) {
         throw new Error(`[schemaRepository] "${store.name}" no expone delete`);
       }
-      const deleted = await apollo.delete<T>(entity, id);
+      const deleted = await graphql.delete<T>(entity, id);
       store.items = store.items.filter((item) => (item as { id?: unknown } | null)?.id !== id);
       if ((store.item as { id?: unknown } | null)?.id === id) store.item = null;
       return deleted;
@@ -198,7 +193,7 @@ export const useSchemaRepositoryStore = defineStore("schemaRepository", {
      */
     async fullList<T>(store: EntityStore<T>, opts: { force?: boolean } = {}): Promise<AgnosticOption[]> {
       if (!opts.force && store.fullList.length > 0) return store.fullList;
-      const list = await apollo.agnosticList(store.name);
+      const list = await graphql.agnosticList(store.name);
       store.fullList = list;
       return list;
     },

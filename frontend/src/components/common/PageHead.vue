@@ -8,7 +8,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import router from "@/router";
+import { router } from "@/app/router";
 
 const props = withDefaults(
   defineProps<{ title?: string; subtitle?: string }>(),

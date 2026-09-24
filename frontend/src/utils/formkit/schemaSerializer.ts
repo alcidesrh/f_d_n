@@ -9,7 +9,7 @@
  */
 
 import type { FormKitSchemaNode } from "@formkit/core";
-import type { AgnosticOption } from "@/lib/apollo/types";
+import type { AgnosticOption } from "@/core/graphql/types";
 import { isIconRelation } from "@/lib/icons/iconRelation";
 
 /** Shape común de `EntityFieldSchema` y `SchemaInputField` (lo que pide el form). */

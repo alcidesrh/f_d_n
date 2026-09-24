@@ -13,7 +13,7 @@ import type {
   AgnosticOption,
   EntitySchema,
   OrderCondition,
-} from "@/lib/apollo/types";
+} from "@/core/graphql/types";
 import type { FormFieldConfig } from "@/types/entities";
 
 export type OrderDirection = "ASC" | "DESC";

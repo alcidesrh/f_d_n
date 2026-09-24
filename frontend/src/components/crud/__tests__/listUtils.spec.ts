@@ -10,7 +10,7 @@ import {
   rangeToIso,
   resolveFilterArgs,
 } from '@/components/crud/listUtils'
-import type { EntityFieldSchema, EntitySchema, SchemaArg } from '@/lib/apollo/types'
+import type { EntityFieldSchema, EntitySchema, SchemaArg } from '@/core/graphql/types'
 
 function field(name: string, namedType: string, isRelation = false): EntityFieldSchema {
   return {

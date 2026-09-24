@@ -5,7 +5,7 @@
  * de rangos de fecha del DatePicker.
  */
 
-import type { EntitySchema } from '@/lib/apollo/types'
+import type { EntitySchema } from '@/core/graphql/types'
 
 /** Prioridad de propiedades para etiquetar un objeto relación. */
 const LABEL_PROPS = ['name', 'label', 'id'] as const

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import { ref } from 'vue'
-import type { EntityFieldSchema, EntitySchema, SchemaInputField } from '@/lib/apollo/types'
+import type { EntityFieldSchema, EntitySchema, SchemaInputField } from '@/core/graphql/types'
 
 function entityField(name: string, overrides: Partial<EntityFieldSchema> = {}): EntityFieldSchema {
   return {
@@ -45,11 +45,10 @@ const { busStore, rutaStore } = vi.hoisted(() => {
   return { busStore: make(), rutaStore: make() }
 })
 
-vi.mock('@/init', () => ({
-  apiGraphql: { getEntityMetadata: () => busEntity },
-  apollo: {},
+vi.mock('@/stores/schemaRepository', () => ({
+  useSchemaRepositoryStore: () => ({ getEntityMetadata: () => busEntity }),
 }))
-vi.mock('@/utils/autoimport', () => ({ msg: vi.fn<(options: unknown) => void>() }))
+vi.mock('@/core/notify', () => ({ notify: { error: vi.fn<(text: string) => void>() } }))
 vi.mock('@/composables/useEntityRegistry', () => ({
   getEntity: (name: string) => (name === 'Ruta' ? rutaStore : busStore),
   useEntityRegistry: () => ({ getEntity: (name: string) => (name === 'Ruta' ? rutaStore : busStore) }),

@@ -32,6 +32,8 @@
 </template>
 
 <script setup lang="ts">
+import { useFormBuilderStore } from '@/stores/formBuilder'
+
 defineOptions({ name: 'FormBuilderPage' })
 
 const store = useFormBuilderStore()

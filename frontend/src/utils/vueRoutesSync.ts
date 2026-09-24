@@ -10,8 +10,8 @@
  */
 
 import type { RouteRecordRaw } from 'vue-router'
-import { manejarNoAutorizado } from '@/lib/manejar401'
-import router from '@/router'
+import { handleUnauthorized } from '@/core/auth/unauthorized'
+import { router } from '@/app/router'
 
 const API_BASE = import.meta.env.VITE_REST_ENDPOINT ?? 'http://localhost/api'
 
@@ -82,7 +82,7 @@ export async function syncVueRoutes(routes: VueRouteDTO[] = extractVueRoutes()):
     })
 
     if (response.status === 401) {
-      manejarNoAutorizado()
+      handleUnauthorized()
       return { ok: false, count: 0, error: 'Sesión expirada' }
     }
     if (!response.ok) {

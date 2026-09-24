@@ -9,12 +9,11 @@
 
 import { defineStore } from "pinia";
 import type { StoreDefinition } from "pinia";
-import type { AgnosticOption } from "@/lib/apollo/types";
-import { rest } from "@/lib/apollo/rest";
+import type { AgnosticOption } from "@/core/graphql/types";
+import { fetchEntityConfiguration } from "@/core/metadata/entityConfiguration";
 import { entitySlug } from "@/utils/entitySlug";
 import { useSchemaRepositoryStore } from "@/stores/schemaRepository";
 import type { CollectionFieldConfig, EntityStore, EntityStoreState } from "./types";
-import type { FilterFieldKind } from "@/components/crud/listUtils";
 
 const definitions = new Map<string, StoreDefinition>();
 
@@ -40,7 +39,7 @@ function createEntityStore(name: string): StoreDefinition {
       hasNextPage: false,
     };
   }
-  return defineStore(entity.name, {
+  return defineStore(`entity:${entity.name}`, {
     // Todo el estado de la entidad persiste (paginación, filtros, orden,
     // columnas con su orden/visibilidad, fullList) para reencontrar el
     // listado como se dejó al reabrir el navegador.
@@ -60,8 +59,6 @@ function createEntityStore(name: string): StoreDefinition {
       metadata: (s: EntityStoreState) => schemaRepo.getEntityMetadata(s.name),
       /** Slug kebab-case del nombre de la entidad para URLs (`BoletoAsiento` → `boleto-asiento`). */
       slug: (s: EntityStoreState): string => entitySlug(s.name),
-      visibleColumns: (s) => (s.columns ?? []).filter((col) => col.visible !== false),
-      hiddenColumns: (s) => (s.columns ?? []).filter((col) => col.visible !== true).length,
     },
     actions: {
       /**
@@ -76,8 +73,8 @@ function createEntityStore(name: string): StoreDefinition {
       async init(force = false): void {
         if (force || this.columns.length == 0 || this.formFields.length == 0) {
           try {
-            const config = await rest.getEntityConfiguration(this.name);
-            this.formFields = config.formFields;
+            const config = await fetchEntityConfiguration(this.name);
+            this.formFields = config?.formFields ?? [];
             const columns = config?.collectionFieldConfig;
             if (columns && columns.length > 0) {
               this.columns = columns.map((v) => ({ ...v }));
@@ -113,20 +110,6 @@ function createEntityStore(name: string): StoreDefinition {
 
       async loadFullList(this: EntityStore, force = false): Promise<AgnosticOption[]> {
         return useSchemaRepositoryStore().fullList(this, { force });
-      },
-
-      getColumnByFieldName(field: string): CollectionFieldConfig {
-        return this.columns.find((v) => v.field == field);
-      },
-
-      getFieldKind(field: string): FilterFieldKind {
-        const entry = this.metadata.fields.find((f) => f.name === field);
-        if (!entry) return "text";
-        if (entry.isRelation) return "relation";
-        if (entry.namedType === "Date" || entry.namedType === "DateTime") return "date";
-        if (entry.namedType === "Int" || entry.namedType === "Float") return "number";
-        if (entry.namedType === "Boolean") return "boolean";
-        return "text";
       },
     },
   });

@@ -223,7 +223,7 @@ import {
   watch,
 } from "vue";
 import { useMigracionStore } from "@/stores/migracion";
-import { useToasts } from "@/composables/useToasts";
+import { notify } from "@/core/notify";
 import type {
   ConteoMigracion,
   EntidadMigracion,
@@ -235,7 +235,6 @@ import type {
 defineOptions({ name: "MigracionView" });
 
 const store = useMigracionStore();
-const toasts = useToasts();
 const consola = ref<HTMLElement | null>(null);
 
 interface FilaIndicador {
@@ -326,11 +325,11 @@ async function cancelar(): Promise<void> {
   if (!actual) return;
   try {
     await store.cancelarJob(actual.id);
-    toasts.info(
+    notify.info(
       "Cancelación solicitada. El proceso la respetará en la próxima iteración.",
     );
   } catch (e) {
-    toasts.error(e instanceof Error ? e.message : String(e));
+    notify.error(e instanceof Error ? e.message : String(e));
   }
 }
 
@@ -351,9 +350,9 @@ async function reejecutar(job: JobMigracion): Promise<void> {
   if (p.clean) payload.clean = true;
   try {
     await store.arrancarJob(payload);
-    toasts.success("Migración re-lanzada con los mismos parámetros.");
+    notify.success("Migración re-lanzada con los mismos parámetros.");
   } catch (e) {
-    toasts.error(e instanceof Error ? e.message : String(e));
+    notify.error(e instanceof Error ? e.message : String(e));
   }
 }
 

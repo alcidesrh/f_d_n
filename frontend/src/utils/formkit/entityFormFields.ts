@@ -7,7 +7,7 @@
  * tiene `formFields` configurados, la referencia son todos los `fields` del
  * schema (sin subcolecciones).
  */
-import type { EntitySchema, MutationSchema, SchemaInputField } from "@/lib/apollo/types";
+import type { EntitySchema, MutationSchema, SchemaInputField } from "@/core/graphql/types";
 import type { FormFieldConfig } from "@/types/entities";
 
 export interface FormFieldEntry {

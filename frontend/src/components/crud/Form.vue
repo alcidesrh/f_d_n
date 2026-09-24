@@ -10,6 +10,8 @@
       :id="recordId"
       v-model:form-data="formData"
       @submitted="onSubmitted"
+      @deleted="onDeleted"
+      @cancel="toList"
     />
   </div>
 </template>
@@ -19,15 +21,13 @@
 import { shallowRef } from "vue";
 import type { Component } from "vue";
 import FkEntityForm from "@/components/formkit/FkEntityForm.vue";
+import { router } from "@/app/router";
+import { notify } from "@/core/notify";
 import { entityNameFromSlug } from "@/utils/entitySlug";
 import { getFormOverride, type EntityFormOverride } from "./formOverrides";
 
 defineOptions({ name: "EntityFormPage" });
 
-const emit = defineEmits<{
-  edit: [item: unknown];
-  create: [];
-}>();
 const props = withDefaults(defineProps<{ entity: string | string[]; id?: string | string[] }>(), {
   entity: "",
   id: undefined,
@@ -45,9 +45,18 @@ const recordId = computed<string | null>(() => {
 });
 const formData = ref<Record<string, unknown>>({});
 
+function toList() {
+  void router.push({ name: "entity-list", params: { entity: props.entity } });
+}
+
+function onDeleted() {
+  notify.success(`${entityName.value} eliminado`);
+  toList();
+}
+
 /** Tras crear, pasa a la URL de edición del registro nuevo (los siguientes guardados son `update`). */
 function onSubmitted(item: Record<string, unknown>) {
-  msg({ severity: "success", summary: "Guardado", detail: `${entityName.value} guardado`, life: 3000 });
+  notify.success(`${entityName.value} guardado`);
   if (recordId.value) return;
   const id = String(item.id ?? "").match(/\/(\d+)$/)?.[1];
   if (!id) return;

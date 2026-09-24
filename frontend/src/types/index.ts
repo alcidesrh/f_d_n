@@ -23,5 +23,4 @@ export type PrimaryColor =
 
 export type SurfacePalette = 'slate' | 'gray' | 'zinc' | 'neutral' | 'stone'
 
-export type PanelState = 'open' | 'mini' | 'close'
 

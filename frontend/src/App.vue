@@ -1,7 +1,7 @@
 <template>
   <TopLoadingBar />
-  <transition v-if="flag" name="fade" mode="out-in">
-    <AppLayout :key="layoutKey">
+  <transition v-if="mounted" name="fade" mode="out-in">
+    <AppLayout :key="route.meta.layout ?? 'app'">
       <router-view v-slot="{ Component, route: r }">
         <transition name="fade" mode="out-in">
           <component :is="Component" :key="r.fullPath" />
@@ -9,21 +9,30 @@
       </router-view>
     </AppLayout>
   </transition>
-  <ConfirmDialog></ConfirmDialog>
+  <ConfirmDialog />
   <DynamicDialog />
   <Toasts />
-  <div class="backdrop" :class="{ show: showBackdrop }"></div>
 </template>
+
 <script setup lang="ts">
-import AppLayout from "@/components/layout/AppLayout.vue";
+import AppLayout from "@/app/layout/AppLayout.vue";
+import Toasts from "@/app/layout/Toasts.vue";
+import TopLoadingBar from "@/app/layout/TopLoadingBar.vue";
+import { useUiStore } from "@/app/ui";
 
 const route = useRoute();
-const flag = ref(false);
-const layoutKey = computed(() => (route.meta.layout as string) || "default");
+const ui = useUiStore();
+const mounted = ref(false);
 
-const showBackdrop = computed(() => ui.isMobile && (ui.mobileLeftOpen || ui.mobileRightOpen));
-
+const syncViewport = () => ui.syncViewport();
 onMounted(() => {
-  flag.value = true;
+  mounted.value = true;
+  window.addEventListener("resize", syncViewport);
+});
+onBeforeUnmount(() => window.removeEventListener("resize", syncViewport));
+
+/** Clases de tema en `<html>` (modo, color primario y superficie). */
+watchEffect(() => {
+  document.documentElement.className = `${ui.mode} primary-${ui.primary} surface-${ui.surface}`;
 });
 </script>

@@ -222,6 +222,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import { useFormBuilderStore } from '@/stores/formBuilder'
 import {
   BUILDER_INPUT_TYPES,
   MAX_COLS,

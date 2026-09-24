@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import { useUserSessionStore } from "@/stores/session";
-import { manejarNoAutorizado } from "@/lib/manejar401";
+import { useSessionStore } from "@/core/auth/session";
+import { handleUnauthorized } from "@/core/auth/unauthorized";
 import type {
   EntidadMigracion,
   EstadoMigracion,
@@ -18,7 +18,7 @@ const INTERVALO_LOG_MS = 5000;
 const INTERVALO_INDICADORES_MS = 8000;
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const session = useUserSessionStore();
+  const session = useSessionStore();
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
     headers: {
@@ -39,7 +39,7 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   if (res.status === 401) {
     // El firewall responde 401 cuando el Bearer token ya no existe/expiro en
     // api_token (p. ej. sesion de antes de un reset de BD): limpiar y al login.
-    manejarNoAutorizado();
+    handleUnauthorized();
   }
   if (!res.ok) {
     const msg =

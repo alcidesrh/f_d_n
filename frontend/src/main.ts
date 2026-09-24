@@ -1,48 +1,40 @@
-import App from "./App.vue";
-import router from "./router";
-// CSS-------------------
-import "./assets/main.css";
-// import "virtual:uno.css";
+/**
+ * Arranque de la aplicación: plugins → tema → schema GraphQL → montaje.
+ * La sincronización de rutas con el backend se lanza sin bloquear.
+ */
 import { createApp } from "vue";
-
-//Primevue-------------------
 import PrimeVue from "primevue/config";
-import { es } from "primelocale/js/es.js";
-import DialogService from "primevue/dialogservice";
 import ConfirmationService from "primevue/confirmationservice";
+import DialogService from "primevue/dialogservice";
 import ToastService from "primevue/toastservice";
-
-// Formkit----------------------
+import { es } from "primelocale/js/es.js";
 import { defaultConfig as formkitDefaultConfig, plugin as formkitPlugin } from "@formkit/vue";
+import App from "./App.vue";
+import "./assets/main.css";
+import { pinia } from "@/app/pinia";
+import { router } from "@/app/router";
 import formkitConfig from "@/formkit.config";
-
-// Pinia--------------------
-import { pinia } from "@/stores/pinia.ts";
-import { init } from "@/init";
-
-// Apollo------------------------
-// Cliente GraphQL singleton (se crea al importar; acceso global vía `apollo`).
+import { useUiStore } from "@/app/ui";
+import { useSchemaRepositoryStore } from "@/stores/schemaRepository";
+import { syncVueRoutes } from "@/utils/vueRoutesSync";
 
 async function bootstrap() {
-  const app = createApp(App);
-  app.use(pinia);
-  app.use(router);
-  app.use(formkitPlugin, formkitDefaultConfig(formkitConfig()));
-  app.use(PrimeVue, {
-    locale: es,
-    theme: {
-      options: {
-        darkModeSelector: ".darks",
-      },
-    },
-  });
-  app.use(DialogService);
-  app.use(ConfirmationService);
-  app.use(ToastService);
+  const app = createApp(App)
+    .use(pinia)
+    .use(router)
+    .use(formkitPlugin, formkitDefaultConfig(formkitConfig()))
+    .use(PrimeVue, { locale: es, theme: { options: { darkModeSelector: ".darks" } } })
+    .use(DialogService)
+    .use(ConfirmationService)
+    .use(ToastService);
 
-  await init();
-
+  await useUiStore().init();
+  await useSchemaRepositoryStore().init();
   app.mount("#app");
+
+  void syncVueRoutes().then((result) => {
+    if (!result.ok) console.warn("[vueRoutes] no se pudo sincronizar rutas:", result.error);
+  });
 }
 
-bootstrap();
+void bootstrap();

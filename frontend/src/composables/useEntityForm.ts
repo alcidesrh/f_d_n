@@ -19,8 +19,10 @@ import type { FormKitSchemaNode } from "@formkit/core";
 import { useEntityRegistry } from "./useEntityRegistry";
 
 import { FormSchemaSerializer, type FormFieldSource } from "@/utils/formkit/schemaSerializer";
-import type { AgnosticOption } from "@/lib/apollo/types";
-import { itemIri } from "@/lib/apollo/documents";
+import type { AgnosticOption } from "@/core/graphql/types";
+import { itemIri } from "@/core/graphql/documents";
+import { notify } from "@/core/notify";
+import { useSchemaRepositoryStore } from "@/stores/schemaRepository";
 import { formFieldEntries, pickInputFields } from "@/utils/formkit/entityFormFields";
 import type { EntityStore } from "@/stores/entities/types";
 import { createIconRelationResolver, isIconRelation } from "@/lib/icons/iconRelation";
@@ -65,7 +67,7 @@ export function useEntityForm(entityName: MaybeRefOrGetter<string>, options: Use
   // al guardar se traduce a IRI buscando/creando el registro `Icon`.
   const iconRelations = createIconRelationResolver(apiIconGateway());
 
-  const entity = computed(() => apiGraphql.getEntityMetadata(name.value));
+  const entity = computed(() => useSchemaRepositoryStore().getEntityMetadata(name.value));
   const store = computed<EntityStore<Record<string, unknown>> | null>(() => {
     try {
       return registry.getEntity<Record<string, unknown>>(name.value);
@@ -153,10 +155,7 @@ export function useEntityForm(entityName: MaybeRefOrGetter<string>, options: Use
       if (seq !== buildSeq) return;
       error.value = cause instanceof Error ? cause.message : String(cause);
       schema.value = [];
-      msg({
-        severity: "error",
-        detail: error.value,
-      });
+      notify.error(error.value);
     } finally {
       if (seq === buildSeq) loading.value = false;
     }
@@ -179,6 +178,18 @@ export function useEntityForm(entityName: MaybeRefOrGetter<string>, options: Use
     } catch (cause) {
       error.value = cause instanceof Error ? cause.message : String(cause);
       throw cause;
+    } finally {
+      submitting.value = false;
+    }
+  }
+
+  /** Borra el registro cargado por `id`. */
+  async function remove(): Promise<void> {
+    const target = store.value;
+    if (!target || !recordIri) throw new Error("No hay registro cargado para eliminar");
+    submitting.value = true;
+    try {
+      await target.remove(recordIri);
     } finally {
       submitting.value = false;
     }
@@ -214,6 +225,7 @@ export function useEntityForm(entityName: MaybeRefOrGetter<string>, options: Use
     error,
     mode: effectiveMode,
     submit,
+    remove,
     reset,
     setMode,
     setInitialData,

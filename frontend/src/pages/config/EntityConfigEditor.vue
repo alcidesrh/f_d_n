@@ -118,7 +118,7 @@ import { useConfirm } from "primevue/useconfirm";
 import FieldConfigPanel from "@/components/config/FieldConfigPanel.vue";
 import SortablePanelList from "@/components/common/SortablePanelList.vue";
 import { useEntityConfigStore } from "@/stores/entityConfig";
-import { useToasts } from "@/composables/useToasts";
+import { notify } from "@/core/notify";
 
 defineOptions({ name: "EntityConfigEditor" });
 
@@ -128,7 +128,6 @@ const GAP = 10;
 
 const store = useEntityConfigStore();
 const confirm = useConfirm();
-const toasts = useToasts();
 const tab = ref("collection");
 
 /** Pide confirmación solo si hay cambios pendientes de guardar. */
@@ -166,9 +165,9 @@ async function save() {
   const entityClass = store.selected;
   try {
     await store.save();
-    toasts.success(`Configuración de ${entityClass} guardada`);
+    notify.success(`Configuración de ${entityClass} guardada`);
   } catch (error) {
-    toasts.error(
+    notify.error(
       `No se pudo guardar ${entityClass}: ${error instanceof Error ? error.message : String(error)}`,
     );
   }

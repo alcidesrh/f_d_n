@@ -16,7 +16,7 @@ import {
   type CollectionFieldConfigDto,
   type EntityConfigurationDetailDto,
   type FormFieldConfigDto,
-} from "@/lib/apollo/entityConfig";
+} from "@/features/entity-config/api";
 import { stores as entityStores } from "@/composables/useEntityRegistry";
 
 /** Fila arrastrable: el DTO más una `key` estable (el IRI) para el drag & drop. */

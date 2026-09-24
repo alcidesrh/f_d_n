@@ -38,7 +38,8 @@
 </template>
 
 <script setup lang="ts">
-import { useId, watch } from "vue";
+import { computed, useId, watch } from "vue";
+import { useConfirm } from "primevue/useconfirm";
 import { submitForm } from "@formkit/core";
 import { useEntityForm } from "@/composables/useEntityForm";
 import type { EntityFormMode } from "@/composables/useEntityForm";
@@ -66,12 +67,14 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   submitted: [item: Record<string, unknown>];
+  deleted: [];
+  cancel: [];
   error: [message: string];
 }>();
 
 const formData = defineModel<Record<string, unknown>>("formData", { default: () => ({}) });
 
-const { schema, loading, submitting, error, submit, reset, setMode, setInitialData, setLabels } = useEntityForm(() => props.entity, {
+const { schema, loading, submitting, error, mode, submit, remove, reset, setMode, setInitialData, setLabels } = useEntityForm(() => props.entity, {
   id: () => props.id,
   mode: props.mode,
   initialData: props.initialData,
@@ -104,31 +107,28 @@ function onReset() {
 }
 
 defineExpose({ schema, loading, submitting, error });
-const route = useRouter();
-const items = [
-  {
-    label: "Cancelar",
-    icon: "cancel",
-    command: () => {
-      router.push({ name: "entity-list", params: { entity: props.entity } });
+
+const confirm = useConfirm();
+
+function askDelete() {
+  confirm.require({
+    header: "Eliminar registro",
+    message: `¿Eliminar este registro de ${props.entity}? No se puede deshacer.`,
+    acceptProps: { label: "Eliminar", severity: "danger" },
+    rejectProps: { label: "Cancelar", severity: "secondary", outlined: true },
+    accept: async () => {
+      try {
+        await remove();
+        emit("deleted");
+      } catch (cause) {
+        emit("error", cause instanceof Error ? cause.message : String(cause));
+      }
     },
-  },
-  {
-    label: "Eliminar",
-    icon: "trash",
-    command: () => {
-      msg({ severity: "warn", summary: "Delete", detail: "Data Deleted", life: 3000 });
-    },
-  },
-  {
-    separator: true,
-  },
-  {
-    label: "Quit",
-    icon: "pi pi-power-off",
-    command: () => {
-      window.location.href = "https://vuejs.org/";
-    },
-  },
-];
+  });
+}
+
+const items = computed(() => [
+  { label: "Cancelar", icon: "arrow-back-up", command: () => emit("cancel") },
+  ...(mode.value === "update" ? [{ label: "Eliminar", icon: "trash", command: askDelete }] : []),
+]);
 </script>

@@ -209,7 +209,7 @@
 import { computed, ref } from "vue";
 import { useConfirm } from "primevue/useconfirm";
 import { useMigracionStore } from "@/stores/migracion";
-import { useToasts } from "@/composables/useToasts";
+import { notify } from "@/core/notify";
 import type {
   EntidadMigracion,
   EstadoJobMigracion,
@@ -221,7 +221,6 @@ defineOptions({ name: "MigracionPanel" });
 
 const store = useMigracionStore();
 const confirm = useConfirm();
-const toasts = useToasts();
 
 const entidadSeleccionada = ref<string | null>(null);
 const desdeFecha = ref<Date | null>(null);
@@ -295,9 +294,9 @@ function severidadEstado(
 async function iniciar(payload: PayloadEjecutar): Promise<void> {
   try {
     await store.arrancarJob(payload);
-    toasts.success("Migración iniciada. Seguí el avance en la consola.");
+    notify.success("Migración iniciada. Seguí el avance en la consola.");
   } catch (e) {
-    toasts.error(e instanceof Error ? e.message : String(e));
+    notify.error(e instanceof Error ? e.message : String(e));
   }
 }
 
@@ -366,9 +365,9 @@ async function cancelar(): Promise<void> {
   if (!actual) return;
   try {
     await store.cancelarJob(actual.id);
-    toasts.info("Cancelación solicitada. El proceso la respetará en la próxima iteración.");
+    notify.info("Cancelación solicitada. El proceso la respetará en la próxima iteración.");
   } catch (e) {
-    toasts.error(e instanceof Error ? e.message : String(e));
+    notify.error(e instanceof Error ? e.message : String(e));
   }
 }
 </script>

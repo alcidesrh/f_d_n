@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { createPinia, getActivePinia, setActivePinia } from 'pinia'
 import {
   DOMWrapper,
   flushPromises,
@@ -10,11 +11,11 @@ import { defaultConfig, plugin as formkitPlugin } from '@formkit/vue'
 import PrimeVue from 'primevue/config'
 import { reactive } from 'vue'
 import formkitConfig from '@/formkit.config'
-import { useToasts } from '@/composables/useToasts'
-import type { AgnosticOption, EntitySchema } from '@/lib/apollo/types'
+import { dismissAll } from "@/core/notify";
+import type { AgnosticOption, EntitySchema } from '@/core/graphql/types'
 import type { CollectionFieldConfig, EntityStore } from '@/stores/entities/types'
 import List from '@/components/crud/List.vue'
-import Toasts from '@/components/Toasts.vue'
+import Toasts from '@/app/layout/Toasts.vue'
 import { HIGHLIGHT_NAME } from '@/components/crud/cellHighlight'
 
 if (typeof window.matchMedia !== 'function') {
@@ -32,7 +33,7 @@ if (typeof window.matchMedia !== 'function') {
 }
 
 const { schemaRepoMock, registryMock } = vi.hoisted(() => ({
-  schemaRepoMock: { getEntity: vi.fn<(name: string) => EntitySchema | null>() },
+  schemaRepoMock: { getEntityMetadata: vi.fn<(name: string) => EntitySchema | null>() },
   registryMock: { getEntity: vi.fn<(name: string) => EntityStore>() },
 }))
 
@@ -176,7 +177,7 @@ function makeStore(): EntityStore<IconItem> {
     columns: [],
     items: [...items],
     get metadata(): EntitySchema | null {
-      return schemaRepoMock.getEntity(this.name)
+      return schemaRepoMock.getEntityMetadata(this.name)
     },
     pagination: {
       itemsPerPage: 10,
@@ -223,7 +224,7 @@ function makeCategoryStore(): EntityStore {
     columns: [],
     items: [],
     get metadata(): EntitySchema | null {
-      return schemaRepoMock.getEntity(this.name)
+      return schemaRepoMock.getEntityMetadata(this.name)
     },
     pagination: {
       itemsPerPage: 10,
@@ -251,7 +252,7 @@ function makeCategoryStore(): EntityStore {
 
 const pluginMount = (): ComponentMountingOptions<typeof List> => ({
   global: {
-    plugins: [PrimeVue, [formkitPlugin, defaultConfig(formkitConfig())]],
+    plugins: [getActivePinia()!, PrimeVue, [formkitPlugin, defaultConfig(formkitConfig())]],
   },
 })
 
@@ -262,9 +263,10 @@ describe('List.vue', () => {
   let toastsWrapper: VueWrapper | null = null
 
   beforeEach(() => {
+    setActivePinia(createPinia())
     store = makeStore()
     categoryStore = makeCategoryStore()
-    schemaRepoMock.getEntity.mockReset()
+    schemaRepoMock.getEntityMetadata.mockReset()
     registryMock.getEntity.mockReset()
     registryMock.getEntity.mockImplementation(
       (name: string): EntityStore => (name === 'Category' ? categoryStore : (store as EntityStore)),
@@ -278,18 +280,18 @@ describe('List.vue', () => {
     toastsWrapper?.unmount()
     toastsWrapper = null
     vi.useRealTimers()
-    useToasts().clear()
+    dismissAll()
   })
 
   it('muestra error si la entidad no existe', async () => {
-    schemaRepoMock.getEntity.mockReturnValue(null)
+    schemaRepoMock.getEntityMetadata.mockReturnValue(null)
     wrapper = mount(List, { props: { entity: 'Nope' }, ...pluginMount() })
     await flushPromises()
     expect(document.body.textContent).toContain('no encontrada')
   })
 
   it('renderiza título, filas, acciones y precarga relaciones', async () => {
-    schemaRepoMock.getEntity.mockReturnValue(iconSchema)
+    schemaRepoMock.getEntityMetadata.mockReturnValue(iconSchema)
     wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
     await flushPromises()
 
@@ -306,7 +308,7 @@ describe('List.vue', () => {
   })
 
   it('filtro de texto con debounce de 500ms aplica al store y refetcha', async () => {
-    schemaRepoMock.getEntity.mockReturnValue(iconSchema)
+    schemaRepoMock.getEntityMetadata.mockReturnValue(iconSchema)
     wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
     await flushPromises()
 
@@ -322,7 +324,7 @@ describe('List.vue', () => {
   })
 
   it('filtro sin arg de servidor avisa "filtro local" y no puebla filtros del servidor', async () => {
-    schemaRepoMock.getEntity.mockReturnValue(iconSchema)
+    schemaRepoMock.getEntityMetadata.mockReturnValue(iconSchema)
     wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
     await flushPromises()
 
@@ -335,7 +337,7 @@ describe('List.vue', () => {
   })
 
   it('confirma y elimina el registro seleccionado', async () => {
-    schemaRepoMock.getEntity.mockReturnValue(iconSchema)
+    schemaRepoMock.getEntityMetadata.mockReturnValue(iconSchema)
     wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
     await flushPromises()
 
@@ -357,7 +359,7 @@ describe('List.vue', () => {
   })
 
   it('muestra el id como número, no como IRI del resource', async () => {
-    schemaRepoMock.getEntity.mockReturnValue(iconSchema)
+    schemaRepoMock.getEntityMetadata.mockReturnValue(iconSchema)
     wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
     await flushPromises()
 
@@ -366,7 +368,7 @@ describe('List.vue', () => {
   })
 
   it('limpia el filtro de texto con el icono, sin esperar el debounce', async () => {
-    schemaRepoMock.getEntity.mockReturnValue(iconSchema)
+    schemaRepoMock.getEntityMetadata.mockReturnValue(iconSchema)
     wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
     await flushPromises()
 
@@ -386,7 +388,7 @@ describe('List.vue', () => {
   })
 
   it('oculta columnas y las restaura desde el indicador', async () => {
-    schemaRepoMock.getEntity.mockReturnValue(iconSchema)
+    schemaRepoMock.getEntityMetadata.mockReturnValue(iconSchema)
     wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
     await flushPromises()
 
@@ -416,7 +418,7 @@ describe('List.vue', () => {
   })
 
   it('reordena columnas y sincroniza el array del store', async () => {
-    schemaRepoMock.getEntity.mockReturnValue(iconSchema)
+    schemaRepoMock.getEntityMetadata.mockReturnValue(iconSchema)
     wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
     await flushPromises()
 
@@ -434,7 +436,7 @@ describe('List.vue', () => {
   })
 
   it('hidrata los filtros persistidos del store', async () => {
-    schemaRepoMock.getEntity.mockReturnValue(iconSchema)
+    schemaRepoMock.getEntityMetadata.mockReturnValue(iconSchema)
     store.filters = { name: 'ho' }
     wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
     await flushPromises()
@@ -445,7 +447,7 @@ describe('List.vue', () => {
   })
 
   it('edita celdas en línea y persiste solo el campo editado', async () => {
-    schemaRepoMock.getEntity.mockReturnValue(editableSchema)
+    schemaRepoMock.getEntityMetadata.mockReturnValue(editableSchema)
     wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
     await flushPromises()
 
@@ -472,7 +474,7 @@ describe('List.vue', () => {
   })
 
   it('normaliza fechas a YYYY-MM-DD al editar una celda', async () => {
-    schemaRepoMock.getEntity.mockReturnValue(editableSchema)
+    schemaRepoMock.getEntityMetadata.mockReturnValue(editableSchema)
     wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
     await flushPromises()
 
@@ -495,7 +497,7 @@ describe('List.vue', () => {
   })
 
   it('modo selección: oculta acciones, marca filas y muestra el contador', async () => {
-    schemaRepoMock.getEntity.mockReturnValue(iconSchema)
+    schemaRepoMock.getEntityMetadata.mockReturnValue(iconSchema)
     wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
     await flushPromises()
 
@@ -514,7 +516,7 @@ describe('List.vue', () => {
   })
 
   it('restablecer la vista limpia filtros, orden, página, ocultas y selección', async () => {
-    schemaRepoMock.getEntity.mockReturnValue(iconSchema)
+    schemaRepoMock.getEntityMetadata.mockReturnValue(iconSchema)
     store.filters = { name: 'ho' }
     store.order = [{ name: 'ASC' }]
     store.pagination.currentPage = 3
@@ -547,7 +549,7 @@ describe('List.vue', () => {
     vi.stubGlobal('Highlight', FakeHighlight)
     vi.stubGlobal('CSS', { highlights })
     try {
-      schemaRepoMock.getEntity.mockReturnValue(iconSchema)
+      schemaRepoMock.getEntityMetadata.mockReturnValue(iconSchema)
       wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
       await flushPromises()
 
@@ -570,7 +572,7 @@ describe('List.vue', () => {
     vi.stubGlobal('Highlight', FakeHighlight)
     vi.stubGlobal('CSS', { highlights })
     try {
-      schemaRepoMock.getEntity.mockReturnValue(iconSchema)
+      schemaRepoMock.getEntityMetadata.mockReturnValue(iconSchema)
       wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
       await flushPromises()
 
@@ -585,7 +587,7 @@ describe('List.vue', () => {
   })
 
   it('pinta la flecha de orden junto al nombre según el estado del store', async () => {
-    schemaRepoMock.getEntity.mockReturnValue({
+    schemaRepoMock.getEntityMetadata.mockReturnValue({
       ...iconSchema,
       orderInput: 'IconFilter_order',
       orderFields: ['name'],
@@ -606,7 +608,7 @@ describe('List.vue', () => {
   })
 
   it('no permite ordenar columnas fuera del input de orden del backend', async () => {
-    schemaRepoMock.getEntity.mockReturnValue({
+    schemaRepoMock.getEntityMetadata.mockReturnValue({
       ...iconSchema,
       orderInput: 'IconFilter_order',
       orderFields: ['name'],

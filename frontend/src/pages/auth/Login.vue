@@ -58,7 +58,12 @@
 </template>
 
 <script lang="ts" setup>
+import type { FormKitNode } from "@formkit/core";
 import { FormKitMessages } from "@formkit/vue";
+import { router } from "@/app/router";
+import { useSessionStore } from "@/core/auth/session";
+import { HttpError } from "@/core/http";
+import { useLoadingStore } from "@/core/loading";
 import { gsap } from "gsap";
 import { CustomWiggle } from "gsap/CustomWiggle";
 
@@ -70,8 +75,8 @@ const card = useTemplateRef("login");
 const layer0 = useTemplateRef<HTMLElement>("layer0");
 const layer1 = useTemplateRef<HTMLElement>("layer1");
 const error = ref(false);
+const session = useSessionStore();
 const loadingStore = useLoadingStore();
-const { loading } = storeToRefs(loadingStore);
 
 const schema = [
   {
@@ -116,26 +121,19 @@ const submit = () => {
     shake();
   }
 };
-const data = ref({ submit, loading: computed(() => loading && loadingStore.isOpLoading("login")) });
-async function handleSubmit(credentials: Record<string, string>, node: Record<any, any>) {
+const data = ref({ submit, loading: computed(() => loadingStore.isLoading("login")) });
+async function handleSubmit(credentials: { username: string; password: string }, node: FormKitNode) {
   error.value = false;
   node.clearErrors();
-  apiRest
-    .post("/login", credentials, { key: "login" })
-    .then(async (resp) => {
-      const store = useUserSessionStore();
-      store.user = resp.username;
-      store.permissions = resp.permissions;
-      store.token = resp.token;
-      // const router = useRouter()
-      router.push({ path: store.redirectTo });
-    })
-    .catch((e: FetchError | string) => {
-      console.log(e);
-      error.value = true;
-      node.setErrors([e]);
-      shake();
-    });
+  try {
+    await session.login(credentials);
+    await router.push({ name: "dashboard" });
+  } catch (cause) {
+    error.value = true;
+    const invalid = cause instanceof HttpError && cause.status === 401;
+    node.setErrors([invalid ? "Usuario o contraseña incorrecto." : String((cause as Error).message ?? cause)]);
+    shake();
+  }
 }
 
 const start = Math.floor(Math.random() * 10) + 1;
