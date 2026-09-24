@@ -24,7 +24,9 @@ export default defineConfig({
       vueTemplate: true,
     }),
     Components({
-      dirs: ["src/components"],
+      // Solo el kit de UI compartido se registra global (<icon>, <PageHead>…);
+      // los componentes de features se importan explícitamente.
+      dirs: ["src/shared/ui", "src/shared/icons"],
       dts: "src/components.d.ts",
       resolvers: [
         PrimeVueResolver(),

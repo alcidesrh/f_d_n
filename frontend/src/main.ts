@@ -10,13 +10,13 @@ import ToastService from "primevue/toastservice";
 import { es } from "primelocale/js/es.js";
 import { defaultConfig as formkitDefaultConfig, plugin as formkitPlugin } from "@formkit/vue";
 import App from "./App.vue";
-import "./assets/main.css";
+import "@/assets/main.css";
 import { pinia } from "@/app/pinia";
 import { router } from "@/app/router";
-import formkitConfig from "@/formkit.config";
+import formkitConfig from "@/shared/formkit/config";
 import { useUiStore } from "@/app/ui";
-import { useSchemaRepositoryStore } from "@/stores/schemaRepository";
-import { syncVueRoutes } from "@/utils/vueRoutesSync";
+import { useSchemaRepositoryStore } from "@/core/entities/schema";
+import { syncVueRoutes } from "@/app/routeSync";
 
 async function bootstrap() {
   const app = createApp(App)

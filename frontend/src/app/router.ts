@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useSessionStore } from "@/core/auth/session";
-import { useNavigationHistoryStore } from "./layout/navigationHistory";
+import { useNavigationHistoryStore } from "@/app/layout/navigationHistory";
 
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -11,7 +11,7 @@ export const router = createRouter({
     {
       path: "/",
       name: "dashboard",
-      component: () => import("@/pages/Dashboard.vue"),
+      component: () => import("@/features/dashboard/DashboardPage.vue"),
       meta: {
         title: "Resumen operativo",
       },
@@ -19,7 +19,7 @@ export const router = createRouter({
     {
       path: "/login",
       name: "login",
-      component: () => import("@/pages/auth/Login.vue"),
+      component: () => import("@/features/auth/LoginPage.vue"),
       meta: {
         layout: "blank",
         title: "Iniciar Sesión",
@@ -29,25 +29,25 @@ export const router = createRouter({
     {
       path: "/form/build",
       name: "form_build",
-      component: () => import("@/pages/form/FormBuilder.vue"),
+      component: () => import("@/features/form-builder/FormBuilderPage.vue"),
       meta: {
         title: "Constructor de formularios",
-        panel: { component: () => import("@/components/formbuilder/FormBuilderPanel.vue"), width: 350 },
+        panel: { component: () => import("@/features/form-builder/FormBuilderPanel.vue"), width: 350 },
       },
     },
     {
       path: "/migracion",
       name: "migracion",
-      component: () => import("@/pages/migracion/MigracionView.vue"),
+      component: () => import("@/features/migracion/MigracionPage.vue"),
       meta: {
         title: "Migración legado → nuevo",
-        panel: { component: () => import("@/components/migracion/MigracionPanel.vue"), width: 340 },
+        panel: { component: () => import("@/features/migracion/MigracionPanel.vue"), width: 340 },
       },
     },
     {
       path: "/configuracion/entidades",
       name: "entity-config",
-      component: () => import("@/pages/config/EntityConfigEditor.vue"),
+      component: () => import("@/features/entity-config/EntityConfigPage.vue"),
       meta: {
         title: "Configuración de entidades",
         label: "Config. entidades",
@@ -58,7 +58,7 @@ export const router = createRouter({
       path: "/lista/:entity",
       name: "entity-list",
       props: true,
-      component: () => import("@/components/crud/List.vue"),
+      component: () => import("@/features/entity-crud/ListPage.vue"),
       meta: {
         title: "Lista de entidad",
       },
@@ -67,7 +67,7 @@ export const router = createRouter({
       path: "/form/:entity/:id?",
       name: "entity-form",
       props: true,
-      component: () => import("@/components/crud/Form.vue"),
+      component: () => import("@/features/entity-crud/FormPage.vue"),
       meta: {
         title: "Formulario de entidad",
       },
@@ -75,7 +75,7 @@ export const router = createRouter({
     {
       path: "/:pathMatch(.*)*",
       name: "not-found",
-      component: () => import("@/pages/errors/NotFoundPage.vue"),
+      component: () => import("./NotFoundPage.vue"),
       meta: {
         layout: "blank",
         title: "Página no encontrada",

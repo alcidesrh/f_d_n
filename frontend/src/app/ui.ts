@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import type { PrimaryColor, SurfacePalette, ThemeMode, ThemePreset } from "@/types";
+import type { PrimaryColor, SurfacePalette, ThemeMode, ThemePreset } from "./themeTypes";
 import { usePreset } from "@primeuix/themes";
 import { themeColors } from "./theme";
 

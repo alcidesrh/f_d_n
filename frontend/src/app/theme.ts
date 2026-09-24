@@ -3,7 +3,7 @@ import Lara from "@primeuix/themes/lara";
 import Material from "@primeuix/themes/material";
 import Nora from "@primeuix/themes/nora";
 import type { Preset } from "@primeuix/themes/types";
-import type { PrimaryColor, SurfacePalette, ThemePreset } from "@/types";
+import type { PrimaryColor, SurfacePalette, ThemePreset } from "./themeTypes";
 import colors from "tailwindcss/colors";
 import pick from "ramda/src/pick";
 

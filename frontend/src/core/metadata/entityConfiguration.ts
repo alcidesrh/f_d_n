@@ -3,9 +3,18 @@
  * columnas del listado y campos del formulario. La editan en
  * `features/entity-config`; la consumen listados y formularios.
  */
-import { http } from "../http";
-import type { CollectionFieldConfig } from "@/stores/entities/types";
-import type { FormFieldConfig } from "@/types/entities";
+import { http } from "@/core/http";
+import type { CollectionFieldConfig } from "@/core/entities/types";
+
+/** Campo del formulario de una entidad (`FormFieldConfig` del backend). */
+export interface FormFieldConfig {
+  "@id"?: string;
+  field?: string;
+  label?: string | null;
+  position?: number;
+  visible?: boolean;
+  attrs?: Record<string, unknown> | null;
+}
 
 export interface EntityConfigurationDto {
   "@id"?: string;

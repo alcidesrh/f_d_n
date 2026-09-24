@@ -1,5 +1,5 @@
 import { ApolloLink, Observable } from "@apollo/client";
-import { useLoadingStore } from "../../loading";
+import { useLoadingStore } from "@/core/loading";
 
 /** Retardo antes de mostrar la carga: las respuestas rápidas no parpadean. */
 const DELAY_MS = 150;

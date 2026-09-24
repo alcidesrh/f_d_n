@@ -1,7 +1,7 @@
 import { CombinedGraphQLErrors, ServerError, ServerParseError } from "@apollo/client";
 import { ErrorLink } from "@apollo/client/link/error";
-import { handleUnauthorized } from "../../auth/unauthorized";
-import { notify } from "../../notify";
+import { handleUnauthorized } from "@/core/auth/unauthorized";
+import { notify } from "@/core/notify";
 
 /** Traduce los errores de red y de GraphQL a notificaciones; un 401 cierra la sesión. */
 export function createErrorLink() {

@@ -4,7 +4,7 @@
  */
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
-import { request } from "../http";
+import { request } from "@/core/http";
 
 interface LoginResponse {
   username: string;

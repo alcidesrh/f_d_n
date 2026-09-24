@@ -1,5 +1,5 @@
 /**
- * Genera `src/lib/icons/tablerMeta.ts`: categoría + tags de cada ícono de
+ * Genera `src/shared/icons/tablerMeta.ts`: categoría + tags de cada ícono de
  * Tabler, para el buscador de `IconPicker`.
  *
  * El set de Iconify (`@iconify-json/tabler`) trae los SVG pero no las
@@ -51,5 +51,5 @@ const meta: TablerMetaFile = JSON.parse(${JSON.stringify(json)});
 
 export default meta;
 `
-await writeFile(new URL('src/lib/icons/tablerMeta.ts', root), source)
+await writeFile(new URL('src/shared/icons/tablerMeta.ts', root), source)
 console.log(`tablerMeta.ts: ${Object.keys(icons).length} íconos, ${categories.length} categorías (v${version})`)

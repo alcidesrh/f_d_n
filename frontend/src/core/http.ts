@@ -8,8 +8,8 @@
  */
 import { config } from "./config";
 import { useLoadingStore } from "./loading";
-import { handleUnauthorized } from "./auth/unauthorized";
-import { useSessionStore } from "./auth/session";
+import { handleUnauthorized } from "@/core/auth/unauthorized";
+import { useSessionStore } from "@/core/auth/session";
 
 export class HttpError extends Error {
   constructor(

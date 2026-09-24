@@ -11,9 +11,9 @@
 import { ApolloClient, ApolloLink, HttpLink, InMemoryCache, gql, type DocumentNode } from "@apollo/client";
 import { RemoveTypenameFromVariablesLink } from "@apollo/client/link/remove-typename";
 import { getIntrospectionQuery, parse } from "graphql";
-import { config } from "../config";
-import { createErrorLink } from "./links/errorLink";
-import { createLoadingLink } from "./links/loadingLink";
+import { config } from "@/core/config";
+import { createErrorLink } from "@/core/graphql/links/errorLink";
+import { createLoadingLink } from "@/core/graphql/links/loadingLink";
 import { buildCollectionQuery, buildItemQuery, buildMutation, itemIri, type CollectionQuerySpec } from "./documents";
 import { parseIntrospection, type IntrospectionSchemaLike } from "./introspection";
 import type { AgnosticOption, CollectionPagination, CollectionResult, EntitySchema, MutationSchema } from "./types";
