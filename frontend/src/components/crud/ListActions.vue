@@ -1,7 +1,7 @@
 <template>
   <div class="flex justify-center gap-3 px-3">
-    <icon @click="emit('edit', item)" name="pencil" />
-    <icon name="trash" @click="emit('delete', item)" />
+    <icon @click="emit('edit', item)" name="pencil" size="1.2rem" sw="1.3" />
+    <icon name="trash" @click="emit('delete', item)" size="1.2rem" sw="1.3" />
   </div>
 </template>
 

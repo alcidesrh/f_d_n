@@ -92,18 +92,13 @@ function onReset() {
 }
 
 defineExpose({ schema, loading, submitting, error });
-
+const route = useRouter();
 const items = [
   {
     label: "Cancelar",
     icon: "cancel",
     command: () => {
-      msg({
-        severity: "success",
-        summary: "Updated",
-        detail: "Data Updated",
-        life: 3000,
-      });
+      router.push({ name: "entity-list", params: { entity: props.entity } });
     },
   },
   {

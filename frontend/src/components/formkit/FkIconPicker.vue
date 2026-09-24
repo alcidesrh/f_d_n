@@ -73,7 +73,9 @@ const showClear = computed(() => props.context.attrs.showClear !== false);
  */
 const iconName = computed<string | null>(() => {
   const value = context.value._value as unknown;
-  if (typeof value === "string") return value || null;
+  // Un IRI (`/api/icons/3`) es una relación que no se pudo hidratar a nombre:
+  // se conserva como valor pero no se pinta como ícono.
+  if (typeof value === "string") return value && !value.startsWith("/") ? value : null;
   if (value && typeof value === "object" && "icon" in value) {
     const icon = (value as { icon?: unknown }).icon;
     return typeof icon === "string" && icon ? icon : null;

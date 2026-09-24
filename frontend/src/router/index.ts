@@ -88,7 +88,7 @@ export const router = createRouter({
       },
     },
     {
-      path: "/form/:entity",
+      path: "/form/:entity/:id?",
       name: "entity-form",
       props: true,
       component: () => import("@/components/crud/Form.vue"),

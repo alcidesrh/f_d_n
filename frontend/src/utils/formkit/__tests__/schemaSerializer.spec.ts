@@ -99,6 +99,14 @@ describe('inferInputType', () => {
       inferInputType(field({ name: 'ruta', namedType: 'Ruta', kind: 'OBJECT', isRelation: true })),
     ).toBe('Select')
     expect(
+      inferInputType(field({ name: 'icon', namedType: 'Icon', kind: 'OBJECT', isRelation: true })),
+    ).toBe('IconPicker')
+    expect(
+      inferInputType(
+        field({ name: 'icons', namedType: 'Icon', kind: 'OBJECT', isRelation: true, isList: true }),
+      ),
+    ).toBe('MultiSelect')
+    expect(
       inferInputType(
         field({
           name: 'boletas',

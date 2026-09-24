@@ -1,48 +1,24 @@
 <!-- #region Template -->
 <template>
   <div>
-    <div
-      v-if="store.metadata"
-      class="card flex flex-col overflow-hidden"
-      style="min-height: 400px"
-    >
+    <div v-if="store.metadata" class="card flex flex-col overflow-hidden" style="min-height: 400px">
       <Toolbar class="rounded-none border-none! bg-transparent px-2">
         <template #start>
-          <span
-            v-if="selectionMode"
-            class="text-sm font-medium text-surface-600"
-          >
-            {{ selection.length }} seleccionados
-          </span>
+          <span v-if="selectionMode" class="text-sm font-medium text-surface-600"> {{ selection.length }} seleccionados </span>
           <PageHead v-else></PageHead>
         </template>
         <template #end>
           <div class="flex items-center justify-between gap-5 my-4">
             <icon name="square-check" @click="toggleSelection" />
-            <OverlayBadge
-              v-if="store.hiddenColumns > 0"
-              ``
-              :value="String(store.hiddenColumns)"
-              severity="primary"
-              size="small"
-            >
+            <OverlayBadge v-if="store.hiddenColumns > 0" `` :value="String(store.hiddenColumns)" severity="primary" size="small">
               <div @click="hiddenPopover?.toggle($event)">
                 <icon name="eye-off" />
               </div>
             </OverlayBadge>
             <Popover ref="hiddenPopover">
               <div class="flex flex-col gap-1 p-2">
-                <span class="px-2 pb-1 text-xs font-semibold text-surface-500"
-                  >Columnas ocultas</span
-                >
-                <button
-                  v-for="col in (store?.columns ?? []).filter(
-                    (col) => col.visible === false,
-                  )"
-                  :key="col.field"
-                  class="flex cursor-pointer items-center justify-between gap-6 rounded px-2 py-1 text-left text-sm text-surface-700 hover:bg-surface-100"
-                  @click="restoreColumn(col.field)"
-                >
+                <span class="px-2 pb-1 text-xs font-semibold text-surface-500">Columnas ocultas</span>
+                <button v-for="col in (store?.columns ?? []).filter((col) => col.visible === false)" :key="col.field" class="flex cursor-pointer items-center justify-between gap-6 rounded px-2 py-1 text-left text-sm text-surface-700 hover:bg-surface-100" @click="restoreColumn(col.field)">
                   <span>{{ col.label ?? col.field }}</span>
                   <icon name="eye" />
 
@@ -54,93 +30,39 @@
           </div>
         </template>
       </Toolbar>
-      <DataTable
-        v-model:selection="selection"
-        :value="visibleItems"
-        :loading="loadingStore.loading"
-        row-key="id"
-        scrollable
-        scroll-height="flex"
-        :removable-sort="true"
-        reorderable-columns
-        :edit-mode="canEdit ? 'cell' : undefined"
-        @column-reorder="onColumnReorder"
-        @cell-edit-complete="onCellEditComplete"
-      >
-        <Column
-          v-for="col in store.visibleColumns"
-          :key="col.field"
-          :field="col.field"
-        >
+      <DataTable v-model:selection="selection" :value="visibleItems" :loading="loadingStore.loading" row-key="id" scrollable scroll-height="flex" :removable-sort="true" reorderable-columns :edit-mode="canEdit ? 'cell' : undefined" @column-reorder="onColumnReorder" @cell-edit-complete="onCellEditComplete">
+        <Column v-for="col in store.visibleColumns" :key="col.field" :field="col.field">
           <template #header>
             <div class="relative">
               <div class="col-head">
                 <div class="flex items-center justify-between gap-1 relative">
-                  <span class="truncate font-semibold capitalize">{{
-                    col.label ?? col.field
-                  }}</span>
+                  <span class="truncate font-semibold capitalize">{{ col.label ?? col.field }}</span>
                   <span class="flex gap-3">
-                    <icon
-                      v-if="col.sortable"
-                      class="ml-3"
-                      @click.stop="toggleSort(col.field)"
-                      :name="getSortIcon(col.field)"
-                    />
-                    <icon
-                      v-if="filterNodes.has(col.field)"
-                      :name="filters[col.field] ? 'filter-filled' : 'filter'"
-                      class=""
-                      :class="{ 'text-primary': filters[col.field] }"
-                      @click.stop="col.showFilter = !col.showFilter"
-                    />
-                    <icon name="eye" @click="hideColumn(col.field)" class="" />
+                    <icon v-if="col.sortable" class="ml-3" @click.stop="toggleSort(col.field)" :name="getSortIcon(col.field)" />
+                    <icon v-if="filterNodes.has(col.field)" :name="filters[col.field] ? 'filter-filled' : 'filter'" class="" :class="{ 'text-primary': filters[col.field] }" @click.stop="col.showFilter = !col.showFilter" />
+                    <icon name="square-minus" @click="hideColumn(col.field)" class="" />
                   </span>
                 </div>
-                <div
-                  @click.stop
-                  class="column-filter-input"
-                  :class="{ 'show-filter': col.showFilter }"
-                >
-                  <FormKitSchema
-                    v-if="filterNodes.has(col.field)"
-                    :schema="[filterNodes.get(col.field)]"
-                  />
+                <div @click.stop class="column-filter-input" :class="{ 'show-filter': col.showFilter }">
+                  <FormKitSchema v-if="filterNodes.has(col.field)" :schema="[filterNodes.get(col.field)]" />
                 </div>
               </div>
-              <div
-                class="absolute bottom-0 border-r border-r-surface-200 h-[40px] w-[3px]"
-              ></div>
+              <div class="absolute bottom-0 border-r border-r-surface-200 h-[40px] w-[3px]"></div>
             </div>
           </template>
           <!-- #region Datatable:body -->
           <template #body="{ data }">
-            <ListCell
-              :column="col"
-              :data="data"
-              :filter-value="filterValueFor(col.field)"
-            />
+            <ListCell :column="col" :data="data" :filter-value="filterValueFor(col.field)" />
           </template>
           <!-- #endregion -->
           <template v-if="canEditCell(col)" #editor="{ data }">
             <Suspense>
-              <ListCellEditor
-                :column="col"
-                :data="data"
-                :filter-value="filterValueFor(col.field)"
-              />
+              <ListCellEditor :column="col" :data="data" :filter-value="filterValueFor(col.field)" />
             </Suspense>
           </template>
         </Column>
         <!-- #region Editar y Eliminar.  -->
-        <Column
-          alignFrozen="right"
-          frozen
-          header-class="col-actions"
-          body-class="col-actions"
-          :exportable="false"
-          :reorderable-column="false"
-          :selection-mode="selectionMode ? 'multiple' : undefined"
-        >
+        <Column alignFrozen="right" frozen header-class="col-actions" body-class="col-actions" :exportable="false" :reorderable-column="false" :selection-mode="selectionMode ? 'multiple' : undefined">
           <template v-if="!selectionMode" #body="{ data }">
             <ListActions :item="data" @edit="onEdit" @delete="askDelete" />
           </template>
@@ -148,44 +70,18 @@
         <!-- #endregion -->
       </DataTable>
 
-      <div
-        class="flex flex-wrap items-center justify-between gap-3 border-t p-2"
-      >
-        <span v-if="hasLocalFilter" class="text-xs text-surface-500">
-          Filtro local: aplica sobre la página cargada
-        </span>
-        <span v-else-if="!store.pagination" class="text-xs text-surface-500">
-          {{ store?.items.length ?? 0 }} registros
-        </span>
+      <div class="flex flex-wrap items-center justify-between gap-3 border-t p-2">
+        <span v-if="hasLocalFilter" class="text-xs text-surface-500"> Filtro local: aplica sobre la página cargada </span>
+        <span v-else-if="!store.pagination" class="text-xs text-surface-500"> {{ store?.items.length ?? 0 }} registros </span>
         <span v-else></span>
         <!-- #region Datatable:paginator -->
 
-        <Paginator
-          v-if="store?.pagination"
-          :rows="store.pagination.itemsPerPage"
-          :first="
-            (store.pagination.currentPage - 1) * store.pagination.itemsPerPage
-          "
-          :total-records="store.pagination.totalCount"
-          :rows-per-page-options="[10, 25, 50]"
-          template=" FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown "
-          currentPageReportTemplate="{first} al {last} de {totalRecords}"
-          @page="onPage"
-        >
+        <Paginator v-if="store?.pagination" :rows="store.pagination.itemsPerPage" :first="(store.pagination.currentPage - 1) * store.pagination.itemsPerPage" :total-records="store.pagination.totalCount" :rows-per-page-options="[10, 25, 50]" template=" FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown " currentPageReportTemplate="{first} al {last} de {totalRecords}" @page="onPage">
           <template #end="slotProps">
-            <span class="ml-[10px] font-semibold text-surface-500">{{
-              slotProps.state.page * slotProps.state.rows + 1
-            }}</span>
+            <span class="ml-[10px] font-semibold text-surface-500">{{ slotProps.state.page * slotProps.state.rows + 1 }}</span>
             <span class="font-semsibold text-surface-500 mx-[1px]"> al </span>
             <span class="font-semibold text-surface-500">
-              {{
-                slotProps.state.page * slotProps.state.rows +
-                  slotProps.state.rows <
-                store.pagination.totalCount
-                  ? slotProps.state.page * slotProps.state.rows +
-                    slotProps.state.rows
-                  : store.pagination.totalCount
-              }}
+              {{ slotProps.state.page * slotProps.state.rows + slotProps.state.rows < store.pagination.totalCount ? slotProps.state.page * slotProps.state.rows + slotProps.state.rows : store.pagination.totalCount }}
             </span>
             <span class="font-semibqqld text-surface-500 mx-[1px]"> de </span>
 
@@ -201,34 +97,15 @@
     </div>
 
     <div v-else class="card flex items-center justify-center py-12">
-      <ProgressSpinner
-        v-if="loadingStore.loading"
-        style="width: 2rem; height: 2rem"
-      />
+      <ProgressSpinner v-if="loadingStore.loading" style="width: 2rem; height: 2rem" />
       <span v-else class="text-surface-500">Sin entidad</span>
     </div>
 
-    <Dialog
-      v-model:visible="confirmVisible"
-      modal
-      header="Confirmar eliminación"
-      :style="{ width: '25rem' }"
-    >
-      <span class="text-surface-600 block mb-6">
-        ¿Eliminar este registro? Esta acción no se puede deshacer.
-      </span>
+    <Dialog v-model:visible="confirmVisible" modal header="Confirmar eliminación" :style="{ width: '25rem' }">
+      <span class="text-surface-600 block mb-6"> ¿Eliminar este registro? Esta acción no se puede deshacer. </span>
       <div class="flex justify-end gap-2">
-        <Button
-          label="Cancelar"
-          severity="secondary"
-          @click="confirmVisible = false"
-        />
-        <Button
-          label="Eliminar"
-          severity="danger"
-          :loading="deleting"
-          @click="confirmDelete"
-        />
+        <Button label="Cancelar" severity="secondary" @click="confirmVisible = false" />
+        <Button label="Eliminar" severity="danger" :loading="deleting" @click="confirmDelete" />
       </div>
     </Dialog>
   </div>
@@ -236,26 +113,12 @@
 <script setup lang="ts">
 import { computed, reactive, ref, useId, watch } from "vue";
 import type { FormKitSchemaNode } from "@formkit/core";
-import type {
-  DataTableCellEditCompleteEvent,
-  DataTableColumnReorderEvent,
-} from "primevue/datatable";
+import type { DataTableCellEditCompleteEvent, DataTableColumnReorderEvent } from "primevue/datatable";
 import { useToasts } from "@/composables/useToasts";
 import router from "@/router";
 import type { EntitySchema } from "@/lib/apollo/types";
-import type {
-  CollectionFieldConfig,
-  EntityStore,
-} from "@/stores/entities/types";
-import {
-  cellLabel,
-  cellValue,
-  isEmptyFilterValue,
-  noServerFilter,
-  rangeToIso,
-  resolveFilterArgs,
-  type FilterFieldKind,
-} from "./listUtils";
+import type { CollectionFieldConfig, EntityStore } from "@/stores/entities/types";
+import { cellLabel, cellValue, idDisplay, isEmptyFilterValue, noServerFilter, rangeToIso, resolveFilterArgs, type FilterFieldKind } from "./listUtils";
 import type { Popover } from "primevue";
 // ---------------------------------------------------------------------------
 // Props expuestos al padre.
@@ -276,9 +139,7 @@ const entityName = computed(() => {
   const raw = Array.isArray(props.entity) ? props.entity[0] : props.entity;
   return entityNameFromSlug(raw) ?? "";
 });
-const store = computed<EntityStore | null>(
-  () => registry.getEntity(entityName.value) ?? null,
-);
+const store = computed<EntityStore | null>(() => registry.getEntity(entityName.value) ?? null);
 // ---------------------------------------------------------------------------
 // Estado local: carga, filtros en vivo (con debounce), clave de remount de
 // los inputs de filtro, modo selección y diálogo de confirmación.
@@ -306,11 +167,7 @@ let textTimer: ReturnType<typeof setTimeout> | undefined;
 // Computadas de cabecera, editabilidad y tipo de colección.
 // ---------------------------------------------------------------------------
 const pageTitle = computed(() => entityName.value || "Listado");
-const subtitle = computed(() =>
-  store.value.metadata?.queryCollection
-    ? `${entityName.value} · lista dinámica`
-    : "",
-);
+const subtitle = computed(() => (store.value.metadata?.queryCollection ? `${entityName.value} · lista dinámica` : ""));
 const canEdit = computed(() => Boolean(store.value.metadata?.update));
 
 // ---------------------------------------------------------------------------
@@ -554,12 +411,8 @@ function matchesClientFilter(item: unknown, entity: EntitySchema): boolean {
       if (!after && !before) return true;
       const timestamp = new Date(String(raw ?? "")).getTime();
       if (Number.isNaN(timestamp)) return false;
-      const start = after
-        ? new Date(after).getTime()
-        : Number.NEGATIVE_INFINITY;
-      const end = before
-        ? new Date(before).getTime() + 86_400_000
-        : Number.POSITIVE_INFINITY;
+      const start = after ? new Date(after).getTime() : Number.NEGATIVE_INFINITY;
+      const end = before ? new Date(before).getTime() + 86_400_000 : Number.POSITIVE_INFINITY;
       return timestamp >= start && timestamp <= end;
     }
     if (kind === "relation") {
@@ -568,10 +421,7 @@ function matchesClientFilter(item: unknown, entity: EntitySchema): boolean {
       return entries.some((entry) => {
         const record = entry as Record<string, unknown> | null;
         if (!record) return false;
-        return (
-          String(record.id ?? "") === needle ||
-          cellLabel(record).toLowerCase().includes(needle.toLowerCase())
-        );
+        return String(record.id ?? "") === needle || cellLabel(record).toLowerCase().includes(needle.toLowerCase());
       });
     }
     const needle = String(value).toLowerCase();
@@ -695,9 +545,7 @@ function onColumnReorder(event: DataTableColumnReorderEvent) {
   const reordered: CollectionFieldConfig[] = [];
   let index = 0;
   for (const col of currentStore.columns) {
-    reordered.push(
-      visibleFields.has(col.field) ? (visible[index++] ?? col) : col,
-    );
+    reordered.push(visibleFields.has(col.field) ? (visible[index++] ?? col) : col);
   }
   currentStore.columns = reordered;
 }
@@ -715,9 +563,7 @@ function canEditCell(col: CollectionFieldConfig): boolean {
   return mutation.inputFields.some((field) => field.name === col.field);
 }
 
-function relationOptionsFor(
-  field: string,
-): Array<{ label: string; value: string }> {
+function relationOptionsFor(field: string): Array<{ label: string; value: string }> {
   const entity = store.value.metadata;
   // console.log(entity)
   if (!entity) return [];
@@ -777,9 +623,11 @@ function normalizeEditedValue(field: string, value: unknown): unknown {
 // ---------------------------------------------------------------------------
 function onEdit(item: unknown) {
   const record = (item ?? {}) as Record<string, unknown>;
+  alert(idDisplay(String(record.id)));
+
   void router.push({
     name: "entity-form",
-    params: { entity: entityName.value, id: String(record.id) },
+    params: { entity: entityName.value, id: parseInt(idDisplay(String(record.id))) },
   });
 }
 
@@ -843,8 +691,7 @@ function preloadRelationLists() {
   for (const col of currentStore.columns) {
     if (col.filterable === false) continue;
     const entry = entity.fields.find((f) => f.name === col.field);
-    if (entry?.isRelation)
-      loads.push(registry.getEntity(entry.namedType).loadFullList());
+    if (entry?.isRelation) loads.push(registry.getEntity(entry.namedType).loadFullList());
   }
   return loads;
 }
@@ -865,9 +712,7 @@ watch(
       return;
     }
     if (!entity.queryCollection) {
-      toasts.error(
-        `"${name}" no expone una colección consultable (queryCollection)`,
-      );
+      toasts.error(`"${name}" no expone una colección consultable (queryCollection)`);
       return;
     }
     resetFilters();

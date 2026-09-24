@@ -10,6 +10,7 @@
 
 import type { FormKitSchemaNode } from "@formkit/core";
 import type { AgnosticOption } from "@/lib/apollo/types";
+import { isIconRelation } from "@/lib/icons/iconRelation";
 
 /** Shape común de `EntityFieldSchema` y `SchemaInputField` (lo que pide el form). */
 export interface FormFieldSource {
@@ -55,6 +56,7 @@ export class FormSchemaSerializer {
   }
 
   static inferInputType(entry: FormFieldSource): string {
+    if (isIconRelation(entry)) return "IconPicker";
     if (entry.isRelation) return entry.isList ? "MultiSelect" : "Select";
     if (entry.kind === "ENUM") return "Select";
     if (entry.namedType === "Boolean") return "ToggleSwitch";

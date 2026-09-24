@@ -17,6 +17,8 @@ import { useEntityRegistry } from "./useEntityRegistry";
 import { FormSchemaSerializer, type FormFieldSource } from "@/utils/formkit/schemaSerializer";
 import type { AgnosticOption, SchemaInputField } from "@/lib/apollo/types";
 import type { EntityStore } from "@/stores/entities/types";
+import { createIconRelationResolver, isIconRelation } from "@/lib/icons/iconRelation";
+import { apiIconGateway } from "@/lib/icons/iconGateway";
 
 export type EntityFormMode = "create" | "update";
 
@@ -43,6 +45,9 @@ export function useEntityForm(entityName: MaybeRefOrGetter<string>, options: Use
 
   let fields: FormFieldSource[] = [];
   let resetKey = 0;
+  // Relaciones con `Icon`: el form edita el nombre del ícono (IconPicker) y
+  // al guardar se traduce a IRI buscando/creando el registro `Icon`.
+  const iconRelations = createIconRelationResolver(apiIconGateway());
 
   const entity = computed(() => apiGraphql.getEntityMetadata(name.value));
   const store = computed<EntityStore<Record<string, unknown>> | null>(() => {
@@ -68,7 +73,7 @@ export function useEntityForm(entityName: MaybeRefOrGetter<string>, options: Use
       if (!ent || !mut || !target) {
         throw new Error(`"${name.value}" no expone ${mode.value}`);
       }
-      let selected = [];
+      let selected: SchemaInputField[] = [];
       if (target.formFields.length) {
         target.formFields.forEach((v) => {
           if (v.visible) {
@@ -85,7 +90,7 @@ export function useEntityForm(entityName: MaybeRefOrGetter<string>, options: Use
 
       // Precarga en paralelo las listas de relaciones; falla blando si una
       // entidad destino no expone collectionAgnostic.
-      const targets = [...new Set(selected.filter((f) => f.isRelation).map((f) => f.namedType))];
+      const targets = [...new Set(selected.filter((f) => f.isRelation && !isIconRelation(f)).map((f) => f.namedType))];
       const lists = await Promise.all(
         targets.map(async (targetName) => {
           try {
@@ -110,6 +115,9 @@ export function useEntityForm(entityName: MaybeRefOrGetter<string>, options: Use
         if (col.label && !labelMap[col.field]) labelMap[col.field] = col.label;
       }
 
+      let values = FormSchemaSerializer.hydrateInitialValues(selected, initialData.value, mode.value);
+      if (selected.some(isIconRelation)) values = await iconRelations.hydrate(selected, values);
+
       fields = selected;
       resetKey += 1;
 
@@ -117,7 +125,7 @@ export function useEntityForm(entityName: MaybeRefOrGetter<string>, options: Use
         mode: mode.value,
         labels: labelMap,
         relationOptions,
-        values: FormSchemaSerializer.hydrateInitialValues(fields, initialData.value, mode.value),
+        values,
         resetKey,
       });
     } catch (cause) {
@@ -138,7 +146,8 @@ export function useEntityForm(entityName: MaybeRefOrGetter<string>, options: Use
     submitting.value = true;
     error.value = "";
     try {
-      const payload = FormSchemaSerializer.serializeSubmitValue(fields, data);
+      const resolved = fields.some(isIconRelation) ? await iconRelations.resolve(fields, data) : data;
+      const payload = FormSchemaSerializer.serializeSubmitValue(fields, resolved);
       return mode.value === "update" ? await target.update(payload) : await target.create(payload);
     } catch (cause) {
       error.value = cause instanceof Error ? cause.message : String(cause);

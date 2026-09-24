@@ -4,7 +4,7 @@
  * Carga diferida (dos chunks aparte, solo cuando se abre el buscador):
  *  - `@iconify-json/tabler`: SVGs. Se registran con `addCollection`
  *    para que `<icon>` los pinte sin pedirlos a api.iconify.design.
- *  - `./tabler-meta.json`: categoría + tags (ver `scripts/gen-tabler-meta.ts`).
+ *  - `./tablerMeta.ts`: categoría + tags (ver `scripts/gen-tabler-meta.ts`).
  *
  * Los nombres del catálogo son los de Iconify sin prefijo (`bus`, `bus-filled`),
  * el mismo formato que persiste `Icon.icon` y que recibe `<icon name>`.
@@ -28,7 +28,7 @@ export interface TablerCatalog {
   icons: TablerIconEntry[]
 }
 
-interface TablerMetaFile {
+export interface TablerMetaFile {
   version: string
   categories: string[]
   icons: Record<string, [number, string]>
@@ -151,11 +151,11 @@ let catalogPromise: Promise<TablerCatalog> | null = null
 export function loadTablerCatalog(): Promise<TablerCatalog> {
   catalogPromise ??= Promise.all([
     import('@iconify-json/tabler'),
-    import('./tabler-meta.json'),
+    import('./tablerMeta'),
   ])
     .then(([{ icons: set }, meta]) => {
       addCollection(set)
-      return buildCatalog(Object.keys(set.icons), meta.default as unknown as TablerMetaFile)
+      return buildCatalog(Object.keys(set.icons), meta.default)
     })
     .catch((error: unknown) => {
       catalogPromise = null
