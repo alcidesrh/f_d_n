@@ -27,9 +27,7 @@ export function apiIconGateway(): IconGateway {
       return items.find((item) => item.icon === name)?.id ?? null;
     },
     async create(name) {
-      // `label` es obligatorio en todos los create*Input (propiedad pública de
-      // `Base`), aunque el backend lo calcula desde `name`: se manda el mismo valor.
-      const created = await getEntity<{ id: string }>(ICON_ENTITY).create({ icon: name, name, label: name });
+      const created = await getEntity<{ id: string }>(ICON_ENTITY).create({ icon: name, name });
       return created.id;
     },
   };

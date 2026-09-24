@@ -36,8 +36,8 @@ security:
                 username_path: username
                 password_path: password
             logout:
+                # Respuesta y revocación del token: App\EventListener\LogoutListener.
                 path: /api/logout
-                target: /user-invalid
                 # clear_site_data:
                 #     - cache
                 #     - storage

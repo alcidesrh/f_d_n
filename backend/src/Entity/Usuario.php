@@ -23,7 +23,6 @@ use App\Entity\Base\PersonaBase;
 use App\Filter\IdPartialSearchFilter;
 use App\Repository\UsuarioRepository;
 use App\Resolver\UserByUsernameResolver;
-use App\Services\Collection as ServicesCollection;
 use App\Services\UsuarioPasswordHasher;
 use Symfony\Component\Serializer\Attribute\Ignore;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -201,11 +200,11 @@ class Usuario extends PersonaBase implements
             $this->loadData($data);
         }
 
-        $this->apiTokens = new ServicesCollection();
-        $this->userRoles = new ServicesCollection();
-        $this->permisos = new ServicesCollection();
-        $this->directActions = new ServicesCollection();
-        $this->deniedActions = new ServicesCollection();
+        $this->apiTokens = new ArrayCollection();
+        $this->userRoles = new ArrayCollection();
+        $this->permisos = new ArrayCollection();
+        $this->directActions = new ArrayCollection();
+        $this->deniedActions = new ArrayCollection();
     }
 
     public function getFullName()

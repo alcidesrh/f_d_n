@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use App\Entity\Usuario;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
@@ -9,7 +10,7 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
 
 /**
- * @extends CustomEntityRepository<Usuario>
+ * @extends ServiceEntityRepository<Usuario>
  *
  * @implements PasswordUpgraderInterface<Usuario>
  *
@@ -18,7 +19,7 @@ use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
  * @method Usuario[]    findAll()
  * @method Usuario[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
-class UsuarioRepository extends CustomEntityRepository implements PasswordUpgraderInterface {
+class UsuarioRepository extends ServiceEntityRepository implements PasswordUpgraderInterface {
     public function __construct(ManagerRegistry $registry) {
         parent::__construct($registry, Usuario::class);
     }
@@ -49,14 +50,4 @@ class UsuarioRepository extends CustomEntityRepository implements PasswordUpgrad
             ->getResult()
         ;
     }
-
-    //    public function findOneBySomeField($value): ?Usuario
-    //    {
-    //        return $this->createQueryBuilder('u')
-    //            ->andWhere('u.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
 }

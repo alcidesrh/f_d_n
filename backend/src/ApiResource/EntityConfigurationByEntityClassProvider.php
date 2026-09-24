@@ -11,7 +11,6 @@ use App\Entity\CollectionFieldConfig;
 use App\Entity\EntityConfiguration;
 use App\Entity\FormFieldConfig;
 use App\Repository\EntityConfigurationRepository;
-use App\Services\Collection;
 use App\Services\EntityConfigSynchronizer;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;

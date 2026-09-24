@@ -2,8 +2,8 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiProperty;
 use App\Attribute\ApiResourceNoPagination;
-use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
 use App\Entity\Base\Traits\TimestampableEntityTrait;
 use App\Repository\ApiTokenRepository;
@@ -34,11 +34,10 @@ class ApiToken extends Base {
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $expira = null;
 
+    /** Secreto del Bearer: nunca se expone por la API (solo lo devuelve el login). */
+    #[ApiProperty(readable: false, writable: false)]
     #[ORM\Column(length: 68)]
     private string $token;
-
-    // #[ORM\Column]
-    // private array $scopes = [];
 
     #[ORM\Column(nullable: true)]
     private ?bool $activo = null;
@@ -78,18 +77,9 @@ class ApiToken extends Base {
         return $this;
     }
 
-    // public function getScopes(): array {
-    //     return $this->scopes;
-    // }
-
-    // public function setScopes(array $scopes): self {
-    //     $this->scopes = $scopes;
-
-    //     return $this;
-    // }
-
-    public function isValid(): ?bool {
-        return $this->activo; //($this->expira === null || $this->expira > new \DateTimeInterface()) && $this->activo;
+    /** Activo y sin vencer. */
+    public function isValid(): bool {
+        return (bool) $this->activo && ($this->expira === null || $this->expira > new \DateTimeImmutable());
     }
 
     public function isActivo(): ?bool {

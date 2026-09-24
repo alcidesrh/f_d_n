@@ -2,36 +2,19 @@
 
 namespace App\Attribute;
 
-use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Metadata\GraphQl\DeleteMutation;
-use ApiPlatform\Metadata\GraphQl\Mutation;
-use ApiPlatform\Metadata\GraphQl\Query;
 use ApiPlatform\Metadata\GraphQl\QueryCollection;
-use ApiPlatform\Metadata\Operations;
-use Attribute;
 
+/** Recurso con colección paginada por página (`currentPage`/`itemsPerPage`) y orden. */
 #[\Attribute(\Attribute::TARGET_CLASS | \Attribute::IS_REPEATABLE)]
 final class ApiResourcePaginationPage extends ApiResourceBase
 {
-
-    public function __construct(protected ?array $graphQlOperations = null, protected ?Operations $operations = null, ...$data)
+    protected static function collection(): QueryCollection
     {
-        $default = [
+        return new QueryCollection(filters: ['order.filter']);
+    }
 
-            new QueryCollection(
-                filters: ['order.filter'],
-            ),
-            ...($graphQlOperations ?? []),
-        ];
-        if (empty($data)) {
-            $data = ['paginationType' => 'page'];
-        } else {
-            $data['paginationType'] = 'page';
-        }
-        if ($operations) {
-            parent::__construct(...$data, graphQlOperations: $default, operations: new Operations((array)($operations)));
-        } else {
-            parent::__construct(...$data, graphQlOperations: $default);
-        }
+    protected static function defaults(array $data): array
+    {
+        return ['paginationType' => 'page', ...$data];
     }
 }

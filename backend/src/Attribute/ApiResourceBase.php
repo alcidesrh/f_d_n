@@ -8,36 +8,36 @@ use ApiPlatform\Metadata\GraphQl\Mutation;
 use ApiPlatform\Metadata\GraphQl\Query;
 use ApiPlatform\Metadata\GraphQl\QueryCollection;
 use ApiPlatform\Metadata\Operations;
-use Attribute;
 
-#[\Attribute(\Attribute::TARGET_CLASS | \Attribute::IS_REPEATABLE)]
-class ApiResourceBase extends ApiResource {
+/**
+ * Recurso API de una entidad con el CRUD GraphQL completo: item, colección
+ * (definida por cada variante), create, update y delete. `graphQlOperations`
+ * añade operaciones propias (p. ej. una colección con filtros por parámetro).
+ */
+abstract class ApiResourceBase extends ApiResource
+{
+    public function __construct(?array $graphQlOperations = null, ?Operations $operations = null, mixed ...$data)
+    {
+        parent::__construct(
+            ...static::defaults($data),
+            graphQlOperations: [
+                new Query(),
+                new Mutation(name: 'create'),
+                new Mutation(name: 'update'),
+                new DeleteMutation(name: 'delete'),
+                static::collection(),
+                ...($graphQlOperations ?? []),
+            ],
+            operations: $operations,
+        );
+    }
 
-    public function __construct(protected ?array $graphQlOperations = null, protected ?Operations $operations = null, ...$data) {
-        
-        $default = [
-            new Query(),
-            new Mutation(name: 'create'),
-            new Mutation(name: 'update'),
-            new DeleteMutation(name: 'delete'),
-            // new QueryCollection(
-            //     name: 'list',
-            //     paginationType: 'page',
-            //     filters: ['order.filter'],
-            // ),
-            ...($graphQlOperations ?? []),
-        ];
-        foreach ($graphQlOperations as $key => $value) {
-            if ($value instanceof QueryCollection && $value->getName() === 'list') {
-                unset($default[4]);
-                break;
-            }
-        }
+    /** Operación de colección GraphQL de la variante. */
+    abstract protected static function collection(): QueryCollection;
 
-        if ($operations) {
-            parent::__construct(...$data, graphQlOperations: $default, operations: new Operations((array)($operations)));
-        } else {
-            parent::__construct(...$data, graphQlOperations: $default);
-        }
+    /** Argumentos de `ApiResource` que fija la variante. */
+    protected static function defaults(array $data): array
+    {
+        return $data;
     }
 }

@@ -5,7 +5,6 @@ namespace App\GraphQL\Type\Converter;
 use ApiPlatform\GraphQl\Type\TypeConverterInterface;
 use ApiPlatform\GraphQl\Type\TypesContainerInterface;
 use ApiPlatform\Metadata\GraphQl\Operation;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping\Column;
 use GraphQL\Type\Definition\Type as GraphQLType;
@@ -41,23 +40,9 @@ final class DateTypeConverter implements TypeConverterInterface
 
                 $reflectionType = $reflection->getType();
 
-                if ($reflectionType instanceof \ReflectionNamedType) {
-                    if (is_a($reflectionType->getName(), \DateTimeInterface::class, true)) {
-                        return $this->types->get('Date');
-                    } else   if (is_a($reflectionType->getName(), Collection::class, true)) {
-                        // return $this->types->get('Multiple');
-                    }
+                if ($reflectionType instanceof \ReflectionNamedType && is_a($reflectionType->getName(), \DateTimeInterface::class, true)) {
+                    return $this->types->get('Date');
                 }
-                // $reflection = new \ReflectionProperty($rootResource, $property);
-                // $reflectionType = $reflection->getType();
-
-                // if ($reflectionType instanceof \ReflectionNamedType) {
-                //   $typeName = $reflectionType->getName();
-
-                //   if (is_a($typeName, \DateTimeInterface::class, true)) {
-                //     return $this->types->get('Date');
-                //   }
-                // }
             } catch (\ReflectionException $e) {
                 return $this->decorated->convertPhpType(
                     $type,

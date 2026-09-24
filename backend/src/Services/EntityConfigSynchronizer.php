@@ -21,19 +21,9 @@ final class EntityConfigSynchronizer
     {
         $config = $this->entityManager->getRepository(EntityConfiguration::class)
             ->findOneBy(['entityClass' => $entityClass]);
-        // if ($config) {
-        //   $item = $config->getCollectionFieldConfig();
-        //   $toDelete = $item->filter(fn(CollectionFieldConfig $v) => in_array($v->field, ['legacyId', 'password', 'apiTokens', 'plainPassword', 'userIdentifier']));
-        //   foreach ($toDelete  as $key => $value) {
-        //     $item->removeElement($value);
-        //   }
-        //   $this->entityManager->flush();
-        // }
-        // return;
         if (!$config) {
             $config = new EntityConfiguration($entityClass);
             $this->entityManager->persist($config);
-            // $this->logger->info('Configuración inicial creada para {entity}', ['entity' => $entityClass]);
         }
 
         $metadata = $this->entityManager->getClassMetadata('App\\Entity\\' . $entityClass);
@@ -47,7 +37,6 @@ final class EntityConfigSynchronizer
             $this->configChangePublisher->entityConfigChanged($config);
         }
         return $config;
-        // $this->logger->debug('Sincronización completada para {entity}', ['entity' => $entityClass]);
     }
 
     public static function getAllFieldNames(ClassMetadata $metadata): array
@@ -113,10 +102,6 @@ final class EntityConfigSynchronizer
                 $collectionFieldConfig->setData($data);
             }
             $config->addcollectionFieldConfig($collectionFieldConfig);
-            // $this->logger->info('Campo de listado añadido automáticamente: {field} en {entity}', [
-            //   'field' => $data[0],
-            //   'entity' => $config->getEntityClass()
-            // ]);
         }
         $config->orderFields($config->getCollectionFieldConfig());
     }
@@ -140,10 +125,6 @@ final class EntityConfigSynchronizer
 
             $config->addFormField($formField);
 
-            // $this->logger->info('Campo de formulario añadido automáticamente: {field} en {entity}', [
-            //   'field' => $data[0],
-            //   'entity' => $config->getEntityClass()
-            // ]);
         }
         $config->orderFields($config->getFormFields());
     }

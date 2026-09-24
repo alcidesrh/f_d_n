@@ -87,12 +87,6 @@ class MigrarTodoCommand extends Command
                 "Who do you want to greet (separate multiple names with a space)?",
                 [],
             );
-        // ->addArgument('boletos', InputArgument::OPTIONAL, 'Cantidad de boletos a migrar', '100')
-        // ->addArgument(
-        //     'entities',
-        //     InputArgument::IS_ARRAY,
-        //     'Who do you want to greet (separate multiple names with a space)?'
-        // );
     }
 
     protected function execute(
@@ -117,7 +111,6 @@ class MigrarTodoCommand extends Command
         // ─── Paso 1: Reset (opcional) ─────────────────────────────
         if ($clean) {
             $output->writeln("<info>[1/5] Limpiando base de datos...</info>");
-            // $this->limpiador->limpiar();
             $this->resetDB($input, $output, true);
             $output->writeln("<info>✓ Base de datos limpiada</info>");
             $steps[] = "reset";
@@ -285,7 +278,6 @@ class MigrarTodoCommand extends Command
         return Command::SUCCESS;
     }
 
-    // #[AsCommand('app:migrar:estaticos')]
     public function estaticos(
         #[Argument] array $entities = [],
         ?OutputInterface $output = null,

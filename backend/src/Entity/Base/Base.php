@@ -22,7 +22,6 @@ class Base
      */
     private static array $labelMethodCache = [];
 
-    public ?string $label = null;
     public function setId(int $id): self
     {
         $this->id = $id;
@@ -32,6 +31,7 @@ class Base
     {
         return $this->id;
     }
+    /** Texto para mostrar el registro (`nombre`, `name` o el id); solo lectura en la API. */
     public function getLabel(): string
     {
         $class = static::class;
