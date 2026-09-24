@@ -5,6 +5,7 @@ import FkButton from "@/components/formkit/FkButton.vue";
 import FkCascadeSelect from "@/components/formkit/FkCascadeSelect.vue";
 import FkCheckbox from "@/components/formkit/FkCheckbox.vue";
 import FkDatePicker from "@/components/formkit/FkDatePicker.vue";
+import FkIconPicker from "@/components/formkit/FkIconPicker.vue";
 import FkInputMask from "@/components/formkit/FkInputMask.vue";
 import FkInputNumber from "@/components/formkit/FkInputNumber.vue";
 import FkInputText from "@/components/formkit/FkInputText.vue";
@@ -36,6 +37,7 @@ export default defineFormKitConfig({
     TextArea: createInput(FkTextArea),
     TreeSelect: createInput(FkTreeSelect),
     ToggleSwitch: createInput(FkToggleSwitch),
+    IconPicker: createInput(FkIconPicker),
     // El label se pinta en el botón PrimeVue: se suprime la sección `label` de FormKit.
     Button: createInput(FkButton, {}, { label: null }),
   },

@@ -86,6 +86,12 @@
             placeholder="Selecciona archivos"
           />
           <FormKit
+            type="IconPicker"
+            name="icono"
+            label="Ícono"
+            help="Busca por nombre, tag o categoría"
+          />
+          <FormKit
             type="AutoComplete"
             name="marca"
             label="Marca"

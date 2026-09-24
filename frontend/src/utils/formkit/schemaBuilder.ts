@@ -29,6 +29,7 @@ export type BuilderInputType =
   | 'TextArea'
   | 'TreeSelect'
   | 'ToggleSwitch'
+  | 'IconPicker'
   | 'Button'
 
 export const BUILDER_INPUT_TYPES: BuilderInputType[] = [
@@ -44,6 +45,7 @@ export const BUILDER_INPUT_TYPES: BuilderInputType[] = [
   'RadioButton',
   'Checkbox',
   'ToggleSwitch',
+  'IconPicker',
   'AutoComplete',
   'CascadeSelect',
   'TreeSelect',
