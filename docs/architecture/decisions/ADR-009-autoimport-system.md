@@ -1,6 +1,6 @@
 # ADR-009: Sistema de auto-import mediante unplugin
 
-**Estado:** Aceptada
+**Estado:** Reemplazada por [ADR-017](ADR-017-frontend-por-capas.md). Hoy el auto-import cubre solo Vue/Router/Pinia y el auto-registro solo `shared/ui` y `shared/icons`.
 
 ## Contexto
 

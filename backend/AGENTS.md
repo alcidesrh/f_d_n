@@ -27,6 +27,31 @@ Main stack:
 
 ---
 
+## Mapa del código (`src/`)
+
+| Carpeta | Qué hay |
+|---|---|
+| `Entity/` | Entidades del modelo nuevo. Todas extienden `Base\Base` (id + `label` derivado de solo lectura); `Base/` tiene las variantes (`PersonaBase`, …) y traits (timestamps, status, legacy). |
+| `Attribute/` | Cómo se publica cada entidad: `#[ApiResourcePaginationPage]` (colección paginada por página + orden) o `#[ApiResourceNoPagination]` (catálogos). Ambas dan item, colección, create, update y delete en GraphQL; `graphQlOperations:` añade operaciones propias. |
+| `ApiResource/` | Recursos que no son entidades: `Agnostic` (`collectionAgnostic`: options `{ value, label }` de cualquier entidad, borrado múltiple), `ConfigVersions`, configuración por `entityClass`. |
+| `Resolver/` | Resolvers GraphQL propios (listas agnósticas, borrado múltiple, guardado de configuración de entidades, usuario por username). |
+| `Security/` | Autorización (`Voter/EntityVoter` = `{entidad}.{create,read,update,delete}`, `ActionVoter`, `PermissionManager`), autenticación por Bearer (`ApiTokenHandler`) y hasher legacy. |
+| `EventListener/` | `TenantFilterListener` (aislamiento por empresa, ADR-015) y `LogoutListener` (revoca el Bearer en `POST /api/logout`). |
+| `Controller/` | Endpoints REST fuera de API Platform: login, cambio de contraseña, permisos, sincronización de rutas, migración. |
+| `Services/` | Sincronización de `EntityConfiguration` y `VueRoute`, publicación de cambios (Mercure/SSE), hasher de contraseñas. |
+| `Migration/`, `Command/` | Migración desde el sistema legado (TerminalOmnibus) y sus comandos de consola. |
+| `EntitySistemaFdn/` | Entidades del sistema legado (SQL Server). Solo lectura para la migración: **no tocar**. |
+| `Doctrine/`, `GraphQL/` | Filtro multi-empresa, función `CAST`, driver dblib; tipo GraphQL `Date`. |
+
+Reglas de la casa:
+
+- `label` nunca es escribible: se calcula (`getNombre()`/`getName()`/id).
+- El valor de `ApiToken.token` nunca se expone por la API; solo lo devuelve el login.
+- Repositorios: `ServiceEntityRepository` simple; persistir con el `EntityManager`.
+- Cambios de contrato: exportar el schema antes y después (`bin/console api:graphql:export`) y revisar el diff.
+
+---
+
 ## Development Environment
 
 All commands must be executed inside Docker containers unless explicitly stated otherwise.

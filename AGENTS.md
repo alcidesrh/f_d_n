@@ -87,7 +87,7 @@ Despliegue
 | `npm run build`     | type-check + build       |
 | `npm run lint`      | oxlint + eslint --fix    |
 | `npm run test:unit` | Vitest                   |
-| `npm run test:e2e`  | Playwright               |
+| `npm run test:e2e`  | Playwright (con el stack levantado) |
 
 ---
 
@@ -96,9 +96,11 @@ Despliegue
 - **GraphQL collections** son `PageConnection` hulls, no arrays: `{ collection { id } paginationInfo { totalCount } }`.
 - **REST** requiere `Accept: application/ld+json` (sin header → 406).
 - **CRUD dinámico**: backend expone metadatos → frontend genera forms/listas via introspection GraphQL.
-- **Boot order frontend**: unocss → api-rest → apollo → introspection → middleware → i18n → gsap.
-- **Stores frontend**: en getters **no usar** `state` como parámetro (collision con auto-import). Usar `st`.
-- **Íconos**: el repositorio de íconos es [Tabler](https://tabler.io/icons) y el único punto de uso es `frontend/src/components/common/Icon.vue` (`<icon name="grip-vertical" lg />`, prefijo `tabler:` implícito). Ver `docs/frontend/icons.md`.
+- **Frontend por capas** (ADR-017): `app → features → shared → core`, imports explícitos. Mapa completo en `frontend/AGENTS.md`.
+- **Boot order frontend** (`main.ts`): plugins (Pinia, router, FormKit, PrimeVue) → tema → introspección GraphQL → montaje → sincronización de rutas.
+- **`label`** es derivado (de `nombre`/`name`) y de solo lectura en todas las entidades: no forma parte de los inputs de create/update.
+- **Tokens de API**: el valor del Bearer solo lo entrega `POST /api/login`; nunca se expone por GraphQL/REST. `POST /api/logout` lo revoca (`App\EventListener\LogoutListener`).
+- **Íconos**: el repositorio de íconos es [Tabler](https://tabler.io/icons) y el único punto de uso es `frontend/src/shared/ui/Icon.vue` (`<icon name="grip-vertical" lg />`, prefijo `tabler:` implícito). Ver `docs/frontend/icons.md`.
 - **Multi-tenancy**: `App\Doctrine\TenantFilter` (Doctrine SQLFilter, deshabilitado por defecto en el EM `default`) aísla `Bus`/`Piloto`/`Recorrido`/`BoletoTarifa` por `empresa_id`. Se habilita por request en `App\EventListener\TenantFilterListener` según `Usuario.empresa` — si el usuario no tiene empresa asignada, navega sin filtro. Ver ADR-015.
 
 ---
@@ -123,7 +125,8 @@ Despliegue
 - `config/packages/*` / `config/services.yaml`
 - `migrations/*`
 - GraphQL schema definitions
-- `frontend/src/entities.ts` / `frontend/src/types/entities/*`
+- `frontend/src/core/entities/schema.ts` (`SCHEMA_VERSION`: subirla si cambia el schema de forma incompatible) / `frontend/src/core/http.ts` / `frontend/src/core/graphql/client.ts`
+- `backend/src/Attribute/*` (operaciones GraphQL de todas las entidades) / `backend/src/Entity/Base/Base.php`
 - `CONTEXT.md`
 
 ---
@@ -136,7 +139,7 @@ No existe un sitio MkDocs — se eliminó el 2026-09 por documentar un modelo de
 | ------------------- | ---------------------------------------- |
 | Contexto de dominio | `CONTEXT.md`                             |
 | Terminología + estado del modelo | `AGENTS.md` (este archivo, sección "Domain terminology") |
-| ADRs (decisiones de arquitectura) | `docs/architecture/decisions/` (ADR-001 a ADR-016, ver `index.md`) |
+| ADRs (decisiones de arquitectura) | `docs/architecture/decisions/` (ADR-001 a ADR-017, ver `index.md`) |
 | Convención de exploración de dominio para skills | `docs/agents/domain.md` |
 | Convención de issue tracker | `docs/agents/issue-tracker.md` |
 | Backend (Symfony, Doctrine, GraphQL) | `backend/AGENTS.md` |

@@ -12,7 +12,7 @@
 | [ADR-006](ADR-006-subdomains-bounded-contexts.md) | Subdominios como bounded contexts | Aceptada |
 | [ADR-007](ADR-007-formkit-custom-theme.md) | FormKit con tema personalizado + JSON schemas | Aceptada |
 | [ADR-008](ADR-008-legacy-migration-strategy.md) | Estrategia de migración desde TerminalOmnibus | Aceptada |
-| [ADR-009](ADR-009-autoimport-system.md) | Sistema de auto-import mediante unplugin | Aceptada |
+| [ADR-009](ADR-009-autoimport-system.md) | Sistema de auto-import mediante unplugin | Reemplazada por ADR-017 |
 | [ADR-010](ADR-010-dynamic-entity-config.md) | Configuración dinámica de entidades vía metadatos | Aceptada |
 | [ADR-011](ADR-011-recorrido-lleva-trayecto.md) | Recorrido lleva el trayecto directamente (sin plantilla intermedia) | Aceptada |
 | [ADR-012](ADR-012-trayecto-canonico-por-enclaves.md) | Trayecto canónico por par de enclaves (origen, destino) | Aceptada |
@@ -20,3 +20,4 @@
 | [ADR-014](ADR-014-estados-tipados-por-entidad.md) | Estados tipados por entidad (enum) en vez de catálogo Status genérico | Aceptada |
 | [ADR-015](ADR-015-tenant-filter.md) | TenantFilter: aislamiento por empresa vía Doctrine SQLFilter | Aceptada |
 | [ADR-016](ADR-016-piloto-vuelve-a-bus.md) | La asignación de Piloto vuelve a Bus (no Recorrido); pilotoAux → copiloto | Aceptada |
+| [ADR-017](ADR-017-frontend-por-capas.md) | Frontend por capas (core / shared / features) con imports explícitos | Aceptada |
