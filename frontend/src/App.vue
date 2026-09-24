@@ -15,24 +15,24 @@
 </template>
 
 <script setup lang="ts">
-import AppLayout from "@/app/layout/AppLayout.vue";
-import Toasts from "@/app/layout/Toasts.vue";
-import TopLoadingBar from "@/app/layout/TopLoadingBar.vue";
-import { useUiStore } from "@/app/ui";
+import AppLayout from '@/app/layout/AppLayout.vue'
+import Toasts from '@/app/layout/Toasts.vue'
+import TopLoadingBar from '@/app/layout/TopLoadingBar.vue'
+import { useUiStore } from '@/app/ui'
 
-const route = useRoute();
-const ui = useUiStore();
-const mounted = ref(false);
+const route = useRoute()
+const ui = useUiStore()
+const mounted = ref(false)
 
-const syncViewport = () => ui.syncViewport();
+const syncViewport = () => ui.syncViewport()
 onMounted(() => {
-  mounted.value = true;
-  window.addEventListener("resize", syncViewport);
-});
-onBeforeUnmount(() => window.removeEventListener("resize", syncViewport));
+  mounted.value = true
+  window.addEventListener('resize', syncViewport)
+})
+onBeforeUnmount(() => window.removeEventListener('resize', syncViewport))
 
 /** Clases de tema en `<html>` (modo, color primario y superficie). */
 watchEffect(() => {
-  document.documentElement.className = `${ui.mode} primary-${ui.primary} surface-${ui.surface}`;
-});
+  document.documentElement.className = `${ui.mode} primary-${ui.primary} surface-${ui.surface}`
+})
 </script>

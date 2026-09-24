@@ -12,7 +12,12 @@
         class="left-0 toast relative backdrop-blur-[7px] pointer-events-auto flex w-full items-start gap-3 rounded-lg border px-4 py-3 pt-6 shadow-lg"
         role="alert"
       >
-        <icon @click="dismiss(toast.id)" name="x" class="absolute right-0 top-0 m-2" size="1.2rem" />
+        <icon
+          @click="dismiss(toast.id)"
+          name="x"
+          class="absolute right-0 top-0 m-2"
+          size="1.2rem"
+        />
         <icon :name="ICONS[toast.type]" size="1.2rem" />
         <span class="flex-1 text-sm leading-snug">{{ toast.text }}</span>
       </div>
@@ -21,21 +26,21 @@
 </template>
 
 <script setup lang="ts">
-import { dismiss, toasts, type ToastType } from "@/core/notify";
+import { dismiss, toasts, type ToastType } from '@/core/notify'
 
 const ICONS: Record<ToastType, string> = {
-  info: "info-circle",
-  success: "circle-dashed-check",
-  warning: "alert-triangle",
-  error: "exclamation-circle",
-};
+  info: 'info-circle',
+  success: 'circle-dashed-check',
+  warning: 'alert-triangle',
+  error: 'exclamation-circle',
+}
 
 const TONES: Record<ToastType, string> = {
-  info: "info bg-sky-50/30 border-sky-200 text-sky-800",
-  success: "success bg-emerald-50/30 border-emerald-200 text-emerald-800",
-  warning: "warning bg-amber-50/30 border-amber-200 text-amber-800",
-  error: "error bg-red-50/30 border-red-200 text-red-800",
-};
+  info: 'info bg-sky-50/30 border-sky-200 text-sky-800',
+  success: 'success bg-emerald-50/30 border-emerald-200 text-emerald-800',
+  warning: 'warning bg-amber-50/30 border-amber-200 text-amber-800',
+  error: 'error bg-red-50/30 border-red-200 text-red-800',
+}
 </script>
 
 <style scoped>

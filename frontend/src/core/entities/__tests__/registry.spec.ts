@@ -7,7 +7,9 @@ const { restMock, schemaMock } = vi.hoisted(() => ({
   schemaMock: { require: vi.fn<(name: string) => unknown>() },
 }))
 
-vi.mock('@/core/metadata/entityConfiguration', () => ({ fetchEntityConfiguration: restMock.getEntityConfiguration }))
+vi.mock('@/core/metadata/entityConfiguration', () => ({
+  fetchEntityConfiguration: restMock.getEntityConfiguration,
+}))
 vi.mock('@/core/entities/schema', () => ({ useSchemaStore: () => schemaMock }))
 
 describe('getEntity', () => {

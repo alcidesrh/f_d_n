@@ -3,16 +3,16 @@
 
 /* Reset CSS */
 
-@import "tailwindcss";
-@import "tailwindcss-primeui";
-@import "./primevue/index.css";
+@import 'tailwindcss';
+@import 'tailwindcss-primeui';
+@import './primevue/index.css';
 
-@import "./tokens.css";
-@import "./fonts.css";
-@import "./header.css";
-@import "./theme-editor.css";
-@import "./sidebar.css";
-@import "./content.css";
+@import './tokens.css';
+@import './fonts.css';
+@import './header.css';
+@import './theme-editor.css';
+@import './sidebar.css';
+@import './content.css';
 
 /* ============================= RESET ============================= */
 /* *,
@@ -33,7 +33,7 @@ html.dark {
   }
 }
 body {
-  font-family: "Roboto Flex Variable", sans-serif;
+  font-family: 'Roboto Flex Variable', sans-serif;
   font-size: 1rem;
   background: var(--p-surface-100);
   /* var(--p-surface-50); */

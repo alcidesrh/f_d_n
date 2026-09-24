@@ -38,10 +38,19 @@ const FILTER_INPUTS: Record<FilterFieldKind, Record<string, unknown>> = {
   number: { type: 'InputNumber', placeholder: 'Todos', showClear: true },
   boolean: { type: 'Select', placeholder: 'Todos', showClear: true, options: BOOLEAN_OPTIONS },
   relation: { type: 'Select', placeholder: 'Todos', showClear: true },
-  date: { type: 'DatePicker', placeholder: 'Rango', selectionMode: 'range', showIcon: true, showClear: true },
+  date: {
+    type: 'DatePicker',
+    placeholder: 'Rango',
+    selectionMode: 'range',
+    showIcon: true,
+    showClear: true,
+  },
 }
 
-export function useListFilters(store: ComputedRef<EntityStore | null>, columns: ComputedRef<CollectionFieldConfig[]>) {
+export function useListFilters(
+  store: ComputedRef<EntityStore | null>,
+  columns: ComputedRef<CollectionFieldConfig[]>,
+) {
   /** Valor de cada input (campo → valor), antes de traducirse a args del backend. */
   const filters = reactive<Record<string, unknown>>({})
   const filterNodes = ref(new Map<string, FormKitSchemaNode>())
@@ -60,7 +69,10 @@ export function useListFilters(store: ComputedRef<EntityStore | null>, columns: 
   function relationOptions(field: string) {
     const target = entity()?.fields.find((f) => f.name === field)?.namedType
     if (!target) return []
-    return getEntity(target).fullList.map((option) => ({ label: option.label, value: option.value ?? option.id }))
+    return getEntity(target).fullList.map((option) => ({
+      label: option.label,
+      value: option.value ?? option.id,
+    }))
   }
 
   function buildNode(column: CollectionFieldConfig): FormKitSchemaNode | null {
@@ -97,7 +109,8 @@ export function useListFilters(store: ComputedRef<EntityStore | null>, columns: 
   function apply(field: string, kind: FilterFieldKind, value: unknown) {
     filters[field] = value
     clearTimeout(timer)
-    if (!isEmptyFilterValue(value) && (kind === 'text' || kind === 'number')) timer = setTimeout(commit, DEBOUNCE_MS)
+    if (!isEmptyFilterValue(value) && (kind === 'text' || kind === 'number'))
+      timer = setTimeout(commit, DEBOUNCE_MS)
     else commit()
   }
 
@@ -128,7 +141,8 @@ export function useListFilters(store: ComputedRef<EntityStore | null>, columns: 
   const hasLocalFilter = computed(() => {
     const metadata = entity()
     return Object.entries(filters).some(
-      ([field, value]) => !isEmptyFilterValue(value) && (!metadata || isLocalFilter(metadata, field)),
+      ([field, value]) =>
+        !isEmptyFilterValue(value) && (!metadata || isLocalFilter(metadata, field)),
     )
   })
 
@@ -136,7 +150,9 @@ export function useListFilters(store: ComputedRef<EntityStore | null>, columns: 
   const visibleItems = computed<unknown[]>(() => {
     const items = store.value?.items ?? []
     const metadata = entity()
-    return hasLocalFilter.value && metadata ? items.filter((item) => matchesFilters(item, filters, metadata)) : items
+    return hasLocalFilter.value && metadata
+      ? items.filter((item) => matchesFilters(item, filters, metadata))
+      : items
   })
 
   /** Texto a resaltar en una columna (solo texto/número). */
@@ -165,5 +181,14 @@ export function useListFilters(store: ComputedRef<EntityStore | null>, columns: 
     { flush: 'post' },
   )
 
-  return { filters, filterNodes, hasLocalFilter, visibleItems, rebuild, clear, hydrate, highlightFor }
+  return {
+    filters,
+    filterNodes,
+    hasLocalFilter,
+    visibleItems,
+    rebuild,
+    clear,
+    hydrate,
+    highlightFor,
+  }
 }

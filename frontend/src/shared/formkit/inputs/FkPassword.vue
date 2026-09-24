@@ -14,11 +14,11 @@
   />
 </template>
 <script setup lang="ts">
-import type { FormKitFrameworkContext } from "@formkit/core";
-import { useFormKitInput } from "@/shared/formkit/useFormKitInput";
+import type { FormKitFrameworkContext } from '@formkit/core'
+import { useFormKitInput } from '@/shared/formkit/useFormKitInput'
 
-defineOptions({ name: "FkPassword" });
+defineOptions({ name: 'FkPassword' })
 
-const props = defineProps<{ context: FormKitFrameworkContext }>();
-const { context, update, blur, invalid, disabled } = useFormKitInput(props);
+const props = defineProps<{ context: FormKitFrameworkContext }>()
+const { context, update, blur, invalid, disabled } = useFormKitInput(props)
 </script>

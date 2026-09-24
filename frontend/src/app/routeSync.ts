@@ -13,7 +13,6 @@ import type { RouteRecordRaw } from 'vue-router'
 import { http } from '@/core/http'
 import { router } from './router'
 
-
 export interface VueRouteDTO {
   name: string
   path?: string | null
@@ -72,11 +71,13 @@ export interface VueRoutesSyncResult {
  * el backend aceptó la sincronización; no lanza excepción de red para poder
  * usarse de forma no bloqueante durante el bootstrap.
  */
-export async function syncVueRoutes(routes: VueRouteDTO[] = extractVueRoutes()): Promise<VueRoutesSyncResult> {
+export async function syncVueRoutes(
+  routes: VueRouteDTO[] = extractVueRoutes(),
+): Promise<VueRoutesSyncResult> {
   try {
-    await http.post("/vue-routes/sync", { routes }, { silent: true });
-    return { ok: true, count: routes.length };
+    await http.post('/vue-routes/sync', { routes }, { silent: true })
+    return { ok: true, count: routes.length }
   } catch (error) {
-    return { ok: false, count: 0, error: error instanceof Error ? error.message : String(error) };
+    return { ok: false, count: 0, error: error instanceof Error ? error.message : String(error) }
   }
 }

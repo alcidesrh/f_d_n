@@ -222,11 +222,23 @@ describe('isEmptyFilterValue', () => {
 describe('toServerFilters / fromServerFilters', () => {
   it('traduce solo los campos con argumento en el backend y vuelve a los valores de la UI', () => {
     const range = [new Date('2026-01-01T12:00:00'), new Date('2026-01-31T12:00:00')]
-    const server = toServerFilters(schema, { name: 'ho', description: 'x', createdAt: range, icon: '' })
-    expect(server).toEqual({ name: 'ho', createdAt_after: '2026-01-01', createdAt_before: '2026-01-31' })
+    const server = toServerFilters(schema, {
+      name: 'ho',
+      description: 'x',
+      createdAt: range,
+      icon: '',
+    })
+    expect(server).toEqual({
+      name: 'ho',
+      createdAt_after: '2026-01-01',
+      createdAt_before: '2026-01-31',
+    })
     const back = fromServerFilters(schema, server)
     expect(back.name).toBe('ho')
-    expect((back.createdAt as Date[]).map((d) => d.toISOString().slice(0, 10))).toEqual(['2026-01-01', '2026-01-31'])
+    expect((back.createdAt as Date[]).map((d) => d.toISOString().slice(0, 10))).toEqual([
+      '2026-01-01',
+      '2026-01-31',
+    ])
   })
 
   it('isLocalFilter marca los campos sin argumento', () => {
@@ -236,7 +248,11 @@ describe('toServerFilters / fromServerFilters', () => {
 })
 
 describe('matchesFilters', () => {
-  const item = { name: 'Home', createdAt: '2026-01-15', category: { id: '/api/categories/1', label: 'Navegación' } }
+  const item = {
+    name: 'Home',
+    createdAt: '2026-01-15',
+    category: { id: '/api/categories/1', label: 'Navegación' },
+  }
   it('texto contiene, relación por id o label y fecha por rango inclusivo', () => {
     expect(matchesFilters(item, { name: 'hom' }, schema)).toBe(true)
     expect(matchesFilters(item, { name: 'x' }, schema)).toBe(false)
@@ -250,7 +266,9 @@ describe('matchesFilters', () => {
 describe('toEditedInput', () => {
   it('fechas a YYYY-MM-DD y relaciones a su IRI', () => {
     expect(toEditedInput(schema, 'createdAt', '2026-01-15T10:00:00-06:00')).toBe('2026-01-15')
-    expect(toEditedInput(schema, 'category', { value: '/api/categories/2', label: 'X' })).toBe('/api/categories/2')
+    expect(toEditedInput(schema, 'category', { value: '/api/categories/2', label: 'X' })).toBe(
+      '/api/categories/2',
+    )
     expect(toEditedInput(schema, 'name', 'abc')).toBe('abc')
   })
 })

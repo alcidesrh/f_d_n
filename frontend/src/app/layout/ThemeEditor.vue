@@ -69,8 +69,8 @@
   </div>
 </template>
 <script setup lang="ts">
-import { PRESET_OPTIONS, PRIMARY_OPTIONS, SURFACE_OPTIONS } from "@/app/theme";
-import { useUiStore } from "@/app/ui";
+import { PRESET_OPTIONS, PRIMARY_OPTIONS, SURFACE_OPTIONS } from '@/app/theme'
+import { useUiStore } from '@/app/ui'
 
-const ui = useUiStore();
+const ui = useUiStore()
 </script>

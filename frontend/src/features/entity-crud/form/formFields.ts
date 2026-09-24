@@ -7,26 +7,31 @@
  * tiene `formFields` configurados, la referencia son todos los `fields` del
  * schema (sin subcolecciones).
  */
-import type { EntitySchema, MutationSchema, SchemaInputField } from "@/core/graphql/types";
-import type { FormFieldConfig } from "@/core/metadata/entityConfiguration";
+import type { EntitySchema, MutationSchema, SchemaInputField } from '@/core/graphql/types'
+import type { FormFieldConfig } from '@/core/metadata/entityConfiguration'
 
 export interface FormFieldEntry {
-  name: string;
-  label?: string;
+  name: string
+  label?: string
 }
 
-export function formFieldEntries(formFields: FormFieldConfig[], entity: EntitySchema): FormFieldEntry[] {
+export function formFieldEntries(
+  formFields: FormFieldConfig[],
+  entity: EntitySchema,
+): FormFieldEntry[] {
   if (formFields.length === 0) {
-    return entity.fields.filter((field) => !field.isSubcollection).map((field) => ({ name: field.name }));
+    return entity.fields
+      .filter((field) => !field.isSubcollection)
+      .map((field) => ({ name: field.name }))
   }
   return formFields
-    .filter((config) => config.visible && typeof config.field === "string" && config.field)
+    .filter((config) => config.visible && typeof config.field === 'string' && config.field)
     .slice()
     .sort((a, b) => (Number(a.position) || 0) - (Number(b.position) || 0))
     .map((config) => ({
       name: config.field as string,
-      ...(typeof config.label === "string" && config.label ? { label: config.label } : {}),
-    }));
+      ...(typeof config.label === 'string' && config.label ? { label: config.label } : {}),
+    }))
 }
 
 /**
@@ -38,16 +43,16 @@ export function formFieldEntries(formFields: FormFieldConfig[], entity: EntitySc
 export function pickInputFields(
   entries: FormFieldEntry[],
   mutation: MutationSchema,
-  mode: "create" | "update",
+  mode: 'create' | 'update',
 ): SchemaInputField[] {
-  const inputs = new Map(mutation.inputFields.map((field) => [field.name, field]));
-  const out: SchemaInputField[] = [];
+  const inputs = new Map(mutation.inputFields.map((field) => [field.name, field]))
+  const out: SchemaInputField[] = []
   for (const entry of entries) {
-    if (entry.name === "clientMutationId") continue;
-    if (entry.name === "id" && mode === "create") continue;
-    const input = inputs.get(entry.name);
-    if (!input) continue;
-    out.push(entry.label ? { ...input, label: entry.label } : { ...input });
+    if (entry.name === 'clientMutationId') continue
+    if (entry.name === 'id' && mode === 'create') continue
+    const input = inputs.get(entry.name)
+    if (!input) continue
+    out.push(entry.label ? { ...input, label: entry.label } : { ...input })
   }
-  return out;
+  return out
 }

@@ -114,66 +114,66 @@
 </template>
 
 <script setup lang="ts">
-import { useConfirm } from "primevue/useconfirm";
-import FieldConfigPanel from "./FieldConfigPanel.vue";
-import SortablePanelList from "@/shared/ui/SortablePanelList.vue";
-import { useEntityConfigStore } from "./store";
-import { notify } from "@/core/notify";
+import { useConfirm } from 'primevue/useconfirm'
+import FieldConfigPanel from './FieldConfigPanel.vue'
+import SortablePanelList from '@/shared/ui/SortablePanelList.vue'
+import { useEntityConfigStore } from './store'
+import { notify } from '@/core/notify'
 
-defineOptions({ name: "EntityConfigEditor" });
+defineOptions({ name: 'EntityConfigEditor' })
 
 /** Alto de cada panel-fila (incluye `GAP`). */
-const ROW_HEIGHT = 92;
-const GAP = 10;
+const ROW_HEIGHT = 92
+const GAP = 10
 
-const store = useEntityConfigStore();
-const confirm = useConfirm();
-const tab = ref("collection");
+const store = useEntityConfigStore()
+const confirm = useConfirm()
+const tab = ref('collection')
 
 /** Pide confirmación solo si hay cambios pendientes de guardar. */
 function confirmDiscard(message: string): Promise<boolean> {
-  if (!store.dirty) return Promise.resolve(true);
+  if (!store.dirty) return Promise.resolve(true)
   return new Promise((resolve) => {
     confirm.require({
-      header: "Cambios sin guardar",
+      header: 'Cambios sin guardar',
       message,
-      icon: "pi pi-exclamation-triangle",
-      acceptLabel: "Descartar",
-      rejectLabel: "Seguir editando",
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Descartar',
+      rejectLabel: 'Seguir editando',
       accept: () => resolve(true),
       reject: () => resolve(false),
       onHide: () => resolve(false),
-    });
-  });
+    })
+  })
 }
 
 async function onSelectEntity(event: { value: string | null }) {
-  const entityClass = event.value;
-  if (!entityClass || entityClass === store.selected) return;
+  const entityClass = event.value
+  if (!entityClass || entityClass === store.selected) return
   const ok = await confirmDiscard(
     `Se perderán los cambios de ${store.selected} al abrir ${entityClass}.`,
-  );
-  if (ok) await store.select(entityClass);
+  )
+  if (ok) await store.select(entityClass)
 }
 
 async function reload() {
-  if (await confirmDiscard("Se descartarán los cambios y se recargará la configuración."))
-    await store.reload();
+  if (await confirmDiscard('Se descartarán los cambios y se recargará la configuración.'))
+    await store.reload()
 }
 
 async function save() {
-  const entityClass = store.selected;
+  const entityClass = store.selected
   try {
-    await store.save();
-    notify.success(`Configuración de ${entityClass} guardada`);
+    await store.save()
+    notify.success(`Configuración de ${entityClass} guardada`)
   } catch (error) {
     notify.error(
       `No se pudo guardar ${entityClass}: ${error instanceof Error ? error.message : String(error)}`,
-    );
+    )
   }
 }
 
-onBeforeRouteLeave(() => confirmDiscard("Vas a salir del editor y se perderán los cambios."));
+onBeforeRouteLeave(() => confirmDiscard('Vas a salir del editor y se perderán los cambios.'))
 
-onMounted(() => store.loadEntityClasses());
+onMounted(() => store.loadEntityClasses())
 </script>

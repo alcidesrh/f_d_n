@@ -13,7 +13,7 @@ import ConfirmationService from 'primevue/confirmationservice'
 import ConfirmDialog from 'primevue/confirmdialog'
 import { reactive } from 'vue'
 import formkitConfig from '@/shared/formkit/config'
-import { dismissAll } from "@/core/notify";
+import { dismissAll } from '@/core/notify'
 import type { AgnosticOption, EntitySchema } from '@/core/graphql/types'
 import type { CollectionFieldConfig, EntityStore } from '@/core/entities/types'
 import List from '@/features/entity-crud/ListPage.vue'
@@ -258,7 +258,12 @@ async function settleToasts() {
 
 const pluginMount = (): ComponentMountingOptions<typeof List> => ({
   global: {
-    plugins: [getActivePinia()!, PrimeVue, ConfirmationService, [formkitPlugin, defaultConfig(formkitConfig())]],
+    plugins: [
+      getActivePinia()!,
+      PrimeVue,
+      ConfirmationService,
+      [formkitPlugin, defaultConfig(formkitConfig())],
+    ],
   },
 })
 
@@ -279,7 +284,10 @@ describe('ListPage', () => {
       (name: string): EntityStore => (name === 'Category' ? categoryStore : (store as EntityStore)),
     )
     toastsWrapper = mount(Toasts, { global: { plugins: [PrimeVue] } })
-    confirmWrapper = mount(ConfirmDialog, { attachTo: document.body, global: { plugins: [PrimeVue, ConfirmationService] } })
+    confirmWrapper = mount(ConfirmDialog, {
+      attachTo: document.body,
+      global: { plugins: [PrimeVue, ConfirmationService] },
+    })
   })
 
   afterEach(() => {

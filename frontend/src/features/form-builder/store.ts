@@ -68,7 +68,10 @@ interface RootHolder {
 }
 
 /** Celda apuntada por la selección dentro del árbol dado. */
-function fbResolveTarget(root: BuilderGrid | null, key: CellKey | null): { grid: BuilderGrid; index: number } | null {
+function fbResolveTarget(
+  root: BuilderGrid | null,
+  key: CellKey | null,
+): { grid: BuilderGrid; index: number } | null {
   if (!key || !root) return null
   const grid = fbFindGrid(root, key.gridId)
   if (!grid || key.index < 0 || key.index >= grid.cells.length) return null
@@ -178,7 +181,10 @@ export const useFormBuilderStore = defineStore('formBuilder', {
     patchFieldProps(fieldId: string, patch: Record<string, unknown>): boolean {
       const next = fbReplaceNode(this.root, fieldId, (node) =>
         node.kind === 'field'
-          ? { ...node, props: { ...structuredCloneSafe(node.props), ...structuredCloneSafe(patch) } }
+          ? {
+              ...node,
+              props: { ...structuredCloneSafe(node.props), ...structuredCloneSafe(patch) },
+            }
           : node,
       )
       if (!next || next === this.root || next.kind !== 'grid') return false

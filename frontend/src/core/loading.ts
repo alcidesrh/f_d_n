@@ -3,9 +3,9 @@
  * petición se registra con una `key` para poder preguntar por una operación
  * concreta (`isLoading("login")`).
  */
-import { defineStore } from "pinia";
+import { defineStore } from 'pinia'
 
-export const useLoadingStore = defineStore("loading", {
+export const useLoadingStore = defineStore('loading', {
   state: () => ({ ops: {} as Record<string, number> }),
   getters: {
     /** Peticiones en curso (todas las keys). */
@@ -14,13 +14,13 @@ export const useLoadingStore = defineStore("loading", {
     isLoading: (st) => (key: string) => (st.ops[key] ?? 0) > 0,
   },
   actions: {
-    start(key = "anonymous") {
-      this.ops[key] = (this.ops[key] ?? 0) + 1;
+    start(key = 'anonymous') {
+      this.ops[key] = (this.ops[key] ?? 0) + 1
     },
-    stop(key = "anonymous") {
-      const count = (this.ops[key] ?? 0) - 1;
-      if (count > 0) this.ops[key] = count;
-      else delete this.ops[key];
+    stop(key = 'anonymous') {
+      const count = (this.ops[key] ?? 0) - 1
+      if (count > 0) this.ops[key] = count
+      else delete this.ops[key]
     },
   },
-});
+})

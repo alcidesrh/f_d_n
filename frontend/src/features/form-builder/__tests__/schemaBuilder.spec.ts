@@ -55,7 +55,12 @@ describe('compileSchema (export)', () => {
   it('preserva posiciones: huecos intermedios → spacers; vacíos finales descartados', () => {
     const root: BuilderGrid = {
       ...createGrid(2, 2),
-      cells: [null, createField('InputText', { name: 'a' }), null, createField('InputText', { name: 'b' })],
+      cells: [
+        null,
+        createField('InputText', { name: 'a' }),
+        null,
+        createField('InputText', { name: 'b' }),
+      ],
     }
     const [node] = compileSchema(root)
     const children = (node as { children?: unknown[] }).children ?? []
@@ -79,8 +84,14 @@ describe('compileSchema (export)', () => {
     root.cells[0] = nested
     const [node] = compileSchema(root)
     const outerChildren =
-      (node as { children?: Array<{ attrs?: Record<string, unknown>; children?: Array<Record<string, unknown>> }> })
-        .children ?? []
+      (
+        node as {
+          children?: Array<{
+            attrs?: Record<string, unknown>
+            children?: Array<Record<string, unknown>>
+          }>
+        }
+      ).children ?? []
     const inner = outerChildren[0]
     expect(inner?.attrs?.class).toBe(gridClass(2))
     expect(inner?.children?.[0]).toMatchObject({ $formkit: 'Button', label: 'Guardar' })
@@ -108,7 +119,7 @@ describe('compileSchema (preview)', () => {
       preview: true,
       selectedKey: { gridId: root.id, index: 1 },
     })
-    const cells = ((node as { children?: Array<{ attrs?: Record<string, unknown> }> }).children ?? [])
+    const cells = (node as { children?: Array<{ attrs?: Record<string, unknown> }> }).children ?? []
     expect(cells).toHaveLength(2)
     expect(cells[0]?.attrs).toMatchObject({ class: 'fb-cell' })
     expect(cells[1]?.attrs).toMatchObject({ class: 'fb-cell fb-cell--selected' })
@@ -121,10 +132,14 @@ describe('compileSchema (preview)', () => {
       preview: true,
       onSelectCell: (key) => clicks.push(key),
     })
-    const cell = ((node as { children?: Array<{ attrs?: Record<string, unknown> }> }).children ?? [])[0]
+    const cell = ((node as { children?: Array<{ attrs?: Record<string, unknown> }> }).children ??
+      [])[0]
     const onClick = cell?.attrs?.onClick as (() => void) | undefined
     expect(onClick).toBeTypeOf('function')
-    expect(cell?.attrs).toMatchObject({ class: 'fb-cell fb-cell--empty', 'data-cell': `${root.id}:0` })
+    expect(cell?.attrs).toMatchObject({
+      class: 'fb-cell fb-cell--empty',
+      'data-cell': `${root.id}:0`,
+    })
     onClick?.()
     expect(clicks).toEqual([{ gridId: root.id, index: 0 }])
   })
@@ -184,7 +199,13 @@ describe('import/export de borrador', () => {
   it('rechaza JSON roto, shapes inválidos e inputTypes desconocidos', () => {
     expect(() => importBuilderJson('{nope')).toThrow('JSON')
     expect(() => importBuilderJson('{"kind":"field"}')).toThrow('raíz')
-    const bad = { kind: 'grid', id: 'g', cols: 2, rows: 1, cells: [{ kind: 'field', inputType: 'NoExiste', props: {} }, null] }
+    const bad = {
+      kind: 'grid',
+      id: 'g',
+      cols: 2,
+      rows: 1,
+      cells: [{ kind: 'field', inputType: 'NoExiste', props: {} }, null],
+    }
     expect(() => importBuilderJson(JSON.stringify(bad))).toThrow('inputType')
     const wrongCells = { kind: 'grid', id: 'g', cols: 2, rows: 2, cells: [] }
     expect(() => importBuilderJson(JSON.stringify(wrongCells))).toThrow('cells')

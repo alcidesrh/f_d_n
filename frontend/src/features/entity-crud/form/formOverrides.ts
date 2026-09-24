@@ -5,9 +5,9 @@
  *
  *   Menu: () => import("@/features/menu/MenuForm.vue"),
  */
-import type { Component } from "vue";
+import type { Component } from 'vue'
 
-export type EntityFormLoader = () => Promise<Component | { default: Component }>;
+export type EntityFormLoader = () => Promise<Component | { default: Component }>
 
 /** Clave = nombre de la entidad en PascalCase. */
-export const entityFormOverrides: Record<string, EntityFormLoader> = {};
+export const entityFormOverrides: Record<string, EntityFormLoader> = {}

@@ -6,31 +6,31 @@
 // biome-ignore lint: disable
 export {}
 declare global {
-  const ApiPlatformClient: typeof import("./init").ApiPlatformClient
+  const ApiPlatformClient: typeof import('./init').ApiPlatformClient
   const EffectScope: typeof import('vue').EffectScope
-  const ICON_PATHS: typeof import("./components/icons/icon-paths").ICON_PATHS
+  const ICON_PATHS: typeof import('./components/icons/icon-paths').ICON_PATHS
   const acceptHMRUpdate: typeof import('pinia').acceptHMRUpdate
-  const buildFallbackColumns: typeof import("./stores/sidebarFactoryStore").buildFallbackColumns
+  const buildFallbackColumns: typeof import('./stores/sidebarFactoryStore').buildFallbackColumns
   const computed: typeof import('vue').computed
-  const createApi: typeof import("./composables/useApiRest").createApi
-  const createApiPlatformClient: typeof import("./init").createApiPlatformClient
+  const createApi: typeof import('./composables/useApiRest').createApi
+  const createApiPlatformClient: typeof import('./init').createApiPlatformClient
   const createApp: typeof import('vue').createApp
   const createPinia: typeof import('pinia').createPinia
   const customRef: typeof import('vue').customRef
   const defineAsyncComponent: typeof import('vue').defineAsyncComponent
   const defineComponent: typeof import('vue').defineComponent
-  const defineEntityStore: typeof import("./stores/sidebarFactoryStore").defineEntityStore
+  const defineEntityStore: typeof import('./stores/sidebarFactoryStore').defineEntityStore
   const defineStore: typeof import('pinia').defineStore
   const effectScope: typeof import('vue').effectScope
   const getActivePinia: typeof import('pinia').getActivePinia
   const getCurrentInstance: typeof import('vue').getCurrentInstance
   const getCurrentScope: typeof import('vue').getCurrentScope
   const getCurrentWatcher: typeof import('vue').getCurrentWatcher
-  const getSidebar: typeof import("./init").getSidebar
+  const getSidebar: typeof import('./init').getSidebar
   const h: typeof import('vue').h
-  const handleMouseEnter: typeof import("./utils/autoimport").handleMouseEnter
-  const handleMouseLeave: typeof import("./utils/autoimport").handleMouseLeave
-  const initGlobalStores: typeof import("./stores/global").initGlobalStores
+  const handleMouseEnter: typeof import('./utils/autoimport').handleMouseEnter
+  const handleMouseLeave: typeof import('./utils/autoimport').handleMouseLeave
+  const initGlobalStores: typeof import('./stores/global').initGlobalStores
   const inject: typeof import('vue').inject
   const isProxy: typeof import('vue').isProxy
   const isReactive: typeof import('vue').isReactive
@@ -43,7 +43,7 @@ declare global {
   const mapStores: typeof import('pinia').mapStores
   const mapWritableState: typeof import('pinia').mapWritableState
   const markRaw: typeof import('vue').markRaw
-  const menus: typeof import("./stores/global").menus
+  const menus: typeof import('./stores/global').menus
   const nextTick: typeof import('vue').nextTick
   const onActivated: typeof import('vue').onActivated
   const onBeforeMount: typeof import('vue').onBeforeMount
@@ -61,16 +61,16 @@ declare global {
   const onUnmounted: typeof import('vue').onUnmounted
   const onUpdated: typeof import('vue').onUpdated
   const onWatcherCleanup: typeof import('vue').onWatcherCleanup
-  const ormKeys: typeof import("./features/crud/composables/graphql-orm-keys").ormKeys
+  const ormKeys: typeof import('./features/crud/composables/graphql-orm-keys').ormKeys
   const provide: typeof import('vue').provide
   const reactive: typeof import('vue').reactive
   const readonly: typeof import('vue').readonly
   const ref: typeof import('vue').ref
   const resolveComponent: typeof import('vue').resolveComponent
-  const restApi: typeof import("./composables/useApiRest").restApi
-  const schemaRepository: typeof import("@/init").schemaRepository
+  const restApi: typeof import('./composables/useApiRest').restApi
+  const schemaRepository: typeof import('@/init').schemaRepository
   const setActivePinia: typeof import('pinia').setActivePinia
-  const setApi: typeof import("./composables/useApiRest").setApi
+  const setApi: typeof import('./composables/useApiRest').setApi
   const setMapStoreSuffix: typeof import('pinia').setMapStoreSuffix
   const shallowReactive: typeof import('vue').shallowReactive
   const shallowReadonly: typeof import('vue').shallowReadonly
@@ -80,24 +80,24 @@ declare global {
   const toRef: typeof import('vue').toRef
   const toRefs: typeof import('vue').toRefs
   const toValue: typeof import('vue').toValue
-  const toast: typeof import("./utils/autoimport").toast
+  const toast: typeof import('./utils/autoimport').toast
   const triggerRef: typeof import('vue').triggerRef
   const unref: typeof import('vue').unref
-  const useApi: typeof import("./composables/useApiRest").useApi
+  const useApi: typeof import('./composables/useApiRest').useApi
   const useAttrs: typeof import('vue').useAttrs
-  const useCollection: typeof import("./features/crud/composables/use-collection").useCollection
+  const useCollection: typeof import('./features/crud/composables/use-collection').useCollection
   const useCssModule: typeof import('vue').useCssModule
   const useCssVars: typeof import('vue').useCssVars
-  const useEntityMutations: typeof import("./features/crud/composables/use-entity-mutations").useEntityMutations
-  const useFormKitSchema: typeof import("./composables/useFormKitSchema").useFormKitSchema
+  const useEntityMutations: typeof import('./features/crud/composables/use-entity-mutations').useEntityMutations
+  const useFormKitSchema: typeof import('./composables/useFormKitSchema').useFormKitSchema
   const useId: typeof import('vue').useId
-  const useItem: typeof import("./features/crud/composables/use-item").useItem
-  const useLayout: typeof import("./composables/useLayout").useLayout
+  const useItem: typeof import('./features/crud/composables/use-item').useItem
+  const useLayout: typeof import('./composables/useLayout').useLayout
   const useLink: typeof import('vue-router').useLink
   const useModel: typeof import('vue').useModel
-  const useOrm: typeof import("./features/crud/composables/use-orm").useOrm
-  const useProfilerStore: typeof import("./stores/profilerStore").useProfilerStore
-  const useRagf: typeof import("./stores/ragf").useRagf
+  const useOrm: typeof import('./features/crud/composables/use-orm').useOrm
+  const useProfilerStore: typeof import('./stores/profilerStore').useProfilerStore
+  const useRagf: typeof import('./stores/ragf').useRagf
   const useRoute: typeof import('vue-router').useRoute
   const useRouter: typeof import('vue-router').useRouter
   const useSlots: typeof import('vue').useSlots

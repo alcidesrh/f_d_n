@@ -1,9 +1,22 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { FormFieldSource } from '@/features/entity-crud/form/formSchema'
-import { createIconRelationResolver, isIconRelation, type IconGateway } from '@/features/entity-crud/form/iconRelation'
+import {
+  createIconRelationResolver,
+  isIconRelation,
+  type IconGateway,
+} from '@/features/entity-crud/form/iconRelation'
 
-function field(overrides: Partial<FormFieldSource> & Pick<FormFieldSource, 'name' | 'namedType'>): FormFieldSource {
-  return { kind: 'SCALAR', required: false, isList: false, isRelation: false, enumValues: [], ...overrides }
+function field(
+  overrides: Partial<FormFieldSource> & Pick<FormFieldSource, 'name' | 'namedType'>,
+): FormFieldSource {
+  return {
+    kind: 'SCALAR',
+    required: false,
+    isList: false,
+    isRelation: false,
+    enumValues: [],
+    ...overrides,
+  }
 }
 
 const iconField = field({ name: 'icon', namedType: 'Icon', kind: 'OBJECT', isRelation: true })
@@ -14,7 +27,9 @@ function fakeGateway(db: Record<string, string> = {}) {
   let seq = Object.keys(db).length
   const gateway: IconGateway = {
     iconName: vi.fn<IconGateway['iconName']>(async (iri: string) => db[iri] ?? null),
-    findIri: vi.fn<IconGateway['findIri']>(async (name: string) => Object.keys(db).find((iri) => db[iri] === name) ?? null),
+    findIri: vi.fn<IconGateway['findIri']>(
+      async (name: string) => Object.keys(db).find((iri) => db[iri] === name) ?? null,
+    ),
     create: vi.fn<IconGateway['create']>(async (name: string) => {
       const iri = `/api/icons/${++seq}`
       db[iri] = name
@@ -47,7 +62,9 @@ describe('createIconRelationResolver', () => {
     vi.mocked(gateway.iconName).mockRejectedValueOnce(new Error('red'))
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const resolver = createIconRelationResolver(gateway)
-    expect(await resolver.hydrate(fields, { icon: '/api/icons/9' })).toEqual({ icon: '/api/icons/9' })
+    expect(await resolver.hydrate(fields, { icon: '/api/icons/9' })).toEqual({
+      icon: '/api/icons/9',
+    })
     warn.mockRestore()
   })
 
@@ -83,7 +100,9 @@ describe('createIconRelationResolver', () => {
     const resolver = createIconRelationResolver(fakeGateway())
     expect(await resolver.resolve(fields, { icon: '' })).toEqual({ icon: null })
     expect(await resolver.resolve(fields, { icon: null })).toEqual({ icon: null })
-    expect(await resolver.resolve(fields, { icon: '/api/icons/5' })).toEqual({ icon: '/api/icons/5' })
+    expect(await resolver.resolve(fields, { icon: '/api/icons/5' })).toEqual({
+      icon: '/api/icons/5',
+    })
     expect(await resolver.resolve(fields, { nombre: 'a' })).toEqual({ nombre: 'a' })
   })
 })

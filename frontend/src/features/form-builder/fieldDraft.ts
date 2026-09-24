@@ -2,7 +2,12 @@
  * Borrador del editor de campos del Form Builder: los valores del formulario
  * del panel ↔ las props del campo FormKit que se guarda en el grid.
  */
-import { OPTION_INPUT_TYPES, parseOptionsText, type BuilderField, type BuilderInputType } from './schemaBuilder'
+import {
+  OPTION_INPUT_TYPES,
+  parseOptionsText,
+  type BuilderField,
+  type BuilderInputType,
+} from './schemaBuilder'
 
 export interface DraftState {
   inputType: BuilderInputType
@@ -80,7 +85,10 @@ export function draftFromField(node: Pick<BuilderField, 'inputType' | 'props'>):
  * Props del campo a partir del borrador: solo las que tienen valor y aplican al
  * tipo de input, más las "props avanzadas" (JSON libre).
  */
-export function propsFromDraft(draft: DraftState): { props: Record<string, unknown> | null; error?: string } {
+export function propsFromDraft(draft: DraftState): {
+  props: Record<string, unknown> | null
+  error?: string
+} {
   const props: Record<string, unknown> = {}
   const put = (key: string, value: unknown) => {
     if (typeof value === 'string') {
@@ -119,7 +127,10 @@ export function propsFromDraft(draft: DraftState): { props: Record<string, unkno
       }
       Object.assign(props, extra)
     } catch (cause) {
-      return { props: null, error: `Props avanzadas inválidas: ${cause instanceof Error ? cause.message : String(cause)}` }
+      return {
+        props: null,
+        error: `Props avanzadas inválidas: ${cause instanceof Error ? cause.message : String(cause)}`,
+      }
     }
   }
   return { props }

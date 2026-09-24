@@ -4,8 +4,8 @@
 </template>
 
 <script setup lang="ts">
-import AppShell from "./AppShell.vue";
-import BlankLayout from "./BlankLayout.vue";
+import AppShell from './AppShell.vue'
+import BlankLayout from './BlankLayout.vue'
 
-const route = useRoute();
+const route = useRoute()
 </script>

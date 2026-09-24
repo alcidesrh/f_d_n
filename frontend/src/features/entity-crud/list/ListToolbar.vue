@@ -1,7 +1,9 @@
 <template>
   <Toolbar class="rounded-none border-none! bg-transparent px-2">
     <template #start>
-      <span v-if="selectionMode" class="text-sm font-medium text-surface-600">{{ selectedCount }} seleccionados</span>
+      <span v-if="selectionMode" class="text-sm font-medium text-surface-600"
+        >{{ selectedCount }} seleccionados</span
+      >
       <PageHead v-else />
     </template>
     <template #end>
@@ -9,8 +11,17 @@
         <button type="button" aria-label="Modo selección" @click="emit('toggle-selection')">
           <icon name="square-check" :class="{ 'text-primary': selectionMode }" />
         </button>
-        <OverlayBadge v-if="hiddenColumns.length > 0" :value="String(hiddenColumns.length)" severity="primary" size="small">
-          <button type="button" :aria-label="`${hiddenColumns.length} columnas ocultas`" @click="popover?.toggle($event)">
+        <OverlayBadge
+          v-if="hiddenColumns.length > 0"
+          :value="String(hiddenColumns.length)"
+          severity="primary"
+          size="small"
+        >
+          <button
+            type="button"
+            :aria-label="`${hiddenColumns.length} columnas ocultas`"
+            @click="popover?.toggle($event)"
+          >
             <icon name="eye-off" />
           </button>
         </OverlayBadge>
@@ -38,13 +49,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import type { Popover as PopoverType } from "primevue";
-import type { CollectionFieldConfig } from "@/core/entities/types";
+import { ref } from 'vue'
+import type { Popover as PopoverType } from 'primevue'
+import type { CollectionFieldConfig } from '@/core/entities/types'
 
-defineProps<{ selectionMode: boolean; selectedCount: number; hiddenColumns: CollectionFieldConfig[] }>();
+defineProps<{
+  selectionMode: boolean
+  selectedCount: number
+  hiddenColumns: CollectionFieldConfig[]
+}>()
 
-const emit = defineEmits<{ "toggle-selection": []; restore: [field: string]; reset: [] }>();
+const emit = defineEmits<{ 'toggle-selection': []; restore: [field: string]; reset: [] }>()
 
-const popover = ref<InstanceType<typeof PopoverType> | null>(null);
+const popover = ref<InstanceType<typeof PopoverType> | null>(null)
 </script>

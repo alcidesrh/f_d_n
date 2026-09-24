@@ -277,15 +277,11 @@ describe('FkSelect / FkMultiSelect: normalizacion de options y valores', () => {
             optionDisabled: getDisabled,
           }) as FormKitSchemaNode
         return [
-          mk(
-            'parents',
-            getFilteredParents,
-            (opt) => childrenSelected.value.map(String).includes(String(opt.value)),
+          mk('parents', getFilteredParents, (opt) =>
+            childrenSelected.value.map(String).includes(String(opt.value)),
           ),
-          mk(
-            'children',
-            getFilteredChildren,
-            (opt) => parentsSelected.value.map(String).includes(String(opt.value)),
+          mk('children', getFilteredChildren, (opt) =>
+            parentsSelected.value.map(String).includes(String(opt.value)),
           ),
         ]
       })

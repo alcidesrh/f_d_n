@@ -1,13 +1,17 @@
 <template>
-  <div class=" bg-white p-[2rem] py-[4rem] border border-surface-300">
-    <PageHead title="Form Builder" subtitle="Grids responsivos + custom inputs → JSON FormKitSchema" />
+  <div class="bg-white p-[2rem] py-[4rem] border border-surface-300">
+    <PageHead
+      title="Form Builder"
+      subtitle="Grids responsivos + custom inputs → JSON FormKitSchema"
+    />
 
     <div class="card">
       <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
         <span class="text-xs text-surface-500">
           Click en una celda para seleccionarla · los bordes punteados son solo de esta vista previa
         </span>
-        <Button class="cursor-pointer"
+        <Button
+          class="cursor-pointer"
           v-if="store.root"
           label="Vaciar todo"
           icon="pi pi-times"

@@ -13,7 +13,12 @@
 </template>
 <script setup lang="ts">
 import type { FormKitFrameworkContext } from '@formkit/core'
-import { useFormKitInput, normalizeOptions, resolveOptions, toScalarArray } from '@/shared/formkit/useFormKitInput'
+import {
+  useFormKitInput,
+  normalizeOptions,
+  resolveOptions,
+  toScalarArray,
+} from '@/shared/formkit/useFormKitInput'
 
 defineOptions({ name: 'FkMultiSelect' })
 

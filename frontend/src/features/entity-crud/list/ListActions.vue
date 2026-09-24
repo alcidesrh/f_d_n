@@ -10,7 +10,7 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{ item: unknown }>();
+defineProps<{ item: unknown }>()
 
-const emit = defineEmits<{ edit: [item: unknown]; delete: [item: unknown] }>();
+const emit = defineEmits<{ edit: [item: unknown]; delete: [item: unknown] }>()
 </script>

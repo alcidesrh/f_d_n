@@ -3,7 +3,12 @@
     <template #menu-content>
       <ul class="sidebar-menu">
         <li class="menu-item">
-          <a href="#" class="menu-link" @mouseenter="sidebarStore.handleMouseEnter" @mouseleave="sidebarStore.handleMouseLeave">
+          <a
+            href="#"
+            class="menu-link"
+            @mouseenter="sidebarStore.handleMouseEnter"
+            @mouseleave="sidebarStore.handleMouseLeave"
+          >
             <span>
               <icon name="settings" size="1.5rem" />
             </span>
@@ -11,7 +16,12 @@
           </a>
         </li>
         <li class="menu-item">
-          <a href="#" class="menu-link" @mouseenter="sidebarStore.handleMouseEnter" @mouseleave="sidebarStore.handleMouseLeave">
+          <a
+            href="#"
+            class="menu-link"
+            @mouseenter="sidebarStore.handleMouseEnter"
+            @mouseleave="sidebarStore.handleMouseLeave"
+          >
             <span>
               <icon name="settings" size="1.5rem" />
             </span>
@@ -19,7 +29,12 @@
           </a>
         </li>
         <li class="menu-item">
-          <a href="#" class="menu-link" @mouseenter="sidebarStore.handleMouseEnter" @mouseleave="sidebarStore.handleMouseLeave">
+          <a
+            href="#"
+            class="menu-link"
+            @mouseenter="sidebarStore.handleMouseEnter"
+            @mouseleave="sidebarStore.handleMouseLeave"
+          >
             <!-- <span> -->
             <icon name="settings" size="1.5rem" />
             <!-- </span> -->
@@ -31,8 +46,8 @@
   </Sidebar>
 </template>
 <script setup lang="ts">
-import Sidebar from "./Sidebar.vue";
-import { defineSidebarStore } from "./sidebarStore";
+import Sidebar from './Sidebar.vue'
+import { defineSidebarStore } from './sidebarStore'
 
-const sidebarStore = defineSidebarStore("left")();
+const sidebarStore = defineSidebarStore('left')()
 </script>

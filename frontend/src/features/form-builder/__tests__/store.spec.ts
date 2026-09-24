@@ -34,7 +34,9 @@ describe('formBuilder store', () => {
     // Misma celda otra vez → ocupada.
     expect(store.assignField('TextArea', { name: 'b' })).toBe(false)
 
-    const parsed = JSON.parse(store.schemaJson) as Array<{ children?: Array<Record<string, unknown>> }>
+    const parsed = JSON.parse(store.schemaJson) as Array<{
+      children?: Array<Record<string, unknown>>
+    }>
     expect(parsed).toHaveLength(1)
     expect(parsed[0]?.children?.[0]).toMatchObject({ $formkit: 'InputText', name: 'a' })
     // El export no arrastra helpers de preview.

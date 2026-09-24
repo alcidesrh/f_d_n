@@ -84,7 +84,7 @@
           <div v-if="entidadMeta" class="text-xs text-muted-color">
             {{ entidadMeta.etiqueta }}: {{ formatearNumero(entidadMeta.totalFuente) }} en legado ·
             dependencias:
-            {{ entidadMeta.dependencias.length ? entidadMeta.dependencias.join(", ") : "ninguna" }}
+            {{ entidadMeta.dependencias.length ? entidadMeta.dependencias.join(', ') : 'ninguna' }}
           </div>
           <Button
             label="Migrar entidad"
@@ -206,110 +206,101 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import { useConfirm } from "primevue/useconfirm";
-import { useMigracionStore } from "./store";
-import { cancelarJob as cancelar, iniciarJob as iniciar } from "./actions";
-import { etiquetaEstado, etiquetaTipo, formatearNumero, severidadEstado } from "./labels";
-import type {
-  EntidadMigracion,
-  PayloadEjecutar,
-} from "./types";
+import { computed, ref } from 'vue'
+import { useConfirm } from 'primevue/useconfirm'
+import { useMigracionStore } from './store'
+import { cancelarJob as cancelar, iniciarJob as iniciar } from './actions'
+import { etiquetaEstado, etiquetaTipo, formatearNumero, severidadEstado } from './labels'
+import type { EntidadMigracion, PayloadEjecutar } from './types'
 
-defineOptions({ name: "MigracionPanel" });
+defineOptions({ name: 'MigracionPanel' })
 
-const store = useMigracionStore();
-const confirm = useConfirm();
+const store = useMigracionStore()
+const confirm = useConfirm()
 
-const entidadSeleccionada = ref<string | null>(null);
-const desdeFecha = ref<Date | null>(null);
-const hastaFecha = ref<Date | null>(null);
-const cantidad = ref<number | null>(null);
-const cleanTodo = ref(false);
-const modoResetDuro = ref(false);
-const textoReset = ref("");
+const entidadSeleccionada = ref<string | null>(null)
+const desdeFecha = ref<Date | null>(null)
+const hastaFecha = ref<Date | null>(null)
+const cantidad = ref<number | null>(null)
+const cleanTodo = ref(false)
+const modoResetDuro = ref(false)
+const textoReset = ref('')
 
-const ocupado = computed(() => store.estado.ejecutando);
+const ocupado = computed(() => store.estado.ejecutando)
 
 const entidadMeta = computed<EntidadMigracion | null>(() => {
-  const nombre = entidadSeleccionada.value;
-  if (!nombre) return null;
-  return store.entidades.find((e) => e.nombre === nombre) ?? null;
-});
+  const nombre = entidadSeleccionada.value
+  if (!nombre) return null
+  return store.entidades.find((e) => e.nombre === nombre) ?? null
+})
 
 function aYmd(d: Date | null): string | null {
-  if (!d) return null;
-  const anio = d.getFullYear();
-  const mes = String(d.getMonth() + 1).padStart(2, "0");
-  const dia = String(d.getDate()).padStart(2, "0");
-  return `${anio}-${mes}-${dia}`;
+  if (!d) return null
+  const anio = d.getFullYear()
+  const mes = String(d.getMonth() + 1).padStart(2, '0')
+  const dia = String(d.getDate()).padStart(2, '0')
+  return `${anio}-${mes}-${dia}`
 }
-
-
-
-
-
 
 function conConfirmacion(mensaje: string, aceptar: () => void): void {
   confirm.require({
     message: mensaje,
-    header: "Confirmar ejecución",
-    icon: "pi pi-exclamation-triangle",
-    acceptLabel: "Ejecutar",
-    rejectLabel: "Cancelar",
+    header: 'Confirmar ejecución',
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: 'Ejecutar',
+    rejectLabel: 'Cancelar',
     accept: () => aceptar(),
-  });
+  })
 }
 
 function migrarEntidad(): void {
-  const meta = entidadMeta.value;
-  if (!meta) return;
+  const meta = entidadMeta.value
+  if (!meta) return
   const payload: PayloadEjecutar = {
-    tipo: "entidad",
+    tipo: 'entidad',
     entidad: meta.nombre,
     desde: aYmd(desdeFecha.value),
     hasta: aYmd(hastaFecha.value),
     cantidad: cantidad.value != null && cantidad.value > 0 ? cantidad.value : null,
-  };
+  }
   conConfirmacion(
-    `Migrar entidad "${meta.etiqueta}"${payload.desde ? ` desde ${payload.desde}` : ""}${payload.hasta ? ` hasta ${payload.hasta}` : ""}${payload.cantidad ? ` (máx. ${payload.cantidad})` : ""}?`,
+    `Migrar entidad "${meta.etiqueta}"${payload.desde ? ` desde ${payload.desde}` : ''}${payload.hasta ? ` hasta ${payload.hasta}` : ''}${payload.cantidad ? ` (máx. ${payload.cantidad})` : ''}?`,
     () => iniciar(payload),
-  );
+  )
 }
 
-function confirmarFlujo(tipo: "estaticos" | "iam" | "config"): void {
+function confirmarFlujo(tipo: 'estaticos' | 'iam' | 'config'): void {
   conConfirmacion(`Ejecutar la migración de "${etiquetaTipo({ tipo, entidad: null })}"?`, () =>
     iniciar({ tipo }),
-  );
+  )
 }
 
 function confirmarTodo(): void {
   conConfirmacion(
     cleanTodo.value
-      ? "Migración COMPLETA con RESET previo de la base de datos. ¿Continuar?"
-      : "Migración completa (estáticos + IAM + configuración + salidas). ¿Continuar?",
-    () => iniciar({ tipo: "todo", clean: cleanTodo.value || undefined }),
-  );
+      ? 'Migración COMPLETA con RESET previo de la base de datos. ¿Continuar?'
+      : 'Migración completa (estáticos + IAM + configuración + salidas). ¿Continuar?',
+    () => iniciar({ tipo: 'todo', clean: cleanTodo.value || undefined }),
+  )
 }
 
 function confirmarTruncar(): void {
   conConfirmacion(
-    "Truncar todas las tablas migrables? La migración posterior vuelve a insertar desde cero.",
-    () => iniciar({ tipo: "truncar" }),
-  );
+    'Truncar todas las tablas migrables? La migración posterior vuelve a insertar desde cero.',
+    () => iniciar({ tipo: 'truncar' }),
+  )
 }
 
 function confirmarResetDuro(): void {
-  if (textoReset.value !== "RESET") return;
-  void iniciar({ tipo: "reset" });
-  cerrarResetDuro();
+  if (textoReset.value !== 'RESET') return
+  void iniciar({ tipo: 'reset' })
+  cerrarResetDuro()
 }
 
 function cerrarResetDuro(): void {
-  modoResetDuro.value = false;
-  textoReset.value = "";
+  modoResetDuro.value = false
+  textoReset.value = ''
 }
-
 </script>
 
 <style scoped>

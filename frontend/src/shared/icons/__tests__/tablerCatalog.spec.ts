@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { buildCatalog, loadTablerCatalog, searchIcons, UNCATEGORIZED } from '@/shared/icons/tablerCatalog'
+import {
+  buildCatalog,
+  loadTablerCatalog,
+  searchIcons,
+  UNCATEGORIZED,
+} from '@/shared/icons/tablerCatalog'
 
 const meta = {
   version: '0.0.0',
@@ -12,12 +17,23 @@ const meta = {
   },
 }
 
-const catalog = buildCatalog(['settings', 'bus', 'bus-filled', 'bus-stop', 'car-bus', 'brand-x'], meta)
-const names = (opts: Parameters<typeof searchIcons>[1]) => searchIcons(catalog.icons, opts).map((i) => i.name)
+const catalog = buildCatalog(
+  ['settings', 'bus', 'bus-filled', 'bus-stop', 'car-bus', 'brand-x'],
+  meta,
+)
+const names = (opts: Parameters<typeof searchIcons>[1]) =>
+  searchIcons(catalog.icons, opts).map((i) => i.name)
 
 describe('buildCatalog', () => {
   it('ordena por nombre y hereda la metadata outline en las variantes -filled', () => {
-    expect(catalog.icons.map((i) => i.name)).toEqual(['brand-x', 'bus', 'bus-filled', 'bus-stop', 'car-bus', 'settings'])
+    expect(catalog.icons.map((i) => i.name)).toEqual([
+      'brand-x',
+      'bus',
+      'bus-filled',
+      'bus-stop',
+      'car-bus',
+      'settings',
+    ])
     const filled = catalog.icons.find((i) => i.name === 'bus-filled')
     expect(filled).toMatchObject({ category: 'Vehicles', style: 'filled' })
     expect(filled?.haystack).toContain('journey')

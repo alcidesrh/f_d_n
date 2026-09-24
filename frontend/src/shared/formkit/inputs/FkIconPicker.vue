@@ -1,10 +1,5 @@
 <template>
-  <IconPicker
-    v-if="inline"
-    :model-value="iconName"
-    :height="height"
-    @update:model-value="update"
-  />
+  <IconPicker v-if="inline" :model-value="iconName" :height="height" @update:model-value="update" />
   <div v-else class="flex w-full items-center gap-1" :class="context.classes.input">
     <button
       :id="context.id"
@@ -42,11 +37,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from "vue";
-import type { FormKitFrameworkContext } from "@formkit/core";
-import { useFormKitInput } from "@/shared/formkit/useFormKitInput";
+import { computed, ref } from 'vue'
+import type { FormKitFrameworkContext } from '@formkit/core'
+import { useFormKitInput } from '@/shared/formkit/useFormKitInput'
 
-defineOptions({ name: "FkIconPicker" });
+defineOptions({ name: 'FkIconPicker' })
 
 /**
  * Buscador de íconos Tabler. El valor es el nombre del ícono (`bus`,
@@ -55,44 +50,46 @@ defineOptions({ name: "FkIconPicker" });
  * Attrs: `placeholder`, `inline` (grilla siempre visible, sin popover),
  * `height` (alto de la grilla), `showClear` (por defecto `true`).
  */
-const props = defineProps<{ context: FormKitFrameworkContext }>();
-const { context, update, blur, invalid, disabled } = useFormKitInput(props);
+const props = defineProps<{ context: FormKitFrameworkContext }>()
+const { context, update, blur, invalid, disabled } = useFormKitInput(props)
 
-const popover = ref<{ toggle: (e: Event) => void; hide: () => void } | null>(null);
+const popover = ref<{ toggle: (e: Event) => void; hide: () => void } | null>(null)
 
-const inline = computed(() => props.context.attrs.inline === true || props.context.attrs.inline === "");
-const height = computed(() => (props.context.attrs.height as string | undefined) ?? "22rem");
+const inline = computed(
+  () => props.context.attrs.inline === true || props.context.attrs.inline === '',
+)
+const height = computed(() => (props.context.attrs.height as string | undefined) ?? '22rem')
 const placeholder = computed(
-  () => (props.context.attrs.placeholder as string | undefined) ?? "Selecciona un ícono…",
-);
-const showClear = computed(() => props.context.attrs.showClear !== false);
+  () => (props.context.attrs.placeholder as string | undefined) ?? 'Selecciona un ícono…',
+)
+const showClear = computed(() => props.context.attrs.showClear !== false)
 
 /**
  * Acepta también una entidad `Icon` hidratada (`{ icon: 'bus', … }`) como
  * valor inicial; lo que se emite siempre es el nombre.
  */
 const iconName = computed<string | null>(() => {
-  const value = context.value._value as unknown;
+  const value = context.value._value as unknown
   // Un IRI (`/api/icons/3`) es una relación que no se pudo hidratar a nombre:
   // se conserva como valor pero no se pinta como ícono.
-  if (typeof value === "string") return value && !value.startsWith("/") ? value : null;
-  if (value && typeof value === "object" && "icon" in value) {
-    const icon = (value as { icon?: unknown }).icon;
-    return typeof icon === "string" && icon ? icon : null;
+  if (typeof value === 'string') return value && !value.startsWith('/') ? value : null
+  if (value && typeof value === 'object' && 'icon' in value) {
+    const icon = (value as { icon?: unknown }).icon
+    return typeof icon === 'string' && icon ? icon : null
   }
-  return null;
-});
+  return null
+})
 
 function toggle(event: Event) {
-  popover.value?.toggle(event);
+  popover.value?.toggle(event)
 }
 
 function onSelect(name: string) {
-  update(name);
-  popover.value?.hide();
+  update(name)
+  popover.value?.hide()
 }
 
 function clear() {
-  update(null);
+  update(null)
 }
 </script>

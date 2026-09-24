@@ -43,15 +43,29 @@
                     :aria-label="`Filtrar ${col.label ?? col.field}`"
                     @click.stop="col.showFilter = !col.showFilter"
                   >
-                    <icon :name="filters[col.field] ? 'filter-filled' : 'filter'" :class="{ 'text-primary': filters[col.field] }" />
+                    <icon
+                      :name="filters[col.field] ? 'filter-filled' : 'filter'"
+                      :class="{ 'text-primary': filters[col.field] }"
+                    />
                   </button>
-                  <button type="button" :aria-label="`Ocultar columna ${col.label ?? col.field}`" @click="setColumnVisible(col.field, false)">
+                  <button
+                    type="button"
+                    :aria-label="`Ocultar columna ${col.label ?? col.field}`"
+                    @click="setColumnVisible(col.field, false)"
+                  >
                     <icon name="square-minus" />
                   </button>
                 </span>
               </div>
-              <div class="column-filter-input" :class="{ 'show-filter': col.showFilter }" @click.stop>
-                <FormKitSchema v-if="filterNodes.has(col.field)" :schema="[filterNodes.get(col.field)!]" />
+              <div
+                class="column-filter-input"
+                :class="{ 'show-filter': col.showFilter }"
+                @click.stop
+              >
+                <FormKitSchema
+                  v-if="filterNodes.has(col.field)"
+                  :schema="[filterNodes.get(col.field)!]"
+                />
               </div>
             </div>
             <div class="absolute bottom-0 h-[40px] w-[3px] border-r border-r-surface-200" />
@@ -78,7 +92,12 @@
         </template>
       </Column>
     </DataTable>
-    <ListFooter :pagination="store.pagination" :count="store.items.length" :local-filter="hasLocalFilter" @page="onPage" />
+    <ListFooter
+      :pagination="store.pagination"
+      :count="store.items.length"
+      :local-filter="hasLocalFilter"
+      @page="onPage"
+    />
   </div>
 
   <div v-else class="card flex items-center justify-center py-12">
@@ -94,139 +113,158 @@
  * línea, selección múltiple y borrado. El estado persiste en el store de la
  * entidad; los filtros viven en `useListFilters`.
  */
-import { computed, ref, watch } from "vue";
-import { useConfirm } from "primevue/useconfirm";
-import type { DataTableCellEditCompleteEvent, DataTableColumnReorderEvent } from "primevue/datatable";
-import { router } from "@/app/router";
-import { getEntity } from "@/core/entities/registry";
-import { useSchemaStore } from "@/core/entities/schema";
-import { entityNameFromSlug } from "@/core/entities/slug";
-import type { CollectionFieldConfig, EntityStore } from "@/core/entities/types";
-import { useLoadingStore } from "@/core/loading";
-import { notify } from "@/core/notify";
-import ListActions from "./list/ListActions.vue";
-import ListCell from "./list/ListCell.vue";
-import ListCellEditor from "./list/ListCellEditor.vue";
-import ListFooter from "./list/ListFooter.vue";
-import ListToolbar from "./list/ListToolbar.vue";
-import { idDisplay, nextOrder, sortDirection, toEditedInput } from "./list/listUtils";
-import { useListFilters } from "./list/useListFilters";
+import { computed, ref, watch } from 'vue'
+import { useConfirm } from 'primevue/useconfirm'
+import type {
+  DataTableCellEditCompleteEvent,
+  DataTableColumnReorderEvent,
+} from 'primevue/datatable'
+import { router } from '@/app/router'
+import { getEntity } from '@/core/entities/registry'
+import { useSchemaStore } from '@/core/entities/schema'
+import { entityNameFromSlug } from '@/core/entities/slug'
+import type { CollectionFieldConfig, EntityStore } from '@/core/entities/types'
+import { useLoadingStore } from '@/core/loading'
+import { notify } from '@/core/notify'
+import ListActions from './list/ListActions.vue'
+import ListCell from './list/ListCell.vue'
+import ListCellEditor from './list/ListCellEditor.vue'
+import ListFooter from './list/ListFooter.vue'
+import ListToolbar from './list/ListToolbar.vue'
+import { idDisplay, nextOrder, sortDirection, toEditedInput } from './list/listUtils'
+import { useListFilters } from './list/useListFilters'
 
-const SORT_ICONS = { asc: "sort-ascending", desc: "sort-descending", none: "arrows-sort" } as const;
-const DEFAULT_PAGE_SIZE = 10;
+const SORT_ICONS = { asc: 'sort-ascending', desc: 'sort-descending', none: 'arrows-sort' } as const
+const DEFAULT_PAGE_SIZE = 10
 
-const props = withDefaults(defineProps<{ entity: string | string[] }>(), { entity: "" });
+const props = withDefaults(defineProps<{ entity: string | string[] }>(), { entity: '' })
 
-const schema = useSchemaStore();
-const loading = useLoadingStore();
-const confirm = useConfirm();
+const schema = useSchemaStore()
+const loading = useLoadingStore()
+const confirm = useConfirm()
 
-const entityName = computed(() => entityNameFromSlug((Array.isArray(props.entity) ? props.entity[0] : props.entity) ?? ""));
-const store = computed<EntityStore | null>(() => (schema.find(entityName.value) ? getEntity(entityName.value) : null));
+const entityName = computed(() =>
+  entityNameFromSlug((Array.isArray(props.entity) ? props.entity[0] : props.entity) ?? ''),
+)
+const store = computed<EntityStore | null>(() =>
+  schema.find(entityName.value) ? getEntity(entityName.value) : null,
+)
 
 // Columnas ----------------------------------------------------------------
-const visibleColumns = computed(() => (store.value?.columns ?? []).filter((column) => column.visible !== false));
-const hiddenColumns = computed(() => (store.value?.columns ?? []).filter((column) => column.visible === false));
+const visibleColumns = computed(() =>
+  (store.value?.columns ?? []).filter((column) => column.visible !== false),
+)
+const hiddenColumns = computed(() =>
+  (store.value?.columns ?? []).filter((column) => column.visible === false),
+)
 
-const { filters, filterNodes, hasLocalFilter, visibleItems, rebuild, hydrate, highlightFor } = useListFilters(store, visibleColumns);
+const { filters, filterNodes, hasLocalFilter, visibleItems, rebuild, hydrate, highlightFor } =
+  useListFilters(store, visibleColumns)
 
 function setColumnVisible(field: string, visible: boolean) {
-  const column = store.value?.columns.find((c) => c.field === field);
-  if (column) column.visible = visible;
-  rebuild();
+  const column = store.value?.columns.find((c) => c.field === field)
+  if (column) column.visible = visible
+  rebuild()
 }
 
 /** Aplica el drag de PrimeVue a `store.columns`, dejando las ocultas en su sitio. */
 function onColumnReorder(event: DataTableColumnReorderEvent) {
-  const current = store.value;
-  if (!current) return;
-  const visible = [...visibleColumns.value];
-  const [moved] = visible.splice(event.dragIndex, 1);
-  if (!moved) return;
-  visible.splice(event.dropIndex, 0, moved);
-  let index = 0;
-  current.columns = current.columns.map((column) => (column.visible === false ? column : (visible[index++] ?? column)));
+  const current = store.value
+  if (!current) return
+  const visible = [...visibleColumns.value]
+  const [moved] = visible.splice(event.dragIndex, 1)
+  if (!moved) return
+  visible.splice(event.dropIndex, 0, moved)
+  let index = 0
+  current.columns = current.columns.map((column) =>
+    column.visible === false ? column : (visible[index++] ?? column),
+  )
 }
 
 // Orden y paginación ------------------------------------------------------
 /** Ordenable si la configuración no lo impide y el backend acepta el campo. */
 function isSortable(column: CollectionFieldConfig) {
-  return column.sortable !== false && Boolean(store.value?.metadata.orderFields.includes(column.field));
+  return (
+    column.sortable !== false && Boolean(store.value?.metadata.orderFields.includes(column.field))
+  )
 }
 
 function toggleSort(field: string) {
-  const current = store.value;
-  if (!current) return;
-  current.order = nextOrder(current.order, field);
-  void current.fetchItems();
+  const current = store.value
+  if (!current) return
+  current.order = nextOrder(current.order, field)
+  void current.fetchItems()
 }
 
 function onPage({ page, rows }: { page: number; rows: number }) {
-  const current = store.value;
-  if (!current?.pagination) return;
-  current.pagination.currentPage = page;
-  current.pagination.itemsPerPage = rows;
-  void current.fetchItems();
+  const current = store.value
+  if (!current?.pagination) return
+  current.pagination.currentPage = page
+  current.pagination.itemsPerPage = rows
+  void current.fetchItems()
 }
 
 // Selección ---------------------------------------------------------------
-const selectionMode = ref(false);
-const selection = ref<unknown[]>([]);
+const selectionMode = ref(false)
+const selection = ref<unknown[]>([])
 
 function toggleSelection() {
-  selectionMode.value = !selectionMode.value;
-  selection.value = [];
+  selectionMode.value = !selectionMode.value
+  selection.value = []
 }
 
 // Edición en línea --------------------------------------------------------
-const canEdit = computed(() => Boolean(store.value?.metadata.update));
+const canEdit = computed(() => Boolean(store.value?.metadata.update))
 
 function canEditCell(column: CollectionFieldConfig) {
-  const mutation = store.value?.metadata.update;
-  return column.field !== "id" && Boolean(mutation?.inputFields.some((input) => input.name === column.field));
+  const mutation = store.value?.metadata.update
+  return (
+    column.field !== 'id' &&
+    Boolean(mutation?.inputFields.some((input) => input.name === column.field))
+  )
 }
 
 /** Guarda solo el campo editado (`{ id, campo }`). */
 async function onCellEditComplete(event: DataTableCellEditCompleteEvent) {
-  const current = store.value;
-  if (!current || event.value === event.newValue) return;
+  const current = store.value
+  if (!current || event.value === event.newValue) return
   try {
     await current.update({
       id: (event.data as { id: unknown }).id,
       [event.field]: toEditedInput(current.metadata, event.field, event.newValue),
-    });
-    await current.fetchItems();
-    notify.success("Cambio guardado");
+    })
+    await current.fetchItems()
+    notify.success('Cambio guardado')
   } catch (cause) {
-    notify.error(cause instanceof Error ? cause.message : String(cause));
+    notify.error(cause instanceof Error ? cause.message : String(cause))
   }
 }
 
 // Acciones de fila --------------------------------------------------------
 function onEdit(item: unknown) {
-  const id = idDisplay((item as { id?: unknown }).id);
-  void router.push({ name: "entity-form", params: { entity: entityName.value, id } });
+  const id = idDisplay((item as { id?: unknown }).id)
+  void router.push({ name: 'entity-form', params: { entity: entityName.value, id } })
 }
 
 function askDelete(item: unknown) {
-  const current = store.value;
-  const id = (item as { id?: string | number }).id;
-  if (!current || id === undefined) return;
+  const current = store.value
+  const id = (item as { id?: string | number }).id
+  if (!current || id === undefined) return
   confirm.require({
-    header: "Confirmar eliminación",
-    message: "¿Eliminar este registro? Esta acción no se puede deshacer.",
-    acceptProps: { label: "Eliminar", severity: "danger" },
-    rejectProps: { label: "Cancelar", severity: "secondary" },
+    header: 'Confirmar eliminación',
+    message: '¿Eliminar este registro? Esta acción no se puede deshacer.',
+    acceptProps: { label: 'Eliminar', severity: 'danger' },
+    rejectProps: { label: 'Cancelar', severity: 'secondary' },
     accept: async () => {
       try {
-        await current.remove(id);
-        await current.fetchItems();
-        notify.success("Registro eliminado");
+        await current.remove(id)
+        await current.fetchItems()
+        notify.success('Registro eliminado')
       } catch (cause) {
-        notify.error(cause instanceof Error ? cause.message : String(cause));
+        notify.error(cause instanceof Error ? cause.message : String(cause))
       }
     },
-  });
+  })
 }
 
 // Carga -------------------------------------------------------------------
@@ -236,43 +274,47 @@ function preloadRelationOptions(current: EntityStore) {
     .filter((column) => column.filterable !== false)
     .map((column) => current.metadata.fields.find((field) => field.name === column.field))
     .filter((field) => field?.isRelation)
-    .map((field) => getEntity(field!.namedType).loadFullList());
+    .map((field) => getEntity(field!.namedType).loadFullList())
 }
 
 async function load(current: EntityStore, forceConfig = false) {
-  await current.init(forceConfig);
-  hydrate();
-  rebuild();
-  await current.fetchItems();
-  await Promise.all(preloadRelationOptions(current));
-  rebuild();
+  await current.init(forceConfig)
+  hydrate()
+  rebuild()
+  await current.fetchItems()
+  await Promise.all(preloadRelationOptions(current))
+  rebuild()
 }
 
 /** Vuelve a la vista por defecto: filtros, orden, página, columnas y selección. */
 async function resetView() {
-  const current = store.value;
-  if (!current) return;
-  current.filters = {};
-  current.order = [];
+  const current = store.value
+  if (!current) return
+  current.filters = {}
+  current.order = []
   if (current.pagination) {
-    current.pagination.currentPage = 1;
-    current.pagination.itemsPerPage = DEFAULT_PAGE_SIZE;
+    current.pagination.currentPage = 1
+    current.pagination.itemsPerPage = DEFAULT_PAGE_SIZE
   }
-  selectionMode.value = false;
-  selection.value = [];
-  await load(current, true);
+  selectionMode.value = false
+  selection.value = []
+  await load(current, true)
 }
 
 watch(
   entityName,
   (name) => {
-    const entity = name ? schema.find(name) : null;
-    if (!entity) return notify.error(name ? `Entidad "${name}" no encontrada en el schema GraphQL` : "Entidad no especificada");
-    if (!entity.queryCollection) return notify.error(`"${name}" no expone una colección consultable`);
-    void load(getEntity(name));
+    const entity = name ? schema.find(name) : null
+    if (!entity)
+      return notify.error(
+        name ? `Entidad "${name}" no encontrada en el schema GraphQL` : 'Entidad no especificada',
+      )
+    if (!entity.queryCollection)
+      return notify.error(`"${name}" no expone una colección consultable`)
+    void load(getEntity(name))
   },
   { immediate: true },
-);
+)
 </script>
 
 <style scoped>

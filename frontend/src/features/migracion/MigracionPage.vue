@@ -37,11 +37,7 @@
                 {{ formatearNumero(fila.conteo.legado) }} legado
               </span>
             </div>
-            <ProgressBar
-              :value="porcentajeNuevo(fila.conteo)"
-              :show-value="false"
-              class="h-1.5"
-            />
+            <ProgressBar :value="porcentajeNuevo(fila.conteo)" :show-value="false" class="h-1.5" />
           </div>
         </div>
       </div>
@@ -61,9 +57,7 @@
         <template v-if="store.estado.actual">
           <div class="flex flex-col gap-2 text-sm">
             <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
-              <span class="font-medium">{{
-                etiquetaTipo(store.estado.actual)
-              }}</span>
+              <span class="font-medium">{{ etiquetaTipo(store.estado.actual) }}</span>
               <span class="font-mono text-xs text-muted-color">
                 {{ store.estado.actual.id }}
               </span>
@@ -78,16 +72,10 @@
               </span>
             </div>
             <div
-              v-if="
-                store.estado.actual.total != null &&
-                store.estado.actual.total > 0
-              "
+              v-if="store.estado.actual.total != null && store.estado.actual.total > 0"
               class="flex flex-col gap-1"
             >
-              <ProgressBar
-                :value="porcentajeProgreso(store.estado.actual)"
-                class="h-2"
-              />
+              <ProgressBar :value="porcentajeProgreso(store.estado.actual)" class="h-2" />
               <div class="text-xs text-muted-color">
                 {{ formatearNumero(store.estado.actual.procesados) }} /
                 {{ formatearNumero(store.estado.actual.total) }} procesados
@@ -102,9 +90,7 @@
               class="flex flex-wrap gap-2"
             >
               <Tag
-                v-for="[clave, valor] in contadoresVisibles(
-                  store.estado.actual,
-                )"
+                v-for="[clave, valor] in contadoresVisibles(store.estado.actual)"
                 :key="clave"
                 :value="`${clave}: ${formatearNumero(valor)}`"
                 severity="secondary"
@@ -124,8 +110,8 @@
           </div>
         </template>
         <div v-else class="text-sm text-muted-color">
-          No hay ninguna migración en ejecución. Usá el panel derecho para
-          arrancar una (entidad, estáticos, IAM, configuración o completa).
+          No hay ninguna migración en ejecución. Usá el panel derecho para arrancar una (entidad,
+          estáticos, IAM, configuración o completa).
         </div>
       </div>
 
@@ -140,32 +126,18 @@
             size="small"
           />
         </div>
-        <pre
-          ref="consola"
-          class="consola"
-          :class="{ vacia: !store.log && !store.logJobId }"
-          >{{
-            store.log ||
-            "Sin actividad todavía. Al lanzar una migración el log aparecerá aquí."
-          }}</pre>
+        <pre ref="consola" class="consola" :class="{ vacia: !store.log && !store.logJobId }">{{
+          store.log || 'Sin actividad todavía. Al lanzar una migración el log aparecerá aquí.'
+        }}</pre>
       </div>
 
       <!-- Historial -->
       <div class="card">
         <div class="text-base font-semibold mb-3">Historial reciente</div>
-        <div
-          v-if="store.estado.recientes.length === 0"
-          class="text-sm text-muted-color"
-        >
+        <div v-if="store.estado.recientes.length === 0" class="text-sm text-muted-color">
           Sin ejecuciones registradas.
         </div>
-        <DataTable
-          v-else
-          :value="store.estado.recientes"
-          size="small"
-          striped-rows
-          class="w-full"
-        >
+        <DataTable v-else :value="store.estado.recientes" size="small" striped-rows class="w-full">
           <Column field="id" header="Job">
             <template #body="{ data }">
               <span class="font-mono text-xs">{{ data.id }}</span>
@@ -192,7 +164,7 @@
           </Column>
           <Column header="Duración">
             <template #body="{ data }">
-              {{ data.duracion != null ? `${data.duracion} s` : "—" }}
+              {{ data.duracion != null ? `${data.duracion} s` : '—' }}
             </template>
           </Column>
           <Column header="Acciones">
@@ -214,77 +186,65 @@
 </template>
 
 <script setup lang="ts">
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useMigracionStore } from './store'
+import { cancelarJob as cancelar, reejecutarJob as reejecutar } from './actions'
 import {
-  computed,
-  nextTick,
-  onBeforeUnmount,
-  onMounted,
-  ref,
-  watch,
-} from "vue";
-import { useMigracionStore } from "./store";
-import { cancelarJob as cancelar, reejecutarJob as reejecutar } from "./actions";
-import { etiquetaEstado, etiquetaTipo, formatearNumero, porcentajeNuevo, porcentajeProgreso, severidadEstado } from "./labels";
-import type {
-  ConteoMigracion,
-  EntidadMigracion,
-  JobMigracion,
-} from "./types";
+  etiquetaEstado,
+  etiquetaTipo,
+  formatearNumero,
+  porcentajeNuevo,
+  porcentajeProgreso,
+  severidadEstado,
+} from './labels'
+import type { ConteoMigracion, EntidadMigracion, JobMigracion } from './types'
 
-defineOptions({ name: "MigracionView" });
+defineOptions({ name: 'MigracionView' })
 
-const store = useMigracionStore();
-const consola = ref<HTMLElement | null>(null);
+const store = useMigracionStore()
+const consola = ref<HTMLElement | null>(null)
 
 interface FilaIndicador {
-  nombre: string;
-  etiqueta: string;
-  conteo: ConteoMigracion;
+  nombre: string
+  etiqueta: string
+  conteo: ConteoMigracion
 }
 
 const filasIndicadores = computed<FilaIndicador[]>(() => {
-  const porNombre = new Map<string, EntidadMigracion>();
-  for (const e of store.entidades) porNombre.set(e.nombre, e);
-  const nombres = Object.keys(store.indicadores).filter((k) => k !== "total");
+  const porNombre = new Map<string, EntidadMigracion>()
+  for (const e of store.entidades) porNombre.set(e.nombre, e)
+  const nombres = Object.keys(store.indicadores).filter((k) => k !== 'total')
   return nombres.map((nombre) => ({
     nombre,
     etiqueta: porNombre.get(nombre)?.etiqueta ?? nombre,
     conteo: store.indicadores[nombre] ?? { nuevo: -1, legado: -1 },
-  }));
-});
-
-
+  }))
+})
 
 function contadoresVisibles(job: JobMigracion): Array<[string, number]> {
-  return Object.entries(job.contadores ?? {}).filter(
-    ([, v]) => typeof v === "number",
-  ) as Array<[string, number]>;
+  return Object.entries(job.contadores ?? {}).filter(([, v]) => typeof v === 'number') as Array<
+    [string, number]
+  >
 }
-
-
-
-
-
-
 
 // Autoscroll de la consola al final cuando crece el log.
 watch(
   () => store.log,
   () => {
     void nextTick(() => {
-      const el = consola.value;
-      if (el) el.scrollTop = el.scrollHeight;
-    });
+      const el = consola.value
+      if (el) el.scrollTop = el.scrollHeight
+    })
   },
-);
+)
 
 onMounted(() => {
-  void store.inicializar();
-});
+  void store.inicializar()
+})
 
 onBeforeUnmount(() => {
-  store.detenerPolling();
-});
+  store.detenerPolling()
+})
 </script>
 
 <style scoped>

@@ -145,7 +145,10 @@ function toServerScalar(value: unknown, kind: FilterFieldKind): unknown {
 }
 
 /** Filtros de la UI (campo → valor) → argumentos de la colección GraphQL. */
-export function toServerFilters(entity: EntitySchema, filters: Record<string, unknown>): Record<string, unknown> {
+export function toServerFilters(
+  entity: EntitySchema,
+  filters: Record<string, unknown>,
+): Record<string, unknown> {
   const server: Record<string, unknown> = {}
   for (const [field, value] of Object.entries(filters)) {
     if (isEmptyFilterValue(value)) continue
@@ -163,14 +166,18 @@ export function toServerFilters(entity: EntitySchema, filters: Record<string, un
 }
 
 /** Inversa de `toServerFilters`: argumentos persistidos → valores de los inputs. */
-export function fromServerFilters(entity: EntitySchema, server: Record<string, unknown>): Record<string, unknown> {
+export function fromServerFilters(
+  entity: EntitySchema,
+  server: Record<string, unknown>,
+): Record<string, unknown> {
   const filters: Record<string, unknown> = {}
   for (const { name: field } of entity.fields) {
     const args = resolveFilterArgs(entity, field)
     if (fieldKind(entity, field) === 'date') {
       const after = args.after ? server[args.after] : undefined
       const before = args.before ? server[args.before] : undefined
-      if (typeof after === 'string' && typeof before === 'string') filters[field] = [new Date(after), new Date(before)]
+      if (typeof after === 'string' && typeof before === 'string')
+        filters[field] = [new Date(after), new Date(before)]
     } else if (args.single && server[args.single] !== undefined) {
       filters[field] = server[args.single]
     }
@@ -181,7 +188,11 @@ export function fromServerFilters(entity: EntitySchema, server: Record<string, u
 const DAY_MS = 86_400_000
 
 /** ¿El item cumple todos los filtros? (texto: contiene; relación: id o label; fecha: rango). */
-export function matchesFilters(item: unknown, filters: Record<string, unknown>, entity: EntitySchema): boolean {
+export function matchesFilters(
+  item: unknown,
+  filters: Record<string, unknown>,
+  entity: EntitySchema,
+): boolean {
   return Object.entries(filters).every(([field, value]) => {
     if (isEmptyFilterValue(value)) return true
     const raw = (item as Record<string, unknown>)[field]
@@ -190,7 +201,10 @@ export function matchesFilters(item: unknown, filters: Record<string, unknown>, 
         const { after, before } = rangeToIso(value)
         const time = new Date(String(raw ?? '')).getTime()
         if (Number.isNaN(time)) return !after && !before
-        return (!after || time >= new Date(after).getTime()) && (!before || time <= new Date(before).getTime() + DAY_MS)
+        return (
+          (!after || time >= new Date(after).getTime()) &&
+          (!before || time <= new Date(before).getTime() + DAY_MS)
+        )
       }
       case 'relation': {
         const needle = String(value)

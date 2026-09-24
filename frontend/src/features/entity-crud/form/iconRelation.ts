@@ -11,77 +11,85 @@
  * El acceso a la API va por un `IconGateway` inyectable (ver `iconGateway.ts`);
  * este módulo no depende de `@/init` y se puede importar desde utils puros.
  */
-import type { FormFieldSource } from "./formSchema";
+import type { FormFieldSource } from './formSchema'
 
-export const ICON_ENTITY = "Icon";
+export const ICON_ENTITY = 'Icon'
 
 /** Relaciones que se editan con `IconPicker` (solo a-uno; a-muchos sigue con MultiSelect). */
-export function isIconRelation(field: Pick<FormFieldSource, "isRelation" | "isList" | "namedType">): boolean {
-  return field.isRelation && !field.isList && field.namedType === ICON_ENTITY;
+export function isIconRelation(
+  field: Pick<FormFieldSource, 'isRelation' | 'isList' | 'namedType'>,
+): boolean {
+  return field.isRelation && !field.isList && field.namedType === ICON_ENTITY
 }
 
 /** IRI de API Platform (`/api/icons/3`) vs nombre de ícono (`bus`). */
 function isIri(value: string): boolean {
-  return value.startsWith("/");
+  return value.startsWith('/')
 }
 
 export interface IconGateway {
   /** Nombre del ícono (`Icon.icon`) de un registro; `null` si no existe. */
-  iconName(iri: string): Promise<string | null>;
+  iconName(iri: string): Promise<string | null>
   /** IRI de un `Icon` cuyo `icon` sea exactamente `name`; `null` si no hay. */
-  findIri(name: string): Promise<string | null>;
+  findIri(name: string): Promise<string | null>
   /** Crea un `Icon` para `name` y devuelve su IRI. */
-  create(name: string): Promise<string>;
+  create(name: string): Promise<string>
 }
 
 export function createIconRelationResolver(gateway: IconGateway) {
   /** nombre → IRI ya conocido en este formulario (hidratado, encontrado o creado). */
-  const known = new Map<string, string>();
+  const known = new Map<string, string>()
 
   async function toIri(name: string): Promise<string> {
-    const cached = known.get(name);
-    if (cached) return cached;
-    const iri = (await gateway.findIri(name)) ?? (await gateway.create(name));
-    known.set(name, iri);
-    return iri;
+    const cached = known.get(name)
+    if (cached) return cached
+    const iri = (await gateway.findIri(name)) ?? (await gateway.create(name))
+    known.set(name, iri)
+    return iri
   }
 
   return {
     /** Reemplaza los IRIs de relaciones `Icon` por el nombre del ícono. */
-    async hydrate(fields: FormFieldSource[], values: Record<string, unknown>): Promise<Record<string, unknown>> {
-      const out = { ...values };
+    async hydrate(
+      fields: FormFieldSource[],
+      values: Record<string, unknown>,
+    ): Promise<Record<string, unknown>> {
+      const out = { ...values }
       await Promise.all(
         fields.filter(isIconRelation).map(async (field) => {
-          const iri = out[field.name];
-          if (typeof iri !== "string" || !isIri(iri)) return;
+          const iri = out[field.name]
+          if (typeof iri !== 'string' || !isIri(iri)) return
           try {
-            const name = await gateway.iconName(iri);
-            if (!name) return;
-            known.set(name, iri);
-            out[field.name] = name;
+            const name = await gateway.iconName(iri)
+            if (!name) return
+            known.set(name, iri)
+            out[field.name] = name
           } catch (cause) {
-            console.warn(`[iconRelation] no se pudo leer ${iri}:`, cause);
+            console.warn(`[iconRelation] no se pudo leer ${iri}:`, cause)
           }
         }),
-      );
-      return out;
+      )
+      return out
     },
 
     /** Reemplaza los nombres de ícono de relaciones `Icon` por IRIs (buscando o creando). */
-    async resolve(fields: FormFieldSource[], data: Record<string, unknown>): Promise<Record<string, unknown>> {
-      const out = { ...data };
+    async resolve(
+      fields: FormFieldSource[],
+      data: Record<string, unknown>,
+    ): Promise<Record<string, unknown>> {
+      const out = { ...data }
       for (const field of fields.filter(isIconRelation)) {
-        const value = out[field.name];
-        if (value === "" || value === undefined) {
-          if (field.name in out) out[field.name] = null;
-          continue;
+        const value = out[field.name]
+        if (value === '' || value === undefined) {
+          if (field.name in out) out[field.name] = null
+          continue
         }
-        if (typeof value !== "string" || isIri(value)) continue;
-        out[field.name] = await toIri(value);
+        if (typeof value !== 'string' || isIri(value)) continue
+        out[field.name] = await toIri(value)
       }
-      return out;
+      return out
     },
-  };
+  }
 }
 
-export type IconRelationResolver = ReturnType<typeof createIconRelationResolver>;
+export type IconRelationResolver = ReturnType<typeof createIconRelationResolver>

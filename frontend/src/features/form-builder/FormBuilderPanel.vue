@@ -7,11 +7,23 @@
       <div class="flex items-end gap-2">
         <label class="text-xs text-surface-500">
           Filas
-          <InputNumber v-model="gridRows" :min="MIN_ROWS" :max="MAX_ROWS" class="w-full" input-class="w-full" />
+          <InputNumber
+            v-model="gridRows"
+            :min="MIN_ROWS"
+            :max="MAX_ROWS"
+            class="w-full"
+            input-class="w-full"
+          />
         </label>
         <label class="text-xs text-surface-500">
           Columnas
-          <InputNumber v-model="gridCols" :min="MIN_COLS" :max="MAX_COLS" class="w-full" input-class="w-full" />
+          <InputNumber
+            v-model="gridCols"
+            :min="MIN_COLS"
+            :max="MAX_COLS"
+            class="w-full"
+            input-class="w-full"
+          />
         </label>
       </div>
       <div class="mt-2 flex flex-wrap gap-2">
@@ -41,7 +53,7 @@
         </template>
       </div>
     </section>
-<Divider/>
+    <Divider />
     <!-- ── Input ────────────────────────────────────────────────────── -->
     <section>
       <h3 class="fb-h">Input</h3>
@@ -58,7 +70,12 @@
         </label>
         <label class="text-xs text-surface-500">
           Name <span class="text-red-400">*</span>
-          <InputText v-model="draft.name" class="w-full" size="small" placeholder="nombreDelCampo" />
+          <InputText
+            v-model="draft.name"
+            class="w-full"
+            size="small"
+            placeholder="nombreDelCampo"
+          />
         </label>
         <label class="text-xs text-surface-500">
           Label
@@ -80,7 +97,12 @@
         <!-- Extras por tipo -->
         <label v-if="needsOptions" class="text-xs text-surface-500">
           Options (una por línea: <code>Label | valor</code>)
-          <TextArea v-model="draft.optionsText" rows="4" class="w-full font-mono text-xs" auto-resize />
+          <TextArea
+            v-model="draft.optionsText"
+            rows="4"
+            class="w-full font-mono text-xs"
+            auto-resize
+          />
         </label>
         <div v-if="draft.inputType === 'InputNumber'" class="flex items-end gap-2">
           <label class="text-xs text-surface-500">
@@ -94,7 +116,13 @@
         </div>
         <label v-if="draft.inputType === 'TextArea'" class="text-xs text-surface-500">
           Rows
-          <InputNumber v-model="draft.rows" :min="1" :max="20" class="w-full" input-class="w-full" />
+          <InputNumber
+            v-model="draft.rows"
+            :min="1"
+            :max="20"
+            class="w-full"
+            input-class="w-full"
+          />
         </label>
         <label v-if="draft.inputType === 'InputMask'" class="text-xs text-surface-500">
           Mask (ej. <code>999-999</code>)
@@ -144,16 +172,28 @@
             </label>
             <label class="text-xs text-surface-500">
               Icon (clase PrimeIcons)
-              <InputText v-model="draft.icon" class="w-full" size="small" placeholder="pi pi-check" />
+              <InputText
+                v-model="draft.icon"
+                class="w-full"
+                size="small"
+                placeholder="pi pi-check"
+              />
             </label>
           </div>
         </template>
 
         <label class="text-xs text-surface-500">
           Props avanzadas (JSON, se mergean al final)
-          <TextArea v-model="draft.advancedJson" rows="2" class="w-full font-mono text-xs" auto-resize />
+          <TextArea
+            v-model="draft.advancedJson"
+            rows="2"
+            class="w-full font-mono text-xs"
+            auto-resize
+          />
         </label>
-        <Message v-if="propsError" severity="error" :closable="false" class="py-1 text-xs">{{ propsError }}</Message>
+        <Message v-if="propsError" severity="error" :closable="false" class="py-1 text-xs">{{
+          propsError
+        }}</Message>
       </div>
 
       <div class="mt-2 flex flex-wrap items-center gap-2">
@@ -176,11 +216,13 @@
         <span v-if="flash" class="text-xs text-green-600">{{ flash }}</span>
       </div>
     </section>
-<Divider/>
+    <Divider />
     <!-- ── Selección ───────────────────────────────────────────────── -->
     <section>
       <h3 class="fb-h">Selección</h3>
-      <p v-if="!store.selectedKey" class="text-xs text-surface-500">Haz click en una celda de la vista previa.</p>
+      <p v-if="!store.selectedKey" class="text-xs text-surface-500">
+        Haz click en una celda de la vista previa.
+      </p>
       <template v-else>
         <p class="text-xs text-surface-600">
           Celda <code>{{ store.selectedKey.gridId }}:{{ store.selectedKey.index }}</code> —
@@ -206,15 +248,30 @@
       <pre class="fb-json">{{ store.schemaJson || '// Crea el grid raíz y asigna campos' }}</pre>
       <div class="mt-2 flex flex-wrap gap-2">
         <Button label="Copiar" icon="pi pi-copy" size="small" @click="onCopyJson" />
-        <Button label="Descargar .json" icon="pi pi-download" severity="secondary" size="small" @click="onDownloadJson" />
+        <Button
+          label="Descargar .json"
+          icon="pi pi-download"
+          severity="secondary"
+          size="small"
+          @click="onDownloadJson"
+        />
         <span v-if="copied" class="text-xs text-green-600 self-center">Copiado ✓</span>
       </div>
 
       <details class="mt-3">
         <summary class="cursor-pointer text-xs text-surface-500">Importar borrador</summary>
         <TextArea v-model="importText" rows="4" class="mt-2 w-full font-mono text-xs" auto-resize />
-        <Message v-if="importError" severity="error" :closable="false" class="mt-1 py-1 text-xs">{{ importError }}</Message>
-        <Button label="Importar" icon="pi pi-upload" severity="secondary" size="small" class="mt-2" @click="onImportDraft" />
+        <Message v-if="importError" severity="error" :closable="false" class="mt-1 py-1 text-xs">{{
+          importError
+        }}</Message>
+        <Button
+          label="Importar"
+          icon="pi pi-upload"
+          severity="secondary"
+          size="small"
+          class="mt-2"
+          @click="onImportDraft"
+        />
       </details>
     </section>
   </div>
@@ -314,7 +371,11 @@ function onSubmitField() {
 }
 
 function onAddNestedGrid() {
-  showFlash(store.addNestedGrid(gridCols.value, gridRows.value) ? 'Grid anidado creado ✓' : 'La celda debe estar vacía')
+  showFlash(
+    store.addNestedGrid(gridCols.value, gridRows.value)
+      ? 'Grid anidado creado ✓'
+      : 'La celda debe estar vacía',
+  )
 }
 
 function onRemoveSelected() {

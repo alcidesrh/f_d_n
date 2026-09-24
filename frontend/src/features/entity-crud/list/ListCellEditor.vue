@@ -67,7 +67,10 @@ if (kind === 'relation') {
     void getEntity(target)
       .loadFullList()
       .then((list: AgnosticOption[]) => {
-        options.value = list.map((option) => ({ label: option.label, value: option.value ?? option.id ?? '' }))
+        options.value = list.map((option) => ({
+          label: option.label,
+          value: option.value ?? option.id ?? '',
+        }))
       })
   }
 }

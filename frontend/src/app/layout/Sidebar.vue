@@ -17,15 +17,15 @@
   </aside>
 </template>
 <script setup lang="ts">
-import { defineSidebarStore, type SidebarStore } from "./sidebarStore";
+import { defineSidebarStore, type SidebarStore } from './sidebarStore'
 
-const props = defineProps<{ side?: "left" | "right"; store?: SidebarStore; nomini?: boolean }>();
+const props = defineProps<{ side?: 'left' | 'right'; store?: SidebarStore; nomini?: boolean }>()
 
-const sidebarStore = props.store ?? defineSidebarStore(props.side ?? "left")();
+const sidebarStore = props.store ?? defineSidebarStore(props.side ?? 'left')()
 
 watch(
   () => sidebarStore.mode,
   () => sidebarStore.sidebarUpdate(),
-);
-onMounted(() => sidebarStore.sidebarUpdate());
+)
+onMounted(() => sidebarStore.sidebarUpdate())
 </script>

@@ -22,5 +22,3 @@ export type PrimaryColor =
   | 'red'
 
 export type SurfacePalette = 'slate' | 'gray' | 'zinc' | 'neutral' | 'stone'
-
-

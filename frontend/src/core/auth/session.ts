@@ -2,52 +2,52 @@
  * Sesión del usuario: identidad, token y permisos (persistidos). Login y
  * logout viven aquí para que las pantallas solo llamen a la acción.
  */
-import { defineStore } from "pinia";
-import { computed, ref } from "vue";
-import { request } from "@/core/http";
+import { defineStore } from 'pinia'
+import { computed, ref } from 'vue'
+import { request } from '@/core/http'
 
 interface LoginResponse {
-  username: string;
-  token: string;
-  permissions?: string[];
+  username: string
+  token: string
+  permissions?: string[]
 }
 
 export const useSessionStore = defineStore(
-  "session",
+  'session',
   () => {
-    const user = ref<string | null>(null);
-    const token = ref<string | null>(null);
-    const permissions = ref<string[]>([]);
-    const isAuthenticated = computed(() => Boolean(user.value && token.value));
+    const user = ref<string | null>(null)
+    const token = ref<string | null>(null)
+    const permissions = ref<string[]>([])
+    const isAuthenticated = computed(() => Boolean(user.value && token.value))
 
     /** Lanza `HttpError` (401 = credenciales inválidas) para que el formulario lo muestre. */
     async function login(credentials: { username: string; password: string }) {
-      const response = await request<LoginResponse>("/login", {
-        method: "POST",
+      const response = await request<LoginResponse>('/login', {
+        method: 'POST',
         body: credentials,
-        loadingKey: "login",
+        loadingKey: 'login',
         skipUnauthorized: true,
-      });
-      user.value = response.username;
-      token.value = response.token;
-      permissions.value = response.permissions ?? [];
+      })
+      user.value = response.username
+      token.value = response.token
+      permissions.value = response.permissions ?? []
     }
 
     async function logout() {
       try {
-        await request("/logout", { method: "POST", skipUnauthorized: true });
+        await request('/logout', { method: 'POST', skipUnauthorized: true })
       } finally {
-        clear();
+        clear()
       }
     }
 
     function clear() {
-      user.value = null;
-      token.value = null;
-      permissions.value = [];
+      user.value = null
+      token.value = null
+      permissions.value = []
     }
 
-    return { user, token, permissions, isAuthenticated, login, logout, clear };
+    return { user, token, permissions, isAuthenticated, login, logout, clear }
   },
-  { persist: { pick: ["user", "token", "permissions"] } },
-);
+  { persist: { pick: ['user', 'token', 'permissions'] } },
+)

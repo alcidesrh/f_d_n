@@ -10,42 +10,42 @@
  * así que servir la caché de Apollo mostraría datos ya pisados por un guardado.
  */
 
-import { gql } from "@apollo/client";
-import { graphql } from "@/core/graphql/client";
+import { gql } from '@apollo/client'
+import { graphql } from '@/core/graphql/client'
 
 /** Campos comunes a `CollectionFieldConfig` y `FormFieldConfig` (`FieldConfig`). */
 export interface FieldConfigDto {
   /** IRI del registro (`/api/collection_field_configs/45`); es el id que espera la mutación. */
-  id: string;
-  field: string;
-  label: string | null;
-  position: number;
-  visible: boolean;
-  kind: string | null;
-  attrs: Record<string, unknown> | null;
+  id: string
+  field: string
+  label: string | null
+  position: number
+  visible: boolean
+  kind: string | null
+  attrs: Record<string, unknown> | null
 }
 
 export interface CollectionFieldConfigDto extends FieldConfigDto {
-  sortable: boolean | null;
-  filterable: boolean | null;
+  sortable: boolean | null
+  filterable: boolean | null
 }
 
 export interface FormFieldConfigDto extends FieldConfigDto {
-  groupName: string | null;
+  groupName: string | null
 }
 
 export interface EntityConfigurationDetailDto {
-  id: string;
-  entityClass: string;
-  collectionFieldConfig: CollectionFieldConfigDto[];
-  formFields: FormFieldConfigDto[];
+  id: string
+  entityClass: string
+  collectionFieldConfig: CollectionFieldConfigDto[]
+  formFields: FormFieldConfigDto[]
 }
 
 /** Entrada de `updateWithRelationsEntityConfiguration`: la entidad y sus dos listas. */
 export interface UpdateEntityConfigurationInput {
-  entityClass: string;
-  collectionFieldConfig: CollectionFieldConfigDto[];
-  formFields: FormFieldConfigDto[];
+  entityClass: string
+  collectionFieldConfig: CollectionFieldConfigDto[]
+  formFields: FormFieldConfigDto[]
 }
 
 const ENTITY_CLASSES_QUERY = gql`
@@ -55,7 +55,7 @@ const ENTITY_CLASSES_QUERY = gql`
       entityClass
     }
   }
-`;
+`
 
 const ENTITY_CONFIGURATION_QUERY = gql`
   query EntityConfigurationByClass($entityClass: String!) {
@@ -85,7 +85,7 @@ const ENTITY_CONFIGURATION_QUERY = gql`
       }
     }
   }
-`;
+`
 
 const UPDATE_ENTITY_CONFIGURATION = gql`
   mutation UpdateEntityConfigurationFields($input: updateWithRelationsEntityConfigurationInput!) {
@@ -117,18 +117,18 @@ const UPDATE_ENTITY_CONFIGURATION = gql`
       }
     }
   }
-`;
+`
 
 /** Nombres de entidad con configuración persistida, en orden alfabético. */
 export async function fetchEntityClasses(): Promise<string[]> {
   const result = await graphql.client.query<{
-    entityConfigurations: Array<{ entityClass: string }>;
-  }>({ query: ENTITY_CLASSES_QUERY, fetchPolicy: "network-only" });
+    entityConfigurations: Array<{ entityClass: string }>
+  }>({ query: ENTITY_CLASSES_QUERY, fetchPolicy: 'network-only' })
 
   return (result.data?.entityConfigurations ?? [])
     .map((config) => config.entityClass)
     .filter(Boolean)
-    .sort((a, b) => a.localeCompare(b));
+    .sort((a, b) => a.localeCompare(b))
 }
 
 /**
@@ -139,14 +139,14 @@ export async function fetchEntityConfiguration(
   entityClass: string,
 ): Promise<EntityConfigurationDetailDto | null> {
   const result = await graphql.client.query<{
-    entityConfigurations: EntityConfigurationDetailDto[];
+    entityConfigurations: EntityConfigurationDetailDto[]
   }>({
     query: ENTITY_CONFIGURATION_QUERY,
     variables: { entityClass },
-    fetchPolicy: "network-only",
-  });
+    fetchPolicy: 'network-only',
+  })
 
-  return result.data?.entityConfigurations?.[0] ?? null;
+  return result.data?.entityConfigurations?.[0] ?? null
 }
 
 /**
@@ -158,13 +158,15 @@ export async function saveEntityConfiguration(
 ): Promise<EntityConfigurationDetailDto> {
   const result = await graphql.client.mutate<{
     updateWithRelationsEntityConfiguration: {
-      entityConfiguration: EntityConfigurationDetailDto;
-    };
-  }>({ mutation: UPDATE_ENTITY_CONFIGURATION, variables: { input } });
+      entityConfiguration: EntityConfigurationDetailDto
+    }
+  }>({ mutation: UPDATE_ENTITY_CONFIGURATION, variables: { input } })
 
-  const saved = result.data?.updateWithRelationsEntityConfiguration?.entityConfiguration;
+  const saved = result.data?.updateWithRelationsEntityConfiguration?.entityConfiguration
   if (!saved) {
-    throw new Error(`[entityConfig] la mutación no devolvió la configuración de ${input.entityClass}`);
+    throw new Error(
+      `[entityConfig] la mutación no devolvió la configuración de ${input.entityClass}`,
+    )
   }
-  return saved;
+  return saved
 }

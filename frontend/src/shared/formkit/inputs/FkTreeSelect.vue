@@ -32,7 +32,9 @@ const props = defineProps<{ context: FormKitFrameworkContext }>()
 const { context, update, blur, invalid, disabled } = useFormKitInput(props)
 
 const filter = computed(() => (props.context.attrs.filter as boolean) ?? false)
-const filterPlaceholder = computed(() => (props.context.attrs.filterPlaceholder as string) ?? 'Buscar...')
+const filterPlaceholder = computed(
+  () => (props.context.attrs.filterPlaceholder as string) ?? 'Buscar...',
+)
 const autoExpand = computed(() => (props.context.attrs.autoExpand as boolean) ?? true)
 
 function collectAllKeys(nodes: TreeNode[]): Record<string, boolean> {

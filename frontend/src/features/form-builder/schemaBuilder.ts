@@ -118,10 +118,19 @@ export function clampRows(value: number): number {
 export function createGrid(cols: number, rows: number): BuilderGrid {
   const c = clampCols(cols)
   const r = clampRows(rows)
-  return { id: newId('grid'), kind: 'grid', cols: c, rows: r, cells: Array.from({ length: c * r }, () => null) }
+  return {
+    id: newId('grid'),
+    kind: 'grid',
+    cols: c,
+    rows: r,
+    cells: Array.from({ length: c * r }, () => null),
+  }
 }
 
-export function createField(inputType: BuilderInputType, props: Record<string, unknown> = {}): BuilderField {
+export function createField(
+  inputType: BuilderInputType,
+  props: Record<string, unknown> = {},
+): BuilderField {
   return { id: newId('field'), kind: 'field', inputType, props }
 }
 
@@ -170,7 +179,12 @@ function sameKey(a: CellKey | null | undefined, b: CellKey): boolean {
 }
 
 function compileField(field: BuilderField): FormKitSchemaNode {
-  return { key: field.id, $formkit: field.inputType, fluid: true, ...structuredCloneSafe(field.props) } as FormKitSchemaNode
+  return {
+    key: field.id,
+    $formkit: field.inputType,
+    fluid: true,
+    ...structuredCloneSafe(field.props),
+  } as FormKitSchemaNode
 }
 
 /** Clone JSON-safe (el árbol es serializable; evita fugas de reactividad). */
@@ -189,7 +203,11 @@ function compileGrid(grid: BuilderGrid, opts: CompileOptions): FormKitSchemaNode
       children.push({
         $el: 'div',
         attrs: {
-          class: selected ? 'fb-cell fb-cell--selected' : cell ? 'fb-cell' : 'fb-cell fb-cell--empty',
+          class: selected
+            ? 'fb-cell fb-cell--selected'
+            : cell
+              ? 'fb-cell'
+              : 'fb-cell fb-cell--empty',
           'data-cell': `${grid.id}:${index}`,
           onClick: () => opts.onSelectCell?.(key),
         },
@@ -249,9 +267,13 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function reviveField(raw: unknown, path: string): BuilderField {
   if (!isRecord(raw)) throw new Error(`Borrador inválido: campo mal formado en ${path}`)
-  if (raw.kind !== 'field') throw new Error(`Borrador inválido: se esperaba kind "field" en ${path}`)
+  if (raw.kind !== 'field')
+    throw new Error(`Borrador inválido: se esperaba kind "field" en ${path}`)
   const inputType = raw.inputType
-  if (typeof inputType !== 'string' || !BUILDER_INPUT_TYPES.includes(inputType as BuilderInputType)) {
+  if (
+    typeof inputType !== 'string' ||
+    !BUILDER_INPUT_TYPES.includes(inputType as BuilderInputType)
+  ) {
     throw new Error(`Borrador inválido: inputType desconocido "${String(inputType)}" en ${path}`)
   }
   if (!isRecord(raw.props)) throw new Error(`Borrador inválido: props no es objeto en ${path}`)

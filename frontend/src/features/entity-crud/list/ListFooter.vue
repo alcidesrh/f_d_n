@@ -1,6 +1,8 @@
 <template>
   <div class="flex flex-wrap items-center justify-between gap-3 border-t p-2">
-    <span v-if="localFilter" class="text-xs text-surface-500">Filtro local: aplica sobre la página cargada</span>
+    <span v-if="localFilter" class="text-xs text-surface-500"
+      >Filtro local: aplica sobre la página cargada</span
+    >
     <span v-else-if="!pagination" class="text-xs text-surface-500">{{ count }} registros</span>
     <span v-else />
     <Paginator
@@ -22,17 +24,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-import type { PaginationState } from "@/core/entities/types";
+import { computed } from 'vue'
+import type { PaginationState } from '@/core/entities/types'
 
-const props = defineProps<{ pagination?: PaginationState; count: number; localFilter: boolean }>();
+const props = defineProps<{ pagination?: PaginationState; count: number; localFilter: boolean }>()
 
-const emit = defineEmits<{ page: [value: { page: number; rows: number }] }>();
+const emit = defineEmits<{ page: [value: { page: number; rows: number }] }>()
 
 const range = computed(() => {
-  const page = props.pagination;
-  if (!page) return { first: 0, last: 0 };
-  const first = (page.currentPage - 1) * page.itemsPerPage;
-  return { first: first + 1, last: Math.min(first + page.itemsPerPage, page.totalCount) };
-});
+  const page = props.pagination
+  if (!page) return { first: 0, last: 0 }
+  const first = (page.currentPage - 1) * page.itemsPerPage
+  return { first: first + 1, last: Math.min(first + page.itemsPerPage, page.totalCount) }
+})
 </script>

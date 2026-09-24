@@ -1,12 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import type { RouteRecordRaw } from 'vue-router'
-import {
-  toVueRouteDTO,
-  extractVueRoutes,
-  syncVueRoutes,
-  type VueRouteDTO,
-} from '@/app/routeSync'
+import { toVueRouteDTO, extractVueRoutes, syncVueRoutes, type VueRouteDTO } from '@/app/routeSync'
 
 describe('toVueRouteDTO', () => {
   it('ignora rutas sin nombre', () => {

@@ -55,11 +55,15 @@ describe('FkButton', () => {
 
     await wrapper.find('button.p-button').trigger('click')
     await settle()
-    expect((wrapper.vm as unknown as { formData: Record<string, unknown> }).formData.acepto).toBe(true)
+    expect((wrapper.vm as unknown as { formData: Record<string, unknown> }).formData.acepto).toBe(
+      true,
+    )
 
     await wrapper.find('button.p-button').trigger('click')
     await settle()
-    expect((wrapper.vm as unknown as { formData: Record<string, unknown> }).formData.acepto).toBe(false)
+    expect((wrapper.vm as unknown as { formData: Record<string, unknown> }).formData.acepto).toBe(
+      false,
+    )
 
     wrapper.unmount()
   })

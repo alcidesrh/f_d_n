@@ -26,11 +26,11 @@
   </Sidebar>
 </template>
 <script setup lang="ts">
-import Sidebar from "./Sidebar.vue";
-import { defineSidebarStore } from "./sidebarStore";
+import Sidebar from './Sidebar.vue'
+import { defineSidebarStore } from './sidebarStore'
 
-const sidebarStore = defineSidebarStore("right")();
-const router = useRouter();
+const sidebarStore = defineSidebarStore('right')()
+const router = useRouter()
 
-const sidebarRoutes = computed(() => router.getRoutes());
+const sidebarRoutes = computed(() => router.getRoutes())
 </script>

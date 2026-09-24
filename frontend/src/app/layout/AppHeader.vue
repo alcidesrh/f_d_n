@@ -33,11 +33,20 @@
     <div class="header-actions">
       <slot name="menu-content"></slot>
 
-      <button class="icon-btn cursor-pointer" title="Personalizar apariencia" @click.stop="showThemeEditor()">
+      <button
+        class="icon-btn cursor-pointer"
+        title="Personalizar apariencia"
+        @click.stop="showThemeEditor()"
+      >
         <icon name="palette" />
       </button>
 
-      <button class="icon-btn" title="Pantalla completa" @click="toggleFullscreen" :class="{ 'active-state': openPopover === 'fullscreen' }">
+      <button
+        class="icon-btn"
+        title="Pantalla completa"
+        @click="toggleFullscreen"
+        :class="{ 'active-state': openPopover === 'fullscreen' }"
+      >
         <icon name="arrows-maximize" />
       </button>
       <div style="position: relative">
@@ -65,57 +74,57 @@
   </header>
 </template>
 <script setup lang="ts">
-import { useDialog } from "primevue/usedialog";
-import { router } from "@/app/router";
-import { useSessionStore } from "@/core/auth/session";
-import { useNavigationHistoryStore } from "./navigationHistory";
-import { defineSidebarStore, type SidebarStore } from "./sidebarStore";
-import ThemeEditor from "./ThemeEditor.vue";
+import { useDialog } from 'primevue/usedialog'
+import { router } from '@/app/router'
+import { useSessionStore } from '@/core/auth/session'
+import { useNavigationHistoryStore } from './navigationHistory'
+import { defineSidebarStore, type SidebarStore } from './sidebarStore'
+import ThemeEditor from './ThemeEditor.vue'
 
 /** Store del panel derecho visible (menú o panel propio de la ruta). */
-defineProps<{ rightSidebar: SidebarStore }>();
+defineProps<{ rightSidebar: SidebarStore }>()
 
-const session = useSessionStore();
+const session = useSessionStore()
 
-const dialog = useDialog();
+const dialog = useDialog()
 
-const showThemeEditor = () => dialog.open(ThemeEditor, { props: { header: "Edit Profile" } });
+const showThemeEditor = () => dialog.open(ThemeEditor, { props: { header: 'Edit Profile' } })
 
-const sidebarStore = defineSidebarStore("left")();
-type PopoverName = "notif" | "customizer" | "user" | "fullscreen" | null;
-const openPopover = ref<PopoverName>(null);
-const navigationHistory = useNavigationHistoryStore();
+const sidebarStore = defineSidebarStore('left')()
+type PopoverName = 'notif' | 'customizer' | 'user' | 'fullscreen' | null
+const openPopover = ref<PopoverName>(null)
+const navigationHistory = useNavigationHistoryStore()
 
 function formatClock(date: Date) {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const hours12 = date.getHours() % 12 || 12;
-  const seconds10 = Math.floor(date.getSeconds() / 10) * 10;
-  const ampm = date.getHours() >= 12 ? "pm" : "am";
-  return `${pad(hours12)}:${pad(date.getMinutes())} <span class="text-[.8rem] font-bold">${pad(seconds10)}</span> ${ampm}`;
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const hours12 = date.getHours() % 12 || 12
+  const seconds10 = Math.floor(date.getSeconds() / 10) * 10
+  const ampm = date.getHours() >= 12 ? 'pm' : 'am'
+  return `${pad(hours12)}:${pad(date.getMinutes())} <span class="text-[.8rem] font-bold">${pad(seconds10)}</span> ${ampm}`
 }
-const currentTime = ref(formatClock(new Date()));
-let clockTimer: ReturnType<typeof setInterval>;
+const currentTime = ref(formatClock(new Date()))
+let clockTimer: ReturnType<typeof setInterval>
 onMounted(() => {
   clockTimer = setInterval(() => {
-    currentTime.value = formatClock(new Date());
-  }, 1000);
-});
-onUnmounted(() => clearInterval(clockTimer));
+    currentTime.value = formatClock(new Date())
+  }, 1000)
+})
+onUnmounted(() => clearInterval(clockTimer))
 
 function toggleFullscreen() {
   if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen?.();
+    document.documentElement.requestFullscreen?.()
   } else {
-    document.exitFullscreen?.();
+    document.exitFullscreen?.()
   }
-  toggle("fullscreen");
+  toggle('fullscreen')
 }
 function toggle(name: Exclude<PopoverName, null>) {
-  openPopover.value = openPopover.value === name ? null : name;
+  openPopover.value = openPopover.value === name ? null : name
 }
 
 async function logout() {
-  await session.logout();
-  await router.push({ name: "login" });
+  await session.logout()
+  await router.push({ name: 'login' })
 }
 </script>

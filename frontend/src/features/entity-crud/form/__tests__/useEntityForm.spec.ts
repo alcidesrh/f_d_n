@@ -19,15 +19,35 @@ function entityField(name: string, overrides: Partial<EntityFieldSchema> = {}): 
 }
 
 function input(name: string, overrides: Partial<SchemaInputField> = {}): SchemaInputField {
-  return { name, type: 'String', namedType: 'String', kind: 'SCALAR', required: false, isList: false, isRelation: false, enumValues: [], ...overrides }
+  return {
+    name,
+    type: 'String',
+    namedType: 'String',
+    kind: 'SCALAR',
+    required: false,
+    isList: false,
+    isRelation: false,
+    enumValues: [],
+    ...overrides,
+  }
 }
 
-const inputs = [input('nombre'), input('descripcion'), input('ruta', { namedType: 'Ruta', isRelation: true })]
+const inputs = [
+  input('nombre'),
+  input('descripcion'),
+  input('ruta', { namedType: 'Ruta', isRelation: true }),
+]
 const busEntity = {
   name: 'Bus',
   queryItem: 'bus',
   queryCollection: 'buses',
-  fields: [entityField('id', { namedType: 'ID' }), entityField('nombre'), entityField('descripcion'), entityField('createdAt'), entityField('ruta', { namedType: 'Ruta', kind: 'OBJECT', isRelation: true })],
+  fields: [
+    entityField('id', { namedType: 'ID' }),
+    entityField('nombre'),
+    entityField('descripcion'),
+    entityField('createdAt'),
+    entityField('ruta', { namedType: 'Ruta', kind: 'OBJECT', isRelation: true }),
+  ],
   create: { kind: 'create', inputFields: inputs },
   update: { kind: 'update', inputFields: [input('id', { namedType: 'ID' }), ...inputs] },
 } as unknown as EntitySchema
@@ -37,10 +57,17 @@ const { busStore, rutaStore } = vi.hoisted(() => {
     formFields: [] as Array<Record<string, unknown>>,
     columns: [] as unknown[],
     init: vi.fn<() => Promise<void>>(async () => {}),
-    fetchItem: vi.fn<(id: string | number, fields?: string[]) => Promise<Record<string, unknown>>>(),
-    create: vi.fn<(data: Record<string, unknown>) => Promise<Record<string, unknown>>>(async (d) => ({ id: '/api/buses/99', ...d })),
-    update: vi.fn<(data: Record<string, unknown>) => Promise<Record<string, unknown>>>(async (d) => d),
-    loadFullList: vi.fn<() => Promise<unknown[]>>(async () => [{ value: '/api/rutas/1', label: 'Norte' }]),
+    fetchItem:
+      vi.fn<(id: string | number, fields?: string[]) => Promise<Record<string, unknown>>>(),
+    create: vi.fn<(data: Record<string, unknown>) => Promise<Record<string, unknown>>>(
+      async (d) => ({ id: '/api/buses/99', ...d }),
+    ),
+    update: vi.fn<(data: Record<string, unknown>) => Promise<Record<string, unknown>>>(
+      async (d) => d,
+    ),
+    loadFullList: vi.fn<() => Promise<unknown[]>>(async () => [
+      { value: '/api/rutas/1', label: 'Norte' },
+    ]),
   })
   return { busStore: make(), rutaStore: make() }
 })
@@ -113,7 +140,11 @@ describe('useEntityForm', () => {
       { field: 'nombre', position: 1, visible: true },
       { field: 'descripcion', position: 3, visible: false },
     ]
-    busStore.fetchItem.mockResolvedValue({ id: '/api/buses/5', nombre: 'Bus 5', ruta: { id: '/api/rutas/1', label: 'Norte' } })
+    busStore.fetchItem.mockResolvedValue({
+      id: '/api/buses/5',
+      nombre: 'Bus 5',
+      ruta: { id: '/api/rutas/1', label: 'Norte' },
+    })
 
     const id = ref<string | null>('5')
     const form = useEntityForm('Bus', { id })
@@ -127,7 +158,11 @@ describe('useEntityForm', () => {
     expect(labelOf(form.schema.value, 'ruta')).toBe('Ruta asignada')
 
     await form.submit({ nombre: 'Bus cinco', ruta: '/api/rutas/1' })
-    expect(busStore.update).toHaveBeenCalledWith({ nombre: 'Bus cinco', ruta: '/api/rutas/1', id: '/api/buses/5' })
+    expect(busStore.update).toHaveBeenCalledWith({
+      nombre: 'Bus cinco',
+      ruta: '/api/rutas/1',
+      id: '/api/buses/5',
+    })
     expect(busStore.create).not.toHaveBeenCalled()
   })
 

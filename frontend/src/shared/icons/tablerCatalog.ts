@@ -119,7 +119,10 @@ export interface IconSearchOptions {
  * nombre contiene > coincidencia en tags/categoría. Con varias palabras, todas
  * deben aparecer en el texto de búsqueda.
  */
-export function searchIcons(icons: TablerIconEntry[], opts: IconSearchOptions = {}): TablerIconEntry[] {
+export function searchIcons(
+  icons: TablerIconEntry[],
+  opts: IconSearchOptions = {},
+): TablerIconEntry[] {
   const query = (opts.query ?? '').trim().toLowerCase()
   const slug = query.replace(/\s+/g, '-')
   const words = query.split(/\s+/).filter(Boolean)
@@ -149,10 +152,7 @@ let catalogPromise: Promise<TablerCatalog> | null = null
 
 /** Carga (una sola vez) el set de íconos y su metadata. */
 export function loadTablerCatalog(): Promise<TablerCatalog> {
-  catalogPromise ??= Promise.all([
-    import('@iconify-json/tabler'),
-    import('./tablerMeta'),
-  ])
+  catalogPromise ??= Promise.all([import('@iconify-json/tabler'), import('./tablerMeta')])
     .then(([{ icons: set }, meta]) => {
       addCollection(set)
       return buildCatalog(Object.keys(set.icons), meta.default)

@@ -11,11 +11,7 @@
 -->
 <template>
   <div v-if="row" class="field-panel" :class="{ 'field-panel--hidden': !row.visible }">
-    <span
-      data-drag-handle
-      class="field-panel__handle"
-      title="Arrastrar para cambiar la posición"
-    >
+    <span data-drag-handle class="field-panel__handle" title="Arrastrar para cambiar la posición">
       <icon name="grip-vertical" lg />
     </span>
 
@@ -40,19 +36,13 @@
         :model-value="row.label ?? ''"
         size="small"
         :placeholder="row.field"
-        @update:model-value="row.label = (($event as string) || null)"
+        @update:model-value="row.label = ($event as string) || null"
       />
     </label>
 
     <label class="cell w-32">
       <span class="cell__label">kind</span>
-      <Select
-        v-model="row.kind"
-        :options="KIND_OPTIONS"
-        size="small"
-        editable
-        placeholder="—"
-      />
+      <Select v-model="row.kind" :options="KIND_OPTIONS" size="small" editable placeholder="—" />
     </label>
 
     <label v-if="variant === 'form'" class="cell w-36">
@@ -61,7 +51,7 @@
         :model-value="(row as FormFieldRow).groupName ?? ''"
         size="small"
         placeholder="—"
-        @update:model-value="(row as FormFieldRow).groupName = (($event as string) || null)"
+        @update:model-value="(row as FormFieldRow).groupName = ($event as string) || null"
       />
     </label>
 
@@ -108,62 +98,62 @@
 </template>
 
 <script setup lang="ts">
-import { useEntityConfigStore } from "./store";
-import type { CollectionFieldRow, FormFieldRow } from "./store";
+import { useEntityConfigStore } from './store'
+import type { CollectionFieldRow, FormFieldRow } from './store'
 
-defineOptions({ name: "FieldConfigPanel" });
+defineOptions({ name: 'FieldConfigPanel' })
 
 const props = defineProps<{
   /** IRI de la fila; estable mientras se arrastra (el índice no lo es). */
-  fieldKey: string;
+  fieldKey: string
   /** Posición actual del panel en la lista (0-based). */
-  index: number;
-  variant: "collection" | "form";
-}>();
+  index: number
+  variant: 'collection' | 'form'
+}>()
 
 /** Valores que produce `CollectionFieldConfig::setData()`; el campo admite otros. */
-const KIND_OPTIONS = ["scalar", "date", "list"];
+const KIND_OPTIONS = ['scalar', 'date', 'list']
 
-const store = useEntityConfigStore();
+const store = useEntityConfigStore()
 
 const row = computed<CollectionFieldRow | FormFieldRow | null>(() => {
-  const list = props.variant === "collection" ? store.collectionFields : store.formFields;
-  return list.find((item) => item.key === props.fieldKey) ?? null;
-});
+  const list = props.variant === 'collection' ? store.collectionFields : store.formFields
+  return list.find((item) => item.key === props.fieldKey) ?? null
+})
 
-const attrsText = ref("");
-const attrsInvalid = ref(false);
+const attrsText = ref('')
+const attrsInvalid = ref(false)
 
 function serializeAttrs(attrs: Record<string, unknown> | null): string {
-  return attrs ? JSON.stringify(attrs) : "";
+  return attrs ? JSON.stringify(attrs) : ''
 }
 
 function setInvalid(invalid: boolean) {
-  attrsInvalid.value = invalid;
-  store.setAttrsError(props.fieldKey, invalid);
+  attrsInvalid.value = invalid
+  store.setAttrsError(props.fieldKey, invalid)
 }
 
 /** Escribe `attrs` solo si el texto es un objeto JSON; si no, marca el panel. */
 function onAttrsInput(value: string | undefined) {
-  attrsText.value = value ?? "";
-  const target = row.value;
-  if (!target) return;
+  attrsText.value = value ?? ''
+  const target = row.value
+  if (!target) return
 
-  const raw = attrsText.value.trim();
+  const raw = attrsText.value.trim()
   if (!raw) {
-    target.attrs = null;
-    setInvalid(false);
-    return;
+    target.attrs = null
+    setInvalid(false)
+    return
   }
   try {
-    const parsed: unknown = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      throw new Error("attrs debe ser un objeto JSON");
+    const parsed: unknown = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new Error('attrs debe ser un objeto JSON')
     }
-    target.attrs = parsed as Record<string, unknown>;
-    setInvalid(false);
+    target.attrs = parsed as Record<string, unknown>
+    setInvalid(false)
   } catch {
-    setInvalid(true);
+    setInvalid(true)
   }
 }
 
@@ -172,13 +162,13 @@ function onAttrsInput(value: string | undefined) {
 watch(
   row,
   (value) => {
-    attrsText.value = serializeAttrs(value?.attrs ?? null);
-    setInvalid(false);
+    attrsText.value = serializeAttrs(value?.attrs ?? null)
+    setInvalid(false)
   },
   { immediate: true },
-);
+)
 
-onBeforeUnmount(() => store.setAttrsError(props.fieldKey, false));
+onBeforeUnmount(() => store.setAttrsError(props.fieldKey, false))
 </script>
 
 <style scoped>

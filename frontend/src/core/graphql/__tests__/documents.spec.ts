@@ -333,7 +333,9 @@ describe('buildItemQuery', () => {
 describe('itemIri', () => {
   it('arma /api/{colección en snake_case}/{id} y deja los IRIs tal cual', () => {
     expect(itemIri(boletoSchema, 5)).toBe('/api/boletos/5')
-    expect(itemIri({ ...boletoSchema, queryCollection: 'boletoTarifas' }, '7')).toBe('/api/boleto_tarifas/7')
+    expect(itemIri({ ...boletoSchema, queryCollection: 'boletoTarifas' }, '7')).toBe(
+      '/api/boleto_tarifas/7',
+    )
     expect(itemIri({ ...boletoSchema, queryCollection: 'buses' }, 1)).toBe('/api/buses/1')
     expect(itemIri(boletoSchema, '/api/boletos/9')).toBe('/api/boletos/9')
   })

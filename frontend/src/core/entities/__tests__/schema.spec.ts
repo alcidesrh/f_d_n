@@ -241,7 +241,13 @@ describe('useSchemaStore', () => {
     apolloMock.introspect.mockResolvedValue({ Boleto: listSchema })
     apolloMock.collection.mockResolvedValue({
       items: [{ id: 1, numero: 'AB' }],
-      pagination: { currentPage: 1, itemsPerPage: 1, lastPage: 1, totalCount: 1, hasNextPage: false },
+      pagination: {
+        currentPage: 1,
+        itemsPerPage: 1,
+        lastPage: 1,
+        totalCount: 1,
+        hasNextPage: false,
+      },
     })
     const store = useSchemaStore()
     await store.init()

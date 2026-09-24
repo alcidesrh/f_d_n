@@ -33,29 +33,27 @@
   />
 </template>
 <script setup lang="ts">
-import { computed } from "vue";
-import type { FormKitFrameworkContext } from "@formkit/core";
-import { omit, useFormKitInput } from "@/shared/formkit/useFormKitInput";
+import { computed } from 'vue'
+import type { FormKitFrameworkContext } from '@formkit/core'
+import { omit, useFormKitInput } from '@/shared/formkit/useFormKitInput'
 
-defineOptions({ name: "FkInputText" });
+defineOptions({ name: 'FkInputText' })
 
-const props = defineProps<{ context: FormKitFrameworkContext }>();
-const { context, update, blur, invalid, disabled } = useFormKitInput(props);
+const props = defineProps<{ context: FormKitFrameworkContext }>()
+const { context, update, blur, invalid, disabled } = useFormKitInput(props)
 /** Opt-in para listados: muestra un ✕ dentro del input para limpiar el valor. */
-const clearable = computed(
-  () => props.context.node.props.attrs.clearable === true,
-);
+const clearable = computed(() => props.context.node.props.attrs.clearable === true)
 const hasValue = computed(() => {
-  const value = props.context._value;
+  const value = props.context._value
   return (
-    value !== "" &&
+    value !== '' &&
     value !== null &&
     value !== undefined &&
     !(Array.isArray(value) && value.length === 0)
-  );
-});
-const cleanAttrs = computed(() => omit(props.context.attrs, "clearable"));
+  )
+})
+const cleanAttrs = computed(() => omit(props.context.attrs, 'clearable'))
 function clearValue() {
-  props.context.node.input("");
+  props.context.node.input('')
 }
 </script>
