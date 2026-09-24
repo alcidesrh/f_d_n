@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { createPinia, setActivePinia } from 'pinia'
 import type { RouteRecordRaw } from 'vue-router'
 import {
   toVueRouteDTO,
@@ -76,31 +77,32 @@ describe('extractVueRoutes', () => {
 
 describe('syncVueRoutes', () => {
   beforeEach(() => {
+    setActivePinia(createPinia())
     vi.stubGlobal('fetch', vi.fn())
   })
 
+  const response = (status: number) =>
+    ({ ok: status < 400, status, text: async () => '' }) as unknown as Response
+
   it('devuelve ok=false sin lanzar cuando el backend responde error', async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: false,
-      status: 500,
-      statusText: 'Internal Server Error',
-    } as Response)
+    vi.mocked(fetch).mockResolvedValue(response(500))
 
     const result = await syncVueRoutes([])
 
-    expect(result).toEqual({ ok: false, count: 0, error: 'HTTP 500 Internal Server Error' })
+    expect(result).toEqual({ ok: false, count: 0, error: 'HTTP 500' })
   })
 
   it('publica el árbol de rutas y devuelve ok', async () => {
     const fetchMock = vi.mocked(fetch)
-    fetchMock.mockResolvedValue({ ok: true, status: 200 } as Response)
+    fetchMock.mockResolvedValue(response(200))
 
     const routes: VueRouteDTO[] = [{ name: 'dashboard', path: '/' }]
     const result = await syncVueRoutes(routes)
 
     expect(result).toEqual({ ok: true, count: 1 })
 
-    const [, init] = fetchMock.mock.calls[0]
+    const [url, init] = fetchMock.mock.calls[0]!
+    expect(String(url)).toMatch(/\/vue-routes\/sync$/)
     const body = JSON.parse((init!.body as string) ?? '')
     expect(body.routes).toEqual(routes)
     expect(init!.method).toBe('POST')

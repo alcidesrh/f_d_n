@@ -223,13 +223,12 @@ import {
   watch,
 } from "vue";
 import { useMigracionStore } from "./store";
-import { notify } from "@/core/notify";
+import { cancelarJob as cancelar, reejecutarJob as reejecutar } from "./actions";
+import { etiquetaEstado, etiquetaTipo, formatearNumero, porcentajeNuevo, porcentajeProgreso, severidadEstado } from "./labels";
 import type {
   ConteoMigracion,
   EntidadMigracion,
-  EstadoJobMigracion,
   JobMigracion,
-  TipoJobMigracion,
 } from "./types";
 
 defineOptions({ name: "MigracionView" });
@@ -254,15 +253,7 @@ const filasIndicadores = computed<FilaIndicador[]>(() => {
   }));
 });
 
-function porcentajeNuevo(conteo: ConteoMigracion): number {
-  if (conteo.legado <= 0) return conteo.nuevo > 0 ? 100 : 0;
-  return Math.min(100, Math.round((conteo.nuevo / conteo.legado) * 100));
-}
 
-function porcentajeProgreso(job: JobMigracion): number {
-  if (!job.total || job.total <= 0) return 0;
-  return Math.min(100, Math.round((job.procesados / job.total) * 100));
-}
 
 function contadoresVisibles(job: JobMigracion): Array<[string, number]> {
   return Object.entries(job.contadores ?? {}).filter(
@@ -270,91 +261,11 @@ function contadoresVisibles(job: JobMigracion): Array<[string, number]> {
   ) as Array<[string, number]>;
 }
 
-function formatearNumero(n: number): string {
-  return new Intl.NumberFormat("es-AR").format(n);
-}
 
-function etiquetaTipo(job: {
-  tipo: TipoJobMigracion;
-  entidad: string | null;
-}): string {
-  const nombre: Record<TipoJobMigracion, string> = {
-    reset: "Reset duro",
-    truncar: "Truncar tablas",
-    estaticos: "Estáticos",
-    entidad: "Entidad",
-    iam: "IAM",
-    config: "Configuración",
-    todo: "Migración completa",
-  };
-  return job.entidad
-    ? `${nombre[job.tipo]} → ${job.entidad}`
-    : nombre[job.tipo];
-}
 
-function etiquetaEstado(estado: EstadoJobMigracion | string): string {
-  return (
-    {
-      pending: "En cola",
-      running: "Ejecutando",
-      done: "Completado",
-      cancelado: "Cancelado",
-      error: "Error",
-      abortado: "Abortado",
-    }[estado] ?? String(estado)
-  );
-}
 
-function severidadEstado(
-  estado: EstadoJobMigracion | string,
-): "success" | "info" | "warn" | "danger" | "secondary" {
-  return (
-    {
-      pending: "warn",
-      running: "info",
-      done: "success",
-      cancelado: "warn",
-      error: "danger",
-      abortado: "danger",
-    }[estado] ?? "secondary"
-  );
-}
 
-async function cancelar(): Promise<void> {
-  const actual = store.estado.actual;
-  if (!actual) return;
-  try {
-    await store.cancelarJob(actual.id);
-    notify.info(
-      "Cancelación solicitada. El proceso la respetará en la próxima iteración.",
-    );
-  } catch (e) {
-    notify.error(e instanceof Error ? e.message : String(e));
-  }
-}
 
-async function reejecutar(job: JobMigracion): Promise<void> {
-  const p = job.parametros ?? {};
-  const payload: {
-    tipo: TipoJobMigracion;
-    entidad?: string;
-    desde?: string | null;
-    hasta?: string | null;
-    cantidad?: number | null;
-    clean?: boolean;
-  } = { tipo: job.tipo };
-  if (p.entidad) payload.entidad = p.entidad;
-  if (p.desde) payload.desde = p.desde;
-  if (p.hasta) payload.hasta = p.hasta;
-  if (p.cantidad != null) payload.cantidad = p.cantidad;
-  if (p.clean) payload.clean = true;
-  try {
-    await store.arrancarJob(payload);
-    notify.success("Migración re-lanzada con los mismos parámetros.");
-  } catch (e) {
-    notify.error(e instanceof Error ? e.message : String(e));
-  }
-}
 
 // Autoscroll de la consola al final cuando crece el log.
 watch(

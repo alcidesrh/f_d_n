@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useSchemaStore, SCHEMA_VERSION } from '@/core/entities/schema'
 import { repository } from '@/core/entities/repository'
-import type { CollectionFieldConfig, EntityStore, EntityStoreState } from '@/core/entities/types'
+import type { EntityStore, EntityStoreState } from '@/core/entities/types'
 import type { AgnosticOption, EntitySchema } from '@/core/graphql/types'
 
 const { apolloMock } = vi.hoisted(() => ({
@@ -316,11 +316,10 @@ describe('useSchemaStore', () => {
     await store.init()
     const entityStore = makeStore()
     const first = await repository.fullList(entityStore)
-    expect(apolloMock.agnosticList).toHaveBeenCalledWith('Boleto')
     expect(first).toEqual(options)
     expect(entityStore.fullList).toEqual(options)
     await repository.fullList(entityStore)
-    expect(apolloMock.agnosticList).toHaveBeenCalledOnce()
+    expect(apolloMock.agnosticList).toHaveBeenCalledExactlyOnceWith('Boleto')
     await repository.fullList(entityStore, { force: true })
     expect(apolloMock.agnosticList).toHaveBeenCalledTimes(2)
   })

@@ -3,9 +3,8 @@ import Lara from "@primeuix/themes/lara";
 import Material from "@primeuix/themes/material";
 import Nora from "@primeuix/themes/nora";
 import type { Preset } from "@primeuix/themes/types";
-import type { PrimaryColor, SurfacePalette, ThemePreset } from "./themeTypes";
+import type { PrimaryColor, SurfacePalette, ThemeMode, ThemePreset } from "./themeTypes";
 import colors from "tailwindcss/colors";
-import pick from "ramda/src/pick";
 
 const RAMP_STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950] as const;
 
@@ -88,27 +87,43 @@ export const SURFACE_OPTIONS: SurfaceOption[] = [
   { key: "stone", label: "Stone", bg: "#e7e5e4", accent: "#44403c" },
 ];
 
-// console.log(PRESET_OPTIONS.map(v => v.value))
-export const themeColors = (theme, primary, surface, dark) => {
-  const option = PRESET_OPTIONS.find((o) => o.key === theme);
-  let primitive = "";
-  if (dark == "dark") {
-    primitive = invertPalette({ ...option.value.primitive, ...colors });
-    primary = invertPalette(pick([primary], colors))[primary];
-    surface = invertPalette(pick([surface], colors))[surface];
-    surface = { "0": "#000000", ...surface };
+/**
+ * Tokens de diseño de PrimeVue: objetos anidados libres (primitive/semantic/
+ * components) que se combinan y sobrescriben por clave.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Tokens = Record<string, any>;
+
+type Palette = Record<string, string>;
+const palette = (name: string) => (colors as unknown as Record<string, Palette>)[name] ?? {};
+
+/** Preset base de PrimeVue (Aura, Lara…); si la clave no existe, el primero. */
+function presetOf(key: ThemePreset): Tokens {
+  return (PRESET_OPTIONS.find((o) => o.key === key) ?? PRESET_OPTIONS[0]).value as Tokens;
+}
+
+/** Preset completo: base + paletas (primaria y superficie) + ajustes propios, en claro u oscuro. */
+export const themeColors = (theme: ThemePreset, primaryName: PrimaryColor, surfaceName: SurfacePalette, mode: ThemeMode): Tokens => {
+  const base = presetOf(theme);
+  let primitive: Tokens;
+  let primary: Palette;
+  let surface: Palette;
+  if (mode === "dark") {
+    primitive = invertPalette({ ...base.primitive, ...colors });
+    primary = invertPalette(palette(primaryName));
+    surface = { "0": "#000000", ...invertPalette(palette(surfaceName)) };
   } else {
-    primitive = { ...option.value.primitive, ...colors };
-    primary = colors[primary];
-    surface = { "0": "#ffffff", ...colors[surface] };
+    primitive = { ...base.primitive, ...colors };
+    primary = palette(primaryName);
+    surface = { "0": "#ffffff", ...palette(surfaceName) };
   }
   return {
-    ...option.value,
+    ...base,
     primitive: primitive,
     semantic: {
-      ...option.value.semantic,
+      ...base.semantic,
       formField: {
-        ...option.value.semantic.formField,
+        ...base.semantic.formField,
         borderRadius: "4px",
       },
 
@@ -125,7 +140,7 @@ export const themeColors = (theme, primary, surface, dark) => {
         activeColor: "#0e7490",
       },
       colorScheme: {
-        ...option.value.semantic?.colorScheme?.light,
+        ...base.semantic?.colorScheme?.light,
         surface: surface,
         primary: {
           // color: "{primary.500}",
@@ -203,51 +218,51 @@ export const themeColors = (theme, primary, surface, dark) => {
         },
       },
     },
-    components: { ...option.value.components, ...componentsPreset(theme) },
+    components: { ...base.components, ...componentsPreset(theme) },
   };
 };
 //#region Componentes
-export const componentsPreset = (parent: string) => {
-  const option = PRESET_OPTIONS.find((o) => o.key === parent);
+export const componentsPreset = (parent: ThemePreset): Tokens => {
+  const base = presetOf(parent);
   return {
     multiselect: {
-      ...option.value.components.multiselect,
+      ...base.components.multiselect,
       root: {
-        ...option.value.components.multiselect?.root,
+        ...base.components.multiselect?.root,
         overlay: { background: "{surface.50}" },
         // "border.color": "{surface.400}",
       },
       colorScheme: {
-        ...option.value.components.multiselect?.colorScheme,
+        ...base.components.multiselect?.colorScheme,
         dark: {
-          ...option.value.components.multiselect?.colorScheme?.dark,
+          ...base.components.multiselect?.colorScheme?.dark,
           background: "{surface.50}",
           "border.color": "{surface.400}",
         },
       },
     },
     inputtext: {
-      ...option.value.components.inputtext,
+      ...base.components.inputtext,
       colorScheme: {
-        ...option.value.components.inputtext?.colorScheme,
+        ...base.components.inputtext?.colorScheme,
         dark: {
-          ...option.value.components.inputtext?.colorScheme?.dark,
+          ...base.components.inputtext?.colorScheme?.dark,
           background: "{surface.50}",
           "border.color": "{surface.400}",
         },
       },
     },
     datatable: {
-      ...option.value.components.datatable,
+      ...base.components.datatable,
       header: {
         cell: {
           padding: "5px 0",
         },
       },
       colorScheme: {
-        ...option.value.components.datatable?.colorScheme,
+        ...base.components.datatable?.colorScheme,
         dark: {
-          ...option.value.components.datatable?.colorScheme.dark,
+          ...base.components.datatable?.colorScheme.dark,
           // header: {
           //   background: "{surface.100}",
           //   "cell.background": "{surface.100}",
@@ -260,41 +275,41 @@ export const componentsPreset = (parent: string) => {
       },
     },
     select: {
-      ...option.value.components.select,
+      ...base.components.select,
       root: {
-        ...option.value.components.select?.root,
+        ...base.components.select?.root,
         overlay: { background: "{surface.50}" },
         // "border.color": "{surface.400}",
       },
     },
     popover: {
-      ...option.value.components.popover,
+      ...base.components.popover,
       root: {
-        ...option.value.components.popover?.root,
+        ...base.components.popover?.root,
         background: "{surface.50}",
         "border.color": "{surface.300}",
       },
       // colorScheme: {
-      // ...option.value.components.popover?.colorScheme,
+      // ...base.components.popover?.colorScheme,
       //   dark: {
-      //     ...option.value.components.popover.dark,
+      //     ...base.components.popover.dark,
       //     background: "{surface.100}",
       //   },
       // },
     },
     divider: {
-      ...option.value.components.divider,
+      ...base.components.divider,
       root: {
-        ...option.value.components.divider?.root,
+        ...base.components.divider?.root,
         border: {
           color: "{surface.200}",
         },
       },
     },
     dialog: {
-      ...option.value.components.dialog,
+      ...base.components.dialog,
       root: {
-        ...option.value.components.dialog?.root,
+        ...base.components.dialog?.root,
         background: "{overlay.modal.background}",
       },
     },
@@ -309,12 +324,12 @@ export const componentsPreset = (parent: string) => {
       },
     },
     button: {
-      ...option.value.components.button,
+      ...base.components.button,
       colorScheme: {
         light: {
-          ...option.value.components.button.colorScheme?.light,
+          ...base.components.button.colorScheme?.light,
           outlined: {
-            ...option.value.components.button.colorScheme?.light?.outlined,
+            ...base.components.button.colorScheme?.light?.outlined,
             secondary: {
               hoverBackground: "{surface.50}",
               activeBackground: "{surface.100}",
@@ -326,23 +341,23 @@ export const componentsPreset = (parent: string) => {
       },
     },
     tabs: {
-      ...option.value.components.tabs,
+      ...base.components.tabs,
       tablist: {
-        ...option.value.components.tabs.tablist,
+        ...base.components.tabs.tablist,
       },
       tab: {
-        ...option.value.components.tabs.tab,
+        ...base.components.tabs.tab,
       },
       tabpanel: {
-        ...option.value.components.tabs.tabpanel,
+        ...base.components.tabs.tabpanel,
         // background: "transparent",
       },
       colorScheme: {
-        ...option.value.components.tabs.colorScheme,
+        ...base.components.tabs.colorScheme,
         light: {
-          ...option.value.components.tabs.colorScheme.light,
+          ...base.components.tabs.colorScheme.light,
           tab: {
-            ...option.value.components.tabs.colorScheme.light.tab,
+            ...base.components.tabs.colorScheme.light.tab,
             activeBackground: "{surface.50}",
           },
         },

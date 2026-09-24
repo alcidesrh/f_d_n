@@ -1,61 +1,30 @@
 <template>
-  <ProgressBar
-    :showValue="false"
-    :value="progreso"
-    class="z-[999] w-full fixed! top-0"
-    :class="{ 'hidden!': progreso == 0 }"
-  ></ProgressBar>
+  <ProgressBar v-show="progress > 0" :show-value="false" :value="progress" class="fixed! top-0 z-[999] w-full" />
 </template>
+
 <script setup lang="ts">
+/** Barra de carga global: avanza (sin llegar al final) mientras haya peticiones en curso. */
+import { onUnmounted, ref, watch } from "vue";
 import { useLoadingStore } from "@/core/loading";
 
-const loadingStore = useLoadingStore();
+const loading = useLoadingStore();
+const progress = ref(0);
+let timer: ReturnType<typeof setInterval> | undefined;
 
-const progreso = ref(0);
-const localLoading = ref(loadingStore.count);
-let intervalo = null,
-  ratio = 20,
-  started = false;
-
-function start() {
-  started = true;
-  intervalo = setInterval(() => {
-    if (progreso.value < 90) {
-      progreso.value += Math.floor(Math.random() * 5) + ratio;
-    } else if (progreso.value < 98) {
-      progreso.value += Math.floor(Math.random() * 1) + ratio;
-    } else {
-      progreso.value = 70;
-    }
-  }, 300);
-}
-
-// Escuchamos los cambios en el indicador loading
 watch(
-  () => loadingStore.count,
-  (nuevoLoading) => {
-    if (nuevoLoading == 0) {
-      clearInterval(intervalo);
-      progreso.value = 0;
-      localLoading.value = 0;
-      started = false;
-      ratio = 10;
-    } else if (nuevoLoading > localLoading.value) {
-      ratio = localLoading.value / nuevoLoading || 10;
-      localLoading.value = nuevoLoading;
-      if (!started) {
-        progreso.value = 0;
-        start();
-      }
-    } else {
-      ratio = localLoading.value / nuevoLoading;
+  () => loading.count > 0,
+  (active) => {
+    clearInterval(timer);
+    if (!active) {
+      progress.value = 0;
+      return;
     }
+    progress.value = 10;
+    // Cada paso recorre el 15 % de lo que falta hasta el 95 %.
+    timer = setInterval(() => (progress.value += (95 - progress.value) * 0.15), 300);
   },
   { immediate: true },
 );
 
-// Limpieza para evitar fugas de memoria
-onUnmounted(() => {
-  clearInterval(intervalo);
-});
+onUnmounted(() => clearInterval(timer));
 </script>

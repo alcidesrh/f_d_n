@@ -15,7 +15,7 @@ export type PrimaryColor =
   | 'stone'
   | 'gray'
   | 'slate'
-  | 'verde'
+  | 'green'
   | 'cyan'
   | 'sky'
   | 'yellow'

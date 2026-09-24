@@ -1,7 +1,6 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import { useSessionStore } from "@/core/auth/session";
-import { handleUnauthorized } from "@/core/auth/unauthorized";
+import { http } from "@/core/http";
 import type {
   EntidadMigracion,
   EstadoMigracion,
@@ -11,45 +10,13 @@ import type {
   PayloadEjecutar,
 } from "./types";
 
-const API_BASE = import.meta.env.VITE_REST_ENDPOINT ?? "http://localhost/api";
-
 const INTERVALO_ESTADO_MS = 6000;
 const INTERVALO_LOG_MS = 5000;
 const INTERVALO_INDICADORES_MS = 8000;
 
-async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const session = useSessionStore();
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    headers: {
-      ...init?.headers,
-      ...(init?.body ? { "Content-Type": "application/json" } : {}),
-      ...(session.token ? { Authorization: `Bearer ${session.token}` } : {}),
-    },
-  });
-  const texto = await res.text();
-  let data: unknown = null;
-  if (texto) {
-    try {
-      data = JSON.parse(texto);
-    } catch {
-      data = texto;
-    }
-  }
-  if (res.status === 401) {
-    // El firewall responde 401 cuando el Bearer token ya no existe/expiro en
-    // api_token (p. ej. sesion de antes de un reset de BD): limpiar y al login.
-    handleUnauthorized();
-  }
-  if (!res.ok) {
-    const msg =
-      data && typeof data === "object" && "error" in (data as object)
-        ? String((data as { error: unknown }).error)
-        : `HTTP ${res.status}`;
-    throw new Error(msg);
-  }
-  return data as T;
-}
+/** Consultas del polling: no encienden la barra de carga. */
+const silent = { silent: true } as const;
+const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 /**
  * Estado del panel de migración: catálogo de entidades, indicadores
@@ -80,17 +47,17 @@ export const useMigracionStore = defineStore("migracion", () => {
 
   async function cargarEntidades(): Promise<void> {
     try {
-      entidades.value = await apiFetch<EntidadMigracion[]>("/migracion/entidades");
+      entidades.value = await http.get<EntidadMigracion[]>("/migracion/entidades");
     } catch (e) {
-      error.value = e instanceof Error ? e.message : String(e);
+      error.value = message(e);
     }
   }
 
   async function cargarIndicadores(): Promise<void> {
     try {
-      indicadores.value = await apiFetch<IndicadoresMigracion>("/migracion/indicadores");
+      indicadores.value = await http.get<IndicadoresMigracion>("/migracion/indicadores", silent);
     } catch (e) {
-      error.value = e instanceof Error ? e.message : String(e);
+      error.value = message(e);
     }
   }
 
@@ -101,14 +68,15 @@ export const useMigracionStore = defineStore("migracion", () => {
     if (!id || logFin.value) return;
     cargandoLog = true;
     try {
-      const chunk = await apiFetch<LogJobMigracion>(
+      const chunk = await http.get<LogJobMigracion>(
         `/migracion/ejecutar/${encodeURIComponent(id)}/log?desde=${logOffset.value}`,
+        silent,
       );
       if (chunk.log) log.value += chunk.log;
       if (chunk.offset > logOffset.value) logOffset.value = chunk.offset;
       logFin.value = chunk.fin;
     } catch (e) {
-      error.value = e instanceof Error ? e.message : String(e);
+      error.value = message(e);
     } finally {
       cargandoLog = false;
     }
@@ -118,7 +86,7 @@ export const useMigracionStore = defineStore("migracion", () => {
     if (cargandoEstado) return;
     cargandoEstado = true;
     try {
-      const nuevo = await apiFetch<EstadoMigracion>("/migracion/estado");
+      const nuevo = await http.get<EstadoMigracion>("/migracion/estado", silent);
       estado.value = nuevo;
       const activo = nuevo.actual;
       if (activo) {
@@ -138,24 +106,34 @@ export const useMigracionStore = defineStore("migracion", () => {
       }
       cargado.value = true;
     } catch (e) {
-      error.value = e instanceof Error ? e.message : String(e);
+      error.value = message(e);
     } finally {
       cargandoEstado = false;
     }
   }
 
   async function arrancarJob(payload: PayloadEjecutar): Promise<JobMigracion> {
-    const job = await apiFetch<JobMigracion>("/migracion/ejecutar", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
+    const job = await http.post<JobMigracion>("/migracion/ejecutar", payload);
     await refrescarEstado();
     return job;
   }
 
-  async function cancelarJob(id: string): Promise<void> {
-    await apiFetch<JobMigracion>(`/migracion/ejecutar/${encodeURIComponent(id)}/cancelar`, {
-      method: "POST",
+  /** Pide cancelar el job en curso (el proceso la respeta en su próxima iteración). */
+  async function cancelarActual(): Promise<void> {
+    const actual = estado.value.actual;
+    if (actual) await http.post(`/migracion/ejecutar/${encodeURIComponent(actual.id)}/cancelar`);
+  }
+
+  /** Relanza un job con los mismos parámetros. */
+  function reejecutar(job: JobMigracion): Promise<JobMigracion> {
+    const { entidad, desde, hasta, cantidad, clean } = job.parametros ?? {};
+    return arrancarJob({
+      tipo: job.tipo,
+      ...(entidad ? { entidad } : {}),
+      ...(desde ? { desde } : {}),
+      ...(hasta ? { hasta } : {}),
+      ...(cantidad != null ? { cantidad } : {}),
+      ...(clean ? { clean: true } : {}),
     });
   }
 
@@ -192,7 +170,8 @@ export const useMigracionStore = defineStore("migracion", () => {
     refrescarEstado,
     tailLog,
     arrancarJob,
-    cancelarJob,
+    cancelarActual,
+    reejecutar,
     iniciarPolling,
     detenerPolling,
     inicializar,

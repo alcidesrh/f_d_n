@@ -1,92 +1,46 @@
 <template>
-  <IconifyInstance
-    :icon="iconName"
-    :stroke-width="props.sw"
-    :style="sizeComputed"
-    :class="clases"
-    v-bind="$attrs"
-  />
+  <IconifyInstance :icon="iconName" :stroke-width="sw" :style="{ width: size_, height: size_, minWidth: size_, minHeight: size_ }" :class="classes" />
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+/**
+ * Ícono de Tabler vía Iconify: `<icon name="bus" lg />`. Acepta el nombre
+ * con o sin prefijo (`bus` = `tabler:bus`) y un tamaño por atajo (`xs`…`xl`)
+ * o explícito (`size="1.2rem"`).
+ */
+import { computed, useAttrs } from "vue";
 import { Icon as IconifyInstance } from "@iconify/vue";
 
-const props = defineProps({
-  name: {
-    type: String,
-    required: true,
-  },
-  sw: {
-    type: [String, Number],
-    default: 1.8, // Permite usar el de defecto del ícono si no se pasa ninguno
-  },
-  size: {
-    type: String,
-    default: "1rem",
-  },
-  color: {
-    type: String,
-    default: "",
-  },
-  xs: {
-    type: Boolean,
-    default: false,
-  },
-  sm: {
-    type: Boolean,
-    default: false,
-  },
-  md: {
-    type: Boolean,
-    default: false,
-  },
-  lg: {
-    type: Boolean,
-    default: false,
-  },
-  xl: {
-    type: Boolean,
-    default: false,
-  },
+const SIZES = { xs: ".80rem", sm: ".95rem", md: "1rem", lg: "1.5rem", xl: "2rem" } as const;
+
+const props = withDefaults(
+  defineProps<{
+    name: string;
+    /** Grosor del trazo. */
+    sw?: string | number;
+    size?: string;
+    /** Clase de color (por defecto `text-surface-600`). */
+    color?: string;
+    xs?: boolean;
+    sm?: boolean;
+    md?: boolean;
+    lg?: boolean;
+    xl?: boolean;
+  }>(),
+  { sw: 1.8, size: "1rem", color: "" },
+);
+
+const attrs = useAttrs();
+
+const iconName = computed(() => (props.name.includes(":") ? props.name : `tabler:${props.name}`));
+
+const size_ = computed(() => {
+  const shortcut = (Object.keys(SIZES) as Array<keyof typeof SIZES>).find((key) => props[key]);
+  return shortcut ? SIZES[shortcut] : props.size;
 });
 
-// Normaliza el nombre: transforma "tabler_database-cog" o "tabler-database-cog"
-// al formato estándar de Iconify "tabler:database-cog"
-const iconName = computed(() => {
-  if (props.name.includes(":")) {
-    return props.name;
-  }
-  return `tabler:${props.name}`;
-});
-const sizeComputed = computed(() => {
-  let size;
-  if (props.xs) {
-    size = ".80rem";
-  } else if (props.sm) {
-    size = ".95rem";
-  } else if (props.md) {
-    size = "1rem";
-  } else if (props.lg) {
-    size = "1.5rem";
-  } else if (props.xl) {
-    size = "2rem";
-  } else {
-    size = props.size;
-  }
-  return {
-    width: `${size}`,
-    height: `${size}`,
-    minWidth: `${size}`,
-    minHeight: `${size}`,
-  };
-});
-const clases = computed(() => {
-  if (!props.color && !props.class) {
-    return ["cursor-pointer text-surface-600"];
-  }
-  return ["cursor-pointer " + props.class + " " + props.color];
-});
+/** Color por defecto solo si no llega ni `color` ni una `class` propia. */
+const classes = computed(() => ["cursor-pointer", props.color || (attrs.class ? "" : "text-surface-600")]);
 </script>
 
 <style scoped>

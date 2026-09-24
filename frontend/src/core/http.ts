@@ -27,6 +27,8 @@ export interface RequestOptions {
   headers?: Record<string, string>;
   /** Clave para `useLoadingStore().isLoading(key)`; por defecto el path. */
   loadingKey?: string;
+  /** Petición de fondo (polling): no enciende la barra de carga. */
+  silent?: boolean;
   skipUnauthorized?: boolean;
 }
 
@@ -50,8 +52,8 @@ function errorMessage(body: unknown, status: number): string {
 export async function request<T = unknown>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = "GET", body, loadingKey = path } = options;
   const token = useSessionStore().token;
-  const loading = useLoadingStore();
-  loading.start(loadingKey);
+  const loading = options.silent ? null : useLoadingStore();
+  loading?.start(loadingKey);
   try {
     const response = await fetch(`${config.restUrl}${path}`, {
       method,
@@ -68,7 +70,7 @@ export async function request<T = unknown>(path: string, options: RequestOptions
     if (!response.ok) throw new HttpError(response.status, data, errorMessage(data, response.status));
     return data as T;
   } finally {
-    loading.stop(loadingKey);
+    loading?.stop(loadingKey);
   }
 }
 

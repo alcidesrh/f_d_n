@@ -209,12 +209,11 @@
 import { computed, ref } from "vue";
 import { useConfirm } from "primevue/useconfirm";
 import { useMigracionStore } from "./store";
-import { notify } from "@/core/notify";
+import { cancelarJob as cancelar, iniciarJob as iniciar } from "./actions";
+import { etiquetaEstado, etiquetaTipo, formatearNumero, severidadEstado } from "./labels";
 import type {
   EntidadMigracion,
-  EstadoJobMigracion,
   PayloadEjecutar,
-  TipoJobMigracion,
 } from "./types";
 
 defineOptions({ name: "MigracionPanel" });
@@ -246,59 +245,10 @@ function aYmd(d: Date | null): string | null {
   return `${anio}-${mes}-${dia}`;
 }
 
-function formatearNumero(n: number): string {
-  return new Intl.NumberFormat("es-AR").format(n);
-}
 
-function etiquetaTipo(job: { tipo: TipoJobMigracion; entidad: string | null }): string {
-  const nombre: Record<TipoJobMigracion, string> = {
-    reset: "Reset duro",
-    truncar: "Truncar tablas",
-    estaticos: "Estáticos",
-    entidad: "Entidad",
-    iam: "IAM",
-    config: "Configuración",
-    todo: "Migración completa",
-  };
-  return job.entidad ? `${nombre[job.tipo]} → ${job.entidad}` : nombre[job.tipo];
-}
 
-function etiquetaEstado(estado: EstadoJobMigracion | string): string {
-  return (
-    {
-      pending: "En cola",
-      running: "Ejecutando",
-      done: "Completado",
-      cancelado: "Cancelado",
-      error: "Error",
-      abortado: "Abortado",
-    }[estado] ?? String(estado)
-  );
-}
 
-function severidadEstado(
-  estado: EstadoJobMigracion | string,
-): "success" | "info" | "warn" | "danger" | "secondary" {
-  return (
-    {
-      pending: "warn",
-      running: "info",
-      done: "success",
-      cancelado: "warn",
-      error: "danger",
-      abortado: "danger",
-    }[estado] ?? "secondary"
-  );
-}
 
-async function iniciar(payload: PayloadEjecutar): Promise<void> {
-  try {
-    await store.arrancarJob(payload);
-    notify.success("Migración iniciada. Seguí el avance en la consola.");
-  } catch (e) {
-    notify.error(e instanceof Error ? e.message : String(e));
-  }
-}
 
 function conConfirmacion(mensaje: string, aceptar: () => void): void {
   confirm.require({
@@ -360,16 +310,6 @@ function cerrarResetDuro(): void {
   textoReset.value = "";
 }
 
-async function cancelar(): Promise<void> {
-  const actual = store.estado.actual;
-  if (!actual) return;
-  try {
-    await store.cancelarJob(actual.id);
-    notify.info("Cancelación solicitada. El proceso la respetará en la próxima iteración.");
-  } catch (e) {
-    notify.error(e instanceof Error ? e.message : String(e));
-  }
-}
 </script>
 
 <style scoped>

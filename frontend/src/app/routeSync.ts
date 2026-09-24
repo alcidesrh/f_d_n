@@ -6,14 +6,13 @@
  * siempre refleja las rutas realmente declaradas en la aplicación.
  *
  * Se puede disparar "a voluntad" llamando a `syncVueRoutes()`, y también se
- * ejecuta automáticamente durante el bootstrap (ver `stores/global.ts`).
+ * ejecuta automáticamente durante el arranque (`main.ts`).
  */
 
 import type { RouteRecordRaw } from 'vue-router'
-import { handleUnauthorized } from '@/core/auth/unauthorized'
+import { http } from '@/core/http'
 import { router } from './router'
 
-const API_BASE = import.meta.env.VITE_REST_ENDPOINT ?? 'http://localhost/api'
 
 export interface VueRouteDTO {
   name: string
@@ -75,30 +74,9 @@ export interface VueRoutesSyncResult {
  */
 export async function syncVueRoutes(routes: VueRouteDTO[] = extractVueRoutes()): Promise<VueRoutesSyncResult> {
   try {
-    const response = await fetch(`${API_BASE}/vue-routes/sync`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ routes }),
-    })
-
-    if (response.status === 401) {
-      handleUnauthorized()
-      return { ok: false, count: 0, error: 'Sesión expirada' }
-    }
-    if (!response.ok) {
-      return {
-        ok: false,
-        count: 0,
-        error: `HTTP ${response.status} ${response.statusText}`,
-      }
-    }
-
-    return { ok: true, count: routes.length }
+    await http.post("/vue-routes/sync", { routes }, { silent: true });
+    return { ok: true, count: routes.length };
   } catch (error) {
-    return {
-      ok: false,
-      count: 0,
-      error: error instanceof Error ? error.message : String(error),
-    }
+    return { ok: false, count: 0, error: error instanceof Error ? error.message : String(error) };
   }
 }
