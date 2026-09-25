@@ -27,7 +27,7 @@ const props = withDefaults(
     lg?: boolean;
     xl?: boolean;
   }>(),
-  { sw: 1.5, size: "1rem", color: "" },
+  { sw: 1.7, size: "1.3rem", color: "" },
 );
 
 const attrs = useAttrs();

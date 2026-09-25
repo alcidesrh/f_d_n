@@ -13,12 +13,25 @@
   gap: 16px;
   padding: 0 0.5rem;
 }
+.right-header {
+  display: flex;
+  align-items: center;
+  /*justify-content: center;*/
+  /*justify-items: center;*/
+}
+.left-header {
+  width: calc(var(--sidebar-width) - 0.5rem);
+  display: flex;
+  align-items: center;
+}
 .brand {
+  transition: transform var(--transition);
+  width: 230px;
   display: flex;
   align-items: center;
   justify-content: center;
-  justify-items: center;
   position: relative;
+  transform: translate(-40px, 0);
 }
 .brand-mark {
   width: 36px;
@@ -33,28 +46,22 @@
 }
 .header-clock {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  font-family: 'Space Grotesk', 'SFMono-Regular', Consolas, monospace;
+  font-family: "Rajdha";
   font-variant-numeric: tabular-nums;
-  font-size: 1.3rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  font-size: 2rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
   color: var(--p-surface-500);
   white-space: nowrap;
   line-height: 1.2;
+  z-index: 10;
 }
 .brand-name {
-  font-family: 'diplomata-sc-regular', sans-serif;
-  /*font-weight: 700;*/
-  font-size: 2rem;
-  opacity: 0.1;
+  font-family: "diplomata-sc-regular", sans-serif;
+  font-size: 3.5rem;
+  opacity: 0.05;
   letter-spacing: 0.5rem;
-  transform: scaleY(2);
-  /*white-space: nowrap;*/
-  /*color: var(--p-surface-200);*/
-  /*position: absolute;*/
+  transform: scaleY(1.5);
 }
 .brand-tag {
   font-size: 11px;
@@ -63,14 +70,24 @@
   margin-top: -2px;
 }
 .btn-siderbar-header {
-  transition: width var(--transition);
+  transition: transform var(--transition);
+  transform: translate(calc(-50px - 0.5rem), 0);
   width: 50px;
-  overflow: hidden;
-  &.open,
-  &.mini {
-    width: 0;
-    /* transform: translate(-120px, 0) rotate(45deg) scale(1.5); */
-  }
+}
+.left-header.close .btn-siderbar-header {
+  transform: translate(0px, 0);
+}
+.left-header.close .brand {
+  transform: translate(0px, 0);
+}
+.right-header .btn-siderbar-header {
+  transform: translate(50px, 0);
+}
+.right-header.close .btn-siderbar-header {
+  transform: translate(0px, 0);
+}
+.right-header.close .header-actions {
+  transform: translate(0px, 0);
 }
 .icon-btn {
   width: 38px;
@@ -125,9 +142,12 @@
 }
 
 .header-actions {
+  transition: transform var(--transition);
   display: flex;
   align-items: center;
   gap: 4px;
+  transform: translate(50px, 0);
+  padding-right: 0.5rem;
 }
 .header-search {
   display: flex;
@@ -171,7 +191,7 @@
   justify-content: center;
   font-weight: 700;
   font-size: 13px;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: "Space Grotesk", sans-serif;
 }
 .header-user {
   display: flex;
