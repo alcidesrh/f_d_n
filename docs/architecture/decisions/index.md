@@ -21,3 +21,4 @@
 | [ADR-015](ADR-015-tenant-filter.md) | TenantFilter: aislamiento por empresa vía Doctrine SQLFilter | Aceptada |
 | [ADR-016](ADR-016-piloto-vuelve-a-bus.md) | La asignación de Piloto vuelve a Bus (no Recorrido); pilotoAux → copiloto | Aceptada |
 | [ADR-017](ADR-017-frontend-por-capas.md) | Frontend por capas (core / shared / features) con imports explícitos | Aceptada |
+| [ADR-018](ADR-018-taxonomia-agnostica-y-menus.md) | Taxonomía agnóstica (referencia polimórfica) y menús de navegación sobre ella | Aceptada |

@@ -4,6 +4,7 @@
  */
 import { defineStore } from 'pinia'
 import { gsap } from 'gsap'
+import { closeFlyout, openFlyout, resetFlyouts } from './sidebarFlyout'
 
 export type SidebarMode = 'open' | 'mini' | 'close'
 
@@ -45,83 +46,24 @@ function createDefinition(side: 'left' | 'right', name: string) {
           this.prevMode = this.mode == 'open' ? 'mini' : 'open'
         }
       },
-      handleMouseLeave(e: MouseEvent) {
-        if (this.mode === 'mini') {
-          const to: gsap.TweenVars = {
-            border: 'none',
-            borderRadius: 'none',
-            ease: 'power1.out',
-            zIndex: 999,
-            width: 'auto',
-            duration: 0.4,
-            boxShadow: 'none',
-          }
-          if (this.side == 'left') {
-            gsap.to(e.target, to)
-          } else {
-            to.x = 0
-            gsap.to(e.target, to)
-          }
-        } else if (this.mode === 'open') {
-          // gsap.to(link, { backgroundColor: bg });
-        }
-      },
+      /** En `mini`, el enlace se despliega mostrando su texto mientras dure el hover. */
       handleMouseEnter(e: MouseEvent) {
-        const rootStyles = window.getComputedStyle(document.documentElement)
-        const shadow = rootStyles.getPropertyValue('--p-surface-300')
-
-        if (this.mode === 'mini') {
-          const temp: gsap.TweenVars = {
-            borderRadius: '0 8px 8px 0',
-            duration: 0.25,
-            ease: 'power1.out',
-            zIndex: 999,
-            width: '0px',
-          }
-          if (this.side == 'left') {
-            gsap.fromTo(
-              e.target,
-              { ...temp },
-              {
-                duration: 0.4,
-                width: 200,
-                boxShadow: `1px 0px 3px ${shadow}`,
-              },
-            )
-          } else {
-            temp.flexDirection = 'row-reverse'
-            gsap.fromTo(
-              e.target,
-              {
-                ...temp,
-                borderRadius: '8 0px 0px 8',
-                display: 'flex',
-                width: 200,
-                flexDirection: 'row-reverse',
-                x: -130,
-                justifyContent: 'end',
-              },
-              {
-                duration: 0.4,
-
-                // x: -130,
-                boxShadow: `-1px 0px 3px ${shadow}`,
-              },
-            )
-          }
-
-          gsap.fromTo(
-            (e.currentTarget as HTMLElement).querySelector('.menu-text'),
-            { opacity: 1, width: '0px', overflow: 'hidden' },
-            { width: '100%', duration: 0.4 },
-          )
-        }
+        if (this.mode !== 'mini') return
+        openFlyout(e.currentTarget as HTMLElement, {
+          side: this.side,
+          mini: this.mini,
+          open: this.open,
+        })
+      },
+      handleMouseLeave(e: MouseEvent) {
+        closeFlyout(e.currentTarget as HTMLElement)
       },
       sidebarUpdate() {
+        resetFlyouts(this.side)
         const targets = {
           sidebar: `.sidebar.${this.side}`,
           main: `.main`,
-          menu: `.sidebar.${this.side} .menu-text`,
+          menu: document.querySelectorAll(`.sidebar.${this.side} .menu-text`),
         }
         const duration = 0.2
         // const ease = "expoScale(1, 2)";
@@ -142,11 +84,13 @@ function createDefinition(side: 'left' | 'right', name: string) {
               ease,
             })
           }
-          gsap.to(targets.menu, {
-            opacity: 1,
-            duration: duration * 0.8,
-            ease,
-          })
+          // Una barra sin ítems (sin menús asignados) no tiene textos que animar.
+          if (targets.menu.length)
+            gsap.to(targets.menu, {
+              opacity: 1,
+              duration: duration * 0.8,
+              ease,
+            })
         } else if (this.mode === 'mini') {
           gsap.to(targets.sidebar, {
             width: this.width,
@@ -164,11 +108,13 @@ function createDefinition(side: 'left' | 'right', name: string) {
               ease,
             })
           }
-          gsap.to(targets.menu, {
-            opacity: 0,
-            duration: duration * 0.5,
-            ease,
-          })
+          // Una barra sin ítems (sin menús asignados) no tiene textos que animar.
+          if (targets.menu.length)
+            gsap.to(targets.menu, {
+              opacity: 0,
+              duration: duration * 0.5,
+              ease,
+            })
         } else if (this.mode === 'close') {
           gsap.to(targets.sidebar, {
             width: this.width,
@@ -182,11 +128,13 @@ function createDefinition(side: 'left' | 'right', name: string) {
           } else {
             gsap.to(targets.main, { marginRight: 0, duration, ease })
           }
-          gsap.to(targets.menu, {
-            opacity: 0,
-            duration: duration * 0.5,
-            ease,
-          })
+          // Una barra sin ítems (sin menús asignados) no tiene textos que animar.
+          if (targets.menu.length)
+            gsap.to(targets.menu, {
+              opacity: 0,
+              duration: duration * 0.5,
+              ease,
+            })
         }
       },
     },

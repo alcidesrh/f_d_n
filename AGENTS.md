@@ -40,6 +40,9 @@ Columna **Modelo**: `nuevo` = entidad viva en `backend/src/Entity/`; `legacy` = 
 | **Anulacion**                           | Cuando se invalida la compra de un asiento asi como su registro en la oficina tributaria.                                                                                                                                                                                        |                         | legacy (sin operación de dominio equivalente hoy) |
 | **Usuario**                             | Empleado de alguna empresa. Usan el sistema para la venta de boletos o encomiendas, crean el calendarios de recorrido, generan reportes y demas procesos del negocio segun el rol asignado                                                                                       |                         | nuevo |
 | **Agencia**                             | Un tipo de usuario que representa una entidad externa asociada a una empresa. La diferencia es que solo estan limitado a la venta de boletos.                                                                                                                                    |                         | legacy |
+| **Taxonomía**                           | Jerarquía ordenada (árbol, una o más raíces) sobre registros de cualquier entidad, por referencia polimórfica `(subjectClass, subjectId)`. Un mismo registro puede estar en varias taxonomías. Ver ADR-018. | categoría, árbol | nuevo |
+| **Menú**                                | Taxonomía de ítems navegables visible para ciertos roles (o sus ascendientes vía `Role.parents`) y colocada en una o más áreas de la UI (`MenuPlacement`, `LayoutArea`). | navegación | nuevo |
+| **Ítem navegable** (`MenuItem`)         | Texto + ícono + ruta de vue-router (`VueRoute`); se crea antes de usarse y puede estar en varios menús. El orden y el nivel viven en cada menú, no en el ítem. | enlace, opción | nuevo |
 | **Manifiesto\<de pasajero, de venta, ...\>** | son reportes que se generan en formato pdf                                                                                                                                                                                                                                  |                         | legacy |
 
 > **Estado del modelo (2026-09):** el modelo nuevo (`src/Entity/`, ~30 clases) cubre geografía, flota y venta básica de asientos. `Agencia`, `Voucher`, `Encomienda`, `Reasignación`, `Anulación` y `Manifiesto` solo existen en el legacy (`src/EntitySistemaFdn/`, ~112 clases) — son el trabajo de dominio pendiente, no features ya resueltas. No asumas que existe un endpoint/servicio para ellas sin verificarlo primero.
@@ -100,6 +103,7 @@ Despliegue
 - **Boot order frontend** (`main.ts`): plugins (Pinia, router, FormKit, PrimeVue) → tema → introspección GraphQL → montaje → sincronización de rutas.
 - **`label`** es derivado (de `nombre`/`name`) y de solo lectura en todas las entidades: no forma parte de los inputs de create/update.
 - **Tokens de API**: el valor del Bearer solo lo entrega `POST /api/login`; nunca se expone por GraphQL/REST. `POST /api/logout` lo revoca (`App\EventListener\LogoutListener`).
+- **Menús de navegación** (ADR-018): `GET /api/me/menus` devuelve, por área del shell, los menús visibles para el usuario; se editan en `/configuracion/menus`. El árbol de cada menú es una `Taxonomy` genérica (`App\Taxonomy`), reutilizable para clasificar cualquier entidad.
 - **Íconos**: el repositorio de íconos es [Tabler](https://tabler.io/icons) y el único punto de uso es `frontend/src/shared/ui/Icon.vue` (`<icon name="grip-vertical" lg />`, prefijo `tabler:` implícito). Ver `docs/frontend/icons.md`.
 - **Multi-tenancy**: `App\Doctrine\TenantFilter` (Doctrine SQLFilter, deshabilitado por defecto en el EM `default`) aísla `Bus`/`Piloto`/`Recorrido`/`BoletoTarifa` por `empresa_id`. Se habilita por request en `App\EventListener\TenantFilterListener` según `Usuario.empresa` — si el usuario no tiene empresa asignada, navega sin filtro. Ver ADR-015.
 
@@ -139,7 +143,7 @@ No existe un sitio MkDocs — se eliminó el 2026-09 por documentar un modelo de
 | ------------------- | ---------------------------------------- |
 | Contexto de dominio | `CONTEXT.md`                             |
 | Terminología + estado del modelo | `AGENTS.md` (este archivo, sección "Domain terminology") |
-| ADRs (decisiones de arquitectura) | `docs/architecture/decisions/` (ADR-001 a ADR-017, ver `index.md`) |
+| ADRs (decisiones de arquitectura) | `docs/architecture/decisions/` (ADR-001 a ADR-018, ver `index.md`) |
 | Convención de exploración de dominio para skills | `docs/agents/domain.md` |
 | Convención de issue tracker | `docs/agents/issue-tracker.md` |
 | Backend (Symfony, Doctrine, GraphQL) | `backend/AGENTS.md` |

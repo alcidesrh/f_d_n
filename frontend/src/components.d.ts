@@ -65,6 +65,7 @@ declare module 'vue' {
     Tag: typeof import('primevue/tag')['default']
     Textarea: typeof import('primevue/textarea')['default']
     TextArea: typeof import('primevue/textarea')['default']
+    TieredMenu: typeof import('primevue/tieredmenu')['default']
     ToggleSwitch: typeof import('primevue/toggleswitch')['default']
     Toolbar: typeof import('primevue/toolbar')['default']
     TreeSelect: typeof import('primevue/treeselect')['default']

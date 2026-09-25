@@ -38,6 +38,8 @@ Main stack:
 | `Security/` | Autorización (`Voter/EntityVoter` = `{entidad}.{create,read,update,delete}`, `ActionVoter`, `PermissionManager`), autenticación por Bearer (`ApiTokenHandler`) y hasher legacy. |
 | `EventListener/` | `TenantFilterListener` (aislamiento por empresa, ADR-015) y `LogoutListener` (revoca el Bearer en `POST /api/logout`). |
 | `Controller/` | Endpoints REST fuera de API Platform: login, cambio de contraseña, permisos, sincronización de rutas, migración. |
+| `Taxonomy/` | Taxonomía agnóstica (ADR-018): árbol puro (`TaxonomyTree`), lectura por lotes (`TaxonomyTreeReader`), reemplazo del árbol (`TaxonomyTreeWriter`) y resolución de `subjectClass` (`SubjectRegistry`). |
+| `Navigation/` | Menús de navegación sobre la taxonomía: visibilidad por roles (`MenuVisibility`), árbol del editor (`MenuTree`), áreas (`MenuLayout`) y menús del usuario (`UserMenus`). Endpoints en `Controller/MenuController`. |
 | `Services/` | Sincronización de `EntityConfiguration` y `VueRoute`, publicación de cambios (Mercure/SSE), hasher de contraseñas. |
 | `Migration/`, `Command/` | Migración desde el sistema legado (TerminalOmnibus) y sus comandos de consola. |
 | `EntitySistemaFdn/` | Entidades del sistema legado (SQL Server). Solo lectura para la migración: **no tocar**. |

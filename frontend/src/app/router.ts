@@ -58,6 +58,16 @@ export const router = createRouter({
       },
     },
     {
+      path: '/configuracion/menus',
+      name: 'menu-builder',
+      component: () => import('@/features/menu-builder/MenuBuilderPage.vue'),
+      meta: {
+        title: 'Menús de navegación',
+        label: 'Menús',
+        icon: 'sitemap',
+      },
+    },
+    {
       path: '/lista/:entity',
       name: 'entity-list',
       props: true,

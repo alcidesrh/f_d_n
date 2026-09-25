@@ -1,51 +1,12 @@
 <template>
   <Sidebar side="left">
     <template #menu-content>
-      <ul class="sidebar-menu">
-        <li class="menu-item">
-          <a
-            href="#"
-            class="menu-link"
-            @mouseenter="sidebarStore.handleMouseEnter"
-            @mouseleave="sidebarStore.handleMouseLeave"
-          >
-            <span>
-              <icon name="settings" size="1.5rem" />
-            </span>
-            <span class="menu-text">Inicio</span>
-          </a>
-        </li>
-        <li class="menu-item">
-          <a
-            href="#"
-            class="menu-link"
-            @mouseenter="sidebarStore.handleMouseEnter"
-            @mouseleave="sidebarStore.handleMouseLeave"
-          >
-            <span>
-              <icon name="settings" size="1.5rem" />
-            </span>
-            <span class="menu-text">Inicio</span>
-          </a>
-        </li>
-        <li class="menu-item">
-          <a
-            href="#"
-            class="menu-link"
-            @mouseenter="sidebarStore.handleMouseEnter"
-            @mouseleave="sidebarStore.handleMouseLeave"
-          >
-            <!-- <span> -->
-            <icon name="settings" size="1.5rem" />
-            <!-- </span> -->
-            <span class="menu-text">Configuración</span>
-          </a>
-        </li>
-      </ul>
+      <NavArea area="sidebar_left" :sidebar="sidebarStore" />
     </template>
   </Sidebar>
 </template>
 <script setup lang="ts">
+import NavArea from './navigation/NavArea.vue'
 import Sidebar from './Sidebar.vue'
 import { defineSidebarStore } from './sidebarStore'
 

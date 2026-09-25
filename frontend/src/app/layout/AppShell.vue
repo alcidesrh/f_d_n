@@ -1,6 +1,10 @@
 <template>
   <div class="shell">
-    <AppHeader :right-sidebar="rightSidebar" />
+    <AppHeader :right-sidebar="rightSidebar">
+      <template #menu-content>
+        <NavArea area="topbar_right" />
+      </template>
+    </AppHeader>
     <div class="body-row">
       <SidebarLeft />
       <main class="main">
@@ -20,13 +24,25 @@
 
 <script setup lang="ts">
 import { defineAsyncComponent } from 'vue'
+import { useSessionStore } from '@/core/auth/session'
+import { useUserMenusStore } from '@/core/navigation/userMenus'
 import AppHeader from './AppHeader.vue'
+import NavArea from './navigation/NavArea.vue'
 import Sidebar from './Sidebar.vue'
 import SidebarLeft from './SidebarLeft.vue'
 import SidebarRight from './SidebarRight.vue'
 import { defineSidebarStore } from './sidebarStore'
 
 const route = useRoute()
+const session = useSessionStore()
+const userMenus = useUserMenusStore()
+
+// Menús del usuario: se cargan al entrar al shell y al cambiar de usuario.
+watch(
+  () => session.user,
+  (user) => (user ? void userMenus.load() : userMenus.clear()),
+  { immediate: true },
+)
 
 /** Panel propio de la ruta (`meta.panel`), con su propio store de ancho/modo. */
 const panel = computed(() =>

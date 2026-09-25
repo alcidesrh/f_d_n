@@ -42,6 +42,7 @@ Dependencias en una sola dirección: `app → features → shared → core`. **U
 | `core/auth/` | Sesión (`login`/`logout`), manejo de 401 | `session.ts` |
 | `core/entities/` | Capa de datos de entidades: `schema` (metadata: `find`/`require`), `repository` (leer/escribir), `entityStore` (estado por entidad), `registry` (`getEntity(nombre)`) | `registry.ts` |
 | `core/metadata/` | Configuración de presentación (`/api/entity_configurations`) | — |
+| `core/navigation/` | Menús del usuario por área (`GET /me/menus`, `useUserMenusStore`); los pinta `app/layout/navigation/` (`NavArea`) | `userMenus.ts` |
 | `core/notify.ts`, `core/loading.ts` | Toasts (`notify.success/error/…`) y contador de peticiones | — |
 | `shared/ui/` | `Icon` (`<icon name="bus" lg />`), `PageHead`, `SortablePanelList` — registrados globalmente | — |
 | `shared/icons/` | `IconPicker` y catálogo Tabler (carga diferida) | `tablerCatalog.ts` |
@@ -49,6 +50,7 @@ Dependencias en una sola dirección: `app → features → shared → core`. **U
 | `features/entity-crud/` | Listado (`ListPage` + `list/`) y formulario (`FormPage` + `form/`) genéricos de cualquier entidad | `ListPage.vue`, `form/useEntityForm.ts` |
 | `features/entity-config/` | Editor de columnas/campos por entidad | `EntityConfigPage.vue` |
 | `features/form-builder/` | Constructor de formularios FormKit | `FormBuilderPage.vue` |
+| `features/menu-builder/` | Constructor de menús (ADR-018): árbol con GSAP Draggable sobre un esquema con sangría, paleta de ítems, áreas del shell | `outline.ts`, `MenuBuilderPage.vue` |
 | `features/migracion/` | Panel de migración desde el sistema legado | `MigracionPage.vue` |
 | `features/auth/`, `features/dashboard/` | Login (el fondo animado está aparte en `LoginBackground`) y portada | — |
 
