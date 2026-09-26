@@ -15,7 +15,7 @@
         <PageHead title="" />
       </template>
       <template #end>
-        <div class="flex items-center gap-4">
+        <div class="flex flex-wrap items-center gap-4">
           <span v-if="store.dirty" class="text-sm text-amber-600">Cambios sin guardar</span>
           <span v-if="store.attrsErrors.length" class="text-sm text-red-500">
             {{ store.attrsErrors.length }} panel(es) con attrs inválido
@@ -40,7 +40,8 @@
     </Toolbar>
 
     <div class="grid grid-cols-1 gap-3 lg:grid-cols-[16rem_minmax(0,1fr)]">
-      <div class="card p-2">
+      <!-- Apilada sobre el editor (móvil/tablet) la lista es compacta; en su columna, alta. -->
+      <div class="card p-2 [--entity-list-h:14rem] lg:[--entity-list-h:calc(100dvh-16rem)]">
         <Listbox
           :model-value="store.selected"
           :options="store.entityClasses"
@@ -48,7 +49,7 @@
           filter-placeholder="Buscar entidad"
           empty-filter-message="Sin coincidencias"
           empty-message="Sin entidades configuradas"
-          list-style="max-height: calc(100vh - 16rem)"
+          list-style="max-height: var(--entity-list-h)"
           @change="onSelectEntity"
         />
       </div>

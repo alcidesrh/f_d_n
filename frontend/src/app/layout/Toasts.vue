@@ -12,12 +12,14 @@
         class="left-0 toast relative backdrop-blur-[7px] pointer-events-auto flex w-full items-start gap-3 rounded-lg border px-4 py-3 pt-6 shadow-lg"
         role="alert"
       >
-        <icon
+        <button
+          type="button"
+          class="tap-target absolute right-0 top-0 m-2"
+          aria-label="Cerrar aviso"
           @click="dismiss(toast.id)"
-          name="x"
-          class="absolute right-0 top-0 m-2"
-          size="1.2rem"
-        />
+        >
+          <icon name="x" size="1.2rem" />
+        </button>
         <icon :name="ICONS[toast.type]" size="1.2rem" />
         <span class="flex-1 text-sm leading-snug">{{ toast.text }}</span>
       </div>

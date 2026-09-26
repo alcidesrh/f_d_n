@@ -1,5 +1,7 @@
 <template>
-  <div class="card bg-surface-50 p-[4rem]">
+  <!-- Contenedor de consultas: las filas del formulario pasan a dos columnas
+       según el ancho de esta tarjeta (formSchema), no del viewport. -->
+  <div class="card @container bg-surface-50 p-[var(--page-gutter)]">
     <div v-if="loading" class="flex flex-col gap-4">
       <Skeleton v-for="i in 6" :key="i" height="3.5rem" />
     </div>

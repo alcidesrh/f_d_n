@@ -1,15 +1,23 @@
 import { defineStore } from 'pinia'
 import type { PrimaryColor, SurfacePalette, ThemeMode, ThemePreset } from './themeTypes'
 import { usePreset } from '@primeuix/themes'
+import { mediaUp } from './breakpoints'
 import { themeColors } from './theme'
 
-const MOBILE_BREAKPOINT = 1024
+/** Desde `lg` el shell tiene sidebars fijos; debajo, drawers. */
+const DESKTOP_QUERY = mediaUp('lg')
+
+function isBelowDesktop(): boolean {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false
+  return !window.matchMedia(DESKTOP_QUERY).matches
+}
 
 export interface UiState {
   mode: ThemeMode
   primary: PrimaryColor
   surface: SurfacePalette
   preset: ThemePreset
+  /** Viewport debajo de `lg`: navegación en drawers (ver `app/breakpoints.ts`). */
   isMobile: boolean
 }
 
@@ -19,13 +27,13 @@ export interface UiState {
  * (`layout/sidebarStore.ts`).
  */
 export const useUiStore = defineStore('ui', {
-  persist: true,
+  persist: { omit: ['isMobile'] },
   state: (): UiState => ({
     mode: 'light',
     primary: 'blue',
     surface: 'slate',
     preset: 'lara',
-    isMobile: typeof window !== 'undefined' ? window.innerWidth <= MOBILE_BREAKPOINT : false,
+    isMobile: isBelowDesktop(),
   }),
 
   actions: {
@@ -49,8 +57,16 @@ export const useUiStore = defineStore('ui', {
       await usePreset(themeColors(this.preset, this.primary, this.surface, this.mode))
     },
     syncViewport() {
-      const mobile = window.innerWidth <= MOBILE_BREAKPOINT
-      this.isMobile = mobile
+      this.isMobile = isBelowDesktop()
+    },
+    /** Sigue el cruce de `lg` (no cada resize). Devuelve la función para dejar de seguirlo. */
+    watchViewport(): () => void {
+      this.syncViewport()
+      if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return () => {}
+      const query = window.matchMedia(DESKTOP_QUERY)
+      const sync = () => this.syncViewport()
+      query.addEventListener('change', sync)
+      return () => query.removeEventListener('change', sync)
     },
     init() {
       this.syncViewport()

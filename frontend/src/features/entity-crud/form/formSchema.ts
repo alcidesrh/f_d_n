@@ -272,7 +272,8 @@ function layoutNodes(nodes: FormKitSchemaNode[]): FormKitSchemaNode[] {
     if (row.length === 0) return
     rows.push({
       $el: 'div',
-      attrs: { class: 'grid grid-cols-1 md:grid-cols-2 gap-x-6' },
+      // Container query (`@container` en EntityForm): dos columnas cuando el formulario mide ≥ 36rem.
+      attrs: { class: 'grid grid-cols-1 @xl:grid-cols-2 gap-x-6' },
       children: row,
     } as FormKitSchemaNode)
     row = []

@@ -14,7 +14,7 @@
         <PageHead title="" />
       </template>
       <template #end>
-        <div class="flex items-center gap-3">
+        <div class="flex flex-wrap items-center gap-3">
           <span v-if="tab === 'menus' && store.treeDirty" class="text-sm text-amber-600">
             Árbol sin guardar
           </span>

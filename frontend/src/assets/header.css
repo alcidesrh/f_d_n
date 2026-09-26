@@ -1,4 +1,7 @@
-/* ---- HEADER ---- */
+/* ---- HEADER ----
+   Mobile-first: [menú][reloj] … [acciones][panel derecho]. Desde `lg` los
+   botones de menú se deslizan fuera cuando su sidebar está visible (el
+   sidebar tiene su propio botón cerrar) y la marca se alinea con el sidebar. */
 .app-header {
   position: fixed;
   top: 0;
@@ -10,28 +13,43 @@
   border-bottom: var(--border);
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 0.25rem;
   padding: 0 0.5rem;
+  @variant lg {
+    gap: 16px;
+  }
 }
 .right-header {
   display: flex;
   align-items: center;
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-left: auto;
   /*justify-content: center;*/
   /*justify-items: center;*/
 }
 .left-header {
-  width: calc(var(--sidebar-width) - 0.5rem);
   display: flex;
   align-items: center;
+  flex: 0 0 auto;
+  @variant lg {
+    width: calc(var(--sidebar-width) - 0.5rem);
+  }
 }
+/* Reloj sobre la marca de agua "FDN": ambos en la misma celda de grid, así
+   la marca mide lo que su contenido más ancho. */
 .brand {
   transition: transform var(--transition);
-  width: 230px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   position: relative;
-  transform: translate(-40px, 0);
+  & > * {
+    grid-area: 1 / 1;
+  }
+  @variant lg {
+    width: 230px;
+    transform: translate(-40px, 0);
+  }
 }
 .brand-mark {
   width: 36px;
@@ -45,10 +63,13 @@
   color: var(--on-primary);
 }
 .header-clock {
-  position: absolute;
+  position: relative;
   font-family: "Rajdha";
   font-variant-numeric: tabular-nums;
-  font-size: 2rem;
+  font-size: 1.3rem;
+  @variant md {
+    font-size: 2rem;
+  }
   font-weight: 500;
   letter-spacing: 0.1em;
   color: var(--p-surface-500);
@@ -56,7 +77,12 @@
   line-height: 1.2;
   z-index: 10;
 }
+/* Marca de agua decorativa (5 % de opacidad): solo con espacio (md+). */
 .brand-name {
+  display: none;
+  @variant md {
+    display: block;
+  }
   font-family: "diplomata-sc-regular", sans-serif;
   font-size: 3.5rem;
   opacity: 0.05;
@@ -71,23 +97,22 @@
 }
 .btn-siderbar-header {
   transition: transform var(--transition);
-  transform: translate(calc(-50px - 0.5rem), 0);
   width: 50px;
+  flex: 0 0 auto;
+  @variant lg {
+    transform: translate(calc(-50px - 0.5rem), 0);
+  }
 }
-.left-header.close .btn-siderbar-header {
-  transform: translate(0px, 0);
-}
-.left-header.close .brand {
-  transform: translate(0px, 0);
-}
-.right-header .btn-siderbar-header {
-  transform: translate(50px, 0);
-}
-.right-header.close .btn-siderbar-header {
-  transform: translate(0px, 0);
-}
-.right-header.close .header-actions {
-  transform: translate(0px, 0);
+@variant lg {
+  .left-header.close .btn-siderbar-header,
+  .left-header.close .brand,
+  .right-header.close .btn-siderbar-header,
+  .right-header.close .header-actions {
+    transform: translate(0px, 0);
+  }
+  .right-header .btn-siderbar-header {
+    transform: translate(50px, 0);
+  }
 }
 .icon-btn {
   width: 38px;
@@ -112,9 +137,14 @@
   color: var(--p-primary-color);
   background: var(--p-primary-color-soft);
 }
+/* Historial de navegación: secundario (la página ya muestra su título y el
+   navegador tiene "atrás"); hasta `lg` no cabe junto a las acciones. */
 .header-crumbs {
   flex: 1;
-  display: flex;
+  display: none;
+  @variant lg {
+    display: flex;
+  }
   align-items: center;
   justify-content: center;
   min-width: 0;
@@ -141,13 +171,45 @@
   color: var(--p-surface-600);
 }
 
+/* Debajo de `lg` la cantidad de acciones depende de los menús de la
+   cabecera (`topbar_right`): si no caben, la franja scrollea en horizontal
+   y los botones de los sidebars quedan siempre visibles. */
 .header-actions {
   transition: transform var(--transition);
   display: flex;
   align-items: center;
   gap: 4px;
-  transform: translate(50px, 0);
-  padding-right: 0.5rem;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-block: 4px;
+  & > * {
+    flex-shrink: 0;
+  }
+  @variant lg {
+    overflow: visible;
+    transform: translate(50px, 0);
+    padding-right: 0.5rem;
+  }
+}
+/* Pantalla completa: sin utilidad en teléfonos (iOS no la soporta). */
+.header-fullscreen {
+  display: none;
+  @variant md {
+    display: flex;
+  }
+}
+/* Usuario: en móvil solo el botón de salir (el nombre queda en `title`). */
+.header-user-chip .p-chip-label {
+  display: none;
+  @variant md {
+    display: inline;
+  }
+}
+.header-logout {
+  display: inline-flex;
+  color: inherit;
+  cursor: pointer;
 }
 .header-search {
   display: flex;

@@ -13,6 +13,7 @@
 @import "./theme-editor.css";
 @import "./sidebar.css";
 @import "./content.css";
+@import "./utilities.css";
 
 /* ============================= RESET ============================= */
 /* *,
@@ -39,6 +40,7 @@ body {
   /* var(--p-surface-50); */
   color: var(--text);
   -webkit-font-smoothing: antialiased;
+  /* El scroll es de `.main` (shell) o del layout en blanco, nunca del body. */
   overflow: hidden;
 }
 
@@ -87,77 +89,7 @@ svg[stroke-width] path {
   opacity: 0;
 }
 
-/* ============================= RESPONSIVE ============================= */
-
-@media (max-width: 1024px) {
-  .sidebar {
-    position: fixed;
-    top: var(--header-h);
-    bottom: 0;
-    z-index: 45;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
-  }
-  .sidebar.left {
-    left: 0;
-  }
-  .sidebar.right {
-    right: 0;
-  }
-  .sidebar.left.closed,
-  .sidebar.left.mobile-hidden {
-    transform: translateX(-100%);
-    width: var(--sb-open) !important;
-  }
-  .sidebar.right.closed,
-  .sidebar.right.mobile-hidden {
-    transform: translateX(100%);
-    width: var(--sb-open) !important;
-  }
-  .sidebar.left:not(.mobile-hidden):not(.closed) {
-    transform: translateX(0);
-    width: var(--sb-open) !important;
-  }
-  .sidebar.right:not(.mobile-hidden):not(.closed) {
-    transform: translateX(0);
-    width: var(--sb-open) !important;
-  }
-  .sidebar.mini .nav-item::after {
-    display: none;
-  }
-}
-@media (max-width: 720px) {
-  .brand-tag {
-    display: none;
-  }
-  .header-search {
-    display: none;
-  }
-  .grid-kpi {
-    grid-template-columns: 1fr 1fr;
-  }
-  .grid-3,
-  .grid-2 {
-    grid-template-columns: 1fr;
-  }
-  .main-inner {
-    padding: 18px 14px 50px;
-  }
-  .page-title {
-    font-size: 20px;
-  }
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-}
-@media (max-width: 520px) {
-  .grid-kpi {
-    grid-template-columns: 1fr;
-  }
-  .route-bar-row .rname {
-    width: 110px;
-  }
-  .donut-wrap {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
+/* ============================= RESPONSIVE =============================
+   Sin reglas por página aquí. Breakpoints en tokens.css, reglas y patrones
+   en docs/frontend/responsive.md; cada regla vive junto a lo que adapta
+   (shell en content/header/sidebar.css, PrimeVue en primevue/*.css). */

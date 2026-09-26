@@ -7,8 +7,8 @@
       <PageHead v-else />
     </template>
     <template #end>
-      <div class="my-4 flex items-center justify-between gap-5">
-        <button type="button" aria-label="Modo selección" @click="emit('toggle-selection')">
+      <div class="my-4 flex flex-wrap items-center justify-between gap-5">
+        <button type="button" class="tap-target" aria-label="Modo selección" @click="emit('toggle-selection')">
           <icon name="square-check" :class="{ 'text-primary': selectionMode }" />
         </button>
         <OverlayBadge
@@ -19,6 +19,7 @@
         >
           <button
             type="button"
+            class="tap-target"
             :aria-label="`${hiddenColumns.length} columnas ocultas`"
             @click="popover?.toggle($event)"
           >
@@ -40,7 +41,7 @@
             </button>
           </div>
         </Popover>
-        <button type="button" aria-label="Restablecer vista" @click="emit('reset')">
+        <button type="button" class="tap-target" aria-label="Restablecer vista" @click="emit('reset')">
           <icon name="rotate-ccw" />
         </button>
       </div>

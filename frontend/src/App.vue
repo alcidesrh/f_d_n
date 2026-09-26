@@ -24,12 +24,12 @@ const route = useRoute()
 const ui = useUiStore()
 const mounted = ref(false)
 
-const syncViewport = () => ui.syncViewport()
+let unwatchViewport = () => {}
 onMounted(() => {
   mounted.value = true
-  window.addEventListener('resize', syncViewport)
+  unwatchViewport = ui.watchViewport()
 })
-onBeforeUnmount(() => window.removeEventListener('resize', syncViewport))
+onBeforeUnmount(() => unwatchViewport())
 
 /** Clases de tema en `<html>` (modo, color primario y superficie). */
 watchEffect(() => {

@@ -1,0 +1,6 @@
+/* Tablas: una tabla que no entra en su contenedor scrollea en horizontal
+   dentro de su propio contenedor (las `scrollable` ya lo hacen), en lugar
+   de desbordar la página. */
+.p-datatable:not(.p-datatable-scrollable) > .p-datatable-table-container {
+  overflow-x: auto;
+}

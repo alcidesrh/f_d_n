@@ -1,3 +1,19 @@
+/* ============================= BREAKPOINTS =============================
+   Única fuente de verdad (ver docs/frontend/responsive.md). Mobile-first:
+   los estilos base son el móvil y cada breakpoint mejora hacia arriba.
+     base  < 48rem (768px)   Mobile
+     md   ≥ 48rem (768px)    Tablet
+     lg   ≥ 64rem (1024px)   Desktop: sidebars fijos (debajo, drawers)
+     xl   ≥ 80rem (1280px)   Wide desktop
+   Son los de Tailwind; se declaran aquí para que la escala sea explícita.
+   `sm` (40rem) y `2xl` (96rem) siguen existiendo en Tailwind pero no son
+   cortes del layout. En JS: `app/breakpoints.ts` (mismos valores). */
+@theme {
+  --breakpoint-md: 48rem;
+  --breakpoint-lg: 64rem;
+  --breakpoint-xl: 80rem;
+}
+
 :root {
   --bg: var(--p-surface-50);
   /* --bg1: var(--p-surface-100); */
@@ -22,13 +38,49 @@
   --c-info: #3b82f6;
   --c-info-soft: rgba(59, 130, 246, 0.12);
 
+  /* ---- Layout ----
+     Espaciado: la escala de Tailwind (`--spacing` = 0.25rem; p-2, gap-4…).
+     Estos tokens son los semánticos del layout; no inventar valores sueltos. */
   --header-h: 70px;
   --sidebar-width: 250px;
   --sb-mini: 70px;
   --sb-close: 0px;
+  /* Ancho abierto de cada sidebar (lo escribe `sidebarStore.sidebarUpdate()`
+     sobre su panel). El ancho animado (`--sb-<lado>-w`) está abajo. */
+  --sb-left-open: var(--sidebar-width);
+  --sb-right-open: var(--sidebar-width);
+  /* Margen interior de página y de superficies grandes (formularios),
+     continuo según el ancho W de `.main` (container query units, 1cqi = W/100):
+       W ≤ 350px  → 1rem
+       350–700px  → 4 % de W (1rem → 2rem)
+       700–900px  → rampa de 2rem a 4rem (14 % de W - 5rem)
+       W ≥ 900px  → 4rem
+     Sin saltos: al abrir/cerrar un sidebar el contenido se acomoda de a poco. */
+  --page-gutter: clamp(1rem, max(min(4cqi, 2rem), 14cqi - 5rem), 4rem);
+  /* Ancho máximo del contenido en pantallas muy anchas. */
+  --content-max: 120rem;
+  /* Área táctil mínima de un control (ver utilidad `tap-target`). */
+  --tap-min: 2.75rem;
+
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
   --transition: 0.3s;
   /*var(--ease);*/
+}
+
+/* Ancho actual (animado) de cada sidebar. Registradas y SIN herencia a
+   propósito: `sidebarStore.sidebarUpdate()` las anima solo sobre `.sidebar`
+   y `.main`, los únicos que las leen. Una variable heredada animada en
+   `:root` recalculaba el estilo de todo el documento en cada fotograma
+   (animación a tirones). */
+@property --sb-left-w {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 250px;
+}
+@property --sb-right-w {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 250px;
 }
 
 /* NOTA: el bloque anterior `prefers-reduced-motion: reduce` con

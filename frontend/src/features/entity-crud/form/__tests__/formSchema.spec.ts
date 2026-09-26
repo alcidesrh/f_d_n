@@ -324,7 +324,7 @@ describe('serializeEntityForm', () => {
     )
     expect(rows.length).toBeGreaterThan(0)
     const first = rows[0] as { attrs?: { class?: string } }
-    expect(first.attrs?.class).toContain('grid grid-cols-1 md:grid-cols-2')
+    expect(first.attrs?.class).toContain('grid grid-cols-1 @xl:grid-cols-2')
     const wrapper = findWrapper(schema, 'descripcion') as { attrs?: { class?: string } }
     expect(wrapper.attrs?.class).toContain('md:col-span-2')
   })
