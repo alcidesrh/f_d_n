@@ -49,7 +49,7 @@ Dependencias en una sola dirección: `app → features → shared → core`. **U
 | `shared/icons/` | `IconPicker` y catálogo Tabler (carga diferida) | `tablerCatalog.ts` |
 | `shared/bus-map/` | Mapa del bus (`BusMap`, `SeatGlyph`, `SignalGlyph`, `BusMapLegend`): presentación pura para edición, ocupación y venta (`estado`, `interactivo`, slot `celda`). Excepción acotada a ADR-017: vocabulario del dominio, sin datos | `BusMap.vue` |
 | `shared/formkit/` | Inputs `Fk*` y su registro en FormKit (`config.ts`) | `useFormKitInput.ts` |
-| `features/entity-crud/` | Listado (`ListPage` + `list/`) y formulario (`FormPage` + `form/`) genéricos de cualquier entidad. Formulario propio por entidad: `form/formOverrides.ts`; secciones extra bajo el genérico (se guardan con él, contrato en `core/entities/formExtension.ts`): `form/formExtensions.ts` | `ListPage.vue`, `form/useEntityForm.ts` |
+| `features/entity-crud/` | Listado (`ListPage` + `list/`) y formulario (`FormPage` + `form/`) genéricos de cualquier entidad. Formulario propio por entidad: `form/formOverrides.ts`; secciones extra del genérico, en pestañas junto a "Datos" (se guardan con él, contrato en `core/entities/formExtension.ts`): `form/formExtensions.ts` | `ListPage.vue`, `form/useEntityForm.ts` |
 | `features/bus/` | Editor del croquis del bus (sección "Croquis" del formulario de `Bus`): pilas, arrastre por puntero, pincel, deshacer, plantillas | `editor.ts`, `CroquisEditor.vue` |
 | `features/entity-config/` | Editor de columnas/campos por entidad | `EntityConfigPage.vue` |
 | `features/form-builder/` | Constructor de formularios FormKit | `FormBuilderPage.vue` |

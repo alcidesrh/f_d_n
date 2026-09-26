@@ -23,18 +23,54 @@
           <template #menuitemicon="{ item }"><icon :name="String(item.icon)" /></template>
         </SplitButton>
       </div>
-      <FormKit :id="formId" type="form" :disabled="submitting" :actions="false" @submit="onSubmit">
+      <!-- Con secciones extra (p. ej. el croquis del bus): una pestaña por sección.
+           Las pestañas no son lazy: todo queda montado y se guarda junto. -->
+      <Tabs v-if="extensions.length" v-model:value="tab" class="entity-form-tabs">
+        <TabList>
+          <Tab :value="DATOS">
+            <span class="flex items-center gap-2"><icon name="forms" /> Datos</span>
+          </Tab>
+          <Tab v-for="extension in extensions" :key="extension.key" :value="extension.key">
+            <span class="flex items-center gap-2">
+              <icon v-if="extension.icon" :name="extension.icon" />
+              {{ extension.title }}
+            </span>
+          </Tab>
+        </TabList>
+        <TabPanels class="px-0! pb-0!">
+          <TabPanel :value="DATOS">
+            <FormKit
+              :id="formId"
+              type="form"
+              :disabled="submitting"
+              :actions="false"
+              @submit="onSubmit"
+              @submit-invalid="tab = DATOS"
+            >
+              <Fluid>
+                <FormKitSchema :schema="schema" />
+              </Fluid>
+            </FormKit>
+          </TabPanel>
+          <TabPanel v-for="extension in extensions" :key="extension.key" :value="extension.key">
+            <FormExtensionScope :extension-key="extension.key">
+              <component :is="extension.component" :entity="entity" :id="id ?? null" />
+            </FormExtensionScope>
+          </TabPanel>
+        </TabPanels>
+      </Tabs>
+      <FormKit
+        v-else
+        :id="formId"
+        type="form"
+        :disabled="submitting"
+        :actions="false"
+        @submit="onSubmit"
+      >
         <Fluid>
           <FormKitSchema :schema="schema" />
         </Fluid>
       </FormKit>
-      <section v-for="extension in extensions" :key="extension.key" class="mt-10">
-        <h3 class="mb-3 flex items-center gap-2 text-base font-semibold">
-          <icon v-if="extension.icon" :name="extension.icon" />
-          {{ extension.title }}
-        </h3>
-        <component :is="extension.component" :entity="entity" :id="id ?? null" />
-      </section>
       <div class="mt-4 flex justify-end">
         <Button
           label="Restablecer"
@@ -61,8 +97,13 @@
 import { computed, defineAsyncComponent, provide, ref, useId } from 'vue'
 import { submitForm } from '@formkit/core'
 import { useConfirm } from 'primevue/useconfirm'
-import { createEntityFormExtensionHost, ENTITY_FORM_EXTENSION } from '@/core/entities/formExtension'
+import {
+  createEntityFormExtensionHost,
+  ENTITY_FORM_EXTENSION,
+  EntityFormExtensionError,
+} from '@/core/entities/formExtension'
 import { notify } from '@/core/notify'
+import FormExtensionScope from './FormExtensionScope'
 import { entityFormExtensions } from './formExtensions'
 import { useEntityForm } from './useEntityForm'
 
@@ -87,6 +128,9 @@ const message = (cause: unknown) => (cause instanceof Error ? cause.message : St
 // Secciones extra de la entidad (p. ej. el croquis del bus), guardadas con el formulario.
 const extensionHost = createEntityFormExtensionHost()
 const savingExtensions = ref(false)
+const DATOS = 'datos'
+/** Pestaña visible: los datos de la entidad o la clave de una sección extra. */
+const tab = ref<string>(DATOS)
 provide(ENTITY_FORM_EXTENSION, extensionHost)
 const extensions = computed(() =>
   (entityFormExtensions[props.entity] ?? []).map((extension) => ({
@@ -98,8 +142,9 @@ const extensions = computed(() =>
 async function onSubmit(data: Record<string, unknown>) {
   const blocked = extensionHost.validate()
   if (blocked) {
-    notify.error(blocked)
-    emit('error', blocked)
+    if (blocked.key) tab.value = blocked.key
+    notify.error(blocked.message)
+    emit('error', blocked.message)
     return
   }
   let item: Record<string, unknown>
@@ -113,6 +158,7 @@ async function onSubmit(data: Record<string, unknown>) {
   try {
     await extensionHost.afterSave(item)
   } catch (cause) {
+    if (cause instanceof EntityFormExtensionError && cause.key) tab.value = cause.key
     notify.error(message(cause))
     emit('error', message(cause))
     // Al crear, el registro ya existe: se pasa igual a su edición.
