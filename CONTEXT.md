@@ -30,8 +30,18 @@ Un vehículo de la flota, perteneciente a una empresa, con una disposición de a
 _Avoid_: unidad, vehículo
 
 **Asiento**:
-Una plaza física de un bus, con una clase determinada.
+Una plaza física de un bus, con una clase determinada, un número (consecutivo en el bus) y una celda en su croquis.
 _Avoid_: puesto
+
+**Croquis**:
+El mapa de un bus visto desde arriba: una rejilla por planta (hasta dos) con coordenadas desde 1
+—fila, columna— donde cada celda tiene como mucho un asiento, el chofer o una puerta.
+En los buses de dos plantas, los asientos clase B (reclinables) van en la planta baja.
+Se usa para editar el bus, mostrar la ocupación de un recorrido y elegir asientos al vender.
+
+**Señal**:
+Elemento del croquis que no se vende: el chofer (uno por bus) o una puerta.
+Aquí "chofer" es el puesto de conducción dibujado en el croquis, no la persona (esa es el Piloto).
 
 **Piloto**:
 El conductor (o copiloto) asignado a un bus. La asignación es del bus, no del recorrido.
