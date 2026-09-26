@@ -39,12 +39,6 @@
   max-width: var(--content-max);
   margin: 0 auto;
 }
-/* Umbral histórico del contenido ancho (se conserva el espaciado de escritorio). */
-@container main (width >= 800px) {
-  .main-inner {
-    --page-gutter: 4rem;
-  }
-}
 .page-head {
   display: flex;
   align-items: flex-end;

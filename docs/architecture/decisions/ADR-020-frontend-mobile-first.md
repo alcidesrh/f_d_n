@@ -48,8 +48,8 @@ Las reglas están en [docs/frontend/responsive.md](../../frontend/responsive.md)
 
 **Positivas:**
 
-- Ninguna página desborda en horizontal entre 320 y 1600px. En escritorio (≥ 1024px, y ≥ 800px
-  de contenido) el aspecto no cambia.
+- Ninguna página desborda en horizontal entre 320 y 1600px. En escritorio, con ≥ 900px de
+  contenido, el aspecto no cambia.
 - Hay una sola escala de breakpoints y un solo lugar donde se define cada regla del shell.
 
 **Negativas / a tener en cuenta:**
@@ -58,5 +58,6 @@ Las reglas están en [docs/frontend/responsive.md](../../frontend/responsive.md)
   horizontal. Pasa con más de ~4 acciones en 320px.
 - Por debajo de `lg` no se ve el historial de navegación de la cabecera. Es secundario: el
   título está en la página y el navegador tiene "atrás".
-- `--page-gutter` conserva el umbral de 800px de `.main`, que es previo a este ADR, para no
-  cambiar el espaciado de escritorio.
+- `--page-gutter` reemplaza el salto de 2rem a 4rem que había a 800px de `.main` (previo a
+  este ADR) por una rampa continua entre 700 y 900px, así el contenido no salta al
+  abrir/cerrar un sidebar. En ese tramo el margen queda entre ambos valores.

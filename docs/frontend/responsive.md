@@ -38,7 +38,7 @@ Son los de Tailwind y se declaran en `src/assets/tokens.css` (`@theme`). En JS e
 | Token | Uso |
 |---|---|
 | Escala de Tailwind (`p-2`, `gap-4`…, `--spacing` = 0.25rem) | Espaciado. No uses px sueltos (`13px`, `17px`) |
-| `--page-gutter` | Margen interior de página y de superficies grandes. Va de 1rem a 2rem según el ancho de `.main`, y pasa a 4rem cuando `.main` mide ≥ 800px |
+| `--page-gutter` | Margen interior de página y de superficies grandes. Continuo según el ancho de `.main`: 1rem → 2rem hasta 700px, rampa hasta 4rem a los 900px, sin saltos (fórmula en `tokens.css`) |
 | `--content-max` (120rem) | Ancho máximo del contenido en pantallas muy anchas |
 | `--tap-min` (2.75rem) | Área táctil mínima |
 | `--header-h`, `--sb-<lado>-w`, `--sb-<lado>-open` | Shell. `sidebarStore` escribe los anchos |

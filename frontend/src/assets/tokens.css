@@ -49,10 +49,14 @@
      sobre su panel). El ancho animado (`--sb-<lado>-w`) está abajo. */
   --sb-left-open: var(--sidebar-width);
   --sb-right-open: var(--sidebar-width);
-  /* Margen interior de página y de superficies grandes (formularios): crece
-     con el ancho de `.main` (container query units) de 1rem a 2rem; con
-     `.main` ≥ 800px pasa a 4rem (content.css). */
-  --page-gutter: clamp(1rem, 4cqi, 2rem);
+  /* Margen interior de página y de superficies grandes (formularios),
+     continuo según el ancho W de `.main` (container query units, 1cqi = W/100):
+       W ≤ 350px  → 1rem
+       350–700px  → 4 % de W (1rem → 2rem)
+       700–900px  → rampa de 2rem a 4rem (14 % de W - 5rem)
+       W ≥ 900px  → 4rem
+     Sin saltos: al abrir/cerrar un sidebar el contenido se acomoda de a poco. */
+  --page-gutter: clamp(1rem, max(min(4cqi, 2rem), 14cqi - 5rem), 4rem);
   /* Ancho máximo del contenido en pantallas muy anchas. */
   --content-max: 120rem;
   /* Área táctil mínima de un control (ver utilidad `tap-target`). */
