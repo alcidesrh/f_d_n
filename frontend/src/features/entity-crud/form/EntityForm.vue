@@ -14,7 +14,7 @@
         <SplitButton
           label="Guardar"
           :model="actions"
-          :disabled="submitting"
+          :disabled="submitting || savingExtensions"
           outlined
           severity="secondary"
           @click="submitForm(formId)"
@@ -28,6 +28,13 @@
           <FormKitSchema :schema="schema" />
         </Fluid>
       </FormKit>
+      <section v-for="extension in extensions" :key="extension.key" class="mt-10">
+        <h3 class="mb-3 flex items-center gap-2 text-base font-semibold">
+          <icon v-if="extension.icon" :name="extension.icon" />
+          {{ extension.title }}
+        </h3>
+        <component :is="extension.component" :entity="entity" :id="id ?? null" />
+      </section>
       <div class="mt-4 flex justify-end">
         <Button
           label="Restablecer"
@@ -51,9 +58,12 @@
  * Formulario genérico de una entidad (alta sin `id`, edición con `id`). Emite
  * los resultados; la navegación la decide quien lo usa (`FormPage`).
  */
-import { computed, useId } from 'vue'
+import { computed, defineAsyncComponent, provide, ref, useId } from 'vue'
 import { submitForm } from '@formkit/core'
 import { useConfirm } from 'primevue/useconfirm'
+import { createEntityFormExtensionHost, ENTITY_FORM_EXTENSION } from '@/core/entities/formExtension'
+import { notify } from '@/core/notify'
+import { entityFormExtensions } from './formExtensions'
 import { useEntityForm } from './useEntityForm'
 
 const props = defineProps<{ entity: string; id?: string | number | null }>()
@@ -74,12 +84,44 @@ const formId = `entity-form-${useId()}`
 const confirm = useConfirm()
 const message = (cause: unknown) => (cause instanceof Error ? cause.message : String(cause))
 
+// Secciones extra de la entidad (p. ej. el croquis del bus), guardadas con el formulario.
+const extensionHost = createEntityFormExtensionHost()
+const savingExtensions = ref(false)
+provide(ENTITY_FORM_EXTENSION, extensionHost)
+const extensions = computed(() =>
+  (entityFormExtensions[props.entity] ?? []).map((extension) => ({
+    ...extension,
+    component: defineAsyncComponent(extension.component),
+  })),
+)
+
 async function onSubmit(data: Record<string, unknown>) {
+  const blocked = extensionHost.validate()
+  if (blocked) {
+    notify.error(blocked)
+    emit('error', blocked)
+    return
+  }
+  let item: Record<string, unknown>
   try {
-    emit('submitted', await submit(data))
+    item = await submit(data)
   } catch (cause) {
     emit('error', message(cause))
+    return
   }
+  savingExtensions.value = true
+  try {
+    await extensionHost.afterSave(item)
+  } catch (cause) {
+    notify.error(message(cause))
+    emit('error', message(cause))
+    // Al crear, el registro ya existe: se pasa igual a su edición.
+    if (mode.value === 'create') emit('submitted', item)
+    return
+  } finally {
+    savingExtensions.value = false
+  }
+  emit('submitted', item)
 }
 
 function askDelete() {

@@ -1,0 +1,38 @@
+/*
+ * Tokens del mapa del bus. Derivan de los del tema de PrimeVue (en modo
+ * oscuro las rampas se invierten), así que el mapa sigue al tema elegido.
+ * Un uso concreto puede sobreescribirlos en su contenedor.
+ */
+:root {
+  --bm-seat-a: color-mix(in srgb, var(--p-primary-color) 9%, var(--p-content-background));
+  --bm-seat-a-stroke: color-mix(in srgb, var(--p-primary-color) 58%, var(--p-content-background));
+  --bm-seat-a-ink: color-mix(in srgb, var(--p-primary-color) 72%, var(--p-text-color));
+
+  --bm-seat-b: color-mix(in srgb, var(--p-amber-400, #fbbf24) 20%, var(--p-content-background));
+  --bm-seat-b-stroke: color-mix(
+    in srgb,
+    var(--p-amber-600, #d97706) 78%,
+    var(--p-content-background)
+  );
+  --bm-seat-b-ink: var(--p-amber-800, #92400e);
+
+  --bm-occupied: color-mix(in srgb, var(--p-text-color) 14%, var(--p-content-background));
+  --bm-occupied-stroke: color-mix(in srgb, var(--p-text-color) 28%, var(--p-content-background));
+  --bm-occupied-ink: var(--p-text-muted-color);
+
+  --bm-reserved: var(--p-orange-500, #f97316);
+  --bm-reserved-soft: color-mix(
+    in srgb,
+    var(--p-orange-500, #f97316) 10%,
+    var(--p-content-background)
+  );
+
+  --bm-driver: color-mix(in srgb, var(--p-text-color) 70%, var(--p-content-background));
+  --bm-door: var(--p-teal-600, #0d9488);
+
+  --bm-hull: var(--p-content-background);
+  --bm-hull-border: color-mix(in srgb, var(--p-text-color) 16%, var(--p-content-background));
+  --bm-floor: color-mix(in srgb, var(--p-text-color) 3.5%, var(--p-content-background));
+  --bm-aisle: color-mix(in srgb, var(--p-text-color) 12%, transparent);
+  --bm-glass: color-mix(in srgb, var(--p-sky-400, #38bdf8) 28%, var(--p-content-background));
+}
