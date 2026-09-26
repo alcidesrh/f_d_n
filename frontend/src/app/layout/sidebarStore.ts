@@ -83,20 +83,40 @@ function createDefinition(side: "left" | "right", name: string) {
        * `content.css` deciden por breakpoint cómo usarlas (empujar el
        * contenido en escritorio, drawer en móvil). Los textos en `mini` se
        * ocultan por CSS (`.sidebar.mini .menu-text`).
+       *
+       * `--sb-<lado>-w` no se hereda: se anima sobre el panel y sobre `.main`
+       * (no en `:root`, que recalcularía el estilo de toda la página en cada
+       * fotograma).
        */
       sidebarUpdate() {
         resetFlyouts(this.side);
-        const root = document.documentElement;
-        gsap.set(root, { [`--sb-${this.side}-open`]: `${this.open}px` });
-        gsap.to(root, {
-          [`--sb-${this.side}-w`]: `${this.width}px`,
+        const panel = document.querySelector<HTMLElement>(`.sidebar.${this.side}`);
+        const main = document.querySelector<HTMLElement>(".main");
+        if (!panel || !main) return;
+        const name = `--sb-${this.side}-w`;
+        const current = widths[this.side];
+        panel.style.setProperty(`--sb-${this.side}-open`, `${this.open}px`);
+        // Un panel recién montado (p. ej. el de una ruta) arranca del ancho actual.
+        panel.style.setProperty(name, `${current.px}px`);
+        // Se anima un número y se escribe en `onUpdate`: GSAP no lee estilos del DOM
+        // (leerlos al arrancar forzaba un recálculo de estilo en el primer fotograma).
+        gsap.to(current, {
+          px: this.width,
           duration: 0.3,
-          ease: "expoScale(0.5,7, none)",
+          ease: "power1.out",
+          overwrite: true,
+          onUpdate: () => {
+            panel.style.setProperty(name, `${current.px}px`);
+            main.style.setProperty(name, `${current.px}px`);
+          },
         });
       },
     },
   });
 }
+
+/** Ancho animado actual de cada lado (px); arranca en el `initial-value` de `--sb-<lado>-w`. */
+const widths: Record<"left" | "right", { px: number }> = { left: { px: 250 }, right: { px: 250 } };
 
 type SidebarDefinition = ReturnType<typeof createDefinition>;
 export type SidebarStore = ReturnType<SidebarDefinition>;

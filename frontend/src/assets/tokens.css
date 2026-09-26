@@ -45,10 +45,8 @@
   --sidebar-width: 250px;
   --sb-mini: 70px;
   --sb-close: 0px;
-  /* Ancho actual (animado) y ancho abierto de cada sidebar; los escribe
-     `sidebarStore.sidebarUpdate()`. El layout decide cómo usarlos por breakpoint. */
-  --sb-left-w: var(--sidebar-width);
-  --sb-right-w: var(--sidebar-width);
+  /* Ancho abierto de cada sidebar (lo escribe `sidebarStore.sidebarUpdate()`
+     sobre su panel). El ancho animado (`--sb-<lado>-w`) está abajo. */
   --sb-left-open: var(--sidebar-width);
   --sb-right-open: var(--sidebar-width);
   /* Margen interior de página y de superficies grandes (formularios): crece
@@ -63,6 +61,22 @@
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
   --transition: 0.3s;
   /*var(--ease);*/
+}
+
+/* Ancho actual (animado) de cada sidebar. Registradas y SIN herencia a
+   propósito: `sidebarStore.sidebarUpdate()` las anima solo sobre `.sidebar`
+   y `.main`, los únicos que las leen. Una variable heredada animada en
+   `:root` recalculaba el estilo de todo el documento en cada fotograma
+   (animación a tirones). */
+@property --sb-left-w {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 250px;
+}
+@property --sb-right-w {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 250px;
 }
 
 /* NOTA: el bloque anterior `prefers-reduced-motion: reduce` con

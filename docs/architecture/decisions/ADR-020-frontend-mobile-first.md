@@ -29,6 +29,10 @@ El frontend estaba hecho solo para escritorio. Por debajo de 1024px no se podía
 3. **GSAP anima variables CSS y CSS decide el layout.** `sidebarStore.sidebarUpdate()` solo
    escribe `--sb-<lado>-w`/`--sb-<lado>-open`, y `sidebar.css`/`content.css` las aplican
    según el breakpoint. El texto de los ítems en `mini` también se oculta por CSS.
+   `--sb-<lado>-w` está registrada con `@property` sin herencia y se escribe solo sobre
+   `.sidebar` y `.main` (GSAP anima un número en JS y la escribe en `onUpdate`, sin leer
+   estilos). Animada en `:root`, recalculaba el estilo de toda la página en cada fotograma
+   y la transición avanzaba a tirones.
 4. **JS solo para comportamiento.** `useUiStore().isMobile` sigue el cruce de `lg` con
    `matchMedia` (no con `resize`) y decide si el botón de menú abre el drawer o alterna el
    modo. El estado del drawer no se persiste.
