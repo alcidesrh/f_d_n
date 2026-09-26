@@ -1,8 +1,9 @@
 /**
  * Secciones extra del formulario genérico por entidad (contrato en
  * `core/entities/formExtension`). A diferencia de `formOverrides`, el
- * formulario de la entidad sigue siendo el genérico: la sección se añade
- * debajo de sus campos y se guarda con él.
+ * formulario de la entidad sigue siendo el genérico: con secciones, el
+ * formulario se muestra en pestañas ("Datos" + una por sección, `title` e
+ * `icon`) y todo se guarda con el mismo botón.
  *
  * El componente recibe `entity` e `id` (null al crear).
  */
