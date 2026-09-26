@@ -2,7 +2,13 @@
   <header class="app-header">
     <div class="left-header" :class="[sidebarStore.mode]">
       <div class="flex btn-siderbar-header">
-        <button class="icon-btn" @click="sidebarStore.setMode()">
+        <button
+          type="button"
+          class="icon-btn"
+          aria-label="Menú de navegación"
+          :aria-expanded="ui.isMobile ? sidebarStore.drawer : sidebarStore.mode !== 'close'"
+          @click="sidebarStore.toggle()"
+        >
           <icon name="menu-2" />
         </button>
         <Divider layout="vertical" class="mx-[5px]!" />
@@ -36,32 +42,39 @@
       <div class="header-actions">
         <slot name="menu-content"></slot>
 
-        <button class="icon-btn cursor-pointer" title="Personalizar apariencia" @click.stop="showThemeEditor()">
+        <button class="icon-btn cursor-pointer" title="Personalizar apariencia" aria-label="Personalizar apariencia" @click.stop="showThemeEditor()">
           <icon name="palette" />
         </button>
 
-        <button class="icon-btn" title="Pantalla completa" @click="toggleFullscreen" :class="{ 'active-state': openPopover === 'fullscreen' }">
+        <button class="icon-btn header-fullscreen" title="Pantalla completa" aria-label="Pantalla completa" @click="toggleFullscreen" :class="{ 'active-state': openPopover === 'fullscreen' }">
           <icon name="arrows-maximize" />
         </button>
         <div style="position: relative">
-          <button class="icon-btn" title="Notificaciones" @click.stop="toggle('notif')">
+          <button class="icon-btn" title="Notificaciones" aria-label="Notificaciones" @click.stop="toggle('notif')">
             <icon name="bell" />
           </button>
         </div>
 
         <div style="position: relative">
-          <Chip :label="session.user ?? ''" removable>
+          <Chip :label="session.user ?? ''" :title="session.user ?? ''" class="header-user-chip" removable>
             <template #removeicon>
-              <!-- <button class="icon-btn" @click.stop="logout"> -->
-              <icon name="logout" @click.stop="logout" />
-              <!-- </button -->
+              <button type="button" class="header-logout tap-target" title="Cerrar sesión" aria-label="Cerrar sesión" @click.stop="logout">
+                <icon name="logout" />
+              </button>
             </template>
           </Chip>
         </div>
       </div>
       <div class="flex btn-siderbar-header">
         <Divider layout="vertical" class="mx-[5px]!" />
-        <button class="icon-btn right" title="Mostrar/ocultar menú" @click="rightSidebar.setMode()">
+        <button
+          type="button"
+          class="icon-btn right"
+          title="Mostrar/ocultar menú"
+          aria-label="Panel lateral derecho"
+          :aria-expanded="ui.isMobile ? rightSidebar.drawer : rightSidebar.mode !== 'close'"
+          @click="rightSidebar.toggle()"
+        >
           <icon name="menu-2" />
         </button>
       </div>
@@ -71,6 +84,7 @@
 <script setup lang="ts">
 import { useDialog } from "primevue/usedialog";
 import { router } from "@/app/router";
+import { useUiStore } from "@/app/ui";
 import { useSessionStore } from "@/core/auth/session";
 import { useNavigationHistoryStore } from "./navigationHistory";
 import { defineSidebarStore, type SidebarStore } from "./sidebarStore";
@@ -80,6 +94,7 @@ import ThemeEditor from "./ThemeEditor.vue";
 defineProps<{ rightSidebar: SidebarStore }>();
 
 const session = useSessionStore();
+const ui = useUiStore();
 
 const dialog = useDialog();
 

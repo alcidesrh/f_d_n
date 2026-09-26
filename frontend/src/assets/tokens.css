@@ -1,3 +1,19 @@
+/* ============================= BREAKPOINTS =============================
+   Única fuente de verdad (ver docs/frontend/responsive.md). Mobile-first:
+   los estilos base son el móvil y cada breakpoint mejora hacia arriba.
+     base  < 48rem (768px)   Mobile
+     md   ≥ 48rem (768px)    Tablet
+     lg   ≥ 64rem (1024px)   Desktop: sidebars fijos (debajo, drawers)
+     xl   ≥ 80rem (1280px)   Wide desktop
+   Son los de Tailwind; se declaran aquí para que la escala sea explícita.
+   `sm` (40rem) y `2xl` (96rem) siguen existiendo en Tailwind pero no son
+   cortes del layout. En JS: `app/breakpoints.ts` (mismos valores). */
+@theme {
+  --breakpoint-md: 48rem;
+  --breakpoint-lg: 64rem;
+  --breakpoint-xl: 80rem;
+}
+
 :root {
   --bg: var(--p-surface-50);
   /* --bg1: var(--p-surface-100); */
@@ -22,10 +38,28 @@
   --c-info: #3b82f6;
   --c-info-soft: rgba(59, 130, 246, 0.12);
 
+  /* ---- Layout ----
+     Espaciado: la escala de Tailwind (`--spacing` = 0.25rem; p-2, gap-4…).
+     Estos tokens son los semánticos del layout; no inventar valores sueltos. */
   --header-h: 70px;
   --sidebar-width: 250px;
   --sb-mini: 70px;
   --sb-close: 0px;
+  /* Ancho actual (animado) y ancho abierto de cada sidebar; los escribe
+     `sidebarStore.sidebarUpdate()`. El layout decide cómo usarlos por breakpoint. */
+  --sb-left-w: var(--sidebar-width);
+  --sb-right-w: var(--sidebar-width);
+  --sb-left-open: var(--sidebar-width);
+  --sb-right-open: var(--sidebar-width);
+  /* Margen interior de página y de superficies grandes (formularios): crece
+     con el ancho de `.main` (container query units) de 1rem a 2rem; con
+     `.main` ≥ 800px pasa a 4rem (content.css). */
+  --page-gutter: clamp(1rem, 4cqi, 2rem);
+  /* Ancho máximo del contenido en pantallas muy anchas. */
+  --content-max: 120rem;
+  /* Área táctil mínima de un control (ver utilidad `tap-target`). */
+  --tap-min: 2.75rem;
+
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
   --transition: 0.3s;
   /*var(--ease);*/

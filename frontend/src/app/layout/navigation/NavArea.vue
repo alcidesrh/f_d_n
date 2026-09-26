@@ -7,7 +7,7 @@
   <NavMenuBar v-if="area === 'topbar_right'" :menus="menus" />
   <nav v-else class="nav-area">
     <section v-for="menu in menus" :key="menu.id" class="nav-section">
-      <div v-if="menus.length > 1 && sidebar?.mode !== 'mini'" class="nav-section-title">
+      <div v-if="menus.length > 1 && !sidebar?.collapsed" class="nav-section-title">
         {{ menu.nombre }}
       </div>
       <NavTree v-if="sidebar" :items="menu.items" :sidebar="sidebar" />
@@ -17,7 +17,6 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick } from 'vue'
 import { useUserMenusStore, type LayoutArea } from '@/core/navigation/userMenus'
 import type { SidebarStore } from '../sidebarStore'
 import NavMenuBar from './NavMenuBar.vue'
@@ -27,12 +26,6 @@ const props = defineProps<{ area: LayoutArea; sidebar?: SidebarStore }>()
 
 const userMenus = useUserMenusStore()
 const menus = computed(() => userMenus.areas[props.area])
-
-// Los menús llegan después de montar el sidebar: reaplicar su modo (p. ej. ocultar textos en `mini`).
-watch(menus, async () => {
-  await nextTick()
-  props.sidebar?.sidebarUpdate()
-})
 </script>
 
 <style scoped>

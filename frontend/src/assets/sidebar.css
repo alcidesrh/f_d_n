@@ -1,19 +1,76 @@
-/* BARRA DE NAVEGACIÓN LATERAL */
+/* BARRA DE NAVEGACIÓN LATERAL
+   Mobile-first: debajo de `lg` cada sidebar es un drawer sobre el contenido
+   (ancho abierto, sin `mini`), oculto hasta que su store abre `drawer`.
+   Desde `lg` es fijo: su ancho es `--sb-<lado>-w` (lo anima el store) y el
+   contenido se corre ese ancho (`.main` en content.css). */
 .sidebar {
   position: fixed;
-  top: 0;
-  margin-top: var(--header-h);
-  height: calc(100vh - var(--header-h));
+  top: var(--header-h);
+  bottom: 0;
   background-color: var(--bg);
-  /*transition: width var(--transition) cubic-bezier(0.4, 0, 0.2, 1);*/
   z-index: 100;
+  width: min(var(--sb-open), 85vw);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Cerrado queda fuera del orden de tabulación (visibility) al terminar de salir. */
+  visibility: hidden;
+  transition:
+    transform var(--transition) var(--ease),
+    visibility 0s linear var(--transition);
   &.left {
+    --sb-open: var(--sb-left-open);
+    left: 0;
     border-right: var(--border);
+    transform: translateX(-100%);
   }
 
   &.right {
+    --sb-open: var(--sb-right-open);
     border-left: var(--border);
     right: 0;
+    transform: translateX(100%);
+  }
+
+  &.drawer-open {
+    visibility: visible;
+    transform: none;
+    box-shadow: 0 12px 32px rgb(0 0 0 / 0.2);
+    transition: transform var(--transition) var(--ease);
+  }
+
+  @variant lg {
+    visibility: visible;
+    transform: none;
+    box-shadow: none;
+    transition: none;
+    &.left {
+      width: var(--sb-left-w);
+      transform: none;
+    }
+    &.right {
+      width: var(--sb-right-w);
+      transform: none;
+    }
+    /* En `mini` los enlaces se despliegan por fuera del panel (sidebarFlyout). */
+    &.mini {
+      overflow: visible;
+    }
+    &.close {
+      visibility: hidden;
+      transition: visibility 0s linear var(--transition);
+    }
+  }
+}
+
+/* Fondo detrás del drawer abierto (solo debajo de `lg`). */
+.shell-backdrop {
+  position: fixed;
+  inset: var(--header-h) 0 0;
+  z-index: 90;
+  background: rgb(0 0 0 / 0.3);
+  @variant lg {
+    display: none;
   }
 }
 
@@ -35,10 +92,18 @@
   /* padding-bottom: 0px; */
 
   & > * {
+    display: inline-flex;
     cursor: pointer;
     &:hover {
       border-radius: 999px;
       background-color: var(--p-surface-100);
+    }
+  }
+  /* `mini` es solo de escritorio: el drawer siempre muestra los textos. */
+  & > .toggle-sidebar {
+    display: none;
+    @variant lg {
+      display: inline-flex;
     }
   }
   &.right {
@@ -48,7 +113,7 @@
     &.nomini > .toggle-sidebar {
       display: none;
     }
-    & > div:last-child {
+    & > :last-child {
       rotate: 180deg;
     }
   }
@@ -90,17 +155,11 @@
 .menu-text {
   margin-left: 15px;
   opacity: 1;
-  /*transition: opacity var(--transition) ease;*/
+  transition: opacity calc(var(--transition) * 0.8) var(--ease);
 }
-
-/* ÁREA DE CONTENIDO Y CONTROLES */
-.main {
-  margin-left: 250px;
-  /*margin-left: var(--sidebar-width);*/
-  /*padding: 30px;*/
-  /*width: calc(100% - (var(--sidebar-width) + var(--sidebar-r-width)));*/
-  /*transition:
-    margin-left var(--transition) cubic-bezier(0.4, 0, 0.2, 1),
-    width var(--transition) cubic-bezier(0.4, 0, 0.2, 1);*/
-  /*margin-top: var(--header-h);*/
+.sidebar.mini .menu-text {
+  @variant lg {
+    opacity: 0;
+    transition-duration: calc(var(--transition) * 0.5);
+  }
 }

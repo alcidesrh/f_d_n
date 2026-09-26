@@ -1,0 +1,16 @@
+/* ============================= UTILIDADES =============================
+   Utilidades propias (Tailwind v4 `@utility`): se usan como cualquier clase
+   de Tailwind y admiten variantes (`md:tap-target`). */
+
+/* Área táctil mínima para controles compactos (íconos sueltos, acciones de
+   fila): con puntero grueso (touch) el control crece hasta `--tap-min` sin
+   cambiar nada con mouse. Para botones de ícono del shell usar `.icon-btn`. */
+@utility tap-target {
+  @media (pointer: coarse) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: var(--tap-min);
+    min-height: var(--tap-min);
+  }
+}

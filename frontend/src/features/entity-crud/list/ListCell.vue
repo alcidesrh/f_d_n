@@ -1,5 +1,5 @@
 <template>
-  <div ref="cellRef" class="max-h-[50px] overflow-y-scroll">{{ cellDisplay(data, column) }}</div>
+  <div ref="cellRef" class="max-h-[50px] overflow-y-auto">{{ cellDisplay(data, column) }}</div>
 </template>
 
 <script setup lang="ts">

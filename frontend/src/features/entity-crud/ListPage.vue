@@ -30,7 +30,7 @@
                   <button
                     v-if="isSortable(col)"
                     type="button"
-                    class="ml-3"
+                    class="tap-target ml-3"
                     :aria-label="`Ordenar por ${col.label ?? col.field}`"
                     :data-sort="sortDirection(store.order, col.field) ?? 'none'"
                     @click.stop="toggleSort(col.field)"
@@ -40,6 +40,7 @@
                   <button
                     v-if="filterNodes.has(col.field)"
                     type="button"
+                    class="tap-target"
                     :aria-label="`Filtrar ${col.label ?? col.field}`"
                     @click.stop="col.showFilter = !col.showFilter"
                   >
@@ -50,6 +51,7 @@
                   </button>
                   <button
                     type="button"
+                    class="tap-target"
                     :aria-label="`Ocultar columna ${col.label ?? col.field}`"
                     @click="setColumnVisible(col.field, false)"
                   >
@@ -321,7 +323,8 @@ watch(
 .col-head {
   display: flex;
   flex-direction: column; /* Stacks children vertically from top to bottom */
-  min-width: 300px;
+  /* 300px en escritorio; en móvil ~ dos columnas visibles (la tabla scrollea en horizontal). */
+  min-width: clamp(12rem, 40vw, 300px);
   justify-content: end;
   padding: 0 15px;
   gap: 5px;

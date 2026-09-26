@@ -107,6 +107,7 @@ Despliegue
 - **Tokens de API**: el valor del Bearer solo lo entrega `POST /api/login`; nunca se expone por GraphQL/REST. `POST /api/logout` lo revoca (`App\EventListener\LogoutListener`).
 - **Menús de navegación** (ADR-018): `GET /api/me/menus` devuelve, por área del shell, los menús visibles para el usuario; se editan en `/configuracion/menus`. El árbol de cada menú es una `Taxonomy` genérica (`App\Taxonomy`), reutilizable para clasificar cualquier entidad.
 - **Croquis del bus** (ADR-019): `GET/PUT /api/buses/{id}/croquis` y `GET /api/croquis/plantillas`; `Bus.asientos` no se escribe por GraphQL. En el frontend, el mapa reutilizable es `shared/bus-map/BusMap.vue` (edición, ocupación y venta lo usan con distinto `estado`/slot) y el editor está en `features/bus/`.
+- **Responsive** (ADR-020): mobile-first; breakpoints `md` 48rem / `lg` 64rem / `xl` 80rem en `frontend/src/assets/tokens.css` (JS: `app/breakpoints.ts`). Debajo de `lg` los sidebars son drawers. Reglas y patrones en `docs/frontend/responsive.md`; ninguna pantalla está terminada si solo funciona en escritorio.
 - **Íconos**: el repositorio de íconos es [Tabler](https://tabler.io/icons) y el único punto de uso es `frontend/src/shared/ui/Icon.vue` (`<icon name="grip-vertical" lg />`, prefijo `tabler:` implícito). Ver `docs/frontend/icons.md`.
 - **Multi-tenancy**: `App\Doctrine\TenantFilter` (Doctrine SQLFilter, deshabilitado por defecto en el EM `default`) aísla `Bus`/`Piloto`/`Recorrido`/`BoletoTarifa` por `empresa_id`. Se habilita por request en `App\EventListener\TenantFilterListener` según `Usuario.empresa` — si el usuario no tiene empresa asignada, navega sin filtro. Ver ADR-015.
 
@@ -146,11 +147,12 @@ No existe un sitio MkDocs — se eliminó el 2026-09 por documentar un modelo de
 | ------------------- | ---------------------------------------- |
 | Contexto de dominio | `CONTEXT.md`                             |
 | Terminología + estado del modelo | `AGENTS.md` (este archivo, sección "Domain terminology") |
-| ADRs (decisiones de arquitectura) | `docs/architecture/decisions/` (ADR-001 a ADR-019, ver `index.md`) |
+| ADRs (decisiones de arquitectura) | `docs/architecture/decisions/` (ADR-001 a ADR-020, ver `index.md`) |
 | Convención de exploración de dominio para skills | `docs/agents/domain.md` |
 | Convención de issue tracker | `docs/agents/issue-tracker.md` |
 | Backend (Symfony, Doctrine, GraphQL) | `backend/AGENTS.md` |
 | Frontend (Quasar, Vue, stores) | `frontend/AGENTS.md` |
+| Responsive (breakpoints, patrones mobile-first) | `docs/frontend/responsive.md` |
 
 Si necesitas documentación de un tema que no está en esta lista (ERD, mapa de entidades por subdominio, guía de performance, etc.), **no asumas que existe en `docs/`** — verifícalo primero; probablemente haya que escribirla desde cero contra el estado actual del código.
 

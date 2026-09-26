@@ -47,6 +47,8 @@ function build(link: HTMLElement, { side, mini, open }: FlyoutOptions): gsap.cor
     // En el sidebar derecho crece hacia la izquierda con el ícono fijo en su sitio.
     ...(left ? {} : { flexDirection: 'row-reverse' }),
   })
+  // Sin la transición CSS de `.menu-text` (sidebar.css): la opacidad la anima GSAP.
+  if (text) timeline.set(text, { transition: 'none' })
   if (text && !left) timeline.set(text, { marginLeft: 0, marginRight: 15 })
 
   timeline.fromTo(
@@ -78,8 +80,8 @@ function reset(link: HTMLElement) {
       'flexShrink,zIndex,backgroundColor,borderRadius,flexDirection,width,x,boxShadow,transform',
   })
   const text = link.querySelector<HTMLElement>('.menu-text')
-  // El texto sigue oculto en `mini` (lo dejó así `sidebarUpdate`).
-  if (text) gsap.set(text, { clearProps: 'marginLeft,marginRight,x,transform' })
+  // Sin estilos en línea el texto vuelve a lo que diga el CSS (oculto en `mini`).
+  if (text) gsap.set(text, { clearProps: 'marginLeft,marginRight,x,transform,opacity,transition' })
 }
 
 export function openFlyout(link: HTMLElement, options: FlyoutOptions): void {

@@ -1,9 +1,14 @@
 /**
- * Stores de los paneles laterales (`left`, `right` o uno por panel de ruta):
- * modo `open`/`mini`/`close` persistido y animaciones GSAP del shell.
+ * Stores de los paneles laterales (`left`, `right` o uno por panel de ruta).
+ *
+ * Desde `lg` el panel es fijo y empuja el contenido: modo `open`/`mini`/`close`
+ * (persistido). Debajo de `lg` es un drawer sobre el contenido: `drawer`
+ * (no persistido, siempre empieza cerrado). El modo de escritorio no se toca
+ * desde el móvil y viceversa.
  */
 import { defineStore } from "pinia";
 import { gsap } from "gsap";
+import { useUiStore } from "@/app/ui";
 import { closeFlyout, openFlyout, resetFlyouts } from "./sidebarFlyout";
 
 export type SidebarMode = "open" | "mini" | "close";
@@ -15,11 +20,13 @@ export interface SidebarStoreState {
   open: number;
   mini: number;
   close: number;
+  /** Drawer abierto (solo debajo de `lg`). */
+  drawer: boolean;
 }
 
 function createDefinition(side: "left" | "right", name: string) {
   return defineStore(name, {
-    persist: true,
+    persist: { omit: ["drawer"] },
     state: (): SidebarStoreState => ({
       side: side,
       mode: "open",
@@ -27,11 +34,24 @@ function createDefinition(side: "left" | "right", name: string) {
       open: 250,
       mini: 71,
       close: 0,
+      drawer: false,
     }),
     getters: {
       width: (s: SidebarStoreState): number => ({ open: s.open, mini: s.mini, close: s.close })[s.mode],
+      /** Solo íconos: `mini` en escritorio (el drawer siempre muestra los textos). */
+      collapsed: (s: SidebarStoreState): boolean => s.mode === "mini" && !useUiStore().isMobile,
     },
     actions: {
+      /** Botón de menú de la cabecera: abre/cierra el drawer o alterna el modo de escritorio. */
+      toggle() {
+        if (useUiStore().isMobile) this.drawer = !this.drawer;
+        else this.setMode();
+      },
+      /** Botón cerrar del panel. */
+      dismiss() {
+        if (useUiStore().isMobile) this.drawer = false;
+        else this.setMode("close");
+      },
       setMode(mode?: SidebarMode) {
         if (mode && mode != this.mode) {
           this.prevMode = this.mode;
@@ -47,7 +67,7 @@ function createDefinition(side: "left" | "right", name: string) {
       },
       /** En `mini`, el enlace se despliega mostrando su texto mientras dure el hover. */
       handleMouseEnter(e: MouseEvent) {
-        if (this.mode !== "mini") return;
+        if (!this.collapsed) return;
         openFlyout(e.currentTarget as HTMLElement, {
           side: this.side,
           mini: this.mini,
@@ -57,84 +77,22 @@ function createDefinition(side: "left" | "right", name: string) {
       handleMouseLeave(e: MouseEvent) {
         closeFlyout(e.currentTarget as HTMLElement);
       },
+      /**
+       * Anima el ancho del panel. Solo escribe variables CSS (`--sb-<lado>-w`
+       * y `--sb-<lado>-open`, ver `assets/tokens.css`); `sidebar.css` y
+       * `content.css` deciden por breakpoint cómo usarlas (empujar el
+       * contenido en escritorio, drawer en móvil). Los textos en `mini` se
+       * ocultan por CSS (`.sidebar.mini .menu-text`).
+       */
       sidebarUpdate() {
         resetFlyouts(this.side);
-        const targets = {
-          sidebar: `.sidebar.${this.side}`,
-          main: `.main`,
-          menu: document.querySelectorAll(`.sidebar.${this.side} .menu-text`),
-        };
-        const duration = 0.3;
-        // const ease = "expoScale(1, 2)";
-        const ease = "expoScale(0.5,7, none)";
-
-        if (this.mode === "open") {
-          gsap.to(targets.sidebar, { width: this.width, duration, ease });
-          if (this.side == "left") {
-            gsap.to(targets.main, {
-              marginLeft: this.width,
-              duration,
-              ease: ease,
-            });
-          } else {
-            gsap.to(targets.main, {
-              marginRight: this.width,
-              duration,
-              ease,
-            });
-          }
-          // Una barra sin ítems (sin menús asignados) no tiene textos que animar.
-          if (targets.menu.length)
-            gsap.to(targets.menu, {
-              opacity: 1,
-              duration: duration * 0.8,
-              ease,
-            });
-        } else if (this.mode === "mini") {
-          gsap.to(targets.sidebar, {
-            width: this.width,
-            overflow: "visible",
-            duration,
-            ease,
-          });
-
-          if (this.side == "left") {
-            gsap.to(targets.main, { marginLeft: this.width, duration, ease });
-          } else {
-            gsap.to(targets.main, {
-              marginRight: this.width,
-              duration,
-              ease,
-            });
-          }
-          // Una barra sin ítems (sin menús asignados) no tiene textos que animar.
-          if (targets.menu.length)
-            gsap.to(targets.menu, {
-              opacity: 0,
-              duration: duration * 0.5,
-              ease,
-            });
-        } else if (this.mode === "close") {
-          gsap.to(targets.sidebar, {
-            width: this.width,
-            opacity: 1,
-            overflow: "hidden",
-            duration,
-            ease,
-          });
-          if (this.side == "left") {
-            gsap.to(targets.main, { marginLeft: 0, duration, ease: ease });
-          } else {
-            gsap.to(targets.main, { marginRight: 0, duration, ease });
-          }
-          // Una barra sin ítems (sin menús asignados) no tiene textos que animar.
-          if (targets.menu.length)
-            gsap.to(targets.menu, {
-              opacity: 0,
-              duration: duration * 0.5,
-              ease,
-            });
-        }
+        const root = document.documentElement;
+        gsap.set(root, { [`--sb-${this.side}-open`]: `${this.open}px` });
+        gsap.to(root, {
+          [`--sb-${this.side}-w`]: `${this.width}px`,
+          duration: 0.3,
+          ease: "expoScale(0.5,7, none)",
+        });
       },
     },
   });

@@ -12,6 +12,7 @@
           class="icon-btn nav-menubar-btn"
           :class="{ 'nav-disabled': !item.children.length && !navTarget(item, router) }"
           :title="item.label"
+          :aria-label="item.label"
           @click="onRoot($event, item)"
         >
           <icon :name="item.icon ?? 'point'" />
@@ -92,9 +93,16 @@ function onRoot(event: MouseEvent, item: NavItem) {
   width: auto;
   padding-inline: 0.5rem;
 }
+/* En móvil solo el ícono (el texto queda en `title`/`aria-label`). */
 .nav-menubar-text {
+  display: none;
   font-size: 0.875rem;
   white-space: nowrap;
+}
+@media (width >= 48rem) {
+  .nav-menubar-text {
+    display: inline;
+  }
 }
 .nav-disabled {
   opacity: 0.5;

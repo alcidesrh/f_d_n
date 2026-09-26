@@ -35,8 +35,8 @@ Dependencias en una sola dirección: `app → features → shared → core`. **U
 | Carpeta | Qué hay | Empezar por |
 |---|---|---|
 | `main.ts` | Arranque: plugins → tema → schema GraphQL → montaje; sincroniza rutas con el backend | — |
-| `app/` | Router y guards, tema (`ui.ts`, `theme.ts`), sincronización de rutas (`routeSync.ts`) | `router.ts` |
-| `app/layout/` | Shell: `AppShell` (header + sidebars), `BlankLayout`, toasts, barra de carga. Una ruta añade su panel derecho con `meta.panel` | `AppShell.vue` |
+| `app/` | Router y guards, tema (`ui.ts`, `theme.ts`), breakpoints (`breakpoints.ts`), sincronización de rutas (`routeSync.ts`) | `router.ts` |
+| `app/layout/` | Shell: `AppShell` (header + sidebars; drawers debajo de `lg`), `BlankLayout`, toasts, barra de carga. Una ruta añade su panel derecho con `meta.panel` | `AppShell.vue` |
 | `core/http.ts` | Único cliente REST (`Accept: application/ld+json`, Bearer, 401 → login, `silent` para polling) | — |
 | `core/graphql/` | Cliente Apollo (`graphql`), documentos generados desde la metadata, introspección | `client.ts` |
 | `core/auth/` | Sesión (`login`/`logout`), manejo de 401 | `session.ts` |
@@ -64,6 +64,7 @@ Los tests viven junto al código, en carpetas `__tests__/`.
 ## Convenciones
 
 - Siempre `<script setup lang="ts">`.
+- **Mobile-first** (ADR-020, `docs/frontend/responsive.md`): estilos base para móvil y `md:`/`lg:`/`xl:` (o `@container`) para mejorar; sin breakpoints nuevos ni `max-width`. Iconos clicables con `tap-target` y `aria-label`. Una pantalla no está terminada si solo funciona en escritorio.
 - **Imports explícitos.** El auto-import solo cubre Vue, Vue Router y Pinia; el auto-registro de componentes solo `shared/ui` y `shared/icons`. Todo lo demás se importa (`import { notify } from '@/core/notify'`).
 - **Estado en stores, lógica en funciones puras.** Filtros, orden, serialización de formularios, etc. van en módulos sin estado (con tests); los componentes orquestan.
 - **Notificaciones**: `notify.*` (`core/notify`). **REST**: `http.*` (`core/http`). **GraphQL**: `graphql` (`core/graphql/client`) o, para entidades, `getEntity(nombre)`.

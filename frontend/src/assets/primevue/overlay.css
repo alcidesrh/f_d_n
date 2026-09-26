@@ -1,0 +1,11 @@
+/* Overlays de PrimeVue en pantallas angostas: nunca más anchos que el
+   viewport (un `width` fijo como `44rem` se respeta mientras quepa). La
+   altura ya la limita PrimeVue (90 %) con scroll interno del contenido. */
+.p-dialog {
+  max-width: calc(100vw - 1rem);
+}
+.p-popover,
+.p-tieredmenu-overlay,
+.p-menu-overlay {
+  max-width: calc(100vw - 1rem);
+}

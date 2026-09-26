@@ -1,6 +1,9 @@
 /* ============================= APP SHELL ============================= */
+/* Un solo scroll de página: `.main` (el body no scrollea; ver main.css).
+   `dvh`: en móvil la altura sigue a la barra del navegador. */
 #app {
   height: 100vh;
+  height: 100dvh;
 }
 
 /* ---- BODY ROW ---- */
@@ -9,10 +12,13 @@
   flex: 1;
   margin-top: var(--header-h);
   height: calc(100vh - var(--header-h));
+  height: calc(100dvh - var(--header-h));
   position: relative;
 }
 
-/* ---- MAIN CONTENT ---- */
+/* ---- MAIN CONTENT ----
+   Contenedor de consultas `main`: los componentes se adaptan a su ancho
+   (`@container`, clases `@md:`…), que ya descuenta los sidebars. */
 .main {
   flex: 1;
   min-width: 0;
@@ -20,16 +26,23 @@
   background: var(--p-surface-50);
   container-type: inline-size;
   container-name: main;
+  /* Desde `lg` los sidebars fijos empujan el contenido; debajo son drawers. */
+  @variant lg {
+    margin-left: var(--sb-left-w);
+    margin-right: var(--sb-right-w);
+  }
 }
 
 .main-inner {
-  padding: 4rem;
-  /* max-width: 1400px; */
+  padding: var(--page-gutter);
+  padding-bottom: max(var(--page-gutter), 3rem);
+  max-width: var(--content-max);
   margin: 0 auto;
 }
-@container main (width < 800px) {
+/* Umbral histórico del contenido ancho (se conserva el espaciado de escritorio). */
+@container main (width >= 800px) {
   .main-inner {
-    padding: 2rem;
+    --page-gutter: 4rem;
   }
 }
 .page-head {
@@ -40,6 +53,7 @@
   /* margin-bottom: 22px; */
   flex-wrap: wrap;
   margin-bottom: 1rem;
+  min-width: 0;
 }
 .page-title {
   font-family: 'Space Grotesk', sans-serif;
@@ -47,6 +61,9 @@
   color: var(--p-surface-700);
   font-weight: 600;
   display: flex;
+  flex-wrap: wrap;
+  min-width: 0;
+  overflow-wrap: anywhere;
   text-transform: capitalize;
 
   gap: 0.5rem;

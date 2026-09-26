@@ -1,10 +1,10 @@
 <template>
-  <div class="flex-center flex h-dvh w-dvw">
+  <div class="flex-center flex min-h-dvh w-full py-4">
     <LoginBackground :obstacle="card" />
     <div id="login" ref="card" class="m-auto bg-white/90">
       <Card
         class="card-login p-4"
-        style="width: 400px; max-width: 90vw"
+        style="width: min(400px, 90vw)"
         :class="{ 'opacity-50': loading }"
       >
         <template #title>

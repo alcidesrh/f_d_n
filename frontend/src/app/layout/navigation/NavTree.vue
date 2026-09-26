@@ -21,7 +21,7 @@
           <span class="menu-text">{{ item.label }}</span>
         </component>
         <button
-          v-if="item.children.length && sidebar.mode !== 'mini'"
+          v-if="item.children.length && !sidebar.collapsed"
           type="button"
           class="nav-toggle"
           :aria-expanded="expanded.has(item.id)"
@@ -37,7 +37,7 @@
       </div>
       <Transition :css="false" @enter="onEnter" @leave="onLeave">
         <NavTree
-          v-if="item.children.length && expanded.has(item.id) && sidebar.mode !== 'mini'"
+          v-if="item.children.length && expanded.has(item.id) && !sidebar.collapsed"
           :items="item.children"
           :depth="depth + 1"
           :sidebar="sidebar"

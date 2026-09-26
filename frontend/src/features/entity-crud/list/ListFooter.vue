@@ -11,7 +11,7 @@
       :first="(pagination.currentPage - 1) * pagination.itemsPerPage"
       :total-records="pagination.totalCount"
       :rows-per-page-options="[10, 25, 50]"
-      template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
+      :template="PAGINATOR_TEMPLATE"
       @page="(event) => emit('page', { page: event.page + 1, rows: event.rows })"
     >
       <template #end>
@@ -26,6 +26,16 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { PaginationState } from '@/core/entities/types'
+
+/**
+ * Por ancho de viewport (PrimeVue lo resuelve con CSS): debajo de `md`
+ * (767px = 48rem - 1px) solo anterior/siguiente: el rango "1 al 10 de 57"
+ * ya dice dónde se está.
+ */
+const PAGINATOR_TEMPLATE = {
+  '767px': 'PrevPageLink NextPageLink RowsPerPageDropdown',
+  default: 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown',
+}
 
 const props = defineProps<{ pagination?: PaginationState; count: number; localFilter: boolean }>()
 
