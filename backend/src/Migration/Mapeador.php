@@ -2,7 +2,9 @@
 
 namespace App\Migration;
 
+use App\Croquis\Croquis;
 use App\Entity\Enum\EstadoRecorrido;
+use App\Entity\Enum\TipoBusSenal;
 
 class Mapeador
 {
@@ -78,7 +80,10 @@ class Mapeador
     }
 
     /**
-     * Asiento old PK is numeric → use as new PK, no legacy_id.
+     * Asiento de un bus. En el legado los asientos son del tipo de bus
+     * (`bus_asiento.tipoBus_id`), compartidos por todos los buses de ese tipo:
+     * cada bus recibe su copia, con id nuevo (se reconoce por `bus_id` +
+     * `numero`). Coordenadas del legado (0, 50, …) → desde 1 (`X / 50 + 1`).
      */
     public function asiento(array $old, int $busId): array
     {
@@ -88,13 +93,39 @@ class Mapeador
         };
 
         return [
-            "id" => (int) $old["id"],
             "numero" => (int) ($old["numero"] ?? 0),
             "clase" => $clase,
-            "fila" => (int) ($old["coordenadaY"] ?? 0),
-            "columna" => (int) ($old["coordenadaX"] ?? 0),
+            "planta" => $this->planta($old["nivel2"] ?? null),
+            "fila" => Croquis::desdeLegado($old["coordenadaY"] ?? 0),
+            "columna" => Croquis::desdeLegado($old["coordenadaX"] ?? 0),
             "bus_id" => $busId,
         ];
+    }
+
+    /**
+     * Señal del croquis (chofer, puerta) de un bus, desde `bus_senal` +
+     * `bus_senal_tipo.nombre` (`tipo_nombre`). Null si el tipo no se reconoce.
+     */
+    public function senal(array $old, int $busId): ?array
+    {
+        $tipo = TipoBusSenal::desdeNombreLegado($old["tipo_nombre"] ?? null);
+        if ($tipo === null) {
+            return null;
+        }
+
+        return [
+            "tipo" => $tipo->value,
+            "planta" => $this->planta($old["nivel2"] ?? null),
+            "fila" => Croquis::desdeLegado($old["coordenada_y"] ?? 0),
+            "columna" => Croquis::desdeLegado($old["coordenada_x"] ?? 0),
+            "bus_id" => $busId,
+        ];
+    }
+
+    /** `nivel2` del legado → planta (1 = baja, 2 = alta). */
+    private function planta(mixed $nivel2): int
+    {
+        return filter_var($nivel2, FILTER_VALIDATE_BOOL) ? 2 : 1;
     }
 
     /**

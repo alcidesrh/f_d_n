@@ -40,6 +40,7 @@ Main stack:
 | `Controller/` | Endpoints REST fuera de API Platform: login, cambio de contraseña, permisos, sincronización de rutas, migración. |
 | `Taxonomy/` | Taxonomía agnóstica (ADR-018): árbol puro (`TaxonomyTree`), lectura por lotes (`TaxonomyTreeReader`), reemplazo del árbol (`TaxonomyTreeWriter`) y resolución de `subjectClass` (`SubjectRegistry`). |
 | `Navigation/` | Menús de navegación sobre la taxonomía: visibilidad por roles (`MenuVisibility`), árbol del editor (`MenuTree`), áreas (`MenuLayout`) y menús del usuario (`UserMenus`). Endpoints en `Controller/MenuController`. |
+| `Croquis/` | Croquis del bus (ADR-019): reglas puras (`Croquis`: validación, coordenadas del legado, firma), lectura/reemplazo por bus (`CroquisBus`) y plantillas de la flota (`PlantillasCroquis`). Endpoints en `Controller/BusCroquisController`. |
 | `Services/` | Sincronización de `EntityConfiguration` y `VueRoute`, publicación de cambios (Mercure/SSE), hasher de contraseñas. |
 | `Migration/`, `Command/` | Migración desde el sistema legado (TerminalOmnibus) y sus comandos de consola. |
 | `EntitySistemaFdn/` | Entidades del sistema legado (SQL Server). Solo lectura para la migración: **no tocar**. |

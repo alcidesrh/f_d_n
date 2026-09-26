@@ -12,12 +12,13 @@ use Symfony\Component\DependencyInjection\Attribute\Target;
 /**
  * Migrates static (non-growing) entities from legacy FDN to the new system.
  *
- * Order matters: Empresa → Estacion → Bus → Asiento → Cliente → Usuario
+ * Order matters: Empresa → Estacion → Bus → Asiento/Señal → Cliente → Usuario
  * Trayectos and Tarifas are handled separately due to their complex derivation logic.
  *
- * Static entities with numeric old PKs (empresa, estacion, asiento, cliente, usuario, tarifa)
+ * Static entities with numeric old PKs (empresa, estacion, cliente, usuario, tarifa)
  * reuse the old PK as the new id. Entities with string old PKs (bus, ruta→trayecto)
- * keep a legacy_id column.
+ * keep a legacy_id column. Asientos y señales del croquis son del tipo de bus en
+ * el legado: se copian a cada bus con id nuevo.
  */
 class MigradorEstaticos
 {
@@ -50,6 +51,7 @@ class MigradorEstaticos
             "estacion" => 0,
             "bus" => 0,
             "asiento" => 0,
+            "senal" => 0,
             "cliente" => 0,
             "usuario" => 0,
             "trayecto" => 0,
@@ -91,6 +93,7 @@ class MigradorEstaticos
                 $contadores["bus_marca"] = $this->migrarMarcas($output);
                 $contadores["bus"] = $this->migrarBuss($output);
                 $contadores["asiento"] = $this->migrarAsientos($output);
+                $contadores["senal"] = $this->migrarSenales($output);
                 $contadores["trayecto"] = $this->migrarTrayectos($output);
                 $contadores["tarifa"] = $this->migrarTarifas($output);
             }
@@ -114,6 +117,7 @@ class MigradorEstaticos
         "usuario" => "migrarUsuarios",
         "bus" => "migrarBuss",
         "asiento" => "migrarAsientos",
+        "senal" => "migrarSenales",
         "trayecto" => "migrarTrayectos",
         "tarifa" => "migrarTarifas",
         "piloto" => "migrarPilotos",
@@ -373,6 +377,10 @@ class MigradorEstaticos
 
     // ─── Asiento ───────────────────────────────────────────────────
 
+    /**
+     * Los asientos del legado son del tipo de bus: cada bus de ese tipo recibe
+     * su copia. Ya migrado = existe `(bus_id, numero)`.
+     */
     private function migrarAsientos(?OutputInterface $output = null): int
     {
         if ($output) {
@@ -381,27 +389,29 @@ class MigradorEstaticos
         $rows = $this->fetchOld(
             'SELECT ba.*, b.codigo AS bus_codigo
              FROM bus_asiento ba
-             JOIN bus_tipo bt ON bt.id = ba.tipoBus_id
-             JOIN bus b ON b.tipo_id = bt.id',
+             JOIN bus b ON b.tipo_id = ba.tipoBus_id',
+        );
+        $existentes = $this->clavesExistentes(
+            "SELECT bus_id, numero FROM asiento",
         );
         $count = 0;
 
         foreach ($rows as $row) {
-            $lid = (string) $row["id"];
-            if ($this->existe("asiento", $lid)) {
-                continue;
-            }
-
             $busId = $this->getBusIdByLegacy($row["bus_codigo"]);
             if (!$busId) {
                 continue;
             }
 
             $data = $this->mapeador->asiento($row, $busId);
+            $clave = "{$busId}:{$data["numero"]}";
+            if (isset($existentes[$clave])) {
+                continue;
+            }
             $this->newConn->executeStatement(
-                "INSERT INTO asiento (id, numero, clase, fila, columna, bus_id) VALUES (:id, :numero, :clase, :fila, :columna, :bus_id)",
+                "INSERT INTO asiento (numero, clase, planta, fila, columna, bus_id) VALUES (:numero, :clase, :planta, :fila, :columna, :bus_id)",
                 $data,
             );
+            $existentes[$clave] = true;
             $count++;
         }
 
@@ -409,6 +419,72 @@ class MigradorEstaticos
             $output->writeln(" <info>{$count}</info>");
         }
         return $count;
+    }
+
+    // ─── Señales del croquis (chofer, puertas) ─────────────────────
+
+    /**
+     * `bus_senal` es, como los asientos, del tipo de bus: cada bus recibe su
+     * copia. Ya migrada = existe `(bus_id, planta, fila, columna)`. Los tipos
+     * que no son chofer ni puerta se omiten.
+     */
+    private function migrarSenales(?OutputInterface $output = null): int
+    {
+        if ($output) {
+            $output->write("<info>Chofer y puertas...</info>");
+        }
+        $rows = $this->fetchOld(
+            'SELECT s.*, t.nombre AS tipo_nombre, b.codigo AS bus_codigo
+             FROM bus_senal s
+             JOIN bus_senal_tipo t ON t.id = s.tipo_id
+             JOIN bus b ON b.tipo_id = s.tipoBus_id',
+        );
+        $existentes = $this->clavesExistentes(
+            "SELECT bus_id, planta, fila, columna FROM bus_senal",
+        );
+        $count = 0;
+
+        foreach ($rows as $row) {
+            $busId = $this->getBusIdByLegacy($row["bus_codigo"]);
+            if (!$busId) {
+                continue;
+            }
+
+            $data = $this->mapeador->senal($row, $busId);
+            if ($data === null) {
+                continue;
+            }
+            $clave = "{$busId}:{$data["planta"]}:{$data["fila"]}:{$data["columna"]}";
+            if (isset($existentes[$clave])) {
+                continue;
+            }
+            $this->newConn->executeStatement(
+                "INSERT INTO bus_senal (tipo, planta, fila, columna, bus_id) VALUES (:tipo, :planta, :fila, :columna, :bus_id)",
+                $data,
+            );
+            $existentes[$clave] = true;
+            $count++;
+        }
+
+        if ($output) {
+            $output->writeln(" <info>{$count}</info>");
+        }
+        return $count;
+    }
+
+    /**
+     * Claves `col1:col2:…` de las filas de `$sql` (dedupe en memoria).
+     *
+     * @return array<string, true>
+     */
+    private function clavesExistentes(string $sql): array
+    {
+        $claves = [];
+        foreach ($this->newConn->fetchAllNumeric($sql) as $fila) {
+            $claves[implode(":", $fila)] = true;
+        }
+
+        return $claves;
     }
 
     // ─── Trayecto (ruta + subtrayectos) ────────────────────────────

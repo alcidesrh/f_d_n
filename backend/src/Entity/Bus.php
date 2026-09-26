@@ -2,9 +2,7 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
-use ApiPlatform\Metadata\ApiFilter;
-use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\ApiProperty;
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -26,6 +24,8 @@ class Bus extends Base
     #[ORM\JoinColumn(nullable: false)]
     private ?Empresa $empresa = null;
 
+    /** Se escriben con el croquis (`/api/buses/{id}/croquis`), no por el CRUD. */
+    #[ApiProperty(writable: false)]
     #[
         ORM\OneToMany(
             targetEntity: Asiento::class,
@@ -34,6 +34,22 @@ class Bus extends Base
         ),
     ]
     private Collection $asientos;
+
+    /**
+     * Chofer y puertas del croquis. Solo por `/api/buses/{id}/croquis`.
+     *
+     * @var Collection<int, BusSenal>
+     */
+    #[ApiProperty(readable: false, writable: false)]
+    #[
+        ORM\OneToMany(
+            targetEntity: BusSenal::class,
+            mappedBy: "bus",
+            cascade: ["persist", "remove"],
+            orphanRemoval: true,
+        ),
+    ]
+    private Collection $senales;
 
     #[ORM\ManyToOne]
     private ?Piloto $piloto = null;
@@ -98,6 +114,7 @@ class Bus extends Base
     public function __construct()
     {
         $this->asientos = new ArrayCollection();
+        $this->senales = new ArrayCollection();
     }
     #[Override]
     public function getLabel(): string
@@ -176,6 +193,30 @@ class Bus extends Base
     public function setAsientos(Collection $asientos): static
     {
         $this->asientos = $asientos;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, BusSenal>
+     */
+    public function getSenales(): Collection
+    {
+        return $this->senales;
+    }
+
+    public function addSenal(BusSenal $senal): static
+    {
+        if (!$this->senales->contains($senal)) {
+            $this->senales->add($senal);
+        }
+
+        return $this;
+    }
+
+    public function removeSenal(BusSenal $senal): static
+    {
+        $this->senales->removeElement($senal);
 
         return $this;
     }

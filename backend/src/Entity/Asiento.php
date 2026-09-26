@@ -17,6 +17,14 @@ class Asiento extends Base
     #[ORM\Column(type: "string", length: 1, enumType: AsientoClase::class)]
     private AsientoClase $clase;
 
+    /**
+     * Planta del bus: 1 = baja (la única en buses de un piso; en los de dos,
+     * la de los asientos clase B), 2 = alta. Coordenadas `fila`/`columna`
+     * desde 1 dentro de la planta (ver `App\Croquis`).
+     */
+    #[ORM\Column(type: "smallint", options: ["default" => 1])]
+    private int $planta = 1;
+
     #[ORM\Column(nullable: true)]
     private ?int $fila = null;
 
@@ -35,6 +43,18 @@ class Asiento extends Base
     public function setNumero(int $numero): static
     {
         $this->numero = $numero;
+
+        return $this;
+    }
+
+    public function getPlanta(): int
+    {
+        return $this->planta;
+    }
+
+    public function setPlanta(int $planta): static
+    {
+        $this->planta = $planta;
 
         return $this;
     }
