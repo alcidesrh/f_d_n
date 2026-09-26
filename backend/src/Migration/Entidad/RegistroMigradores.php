@@ -16,7 +16,7 @@ use Symfony\Component\DependencyInjection\Attribute\Target;
  * Catálogo de migradores por entidad + orden del flujo "estáticos".
  *
  * Nombres canónicos: empresa, estacion, localidad, marca, piloto, cliente,
- * usuario, bus, asiento, trayecto, tarifa, salida, iam, config.
+ * usuario, bus, asiento, senal, trayecto, tarifa, salida, iam, config.
  *
  * La entidad "salida" se marca SIN dependencias porque migrarSalida ya recorre
  * sus propias ramificaciones (empresa, trayecto, bus, cliente…) con dedupe:
@@ -42,6 +42,7 @@ class RegistroMigradores
         "marca",
         "bus",
         "asiento",
+        "senal",
         "trayecto",
         "tarifa",
     ];
@@ -160,12 +161,23 @@ class RegistroMigradores
                 ["bus"],
                 ["empresa", "marca"],
             ),
+            // Asientos y señales son del tipo de bus en el legado: se cuentan
+            // por bus (cada bus recibe su copia).
             "asiento" => $estatica(
                 "asiento",
                 "Asientos",
                 "bus_asiento",
                 ["asiento"],
                 ["bus"],
+                "SELECT COUNT(*) FROM bus_asiento ba JOIN bus b ON b.tipo_id = ba.tipoBus_id",
+            ),
+            "senal" => $estatica(
+                "senal",
+                "Chofer y puertas",
+                "bus_senal",
+                ["bus_senal"],
+                ["bus"],
+                "SELECT COUNT(*) FROM bus_senal s JOIN bus b ON b.tipo_id = s.tipoBus_id",
             ),
             "trayecto" => $estatica(
                 "trayecto",

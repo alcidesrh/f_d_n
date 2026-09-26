@@ -54,7 +54,13 @@ final class IndicadoresMigracion
         ],
         "asiento" => [
             "nuevo" => "SELECT COUNT(*) FROM asiento",
-            "legado" => "SELECT COUNT(*) FROM bus_asiento",
+            "legado" =>
+                "SELECT COUNT(*) FROM bus_asiento ba JOIN bus b ON b.tipo_id = ba.tipoBus_id",
+        ],
+        "senal" => [
+            "nuevo" => "SELECT COUNT(*) FROM bus_senal",
+            "legado" =>
+                "SELECT COUNT(*) FROM bus_senal s JOIN bus b ON b.tipo_id = s.tipoBus_id",
         ],
         "trayecto" => [
             "nuevo" => "SELECT COUNT(*) FROM trayecto",
