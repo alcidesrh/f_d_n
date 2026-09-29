@@ -59,7 +59,7 @@ class BoletoTarifa extends Base
 
     public function getPrecio(): ?Money
     {
-        return $this->precio;
+        return $this->precio?->toMoney();
     }
 
     public function setPrecio(Money $money): self

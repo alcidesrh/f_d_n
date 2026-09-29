@@ -3,13 +3,29 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\GraphQl\Query;
+use ApiPlatform\Metadata\GraphQl\QueryCollection;
+use App\Entity\Embeddable\Precio;
 use App\Entity\Base\Traits\TimestampableEntityTrait;
 use App\Repository\FacturaRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Money\Money;
 use Symfony\Component\Uid\Uuid;
 
+/**
+ * DTE (factura electrónica) certificado de una venta: snapshot inmutable de
+ * emisor, receptor y datos del certificador. Lo crea `App\Venta` con la
+ * respuesta del certificador; la API solo lo lee.
+ */
 #[ORM\Entity(repositoryClass: FacturaRepository::class)]
-#[ApiResource]
+#[
+    ApiResource(
+        operations: [new Get(), new GetCollection()],
+        graphQlOperations: [new Query(), new QueryCollection()],
+    ),
+]
 class Factura {
     use TimestampableEntityTrait;
 
@@ -18,8 +34,9 @@ class Factura {
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column]
-    private ?int $dte = null;
+    /** Número del DTE (hasta 10 dígitos). */
+    #[ORM\Column(type: 'bigint')]
+    private int|string|null $dte = null;
 
     #[ORM\Column(type: 'uuid')]
     private ?Uuid $uuid = null;
@@ -48,12 +65,29 @@ class Factura {
     #[ORM\Column(length: 255)]
     private ?string $receptorNombre = null;
 
+    /** Momento en que el certificador firmó el DTE. */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $fechaCertificacion = null;
+
+    #[ORM\Column(length: 25, nullable: true)]
+    private ?string $certificadorNit = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $certificadorNombre = null;
+
+    #[ORM\Embedded(class: Precio::class, columnPrefix: 'total_')]
+    private ?Precio $total = null;
+
+    /** XML certificado tal como lo devolvió el certificador (respaldo fiscal). */
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $xml = null;
+
     public function getId(): ?int {
         return $this->id;
     }
 
     public function getDte(): ?int {
-        return $this->dte;
+        return $this->dte !== null ? (int) $this->dte : null;
     }
 
     public function setDte(int $dte): static {
@@ -148,6 +182,56 @@ class Factura {
 
     public function setReceptorNombre(string $receptorNombre): static {
         $this->receptorNombre = $receptorNombre;
+
+        return $this;
+    }
+
+    public function getFechaCertificacion(): ?\DateTimeImmutable {
+        return $this->fechaCertificacion;
+    }
+
+    public function setFechaCertificacion(?\DateTimeImmutable $fechaCertificacion): static {
+        $this->fechaCertificacion = $fechaCertificacion;
+
+        return $this;
+    }
+
+    public function getCertificadorNit(): ?string {
+        return $this->certificadorNit;
+    }
+
+    public function setCertificadorNit(?string $certificadorNit): static {
+        $this->certificadorNit = $certificadorNit;
+
+        return $this;
+    }
+
+    public function getCertificadorNombre(): ?string {
+        return $this->certificadorNombre;
+    }
+
+    public function setCertificadorNombre(?string $certificadorNombre): static {
+        $this->certificadorNombre = $certificadorNombre;
+
+        return $this;
+    }
+
+    public function getTotal(): ?Money {
+        return $this->total?->toMoney();
+    }
+
+    public function setTotal(Money $total): static {
+        $this->total = Precio::fromMoney($total);
+
+        return $this;
+    }
+
+    public function getXml(): ?string {
+        return $this->xml;
+    }
+
+    public function setXml(?string $xml): static {
+        $this->xml = $xml;
 
         return $this;
     }

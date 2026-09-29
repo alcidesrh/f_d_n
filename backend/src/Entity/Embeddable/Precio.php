@@ -35,8 +35,8 @@ class Precio {
 
   public static function fromMoney(Money $money): self {
     return new self(
-      (int) $money->getMonto(),
-      $money->getMoneda()->getCode()
+      (int) $money->getAmount(),
+      $money->getCurrency()->getCode()
     );
   }
 

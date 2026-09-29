@@ -3,7 +3,9 @@
 
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
-# parameters:
+parameters:
+    # Remitente de los correos con el boleto (sobrescribible con VENTA_CORREO_REMITENTE).
+    venta_correo_remitente_defecto: "boletos@transportesfuentedelnorte.com"
 
 services:
     # default configuration for services in *this* file
@@ -71,3 +73,8 @@ services:
     App\GraphQL\Type\Definition\DateType:
         tags:
             - { name: api_platform.graphql.type }
+
+    # Venta de asientos (ADR-021): adaptadores activos de los puertos externos.
+    # Reemplazar por los del certificador FEL y el banco adquirente contratados.
+    App\Venta\Facturacion\CertificadorFel: '@App\Venta\Facturacion\CertificadorSimulado'
+    App\Venta\Pago\PasarelaPago: '@App\Venta\Pago\PasarelaSimulada'

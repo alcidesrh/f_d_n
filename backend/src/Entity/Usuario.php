@@ -194,6 +194,14 @@ class Usuario extends PersonaBase implements
     #[ORM\ManyToOne]
     private ?Empresa $empresa = null;
 
+    /** Si es usuario de una agencia: vende con el saldo de esta (ADR-021). */
+    #[ORM\ManyToOne]
+    private ?Agencia $agencia = null;
+
+    /** Estación donde trabaja (taquilla): valor inicial de la venta. */
+    #[ORM\ManyToOne]
+    private ?Estacion $estacion = null;
+
     public function __construct($data = [])
     {
         if (!empty($data)) {
@@ -438,6 +446,30 @@ class Usuario extends PersonaBase implements
     public function setEmpresa(?Empresa $empresa): static
     {
         $this->empresa = $empresa;
+
+        return $this;
+    }
+
+    public function getAgencia(): ?Agencia
+    {
+        return $this->agencia;
+    }
+
+    public function setAgencia(?Agencia $agencia): static
+    {
+        $this->agencia = $agencia;
+
+        return $this;
+    }
+
+    public function getEstacion(): ?Estacion
+    {
+        return $this->estacion;
+    }
+
+    public function setEstacion(?Estacion $estacion): static
+    {
+        $this->estacion = $estacion;
 
         return $this;
     }
