@@ -31,7 +31,7 @@ const base: Comprobante = {
     receptorNombre: 'BAUTISTA OROZCO, JENNER OSWALDO',
   },
   cliente: { nombre: 'Jenner <b>', nit: '28119266', email: null },
-  recorrido: { id: 1, salida: '2026-09-27T10:45:00-06:00', bus: 'TPB060B' },
+  recorrido: { id: 1, salida: '2026-09-27T08:00:00-06:00', salidaOrigen: '2026-09-27T10:45:00-06:00', bus: 'TPB060B' },
   origen: { nombre: 'Aguilar Batres', direccion: null },
   destino: { nombre: 'San Marcos', direccion: null },
   boletos: [

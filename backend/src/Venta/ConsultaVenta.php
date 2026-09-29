@@ -28,6 +28,7 @@ final class ConsultaVenta
         private readonly ResolutorTarifa $tarifas,
         private readonly ReglasVenta $reglas,
         private readonly CroquisBus $croquis,
+        private readonly HorasRecorrido $horas,
         private readonly ClockInterface $reloj,
     ) {}
 
@@ -251,11 +252,7 @@ final class ConsultaVenta
     /** Hora estimada del recorrido en una parada (ISO), si se conoce la duración. */
     private function horaEn(Recorrido $r, Itinerario $it, int $enclaveId): ?string
     {
-        $minutos = $it->minutosHasta($enclaveId);
-
-        return $minutos === null
-            ? null
-            : \DateTimeImmutable::createFromMutable($r->getFecha())->modify("+{$minutos} minutes")->format(DATE_ATOM);
+        return $this->horas->enParada($r, $enclaveId)?->format(DATE_ATOM);
     }
 
     /**

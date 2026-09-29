@@ -10,10 +10,12 @@ use App\Entity\Recorrido;
 use App\Entity\ReservaAsiento;
 use App\Entity\TipoDocumento;
 use App\Venta\Boleto\BoletoPdf;
+use App\Venta\Boleto\Comprobantes;
 use App\Venta\Boleto\DatosBoleto;
 use App\Venta\CompraWeb;
 use App\Venta\Comprador;
 use App\Venta\ConsultaVenta;
+use App\Venta\HorasRecorrido;
 use App\Venta\Excepcion\VentaRechazada;
 use App\Venta\Pago\PasarelaPago;
 use App\Venta\Pago\PasarelaSimulada;
@@ -54,6 +56,8 @@ final class PublicoController extends AbstractController
         private readonly CompraWeb $compras,
         private readonly PasarelaPago $pasarela,
         private readonly ClockInterface $reloj,
+        private readonly Comprobantes $comprobantes,
+        private readonly HorasRecorrido $horas,
         private readonly RateLimiterFactoryInterface $publicoLimiter,
         private readonly RateLimiterFactoryInterface $publicoPagoLimiter,
     ) {}
@@ -195,7 +199,7 @@ final class PublicoController extends AbstractController
 
             $resultado = $this->compras->pagar($uuid, $comprador, $tarjeta, $retorno, $request->getClientIp());
             if ($resultado["estado"] === "completado") {
-                return ["estado" => "completado", "compra" => DatosBoleto::de($resultado["venta"])];
+                return ["estado" => "completado", "compra" => $this->comprobantes->de($resultado["venta"])];
             }
 
             return $resultado;
@@ -256,7 +260,7 @@ final class PublicoController extends AbstractController
             $uuid = $this->tokenObligatorio($token);
             $venta = $this->compras->venta($uuid);
             if ($venta !== null) {
-                return ["estado" => "completado", "compra" => DatosBoleto::de($venta)];
+                return ["estado" => "completado", "compra" => $this->comprobantes->de($venta)];
             }
             $pago = $this->compras->ultimoPago($uuid);
 
@@ -295,6 +299,7 @@ final class PublicoController extends AbstractController
             "recorrido" => [
                 "id" => $primera->getRecorrido()->getId(),
                 "salida" => $primera->getRecorrido()->getFecha()->format(DATE_ATOM),
+                "salidaOrigen" => $this->horas->salidaDesde($primera->getRecorrido(), (int) $primera->getTrayecto()->getOrigen()->getId())->format(DATE_ATOM),
                 "empresa" => $primera->getRecorrido()->getEmpresa()?->getNombre(),
             ],
             "trayecto" => [

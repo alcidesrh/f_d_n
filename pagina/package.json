@@ -1,0 +1,49 @@
+{
+  "name": "fdn-pagina",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Página web pública de venta de boletos (ADR-021). Se compila en backend/public/pagina.",
+  "scripts": {
+    "dev": "vite",
+    "build": "run-p type-check \"build-only {@}\" --",
+    "build-only": "vite build",
+    "preview": "vite preview",
+    "type-check": "vue-tsc --build",
+    "test:unit": "vitest"
+  },
+  "dependencies": {
+    "@formkit/i18n": "^2.1.2",
+    "@formkit/vue": "^2.1.2",
+    "@primeuix/themes": "^2.0.3",
+    "pinia": "^4.0.2",
+    "primelocale": "^2.4.0",
+    "primevue": "4.5.5",
+    "tailwindcss-primeui": "^0.6.1",
+    "vue": "^3.5.40",
+    "vue-router": "^5.2.0"
+  },
+  "devDependencies": {
+    "@iconify-json/tabler": "^1.2.38",
+    "@primevue/auto-import-resolver": "^5.0.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@tsconfig/node24": "^24.0.4",
+    "@types/node": "^24.13.3",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "@vue/test-utils": "^2.4.11",
+    "@vue/tsconfig": "^0.9.1",
+    "jsdom": "^29.1.1",
+    "npm-run-all2": "^9.0.2",
+    "tailwindcss": "^4.3.3",
+    "typescript": "~6.0.0",
+    "unplugin-auto-import": "^21.1.0",
+    "unplugin-icons": "^23.0.1",
+    "unplugin-vue-components": "^32.1.0",
+    "vite": "^8.1.5",
+    "vitest": "^4.1.10",
+    "vue-tsc": "^3.3.7"
+  },
+  "engines": {
+    "node": "^22.18.0 || >=24.12.0"
+  }
+}

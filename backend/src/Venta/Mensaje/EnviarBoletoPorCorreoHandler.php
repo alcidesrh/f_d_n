@@ -6,7 +6,7 @@ namespace App\Venta\Mensaje;
 
 use App\Entity\BoletoVenta;
 use App\Venta\Boleto\BoletoPdf;
-use App\Venta\Boleto\DatosBoleto;
+use App\Venta\Boleto\Comprobantes;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
@@ -20,6 +20,7 @@ final class EnviarBoletoPorCorreoHandler
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly BoletoPdf $pdf,
+        private readonly Comprobantes $comprobantes,
         private readonly MailerInterface $mailer,
         private readonly LoggerInterface $logger,
         #[Autowire(env: "default:venta_correo_remitente_defecto:VENTA_CORREO_REMITENTE")]
@@ -36,7 +37,7 @@ final class EnviarBoletoPorCorreoHandler
             return;
         }
 
-        $datos = DatosBoleto::de($venta);
+        $datos = $this->comprobantes->de($venta);
         $this->mailer->send(
             (new TemplatedEmail())
                 ->from($this->remitente)

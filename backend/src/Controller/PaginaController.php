@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
@@ -34,10 +33,11 @@ final class PaginaController
             );
         }
 
-        $respuesta = new BinaryFileResponse($this->indice);
-        $respuesta->headers->set("Content-Type", "text/html; charset=utf-8");
-        $respuesta->headers->set("Cache-Control", "no-cache");
-
-        return $respuesta;
+        // Response (no BinaryFileResponse): el index es chico y así la barra
+        // de depuración de Symfony puede inyectarse en desarrollo.
+        return new Response((string) file_get_contents($this->indice), Response::HTTP_OK, [
+            "Content-Type" => "text/html; charset=utf-8",
+            "Cache-Control" => "no-cache",
+        ]);
     }
 }

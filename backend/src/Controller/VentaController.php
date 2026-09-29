@@ -14,6 +14,7 @@ use App\Entity\TipoDocumento;
 use App\Entity\TipoPago;
 use App\Entity\Usuario;
 use App\Venta\Boleto\BoletoPdf;
+use App\Venta\Boleto\Comprobantes;
 use App\Venta\Boleto\DatosBoleto;
 use App\Venta\Clientes;
 use App\Venta\ConsultaVenta;
@@ -54,6 +55,7 @@ final class VentaController extends AbstractController
         private readonly ReglasVenta $reglas,
         private readonly RegistroVenta $registro,
         private readonly Clientes $clientes,
+        private readonly Comprobantes $comprobantes,
     ) {}
 
     /** Quién vende y con qué: canal, estación/agencia, permisos y catálogos del formulario. */
@@ -171,7 +173,7 @@ final class VentaController extends AbstractController
                 throw new VentaRechazada("No tiene permiso para vender sin factura electrónica.", "permiso", 403);
             }
 
-            return DatosBoleto::de($this->registro->vender($solicitud, $usuario, $this->isGranted(self::SIN_FACTURA)));
+            return $this->comprobantes->de($this->registro->vender($solicitud, $usuario, $this->isGranted(self::SIN_FACTURA)));
         }, Response::HTTP_CREATED);
     }
 
@@ -181,7 +183,7 @@ final class VentaController extends AbstractController
     {
         $this->denyUnlessPuedeVer($venta, $usuario);
 
-        return $this->json(DatosBoleto::de($venta));
+        return $this->json($this->comprobantes->de($venta));
     }
 
     #[Route("/ventas/{id<\d+>}/pdf", name: "venta_pdf", methods: ["GET"])]

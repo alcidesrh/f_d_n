@@ -11,14 +11,15 @@ use Money\Money;
 /**
  * Datos del comprobante de una venta (ticket de taquilla, PDF de la web y
  * respuesta de la API): factura + boletos, con importes ya formateados. Lo
- * mismo que imprime el legado en el ticket de 80 mm.
+ * mismo que imprime el legado en el ticket de 80 mm. Con la hora en la
+ * parada de subida, usar el servicio `Comprobantes`.
  */
 final class DatosBoleto
 {
     /**
      * @return array<string, mixed>
      */
-    public static function de(BoletoVenta $venta): array
+    public static function de(BoletoVenta $venta, ?\DateTimeImmutable $salidaOrigen = null): array
     {
         $boletos = $venta->getAsientos()->toArray();
         usort($boletos, static fn(BoletoAsiento $a, BoletoAsiento $b) => $a->getAsiento()->getNumero() <=> $b->getAsiento()->getNumero());
@@ -67,7 +68,9 @@ final class DatosBoleto
             ],
             "recorrido" => $recorrido === null ? null : [
                 "id" => $recorrido->getId(),
+                // Salida del inicio de la ruta y hora estimada donde sube el pasajero.
                 "salida" => $recorrido->getFecha()->format(DATE_ATOM),
+                "salidaOrigen" => ($salidaOrigen ?? \DateTimeImmutable::createFromMutable($recorrido->getFecha()))->format(DATE_ATOM),
                 "bus" => $recorrido->getBus()?->getCodigo(),
             ],
             "origen" => $trayecto === null ? null : [

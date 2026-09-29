@@ -154,7 +154,8 @@ export interface Comprobante {
     receptorNombre: string
   } | null
   cliente: { nombre: string; nit: string; email: string | null } | null
-  recorrido: { id: number; salida: string; bus: string | null } | null
+  /** `salida`: inicio de la ruta; `salidaOrigen`: hora estimada donde sube el pasajero. */
+  recorrido: { id: number; salida: string; salidaOrigen: string; bus: string | null } | null
   origen: { nombre: string; direccion: string | null } | null
   destino: { nombre: string; direccion: string | null } | null
   boletos: Array<{

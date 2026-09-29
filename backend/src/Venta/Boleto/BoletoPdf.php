@@ -17,12 +17,13 @@ final class BoletoPdf
 {
     public function __construct(
         private readonly Environment $twig,
+        private readonly Comprobantes $comprobantes,
     ) {}
 
     public function generar(BoletoVenta $venta): string
     {
         $html = $this->twig->render("venta/boleto_pdf.html.twig", [
-            "b" => DatosBoleto::de($venta),
+            "b" => $this->comprobantes->de($venta),
             "codigoBarras" => base64_encode(Code128::svg(sprintf("%08d", $venta->getId()))),
         ]);
 
