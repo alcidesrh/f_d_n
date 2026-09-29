@@ -10,7 +10,7 @@ Guía para asistentes IA que trabajan en este repo.
 
 **Descripcion**: Un grupo de empresas brindan un servicio de buses para el transporte de pasajeros en trayectos largos, medianos y cortos. También proveen un servicio secundario de envío de paquetes o encomiendas que son recibidas y entregadas siempre en las estaciones de los trayectos. Los trayectos pueden ser itinerarios exclusivos de una empresa o pueden estar compartido en cuyo caso las empresas involucradas se alternan los días para dar el servicio. Cada empresa gestiona un flujo de datos independiente propio de la empresa como las finanzas, su inventario de buses, estaciones y empleados. Sin embargo todas operan y gestionan el negocio de la misma manera y no hay procesos personalizados.
 
-Monorepo con `backend/` (Symfony 8 + API Platform) y `frontend/` (Quasar + Vue 3).
+Monorepo con `backend/` (Symfony 8 + API Platform), `frontend/` (Quasar + Vue 3) y `pagina/` (página web pública de venta de boletos, Vue 3; se sirve desde el backend en `/pagina`).
 Orquestación vía Docker Compose (`compose.yaml` + overrides).
 
 ### Domain terminology
@@ -31,23 +31,27 @@ Columna **Modelo**: `nuevo` = entidad viva en `backend/src/Entity/`; `legacy` = 
 | **Croquis**                             | Mapa del bus visto desde arriba: sus `Asiento` + sus `BusSenal`, cada uno en una celda `(planta, fila, columna)` con coordenadas desde 1 (el legado usaba múltiplos de 50: `X / 50 + 1`). Hasta dos plantas (`planta` 1 = baja, 2 = alta; en los de dos pisos la clase B va abajo). Se edita entero por `PUT /api/buses/{id}/croquis` (ver ADR-019). | mapa del bus, lienzo, distribución | nuevo |
 | **Señal** (`BusSenal`)                  | Elemento del croquis que no se vende: chofer (uno por bus) o puerta (`TipoBusSenal`). "Chofer" aquí es el puesto de conducción dibujado, no la persona (esa es `Piloto`). En el legado, `bus_senal`/`bus_senal_tipo`. | | nuevo |
 | **BoletoAsiento**                       | Asiento vendido para un trayecto (puede ser un subtramo del trayecto completo del recorrido) dentro de un recorrido determinado. Constraint única `(asiento_id, trayecto_id, recorrido_id)`: el mismo asiento puede venderse dos veces en el mismo recorrido solo si es para trayectos (subtramos) distintos. Estado tipado con enum `EstadoBoletoAsiento`: `emitido → chequeado → transito → finalizado` (lineal); `anulado`/`reasignado` solo alcanzables desde `emitido` (ver ADR-014).           | boleto, ticket          | nuevo |
-| **BoletoVenta**                         | Agrupa boletos, usuario quien lo emite, cliente, factura tributaria.                                                                                                                                                                                                             | venta, tiquetera        | nuevo |
-| **BoletoTarifa**                        | Precio de referencia de un BoletoAsiento. La tarifa se decide por la que mayor cantidad de atributos iguales tenga una BoletoTarifa con el entorno de un BoletoAsiento: empresa, trayecto, hora, clase de asiento, bus. **El resolver de especificidad aún no está implementado en código** — hoy `BoletoTarifa` solo se usa desde el migrador legacy. | tarifa, precio          | nuevo (sin lógica de resolución) |
+| **BoletoVenta**                         | Agrupa boletos, usuario quien lo emite, cliente, factura tributaria. Tiene canal (`CanalVenta`: `estacion`, `agencia`, `web`), estado (`pendiente` → `confirmada`) y estado de facturación (`certificada`, `pendiente`, `no_aplica`). Solo se crea por `App\Venta` (ver ADR-021); la API la expone solo para lectura. | venta, tiquetera        | nuevo |
+| **Tramo**                               | Porción de un recorrido entre dos paradas. Un asiento se revende en tramos que no se solapan (`App\Venta\Ocupacion`). El orden de las paradas se deduce de los subtrayectos (`App\Venta\Itinerario`). | | concepto |
+| **Reserva** (`ReservaAsiento`)          | Asiento apartado en la página web mientras el cliente paga (la "precompra"). Vence sola a los 15 min y nunca después del cierre de venta en línea (30 min antes de salir). | preventa | nuevo |
+| **Agencia**                             | Entidad externa que vende por comisión con usuarios propios (`Usuario.agencia`). Cada venta descuenta su saldo (nunca negativo), sin factura electrónica. El saldo solo cambia por `AgenciaMovimiento`. En el legado era una estación tipo 4. | estación tipo 4 | nuevo |
+| **Cortesía**                            | Venta sin cobro ni factura (el "voucher" del legado para boletos), con permiso `venta.cortesia`. | voucher | nuevo (`BoletoVenta.cortesia`) |
+| **Tipo de pago**, **Moneda**, **Tipo de documento** | Catálogos de la venta (`TipoPago`, `Moneda`, `TipoDocumento`), migrados del legado. | | nuevo |
+| **BoletoTarifa**                        | Precio de referencia de un BoletoAsiento. La tarifa se decide por la que mayor cantidad de atributos iguales tenga una BoletoTarifa con el entorno de un BoletoAsiento: empresa, trayecto, hora, clase de asiento, bus (resolver: `App\Venta\EspecificidadTarifa`, ADR-021). | tarifa, precio          | nuevo |
 | **Factura**                             | Documento fiscal con snapshot inmutable de emisor/receptor                                                                                                                                                                                                                       | recibo, comprobante     | nuevo |
 | **Cliente**                             | Persona que compra un boleto. Son los pasajeros.                                                                                                                                                                                                                                 | pasajero, comprador     | nuevo |
 | **Empresa**                             | Línea transportista dueña de la operación                                                                                                                                                                                                                                        | compañía, operador      | nuevo |
 | **Encomienda**                          | se refiere a una solicitud aceptada y registrada del servicio de paqueteria                                                                                                                                                                                                      | paquete, envio          | legacy |
-| **Voucher**                             | Es un boleto o encomienda que no se cobra. La razon puede ser desde desicion administrativa hasta restitucion de un por un viaje cancelado.                                                                                                                                      |                         | legacy |
+| **Voucher**                             | Es un boleto o encomienda que no se cobra. La razon puede ser desde desicion administrativa hasta restitucion de un por un viaje cancelado.                                                                                                                                      |                         | legacy (para boletos: ver Cortesía) |
 | **Reasignacion**                        | Cambio de asiento                                                                                                                                                                                                                                                                |                         | legacy (sin operación de dominio equivalente hoy) |
 | **Anulacion**                           | Cuando se invalida la compra de un asiento asi como su registro en la oficina tributaria.                                                                                                                                                                                        |                         | legacy (sin operación de dominio equivalente hoy) |
 | **Usuario**                             | Empleado de alguna empresa. Usan el sistema para la venta de boletos o encomiendas, crean el calendarios de recorrido, generan reportes y demas procesos del negocio segun el rol asignado                                                                                       |                         | nuevo |
-| **Agencia**                             | Un tipo de usuario que representa una entidad externa asociada a una empresa. La diferencia es que solo estan limitado a la venta de boletos.                                                                                                                                    |                         | legacy |
 | **Taxonomía**                           | Jerarquía ordenada (árbol, una o más raíces) sobre registros de cualquier entidad, por referencia polimórfica `(subjectClass, subjectId)`. Un mismo registro puede estar en varias taxonomías. Ver ADR-018. | categoría, árbol | nuevo |
 | **Menú**                                | Taxonomía de ítems navegables visible para ciertos roles (o sus ascendientes vía `Role.parents`) y colocada en una o más áreas de la UI (`MenuPlacement`, `LayoutArea`). | navegación | nuevo |
 | **Ítem navegable** (`MenuItem`)         | Texto + ícono + ruta de vue-router (`VueRoute`); se crea antes de usarse y puede estar en varios menús. El orden y el nivel viven en cada menú, no en el ítem. | enlace, opción | nuevo |
 | **Manifiesto\<de pasajero, de venta, ...\>** | son reportes que se generan en formato pdf                                                                                                                                                                                                                                  |                         | legacy |
 
-> **Estado del modelo (2026-09):** el modelo nuevo (`src/Entity/`, ~30 clases) cubre geografía, flota y venta básica de asientos. `Agencia`, `Voucher`, `Encomienda`, `Reasignación`, `Anulación` y `Manifiesto` solo existen en el legacy (`src/EntitySistemaFdn/`, ~112 clases) — son el trabajo de dominio pendiente, no features ya resueltas. No asumas que existe un endpoint/servicio para ellas sin verificarlo primero.
+> **Estado del modelo (2026-09):** el modelo nuevo (`src/Entity/`, ~40 clases) cubre geografía, flota y la venta de asientos por taquilla, agencias y página web (ADR-021: `App\Venta`). `Encomienda`, `Reasignación`, `Anulación` y `Manifiesto` solo existen en el legacy (`src/EntitySistemaFdn/`, ~112 clases) — son el trabajo de dominio pendiente, no features ya resueltas. No asumas que existe un endpoint/servicio para ellas sin verificarlo primero. El certificador de factura electrónica y la pasarela de pago están detrás de puertos con adaptadores **simulados** (`CertificadorSimulado`, `PasarelaSimulada`) hasta tener la documentación de los reales.
 
 ---
 
@@ -57,6 +61,7 @@ Despliegue
 | ---------- | ------------------------------------------------------------------- | ------ |
 | `backend`  | FrankenPHP/Caddy, PHP 8.4, Symfony 8, API Platform (REST + GraphQL) | 80/443 |
 | `frontend` | Quasar, Vue 3, Vite 8, PrimeVue 4, FormKit 2                        | 9000   |
+| `pagina/` (no es servicio) | Vue 3, PrimeVue 4, FormKit 2, Tailwind 4; se compila en `backend/public/pagina` y la sirve el backend en `/pagina` | (dev 9100) |
 | `database` | PostgreSQL 16                                                       | 5432   |
 
 - Dos entity managers: PostgreSQL (principal) + SQL Server (legacy).
@@ -84,6 +89,14 @@ Despliegue
 | `make test`           | PHPUnit                         |
 | `make testf F="name"` | Test por filtro                 |
 
+### Página web (en `pagina/`)
+
+| Comando             | Descripción |
+| ------------------- | ----------- |
+| `npm run dev`       | Dev server en 9100 bajo `/pagina/`, proxy de `/api` a `PAGINA_BACKEND` (por defecto `https://localhost`) |
+| `npm run build`     | type-check + build a `backend/public/pagina` (requerido antes de construir la imagen del backend) |
+| `npm run test:unit` | Vitest |
+
 ### Frontend (en `frontend/`)
 
 | Comando             | Descripción              |
@@ -109,6 +122,7 @@ Despliegue
 - **Croquis del bus** (ADR-019): `GET/PUT /api/buses/{id}/croquis` y `GET /api/croquis/plantillas`; `Bus.asientos` no se escribe por GraphQL. En el frontend, el mapa reutilizable es `shared/bus-map/BusMap.vue` (edición, ocupación y venta lo usan con distinto `estado`/slot) y el editor está en `features/bus/`.
 - **Responsive** (ADR-020): mobile-first; breakpoints `md` 48rem / `lg` 64rem / `xl` 80rem en `frontend/src/assets/tokens.css` (JS: `app/breakpoints.ts`). Debajo de `lg` los sidebars son drawers. Reglas y patrones en `docs/frontend/responsive.md`; ninguna pantalla está terminada si solo funciona en escritorio.
 - **Íconos**: el repositorio de íconos es [Tabler](https://tabler.io/icons) y el único punto de uso es `frontend/src/shared/ui/Icon.vue` (`<icon name="grip-vertical" lg />`, prefijo `tabler:` implícito). Ver `docs/frontend/icons.md`.
+- **Venta de asientos** (ADR-021): `App\Venta` (itinerario por subtrayectos, ocupación por tramos, tarifa por especificidad, registro con bloqueo del recorrido y factura fuera de la transacción, saldo de agencias, carrito web y pago 3-D Secure). REST: `/api/venta/*` (taquilla/agencia, permisos `venta.vender`, `venta.cortesia`, `venta.sin_factura`), `/api/agencias/{id}/*` (`agencia.acreditar`), `/api/publico/*` (página, sin sesión, rate limit) y `/pagina/*`. Mercure publica `/recorridos/{id}/ocupacion`. Comandos: `app:venta:purgar` (reservas vencidas, ventas pendientes abandonadas; `--cada=N`) y `app:venta:certificar-pendientes` (cron).
 - **Multi-tenancy**: `App\Doctrine\TenantFilter` (Doctrine SQLFilter, deshabilitado por defecto en el EM `default`) aísla `Bus`/`Piloto`/`Recorrido`/`BoletoTarifa` por `empresa_id`. Se habilita por request en `App\EventListener\TenantFilterListener` según `Usuario.empresa` — si el usuario no tiene empresa asignada, navega sin filtro. Ver ADR-015.
 
 ---
@@ -147,11 +161,12 @@ No existe un sitio MkDocs — se eliminó el 2026-09 por documentar un modelo de
 | ------------------- | ---------------------------------------- |
 | Contexto de dominio | `CONTEXT.md`                             |
 | Terminología + estado del modelo | `AGENTS.md` (este archivo, sección "Domain terminology") |
-| ADRs (decisiones de arquitectura) | `docs/architecture/decisions/` (ADR-001 a ADR-020, ver `index.md`) |
+| ADRs (decisiones de arquitectura) | `docs/architecture/decisions/` (ADR-001 a ADR-021, ver `index.md`) |
 | Convención de exploración de dominio para skills | `docs/agents/domain.md` |
 | Convención de issue tracker | `docs/agents/issue-tracker.md` |
 | Backend (Symfony, Doctrine, GraphQL) | `backend/AGENTS.md` |
 | Frontend (Quasar, Vue, stores) | `frontend/AGENTS.md` |
+| Página web pública | `pagina/AGENTS.md` |
 | Responsive (breakpoints, patrones mobile-first) | `docs/frontend/responsive.md` |
 
 Si necesitas documentación de un tema que no está en esta lista (ERD, mapa de entidades por subdominio, guía de performance, etc.), **no asumas que existe en `docs/`** — verifícalo primero; probablemente haya que escribirla desde cero contra el estado actual del código.
