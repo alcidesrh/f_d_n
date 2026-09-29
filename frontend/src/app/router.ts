@@ -68,6 +68,16 @@ export const router = createRouter({
       },
     },
     {
+      path: '/venta',
+      name: 'venta',
+      component: () => import('@/features/venta/VentaPage.vue'),
+      meta: {
+        title: 'Venta de boletos',
+        label: 'Venta',
+        icon: 'ticket',
+      },
+    },
+    {
       path: '/lista/:entity',
       name: 'entity-list',
       props: true,

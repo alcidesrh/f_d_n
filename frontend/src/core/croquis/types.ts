@@ -56,5 +56,25 @@ export interface PlantillaCroquis {
 /**
  * Cómo se pinta un asiento en un uso concreto del mapa. El croquis no lo
  * sabe: lo decide quien pinta (p. ej. la ocupación de un recorrido).
+ *
+ * En la venta, `ocupado` es vendido en taquilla; `ocupado-web` y
+ * `ocupado-agencia` distinguen los otros canales (ADR-021) y `reservado` es
+ * la precompra de la página web.
  */
-export type EstadoAsiento = 'disponible' | 'ocupado' | 'seleccionado' | 'reservado' | 'bloqueado'
+export type EstadoAsiento =
+  | 'disponible'
+  | 'ocupado'
+  | 'ocupado-web'
+  | 'ocupado-agencia'
+  | 'seleccionado'
+  | 'reservado'
+  | 'bloqueado'
+
+/** Estados que no se pueden elegir en un mapa interactivo. */
+export const ESTADOS_NO_SELECCIONABLES: readonly EstadoAsiento[] = [
+  'ocupado',
+  'ocupado-web',
+  'ocupado-agencia',
+  'reservado',
+  'bloqueado',
+]
