@@ -22,6 +22,7 @@ use App\Venta\Excepcion\VentaRechazada;
 use App\Venta\Facturacion\CertificacionFallida;
 use App\Venta\Facturacion\Facturador;
 use App\Venta\Mensaje\EnviarBoletoPorCorreo;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -77,68 +78,13 @@ final class RegistroVenta
         $conFactura = $canal === CanalVenta::ESTACION && !$s->cortesia;
 
         $usuarioId = $usuario->getId();
-        /** @var BoletoVenta $venta */
-        $venta = $this->transaccion->ejecutar(function () use ($s, $usuarioId, $token, $canal, $conFactura) {
-            $usuario = $this->em->find(Usuario::class, $usuarioId);
-            $recorrido = $this->em->find(Recorrido::class, $s->recorridoId, LockMode::PESSIMISTIC_WRITE)
-                ?? throw new VentaRechazada("El recorrido no existe.", "no_encontrado", 404);
-            $this->reglas->exigirVendibleEnTaquilla($recorrido);
-
-            $agencia = $usuario->getAgencia();
-            if ($agencia !== null) {
-                $this->exigirAgenciaPuedeVender($agencia, $recorrido);
-            }
-
-            $trayecto = $this->reglas->trayecto($recorrido, $s->trayectoId);
-            $tramo = $this->reglas->tramo($recorrido, $trayecto);
-            $asientos = $this->reglas->asientos($recorrido, array_column($s->asientos, "asiento"));
-            $this->reglas->exigirDisponibles($recorrido, $tramo, $asientos);
-            $cotizacion = $this->reglas->cotizar($recorrido, $trayecto, $asientos, $s->cobrarTrayectoCompleto, $s->cortesia);
-
-            $cliente = $this->em->find(Cliente::class, $s->clienteId)
-                ?? throw new VentaRechazada("El cliente no existe.");
-
-            $conFacturaAhora = $conFactura && !$s->sinFacturaElectronica && !$cotizacion->total->isZero();
-            $venta = (new BoletoVenta())
-                ->setTokenPublico($token)
-                ->setCanal($canal)
-                ->setUsuario($usuario)
-                ->setAgencia($agencia)
-                ->setEstacion($canal === CanalVenta::ESTACION ? $this->estacion($s, $usuario) : null)
-                ->setCliente($cliente)
-                ->setTipoPago($s->tipoPagoId ? $this->em->find(TipoPago::class, $s->tipoPagoId) : null)
-                ->setMoneda($s->monedaId ? $this->em->find(Moneda::class, $s->monedaId) : null)
-                ->setTotal($cotizacion->total)
-                ->setCortesia($s->cortesia)
-                ->setEnviarCorreo($s->enviarCorreo)
-                ->setEstado($conFacturaAhora ? EstadoBoletoVenta::PENDIENTE : EstadoBoletoVenta::CONFIRMADA)
-                ->setEstadoFacturacion(match (true) {
-                    !$conFactura || $cotizacion->total->isZero() => EstadoFacturacion::NO_APLICA,
-                    default => EstadoFacturacion::PENDIENTE,
-                })
-                ->setErrorFacturacion($conFactura && $s->sinFacturaElectronica ? "Venta en contingencia: sin factura electrónica." : null)
-                ->setCreatedAt(new \DateTime());
-            $this->em->persist($venta);
-
-            $pasajeros = $this->pasajeros($s, $cliente);
-            foreach ($asientos as $i => $asiento) {
-                $boleto = (new BoletoAsiento())
-                    ->setAsiento($asiento)
-                    ->setTrayecto($trayecto)
-                    ->setRecorrido($recorrido)
-                    ->setCliente($pasajeros[$s->asientos[$i]["cliente"] ?? $cliente->getId()])
-                    ->setPrecio($cotizacion->precioDe($asiento))
-                    ->setObservacion($s->observacion);
-                $venta->addAsiento($boleto);
-                $this->em->persist($boleto);
-            }
-
-            if ($agencia !== null) {
-                $this->saldo->debitarVenta($agencia, $venta, $usuario);
-            }
-
-            return $venta;
-        });
+        try {
+            /** @var BoletoVenta $venta */
+            $venta = $this->transaccion->ejecutar(fn() => $this->registrar($s, $usuarioId, $token, $canal, $conFactura));
+        } catch (UniqueConstraintViolationException) {
+            // Mismo token enviado dos veces a la vez: la otra petición ya la está registrando.
+            throw new VentaRechazada("Esta venta ya se está procesando.", "venta_en_proceso", 409);
+        }
 
         if ($venta->getEstado() === EstadoBoletoVenta::PENDIENTE) {
             $this->certificarOAnular($venta, $permiteSinFactura);
@@ -147,6 +93,70 @@ final class RegistroVenta
         $this->publicador->cambio((int) $venta->getAsientos()->first()->getRecorrido()->getId());
         if ($venta->isEnviarCorreo() && $venta->getCliente()?->getEmail()) {
             $this->bus->dispatch(new EnviarBoletoPorCorreo((int) $venta->getId()));
+        }
+
+        return $venta;
+    }
+
+    /** Paso 1 (dentro de la transacción): valida, cotiza y aparta. */
+    private function registrar(SolicitudVenta $s, int $usuarioId, Uuid $token, CanalVenta $canal, bool $conFactura): BoletoVenta
+    {
+        $usuario = $this->em->find(Usuario::class, $usuarioId);
+        $recorrido = $this->em->find(Recorrido::class, $s->recorridoId, LockMode::PESSIMISTIC_WRITE)
+            ?? throw new VentaRechazada("El recorrido no existe.", "no_encontrado", 404);
+        $this->reglas->exigirVendibleEnTaquilla($recorrido);
+
+        $agencia = $usuario->getAgencia();
+        if ($agencia !== null) {
+            $this->exigirAgenciaPuedeVender($agencia, $recorrido);
+        }
+
+        $trayecto = $this->reglas->trayecto($recorrido, $s->trayectoId);
+        $tramo = $this->reglas->tramo($recorrido, $trayecto);
+        $asientos = $this->reglas->asientos($recorrido, array_column($s->asientos, "asiento"));
+        $this->reglas->exigirDisponibles($recorrido, $tramo, $asientos);
+        $cotizacion = $this->reglas->cotizar($recorrido, $trayecto, $asientos, $s->cobrarTrayectoCompleto, $s->cortesia);
+
+        $cliente = $this->em->find(Cliente::class, $s->clienteId)
+            ?? throw new VentaRechazada("El cliente no existe.");
+
+        $conFacturaAhora = $conFactura && !$s->sinFacturaElectronica && !$cotizacion->total->isZero();
+        $venta = (new BoletoVenta())
+            ->setTokenPublico($token)
+            ->setCanal($canal)
+            ->setUsuario($usuario)
+            ->setAgencia($agencia)
+            ->setEstacion($canal === CanalVenta::ESTACION ? $this->estacion($s, $usuario) : null)
+            ->setCliente($cliente)
+            ->setTipoPago($s->tipoPagoId ? $this->em->find(TipoPago::class, $s->tipoPagoId) : null)
+            ->setMoneda($s->monedaId ? $this->em->find(Moneda::class, $s->monedaId) : null)
+            ->setTotal($cotizacion->total)
+            ->setCortesia($s->cortesia)
+            ->setEnviarCorreo($s->enviarCorreo)
+            ->setEstado($conFacturaAhora ? EstadoBoletoVenta::PENDIENTE : EstadoBoletoVenta::CONFIRMADA)
+            ->setEstadoFacturacion(match (true) {
+                !$conFactura || $cotizacion->total->isZero() => EstadoFacturacion::NO_APLICA,
+                default => EstadoFacturacion::PENDIENTE,
+            })
+            ->setErrorFacturacion($conFactura && $s->sinFacturaElectronica ? "Venta en contingencia: sin factura electrónica." : null)
+            ->setCreatedAt(new \DateTime());
+        $this->em->persist($venta);
+
+        $pasajeros = $this->pasajeros($s, $cliente);
+        foreach ($asientos as $i => $asiento) {
+            $boleto = (new BoletoAsiento())
+                ->setAsiento($asiento)
+                ->setTrayecto($trayecto)
+                ->setRecorrido($recorrido)
+                ->setCliente($pasajeros[$s->asientos[$i]["cliente"] ?? $cliente->getId()])
+                ->setPrecio($cotizacion->precioDe($asiento))
+                ->setObservacion($s->observacion);
+            $venta->addAsiento($boleto);
+            $this->em->persist($boleto);
+        }
+
+        if ($agencia !== null) {
+            $this->saldo->debitarVenta($agencia, $venta, $usuario);
         }
 
         return $venta;

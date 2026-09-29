@@ -95,7 +95,7 @@ final class VentaController extends AbstractController
 
     /** `?fecha=AAAA-MM-DD&estacion={id}`: recorridos del día que pasan por la estación. */
     #[Route("/recorridos", name: "recorridos", methods: ["GET"])]
-    public function recorridos(Request $request): JsonResponse
+    public function recorridos(Request $request, #[CurrentUser] Usuario $usuario): JsonResponse
     {
         $this->denyAccessUnlessGranted(self::VENDER);
         $dia = \DateTimeImmutable::createFromFormat("!Y-m-d", (string) $request->query->get("fecha"));
@@ -104,7 +104,11 @@ final class VentaController extends AbstractController
         }
         $estacion = $request->query->getInt("estacion") ?: null;
 
-        return $this->json($this->consulta->recorridosDeEstacion($dia, $estacion));
+        return $this->json($this->consulta->recorridosDeEstacion(
+            $dia,
+            $estacion,
+            $usuario->getAgencia()?->getEmpresa()?->getId(),
+        ));
     }
 
     #[Route("/recorridos/{id<\d+>}", name: "recorrido", methods: ["GET"])]

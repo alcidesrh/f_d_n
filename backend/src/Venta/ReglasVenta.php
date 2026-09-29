@@ -154,7 +154,7 @@ final class ReglasVenta
             $tarifa = $porClase[$asiento->getClase()->value] ?? null;
             if ($tarifa === null && !$cortesia) {
                 throw new VentaRechazada(sprintf(
-                    "No hay tarifa para asientos clase %s en %s - %s. Configure una BoletoTarifa.",
+                    "No hay tarifa para asientos clase %s en %s - %s.",
                     $asiento->getClase()->value,
                     $trayectoTarifa->getOrigen()->getNombre(),
                     $trayectoTarifa->getDestino()->getNombre(),

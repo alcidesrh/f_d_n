@@ -34,13 +34,17 @@ final class ConsultaVenta
 
     /**
      * Recorridos del día que pasan por la estación (en cualquier parada salvo
-     * la última): desde ahí se les puede vender. Sin estación, todos.
+     * la última): desde ahí se les puede vender. Sin estación, todos. Con
+     * empresa, solo los suyos (agencias que venden para una sola empresa).
      *
      * @return list<array<string, mixed>>
      */
-    public function recorridosDeEstacion(\DateTimeImmutable $dia, ?int $estacionId): array
+    public function recorridosDeEstacion(\DateTimeImmutable $dia, ?int $estacionId, ?int $empresaId = null): array
     {
-        $recorridos = $this->recorridosDelDia($dia);
+        $recorridos = array_values(array_filter(
+            $this->recorridosDelDia($dia),
+            static fn(Recorrido $r) => $empresaId === null || $r->getEmpresa()?->getId() === $empresaId,
+        ));
         $itinerarios = $this->itinerarios->deTrayectos(array_map(static fn(Recorrido $r) => $r->getTrayecto(), $recorridos));
 
         $filas = [];

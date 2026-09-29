@@ -16,7 +16,6 @@ use App\Entity\PagoWeb;
 use App\Entity\Recorrido;
 use App\Entity\ReservaAsiento;
 use App\Entity\TipoDocumento;
-use App\Venta\Excepcion\AsientosNoDisponibles;
 use App\Venta\Excepcion\VentaRechazada;
 use App\Venta\Facturacion\CertificacionFallida;
 use App\Venta\Facturacion\Facturador;
@@ -182,14 +181,20 @@ final class CompraWeb
         try {
             /** @var BoletoVenta $venta */
             $venta = $this->transaccion->ejecutar(fn() => $this->registrar($this->em->find(PagoWeb::class, $pagoId)));
-        } catch (AsientosNoDisponibles|VentaRechazada $e) {
+        } catch (\Throwable $e) {
+            // Cobrado pero sin venta: se devuelve el dinero (asiento perdido o error inesperado).
             $pago = $this->em->find(PagoWeb::class, $pagoId);
             $this->pasarela->reembolsar((string) $pago->getReferenciaPasarela(), $pago->getMonto());
-            $pago->registrar(EstadoPagoWeb::REEMBOLSADO, mensaje: $e->getMessage());
+            $motivo = $e instanceof VentaRechazada ? $e->getMessage() : "error al registrar la venta";
+            $pago->registrar(EstadoPagoWeb::REEMBOLSADO, mensaje: $motivo);
             $this->em->flush();
-            $this->logger->warning("Compra web {token} reembolsada: {motivo}", ["token" => (string) $pago->getToken(), "motivo" => $e->getMessage()]);
+            $this->logger->error("Compra web {token} reembolsada: {motivo}", [
+                "token" => (string) $pago->getToken(),
+                "motivo" => $e->getMessage(),
+                "exception" => $e,
+            ]);
             throw new VentaRechazada(
-                "No pudimos confirmar sus asientos ({$e->getMessage()}). Se reembolsó el cobro a su tarjeta.",
+                "No pudimos confirmar sus asientos ({$motivo}). Se reembolsó el cobro a su tarjeta.",
                 "reembolsado",
                 409,
             );
