@@ -18,6 +18,14 @@ export interface EntityFormExtension {
 
 /** Clave = nombre de la entidad en PascalCase. */
 export const entityFormExtensions: Record<string, EntityFormExtension[]> = {
+  Agencia: [
+    {
+      key: 'saldo',
+      title: 'Saldo',
+      icon: 'wallet',
+      component: () => import('@/features/agencia/AgenciaSaldoSection.vue'),
+    },
+  ],
   Bus: [
     {
       key: 'croquis',

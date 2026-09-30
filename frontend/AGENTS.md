@@ -43,13 +43,18 @@ Dependencias en una sola dirección: `app → features → shared → core`. **U
 | `core/entities/` | Capa de datos de entidades: `schema` (metadata: `find`/`require`), `repository` (leer/escribir), `entityStore` (estado por entidad), `registry` (`getEntity(nombre)`) | `registry.ts` |
 | `core/metadata/` | Configuración de presentación (`/api/entity_configurations`) | — |
 | `core/navigation/` | Menús del usuario por área (`GET /me/menus`, `useUserMenusStore`); los pinta `app/layout/navigation/` (`NavArea`) | `userMenus.ts` |
+| `core/venta/` | Venta de asientos (ADR-021): tipos, REST (`/venta/*`, `/agencias/*`), reglas puras (mapa, sube/baja, selección) y NIT | `modelo.ts` |
+| `core/realtime.ts` | Suscripción a tópicos de Mercure (`suscribir(topico, cb)`) | — |
 | `core/croquis/` | Croquis del bus (ADR-019): tipos, reglas puras (espejo de `App\Croquis\Croquis`) y REST (`/buses/{id}/croquis`, `/croquis/plantillas`) | `model.ts` |
 | `core/notify.ts`, `core/loading.ts` | Toasts (`notify.success/error/…`) y contador de peticiones | — |
 | `shared/ui/` | `Icon` (`<icon name="bus" lg />`), `PageHead`, `SortablePanelList` — registrados globalmente | — |
 | `shared/icons/` | `IconPicker` y catálogo Tabler (carga diferida) | `tablerCatalog.ts` |
 | `shared/bus-map/` | Mapa del bus (`BusMap`, `SeatGlyph`, `SignalGlyph`, `BusMapLegend`): presentación pura para edición, ocupación y venta (`estado`, `interactivo`, slot `celda`). Excepción acotada a ADR-017: vocabulario del dominio, sin datos | `BusMap.vue` |
+| `shared/barcode/` | Code 128 (`code128.ts`, espejo de `App\Venta\Boleto\Code128`) y `Barcode.vue` | — |
 | `shared/formkit/` | Inputs `Fk*` y su registro en FormKit (`config.ts`) | `useFormKitInput.ts` |
 | `features/entity-crud/` | Listado (`ListPage` + `list/`) y formulario (`FormPage` + `form/`) genéricos de cualquier entidad. Formulario propio por entidad: `form/formOverrides.ts`; secciones extra del genérico, en pestañas junto a "Datos" (se guardan con él, contrato en `core/entities/formExtension.ts`): `form/formExtensions.ts` | `ListPage.vue`, `form/useEntityForm.ts` |
+| `features/venta/` | Venta en taquilla y agencias (ADR-021): cliente, recorridos del día, sube/baja, croquis en vivo (Mercure), cobro, fallo de factura, ticket de 80 mm (`ticket.ts`) | `VentaPage.vue`, `store.ts` |
+| `features/agencia/` | Sección "Saldo" del formulario genérico de Agencia (depósitos, ajustes, movimientos) | `AgenciaSaldoSection.vue` |
 | `features/bus/` | Editor del croquis del bus (sección "Croquis" del formulario de `Bus`): pilas, arrastre por puntero, pincel, deshacer, plantillas | `editor.ts`, `CroquisEditor.vue` |
 | `features/entity-config/` | Editor de columnas/campos por entidad | `EntityConfigPage.vue` |
 | `features/form-builder/` | Constructor de formularios FormKit | `FormBuilderPage.vue` |

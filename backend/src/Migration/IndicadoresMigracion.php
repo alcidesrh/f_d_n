@@ -26,7 +26,7 @@ final class IndicadoresMigracion
         ],
         "estacion" => [
             "nuevo" => "SELECT COUNT(*) FROM enclave WHERE tipo = 'estacion'",
-            "legado" => "SELECT COUNT(*) FROM estacion WHERE activo = 1",
+            "legado" => "SELECT COUNT(*) FROM estacion WHERE activo = 1 AND (tipoEstacion_id IS NULL OR tipoEstacion_id <> 4)",
         ],
         "localidad" => [
             "nuevo" => "SELECT COUNT(*) FROM localidad",
@@ -39,6 +39,30 @@ final class IndicadoresMigracion
         "piloto" => [
             "nuevo" => "SELECT COUNT(*) FROM piloto",
             "legado" => "SELECT COUNT(*) FROM piloto",
+        ],
+        "tipo_pago" => [
+            "nuevo" => "SELECT COUNT(*) FROM tipo_pago",
+            "legado" => "SELECT COUNT(*) FROM tipo_pago",
+        ],
+        "moneda" => [
+            "nuevo" => "SELECT COUNT(*) FROM moneda",
+            "legado" => "SELECT COUNT(*) FROM moneda",
+        ],
+        "tipo_documento" => [
+            "nuevo" => "SELECT COUNT(*) FROM tipo_documento",
+            "legado" => "SELECT COUNT(*) FROM tipo_documento",
+        ],
+        "nacionalidad" => [
+            "nuevo" => "SELECT COUNT(*) FROM pais",
+            "legado" => "SELECT COUNT(*) FROM nacionalidad",
+        ],
+        "fel" => [
+            "nuevo" => "SELECT COUNT(*) FROM credencial_fel",
+            "legado" => "SELECT COUNT(*) FROM factura_emisor",
+        ],
+        "agencia" => [
+            "nuevo" => "SELECT COUNT(*) FROM agencia",
+            "legado" => "SELECT COUNT(*) FROM estacion WHERE tipoEstacion_id = 4",
         ],
         "cliente" => [
             "nuevo" => "SELECT COUNT(*) FROM cliente",

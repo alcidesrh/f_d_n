@@ -20,6 +20,26 @@
   --bm-occupied-stroke: color-mix(in srgb, var(--p-text-color) 28%, var(--p-content-background));
   --bm-occupied-ink: var(--p-text-muted-color);
 
+  /* Vendidos por otros canales (venta, ADR-021): web en ámbar, agencia en violeta. */
+  --bm-sold-web: color-mix(in srgb, var(--p-yellow-500, #eab308) 30%, var(--p-content-background));
+  --bm-sold-web-stroke: color-mix(
+    in srgb,
+    var(--p-yellow-600, #ca8a04) 70%,
+    var(--p-content-background)
+  );
+  --bm-sold-web-ink: var(--p-yellow-800, #854d0e);
+  --bm-sold-agency: color-mix(
+    in srgb,
+    var(--p-violet-500, #8b5cf6) 18%,
+    var(--p-content-background)
+  );
+  --bm-sold-agency-stroke: color-mix(
+    in srgb,
+    var(--p-violet-600, #7c3aed) 60%,
+    var(--p-content-background)
+  );
+  --bm-sold-agency-ink: var(--p-violet-800, #5b21b6);
+
   --bm-reserved: var(--p-orange-500, #f97316);
   --bm-reserved-soft: color-mix(
     in srgb,

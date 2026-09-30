@@ -72,6 +72,9 @@ security:
         # - { path: "^/api$", roles: PUBLIC_ACCESS }
         # - { path: "^/api/", roles: ROLE_USER }
         # - { request_matcher: App\Security\GraphiQLRequestMatcher, roles: PUBLIC_ACCESS }
+        # Página web pública y su API (venta en línea, ADR-021).
+        - { path: "^/api/publico/", roles: PUBLIC_ACCESS }
+        - { path: "^/pagina", roles: PUBLIC_ACCESS }
         - { path: "^/", roles: ROLE_USER }
 
 when@test:

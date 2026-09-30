@@ -3,6 +3,7 @@
 namespace App\Migration;
 
 use App\Migration\Job\Progreso;
+use App\Venta\Facturacion\CredencialesFel;
 use DateTime;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -30,6 +31,7 @@ class MigradorEstaticos
         ]
         private EntityManagerInterface $systemfdnEm,
         private Mapeador $mapeador,
+        private CredencialesFel $credencialesFel,
     ) {
         $this->oldPdo->setAttribute(
             \PDO::ATTR_ERRMODE,
@@ -59,6 +61,12 @@ class MigradorEstaticos
             "piloto" => 0,
             "bus_marca" => 0,
             "localidad" => 0,
+            "tipo_pago" => 0,
+            "moneda" => 0,
+            "tipo_documento" => 0,
+            "nacionalidad" => 0,
+            "agencia" => 0,
+            "fel" => 0,
         ];
 
         $this->newConn->beginTransaction();
@@ -88,8 +96,14 @@ class MigradorEstaticos
                 $contadores["piloto"] = $this->migrarPilotos($output);
                 $contadores["localidad"] = $this->migrarLocalidads($output);
                 $contadores["estacion"] = $this->migrarEstacions($output);
+                $contadores["tipo_pago"] = $this->migrarTiposPago($output);
+                $contadores["moneda"] = $this->migrarMonedas($output);
+                $contadores["tipo_documento"] = $this->migrarTiposDocumento($output);
+                $contadores["nacionalidad"] = $this->migrarNacionalidades($output);
                 $contadores["cliente"] = $this->migrarClientes($output);
                 $contadores["usuario"] = $this->migrarUsuarios($output);
+                $contadores["agencia"] = $this->migrarAgencias($output);
+                $contadores["fel"] = $this->migrarFel($output);
                 $contadores["bus_marca"] = $this->migrarMarcas($output);
                 $contadores["bus"] = $this->migrarBuss($output);
                 $contadores["asiento"] = $this->migrarAsientos($output);
@@ -123,6 +137,12 @@ class MigradorEstaticos
         "piloto" => "migrarPilotos",
         "marca" => "migrarMarcas",
         "localidad" => "migrarLocalidads",
+        "tipo_pago" => "migrarTiposPago",
+        "moneda" => "migrarMonedas",
+        "tipo_documento" => "migrarTiposDocumento",
+        "nacionalidad" => "migrarNacionalidades",
+        "agencia" => "migrarAgencias",
+        "fel" => "migrarFel",
     ];
 
     /**
@@ -212,7 +232,8 @@ class MigradorEstaticos
         if ($output) {
             $output->write("<info>Estaciones...</info>");
         }
-        $rows = $this->fetchOld("SELECT * FROM estacion WHERE activo = 1");
+        // Las agencias (tipo 4) no son enclaves: van a `agencia` (migrarAgencias).
+        $rows = $this->fetchOld("SELECT * FROM estacion WHERE activo = 1 AND (tipoEstacion_id IS NULL OR tipoEstacion_id <> " . self::TIPO_ESTACION_AGENCIA . ")");
         $count = 0;
 
         foreach ($rows as $row) {
@@ -247,6 +268,8 @@ class MigradorEstaticos
         $top = $limite ?? 1000;
         $rows = $this->fetchOld("SELECT TOP {$top} * FROM cliente ORDER BY id");
         $count = 0;
+        $tiposDocumento = array_flip(array_map("intval", $this->newConn->fetchFirstColumn("SELECT id FROM tipo_documento")));
+        $naciones = array_flip(array_map("intval", $this->newConn->fetchFirstColumn("SELECT id FROM pais")));
 
         foreach ($rows as $row) {
             if ($progreso && $progreso->debeCancelar()) {
@@ -257,8 +280,14 @@ class MigradorEstaticos
                 continue;
             }
             $data = $this->mapeador->cliente($row);
+            if (!isset($tiposDocumento[$data["tipo_documento_id"] ?? 0])) {
+                $data["tipo_documento_id"] = null;
+            }
+            if (!isset($naciones[$data["nacionalidad_id"] ?? 0])) {
+                $data["nacionalidad_id"] = null;
+            }
             $this->newConn->executeStatement(
-                "INSERT INTO cliente (id, nombre, apellido, nit, email, telefono) VALUES (:id, :nombre, :apellido, :nit, :email, :telefono)",
+                "INSERT INTO cliente (id, nombre, apellido, nit, email, telefono, numero_documento, tipo_documento_id, nacionalidad_id) VALUES (:id, :nombre, :apellido, :nit, :email, :telefono, :numero_documento, :tipo_documento_id, :nacionalidad_id)",
                 $data,
             );
             $count++;
@@ -300,6 +329,13 @@ class MigradorEstaticos
                 "INSERT INTO usuario ({$fields}) VALUES ({$args})",
                 $data,
             );
+            // Estación de trabajo (valor inicial de la venta en taquilla).
+            if (!empty($row["estacion_id"]) && $this->existe("enclave", (string) $row["estacion_id"])) {
+                $this->newConn->executeStatement(
+                    "UPDATE usuario SET estacion_id = :estacion WHERE id = :id",
+                    ["estacion" => (int) $row["estacion_id"], "id" => (int) $row["id"]],
+                );
+            }
             $token = "fdn_" . bin2hex(random_bytes(32));
             $data = [
                 "expira" => null,
@@ -939,6 +975,164 @@ class MigradorEstaticos
 
     // ─── Helpers ───────────────────────────────────────────────────
 
+    // ─── Catálogos de la venta (ADR-021) ───────────────────────────
+
+    /** `estacion.tipoEstacion_id` de las agencias en el legado. */
+    private const TIPO_ESTACION_AGENCIA = 4;
+
+    private function migrarTiposPago(?OutputInterface $output = null): int
+    {
+        return $this->migrarCatalogo($output, "Tipos de pago", "SELECT * FROM tipo_pago", "tipo_pago", $this->mapeador->tipoPago(...));
+    }
+
+    private function migrarMonedas(?OutputInterface $output = null): int
+    {
+        return $this->migrarCatalogo($output, "Monedas", "SELECT * FROM moneda", "moneda", $this->mapeador->moneda(...));
+    }
+
+    private function migrarTiposDocumento(?OutputInterface $output = null): int
+    {
+        return $this->migrarCatalogo($output, "Tipos de documento", "SELECT * FROM tipo_documento", "tipo_documento", $this->mapeador->tipoDocumento(...));
+    }
+
+    private function migrarNacionalidades(?OutputInterface $output = null): int
+    {
+        return $this->migrarCatalogo($output, "Nacionalidades", "SELECT * FROM nacionalidad", "pais", $this->mapeador->nacionalidad(...));
+    }
+
+    /**
+     * Catálogo con PK numérica del legado (se conserva el id). Un nombre ya
+     * existente con otro id se salta (`ON CONFLICT DO NOTHING`).
+     */
+    private function migrarCatalogo(?OutputInterface $output, string $etiqueta, string $sql, string $tabla, callable $mapear): int
+    {
+        if ($output) {
+            $output->write("<info>{$etiqueta}...</info>");
+        }
+        $count = 0;
+        foreach ($this->fetchOld($sql) as $row) {
+            if ($this->existe($tabla, (string) $row["id"])) {
+                continue;
+            }
+            $data = $mapear($row);
+            $campos = implode(", ", array_keys($data));
+            $args = implode(", ", array_map(static fn($k) => ":{$k}", array_keys($data)));
+            $count += $this->newConn->executeStatement("INSERT INTO {$tabla} ({$campos}) VALUES ({$args}) ON CONFLICT DO NOTHING", $data);
+        }
+        $this->reiniciarIdentidad($tabla);
+        if ($output) {
+            $output->writeln(" <info>{$count}</info>");
+        }
+
+        return $count;
+    }
+
+    /**
+     * Agencias: estaciones del legado con `tipoEstacion_id = 4`. El saldo
+     * migrado entra como un ajuste en el libro de la agencia, y sus usuarios
+     * (`custom_user.estacion_id`) quedan vinculados a ella.
+     */
+    private function migrarAgencias(?OutputInterface $output = null): int
+    {
+        if ($output) {
+            $output->write("<info>Agencias...</info>");
+        }
+        $rows = $this->fetchOld(
+            "SELECT e.*, m.sigla AS moneda_sigla FROM estacion e LEFT JOIN moneda m ON m.id = e.agencia_moneda_id WHERE e.tipoEstacion_id = " . self::TIPO_ESTACION_AGENCIA,
+        );
+        $count = 0;
+        $ahora = (new DateTime())->format("Y-m-d H:i:s");
+        foreach ($rows as $row) {
+            if ($this->existe("agencia", (string) $row["id"])) {
+                continue;
+            }
+            $data = $this->mapeador->agencia($row);
+            $this->newConn->executeStatement(
+                "INSERT INTO agencia (id, nombre, direccion, saldo, moneda, porcentaje_bonificacion, activo, legacy_id) VALUES (:id, :nombre, :direccion, :saldo, :moneda, :porcentaje_bonificacion, :activo, :legacy_id)",
+                $data,
+            );
+            if ($data["saldo"] !== 0) {
+                $this->newConn->executeStatement(
+                    "INSERT INTO agencia_movimiento (agencia_id, tipo, monto, saldo_resultante, observacion, fecha) VALUES (:agencia, 'ajuste', :monto, :monto, 'Saldo migrado del sistema anterior', :fecha)",
+                    ["agencia" => $data["id"], "monto" => $data["saldo"], "fecha" => $ahora],
+                );
+            }
+            $usuarios = array_map("intval", array_column($this->fetchOldNoGenerator(
+                "SELECT id FROM custom_user WHERE estacion_id = :estacion",
+                ["estacion" => $row["id"]],
+            ), "id"));
+            if ($usuarios !== []) {
+                $this->newConn->executeStatement(
+                    "UPDATE usuario SET agencia_id = :agencia, estacion_id = NULL WHERE id IN (" . implode(",", $usuarios) . ")",
+                    ["agencia" => $data["id"]],
+                );
+            }
+            $count++;
+        }
+        $this->reiniciarIdentidad("agencia");
+        if ($output) {
+            $output->writeln(" <info>{$count}</info>");
+        }
+
+        return $count;
+    }
+
+    /**
+     * Datos FEL de cada empresa desde `factura_emisor`: afiliación al IVA,
+     * credenciales del certificador (la clave se guarda cifrada) y el
+     * establecimiento por defecto (código 1) si la empresa no tiene.
+     */
+    private function migrarFel(?OutputInterface $output = null): int
+    {
+        if ($output) {
+            $output->write("<info>Facturación electrónica (emisores)...</info>");
+        }
+        $count = 0;
+        foreach ($this->fetchOld("SELECT * FROM factura_emisor") as $row) {
+            if (isset($row["activo"]) && $row["activo"] !== null && !filter_var($row["activo"], FILTER_VALIDATE_BOOL)) {
+                continue;
+            }
+            $empresaId = $row["empresa_id"] ? $this->resolveEmpresaId((int) $row["empresa_id"]) : null;
+            if (!$empresaId) {
+                continue;
+            }
+            $data = $this->mapeador->emisorFel($row);
+            if ($data["afiliacion_iva"] !== null) {
+                $this->newConn->executeStatement(
+                    "UPDATE empresa SET afiliacion_iva = :afiliacion WHERE id = :id",
+                    ["afiliacion" => $data["afiliacion_iva"], "id" => $empresaId],
+                );
+            }
+            if ($data["usuario"] !== null && $data["clave"] !== null) {
+                $this->newConn->executeStatement(
+                    "INSERT INTO credencial_fel (empresa_id, usuario, clave_cifrada) VALUES (:empresa, :usuario, :clave)
+                     ON CONFLICT (empresa_id) DO UPDATE SET usuario = EXCLUDED.usuario, clave_cifrada = EXCLUDED.clave_cifrada",
+                    ["empresa" => $empresaId, "usuario" => $data["usuario"], "clave" => $this->credencialesFel->cifrar($data["clave"])],
+                );
+            }
+            $this->newConn->executeStatement(
+                "INSERT INTO establecimiento (empresa_id, estacion_id, codigo, nombre)
+                 SELECT :empresa, NULL, 1, 'Principal'
+                 WHERE NOT EXISTS (SELECT 1 FROM establecimiento WHERE empresa_id = :empresa AND estacion_id IS NULL)",
+                ["empresa" => $empresaId],
+            );
+            $count++;
+        }
+        if ($output) {
+            $output->writeln(" <info>{$count}</info>");
+        }
+
+        return $count;
+    }
+
+    /** Tras insertar ids explícitos, la identidad sigue desde el mayor. */
+    private function reiniciarIdentidad(string $tabla): void
+    {
+        $this->newConn->executeStatement(
+            "SELECT setval(pg_get_serial_sequence('{$tabla}', 'id'), COALESCE((SELECT MAX(id) FROM {$tabla}), 0) + 1, false)",
+        );
+    }
+
     private function existe(string $tabla, string $legacyId): bool
     {
         $sql = match ($tabla) {
@@ -950,7 +1144,12 @@ class MigradorEstaticos
             "boleto_tarifa",
             "piloto",
             "localidad",
-            "bus_marca"
+            "bus_marca",
+            "tipo_pago",
+            "moneda",
+            "tipo_documento",
+            "pais",
+            "agencia"
                 => "SELECT 1 FROM {$tabla} WHERE id = :lid",
             "bus" => "SELECT 1 FROM {$tabla} WHERE codigo = :lid",
             "trayecto" => "SELECT 1 FROM {$tabla} WHERE legacy_id = :lid",

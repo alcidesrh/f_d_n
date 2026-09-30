@@ -46,6 +46,11 @@ class ActionFixtures extends Fixture
             ['codigo' => 'ruta.editar',  'recurso' => 'Ruta',  'operacion' => 'update', 'grupo' => 'Rutas', 'nombre' => 'Editar rutas'],
             ['codigo' => 'ruta.eliminar','recurso' => 'Ruta',  'operacion' => 'delete', 'grupo' => 'Rutas', 'nombre' => 'Eliminar rutas'],
             ['codigo' => 'ruta.ver',     'recurso' => 'Ruta',  'operacion' => 'read',   'grupo' => 'Rutas', 'nombre' => 'Ver ruta'],
+            // Venta de asientos (ADR-021)
+            ['codigo' => 'venta.vender',      'recurso' => 'BoletoVenta', 'operacion' => 'create', 'grupo' => 'Venta', 'nombre' => 'Vender boletos (taquilla/agencia)'],
+            ['codigo' => 'venta.cortesia',    'recurso' => 'BoletoVenta', 'operacion' => 'courtesy', 'grupo' => 'Venta', 'nombre' => 'Emitir cortesías (sin cobro)'],
+            ['codigo' => 'venta.sin_factura', 'recurso' => 'BoletoVenta', 'operacion' => 'contingency', 'grupo' => 'Venta', 'nombre' => 'Vender sin factura electrónica (contingencia)'],
+            ['codigo' => 'agencia.acreditar', 'recurso' => 'Agencia', 'operacion' => 'credit', 'grupo' => 'Venta', 'nombre' => 'Acreditar/ajustar saldo de agencias'],
         ];
 
         foreach ($actions as $data) {

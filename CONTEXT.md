@@ -66,20 +66,52 @@ Estado (`EstadoBoletoAsiento`): `emitido → chequeado → transito → finaliza
 _Avoid_: boleto, ticket
 
 **BoletoVenta**:
-Una venta que agrupa uno o más boletos de asiento y puede emitir una factura.
+Una venta que agrupa uno o más boletos de asiento de un recorrido y un tramo, hecha por un canal,
+facturada a un cliente y que puede emitir una factura.
+Estado (`EstadoBoletoVenta`): `pendiente` (asientos apartados esperando la factura) → `confirmada`.
+Facturación (`EstadoFacturacion`): `certificada`, `pendiente` (contingencia o fallo tras cobrar en la web)
+o `no_aplica` (agencias, cortesías).
 _Avoid_: venta, tiquetera
 
+**Canal de venta**:
+Por dónde entra una venta: `estacion` (taquilla, un usuario de la empresa), `agencia`
+(usuario de una agencia, descuenta saldo, sin factura electrónica) o `web` (el propio cliente en la página).
+
+**Tramo**:
+La porción de un recorrido entre dos de sus paradas, por posición. Un asiento está ocupado para un tramo
+si algún boleto vivo o alguna reserva vigente se solapa con él; tramos que no se solapan comparten asiento.
+
+**Reserva** (precompra):
+Asiento apartado en la página web mientras el cliente paga (`ReservaAsiento`). Vence sola a los 15 minutos
+y nunca después del cierre de venta en línea (30 minutos antes de la salida). En taquilla se ve como reservado.
+_Avoid_: preventa, bloqueo
+
+**Cortesía**:
+Venta de asientos que no se cobran (el "voucher" del legado): total 0 y sin factura. Solo taquilla, con permiso.
+_Avoid_: voucher, regalo
+
+**Agencia**:
+Entidad externa que vende boletos por comisión con usuarios propios. Cada venta descuenta su total del saldo,
+que nunca queda negativo y solo cambia por movimientos (depósito, bonificación, venta, ajuste).
+Sus ventas no llevan factura electrónica.
+_Avoid_: estación tipo 4, punto de venta
+
 **BoletoTarifa**:
-El precio de referencia aplicable a un trayecto y una clase de asiento,
-con hora y bus opcionales.
+El precio de referencia de un asiento. Fija algunos de empresa, trayecto, hora, clase y bus (los demás son
+comodín); aplica la que coincide en todos los que fija y fija más (empate: la más reciente).
 _Avoid_: tarifa, precio
 
 **Factura**:
-El documento fiscal de una venta, con un snapshot inmutable de emisor y receptor.
+El documento fiscal (DTE) de una venta, certificado por el certificador FEL, con un snapshot inmutable
+de emisor, receptor y certificador.
 _Avoid_: recibo, comprobante
 
+**Tipo de pago**, **Moneda**:
+Forma y moneda en que el cliente paga una venta (el cobro con tarjeta en taquilla es en un POS externo).
+
 **Cliente**:
-La persona que compra un boleto de asiento.
+La persona que compra un boleto de asiento (a quien se factura) o que viaja en él.
+Puede tener documento de identificación (tipo y número) y nacionalidad.
 _Avoid_: pasajero, comprador
 
 **Empresa**:

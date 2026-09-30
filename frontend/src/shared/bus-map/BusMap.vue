@@ -84,6 +84,7 @@ import {
   plantasDe,
   rejillas,
 } from '@/core/croquis/model'
+import { ESTADOS_NO_SELECCIONABLES } from '@/core/croquis/types'
 import type {
   AsientoCroquis,
   ElementoCroquis,
@@ -112,7 +113,7 @@ const props = withDefaults(
     tamano?: 'xs' | 'sm' | 'md' | 'lg'
     /** Estado con el que se pinta cada asiento (venta, ocupación, …). */
     estado?: (asiento: AsientoCroquis) => EstadoAsiento | undefined
-    /** Asientos como botones (`@asiento`); los ocupados/bloqueados quedan deshabilitados. */
+    /** Asientos como botones (`@asiento`); los ocupados/reservados/bloqueados quedan deshabilitados. */
     interactivo?: boolean
     /** Pinta también las celdas vacías (editor). */
     celdasVacias?: boolean
@@ -216,7 +217,7 @@ const esIzquierda = (planta: number, e: ElementoCroquis) =>
 // Estado e interacción ------------------------------------------------------
 const estadoDe = (a: AsientoCroquis): EstadoAsiento => props.estado?.(a) ?? 'disponible'
 
-const noSeleccionable = (a: AsientoCroquis) => ['ocupado', 'bloqueado'].includes(estadoDe(a))
+const noSeleccionable = (a: AsientoCroquis) => ESTADOS_NO_SELECCIONABLES.includes(estadoDe(a))
 
 const esBoton = (e: ElementoCroquis | null): e is AsientoCroquis =>
   props.interactivo && !!e && esAsiento(e)
@@ -224,6 +225,8 @@ const esBoton = (e: ElementoCroquis | null): e is AsientoCroquis =>
 const ETIQUETA_ESTADO: Record<EstadoAsiento, string> = {
   disponible: 'disponible',
   ocupado: 'ocupado',
+  'ocupado-web': 'vendido en línea',
+  'ocupado-agencia': 'vendido por agencia',
   seleccionado: 'seleccionado',
   reservado: 'reservado',
   bloqueado: 'bloqueado',

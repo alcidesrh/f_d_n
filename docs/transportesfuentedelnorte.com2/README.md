@@ -45,7 +45,7 @@ make debug DB_HOST=IP DB_PORT=PUERTO DB_USER=usuario DB_PASS='clave' DB_NAME=nom
 Ejemplo real utilizado en este proyecto:
 
 ```bash
-make debug DB_HOST=144.126.140.23 DB_PORT=32769 DB_USER='app' DB_PASS='[3F)d)N1]'
+make debug DB_HOST=<CAMBIAR> DB_PORT=32769 DB_USER='app' DB_PASS=<CAMBIAR>
 ```
 
 Para bajar el stack cuando termines:

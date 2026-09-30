@@ -24,3 +24,4 @@
 | [ADR-018](ADR-018-taxonomia-agnostica-y-menus.md) | Taxonomía agnóstica (referencia polimórfica) y menús de navegación sobre ella | Aceptada |
 | [ADR-019](ADR-019-croquis-del-bus.md) | Croquis del bus (asientos, chofer y puertas por planta) y mapa reutilizable | Aceptada |
 | [ADR-020](ADR-020-frontend-mobile-first.md) | Frontend mobile-first con breakpoints centralizados | Aceptada |
+| [ADR-021](ADR-021-venta-de-asientos.md) | Venta de asientos por tres canales (taquilla, agencia, web) con factura electrónica | Aceptada |

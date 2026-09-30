@@ -98,6 +98,16 @@ withDefaults(
   --seat-stroke: var(--bm-occupied-stroke);
   --seat-ink: var(--bm-occupied-ink);
 }
+.seat--ocupado-web {
+  --seat-fill: var(--bm-sold-web);
+  --seat-stroke: var(--bm-sold-web-stroke);
+  --seat-ink: var(--bm-sold-web-ink);
+}
+.seat--ocupado-agencia {
+  --seat-fill: var(--bm-sold-agency);
+  --seat-stroke: var(--bm-sold-agency-stroke);
+  --seat-ink: var(--bm-sold-agency-ink);
+}
 .seat--seleccionado {
   --seat-fill: var(--p-primary-color);
   --seat-stroke: color-mix(in srgb, var(--p-primary-color) 70%, black);

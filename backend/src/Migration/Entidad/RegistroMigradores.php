@@ -15,8 +15,9 @@ use Symfony\Component\DependencyInjection\Attribute\Target;
 /**
  * Catálogo de migradores por entidad + orden del flujo "estáticos".
  *
- * Nombres canónicos: empresa, estacion, localidad, marca, piloto, cliente,
- * usuario, bus, asiento, senal, trayecto, tarifa, salida, iam, config.
+ * Nombres canónicos: empresa, estacion, localidad, marca, piloto, tipo_pago,
+ * moneda, tipo_documento, nacionalidad, cliente, usuario, agencia, bus,
+ * asiento, senal, trayecto, tarifa, salida, iam, config.
  *
  * La entidad "salida" se marca SIN dependencias porque migrarSalida ya recorre
  * sus propias ramificaciones (empresa, trayecto, bus, cliente…) con dedupe:
@@ -37,8 +38,14 @@ class RegistroMigradores
         "piloto",
         "localidad",
         "estacion",
+        "tipo_pago",
+        "moneda",
+        "tipo_documento",
+        "nacionalidad",
         "cliente",
         "usuario",
+        "agencia",
+        "fel",
         "marca",
         "bus",
         "asiento",
@@ -129,7 +136,20 @@ class RegistroMigradores
                 "estacion",
                 ["enclave"],
                 [],
-                "SELECT COUNT(*) FROM estacion WHERE activo = 1",
+                "SELECT COUNT(*) FROM estacion WHERE activo = 1 AND (tipoEstacion_id IS NULL OR tipoEstacion_id <> 4)",
+            ),
+            "tipo_pago" => $estatica("tipo_pago", "Tipos de pago", "tipo_pago", ["tipo_pago"]),
+            "fel" => $estatica("fel", "Facturación electrónica (emisores)", "factura_emisor", ["credencial_fel", "establecimiento"], ["empresa"]),
+            "moneda" => $estatica("moneda", "Monedas", "moneda", ["moneda"]),
+            "tipo_documento" => $estatica("tipo_documento", "Tipos de documento", "tipo_documento", ["tipo_documento"]),
+            "nacionalidad" => $estatica("nacionalidad", "Nacionalidades", "nacionalidad", ["pais"]),
+            "agencia" => $estatica(
+                "agencia",
+                "Agencias",
+                "estacion",
+                ["agencia", "agencia_movimiento"],
+                ["moneda", "usuario"],
+                "SELECT COUNT(*) FROM estacion WHERE tipoEstacion_id = 4",
             ),
             "localidad" => $estatica(
                 "localidad",

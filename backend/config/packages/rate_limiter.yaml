@@ -1,0 +1,12 @@
+# Límites de la API pública de la página web (App\Controller\PublicoController), por IP.
+framework:
+    rate_limiter:
+        publico:
+            policy: sliding_window
+            limit: 240
+            interval: '1 minute'
+        # Cada intento de pago usa hasta 3 peticiones (inicio, dispositivo, desafío 3-D Secure).
+        publico_pago:
+            policy: sliding_window
+            limit: 30
+            interval: '10 minutes'

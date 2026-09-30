@@ -30,6 +30,8 @@ const ETIQUETAS: Record<ItemLeyenda, string> = {
   B: 'Clase B · reclinable',
   disponible: 'Disponible',
   ocupado: 'Ocupado',
+  'ocupado-web': 'Vendido en línea',
+  'ocupado-agencia': 'Vendido por agencia',
   seleccionado: 'Seleccionado',
   reservado: 'Reservado',
   bloqueado: 'No disponible',

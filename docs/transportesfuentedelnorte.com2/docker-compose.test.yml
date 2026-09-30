@@ -38,7 +38,7 @@ services:
       CYBERSOURCE_BASE_URI: https://apitest.cybersource.com
       ORG_ID: 1snn5n9w
       # Base no define APP_SECRET y en dev FrameworkBundle lo exige no vacío.
-      APP_SECRET: ${APP_SECRET:-4ca07b58b4c2f273ba5bf73191158c6b}
+      APP_SECRET: ${APP_SECRET:-<CAMBIAR>}
       # Sin DATABASE_URL en el entorno real, Symfony carga .env.dev (BD remota de
       # producción vía el puerto publicado) en lugar del postgres local VACÍO del
       # base. Funciona en la cadena de 2 archivos (base+test); ver cabecera.

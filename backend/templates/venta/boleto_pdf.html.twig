@@ -1,0 +1,88 @@
+{# PDF del boleto (venta web y copia por correo). Datos: App\Venta\Boleto\DatosBoleto. #}
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Boleto {{ b.id }}</title>
+<style>
+  @page { margin: 28px 36px; }
+  body { font-family: "DejaVu Sans", sans-serif; font-size: 11px; color: #1f2937; }
+  h1 { font-size: 18px; margin: 0 0 2px; }
+  .muted { color: #6b7280; }
+  .caja { border: 1px solid #d1d5db; border-radius: 6px; padding: 10px 12px; margin-top: 10px; }
+  .grid td { vertical-align: top; padding: 2px 10px 2px 0; }
+  .lbl { font-size: 9px; text-transform: uppercase; letter-spacing: .04em; color: #6b7280; }
+  .val { font-size: 12px; font-weight: bold; }
+  table.boletos { width: 100%; border-collapse: collapse; margin-top: 6px; }
+  table.boletos th { text-align: left; font-size: 9px; text-transform: uppercase; color: #6b7280; border-bottom: 1px solid #d1d5db; padding: 3px 0; }
+  table.boletos td { padding: 3px 0; border-bottom: 1px solid #f3f4f6; }
+  .total { text-align: right; font-size: 14px; font-weight: bold; margin-top: 6px; }
+  .aviso { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 8px 10px; margin-top: 10px; }
+  .terminos { margin-top: 12px; font-size: 9px; color: #374151; }
+  .terminos h3 { font-size: 10px; margin: 8px 0 2px; }
+  .terminos ul { margin: 0; padding-left: 14px; }
+</style>
+</head>
+<body>
+  <table width="100%"><tr>
+    <td>
+      <h1>Boleto {{ b.empresa.nombre ?? 'Fuente del Norte' }}</h1>
+      <div class="muted">Guarde y muestre este boleto a la hora de abordar. ¡Feliz viaje!</div>
+    </td>
+    <td align="right">
+      <img src="data:image/svg+xml;base64,{{ codigoBarras }}" height="46"><br>
+      <span class="muted">ID {{ b.codigoBarras }}</span>
+    </td>
+  </tr></table>
+
+  <div class="caja">
+    <table class="grid"><tr>
+      <td><div class="lbl">Cliente</div><div class="val">{{ b.cliente.nombre ?? '—' }}</div></td>
+      <td><div class="lbl">NIT</div><div class="val">{{ b.cliente.nit ?? 'CF' }}</div></td>
+      <td><div class="lbl">Compra</div><div class="val">{{ b.creada ? b.creada|date('d/m/Y H:i') : '—' }}</div></td>
+    </tr><tr>
+      <td><div class="lbl">Salida</div><div class="val">{{ b.recorrido.salidaOrigen|date('d/m/Y h:i A') }}</div></td>
+      <td colspan="2"><div class="lbl">Asiento(s)</div><div class="val">{{ b.boletos|map(x => x.asiento)|join(', ') }}</div></td>
+    </tr><tr>
+      <td colspan="2"><div class="lbl">Estación de salida</div><div class="val">{{ b.origen.nombre }}</div><div class="muted">{{ b.origen.direccion }}</div></td>
+      <td><div class="lbl">Estación de llegada</div><div class="val">{{ b.destino.nombre }}</div><div class="muted">{{ b.destino.direccion }}</div></td>
+    </tr></table>
+
+    <table class="boletos">
+      <tr><th>Asiento</th><th>Clase</th><th>Pasajero</th><th style="text-align:right">Precio</th></tr>
+      {% for x in b.boletos %}
+        <tr><td>{{ x.asiento }}</td><td>{{ x.clase }}</td><td>{{ x.pasajero }}</td><td style="text-align:right">{{ x.precio.texto }}</td></tr>
+      {% endfor %}
+    </table>
+    <div class="total">Total: {{ b.total.texto }}</div>
+  </div>
+
+  <div class="caja">
+    <div class="lbl">Factura electrónica</div>
+    {% if b.factura %}
+      <table class="grid"><tr>
+        <td><div class="lbl">NIT emisor</div><div class="val">{{ b.empresa.nit }}</div></td>
+        <td><div class="lbl">Número DTE</div><div class="val">{{ b.factura.numero }}</div></td>
+        <td><div class="lbl">Serie</div><div class="val">{{ b.factura.serie }}</div></td>
+      </tr><tr>
+        <td colspan="2"><div class="lbl">Autorización (UUID)</div><div class="val">{{ b.factura.uuid }}</div></td>
+        <td><div class="lbl">Certificada</div><div class="val">{{ b.factura.fechaCertificacion|date('d/m/Y H:i') }}</div></td>
+      </tr></table>
+      {% if b.factura.urlPdf %}<div class="muted">Factura en línea: {{ b.factura.urlPdf }}</div>{% endif %}
+      {% if b.factura.certificador %}<div class="muted">Certificador: {{ b.factura.certificador }}{% if b.factura.certificadorNit %}, NIT {{ b.factura.certificadorNit }}{% endif %}</div>{% endif %}
+    {% elseif b.estadoFacturacion == 'pendiente' %}
+      <div>La factura electrónica está en proceso de certificación; se la enviaremos por correo.</div>
+      {% if b.numeroAcceso %}<div>Documento en contingencia · número de acceso <strong>{{ b.numeroAcceso }}</strong></div>{% endif %}
+    {% else %}
+      <div>Esta venta no genera factura electrónica.</div>
+    {% endif %}
+  </div>
+
+  <div class="aviso">
+    <strong>Atención:</strong> no es posible el reembolso o modificación de este boleto en línea.
+    Este boleto no será válido después de la fecha de salida.
+  </div>
+
+  {% include 'venta/_terminos.html.twig' %}
+</body>
+</html>

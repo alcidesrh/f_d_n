@@ -51,6 +51,10 @@ class BoletoAsiento
     #[ORM\Column(type: "string", length: 50, nullable: true)]
     private ?string $legacyId = null;
 
+    /** Nota de taquilla (p. ej. "viaja con mascota", "se baja en el km 120"). */
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $observacion = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -150,12 +154,24 @@ class BoletoAsiento
 
     public function getPrecio(): ?Money
     {
-        return $this->precio;
+        return $this->precio?->toMoney();
     }
 
     public function setPrecio(Money $money): self
     {
         $this->precio = Precio::fromMoney($money);
+        return $this;
+    }
+
+    public function getObservacion(): ?string
+    {
+        return $this->observacion;
+    }
+
+    public function setObservacion(?string $observacion): static
+    {
+        $this->observacion = $observacion;
+
         return $this;
     }
 

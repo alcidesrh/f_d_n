@@ -153,7 +153,108 @@ class Mapeador
             "nit" => $this->truncate($old["nit"] ?? null, 20),
             "email" => $this->truncate($old["correo"] ?? null, 50),
             "telefono" => $this->truncate($old["telefono"] ?? null, 15),
+            "numero_documento" => $this->truncate($old["dpi"] ?? null, 40),
+            // Se validan contra los catálogos ya migrados en el migrador (FK).
+            "tipo_documento_id" => self::idONulo($old["tipo_documento_id"] ?? $old["tipoDocumento_id"] ?? null),
+            "nacionalidad_id" => self::idONulo($old["nacionalidad_id"] ?? null),
         ];
+    }
+
+    /** `tipo_pago` del legado (se conserva el id). */
+    public function tipoPago(array $old): array
+    {
+        return [
+            "id" => (int) $old["id"],
+            "nombre" => $this->truncate($old["nombre"] ?? "", 50),
+            "activo" => filter_var($old["activo"] ?? true, FILTER_VALIDATE_BOOL) ? "true" : "false",
+        ];
+    }
+
+    /** `moneda` del legado (se conserva el id; `sigla` = ISO 4217). */
+    public function moneda(array $old): array
+    {
+        return [
+            "id" => (int) $old["id"],
+            "sigla" => strtoupper($this->truncate($old["sigla"] ?? "", 3)),
+            "nombre" => $this->truncate($old["nombre"] ?? "", 40),
+            "activo" => filter_var($old["activo"] ?? true, FILTER_VALIDATE_BOOL) ? "true" : "false",
+        ];
+    }
+
+    /** `tipo_documento` del legado (se conserva el id). */
+    public function tipoDocumento(array $old): array
+    {
+        return [
+            "id" => (int) $old["id"],
+            "sigla" => $this->truncate($old["sigla"] ?? null, 3),
+            "nombre" => $this->truncate($old["nombre"] ?? "", 50),
+            "activo" => filter_var($old["activo"] ?? true, FILTER_VALIDATE_BOOL) ? "true" : "false",
+        ];
+    }
+
+    /**
+     * `nacionalidad` del legado → `Nacion` (tabla `pais`), conservando el id
+     * para que `cliente.nacionalidad_id` apunte igual.
+     */
+    public function nacionalidad(array $old): array
+    {
+        return [
+            "id" => (int) $old["id"],
+            "nombre" => $this->truncate($old["nombre"] ?? "", 255),
+            "legacy_id" => "nacionalidad-" . (int) $old["id"],
+        ];
+    }
+
+    /**
+     * Estación del legado con `tipoEstacion_id = 4` → `Agencia` (se conserva
+     * el id). El porcentaje de bonificación del legado se guarda como
+     * fracción o como porcentaje según la estación: ≤ 1 se toma como fracción.
+     *
+     * @param array<string, mixed> $old fila de `estacion` (+ `moneda_sigla`)
+     */
+    public function agencia(array $old): array
+    {
+        $porcentaje = $old["agencia_porciento_bonificacion"] ?? null;
+        if ($porcentaje !== null && $porcentaje !== "") {
+            $porcentaje = (float) $porcentaje;
+            $porcentaje = $porcentaje > 0 && $porcentaje <= 1 ? $porcentaje * 100 : $porcentaje;
+            $porcentaje = number_format(min(max($porcentaje, 0), 100), 2, ".", "");
+        } else {
+            $porcentaje = null;
+        }
+
+        return [
+            "id" => (int) $old["id"],
+            "nombre" => $this->truncate($old["nombre"] ?? "", 255),
+            "direccion" => $this->truncate($old["direccion"] ?? null, 255),
+            "saldo" => (int) round(((float) ($old["agencia_saldo"] ?? 0)) * 100),
+            "moneda" => strtoupper($this->truncate($old["moneda_sigla"] ?? null, 3) ?: "GTQ"),
+            "porcentaje_bonificacion" => $porcentaje,
+            "activo" => filter_var($old["activo"] ?? true, FILTER_VALIDATE_BOOL) ? "true" : "false",
+            "legacy_id" => "estacion-" . (int) $old["id"],
+        ];
+    }
+
+    /**
+     * `factura_emisor` del legado: afiliación al IVA y credenciales del
+     * certificador (Forcon) de la empresa.
+     *
+     * @return array{afiliacion_iva: ?string, usuario: ?string, clave: ?string}
+     */
+    public function emisorFel(array $old): array
+    {
+        $texto = static fn(mixed $v) => ($v = trim((string) $v)) !== "" ? $v : null;
+
+        return [
+            "afiliacion_iva" => ($a = $texto($old["afiliacion_iva"] ?? null)) !== null ? strtoupper(mb_substr($a, 0, 5)) : null,
+            "usuario" => $texto($old["user_forcon"] ?? $old["userForcon"] ?? null),
+            "clave" => $texto($old["password_forcon"] ?? $old["passwordForcon"] ?? null),
+        ];
+    }
+
+    private static function idONulo(mixed $v): ?int
+    {
+        return is_numeric($v) && (int) $v > 0 ? (int) $v : null;
     }
 
     /**
