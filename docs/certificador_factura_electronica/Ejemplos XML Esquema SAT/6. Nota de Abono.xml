@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<dte:GTDocumento xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:dte="http://www.sat.gob.gt/dte/fel/0.2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="0.1" xsi:schemaLocation="http://www.sat.gob.gt/dte/fel/0.2.0 GT_Documento-0.2.0.xsd">
+	<dte:SAT ClaseDocumento="dte">
+		<dte:DTE ID="DatosCertificados">
+			<dte:DatosEmision ID="DatosEmision">
+				<dte:DatosGenerales CodigoMoneda="GTQ" FechaHoraEmision="2023-05-31T08:42:53.368-06:00" Tipo="NABN"/>
+				<dte:Emisor AfiliacionIVA="GEN" CodigoEstablecimiento="1" CorreoEmisor="eforcon@eforcon.com" NITEmisor="4150686" NombreComercial="FORMULARIOS CONTINUOS DE CENTROAMERICA" NombreEmisor="FORMULARIOS CONTINUOS DE CENTROAMERICA, SOCIEDAD ANONIMA">
+					<dte:DireccionEmisor>
+						<dte:Direccion>2DA. CALLE 36-73 COL. TOLEDO ZONA 11</dte:Direccion>
+						<dte:CodigoPostal>01000</dte:CodigoPostal>
+						<dte:Municipio>GUATEMALA</dte:Municipio>
+						<dte:Departamento>GUATEMALA</dte:Departamento>
+						<dte:Pais>GT</dte:Pais>
+					</dte:DireccionEmisor>
+				</dte:Emisor>
+				<dte:Receptor CorreoReceptor="" IDReceptor="CF" NombreReceptor="CONSUMIDOR FINAL"/>
+				<dte:Items>
+					<dte:Item BienOServicio="B" NumeroLinea="1">
+						<dte:Cantidad>1.0000000000</dte:Cantidad>
+						<dte:UnidadMedida>UNI</dte:UnidadMedida>
+						<dte:Descripcion>sillas de madera</dte:Descripcion>
+						<dte:PrecioUnitario>1120.0000000000</dte:PrecioUnitario>
+						<dte:Precio>1120.0000000000</dte:Precio>
+						<dte:Descuento>0.0000000000</dte:Descuento>
+						<dte:Total>1120.00</dte:Total>
+					</dte:Item>
+				</dte:Items>
+				<dte:Totales>
+					<dte:GranTotal>1120.00</dte:GranTotal>
+				</dte:Totales>
+			</dte:DatosEmision>
+		</dte:DTE>
+	</dte:SAT>
+</dte:GTDocumento>

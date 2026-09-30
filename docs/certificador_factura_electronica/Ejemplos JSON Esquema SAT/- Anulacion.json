@@ -1,0 +1,10 @@
+{
+	"DatosGeneralesAnulacion": {
+		"FechaEmisionDocumentoAnular": "2021-10-30T08:24:43.694-06:00",
+        "FechaHoraAnulacion": "2023-05-31T11:26:05.049-06:00",
+        "IDReceptor": "CF",
+        "MotivoAnulacion": "DATOS DEL RECEPTOR Y PRODUCTOS INCORRECTOS",
+        "NITEmisor": "4150686",
+        "NumeroDocumentoAAnular": "62DE80B1-3834-42F0-A591-341FC382D884"
+    }
+}

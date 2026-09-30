@@ -1,0 +1,71 @@
+{
+	"DatosEmision": {
+		"DatosGeneralesEmision": {
+			"CodigoMoneda": "GTQ",
+			"FechaHoraEmision": "2023-05-31T12:37:49.463-06:00",
+			"Tipo": "RDON",
+			"TipoPersoneria": "698"
+		},
+		"Emisor": {
+			"AfiliacionIVA": "GEN",
+			"CodigoEstablecimiento": "1",
+			"CorreoEmisor": "soporte@eforcon.com",
+			"NITEmisor": "4150686",
+			"NombreComercial": "FORMULARIOS CONTINUOS DE CENTRO AMERICA",
+			"NombreEmisor": "FORMULARIOS CONTINUOS DE CENTRO AMERICA SOCIEDAD ANONIMA",
+			"DireccionEmisor": {
+				"Direccion": "2DA CALLE  36-73  Z. 11 COLONIA TOLEDO",
+				"CodigoPostal": "01000",
+				"Municipio": "GUATEMALA",
+				"Departamento": "GUATEMALA",
+				"Pais": "GT"
+			}
+		},
+		"Receptor": {
+			"CorreoReceptor": "",
+			"IDReceptor": "CF",
+			"NombreReceptor": "CONSUMIDOR FINAL",
+			"DireccionReceptor": {
+				"Direccion": "2DA CALLE  36-73  Z. 11 COLONIA TOLEDO",
+				"CodigoPostal": "01000",
+				"Municipio": "GUATEMALA",
+				"Departamento": "GUATEMALA",
+				"Pais": "GT"
+			}
+		},
+		"Frases": {
+			"Frase": [{
+					"CodigoEscenario": "4",
+					"TipoFrase": "4"
+				}
+			]
+		},
+		"Items": {
+			"Item": [{
+					"BienOServicio": "B",
+					"NumeroLinea": "1",
+					"Cantidad": "1.0000000000",
+					"UnidadMedida": "UNI",
+					"Descripcion": "sillas y mesas",
+					"PrecioUnitario": "5.0000000000",
+					"Precio": "5.0000000000",
+					"Descuento": "0.0000000000",
+					"Total": "5.00"
+				}, {
+					"BienOServicio": "B",
+					"NumeroLinea": "2",
+					"Cantidad": "2.0000000000",
+					"UnidadMedida": "UNI",
+					"Descripcion": "anuncio publicitario",
+					"PrecioUnitario": "4500.0000000000",
+					"Precio": "9000.0000000000",
+					"Descuento": "0.0000000000",
+					"Total": "9000.00"
+				}
+			]
+		},
+		"Totales": {
+			"GranTotal": "9005.00"
+		}
+	}
+}

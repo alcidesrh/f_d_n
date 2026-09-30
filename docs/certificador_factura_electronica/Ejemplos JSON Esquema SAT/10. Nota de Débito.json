@@ -1,0 +1,88 @@
+{
+	"DatosEmision": {
+		"DatosGeneralesEmision": {
+			"CodigoMoneda": "GTQ",
+			"FechaHoraEmision": "2023-05-31T12:37:49.463-06:00",
+			"Tipo": "NDEB"
+		},
+		"Emisor": {
+			"AfiliacionIVA": "GEN",
+			"CodigoEstablecimiento": "1",
+			"CorreoEmisor": "soporte@eforcon.com",
+			"NITEmisor": "4150686",
+			"NombreComercial": "FORMULARIOS CONTINUOS DE CENTRO AMERICA",
+			"NombreEmisor": "FORMULARIOS CONTINUOS DE CENTRO AMERICA SOCIEDAD ANONIMA",
+			"DireccionEmisor": {
+				"Direccion": "2DA CALLE  36-73  Z. 11 COLONIA TOLEDO",
+				"CodigoPostal": "01000",
+				"Municipio": "GUATEMALA",
+				"Departamento": "GUATEMALA",
+				"Pais": "GT"
+			}
+		},
+		"Receptor": {
+			"CorreoReceptor": "",
+			"IDReceptor": "CF",
+			"NombreReceptor": "CONSUMIDOR FINAL",
+			"DireccionReceptor": {
+				"Direccion": "2DA CALLE  36-73  Z. 11 COLONIA TOLEDO",
+				"CodigoPostal": "01000",
+				"Municipio": "GUATEMALA",
+				"Departamento": "GUATEMALA",
+				"Pais": "GT"
+			}
+		},
+		"Frases": {
+			"Frase": [{
+					"CodigoEscenario": "1",
+					"TipoFrase": "1"
+				}, {
+					"CodigoEscenario": "1",
+					"TipoFrase": "2"
+				}
+			]
+		},
+		"Items": {
+			"Item": [{
+					"BienOServicio": "B",
+					"NumeroLinea": "1",
+					"Cantidad": "1.0000000000",
+					"UnidadMedida": "UNI",
+					"Descripcion": "sillas y mesas",
+					"PrecioUnitario": "5.0000000000",
+					"Precio": "5.0000000000",
+					"Descuento": "0.0000000000",
+					"Impuestos": {
+						"Impuesto": [{
+								"NombreCorto": "IVA",
+								"CodigoUnidadGravable": "2",
+								"MontoGravable": "5.000000",
+								"MontoImpuesto": "0.000000"
+							}
+						]
+					},
+					"Total": "5.00"
+				}
+			]
+		},
+		"Totales": {
+			"TotalImpuestos": {
+				"TotalImpuesto": [{
+						"NombreCorto": "IVA",
+						"TotalMontoImpuesto": "0.000000"
+					}
+				]
+			},
+			"GranTotal": "5.00"
+		},
+		"Complementos": {			
+			"ComplementoNotas": {
+				"NumeroAutorizacionDocumentoOrigen": "0AF32B19-49B3-4323-86EB-E5263C7F6A89",
+				"FechaEmisionDocumentoOrigen": "2021-10-31",
+				"MotivoAjuste": "CARGO POR ENVÍO ADICIONAL DE PRODUCTO",
+				"SerieDocumentoOrigen": "0AF32B19",
+				"NumeroDocumentoOrigen": "4598712475"
+			}
+		}
+	}
+}
