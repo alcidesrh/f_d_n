@@ -1,0 +1,12 @@
+<turbo-stream action="update" target="fingerprint">
+	<template>
+		<div id="fingerprint">
+			<script data-turbo="false" type="text/javascript" src="https://h.online-metrix.net/fp/tags.js?org_id={{org_id}}&session_id={{cybersource_session_id}}"></script>
+			{% if cybersource_session_id is defined %}
+				<noscript data-turbo="false">
+					<iframe style="width: 100px; height: 100px; border: 0; position:absolute; top: -5000px;" src="https://h.online-metrix.net/fp/tags?org_id={{org_id}}&session_id={{cybersource_session_id}}"></iframe>
+				</noscript>
+			{% endif %}
+		</div>
+	</template>
+</turbo-stream>

@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "fdnmonitor",
+      "sha256_cert_fingerprints": [
+        "0C:FF:0B:CF:D8:70:AC:BF:95:38:C3:AD:38:06:09:EA:B1:38:24:F3:43:04:80:DE:01:54:C1:7E:B5:A5:5C:40"
+      ]
+    }
+  }
+]

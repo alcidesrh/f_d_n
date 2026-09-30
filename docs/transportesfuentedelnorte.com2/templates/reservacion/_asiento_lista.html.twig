@@ -1,0 +1,70 @@
+{% from 'email/macros.html.twig' import error_alert %}
+
+{% if error | default(false) %}
+
+	{{ error_alert( error ) }}
+
+{% endif %}
+
+{% if reservacion.isIdaVuelta %}
+	<div class="flex items-center font-medium">
+		<label class="form-label mb-0 flex items-center">
+			<span class="font-semibold">
+				{{regreso ? ('Regreso' | trans) : ('Salida' | trans)}}:</span>
+		</label>
+	</div>
+{% endif %}
+
+<div class="flex justify-between gap-2	">
+	<div class="flex items-end font-medium  px-0 ">
+		{{'Marque sus asientos' | trans}}
+	</div>
+	<div class="grid justify-end gap-0">
+		<div class="flex items-end text-sm font-medium mb-2">
+			<div class="w-3 h-3 bg-red-400 mr-1"></div>
+			<span class=" h-4">{{'Ocupado' | trans}}</span>
+		</div>
+
+		<div class="flex items-end text-sm font-medium">
+			<div class="w-3 h-3 bg-teal-500 mr-1"></div>
+			<span class=" h-4">{{'Disponible' | trans}}</span>
+		</div>
+
+	</div>
+</div>
+
+<div class="max-w-[328px] border border-slate-400 rounded-3xl mt-3 pt-5 bg-white z-10">
+
+	{% if asientos_nivel_1 is not empty and asientos_nivel_2 is not empty %}
+		<div class="flex justify-end px-3 mb-5 gap-2">
+			<button class="btn relative pl-2 py-0 sm no-ajax flex justify-center min-w-fit level-btn active" type="button" data-asiento-target="{{regreso ? 'btn_nivel1_regreso' : 'btn_nivel1'}}" data-action="asiento#cambiar_nivel" data-nivel="1" data-regreso="{{regreso}}">
+				<span class="material-symbols-outlined mr-1 text-xl">
+					airline_seat_recline_extra
+				</span>
+				{{'Arriba' | trans}}
+			</button>
+
+			<button class="btn relative pl-2 py-0 sm no-ajax flex justify-center min-w-fit level-btn" type="button" data-asiento-target="{{regreso ? 'btn_nivel2_regreso' : 'btn_nivel2'}}" data-action="asiento#cambiar_nivel" data-nivel="2" data-regreso="{{regreso}}">
+
+				<span class="material-symbols-outlined mr-1 text-xl">
+					airline_seat_flat_angled
+				</span>
+				{{'Abajo' | trans}}
+			</button>
+		</div>
+	{% endif %}
+
+	<div style="height: {{max_h_1}}px" class="relative  w-[334px] {% if asientos_nivel_2 is not empty %}hidden{% endif %}" data-asiento-target="{{regreso ? 'nivel1_regreso' : 'nivel1'}}" data-asientos="{{asientos_nivel_1 | length}}">
+		{% for item in senales_nivel_1 | merge(asientos_nivel_1)%}
+			{{ component('asiento', {data: item, regreso: regreso}) }}
+		{% endfor %}
+	</div>
+
+	{% if asientos_nivel_2 is not empty %}
+		<div style="height: {{max_h_2}}px" class="relative  w-[328px]" data-asiento-target="{{regreso ? 'nivel2_regreso' : 'nivel2'}}" data-asientos="{{asientos_nivel_2 | length}}">
+			{% for item in senales_nivel_2 | merge(asientos_nivel_2)%}
+				{{ component('asiento', {data: item, regreso: regreso}) }}
+			{% endfor %}
+		</div>
+	{% endif %}
+</div>

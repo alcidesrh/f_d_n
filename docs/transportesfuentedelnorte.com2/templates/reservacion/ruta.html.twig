@@ -1,0 +1,41 @@
+<turbo-frame id="reservacion-form">
+
+
+	{% for message in app.flashes('session_terminada') %}
+		{% set array = app.flashes('RESERVACION_MINUTOS') %}
+		{{ component('alert', {class: 'warning max-w-2xl mb-5 mx-auto', icon: 'warning', text: message | trans({'RESERVACION_MINUTOS' :  ( array[0] is defined) ? array[0]})})}}
+	{% endfor %}
+
+	<div class="alert m-auto mt-5 bg-sky-50/50 border-sky-200 border-l text-sky-700" role="alert">
+
+		<div class="relative  overflow-auto ">
+			<div class="flex">
+				<span class="material-symbols-outlined material-symbols-outlined text-xl w-6 mr-1 mt-[-2px]">
+					directions_bus
+				</span>
+				<p class="break-words sm:max-w-sm md:max-w-xl font-mono font-medium">
+					{{'Venta de boletos para buses de rutas largas, medianas y cortas en toda Guatemala.' | trans}}
+				</p>
+			</div>
+		</div>
+
+	</div>
+
+	{{ form_start(form, {attr: {class: 'm-auto mt-10', 'data-controller': 'ruta-form'}}) }}
+
+	{{ form_row(form._token) }}
+
+	<div class="grid gap-5 gap-y-8 lg:gap-y-3 max-w-xl lg:max-w-3xl m-auto sm:grid-cols-2 lg:grid-cols-3">
+		{{ form_row(form.estacion_salida)}}
+		{{ form_row(form.estacion_llegada)}}
+		{{ form_row(form.ida_vuelta, {row_attr: {class: 'flex items-center'} , attr: {class: 'flex gap-2 items-center' }}) }}
+
+		<div class="flex justify-end row-start-4 sm:row-start-3 sm:col-start-2 lg:col-start-3">
+			{{ component('button', {text: 'Siguiente' | trans, icon: {right: true, name: 'arrow_forward'} , attr: {type: 'submit' }, class: 'ruta-btn'}) }}
+		</div>
+
+	</div>
+
+	{{ form_end(form) }}
+
+</turbo-frame>

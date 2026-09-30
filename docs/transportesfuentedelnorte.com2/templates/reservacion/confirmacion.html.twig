@@ -1,0 +1,34 @@
+<turbo-frame id="reservacion-form">
+	<div data-controller="confirmacion" class="max-w-3xl mt-5 m-auto">
+
+		<div class="mb-5">
+			{{ component('alert', {class: 'info', icon: 'done', icon_class: 'text-2xl', text: ('Su reserva ha sido creada. Guarde el boleto y <span class="font-bold">llévelo en el teléfono o impreso el día de su viaje</span>.' | trans) ~ (reservacion.cliente and reservacion.cliente.email ? (' ' ~ 'Se ha enviado una copia del boleto a' | trans ~ ' <span class="font-semibold">' ~reservacion.cliente.email ~ '</span> ' ~ '.' | trans))}) }}
+		</div>
+
+		{% if confirmacion_error %}
+			<div class="mb-5">
+				{{ component('alert', {class: 'error', icon: 'error', text: confirmacion_error})}}
+			</div>
+		{% endif %}
+
+		{% if error is defined %}
+			{{ component('alert', {class: 'error', icon: 'error', text: 'error_pdf' | trans({'BOLETO' :  reservacion.getBoletoTicketId})})}}
+		{% else %}
+
+			<div class="alert warning" role="alert">
+				<div class="relative flex items-center">
+					<span class="material-symbols-outlined hidden sm:block text-2xl">
+						notification_important
+					</span>
+					<span class="ml-1">
+						{{'Si no se ha <span class="font-bold">descargado el boleto</span> automáticamente pulse el boton para descargarlo.' | trans | raw}}</span>
+				</div>
+			</div>
+		{% endif %}
+		<div class="flex justify-center mt-10">
+			{{ component('button_link', {text: 'Descargar Boleto' | trans, icon: {right: true, name: 'file_download'}, link: path('pdf', {id: reservacion.id}), attr: 'data-turbo=false  data-turbo-cache=false data-confirmacion-target=pdf_link', class: 'font-semibold bg-orange-500 hover:bg-orange-700 border-orange-700 mr-1 text-white'}) }}
+
+			{{ component('button_link', {text: 'Nueva Reservar' | trans, link: path('reiniciar'), attr: 'data-turbo=false', class: 'ml-1'}) }}
+		</div>
+	</div>
+</turbo-frame>

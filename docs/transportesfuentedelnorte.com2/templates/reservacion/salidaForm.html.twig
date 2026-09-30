@@ -1,0 +1,131 @@
+{% if not noframe %}
+	<turbo-frame id="salida-form">
+	{% endif %}
+	{% from 'email/macros.html.twig' import error_alert %}
+
+	{% if sistema_conexion_error %}
+
+		{{ error_alert(  sistema_conexion_error  ) }}
+
+	{% endif %}
+
+
+	<div class="m-auto {{ida_vuelta ? 'mt-10'}}" {% if ida_vuelta %} {{'data-action="buscar-salida:min-fecha@window->buscar-salida#minFecha"'}} {% else %} {{'data-buscar-salida-target="is_ida_vuelta"'}} {% endif %} data-controller='buscar-salida' data-buscar-salida-ida-vuelta-value="{{ida_vuelta}}" data-buscar-salida-idioma-value={{app.request.locale}} ">
+
+		{% set texto = ida_vuelta ? 'Fecha de regreso' : 'Fecha de salida'%}
+
+		<div class="grid md:flex mt-5">
+
+			<div class="pr-3">
+				<div class="form-label mb-2">
+					<span class="font-bold">{{texto | trans}}</span>
+				</div>
+				<div class="relative w-44 ">
+
+					{{ form_start(form, {attr: {'data-nospinner': true}}) }}
+
+					<div class="flex">
+						<div class="relative">
+							{{ form_row(form.salida_fecha, {attr: {'data-buscar-salida-target': 'salida_fecha_' ~ (ida_vuelta ? 'regreso' : 'ida'), 'data-action': 'buscar-salida#buscarSalida', readonly: true, class: 'flatpickr-input'}})}}
+
+							<span class="material-symbols-outlined calendar-icon" data-action="click->buscar-salida#abrirFechaSalida">
+								calendar_month
+							</span>
+							<div class="relative {{'salida_form_' ~ (ida_vuelta ? 'regreso' : 'ida')}}"></div>
+						</div>
+						{{ form_row( form.submit) }}
+
+					</div>
+
+					{{ form_end(form) }}
+				</div>
+			</div>
+
+			{% if salidas is defined and salidas is not null %}
+				{% if salidas is not empty %}
+					<div class="salida-lista  text-15 bg-slate-50 w-full my-5">
+						<div class="grid grid-cols-4 bg-white text-zinc-600 font-semibold px-0 sm:px-3 border-b border-b-slate-300">
+							<div class="px-1 py-1 text-left whitespace-nowrap flex items-center">
+								<span class="material-symbols-outlined mr-[1px] sm:mr-1 text-xl">
+									schedule
+								</span>
+								{{'Hora' | trans}}
+							</div>
+							<div class="pl-1 py-1 text-left whitespace-nowrap flex items-center">
+								<span class="material-symbols-outlined mr-[1px] sm:mr-1 text-xl">
+									airline_seat_recline_extra
+								</span>
+								{{'Clase' | trans}}
+								A
+							</div>
+							<div class="pl-5 sm:pl-1 py-1 text-left flex items-center whitespace-nowrap">
+								<span class="material-symbols-outlined mr-[1px] sm:mr-1 text-xl">
+									airline_seat_flat_angled
+								</span>
+								{{'Clase' | trans}}
+								B
+							</div>
+							<div></div>
+						</div>
+						<div data-buscar-salida-target="lista" class="border border-slate-200">
+							{% for salida in salidas %}
+								<div class="salida-row grid grid-cols-4 cursor-pointer px-0 sm:px-3 {{ salida.salida_id == salida_reservacion.getSalidaId ?? null ? 'salida-selected'}}" id="_{{salida.salida_id}}" data-action="click->buscar-salida#elegir" data-id="{{salida.salida_id}}" data-empresa="{{salida.empresa_id}}">
+									<div class="relative  text-md !pl-2" data-value="{{salida.horario | date("g:i a")}}" id="_{{salida.salida_id ~ '_horario'}}">
+										{{salida.horario  | date("g:i a")}}
+										<div class="relative">
+											<span class="text-xs text-teal-700 mr-2 font-medium absolute whitespace-nowrap">
+												(
+												{{salida.total_asientos - (salida.boletos)}}
+												libres )
+											</span>
+										</div>
+									</div>
+									<div class="flex text-md pl-[0.50rem] relative" data-value="{{salida.bus_clase}}">
+										{% if salida.asientos[0] is defined and salida.asientos[0].clase == 'A' %}
+											Q{{salida.asientos[0].precio}}
+										{% elseif salida.asientos[1] is defined and salida.asientos[1].clase == 'A' %}
+											Q{{salida.asientos[1].precio}}
+										{% else %}
+											<span class="material-symbols-outlined text-slate-500 text-xl ml-3">
+												question_mark
+											</span>
+										{% endif %}
+									</div>
+									<div class="flex text-md pl-[0.50rem]" data-value="{{salida.bus_clase}}" ">
+										{% if salida.asientos[1] is defined and salida.asientos[1].clase == 'B' %}
+											Q{{salida.asientos[1].precio}}
+										{% elseif salida.asientos[0] is defined and salida.asientos[0].clase == 'B'%}
+											Q{{salida.asientos[0].precio}}
+										{% else %}
+											<span class="material-symbols-outlined text-orange-700 text-2xl ml-3">
+												close
+											</span>
+										{% endif %}
+									</div>
+
+									<div class="flex items-center justify-end !pr-2">
+										<button class="btn sm elegir min-w-fit border-slate-400">
+											<div class="flex justify-center w-full">
+												<label>{{'Elegir' | trans}}</label>
+											</div>
+										</button>
+										<div class="w-[80px] items-center justify-center text-center btn-descartar-salida h-[34px] hidden">
+											<span class="material-symbols-outlined text-[1.7rem] text-teal-800 -mt-[3px]">
+												done_outline
+											</span>
+										</div>
+									</div>
+								</div>
+							{% endfor %}
+						</div>
+					</div>
+				{% else %}
+					<p class="mt-10 font-medium opacity-80">{{'No se encontraron salida para esa fecha' | trans}}</p>
+				{% endif %}
+			{% endif %}
+
+		</div>
+	</div>
+	{% if not noframe %}
+	</turbo-frame>
+{% endif %}

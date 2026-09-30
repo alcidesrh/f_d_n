@@ -1,0 +1,30 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+	<section class="mt-[134px] mb-10 h-full">
+		{% if error %}
+			<div class="text-center text-red-500 font-medium">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+		{% endif %}
+
+		<form action="{{ path('app_login') }}" method="post" class="max-w-[400px] m-auto grid gap-5 p-10">
+			<div>
+				<label for="username" class="font-medium">Usuario</label>
+				<input class="input" type="text" id="username" name="_username" value="{{ last_username }}"/>
+			</div>
+
+			<div>
+				<label for="password" class="font-medium">Contraseña</label>
+				<input class="input" type="password" id="password" name="_password"/>
+			</div>
+			<input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+			<input type="hidden" name="_target_path" value="{{path('admin')}}"/>
+
+			<div class="flex justify-end">
+				{{ component('button', {text: 'Iniciar sesión', attr: {type: 'submit'}}) }}
+			</div>
+
+		</form>
+	</section>
+{% endblock %}
+{% block footer %}{% endblock %}

@@ -1,0 +1,94 @@
+doctrine:
+    dbal:
+        default_connection: default
+        connections:
+            default:
+                # configure these for your database server
+                url: "%env(DATABASE_URL)%"
+                schema_filter: ~^(?!(states|countries|cities))~
+                logging: true
+            systemfdn:
+                # configure these for your database server
+                # url: 'sqlsrv://custom_user_terminal_bus:custom_user_terminal_bus123@207.244.233.184:1433/TerminalOmnibus'
+                driver: sqlsrv
+                host: "%env(systemfdn_host)%"
+                port: "%env(systemfdn_port)%"
+                charset: UTF-8
+                options:
+                    trustServerCertificate: true
+                dbname: "%env(systemfdn_dbname)%"
+                user: "%env(systemfdn_user)%"
+                password: "%env(systemfdn_password)%"
+
+        # IMPORTANT: You MUST configure your server version,
+        # either here or in the DATABASE_URL env var (see .env file)
+        #server_version: '13'
+    orm:
+        default_entity_manager: "default"
+        auto_generate_proxy_classes: true
+        # naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
+        # auto_mapping: true
+        # mappings:
+        #     App:
+        #         is_bundle: false
+        #         dir: '%kernel.project_dir%/src/Entity'
+        #         prefix: 'App\Entity'
+        #         alias: App
+        entity_managers:
+            default:
+                connection: default
+                naming_strategy: doctrine.orm.naming_strategy.underscore_number_aware
+                # auto_mapping: true
+                mappings:
+                    App:
+                        is_bundle: false
+                        dir: "%kernel.project_dir%/src/Entity"
+                        prefix: 'App\Entity'
+                        alias: App
+                    gedmo_translatable:
+                        type: annotation
+                        prefix: Gedmo\Translatable\Entity
+                        dir: "%kernel.project_dir%/vendor/gedmo/doctrine-extensions/src/Translatable/Entity"
+                        alias: GedmoTranslatable # (optional) it will default to the name set for the mapping
+                        is_bundle: false
+                    gedmo_translator:
+                        type: annotation
+                        prefix: Gedmo\Translator\Entity
+                        dir: "%kernel.project_dir%/vendor/gedmo/doctrine-extensions/src/Translator/Entity"
+                        alias: GedmoTranslator # (optional) it will default to the name set for the mapping
+                        is_bundle: false
+            systemfdn:
+                naming_strategy: doctrine.orm.naming_strategy.underscore
+                connection: systemfdn
+                mappings:
+                    systemfdn:
+                        is_bundle: false
+                        # type: annotation
+                        dir: "%kernel.project_dir%/src/EntitySistemaFdn"
+                        prefix: 'App\EntitySistemaFdn'
+                        alias: systemfdns
+
+when@test:
+    doctrine:
+        dbal:
+            # "TEST_TOKEN" is typically set by ParaTest
+            dbname_suffix: "_test%env(default::TEST_TOKEN)%"
+
+when@prod:
+    doctrine:
+        orm:
+            auto_generate_proxy_classes: false
+            query_cache_driver:
+                type: pool
+                pool: doctrine.system_cache_pool
+            result_cache_driver:
+                type: pool
+                pool: doctrine.result_cache_pool
+
+    framework:
+        cache:
+            pools:
+                doctrine.result_cache_pool:
+                    adapter: cache.app
+                doctrine.system_cache_pool:
+                    adapter: cache.system

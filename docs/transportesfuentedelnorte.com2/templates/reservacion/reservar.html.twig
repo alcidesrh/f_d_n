@@ -1,0 +1,34 @@
+<div id="reserva-wrap">
+
+	<div class="relative px-0 lg:px-16 z-30" data-controller="reservacion" data-reservacion-paso-value="{{paso_completado}}" data-action='ruta-form:paso_completado->reservacion#setPaso'>
+
+
+		<div data-action='salida:paso_completado@window->reservacion#setPaso'></div>
+		<div data-action='asiento:paso_completado@window->reservacion#setPaso'></div>
+		<div data-action='pagar:paso_completado@window->reservacion#setPaso'></div>
+		<div data-action='confirmacion:paso_completado@window->reservacion#setPaso'></div>
+
+		<div class="step-wrap w-full z-20 relative bg-sky-800 lg:bg-transparent py-5">
+			<div class="z-20">
+
+				{% include 'reservacion/_steps.html.twig' %}
+			</div>
+		</div>
+
+		<div class="reserva-form-wrap px-5 sm:px-10 min-h-[180px] bg-white rounded-none lg:rounded-lg pb-10 ">
+			<div class="flex items-center justify-center w-full relative" data-action="confirmacion:reserva->reservacion#setPaso">
+
+
+				<div class="w-full">
+					<div id="error_generico" {{ turbo_stream_listen('error_generico') }}></div>
+
+					<turbo-frame id="reservacion-form" src="{{ path(reservacion_action, {primer_render: true}) }}"></turbo-frame>
+				</div>
+			</div>
+		</div>
+
+	</div>
+
+	<div class="hidden lg:flex absolute top-0 z-10 w-full h-full bg-slate-900/60 rounded-none lg:rounded-lg reserva-bg"></div>
+
+</div>

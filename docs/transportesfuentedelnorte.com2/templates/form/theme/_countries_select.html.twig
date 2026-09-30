@@ -1,0 +1,17 @@
+{%- block choice_widget_expanded -%}
+{%- set attr = attr|merge({ class: attr.class|default('mt-2') }) -%}
+<div {{ block('widget_container_attributes') }}>
+	{%- for child in form %}
+		<div class="flex items-center gap-1 mr-3">
+			{% set entity = form.vars.choices[child.vars.value].data %}
+
+			<input type="radio" id="{{child.vars.id}}" name="{{child.vars.full_name}}" required="required" class="mr-2" value="{{entity.id}}">
+
+			<div class="flex items-center gap-2">
+				<img width="30" src="{{asset(entity.imagen.path)}}"/>
+
+				{{- form_label(child) -}}
+			</div>
+		</div>
+	{% endfor -%}
+</div>{%- endblock choice_widget_expanded -%}

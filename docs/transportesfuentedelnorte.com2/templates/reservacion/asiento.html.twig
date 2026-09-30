@@ -1,0 +1,67 @@
+<turbo-frame id="reservacion-form">
+
+	<div data-controller="asiento" class="mt-0 sm:mt-5">
+
+		{% from 'email/macros.html.twig' import error_alert %}
+
+		{% if errors is not empty %}
+			{% for error in errors %}
+
+				{{ error_alert(error) }}
+
+			{% endfor %}
+		{% endif %}
+
+		{% for message in app.flashes('error_asientos_ocupados') %}
+
+			{{ error_alert( message ) }}
+
+		{% endfor %}
+
+		{{ form_start(form, {'action': path('asientos', {reservacion: reservacion.id})}) }}
+
+		<div class="hidden">
+			{{ form_row(form.salida, {attr: {'data-asiento-target': 'asientos_salida'}}) }}
+			{% if reservacion.isIdaVuelta %}
+				{{ form_row(form.regreso, {attr: {'data-asiento-target': 'asientos_regreso'}}) }}
+			{% endif %}
+		</div>
+
+		<div class="flex flex-wrap justify-center">
+			<div class="{{reservacion.isIdaVuelta ? 'md:grid md:grid-cols-2 md:gap-7 lg:gap-10'}}">
+				<div>
+					{{ render(controller('App\\Controller\\ReservacionController::getAsientos', {id: reservacion.salida.id})) }}
+				</div>
+				{% if reservacion.isIdaVuelta %}
+
+					<div class="separador block md:hidden"></div>
+
+					<div>
+						{{render(controller('App\\Controller\\ReservacionController::getAsientos',{id: reservacion.regreso.id, regreso: true}))}}
+					</div>
+				{% endif %}
+			</div>
+		</div>
+
+		<div class="hidden sm:flex justify-between sm:justify-center gap-0 sm:gap-8 mt-14 ">
+			{{ component('button_link', {text: 'Atrás' | trans, icon: {left: true, name: 'arrow_back'}, link: path('salida', {'reservacion': reservacion.id})}) }}
+			{{ component('button_link', {text: 'Cancelar' | trans, icon: {left: true, name: 'block'}, link: path('reiniciar'), attr: 'data-turbo=false'}) }}
+			{{ component('button', {text: 'Siguiente' | trans, icon: {right: true, name: 'arrow_forward'}, attr: {type: 'submit'}}) }}
+		</div>
+
+		<div class="fixed-buttons">
+			<div class="m-auto flex w-full justify-around py-3 z-20 relative">
+				{{ component('button_link', {text: 'Atrás' | trans, icon: {left: true, name: 'arrow_back'}, link: path('salida', {'reservacion': reservacion.id})}) }}
+				{{ component('button_link',{text:'Cancelar'|trans, icon: {left:true,name:'block'}, link:path('reiniciar'), attr:'data-turbo=false'})}}
+				{{ component('button', {text: 'Siguiente' | trans, icon: {right: true, name: 'arrow_forward'} , attr: {type: 'submit'}}) }}
+			</div>
+			<div class="bg-button-reserva"></div>
+
+		</div>
+
+		{{ form_end(form) }}
+
+	</div>
+
+
+</turbo-frame>

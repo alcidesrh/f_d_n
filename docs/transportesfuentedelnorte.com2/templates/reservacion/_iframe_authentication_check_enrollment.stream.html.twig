@@ -1,0 +1,17 @@
+<turbo-stream action="update" target="authentication_check_enrollment">
+	<template>
+		<div class="top-0 z-50 absolute w-full h-full flex justify-center items-center" data-controller='authentication-check-enrollment' data-authentication-check-enrollment-challenge-response-value="{{mercure('authentication_check_enrollment_challenge_response_' ~ app.session.id)}}" data-authentication-check-enrollment-authentication-validation-route-value="{{path('payer_authentication_validation_service')}}" data-authentication-check-enrollment-error-url-value="{{path('payment_iframe_data_collection_error')}}">
+			<div id="authentication_check_enrollment" class="rounded-lg m-auto bg-white p-1 md:p-8">
+				<iframe class="m-auto" name="step-up-iframe" height="{{height}}" width="{{width}}"></iframe>
+				<form data-turbo="false" id="step-up-form" target="step-up-iframe" method="post" action="{{stepUpUrl}}">
+					<input type="hidden" name="JWT" value="{{accessToken}}"/>
+				</form>
+			</div>
+		</div>
+		<script data-turbo="false">
+			console.log("[CyberSource | Visa] Servidor -> Step-up iframe | stepUpUrl (ACS):", {{ stepUpUrl|json_encode|raw }});
+			console.log("[CyberSource | Visa] Servidor -> Step-up iframe | JWT (accessToken):", {{ accessToken|json_encode|raw }});
+			console.log("[CyberSource | Visa] Servidor -> Step-up iframe | autenticationTransactionId:", {{ app.session.get('authenticationTransactionId')|json_encode|raw }});
+		</script>
+	</template>
+</turbo-stream>

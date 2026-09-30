@@ -1,0 +1,10 @@
+<turbo-stream action="update" target="error_pago">
+	<template>
+		<div class="text-center mt-5 mb-10" id="error-pago">
+			{% if detalle is defined and detalle %}
+				{% set error = (error | trans) ~ '<br/>' ~ ('Respuesta recibida' | trans) ~ ': <span class="font-semibold">"' ~ detalle ~ '"</span>' %}
+			{% endif %}
+			{{ component('alert', {icon: 'error', text: error | trans, class: 'mb-0 error'}) }}
+		</div>
+	</template>
+</turbo-stream>
