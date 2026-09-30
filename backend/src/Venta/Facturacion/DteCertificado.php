@@ -18,5 +18,7 @@ final readonly class DteCertificado
         public ?string $emisorNombreComercial = null,
         public ?string $establecimientoCodigo = null,
         public ?string $xml = null,
+        /** Representación gráfica del DTE en el portal del certificador. */
+        public ?string $urlPdf = null,
     ) {}
 }

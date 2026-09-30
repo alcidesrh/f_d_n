@@ -119,6 +119,9 @@ final class RegistroVenta
 
         $cliente = $this->em->find(Cliente::class, $s->clienteId)
             ?? throw new VentaRechazada("El cliente no existe.");
+        if ($conFactura) {
+            $this->reglas->exigirReceptorFacturable($cliente->getNit(), $cotizacion->total);
+        }
 
         $conFacturaAhora = $conFactura && !$s->sinFacturaElectronica && !$cotizacion->total->isZero();
         $venta = (new BoletoVenta())
@@ -139,6 +142,8 @@ final class RegistroVenta
                 default => EstadoFacturacion::PENDIENTE,
             })
             ->setErrorFacturacion($conFactura && $s->sinFacturaElectronica ? "Venta en contingencia: sin factura electrónica." : null)
+            // Contingencia: el número de acceso de la SAT se asigna al vender y se imprime.
+            ->setNumeroAcceso($conFactura && $s->sinFacturaElectronica ? Facturador::nuevoNumeroAcceso() : null)
             ->setCreatedAt(new \DateTime());
         $this->em->persist($venta);
 

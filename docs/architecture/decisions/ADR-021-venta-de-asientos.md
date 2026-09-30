@@ -46,7 +46,15 @@ El modelo nuevo tenía `BoletoVenta`, `BoletoAsiento`, `BoletoTarifa` (sin resol
 ### Facturación electrónica
 
 - Puerto `CertificadorFel` (`certificar(SolicitudDte): DteCertificado`, `CertificacionFallida` con mensaje para el usuario y `recuperable`). `Factura` guarda el snapshot (emisor, receptor, número, serie, UUID, fecha de certificación, certificador, total, XML).
-- **Implementación activa: `CertificadorSimulado`** (NIT receptor `0` → rechazo; `FEL_SIMULADO_FALLA=1` → sin respuesta). La documentación del certificador (`docs/certificador_factura_electronica/`) no estaba en el repositorio: el adaptador real se escribe contra ella y se activa en `config/services.yaml`.
+- **Certificador: Forcon** (`App\Venta\Facturacion\Forcon`, documentación en `docs/certificador_factura_electronica/`). `FEL_CERTIFICADOR=forcon` lo activa (`FelActivo`); por defecto `simulado` (NIT receptor `0` → rechazo; `FEL_SIMULADO_FALLA=1` → sin respuesta).
+  - Emisión por `EmitirDteJson` (Basic Auth; Forcon firma con el certificado del emisor). Factura `FACT`, un ítem de servicio por boleto con IVA 12 % incluido y desglosado, frases de la empresa (`Empresa.frasesFel`, p. ej. `1-1,2-1`), afiliación IVA (`Empresa.afiliacionIva`) y establecimiento SAT (`Establecimiento`: por estación o el por defecto de la empresa).
+  - Adenda: **59 = código interno** (`FDN-VENTA-{id}`; Forcon rechaza un código ya certificado con `ESW-025`, así un reintento nunca emite dos facturas), 137 = ruta, y por ítem 129 = asiento y 132 = pasajero.
+  - Nombre comercial, correo y dirección del emisor salen del servicio "Datos Emisor" de Forcon (caché 12 h): la dirección de cada factura es la registrada en la SAT.
+  - **Credenciales por empresa**: Forcon asocia cada usuario a un NIT emisor (`EAL-092`), como en el legado (`factura_emisor.user_forcon`). Se guardan en `CredencialFel` con la clave cifrada (sodium, llave derivada de `APP_SECRET`; si APP_SECRET cambia hay que recargarlas), sin exponerlas por la API. Se cargan con `app:fel:credencial <nit> <usuario> [--probar=1]` o desde el legado (migrador `fel`). `FEL_FORCON_USUARIO`/`FEL_FORCON_CLAVE` sirven de respaldo si hay una sola empresa. `FEL_FORCON_URL`: pruebas `https://pruebasfel.eforcon.com`; la de producción la entrega soporte.
+  - Errores con código (`EVI-049`, `ESW-025`, …) = problema del documento: no recuperable, mensaje claro al usuario. Sin código, 5xx o sin respuesta = recuperable (reintentar / contingencia).
+  - **Contingencia SAT:** vender "sin factura electrónica" asigna un **número de acceso** de 9 dígitos que se imprime en el ticket; al certificar después se envía con él y con la fecha de emisión original.
+  - Antes de apartar/cobrar: la SAT no admite CF desde Q2,500.00 (`EVI-221`); la web además consulta el NIT del comprador (servicio "Consulta de NIT") antes de cobrar. En taquilla el alta de cliente consulta la razón social (`GET /api/venta/nit`).
+  - Anulación (`AnularDteJson`) y consulta de CUI están documentadas por Forcon pero no se usan aún (la anulación de boletos no tiene operación de dominio).
 - Lo mismo para la pasarela: `PasarelaSimulada` (tarjetas de prueba `4000 0000 0000 0002` rechazada, `4000 0000 0000 3220` con 3-D Secure) hasta integrar el banco adquirente.
 
 ### Modelo y API
@@ -74,8 +82,8 @@ El modelo nuevo tenía `BoletoVenta`, `BoletoAsiento`, `BoletoTarifa` (sin resol
 
 **Negativas / pendientes:**
 
-- Adaptadores reales de certificador y pasarela por escribir (faltan sus documentaciones); hasta entonces el sistema factura y cobra en modo simulado.
-- Si el proceso muere después de que el certificador emitió el DTE y antes de guardarlo, queda un DTE sin venta (se registra en el log); el adaptador real debería usar la referencia interna (`FDN-VENTA-{id}`) para detectar duplicados.
+- La pasarela de pago sigue simulada (falta la documentación del banco adquirente). La copia de la página anterior (`docs/transportesfuentedelnorte.com`) quedó en el repositorio como gitlink sin contenido.
+- Si el proceso muere después de que el certificador emitió el DTE y antes de guardarlo, el reintento recibe `ESW-025` (código interno repetido) y la venta no se duplica, pero hay que recuperar ese DTE a mano (Forcon tiene una consulta por código interno, `ESW-045`, no documentada en lo recibido).
 - El orden de las paradas se deduce de los subtrayectos; un trayecto sin subtrayectos solo vende origen→destino. Las horas por parada son estimadas (duración de los trayectos).
 - La página no entra en la imagen de producción del backend automáticamente (el contexto de build es `backend/`): hay que compilarla (`npm run build` en `pagina/`) antes de construir la imagen.
 - Anulación y reasignación de boletos siguen sin operación de dominio.

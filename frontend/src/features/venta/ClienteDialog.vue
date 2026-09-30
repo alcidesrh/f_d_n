@@ -24,7 +24,7 @@
             type="InputText"
             name="nit"
             label="NIT"
-            help="Sin guion. CF si es consumidor final."
+            :help="ayudaNit"
             validation="required|nit"
             :validation-rules="{ nit: nitValido }"
             :validation-messages="{ nit: 'NIT inválido (dígito verificador).' }"
@@ -78,8 +78,8 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { crearCliente, editarCliente, errorVenta } from '@/core/venta/api'
-import { nitValido as validarNit } from '@/core/venta/nit'
+import { consultarNit, crearCliente, editarCliente, errorVenta } from '@/core/venta/api'
+import { normalizarNit, nitValido as validarNit } from '@/core/venta/nit'
 import type { Cliente, ClienteDatos } from '@/core/venta/types'
 import { useVentaStore } from './store'
 
@@ -101,6 +101,38 @@ const naciones = computed(() => opciones(store.contexto?.naciones))
 const tiposDocumento = computed(() => opciones(store.contexto?.tiposDocumento))
 
 const nitValido = (nodo: { value: unknown }) => validarNit(String(nodo.value ?? ''))
+
+/**
+ * Al escribir un NIT válido se consulta la SAT: confirma que existe y, si el
+ * nombre está vacío, lo completa con la razón social registrada.
+ */
+const ayudaNit = ref('Sin guion. CF si es consumidor final.')
+let consultaNit: ReturnType<typeof setTimeout> | undefined
+watch(
+  () => String(datos.value.nit ?? ''),
+  (nit) => {
+    clearTimeout(consultaNit)
+    ayudaNit.value = 'Sin guion. CF si es consumidor final.'
+    const limpio = normalizarNit(nit)
+    if (!props.visible || limpio === 'CF' || !validarNit(limpio)) return
+    consultaNit = setTimeout(async () => {
+      ayudaNit.value = 'Consultando en la SAT…'
+      try {
+        const r = await consultarNit(limpio)
+        if (normalizarNit(String(datos.value.nit ?? '')) !== limpio) return
+        ayudaNit.value = `SAT: ${r.nombre}`
+        if (!String(datos.value.nombre ?? '').trim())
+          datos.value = { ...datos.value, nombre: r.nombre }
+      } catch (e) {
+        const err = errorVenta(e)
+        ayudaNit.value =
+          err?.codigo === 'nit_inexistente'
+            ? 'La SAT no reconoce este NIT: la factura sería rechazada.'
+            : 'No se pudo consultar la SAT (se validará al facturar).'
+      }
+    }, 500)
+  },
+)
 
 watch(
   () => props.visible,

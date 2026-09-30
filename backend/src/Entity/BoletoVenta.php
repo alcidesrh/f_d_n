@@ -65,6 +65,13 @@ class BoletoVenta extends TimeLegacyStatusBase
     #[ORM\Column(length: 20, enumType: EstadoFacturacion::class, options: ["default" => "no_aplica"])]
     private EstadoFacturacion $estadoFacturacion = EstadoFacturacion::NO_APLICA;
 
+    /**
+     * Número de acceso de contingencia (9 dígitos, SAT): se asigna al vender
+     * sin factura electrónica y viaja en el DTE cuando se certifica después.
+     */
+    #[ORM\Column(nullable: true)]
+    private ?int $numeroAcceso = null;
+
     /** Último error del certificador (contingencia o reintentos pendientes). */
     #[ORM\Column(length: 500, nullable: true)]
     private ?string $errorFacturacion = null;
@@ -201,6 +208,18 @@ class BoletoVenta extends TimeLegacyStatusBase
     public function setEstadoFacturacion(EstadoFacturacion $estadoFacturacion): static
     {
         $this->estadoFacturacion = $estadoFacturacion;
+
+        return $this;
+    }
+
+    public function getNumeroAcceso(): ?int
+    {
+        return $this->numeroAcceso;
+    }
+
+    public function setNumeroAcceso(?int $numeroAcceso): static
+    {
+        $this->numeroAcceso = $numeroAcceso;
 
         return $this;
     }

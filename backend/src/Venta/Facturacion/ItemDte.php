@@ -13,5 +13,8 @@ final readonly class ItemDte
         public int $cantidad,
         public Money $precioUnitario,
         public Money $total,
+        /** Datos del boleto para la adenda del ítem. */
+        public ?int $asiento = null,
+        public ?string $pasajero = null,
     ) {}
 }

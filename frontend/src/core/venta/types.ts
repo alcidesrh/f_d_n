@@ -131,6 +131,8 @@ export interface Comprobante {
   canal: CanalVenta
   estado: 'pendiente' | 'confirmada'
   estadoFacturacion: 'certificada' | 'pendiente' | 'no_aplica'
+  /** Número de acceso de la SAT de una venta en contingencia (sin factura aún). */
+  numeroAcceso: number | null
   cortesia: boolean
   creada: string | null
   codigoBarras: string
@@ -152,6 +154,8 @@ export interface Comprobante {
     certificadorNit: string | null
     receptorNit: string
     receptorNombre: string
+    /** PDF del DTE en el portal del certificador. */
+    urlPdf: string | null
   } | null
   cliente: { nombre: string; nit: string; email: string | null } | null
   /** `salida`: inicio de la ruta; `salidaOrigen`: hora estimada donde sube el pasajero. */

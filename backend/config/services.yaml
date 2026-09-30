@@ -6,6 +6,10 @@
 parameters:
     # Remitente de los correos con el boleto (sobrescribible con VENTA_CORREO_REMITENTE).
     venta_correo_remitente_defecto: "boletos@transportesfuentedelnorte.com"
+    # Certificador FEL: "simulado" (desarrollo) o "forcon" (sobrescribible con FEL_CERTIFICADOR).
+    fel_certificador_defecto: "simulado"
+    # API de Forcon: ambiente de pruebas; la URL de producción la entrega su soporte (FEL_FORCON_URL).
+    fel_forcon_url_defecto: "https://pruebasfel.eforcon.com"
 
 services:
     # default configuration for services in *this* file
@@ -75,6 +79,8 @@ services:
             - { name: api_platform.graphql.type }
 
     # Venta de asientos (ADR-021): adaptadores activos de los puertos externos.
-    # Reemplazar por los del certificador FEL y el banco adquirente contratados.
-    App\Venta\Facturacion\CertificadorFel: '@App\Venta\Facturacion\CertificadorSimulado'
+    # Certificador FEL: FelActivo elige Forcon o el simulado según FEL_CERTIFICADOR.
+    App\Venta\Facturacion\CertificadorFel: '@App\Venta\Facturacion\FelActivo'
+    App\Venta\Facturacion\ConsultaContribuyente: '@App\Venta\Facturacion\FelActivo'
+    # Pasarela de pago: reemplazar por la del banco adquirente contratado.
     App\Venta\Pago\PasarelaPago: '@App\Venta\Pago\PasarelaSimulada'

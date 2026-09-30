@@ -3,6 +3,7 @@
 namespace App\Migration;
 
 use App\Migration\Job\Progreso;
+use App\Venta\Facturacion\CredencialesFel;
 use DateTime;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -30,6 +31,7 @@ class MigradorEstaticos
         ]
         private EntityManagerInterface $systemfdnEm,
         private Mapeador $mapeador,
+        private CredencialesFel $credencialesFel,
     ) {
         $this->oldPdo->setAttribute(
             \PDO::ATTR_ERRMODE,
@@ -64,6 +66,7 @@ class MigradorEstaticos
             "tipo_documento" => 0,
             "nacionalidad" => 0,
             "agencia" => 0,
+            "fel" => 0,
         ];
 
         $this->newConn->beginTransaction();
@@ -100,6 +103,7 @@ class MigradorEstaticos
                 $contadores["cliente"] = $this->migrarClientes($output);
                 $contadores["usuario"] = $this->migrarUsuarios($output);
                 $contadores["agencia"] = $this->migrarAgencias($output);
+                $contadores["fel"] = $this->migrarFel($output);
                 $contadores["bus_marca"] = $this->migrarMarcas($output);
                 $contadores["bus"] = $this->migrarBuss($output);
                 $contadores["asiento"] = $this->migrarAsientos($output);
@@ -138,6 +142,7 @@ class MigradorEstaticos
         "tipo_documento" => "migrarTiposDocumento",
         "nacionalidad" => "migrarNacionalidades",
         "agencia" => "migrarAgencias",
+        "fel" => "migrarFel",
     ];
 
     /**
@@ -1065,6 +1070,54 @@ class MigradorEstaticos
             $count++;
         }
         $this->reiniciarIdentidad("agencia");
+        if ($output) {
+            $output->writeln(" <info>{$count}</info>");
+        }
+
+        return $count;
+    }
+
+    /**
+     * Datos FEL de cada empresa desde `factura_emisor`: afiliación al IVA,
+     * credenciales del certificador (la clave se guarda cifrada) y el
+     * establecimiento por defecto (código 1) si la empresa no tiene.
+     */
+    private function migrarFel(?OutputInterface $output = null): int
+    {
+        if ($output) {
+            $output->write("<info>Facturación electrónica (emisores)...</info>");
+        }
+        $count = 0;
+        foreach ($this->fetchOld("SELECT * FROM factura_emisor") as $row) {
+            if (isset($row["activo"]) && $row["activo"] !== null && !filter_var($row["activo"], FILTER_VALIDATE_BOOL)) {
+                continue;
+            }
+            $empresaId = $row["empresa_id"] ? $this->resolveEmpresaId((int) $row["empresa_id"]) : null;
+            if (!$empresaId) {
+                continue;
+            }
+            $data = $this->mapeador->emisorFel($row);
+            if ($data["afiliacion_iva"] !== null) {
+                $this->newConn->executeStatement(
+                    "UPDATE empresa SET afiliacion_iva = :afiliacion WHERE id = :id",
+                    ["afiliacion" => $data["afiliacion_iva"], "id" => $empresaId],
+                );
+            }
+            if ($data["usuario"] !== null && $data["clave"] !== null) {
+                $this->newConn->executeStatement(
+                    "INSERT INTO credencial_fel (empresa_id, usuario, clave_cifrada) VALUES (:empresa, :usuario, :clave)
+                     ON CONFLICT (empresa_id) DO UPDATE SET usuario = EXCLUDED.usuario, clave_cifrada = EXCLUDED.clave_cifrada",
+                    ["empresa" => $empresaId, "usuario" => $data["usuario"], "clave" => $this->credencialesFel->cifrar($data["clave"])],
+                );
+            }
+            $this->newConn->executeStatement(
+                "INSERT INTO establecimiento (empresa_id, estacion_id, codigo, nombre)
+                 SELECT :empresa, NULL, 1, 'Principal'
+                 WHERE NOT EXISTS (SELECT 1 FROM establecimiento WHERE empresa_id = :empresa AND estacion_id IS NULL)",
+                ["empresa" => $empresaId],
+            );
+            $count++;
+        }
         if ($output) {
             $output->writeln(" <info>{$count}</info>");
         }

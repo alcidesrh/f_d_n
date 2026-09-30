@@ -83,7 +83,7 @@ export interface Compra {
   estadoFacturacion: 'certificada' | 'pendiente' | 'no_aplica'
   codigoBarras: string
   empresa: { nombre: string; nit: string | null } | null
-  factura: { numero: number; serie: string; uuid: string } | null
+  factura: { numero: number; serie: string; uuid: string; urlPdf: string | null } | null
   cliente: { nombre: string; nit: string; email: string | null } | null
   recorrido: { id: number; salida: string; salidaOrigen: string } | null
   origen: { nombre: string; direccion: string | null } | null

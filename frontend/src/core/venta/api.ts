@@ -58,6 +58,12 @@ export const fetchComprobante = (id: number) => http.get<Comprobante>(`/venta/ve
 export const buscarClientes = (q: string) =>
   http.get<Cliente[]>(`/venta/clientes?q=${encodeURIComponent(q)}`, { silent: true })
 
+/** Razón social de un NIT según la SAT (404 si no existe). */
+export const consultarNit = (nit: string) =>
+  http.get<{ nit: string; nombre: string }>(`/venta/nit?nit=${encodeURIComponent(nit)}`, {
+    silent: true,
+  })
+
 export const crearCliente = (datos: ClienteDatos) => http.post<Cliente>('/venta/clientes', datos)
 
 export const editarCliente = (id: number, datos: ClienteDatos) =>

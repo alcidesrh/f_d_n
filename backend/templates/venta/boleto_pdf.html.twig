@@ -68,9 +68,11 @@
         <td colspan="2"><div class="lbl">Autorización (UUID)</div><div class="val">{{ b.factura.uuid }}</div></td>
         <td><div class="lbl">Certificada</div><div class="val">{{ b.factura.fechaCertificacion|date('d/m/Y H:i') }}</div></td>
       </tr></table>
+      {% if b.factura.urlPdf %}<div class="muted">Factura en línea: {{ b.factura.urlPdf }}</div>{% endif %}
       {% if b.factura.certificador %}<div class="muted">Certificador: {{ b.factura.certificador }}{% if b.factura.certificadorNit %}, NIT {{ b.factura.certificadorNit }}{% endif %}</div>{% endif %}
     {% elseif b.estadoFacturacion == 'pendiente' %}
       <div>La factura electrónica está en proceso de certificación; se la enviaremos por correo.</div>
+      {% if b.numeroAcceso %}<div>Documento en contingencia · número de acceso <strong>{{ b.numeroAcceso }}</strong></div>{% endif %}
     {% else %}
       <div>Esta venta no genera factura electrónica.</div>
     {% endif %}

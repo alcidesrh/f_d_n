@@ -16,6 +16,10 @@
           <dt class="text-muted-color">DTE</dt>
           <dd>{{ comprobante.factura.numero }} · serie {{ comprobante.factura.serie }}</dd>
         </template>
+        <template v-if="comprobante.numeroAcceso">
+          <dt class="text-muted-color">No. acceso</dt>
+          <dd class="font-mono">{{ comprobante.numeroAcceso }}</dd>
+        </template>
         <dt class="text-muted-color">Asientos</dt>
         <dd>{{ comprobante.boletos.map((b) => b.asiento).join(', ') }}</dd>
         <dt class="text-muted-color">Total</dt>
@@ -24,6 +28,15 @@
     </div>
     <template #footer>
       <div class="flex flex-wrap justify-end gap-2">
+        <a
+          v-if="comprobante?.factura?.urlPdf"
+          :href="comprobante.factura.urlPdf"
+          target="_blank"
+          rel="noopener"
+          class="no-underline"
+        >
+          <Button label="Factura (DTE)" severity="secondary" text />
+        </a>
         <Button label="PDF" severity="secondary" outlined :loading="descargando" @click="pdf">
           <template #icon><icon name="file-type-pdf" class="mr-1" /></template>
         </Button>

@@ -235,6 +235,23 @@ class Mapeador
         ];
     }
 
+    /**
+     * `factura_emisor` del legado: afiliación al IVA y credenciales del
+     * certificador (Forcon) de la empresa.
+     *
+     * @return array{afiliacion_iva: ?string, usuario: ?string, clave: ?string}
+     */
+    public function emisorFel(array $old): array
+    {
+        $texto = static fn(mixed $v) => ($v = trim((string) $v)) !== "" ? $v : null;
+
+        return [
+            "afiliacion_iva" => ($a = $texto($old["afiliacion_iva"] ?? null)) !== null ? strtoupper(mb_substr($a, 0, 5)) : null,
+            "usuario" => $texto($old["user_forcon"] ?? $old["userForcon"] ?? null),
+            "clave" => $texto($old["password_forcon"] ?? $old["passwordForcon"] ?? null),
+        ];
+    }
+
     private static function idONulo(mixed $v): ?int
     {
         return is_numeric($v) && (int) $v > 0 ? (int) $v : null;

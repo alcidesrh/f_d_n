@@ -36,6 +36,7 @@ final class DatosBoleto
             "canal" => $venta->getCanal()->value,
             "estado" => $venta->getEstado()->value,
             "estadoFacturacion" => $venta->getEstadoFacturacion()->value,
+            "numeroAcceso" => $venta->getNumeroAcceso(),
             "cortesia" => $venta->isCortesia(),
             "creada" => $venta->getCreada()?->format(DATE_ATOM),
             "codigoBarras" => sprintf("%08d", $venta->getId()),
@@ -60,6 +61,7 @@ final class DatosBoleto
                 "certificadorNit" => $factura->getCertificadorNit(),
                 "receptorNit" => $factura->getReceptopNit(),
                 "receptorNombre" => $factura->getReceptorNombre(),
+                "urlPdf" => $factura->getUrlPdf(),
             ],
             "cliente" => $cliente === null ? null : [
                 "nombre" => $cliente->getNombreCompleto(),

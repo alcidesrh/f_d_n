@@ -26,7 +26,10 @@
         <div>
           <dt class="text-muted-color">Factura</dt>
           <dd class="m-0 font-medium">
-            <template v-if="compra.factura">DTE {{ compra.factura.numero }} · serie {{ compra.factura.serie }}</template>
+            <template v-if="compra.factura">
+              DTE {{ compra.factura.numero }} · serie {{ compra.factura.serie }}
+              <a v-if="compra.factura.urlPdf" :href="compra.factura.urlPdf" target="_blank" rel="noopener" class="ml-1">ver factura</a>
+            </template>
             <template v-else>En proceso: le llegará por correo.</template>
           </dd>
         </div>

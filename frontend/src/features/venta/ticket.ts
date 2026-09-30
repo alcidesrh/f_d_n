@@ -28,7 +28,7 @@ export function ticketHtml(c: Comprobante): string {
        <p>Certificado: ${esc(fecha(f.fechaCertificacion))} ${esc(hora(f.fechaCertificacion))}</p>
        <p class="small">UUID: ${esc(f.uuid)}</p>`
     : c.estadoFacturacion === 'pendiente'
-      ? '<p class="c"><b>FACTURA ELECTRÓNICA PENDIENTE DE CERTIFICAR</b></p>'
+      ? `<p class="c"><b>DOCUMENTO EN CONTINGENCIA</b>${c.numeroAcceso ? `<br>Número de acceso: ${esc(c.numeroAcceso)}` : ''}<br>La factura electrónica se certificará después.</p>`
       : `<p class="c"><b>${c.cortesia ? 'CORTESÍA' : 'SIN FACTURA ELECTRÓNICA'}</b>${c.agencia ? `<br>Agencia: ${esc(c.agencia)}` : ''}</p>`
 
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Boleto ${esc(c.codigoBarras)}</title>

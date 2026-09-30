@@ -56,6 +56,10 @@ final class IndicadoresMigracion
             "nuevo" => "SELECT COUNT(*) FROM pais",
             "legado" => "SELECT COUNT(*) FROM nacionalidad",
         ],
+        "fel" => [
+            "nuevo" => "SELECT COUNT(*) FROM credencial_fel",
+            "legado" => "SELECT COUNT(*) FROM factura_emisor",
+        ],
         "agencia" => [
             "nuevo" => "SELECT COUNT(*) FROM agencia",
             "legado" => "SELECT COUNT(*) FROM estacion WHERE tipoEstacion_id = 4",

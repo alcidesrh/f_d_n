@@ -78,6 +78,10 @@ class Factura {
     #[ORM\Embedded(class: Precio::class, columnPrefix: 'total_')]
     private ?Precio $total = null;
 
+    /** Representación gráfica (PDF) del DTE en el portal del certificador. */
+    #[ORM\Column(length: 500, nullable: true)]
+    private ?string $urlPdf = null;
+
     /** XML certificado tal como lo devolvió el certificador (respaldo fiscal). */
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $xml = null;
@@ -232,6 +236,16 @@ class Factura {
 
     public function setXml(?string $xml): static {
         $this->xml = $xml;
+
+        return $this;
+    }
+
+    public function getUrlPdf(): ?string {
+        return $this->urlPdf;
+    }
+
+    public function setUrlPdf(?string $urlPdf): static {
+        $this->urlPdf = $urlPdf;
 
         return $this;
     }

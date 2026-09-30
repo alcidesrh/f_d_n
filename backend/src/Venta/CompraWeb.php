@@ -18,6 +18,7 @@ use App\Entity\ReservaAsiento;
 use App\Entity\TipoDocumento;
 use App\Venta\Excepcion\VentaRechazada;
 use App\Venta\Facturacion\CertificacionFallida;
+use App\Venta\Facturacion\ConsultaContribuyente;
 use App\Venta\Facturacion\Facturador;
 use App\Venta\Mensaje\EnviarBoletoPorCorreo;
 use App\Venta\Pago\PasarelaPago;
@@ -48,6 +49,7 @@ final class CompraWeb
         private readonly ReglasVenta $reglas,
         private readonly PasarelaPago $pasarela,
         private readonly Facturador $facturador,
+        private readonly ConsultaContribuyente $contribuyentes,
         private readonly PublicadorOcupacion $publicador,
         private readonly MessageBusInterface $bus,
         private readonly LoggerInterface $logger,
@@ -76,6 +78,9 @@ final class CompraWeb
             $reservas[0]->getTrayecto(),
             array_map(static fn(ReservaAsiento $r) => $r->getAsiento(), $reservas),
         );
+        // Antes de cobrar: lo que impediría facturar se corrige ahora, no después.
+        $this->reglas->exigirReceptorFacturable($comprador->nit, $cotizacion->total);
+        $this->exigirNitExistente($comprador->nit);
         $this->reservas->extender($token);
 
         $pago = new PagoWeb($token, $cotizacion->total, $comprador->toArray(), $tarjeta->marcaTarjeta(), $tarjeta->ultimos4());
@@ -135,6 +140,22 @@ final class CompraWeb
             return [...$r, "token" => $token];
         } catch (VentaRechazada $e) {
             return ["estado" => "rechazado", "mensaje" => $e->getMessage(), "token" => $token];
+        }
+    }
+
+    /** Un NIT que la SAT no conoce haría fallar la factura; si la consulta falla, se sigue. */
+    private function exigirNitExistente(string $nit): void
+    {
+        if ($nit === "CF") {
+            return;
+        }
+        try {
+            $existe = $this->contribuyentes->nombreDeNit($nit) !== null;
+        } catch (CertificacionFallida) {
+            return;
+        }
+        if (!$existe) {
+            throw new VentaRechazada("La SAT no reconoce ese NIT. Revíselo o use CF.", "comprador_nit");
         }
     }
 

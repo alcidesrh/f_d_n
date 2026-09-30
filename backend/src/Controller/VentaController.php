@@ -18,7 +18,11 @@ use App\Venta\Boleto\Comprobantes;
 use App\Venta\Boleto\DatosBoleto;
 use App\Venta\Clientes;
 use App\Venta\ConsultaVenta;
+use App\Venta\Comprador;
 use App\Venta\Excepcion\VentaRechazada;
+use App\Venta\Facturacion\CertificacionFallida;
+use App\Venta\Facturacion\ConsultaContribuyente;
+use App\Venta\Facturacion\Facturador;
 use App\Venta\PublicadorOcupacion;
 use App\Venta\RegistroVenta;
 use App\Venta\ReglasVenta;
@@ -208,6 +212,26 @@ final class VentaController extends AbstractController
         $this->denyAccessUnlessGranted(self::VENDER);
 
         return $this->json($this->clientes->buscar((string) $request->query->get("q", "")));
+    }
+
+    /** `?nit=`: razón social registrada en la SAT (para completar el cliente). */
+    #[Route("/nit", name: "nit", methods: ["GET"])]
+    public function nit(Request $request, ConsultaContribuyente $contribuyentes): JsonResponse
+    {
+        $this->denyAccessUnlessGranted(self::VENDER);
+        $nit = Facturador::normalizarNit((string) $request->query->get("nit"));
+        if ($nit === "CF" || !Comprador::nitValido($nit)) {
+            return $this->json(["error" => "NIT inválido (dígito verificador).", "codigo" => "nit_invalido"], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+        try {
+            $nombre = $contribuyentes->nombreDeNit($nit);
+        } catch (CertificacionFallida $e) {
+            return $this->json(["error" => $e->getMessage(), "codigo" => "sin_respuesta"], Response::HTTP_BAD_GATEWAY);
+        }
+
+        return $nombre === null
+            ? $this->json(["error" => "La SAT no reconoce ese NIT.", "codigo" => "nit_inexistente"], Response::HTTP_NOT_FOUND)
+            : $this->json(["nit" => $nit, "nombre" => $nombre]);
     }
 
     /** Alta rápida de cliente desde la venta. */

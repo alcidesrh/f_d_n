@@ -8,6 +8,7 @@ const base: Comprobante = {
   canal: 'estacion',
   estado: 'confirmada',
   estadoFacturacion: 'certificada',
+  numeroAcceso: null,
   cortesia: false,
   creada: '2026-09-27T09:52:00-06:00',
   codigoBarras: '00000007',
@@ -29,9 +30,15 @@ const base: Comprobante = {
     certificadorNit: '4150686',
     receptorNit: '28119266',
     receptorNombre: 'BAUTISTA OROZCO, JENNER OSWALDO',
+    urlPdf: null,
   },
   cliente: { nombre: 'Jenner <b>', nit: '28119266', email: null },
-  recorrido: { id: 1, salida: '2026-09-27T08:00:00-06:00', salidaOrigen: '2026-09-27T10:45:00-06:00', bus: 'TPB060B' },
+  recorrido: {
+    id: 1,
+    salida: '2026-09-27T08:00:00-06:00',
+    salidaOrigen: '2026-09-27T10:45:00-06:00',
+    bus: 'TPB060B',
+  },
   origen: { nombre: 'Aguilar Batres', direccion: null },
   destino: { nombre: 'San Marcos', direccion: null },
   boletos: [
@@ -68,8 +75,13 @@ describe('ticketHtml', () => {
     expect(
       ticketHtml({ ...base, factura: null, cortesia: true, estadoFacturacion: 'no_aplica' }),
     ).toContain('CORTESÍA')
-    expect(ticketHtml({ ...base, factura: null, estadoFacturacion: 'pendiente' })).toContain(
-      'PENDIENTE DE CERTIFICAR',
-    )
+    const contingencia = ticketHtml({
+      ...base,
+      factura: null,
+      estadoFacturacion: 'pendiente',
+      numeroAcceso: 290524861,
+    })
+    expect(contingencia).toContain('CONTINGENCIA')
+    expect(contingencia).toContain('Número de acceso: 290524861')
   })
 })

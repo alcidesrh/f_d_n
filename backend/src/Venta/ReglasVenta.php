@@ -10,6 +10,7 @@ use App\Entity\Recorrido;
 use App\Entity\Trayecto;
 use App\Venta\Excepcion\AsientosNoDisponibles;
 use App\Venta\Excepcion\VentaRechazada;
+use App\Venta\Facturacion\Facturador;
 use Doctrine\ORM\EntityManagerInterface;
 use Money\Currency;
 use Money\Money;
@@ -170,6 +171,24 @@ final class ReglasVenta
         }
 
         return new Cotizacion($lineas, $total ?? new Money(0, new Currency("GTQ")));
+    }
+
+    /**
+     * La SAT no admite facturar a consumidor final (CF) desde Q2,500.00: se
+     * valida antes de apartar o cobrar, no cuando ya falló la factura.
+     */
+    public function exigirReceptorFacturable(?string $nit, Money $total): void
+    {
+        if (
+            Facturador::normalizarNit($nit) === "CF"
+            && $total->getCurrency()->getCode() === "GTQ"
+            && (int) $total->getAmount() >= Facturador::TOPE_CONSUMIDOR_FINAL
+        ) {
+            throw new VentaRechazada(
+                "Para compras de Q2,500.00 o más la SAT exige el NIT del cliente: no se puede facturar a CF.",
+                "requiere_nit",
+            );
+        }
     }
 
     private function exigirBus(Recorrido $recorrido): void

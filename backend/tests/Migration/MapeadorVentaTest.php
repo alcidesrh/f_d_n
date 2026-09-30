@@ -41,4 +41,12 @@ final class MapeadorVentaTest extends TestCase
         $this->assertSame(2, $c["tipo_documento_id"]);
         $this->assertNull($c["nacionalidad_id"]);
     }
+
+    public function testEmisorFelDelLegado(): void
+    {
+        $e = (new Mapeador())->emisorFel(["afiliacion_iva" => " gen ", "user_forcon" => "usr", "password_forcon" => "pwd"]);
+
+        $this->assertSame(["afiliacion_iva" => "GEN", "usuario" => "usr", "clave" => "pwd"], $e);
+        $this->assertSame(["afiliacion_iva" => null, "usuario" => null, "clave" => null], (new Mapeador())->emisorFel([]));
+    }
 }
