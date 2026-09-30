@@ -9,7 +9,7 @@ doctrine:
                 logging: true
             systemfdn:
                 # configure these for your database server
-                # url: 'sqlsrv://custom_user_terminal_bus:custom_user_terminal_bus123@207.244.233.184:1433/TerminalOmnibus'
+                # url: '<CAMBIAR>'
                 driver: sqlsrv
                 host: "%env(systemfdn_host)%"
                 port: "%env(systemfdn_port)%"

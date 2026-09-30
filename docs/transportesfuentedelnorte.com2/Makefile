@@ -311,7 +311,7 @@ debug-build:
 ## Para usar un PostgreSQL externo, solo levanta php + caddy y pasa el host/puerto:
 ##   make debug DB_HOST=IP DB_PORT=PUERTO DB_USER=usuario DB_PASS='clave' DB_NAME=nombre
 ## Ejemplo:
-##   make debug DB_HOST=144.126.140.23 DB_PORT=32769 DB_USER='app' DB_PASS='[3F)d)N1]'
+##   make debug DB_HOST=<CAMBIAR> DB_PORT=32769 DB_USER='app' DB_PASS=<CAMBIAR>
 debug: ## Levanta docker en modo debug (DB_HOST, DB_PORT, DB_USER, DB_PASS, DB_NAME opcionales)
 	@if [ -n "$(DB_HOST)" ]; then \
 		echo "Levantando solo php y caddy (DB externo: $(DB_HOST):$(DB_PORT))"; \
@@ -320,17 +320,17 @@ debug: ## Levanta docker en modo debug (DB_HOST, DB_PORT, DB_USER, DB_PASS, DB_N
 		$(DOCKER_COMP) up -d php caddy; \
 	else \
 		echo "Levantando stack completo (DB interno)"; \
-		POSTGRES_PASSWORD="[3F)d)N1]" $(DOCKER_COMP) up -d; \
+		POSTGRES_PASSWORD="<CAMBIAR>" $(DOCKER_COMP) up -d; \
 	fi
 
 # prod:
-# 	SERVER_NAME=transportesfuentedelnorte.com POSTGRES_PASSWORD='[3F)d)N1]' CADDY_MERCURE_JWT_SECRET=fdn.transportesfuentedelnorte.com APP_ENV=prod APP_SECRET=fdn.transportesfuentedelnorte.com $(DOCKER_COMP)  -f docker-compose.yml -f docker-compose.prod.yml up -d
+# 	SERVER_NAME=transportesfuentedelnorte.com POSTGRES_PASSWORD='<CAMBIAR>' CADDY_MERCURE_JWT_SECRET=<CAMBIAR> APP_ENV=prod APP_SECRET=<CAMBIAR> $(DOCKER_COMP)  -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 prod:
-	SERVER_NAME=transportesfuentedelnorte.com POSTGRES_PASSWORD='[3F)d)N1]' CADDY_MERCURE_JWT_SECRET=fdn.transportesfuentedelnorte.com APP_ENV=prod docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+	SERVER_NAME=transportesfuentedelnorte.com POSTGRES_PASSWORD='<CAMBIAR>' CADDY_MERCURE_JWT_SECRET=<CAMBIAR> APP_ENV=prod docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 prod-build:
-	SERVER_NAME=transportesfuentedelnorte.com APP_ENV=prod POSTGRES_PASSWORD='[3F)d)N1]' APP_SECRET=fdn.transportesfuentedelnorte.com CADDY_MERCURE_JWT_SECRET=fdn.transportesfuentedelnorte.com docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
+	SERVER_NAME=transportesfuentedelnorte.com APP_ENV=prod POSTGRES_PASSWORD='<CAMBIAR>' APP_SECRET=<CAMBIAR> CADDY_MERCURE_JWT_SECRET=<CAMBIAR> docker compose -f docker-compose.yml -f docker-compose.prod.yml up --build -d
 
 pcl:
 	@$(DOCKER) logs --follow transportesfuentedelnortecom-php-1

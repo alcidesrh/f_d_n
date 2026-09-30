@@ -8,7 +8,7 @@ services:
       # no exporta estas variables, NUNCA deben quedar vacías (un env real vacío
       # gana a los archivos .env de Symfony y rompe el JWT de Mercure al arrancar:
       # lcobucci "Key cannot be empty"). Exportarlas en el server las overrides.
-      APP_SECRET: ${APP_SECRET:-4ca07b58b4c2f273ba5bf73191158c6b}
+      APP_SECRET: ${APP_SECRET:-<CAMBIAR>}
       MERCURE_JWT_SECRET: ${CADDY_MERCURE_JWT_SECRET:-!ChangeThisMercureHubJWTSecretKey!}
       MERCURE_URL: https://${SERVER_NAME:-transportesfuentedelnorte.com}/.well-known/mercure
       # ⚠️ NO tocar DATABASE_URL aquí. El server de producción exporta
