@@ -23,14 +23,17 @@ Reutiliza del frontend por alias (ver `vite.config.ts` y `tsconfig.app.json`): `
 | `src/carrito.ts` | Store del carrito (token en `sessionStorage`: sobrevive a la vuelta del banco) |
 | `src/modelo.ts` | Reglas puras (tarjeta, tiempo restante, estado del mapa, fechas) — con tests |
 | `src/paginas/` | Inicio → Salidas → Asientos → Pago → Compra |
-| `src/componentes/` | Buscador de viaje, resumen del carrito, íconos |
+| `src/tresDs.ts` | Pasos del navegador en 3-D Secure (formularios a iframes, datos del navegador, huella) |
+| `src/componentes/` | Buscador de viaje, resumen del carrito, desafío del banco, íconos |
 
 ## Flujo
 
 1. Buscar origen/destino/fecha → salidas con precio "desde" y asientos libres.
 2. Croquis en vivo: tocar un asiento lo aparta (reserva de 15 min, nunca pasado el cierre de 30 min antes de salir).
-3. Pago: datos del comprador (NIT o CF, documento opcional) y tarjeta. Si el banco pide 3-D Secure, el navegador envía un formulario POST al banco y vuelve a `/pagina/compra/{token}`.
+3. Pago: datos del comprador (NIT o CF, documento opcional), tarjeta y su dirección de facturación. El pago puede pedir pasos de 3-D Secure (`src/tresDs.ts`): recolección de datos del dispositivo (iframe oculto) y desafío del banco (`DesafioBanco.vue`, iframe en un diálogo; el banco vuelve a `/api/publico/pagos/retorno`, que avisa por `postMessage`). Tras cada paso la página reenvía el pago con `continuar`: la tarjeta nunca sale de la memoria de esta página salvo hacia el backend.
 4. Compra: se descarga el PDF una vez y queda el botón; el boleto también llega por correo.
+
+Con `CYBERSOURCE_ORG_ID`, la página carga el script de huella del dispositivo del banco (`/api/publico/carritos/{token}/huella`).
 
 Con la pasarela simulada: `4000 0000 0000 0002` rechaza, `4000 0000 0000 3220` pide 3-D Secure, otra Visa/Mastercard válida aprueba.
 

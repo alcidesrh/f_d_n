@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { AsientoCroquis } from '@/core/croquis/types'
-import { desdeISO, diaISO, estadoEnMapa, expiraValida, luhn, marca, restante } from '../modelo'
+import { deOrigen, desdeISO, diaISO, esRetorno3ds, estadoEnMapa, exigeCodigoPostal, expiraValida, luhn, marca, paises, restante } from '../modelo'
 
 describe('tarjeta', () => {
   it('luhn y marca', () => {
@@ -38,4 +38,30 @@ it('fechas locales', () => {
   expect(diaISO(new Date(2026, 0, 5))).toBe('2026-01-05')
   expect(desdeISO('2026-01-05')?.getDate()).toBe(5)
   expect(desdeISO('x')).toBeNull()
+})
+
+describe('pago: país y 3-D Secure', () => {
+  it('lista los países con Guatemala primero', () => {
+    const lista = paises()
+    expect(lista[0]).toEqual({ label: 'Guatemala', value: 'GT' })
+    expect(lista.some((p) => p.value === 'US')).toBe(true)
+  })
+
+  it('exige código postal solo en EE. UU. y Canadá', () => {
+    expect(exigeCodigoPostal('US')).toBe(true)
+    expect(exigeCodigoPostal('CA')).toBe(true)
+    expect(exigeCodigoPostal('GT')).toBe(false)
+  })
+
+  it('acepta avisos solo de los orígenes esperados', () => {
+    const origenes = ['https://centinelapistag.cardinalcommerce.com']
+    expect(deOrigen('https://centinelapistag.cardinalcommerce.com', origenes)).toBe(true)
+    expect(deOrigen('https://evil.example', origenes)).toBe(false)
+  })
+
+  it('reconoce el aviso de retorno del banco', () => {
+    expect(esRetorno3ds({ tipo: 'fdn-3ds', datos: { resultado: 'Y' } })).toBe(true)
+    expect(esRetorno3ds({ tipo: 'otro', datos: {} })).toBe(false)
+    expect(esRetorno3ds('fdn-3ds')).toBe(false)
+  })
 })

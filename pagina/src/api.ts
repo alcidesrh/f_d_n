@@ -6,12 +6,11 @@ import type {
   Carrito,
   Catalogos,
   Compra,
-  Comprador,
-  DatosTarjeta,
   Opcion,
   RecorridoPublico,
   ResultadoPago,
   Salida,
+  SolicitudPago,
 } from './tipos'
 
 const BASE = '/api/publico'
@@ -84,8 +83,12 @@ export const liberar = (token: string, asiento: number) =>
 
 export const vaciar = (token: string) => pedir<{ ok: true }>(`/carritos/${token}`, { method: 'DELETE' })
 
-export const pagar = (token: string, comprador: Comprador, tarjeta: DatosTarjeta) =>
-  pedir<ResultadoPago>(`/carritos/${token}/pago`, { method: 'POST', body: { comprador, tarjeta } })
+/** Inicia el pago o, con `continuar`, sigue tras un paso de 3-D Secure. */
+export const pagar = (token: string, solicitud: SolicitudPago) =>
+  pedir<ResultadoPago>(`/carritos/${token}/pago`, { method: 'POST', body: solicitud })
+
+/** Script de huella del dispositivo que pide el antifraude del banco. */
+export const huella = (token: string) => pedir<{ script: string | null }>(`/carritos/${token}/huella`)
 
 export const compra = (token: string) =>
   pedir<{ estado: string; compra?: Compra; mensaje?: string | null }>(`/compras/${token}`)

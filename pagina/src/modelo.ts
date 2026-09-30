@@ -90,3 +90,34 @@ export function desdeISO(dia: string): Date | null {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dia)
   return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null
 }
+
+/** Países (ISO 3166-1 alfa-2) para la dirección de facturación de la tarjeta. */
+const CODIGOS_PAIS =
+  'AD AE AF AG AI AL AM AO AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BW BY BZ CA CD CF CG CH CI CK CL CM CN CO CR CU CV CW CY CZ DE DJ DK DM DO DZ EC EE EG ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GT GU GW GY HK HN HR HT HU ID IE IL IM IN IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW'.split(' ')
+
+/** Opciones de país con Guatemala primero y el resto por nombre. */
+export function paises(idioma = 'es'): Array<{ label: string; value: string }> {
+  let nombre: (c: string) => string = (c) => c
+  try {
+    const nombres = new Intl.DisplayNames([idioma], { type: 'region' })
+    nombre = (c) => nombres.of(c) ?? c
+  } catch {
+    /* navegador sin Intl.DisplayNames: se muestran los códigos */
+  }
+  const todas = CODIGOS_PAIS.map((c) => ({ label: nombre(c), value: c }))
+  const gt = todas.filter((p) => p.value === 'GT')
+  return [...gt, ...todas.filter((p) => p.value !== 'GT').sort((a, b) => a.label.localeCompare(b.label, idioma))]
+}
+
+/** En EE. UU. y Canadá el banco valida el estado (2 letras) y el código postal. */
+export const exigeCodigoPostal = (pais: unknown) => pais === 'US' || pais === 'CA'
+
+/** El aviso (`postMessage`) viene de alguno de los orígenes esperados. */
+export const deOrigen = (origen: string, origenes: readonly string[]) => origenes.includes(origen)
+
+/** Aviso de `/api/publico/pagos/retorno` al terminar el desafío 3-D Secure. */
+export function esRetorno3ds(dato: unknown): dato is { tipo: 'fdn-3ds'; datos: Record<string, string> } {
+  if (typeof dato !== 'object' || dato === null) return false
+  const d = dato as { tipo?: unknown; datos?: unknown }
+  return d.tipo === 'fdn-3ds' && typeof d.datos === 'object' && d.datos !== null
+}

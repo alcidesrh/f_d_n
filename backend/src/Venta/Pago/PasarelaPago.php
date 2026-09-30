@@ -8,21 +8,30 @@ use Money\Money;
 
 /**
  * Puerto hacia la pasarela de pago con tarjeta (Visa/Mastercard, 3-D Secure).
- * La implementación activa se elige en `config/services.yaml`
- * (`PasarelaSimulada` hasta integrar el banco adquirente).
+ * La implementación activa la elige `PasarelaActiva` según `PAGO_PASARELA`.
+ *
+ * Un cobro puede tener varios pasos: `cobrar()` sin continuación lo inicia; si
+ * el resultado pide algo al navegador (`dispositivo` o `autenticacion`), la
+ * página lo hace y se vuelve a llamar con la `Continuacion` (el `estado` del
+ * resultado anterior + lo que envió el navegador) y la misma solicitud: los
+ * datos de la tarjeta nunca se guardan entre pasos.
  */
 interface PasarelaPago
 {
-    public function cobrar(SolicitudPago $solicitud): ResultadoPago;
+    public function cobrar(SolicitudPago $solicitud, ?Continuacion $continuacion = null): ResultadoPago;
 
     /**
-     * Completa el cobro después del desafío 3-D Secure con los datos que el
-     * banco envió a la URL de retorno.
+     * Devuelve un cobro aprobado (p. ej. si el asiento se perdió después de cobrar).
      *
-     * @param array<string, mixed> $datosRetorno
+     * @throws \RuntimeException si la pasarela no lo aceptó (hay que devolverlo a mano)
      */
-    public function confirmarAutenticacion(string $referenciaPasarela, array $datosRetorno): ResultadoPago;
+    public function reembolsar(string $referenciaPasarela, Money $monto, int $empresaId): void;
 
-    /** Devuelve un cobro aprobado (p. ej. si el asiento se perdió después de cobrar). */
-    public function reembolsar(string $referenciaPasarela, Money $monto): void;
+    /**
+     * Huella del dispositivo para el antifraude del banco: el script que la
+     * página debe cargar antes de pagar, o null si no aplica.
+     *
+     * @return array{script: string}|null
+     */
+    public function huella(int $empresaId, string $referencia): ?array;
 }

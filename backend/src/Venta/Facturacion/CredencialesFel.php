@@ -6,6 +6,7 @@ namespace App\Venta\Facturacion;
 
 use App\Entity\CredencialFel;
 use App\Entity\Empresa;
+use App\Venta\CifradoCredenciales;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
@@ -17,10 +18,11 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  */
 final class CredencialesFel
 {
+    private const CONTEXTO = "fdn-credencial-fel";
+
     public function __construct(
         private readonly EntityManagerInterface $em,
-        #[Autowire("%kernel.secret%")]
-        private readonly string $secreto,
+        private readonly CifradoCredenciales $cifrado,
         #[Autowire(env: "default::FEL_FORCON_USUARIO")]
         private readonly ?string $usuarioGlobal = null,
         #[Autowire(env: "default::FEL_FORCON_CLAVE")]
@@ -68,30 +70,16 @@ final class CredencialesFel
 
     public function cifrar(string $clave): string
     {
-        $nonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
-
-        return base64_encode($nonce . sodium_crypto_secretbox($clave, $nonce, $this->llave()));
+        return $this->cifrado->cifrar(self::CONTEXTO, $clave);
     }
 
     public function descifrar(string $cifrada): string
     {
-        $crudo = base64_decode($cifrada, true);
-        $claro = $crudo !== false && strlen($crudo) > SODIUM_CRYPTO_SECRETBOX_NONCEBYTES
-            ? sodium_crypto_secretbox_open(
-                substr($crudo, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES),
-                substr($crudo, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES),
-                $this->llave(),
-            )
-            : false;
-        if ($claro === false) {
-            throw new CertificacionFallida(
-                "No se pudo leer la clave del certificador (¿cambió APP_SECRET?). Vuelva a cargarla con app:fel:credencial.",
-                false,
-                "credenciales",
-            );
-        }
-
-        return $claro;
+        return $this->cifrado->descifrar(self::CONTEXTO, $cifrada) ?? throw new CertificacionFallida(
+            "No se pudo leer la clave del certificador (¿cambió APP_SECRET?). Vuelva a cargarla con app:fel:credencial.",
+            false,
+            "credenciales",
+        );
     }
 
     private function deNit(string $nit): ?CredencialFel
@@ -106,10 +94,5 @@ final class CredencialesFel
     private function cualquiera(): ?CredencialFel
     {
         return $this->em->getRepository(CredencialFel::class)->findOneBy([], ["id" => "ASC"]);
-    }
-
-    private function llave(): string
-    {
-        return sodium_crypto_generichash("fdn-credencial-fel|" . $this->secreto, "", SODIUM_CRYPTO_SECRETBOX_KEYBYTES);
     }
 }

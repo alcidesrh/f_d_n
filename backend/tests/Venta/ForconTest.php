@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Venta;
 
 use App\Entity\Empresa;
+use App\Venta\CifradoCredenciales;
 use App\Venta\Facturacion\CertificacionFallida;
 use App\Venta\Facturacion\CredencialesFel;
 use App\Venta\Facturacion\Forcon\DatosEmisorForcon;
@@ -150,13 +151,13 @@ final class ForconTest extends TestCase
 
     public function testCredencialesCifradasIdaYVuelta(): void
     {
-        $credenciales = new CredencialesFel($this->createStub(EntityManagerInterface::class), "secreto-de-prueba");
+        $credenciales = new CredencialesFel($this->createStub(EntityManagerInterface::class), new CifradoCredenciales("secreto-de-prueba"));
         $cifrada = $credenciales->cifrar("clave-forcon");
 
         $this->assertStringNotContainsString("clave-forcon", $cifrada);
         $this->assertSame("clave-forcon", $credenciales->descifrar($cifrada));
 
-        $otra = new CredencialesFel($this->createStub(EntityManagerInterface::class), "otro-secreto");
+        $otra = new CredencialesFel($this->createStub(EntityManagerInterface::class), new CifradoCredenciales("otro-secreto"));
         $this->expectException(CertificacionFallida::class);
         $otra->descifrar($cifrada);
     }
@@ -182,7 +183,7 @@ final class ForconTest extends TestCase
 
             return new \Symfony\Component\HttpClient\Response\MockResponse(json_encode($cuerpo));
         });
-        $credenciales = new CredencialesFel($this->createStub(EntityManagerInterface::class), "s", "usr", "pwd");
+        $credenciales = new CredencialesFel($this->createStub(EntityManagerInterface::class), new CifradoCredenciales("s"), "usr", "pwd");
         $cliente = new \App\Venta\Facturacion\Forcon\ClienteForcon($http, "https://pruebasfel.eforcon.com", $credenciales);
         $certificador = new \App\Venta\Facturacion\Forcon\CertificadorForcon(
             $cliente,

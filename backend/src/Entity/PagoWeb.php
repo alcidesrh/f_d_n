@@ -12,9 +12,10 @@ use Symfony\Component\Uid\Uuid;
 
 /**
  * Intento de cobro de un carrito de la página web (ADR-021). Guarda lo
- * necesario para terminar la compra después de 3-D Secure (datos del
- * comprador, referencia de la pasarela) y deja rastro de cada intento. Nunca
- * guarda datos de la tarjeta, salvo marca y últimos cuatro dígitos.
+ * necesario para seguir el cobro entre los pasos de 3-D Secure (datos del
+ * comprador, referencia y estado de la pasarela) y deja rastro de cada
+ * intento. Nunca guarda datos de la tarjeta, salvo marca y últimos cuatro
+ * dígitos: en cada paso la página los vuelve a enviar.
  */
 #[ORM\Entity]
 #[ORM\Index(columns: ["token"], name: "idx_pago_web_token")]
@@ -59,6 +60,20 @@ class PagoWeb
     #[ORM\Column(length: 500, nullable: true)]
     private ?string $mensaje = null;
 
+    /** Empresa que cobra (su comercio en la pasarela). */
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(onDelete: "SET NULL")]
+    private ?Empresa $empresa = null;
+
+    /**
+     * Lo que la pasarela necesita para el siguiente paso del cobro (3-D
+     * Secure); nunca datos de la tarjeta.
+     *
+     * @var array<string, string>|null
+     */
+    #[ORM\Column(type: "json", nullable: true)]
+    private ?array $estadoPasarela = null;
+
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(onDelete: "SET NULL")]
     private ?BoletoVenta $boletoVenta = null;
@@ -72,9 +87,10 @@ class PagoWeb
     /**
      * @param array<string, mixed> $comprador
      */
-    public function __construct(Uuid $token, Money $monto, array $comprador, string $marca, string $ultimos4)
+    public function __construct(Uuid $token, Money $monto, array $comprador, string $marca, string $ultimos4, ?Empresa $empresa = null)
     {
         $this->token = $token;
+        $this->empresa = $empresa;
         $this->monto = Precio::fromMoney($monto);
         $this->comprador = $comprador;
         $this->marca = $marca;
@@ -100,11 +116,36 @@ class PagoWeb
 
     public function registrar(EstadoPagoWeb $estado, ?string $referenciaPasarela = null, ?string $autorizacion = null, ?string $mensaje = null): void
     {
+        if ($estado !== EstadoPagoWeb::AUTENTICACION) {
+            $this->estadoPasarela = null;
+        }
         $this->estado = $estado;
         $this->referenciaPasarela = $referenciaPasarela ?? $this->referenciaPasarela;
         $this->autorizacion = $autorizacion ?? $this->autorizacion;
         $this->mensaje = $mensaje !== null ? mb_substr($mensaje, 0, 500) : $this->mensaje;
         $this->actualizado = new \DateTimeImmutable();
+    }
+
+    /**
+     * Espera un paso del navegador (datos del dispositivo o desafío 3-D Secure).
+     *
+     * @param array<string, string> $estadoPasarela
+     */
+    public function esperarNavegador(?string $referenciaPasarela, array $estadoPasarela): void
+    {
+        $this->registrar(EstadoPagoWeb::AUTENTICACION, $referenciaPasarela !== "" ? $referenciaPasarela : null);
+        $this->estadoPasarela = $estadoPasarela;
+    }
+
+    /** @return array<string, string> */
+    public function getEstadoPasarela(): array
+    {
+        return $this->estadoPasarela ?? [];
+    }
+
+    public function getEmpresa(): ?Empresa
+    {
+        return $this->empresa;
     }
 
     public function getReferenciaPasarela(): ?string

@@ -92,9 +92,43 @@ export interface Compra {
   total: Importe
 }
 
+/** Dirección de facturación de la tarjeta (la registrada en el banco). */
+export interface DatosFacturacion {
+  /** ISO 3166-1 alfa-2. */
+  pais: string
+  region?: string
+  ciudad: string
+  direccion: string
+  codigoPostal?: string
+}
+
+/** Datos del navegador que 3-D Secure usa para evaluar el riesgo. */
+export interface DatosNavegador {
+  anchoPantalla: number
+  altoPantalla: number
+  profundidadColor: number
+  diferenciaHoraria: number
+  idioma: string
+}
+
+/**
+ * Respuesta del pago: completado o el paso que hace el navegador antes de
+ * volver a enviar el pago con `continuar`.
+ */
 export type ResultadoPago =
   | { estado: 'completado'; compra: Compra }
-  | { estado: 'autenticacion'; url: string; campos: Record<string, string> }
+  /** Recolección de datos del dispositivo: POST oculto; aviso de `origenes`. */
+  | { estado: 'dispositivo'; url: string; campos: Record<string, string>; origenes: string[] }
+  /** Desafío 3-D Secure: POST en un iframe visible de `ancho`×`alto`. */
+  | { estado: 'autenticacion'; url: string; campos: Record<string, string>; ancho: string; alto: string }
+
+export interface SolicitudPago {
+  comprador: Comprador
+  tarjeta: DatosTarjeta
+  facturacion: DatosFacturacion
+  navegador: DatosNavegador
+  continuar?: Record<string, string>
+}
 
 export interface ErrorApi {
   error: string

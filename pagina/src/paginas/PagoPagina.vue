@@ -1,8 +1,9 @@
 <!--
-  Datos del comprador y de la tarjeta. Si el banco pide 3-D Secure, el
-  navegador va a su página de verificación y vuelve a /compra/{token}. Los
-  datos de la tarjeta viajan directo al backend, que los pasa a la pasarela
-  sin guardarlos.
+  Datos del comprador y de la tarjeta. El pago puede tener pasos de 3-D
+  Secure (recolección de datos del dispositivo, desafío del banco en un
+  iframe): tras cada uno la página vuelve a enviar el pago con `continuar`.
+  Los datos de la tarjeta solo viven en esta página y viajan directo al
+  backend, que los pasa a la pasarela sin guardarlos.
 -->
 <template>
   <div class="mx-auto max-w-6xl px-4 py-6">
@@ -94,6 +95,35 @@
           </div>
         </section>
 
+        <section class="panel">
+          <h2 class="m-0 mb-1 text-lg font-semibold">Dirección de la tarjeta</h2>
+          <p class="m-0 mb-4 text-sm text-muted-color">La que su banco tiene registrada para la tarjeta (estado de cuenta).</p>
+          <div class="grid grid-cols-1 gap-x-4 md:grid-cols-2">
+            <FormKit type="Select" name="pais" label="País" :options="listaPaises" filter validation="required" fluid autocomplete="country" />
+            <FormKit
+              type="InputText"
+              name="region"
+              :label="usaCodigoPostal ? 'Estado o provincia (2 letras)' : 'Departamento o estado'"
+              :validation="usaCodigoPostal ? 'required|matches:/^[A-Za-z]{2}$/' : ''"
+              :validation-messages="{ matches: 'Use el código de 2 letras (p. ej. CA, TX, ON).' }"
+              fluid
+              autocomplete="address-level1"
+            />
+            <FormKit type="InputText" name="ciudad" label="Ciudad" validation="required" fluid autocomplete="address-level2" maxlength="50" />
+            <FormKit type="InputText" name="direccion" label="Dirección" validation="required" fluid autocomplete="address-line1" maxlength="60" />
+            <FormKit
+              v-if="usaCodigoPostal"
+              type="InputText"
+              name="codigoPostal"
+              label="Código postal"
+              validation="required"
+              fluid
+              autocomplete="postal-code"
+              maxlength="10"
+            />
+          </div>
+        </section>
+
         <Message v-if="error" severity="error" :closable="false">
           <div class="font-semibold">No se realizó la compra</div>
           <div>{{ error }}</div>
@@ -116,6 +146,16 @@
         <p class="m-0 flex items-center gap-1 text-xs text-muted-color"><icon name="lock" size="0.9rem" /> Conexión cifrada. No guardamos los datos de su tarjeta.</p>
       </aside>
     </div>
+
+    <DesafioBanco
+      v-if="desafio"
+      :url="desafio.url"
+      :campos="desafio.campos"
+      :ancho="desafio.ancho"
+      :alto="desafio.alto"
+      @completado="desafio.fin($event)"
+      @cancelado="desafio.fin(null)"
+    />
   </div>
 </template>
 
@@ -125,20 +165,27 @@ import { useRouter } from 'vue-router'
 import { getNode } from '@formkit/core'
 import * as api from '@/api'
 import { useCarrito } from '@/carrito'
+import DesafioBanco from '@/componentes/DesafioBanco.vue'
 import ResumenCarrito from '@/componentes/ResumenCarrito.vue'
-import { expiraValida, luhn, marca } from '@/modelo'
-import type { Catalogos, Comprador, DatosTarjeta } from '@/tipos'
+import { exigeCodigoPostal, expiraValida, luhn, marca, paises } from '@/modelo'
+import { cargarHuella, datosNavegador, recolectarDispositivo } from '@/tresDs'
+import type { Catalogos, Comprador, DatosFacturacion, DatosTarjeta, ResultadoPago, SolicitudPago } from '@/tipos'
 
 const router = useRouter()
 const carrito = useCarrito()
 const catalogos = ref<Catalogos | null>(null)
-const datos = ref<Record<string, unknown>>({ nit: 'CF' })
+const datos = ref<Record<string, unknown>>({ nit: 'CF', pais: 'GT' })
 const pagando = ref(false)
 const error = ref('')
 
 const opciones = (l: Array<{ id: number; nombre: string }> | undefined) => (l ?? []).map((o) => ({ label: o.nombre, value: o.id }))
 const naciones = computed(() => opciones(catalogos.value?.naciones))
 const documentos = computed(() => opciones(catalogos.value?.tiposDocumento))
+const listaPaises = paises()
+const usaCodigoPostal = computed(() => exigeCodigoPostal(datos.value.pais))
+
+/** Desafío del banco en curso: `fin` recibe lo que envió el banco (o null si se canceló). */
+const desafio = ref<{ url: string; campos: Record<string, string>; ancho: string; alto: string; fin: (d: Record<string, string> | null) => void } | null>(null)
 
 const tarjetaValida = (n: { value: unknown }) => luhn(String(n.value ?? '')) && marca(String(n.value ?? '')) !== null
 const vigente = (n: { value: unknown }) => expiraValida(String(n.value ?? ''))
@@ -147,6 +194,10 @@ const cvvValido = (n: { value: unknown }) => /^\d{3,4}$/.test(String(n.value ?? 
 onMounted(async () => {
   await carrito.refrescar()
   catalogos.value = await api.catalogos().catch(() => null)
+  if (carrito.token) {
+    const h = await api.huella(carrito.token).catch(() => null)
+    if (h?.script) cargarHuella(h.script)
+  }
 })
 
 /** Botón del resumen (fuera del formulario en escritorio). */
@@ -178,36 +229,54 @@ async function pagar(v: Record<string, unknown>) {
     cvv: String(v.cvv ?? ''),
     titular: String(v.titular ?? ''),
   }
+  const facturacion: DatosFacturacion = {
+    pais: String(v.pais ?? 'GT'),
+    region: v.region ? String(v.region) : undefined,
+    ciudad: String(v.ciudad ?? ''),
+    direccion: String(v.direccion ?? ''),
+    codigoPostal: exigeCodigoPostal(v.pais) && v.codigoPostal ? String(v.codigoPostal) : undefined,
+  }
   const token = carrito.token
+  const solicitud: SolicitudPago = { comprador, tarjeta, facturacion, navegador: datosNavegador() }
   try {
-    const r = await api.pagar(token, comprador, tarjeta)
-    if (r.estado === 'completado') {
-      carrito.olvidar()
-      await router.push({ name: 'compra', params: { token } })
-      return
+    let r: ResultadoPago = await api.pagar(token, solicitud)
+    // Pasos de 3-D Secure hasta que el banco apruebe (los rechazos llegan como error).
+    for (let paso = 0; r.estado !== 'completado'; paso++) {
+      if (paso > 4) throw new Error('El banco no terminó la verificación. Intente de nuevo.')
+      let continuar: Record<string, string> = {}
+      if (r.estado === 'dispositivo') {
+        await recolectarDispositivo(r.url, r.campos, r.origenes)
+      } else {
+        const respuesta = await desafiar(r.url, r.campos, r.ancho, r.alto)
+        if (respuesta === null) throw new Error('Canceló la verificación con su banco. No se realizó ningún cobro.')
+        continuar = respuesta
+      }
+      r = await api.pagar(token, { ...solicitud, continuar })
     }
-    autenticar(r.url, r.campos)
+    carrito.olvidar()
+    await router.push({ name: 'compra', params: { token } })
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e)
     if (e instanceof api.ErrorPublico && e.codigo === 'carrito_vencido') await carrito.refrescar()
   } finally {
+    desafio.value = null
     pagando.value = false
   }
 }
 
-/** 3-D Secure: el navegador envía los campos al banco (POST de formulario). */
-function autenticar(url: string, campos: Record<string, string>) {
-  const form = document.createElement('form')
-  form.method = 'POST'
-  form.action = url
-  for (const [nombre, valor] of Object.entries(campos)) {
-    const input = document.createElement('input')
-    input.type = 'hidden'
-    input.name = nombre
-    input.value = valor
-    form.appendChild(input)
-  }
-  document.body.appendChild(form)
-  form.submit()
+/** Muestra el desafío del banco y espera su resultado (null si el cliente lo cierra). */
+function desafiar(url: string, campos: Record<string, string>, ancho: string, alto: string) {
+  return new Promise<Record<string, string> | null>((resolve) => {
+    desafio.value = {
+      url,
+      campos,
+      ancho,
+      alto,
+      fin: (d) => {
+        desafio.value = null
+        resolve(d)
+      },
+    }
+  })
 }
 </script>

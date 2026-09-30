@@ -18,7 +18,9 @@ use App\Venta\ConsultaVenta;
 use App\Venta\HorasRecorrido;
 use App\Venta\Excepcion\VentaRechazada;
 use App\Venta\Pago\PasarelaPago;
-use App\Venta\Pago\PasarelaSimulada;
+use App\Venta\Pago\DireccionFacturacion;
+use App\Venta\Pago\Navegador;
+use App\Venta\Pago\PasarelaActiva;
 use App\Venta\Pago\Tarjeta;
 use App\Venta\PublicadorOcupacion;
 use App\Venta\ReglasVenta;
@@ -27,7 +29,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
@@ -182,10 +183,21 @@ final class PublicoController extends AbstractController
     }
 
     /**
-     * `{ comprador: {...}, tarjeta: { numero, expira: "MM/AA", cvv, titular } }`.
-     * Responde `{ estado: "completado", compra }` o, si el banco pide 3-D
-     * Secure, `{ estado: "autenticacion", url, campos }` (el navegador envía
-     * `campos` por POST a `url`). Rechazos: 402 con el motivo del banco.
+     * `{ comprador: {...}, tarjeta: { numero, expira: "MM/AA", cvv, titular },
+     * facturacion: { pais, region, ciudad, direccion, codigoPostal },
+     * navegador: { anchoPantalla, altoPantalla, profundidadColor, diferenciaHoraria, idioma },
+     * continuar?: {...} }`.
+     *
+     * Responde `{ estado: "completado", compra }` o el paso que debe hacer el
+     * navegador (3-D Secure), tras el cual repite la petición con `continuar`
+     * (lo que recibió del banco):
+     * - `{ estado: "dispositivo", url, campos, origenes }`: POST oculto de
+     *   `campos` a `url` en un iframe; espera un `postMessage` de `origenes`.
+     * - `{ estado: "autenticacion", url, campos, ancho, alto }`: POST de
+     *   `campos` a `url` en un iframe visible; el banco vuelve a
+     *   `/api/publico/pagos/retorno`, que avisa a la página por `postMessage`.
+     *
+     * Rechazos: 402 con el motivo del banco.
      */
     #[Route("/carritos/{token}/pago", name: "carrito_pagar", methods: ["POST"])]
     public function pagar(string $token, Request $request): JsonResponse
@@ -195,9 +207,18 @@ final class PublicoController extends AbstractController
             $datos = $request->toArray();
             $comprador = Comprador::desdeArray((array) ($datos["comprador"] ?? []));
             $tarjeta = Tarjeta::desdeArray((array) ($datos["tarjeta"] ?? []), $this->reloj->now());
+            $direccion = DireccionFacturacion::desdeArray((array) ($datos["facturacion"] ?? []));
+            $navegador = Navegador::de(
+                $request->getClientIp(),
+                $request->headers->get("User-Agent"),
+                $request->headers->get("Accept"),
+                $request->headers->get("Accept-Language"),
+                (array) ($datos["navegador"] ?? []),
+            );
+            $continuar = isset($datos["continuar"]) ? self::camposNavegador((array) $datos["continuar"]) : null;
             $retorno = $this->generateUrl("api_publico_pago_retorno", [], UrlGeneratorInterface::ABSOLUTE_URL);
 
-            $resultado = $this->compras->pagar($uuid, $comprador, $tarjeta, $retorno, $request->getClientIp());
+            $resultado = $this->compras->pagar($uuid, $comprador, $tarjeta, $direccion, $retorno, $navegador, $continuar);
             if ($resultado["estado"] === "completado") {
                 return ["estado" => "completado", "compra" => $this->comprobantes->de($resultado["venta"])];
             }
@@ -206,31 +227,48 @@ final class PublicoController extends AbstractController
         }, $this->publicoPagoLimiter);
     }
 
+    /** Script de huella del dispositivo que pide el antifraude del banco (o `{ script: null }`). */
+    #[Route("/carritos/{token}/huella", name: "carrito_huella", methods: ["GET"])]
+    public function huella(string $token, Request $request): JsonResponse
+    {
+        return $this->limitado($request, function () use ($token) {
+            $uuid = $this->tokenObligatorio($token);
+            $empresa = $this->compras->empresaDelCarrito($uuid);
+            try {
+                $huella = $empresa !== null ? $this->pasarela->huella($empresa, $uuid->toRfc4122()) : null;
+            } catch (\RuntimeException) {
+                $huella = null;
+            }
+
+            return ["script" => $huella["script"] ?? null];
+        });
+    }
+
     /**
-     * Vuelta del banco tras 3-D Secure (POST del ACS o GET). Redirige a la
-     * página con el resultado.
+     * Vuelta del banco tras el desafío 3-D Secure, dentro del iframe de la
+     * página: avisa a la página (`postMessage` al mismo origen) con lo que
+     * envió el banco, y la página continúa el pago.
      */
     #[Route("/pagos/retorno", name: "pago_retorno", methods: ["GET", "POST"])]
     public function retorno(Request $request): Response
     {
-        $datos = [...$request->query->all(), ...$request->request->all()];
-        $referencia = (string) ($datos["referencia"] ?? $datos["ref"] ?? "");
-        try {
-            $r = $this->compras->retorno($referencia, $datos);
-        } catch (VentaRechazada $e) {
-            return new RedirectResponse("/pagina/?error=" . rawurlencode($e->getMessage()), Response::HTTP_SEE_OTHER);
-        }
+        $datos = self::camposNavegador([...$request->query->all(), ...$request->request->all()]);
+        $mensaje = json_encode(["tipo" => "fdn-3ds", "datos" => $datos], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
+        $origen = json_encode($request->getSchemeAndHttpHost(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES);
 
-        $query = $r["estado"] === "completado" ? "" : "?error=" . rawurlencode((string) ($r["mensaje"] ?? "El pago no se completó."));
-
-        return new RedirectResponse(sprintf("/pagina/compra/%s%s", $r["token"], $query), Response::HTTP_SEE_OTHER);
+        return new Response(<<<HTML
+            <!doctype html><html lang="es"><meta charset="utf-8"><title>Verificando…</title>
+            <body style="font-family:system-ui;text-align:center;padding:2rem">Verificando con su banco…
+            <script>(window.parent !== window ? window.parent : window.opener)?.postMessage({$mensaje}, {$origen});</script>
+            </body></html>
+            HTML, 200, ["Cache-Control" => "no-store"]);
     }
 
-    /** Simulador del banco (ACS 3-D Secure). Solo existe con `PasarelaSimulada`. */
+    /** Simulador del banco (ACS 3-D Secure). Solo existe con la pasarela simulada. */
     #[Route("/pagos/simulador-3ds", name: "pago_simulador", methods: ["GET", "POST"])]
     public function simulador3ds(Request $request): Response
     {
-        if (!$this->pasarela instanceof PasarelaSimulada) {
+        if (!$this->pasarela instanceof PasarelaActiva || !$this->pasarela->esSimulada()) {
             throw $this->createNotFoundException();
         }
         $campo = static fn(string $k) => htmlspecialchars((string) ($request->request->get($k) ?? $request->query->get($k)), ENT_QUOTES);
@@ -241,11 +279,10 @@ final class PublicoController extends AbstractController
         return new Response(<<<HTML
             <!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
             <title>Banco simulado · 3-D Secure</title>
-            <body style="font-family:system-ui;max-width:26rem;margin:3rem auto;padding:0 1rem">
-            <h1 style="font-size:1.2rem">Banco simulado — verificación 3-D Secure</h1>
+            <body style="font-family:system-ui;max-width:26rem;margin:1.5rem auto;padding:0 1rem">
+            <h1 style="font-size:1.1rem">Banco simulado — verificación 3-D Secure</h1>
             <p>Referencia <code>{$referencia}</code>. Elija el resultado de la autenticación:</p>
             <form method="post" action="{$retorno}" style="display:flex;gap:.5rem">
-              <input type="hidden" name="referencia" value="{$referencia}">
               <button name="resultado" value="Y" style="padding:.6rem 1rem">Autenticar</button>
               <button name="resultado" value="N" style="padding:.6rem 1rem">Rechazar</button>
             </form></body></html>
@@ -277,6 +314,25 @@ final class PublicoController extends AbstractController
             "Content-Type" => "application/pdf",
             "Content-Disposition" => sprintf('%s; filename="%s"', $request->query->getBoolean("ver") ? "inline" : "attachment", BoletoPdf::nombreArchivo($venta)),
         ]);
+    }
+
+    /**
+     * Campos que el navegador reenvía del banco: solo texto corto.
+     *
+     * @param array<mixed> $datos
+     *
+     * @return array<string, string>
+     */
+    private static function camposNavegador(array $datos): array
+    {
+        $limpios = [];
+        foreach (array_slice($datos, 0, 20, true) as $k => $v) {
+            if (is_string($k) && strlen($k) <= 64 && is_scalar($v)) {
+                $limpios[$k] = mb_substr((string) $v, 0, 4000);
+            }
+        }
+
+        return $limpios;
     }
 
     /** @return array<string, mixed> */

@@ -21,6 +21,10 @@ use App\Venta\Facturacion\CertificacionFallida;
 use App\Venta\Facturacion\ConsultaContribuyente;
 use App\Venta\Facturacion\Facturador;
 use App\Venta\Mensaje\EnviarBoletoPorCorreo;
+use App\Venta\Pago\Continuacion;
+use App\Venta\Pago\DireccionFacturacion;
+use App\Venta\Pago\Navegador;
+use App\Venta\Pago\PagoIncierto;
 use App\Venta\Pago\PasarelaPago;
 use App\Venta\Pago\ResultadoPago;
 use App\Venta\Pago\SolicitudPago;
@@ -32,8 +36,8 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * Compra en la página web (ADR-021): cobra el carrito con tarjeta (con 3-D
- * Secure si el banco lo pide), registra la venta como si fuera de taquilla
+ * Compra en la página web (ADR-021): cobra el carrito con tarjeta (con los
+ * pasos de 3-D Secure que pida la pasarela), registra la venta como si fuera de taquilla
  * (canal `web`, sin usuario), certifica la factura y envía el boleto en PDF.
  *
  * El dinero manda: cobrado el pago, la venta se registra aunque la factura
@@ -56,15 +60,50 @@ final class CompraWeb
     ) {}
 
     /**
-     * @return array{estado: string, venta?: BoletoVenta, url?: string, campos?: array<string, string>}
+     * Inicia el cobro del carrito o, con `$continuar` (lo que envió el
+     * navegador tras un paso de 3-D Secure), sigue el cobro en curso. En cada
+     * paso la página vuelve a enviar la tarjeta: nunca se guarda.
+     *
+     * @param array<string, string>|null $continuar
+     *
+     * @return array<string, mixed> `{estado: "completado", venta}` o el paso del navegador (`ResultadoPago::paraNavegador()`)
      *
      * @throws VentaRechazada
      */
-    public function pagar(Uuid $token, Comprador $comprador, Tarjeta $tarjeta, string $urlRetorno, ?string $ip): array
-    {
+    public function pagar(
+        Uuid $token,
+        Comprador $comprador,
+        Tarjeta $tarjeta,
+        DireccionFacturacion $direccion,
+        string $urlRetorno,
+        Navegador $navegador,
+        ?array $continuar = null,
+    ): array {
         $previa = $this->venta($token);
         if ($previa !== null) {
             return ["estado" => "completado", "venta" => $previa];
+        }
+
+        if ($continuar !== null) {
+            $pago = $this->ultimoPago($token);
+            if ($pago === null || $pago->getEstado() !== EstadoPagoWeb::AUTENTICACION || $pago->getEstadoPasarela() === []) {
+                throw new VentaRechazada("Este pago ya no está en curso. Intente pagar de nuevo.", "pago_no_en_curso", 409);
+            }
+            if ($pago->getUltimos4() !== $tarjeta->ultimos4() || $pago->getMarca() !== $tarjeta->marcaTarjeta()) {
+                throw new VentaRechazada("La tarjeta no coincide con la del pago en curso.", "pago_tarjeta", 409);
+            }
+            $estado = $pago->getEstadoPasarela();
+            // Cada paso se usa una sola vez (un doble envío no cobra dos veces).
+            $tomado = $this->em->createQuery("UPDATE App\\Entity\\PagoWeb p SET p.estadoPasarela = NULL WHERE p.id = :id AND p.estadoPasarela IS NOT NULL")
+                ->setParameter("id", $pago->getId())
+                ->execute();
+            if ($tomado !== 1) {
+                throw new VentaRechazada("Este pago ya se está procesando.", "pago_en_proceso", 409);
+            }
+            $this->reservas->extender($token);
+            $solicitud = $this->solicitud($pago, $tarjeta, $direccion, $urlRetorno, $navegador);
+
+            return $this->cobrar($pago, $solicitud, new Continuacion($estado, $continuar));
         }
 
         $reservas = $this->reservas->vigentes($token);
@@ -81,29 +120,41 @@ final class CompraWeb
         // Antes de cobrar: lo que impediría facturar se corrige ahora, no después.
         $this->reglas->exigirReceptorFacturable($comprador->nit, $cotizacion->total);
         $this->exigirNitExistente($comprador->nit);
+        $empresa = $recorrido->getEmpresa() ?? throw new VentaRechazada("Este recorrido no tiene empresa: no se puede cobrar en línea.");
         $this->reservas->extender($token);
 
-        $pago = new PagoWeb($token, $cotizacion->total, $comprador->toArray(), $tarjeta->marcaTarjeta(), $tarjeta->ultimos4());
+        $pago = new PagoWeb($token, $cotizacion->total, $comprador->toArray(), $tarjeta->marcaTarjeta(), $tarjeta->ultimos4(), $empresa);
         $this->em->persist($pago);
         $this->em->flush();
 
+        return $this->cobrar($pago, $this->solicitud($pago, $tarjeta, $direccion, $urlRetorno, $navegador));
+    }
+
+    /** Empresa que cobra el carrito (para la huella del dispositivo). */
+    public function empresaDelCarrito(Uuid $token): ?int
+    {
+        $reservas = $this->reservas->vigentes($token);
+
+        return $reservas !== [] ? $reservas[0]->getRecorrido()->getEmpresa()?->getId() : null;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function cobrar(PagoWeb $pago, SolicitudPago $solicitud, ?Continuacion $continuacion = null): array
+    {
         try {
-            $resultado = $this->pasarela->cobrar(new SolicitudPago(
-                referencia: $token->toRfc4122(),
-                monto: $cotizacion->total,
-                tarjeta: $tarjeta,
-                correo: $comprador->email,
-                descripcion: sprintf(
-                    "Boletos %s - %s %s",
-                    $reservas[0]->getTrayecto()->getOrigen()->getNombre(),
-                    $reservas[0]->getTrayecto()->getDestino()->getNombre(),
-                    $recorrido->getFecha()->format("d/m/Y H:i"),
-                ),
-                urlRetorno: $urlRetorno,
-                ip: $ip,
-            ));
+            $resultado = $this->pasarela->cobrar($solicitud, $continuacion);
+        } catch (PagoIncierto $e) {
+            $pago->registrar(EstadoPagoWeb::RECHAZADO, mensaje: "Sin respuesta del banco al cobrar: revisar si se cobró. " . $e->getMessage());
+            $this->em->flush();
+            throw new VentaRechazada(
+                "No recibimos la respuesta de su banco. Antes de intentar de nuevo, revise si su tarjeta tiene el cargo: si lo tiene, comuníquese con nosotros y se lo devolveremos.",
+                "pago_incierto",
+                502,
+            );
         } catch (\Throwable $e) {
-            $this->logger->error("Pasarela sin respuesta para el carrito {token}: {error}", ["token" => (string) $token, "error" => $e->getMessage()]);
+            $this->logger->error("Pasarela sin respuesta para el carrito {token}: {error}", ["token" => (string) $pago->getToken(), "error" => $e->getMessage(), "exception" => $e]);
             $pago->registrar(EstadoPagoWeb::RECHAZADO, mensaje: "Sin respuesta de la pasarela: " . $e->getMessage());
             $this->em->flush();
             throw new VentaRechazada("No fue posible comunicarse con el banco. No se realizó ningún cobro; intente de nuevo.", "pasarela", 502);
@@ -112,35 +163,24 @@ final class CompraWeb
         return $this->procesar($pago, $resultado);
     }
 
-    /**
-     * Vuelta de 3-D Secure: el banco envía aquí al cliente.
-     *
-     * @param array<string, mixed> $datos
-     *
-     * @return array{estado: string, venta?: BoletoVenta, mensaje?: string, token: string}
-     */
-    public function retorno(string $referenciaPasarela, array $datos): array
+    private function solicitud(PagoWeb $pago, Tarjeta $tarjeta, DireccionFacturacion $direccion, string $urlRetorno, Navegador $navegador): SolicitudPago
     {
-        $pago = $this->em->getRepository(PagoWeb::class)->findOneBy(["referenciaPasarela" => $referenciaPasarela])
-            ?? throw new VentaRechazada("Pago desconocido.", "no_encontrado", 404);
-        $token = $pago->getToken()->toRfc4122();
+        $comprador = Comprador::desdeArray($pago->getComprador());
 
-        if ($pago->getEstado() !== EstadoPagoWeb::AUTENTICACION) {
-            $venta = $pago->getBoletoVenta();
-
-            return $venta !== null
-                ? ["estado" => "completado", "venta" => $venta, "token" => $token]
-                : ["estado" => $pago->getEstado()->value, "mensaje" => $pago->getMensaje(), "token" => $token];
-        }
-
-        try {
-            $resultado = $this->pasarela->confirmarAutenticacion($referenciaPasarela, $datos);
-            $r = $this->procesar($pago, $resultado);
-
-            return [...$r, "token" => $token];
-        } catch (VentaRechazada $e) {
-            return ["estado" => "rechazado", "mensaje" => $e->getMessage(), "token" => $token];
-        }
+        return new SolicitudPago(
+            referencia: $pago->getToken()->toRfc4122(),
+            empresaId: (int) $pago->getEmpresa()?->getId(),
+            monto: $pago->getMonto(),
+            tarjeta: $tarjeta,
+            direccion: $direccion,
+            nombre: $comprador->nombre,
+            apellido: $comprador->apellido,
+            correo: $comprador->email,
+            telefono: $comprador->telefono,
+            descripcion: "Boletos Transportes Fuente del Norte",
+            urlRetorno: $urlRetorno,
+            navegador: $navegador,
+        );
     }
 
     /** Un NIT que la SAT no conoce haría fallar la factura; si la consulta falla, se sigue. */
@@ -171,16 +211,17 @@ final class CompraWeb
     }
 
     /**
-     * @return array{estado: string, venta?: BoletoVenta, url?: string, campos?: array<string, string>}
+     * @return array<string, mixed>
      */
     private function procesar(PagoWeb $pago, ResultadoPago $resultado): array
     {
         switch ($resultado->estado) {
+            case ResultadoPago::DISPOSITIVO:
             case ResultadoPago::AUTENTICACION:
-                $pago->registrar(EstadoPagoWeb::AUTENTICACION, $resultado->referenciaPasarela);
+                $pago->esperarNavegador($resultado->referenciaPasarela, $resultado->estadoPasarela);
                 $this->em->flush();
 
-                return ["estado" => "autenticacion", "url" => $resultado->url, "campos" => $resultado->campos];
+                return $resultado->paraNavegador();
 
             case ResultadoPago::APROBADO:
                 $pago->registrar(EstadoPagoWeb::APROBADO, $resultado->referenciaPasarela, $resultado->autorizacion);
@@ -205,9 +246,17 @@ final class CompraWeb
         } catch (\Throwable $e) {
             // Cobrado pero sin venta: se devuelve el dinero (asiento perdido o error inesperado).
             $pago = $this->em->find(PagoWeb::class, $pagoId);
-            $this->pasarela->reembolsar((string) $pago->getReferenciaPasarela(), $pago->getMonto());
             $motivo = $e instanceof VentaRechazada ? $e->getMessage() : "error al registrar la venta";
-            $pago->registrar(EstadoPagoWeb::REEMBOLSADO, mensaje: $motivo);
+            try {
+                $this->pasarela->reembolsar((string) $pago->getReferenciaPasarela(), $pago->getMonto(), (int) $pago->getEmpresa()?->getId());
+                $pago->registrar(EstadoPagoWeb::REEMBOLSADO, mensaje: $motivo);
+            } catch (\Throwable $r) {
+                $this->logger->critical("Compra web {token}: cobrada sin venta y sin reembolso automático ({error}): devolverla a mano.", [
+                    "token" => (string) $pago->getToken(),
+                    "error" => $r->getMessage(),
+                ]);
+                $pago->registrar(EstadoPagoWeb::REEMBOLSO_PENDIENTE, mensaje: "{$motivo}; reembolso automático fallido: " . $r->getMessage());
+            }
             $this->em->flush();
             $this->logger->error("Compra web {token} reembolsada: {motivo}", [
                 "token" => (string) $pago->getToken(),
@@ -215,7 +264,9 @@ final class CompraWeb
                 "exception" => $e,
             ]);
             throw new VentaRechazada(
-                "No pudimos confirmar sus asientos ({$motivo}). Se reembolsó el cobro a su tarjeta.",
+                $pago->getEstado() === EstadoPagoWeb::REEMBOLSADO
+                    ? "No pudimos confirmar sus asientos ({$motivo}). Se reembolsó el cobro a su tarjeta."
+                    : "No pudimos confirmar sus asientos ({$motivo}). Le devolveremos el cobro; si no lo ve en unos días, comuníquese con nosotros.",
                 "reembolsado",
                 409,
             );

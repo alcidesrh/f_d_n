@@ -32,7 +32,8 @@ El modelo nuevo tenía `BoletoVenta`, `BoletoAsiento`, `BoletoTarifa` (sin resol
   - Si el proceso muere entre los pasos 1 y 3, `app:venta:purgar` borra las ventas `pendientes` abandonadas.
 - **Web** (`Reservas`, `CompraWeb`, `/api/publico/*`, sin sesión):
   - **Carrito = reservas** (`ReservaAsiento`, token UUID): apartar un asiento crea/extiende el carrito; un carrito es un recorrido + un trayecto, hasta 10 asientos. Vencimiento deslizante de 15 minutos, **nunca después del cierre de venta en línea (30 minutos antes de la salida)**. La disponibilidad ignora las reservas vencidas, así que liberar un asiento no depende de ningún proceso; `app:venta:purgar` solo borra filas (con `--cada=N` corre permanente, como el comando del legado).
-  - **Pago** (`PasarelaPago`): el backend recibe los datos de la tarjeta y los pasa a la pasarela sin guardarlos ni registrarlos (`Tarjeta` enmascara `__debugInfo` y no se serializa). Resultado `aprobado`, `rechazado` (motivo del banco) o `autenticacion` (3-D Secure: el navegador envía los campos por POST al ACS del banco, que vuelve a `/api/publico/pagos/retorno` y de ahí a `/pagina/compra/{token}`). Cada intento queda en `PagoWeb` (marca y últimos 4 dígitos).
+  - **Pago** (`PasarelaPago`): el backend recibe los datos de la tarjeta y los pasa a la pasarela sin guardarlos ni registrarlos (`Tarjeta` enmascara `__debugInfo` y no se serializa). Un cobro puede tener varios pasos: cada respuesta es `aprobado`, `rechazado` (motivo del banco) o un paso del navegador —`dispositivo` (recolección de datos del dispositivo en un iframe oculto) o `autenticacion` (desafío 3-D Secure del banco en un iframe visible, que al terminar vuelve a `/api/publico/pagos/retorno` y avisa a la página por `postMessage`)—, tras el cual la página repite `POST /carritos/{token}/pago` con `continuar`. **La tarjeta solo vive en la página**: se reenvía en cada paso y el servidor guarda únicamente lo que la pasarela necesita para seguir (`PagoWeb.estadoPasarela`, que cada paso consume una sola vez). Cada intento queda en `PagoWeb` (marca, últimos 4 dígitos, empresa).
+  - La pasarela pide la **dirección de facturación de la tarjeta** (`DireccionFacturacion`; estado y código postal obligatorios en EE. UU. y Canadá) y los datos del navegador (`Navegador`), que no se guardan.
   - **El dinero manda:** cobrado el pago, la venta se registra (`canal = web`, sin usuario) aunque falle la factura (queda `pendiente` y se reintenta). Si entre el cobro y el registro el asiento se perdió, se **reembolsa**.
   - Boleto: PDF (`BoletoPdf`, dompdf + Twig) descargable con el token y enviado por correo (Messenger, asíncrono).
 - **Tiempo real:** cada cambio de ocupación publica `/recorridos/{id}/ocupacion` en Mercure (sin datos de clientes); taquilla y página vuelven a pedir la ocupación. En taquilla los vendidos se distinguen por canal (estación, agencia, web) y las reservas web salen como `reservado`.
@@ -55,7 +56,17 @@ El modelo nuevo tenía `BoletoVenta`, `BoletoAsiento`, `BoletoTarifa` (sin resol
   - **Contingencia SAT:** vender "sin factura electrónica" asigna un **número de acceso** de 9 dígitos que se imprime en el ticket; al certificar después se envía con él y con la fecha de emisión original.
   - Antes de apartar/cobrar: la SAT no admite CF desde Q2,500.00 (`EVI-221`); la web además consulta el NIT del comprador (servicio "Consulta de NIT") antes de cobrar. En taquilla el alta de cliente consulta la razón social (`GET /api/venta/nit`).
   - Anulación (`AnularDteJson`) y consulta de CUI están documentadas por Forcon pero no se usan aún (la anulación de boletos no tiene operación de dominio).
-- Lo mismo para la pasarela: `PasarelaSimulada` (tarjetas de prueba `4000 0000 0000 0002` rechazada, `4000 0000 0000 3220` con 3-D Secure) hasta integrar el banco adquirente.
+
+### Pago con tarjeta
+
+- **Pasarela: Cybersource** (`App\Venta\Pago\Cybersource`), la misma de la página anterior. `PAGO_PASARELA=cybersource` la activa (`PasarelaActiva`); por defecto `simulada` (`4000 0000 0000 0002` rechazada, `4000 0000 0000 3220` con desafío 3-D Secure, otra aprobada).
+  - REST con HTTP Signature (HMAC-SHA256 sobre host, fecha, ruta, digest y merchant id). `CYBERSOURCE_URL`: pruebas `https://apitest.cybersource.com`, producción `https://api.cybersource.com`.
+  - Flujo de Payer Authentication (3-D Secure 2, Cardinal): `authentication-setups` → recolección de datos del dispositivo (DDC) → pago con `CONSUMER_AUTHENTICATION` y captura (sin desafío queda cobrado; con `PENDING_AUTHENTICATION` el navegador abre el `stepUpUrl`) → pago con `VALIDATE_CONSUMER_AUTHENTICATION` y captura.
+  - Un cobro autorizado **sin evidencia de 3-D Secure** (`cavv`, `token`, UCAF con `paresStatus` Y, o tarjeta no inscrita con intento registrado) se anula, como hacía el legado; también los retenidos por el análisis de riesgo.
+  - Reembolso: anulación (`voids`) y, si ya no se puede, `refunds`. Si ninguno funciona, el pago queda `reembolso_pendiente` y se registra un error crítico para devolverlo desde el Business Center.
+  - Sin respuesta en un paso que cobra: `PagoIncierto` (no se sabe si se cobró); el comprador recibe el aviso de revisar su tarjeta antes de reintentar y queda un error crítico en el log.
+  - **Comercio por empresa** (como `empresas.json` del legado): `CredencialPago` con merchant id, key id y la llave secreta compartida cifrada (`CifradoCredenciales`, mismo esquema que las del certificador). Se cargan con `app:pago:credencial <nit> <merchant-id> <key-id>` (llave oculta o `PAGO_SECRETO`). Cobra la empresa del recorrido.
+  - Huella del dispositivo (ThreatMetrix/Decision Manager): con `CYBERSOURCE_ORG_ID` la página carga el script de `GET /api/publico/carritos/{token}/huella` y el pago envía `fingerprintSessionId`.
 
 ### Modelo y API
 
@@ -82,7 +93,7 @@ El modelo nuevo tenía `BoletoVenta`, `BoletoAsiento`, `BoletoTarifa` (sin resol
 
 **Negativas / pendientes:**
 
-- La pasarela de pago sigue simulada (falta la documentación del banco adquirente). La copia de la página anterior (`docs/transportesfuentedelnorte.com`) quedó en el repositorio como gitlink sin contenido.
+- La pasarela de Cybersource está probada con respuestas simuladas (sin acceso de red al sandbox desde el entorno de desarrollo): antes de producción hay que probarla con el comercio de pruebas de cada empresa. La copia de la página anterior (`docs/transportesfuentedelnorte.com`) quedó en el repositorio como gitlink sin contenido.
 - Si el proceso muere después de que el certificador emitió el DTE y antes de guardarlo, el reintento recibe `ESW-025` (código interno repetido) y la venta no se duplica, pero hay que recuperar ese DTE a mano (Forcon tiene una consulta por código interno, `ESW-045`, no documentada en lo recibido).
 - El orden de las paradas se deduce de los subtrayectos; un trayecto sin subtrayectos solo vende origen→destino. Las horas por parada son estimadas (duración de los trayectos).
 - La página no entra en la imagen de producción del backend automáticamente (el contexto de build es `backend/`): hay que compilarla (`npm run build` en `pagina/`) antes de construir la imagen.

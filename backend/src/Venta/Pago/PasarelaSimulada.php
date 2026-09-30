@@ -24,33 +24,43 @@ final class PasarelaSimulada implements PasarelaPago
         private readonly LoggerInterface $logger,
     ) {}
 
-    public function cobrar(SolicitudPago $solicitud): ResultadoPago
+    public function cobrar(SolicitudPago $solicitud, ?Continuacion $continuacion = null): ResultadoPago
     {
+        if ($continuacion !== null) {
+            $ref = $continuacion->estado["referencia"] ?? "";
+
+            return ($continuacion->datos["resultado"] ?? "") === "Y"
+                ? ResultadoPago::aprobado($ref, (string) random_int(100000, 999999))
+                : ResultadoPago::rechazado("La autenticación 3-D Secure con su banco no se completó.", $ref);
+        }
+
         $ref = "SIM-" . strtoupper(substr(Uuid::v4()->toBase58(), 0, 12));
 
         return match ($solicitud->tarjeta->numero()) {
             "4000000000000002" => ResultadoPago::rechazado("El banco rechazó la transacción: fondos insuficientes.", $ref),
-            "4000000000003220" => ResultadoPago::autenticacion($ref, self::URL_ACS, [
-                "referencia" => $ref,
-                "retorno" => $solicitud->urlRetorno,
-            ]),
+            "4000000000003220" => ResultadoPago::autenticacion(
+                $ref,
+                self::URL_ACS,
+                ["referencia" => $ref, "retorno" => $solicitud->urlRetorno],
+                ["referencia" => $ref],
+                "390px",
+                "400px",
+            ),
             default => ResultadoPago::aprobado($ref, (string) random_int(100000, 999999)),
         };
     }
 
-    public function confirmarAutenticacion(string $referenciaPasarela, array $datosRetorno): ResultadoPago
-    {
-        return ($datosRetorno["resultado"] ?? "") === "Y"
-            ? ResultadoPago::aprobado($referenciaPasarela, (string) random_int(100000, 999999))
-            : ResultadoPago::rechazado("La autenticación 3-D Secure con su banco no se completó.", $referenciaPasarela);
-    }
-
-    public function reembolsar(string $referenciaPasarela, Money $monto): void
+    public function reembolsar(string $referenciaPasarela, Money $monto, int $empresaId): void
     {
         $this->logger->notice("Reembolso simulado de {monto} {moneda} ({ref}).", [
             "monto" => $monto->getAmount(),
             "moneda" => $monto->getCurrency()->getCode(),
             "ref" => $referenciaPasarela,
         ]);
+    }
+
+    public function huella(int $empresaId, string $referencia): ?array
+    {
+        return null;
     }
 }
