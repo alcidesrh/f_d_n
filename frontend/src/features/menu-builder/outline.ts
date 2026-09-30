@@ -1,6 +1,6 @@
 /**
  * Árbol de un menú como esquema plano con sangría: cada fila es un ítem con
- * su `depth` (0 = raíz) y el orden del array es el recorrido en preorden.
+ * su `depth` (0 = raíz) y el orden del array es el salida en preorden.
  * Así el editor pinta todos los nodos "expandidos" y un arrastre solo decide
  * dos números: la fila destino y la sangría.
  *

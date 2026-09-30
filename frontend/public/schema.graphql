@@ -161,18 +161,18 @@ type Query {
 
     order: [PilotoFilter_order]
   ): PilotoPageConnection
-  recorrido(id: ID!): Recorrido
-  recorridos(
+  salida(id: ID!): Salida
+  salidas(
     "Returns the current page."
     currentPage: Int
 
     "Returns the number of items per page."
     itemsPerPage: Int
 
-    order: [RecorridoFilter_order]
-  ): RecorridoPageConnection
-  recorridoMatrioska(id: ID!): RecorridoMatrioska
-  recorridoMatrioskas(
+    order: [SalidaFilter_order]
+  ): SalidaPageConnection
+  salidaMatrioska(id: ID!): SalidaMatrioska
+  salidaMatrioskas(
     "Returns the first n elements from the list."
     first: Int
 
@@ -184,7 +184,7 @@ type Query {
 
     "Returns the elements in the list that come after the specified cursor."
     after: String
-  ): RecorridoMatrioskaCursorConnection
+  ): SalidaMatrioskaCursorConnection
   role(id: ID!): Role
   roles: [Role]
   salida(id: ID!): Salida
@@ -451,7 +451,7 @@ type BoletoPageConnection {
 
 type Boleto implements Node {
   id: ID!
-  recorrido: Recorrido
+  salida: Salida
   cliente: Cliente!
   legacyId: String
   venta: Venta!
@@ -467,13 +467,13 @@ type Boleto implements Node {
   status: Status
 }
 
-type Recorrido implements Node {
+type Salida implements Node {
   id: ID!
   nombre: String!
   empresa: Empresa
   bus: Bus
   trayecto: Trayecto
-  subrecorridos(
+  subsalidas(
     "Returns the first n elements from the list."
     first: Int
 
@@ -485,7 +485,7 @@ type Recorrido implements Node {
 
     "Returns the elements in the list that come after the specified cursor."
     after: String
-  ): RecorridoMatrioskaCursorConnection
+  ): SalidaMatrioskaCursorConnection
   _id: Int!
   label: String
 }
@@ -650,15 +650,15 @@ type Trayecto implements Node {
 
     order: [TrayectoFilter_order]
   ): TrayectoPageConnection
-  recorridos(
+  salidas(
     "Returns the current page."
     currentPage: Int
 
     "Returns the number of items per page."
     itemsPerPage: Int
 
-    order: [RecorridoFilter_order]
-  ): RecorridoPageConnection
+    order: [SalidaFilter_order]
+  ): SalidaPageConnection
   _id: Int!
   label: String
 }
@@ -701,18 +701,18 @@ type TrayectoPaginationInfo {
   hasNextPage: Boolean!
 }
 
-input RecorridoFilter_order {
+input SalidaFilter_order {
   id: String
 }
 
-"Page connection for Recorrido."
-type RecorridoPageConnection {
-  collection: [Recorrido]
-  paginationInfo: RecorridoPaginationInfo!
+"Page connection for Salida."
+type SalidaPageConnection {
+  collection: [Salida]
+  paginationInfo: SalidaPaginationInfo!
 }
 
 "Information about the pagination."
-type RecorridoPaginationInfo {
+type SalidaPaginationInfo {
   itemsPerPage: Int!
   lastPage: Int!
   totalCount: Int!
@@ -720,29 +720,29 @@ type RecorridoPaginationInfo {
   hasNextPage: Boolean!
 }
 
-"Cursor connection for RecorridoMatrioska."
-type RecorridoMatrioskaCursorConnection {
-  edges: [RecorridoMatrioskaEdge]
-  pageInfo: RecorridoMatrioskaPageInfo!
+"Cursor connection for SalidaMatrioska."
+type SalidaMatrioskaCursorConnection {
+  edges: [SalidaMatrioskaEdge]
+  pageInfo: SalidaMatrioskaPageInfo!
   totalCount: Int!
 }
 
-"Edge of RecorridoMatrioska."
-type RecorridoMatrioskaEdge {
-  node: RecorridoMatrioska
+"Edge of SalidaMatrioska."
+type SalidaMatrioskaEdge {
+  node: SalidaMatrioska
   cursor: String!
 }
 
-type RecorridoMatrioska implements Node {
+type SalidaMatrioska implements Node {
   id: ID!
   _id: Int!
-  recorrido: Recorrido!
-  subrecorridos: Recorrido!
+  salida: Salida!
+  subsalidas: Salida!
   posicion: Int
 }
 
 "Information about the current page."
-type RecorridoMatrioskaPageInfo {
+type SalidaMatrioskaPageInfo {
   endCursor: String
   startCursor: String
   hasNextPage: Boolean!
@@ -773,7 +773,7 @@ type Salida implements Node {
   fecha: Date!
   legacyId: String
   empresa: Empresa
-  recorrido: Recorrido!
+  salida: Salida!
   bus: Bus
   piloto: Piloto
   boletos(
@@ -1492,23 +1492,23 @@ type Mutation {
   "Deletes a Piloto."
   deletePiloto(input: deletePilotoInput!): deletePilotoPayload
 
-  "Creates a Recorrido."
-  createRecorrido(input: createRecorridoInput!): createRecorridoPayload
+  "Creates a Salida."
+  createSalida(input: createSalidaInput!): createSalidaPayload
 
-  "Updates a Recorrido."
-  updateRecorrido(input: updateRecorridoInput!): updateRecorridoPayload
+  "Updates a Salida."
+  updateSalida(input: updateSalidaInput!): updateSalidaPayload
 
-  "Deletes a Recorrido."
-  deleteRecorrido(input: deleteRecorridoInput!): deleteRecorridoPayload
+  "Deletes a Salida."
+  deleteSalida(input: deleteSalidaInput!): deleteSalidaPayload
 
-  "Updates a RecorridoMatrioska."
-  updateRecorridoMatrioska(input: updateRecorridoMatrioskaInput!): updateRecorridoMatrioskaPayload
+  "Updates a SalidaMatrioska."
+  updateSalidaMatrioska(input: updateSalidaMatrioskaInput!): updateSalidaMatrioskaPayload
 
-  "Deletes a RecorridoMatrioska."
-  deleteRecorridoMatrioska(input: deleteRecorridoMatrioskaInput!): deleteRecorridoMatrioskaPayload
+  "Deletes a SalidaMatrioska."
+  deleteSalidaMatrioska(input: deleteSalidaMatrioskaInput!): deleteSalidaMatrioskaPayload
 
-  "Creates a RecorridoMatrioska."
-  createRecorridoMatrioska(input: createRecorridoMatrioskaInput!): createRecorridoMatrioskaPayload
+  "Creates a SalidaMatrioska."
+  createSalidaMatrioska(input: createSalidaMatrioskaInput!): createSalidaMatrioskaPayload
 
   "Creates a Role."
   createRole(input: createRoleInput!): createRolePayload
@@ -1819,7 +1819,7 @@ type deleteAsientoPayload {
 
 "Creates a Boleto."
 input createBoletoInput {
-  recorrido: String
+  salida: String
   cliente: String!
   legacyId: String
   venta: String!
@@ -1843,7 +1843,7 @@ type createBoletoPayload {
 "Updates a Boleto."
 input updateBoletoInput {
   id: ID!
-  recorrido: String
+  salida: String
   cliente: String
   legacyId: String
   venta: String
@@ -2899,91 +2899,91 @@ type deletePilotoPayload {
   clientMutationId: String
 }
 
-"Creates a Recorrido."
-input createRecorridoInput {
+"Creates a Salida."
+input createSalidaInput {
   nombre: String!
   empresa: String
   bus: String
   trayecto: String
-  subrecorridos: [String]
+  subsalidas: [String]
   label: String
   clientMutationId: String
 }
 
-"Creates a Recorrido."
-type createRecorridoPayload {
-  recorrido: Recorrido
+"Creates a Salida."
+type createSalidaPayload {
+  salida: Salida
   clientMutationId: String
 }
 
-"Updates a Recorrido."
-input updateRecorridoInput {
+"Updates a Salida."
+input updateSalidaInput {
   id: ID!
   nombre: String
   empresa: String
   bus: String
   trayecto: String
-  subrecorridos: [String]
+  subsalidas: [String]
   label: String
   clientMutationId: String
 }
 
-"Updates a Recorrido."
-type updateRecorridoPayload {
-  recorrido: Recorrido
+"Updates a Salida."
+type updateSalidaPayload {
+  salida: Salida
   clientMutationId: String
 }
 
-"Deletes a Recorrido."
-input deleteRecorridoInput {
+"Deletes a Salida."
+input deleteSalidaInput {
   id: ID!
   clientMutationId: String
 }
 
-"Deletes a Recorrido."
-type deleteRecorridoPayload {
-  recorrido: Recorrido
+"Deletes a Salida."
+type deleteSalidaPayload {
+  salida: Salida
   clientMutationId: String
 }
 
-"Updates a RecorridoMatrioska."
-input updateRecorridoMatrioskaInput {
+"Updates a SalidaMatrioska."
+input updateSalidaMatrioskaInput {
   id: ID!
-  recorrido: String
-  subrecorridos: String
+  salida: String
+  subsalidas: String
   posicion: Int
   clientMutationId: String
 }
 
-"Updates a RecorridoMatrioska."
-type updateRecorridoMatrioskaPayload {
-  recorridoMatrioska: RecorridoMatrioska
+"Updates a SalidaMatrioska."
+type updateSalidaMatrioskaPayload {
+  salidaMatrioska: SalidaMatrioska
   clientMutationId: String
 }
 
-"Deletes a RecorridoMatrioska."
-input deleteRecorridoMatrioskaInput {
+"Deletes a SalidaMatrioska."
+input deleteSalidaMatrioskaInput {
   id: ID!
   clientMutationId: String
 }
 
-"Deletes a RecorridoMatrioska."
-type deleteRecorridoMatrioskaPayload {
-  recorridoMatrioska: RecorridoMatrioska
+"Deletes a SalidaMatrioska."
+type deleteSalidaMatrioskaPayload {
+  salidaMatrioska: SalidaMatrioska
   clientMutationId: String
 }
 
-"Creates a RecorridoMatrioska."
-input createRecorridoMatrioskaInput {
-  recorrido: String!
-  subrecorridos: String!
+"Creates a SalidaMatrioska."
+input createSalidaMatrioskaInput {
+  salida: String!
+  subsalidas: String!
   posicion: Int
   clientMutationId: String
 }
 
-"Creates a RecorridoMatrioska."
-type createRecorridoMatrioskaPayload {
-  recorridoMatrioska: RecorridoMatrioska
+"Creates a SalidaMatrioska."
+type createSalidaMatrioskaPayload {
+  salidaMatrioska: SalidaMatrioska
   clientMutationId: String
 }
 
@@ -3039,7 +3039,7 @@ input createSalidaInput {
   fecha: Date!
   legacyId: String
   empresa: String
-  recorrido: String!
+  salida: String!
   bus: String
   piloto: String
   boletos: [String]
@@ -3064,7 +3064,7 @@ input updateSalidaInput {
   fecha: Date
   legacyId: String
   empresa: String
-  recorrido: String
+  salida: String
   bus: String
   piloto: String
   boletos: [String]
@@ -3142,7 +3142,7 @@ input createTrayectoInput {
   duracionEstimadaMinutos: Int
   activo: Boolean!
   legacyId: String
-  recorridos: [String]
+  salidas: [String]
   label: String
   clientMutationId: String
 }
@@ -3162,7 +3162,7 @@ input updateTrayectoInput {
   duracionEstimadaMinutos: Int
   activo: Boolean
   legacyId: String
-  recorridos: [String]
+  salidas: [String]
   label: String
   clientMutationId: String
 }

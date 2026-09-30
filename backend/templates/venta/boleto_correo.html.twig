@@ -2,7 +2,7 @@
 <p>Gracias por viajar con {{ b.empresa.nombre ?? 'nosotros' }}. Adjuntamos su boleto
 {% if b.factura %}con los datos de su factura electrónica (DTE {{ b.factura.numero }}, serie {{ b.factura.serie }}){% endif %}.</p>
 <ul>
-  <li><strong>Salida:</strong> {{ b.recorrido.salidaOrigen|date('d/m/Y h:i A') }}</li>
+  <li><strong>Salida:</strong> {{ b.salida.salidaOrigen|date('d/m/Y h:i A') }}</li>
   <li><strong>De:</strong> {{ b.origen.nombre }} <strong>a</strong> {{ b.destino.nombre }}</li>
   <li><strong>Asiento(s):</strong> {{ b.boletos|map(x => x.asiento)|join(', ') }}</li>
   <li><strong>Total:</strong> {{ b.total.texto }}</li>

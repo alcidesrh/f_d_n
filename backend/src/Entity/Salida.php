@@ -5,16 +5,16 @@ namespace App\Entity;
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
 use App\Entity\Base\Traits\TimestampableEntityTrait;
-use App\Entity\Enum\EstadoRecorrido;
-use App\Repository\RecorridoRepository;
+use App\Entity\Enum\EstadoSalida;
+use App\Repository\SalidaRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: RecorridoRepository::class)]
-#[ORM\Index(columns: ["fecha", "empresa_id", "trayecto_id"], name: "idx_recorrido_fecha_empresa_trayecto")]
+#[ORM\Entity(repositoryClass: SalidaRepository::class)]
+#[ORM\Index(columns: ["fecha", "empresa_id", "trayecto_id"], name: "idx_salida_fecha_empresa_trayecto")]
 #[ApiResourcePaginationPage]
-class Recorrido extends Base
+class Salida extends Base
 {
     use TimestampableEntityTrait;
 
@@ -30,13 +30,13 @@ class Recorrido extends Base
     #[ORM\ManyToOne]
     private ?Bus $bus = null;
 
-    #[ORM\Column(type: "string", length: 20, enumType: EstadoRecorrido::class)]
-    private EstadoRecorrido $estado = EstadoRecorrido::PROGRAMADA;
+    #[ORM\Column(type: "string", length: 20, enumType: EstadoSalida::class)]
+    private EstadoSalida $estado = EstadoSalida::PROGRAMADA;
 
     /**
      * @var Collection<int, BoletoAsiento>
      */
-    #[ORM\OneToMany(targetEntity: BoletoAsiento::class, mappedBy: "recorrido")]
+    #[ORM\OneToMany(targetEntity: BoletoAsiento::class, mappedBy: "salida")]
     private Collection $boletoAsientos;
 
     #[ORM\ManyToOne]
@@ -84,19 +84,19 @@ class Recorrido extends Base
         return $this;
     }
 
-    public function getEstado(): EstadoRecorrido
+    public function getEstado(): EstadoSalida
     {
         return $this->estado;
     }
 
     /**
-     * Transiciona el recorrido al nuevo estado, validando la máquina de estados:
+     * Transiciona el salida al nuevo estado, validando la máquina de estados:
      * programada -> abordando -> iniciada -> finalizada (lineal),
      * y programada -> cancelada (solo desde programada).
      *
      * @throws \DomainException si la transición no está permitida
      */
-    public function setEstado(EstadoRecorrido $estado): static
+    public function setEstado(EstadoSalida $estado): static
     {
         if (
             $estado !== $this->estado &&
@@ -104,7 +104,7 @@ class Recorrido extends Base
         ) {
             throw new \DomainException(
                 sprintf(
-                    "Transición de Recorrido inválida: %s -> %s",
+                    "Transición de Salida inválida: %s -> %s",
                     $this->estado->value,
                     $estado->value,
                 ),
@@ -139,7 +139,7 @@ class Recorrido extends Base
     {
         if (!$this->boletoAsientos->contains($boletoAsiento)) {
             $this->boletoAsientos->add($boletoAsiento);
-            $boletoAsiento->setRecorrido($this);
+            $boletoAsiento->setSalida($this);
         }
 
         return $this;
@@ -149,8 +149,8 @@ class Recorrido extends Base
     {
         if ($this->boletoAsientos->removeElement($boletoAsiento)) {
             // set the owning side to null (unless already changed)
-            if ($boletoAsiento->getRecorrido() === $this) {
-                $boletoAsiento->setRecorrido(null);
+            if ($boletoAsiento->getSalida() === $this) {
+                $boletoAsiento->setSalida(null);
             }
         }
 

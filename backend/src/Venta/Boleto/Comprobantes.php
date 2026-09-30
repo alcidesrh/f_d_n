@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace App\Venta\Boleto;
 
 use App\Entity\BoletoVenta;
-use App\Venta\HorasRecorrido;
+use App\Venta\HorasSalida;
 
 /**
  * `DatosBoleto` con la hora de salida estimada en la parada donde sube el
- * pasajero (`recorrido.salidaOrigen`).
+ * pasajero (`salida.salidaOrigen`).
  */
 final class Comprobantes
 {
     public function __construct(
-        private readonly HorasRecorrido $horas,
+        private readonly HorasSalida $horas,
     ) {}
 
     /** @return array<string, mixed> */
@@ -23,7 +23,7 @@ final class Comprobantes
         $boleto = $venta->getAsientos()->first() ?: null;
         $salida = $boleto === null
             ? null
-            : $this->horas->salidaDesde($boleto->getRecorrido(), (int) $boleto->getTrayecto()->getOrigen()->getId());
+            : $this->horas->salidaDesde($boleto->getSalida(), (int) $boleto->getTrayecto()->getOrigen()->getId());
 
         return DatosBoleto::de($venta, $salida);
     }

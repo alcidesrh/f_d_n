@@ -13,7 +13,7 @@ use App\Entity\Enum\EstadoBoletoVenta;
 use App\Entity\Enum\EstadoFacturacion;
 use App\Entity\Estacion;
 use App\Entity\Moneda;
-use App\Entity\Recorrido;
+use App\Entity\Salida;
 use App\Entity\TipoPago;
 use App\Entity\Usuario;
 use App\Venta\Agencia\SaldoAgencia;
@@ -32,10 +32,10 @@ use Symfony\Component\Uid\Uuid;
 /**
  * Venta en taquilla y en agencias (ADR-021).
  *
- * 1. En una transacción, con el recorrido bloqueado: valida, cotiza, aparta
+ * 1. En una transacción, con el salida bloqueado: valida, cotiza, aparta
  *    los asientos (venta `pendiente` si lleva factura) y, en agencias,
  *    descuenta el saldo.
- * 2. Fuera de la transacción (no se bloquea el recorrido mientras responde
+ * 2. Fuera de la transacción (no se bloquea el salida mientras responde
  *    el certificador): certifica la factura.
  * 3. Si se certificó, la venta queda `confirmada`; si no, se borra —nada
  *    queda registrado— y el usuario decide: cancelar, reintentar o, con
@@ -90,7 +90,7 @@ final class RegistroVenta
             $this->certificarOAnular($venta, $permiteSinFactura);
         }
 
-        $this->publicador->cambio((int) $venta->getAsientos()->first()->getRecorrido()->getId());
+        $this->publicador->cambio((int) $venta->getAsientos()->first()->getSalida()->getId());
         if ($venta->isEnviarCorreo() && $venta->getCliente()?->getEmail()) {
             $this->bus->dispatch(new EnviarBoletoPorCorreo((int) $venta->getId()));
         }
@@ -102,20 +102,20 @@ final class RegistroVenta
     private function registrar(SolicitudVenta $s, int $usuarioId, Uuid $token, CanalVenta $canal, bool $conFactura): BoletoVenta
     {
         $usuario = $this->em->find(Usuario::class, $usuarioId);
-        $recorrido = $this->em->find(Recorrido::class, $s->recorridoId, LockMode::PESSIMISTIC_WRITE)
-            ?? throw new VentaRechazada("El recorrido no existe.", "no_encontrado", 404);
-        $this->reglas->exigirVendibleEnTaquilla($recorrido);
+        $salida = $this->em->find(Salida::class, $s->salidaId, LockMode::PESSIMISTIC_WRITE)
+            ?? throw new VentaRechazada("El salida no existe.", "no_encontrado", 404);
+        $this->reglas->exigirVendibleEnTaquilla($salida);
 
         $agencia = $usuario->getAgencia();
         if ($agencia !== null) {
-            $this->exigirAgenciaPuedeVender($agencia, $recorrido);
+            $this->exigirAgenciaPuedeVender($agencia, $salida);
         }
 
-        $trayecto = $this->reglas->trayecto($recorrido, $s->trayectoId);
-        $tramo = $this->reglas->tramo($recorrido, $trayecto);
-        $asientos = $this->reglas->asientos($recorrido, array_column($s->asientos, "asiento"));
-        $this->reglas->exigirDisponibles($recorrido, $tramo, $asientos);
-        $cotizacion = $this->reglas->cotizar($recorrido, $trayecto, $asientos, $s->cobrarTrayectoCompleto, $s->cortesia);
+        $trayecto = $this->reglas->trayecto($salida, $s->trayectoId);
+        $tramo = $this->reglas->tramo($salida, $trayecto);
+        $asientos = $this->reglas->asientos($salida, array_column($s->asientos, "asiento"));
+        $this->reglas->exigirDisponibles($salida, $tramo, $asientos);
+        $cotizacion = $this->reglas->cotizar($salida, $trayecto, $asientos, $s->cobrarTrayectoCompleto, $s->cortesia);
 
         $cliente = $this->em->find(Cliente::class, $s->clienteId)
             ?? throw new VentaRechazada("El cliente no existe.");
@@ -152,7 +152,7 @@ final class RegistroVenta
             $boleto = (new BoletoAsiento())
                 ->setAsiento($asiento)
                 ->setTrayecto($trayecto)
-                ->setRecorrido($recorrido)
+                ->setSalida($salida)
                 ->setCliente($pasajeros[$s->asientos[$i]["cliente"] ?? $cliente->getId()])
                 ->setPrecio($cotizacion->precioDe($asiento))
                 ->setObservacion($s->observacion);
@@ -192,22 +192,22 @@ final class RegistroVenta
     /** La factura no salió: la venta desaparece y los asientos quedan libres. */
     private function anular(BoletoVenta $venta): void
     {
-        $recorridoId = (int) $venta->getAsientos()->first()->getRecorrido()->getId();
+        $salidaId = (int) $venta->getAsientos()->first()->getSalida()->getId();
         $this->transaccion->ejecutar(function () use ($venta) {
             $venta->setFactura(null);
             $this->em->remove($venta);
         });
-        $this->publicador->cambio($recorridoId);
+        $this->publicador->cambio($salidaId);
     }
 
-    private function exigirAgenciaPuedeVender(Agencia $agencia, Recorrido $recorrido): void
+    private function exigirAgenciaPuedeVender(Agencia $agencia, Salida $salida): void
     {
         if (!$agencia->isActivo()) {
             throw new VentaRechazada("La agencia está inactiva: no puede vender.", "agencia_inactiva", 403);
         }
         $empresa = $agencia->getEmpresa();
-        if ($empresa !== null && $recorrido->getEmpresa()?->getId() !== $empresa->getId()) {
-            throw new VentaRechazada("La agencia no vende recorridos de esta empresa.", "agencia_empresa", 403);
+        if ($empresa !== null && $salida->getEmpresa()?->getId() !== $empresa->getId()) {
+            throw new VentaRechazada("La agencia no vende salidas de esta empresa.", "agencia_empresa", 403);
         }
     }
 

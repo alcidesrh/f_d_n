@@ -7,7 +7,7 @@ namespace App\Venta;
 use App\Entity\Enum\CanalVenta;
 
 /**
- * Algo que aparta un asiento de un recorrido para un trayecto: un boleto
+ * Algo que aparta un asiento de un salida para un trayecto: un boleto
  * vendido (o en venta pendiente de factura) o una reserva web vigente.
  */
 final readonly class Ocupante

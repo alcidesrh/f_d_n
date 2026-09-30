@@ -5,7 +5,7 @@ namespace App\Doctrine;
 use App\Entity\Bus;
 use App\Entity\BoletoTarifa;
 use App\Entity\Piloto;
-use App\Entity\Recorrido;
+use App\Entity\Salida;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Query\Filter\SQLFilter;
 
@@ -23,7 +23,7 @@ final class TenantFilter extends SQLFilter
     private const TENANT_ENTITIES = [
         Bus::class,
         Piloto::class,
-        Recorrido::class,
+        Salida::class,
         BoletoTarifa::class,
     ];
 

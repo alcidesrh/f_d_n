@@ -51,7 +51,7 @@ export const useCarrito = defineStore('carrito', () => {
   }
 
   /** Aparta o suelta un asiento. Si el carrito es de otro viaje, lo vacía primero. */
-  async function alternar(recorrido: number, trayecto: number, asiento: number) {
+  async function alternar(salida: number, trayecto: number, asiento: number) {
     ocupado.value = true
     try {
       if (asientos.value.some((a) => a.asiento === asiento) && token.value) {
@@ -60,12 +60,12 @@ export const useCarrito = defineStore('carrito', () => {
       }
       const otroViaje =
         !vacio.value &&
-        (carrito.value?.recorrido?.id !== recorrido || carrito.value?.trayecto?.id !== trayecto)
+        (carrito.value?.salida?.id !== salida || carrito.value?.trayecto?.id !== trayecto)
       if (otroViaje && token.value) {
         await api.vaciar(token.value)
         olvidar()
       }
-      aplicar(await api.apartar({ recorrido, trayecto, asiento, token: token.value }))
+      aplicar(await api.apartar({ salida, trayecto, asiento, token: token.value }))
     } finally {
       ocupado.value = false
     }

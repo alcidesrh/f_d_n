@@ -38,7 +38,7 @@ class Agencia extends Base
     #[ORM\Column(length: 100, nullable: true)]
     private ?string $email = null;
 
-    /** Empresa para la que vende; null = puede vender recorridos de cualquier empresa. */
+    /** Empresa para la que vende; null = puede vender salidas de cualquier empresa. */
     #[ORM\ManyToOne]
     private ?Empresa $empresa = null;
 

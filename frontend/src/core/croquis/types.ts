@@ -4,7 +4,7 @@
  * asiento vendible o una señal (chofer, puerta)—.
  *
  * Es el mismo dato para todos los usos del mapa del bus: edición del bus,
- * ocupación de un recorrido, selección de asientos en taquilla o en la venta
+ * ocupación de un salida, selección de asientos en taquilla o en la venta
  * en línea. Lo que cambia entre usos es cómo se pinta cada asiento
  * (`EstadoAsiento`), no el croquis.
  */
@@ -55,7 +55,7 @@ export interface PlantillaCroquis {
 
 /**
  * Cómo se pinta un asiento en un uso concreto del mapa. El croquis no lo
- * sabe: lo decide quien pinta (p. ej. la ocupación de un recorrido).
+ * sabe: lo decide quien pinta (p. ej. la ocupación de un salida).
  *
  * En la venta, `ocupado` es vendido en taquilla; `ocupado-web` y
  * `ocupado-agencia` distinguen los otros canales (ADR-021) y `reservado` es

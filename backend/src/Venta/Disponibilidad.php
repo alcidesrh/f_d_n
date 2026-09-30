@@ -7,13 +7,13 @@ namespace App\Venta;
 use App\Entity\BoletoAsiento;
 use App\Entity\Enum\CanalVenta;
 use App\Entity\Enum\EstadoBoletoAsiento;
-use App\Entity\Recorrido;
+use App\Entity\Salida;
 use App\Entity\ReservaAsiento;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 
 /**
- * Qué ocupa cada asiento de un recorrido: boletos vivos (no anulados ni
+ * Qué ocupa cada asiento de un salida: boletos vivos (no anulados ni
  * reasignados, incluidos los de ventas pendientes de factura) y reservas
  * web vigentes. Las reservas vencidas no cuentan aunque la fila siga ahí.
  */
@@ -28,7 +28,7 @@ final class Disponibilidad
     /**
      * @return list<Ocupante>
      */
-    public function ocupantes(Recorrido $recorrido): array
+    public function ocupantes(Salida $salida): array
     {
         $vendidos = $this->em->createQueryBuilder()
             ->select(
@@ -38,9 +38,9 @@ final class Disponibilidad
             )
             ->from(BoletoAsiento::class, "b")
             ->join("b.boletoVenta", "v")
-            ->where("b.recorrido = :recorrido")
+            ->where("b.salida = :salida")
             ->andWhere("b.estado NOT IN (:libres)")
-            ->setParameter("recorrido", $recorrido)
+            ->setParameter("salida", $salida)
             ->setParameter("libres", [
                 EstadoBoletoAsiento::ANULADO->value,
                 EstadoBoletoAsiento::REASIGNADO->value,
@@ -55,9 +55,9 @@ final class Disponibilidad
                 "r.token AS token",
             )
             ->from(ReservaAsiento::class, "r")
-            ->where("r.recorrido = :recorrido")
+            ->where("r.salida = :salida")
             ->andWhere("r.expiraEn > :ahora")
-            ->setParameter("recorrido", $recorrido)
+            ->setParameter("salida", $salida)
             ->setParameter("ahora", $this->reloj->now())
             ->getQuery()
             ->getArrayResult();
@@ -88,16 +88,16 @@ final class Disponibilidad
     }
 
     /**
-     * Estado de los asientos ocupados del recorrido para un tramo.
+     * Estado de los asientos ocupados del salida para un tramo.
      *
      * @return array<int, array{estado: string, canal: ?string}>
      */
-    public function estados(Recorrido $recorrido, Tramo $tramo, ?string $tokenPropio = null): array
+    public function estados(Salida $salida, Tramo $tramo, ?string $tokenPropio = null): array
     {
         return Ocupacion::estados(
-            $this->itinerarios->deTrayecto($recorrido->getTrayecto()),
+            $this->itinerarios->deTrayecto($salida->getTrayecto()),
             $tramo,
-            $this->ocupantes($recorrido),
+            $this->ocupantes($salida),
             $tokenPropio,
         );
     }

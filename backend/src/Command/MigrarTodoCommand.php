@@ -25,7 +25,7 @@ use Doctrine\DBAL\Connection;
 #[
     AsCommand(
         name: "app:migrar:todo",
-        description: "Ejecuta la migración completa: 1) reset, 2) estáticos, 3) IAM, 4) config, 5) recorridos + boletos/asientos vendidos",
+        description: "Ejecuta la migración completa: 1) reset, 2) estáticos, 3) IAM, 4) config, 5) salidas + boletos/asientos vendidos",
     ),
 ]
 class MigrarTodoCommand extends Command
@@ -74,7 +74,7 @@ class MigrarTodoCommand extends Command
                 "Salta la sincronización de EntityConfiguration",
             )
             ->addOption(
-                "recorridos",
+                "salidas",
                 null,
                 InputOption::VALUE_OPTIONAL,
                 "Cantidad de boletos a migrar",
@@ -99,7 +99,7 @@ class MigrarTodoCommand extends Command
         $flagIam = (bool) $input->getOption("iam");
         $flagConfig = (bool) $input->getOption("config");
         $flagData = (bool) $input->getOption("data");
-        $recorridos = (int) $input->getOption("recorridos");
+        $salidas = (int) $input->getOption("salidas");
         ini_set("memory_limit", "2G");
         // Reset the debug data holder to avoid memory exhaustion from
         // BacktraceDebugDataHolder accumulating all migration queries.
@@ -194,24 +194,24 @@ class MigrarTodoCommand extends Command
             }
         }
         if ($flagData) {
-            // ─── Paso 5: Salidas + Boletos (desde recorrido) ──────────
+            // ─── Paso 5: Salidas + Boletos (desde salida) ──────────
             $this->resetDebugDataHolder();
             $output->writeln(
-                "<info>[5/5] Migrando recorridos y boletos desde salidas...</info>",
+                "<info>[5/5] Migrando salidas y boletos desde salidas...</info>",
             );
             $resetFn = function () {
                 $this->resetDebugDataHolder();
             };
             try {
                 $contadores = $this->migrador->migrarSalida(
-                    $recorridos,
+                    $salidas,
                     $output,
                     $resetFn,
                 );
                 $this->resetDebugDataHolder();
 
                 $allCounters = array_merge($allCounters, $contadores);
-                $steps[] = "recorridos+boletos";
+                $steps[] = "salidas+boletos";
             } catch (\Throwable $e) {
                 $output->writeln(
                     "<error>Error en boletos: {$e->getMessage()}</error>",

@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Venta;
 
 /**
- * Estado de cada asiento de un recorrido para un tramo, a partir de lo que
+ * Estado de cada asiento de un salida para un tramo, a partir de lo que
  * lo ocupa (pura). Un asiento está ocupado para un tramo si algún ocupante
  * tiene un tramo que se solapa. Un ocupante con un trayecto ajeno al
- * itinerario (datos inconsistentes) ocupa el recorrido completo: ante la
+ * itinerario (datos inconsistentes) ocupa el salida completo: ante la
  * duda, no se vende dos veces.
  */
 final class Ocupacion

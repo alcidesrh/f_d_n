@@ -31,9 +31,9 @@ export interface ContextoVenta {
   naciones: Opcion[]
 }
 
-export interface RecorridoResumen {
+export interface SalidaResumen {
   id: number
-  /** Salida del origen del recorrido (ISO). */
+  /** Salida del origen del salida (ISO). */
   salida: string
   /** Hora estimada en la estación elegida (ISO), si se conoce. */
   salidaEstacion: string | null
@@ -60,7 +60,7 @@ export interface TrayectoVendible {
   completo: boolean
 }
 
-export interface RecorridoDetalle extends RecorridoResumen {
+export interface SalidaDetalle extends SalidaResumen {
   paradas: Parada[]
   trayectos: TrayectoVendible[]
   croquis: ElementoCroquis[]
@@ -110,7 +110,7 @@ export type ClienteDatos = Partial<Omit<Cliente, 'id' | 'nombreCompleto' | 'labe
 
 export interface PedidoVenta {
   token: string
-  recorrido: number
+  salida: number
   trayecto: number | null
   asientos: Array<{ asiento: number; cliente?: number | null }>
   cliente: number
@@ -159,7 +159,7 @@ export interface Comprobante {
   } | null
   cliente: { nombre: string; nit: string; email: string | null } | null
   /** `salida`: inicio de la ruta; `salidaOrigen`: hora estimada donde sube el pasajero. */
-  recorrido: { id: number; salida: string; salidaOrigen: string; bus: string | null } | null
+  salida: { id: number; salida: string; salidaOrigen: string; bus: string | null } | null
   origen: { nombre: string; direccion: string | null } | null
   destino: { nombre: string; direccion: string | null } | null
   boletos: Array<{

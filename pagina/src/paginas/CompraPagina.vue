@@ -19,7 +19,7 @@
 
       <dl class="m-0 grid grid-cols-1 gap-x-6 gap-y-2 rounded-xl bg-surface-50 p-4 text-sm md:grid-cols-2">
         <div><dt class="text-muted-color">Viaje</dt><dd class="m-0 font-medium">{{ compra.origen?.nombre }} → {{ compra.destino?.nombre }}</dd></div>
-        <div><dt class="text-muted-color">Salida</dt><dd class="m-0 font-medium">{{ fechaLarga(compra.recorrido?.salidaOrigen) }}, {{ hora(compra.recorrido?.salidaOrigen) }}</dd></div>
+        <div><dt class="text-muted-color">Salida</dt><dd class="m-0 font-medium">{{ fechaLarga(compra.salida?.salidaOrigen) }}, {{ hora(compra.salida?.salidaOrigen) }}</dd></div>
         <div><dt class="text-muted-color">Asiento(s)</dt><dd class="m-0 font-medium">{{ compra.boletos.map((b) => b.asiento).join(', ') }}</dd></div>
         <div><dt class="text-muted-color">Total pagado</dt><dd class="m-0 font-medium">{{ compra.total.texto }}</dd></div>
         <div><dt class="text-muted-color">Número de compra</dt><dd class="m-0 font-mono">{{ compra.codigoBarras }}</dd></div>

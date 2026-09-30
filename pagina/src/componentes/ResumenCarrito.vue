@@ -3,7 +3,7 @@
   <div class="flex flex-col gap-3">
     <div v-if="carrito.carrito?.trayecto" class="text-sm">
       <div class="font-semibold">{{ carrito.carrito.trayecto.origen }} → {{ carrito.carrito.trayecto.destino }}</div>
-      <div class="text-muted-color">{{ fechaLarga(carrito.carrito.recorrido?.salidaOrigen) }}, {{ hora(carrito.carrito.recorrido?.salidaOrigen) }} · {{ carrito.carrito.recorrido?.empresa }}</div>
+      <div class="text-muted-color">{{ fechaLarga(carrito.carrito.salida?.salidaOrigen) }}, {{ hora(carrito.carrito.salida?.salidaOrigen) }} · {{ carrito.carrito.salida?.empresa }}</div>
     </div>
     <ul v-if="!carrito.vacio" class="m-0 flex list-none flex-col gap-1 p-0">
       <li v-for="a in carrito.asientos" :key="a.asiento" class="flex items-center justify-between gap-2">

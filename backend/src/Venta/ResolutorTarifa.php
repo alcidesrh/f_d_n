@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Venta;
 
 use App\Entity\Asiento;
-use App\Entity\Recorrido;
+use App\Entity\Salida;
 use App\Entity\Trayecto;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
@@ -13,7 +13,7 @@ use Money\Currency;
 use Money\Money;
 
 /**
- * Tarifa (`BoletoTarifa`) de un asiento en un recorrido para un trayecto,
+ * Tarifa (`BoletoTarifa`) de un asiento en un salida para un trayecto,
  * por especificidad (`EspecificidadTarifa`).
  *
  * Lee con DBAL a propósito: el `TenantFilter` del ORM dejaría fuera las
@@ -25,14 +25,14 @@ final class ResolutorTarifa
         private readonly Connection $conexion,
     ) {}
 
-    public function precio(Recorrido $recorrido, Trayecto $trayecto, Asiento $asiento): ?Money
+    public function precio(Salida $salida, Trayecto $trayecto, Asiento $asiento): ?Money
     {
-        return $this->tarifa($recorrido, $trayecto, $asiento)?->precio;
+        return $this->tarifa($salida, $trayecto, $asiento)?->precio;
     }
 
-    public function tarifa(Recorrido $recorrido, Trayecto $trayecto, Asiento $asiento): ?CandidatoTarifa
+    public function tarifa(Salida $salida, Trayecto $trayecto, Asiento $asiento): ?CandidatoTarifa
     {
-        return $this->porClase($recorrido, $trayecto, [$asiento->getClase()->value])[$asiento->getClase()->value] ?? null;
+        return $this->porClase($salida, $trayecto, [$asiento->getClase()->value])[$asiento->getClase()->value] ?? null;
     }
 
     /**
@@ -42,13 +42,13 @@ final class ResolutorTarifa
      *
      * @return array<string, CandidatoTarifa>
      */
-    public function porClase(Recorrido $recorrido, Trayecto $trayecto, array $clases): array
+    public function porClase(Salida $salida, Trayecto $trayecto, array $clases): array
     {
         if ($clases === []) {
             return [];
         }
-        $empresaId = $recorrido->getEmpresa()?->getId();
-        $busId = $recorrido->getBus()?->getId();
+        $empresaId = $salida->getEmpresa()?->getId();
+        $busId = $salida->getBus()?->getId();
 
         $filas = $this->conexion->fetchAllAssociative(
             'SELECT id, precio_monto, precio_moneda, clase, empresa_id, trayecto_id, bus_id, hora
@@ -79,7 +79,7 @@ final class ResolutorTarifa
             $filas,
         );
 
-        $hora = $recorrido->getFecha()->format("H:i");
+        $hora = $salida->getFecha()->format("H:i");
         $resultado = [];
         foreach (array_unique($clases) as $clase) {
             $elegida = EspecificidadTarifa::elegir(

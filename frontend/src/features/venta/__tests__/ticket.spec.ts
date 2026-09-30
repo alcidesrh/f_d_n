@@ -33,7 +33,7 @@ const base: Comprobante = {
     urlPdf: null,
   },
   cliente: { nombre: 'Jenner <b>', nit: '28119266', email: null },
-  recorrido: {
+  salida: {
     id: 1,
     salida: '2026-09-27T08:00:00-06:00',
     salidaOrigen: '2026-09-27T10:45:00-06:00',

@@ -2,7 +2,7 @@
 
 namespace App\Entity\Enum;
 
-enum EstadoRecorrido: string
+enum EstadoSalida: string
 {
     case PROGRAMADA = "programada";
     case ABORDANDO = "abordando";

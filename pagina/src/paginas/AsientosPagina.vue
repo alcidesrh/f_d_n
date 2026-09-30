@@ -10,22 +10,22 @@
       <RouterLink :to="{ name: 'inicio' }" class="ml-2 underline">Volver a buscar</RouterLink>
     </Message>
     <Message v-if="aviso" severity="warn" class="mb-4" @close="aviso = ''">{{ aviso }}</Message>
-    <Skeleton v-if="!recorrido && !error" height="24rem" border-radius="1rem" />
+    <Skeleton v-if="!salida && !error" height="24rem" border-radius="1rem" />
 
-    <div v-if="recorrido" class="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
+    <div v-if="salida" class="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
       <section class="panel flex flex-col gap-4">
         <header>
-          <h1 class="m-0 text-xl font-semibold">{{ recorrido.trayecto.origen }} → {{ recorrido.trayecto.destino }}</h1>
+          <h1 class="m-0 text-xl font-semibold">{{ salida.trayecto.origen }} → {{ salida.trayecto.destino }}</h1>
           <p class="m-0 text-sm text-muted-color">
-            {{ fechaLarga(salidaOrigen) }} · sale {{ hora(salidaOrigen) }} · {{ recorrido.empresa }}<template v-if="recorrido.bus"> · {{ recorrido.bus }}</template>
+            {{ fechaLarga(salidaOrigen) }} · sale {{ hora(salidaOrigen) }} · {{ salida.empresa }}<template v-if="salida.bus"> · {{ salida.bus }}</template>
           </p>
           <div class="mt-2 flex flex-wrap gap-2">
-            <Tag v-for="p in recorrido.precios" :key="p.clase" severity="secondary" :value="`Clase ${p.clase}: ${p.precio.texto}`" />
+            <Tag v-for="p in salida.precios" :key="p.clase" severity="secondary" :value="`Clase ${p.clase}: ${p.precio.texto}`" />
           </div>
         </header>
         <div class="overflow-x-auto">
           <BusMap
-            :elementos="recorrido.croquis"
+            :elementos="salida.croquis"
             :estado="estado"
             interactivo
             tamano="lg"
@@ -44,7 +44,7 @@
 
     <!-- Móvil: resumen fijo abajo -->
     <div
-      v-if="recorrido"
+      v-if="salida"
       class="fixed inset-x-0 bottom-0 z-10 flex items-center justify-between gap-3 border-t border-surface-200 bg-white px-4 py-3 shadow-[0_-4px_12px_rgb(0_0_0/0.06)] lg:hidden"
     >
       <div class="text-sm">
@@ -67,19 +67,19 @@ import { useCarrito } from '@/carrito'
 import ResumenCarrito from '@/componentes/ResumenCarrito.vue'
 import { estadoEnMapa, fechaLarga, hora } from '@/modelo'
 import { suscribir } from '@/tiempoReal'
-import type { RecorridoPublico } from '@/tipos'
+import type { SalidaPublico } from '@/tipos'
 
 const props = defineProps<{ id: number; trayecto: number }>()
 const router = useRouter()
 const carrito = useCarrito()
-const recorrido = ref<RecorridoPublico | null>(null)
+const salida = ref<SalidaPublico | null>(null)
 const error = ref('')
 const aviso = ref('')
 let desuscribir: (() => void) | null = null
 
-const estado = computed(() => estadoEnMapa(recorrido.value?.ocupacion ?? []))
+const estado = computed(() => estadoEnMapa(salida.value?.ocupacion ?? []))
 const salidaOrigen = computed(() => {
-  const r = recorrido.value
+  const r = salida.value
   if (!r) return null
   const origen = r.paradas.find((p) => p.nombre === r.trayecto.origen)
   return origen?.hora ?? r.salida
@@ -87,7 +87,7 @@ const salidaOrigen = computed(() => {
 
 async function cargar() {
   try {
-    recorrido.value = await api.recorrido(props.id, props.trayecto, carrito.token)
+    salida.value = await api.salida(props.id, props.trayecto, carrito.token)
     error.value = ''
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e)
@@ -99,7 +99,7 @@ watch(
   async () => {
     desuscribir?.()
     await cargar()
-    if (recorrido.value) desuscribir = suscribir(recorrido.value.topico, () => void cargar())
+    if (salida.value) desuscribir = suscribir(salida.value.topico, () => void cargar())
   },
   { immediate: true },
 )

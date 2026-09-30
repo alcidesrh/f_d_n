@@ -9,14 +9,14 @@ use App\Entity\Asiento;
 use App\Entity\BoletoAsiento;
 use App\Entity\Enclave;
 use App\Entity\Enum\EstadoBoletoAsiento;
-use App\Entity\Enum\EstadoRecorrido;
-use App\Entity\Recorrido;
+use App\Entity\Enum\EstadoSalida;
+use App\Entity\Salida;
 use App\Venta\Boleto\DatosBoleto;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 
 /**
- * Lecturas de la pantalla de venta y de la página web: recorridos del día,
+ * Lecturas de la pantalla de venta y de la página web: salidas del día,
  * paradas, trayectos vendibles, croquis y ocupación. Solo lectura.
  */
 final class ConsultaVenta
@@ -28,27 +28,27 @@ final class ConsultaVenta
         private readonly ResolutorTarifa $tarifas,
         private readonly ReglasVenta $reglas,
         private readonly CroquisBus $croquis,
-        private readonly HorasRecorrido $horas,
+        private readonly HorasSalida $horas,
         private readonly ClockInterface $reloj,
     ) {}
 
     /**
-     * Recorridos del día que pasan por la estación (en cualquier parada salvo
+     * Salidas del día que pasan por la estación (en cualquier parada salvo
      * la última): desde ahí se les puede vender. Sin estación, todos. Con
      * empresa, solo los suyos (agencias que venden para una sola empresa).
      *
      * @return list<array<string, mixed>>
      */
-    public function recorridosDeEstacion(\DateTimeImmutable $dia, ?int $estacionId, ?int $empresaId = null): array
+    public function salidasDeEstacion(\DateTimeImmutable $dia, ?int $estacionId, ?int $empresaId = null): array
     {
-        $recorridos = array_values(array_filter(
-            $this->recorridosDelDia($dia),
-            static fn(Recorrido $r) => $empresaId === null || $r->getEmpresa()?->getId() === $empresaId,
+        $salidas = array_values(array_filter(
+            $this->salidasDelDia($dia),
+            static fn(Salida $r) => $empresaId === null || $r->getEmpresa()?->getId() === $empresaId,
         ));
-        $itinerarios = $this->itinerarios->deTrayectos(array_map(static fn(Recorrido $r) => $r->getTrayecto(), $recorridos));
+        $itinerarios = $this->itinerarios->deTrayectos(array_map(static fn(Salida $r) => $r->getTrayecto(), $salidas));
 
         $filas = [];
-        foreach ($recorridos as $r) {
+        foreach ($salidas as $r) {
             $it = $itinerarios[$r->getTrayecto()->getId()];
             $pos = $estacionId !== null ? $it->posicion($estacionId) : 0;
             if ($pos === null || $pos >= count($it->paradas) - 1) {
@@ -56,31 +56,31 @@ final class ConsultaVenta
             }
             $filas[] = [$r, $it, $estacionId];
         }
-        $ocupados = $this->boletosVivosPorRecorrido(array_map(static fn(array $f) => $f[0], $filas));
+        $ocupados = $this->boletosVivosPorSalida(array_map(static fn(array $f) => $f[0], $filas));
         $capacidad = $this->capacidadPorBus(array_map(static fn(array $f) => $f[0], $filas));
 
         return array_map(fn(array $f) => $this->resumen($f[0], $f[1], $f[2], $ocupados, $capacidad), $filas);
     }
 
     /**
-     * Recorridos a la venta en línea entre dos paradas en un día: la web
+     * Salidas a la venta en línea entre dos paradas en un día: la web
      * necesita que exista el trayecto (o subtrayecto) origen→destino.
      *
      * @return list<array<string, mixed>>
      */
-    public function recorridosEnLinea(\DateTimeImmutable $dia, int $origenId, int $destinoId): array
+    public function salidasEnLinea(\DateTimeImmutable $dia, int $origenId, int $destinoId): array
     {
         $ahora = $this->reloj->now();
-        $recorridos = array_filter(
-            $this->recorridosDelDia($dia),
-            fn(Recorrido $r) => $r->getEstado() === EstadoRecorrido::PROGRAMADA
+        $salidas = array_filter(
+            $this->salidasDelDia($dia),
+            fn(Salida $r) => $r->getEstado() === EstadoSalida::PROGRAMADA
                 && $r->getBus() !== null
                 && $ahora < $this->reglas->cierreEnLinea($r),
         );
-        $itinerarios = $this->itinerarios->deTrayectos(array_map(static fn(Recorrido $r) => $r->getTrayecto(), $recorridos));
+        $itinerarios = $this->itinerarios->deTrayectos(array_map(static fn(Salida $r) => $r->getTrayecto(), $salidas));
 
         $resultado = [];
-        foreach ($recorridos as $r) {
+        foreach ($salidas as $r) {
             $it = $itinerarios[$r->getTrayecto()->getId()];
             $trayectoId = $it->trayectoEntre($origenId, $destinoId);
             if ($trayectoId === null) {
@@ -103,7 +103,7 @@ final class ConsultaVenta
                 "trayecto" => $trayectoId,
                 "salida" => $this->horaEn($r, $it, $origenId),
                 "llegada" => $this->horaEn($r, $it, $destinoId),
-                "salidaRecorrido" => $r->getFecha()->format(DATE_ATOM),
+                "salidaInicio" => $r->getFecha()->format(DATE_ATOM),
                 "empresa" => $r->getEmpresa()?->getNombre(),
                 "ruta" => sprintf("%s → %s", $r->getTrayecto()->getOrigen()->getNombre(), $r->getTrayecto()->getDestino()->getNombre()),
                 "clases" => array_map(static fn(string $c, CandidatoTarifa $t) => ["clase" => $c, "precio" => DatosBoleto::importe($t->precio)], array_keys($tarifas), $tarifas),
@@ -120,13 +120,13 @@ final class ConsultaVenta
     }
 
     /**
-     * Paradas, trayectos vendibles y croquis de un recorrido.
+     * Paradas, trayectos vendibles y croquis de un salida.
      *
      * @return array<string, mixed>
      */
-    public function detalle(Recorrido $recorrido): array
+    public function detalle(Salida $salida): array
     {
-        $it = $this->itinerarios->deTrayecto($recorrido->getTrayecto());
+        $it = $this->itinerarios->deTrayecto($salida->getTrayecto());
         $enclaves = $this->enclaves($it->paradas);
 
         $trayectos = [];
@@ -141,17 +141,17 @@ final class ConsultaVenta
         usort($trayectos, static fn($a, $b) => [$it->posicion($a["origen"]), $it->posicion($a["destino"])] <=> [$it->posicion($b["origen"]), $it->posicion($b["destino"])]);
 
         return [
-            ...$this->resumen($recorrido, $it, null),
+            ...$this->resumen($salida, $it, null),
             "paradas" => array_map(fn(int $id, int $pos) => [
                 "id" => $id,
                 "nombre" => $enclaves[$id]?->getNombre(),
                 "direccion" => $enclaves[$id]?->getDireccion(),
                 "posicion" => $pos,
-                "hora" => $this->horaEn($recorrido, $it, $id),
+                "hora" => $this->horaEn($salida, $it, $id),
             ], $it->paradas, array_keys($it->paradas)),
             "trayectos" => $trayectos,
-            "croquis" => $recorrido->getBus() !== null ? $this->croquis->leer($recorrido->getBus())["elementos"] : [],
-            "cierreEnLinea" => $this->reglas->cierreEnLinea($recorrido)->format(DATE_ATOM),
+            "croquis" => $salida->getBus() !== null ? $this->croquis->leer($salida->getBus())["elementos"] : [],
+            "cierreEnLinea" => $this->reglas->cierreEnLinea($salida)->format(DATE_ATOM),
         ];
     }
 
@@ -160,9 +160,9 @@ final class ConsultaVenta
      *
      * @return list<array{asiento: int, estado: string, canal: ?string}>
      */
-    public function ocupacion(Recorrido $recorrido, Tramo $tramo, ?string $tokenPropio = null, bool $conCanal = true): array
+    public function ocupacion(Salida $salida, Tramo $tramo, ?string $tokenPropio = null, bool $conCanal = true): array
     {
-        $estados = $this->disponibilidad->estados($recorrido, $tramo, $tokenPropio);
+        $estados = $this->disponibilidad->estados($salida, $tramo, $tokenPropio);
         $lista = [];
         foreach ($estados as $asiento => $e) {
             $lista[] = ["asiento" => $asiento, "estado" => $e["estado"], "canal" => $conCanal ? $e["canal"] : null];
@@ -202,16 +202,16 @@ final class ConsultaVenta
     }
 
     /**
-     * @return list<Recorrido>
+     * @return list<Salida>
      */
-    private function recorridosDelDia(\DateTimeImmutable $dia): array
+    private function salidasDelDia(\DateTimeImmutable $dia): array
     {
         $desde = \DateTime::createFromImmutable($dia->setTime(0, 0));
         $hasta = \DateTime::createFromImmutable($dia->setTime(0, 0)->modify("+1 day"));
 
         return $this->em->createQueryBuilder()
             ->select("r", "t", "o", "d", "b", "e")
-            ->from(Recorrido::class, "r")
+            ->from(Salida::class, "r")
             ->join("r.trayecto", "t")
             ->join("t.origen", "o")
             ->join("t.destino", "d")
@@ -232,7 +232,7 @@ final class ConsultaVenta
      *
      * @return array<string, mixed>
      */
-    private function resumen(Recorrido $r, Itinerario $it, ?int $estacionId, array $ocupados = [], array $capacidad = []): array
+    private function resumen(Salida $r, Itinerario $it, ?int $estacionId, array $ocupados = [], array $capacidad = []): array
     {
         $busId = $r->getBus()?->getId();
 
@@ -253,8 +253,8 @@ final class ConsultaVenta
         ];
     }
 
-    /** Hora estimada del recorrido en una parada (ISO), si se conoce la duración. */
-    private function horaEn(Recorrido $r, Itinerario $it, int $enclaveId): ?string
+    /** Hora estimada del salida en una parada (ISO), si se conoce la duración. */
+    private function horaEn(Salida $r, Itinerario $it, int $enclaveId): ?string
     {
         return $this->horas->enParada($r, $enclaveId)?->format(DATE_ATOM);
     }
@@ -275,37 +275,37 @@ final class ConsultaVenta
     }
 
     /**
-     * @param list<Recorrido> $recorridos
+     * @param list<Salida> $salidas
      *
-     * @return array<int, int> boletos vivos por recorrido
+     * @return array<int, int> boletos vivos por salida
      */
-    private function boletosVivosPorRecorrido(array $recorridos): array
+    private function boletosVivosPorSalida(array $salidas): array
     {
-        if ($recorridos === []) {
+        if ($salidas === []) {
             return [];
         }
         $filas = $this->em->createQueryBuilder()
-            ->select("IDENTITY(b.recorrido) AS recorrido", "COUNT(DISTINCT b.asiento) AS n")
+            ->select("IDENTITY(b.salida) AS salida", "COUNT(DISTINCT b.asiento) AS n")
             ->from(BoletoAsiento::class, "b")
-            ->where("b.recorrido IN (:recorridos)")
+            ->where("b.salida IN (:salidas)")
             ->andWhere("b.estado NOT IN (:libres)")
-            ->groupBy("b.recorrido")
-            ->setParameter("recorridos", $recorridos)
+            ->groupBy("b.salida")
+            ->setParameter("salidas", $salidas)
             ->setParameter("libres", [EstadoBoletoAsiento::ANULADO->value, EstadoBoletoAsiento::REASIGNADO->value])
             ->getQuery()
             ->getArrayResult();
 
-        return array_column(array_map(static fn(array $f) => [(int) $f["recorrido"], (int) $f["n"]], $filas), 1, 0);
+        return array_column(array_map(static fn(array $f) => [(int) $f["salida"], (int) $f["n"]], $filas), 1, 0);
     }
 
     /**
-     * @param list<Recorrido> $recorridos
+     * @param list<Salida> $salidas
      *
      * @return array<int, int> asientos por bus
      */
-    private function capacidadPorBus(array $recorridos): array
+    private function capacidadPorBus(array $salidas): array
     {
-        $buses = array_values(array_unique(array_filter(array_map(static fn(Recorrido $r) => $r->getBus()?->getId(), $recorridos))));
+        $buses = array_values(array_unique(array_filter(array_map(static fn(Salida $r) => $r->getBus()?->getId(), $salidas))));
         if ($buses === []) {
             return [];
         }

@@ -62,10 +62,10 @@ final class Facturador
         if ($boletos === []) {
             throw new \LogicException("Una venta sin boletos no se factura.");
         }
-        $empresa = $boletos[0]->getRecorrido()->getEmpresa();
+        $empresa = $boletos[0]->getSalida()->getEmpresa();
         if ($empresa === null || !$empresa->getNit()) {
             throw new CertificacionFallida(
-                "La empresa del recorrido no tiene NIT configurado: no se puede facturar.",
+                "La empresa del salida no tiene NIT configurado: no se puede facturar.",
                 false,
                 "emisor_sin_nit",
             );
@@ -80,7 +80,7 @@ final class Facturador
                     $b->getTrayecto()->getOrigen()->getNombre(),
                     $b->getTrayecto()->getDestino()->getNombre(),
                     $b->getAsiento()->getNumero(),
-                    $b->getRecorrido()->getFecha()->format("d/m/Y H:i"),
+                    $b->getSalida()->getFecha()->format("d/m/Y H:i"),
                 ),
                 1,
                 $precio,

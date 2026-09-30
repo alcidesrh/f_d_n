@@ -1,6 +1,6 @@
 /**
  * Estado de la pantalla de venta (taquilla y agencias, ADR-021): filtros,
- * recorrido elegido, tramo, ocupación en vivo (Mercure), selección de
+ * salida elegido, tramo, ocupación en vivo (Mercure), selección de
  * asientos, cliente y cotización. La lógica pura está en `core/venta/modelo`.
  */
 import { defineStore } from 'pinia'
@@ -27,8 +27,8 @@ import type {
   ContextoVenta,
   Cotizacion,
   ErrorVenta,
-  RecorridoDetalle,
-  RecorridoResumen,
+  SalidaDetalle,
+  SalidaResumen,
 } from '@/core/venta/types'
 
 export interface OpcionesCobro {
@@ -45,11 +45,11 @@ export const useVentaStore = defineStore('venta', () => {
 
   const fecha = ref(new Date())
   const estacionId = ref<number | null>(null)
-  const recorridos = ref<RecorridoResumen[]>([])
-  const cargandoRecorridos = ref(false)
+  const salidas = ref<SalidaResumen[]>([])
+  const cargandoSalidas = ref(false)
 
-  const recorridoId = ref<number | null>(null)
-  const detalle = shallowRef<RecorridoDetalle | null>(null)
+  const salidaId = ref<number | null>(null)
+  const detalle = shallowRef<SalidaDetalle | null>(null)
   const cargandoDetalle = ref(false)
   const sube = ref<number | null>(null)
   const baja = ref<number | null>(null)
@@ -101,7 +101,7 @@ export const useVentaStore = defineStore('venta', () => {
     try {
       contexto.value = await api.fetchContexto()
       estacionId.value ??= contexto.value.estacion?.id ?? null
-      await cargarRecorridos()
+      await cargarSalidas()
     } catch (e) {
       errorCarga.value = e instanceof Error ? e.message : String(e)
     }
@@ -115,46 +115,46 @@ export const useVentaStore = defineStore('venta', () => {
     }
   }
 
-  async function cargarRecorridos() {
-    cargandoRecorridos.value = true
+  async function cargarSalidas() {
+    cargandoSalidas.value = true
     try {
-      recorridos.value = await api.fetchRecorridos(diaISO(fecha.value), estacionId.value)
-      if (recorridoId.value && !recorridos.value.some((r) => r.id === recorridoId.value)) {
-        cerrarRecorrido()
+      salidas.value = await api.fetchSalidas(diaISO(fecha.value), estacionId.value)
+      if (salidaId.value && !salidas.value.some((r) => r.id === salidaId.value)) {
+        cerrarSalida()
       }
     } catch (e) {
-      recorridos.value = []
-      notify.error(api.errorVenta(e)?.error ?? 'No se pudieron cargar los recorridos.')
+      salidas.value = []
+      notify.error(api.errorVenta(e)?.error ?? 'No se pudieron cargar los salidas.')
     } finally {
-      cargandoRecorridos.value = false
+      cargandoSalidas.value = false
     }
   }
 
-  async function elegirRecorrido(id: number) {
-    if (id === recorridoId.value && detalle.value) return
-    cerrarRecorrido()
-    recorridoId.value = id
+  async function elegirSalida(id: number) {
+    if (id === salidaId.value && detalle.value) return
+    cerrarSalida()
+    salidaId.value = id
     cargandoDetalle.value = true
     try {
-      const d = await api.fetchRecorrido(id)
-      if (recorridoId.value !== id) return
+      const d = await api.fetchSalida(id)
+      if (salidaId.value !== id) return
       detalle.value = d
       sube.value = subidaPorDefecto(d, estacionId.value)
       baja.value = bajadaPorDefecto(d, sube.value)
       await cargarOcupacion()
       desuscribir = suscribir(d.topico, () => void refrescarOcupacion())
     } catch (e) {
-      notify.error(api.errorVenta(e)?.error ?? 'No se pudo abrir el recorrido.')
-      cerrarRecorrido()
+      notify.error(api.errorVenta(e)?.error ?? 'No se pudo abrir el salida.')
+      cerrarSalida()
     } finally {
       cargandoDetalle.value = false
     }
   }
 
-  function cerrarRecorrido() {
+  function cerrarSalida() {
     desuscribir?.()
     desuscribir = null
-    recorridoId.value = null
+    salidaId.value = null
     detalle.value = null
     ocupados.value = []
     seleccion.value = []
@@ -164,8 +164,8 @@ export const useVentaStore = defineStore('venta', () => {
   }
 
   async function cargarOcupacion(silenciosa = false) {
-    if (!recorridoId.value || trayectoId.value == null) return
-    ocupados.value = await api.fetchOcupacion(recorridoId.value, trayectoId.value, silenciosa)
+    if (!salidaId.value || trayectoId.value == null) return
+    ocupados.value = await api.fetchOcupacion(salidaId.value, trayectoId.value, silenciosa)
   }
 
   /** Refresco en vivo: si otro vendió un asiento elegido, se avisa y se quita. */
@@ -213,13 +213,13 @@ export const useVentaStore = defineStore('venta', () => {
   async function recotizar(cortesia = false) {
     const n = ++cotizacionEnCurso
     errorCotizacion.value = ''
-    if (!recorridoId.value || !seleccion.value.length) {
+    if (!salidaId.value || !seleccion.value.length) {
       cotizacion.value = null
       return
     }
     try {
       const c = await api.cotizar({
-        recorrido: recorridoId.value,
+        salida: salidaId.value,
         trayecto: trayectoId.value,
         asientos: seleccion.value,
         cobrarTrayectoCompleto: cobrarTrayectoCompleto.value,
@@ -238,13 +238,13 @@ export const useVentaStore = defineStore('venta', () => {
    * deja el motivo en `falloFacturacion` (la venta no quedó registrada).
    */
   async function vender(opciones: OpcionesCobro): Promise<Comprobante | null> {
-    if (!puedeVender.value || !recorridoId.value || !cliente.value) return null
+    if (!puedeVender.value || !salidaId.value || !cliente.value) return null
     vendiendo.value = true
     falloFacturacion.value = null
     try {
       const c = await api.vender({
         token: token.value,
-        recorrido: recorridoId.value,
+        salida: salidaId.value,
         trayecto: trayectoId.value,
         asientos: seleccion.value.map((asiento) => ({
           asiento,
@@ -264,7 +264,7 @@ export const useVentaStore = defineStore('venta', () => {
       terminarVenta()
       if (contexto.value?.canal === 'agencia') void refrescarContexto()
       void refrescarOcupacion()
-      void cargarRecorridos()
+      void cargarSalidas()
       return c
     } catch (e) {
       const err = api.errorVenta(e)
@@ -281,7 +281,7 @@ export const useVentaStore = defineStore('venta', () => {
     }
   }
 
-  /** Deja lista la pantalla para la siguiente venta (mismo recorrido y cliente). */
+  /** Deja lista la pantalla para la siguiente venta (mismo salida y cliente). */
   function terminarVenta() {
     token.value = nuevoToken()
     seleccion.value = []
@@ -301,9 +301,9 @@ export const useVentaStore = defineStore('venta', () => {
     errorCarga,
     fecha,
     estacionId,
-    recorridos,
-    cargandoRecorridos,
-    recorridoId,
+    salidas,
+    cargandoSalidas,
+    salidaId,
     detalle,
     cargandoDetalle,
     sube,
@@ -328,9 +328,9 @@ export const useVentaStore = defineStore('venta', () => {
     libres,
     puedeVender,
     iniciar,
-    cargarRecorridos,
-    elegirRecorrido,
-    cerrarRecorrido,
+    cargarSalidas,
+    elegirSalida,
+    cerrarSalida,
     cambiarSubida,
     cambiarBajada,
     alternarAsiento,

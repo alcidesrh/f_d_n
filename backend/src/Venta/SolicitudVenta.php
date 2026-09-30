@@ -17,8 +17,8 @@ final readonly class SolicitudVenta
     public function __construct(
         /** Clave de idempotencia (UUID) generada por el cliente para esta venta. */
         public string $token,
-        public int $recorridoId,
-        /** Trayecto que viaja el cliente; null = el del recorrido. */
+        public int $salidaId,
+        /** Trayecto que viaja el cliente; null = el del salida. */
         public ?int $trayectoId,
         public array $asientos,
         /** A quién se factura (y pasajero por defecto). */
@@ -26,7 +26,7 @@ final readonly class SolicitudVenta
         /** Estación donde se vende (taquilla). */
         public ?int $estacionId = null,
         public ?string $observacion = null,
-        /** Cobrar la tarifa del trayecto completo del recorrido aunque viaje un subtrayecto. */
+        /** Cobrar la tarifa del trayecto completo del salida aunque viaje un subtrayecto. */
         public bool $cobrarTrayectoCompleto = false,
         public ?int $tipoPagoId = null,
         public ?int $monedaId = null,
@@ -83,7 +83,7 @@ final readonly class SolicitudVenta
 
         return new self(
             token: strtolower($token),
-            recorridoId: $entero($datos["recorrido"] ?? null, "recorrido"),
+            salidaId: $entero($datos["salida"] ?? null, "salida"),
             trayectoId: $entero($datos["trayecto"] ?? null, "trayecto", false),
             asientos: $asientos,
             clienteId: $entero($datos["cliente"] ?? null, "cliente"),

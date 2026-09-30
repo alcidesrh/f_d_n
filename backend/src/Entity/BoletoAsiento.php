@@ -11,8 +11,8 @@ use Money\Money;
 #[ORM\Entity(repositoryClass: BoletoAsientoRepository::class)]
 #[
     ORM\UniqueConstraint(
-        name: "uq_boleto_asiento_asiento_trayecto_recorrido",
-        columns: ["asiento_id", "trayecto_id", "recorrido_id"],
+        name: "uq_boleto_asiento_asiento_trayecto_salida",
+        columns: ["asiento_id", "trayecto_id", "salida_id"],
     ),
 ]
 class BoletoAsiento
@@ -43,7 +43,7 @@ class BoletoAsiento
 
     #[ORM\ManyToOne(inversedBy: "boletoAsientos")]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Recorrido $recorrido = null;
+    private ?Salida $salida = null;
 
     #[ORM\Embedded(class: Precio::class)]
     private ?Precio $precio = null;
@@ -140,14 +140,14 @@ class BoletoAsiento
         return $this;
     }
 
-    public function getRecorrido(): ?Recorrido
+    public function getSalida(): ?Salida
     {
-        return $this->recorrido;
+        return $this->salida;
     }
 
-    public function setRecorrido(?Recorrido $recorrido): static
+    public function setSalida(?Salida $salida): static
     {
-        $this->recorrido = $recorrido;
+        $this->salida = $salida;
 
         return $this;
     }

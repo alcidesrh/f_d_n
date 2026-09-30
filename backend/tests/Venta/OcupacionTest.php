@@ -58,7 +58,7 @@ final class OcupacionTest extends TestCase
         $this->assertSame(Ocupacion::VENDIDO, Ocupacion::estados($this->it, new Tramo(0, 1), $ocupantes, "yo")[3]["estado"]);
     }
 
-    public function testUnTrayectoAjenoAlItinerarioOcupaTodoElRecorrido(): void
+    public function testUnTrayectoAjenoAlItinerarioOcupaTodoElSalida(): void
     {
         $ocupantes = [new Ocupante(8, 999, Ocupante::VENDIDO, CanalVenta::AGENCIA)];
 

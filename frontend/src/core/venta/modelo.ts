@@ -3,7 +3,7 @@
  * paradas donde se puede subir/bajar y selección de asientos.
  */
 import type { AsientoCroquis, EstadoAsiento } from '@/core/croquis/types'
-import type { AsientoOcupado, Parada, RecorridoDetalle } from './types'
+import type { AsientoOcupado, Parada, SalidaDetalle } from './types'
 
 /** Cómo se pinta cada asiento en la taquilla, según lo que lo ocupa. */
 export function estadoEnMapa(
@@ -41,7 +41,7 @@ export function alternar(seleccion: readonly number[], id: number, maximo = Infi
 
 /** Paradas donde se puede subir: las que son origen de algún trayecto vendible. */
 export function paradasDeSubida(
-  detalle: Pick<RecorridoDetalle, 'paradas' | 'trayectos'>,
+  detalle: Pick<SalidaDetalle, 'paradas' | 'trayectos'>,
 ): Parada[] {
   const origenes = new Set(detalle.trayectos.map((t) => t.origen))
   return detalle.paradas.filter((p) => origenes.has(p.id))
@@ -49,7 +49,7 @@ export function paradasDeSubida(
 
 /** Paradas donde se puede bajar si se sube en `sube`. */
 export function paradasDeBajada(
-  detalle: Pick<RecorridoDetalle, 'paradas' | 'trayectos'>,
+  detalle: Pick<SalidaDetalle, 'paradas' | 'trayectos'>,
   sube: number | null,
 ): Parada[] {
   if (sube == null) return []
@@ -59,7 +59,7 @@ export function paradasDeBajada(
 
 /** Id del trayecto vendible entre dos paradas. */
 export function trayectoEntre(
-  detalle: Pick<RecorridoDetalle, 'trayectos'>,
+  detalle: Pick<SalidaDetalle, 'trayectos'>,
   sube: number | null,
   baja: number | null,
 ): number | null {
@@ -68,19 +68,19 @@ export function trayectoEntre(
 
 /**
  * Parada de subida por defecto: la estación desde donde se vende, si el
- * recorrido pasa por ella; si no, el origen.
+ * salida pasa por ella; si no, el origen.
  */
 export function subidaPorDefecto(
-  detalle: Pick<RecorridoDetalle, 'paradas' | 'trayectos'>,
+  detalle: Pick<SalidaDetalle, 'paradas' | 'trayectos'>,
   estacion: number | null,
 ): number | null {
   const subidas = paradasDeSubida(detalle)
   return subidas.find((p) => p.id === estacion)?.id ?? subidas[0]?.id ?? null
 }
 
-/** Bajada por defecto: el final del recorrido (o la última posible). */
+/** Bajada por defecto: el final del salida (o la última posible). */
 export function bajadaPorDefecto(
-  detalle: Pick<RecorridoDetalle, 'paradas' | 'trayectos'>,
+  detalle: Pick<SalidaDetalle, 'paradas' | 'trayectos'>,
   sube: number | null,
 ): number | null {
   const bajadas = paradasDeBajada(detalle, sube)

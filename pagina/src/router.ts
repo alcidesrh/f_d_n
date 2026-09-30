@@ -7,8 +7,8 @@ export const router = createRouter({
     { path: '/', name: 'inicio', component: () => import('./paginas/InicioPagina.vue') },
     { path: '/salidas', name: 'salidas', component: () => import('./paginas/SalidasPagina.vue') },
     {
-      path: '/recorrido/:id(\\d+)',
-      name: 'recorrido',
+      path: '/salida/:id(\\d+)',
+      name: 'salida',
       component: () => import('./paginas/AsientosPagina.vue'),
       props: (r) => ({ id: Number(r.params.id), trayecto: Number(r.query.trayecto) }),
     },
@@ -26,7 +26,7 @@ export const router = createRouter({
 router.afterEach((to) => {
   const titulos: Record<string, string> = {
     salidas: 'Horarios',
-    recorrido: 'Elija sus asientos',
+    salida: 'Elija sus asientos',
     pago: 'Pago',
     compra: 'Su compra',
   }

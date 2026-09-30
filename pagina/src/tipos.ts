@@ -26,7 +26,7 @@ export interface Salida {
   /** Hora estimada en el origen elegido (null si no se conoce). */
   salida: string | null
   llegada: string | null
-  salidaRecorrido: string
+  salidaInicio: string
   empresa: string | null
   ruta: string
   clases: Array<{ clase: 'A' | 'B'; precio: Importe }>
@@ -35,7 +35,7 @@ export interface Salida {
   cierre: string
 }
 
-export interface RecorridoPublico {
+export interface SalidaPublico {
   id: number
   salida: string
   empresa: string | null
@@ -53,7 +53,7 @@ export interface Carrito {
   token: string
   expira: string | null
   /** `salidaOrigen`: hora estimada donde sube el pasajero. */
-  recorrido?: { id: number; salida: string; salidaOrigen: string; empresa: string | null }
+  salida?: { id: number; salida: string; salidaOrigen: string; empresa: string | null }
   trayecto?: { id: number; origen: string; destino: string }
   asientos: Array<{ asiento: number; numero: number; clase: 'A' | 'B'; precio: Importe }>
   total: Importe | null
@@ -85,7 +85,7 @@ export interface Compra {
   empresa: { nombre: string; nit: string | null } | null
   factura: { numero: number; serie: string; uuid: string; urlPdf: string | null } | null
   cliente: { nombre: string; nit: string; email: string | null } | null
-  recorrido: { id: number; salida: string; salidaOrigen: string } | null
+  salida: { id: number; salida: string; salidaOrigen: string } | null
   origen: { nombre: string; direccion: string | null } | null
   destino: { nombre: string; direccion: string | null } | null
   boletos: Array<{ asiento: number; clase: 'A' | 'B'; precio: Importe | null }>

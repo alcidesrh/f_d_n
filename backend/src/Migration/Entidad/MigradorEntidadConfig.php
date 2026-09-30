@@ -11,7 +11,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 /**
  * Sincroniza la metadatos de entidades hacia EntityConfiguration
- * (mismo recorrido que el paso 4 de `app:migrar:todo`).
+ * (mismo salida que el paso 4 de `app:migrar:todo`).
  */
 final class MigradorEntidadConfig implements MigradorEntidadInterface
 {

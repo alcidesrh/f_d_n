@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Venta;
 
 use App\Entity\Asiento;
-use App\Entity\Recorrido;
+use App\Entity\Salida;
 use App\Entity\ReservaAsiento;
 use App\Venta\Excepcion\VentaRechazada;
 use Doctrine\DBAL\LockMode;
@@ -15,7 +15,7 @@ use Symfony\Component\Uid\Uuid;
 
 /**
  * Carrito de la página web: asientos apartados (`ReservaAsiento`) mientras
- * el cliente paga. Un carrito es un recorrido + un trayecto; cambiar de viaje
+ * el cliente paga. Un carrito es un salida + un trayecto; cambiar de viaje
  * es empezar otro. Apartar extiende todo el carrito (vencimiento deslizante)
  * hasta `DURACION_MINUTOS`, sin pasar del cierre de venta en línea.
  */
@@ -37,18 +37,18 @@ final class Reservas
      *
      * @throws VentaRechazada
      */
-    public function apartar(?Uuid $token, int $recorridoId, ?int $trayectoId, int $asientoId): Uuid
+    public function apartar(?Uuid $token, int $salidaId, ?int $trayectoId, int $asientoId): Uuid
     {
         $token ??= Uuid::v4();
-        $this->transaccion->ejecutar(function () use ($token, $recorridoId, $trayectoId, $asientoId) {
-            $recorrido = $this->em->find(Recorrido::class, $recorridoId, LockMode::PESSIMISTIC_WRITE)
-                ?? throw new VentaRechazada("El recorrido no existe.", "no_encontrado", 404);
-            $this->reglas->exigirVendibleEnLinea($recorrido);
-            $trayecto = $this->reglas->trayecto($recorrido, $trayectoId);
+        $this->transaccion->ejecutar(function () use ($token, $salidaId, $trayectoId, $asientoId) {
+            $salida = $this->em->find(Salida::class, $salidaId, LockMode::PESSIMISTIC_WRITE)
+                ?? throw new VentaRechazada("El salida no existe.", "no_encontrado", 404);
+            $this->reglas->exigirVendibleEnLinea($salida);
+            $trayecto = $this->reglas->trayecto($salida, $trayectoId);
 
             $carrito = $this->delCarrito($token, soloVigentes: true);
             foreach ($carrito as $r) {
-                if ($r->getRecorrido()->getId() !== $recorrido->getId() || $r->getTrayecto()->getId() !== $trayecto->getId()) {
+                if ($r->getSalida()->getId() !== $salida->getId() || $r->getTrayecto()->getId() !== $trayecto->getId()) {
                     throw new VentaRechazada("Su selección es de otro viaje: termine o vacíe esa compra primero.", "carrito_otro_viaje", 409);
                 }
                 if ($r->getAsiento()->getId() === $asientoId) {
@@ -59,49 +59,49 @@ final class Reservas
                 throw new VentaRechazada(sprintf("Puede comprar hasta %d asientos por compra.", self::MAX_ASIENTOS), "carrito_lleno");
             }
 
-            [$asiento] = $this->reglas->asientos($recorrido, [$asientoId]);
-            $this->reglas->exigirDisponibles($recorrido, $this->reglas->tramo($recorrido, $trayecto), [$asiento], $token->toRfc4122());
+            [$asiento] = $this->reglas->asientos($salida, [$asientoId]);
+            $this->reglas->exigirDisponibles($salida, $this->reglas->tramo($salida, $trayecto), [$asiento], $token->toRfc4122());
             // Reglas de tarifa: no se aparta lo que no se puede cobrar.
-            $this->reglas->cotizar($recorrido, $trayecto, [$asiento]);
+            $this->reglas->cotizar($salida, $trayecto, [$asiento]);
 
             $this->borrarVencidas($token);
-            $expira = $this->vencimiento($recorrido);
-            $this->em->persist(new ReservaAsiento($token, $recorrido, $asiento, $trayecto, $expira));
+            $expira = $this->vencimiento($salida);
+            $this->em->persist(new ReservaAsiento($token, $salida, $asiento, $trayecto, $expira));
             foreach ($carrito as $r) {
                 $r->extenderHasta($expira);
             }
         });
-        $this->publicador->cambio($recorridoId);
+        $this->publicador->cambio($salidaId);
 
         return $token;
     }
 
     public function liberar(Uuid $token, int $asientoId): void
     {
-        $recorridoId = null;
-        $this->transaccion->ejecutar(function () use ($token, $asientoId, &$recorridoId) {
+        $salidaId = null;
+        $this->transaccion->ejecutar(function () use ($token, $asientoId, &$salidaId) {
             foreach ($this->delCarrito($token) as $r) {
                 if ($r->getAsiento()->getId() === $asientoId) {
-                    $recorridoId = $r->getRecorrido()->getId();
+                    $salidaId = $r->getSalida()->getId();
                     $this->em->remove($r);
                 }
             }
         });
-        if ($recorridoId !== null) {
-            $this->publicador->cambio($recorridoId);
+        if ($salidaId !== null) {
+            $this->publicador->cambio($salidaId);
         }
     }
 
     public function vaciar(Uuid $token): void
     {
-        $recorridos = [];
-        $this->transaccion->ejecutar(function () use ($token, &$recorridos) {
+        $salidas = [];
+        $this->transaccion->ejecutar(function () use ($token, &$salidas) {
             foreach ($this->delCarrito($token) as $r) {
-                $recorridos[$r->getRecorrido()->getId()] = true;
+                $salidas[$r->getSalida()->getId()] = true;
                 $this->em->remove($r);
             }
         });
-        foreach (array_keys($recorridos) as $id) {
+        foreach (array_keys($salidas) as $id) {
             $this->publicador->cambio($id);
         }
     }
@@ -124,7 +124,7 @@ final class Reservas
     {
         $this->transaccion->ejecutar(function () use ($token) {
             foreach ($this->delCarrito($token, soloVigentes: true) as $r) {
-                $r->extenderHasta($this->vencimiento($r->getRecorrido()));
+                $r->extenderHasta($this->vencimiento($r->getSalida()));
             }
         });
     }
@@ -140,10 +140,10 @@ final class Reservas
             ->execute();
     }
 
-    private function vencimiento(Recorrido $recorrido): \DateTimeImmutable
+    private function vencimiento(Salida $salida): \DateTimeImmutable
     {
         $deslizante = $this->reloj->now()->modify(sprintf("+%d minutes", self::DURACION_MINUTOS));
-        $cierre = $this->reglas->cierreEnLinea($recorrido);
+        $cierre = $this->reglas->cierreEnLinea($salida);
 
         return min($deslizante, $cierre);
     }

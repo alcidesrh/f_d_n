@@ -32,7 +32,7 @@
       <li v-for="s in salidas" :key="s.id" class="panel grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto] md:items-center">
         <div class="flex flex-col gap-1">
           <div class="flex flex-wrap items-baseline gap-x-3">
-            <span class="text-2xl font-semibold tabular-nums">{{ hora(s.salida ?? s.salidaRecorrido) }}</span>
+            <span class="text-2xl font-semibold tabular-nums">{{ hora(s.salida ?? s.salidaInicio) }}</span>
             <span v-if="s.llegada" class="text-muted-color">→ llega aprox. {{ hora(s.llegada) }}</span>
           </div>
           <div class="text-sm">{{ s.empresa }} · ruta {{ s.ruta }}</div>
@@ -107,6 +107,6 @@ function moverDia(delta: number) {
 }
 
 function elegir(s: Salida) {
-  void router.push({ name: 'recorrido', params: { id: s.id }, query: { trayecto: s.trayecto } })
+  void router.push({ name: 'salida', params: { id: s.id }, query: { trayecto: s.trayecto } })
 }
 </script>

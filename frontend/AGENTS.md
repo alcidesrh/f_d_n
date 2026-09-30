@@ -53,7 +53,7 @@ Dependencias en una sola dirección: `app → features → shared → core`. **U
 | `shared/barcode/` | Code 128 (`code128.ts`, espejo de `App\Venta\Boleto\Code128`) y `Barcode.vue` | — |
 | `shared/formkit/` | Inputs `Fk*` y su registro en FormKit (`config.ts`) | `useFormKitInput.ts` |
 | `features/entity-crud/` | Listado (`ListPage` + `list/`) y formulario (`FormPage` + `form/`) genéricos de cualquier entidad. Formulario propio por entidad: `form/formOverrides.ts`; secciones extra del genérico, en pestañas junto a "Datos" (se guardan con él, contrato en `core/entities/formExtension.ts`): `form/formExtensions.ts` | `ListPage.vue`, `form/useEntityForm.ts` |
-| `features/venta/` | Venta en taquilla y agencias (ADR-021): cliente, recorridos del día, sube/baja, croquis en vivo (Mercure), cobro, fallo de factura, ticket de 80 mm (`ticket.ts`) | `VentaPage.vue`, `store.ts` |
+| `features/venta/` | Venta en taquilla y agencias (ADR-021): cliente, salidas del día, sube/baja, croquis en vivo (Mercure), cobro, fallo de factura, ticket de 80 mm (`ticket.ts`) | `VentaPage.vue`, `store.ts` |
 | `features/agencia/` | Sección "Saldo" del formulario genérico de Agencia (depósitos, ajustes, movimientos) | `AgenciaSaldoSection.vue` |
 | `features/bus/` | Editor del croquis del bus (sección "Croquis" del formulario de `Bus`): pilas, arrastre por puntero, pincel, deshacer, plantillas | `editor.ts`, `CroquisEditor.vue` |
 | `features/entity-config/` | Editor de columnas/campos por entidad | `EntityConfigPage.vue` |

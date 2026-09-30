@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Venta;
 
 use App\Entity\Asiento;
-use App\Entity\Enum\EstadoRecorrido;
-use App\Entity\Recorrido;
+use App\Entity\Enum\EstadoSalida;
+use App\Entity\Salida;
 use App\Entity\Trayecto;
 use App\Venta\Excepcion\AsientosNoDisponibles;
 use App\Venta\Excepcion\VentaRechazada;
@@ -17,7 +17,7 @@ use Money\Money;
 use Psr\Clock\ClockInterface;
 
 /**
- * Reglas comunes a todos los canales: qué recorrido se puede vender, qué
+ * Reglas comunes a todos los canales: qué salida se puede vender, qué
  * trayecto, qué asientos y a qué precio.
  */
 final class ReglasVenta
@@ -33,79 +33,79 @@ final class ReglasVenta
         private readonly ClockInterface $reloj,
     ) {}
 
-    /** Taquilla y agencias venden mientras el recorrido está programado o abordando. */
-    public function exigirVendibleEnTaquilla(Recorrido $recorrido): void
+    /** Taquilla y agencias venden mientras el salida está programado o abordando. */
+    public function exigirVendibleEnTaquilla(Salida $salida): void
     {
-        if (!in_array($recorrido->getEstado(), [EstadoRecorrido::PROGRAMADA, EstadoRecorrido::ABORDANDO], true)) {
+        if (!in_array($salida->getEstado(), [EstadoSalida::PROGRAMADA, EstadoSalida::ABORDANDO], true)) {
             throw new VentaRechazada(sprintf(
-                "El recorrido está %s: ya no se venden boletos.",
-                $recorrido->getEstado()->value,
+                "El salida está %s: ya no se venden boletos.",
+                $salida->getEstado()->value,
             ));
         }
-        $this->exigirBus($recorrido);
+        $this->exigirBus($salida);
     }
 
-    /** La web vende hasta `CIERRE_WEB_MINUTOS` antes de la salida y solo recorridos programados. */
-    public function exigirVendibleEnLinea(Recorrido $recorrido): void
+    /** La web vende hasta `CIERRE_WEB_MINUTOS` antes de la salida y solo salidas programados. */
+    public function exigirVendibleEnLinea(Salida $salida): void
     {
-        if ($recorrido->getEstado() !== EstadoRecorrido::PROGRAMADA) {
-            throw new VentaRechazada("Este recorrido ya no está a la venta en línea.");
+        if ($salida->getEstado() !== EstadoSalida::PROGRAMADA) {
+            throw new VentaRechazada("Este salida ya no está a la venta en línea.");
         }
-        if ($this->reloj->now() >= $this->cierreEnLinea($recorrido)) {
+        if ($this->reloj->now() >= $this->cierreEnLinea($salida)) {
             throw new VentaRechazada(sprintf(
                 "La venta en línea cierra %d minutos antes de la salida. Compre su boleto en la estación.",
                 self::CIERRE_WEB_MINUTOS,
             ), "venta_cerrada");
         }
-        $this->exigirBus($recorrido);
+        $this->exigirBus($salida);
     }
 
-    public function cierreEnLinea(Recorrido $recorrido): \DateTimeImmutable
+    public function cierreEnLinea(Salida $salida): \DateTimeImmutable
     {
-        return \DateTimeImmutable::createFromMutable($recorrido->getFecha())
+        return \DateTimeImmutable::createFromMutable($salida->getFecha())
             ->modify(sprintf("-%d minutes", self::CIERRE_WEB_MINUTOS));
     }
 
-    /** Trayecto que viaja el cliente: el del recorrido o uno de sus subtrayectos. */
-    public function trayecto(Recorrido $recorrido, ?int $trayectoId): Trayecto
+    /** Trayecto que viaja el cliente: el del salida o uno de sus subtrayectos. */
+    public function trayecto(Salida $salida, ?int $trayectoId): Trayecto
     {
-        if ($trayectoId === null || $trayectoId === $recorrido->getTrayecto()->getId()) {
-            return $recorrido->getTrayecto();
+        if ($trayectoId === null || $trayectoId === $salida->getTrayecto()->getId()) {
+            return $salida->getTrayecto();
         }
-        if (!$this->itinerarios->deTrayecto($recorrido->getTrayecto())->contieneTrayecto($trayectoId)) {
-            throw new VentaRechazada("El trayecto elegido no es parte del recorrido.");
+        if (!$this->itinerarios->deTrayecto($salida->getTrayecto())->contieneTrayecto($trayectoId)) {
+            throw new VentaRechazada("El trayecto elegido no es parte del salida.");
         }
 
         return $this->em->find(Trayecto::class, $trayectoId)
             ?? throw new VentaRechazada("El trayecto elegido no existe.");
     }
 
-    public function tramo(Recorrido $recorrido, Trayecto $trayecto): Tramo
+    public function tramo(Salida $salida, Trayecto $trayecto): Tramo
     {
-        return $this->itinerarios->deTrayecto($recorrido->getTrayecto())->tramo((int) $trayecto->getId())
-            ?? throw new VentaRechazada("El trayecto elegido no es parte del recorrido.");
+        return $this->itinerarios->deTrayecto($salida->getTrayecto())->tramo((int) $trayecto->getId())
+            ?? throw new VentaRechazada("El trayecto elegido no es parte del salida.");
     }
 
     /**
-     * Asientos del bus del recorrido, en el orden pedido.
+     * Asientos del bus del salida, en el orden pedido.
      *
      * @param list<int> $ids
      *
      * @return list<Asiento>
      */
-    public function asientos(Recorrido $recorrido, array $ids): array
+    public function asientos(Salida $salida, array $ids): array
     {
         if (count($ids) !== count(array_unique($ids))) {
             throw new VentaRechazada("Hay asientos repetidos en la venta.");
         }
         /** @var array<int, Asiento> $porId */
         $porId = [];
-        foreach ($this->em->getRepository(Asiento::class)->findBy(["id" => $ids, "bus" => $recorrido->getBus()]) as $a) {
+        foreach ($this->em->getRepository(Asiento::class)->findBy(["id" => $ids, "bus" => $salida->getBus()]) as $a) {
             $porId[$a->getId()] = $a;
         }
         $faltan = array_diff($ids, array_keys($porId));
         if ($faltan !== []) {
-            throw new VentaRechazada("Algún asiento elegido no es del bus del recorrido.");
+            throw new VentaRechazada("Algún asiento elegido no es del bus del salida.");
         }
 
         return array_map(static fn(int $id) => $porId[$id], $ids);
@@ -116,9 +116,9 @@ final class ReglasVenta
      *
      * @throws AsientosNoDisponibles
      */
-    public function exigirDisponibles(Recorrido $recorrido, Tramo $tramo, array $asientos, ?string $tokenPropio = null): void
+    public function exigirDisponibles(Salida $salida, Tramo $tramo, array $asientos, ?string $tokenPropio = null): void
     {
-        $estados = $this->disponibilidad->estados($recorrido, $tramo, $tokenPropio);
+        $estados = $this->disponibilidad->estados($salida, $tramo, $tokenPropio);
         $ocupados = Ocupacion::noDisponibles(array_map(static fn(Asiento $a) => (int) $a->getId(), $asientos), $estados);
         if ($ocupados !== []) {
             $numeros = array_map(
@@ -131,20 +131,20 @@ final class ReglasVenta
 
     /**
      * Precio de cada asiento. Se cobra la tarifa del trayecto que viaja, o la
-     * del trayecto completo del recorrido si así se pide. Una cortesía vale 0.
+     * del trayecto completo del salida si así se pide. Una cortesía vale 0.
      *
      * @param list<Asiento> $asientos
      */
     public function cotizar(
-        Recorrido $recorrido,
+        Salida $salida,
         Trayecto $viaja,
         array $asientos,
         bool $cobrarTrayectoCompleto = false,
         bool $cortesia = false,
     ): Cotizacion {
-        $trayectoTarifa = $cobrarTrayectoCompleto ? $recorrido->getTrayecto() : $viaja;
+        $trayectoTarifa = $cobrarTrayectoCompleto ? $salida->getTrayecto() : $viaja;
         $porClase = $this->tarifas->porClase(
-            $recorrido,
+            $salida,
             $trayectoTarifa,
             array_map(static fn(Asiento $a) => $a->getClase()->value, $asientos),
         );
@@ -191,10 +191,10 @@ final class ReglasVenta
         }
     }
 
-    private function exigirBus(Recorrido $recorrido): void
+    private function exigirBus(Salida $salida): void
     {
-        if ($recorrido->getBus() === null) {
-            throw new VentaRechazada("El recorrido todavía no tiene bus asignado.");
+        if ($salida->getBus() === null) {
+            throw new VentaRechazada("El salida todavía no tiene bus asignado.");
         }
     }
 }

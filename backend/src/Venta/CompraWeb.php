@@ -13,7 +13,7 @@ use App\Entity\Enum\EstadoFacturacion;
 use App\Entity\Enum\EstadoPagoWeb;
 use App\Entity\Nacion;
 use App\Entity\PagoWeb;
-use App\Entity\Recorrido;
+use App\Entity\Salida;
 use App\Entity\ReservaAsiento;
 use App\Entity\TipoDocumento;
 use App\Venta\Excepcion\VentaRechazada;
@@ -110,17 +110,17 @@ final class CompraWeb
         if ($reservas === []) {
             throw new VentaRechazada("Su selección de asientos venció. Elija sus asientos de nuevo.", "carrito_vencido", 410);
         }
-        $recorrido = $reservas[0]->getRecorrido();
-        $this->reglas->exigirVendibleEnLinea($recorrido);
+        $salida = $reservas[0]->getSalida();
+        $this->reglas->exigirVendibleEnLinea($salida);
         $cotizacion = $this->reglas->cotizar(
-            $recorrido,
+            $salida,
             $reservas[0]->getTrayecto(),
             array_map(static fn(ReservaAsiento $r) => $r->getAsiento(), $reservas),
         );
         // Antes de cobrar: lo que impediría facturar se corrige ahora, no después.
         $this->reglas->exigirReceptorFacturable($comprador->nit, $cotizacion->total);
         $this->exigirNitExistente($comprador->nit);
-        $empresa = $recorrido->getEmpresa() ?? throw new VentaRechazada("Este recorrido no tiene empresa: no se puede cobrar en línea.");
+        $empresa = $salida->getEmpresa() ?? throw new VentaRechazada("Este salida no tiene empresa: no se puede cobrar en línea.");
         $this->reservas->extender($token);
 
         $pago = new PagoWeb($token, $cotizacion->total, $comprador->toArray(), $tarjeta->marcaTarjeta(), $tarjeta->ultimos4(), $empresa);
@@ -135,7 +135,7 @@ final class CompraWeb
     {
         $reservas = $this->reservas->vigentes($token);
 
-        return $reservas !== [] ? $reservas[0]->getRecorrido()->getEmpresa()?->getId() : null;
+        return $reservas !== [] ? $reservas[0]->getSalida()->getEmpresa()?->getId() : null;
     }
 
     /**
@@ -283,7 +283,7 @@ final class CompraWeb
         }
         $this->em->flush();
 
-        $this->publicador->cambio((int) $venta->getAsientos()->first()->getRecorrido()->getId());
+        $this->publicador->cambio((int) $venta->getAsientos()->first()->getSalida()->getId());
         $this->bus->dispatch(new EnviarBoletoPorCorreo((int) $venta->getId()));
 
         return $venta;
@@ -296,12 +296,12 @@ final class CompraWeb
         if ($reservas === []) {
             throw new VentaRechazada("la selección de asientos ya no existe");
         }
-        $recorrido = $this->em->find(Recorrido::class, $reservas[0]->getRecorrido()->getId(), LockMode::PESSIMISTIC_WRITE);
+        $salida = $this->em->find(Salida::class, $reservas[0]->getSalida()->getId(), LockMode::PESSIMISTIC_WRITE);
         $trayecto = $reservas[0]->getTrayecto();
         $asientos = array_map(static fn(ReservaAsiento $r) => $r->getAsiento(), $reservas);
         // Las reservas propias no estorban (aunque hayan vencido durante el pago).
-        $this->reglas->exigirDisponibles($recorrido, $this->reglas->tramo($recorrido, $trayecto), $asientos, $token->toRfc4122());
-        $cotizacion = $this->reglas->cotizar($recorrido, $trayecto, $asientos);
+        $this->reglas->exigirDisponibles($salida, $this->reglas->tramo($salida, $trayecto), $asientos, $token->toRfc4122());
+        $cotizacion = $this->reglas->cotizar($salida, $trayecto, $asientos);
         if (!$cotizacion->total->equals($pago->getMonto())) {
             throw new VentaRechazada("la tarifa cambió durante el pago");
         }
@@ -323,7 +323,7 @@ final class CompraWeb
             $boleto = (new BoletoAsiento())
                 ->setAsiento($asiento)
                 ->setTrayecto($trayecto)
-                ->setRecorrido($recorrido)
+                ->setSalida($salida)
                 ->setCliente($cliente)
                 ->setPrecio($cotizacion->precioDe($asiento));
             $venta->addAsiento($boleto);

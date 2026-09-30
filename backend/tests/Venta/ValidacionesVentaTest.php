@@ -93,14 +93,14 @@ final class ValidacionesVentaTest extends TestCase
     {
         $s = SolicitudVenta::desdeArray([
             "token" => "1B4E28BA-2FA1-41D2-883F-0016D3CCA427",
-            "recorrido" => "/api/recorridos/5",
+            "salida" => "/api/salidas/5",
             "asientos" => [3, ["asiento" => 4, "cliente" => 9]],
             "cliente" => 7,
             "observacion" => "  viaja con mascota ",
         ]);
 
         $this->assertSame("1b4e28ba-2fa1-41d2-883f-0016d3cca427", $s->token);
-        $this->assertSame(5, $s->recorridoId);
+        $this->assertSame(5, $s->salidaId);
         $this->assertNull($s->trayectoId);
         $this->assertSame([["asiento" => 3, "cliente" => null], ["asiento" => 4, "cliente" => 9]], $s->asientos);
         $this->assertSame("viaja con mascota", $s->observacion);
@@ -109,6 +109,6 @@ final class ValidacionesVentaTest extends TestCase
     public function testSolicitudSinAsientos(): void
     {
         $this->expectException(VentaRechazada::class);
-        SolicitudVenta::desdeArray(["token" => "1b4e28ba-2fa1-41d2-883f-0016d3cca427", "recorrido" => 1, "cliente" => 1, "asientos" => []]);
+        SolicitudVenta::desdeArray(["token" => "1b4e28ba-2fa1-41d2-883f-0016d3cca427", "salida" => 1, "cliente" => 1, "asientos" => []]);
     }
 }

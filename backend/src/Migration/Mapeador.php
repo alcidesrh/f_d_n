@@ -3,7 +3,7 @@
 namespace App\Migration;
 
 use App\Croquis\Croquis;
-use App\Entity\Enum\EstadoRecorrido;
+use App\Entity\Enum\EstadoSalida;
 use App\Entity\Enum\TipoBusSenal;
 
 class Mapeador
@@ -336,9 +336,9 @@ class Mapeador
      * `estado` fija PROGRAMADA: `fetchSalidas`/`fetchSalidasVentana` solo traen
      * salidas legacy con estado_id 1 o 2 (Emitido/Chequeado), es decir, salidas
      * legacy aún no completadas — PROGRAMADA es su equivalente razonable en el
-     * enum nuevo (ver EstadoRecorrido).
+     * enum nuevo (ver EstadoSalida).
      */
-    public function recorrido(
+    public function salida(
         array $old,
         ?int $busId,
         ?int $empresaId,
@@ -349,7 +349,7 @@ class Mapeador
             "bus_id" => $busId,
             "empresa_id" => $empresaId,
             "trayecto_id" => $trayectoId,
-            "estado" => EstadoRecorrido::PROGRAMADA->value,
+            "estado" => EstadoSalida::PROGRAMADA->value,
             "legacy_id" => (string) $old["id"],
         ];
     }
@@ -357,11 +357,11 @@ class Mapeador
     /**
      * BoletoAsiento is variable data → keep legacy_id.
      * Payload mínimo y desacoplado: cada boleto legacy se convierte en un
-     * asiento vendido, enlazado a su venta, recorrido, cliente y trayecto.
+     * asiento vendido, enlazado a su venta, salida, cliente y trayecto.
      */
     public function boletoAsiento(
         array $old,
-        int $recorridoId,
+        int $salidaId,
         int $asientoId,
         int $clienteId,
         int $trayectoId,
@@ -371,7 +371,7 @@ class Mapeador
         $precio = (int) (($old["precioCalculado"] ?? 0) * 100);
 
         return [
-            "recorrido_id" => $recorridoId,
+            "salida_id" => $salidaId,
             "asiento_id" => $asientoId,
             "cliente_id" => $clienteId,
             "trayecto_id" => $trayectoId,

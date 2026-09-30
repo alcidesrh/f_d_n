@@ -24,9 +24,9 @@ final class DatosBoleto
         $boletos = $venta->getAsientos()->toArray();
         usort($boletos, static fn(BoletoAsiento $a, BoletoAsiento $b) => $a->getAsiento()->getNumero() <=> $b->getAsiento()->getNumero());
         $primero = $boletos[0] ?? null;
-        $recorrido = $primero?->getRecorrido();
+        $salida = $primero?->getSalida();
         $trayecto = $primero?->getTrayecto();
-        $empresa = $recorrido?->getEmpresa();
+        $empresa = $salida?->getEmpresa();
         $factura = $venta->getFactura();
         $cliente = $venta->getCliente();
 
@@ -68,12 +68,12 @@ final class DatosBoleto
                 "nit" => $cliente->getNit() ?: "CF",
                 "email" => $cliente->getEmail(),
             ],
-            "recorrido" => $recorrido === null ? null : [
-                "id" => $recorrido->getId(),
+            "salida" => $salida === null ? null : [
+                "id" => $salida->getId(),
                 // Salida del inicio de la ruta y hora estimada donde sube el pasajero.
-                "salida" => $recorrido->getFecha()->format(DATE_ATOM),
-                "salidaOrigen" => ($salidaOrigen ?? \DateTimeImmutable::createFromMutable($recorrido->getFecha()))->format(DATE_ATOM),
-                "bus" => $recorrido->getBus()?->getCodigo(),
+                "salida" => $salida->getFecha()->format(DATE_ATOM),
+                "salidaOrigen" => ($salidaOrigen ?? \DateTimeImmutable::createFromMutable($salida->getFecha()))->format(DATE_ATOM),
+                "bus" => $salida->getBus()?->getCodigo(),
             ],
             "origen" => $trayecto === null ? null : [
                 "nombre" => $trayecto->getOrigen()->getNombre(),

@@ -3,7 +3,7 @@
   rejilla del croquis. Es solo presentación y sirve a todos los usos:
 
   - edición del bus: `celdas-vacias` + slot `celda` (el editor pinta cada celda);
-  - ocupación de un recorrido: `estado` (ocupado/disponible por asiento);
+  - ocupación de un salida: `estado` (ocupado/disponible por asiento);
   - selección de asientos (taquilla, venta en línea): `interactivo` + `@asiento`.
 
   El croquis no sabe de ventas: el estado de cada asiento lo da quien lo usa.

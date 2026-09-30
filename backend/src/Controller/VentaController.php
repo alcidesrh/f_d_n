@@ -9,7 +9,7 @@ use App\Entity\Cliente;
 use App\Entity\Estacion;
 use App\Entity\Moneda;
 use App\Entity\Nacion;
-use App\Entity\Recorrido;
+use App\Entity\Salida;
 use App\Entity\TipoDocumento;
 use App\Entity\TipoPago;
 use App\Entity\Usuario;
@@ -97,9 +97,9 @@ final class VentaController extends AbstractController
         ]);
     }
 
-    /** `?fecha=AAAA-MM-DD&estacion={id}`: recorridos del día que pasan por la estación. */
-    #[Route("/recorridos", name: "recorridos", methods: ["GET"])]
-    public function recorridos(Request $request, #[CurrentUser] Usuario $usuario): JsonResponse
+    /** `?fecha=AAAA-MM-DD&estacion={id}`: salidas del día que pasan por la estación. */
+    #[Route("/salidas", name: "salidas", methods: ["GET"])]
+    public function salidas(Request $request, #[CurrentUser] Usuario $usuario): JsonResponse
     {
         $this->denyAccessUnlessGranted(self::VENDER);
         $dia = \DateTimeImmutable::createFromFormat("!Y-m-d", (string) $request->query->get("fecha"));
@@ -108,38 +108,38 @@ final class VentaController extends AbstractController
         }
         $estacion = $request->query->getInt("estacion") ?: null;
 
-        return $this->json($this->consulta->recorridosDeEstacion(
+        return $this->json($this->consulta->salidasDeEstacion(
             $dia,
             $estacion,
             $usuario->getAgencia()?->getEmpresa()?->getId(),
         ));
     }
 
-    #[Route("/recorridos/{id<\d+>}", name: "recorrido", methods: ["GET"])]
-    public function recorrido(Recorrido $recorrido): JsonResponse
+    #[Route("/salidas/{id<\d+>}", name: "salida", methods: ["GET"])]
+    public function salida(Salida $salida): JsonResponse
     {
         $this->denyAccessUnlessGranted(self::VENDER);
 
         return $this->json([
-            ...$this->consulta->detalle($recorrido),
-            "topico" => PublicadorOcupacion::topico((int) $recorrido->getId()),
+            ...$this->consulta->detalle($salida),
+            "topico" => PublicadorOcupacion::topico((int) $salida->getId()),
         ]);
     }
 
-    /** `?trayecto={id}`: asientos ocupados para ese trayecto (por defecto, el del recorrido). */
-    #[Route("/recorridos/{id<\d+>}/ocupacion", name: "ocupacion", methods: ["GET"])]
-    public function ocupacion(Recorrido $recorrido, Request $request): JsonResponse
+    /** `?trayecto={id}`: asientos ocupados para ese trayecto (por defecto, el del salida). */
+    #[Route("/salidas/{id<\d+>}/ocupacion", name: "ocupacion", methods: ["GET"])]
+    public function ocupacion(Salida $salida, Request $request): JsonResponse
     {
         $this->denyAccessUnlessGranted(self::VENDER);
 
-        return $this->responder(function () use ($recorrido, $request) {
-            $trayecto = $this->reglas->trayecto($recorrido, $request->query->getInt("trayecto") ?: null);
+        return $this->responder(function () use ($salida, $request) {
+            $trayecto = $this->reglas->trayecto($salida, $request->query->getInt("trayecto") ?: null);
 
-            return ["asientos" => $this->consulta->ocupacion($recorrido, $this->reglas->tramo($recorrido, $trayecto))];
+            return ["asientos" => $this->consulta->ocupacion($salida, $this->reglas->tramo($salida, $trayecto))];
         });
     }
 
-    /** `{ recorrido, trayecto?, asientos: [id], cobrarTrayectoCompleto?, cortesia? }` → precio por asiento y total. */
+    /** `{ salida, trayecto?, asientos: [id], cobrarTrayectoCompleto?, cortesia? }` → precio por asiento y total. */
     #[Route("/cotizacion", name: "cotizacion", methods: ["POST"])]
     public function cotizacion(Request $request): JsonResponse
     {
@@ -147,13 +147,13 @@ final class VentaController extends AbstractController
 
         return $this->responder(function () use ($request) {
             $datos = $request->toArray();
-            $recorrido = $this->em->find(Recorrido::class, (int) ($datos["recorrido"] ?? 0))
-                ?? throw new VentaRechazada("El recorrido no existe.", "no_encontrado", 404);
-            $trayecto = $this->reglas->trayecto($recorrido, isset($datos["trayecto"]) ? (int) $datos["trayecto"] : null);
-            $asientos = $this->reglas->asientos($recorrido, array_map("intval", (array) ($datos["asientos"] ?? [])));
+            $salida = $this->em->find(Salida::class, (int) ($datos["salida"] ?? 0))
+                ?? throw new VentaRechazada("El salida no existe.", "no_encontrado", 404);
+            $trayecto = $this->reglas->trayecto($salida, isset($datos["trayecto"]) ? (int) $datos["trayecto"] : null);
+            $asientos = $this->reglas->asientos($salida, array_map("intval", (array) ($datos["asientos"] ?? [])));
 
             return $this->reglas->cotizar(
-                $recorrido,
+                $salida,
                 $trayecto,
                 $asientos,
                 (bool) ($datos["cobrarTrayectoCompleto"] ?? false),

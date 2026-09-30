@@ -66,15 +66,15 @@ final class VentaPurgarCommand
             ->getQuery()
             ->getResult();
 
-        $recorridos = [];
+        $salidas = [];
         foreach ($ventas as $venta) {
             foreach ($venta->getAsientos() as $b) {
-                $recorridos[$b->getRecorrido()->getId()] = true;
+                $salidas[$b->getSalida()->getId()] = true;
             }
             $this->em->remove($venta);
         }
         $this->em->flush();
-        foreach (array_keys($recorridos) as $id) {
+        foreach (array_keys($salidas) as $id) {
             $this->publicador->cambio($id);
         }
 

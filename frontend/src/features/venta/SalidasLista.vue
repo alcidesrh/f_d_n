@@ -1,7 +1,7 @@
-<!-- Recorridos del día que pasan por la estación; clic = abrir su croquis. -->
+<!-- Salidas del día que pasan por la estación; clic = abrir su croquis. -->
 <template>
   <DataTable
-    :value="recorridos"
+    :value="salidas"
     :loading="cargando"
     data-key="id"
     selection-mode="single"
@@ -10,7 +10,7 @@
     scroll-height="18rem"
     size="small"
     striped-rows
-    :row-class="(r: RecorridoResumen) => (vendible(r) ? '' : 'opacity-60')"
+    :row-class="(r: SalidaResumen) => (vendible(r) ? '' : 'opacity-60')"
     @row-select="emit('elegir', $event.data.id)"
   >
     <template #empty>
@@ -27,7 +27,7 @@
         </div>
       </template>
     </Column>
-    <Column header="Recorrido" style="min-width: 12rem">
+    <Column header="Salida" style="min-width: 12rem">
       <template #body="{ data }">
         {{ data.trayecto.origen.nombre }} → {{ data.trayecto.destino.nombre }}
       </template>
@@ -60,21 +60,21 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { hora } from '@/core/venta/modelo'
-import type { RecorridoResumen } from '@/core/venta/types'
+import type { SalidaResumen } from '@/core/venta/types'
 
 const props = defineProps<{
-  recorridos: RecorridoResumen[]
+  salidas: SalidaResumen[]
   cargando: boolean
-  recorridoId: number | null
+  salidaId: number | null
 }>()
 const emit = defineEmits<{ elegir: [id: number] }>()
 
 const seleccionado = computed(
-  () => props.recorridos.find((r) => r.id === props.recorridoId) ?? null,
+  () => props.salidas.find((r) => r.id === props.salidaId) ?? null,
 )
-const vendible = (r: RecorridoResumen) => ['programada', 'abordando'].includes(r.estado) && !!r.bus
+const vendible = (r: SalidaResumen) => ['programada', 'abordando'].includes(r.estado) && !!r.bus
 
-function severidad(estado: RecorridoResumen['estado']) {
+function severidad(estado: SalidaResumen['estado']) {
   return {
     programada: 'info',
     abordando: 'warn',

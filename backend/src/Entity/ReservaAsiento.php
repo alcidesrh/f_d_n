@@ -16,10 +16,10 @@ use Symfony\Component\Uid\Uuid;
  * (`expiraEn`): la disponibilidad ignora las vencidas, así que no dependen
  * de ningún proceso de limpieza para liberar el asiento; `app:venta:purgar`
  * solo borra las filas. `expiraEn` nunca pasa del cierre de venta en línea
- * del recorrido (30 minutos antes de salir, ADR-021).
+ * del salida (30 minutos antes de salir, ADR-021).
  */
 #[ORM\Entity]
-#[ORM\Index(columns: ["recorrido_id", "expira_en"], name: "idx_reserva_asiento_recorrido_expira")]
+#[ORM\Index(columns: ["salida_id", "expira_en"], name: "idx_reserva_asiento_salida_expira")]
 #[ORM\Index(columns: ["token"], name: "idx_reserva_asiento_token")]
 #[ORM\UniqueConstraint(name: "uq_reserva_asiento_token_asiento", columns: ["token", "asiento_id"])]
 class ReservaAsiento
@@ -34,7 +34,7 @@ class ReservaAsiento
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false, onDelete: "CASCADE")]
-    private Recorrido $recorrido;
+    private Salida $salida;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false, onDelete: "CASCADE")]
@@ -52,13 +52,13 @@ class ReservaAsiento
 
     public function __construct(
         Uuid $token,
-        Recorrido $recorrido,
+        Salida $salida,
         Asiento $asiento,
         Trayecto $trayecto,
         \DateTimeImmutable $expiraEn,
     ) {
         $this->token = $token;
-        $this->recorrido = $recorrido;
+        $this->salida = $salida;
         $this->asiento = $asiento;
         $this->trayecto = $trayecto;
         $this->expiraEn = $expiraEn;
@@ -75,9 +75,9 @@ class ReservaAsiento
         return $this->token;
     }
 
-    public function getRecorrido(): Recorrido
+    public function getSalida(): Salida
     {
-        return $this->recorrido;
+        return $this->salida;
     }
 
     public function getAsiento(): Asiento

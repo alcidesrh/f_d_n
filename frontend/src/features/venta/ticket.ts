@@ -54,8 +54,8 @@ ${factura}
 ${SEP}
 <p class="c"><b>VÁLIDO ÚNICAMENTE PARA LA HORA Y FECHA DE SALIDA.</b></p>
 <div class="g">
-  <div><span class="lbl">Hora salida:</span><br>${esc(hora(c.recorrido?.salidaOrigen))}</div>
-  <div><span class="lbl">Día:</span><br>${esc(fecha(c.recorrido?.salidaOrigen))}</div>
+  <div><span class="lbl">Hora salida:</span><br>${esc(hora(c.salida?.salidaOrigen))}</div>
+  <div><span class="lbl">Día:</span><br>${esc(fecha(c.salida?.salidaOrigen))}</div>
   <div><span class="lbl">Sale de:</span><br>${esc(c.origen?.nombre)}</div>
   <div><span class="lbl">Destino:</span><br>${esc(c.destino?.nombre)}</div>
 </div>
@@ -68,7 +68,7 @@ ${SEP}
 <p class="total"><span class="lbl">Total: ${esc(c.total.texto)}</span></p>
 ${f?.certificador ? `<p class="c">Datos del certificador: ${esc(f.certificador)}${f.certificadorNit ? ` NIT ${esc(f.certificadorNit)}` : ''}</p>` : ''}
 <div class="sep">------------------------------</div>
-<p>Fecha: ${esc(fecha(c.recorrido?.salidaOrigen))} ${esc(hora(c.recorrido?.salidaOrigen))}</p>
+<p>Fecha: ${esc(fecha(c.salida?.salidaOrigen))} ${esc(hora(c.salida?.salidaOrigen))}</p>
 <p>Asientos: ${esc(c.boletos.map((b) => b.asiento).join(', '))}</p>
 ${c.boletos.some((b) => b.observacion) ? `<p class="small">Obs.: ${esc(c.boletos.find((b) => b.observacion)?.observacion)}</p>` : ''}
 <div class="bar">${svg(c.codigoBarras)}<div>${esc(c.codigoBarras)}</div></div>

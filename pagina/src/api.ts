@@ -7,7 +7,7 @@ import type {
   Catalogos,
   Compra,
   Opcion,
-  RecorridoPublico,
+  SalidaPublico,
   ResultadoPago,
   Salida,
   SolicitudPago,
@@ -62,15 +62,15 @@ export const destinos = (origen: number) => pedir<Opcion[]>(`/destinos?origen=${
 export const catalogos = () => pedir<Catalogos>('/catalogos')
 
 export const salidas = (origen: number, destino: number, fecha: string) =>
-  pedir<Salida[]>(`/recorridos?origen=${origen}&destino=${destino}&fecha=${fecha}`)
+  pedir<Salida[]>(`/salidas?origen=${origen}&destino=${destino}&fecha=${fecha}`)
 
-export const recorrido = (id: number, trayecto: number, carrito: string | null) =>
-  pedir<RecorridoPublico>(
-    `/recorridos/${id}?trayecto=${trayecto}${carrito ? `&carrito=${carrito}` : ''}`,
+export const salida = (id: number, trayecto: number, carrito: string | null) =>
+  pedir<SalidaPublico>(
+    `/salidas/${id}?trayecto=${trayecto}${carrito ? `&carrito=${carrito}` : ''}`,
   )
 
 export const apartar = (body: {
-  recorrido: number
+  salida: number
   trayecto: number
   asiento: number
   token: string | null

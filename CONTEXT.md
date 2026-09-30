@@ -1,7 +1,7 @@
 # Operativo — Ventas de Transporte (FDN)
 
 Contexto que modela la operación de salidas de buses y la venta de pasajes:
-geografía (enclaves y trayectos), flota (buses y asientos) y ventas (recorridos y boletos).
+geografía (enclaves y trayectos), flota (buses y asientos) y ventas (salidas y boletos).
 IAM/seguridad y configuración de menús son contextos separados.
 
 ## Geografía
@@ -37,36 +37,36 @@ _Avoid_: puesto
 El mapa de un bus visto desde arriba: una rejilla por planta (hasta dos) con coordenadas desde 1
 —fila, columna— donde cada celda tiene como mucho un asiento, el chofer o una puerta.
 En los buses de dos plantas, los asientos clase B (reclinables) van en la planta baja.
-Se usa para editar el bus, mostrar la ocupación de un recorrido y elegir asientos al vender.
+Se usa para editar el bus, mostrar la ocupación de un salida y elegir asientos al vender.
 
 **Señal**:
 Elemento del croquis que no se vende: el chofer (uno por bus) o una puerta.
 Aquí "chofer" es el puesto de conducción dibujado en el croquis, no la persona (esa es el Piloto).
 
 **Piloto**:
-El conductor (o copiloto) asignado a un bus. La asignación es del bus, no del recorrido.
+El conductor (o copiloto) asignado a un bus. La asignación es del bus, no del salida.
 _Avoid_: conductor, chofer
 
 ## Ventas
 
-**Recorrido**:
+**Salida**:
 La salida concreta de un bus: un trayecto, una fecha y un bus.
-Cada recorrido fija su ruta al crearse, resolviendo el trayecto de sus enclaves de origen y destino.
-Estado (`EstadoRecorrido`): `programada → abordando → iniciada → finalizada` en ese orden;
+Cada salida fija su ruta al crearse, resolviendo el trayecto de sus enclaves de origen y destino.
+Estado (`EstadoSalida`): `programada → abordando → iniciada → finalizada` en ese orden;
 `cancelada` solo es alcanzable desde `programada`.
-_Avoid_: servicio, itinerario, salida, viaje
+_Avoid_: servicio, recorrido, itinerario, viaje
 
 **BoletoAsiento**:
-Un asiento vendido dentro de un recorrido, para un cliente y un trayecto
-(puede ser un subtramo del recorrido completo), con precio y estado propios.
-Único por `(asiento, trayecto, recorrido)`: el mismo asiento puede venderse dos veces
-en el mismo recorrido solo si es para trayectos (subtramos) distintos.
+Un asiento vendido dentro de un salida, para un cliente y un trayecto
+(puede ser un subtramo del salida completo), con precio y estado propios.
+Único por `(asiento, trayecto, salida)`: el mismo asiento puede venderse dos veces
+en el mismo salida solo si es para trayectos (subtramos) distintos.
 Estado (`EstadoBoletoAsiento`): `emitido → chequeado → transito → finalizado` en ese orden;
 `anulado` y `reasignado` solo son alcanzables desde `emitido`.
 _Avoid_: boleto, ticket
 
 **BoletoVenta**:
-Una venta que agrupa uno o más boletos de asiento de un recorrido y un tramo, hecha por un canal,
+Una venta que agrupa uno o más boletos de asiento de un salida y un tramo, hecha por un canal,
 facturada a un cliente y que puede emitir una factura.
 Estado (`EstadoBoletoVenta`): `pendiente` (asientos apartados esperando la factura) → `confirmada`.
 Facturación (`EstadoFacturacion`): `certificada`, `pendiente` (contingencia o fallo tras cobrar en la web)
@@ -78,7 +78,7 @@ Por dónde entra una venta: `estacion` (taquilla, un usuario de la empresa), `ag
 (usuario de una agencia, descuenta saldo, sin factura electrónica) o `web` (el propio cliente en la página).
 
 **Tramo**:
-La porción de un recorrido entre dos de sus paradas, por posición. Un asiento está ocupado para un tramo
+La porción de un salida entre dos de sus paradas, por posición. Un asiento está ocupado para un tramo
 si algún boleto vivo o alguna reserva vigente se solapa con él; tramos que no se solapan comparten asiento.
 
 **Reserva** (precompra):
@@ -115,5 +115,5 @@ Puede tener documento de identificación (tipo y número) y nacionalidad.
 _Avoid_: pasajero, comprador
 
 **Empresa**:
-La línea transportista dueña de la operación: buses, pilotos, recorridos y tarifas.
+La línea transportista dueña de la operación: buses, pilotos, salidas y tarifas.
 _Avoid_: compañía, operador

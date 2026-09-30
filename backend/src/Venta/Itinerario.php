@@ -172,7 +172,7 @@ final class Itinerario
     }
 
     /**
-     * Minutos estimados desde la salida del recorrido hasta una parada (la
+     * Minutos estimados desde la salida del salida hasta una parada (la
      * duración del trayecto origen→parada), o null si no se conoce.
      */
     public function minutosHasta(int $enclaveId): ?int

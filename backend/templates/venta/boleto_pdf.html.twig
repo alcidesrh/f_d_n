@@ -41,7 +41,7 @@
       <td><div class="lbl">NIT</div><div class="val">{{ b.cliente.nit ?? 'CF' }}</div></td>
       <td><div class="lbl">Compra</div><div class="val">{{ b.creada ? b.creada|date('d/m/Y H:i') : '—' }}</div></td>
     </tr><tr>
-      <td><div class="lbl">Salida</div><div class="val">{{ b.recorrido.salidaOrigen|date('d/m/Y h:i A') }}</div></td>
+      <td><div class="lbl">Salida</div><div class="val">{{ b.salida.salidaOrigen|date('d/m/Y h:i A') }}</div></td>
       <td colspan="2"><div class="lbl">Asiento(s)</div><div class="val">{{ b.boletos|map(x => x.asiento)|join(', ') }}</div></td>
     </tr><tr>
       <td colspan="2"><div class="lbl">Estación de salida</div><div class="val">{{ b.origen.nombre }}</div><div class="muted">{{ b.origen.direccion }}</div></td>

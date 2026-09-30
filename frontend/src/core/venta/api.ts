@@ -15,35 +15,35 @@ import type {
   ErrorVenta,
   EstadoAgencia,
   PedidoVenta,
-  RecorridoDetalle,
-  RecorridoResumen,
+  SalidaDetalle,
+  SalidaResumen,
 } from './types'
 
 export const fetchContexto = () => http.get<ContextoVenta>('/venta/contexto')
 
-export const fetchRecorridos = (fecha: string, estacion: number | null) =>
-  http.get<RecorridoResumen[]>(
-    `/venta/recorridos?fecha=${encodeURIComponent(fecha)}${estacion ? `&estacion=${estacion}` : ''}`,
+export const fetchSalidas = (fecha: string, estacion: number | null) =>
+  http.get<SalidaResumen[]>(
+    `/venta/salidas?fecha=${encodeURIComponent(fecha)}${estacion ? `&estacion=${estacion}` : ''}`,
   )
 
-export const fetchRecorrido = (id: number) => http.get<RecorridoDetalle>(`/venta/recorridos/${id}`)
+export const fetchSalida = (id: number) => http.get<SalidaDetalle>(`/venta/salidas/${id}`)
 
 /** Ocupación para un trayecto; `silent` para refrescos por Mercure. */
 export async function fetchOcupacion(
-  recorrido: number,
+  salida: number,
   trayecto: number | null,
   silent = false,
 ): Promise<AsientoOcupado[]> {
   const q = trayecto ? `?trayecto=${trayecto}` : ''
   return (
-    await http.get<{ asientos: AsientoOcupado[] }>(`/venta/recorridos/${recorrido}/ocupacion${q}`, {
+    await http.get<{ asientos: AsientoOcupado[] }>(`/venta/salidas/${salida}/ocupacion${q}`, {
       silent,
     })
   ).asientos
 }
 
 export const cotizar = (body: {
-  recorrido: number
+  salida: number
   trayecto: number | null
   asientos: number[]
   cobrarTrayectoCompleto?: boolean

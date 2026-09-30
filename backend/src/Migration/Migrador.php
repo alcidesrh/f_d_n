@@ -85,7 +85,7 @@ class Migrador
             }
 
             $legacyId = (string) $salida["id"];
-            if ($this->yaMigrado("recorrido", $legacyId)) {
+            if ($this->yaMigrado("salida", $legacyId)) {
                 continue;
             }
 
@@ -517,7 +517,7 @@ class Migrador
     }
 
     /**
-     * Asiento nuevo de un boleto: el del bus del recorrido con el mismo número
+     * Asiento nuevo de un boleto: el del bus del salida con el mismo número
      * que el `bus_asiento` del legado (los asientos se copian por bus).
      *
      * @param array<int|string, int|null> $numerosLegado caché id legado → número
@@ -827,11 +827,11 @@ class Migrador
         ?string $desde = null,
         ?string $hasta = null,
     ): array {
-        // Set de legacy_id ya migrados en el nuevo recorrido (evita N+1).
+        // Set de legacy_id ya migrados en el nuevo salida (evita N+1).
         $migradas = [];
         $rows = $this->newConn
             ->executeQuery(
-                "SELECT legacy_id FROM recorrido WHERE legacy_id IS NOT NULL",
+                "SELECT legacy_id FROM salida WHERE legacy_id IS NOT NULL",
             )
             ->fetchFirstColumn();
         foreach ($rows as $legacyId) {
@@ -903,18 +903,18 @@ class Migrador
         array &$contadores,
     ): ?int {
         // Nota: el piloto de la salida legacy ya no se migra a nivel de
-        // Recorrido — la asignación de piloto/copiloto vive en Bus (ver
+        // Salida — la asignación de piloto/copiloto vive en Bus (ver
         // ADR-013 y siguientes). El piloto histórico de esta salida puntual
         // (que podía diferir del piloto habitual del bus) no tiene destino
         // en el modelo nuevo y se descarta.
-        $data = $this->mapeador->recorrido(
+        $data = $this->mapeador->salida(
             $salida,
             $busId,
             $empresaId,
             $trayectoId,
         );
         $id = $this->newConn->fetchOne(
-            "INSERT INTO recorrido (fecha, bus_id, empresa_id, trayecto_id, estado, legacy_id) VALUES (:fecha, :bus_id, :empresa_id, :trayecto_id, :estado, :legacy_id) RETURNING id",
+            "INSERT INTO salida (fecha, bus_id, empresa_id, trayecto_id, estado, legacy_id) VALUES (:fecha, :bus_id, :empresa_id, :trayecto_id, :estado, :legacy_id) RETURNING id",
             $data,
         );
         $contadores["salida"]++;
@@ -999,8 +999,8 @@ class Migrador
                 $ventaId,
             );
             $this->newConn->executeStatement(
-                'INSERT INTO boleto_asiento (recorrido_id, asiento_id, cliente_id, trayecto_id, estado, boleto_venta_id, precio_monto, precio_moneda, legacy_id)
-                 VALUES (:recorrido_id, :asiento_id, :cliente_id, :trayecto_id, :estado, :boleto_venta_id, :precio_monto, :precio_moneda, :legacy_id)',
+                'INSERT INTO boleto_asiento (salida_id, asiento_id, cliente_id, trayecto_id, estado, boleto_venta_id, precio_monto, precio_moneda, legacy_id)
+                 VALUES (:salida_id, :asiento_id, :cliente_id, :trayecto_id, :estado, :boleto_venta_id, :precio_monto, :precio_moneda, :legacy_id)',
                 $data,
             );
             $contadores["boleto_asiento"]++;

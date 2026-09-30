@@ -1,6 +1,6 @@
 /** Reglas puras de la página: tarjeta, tiempo restante, estado del mapa. */
 import type { AsientoCroquis, EstadoAsiento } from '@/core/croquis/types'
-import type { RecorridoPublico } from './tipos'
+import type { SalidaPublico } from './tipos'
 
 export function luhn(numero: string): boolean {
   const d = numero.replace(/\D+/g, '')
@@ -46,7 +46,7 @@ export function restante(iso: string | null, ahora = Date.now()): { segundos: nu
 
 /** Cómo se pinta cada asiento en la página (sin distinguir canales). */
 export function estadoEnMapa(
-  ocupacion: RecorridoPublico['ocupacion'],
+  ocupacion: SalidaPublico['ocupacion'],
 ): (asiento: AsientoCroquis) => EstadoAsiento {
   const porId = new Map(ocupacion.map((o) => [o.asiento, o.estado]))
   return (a) => {

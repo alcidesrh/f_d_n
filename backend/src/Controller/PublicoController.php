@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Entity\Enum\EstadoRecorrido;
+use App\Entity\Enum\EstadoSalida;
 use App\Entity\Nacion;
-use App\Entity\Recorrido;
+use App\Entity\Salida;
 use App\Entity\ReservaAsiento;
 use App\Entity\TipoDocumento;
 use App\Venta\Boleto\BoletoPdf;
@@ -15,7 +15,7 @@ use App\Venta\Boleto\DatosBoleto;
 use App\Venta\CompraWeb;
 use App\Venta\Comprador;
 use App\Venta\ConsultaVenta;
-use App\Venta\HorasRecorrido;
+use App\Venta\HorasSalida;
 use App\Venta\Excepcion\VentaRechazada;
 use App\Venta\Pago\PasarelaPago;
 use App\Venta\Pago\DireccionFacturacion;
@@ -58,7 +58,7 @@ final class PublicoController extends AbstractController
         private readonly PasarelaPago $pasarela,
         private readonly ClockInterface $reloj,
         private readonly Comprobantes $comprobantes,
-        private readonly HorasRecorrido $horas,
+        private readonly HorasSalida $horas,
         private readonly RateLimiterFactoryInterface $publicoLimiter,
         private readonly RateLimiterFactoryInterface $publicoPagoLimiter,
     ) {}
@@ -89,8 +89,8 @@ final class PublicoController extends AbstractController
     }
 
     /** `?origen&destino&fecha=AAAA-MM-DD` */
-    #[Route("/recorridos", name: "recorridos", methods: ["GET"])]
-    public function recorridos(Request $request): JsonResponse
+    #[Route("/salidas", name: "salidas", methods: ["GET"])]
+    public function salidas(Request $request): JsonResponse
     {
         return $this->limitado($request, function () use ($request) {
             $dia = \DateTimeImmutable::createFromFormat("!Y-m-d", (string) $request->query->get("fecha"));
@@ -98,25 +98,25 @@ final class PublicoController extends AbstractController
                 throw new VentaRechazada("Elija una fecha de hoy en adelante.");
             }
 
-            return $this->consulta->recorridosEnLinea($dia, $request->query->getInt("origen"), $request->query->getInt("destino"));
+            return $this->consulta->salidasEnLinea($dia, $request->query->getInt("origen"), $request->query->getInt("destino"));
         });
     }
 
     /** `?trayecto={id}&carrito={token}`: croquis y asientos libres (los del carrito salen como propios). */
-    #[Route("/recorridos/{id<\d+>}", name: "recorrido", methods: ["GET"])]
-    public function recorrido(Recorrido $recorrido, Request $request): JsonResponse
+    #[Route("/salidas/{id<\d+>}", name: "salida", methods: ["GET"])]
+    public function salida(Salida $salida, Request $request): JsonResponse
     {
-        return $this->limitado($request, function () use ($recorrido, $request) {
-            if ($recorrido->getEstado() !== EstadoRecorrido::PROGRAMADA) {
-                throw new VentaRechazada("Este recorrido ya no está a la venta.", "no_encontrado", 404);
+        return $this->limitado($request, function () use ($salida, $request) {
+            if ($salida->getEstado() !== EstadoSalida::PROGRAMADA) {
+                throw new VentaRechazada("Este salida ya no está a la venta.", "no_encontrado", 404);
             }
-            $trayecto = $this->reglas->trayecto($recorrido, $request->query->getInt("trayecto") ?: null);
-            $detalle = $this->consulta->detalle($recorrido);
+            $trayecto = $this->reglas->trayecto($salida, $request->query->getInt("trayecto") ?: null);
+            $detalle = $this->consulta->detalle($salida);
             $clases = array_values(array_unique(array_map(static fn(array $e) => $e["clase"] ?? null, array_filter($detalle["croquis"], static fn(array $e) => $e["tipo"] === "asiento"))));
-            $tarifas = $this->precios($recorrido, $trayecto, $clases);
+            $tarifas = $this->precios($salida, $trayecto, $clases);
 
             return [
-                "id" => $recorrido->getId(),
+                "id" => $salida->getId(),
                 "salida" => $detalle["salida"],
                 "empresa" => $detalle["empresa"]["nombre"] ?? null,
                 "bus" => $detalle["bus"]["gama"] ?? null,
@@ -130,15 +130,15 @@ final class PublicoController extends AbstractController
                 "precios" => $tarifas,
                 "ocupacion" => array_map(
                     static fn(array $o) => ["asiento" => $o["asiento"], "estado" => $o["estado"]],
-                    $this->consulta->ocupacion($recorrido, $this->reglas->tramo($recorrido, $trayecto), $this->token($request->query->get("carrito"))?->toRfc4122(), false),
+                    $this->consulta->ocupacion($salida, $this->reglas->tramo($salida, $trayecto), $this->token($request->query->get("carrito"))?->toRfc4122(), false),
                 ),
                 "cierre" => $detalle["cierreEnLinea"],
-                "topico" => PublicadorOcupacion::topico((int) $recorrido->getId()),
+                "topico" => PublicadorOcupacion::topico((int) $salida->getId()),
             ];
         });
     }
 
-    /** `{ recorrido, trayecto, asiento, token? }` → carrito (crea uno si no hay token). */
+    /** `{ salida, trayecto, asiento, token? }` → carrito (crea uno si no hay token). */
     #[Route("/carritos", name: "carrito_apartar", methods: ["POST"])]
     public function apartar(Request $request): JsonResponse
     {
@@ -146,7 +146,7 @@ final class PublicoController extends AbstractController
             $datos = $request->toArray();
             $token = $this->reservas->apartar(
                 $this->token($datos["token"] ?? null),
-                (int) ($datos["recorrido"] ?? 0),
+                (int) ($datos["salida"] ?? 0),
                 isset($datos["trayecto"]) ? (int) $datos["trayecto"] : null,
                 (int) ($datos["asiento"] ?? 0),
             );
@@ -344,7 +344,7 @@ final class PublicoController extends AbstractController
         }
         $primera = $reservas[0];
         $cotizacion = $this->reglas->cotizar(
-            $primera->getRecorrido(),
+            $primera->getSalida(),
             $primera->getTrayecto(),
             array_map(static fn(ReservaAsiento $r) => $r->getAsiento(), $reservas),
         );
@@ -352,11 +352,11 @@ final class PublicoController extends AbstractController
         return [
             "token" => $token->toRfc4122(),
             "expira" => min(array_map(static fn(ReservaAsiento $r) => $r->getExpiraEn(), $reservas))->format(DATE_ATOM),
-            "recorrido" => [
-                "id" => $primera->getRecorrido()->getId(),
-                "salida" => $primera->getRecorrido()->getFecha()->format(DATE_ATOM),
-                "salidaOrigen" => $this->horas->salidaDesde($primera->getRecorrido(), (int) $primera->getTrayecto()->getOrigen()->getId())->format(DATE_ATOM),
-                "empresa" => $primera->getRecorrido()->getEmpresa()?->getNombre(),
+            "salida" => [
+                "id" => $primera->getSalida()->getId(),
+                "salida" => $primera->getSalida()->getFecha()->format(DATE_ATOM),
+                "salidaOrigen" => $this->horas->salidaDesde($primera->getSalida(), (int) $primera->getTrayecto()->getOrigen()->getId())->format(DATE_ATOM),
+                "empresa" => $primera->getSalida()->getEmpresa()?->getNombre(),
             ],
             "trayecto" => [
                 "id" => $primera->getTrayecto()->getId(),
@@ -372,10 +372,10 @@ final class PublicoController extends AbstractController
      *
      * @return list<array{clase: string, precio: mixed}>
      */
-    private function precios(Recorrido $recorrido, \App\Entity\Trayecto $trayecto, array $clases): array
+    private function precios(Salida $salida, \App\Entity\Trayecto $trayecto, array $clases): array
     {
         $asientos = [];
-        foreach ($recorrido->getBus()?->getAsientos() ?? [] as $a) {
+        foreach ($salida->getBus()?->getAsientos() ?? [] as $a) {
             $asientos[$a->getClase()->value] ??= $a;
         }
         $precios = [];
@@ -384,7 +384,7 @@ final class PublicoController extends AbstractController
                 continue;
             }
             try {
-                $c = $this->reglas->cotizar($recorrido, $trayecto, [$asientos[$clase]]);
+                $c = $this->reglas->cotizar($salida, $trayecto, [$asientos[$clase]]);
                 $precios[] = ["clase" => $clase, "precio" => DatosBoleto::importe($c->total)];
             } catch (VentaRechazada) {
                 // Clase sin tarifa: no se vende en línea.
