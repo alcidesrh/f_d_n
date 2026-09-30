@@ -1,0 +1,84 @@
+{
+	"DatosEmision": {
+		"DatosGeneralesEmision": {
+			"CodigoMoneda": "GTQ",
+			"FechaHoraEmision": "2023-05-31T12:37:49.463-06:00",
+			"Tipo": "FESP"
+		},
+		"Emisor": {
+			"AfiliacionIVA": "GEN",
+			"CodigoEstablecimiento": "1",
+			"CorreoEmisor": "soporte@eforcon.com",
+			"NITEmisor": "4150686",
+			"NombreComercial": "FORMULARIOS CONTINUOS DE CENTRO AMERICA",
+			"NombreEmisor": "FORMULARIOS CONTINUOS DE CENTRO AMERICA SOCIEDAD ANONIMA",
+			"DireccionEmisor": {
+				"Direccion": "2DA CALLE  36-73  Z. 11 COLONIA TOLEDO",
+				"CodigoPostal": "01000",
+				"Municipio": "GUATEMALA",
+				"Departamento": "GUATEMALA",
+				"Pais": "GT"
+			}
+		},
+		"Receptor": {
+			"CorreoReceptor": "",
+			"IDReceptor": "2063484520101",
+			"TipoEspecial": "CUI",
+			"NombreReceptor": "CONSUMIDOR FINAL",
+			"DireccionReceptor": {
+				"Direccion": "2DA CALLE  36-73  Z. 11 COLONIA TOLEDO",
+				"CodigoPostal": "01000",
+				"Municipio": "GUATEMALA",
+				"Departamento": "GUATEMALA",
+				"Pais": "GT"
+			}
+		},
+		"Frases": {
+			"Frase": [{
+					"CodigoEscenario": "1",
+					"TipoFrase": "5"
+				}
+			]
+		},
+		"Items": {
+			"Item": [{
+					"BienOServicio": "B",
+					"NumeroLinea": "1",
+					"Cantidad": "1.0000000000",
+					"UnidadMedida": "UNI",
+					"Descripcion": "sillas y mesas",
+					"PrecioUnitario": "1120.0000000000",
+					"Precio": "1120.0000000000",
+					"Descuento": "0.0000000000",
+					"Impuestos": {
+						"Impuesto": [{
+								"NombreCorto": "IVA",
+								"CodigoUnidadGravable": "1",
+								"MontoGravable": "1000.000000",
+								"MontoImpuesto": "120.000000"
+							}
+						]
+					},
+					"Total": "1120.00"
+				}
+			]
+		},
+		"Totales": {
+			"TotalImpuestos": {
+				"TotalImpuesto": [{
+						"NombreCorto": "IVA",
+						"TotalMontoImpuesto": "120.000000"
+					}
+				]
+			},
+			"GranTotal": "1120.00"
+		},
+		"Complementos": {
+			"ComplementoFacturaEspecial": {
+				"RetencionISR": "50.00",
+				"RetencionIVA": "120.00",
+				"TotalMenosRetenciones": "950.00"
+			}
+		}
+	}
+}

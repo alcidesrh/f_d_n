@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns="http://www.w3.org/2001/XMLSchema" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:wmdte="http://walmart.com.gt/dte" targetNamespace="http://walmart.com.gt/dte" elementFormDefault="qualified">
+  <xs:element name="Walmart" type="wmdte:WalmartElements">
+    <xs:annotation>
+      <xs:documentation xml:lang="es-gt">Walmart requiere nodos de resumen</xs:documentation>
+      <xs:documentation xml:lang="en-us">Walmart required summary nodes</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+
+  <xs:complexType name="WalmartElements">
+    <xs:sequence>
+      <xs:choice minOccurs="1" maxOccurs="1">
+        <xs:element name="WM-FACT" type="wmdte:WM-FACTElements" minOccurs="0"/>
+        <xs:element name="WM-NCRE" type="wmdte:WM-NCREElements" minOccurs="0"/>
+      </xs:choice>
+    </xs:sequence>
+    <xs:attribute name="version" use="required" fixed="1.2" type="xs:string"/>
+  </xs:complexType>
+
+  <xs:complexType name="WM-FACTElements">
+    <xs:sequence>
+      <xs:choice minOccurs="1" maxOccurs="1">
+        <xs:element name="WMMercaderia" type="wmdte:WM-FACTMercaderiaType" minOccurs="0"/>
+        <xs:element name="WMGastos" type="wmdte:WMGastosType" minOccurs="0"/>
+      </xs:choice>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="WM-NCREElements">
+    <xs:sequence>
+      <xs:choice minOccurs="1" maxOccurs="1">
+        <xs:element name="WMMercaderia" type="wmdte:WM-NCREMercaderiaType" minOccurs="0"/>
+        <xs:element name="WMGastos" type="wmdte:WMGastosType" minOccurs="0"/>
+        <xs:element name="WMProntoPago" minOccurs="0"/>
+      </xs:choice>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:group name="WMOrdenGroup">
+    <xs:sequence>
+      <xs:element name="WMNumeroOrden" type="wmdte:WMNumeroOrdenType"/>
+      <xs:element name="WMFechaOrden" type="xs:date" minOccurs="0">
+        <xs:annotation>
+          <xs:documentation xml:lang="es-gt">Walmart Fecha de Orden (ISO 8601 Date)</xs:documentation>
+          <xs:documentation xml:lang="en-us">Walmart Order Date (ISO 8601 Date)</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:group>
+
+  <xs:group name="WMMercaderiaGroup">
+    <xs:sequence>
+      <xs:element name="WMNumeroVendedor" type="wmdte:WMNumeroVendedorType"/>
+      <xs:element name="WMEnviarGLN" type="wmdte:WMEnviarGLNType"/>
+    </xs:sequence>
+  </xs:group>
+
+  <xs:complexType name="WM-FACTMercaderiaType">
+    <xs:sequence>
+      <xs:group ref="wmdte:WMOrdenGroup"/>
+      <xs:group ref="wmdte:WMMercaderiaGroup"/>
+      <xs:element name="WMNumeroRecepcion" type="wmdte:WMNumeroRecepcionType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="WM-NCREMercaderiaType">
+    <xs:sequence>
+      <xs:group ref="wmdte:WMOrdenGroup"/>
+      <xs:group ref="wmdte:WMMercaderiaGroup"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="WMGastosType">
+    <xs:sequence>
+      <xs:group ref="wmdte:WMOrdenGroup"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:simpleType name="WMNumeroVendedorType">
+    <xs:annotation>
+      <xs:documentation xml:lang="es-gt">Walmart asignado Vendedor-Departamento-Subsecuencia Número (9 dígitos)</xs:documentation>
+      <xs:documentation xml:lang="en-us">Walmart assigned Vendor-Department-Subsequence Number (9-digit)</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\d{9}"/>
+      <xs:minLength value="9"/>
+      <xs:maxLength value="9"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="WMNumeroOrdenType">
+    <xs:annotation>
+      <xs:documentation xml:lang="es-gt">Walmart Número de Orden de compra (10 dígitos)</xs:documentation>
+      <xs:documentation xml:lang="en-us">Walmart Purchase Order Number (10-digit)</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\d{10}"/>
+      <xs:minLength value="10"/>
+      <xs:maxLength value="10"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="WMEnviarGLNType">
+    <xs:annotation>
+      <xs:documentation xml:lang="es-gt">Walmart envía a GLN (13 dígitos)</xs:documentation>
+      <xs:documentation xml:lang="en-us">Walmart Ship to GLN (13-digit)</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\d{13}"/>
+      <xs:minLength value="13"/>
+      <xs:maxLength value="13"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="WMNumeroRecepcionType">
+    <xs:annotation>
+      <xs:documentation xml:lang="es-gt">Walmart Número de recepción (Máximo 11 caracteres)</xs:documentation>
+      <xs:documentation xml:lang="en-us">WM Receiving Number (Max 11 characters)</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+      <xs:maxLength value="11"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

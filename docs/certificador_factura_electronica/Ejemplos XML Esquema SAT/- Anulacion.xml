@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<dte:GTAnulacionDocumento xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:dte="http://www.sat.gob.gt/dte/fel/0.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Version="0.1" xsi:schemaLocation="http://www.sat.gob.gt/dte/fel/0.1.0 GT_AnulacionDocumento-0.1.0.xsd">
+	<dte:SAT>
+		<dte:AnulacionDTE ID="DatosCertificados">
+			<dte:DatosGenerales FechaEmisionDocumentoAnular="2022-07-01T15:04:13.972-06:00" FechaHoraAnulacion="2023-05-31T21:00:04.449-06:00" ID="DatosAnulacion" IDReceptor="1002686" MotivoAnulacion="DATOS INCORRECTOS DEL RECEPTOR" NITEmisor="4150686" NumeroDocumentoAAnular="796BEFB9-1E13-489A-83F0-9F6D2D86A563"/>
+		</dte:AnulacionDTE>
+	</dte:SAT>
+</dte:GTAnulacionDocumento>

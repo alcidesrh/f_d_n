@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Created with Liquid Technologies Online Tools 1.0 (https://www.liquid-technologies.com) -->
+<xs:schema 	xmlns:tns="https://tu-red.fibbo.app/addenda/fb" 
+			attributeFormDefault="unqualified" 
+			elementFormDefault="qualified" 
+			targetNamespace="https://tu-red.fibbo.app/addenda/fb" 
+			xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="Fibbo">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="OrdenesCompra">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element maxOccurs="unbounded" name="Secuencia">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="DepartamentoCompra" type="xs:string" />
+                    <xs:element name="IdPedido" type="xs:string" />
+                    <xs:element name="FechaOrden" type="xs:date" />
+                  </xs:sequence>
+                  <xs:attribute name="consec" type="xs:unsignedByte" use="required" />
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="DiasCredito" type="xs:unsignedByte" />
+        <xs:element name="CodigoVendedor" type="xs:string" />
+        <xs:element name="CodigoProyecto" type="xs:string" />
+        <xs:element name="FechaRecepcion" type="xs:date" />
+        <xs:element name="ContactoRecepcion" type="xs:string" />
+      </xs:sequence>
+      <xs:attribute name="version" type="xs:decimal" use="required" />
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
