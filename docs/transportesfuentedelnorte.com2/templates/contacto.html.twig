@@ -1,0 +1,16 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+
+	<section class="p-5 sm:px-20 mb-10">
+		<div class="container mx-auto max-w-md">
+
+			<div class="mb-10">
+				{{component('alert', {text: 'Deje su mensaje y no pondremos en contacto con usted lo antes posible.' | trans})}}
+			</div>
+
+			{{ render_esi(controller('App\\Controller\\AppController::contactoForm')) }}
+
+		</div>
+	</section>
+{% endblock %}

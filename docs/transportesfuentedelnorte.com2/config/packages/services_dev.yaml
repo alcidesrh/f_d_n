@@ -1,0 +1,3 @@
+parameters:
+    reservacion_minutos: 20
+    salida_minutos_antes: 80

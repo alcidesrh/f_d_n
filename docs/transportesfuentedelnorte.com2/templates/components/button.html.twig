@@ -1,0 +1,11 @@
+<button class="btn {{class}}" {% if attr is defined %} {%- for attrname, attrvalue in attr -%} {{- " " -}} {{- attrname }}="{{ attrvalue }}" {%- endfor -%} {% endif %}>
+	<div class="flex justify-center items-center w-full">
+		{% if icon is defined and icon.left is defined%}
+			<span class="material-symbols-outlined left mr-[2px] text-white {% if icon.class_icon is defined %} {{icon.class_icon}} {% endif%}">{{icon.name}}</span>
+		{% endif %}
+		<span class="capitalize cursor-pointer">{{text | trans}}</span>
+		{% if icon is defined and icon.right is defined%}
+			<span class="material-symbols-outlined ml-[2px] ">{{icon.name}}</span>
+		{% endif %}
+	</div>
+</button>

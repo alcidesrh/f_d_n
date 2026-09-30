@@ -1,0 +1,10 @@
+{% extends '@!EasyAdmin/layout.html.twig' %}
+
+
+{%- block checkbox_radio_label -%}
+{%- if widget is defined -%}
+	<div class="d-flex flex-wrap align-items-center mt-3">
+		{{ widget|raw }}
+		<img src="/images/{{label}}" width="200" class="img-fluid ms-3">
+	</div>
+{%- endif -%}{%- endblock checkbox_radio_label %}

@@ -1,0 +1,11 @@
+twig:
+    default_path: "%kernel.project_dir%/templates"
+    form_themes: ["form/theme/theme.html.twig"]
+
+    paths:
+        # point this wherever your css files live
+        "%kernel.project_dir%/assets/styles": styles
+
+when@test:
+    twig:
+        strict_variables: true

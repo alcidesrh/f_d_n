@@ -1,0 +1,13 @@
+controllers:
+    resource: ../src/Controller/
+    type: attribute
+    prefix:
+        es: ""
+        en: "/{_locale}"
+    requirements:
+        _locale: es|en
+    locale: "%default_locale%"
+
+payment_iframe_data_collection_error:
+    path: /payment_iframe_data_collection_error
+    controller: App\Services\ServerSentEvent::errorPago

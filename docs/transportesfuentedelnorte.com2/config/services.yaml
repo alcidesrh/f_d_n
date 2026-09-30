@@ -1,0 +1,71 @@
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
+parameters:
+    default_locale: "es"
+    set_locale_from_accept_language: false
+    set_content_language_from_locale: false
+    enabled_locales: ["es", "en"]
+    reservacion_minutos: 30
+    salida_minutos_antes: 80
+    reenviar_email: 300
+    webmaster_email: alcidesrh@gmail.com
+
+    liip_imagine.meta_data.reader.class: "Imagine\\Image\\Metadata\\DefaultMetadataReader"
+
+    fdn_base_uri: "%env(FDN_BASE_URI)%"
+
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        autowire: true # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+
+    # makes classes in src/ available to be used as services
+    # this creates a service per class whose id is the fully-qualified class name
+    App\:
+        resource: "../src/"
+        exclude:
+            - "../src/DependencyInjection/"
+            - "../src/Entity*/"
+            - "../src/Kernel.php"
+            - "../src/Services/{CybersourceApi.php}"
+
+    App\Services\ServerSentEvent:
+        public: true
+        tags: ["controller.service_arguments"]
+
+    App\Services\Factories\ReservacionFactory:
+    App\Entity\Reservacion:
+        lazy: true
+        factory: '@App\Services\Factories\ReservacionFactory'
+
+    App\Services\Factories\EmpresaFactory: ~
+    App\Entity\Empresa:
+        factory: '@App\Services\Factories\EmpresaFactory'
+    #     arguments: ['@doctrine.orm.default_entity_manager']
+    # factory: '@App\Services\Factories\EmpresaFactory'
+
+    App\Services\RemoteDatabaseQueries:
+        arguments:
+            # the '@' symbol is important: that's what tells the container
+            # you want to pass the *service* whose id is 'monolog.logger.request',
+            # and not just the *string* 'monolog.logger.request'
+            $systemfdn: "@doctrine.orm.systemfdn_entity_manager"
+
+    App\Services\Mails:
+        arguments:
+            $private_key: "%env(private_key)%"
+
+    App\EventSubscriber\LocaleRedirectSubscriber:
+        arguments:
+            $enabled_locales: "%enabled_locales%"
+
+    # App\EventListener\ExceptionListener:
+    #     tags: [kernel.event_listener]
+
+    App\Services\Lock\LockReservacion:
+        arguments:
+            $connection: "@doctrine.dbal.default_connection"

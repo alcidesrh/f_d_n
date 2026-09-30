@@ -1,0 +1,30 @@
+{
+  "transportes-fuente-del-norte-la-pionera-sociedad-anonima": {
+    "CYBERSOURCE_MERCHANT_ID": "visanetgt_transportesrosita",
+    "CYBERSOURCE_MERCHANT_KEY_ID": "0717bc06-f0a6-424c-a2e7-507d3d5f50cf",
+    "CYBERSOURCE_MERCHANT_SECRET_KEY": "Afd9zsBfF3AsTqpbj2WwbZ0m95Tbl0/4Ugaf4qK3XX0=",
+    "eforcon_user": "proper-transrosita",
+    "eforcon_password": "Transrosita2021*"
+  },
+  "autobuses-maya-de-oro-sociedad-anonima_no_sirve": {
+    "CYBERSOURCE_MERCHANT_ID": "visanetgt_mayadeoro",
+    "CYBERSOURCE_MERCHANT_KEY_ID": "9bcd075a-380f-4856-8437-c4de7d98a55b",
+    "CYBERSOURCE_MERCHANT_SECRET_KEY": "gI9kkbhaW25zjIemYagEVEaebtDwy8VwKqHJ8zhuJmI=",
+    "eforcon_user": "operpro1-mayaoro",
+    "eforcon_password": "M@y$2781%Qa5!!"
+  },
+  "autobuses-maya-de-oro-sociedad-anonima": {
+    "CYBERSOURCE_MERCHANT_ID": "visanetgt_transportesrosita",
+    "CYBERSOURCE_MERCHANT_KEY_ID": "0717bc06-f0a6-424c-a2e7-507d3d5f50cf",
+    "CYBERSOURCE_MERCHANT_SECRET_KEY": "Afd9zsBfF3AsTqpbj2WwbZ0m95Tbl0/4Ugaf4qK3XX0=",
+    "eforcon_user": "proper-transrosita",
+    "eforcon_password": "Transrosita2021*"
+  },
+  "transportes-rosita-sociedad-anonima": {
+    "CYBERSOURCE_MERCHANT_ID": "visanetgt_transportesrosita",
+    "CYBERSOURCE_MERCHANT_KEY_ID": "0717bc06-f0a6-424c-a2e7-507d3d5f50cf",
+    "CYBERSOURCE_MERCHANT_SECRET_KEY": "Afd9zsBfF3AsTqpbj2WwbZ0m95Tbl0/4Ugaf4qK3XX0=",
+    "eforcon_user": "proper-transrosita",
+    "eforcon_password": "Transrosita2021*"
+  }
+}

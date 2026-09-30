@@ -1,0 +1,162 @@
+{
+	"DatosEmision": {
+		"DatosGeneralesEmision": {
+			"CodigoMoneda": "GTQ",
+			"FechaHoraEmision": "2022-07-01T12:37:49.463-06:00",
+			"Tipo": "FCAM"
+		},
+		"Emisor": {
+			"AfiliacionIVA": "GEN",
+			"CodigoEstablecimiento": "1",
+			"CorreoEmisor": "soporte@eforcon.com",
+			"NITEmisor": "4150686",
+			"NombreComercial": "FORMULARIOS CONTINUOS DE CENTRO AMERICA",
+			"NombreEmisor": "FORMULARIOS CONTINUOS DE CENTRO AMERICA SOCIEDAD ANONIMA",
+			"DireccionEmisor": {
+				"Direccion": "2DA CALLE  36-73  Z. 11 COLONIA TOLEDO",
+				"CodigoPostal": "01000",
+				"Municipio": "GUATEMALA",
+				"Departamento": "GUATEMALA",
+				"Pais": "GT"
+			}
+		},
+		"Receptor": {
+			"CorreoReceptor": "",
+			"IDReceptor": "CF",
+			"NombreReceptor": "CONSUMIDOR FINAL",
+			"DireccionReceptor": {
+				"Direccion": "2DA CALLE  36-73  Z. 11 COLONIA TOLEDO",
+				"CodigoPostal": "01000",
+				"Municipio": "GUATEMALA",
+				"Departamento": "GUATEMALA",
+				"Pais": "GT"
+			}
+		},
+		"Frases": {
+			"Frase": [
+				{
+					"CodigoEscenario": "1",
+					"TipoFrase": "1"
+				},
+				{
+					"CodigoEscenario": "1",
+					"TipoFrase": "2"
+				}
+			]
+		},
+		"Items": {
+			"Item": [
+				{
+					"BienOServicio": "S",
+					"NumeroLinea": "1",
+					"Cantidad": "1.0000000000",
+					"UnidadMedida": "UNI",
+					"Descripcion": "sillas y mesas",
+					"PrecioUnitario": "5.0000000000",
+					"Precio": "5.0000000000",
+					"Descuento": "0.0000000000",
+					"Impuestos": {
+						"Impuesto": [
+							{
+								"NombreCorto": "IVA",
+								"CodigoUnidadGravable": "1",
+								"MontoGravable": "4.464286",
+								"MontoImpuesto": "0.535714"
+							}
+						]
+					},
+					"Total": "5.00"
+				},
+				{
+					"BienOServicio": "S",
+					"NumeroLinea": "2",
+					"Cantidad": "2.0000000000",
+					"UnidadMedida": "UNI",
+					"Descripcion": "anuncio publicitario",
+					"PrecioUnitario": "4500.0000000000",
+					"Precio": "9000.0000000000",
+					"Descuento": "0.0000000000",
+					"Impuestos": {
+						"Impuesto": [
+							{
+								"NombreCorto": "IVA",
+								"CodigoUnidadGravable": "1",
+								"MontoGravable": "8035.714286",
+								"MontoImpuesto": "964.285714"
+							},
+							{
+								"NombreCorto": "TIMBRE DE PRENSA",
+								"CodigoUnidadGravable": "1",
+								"MontoGravable": "8035.714286",
+								"MontoImpuesto": "40.178571"
+							}
+						]
+					},
+					"Total": "9040.17"
+				},
+				{
+					"BienOServicio": "S",
+					"NumeroLinea": "3",
+					"Cantidad": "6.0000000000",
+					"UnidadMedida": "UNI",
+					"Descripcion": "galones de gasolina",
+					"PrecioUnitario": "73.3",
+					"Precio": "439.8000000000",
+					"Descuento": "0.0000000000",
+					"Impuestos": {
+						"Impuesto": [
+							{
+								"NombreCorto": "IVA",
+								"CodigoUnidadGravable": "1",
+								"MontoGravable": "392.678571",
+								"MontoImpuesto": "47.121429"
+							},
+							{
+								"NombreCorto": "PETROLEO",
+								"CodigoUnidadGravable": "3",
+								"CantidadUnidadesGravables": "6.0000000000",
+								"MontoImpuesto": "28.200000"
+							}
+						]
+					},
+					"Total": "468.00"
+				}
+			]
+		},
+		"Totales": {
+			"TotalImpuestos": {
+				"TotalImpuesto": [
+					{
+						"NombreCorto": "IVA",
+						"TotalMontoImpuesto": "1011.942857"
+					},
+					{
+						"NombreCorto": "PETROLEO",
+						"TotalMontoImpuesto": "28.200000"
+					},
+					{
+						"NombreCorto": "TIMBRE DE PRENSA",
+						"TotalMontoImpuesto": "40.178571"
+					}
+				]
+			},
+			"GranTotal": "9513.17"
+		},
+		"Complementos": {
+			"ComplementoCambiaria": {
+				"Abonos": [
+					{
+						"NumeroAbono": "1",
+						"FechaVencimiento": "2021-11-14",
+						"MontoAbono": "4513.17"
+					},
+					{
+						"NumeroAbono": "2",
+						"FechaVencimiento": "2021-12-14",
+						"MontoAbono": "4513.17"
+					}
+				]
+			}
+		}
+	}
+}

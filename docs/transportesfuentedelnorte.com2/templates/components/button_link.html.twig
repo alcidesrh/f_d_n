@@ -1,0 +1,11 @@
+<a class="btn inline-block {{class}}" href="{{link}}" {{attr}} data-turbo-cache="false">
+	<div class="flex justify-center items-center">
+		{% if icon is defined and icon.left is defined%}
+			<span class="material-symbols-outlined left mr-[2px]">{{icon.name}}</span>
+		{% endif %}
+		<span class="capitalize cursor-pointer">{{text | trans}}</span>
+		{# {% if icon is defined and icon.right is defined%}
+													<span class="material-symbols-outlined ml-1">{{icon.name}}</span>
+												{% endif %} #}
+	</div>
+</a>

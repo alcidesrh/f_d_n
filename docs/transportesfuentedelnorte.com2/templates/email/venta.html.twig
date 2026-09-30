@@ -1,0 +1,102 @@
+{% extends 'email/email_base.html.twig' %}
+
+{% block body %}
+
+
+	<body style="font-size: 14px; margin: 0; width: 100%; padding: 0; word-break: break-word; -webkit-font-smoothing: antialiased;">
+
+
+		<table style="width: 100%; font-family: Montserrat, sans-serif" cellpadding="0" cellspacing="0" role="presentation">
+			<tr>
+				<td align="center">
+					<table style="width: {% if boleto_path is defined %} 600px {% else %} 100% {% endif %}" cellpadding="0" cellspacing="0" role="presentation">
+						<tr>
+							<td align="center">
+								<table style="width: 100%; background: #fff; padding: 20px 5px;  margin:auto" cellpadding="0" cellspacing="0" role="presentation">
+									<tr>
+										<td>
+											<table style="max-width: 100%; margin:auto" cellpadding="0" cellspacing="0" role="presentation">
+												<tr>
+													<td style="text-align: left; font-size: 14px; line-height: 24px; color: #1f2937">
+														<p style="margin-top: 20; margin-bottom: 20px; text-align: center; font-size: 22px; font-weight: 600; color: #164e63">
+															Página Web Venta
+														</p>
+													</td>
+												</tr>
+											</tbody>
+										</td>
+									</tr>
+								</table>
+
+								<table style="margin-bottom: 32px; margin-bottom: 15px; width: 100%" cellpadding="0" cellspacing="0" role="presentation">
+									<tbody>
+										<tr>
+											<td style=" padding: 7px 10px">
+												<div style="font-size: 14px;  text-align: left; color: gray; font-weight: 700; font-style: oblique;">{# ID: #}
+													{# {{reservacion.id}} #}
+												</div>
+											</td>
+											<td>
+												<div style="padding: 7px 10px; text-align: right;font-style: oblique; font-size: 12px; color: gray; font-weight: 700; font-style: oblique;">
+													{{ "now" | date("m/d/Y g:i a") | format_datetime('long', 'medium', 'es') }}
+												</div>
+											</td>
+										</tr>
+
+									</tbody>
+								</table>
+							</td>
+						</tr>
+					</table>
+				</td>
+			</tr>
+		</table>
+
+		<table style="margin-bottom: 32px; width: 100%" cellpadding="0" cellspacing="0" role="presentation">
+			<thead>
+				<th style=" padding: 7px 10px; box-sizing: inherit; text-align: left; width: 140px;">Venta en Quetzales:</th>
+				<th></th>
+			</thead>
+			<tbody>
+				<tr>
+					<td style="width: 140px; padding: 7px 10px;">
+						<b>Mes</b>
+					</td>
+					<td style="padding: 7px 10px;">
+						<b>GTQ Total</b>
+					</td>
+				</tr>
+				{% for q in qtz %}
+					<tr>
+						<td style="width: 140px; padding: 7px 10px; text-transform: capitalize">
+							{{q.date_trunc}}
+						</td>
+						<td style="width: 140px; padding: 7px 10px;">
+							{{q.sum}}
+						</td>
+					</tr>
+				{% endfor %}
+				<tr>
+					<td style="width: 140px; padding: 7px 10px;">
+						<b>Mes</b>
+					</td>
+
+					<td style="padding: 7px 10px;">
+						<b>USD Total</b>
+					</td>
+				</tr>
+				{% for q in usd %}
+					<tr>
+						<td style="width: 140px; padding: 7px 10px; text-transform: capitalize">
+							{{q.date_trunc}}
+						</td>
+
+						<td style="padding: 7px 10px;">
+							{{q.sum}}
+						</td>
+					</tr>
+				{% endfor %}
+			</tbody>
+		</tbody>
+	</body>
+</table></body>{% endblock body %}

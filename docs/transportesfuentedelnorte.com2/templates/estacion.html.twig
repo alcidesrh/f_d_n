@@ -1,0 +1,29 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+
+	<section class="p-5 sm:px-20">
+		<div class="container mx-auto">
+
+			<div class="pt-10">
+				{% for key, departamento in departamentos %}
+					<details open>
+						<summary>
+							<span class="text-lg text-slate-700 font-semibold">{{departamento.nombre}}</span>
+						</summary>
+						<ul class="pl-10 list-disc">
+							{% for key, estacion in departamento.estaciones %}
+								<li class="prose prose-base max-w-none">
+									<span class="text-slate-600 font-semibold">{{estacion.nombre}}</span>:
+									<span class="italic">{{estacion.direccion}}</span>
+								</li>
+							{% endfor %}
+						</ul>
+					</details>
+
+
+				{% endfor %}
+			</div>
+		</div>
+	</section>
+{% endblock %}
