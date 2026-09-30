@@ -50,6 +50,11 @@ class MigradorIAM {
         ['config.editar', 'Config', 'update', 'Configuración'],
         ['iam.ver', 'IAM', 'read', 'IAM'],
         ['iam.editar', 'IAM', 'update', 'IAM'],
+        // Venta de asientos (ADR-021)
+        ['venta.vender', 'BoletoVenta', 'create', 'Venta'],
+        ['venta.cortesia', 'BoletoVenta', 'courtesy', 'Venta'],
+        ['venta.sin_factura', 'BoletoVenta', 'contingency', 'Venta'],
+        ['agencia.acreditar', 'Agencia', 'credit', 'Venta'],
     ];
 
     private const BASE_PERMISOS = [
@@ -73,6 +78,8 @@ class MigradorIAM {
         'Gestion Reportes' => ['reporte.ventas', 'config.ver'],
         'Gestion Config' => ['config.ver', 'config.editar', 'empresa.editar', 'ruta.editar', 'tarifa.editar'],
         'Gestion Asientos' => ['asiento.ver'],
+        'Venta Taquilla' => ['venta.vender'],
+        'Supervision Venta' => ['venta.vender', 'venta.cortesia', 'venta.sin_factura', 'agencia.acreditar'],
     ];
 
     public function __construct(

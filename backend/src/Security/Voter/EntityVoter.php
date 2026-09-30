@@ -7,6 +7,7 @@ use App\Security\PermissionManager;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Vote;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
+use Symfony\Component\Security\Core\Role\RoleHierarchyInterface;
 
 class EntityVoter extends Voter {
 
@@ -17,6 +18,7 @@ class EntityVoter extends Voter {
 
     public function __construct(
         private PermissionManager $permissionManager,
+        private RoleHierarchyInterface $roleHierarchy,
     ) {}
 
     protected function supports(string $attribute, mixed $subject): bool {
@@ -33,7 +35,8 @@ class EntityVoter extends Voter {
             return false;
         }
 
-        if (in_array('ROLE_ADMIN', $user->getRoles(), true)) {
+        // role_hierarchy: ROLE_SUPER_ADMIN también cuenta como ROLE_ADMIN.
+        if (in_array('ROLE_ADMIN', $this->roleHierarchy->getReachableRoleNames($token->getRoleNames()), true)) {
             return true;
         }
 
