@@ -1,3 +1,0 @@
-session_terminada_mensaje: The session has expired. The reservation must be made in less than {RESERVACION_MINUTOS} minutes to preserve the seats.
-error_pdf: The ticket could not be created. Your ticket number is {BOLETO}. Please save that number and contact our offices.
-error_tarjeta: <b>Authentication failed:</b> <br> There may be something wrong or your card issuer cannot authenticate this card. If the data is correct, try again or try another card to complete your purchase.

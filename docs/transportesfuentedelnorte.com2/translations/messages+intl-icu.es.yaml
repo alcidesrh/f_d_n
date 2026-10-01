@@ -1,3 +1,0 @@
-session_terminada_mensaje: La sesion ha caducado. La reserva debe hacerse en menos de {RESERVACION_MINUTOS} minutos para preservar los asientos.
-error_pdf: No se ha podido crear el ticket. Su número de boleto es {BOLETO}. Por favor guarde ese número y pongase en contacto con nuestras oficinas.
-error_tarjeta: <b>Autenticación fallida:</b> <br> Puede ser que haya algún dato incorrecto o el emisor de su tarjeta no puede autenticar esta tarjeta. Si los datos son correctos inténtelo de nuevo o seleccione otra tarjeta para completa su compra.

@@ -1,6 +1,0 @@
-# App\Entity\ClienteReservacion:
-#     properties:
-#         pais:
-#             - NotBlank: ~
-#         provincia:
-#             - NotBlank: ~
