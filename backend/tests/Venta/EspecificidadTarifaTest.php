@@ -18,7 +18,7 @@ final class EspecificidadTarifaTest extends TestCase
     }
 
     /** Salida: trayecto 1, empresa 1, 12:00, bus 1. */
-    private static function elegir(array $candidatos, string $clase = "A", int $trayecto = 1, string $hora = "12:00", ?int $empresa = 1, ?int $bus = 1): ?int
+    private static function elegir(array $candidatos, string $clase = "A", int $trayecto = 1, ?string $hora = "12:00", ?int $empresa = 1, ?int $bus = 1): ?int
     {
         return EspecificidadTarifa::elegir($candidatos, $clase, $trayecto, $empresa, $hora, $bus)?->id;
     }
@@ -96,16 +96,30 @@ final class EspecificidadTarifaTest extends TestCase
         $this->assertSame(9, self::elegir([self::t(4, empresa: 1), self::t(9, empresa: 1), self::t(6, empresa: 1)]));
     }
 
-    public function testSubtrayectoUsaSuTrayectoConEmpresaHoraYBusDeLaSalida(): void
+    /** Subtrayecto 5 de la salida: empresa y bus de la salida, hora en su parada de origen. */
+    public function testSubtrayectoUsaSuTrayectoConEmpresaYBusDeLaSalidaYHoraEnLaParada(): void
     {
         $candidatos = [
             self::t(1, 1, 1),
             self::t(2, 5),
-            self::t(3, 5, 1, "12:00", 1),
+            self::t(3, 5, 1, "14:30", 1),
+            self::t(4, 5, 1, "12:00", 1),
         ];
 
-        $this->assertSame(3, self::elegir($candidatos, trayecto: 5));
+        $this->assertSame(3, self::elegir($candidatos, trayecto: 5, hora: "14:30"));
         $this->assertSame(2, self::elegir($candidatos, trayecto: 5, hora: "15:00"));
         $this->assertNull(self::elegir($candidatos, trayecto: 6), "sin tarifa del subtrayecto no se vende");
+    }
+
+    public function testSinHoraEnLaParadaSoloAplicanLasQueNoFijanHora(): void
+    {
+        $candidatos = [
+            self::t(1, 5, 1, "14:30", 1),
+            self::t(2, 5, 1, null, 1),
+            self::t(3, 5, null, "14:30"),
+        ];
+
+        $this->assertSame(2, self::elegir($candidatos, trayecto: 5, hora: null));
+        $this->assertSame(1, self::elegir($candidatos, trayecto: 5, hora: "14:30"));
     }
 }

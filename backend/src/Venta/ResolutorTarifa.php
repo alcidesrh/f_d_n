@@ -15,8 +15,10 @@ use Money\Money;
 /**
  * Tarifa (`BoletoTarifa`) de un asiento en una salida para un trayecto, por
  * especificidad (`EspecificidadTarifa`). El trayecto puede ser el de la salida
- * o uno de sus subtrayectos: en ambos casos se usan la empresa, la hora y el
- * bus de la salida. Sin tarifa que aplique, el asiento no se vende.
+ * o uno de sus subtrayectos: en ambos casos se usan la empresa y el bus de la
+ * salida, y la hora estimada en el origen del trayecto (la de la salida si es
+ * su origen; sin hora si no se conoce la duración hasta esa parada). Sin
+ * tarifa que aplique, el asiento no se vende.
  *
  * Lee con DBAL a propósito: el `TenantFilter` del ORM dejaría fuera las
  * tarifas sin empresa (comodín), que también aplican.
@@ -25,6 +27,7 @@ final class ResolutorTarifa
 {
     public function __construct(
         private readonly Connection $conexion,
+        private readonly HorasSalida $horas,
     ) {}
 
     public function precio(Salida $salida, Trayecto $trayecto, Asiento $asiento): ?Money
@@ -51,7 +54,7 @@ final class ResolutorTarifa
         }
         $empresaId = $salida->getEmpresa()?->getId();
         $busId = $salida->getBus()?->getId();
-        $hora = $salida->getFecha()->format("H:i");
+        $hora = $this->horas->enParada($salida, (int) $trayecto->getOrigen()->getId())?->format("H:i");
 
         // Solo las que pueden aplicar: el trayecto exacto y, en lo demás, el
         // valor de la salida o comodín. La prioridad la decide la regla pura.
@@ -61,7 +64,7 @@ final class ResolutorTarifa
               WHERE trayecto_id = :trayecto
                 AND (clase IN (:clases) OR clase IS NULL)
                 AND (empresa_id = :empresa OR empresa_id IS NULL)
-                AND (hora IS NULL OR TO_CHAR(hora, 'HH24:MI') = :hora)
+                AND (hora IS NULL OR TO_CHAR(hora, 'HH24:MI') = CAST(:hora AS TEXT))
                 AND (bus_id = :bus OR bus_id IS NULL)",
             [
                 "trayecto" => $trayecto->getId(),

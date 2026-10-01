@@ -10,8 +10,10 @@ namespace App\Venta;
  * Una tarifa aplica a un asiento de una salida si su trayecto es el que se
  * vende (obligatorio) y cada uno de los demás atributos —empresa, hora, bus y
  * clase de asiento— es igual al de la salida/asiento o es null (comodín). Un
- * subtrayecto se cotiza como una salida más: su trayecto, con la empresa, la
- * hora y el bus de la salida que lo contiene.
+ * subtrayecto se cotiza como una salida más: su trayecto, con la empresa y el
+ * bus de la salida que lo contiene y la hora estimada en su parada de origen.
+ * Si esa hora no se conoce se cotiza sin hora: solo aplican las tarifas que no
+ * la fijan.
  *
  * Entre las que aplican gana la que fija los atributos de mayor rango, en
  * este orden: empresa > hora > bus > clase. Es un orden lexicográfico, no un
@@ -31,14 +33,14 @@ final class EspecificidadTarifa
 
     /**
      * @param iterable<CandidatoTarifa> $candidatos
-     * @param string $hora `H:i` de la salida
+     * @param ?string $hora `H:i` en el origen del trayecto; null si no se conoce
      */
     public static function elegir(
         iterable $candidatos,
         string $clase,
         int $trayectoId,
         ?int $empresaId,
-        string $hora,
+        ?string $hora,
         ?int $busId,
     ): ?CandidatoTarifa {
         $mejor = null;
@@ -66,7 +68,7 @@ final class EspecificidadTarifa
         string $clase,
         int $trayectoId,
         ?int $empresaId,
-        string $hora,
+        ?string $hora,
         ?int $busId,
     ): ?int {
         if ($c->trayectoId !== $trayectoId) {
