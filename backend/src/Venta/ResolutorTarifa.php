@@ -13,8 +13,10 @@ use Money\Currency;
 use Money\Money;
 
 /**
- * Tarifa (`BoletoTarifa`) de un asiento en un salida para un trayecto,
- * por especificidad (`EspecificidadTarifa`).
+ * Tarifa (`BoletoTarifa`) de un asiento en una salida para un trayecto, por
+ * especificidad (`EspecificidadTarifa`). El trayecto puede ser el de la salida
+ * o uno de sus subtrayectos: en ambos casos se usan la empresa, la hora y el
+ * bus de la salida. Sin tarifa que aplique, el asiento no se vende.
  *
  * Lee con DBAL a propósito: el `TenantFilter` del ORM dejaría fuera las
  * tarifas sin empresa (comodín), que también aplican.
@@ -36,7 +38,7 @@ final class ResolutorTarifa
     }
 
     /**
-     * Mejor tarifa por clase de asiento.
+     * Mejor tarifa por clase de asiento. Una tarifa sin clase compite en todas.
      *
      * @param list<string> $clases
      *
@@ -49,18 +51,23 @@ final class ResolutorTarifa
         }
         $empresaId = $salida->getEmpresa()?->getId();
         $busId = $salida->getBus()?->getId();
+        $hora = $salida->getFecha()->format("H:i");
 
+        // Solo las que pueden aplicar: el trayecto exacto y, en lo demás, el
+        // valor de la salida o comodín. La prioridad la decide la regla pura.
         $filas = $this->conexion->fetchAllAssociative(
-            'SELECT id, precio_monto, precio_moneda, clase, empresa_id, trayecto_id, bus_id, hora
+            "SELECT id, precio_monto, precio_moneda, clase, empresa_id, trayecto_id, bus_id, TO_CHAR(hora, 'HH24:MI') AS hora
                FROM boleto_tarifa
-              WHERE clase IN (:clases)
-                AND (trayecto_id = :trayecto OR trayecto_id IS NULL)
+              WHERE trayecto_id = :trayecto
+                AND (clase IN (:clases) OR clase IS NULL)
                 AND (empresa_id = :empresa OR empresa_id IS NULL)
-                AND (bus_id = :bus OR bus_id IS NULL)',
+                AND (hora IS NULL OR TO_CHAR(hora, 'HH24:MI') = :hora)
+                AND (bus_id = :bus OR bus_id IS NULL)",
             [
-                "clases" => array_values(array_unique($clases)),
                 "trayecto" => $trayecto->getId(),
+                "clases" => array_values(array_unique($clases)),
                 "empresa" => $empresaId ?? 0,
+                "hora" => $hora,
                 "bus" => $busId ?? 0,
             ],
             ["clases" => ArrayParameterType::STRING],
@@ -70,23 +77,22 @@ final class ResolutorTarifa
             static fn(array $f) => new CandidatoTarifa(
                 (int) $f["id"],
                 new Money((int) $f["precio_monto"], new Currency($f["precio_moneda"])),
-                $f["clase"],
+                (int) $f["trayecto_id"],
                 $f["empresa_id"] !== null ? (int) $f["empresa_id"] : null,
-                $f["trayecto_id"] !== null ? (int) $f["trayecto_id"] : null,
-                $f["hora"] !== null ? substr((string) $f["hora"], 0, 5) : null,
+                $f["hora"],
                 $f["bus_id"] !== null ? (int) $f["bus_id"] : null,
+                $f["clase"],
             ),
             $filas,
         );
 
-        $hora = $salida->getFecha()->format("H:i");
         $resultado = [];
         foreach (array_unique($clases) as $clase) {
             $elegida = EspecificidadTarifa::elegir(
                 $candidatos,
                 $clase,
-                $empresaId,
                 (int) $trayecto->getId(),
+                $empresaId,
                 $hora,
                 $busId,
             );

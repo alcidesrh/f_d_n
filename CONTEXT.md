@@ -97,8 +97,9 @@ Sus ventas no llevan factura electrónica.
 _Avoid_: estación tipo 4, punto de venta
 
 **BoletoTarifa**:
-El precio de referencia de un asiento. Fija algunos de empresa, trayecto, hora, clase y bus (los demás son
-comodín); aplica la que coincide en todos los que fija y fija más (empate: la más reciente).
+El precio de referencia de un asiento. Fija siempre el trayecto y, si quiere, empresa, hora, bus y clase
+(null = comodín); aplica si todo lo que fija coincide con la salida y el asiento. Gana la que fija lo de mayor
+rango: empresa > hora > bus > clase (empate: la más reciente). Un subtrayecto usa la empresa, hora y bus de su salida.
 _Avoid_: tarifa, precio
 
 **Factura**:

@@ -10,7 +10,13 @@ use App\Repository\BoletoTarifaRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Money\Money;
+use Symfony\Component\Validator\Constraints as Assert;
 
+/**
+ * Precio de referencia de un asiento. Ver `App\Venta\EspecificidadTarifa`
+ * para cuál aplica: trayecto obligatorio; empresa, hora, bus y clase en null
+ * son comodín.
+ */
 #[ORM\Entity(repositoryClass: BoletoTarifaRepository::class)]
 #[ApiResourcePaginationPage]
 class BoletoTarifa extends Base
@@ -27,14 +33,18 @@ class BoletoTarifa extends Base
     #[ORM\ManyToOne]
     private ?Bus $bus = null;
 
+    /** Obligatorio: una tarifa siempre es de un trayecto. */
     #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull]
     private ?Trayecto $trayecto = null;
 
     #[ORM\Column(type: Types::TIME_MUTABLE, nullable: true)]
     private ?\DateTime $hora = null;
 
-    #[ORM\Column(type: "string", length: 1, enumType: AsientoClase::class)]
-    private AsientoClase $clase;
+    /** Null: aplica a asientos de cualquier clase. */
+    #[ORM\Column(type: "string", length: 1, nullable: true, enumType: AsientoClase::class)]
+    private ?AsientoClase $clase = null;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
@@ -116,12 +126,12 @@ class BoletoTarifa extends Base
         return $this;
     }
 
-    public function getClase(): AsientoClase
+    public function getClase(): ?AsientoClase
     {
         return $this->clase;
     }
 
-    public function setClase(AsientoClase $clase): static
+    public function setClase(?AsientoClase $clase): static
     {
         $this->clase = $clase;
 

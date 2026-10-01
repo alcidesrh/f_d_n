@@ -784,6 +784,7 @@ class MigradorEstaticos
         );
 
         $count = 0;
+        $sinTrayecto = 0;
         $defaultUsuarioId = $this->getFirstUsuarioId();
 
         foreach ($rows as $row) {
@@ -799,6 +800,11 @@ class MigradorEstaticos
 
             $clase = ((int) ($row["clase_asiento"] ?? 0)) === 2 ? "B" : "A";
             $trayectoId = $this->findTrayectoIdPorTarifa($row);
+            if ($trayectoId === null) {
+                // Una tarifa sin trayecto no aplica a ninguna venta (EspecificidadTarifa).
+                $sinTrayecto++;
+                continue;
+            }
             $usuarioId = $defaultUsuarioId ?? 1;
 
             $data = $this->mapeador->boletoTarifa(
@@ -817,7 +823,7 @@ class MigradorEstaticos
         }
 
         if ($output) {
-            $output->writeln(" <info>{$count}</info>");
+            $output->writeln(" <info>{$count}</info>" . ($sinTrayecto > 0 ? " <comment>({$sinTrayecto} sin trayecto, omitidas)</comment>" : ""));
         }
         return $count;
     }

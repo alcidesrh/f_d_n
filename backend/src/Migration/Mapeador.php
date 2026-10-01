@@ -402,7 +402,7 @@ class Mapeador
         int $empresaId,
         string $clase,
         int $usuarioId,
-        ?int $trayectoId = null,
+        int $trayectoId,
     ): array {
         $nombre = sprintf(
             "Tarifa-%s-%s-%s",
@@ -422,14 +422,6 @@ class Mapeador
             "trayecto_id" => $trayectoId,
             "usuario_id" => $usuarioId,
         ];
-    }
-
-    /**
-     * @deprecated Legacy alias kept for the standalone `migracion` command.
-     */
-    public function tarifa(array $old, int $empresaId): array
-    {
-        return $this->boletoTarifa($old, $empresaId, "A", 1);
     }
 
     private function truncate(?string $value, int $maxLength): ?string
