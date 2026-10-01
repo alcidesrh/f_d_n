@@ -55,6 +55,8 @@ class MigradorIAM {
         ['venta.cortesia', 'BoletoVenta', 'courtesy', 'Venta'],
         ['venta.sin_factura', 'BoletoVenta', 'contingency', 'Venta'],
         ['agencia.acreditar', 'Agencia', 'credit', 'Venta'],
+        // Página web (ADR-023)
+        ['pagina.administrar', 'Pagina', 'manage', 'Página web'],
     ];
 
     private const BASE_PERMISOS = [
@@ -80,6 +82,7 @@ class MigradorIAM {
         'Gestion Asientos' => ['asiento.ver'],
         'Venta Taquilla' => ['venta.vender'],
         'Supervision Venta' => ['venta.vender', 'venta.cortesia', 'venta.sin_factura', 'agencia.acreditar'],
+        'Administracion Pagina Web' => ['pagina.administrar'],
     ];
 
     public function __construct(

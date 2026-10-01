@@ -10,3 +10,8 @@ framework:
             policy: sliding_window
             limit: 30
             interval: '10 minutes'
+        # Formulario de contacto de la página.
+        publico_contacto:
+            policy: sliding_window
+            limit: 5
+            interval: '1 hour'

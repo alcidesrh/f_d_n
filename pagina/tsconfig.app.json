@@ -1,14 +1,40 @@
 {
   "extends": "@vue/tsconfig/tsconfig.dom.json",
-  "include": ["env.d.ts", "src/**/*", "src/**/*.vue"],
+  "include": [
+    "env.d.ts",
+    "src/**/*",
+    "src/**/*.vue"
+  ],
   "compilerOptions": {
     "noUncheckedIndexedAccess": true,
-    "types": ["unplugin-icons/types/vue"],
+    "types": [
+      "unplugin-icons/types/vue"
+    ],
     "paths": {
-      "@/core/croquis/*": ["../frontend/src/core/croquis/*"],
-      "@/shared/bus-map/*": ["../frontend/src/shared/bus-map/*"],
-      "@/shared/formkit/*": ["../frontend/src/shared/formkit/*"],
-      "@/*": ["./src/*"]
+      "@/core/croquis/*": [
+        "../frontend/src/core/croquis/*"
+      ],
+      "@/shared/bus-map/*": [
+        "../frontend/src/shared/bus-map/*"
+      ],
+      "@/shared/formkit/*": [
+        "../frontend/src/shared/formkit/*"
+      ],
+      "@/*": [
+        "./src/*"
+      ],
+      "vue": [
+        "./node_modules/vue"
+      ],
+      "@formkit/core": [
+        "./node_modules/@formkit/core"
+      ],
+      "@formkit/vue": [
+        "./node_modules/@formkit/vue"
+      ],
+      "primevue/*": [
+        "./node_modules/primevue/*"
+      ]
     },
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo"
   }

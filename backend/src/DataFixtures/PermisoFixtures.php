@@ -23,6 +23,7 @@ class PermisoFixtures extends Fixture
             'Gestion Rutas'    => ['ruta.listar', 'ruta.crear', 'ruta.editar', 'ruta.eliminar', 'ruta.ver'],
             'Venta Taquilla'   => ['venta.vender'],
             'Supervision Venta' => ['venta.vender', 'venta.cortesia', 'venta.sin_factura', 'agencia.acreditar'],
+            'Administracion Pagina Web' => ['pagina.administrar'],
         ];
 
         foreach ($permisos as $nombre => $actionCodes) {

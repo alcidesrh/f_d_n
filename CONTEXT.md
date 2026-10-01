@@ -82,8 +82,10 @@ La porción de un salida entre dos de sus paradas, por posición. Un asiento est
 si algún boleto vivo o alguna reserva vigente se solapa con él; tramos que no se solapan comparten asiento.
 
 **Reserva** (precompra):
-Asiento apartado en la página web mientras el cliente paga (`ReservaAsiento`). Vence sola a los 15 minutos
-y nunca después del cierre de venta en línea (30 minutos antes de la salida). En taquilla se ve como reservado.
+Asiento apartado en la página web mientras el cliente paga (`ReservaAsiento`). Se aparta al pulsar "Pagar asientos",
+todo el carrito junto (ida y regreso) o nada. Vence sola a los 15 minutos (se extiende mientras el pago sigue) y nunca
+después de 30 minutos antes de la salida; la venta en línea cierra antes (60 minutos por defecto). En taquilla se ve
+como reservado.
 _Avoid_: preventa, bloqueo
 
 **Cortesía**:

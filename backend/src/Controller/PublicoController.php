@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Entity\BoletoVenta;
 use App\Entity\Enum\EstadoSalida;
+use App\Entity\MensajeContacto;
 use App\Entity\Nacion;
 use App\Entity\Salida;
 use App\Entity\ReservaAsiento;
@@ -16,6 +18,8 @@ use App\Venta\CompraWeb;
 use App\Venta\Comprador;
 use App\Venta\ConsultaVenta;
 use App\Venta\HorasSalida;
+use App\Venta\EnLinea\AjustesPagina;
+use App\Venta\EnLinea\SolicitudCarrito;
 use App\Venta\Excepcion\VentaRechazada;
 use App\Venta\Pago\PasarelaPago;
 use App\Venta\Pago\DireccionFacturacion;
@@ -27,6 +31,10 @@ use App\Venta\ReglasVenta;
 use App\Venta\Reservas;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -61,12 +69,21 @@ final class PublicoController extends AbstractController
         private readonly HorasSalida $horas,
         private readonly RateLimiterFactoryInterface $publicoLimiter,
         private readonly RateLimiterFactoryInterface $publicoPagoLimiter,
+        private readonly RateLimiterFactoryInterface $publicoContactoLimiter,
+        private readonly AjustesPagina $ajustes,
     ) {}
 
     #[Route("/estaciones", name: "estaciones", methods: ["GET"])]
     public function estaciones(Request $request): JsonResponse
     {
         return $this->limitado($request, fn() => $this->consulta->estacionesEnLinea());
+    }
+
+    /** Estaciones con dirección y departamento (página de estaciones). */
+    #[Route("/estaciones/directorio", name: "estaciones_directorio", methods: ["GET"])]
+    public function directorio(Request $request): JsonResponse
+    {
+        return $this->limitado($request, fn() => $this->consulta->directorioEstaciones());
     }
 
     #[Route("/destinos", name: "destinos", methods: ["GET"])]
@@ -82,9 +99,10 @@ final class PublicoController extends AbstractController
         return $this->limitado($request, fn() => [
             "tiposDocumento" => array_map(static fn(TipoDocumento $t) => ["id" => $t->getId(), "nombre" => $t->getNombre()], $this->em->getRepository(TipoDocumento::class)->findBy(["activo" => true], ["nombre" => "ASC"])),
             "naciones" => array_map(static fn(Nacion $n) => ["id" => $n->getId(), "nombre" => $n->getNombre()], $this->em->getRepository(Nacion::class)->findBy([], ["nombre" => "ASC"])),
-            "cierreMinutos" => ReglasVenta::CIERRE_WEB_MINUTOS,
+            "cierreMinutos" => $this->ajustes->actual()->getCierreMinutos(),
             "reservaMinutos" => Reservas::DURACION_MINUTOS,
-            "maxAsientos" => Reservas::MAX_ASIENTOS,
+            "maxAsientos" => SolicitudCarrito::MAX_ASIENTOS,
+            "ventaEnLinea" => $this->ajustes->actual()->getVentaEnLinea(),
         ]);
     }
 
@@ -138,17 +156,22 @@ final class PublicoController extends AbstractController
         });
     }
 
-    /** `{ salida, trayecto, asiento, token? }` → carrito (crea uno si no hay token). */
-    #[Route("/carritos", name: "carrito_apartar", methods: ["POST"])]
-    public function apartar(Request $request): JsonResponse
+    /**
+     * `{ token?, viajes: [{ salida, trayecto?, asientos: [ids] }, ...] }` → carrito.
+     *
+     * "Pagar asientos" (ADR-023): aparta todos los asientos de la ida y del
+     * regreso, o ninguno. Si otro los tomó: 409 `asientos_no_disponibles`
+     * con `viajes: [{ viaje, salida, asientos, numeros }]`. Reemplaza lo que
+     * el carrito tuviera (crea uno si no hay token).
+     */
+    #[Route("/carritos", name: "carrito_reservar", methods: ["POST"])]
+    public function reservar(Request $request): JsonResponse
     {
         return $this->limitado($request, function () use ($request) {
             $datos = $request->toArray();
-            $token = $this->reservas->apartar(
+            $token = $this->reservas->reservar(
                 $this->token($datos["token"] ?? null),
-                (int) ($datos["salida"] ?? 0),
-                isset($datos["trayecto"]) ? (int) $datos["trayecto"] : null,
-                (int) ($datos["asiento"] ?? 0),
+                SolicitudCarrito::desdeArray(is_array($datos["viajes"] ?? null) ? $datos["viajes"] : []),
             );
 
             return $this->carrito($token);
@@ -159,17 +182,6 @@ final class PublicoController extends AbstractController
     public function verCarrito(string $token, Request $request): JsonResponse
     {
         return $this->limitado($request, fn() => $this->carrito($this->tokenObligatorio($token)));
-    }
-
-    #[Route("/carritos/{token}/asientos/{asiento<\d+>}", name: "carrito_liberar", methods: ["DELETE"])]
-    public function liberar(string $token, int $asiento, Request $request): JsonResponse
-    {
-        return $this->limitado($request, function () use ($token, $asiento) {
-            $uuid = $this->tokenObligatorio($token);
-            $this->reservas->liberar($uuid, $asiento);
-
-            return $this->carrito($uuid);
-        });
     }
 
     #[Route("/carritos/{token}", name: "carrito_vaciar", methods: ["DELETE"])]
@@ -220,7 +232,7 @@ final class PublicoController extends AbstractController
 
             $resultado = $this->compras->pagar($uuid, $comprador, $tarjeta, $direccion, $retorno, $navegador, $continuar);
             if ($resultado["estado"] === "completado") {
-                return ["estado" => "completado", "compra" => $this->comprobantes->de($resultado["venta"])];
+                return ["estado" => "completado", "compras" => $this->comprobantes($resultado["ventas"])];
             }
 
             return $resultado;
@@ -289,15 +301,15 @@ final class PublicoController extends AbstractController
             HTML);
     }
 
-    /** Resultado de la compra y comprobante (con el token del carrito). */
+    /** Resultado de la compra y comprobantes (ida y regreso), con el token del carrito. */
     #[Route("/compras/{token}", name: "compra", methods: ["GET"])]
     public function compra(string $token, Request $request): JsonResponse
     {
         return $this->limitado($request, function () use ($token) {
             $uuid = $this->tokenObligatorio($token);
-            $venta = $this->compras->venta($uuid);
-            if ($venta !== null) {
-                return ["estado" => "completado", "compra" => $this->comprobantes->de($venta)];
+            $ventas = $this->compras->ventas($uuid);
+            if ($ventas !== []) {
+                return ["estado" => "completado", "compras" => $this->comprobantes($ventas)];
             }
             $pago = $this->compras->ultimoPago($uuid);
 
@@ -308,12 +320,60 @@ final class PublicoController extends AbstractController
     #[Route("/compras/{token}/boleto.pdf", name: "compra_pdf", methods: ["GET"])]
     public function compraPdf(string $token, Request $request, BoletoPdf $pdf): Response
     {
-        $venta = $this->compras->venta($this->tokenObligatorio($token)) ?? throw $this->createNotFoundException();
+        $ventas = $this->compras->ventas($this->tokenObligatorio($token));
+        if ($ventas === []) {
+            throw $this->createNotFoundException();
+        }
 
-        return new Response($pdf->generar($venta), 200, [
+        return new Response($pdf->generar(...$ventas), 200, [
             "Content-Type" => "application/pdf",
-            "Content-Disposition" => sprintf('%s; filename="%s"', $request->query->getBoolean("ver") ? "inline" : "attachment", BoletoPdf::nombreArchivo($venta)),
+            "Content-Disposition" => sprintf('%s; filename="%s"', $request->query->getBoolean("ver") ? "inline" : "attachment", BoletoPdf::nombreArchivo($ventas[0])),
+            "Cache-Control" => "private, no-store",
         ]);
+    }
+
+    /**
+     * Formulario de contacto: `{ nombre, email, telefono?, mensaje, idioma?, web? }`.
+     * `web` es una trampa para robots (campo oculto): si viene lleno, se
+     * responde bien pero no se guarda.
+     */
+    #[Route("/contacto", name: "contacto", methods: ["POST"])]
+    public function contacto(
+        Request $request,
+        MailerInterface $mailer,
+        LoggerInterface $logger,
+        #[Autowire(env: "default:pagina_contacto_correo_defecto:PAGINA_CONTACTO_CORREO")] string $buzon,
+        #[Autowire(env: "default:venta_correo_remitente_defecto:VENTA_CORREO_REMITENTE")] string $remitente,
+    ): JsonResponse {
+        return $this->limitado($request, function () use ($request, $mailer, $logger, $buzon, $remitente) {
+            $datos = $request->toArray();
+            if (trim((string) ($datos["web"] ?? "")) !== "") {
+                return ["ok" => true];
+            }
+            $texto = static fn(string $k, int $max) => mb_substr(trim((string) ($datos[$k] ?? "")), 0, $max);
+            $nombre = $texto("nombre", 120);
+            $email = $texto("email", 180);
+            $mensaje = $texto("mensaje", 4000);
+            if ($nombre === "" || $mensaje === "" || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+                throw new VentaRechazada("Escriba su nombre, un correo válido y su mensaje.", "contacto_invalido");
+            }
+            $idioma = in_array($datos["idioma"] ?? null, ["es", "en", "fr", "de", "it"], true) ? $datos["idioma"] : "es";
+            $m = new MensajeContacto($nombre, $email, $texto("telefono", 30) ?: null, $mensaje, $idioma, $this->reloj->now());
+            $this->em->persist($m);
+            $this->em->flush();
+            try {
+                $mailer->send((new Email())
+                    ->from($remitente)
+                    ->to($buzon)
+                    ->replyTo($email)
+                    ->subject(sprintf("Contacto desde la página: %s", $nombre))
+                    ->text(sprintf("De: %s <%s>\nTeléfono: %s\nIdioma: %s\n\n%s", $nombre, $email, $m->getTelefono() ?? "—", $idioma, $mensaje)));
+            } catch (\Throwable $e) {
+                $logger->warning("Contacto {id}: no se envió el correo al buzón ({error}); queda en el dashboard.", ["id" => $m->getId(), "error" => $e->getMessage()]);
+            }
+
+            return ["ok" => true];
+        }, $this->publicoContactoLimiter);
     }
 
     /**
@@ -335,35 +395,63 @@ final class PublicoController extends AbstractController
         return $limpios;
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @param list<BoletoVenta> $ventas
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function comprobantes(array $ventas): array
+    {
+        return array_map(fn(BoletoVenta $v) => $this->comprobantes->de($v), $ventas);
+    }
+
+    /**
+     * Carrito: un viaje (o dos, ida y regreso) con sus asientos y precios.
+     *
+     * @return array<string, mixed>
+     */
     private function carrito(Uuid $token): array
     {
-        $reservas = $this->reservas->vigentes($token);
-        if ($reservas === []) {
-            return ["token" => $token->toRfc4122(), "asientos" => [], "total" => null, "expira" => null];
+        $viajes = $this->reservas->viajes($token);
+        if ($viajes === []) {
+            return ["token" => $token->toRfc4122(), "viajes" => [], "total" => null, "expira" => null];
         }
-        $primera = $reservas[0];
-        $cotizacion = $this->reglas->cotizar(
-            $primera->getSalida(),
-            $primera->getTrayecto(),
-            array_map(static fn(ReservaAsiento $r) => $r->getAsiento(), $reservas),
-        );
+        $total = null;
+        $expira = null;
+        $lista = [];
+        foreach ($viajes as $reservas) {
+            $primera = $reservas[0];
+            $cotizacion = $this->reglas->cotizarEnLinea(
+                $primera->getSalida(),
+                $primera->getTrayecto(),
+                array_map(static fn(ReservaAsiento $r) => $r->getAsiento(), $reservas),
+            );
+            $total = $total === null ? $cotizacion->total : $total->add($cotizacion->total);
+            foreach ($reservas as $r) {
+                $expira = $expira === null ? $r->getExpiraEn() : min($expira, $r->getExpiraEn());
+            }
+            $lista[] = [
+                "salida" => [
+                    "id" => $primera->getSalida()->getId(),
+                    "salida" => $primera->getSalida()->getFecha()->format(DATE_ATOM),
+                    "salidaOrigen" => $this->horas->salidaDesde($primera->getSalida(), (int) $primera->getTrayecto()->getOrigen()->getId())->format(DATE_ATOM),
+                    "llegada" => $this->horas->enParada($primera->getSalida(), (int) $primera->getTrayecto()->getDestino()->getId())?->format(DATE_ATOM),
+                    "empresa" => $primera->getSalida()->getEmpresa()?->getNombre(),
+                ],
+                "trayecto" => [
+                    "id" => $primera->getTrayecto()->getId(),
+                    "origen" => $primera->getTrayecto()->getOrigen()->getNombre(),
+                    "destino" => $primera->getTrayecto()->getDestino()->getNombre(),
+                ],
+                ...$cotizacion->toArray(),
+            ];
+        }
 
         return [
             "token" => $token->toRfc4122(),
-            "expira" => min(array_map(static fn(ReservaAsiento $r) => $r->getExpiraEn(), $reservas))->format(DATE_ATOM),
-            "salida" => [
-                "id" => $primera->getSalida()->getId(),
-                "salida" => $primera->getSalida()->getFecha()->format(DATE_ATOM),
-                "salidaOrigen" => $this->horas->salidaDesde($primera->getSalida(), (int) $primera->getTrayecto()->getOrigen()->getId())->format(DATE_ATOM),
-                "empresa" => $primera->getSalida()->getEmpresa()?->getNombre(),
-            ],
-            "trayecto" => [
-                "id" => $primera->getTrayecto()->getId(),
-                "origen" => $primera->getTrayecto()->getOrigen()->getNombre(),
-                "destino" => $primera->getTrayecto()->getDestino()->getNombre(),
-            ],
-            ...$cotizacion->toArray(),
+            "expira" => $expira?->format(DATE_ATOM),
+            "viajes" => $lista,
+            "total" => DatosBoleto::importe($total),
         ];
     }
 
@@ -384,7 +472,7 @@ final class PublicoController extends AbstractController
                 continue;
             }
             try {
-                $c = $this->reglas->cotizar($salida, $trayecto, [$asientos[$clase]]);
+                $c = $this->reglas->cotizarEnLinea($salida, $trayecto, [$asientos[$clase]]);
                 $precios[] = ["clase" => $clase, "precio" => DatosBoleto::importe($c->total)];
             } catch (VentaRechazada) {
                 // Clase sin tarifa: no se vende en línea.

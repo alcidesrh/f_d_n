@@ -49,4 +49,12 @@ final class MapeadorVentaTest extends TestCase
         $this->assertSame(["afiliacion_iva" => "GEN", "usuario" => "usr", "clave" => "pwd"], $e);
         $this->assertSame(["afiliacion_iva" => null, "usuario" => null, "clave" => null], (new Mapeador())->emisorFel([]));
     }
+
+    public function testBoletoConVoucherDelLegado(): void
+    {
+        $this->assertTrue(\App\Migration\Mapeador::esVoucher(["voucher_estacion_id" => "15"]));
+        $this->assertTrue(\App\Migration\Mapeador::esVoucher(["voucher_internet_id" => 3, "voucher_agencia_id" => null]));
+        $this->assertFalse(\App\Migration\Mapeador::esVoucher(["voucher_estacion_id" => null, "voucher_agencia_id" => null, "voucher_internet_id" => null]));
+        $this->assertFalse(\App\Migration\Mapeador::esVoucher([]));
+    }
 }

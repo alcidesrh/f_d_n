@@ -78,6 +78,17 @@ export const router = createRouter({
       },
     },
     {
+      // No empieza con /pagina: Caddy manda /pagina* a la página pública (backend).
+      path: '/venta-en-linea',
+      name: 'venta-en-linea',
+      component: () => import('@/features/pagina-web/PaginaWebPage.vue'),
+      meta: {
+        title: 'Venta en línea (página web)',
+        label: 'Venta en línea',
+        icon: 'world-www',
+      },
+    },
+    {
       path: '/lista/:entity',
       name: 'entity-list',
       props: true,

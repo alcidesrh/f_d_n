@@ -111,6 +111,9 @@ class MigradorEstaticos
                 $contadores["trayecto"] = $this->migrarTrayectos($output);
                 $contadores["tarifa"] = $this->migrarTarifas($output);
             }
+            foreach (self::TABLAS_ID_EXPLICITO as $tabla) {
+                $this->reiniciarIdentidad($tabla);
+            }
             $this->newConn->commit();
         } catch (\Throwable $e) {
             $this->newConn->rollBack();
@@ -119,6 +122,9 @@ class MigradorEstaticos
 
         return $contadores;
     }
+
+    /** Tablas que se insertan con id explícito del legacy. */
+    private const TABLAS_ID_EXPLICITO = ["empresa", "enclave", "cliente", "usuario", "piloto", "bus_marca", "localidad", "boleto_tarifa"];
 
     /**
      * Nombre canónico de entidad → método migrador.
@@ -213,7 +219,7 @@ class MigradorEstaticos
             }
             $data = $this->mapeador->empresa($row);
             $this->newConn->executeStatement(
-                "INSERT INTO empresa (id, nombre, nit, direccion, telefono, email) VALUES (:id, :nombre, :nit, :direccion, :telefono, :email)",
+                "INSERT INTO empresa (id, nombre, alias, nombre_comercial, denominacion_social, nit, direccion, telefono, email) VALUES (:id, :nombre, :alias, :nombre_comercial, :denominacion_social, :nit, :direccion, :telefono, :email)",
                 $data,
             );
             $count++;
@@ -227,13 +233,33 @@ class MigradorEstaticos
 
     // ─── Estacion → Enclave ────────────────────────────────────────
 
+    /**
+     * Copia el departamento del legado a los enclaves ya migrados (mismo id
+     * que `estacion.id`), sin migrar de nuevo. Devuelve los actualizados.
+     */
+    public function actualizarDepartamentos(): int
+    {
+        $count = 0;
+        foreach ($this->fetchOld("SELECT e.id, d.nombre AS departamento_nombre FROM estacion e JOIN departamento d ON d.id = e.departamento_id") as $row) {
+            $count += $this->newConn->executeStatement(
+                "UPDATE enclave SET departamento = :departamento WHERE id = :id AND departamento IS DISTINCT FROM :departamento",
+                ["id" => (int) $row["id"], "departamento" => mb_substr(trim((string) $row["departamento_nombre"]), 0, 60)],
+            );
+        }
+
+        return $count;
+    }
+
     private function migrarEstacions(?OutputInterface $output = null): int
     {
         if ($output) {
             $output->write("<info>Estaciones...</info>");
         }
         // Las agencias (tipo 4) no son enclaves: van a `agencia` (migrarAgencias).
-        $rows = $this->fetchOld("SELECT * FROM estacion WHERE activo = 1 AND (tipoEstacion_id IS NULL OR tipoEstacion_id <> " . self::TIPO_ESTACION_AGENCIA . ")");
+        $rows = $this->fetchOld(
+            "SELECT e.*, d.nombre AS departamento_nombre FROM estacion e LEFT JOIN departamento d ON d.id = e.departamento_id"
+            . " WHERE e.activo = 1 AND (e.tipoEstacion_id IS NULL OR e.tipoEstacion_id <> " . self::TIPO_ESTACION_AGENCIA . ")",
+        );
         $count = 0;
 
         foreach ($rows as $row) {
@@ -243,7 +269,7 @@ class MigradorEstaticos
             }
             $data = $this->mapeador->estacion($row);
             $this->newConn->executeStatement(
-                "INSERT INTO enclave (id, tipo, nombre, direccion, latitud, longitud) VALUES (:id, 'estacion', :nombre, :direccion, :latitud, :longitud)",
+                "INSERT INTO enclave (id, tipo, nombre, direccion, latitud, longitud, departamento) VALUES (:id, 'estacion', :nombre, :direccion, :latitud, :longitud, :departamento)",
                 $data,
             );
             $count++;
@@ -1129,7 +1155,7 @@ class MigradorEstaticos
     private function reiniciarIdentidad(string $tabla): void
     {
         $this->newConn->executeStatement(
-            "SELECT setval(pg_get_serial_sequence('{$tabla}', 'id'), COALESCE((SELECT MAX(id) FROM {$tabla}), 0) + 1, false)",
+            "SELECT setval(pg_get_serial_sequence('{$tabla}', 'id'), GREATEST(COALESCE((SELECT MAX(id) FROM {$tabla}), 0) + 1, 1), false)",
         );
     }
 

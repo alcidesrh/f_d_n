@@ -15,8 +15,9 @@ use Symfony\Component\Uid\Uuid;
  * Las reservas de un mismo carrito comparten `token`. Vencen solas
  * (`expiraEn`): la disponibilidad ignora las vencidas, así que no dependen
  * de ningún proceso de limpieza para liberar el asiento; `app:venta:purgar`
- * solo borra las filas. `expiraEn` nunca pasa del cierre de venta en línea
- * del salida (30 minutos antes de salir, ADR-021).
+ * solo borra las filas. `expiraEn` nunca pasa de
+ * `ReglasVenta::LIBERACION_MINUTOS` (30) antes de la primera salida del
+ * carrito, y todas las del carrito vencen juntas (ADR-023).
  */
 #[ORM\Entity]
 #[ORM\Index(columns: ["salida_id", "expira_en"], name: "idx_reserva_asiento_salida_expira")]

@@ -16,6 +16,9 @@ class Mapeador
         return [
             "id" => (int) $old["id"],
             "nombre" => $this->truncate($old["nombre"] ?? "", 255),
+            "alias" => $this->truncate($old["alias"] ?? null, 15),
+            "nombre_comercial" => $this->truncate($old["nombreComercial"] ?? null, 255),
+            "denominacion_social" => $this->truncate($old["denominacionSocial"] ?? null, 255),
             "nit" => $this->truncate($old["nit"] ?? null, 20),
             "direccion" => $this->truncate($old["direccion"] ?? null, 255),
             "telefono" => $this->truncate($old["telefonos"] ?? null, 20),
@@ -31,6 +34,7 @@ class Mapeador
             "direccion" => $this->truncate($old["direccion"] ?? null, 255),
             "latitud" => $old["latitude"] ?? null,
             "longitud" => $old["longitude"] ?? null,
+            "departamento" => $this->truncate($old["departamento_nombre"] ?? null, 60),
         ];
     }
 
@@ -381,6 +385,18 @@ class Mapeador
             "precio_moneda" => "GTQ",
             "legacy_id" => (string) $old["id"],
         ];
+    }
+
+    /** El boleto del legado se emitió con voucher (no se cobró). */
+    public static function esVoucher(array $old): bool
+    {
+        foreach (["voucher_estacion_id", "voucher_agencia_id", "voucher_internet_id"] as $columna) {
+            if (!empty($old[$columna])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

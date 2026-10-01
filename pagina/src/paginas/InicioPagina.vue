@@ -1,41 +1,164 @@
+<!--
+  Inicio = compra (ADR-023): buscador; al cambiar cualquier campo (con
+  origen, destino y fecha) aparecen las salidas de ida (y de regreso). Cada
+  salida se abre como acordeón con su croquis. "Pagar asientos" aparta
+  todo junto y lleva al pago; si otro tomó algún asiento, se avisa aquí.
+  La búsqueda queda en la URL (`?o=&d=&f=&r=`) para compartirla o volver.
+-->
 <template>
-  <section class="bg-gradient-to-br from-blue-900 via-blue-800 to-sky-700 text-white">
-    <div class="mx-auto max-w-6xl px-4 pb-24 pt-10 md:pt-16">
-      <h1 class="m-0 text-3xl font-bold leading-tight md:text-5xl">Viaje por Guatemala<br class="hidden md:block" /> con su asiento asegurado</h1>
-      <p class="mt-3 max-w-2xl text-base text-blue-100 md:text-lg">
-        Elija su salida, escoja el asiento en el croquis del bus y pague con tarjeta. Su boleto llega al correo.
-      </p>
-    </div>
-  </section>
-  <section class="mx-auto -mt-16 max-w-6xl px-4">
-    <div class="panel shadow-lg">
-      <BuscadorViaje @buscar="irASalidas" />
-    </div>
-  </section>
-  <section class="mx-auto grid max-w-6xl gap-4 px-4 py-10 md:grid-cols-3">
-    <div v-for="b in beneficios" :key="b.titulo" class="panel flex gap-3">
-      <icon :name="b.icono" size="1.75rem" class="shrink-0 text-primary" />
-      <div>
-        <h2 class="m-0 text-base font-semibold">{{ b.titulo }}</h2>
-        <p class="m-0 mt-1 text-sm text-muted-color">{{ b.texto }}</p>
+  <div :class="{ 'pb-32': viaje.cantidad > 0 }">
+    <section class="bg-gradient-to-br from-marca-950 via-marca-900 to-marca-800 text-white">
+      <div class="contenedor pb-20 pt-6 md:pb-28 md:pt-12">
+        <h1 class="m-0 max-w-3xl text-2xl font-bold leading-tight tracking-tight md:text-4xl lg:text-5xl">{{ t('inicio.titulo') }}</h1>
+        <p class="m-0 mt-2 max-w-2xl text-sm text-blue-100 md:mt-3 md:text-lg">{{ t('inicio.subtitulo') }}</p>
       </div>
-    </div>
-  </section>
+    </section>
+
+    <section class="contenedor -mt-16 md:-mt-20">
+      <div class="panel shadow-lg">
+        <BuscadorViaje />
+      </div>
+      <Message v-if="viaje.catalogos && !viaje.catalogos.ventaEnLinea" severity="warn" :closable="false" class="mt-3">
+        {{ t('barra.ventaSuspendida') }}
+      </Message>
+    </section>
+
+    <section v-if="viaje.completa" id="salidas" class="contenedor mt-6 flex flex-col gap-8 md:mt-8">
+      <Message v-if="aviso" severity="warn" @close="aviso = ''">{{ aviso }}</Message>
+      <Message v-if="error" severity="error" @close="error = null">
+        <div class="font-semibold">{{ error.titulo }}</div>
+        <div v-if="error.detalle" class="mt-1 text-sm">{{ error.detalle }}</div>
+      </Message>
+      <ListaSalidas v-for="s in viaje.sentidos" :key="s" :sentido="s" :nombres="nombres(s)" />
+    </section>
+    <p v-else class="contenedor mt-6 text-center text-sm text-muted-color">{{ t('buscador.ayuda') }}</p>
+
+    <!-- Contenido para quien llega a la página (y para los buscadores). -->
+    <section class="contenedor mt-12 grid gap-3 md:grid-cols-3 md:gap-4">
+      <div v-for="b in beneficios" :key="b.titulo" class="panel flex gap-3">
+        <span class="grid size-11 shrink-0 place-items-center rounded-xl bg-marca-50 text-marca-800"><icon :name="b.icono" size="1.4rem" /></span>
+        <div>
+          <h2 class="m-0 text-base font-semibold">{{ t(b.titulo) }}</h2>
+          <p class="m-0 mt-1 text-sm text-muted-color">{{ t(b.texto) }}</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="contenedor mt-12">
+      <div class="flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <h2 class="m-0 text-xl font-bold md:text-2xl">{{ t('inicio.serviciosTitulo') }}</h2>
+          <p class="m-0 mt-1 max-w-2xl text-sm text-muted-color">{{ t('inicio.experiencia') }}</p>
+        </div>
+        <RouterLink :to="{ name: 'servicios', params: { idioma: locale } }" class="inline-flex items-center gap-1 text-sm font-medium no-underline">
+          {{ t('inicio.verServicios') }} <icon name="arrow-right" size="1rem" />
+        </RouterLink>
+      </div>
+      <ul class="m-0 mt-4 grid list-none gap-3 p-0 sm:grid-cols-2 lg:grid-cols-3">
+        <li v-for="s in servicios" :key="s.id">
+          <RouterLink :to="{ name: 'servicios', params: { idioma: locale }, hash: `#${s.id}` }" class="panel flex h-full flex-col gap-1 text-color no-underline transition-shadow hover:shadow-md">
+            <span class="font-semibold text-marca-900">{{ s.nombre }}</span>
+            <span class="text-sm text-muted-color">{{ s.resumen }}</span>
+          </RouterLink>
+        </li>
+      </ul>
+    </section>
+
+    <BarraCompra v-if="viaje.cantidad > 0" :ocupado="carrito.ocupado" @pagar="pagar" />
+  </div>
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
-import BuscadorViaje from '@/componentes/BuscadorViaje.vue'
-import { diaISO } from '@/modelo'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useRoute, useRouter } from 'vue-router'
+import { ErrorPublico } from '@/api'
+import { useCarrito } from '@/carrito'
+import BarraCompra from '@/componentes/compra/BarraCompra.vue'
+import BuscadorViaje from '@/componentes/compra/BuscadorViaje.vue'
+import ListaSalidas from '@/componentes/compra/ListaSalidas.vue'
+import { mensajeDeError, type MensajeError } from '@/errores'
+import type { Idioma } from '@/i18n'
+import { contenido } from '@/i18n/contenido'
+import type { Conflicto } from '@/tipos'
+import { useViaje, type Sentido } from '@/viaje'
 
+const { t, te, locale } = useI18n()
+const route = useRoute()
 const router = useRouter()
+const viaje = useViaje()
+const carrito = useCarrito()
+const aviso = ref('')
+const error = ref<MensajeError | null>(null)
+
+const servicios = computed(() => contenido(locale.value as Idioma).servicios.lista)
 const beneficios = [
-  { icono: 'armchair', titulo: 'Usted elige el asiento', texto: 'Vea en vivo los asientos libres y ocupados de cada bus.' },
-  { icono: 'lock', titulo: 'Pago seguro', texto: 'Visa y Mastercard con verificación 3-D Secure de su banco.' },
-  { icono: 'download', titulo: 'Boleto al instante', texto: 'Descárguelo al pagar y reciba una copia con su factura por correo.' },
+  { icono: 'armchair', titulo: 'inicio.beneficios.asientoTitulo', texto: 'inicio.beneficios.asientoTexto' },
+  { icono: 'shield-check', titulo: 'inicio.beneficios.pagoTitulo', texto: 'inicio.beneficios.pagoTexto' },
+  { icono: 'ticket', titulo: 'inicio.beneficios.boletoTitulo', texto: 'inicio.beneficios.boletoTexto' },
 ]
 
-function irASalidas(b: { origen: number; destino: number; fecha: Date }) {
-  void router.push({ name: 'salidas', query: { origen: b.origen, destino: b.destino, fecha: diaISO(b.fecha) } })
+function nombres(s: Sentido) {
+  const { origen, destino } = viaje.busqueda
+  if (!origen || !destino) return null
+  const [o, d] = s === 'ida' ? [origen, destino] : [destino, origen]
+  return viaje.nombres[o] && viaje.nombres[d] ? { origen: viaje.nombres[o], destino: viaje.nombres[d] } : null
+}
+
+// URL → búsqueda (al entrar con un enlace compartido o al volver).
+function desdeUrl() {
+  const q = route.query
+  const n = (v: unknown) => (Number(v) > 0 ? Number(v) : null)
+  const dia = (v: unknown) => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null)
+  if (!q.o && !q.d) return
+  Object.assign(viaje.busqueda, {
+    origen: n(q.o),
+    destino: n(q.d),
+    fecha: dia(q.f) ?? viaje.busqueda.fecha,
+    idaVuelta: q.r !== undefined,
+    regreso: dia(q.r),
+  })
+}
+
+desdeUrl()
+
+onMounted(async () => {
+  await viaje.cargarCatalogos()
+  // Volvió del pago con los asientos aún apartados: se sueltan mientras edita.
+  if (!carrito.vacio) await carrito.vaciar()
+})
+
+let espera: ReturnType<typeof setTimeout> | null = null
+watch(
+  () => ({ ...viaje.busqueda }),
+  (b) => {
+    if (typeof window === 'undefined') return
+    // Búsqueda → URL (sin crear una entrada de historial por cada cambio).
+    const query = b.origen && b.destino ? { o: String(b.origen), d: String(b.destino), f: b.fecha ?? undefined, ...(b.idaVuelta ? { r: b.regreso ?? '' } : {}) } : {}
+    void router.replace({ query, hash: route.hash })
+    if (espera) clearTimeout(espera)
+    espera = setTimeout(() => void viaje.buscar(), 150)
+  },
+  { deep: true, immediate: true },
+)
+
+async function pagar() {
+  aviso.value = ''
+  error.value = null
+  try {
+    await carrito.reservar(viaje.pedido())
+    await router.push({ name: 'pago', params: { idioma: locale.value } })
+  } catch (e) {
+    if (e instanceof ErrorPublico && e.codigo === 'asientos_no_disponibles' && Array.isArray(e.detalle.viajes)) {
+      const conflictos = e.detalle.viajes as Conflicto[]
+      viaje.quitarConflictos(conflictos)
+      const lista = conflictos.map((c) => `${t(`salidas.${viaje.sentidos[c.viaje] ?? 'ida'}`)}: ${c.numeros.join(', ')}`).join('; ')
+      aviso.value = t('barra.conflicto', { lista })
+      document.getElementById('salidas')?.scrollIntoView({ behavior: 'smooth' })
+      return
+    }
+    error.value = mensajeDeError(e, t, te, { max: viaje.maxAsientos })
+    if (e instanceof ErrorPublico) void viaje.buscar()
+  }
 }
 </script>

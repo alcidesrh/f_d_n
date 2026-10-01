@@ -27,11 +27,8 @@
         </div>
       </template>
     </Column>
-    <Column header="Salida" style="min-width: 12rem">
-      <template #body="{ data }">
-        {{ data.trayecto.origen.nombre }} → {{ data.trayecto.destino.nombre }}
-      </template>
-    </Column>
+    <Column header="Origen" field="trayecto.origen.nombre" style="min-width: 8rem" />
+    <Column header="Destino" field="trayecto.destino.nombre" style="min-width: 8rem" />
     <Column header="Empresa" field="empresa.nombre" style="min-width: 8rem" />
     <Column header="Bus" style="min-width: 7rem">
       <template #body="{ data }">
@@ -41,7 +38,7 @@
             · {{ data.bus.gama }}</span
           ></template
         >
-        <Tag v-else value="Sin bus" severity="warn" />
+        <Chip v-else label="Sin bus" class="chip-warn" />
       </template>
     </Column>
     <Column header="Ocupación" class="whitespace-nowrap">
@@ -51,7 +48,7 @@
     </Column>
     <Column header="Estado">
       <template #body="{ data }">
-        <Tag :value="data.estado" :severity="severidad(data.estado)" />
+        <Chip :label="data.estado" :class="{ 'chip-success': data.estado === 'programada' }" />
       </template>
     </Column>
   </DataTable>
@@ -73,14 +70,23 @@ const seleccionado = computed(
   () => props.salidas.find((r) => r.id === props.salidaId) ?? null,
 )
 const vendible = (r: SalidaResumen) => ['programada', 'abordando'].includes(r.estado) && !!r.bus
-
-function severidad(estado: SalidaResumen['estado']) {
-  return {
-    programada: 'info',
-    abordando: 'warn',
-    iniciada: 'secondary',
-    finalizada: 'secondary',
-    cancelada: 'danger',
-  }[estado]
-}
 </script>
+
+<style scoped>
+.chip-warn {
+  background: var(--p-orange-100);
+  color: var(--p-orange-800);
+}
+.chip-success {
+  background: var(--p-green-100);
+  color: var(--p-green-800);
+}
+:global(.darks) .chip-warn {
+  background: color-mix(in srgb, var(--p-orange-400) 20%, transparent);
+  color: var(--p-orange-300);
+}
+:global(.darks) .chip-success {
+  background: color-mix(in srgb, var(--p-green-400) 20%, transparent);
+  color: var(--p-green-300);
+}
+</style>

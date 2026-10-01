@@ -30,9 +30,24 @@ final class OcupacionTest extends TestCase
 
         $this->assertSame([], Ocupacion::estados($this->it, $this->it->tramo(11), $ocupantes));
         $this->assertSame(
-            [5 => ["estado" => Ocupacion::VENDIDO, "canal" => "estacion"]],
+            [5 => ["estado" => Ocupacion::VENDIDO, "canal" => "estacion", "sinCobro" => null]],
             Ocupacion::estados($this->it, $this->it->tramo(1), $ocupantes),
         );
+    }
+
+    public function testCortesiasYVouchersSeDistinguenDeLoCobrado(): void
+    {
+        $ocupantes = [
+            new Ocupante(1, 1, Ocupante::VENDIDO, CanalVenta::ESTACION, sinCobro: Ocupacion::CORTESIA),
+            new Ocupante(2, 1, Ocupante::VENDIDO, CanalVenta::AGENCIA, sinCobro: Ocupacion::VOUCHER),
+            new Ocupante(3, 1, Ocupante::VENDIDO, CanalVenta::WEB),
+        ];
+
+        $estados = Ocupacion::estados($this->it, $this->it->tramo(1), $ocupantes);
+
+        $this->assertSame(Ocupacion::CORTESIA, $estados[1]["sinCobro"]);
+        $this->assertSame(["estado" => Ocupacion::VENDIDO, "canal" => "agencia", "sinCobro" => Ocupacion::VOUCHER], $estados[2]);
+        $this->assertNull($estados[3]["sinCobro"]);
     }
 
     public function testLasReservasPropiasSeDistinguenDeLasAjenas(): void

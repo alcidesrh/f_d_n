@@ -21,6 +21,11 @@
       <line v-if="clase === 'B'" class="seat__recline" x1="10" y1="33.25" x2="30" y2="33.25" />
     </g>
     <text v-if="numero != null && conNumero" class="seat__num" x="20" y="20.5">{{ numero }}</text>
+    <!-- Sin cobro: una letra además del color (no depender solo del color). -->
+    <g v-if="estado === 'cortesia' || estado === 'voucher'" class="seat__marca">
+      <circle cx="33" cy="7" r="6" />
+      <text x="33" y="7.3">{{ estado === 'cortesia' ? 'C' : 'V' }}</text>
+    </g>
     <g v-if="estado === 'seleccionado'" class="seat__check">
       <circle cx="33" cy="7" r="6" />
       <path d="M30.2 7.1l2 2 3.6-4" />
@@ -107,6 +112,29 @@ withDefaults(
   --seat-fill: var(--bm-sold-agency);
   --seat-stroke: var(--bm-sold-agency-stroke);
   --seat-ink: var(--bm-sold-agency-ink);
+}
+.seat--cortesia {
+  --seat-fill: var(--bm-courtesy);
+  --seat-stroke: var(--bm-courtesy-stroke);
+  --seat-ink: var(--bm-courtesy-ink);
+}
+.seat--voucher {
+  --seat-fill: var(--bm-voucher);
+  --seat-stroke: var(--bm-voucher-stroke);
+  --seat-ink: var(--bm-voucher-ink);
+}
+.seat__marca circle {
+  fill: var(--p-content-background);
+  stroke: var(--seat-stroke);
+  stroke-width: 1.2;
+}
+.seat__marca text {
+  fill: var(--seat-ink);
+  font-size: 8px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
 }
 .seat--seleccionado {
   --seat-fill: var(--p-primary-color);

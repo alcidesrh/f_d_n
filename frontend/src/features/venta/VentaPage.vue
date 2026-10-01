@@ -142,7 +142,7 @@ const cobro = ref(false);
 const cortesia = ref(false);
 let ultimasOpciones: OpcionesCobro | null = null;
 
-const leyenda: ItemLeyenda[] = ["disponible", "seleccionado", "ocupado", "ocupado-agencia", "ocupado-web", "reservado", "B"];
+const leyenda: ItemLeyenda[] = ["disponible", "B", "seleccionado", "ocupado", "ocupado-web", "ocupado-agencia", "reservado", "cortesia", "voucher"];
 
 const opcionesParada = (paradas: Parada[]) =>
   paradas.map((p) => ({

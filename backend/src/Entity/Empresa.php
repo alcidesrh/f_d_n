@@ -15,6 +15,16 @@ class Empresa extends Base
     #[ORM\Column(length: 255)]
     private ?string $nombre = null;
 
+    /** Nombre corto para listas y pantallas. */
+    #[ORM\Column(length: 15, nullable: true)]
+    private ?string $alias = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $nombreComercial = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $denominacionSocial = null;
+
     #[ORM\Column(length: 20, nullable: true)]
     private ?string $nit = null;
 
@@ -60,6 +70,42 @@ class Empresa extends Base
     public function setNombre(string $nombre): static
     {
         $this->nombre = $nombre;
+
+        return $this;
+    }
+
+    public function getAlias(): ?string
+    {
+        return $this->alias;
+    }
+
+    public function setAlias(?string $alias): static
+    {
+        $this->alias = $alias;
+
+        return $this;
+    }
+
+    public function getNombreComercial(): ?string
+    {
+        return $this->nombreComercial;
+    }
+
+    public function setNombreComercial(?string $nombreComercial): static
+    {
+        $this->nombreComercial = $nombreComercial;
+
+        return $this;
+    }
+
+    public function getDenominacionSocial(): ?string
+    {
+        return $this->denominacionSocial;
+    }
+
+    public function setDenominacionSocial(?string $denominacionSocial): static
+    {
+        $this->denominacionSocial = $denominacionSocial;
 
         return $this;
     }

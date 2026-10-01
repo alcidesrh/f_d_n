@@ -8,6 +8,8 @@ use App\Entity\Asiento;
 use App\Entity\Enum\EstadoSalida;
 use App\Entity\Salida;
 use App\Entity\Trayecto;
+use App\Venta\EnLinea\AjustesPagina;
+use App\Venta\EnLinea\Recargo;
 use App\Venta\Excepcion\AsientosNoDisponibles;
 use App\Venta\Excepcion\VentaRechazada;
 use App\Venta\Facturacion\Facturador;
@@ -22,8 +24,12 @@ use Psr\Clock\ClockInterface;
  */
 final class ReglasVenta
 {
-    /** La venta en línea cierra este tiempo antes de la salida (ADR-021). */
-    public const CIERRE_WEB_MINUTOS = 30;
+    /**
+     * Ninguna reserva web (precompra) sigue viva pasado este tiempo antes de
+     * la salida (ADR-023). La venta en línea cierra antes: ver
+     * `ConfiguracionPagina::cierreMinutos` (60 por defecto).
+     */
+    public const LIBERACION_MINUTOS = 30;
 
     public function __construct(
         private readonly EntityManagerInterface $em,
@@ -31,6 +37,7 @@ final class ReglasVenta
         private readonly Disponibilidad $disponibilidad,
         private readonly ResolutorTarifa $tarifas,
         private readonly ClockInterface $reloj,
+        private readonly AjustesPagina $ajustes,
     ) {}
 
     /** Taquilla y agencias venden mientras el salida está programado o abordando. */
@@ -45,16 +52,19 @@ final class ReglasVenta
         $this->exigirBus($salida);
     }
 
-    /** La web vende hasta `CIERRE_WEB_MINUTOS` antes de la salida y solo salidas programados. */
+    /** La web vende solo salidas programadas, hasta su cierre en línea y si la venta en línea está activa. */
     public function exigirVendibleEnLinea(Salida $salida): void
     {
+        if (!$this->ajustes->actual()->getVentaEnLinea()) {
+            throw new VentaRechazada("La venta en línea está suspendida por el momento. Compre su boleto en la estación.", "venta_suspendida", 503);
+        }
         if ($salida->getEstado() !== EstadoSalida::PROGRAMADA) {
             throw new VentaRechazada("Este salida ya no está a la venta en línea.");
         }
         if ($this->reloj->now() >= $this->cierreEnLinea($salida)) {
             throw new VentaRechazada(sprintf(
                 "La venta en línea cierra %d minutos antes de la salida. Compre su boleto en la estación.",
-                self::CIERRE_WEB_MINUTOS,
+                $this->ajustes->actual()->getCierreMinutos(),
             ), "venta_cerrada");
         }
         $this->exigirBus($salida);
@@ -63,7 +73,14 @@ final class ReglasVenta
     public function cierreEnLinea(Salida $salida): \DateTimeImmutable
     {
         return \DateTimeImmutable::createFromMutable($salida->getFecha())
-            ->modify(sprintf("-%d minutes", self::CIERRE_WEB_MINUTOS));
+            ->modify(sprintf("-%d minutes", $this->ajustes->actual()->getCierreMinutos()));
+    }
+
+    /** Hasta cuándo puede seguir apartado un asiento en la web (aunque el pago siga en curso). */
+    public function limiteReservas(Salida $salida): \DateTimeImmutable
+    {
+        return \DateTimeImmutable::createFromMutable($salida->getFecha())
+            ->modify(sprintf("-%d minutes", self::LIBERACION_MINUTOS));
     }
 
     /** Trayecto que viaja el cliente: el del salida o uno de sus subtrayectos. */
@@ -171,6 +188,17 @@ final class ReglasVenta
         }
 
         return new Cotizacion($lineas, $total ?? new Money(0, new Currency("GTQ")));
+    }
+
+    /**
+     * Precio en la página web: la tarifa más el recargo de la página
+     * (`ConfiguracionPagina`), o el `$recargo` que se fijó al empezar el pago.
+     *
+     * @param list<Asiento> $asientos
+     */
+    public function cotizarEnLinea(Salida $salida, Trayecto $viaja, array $asientos, ?Recargo $recargo = null): Cotizacion
+    {
+        return $this->cotizar($salida, $viaja, $asientos)->conRecargo($recargo ?? $this->ajustes->recargo());
     }
 
     /**

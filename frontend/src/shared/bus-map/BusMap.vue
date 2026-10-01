@@ -225,8 +225,10 @@ const esBoton = (e: ElementoCroquis | null): e is AsientoCroquis =>
 const ETIQUETA_ESTADO: Record<EstadoAsiento, string> = {
   disponible: 'disponible',
   ocupado: 'ocupado',
-  'ocupado-web': 'vendido en línea',
+  'ocupado-web': 'vendido en la página',
   'ocupado-agencia': 'vendido por agencia',
+  cortesia: 'cortesía',
+  voucher: 'voucher',
   seleccionado: 'seleccionado',
   reservado: 'reservado',
   bloqueado: 'bloqueado',

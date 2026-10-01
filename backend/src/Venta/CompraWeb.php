@@ -16,6 +16,8 @@ use App\Entity\PagoWeb;
 use App\Entity\Salida;
 use App\Entity\ReservaAsiento;
 use App\Entity\TipoDocumento;
+use App\Venta\EnLinea\AjustesPagina;
+use App\Venta\EnLinea\Recargo;
 use App\Venta\Excepcion\VentaRechazada;
 use App\Venta\Facturacion\CertificacionFallida;
 use App\Venta\Facturacion\ConsultaContribuyente;
@@ -36,9 +38,11 @@ use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * Compra en la página web (ADR-021): cobra el carrito con tarjeta (con los
- * pasos de 3-D Secure que pida la pasarela), registra la venta como si fuera de taquilla
- * (canal `web`, sin usuario), certifica la factura y envía el boleto en PDF.
+ * Compra en la página web (ADR-021, ADR-023): cobra el carrito con tarjeta
+ * (con los pasos de 3-D Secure que pida la pasarela) en un solo cobro, con el
+ * comercio de la empresa de la ida. Registra una venta por salida como si
+ * fuera de taquilla (canal `web`, sin usuario): en ida y vuelta, dos ventas,
+ * cada una facturada por la empresa de su salida. Envía los boletos en PDF.
  *
  * El dinero manda: cobrado el pago, la venta se registra aunque la factura
  * falle (queda `pendiente` y `app:venta:certificar-pendientes` reintenta).
@@ -57,6 +61,7 @@ final class CompraWeb
         private readonly PublicadorOcupacion $publicador,
         private readonly MessageBusInterface $bus,
         private readonly LoggerInterface $logger,
+        private readonly AjustesPagina $ajustes,
     ) {}
 
     /**
@@ -79,9 +84,9 @@ final class CompraWeb
         Navegador $navegador,
         ?array $continuar = null,
     ): array {
-        $previa = $this->venta($token);
-        if ($previa !== null) {
-            return ["estado" => "completado", "venta" => $previa];
+        $previas = $this->ventas($token);
+        if ($previas !== []) {
+            return ["estado" => "completado", "ventas" => $previas];
         }
 
         if ($continuar !== null) {
@@ -106,24 +111,31 @@ final class CompraWeb
             return $this->cobrar($pago, $solicitud, new Continuacion($estado, $continuar));
         }
 
-        $reservas = $this->reservas->vigentes($token);
-        if ($reservas === []) {
+        $viajes = $this->reservas->viajes($token);
+        if ($viajes === []) {
             throw new VentaRechazada("Su selección de asientos venció. Elija sus asientos de nuevo.", "carrito_vencido", 410);
         }
-        $salida = $reservas[0]->getSalida();
-        $this->reglas->exigirVendibleEnLinea($salida);
-        $cotizacion = $this->reglas->cotizar(
-            $salida,
-            $reservas[0]->getTrayecto(),
-            array_map(static fn(ReservaAsiento $r) => $r->getAsiento(), $reservas),
-        );
-        // Antes de cobrar: lo que impediría facturar se corrige ahora, no después.
-        $this->reglas->exigirReceptorFacturable($comprador->nit, $cotizacion->total);
+        $recargo = $this->ajustes->recargo();
+        $total = null;
+        foreach ($viajes as $reservas) {
+            $salida = $reservas[0]->getSalida();
+            $this->reglas->exigirVendibleEnLinea($salida);
+            $salida->getEmpresa() ?? throw new VentaRechazada("Esta salida no tiene empresa: no se puede cobrar en línea.");
+            $cotizacion = $this->reglas->cotizarEnLinea(
+                $salida,
+                $reservas[0]->getTrayecto(),
+                array_map(static fn(ReservaAsiento $r) => $r->getAsiento(), $reservas),
+                $recargo,
+            );
+            // Antes de cobrar: lo que impediría facturar se corrige ahora, no después (una factura por viaje).
+            $this->reglas->exigirReceptorFacturable($comprador->nit, $cotizacion->total);
+            $total = $total === null ? $cotizacion->total : $total->add($cotizacion->total);
+        }
         $this->exigirNitExistente($comprador->nit);
-        $empresa = $salida->getEmpresa() ?? throw new VentaRechazada("Este salida no tiene empresa: no se puede cobrar en línea.");
         $this->reservas->extender($token);
 
-        $pago = new PagoWeb($token, $cotizacion->total, $comprador->toArray(), $tarjeta->marcaTarjeta(), $tarjeta->ultimos4(), $empresa);
+        // Cobra el comercio de la empresa de la ida.
+        $pago = new PagoWeb($token, $total, $comprador->toArray(), $tarjeta->marcaTarjeta(), $tarjeta->ultimos4(), $viajes[0][0]->getSalida()->getEmpresa(), $recargo->porciento, count($viajes));
         $this->em->persist($pago);
         $this->em->flush();
 
@@ -133,9 +145,9 @@ final class CompraWeb
     /** Empresa que cobra el carrito (para la huella del dispositivo). */
     public function empresaDelCarrito(Uuid $token): ?int
     {
-        $reservas = $this->reservas->vigentes($token);
+        $viajes = $this->reservas->viajes($token);
 
-        return $reservas !== [] ? $reservas[0]->getSalida()->getEmpresa()?->getId() : null;
+        return $viajes !== [] ? $viajes[0][0]->getSalida()->getEmpresa()?->getId() : null;
     }
 
     /**
@@ -199,9 +211,19 @@ final class CompraWeb
         }
     }
 
-    public function venta(Uuid $token): ?BoletoVenta
+    /**
+     * Ventas de un carrito pagado: la ida y, si hubo, el regreso.
+     *
+     * @return list<BoletoVenta>
+     */
+    public function ventas(Uuid $token): array
     {
-        return $this->em->getRepository(BoletoVenta::class)->findOneBy(["tokenPublico" => $token]);
+        $ventas = $this->em->getRepository(BoletoVenta::class)->findBy(
+            ["tokenPublico" => [$token, BoletoVenta::tokenRegreso($token)]],
+            ["id" => "ASC"],
+        );
+
+        return array_values($ventas);
     }
 
     /** Último intento de pago del carrito. */
@@ -227,7 +249,7 @@ final class CompraWeb
                 $pago->registrar(EstadoPagoWeb::APROBADO, $resultado->referenciaPasarela, $resultado->autorizacion);
                 $this->em->flush();
 
-                return ["estado" => "completado", "venta" => $this->completar($pago)];
+                return ["estado" => "completado", "ventas" => $this->completar($pago)];
 
             default:
                 $pago->registrar(EstadoPagoWeb::RECHAZADO, $resultado->referenciaPasarela, mensaje: $resultado->mensaje);
@@ -236,13 +258,17 @@ final class CompraWeb
         }
     }
 
-    /** Cobrado: registrar la venta, certificar y enviar el boleto. */
-    private function completar(PagoWeb $pago): BoletoVenta
+    /**
+     * Cobrado: registrar las ventas (todas o ninguna), certificar y enviar los boletos.
+     *
+     * @return list<BoletoVenta>
+     */
+    private function completar(PagoWeb $pago): array
     {
         $pagoId = $pago->getId();
         try {
-            /** @var BoletoVenta $venta */
-            $venta = $this->transaccion->ejecutar(fn() => $this->registrar($this->em->find(PagoWeb::class, $pagoId)));
+            /** @var list<BoletoVenta> $ventas */
+            $ventas = $this->transaccion->ejecutar(fn() => $this->registrar($this->em->find(PagoWeb::class, $pagoId)));
         } catch (\Throwable $e) {
             // Cobrado pero sin venta: se devuelve el dinero (asiento perdido o error inesperado).
             $pago = $this->em->find(PagoWeb::class, $pagoId);
@@ -272,69 +298,96 @@ final class CompraWeb
             );
         }
 
-        try {
-            $this->facturador->certificar($venta);
-        } catch (CertificacionFallida $e) {
-            $venta->setErrorFacturacion($e->getMessage());
-            $this->logger->warning("Venta web {id} sin factura (se reintentará): {error}", ["id" => $venta->getId(), "error" => $e->getMessage()]);
-        } catch (\Throwable $e) {
-            $venta->setErrorFacturacion("Error inesperado del certificador.");
-            $this->logger->error("Venta web {id}: error del certificador: {error}", ["id" => $venta->getId(), "error" => $e->getMessage(), "exception" => $e]);
+        foreach ($ventas as $venta) {
+            try {
+                $this->facturador->certificar($venta);
+            } catch (CertificacionFallida $e) {
+                $venta->setErrorFacturacion($e->getMessage());
+                $this->logger->warning("Venta web {id} sin factura (se reintentará): {error}", ["id" => $venta->getId(), "error" => $e->getMessage()]);
+            } catch (\Throwable $e) {
+                $venta->setErrorFacturacion("Error inesperado del certificador.");
+                $this->logger->error("Venta web {id}: error del certificador: {error}", ["id" => $venta->getId(), "error" => $e->getMessage(), "exception" => $e]);
+            }
+            $this->em->flush();
+            $this->publicador->cambio((int) $venta->getAsientos()->first()->getSalida()->getId());
         }
-        $this->em->flush();
 
-        $this->publicador->cambio((int) $venta->getAsientos()->first()->getSalida()->getId());
-        $this->bus->dispatch(new EnviarBoletoPorCorreo((int) $venta->getId()));
+        // Un solo correo con los boletos de todos los viajes.
+        $ids = array_map(static fn(BoletoVenta $v) => (int) $v->getId(), $ventas);
+        $this->bus->dispatch(new EnviarBoletoPorCorreo($ids[0], array_slice($ids, 1)));
 
-        return $venta;
+        return $ventas;
     }
 
-    private function registrar(PagoWeb $pago): BoletoVenta
+    /**
+     * Una venta por viaje del carrito, con el recargo fijado al empezar el
+     * pago. Si algún asiento se perdió o el precio cambió, no se registra
+     * ninguna (y `completar` reembolsa).
+     *
+     * @return list<BoletoVenta>
+     */
+    private function registrar(PagoWeb $pago): array
     {
         $token = $pago->getToken();
-        $reservas = $this->em->getRepository(ReservaAsiento::class)->findBy(["token" => $token]);
-        if ($reservas === []) {
+        // También las vencidas durante el pago: siguen siendo de este carrito.
+        $viajes = Reservas::agrupar($this->em->getRepository(ReservaAsiento::class)->findBy(["token" => $token]));
+        if ($viajes === [] || count($viajes) !== $pago->getViajes()) {
             throw new VentaRechazada("la selección de asientos ya no existe");
         }
-        $salida = $this->em->find(Salida::class, $reservas[0]->getSalida()->getId(), LockMode::PESSIMISTIC_WRITE);
-        $trayecto = $reservas[0]->getTrayecto();
-        $asientos = array_map(static fn(ReservaAsiento $r) => $r->getAsiento(), $reservas);
-        // Las reservas propias no estorban (aunque hayan vencido durante el pago).
-        $this->reglas->exigirDisponibles($salida, $this->reglas->tramo($salida, $trayecto), $asientos, $token->toRfc4122());
-        $cotizacion = $this->reglas->cotizar($salida, $trayecto, $asientos);
-        if (!$cotizacion->total->equals($pago->getMonto())) {
+        $ids = array_map(static fn(array $r) => (int) $r[0]->getSalida()->getId(), $viajes);
+        sort($ids);
+        foreach ($ids as $id) {
+            $this->em->find(Salida::class, $id, LockMode::PESSIMISTIC_WRITE);
+        }
+
+        $recargo = Recargo::de($pago->getRecargoPorciento());
+        $cliente = $this->cliente(Comprador::desdeArray($pago->getComprador()));
+        $ventas = [];
+        $total = null;
+        foreach ($viajes as $i => $reservas) {
+            $salida = $reservas[0]->getSalida();
+            $trayecto = $reservas[0]->getTrayecto();
+            $asientos = array_map(static fn(ReservaAsiento $r) => $r->getAsiento(), $reservas);
+            // Las reservas propias no estorban (aunque hayan vencido durante el pago).
+            $this->reglas->exigirDisponibles($salida, $this->reglas->tramo($salida, $trayecto), $asientos, $token->toRfc4122());
+            $cotizacion = $this->reglas->cotizarEnLinea($salida, $trayecto, $asientos, $recargo);
+            $total = $total === null ? $cotizacion->total : $total->add($cotizacion->total);
+
+            $venta = (new BoletoVenta())
+                ->setTokenPublico($i === 0 ? $token : BoletoVenta::tokenRegreso($token))
+                ->setCanal(CanalVenta::WEB)
+                ->setCliente($cliente)
+                ->setTotal($cotizacion->total)
+                ->setEnviarCorreo(true)
+                ->setReferenciaPago($pago->getAutorizacion())
+                ->setEstado(EstadoBoletoVenta::CONFIRMADA)
+                ->setEstadoFacturacion($cotizacion->total->isZero() ? EstadoFacturacion::NO_APLICA : EstadoFacturacion::PENDIENTE)
+                ->setCreatedAt(new \DateTime());
+            $this->em->persist($venta);
+
+            foreach ($asientos as $asiento) {
+                $boleto = (new BoletoAsiento())
+                    ->setAsiento($asiento)
+                    ->setTrayecto($trayecto)
+                    ->setSalida($salida)
+                    ->setCliente($cliente)
+                    ->setPrecio($cotizacion->precioDe($asiento));
+                $venta->addAsiento($boleto);
+                $this->em->persist($boleto);
+            }
+            $ventas[] = $venta;
+        }
+        if ($total === null || !$total->equals($pago->getMonto())) {
             throw new VentaRechazada("la tarifa cambió durante el pago");
         }
-
-        $cliente = $this->cliente(Comprador::desdeArray($pago->getComprador()));
-        $venta = (new BoletoVenta())
-            ->setTokenPublico($token)
-            ->setCanal(CanalVenta::WEB)
-            ->setCliente($cliente)
-            ->setTotal($cotizacion->total)
-            ->setEnviarCorreo(true)
-            ->setReferenciaPago($pago->getAutorizacion())
-            ->setEstado(EstadoBoletoVenta::CONFIRMADA)
-            ->setEstadoFacturacion($cotizacion->total->isZero() ? EstadoFacturacion::NO_APLICA : EstadoFacturacion::PENDIENTE)
-            ->setCreatedAt(new \DateTime());
-        $this->em->persist($venta);
-
-        foreach ($asientos as $asiento) {
-            $boleto = (new BoletoAsiento())
-                ->setAsiento($asiento)
-                ->setTrayecto($trayecto)
-                ->setSalida($salida)
-                ->setCliente($cliente)
-                ->setPrecio($cotizacion->precioDe($asiento));
-            $venta->addAsiento($boleto);
-            $this->em->persist($boleto);
+        foreach ($viajes as $reservas) {
+            foreach ($reservas as $r) {
+                $this->em->remove($r);
+            }
         }
-        foreach ($reservas as $r) {
-            $this->em->remove($r);
-        }
-        $pago->completar($venta);
+        $pago->completar($ventas[0], $ventas[1] ?? null);
 
-        return $venta;
+        return $ventas;
     }
 
     private function cliente(Comprador $c): Cliente

@@ -20,4 +20,30 @@ final class AsientosNoDisponibles extends VentaRechazada
             ["asientos" => $numeros],
         );
     }
+
+    /**
+     * Asientos ya ocupados en uno o más viajes de un carrito web.
+     *
+     * @param list<array{salida: int, viaje: int, asientos: list<int>, numeros: list<int>}> $viajes `viaje`: 0 = ida, 1 = regreso
+     */
+    public static function enViajes(array $viajes): self
+    {
+        $partes = [];
+        foreach ($viajes as $v) {
+            $numeros = $v["numeros"];
+            sort($numeros);
+            $partes[] = sprintf(
+                "%s: %s",
+                $v["viaje"] === 0 ? "ida" : "regreso",
+                implode(", ", $numeros),
+            );
+        }
+
+        return new self(
+            sprintf("Mientras elegía, otra persona tomó estos asientos (%s). Elija otros.", implode("; ", $partes)),
+            "asientos_no_disponibles",
+            409,
+            ["viajes" => $viajes],
+        );
+    }
 }

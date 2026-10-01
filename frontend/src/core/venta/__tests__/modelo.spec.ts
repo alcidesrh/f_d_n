@@ -47,6 +47,18 @@ describe('estadoEnMapa', () => {
   ]
   const estado = estadoEnMapa(ocupados, [6])
 
+  it('lo vendido sin cobro se distingue antes que el canal', () => {
+    const e = estadoEnMapa(
+      [
+        { asiento: 1, estado: 'vendido', canal: 'estacion', sinCobro: 'cortesia' },
+        { asiento: 2, estado: 'vendido', canal: 'agencia', sinCobro: 'voucher' },
+        { asiento: 3, estado: 'vendido', canal: 'web', sinCobro: null },
+      ],
+      [],
+    )
+    expect([1, 2, 3].map((id) => e(asiento(id)))).toEqual(['cortesia', 'voucher', 'ocupado-web'])
+  })
+
   it('distingue el canal de lo vendido', () => {
     expect([1, 2, 3].map((id) => estado(asiento(id)))).toEqual([
       'ocupado',

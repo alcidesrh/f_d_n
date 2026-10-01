@@ -75,6 +75,8 @@ export interface AsientoOcupado {
   asiento: number
   estado: EstadoOcupacion
   canal: CanalVenta | null
+  /** Vendido sin cobro: cortesía de taquilla o voucher del legado. */
+  sinCobro?: 'cortesia' | 'voucher' | null
 }
 
 export interface LineaCotizacion {

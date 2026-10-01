@@ -18,6 +18,14 @@ final readonly class Cotizacion
         public Money $total,
     ) {}
 
+    public function conRecargo(EnLinea\Recargo $recargo): self
+    {
+        $lineas = array_map(static fn(array $l) => [...$l, "precio" => $recargo->aplicar($l["precio"])], $this->lineas);
+        $total = array_reduce($lineas, static fn(?Money $t, array $l) => $t === null ? $l["precio"] : $t->add($l["precio"]), null);
+
+        return new self($lineas, $total ?? $this->total);
+    }
+
     public function precioDe(Asiento $asiento): Money
     {
         foreach ($this->lineas as $l) {

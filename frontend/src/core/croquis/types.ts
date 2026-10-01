@@ -58,14 +58,17 @@ export interface PlantillaCroquis {
  * sabe: lo decide quien pinta (p. ej. la ocupación de un salida).
  *
  * En la venta, `ocupado` es vendido en taquilla; `ocupado-web` y
- * `ocupado-agencia` distinguen los otros canales (ADR-021) y `reservado` es
- * la precompra de la página web.
+ * `ocupado-agencia` distinguen los otros canales (ADR-021), `reservado` es
+ * la precompra de la página web, y `cortesia` / `voucher` son vendidos sin
+ * cobro (cortesía de taquilla, voucher del legado).
  */
 export type EstadoAsiento =
   | 'disponible'
   | 'ocupado'
   | 'ocupado-web'
   | 'ocupado-agencia'
+  | 'cortesia'
+  | 'voucher'
   | 'seleccionado'
   | 'reservado'
   | 'bloqueado'
@@ -75,6 +78,8 @@ export const ESTADOS_NO_SELECCIONABLES: readonly EstadoAsiento[] = [
   'ocupado',
   'ocupado-web',
   'ocupado-agencia',
+  'cortesia',
+  'voucher',
   'reservado',
   'bloqueado',
 ]

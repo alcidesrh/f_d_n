@@ -26,3 +26,4 @@
 | [ADR-020](ADR-020-frontend-mobile-first.md) | Frontend mobile-first con breakpoints centralizados | Aceptada |
 | [ADR-021](ADR-021-venta-de-asientos.md) | Venta de asientos por tres canales (taquilla, agencia, web) con factura electrónica | Aceptada |
 | [ADR-022](ADR-022-rename-recorrido-a-salida.md) | Renombrar la entidad Recorrido a Salida (código y base de datos) | Aceptada |
+| [ADR-023](ADR-023-pagina-web-compra-en-una-pagina.md) | Página web: compra en una sola página, ida y vuelta, recargo, idiomas y SEO | Aceptada |

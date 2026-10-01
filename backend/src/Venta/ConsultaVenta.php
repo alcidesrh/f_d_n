@@ -30,6 +30,7 @@ final class ConsultaVenta
         private readonly CroquisBus $croquis,
         private readonly HorasSalida $horas,
         private readonly ClockInterface $reloj,
+        private readonly EnLinea\AjustesPagina $ajustes,
     ) {}
 
     /**
@@ -95,8 +96,12 @@ final class ConsultaVenta
             if ($tarifas === []) {
                 continue;
             }
-            $precios = array_map(static fn(CandidatoTarifa $c) => $c->precio, $tarifas);
+            $recargo = $this->ajustes->recargo();
+            $porClase = array_map(static fn(CandidatoTarifa $c) => $recargo->aplicar($c->precio), $tarifas);
+            $precios = array_values($porClase);
             usort($precios, static fn($a, $b) => $a->compare($b));
+            $ocupados = count(array_filter($estados, static fn(array $e) => $e["estado"] !== Ocupacion::PROPIO));
+            $reservados = count(array_filter($estados, static fn(array $e) => $e["estado"] === Ocupacion::RESERVADO));
 
             $resultado[] = [
                 "id" => $r->getId(),
@@ -106,12 +111,22 @@ final class ConsultaVenta
                 "salidaInicio" => $r->getFecha()->format(DATE_ATOM),
                 "empresa" => $r->getEmpresa()?->getNombre(),
                 "ruta" => sprintf("%s → %s", $r->getTrayecto()->getOrigen()->getNombre(), $r->getTrayecto()->getDestino()->getNombre()),
-                "clases" => array_map(static fn(string $c, CandidatoTarifa $t) => ["clase" => $c, "precio" => DatosBoleto::importe($t->precio)], array_keys($tarifas), $tarifas),
+                "clases" => array_map(
+                    static fn(string $c, $precio) => [
+                        "clase" => $c,
+                        "precio" => DatosBoleto::importe($precio),
+                        "asientos" => count(array_filter($asientos->toArray(), static fn(Asiento $a) => $a->getClase()->value === $c)),
+                    ],
+                    array_keys($porClase),
+                    $porClase,
+                ),
                 "desde" => DatosBoleto::importe($precios[0]),
-                "disponibles" => $asientos->count() - count(array_filter(
-                    $estados,
-                    static fn(array $e) => $e["estado"] !== Ocupacion::PROPIO,
-                )),
+                "capacidad" => $asientos->count(),
+                "ocupados" => $ocupados,
+                "reservados" => $reservados,
+                "disponibles" => max(0, $asientos->count() - $ocupados),
+                "bus" => $r->getBus()->getGama(),
+                "paradas" => max(0, $it->posicion($destinoId) - $it->posicion($origenId) - 1),
                 "cierre" => $this->reglas->cierreEnLinea($r)->format(DATE_ATOM),
             ];
         }
@@ -158,14 +173,22 @@ final class ConsultaVenta
     /**
      * Estado de los asientos ocupados para un tramo (los libres no aparecen).
      *
-     * @return list<array{asiento: int, estado: string, canal: ?string}>
+     * `$conCanal` (taquilla): por qué canal se vendió y si fue sin cobro
+     * (cortesía, voucher). La página web solo ve libre u ocupado.
+     *
+     * @return list<array{asiento: int, estado: string, canal: ?string, sinCobro: ?string}>
      */
     public function ocupacion(Salida $salida, Tramo $tramo, ?string $tokenPropio = null, bool $conCanal = true): array
     {
         $estados = $this->disponibilidad->estados($salida, $tramo, $tokenPropio);
         $lista = [];
         foreach ($estados as $asiento => $e) {
-            $lista[] = ["asiento" => $asiento, "estado" => $e["estado"], "canal" => $conCanal ? $e["canal"] : null];
+            $lista[] = [
+                "asiento" => $asiento,
+                "estado" => $e["estado"],
+                "canal" => $conCanal ? $e["canal"] : null,
+                "sinCobro" => $conCanal ? $e["sinCobro"] : null,
+            ];
         }
 
         return $lista;
@@ -174,14 +197,39 @@ final class ConsultaVenta
     /**
      * Enclaves que son origen de algún trayecto activo (para la web).
      *
-     * @return list<array{id: int, nombre: string}>
+     * @return list<array{id: int, nombre: string, departamento: ?string}>
      */
     public function estacionesEnLinea(): array
     {
         return array_map(
-            static fn(array $f) => ["id" => (int) $f["id"], "nombre" => $f["nombre"]],
+            static fn(array $f) => ["id" => (int) $f["id"], "nombre" => $f["nombre"], "departamento" => $f["departamento"]],
             $this->em->createQuery(
-                "SELECT DISTINCT e.id, e.nombre FROM App\Entity\Trayecto t JOIN t.origen e WHERE t.activo = true ORDER BY e.nombre",
+                "SELECT DISTINCT e.id, e.nombre, e.departamento FROM App\Entity\Trayecto t JOIN t.origen e WHERE t.activo = true ORDER BY e.nombre",
+            )->getArrayResult(),
+        );
+    }
+
+    /**
+     * Estaciones de la página web (las que son origen o destino de algún
+     * trayecto activo), con dirección, departamento y ubicación.
+     *
+     * @return list<array{id: int, nombre: string, direccion: ?string, departamento: ?string, latitud: ?float, longitud: ?float}>
+     */
+    public function directorioEstaciones(): array
+    {
+        return array_map(
+            static fn(array $f) => [
+                "id" => (int) $f["id"],
+                "nombre" => $f["nombre"],
+                "direccion" => $f["direccion"] !== null ? trim(preg_replace('/\s+/', " ", $f["direccion"])) : null,
+                "departamento" => $f["departamento"],
+                "latitud" => $f["latitud"] !== null ? (float) $f["latitud"] : null,
+                "longitud" => $f["longitud"] !== null ? (float) $f["longitud"] : null,
+            ],
+            $this->em->createQuery(
+                "SELECT e.id, e.nombre, e.direccion, e.departamento, e.latitud, e.longitud FROM App\Entity\Estacion e
+                 WHERE EXISTS (SELECT 1 FROM App\Entity\Trayecto t WHERE t.activo = true AND (t.origen = e OR t.destino = e))
+                 ORDER BY e.departamento, e.nombre",
             )->getArrayResult(),
         );
     }
@@ -189,14 +237,14 @@ final class ConsultaVenta
     /**
      * Destinos alcanzables desde un enclave por algún trayecto activo.
      *
-     * @return list<array{id: int, nombre: string}>
+     * @return list<array{id: int, nombre: string, departamento: ?string}>
      */
     public function destinosDesde(int $origenId): array
     {
         return array_map(
-            static fn(array $f) => ["id" => (int) $f["id"], "nombre" => $f["nombre"]],
+            static fn(array $f) => ["id" => (int) $f["id"], "nombre" => $f["nombre"], "departamento" => $f["departamento"]],
             $this->em->createQuery(
-                "SELECT DISTINCT e.id, e.nombre FROM App\Entity\Trayecto t JOIN t.destino e WHERE t.activo = true AND IDENTITY(t.origen) = :origen ORDER BY e.nombre",
+                "SELECT DISTINCT e.id, e.nombre, e.departamento FROM App\Entity\Trayecto t JOIN t.destino e WHERE t.activo = true AND IDENTITY(t.origen) = :origen ORDER BY e.nombre",
             )->setParameter("origen", $origenId)->getArrayResult(),
         );
     }
@@ -241,7 +289,7 @@ final class ConsultaVenta
             "salida" => $r->getFecha()->format(DATE_ATOM),
             "salidaEstacion" => $estacionId !== null ? $this->horaEn($r, $it, $estacionId) : null,
             "estado" => $r->getEstado()->value,
-            "empresa" => $r->getEmpresa() === null ? null : ["id" => $r->getEmpresa()->getId(), "nombre" => $r->getEmpresa()->getNombre()],
+            "empresa" => $r->getEmpresa() === null ? null : ["id" => $r->getEmpresa()->getId(), "nombre" => $r->getEmpresa()->getAlias() ?? $r->getEmpresa()->getNombre()],
             "bus" => $r->getBus() === null ? null : ["id" => $busId, "codigo" => $r->getBus()->getCodigo(), "gama" => $r->getBus()->getGama()],
             "trayecto" => [
                 "id" => $r->getTrayecto()->getId(),

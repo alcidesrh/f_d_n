@@ -183,6 +183,11 @@ class Migrador
             $output->writeln("");
         }
 
+        // Los clientes se insertan con id explícito: la identidad sigue desde el mayor.
+        $this->newConn->executeStatement(
+            "SELECT setval(pg_get_serial_sequence('cliente', 'id'), COALESCE((SELECT MAX(id) FROM cliente), 0) + 1, false)",
+        );
+
         return $contadores;
     }
 
@@ -984,7 +989,7 @@ class Migrador
 
             $estado = $this->resolverEstadoBoletoAsiento($boletoOld);
 
-            $ventaId = $this->crearBoletoVenta($usuarioId, $contadores);
+            $ventaId = $this->crearBoletoVenta($usuarioId, $contadores, Mapeador::esVoucher($boletoOld));
             if (!$ventaId) {
                 continue;
             }
@@ -1007,15 +1012,49 @@ class Migrador
         }
     }
 
-    private function crearBoletoVenta(?int $usuarioId, array &$contadores): ?int
+    /**
+     * Marca `boleto_venta.voucher` en boletos ya migrados (por
+     * `boleto_asiento.legacy_id`), sin migrar de nuevo. Devuelve los marcados.
+     */
+    public function actualizarVouchers(): int
+    {
+        $count = 0;
+        $ids = [];
+        $marcar = function () use (&$ids, &$count) {
+            if ($ids === []) {
+                return;
+            }
+            $count += $this->newConn->executeStatement(
+                "UPDATE boleto_venta v SET voucher = true FROM boleto_asiento b
+                 WHERE b.boleto_venta_id = v.id AND b.legacy_id IN (:ids) AND v.voucher = false",
+                ["ids" => $ids],
+                ["ids" => \Doctrine\DBAL\ArrayParameterType::STRING],
+            );
+            $ids = [];
+        };
+        foreach ($this->fetchOld(
+            "SELECT id FROM boleto WHERE voucher_estacion_id IS NOT NULL OR voucher_agencia_id IS NOT NULL OR voucher_internet_id IS NOT NULL",
+        ) as $row) {
+            $ids[] = (string) $row["id"];
+            if (count($ids) >= 1000) {
+                $marcar();
+            }
+        }
+        $marcar();
+
+        return $count;
+    }
+
+    private function crearBoletoVenta(?int $usuarioId, array &$contadores, bool $voucher = false): ?int
     {
         if (!$usuarioId) {
             $usuarioId = 1;
         }
 
         $insertId = $this->newConn->fetchOne(
-            "INSERT INTO boleto_venta (usuario_id) VALUES (:usuario_id) RETURNING id",
-            ["usuario_id" => $usuarioId],
+            "INSERT INTO boleto_venta (usuario_id, voucher) VALUES (:usuario_id, :voucher) RETURNING id",
+            ["usuario_id" => $usuarioId, "voucher" => $voucher],
+            ["voucher" => \Doctrine\DBAL\ParameterType::BOOLEAN],
         );
         $contadores["boleto_venta"]++;
 

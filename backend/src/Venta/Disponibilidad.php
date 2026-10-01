@@ -35,6 +35,8 @@ final class Disponibilidad
                 "IDENTITY(b.asiento) AS asiento",
                 "IDENTITY(b.trayecto) AS trayecto",
                 "v.canal AS canal",
+                "v.cortesia AS cortesia",
+                "v.voucher AS voucher",
             )
             ->from(BoletoAsiento::class, "b")
             ->join("b.boletoVenta", "v")
@@ -71,6 +73,12 @@ final class Disponibilidad
                     $f["canal"] instanceof CanalVenta
                         ? $f["canal"]
                         : CanalVenta::tryFrom((string) $f["canal"]),
+                    null,
+                    match (true) {
+                        (bool) $f["voucher"] => Ocupacion::VOUCHER,
+                        (bool) $f["cortesia"] => Ocupacion::CORTESIA,
+                        default => null,
+                    },
                 ),
                 $vendidos,
             ),
@@ -90,7 +98,7 @@ final class Disponibilidad
     /**
      * Estado de los asientos ocupados del salida para un tramo.
      *
-     * @return array<int, array{estado: string, canal: ?string}>
+     * @return array<int, array{estado: string, canal: ?string, sinCobro: ?string}>
      */
     public function estados(Salida $salida, Tramo $tramo, ?string $tokenPropio = null): array
     {

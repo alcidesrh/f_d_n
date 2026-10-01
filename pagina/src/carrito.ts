@@ -1,12 +1,13 @@
 /**
- * Carrito de asientos (reservas del backend). El token vive en
- * `sessionStorage`: sobrevive a la vuelta del banco (3-D Secure) en la misma
- * pestaña, y otra pestaña empieza su propia compra.
+ * Carrito: los asientos apartados en el backend al pulsar "Pagar asientos"
+ * (ADR-023). El token vive en `sessionStorage`: sobrevive a la vuelta del
+ * banco (3-D Secure) en la misma pestaña, y otra pestaña empieza su propia
+ * compra.
  */
 import { defineStore } from 'pinia'
 import { computed, ref, shallowRef } from 'vue'
 import * as api from './api'
-import type { Carrito } from './tipos'
+import type { Carrito, ViajePedido } from './tipos'
 
 const CLAVE = 'fdn.carrito'
 
@@ -32,8 +33,9 @@ export const useCarrito = defineStore('carrito', () => {
   const carrito = shallowRef<Carrito | null>(null)
   const ocupado = ref(false)
 
-  const asientos = computed(() => carrito.value?.asientos ?? [])
-  const vacio = computed(() => asientos.value.length === 0)
+  const viajes = computed(() => carrito.value?.viajes ?? [])
+  const vacio = computed(() => viajes.value.length === 0)
+  const asientos = computed(() => viajes.value.reduce((n, v) => n + v.asientos.length, 0))
 
   function aplicar(c: Carrito) {
     carrito.value = c
@@ -50,30 +52,20 @@ export const useCarrito = defineStore('carrito', () => {
     }
   }
 
-  /** Aparta o suelta un asiento. Si el carrito es de otro viaje, lo vacía primero. */
-  async function alternar(salida: number, trayecto: number, asiento: number) {
+  /** Aparta todo (ida y regreso) o nada: si otro tomó algún asiento, `ErrorPublico` 409 con los conflictos. */
+  async function reservar(pedido: ViajePedido[]) {
     ocupado.value = true
     try {
-      if (asientos.value.some((a) => a.asiento === asiento) && token.value) {
-        aplicar(await api.liberar(token.value, asiento))
-        return
-      }
-      const otroViaje =
-        !vacio.value &&
-        (carrito.value?.salida?.id !== salida || carrito.value?.trayecto?.id !== trayecto)
-      if (otroViaje && token.value) {
-        await api.vaciar(token.value)
-        olvidar()
-      }
-      aplicar(await api.apartar({ salida, trayecto, asiento, token: token.value }))
+      aplicar(await api.reservar(pedido, token.value))
     } finally {
       ocupado.value = false
     }
   }
 
+  /** Suelta los asientos (al volver a elegir): otros pueden tomarlos. */
   async function vaciar() {
-    if (token.value) await api.vaciar(token.value).catch(() => undefined)
-    olvidar()
+    if (token.value && !vacio.value) await api.vaciar(token.value).catch(() => undefined)
+    if (carrito.value) carrito.value = { ...carrito.value, viajes: [], total: null, expira: null }
   }
 
   /** Tras comprar (o si venció): el próximo viaje usa otro token. */
@@ -83,5 +75,5 @@ export const useCarrito = defineStore('carrito', () => {
     guardarToken(null)
   }
 
-  return { token, carrito, ocupado, asientos, vacio, refrescar, alternar, vaciar, olvidar }
+  return { token, carrito, ocupado, viajes, vacio, asientos, refrescar, reservar, vaciar, olvidar }
 })

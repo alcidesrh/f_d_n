@@ -24,6 +24,10 @@ class Enclave extends Base
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $direccion = null;
 
+    /** Departamento (Guatemala) o distrito/estado fuera del país: agrupa los enclaves en la página web. */
+    #[ORM\Column(length: 60, nullable: true)]
+    private ?string $departamento = null;
+
     #[ORM\Column(type: "decimal", precision: 10, scale: 7, nullable: true)]
     private ?string $latitud = null;
 
@@ -60,6 +64,18 @@ class Enclave extends Base
     public function setDireccion(?string $direccion): static
     {
         $this->direccion = $direccion;
+
+        return $this;
+    }
+
+    public function getDepartamento(): ?string
+    {
+        return $this->departamento;
+    }
+
+    public function setDepartamento(?string $departamento): static
+    {
+        $this->departamento = $departamento;
 
         return $this;
     }

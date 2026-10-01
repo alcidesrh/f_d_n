@@ -12,12 +12,20 @@ export interface Opcion {
   nombre: string
 }
 
+/** Estación de origen o destino, con su departamento para agrupar. */
+export interface Estacion extends Opcion {
+  departamento: string | null
+}
+
 export interface Catalogos {
   tiposDocumento: Opcion[]
   naciones: Opcion[]
   cierreMinutos: number
   reservaMinutos: number
+  /** Por viaje. */
   maxAsientos: number
+  /** Apagada desde el dashboard: se ven los horarios pero no se vende. */
+  ventaEnLinea: boolean
 }
 
 export interface Salida {
@@ -29,9 +37,17 @@ export interface Salida {
   salidaInicio: string
   empresa: string | null
   ruta: string
-  clases: Array<{ clase: 'A' | 'B'; precio: Importe }>
+  /** Precio en la web (con recargo) y asientos de cada clase. */
+  clases: Array<{ clase: 'A' | 'B'; precio: Importe; asientos: number }>
   desde: Importe
+  capacidad: number
+  /** Vendidos y apartados en el tramo del cliente. */
+  ocupados: number
+  reservados: number
   disponibles: number
+  bus: string | null
+  /** Paradas intermedias entre el origen y el destino del cliente. */
+  paradas: number
   cierre: string
 }
 
@@ -49,14 +65,35 @@ export interface SalidaPublico {
   topico: string
 }
 
+export interface ViajeCarrito {
+  /** `salidaOrigen`: hora estimada donde sube el pasajero. */
+  salida: { id: number; salida: string; salidaOrigen: string; llegada: string | null; empresa: string | null }
+  trayecto: { id: number; origen: string; destino: string }
+  asientos: Array<{ asiento: number; numero: number; clase: 'A' | 'B'; precio: Importe }>
+  total: Importe
+}
+
+/** Asientos apartados al pulsar "Pagar asientos": la ida y, si hay, el regreso. */
 export interface Carrito {
   token: string
   expira: string | null
-  /** `salidaOrigen`: hora estimada donde sube el pasajero. */
-  salida?: { id: number; salida: string; salidaOrigen: string; empresa: string | null }
-  trayecto?: { id: number; origen: string; destino: string }
-  asientos: Array<{ asiento: number; numero: number; clase: 'A' | 'B'; precio: Importe }>
+  viajes: ViajeCarrito[]
   total: Importe | null
+}
+
+/** Lo que se aparta: un viaje por sentido. */
+export interface ViajePedido {
+  salida: number
+  trayecto: number
+  asientos: number[]
+}
+
+/** 409 al apartar: asientos que otro tomó, por viaje (0 = ida, 1 = regreso). */
+export interface Conflicto {
+  viaje: number
+  salida: number
+  asientos: number[]
+  numeros: number[]
 }
 
 export interface Comprador {
@@ -116,7 +153,7 @@ export interface DatosNavegador {
  * volver a enviar el pago con `continuar`.
  */
 export type ResultadoPago =
-  | { estado: 'completado'; compra: Compra }
+  | { estado: 'completado'; compras: Compra[] }
   /** Recolección de datos del dispositivo: POST oculto; aviso de `origenes`. */
   | { estado: 'dispositivo'; url: string; campos: Record<string, string>; origenes: string[] }
   /** Desafío 3-D Secure: POST en un iframe visible de `ancho`×`alto`. */

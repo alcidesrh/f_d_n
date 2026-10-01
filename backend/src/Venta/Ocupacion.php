@@ -20,10 +20,14 @@ final class Ocupacion
     /** Apartado por el propio carrito (web). */
     public const PROPIO = "propio";
 
+    /** Vendidos sin cobro (`sinCobro`): cortesía de taquilla o voucher del legado. */
+    public const CORTESIA = "cortesia";
+    public const VOUCHER = "voucher";
+
     /**
      * @param iterable<Ocupante> $ocupantes
      *
-     * @return array<int, array{estado: string, canal: ?string}> por id de asiento; los libres no aparecen
+     * @return array<int, array{estado: string, canal: ?string, sinCobro: ?string}> por id de asiento; los libres no aparecen
      */
     public static function estados(
         Itinerario $itinerario,
@@ -51,6 +55,7 @@ final class Ocupacion
                 $estados[$o->asientoId] = [
                     "estado" => $estado,
                     "canal" => $o->canal?->value,
+                    "sinCobro" => $o->sinCobro,
                 ];
             }
         }
@@ -63,7 +68,7 @@ final class Ocupacion
      * por otro). Los propios sí se pueden.
      *
      * @param list<int>                                         $pedidos
-     * @param array<int, array{estado: string, canal: ?string}> $estados
+     * @param array<int, array{estado: string, canal: ?string, sinCobro: ?string}> $estados
      *
      * @return list<int>
      */

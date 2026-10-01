@@ -22,5 +22,7 @@ final readonly class Ocupante
         public ?CanalVenta $canal = null,
         /** Token del carrito, en las reservas. */
         public ?string $token = null,
+        /** Vendido sin cobro: `Ocupacion::CORTESIA` o `Ocupacion::VOUCHER` (null si se cobró). */
+        public ?string $sinCobro = null,
     ) {}
 }

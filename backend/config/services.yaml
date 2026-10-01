@@ -6,6 +6,8 @@
 parameters:
     # Remitente de los correos con el boleto (sobrescribible con VENTA_CORREO_REMITENTE).
     venta_correo_remitente_defecto: "boletos@transportesfuentedelnorte.com"
+    # Buzón que recibe el formulario de contacto de la página (sobrescribible con PAGINA_CONTACTO_CORREO).
+    pagina_contacto_correo_defecto: "contacto@transportesfuentedelnorte.com"
     # Certificador FEL: "simulado" (desarrollo) o "forcon" (sobrescribible con FEL_CERTIFICADOR).
     fel_certificador_defecto: "simulado"
     # API de Forcon: ambiente de pruebas; la URL de producción la entrega su soporte (FEL_FORCON_URL).

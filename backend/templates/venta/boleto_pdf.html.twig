@@ -1,9 +1,9 @@
-{# PDF del boleto (venta web y copia por correo). Datos: App\Venta\Boleto\DatosBoleto. #}
+{# PDF del boleto (venta web y copia por correo): una página por venta (ida y regreso). Datos: `boletos` = lista de { b: App\Venta\Boleto\DatosBoleto, codigoBarras }. #}
 <!doctype html>
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<title>Boleto {{ b.id }}</title>
+<title>Boleto {{ boletos|map(x => x.b.codigoBarras)|join(', ') }}</title>
 <style>
   @page { margin: 28px 36px; }
   body { font-family: "DejaVu Sans", sans-serif; font-size: 11px; color: #1f2937; }
@@ -24,6 +24,9 @@
 </style>
 </head>
 <body>
+{% for item in boletos %}
+  {% set b = item.b %}
+  {% set codigoBarras = item.codigoBarras %}
   <table width="100%"><tr>
     <td>
       <h1>Boleto {{ b.empresa.nombre ?? 'Fuente del Norte' }}</h1>
@@ -84,5 +87,7 @@
   </div>
 
   {% include 'venta/_terminos.html.twig' %}
+  {% if not loop.last %}<div style="page-break-after: always"></div>{% endif %}
+{% endfor %}
 </body>
 </html>

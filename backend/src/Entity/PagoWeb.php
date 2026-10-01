@@ -74,9 +74,23 @@ class PagoWeb
     #[ORM\Column(type: "json", nullable: true)]
     private ?array $estadoPasarela = null;
 
+    /** Venta de la ida (o la única). */
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(onDelete: "SET NULL")]
     private ?BoletoVenta $boletoVenta = null;
+
+    /** Venta del regreso en ida y vuelta (su `tokenPublico` es `BoletoVenta::tokenRegreso($token)`). */
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(onDelete: "SET NULL")]
+    private ?BoletoVenta $boletoVentaRegreso = null;
+
+    /** Recargo de la página al empezar el pago: el que se cobra aunque cambie mientras tanto. */
+    #[ORM\Column(type: "decimal", precision: 5, scale: 2, options: ["default" => "0.00"])]
+    private string $recargoPorciento = "0.00";
+
+    /** Viajes del carrito: 1, o 2 si es ida y vuelta. */
+    #[ORM\Column(type: "smallint", options: ["default" => 1])]
+    private int $viajes = 1;
 
     #[ORM\Column]
     private \DateTimeImmutable $creado;
@@ -87,8 +101,10 @@ class PagoWeb
     /**
      * @param array<string, mixed> $comprador
      */
-    public function __construct(Uuid $token, Money $monto, array $comprador, string $marca, string $ultimos4, ?Empresa $empresa = null)
+    public function __construct(Uuid $token, Money $monto, array $comprador, string $marca, string $ultimos4, ?Empresa $empresa = null, string $recargoPorciento = "0.00", int $viajes = 1)
     {
+        $this->recargoPorciento = $recargoPorciento;
+        $this->viajes = $viajes;
         $this->token = $token;
         $this->empresa = $empresa;
         $this->monto = Precio::fromMoney($monto);
@@ -189,14 +205,35 @@ class PagoWeb
         return $this->boletoVenta;
     }
 
-    public function completar(BoletoVenta $venta): void
+    public function completar(BoletoVenta $venta, ?BoletoVenta $regreso = null): void
     {
         $this->boletoVenta = $venta;
+        $this->boletoVentaRegreso = $regreso;
         $this->registrar(EstadoPagoWeb::COMPLETADO);
     }
 
     public function getCreado(): \DateTimeImmutable
     {
         return $this->creado;
+    }
+
+    public function getActualizado(): \DateTimeImmutable
+    {
+        return $this->actualizado;
+    }
+
+    public function getBoletoVentaRegreso(): ?BoletoVenta
+    {
+        return $this->boletoVentaRegreso;
+    }
+
+    public function getRecargoPorciento(): string
+    {
+        return $this->recargoPorciento;
+    }
+
+    public function getViajes(): int
+    {
+        return $this->viajes;
     }
 }

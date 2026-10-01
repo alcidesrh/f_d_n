@@ -37,15 +37,22 @@ final class EnviarBoletoPorCorreoHandler
             return;
         }
 
+        $ventas = [$venta, ...array_values(array_filter(array_map(fn(int $id) => $this->em->find(BoletoVenta::class, $id), $mensaje->otrasVentas)))];
         $datos = $this->comprobantes->de($venta);
         $this->mailer->send(
             (new TemplatedEmail())
                 ->from($this->remitente)
                 ->to($correo)
-                ->subject(sprintf("Su boleto %s – %s a %s", $datos["codigoBarras"], $datos["origen"]["nombre"] ?? "", $datos["destino"]["nombre"] ?? ""))
+                ->subject(sprintf(
+                    "Su boleto %s – %s a %s%s",
+                    $datos["codigoBarras"],
+                    $datos["origen"]["nombre"] ?? "",
+                    $datos["destino"]["nombre"] ?? "",
+                    count($ventas) > 1 ? " (ida y vuelta)" : "",
+                ))
                 ->htmlTemplate("venta/boleto_correo.html.twig")
-                ->context(["b" => $datos])
-                ->attach($this->pdf->generar($venta), BoletoPdf::nombreArchivo($venta), "application/pdf"),
+                ->context(["b" => $datos, "otros" => array_map(fn(BoletoVenta $v) => $this->comprobantes->de($v), array_slice($ventas, 1))])
+                ->attach($this->pdf->generar(...$ventas), BoletoPdf::nombreArchivo($venta), "application/pdf"),
         );
     }
 }

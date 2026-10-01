@@ -10,8 +10,9 @@ use Dompdf\Options;
 use Twig\Environment;
 
 /**
- * PDF del boleto de una venta (el que se descarga en la web y viaja por
- * correo). Plantilla: `templates/venta/boleto_pdf.html.twig`.
+ * PDF del boleto de una o más ventas (el que se descarga en la web y viaja
+ * por correo; en ida y vuelta, una página por viaje). Plantilla:
+ * `templates/venta/boleto_pdf.html.twig`.
  */
 final class BoletoPdf
 {
@@ -20,11 +21,14 @@ final class BoletoPdf
         private readonly Comprobantes $comprobantes,
     ) {}
 
-    public function generar(BoletoVenta $venta): string
+    /** Un PDF con una página por venta (ida y regreso de una compra web). */
+    public function generar(BoletoVenta ...$ventas): string
     {
         $html = $this->twig->render("venta/boleto_pdf.html.twig", [
-            "b" => $this->comprobantes->de($venta),
-            "codigoBarras" => base64_encode(Code128::svg(sprintf("%08d", $venta->getId()))),
+            "boletos" => array_map(fn(BoletoVenta $v) => [
+                "b" => $this->comprobantes->de($v),
+                "codigoBarras" => base64_encode(Code128::svg(sprintf("%08d", $v->getId()))),
+            ], $ventas),
         ]);
 
         $opciones = new Options();

@@ -96,9 +96,17 @@ class BoletoVenta extends TimeLegacyStatusBase
     #[ORM\Embedded(class: Precio::class)]
     private Precio $total;
 
-    /** Asientos que no se cobran (el "voucher"/cortesía del legado): total 0 y sin factura. */
+    /** Asientos que no se cobran, emitidos en taquilla con permiso `venta.cortesia`: total 0 y sin factura. */
     #[ORM\Column(options: ["default" => false])]
     private bool $cortesia = false;
+
+    /**
+     * Boleto del legado emitido con voucher (`boleto.voucher_estacion_id`,
+     * `voucher_agencia_id` o `voucher_internet_id`): no se cobró. Solo lo pone
+     * la migración; el modelo nuevo emite cortesías.
+     */
+    #[ORM\Column(options: ["default" => false])]
+    private bool $voucher = false;
 
     /** Enviar la factura al correo del cliente al confirmarse. */
     #[ORM\Column(options: ["default" => false])]
@@ -332,6 +340,18 @@ class BoletoVenta extends TimeLegacyStatusBase
         return $this;
     }
 
+    public function isVoucher(): bool
+    {
+        return $this->voucher;
+    }
+
+    public function setVoucher(bool $voucher): static
+    {
+        $this->voucher = $voucher;
+
+        return $this;
+    }
+
     public function isEnviarCorreo(): bool
     {
         return $this->enviarCorreo;
@@ -360,6 +380,16 @@ class BoletoVenta extends TimeLegacyStatusBase
     public function getCreada(): ?\DateTime
     {
         return isset($this->createdAt) ? $this->createdAt : null;
+    }
+
+    /**
+     * `tokenPublico` de la venta del regreso de un carrito web de ida y
+     * vuelta: derivado del token del carrito (el de la ida), para que siga
+     * siendo único.
+     */
+    public static function tokenRegreso(Uuid $carrito): Uuid
+    {
+        return Uuid::v5($carrito, "regreso");
     }
 
     public function getTokenPublico(): ?Uuid

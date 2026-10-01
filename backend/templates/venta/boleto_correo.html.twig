@@ -1,10 +1,13 @@
 <p>Hola {{ b.cliente.nombre ?? '' }},</p>
 <p>Gracias por viajar con {{ b.empresa.nombre ?? 'nosotros' }}. Adjuntamos su boleto
 {% if b.factura %}con los datos de su factura electrónica (DTE {{ b.factura.numero }}, serie {{ b.factura.serie }}){% endif %}.</p>
+{% for v in [b]|merge(otros ?? []) %}
+{% if otros ?? [] is not empty %}<p><strong>{{ loop.first ? 'Ida' : 'Regreso' }}{% if not loop.first and v.factura %} · DTE {{ v.factura.numero }}, serie {{ v.factura.serie }}{% endif %}</strong></p>{% endif %}
 <ul>
-  <li><strong>Salida:</strong> {{ b.salida.salidaOrigen|date('d/m/Y h:i A') }}</li>
-  <li><strong>De:</strong> {{ b.origen.nombre }} <strong>a</strong> {{ b.destino.nombre }}</li>
-  <li><strong>Asiento(s):</strong> {{ b.boletos|map(x => x.asiento)|join(', ') }}</li>
-  <li><strong>Total:</strong> {{ b.total.texto }}</li>
+  <li><strong>Salida:</strong> {{ v.salida.salidaOrigen|date('d/m/Y h:i A') }}</li>
+  <li><strong>De:</strong> {{ v.origen.nombre }} <strong>a</strong> {{ v.destino.nombre }}</li>
+  <li><strong>Asiento(s):</strong> {{ v.boletos|map(x => x.asiento)|join(', ') }}</li>
+  <li><strong>Total:</strong> {{ v.total.texto }}</li>
 </ul>
+{% endfor %}
 <p>Preséntelo (impreso o en su teléfono) a la hora de abordar.</p>

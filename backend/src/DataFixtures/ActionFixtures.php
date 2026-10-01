@@ -51,6 +51,8 @@ class ActionFixtures extends Fixture
             ['codigo' => 'venta.cortesia',    'recurso' => 'BoletoVenta', 'operacion' => 'courtesy', 'grupo' => 'Venta', 'nombre' => 'Emitir cortesías (sin cobro)'],
             ['codigo' => 'venta.sin_factura', 'recurso' => 'BoletoVenta', 'operacion' => 'contingency', 'grupo' => 'Venta', 'nombre' => 'Vender sin factura electrónica (contingencia)'],
             ['codigo' => 'agencia.acreditar', 'recurso' => 'Agencia', 'operacion' => 'credit', 'grupo' => 'Venta', 'nombre' => 'Acreditar/ajustar saldo de agencias'],
+            // Página web (ADR-023)
+            ['codigo' => 'pagina.administrar', 'recurso' => 'Pagina', 'operacion' => 'manage', 'grupo' => 'Página web', 'nombre' => 'Compras en línea y configuración de la página web'],
         ];
 
         foreach ($actions as $data) {

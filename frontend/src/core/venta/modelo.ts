@@ -18,6 +18,9 @@ export function estadoEnMapa(
     if (!o) return elegidos.has(id) ? 'seleccionado' : 'disponible'
     if (o.estado === 'propio') return 'seleccionado'
     if (o.estado === 'reservado') return 'reservado'
+    // Sin cobro antes que el canal: importa más que no se cobró que dónde se emitió.
+    if (o.sinCobro === 'voucher') return 'voucher'
+    if (o.sinCobro === 'cortesia') return 'cortesia'
     if (o.canal === 'web') return 'ocupado-web'
     if (o.canal === 'agencia') return 'ocupado-agencia'
     return 'ocupado'
