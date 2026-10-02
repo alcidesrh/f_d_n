@@ -27,3 +27,4 @@
 | [ADR-021](ADR-021-venta-de-asientos.md) | Venta de asientos por tres canales (taquilla, agencia, web) con factura electrónica | Aceptada |
 | [ADR-022](ADR-022-rename-recorrido-a-salida.md) | Renombrar la entidad Recorrido a Salida (código y base de datos) | Aceptada |
 | [ADR-023](ADR-023-pagina-web-compra-en-una-pagina.md) | Página web: compra en una sola página, ida y vuelta, recargo, idiomas y SEO | Aceptada |
+| [ADR-024](ADR-024-gestion-de-salidas.md) | Gestión de salidas: programador, esquemas guardados y editar/anular/eliminar con propagación | Aceptada |

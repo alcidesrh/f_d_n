@@ -24,6 +24,7 @@ class PermisoFixtures extends Fixture
             'Venta Taquilla'   => ['venta.vender'],
             'Supervision Venta' => ['venta.vender', 'venta.cortesia', 'venta.sin_factura', 'agencia.acreditar'],
             'Administracion Pagina Web' => ['pagina.administrar'],
+            'Gestion Salidas'  => ['salida.ver', 'salida.crear', 'salida.editar', 'salida.cancelar', 'salida.eliminar'],
         ];
 
         foreach ($permisos as $nombre => $actionCodes) {

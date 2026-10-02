@@ -4,6 +4,7 @@ namespace App\Doctrine;
 
 use App\Entity\Bus;
 use App\Entity\BoletoTarifa;
+use App\Entity\EsquemaSalida;
 use App\Entity\Piloto;
 use App\Entity\Salida;
 use Doctrine\ORM\Mapping\ClassMetadata;
@@ -25,6 +26,7 @@ final class TenantFilter extends SQLFilter
         Piloto::class,
         Salida::class,
         BoletoTarifa::class,
+        EsquemaSalida::class,
     ];
 
     public function addFilterConstraint(

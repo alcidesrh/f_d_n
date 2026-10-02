@@ -56,6 +56,15 @@ Estado (`EstadoSalida`): `programada → abordando → iniciada → finalizada` 
 `cancelada` solo es alcanzable desde `programada`.
 _Avoid_: servicio, recorrido, itinerario, viaje
 
+**Esquema de salidas**:
+Una configuración guardada con un nombre para programar salidas: un trayecto, las horas del día
+con su bus y cada cuántos días se repite. Es una plantilla: cambiarla no toca las salidas ya creadas.
+_Avoid_: plantilla, horario
+
+**Salidas idénticas**:
+Salidas futuras programadas con el mismo trayecto, bus, empresa y hora; solo cambia el día.
+Editar, anular o eliminar una salida puede propagarse a ellas, salvo a las que tienen asientos vendidos.
+
 **BoletoAsiento**:
 Un asiento vendido dentro de un salida, para un cliente y un trayecto
 (puede ser un subtramo del salida completo), con precio y estado propios.

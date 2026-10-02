@@ -78,6 +78,26 @@ export const router = createRouter({
       },
     },
     {
+      path: '/salidas',
+      name: 'salidas',
+      component: () => import('@/features/salida/SalidasPage.vue'),
+      meta: {
+        title: 'Salidas',
+        label: 'Salidas',
+        icon: 'bus',
+      },
+    },
+    {
+      path: '/salidas/programar',
+      name: 'salidas-programar',
+      component: () => import('@/features/salida/ProgramadorPage.vue'),
+      meta: {
+        title: 'Programar salidas',
+        label: 'Programar salidas',
+        icon: 'calendar-plus',
+      },
+    },
+    {
       // No empieza con /pagina: Caddy manda /pagina* a la página pública (backend).
       path: '/venta-en-linea',
       name: 'venta-en-linea',

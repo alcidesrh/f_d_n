@@ -34,6 +34,7 @@ class MigradorIAM {
         ['salida.ver', 'Salida', 'read', 'Salidas'],
         ['salida.editar', 'Salida', 'update', 'Salidas'],
         ['salida.cancelar', 'Salida', 'cancel', 'Salidas'],
+        ['salida.eliminar', 'Salida', 'delete', 'Salidas'],
         ['ruta.ver', 'Ruta', 'read', 'Rutas'],
         ['ruta.editar', 'Ruta', 'update', 'Rutas'],
         ['empresa.ver', 'Empresa', 'read', 'Empresas'],
@@ -83,6 +84,7 @@ class MigradorIAM {
         'Venta Taquilla' => ['venta.vender'],
         'Supervision Venta' => ['venta.vender', 'venta.cortesia', 'venta.sin_factura', 'agencia.acreditar'],
         'Administracion Pagina Web' => ['pagina.administrar'],
+        'Gestion Salidas' => ['salida.ver', 'salida.crear', 'salida.editar', 'salida.cancelar', 'salida.eliminar'],
     ];
 
     public function __construct(

@@ -51,6 +51,12 @@ class ActionFixtures extends Fixture
             ['codigo' => 'venta.cortesia',    'recurso' => 'BoletoVenta', 'operacion' => 'courtesy', 'grupo' => 'Venta', 'nombre' => 'Emitir cortesías (sin cobro)'],
             ['codigo' => 'venta.sin_factura', 'recurso' => 'BoletoVenta', 'operacion' => 'contingency', 'grupo' => 'Venta', 'nombre' => 'Vender sin factura electrónica (contingencia)'],
             ['codigo' => 'agencia.acreditar', 'recurso' => 'Agencia', 'operacion' => 'credit', 'grupo' => 'Venta', 'nombre' => 'Acreditar/ajustar saldo de agencias'],
+            // Gestión de salidas (ADR-024)
+            ['codigo' => 'salida.ver',      'recurso' => 'Salida', 'operacion' => 'read',   'grupo' => 'Salidas', 'nombre' => 'Ver salidas'],
+            ['codigo' => 'salida.crear',    'recurso' => 'Salida', 'operacion' => 'create', 'grupo' => 'Salidas', 'nombre' => 'Programar salidas y administrar esquemas'],
+            ['codigo' => 'salida.editar',   'recurso' => 'Salida', 'operacion' => 'update', 'grupo' => 'Salidas', 'nombre' => 'Editar salidas'],
+            ['codigo' => 'salida.cancelar', 'recurso' => 'Salida', 'operacion' => 'cancel', 'grupo' => 'Salidas', 'nombre' => 'Anular salidas'],
+            ['codigo' => 'salida.eliminar', 'recurso' => 'Salida', 'operacion' => 'delete', 'grupo' => 'Salidas', 'nombre' => 'Eliminar salidas'],
             // Página web (ADR-023)
             ['codigo' => 'pagina.administrar', 'recurso' => 'Pagina', 'operacion' => 'manage', 'grupo' => 'Página web', 'nombre' => 'Compras en línea y configuración de la página web'],
         ];
