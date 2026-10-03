@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Migration\Entidad;
 
+use App\Migration\IndicadoresMigracion;
 use App\Migration\Migrador;
 use App\Migration\MigradorEstaticos;
 use App\Migration\MigradorIAM;
@@ -16,7 +17,7 @@ use Symfony\Component\DependencyInjection\Attribute\Target;
  * Catálogo de migradores por entidad + orden del flujo "estáticos".
  *
  * Nombres canónicos: empresa, estacion, localidad, marca, piloto, tipo_pago,
- * moneda, tipo_documento, nacionalidad, cliente, usuario, agencia, bus,
+ * moneda, tipo_documento, nacionalidad, cliente, usuario, agencia, bus_clase, bus,
  * asiento, senal, trayecto, tarifa, salida, iam, config.
  *
  * La entidad "salida" se marca SIN dependencias porque migrarSalida ya recorre
@@ -47,6 +48,7 @@ class RegistroMigradores
         "agencia",
         "fel",
         "marca",
+        "bus_clase",
         "bus",
         "asiento",
         "senal",
@@ -174,12 +176,15 @@ class RegistroMigradores
                 "usuario",
                 "api_token",
             ]),
+            "bus_clase" => $estatica("bus_clase", "Clases de bus", "bus_clase", [
+                "bus_clase",
+            ]),
             "bus" => $estatica(
                 "bus",
                 "Buses",
                 "bus",
                 ["bus"],
-                ["empresa", "marca"],
+                ["empresa", "marca", "bus_clase"],
             ),
             // Asientos y señales son del tipo de bus en el legado: se cuentan
             // por bus (cada bus recibe su copia).
@@ -211,7 +216,8 @@ class RegistroMigradores
                 "Tarifas",
                 "tarifas_boleto",
                 ["boleto_tarifa"],
-                ["empresa", "trayecto", "usuario"],
+                ["trayecto", "bus_clase", "usuario"],
+                IndicadoresMigracion::LEGADO_TARIFAS,
             ),
             "salida" => new MigradorEntidadSalida($this->migrador),
             "iam" => new MigradorEntidadIam($this->iam),

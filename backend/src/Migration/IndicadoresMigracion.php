@@ -18,6 +18,13 @@ use Symfony\Component\DependencyInjection\Attribute\Lazy;
 #[Lazy]
 final class IndicadoresMigracion
 {
+    /**
+     * Tarifas del legado que se migran: la más reciente de cada grupo de
+     * iguales (ver `MigradorEstaticos::migrarTarifas`). No descuenta las que
+     * no tienen trayecto en el modelo nuevo.
+     */
+    public const LEGADO_TARIFAS = "SELECT COUNT(*) FROM (SELECT DISTINCT estacion_origen_id, estacion_destino_id, clase_asiento_id, clase_bus_id, horaInicialSalida, horaFinalSalida FROM tarifas_boleto) t";
+
     /** @var array<string, array{nuevo: string, legado: ?string}> */
     private const CONTEOS = [
         "empresa" => [
@@ -35,6 +42,10 @@ final class IndicadoresMigracion
         "marca" => [
             "nuevo" => "SELECT COUNT(*) FROM bus_marca",
             "legado" => "SELECT COUNT(*) FROM bus_marca",
+        ],
+        "bus_clase" => [
+            "nuevo" => "SELECT COUNT(*) FROM bus_clase",
+            "legado" => "SELECT COUNT(*) FROM bus_clase",
         ],
         "piloto" => [
             "nuevo" => "SELECT COUNT(*) FROM piloto",
@@ -92,7 +103,7 @@ final class IndicadoresMigracion
         ],
         "tarifa" => [
             "nuevo" => "SELECT COUNT(*) FROM boleto_tarifa",
-            "legado" => "SELECT COUNT(*) FROM tarifas_boleto",
+            "legado" => self::LEGADO_TARIFAS,
         ],
         "salida" => [
             "nuevo" => "SELECT COUNT(*) FROM salida",

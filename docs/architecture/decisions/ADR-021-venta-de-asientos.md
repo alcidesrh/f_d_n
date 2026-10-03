@@ -18,7 +18,7 @@ El modelo nuevo tenía `BoletoVenta`, `BoletoAsiento`, `BoletoTarifa` (sin resol
 
 - **Itinerario** (`Itinerario`, `Itinerarios`): las paradas de un trayecto se ordenan topológicamente a partir de sus subtrayectos (origen primero, destino al final, descartando aristas que llegan al origen o salen del destino: así el trayecto inverso no entra). Da el **tramo** `[desde, hasta)` de cada trayecto vendible y la hora estimada en cada parada (duración del trayecto origen→parada, `HorasRecorrido`).
 - **Ocupación por tramos** (`Ocupacion`, `Disponibilidad`): un asiento está ocupado para un tramo si algún boleto vivo (no anulado ni reasignado, incluidas ventas pendientes de factura) o alguna reserva web vigente se solapa. El mismo asiento se vende en tramos que no se solapan (A→B y B→C). Un boleto con un trayecto ajeno al itinerario ocupa todo el recorrido (ante la duda no se vende dos veces).
-- **Tarifa por especificidad** (`EspecificidadTarifa`, `ResolutorTarifa`): cada `BoletoTarifa` fija algunos de empresa, trayecto, hora, clase y bus (los demás son comodín). Aplica la que coincide en todos los que fija y fija más; empate → la más reciente. Se lee por DBAL para no perder las tarifas sin empresa bajo el `TenantFilter`. En taquilla se puede **cobrar el trayecto completo** del recorrido aunque el pasajero viaje un subtrayecto.
+- **Tarifa** (`EspecificidadTarifa`, `ResolutorTarifa`): la más reciente del trayecto y la clase de asiento cuyos demás campos (empresa, clase de bus, horario, bus) coinciden o están vacíos, relajándolos por prioridad si ninguna cumple. Ver la enmienda de 2026-10 al final. Se lee por DBAL para no perder las tarifas sin empresa bajo el `TenantFilter`. En taquilla se puede **cobrar el trayecto completo** del recorrido aunque el pasajero viaje un subtrayecto.
 - **Concurrencia:** toda venta/reserva bloquea la fila del recorrido (`PESSIMISTIC_WRITE`) mientras valida disponibilidad y aparta; el saldo de una agencia se mueve con la fila de la agencia bloqueada.
 
 ### Canales
@@ -98,3 +98,17 @@ El modelo nuevo tenía `BoletoVenta`, `BoletoAsiento`, `BoletoTarifa` (sin resol
 - El orden de las paradas se deduce de los subtrayectos; un trayecto sin subtrayectos solo vende origen→destino. Las horas por parada son estimadas (duración de los trayectos).
 - La página no entra en la imagen de producción del backend automáticamente (el contexto de build es `backend/`): hay que compilarla (`npm run build` en `pagina/`) antes de construir la imagen.
 - Anulación y reasignación de boletos siguen sin operación de dominio.
+
+## Enmienda 2026-10: tarifas como en el legado
+
+La primera versión de `BoletoTarifa` no reflejaba cómo el legado elegía la tarifa (`TarifaBoletoRepository::getTarifaBoleto`: origen, destino, **clase de bus**, clase de asiento, **horario** de salida y la **última `fechaEfectividad` vigente**; sin empresa). La migración le asignaba la primera empresa a todas, leía una columna inexistente (`clase_asiento`, todas quedaban clase A), importaba todo el historial y dejaba como comodín de trayecto las tarifas de pares sin trayecto. Resultado: una salida de otra empresa no tenía tarifa (la página no la mostraba) y el resto cobraba la tarifa de id mayor de cualquier clase de bus.
+
+Decisión:
+
+- Catálogo `BusClase` (ids del legado) y `Bus.clase` (del `bus_tipo.clase_id` del legado). `BoletoTarifa.busClase` es un atributo más de especificidad.
+- `BoletoTarifa.hora` (exacta) pasa a horario `horaDesde`–`horaHasta`, extremos incluidos y lados abiertos si falta uno; si `horaDesde` > `horaHasta` cruza la medianoche (el legado tenía 15 tarifas así que nunca aplicaba). Se compara con la hora en que parte la salida.
+- `BoletoTarifa.vigenteDesde`: solo aplican las ya vigentes.
+- **Política de elección** (reemplaza a "la que fija más atributos"): siempre se exigen la clase de asiento y el trayecto (o tarifa sin trayecto). Los demás campos tienen prioridad empresa > clase de bus > horario > bus; de las tarifas cuyos campos coinciden o están vacíos gana la **más reciente** (`vigenteDesde`, luego id). Si no hay ninguna se deja de exigir el bus, luego el horario, luego la clase de bus y por último la empresa. Con esto se cubre el respaldo del legado (si no había tarifa para la clase de bus del itinerario probaba con la del bus de la salida): un bus de una clase sin tarifa en el trayecto toma la más reciente del trayecto. Consecuencia: a igual nivel, una tarifa nueva genérica (campos vacíos) desplaza a una más específica pero más antigua.
+- Migración: la tarifa del legado no tiene empresa (comodín). De cada grupo de tarifas iguales (origen, destino, clase de asiento, clase de bus, horario) se migra solo la más reciente (`fechaEfectividad`, luego id); el resto es historial y se borra si ya estaba migrado. Se omiten las de pares sin trayecto. Las ganadoras se corrigen por upsert, así que volver a migrar "tarifa" repara una base ya migrada.
+
+Consecuencia: un bus sin clase de bus, o de una clase sin tarifa en el trayecto, toma la tarifa más reciente del trayecto (relajación de la clase de bus); conviene asignarle la clase a cada bus para que cobre la de su clase.

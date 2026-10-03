@@ -411,41 +411,37 @@ class Mapeador
 
     /**
      * BoletoTarifa old PK is numeric → use as new PK, no legacy_id.
-     * `clase_asiento` legacy: 1 = A, 2 = B (ver ClaseAsiento::A/B).
+     * La tarifa del legado no tiene empresa: aplica a cualquiera (comodín).
+     * Las horas llegan como `HH:MM` y la vigencia como `AAAA-MM-DD HH:MM:SS`
+     * (convertidas en el SELECT); `tarifaValor` son quetzales → centavos.
      */
     public function boletoTarifa(
         array $old,
-        int $empresaId,
         string $clase,
         int $usuarioId,
-        ?int $trayectoId = null,
+        int $trayectoId,
+        int $busClaseId,
     ): array {
-        $nombre = sprintf(
-            "Tarifa-%s-%s-%s",
-            $old["estacion_origen_id"] ?? "?",
-            $old["estacion_destino_id"] ?? "?",
-            $old["id"],
-        );
-
         return [
             "id" => (int) $old["id"],
-            "nombre" => $nombre,
-            "precio_monto" => (int) (($old["tarifaValor"] ?? 0) * 100),
+            "nombre" => sprintf(
+                "Tarifa-%s-%s-%s",
+                $old["estacion_origen_id"] ?? "?",
+                $old["estacion_destino_id"] ?? "?",
+                $old["id"],
+            ),
+            "precio_monto" => (int) round(((float) ($old["tarifaValor"] ?? 0)) * 100),
             "precio_moneda" => "GTQ",
             "clase" => $clase,
-            "empresa_id" => $empresaId,
+            "empresa_id" => null,
             "bus_id" => null,
+            "bus_clase_id" => $busClaseId,
             "trayecto_id" => $trayectoId,
+            "hora_desde" => $old["hora_desde"] ?: null,
+            "hora_hasta" => $old["hora_hasta"] ?: null,
+            "vigente_desde" => $old["vigente_desde"],
             "usuario_id" => $usuarioId,
         ];
-    }
-
-    /**
-     * @deprecated Legacy alias kept for the standalone `migracion` command.
-     */
-    public function tarifa(array $old, int $empresaId): array
-    {
-        return $this->boletoTarifa($old, $empresaId, "A", 1);
     }
 
     private function truncate(?string $value, int $maxLength): ?string

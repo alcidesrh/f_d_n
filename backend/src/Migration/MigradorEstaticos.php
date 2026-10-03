@@ -5,6 +5,7 @@ namespace App\Migration;
 use App\Migration\Job\Progreso;
 use App\Venta\Facturacion\CredencialesFel;
 use DateTime;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -13,7 +14,7 @@ use Symfony\Component\DependencyInjection\Attribute\Target;
 /**
  * Migrates static (non-growing) entities from legacy FDN to the new system.
  *
- * Order matters: Empresa → Estacion → Bus → Asiento/Señal → Cliente → Usuario
+ * Order matters: Empresa → Estacion → BusClase → Bus → Asiento/Señal → Cliente → Usuario
  * Trayectos and Tarifas are handled separately due to their complex derivation logic.
  *
  * Static entities with numeric old PKs (empresa, estacion, cliente, usuario, tarifa)
@@ -51,6 +52,7 @@ class MigradorEstaticos
         $contadores = [
             "empresa" => 0,
             "estacion" => 0,
+            "bus_clase" => 0,
             "bus" => 0,
             "asiento" => 0,
             "senal" => 0,
@@ -105,6 +107,7 @@ class MigradorEstaticos
                 $contadores["agencia"] = $this->migrarAgencias($output);
                 $contadores["fel"] = $this->migrarFel($output);
                 $contadores["bus_marca"] = $this->migrarMarcas($output);
+                $contadores["bus_clase"] = $this->migrarBusClases($output);
                 $contadores["bus"] = $this->migrarBuss($output);
                 $contadores["asiento"] = $this->migrarAsientos($output);
                 $contadores["senal"] = $this->migrarSenales($output);
@@ -124,7 +127,7 @@ class MigradorEstaticos
     }
 
     /** Tablas que se insertan con id explícito del legacy. */
-    private const TABLAS_ID_EXPLICITO = ["empresa", "enclave", "cliente", "usuario", "piloto", "bus_marca", "localidad", "boleto_tarifa"];
+    private const TABLAS_ID_EXPLICITO = ["empresa", "enclave", "cliente", "usuario", "piloto", "bus_marca", "bus_clase", "localidad", "boleto_tarifa"];
 
     /**
      * Nombre canónico de entidad → método migrador.
@@ -135,6 +138,7 @@ class MigradorEstaticos
         "estacion" => "migrarEstacions",
         "cliente" => "migrarClientes",
         "usuario" => "migrarUsuarios",
+        "bus_clase" => "migrarBusClases",
         "bus" => "migrarBuss",
         "asiento" => "migrarAsientos",
         "senal" => "migrarSenales",
@@ -397,12 +401,18 @@ class MigradorEstaticos
             $output->write("<info>Buses...</info>");
         }
         $rows = $this->fetchOld(
-            "SELECT b.*, bt.descripcion AS tipo_desc FROM bus b LEFT JOIN bus_tipo bt ON bt.id = b.tipo_id",
+            "SELECT b.*, bt.descripcion AS tipo_desc, bt.clase_id AS clase_id FROM bus b LEFT JOIN bus_tipo bt ON bt.id = b.tipo_id",
         );
         $count = 0;
 
         foreach ($rows as $row) {
+            $claseId = $this->resolveBusClaseId((int) ($row["clase_id"] ?? 0));
             if ($this->existe("bus", $row["codigo"])) {
+                // Buses migrados antes de que existiera la clase de bus.
+                $this->newConn->executeStatement(
+                    "UPDATE bus SET clase_id = :clase WHERE codigo = :codigo AND clase_id IS NULL",
+                    ["clase" => $claseId, "codigo" => $row["codigo"]],
+                );
                 continue;
             }
             if (!$row["empresa_id"]) {
@@ -418,6 +428,7 @@ class MigradorEstaticos
             $data["gama"] = isset($row["tipo_desc"])
                 ? mb_substr($row["tipo_desc"], 0, 50)
                 : null;
+            $data["clase_id"] = $claseId;
 
             // Prepare insert dynamically from mapped keys so we include additional fields
             $fields = implode(", ", array_keys($data));
@@ -800,44 +811,118 @@ class MigradorEstaticos
 
     // ─── Tarifa ────────────────────────────────────────────────────
 
+    /**
+     * Solo la más reciente de cada grupo de tarifas iguales (mismo origen,
+     * destino, clase de asiento, clase de bus y horario), por
+     * `fechaEfectividad` y luego id, como las elegía el legado. Las demás del
+     * grupo son historial: no se migran, y si ya estaban migradas se borran.
+     * Tampoco se migran las de un par origen→destino sin trayecto en el
+     * modelo nuevo (aplicarían a cualquier trayecto) ni las de una clase de
+     * bus sin migrar. Las ganadoras se insertan o se corrigen (upsert por id).
+     */
     private function migrarTarifas(?OutputInterface $output = null): int
     {
         if ($output) {
             $output->write("<info>Tarifas...</info>");
         }
         $rows = $this->fetchOld(
-            "SELECT tb.* FROM tarifas_boleto tb ORDER BY tb.id DESC",
+            "SELECT id, estacion_origen_id, estacion_destino_id, clase_asiento_id, clase_bus_id, usuario_creacion, tarifaValor,
+                    CONVERT(varchar(19), fechaEfectividad, 120) AS vigente_desde,
+                    CONVERT(varchar(5), horaInicialSalida, 108) AS hora_desde,
+                    CONVERT(varchar(5), horaFinalSalida, 108) AS hora_hasta,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY estacion_origen_id, estacion_destino_id, clase_asiento_id, clase_bus_id, horaInicialSalida, horaFinalSalida
+                        ORDER BY fechaEfectividad DESC, id DESC
+                    ) AS orden
+               FROM tarifas_boleto",
         );
 
         $count = 0;
-        $defaultUsuarioId = $this->getFirstUsuarioId();
+        $sobrantes = [];
+        $sinTrayecto = 0;
+        $sinClaseBus = 0;
+        $defaultUsuarioId = $this->getFirstUsuarioId() ?? 1;
 
         foreach ($rows as $row) {
-            $lid = (string) $row["id"];
-            if ($this->existe("boleto_tarifa", $lid)) {
+            if ((int) $row["orden"] > 1) {
+                $sobrantes[] = (int) $row["id"];
                 continue;
             }
-
-            $empresaId = $this->getFirstEmpresaId();
-            if (!$empresaId) {
-                continue;
-            }
-
-            $clase = ((int) ($row["clase_asiento"] ?? 0)) === 2 ? "B" : "A";
             $trayectoId = $this->findTrayectoIdPorTarifa($row);
-            $usuarioId = $defaultUsuarioId ?? 1;
+            if ($trayectoId === null) {
+                $sobrantes[] = (int) $row["id"];
+                $sinTrayecto++;
+                continue;
+            }
+            $busClaseId = $this->resolveBusClaseId((int) ($row["clase_bus_id"] ?? 0));
+            if ($busClaseId === null) {
+                $sobrantes[] = (int) $row["id"];
+                $sinClaseBus++;
+                continue;
+            }
+
+            $clase = ((int) ($row["clase_asiento_id"] ?? 0)) === 2 ? "B" : "A";
+            $usuarioId = $this->resolveUsuarioId((int) ($row["usuario_creacion"] ?? 0)) ?? $defaultUsuarioId;
 
             $data = $this->mapeador->boletoTarifa(
                 $row,
-                $empresaId,
                 $clase,
                 $usuarioId,
                 $trayectoId,
+                $busClaseId,
             );
             $this->newConn->executeStatement(
-                'INSERT INTO boleto_tarifa (id, nombre, precio_monto, precio_moneda, clase, empresa_id, bus_id, trayecto_id, usuario_id)
-                 VALUES (:id, :nombre, :precio_monto, :precio_moneda, :clase, :empresa_id, :bus_id, :trayecto_id, :usuario_id)',
+                'INSERT INTO boleto_tarifa (id, nombre, precio_monto, precio_moneda, clase, empresa_id, bus_id, bus_clase_id, trayecto_id, hora_desde, hora_hasta, vigente_desde, usuario_id)
+                 VALUES (:id, :nombre, :precio_monto, :precio_moneda, :clase, :empresa_id, :bus_id, :bus_clase_id, :trayecto_id, :hora_desde, :hora_hasta, :vigente_desde, :usuario_id)
+                 ON CONFLICT (id) DO UPDATE SET nombre = EXCLUDED.nombre, precio_monto = EXCLUDED.precio_monto, precio_moneda = EXCLUDED.precio_moneda,
+                     clase = EXCLUDED.clase, empresa_id = EXCLUDED.empresa_id, bus_id = EXCLUDED.bus_id, bus_clase_id = EXCLUDED.bus_clase_id,
+                     trayecto_id = EXCLUDED.trayecto_id, hora_desde = EXCLUDED.hora_desde, hora_hasta = EXCLUDED.hora_hasta,
+                     vigente_desde = EXCLUDED.vigente_desde, usuario_id = EXCLUDED.usuario_id',
                 $data,
+            );
+            $count++;
+        }
+
+        foreach (array_chunk($sobrantes, 1000) as $ids) {
+            $this->newConn->executeStatement(
+                "DELETE FROM boleto_tarifa WHERE id IN (:ids)",
+                ["ids" => $ids],
+                ["ids" => ArrayParameterType::INTEGER],
+            );
+        }
+
+        if ($output) {
+            $output->writeln(sprintf(
+                " <info>%d</info> (omitidas: %d historial, %d sin trayecto, %d sin clase de bus)",
+                $count,
+                count($sobrantes) - $sinTrayecto - $sinClaseBus,
+                $sinTrayecto,
+                $sinClaseBus,
+            ));
+        }
+        return $count;
+    }
+
+    // ─── BusClase ──────────────────────────────────────────────────
+
+    private function migrarBusClases(?OutputInterface $output = null): int
+    {
+        if ($output) {
+            $output->write("<info>Clases de bus...</info>");
+        }
+        $count = 0;
+
+        foreach ($this->fetchOld("SELECT id, nombre, activo FROM bus_clase") as $row) {
+            if ($this->existe("bus_clase", (string) $row["id"])) {
+                continue;
+            }
+            $this->newConn->executeStatement(
+                "INSERT INTO bus_clase (id, nombre, activo) VALUES (:id, :nombre, :activo)",
+                [
+                    "id" => (int) $row["id"],
+                    "nombre" => mb_substr(trim((string) $row["nombre"]), 0, 50),
+                    "activo" => (bool) $row["activo"] ? "true" : "false",
+                ],
             );
             $count++;
         }
@@ -1171,6 +1256,7 @@ class MigradorEstaticos
             "piloto",
             "localidad",
             "bus_marca",
+            "bus_clase",
             "tipo_pago",
             "moneda",
             "tipo_documento",
@@ -1218,6 +1304,16 @@ class MigradorEstaticos
             : null;
     }
 
+    private function resolveBusClaseId(int $oldId): ?int
+    {
+        return $oldId > 0 && $this->existe("bus_clase", (string) $oldId) ? $oldId : null;
+    }
+
+    private function resolveUsuarioId(int $oldId): ?int
+    {
+        return $oldId > 0 && $this->existe("usuario", (string) $oldId) ? $oldId : null;
+    }
+
     private function getBusIdByLegacy(string $codigo): ?int
     {
         $id = $this->newConn->fetchOne(
@@ -1232,14 +1328,6 @@ class MigradorEstaticos
         $id = $this->newConn->fetchOne(
             "SELECT id FROM trayecto WHERE legacy_id = :lid",
             ["lid" => $legacyId],
-        );
-        return $id !== false ? (int) $id : null;
-    }
-
-    private function getFirstEmpresaId(): ?int
-    {
-        $id = $this->newConn->fetchOne(
-            "SELECT id FROM empresa ORDER BY id ASC LIMIT 1",
         );
         return $id !== false ? (int) $id : null;
     }

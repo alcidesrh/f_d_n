@@ -20,6 +20,10 @@ class Bus extends Base
     #[ORM\Column(length: 50, nullable: true)]
     private ?string $gama = null;
 
+    /** Clase de servicio: decide la tarifa (`BoletoTarifa.busClase`). */
+    #[ORM\ManyToOne]
+    private ?BusClase $clase = null;
+
     #[ORM\ManyToOne(inversedBy: "buses")]
     #[ORM\JoinColumn(nullable: false)]
     private ?Empresa $empresa = null;
@@ -147,6 +151,18 @@ class Bus extends Base
     public function setGama(?string $gama): static
     {
         $this->gama = $gama;
+
+        return $this;
+    }
+
+    public function getClase(): ?BusClase
+    {
+        return $this->clase;
+    }
+
+    public function setClase(?BusClase $clase): static
+    {
+        $this->clase = $clase;
 
         return $this;
     }

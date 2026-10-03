@@ -29,6 +29,11 @@ _Avoid_: tramo, subservicio, subruta
 Un vehículo de la flota, perteneciente a una empresa, con una disposición de asientos por clase.
 _Avoid_: unidad, vehículo
 
+**Clase de bus** (`BusClase`):
+El nivel de servicio del bus (Económica, Clase Oro, Platino, Starbus…). La tarifa depende de ella.
+No confundir con la clase del asiento (A/B).
+_Avoid_: gama, tipo de bus
+
 **Asiento**:
 Una plaza física de un bus, con una clase determinada, un número (consecutivo en el bus) y una celda en su croquis.
 _Avoid_: puesto
@@ -108,8 +113,9 @@ Sus ventas no llevan factura electrónica.
 _Avoid_: estación tipo 4, punto de venta
 
 **BoletoTarifa**:
-El precio de referencia de un asiento. Fija algunos de empresa, trayecto, hora, clase y bus (los demás son
-comodín); aplica la que coincide en todos los que fija y fija más (empate: la más reciente).
+El precio de referencia de un asiento. Rige desde su fecha de vigencia. Se aplica la más reciente del trayecto
+y la clase de asiento cuyos demás campos coinciden o están vacíos, por prioridad: empresa, clase de bus,
+horario, bus. Si ninguna cumple se deja de exigir el de menor prioridad (primero el bus, al final la empresa).
 _Avoid_: tarifa, precio
 
 **Factura**:

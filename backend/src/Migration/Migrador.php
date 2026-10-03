@@ -441,6 +441,11 @@ class Migrador
         $data["gama"] = isset($tipo["descripcion"])
             ? mb_substr($tipo["descripcion"], 0, 50)
             : null;
+        // Clase de bus del tipo, si ya se migraron las clases ("bus_clase").
+        $data["clase_id"] = isset($tipo["clase_id"]) && $this->newConn->fetchOne(
+            "SELECT 1 FROM bus_clase WHERE id = :id",
+            ["id" => (int) $tipo["clase_id"]],
+        ) ? (int) $tipo["clase_id"] : null;
 
         $fields = implode(", ", array_keys($data));
         $args = implode(", ", array_map(fn($k) => ":{$k}", array_keys($data)));

@@ -11,6 +11,12 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Money\Money;
 
+/**
+ * Precio de un asiento. Fija algunos de empresa, trayecto, horario, clase de
+ * bus, bus y clase de asiento (obligatoria); los demás son comodín. Rige desde
+ * `vigenteDesde`: una tarifa nueva con fecha futura no aplica hasta entonces.
+ * Elección: `App\Venta\EspecificidadTarifa` (ADR-021).
+ */
 #[ORM\Entity(repositoryClass: BoletoTarifaRepository::class)]
 #[ApiResourcePaginationPage]
 class BoletoTarifa extends Base
@@ -30,8 +36,22 @@ class BoletoTarifa extends Base
     #[ORM\ManyToOne]
     private ?Trayecto $trayecto = null;
 
+    #[ORM\ManyToOne]
+    private ?BusClase $busClase = null;
+
+    /**
+     * Horario en que parte la salida (desde el origen de su trayecto), con
+     * los extremos incluidos. Si `horaDesde` > `horaHasta` cruza la medianoche
+     * (22:15–04:00). Un extremo vacío deja ese lado abierto.
+     */
     #[ORM\Column(type: Types::TIME_MUTABLE, nullable: true)]
-    private ?\DateTime $hora = null;
+    private ?\DateTime $horaDesde = null;
+
+    #[ORM\Column(type: Types::TIME_MUTABLE, nullable: true)]
+    private ?\DateTime $horaHasta = null;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    private \DateTime $vigenteDesde;
 
     #[ORM\Column(type: "string", length: 1, enumType: AsientoClase::class)]
     private AsientoClase $clase;
@@ -39,6 +59,11 @@ class BoletoTarifa extends Base
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
     private ?Usuario $usuario = null;
+
+    public function __construct()
+    {
+        $this->vigenteDesde = new \DateTime();
+    }
 
     public function getId(): ?int
     {
@@ -104,14 +129,50 @@ class BoletoTarifa extends Base
         return $this;
     }
 
-    public function getHora(): ?\DateTime
+    public function getBusClase(): ?BusClase
     {
-        return $this->hora;
+        return $this->busClase;
     }
 
-    public function setHora(?\DateTime $hora): static
+    public function setBusClase(?BusClase $busClase): static
     {
-        $this->hora = $hora;
+        $this->busClase = $busClase;
+
+        return $this;
+    }
+
+    public function getHoraDesde(): ?\DateTime
+    {
+        return $this->horaDesde;
+    }
+
+    public function setHoraDesde(?\DateTime $horaDesde): static
+    {
+        $this->horaDesde = $horaDesde;
+
+        return $this;
+    }
+
+    public function getHoraHasta(): ?\DateTime
+    {
+        return $this->horaHasta;
+    }
+
+    public function setHoraHasta(?\DateTime $horaHasta): static
+    {
+        $this->horaHasta = $horaHasta;
+
+        return $this;
+    }
+
+    public function getVigenteDesde(): \DateTime
+    {
+        return $this->vigenteDesde;
+    }
+
+    public function setVigenteDesde(\DateTime $vigenteDesde): static
+    {
+        $this->vigenteDesde = $vigenteDesde;
 
         return $this;
     }

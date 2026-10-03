@@ -8,7 +8,7 @@ import { graphql } from '@/core/graphql/client'
 import type { EntitySchema } from '@/core/graphql/types'
 import { entityNameFromSlug } from './slug'
 
-export const SCHEMA_VERSION = 8
+export const SCHEMA_VERSION = 9
 
 export const useSchemaStore = defineStore('schema', {
   persist: { pick: ['entities', 'schemaVersion', 'loadedAt'] },
