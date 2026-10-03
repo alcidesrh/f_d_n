@@ -2,20 +2,28 @@
  * Reglas puras de la pantalla de venta: estado de cada asiento en el mapa,
  * paradas donde se puede subir/bajar y selección de asientos.
  */
-import type { AsientoCroquis, EstadoAsiento } from '@/core/croquis/types'
+import type { AsientoCroquis, ClaseAsiento, EstadoAsiento } from '@/core/croquis/types'
 import type { AsientoOcupado, Parada, SalidaDetalle } from './types'
 
-/** Cómo se pinta cada asiento en la taquilla, según lo que lo ocupa. */
+/**
+ * Cómo se pinta cada asiento en la taquilla, según lo que lo ocupa. Con
+ * `clasesVendibles`, un asiento libre de otra clase queda `bloqueado`: no
+ * tiene tarifa en el tramo elegido.
+ */
 export function estadoEnMapa(
   ocupados: readonly AsientoOcupado[],
   seleccion: readonly number[],
+  clasesVendibles?: readonly ClaseAsiento[],
 ): (asiento: AsientoCroquis) => EstadoAsiento {
   const porId = new Map(ocupados.map((o) => [o.asiento, o]))
   const elegidos = new Set(seleccion)
   return (asiento) => {
     const id = asiento.id ?? -1
     const o = porId.get(id)
-    if (!o) return elegidos.has(id) ? 'seleccionado' : 'disponible'
+    if (!o) {
+      if (clasesVendibles && !clasesVendibles.includes(asiento.clase)) return 'bloqueado'
+      return elegidos.has(id) ? 'seleccionado' : 'disponible'
+    }
     if (o.estado === 'propio') return 'seleccionado'
     if (o.estado === 'reservado') return 'reservado'
     // Sin cobro antes que el canal: importa más que no se cobró que dónde se emitió.
@@ -36,13 +44,31 @@ export function depurarSeleccion(
   return seleccion.filter((id) => !tomados.has(id))
 }
 
+/** Clases de asiento con tarifa en el trayecto elegido (ninguna si no es vendible). */
+export function clasesDelTrayecto(
+  detalle: Pick<SalidaDetalle, 'trayectos'>,
+  trayectoId: number | null,
+): ClaseAsiento[] {
+  return detalle.trayectos.find((t) => t.id === trayectoId)?.clases ?? []
+}
+
+/** Quita de la selección los asientos de clases sin tarifa en el tramo. */
+export function soloVendibles(
+  seleccion: readonly number[],
+  asientos: readonly AsientoCroquis[],
+  clases: readonly ClaseAsiento[],
+): number[] {
+  const vendibles = new Set(asientos.filter((a) => clases.includes(a.clase)).map((a) => a.id))
+  return seleccion.filter((id) => vendibles.has(id))
+}
+
 /** Agrega o quita un asiento de la selección (respetando un máximo). */
 export function alternar(seleccion: readonly number[], id: number, maximo = Infinity): number[] {
   if (seleccion.includes(id)) return seleccion.filter((x) => x !== id)
   return seleccion.length >= maximo ? [...seleccion] : [...seleccion, id]
 }
 
-/** Paradas donde se puede subir: las que son origen de algún trayecto vendible. */
+/** Paradas donde se puede subir: las que son origen de algún trayecto vendible (con tarifa). */
 export function paradasDeSubida(
   detalle: Pick<SalidaDetalle, 'paradas' | 'trayectos'>,
 ): Parada[] {

@@ -2,7 +2,7 @@
  * Contratos de la venta de asientos (ADR-021): `VentaController` (taquilla y
  * agencias) y `AgenciaController`. Ids numéricos; importes en centavos.
  */
-import type { ElementoCroquis } from '@/core/croquis/types'
+import type { ClaseAsiento, ElementoCroquis } from '@/core/croquis/types'
 
 export type CanalVenta = 'estacion' | 'agencia' | 'web'
 
@@ -53,11 +53,14 @@ export interface Parada {
   hora: string | null
 }
 
+/** Trayecto de la salida (el suyo o un subtrayecto) con tarifa: solo esos se venden. */
 export interface TrayectoVendible {
   id: number
   origen: number
   destino: number
   completo: boolean
+  /** Clases de asiento con tarifa en este trayecto; las demás no se venden en él. */
+  clases: ClaseAsiento[]
 }
 
 export interface SalidaDetalle extends SalidaResumen {

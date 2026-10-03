@@ -150,6 +150,10 @@ final class ReglasVenta
      * Precio de cada asiento. Se cobra la tarifa del trayecto que viaja, o la
      * del trayecto completo del salida si así se pide. Una cortesía vale 0.
      *
+     * Solo se vende un trayecto (o subtrayecto) con tarifa para la clase del
+     * asiento, en todos los canales: también en una cortesía o cobrando el
+     * trayecto completo, el tramo que viaja tiene que ser tarifable.
+     *
      * @param list<Asiento> $asientos
      */
     public function cotizar(
@@ -160,15 +164,24 @@ final class ReglasVenta
         bool $cortesia = false,
     ): Cotizacion {
         $trayectoTarifa = $cobrarTrayectoCompleto ? $salida->getTrayecto() : $viaja;
-        $porClase = $this->tarifas->porClase(
+        $tarifas = $this->tarifas->porTrayectos(
             $salida,
-            $trayectoTarifa,
+            [(int) $viaja->getId(), (int) $trayectoTarifa->getId()],
             array_map(static fn(Asiento $a) => $a->getClase()->value, $asientos),
         );
+        $porClase = $tarifas[(int) $trayectoTarifa->getId()];
 
         $lineas = [];
         $total = null;
         foreach ($asientos as $asiento) {
+            if (!isset($tarifas[(int) $viaja->getId()][$asiento->getClase()->value])) {
+                throw new VentaRechazada(sprintf(
+                    "%s - %s no se vende en asientos clase %s: no tiene tarifa.",
+                    $viaja->getOrigen()->getNombre(),
+                    $viaja->getDestino()->getNombre(),
+                    $asiento->getClase()->value,
+                ), "sin_tarifa");
+            }
             $tarifa = $porClase[$asiento->getClase()->value] ?? null;
             if ($tarifa === null && !$cortesia) {
                 throw new VentaRechazada(sprintf(

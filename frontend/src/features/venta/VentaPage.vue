@@ -60,7 +60,7 @@
                 <Select :model-value="store.baja" :options="opcionesParada(store.bajadas)" option-label="label" option-value="value" fluid @update:model-value="store.cambiarBajada" />
               </label>
             </div>
-            <label v-if="store.esSubtrayecto" class="flex items-center gap-2 text-sm">
+            <label v-if="store.puedeCobrarCompleto" class="flex items-center gap-2 text-sm">
               <Checkbox v-model="store.cobrarTrayectoCompleto" binary input-id="venta-completo" @update:model-value="store.recotizar()" />
               <span> Cobrar la tarifa del trayecto completo ({{ store.detalle.trayecto.origen.nombre }} → {{ store.detalle.trayecto.destino.nombre }}) </span>
             </label>

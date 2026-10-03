@@ -9,17 +9,20 @@ import * as api from '@/core/venta/api'
 import {
   alternar,
   bajadaPorDefecto,
+  clasesDelTrayecto,
   depurarSeleccion,
   diaISO,
   estadoEnMapa,
   nuevoToken,
   paradasDeBajada,
   paradasDeSubida,
+  soloVendibles,
   subidaPorDefecto,
   trayectoEntre,
 } from '@/core/venta/modelo'
 import { suscribir } from '@/core/realtime'
 import { notify } from '@/core/notify'
+import type { AsientoCroquis } from '@/core/croquis/types'
 import type {
   AsientoOcupado,
   Cliente,
@@ -78,11 +81,22 @@ export const useVentaStore = defineStore('venta', () => {
   const esSubtrayecto = computed(
     () => !!detalle.value && trayectoId.value !== detalle.value.trayecto.id,
   )
+  /** Cobrar el trayecto completo solo si se viaja un subtrayecto y el completo tiene tarifa. */
+  const puedeCobrarCompleto = computed(
+    () => esSubtrayecto.value && !!detalle.value?.trayectos.some((t) => t.completo),
+  )
   const subidas = computed(() => (detalle.value ? paradasDeSubida(detalle.value) : []))
   const bajadas = computed(() => (detalle.value ? paradasDeBajada(detalle.value, sube.value) : []))
-  const estadoAsiento = computed(() => estadoEnMapa(ocupados.value, seleccion.value))
+  /** Clases de asiento con tarifa en el tramo elegido: las demás se ven bloqueadas. */
+  const clasesVendibles = computed(() =>
+    detalle.value ? clasesDelTrayecto(detalle.value, trayectoId.value) : [],
+  )
+  const estadoAsiento = computed(() =>
+    estadoEnMapa(ocupados.value, seleccion.value, clasesVendibles.value),
+  )
   const asientosCroquis = computed(
-    () => detalle.value?.croquis.filter((e) => e.tipo === 'asiento') ?? [],
+    () =>
+      detalle.value?.croquis.filter((e): e is AsientoCroquis => e.tipo === 'asiento') ?? [],
   )
   const libres = computed(
     () => asientosCroquis.value.length - ocupados.value.filter((o) => o.estado !== 'propio').length,
@@ -197,9 +211,13 @@ export const useVentaStore = defineStore('venta', () => {
   }
 
   async function cambioDeTramo() {
-    if (!esSubtrayecto.value) cobrarTrayectoCompleto.value = false
+    if (!puedeCobrarCompleto.value) cobrarTrayectoCompleto.value = false
     await cargarOcupacion()
-    seleccion.value = depurarSeleccion(seleccion.value, ocupados.value)
+    seleccion.value = soloVendibles(
+      depurarSeleccion(seleccion.value, ocupados.value),
+      asientosCroquis.value,
+      clasesVendibles.value,
+    )
     await recotizar()
   }
 
@@ -321,6 +339,8 @@ export const useVentaStore = defineStore('venta', () => {
     comprobante,
     trayectoId,
     esSubtrayecto,
+    puedeCobrarCompleto,
+    clasesVendibles,
     subidas,
     bajadas,
     estadoAsiento,

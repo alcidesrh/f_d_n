@@ -79,4 +79,27 @@ final class OcupacionTest extends TestCase
 
         $this->assertArrayHasKey(8, Ocupacion::estados($this->it, $this->it->tramo(11), $ocupantes));
     }
+
+    public function testUnAsientoSeRevendeEnLosSubtrayectosQueNoSeSolapan(): void
+    {
+        // Guatemala(1) → Morales(2) → Río Dulce(3) → Santa Elena(4), todos los pares.
+        $it = Itinerario::construir(1, 1, 4, [
+            ["trayecto" => 12, "origen" => 1, "destino" => 2],
+            ["trayecto" => 10, "origen" => 1, "destino" => 3],
+            ["trayecto" => 23, "origen" => 2, "destino" => 3],
+            ["trayecto" => 24, "origen" => 2, "destino" => 4],
+            ["trayecto" => 11, "origen" => 3, "destino" => 4],
+        ]);
+        // Asiento 5 vendido Guatemala → Morales por la agencia; asiento 6 Río Dulce → Santa Elena en la web.
+        $ocupantes = [
+            new Ocupante(5, 12, Ocupante::VENDIDO, CanalVenta::AGENCIA),
+            new Ocupante(6, 11, Ocupante::VENDIDO, CanalVenta::WEB),
+        ];
+        $ocupados = static fn(int $trayecto) => array_keys(Ocupacion::estados($it, $it->tramo($trayecto), $ocupantes));
+
+        $this->assertSame([], $ocupados(23), "Morales → Río Dulce: ambos libres");
+        $this->assertSame([6], $ocupados(24), "Morales → Santa Elena: el 5 ya bajó");
+        $this->assertSame([5], $ocupados(10), "Guatemala → Río Dulce: el 6 aún no sube");
+        $this->assertSame([5, 6], $ocupados(1), "el trayecto completo choca con los dos");
+    }
 }

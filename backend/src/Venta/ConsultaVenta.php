@@ -8,6 +8,7 @@ use App\Croquis\CroquisBus;
 use App\Entity\Asiento;
 use App\Entity\BoletoAsiento;
 use App\Entity\Enclave;
+use App\Entity\Enum\AsientoClase;
 use App\Entity\Enum\EstadoBoletoAsiento;
 use App\Entity\Enum\EstadoSalida;
 use App\Entity\Salida;
@@ -35,8 +36,10 @@ final class ConsultaVenta
 
     /**
      * Salidas del día que pasan por la estación (en cualquier parada salvo
-     * la última): desde ahí se les puede vender. Sin estación, todos. Con
-     * empresa, solo los suyos (agencias que venden para una sola empresa).
+     * la última) con algún trayecto tarifado que sube ahí: desde ahí se les
+     * puede vender. Sin estación, todas las que tienen algún trayecto
+     * tarifado. Con empresa, solo las suyas (agencias que venden para una
+     * sola empresa).
      *
      * @return list<array<string, mixed>>
      */
@@ -48,6 +51,8 @@ final class ConsultaVenta
         ));
         $itinerarios = $this->itinerarios->deTrayectos(array_map(static fn(Salida $r) => $r->getTrayecto(), $salidas));
 
+        $asientos = $this->asientosPorBus($salidas);
+
         $filas = [];
         foreach ($salidas as $r) {
             $it = $itinerarios[$r->getTrayecto()->getId()];
@@ -55,10 +60,19 @@ final class ConsultaVenta
             if ($pos === null || $pos >= count($it->paradas) - 1) {
                 continue;
             }
+            $clases = $r->getBus() !== null ? array_keys($asientos[$r->getBus()->getId()] ?? []) : self::todasLasClases();
+            $sube = array_filter(
+                $this->tarifados($r, $it, $clases),
+                static fn(int $id) => $estacionId === null || $it->trayectos()[$id]["origen"] === $estacionId,
+                ARRAY_FILTER_USE_KEY,
+            );
+            if ($sube === []) {
+                continue;
+            }
             $filas[] = [$r, $it, $estacionId];
         }
         $ocupados = $this->boletosVivosPorSalida(array_map(static fn(array $f) => $f[0], $filas));
-        $capacidad = $this->capacidadPorBus(array_map(static fn(array $f) => $f[0], $filas));
+        $capacidad = array_map(static fn(array $porClase) => array_sum($porClase), $asientos);
 
         return array_map(fn(array $f) => $this->resumen($f[0], $f[1], $f[2], $ocupados, $capacidad), $filas);
     }
@@ -137,20 +151,36 @@ final class ConsultaVenta
     /**
      * Paradas, trayectos vendibles y croquis de un salida.
      *
+     * Vendibles son el trayecto de la salida y los subtrayectos que tienen
+     * tarifa —propia o asignable con lo que heredan de la salida: empresa,
+     * bus, clase de bus y hora— para alguna clase de asiento del bus; cada
+     * uno dice para qué clases (`clases`). Lo mismo rige en taquilla,
+     * agencias y página web (`ReglasVenta::cotizar` lo exige al vender).
+     *
      * @return array<string, mixed>
      */
     public function detalle(Salida $salida): array
     {
         $it = $this->itinerarios->deTrayecto($salida->getTrayecto());
         $enclaves = $this->enclaves($it->paradas);
+        $croquis = $salida->getBus() !== null ? $this->croquis->leer($salida->getBus())["elementos"] : [];
+        // Sin bus asignado aún no hay asientos: se informa con todas las clases.
+        $clasesBus = $salida->getBus() !== null
+            ? array_values(array_unique(array_column(
+                array_filter($croquis, static fn(array $e) => $e["tipo"] === "asiento"),
+                "clase",
+            )))
+            : self::todasLasClases();
 
         $trayectos = [];
-        foreach ($it->trayectos() as $id => $t) {
+        foreach ($this->tarifados($salida, $it, $clasesBus) as $id => $clases) {
+            $t = $it->trayectos()[$id];
             $trayectos[] = [
                 "id" => $id,
                 "origen" => $t["origen"],
                 "destino" => $t["destino"],
                 "completo" => $id === $it->trayectoId,
+                "clases" => $clases,
             ];
         }
         usort($trayectos, static fn($a, $b) => [$it->posicion($a["origen"]), $it->posicion($a["destino"])] <=> [$it->posicion($b["origen"]), $it->posicion($b["destino"])]);
@@ -165,7 +195,7 @@ final class ConsultaVenta
                 "hora" => $this->horaEn($salida, $it, $id),
             ], $it->paradas, array_keys($it->paradas)),
             "trayectos" => $trayectos,
-            "croquis" => $salida->getBus() !== null ? $this->croquis->leer($salida->getBus())["elementos"] : [],
+            "croquis" => $croquis,
             "cierreEnLinea" => $this->reglas->cierreEnLinea($salida)->format(DATE_ATOM),
         ];
     }
@@ -347,25 +377,59 @@ final class ConsultaVenta
     }
 
     /**
+     * Trayectos de la salida (el suyo y sus subtrayectos) con tarifa para
+     * alguna de las clases de asiento dadas, con esas clases.
+     *
+     * @param list<string> $clases
+     *
+     * @return array<int, list<string>> por id de trayecto
+     */
+    private function tarifados(Salida $salida, Itinerario $it, array $clases): array
+    {
+        $tarifados = [];
+        foreach ($this->tarifas->porTrayectos($salida, array_keys($it->trayectos()), $clases) as $id => $porClase) {
+            if ($porClase !== []) {
+                $deTrayecto = array_keys($porClase);
+                sort($deTrayecto);
+                $tarifados[$id] = $deTrayecto;
+            }
+        }
+
+        return $tarifados;
+    }
+
+    /** @return list<string> */
+    private static function todasLasClases(): array
+    {
+        return array_map(static fn(AsientoClase $c) => $c->value, AsientoClase::cases());
+    }
+
+    /**
      * @param list<Salida> $salidas
      *
-     * @return array<int, int> asientos por bus
+     * @return array<int, array<string, int>> asientos por bus y clase
      */
-    private function capacidadPorBus(array $salidas): array
+    private function asientosPorBus(array $salidas): array
     {
         $buses = array_values(array_unique(array_filter(array_map(static fn(Salida $r) => $r->getBus()?->getId(), $salidas))));
         if ($buses === []) {
             return [];
         }
         $filas = $this->em->createQueryBuilder()
-            ->select("IDENTITY(a.bus) AS bus", "COUNT(a.id) AS n")
+            ->select("IDENTITY(a.bus) AS bus", "a.clase AS clase", "COUNT(a.id) AS n")
             ->from(Asiento::class, "a")
             ->where("a.bus IN (:buses)")
-            ->groupBy("a.bus")
+            ->groupBy("a.bus", "a.clase")
             ->setParameter("buses", $buses)
             ->getQuery()
             ->getArrayResult();
 
-        return array_column(array_map(static fn(array $f) => [(int) $f["bus"], (int) $f["n"]], $filas), 1, 0);
+        $porBus = [];
+        foreach ($filas as $f) {
+            $clase = $f["clase"] instanceof \BackedEnum ? $f["clase"]->value : (string) $f["clase"];
+            $porBus[(int) $f["bus"]][$clase] = (int) $f["n"];
+        }
+
+        return $porBus;
     }
 }

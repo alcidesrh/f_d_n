@@ -1,23 +1,25 @@
 import { describe, expect, it } from 'vitest'
-import type { AsientoCroquis } from '@/core/croquis/types'
+import type { AsientoCroquis, ClaseAsiento } from '@/core/croquis/types'
 import {
   alternar,
   bajadaPorDefecto,
+  clasesDelTrayecto,
   depurarSeleccion,
   diaISO,
   estadoEnMapa,
   paradasDeBajada,
   paradasDeSubida,
+  soloVendibles,
   subidaPorDefecto,
   trayectoEntre,
 } from '../modelo'
 import type { AsientoOcupado } from '../types'
 
-const asiento = (id: number): AsientoCroquis => ({
+const asiento = (id: number, clase: ClaseAsiento = 'A'): AsientoCroquis => ({
   tipo: 'asiento',
   id,
   numero: id,
-  clase: 'A',
+  clase,
   planta: 1,
   fila: 1,
   columna: 1,
@@ -31,9 +33,9 @@ const detalle = {
     { id: 3, nombre: 'Melchor', direccion: null, posicion: 2, hora: null },
   ],
   trayectos: [
-    { id: 10, origen: 1, destino: 3, completo: true },
-    { id: 11, origen: 1, destino: 2, completo: false },
-    { id: 12, origen: 2, destino: 3, completo: false },
+    { id: 10, origen: 1, destino: 3, completo: true, clases: ['A', 'B'] as ClaseAsiento[] },
+    { id: 11, origen: 1, destino: 2, completo: false, clases: ['A'] as ClaseAsiento[] },
+    { id: 12, origen: 2, destino: 3, completo: false, clases: ['B'] as ClaseAsiento[] },
   ],
 }
 
@@ -122,4 +124,25 @@ describe('sube / baja', () => {
 
 it('diaISO usa la fecha local', () => {
   expect(diaISO(new Date(2026, 8, 7, 23, 30))).toBe('2026-09-07')
+})
+
+describe('tarifa por tramo', () => {
+  it('cada trayecto vendible dice qué clases tienen tarifa', () => {
+    expect(clasesDelTrayecto(detalle, 11)).toEqual(['A'])
+    expect(clasesDelTrayecto(detalle, 12)).toEqual(['B'])
+    expect(clasesDelTrayecto(detalle, null)).toEqual([])
+  })
+
+  it('un asiento libre de una clase sin tarifa en el tramo queda bloqueado', () => {
+    const e = estadoEnMapa([{ asiento: 1, estado: 'vendido', canal: 'estacion' }], [], ['A'])
+    expect(e(asiento(2, 'A'))).toBe('disponible')
+    expect(e(asiento(3, 'B'))).toBe('bloqueado')
+    expect(e(asiento(1, 'B')), 'lo vendido se sigue viendo vendido').toBe('ocupado')
+  })
+
+  it('al cambiar de tramo se sueltan los asientos que ya no tienen tarifa', () => {
+    const croquis = [asiento(1, 'A'), asiento(2, 'B'), asiento(3, 'A')]
+    expect(soloVendibles([1, 2, 3], croquis, ['A'])).toEqual([1, 3])
+    expect(soloVendibles([1, 2, 3], croquis, [])).toEqual([])
+  })
 })
