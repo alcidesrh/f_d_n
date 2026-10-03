@@ -103,9 +103,12 @@ export const sumaCentavos = (asientos: readonly { centavos: number }[]) => asien
 
 /**
  * Orígenes o destinos agrupados por departamento (como en la página
- * anterior), los grupos y las estaciones por nombre; sin departamento, en
- * `otros` al final.
+ * anterior): primero Guatemala y Petén (en ese orden), luego los demás por
+ * nombre y, sin departamento, `otros` al final. Estaciones por nombre.
  */
+const DEPARTAMENTOS_PRIMERO = ['guatemala', 'peten']
+const clave = (d: string) => d.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
+
 export function porDepartamento<E extends Estacion>(estaciones: readonly E[], otros: string, idioma = 'es'): Array<{ departamento: string; estaciones: E[] }> {
   const grupos = new Map<string, E[]>()
   for (const e of estaciones) {
@@ -114,7 +117,13 @@ export function porDepartamento<E extends Estacion>(estaciones: readonly E[], ot
   }
   const orden = (a: string, b: string) => a.localeCompare(b, idioma, { sensitivity: 'base' })
   return [...grupos.entries()]
-    .sort(([a], [b]) => (a === '' ? 1 : b === '' ? -1 : orden(a, b)))
+    .sort(([a], [b]) => {
+      if (a === '' || b === '') return a === '' ? 1 : -1
+      const pa = DEPARTAMENTOS_PRIMERO.indexOf(clave(a))
+      const pb = DEPARTAMENTOS_PRIMERO.indexOf(clave(b))
+      if (pa !== pb) return (pa < 0 ? Infinity : pa) - (pb < 0 ? Infinity : pb)
+      return orden(a, b)
+    })
     .map(([d, lista]) => ({ departamento: d || otros, estaciones: [...lista].sort((x, y) => orden(x.nombre, y.nombre)) }))
 }
 

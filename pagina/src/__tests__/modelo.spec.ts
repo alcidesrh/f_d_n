@@ -88,10 +88,12 @@ it('agrupa estaciones por departamento, "otros" al final', () => {
       { id: 2, nombre: 'Guatemala', departamento: 'Guatemala' },
       { id: 3, nombre: 'Melchor', departamento: 'Petén' },
       { id: 4, nombre: 'Belice', departamento: null },
+      { id: 5, nombre: 'Cobán', departamento: 'Alta Verapaz' },
+      { id: 6, nombre: 'Escuintla', departamento: 'Escuintla' },
     ],
     'Otros',
   )
-  expect(g.map((x) => x.departamento)).toEqual(['Guatemala', 'Petén', 'Otros'])
+  expect(g.map((x) => x.departamento)).toEqual(['Guatemala', 'Petén', 'Alta Verapaz', 'Escuintla', 'Otros'])
   expect(g[1]!.estaciones.map((e) => e.nombre)).toEqual(['Melchor', 'Santa Elena'])
 })
 
