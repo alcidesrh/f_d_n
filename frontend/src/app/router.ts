@@ -88,6 +88,16 @@ export const router = createRouter({
       },
     },
     {
+      path: '/seguimiento',
+      name: 'seguimiento',
+      component: () => import('@/features/seguimiento/SeguimientoPage.vue'),
+      meta: {
+        title: 'Buses en recorrido',
+        label: 'Seguimiento',
+        icon: 'map-pin',
+      },
+    },
+    {
       path: '/salidas/programar',
       name: 'salidas-programar',
       component: () => import('@/features/salida/ProgramadorPage.vue'),

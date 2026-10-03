@@ -28,12 +28,15 @@ class Mapeador
 
     public function estacion(array $old): array
     {
+        // El legado guarda latitud y longitud intercambiadas en algunas estaciones.
+        $gps = \App\Seguimiento\TrazadoDeRuta::normalizarGps($old["latitude"] ?? null, $old["longitude"] ?? null);
+
         return [
             "id" => (int) $old["id"],
             "nombre" => $this->truncate($old["nombre"] ?? "", 255),
             "direccion" => $this->truncate($old["direccion"] ?? null, 255),
-            "latitud" => $old["latitude"] ?? null,
-            "longitud" => $old["longitude"] ?? null,
+            "latitud" => $gps[0] ?? null,
+            "longitud" => $gps[1] ?? null,
             "departamento" => $this->truncate($old["departamento_nombre"] ?? null, 60),
         ];
     }

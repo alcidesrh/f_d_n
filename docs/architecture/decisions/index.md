@@ -28,3 +28,4 @@
 | [ADR-022](ADR-022-rename-recorrido-a-salida.md) | Renombrar la entidad Recorrido a Salida (código y base de datos) | Aceptada |
 | [ADR-023](ADR-023-pagina-web-compra-en-una-pagina.md) | Página web: compra en una sola página, ida y vuelta, recargo, idiomas y SEO | Aceptada |
 | [ADR-024](ADR-024-gestion-de-salidas.md) | Gestión de salidas: programador, esquemas guardados y editar/anular/eliminar con propagación | Aceptada |
+| [ADR-025](ADR-025-seguimiento-de-buses-en-recorrido.md) | Seguimiento de buses en recorrido: mapa en tiempo real con GPS simulado desde el legado | Aceptada |
