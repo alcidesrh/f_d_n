@@ -9,7 +9,8 @@ const WALL_RESTITUTION = 0.75
 const BALL_RESTITUTION = 0.92
 const IMPULSE_SPEED = [12, 24] as const
 const GRID = { cols: 4, rows: 3 }
-const SIZE = 120
+/** Diámetros (px) repartidos al azar entre las ruedas. */
+const SIZES = [84, 100, 120, 142, 168]
 
 interface Ball {
   x: number
@@ -131,15 +132,17 @@ function render(ball: Ball) {
  */
 export function createBouncingBalls(elements: HTMLElement[], obstacle: () => DOMRect | undefined) {
   let frame: number | null = null
+  const sizes = shuffle([...SIZES])
   const balls: Ball[] = scatteredPoints(elements.length).map(({ x, y }, i) => {
     const el = elements[i]!
-    el.style.width = el.style.height = `${SIZE}px`
+    const size = sizes[i % sizes.length]!
+    el.style.width = el.style.height = `${size}px`
     const ball = {
       x,
       y,
       vx: 0,
       vy: 0,
-      radius: SIZE / 2,
+      radius: size / 2,
       rotation: random(-25, 25),
       rotationSpeed: 0,
       el,

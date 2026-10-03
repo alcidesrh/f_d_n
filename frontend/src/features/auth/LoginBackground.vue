@@ -140,8 +140,10 @@ onBeforeUnmount(() => {
    * acero, disco oscuro y cubo metálico con tuercas. `color` es el tono del
    * neumático (paleta zinc), oscuro o claro según la foto; `outline` su contorno.
    */
-  color: #a1a1aa; /* zinc-400: tono del neumático */
+  color: #71717a; /* zinc-500: tono del neumático sobre foto oscura */
   outline: 3px solid #f4f4f5; /* zinc-100: contorno */
+  /* Cada rueda aclara u oscurece un poco el tono base (`--tone`), sin salir del gris. */
+  --tone: currentColor;
   position: absolute;
   box-sizing: border-box;
   border-radius: 50%;
@@ -155,13 +157,13 @@ onBeforeUnmount(() => {
     #2a2d33 32% 56%,
     #b8bec6 56% 58%,
     #3b3f46 58% 60%,
-    color-mix(in srgb, currentColor 60%, black) 60% 63%,
-    color-mix(in srgb, currentColor 75%, white) 63% 64%,
-    currentColor 64% 80%,
-    color-mix(in srgb, currentColor 75%, white) 80% 81%,
-    color-mix(in srgb, currentColor 85%, black) 81% 93%,
-    color-mix(in srgb, currentColor 70%, black) 93% 94%,
-    color-mix(in srgb, currentColor 55%, black) 94% 100%
+    color-mix(in srgb, var(--tone) 60%, black) 60% 63%,
+    color-mix(in srgb, var(--tone) 75%, white) 63% 64%,
+    var(--tone) 64% 80%,
+    color-mix(in srgb, var(--tone) 75%, white) 80% 81%,
+    color-mix(in srgb, var(--tone) 85%, black) 81% 93%,
+    color-mix(in srgb, var(--tone) 70%, black) 93% 94%,
+    color-mix(in srgb, var(--tone) 55%, black) 94% 100%
   );
   box-shadow: 0 0 14px 2px rgb(0 0 0 / 0.45);
   user-select: none;
@@ -195,7 +197,7 @@ onBeforeUnmount(() => {
     inset: 0;
     border-radius: 50%;
     background: repeating-conic-gradient(
-      color-mix(in srgb, currentColor 60%, white) 0 1.2deg,
+      color-mix(in srgb, var(--tone) 60%, white) 0 1.2deg,
       transparent 1.2deg 5deg
     );
     mask: radial-gradient(circle closest-side, transparent 94%, #000 94.5%);
@@ -206,31 +208,36 @@ onBeforeUnmount(() => {
   &.login3,
   &.login8,
   &.login9 {
-    color: #3f3f46; /* zinc-700 */
+    color: #3f3f46; /* zinc-700: sobre foto clara (zinc-600 queda en medio) */
     outline-color: #18181b; /* zinc-900 */
   }
   /* El contorno cambia en cascada, un logo tras otro. */
   &:nth-child(1) {
+    --tone: color-mix(in srgb, currentColor 86%, white);
     transition:
       color 0.2s 0.5s,
       outline-color 0.2s 0.5s;
   }
   &:nth-child(2) {
+    --tone: color-mix(in srgb, currentColor 88%, black);
     transition:
       color 0.2s 0.7s,
       outline-color 0.2s 0.7s;
   }
   &:nth-child(3) {
+    --tone: color-mix(in srgb, currentColor 100%, black);
     transition:
       color 0.2s 0.9s,
       outline-color 0.2s 0.9s;
   }
   &:nth-child(4) {
+    --tone: color-mix(in srgb, currentColor 72%, white);
     transition:
       color 0.2s 1.12s,
       outline-color 0.2s 1.12s;
   }
   &:nth-child(5) {
+    --tone: color-mix(in srgb, currentColor 76%, black);
     transition:
       color 0.2s 1.24s,
       outline-color 0.2s 1.24s;
