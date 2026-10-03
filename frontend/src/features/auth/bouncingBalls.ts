@@ -9,7 +9,7 @@ const WALL_RESTITUTION = 0.75
 const BALL_RESTITUTION = 0.92
 const IMPULSE_SPEED = [12, 24] as const
 const GRID = { cols: 4, rows: 3 }
-const SIZE = 150
+const SIZE = 120
 
 interface Ball {
   x: number

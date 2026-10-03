@@ -1,12 +1,8 @@
 <template>
   <div ref="logosEl" class="background">
-    <div
-      v-for="src in LOGOS"
-      :key="src"
-      class="img bg-surface-300/50"
-      :class="bgClass"
-      :style="{ backgroundImage: `url('${src}')` }"
-    />
+    <div v-for="n in WHEELS" :key="n" class="img" :class="bgClass">
+      <span class="tread" />
+    </div>
   </div>
   <div class="overlay" />
   <div
@@ -23,8 +19,7 @@
 
 <script setup lang="ts">
 /**
- * Fondo decorativo del login: carrusel de fotos a pantalla completa y logos de
- * las empresas rebotando (y chocando con `obstacle`, la tarjeta de login).
+ * Fondo decorativo del login: carrusel de fotos a pantalla completa y ruedas de bus rebotando (y chocando con `obstacle`, la tarjeta de login).
  */
 import { onBeforeUnmount, onMounted, ref, useTemplateRef } from 'vue'
 import { gsap } from 'gsap'
@@ -34,13 +29,7 @@ const props = defineProps<{ obstacle: HTMLElement | null }>()
 
 const SLIDE_MS = 5000
 const SLIDE_COUNT = 10
-const LOGOS = [
-  'images/logos/copiloto/lapionera5.png',
-  'images/logos/copiloto/rosita5.png',
-  'images/logos/copiloto/mayadeoro5.png',
-  'images/logos/copiloto/starbus5.png',
-  'images/logos/copiloto/corporacionlapionera5.png',
-]
+const WHEELS = 5
 
 const imageUrl = (n: number) => `images/login${n}.png`
 const nextSlide = (n: number) => (n % SLIDE_COUNT) + 1
@@ -54,7 +43,7 @@ const first = Math.floor(Math.random() * SLIDE_COUNT) + 1
 /** Foto de cada capa; se alternan: una visible y la otra preparada con la siguiente. */
 const slides = ref<[number, number]>([first, nextSlide(first)])
 let showingA = true
-/** Clase según la foto visible: ajusta el color del borde de los logos. */
+/** Clase según la foto visible: ajusta el color de las ruedas. */
 const bgClass = ref(`login${first}`)
 
 let timer: ReturnType<typeof setInterval> | undefined
@@ -67,23 +56,37 @@ function advance() {
   slides.value[showingA ? 1 : 0] = next
   preload(nextSlide(next))
 
-  gsap.set(from, { clearProps: 'transform' })
-  gsap.set(to, { opacity: 0, clearProps: 'transform' })
+  // Truco del mantel: la foto actual se jala hacia una dirección al azar, despacio y de
+  // pronto muy rápido; la nueva queda debajo. Las ruedas reciben su empujón en ese tirón.
+  const angle = Math.random() * Math.PI * 2
+  const reach = Math.hypot(window.innerWidth, window.innerHeight)
+  gsap.set(from, { zIndex: 1, opacity: 1, x: 0, y: 0 })
+  gsap.set(to, { zIndex: 0, opacity: 1, x: 0, y: 0 })
   timeline = gsap
     .timeline({
       onComplete: () => {
         showingA = !showingA
         gsap.set(from, { opacity: 0, clearProps: 'transform' })
-        bgClass.value = `login${next}`
       },
     })
     .to(
       from,
-      { y: -280, rotation: 5, scale: 0.95, opacity: 0, duration: 0.4, ease: 'back.in(1.7)' },
+      {
+        x: Math.cos(angle) * reach,
+        y: Math.sin(angle) * reach,
+        duration: 3,
+        ease: (t: number) => t ** 14,
+      },
       0,
     )
-    .to(to, { opacity: 1, duration: 0.25, ease: 'power2.out' }, 0.05)
-    .call(() => balls?.scatter(), [], 0.12)
+    .call(
+      () => {
+        bgClass.value = `login${next}`
+        balls?.scatter()
+      },
+      [],
+      2.6,
+    )
 }
 
 onMounted(() => {
@@ -107,15 +110,14 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .overlay {
-  width: 100vw;
-  height: 100vh;
-  position: absolute;
+  position: fixed;
+  inset: 0;
   z-index: 2;
+  background: rgb(0 0 0 / 0.55);
 }
 .bg-layer {
-  position: absolute;
-  width: 100vw;
-  min-height: 100vh;
+  position: fixed;
+  inset: 0;
   z-index: 1;
   background-repeat: no-repeat;
   background-position: center;
@@ -133,48 +135,105 @@ onBeforeUnmount(() => {
   padding: 30px;
 }
 .background .img {
-  border: 20px solid var(--p-surface-100);
-  border-radius: 999px;
-  padding: 20px;
+  /*
+   * Rueda de bus vista de frente: neumático negro con flanco ancho, aro de
+   * acero, disco oscuro y cubo metálico con tuercas. `color` es el tono del
+   * neumático (paleta zinc), oscuro o claro según la foto; `outline` su contorno.
+   */
+  color: #a1a1aa; /* zinc-400: tono del neumático */
+  outline: 3px solid #f4f4f5; /* zinc-100: contorno */
   position: absolute;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle closest-side,
+    #aeb4bc 0 5%,
+    #2b2f35 5% 7%,
+    #6c727a 7% 9%,
+    #1a1c20 9% 30%,
+    #5a6069 30% 32%,
+    #2a2d33 32% 56%,
+    #b8bec6 56% 58%,
+    #3b3f46 58% 60%,
+    color-mix(in srgb, currentColor 60%, black) 60% 63%,
+    color-mix(in srgb, currentColor 75%, white) 63% 64%,
+    currentColor 64% 80%,
+    color-mix(in srgb, currentColor 75%, white) 80% 81%,
+    color-mix(in srgb, currentColor 85%, black) 81% 93%,
+    color-mix(in srgb, currentColor 70%, black) 93% 94%,
+    color-mix(in srgb, currentColor 55%, black) 94% 100%
+  );
+  box-shadow: 0 0 14px 2px rgb(0 0 0 / 0.45);
   user-select: none;
   z-index: 1;
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: contain;
   margin: 0;
+  /* Cubo: acabado metálico cepillado. */
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: conic-gradient(#4b5058, #9aa0a8, #3a3e44, #b4bac2, #40444b, #8d939b, #4b5058);
+    mask: radial-gradient(circle closest-side, transparent 9%, #000 9.5% 29.5%, transparent 30%);
+  }
+  /* Seis tuercas alrededor del cubo. */
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle 5px at 70% 50%, #e5e8ec 0 2px, #1a1a1a 3px 4px, transparent 5px),
+      radial-gradient(circle 5px at 60% 67.3%, #e5e8ec 0 2px, #1a1a1a 3px 4px, transparent 5px),
+      radial-gradient(circle 5px at 40% 67.3%, #e5e8ec 0 2px, #1a1a1a 3px 4px, transparent 5px),
+      radial-gradient(circle 5px at 30% 50%, #e5e8ec 0 2px, #1a1a1a 3px 4px, transparent 5px),
+      radial-gradient(circle 5px at 40% 32.7%, #e5e8ec 0 2px, #1a1a1a 3px 4px, transparent 5px),
+      radial-gradient(circle 5px at 60% 32.7%, #e5e8ec 0 2px, #1a1a1a 3px 4px, transparent 5px);
+  }
+  /* Dibujo de la banda de rodadura: muescas finas en el borde. */
+  .tread {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: repeating-conic-gradient(
+      color-mix(in srgb, currentColor 60%, white) 0 1.2deg,
+      transparent 1.2deg 5deg
+    );
+    mask: radial-gradient(circle closest-side, transparent 94%, #000 94.5%);
+  }
+  /* Foto clara: neumático oscuro. Foto oscura: neumático claro. */
   &.login1,
   &.login2,
   &.login3,
   &.login8,
   &.login9 {
-    border-color: var(--p-surface-900);
+    color: #3f3f46; /* zinc-700 */
+    outline-color: #18181b; /* zinc-900 */
   }
-  /* El borde cambia en cascada, un logo tras otro. */
+  /* El contorno cambia en cascada, un logo tras otro. */
   &:nth-child(1) {
     transition:
-      border 0.2s 0.5s,
-      background-color 0.2s 0.5s;
+      color 0.2s 0.5s,
+      outline-color 0.2s 0.5s;
   }
   &:nth-child(2) {
     transition:
-      border 0.2s 0.7s,
-      background-color 0.2s 0.7s;
+      color 0.2s 0.7s,
+      outline-color 0.2s 0.7s;
   }
   &:nth-child(3) {
     transition:
-      border 0.2s 0.9s,
-      background-color 0.2s 0.9s;
+      color 0.2s 0.9s,
+      outline-color 0.2s 0.9s;
   }
   &:nth-child(4) {
     transition:
-      border 0.2s 1.12s,
-      background-color 0.2s 1.12s;
+      color 0.2s 1.12s,
+      outline-color 0.2s 1.12s;
   }
   &:nth-child(5) {
     transition:
-      border 0.2s 1.24s,
-      background-color 0.2s 1.24s;
+      color 0.2s 1.24s,
+      outline-color 0.2s 1.24s;
   }
 }
 </style>
