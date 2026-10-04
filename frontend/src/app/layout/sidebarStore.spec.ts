@@ -11,7 +11,7 @@ describe('defineSidebarStore', () => {
     expect(left.mode).toBe('open')
     expect(left.width).toBe(250)
     left.setMode('mini')
-    expect(left.width).toBe(71)
+    expect(left.width).toBe(60)
     left.setMode('close')
     expect(left.width).toBe(0)
   })

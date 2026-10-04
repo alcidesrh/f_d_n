@@ -10,7 +10,7 @@
           </div>
           <ul class="sidebar-menu">
             <li v-for="route in sidebarRoutes" :key="route.name ?? route.path" class="menu-item">
-              <RouterLink :to="route.path" class="menu-link" @mouseenter="sidebarStore.handleMouseEnter" @mouseleave="sidebarStore.handleMouseLeave">
+              <RouterLink :to="route.path" class="menu-link">
                 <span class="menu-icon">
                   <icon :name="route.meta.icon ?? 'link'" />
                 </span>

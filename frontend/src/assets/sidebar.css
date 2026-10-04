@@ -52,7 +52,7 @@
       width: var(--sb-right-w);
       transform: none;
     }
-    /* En `mini` los enlaces se despliegan por fuera del panel (sidebarFlyout). */
+    /* En `mini` los enlaces se despliegan por fuera del panel (ver `.sidebar.mini` abajo). */
     &.mini {
       overflow: visible;
     }
@@ -76,27 +76,38 @@
 
 .sidebar-menu {
   list-style: none;
-  padding: 10px 0;
+  padding: 0px 0;
 }
 .sidebar-control {
   /*border-bottom: var(--border-200);*/
-  background-color: var(--p-surface-100);
+  /*background-color: var(--p-neutral-00);*/
   position: relative;
-  z-index: 999;
-  width: 100%;
+  /*z-index: 999;*/
+  /*width: fit-content;*/
+  right: 0px;
+  margin-left: auto;
   display: flex;
-  justify-content: space-between;
+  justify-content: end;
   align-items: center;
   min-height: 2rem;
-  padding: 0px 15px;
-  /* padding-bottom: 0px; */
+  padding: 7px 7px;
+  gap: 0px;
+  padding-bottom: 0px;
 
   & > * {
     display: inline-flex;
     cursor: pointer;
+    padding: 4px;
+    /*background-color: var(--p-surface-200);*/
+    /*border-radius: 999px;*/
+    /*box-shadow: 2px 2px 7px -1px var(--p-surface-500);*/
+    border-radius: 999px;
+    /*transition: box-shadow var(--transition);*/
     &:hover {
       border-radius: 999px;
-      background-color: var(--p-surface-100);
+      /*background-color: var(--p-surface-200);*/
+      /*box-shadow: var(--shadow);*/
+      box-shadow: 0px 0px 2px 0px var(--p-surface-700);
     }
   }
   /* `mini` es solo de escritorio: el drawer siempre muestra los textos. */
@@ -107,6 +118,8 @@
     }
   }
   &.right {
+    justify-content: start;
+
     &:not(.nomini) {
       flex-direction: row-reverse;
     }
@@ -131,7 +144,7 @@
   width: 100%;
   display: flex;
   align-items: center;
-  padding: 14px calc((70px - 1.5rem) / 2);
+  padding: 14px calc((var(--sb-mini) - 24px) / 2);
   color: var(--text-color);
   text-decoration: none;
   white-space: nowrap;
@@ -157,9 +170,60 @@
   opacity: 1;
   transition: opacity calc(var(--transition) * 0.8) var(--ease);
 }
-.sidebar.mini .menu-text {
+.sidebar.mini {
+  & .sidebar-control {
+    justify-content: center;
+    position: relative;
+  }
+  /* Solo íconos (la columna mide `--sb-mini`). Al pasar el mouse, el enlace se
+     ensancha hasta el ancho abierto flotando sobre el contenido y aparece el
+     texto. Todo con transiciones CSS sobre `--w`: ancho y margen se animan
+     juntos, así en el sidebar derecho (crece hacia la izquierda) el borde
+     pegado a la barra no se mueve y el puntero no sale del enlace. */
   @variant lg {
-    opacity: 0;
-    transition-duration: calc(var(--transition) * 0.5);
+    & .menu-item .menu-link {
+      --w: var(--sb-mini);
+      flex: none;
+      min-width: 0;
+      width: var(--w);
+      overflow: hidden;
+      transition:
+        width var(--transition) var(--ease),
+        margin-left var(--transition) var(--ease),
+        box-shadow var(--transition) var(--ease);
+      &:hover,
+      &:focus-visible {
+        --w: var(--sb-open);
+        position: relative;
+        z-index: 2;
+        background-color: var(--bg);
+        box-shadow: 0 2px 8px rgb(0 0 0 / 0.15);
+      }
+    }
+    & .menu-text {
+      opacity: 0;
+      transition-duration: calc(var(--transition) * 0.5);
+    }
+    & .menu-link:hover .menu-text,
+    & .menu-link:focus-visible .menu-text {
+      opacity: 1;
+      transition-duration: var(--transition);
+    }
+    &.left .menu-link:hover,
+    &.left .menu-link:focus-visible {
+      border-radius: 0 8px 8px 0;
+    }
+    &.right .menu-item .menu-link {
+      flex-direction: row-reverse;
+      margin-left: calc(var(--sb-mini) - var(--w));
+      &:hover,
+      &:focus-visible {
+        border-radius: 8px 0 0 8px;
+      }
+      & .menu-text {
+        margin-left: 0;
+        margin-right: 15px;
+      }
+    }
   }
 }

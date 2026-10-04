@@ -9,7 +9,6 @@
 import { defineStore } from "pinia";
 import { gsap } from "gsap";
 import { useUiStore } from "@/app/ui";
-import { closeFlyout, openFlyout, resetFlyouts } from "./sidebarFlyout";
 
 export type SidebarMode = "open" | "mini" | "close";
 
@@ -26,13 +25,14 @@ export interface SidebarStoreState {
 
 function createDefinition(side: "left" | "right", name: string) {
   return defineStore(name, {
-    persist: { omit: ["drawer"] },
+    // Solo el modo: los anchos son constantes (un valor viejo persistido pisaría el nuevo).
+    persist: { pick: ["mode", "prevMode"] },
     state: (): SidebarStoreState => ({
       side: side,
       mode: "open",
       prevMode: "mini",
       open: 250,
-      mini: 71,
+      mini: 60,
       close: 0,
       drawer: false,
     }),
@@ -65,31 +65,18 @@ function createDefinition(side: "left" | "right", name: string) {
           this.prevMode = this.mode == "open" ? "mini" : "open";
         }
       },
-      /** En `mini`, el enlace se despliega mostrando su texto mientras dure el hover. */
-      handleMouseEnter(e: MouseEvent) {
-        if (!this.collapsed) return;
-        openFlyout(e.currentTarget as HTMLElement, {
-          side: this.side,
-          mini: this.mini,
-          open: this.open,
-        });
-      },
-      handleMouseLeave(e: MouseEvent) {
-        closeFlyout(e.currentTarget as HTMLElement);
-      },
       /**
        * Anima el ancho del panel. Solo escribe variables CSS (`--sb-<lado>-w`
        * y `--sb-<lado>-open`, ver `assets/tokens.css`); `sidebar.css` y
        * `content.css` deciden por breakpoint cómo usarlas (empujar el
-       * contenido en escritorio, drawer en móvil). Los textos en `mini` se
-       * ocultan por CSS (`.sidebar.mini .menu-text`).
+       * contenido en escritorio, drawer en móvil). En `mini` los textos se
+       * ocultan y el enlace con hover se despliega, todo por CSS (`sidebar.css`).
        *
        * `--sb-<lado>-w` no se hereda: se anima sobre el panel y sobre `.main`
        * (no en `:root`, que recalcularía el estilo de toda la página en cada
        * fotograma).
        */
       sidebarUpdate() {
-        resetFlyouts(this.side);
         const panel = document.querySelector<HTMLElement>(`.sidebar.${this.side}`);
         const main = document.querySelector<HTMLElement>(".main");
         if (!panel || !main) return;

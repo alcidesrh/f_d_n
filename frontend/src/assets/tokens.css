@@ -43,7 +43,7 @@
      Estos tokens son los semánticos del layout; no inventar valores sueltos. */
   --header-h: 70px;
   --sidebar-width: 250px;
-  --sb-mini: 70px;
+  --sb-mini: 60px;
   --sb-close: 0px;
   /* Ancho abierto de cada sidebar (lo escribe `sidebarStore.sidebarUpdate()`
      sobre su panel). El ancho animado (`--sb-<lado>-w`) está abajo. */
