@@ -2,13 +2,13 @@
 
 namespace App\Entity;
 
-use App\Attribute\ApiResourceNoPagination;
+use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
 use App\Entity\Enum\AsientoClase;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
-#[ApiResourceNoPagination]
+#[ApiResourcePaginationPage]
 class Asiento extends Base
 {
     #[ORM\Column]

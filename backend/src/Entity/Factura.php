@@ -86,6 +86,11 @@ class Factura {
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $xml = null;
 
+    /** Etiqueta para mostrar la factura como relación (`serie-dte`). */
+    public function getLabel(): string {
+        return trim(($this->serie ?? '') . '-' . ($this->dte ?? ''), '-');
+    }
+
     public function getId(): ?int {
         return $this->id;
     }
