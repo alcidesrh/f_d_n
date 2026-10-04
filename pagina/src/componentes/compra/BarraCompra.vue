@@ -4,8 +4,8 @@
 -->
 <template>
   <div class="fixed inset-x-0 bottom-0 z-40 border-t border-surface-200 bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-6px_20px_-8px_rgb(15_23_42/0.18)] backdrop-blur">
-    <div class="contenedor flex items-center gap-3 py-3">
-      <div class="min-w-0 flex-1">
+    <div class="contenedor flex flex-wrap items-center gap-x-3 gap-y-2 py-3">
+      <div class="min-w-0 basis-full sm:basis-0 sm:flex-1">
         <div v-if="viaje.cantidad > 0" class="flex items-baseline gap-2">
           <span class="text-xs text-muted-color">{{ t('barra.total') }}</span>
           <span class="text-xl font-bold tabular-nums text-marca-900">{{ quetzales(viaje.totalCentavos, region) }}</span>
@@ -21,12 +21,12 @@
           <template v-else>{{ t('barra.elijaAsientos') }}</template>
         </p>
       </div>
-      <Button type="button" severity="secondary" outlined class="shrink-0" :disabled="ocupado" @click="emit('cancelar')">
+      <Button type="button" severity="secondary" outlined class="shrink-0 whitespace-nowrap" :disabled="ocupado" @click="emit('cancelar')">
         <icon name="x" size="1rem" />
         <span>{{ t('barra.cancelar') }}</span>
       </Button>
       <Button
-        class="boton-compra shrink-0"
+        class="boton-compra min-w-0 flex-1 whitespace-nowrap sm:flex-none"
         size="large"
         :loading="ocupado"
         :disabled="!!viaje.falta || ocupado"
