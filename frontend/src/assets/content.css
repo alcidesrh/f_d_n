@@ -35,6 +35,7 @@
 
 .main-inner {
   padding: var(--page-gutter);
+  padding-top: 2rem;
   padding-bottom: max(var(--page-gutter), 3rem);
   max-width: var(--content-max);
   margin: 0 auto;
@@ -50,7 +51,7 @@
   min-width: 0;
 }
 .page-title {
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: "Space Grotesk", sans-serif;
   font-size: 1.2rem;
   color: var(--p-surface-700);
   font-weight: 600;

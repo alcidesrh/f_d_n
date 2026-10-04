@@ -11,6 +11,7 @@ import type {
   EntitySchema,
   MutationSchema,
 } from '@/core/graphql/types'
+import { selectionsFor } from './columnPresenters'
 import { useSchemaStore } from './schema'
 import type { EntityStore } from './types'
 
@@ -53,6 +54,7 @@ export const repository = {
       filters: store.filters,
       order,
       fields,
+      selections: fields ? selectionsFor(entity.name, fields) : undefined,
     })
     store.items = result.items
     if (page)

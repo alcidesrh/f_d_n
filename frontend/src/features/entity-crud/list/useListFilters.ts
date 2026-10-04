@@ -151,7 +151,7 @@ export function useListFilters(
     const items = store.value?.items ?? []
     const metadata = entity()
     return hasLocalFilter.value && metadata
-      ? items.filter((item) => matchesFilters(item, filters, metadata))
+      ? items.filter((item) => matchesFilters(item, filters, metadata, store.value?.name))
       : items
   })
 

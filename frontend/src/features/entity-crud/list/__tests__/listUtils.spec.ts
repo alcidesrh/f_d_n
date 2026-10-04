@@ -127,6 +127,24 @@ describe('cellDisplay', () => {
   })
 })
 
+describe('cellDisplay con presentador', () => {
+  const row = { trayecto: { id: '/api/trayectos/1', origen: { label: 'Guatemala' }, destino: { label: 'Esquipulas' } } }
+
+  it('compone el texto con el presentador de Entidad.campo', () => {
+    expect(cellDisplay(row, { field: 'trayecto' }, 'BoletoTarifa')).toBe('Guatemala Esquipulas')
+  })
+
+  it('otra entidad o campo sin presentador usa el label', () => {
+    const labelled = { trayecto: { label: 'T1' } }
+    expect(cellDisplay(labelled, { field: 'trayecto' }, 'Salida')).toBe('T1')
+    expect(cellDisplay(labelled, { field: 'trayecto' })).toBe('T1')
+  })
+
+  it('relación vacía no rompe', () => {
+    expect(cellDisplay({ trayecto: null }, { field: 'trayecto' }, 'BoletoTarifa')).toBe('')
+  })
+})
+
 describe('fieldKind', () => {
   it('detecta el tipo por namedType', () => {
     expect(fieldKind(schema, 'createdAt')).toBe('date')

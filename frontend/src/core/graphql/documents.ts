@@ -18,6 +18,8 @@ function indent(text: string, spaces: number): string {
 export interface SelectionOptions {
   includeRelations?: boolean
   fields?: string[]
+  /** Subselección propia por relación (sustituye a `id label`). */
+  selections?: Record<string, string>
 }
 
 /** Selección hoja de una entidad: scalars + relaciones a 1 nivel. Si `fields`
@@ -36,7 +38,8 @@ export function buildSelection(entity: EntitySchema, options: SelectionOptions =
     for (const relation of entity.relations) {
       if (!want(relation.name) || seen.has(relation.name)) continue
       seen.add(relation.name)
-      lines.push(`${relation.name} {\n  id\n  label\n}`)
+      const custom = options.selections?.[relation.name]
+      lines.push(`${relation.name} {\n${custom ? indent(custom, 2) : '  id\n  label'}\n}`)
     }
   }
   if (lines.length === 0) lines.push('id')
@@ -49,6 +52,7 @@ export interface CollectionQuerySpec {
   filters?: Record<string, unknown>
   order?: OrderCondition[]
   fields?: string[]
+  selections?: Record<string, string>
 }
 
 export interface BuiltDocument {
@@ -119,7 +123,7 @@ export function buildCollectionQuery(
     callArgs.push('order: $order')
   }
 
-  const selection = buildSelection(entity, { fields: spec.fields })
+  const selection = buildSelection(entity, { fields: spec.fields, selections: spec.selections })
   let body: string
   if (entity.collectionKind === 'page-connection') {
     body = `collection {\n${indent(selection, 2)}\n}\npaginationInfo {\n  itemsPerPage\n  lastPage\n  totalCount\n  currentPage\n  hasNextPage\n}`

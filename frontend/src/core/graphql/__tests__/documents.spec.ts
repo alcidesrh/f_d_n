@@ -298,6 +298,15 @@ describe('buildSelection', () => {
     expect(selection.split('\n').filter((line) => line === 'label')).toHaveLength(0)
   })
 
+  it('usa la subselección propia de una relación', () => {
+    const selection = buildSelection(boletoSchema, {
+      fields: ['numero', 'ruta'],
+      selections: { ruta: 'id\norigen {\n  label\n}' },
+    })
+    expect(selection).toContain('ruta {\n  id\n  origen {\n    label\n  }\n}')
+    expect(selection).not.toContain('ruta {\n  id\n  label')
+  })
+
   it('con fields vacíos cae a id', () => {
     expect(buildSelection(boletoSchema, { fields: [] })).toBe('id')
   })

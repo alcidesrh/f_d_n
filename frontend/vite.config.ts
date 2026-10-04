@@ -14,7 +14,7 @@ import IconsResolver from "unplugin-icons/resolver";
 export default defineConfig({
   plugins: [
     vue(),
-    vueDevTools(),
+    // vueDevTools(),
     tailwindcss(),
     AutoImport({
       // Solo las APIs de Vue/Router/Pinia: el código del proyecto se importa
