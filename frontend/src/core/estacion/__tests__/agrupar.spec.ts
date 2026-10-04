@@ -16,6 +16,6 @@ describe('agruparPorDepartamento', () => {
     expect(agruparPorDepartamento(lista, { propio: 'PETEN' }).map((g) => g.departamento).slice(0, 2)).toEqual(['Petén', 'Guatemala'])
   })
   it('usa el rótulo dado para las sin departamento', () => {
-    expect(agruparPorDepartamento(lista, { otros: 'Sin depto.' }).at(-1)!.departamento).toBe('Sin depto.')
+    expect(agruparPorDepartamento(lista, { otros: 'Sin depto.' })[4]!.departamento).toBe('Sin depto.')
   })
 })
