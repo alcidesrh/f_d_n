@@ -143,6 +143,14 @@ export const useEntityConfigStore = defineStore('entityConfig', {
       return this.entityClasses
     },
 
+    /** Elige una entidad sin cargar su configuración (se carga con `select` al abrir el editor). */
+    choose(entityClass: string): void {
+      this.selected = entityClass
+      this.status = 'idle'
+      this.error = ''
+      this.applyConfig(null)
+    },
+
     /** Selecciona una entidad y carga su configuración (descarta cambios en curso). */
     async select(entityClass: string): Promise<void> {
       this.selected = entityClass
