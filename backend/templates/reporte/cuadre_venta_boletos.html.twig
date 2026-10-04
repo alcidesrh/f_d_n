@@ -1,0 +1,110 @@
+{# Cuadre de venta de boletos. Datos: ver ReportePdf::cuadre (c = CuadreVentaBoletos, dinero). #}
+{% extends 'reporte/_base.html.twig' %}
+{% set titulo = 'Cuadre de venta de boletos' %}
+{% set mon = c.moneda %}
+
+{% block ficha %}
+<table class="ficha">
+  <tr>
+    <td style="width:25%"><div class="lbl">Fecha de venta</div><div class="val">{{ c.fecha|date('d/m/Y') }}</div></td>
+    <td style="width:35%"><div class="lbl">Estación de venta</div><div class="val">{{ c.estacion ?? 'Todas las estaciones' }}</div></td>
+    <td style="width:25%"><div class="lbl">Empresa</div><div class="val">{{ c.empresa ?? 'Todas' }}</div></td>
+    <td style="width:15%"><div class="lbl">Moneda</div><div class="val">{{ mon }}</div></td>
+  </tr>
+</table>
+<table class="cifras"><tr>
+  <td style="width:25%"><div class="lbl">Boletos vendidos</div><div class="n">{{ c.totalUsuarios.boletos }}</div></td>
+  <td style="width:25%"><div class="lbl">Recibido</div><div class="n">{{ dinero.num(c.totalUsuarios.recibido) }}</div></td>
+  <td style="width:25%"><div class="lbl">Anulado</div><div class="n">{{ dinero.num(c.totalUsuarios.anulado) }}</div></td>
+  <td style="width:25%"><div class="lbl">Facturado</div><div class="n">{{ dinero.num(c.totalUsuarios.facturado) }}</div></td>
+</tr></table>
+{% endblock %}
+
+{% block cuerpo %}
+<div class="seccion">Ventas de boletos por usuario</div>
+<table class="datos">
+  <thead><tr><th>Usuario</th><th class="der">Ventas</th><th class="der">Boletos</th><th class="der">Recibido</th><th class="der">Anulado</th><th class="der">Facturado</th></tr></thead>
+  <tbody>
+  {% for u in c.usuarios %}
+    <tr class="{{ loop.index is even ? 'par' : '' }}">
+      <td><b>{{ u.usuario }}</b>{% if u.nombre %} <span class="muted">· {{ u.nombre }}</span>{% endif %}</td>
+      <td class="der">{{ u.ventas }}</td><td class="der">{{ u.boletos }}</td>
+      <td class="der num">{{ dinero.num(u.recibido) }}</td><td class="der num">{{ dinero.num(u.anulado) }}</td><td class="der num">{{ dinero.num(u.facturado) }}</td>
+    </tr>
+  {% else %}
+    <tr class="vacio"><td colspan="6">No hay ventas con estos parámetros.</td></tr>
+  {% endfor %}
+  </tbody>
+  <tfoot><tr class="total">
+    <td>Totales ({{ mon }})</td><td class="der">{{ c.totalUsuarios.ventas }}</td><td class="der">{{ c.totalUsuarios.boletos }}</td>
+    <td class="der num">{{ dinero.num(c.totalUsuarios.recibido) }}</td><td class="der num">{{ dinero.num(c.totalUsuarios.anulado) }}</td><td class="der num">{{ dinero.num(c.totalUsuarios.facturado) }}</td>
+  </tr></tfoot>
+</table>
+
+<div class="seccion">Ventas por bus y salida</div>
+<table class="datos">
+  <thead><tr><th>Bus</th><th>Piloto</th><th>Hora</th><th>Ruta</th><th class="der">Venta</th></tr></thead>
+  <tbody>
+  {% for s in c.salidas %}
+    <tr class="{{ loop.index is even ? 'par' : '' }}">
+      <td><b>{{ s.bus ?? '—' }}</b></td><td>{{ s.piloto ?? '—' }}</td><td>{{ s.hora }}</td><td>{{ s.descripcion }}</td><td class="der num">{{ dinero.num(s.venta) }}</td>
+    </tr>
+  {% else %}
+    <tr class="vacio"><td colspan="5">Sin resultados</td></tr>
+  {% endfor %}
+  </tbody>
+  <tfoot><tr class="total"><td colspan="4" class="der">Total</td><td class="der num">{{ dinero.conMoneda(c.totalSalidas, mon) }}</td></tr></tfoot>
+</table>
+
+<div class="seccion">Venta de prepagados</div>
+<table class="datos">
+  <thead><tr><th>Salida</th><th>Ruta</th><th class="der">Venta</th></tr></thead>
+  <tbody>
+  {% for s in c.prepagados %}
+    <tr class="{{ loop.index is even ? 'par' : '' }}"><td class="num">{{ s.salida|date('d/m/Y H:i') }}</td><td>{{ s.descripcion }}</td><td class="der num">{{ dinero.num(s.venta) }}</td></tr>
+  {% else %}
+    <tr class="vacio"><td colspan="3">Sin resultados</td></tr>
+  {% endfor %}
+  </tbody>
+  <tfoot><tr class="total"><td colspan="2" class="der">Total</td><td class="der num">{{ dinero.conMoneda(c.totalPrepagados, mon) }}</td></tr></tfoot>
+</table>
+
+<div class="seccion">Prepagados de otras estaciones</div>
+<table class="datos">
+  <thead><tr><th>Salida</th><th>Ruta</th><th class="der">Venta</th></tr></thead>
+  <tbody>
+  {% for s in c.prepagadosOtras %}
+    <tr class="{{ loop.index is even ? 'par' : '' }}"><td class="num">{{ s.salida|date('d/m/Y H:i') }}</td><td>{{ s.descripcion }}</td><td class="der num">{{ dinero.num(s.venta) }}</td></tr>
+  {% else %}
+    <tr class="vacio"><td colspan="3">Sin resultados</td></tr>
+  {% endfor %}
+  </tbody>
+  <tfoot><tr class="total"><td colspan="2" class="der">Total</td><td class="der num">{{ dinero.conMoneda(c.totalPrepagadosOtras, mon) }}</td></tr></tfoot>
+</table>
+
+<div class="seccion">Ventas con tarjeta</div>
+<table class="datos">
+  <thead><tr><th>Factura</th><th>Hora</th><th>Autorización</th><th>Usuario</th><th class="der">Venta</th></tr></thead>
+  <tbody>
+  {% for t in c.tarjetas %}
+    <tr class="{{ loop.index is even ? 'par' : '' }}"><td class="num">{{ t.factura }}</td><td class="num">{{ t.hora|date('H:i:s') }}</td><td>{{ t.tarjeta }}</td><td>{{ t.usuario }}</td><td class="der num">{{ dinero.num(t.venta) }}</td></tr>
+  {% else %}
+    <tr class="vacio"><td colspan="5">Sin resultados</td></tr>
+  {% endfor %}
+  </tbody>
+  <tfoot><tr class="total"><td colspan="4" class="der">Total</td><td class="der num">{{ dinero.conMoneda(c.totalTarjetas, mon) }}</td></tr></tfoot>
+</table>
+
+<div class="seccion">Boletos anulados</div>
+<table class="datos">
+  <thead><tr><th>Factura</th><th>Hora</th><th>Boleto</th><th>Usuario</th><th class="centro">Asiento</th><th>Trayecto</th><th class="der">Importe anulado</th></tr></thead>
+  <tbody>
+  {% for a in c.anulados %}
+    <tr class="{{ loop.index is even ? 'par' : '' }}"><td class="num">{{ a.factura }}</td><td class="num">{{ a.hora|date('H:i:s') }}</td><td>{{ a.boletoId }}</td><td>{{ a.usuario }}</td><td class="centro">{{ a.asiento }}</td><td>{{ a.descripcion }}</td><td class="der num">{{ dinero.num(a.importe) }}</td></tr>
+  {% else %}
+    <tr class="vacio"><td colspan="7">Sin resultados</td></tr>
+  {% endfor %}
+  </tbody>
+  <tfoot><tr class="total"><td colspan="6" class="der">Total anulado</td><td class="der num">{{ dinero.conMoneda(c.totalAnulados, mon) }}</td></tr></tfoot>
+</table>
+{% endblock %}

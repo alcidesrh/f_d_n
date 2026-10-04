@@ -1,0 +1,54 @@
+{# Estilos y encabezado comunes de los reportes de venta (dompdf: CSS 2.1, sin flex/grid). Variables: titulo, usuario, generado; bloques: ficha, cuerpo. #}
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><title>{{ titulo }}</title>
+<style>
+  @page { margin: 30px 34px 44px; }
+  body { font-family: "DejaVu Sans", sans-serif; font-size: 9px; color: #1f2937; }
+  .muted { color: #6b7280; }
+  table { border-collapse: collapse; }
+  .banda { width: 100%; border-bottom: 3px solid #1e3a5f; padding-bottom: 8px; }
+  .marca { font-size: 8px; letter-spacing: .14em; text-transform: uppercase; color: #6b7280; }
+  .titulo { font-size: 19px; font-weight: bold; color: #1e3a5f; margin-top: 2px; }
+  .meta td { font-size: 8px; color: #6b7280; text-align: right; padding: 0 0 1px 10px; }
+  .meta td b { color: #1f2937; }
+  .ficha { width: 100%; margin-top: 12px; background: #f3f6fa; border: 1px solid #d7e0ea; }
+  .ficha td { padding: 6px 10px; vertical-align: top; }
+  .lbl { font-size: 7px; letter-spacing: .06em; text-transform: uppercase; color: #6b7280; }
+  .val { font-size: 10px; font-weight: bold; margin-top: 1px; }
+  .cifras { width: 100%; margin-top: 8px; }
+  .cifras td { padding: 5px 10px; border-left: 3px solid #2563eb; background: #eef4ff; }
+  .cifras .n { font-size: 14px; font-weight: bold; color: #1e3a5f; }
+  .seccion { margin-top: 16px; font-size: 10px; font-weight: bold; color: #1e3a5f; text-transform: uppercase; letter-spacing: .06em; border-bottom: 1px solid #b9cbe2; padding-bottom: 3px; }
+  .datos { width: 100%; margin-top: 6px; }
+  .datos th { background: #1e3a5f; color: #fff; font-size: 7.5px; letter-spacing: .05em; text-transform: uppercase; text-align: left; padding: 5px 6px; }
+  .datos td { padding: 4px 6px; border-bottom: 1px solid #e5e9ef; vertical-align: top; }
+  .datos tr { page-break-inside: avoid; }
+  .datos tr.par td { background: #f8fafc; }
+  .datos th.der, .der { text-align: right; }
+  .datos th.centro, .centro { text-align: center; }
+  .total td { font-weight: bold; font-size: 9px; background: #dbe6f4; color: #1e3a5f; padding: 5px 6px; border-top: 1px solid #1e3a5f; border-bottom: 1px solid #1e3a5f; }
+  .vacio td { text-align: center; color: #6b7280; padding: 10px; font-style: italic; }
+  .etq { font-size: 7px; font-weight: bold; padding: 1px 5px; border-radius: 6px; background: #e5e7eb; color: #374151; }
+  .etq-pend { background: #fef3c7; color: #92400e; }
+  .num { white-space: nowrap; }
+</style>
+</head>
+<body>
+<table class="banda"><tr>
+  <td>
+    <div class="marca">Transporte Fuente del Norte</div>
+    <div class="titulo">{{ titulo }}</div>
+  </td>
+  <td align="right">
+    <table class="meta" align="right">
+      <tr><td>Generado</td><td><b>{{ generado }}</b></td></tr>
+      <tr><td>Usuario</td><td><b>{{ usuario }}</b></td></tr>
+    </table>
+  </td>
+</tr></table>
+
+{% block ficha %}{% endblock %}
+{% block cuerpo %}{% endblock %}
+</body>
+</html>

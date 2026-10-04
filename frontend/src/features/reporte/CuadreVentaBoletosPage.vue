@@ -1,0 +1,105 @@
+<!--
+  Reporte "Cuadre de venta de boletos": lo vendido en un día por usuario, por
+  bus y salida, los prepagados, las ventas con tarjeta y los boletos anulados
+  (PDF). La vista previa muestra las cifras antes de generar. Una estación o
+  empresa asignada al usuario no se puede cambiar. Permiso `reporte.ventas`.
+-->
+<template>
+  <ReporteLayout icono="report-money" descripcion="Cierre de caja del día: qué vendió cada usuario y cuánto se recibió, anuló y facturó." :problema="problema" :cargando="cargando" :error="error" :listo="!!resumen">
+    <div class="grid gap-4 @lg:grid-cols-2">
+      <label class="flex flex-col gap-1.5">
+        <span class="text-sm font-medium">Fecha de venta</span>
+        <DatePicker v-model="filtro.fecha" date-format="dd/mm/yy" show-icon icon-display="input" fluid :manual-input="false" input-id="cuadre-fecha" />
+      </label>
+      <label class="flex flex-col gap-1.5">
+        <span class="text-sm font-medium">Moneda</span>
+        <Select v-model="filtro.moneda" :options="opciones?.monedas ?? []" option-value="sigla" :option-label="etiquetaMoneda" fluid placeholder="Elige la moneda" />
+      </label>
+      <label class="flex flex-col gap-1.5">
+        <span class="text-sm font-medium">Estación de venta</span>
+        <Select v-model="filtro.estacion" :options="opciones?.estaciones ?? []" option-value="id" option-label="nombre" :disabled="!!opciones?.alcance.estacion" :show-clear="!opciones?.alcance.estacion" filter fluid placeholder="Todas las estaciones" />
+      </label>
+      <label class="flex flex-col gap-1.5">
+        <span class="text-sm font-medium">Empresa</span>
+        <Select v-model="filtro.empresa" :options="opciones?.empresas ?? []" option-value="id" option-label="nombre" :disabled="!!opciones?.alcance.empresa" :show-clear="!opciones?.alcance.empresa" fluid placeholder="Todas las empresas" />
+      </label>
+    </div>
+
+    <template #acciones>
+      <Button :disabled="!!problema || !opciones" :loading="generando" @click="generar">
+        <template #icon><icon name="file-type-pdf" class="mr-1.5" color="text-white" /></template>
+        <span>Generar PDF</span>
+      </Button>
+      <small class="text-muted-color">Se abre en una pestaña nueva.</small>
+    </template>
+
+    <template #resumen>
+      <template v-if="resumen">
+        <div class="grid grid-cols-2 gap-3">
+          <CifraReporte etiqueta="Boletos vendidos" :valor="resumen.boletos" />
+          <CifraReporte etiqueta="Ventas" :valor="resumen.ventas" />
+          <CifraReporte etiqueta="Recibido" :valor="importe(resumen.recibido, resumen.moneda)" destacada />
+          <CifraReporte etiqueta="Facturado" :valor="importe(resumen.facturado, resumen.moneda)" destacada />
+        </div>
+        <CifraReporte v-if="resumen.anulado" etiqueta="Anulado" :valor="importe(resumen.anulado, resumen.moneda)" alerta />
+        <p v-if="!resumen.boletos" class="m-0 text-sm text-muted-color">No hay ventas con estos parámetros; el reporte saldrá con las secciones vacías.</p>
+        <ul v-else class="m-0 flex list-none flex-wrap gap-1.5 p-0 text-xs">
+          <li v-for="e in secciones" :key="e" class="rounded-full bg-surface-100 px-2.5 py-1 dark:bg-surface-800">{{ e }}</li>
+        </ul>
+      </template>
+    </template>
+  </ReporteLayout>
+</template>
+
+<script setup lang="ts">
+import { fetchOpciones, fetchResumenCuadre } from '@/core/reporte/api'
+import { cuadreInicial, cuadreQuery, errorCuadre, importe, type FiltroCuadre } from '@/core/reporte/filtro'
+import type { Moneda, OpcionesReporte } from '@/core/reporte/types'
+import { notify } from '@/core/notify'
+import CifraReporte from './CifraReporte.vue'
+import ReporteLayout from './ReporteLayout.vue'
+import { generarReporte } from './descarga'
+import { useResumen } from './useResumen'
+
+const opciones = ref<OpcionesReporte | null>(null)
+const filtro = reactive<FiltroCuadre>({ fecha: null, estacion: null, empresa: null, moneda: null })
+const generando = ref(false)
+
+const query = computed(() => (opciones.value ? cuadreQuery(filtro) : null))
+const problema = computed(() => (opciones.value ? errorCuadre(filtro) : null))
+const { datos: resumen, cargando, error } = useResumen(() => query.value, fetchResumenCuadre)
+
+const plural = (n: number, uno: string, varios: string) => `${n} ${n === 1 ? uno : varios}`
+const secciones = computed(() => {
+  const r = resumen.value
+  if (!r) return []
+  return [
+    plural(r.usuarios, 'usuario', 'usuarios'),
+    plural(r.salidas, 'salida', 'salidas'),
+    ...(r.prepagados ? [plural(r.prepagados, 'prepagado', 'prepagados')] : []),
+    ...(r.tarjetas ? [plural(r.tarjetas, 'venta con tarjeta', 'ventas con tarjeta')] : []),
+    ...(r.anulados ? [plural(r.anulados, 'boleto anulado', 'boletos anulados')] : []),
+  ]
+})
+
+const etiquetaMoneda = (m: Moneda) => `${m.sigla} - ${m.nombre}`
+
+onMounted(async () => {
+  try {
+    opciones.value = await fetchOpciones()
+    Object.assign(filtro, cuadreInicial(opciones.value))
+  } catch {
+    notify.error('No se pudieron cargar las opciones del reporte.')
+  }
+})
+
+async function generar() {
+  if (!query.value) return
+  generando.value = true
+  try {
+    await generarReporte('cuadre-venta-boletos', query.value, 'pdf', `cuadre_venta_boletos_${filtro.moneda}`)
+  } finally {
+    generando.value = false
+  }
+}
+</script>

@@ -108,6 +108,26 @@ export const router = createRouter({
       },
     },
     {
+      path: '/reporte/cuadre-venta-boletos',
+      name: 'reporte-cuadre-venta-boletos',
+      component: () => import('@/features/reporte/CuadreVentaBoletosPage.vue'),
+      meta: {
+        title: 'Cuadre de venta de boletos',
+        label: 'Cuadre de venta',
+        icon: 'report-money',
+      },
+    },
+    {
+      path: '/reporte/detalle-factura-boletos',
+      name: 'reporte-detalle-factura-boletos',
+      component: () => import('@/features/reporte/DetalleFacturaBoletosPage.vue'),
+      meta: {
+        title: 'Detalle de factura de boletos',
+        label: 'Detalle de facturas',
+        icon: 'file-invoice',
+      },
+    },
+    {
       // No empieza con /pagina: Caddy manda /pagina* a la página pública (backend).
       path: '/venta-en-linea',
       name: 'venta-en-linea',
