@@ -18,88 +18,91 @@ use App\Attribute\ApiResourceNoPagination;
 use App\Entity\Icon;
 use App\Repository\EntityConfigurationRepository;
 use App\Resolver\UpdateEntityConfigurationFieldsResolver;
-use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\Groups; // Carga automáticamente la entidad
+// Evita la deserialización automática
+// JSON como string
 
 #[ORM\Entity(repositoryClass: EntityConfigurationRepository::class)]
 #[ORM\HasLifecycleCallbacks]
-#[ApiResource(
-    order: ['collectionFieldConfig.position' => 'ASC', 'formFields.position' => 'ASC'],
-    operations: [
-        new Get(
-            requirements: ['id' => '\d+'],
-        ),
-        new Get(
-            normalizationContext: ['groups' => ['read:dto']],
-            name: 'refresh',
-            uriTemplate: '/entity_configurations/refresh',
-            provider: EntityConfigurationByEntityClassProvider::class,
-            // read: false,
-            // parameters: [
-            //     'entityClass' => new QueryParameter(
-            //         filter: new ExactFilter(),
-            //         property: 'entityClass'
-            //     ),
-            // ],
-        ),
-        new GetCollection(
-            normalizationContext: ['groups' => ['read:dto']],
-            order: ['collectionFieldConfig.position' => 'ASC', 'formFields.position' => 'ASC'],
-            paginationEnabled: false,
-            parameters: [
-                'entityClass' => new QueryParameter(
-                    filter: new ExactFilter(),
-                    property: 'entityClass'
-                ),
-            ],
-        ),
-    ],
-    graphQlOperations: [
-        new Query(name: 'item_query'),
-        new QueryCollection(
-            paginationEnabled: false,
-            parameters: [
-                'entityClass' => new QueryParameter(
-                    filter: new ExactFilter(),
-                    property: 'entityClass'
-                ),
-            ],
-        ),
-        new QueryCollection(
-            name: 'get',
-            order: ['collectionFieldConfig.position' => 'ASC', 'formFields.position' => 'ASC'],
-            normalizationContext: ['groups' => ['read:dto']],
-            paginationEnabled: false,
-            parameters: [
-                'entityClass' => new QueryParameter(
-                    filter: new ExactFilter(),
-                    property: 'entityClass'
-                ),
-            ],
-        ),
-        new Mutation(name: 'update'),
-        new Mutation(
-            name: 'updateWithRelations',
-            resolver: UpdateEntityConfigurationFieldsResolver::class,
-            read: true,          // Carga automáticamente la entidad
-            deserialize: false,  // Evita la deserialización automática
-            validate: false,
-            args: [
-                'entityClass' => [
-                    'type' => 'String!',
-                    'description' => 'IRI o ID de la entidad (ej: "/api/entity_configurations/97")'
+#[
+    ApiResource(
+        order: [
+            "collectionFieldConfig.position" => "ASC",
+            "formFields.position" => "ASC",
+        ],
+        operations: [
+            new Get(requirements: ["id" => "\d+"]),
+            new Get(
+                normalizationContext: ["groups" => ["read:dto"]],
+                name: "refresh",
+                uriTemplate: "/entity_configurations/refresh",
+                provider: EntityConfigurationByEntityClassProvider::class,
+            ),
+            new GetCollection(
+                normalizationContext: ["groups" => ["read:dto"]],
+                order: [
+                    "collectionFieldConfig.position" => "ASC",
+                    "formFields.position" => "ASC",
                 ],
-                'formFields' => [
-                    'type' => '[updateFormFieldConfigInput]',   // JSON como string
+                paginationEnabled: false,
+                parameters: [
+                    "entityClass" => new QueryParameter(
+                        filter: new ExactFilter(),
+                        property: "entityClass",
+                    ),
                 ],
-                'collectionFieldConfig' => [
-                    'type' => '[updateCollectionFieldConfigInput]',
-                ]
-            ]
-        )
-    ],
-
-)]
-
+            ),
+        ],
+        graphQlOperations: [
+            new Query(name: "item_query"),
+            new QueryCollection(
+                paginationEnabled: false,
+                parameters: [
+                    "entityClass" => new QueryParameter(
+                        filter: new ExactFilter(),
+                        property: "entityClass",
+                    ),
+                ],
+            ),
+            new QueryCollection(
+                name: "get",
+                order: [
+                    "collectionFieldConfig.position" => "ASC",
+                    "formFields.position" => "ASC",
+                ],
+                normalizationContext: ["groups" => ["read:dto"]],
+                paginationEnabled: false,
+                parameters: [
+                    "entityClass" => new QueryParameter(
+                        filter: new ExactFilter(),
+                        property: "entityClass",
+                    ),
+                ],
+            ),
+            new Mutation(name: "update"),
+            new Mutation(
+                name: "updateWithRelations",
+                resolver: UpdateEntityConfigurationFieldsResolver::class,
+                read: true,
+                deserialize: false,
+                validate: false,
+                args: [
+                    "entityClass" => [
+                        "type" => "String!",
+                        "description" =>
+                            'IRI o ID de la entidad (ej: "/api/entity_configurations/97")',
+                    ],
+                    "formFields" => [
+                        "type" => "[updateFormFieldConfigInput]",
+                    ],
+                    "collectionFieldConfig" => [
+                        "type" => "[updateCollectionFieldConfigInput]",
+                    ],
+                ],
+            ),
+        ],
+    ),
+]
 class EntityConfiguration
 {
     #[ORM\Id]
@@ -110,19 +113,33 @@ class EntityConfiguration
     #[ORM\Column(length: 255, unique: true)]
     public string $entityClass;
 
-    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    #[ORM\Column(type: "datetime_immutable", nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
 
-    #[ORM\OneToMany(mappedBy: 'entityConfig', targetEntity: CollectionFieldConfig::class, cascade: ['persist', 'remove'], orphanRemoval: true, fetch: 'LAZY')]
-    #[ORM\OrderBy(['position' => 'ASC'])]
-    #[Groups(['read:dto'])]
+    #[
+        ORM\OneToMany(
+            mappedBy: "entityConfig",
+            targetEntity: CollectionFieldConfig::class,
+            cascade: ["persist", "remove"],
+            orphanRemoval: true,
+            fetch: "LAZY",
+        ),
+    ]
+    #[ORM\OrderBy(["position" => "ASC"])]
+    #[Groups(["read:dto"])]
     private Collection $collectionFieldConfig;
 
-    #[ORM\OneToMany(mappedBy: 'entityConfig', targetEntity: FormFieldConfig::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
-    #[ORM\OrderBy(['position' => 'ASC'])]
-    #[Groups(['read:dto'])]
+    #[
+        ORM\OneToMany(
+            mappedBy: "entityConfig",
+            targetEntity: FormFieldConfig::class,
+            cascade: ["persist", "remove"],
+            orphanRemoval: true,
+        ),
+    ]
+    #[ORM\OrderBy(["position" => "ASC"])]
+    #[Groups(["read:dto"])]
     private Collection $formFields;
-
 
     #[ORM\ManyToOne]
     private ?Icon $icon = null;
@@ -171,13 +188,15 @@ class EntityConfiguration
         return $this->collectionFieldConfig;
     }
 
-    public function setCollectionFieldConfig(Collection $collectionFieldConfig): Collection
-    {
+    public function setCollectionFieldConfig(
+        Collection $collectionFieldConfig,
+    ): Collection {
         return $this->collectionFieldConfig = $collectionFieldConfig;
     }
 
-    public function addCollectionFieldConfig(CollectionFieldConfig $collectionFieldConfig): self
-    {
+    public function addCollectionFieldConfig(
+        CollectionFieldConfig $collectionFieldConfig,
+    ): self {
         if (!$this->collectionFieldConfig->contains($collectionFieldConfig)) {
             $this->collectionFieldConfig->add($collectionFieldConfig);
             $collectionFieldConfig->setEntityConfig($this);
@@ -185,9 +204,12 @@ class EntityConfiguration
         return $this;
     }
 
-    public function removeCollectionFieldConfig(CollectionFieldConfig $collectionFieldConfig): self
-    {
-        if ($this->collectionFieldConfig->removeElement($collectionFieldConfig)) {
+    public function removeCollectionFieldConfig(
+        CollectionFieldConfig $collectionFieldConfig,
+    ): self {
+        if (
+            $this->collectionFieldConfig->removeElement($collectionFieldConfig)
+        ) {
             if ($collectionFieldConfig->getEntityConfig() === $this) {
                 $collectionFieldConfig->setEntityConfig(null);
             }
@@ -230,11 +252,15 @@ class EntityConfiguration
     {
         $position = 1;
         foreach ($data as $field) {
-            if (!$field->isVisible()) continue;
+            if (!$field->isVisible()) {
+                continue;
+            }
             $field->setPosition($position++);
         }
         foreach ($data as $field) {
-            if ($field->isVisible()) continue;
+            if ($field->isVisible()) {
+                continue;
+            }
             $field->setPosition($position++);
         }
     }

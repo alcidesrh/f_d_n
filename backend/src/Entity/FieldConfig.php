@@ -2,7 +2,6 @@
 
 namespace App\Entity;
 
-use ApiPlatform\Metadata\ApiProperty;
 use App\Entity\Base\Traits\DataLoader;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -18,26 +17,27 @@ class FieldConfig
     public ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Groups(['read:dto'])]
+    #[Groups(["read:dto"])]
     public string $field;
 
-    #[ORM\Column(type: 'integer')]
-    #[Groups(['read:dto'])]
+    #[ORM\Column(type: "integer")]
+    #[Groups(["read:dto"])]
     public int $position;
 
     #[ORM\Column(nullable: true)]
-    #[Groups(['read:dto'])]
+    #[Groups(["read:dto"])]
     public bool $visible = true;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['read:dto'])]
+    #[Groups(["read:dto"])]
     public ?string $label = null;
 
     #[ORM\Column(type: Types::JSON, nullable: true)]
-    #[Groups(['read:dto'])]
+    #[Groups(["read:dto"])]
     public ?array $attrs = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(["read:dto"])]
     public ?string $kind = null;
 
     public function getId(): ?int
@@ -55,7 +55,7 @@ class FieldConfig
         $this->field = $field;
         return $this;
     }
-    #[Groups(['read:dto'])]
+    #[Groups(["read:dto"])]
     public function getName(): string
     {
         return $this->field;
@@ -102,7 +102,6 @@ class FieldConfig
         $this->attrs = $attrs;
         return $this;
     }
-
 
     public function getKind(): ?string
     {
