@@ -8,10 +8,14 @@ use App\Entity\Bus;
 use App\Entity\Empresa;
 use App\Entity\Trayecto;
 use App\Entity\Usuario;
+use App\Entity\Salida;
 use App\Salida\ConsultaSalidas;
+use App\Salida\DetalleSalida;
 use App\Salida\Esquemas;
 use App\Salida\FiltroSalidas;
 use App\Salida\GestionSalidas;
+use App\Salida\Manifiesto\ManifiestoPdf;
+use App\Salida\Manifiesto\ManifiestoSalida;
 use App\Salida\Programacion\Programacion;
 use App\Salida\ProgramadorSalidas;
 use App\Salida\SalidaRechazada;
@@ -20,6 +24,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
@@ -75,7 +80,7 @@ final class SalidaController extends AbstractController
 
         return $this->json([
             "empresas" => array_map(
-                static fn(Empresa $e) => ["id" => $e->getId(), "nombre" => $e->getNombre()],
+                static fn(Empresa $e) => ["id" => $e->getId(), "nombre" => $e->getNombreCorto()],
                 $this->em->getRepository(Empresa::class)->findBy([], ["nombre" => "ASC"]),
             ),
             "trayectos" => array_map(VistaSalida::trayecto(...), $trayectos),
@@ -149,6 +154,33 @@ final class SalidaController extends AbstractController
         });
     }
 
+    /** Salida con paradas, croquis, estado de cada asiento y resumen de venta ("Ver"). */
+    #[Route("/{id<\d+>}/detalle", name: "detalle", methods: ["GET"])]
+    public function detalle(int $id, DetalleSalida $detalle): JsonResponse
+    {
+        $this->denyAccessUnlessGranted(self::VER);
+
+        return $this->responder(fn() => $detalle->de($this->salida($id)));
+    }
+
+    /** PDF del manifiesto `interno` o `piloto` de la salida. */
+    #[Route("/{id<\d+>}/manifiesto/{tipo<interno|piloto>}", name: "manifiesto", methods: ["GET"])]
+    public function manifiesto(int $id, string $tipo, #[CurrentUser] Usuario $usuario, ManifiestoSalida $manifiestos, ManifiestoPdf $pdf): Response
+    {
+        $this->denyAccessUnlessGranted(self::VER);
+
+        try {
+            $manifiesto = $manifiestos->de($this->salida($id));
+        } catch (SalidaRechazada $e) {
+            return $this->json($e->toArray(), $e->estadoHttp);
+        }
+
+        return new Response($pdf->generar($tipo, $manifiesto, $usuario->getUsername()), 200, [
+            "Content-Type" => "application/pdf",
+            "Content-Disposition" => sprintf('inline; filename="%s"', ManifiestoPdf::nombreArchivo($tipo, $manifiesto)),
+        ]);
+    }
+
     /** Cuántas futuras idénticas tiene la salida y cuántas tienen asientos (para confirmar la propagación). */
     #[Route("/{id<\d+>}/propagacion", name: "propagacion", methods: ["GET"])]
     public function propagacion(int $id): JsonResponse
@@ -185,6 +217,12 @@ final class SalidaController extends AbstractController
         $this->denyAccessUnlessGranted(self::ELIMINAR);
 
         return $this->responder(fn() => $this->gestion->eliminar($id, $request->query->getBoolean("propagar")));
+    }
+
+    private function salida(int $id): Salida
+    {
+        return $this->em->find(Salida::class, $id)
+            ?? throw new SalidaRechazada("La salida no existe.", "salida_inexistente", 404);
     }
 
     /** @param callable(): mixed $operacion */

@@ -436,7 +436,7 @@ final class PublicoController extends AbstractController
                     "salida" => $primera->getSalida()->getFecha()->format(DATE_ATOM),
                     "salidaOrigen" => $this->horas->salidaDesde($primera->getSalida(), (int) $primera->getTrayecto()->getOrigen()->getId())->format(DATE_ATOM),
                     "llegada" => $this->horas->enParada($primera->getSalida(), (int) $primera->getTrayecto()->getDestino()->getId())?->format(DATE_ATOM),
-                    "empresa" => $primera->getSalida()->getEmpresa()?->getNombre(),
+                    "empresa" => $primera->getSalida()->getEmpresa()?->getNombreCorto(),
                 ],
                 "trayecto" => [
                     "id" => $primera->getTrayecto()->getId(),

@@ -1,0 +1,42 @@
+{# Manifiesto interno: pasajeros agrupados por dónde se emitió el boleto, con importes. Datos: ver ManifiestoPdf::generar. #}
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><title>Manifiesto interno {{ m.salidaId }}</title></head>
+<body>
+{% include 'salida/_manifiesto_base.html.twig' with { titulo: 'Manifiesto interno de pasajeros' } %}
+
+<table class="cifras"><tr>
+  <td><div class="lbl">Pasajeros</div><div class="n">{{ m.pasajeros|length }}</div></td>
+  <td><div class="lbl">Lugares de emisión</div><div class="n">{{ grupos|length }}</div></td>
+  <td><div class="lbl">Sin cobro (voucher / cortesía)</div><div class="n">{{ m.pasajeros|filter(p => p.sinCobro)|length }}</div></td>
+  <td><div class="lbl">Importe cobrado</div><div class="n">{{ total }}</div></td>
+</tr></table>
+
+<table class="datos">
+  <thead><tr>
+    <th>ID</th><th>Pasajero</th><th>Documento</th><th class="centro">Asiento</th><th>Sube</th><th>Baja</th><th>Estado</th><th class="der">Importe</th>
+  </tr></thead>
+  <tbody>
+  {% for lugar, g in grupos %}
+    <tr class="grupo"><td colspan="8">Emitido en: {{ lugar }} · {{ g.pasajeros|length }} {{ g.pasajeros|length == 1 ? 'pasajero' : 'pasajeros' }}</td></tr>
+    {% for p in g.pasajeros %}
+      <tr class="{{ loop.index is even ? 'par' : '' }}">
+        <td>{{ p.boletoId }}</td>
+        <td>{{ p.nombre }}{% if p.observacion %}<br><span class="muted">{{ p.observacion }}</span>{% endif %}</td>
+        <td>{% if p.sinCobro %}<span class="etq etq-sin">{{ p.documento }}</span>{% else %}{{ p.documento ?? '—' }}{% endif %}</td>
+        <td class="centro asiento">{{ p.asiento }}</td>
+        <td>{{ p.sube }}</td>
+        <td>{{ p.baja }}</td>
+        <td>{{ p.etiquetaEstado }}</td>
+        <td class="der">{{ p.importe }}</td>
+      </tr>
+    {% endfor %}
+    <tr class="subtotal"><td colspan="7" class="der">Subtotal {{ lugar }} ({{ g.pasajeros|length }})</td><td class="der">{{ g.importe }}</td></tr>
+  {% else %}
+    <tr><td colspan="8" class="centro muted" style="padding: 18px">Esta salida no tiene boletos vigentes.</td></tr>
+  {% endfor %}
+  </tbody>
+  <tfoot><tr class="total"><td colspan="7" class="der">TOTAL · {{ m.pasajeros|length }} pasajeros</td><td class="der">{{ total }}</td></tr></tfoot>
+</table>
+</body>
+</html>

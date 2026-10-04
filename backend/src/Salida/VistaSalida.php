@@ -62,7 +62,7 @@ final class VistaSalida
             "atrasada" => $s->getEstado() === EstadoSalida::PROGRAMADA && $s->getFecha() < $ahora,
             "trayecto" => self::trayecto($s->getTrayecto()),
             "bus" => $s->getBus() ? self::bus($s->getBus()) : null,
-            "empresa" => $s->getEmpresa() ? ["id" => $s->getEmpresa()->getId(), "nombre" => $s->getEmpresa()->getNombre()] : null,
+            "empresa" => $s->getEmpresa() ? ["id" => $s->getEmpresa()->getId(), "nombre" => $s->getEmpresa()->getNombreCorto()] : null,
             "vendidos" => $vendidos,
             "capacidad" => $capacidad,
         ];

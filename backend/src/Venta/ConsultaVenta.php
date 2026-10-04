@@ -123,14 +123,19 @@ final class ConsultaVenta
                 "salida" => $this->horaEn($r, $it, $origenId),
                 "llegada" => $this->horaEn($r, $it, $destinoId),
                 "salidaInicio" => $r->getFecha()->format(DATE_ATOM),
-                "empresa" => $r->getEmpresa()?->getNombre(),
+                "empresa" => $r->getEmpresa()?->getAlias() ?: $r->getEmpresa()?->getNombre(),
                 "ruta" => sprintf("%s → %s", $r->getTrayecto()->getOrigen()->getNombre(), $r->getTrayecto()->getDestino()->getNombre()),
                 "clases" => array_map(
-                    static fn(string $c, $precio) => [
-                        "clase" => $c,
-                        "precio" => DatosBoleto::importe($precio),
-                        "asientos" => count(array_filter($asientos->toArray(), static fn(Asiento $a) => $a->getClase()->value === $c)),
-                    ],
+                    static function (string $c, $precio) use ($asientos, $estados) {
+                        $deClase = array_filter($asientos->toArray(), static fn(Asiento $a) => $a->getClase()->value === $c);
+
+                        return [
+                            "clase" => $c,
+                            "precio" => DatosBoleto::importe($precio),
+                            "asientos" => count($deClase),
+                            "ocupados" => count(array_filter($deClase, static fn(Asiento $a) => isset($estados[$a->getId()]) && $estados[$a->getId()]["estado"] !== Ocupacion::PROPIO)),
+                        ];
+                    },
                     array_keys($porClase),
                     $porClase,
                 ),

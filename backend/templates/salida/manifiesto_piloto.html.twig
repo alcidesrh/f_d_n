@@ -1,0 +1,40 @@
+{# Manifiesto del piloto: pasajeros por asiento con nacionalidad y documento, y firmas. Datos: ver ManifiestoPdf::generar. #}
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><title>Manifiesto del piloto {{ m.salidaId }}</title></head>
+<body>
+{% include 'salida/_manifiesto_base.html.twig' with { titulo: 'Manifiesto del piloto' } %}
+
+<table class="datos">
+  <thead><tr>
+    <th class="centro">Asiento</th><th>Pasajero</th><th>Nacionalidad</th><th>Sube</th><th>Baja</th><th>Documento / ID</th>
+  </tr></thead>
+  <tbody>
+  {% for p in m.pasajeros %}
+    <tr class="{{ loop.index is even ? 'par' : '' }}">
+      <td class="centro asiento">{{ p.asiento }}</td>
+      <td>{{ p.nombre }}</td>
+      <td>{{ p.nacionalidad ?? '—' }}</td>
+      <td>{{ p.sube }}</td>
+      <td>{{ p.baja }}</td>
+      <td>{{ p.documento ?? '—' }} · {{ p.boletoId }}</td>
+    </tr>
+    {% if p.observacion %}<tr class="obs"><td colspan="6"><b>Observación:</b> {{ p.observacion }}</td></tr>{% endif %}
+  {% else %}
+    <tr><td colspan="6" class="centro muted" style="padding: 18px">Esta salida no tiene boletos vigentes.</td></tr>
+  {% endfor %}
+  </tbody>
+  <tfoot><tr class="total"><td colspan="6" class="der">TOTAL PASAJEROS: {{ m.pasajeros|length }}</td></tr></tfoot>
+</table>
+
+<table width="100%" style="margin-top: 46px; page-break-inside: avoid"><tr>
+  {% for etiqueta, nombre in { 'Piloto 1': m.pilotos[0], 'Piloto 2': m.pilotos[1], 'Despacho de la estación': '' } %}
+    <td width="33%" align="center" style="padding: 0 18px">
+      <div style="border-top: 1px solid #6b7280; padding-top: 4px; font-size: 8px">
+        <b>{{ etiqueta }}</b>{% if nombre %}<br><span class="muted">{{ nombre }}</span>{% endif %}
+      </div>
+    </td>
+  {% endfor %}
+</tr></table>
+</body>
+</html>

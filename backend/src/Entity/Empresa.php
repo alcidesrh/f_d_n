@@ -86,6 +86,17 @@ class Empresa extends Base
         return $this;
     }
 
+    /** Nombre para pantallas: el alias, o el nombre si no tiene. Tickets, PDF y facturas usan `getNombre()`. */
+    public function getNombreCorto(): ?string
+    {
+        return $this->alias ?: $this->nombre;
+    }
+
+    public function getLabel(): string
+    {
+        return $this->getNombreCorto() ?? (string) $this->getId();
+    }
+
     public function getNombreComercial(): ?string
     {
         return $this->nombreComercial;
