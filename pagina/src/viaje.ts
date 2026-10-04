@@ -10,7 +10,7 @@
 import { defineStore } from 'pinia'
 import { computed, reactive, ref, watch } from 'vue'
 import * as api from './api'
-import { alternarAsiento, sumaCentavos, tomadosPorOtros, type AsientoElegido } from './modelo'
+import { alternarAsiento, diaISO, sumaCentavos, tomadosPorOtros, type AsientoElegido } from './modelo'
 import type { Catalogos, Salida, SalidaPublico, ViajePedido } from './tipos'
 
 export type Sentido = 'ida' | 'regreso'
@@ -197,6 +197,18 @@ export const useViaje = defineStore('viaje', () => {
     abierta.regreso = null
   }
 
+  /** Cancela la compra desde el inicio: búsqueda y elección vuelven a cero (la fecha, a hoy). */
+  function cancelar() {
+    Object.assign(busqueda, { origen: null, destino: null, fecha: diaISO(new Date()), idaVuelta: false, regreso: null })
+    limpiar()
+    for (const s of SENTIDOS) {
+      listas[s].clave = ''
+      listas[s].salidas = []
+      listas[s].error = null
+      listas[s].cargando = false
+    }
+  }
+
   let pidiendoCatalogos: Promise<Catalogos | null> | null = null
   /** Una sola petición aunque la pidan varios componentes a la vez. */
   async function cargarCatalogos() {
@@ -229,6 +241,7 @@ export const useViaje = defineStore('viaje', () => {
     quitarConflictos,
     pedido,
     limpiar,
+    cancelar,
     recordarNombres,
     cargarCatalogos,
   }

@@ -17,6 +17,7 @@ import { changeLocale } from '@formkit/i18n'
 import type { RouterHistory } from 'vue-router'
 import App from './App.vue'
 import Icono from './componentes/Icono.vue'
+import { SELECT_PANEL } from './panelSelect'
 import formkitConfig from './formkit'
 import { crearI18n, esIdioma, guardarIdioma, REGION, type Idioma } from './i18n'
 import { crearRouter } from './router'
@@ -49,6 +50,44 @@ const Marca = definePreset(Aura, {
 })
 
 /**
+ * Select y DatePicker alinean el panel en `onEnter`, pero PrimeVue aún no
+ * tiene la referencia del panel (se asigna después de ese hook): el panel
+ * quedaba en la esquina de la pantalla. Se le da la referencia antes de
+ * entrar y se alinea de nuevo apenas existe.
+ */
+const conPanel = ({ instance }: { instance: { overlay?: HTMLElement | null; alignOverlay?: () => void } }) => ({
+  onBeforeEnter: (el: HTMLElement) => {
+    instance.overlay = el
+    // Oculto hasta quedar alineado: si no, se ve un instante en la esquina de la pantalla.
+    el.style.visibility = 'hidden'
+  },
+  onEnter: (el: HTMLElement) =>
+    queueMicrotask(() => {
+      instance.alignOverlay?.()
+      requestAnimationFrame(() => (el.style.visibility = ''))
+      setTimeout(() => (el.style.visibility = ''), 100)
+    }),
+})
+
+/**
+ * Select muestra la opción elegida con `scrollIntoView`, que además desplaza
+ * la página (al abrir "país" la llevaba arriba, dejando el input fuera de
+ * pantalla). Dentro de un panel de Select solo se desplaza su lista.
+ */
+export function desplazarSoloLista() {
+  if (typeof Element === 'undefined') return
+  const original = Element.prototype.scrollIntoView
+  Element.prototype.scrollIntoView = function (this: Element, arg?: boolean | ScrollIntoViewOptions) {
+    const lista = this.closest('.p-select-overlay') && this.closest<HTMLElement>('.p-select-list-container')
+    if (!lista) return original.call(this, arg as ScrollIntoViewOptions)
+    const el = this.getBoundingClientRect()
+    const caja = lista.getBoundingClientRect()
+    if (el.top < caja.top) lista.scrollTop -= caja.top - el.top
+    else if (el.bottom > caja.bottom) lista.scrollTop += el.bottom - caja.bottom
+  }
+}
+
+/**
  * `ssr`: para el prerender. En el navegador se monta desde cero (sin
  * hidratar): el estado de la sesión (búsqueda, carrito) cambia lo que se
  * pinta y una hidratación a medias dejaría atributos viejos.
@@ -65,6 +104,7 @@ export function crearApp(idioma: Idioma, historia: RouterHistory, opciones: { ss
     .use(i18n)
     .use(PrimeVue, {
       locale: LOCALES_PRIMEVUE[idioma],
+      pt: { select: { transition: conPanel, overlay: { class: SELECT_PANEL } }, datepicker: { transition: conPanel } },
       theme: {
         preset: Marca,
         options: { darkModeSelector: '.oscuro', cssLayer: { name: 'primevue', order: 'theme, base, primevue, components, utilities' } },

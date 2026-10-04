@@ -7,29 +7,14 @@
     <div class="grid grid-cols-[1fr_auto] items-end gap-x-2 gap-y-3 lg:grid-cols-[1fr_auto_1fr]">
       <label class="col-start-1 flex min-w-0 flex-col gap-1.5">
         <span class="text-sm font-medium">{{ t('buscador.origen') }}</span>
-        <Select
+        <SelectorEstacion
           v-model="busqueda.origen"
-          :options="gruposOrigen"
-          option-label="nombre"
-          option-value="id"
-          option-group-label="departamento"
-          option-group-children="estaciones"
-          filter
-          auto-filter-focus
-          :filter-placeholder="t('buscador.buscarEstacion')"
-          :empty-filter-message="t('buscador.sinResultados')"
+          :grupos="gruposOrigen"
           :placeholder="t('buscador.origenPlaceholder')"
-          :loading="cargandoOrigenes"
+          :cargando="cargandoOrigenes"
           :input-id="`${id}-origen`"
-          fluid
-          scroll-height="18rem"
-          :pt="ptSelect"
           @update:model-value="cambioOrigen"
-        >
-          <template #optiongroup="{ option }">
-            <span class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-color"><icon name="map-pin" size="0.85rem" />{{ option.departamento }}</span>
-          </template>
-        </Select>
+        />
       </label>
 
       <Button
@@ -48,30 +33,15 @@
 
       <label class="col-start-1 flex min-w-0 flex-col gap-1.5 lg:col-start-3 lg:row-start-1">
         <span class="text-sm font-medium">{{ t('buscador.destino') }}</span>
-        <Select
+        <SelectorEstacion
           v-model="busqueda.destino"
-          :options="gruposDestino"
-          option-label="nombre"
-          option-value="id"
-          option-group-label="departamento"
-          option-group-children="estaciones"
-          filter
-          auto-filter-focus
-          :filter-placeholder="t('buscador.buscarEstacion')"
-          :empty-filter-message="t('buscador.sinResultados')"
-          :empty-message="t('buscador.sinDestinos')"
+          :grupos="gruposDestino"
           :placeholder="t('buscador.destinoPlaceholder')"
+          :vacio="t('buscador.sinDestinos')"
           :disabled="!busqueda.origen"
-          :loading="cargandoDestinos"
+          :cargando="cargandoDestinos"
           :input-id="`${id}-destino`"
-          fluid
-          scroll-height="18rem"
-          :pt="ptSelect"
-        >
-          <template #optiongroup="{ option }">
-            <span class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-color"><icon name="map-pin" size="0.85rem" />{{ option.departamento }}</span>
-          </template>
-        </Select>
+        />
       </label>
     </div>
 
@@ -115,12 +85,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, useId } from 'vue'
+import { computed, onMounted, ref, useId, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import * as api from '@/api'
 import { desdeISO, diaISO, porDepartamento } from '@/modelo'
 import type { Estacion } from '@/tipos'
 import { useViaje } from '@/viaje'
+import SelectorEstacion from './SelectorEstacion.vue'
 
 const { t, locale } = useI18n()
 const id = useId()
@@ -138,9 +109,6 @@ const cargandoDestinos = ref(false)
 
 const gruposOrigen = computed(() => porDepartamento(origenes.value, t('buscador.otros'), locale.value))
 const gruposDestino = computed(() => porDepartamento(destinos.value, t('buscador.otros'), locale.value))
-
-/** Panel con fondo sólido y ancho suficiente para nombres largos. */
-const ptSelect = { overlay: { class: '!bg-white !min-w-[min(20rem,calc(100vw-2rem))]' } }
 
 const fechaIda = computed<Date | null>({
   get: () => (busqueda.fecha ? desdeISO(busqueda.fecha) : null),
@@ -183,6 +151,13 @@ async function cargarDestinos(origen: number | null) {
     cargandoDestinos.value = false
   }
 }
+
+watch(
+  () => busqueda.origen,
+  (o) => {
+    if (!o) destinos.value = []
+  },
+)
 
 async function cambioOrigen(origen: number | null) {
   await cargarDestinos(origen)

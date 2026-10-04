@@ -23,7 +23,7 @@ import AutoImport from 'unplugin-auto-import/vite'
 const aqui = (ruta: string) => fileURLToPath(new URL(ruta, import.meta.url))
 const frontend = aqui('../frontend/src')
 /** Backend para `npm run dev` (proxy de `/api` y de Mercure). */
-const backend = process.env.PAGINA_BACKEND ?? 'https://localhost'
+const backend = process.env.PAGINA_BACKEND ?? 'http://localhost'
 
 /**
  * Los archivos del frontend que se reutilizan importan estos paquetes; sin

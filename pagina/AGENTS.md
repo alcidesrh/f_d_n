@@ -7,7 +7,7 @@ Venta de boletos en línea (ADR-021, ADR-023). Reemplaza a la aplicación Symfon
 - `npm run build`: type-check + `vite build` (cliente en `../backend/public/pagina/`) + `vite build --ssr src/entry-server.ts` (en `.ssr/`, se borra al final) + `node scripts/prerender.mjs`, que escribe `<idioma>/<ruta>/index.html` de las páginas públicas, `sitemap.xml` y `robots.txt`. `PAGINA_ORIGEN` (dominio de las canónicas, por defecto `https://transportesfuentedelnorte.com`); si `PAGINA_BACKEND` responde al compilar, la página de estaciones sale con el directorio incluido.
 - El backend la sirve en `/pagina/` (`App\Controller\PaginaController`): `/pagina/` redirige al idioma del navegador; si hay HTML prerenderizado para la ruta lo entrega, si no el `index.html` de la SPA. Caddy no envía `/pagina*` al contenedor del frontend (por eso el dashboard del personal está en `/venta-en-linea`).
 - La API es del mismo origen: `/api/publico/*` (sin sesión, limitada por IP) y el hub Mercure en `/.well-known/mercure`.
-- `npm run dev`: Vite en `http://localhost:9100/pagina/` con proxy de `/api` y Mercure al backend (`PAGINA_BACKEND`, por defecto `https://localhost`; con el stack local, `http://localhost`). El proxy no cambia el `Host`: la vuelta del banco (3-D Secure) queda en el mismo origen que la página, como en producción.
+- `npm run dev`: Vite en `http://localhost:9100/pagina/` con proxy de `/api` y Mercure al backend (`PAGINA_BACKEND`, por defecto `http://localhost`, el stack local; `https://localhost` solo si el certificado del contenedor responde). El proxy no cambia el `Host`: la vuelta del banco (3-D Secure) queda en el mismo origen que la página, como en producción.
 - `npm install` usa `legacy-peer-deps` (`.npmrc`), igual que el frontend.
 
 ## Stack

@@ -6,7 +6,12 @@
   La búsqueda queda en la URL (`?o=&d=&f=&r=`) para compartirla o volver.
 -->
 <template>
-  <div :class="{ 'pb-32': viaje.cantidad > 0 }">
+  <div :class="{ 'pb-32': viaje.completa }">
+    <!-- Con origen, destino y fecha elegidos, el resto de la página se atenúa como detrás de un modal. -->
+    <Transition name="velo">
+      <div v-if="viaje.completa" class="fixed inset-0 z-[25] bg-slate-900/60" aria-hidden="true" />
+    </Transition>
+
     <section class="bg-gradient-to-br from-marca-950 via-marca-900 to-marca-800 text-white">
       <div class="contenedor pb-20 pt-6 md:pb-28 md:pt-12">
         <h1 class="m-0 max-w-3xl text-2xl font-bold leading-tight tracking-tight md:text-4xl lg:text-5xl">{{ t('inicio.titulo') }}</h1>
@@ -14,8 +19,8 @@
       </div>
     </section>
 
-    <section class="contenedor -mt-16 md:-mt-20">
-      <div class="panel shadow-lg">
+    <section class="contenedor relative -mt-16 max-md:px-0 md:-mt-20" :class="{ 'z-[30]': viaje.completa }">
+      <div class="panel shadow-lg max-md:rounded-none max-md:border-x-0">
         <BuscadorViaje />
       </div>
       <Message v-if="viaje.catalogos && !viaje.catalogos.ventaEnLinea" severity="warn" :closable="false" class="mt-3">
@@ -23,18 +28,20 @@
       </Message>
     </section>
 
-    <section v-if="viaje.completa" id="salidas" class="contenedor mt-6 flex flex-col gap-8 md:mt-8">
+    <section v-if="viaje.completa" id="salidas" class="contenedor relative z-[30] mt-4 max-md:px-0 md:mt-5">
+      <div class="flex flex-col gap-8 bg-surface-50 p-3 shadow-xl max-md:px-2 md:rounded-2xl md:p-5">
       <Message v-if="aviso" severity="warn" @close="aviso = ''">{{ aviso }}</Message>
       <Message v-if="error" severity="error" @close="error = null">
         <div class="font-semibold">{{ error.titulo }}</div>
         <div v-if="error.detalle" class="mt-1 text-sm">{{ error.detalle }}</div>
       </Message>
       <ListaSalidas v-for="s in viaje.sentidos" :key="s" :sentido="s" :nombres="nombres(s)" />
+      </div>
     </section>
     <p v-else class="contenedor mt-6 text-center text-sm text-muted-color">{{ t('buscador.ayuda') }}</p>
 
-    <!-- Contenido para quien llega a la página (y para los buscadores). -->
-    <section class="contenedor mt-12 grid gap-3 md:grid-cols-3 md:gap-4">
+    <!-- Contenido para quien llega a la página (y para los buscadores); se oculta al empezar la compra. -->
+    <section v-if="!viaje.completa" class="contenedor mt-12 grid gap-3 md:grid-cols-3 md:gap-4">
       <div v-for="b in beneficios" :key="b.titulo" class="panel flex gap-3">
         <span class="grid size-11 shrink-0 place-items-center rounded-xl bg-marca-50 text-marca-800"><icon :name="b.icono" size="1.4rem" /></span>
         <div>
@@ -44,7 +51,7 @@
       </div>
     </section>
 
-    <section class="contenedor mt-12">
+    <section v-if="!viaje.completa" class="contenedor mt-12">
       <div class="flex flex-wrap items-end justify-between gap-2">
         <div>
           <h2 class="m-0 text-xl font-bold md:text-2xl">{{ t('inicio.serviciosTitulo') }}</h2>
@@ -64,7 +71,7 @@
       </ul>
     </section>
 
-    <BarraCompra v-if="viaje.cantidad > 0" :ocupado="carrito.ocupado" @pagar="pagar" />
+    <BarraCompra v-if="viaje.completa" :ocupado="carrito.ocupado" @pagar="pagar" @cancelar="cancelar" />
   </div>
 </template>
 
@@ -142,6 +149,14 @@ watch(
   { deep: true, immediate: true },
 )
 
+/** Empieza de nuevo: limpia la búsqueda y la elección (y suelta lo apartado, si lo hay). */
+async function cancelar() {
+  aviso.value = ''
+  error.value = null
+  viaje.cancelar()
+  await carrito.vaciar()
+}
+
 async function pagar() {
   aviso.value = ''
   error.value = null
@@ -162,3 +177,14 @@ async function pagar() {
   }
 }
 </script>
+
+<style scoped>
+.velo-enter-active,
+.velo-leave-active {
+  transition: opacity 0.25s ease;
+}
+.velo-enter-from,
+.velo-leave-to {
+  opacity: 0;
+}
+</style>

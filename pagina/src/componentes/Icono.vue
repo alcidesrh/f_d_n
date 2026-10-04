@@ -24,6 +24,8 @@ import ChevronDown from '~icons/tabler/chevron-down'
 import ChevronLeft from '~icons/tabler/chevron-left'
 import ChevronRight from '~icons/tabler/chevron-right'
 import ChevronUp from '~icons/tabler/chevron-up'
+import ChevronsDown from '~icons/tabler/chevrons-down'
+import ChevronsUp from '~icons/tabler/chevrons-up'
 import CircleCheck from '~icons/tabler/circle-check'
 import CircleX from '~icons/tabler/circle-x'
 import Clock from '~icons/tabler/clock'
@@ -66,6 +68,8 @@ const ICONOS = {
   'calendar-repeat': CalendarRepeat,
   check: CircleCheck,
   'chevron-down': ChevronDown,
+  'chevrons-down': ChevronsDown,
+  'chevrons-up': ChevronsUp,
   'chevron-left': ChevronLeft,
   'chevron-right': ChevronRight,
   'chevron-up': ChevronUp,

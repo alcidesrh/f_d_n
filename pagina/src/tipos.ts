@@ -38,7 +38,7 @@ export interface Salida {
   empresa: string | null
   ruta: string
   /** Precio en la web (con recargo) y asientos de cada clase. */
-  clases: Array<{ clase: 'A' | 'B'; precio: Importe; asientos: number }>
+  clases: Array<{ clase: 'A' | 'B'; precio: Importe; asientos: number; ocupados: number }>
   desde: Importe
   capacidad: number
   /** Vendidos y apartados en el tramo del cliente. */

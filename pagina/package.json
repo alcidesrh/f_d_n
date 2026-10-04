@@ -13,9 +13,11 @@
     "test:unit": "vitest"
   },
   "dependencies": {
+    "@fontsource-variable/roboto-flex": "^5.3.0",
     "@formkit/i18n": "^2.1.2",
     "@formkit/vue": "^2.1.2",
     "@primeuix/themes": "^2.0.3",
+    "gsap": "^3.15.0",
     "pinia": "^4.0.2",
     "primelocale": "^2.4.0",
     "primevue": "4.5.5",

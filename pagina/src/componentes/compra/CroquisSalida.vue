@@ -16,8 +16,12 @@
     </Message>
 
     <template v-if="detalle">
-      <div class="flex flex-wrap items-center justify-between gap-2 text-sm">
-        <p class="m-0 text-muted-color">{{ t('croquis.ayuda', { max: viaje.maxAsientos }) }}</p>
+      <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+        <ul class="m-0 flex list-none flex-wrap items-center gap-x-3 gap-y-1 p-0 text-xs text-muted-color" :aria-label="t('salidas.ocupacion')">
+          <li v-for="l in leyenda" :key="`${l.estado}-${l.clase}`" class="flex items-center gap-1">
+            <span class="inline-block size-7 shrink-0"><SeatGlyph :clase="l.clase" :estado="l.estado" /></span>{{ l.texto }}
+          </li>
+        </ul>
         <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
           <span class="size-1.5 animate-pulse rounded-full bg-emerald-500" />{{ t('croquis.enVivo') }}
         </span>
@@ -39,12 +43,6 @@
           </template>
         </BusMap>
       </div>
-
-      <ul class="m-0 flex list-none flex-wrap justify-center gap-x-4 gap-y-2 p-0 text-xs text-muted-color" :aria-label="t('salidas.ocupacion')">
-        <li v-for="l in leyenda" :key="l.estado" class="flex items-center gap-1.5">
-          <SeatGlyph :clase="l.clase" :estado="l.estado" class="size-6" />{{ l.texto }}
-        </li>
-      </ul>
 
       <div v-if="mios.length" class="flex flex-wrap items-center gap-2 rounded-xl bg-white p-3 text-sm ring-1 ring-surface-200">
         <span class="font-medium">{{ t('barra.asientos', mios.length) }}:</span>
@@ -99,7 +97,10 @@ const leyenda = computed(() => {
     { estado: 'seleccionado', clase: 'A', texto: t('croquis.seleccionado') },
     { estado: 'ocupado', clase: 'A', texto: t('croquis.ocupado') },
   ]
-  if (precios.value.has('B')) l.push({ estado: 'disponible', clase: 'B', texto: t('croquis.claseB') })
+  if (precios.value.has('B')) {
+    l.push({ estado: 'disponible', clase: 'B', texto: t('croquis.claseB') })
+    l.push({ estado: 'disponible', clase: 'A', texto: t('croquis.claseA') })
+  }
   return l
 })
 

@@ -4,10 +4,11 @@
  * backend. El idioma sale de la URL (`/pagina/es/…`).
  */
 import { createWebHistory } from 'vue-router'
-import { crearApp } from './app'
+import { crearApp, desplazarSoloLista } from './app'
 import { esIdioma, idiomaInicial } from './i18n'
 import './assets/main.css'
 
+desplazarSoloLista()
 const primero = window.location.pathname.replace(/^\/pagina\/?/, '').split('/')[0]
 const { app, router } = crearApp(esIdioma(primero) ? primero : idiomaInicial(), createWebHistory('/pagina/'))
 
