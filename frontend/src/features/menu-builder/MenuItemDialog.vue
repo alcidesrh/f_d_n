@@ -7,11 +7,16 @@
   <Dialog
     :visible="visible"
     modal
+    maximizable
     :header="draft.id ? 'Editar ítem' : 'Nuevo ítem navegable'"
     :style="{ width: '44rem' }"
+    :pt="{ content: { class: maximized ? 'flex flex-col' : '' } }"
     @update:visible="emit('update:visible', $event)"
+    @maximize="maximized = true"
+    @unmaximize="maximized = false"
+    @after-hide="maximized = false"
   >
-    <form class="flex flex-col gap-4" @submit.prevent="submit">
+    <form class="flex flex-col gap-4" :class="{ 'min-h-0 flex-1': maximized }" @submit.prevent="submit">
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <label class="flex flex-col gap-1">
           <span class="text-sm font-medium">Texto</span>
@@ -29,7 +34,7 @@
           />
         </label>
       </div>
-      <div class="flex flex-col gap-1">
+      <div class="flex flex-col gap-1" :class="{ 'min-h-0 flex-1': maximized }">
         <span class="text-sm font-medium">
           Ícono
           <span
@@ -39,7 +44,11 @@
             <icon :name="draft.icon" /> {{ draft.icon }}
           </span>
         </span>
-        <IconPicker v-model="draft.icon" height="16rem" />
+        <IconPicker
+          v-model="draft.icon"
+          :height="maximized ? 'fill' : '16rem'"
+          :class="{ 'min-h-0 flex-1': maximized }"
+        />
       </div>
       <div class="flex justify-end gap-2">
         <Button label="Cancelar" severity="secondary" text @click="emit('update:visible', false)" />
@@ -61,6 +70,7 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{ 'update:visible': [visible: boolean]; save: [draft: MenuItemDraft] }>()
 
+const maximized = ref(false)
 const draft = ref<MenuItemDraft>({ ...props.initial })
 watch(
   () => [props.visible, props.initial] as const,

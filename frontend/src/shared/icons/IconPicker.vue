@@ -33,7 +33,11 @@
       show-clear
     />
 
-    <div class="flex min-h-0 gap-3" :style="{ height }">
+    <div
+      class="flex min-h-0 gap-3"
+      :class="{ 'flex-1': height === 'fill' }"
+      :style="height === 'fill' ? undefined : { height }"
+    >
       <nav
         class="hidden w-44 shrink-0 flex-col gap-0.5 overflow-y-auto pr-1 sm:flex"
         aria-label="Categorías"
@@ -118,7 +122,7 @@ const props = withDefaults(
   defineProps<{
     /** Nombre del ícono seleccionado (formato de `<icon name>`: `bus`, `bus-filled`). */
     modelValue?: string | null
-    /** Alto del área de categorías + grilla. */
+    /** Alto del área de categorías + grilla; `fill` ocupa el alto sobrante del contenedor (que debe ser flex-col con alto). */
     height?: string
     autofocus?: boolean
   }>(),
