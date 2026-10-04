@@ -49,7 +49,7 @@ final class PaginaAdminController extends AbstractController
 
     /** Empresas y estaciones para los filtros. */
     #[Route("/opciones", name: "opciones", methods: ["GET"])]
-    public function opciones(ConsultaVenta $consulta): JsonResponse
+    public function opciones(ConsultaVenta $consulta, #[CurrentUser] Usuario $usuario): JsonResponse
     {
         $this->denyAccessUnlessGranted(self::ADMINISTRAR);
 
@@ -59,6 +59,7 @@ final class PaginaAdminController extends AbstractController
                 $this->em->getRepository(Empresa::class)->findBy([], ["nombre" => "ASC"]),
             ),
             "estaciones" => $consulta->estacionesEnLinea(),
+            "departamento" => $usuario->getEstacion()?->getDepartamento(),
         ]);
     }
 

@@ -76,7 +76,7 @@ final class VentaController extends AbstractController
         return $this->json([
             "canal" => $agencia !== null ? "agencia" : "estacion",
             "usuario" => ["id" => $usuario->getId(), "username" => $usuario->getUsername(), "nombre" => $usuario->getFullName()],
-            "estacion" => $usuario->getEstacion() === null ? null : ["id" => $usuario->getEstacion()->getId(), "nombre" => $usuario->getEstacion()->getNombre()],
+            "estacion" => $usuario->getEstacion() === null ? null : ["id" => $usuario->getEstacion()->getId(), "nombre" => $usuario->getEstacion()->getNombre(), "departamento" => $usuario->getEstacion()->getDepartamento()],
             "agencia" => $agencia === null ? null : [
                 "id" => $agencia->getId(),
                 "nombre" => $agencia->getNombre(),
@@ -87,7 +87,7 @@ final class VentaController extends AbstractController
                 "sinFactura" => $agencia === null && $this->isGranted(self::SIN_FACTURA),
             ],
             "estaciones" => array_map(
-                static fn(Estacion $e) => ["id" => $e->getId(), "nombre" => $e->getNombre(), "direccion" => $e->getDireccion()],
+                static fn(Estacion $e) => ["id" => $e->getId(), "nombre" => $e->getNombre(), "direccion" => $e->getDireccion(), "departamento" => $e->getDepartamento()],
                 $this->em->getRepository(Estacion::class)->findBy([], ["nombre" => "ASC"]),
             ),
             "tiposPago" => $catalogo(TipoPago::class, static fn(TipoPago $t) => ["id" => $t->getId(), "nombre" => $t->getNombre()]),
