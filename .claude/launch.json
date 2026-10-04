@@ -1,0 +1,40 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "frontend"
+      ],
+      "port": 9000
+    },
+    {
+      "name": "pagina",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "PAGINA_BACKEND=http://localhost",
+        "npm",
+        "run",
+        "dev",
+        "--prefix",
+        "pagina"
+      ],
+      "port": 9100,
+      "url": "http://localhost:9100"
+    },
+    {
+      "name": "pagina-9101",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd pagina && PAGINA_BACKEND=http://localhost exec npx vite --port 9101 --strictPort"
+      ],
+      "port": 9101,
+      "url": "http://localhost:9101"
+    }
+  ]
+}
