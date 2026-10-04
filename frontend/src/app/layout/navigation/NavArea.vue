@@ -16,6 +16,7 @@
           <NavTree :items="menu.items" :sidebar="sidebar" />
         </div>
       </Transition>
+      <divider class="my-4!" />
     </section>
     <slot v-if="!menus.length" name="empty" />
   </template>
@@ -73,14 +74,15 @@ function onLeave(el: Element, done: () => void) {
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1.25rem;
-  background-color: var(--p-surface-200);
+  /*background-color: white;*/
+  /*var(--p-surface-50);*/
   cursor: pointer;
   text-align: start;
-  font-size: 0.7rem;
-  font-weight: 800;
+  font-size: 0.8rem;
+  font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  /*color: var(--p-text-muted-color);*/
+  color: var(--p-text-muted-color);
 }
 .nav-section-title:hover {
   background-color: var(--p-surface-200);

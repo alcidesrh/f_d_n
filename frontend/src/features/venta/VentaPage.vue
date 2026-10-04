@@ -11,8 +11,8 @@
 -->
 <template>
   <div class="flex flex-col gap-4">
-    <Toolbar>
-      <template #start><PageHead /></template>
+    <Toolbar v-if="store.contexto?.agencia || store.contexto?.estacion">
+      <!-- <template #start><PageHead /></template> -->
       <template #end>
         <div class="flex flex-wrap items-center gap-2">
           <Tag v-if="store.contexto?.agencia" severity="info" :value="`${store.contexto.agencia.nombre} · saldo ${store.contexto.agencia.saldo.texto}`" />
@@ -34,7 +34,6 @@
             <label class="text-sm font-medium" for="venta-cliente">Cliente (facturar a)</label>
             <ClienteBuscador v-model="store.cliente" input-id="venta-cliente" />
           </section>
-
           <section class="panel flex flex-col gap-3">
             <div class="grid grid-cols-1 gap-3 @xl:grid-cols-2">
               <label class="flex flex-col gap-1">
@@ -46,8 +45,11 @@
                 <estacion-select v-model="store.estacionId" :estaciones="store.contexto?.estaciones ?? []" :propio="store.contexto?.estacion?.departamento" placeholder="Todas" @update:model-value="store.cargarSalidas()" />
               </label>
             </div>
+            <divider />
+
             <SalidasLista :salidas="store.salidas" :cargando="store.cargandoSalidas" :salida-id="store.salidaId" @elegir="store.elegirSalida" />
           </section>
+          <divider />
 
           <section v-if="store.detalle" class="panel flex flex-col gap-3">
             <div class="grid grid-cols-1 gap-3 @xl:grid-cols-2">
@@ -83,37 +85,40 @@
         </div>
 
         <!-- Croquis + cobro -->
-        <aside class="panel flex flex-col gap-3 @3xl:sticky @3xl:top-4">
-          <template v-if="store.cargandoDetalle">
-            <Skeleton height="20rem" />
-          </template>
-          <template v-else-if="store.detalle">
-            <div class="flex items-baseline justify-between gap-2">
-              <div class="font-medium">{{ store.detalle.bus?.codigo ?? "Sin bus" }}</div>
-              <div class="text-sm text-muted-color">Libres {{ store.libres }}/{{ store.asientosCroquis.length }}</div>
+        <div class="flex">
+          <divider layout="vertical" />
+          <aside class="panel flex flex-col gap-3 @3xl:sticky @3xl:top-4">
+            <template v-if="store.cargandoDetalle">
+              <Skeleton height="20rem" />
+            </template>
+            <template v-else-if="store.detalle">
+              <div class="flex items-baseline justify-between gap-2">
+                <div class="font-medium">{{ store.detalle.bus?.codigo ?? "Sin bus" }}</div>
+                <div class="text-sm text-muted-color">Libres {{ store.libres }}/{{ store.asientosCroquis.length }}</div>
+              </div>
+              <div class="overflow-x-auto">
+                <BusMap :elementos="store.detalle.croquis" :estado="store.estadoAsiento" interactivo tamano="md" class="justify-center" @asiento="(a) => a.id != null && store.alternarAsiento(a.id)" />
+              </div>
+              <BusMapLegend :items="leyenda" />
+              <div class="flex items-baseline justify-between border-t border-surface pt-3">
+                <span class="text-muted-color">Total</span>
+                <span class="text-xl font-semibold tabular-nums">{{ store.cotizacion?.total.texto ?? "—" }}</span>
+              </div>
+              <Message v-if="store.errorCotizacion" severity="warn" :closable="false">
+                {{ store.errorCotizacion }}
+              </Message>
+              <Message v-if="!store.cliente && store.seleccion.length" severity="info" :closable="false"> Elija el cliente para facturar. </Message>
+              <div class="flex flex-wrap justify-end gap-2">
+                <Button v-if="store.contexto?.permisos.cortesia" label="Cortesía" severity="secondary" outlined :disabled="!store.puedeVender" @click="abrirCobro(true)" />
+                <Button :label="store.contexto?.canal === 'agencia' ? 'Vender' : 'Facturar'" :disabled="!store.puedeVender || !store.cotizacion" @click="abrirCobro(false)" />
+              </div>
+            </template>
+            <div v-else class="py-10 text-center text-muted-color">
+              <icon name="bus" class="mb-2 text-3xl" />
+              <p>Elija un salida para ver sus asientos.</p>
             </div>
-            <div class="overflow-x-auto">
-              <BusMap :elementos="store.detalle.croquis" :estado="store.estadoAsiento" interactivo tamano="md" class="justify-center" @asiento="(a) => a.id != null && store.alternarAsiento(a.id)" />
-            </div>
-            <BusMapLegend :items="leyenda" />
-            <div class="flex items-baseline justify-between border-t border-surface pt-3">
-              <span class="text-muted-color">Total</span>
-              <span class="text-xl font-semibold tabular-nums">{{ store.cotizacion?.total.texto ?? "—" }}</span>
-            </div>
-            <Message v-if="store.errorCotizacion" severity="warn" :closable="false">
-              {{ store.errorCotizacion }}
-            </Message>
-            <Message v-if="!store.cliente && store.seleccion.length" severity="info" :closable="false"> Elija el cliente para facturar. </Message>
-            <div class="flex flex-wrap justify-end gap-2">
-              <Button v-if="store.contexto?.permisos.cortesia" label="Cortesía" severity="secondary" outlined :disabled="!store.puedeVender" @click="abrirCobro(true)" />
-              <Button :label="store.contexto?.canal === 'agencia' ? 'Vender' : 'Facturar'" :disabled="!store.puedeVender || !store.cotizacion" @click="abrirCobro(false)" />
-            </div>
-          </template>
-          <div v-else class="py-10 text-center text-muted-color">
-            <icon name="bus" class="mb-2 text-3xl" />
-            <p>Elija un salida para ver sus asientos.</p>
-          </div>
-        </aside>
+          </aside>
+        </div>
       </div>
     </div>
 
@@ -187,9 +192,9 @@ async function reintentar(sinFactura: boolean) {
 
 <style scoped>
 .panel {
-  background: var(--p-content-background);
-  border: 1px solid var(--p-content-border-color);
-  border-radius: var(--p-content-border-radius, 0.75rem);
+  /*background: var(--p-content-background);*/
+  /*border: 1px solid var(--p-content-border-color);*/
+  /*border-radius: var(--p-content-border-radius, 0.75rem);*/
   padding: 1rem;
 }
 </style>

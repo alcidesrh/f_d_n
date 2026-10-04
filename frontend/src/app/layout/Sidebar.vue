@@ -3,11 +3,11 @@
     <div :class="[sidebarStore.side, nomini ? 'nomini' : '']" class="sidebar-control">
       <button type="button" class="toggle-sidebar tap-target" :aria-label="sidebarStore.mode != 'mini' ? 'Solo íconos' : 'Mostrar textos'" @click="sidebarStore.setMode(sidebarStore.mode == 'mini' ? 'open' : 'mini')">
         <!-- <icon :name="sidebarStore.mode != 'mini' ? 'chevrons-left' : 'chevrons-right'" size="sm" sw="2" /> -->
-        <icon :name="sidebarStore.mode != 'mini' ? 'chevron-left' : 'chevron-right'" size="1.2rem" sw="2" class="text-surface-500" :class="{ 'rotate-180': sidebarStore.side != 'left' }" />
+        <icon :name="sidebarStore.mode != 'mini' ? 'chevron-left' : 'chevron-right'" size="1rem" sw="2" class="text-surface-600" :class="{ 'rotate-180': sidebarStore.side != 'left' }" />
       </button>
       <button type="button" class="close-sidebar tap-target" aria-label="Cerrar panel" @click="sidebarStore.dismiss()">
         <!-- <icon name="x" size="sm" sw="2" /> -->
-        <icon name="x" size="1.2rem" sw="2" class="text-surface-500" />
+        <icon name="x" size="1rem" sw="2" class="text-surface-600" />
       </button>
     </div>
     <nav>
