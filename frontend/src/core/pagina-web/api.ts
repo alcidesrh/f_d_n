@@ -5,7 +5,7 @@ import type { ConfiguracionPagina, MensajeContacto, Opcion, PaginaCompras } from
 export const fetchCompras = (query: string, silent = false) => http.get<PaginaCompras>(`/pagina/compras?${query}`, { silent })
 
 export const fetchOpciones = () =>
-  http.get<{ empresas: Opcion[]; estaciones: Array<Opcion & { departamento: string | null }> }>('/pagina/opciones')
+  http.get<{ empresas: Opcion[]; estaciones: Array<Opcion & { departamento: string | null }>; departamento: string | null }>('/pagina/opciones')
 
 export const fetchConfiguracion = () => http.get<ConfiguracionPagina>('/pagina/configuracion')
 

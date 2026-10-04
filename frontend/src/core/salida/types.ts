@@ -1,4 +1,6 @@
 /** Contratos de la gestión de salidas (`/api/gestion-salidas/*`, ADR-024). */
+import type { ElementoCroquis } from '@/core/croquis/types'
+import type { AsientoOcupado, Importe, Parada } from '@/core/venta/types'
 
 export type EstadoSalida = 'programada' | 'abordando' | 'iniciada' | 'finalizada' | 'cancelada'
 
@@ -136,4 +138,44 @@ export interface CambioSalida {
   /** `AAAA-MM-DDTHH:MM` local */
   fecha?: string
   propagar: boolean
+}
+
+export type TipoManifiesto = 'interno' | 'piloto'
+
+export interface ResumenClase {
+  clase: 'A' | 'B'
+  asientos: number
+  vendidos: number
+  reservados: number
+}
+
+/** Qué se vendió: asientos (no boletos) por canal; cortesías y vouchers van aparte. */
+export interface ResumenSalida {
+  clases: ResumenClase[]
+  asientos: number
+  vendidos: number
+  reservados: number
+  canales: { estacion: number; agencia: number; web: number; cortesia: number; voucher: number }
+  /** Boletos vivos por estado (`emitido`, `chequeado`, `transito`, `finalizado`). */
+  boletosPorEstado: Partial<Record<string, number>>
+  /** Lo cobrado (sin cortesías ni vouchers); null si no hay boletos. */
+  ingresos: Importe | null
+}
+
+/** `GET /gestion-salidas/{id}/detalle`: lo que muestra "Ver". */
+export interface DetalleSalida {
+  id: number
+  /** ISO con zona */
+  salida: string
+  estado: EstadoSalida
+  empresa: Opcion | null
+  bus: { id: number; codigo: string; gama: string | null } | null
+  trayecto: { id: number; origen: Opcion; destino: Opcion }
+  paradas: Parada[]
+  croquis: ElementoCroquis[]
+  /** Asientos ocupados para el viaje completo (los libres no aparecen). */
+  ocupados: AsientoOcupado[]
+  /** Piloto y copiloto del bus (`N/D` si falta). */
+  pilotos: string[]
+  resumen: ResumenSalida
 }

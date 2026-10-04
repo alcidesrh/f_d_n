@@ -194,8 +194,8 @@
           <label class="flex flex-col gap-1"><span class="text-xs font-medium">Salida hasta</span><DatePicker v-model="salidaHasta" date-format="dd/mm/yy" show-button-bar fluid /></label>
         </div>
         <label class="flex flex-col gap-1"><span class="text-xs font-medium">Empresa del viaje</span><Select v-model="filtro.empresa" :options="opciones.empresas" option-label="nombre" option-value="id" show-clear filter fluid placeholder="Todas" /></label>
-        <label class="flex flex-col gap-1"><span class="text-xs font-medium">Origen</span><Select v-model="filtro.origen" :options="opciones.estaciones" option-label="nombre" option-value="id" show-clear filter fluid placeholder="Cualquiera" /></label>
-        <label class="flex flex-col gap-1"><span class="text-xs font-medium">Destino</span><Select v-model="filtro.destino" :options="opciones.estaciones" option-label="nombre" option-value="id" show-clear filter fluid placeholder="Cualquiera" /></label>
+        <label class="flex flex-col gap-1"><span class="text-xs font-medium">Origen</span><estacion-select v-model="filtro.origen" :estaciones="opciones.estaciones" :propio="opciones.departamento" placeholder="Cualquiera" /></label>
+        <label class="flex flex-col gap-1"><span class="text-xs font-medium">Destino</span><estacion-select v-model="filtro.destino" :estaciones="opciones.estaciones" :propio="opciones.departamento" placeholder="Cualquiera" /></label>
         <div class="flex flex-col gap-1">
           <span class="text-xs font-medium">Ida y vuelta</span>
           <SelectButton v-model="filtro.idaVuelta" :options="[{ v: 'todos', l: 'Todas' }, { v: 'si', l: 'Sí' }, { v: 'no', l: 'Solo ida' }]" option-label="l" option-value="v" :allow-empty="false" />
@@ -237,7 +237,7 @@ const detalle = ref<CompraWeb | null>(null)
 const seleccion = ref<CompraWeb[]>([])
 const rangoActivo = ref<Rango | null>('todo')
 const texto = ref('')
-const opciones = reactive<{ empresas: Opcion[]; estaciones: Opcion[] }>({ empresas: [], estaciones: [] })
+const opciones = reactive<{ empresas: Opcion[]; estaciones: Array<Opcion & { departamento: string | null }>; departamento: string | null }>({ empresas: [], estaciones: [], departamento: null })
 
 const activos = computed(() => filtrosActivos(filtro))
 const suma = computed(() => sumaSeleccion(seleccion.value))

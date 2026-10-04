@@ -103,7 +103,7 @@
               :aria-pressed="b.salidaId === seleccionadoId"
               @click="elegir(b.salidaId, true)"
             >
-              <span class="inline-block size-3 shrink-0 rounded-full" :style="{ background: colorEmpresa(b.empresaId) }" />
+              <span class="inline-block size-3 shrink-0 rounded-full" :style="{ background: colorEmpresa(b.empresaId, b.empresa) }" />
               <span class="min-w-0 flex-1">
                 <span class="block truncate font-medium">{{ b.origen }} → {{ b.destino }}</span>
                 <span class="block truncate text-xs text-muted-color">{{ b.empresa }} · bus {{ b.bus }} · {{ horaDe(b.partida) }}</span>
@@ -173,7 +173,7 @@ const seleccionadoPos = computed(() => (seleccionado.value ? (estimadas.value.ge
 const seleccionadoProxima = computed(() => (seleccionado.value ? proximaParada(seleccionado.value, ahora.value) : null))
 
 function iconoBus(b: BusEnRecorrido, p: PosicionEstimada, activo: boolean): L.DivIcon {
-  const color = colorEmpresa(b.empresaId)
+  const color = colorEmpresa(b.empresaId, b.empresa)
   const quieto = p.estado !== 'en_ruta'
   return L.divIcon({
     className: 'bus-marker',
@@ -195,7 +195,7 @@ function dibujarRutas() {
   for (const b of buses) {
     if (vistas.has(b.ruta)) continue
     vistas.add(b.ruta)
-    const color = colorEmpresa(b.empresaId)
+    const color = colorEmpresa(b.empresaId, b.empresa)
     const estilo = estilos.value.get(b.ruta)
     L.polyline(trazadoArqueado(b.trazado, estilo?.k ?? 0), { color, weight: 3, opacity: 0.85, dashArray: '6 6', dashOffset: String(estilo?.fase ?? 0) }).addTo(capaRutas)
     for (const e of b.estaciones) {

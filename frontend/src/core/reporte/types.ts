@@ -14,7 +14,7 @@ export interface Moneda {
 export interface OpcionesReporte {
   /** Hoy en el servidor (`AAAA-MM-DD`). */
   hoy: string
-  estaciones: Opcion[]
+  estaciones: Array<Opcion & { departamento: string | null }>
   empresas: Opcion[]
   monedas: Moneda[]
   /** Estación y empresa fijas del usuario; con valor, no puede elegir otra. */

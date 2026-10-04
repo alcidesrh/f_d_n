@@ -43,7 +43,7 @@
               </label>
               <label class="flex flex-col gap-1">
                 <span class="text-sm font-medium">Estación</span>
-                <Select v-model="store.estacionId" :options="store.contexto?.estaciones ?? []" option-label="nombre" option-value="id" filter show-clear placeholder="Todas" fluid @update:model-value="store.cargarSalidas()" />
+                <estacion-select v-model="store.estacionId" :estaciones="store.contexto?.estaciones ?? []" :propio="store.contexto?.estacion?.departamento" placeholder="Todas" @update:model-value="store.cargarSalidas()" />
               </label>
             </div>
             <SalidasLista :salidas="store.salidas" :cargando="store.cargandoSalidas" :salida-id="store.salidaId" @elegir="store.elegirSalida" />

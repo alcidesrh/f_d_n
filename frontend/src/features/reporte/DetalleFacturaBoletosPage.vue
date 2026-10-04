@@ -13,7 +13,7 @@
       </label>
       <label class="flex flex-col gap-1.5">
         <span class="text-sm font-medium">Estación de venta</span>
-        <Select v-model="filtro.estacion" :options="opciones?.estaciones ?? []" option-value="id" option-label="nombre" :disabled="!!opciones?.alcance.estacion" :show-clear="!opciones?.alcance.estacion" filter fluid placeholder="Todas las estaciones" />
+        <estacion-select v-model="filtro.estacion" :estaciones="opciones?.estaciones ?? []" :propio="departamentoPropio" :disabled="!!opciones?.alcance.estacion" :show-clear="!opciones?.alcance.estacion" />
       </label>
       <label class="flex flex-col gap-1.5">
         <span class="text-sm font-medium">Empresa</span>
@@ -72,6 +72,8 @@ import { useResumen } from './useResumen'
 
 const opciones = ref<OpcionesReporte | null>(null)
 const filtro = reactive<FiltroDetalle>({ rango: null, estacion: null, empresa: null, autorizacion: '', referencia: '', soloTarjetas: false, soloReferencias: false })
+/** Departamento de la estación fija del usuario, si la tiene. */
+const departamentoPropio = computed(() => opciones.value?.estaciones.find((e) => e.id === opciones.value?.alcance.estacion)?.departamento)
 const generando = ref<FormatoReporte | null>(null)
 
 // Con el primer día elegido y el segundo pendiente, el reporte es de ese día.

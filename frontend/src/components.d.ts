@@ -31,6 +31,7 @@ declare module 'vue' {
     Divider: typeof import('primevue/divider')['default']
     Drawer: typeof import('primevue/drawer')['default']
     DynamicDialog: typeof import('primevue/dynamicdialog')['default']
+    EstacionSelect: typeof import('./shared/ui/EstacionSelect.vue')['default']
     Fluid: typeof import('primevue/fluid')['default']
     Icon: typeof import('./shared/ui/Icon.vue')['default']
     IconField: typeof import('primevue/iconfield')['default']

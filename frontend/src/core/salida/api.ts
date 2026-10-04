@@ -1,7 +1,10 @@
 /** Transporte de la gestión de salidas (`/api/gestion-salidas/*`, permisos `salida.*`, ADR-024). */
-import { http, request } from '@/core/http'
+import { config } from '@/core/config'
+import { useSessionStore } from '@/core/auth/session'
+import { HttpError, http, request } from '@/core/http'
 import type {
   CambioSalida,
+  DetalleSalida,
   Esquema,
   EsquemaPayload,
   OpcionesSalidas,
@@ -10,6 +13,7 @@ import type {
   Propagacion,
   ResultadoOperacion,
   ResultadoProgramacion,
+  TipoManifiesto,
   VistaPrevia,
 } from './types'
 
@@ -38,3 +42,15 @@ export const editarSalida = (id: number, cambio: CambioSalida) => request<Result
 export const anularSalida = (id: number, propagar: boolean) => http.post<ResultadoOperacion>(`${BASE}/${id}/anular`, { propagar })
 
 export const eliminarSalida = (id: number, propagar: boolean) => http.delete<ResultadoOperacion>(`${BASE}/${id}${propagar ? '?propagar=1' : ''}`)
+
+export const fetchDetalle = (id: number) => http.get<DetalleSalida>(`${BASE}/${id}/detalle`)
+
+/** PDF del manifiesto como `Blob` (lleva el Bearer, por eso no es un enlace). */
+export async function fetchManifiestoPdf(id: number, tipo: TipoManifiesto): Promise<Blob> {
+  const token = useSessionStore().token
+  const res = await fetch(`${config.restUrl}${BASE}/${id}/manifiesto/${tipo}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  })
+  if (!res.ok) throw new HttpError(res.status, null, `HTTP ${res.status}`)
+  return res.blob()
+}

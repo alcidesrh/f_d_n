@@ -21,10 +21,10 @@ export interface Opcion {
 export interface ContextoVenta {
   canal: 'estacion' | 'agencia'
   usuario: { id: number; username: string; nombre: string }
-  estacion: Opcion | null
+  estacion: (Opcion & { departamento: string | null }) | null
   agencia: (Opcion & { saldo: Importe }) | null
   permisos: { cortesia: boolean; sinFactura: boolean }
-  estaciones: Array<Opcion & { direccion: string | null }>
+  estaciones: Array<Opcion & { direccion: string | null; departamento: string | null }>
   tiposPago: Opcion[]
   monedas: Array<Opcion & { sigla: string }>
   tiposDocumento: Opcion[]

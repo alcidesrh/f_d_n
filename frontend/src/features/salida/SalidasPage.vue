@@ -3,7 +3,9 @@
   que están en ruta, luego las que abordan y después las programadas de la
   más próxima a la más lejana. Filtros por estado (con conteo), fechas,
   empresa, trayecto y bus. Por fila: editar, anular (queda como cancelada)
-  y eliminar, con la opción de propagarlo a las futuras idénticas.
+  y eliminar, con la opción de propagarlo a las futuras idénticas. Ver abre el
+  croquis con la ocupación y el resumen de venta; el menú PDF genera el
+  manifiesto interno y el del piloto.
   Contenido angosto: tarjetas; desde 56rem de ancho del contenido: tabla.
 -->
 <template>
@@ -76,6 +78,12 @@
           </div>
         </div>
         <div class="flex justify-end gap-1">
+          <Button severity="secondary" text rounded size="small" class="tap-target" aria-label="Ver" v-tooltip.top="'Ver croquis y resumen'" @click="verSalida = s">
+            <template #icon><icon name="eye" /></template>
+          </Button>
+          <Button severity="secondary" text rounded size="small" class="tap-target" aria-label="Manifiestos" v-tooltip.top="'Manifiestos (PDF)'" aria-haspopup="menu" @click="abrirMenu($event, s)">
+            <template #icon><icon name="file-type-pdf" /></template>
+          </Button>
           <Button v-for="a in acciones(s)" :key="a.op" :severity="a.severidad" text rounded size="small" class="tap-target" :disabled="!a.habilitada" :aria-label="a.etiqueta" v-tooltip.top="a.ayuda" @click="abrir(a.op, s)">
             <template #icon><icon :name="a.icono" /></template>
           </Button>
@@ -132,6 +140,12 @@
         <Column header="" class="w-0">
           <template #body="{ data }">
             <div class="flex justify-end gap-0.5">
+              <Button severity="secondary" text rounded size="small" aria-label="Ver" v-tooltip.top="'Ver croquis y resumen'" @click="verSalida = data">
+                <template #icon><icon name="eye" /></template>
+              </Button>
+              <Button severity="secondary" text rounded size="small" aria-label="Manifiestos" v-tooltip.top="'Manifiestos (PDF)'" aria-haspopup="menu" @click="abrirMenu($event, data)">
+                <template #icon><icon name="file-type-pdf" /></template>
+              </Button>
               <Button v-for="a in acciones(data)" :key="a.op" :severity="a.severidad" text rounded size="small" :disabled="!a.habilitada" :aria-label="a.etiqueta" v-tooltip.top="a.ayuda" @click="abrir(a.op, data)">
                 <template #icon><icon :name="a.icono" /></template>
               </Button>
@@ -167,6 +181,8 @@
       </div>
     </Drawer>
 
+    <Menu ref="menuManifiestos" :model="itemsManifiestos" popup />
+    <VerSalidaDialog :salida="verSalida" @cerrar="verSalida = null" />
     <EditarSalidaDialog v-if="opciones" :salida="operacion === 'editar' ? seleccion : null" :opciones="opciones" @cerrar="seleccion = null" @hecho="alTerminar" />
     <ConfirmarOperacionDialog :salida="operacion !== 'editar' ? seleccion : null" :operacion="operacion === 'eliminar' ? 'eliminar' : 'anular'" @cerrar="seleccion = null" @hecho="alTerminar" />
     <ResultadoOperacionDialog :resultado="resultado" :operacion="operacion" @cerrar="resultado = null" />
@@ -183,6 +199,8 @@ import { notify } from '@/core/notify'
 import ConfirmarOperacionDialog from './ConfirmarOperacionDialog.vue'
 import EditarSalidaDialog from './EditarSalidaDialog.vue'
 import ResultadoOperacionDialog from './ResultadoOperacionDialog.vue'
+import VerSalidaDialog from './VerSalidaDialog.vue'
+import { abrirManifiesto, MANIFIESTOS } from './manifiesto'
 
 const ORDENES = [
   { v: 'proximas', l: 'Próximas primero' },
@@ -199,6 +217,9 @@ const masFiltros = ref(false)
 const seleccion = ref<SalidaFila | null>(null)
 const operacion = ref<Operacion>('editar')
 const resultado = shallowRef<ResultadoOperacion | null>(null)
+const verSalida = ref<SalidaFila | null>(null)
+const menuManifiestos = ref<{ toggle: (e: Event) => void } | null>(null)
+const itemsManifiestos = ref<Array<{ label: string; icon?: string; command: () => void }>>([])
 
 const estaModificado = computed(() => aQuery({ ...filtro, pagina: 1 }) !== aQuery(filtroInicial()))
 const otrosActivos = computed(() => [filtro.empresa, filtro.bus, filtro.orden !== 'proximas' ? 1 : null].filter((v) => v !== null).length)
@@ -234,6 +255,12 @@ function acciones(s: SalidaFila) {
       ayuda: programada || s.estado === 'cancelada' ? 'Eliminar' : 'Una salida en curso o finalizada no se elimina',
     },
   ]
+}
+
+/** Menú de los dos manifiestos (PDF) de la fila. */
+function abrirMenu(e: Event, s: SalidaFila) {
+  itemsManifiestos.value = MANIFIESTOS.map((m) => ({ label: m.etiqueta, command: () => void abrirManifiesto(s.id, m.tipo) }))
+  menuManifiestos.value?.toggle(e)
 }
 
 function abrir(op: Operacion, s: SalidaFila) {
