@@ -14,7 +14,6 @@
     @update:visible="emit('update:visible', $event)"
     @maximize="maximized = true"
     @unmaximize="maximized = false"
-    @after-hide="maximized = false"
   >
     <form class="flex flex-col gap-4" :class="{ 'min-h-0 flex-1': maximized }" @submit.prevent="submit">
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
