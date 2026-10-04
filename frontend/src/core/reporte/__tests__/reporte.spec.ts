@@ -4,7 +4,7 @@ import type { OpcionesReporte } from '../types'
 
 const opciones = (alcance = { estacion: null as number | null, empresa: null as number | null }): OpcionesReporte => ({
   hoy: '2026-10-03',
-  estaciones: [{ id: 1, nombre: 'Guatemala' }],
+  estaciones: [{ id: 1, nombre: 'Guatemala', departamento: 'Guatemala' }],
   empresas: [{ id: 1, nombre: 'PIONERA' }],
   monedas: [
     { id: 2, sigla: 'USD', nombre: 'Dólar' },

@@ -34,14 +34,8 @@
     </div>
 
     <template #acciones>
-      <Button :disabled="!!problema || !opciones" :loading="generando === 'pdf'" @click="generar('pdf')">
-        <template #icon><icon name="file-type-pdf" class="mr-1.5" color="text-white" /></template>
-        <span>Generar PDF</span>
-      </Button>
-      <Button severity="secondary" outlined :disabled="!!problema || !opciones" :loading="generando === 'xlsx'" @click="generar('xlsx')">
-        <template #icon><icon name="file-type-xls" class="mr-1.5" color="text-primary" /></template>
-        <span>Descargar Excel</span>
-      </Button>
+      <Button :disabled="!!problema || !opciones" :loading="generando === 'pdf'" @click="generar('pdf')" label="Generar PDF" class="shrink-0 whitespace-nowrap"><template #icon><icon name="file-type-pdf" class="mr-1.5" color="text-white" /></template></Button>
+      <Button severity="secondary" outlined :disabled="!!problema || !opciones" :loading="generando === 'xlsx'" @click="generar('xlsx')" label="Descargar Excel" class="shrink-0 whitespace-nowrap"><template #icon><icon name="file-type-xls" class="mr-1.5" color="text-primary" /></template></Button>
     </template>
 
     <template #resumen>

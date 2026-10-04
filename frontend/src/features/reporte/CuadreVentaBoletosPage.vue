@@ -26,10 +26,7 @@
     </div>
 
     <template #acciones>
-      <Button :disabled="!!problema || !opciones" :loading="generando" @click="generar">
-        <template #icon><icon name="file-type-pdf" class="mr-1.5" color="text-white" /></template>
-        <span>Generar PDF</span>
-      </Button>
+      <Button :disabled="!!problema || !opciones" :loading="generando" @click="generar" label="Generar PDF" class="shrink-0 whitespace-nowrap"><template #icon><icon name="file-type-pdf" class="mr-1.5" color="text-white" /></template></Button>
       <small class="text-muted-color">Se abre en una pestaña nueva.</small>
     </template>
 
