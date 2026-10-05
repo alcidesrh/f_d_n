@@ -7,7 +7,7 @@
   position: fixed;
   top: var(--header-h);
   bottom: 0;
-  background-color: var(--bg);
+  background-color: var(--p-surface-50);
   z-index: 100;
   width: min(var(--sb-open), 85vw);
   overflow-x: hidden;
@@ -133,7 +133,6 @@
 
 .menu-item {
   position: relative;
-  background-color: var(--bg);
   z-index: 9;
 }
 
@@ -175,16 +174,18 @@
     position: relative;
   }
   /* Solo íconos (la columna mide `--sb-mini`). Al pasar el mouse, el enlace se
-     ensancha hasta el ancho abierto flotando sobre el contenido y aparece el
-     texto. Todo con transiciones CSS sobre `--w`: ancho y margen se animan
-     juntos, así en el sidebar derecho (crece hacia la izquierda) el borde
-     pegado a la barra no se mueve y el puntero no sale del enlace. */
+     ensancha hasta el ancho de su texto (`max-content`, tope `--sb-open`) flotando sobre el contenido y aparece el
+     texto. Ancho animado con `interpolate-size`; en el sidebar derecho
+     (crece hacia la izquierda) `justify-content: flex-end` mantiene pegado el borde
+     a la barra, así el puntero no sale del enlace. */
   @variant lg {
     & .menu-item .menu-link {
       --w: var(--sb-mini);
       flex: none;
-      min-width: 0;
+      min-width: var(--sb-mini);
+      max-width: var(--sb-open);
       width: var(--w);
+      interpolate-size: allow-keywords;
       overflow: hidden;
       transition:
         width var(--transition) var(--ease),
@@ -192,7 +193,7 @@
         box-shadow var(--transition) var(--ease);
       &:hover,
       &:focus-visible {
-        --w: var(--sb-open);
+        --w: max-content;
         position: relative;
         z-index: 2;
         background-color: var(--bg);
@@ -212,16 +213,22 @@
     &.left .menu-link:focus-visible {
       border-radius: 0 8px 8px 0;
     }
+    /* Un flex con `justify-content: flex-end` desborda hacia el inicio (la
+       izquierda); con `margin-left: auto` el margen se anularía y el enlace
+       saldría por la derecha, fuera de la pantalla. */
+    &.right .menu-item,
+    &.right .menu-item .nav-row {
+      display: flex;
+      justify-content: flex-end;
+    }
+    &.right .menu-item .nav-row {
+      flex: 1;
+      min-width: 0;
+    }
     &.right .menu-item .menu-link {
-      flex-direction: row-reverse;
-      margin-left: calc(var(--sb-mini) - var(--w));
       &:hover,
       &:focus-visible {
         border-radius: 8px 0 0 8px;
-      }
-      & .menu-text {
-        margin-left: 0;
-        margin-right: 15px;
       }
     }
   }
