@@ -35,7 +35,7 @@
             <ClienteBuscador v-model="store.cliente" input-id="venta-cliente" />
           </section>
           <section class="panel flex flex-col gap-3">
-            <div class="grid grid-cols-1 gap-3 @xl:grid-cols-2">
+            <div class="grid grid-cols-1 gap-3 @xl:grid-cols-2 mb-6">
               <label class="flex flex-col gap-1">
                 <span class="text-sm font-medium">Fecha de salida</span>
                 <DatePicker v-model="store.fecha" date-format="dd/mm/yy" show-icon fluid @update:model-value="store.cargarSalidas()" />
@@ -45,7 +45,9 @@
                 <estacion-select v-model="store.estacionId" :estaciones="store.contexto?.estaciones ?? []" :propio="store.contexto?.estacion?.departamento" placeholder="Todas" @update:model-value="store.cargarSalidas()" />
               </label>
             </div>
-            <divider />
+            <Divider align="center" class="before:border-surface-500!" type="dashed">
+              <span class="text-surface-500 font-semibold">Salidas encontradas</span>
+            </Divider>
 
             <SalidasLista :salidas="store.salidas" :cargando="store.cargandoSalidas" :salida-id="store.salidaId" @elegir="store.elegirSalida" />
           </section>
@@ -114,7 +116,7 @@
               </div>
             </template>
             <div v-else class="py-10 text-center text-muted-color">
-              <icon name="bus" class="mb-2 text-3xl" />
+              <icon name="directions-bus-outline" class="mb-2 text-3xl" />
               <p>Elija un salida para ver sus asientos.</p>
             </div>
           </aside>

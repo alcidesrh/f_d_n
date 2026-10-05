@@ -15,7 +15,7 @@
       <span class="flex-1 truncate" :class="{ 'text-muted-color': !iconName }">
         {{ iconName || placeholder }}
       </span>
-      <icon name="chevron-down" color="text-muted-color" />
+      <icon name="keyboard-arrow-down" color="text-muted-color" />
     </button>
     <Button
       v-if="showClear && iconName && !disabled"
@@ -26,7 +26,7 @@
       aria-label="Quitar ícono"
       @click="clear"
     >
-      <template #icon><icon name="x" /></template>
+      <template #icon><icon name="close" /></template>
     </Button>
     <Popover ref="popover" @hide="blur">
       <div class="w-[min(46rem,calc(100vw-3rem))]">
@@ -44,8 +44,8 @@ import { useFormKitInput } from '@/shared/formkit/useFormKitInput'
 defineOptions({ name: 'FkIconPicker' })
 
 /**
- * Buscador de íconos Tabler. El valor es el nombre del ícono (`bus`,
- * `bus-filled`) — el mismo que persiste `Icon.icon` y que pinta `<icon name>`.
+ * Buscador de íconos Material Symbols. El valor es el nombre del ícono
+ * (`home`, `home-outline`) — el mismo que persiste `Icon.icon` y que pinta `<icon name>`.
  *
  * Attrs: `placeholder`, `inline` (grilla siempre visible, sin popover),
  * `height` (alto de la grilla), `showClear` (por defecto `true`).
@@ -65,7 +65,7 @@ const placeholder = computed(
 const showClear = computed(() => props.context.attrs.showClear !== false)
 
 /**
- * Acepta también una entidad `Icon` hidratada (`{ icon: 'bus', … }`) como
+ * Acepta también una entidad `Icon` hidratada (`{ icon: 'home-outline', … }`) como
  * valor inicial; lo que se emite siempre es el nombre.
  */
 const iconName = computed<string | null>(() => {

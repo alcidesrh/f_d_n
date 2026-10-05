@@ -22,7 +22,7 @@ export const entityFormExtensions: Record<string, EntityFormExtension[]> = {
     {
       key: 'saldo',
       title: 'Saldo',
-      icon: 'wallet',
+      icon: 'account-balance-wallet-outline',
       component: () => import('@/features/agencia/AgenciaSaldoSection.vue'),
     },
   ],
@@ -30,7 +30,7 @@ export const entityFormExtensions: Record<string, EntityFormExtension[]> = {
     {
       key: 'croquis',
       title: 'Croquis',
-      icon: 'layout-grid',
+      icon: 'grid-view-outline',
       component: () => import('@/features/bus/BusCroquisSection.vue'),
     },
   ],

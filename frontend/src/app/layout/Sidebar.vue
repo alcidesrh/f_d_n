@@ -2,12 +2,12 @@
   <aside ref="panel" class="sidebar" :class="[sidebarStore.side, sidebarStore.mode, { 'drawer-open': sidebarStore.drawer }]">
     <div :class="[sidebarStore.side, nomini ? 'nomini' : '']" class="sidebar-control">
       <button type="button" class="toggle-sidebar tap-target" :aria-label="sidebarStore.mode != 'mini' ? 'Solo íconos' : 'Mostrar textos'" @click="sidebarStore.setMode(sidebarStore.mode == 'mini' ? 'open' : 'mini')">
-        <!-- <icon :name="sidebarStore.mode != 'mini' ? 'chevrons-left' : 'chevrons-right'" size="sm" sw="2" /> -->
-        <icon :name="sidebarStore.mode != 'mini' ? 'chevron-left' : 'chevron-right'" size="1rem" sw="2" class="text-surface-600" :class="{ 'rotate-180': sidebarStore.side != 'left' }" />
+        <!-- <icon :name="sidebarStore.mode != 'mini' ? 'keyboard-double-arrow-left' : 'keyboard-double-arrow-right'" size="sm" /> -->
+        <icon :name="sidebarStore.mode != 'mini' ? 'chevron-left' : 'chevron-right'" size="1rem" class="text-surface-600" :class="{ 'rotate-180': sidebarStore.side != 'left' }" />
       </button>
       <button type="button" class="close-sidebar tap-target" aria-label="Cerrar panel" @click="sidebarStore.dismiss()">
-        <!-- <icon name="x" size="sm" sw="2" /> -->
-        <icon name="x" size="1rem" sw="2" class="text-surface-600" />
+        <!-- <icon name="close" size="sm" /> -->
+        <icon name="close" size="1rem" class="text-surface-600" />
       </button>
     </div>
     <nav>

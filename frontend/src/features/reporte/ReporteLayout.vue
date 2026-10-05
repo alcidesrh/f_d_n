@@ -33,7 +33,7 @@
 
         <aside class="panel flex flex-col gap-4" aria-live="polite" aria-labelledby="reporte-resumen">
           <h2 id="reporte-resumen" class="m-0 flex items-center gap-2 text-base font-semibold">
-            <icon name="chart-bar" color="text-primary" />Vista previa
+            <icon name="bar-chart" color="text-primary" />Vista previa
             <ProgressSpinner v-if="cargando" class="!size-4" stroke-width="6" aria-label="Consultando" />
           </h2>
           <Message v-if="error" severity="error" size="small" :closable="false">{{ error }}</Message>

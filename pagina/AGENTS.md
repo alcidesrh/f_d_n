@@ -12,7 +12,7 @@ Venta de boletos en línea (ADR-021, ADR-023). Reemplaza a la aplicación Symfon
 
 ## Stack
 
-Vue 3 (`<script setup lang="ts">`), vue-router, Pinia, vue-i18n, PrimeVue 4 (tema Aura con preset de la marca, en la capa CSS `primevue`), FormKit 2, Tailwind 4 (tokens `marca-*` y `acento-*` en `main.css`), íconos de Tabler compilados con unplugin-icons (sin llamadas a Iconify en tiempo de ejecución). **Sin Stimulus ni Turbo.**
+Vue 3 (`<script setup lang="ts">`), vue-router, Pinia, vue-i18n, PrimeVue 4 (tema Aura con preset de la marca, en la capa CSS `primevue`), FormKit 2, Tailwind 4 (tokens `marca-*` y `acento-*` en `main.css`), íconos de Google Material Symbols compilados con unplugin-icons (sin llamadas a Iconify en tiempo de ejecución). **Sin Stimulus ni Turbo.**
 
 Reutiliza del frontend por alias (ver `vite.config.ts` y `tsconfig.app.json`): `@/core/croquis/*` y `@/shared/bus-map/*` (el mismo mapa del bus que ve la taquilla) y `@/shared/formkit/*` (inputs FormKit sobre PrimeVue). Esos archivos usan las APIs de Vue sin importarlas: por eso `unplugin-auto-import` (`src/auto-imports.d.ts` es generado). **`resolve.dedupe` y `paths`** fuerzan que Vue, PrimeVue, FormKit y Pinia se resuelvan desde `pagina/node_modules` aunque el import venga de `frontend/src`: con dos copias de PrimeVue, el tema solo queda registrado en una y los componentes de la otra salen sin variables (selects transparentes).
 

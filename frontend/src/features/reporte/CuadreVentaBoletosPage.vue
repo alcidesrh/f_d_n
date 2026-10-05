@@ -5,7 +5,7 @@
   empresa asignada al usuario no se puede cambiar. Permiso `reporte.ventas`.
 -->
 <template>
-  <ReporteLayout icono="report-money" descripcion="Cierre de caja del día: qué vendió cada usuario y cuánto se recibió, anuló y facturó." :problema="problema" :cargando="cargando" :error="error" :listo="!!resumen">
+  <ReporteLayout icono="request-quote-outline" descripcion="Cierre de caja del día: qué vendió cada usuario y cuánto se recibió, anuló y facturó." :problema="problema" :cargando="cargando" :error="error" :listo="!!resumen">
     <div class="grid gap-4 @lg:grid-cols-2">
       <label class="flex flex-col gap-1.5">
         <span class="text-sm font-medium">Fecha de venta</span>
@@ -26,7 +26,7 @@
     </div>
 
     <template #acciones>
-      <Button :disabled="!!problema || !opciones" :loading="generando" @click="generar" label="Generar PDF" class="shrink-0 whitespace-nowrap"><template #icon><icon name="file-type-pdf" class="mr-1.5" color="text-white" /></template></Button>
+      <Button :disabled="!!problema || !opciones" :loading="generando" @click="generar" label="Generar PDF" class="shrink-0 whitespace-nowrap"><template #icon><icon name="picture-as-pdf-outline" class="mr-1.5" color="text-white" /></template></Button>
       <small class="text-muted-color">Se abre en una pestaña nueva.</small>
     </template>
 

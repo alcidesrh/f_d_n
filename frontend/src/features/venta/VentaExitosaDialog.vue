@@ -38,10 +38,10 @@
           <Button label="Factura (DTE)" severity="secondary" text />
         </a>
         <Button label="PDF" severity="secondary" outlined :loading="descargando" @click="pdf">
-          <template #icon><icon name="file-type-pdf" class="mr-1" /></template>
+          <template #icon><icon name="picture-as-pdf-outline" class="mr-1" /></template>
         </Button>
         <Button label="Imprimir ticket" severity="secondary" outlined @click="imprimir">
-          <template #icon><icon name="printer" class="mr-1" /></template>
+          <template #icon><icon name="print-outline" class="mr-1" /></template>
         </Button>
         <Button label="Nueva venta" autofocus @click="emit('cerrar')" />
       </div>

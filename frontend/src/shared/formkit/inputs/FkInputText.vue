@@ -14,7 +14,7 @@
       />
       <InputIcon>
         <button v-if="hasValue" type="button" aria-label="Limpiar" @click="clearValue">
-          <icon name="x" sw="2" size="20" />
+          <icon name="close" size="20" />
         </button>
       </InputIcon>
     </IconField>

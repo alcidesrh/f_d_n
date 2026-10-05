@@ -5,7 +5,7 @@
   usuario no se puede cambiar. Permiso `reporte.ventas`.
 -->
 <template>
-  <ReporteLayout icono="file-invoice" descripcion="Facturas de los boletos vendidos, para conciliar con tarjetas y con el certificador." :problema="problema" :cargando="cargando" :error="error" :listo="!!resumen">
+  <ReporteLayout icono="receipt-long-outline" descripcion="Facturas de los boletos vendidos, para conciliar con tarjetas y con el certificador." :problema="problema" :cargando="cargando" :error="error" :listo="!!resumen">
     <div class="grid gap-4 @lg:grid-cols-2">
       <label class="flex flex-col gap-1.5 @lg:col-span-2">
         <span class="text-sm font-medium">Fecha de venta (un día o un rango)</span>
@@ -34,8 +34,8 @@
     </div>
 
     <template #acciones>
-      <Button :disabled="!!problema || !opciones" :loading="generando === 'pdf'" @click="generar('pdf')" label="Generar PDF" class="shrink-0 whitespace-nowrap"><template #icon><icon name="file-type-pdf" class="mr-1.5" color="text-white" /></template></Button>
-      <Button severity="secondary" outlined :disabled="!!problema || !opciones" :loading="generando === 'xlsx'" @click="generar('xlsx')" label="Descargar Excel" class="shrink-0 whitespace-nowrap"><template #icon><icon name="file-type-xls" class="mr-1.5" color="text-primary" /></template></Button>
+      <Button :disabled="!!problema || !opciones" :loading="generando === 'pdf'" @click="generar('pdf')" label="Generar PDF" class="shrink-0 whitespace-nowrap"><template #icon><icon name="picture-as-pdf-outline" class="mr-1.5" color="text-white" /></template></Button>
+      <Button severity="secondary" outlined :disabled="!!problema || !opciones" :loading="generando === 'xlsx'" @click="generar('xlsx')" label="Descargar Excel" class="shrink-0 whitespace-nowrap"><template #icon><icon name="table-chart-outline" class="mr-1.5" color="text-primary" /></template></Button>
     </template>
 
     <template #resumen>
@@ -47,7 +47,7 @@
         <CifraReporte v-for="t in resumen.totales" :key="t.moneda" :etiqueta="`Total ${t.moneda} · ${t.cantidad} boletos`" :valor="importe(t.total, t.moneda)" destacada />
         <p v-if="!resumen.cantidad" class="m-0 text-sm text-muted-color">No hay boletos con estos parámetros.</p>
         <p v-else-if="resumen.sinFactura" class="m-0 flex items-start gap-1.5 text-sm text-muted-color">
-          <icon name="info-circle" class="mt-0.5" />{{ resumen.sinFactura }} {{ resumen.sinFactura === 1 ? 'boleto aparece' : 'boletos aparecen' }} sin número DTE (pendientes de certificar o sin factura).
+          <icon name="info-outline" class="mt-0.5" />{{ resumen.sinFactura }} {{ resumen.sinFactura === 1 ? 'boleto aparece' : 'boletos aparecen' }} sin número DTE (pendientes de certificar o sin factura).
         </p>
       </template>
     </template>

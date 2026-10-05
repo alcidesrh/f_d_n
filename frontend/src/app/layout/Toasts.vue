@@ -18,7 +18,7 @@
           aria-label="Cerrar aviso"
           @click="dismiss(toast.id)"
         >
-          <icon name="x" size="1.2rem" />
+          <icon name="close" size="1.2rem" />
         </button>
         <icon :name="ICONS[toast.type]" size="1.2rem" />
         <span class="flex-1 text-sm leading-snug">{{ toast.text }}</span>
@@ -31,10 +31,10 @@
 import { dismiss, toasts, type ToastType } from '@/core/notify'
 
 const ICONS: Record<ToastType, string> = {
-  info: 'info-circle',
-  success: 'circle-dashed-check',
-  warning: 'alert-triangle',
-  error: 'exclamation-circle',
+  info: 'info-outline',
+  success: 'check-circle-outline',
+  warning: 'warning-outline',
+  error: 'error-outline',
 }
 
 const TONES: Record<ToastType, string> = {

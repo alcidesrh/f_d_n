@@ -54,7 +54,7 @@ export const router = createRouter({
       meta: {
         title: 'Configuración de entidades',
         label: 'Config. entidades',
-        icon: 'adjustments',
+        icon: 'tune',
       },
     },
     {
@@ -64,7 +64,7 @@ export const router = createRouter({
       meta: {
         title: 'Menús de navegación',
         label: 'Menús',
-        icon: 'sitemap',
+        icon: 'account-tree-outline',
       },
     },
     {
@@ -74,7 +74,7 @@ export const router = createRouter({
       meta: {
         title: 'Venta de boletos',
         label: 'Venta',
-        icon: 'ticket',
+        icon: 'confirmation-number-outline',
       },
     },
     {
@@ -84,7 +84,7 @@ export const router = createRouter({
       meta: {
         title: 'Salidas',
         label: 'Salidas',
-        icon: 'bus',
+        icon: 'directions-bus-outline',
       },
     },
     {
@@ -94,7 +94,7 @@ export const router = createRouter({
       meta: {
         title: 'Buses en recorrido',
         label: 'Seguimiento',
-        icon: 'map-pin',
+        icon: 'location-on-outline',
       },
     },
     {
@@ -104,7 +104,7 @@ export const router = createRouter({
       meta: {
         title: 'Programar salidas',
         label: 'Programar salidas',
-        icon: 'calendar-plus',
+        icon: 'calendar-add-on-outline',
       },
     },
     {
@@ -114,7 +114,7 @@ export const router = createRouter({
       meta: {
         title: 'Cuadre de venta de boletos',
         label: 'Cuadre de venta',
-        icon: 'report-money',
+        icon: 'request-quote-outline',
       },
     },
     {
@@ -124,7 +124,7 @@ export const router = createRouter({
       meta: {
         title: 'Detalle de factura de boletos',
         label: 'Detalle de facturas',
-        icon: 'file-invoice',
+        icon: 'receipt-long-outline',
       },
     },
     {
@@ -135,7 +135,7 @@ export const router = createRouter({
       meta: {
         title: 'Venta en línea (página web)',
         label: 'Venta en línea',
-        icon: 'world-www',
+        icon: 'language',
       },
     },
     {

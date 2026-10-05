@@ -3,11 +3,11 @@
     <template #end> -->
   <div class="mb-6 px-5 py-2 rounded-md flex flex-wrap items-center justify-end w-fit ml-auto gap-5">
     <button type="button" class="tap-target" aria-label="Modo selección" @click="emit('toggle-selection')">
-      <icon name="square-check" :class="{ 'text-primary': selectionMode }" />
+      <icon name="check-box-outline" :class="{ 'text-primary': selectionMode }" />
     </button>
     <OverlayBadge v-if="hiddenColumns.length > 0" :value="String(hiddenColumns.length)" severity="primary" size="small">
       <button type="button" class="tap-target" :aria-label="`${hiddenColumns.length} columnas ocultas`" @click="popover?.toggle($event)">
-        <icon name="eye-off" />
+        <icon name="visibility-off-outline" />
       </button>
     </OverlayBadge>
     <Popover ref="popover">
@@ -15,15 +15,15 @@
         <span class="px-2 pb-1 text-xs font-semibold text-surface-500">Columnas ocultas</span>
         <button v-for="column in hiddenColumns" :key="column.field" type="button" class="flex cursor-pointer items-center justify-between gap-6 rounded px-2 py-1 text-left text-sm text-surface-700 hover:bg-surface-100" @click="emit('restore', column.field)">
           <span>{{ column.label ?? column.field }}</span>
-          <icon name="eye" />
+          <icon name="visibility-outline" />
         </button>
       </div>
     </Popover>
     <button v-if="configurable" type="button" class="tap-target" aria-label="Configurar entidad" @click="emit('configure')">
-      <icon name="settings" />
+      <icon name="settings-outline" />
     </button>
     <button type="button" class="tap-target" aria-label="Restablecer vista" @click="emit('reset')">
-      <icon name="eraser" />
+      <icon name="ink-eraser-outline" />
     </button>
   </div>
   <!-- </template>

@@ -15,16 +15,16 @@
           :aria-label="item.label"
           @click="onRoot($event, item)"
         >
-          <icon :name="item.icon ?? 'point'" />
+          <icon :name="item.icon ?? 'fiber-manual-record'" />
           <span class="nav-menubar-text">{{ item.label }}</span>
-          <icon v-if="item.children.length" name="chevron-down" size=".8rem" />
+          <icon v-if="item.children.length" name="keyboard-arrow-down" size=".8rem" />
         </button>
       </template>
     </template>
     <TieredMenu ref="popup" :model="popupModel" popup>
       <template #item="{ item, props, hasSubmenu }">
         <a v-bind="props.action" :class="{ 'nav-disabled': item.disabled }">
-          <icon :name="String(item.iconName ?? 'point')" />
+          <icon :name="String(item.iconName ?? 'fiber-manual-record')" />
           <span class="ml-2">{{ item.label }}</span>
           <icon v-if="hasSubmenu" name="chevron-right" class="ml-auto" size=".8rem" />
         </a>

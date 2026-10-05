@@ -128,7 +128,7 @@ const ICONS_BY_NAME = gql`
 `
 
 /**
- * IRI del `Icon` con ese nombre de Tabler; lo crea si no existe (el
+ * IRI del `Icon` con ese nombre de Material Symbols; lo crea si no existe (el
  * `IconPicker` elige nombres del catálogo, `MenuItem.icon` es una relación).
  */
 export async function ensureIcon(name: string): Promise<string> {

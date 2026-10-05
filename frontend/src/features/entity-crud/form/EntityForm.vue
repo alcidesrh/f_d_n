@@ -21,7 +21,7 @@
         severity="secondary"
         @click="submitForm(formId)"
       >
-        <template #dropdownicon><icon name="chevron-down" /></template>
+        <template #dropdownicon><icon name="keyboard-arrow-down" /></template>
         <template #menuitemicon="{ item }"><icon :name="String(item.icon)" /></template>
       </SplitButton>
       <!-- Con secciones extra (p. ej. el croquis del bus): una pestaña por sección.
@@ -29,7 +29,7 @@
       <Tabs v-if="extensions.length" v-model:value="tab" class="entity-form-tabs">
         <TabList>
           <Tab :value="DATOS">
-            <span class="flex items-center gap-2"><icon name="forms" /> Datos</span>
+            <span class="flex items-center gap-2"><icon name="dynamic-form-outline" /> Datos</span>
           </Tab>
           <Tab v-for="extension in extensions" :key="extension.key" :value="extension.key">
             <span class="flex items-center gap-2">
@@ -190,7 +190,7 @@ function askDelete() {
 }
 
 const actions = computed(() => [
-  { label: 'Cancelar', icon: 'arrow-back-up', command: () => emit('cancel') },
-  ...(mode.value === 'update' ? [{ label: 'Eliminar', icon: 'trash', command: askDelete }] : []),
+  { label: 'Cancelar', icon: 'undo', command: () => emit('cancel') },
+  ...(mode.value === 'update' ? [{ label: 'Eliminar', icon: 'delete-outline', command: askDelete }] : []),
 ])
 </script>

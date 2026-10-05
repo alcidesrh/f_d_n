@@ -11,7 +11,7 @@
 | `npm run format` | oxfmt sobre `src/` (sin `;`, comillas simples) |
 | `npm run test:unit` | Vitest |
 | `npm run test:e2e` | Playwright contra el stack levantado (`make dev`); otra URL con `E2E_BASE_URL` |
-| `npm run icons:meta` | Regenera `src/shared/icons/tablerMeta.ts` (categorías/tags de Tabler); usa `bun` |
+| `npm run icons:meta` | Regenera `src/shared/icons/iconMeta.ts` (categorías/tags de Material Symbols); usa `bun` |
 
 Nota: el contenedor usa `bun install && bun run dev`; el host usa npm.
 
@@ -20,7 +20,7 @@ Nota: el contenedor usa `bun install && bun run dev`; el host usa npm.
 ## Stack
 
 - **Runtime**: Vue 3.5 (`<script setup lang="ts">`), TypeScript ~6, vite 8 (rolldown)
-- **UI**: PrimeVue 4.5 (auto-import vía resolver) + Tailwind CSS v4 + íconos Tabler (`<icon>`)
+- **UI**: PrimeVue 4.5 (auto-import vía resolver) + Tailwind CSS v4 + íconos Google Material Symbols (`<icon>`)
 - **Forms**: FormKit 2 — inputs `Fk*` sobre componentes PrimeVue
 - **Datos**: Apollo Client (GraphQL de API Platform) + `core/http` (REST)
 - **Estado**: Pinia (con `pinia-plugin-persistedstate`)
@@ -48,7 +48,7 @@ Dependencias en una sola dirección: `app → features → shared → core`. **U
 | `core/croquis/` | Croquis del bus (ADR-019): tipos, reglas puras (espejo de `App\Croquis\Croquis`) y REST (`/buses/{id}/croquis`, `/croquis/plantillas`) | `model.ts` |
 | `core/notify.ts`, `core/loading.ts` | Toasts (`notify.success/error/…`) y contador de peticiones | — |
 | `shared/ui/` | `Icon` (`<icon name="bus" lg />`), `PageHead`, `SortablePanelList` — registrados globalmente | — |
-| `shared/icons/` | `IconPicker` y catálogo Tabler (carga diferida) | `tablerCatalog.ts` |
+| `shared/icons/` | `IconPicker` y catálogo Material Symbols (carga diferida) | `iconCatalog.ts` |
 | `shared/bus-map/` | Mapa del bus (`BusMap`, `SeatGlyph`, `SignalGlyph`, `BusMapLegend`): presentación pura para edición, ocupación y venta (`estado`, `interactivo`, slot `celda`). Excepción acotada a ADR-017: vocabulario del dominio, sin datos | `BusMap.vue` |
 | `shared/barcode/` | Code 128 (`code128.ts`, espejo de `App\Venta\Boleto\Code128`) y `Barcode.vue` | — |
 | `shared/formkit/` | Inputs `Fk*` y su registro en FormKit (`config.ts`) | `useFormKitInput.ts` |

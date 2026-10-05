@@ -1,5 +1,5 @@
 <!--
-  Íconos de Tabler compilados en el build (unplugin-icons): sin llamadas a
+  Íconos de Google Material Symbols compilados en el build (unplugin-icons): sin llamadas a
   servicios externos. Solo los que usa la página; mismo uso que el <icon> del
   frontend (`<icon name="x" />`).
 -->
@@ -9,96 +9,96 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import AlertTriangle from '~icons/tabler/alert-triangle'
-import Armchair from '~icons/tabler/armchair'
-import ArrowBackUp from '~icons/tabler/arrow-back-up'
-import ArrowLeft from '~icons/tabler/arrow-left'
-import ArrowRight from '~icons/tabler/arrow-right'
-import ArrowsExchange from '~icons/tabler/arrows-exchange'
-import BrandFacebook from '~icons/tabler/brand-facebook'
-import BrandWhatsapp from '~icons/tabler/brand-whatsapp'
-import Bus from '~icons/tabler/bus'
-import Calendar from '~icons/tabler/calendar'
-import CalendarRepeat from '~icons/tabler/calendar-repeat'
-import ChevronDown from '~icons/tabler/chevron-down'
-import ChevronLeft from '~icons/tabler/chevron-left'
-import ChevronRight from '~icons/tabler/chevron-right'
-import ChevronUp from '~icons/tabler/chevron-up'
-import ChevronsDown from '~icons/tabler/chevrons-down'
-import ChevronsUp from '~icons/tabler/chevrons-up'
-import CircleCheck from '~icons/tabler/circle-check'
-import CircleX from '~icons/tabler/circle-x'
-import Clock from '~icons/tabler/clock'
-import Crown from '~icons/tabler/crown'
-import CreditCard from '~icons/tabler/credit-card'
-import Download from '~icons/tabler/download'
-import ExternalLink from '~icons/tabler/external-link'
-import Eye from '~icons/tabler/eye'
-import InfoCircle from '~icons/tabler/info-circle'
-import Lock from '~icons/tabler/lock'
-import Mail from '~icons/tabler/mail'
-import MapPin from '~icons/tabler/map-pin'
-import Menu2 from '~icons/tabler/menu-2'
-import Package from '~icons/tabler/package'
-import Phone from '~icons/tabler/phone'
-import PointFilled from '~icons/tabler/point-filled'
-import Route from '~icons/tabler/route'
-import Search from '~icons/tabler/search'
-import Send from '~icons/tabler/send'
-import ShieldCheck from '~icons/tabler/shield-check'
-import Star from '~icons/tabler/star'
-import SteeringWheel from '~icons/tabler/steering-wheel'
-import Ticket from '~icons/tabler/ticket'
-import Trash from '~icons/tabler/trash'
-import Users from '~icons/tabler/users'
-import World from '~icons/tabler/world'
-import X from '~icons/tabler/x'
+import WarningOutline from '~icons/material-symbols/warning-outline'
+import AirlineSeatReclineNormal from '~icons/material-symbols/airline-seat-recline-normal'
+import Undo from '~icons/material-symbols/undo'
+import ArrowBack from '~icons/material-symbols/arrow-back'
+import ArrowForward from '~icons/material-symbols/arrow-forward'
+import SwapHoriz from '~icons/material-symbols/swap-horiz'
+import ThumbUpOutline from '~icons/material-symbols/thumb-up-outline'
+import ChatOutline from '~icons/material-symbols/chat-outline'
+import DirectionsBusOutline from '~icons/material-symbols/directions-bus-outline'
+import CalendarMonthOutline from '~icons/material-symbols/calendar-month-outline'
+import EventRepeatOutline from '~icons/material-symbols/event-repeat-outline'
+import CheckCircleOutline from '~icons/material-symbols/check-circle-outline'
+import KeyboardArrowDown from '~icons/material-symbols/keyboard-arrow-down'
+import KeyboardDoubleArrowDown from '~icons/material-symbols/keyboard-double-arrow-down'
+import KeyboardDoubleArrowUp from '~icons/material-symbols/keyboard-double-arrow-up'
+import ChevronLeft from '~icons/material-symbols/chevron-left'
+import ChevronRight from '~icons/material-symbols/chevron-right'
+import KeyboardArrowUp from '~icons/material-symbols/keyboard-arrow-up'
+import CancelOutline from '~icons/material-symbols/cancel-outline'
+import ScheduleOutline from '~icons/material-symbols/schedule-outline'
+import WorkspacePremiumOutline from '~icons/material-symbols/workspace-premium-outline'
+import CreditCardOutline from '~icons/material-symbols/credit-card-outline'
+import Download from '~icons/material-symbols/download'
+import OpenInNew from '~icons/material-symbols/open-in-new'
+import VisibilityOutline from '~icons/material-symbols/visibility-outline'
+import InfoOutline from '~icons/material-symbols/info-outline'
+import LockOutline from '~icons/material-symbols/lock-outline'
+import MailOutline from '~icons/material-symbols/mail-outline'
+import LocationOnOutline from '~icons/material-symbols/location-on-outline'
+import Menu from '~icons/material-symbols/menu'
+import Package2Outline from '~icons/material-symbols/package-2-outline'
+import CallOutline from '~icons/material-symbols/call-outline'
+import FiberManualRecord from '~icons/material-symbols/fiber-manual-record'
+import Route from '~icons/material-symbols/route'
+import Search from '~icons/material-symbols/search'
+import SendOutline from '~icons/material-symbols/send-outline'
+import VerifiedUserOutline from '~icons/material-symbols/verified-user-outline'
+import StarOutline from '~icons/material-symbols/star-outline'
+import SportsMotorsportsOutline from '~icons/material-symbols/sports-motorsports-outline'
+import ConfirmationNumberOutline from '~icons/material-symbols/confirmation-number-outline'
+import DeleteOutline from '~icons/material-symbols/delete-outline'
+import GroupOutline from '~icons/material-symbols/group-outline'
+import Language from '~icons/material-symbols/language'
+import Close from '~icons/material-symbols/close'
 
 const ICONOS = {
-  alert: AlertTriangle,
-  armchair: Armchair,
-  'arrow-back-up': ArrowBackUp,
-  'arrow-left': ArrowLeft,
-  'arrow-right': ArrowRight,
-  'arrows-exchange': ArrowsExchange,
-  'brand-facebook': BrandFacebook,
-  'brand-whatsapp': BrandWhatsapp,
-  bus: Bus,
-  calendar: Calendar,
-  'calendar-repeat': CalendarRepeat,
-  check: CircleCheck,
-  'chevron-down': ChevronDown,
-  'chevrons-down': ChevronsDown,
-  'chevrons-up': ChevronsUp,
+  alert: WarningOutline,
+  armchair: AirlineSeatReclineNormal,
+  'arrow-back-up': Undo,
+  'arrow-left': ArrowBack,
+  'arrow-right': ArrowForward,
+  'arrows-exchange': SwapHoriz,
+  'brand-facebook': ThumbUpOutline,
+  'brand-whatsapp': ChatOutline,
+  bus: DirectionsBusOutline,
+  calendar: CalendarMonthOutline,
+  'calendar-repeat': EventRepeatOutline,
+  check: CheckCircleOutline,
+  'chevron-down': KeyboardArrowDown,
+  'chevrons-down': KeyboardDoubleArrowDown,
+  'chevrons-up': KeyboardDoubleArrowUp,
   'chevron-left': ChevronLeft,
   'chevron-right': ChevronRight,
-  'chevron-up': ChevronUp,
-  'circle-x': CircleX,
-  clock: Clock,
-  crown: Crown,
-  'credit-card': CreditCard,
+  'chevron-up': KeyboardArrowUp,
+  'circle-x': CancelOutline,
+  clock: ScheduleOutline,
+  crown: WorkspacePremiumOutline,
+  'credit-card': CreditCardOutline,
   download: Download,
-  'external-link': ExternalLink,
-  eye: Eye,
-  info: InfoCircle,
-  lock: Lock,
-  mail: Mail,
-  'map-pin': MapPin,
-  menu: Menu2,
-  package: Package,
-  phone: Phone,
-  punto: PointFilled,
+  'external-link': OpenInNew,
+  eye: VisibilityOutline,
+  info: InfoOutline,
+  lock: LockOutline,
+  mail: MailOutline,
+  'map-pin': LocationOnOutline,
+  menu: Menu,
+  package: Package2Outline,
+  phone: CallOutline,
+  punto: FiberManualRecord,
   route: Route,
   search: Search,
-  send: Send,
-  'shield-check': ShieldCheck,
-  star: Star,
-  'steering-wheel': SteeringWheel,
-  ticket: Ticket,
-  trash: Trash,
-  users: Users,
-  world: World,
-  x: X,
+  send: SendOutline,
+  'shield-check': VerifiedUserOutline,
+  star: StarOutline,
+  'steering-wheel': SportsMotorsportsOutline,
+  ticket: ConfirmationNumberOutline,
+  trash: DeleteOutline,
+  users: GroupOutline,
+  world: Language,
+  x: Close,
 } as const
 
 const props = withDefaults(defineProps<{ name: string; size?: string | number }>(), { size: '1.25rem' })

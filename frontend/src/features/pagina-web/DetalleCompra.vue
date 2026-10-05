@@ -42,7 +42,7 @@
     </section>
 
     <a v-if="compra.ventas.length" :href="`/api/publico/compras/${compra.token}/boleto.pdf?ver=1`" target="_blank" rel="noopener" class="self-start no-underline">
-      <Button label="Ver boleto (PDF)" severity="secondary" outlined size="small"><template #icon><icon name="file-type-pdf" class="mr-1" /></template></Button>
+      <Button label="Ver boleto (PDF)" severity="secondary" outlined size="small"><template #icon><icon name="picture-as-pdf-outline" class="mr-1" /></template></Button>
     </a>
   </div>
 </template>

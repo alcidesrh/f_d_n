@@ -29,7 +29,7 @@
             :loading="store.saving"
             @click="run(() => store.saveTree(), 'Árbol del menú guardado')"
           >
-            <template #icon><icon name="device-floppy" class="mr-1" /></template>
+            <template #icon><icon name="save-outline" class="mr-1" /></template>
           </Button>
           <Button
             v-else
@@ -39,7 +39,7 @@
             :loading="store.saving"
             @click="run(() => store.saveLayout(), 'Distribución de menús guardada')"
           >
-            <template #icon><icon name="device-floppy" class="mr-1" /></template>
+            <template #icon><icon name="save-outline" class="mr-1" /></template>
           </Button>
         </div>
       </template>
@@ -61,7 +61,7 @@
             <!-- Menús -->
             <div class="card flex flex-col gap-2 p-2 @2xl:col-span-2 @6xl:col-span-1">
               <Button label="Nuevo menú" size="small" text @click="newMenu">
-                <template #icon><icon name="plus" class="mr-1" /></template>
+                <template #icon><icon name="add" class="mr-1" /></template>
               </Button>
               <Listbox
                 :model-value="store.selectedMenuId"
@@ -117,7 +117,7 @@
                     aria-label="Eliminar menú"
                     @click="removeMenu"
                   >
-                    <template #icon><icon name="trash" /></template>
+                    <template #icon><icon name="delete-outline" /></template>
                   </Button>
                 </div>
               </form>
@@ -131,7 +131,7 @@
               <template v-else-if="store.selectedMenuId !== null">
                 <p class="text-xs text-muted-color">
                   Arrastrá
-                  <icon name="grip-vertical" class="inline align-text-bottom" /> arriba/abajo para
+                  <icon name="drag-indicator" class="inline align-text-bottom" /> arriba/abajo para
                   ordenar y a izquierda/derecha para cambiar de nivel. Soltar fuera del recuadro
                   quita el ítem (y sus hijos) del menú.
                 </p>
@@ -161,7 +161,7 @@
                   title="Nuevo ítem"
                   @click="editItem(null)"
                 >
-                  <template #icon><icon name="plus" class="mr-1" /></template>
+                  <template #icon><icon name="add" class="mr-1" /></template>
                 </Button>
               </div>
               <MenuItemPalette

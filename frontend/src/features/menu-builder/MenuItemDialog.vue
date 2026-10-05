@@ -1,5 +1,5 @@
 <!--
-  Alta/edición de un ítem navegable: texto, ícono (catálogo Tabler) y ruta
+  Alta/edición de un ítem navegable: texto, ícono (catálogo Material Symbols) y ruta
   (`VueRoute`). Las rutas con parámetros (`/lista/:entity`) no se ofrecen:
   el ítem no guarda valores de parámetros, así que no serían navegables.
 -->

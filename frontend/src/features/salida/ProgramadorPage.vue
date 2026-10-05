@@ -25,7 +25,7 @@
       <div class="flex flex-col gap-4">
         <!-- Esquema guardado -->
         <section class="panel flex flex-col gap-3 mb-4" aria-labelledby="pg-esquema">
-          <h2 id="pg-esquema" class="m-0 flex items-center gap-2 text-base font-semibold"><icon name="template" />Esquema guardado</h2>
+          <h2 id="pg-esquema" class="m-0 flex items-center gap-2 text-base font-semibold"><icon name="bookmark-outline" />Esquema guardado</h2>
           <div class="flex flex-col gap-2 @xl:flex-row @xl:items-end">
             <label class="flex flex-1 flex-col gap-1">
               <span class="text-xs font-medium text-muted-color">Cargar un esquema</span>
@@ -40,10 +40,10 @@
             </label>
             <div v-if="esquema" class="flex flex-wrap gap-2">
               <Button label="Guardar cambios" size="small" :disabled="!cambiosEsquema || !!errores.length" :loading="guardandoEsquema" @click="actualizarEsquema">
-                <template #icon><icon name="device-floppy" class="mr-1" /></template>
+                <template #icon><icon name="save-outline" class="mr-1" /></template>
               </Button>
               <Button label="Borrar" size="small" severity="danger" outlined @click="borrarEsquema = true"
-                ><template #icon><icon name="trash" class="mr-1" /></template
+                ><template #icon><icon name="delete-outline" class="mr-1" /></template
               ></Button>
             </div>
           </div>
@@ -72,29 +72,29 @@
 
         <!-- Horas y buses -->
         <section class="panel flex flex-col gap-3 mb-5" aria-labelledby="pg-horas">
-          <h2 id="pg-horas" class="m-0 flex items-center gap-2 text-base font-semibold"><icon name="clock" />Horas de salida y bus</h2>
+          <h2 id="pg-horas" class="m-0 flex items-center gap-2 text-base font-semibold"><icon name="schedule-outline" />Horas de salida y bus</h2>
           <ul class="m-0 flex list-none flex-col gap-2 p-0">
             <li v-for="(m, i) in form.momentos" :key="i" class="grid grid-cols-[7rem_minmax(0,1fr)_auto] items-center gap-2">
               <InputText v-model="m.hora" type="time" :aria-label="`Hora n.º ${i + 1}`" class="tabular-nums" />
               <Select v-model="m.busId" :options="opciones?.buses ?? []" :option-label="etiquetaBus" option-value="id" filter :filter-fields="['codigo', 'matricula']" fluid placeholder="Bus" :aria-label="`Bus de la hora n.º ${i + 1}`" />
               <Button severity="secondary" text rounded class="tap-target" :aria-label="`Quitar la hora n.º ${i + 1}`" :disabled="form.momentos.length === 1" @click="form.momentos.splice(i, 1)">
-                <template #icon><icon name="x" /></template>
+                <template #icon><icon name="close" /></template>
               </Button>
             </li>
           </ul>
           <div class="flex flex-wrap gap-2">
             <Button label="Agregar hora" size="small" severity="secondary" outlined :disabled="form.momentos.length >= MAX_MOMENTOS" @click="agregarHora"
-              ><template #icon><icon name="plus" class="mr-1" /></template
+              ><template #icon><icon name="add" class="mr-1" /></template
             ></Button>
             <Button v-if="form.momentos.length > 1" label="Ordenar por hora" size="small" text @click="ordenar">
-              <template #icon><icon name="sort-ascending" class="mr-1" /></template>
+              <template #icon><icon name="sort" class="mr-1" /></template>
             </Button>
           </div>
         </section>
 
         <!-- Días -->
         <section class="panel flex flex-col gap-3" aria-labelledby="pg-dias">
-          <h2 id="pg-dias" class="m-0 flex items-center gap-2 text-base font-semibold"><icon name="calendar" />Días</h2>
+          <h2 id="pg-dias" class="m-0 flex items-center gap-2 text-base font-semibold"><icon name="calendar-month-outline" />Días</h2>
           <label class="flex flex-col gap-1">
             <span class="text-xs font-medium text-muted-color">Día (primera salida)</span>
             <DatePicker v-model="desde" date-format="dd/mm/yy" show-icon fluid :min-date="hoy" />
@@ -150,7 +150,7 @@
         <divider layout="vertical" />
 
         <section class="panel w-full flex flex-col gap-3 @5xl:sticky @5xl:top-4" aria-labelledby="pg-previa">
-          <h2 id="pg-previa" class="m-0 flex items-center gap-2 text-base font-semibold"><icon name="eye" />Vista previa</h2>
+          <h2 id="pg-previa" class="m-0 flex items-center gap-2 text-base font-semibold"><icon name="visibility-outline" />Vista previa</h2>
           <ul v-if="errores.length" class="m-0 flex flex-col gap-1 pl-4 text-sm text-muted-color">
             <li v-for="e in errores" :key="e">{{ e }}</li>
           </ul>
@@ -185,7 +185,7 @@
             </template>
           </template>
           <Button :label="previa && !errores.length ? `Crear ${previa.resumen.nueva} salida(s)` : 'Crear salidas'" :disabled="!!errores.length || !previa || cargandoPrevia || (previa.resumen.nueva === 0 && !form.guardarComo)" :loading="creando" @click="crear">
-            <template #icon><icon name="calendar-plus" class="mr-1" /></template>
+            <template #icon><icon name="calendar-add-on-outline" class="mr-1" /></template>
           </Button>
           <Message v-if="resultado" :severity="resultado.creadas ? 'success' : 'warn'" :closable="false">
             <div class="flex flex-col gap-1">

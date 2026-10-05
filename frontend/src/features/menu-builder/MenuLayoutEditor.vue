@@ -30,7 +30,7 @@
           <template #row="{ row, index }">
             <div class="area-row">
               <span data-drag-handle class="flex cursor-grab text-muted-color"
-                ><icon name="grip-vertical"
+                ><icon name="drag-indicator"
               /></span>
               <span class="w-5 text-xs text-muted-color">{{ index + 1 }}</span>
               <div class="flex min-w-0 flex-1 flex-col leading-tight">
@@ -45,7 +45,7 @@
                 title="Quitar del área"
                 @click="remove(area, row.id)"
               >
-                <icon name="x" />
+                <icon name="close" />
               </button>
             </div>
           </template>
@@ -76,9 +76,9 @@ import { useMenuBuilderStore } from './store'
 
 const ROW_HEIGHT = 56
 const AREA_ICONS: Record<LayoutArea, string> = {
-  sidebar_left: 'layout-sidebar',
-  topbar_right: 'layout-navbar',
-  sidebar_right: 'layout-sidebar-right',
+  sidebar_left: 'left-panel-open-outline',
+  topbar_right: 'web-asset',
+  sidebar_right: 'right-panel-open-outline',
 }
 
 const store = useMenuBuilderStore()

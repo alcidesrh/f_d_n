@@ -40,7 +40,7 @@
           </IconField>
         </label>
         <Button severity="secondary" outlined class="col-span-2 @3xl:col-span-1" @click="masFiltros = true">
-          <icon name="filter" class="mr-1" />Más filtros
+          <icon name="filter-alt-outline" class="mr-1" />Más filtros
           <Badge v-if="activos" :value="activos" class="ml-1.5" />
         </Button>
       </div>

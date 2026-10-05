@@ -32,7 +32,7 @@ import { flatten, liftRow, toTree, type OutlineRow } from './outline'
 export interface MenuItemDraft {
   id?: string
   nombre: string
-  /** Nombre de ícono Tabler (el `Icon` se busca o se crea al guardar). */
+  /** Nombre de ícono Material Symbols (el `Icon` se busca o se crea al guardar). */
   icon: string
   /** IRI de la `VueRoute`. */
   route: string

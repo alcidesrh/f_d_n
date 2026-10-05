@@ -12,13 +12,13 @@
           @keydown.enter.prevent="pickFirst"
         />
       </IconField>
-      <SelectButton
+      <Select
         v-model="style"
         :options="styleOptions"
         option-label="label"
         option-value="value"
-        :allow-empty="false"
         size="small"
+        class="w-full sm:w-52"
         aria-label="Estilo"
       />
     </div>
@@ -80,16 +80,16 @@
             type="button"
             class="flex h-22 flex-col items-center justify-center gap-2 rounded-lg border px-1 transition-colors"
             :class="
-              item.name === modelValue
+              isSelected(item)
                 ? 'border-primary bg-highlight'
                 : 'border-transparent hover:border-surface hover:bg-emphasis'
             "
-            :title="`${item.name} · ${categoryLabel(item.category)}`"
-            :data-icon="item.name"
-            :aria-pressed="item.name === modelValue"
-            @click="pick(item.name)"
+            :title="`${variantName(item)} · ${categoryLabel(item.category)}`"
+            :data-icon="variantName(item)"
+            :aria-pressed="isSelected(item)"
+            @click="pick(variantName(item))"
           >
-            <icon :name="item.name" lg color="text-color" />
+            <icon :name="variantName(item)" lg color="text-color" />
             <span class="w-full truncate text-center text-[0.7rem] leading-tight text-muted-color">
               {{ item.name }}
             </span>
@@ -101,7 +101,7 @@
 
     <div class="flex items-center justify-between gap-2 text-xs text-muted-color">
       <span>{{ results.length }} íconos</span>
-      <span v-if="catalog">Tabler Icons v{{ catalog.version }}</span>
+      <span v-if="catalog">Material Symbols v{{ catalog.version }}</span>
     </div>
   </div>
 </template>
@@ -110,17 +110,20 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import {
   categoryLabel,
-  loadTablerCatalog,
+  loadIconCatalog,
+  resolveVariant,
   searchIcons,
-  type TablerCatalog,
-  type TablerIconStyle,
-} from './tablerCatalog'
+  STYLE_LABELS,
+  type IconCatalog,
+  type IconEntry,
+  type IconStyle,
+} from './iconCatalog'
 
 defineOptions({ name: 'IconPicker' })
 
 const props = withDefaults(
   defineProps<{
-    /** Nombre del ícono seleccionado (formato de `<icon name>`: `bus`, `bus-filled`). */
+    /** Nombre del ícono seleccionado (formato de `<icon name>`: `home`, `home-outline`). */
     modelValue?: string | null
     /** Alto del área de categorías + grilla; `fill` ocupa el alto sobrante del contenedor (que debe ser flex-col con alto). */
     height?: string
@@ -137,21 +140,19 @@ const emit = defineEmits<{
 /** Íconos pintados por tanda; la grilla crece al acercarse al final del scroll. */
 const PAGE_SIZE = 160
 
-const catalog = ref<TablerCatalog | null>(null)
+const catalog = ref<IconCatalog | null>(null)
 const loading = ref(false)
 const error = ref(false)
 
 const query = ref('')
 const debouncedQuery = ref('')
 const category = ref<string | null>(null)
-const style = ref<TablerIconStyle | null>('outline')
+const style = ref<IconStyle>('outline')
 const limit = ref(PAGE_SIZE)
 
-const styleOptions = [
-  { label: 'Outline', value: 'outline' },
-  { label: 'Filled', value: 'filled' },
-  { label: 'Todos', value: null },
-]
+const styleOptions = (Object.entries(STYLE_LABELS) as Array<[IconStyle, string]>).map(
+  ([value, label]) => ({ label, value }),
+)
 
 const searchInput = ref<{ $el: HTMLElement } | null>(null)
 const scroller = ref<HTMLElement | null>(null)
@@ -161,7 +162,7 @@ async function load() {
   loading.value = true
   error.value = false
   try {
-    catalog.value = await loadTablerCatalog()
+    catalog.value = await loadIconCatalog()
   } catch (e) {
     console.warn('[IconPicker] No se pudo cargar el catálogo:', e)
     error.value = true
@@ -170,11 +171,9 @@ async function load() {
   }
 }
 
-/** Resultados por texto + estilo; los conteos por categoría salen de aquí. */
+/** Resultados por texto; los conteos por categoría salen de aquí. */
 const matches = computed(() =>
-  catalog.value
-    ? searchIcons(catalog.value.icons, { query: debouncedQuery.value, style: style.value })
-    : [],
+  catalog.value ? searchIcons(catalog.value.icons, { query: debouncedQuery.value }) : [],
 )
 
 const results = computed(() =>
@@ -208,10 +207,20 @@ watch(query, (value) => {
   debounceTimer = setTimeout(() => (debouncedQuery.value = value), 120)
 })
 
-watch([debouncedQuery, category, style], () => {
+watch([debouncedQuery, category], () => {
   limit.value = PAGE_SIZE
   scroller.value?.scrollTo?.({ top: 0 })
 })
+
+/** Nombre de la variante del símbolo según el estilo elegido (el relleno si no la tiene). */
+function variantName(item: IconEntry) {
+  return resolveVariant(item, style.value)
+}
+
+/** El símbolo está elegido si el valor es cualquiera de sus variantes. */
+function isSelected(item: IconEntry) {
+  return props.modelValue != null && Object.values(item.variants).includes(props.modelValue)
+}
 
 function pick(name: string) {
   emit('update:modelValue', name)
@@ -220,7 +229,7 @@ function pick(name: string) {
 
 function pickFirst() {
   const first = results.value[0]
-  if (first) pick(first.name)
+  if (first) pick(variantName(first))
 }
 
 let observer: IntersectionObserver | undefined

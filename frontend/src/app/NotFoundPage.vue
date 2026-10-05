@@ -6,7 +6,7 @@
         <div
           class="w-20 h-20 rounded-3xl bg-primary-600/10 dark:bg-primary-500/20 flex items-center justify-center text-primary-600 dark:text-primary-400"
         >
-          <icon name="alert" />
+          <icon name="warning-outline" />
         </div>
       </div>
     </div>

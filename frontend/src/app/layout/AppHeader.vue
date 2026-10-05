@@ -9,7 +9,7 @@
           :aria-expanded="ui.isMobile ? sidebarStore.drawer : sidebarStore.mode !== 'close'"
           @click="sidebarStore.toggle()"
         >
-          <icon name="menu-2" />
+          <icon name="menu" />
         </button>
         <Divider layout="vertical" class="mx-[5px]!" />
       </div>
@@ -43,15 +43,15 @@
         <slot name="menu-content"></slot>
 
         <button class="icon-btn cursor-pointer" title="Personalizar apariencia" aria-label="Personalizar apariencia" @click.stop="showThemeEditor()">
-          <icon name="palette" />
+          <icon name="palette-outline" />
         </button>
 
         <button class="icon-btn header-fullscreen" title="Pantalla completa" aria-label="Pantalla completa" @click="toggleFullscreen" :class="{ 'active-state': openPopover === 'fullscreen' }">
-          <icon name="arrows-maximize" />
+          <icon name="fullscreen" />
         </button>
         <div style="position: relative">
           <button class="icon-btn" title="Notificaciones" aria-label="Notificaciones" @click.stop="toggle('notif')">
-            <icon name="bell" />
+            <icon name="notifications-outline" />
           </button>
         </div>
 
@@ -75,7 +75,7 @@
           :aria-expanded="ui.isMobile ? rightSidebar.drawer : rightSidebar.mode !== 'close'"
           @click="rightSidebar.toggle()"
         >
-          <icon name="menu-2" />
+          <icon name="menu" />
         </button>
       </div>
     </div>

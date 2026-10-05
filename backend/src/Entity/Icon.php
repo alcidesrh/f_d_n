@@ -37,7 +37,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
 class Icon extends Base
 {
     #[Groups(["read", "write", "icon:read", "icon:write"])]
-    #[ORM\Column(length: 50)]
+    #[ORM\Column(length: 100)]
     private ?string $icon = null;
 
     #[Groups(["read", "write", "icon:read", "icon:write"])]

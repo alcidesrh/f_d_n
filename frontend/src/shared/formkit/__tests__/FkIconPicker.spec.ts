@@ -5,7 +5,7 @@ import { defaultConfig, plugin as formkitPlugin } from '@formkit/vue'
 import PrimeVue from 'primevue/config'
 import formkitConfig from '@/shared/formkit/config'
 import type { FormKitSchemaNode } from '@formkit/core'
-import { loadTablerCatalog } from '@/shared/icons/tablerCatalog'
+import { loadIconCatalog } from '@/shared/icons/iconCatalog'
 
 if (typeof window.matchMedia !== 'function') {
   window.matchMedia = (query: string) =>
@@ -40,15 +40,15 @@ function mountForm(schema: FormKitSchemaNode[], initial: Record<string, unknown>
 
 /** Espera la carga del catálogo, el debounce del buscador y el commit de FormKit. */
 async function settle() {
-  await loadTablerCatalog()
+  await loadIconCatalog()
   await flushPromises()
   await new Promise((resolve) => setTimeout(resolve, 150))
   await flushPromises()
 }
 
 describe('FkIconPicker', () => {
-  // Transformar el set de íconos (~2 MB de JSON) es lento con la suite en paralelo.
-  beforeAll(() => loadTablerCatalog(), 30_000)
+  // Transformar el set de íconos (~8 MB de JSON) es lento con la suite en paralelo.
+  beforeAll(() => loadIconCatalog(), 30_000)
 
   it('modo inline: buscar y elegir un ícono exporta su nombre como valor', async () => {
     const { wrapper, formData } = mountForm([
@@ -56,28 +56,29 @@ describe('FkIconPicker', () => {
     ] as unknown as FormKitSchemaNode[])
     await settle()
 
-    await wrapper.find('input[aria-label="Buscar ícono"]').setValue('bus')
+    await wrapper.find('input[aria-label="Buscar ícono"]').setValue('home')
     await settle()
 
+    // Estilo por defecto: contorno.
     const first = wrapper.find('button[data-icon]')
-    expect(first.attributes('title')).toContain('bus ·')
+    expect(first.attributes('title')).toContain('home-outline ·')
     await first.trigger('click')
     await settle()
 
-    expect(formData.value.icono).toBe('bus')
-    expect(wrapper.find('button[data-icon="bus"]').attributes('aria-pressed')).toBe('true')
+    expect(formData.value.icono).toBe('home-outline')
+    expect(wrapper.find('button[data-icon="home-outline"]').attributes('aria-pressed')).toBe('true')
     wrapper.unmount()
   })
 
   it('modo popover: muestra el ícono de una entidad Icon hidratada y permite limpiarlo', async () => {
     const { wrapper, formData } = mountForm(
       [{ $formkit: 'IconPicker', name: 'icono', label: 'Ícono' }] as unknown as FormKitSchemaNode[],
-      { icono: { id: '/api/icons/1', icon: 'settings', name: 'Configuración' } },
+      { icono: { id: '/api/icons/1', icon: 'settings-outline', name: 'Configuración' } },
     )
     await flushPromises()
 
     const trigger = wrapper.find('button[aria-haspopup="dialog"]')
-    expect(trigger.text()).toContain('settings')
+    expect(trigger.text()).toContain('settings-outline')
 
     await wrapper.find('button[aria-label="Quitar ícono"]').trigger('click')
     await settle()

@@ -27,7 +27,7 @@
     "vue-router": "^5.2.0"
   },
   "devDependencies": {
-    "@iconify-json/tabler": "^1.2.38",
+    "@iconify-json/material-symbols": "^1.2.94",
     "@primevue/auto-import-resolver": "^5.0.0",
     "@tailwindcss/vite": "^4.3.3",
     "@tsconfig/node24": "^24.0.4",

@@ -39,7 +39,7 @@
     <template #header>
       <div v-if="!filtro && grupos.length > 1" class="flex justify-end border-b border-surface-200 px-2 py-1">
         <button type="button" class="inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent px-1 py-0.5 text-xs font-medium text-primary" @click="alternarTodos">
-          <icon :name="todosAbiertos ? 'chevrons-up' : 'chevrons-down'" size="0.95rem" />
+          <icon :name="todosAbiertos ? 'keyboard-double-arrow-up' : 'keyboard-double-arrow-down'" size="0.95rem" />
           {{ todosAbiertos ? 'Contraer todo' : 'Expandir todo' }}
         </button>
       </div>
@@ -53,12 +53,12 @@
         :aria-expanded="abiertos.has(option.departamento)"
         @click.stop="alternar(option.departamento)"
       >
-        <icon :name="abiertos.has(option.departamento) ? 'chevron-down' : 'chevron-right'" size="0.9rem" />
-        <icon name="map-pin" size="0.85rem" />
+        <icon :name="abiertos.has(option.departamento) ? 'keyboard-arrow-down' : 'chevron-right'" size="0.9rem" />
+        <icon name="location-on-outline" size="0.85rem" />
         <span class="flex-1">{{ option.departamento }}</span>
         <span class="font-normal normal-case tracking-normal">{{ totales.get(option.departamento) }}</span>
       </button>
-      <span v-else class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-color"><icon name="map-pin" size="0.85rem" />{{ option.departamento }}</span>
+      <span v-else class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-color"><icon name="location-on-outline" size="0.85rem" />{{ option.departamento }}</span>
     </template>
   </Select>
 </template>

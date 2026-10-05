@@ -42,7 +42,7 @@
       outlined
       @click="abrir(null)"
     >
-      <icon name="plus" />
+      <icon name="add" />
     </Button>
     <Button
       v-if="!compacto"
@@ -53,7 +53,7 @@
       :disabled="!modelValue"
       @click="abrir(modelValue)"
     >
-      <icon name="pencil" />
+      <icon name="edit-outline" />
     </Button>
     <ClienteDialog
       v-model:visible="dialogo"

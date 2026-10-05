@@ -31,7 +31,7 @@
           title="Agregar la planta alta (bus de dos pisos)"
           @click="aplicar(agregarPlanta(estado))"
         >
-          <template #icon><icon name="stack-push" class="mr-1" /></template>
+          <template #icon><icon name="stacks" class="mr-1" /></template>
         </Button>
         <Button
           size="small"
@@ -41,7 +41,7 @@
           :disabled="!pasado.length"
           @click="deshacer"
         >
-          <template #icon><icon name="arrow-back-up" /></template>
+          <template #icon><icon name="undo" /></template>
         </Button>
         <Button
           size="small"
@@ -51,7 +51,7 @@
           :disabled="!futuro.length"
           @click="rehacer"
         >
-          <template #icon><icon name="arrow-forward-up" /></template>
+          <template #icon><icon name="redo" /></template>
         </Button>
         <Button
           size="small"
@@ -61,13 +61,13 @@
           :disabled="!resumenActual.asientos"
           @click="menuNumeracion?.toggle($event)"
         >
-          <template #icon><icon name="list-numbers" class="mr-1" /></template>
+          <template #icon><icon name="format-list-numbered" class="mr-1" /></template>
         </Button>
         <Menu ref="menuNumeracion" :model="accionesNumeracion" popup>
           <template #itemicon="{ item }"><icon :name="String(item.icon)" class="mr-2" /></template>
         </Menu>
         <Button size="small" text label="Usar plantilla" @click="dialogoPlantilla = true">
-          <template #icon><icon name="copy" class="mr-1" /></template>
+          <template #icon><icon name="content-copy-outline" class="mr-1" /></template>
         </Button>
         <Button
           size="small"
@@ -77,7 +77,7 @@
           :disabled="!estado.elementos.length"
           @click="pedirVaciar"
         >
-          <template #icon><icon name="eraser" class="mr-1" /></template>
+          <template #icon><icon name="ink-eraser-outline" class="mr-1" /></template>
         </Button>
       </div>
       <Tag v-if="modificado" severity="warn" value="Croquis sin guardar" class="text-xs" />
@@ -139,7 +139,7 @@
               aria-label="Quitar planta"
               @click="aplicar(quitarPlanta(estado, planta))"
             >
-              <template #icon><icon name="x" sm /></template>
+              <template #icon><icon name="close" sm /></template>
             </Button>
           </template>
 
@@ -173,7 +173,7 @@
                   class="ed-cell__lock"
                   title="Tiene boletos vendidos"
                 >
-                  <icon name="lock" size=".6rem" />
+                  <icon name="lock-outline" size=".6rem" />
                 </span>
               </template>
               <span v-else-if="pincel" class="ed-cell__preview" aria-hidden="true">
@@ -285,7 +285,7 @@
               :disabled="elementoSel.tipo === 'asiento' && elementoSel.conBoletos"
               @click="quitarSeleccion"
             >
-              <template #icon><icon name="trash" class="mr-1" /></template>
+              <template #icon><icon name="delete-outline" class="mr-1" /></template>
             </Button>
             <Button
               size="small"
@@ -312,17 +312,17 @@
             <span class="ed-inspector__kind">Cómo se arma</span>
           </header>
           <ul class="ed-tips">
-            <li><icon name="hand-grab" /> Arrastrá una pieza de las pilas a una celda.</li>
+            <li><icon name="pan-tool-outline" /> Arrastrá una pieza de las pilas a una celda.</li>
             <li>
-              <icon name="brush" /> Clic en una pila para colocar varias seguidas; Esc para
+              <icon name="brush-outline" /> Clic en una pila para colocar varias seguidas; Esc para
               soltarla.
             </li>
             <li>
-              <icon name="arrows-exchange" /> Arrastrá un elemento para moverlo; sobre otro, se
+              <icon name="swap-horiz" /> Arrastrá un elemento para moverlo; sobre otro, se
               intercambian.
             </li>
-            <li><icon name="trash-x" /> Soltarlo fuera del bus lo quita.</li>
-            <li><icon name="keyboard" /> Flechas mueven, Supr quita, Ctrl+Z deshace.</li>
+            <li><icon name="delete-forever-outline" /> Soltarlo fuera del bus lo quita.</li>
+            <li><icon name="keyboard-outline" /> Flechas mueven, Supr quita, Ctrl+Z deshace.</li>
           </ul>
         </template>
       </aside>
@@ -349,7 +349,7 @@
           {{ resumenActual.puertas === 1 ? 'puerta' : 'puertas' }}</span
         >
         <span class="ed-stat" :class="{ 'ed-stat--falta': !resumenActual.chofer }">
-          <icon :name="resumenActual.chofer ? 'circle-check' : 'circle-dashed'" sm />
+          <icon :name="resumenActual.chofer ? 'check-circle-outline' : 'radio-button-unchecked'" sm />
           chofer
         </span>
       </div>
@@ -359,7 +359,7 @@
           :key="i"
           :class="problema.nivel === 'error' ? 'text-red-600' : 'text-amber-600'"
         >
-          <icon :name="problema.nivel === 'error' ? 'alert-octagon' : 'alert-triangle'" sm />
+          <icon :name="problema.nivel === 'error' ? 'dangerous-outline' : 'warning-outline'" sm />
           {{ problema.mensaje }}
         </li>
       </ul>
@@ -746,12 +746,12 @@ const menuNumeracion = ref<{ toggle: (event: Event) => void } | null>(null)
 const accionesNumeracion = [
   {
     label: 'Cerrar huecos (1…N, mismo orden)',
-    icon: 'sort-ascending-numbers',
+    icon: 'compress',
     command: () => aplicar(compactarNumeracion(estado.value)),
   },
   {
     label: 'Numerar por posición (planta, fila, columna)',
-    icon: 'arrows-sort',
+    icon: 'swap-vert',
     command: () => aplicar(numerarPorPosicion(estado.value)),
   },
 ]

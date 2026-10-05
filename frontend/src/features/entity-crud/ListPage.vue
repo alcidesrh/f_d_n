@@ -13,10 +13,10 @@
                     <icon size="sm" :name="SORT_ICONS[sortDirection(store.order, col.field) ?? 'none']" />
                   </button>
                   <button v-if="filterNodes.has(col.field)" type="button" class="tap-target" :aria-label="`Filtrar ${col.label ?? col.field}`" @click.stop="col.showFilter = !col.showFilter">
-                    <icon size="sm" :name="filters[col.field] ? 'filter-filled' : 'filter'" :class="{ 'text-primary': filters[col.field] }" />
+                    <icon size="sm" :name="filters[col.field] ? 'filter-alt' : 'filter-alt-outline'" :class="{ 'text-primary': filters[col.field] }" />
                   </button>
                   <button type="button" class="tap-target" :aria-label="`Ocultar columna ${col.label ?? col.field}`" @click="setColumnVisible(col.field, false)">
-                    <icon name="x" size="sm" sw="2" />
+                    <icon name="close" size="sm" />
                   </button>
                 </span>
               </div>
@@ -74,7 +74,7 @@ import ListToolbar from "./list/ListToolbar.vue";
 import { idDisplay, nextOrder, sortDirection, toEditedInput } from "./list/listUtils";
 import { useListFilters } from "./list/useListFilters";
 
-const SORT_ICONS = { asc: "sort-ascending", desc: "sort-descending", none: "arrows-sort" } as const;
+const SORT_ICONS = { asc: "sort", desc: "arrow-downward", none: "swap-vert" } as const;
 const DEFAULT_PAGE_SIZE = 10;
 
 const props = withDefaults(defineProps<{ entity: string | string[]; configurable?: boolean }>(), {

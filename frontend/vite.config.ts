@@ -32,7 +32,7 @@ export default defineConfig({
         PrimeVueResolver(),
         IconsResolver({
           prefix: "icon", // Prefix for your components (e.g., <icon-lucide-home />)
-          enabledCollections: ["lucide", "tabler", "material-symbols"], // Turn on both sets
+          enabledCollections: ["lucide", "material-symbols"],
         }),
       ],
     }),

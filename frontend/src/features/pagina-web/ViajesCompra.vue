@@ -5,7 +5,7 @@
       <span v-if="compra.ventas.length > 1" class="mr-1 text-xs font-semibold uppercase text-muted-color">{{ i === 0 ? 'Ida' : 'Reg.' }}</span>
       <span class="font-medium">{{ v.origen }} → {{ v.destino }}</span>
       <span class="text-muted-color"> · {{ fecha(v.salida) }} · as. {{ v.asientos }}</span>
-      <icon v-if="v.facturacion === 'pendiente'" name="alert-triangle" class="ml-1 text-orange-500" v-tooltip="'Factura pendiente'" />
+      <icon v-if="v.facturacion === 'pendiente'" name="warning-outline" class="ml-1 text-orange-500" v-tooltip="'Factura pendiente'" />
     </li>
     <li v-if="!compra.ventas.length" class="text-muted-color">Sin venta registrada</li>
   </ul>

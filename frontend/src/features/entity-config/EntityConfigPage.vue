@@ -31,12 +31,12 @@
           <div class="mb-2 flex flex-wrap items-center justify-end gap-3 lg:absolute lg:right-0 lg:top-0 lg:z-10 lg:mb-0">
             <span v-if="store.dirty" class="text-sm text-amber-600">Cambios sin guardar</span>
             <span v-if="store.attrsErrors.length" class="text-sm text-red-500"> {{ store.attrsErrors.length }} panel(es) con attrs inválido </span>
-            <icon name="rotate-ccw" lg title="Descartar cambios y recargar" @click="reload" />
+            <icon name="restart-alt" lg title="Descartar cambios y recargar" @click="reload" />
             <Button label="Volver al listado" severity="secondary" size="small" @click="view = 'list'">
-              <template #icon><icon name="arrow-left" /></template>
+              <template #icon><icon name="arrow-back" /></template>
             </Button>
             <Button label="Guardar cambios" size="small" :disabled="!store.canSave" :loading="store.saving" @click="save">
-              <template #icon><icon name="device-floppy" class="text-white" /></template>
+              <template #icon><icon name="save-outline" class="text-white" /></template>
             </Button>
           </div>
           <Tabs v-model:value="tab">
@@ -48,7 +48,7 @@
               <TabPanel value="collection">
                 <p class="mb-3 text-xs text-surface-500">
                   Orden de las columnas del listado. Arrastrá
-                  <icon name="grip-vertical" class="inline align-text-bottom" /> para cambiar la posición.
+                  <icon name="drag-indicator" class="inline align-text-bottom" /> para cambiar la posición.
                 </p>
                 <div class="overflow-x-auto pb-1">
                   <SortablePanelList v-model="store.collectionFields" :row-height="ROW_HEIGHT" :gap="GAP">
@@ -62,7 +62,7 @@
               <TabPanel value="form">
                 <p class="mb-3 text-xs text-surface-500">
                   Orden de los campos del formulario. Arrastrá
-                  <icon name="grip-vertical" class="inline align-text-bottom" /> para cambiar la posición.
+                  <icon name="drag-indicator" class="inline align-text-bottom" /> para cambiar la posición.
                 </p>
                 <div class="overflow-x-auto pb-1">
                   <SortablePanelList v-model="store.formFields" :row-height="ROW_HEIGHT" :gap="GAP">

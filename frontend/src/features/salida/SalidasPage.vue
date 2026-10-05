@@ -15,7 +15,7 @@
     <!-- <template #end> -->
     <RouterLink v-if="opciones?.puede.crear" :to="{ name: 'salidas-programar' }" class="no-underline ml-auto">
       <Button label="Programar salidas" size="small"
-        ><template #icon><icon name="calendar-plus" class="mr-1" /></template
+        ><template #icon><icon name="calendar-add-on-outline" class="mr-1" /></template
       ></Button>
     </RouterLink>
     <!-- </template> -->
@@ -42,7 +42,7 @@
           <Select v-model="filtro.trayecto" :options="opciones?.trayectos ?? []" option-label="ruta" option-value="id" filter show-clear fluid :virtual-scroller-options="{ itemSize: 38 }" placeholder="Todos" />
         </label>
         <Button severity="secondary" outlined class="col-span-2 @3xl:col-span-1" @click="masFiltros = true">
-          <icon name="filter" class="mr-1" />Más filtros
+          <icon name="filter-alt-outline" class="mr-1" />Más filtros
           <Badge v-if="otrosActivos" :value="otrosActivos" class="ml-1.5" />
         </Button>
       </div>
@@ -73,10 +73,10 @@
         </div>
         <div class="flex justify-end gap-1">
           <Button severity="secondary" text rounded size="small" class="tap-target" aria-label="Ver" v-tooltip.top="'Ver croquis y resumen'" @click="verSalida = s">
-            <template #icon><icon name="eye" /></template>
+            <template #icon><icon name="visibility-outline" /></template>
           </Button>
           <Button severity="secondary" text rounded size="small" class="tap-target" aria-label="Manifiestos" v-tooltip.top="'Manifiestos (PDF)'" aria-haspopup="menu" @click="abrirMenu($event, s)">
-            <template #icon><icon name="file-type-pdf" /></template>
+            <template #icon><icon name="picture-as-pdf-outline" /></template>
           </Button>
           <Button v-for="a in acciones(s)" :key="a.op" :severity="a.severidad" text rounded size="small" class="tap-target" :disabled="!a.habilitada" :aria-label="a.etiqueta" v-tooltip.top="a.ayuda" @click="abrir(a.op, s)">
             <template #icon><icon :name="a.icono" /></template>
@@ -129,10 +129,10 @@
           <template #body="{ data }">
             <div class="flex justify-end gap-0.5">
               <Button severity="secondary" text rounded size="small" aria-label="Ver" v-tooltip.top="'Ver croquis y resumen'" @click="verSalida = data">
-                <template #icon><icon name="eye" /></template>
+                <template #icon><icon name="visibility-outline" /></template>
               </Button>
               <Button severity="secondary" text rounded size="small" aria-label="Manifiestos" v-tooltip.top="'Manifiestos (PDF)'" aria-haspopup="menu" @click="abrirMenu($event, data)">
-                <template #icon><icon name="file-type-pdf" /></template>
+                <template #icon><icon name="picture-as-pdf-outline" /></template>
               </Button>
               <Button v-for="a in acciones(data)" :key="a.op" :severity="a.severidad" text rounded size="small" :disabled="!a.habilitada" :aria-label="a.etiqueta" v-tooltip.top="a.ayuda" @click="abrir(a.op, data)">
                 <template #icon><icon :name="a.icono" /></template>
@@ -222,11 +222,11 @@ function acciones(s: SalidaFila) {
   const p = opciones.value?.puede;
   const programada = s.estado === "programada";
   return [
-    { op: "editar" as const, icono: "pencil", etiqueta: "Editar", severidad: "secondary" as const, habilitada: !!p?.editar && programada, ayuda: programada ? "Editar" : "Solo se editan salidas programadas" },
-    { op: "anular" as const, icono: "ban", etiqueta: "Anular", severidad: "warn" as const, habilitada: !!p?.anular && programada, ayuda: programada ? "Anular (se conserva como cancelada)" : "Solo se anulan salidas programadas" },
+    { op: "editar" as const, icono: "edit-outline", etiqueta: "Editar", severidad: "secondary" as const, habilitada: !!p?.editar && programada, ayuda: programada ? "Editar" : "Solo se editan salidas programadas" },
+    { op: "anular" as const, icono: "block", etiqueta: "Anular", severidad: "warn" as const, habilitada: !!p?.anular && programada, ayuda: programada ? "Anular (se conserva como cancelada)" : "Solo se anulan salidas programadas" },
     {
       op: "eliminar" as const,
-      icono: "trash",
+      icono: "delete-outline",
       etiqueta: "Eliminar",
       severidad: "danger" as const,
       habilitada: !!p?.eliminar && (programada || s.estado === "cancelada"),

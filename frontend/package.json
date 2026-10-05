@@ -15,7 +15,7 @@
     "lint:oxlint": "oxlint . --fix",
     "lint:eslint": "eslint . --fix --cache",
     "format": "oxfmt src/",
-    "icons:meta": "bun scripts/gen-tabler-meta.ts"
+    "icons:meta": "bun scripts/gen-icon-meta.ts"
   },
   "dependencies": {
     "@apollo/client": "^4.2.11",
@@ -39,7 +39,6 @@
   "devDependencies": {
     "@iconify-json/lucide": "^1.2.125",
     "@iconify-json/material-symbols": "^1.2.89",
-    "@iconify-json/tabler": "^1.2.38",
     "@iconify/json": "^2.2.519",
     "@iconify/vue": "^5.0.1",
     "@playwright/test": "^1.61.1",

@@ -9,12 +9,12 @@
       <div class="nav-row" :class="{ 'nav-row--mini': sidebar.collapsed }">
         <template v-if="!sidebar.collapsed">
           <button v-if="item.children.length" type="button" class="nav-toggle" :style="toggleIndent" :aria-expanded="expanded.has(item.id)" :title="expanded.has(item.id) ? 'Contraer' : 'Desplegar'" @click="toggle(item.id)">
-            <icon :name="expanded.has(item.id) ? 'minus' : 'plus'" size="0.9rem" />
+            <icon :name="expanded.has(item.id) ? 'remove' : 'add'" size="0.9rem" />
           </button>
           <span v-else class="nav-toggle nav-toggle--spacer" :style="toggleIndent" aria-hidden="true" />
         </template>
         <component :is="navTarget(item, router) ? RouterLink : 'span'" :to="navTarget(item, router) ?? undefined" class="menu-link" :class="{ 'nav-disabled': !navTarget(item, router) }" :title="navTarget(item, router) ? item.label : `${item.label} (ruta no navegable)`">
-          <span class="menu-icon"><icon :name="item.icon ?? 'point'" size="1.3rem" /></span>
+          <span class="menu-icon"><icon :name="item.icon ?? 'fiber-manual-record'" size="1.3rem" /></span>
           <span class="menu-text">{{ item.label }}</span>
         </component>
       </div>

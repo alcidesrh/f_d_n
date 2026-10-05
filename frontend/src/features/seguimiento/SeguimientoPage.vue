@@ -20,7 +20,7 @@
           <template v-else>Cargando…</template>
           <Button size="small" text rounded class="tap-target" aria-label="Actualizar ahora" :loading="cargando" @click="cargar(false)"><icon name="refresh" /></Button>
           <Button size="small" text rounded class="tap-target" :aria-label="maximizado ? 'Salir de pantalla completa' : 'Maximizar mapa'" :title="maximizado ? 'Salir de pantalla completa (Esc)' : 'Maximizar'" :aria-pressed="maximizado" @click="alternarMaximizado">
-            <icon :name="maximizado ? 'arrows-minimize' : 'arrows-maximize'" />
+            <icon :name="maximizado ? 'fullscreen-exit' : 'fullscreen'" />
           </Button>
         </span>
       </template>
@@ -41,7 +41,7 @@
           <span>Nombres de enclaves</span>
         </label>
         <span class="flex items-center gap-2">
-          <icon name="bus" />
+          <icon name="directions-bus-outline" />
           {{ visibles.length }} {{ visibles.length === 1 ? 'bus en recorrido' : 'buses en recorrido' }}
         </span>
       </div>

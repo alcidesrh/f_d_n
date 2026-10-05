@@ -9,17 +9,17 @@
       <template #start><PageHead /></template>
       <template #end>
         <a href="/pagina/" target="_blank" rel="noopener" class="no-underline">
-          <Button label="Ver la página" severity="secondary" text size="small"><template #icon><icon name="external-link" class="mr-1" /></template></Button>
+          <Button label="Ver la página" severity="secondary" text size="small"><template #icon><icon name="open-in-new" class="mr-1" /></template></Button>
         </a>
       </template>
     </Toolbar>
 
     <Tabs v-model:value="pestana">
       <TabList>
-        <Tab value="compras"><icon name="receipt" class="mr-1.5" />Compras</Tab>
-        <Tab value="configuracion"><icon name="settings" class="mr-1.5" />Configuración</Tab>
+        <Tab value="compras"><icon name="receipt-outline" class="mr-1.5" />Compras</Tab>
+        <Tab value="configuracion"><icon name="settings-outline" class="mr-1.5" />Configuración</Tab>
         <Tab value="mensajes">
-          <icon name="mail" class="mr-1.5" />Mensajes
+          <icon name="mail-outline" class="mr-1.5" />Mensajes
           <Badge v-if="sinLeer" :value="sinLeer" severity="danger" class="ml-1.5" />
         </Tab>
       </TabList>

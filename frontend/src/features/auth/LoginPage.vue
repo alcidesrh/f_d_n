@@ -17,7 +17,7 @@
             </div>
             <Button type="submit" label="Aceptar" :loading="loading" class="mt-6 w-full" />
             <div v-if="error" class="flex items-center gap-1">
-              <icon name="error" class="text-red-600" />
+              <icon name="error-outline" class="text-red-600" />
               <FormKitMessages />
             </div>
           </FormKit>

@@ -12,7 +12,7 @@
 <template>
   <div v-if="row" class="field-panel" :class="{ 'field-panel--hidden': !row.visible }">
     <span data-drag-handle class="field-panel__handle" title="Arrastrar para cambiar la posición">
-      <icon name="grip-vertical" lg />
+      <icon name="drag-indicator" lg />
     </span>
 
     <span class="field-panel__position" title="Posición (dada por el orden del panel)">

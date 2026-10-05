@@ -32,7 +32,7 @@
         <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
         <div class="flex flex-wrap items-center justify-between gap-2">
           <span v-if="config.actualizadaEn" class="text-xs text-muted-color">Último cambio: {{ fechaHora(config.actualizadaEn) }}<template v-if="config.actualizadaPor"> por {{ config.actualizadaPor }}</template></span>
-          <Button label="Guardar" :loading="guardando" :disabled="!cambio" @click="guardar"><template #icon><icon name="device-floppy" class="mr-1" /></template></Button>
+          <Button label="Guardar" :loading="guardando" :disabled="!cambio" @click="guardar"><template #icon><icon name="save-outline" class="mr-1" /></template></Button>
         </div>
       </template>
     </section>

@@ -4,8 +4,8 @@ import type { TipoManifiesto } from '@/core/salida/types'
 import { notify } from '@/core/notify'
 
 export const MANIFIESTOS: ReadonlyArray<{ tipo: TipoManifiesto; etiqueta: string; icono: string }> = [
-  { tipo: 'interno', etiqueta: 'Manifiesto interno', icono: 'file-description' },
-  { tipo: 'piloto', etiqueta: 'Manifiesto del piloto', icono: 'steering-wheel' },
+  { tipo: 'interno', etiqueta: 'Manifiesto interno', icono: 'description-outline' },
+  { tipo: 'piloto', etiqueta: 'Manifiesto del piloto', icono: 'sports-motorsports-outline' },
 ]
 
 export async function abrirManifiesto(salidaId: number, tipo: TipoManifiesto): Promise<void> {

@@ -21,7 +21,7 @@
         :data-id="item.id"
       >
         <span class="palette-handle" data-drag-handle title="Arrastrar al menú">
-          <icon name="grip-vertical" />
+          <icon name="drag-indicator" />
         </span>
         <icon :name="item.icon.icon" class="text-primary" />
         <div class="flex min-w-0 flex-1 flex-col leading-tight">
@@ -29,10 +29,10 @@
           <span class="truncate text-xs text-muted-color">{{ item.route.path }}</span>
         </div>
         <button type="button" class="palette-btn" title="Editar" @click="emit('edit', item)">
-          <icon name="pencil" />
+          <icon name="edit-outline" />
         </button>
         <button type="button" class="palette-btn" title="Eliminar" @click="emit('remove', item)">
-          <icon name="trash" />
+          <icon name="delete-outline" />
         </button>
       </li>
     </ul>

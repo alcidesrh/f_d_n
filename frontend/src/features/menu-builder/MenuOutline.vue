@@ -21,7 +21,7 @@
     :style="{ height: `${Math.max(slots, 2) * ROW_H + PADDING * 2}px` }"
   >
     <div v-if="!rows.length && incoming === null" class="mo-empty">
-      <icon name="drag-drop" lg />
+      <icon name="drag-pan" lg />
       <span>Arrastrá ítems de la paleta hasta aquí</span>
     </div>
 
@@ -49,9 +49,9 @@
       :style="{ height: `${ROW_H - GAP}px`, top: `${PADDING}px` }"
     >
       <span class="mo-handle" data-drag-handle title="Arrastrar">
-        <icon name="grip-vertical" />
+        <icon name="drag-indicator" />
       </span>
-      <icon :name="itemsById.get(row.id)?.icon.icon ?? 'point'" class="text-primary" />
+      <icon :name="itemsById.get(row.id)?.icon.icon ?? 'fiber-manual-record'" class="text-primary" />
       <div class="mo-text">
         <span class="mo-label">{{ itemsById.get(row.id)?.nombre ?? `#${row.id}` }}</span>
         <span class="mo-route">{{ itemsById.get(row.id)?.route.path }}</span>
@@ -63,7 +63,7 @@
           :disabled="row.depth === 0"
           @click="shift(index, -1)"
         >
-          <icon name="arrow-bar-to-left" />
+          <icon name="format-indent-decrease" />
         </button>
         <button
           type="button"
@@ -71,14 +71,14 @@
           :disabled="!canIndent(index)"
           @click="shift(index, 1)"
         >
-          <icon name="arrow-bar-to-right" />
+          <icon name="format-indent-increase" />
         </button>
         <button
           type="button"
           title="Quitar del menú"
           @click="emit('update:rows', liftRow(rows, index))"
         >
-          <icon name="x" />
+          <icon name="close" />
         </button>
       </div>
     </div>
