@@ -245,6 +245,8 @@ export const componentsPreset = (parent: ThemePreset): Tokens => {
       ...base.components.inputtext,
       colorScheme: {
         ...base.components.inputtext?.colorScheme,
+        "border.color": "{surface.400}",
+
         dark: {
           ...base.components.inputtext?.colorScheme?.dark,
           background: "{surface.50}",
@@ -256,11 +258,30 @@ export const componentsPreset = (parent: ThemePreset): Tokens => {
       ...base.components.datatable,
       header: {
         cell: {
-          padding: "5px 0",
+          padding: "35px 0",
+        },
+      },
+      body: {
+        cell: {
+          padding: "35px",
+          sm: {
+            padding: "35px",
+          },
         },
       },
       colorScheme: {
         ...base.components.datatable?.colorScheme,
+        body: {
+          cell: {
+            sm: {
+              padding: "15px 0",
+            },
+          },
+        },
+        row: {
+          background: "{surface.0}",
+          // "striped.background": "{surface.200}",
+        },
         dark: {
           ...base.components.datatable?.colorScheme.dark,
           // header: {
@@ -279,7 +300,7 @@ export const componentsPreset = (parent: ThemePreset): Tokens => {
       root: {
         ...base.components.select?.root,
         overlay: { background: "{surface.50}" },
-        // "border.color": "{surface.400}",
+        "border.color": "{surface.400}",
       },
     },
     popover: {

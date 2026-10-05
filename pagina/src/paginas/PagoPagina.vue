@@ -67,7 +67,9 @@
       v-else
       class="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_23rem] lg:gap-6"
     >
-      <h1 class="relative z-[30] m-0 text-2xl font-bold text-white lg:col-span-2">
+      <h1
+        class="relative z-[30] m-0 text-2xl font-bold text-white lg:col-span-2"
+      >
         {{ t("pago.titulo") }}
       </h1>
 

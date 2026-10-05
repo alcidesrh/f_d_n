@@ -8,7 +8,7 @@
     <header class="flex flex-wrap items-end justify-between gap-2">
       <div class="min-w-0">
         <p
-          class="m-0 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide"
+          class="mb-3 flex items-center gap-1.5 text-xl font-bold uppercase tracking-wide"
           :class="sentido === 'ida' ? 'text-marca-700' : 'text-acento-700'"
         >
           <icon
@@ -18,11 +18,13 @@
         </p>
         <h2
           :id="`lista-${sentido}`"
-          class="m-0 text-lg font-medium leading-snug md:text-xl"
+          class="m-0 text-lg font-bold text-surface-600 leading-snug md:text-xl"
         >
           <template v-if="nombres">{{ t("salidas.titulo", nombres) }}</template>
         </h2>
-        <p class="m-0 text first-letter:uppercase font-bold">
+        <p
+          class="m-0 text-lg text-surface-600 first-letter:uppercase font-bold"
+        >
           {{ diaLargo(dia, region) }}
         </p>
       </div>
@@ -34,6 +36,7 @@
           :disabled="esPrimerDia"
           :aria-label="t('salidas.diaAnterior')"
           @click="mover(-1)"
+          class="border-slate-400"
         >
           <icon name="chevron-left" size="1rem" /><span
             class="hidden sm:inline"
@@ -46,6 +49,7 @@
           outlined
           :aria-label="t('salidas.diaSiguiente')"
           @click="mover(1)"
+          class="border-slate-400"
         >
           <span class="hidden sm:inline">{{ t("salidas.diaSiguiente") }}</span
           ><icon name="chevron-right" size="1rem" />
