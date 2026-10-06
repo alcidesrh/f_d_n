@@ -36,7 +36,7 @@
             <ClienteBuscador v-model="store.cliente" input-id="venta-cliente" />
           </section>
           <section class="panel flex flex-col gap-3">
-            <div class="grid grid-cols-1 gap-3 @xl:grid-cols-2 mb-6">
+            <div class="grid grid-cols-1 gap-3 @xl:grid-cols-3 mb-6">
               <label class="flex flex-col gap-1">
                 <span class="text-sm font-medium">Fecha de salida</span>
                 <DatePicker v-model="store.fecha" date-format="dd/mm/yy" show-icon fluid @update:model-value="store.cargarSalidas()" />
@@ -45,9 +45,13 @@
                 <span class="text-sm font-medium">Estación</span>
                 <estacion-select v-model="store.estacionId" :estaciones="estaciones" :propio="departamentoPropio" placeholder="Todas" @update:model-value="store.cargarSalidas()" />
               </label>
+              <label class="flex flex-col gap-1">
+                <span class="text-sm font-medium">Empresa</span>
+                <Select v-model="store.empresaId" :options="store.empresas" option-label="nombre" option-value="id" placeholder="Todas" show-clear fluid />
+              </label>
             </div>
 
-            <SalidasLista :salidas="store.salidas" :cargando="store.cargandoSalidas" :salida-id="store.salidaId" @elegir="store.elegirSalida" />
+            <SalidasLista :salidas="store.salidasVisibles" :cargando="store.cargandoSalidas" :salida-id="store.salidaId" @elegir="store.elegirSalida" />
           </section>
           <divider />
 

@@ -28,6 +28,14 @@ export const useVentaStore = defineStore("venta", () => {
   const estacionId = ref<number | null>(null);
   const salidas = ref<SalidaResumen[]>([]);
   const cargandoSalidas = ref(false);
+  /** Filtro por empresa (en el cliente, sobre las salidas ya cargadas); null = todas. */
+  const empresaId = ref<number | null>(null);
+  const empresas = computed(() => {
+    const porId = new Map<number, string>();
+    for (const r of salidas.value) if (r.empresa) porId.set(r.empresa.id, r.empresa.nombre);
+    return [...porId].map(([id, nombre]) => ({ id, nombre })).sort((a, b) => a.nombre.localeCompare(b.nombre));
+  });
+  const salidasVisibles = computed(() => (empresaId.value == null ? salidas.value : salidas.value.filter((r) => r.empresa?.id === empresaId.value)));
 
   const salidaId = ref<number | null>(null);
   const detalle = shallowRef<SalidaDetalle | null>(null);
@@ -89,6 +97,7 @@ export const useVentaStore = defineStore("venta", () => {
     cargandoSalidas.value = true;
     try {
       salidas.value = await api.fetchSalidas(diaISO(fecha.value), estacionId.value);
+      if (empresaId.value != null && !salidas.value.some((r) => r.empresa?.id === empresaId.value)) empresaId.value = null;
       if (salidaId.value && !salidas.value.some((r) => r.id === salidaId.value)) {
         cerrarSalida();
       }
@@ -272,6 +281,9 @@ export const useVentaStore = defineStore("venta", () => {
     fecha,
     estacionId,
     salidas,
+    empresaId,
+    empresas,
+    salidasVisibles,
     cargandoSalidas,
     salidaId,
     detalle,
