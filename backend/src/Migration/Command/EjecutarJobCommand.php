@@ -11,6 +11,7 @@ use App\Migration\Job\AlmacenDeJobs;
 use App\Migration\Job\Progreso;
 use App\Migration\Job\SalidaJobOutput;
 use App\Migration\Reseteador;
+use App\Services\VueRouteSynchronizer;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -36,6 +37,7 @@ class EjecutarJobCommand extends Command
         private readonly RegistroMigradores $registro,
         private readonly Reseteador $reseteador,
         private readonly EjecutorEntidad $ejecutorEntidad,
+        private readonly VueRouteSynchronizer $rutasSynchronizer,
     ) {
         parent::__construct();
     }
@@ -161,6 +163,10 @@ class EjecutarJobCommand extends Command
                     );
                 break;
 
+            case "rutas":
+                $contadores = $this->sincronizarRutas($params, $salida);
+                break;
+
             case "entidad":
                 $es = Especificacion::desdeArray($params);
                 $contadores = $this->ejecutorEntidad->ejecutar(
@@ -173,10 +179,10 @@ class EjecutarJobCommand extends Command
 
             case "todo":
                 if (!empty($params["clean"])) {
-                    $salida->writeln("<info>[1/5] Reset de BD…</info>");
+                    $salida->writeln("<info>[1/6] Reset de BD…</info>");
                     $this->reseteador->hard();
                 }
-                $salida->writeln("<info>[2/5] Migrando estáticos…</info>");
+                $salida->writeln("<info>[2/6] Migrando estáticos…</info>");
                 $contadores = array_merge(
                     $contadores,
                     $this->ejecutarEstaticos($salida, $progreso),
@@ -184,7 +190,7 @@ class EjecutarJobCommand extends Command
                 if ($progreso->debeCancelar()) {
                     break;
                 }
-                $salida->writeln("<info>[3/5] Migrando IAM…</info>");
+                $salida->writeln("<info>[3/6] Migrando IAM…</info>");
                 $contadores = array_merge(
                     $contadores,
                     $this->registro
@@ -199,7 +205,7 @@ class EjecutarJobCommand extends Command
                     break;
                 }
                 $salida->writeln(
-                    "<info>[4/5] Sincronizando EntityConfiguration…</info>",
+                    "<info>[4/6] Sincronizando EntityConfiguration…</info>",
                 );
                 $contadores = array_merge(
                     $contadores,
@@ -214,7 +220,17 @@ class EjecutarJobCommand extends Command
                 if ($progreso->debeCancelar()) {
                     break;
                 }
-                $salida->writeln("<info>[5/5] Migrando salidas (lote)…</info>");
+                $salida->writeln(
+                    "<info>[5/6] Insertando rutas del frontend…</info>",
+                );
+                $contadores = array_merge(
+                    $contadores,
+                    $this->sincronizarRutas($params, $salida),
+                );
+                if ($progreso->debeCancelar()) {
+                    break;
+                }
+                $salida->writeln("<info>[6/6] Migrando salidas (lote)…</info>");
                 $es = Especificacion::desdeArray(
                     ["entidad" => "salida"] + $params,
                 );
@@ -236,6 +252,35 @@ class EjecutarJobCommand extends Command
         }
 
         return $contadores;
+    }
+
+    /**
+     * Inserta/actualiza `VueRoute` con el árbol de rutas que el frontend envió
+     * en los parámetros del job (`rutas`), igual que POST /api/vue-routes/sync.
+     *
+     * @param array<string, mixed> $params
+     *
+     * @return array<string, int>
+     */
+    private function sincronizarRutas(
+        array $params,
+        SalidaJobOutput $salida,
+    ): array {
+        $rutas = $params["rutas"] ?? null;
+        if (!is_array($rutas) || [] === $rutas) {
+            $salida->writeln(
+                "<comment>Sin rutas en el job: no se sincronizaron.</comment>",
+            );
+
+            return [];
+        }
+
+        $nombres = $this->rutasSynchronizer->sync($rutas);
+        $salida->writeln(
+            sprintf("<info>✓ %d rutas de nivel superior sincronizadas</info>", count($nombres)),
+        );
+
+        return ["rutas" => count($nombres)];
     }
 
     /**

@@ -274,7 +274,7 @@ export const componentsPreset = (parent: ThemePreset): Tokens => {
         body: {
           cell: {
             sm: {
-              padding: "15px 0",
+              // padding: "10px 0",
             },
           },
         },

@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@apollo/client": "^4.2.11",
+    "@fontsource-variable/material-symbols-outlined": "^5.3.8",
     "@formkit/vue": "^2.1.2",
     "@primevue/themes": "4.5.4",
     "@types/leaflet": "^1.9.22",

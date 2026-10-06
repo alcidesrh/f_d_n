@@ -43,6 +43,7 @@ class MigracionController extends AbstractController
         "entidad",
         "iam",
         "config",
+        "rutas",
         "todo",
     ];
 
@@ -184,6 +185,15 @@ class MigracionController extends AbstractController
             }
         }
 
+        // Las rutas solo las conoce el frontend (vue-router): viajan en el job.
+        $rutas = $data["rutas"] ?? null;
+        if ("rutas" === $tipo && (!is_array($rutas) || [] === $rutas)) {
+            return $this->json(
+                ["error" => "Faltan las rutas del frontend (rutas)."],
+                400,
+            );
+        }
+
         $parametros = [
             "entidad" => "entidad" === $tipo ? $entidad : null,
             "desde" => empty($data["desde"]) ? null : (string) $data["desde"],
@@ -193,6 +203,9 @@ class MigracionController extends AbstractController
                 : null,
             "clean" => (bool) ($data["clean"] ?? false),
         ];
+        if (in_array($tipo, ["rutas", "todo"], true) && is_array($rutas)) {
+            $parametros["rutas"] = $rutas;
+        }
 
         $job = $this->almacen->crear($tipo, $parametros);
 

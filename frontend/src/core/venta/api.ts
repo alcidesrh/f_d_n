@@ -5,6 +5,7 @@
 import { config } from '@/core/config'
 import { HttpError, http, request } from '@/core/http'
 import { useSessionStore } from '@/core/auth/session'
+import { prefijoLegado } from '@/temporal/legado/estado' // TEMPORAL-LEGADO
 import type {
   AsientoOcupado,
   Cliente,
@@ -21,12 +22,15 @@ import type {
 
 export const fetchContexto = () => http.get<ContextoVenta>('/venta/contexto')
 
+/** Base de la API de venta: `/venta`, o la prueba con el legado. */
+const venta = () => `${prefijoLegado()}/venta` // TEMPORAL-LEGADO
+
 export const fetchSalidas = (fecha: string, estacion: number | null) =>
   http.get<SalidaResumen[]>(
-    `/venta/salidas?fecha=${encodeURIComponent(fecha)}${estacion ? `&estacion=${estacion}` : ''}`,
+    `${venta()}/salidas?fecha=${encodeURIComponent(fecha)}${estacion ? `&estacion=${estacion}` : ''}`,
   )
 
-export const fetchSalida = (id: number) => http.get<SalidaDetalle>(`/venta/salidas/${id}`)
+export const fetchSalida = (id: number) => http.get<SalidaDetalle>(`${venta()}/salidas/${id}`)
 
 /** Ocupación para un trayecto; `silent` para refrescos por Mercure. */
 export async function fetchOcupacion(
@@ -36,7 +40,7 @@ export async function fetchOcupacion(
 ): Promise<AsientoOcupado[]> {
   const q = trayecto ? `?trayecto=${trayecto}` : ''
   return (
-    await http.get<{ asientos: AsientoOcupado[] }>(`/venta/salidas/${salida}/ocupacion${q}`, {
+    await http.get<{ asientos: AsientoOcupado[] }>(`${venta()}/salidas/${salida}/ocupacion${q}`, {
       silent,
     })
   ).asientos
@@ -48,10 +52,10 @@ export const cotizar = (body: {
   asientos: number[]
   cobrarTrayectoCompleto?: boolean
   cortesia?: boolean
-}) => http.post<Cotizacion>('/venta/cotizacion', body, { silent: true })
+}) => http.post<Cotizacion>(`${venta()}/cotizacion`, body, { silent: true })
 
 export const vender = (pedido: PedidoVenta) =>
-  http.post<Comprobante>('/venta/ventas', pedido, { loadingKey: 'venta' })
+  http.post<Comprobante>(`${venta()}/ventas`, pedido, { loadingKey: 'venta' })
 
 export const fetchComprobante = (id: number) => http.get<Comprobante>(`/venta/ventas/${id}`)
 
@@ -82,7 +86,7 @@ export const ajustarAgencia = (id: number, body: { importe: number; observacion:
 /** PDF del comprobante como `Blob` (lleva el Bearer, por eso no es un enlace). */
 export async function fetchComprobantePdf(id: number): Promise<Blob> {
   const token = useSessionStore().token
-  const res = await fetch(`${config.restUrl}/venta/ventas/${id}/pdf`, {
+  const res = await fetch(`${config.restUrl}${venta()}/ventas/${id}/pdf`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   })
   if (!res.ok) throw new HttpError(res.status, null, `HTTP ${res.status}`)

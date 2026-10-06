@@ -2,16 +2,14 @@
  * Catálogo de Google Material Symbols para el buscador (`IconPicker`).
  *
  * Carga diferida (dos chunks aparte, solo cuando se abre el buscador):
- *  - `@iconify-json/material-symbols`: SVGs. Se registran con `addCollection`
- *    para que `<icon>` los pinte sin pedirlos a api.iconify.design.
+ *  - `@iconify-json/material-symbols`: solo la lista de nombres y variantes
+ *    (el dibujo lo hace la fuente variable en `<icon>`).
  *  - `./iconMeta.ts`: categoría + tags (ver `scripts/gen-icon-meta.ts`).
  *
  * Cada símbolo del catálogo es un nombre base (`home`) con sus variantes de
  * estilo (`home-outline`, `home-rounded`…). Los nombres son los de Iconify sin
  * prefijo, el mismo formato que persiste `Icon.icon` y que recibe `<icon name>`.
  */
-import { addCollection } from '@iconify/vue'
-
 /** Estilos de Material Symbols; `regular` es el relleno por defecto del set. */
 export type IconStyle =
   | 'regular'
@@ -181,7 +179,6 @@ let catalogPromise: Promise<IconCatalog> | null = null
 export function loadIconCatalog(): Promise<IconCatalog> {
   catalogPromise ??= Promise.all([import('@iconify-json/material-symbols'), import('./iconMeta')])
     .then(([{ icons: set }, meta]) => {
-      addCollection(set)
       return buildCatalog(Object.keys(set.icons), meta.default)
     })
     .catch((error: unknown) => {

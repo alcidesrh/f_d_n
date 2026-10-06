@@ -126,6 +126,14 @@
             :disabled="ocupado"
             @click="confirmarFlujo('config')"
           />
+          <Button
+            label="Insertar rutas"
+            icon="pi pi-sitemap"
+            size="small"
+            outlined
+            :disabled="ocupado"
+            @click="confirmarFlujo('rutas')"
+          />
           <div class="flex items-center gap-2 mt-1">
             <Checkbox v-model="cleanTodo" input-id="migracion-clean" binary :disabled="ocupado" />
             <label for="migracion-clean" class="text-sm">Todo (con reset previo)</label>
@@ -269,7 +277,7 @@ function migrarEntidad(): void {
   )
 }
 
-function confirmarFlujo(tipo: 'estaticos' | 'iam' | 'config'): void {
+function confirmarFlujo(tipo: 'estaticos' | 'iam' | 'config' | 'rutas'): void {
   conConfirmacion(`Ejecutar la migración de "${etiquetaTipo({ tipo, entidad: null })}"?`, () =>
     iniciar({ tipo }),
   )
@@ -279,7 +287,7 @@ function confirmarTodo(): void {
   conConfirmacion(
     cleanTodo.value
       ? 'Migración COMPLETA con RESET previo de la base de datos. ¿Continuar?'
-      : 'Migración completa (estáticos + IAM + configuración + salidas). ¿Continuar?',
+      : 'Migración completa (estáticos + IAM + configuración + rutas + salidas). ¿Continuar?',
     () => iniciar({ tipo: 'todo', clean: cleanTodo.value || undefined }),
   )
 }

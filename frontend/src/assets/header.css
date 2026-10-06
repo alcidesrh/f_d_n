@@ -9,8 +9,8 @@
   right: 0;
   height: var(--header-h);
   z-index: 50;
-  background: var(--bg);
-  border-bottom: var(--border);
+  background: var(--p-surface-50);
+  /*border-bottom: var(--border);*/
   display: flex;
   align-items: center;
   gap: 0.25rem;
@@ -85,16 +85,11 @@
   }
   font-family: "diplomata-sc-regular", sans-serif;
   font-size: 3.5rem;
-  opacity: 0.05;
+  opacity: 0.1;
   letter-spacing: 0.5rem;
   transform: scaleY(1.5);
 }
-.brand-tag {
-  font-size: 11px;
-  color: var(--text-muted);
-  white-space: nowrap;
-  margin-top: -2px;
-}
+
 .btn-siderbar-header {
   transition: transform var(--transition);
   width: 50px;

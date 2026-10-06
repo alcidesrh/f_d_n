@@ -82,7 +82,7 @@ function onLeave(el: Element, done: () => void) {
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--p-text-muted-color);
+  color: var(--p-surface-400);
 }
 .nav-section-title:hover {
   background-color: var(--p-surface-200);

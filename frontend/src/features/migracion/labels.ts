@@ -8,6 +8,7 @@ const TIPOS: Record<TipoJobMigracion, string> = {
   entidad: 'Entidad',
   iam: 'IAM',
   config: 'Configuración',
+  rutas: 'Rutas',
   todo: 'Migración completa',
 }
 

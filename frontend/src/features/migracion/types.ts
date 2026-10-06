@@ -1,6 +1,7 @@
 /**
  * Tipos del panel /migracion (backend: src/Controller/MigracionController.php).
  */
+import type { VueRouteDTO } from '@/app/routeSync'
 
 export interface EntidadMigracion {
   nombre: string
@@ -28,6 +29,7 @@ export type TipoJobMigracion =
   | 'entidad'
   | 'iam'
   | 'config'
+  | 'rutas'
   | 'todo'
 
 export type EstadoJobMigracion = 'pending' | 'running' | 'done' | 'cancelado' | 'error' | 'abortado'
@@ -80,4 +82,6 @@ export interface PayloadEjecutar {
   hasta?: string | null
   cantidad?: number | null
   clean?: boolean
+  /** Árbol de rutas del router; lo agrega el store para `rutas` y `todo`. */
+  rutas?: VueRouteDTO[]
 }

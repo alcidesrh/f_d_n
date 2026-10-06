@@ -30,13 +30,23 @@ Cada símbolo se nombra con un sufijo según su estilo:
 <icon name="restart-alt" color="text-primary" @click="reset" />
 ```
 
-Envuelve `<Icon>` de `@iconify/vue` y agrega:
+Pinta el símbolo con la **fuente variable** `@fontsource-variable/material-symbols-outlined` (archivo `fill.css`, ejes `wght` y `FILL`, ~1,1 MB, se carga una vez y se cachea). Soporta:
 
-- **Normalización del nombre.** Sin prefijo se asume Material Symbols: `name="database-outline"` → `material-symbols:database-outline`. Para otra colección se pasa el prefijo completo: `name="lucide:home"`.
+- **Nombre en formato Iconify.** `home` es el símbolo relleno (`FILL` 1) y `home-outline` el de contorno (`FILL` 0); el componente lo traduce al nombre de la fuente (`home`, kebab → snake). `-rounded`/`-sharp` se ignoran: solo se carga la familia Outlined. El prefijo `material-symbols:` es opcional; ya no hay otras colecciones.
+- **Grosor.** Prop `weight` (100 fino … 700 grueso) por ícono, o `--icon-weight` en CSS para todos (por defecto 400):
+
+```vue
+<icon name="edit-outline" :weight="300" />
+```
+
+```css
+:root { --icon-weight: 300; } /* todos los íconos más finos */
+```
+
 - **Tamaños.** Props booleanas `xs` (.80rem), `sm` (.95rem), `md` (1rem), `lg` (1.5rem), `xl` (2rem); o `size` con cualquier valor CSS (default `1.3rem`). Se aplican a `width`/`height` **y** a `min-width`/`min-height`, para que el ícono no se deforme dentro de un flex.
 - **Color y clases.** `color` es una clase de color; la `class` del padre se suma sola. Sin ninguna de las dos el ícono queda `cursor-pointer text-surface-600`.
 
-Los Material Symbols son glifos rellenos (`fill: currentColor`): **no existe grosor de trazo** (el `sw` de la época de Tabler se eliminó). El peso visual lo da la variante (`-outline`, `-rounded`…) y el tamaño.
+El tamaño (`size`, atajos) se aplica como `font-size` y como `width`/`height`/`min-*`; un número sin unidad (`size="20"`) se toma como px. El color es `currentColor`.
 
 ```vue
 <!-- tirador de drag & drop del editor de configuración de entidades -->
@@ -49,7 +59,7 @@ Los Material Symbols son glifos rellenos (`fill: currentColor`): **no existe gro
 
 ## Consideraciones
 
-- `@iconify/vue` resuelve el SVG **en runtime** contra la API pública de Iconify y lo cachea en el navegador. Al abrir el buscador (`IconPicker`), `shared/icons/iconCatalog.ts` carga el set completo (~8 MB, solo entonces) y lo registra con `addCollection`, así que desde ese momento los íconos pintan sin salida a internet.
+- La fuente va empaquetada (sin red externa). Al abrir el buscador (`IconPicker`), `shared/icons/iconCatalog.ts` carga la lista de nombres de `@iconify-json/material-symbols` (~8 MB, solo entonces) para construir el catálogo; el dibujo lo hace la fuente.
 - Los íconos guardados en base de datos (`Icon`, `Menu.icon`, `route.meta.icon`) son nombres de Material Symbols en kebab-case y se renderizan con el mismo componente: `<icon :name="route.meta.icon ?? 'link'" />`. `Icon.icon` admite hasta 100 caracteres (el nombre más largo del set tiene 51). La migración `Version20261005120000` convirtió los nombres de Tabler que ya existían.
 - `vite.config.ts` también configura `unplugin-icons` con prefijo `icon` (`<icon-material-symbols-home />`, `<icon-lucide-home />`), que compila el SVG en el bundle. Es una vía alternativa; **preferí `<icon name="..." />`**, que es la que entiende el resto del sistema (props de tamaño, nombres dinámicos desde la API).
 - PrimeVue trae sus propias clases `pi pi-*` en props `icon` de sus componentes (`<Button icon="pi pi-save" />`). Eso es aceptable dentro de PrimeVue; fuera de sus props, Material Symbols.

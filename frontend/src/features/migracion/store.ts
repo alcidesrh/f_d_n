@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { extractVueRoutes } from '@/app/routeSync'
 import { http } from '@/core/http'
 import type {
   EntidadMigracion,
@@ -113,7 +114,12 @@ export const useMigracionStore = defineStore('migracion', () => {
   }
 
   async function arrancarJob(payload: PayloadEjecutar): Promise<JobMigracion> {
-    const job = await http.post<JobMigracion>('/migracion/ejecutar', payload)
+    // Las rutas solo las conoce el router del frontend: viajan con el job.
+    const conRutas =
+      payload.tipo === 'rutas' || payload.tipo === 'todo'
+        ? { ...payload, rutas: extractVueRoutes() }
+        : payload
+    const job = await http.post<JobMigracion>('/migracion/ejecutar', conRutas)
     await refrescarEstado()
     return job
   }

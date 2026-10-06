@@ -4,72 +4,45 @@
  * Un uso concreto puede sobreescribirlos en su contenedor.
  */
 :root {
-  --bm-seat-a: color-mix(in srgb, var(--p-primary-color) 9%, var(--p-content-background));
-  --bm-seat-a-stroke: color-mix(in srgb, var(--p-primary-color) 58%, var(--p-content-background));
-  --bm-seat-a-ink: color-mix(in srgb, var(--p-primary-color) 72%, var(--p-text-color));
+  --bm-seat-a: color-mix(in srgb, var(--p-slate-500, #64748b) 18%, var(--p-content-background));
+  --bm-seat-a-stroke: color-mix(in srgb, var(--p-slate-500, #64748b) 55%, var(--p-content-background));
+  --bm-seat-a-ink: var(--p-slate-700, #334155);
 
-  --bm-seat-b: color-mix(in srgb, var(--p-amber-400, #fbbf24) 20%, var(--p-content-background));
-  --bm-seat-b-stroke: color-mix(
-    in srgb,
-    var(--p-amber-600, #d97706) 78%,
-    var(--p-content-background)
-  );
-  --bm-seat-b-ink: var(--p-amber-800, #92400e);
+  --bm-seat-b: color-mix(in srgb, var(--p-slate-500, #64748b) 18%, var(--p-content-background));
+  --bm-seat-b-stroke: color-mix(in srgb, var(--p-slate-500, #64748b) 55%, var(--p-content-background));
+  --bm-seat-b-ink: var(--p-slate-700, #334155);
 
   /*
    * Ocupados (venta, ADR-021/023): tonos claros que no chocan con los libres
-   * (A azul, B ámbar) ni entre sí. Estación = pizarra, página = verde
-   * azulado, agencia = violeta, cortesía = lima, voucher = rosa; la
+   * (A y B pizarra) ni entre sí. Estación = verde azulado, página = ámbar,
+   * agencia = naranja, cortesía = lima, voucher = rosa; la
    * preventa es un contorno naranja punteado (es temporal).
    */
-  --bm-occupied: color-mix(in srgb, var(--p-slate-500, #64748b) 18%, var(--p-content-background));
-  --bm-occupied-stroke: color-mix(
-    in srgb,
-    var(--p-slate-500, #64748b) 55%,
-    var(--p-content-background)
-  );
-  --bm-occupied-ink: var(--p-slate-700, #334155);
+  --bm-occupied: color-mix(in srgb, var(--p-emerald-500, #14b8a6) 22%, var(--p-content-background));
+  --bm-occupied-stroke: color-mix(in srgb, var(--p-emerald-600, #0d9488) 65%, var(--p-content-background));
+  --bm-occupied-ink: var(--p-emerald-800, #115e59);
 
-  --bm-sold-web: color-mix(in srgb, var(--p-teal-500, #14b8a6) 22%, var(--p-content-background));
-  --bm-sold-web-stroke: color-mix(
-    in srgb,
-    var(--p-teal-600, #0d9488) 65%,
-    var(--p-content-background)
-  );
-  --bm-sold-web-ink: var(--p-teal-800, #115e59);
-  --bm-sold-agency: color-mix(
-    in srgb,
-    var(--p-violet-500, #8b5cf6) 18%,
-    var(--p-content-background)
-  );
-  --bm-sold-agency-stroke: color-mix(
-    in srgb,
-    var(--p-violet-600, #7c3aed) 60%,
-    var(--p-content-background)
-  );
-  --bm-sold-agency-ink: var(--p-violet-800, #5b21b6);
+  --bm-sold-web: color-mix(in srgb, var(--p-amber-400, #fbbf24) 20%, var(--p-content-background));
+  --bm-sold-web-stroke: color-mix(in srgb, var(--p-amber-600, #d97706) 78%, var(--p-content-background));
+  --bm-sold-web-ink: var(--p-amber-800, #92400e);
+  --bm-sold-agency: color-mix(in srgb, var(--p-orange-500, #f97316) 30%, var(--p-content-background));
+  --bm-sold-agency-stroke: color-mix(in srgb, var(--p-orange-600, #ea580c) 80%, var(--p-content-background));
+  --bm-sold-agency-ink: var(--p-orange-800, #9a3412);
 
   --bm-courtesy: color-mix(in srgb, var(--p-lime-500, #84cc16) 26%, var(--p-content-background));
-  --bm-courtesy-stroke: color-mix(
-    in srgb,
-    var(--p-lime-600, #65a30d) 70%,
-    var(--p-content-background)
-  );
+  --bm-courtesy-stroke: color-mix(in srgb, var(--p-lime-600, #65a30d) 70%, var(--p-content-background));
   --bm-courtesy-ink: var(--p-lime-800, #3f6212);
-  --bm-voucher: color-mix(in srgb, var(--p-rose-400, #fb7185) 22%, var(--p-content-background));
-  --bm-voucher-stroke: color-mix(
-    in srgb,
-    var(--p-rose-500, #f43f5e) 60%,
-    var(--p-content-background)
-  );
-  --bm-voucher-ink: var(--p-rose-800, #9f1239);
+
+  /*--bm-voucher: color-mix(in srgb, var(--p-rose-400, #fb7185) 22%, var(--p-content-background));
+  --bm-voucher-stroke: color-mix(in srgb, var(--p-rose-500, #f43f5e) 60%, var(--p-content-background));
+  --bm-voucher-ink: var(--p-rose-800, #9f1239);*/
+
+  --bm-voucher: color-mix(in srgb, var(--p-neutral-200, #fb7185) 22%, var(--p-content-background));
+  --bm-voucher-stroke: color-mix(in srgb, var(--p-neutral-800, #f43f5e) 60%, var(--p-content-background));
+  --bm-voucher-ink: var(--p-neutral-800, #9f1239);
 
   --bm-reserved: var(--p-orange-500, #f97316);
-  --bm-reserved-soft: color-mix(
-    in srgb,
-    var(--p-orange-500, #f97316) 10%,
-    var(--p-content-background)
-  );
+  --bm-reserved-soft: color-mix(in srgb, var(--p-orange-500, #f97316) 10%, var(--p-content-background));
 
   --bm-driver: color-mix(in srgb, var(--p-text-color) 70%, var(--p-content-background));
   --bm-door: var(--p-teal-600, #0d9488);

@@ -5,13 +5,7 @@
   en horizontal (`rotacion`).
 -->
 <template>
-  <svg
-    viewBox="0 0 40 40"
-    class="seat"
-    :class="[`seat--${clase}`, `seat--${estado}`]"
-    aria-hidden="true"
-    focusable="false"
-  >
+  <svg viewBox="0 0 40 40" class="seat" :class="[`seat--${clase}`, `seat--${estado}`]" aria-hidden="true" focusable="false">
     <g :transform="rotacion ? `rotate(${rotacion} 20 20)` : undefined">
       <rect v-if="clase === 'B'" class="seat__rest" x="11" y="1.5" width="18" height="4" rx="2" />
       <rect class="seat__arm" x="2.5" y="11" width="5" height="21" rx="2.5" />
@@ -22,9 +16,9 @@
     </g>
     <text v-if="numero != null && conNumero" class="seat__num" x="20" y="20.5">{{ numero }}</text>
     <!-- Sin cobro: una letra además del color (no depender solo del color). -->
-    <g v-if="estado === 'cortesia' || estado === 'voucher'" class="seat__marca">
-      <circle cx="33" cy="7" r="6" />
-      <text x="33" y="7.3">{{ estado === 'cortesia' ? 'C' : 'V' }}</text>
+    <g v-if="estado === 'cortesia' || estado === 'voucher'" class="seat__marca" :class="[estado]">
+      <circle cx="33" cy="9" r="4" class="opascity-70" />
+      <!-- <text x="33" y="7.3">{{ estado === "cortesia" ? "C" : "V" }}</text> -->
     </g>
     <g v-if="estado === 'seleccionado'" class="seat__check">
       <circle cx="33" cy="7" r="6" />
@@ -34,20 +28,20 @@
 </template>
 
 <script setup lang="ts">
-import type { ClaseAsiento, EstadoAsiento } from '@/core/croquis/types'
+import type { ClaseAsiento, EstadoAsiento } from "@/core/croquis/types";
 
 withDefaults(
   defineProps<{
-    clase: ClaseAsiento
-    numero?: number | null
-    estado?: EstadoAsiento
+    clase: ClaseAsiento;
+    numero?: number | null;
+    estado?: EstadoAsiento;
     /** Grados; `-90` con el frente del bus a la izquierda. */
-    rotacion?: number
+    rotacion?: number;
     /** Oculta el número (miniaturas). */
-    conNumero?: boolean
+    conNumero?: boolean;
   }>(),
-  { numero: null, estado: 'disponible', rotacion: 0, conNumero: true },
-)
+  { numero: null, estado: "disponible", rotacion: 0, conNumero: true },
+);
 </script>
 
 <style scoped>
@@ -113,28 +107,36 @@ withDefaults(
   --seat-stroke: var(--bm-sold-agency-stroke);
   --seat-ink: var(--bm-sold-agency-ink);
 }
-.seat--cortesia {
-  --seat-fill: var(--bm-courtesy);
-  --seat-stroke: var(--bm-courtesy-stroke);
-  --seat-ink: var(--bm-courtesy-ink);
-}
+.seat--cortesia,
 .seat--voucher {
-  --seat-fill: var(--bm-voucher);
-  --seat-stroke: var(--bm-voucher-stroke);
-  --seat-ink: var(--bm-voucher-ink);
+  --seat-fill: var(--p-neutral-100);
+  --seat-stroke: var(--p-neutral-300);
+  --seat-ink: var(--p-neutral-500);
+  opacity: 0.8;
 }
-.seat__marca circle {
-  fill: var(--p-content-background);
-  stroke: var(--seat-stroke);
-  stroke-width: 1.2;
+.seat__marca {
+  & circle {
+    fill: var(--p-red-300);
+    stroke-width: 0;
+  }
+  &.cortesia circle {
+    fill: var(--p-blue-400);
+    stroke-width: 0;
+  }
 }
-.seat__marca text {
-  fill: var(--seat-ink);
-  font-size: 8px;
-  font-weight: 700;
-  text-anchor: middle;
-  dominant-baseline: central;
-  pointer-events: none;
+
+.seat__marca {
+  & text {
+    fill: var(--p-red-600);
+    font-size: 12px;
+    font-weight: 900;
+    text-anchor: middle;
+    dominant-baseline: central;
+    pointer-events: none;
+  }
+  &.cortesia text {
+    fill: var(--p-emerald-600);
+  }
 }
 .seat--seleccionado {
   --seat-fill: var(--p-primary-color);

@@ -23,7 +23,7 @@
   flex: 1;
   min-width: 0;
   overflow-y: auto;
-  background: white;
+  background: var(--p-surface-50);
   /*var(--p-surface-50);*/
   container-type: inline-size;
   container-name: main;

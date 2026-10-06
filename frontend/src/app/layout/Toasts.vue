@@ -62,16 +62,16 @@ const TONES: Record<ToastType, string> = {
 .toast-move {
   transition: transform 0.25s ease;
 }
-.toast.error svg {
+.toast.error .app-icon {
   color: var(--p-red-800);
 }
-.toast.warning svg {
+.toast.warning .app-icon {
   color: var(--p-amber-800);
 }
-.toast.success svg {
+.toast.success .app-icon {
   color: var(--p-emerald-800);
 }
-.toast.info svg {
+.toast.info .app-icon {
   color: var(--p-sky-800);
 }
 </style>

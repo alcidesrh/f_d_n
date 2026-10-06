@@ -57,7 +57,7 @@
           </p>
         </section>
 
-        <Divider align="center" class="">
+        <Divider align="center" type="dashed" class="before:border-surface-600!">
           <span class="text-surface-500 font-semibold">Programar salidas</span>
         </Divider>
 

@@ -7,7 +7,7 @@
   position: fixed;
   top: var(--header-h);
   bottom: 0;
-  background-color: var(--p-surface-50);
+  background-color: var(--bg);
   z-index: 100;
   width: min(var(--sb-open), 85vw);
   overflow-x: hidden;
@@ -21,13 +21,18 @@
   &.left {
     --sb-open: var(--sb-left-open);
     left: 0;
-    border-right: var(--border);
+    /*border-right: var(--border);*/
+    /*box-shadow: var(--shadow-inset);*/
+    /*box-shadow: 1.5px 0.5px 5px var(--p-surface-600);*/
     transform: translateX(-100%);
   }
 
   &.right {
     --sb-open: var(--sb-right-open);
-    border-left: var(--border);
+    /*border-left: var(--border);*/
+    /*box-shadow: -2.5px 3.5px 6px 2px var(--p-surface-400);*/
+    /*box-shadow: var(--shadow-inset);*/
+
     right: 0;
     transform: translateX(100%);
   }
@@ -84,13 +89,14 @@
   position: relative;
   /*z-index: 999;*/
   /*width: fit-content;*/
-  right: 0px;
+  /*right: 0px;*/
   margin-left: auto;
   display: flex;
   justify-content: end;
   align-items: center;
   min-height: 2rem;
-  padding: 0px 7px;
+  padding: 3px 7px;
+  padding-bottom: 0px;
   gap: 0px;
 
   & > * {
