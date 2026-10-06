@@ -13,6 +13,7 @@ import type {
   Comprobante,
   ContextoVenta,
   Cotizacion,
+  DetalleAsiento,
   ErrorVenta,
   EstadoAgencia,
   PedidoVenta,
@@ -45,6 +46,9 @@ export async function fetchOcupacion(
     })
   ).asientos
 }
+
+export const fetchDetalleAsiento = (salida: number, asiento: number) =>
+  http.get<DetalleAsiento>(`/venta/salidas/${salida}/asientos/${asiento}`, { silent: true })
 
 export const cotizar = (body: {
   salida: number

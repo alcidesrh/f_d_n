@@ -82,4 +82,17 @@ describe('BusMap', () => {
     })
     expect(wrapper.find('[data-celda="1:1:1"]').text()).toBe('n7')
   })
+
+  it('inspeccionable: un asiento ocupado emite `ocupado` y los libres no son botones', async () => {
+    const wrapper = mount(BusMap, {
+      props: { elementos, inspeccionable: true, estado: (a: AsientoCroquis) => (a.numero === 1 ? 'ocupado' : 'disponible') },
+    })
+    const ocupado = wrapper.find('[data-celda="1:2:1"]')
+    expect(ocupado.element.tagName).toBe('BUTTON')
+    expect(ocupado.attributes('disabled')).toBeUndefined()
+    expect(wrapper.find('[data-celda="1:2:2"]').element.tagName).toBe('DIV')
+    await ocupado.trigger('click')
+    expect(wrapper.emitted('ocupado')?.[0]?.[0]).toMatchObject({ numero: 1 })
+    expect(wrapper.emitted('asiento')).toBeUndefined()
+  })
 })

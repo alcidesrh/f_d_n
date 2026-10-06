@@ -18,25 +18,37 @@
         <template v-if="data.bus"
           >{{ data.bus.codigo }}<span v-if="data.bus.gama" class="text-xs text-muted-color"> · {{ data.bus.gama }}</span></template
         >
-        <Chip v-else label="Sin bus" class="chip-warn" />
+        <icon v-else name="no_transfer" class="text-surface-500" size="1.1rem" />
+        <!-- <Chip v-else label="Sin bus" class="chip-warn" /> -->
       </template>
     </Column>
     <Column header="Estado">
       <template #body="{ data }">
-        <div class="text-sm" v-text="data.estado" :class="[`chip-${data.estado}`]" />
+        <div class="text-sm tracking-wider estado" v-text="data.estado" />
       </template>
     </Column>
     <Column class="whitespace-nowrap">
       <template #header>
-        <icon name="airline_seat_recline_extra" classs="text-red-400" />
-        <span class="text-surface-400">|</span>
-        <icon name="tatami_seat" class="text-surface-500" size="1.1rem" :weight="300" />
+        <div class="flex">
+          <div class="w-[20px] text-center">
+            <icon name="airline_seat_recline_extra" class="text-emerald-600" />
+          </div>
+          <div class="w-[20px] mx-[5px] text-center">
+            <icon name="tatami_seat" class="text-neutral-500" size="1rem" :weight="300" />
+          </div>
+          <div class="w-[20px] text-center">
+            <icon name="tatami_seat" size="1rem" :weight="300" class="text-surface-800" />
+            <icon name="airline_seat_recline_extra" class="text-surface-800" />
+          </div>
+        </div>
       </template>
       <template #body="{ data }">
-        <div v-if="data.capacidad" class="m-auto">
-          <span>{{ data.vendidos ?? 0 }}</span>
-          <span class="mx-[9.5px] text-surface-400">|</span>
-          <span>{{ data.capacidad - data.vendidos }}</span>
+        <div v-if="data.capacidad" class="m-auto flex text-xs font-bold">
+          <div class="w-[20px] text-center text-emerald-600">{{ data.vendidos ?? 0 }}</div>
+          <div class="w-[20px] text-neutral-600 mx-[5px] text-center">{{ data.capacidad - data.vendidos }}</div>
+          <div class="w-[20px] text-center text-surface-800">
+            {{ data.capacidad }}
+          </div>
         </div>
       </template>
     </Column>
@@ -73,42 +85,12 @@ const vendible = (r: SalidaResumen) => ["programada", "abordando"].includes(r.es
     pointer-events: none;
   }
 }
-.chip-programada,
-.chip-cancelada,
-.chip-abordando,
-.chip-iniciada,
-.chip-warn {
-  font-weight: 800;
+.estado {
+  font-weight: 500;
   width: fit-content;
   font-size: 9.5px;
   padding: 4px 8px !important;
   border-radius: 5px;
   text-transform: uppercase;
-}
-.chip-cancelada,
-.chip-warn,
-.chip-anulada {
-  background: var(--p-orange-50);
-  color: var(--p-orange-800);
-}
-.chip-iniciada {
-  background: var(--p-green-50);
-  color: var(--p-green-800);
-}
-.chip-programada {
-  background: var(--p-blue-50);
-  color: var(--p-blue-800);
-}
-.chip-abordando {
-  background: var(--p-green-50);
-  color: var(--p-green-800);
-}
-:global(.darks) .chip-warn {
-  background: color-mix(in srgb, var(--p-orange-400) 20%, transparent);
-  color: var(--p-orange-300);
-}
-:global(.darks) .chip-success {
-  background: color-mix(in srgb, var(--p-green-400) 20%, transparent);
-  color: var(--p-green-300);
 }
 </style>

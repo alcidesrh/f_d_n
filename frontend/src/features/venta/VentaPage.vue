@@ -46,9 +46,6 @@
                 <estacion-select v-model="store.estacionId" :estaciones="estaciones" :propio="departamentoPropio" placeholder="Todas" @update:model-value="store.cargarSalidas()" />
               </label>
             </div>
-            <Divider align="center" class="before:border-surface-500!" type="dashed">
-              <span class="text-surface-500 font-semibold">Salidas encontradas</span>
-            </Divider>
 
             <SalidasLista :salidas="store.salidas" :cargando="store.cargandoSalidas" :salida-id="store.salidaId" @elegir="store.elegirSalida" />
           </section>
@@ -95,15 +92,20 @@
               <Skeleton height="20rem" />
             </template>
             <template v-else-if="store.detalle">
-              <div class="flex items-baseline justify-between gap-2">
+              <!-- <div class="flex items-baseline justify-between gap-2">
                 <div class="font-medium">{{ store.detalle.bus?.codigo ?? "Sin bus" }}</div>
                 <div class="text-sm text-muted-color">Libres {{ store.libres }}/{{ store.asientosCroquis.length }}</div>
-              </div>
-              <div class="overflow-x-auto">
-                <BusMap :elementos="store.detalle.croquis" :estado="store.estadoAsiento" interactivo tamano="md" class="justify-center" @asiento="(a) => a.id != null && store.alternarAsiento(a.id)" />
-              </div>
+              </div> -->
+
               <BusMapLegend :items="leyenda" />
-              <div class="flex items-baseline justify-between border-t border-surface pt-3">
+              <div class="overflow-x-auto mt-4">
+                <BusMap :elementos="store.detalle.croquis" :estado="store.estadoAsiento" interactivo inspeccionable tamano="md" class="justify-center" @asiento="(a) => a.id != null && store.alternarAsiento(a.id)" @ocupado="verOcupado" />
+                <AsientoOcupadoPopover ref="detalleAsiento" />
+              </div>
+              <Divider align="center" class="my-0! before:border-surface-400!" type="dashed">
+                <span class="text-xs font-bold text-surface-500">{{ store.libres }} / {{ store.asientosCroquis.length }}</span>
+              </Divider>
+              <div class="flex items-baseline justify-between">
                 <span class="text-muted-color">Total</span>
                 <span class="text-xl font-semibold tabular-nums">{{ store.cotizacion?.total.texto ?? "—" }}</span>
               </div>
@@ -134,6 +136,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
 import BusMap from "@/shared/bus-map/BusMap.vue";
+import type { AsientoCroquis } from "@/core/croquis/types";
+import AsientoOcupadoPopover from "@/shared/bus-map/AsientoOcupadoPopover.vue";
 import BusMapLegend, { type ItemLeyenda } from "@/shared/bus-map/BusMapLegend.vue";
 import { hora } from "@/core/venta/modelo";
 import type { Parada } from "@/core/venta/types";
@@ -149,11 +153,15 @@ import { imprimirTicket } from "./ticket";
 
 const store = useVentaStore();
 const { estaciones, departamentoPropio, cambioDeFuente } = useVentaLegado(store); // TEMPORAL-LEGADO
+const detalleAsiento = ref<InstanceType<typeof AsientoOcupadoPopover> | null>(null);
+const verOcupado = (a: AsientoCroquis, e: MouseEvent) => {
+  if (store.salidaId && a.id != null) void detalleAsiento.value?.abrir(e, store.salidaId, a.id);
+};
 const cobro = ref(false);
 const cortesia = ref(false);
 let ultimasOpciones: OpcionesCobro | null = null;
 
-const leyenda: ItemLeyenda[] = ["disponible", "B", "seleccionado", "ocupado", "ocupado-web", "ocupado-agencia", "reservado", "cortesia", "voucher"];
+const leyenda: ItemLeyenda[] = ["disponible", "seleccionado", "ocupado", "ocupado-web", "ocupado-agencia", "reservado", "cortesia", "voucher"];
 
 const opcionesParada = (paradas: Parada[]) =>
   paradas.map((p) => ({

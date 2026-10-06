@@ -82,6 +82,59 @@ export interface AsientoOcupado {
   sinCobro?: 'cortesia' | 'voucher' | null
 }
 
+/** Lo que hay detrás de un asiento ocupado (`GET /venta/salidas/{id}/asientos/{asiento}`). */
+export interface TrayectoAsiento {
+  id: number | null
+  origen: string
+  destino: string
+}
+
+export interface BoletoDeAsiento {
+  id: number
+  /** `false`: venta de otro vendedor; solo se ve lo operativo. */
+  completo: boolean
+  estado: string
+  trayecto: TrayectoAsiento
+  pasajero?: {
+    nombre: string
+    documento: string | null
+    tipoDocumento: string | null
+    nacionalidad: string | null
+    telefono: string | null
+    email: string | null
+  } | null
+  observacion?: string | null
+  precio?: Importe | null
+  venta: {
+    id: number
+    canal: CanalVenta
+    cortesia: boolean
+    voucher: boolean
+    creada?: string | null
+    vendedor?: string | null
+    estacion?: string | null
+    agencia?: string | null
+    tipoPago?: string | null
+    total?: Importe | null
+    referenciaPago?: string | null
+    comprador?: string | null
+    estadoFacturacion?: string
+    factura?: {
+      serie: string | null
+      numero: number | null
+      nit: string | null
+      nombre: string | null
+      urlPdf: string | null
+    } | null
+  }
+}
+
+export interface DetalleAsiento {
+  asiento: { id: number; numero: number; clase: 'A' | 'B' }
+  reserva: { creada: string; expiraEn: string; trayecto: TrayectoAsiento } | null
+  boletos: BoletoDeAsiento[]
+}
+
 export interface LineaCotizacion {
   asiento: number
   numero: number

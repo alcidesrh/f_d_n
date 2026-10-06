@@ -28,7 +28,8 @@
           <div v-if="!detalle.croquis.length" class="panel text-center text-sm text-muted-color">La salida no tiene bus con croquis.</div>
           <template v-else>
             <div class="overflow-x-auto">
-              <BusMap :elementos="detalle.croquis" :estado="estado" tamano="md" class="justify-center" />
+              <BusMap :elementos="detalle.croquis" :estado="estado" inspeccionable tamano="md" class="justify-center" @ocupado="verOcupado" />
+              <AsientoOcupadoPopover ref="detalleAsiento" />
             </div>
             <BusMapLegend :items="LEYENDA" />
           </template>
@@ -102,11 +103,13 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import AsientoOcupadoPopover from '@/shared/bus-map/AsientoOcupadoPopover.vue'
 import BusMap from '@/shared/bus-map/BusMap.vue'
 import BusMapLegend, { type ItemLeyenda } from '@/shared/bus-map/BusMapLegend.vue'
 import { etiquetaEstado } from '@/core/salida/filtro'
 import { fetchDetalle } from '@/core/salida/api'
 import type { DetalleSalida, SalidaFila, TipoManifiesto } from '@/core/salida/types'
+import type { AsientoCroquis } from '@/core/croquis/types'
 import { hora } from '@/core/venta/modelo'
 import { estadoEnMapa } from '@/core/venta/modelo'
 import { abrirManifiesto, MANIFIESTOS } from './manifiesto'
@@ -116,6 +119,10 @@ const LEYENDA: ItemLeyenda[] = ['disponible', 'B', 'ocupado', 'ocupado-web', 'oc
 const props = defineProps<{ salida: SalidaFila | null }>()
 const emit = defineEmits<{ cerrar: [] }>()
 
+const detalleAsiento = ref<InstanceType<typeof AsientoOcupadoPopover> | null>(null)
+const verOcupado = (a: AsientoCroquis, e: MouseEvent) => {
+  if (props.salida && a.id != null) void detalleAsiento.value?.abrir(e, props.salida.id, a.id)
+}
 const detalle = ref<DetalleSalida | null>(null)
 const error = ref('')
 const generando = ref<TipoManifiesto | null>(null)

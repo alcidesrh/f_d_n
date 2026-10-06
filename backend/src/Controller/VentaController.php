@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Entity\Asiento;
 use App\Entity\BoletoVenta;
 use App\Entity\Cliente;
 use App\Entity\Estacion;
@@ -18,6 +19,7 @@ use App\Venta\Boleto\Comprobantes;
 use App\Venta\Boleto\DatosBoleto;
 use App\Venta\Clientes;
 use App\Venta\ConsultaVenta;
+use App\Venta\DetalleAsiento;
 use App\Venta\Comprador;
 use App\Venta\Excepcion\VentaRechazada;
 use App\Venta\Facturacion\CertificacionFallida;
@@ -137,6 +139,26 @@ final class VentaController extends AbstractController
 
             return ["asientos" => $this->consulta->ocupacion($salida, $this->reglas->tramo($salida, $trayecto))];
         });
+    }
+
+    /**
+     * Detalle de un asiento ocupado del croquis (pasajero, venta, cobro,
+     * factura). Para quien vende o ve salidas; los datos de la venta solo si
+     * puede verla (la suya, la de su agencia, o con lectura de ventas).
+     */
+    #[Route("/salidas/{id<\d+>}/asientos/{asiento<\d+>}", name: "asiento", methods: ["GET"])]
+    public function asiento(Salida $salida, int $asiento, #[CurrentUser] Usuario $usuario, DetalleAsiento $detalle): JsonResponse
+    {
+        if (!$this->isGranted(self::VENDER) && !$this->isGranted(SalidaController::VER)) {
+            throw $this->createAccessDeniedException();
+        }
+        $entidad = $this->em->find(Asiento::class, $asiento);
+        if ($entidad === null) {
+            throw $this->createNotFoundException();
+        }
+        $todo = $this->isGranted(SalidaController::VER);
+
+        return $this->json($detalle->de($salida, $entidad, fn(BoletoVenta $v) => $todo || $this->puedeVer($v, $usuario)));
     }
 
     /** `{ salida, trayecto?, asientos: [id], cobrarTrayectoCompleto?, cortesia? }` → precio por asiento y total. */
@@ -267,16 +289,20 @@ final class VentaController extends AbstractController
     /** El vendedor, su agencia, o quien tenga permiso de lectura de ventas. */
     private function denyUnlessPuedeVer(BoletoVenta $venta, Usuario $usuario): void
     {
+        if (!$this->puedeVer($venta, $usuario)) {
+            throw $this->createAccessDeniedException();
+        }
+    }
+
+    private function puedeVer(BoletoVenta $venta, Usuario $usuario): bool
+    {
         $agencia = $usuario->getAgencia();
         if ($agencia !== null) {
-            if ($venta->getAgencia()?->getId() !== $agencia->getId()) {
-                throw $this->createAccessDeniedException();
-            }
+            return $venta->getAgencia()?->getId() === $agencia->getId();
+        }
 
-            return;
-        }
-        if ($venta->getUsuario()?->getId() !== $usuario->getId() && !$this->isGranted("ROLE_ADMIN")) {
-            $this->denyAccessUnlessGranted("read", BoletoVenta::class);
-        }
+        return $venta->getUsuario()?->getId() === $usuario->getId()
+            || $this->isGranted("ROLE_ADMIN")
+            || $this->isGranted("read", BoletoVenta::class);
     }
 }

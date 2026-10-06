@@ -110,17 +110,17 @@ withDefaults(
 .seat--cortesia,
 .seat--voucher {
   --seat-fill: var(--p-neutral-100);
-  --seat-stroke: var(--p-neutral-300);
+  --seat-stroke: var(--p-neutral-400);
   --seat-ink: var(--p-neutral-500);
-  opacity: 0.8;
+  opacity: 0.6;
 }
 .seat__marca {
   & circle {
-    fill: var(--p-red-300);
+    fill: var(--p-red-500);
     stroke-width: 0;
   }
   &.cortesia circle {
-    fill: var(--p-blue-400);
+    fill: var(--p-blue-600);
     stroke-width: 0;
   }
 }

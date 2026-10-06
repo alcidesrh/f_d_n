@@ -4,7 +4,8 @@
 
   - edición del bus: `celdas-vacias` + slot `celda` (el editor pinta cada celda);
   - ocupación de un salida: `estado` (ocupado/disponible por asiento);
-  - selección de asientos (taquilla, venta en línea): `interactivo` + `@asiento`.
+  - selección de asientos (taquilla, venta en línea): `interactivo` + `@asiento`;
+  - detalle de un asiento ocupado (solo personal): `inspeccionable` + `@ocupado`.
 
   El croquis no sabe de ventas: el estado de cada asiento lo da quien lo usa.
 -->
@@ -47,7 +48,7 @@
             :data-fila="celda.fila"
             :data-columna="celda.columna"
             v-bind="atributosCelda(celda.elemento)"
-            @click="onClick(celda)"
+            @click="onClick(celda, $event)"
           >
             <slot name="celda" v-bind="celda">
               <SeatGlyph
@@ -115,6 +116,8 @@ const props = withDefaults(
     estado?: (asiento: AsientoCroquis) => EstadoAsiento | undefined
     /** Asientos como botones (`@asiento`); los ocupados/reservados/bloqueados quedan deshabilitados. */
     interactivo?: boolean
+    /** Los asientos ocupados/reservados son botones que emiten `@ocupado` (detalle para el personal). */
+    inspeccionable?: boolean
     /** Pinta también las celdas vacías (editor). */
     celdasVacias?: boolean
     /** Cabecera por planta; por defecto solo si hay más de una. */
@@ -127,6 +130,7 @@ const props = withDefaults(
     tamano: 'md',
     estado: undefined,
     interactivo: false,
+    inspeccionable: false,
     celdasVacias: false,
     etiquetas: undefined,
   },
@@ -135,6 +139,7 @@ const props = withDefaults(
 const emit = defineEmits<{
   asiento: [asiento: AsientoCroquis]
   celda: [celda: CeldaMapa]
+  ocupado: [asiento: AsientoCroquis, evento: MouseEvent]
 }>()
 
 const plantasVisibles = computed(() => props.plantas ?? plantasDe(props.elementos))
@@ -219,8 +224,15 @@ const estadoDe = (a: AsientoCroquis): EstadoAsiento => props.estado?.(a) ?? 'dis
 
 const noSeleccionable = (a: AsientoCroquis) => ESTADOS_NO_SELECCIONABLES.includes(estadoDe(a))
 
+/** Con alguien dentro (vendido, reservado, cortesía…): no libre, ni elegido, ni bloqueado. */
+const esOcupado = (a: AsientoCroquis) =>
+  !['disponible', 'seleccionado', 'bloqueado'].includes(estadoDe(a))
+
 const esBoton = (e: ElementoCroquis | null): e is AsientoCroquis =>
-  props.interactivo && !!e && esAsiento(e)
+  !!e && esAsiento(e) && (props.interactivo || (props.inspeccionable && esOcupado(e)))
+
+/** Un ocupado se abre (detalle) en vez de deshabilitarse. */
+const seInspecciona = (a: AsientoCroquis) => props.inspeccionable && esOcupado(a)
 
 const ETIQUETA_ESTADO: Record<EstadoAsiento, string> = {
   disponible: 'disponible',
@@ -245,7 +257,7 @@ function atributosCelda(e: ElementoCroquis | null) {
   if (esBoton(e)) {
     return {
       type: 'button',
-      disabled: noSeleccionable(e),
+      disabled: noSeleccionable(e) && !seInspecciona(e),
       'aria-pressed': estadoDe(e) === 'seleccionado',
       'aria-label': etiqueta(e),
       title: etiqueta(e),
@@ -259,9 +271,12 @@ function claseCelda(e: ElementoCroquis | null) {
   return [`bm-cell--${e.tipo}`, esBoton(e) ? 'bm-cell--boton' : '']
 }
 
-function onClick(celda: CeldaMapa) {
+function onClick(celda: CeldaMapa, evento: MouseEvent) {
   emit('celda', celda)
-  if (esBoton(celda.elemento) && !noSeleccionable(celda.elemento)) emit('asiento', celda.elemento)
+  const e = celda.elemento
+  if (!esBoton(e)) return
+  if (seInspecciona(e)) emit('ocupado', e, evento)
+  else if (!noSeleccionable(e)) emit('asiento', e)
 }
 </script>
 
