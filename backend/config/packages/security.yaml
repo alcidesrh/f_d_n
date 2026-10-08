@@ -75,6 +75,8 @@ security:
         # Página web pública y su API (venta en línea, ADR-021).
         - { path: "^/api/publico/", roles: PUBLIC_ACCESS }
         - { path: "^/pagina", roles: PUBLIC_ACCESS }
+        # Archivos del chat: URL firmada que vence (App\Chat\Archivos), sin Bearer.
+        - { path: '^/api/chat/archivos/\d+/[0-9a-f]{32}$', roles: PUBLIC_ACCESS }
         - { path: "^/", roles: ROLE_USER }
 
 when@test:

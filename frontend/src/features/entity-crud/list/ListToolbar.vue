@@ -5,6 +5,9 @@
     <button type="button" class="tap-target" aria-label="Modo selección" @click="emit('toggle-selection')">
       <icon name="check-box-outline" :class="{ 'text-primary': selectionMode }" />
     </button>
+    <button v-if="selectionMode && selectedCount > 0" type="button" class="tap-target flex items-center gap-1.5 text-sm text-primary" :aria-label="`Enviar ${selectedCount} por chat`" v-tooltip.bottom="'Enviar por chat'" @click="emit('share')">
+      <icon name="forum-outline" class="text-primary" />{{ selectedCount }}
+    </button>
     <OverlayBadge v-if="hiddenColumns.length > 0" :value="String(hiddenColumns.length)" severity="primary" size="small">
       <button type="button" class="tap-target" :aria-label="`${hiddenColumns.length} columnas ocultas`" @click="popover?.toggle($event)">
         <icon name="visibility-off-outline" />
@@ -45,6 +48,8 @@ defineProps<{
 
 const emit = defineEmits<{
   "toggle-selection": [];
+  /** Enviar los seleccionados por el chat interno. */
+  share: [];
   restore: [field: string];
   reset: [];
   configure: [];

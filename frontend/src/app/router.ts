@@ -139,6 +139,16 @@ export const router = createRouter({
       },
     },
     {
+      path: '/chat/:canal(\\d+)?',
+      name: 'chat',
+      component: () => import('@/features/chat/ChatPage.vue'),
+      meta: {
+        title: 'Mensajes',
+        label: 'Mensajes',
+        icon: 'forum-outline',
+      },
+    },
+    {
       path: '/lista/:entity',
       name: 'entity-list',
       props: true,

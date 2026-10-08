@@ -104,7 +104,7 @@ import { abrirManifiesto, MANIFIESTOS } from './manifiesto'
 
 const LEYENDA: ItemLeyenda[] = ['disponible', 'B', 'ocupado', 'ocupado-web', 'ocupado-agencia', 'reservado', 'cortesia', 'voucher']
 
-const props = defineProps<{ salida: SalidaFila | null }>()
+const props = defineProps<{ salida: Pick<SalidaFila, 'id'> | null }>()
 const emit = defineEmits<{ cerrar: [] }>()
 
 const detalleAsiento = ref<InstanceType<typeof AsientoOcupadoPopover> | null>(null)

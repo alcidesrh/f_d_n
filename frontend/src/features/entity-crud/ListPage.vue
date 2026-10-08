@@ -1,6 +1,6 @@
 <template>
   <div v-if="store" class="card flex flex-col" style="min-height: 400px">
-    <ListToolbar :selection-mode="selectionMode" :selected-count="selection.length" :hidden-columns="hiddenColumns" :configurable="configurable" @configure="emit('configure')" @toggle-selection="toggleSelection" @restore="(field) => setColumnVisible(field, true)" @reset="resetView" />
+    <ListToolbar :selection-mode="selectionMode" :selected-count="selection.length" :hidden-columns="hiddenColumns" :configurable="configurable" @configure="emit('configure')" @toggle-selection="toggleSelection" @share="compartir = true" @restore="(field) => setColumnVisible(field, true)" @reset="resetView" />
     <DataTable v-model:selection="selection" :value="visibleItems" :loading="loading.loading" row-key="id" scrollable scroll-height="800px" reorderable-columns :edit-mode="canEdit ? 'cell' : undefined" @column-reorder="onColumnReorder" @cell-edit-complete="onCellEditComplete">
       <Column v-for="col in visibleColumns" :key="col.field" :field="col.field">
         <template #header>
@@ -41,6 +41,7 @@
       </Column>
     </DataTable>
     <ListFooter :pagination="store.pagination" :count="store.items.length" :local-filter="hasLocalFilter" @page="onPage" />
+    <EnviarPorChatDialog v-model:visible="compartir" :referencias="referencias" @enviado="toggleSelection" />
   </div>
 
   <div v-else class="card flex items-center justify-center py-12">
@@ -66,6 +67,7 @@ import { entityNameFromSlug } from "@/core/entities/slug";
 import type { CollectionFieldConfig, EntityStore } from "@/core/entities/types";
 import { useLoadingStore } from "@/core/loading";
 import { notify } from "@/core/notify";
+import EnviarPorChatDialog from "@/shared/chat/EnviarPorChatDialog.vue";
 import ListActions from "./list/ListActions.vue";
 import ListCell from "./list/ListCell.vue";
 import ListCellEditor from "./list/ListCellEditor.vue";
@@ -143,6 +145,16 @@ function toggleSelection() {
   selectionMode.value = !selectionMode.value;
   selection.value = [];
 }
+
+// Enviar por chat -----------------------------------------------------------
+const compartir = ref(false);
+/** Los seleccionados como referencias `{ tipo, id }` (el id numérico, no el IRI). */
+const referencias = computed(() =>
+  selection.value
+    .map((item) => Number(idDisplay((item as { id?: unknown }).id)))
+    .filter((id) => Number.isInteger(id) && id > 0)
+    .map((id) => ({ tipo: entityName.value, id })),
+);
 
 // Edición en línea --------------------------------------------------------
 const canEdit = computed(() => Boolean(store.value?.metadata.update));

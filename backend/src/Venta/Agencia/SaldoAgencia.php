@@ -12,7 +12,9 @@ use App\Entity\Usuario;
 use App\Venta\Excepcion\SaldoInsuficiente;
 use App\Venta\Excepcion\VentaRechazada;
 use Doctrine\DBAL\LockMode;
+use App\Venta\Transaccion;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Money\Money;
 
 /**
@@ -24,6 +26,8 @@ final class SaldoAgencia
 {
     public function __construct(
         private readonly EntityManagerInterface $em,
+        private readonly Transaccion $transaccion,
+        private readonly EventDispatcherInterface $eventos,
     ) {}
 
     /**
@@ -82,6 +86,8 @@ final class SaldoAgencia
             );
         }
 
+        $this->avisar($agencia, SaldoAcreditado::DEPOSITO, $centavos, $bono, $referencia, $observacion);
+
         return $movimientos;
     }
 
@@ -96,7 +102,17 @@ final class SaldoAgencia
             throw new VentaRechazada("El ajuste dejaría el saldo de la agencia en negativo.");
         }
 
-        return $this->mover($agencia, TipoMovimientoAgencia::AJUSTE, $centavos, $usuario, null, null, $observacion);
+        $movimiento = $this->mover($agencia, TipoMovimientoAgencia::AJUSTE, $centavos, $usuario, null, null, $observacion);
+        $this->avisar($agencia, SaldoAcreditado::AJUSTE, $centavos, 0, null, $observacion);
+
+        return $movimiento;
+    }
+
+    /** El aviso sale solo si la operación se confirma. */
+    private function avisar(Agencia $agencia, string $tipo, int $importe, int $bono, ?string $referencia, ?string $observacion): void
+    {
+        $evento = new SaldoAcreditado((int) $agencia->getId(), $tipo, $importe, $bono, $agencia->getSaldo(), $agencia->getMoneda(), $referencia, $observacion);
+        $this->transaccion->despuesDeConfirmar(fn() => $this->eventos->dispatch($evento));
     }
 
     /** Bonificación en centavos (redondeo hacia abajo: nunca se regala de más). */

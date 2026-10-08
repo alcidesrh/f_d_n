@@ -23,6 +23,7 @@
       </Sidebar>
       <SidebarRight v-else />
     </div>
+    <ChatAviso />
   </div>
 </template>
 
@@ -31,6 +32,8 @@ import { defineAsyncComponent } from 'vue'
 import { useUiStore } from '@/app/ui'
 import { useSessionStore } from '@/core/auth/session'
 import { useUserMenusStore } from '@/core/navigation/userMenus'
+import { useChatStore } from '@/core/chat/store'
+import ChatAviso from '@/features/chat/ChatAviso.vue'
 import AppHeader from './AppHeader.vue'
 import NavArea from './navigation/NavArea.vue'
 import Sidebar from './Sidebar.vue'
@@ -41,13 +44,20 @@ import { defineSidebarStore } from './sidebarStore'
 const route = useRoute()
 const session = useSessionStore()
 const userMenus = useUserMenusStore()
+const chat = useChatStore()
 
-// Menús del usuario: se cargan al entrar al shell y al cambiar de usuario.
+// Menús y chat del usuario: se cargan al entrar al shell y al cambiar de usuario.
 watch(
   () => session.user,
-  (user) => (user ? void userMenus.load() : userMenus.clear()),
+  (user) => {
+    chat.detener()
+    if (!user) return userMenus.clear()
+    void userMenus.load()
+    void chat.iniciar()
+  },
   { immediate: true },
 )
+onBeforeUnmount(() => chat.detener())
 
 /** Panel propio de la ruta (`meta.panel`), con su propio store de ancho/modo. */
 const panel = computed(() =>

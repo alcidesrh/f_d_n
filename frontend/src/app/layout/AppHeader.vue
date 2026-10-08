@@ -49,6 +49,10 @@
         <button class="icon-btn header-fullscreen" title="Pantalla completa" aria-label="Pantalla completa" @click="toggleFullscreen" :class="{ 'active-state': openPopover === 'fullscreen' }">
           <icon name="fullscreen" />
         </button>
+        <router-link :to="{ name: 'chat' }" class="icon-btn header-chat" :aria-label="chat.noLeidos ? `Mensajes, ${chat.noLeidos} sin leer` : 'Mensajes'" v-tooltip.bottom="'Mensajes'">
+          <icon name="forum-outline" />
+          <span v-if="chat.noLeidos" class="header-chat__badge">{{ chat.noLeidos > 99 ? "99+" : chat.noLeidos }}</span>
+        </router-link>
         <div style="position: relative">
           <button class="icon-btn" title="Notificaciones" aria-label="Notificaciones" @click.stop="toggle('notif')">
             <icon name="notifications-outline" />
@@ -86,6 +90,7 @@ import { useDialog } from "primevue/usedialog";
 import { router } from "@/app/router";
 import { useUiStore } from "@/app/ui";
 import { useSessionStore } from "@/core/auth/session";
+import { useChatStore } from "@/core/chat/store";
 import { useNavigationHistoryStore } from "./navigationHistory";
 import { defineSidebarStore, type SidebarStore } from "./sidebarStore";
 import ThemeEditor from "./ThemeEditor.vue";
@@ -94,6 +99,7 @@ import ThemeEditor from "./ThemeEditor.vue";
 defineProps<{ rightSidebar: SidebarStore }>();
 
 const session = useSessionStore();
+const chat = useChatStore();
 const ui = useUiStore();
 
 const dialog = useDialog();

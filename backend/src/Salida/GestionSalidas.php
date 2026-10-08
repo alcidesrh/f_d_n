@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Salida;
 
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use App\Entity\Enum\EstadoSalida;
 use App\Entity\Salida;
 use App\Entity\Trayecto;
@@ -35,6 +36,7 @@ final class GestionSalidas
         private readonly AgendaFlota $agendas,
         private readonly Esquemas $esquemas,
         private readonly Transaccion $transaccion,
+        private readonly EventDispatcherInterface $eventos,
     ) {}
 
     /**
@@ -117,11 +119,17 @@ final class GestionSalidas
             [$salida, $objetivos] = $this->bloquear($id, $propagar);
             $this->exigirProgramada($salida, "anular");
 
-            return $this->aplicar($objetivos, static function (Salida $s): ?array {
+            $resultado = $this->aplicar($objetivos, static function (Salida $s): ?array {
                 $s->setEstado(EstadoSalida::CANCELADA);
 
                 return null;
             });
+            $ids = array_values(array_filter(array_map(static fn(array $r) => $r["id"] ?? null, $resultado["aplicadas"])));
+            if ($ids !== []) {
+                $this->transaccion->despuesDeConfirmar(fn() => $this->eventos->dispatch(new SalidasAnuladas($ids)));
+            }
+
+            return $resultado;
         });
     }
 

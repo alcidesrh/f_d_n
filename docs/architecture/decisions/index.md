@@ -29,3 +29,4 @@
 | [ADR-023](ADR-023-pagina-web-compra-en-una-pagina.md) | Página web: compra en una sola página, ida y vuelta, recargo, idiomas y SEO | Aceptada |
 | [ADR-024](ADR-024-gestion-de-salidas.md) | Gestión de salidas: programador, esquemas guardados y editar/anular/eliminar con propagación | Aceptada |
 | [ADR-025](ADR-025-seguimiento-de-buses-en-recorrido.md) | Seguimiento de buses en recorrido: mapa en tiempo real con GPS simulado desde el legado | Aceptada |
+| [ADR-026](ADR-026-chat-interno.md) | Chat interno: conversaciones, registros compartidos como tarjetas vivas y avisos privados por Mercure | Aceptada |
