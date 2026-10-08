@@ -1,49 +1,69 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller;
 
+use App\Entity\ApiToken;
 use App\Entity\Usuario;
-use App\Repository\UsuarioRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
+/**
+ * Cambio de contraseña de un usuario desde la lista de usuarios, con permiso
+ * `usuario.editar`. Si el usuario no es quien hace el cambio, se le cierran
+ * las sesiones abiertas (sus tokens dejan de servir).
+ */
 #[AsController]
-class CambiarPasswordController extends AbstractController {
+final class CambiarPasswordController extends AbstractController
+{
+    public const EDITAR = 'usuario.editar';
+    public const MINIMO = 6;
 
     public function __construct(
-        private UsuarioRepository $usuarioRepository,
-        private EntityManagerInterface $entityManager,
-        private UserPasswordHasherInterface $passwordHasher,
-    ) {
-    }
+        private readonly EntityManagerInterface $em,
+        private readonly UserPasswordHasherInterface $passwordHasher,
+    ) {}
 
-    #[Route('/api/change-password', name: 'api_change_password', methods: ['POST'])]
-    public function __invoke(Request $request): JsonResponse {
-        $data = json_decode($request->getContent(), true);
+    /** `{ password }` */
+    #[Route('/api/usuarios/{id<\d+>}/password', name: 'api_usuario_password', methods: ['POST'])]
+    public function __invoke(Usuario $usuario, Request $request, #[CurrentUser] Usuario $actual): JsonResponse
+    {
+        $this->denyAccessUnlessGranted(self::EDITAR);
 
-        $username = $data['username'] ?? null;
-        $password = $data['password'] ?? null;
-
-        if (!$username || !$password) {
-            return $this->json(['error' => 'Faltan campos requeridos: username, password'], 400);
+        $password = $request->toArray()['password'] ?? null;
+        if (!is_string($password) || mb_strlen($password) < self::MINIMO) {
+            return $this->json(
+                ['error' => sprintf('La contraseña debe tener al menos %d caracteres.', self::MINIMO)],
+                Response::HTTP_UNPROCESSABLE_ENTITY,
+            );
         }
 
-        $user = $this->usuarioRepository->findOneBy(['username' => $username]);
+        $usuario->setPassword($this->passwordHasher->hashPassword($usuario, $password));
 
-        if (!$user) {
-            return $this->json(['error' => 'Usuario no encontrado'], 404);
+        $sesionesCerradas = 0;
+        if ($usuario->getId() !== $actual->getId()) {
+            $sesionesCerradas = $this->em->createQueryBuilder()
+                ->update(ApiToken::class, 't')
+                ->set('t.activo', ':no')
+                ->where('t.usuario = :usuario')
+                ->andWhere('t.activo = :si')
+                ->setParameter('no', false)
+                ->setParameter('si', true)
+                ->setParameter('usuario', $usuario)
+                ->getQuery()
+                ->execute();
         }
 
-        $hashedPassword = $this->passwordHasher->hashPassword($user, $password);
-        $user->setPassword($hashedPassword);
+        $this->em->flush();
 
-        $this->entityManager->flush();
-
-        return $this->json(['success' => true]);
+        return $this->json(['ok' => true, 'sesionesCerradas' => $sesionesCerradas]);
     }
 }

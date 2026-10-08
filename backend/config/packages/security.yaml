@@ -67,7 +67,6 @@ security:
         # - { path: "^/docs", roles: PUBLIC_ACCESS }
         # - { path: "^/login*", roles: PUBLIC_ACCESS }
         # # - { path: "^/login$", roles: PUBLIC_ACCESS }
-        # - { path: "^/api/change-password", roles: ROLE_ADMIN }
         # - { path: "^/api/me/permissions", roles: ROLE_USER }
         # - { path: "^/api$", roles: PUBLIC_ACCESS }
         # - { path: "^/api/", roles: ROLE_USER }

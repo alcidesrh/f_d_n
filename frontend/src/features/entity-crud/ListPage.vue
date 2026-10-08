@@ -36,12 +36,13 @@
       </Column>
       <Column align-frozen="right" frozen header-class="col-actions" body-class="col-actions" :exportable="false" :reorderable-column="false" :selection-mode="selectionMode ? 'multiple' : undefined">
         <template v-if="!selectionMode" #body="{ data }">
-          <ListActions :item="data" @edit="onEdit" @delete="askDelete" />
+          <ListActions :item="data" :actions="extraActions" @edit="onEdit" @delete="askDelete" @action="openAction" />
         </template>
       </Column>
     </DataTable>
     <ListFooter :pagination="store.pagination" :count="store.items.length" :local-filter="hasLocalFilter" @page="onPage" />
     <EnviarPorChatDialog v-model:visible="compartir" :referencias="referencias" @enviado="toggleSelection" />
+    <component :is="activeAction.component" v-if="activeAction" v-model:visible="actionVisible" :item="activeAction.item" @after-hide="activeAction = null" />
   </div>
 
   <div v-else class="card flex items-center justify-center py-12">
@@ -57,7 +58,7 @@
  * línea, selección múltiple y borrado. El estado persiste en el store de la
  * entidad; los filtros viven en `useListFilters`.
  */
-import { computed, ref, watch } from "vue";
+import { computed, defineAsyncComponent, ref, shallowRef, watch, type Component } from "vue";
 import { useConfirm } from "primevue/useconfirm";
 import type { DataTableCellEditCompleteEvent, DataTableColumnReorderEvent } from "primevue/datatable";
 import { router } from "@/app/router";
@@ -69,6 +70,7 @@ import { useLoadingStore } from "@/core/loading";
 import { notify } from "@/core/notify";
 import EnviarPorChatDialog from "@/shared/chat/EnviarPorChatDialog.vue";
 import ListActions from "./list/ListActions.vue";
+import { entityListActions, type EntityListAction } from "./list/listActions";
 import ListCell from "./list/ListCell.vue";
 import ListCellEditor from "./list/ListCellEditor.vue";
 import ListFooter from "./list/ListFooter.vue";
@@ -135,6 +137,16 @@ function onPage({ page, rows }: { page: number; rows: number }) {
   current.pagination.currentPage = page;
   current.pagination.itemsPerPage = rows;
   void current.fetchItems();
+}
+
+// Acciones extra por fila (`listActions`) ----------------------------------
+const extraActions = computed(() => entityListActions[entityName.value] ?? []);
+const activeAction = shallowRef<{ component: Component; item: unknown } | null>(null);
+const actionVisible = ref(false);
+
+function openAction(action: EntityListAction, item: unknown) {
+  activeAction.value = { component: defineAsyncComponent(action.component), item };
+  actionVisible.value = true;
 }
 
 // Selección ---------------------------------------------------------------
