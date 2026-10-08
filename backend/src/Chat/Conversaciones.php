@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Chat;
 
 use App\Chat\Tarjeta\Tarjetas;
+use App\Cuenta\FotoPerfil;
 use App\Entity\ChatArchivo;
 use App\Entity\ChatCanal;
 use App\Entity\ChatMensaje;
@@ -29,7 +30,13 @@ final class Conversaciones
         private readonly Tarjetas $tarjetas,
         private readonly AvisosChat $avisos,
         private readonly Archivos $archivos,
+        private readonly FotoPerfil $fotos,
     ) {}
+
+    private function perfil(Usuario $u): Perfil
+    {
+        return Perfil::de($u, $this->fotos);
+    }
 
     /** @return list<array<string, mixed>> con quién puede hablar `$yo`, por nombre */
     public function contactos(Usuario $yo): array
@@ -37,9 +44,9 @@ final class Conversaciones
         $usuarios = $this->em->createQuery(
             "SELECT u, a, e, emp FROM App\Entity\Usuario u LEFT JOIN u.agencia a LEFT JOIN u.estacion e LEFT JOIN u.empresa emp WHERE u.id != :yo",
         )->setParameter("yo", $yo->getId())->getResult();
-        $mio = Perfil::de($yo);
+        $mio = $this->perfil($yo);
         $perfiles = array_values(array_filter(
-            array_map(Perfil::de(...), $usuarios),
+            array_map($this->perfil(...), $usuarios),
             static fn(Perfil $p) => Directorio::puedenConversar($mio, $p),
         ));
         usort($perfiles, static fn(Perfil $a, Perfil $b) => strcasecmp($a->nombre, $b->nombre));
@@ -55,7 +62,7 @@ final class Conversaciones
             "SELECT c, m, u FROM App\Entity\ChatCanal c JOIN c.miembros yo WITH yo.usuario = :yo JOIN c.miembros m JOIN m.usuario u ORDER BY c.actividad DESC",
         )->setParameter("yo", $yo->getId())->getResult();
         if ($canales === []) {
-            return ["yo" => Perfil::de($yo)->aArray(), "canales" => []];
+            return ["yo" => $this->perfil($yo)->aArray(), "canales" => []];
         }
 
         $noLeidos = [];
@@ -77,7 +84,7 @@ final class Conversaciones
         }
 
         return [
-            "yo" => Perfil::de($yo)->aArray(),
+            "yo" => $this->perfil($yo)->aArray(),
             "canales" => array_map(fn(ChatCanal $c) => $this->canalArray(
                 $c,
                 $yo,
@@ -118,7 +125,7 @@ final class Conversaciones
         if ($usuarios === []) {
             throw new ChatRechazado("Agregue al menos una persona al grupo.");
         }
-        $par = Directorio::parIncompatible(array_map(Perfil::de(...), [$yo, ...$usuarios]));
+        $par = Directorio::parIncompatible(array_map($this->perfil(...), [$yo, ...$usuarios]));
         if ($par !== null) {
             throw new ChatRechazado(sprintf("%s y %s no pueden estar en el mismo grupo.", $par[0]->nombre, $par[1]->nombre));
         }
@@ -292,7 +299,7 @@ final class Conversaciones
             [
                 "canal" => $m->getCanal()->getId(),
                 "mensaje" => $m->getId(),
-                "autor" => $autor ? Perfil::de($autor)->aArray() : null,
+                "autor" => $autor ? $this->perfil($autor)->aArray() : null,
                 "extracto" => self::extracto($m),
             ],
         );
@@ -320,7 +327,7 @@ final class Conversaciones
 
     private function exigirDirectorio(Usuario $yo, ?Usuario $otro): void
     {
-        if ($otro === null || !Directorio::puedenConversar(Perfil::de($yo), Perfil::de($otro))) {
+        if ($otro === null || !Directorio::puedenConversar($this->perfil($yo), $this->perfil($otro))) {
             throw new ChatRechazado("No puede conversar con este usuario.", 403);
         }
     }
@@ -355,7 +362,7 @@ final class Conversaciones
     /** @return array<string, mixed> */
     private function canalArray(ChatCanal $c, Usuario $yo, int $noLeidos = 0, ?ChatMensaje $ultimo = null): array
     {
-        $miembros = array_map(static fn(ChatMiembro $m) => Perfil::de($m->getUsuario())->aArray(), $c->getMiembros()->toArray());
+        $miembros = array_map(fn(ChatMiembro $m) => $this->perfil($m->getUsuario())->aArray(), $c->getMiembros()->toArray());
         $otros = array_values(array_filter($miembros, static fn(array $p) => $p["id"] !== $yo->getId()));
         $directo = $c->getTipo() === TipoCanalChat::Directo;
 
@@ -399,14 +406,14 @@ final class Conversaciones
         return array_map(fn(ChatMensaje $m, int $i) => [
             "id" => $m->getId(),
             "canal" => $m->getCanal()->getId(),
-            "autor" => $m->getAutor() ? Perfil::de($m->getAutor())->aArray() : null,
+            "autor" => $m->getAutor() ? $this->perfil($m->getAutor())->aArray() : null,
             "texto" => $m->getTexto(),
             "fecha" => $m->getCreadoEn()->format(DATE_ATOM),
             "adjuntos" => $tarjetas[$i],
             "archivos" => array_map($this->archivos->presentar(...), $m->getArchivos()->toArray()),
             "respuesta" => ($r = $m->getRespuestaA()) ? [
                 "id" => $r->getId(),
-                "autor" => $r->getAutor() ? Perfil::de($r->getAutor())->nombre : "Sistema",
+                "autor" => $r->getAutor() ? $this->perfil($r->getAutor())->nombre : "Sistema",
                 "extracto" => self::extracto($r),
             ] : null,
         ], $mensajes, array_keys($mensajes));

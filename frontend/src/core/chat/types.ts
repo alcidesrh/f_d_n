@@ -8,6 +8,8 @@ export interface Perfil {
   ambito: Ambito
   /** Estación, agencia o empresa. */
   lugar: string | null
+  /** Foto de perfil (ruta firmada de la API) o null. */
+  foto?: string | null
 }
 
 export interface Canal {

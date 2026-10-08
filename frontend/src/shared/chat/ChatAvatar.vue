@@ -6,7 +6,7 @@
 -->
 <template>
   <span class="chat-avatar" :class="[`chat-avatar--${tamano}`, { 'chat-avatar--sistema': sistema }]" :style="{ '--tono': tono(id) * 45 }" :aria-hidden="true">
-    <img v-if="foto && !fallo" :src="foto" alt="" class="chat-avatar__foto" @error="fallo = true" />
+    <img v-if="src && !fallo" :src="src" alt="" class="chat-avatar__foto" @error="fallo = true" />
     <icon v-else-if="sistema" name="notifications-outline" color="text-current" />
     <icon v-else-if="grupo" name="group-outline" color="text-current" />
     <template v-else>{{ iniciales(nombre) }}</template>
@@ -17,12 +17,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { urlFoto } from '@/core/cuenta/api'
 import { iniciales, tono } from '@/core/chat/modelo'
 import type { Ambito } from '@/core/chat/types'
 
 const props = withDefaults(defineProps<{ id: number; nombre: string; ambito?: Ambito | null; grupo?: boolean; sistema?: boolean; foto?: string | null; tamano?: 'sm' | 'md' | 'lg' | 'xl' }>(), { ambito: null, grupo: false, sistema: false, foto: null, tamano: 'md' })
 
+/** `foto` llega como URL absoluta (la propia) o como ruta firmada de la API (la de otros). */
+const src = computed(() => (props.foto?.startsWith('/') ? urlFoto(props.foto) : props.foto))
 const fallo = ref(false)
 watch(() => props.foto, () => (fallo.value = false))
 </script>

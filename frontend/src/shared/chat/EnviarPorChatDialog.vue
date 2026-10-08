@@ -26,7 +26,7 @@
       <div class="destinos">
         <p v-if="cargando" class="p-4 text-center text-sm text-muted-color">Cargando contactos…</p>
         <button v-for="d in visibles" v-else :key="d.clave" type="button" class="destino" :aria-pressed="esElegido(d)" @click="alternar(d)">
-          <ChatAvatar :id="d.id" :nombre="d.nombre" :grupo="d.grupo" :ambito="d.ambito" tamano="sm" />
+          <ChatAvatar :id="d.id" :nombre="d.nombre" :grupo="d.grupo" :ambito="d.ambito" :foto="d.foto" tamano="sm" />
           <span class="min-w-0 flex-1">
             <span class="block truncate text-sm">{{ d.nombre }}</span>
             <span class="block truncate text-xs text-muted-color">{{ d.detalle }}</span>
@@ -65,6 +65,7 @@ interface Destino {
   detalle: string
   grupo: boolean
   ambito: Ambito | null
+  foto?: string | null
 }
 
 const AMBITOS = { administracion: 'Administración', estacion: 'Estación', agencia: 'Agencia' } as const
@@ -84,12 +85,12 @@ const etiqueta = (tipo: string) => (tipo === 'BoletoAsiento' ? 'Boleto' : tipo.r
 const destinos = computed<Destino[]>(() => {
   const grupos = chat.canales
     .filter((c) => c.tipo === 'grupo')
-    .map((c) => ({ clave: `c${c.id}`, id: c.id, nombre: c.nombre, detalle: `Grupo · ${c.miembros.length} miembros`, grupo: true, ambito: null }))
+    .map((c) => ({ clave: `c${c.id}`, id: c.id, nombre: c.nombre, detalle: `Grupo · ${c.miembros.length} miembros`, grupo: true, ambito: null, foto: null }))
   const recientes = chat.canales.filter((c) => c.tipo === 'directo' && c.contacto).map((c) => c.contacto!.id)
   const orden = new Map(recientes.map((id, i) => [id, i]))
   const personas = [...(chat.contactos ?? [])]
     .sort((a, b) => (orden.get(a.id) ?? Infinity) - (orden.get(b.id) ?? Infinity))
-    .map((p) => ({ clave: `u${p.id}`, id: p.id, nombre: p.nombre, detalle: p.lugar ?? AMBITOS[p.ambito], grupo: false, ambito: p.ambito }))
+    .map((p) => ({ clave: `u${p.id}`, id: p.id, nombre: p.nombre, detalle: p.lugar ?? AMBITOS[p.ambito], grupo: false, ambito: p.ambito, foto: p.foto }))
   return [...grupos, ...personas]
 })
 const visibles = computed(() => destinos.value.filter((d) => !busqueda.value || coincide(`${d.nombre} ${d.detalle}`, busqueda.value)).slice(0, MAX_VISIBLES))

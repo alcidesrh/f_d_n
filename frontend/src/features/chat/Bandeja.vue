@@ -28,7 +28,7 @@
       <template v-else>
         <p v-if="busqueda && conversaciones.length" class="seccion">Conversaciones</p>
         <button v-for="c in conversaciones" :key="c.id" type="button" class="fila" :class="{ 'fila--activa': c.id === activo, 'fila--nueva': c.noLeidos > 0 }" @click="emit('abrir', c.id)">
-          <ChatAvatar :id="c.id" :nombre="c.nombre" :grupo="c.tipo === 'grupo'" :sistema="c.tipo === 'sistema'" :ambito="c.contacto?.ambito" />
+          <ChatAvatar :id="c.id" :nombre="c.nombre" :grupo="c.tipo === 'grupo'" :sistema="c.tipo === 'sistema'" :ambito="c.contacto?.ambito" :foto="c.contacto?.foto" />
           <span class="fila__texto">
             <span class="fila__linea">
               <span class="fila__nombre">{{ c.nombre }}</span>
@@ -47,7 +47,7 @@
         <template v-if="busqueda">
           <p v-if="personas.length" class="seccion">Personas</p>
           <button v-for="p in personas" :key="`p${p.id}`" type="button" class="fila" @click="abrirCon(p.id)">
-            <ChatAvatar :id="p.id" :nombre="p.nombre" :ambito="p.ambito" />
+            <ChatAvatar :id="p.id" :nombre="p.nombre" :ambito="p.ambito" :foto="p.foto" />
             <span class="fila__texto">
               <span class="fila__nombre">{{ p.nombre }}</span>
               <span class="fila__extracto">{{ p.lugar ?? AMBITOS[p.ambito] }}</span>

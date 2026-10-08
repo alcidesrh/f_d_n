@@ -12,7 +12,7 @@
         <icon name="arrow-back" color="text-current" />
       </button>
       <template v-if="canal">
-        <ChatAvatar :id="canal.id" :nombre="canal.nombre" :grupo="canal.tipo === 'grupo'" :sistema="esSistema" :ambito="canal.contacto?.ambito" />
+        <ChatAvatar :id="canal.id" :nombre="canal.nombre" :grupo="canal.tipo === 'grupo'" :sistema="esSistema" :ambito="canal.contacto?.ambito" :foto="canal.contacto?.foto" />
         <div class="min-w-0">
           <div class="conv__nombre">{{ canal.nombre }}</div>
           <div class="conv__sub" :title="miembros">{{ subtitulo }}</div>
@@ -34,7 +34,7 @@
           <template v-for="b in bloques" :key="b.dia">
             <div class="conv__dia"><span>{{ b.etiqueta }}</span></div>
             <div v-for="r in b.rachas" :key="r.mensajes[0]!.id" class="racha" :class="{ 'racha--mia': r.mio }">
-              <ChatAvatar v-if="!r.mio && canal?.tipo === 'grupo'" :id="r.autor?.id ?? 0" :nombre="r.autor?.nombre ?? 'Sistema'" tamano="sm" class="racha__avatar" />
+              <ChatAvatar v-if="!r.mio && canal?.tipo === 'grupo'" :id="r.autor?.id ?? 0" :nombre="r.autor?.nombre ?? 'Sistema'" :foto="r.autor?.foto" tamano="sm" class="racha__avatar" />
               <div class="racha__mensajes">
                 <span v-if="!r.mio && canal?.tipo === 'grupo'" class="racha__autor" :style="{ '--tono': tono(r.autor?.id ?? 0) * 45 }">{{ r.autor?.nombre ?? 'Sistema' }}</span>
                 <div v-for="m in r.mensajes" :key="m.id" class="mensaje">

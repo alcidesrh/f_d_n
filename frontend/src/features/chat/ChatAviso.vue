@@ -7,7 +7,7 @@
 <template>
   <Transition name="aviso">
     <button v-if="visible && entrante" :key="entrante.n" type="button" class="aviso" @click="abrir">
-      <ChatAvatar :id="entrante.autor?.id ?? 0" :nombre="entrante.autor?.nombre ?? 'Sistema'" :sistema="!entrante.autor" :ambito="entrante.autor?.ambito" />
+      <ChatAvatar :id="entrante.autor?.id ?? 0" :nombre="entrante.autor?.nombre ?? 'Sistema'" :sistema="!entrante.autor" :ambito="entrante.autor?.ambito" :foto="entrante.autor?.foto" />
       <span class="min-w-0 flex-1 text-left">
         <span class="aviso__quien">{{ entrante.autor?.nombre ?? 'Aviso del sistema' }}<span v-if="grupo" class="aviso__grupo"> · {{ grupo }}</span></span>
         <span class="aviso__texto">{{ entrante.extracto }}</span>
