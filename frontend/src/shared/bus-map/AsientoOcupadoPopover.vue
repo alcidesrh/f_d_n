@@ -157,7 +157,7 @@ const fechaHora = (iso: string) =>
 }
 .aop-grupo dl {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 0.15rem 0.75rem;
   margin: 0;
   font-size: 0.85rem;
@@ -166,8 +166,10 @@ const fechaHora = (iso: string) =>
   color: var(--p-text-muted-color);
 }
 .aop-grupo dd {
+  min-width: 0;
   margin: 0;
   text-align: right;
+  overflow-wrap: anywhere;
 }
 .aop-tramo + .aop-tramo {
   padding-top: 0.75rem;

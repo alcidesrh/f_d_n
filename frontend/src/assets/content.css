@@ -6,6 +6,13 @@
   height: 100dvh;
 }
 
+/* El header es `fixed` (fuera del flujo): sin un contexto propio, el
+   `margin-top` de `.body-row` colapsa hasta `#app` y el documento mide
+   100dvh + header (enfocar un campo desplazaba todo el shell). */
+.shell {
+  display: flow-root;
+}
+
 /* ---- BODY ROW ---- */
 .body-row {
   display: flex;
