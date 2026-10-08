@@ -33,6 +33,7 @@ import { useUiStore } from '@/app/ui'
 import { useSessionStore } from '@/core/auth/session'
 import { useUserMenusStore } from '@/core/navigation/userMenus'
 import { useChatStore } from '@/core/chat/store'
+import { useCuentaStore } from '@/core/cuenta/store'
 import ChatAviso from '@/features/chat/ChatAviso.vue'
 import AppHeader from './AppHeader.vue'
 import NavArea from './navigation/NavArea.vue'
@@ -45,14 +46,19 @@ const route = useRoute()
 const session = useSessionStore()
 const userMenus = useUserMenusStore()
 const chat = useChatStore()
+const cuenta = useCuentaStore()
 
 // Menús y chat del usuario: se cargan al entrar al shell y al cambiar de usuario.
 watch(
   () => session.user,
   (user) => {
     chat.detener()
-    if (!user) return userMenus.clear()
+    if (!user) {
+      cuenta.limpiar()
+      return userMenus.clear()
+    }
     void userMenus.load()
+    void cuenta.cargar()
     void chat.iniciar()
   },
   { immediate: true },

@@ -14,3 +14,13 @@
     min-height: var(--tap-min);
   }
 }
+
+/* Formulario que se adapta a su contenedor (diálogos, pantallas con rejilla):
+   por omisión cada campo de FormKit mide 25rem fijos (`shared/formkit/config`)
+   y se desborda de un diálogo o de una columna angosta. */
+@utility form-fluid {
+  & .formkit-outer {
+    min-width: 0;
+    max-width: none;
+  }
+}

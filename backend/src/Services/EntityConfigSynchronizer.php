@@ -56,7 +56,7 @@ final class EntityConfigSynchronizer
         // Para mayor detalle puedes hacer:
         $detalle = [];
         foreach ($camposSimples as $campo) {
-            if (\in_array($campo, ['legacyId', 'password', 'apiTokens'])) {
+            if (\in_array($campo, ['legacyId', 'password', 'foto', 'apiTokens'])) {
                 continue;
             }
             $mapping = $metadata->getFieldMapping($campo);

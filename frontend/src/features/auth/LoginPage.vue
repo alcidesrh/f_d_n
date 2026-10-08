@@ -40,7 +40,9 @@ import { FormKitMessages } from "@formkit/vue";
 import { gsap } from "gsap";
 import { CustomEase } from "gsap/CustomEase";
 import { CustomWiggle } from "gsap/CustomWiggle";
+import { useRoute } from "vue-router";
 import { router } from "@/app/router";
+import { destinoSeguro, REDIRECT_QUERY } from "@/core/auth/redirect";
 import { useSessionStore } from "@/core/auth/session";
 import { HttpError } from "@/core/http";
 import { useLoadingStore } from "@/core/loading";
@@ -57,6 +59,7 @@ const COMPANIES = [
   { name: "Corporación La Pionera", logo: "images/logos/copiloto/corporacionlapionera5.png" },
 ];
 
+const route = useRoute();
 const card = useTemplateRef<HTMLElement>("card");
 const session = useSessionStore();
 const loadingStore = useLoadingStore();
@@ -77,7 +80,7 @@ async function handleSubmit(credentials: { username: string; password: string },
   node.clearErrors();
   try {
     await session.login(credentials);
-    await router.push({ name: "dashboard" });
+    await router.push(destinoSeguro(route.query[REDIRECT_QUERY]) ?? { name: "dashboard" });
   } catch (cause) {
     error.value = true;
     const invalid = cause instanceof HttpError && cause.status === 401;

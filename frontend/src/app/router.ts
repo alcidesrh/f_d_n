@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { loginHacia } from '@/core/auth/redirect'
 import { useSessionStore } from '@/core/auth/session'
 import { useNavigationHistoryStore } from '@/app/layout/navigationHistory'
 
@@ -24,6 +25,14 @@ export const router = createRouter({
         layout: 'blank',
         title: 'Iniciar Sesión',
         public: true,
+      },
+    },
+    {
+      path: '/mi-cuenta',
+      name: 'mi-cuenta',
+      component: () => import('@/features/cuenta/MiCuentaPage.vue'),
+      meta: {
+        title: 'Mi cuenta',
       },
     },
     {
@@ -188,7 +197,7 @@ router.beforeEach((to) => {
   const isPublic = to.meta.public === true
 
   if (!session.isAuthenticated && !isPublic) {
-    return { name: 'login' }
+    return loginHacia(to.fullPath)
   }
 
   if (session.isAuthenticated && isPublic) {

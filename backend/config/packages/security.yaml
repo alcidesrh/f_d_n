@@ -76,6 +76,8 @@ security:
         - { path: "^/pagina", roles: PUBLIC_ACCESS }
         # Archivos del chat: URL firmada que vence (App\Chat\Archivos), sin Bearer.
         - { path: '^/api/chat/archivos/\d+/[0-9a-f]{32}$', roles: PUBLIC_ACCESS }
+        # Fotos de perfil: URL firmada y estable (App\Cuenta\FotoPerfil), sin Bearer.
+        - { path: '^/api/usuarios/-?\d+/foto/[0-9a-f]{32}$', roles: PUBLIC_ACCESS }
         - { path: "^/", roles: ROLE_USER }
 
 when@test:

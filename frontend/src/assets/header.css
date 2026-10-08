@@ -194,17 +194,38 @@
     display: flex;
   }
 }
-/* Usuario: en móvil solo el botón de salir (el nombre queda en `title`). */
-.header-user-chip .p-chip-label {
+/* Usuario: avatar y nombre abren el menú (en móvil solo el avatar). */
+.header-user {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.4rem 0.2rem 0.2rem;
+  border-radius: 999px;
+  color: inherit;
+  cursor: pointer;
+  &:hover,
+  &[aria-expanded='true'] {
+    background: var(--p-content-hover-background);
+  }
+}
+.header-user__name {
   display: none;
+  max-width: 10rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.875rem;
   @variant md {
     display: inline;
   }
 }
-.header-logout {
-  display: inline-flex;
-  color: inherit;
-  cursor: pointer;
+.header-user__card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 14rem;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--p-content-border-color);
 }
 .header-search {
   display: flex;

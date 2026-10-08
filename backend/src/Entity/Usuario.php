@@ -118,6 +118,15 @@ class Usuario extends PersonaBase implements
     #[Ignore]
     private ?string $password = null;
 
+    /**
+     * Foto de perfil: ruta relativa en disco (`App\Cuenta\FotoPerfil`). No se
+     * expone por la API genérica; se sube y se lee por `/api/me/foto`.
+     */
+    #[ApiProperty(readable: false, writable: false)]
+    #[ORM\Column(length: 120, nullable: true)]
+    #[Ignore]
+    private ?string $foto = null;
+
     #[Assert\NotBlank]
     private ?string $plainPassword = null;
     private ?string $fullName;
@@ -265,6 +274,18 @@ class Usuario extends PersonaBase implements
     public function setPassword(string $password): static
     {
         $this->password = $password;
+
+        return $this;
+    }
+
+    public function getFoto(): ?string
+    {
+        return $this->foto;
+    }
+
+    public function setFoto(?string $foto): static
+    {
+        $this->foto = $foto;
 
         return $this;
     }

@@ -2,14 +2,8 @@
   <header class="app-header">
     <div class="left-header" :class="[sidebarStore.mode]">
       <div class="flex btn-siderbar-header">
-        <button
-          type="button"
-          class="icon-btn"
-          aria-label="Menú de navegación"
-          :aria-expanded="ui.isMobile ? sidebarStore.drawer : sidebarStore.mode !== 'close'"
-          @click="sidebarStore.toggle()"
-        >
-          <icon name="menu" />
+        <button type="button" class="icon-btn" aria-label="Menú de navegación" :aria-expanded="ui.isMobile ? sidebarStore.drawer : sidebarStore.mode !== 'close'" @click="sidebarStore.toggle()">
+          <icon name="left_panel_open" size="35px" weight="100" color="text-surface-500" />
         </button>
         <Divider layout="vertical" class="mx-[5px]!" />
       </div>
@@ -60,25 +54,33 @@
         </div>
 
         <div style="position: relative">
-          <Chip :label="session.user ?? ''" :title="session.user ?? ''" class="header-user-chip" removable>
-            <template #removeicon>
-              <button type="button" class="header-logout tap-target" title="Cerrar sesión" aria-label="Cerrar sesión" @click.stop="logout">
-                <icon name="logout" />
-              </button>
+          <button type="button" class="header-user" :title="session.user ?? ''" aria-haspopup="true" aria-controls="menu-usuario" @click="menuUsuario?.toggle($event)">
+            <ChatAvatar :id="cuenta.cuenta?.id ?? 0" :nombre="cuenta.nombre" :foto="cuenta.foto" tamano="sm" />
+            <span class="header-user__name">{{ session.user }}</span>
+            <icon name="keyboard-arrow-down" size=".9rem" />
+          </button>
+          <Menu id="menu-usuario" ref="menuUsuario" :model="opcionesUsuario" popup>
+            <template #start>
+              <div class="header-user__card">
+                <ChatAvatar :id="cuenta.cuenta?.id ?? 0" :nombre="cuenta.nombre" :foto="cuenta.foto" tamano="lg" />
+                <div class="min-w-0">
+                  <div class="truncate font-semibold">{{ cuenta.nombre }}</div>
+                  <div class="truncate text-xs text-muted-color">@{{ session.user }}</div>
+                </div>
+              </div>
             </template>
-          </Chip>
+            <template #item="{ item, props }">
+              <a v-bind="props.action" class="flex items-center gap-2">
+                <icon :name="String(item.iconName)" size="1.1rem" />
+                <span>{{ item.label }}</span>
+              </a>
+            </template>
+          </Menu>
         </div>
       </div>
       <div class="flex btn-siderbar-header">
         <Divider layout="vertical" class="mx-[5px]!" />
-        <button
-          type="button"
-          class="icon-btn right"
-          title="Mostrar/ocultar menú"
-          aria-label="Panel lateral derecho"
-          :aria-expanded="ui.isMobile ? rightSidebar.drawer : rightSidebar.mode !== 'close'"
-          @click="rightSidebar.toggle()"
-        >
+        <button type="button" class="icon-btn right" title="Mostrar/ocultar menú" aria-label="Panel lateral derecho" :aria-expanded="ui.isMobile ? rightSidebar.drawer : rightSidebar.mode !== 'close'" @click="rightSidebar.toggle()">
           <icon name="menu" />
         </button>
       </div>
@@ -86,11 +88,15 @@
   </header>
 </template>
 <script setup lang="ts">
+import type { MenuItem } from "primevue/menuitem";
+import type Menu from "primevue/menu";
 import { useDialog } from "primevue/usedialog";
 import { router } from "@/app/router";
 import { useUiStore } from "@/app/ui";
 import { useSessionStore } from "@/core/auth/session";
 import { useChatStore } from "@/core/chat/store";
+import { useCuentaStore } from "@/core/cuenta/store";
+import ChatAvatar from "@/shared/chat/ChatAvatar.vue";
 import { useNavigationHistoryStore } from "./navigationHistory";
 import { defineSidebarStore, type SidebarStore } from "./sidebarStore";
 import ThemeEditor from "./ThemeEditor.vue";
@@ -100,6 +106,7 @@ defineProps<{ rightSidebar: SidebarStore }>();
 
 const session = useSessionStore();
 const chat = useChatStore();
+const cuenta = useCuentaStore();
 const ui = useUiStore();
 
 const dialog = useDialog();
@@ -138,6 +145,9 @@ function toggleFullscreen() {
 function toggle(name: Exclude<PopoverName, null>) {
   openPopover.value = openPopover.value === name ? null : name;
 }
+
+const menuUsuario = ref<InstanceType<typeof Menu> | null>(null);
+const opcionesUsuario: MenuItem[] = [{ label: "Mi cuenta", iconName: "manage-accounts-outline", command: () => void router.push({ name: "mi-cuenta" }) }, { separator: true }, { label: "Cerrar sesión", iconName: "logout", command: () => void logout() }];
 
 async function logout() {
   await session.logout();

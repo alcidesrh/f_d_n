@@ -1,11 +1,13 @@
 <!--
   Avatar del chat: iniciales sobre un tono estable por id (persona o grupo),
   campana para los avisos del sistema y, opcionalmente, una marca del ámbito
-  (estación / agencia).
+  (estación / agencia). Con `foto` (URL) muestra la foto de perfil en su lugar;
+  si la imagen no carga, vuelve a las iniciales.
 -->
 <template>
   <span class="chat-avatar" :class="[`chat-avatar--${tamano}`, { 'chat-avatar--sistema': sistema }]" :style="{ '--tono': tono(id) * 45 }" :aria-hidden="true">
-    <icon v-if="sistema" name="notifications-outline" color="text-current" />
+    <img v-if="foto && !fallo" :src="foto" alt="" class="chat-avatar__foto" @error="fallo = true" />
+    <icon v-else-if="sistema" name="notifications-outline" color="text-current" />
     <icon v-else-if="grupo" name="group-outline" color="text-current" />
     <template v-else>{{ iniciales(nombre) }}</template>
     <span v-if="ambito && ambito !== 'administracion'" class="chat-avatar__ambito" :title="ambito === 'agencia' ? 'Agencia' : 'Estación'">
@@ -15,10 +17,14 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch } from 'vue'
 import { iniciales, tono } from '@/core/chat/modelo'
 import type { Ambito } from '@/core/chat/types'
 
-withDefaults(defineProps<{ id: number; nombre: string; ambito?: Ambito | null; grupo?: boolean; sistema?: boolean; tamano?: 'sm' | 'md' | 'lg' }>(), { ambito: null, grupo: false, sistema: false, tamano: 'md' })
+const props = withDefaults(defineProps<{ id: number; nombre: string; ambito?: Ambito | null; grupo?: boolean; sistema?: boolean; foto?: string | null; tamano?: 'sm' | 'md' | 'lg' | 'xl' }>(), { ambito: null, grupo: false, sistema: false, foto: null, tamano: 'md' })
+
+const fallo = ref(false)
+watch(() => props.foto, () => (fallo.value = false))
 </script>
 
 <style scoped>
@@ -47,6 +53,15 @@ withDefaults(defineProps<{ id: number; nombre: string; ambito?: Ambito | null; g
 }
 .chat-avatar--lg {
   --d: 3rem;
+}
+.chat-avatar--xl {
+  --d: 7rem;
+}
+.chat-avatar__foto {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
 }
 .chat-avatar__ambito {
   position: absolute;
