@@ -15,8 +15,12 @@ framework:
         #app: cache.adapter.apcu
 
         # Namespaced pools use the above "app" backend by default
-        #pools:
-        #my.dedicated.cache: null
+        pools:
+            # Conteos del legado del panel /migracion: en disco también en dev
+            # (allí "app" es un array que se vacía en cada request).
+            cache.migracion:
+                adapter: cache.adapter.filesystem
+                default_lifetime: 300
 
 when@dev:
     framework:

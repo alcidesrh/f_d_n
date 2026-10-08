@@ -9,6 +9,7 @@ const TIPOS: Record<TipoJobMigracion, string> = {
   iam: 'IAM',
   config: 'Configuración',
   rutas: 'Rutas',
+  salidas: 'Salidas por rango de fechas',
   todo: 'Migración completa',
 }
 

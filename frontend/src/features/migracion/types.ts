@@ -30,6 +30,7 @@ export type TipoJobMigracion =
   | 'iam'
   | 'config'
   | 'rutas'
+  | 'salidas'
   | 'todo'
 
 export type EstadoJobMigracion = 'pending' | 'running' | 'done' | 'cancelado' | 'error' | 'abortado'

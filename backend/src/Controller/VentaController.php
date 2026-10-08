@@ -114,6 +114,8 @@ final class VentaController extends AbstractController
             $dia,
             $estacion,
             $usuario->getAgencia()?->getEmpresa()?->getId(),
+            // Las anuladas solo las ve el SUPER_ADMIN.
+            $this->isGranted("ROLE_SUPER_ADMIN"),
         ));
     }
 

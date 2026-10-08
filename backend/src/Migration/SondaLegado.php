@@ -65,7 +65,10 @@ final class SondaLegado
      * Factory del servicio PDO $oldPdo: falla rápido si el legado no responde,
      * evitando el cuelgue de ~130s del connect dblib con el host caído.
      */
-    public function crearPdo(): \PDO
+    /**
+     * @param array<int, mixed> $opciones opciones del PDO (p. ej. \PDO::DBLIB_ATTR_QUERY_TIMEOUT)
+     */
+    public function crearPdo(array $opciones = []): \PDO
     {
         if (!$this->accesible()) {
             throw new \PDOException(
@@ -78,6 +81,7 @@ final class SondaLegado
             "dblib:host={$this->host}:{$this->port};dbname={$this->dbname}",
             $this->username,
             $this->password,
+            $opciones,
         );
     }
 }

@@ -12,11 +12,13 @@ use Symfony\Component\Console\Output\OutputInterface;
  * Migrador de salidas (salidas + boletos/asientos vendidos).
  *
  * Resuelve sus propias ramificaciones (empresa, trayecto, bus, cliente, ...)
- * internamente con dedupe por legacy_id. Al conjugarse con EjecutorEntidad se
- * ejecuta SOLO cuando no hay dependencias no resueltas previamente.
+ * internamente con dedupe por legacy_id (ver Migrador). Al conjugarse con
+ * EjecutorEntidad se ejecuta SOLO cuando no hay dependencias no resueltas
+ * previamente.
  *
- * Filtra las salidas pendientes (ya migradas fuera en PHP) para que la operación
- * "migrate N más" avance correctamente entre ejecuciones sucesivas.
+ * migrar(): filtra las salidas pendientes (ya migradas fuera en PHP) para que
+ * la operación "migrar N más" avance correctamente entre ejecuciones sucesivas.
+ * migrarRango(): todas las del rango, también las ya migradas (se completan).
  */
 final class MigradorEntidadSalida implements MigradorEntidadInterface
 {
@@ -105,6 +107,46 @@ final class MigradorEntidadSalida implements MigradorEntidadInterface
             },
             debeCancelar: static fn(): bool => $progreso->debeCancelar(),
             salidasPrefetchadas: $pendientes,
+        );
+
+        $progreso->informar($total, $total, $contadores, "Salidas migradas");
+
+        return $contadores;
+    }
+
+    /**
+     * Todas las salidas con fecha en [desde, hasta], de cualquier estado. Las
+     * ya migradas se completan (estado, bus, boletos que falten), así que
+     * repetir el mismo rango es seguro.
+     *
+     * @return array<string, int>
+     */
+    public function migrarRango(
+        string $desde,
+        string $hasta,
+        ?OutputInterface $output,
+        Progreso $progreso,
+    ): array {
+        $progreso->informar(0, null, [], "Buscando salidas del rango…");
+        $salidas = $this->migrador->fetchSalidasRango($desde, $hasta);
+        $total = count($salidas);
+        $progreso->informar(0, $total);
+
+        if (0 === $total) {
+            $output?->writeln(
+                "<comment>El legado no tiene salidas en el rango indicado.</comment>",
+            );
+
+            return [];
+        }
+
+        $contadores = $this->migrador->migrarSalida(
+            output: $output,
+            onProgress: static function (int $done) use ($progreso, $total): void {
+                $progreso->informar(min($done, $total), $total);
+            },
+            debeCancelar: static fn(): bool => $progreso->debeCancelar(),
+            salidasPrefetchadas: $salidas,
         );
 
         $progreso->informar($total, $total, $contadores, "Salidas migradas");

@@ -696,12 +696,14 @@ class MigradorEstaticos
                     }
                     continue;
                 }
-                if (
-                    $this->existByColumns("trayecto", [
-                        "origen_id" => $origen,
-                        "destino_id" => $destino,
-                    ])
-                ) {
+                // Ya existe (p. ej. como trayecto de otra ruta): se enlaza igual,
+                // o el itinerario de esta ruta pierde la parada.
+                $existente = $this->newConn->fetchOne(
+                    "SELECT id FROM trayecto WHERE origen_id = :o AND destino_id = :d",
+                    ["o" => $origen, "d" => $destino],
+                );
+                if ($existente !== false) {
+                    $this->linkTrayecto($trayectoPadreId, (int) $existente);
                     continue;
                 }
 

@@ -1,6 +1,6 @@
 /** Contratos de la gestión de salidas (`/api/gestion-salidas/*`, ADR-024). */
 import type { ElementoCroquis } from '@/core/croquis/types'
-import type { AsientoOcupado, Importe, Parada } from '@/core/venta/types'
+import type { AsientoOcupado, Importe } from '@/core/venta/types'
 
 export type EstadoSalida = 'programada' | 'abordando' | 'iniciada' | 'finalizada' | 'cancelada'
 
@@ -171,11 +171,13 @@ export interface DetalleSalida {
   empresa: Opcion | null
   bus: { id: number; codigo: string; gama: string | null } | null
   trayecto: { id: number; origen: Opcion; destino: Opcion }
-  paradas: Parada[]
   croquis: ElementoCroquis[]
   /** Asientos ocupados para el viaje completo (los libres no aparecen). */
   ocupados: AsientoOcupado[]
   /** Piloto y copiloto del bus (`N/D` si falta). */
   pilotos: string[]
+  /** Quien la programó; null en las migradas del legado. */
+  creadaPor: string | null
+  creadaEn: string | null
   resumen: ResumenSalida
 }

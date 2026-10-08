@@ -18,7 +18,7 @@
         <template v-if="data.bus"
           >{{ data.bus.codigo }}<span v-if="data.bus.gama" class="text-xs text-muted-color"> · {{ data.bus.gama }}</span></template
         >
-        <icon v-else name="no_transfer" class="text-surface-500" size="1.1rem" />
+        <icon v-else name="no_transfer" class="text-surface-500" size="1.2rem" />
         <!-- <Chip v-else label="Sin bus" class="chip-warn" /> -->
       </template>
     </Column>
@@ -30,23 +30,24 @@
     <Column class="whitespace-nowrap">
       <template #header>
         <div class="flex">
-          <div class="w-[20px] text-center">
-            <icon name="airline_seat_recline_extra" class="text-emerald-600" />
+          <div class="w-[25px] text-center">
+            <icon size="1.2rem" name="airline_seat_recline_extra" class="text-blue-600" />
           </div>
-          <div class="w-[20px] mx-[5px] text-center">
-            <icon name="tatami_seat" class="text-neutral-500" size="1rem" :weight="300" />
+          <div class="w-[25px] mx-[5px] text-center">
+            <icon name="tatami_seat" class="text-neutral-500" size="1.2rem" :weight="300" />
           </div>
-          <div class="w-[20px] text-center">
-            <icon name="tatami_seat" size="1rem" :weight="300" class="text-surface-800" />
-            <icon name="airline_seat_recline_extra" class="text-surface-800" />
+          <div class="w-[25px] text-center">
+            <icon size="1.2rem" name="airline_seat_recline_extra" class="text-surface-700" />
+
+            <icon name="tatami_seat" size="1.2rem" :weight="300" class="text-surface-700" />
           </div>
         </div>
       </template>
       <template #body="{ data }">
-        <div v-if="data.capacidad" class="m-auto flex text-xs font-bold">
-          <div class="w-[20px] text-center text-emerald-600">{{ data.vendidos ?? 0 }}</div>
-          <div class="w-[20px] text-neutral-600 mx-[5px] text-center">{{ data.capacidad - data.vendidos }}</div>
-          <div class="w-[20px] text-center text-surface-800">
+        <div v-if="data.capacidad" class="m-auto flex text-sm font-bold">
+          <div class="w-[25px] text-center text-blue-600">{{ data.vendidos ?? 0 }}</div>
+          <div class="w-[25px] text-neutral-500 mx-[5px] text-center">{{ data.capacidad - data.vendidos }}</div>
+          <div class="w-[25px] text-center text-surface-700">
             {{ data.capacidad }}
           </div>
         </div>
@@ -72,6 +73,10 @@ const vendible = (r: SalidaResumen) => ["programada", "abordando"].includes(r.es
 </script>
 
 <style scoped>
+:deep(.p-datatable-mask) {
+  background: color-mix(in srgb, var(--p-content-background) 45%, transparent);
+  transition: opacity 0.2s ease;
+}
 :deep(tr.anulada),
 :deep(tr.cancelada) {
   position: relative;

@@ -45,8 +45,10 @@ final class EjecutorDeJobs
             $id,
         );
 
+        // --no-debug: en dev el perfilador de Doctrine guarda cada consulta con
+        // su backtrace; una migración hace cientos de miles.
         $cmd = sprintf(
-            "setsid %s %s %s %s > %s 2>&1 < /dev/null & echo $!",
+            "setsid %s %s %s %s --no-debug > %s 2>&1 < /dev/null & echo $!",
             escapeshellarg($php),
             escapeshellarg($this->proyectoDir . "/bin/console"),
             escapeshellarg("app:migracion:ejecutar"),

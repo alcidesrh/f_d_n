@@ -18,9 +18,9 @@
    * agencia = naranja, cortesía = lima, voucher = rosa; la
    * preventa es un contorno naranja punteado (es temporal).
    */
-  --bm-occupied: color-mix(in srgb, var(--p-emerald-500, #14b8a6) 22%, var(--p-content-background));
-  --bm-occupied-stroke: color-mix(in srgb, var(--p-emerald-600, #0d9488) 65%, var(--p-content-background));
-  --bm-occupied-ink: var(--p-emerald-800, #115e59);
+  --bm-occupied: color-mix(in srgb, var(--p-blue-500, #14b8a6) 22%, var(--p-content-background));
+  --bm-occupied-stroke: color-mix(in srgb, var(--p-blue-600, #0d9488) 65%, var(--p-content-background));
+  --bm-occupied-ink: var(--p-blue-800, #115e59);
 
   --bm-sold-web: color-mix(in srgb, var(--p-amber-400, #fbbf24) 20%, var(--p-content-background));
   --bm-sold-web-stroke: color-mix(in srgb, var(--p-amber-600, #d97706) 78%, var(--p-content-background));

@@ -39,8 +39,20 @@ final class DetalleSalida
             ...$detalle,
             "ocupados" => $ocupados,
             "pilotos" => $manifiesto->pilotos,
+            "creadaPor" => self::quien($salida->getCreatedBy()),
+            "creadaEn" => $salida->getCreatedAt()?->format(DATE_ATOM),
             "resumen" => self::resumen($detalle["croquis"], $ocupados, $manifiesto),
         ];
+    }
+
+    private static function quien(?\App\Entity\Usuario $u): ?string
+    {
+        if ($u === null) {
+            return null;
+        }
+        $nombre = trim(($u->getNombre() ?? "") . " " . ($u->getApellido() ?? ""));
+
+        return $nombre !== "" ? $nombre : $u->getUsername();
     }
 
     /**

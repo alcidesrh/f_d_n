@@ -69,6 +69,7 @@ final class ProgramadorSalidas
                     ->setTrayecto($plan["trayecto"])
                     ->setBus($i["bus"])
                     ->setEmpresa($i["bus"]->getEmpresa())
+                    ->setCreatedBy($usuario)
                     ->setFecha(\DateTime::createFromImmutable($i["fecha"]));
                 $this->em->persist($salida);
                 ++$creadas;

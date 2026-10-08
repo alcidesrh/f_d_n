@@ -10,9 +10,14 @@ namespace App\Migration\Job;
  */
 final class Progreso
 {
+    /**
+     * @param \Closure|null $alInformar se ejecuta en cada informe (p. ej. vaciar
+     *                                  las consultas que el perfilador de Doctrine acumula en dev)
+     */
     public function __construct(
         private readonly AlmacenDeJobs $almacen,
         private readonly string $jobId,
+        private readonly ?\Closure $alInformar = null,
     ) {}
 
     public function id(): string
@@ -29,6 +34,9 @@ final class Progreso
         array $contadores = [],
         string $mensaje = "",
     ): void {
+        if ($this->alInformar) {
+            ($this->alInformar)();
+        }
         $status = $this->almacen->leer($this->jobId) ?? [];
         $status["procesados"] = $procesados;
         if (null !== $total) {

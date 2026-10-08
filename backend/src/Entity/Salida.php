@@ -43,6 +43,11 @@ class Salida extends Base
     #[ORM\JoinColumn(nullable: false)]
     private ?Trayecto $trayecto = null;
 
+    /** Quien programó la salida; nulo en las migradas del legado (no lo guardaba). */
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: true, onDelete: "SET NULL")]
+    private ?Usuario $createdBy = null;
+
     public function __construct()
     {
         $this->boletoAsientos = new ArrayCollection();
@@ -153,6 +158,18 @@ class Salida extends Base
                 $boletoAsiento->setSalida(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getCreatedBy(): ?Usuario
+    {
+        return $this->createdBy;
+    }
+
+    public function setCreatedBy(?Usuario $createdBy): static
+    {
+        $this->createdBy = $createdBy;
 
         return $this;
     }

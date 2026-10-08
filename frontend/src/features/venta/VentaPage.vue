@@ -52,6 +52,14 @@
             </div>
 
             <SalidasLista :salidas="store.salidasVisibles" :cargando="store.cargandoSalidas" :salida-id="store.salidaId" @elegir="store.elegirSalida" />
+            <div class="flex items-center justify-between gap-2">
+              <Button :label="etiquetaDia(-1)" severity="secondary" text size="small" :disabled="store.cargandoSalidas" @click="moverDia(-1)">
+                <template #icon><icon name="chevron-left" class="mr-1" /></template>
+              </Button>
+              <Button :label="etiquetaDia(1)" severity="secondary" text size="small" icon-pos="right" :disabled="store.cargandoSalidas" @click="moverDia(1)">
+                <template #icon><icon name="chevron-right" class="ml-1" /></template>
+              </Button>
+            </div>
           </section>
           <divider />
 
@@ -92,40 +100,42 @@
         <div class="flex">
           <divider layout="vertical" />
           <aside class="panel flex flex-col gap-3 @3xl:sticky @3xl:top-4">
-            <template v-if="store.cargandoDetalle">
-              <Skeleton height="20rem" />
-            </template>
-            <template v-else-if="store.detalle">
-              <!-- <div class="flex items-baseline justify-between gap-2">
+            <Transition name="croquis" mode="out-in">
+              <div v-if="store.cargandoDetalle" key="cargando">
+                <Skeleton height="20rem" />
+              </div>
+              <div v-else-if="store.detalle" :key="`salida-${store.salidaId}`" class="flex flex-col gap-3">
+                <!-- <div class="flex items-baseline justify-between gap-2">
                 <div class="font-medium">{{ store.detalle.bus?.codigo ?? "Sin bus" }}</div>
                 <div class="text-sm text-muted-color">Libres {{ store.libres }}/{{ store.asientosCroquis.length }}</div>
               </div> -->
 
-              <BusMapLegend :items="leyenda" />
-              <div class="overflow-x-auto mt-4">
-                <BusMap :elementos="store.detalle.croquis" :estado="store.estadoAsiento" interactivo inspeccionable tamano="md" class="justify-center" @asiento="(a) => a.id != null && store.alternarAsiento(a.id)" @ocupado="verOcupado" />
-                <AsientoOcupadoPopover ref="detalleAsiento" />
+                <BusMapLegend :items="leyenda" :conteos="conteos" />
+                <div class="overflow-x-auto mt-4">
+                  <BusMap :elementos="store.detalle.croquis" :estado="store.estadoAsiento" interactivo inspeccionable tamano="md" class="justify-center" @asiento="(a) => a.id != null && store.alternarAsiento(a.id)" @ocupado="verOcupado" />
+                  <AsientoOcupadoPopover ref="detalleAsiento" />
+                </div>
+                <Divider align="center" class="my-0! before:border-surface-400!" type="dashed">
+                  <span class="text-xs font-bold text-surface-500">{{ store.ocupados.length }} / {{ store.asientosCroquis.length }}</span>
+                </Divider>
+                <div class="flex items-baseline justify-between">
+                  <span class="text-muted-color">Total</span>
+                  <span class="text-xl font-semibold tabular-nums">{{ store.cotizacion?.total.texto ?? "—" }}</span>
+                </div>
+                <Message v-if="store.errorCotizacion" severity="warn" :closable="false">
+                  {{ store.errorCotizacion }}
+                </Message>
+                <Message v-if="!store.cliente && store.seleccion.length" severity="info" :closable="false"> Elija el cliente para facturar. </Message>
+                <div class="flex flex-wrap justify-end gap-2">
+                  <Button v-if="store.contexto?.permisos.cortesia" label="Cortesía" severity="secondary" outlined :disabled="!store.puedeVender" @click="abrirCobro(true)" />
+                  <Button :label="store.contexto?.canal === 'agencia' ? 'Vender' : 'Facturar'" :disabled="!store.puedeVender || !store.cotizacion" @click="abrirCobro(false)" />
+                </div>
               </div>
-              <Divider align="center" class="my-0! before:border-surface-400!" type="dashed">
-                <span class="text-xs font-bold text-surface-500">{{ store.libres }} / {{ store.asientosCroquis.length }}</span>
-              </Divider>
-              <div class="flex items-baseline justify-between">
-                <span class="text-muted-color">Total</span>
-                <span class="text-xl font-semibold tabular-nums">{{ store.cotizacion?.total.texto ?? "—" }}</span>
+              <div v-else key="vacio" class="py-10 text-center text-muted-color">
+                <icon name="directions-bus-outline" class="mb-2 text-3xl" />
+                <p>Elija un salida para ver sus asientos.</p>
               </div>
-              <Message v-if="store.errorCotizacion" severity="warn" :closable="false">
-                {{ store.errorCotizacion }}
-              </Message>
-              <Message v-if="!store.cliente && store.seleccion.length" severity="info" :closable="false"> Elija el cliente para facturar. </Message>
-              <div class="flex flex-wrap justify-end gap-2">
-                <Button v-if="store.contexto?.permisos.cortesia" label="Cortesía" severity="secondary" outlined :disabled="!store.puedeVender" @click="abrirCobro(true)" />
-                <Button :label="store.contexto?.canal === 'agencia' ? 'Vender' : 'Facturar'" :disabled="!store.puedeVender || !store.cotizacion" @click="abrirCobro(false)" />
-              </div>
-            </template>
-            <div v-else class="py-10 text-center text-muted-color">
-              <icon name="directions-bus-outline" class="mb-2 text-3xl" />
-              <p>Elija un salida para ver sus asientos.</p>
-            </div>
+            </Transition>
           </aside>
         </div>
       </div>
@@ -143,7 +153,7 @@ import BusMap from "@/shared/bus-map/BusMap.vue";
 import type { AsientoCroquis } from "@/core/croquis/types";
 import AsientoOcupadoPopover from "@/shared/bus-map/AsientoOcupadoPopover.vue";
 import BusMapLegend, { type ItemLeyenda } from "@/shared/bus-map/BusMapLegend.vue";
-import { hora } from "@/core/venta/modelo";
+import { conteosPorEstado, hora } from "@/core/venta/modelo";
 import type { Parada } from "@/core/venta/types";
 import ClienteBuscador from "./ClienteBuscador.vue";
 import CobroDialog from "./CobroDialog.vue";
@@ -165,6 +175,25 @@ const cobro = ref(false);
 const cortesia = ref(false);
 let ultimasOpciones: OpcionesCobro | null = null;
 
+const conteos = computed(() => conteosPorEstado(store.detalle?.croquis ?? [], store.estadoAsiento));
+
+/** Paginado por día: mueve la fecha y recarga las salidas. */
+function moverDia(delta: number) {
+  const d = new Date(store.fecha);
+  d.setDate(d.getDate() + delta);
+  store.fecha = d;
+  void store.cargarSalidas();
+}
+/** "Ayer"/"Mañana" respecto de hoy; si ya se navegó, el día de la semana y la fecha. */
+function etiquetaDia(delta: number) {
+  const d = new Date(store.fecha);
+  d.setDate(d.getDate() + delta);
+  const dif = Math.round((new Date(d.toDateString()).getTime() - new Date(new Date().toDateString()).getTime()) / 86_400_000);
+  if (dif === -1) return "Ayer";
+  if (dif === 0) return "Hoy";
+  if (dif === 1) return "Mañana";
+  return new Intl.DateTimeFormat("es-GT", { weekday: "short", day: "numeric", month: "short" }).format(d);
+}
 const leyenda: ItemLeyenda[] = ["disponible", "seleccionado", "ocupado", "ocupado-web", "ocupado-agencia", "reservado", "cortesia", "voucher"];
 
 const opcionesParada = (paradas: Parada[]) =>
@@ -209,6 +238,23 @@ async function reintentar(sinFactura: boolean) {
 </script>
 
 <style scoped>
+.croquis-enter-active,
+.croquis-leave-active {
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+.croquis-enter-from,
+.croquis-leave-to {
+  opacity: 0;
+  transform: translateY(0.5rem);
+}
+@media (prefers-reduced-motion: reduce) {
+  .croquis-enter-active,
+  .croquis-leave-active {
+    transition: none;
+  }
+}
 .panel {
   /*background: var(--p-content-background);*/
   /*border: 1px solid var(--p-content-border-color);*/

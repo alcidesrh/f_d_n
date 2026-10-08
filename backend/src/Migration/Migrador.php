@@ -3,22 +3,33 @@
 namespace App\Migration;
 
 use App\Entity\Enum\EstadoBoletoAsiento;
+use App\Migration\Salida\DependenciasLegado;
+use App\Migration\Salida\RutaMigrada;
+use App\Migration\Salida\TrayectosLegado;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\Attribute\Target;
 
+/**
+ * Migración dirigida por salida: cada salida del legado arrastra su árbol de
+ * relaciones y se escribe en una transacción, en el orden que exigen las FK
+ * del modelo nuevo:
+ *
+ *   empresa → estaciones + trayecto de la ruta (con sus subtrayectos)
+ *   → bus (empresa, marca, clase, piloto, copiloto, asientos y señales)
+ *   → salida (con su estado)
+ *   → por boleto: estaciones y trayecto del tramo, pasajero y comprador
+ *     (tipo de documento, nacionalidad), usuario (estación o agencia),
+ *     agencia, tipo de pago, moneda, factura certificada → boleto_venta
+ *     → boleto_asiento; al final, el total de cada venta.
+ *
+ * Es idempotente: una salida ya migrada se completa (estado, bus que se le
+ * asignó después, boletos que faltan) en vez de saltarse. Lo que el modelo
+ * nuevo no admite se omite y se cuenta (`omitido_*`), nunca en silencio.
+ */
 class Migrador
 {
-    /**
-     * Tables that use old PK as new id (no legacy_id column).
-     */
-    private const ID_MAP = ["empresa", "enclave", "cliente", "usuario"];
-
-    /**
-     * Tables that keep legacy_id column (old PK is string or variable data).
-     */
-    private const LEGACY_MAP = ["bus", "trayecto", "salida", "boleto_asiento"];
-
     /**
      * Mapa de estado_id legacy → EstadoBoletoAsiento. El legacy "Cancelado" (6)
      * no tiene equivalente propio en el enum nuevo; se resuelve como ANULADO
@@ -34,13 +45,27 @@ class Migrador
         6 => EstadoBoletoAsiento::ANULADO,
     ];
 
-    /** @var array<int, true> buses cuyo croquis ya se migró en esta ejecución */
-    private array $croquisMigrado = [];
+    /** Estados que no ocupan el asiento: no cuentan en el total de la venta. */
+    private const ESTADOS_LIBERAN = ["anulado", "reasignado"];
+
+    /** Ejemplos por motivo de omisión que se escriben en el log. */
+    private const EJEMPLOS_POR_MOTIVO = 5;
+
+    /** @var array<int|string, int> factura_generada del legado → boleto_venta (esta ejecución) */
+    private array $ventasPorFactura = [];
+
+    /** @var array<int|string, array<string, mixed>|null> factura del legado (emisor) por id */
+    private array $facturasLegado = [];
+
+    /** @var array<string, list<string>> motivo → ejemplos */
+    private array $ejemplos = [];
 
     public function __construct(
         private Connection $newConn,
         #[Target("oldPdo")] private \PDO $oldPdo,
         private Mapeador $mapeador,
+        private DependenciasLegado $dependencias,
+        private TrayectosLegado $trayectos,
     ) {
         $this->oldPdo->setAttribute(
             \PDO::ATTR_ERRMODE,
@@ -55,7 +80,9 @@ class Migrador
     /**
      * @param \Closure|null $onProgress Optional callback invoked every N iterations: fn(int $done, int $total) => void
      * @param \Closure|null $debeCancelar Optional callback consulted at the top of each iteration: fn() => bool
-     * @param array|null    $salidasPrefetchadas Filas ya obtenidas (fetchSalidasPendientes): evita un segundo fetch
+     * @param array|null    $salidasPrefetchadas Filas ya obtenidas (fetchSalidasPendientes / fetchSalidasRango): evita un segundo fetch
+     *
+     * @return array<string, int> contadores (`errores` = salidas revertidas)
      */
     public function migrarSalida(
         $salidas = 100,
@@ -65,6 +92,7 @@ class Migrador
         ?array $salidasPrefetchadas = null,
     ): array {
         $contadores = $this->contadoresIniciales();
+        $this->ejemplos = [];
 
         $salidas = $salidasPrefetchadas ?? $this->fetchSalidas($salidas);
         if ($output) {
@@ -85,73 +113,22 @@ class Migrador
             }
 
             $legacyId = (string) $salida["id"];
-            if ($this->yaMigrado("salida", $legacyId)) {
-                continue;
-            }
+            $antes = $contadores;
+            $marca = $this->dependencias->marcar();
+            $ventas = $this->ventasPorFactura;
 
             $this->newConn->beginTransaction();
             try {
-                $empresaId = $this->migrarEmpresa(
-                    $salida["empresa_id"] ?: $salida["it_empresa_id"] ?? null,
-                    $contadores,
-                );
-
-                $trayectoId = $this->migrarTrayecto(
-                    $salida["ruta_codigo"] ?: null,
-                    $contadores,
-                );
-                if (!$trayectoId) {
-                    $this->newConn->rollBack();
-                    if ($output) {
-                        $output->writeln(
-                            sprintf(
-                                "<comment>Salida %s sin trayecto resoluble; omitida</comment>",
-                                $legacyId,
-                            ),
-                        );
-                    }
-                    continue;
-                }
-
-                $busId = null;
-                if (!empty($salida["bus_codigo"])) {
-                    $busId = $this->migrarBus(
-                        $salida["bus_codigo"],
-                        $empresaId,
-                        $contadores,
-                    );
-                    if ($busId) {
-                        $this->migrarAsientosParaBus(
-                            $salida["bus_codigo"],
-                            $busId,
-                            $contadores,
-                        );
-                    }
-                }
-
-                $nuevaSalidaId = $this->crearSalida(
-                    $salida,
-                    $busId,
-                    $empresaId,
-                    $trayectoId,
-                    $contadores,
-                );
-
-                if ($nuevaSalidaId) {
-                    $this->migrarBoletosDeSalida(
-                        $salida["id"],
-                        $nuevaSalidaId,
-                        $trayectoId,
-                        $busId,
-                        $contadores,
-                    );
-                }
-
+                $this->migrarArbolSalida($salida, $contadores);
                 $this->newConn->commit();
             } catch (\Throwable $e) {
                 $this->newConn->rollBack();
-                // Lo migrado en la transacción se perdió: el croquis de sus buses también.
-                $this->croquisMigrado = [];
+                // Lo escrito en la transacción se perdió: también lo que las cachés recuerdan.
+                $contadores = $antes;
+                $this->dependencias->restaurar($marca);
+                $this->trayectos->olvidar();
+                $this->ventasPorFactura = $ventas;
+                $contadores["errores"]++;
                 if ($output) {
                     $output->writeln(
                         sprintf(
@@ -183,18 +160,330 @@ class Migrador
             $output->writeln("");
         }
 
-        // Los clientes se insertan con id explícito: la identidad sigue desde el mayor.
-        $this->newConn->executeStatement(
-            "SELECT setval(pg_get_serial_sequence('cliente', 'id'), COALESCE((SELECT MAX(id) FROM cliente), 0) + 1, false)",
-        );
+        $this->dependencias->reiniciarIdentidades();
+
+        $contadores = array_merge($contadores, $this->dependencias->contadores());
+        if ($output) {
+            $this->escribirResumen($contadores, $output);
+        }
 
         return $contadores;
+    }
+
+    // ─── Árbol de una salida ───────────────────────────────────────
+
+    /**
+     * @param array<string, mixed> $salida fila de `salida` + `ruta_codigo`, `it_empresa_id`
+     * @param array<string, int>   $contadores
+     */
+    private function migrarArbolSalida(array $salida, array &$contadores): void
+    {
+        $legacyId = (string) $salida["id"];
+        $empresaId = $this->dependencias->empresa(
+            $salida["empresa_id"] ?: ($salida["it_empresa_id"] ?? null),
+        );
+
+        $ruta = $this->trayectos->deRuta($salida["ruta_codigo"] ?? null);
+        if ($ruta === null) {
+            // `salida.trayecto_id` es obligatorio: sin ruta no hay salida.
+            $this->omitir($contadores, "salida_sin_trayecto", "salida {$legacyId} (ruta " . ($salida["ruta_codigo"] ?: "—") . ")");
+
+            return;
+        }
+
+        $busId = $this->dependencias->bus($salida["bus_codigo"] ?? null, $empresaId);
+        if ($busId === null && !empty($salida["bus_codigo"])) {
+            $this->omitir($contadores, "bus_no_migrable", "bus {$salida["bus_codigo"]} (salida {$legacyId})");
+        }
+
+        $data = $this->mapeador->salida($salida, $busId, $empresaId, $ruta->trayectoId);
+        $existente = $this->newConn->fetchAssociative(
+            "SELECT id, bus_id, estado FROM salida WHERE legacy_id = :lid",
+            ["lid" => $legacyId],
+        );
+        if ($existente === false) {
+            $salidaId = (int) $this->newConn->fetchOne(
+                "INSERT INTO salida (fecha, bus_id, empresa_id, trayecto_id, estado, legacy_id, created_at, updated_at)
+                 VALUES (:fecha, :bus_id, :empresa_id, :trayecto_id, :estado, :legacy_id, NOW(), NOW()) RETURNING id",
+                $data,
+            );
+            $contadores["salida"]++;
+        } else {
+            // Ya migrada: se completa con lo que cambió en el legado (estado,
+            // bus asignado después). Un bus ya puesto no se reemplaza.
+            $salidaId = (int) $existente["id"];
+            $busId = $existente["bus_id"] !== null ? (int) $existente["bus_id"] : $busId;
+            if ($existente["estado"] !== $data["estado"] || ($existente["bus_id"] === null && $busId !== null)) {
+                $this->newConn->executeStatement(
+                    "UPDATE salida SET estado = :estado, bus_id = :bus WHERE id = :id",
+                    ["estado" => $data["estado"], "bus" => $busId, "id" => $salidaId],
+                );
+                $contadores["salida_actualizada"]++;
+            }
+        }
+
+        $this->migrarBoletosDeSalida(
+            (int) $salida["id"],
+            $salidaId,
+            $ruta,
+            $busId,
+            $empresaId,
+            $contadores,
+        );
+    }
+
+    /**
+     * Boletos de la salida. Los que ocupan el asiento van primero: si el
+     * legado anuló un asiento y lo volvió a vender en el mismo tramo, el
+     * modelo nuevo admite uno solo por `(asiento, trayecto, salida)` y se
+     * conserva el vigente.
+     *
+     * @param array<string, int> $contadores
+     */
+    private function migrarBoletosDeSalida(
+        int $salidaLegado,
+        int $salidaId,
+        RutaMigrada $ruta,
+        ?int $busId,
+        ?int $empresaId,
+        array &$contadores,
+    ): void {
+        $boletos = $this->fetchBoletosPorSalida($salidaLegado);
+        if ($boletos === []) {
+            return;
+        }
+
+        $migrados = array_flip($this->newConn->fetchFirstColumn(
+            "SELECT legacy_id FROM boleto_asiento WHERE salida_id = :s AND legacy_id IS NOT NULL",
+            ["s" => $salidaId],
+        ));
+        $ocupados = [];
+        foreach ($this->newConn->fetchAllNumeric(
+            "SELECT asiento_id, trayecto_id FROM boleto_asiento WHERE salida_id = :s",
+            ["s" => $salidaId],
+        ) as [$a, $t]) {
+            $ocupados["{$a}:{$t}"] = true;
+        }
+
+        $this->dependencias->precargarClientes([
+            ...array_column($boletos, "cliente_boleto"),
+            ...array_column($boletos, "cliente_documento"),
+        ]);
+
+        $ventasTocadas = [];
+        foreach ($boletos as $old) {
+            $lid = (string) $old["id"];
+            if (isset($migrados[$lid])) {
+                continue;
+            }
+            if ($busId === null) {
+                // En el modelo nuevo el asiento es del bus y no se vende sin bus (ReglasVenta).
+                $this->omitir($contadores, "boleto_sin_bus", "boleto {$lid} (salida {$salidaLegado})");
+                continue;
+            }
+            $asientoId = $this->dependencias->asiento($busId, $old["asiento_numero"] ?? null);
+            if ($asientoId === null) {
+                $this->omitir($contadores, "boleto_sin_asiento", "boleto {$lid}: asiento " . ($old["asiento_numero"] ?? "—") . " no está en el croquis del bus");
+                continue;
+            }
+
+            $trayectoId = $this->trayectoDelBoleto($old, $ruta, $contadores);
+            if ($trayectoId === null) {
+                $this->omitir($contadores, "boleto_sin_trayecto", "boleto {$lid}");
+                continue;
+            }
+            if (isset($ocupados["{$asientoId}:{$trayectoId}"])) {
+                $this->omitir($contadores, "boleto_asiento_repetido", sprintf(
+                    "boleto %s (%s): asiento %s ya vendido en el mismo tramo",
+                    $lid,
+                    $this->resolverEstadoBoletoAsiento($old),
+                    $old["asiento_numero"],
+                ));
+                continue;
+            }
+
+            $pasajero = $this->dependencias->cliente($old["cliente_boleto"] ?? null)
+                ?? $this->dependencias->cliente($old["cliente_documento"] ?? null);
+            if ($pasajero === null) {
+                $this->omitir($contadores, "boleto_sin_cliente", "boleto {$lid}");
+                continue;
+            }
+
+            $ventaId = $this->ventaDelBoleto($old, $pasajero, $empresaId, $contadores);
+            $this->newConn->executeStatement(
+                'INSERT INTO boleto_asiento (salida_id, asiento_id, cliente_id, trayecto_id, estado, boleto_venta_id, precio_monto, precio_moneda, observacion, legacy_id)
+                 VALUES (:salida_id, :asiento_id, :cliente_id, :trayecto_id, :estado, :boleto_venta_id, :precio_monto, :precio_moneda, :observacion, :legacy_id)',
+                $this->mapeador->boletoAsiento(
+                    $old,
+                    $salidaId,
+                    $asientoId,
+                    $pasajero,
+                    $trayectoId,
+                    $this->resolverEstadoBoletoAsiento($old),
+                    $ventaId,
+                ),
+            );
+            $ocupados["{$asientoId}:{$trayectoId}"] = true;
+            $ventasTocadas[$ventaId] = true;
+            $contadores["boleto_asiento"]++;
+        }
+
+        if ($ventasTocadas !== []) {
+            $this->newConn->executeStatement(
+                "UPDATE boleto_venta v SET total_monto = COALESCE((
+                     SELECT SUM(b.precio_monto) FROM boleto_asiento b
+                     WHERE b.boleto_venta_id = v.id AND b.estado NOT IN (:libres)), 0)
+                 WHERE v.id IN (:ids)",
+                ["libres" => self::ESTADOS_LIBERAN, "ids" => array_keys($ventasTocadas)],
+                ["libres" => ArrayParameterType::STRING, "ids" => ArrayParameterType::INTEGER],
+            );
+        }
+    }
+
+    /**
+     * Trayecto del tramo del boleto (`estacion_origen_id` → `estacion_destino_id`):
+     * el par de la ruta o, si alguna estación no está en ella, el trayecto
+     * suelto de ese par.
+     *
+     * @param array<string, int> $contadores
+     */
+    private function trayectoDelBoleto(array $old, RutaMigrada $ruta, array &$contadores): ?int
+    {
+        $origen = $this->dependencias->estacion($old["estacion_origen_id"] ?? null) ?? $ruta->origenId;
+        $destino = $this->dependencias->estacion($old["estacion_destino_id"] ?? null) ?? $ruta->destinoId;
+        if ($origen === $destino) {
+            return null;
+        }
+        $id = $ruta->entre($origen, $destino);
+        if ($id !== null) {
+            return $id;
+        }
+        $contadores["boleto_tramo_fuera_de_ruta"]++;
+
+        return $this->trayectos->suelto($origen, $destino);
+    }
+
+    /**
+     * Venta del boleto: la de su factura del legado si ya se migró (una
+     * factura agrupa los boletos de una venta) o una nueva, con su factura
+     * certificada.
+     *
+     * @param array<string, int> $contadores
+     */
+    private function ventaDelBoleto(array $old, int $pasajero, ?int $empresaSalida, array &$contadores): int
+    {
+        $fg = $old["factura_generada_id"] ?? null;
+        if ($fg !== null && isset($this->ventasPorFactura[$fg])) {
+            return $this->ventasPorFactura[$fg];
+        }
+
+        $comprador = $this->dependencias->cliente($old["cliente_documento"] ?? null) ?? $pasajero;
+        $facturaId = null;
+        if (Mapeador::facturaCertificada($old)) {
+            $uuid = strtolower(trim((string) $old["fg_uuid"]));
+            $ventaExistente = $this->newConn->fetchOne(
+                "SELECT v.id FROM boleto_venta v JOIN factura f ON f.id = v.factura_id WHERE f.uuid = :uuid",
+                ["uuid" => $uuid],
+            );
+            if ($ventaExistente !== false) {
+                return $this->ventasPorFactura[$fg] = (int) $ventaExistente;
+            }
+            $facturaId = $this->crearFactura($old, $comprador, $empresaSalida, $contadores);
+        }
+
+        $canal = Mapeador::canalVenta($old);
+        $data = $this->mapeador->boletoVenta($old, [
+            "usuario" => $this->dependencias->usuario($old["usuario_creacion_id"] ?? null),
+            "cliente" => $comprador,
+            "estacion" => $canal->value === "estacion" ? $this->dependencias->estacion($old["estacion_creacion_id"] ?? null) : null,
+            "agencia" => $canal->value === "agencia" ? $this->dependencias->agencia($old["estacion_creacion_id"] ?? null) : null,
+            "tipo_pago" => $this->dependencias->tipoPago($old["tipo_pago_id"] ?? null),
+            "moneda" => $this->dependencias->moneda($old["moneda_id"] ?? null),
+        ], $facturaId);
+        $campos = implode(", ", array_keys($data));
+        $args = implode(", ", array_map(static fn($k) => ":{$k}", array_keys($data)));
+        $ventaId = (int) $this->newConn->fetchOne(
+            "INSERT INTO boleto_venta ({$campos}) VALUES ({$args}) RETURNING id",
+            $data,
+            ["cortesia" => \Doctrine\DBAL\ParameterType::BOOLEAN, "voucher" => \Doctrine\DBAL\ParameterType::BOOLEAN],
+        );
+        $contadores["boleto_venta"]++;
+
+        if ($fg !== null) {
+            $this->ventasPorFactura[$fg] = $ventaId;
+        }
+
+        return $ventaId;
+    }
+
+    /** @param array<string, int> $contadores */
+    private function crearFactura(array $old, int $comprador, ?int $empresaSalida, array &$contadores): ?int
+    {
+        $emisor = $this->dependencias->empresa($this->facturaLegado($old["fg_factura_id"] ?? null)["empresa_id"] ?? null)
+            ?? $empresaSalida;
+        $datosEmisor = $emisor === null ? false : $this->newConn->fetchAssociative(
+            "SELECT nit, nombre, nombre_comercial FROM empresa WHERE id = :id",
+            ["id" => $emisor],
+        );
+        $data = $this->mapeador->factura(
+            $old,
+            $datosEmisor ?: ["nit" => null, "nombre" => "Sin emisor", "nombre_comercial" => null],
+            $this->dependencias->datosCliente($comprador),
+        );
+        if ($data === null) {
+            return null;
+        }
+        $campos = implode(", ", array_keys($data));
+        $args = implode(", ", array_map(static fn($k) => ":{$k}", array_keys($data)));
+        $id = (int) $this->newConn->fetchOne("INSERT INTO factura ({$campos}) VALUES ({$args}) RETURNING id", $data);
+        $contadores["factura"]++;
+
+        return $id;
+    }
+
+    /** Fila de `factura` del legado (serie/resolución de la empresa emisora). */
+    private function facturaLegado(mixed $id): ?array
+    {
+        if (!is_numeric($id)) {
+            return null;
+        }
+        if (!array_key_exists($id, $this->facturasLegado)) {
+            $this->facturasLegado[$id] = $this->fetchOld("SELECT id, empresa_id FROM factura WHERE id = :id", ["id" => $id])[0] ?? null;
+        }
+
+        return $this->facturasLegado[$id];
+    }
+
+    /** @param array<string, int> $contadores */
+    private function omitir(array &$contadores, string $motivo, string $ejemplo): void
+    {
+        $contadores["omitido_{$motivo}"] = ($contadores["omitido_{$motivo}"] ?? 0) + 1;
+        if (count($this->ejemplos[$motivo] ?? []) < self::EJEMPLOS_POR_MOTIVO) {
+            $this->ejemplos[$motivo][] = $ejemplo;
+        }
+    }
+
+    /** @param array<string, int> $contadores */
+    private function escribirResumen(array $contadores, OutputInterface $output): void
+    {
+        $output->writeln("<info>Resumen:</info>");
+        foreach ($contadores as $clave => $n) {
+            if ($n > 0 && !str_starts_with($clave, "omitido_")) {
+                $output->writeln(sprintf("  %-28s %d", $clave, $n));
+            }
+        }
+        foreach ($contadores as $clave => $n) {
+            if ($n > 0 && str_starts_with($clave, "omitido_")) {
+                $motivo = substr($clave, strlen("omitido_"));
+                $output->writeln(sprintf("<comment>  Omitidos (%s): %d — p. ej. %s</comment>", $motivo, $n, implode("; ", $this->ejemplos[$motivo] ?? [])));
+            }
+        }
     }
 
     // ─── Existence checks ──────────────────────────────────────────
 
     /**
-     * Check if a record exists by legacy_id (or by id for ID_MAP tables).
+     * Check if a record exists by legacy_id (or by id for tables that keep the legacy PK).
      */
     public function yaMigrado(string $tabla, string $legacyId): bool
     {
@@ -208,42 +497,6 @@ class Migrador
         $result = $this->newConn->fetchOne($sql, ["lid" => $legacyId]);
 
         return $result !== false;
-    }
-
-    /**
-     * Get the new DB id for a legacy record, searching by legacy_id or by id.
-     */
-    public function getNewId(
-        string $tabla,
-        string $legacyId,
-        array $fields = ["id"],
-    ): int|array|null {
-        $select = implode(", ", $fields);
-
-        $sql = match (true) {
-            in_array($tabla, self::ID_MAP, true) || $tabla === "estacion"
-                => match ($tabla) {
-                "estacion" => "SELECT {$select} FROM enclave WHERE id = :lid",
-                default
-                    => "SELECT {$select} FROM \"{$tabla}\" WHERE id = :lid",
-            },
-            $tabla === "bus" => "SELECT {$select} FROM bus WHERE codigo = :lid",
-            default
-                => "SELECT {$select} FROM \"{$tabla}\" WHERE legacy_id = :lid",
-        };
-
-        if (is_numeric($legacyId)) {
-            $sql .= " OR id = :lid";
-        }
-
-        if (count($fields) > 1 || $fields[0] !== "id") {
-            $result = $this->newConn->fetchAllAssociative($sql, [
-                "lid" => $legacyId,
-            ]);
-            return $result[0] ?? null;
-        }
-        $result = $this->newConn->fetchOne($sql, ["lid" => $legacyId]);
-        return $result !== false ? (int) $result : null;
     }
 
     // ─── Fetch helpers ─────────────────────────────────────────────
@@ -269,539 +522,59 @@ class Migrador
         );
     }
 
-    private function fetchUsuario(int|string $id): ?array
-    {
-        $result = $this->fetchOld("SELECT * FROM custom_user WHERE id = :id", [
-            "id" => $id,
-        ]);
-        return $result[0] ?? null;
-    }
-
-    private function fetchRuta(string $codigo): ?array
-    {
-        $result = $this->fetchOld("SELECT * FROM ruta WHERE codigo = :codigo", [
-            "codigo" => $codigo,
-        ]);
-        return $result[0] ?? null;
-    }
-
-    private function fetchRutaEstacionItems(string $rutaCodigo): array
-    {
-        return $this->fetchOld(
-            "SELECT * FROM ruta_estacion_item WHERE ruta_codigo = :codigo ORDER BY posicion ASC",
-            ["codigo" => $rutaCodigo],
-        );
-    }
-
-    private function fetchEmpresa(int|string $id): ?array
-    {
-        $result = $this->fetchOld("SELECT * FROM empresa WHERE id = :id", [
-            "id" => $id,
-        ]);
-        return $result[0] ?? null;
-    }
-
-    private function fetchEstacion(int|string $id): ?array
-    {
-        $result = $this->fetchOld("SELECT * FROM estacion WHERE id = :id", [
-            "id" => $id,
-        ]);
-        return $result[0] ?? null;
-    }
-
-    private function fetchBus(string $codigo): ?array
-    {
-        $result = $this->fetchOld("SELECT * FROM bus WHERE codigo = :codigo", [
-            "codigo" => $codigo,
-        ]);
-        return $result[0] ?? null;
-    }
-
-    private function fetchAsientosPorTipoBus(int|string $tipoBusId): array
-    {
-        return $this->fetchOld(
-            "SELECT ba.*, ca.nombre AS clase_nombre FROM bus_asiento ba LEFT JOIN clase_asiento ca ON ca.id = ba.clase_id WHERE ba.tipoBus_id = :id",
-            ["id" => $tipoBusId],
-        );
-    }
-
-    private function fetchSenalesPorTipoBus(int|string $tipoBusId): array
-    {
-        return $this->fetchOld(
-            "SELECT s.*, t.nombre AS tipo_nombre FROM bus_senal s JOIN bus_senal_tipo t ON t.id = s.tipo_id WHERE s.tipoBus_id = :id",
-            ["id" => $tipoBusId],
-        );
-    }
-
-    private function fetchCliente(int|string $id): ?array
-    {
-        $result = $this->fetchOld("SELECT * FROM cliente WHERE id = :id", [
-            "id" => $id,
-        ]);
-        return $result[0] ?? null;
-    }
-
-    private function fetchTarifaBoletoPorRuta(
-        ?int $origenId,
-        ?int $destinoId,
-    ): ?array {
-        if (!$origenId || !$destinoId) {
-            return null;
-        }
-        $result = $this->fetchOld(
-            "SELECT TOP 1 * FROM tarifas_boleto WHERE estacion_origen_id = :origen AND estacion_destino_id = :destino ORDER BY fechaEfectividad DESC",
-            ["origen" => $origenId, "destino" => $destinoId],
-        );
-        return $result[0] ?? null;
-    }
-
-    private function fetchTipoBusPorBus(string $busCodigo): ?array
-    {
-        $result = $this->fetchOld(
-            "SELECT bt.* FROM bus_tipo bt INNER JOIN bus b ON b.tipo_id = bt.id WHERE b.codigo = :codigo",
-            ["codigo" => $busCodigo],
-        );
-        return $result[0] ?? null;
-    }
-
-    // ─── Migration core ────────────────────────────────────────────
-
-    private function migrarEmpresa(?int $oldId, array &$contadores): ?int
-    {
-        if (!$oldId) {
-            return null;
-        }
-
-        $legacyId = (string) $oldId;
-        if ($this->yaMigrado("empresa", $legacyId)) {
-            return (int) $oldId;
-        }
-
-        $old = $this->fetchEmpresa($oldId);
-        if (!$old) {
-            return null;
-        }
-
-        $data = $this->mapeador->empresa($old);
-        $this->newConn->executeStatement(
-            "INSERT INTO empresa (id, nombre, nit, direccion, telefono, email) VALUES (:id, :nombre, :nit, :direccion, :telefono, :email)",
-            $data,
-        );
-        $contadores["empresa"]++;
-
-        return (int) $data["id"];
-    }
-
-    private function migrarEstacions(?int $oldId, array &$contadores): ?int
-    {
-        if (!$oldId) {
-            return null;
-        }
-
-        $legacyId = (string) $oldId;
-        if ($this->yaMigrado("estacion", $legacyId)) {
-            return (int) $oldId;
-        }
-
-        $old = $this->fetchEstacion($oldId);
-        if (!$old) {
-            return null;
-        }
-
-        $data = $this->mapeador->estacion($old);
-        $this->newConn->executeStatement(
-            "INSERT INTO enclave (id, tipo, nombre, direccion, latitud, longitud) VALUES (:id, 'estacion', :nombre, :direccion, :latitud, :longitud)",
-            $data,
-        );
-        $contadores["estacion"]++;
-
-        return (int) $data["id"];
-    }
-
-    private function migrarBus(
-        string $codigo,
-        ?int $empresaId,
-        array &$contadores,
-    ): ?int {
-        if (!$codigo || !$empresaId) {
-            return null;
-        }
-
-        if ($this->yaMigrado("bus", $codigo)) {
-            return $this->getNewId("bus", $codigo);
-        }
-
-        $old = $this->fetchBus($codigo);
-        if (!$old) {
-            return null;
-        }
-
-        $tipo = $this->fetchTipoBusPorBus($codigo);
-        $data = $this->mapeador->bus($old, $empresaId);
-        $data["gama"] = isset($tipo["descripcion"])
-            ? mb_substr($tipo["descripcion"], 0, 50)
-            : null;
-        // Clase de bus del tipo, si ya se migraron las clases ("bus_clase").
-        $data["clase_id"] = isset($tipo["clase_id"]) && $this->newConn->fetchOne(
-            "SELECT 1 FROM bus_clase WHERE id = :id",
-            ["id" => (int) $tipo["clase_id"]],
-        ) ? (int) $tipo["clase_id"] : null;
-
-        $fields = implode(", ", array_keys($data));
-        $args = implode(", ", array_map(fn($k) => ":{$k}", array_keys($data)));
-        $id = $this->newConn->fetchOne(
-            "INSERT INTO bus ({$fields}) VALUES ({$args}) RETURNING id",
-            $data,
-        );
-        $contadores["bus"]++;
-
-        return (int) $id;
-    }
+    /** Columnas comunes de las consultas de salidas del legado. */
+    private const SELECT_SALIDA = "SELECT s.*, i.ruta_codigo, i.tipo_bus_id AS it_tipo_bus_id, i.empresa_id AS it_empresa_id
+             FROM salida s
+             LEFT JOIN itineario i ON i.id = s.itinerario_id
+             WHERE 1 = 1";
 
     /**
-     * Copia al bus los asientos y las señales (chofer, puertas) de su tipo de
-     * bus del legado. Idempotente: se reconocen por `(bus_id, numero)` y por
-     * celda, respectivamente. Una vez por bus en cada ejecución (hay miles de
-     * salidas por bus).
-     */
-    private function migrarAsientosParaBus(
-        string $busCodigo,
-        int $busId,
-        array &$contadores,
-    ): void {
-        if (isset($this->croquisMigrado[$busId])) {
-            return;
-        }
-        $this->croquisMigrado[$busId] = true;
-
-        $tipo = $this->fetchTipoBusPorBus($busCodigo);
-        if (!$tipo) {
-            return;
-        }
-
-        $numeros = array_flip(
-            $this->newConn->fetchFirstColumn(
-                "SELECT numero FROM asiento WHERE bus_id = :bus",
-                ["bus" => $busId],
-            ),
-        );
-        foreach ($this->fetchAsientosPorTipoBus($tipo["id"]) as $asientoOld) {
-            $data = $this->mapeador->asiento($asientoOld, $busId);
-            if (isset($numeros[$data["numero"]])) {
-                continue;
-            }
-            $this->newConn->executeStatement(
-                "INSERT INTO asiento (numero, clase, planta, fila, columna, bus_id) VALUES (:numero, :clase, :planta, :fila, :columna, :bus_id)",
-                $data,
-            );
-            $numeros[$data["numero"]] = true;
-            $contadores["asiento"]++;
-        }
-
-        $celdas = [];
-        foreach (
-            $this->newConn->fetchAllNumeric(
-                "SELECT planta, fila, columna FROM bus_senal WHERE bus_id = :bus",
-                ["bus" => $busId],
-            )
-            as $celda
-        ) {
-            $celdas[implode(":", $celda)] = true;
-        }
-        foreach ($this->fetchSenalesPorTipoBus($tipo["id"]) as $senalOld) {
-            $data = $this->mapeador->senal($senalOld, $busId);
-            if ($data === null) {
-                continue;
-            }
-            $celda = "{$data["planta"]}:{$data["fila"]}:{$data["columna"]}";
-            if (isset($celdas[$celda])) {
-                continue;
-            }
-            $this->newConn->executeStatement(
-                "INSERT INTO bus_senal (tipo, planta, fila, columna, bus_id) VALUES (:tipo, :planta, :fila, :columna, :bus_id)",
-                $data,
-            );
-            $celdas[$celda] = true;
-            $contadores["senal"] = ($contadores["senal"] ?? 0) + 1;
-        }
-    }
-
-    /**
-     * Asiento nuevo de un boleto: el del bus del salida con el mismo número
-     * que el `bus_asiento` del legado (los asientos se copian por bus).
+     * Filtro de fechas (Y-m-d) con `hasta` inclusive: `fecha` es fecha y hora,
+     * así que una salida del día `hasta` a las 20:00 también entra.
      *
-     * @param array<int|string, int|null> $numerosLegado caché id legado → número
+     * @param array<string, string> $params
      */
-    private function resolverAsientoBoleto(
-        mixed $asientoLegadoId,
-        ?int $busId,
-        array &$numerosLegado,
-    ): ?int {
-        if (!$busId) {
-            return null;
-        }
-
-        if (!empty($asientoLegadoId)) {
-            if (!array_key_exists($asientoLegadoId, $numerosLegado)) {
-                $fila = $this->fetchOld(
-                    "SELECT numero FROM bus_asiento WHERE id = :id",
-                    ["id" => $asientoLegadoId],
-                );
-                $numerosLegado[$asientoLegadoId] = isset($fila[0]["numero"])
-                    ? (int) $fila[0]["numero"]
-                    : null;
-            }
-            $numero = $numerosLegado[$asientoLegadoId];
-            if ($numero !== null) {
-                $id = $this->newConn->fetchOne(
-                    "SELECT id FROM asiento WHERE bus_id = :bus AND numero = :numero",
-                    ["bus" => $busId, "numero" => $numero],
-                );
-                if ($id !== false) {
-                    return (int) $id;
-                }
-            }
-        }
-
-        $id = $this->newConn->fetchOne(
-            "SELECT id FROM asiento WHERE bus_id = :busId ORDER BY id LIMIT 1",
-            ["busId" => $busId],
-        );
-
-        return $id !== false ? (int) $id : null;
-    }
-
-    private function migrarCliente(array $boletoOld, array &$contadores): ?int
+    private static function filtroFechas(?string $desde, ?string $hasta, array &$params): string
     {
-        $clienteId =
-            $boletoOld["cliente_boleto"] ??
-            ($boletoOld["cliente_documento"] ?? null);
-        if (!$clienteId) {
-            return null;
+        $sql = "";
+        if ($desde) {
+            $sql .= " AND s.fecha >= CAST(:desde AS date)";
+            $params["desde"] = $desde;
+        }
+        if ($hasta) {
+            $sql .= " AND s.fecha < DATEADD(day, 1, CAST(:hasta AS date))";
+            $params["hasta"] = $hasta;
         }
 
-        $legacyId = (string) $clienteId;
-        if ($this->yaMigrado("cliente", $legacyId)) {
-            return (int) $clienteId;
-        }
-
-        $old = $this->fetchCliente($clienteId);
-        if (!$old) {
-            return null;
-        }
-
-        $data = $this->mapeador->cliente($old);
-        $this->newConn->executeStatement(
-            "INSERT INTO cliente (id, nombre, apellido, nit, email, telefono) VALUES (:id, :nombre, :apellido, :nit, :email, :telefono) ON CONFLICT DO NOTHING",
-            $data,
-        );
-        $contadores["cliente"]++;
-
-        return (int) $data["id"];
+        return $sql;
     }
-
-    private function migrarUsuario(array $boletoOld, array &$contadores): ?int
-    {
-        $usuarioIds = [$boletoOld["usuario_creacion_id"]];
-        if (
-            $boletoOld["usuario_actualizacion_id"] &&
-            $boletoOld["usuario_actualizacion_id"] !==
-                $boletoOld["usuario_creacion_id"]
-        ) {
-            $usuarioIds[] = $boletoOld["usuario_actualizacion_id"];
-        }
-
-        $firstId = null;
-        foreach ($usuarioIds as $idOld) {
-            if (!$idOld) {
-                continue;
-            }
-            $legacyId = (string) $idOld;
-
-            if ($this->yaMigrado("usuario", $legacyId)) {
-                if (!$firstId) {
-                    $firstId = (int) $idOld;
-                }
-                continue;
-            }
-
-            $old = $this->fetchUsuario($idOld);
-            if (!$old) {
-                continue;
-            }
-
-            $data = $this->mapeador->usuario($old);
-            $fields = implode(", ", array_keys($data));
-            $args = implode(
-                ", ",
-                array_map(fn($k) => ":{$k}", array_keys($data)),
-            );
-            $this->newConn->executeStatement(
-                "INSERT INTO usuario ({$fields}) VALUES ({$args}) ON CONFLICT DO NOTHING",
-                $data,
-            );
-            $contadores["usuario"]++;
-
-            if (!$firstId) {
-                $firstId = (int) $data["id"];
-            }
-        }
-
-        return $firstId ?? ($boletoOld["usuario_creacion_id"] ?? null);
-    }
-
-    private function migrarTrayecto(
-        ?string $rutaCodigo,
-        array &$contadores,
-    ): ?int {
-        if (!$rutaCodigo) {
-            return null;
-        }
-
-        $oldRuta = $this->fetchRuta($rutaCodigo);
-        if (!$oldRuta) {
-            return null;
-        }
-
-        $origenId = $this->migrarEstacions(
-            $oldRuta["estacion_origen_id"],
-            $contadores,
-        );
-        $destinoId = $this->migrarEstacions(
-            $oldRuta["estacion_destino_id"],
-            $contadores,
-        );
-        if (!$origenId || !$destinoId) {
-            return null;
-        }
-
-        $trayectoId = $this->findTrayectoPorEnclaves($origenId, $destinoId);
-        if (!$trayectoId) {
-            $data = $this->mapeador->trayecto(
-                $oldRuta,
-                $origenId,
-                $destinoId,
-                true,
-            );
-            $trayectoId = $this->newConn->fetchOne(
-                "INSERT INTO trayecto (origen_id, destino_id, distancia_km, duracion_estimada_minutos, activo,  legacy_id) VALUES (:origen_id, :destino_id, :distancia_km, :duracion_estimada_minutos, :activo,  :legacy_id) RETURNING id",
-                $data,
-            );
-            if (!$trayectoId) {
-                return null;
-            }
-            $contadores["trayecto"]++;
-        }
-
-        $this->migrarSubTrayectos(
-            $rutaCodigo,
-            (int) $trayectoId,
-            $origenId,
-            $destinoId,
-            $contadores,
-        );
-
-        return (int) $trayectoId;
-    }
-
-    private function findTrayectoPorEnclaves(
-        int $origenId,
-        int $destinoId,
-    ): ?int {
-        $trayectoId = $this->newConn->fetchOne(
-            "SELECT id FROM trayecto WHERE origen_id = :origen AND destino_id = :destino",
-            ["origen" => $origenId, "destino" => $destinoId],
-        );
-
-        return $trayectoId !== false ? (int) $trayectoId : null;
-    }
-
-    private function migrarSubTrayectos(
-        string $rutaCodigo,
-        int $trayectoPadreId,
-        int $rutaOrigenId,
-        int $rutaDestinoId,
-        array &$contadores,
-    ): void {
-        $items = $this->fetchRutaEstacionItems($rutaCodigo);
-        if (empty($items)) {
-            return;
-        }
-
-        $stationIds = [$rutaOrigenId];
-        foreach ($items as $item) {
-            $estId = $this->migrarEstacions($item["estacion_id"], $contadores);
-            if ($estId) {
-                $stationIds[] = $estId;
-            }
-        }
-        $stationIds[] = $rutaDestinoId;
-
-        for ($i = 0; $i < count($stationIds) - 1; $i++) {
-            $origenId = $stationIds[$i];
-            $destinoId = $stationIds[$i + 1];
-            if ($origenId === $destinoId) {
-                continue;
-            }
-
-            $subId = $this->findTrayectoPorEnclaves($origenId, $destinoId);
-            if (!$subId) {
-                $subId = $this->newConn->fetchOne(
-                    "INSERT INTO trayecto (origen_id, destino_id, activo) VALUES (:origen_id, :destino_id, true) RETURNING id",
-                    [
-                        "origen_id" => $origenId,
-                        "destino_id" => $destinoId,
-                    ],
-                );
-                if (!$subId) {
-                    continue;
-                }
-                $contadores["trayecto"]++;
-            }
-
-            $this->linkTrayectoHijo($trayectoPadreId, (int) $subId);
-        }
-    }
-
-    private function linkTrayectoHijo(int $padreId, int $hijoId): void
-    {
-        $exists = $this->newConn->fetchOne(
-            "SELECT id FROM subtrayecto WHERE below_to_id = :padre AND trayecto_id = :hijo",
-            ["padre" => $padreId, "hijo" => $hijoId],
-        );
-        if ($exists) {
-            return;
-        }
-
-        $this->newConn->executeStatement(
-            "INSERT INTO subtrayecto (trayecto_id, below_to_id, activo) VALUES (:hijo, :padre, true)",
-            ["hijo" => $hijoId, "padre" => $padreId],
-        );
-    }
-
-    // ─── Salida-driven migration helpers ───────────────────────────
 
     private function fetchSalidas(
         int $salidas,
         ?string $desde = null,
         ?string $hasta = null,
     ): array {
-        $sql = "SELECT TOP $salidas s.*, i.ruta_codigo, i.tipo_bus_id AS it_tipo_bus_id, i.empresa_id AS it_empresa_id
-             FROM salida s
-             LEFT JOIN itineario i ON i.id = s.itinerario_id
-             WHERE s.estado_id in (1,2)";
         $params = [];
-        if ($desde) {
-            $sql .= " AND s.fecha >= :desde";
-            $params["desde"] = $desde;
-        }
-        if ($hasta) {
-            $sql .= " AND s.fecha <= :hasta";
-            $params["hasta"] = $hasta;
-        }
-        $sql .= " ORDER BY s.fecha DESC";
+        $sql = str_replace("SELECT s.*", "SELECT TOP {$salidas} s.*", self::SELECT_SALIDA)
+            . self::filtroFechas($desde, $hasta, $params)
+            . " ORDER BY s.fecha DESC";
 
         return $this->fetchOld($sql, $params);
+    }
+
+    /**
+     * Todas las salidas del legado con fecha en [desde, hasta] (cualquier
+     * estado: programadas, canceladas, finalizadas…), migradas o no: migrar un
+     * rango completa también las que ya estaban.
+     */
+    public function fetchSalidasRango(string $desde, string $hasta): array
+    {
+        $params = [];
+
+        return $this->fetchOld(
+            self::SELECT_SALIDA . self::filtroFechas($desde, $hasta, $params) . " ORDER BY s.fecha ASC, s.id ASC",
+            $params,
+        );
     }
 
     private function fetchSalidasVentana(
@@ -810,20 +583,10 @@ class Migrador
         ?string $desde = null,
         ?string $hasta = null,
     ): array {
-        $sql = "SELECT s.*, i.ruta_codigo, i.tipo_bus_id AS it_tipo_bus_id, i.empresa_id AS it_empresa_id
-             FROM salida s
-             LEFT JOIN itineario i ON i.id = s.itinerario_id
-             WHERE s.estado_id in (1,2)";
         $params = [];
-        if ($desde) {
-            $sql .= " AND s.fecha >= :desde";
-            $params["desde"] = $desde;
-        }
-        if ($hasta) {
-            $sql .= " AND s.fecha <= :hasta";
-            $params["hasta"] = $hasta;
-        }
-        $sql .= " ORDER BY s.fecha DESC OFFSET {$offset} ROWS FETCH NEXT {$cantidad} ROWS ONLY";
+        $sql = self::SELECT_SALIDA
+            . self::filtroFechas($desde, $hasta, $params)
+            . " ORDER BY s.fecha DESC OFFSET {$offset} ROWS FETCH NEXT {$cantidad} ROWS ONLY";
 
         return $this->fetchOld($sql, $params);
     }
@@ -889,132 +652,13 @@ class Migrador
         ?string $desde = null,
         ?string $hasta = null,
     ): int {
-        $sql = "SELECT COUNT(*) FROM salida s WHERE s.estado_id IN (1,2)";
         $params = [];
-        if ($desde) {
-            $sql .= " AND s.fecha >= :desde";
-            $params["desde"] = $desde;
-        }
-        if ($hasta) {
-            $sql .= " AND s.fecha <= :hasta";
-            $params["hasta"] = $hasta;
-        }
-        $stmt = $this->oldPdo->prepare($sql);
+        $stmt = $this->oldPdo->prepare(
+            "SELECT COUNT(*) FROM salida s WHERE 1 = 1" . self::filtroFechas($desde, $hasta, $params),
+        );
         $stmt->execute($params);
 
         return (int) $stmt->fetchColumn();
-    }
-
-    private function crearSalida(
-        array $salida,
-        ?int $busId,
-        ?int $empresaId,
-        ?int $trayectoId,
-        array &$contadores,
-    ): ?int {
-        // Nota: el piloto de la salida legacy ya no se migra a nivel de
-        // Salida — la asignación de piloto/copiloto vive en Bus (ver
-        // ADR-013 y siguientes). El piloto histórico de esta salida puntual
-        // (que podía diferir del piloto habitual del bus) no tiene destino
-        // en el modelo nuevo y se descarta.
-        $data = $this->mapeador->salida(
-            $salida,
-            $busId,
-            $empresaId,
-            $trayectoId,
-        );
-        $id = $this->newConn->fetchOne(
-            "INSERT INTO salida (fecha, bus_id, empresa_id, trayecto_id, estado, legacy_id) VALUES (:fecha, :bus_id, :empresa_id, :trayecto_id, :estado, :legacy_id) RETURNING id",
-            $data,
-        );
-        $contadores["salida"]++;
-
-        return (int) $id;
-    }
-
-    private function migrarBoletosDeSalida(
-        int $salidaId,
-        int $nuevaSalidaId,
-        ?int $trayectoId,
-        ?int $busId,
-        array &$contadores,
-    ): void {
-        $boletos = $this->fetchBoletosPorSalida($salidaId);
-        if (empty($boletos)) {
-            return;
-        }
-        $numerosAsientoLegado = [];
-
-        foreach ($boletos as $boletoOld) {
-            $boletoLegacy = (string) $boletoOld["id"];
-            if ($this->yaMigrado("boleto_asiento", $boletoLegacy)) {
-                continue;
-            }
-
-            $usuarioId = $this->migrarUsuario($boletoOld, $contadores);
-
-            $clienteId = $this->migrarCliente($boletoOld, $contadores);
-            if (!$clienteId) {
-                $dummyId =
-                    $boletoOld["cliente_boleto"] ??
-                    ($boletoOld["cliente_documento"] ?? null);
-                if ($dummyId) {
-                    $this->newConn->executeStatement(
-                        "INSERT INTO cliente (id, nombre, apellido) VALUES (:id, :nombre, :apellido) ON CONFLICT DO NOTHING",
-                        [
-                            "id" => (int) $dummyId,
-                            "nombre" => "Cliente",
-                            "apellido" => "Migrado",
-                        ],
-                    );
-                    $clienteId = (int) $dummyId;
-                    $contadores["cliente"]++;
-                }
-            }
-            if (!$clienteId) {
-                continue;
-            }
-
-            $asientoId = $this->resolverAsientoBoleto(
-                $boletoOld["asiento_bus_id"] ?? null,
-                $busId,
-                $numerosAsientoLegado,
-            );
-            if (!$asientoId) {
-                continue;
-            }
-
-            $trayectoBoletoId = $this->resolverTrayectoBoleto(
-                $trayectoId,
-                $boletoOld,
-            );
-            if (!$trayectoBoletoId) {
-                continue;
-            }
-
-            $estado = $this->resolverEstadoBoletoAsiento($boletoOld);
-
-            $ventaId = $this->crearBoletoVenta($usuarioId, $contadores, Mapeador::esVoucher($boletoOld));
-            if (!$ventaId) {
-                continue;
-            }
-
-            $data = $this->mapeador->boletoAsiento(
-                $boletoOld,
-                $nuevaSalidaId,
-                $asientoId,
-                $clienteId,
-                $trayectoBoletoId,
-                $estado,
-                $ventaId,
-            );
-            $this->newConn->executeStatement(
-                'INSERT INTO boleto_asiento (salida_id, asiento_id, cliente_id, trayecto_id, estado, boleto_venta_id, precio_monto, precio_moneda, legacy_id)
-                 VALUES (:salida_id, :asiento_id, :cliente_id, :trayecto_id, :estado, :boleto_venta_id, :precio_monto, :precio_moneda, :legacy_id)',
-                $data,
-            );
-            $contadores["boleto_asiento"]++;
-        }
     }
 
     /**
@@ -1050,22 +694,6 @@ class Migrador
         return $count;
     }
 
-    private function crearBoletoVenta(?int $usuarioId, array &$contadores, bool $voucher = false): ?int
-    {
-        if (!$usuarioId) {
-            $usuarioId = 1;
-        }
-
-        $insertId = $this->newConn->fetchOne(
-            "INSERT INTO boleto_venta (usuario_id, voucher) VALUES (:usuario_id, :voucher) RETURNING id",
-            ["usuario_id" => $usuarioId, "voucher" => $voucher],
-            ["voucher" => \Doctrine\DBAL\ParameterType::BOOLEAN],
-        );
-        $contadores["boleto_venta"]++;
-
-        return (int) $insertId;
-    }
-
     /**
      * Resuelve el EstadoBoletoAsiento a partir del estado_id legacy del boleto.
      * Estado desconocido o ausente → fallback EMITIDO.
@@ -1081,59 +709,43 @@ class Migrador
     }
 
     /**
-     * Indica el trayecto del boleto: el trayecto de la salida o, si el boleto
-     * referencia un origen que coincide con un subtrayecto del mismo, ese subtrayecto.
+     * Boletos de una salida con lo que su árbol necesita del legado: número
+     * del asiento, tipo de la estación que lo emitió (agencia) y la factura
+     * (`fg_*`). Primero los que ocupan el asiento (no anulados, reasignados
+     * ni cancelados).
      */
-    private function resolverTrayectoBoleto(
-        ?int $trayectoId,
-        array $boletoOld,
-    ): ?int {
-        if (!$trayectoId) {
-            return null;
-        }
-
-        $origenLegacy = $boletoOld["estacion_origen_id"] ?? null;
-        if (!$origenLegacy) {
-            return $trayectoId;
-        }
-        $origenId = $this->getNewId("estacion", (string) $origenLegacy) ?: null;
-        if (!$origenId) {
-            return $trayectoId;
-        }
-
-        $subTrayectoId = $this->newConn->fetchOne(
-            'SELECT s.trayecto_id FROM subtrayecto s
-             JOIN trayecto t ON t.id = s.trayecto_id
-             WHERE s.below_to_id = :parent AND t.origen_id = :origen
-             ORDER BY s.position NULLS LAST, s.id LIMIT 1',
-            ["parent" => $trayectoId, "origen" => $origenId],
-        );
-
-        return $subTrayectoId ? (int) $subTrayectoId : $trayectoId;
-    }
-
     private function fetchBoletosPorSalida(int $salidaId): array
     {
         return $this->fetchOld(
-            "SELECT * FROM boleto WHERE salida_id = :salidaId ORDER BY id",
+            "SELECT b.*, ba.numero AS asiento_numero, ec.tipoEstacion_id AS creacion_tipo,
+                    fg.factura_id AS fg_factura_id, fg.sAutorizacionUUIDsat AS fg_uuid,
+                    fg.sNumeroDTEsat AS fg_dte, fg.sSerieDTEsat AS fg_serie,
+                    CONVERT(varchar(19), fg.fecha, 120) AS fg_fecha,
+                    CONVERT(varchar(19), fg.sFechaCertificaDTEsat, 120) AS fg_certificada,
+                    fg.importeTotal AS fg_total, fg.autorizacionTarjeta AS fg_autorizacion,
+                    CONVERT(varchar(19), b.fecha_creacion, 120) AS fecha_creacion,
+                    CONVERT(varchar(19), b.fecha_actualizacion, 120) AS fecha_actualizacion
+               FROM boleto b
+               LEFT JOIN bus_asiento ba ON ba.id = b.asiento_bus_id
+               LEFT JOIN estacion ec ON ec.id = b.estacion_creacion_id
+               LEFT JOIN factura_generada fg ON fg.id = b.factura_generada_id
+              WHERE b.salida_id = :salidaId
+              ORDER BY CASE WHEN b.estado_id IN (4, 5, 6) THEN 1 ELSE 0 END, b.id",
             ["salidaId" => $salidaId],
         );
     }
 
+    /** @return array<string, int> */
     private function contadoresIniciales(): array
     {
         return [
-            "empresa" => 0,
-            "estacion" => 0,
-            "bus" => 0,
-            "asiento" => 0,
-            "senal" => 0,
-            "cliente" => 0,
-            "trayecto" => 0,
             "salida" => 0,
+            "salida_actualizada" => 0,
             "boleto_asiento" => 0,
             "boleto_venta" => 0,
-            "usuario" => 0,
+            "factura" => 0,
+            "boleto_tramo_fuera_de_ruta" => 0,
+            "errores" => 0,
         ];
     }
 }

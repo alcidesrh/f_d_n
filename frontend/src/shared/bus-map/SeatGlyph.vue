@@ -139,10 +139,10 @@ withDefaults(
   }
 }
 .seat--seleccionado {
-  --seat-fill: var(--p-primary-color);
-  --seat-stroke: color-mix(in srgb, var(--p-primary-color) 70%, black);
-  --seat-ink: var(--p-primary-contrast-color);
-  filter: drop-shadow(0 2px 5px color-mix(in srgb, var(--p-primary-color) 45%, transparent));
+  --seat-fill: var(--p-blue-700);
+  --seat-stroke: color-mix(in srgb, var(--p-blue-700) 70%, black);
+  --seat-ink: var(--p-blue-50);
+  filter: drop-shadow(0 2px 5px color-mix(in srgb, var(--p-blue-700) 45%, transparent));
 }
 .seat--reservado rect {
   stroke: var(--bm-reserved);

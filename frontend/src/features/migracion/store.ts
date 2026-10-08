@@ -45,6 +45,7 @@ export const useMigracionStore = defineStore('migracion', () => {
   let timers: ReturnType<typeof setInterval>[] = []
   let cargandoEstado = false
   let cargandoLog = false
+  let cargandoIndicadores = false
 
   async function cargarEntidades(): Promise<void> {
     try {
@@ -54,11 +55,16 @@ export const useMigracionStore = defineStore('migracion', () => {
     }
   }
 
+  /** Sin solaparse: cada pedido ocupa un worker del backend mientras el legado responde. */
   async function cargarIndicadores(): Promise<void> {
+    if (cargandoIndicadores) return
+    cargandoIndicadores = true
     try {
       indicadores.value = await http.get<IndicadoresMigracion>('/migracion/indicadores', silent)
     } catch (e) {
       error.value = message(e)
+    } finally {
+      cargandoIndicadores = false
     }
   }
 

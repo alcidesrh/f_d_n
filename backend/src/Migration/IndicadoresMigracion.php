@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Migration;
 
 use Doctrine\DBAL\Connection;
+use Symfony\Contracts\Cache\CacheInterface;
+use Symfony\Contracts\Cache\ItemInterface;
 use Symfony\Component\DependencyInjection\Attribute\Lazy;
+use Symfony\Component\DependencyInjection\Attribute\Target;
 
 /**
  * Conteos "nuevo" (PostgreSQL) vs "legado" (SQL Server) por entidad migrable,
@@ -13,7 +16,12 @@ use Symfony\Component\DependencyInjection\Attribute\Lazy;
  *
  * El PDO legacy se crea bajo demanda (crearPdo con preflight TCP de
  * SondaLegado) y dentro del try de contarLegado, de modo que el panel degrada a
- * -1 sin colgarse cuando el SQL Server legacy no responde.
+ * -1 sin colgarse cuando el SQL Server legacy no responde. Como el puerto puede
+ * abrir aunque el servidor no conteste consultas, cada conteo tiene un tope
+ * (QUERY_TIMEOUT) y tras el primer fallo no se intentan los demás. Los conteos
+ * del legado se cachean (el panel los pide cada pocos segundos y cada pedido
+ * ocupa un worker de FrankenPHP: sin esto, un legado lento deja sin workers a
+ * toda la app).
  */
 #[Lazy]
 final class IndicadoresMigracion
@@ -107,7 +115,7 @@ final class IndicadoresMigracion
         ],
         "salida" => [
             "nuevo" => "SELECT COUNT(*) FROM salida",
-            "legado" => "SELECT COUNT(*) FROM salida WHERE estado_id IN (1,2)",
+            "legado" => "SELECT COUNT(*) FROM salida",
         ],
         "boleto" => [
             "nuevo" => "SELECT COUNT(*) FROM boleto_asiento",
@@ -124,11 +132,21 @@ final class IndicadoresMigracion
         ],
     ];
 
+    /** Segundos que se reutilizan los conteos del legado (cambian despacio). */
+    private const TTL_LEGADO = 300;
+
+    /** Si el legado falló, se vuelve a intentar antes. */
+    private const TTL_LEGADO_FALLIDO = 30;
+
+    /** Tope por consulta al legado, en segundos. */
+    private const QUERY_TIMEOUT = 10;
+
     private ?\PDO $pdoLegadoCache = null;
 
     public function __construct(
         private readonly Connection $newConn,
         private readonly SondaLegado $sonda,
+        #[Target("cache.migracion")] private readonly CacheInterface $cache,
     ) {}
 
     /**
@@ -140,12 +158,10 @@ final class IndicadoresMigracion
         $totalNuevo = 0;
         $totalLegado = 0;
 
+        $legados = $this->conteosLegado();
         foreach (self::CONTEOS as $clave => $sqls) {
             $nuevo = $this->contarNuevo($sqls["nuevo"]);
-            $legado =
-                null !== $sqls["legado"]
-                    ? $this->contarLegado($sqls["legado"])
-                    : 0;
+            $legado = $legados[$clave] ?? 0;
             $totalNuevo += max(0, $nuevo);
             $totalLegado += max(0, $legado);
             $resultado[$clave] = ["nuevo" => $nuevo, "legado" => $legado];
@@ -168,6 +184,31 @@ final class IndicadoresMigracion
         }
     }
 
+    /**
+     * Conteos del legado por entidad, cacheados. Tras el primer fallo
+     * (legado caído o lento) los demás quedan en -1 sin consultarlo.
+     *
+     * @return array<string, int>
+     */
+    private function conteosLegado(): array
+    {
+        return $this->cache->get("migracion.indicadores.legado", function (ItemInterface $item): array {
+            $conteos = [];
+            $fallo = false;
+            foreach (self::CONTEOS as $clave => $sqls) {
+                if (null === $sqls["legado"]) {
+                    $conteos[$clave] = 0;
+                    continue;
+                }
+                $conteos[$clave] = $fallo ? -1 : $this->contarLegado($sqls["legado"]);
+                $fallo = $fallo || $conteos[$clave] < 0;
+            }
+            $item->expiresAfter($fallo ? self::TTL_LEGADO_FALLIDO : self::TTL_LEGADO);
+
+            return $conteos;
+        });
+    }
+
     private function contarLegado(string $sql): int
     {
         try {
@@ -182,6 +223,9 @@ final class IndicadoresMigracion
 
     private function pdoLegado(): \PDO
     {
-        return $this->pdoLegadoCache ??= $this->sonda->crearPdo();
+        return $this->pdoLegadoCache ??= $this->sonda->crearPdo([
+            \PDO::DBLIB_ATTR_QUERY_TIMEOUT => self::QUERY_TIMEOUT,
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+        ]);
     }
 }

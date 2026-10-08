@@ -3,6 +3,8 @@
 namespace App\Migration;
 
 use App\Croquis\Croquis;
+use App\Entity\Enum\CanalVenta;
+use App\Entity\Enum\EstadoFacturacion;
 use App\Entity\Enum\EstadoSalida;
 use App\Entity\Enum\TipoBusSenal;
 
@@ -67,7 +69,8 @@ class Mapeador
             "anoFabricacion" => isset($old["anoFabricacion"])
                 ? (int) $old["anoFabricacion"]
                 : 0,
-            "numeroSeguro" => $this->truncate($old["numeroSeguro"] ?? null, 30),
+            // Único en el modelo nuevo: el legado deja cientos en "" → null.
+            "numeroSeguro" => $this->vacioANulo($this->truncate($old["numeroSeguro"] ?? null, 30)),
             "fechaVencimientoTarjetaOperaciones" => $this->formatDate(
                 $old["fechaVencimientoTarjetaOperaciones"] ?? null,
             ),
@@ -338,12 +341,24 @@ class Mapeador
         ];
     }
 
+    /** `salida_estado` del legado → EstadoSalida (mismos cinco estados). */
+    private const ESTADO_SALIDA = [
+        1 => EstadoSalida::PROGRAMADA,
+        2 => EstadoSalida::ABORDANDO,
+        3 => EstadoSalida::INICIADA,
+        4 => EstadoSalida::CANCELADA,
+        5 => EstadoSalida::FINALIZADA,
+    ];
+
+    /** Estado desconocido o ausente → PROGRAMADA. */
+    public static function estadoSalida(mixed $estadoId): EstadoSalida
+    {
+        return self::ESTADO_SALIDA[(int) $estadoId] ?? EstadoSalida::PROGRAMADA;
+    }
+
     /**
-     * Salida is variable data → keep legacy_id.
-     * `estado` fija PROGRAMADA: `fetchSalidas`/`fetchSalidasVentana` solo traen
-     * salidas legacy con estado_id 1 o 2 (Emitido/Chequeado), es decir, salidas
-     * legacy aún no completadas — PROGRAMADA es su equivalente razonable en el
-     * enum nuevo (ver EstadoSalida).
+     * Salida is variable data → keep legacy_id. El estado se traduce del
+     * legado (`salida_estado`): se migran todas, también canceladas y finalizadas.
      */
     public function salida(
         array $old,
@@ -356,7 +371,7 @@ class Mapeador
             "bus_id" => $busId,
             "empresa_id" => $empresaId,
             "trayecto_id" => $trayectoId,
-            "estado" => EstadoSalida::PROGRAMADA->value,
+            "estado" => self::estadoSalida($old["estado_id"] ?? null)->value,
             "legacy_id" => (string) $old["id"],
         ];
     }
@@ -375,8 +390,6 @@ class Mapeador
         string $estado,
         int $boletoVentaId,
     ): array {
-        $precio = (int) (($old["precioCalculado"] ?? 0) * 100);
-
         return [
             "salida_id" => $salidaId,
             "asiento_id" => $asientoId,
@@ -384,9 +397,112 @@ class Mapeador
             "trayecto_id" => $trayectoId,
             "estado" => $estado,
             "boleto_venta_id" => $boletoVentaId,
-            "precio_monto" => $precio ?: 0,
+            "precio_monto" => self::precioBoleto($old),
             "precio_moneda" => "GTQ",
+            "observacion" => $this->truncate($this->vacioANulo($old["observacion"] ?? null), 255),
             "legacy_id" => (string) $old["id"],
+        ];
+    }
+
+    /**
+     * Precio del boleto en centavos de quetzal. `precioCalculadoMonedaBase` es
+     * el importe en la moneda base (GTQ) aunque se haya pagado en otra
+     * (`boleto.moneda_id`); los boletos viejos solo traen `precioCalculado`.
+     */
+    public static function precioBoleto(array $old): int
+    {
+        $valor = $old["precioCalculadoMonedaBase"] ?? null;
+        if ($valor === null || $valor === "") {
+            $valor = $old["precioCalculado"] ?? 0;
+        }
+
+        return max(0, (int) round(((float) $valor) * 100));
+    }
+
+    /** `estacion.tipoEstacion_id` de las agencias en el legado. */
+    public const TIPO_ESTACION_AGENCIA = 4;
+
+    /**
+     * Canal de la venta: la estación que emitió el boleto es una agencia
+     * (`tipoEstacion_id = 4`, alias `creacion_tipo`), o viene de una reserva
+     * de la página web; si no, taquilla.
+     */
+    public static function canalVenta(array $old): CanalVenta
+    {
+        return match (true) {
+            (int) ($old["creacion_tipo"] ?? 0) === self::TIPO_ESTACION_AGENCIA => CanalVenta::AGENCIA,
+            !empty($old["pagina_web_reserva_id"]) => CanalVenta::WEB,
+            default => CanalVenta::ESTACION,
+        };
+    }
+
+    /** La factura del legado se certificó en la SAT (tiene UUID y número de DTE). */
+    public static function facturaCertificada(array $old): bool
+    {
+        return !empty($old["fg_uuid"]) && !empty($old["fg_dte"]);
+    }
+
+    /**
+     * BoletoVenta de un boleto del legado (fila de `fetchBoletosPorSalida`).
+     * El total se recalcula al terminar la salida con sus boletos. Nunca
+     * queda `pendiente` de facturar: el cron certificaría ventas viejas.
+     *
+     * @param array{usuario: ?int, cliente: ?int, estacion: ?int, agencia: ?int, tipo_pago: ?int, moneda: ?int} $ids ya migrados
+     */
+    public function boletoVenta(array $old, array $ids, ?int $facturaId): array
+    {
+        $canal = self::canalVenta($old);
+        $referencia = $this->vacioANulo(trim((string) ($old["fg_autorizacion"] ?? "")));
+
+        return [
+            "usuario_id" => $ids["usuario"],
+            "cliente_id" => $ids["cliente"],
+            "estacion_id" => $canal === CanalVenta::ESTACION ? $ids["estacion"] : null,
+            "agencia_id" => $canal === CanalVenta::AGENCIA ? $ids["agencia"] : null,
+            "tipo_pago_id" => $ids["tipo_pago"],
+            "moneda_id" => $ids["moneda"],
+            "factura_id" => $facturaId,
+            "canal" => $canal->value,
+            "estado" => "confirmada",
+            "estado_facturacion" => ($facturaId !== null ? EstadoFacturacion::CERTIFICADA : EstadoFacturacion::NO_APLICA)->value,
+            "cortesia" => !empty($old["autorizacion_cortesia_id"]),
+            "voucher" => self::esVoucher($old),
+            "referencia_pago" => $referencia !== null ? $this->truncate($referencia, 100) : null,
+            "total_monto" => 0,
+            "total_moneda" => "GTQ",
+            "created_at" => $this->formatDatetime($old["fecha_creacion"] ?? null),
+            "updated_at" => $this->formatDatetime($old["fecha_actualizacion"] ?? $old["fecha_creacion"] ?? null),
+        ];
+    }
+
+    /**
+     * Factura certificada del legado (`factura_generada`, columnas `fg_*`)
+     * como snapshot inmutable. Null si nunca se certificó.
+     *
+     * @param array{nit: ?string, nombre: string, nombre_comercial: ?string} $emisor  empresa ya migrada
+     * @param array{nit: ?string, nombre: ?string}                          $receptor cliente de la factura
+     */
+    public function factura(array $old, array $emisor, array $receptor): ?array
+    {
+        if (!self::facturaCertificada($old)) {
+            return null;
+        }
+        $nit = strtoupper(preg_replace('/[\s-]+/', '', (string) ($receptor["nit"] ?? "")));
+        $nit = $nit === "" || $nit === "C/F" ? "CF" : $nit;
+
+        return [
+            "dte" => (string) $old["fg_dte"],
+            "uuid" => strtolower(trim((string) $old["fg_uuid"])),
+            "serie" => $this->truncate((string) ($old["fg_serie"] ?? ""), 255),
+            "fecha" => $this->formatDatetime($old["fg_fecha"] ?? null) ?? $this->formatDatetime($old["fecha_creacion"] ?? null),
+            "fecha_certificacion" => $this->formatDatetime($old["fg_certificada"] ?? null),
+            "emisor_nit" => $this->truncate($emisor["nit"], 25),
+            "emisor_nombre" => $this->truncate($emisor["nombre"], 255),
+            "emisor_nombre_comercial" => $this->truncate($emisor["nombre_comercial"], 255),
+            "receptop_nit" => $this->truncate($nit, 25),
+            "receptor_nombre" => $this->truncate(trim((string) ($receptor["nombre"] ?? "")) ?: ($nit === "CF" ? "Consumidor final" : "Sin nombre"), 255),
+            "total_monto" => max(0, (int) round(((float) ($old["fg_total"] ?? 0)) * 100)),
+            "total_moneda" => "GTQ",
         ];
     }
 
@@ -400,16 +516,6 @@ class Mapeador
         }
 
         return false;
-    }
-
-    /**
-     * BoletoVenta wrapper for a boleto (1:1:1 con BoletoAsiento).
-     */
-    public function boletoVenta(int $usuarioId): array
-    {
-        return [
-            "usuario_id" => $usuarioId,
-        ];
     }
 
     /**
@@ -445,6 +551,11 @@ class Mapeador
             "vigente_desde" => $old["vigente_desde"],
             "usuario_id" => $usuarioId,
         ];
+    }
+
+    private function vacioANulo(?string $value): ?string
+    {
+        return $value === null || trim($value) === "" ? null : $value;
     }
 
     private function truncate(?string $value, int $maxLength): ?string

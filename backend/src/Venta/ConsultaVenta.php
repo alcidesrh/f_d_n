@@ -43,11 +43,12 @@ final class ConsultaVenta
      *
      * @return list<array<string, mixed>>
      */
-    public function salidasDeEstacion(\DateTimeImmutable $dia, ?int $estacionId, ?int $empresaId = null): array
+    public function salidasDeEstacion(\DateTimeImmutable $dia, ?int $estacionId, ?int $empresaId = null, bool $incluirAnuladas = true): array
     {
         $salidas = array_values(array_filter(
             $this->salidasDelDia($dia),
-            static fn(Salida $r) => $empresaId === null || $r->getEmpresa()?->getId() === $empresaId,
+            static fn(Salida $r) => ($empresaId === null || $r->getEmpresa()?->getId() === $empresaId)
+                && ($incluirAnuladas || $r->getEstado() !== EstadoSalida::CANCELADA),
         ));
         $itinerarios = $this->itinerarios->deTrayectos(array_map(static fn(Salida $r) => $r->getTrayecto(), $salidas));
 

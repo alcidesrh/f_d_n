@@ -1,7 +1,7 @@
 <!--
   "Ver" una salida: el croquis del bus con el estado de cada asiento (como en
   taquilla), cuánto se vendió por clase y canal, lo cobrado, la tripulación,
-  las paradas y los dos manifiestos en PDF (interno y del piloto).
+  quién la programó y los dos manifiestos en PDF (interno y del piloto).
   Contenido angosto: una columna; desde 40rem: croquis a la izquierda.
 -->
 <template>
@@ -12,15 +12,19 @@
     </div>
     <Skeleton v-else-if="!detalle" height="22rem" />
     <div v-else class="@container flex flex-col gap-4">
-      <header class="flex flex-wrap items-start justify-between gap-2">
-        <div>
+      <header class="flex flex-col gap-3">
+        <div class="flex flex-wrap items-start justify-between gap-2">
           <div class="text-lg font-semibold">{{ detalle.trayecto.origen.nombre }} → {{ detalle.trayecto.destino.nombre }}</div>
-          <div class="text-sm text-muted-color">
-            {{ fechaHora(detalle.salida) }}<template v-if="detalle.empresa"> · {{ detalle.empresa.nombre }}</template>
-            <template v-if="detalle.bus"> · Bus {{ detalle.bus.codigo }}<template v-if="detalle.bus.gama"> ({{ detalle.bus.gama }})</template></template>
-          </div>
+          <Tag :value="etiquetaEstado(detalle.estado).etiqueta" :severity="etiquetaEstado(detalle.estado).severidad" />
         </div>
-        <Tag :value="etiquetaEstado(detalle.estado).etiqueta" :severity="etiquetaEstado(detalle.estado).severidad" />
+        <dl class="panel !p-3 m-0 grid grid-cols-2 gap-x-4 gap-y-2 text-sm @2xl:grid-cols-4">
+          <div class="col-span-2"><dt class="text-xs text-muted-color">Salida</dt><dd class="m-0 first-letter:uppercase">{{ fechaHora(detalle.salida) }}</dd></div>
+          <div><dt class="text-xs text-muted-color">Empresa</dt><dd class="m-0">{{ detalle.empresa?.nombre ?? '—' }}</dd></div>
+          <div><dt class="text-xs text-muted-color">Bus</dt><dd class="m-0">{{ detalle.bus ? detalle.bus.codigo : 'Sin bus' }}<span v-if="detalle.bus?.gama" class="text-muted-color"> · {{ detalle.bus.gama }}</span></dd></div>
+          <div><dt class="text-xs text-muted-color">Piloto</dt><dd class="m-0">{{ detalle.pilotos[0] }}</dd></div>
+          <div><dt class="text-xs text-muted-color">Copiloto</dt><dd class="m-0">{{ detalle.pilotos[1] }}</dd></div>
+          <div class="col-span-2"><dt class="text-xs text-muted-color">Programada por</dt><dd class="m-0">{{ detalle.creadaPor ?? 'Sistema anterior' }}<span v-if="detalle.creadaEn" class="text-muted-color"> · {{ fechaCorta(detalle.creadaEn) }}</span></dd></div>
+        </dl>
       </header>
 
       <div class="grid grid-cols-1 items-start gap-4 @2xl:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]">
@@ -31,7 +35,7 @@
               <BusMap :elementos="detalle.croquis" :estado="estado" inspeccionable tamano="md" class="justify-center" @ocupado="verOcupado" />
               <AsientoOcupadoPopover ref="detalleAsiento" />
             </div>
-            <BusMapLegend :items="LEYENDA" />
+            <BusMapLegend :items="LEYENDA" :conteos="conteos" />
           </template>
         </section>
 
@@ -71,21 +75,6 @@
               <Tag v-for="c in canales" :key="c.etiqueta" severity="secondary" :value="`${c.etiqueta}: ${c.n}`" />
             </div>
           </div>
-
-          <div class="flex flex-col gap-1 text-sm">
-            <span class="text-sm font-medium">Tripulación</span>
-            <div class="flex justify-between gap-2"><span class="text-muted-color">Piloto 1</span><span class="text-right">{{ detalle.pilotos[0] }}</span></div>
-            <div class="flex justify-between gap-2"><span class="text-muted-color">Piloto 2</span><span class="text-right">{{ detalle.pilotos[1] }}</span></div>
-          </div>
-
-          <div v-if="detalle.paradas.length" class="flex flex-col gap-1">
-            <span class="text-sm font-medium">Paradas</span>
-            <ol class="m-0 flex list-none flex-col gap-0.5 p-0 text-sm">
-              <li v-for="p in detalle.paradas" :key="p.id" class="flex justify-between gap-2">
-                <span>{{ p.nombre }}</span><span class="tabular-nums text-muted-color">{{ hora(p.hora) }}</span>
-              </li>
-            </ol>
-          </div>
         </section>
       </div>
     </div>
@@ -110,8 +99,7 @@ import { etiquetaEstado } from '@/core/salida/filtro'
 import { fetchDetalle } from '@/core/salida/api'
 import type { DetalleSalida, SalidaFila, TipoManifiesto } from '@/core/salida/types'
 import type { AsientoCroquis } from '@/core/croquis/types'
-import { hora } from '@/core/venta/modelo'
-import { estadoEnMapa } from '@/core/venta/modelo'
+import { conteosPorEstado, estadoEnMapa } from '@/core/venta/modelo'
 import { abrirManifiesto, MANIFIESTOS } from './manifiesto'
 
 const LEYENDA: ItemLeyenda[] = ['disponible', 'B', 'ocupado', 'ocupado-web', 'ocupado-agencia', 'reservado', 'cortesia', 'voucher']
@@ -129,6 +117,7 @@ const generando = ref<TipoManifiesto | null>(null)
 
 const resumen = computed(() => detalle.value!.resumen)
 const estado = computed(() => estadoEnMapa(detalle.value?.ocupados ?? [], []))
+const conteos = computed(() => conteosPorEstado(detalle.value?.croquis ?? [], estado.value))
 const libres = computed(() => Math.max(0, resumen.value.asientos - resumen.value.vendidos - resumen.value.reservados))
 const porcentaje = computed(() => (resumen.value.asientos ? Math.round(((resumen.value.vendidos + resumen.value.reservados) / resumen.value.asientos) * 100) : 0))
 const totalBoletos = computed(() => Object.values(resumen.value.boletosPorEstado).reduce<number>((a, n) => a + (n ?? 0), 0))
@@ -144,6 +133,8 @@ const canales = computed(() => {
 })
 
 const fechaHora = (iso: string) => new Intl.DateTimeFormat('es-GT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(iso))
+
+const fechaCorta = (iso: string) => new Intl.DateTimeFormat('es-GT', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(iso))
 
 async function generar(tipo: TipoManifiesto) {
   if (!props.salida) return

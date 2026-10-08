@@ -44,6 +44,7 @@ class MigracionController extends AbstractController
         "iam",
         "config",
         "rutas",
+        "salidas",
         "todo",
     ];
 
@@ -181,6 +182,19 @@ class MigracionController extends AbstractController
                         "legadoAccesible" => false,
                     ],
                     503,
+                );
+            }
+        }
+
+        if ("salidas" === $tipo) {
+            $desde = (string) ($data["desde"] ?? "");
+            $hasta = (string) ($data["hasta"] ?? "");
+            $valida = static fn(string $f): bool => 1 === preg_match('/^\d{4}-\d{2}-\d{2}$/', $f)
+                && false !== \DateTimeImmutable::createFromFormat('!Y-m-d', $f);
+            if (!$valida($desde) || !$valida($hasta) || $desde > $hasta) {
+                return $this->json(
+                    ["error" => "Indicá un rango de fechas válido (desde ≤ hasta)."],
+                    400,
                 );
             }
         }

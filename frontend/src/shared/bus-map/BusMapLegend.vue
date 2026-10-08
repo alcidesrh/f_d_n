@@ -11,7 +11,7 @@
         <SeatGlyph v-else clase="A" :estado="item" :con-numero="false" />
       </span>
       <span>{{ ETIQUETAS[item] }}</span>
-      <span v-if="ETIQUETAS_VALUES[item] !== undefined" class="font-bold">{{ ETIQUETAS_VALUES[item] }}</span>
+      <span v-if="conteos && item !== 'A' && item !== 'B' && item !== 'chofer' && item !== 'puerta'" class="font-bold">{{ conteos[item] ?? 0 }}</span>
     </div>
   </div>
 </template>
@@ -21,27 +21,18 @@ import type { ClaseAsiento, EstadoAsiento, TipoSenal } from "@/core/croquis/type
 import SeatGlyph from "./SeatGlyph.vue";
 import SignalGlyph from "./SignalGlyph.vue";
 import "./busMap.css";
-import { useVentaStore } from "@/features/venta/store";
 
 export type ItemLeyenda = ClaseAsiento | EstadoAsiento | TipoSenal;
 
-defineProps<{ items: readonly ItemLeyenda[] }>();
+defineProps<{
+  items: readonly ItemLeyenda[];
+  /** Asientos por estado (`conteosPorEstado`); sin él solo se muestran los nombres. */
+  conteos?: Partial<Record<EstadoAsiento, number>>;
+}>();
 
-const store = useVentaStore();
-
-const ETIQUETAS_VALUES = ref({
-  disponible: computed(() => store.libres),
-  ocupado: computed(() => store.ocupados.length),
-  "ocupado-web": computed(() => store.ocupados.filter((o) => o.canal === "web").length),
-  "ocupado-agencia": store.ocupados.filter((o) => o.canal === "agencia").length,
-  seleccionado: computed(() => store.seleccion.length),
-  cortesia: computed(() => store.ocupados.filter((o) => o.sinCobro === "cortesia").length),
-  voucher: computed(() => store.ocupados.filter((o) => o.sinCobro === "voucher").length),
-  // reservado: computed(() => store.ocupados.filter((o) => o.estado === "reservado").length),
-  // bloqueado: computed(() => store.ocupados.filter((o) => o.estado === "bloqueado").length),
-});
 const ETIQUETAS: Record<ItemLeyenda, string> = {
   A: "Clase A",
+  B: "Clase B",
   disponible: "Disponible",
   ocupado: "Estación",
   "ocupado-web": "Página",

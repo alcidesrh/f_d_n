@@ -134,6 +134,33 @@
             :disabled="ocupado"
             @click="confirmarFlujo('rutas')"
           />
+          <div class="flex flex-col gap-2 mt-1">
+            <div class="text-xs text-muted-color">Salidas por rango de fechas</div>
+            <div class="flex gap-2">
+              <DatePicker
+                v-model="salidasDesde"
+                date-format="yy-mm-dd"
+                placeholder="Desde"
+                :disabled="ocupado"
+                class="w-full"
+              />
+              <DatePicker
+                v-model="salidasHasta"
+                date-format="yy-mm-dd"
+                placeholder="Hasta"
+                :disabled="ocupado"
+                class="w-full"
+              />
+            </div>
+            <Button
+              label="Migrar salidas por rango"
+              icon="pi pi-calendar"
+              size="small"
+              outlined
+              :disabled="ocupado || !rangoSalidasValido"
+              @click="confirmarSalidasRango"
+            />
+          </div>
           <div class="flex items-center gap-2 mt-1">
             <Checkbox v-model="cleanTodo" input-id="migracion-clean" binary :disabled="ocupado" />
             <label for="migracion-clean" class="text-sm">Todo (con reset previo)</label>
@@ -230,11 +257,17 @@ const entidadSeleccionada = ref<string | null>(null)
 const desdeFecha = ref<Date | null>(null)
 const hastaFecha = ref<Date | null>(null)
 const cantidad = ref<number | null>(null)
+const salidasDesde = ref<Date | null>(null)
+const salidasHasta = ref<Date | null>(null)
 const cleanTodo = ref(false)
 const modoResetDuro = ref(false)
 const textoReset = ref('')
 
 const ocupado = computed(() => store.estado.ejecutando)
+
+const rangoSalidasValido = computed(
+  () => !!salidasDesde.value && !!salidasHasta.value && salidasDesde.value <= salidasHasta.value,
+)
 
 const entidadMeta = computed<EntidadMigracion | null>(() => {
   const nombre = entidadSeleccionada.value
@@ -280,6 +313,16 @@ function migrarEntidad(): void {
 function confirmarFlujo(tipo: 'estaticos' | 'iam' | 'config' | 'rutas'): void {
   conConfirmacion(`Ejecutar la migración de "${etiquetaTipo({ tipo, entidad: null })}"?`, () =>
     iniciar({ tipo }),
+  )
+}
+
+function confirmarSalidasRango(): void {
+  const desde = aYmd(salidasDesde.value)
+  const hasta = aYmd(salidasHasta.value)
+  if (!desde || !hasta) return
+  conConfirmacion(
+    `Migrar todas las salidas del ${desde} al ${hasta} (también canceladas y finalizadas)? Se crea lo que falte de cada una: empresa, trayecto, bus con su croquis, clientes, usuarios, ventas, facturas y boletos. Las ya migradas se completan.`,
+    () => iniciar({ tipo: 'salidas', desde, hasta }),
   )
 }
 

@@ -31,6 +31,17 @@ export function estadoEnMapa(ocupados: readonly AsientoOcupado[], seleccion: rea
   };
 }
 
+/** Cuántos asientos del croquis hay en cada estado (para la leyenda del mapa). */
+export function conteosPorEstado(croquis: readonly { tipo: string }[], estado: (a: AsientoCroquis) => EstadoAsiento): Partial<Record<EstadoAsiento, number>> {
+  const n: Partial<Record<EstadoAsiento, number>> = {};
+  for (const e of croquis) {
+    if (e.tipo !== "asiento") continue;
+    const k = estado(e as AsientoCroquis);
+    n[k] = (n[k] ?? 0) + 1;
+  }
+  return n;
+}
+
 /** Quita de la selección los asientos que alguien más ocupó. */
 export function depurarSeleccion(seleccion: readonly number[], ocupados: readonly AsientoOcupado[]): number[] {
   const tomados = new Set(ocupados.filter((o) => o.estado !== "propio").map((o) => o.asiento));

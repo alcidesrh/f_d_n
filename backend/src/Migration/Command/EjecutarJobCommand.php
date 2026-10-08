@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Migration\Command;
 
 use App\Migration\Entidad\EjecutorEntidad;
+use App\Migration\Entidad\MigradorEntidadSalida;
 use App\Migration\Entidad\Especificacion;
 use App\Migration\Entidad\RegistroMigradores;
 use App\Migration\Job\AlmacenDeJobs;
@@ -63,7 +64,11 @@ class EjecutarJobCommand extends Command
         $this->resetDebugDataHolder();
 
         $salida = new SalidaJobOutput($this->almacen, $id);
-        $progreso = new Progreso($this->almacen, $id);
+        $progreso = new Progreso(
+            $this->almacen,
+            $id,
+            fn() => $this->resetDebugDataHolder(),
+        );
 
         $status["estado"] = "running";
         $status["iniciado_en"] = date("c");
@@ -83,10 +88,16 @@ class EjecutarJobCommand extends Command
         $contadores = [];
         try {
             $contadores = $this->ejecutar($status, $salida, $progreso);
+            $errores = (int) ($contadores["errores"] ?? 0);
             if ($progreso->debeCancelar()) {
                 $salida->writeln(
                     "<comment>Job cancelado por el usuario.</comment>",
                 );
+            } elseif ($errores > 0) {
+                $salida->writeln(sprintf(
+                    "<comment>Job completado con %d errores: esas salidas no se migraron (ver arriba).</comment>",
+                    $errores,
+                ));
             } else {
                 $salida->writeln("<info>Job completado correctamente.</info>");
             }
@@ -100,7 +111,13 @@ class EjecutarJobCommand extends Command
             $status["error"] = $e->getMessage() . "\n" . $e->getTraceAsString();
         }
 
+        // El avance lo fue escribiendo Progreso: no pisarlo con el status inicial.
+        $status = array_merge($status, array_intersect_key(
+            $this->almacen->leer($id) ?? [],
+            array_flip(["procesados", "total", "mensaje", "contadores"]),
+        ));
         $status["estado"] = $estadoFinal;
+        $status["errores"] = (int) ($contadores["errores"] ?? 0);
         $status["contadores"] = array_merge(
             (array) ($status["contadores"] ?? []),
             $contadores,
@@ -172,6 +189,14 @@ class EjecutarJobCommand extends Command
                 $contadores = $this->ejecutorEntidad->ejecutar(
                     $es->entidad,
                     $es,
+                    $salida,
+                    $progreso,
+                );
+                break;
+
+            case "salidas":
+                $contadores = $this->migrarSalidasPorRango(
+                    $params,
                     $salida,
                     $progreso,
                 );
@@ -252,6 +277,44 @@ class EjecutarJobCommand extends Command
         }
 
         return $contadores;
+    }
+
+    /**
+     * Migra TODAS las salidas del legado con fecha en [desde, hasta], de
+     * cualquier estado, recorriendo el árbol de cada una (ver Migrador): lo
+     * que falte (empresa, trayecto, bus y croquis, clientes, usuarios,
+     * ventas, facturas, boletos) se crea en orden de dependencias. Las ya
+     * migradas se completan.
+     *
+     * @param array<string, mixed> $params
+     *
+     * @return array<string, int>
+     */
+    private function migrarSalidasPorRango(
+        array $params,
+        SalidaJobOutput $salida,
+        Progreso $progreso,
+    ): array {
+        $es = Especificacion::desdeArray(["entidad" => "salida"] + $params);
+        if (null === $es->desde || null === $es->hasta) {
+            throw new \InvalidArgumentException(
+                "La migración de salidas por rango requiere desde y hasta.",
+            );
+        }
+
+        $migrador = $this->registro->obtener("salida");
+        if (!$migrador instanceof MigradorEntidadSalida) {
+            throw new \LogicException("El migrador de salidas no admite rangos.");
+        }
+        $salida->writeln(
+            sprintf(
+                "<info>Migrando salidas del %s al %s (todos los estados)…</info>",
+                $es->desde,
+                $es->hasta,
+            ),
+        );
+
+        return $migrador->migrarRango($es->desde, $es->hasta, $salida, $progreso);
     }
 
     /**
