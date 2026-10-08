@@ -1,6 +1,6 @@
 <!--
   Una conversación: cabecera, mensajes por día y por racha de autor (texto,
-  fotos y documentos, tarjetas de lo compartido, cita del mensaje al que
+  fotos y documentos, lo compartido plegado por tipo, cita del mensaje al que
   responde y "visto" en los propios) y el redactor. Abre pegada al final; si
   llega algo mientras se lee más arriba, ofrece bajar en lugar de saltar. Se
   pueden soltar archivos encima. Los avisos del sistema son de solo lectura.
@@ -29,7 +29,7 @@
           <div v-if="!lista.length" class="conv__vacia">
             <icon :name="esSistema ? 'notifications-outline' : 'waving-hand-outline'" size="2rem" color="text-current" />
             <p v-if="esSistema">Aquí llegarán los avisos automáticos:<br /><span class="text-xs">acreditaciones de saldo, salidas anuladas y más.</span></p>
-            <p v-else>Escriba el primer mensaje.<br /><span class="text-xs">Puede mandar fotos con el clip, adjuntar boletos o salidas con <b>+</b>, o enviarlos desde sus listados.</span></p>
+            <p v-else>Escriba el primer mensaje.<br /><span class="text-xs">Puede mandar fotos con el clip, adjuntar boletos, salidas o cualquier registro con <b>+</b>, o enviarlos desde sus listados.</span></p>
           </div>
           <template v-for="b in bloques" :key="b.dia">
             <div class="conv__dia"><span>{{ b.etiqueta }}</span></div>
@@ -50,9 +50,7 @@
                         <template v-else>{{ s.texto }}</template>
                       </template>
                     </p>
-                    <div v-if="m.adjuntos.length" class="burbuja__tarjetas">
-                      <Tarjeta v-for="a in m.adjuntos" :key="`${a.tipo}:${a.id}`" :adjunto="a" />
-                    </div>
+                    <TarjetasMensaje v-if="m.adjuntos.length" :adjuntos="m.adjuntos" class="burbuja__tarjetas" />
                     <span class="burbuja__pie">
                       <time :datetime="m.fecha">{{ horaCorta(m.fecha) }}</time>
                       <span v-if="r.mio" v-tooltip.left="tituloVisto(m.id)" class="burbuja__visto" :class="{ 'burbuja__visto--si': visto(m.id).todos }" :aria-label="tituloVisto(m.id)">
@@ -99,11 +97,12 @@ import { notify } from '@/core/notify'
 import ChatAvatar from '@/shared/chat/ChatAvatar.vue'
 import ArchivosMensaje from './ArchivosMensaje.vue'
 import Redactor from './Redactor.vue'
-import Tarjeta from './tarjetas/Tarjeta.vue'
+import TarjetasMensaje from './tarjetas/TarjetasMensaje.vue'
 import VisorImagen from './VisorImagen.vue'
 
-const props = defineProps<{ canalId: number; adjuntar?: Referencia | null }>()
-const emit = defineEmits<{ volver: [] }>()
+/** `activa`: a la vista (minimizada o cerrada no marca leído lo que llega). */
+const props = withDefaults(defineProps<{ canalId: number; adjuntar?: Referencia | null; activa?: boolean }>(), { adjuntar: null, activa: true })
+const emit = defineEmits<{ volver: []; adjuntado: [] }>()
 
 const AMBITOS = { administracion: 'Administración', estacion: 'Estación', agencia: 'Agencia' } as const
 /** Distancia al final (px) para considerar que se está leyendo lo último. */
@@ -242,7 +241,7 @@ function alSoltar(e: DragEvent) {
 
 onMounted(async () => {
   try {
-    await chat.abrir(props.canalId)
+    await (props.activa ? chat.abrir(props.canalId) : chat.cargar(props.canalId))
   } catch (e) {
     notify.error(e instanceof Error ? e.message : String(e))
     emit('volver')
@@ -250,10 +249,30 @@ onMounted(async () => {
   }
   cargado.value = true
   bajar()
-  if (props.adjuntar) redactor.value?.adjuntar(props.adjuntar)
-  redactor.value?.enfocar()
+  recibirAdjunto()
+  if (props.activa) redactor.value?.enfocar()
 })
 onUnmounted(() => chat.cerrar(props.canalId))
+
+/** Un registro que llega para enviar (`?adjuntar=`, "Reportar por chat"). */
+function recibirAdjunto() {
+  if (!props.adjuntar || !cargado.value) return
+  redactor.value?.adjuntar(props.adjuntar)
+  emit('adjuntado')
+}
+watch(() => props.adjuntar, recibirAdjunto)
+
+// Al volver a la vista: lo que llegó queda leído; al salir, deja de marcarse.
+watch(
+  () => props.activa,
+  (activa) => {
+    if (!cargado.value) return
+    if (!activa) return chat.cerrar(props.canalId)
+    void chat.abrir(props.canalId)
+    if (cercaDelFinal()) bajar()
+    redactor.value?.enfocar()
+  },
+)
 </script>
 
 <style scoped>
@@ -281,7 +300,7 @@ onUnmounted(() => chat.cerrar(props.canalId))
   border-radius: 50%;
   color: var(--p-surface-600);
 }
-@container main (min-width: 48rem) {
+@container chat (min-width: 40rem) {
   .conv__volver {
     display: none;
   }
@@ -484,7 +503,7 @@ onUnmounted(() => chat.cerrar(props.canalId))
   background: transparent;
   box-shadow: none;
 }
-.burbuja--suelta :deep(.tarjeta) {
+.burbuja--suelta :deep(.grupo) {
   box-shadow: 0 1px 2px rgb(0 0 0 / 0.06);
 }
 .burbuja--suelta.burbuja--resaltada {
@@ -531,9 +550,6 @@ onUnmounted(() => chat.cerrar(props.canalId))
   }
 }
 .burbuja__tarjetas {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
   width: min(22rem, 70cqi);
   max-width: 100%;
 }

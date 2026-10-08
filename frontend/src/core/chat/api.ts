@@ -2,13 +2,14 @@
 import { config } from '@/core/config'
 import { HttpError, http } from '@/core/http'
 import { useSessionStore } from '@/core/auth/session'
-import type { Archivo, Bandeja, Canal, Destinos, Mensaje, Perfil, Referencia } from './types'
+import type { Archivo, Bandeja, Canal, Destinos, Mensaje, Perfil, Recurso, Referencia } from './types'
 
 const BASE = '/chat'
 const fondo = { silent: true } as const
 
 export const fetchBandeja = (silencioso = false) => http.get<Bandeja>(`${BASE}/canales`, silencioso ? fondo : undefined)
 export const fetchContactos = () => http.get<Perfil[]>(`${BASE}/contactos`, fondo)
+export const fetchRecursos = () => http.get<Recurso[]>(`${BASE}/recursos`, fondo)
 export const fetchToken = () => http.get<{ token: string; topico: string }>(`${BASE}/token`, fondo)
 
 export const abrirDirecto = (usuario: number) => http.post<Canal>(`${BASE}/canales/directo`, { usuario })

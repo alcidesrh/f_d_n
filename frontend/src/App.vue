@@ -4,7 +4,7 @@
     <AppLayout :key="route.meta.layout ?? 'app'">
       <router-view v-slot="{ Component, route: r }">
         <transition name="fade" mode="out-in">
-          <component :is="Component" :key="r.fullPath" />
+          <component :is="Component" :key="r.meta.conservar ? String(r.name) : r.fullPath" />
         </transition>
       </router-view>
     </AppLayout>

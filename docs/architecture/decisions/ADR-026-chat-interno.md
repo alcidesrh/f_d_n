@@ -59,11 +59,36 @@ Mercure (ADR-005) con un **tópico privado por usuario** (`/chat/usuarios/{id}`,
 
 ### API
 
-`/api/chat/*`, cualquier usuario con sesión: `token`, `contactos`, `canales` (bandeja), `canales/directo`, `canales/grupo`, `canales/{id}/mensajes` (GET con `antes`/`despues`, POST), `canales/{id}/leido`, `compartir` (los mismos registros a varias personas y/o grupos).
+`/api/chat/*`, cualquier usuario con sesión: `token`, `contactos`, `recursos` (tipos que el usuario puede adjuntar), `canales` (bandeja), `canales/directo`, `canales/grupo`, `canales/{id}/mensajes` (GET con `antes`/`despues`, POST), `canales/{id}/leido`, `compartir` (los mismos registros a varias personas y/o grupos).
 
 ### Frontend
 
 `core/chat/` (tipos, API, reglas puras con tests, store con la suscripción), `features/chat/` (`/chat/:canal?`: bandeja con búsqueda única de conversaciones y personas, conversación por días y rachas, redactor con adjuntos por tipo e id, tarjetas por tipo en `tarjetas/catalogo.ts`, aviso flotante y notificación del navegador). `shared/chat/EnviarPorChatDialog` es el "Enviar por chat" que usan el listado genérico (modo selección) y `/salidas` ("Reportar por chat"). La cabecera muestra el total de no leídos.
+
+### El chat como capa de la app (v3)
+
+El chat no es una página más: es una capa sobre el trabajo, para hablar de lo que se tiene delante.
+
+- **Tres modos** (`core/chat/ventana.ts`, geometría pura con tests; estado persistido en `features/chat/ventana.ts`):
+  - `centro`: la página `/chat`, como hasta ahora.
+  - `esquina`: ventana abajo a la derecha; minimizada asoma solo la barra.
+  - `flotante`: se mueve por la barra y se redimensiona por bordes y esquinas (GSAP Draggable); minimizada se encoge a la barra en su sitio.
+
+  Todas maximizan a pantalla completa; esquina y flotante además minimizan y cierran. En el móvil, abierta ocupa la pantalla. El ícono del encabezado la vuelve a mostrar tal como estaba (modo, minimizada o maximizada).
+- **Ventana del shell**: en esquina y flotante la monta `AppShell` (`ChatVentana`), así que sigue abierta al navegar. El router convierte `/chat/:canal?adjuntar=…` en "abrir la ventana" sin salir de la página.
+  - Cerrada o minimizada no se desmonta (no se pierde lo escrito), pero tampoco marca leído lo que llega (`Conversacion.activa`).
+  - El aviso flotante cede el lugar a la propia ventana, que destella.
+- **Selector de registros** en lugar de escribir ids. Un modal con tres paneles:
+  - los recursos que el backend deja adjuntar (`GET /api/chat/recursos`: misma regla que las tarjetas, sin secretos como tokens o credenciales);
+  - el listado genérico de la entidad en modo selección (filtros, orden, páginas);
+  - lo elegido, agrupado por recurso como un carrito.
+
+  La selección sobrevive a cambiar de página o de recurso; hasta 20 por mensaje.
+- **Lo recibido, plegado**: los registros de un mensaje llegan agrupados por tipo y plegados (aunque sea uno), con la cuenta y un avance de los títulos; al desplegar, las tarjetas vivas (`tarjetas/TarjetasMensaje.vue`).
+- **Centro sin remontar**: la ruta del chat lleva `meta.conservar`, así `App.vue` no la vuelve a montar al cambiar de conversación (la transición de rutas usa `fullPath` como clave). Su raíz es un elemento, no el `Teleport` de la pantalla completa: la transición `out-in` lo necesita para salir.
+- **Lo que hay en pantalla**: cada página anuncia lo que muestra (`anunciarEnPantalla` en `shared/chat/integracion.ts`): el registro del formulario genérico, la selección de un listado, la salida abierta en `/salidas`. El redactor lo ofrece con un clic.
+
+Para no romper ADR-017 (una feature no importa a otra), el listado genérico llega al chat por inyección: `AppShell` provee `LISTADO_DE_REGISTROS` con `ListPage`, que con `v-model:seleccion` funciona como selector.
 
 ## Consecuencias
 
@@ -73,6 +98,7 @@ Mercure (ADR-005) con un **tópico privado por usuario** (`/chat/usuarios/{id}`,
 - El reporte de salida deja de contarse a mano: la tarjeta lo calcula desde la venta.
 - La separación agencias/estaciones de WhatsApp queda como regla del sistema, no como costumbre.
 - Sumar un tipo de tarjeta es una clase en el backend y un componente en `tarjetas/catalogo.ts`; sin tarjeta propia ya funciona la genérica.
+- Se conversa sin dejar la pantalla de trabajo, y adjuntar es elegir, no recordar ids.
 
 **Negativas / pendiente:**
 
@@ -80,4 +106,6 @@ Mercure (ADR-005) con un **tópico privado por usuario** (`/chat/usuarios/{id}`,
 - Una URL firmada copiada sirve hasta que vence (máximo 30 h).
 - Sin edición ni borrado de mensajes.
 - Avisos del sistema solo para saldo de agencias y salidas anuladas; "salida iniciada" e imprevistos esperan a que existan en el modelo nuevo (hoy el estado "iniciada" solo viene del legado).
+- El selector solo ofrece entidades con colección en GraphQL: `BoletoAsiento` no la tiene, así que los boletos sueltos se comparten desde su venta o desde `?adjuntar=`, hasta que se exponga.
+- La ventana queda por debajo de los overlays y diálogos de PrimeVue (z-index 990 < 1000), que el propio chat abre; un diálogo modal de otra pantalla la tapa mientras está abierto.
 - La tarjeta de salida calcula el detalle completo por salida; con muchas salidas en una misma página de mensajes convendrá una consulta por lotes.

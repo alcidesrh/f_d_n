@@ -12,5 +12,7 @@ declare module 'vue-router' {
     label?: string
     /** Panel lateral derecho propio de la ruta (reemplaza al menú derecho). */
     panel?: { component: () => Promise<Component | { default: Component }>; width?: number }
+    /** La página no se vuelve a montar al cambiar los parámetros (p. ej. el chat al cambiar de conversación). */
+    conservar?: boolean
   }
 }

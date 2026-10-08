@@ -43,10 +43,10 @@
         <button class="icon-btn header-fullscreen" title="Pantalla completa" aria-label="Pantalla completa" @click="toggleFullscreen" :class="{ 'active-state': openPopover === 'fullscreen' }">
           <icon name="fullscreen" />
         </button>
-        <router-link :to="{ name: 'chat' }" class="icon-btn header-chat" :aria-label="chat.noLeidos ? `Mensajes, ${chat.noLeidos} sin leer` : 'Mensajes'" v-tooltip.bottom="'Mensajes'">
+        <button type="button" class="icon-btn header-chat" :aria-label="chat.noLeidos ? `Mensajes, ${chat.noLeidos} sin leer` : 'Mensajes'" v-tooltip.bottom="'Mensajes'" @click="invocarChat">
           <icon name="forum-outline" />
           <span v-if="chat.noLeidos" class="header-chat__badge">{{ chat.noLeidos > 99 ? "99+" : chat.noLeidos }}</span>
-        </router-link>
+        </button>
         <div style="position: relative">
           <button class="icon-btn" title="Notificaciones" aria-label="Notificaciones" @click.stop="toggle('notif')">
             <icon name="notifications-outline" />
@@ -96,6 +96,7 @@ import { useUiStore } from "@/app/ui";
 import { useSessionStore } from "@/core/auth/session";
 import { useChatStore } from "@/core/chat/store";
 import { useCuentaStore } from "@/core/cuenta/store";
+import { useVentanaChat } from "@/features/chat/ventana";
 import ChatAvatar from "@/shared/chat/ChatAvatar.vue";
 import { useNavigationHistoryStore } from "./navigationHistory";
 import { defineSidebarStore, type SidebarStore } from "./sidebarStore";
@@ -108,6 +109,13 @@ const session = useSessionStore();
 const chat = useChatStore();
 const cuenta = useCuentaStore();
 const ui = useUiStore();
+const ventanaChat = useVentanaChat();
+
+/** El chat tal como quedó: la página (centro) o la ventana con su modo y estado. */
+function invocarChat() {
+  if (ventanaChat.esVentana) return ventanaChat.invocar();
+  void router.push({ name: "chat", params: { canal: ventanaChat.canal ?? undefined } });
+}
 
 const dialog = useDialog();
 

@@ -5,11 +5,12 @@
 <template>
   <aside class="bandeja">
     <header class="bandeja__cabeza">
-      <h1 class="bandeja__titulo">
-        Mensajes
-        <span class="vivo" :class="{ 'vivo--off': !chat.enVivo }" v-tooltip.bottom="chat.enVivo ? 'En vivo' : 'Sin conexión en vivo: se actualiza cada 30 s'" />
-      </h1>
-      <div class="flex items-center gap-1">
+      <label class="buscar">
+        <icon name="search" size="1.1rem" color="text-current" />
+        <input v-model="busqueda" type="search" placeholder="Buscar persona, estación o grupo" aria-label="Buscar" @focus="void chat.cargarContactos()" />
+        <button v-if="busqueda" type="button" class="tap-target" aria-label="Limpiar búsqueda" @click="busqueda = ''"><icon name="close" size="1rem" color="text-current" /></button>
+      </label>
+      <div class="flex items-center">
         <button v-if="permisoAvisos === 'default'" type="button" class="icono tap-target" aria-label="Avisos del navegador" v-tooltip.bottom="'Avisarme aunque esté en otra pestaña'" @click="pedirAvisos">
           <icon name="notifications-active-outline" color="text-current" />
         </button>
@@ -18,12 +19,6 @@
         </button>
       </div>
     </header>
-
-    <label class="buscar">
-      <icon name="search" size="1.1rem" color="text-current" />
-      <input v-model="busqueda" type="search" placeholder="Buscar persona, estación o conversación" aria-label="Buscar" @focus="void chat.cargarContactos()" />
-      <button v-if="busqueda" type="button" class="tap-target" aria-label="Limpiar búsqueda" @click="busqueda = ''"><icon name="close" size="1rem" color="text-current" /></button>
-    </label>
 
     <div class="bandeja__lista">
       <template v-if="!chat.listo">
@@ -126,29 +121,8 @@ async function pedirAvisos() {
 .bandeja__cabeza {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1rem 0.5rem 1.25rem;
-}
-.bandeja__titulo {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0;
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--p-surface-800);
-}
-.vivo {
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 50%;
-  background: var(--c-success);
-  box-shadow: 0 0 0 3px var(--c-success-soft);
-}
-.vivo--off {
-  background: var(--p-surface-400);
-  box-shadow: 0 0 0 3px var(--p-surface-200);
+  gap: 0.25rem;
+  padding: 0.75rem 0.5rem 0.5rem 1rem;
 }
 .icono {
   display: grid;
@@ -161,10 +135,11 @@ async function pedirAvisos() {
   }
 }
 .buscar {
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin: 0.25rem 1rem 0.5rem;
   padding: 0 0.75rem;
   height: 2.5rem;
   border-radius: 0.75rem;

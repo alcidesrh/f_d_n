@@ -187,6 +187,7 @@ import EditarSalidaDialog from "./EditarSalidaDialog.vue";
 import ResultadoOperacionDialog from "./ResultadoOperacionDialog.vue";
 import VerSalidaDialog from "./VerSalidaDialog.vue";
 import EnviarPorChatDialog from "@/shared/chat/EnviarPorChatDialog.vue";
+import { anunciarEnPantalla } from "@/shared/chat/integracion";
 import { abrirManifiesto, MANIFIESTOS } from "./manifiesto";
 
 const ORDENES = [
@@ -216,6 +217,13 @@ watch(
   },
   { immediate: true },
 );
+// Con el chat encima, la salida abierta se ofrece para adjuntar.
+anunciarEnPantalla(() => {
+  const v = verSalida.value;
+  if (!v) return [];
+  const fila = "trayecto" in v ? (v as SalidaFila) : datos.value?.items.find((s) => s.id === v.id);
+  return [{ tipo: "Salida", id: v.id, etiqueta: fila ? `${fila.trayecto.ruta} · ${new Date(fila.fecha).toLocaleString("es-GT", { dateStyle: "short", timeStyle: "short" })}` : `Salida ${v.id}` }];
+});
 function cerrarVer() {
   verSalida.value = null;
   if (route.query.ver) void router.replace({ query: { ...route.query, ver: undefined } });

@@ -1,5 +1,5 @@
 /**
- * Tarjetas del chat por tipo de registro. Un tipo sin tarjeta propia usa la
+ * Tarjetas del chat por tipo de registro. Un tipo sin componente propio usa la
  * genérica (etiqueta + abrir en el formulario de la entidad). Para sumar un
  * tipo: su `Tarjeta` en el backend (`App\Chat\Tarjeta`) y aquí su componente.
  */
@@ -23,7 +23,22 @@ const formulario = (a: Adjunto): RouteLocationRaw => ({ name: 'entity-form', par
 export const TARJETAS: Record<string, TipoTarjeta> = {
   BoletoAsiento: { nombre: 'Boleto', icono: 'confirmation-number-outline', componente: TarjetaBoleto, destino: formulario },
   Salida: { nombre: 'Salida', icono: 'directions-bus-outline', componente: TarjetaSalida, destino: (a) => ({ name: 'salidas', query: { ver: a.id } }) },
+  // Sin vista propia (tarjeta genérica): solo nombre e ícono.
+  BoletoVenta: { nombre: 'Venta', icono: 'receipt-long-outline' },
+  Bus: { nombre: 'Bus', icono: 'airport-shuttle-outline' },
+  Cliente: { nombre: 'Cliente', icono: 'person-outline' },
+  Piloto: { nombre: 'Piloto', icono: 'badge-outline' },
+  Agencia: { nombre: 'Agencia', icono: 'storefront-outline' },
+  Estacion: { nombre: 'Estación', icono: 'location-city' },
+  Trayecto: { nombre: 'Trayecto', icono: 'route' },
+  Empresa: { nombre: 'Empresa', icono: 'domain' },
+  Factura: { nombre: 'Factura', icono: 'request-quote-outline' },
+  Usuario: { nombre: 'Usuario', icono: 'account-circle-outline' },
+  Enclave: { nombre: 'Enclave', icono: 'location-on-outline' },
 }
+
+/** Los que el selector de registros ofrece primero. */
+export const HABITUALES = ['BoletoAsiento', 'Salida', 'BoletoVenta', 'Bus', 'Cliente', 'Piloto', 'Agencia', 'Estacion', 'Trayecto']
 
 export function tipoTarjeta(tipo: string): Required<Pick<TipoTarjeta, 'nombre' | 'icono' | 'destino'>> & TipoTarjeta {
   const propia = TARJETAS[tipo]

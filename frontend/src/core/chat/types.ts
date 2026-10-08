@@ -34,6 +34,18 @@ export interface Referencia {
   id: number
 }
 
+/** Referencia con su etiqueta para mostrarla antes de enviar (el selector, "en pantalla"). */
+export interface Registro extends Referencia {
+  etiqueta: string
+}
+
+/** Un tipo de registro que el usuario puede adjuntar (`GET /api/chat/recursos`). */
+export interface Recurso {
+  tipo: string
+  /** Tiene tarjeta propia (boleto, salida). */
+  propia: boolean
+}
+
 /** Una referencia ya resuelta con los permisos de quien lee. */
 export interface Adjunto extends Referencia {
   estado: 'ok' | 'sin_acceso' | 'no_existe'

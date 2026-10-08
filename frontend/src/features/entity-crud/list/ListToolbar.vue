@@ -2,10 +2,10 @@
   <!-- <Toolbar class="rounded-none border-none! bg-transparent px-2">
     <template #end> -->
   <div class="mb-6 px-5 py-2 rounded-md flex flex-wrap items-center justify-end w-fit ml-auto gap-5">
-    <button type="button" class="tap-target" aria-label="Modo selección" @click="emit('toggle-selection')">
+    <button v-if="selectable" type="button" class="tap-target" aria-label="Modo selección" @click="emit('toggle-selection')">
       <icon name="check-box-outline" :class="{ 'text-primary': selectionMode }" />
     </button>
-    <button v-if="selectionMode && selectedCount > 0" type="button" class="tap-target flex items-center gap-1.5 text-sm text-primary" :aria-label="`Enviar ${selectedCount} por chat`" v-tooltip.bottom="'Enviar por chat'" @click="emit('share')">
+    <button v-if="selectable && selectionMode && selectedCount > 0" type="button" class="tap-target flex items-center gap-1.5 text-sm text-primary" :aria-label="`Enviar ${selectedCount} por chat`" v-tooltip.bottom="'Enviar por chat'" @click="emit('share')">
       <icon name="forum-outline" class="text-primary" />{{ selectedCount }}
     </button>
     <OverlayBadge v-if="hiddenColumns.length > 0" :value="String(hiddenColumns.length)" severity="primary" size="small">
@@ -38,13 +38,15 @@ import { ref } from "vue";
 import type { Popover as PopoverType } from "primevue";
 import type { CollectionFieldConfig } from "@/core/entities/types";
 
-defineProps<{
+withDefaults(defineProps<{
   selectionMode: boolean;
+  /** Ofrece el modo selección y "Enviar por chat" (no, cuando el listado ya es un selector). */
+  selectable?: boolean;
   selectedCount: number;
   hiddenColumns: CollectionFieldConfig[];
   /** Muestra la opción que reemplaza el listado por la configuración de la entidad. */
   configurable?: boolean;
-}>();
+}>(), { selectable: true });
 
 const emit = defineEmits<{
   "toggle-selection": [];

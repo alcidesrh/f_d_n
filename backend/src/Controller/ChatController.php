@@ -8,6 +8,7 @@ use App\Chat\Archivos;
 use App\Chat\AvisosChat;
 use App\Chat\ChatRechazado;
 use App\Chat\Conversaciones;
+use App\Chat\Tarjeta\Tarjetas;
 use App\Entity\ChatArchivo;
 use App\Entity\Usuario;
 use Doctrine\ORM\EntityManagerInterface;
@@ -35,6 +36,7 @@ final class ChatController extends AbstractController
         private readonly AvisosChat $avisos,
         private readonly Archivos $archivos,
         private readonly EntityManagerInterface $em,
+        private readonly Tarjetas $tarjetas,
     ) {}
 
     /** Token de suscripción a los avisos privados del usuario (Mercure). */
@@ -48,6 +50,13 @@ final class ChatController extends AbstractController
     public function contactos(#[CurrentUser] Usuario $yo): JsonResponse
     {
         return $this->json($this->chat->contactos($yo));
+    }
+
+    /** Tipos de registro que el usuario puede adjuntar (selector de registros). */
+    #[Route("/recursos", name: "recursos", methods: ["GET"])]
+    public function recursos(): JsonResponse
+    {
+        return $this->json($this->tarjetas->compartibles());
     }
 
     #[Route("/canales", name: "bandeja", methods: ["GET"])]

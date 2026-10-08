@@ -1,7 +1,8 @@
 <!--
   Aviso de mensaje nuevo fuera de la conversación en pantalla: tarjeta flotante
   que lleva a la conversación. Con la pestaña oculta y permiso del navegador,
-  además, notificación del sistema.
+  además, notificación del sistema. Con la ventana del chat abierta (esquina o
+  flotante, aunque esté minimizada) avisa ella: su barra cuenta y destella.
 -->
 <template>
   <Transition name="aviso">
@@ -19,10 +20,12 @@
 <script setup lang="ts">
 import { useChatStore } from '@/core/chat/store'
 import ChatAvatar from '@/shared/chat/ChatAvatar.vue'
+import { useVentanaChat } from './ventana'
 
 const DURACION_MS = 7000
 
 const chat = useChatStore()
+const ventana = useVentanaChat()
 const router = useRouter()
 const entrante = computed(() => chat.entrante)
 const visible = ref(false)
@@ -36,10 +39,11 @@ watch(
   () => entrante.value?.n,
   (n) => {
     if (!n || !entrante.value) return
+    notificarSistema()
+    if (ventana.esVentana && ventana.abierta) return
     visible.value = true
     clearTimeout(temporizador)
     temporizador = setTimeout(() => (visible.value = false), DURACION_MS)
-    notificarSistema()
   },
 )
 

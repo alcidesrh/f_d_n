@@ -8,7 +8,7 @@ import { computed, ref } from 'vue'
 import { suscribir } from '@/core/realtime'
 import * as api from './api'
 import { aplicarAviso, totalNoLeidos, ultimo, unir } from './modelo'
-import type { Aviso, Canal, Destinos, Mensaje, Perfil, Referencia } from './types'
+import type { Aviso, Canal, Destinos, Mensaje, Perfil, Recurso, Referencia } from './types'
 
 
 const RESPALDO_MS = 30_000
@@ -21,6 +21,7 @@ export const useChatStore = defineStore('chat', () => {
   /** Canales sin mensajes más antiguos por cargar. */
   const completos = ref<Record<number, boolean>>({})
   const contactos = ref<Perfil[] | null>(null)
+  const recursos = ref<Recurso[] | null>(null)
   /** Conversación en pantalla (la marca leída al llegar mensajes). */
   const activo = ref<number | null>(null)
   const listo = ref(false)
@@ -67,6 +68,7 @@ export const useChatStore = defineStore('chat', () => {
     mensajes.value = {}
     completos.value = {}
     contactos.value = null
+    recursos.value = null
     activo.value = null
     entrante.value = null
     listo.value = enVivo.value = false
@@ -114,9 +116,8 @@ export const useChatStore = defineStore('chat', () => {
     if (nuevos.length) mensajes.value[id] = unir(mensajes.value[id] ?? [], nuevos)
   }
 
-  /** Pone el canal en pantalla, trae sus últimos mensajes y lo marca leído. */
-  async function abrir(id: number) {
-    activo.value = id
+  /** Trae los últimos mensajes del canal (o los nuevos, si ya los tenía) sin marcarlo leído. */
+  async function cargar(id: number) {
     if (!canal(id)) await refrescar(true)
     if (!mensajes.value[id]) {
       const primeros = await api.fetchMensajes(id)
@@ -125,6 +126,12 @@ export const useChatStore = defineStore('chat', () => {
     } else {
       await traerNuevos(id)
     }
+  }
+
+  /** Pone el canal en pantalla, trae sus últimos mensajes y lo marca leído. */
+  async function abrir(id: number) {
+    activo.value = id
+    await cargar(id)
     if (entrante.value?.canal === id) entrante.value = null
     await leer(id)
   }
@@ -161,6 +168,12 @@ export const useChatStore = defineStore('chat', () => {
     return m
   }
 
+  /** Tipos que el usuario puede adjuntar; una vez por sesión. */
+  async function cargarRecursos() {
+    recursos.value ??= await api.fetchRecursos()
+    return recursos.value
+  }
+
   async function cargarContactos() {
     contactos.value ??= await api.fetchContactos()
     return contactos.value
@@ -189,7 +202,7 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   return {
-    yo, canales, mensajes, completos, contactos, activo, listo, enVivo, entrante, noLeidos,
-    canal, iniciar, detener, refrescar, abrir, cerrar, cargarAnteriores, leer, enviar, cargarContactos, directo, grupo, compartir,
+    yo, canales, mensajes, completos, contactos, recursos, activo, listo, enVivo, entrante, noLeidos,
+    canal, iniciar, detener, refrescar, cargar, abrir, cerrar, cargarAnteriores, leer, enviar, cargarContactos, cargarRecursos, directo, grupo, compartir,
   }
 })

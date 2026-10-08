@@ -24,17 +24,21 @@
       <SidebarRight v-else />
     </div>
     <ChatAviso />
+    <ChatVentana v-if="ventana.esVentana && session.user" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent } from 'vue'
+import { defineAsyncComponent, provide } from 'vue'
 import { useUiStore } from '@/app/ui'
 import { useSessionStore } from '@/core/auth/session'
 import { useUserMenusStore } from '@/core/navigation/userMenus'
 import { useChatStore } from '@/core/chat/store'
 import { useCuentaStore } from '@/core/cuenta/store'
 import ChatAviso from '@/features/chat/ChatAviso.vue'
+import ChatVentana from '@/features/chat/ChatVentana.vue'
+import { useVentanaChat } from '@/features/chat/ventana'
+import { LISTADO_DE_REGISTROS } from '@/shared/chat/integracion'
 import AppHeader from './AppHeader.vue'
 import NavArea from './navigation/NavArea.vue'
 import Sidebar from './Sidebar.vue'
@@ -47,6 +51,10 @@ const session = useSessionStore()
 const userMenus = useUserMenusStore()
 const chat = useChatStore()
 const cuenta = useCuentaStore()
+const ventana = useVentanaChat()
+
+// El selector de registros del chat usa el listado genérico (una feature no importa a otra).
+provide(LISTADO_DE_REGISTROS, defineAsyncComponent(() => import('@/features/entity-crud/ListPage.vue')))
 
 // Menús y chat del usuario: se cargan al entrar al shell y al cambiar de usuario.
 watch(

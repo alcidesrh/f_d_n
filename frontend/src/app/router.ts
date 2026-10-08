@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { loginHacia } from '@/core/auth/redirect'
 import { useSessionStore } from '@/core/auth/session'
 import { useNavigationHistoryStore } from '@/app/layout/navigationHistory'
+import { destinoDeRuta, useVentanaChat } from '@/features/chat/ventana'
 
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -155,6 +156,7 @@ export const router = createRouter({
         title: 'Mensajes',
         label: 'Mensajes',
         icon: 'forum-outline',
+        conservar: true,
       },
     },
     {
@@ -187,7 +189,7 @@ export const router = createRouter({
   ],
 })
 
-router.beforeEach((to) => {
+router.beforeEach((to, from) => {
   const session = useSessionStore()
   // DocumentDocument title
   const title = to.meta.title
@@ -203,8 +205,17 @@ router.beforeEach((to) => {
   if (session.isAuthenticated && isPublic) {
     return { name: 'dashboard' }
   }
+
+  // Chat en esquina o flotante: `/chat` abre la ventana sobre la página actual.
+  const ventana = useVentanaChat()
+  if (to.name === 'chat' && ventana.esVentana) {
+    const { canal, adjuntar } = destinoDeRuta(to.params, to.query)
+    ventana.abrir(canal ?? ventana.canal, adjuntar)
+    return from.matched.length ? false : { name: 'dashboard' }
+  }
 })
 
 router.afterEach((to) => {
   useNavigationHistoryStore().push(to)
+  if (to.name !== 'chat' && !to.meta.public) useVentanaChat().pagina = to.fullPath
 })

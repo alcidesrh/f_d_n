@@ -17,9 +17,12 @@
  * dedicado de la entidad si está registrado en `formOverrides`.
  */
 import { computed, defineAsyncComponent } from 'vue'
+import { getEntity } from '@/core/entities/registry'
+import { useSchemaStore } from '@/core/entities/schema'
 import { router } from '@/app/router'
 import { entityNameFromSlug } from '@/core/entities/slug'
 import { notify } from '@/core/notify'
+import { anunciarEnPantalla, etiquetaDeFila } from '@/shared/chat/integracion'
 import EntityForm from './form/EntityForm.vue'
 import { entityFormOverrides } from './form/formOverrides'
 import { idDisplay } from './list/listUtils'
@@ -33,6 +36,16 @@ const recordId = computed(() => first(props.id))
 const formComponent = computed(() => {
   const override = entityFormOverrides[entityName.value]
   return override ? defineAsyncComponent(override) : EntityForm
+})
+
+// Con el chat encima, el registro en edición se ofrece para adjuntar.
+const schema = useSchemaStore()
+anunciarEnPantalla(() => {
+  const id = Number(recordId.value)
+  if (!Number.isInteger(id) || id <= 0 || !schema.find(entityName.value)) return []
+  const item = getEntity(entityName.value).item as Record<string, unknown> | null
+  const propio = item && Number(idDisplay(item.id)) === id ? item : { id }
+  return [{ tipo: entityName.value, id, etiqueta: etiquetaDeFila(propio, id, entityName.value) }]
 })
 
 function toList() {

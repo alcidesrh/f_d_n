@@ -1,7 +1,7 @@
 <template>
-  <div v-if="store" class="card flex flex-col" style="min-height: 400px">
-    <ListToolbar :selection-mode="selectionMode" :selected-count="selection.length" :hidden-columns="hiddenColumns" :configurable="configurable" @configure="emit('configure')" @toggle-selection="toggleSelection" @share="compartir = true" @restore="(field) => setColumnVisible(field, true)" @reset="resetView" />
-    <DataTable v-model:selection="selection" :value="visibleItems" :loading="loading.loading" row-key="id" scrollable scroll-height="800px" reorderable-columns :edit-mode="canEdit ? 'cell' : undefined" @column-reorder="onColumnReorder" @cell-edit-complete="onCellEditComplete">
+  <div v-if="store" class="card flex flex-col" :class="{ 'h-full': enSelector }" style="min-height: 400px">
+    <ListToolbar :selection-mode="modoSeleccion" :selectable="!enSelector" :selected-count="selection.length" :hidden-columns="hiddenColumns" :configurable="configurable && !enSelector" @configure="emit('configure')" @toggle-selection="toggleSelection" @share="compartir = true" @restore="(field) => setColumnVisible(field, true)" @reset="resetView" />
+    <DataTable :selection="enSelector ? seleccion : selection" :value="visibleItems" :loading="loading.loading" :data-key="claveFila" scrollable :scroll-height="enSelector ? 'flex' : '800px'" reorderable-columns :edit-mode="canEdit && !enSelector ? 'cell' : undefined" @update:selection="alSeleccionar" @column-reorder="onColumnReorder" @cell-edit-complete="onCellEditComplete">
       <Column v-for="col in visibleColumns" :key="col.field" :field="col.field">
         <template #header>
           <div class="relative w-full" v-bind="col.attrs">
@@ -34,14 +34,14 @@
           <ListCellEditor :entity="entityName" :column="col" :data="data" />
         </template>
       </Column>
-      <Column align-frozen="right" frozen header-class="col-actions" body-class="col-actions" :exportable="false" :reorderable-column="false" :selection-mode="selectionMode ? 'multiple' : undefined">
-        <template v-if="!selectionMode" #body="{ data }">
+      <Column align-frozen="right" frozen header-class="col-actions" body-class="col-actions" :exportable="false" :reorderable-column="false" :selection-mode="modoSeleccion ? 'multiple' : undefined">
+        <template v-if="!modoSeleccion" #body="{ data }">
           <ListActions :item="data" :actions="extraActions" @edit="onEdit" @delete="askDelete" @action="openAction" />
         </template>
       </Column>
     </DataTable>
     <ListFooter :pagination="store.pagination" :count="store.items.length" :local-filter="hasLocalFilter" @page="onPage" />
-    <EnviarPorChatDialog v-model:visible="compartir" :referencias="referencias" @enviado="toggleSelection" />
+    <EnviarPorChatDialog v-if="!enSelector" v-model:visible="compartir" :referencias="referencias" @enviado="toggleSelection" />
     <component :is="activeAction.component" v-if="activeAction" v-model:visible="actionVisible" :item="activeAction.item" @after-hide="activeAction = null" />
   </div>
 
@@ -57,6 +57,10 @@
  * (ocultar, reordenar), filtros por columna, orden, paginación, edición en
  * línea, selección múltiple y borrado. El estado persiste en el store de la
  * entidad; los filtros viven en `useListFilters`.
+ *
+ * Con `v-model:seleccion` es un selector (el del chat, `LISTADO_DE_REGISTROS`):
+ * siempre en selección, sin editar ni acciones, y la selección sobrevive al
+ * cambiar de página o de filtros.
  */
 import { computed, defineAsyncComponent, ref, shallowRef, watch, type Component } from "vue";
 import { useConfirm } from "primevue/useconfirm";
@@ -69,6 +73,7 @@ import type { CollectionFieldConfig, EntityStore } from "@/core/entities/types";
 import { useLoadingStore } from "@/core/loading";
 import { notify } from "@/core/notify";
 import EnviarPorChatDialog from "@/shared/chat/EnviarPorChatDialog.vue";
+import { anunciarEnPantalla, etiquetaDeFila } from "@/shared/chat/integracion";
 import ListActions from "./list/ListActions.vue";
 import { entityListActions, type EntityListAction } from "./list/listActions";
 import ListCell from "./list/ListCell.vue";
@@ -81,11 +86,12 @@ import { useListFilters } from "./list/useListFilters";
 const SORT_ICONS = { asc: "sort", desc: "arrow-downward", none: "swap-vert" } as const;
 const DEFAULT_PAGE_SIZE = 10;
 
-const props = withDefaults(defineProps<{ entity: string | string[]; configurable?: boolean }>(), {
+const props = withDefaults(defineProps<{ entity: string | string[]; configurable?: boolean; seleccion?: unknown[] }>(), {
   entity: "",
   configurable: false,
+  seleccion: undefined,
 });
-const emit = defineEmits<{ configure: [] }>();
+const emit = defineEmits<{ configure: []; "update:seleccion": [filas: unknown[]] }>();
 
 const schema = useSchemaStore();
 const loading = useLoadingStore();
@@ -152,6 +158,24 @@ function openAction(action: EntityListAction, item: unknown) {
 // Selección ---------------------------------------------------------------
 const selectionMode = ref(false);
 const selection = ref<unknown[]>([]);
+const enSelector = computed(() => props.seleccion !== undefined);
+const modoSeleccion = computed(() => enSelector.value || selectionMode.value);
+
+/** Por id numérico: la fila de la API (IRI) y `{ id: 12 }` son la misma. */
+const claveFila = (fila: unknown) => idDisplay((fila as { id?: unknown }).id);
+
+/**
+ * El DataTable solo conoce la página visible ("todos" la reemplaza): en el
+ * selector, lo de otras páginas se conserva y el orden de elección también.
+ */
+function alSeleccionar(nueva: unknown[]) {
+  if (!enSelector.value) return void (selection.value = nueva);
+  const pagina = new Map(visibleItems.value.map((fila) => [claveFila(fila), fila]));
+  const elegidas = new Set(nueva.map(claveFila).filter((k) => pagina.has(k)));
+  const previas = (props.seleccion ?? []).filter((f) => !pagina.has(claveFila(f)) || elegidas.has(claveFila(f))).map((f) => pagina.get(claveFila(f)) ?? f);
+  const ya = new Set(previas.map(claveFila));
+  emit("update:seleccion", [...previas, ...nueva.filter((f) => pagina.has(claveFila(f)) && !ya.has(claveFila(f)))]);
+}
 
 function toggleSelection() {
   selectionMode.value = !selectionMode.value;
@@ -166,6 +190,16 @@ const referencias = computed(() =>
     .map((item) => Number(idDisplay((item as { id?: unknown }).id)))
     .filter((id) => Number.isInteger(id) && id > 0)
     .map((id) => ({ tipo: entityName.value, id })),
+);
+
+// Con el chat abierto encima, lo seleccionado se ofrece para adjuntar.
+anunciarEnPantalla(() =>
+  enSelector.value || !selectionMode.value
+    ? []
+    : selection.value.flatMap((fila) => {
+        const id = Number(claveFila(fila));
+        return Number.isInteger(id) && id > 0 ? [{ tipo: entityName.value, id, etiqueta: etiquetaDeFila(fila as Record<string, unknown>, id, entityName.value) }] : [];
+      }),
 );
 
 // Edición en línea --------------------------------------------------------

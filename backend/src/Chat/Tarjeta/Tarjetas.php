@@ -63,6 +63,25 @@ final class Tarjetas
     }
 
     /**
+     * Lo que este usuario puede compartir (el selector de registros del
+     * chat): primero los tipos con tarjeta propia, luego el resto por nombre.
+     *
+     * @return list<array{tipo: string, propia: bool}>
+     */
+    public function compartibles(): array
+    {
+        $tipos = array_values(array_unique([...array_keys($this->propias), ...$this->generica->tipos()]));
+        $lista = [];
+        foreach ($tipos as $tipo) {
+            if ($this->puedeVer($tipo)) {
+                $lista[] = ["tipo" => $tipo, "propia" => isset($this->propias[$tipo])];
+            }
+        }
+
+        return $lista;
+    }
+
+    /**
      * @param list<array{tipo: string, id: int}> $adjuntos
      *
      * @return list<array<string, mixed>>

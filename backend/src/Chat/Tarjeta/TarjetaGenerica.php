@@ -14,6 +14,8 @@ use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 final class TarjetaGenerica
 {
     private const NAMESPACE = "App\\Entity\\";
+    /** Secretos: ni su etiqueta se comparte. */
+    private const RESERVADAS = ["ApiToken", "CredencialFel", "CredencialPago"];
 
     public function __construct(
         private readonly EntityManagerInterface $em,
@@ -27,7 +29,27 @@ final class TarjetaGenerica
         return preg_match('/^[A-Z]\w*$/', $tipo) === 1
             && class_exists($class)
             && !$this->em->getMetadataFactory()->isTransient($class)
-            && !str_starts_with($tipo, "Chat");
+            && !str_starts_with($tipo, "Chat")
+            && !in_array($tipo, self::RESERVADAS, true);
+    }
+
+    /**
+     * Todas las entidades que se pueden adjuntar (las de `existe()`).
+     *
+     * @return list<string>
+     */
+    public function tipos(): array
+    {
+        $tipos = [];
+        foreach ($this->em->getMetadataFactory()->getAllMetadata() as $m) {
+            $tipo = substr($m->getName(), strlen(self::NAMESPACE));
+            if (str_starts_with($m->getName(), self::NAMESPACE) && !$m->isMappedSuperclass && !$m->isEmbeddedClass && $this->existe($tipo)) {
+                $tipos[] = $tipo;
+            }
+        }
+        sort($tipos);
+
+        return $tipos;
     }
 
     public function puedeVer(string $tipo): bool
