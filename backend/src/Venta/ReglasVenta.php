@@ -40,16 +40,29 @@ final class ReglasVenta
         private readonly AjustesPagina $ajustes,
     ) {}
 
-    /** Taquilla y agencias venden mientras el salida está programado o abordando. */
+    /** Taquilla y agencias venden mientras el salida está programado o abordando, y no es de un día pasado. */
     public function exigirVendibleEnTaquilla(Salida $salida): void
     {
-        if (!in_array($salida->getEstado(), [EstadoSalida::PROGRAMADA, EstadoSalida::ABORDANDO], true)) {
-            throw new VentaRechazada(sprintf(
-                "El salida está %s: ya no se venden boletos.",
-                $salida->getEstado()->value,
-            ));
+        $motivo = $this->motivoNoVendibleEnTaquilla($salida);
+        if ($motivo !== null) {
+            throw new VentaRechazada($motivo);
         }
         $this->exigirBus($salida);
+    }
+
+    /** Por qué taquilla y agencias ya no pueden vender el salida; null si se puede. */
+    public function motivoNoVendibleEnTaquilla(Salida $salida): ?string
+    {
+        if (!in_array($salida->getEstado(), [EstadoSalida::PROGRAMADA, EstadoSalida::ABORDANDO], true)) {
+            return sprintf("El salida está %s: ya no se venden boletos.", $salida->getEstado()->value);
+        }
+        // Un salida de un día pasado que nunca se marcó iniciado tampoco se vende.
+        $fecha = $salida->getFecha();
+        if ($fecha !== null && $fecha->format("Y-m-d") < $this->reloj->now()->format("Y-m-d")) {
+            return "El salida es de un día pasado: ya no se venden boletos.";
+        }
+
+        return null;
     }
 
     /** La web vende solo salidas programadas, hasta su cierre en línea y si la venta en línea está activa. */

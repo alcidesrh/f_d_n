@@ -110,6 +110,7 @@
                 <div class="text-sm text-muted-color">Libres {{ store.libres }}/{{ store.asientosCroquis.length }}</div>
               </div> -->
 
+                <Message v-if="store.noVendible" severity="warn" :closable="false">{{ store.noVendible }}</Message>
                 <BusMapLegend :items="leyenda" :conteos="conteos" />
                 <div class="overflow-x-auto mt-4">
                   <BusMap :elementos="store.detalle.croquis" :estado="store.estadoAsiento" interactivo inspeccionable tamano="md" class="justify-center" @asiento="(a) => a.id != null && store.alternarAsiento(a.id)" @ocupado="verOcupado" />

@@ -126,6 +126,7 @@ final class VentaController extends AbstractController
 
         return $this->json([
             ...$this->consulta->detalle($salida),
+            "noVendible" => $this->reglas->motivoNoVendibleEnTaquilla($salida),
             "topico" => PublicadorOcupacion::topico((int) $salida->getId()),
         ]);
     }

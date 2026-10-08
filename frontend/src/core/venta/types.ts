@@ -68,6 +68,8 @@ export interface SalidaDetalle extends SalidaResumen {
   trayectos: TrayectoVendible[]
   croquis: ElementoCroquis[]
   cierreEnLinea: string
+  /** Taquilla: por qué ya no se vende (anulado, iniciado, día pasado…); null si se vende. */
+  noVendible?: string | null
   /** Tópico Mercure con los cambios de ocupación. */
   topico: string
 }

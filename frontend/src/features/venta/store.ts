@@ -69,10 +69,12 @@ export const useVentaStore = defineStore("venta", () => {
   const bajadas = computed(() => (detalle.value ? paradasDeBajada(detalle.value, sube.value) : []));
   /** Clases de asiento con tarifa en el tramo elegido: las demás se ven bloqueadas. */
   const clasesVendibles = computed(() => (detalle.value ? clasesDelTrayecto(detalle.value, trayectoId.value) : []));
-  const estadoAsiento = computed(() => estadoEnMapa(ocupados.value, seleccion.value, clasesVendibles.value));
+  /** Motivo por el que el salida ya no se vende (p. ej. de un día pasado): el croquis queda de solo lectura. */
+  const noVendible = computed(() => detalle.value?.noVendible ?? null);
+  const estadoAsiento = computed(() => estadoEnMapa(ocupados.value, seleccion.value, noVendible.value ? [] : clasesVendibles.value));
   const asientosCroquis = computed(() => detalle.value?.croquis.filter((e): e is AsientoCroquis => e.tipo === "asiento") ?? []);
   const libres = computed(() => asientosCroquis.value.length - ocupados.value.filter((o) => o.estado !== "propio").length);
-  const puedeVender = computed(() => !!cliente.value && !!detalle.value && trayectoId.value != null && seleccion.value.length > 0 && !vendiendo.value);
+  const puedeVender = computed(() => !!cliente.value && !!detalle.value && !noVendible.value && trayectoId.value != null && seleccion.value.length > 0 && !vendiendo.value);
 
   async function iniciar() {
     errorCarga.value = "";
@@ -183,6 +185,7 @@ export const useVentaStore = defineStore("venta", () => {
   }
 
   function alternarAsiento(id: number) {
+    if (noVendible.value) return;
     seleccion.value = alternar(seleccion.value, id);
     if (!seleccion.value.includes(id)) delete pasajeros.value[id];
     void recotizar();
@@ -305,6 +308,7 @@ export const useVentaStore = defineStore("venta", () => {
     esSubtrayecto,
     puedeCobrarCompleto,
     clasesVendibles,
+    noVendible,
     subidas,
     bajadas,
     estadoAsiento,
