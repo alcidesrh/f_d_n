@@ -11,9 +11,9 @@
   z-index: 100;
   width: min(var(--sb-open), 85vw);
   height: calc(100% - (var(--header-h) * 2));
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   /* Cerrado queda fuera del orden de tabulación (visibility) al terminar de salir. */
   visibility: hidden;
   transition:
@@ -59,15 +59,25 @@
       width: var(--sb-right-w);
       transform: none;
     }
-    /* En `mini` los enlaces se despliegan por fuera del panel (ver `.sidebar.mini` abajo). */
-    &.mini {
-      overflow: visible;
+    /* En `mini` el scroll del menú no muestra barra; el texto de cada enlace sale por
+       fuera del panel con `position: fixed` (ver `.sidebar.mini` abajo). */
+    &.mini > nav {
+      scrollbar-width: none;
     }
     &.close {
       visibility: hidden;
       transition: visibility 0s linear var(--transition);
     }
   }
+}
+
+/* Solo el menú hace scroll: la barra de modo/cerrar queda fija arriba. */
+.sidebar > nav {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  overscroll-behavior: contain;
 }
 
 /* Fondo detrás del drawer abierto (solo debajo de `lg`). */
@@ -88,8 +98,8 @@
 .sidebar-control {
   /*border-bottom: var(--border-200);*/
   /*background-color: var(--p-gray-100);*/
+  flex: none;
   position: relative;
-  /*z-index: 999;*/
   /*width: fit-content;*/
   /*right: 0px;*/
   margin-left: auto;
@@ -179,65 +189,45 @@
 .sidebar.mini {
   & .sidebar-control {
     justify-content: center;
-    position: relative;
   }
-  /* Solo íconos (la columna mide `--sb-mini`). Al pasar el mouse, el enlace se
-     ensancha hasta el ancho de su texto (`max-content`, tope `--sb-open`) flotando sobre el contenido y aparece el
-     texto. Ancho animado con `interpolate-size`; en el sidebar derecho
-     (crece hacia la izquierda) `justify-content: flex-end` mantiene pegado el borde
-     a la barra, así el puntero no sale del enlace. */
+  /* Solo íconos (la columna mide `--sb-mini`). Al pasar el mouse el texto aparece
+     flotando sobre el contenido. Es `position: fixed` para no ser recortado por el
+     scroll del panel: sin `top` conserva su posición vertical natural (centrado en el
+     enlace) y no altera el layout; `left`/`right` lo pegan al borde del panel. */
   @variant lg {
     & .menu-item .menu-link {
-      --w: var(--sb-mini);
       flex: none;
       min-width: var(--sb-mini);
-      max-width: var(--sb-open);
-      width: var(--w);
-      interpolate-size: allow-keywords;
-      overflow: hidden;
-      transition:
-        width var(--transition) var(--ease),
-        margin-left var(--transition) var(--ease),
-        box-shadow var(--transition) var(--ease);
-      &:hover,
-      &:focus-visible {
-        --w: max-content;
-        position: relative;
-        z-index: 2;
-        background-color: var(--bg);
-        box-shadow: 0 2px 8px rgb(0 0 0 / 0.15);
-      }
+      width: var(--sb-mini);
+      overflow: visible;
     }
     & .menu-text {
+      position: fixed;
+      margin: 0;
+      padding: 14px 16px;
+      width: max-content;
+      max-width: calc(var(--sb-open) - var(--sb-mini));
+      overflow: hidden;
+      text-overflow: ellipsis;
+      background-color: var(--bg);
+      box-shadow: 0 2px 8px rgb(0 0 0 / 0.15);
       opacity: 0;
-      transition-duration: calc(var(--transition) * 0.5);
+      pointer-events: none;
+      transition: opacity calc(var(--transition) * 0.5) var(--ease);
+    }
+    &.left .menu-text {
+      left: var(--sb-mini);
+      border-radius: 0 8px 8px 0;
+    }
+    &.right .menu-text {
+      right: var(--sb-mini);
+      border-radius: 8px 0 0 8px;
     }
     & .menu-link:hover .menu-text,
     & .menu-link:focus-visible .menu-text {
       opacity: 1;
+      pointer-events: auto;
       transition-duration: var(--transition);
-    }
-    &.left .menu-link:hover,
-    &.left .menu-link:focus-visible {
-      border-radius: 0 8px 8px 0;
-    }
-    /* Un flex con `justify-content: flex-end` desborda hacia el inicio (la
-       izquierda); con `margin-left: auto` el margen se anularía y el enlace
-       saldría por la derecha, fuera de la pantalla. */
-    &.right .menu-item,
-    &.right .menu-item .nav-row {
-      display: flex;
-      justify-content: flex-end;
-    }
-    &.right .menu-item .nav-row {
-      flex: 1;
-      min-width: 0;
-    }
-    &.right .menu-item .menu-link {
-      &:hover,
-      &:focus-visible {
-        border-radius: 8px 0 0 8px;
-      }
     }
   }
 }
