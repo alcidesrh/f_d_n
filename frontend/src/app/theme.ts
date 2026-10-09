@@ -255,42 +255,45 @@ export const componentsPreset = (parent: ThemePreset): Tokens => {
       },
     },
     datatable: {
-      ...base.components.datatable,
-      header: {
-        cell: {
-          padding: "35px 0",
-        },
-      },
-      body: {
-        cell: {
-          padding: "35px",
-          sm: {
-            padding: "35px",
+      root: {
+        ...base.components.datatable?.root,
+        // ...base.components.datatable,
+        header: {
+          cell: {
+            padding: "10px 0",
           },
         },
-      },
-      colorScheme: {
-        ...base.components.datatable?.colorScheme,
         body: {
           cell: {
+            padding: "0 10px",
             sm: {
-              // padding: "10px 0",
+              padding: "35px",
             },
           },
         },
-        row: {
-          background: "{surface.0}",
-          // "striped.background": "{surface.200}",
-        },
-        dark: {
-          ...base.components.datatable?.colorScheme.dark,
-          // header: {
-          //   background: "{surface.100}",
-          //   "cell.background": "{surface.100}",
-          // },
+        colorScheme: {
+          ...base.components.datatable?.colorScheme,
+          body: {
+            cell: {
+              sm: {
+                padding: "10px 0",
+              },
+            },
+          },
           row: {
-            background: "{surface.100}",
-            "striped.background": "{surface.200}",
+            background: "{surface.0}",
+            // "striped.background": "{surface.200}",
+          },
+          dark: {
+            ...base.components.datatable?.colorScheme.dark,
+            // header: {
+            //   background: "{surface.100}",
+            //   "cell.background": "{surface.100}",
+            // },
+            row: {
+              background: "{surface.100}",
+              "striped.background": "{surface.200}",
+            },
           },
         },
       },

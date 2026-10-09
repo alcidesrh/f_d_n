@@ -10,6 +10,7 @@
   background-color: var(--bg);
   z-index: 100;
   width: min(var(--sb-open), 85vw);
+  height: calc(100% - (var(--header-h) * 2));
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -23,14 +24,15 @@
     left: 0;
     /*border-right: var(--border);*/
     /*box-shadow: var(--shadow-inset);*/
-    /*box-shadow: 1.5px 0.5px 5px var(--p-surface-600);*/
+    box-shadow: 1.5px 1.5px 3px 1px var(--p-surface-400);
     transform: translateX(-100%);
   }
 
   &.right {
     --sb-open: var(--sb-right-open);
     /*border-left: var(--border);*/
-    /*box-shadow: -2.5px 3.5px 6px 2px var(--p-surface-400);*/
+    box-shadow: -1.5px 1.5px 5px 1px var(--p-surface-600);
+
     /*box-shadow: var(--shadow-inset);*/
 
     right: 0;
