@@ -3,7 +3,7 @@
  * restante, estado del mapa, selección de asientos, agrupación por
  * departamento, fechas e importes.
  */
-import type { AsientoCroquis, ClaseAsiento, EstadoAsiento } from '@/core/croquis/types'
+import type { AsientoCroquis, ClaseAsiento, ElementoCroquis, EstadoAsiento } from '@/core/croquis/types'
 import type { Estacion, SalidaPublico } from './tipos'
 
 export function luhn(numero: string): boolean {
@@ -177,6 +177,20 @@ export function duracion(desde: string | null | undefined, hasta: string | null 
 /** Centavos de quetzal con el formato de la región (`Q 1,199.00`, `1.199,00 GTQ`…). */
 export function quetzales(centavos: number, region = 'es-GT'): string {
   return new Intl.NumberFormat(region, { style: 'currency', currency: 'GTQ', currencyDisplay: 'symbol' }).format(centavos / 100)
+}
+
+/**
+ * Precios (centavos, de menor a mayor y sin repetir) de los asientos de una
+ * planta que se venden en línea. Vacío si ninguno tiene tarifa.
+ */
+export function preciosDePlanta(croquis: readonly ElementoCroquis[], planta: number, precios: ReadonlyMap<ClaseAsiento, number>): number[] {
+  const unicos = new Set<number>()
+  for (const e of croquis) {
+    if (e.planta !== planta || e.tipo !== 'asiento') continue
+    const centavos = precios.get(e.clase)
+    if (centavos != null) unicos.add(centavos)
+  }
+  return [...unicos].sort((a, b) => a - b)
 }
 
 /** `AAAA-MM-DD` desplazado `dias`. */
