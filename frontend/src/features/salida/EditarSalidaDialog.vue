@@ -11,9 +11,11 @@
         <span class="text-xs font-medium text-muted-color">Trayecto</span>
         <Select v-model="trayectoId" :options="opciones.trayectos" option-label="ruta" option-value="id" filter fluid :virtual-scroller-options="{ itemSize: 38 }" />
       </label>
+      <FiltroBus v-model="filtroBus" :croquis="opciones.croquis" :clases="opciones.clases" />
       <label class="flex flex-col gap-1">
         <span class="text-xs font-medium text-muted-color">Bus</span>
-        <Select v-model="busId" :options="opciones.buses" :option-label="etiquetaBus" option-value="id" filter :filter-fields="['codigo', 'matricula']" fluid placeholder="Sin bus" />
+        <Select v-model="busId" :options="busesCompatibles(opciones.buses, filtroBus, busId)" :option-label="etiquetaBus" option-value="id" filter :filter-fields="['codigo', 'matricula']" fluid placeholder="Bus" />
+        <span class="text-xs text-muted-color">El bus solo se cambia si la salida no tiene asientos vendidos ni apartados.</span>
       </label>
       <label class="flex flex-col gap-1">
         <span class="text-xs font-medium text-muted-color">Fecha y hora</span>
@@ -34,6 +36,8 @@ import { editarSalida } from '@/core/salida/api'
 import { aFechaHora } from '@/core/salida/filtro'
 import type { BusOpcion, CambioSalida, OpcionesSalidas, ResultadoOperacion, SalidaFila } from '@/core/salida/types'
 import { notify } from '@/core/notify'
+import { busesCompatibles, filtroBusVacio, filtroDeBus } from '@/core/salida/buses'
+import FiltroBus from './FiltroBus.vue'
 import PropagacionOpcion from './PropagacionOpcion.vue'
 
 const props = defineProps<{ salida: SalidaFila | null; opciones: OpcionesSalidas }>()
@@ -43,6 +47,8 @@ const trayectoId = ref<number | null>(null)
 const busId = ref<number | null>(null)
 const fecha = ref<Date | null>(null)
 const propagar = ref(false)
+/** Arranca con el croquis y la clase del bus actual: sugiere uno equivalente. */
+const filtroBus = ref(filtroBusVacio())
 const guardando = ref(false)
 
 const empresas = computed(() => new Map(props.opciones.empresas.map((e) => [e.id, e.nombre])))
@@ -54,6 +60,7 @@ watch(
     if (!s) return
     trayectoId.value = s.trayecto.id
     busId.value = s.bus?.id ?? null
+    filtroBus.value = filtroDeBus(props.opciones.buses.find((b) => b.id === s.bus?.id))
     fecha.value = new Date(s.fecha)
   },
   { immediate: true },

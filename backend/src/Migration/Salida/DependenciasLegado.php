@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Migration\Salida;
 
+use App\Croquis\Moldes;
 use App\Migration\Mapeador;
 use Doctrine\DBAL\Connection;
 
@@ -45,6 +46,7 @@ class DependenciasLegado
         private readonly Connection $db,
         private readonly LectorLegado $legado,
         private readonly Mapeador $mapeador,
+        private readonly Moldes $moldes,
     ) {}
 
     // ─── Empresa y lugares ─────────────────────────────────────────
@@ -209,6 +211,9 @@ class DependenciasLegado
 
         if ($id !== null && $old !== null && !empty($old["tipo_id"])) {
             $this->croquis($id, (int) $old["tipo_id"]);
+        }
+        if ($id !== null) {
+            $this->moldes->asociar([$id]);
         }
 
         return $this->ids["bus"][$codigo] = $id;

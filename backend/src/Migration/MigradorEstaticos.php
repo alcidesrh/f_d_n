@@ -2,6 +2,7 @@
 
 namespace App\Migration;
 
+use App\Croquis\Moldes;
 use App\Migration\Job\Progreso;
 use App\Venta\Facturacion\CredencialesFel;
 use DateTime;
@@ -33,6 +34,7 @@ class MigradorEstaticos
         private EntityManagerInterface $systemfdnEm,
         private Mapeador $mapeador,
         private CredencialesFel $credencialesFel,
+        private Moldes $moldes,
     ) {
         $this->oldPdo->setAttribute(
             \PDO::ATTR_ERRMODE,
@@ -116,6 +118,10 @@ class MigradorEstaticos
             }
             foreach (self::TABLAS_ID_EXPLICITO as $tabla) {
                 $this->reiniciarIdentidad($tabla);
+            }
+            // Cada bus con el molde de su distribución (ADR-027).
+            if ($entities === [] || array_intersect($entities, ["bus", "asiento", "senal"]) !== []) {
+                $contadores["croquis"] = $this->moldes->asociar();
             }
             $this->newConn->commit();
         } catch (\Throwable $e) {

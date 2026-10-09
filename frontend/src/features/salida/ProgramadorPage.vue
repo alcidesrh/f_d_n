@@ -73,10 +73,12 @@
         <!-- Horas y buses -->
         <section class="panel flex flex-col gap-3 mb-5" aria-labelledby="pg-horas">
           <h2 id="pg-horas" class="m-0 flex items-center gap-2 text-base font-semibold"><icon name="schedule-outline" />Horas de salida y bus</h2>
+          <FiltroBus v-model="filtroBus" :croquis="opciones?.croquis ?? []" :clases="opciones?.clases ?? []" />
+          <p v-if="filtroBus.croquisId !== null || filtroBus.claseId !== null" class="m-0 text-xs text-muted-color">{{ compatibles.length }} {{ compatibles.length === 1 ? "bus compatible" : "buses compatibles" }}.</p>
           <ul class="m-0 flex list-none flex-col gap-2 p-0">
             <li v-for="(m, i) in form.momentos" :key="i" class="grid grid-cols-[7rem_minmax(0,1fr)_auto] items-center gap-2">
               <InputText v-model="m.hora" type="time" :aria-label="`Hora n.º ${i + 1}`" class="tabular-nums" />
-              <Select v-model="m.busId" :options="opciones?.buses ?? []" :option-label="etiquetaBus" option-value="id" filter :filter-fields="['codigo', 'matricula']" fluid placeholder="Bus" :aria-label="`Bus de la hora n.º ${i + 1}`" />
+              <Select v-model="m.busId" :options="busesCompatibles(opciones?.buses ?? [], filtroBus, m.busId)" :option-label="etiquetaBus" option-value="id" filter :filter-fields="['codigo', 'matricula']" fluid placeholder="Bus" :aria-label="`Bus de la hora n.º ${i + 1}`" />
               <Button severity="secondary" text rounded class="tap-target" :aria-label="`Quitar la hora n.º ${i + 1}`" :disabled="form.momentos.length === 1" @click="form.momentos.splice(i, 1)">
                 <template #icon><icon name="close" /></template>
               </Button>
@@ -215,6 +217,8 @@ import { eliminarEsquema, fetchEsquemas, fetchOpciones, guardarEsquema, programa
 import { aDia, deDia, horaDe } from "@/core/salida/filtro";
 import { aEsquema, aPayload, conEsquema, diasProgramados, difiereDeEsquema, errores as erroresDe, formInicial, horaValida, MAX_DIAS, MAX_INTERVALO, MAX_MOMENTOS, normalizarHora, totalSalidas, type ProgramadorForm } from "@/core/salida/programacion";
 import type { BusOpcion, EstadoPlan, Esquema, ItemPlan, OpcionesSalidas, ResultadoProgramacion, VistaPrevia } from "@/core/salida/types";
+import { busesCompatibles, filtroBusVacio } from "@/core/salida/buses";
+import FiltroBus from "./FiltroBus.vue";
 import { HttpError } from "@/core/http";
 import { notify } from "@/core/notify";
 
@@ -230,6 +234,8 @@ const hoy = new Date();
 hoy.setHours(0, 0, 0, 0);
 
 const form = reactive<ProgramadorForm>(formInicial());
+/** Distribución y clase del bus: solo filtra la lista de buses (no se guarda en el esquema). */
+const filtroBus = reactive(filtroBusVacio());
 const opciones = shallowRef<OpcionesSalidas | null>(null);
 const sinPermiso = ref(false);
 const esquemas = ref<Esquema[]>([]);
@@ -251,6 +257,7 @@ const dias = computed(() => diasProgramados(form));
 const errores = computed(() => erroresDe(form));
 
 const empresas = computed(() => new Map((opciones.value?.empresas ?? []).map((e) => [e.id, e.nombre])));
+const compatibles = computed(() => busesCompatibles(opciones.value?.buses ?? [], filtroBus));
 const etiquetaBus = (b: BusOpcion) => [b.codigo, b.matricula, b.empresaId ? empresas.value.get(b.empresaId) : null].filter(Boolean).join(" · ");
 
 watch(guardar, (g) => (form.guardarComo = g ? nombreEsquema.value : null));

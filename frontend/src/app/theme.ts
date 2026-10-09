@@ -263,23 +263,23 @@ export const componentsPreset = (parent: ThemePreset): Tokens => {
             padding: "10px 0",
           },
         },
-        body: {
-          cell: {
-            padding: "0 10px",
-            sm: {
-              padding: "35px",
-            },
-          },
-        },
+        // body: {
+        //   cell: {
+        //     padding: "0 10px",
+        //     sm: {
+        //       padding: "0 10px",
+        //     },
+        //   },
+        // },
         colorScheme: {
           ...base.components.datatable?.colorScheme,
-          body: {
-            cell: {
-              sm: {
-                padding: "10px 0",
-              },
-            },
-          },
+          // body: {
+          //   cell: {
+          //     sm: {
+          //       padding: "10px 0",
+          //     },
+          //   },
+          // },
           row: {
             background: "{surface.0}",
             // "striped.background": "{surface.200}",

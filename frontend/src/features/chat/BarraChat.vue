@@ -10,7 +10,7 @@
       <icon name="forum-outline" size="1.15rem" color="text-current" />
       <span>Mensajes</span>
       <span class="vivo" :class="{ 'vivo--off': !chat.enVivo }" v-tooltip.bottom="chat.enVivo ? 'En vivo' : 'Sin conexión en vivo: se actualiza cada 30 s'" />
-      <span v-if="chat.noLeidos" class="barra__badge" :aria-label="`${chat.noLeidos} sin leer`">{{ chat.noLeidos > 99 ? '99+' : chat.noLeidos }}</span>
+      <span v-if="chat.noLeidos" class="barra__badge" :aria-label="`${chat.noLeidos} sin leer`">{{ chat.noLeidos > 99 ? "99+" : chat.noLeidos }}</span>
     </span>
 
     <button v-if="!(ventana.esVentana && ventana.minimizada)" type="button" class="modo" aria-haspopup="true" aria-controls="chat-modos" :aria-label="`Modo: ${MODOS[ventana.modo].nombre}`" v-tooltip.bottom="'Modo de la ventana'" @click="menu?.toggle($event)">
@@ -49,41 +49,39 @@
 </template>
 
 <script setup lang="ts">
-import type { MenuItem } from 'primevue/menuitem'
-import type Menu from 'primevue/menu'
-import { useChatStore } from '@/core/chat/store'
-import type { ModoVentana } from '@/core/chat/ventana'
-import { useVentanaChat } from './ventana'
+import type { MenuItem } from "primevue/menuitem";
+import type Menu from "primevue/menu";
+import { useChatStore } from "@/core/chat/store";
+import type { ModoVentana } from "@/core/chat/ventana";
+import { useVentanaChat } from "./ventana";
 
 /** La flotante restaura con el clic de Draggable (distingue clic de arrastre). */
-const props = defineProps<{ arrastrable?: boolean }>()
+const props = defineProps<{ arrastrable?: boolean }>();
 
 const MODOS: Record<ModoVentana, { nombre: string; icono: string; detalle: string }> = {
-  centro: { nombre: 'Centro', icono: 'web-asset', detalle: 'Como página, en el centro' },
-  esquina: { nombre: 'Esquina', icono: 'picture-in-picture-alt', detalle: 'Abajo a la derecha, sobre lo que haga' },
-  flotante: { nombre: 'Flotante', icono: 'select-window', detalle: 'Donde la deje y del tamaño que quiera' },
-}
+  centro: { nombre: "Centro", icono: "web-asset", detalle: "Como página, en el centro" },
+  esquina: { nombre: "Esquina", icono: "picture-in-picture-alt", detalle: "Abajo a la derecha, sobre lo que haga" },
+  flotante: { nombre: "Flotante", icono: "select-window", detalle: "Donde la deje y del tamaño que quiera" },
+};
 
-const chat = useChatStore()
-const ventana = useVentanaChat()
-const router = useRouter()
-const menu = ref<InstanceType<typeof Menu> | null>(null)
+const chat = useChatStore();
+const ventana = useVentanaChat();
+const router = useRouter();
+const menu = ref<InstanceType<typeof Menu> | null>(null);
 
-const opciones = computed<MenuItem[]>(() =>
-  (Object.keys(MODOS) as ModoVentana[]).map((modo) => ({ label: MODOS[modo].nombre, detalle: MODOS[modo].detalle, icono: MODOS[modo].icono, modo, command: () => elegir(modo) })),
-)
+const opciones = computed<MenuItem[]>(() => (Object.keys(MODOS) as ModoVentana[]).map((modo) => ({ label: MODOS[modo].nombre, detalle: MODOS[modo].detalle, icono: MODOS[modo].icono, modo, command: () => elegir(modo) })));
 
 function elegir(modo: ModoVentana) {
-  const antes = ventana.modo
-  ventana.cambiarModo(modo)
-  if (modo === 'centro') void router.push({ name: 'chat', params: { canal: ventana.canal ?? undefined } })
-  else if (antes === 'centro') void router.push(ventana.pagina ?? '/')
+  const antes = ventana.modo;
+  ventana.cambiarModo(modo);
+  if (modo === "centro") void router.push({ name: "chat", params: { canal: ventana.canal ?? undefined } });
+  else if (antes === "centro") void router.push(ventana.pagina ?? "/");
 }
 
 /** Minimizada, tocar la barra (fuera de los botones) la restaura. */
 function alTocar(e: MouseEvent) {
-  if (props.arrastrable || !ventana.minimizada || (e.target as HTMLElement).closest('button')) return
-  ventana.restaurar()
+  if (props.arrastrable || !ventana.minimizada || (e.target as HTMLElement).closest("button")) return;
+  ventana.restaurar();
 }
 </script>
 
@@ -99,7 +97,7 @@ function alTocar(e: MouseEvent) {
   padding: 0 0.35rem 0 0.9rem;
   border-bottom: 1px solid var(--p-surface-200);
   color: var(--p-surface-700);
-  background: var(--p-content-background);
+  background: var(--p-surface-300);
   user-select: none;
 }
 .barra--minimizada {
@@ -111,7 +109,7 @@ function alTocar(e: MouseEvent) {
   align-items: center;
   gap: 0.5rem;
   min-width: 0;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: "Space Grotesk", sans-serif;
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--p-surface-800);

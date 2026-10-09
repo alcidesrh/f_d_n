@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Croquis\Moldes;
 use App\Entity\Bus;
 use App\Entity\Empresa;
 use App\Entity\Trayecto;
@@ -61,7 +62,11 @@ final class SalidaController extends AbstractController
         return $this->json($consulta->buscar(FiltroSalidas::desdeQuery($request->query->all())));
     }
 
-    /** Empresas, trayectos activos y buses (de la empresa del usuario) para filtros y formularios, y qué puede hacer el usuario. */
+    /**
+     * Empresas, trayectos activos y buses (de la empresa del usuario) para
+     * filtros y formularios, los moldes de croquis y clases de bus de esos
+     * buses (para elegir uno compatible) y qué puede hacer el usuario.
+     */
     #[Route("/opciones", name: "opciones", methods: ["GET"])]
     public function opciones(): JsonResponse
     {
@@ -76,7 +81,29 @@ final class SalidaController extends AbstractController
             ->addOrderBy("d.nombre")
             ->getQuery()
             ->getResult();
-        $buses = $this->em->getRepository(Bus::class)->findBy([], ["codigo" => "ASC"]);
+        /** @var list<Bus> $buses */
+        $buses = $this->em->createQueryBuilder()
+            ->select("b", "c", "k")
+            ->from(Bus::class, "b")
+            ->leftJoin("b.croquis", "c")
+            ->leftJoin("b.clase", "k")
+            ->orderBy("b.codigo", "ASC")
+            ->getQuery()
+            ->getResult();
+        // Filtros del bus al programar (ADR-027): solo los moldes y clases que tiene la flota visible.
+        $moldes = [];
+        $clases = [];
+        foreach ($buses as $b) {
+            if (($m = $b->getCroquis()) !== null) {
+                $moldes[(int) $m->getId()] ??= Moldes::vista($m) + ["buses" => 0];
+                $moldes[(int) $m->getId()]["buses"]++;
+            }
+            if (($k = $b->getClase()) !== null) {
+                $clases[(int) $k->getId()] ??= ["id" => (int) $k->getId(), "nombre" => $k->getNombre()];
+            }
+        }
+        usort($moldes, static fn(array $a, array $b) => [$a["asientos"], $a["plantas"], $a["asientosB"], $a["id"]] <=> [$b["asientos"], $b["plantas"], $b["asientosB"], $b["id"]]);
+        usort($clases, static fn(array $a, array $b) => strnatcasecmp($a["nombre"], $b["nombre"]));
 
         return $this->json([
             "empresas" => array_map(
@@ -85,6 +112,8 @@ final class SalidaController extends AbstractController
             ),
             "trayectos" => array_map(VistaSalida::trayecto(...), $trayectos),
             "buses" => array_map(VistaSalida::bus(...), $buses),
+            "croquis" => $moldes,
+            "clases" => $clases,
             "puede" => [
                 "crear" => $this->isGranted(self::CREAR),
                 "editar" => $this->isGranted(self::EDITAR),

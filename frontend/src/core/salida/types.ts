@@ -17,6 +17,21 @@ export interface BusOpcion {
   codigo: string
   matricula: string | null
   empresaId: number | null
+  /** Molde de su distribución (ADR-027). */
+  croquisId: number | null
+  /** Clase de bus (Económica, Platino…). */
+  claseId: number | null
+}
+
+/** Molde de croquis (ADR-027): la distribución que comparten varios buses. */
+export interface CroquisMolde {
+  id: number
+  asientos: number
+  asientosB: number
+  plantas: number
+  elementos: ElementoCroquis[]
+  /** Buses visibles con este croquis. */
+  buses: number
 }
 
 export interface Opcion {
@@ -28,6 +43,9 @@ export interface OpcionesSalidas {
   empresas: Opcion[]
   trayectos: TrayectoOpcion[]
   buses: BusOpcion[]
+  /** Moldes y clases de los buses visibles: filtros para elegir un bus compatible. */
+  croquis: CroquisMolde[]
+  clases: Opcion[]
   puede: { crear: boolean; editar: boolean; anular: boolean; eliminar: boolean }
 }
 

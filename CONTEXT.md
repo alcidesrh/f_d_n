@@ -43,6 +43,9 @@ El mapa de un bus visto desde arriba: una rejilla por planta (hasta dos) con coo
 —fila, columna— donde cada celda tiene como mucho un asiento, el chofer o una puerta.
 En los buses de dos plantas, los asientos clase B (reclinables) van en la planta baja.
 Se usa para editar el bus, mostrar la ocupación de un salida y elegir asientos al vender.
+Los buses con la misma distribución comparten un **molde** (entidad `Croquis`): solo sirve
+para elegir la distribución y luego un bus compatible al crear una salida. El molde no tiene
+asientos (son de cada bus), no se edita y no hay dos iguales (ADR-027).
 
 **Señal**:
 Elemento del croquis que no se vende: el chofer (uno por bus) o una puerta.

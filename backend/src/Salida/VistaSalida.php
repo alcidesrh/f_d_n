@@ -30,7 +30,12 @@ final class VistaSalida
         ];
     }
 
-    /** @return array{id: int, codigo: string, matricula: ?string, empresaId: ?int} */
+    /**
+     * `croquisId` y `claseId` sirven para filtrar los buses compatibles al
+     * programar (ADR-027).
+     *
+     * @return array{id: int, codigo: string, matricula: ?string, empresaId: ?int, croquisId: ?int, claseId: ?int}
+     */
     public static function bus(Bus $b): array
     {
         return [
@@ -38,6 +43,8 @@ final class VistaSalida
             "codigo" => $b->getCodigo(),
             "matricula" => $b->getMatricula(),
             "empresaId" => $b->getEmpresa()?->getId(),
+            "croquisId" => $b->getCroquis()?->getId(),
+            "claseId" => $b->getClase()?->getId(),
         ];
     }
 

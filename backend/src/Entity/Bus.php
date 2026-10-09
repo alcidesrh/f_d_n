@@ -55,6 +55,15 @@ class Bus extends Base
     ]
     private Collection $senales;
 
+    /**
+     * Molde de su distribución (ADR-027): lo asigna `App\Croquis\Moldes` al
+     * guardar el croquis. Solo sirve para filtrar buses compatibles.
+     */
+    #[ApiProperty(readable: false, writable: false)]
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(onDelete: "SET NULL")]
+    private ?Croquis $croquis = null;
+
     #[ORM\ManyToOne]
     private ?Piloto $piloto = null;
 
@@ -235,6 +244,11 @@ class Bus extends Base
         $this->senales->removeElement($senal);
 
         return $this;
+    }
+
+    public function getCroquis(): ?Croquis
+    {
+        return $this->croquis;
     }
 
     public function getPiloto(): ?Piloto

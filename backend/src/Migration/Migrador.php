@@ -4,6 +4,7 @@ namespace App\Migration;
 
 use App\Entity\Enum\EstadoBoletoAsiento;
 use App\Migration\Salida\DependenciasLegado;
+use App\Migration\Salida\InferenciaBus;
 use App\Migration\Salida\RutaMigrada;
 use App\Migration\Salida\TrayectosLegado;
 use Doctrine\DBAL\ArrayParameterType;
@@ -66,6 +67,7 @@ class Migrador
         private Mapeador $mapeador,
         private DependenciasLegado $dependencias,
         private TrayectosLegado $trayectos,
+        private InferenciaBus $inferencia,
     ) {
         $this->oldPdo->setAttribute(
             \PDO::ATTR_ERRMODE,
@@ -198,9 +200,34 @@ class Migrador
 
         $data = $this->mapeador->salida($salida, $busId, $empresaId, $ruta->trayectoId);
         $existente = $this->newConn->fetchAssociative(
-            "SELECT id, bus_id, estado FROM salida WHERE legacy_id = :lid",
+            "SELECT s.id, s.bus_id, s.estado, i.bus_id AS inferido FROM salida s
+               LEFT JOIN salida_bus_inferido i ON i.salida_id = s.id
+              WHERE s.legacy_id = :lid",
             ["lid" => $legacyId],
         );
+        $boletos = $this->fetchBoletosPorSalida((int) $salida["id"]);
+
+        // Toda salida tiene bus (ADR-027). Si el legado no se lo asignó, se infiere.
+        $inferencia = null;
+        if ($busId === null && ($existente === false || $existente["bus_id"] === null)) {
+            if ($boletos === [] && new \DateTimeImmutable((string) $data["fecha"]) < $this->ahora()) {
+                $this->omitir($contadores, "salida_pasada_sin_bus", "salida {$legacyId}");
+
+                return;
+            }
+            $inferencia = $empresaId === null
+                ? ["motivo" => "sin_empresa"]
+                : $this->inferencia->inferir($salida, $empresaId, $ruta->trayectoId, $this->ahora());
+            if (isset($inferencia["motivo"])) {
+                $this->omitir($contadores, "salida_sin_bus_inferible", "salida {$legacyId} ({$inferencia["motivo"]}, " . count($boletos) . " boletos)");
+
+                return;
+            }
+            $busId = $inferencia["bus"];
+            $data["bus_id"] = $busId;
+            $this->contar($contadores, "bus_inferido_" . $inferencia["criterio"]);
+        }
+
         if ($existente === false) {
             $salidaId = (int) $this->newConn->fetchOne(
                 "INSERT INTO salida (fecha, bus_id, empresa_id, trayecto_id, estado, legacy_id, created_at, updated_at)
@@ -210,9 +237,14 @@ class Migrador
             $contadores["salida"]++;
         } else {
             // Ya migrada: se completa con lo que cambió en el legado (estado,
-            // bus asignado después). Un bus ya puesto no se reemplaza.
+            // bus asignado después). Un bus ya puesto no se reemplaza, salvo
+            // el que infirió la migración cuando el legado asigna el real.
             $salidaId = (int) $existente["id"];
-            $busId = $existente["bus_id"] !== null ? (int) $existente["bus_id"] : $busId;
+            if ($existente["inferido"] !== null && $busId !== null) {
+                $busId = $this->busRealTrasInferido($salidaId, (int) $existente["bus_id"], $busId, $legacyId, $contadores);
+            } elseif ($existente["bus_id"] !== null) {
+                $busId = (int) $existente["bus_id"];
+            }
             if ($existente["estado"] !== $data["estado"] || ($existente["bus_id"] === null && $busId !== null)) {
                 $this->newConn->executeStatement(
                     "UPDATE salida SET estado = :estado, bus_id = :bus WHERE id = :id",
@@ -221,15 +253,74 @@ class Migrador
                 $contadores["salida_actualizada"]++;
             }
         }
+        if ($inferencia !== null) {
+            $this->newConn->executeStatement(
+                "INSERT INTO salida_bus_inferido (salida_id, bus_id, criterio, referencia_legado, creado_en)
+                 VALUES (:salida, :bus, :criterio, :referencia, NOW())
+                 ON CONFLICT (salida_id) DO UPDATE SET bus_id = EXCLUDED.bus_id, criterio = EXCLUDED.criterio, referencia_legado = EXCLUDED.referencia_legado",
+                ["salida" => $salidaId, "bus" => $busId, "criterio" => $inferencia["criterio"], "referencia" => $inferencia["referencia"]],
+            );
+        }
 
         $this->migrarBoletosDeSalida(
             (int) $salida["id"],
+            $boletos,
             $salidaId,
             $ruta,
             $busId,
             $empresaId,
             $contadores,
         );
+    }
+
+    /**
+     * El legado asignó el bus real a una salida cuyo bus infirió la migración.
+     * Con el mismo croquis, la salida pasa al bus real y sus boletos (y
+     * reservas) a los asientos del mismo número; con otro croquis se conserva
+     * el inferido y se reporta para reasignar a mano. Devuelve el bus que queda.
+     *
+     * @param array<string, int> $contadores
+     */
+    private function busRealTrasInferido(int $salidaId, int $inferido, int $real, string $legacyId, array &$contadores): int
+    {
+        if ($inferido !== $real) {
+            $mismoCroquis = $this->newConn->fetchOne(
+                "SELECT 1 FROM bus a JOIN bus b ON b.croquis_id = a.croquis_id WHERE a.id = :a AND b.id = :b",
+                ["a" => $inferido, "b" => $real],
+            ) !== false;
+            if (!$mismoCroquis) {
+                $this->omitir($contadores, "bus_real_otro_croquis", "salida {$legacyId}: se conserva el bus inferido");
+
+                return $inferido;
+            }
+            foreach (["boleto_asiento", "reserva_asiento"] as $tabla) {
+                $this->newConn->executeStatement(
+                    "UPDATE {$tabla} t SET asiento_id = nuevo.id
+                       FROM asiento viejo, asiento nuevo
+                      WHERE t.salida_id = :salida AND viejo.id = t.asiento_id
+                        AND nuevo.bus_id = :real AND nuevo.numero = viejo.numero",
+                    ["salida" => $salidaId, "real" => $real],
+                );
+            }
+            $this->newConn->executeStatement("UPDATE salida SET bus_id = :bus WHERE id = :id", ["bus" => $real, "id" => $salidaId]);
+            $this->contar($contadores, "bus_inferido_reemplazado");
+        } else {
+            $this->contar($contadores, "bus_inferido_confirmado");
+        }
+        $this->newConn->executeStatement("DELETE FROM salida_bus_inferido WHERE salida_id = :s", ["s" => $salidaId]);
+
+        return $real;
+    }
+
+    /** @param array<string, int> $contadores */
+    private function contar(array &$contadores, string $clave): void
+    {
+        $contadores[$clave] = ($contadores[$clave] ?? 0) + 1;
+    }
+
+    private function ahora(): \DateTimeImmutable
+    {
+        return new \DateTimeImmutable();
     }
 
     /**
@@ -242,13 +333,13 @@ class Migrador
      */
     private function migrarBoletosDeSalida(
         int $salidaLegado,
+        array $boletos,
         int $salidaId,
         RutaMigrada $ruta,
         ?int $busId,
         ?int $empresaId,
         array &$contadores,
     ): void {
-        $boletos = $this->fetchBoletosPorSalida($salidaLegado);
         if ($boletos === []) {
             return;
         }

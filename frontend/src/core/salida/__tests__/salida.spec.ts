@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { aFechaHora, aQuery, filtroInicial, filtrosActivos } from '../filtro'
 import { aEsquema, aPayload, conEsquema, diasProgramados, difiereDeEsquema, errores, fechaHasta, formInicial, totalSalidas, type ProgramadorForm } from '../programacion'
 import { omitidasPorMotivo, resumen } from '../resultado'
-import type { Esquema, ResultadoOperacion } from '../types'
+import { busesCompatibles, etiquetaCroquis, filtroBusVacio, filtroDeBus } from '../buses'
+import type { BusOpcion, Esquema, ResultadoOperacion } from '../types'
 
 const hoy = new Date(2026, 9, 2, 9, 0)
 
@@ -148,5 +149,35 @@ describe('resultado de una operación', () => {
 
   it('nada aplicado es error', () => {
     expect(resumen({ aplicadas: [], omitidas: [{ ...ref(2), motivo: 'historial' }] }, 'eliminar').severidad).toBe('error')
+  })
+})
+
+describe('elegir bus por croquis y clase (ADR-027)', () => {
+  const bus = (id: number, croquisId: number | null, claseId: number | null): BusOpcion => ({ id, codigo: String(id), matricula: null, empresaId: 1, croquisId, claseId })
+  const buses = [bus(1, 10, 1), bus(2, 10, 2), bus(3, 11, 1), bus(4, null, null)]
+
+  it('sin filtro, todos', () => {
+    expect(busesCompatibles(buses, filtroBusVacio()).map((b) => b.id)).toEqual([1, 2, 3, 4])
+  })
+
+  it('por croquis y por clase, combinables', () => {
+    expect(busesCompatibles(buses, { croquisId: 10, claseId: null }).map((b) => b.id)).toEqual([1, 2])
+    expect(busesCompatibles(buses, { croquisId: null, claseId: 1 }).map((b) => b.id)).toEqual([1, 3])
+    expect(busesCompatibles(buses, { croquisId: 10, claseId: 1 }).map((b) => b.id)).toEqual([1])
+  })
+
+  it('conserva el bus ya elegido aunque no cumpla', () => {
+    expect(busesCompatibles(buses, { croquisId: 11, claseId: null }, 2).map((b) => b.id)).toEqual([2, 3])
+  })
+
+  it('el filtro de un bus es su croquis y su clase', () => {
+    expect(filtroDeBus(buses[1])).toEqual({ croquisId: 10, claseId: 2 })
+    expect(filtroDeBus(null)).toEqual(filtroBusVacio())
+  })
+
+  it('etiqueta del croquis', () => {
+    expect(etiquetaCroquis({ asientos: 47, asientosB: 0, plantas: 1 })).toBe('47 asientos')
+    expect(etiquetaCroquis({ asientos: 60, asientosB: 12, plantas: 2 })).toBe('60 asientos · 12 B · 2 plantas')
+    expect(etiquetaCroquis({ asientos: 30, asientosB: 30, plantas: 1 })).toBe('30 asientos · todos B')
   })
 })
