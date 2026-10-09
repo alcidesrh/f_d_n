@@ -91,122 +91,125 @@
 </template>
 
 <script setup lang="ts">
-import { useChatStore } from '@/core/chat/store'
-import { coincide } from '@/core/chat/modelo'
-import type { Recurso, Registro } from '@/core/chat/types'
-import { useSchemaStore } from '@/core/entities/schema'
-import { notify } from '@/core/notify'
-import { LISTADO_DE_REGISTROS, etiquetaDeFila } from '@/shared/chat/integracion'
-import { HABITUALES, tipoTarjeta } from './tarjetas/catalogo'
+import { useChatStore } from "@/core/chat/store";
+import { coincide } from "@/core/chat/modelo";
+import type { Recurso, Registro } from "@/core/chat/types";
+import { useSchemaStore } from "@/core/entities/schema";
+import { notify } from "@/core/notify";
+import { LISTADO_DE_REGISTROS, etiquetaDeFila } from "@/shared/chat/integracion";
+import { HABITUALES, tipoTarjeta } from "./tarjetas/catalogo";
 
-const props = defineProps<{ visible: boolean; inicial: Registro[] }>()
-const emit = defineEmits<{ 'update:visible': [boolean]; aceptar: [registros: Registro[]] }>()
+const props = defineProps<{ visible: boolean; inicial: Registro[] }>();
+const emit = defineEmits<{ "update:visible": [boolean]; aceptar: [registros: Registro[]] }>();
 
 /** Lo que el backend admite por mensaje (`Tarjetas::MAXIMO`). */
-const MAXIMO = 20
+const MAXIMO = 20;
 const PESTANAS = [
-  { id: 'recursos', nombre: 'Recursos' },
-  { id: 'lista', nombre: 'Listado' },
-  { id: 'carrito', nombre: 'Selección' },
-] as const
+  { id: "recursos", nombre: "Recursos" },
+  { id: "lista", nombre: "Listado" },
+  { id: "carrito", nombre: "Selección" },
+] as const;
 
 /** Lo elegido; `fila` (la del listado) solo si se marcó aquí. */
 interface Elegido extends Registro {
-  fila?: unknown
+  fila?: unknown;
 }
 
-const chat = useChatStore()
-const schema = useSchemaStore()
-const listado = inject(LISTADO_DE_REGISTROS, null)
+const chat = useChatStore();
+const schema = useSchemaStore();
+const listado = inject(LISTADO_DE_REGISTROS, null);
 
-const recursos = ref<Recurso[]>([])
-const cargando = ref(false)
-const busqueda = ref('')
-const recurso = ref<string | null>(null)
-const elegidos = ref<Elegido[]>([])
-const pestana = ref<(typeof PESTANAS)[number]['id']>('recursos')
+const recursos = ref<Recurso[]>([]);
+const cargando = ref(false);
+const busqueda = ref("");
+const recurso = ref<string | null>(null);
+const elegidos = ref<Elegido[]>([]);
+const pestana = ref<(typeof PESTANAS)[number]["id"]>("recursos");
 
-const clave = (r: Registro) => `${r.tipo}:${r.id}`
-const cambio = computed(() => elegidos.value.map(clave).join() !== props.inicial.map(clave).join())
+const clave = (r: Registro) => `${r.tipo}:${r.id}`;
+const cambio = computed(() => elegidos.value.map(clave).join() !== props.inicial.map(clave).join());
 
 /** Solo los que tienen listado (colección en GraphQL). */
 const grupos = computed(() => {
-  const visibles = recursos.value.filter((r) => schema.find(r.tipo)?.queryCollection && (!busqueda.value || coincide(`${tipoTarjeta(r.tipo).nombre} ${r.tipo}`, busqueda.value)))
-  const orden = (t: string) => HABITUALES.indexOf(t)
-  const nombre = (r: Recurso) => tipoTarjeta(r.tipo).nombre
+  const visibles = recursos.value.filter((r) => schema.find(r.tipo)?.queryCollection && (!busqueda.value || coincide(`${tipoTarjeta(r.tipo).nombre} ${r.tipo}`, busqueda.value)));
+  const orden = (t: string) => HABITUALES.indexOf(t);
+  const nombre = (r: Recurso) => tipoTarjeta(r.tipo).nombre;
   return [
-    { nombre: 'Habituales', recursos: visibles.filter((r) => orden(r.tipo) >= 0).sort((a, b) => orden(a.tipo) - orden(b.tipo)) },
-    { nombre: 'Todos', recursos: visibles.filter((r) => orden(r.tipo) < 0).sort((a, b) => nombre(a).localeCompare(nombre(b))) },
-  ]
-})
+    { nombre: "Habituales", recursos: visibles.filter((r) => orden(r.tipo) >= 0).sort((a, b) => orden(a.tipo) - orden(b.tipo)) },
+    { nombre: "Todos", recursos: visibles.filter((r) => orden(r.tipo) < 0).sort((a, b) => nombre(a).localeCompare(nombre(b))) },
+  ];
+});
 
 /** Agrupado por recurso, en el orden en que se eligió cada uno. */
 const carrito = computed(() => {
-  const grupos = new Map<string, Elegido[]>()
-  for (const e of elegidos.value) grupos.set(e.tipo, [...(grupos.get(e.tipo) ?? []), e])
-  return [...grupos].map(([tipo, items]) => ({ tipo, items }))
-})
+  const grupos = new Map<string, Elegido[]>();
+  for (const e of elegidos.value) grupos.set(e.tipo, [...(grupos.get(e.tipo) ?? []), e]);
+  return [...grupos].map(([tipo, items]) => ({ tipo, items }));
+});
 
-const cuantos = (tipo: string) => elegidos.value.filter((e) => e.tipo === tipo).length
+const cuantos = (tipo: string) => elegidos.value.filter((e) => e.tipo === tipo).length;
 /** Para el listado: la fila marcada aquí, o `{ id }` (lo que ya venía del redactor). */
-const filasDe = (tipo: string) => elegidos.value.filter((e) => e.tipo === tipo).map((e) => e.fila ?? { id: e.id })
+const filasDe = (tipo: string) => elegidos.value.filter((e) => e.tipo === tipo).map((e) => e.fila ?? { id: e.id });
 
 const idDe = (fila: unknown) => {
-  const v = (fila as { id?: unknown }).id
-  const n = typeof v === 'number' ? v : Number(String(v ?? '').match(/(\d+)$/)?.[1])
-  return Number.isInteger(n) && n > 0 ? n : null
-}
+  const v = (fila as { id?: unknown }).id;
+  const n = typeof v === "number" ? v : Number(String(v ?? "").match(/(\d+)$/)?.[1]);
+  return Number.isInteger(n) && n > 0 ? n : null;
+};
 
 /** El listado devuelve todas las filas marcadas de ese recurso. */
 function alSeleccionar(tipo: string, filas: unknown[]) {
-  const previos = new Map(elegidos.value.filter((e) => e.tipo === tipo).map((e) => [e.id, e]))
-  const otros = elegidos.value.filter((e) => e.tipo !== tipo)
-  const nuevos: Elegido[] = []
+  const previos = new Map(elegidos.value.filter((e) => e.tipo === tipo).map((e) => [e.id, e]));
+  const otros = elegidos.value.filter((e) => e.tipo !== tipo);
+  const nuevos: Elegido[] = [];
   for (const fila of filas) {
-    const id = idDe(fila)
-    if (id === null) continue
-    const previo = previos.get(id)
+    const id = idDe(fila);
+    if (id === null) continue;
+    const previo = previos.get(id);
     if (!previo && otros.length + nuevos.length >= MAXIMO) {
-      notify.warning(`Se pueden adjuntar hasta ${MAXIMO} registros por mensaje.`)
-      break
+      notify.warning(`Se pueden adjuntar hasta ${MAXIMO} registros por mensaje.`);
+      break;
     }
-    const soloId = Object.keys(fila as object).length <= 1
-    const etiqueta = soloId && previo ? previo.etiqueta : etiquetaDeFila(fila as Record<string, unknown>, id, tipoTarjeta(tipo).nombre)
-    nuevos.push({ tipo, id, etiqueta, fila })
+    const soloId = Object.keys(fila as object).length <= 1;
+    const etiqueta = soloId && previo ? previo.etiqueta : etiquetaDeFila(fila as Record<string, unknown>, id, tipoTarjeta(tipo).nombre);
+    nuevos.push({ tipo, id, etiqueta, fila });
   }
   // Los demás recursos quedan donde estaban; este, en su lugar (o al final si es nuevo).
-  const posicion = elegidos.value.findIndex((e) => e.tipo === tipo)
-  elegidos.value = posicion < 0 ? [...otros, ...nuevos] : [...otros.slice(0, posicion), ...nuevos, ...otros.slice(posicion)]
+  const posicion = elegidos.value.findIndex((e) => e.tipo === tipo);
+  elegidos.value = posicion < 0 ? [...otros, ...nuevos] : [...otros.slice(0, posicion), ...nuevos, ...otros.slice(posicion)];
 }
 
 function quitar(e: Elegido) {
-  elegidos.value = elegidos.value.filter((x) => clave(x) !== clave(e))
+  elegidos.value = elegidos.value.filter((x) => clave(x) !== clave(e));
 }
 
 function elegirRecurso(tipo: string) {
-  recurso.value = tipo
-  pestana.value = 'lista'
+  recurso.value = tipo;
+  pestana.value = "lista";
 }
 
 async function preparar() {
-  elegidos.value = props.inicial.map((r) => ({ ...r }))
-  busqueda.value = ''
-  pestana.value = recurso.value ? 'lista' : 'recursos'
-  if (recursos.value.length) return
-  cargando.value = true
+  elegidos.value = props.inicial.map((r) => ({ ...r }));
+  busqueda.value = "";
+  pestana.value = recurso.value ? "lista" : "recursos";
+  if (recursos.value.length) return;
+  cargando.value = true;
   try {
-    recursos.value = await chat.cargarRecursos()
-    recurso.value ??= props.inicial[0]?.tipo ?? grupos.value[0]?.recursos[0]?.tipo ?? null
+    recursos.value = await chat.cargarRecursos();
+    recurso.value ??= props.inicial[0]?.tipo ?? grupos.value[0]?.recursos[0]?.tipo ?? null;
   } catch (e) {
-    notify.error(e instanceof Error ? e.message : String(e))
+    notify.error(e instanceof Error ? e.message : String(e));
   } finally {
-    cargando.value = false
+    cargando.value = false;
   }
 }
 
 function aceptar() {
-  emit('aceptar', elegidos.value.map(({ tipo, id, etiqueta }) => ({ tipo, id, etiqueta })))
-  emit('update:visible', false)
+  emit(
+    "aceptar",
+    elegidos.value.map(({ tipo, id, etiqueta }) => ({ tipo, id, etiqueta })),
+  );
+  emit("update:visible", false);
 }
 </script>
 
@@ -253,7 +256,7 @@ function aceptar() {
   font-size: 0.85rem;
   color: var(--p-surface-600);
   cursor: pointer;
-  &[aria-selected='true'] {
+  &[aria-selected="true"] {
     color: var(--p-surface-900);
     background: var(--p-content-background);
     box-shadow: 0 1px 3px rgb(0 0 0 / 0.08);
@@ -272,11 +275,11 @@ function aceptar() {
   min-height: 0;
   overflow-y: auto;
 }
-.sel__rejilla[data-pestana='recursos'] .sel__recursos,
-.sel__rejilla[data-pestana='carrito'] .sel__carrito {
+.sel__rejilla[data-pestana="recursos"] .sel__recursos,
+.sel__rejilla[data-pestana="carrito"] .sel__carrito {
   display: block;
 }
-.sel__rejilla[data-pestana='lista'] .sel__lista {
+.sel__rejilla[data-pestana="lista"] .sel__lista {
   display: flex;
 }
 @container selector (min-width: 60rem) {
@@ -348,7 +351,7 @@ function aceptar() {
   &:hover {
     background: var(--p-surface-100);
   }
-  &[aria-current='true'] {
+  &[aria-current="true"] {
     color: var(--p-primary-color);
     background: color-mix(in srgb, var(--p-primary-color) 10%, transparent);
     font-weight: 500;
@@ -450,6 +453,8 @@ function aceptar() {
   &:hover {
     background: var(--p-surface-100);
   }
+  background-color: red;
+  display: none;
 }
 .grupo__items {
   margin: 0;

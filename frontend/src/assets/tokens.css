@@ -26,6 +26,7 @@
   --border-200: 0.1px solid var(--p-surface-200);
   --border-400: 0.1px solid var(--p-surface-400);
   --shadow: 0px 0.5px 3px 0px var(--p-surface-500);
+  --shadow-sm: 0px 0.5px 3px 0px var(--p-surface-300);
   --shadow-inset: 0 3px 12px 0px var(--p-surface-300);
   /* , 0 1px 10px -6px var(--p-surface-400) inset; */
 

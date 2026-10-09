@@ -255,45 +255,47 @@ export const componentsPreset = (parent: ThemePreset): Tokens => {
       },
     },
     datatable: {
-      root: {
-        ...base.components.datatable?.root,
-        // ...base.components.datatable,
-        header: {
-          cell: {
-            padding: "10px 0",
+      ...base.components.datatable,
+
+      // ...base.components.datatable,
+      header: {
+        cell: {
+          padding: "10px 0",
+          sm: {
+            padding: "0 10px",
           },
         },
+      },
+      // body: {
+      //   cell: {
+      //     padding: "0 10px",
+      //     sm: {
+      //       padding: "0 10px",
+      //     },
+      //   },
+      // },
+      colorScheme: {
+        ...base.components.datatable?.colorScheme,
         // body: {
         //   cell: {
-        //     padding: "0 10px",
         //     sm: {
-        //       padding: "0 10px",
+        //       padding: "10px 0",
         //     },
         //   },
         // },
-        colorScheme: {
-          ...base.components.datatable?.colorScheme,
-          // body: {
-          //   cell: {
-          //     sm: {
-          //       padding: "10px 0",
-          //     },
-          //   },
+        row: {
+          background: "{surface.0}",
+          // "striped.background": "{surface.200}",
+        },
+        dark: {
+          ...base.components.datatable?.colorScheme.dark,
+          // header: {
+          //   background: "{surface.100}",
+          //   "cell.background": "{surface.100}",
           // },
           row: {
-            background: "{surface.0}",
-            // "striped.background": "{surface.200}",
-          },
-          dark: {
-            ...base.components.datatable?.colorScheme.dark,
-            // header: {
-            //   background: "{surface.100}",
-            //   "cell.background": "{surface.100}",
-            // },
-            row: {
-              background: "{surface.100}",
-              "striped.background": "{surface.200}",
-            },
+            background: "{surface.100}",
+            "striped.background": "{surface.200}",
           },
         },
       },

@@ -3,7 +3,7 @@
     <div class="left-header" :class="[sidebarStore.mode]">
       <div class="flex btn-siderbar-header">
         <button type="button" class="icon-btn" aria-label="Menú de navegación" :aria-expanded="ui.isMobile ? sidebarStore.drawer : sidebarStore.mode !== 'close'" @click="sidebarStore.toggle()">
-          <icon name="left_panel_open" size="35px" weight="100" color="text-surface-500" />
+          <icon name="left_panel_open" size="35px" :weight="100" color="text-surface-500" />
         </button>
         <Divider layout="vertical" class="mx-[5px]!" />
       </div>
@@ -17,6 +17,9 @@
 
     <div class="header-crumbs">
       <nav class="crumbs" aria-label="Breadcrumb">
+        <!-- <icon v-if="i > 0" name="chevron-right" size=".8rem"></icon> -->
+        <router-link :to="'/'" class="crumb-link"> Inicio </router-link>
+        <icon name="chevron-right" size=".8rem"></icon>
         <template v-for="(crumb, i) in navigationHistory.entries" :key="crumb.path + i">
           <icon v-if="i > 0" name="chevron-right" size=".8rem"></icon>
           <router-link

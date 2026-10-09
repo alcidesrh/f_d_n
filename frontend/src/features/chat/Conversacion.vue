@@ -29,14 +29,18 @@
           <div v-if="!lista.length" class="conv__vacia">
             <icon :name="esSistema ? 'notifications-outline' : 'waving-hand-outline'" size="2rem" color="text-current" />
             <p v-if="esSistema">Aquí llegarán los avisos automáticos:<br /><span class="text-xs">acreditaciones de saldo, salidas anuladas y más.</span></p>
-            <p v-else>Escriba el primer mensaje.<br /><span class="text-xs">Puede mandar fotos con el clip, adjuntar boletos, salidas o cualquier registro con <b>+</b>, o enviarlos desde sus listados.</span></p>
+            <p v-else>
+              Escriba el primer mensaje.<br /><span class="text-xs">Puede mandar fotos con el clip, adjuntar boletos, salidas o cualquier registro con <b>+</b>, o enviarlos desde sus listados.</span>
+            </p>
           </div>
           <template v-for="b in bloques" :key="b.dia">
-            <div class="conv__dia"><span>{{ b.etiqueta }}</span></div>
+            <div class="conv__dia">
+              <span>{{ b.etiqueta }}</span>
+            </div>
             <div v-for="r in b.rachas" :key="r.mensajes[0]!.id" class="racha" :class="{ 'racha--mia': r.mio }">
               <ChatAvatar v-if="!r.mio && canal?.tipo === 'grupo'" :id="r.autor?.id ?? 0" :nombre="r.autor?.nombre ?? 'Sistema'" :foto="r.autor?.foto" tamano="sm" class="racha__avatar" />
               <div class="racha__mensajes">
-                <span v-if="!r.mio && canal?.tipo === 'grupo'" class="racha__autor" :style="{ '--tono': tono(r.autor?.id ?? 0) * 45 }">{{ r.autor?.nombre ?? 'Sistema' }}</span>
+                <span v-if="!r.mio && canal?.tipo === 'grupo'" class="racha__autor" :style="{ '--tono': tono(r.autor?.id ?? 0) * 45 }">{{ r.autor?.nombre ?? "Sistema" }}</span>
                 <div v-for="m in r.mensajes" :key="m.id" class="mensaje">
                   <div :id="`m-${m.id}`" class="burbuja" :class="{ 'burbuja--suelta': !m.texto && !m.respuesta, 'burbuja--resaltada': resaltado === m.id }">
                     <button v-if="m.respuesta" type="button" class="burbuja__cita" @click="irA(m.respuesta.id)">
@@ -73,9 +77,7 @@
     </div>
 
     <Transition name="fade">
-      <button v-if="pendientes > 0" type="button" class="conv__bajar" @click="bajar(true)">
-        <icon name="arrow-downward" size="1rem" color="text-current" />{{ pendientes === 1 ? '1 mensaje nuevo' : `${pendientes} mensajes nuevos` }}
-      </button>
+      <button v-if="pendientes > 0" type="button" class="conv__bajar" @click="bajar(true)"><icon name="arrow-downward" size="1rem" color="text-current" />{{ pendientes === 1 ? "1 mensaje nuevo" : `${pendientes} mensajes nuevos` }}</button>
     </Transition>
 
     <p v-if="esSistema" class="conv__solo-lectura"><icon name="lock-outline" size="1rem" color="text-current" />Avisos automáticos: no se puede responder aquí.</p>
@@ -89,190 +91,190 @@
 </template>
 
 <script setup lang="ts">
-import type { Envio } from '@/core/chat/api'
-import { useChatStore } from '@/core/chat/store'
-import { agrupar, horaCorta, segmentos, tono, ultimo, vistoPor } from '@/core/chat/modelo'
-import type { Archivo, Mensaje, Referencia } from '@/core/chat/types'
-import { notify } from '@/core/notify'
-import ChatAvatar from '@/shared/chat/ChatAvatar.vue'
-import ArchivosMensaje from './ArchivosMensaje.vue'
-import Redactor from './Redactor.vue'
-import TarjetasMensaje from './tarjetas/TarjetasMensaje.vue'
-import VisorImagen from './VisorImagen.vue'
+import type { Envio } from "@/core/chat/api";
+import { useChatStore } from "@/core/chat/store";
+import { agrupar, horaCorta, segmentos, tono, ultimo, vistoPor } from "@/core/chat/modelo";
+import type { Archivo, Mensaje, Referencia } from "@/core/chat/types";
+import { notify } from "@/core/notify";
+import ChatAvatar from "@/shared/chat/ChatAvatar.vue";
+import ArchivosMensaje from "./ArchivosMensaje.vue";
+import Redactor from "./Redactor.vue";
+import TarjetasMensaje from "./tarjetas/TarjetasMensaje.vue";
+import VisorImagen from "./VisorImagen.vue";
 
 /** `activa`: a la vista (minimizada o cerrada no marca leído lo que llega). */
-const props = withDefaults(defineProps<{ canalId: number; adjuntar?: Referencia | null; activa?: boolean }>(), { adjuntar: null, activa: true })
-const emit = defineEmits<{ volver: []; adjuntado: [] }>()
+const props = withDefaults(defineProps<{ canalId: number; adjuntar?: Referencia | null; activa?: boolean }>(), { adjuntar: null, activa: true });
+const emit = defineEmits<{ volver: []; adjuntado: [] }>();
 
-const AMBITOS = { administracion: 'Administración', estacion: 'Estación', agencia: 'Agencia' } as const
+const AMBITOS = { administracion: "Administración", estacion: "Estación", agencia: "Agencia" } as const;
 /** Distancia al final (px) para considerar que se está leyendo lo último. */
-const CERCA = 120
+const CERCA = 120;
 /** Páginas hacia atrás que se cargan, como mucho, para llegar a un mensaje citado. */
-const MAX_PAGINAS_CITA = 10
+const MAX_PAGINAS_CITA = 10;
 
-const chat = useChatStore()
-const lienzo = ref<HTMLElement | null>(null)
-const redactor = ref<InstanceType<typeof Redactor> | null>(null)
-const cargado = ref(false)
-const cargandoPrevios = ref(false)
-const enviando = ref(false)
-const pendientes = ref(0)
-const respondiendo = ref<Mensaje | null>(null)
-const resaltado = ref<number | null>(null)
-const arrastrando = ref(false)
-const visor = reactive<{ fotos: Archivo[]; inicio: number }>({ fotos: [], inicio: 0 })
+const chat = useChatStore();
+const lienzo = ref<HTMLElement | null>(null);
+const redactor = ref<InstanceType<typeof Redactor> | null>(null);
+const cargado = ref(false);
+const cargandoPrevios = ref(false);
+const enviando = ref(false);
+const pendientes = ref(0);
+const respondiendo = ref<Mensaje | null>(null);
+const resaltado = ref<number | null>(null);
+const arrastrando = ref(false);
+const visor = reactive<{ fotos: Archivo[]; inicio: number }>({ fotos: [], inicio: 0 });
 
-const canal = computed(() => chat.canal(props.canalId))
-const esSistema = computed(() => canal.value?.tipo === 'sistema')
-const lista = computed(() => chat.mensajes[props.canalId] ?? [])
-const bloques = computed(() => agrupar(lista.value, chat.yo?.id ?? null))
-const miembros = computed(() => canal.value?.miembros.map((m) => (m.id === chat.yo?.id ? 'Tú' : m.nombre)).join(', ') ?? '')
+const canal = computed(() => chat.canal(props.canalId));
+const esSistema = computed(() => canal.value?.tipo === "sistema");
+const lista = computed(() => chat.mensajes[props.canalId] ?? []);
+const bloques = computed(() => agrupar(lista.value, chat.yo?.id ?? null));
+const miembros = computed(() => canal.value?.miembros.map((m) => (m.id === chat.yo?.id ? "Tú" : m.nombre)).join(", ") ?? "");
 const subtitulo = computed(() => {
-  const c = canal.value
-  if (!c) return ''
-  if (c.tipo === 'sistema') return 'Avisos automáticos'
-  if (c.tipo === 'grupo') return miembros.value
-  return c.contacto?.lugar ?? AMBITOS[c.contacto?.ambito ?? 'administracion']
-})
+  const c = canal.value;
+  if (!c) return "";
+  if (c.tipo === "sistema") return "Avisos automáticos";
+  if (c.tipo === "grupo") return miembros.value;
+  return c.contacto?.lugar ?? AMBITOS[c.contacto?.ambito ?? "administracion"];
+});
 
 // "Visto": ✓ enviado, ✓✓ visto por todos los demás.
-const visto = (id: number) => (canal.value ? vistoPor(canal.value, id) : { todos: false, quienes: [] })
+const visto = (id: number) => (canal.value ? vistoPor(canal.value, id) : { todos: false, quienes: [] });
 function tituloVisto(id: number) {
-  const v = visto(id)
-  if (canal.value?.tipo !== 'grupo') return v.todos ? 'Visto' : 'Enviado'
-  return v.quienes.length ? `Visto por ${v.quienes.map((p) => p.nombre.split(' ')[0]).join(', ')}` : 'Enviado'
+  const v = visto(id);
+  if (canal.value?.tipo !== "grupo") return v.todos ? "Visto" : "Enviado";
+  return v.quienes.length ? `Visto por ${v.quienes.map((p) => p.nombre.split(" ")[0]).join(", ")}` : "Enviado";
 }
 
 const cercaDelFinal = () => {
-  const el = lienzo.value
-  return !el || el.scrollHeight - el.scrollTop - el.clientHeight < CERCA
-}
+  const el = lienzo.value;
+  return !el || el.scrollHeight - el.scrollTop - el.clientHeight < CERCA;
+};
 
 function bajar(suave = false) {
-  pendientes.value = 0
-  void nextTick(() => lienzo.value?.scrollTo({ top: lienzo.value.scrollHeight, behavior: suave ? 'smooth' : 'auto' }))
+  pendientes.value = 0;
+  void nextTick(() => lienzo.value?.scrollTo({ top: lienzo.value.scrollHeight, behavior: suave ? "smooth" : "auto" }));
 }
 
 // Nuevos al final: seguir abajo si ya se estaba ahí; si no, contarlos.
 watch(
   () => ultimo(lista.value)?.id,
   (nuevo, previo) => {
-    if (!cargado.value || !nuevo || nuevo === previo) return
-    const mio = ultimo(lista.value)?.autor?.id === chat.yo?.id
-    if (mio || cercaDelFinal()) bajar(true)
-    else pendientes.value += 1
+    if (!cargado.value || !nuevo || nuevo === previo) return;
+    const mio = ultimo(lista.value)?.autor?.id === chat.yo?.id;
+    if (mio || cercaDelFinal()) bajar(true);
+    else pendientes.value += 1;
   },
-)
+);
 
 async function alDesplazar() {
-  const el = lienzo.value
-  if (!el) return
-  if (cercaDelFinal()) pendientes.value = 0
-  if (el.scrollTop > 80 || cargandoPrevios.value || !cargado.value || chat.completos[props.canalId]) return
-  await cargarPrevios()
+  const el = lienzo.value;
+  if (!el) return;
+  if (cercaDelFinal()) pendientes.value = 0;
+  if (el.scrollTop > 80 || cargandoPrevios.value || !cargado.value || chat.completos[props.canalId]) return;
+  await cargarPrevios();
 }
 
 /** Trae la página anterior sin mover lo que se está viendo. */
 async function cargarPrevios() {
-  const el = lienzo.value
-  if (!el) return
-  cargandoPrevios.value = true
-  const alto = el.scrollHeight
+  const el = lienzo.value;
+  if (!el) return;
+  cargandoPrevios.value = true;
+  const alto = el.scrollHeight;
   try {
-    await chat.cargarAnteriores(props.canalId)
-    await nextTick()
-    el.scrollTop += el.scrollHeight - alto
+    await chat.cargarAnteriores(props.canalId);
+    await nextTick();
+    el.scrollTop += el.scrollHeight - alto;
   } finally {
-    cargandoPrevios.value = false
+    cargandoPrevios.value = false;
   }
 }
 
 /** Lleva al mensaje citado (cargando hacia atrás si hace falta) y lo resalta. */
 async function irA(id: number) {
-  for (let i = 0; i < MAX_PAGINAS_CITA && !lista.value.some((m) => m.id === id) && !chat.completos[props.canalId]; i++) await cargarPrevios()
-  await nextTick()
-  const el = document.getElementById(`m-${id}`)
-  const contenedor = lienzo.value
-  if (!el || !contenedor) return notify.info('El mensaje citado ya no está disponible.')
-  const destino = el.getBoundingClientRect().top - contenedor.getBoundingClientRect().top + contenedor.scrollTop - contenedor.clientHeight / 3
-  contenedor.scrollTo({ top: destino, behavior: 'smooth' })
-  resaltado.value = id
-  setTimeout(() => resaltado.value === id && (resaltado.value = null), 1600)
+  for (let i = 0; i < MAX_PAGINAS_CITA && !lista.value.some((m) => m.id === id) && !chat.completos[props.canalId]; i++) await cargarPrevios();
+  await nextTick();
+  const el = document.getElementById(`m-${id}`);
+  const contenedor = lienzo.value;
+  if (!el || !contenedor) return notify.info("El mensaje citado ya no está disponible.");
+  const destino = el.getBoundingClientRect().top - contenedor.getBoundingClientRect().top + contenedor.scrollTop - contenedor.clientHeight / 3;
+  contenedor.scrollTo({ top: destino, behavior: "smooth" });
+  resaltado.value = id;
+  setTimeout(() => resaltado.value === id && (resaltado.value = null), 1600);
 }
 
 function responder(m: Mensaje) {
-  respondiendo.value = m
-  redactor.value?.enfocar()
+  respondiendo.value = m;
+  redactor.value?.enfocar();
 }
 
 function verFotos(fotos: Archivo[], inicio: number) {
-  visor.inicio = inicio
-  visor.fotos = fotos
+  visor.inicio = inicio;
+  visor.fotos = fotos;
 }
 
 async function enviar(envio: Envio) {
-  enviando.value = true
+  enviando.value = true;
   try {
-    await chat.enviar(props.canalId, envio)
-    redactor.value?.limpiar()
-    respondiendo.value = null
-    bajar(true)
+    await chat.enviar(props.canalId, envio);
+    redactor.value?.limpiar();
+    respondiendo.value = null;
+    bajar(true);
   } catch (e) {
-    notify.error(e instanceof Error ? e.message : String(e))
+    notify.error(e instanceof Error ? e.message : String(e));
   } finally {
-    enviando.value = false
+    enviando.value = false;
   }
 }
 
 // Soltar archivos sobre la conversación -----------------------------------
-const llevaArchivos = (e: DragEvent) => !esSistema.value && [...(e.dataTransfer?.types ?? [])].includes('Files')
+const llevaArchivos = (e: DragEvent) => !esSistema.value && [...(e.dataTransfer?.types ?? [])].includes("Files");
 function alEntrar(e: DragEvent) {
-  if (llevaArchivos(e)) arrastrando.value = true
+  if (llevaArchivos(e)) arrastrando.value = true;
 }
 function alSalir(e: DragEvent) {
-  const dentro = e.relatedTarget instanceof Node && (e.currentTarget as HTMLElement).contains(e.relatedTarget)
-  if (!dentro) arrastrando.value = false
+  const dentro = e.relatedTarget instanceof Node && (e.currentTarget as HTMLElement).contains(e.relatedTarget);
+  if (!dentro) arrastrando.value = false;
 }
 function alSoltar(e: DragEvent) {
-  arrastrando.value = false
-  if (!llevaArchivos(e)) return
-  void redactor.value?.agregarArchivos([...(e.dataTransfer?.files ?? [])])
+  arrastrando.value = false;
+  if (!llevaArchivos(e)) return;
+  void redactor.value?.agregarArchivos([...(e.dataTransfer?.files ?? [])]);
 }
 
 onMounted(async () => {
   try {
-    await (props.activa ? chat.abrir(props.canalId) : chat.cargar(props.canalId))
+    await (props.activa ? chat.abrir(props.canalId) : chat.cargar(props.canalId));
   } catch (e) {
-    notify.error(e instanceof Error ? e.message : String(e))
-    emit('volver')
-    return
+    notify.error(e instanceof Error ? e.message : String(e));
+    emit("volver");
+    return;
   }
-  cargado.value = true
-  bajar()
-  recibirAdjunto()
-  if (props.activa) redactor.value?.enfocar()
-})
-onUnmounted(() => chat.cerrar(props.canalId))
+  cargado.value = true;
+  bajar();
+  recibirAdjunto();
+  if (props.activa) redactor.value?.enfocar();
+});
+onUnmounted(() => chat.cerrar(props.canalId));
 
 /** Un registro que llega para enviar (`?adjuntar=`, "Reportar por chat"). */
 function recibirAdjunto() {
-  if (!props.adjuntar || !cargado.value) return
-  redactor.value?.adjuntar(props.adjuntar)
-  emit('adjuntado')
+  if (!props.adjuntar || !cargado.value) return;
+  redactor.value?.adjuntar(props.adjuntar);
+  emit("adjuntado");
 }
-watch(() => props.adjuntar, recibirAdjunto)
+watch(() => props.adjuntar, recibirAdjunto);
 
 // Al volver a la vista: lo que llegó queda leído; al salir, deja de marcarse.
 watch(
   () => props.activa,
   (activa) => {
-    if (!cargado.value) return
-    if (!activa) return chat.cerrar(props.canalId)
-    void chat.abrir(props.canalId)
-    if (cercaDelFinal()) bajar()
-    redactor.value?.enfocar()
+    if (!cargado.value) return;
+    if (!activa) return chat.cerrar(props.canalId);
+    void chat.abrir(props.canalId);
+    if (cercaDelFinal()) bajar();
+    redactor.value?.enfocar();
   },
-)
+);
 </script>
 
 <style scoped>
@@ -282,7 +284,7 @@ watch(
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  background: var(--p-surface-50);
+  background: var(--p-surface-100);
 }
 .conv__cabeza {
   display: flex;
@@ -442,7 +444,9 @@ watch(
   border-radius: 50%;
   color: var(--p-surface-500);
   opacity: 0;
-  transition: opacity 0.15s var(--ease), background 0.15s var(--ease);
+  transition:
+    opacity 0.15s var(--ease),
+    background 0.15s var(--ease);
   &:hover {
     color: var(--p-primary-color);
     background: var(--p-surface-100);
@@ -471,7 +475,8 @@ watch(
   padding: 0.5rem 0.8rem 0.35rem;
   border-radius: var(--radio);
   color: var(--p-surface-800);
-  background: var(--p-content-background);
+  background: var(--p-surface-50);
+  /*background: var(--p-content-background);*/
   box-shadow: 0 1px 1.5px rgb(0 0 0 / 0.06);
   animation: entra 0.18s var(--ease);
   transition: box-shadow 0.3s var(--ease);

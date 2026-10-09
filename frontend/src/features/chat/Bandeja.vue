@@ -22,7 +22,10 @@
 
     <div class="bandeja__lista">
       <template v-if="!chat.listo">
-        <div v-for="n in 6" :key="n" class="fila"><Skeleton shape="circle" size="2.5rem" /><div class="flex-1"><Skeleton width="60%" class="mb-2" /><Skeleton width="85%" /></div></div>
+        <div v-for="n in 6" :key="n" class="fila">
+          <Skeleton shape="circle" size="2.5rem" />
+          <div class="flex-1"><Skeleton width="60%" class="mb-2" /><Skeleton width="85%" /></div>
+        </div>
       </template>
 
       <template v-else>
@@ -37,9 +40,9 @@
             <span class="fila__linea">
               <span class="fila__extracto">
                 <template v-if="c.ultimo"><template v-if="c.ultimo.autor === chat.yo?.id">Tú: </template>{{ c.ultimo.extracto }}</template>
-                <template v-else>{{ c.tipo === 'grupo' ? `${c.miembros.length} miembros` : (c.contacto?.lugar ?? 'Nueva conversación') }}</template>
+                <template v-else>{{ c.tipo === "grupo" ? `${c.miembros.length} miembros` : (c.contacto?.lugar ?? "Nueva conversación") }}</template>
               </span>
-              <span v-if="c.noLeidos" class="fila__badge">{{ c.noLeidos > 99 ? '99+' : c.noLeidos }}</span>
+              <span v-if="c.noLeidos" class="fila__badge">{{ c.noLeidos > 99 ? "99+" : c.noLeidos }}</span>
             </span>
           </span>
         </button>
@@ -53,7 +56,7 @@
               <span class="fila__extracto">{{ p.lugar ?? AMBITOS[p.ambito] }}</span>
             </span>
           </button>
-          <p v-if="!conversaciones.length && !personas.length" class="vacio">{{ chat.contactos ? 'Sin resultados.' : 'Buscando…' }}</p>
+          <p v-if="!conversaciones.length && !personas.length" class="vacio">{{ chat.contactos ? "Sin resultados." : "Buscando…" }}</p>
         </template>
 
         <div v-else-if="!chat.canales.length" class="vacio">
@@ -68,46 +71,42 @@
 </template>
 
 <script setup lang="ts">
-import { useChatStore } from '@/core/chat/store'
-import { coincide, fechaBandeja } from '@/core/chat/modelo'
-import { notify } from '@/core/notify'
-import ChatAvatar from '@/shared/chat/ChatAvatar.vue'
-import NuevoGrupoDialog from './NuevoGrupoDialog.vue'
+import { useChatStore } from "@/core/chat/store";
+import { coincide, fechaBandeja } from "@/core/chat/modelo";
+import { notify } from "@/core/notify";
+import ChatAvatar from "@/shared/chat/ChatAvatar.vue";
+import NuevoGrupoDialog from "./NuevoGrupoDialog.vue";
 
-defineProps<{ activo: number | null }>()
-const emit = defineEmits<{ abrir: [canal: number] }>()
+defineProps<{ activo: number | null }>();
+const emit = defineEmits<{ abrir: [canal: number] }>();
 
-const AMBITOS = { administracion: 'Administración', estacion: 'Estación', agencia: 'Agencia' } as const
-const MAX_PERSONAS = 30
+const AMBITOS = { administracion: "Administración", estacion: "Estación", agencia: "Agencia" } as const;
+const MAX_PERSONAS = 30;
 
-const chat = useChatStore()
-const busqueda = ref('')
-const grupo = ref(false)
+const chat = useChatStore();
+const busqueda = ref("");
+const grupo = ref(false);
 
-const conversaciones = computed(() =>
-  busqueda.value
-    ? chat.canales.filter((c) => coincide([c.nombre, c.contacto?.lugar ?? '', ...c.miembros.map((m) => m.nombre)].join(' '), busqueda.value))
-    : chat.canales,
-)
+const conversaciones = computed(() => (busqueda.value ? chat.canales.filter((c) => coincide([c.nombre, c.contacto?.lugar ?? "", ...c.miembros.map((m) => m.nombre)].join(" "), busqueda.value)) : chat.canales));
 /** Personas que coinciden y con las que todavía no hay directo en la lista. */
 const personas = computed(() => {
-  const conDirecto = new Set(conversaciones.value.filter((c) => c.tipo === 'directo').map((c) => c.contacto?.id))
-  return (chat.contactos ?? []).filter((p) => !conDirecto.has(p.id) && coincide(`${p.nombre} ${p.lugar ?? ''} ${AMBITOS[p.ambito]}`, busqueda.value)).slice(0, MAX_PERSONAS)
-})
+  const conDirecto = new Set(conversaciones.value.filter((c) => c.tipo === "directo").map((c) => c.contacto?.id));
+  return (chat.contactos ?? []).filter((p) => !conDirecto.has(p.id) && coincide(`${p.nombre} ${p.lugar ?? ""} ${AMBITOS[p.ambito]}`, busqueda.value)).slice(0, MAX_PERSONAS);
+});
 
 async function abrirCon(usuario: number) {
   try {
-    const id = await chat.directo(usuario)
-    busqueda.value = ''
-    emit('abrir', id)
+    const id = await chat.directo(usuario);
+    busqueda.value = "";
+    emit("abrir", id);
   } catch (e) {
-    notify.error(e instanceof Error ? e.message : String(e))
+    notify.error(e instanceof Error ? e.message : String(e));
   }
 }
 
-const permisoAvisos = ref(typeof Notification === 'undefined' ? 'denied' : Notification.permission)
+const permisoAvisos = ref(typeof Notification === "undefined" ? "denied" : Notification.permission);
 async function pedirAvisos() {
-  permisoAvisos.value = await Notification.requestPermission()
+  permisoAvisos.value = await Notification.requestPermission();
 }
 </script>
 

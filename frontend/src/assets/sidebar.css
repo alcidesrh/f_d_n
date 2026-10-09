@@ -24,7 +24,7 @@
     left: 0;
     /*border-right: var(--border);*/
     /*box-shadow: var(--shadow-inset);*/
-    box-shadow: 1.5px 3.5px 8px 0px var(--p-surface-500);
+    box-shadow: 2px 1px 5px 0px var(--p-surface-500);
 
     transform: translateX(-100%);
   }
@@ -32,7 +32,7 @@
   &.right {
     --sb-open: var(--sb-right-open);
     /*border-left: var(--border);*/
-    box-shadow: -1.5px 3.5px 8px 0px var(--p-surface-500);
+    box-shadow: -2px 1px 5px 0px var(--p-surface-500);
 
     /*box-shadow: var(--shadow-inset);*/
 
