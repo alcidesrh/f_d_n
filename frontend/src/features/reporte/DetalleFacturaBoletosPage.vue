@@ -6,7 +6,6 @@
 -->
 <template>
   <ReporteLayout icono="receipt-long-outline" descripcion="Facturas de los boletos vendidos, para conciliar con tarjetas y con el certificador." :problema="problema" :cargando="cargando" :error="error" :listo="!!resumen">
-    <LegadoSwitch @cambio="cargarOpciones" />
     <div class="grid gap-4 @lg:grid-cols-2">
       <label class="flex flex-col gap-1.5 @lg:col-span-2">
         <span class="text-sm font-medium">Fecha de venta (un día o un rango)</span>
@@ -60,7 +59,6 @@ import { fetchOpciones, fetchResumenDetalle } from '@/core/reporte/api'
 import { aDia, detalleInicial, detalleQuery, errorDetalle, importe, type FiltroDetalle } from '@/core/reporte/filtro'
 import type { FormatoReporte, OpcionesReporte } from '@/core/reporte/types'
 import { notify } from '@/core/notify'
-import LegadoSwitch from '@/temporal/legado/LegadoSwitch.vue' // TEMPORAL-LEGADO
 import CifraReporte from './CifraReporte.vue'
 import ReporteLayout from './ReporteLayout.vue'
 import { generarReporte } from './descarga'
@@ -77,17 +75,14 @@ const query = computed(() => (opciones.value ? detalleQuery(filtro) : null))
 const problema = computed(() => (opciones.value ? errorDetalle(filtro) : null))
 const { datos: resumen, cargando, error } = useResumen(() => query.value, fetchResumenDetalle)
 
-async function cargarOpciones() {
-  opciones.value = null // la vista previa se consulta de nuevo aunque el filtro quede igual
+onMounted(async () => {
   try {
     opciones.value = await fetchOpciones()
     Object.assign(filtro, detalleInicial(opciones.value))
   } catch {
     notify.error('No se pudieron cargar las opciones del reporte.')
   }
-}
-
-onMounted(cargarOpciones)
+})
 
 async function generar(formato: FormatoReporte) {
   if (!query.value) return

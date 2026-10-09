@@ -6,7 +6,6 @@
 -->
 <template>
   <ReporteLayout icono="request-quote-outline" descripcion="Cierre de caja del día: qué vendió cada usuario y cuánto se recibió, anuló y facturó." :problema="problema" :cargando="cargando" :error="error" :listo="!!resumen">
-    <LegadoSwitch @cambio="cargarOpciones" />
     <div class="grid gap-4 @lg:grid-cols-2">
       <label class="flex flex-col gap-1.5">
         <span class="text-sm font-medium">Fecha de venta</span>
@@ -54,7 +53,6 @@ import { fetchOpciones, fetchResumenCuadre } from '@/core/reporte/api'
 import { cuadreInicial, cuadreQuery, errorCuadre, importe, type FiltroCuadre } from '@/core/reporte/filtro'
 import type { Moneda, OpcionesReporte } from '@/core/reporte/types'
 import { notify } from '@/core/notify'
-import LegadoSwitch from '@/temporal/legado/LegadoSwitch.vue' // TEMPORAL-LEGADO
 import CifraReporte from './CifraReporte.vue'
 import ReporteLayout from './ReporteLayout.vue'
 import { generarReporte } from './descarga'
@@ -85,17 +83,14 @@ const secciones = computed(() => {
 
 const etiquetaMoneda = (m: Moneda) => `${m.sigla} - ${m.nombre}`
 
-async function cargarOpciones() {
-  opciones.value = null // la vista previa se consulta de nuevo aunque el filtro quede igual
+onMounted(async () => {
   try {
     opciones.value = await fetchOpciones()
     Object.assign(filtro, cuadreInicial(opciones.value))
   } catch {
     notify.error('No se pudieron cargar las opciones del reporte.')
   }
-}
-
-onMounted(cargarOpciones)
+})
 
 async function generar() {
   if (!query.value) return

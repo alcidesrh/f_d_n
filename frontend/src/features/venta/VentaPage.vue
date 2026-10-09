@@ -11,7 +11,6 @@
 -->
 <template>
   <div class="flex flex-col gap-4">
-    <LegadoSwitch @cambio="cambioDeFuente" />
     <Toolbar v-if="store.contexto?.agencia || store.contexto?.estacion">
       <!-- <template #start><PageHead /></template> -->
       <template #end>
@@ -43,7 +42,7 @@
               </label>
               <label class="flex flex-col gap-1">
                 <span class="text-sm font-medium">Estación</span>
-                <estacion-select v-model="store.estacionId" :estaciones="estaciones" :propio="departamentoPropio" placeholder="Todas" @update:model-value="store.cargarSalidas()" />
+                <estacion-select v-model="store.estacionId" :estaciones="store.contexto?.estaciones ?? []" :propio="store.contexto?.estacion?.departamento" placeholder="Todas" @update:model-value="store.cargarSalidas()" />
               </label>
               <label class="flex flex-col gap-1">
                 <span class="text-sm font-medium">Empresa</span>
@@ -162,12 +161,9 @@ import FacturacionFallidaDialog from "./FacturacionFallidaDialog.vue";
 import SalidasLista from "./SalidasLista.vue";
 import VentaExitosaDialog from "./VentaExitosaDialog.vue";
 import { type OpcionesCobro, useVentaStore } from "./store";
-import LegadoSwitch from "@/temporal/legado/LegadoSwitch.vue"; // TEMPORAL-LEGADO
-import { useVentaLegado } from "@/temporal/legado/useVentaLegado"; // TEMPORAL-LEGADO
 import { imprimirTicket } from "./ticket";
 
 const store = useVentaStore();
-const { estaciones, departamentoPropio, cambioDeFuente } = useVentaLegado(store); // TEMPORAL-LEGADO
 const detalleAsiento = ref<InstanceType<typeof AsientoOcupadoPopover> | null>(null);
 const verOcupado = (a: AsientoCroquis, e: MouseEvent) => {
   if (store.salidaId && a.id != null) void detalleAsiento.value?.abrir(e, store.salidaId, a.id);
