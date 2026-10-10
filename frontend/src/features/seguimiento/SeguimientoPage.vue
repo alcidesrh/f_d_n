@@ -1,6 +1,5 @@
 <!--
-  Mapa en tiempo real de buses en recorrido. Muestra las salidas iniciadas del
-  sistema legado; mientras no haya GPS reales, la posición se infiere del
+  Mapa en tiempo real de buses en recorrido. Muestra las salidas en recorrido; mientras no haya GPS reales, la posición se infiere del
   cronograma (distancia, hora y velocidad media) y el navegador anima los
   buses con el reloj; la lista se refresca cada 30 s. Un bus con lectura GPS
   vigente se pinta tal cual la entrega el servidor. Filtros por empresa y
