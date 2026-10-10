@@ -23,6 +23,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 final class ClienteForcon
 {
     public const EMITIR_JSON = "/apiforcon/fel/EmitirDteJson";
+    public const ANULAR_JSON = "/apiforcon/fel/AnularDteJson";
     public const CONSULTA_NIT = "/apinitcontribuyente/receptor/Consulta";
     public const DATOS_EMISOR = "/apidatosemisor/establecimiento/Consulta";
 

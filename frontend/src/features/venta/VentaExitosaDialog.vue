@@ -3,7 +3,7 @@
   <Dialog
     :visible="!!comprobante"
     modal
-    header="Venta registrada"
+    :header="reasignacion ? 'Reasignación registrada' : 'Venta registrada'"
     :style="{ width: '30rem' }"
     @update:visible="!$event && emit('cerrar')"
   >
@@ -43,7 +43,7 @@
         <Button label="Imprimir ticket" severity="secondary" outlined @click="imprimir">
           <template #icon><icon name="print-outline" class="mr-1" /></template>
         </Button>
-        <Button label="Nueva venta" autofocus @click="emit('cerrar')" />
+        <Button :label="reasignacion ? 'Listo' : 'Nueva venta'" autofocus @click="emit('cerrar')" />
       </div>
     </template>
   </Dialog>
@@ -54,18 +54,19 @@ import { computed, ref } from 'vue'
 import { fetchComprobantePdf } from '@/core/venta/api'
 import { notify } from '@/core/notify'
 import type { Comprobante } from '@/core/venta/types'
-import { imprimirTicket } from './ticket'
+import { imprimirTicket } from '@/shared/boleto/ticket'
 
-const props = defineProps<{ comprobante: Comprobante | null }>()
+const props = defineProps<{ comprobante: Comprobante | null; reasignacion?: boolean }>()
 const emit = defineEmits<{ cerrar: [] }>()
 const descargando = ref(false)
 
 const severidad = computed(() =>
-  props.comprobante?.estadoFacturacion === 'pendiente' ? 'warn' : 'success',
+  !props.reasignacion && props.comprobante?.estadoFacturacion === 'pendiente' ? 'warn' : 'success',
 )
 const mensaje = computed(() => {
   const c = props.comprobante
   if (!c) return ''
+  if (props.reasignacion) return 'Boleto(s) reasignado(s). Imprima el ticket nuevo y entréguelo al pasajero.'
   if (c.cortesia) return 'Cortesía emitida.'
   if (c.estadoFacturacion === 'certificada') return 'Factura electrónica certificada.'
   if (c.estadoFacturacion === 'pendiente')

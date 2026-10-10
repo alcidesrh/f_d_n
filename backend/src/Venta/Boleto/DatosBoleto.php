@@ -6,6 +6,7 @@ namespace App\Venta\Boleto;
 
 use App\Entity\BoletoAsiento;
 use App\Entity\BoletoVenta;
+use App\Entity\Enum\EstadoBoletoAsiento;
 use Money\Money;
 
 /**
@@ -17,12 +18,37 @@ use Money\Money;
 final class DatosBoleto
 {
     /**
+     * Los boletos que lleva el comprobante, por número de asiento: los
+     * pedidos (`$soloIds`) o, si no, los vivos (ni anulados ni reasignados);
+     * si ya no queda ninguno viva, todos (para poder consultar la venta).
+     *
+     * @param list<int>|null $soloIds
+     *
+     * @return list<BoletoAsiento>
+     */
+    public static function boletos(BoletoVenta $venta, ?array $soloIds = null): array
+    {
+        $todos = $venta->getAsientos()->toArray();
+        $boletos = $soloIds !== null
+            ? array_values(array_filter($todos, static fn(BoletoAsiento $b) => in_array($b->getId(), $soloIds, true)))
+            : array_values(array_filter($todos, static fn(BoletoAsiento $b) => !in_array($b->getEstado(), [EstadoBoletoAsiento::ANULADO, EstadoBoletoAsiento::REASIGNADO], true)));
+        if ($boletos === [] && $soloIds === null) {
+            $boletos = $todos;
+        }
+        usort($boletos, static fn(BoletoAsiento $a, BoletoAsiento $b) => $a->getAsiento()->getNumero() <=> $b->getAsiento()->getNumero());
+
+        return $boletos;
+    }
+
+    /**
+     * @param list<int>|null $soloIds boletos que se imprimen (por defecto, los vivos de la venta)
+     *
      * @return array<string, mixed>
      */
-    public static function de(BoletoVenta $venta, ?\DateTimeImmutable $salidaOrigen = null): array
+    public static function de(BoletoVenta $venta, ?\DateTimeImmutable $salidaOrigen = null, ?array $soloIds = null): array
     {
-        $boletos = $venta->getAsientos()->toArray();
-        usort($boletos, static fn(BoletoAsiento $a, BoletoAsiento $b) => $a->getAsiento()->getNumero() <=> $b->getAsiento()->getNumero());
+        $boletos = self::boletos($venta, $soloIds);
+        $todos = $venta->getAsientos()->count();
         $primero = $boletos[0] ?? null;
         $salida = $primero?->getSalida();
         $trayecto = $primero?->getTrayecto();
@@ -92,9 +118,24 @@ final class DatosBoleto
                 "observacion" => $b->getObservacion(),
                 "estado" => $b->getEstado()->value,
             ], $boletos),
-            "total" => self::importe($venta->getTotal()),
+            "total" => self::importe(count($boletos) === $todos ? $venta->getTotal() : self::suma($boletos, $venta->getTotal())),
             "tipoPago" => $venta->getTipoPago()?->getNombre(),
         ];
+    }
+
+    /**
+     * Lo que suman los boletos que lleva el comprobante cuando no son todos
+     * los de la venta.
+     *
+     * @param list<BoletoAsiento> $boletos
+     */
+    private static function suma(array $boletos, Money $venta): Money
+    {
+        return array_reduce(
+            $boletos,
+            static fn(Money $total, BoletoAsiento $b) => $b->getPrecio() === null ? $total : $total->add($b->getPrecio()),
+            new Money(0, $venta->getCurrency()),
+        );
     }
 
     /** @return array{centavos: int, moneda: string, texto: string}|null */

@@ -33,7 +33,7 @@
           <template v-else>
             <div class="overflow-x-auto">
               <BusMap :elementos="detalle.croquis" :estado="estado" inspeccionable tamano="md" class="justify-center" @ocupado="verOcupado" />
-              <AsientoOcupadoPopover ref="detalleAsiento" />
+              <AsientoOcupadoPopover ref="detalleAsiento" @anular="(b) => (anular = [b.id])" @reasignar="reasignar" />
             </div>
             <BusMapLegend :items="LEYENDA" :conteos="conteos" />
           </template>
@@ -88,10 +88,12 @@
       </div>
     </template>
   </Dialog>
+  <AnularBoletosDialog :visible="anular.length > 0" :ids="anular" @update:visible="(v) => !v && (anular = [])" @listo="cargar" />
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import AnularBoletosDialog from '@/shared/boleto/AnularBoletosDialog.vue'
 import AsientoOcupadoPopover from '@/shared/bus-map/AsientoOcupadoPopover.vue'
 import BusMap from '@/shared/bus-map/BusMap.vue'
 import BusMapLegend, { type ItemLeyenda } from '@/shared/bus-map/BusMapLegend.vue'
@@ -106,6 +108,15 @@ const LEYENDA: ItemLeyenda[] = ['disponible', 'B', 'ocupado', 'ocupado-web', 'oc
 
 const props = defineProps<{ salida: Pick<SalidaFila, 'id'> | null }>()
 const emit = defineEmits<{ cerrar: [] }>()
+
+const router = useRouter()
+/** Boletos que se están anulando (desde el detalle del asiento). */
+const anular = ref<number[]>([])
+/** La reasignación se hace en la pantalla de venta, con la salida y el asiento nuevos. */
+function reasignar(boleto: { id: number }) {
+  emit('cerrar')
+  void router.push({ name: 'venta', query: { reasignar: String(boleto.id) } })
+}
 
 const detalleAsiento = ref<InstanceType<typeof AsientoOcupadoPopover> | null>(null)
 const verOcupado = (a: AsientoCroquis, e: MouseEvent) => {

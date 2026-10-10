@@ -7,6 +7,7 @@ import { HttpError, http, request } from '@/core/http'
 import { useSessionStore } from '@/core/auth/session'
 import type {
   AsientoOcupado,
+  BoletoOperable,
   Cliente,
   ClienteDatos,
   Comprobante,
@@ -15,7 +16,10 @@ import type {
   DetalleAsiento,
   ErrorVenta,
   EstadoAgencia,
+  PedidoReasignacion,
   PedidoVenta,
+  PermisosBoleto,
+  ResultadoAnulacion,
   SalidaDetalle,
   SalidaResumen,
 } from './types'
@@ -52,12 +56,28 @@ export const cotizar = (body: {
   asientos: number[]
   cobrarTrayectoCompleto?: boolean
   cortesia?: boolean
+  /** Al reasignar: cotiza como esa venta (su cortesía y su recargo). */
+  venta?: number
 }) => http.post<Cotizacion>('/venta/cotizacion', body, { silent: true })
 
 export const vender = (pedido: PedidoVenta) =>
   http.post<Comprobante>('/venta/ventas', pedido, { loadingKey: 'venta' })
 
-export const fetchComprobante = (id: number) => http.get<Comprobante>(`/venta/ventas/${id}`)
+/** Comprobante de una venta; con `boletos`, solo esos (de un mismo viaje). */
+export const fetchComprobante = (id: number, boletos?: number[]) =>
+  http.get<Comprobante>(`/venta/ventas/${id}${boletos?.length ? `?boletos=${boletos.join(',')}` : ''}`)
+
+export const fetchPermisosBoleto = () => http.get<PermisosBoleto>('/venta/boletos/permisos', { silent: true })
+
+export const fetchBoletos = (ids: number[]) =>
+  http.get<BoletoOperable[]>(`/venta/boletos?ids=${ids.join(',')}`)
+
+export const anularBoletos = (boletos: number[], motivo: string) =>
+  http.post<ResultadoAnulacion>('/venta/boletos/anular', { boletos, motivo }, { loadingKey: 'anular-boletos' })
+
+/** Devuelve el comprobante de los boletos nuevos (para imprimir el ticket). */
+export const reasignarBoletos = (pedido: PedidoReasignacion) =>
+  http.post<Comprobante>('/venta/boletos/reasignar', pedido, { loadingKey: 'reasignar-boletos' })
 
 export const buscarClientes = (q: string) =>
   http.get<Cliente[]>(`/venta/clientes?q=${encodeURIComponent(q)}`, { silent: true })

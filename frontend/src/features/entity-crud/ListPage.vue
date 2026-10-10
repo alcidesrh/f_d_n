@@ -1,6 +1,6 @@
 <template>
   <div v-if="store" class="card flex flex-col" :class="{ 'h-full': enSelector }" style="min-height: 400px">
-    <ListToolbar :selection-mode="modoSeleccion" :selectable="!enSelector" :selected-count="selection.length" :hidden-columns="hiddenColumns" :configurable="configurable && !enSelector" @configure="emit('configure')" @toggle-selection="toggleSelection" @share="compartir = true" @restore="(field) => setColumnVisible(field, true)" @reset="resetView" />
+    <ListToolbar :selection-mode="modoSeleccion" :selectable="!enSelector" :selected-count="selection.length" :hidden-columns="hiddenColumns" :configurable="configurable && !enSelector" :acciones="accionesDisponibles" @configure="emit('configure')" @toggle-selection="toggleSelection" @share="compartir = true" @accion="ejecutarAccion" @restore="(field) => setColumnVisible(field, true)" @reset="resetView" />
     <DataTable :selection="enSelector ? seleccion : selection" :value="visibleItems" :loading="loading.loading" :data-key="claveFila" scrollable :scroll-height="enSelector ? 'flex' : '800px'" reorderable-columns :edit-mode="canEdit && !enSelector ? 'cell' : undefined" @update:selection="alSeleccionar" @column-reorder="onColumnReorder" @cell-edit-complete="onCellEditComplete">
       <Column v-for="col in visibleColumns" :key="col.field" :field="col.field">
         <template #header>
@@ -36,13 +36,14 @@
       </Column>
       <Column align-frozen="right" frozen header-class="col-actions" body-class="col-actions" :exportable="false" :reorderable-column="false" :selection-mode="modoSeleccion ? 'multiple' : undefined">
         <template v-if="!modoSeleccion" #body="{ data }">
-          <ListActions :item="data" :actions="extraActions" @edit="onEdit" @delete="askDelete" @action="openAction" />
+          <ListActions :item="data" :actions="extraActions" :can-edit="!soloLectura" :can-delete="!soloLectura" @edit="onEdit" @delete="askDelete" @action="openAction" />
         </template>
       </Column>
     </DataTable>
     <ListFooter :pagination="store.pagination" :count="store.items.length" :local-filter="hasLocalFilter" @page="onPage" />
     <EnviarPorChatDialog v-if="!enSelector" v-model:visible="compartir" :referencias="referencias" @enviado="toggleSelection" />
     <component :is="activeAction.component" v-if="activeAction" v-model:visible="actionVisible" :item="activeAction.item" @after-hide="activeAction = null" />
+    <component :is="activeBulk.component" v-if="activeBulk" v-model:visible="bulkVisible" :ids="activeBulk.ids" @listo="alTerminarAccion" @after-hide="activeBulk = null" />
   </div>
 
   <div v-else class="card flex items-center justify-center py-12">
@@ -72,10 +73,11 @@ import { entityNameFromSlug } from "@/core/entities/slug";
 import type { CollectionFieldConfig, EntityStore } from "@/core/entities/types";
 import { useLoadingStore } from "@/core/loading";
 import { notify } from "@/core/notify";
+import { usePermisosBoleto } from "@/core/venta/permisos";
 import EnviarPorChatDialog from "@/shared/chat/EnviarPorChatDialog.vue";
 import { anunciarEnPantalla, etiquetaDeFila } from "@/shared/chat/integracion";
 import ListActions from "./list/ListActions.vue";
-import { entityListActions, type EntityListAction } from "./list/listActions";
+import { entityBulkActions, entityListActions, entityReadOnly, type EntityBulkAction, type EntityListAction } from "./list/listActions";
 import ListCell from "./list/ListCell.vue";
 import ListCellEditor from "./list/ListCellEditor.vue";
 import ListFooter from "./list/ListFooter.vue";
@@ -146,6 +148,8 @@ function onPage({ page, rows }: { page: number; rows: number }) {
 }
 
 // Acciones extra por fila (`listActions`) ----------------------------------
+/** Boletos, ventas…: se operan con acciones propias, no se editan ni se eliminan a mano. */
+const soloLectura = computed(() => entityReadOnly.has(entityName.value));
 const extraActions = computed(() => entityListActions[entityName.value] ?? []);
 const activeAction = shallowRef<{ component: Component; item: unknown } | null>(null);
 const actionVisible = ref(false);
@@ -153,6 +157,38 @@ const actionVisible = ref(false);
 function openAction(action: EntityListAction, item: unknown) {
   activeAction.value = { component: defineAsyncComponent(action.component), item };
   actionVisible.value = true;
+}
+
+// Acciones sobre la selección (`entityBulkActions`) --------------------------
+const permisosBoleto = usePermisosBoleto();
+const activeBulk = shallowRef<{ component: Component; ids: number[] } | null>(null);
+const bulkVisible = ref(false);
+
+/** Las de la entidad que el usuario puede hacer (las de boletos dependen de sus permisos). */
+const accionesDisponibles = computed(() =>
+  (entityBulkActions[entityName.value] ?? []).filter((a) => !a.permiso || permisosBoleto[a.permiso]),
+);
+
+async function ejecutarAccion(accion: EntityBulkAction) {
+  const ids = selection.value.map((fila) => Number(idDisplay((fila as { id?: unknown }).id))).filter((id) => Number.isInteger(id) && id > 0);
+  if (!ids.length) return;
+  if (accion.ruta) return void router.push(accion.ruta(ids));
+  if (accion.component) {
+    activeBulk.value = { component: defineAsyncComponent(accion.component), ids };
+    bulkVisible.value = true;
+    return;
+  }
+  try {
+    await accion.ejecutar?.(ids);
+  } catch (cause) {
+    notify.error(cause instanceof Error ? cause.message : String(cause));
+  }
+}
+
+/** Lo que cambió una acción (p. ej. boletos anulados): se vuelve a leer la página. */
+async function alTerminarAccion() {
+  selection.value = [];
+  await store.value?.fetchItems();
 }
 
 // Selección ---------------------------------------------------------------
@@ -290,6 +326,7 @@ async function resetView() {
 watch(
   entityName,
   (name) => {
+    if (entityBulkActions[name]) void permisosBoleto.cargar();
     const entity = name ? schema.find(name) : null;
     if (!entity) return notify.error(name ? `Entidad "${name}" no encontrada en el schema GraphQL` : "Entidad no especificada");
     if (!entity.queryCollection) return notify.error(`"${name}" no expone una colección consultable`);

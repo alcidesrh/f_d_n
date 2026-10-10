@@ -11,6 +11,7 @@ use App\Venta\Facturacion\CredencialesFel;
 use App\Venta\Facturacion\Forcon\DatosEmisorForcon;
 use App\Venta\Facturacion\Forcon\DteJsonForcon;
 use App\Venta\Facturacion\ItemDte;
+use App\Venta\Facturacion\SolicitudAnulacion;
 use App\Venta\Facturacion\SolicitudDte;
 use Doctrine\ORM\EntityManagerInterface;
 use Money\Money;
@@ -147,6 +148,39 @@ final class ForconTest extends TestCase
 
         $sinCodigo = DteJsonForcon::fallo("Servicio no disponible");
         $this->assertTrue($sinCodigo->recuperable);
+    }
+
+    public function testAnulacionTieneLaEstructuraDelEjemplo(): void
+    {
+        $ejemplo = json_decode((string) file_get_contents(__DIR__ . "/fixtures/forcon_anulacion.json"), true, 512, JSON_THROW_ON_ERROR);
+        $cuerpo = DteJsonForcon::construirAnulacion(new SolicitudAnulacion(
+            uuid: "62de80b1-3834-42f0-a591-341fc382d884",
+            emisorNit: "4150686",
+            receptorNit: "CF",
+            fechaEmision: new \DateTimeImmutable("2021-10-30T08:24:43.694-06:00"),
+            fechaAnulacion: new \DateTimeImmutable("2023-05-31T11:26:05.049-06:00"),
+            motivo: "DATOS DEL RECEPTOR Y PRODUCTOS INCORRECTOS",
+        ));
+
+        $this->assertSame($ejemplo, $cuerpo);
+    }
+
+    public function testRespuestaDeAnulacion(): void
+    {
+        DteJsonForcon::respuestaAnulacion(["StatusCode" => "OK", "Resultado" => true, "Descripcion" => "Documento anulado"]);
+        $this->addToAssertionCount(1);
+
+        try {
+            DteJsonForcon::respuestaAnulacion(["StatusCode" => "BadRequest", "Resultado" => false, "Descripcion" => "ERROR EVI-100: El documento ya fue anulado"]);
+            $this->fail("debía fallar");
+        } catch (CertificacionFallida $e) {
+            $this->assertFalse($e->recuperable);
+            $this->assertSame("EVI-100", $e->codigo);
+            $this->assertStringContainsString("no anuló", $e->getMessage());
+        }
+
+        $this->expectException(CertificacionFallida::class);
+        DteJsonForcon::respuestaAnulacion(["Resultado" => false, "Descripcion" => "Servicio no disponible"]);
     }
 
     public function testCredencialesCifradasIdaYVuelta(): void

@@ -15,7 +15,10 @@ use App\Entity\TipoDocumento;
 use App\Entity\TipoPago;
 use App\Entity\Usuario;
 use App\Venta\Boleto\BoletoPdf;
+use App\Venta\Acceso\AccesoVentas;
+use App\Venta\Anulacion\AnulacionBoletos;
 use App\Venta\Boleto\Comprobantes;
+use App\Venta\Boleto\ConsultaBoletos;
 use App\Venta\Boleto\DatosBoleto;
 use App\Venta\Clientes;
 use App\Venta\ConsultaVenta;
@@ -26,6 +29,8 @@ use App\Venta\Facturacion\CertificacionFallida;
 use App\Venta\Facturacion\ConsultaContribuyente;
 use App\Venta\Facturacion\Facturador;
 use App\Venta\PublicadorOcupacion;
+use App\Venta\Reasignacion\ReasignacionBoletos;
+use App\Venta\Reasignacion\SolicitudReasignacion;
 use App\Venta\RegistroVenta;
 use App\Venta\ReglasVenta;
 use App\Venta\SolicitudVenta;
@@ -45,7 +50,8 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
  *
  * Permisos (acciones planas, ADR-003): `venta.vender`; `venta.cortesia`
  * (asientos sin cobro); `venta.sin_factura` (continuar sin factura
- * electrónica si el certificador no responde). `ROLE_ADMIN` los tiene todos.
+ * electrónica si el certificador no responde); `boleto.anular` y
+ * `boleto.reasignar` (antes de la hora de salida). `ROLE_ADMIN` los tiene todos.
  */
 #[AsController]
 #[Route("/api/venta", name: "api_venta_")]
@@ -54,6 +60,8 @@ final class VentaController extends AbstractController
     public const VENDER = "venta.vender";
     public const CORTESIA = "venta.cortesia";
     public const SIN_FACTURA = "venta.sin_factura";
+    public const ANULAR = "boleto.anular";
+    public const REASIGNAR = "boleto.reasignar";
 
     public function __construct(
         private readonly EntityManagerInterface $em,
@@ -62,6 +70,7 @@ final class VentaController extends AbstractController
         private readonly RegistroVenta $registro,
         private readonly Clientes $clientes,
         private readonly Comprobantes $comprobantes,
+        private readonly AccesoVentas $acceso,
     ) {}
 
     /** Quién vende y con qué: canal, estación/agencia, permisos y catálogos del formulario. */
@@ -164,26 +173,37 @@ final class VentaController extends AbstractController
         return $this->json($detalle->de($salida, $entidad, fn(BoletoVenta $v) => $todo || $this->puedeVer($v, $usuario)));
     }
 
-    /** `{ salida, trayecto?, asientos: [id], cobrarTrayectoCompleto?, cortesia? }` → precio por asiento y total. */
+    /**
+     * `{ salida, trayecto?, asientos: [id], cobrarTrayectoCompleto?, cortesia?, venta? }` → precio por asiento y total.
+     * Con `venta` (al reasignar) cotiza como esa venta: su cortesía y su recargo.
+     */
     #[Route("/cotizacion", name: "cotizacion", methods: ["POST"])]
-    public function cotizacion(Request $request): JsonResponse
+    public function cotizacion(Request $request, #[CurrentUser] Usuario $usuario, ReasignacionBoletos $reasignacion): JsonResponse
     {
         $this->denyAccessUnlessGranted(self::VENDER);
 
-        return $this->responder(function () use ($request) {
+        return $this->responder(function () use ($request, $usuario, $reasignacion) {
             $datos = $request->toArray();
             $salida = $this->em->find(Salida::class, (int) ($datos["salida"] ?? 0))
                 ?? throw new VentaRechazada("El salida no existe.", "no_encontrado", 404);
             $trayecto = $this->reglas->trayecto($salida, isset($datos["trayecto"]) ? (int) $datos["trayecto"] : null);
             $asientos = $this->reglas->asientos($salida, array_map("intval", (array) ($datos["asientos"] ?? [])));
 
-            return $this->reglas->cotizar(
+            // Al reasignar: el precio como lo pagó esa venta (cortesía, recargo de la página).
+            $venta = isset($datos["venta"]) ? $this->em->find(BoletoVenta::class, (int) $datos["venta"]) : null;
+            if ($venta !== null) {
+                $this->denyUnlessPuedeOperar($venta, $usuario);
+            }
+
+            $cotizacion = $this->reglas->cotizar(
                 $salida,
                 $trayecto,
                 $asientos,
                 (bool) ($datos["cobrarTrayectoCompleto"] ?? false),
-                (bool) ($datos["cortesia"] ?? false),
-            )->toArray();
+                $venta?->isCortesia() ?? (bool) ($datos["cortesia"] ?? false),
+            );
+
+            return ($venta === null ? $cotizacion : $cotizacion->conRecargo($reasignacion->recargoDe($venta)))->toArray();
         });
     }
 
@@ -210,13 +230,91 @@ final class VentaController extends AbstractController
         }, Response::HTTP_CREATED);
     }
 
-    /** Comprobante de una venta (reimpresión del ticket). */
+    /**
+     * Comprobante de una venta (reimpresión del ticket). Con `?boletos=1,2`
+     * solo esos boletos, que deben ser de un mismo viaje; si no, los vivos de
+     * la venta.
+     */
     #[Route("/ventas/{id<\d+>}", name: "venta", methods: ["GET"])]
-    public function venta(BoletoVenta $venta, #[CurrentUser] Usuario $usuario): JsonResponse
+    public function venta(BoletoVenta $venta, Request $request, #[CurrentUser] Usuario $usuario): JsonResponse
     {
         $this->denyUnlessPuedeVer($venta, $usuario);
 
-        return $this->json($this->comprobantes->de($venta));
+        return $this->responder(function () use ($venta, $request) {
+            $ids = $this->ids((string) $request->query->get("boletos", ""));
+            if ($ids !== []) {
+                $this->exigirDeLaVentaYDeUnViaje($venta, $ids);
+            }
+
+            return $this->comprobantes->de($venta, $ids === [] ? null : $ids);
+        });
+    }
+
+    /** Qué puede hacer el usuario con los boletos (para mostrar u ocultar las opciones). */
+    #[Route("/boletos/permisos", name: "boletos_permisos", methods: ["GET"])]
+    public function permisosBoletos(): JsonResponse
+    {
+        return $this->json(["anular" => $this->isGranted(self::ANULAR), "reasignar" => $this->isGranted(self::REASIGNAR)]);
+    }
+
+    /**
+     * `?ids=1,2`: los boletos con lo necesario para anularlos, reasignarlos o
+     * reimprimirlos. Quien anula o reasigna ve los de cualquier venta que
+     * pueda operar; el resto, solo los que puede ver.
+     */
+    #[Route("/boletos", name: "boletos", methods: ["GET"])]
+    public function boletos(Request $request, #[CurrentUser] Usuario $usuario, ConsultaBoletos $boletos): JsonResponse
+    {
+        $opera = $this->isGranted(self::ANULAR) || $this->isGranted(self::REASIGNAR);
+
+        return $this->responder(fn() => $boletos->de(
+            $this->ids((string) $request->query->get("ids", "")),
+            fn(BoletoVenta $v) => $this->acceso->puedeOperar($v, $usuario),
+            fn(BoletoVenta $v) => $this->puedeVer($v, $usuario) || ($opera && $this->acceso->puedeOperar($v, $usuario)),
+        ));
+    }
+
+    /**
+     * `{ boletos: [id], motivo }`. Anula los boletos (y la factura de su venta
+     * en el certificador) antes de la hora de salida. Responde `{ anulados:
+     * [id], fallidos: [{ venta, boletos, error, codigo }] }`: lo que ya se
+     * anuló no se revierte si otra venta falla.
+     */
+    #[Route("/boletos/anular", name: "boletos_anular", methods: ["POST"])]
+    public function anularBoletos(Request $request, #[CurrentUser] Usuario $usuario, AnulacionBoletos $anulacion): JsonResponse
+    {
+        $this->denyAccessUnlessGranted(self::ANULAR);
+
+        return $this->responder(function () use ($request, $usuario, $anulacion) {
+            $datos = $request->toArray();
+
+            return $anulacion->anular(
+                array_map("intval", (array) ($datos["boletos"] ?? [])),
+                $usuario,
+                (string) ($datos["motivo"] ?? ""),
+                fn(BoletoVenta $v) => $this->acceso->puedeOperar($v, $usuario),
+            );
+        });
+    }
+
+    /**
+     * `{ boletos: [id], salida, trayecto?, asientos: [id], cobrarTrayectoCompleto? }`:
+     * cada boleto pasa al asiento de la misma posición. 201 con el comprobante
+     * de los boletos nuevos (para imprimir el ticket).
+     */
+    #[Route("/boletos/reasignar", name: "boletos_reasignar", methods: ["POST"])]
+    public function reasignarBoletos(Request $request, #[CurrentUser] Usuario $usuario, ReasignacionBoletos $reasignacion): JsonResponse
+    {
+        $this->denyAccessUnlessGranted(self::REASIGNAR);
+
+        return $this->responder(function () use ($request, $usuario, $reasignacion) {
+            $resultado = $reasignacion->reasignar(
+                SolicitudReasignacion::desdeArray($request->toArray()),
+                fn(BoletoVenta $v) => $this->acceso->puedeOperar($v, $usuario),
+            );
+
+            return $this->comprobantes->de($resultado["venta"], $resultado["nuevos"]);
+        }, Response::HTTP_CREATED);
     }
 
     #[Route("/ventas/{id<\d+>}/pdf", name: "venta_pdf", methods: ["GET"])]
@@ -290,6 +388,13 @@ final class VentaController extends AbstractController
     }
 
     /** El vendedor, su agencia, o quien tenga permiso de lectura de ventas. */
+    private function denyUnlessPuedeOperar(BoletoVenta $venta, Usuario $usuario): void
+    {
+        if (!$this->acceso->puedeOperar($venta, $usuario)) {
+            throw $this->createAccessDeniedException();
+        }
+    }
+
     private function denyUnlessPuedeVer(BoletoVenta $venta, Usuario $usuario): void
     {
         if (!$this->puedeVer($venta, $usuario)) {
@@ -299,13 +404,29 @@ final class VentaController extends AbstractController
 
     private function puedeVer(BoletoVenta $venta, Usuario $usuario): bool
     {
-        $agencia = $usuario->getAgencia();
-        if ($agencia !== null) {
-            return $venta->getAgencia()?->getId() === $agencia->getId();
-        }
+        return $this->acceso->puedeVer($venta, $usuario);
+    }
 
-        return $venta->getUsuario()?->getId() === $usuario->getId()
-            || $this->isGranted("ROLE_ADMIN")
-            || $this->isGranted("read", BoletoVenta::class);
+    /** @return list<int> */
+    private function ids(string $lista): array
+    {
+        return array_values(array_unique(array_filter(array_map("intval", explode(",", $lista)), static fn(int $id) => $id > 0)));
+    }
+
+    /**
+     * @param list<int> $ids
+     *
+     * @throws VentaRechazada
+     */
+    private function exigirDeLaVentaYDeUnViaje(BoletoVenta $venta, array $ids): void
+    {
+        $elegidos = array_filter($venta->getAsientos()->toArray(), static fn($b) => in_array($b->getId(), $ids, true));
+        if (count($elegidos) !== count($ids)) {
+            throw new VentaRechazada("Algún boleto no es de esta venta.", "no_encontrado", 404);
+        }
+        $viajes = array_unique(array_map(static fn($b) => $b->getSalida()->getId() . "/" . $b->getTrayecto()->getId(), $elegidos));
+        if (count($viajes) > 1) {
+            throw new VentaRechazada("Los boletos elegidos son de viajes distintos: imprímalos por separado.", "viajes_distintos");
+        }
     }
 }

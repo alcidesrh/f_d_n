@@ -40,6 +40,7 @@ class ActionFixtures extends Fixture
             ['codigo' => 'boleto.editar',  'recurso' => 'Boleto',  'operacion' => 'update', 'grupo' => 'Boletos', 'nombre' => 'Editar boletos'],
             ['codigo' => 'boleto.eliminar','recurso' => 'Boleto',  'operacion' => 'delete', 'grupo' => 'Boletos', 'nombre' => 'Eliminar boletos'],
             ['codigo' => 'boleto.anular',  'recurso' => 'Boleto',  'operacion' => 'void',   'grupo' => 'Boletos', 'nombre' => 'Anular boletos'],
+            ['codigo' => 'boleto.reasignar','recurso' => 'Boleto', 'operacion' => 'reassign', 'grupo' => 'Boletos', 'nombre' => 'Reasignar boletos'],
             ['codigo' => 'boleto.ver',     'recurso' => 'Boleto',  'operacion' => 'read',   'grupo' => 'Boletos', 'nombre' => 'Ver boleto'],
             ['codigo' => 'ruta.listar',  'recurso' => 'Ruta',  'operacion' => 'list',   'grupo' => 'Rutas', 'nombre' => 'Listar rutas'],
             ['codigo' => 'ruta.crear',   'recurso' => 'Ruta',  'operacion' => 'create', 'grupo' => 'Rutas', 'nombre' => 'Crear rutas'],

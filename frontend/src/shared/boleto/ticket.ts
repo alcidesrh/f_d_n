@@ -46,6 +46,7 @@ export function ticketHtml(c: Comprobante): string {
   .total { text-align: right; font-size: 14px; margin-top: 4px; }
   .bar { text-align: center; margin-top: 8px; } .bar svg { width: 60mm; height: 18mm; }
 </style></head><body>
+${c.boletos.length > 0 && c.boletos.every((b) => b.estado === 'anulado') ? '<h1>*** ANULADO ***</h1>' : ''}
 <h1>${esc(c.empresa?.nombre)}</h1>
 <p class="c">${c.estacion ? `Estación: ${esc(c.estacion.direccion ?? c.estacion.nombre)}` : c.agencia ? `Agencia: ${esc(c.agencia)}` : ''}</p>
 <p class="c">Empresa NIT: ${esc(c.empresa?.nit)}</p>
@@ -76,8 +77,15 @@ ${c.boletos.some((b) => b.observacion) ? `<p class="small">Obs.: ${esc(c.boletos
 </body></html>`
 }
 
-/** Imprime el ticket en un iframe oculto (sin ventanas emergentes). */
-export function imprimirTicket(c: Comprobante): void {
+/**
+ * Imprime el ticket en un iframe oculto (sin ventanas emergentes). Resuelve
+ * cuando se lanzó la impresión, para imprimir varios tickets uno tras otro.
+ */
+export function imprimirTicket(c: Comprobante): Promise<void> {
+  return new Promise((resolver) => lanzar(c, resolver))
+}
+
+function lanzar(c: Comprobante, listo: () => void): void {
   const iframe = document.createElement('iframe')
   iframe.setAttribute('aria-hidden', 'true')
   Object.assign(iframe.style, {
@@ -96,7 +104,10 @@ export function imprimirTicket(c: Comprobante): void {
   const imprimir = () => {
     iframe.contentWindow?.focus()
     iframe.contentWindow?.print()
-    setTimeout(() => iframe.remove(), 1000)
+    setTimeout(() => {
+      iframe.remove()
+      listo()
+    }, 1000)
   }
   if (doc.readyState === 'complete') setTimeout(imprimir, 50)
   else iframe.onload = imprimir

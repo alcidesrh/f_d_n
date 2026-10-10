@@ -2,26 +2,45 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\GraphQl\Query;
+use ApiPlatform\Metadata\GraphQl\QueryCollection;
+use App\Entity\Base\Base;
 use App\Entity\Embeddable\Precio;
 use App\Entity\Enum\EstadoBoletoAsiento;
 use App\Repository\BoletoAsientoRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Money\Money;
 
+/**
+ * Un asiento vendido. Solo lectura por la API: se crea, anula y reasigna por
+ * `App\Venta` (ADR-021), que valida disponibilidad, tarifa y factura.
+ *
+ * La restricción única solo cuenta los boletos vivos: un asiento anulado o
+ * reasignado se puede volver a vender en el mismo trayecto y salida.
+ */
 #[ORM\Entity(repositoryClass: BoletoAsientoRepository::class)]
 #[
     ORM\UniqueConstraint(
         name: "uq_boleto_asiento_asiento_trayecto_salida",
         columns: ["asiento_id", "trayecto_id", "salida_id"],
+        // Tal como lo devuelve PostgreSQL (`pg_get_expr`): así el esquema no marca diferencias.
+        options: ["where" => "((estado)::text <> ALL ((ARRAY['anulado'::character varying, 'reasignado'::character varying])::text[]))"],
     ),
 ]
-class BoletoAsiento
+#[
+    ApiResource(
+        operations: [],
+        paginationType: "page",
+        order: ["id" => "DESC"],
+        graphQlOperations: [
+            new Query(),
+            new QueryCollection(filters: ["order.filter"]),
+        ],
+    ),
+]
+class BoletoAsiento extends Base
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column]
-    private ?int $id = null;
-
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
     private ?Asiento $asiento = null;
@@ -51,13 +70,19 @@ class BoletoAsiento
     #[ORM\Column(type: "string", length: 50, nullable: true)]
     private ?string $legacyId = null;
 
+    /** Boleto al que reemplaza cuando este nació de una reasignación. */
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(onDelete: "SET NULL")]
+    private ?BoletoAsiento $reasignadoDe = null;
+
     /** Nota de taquilla (p. ej. "viaja con mascota", "se baja en el km 120"). */
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $observacion = null;
 
-    public function getId(): ?int
+    /** "Boleto 15 · asiento 12": el texto que muestran los listados y el chat. */
+    public function getLabel(): string
     {
-        return $this->id;
+        return sprintf("Boleto %d · asiento %s", $this->id ?? 0, $this->asiento?->getNumero() ?? "?");
     }
 
     public function getAsiento(): ?Asiento
@@ -157,9 +182,33 @@ class BoletoAsiento
         return $this->precio?->toMoney();
     }
 
+    /** El precio ya formateado con su moneda (`Q 100.00`), para los listados de la API. */
+    public function getImporte(): ?string
+    {
+        $precio = $this->getPrecio();
+        if ($precio === null) {
+            return null;
+        }
+        $moneda = $precio->getCurrency()->getCode();
+
+        return sprintf("%s %s", $moneda === "GTQ" ? "Q" : $moneda, number_format((int) $precio->getAmount() / 100, 2));
+    }
+
     public function setPrecio(Money $money): self
     {
         $this->precio = Precio::fromMoney($money);
+        return $this;
+    }
+
+    public function getReasignadoDe(): ?BoletoAsiento
+    {
+        return $this->reasignadoDe;
+    }
+
+    public function setReasignadoDe(?BoletoAsiento $reasignadoDe): static
+    {
+        $this->reasignadoDe = $reasignadoDe;
+
         return $this;
     }
 

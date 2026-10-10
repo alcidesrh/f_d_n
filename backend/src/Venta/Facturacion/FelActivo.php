@@ -29,6 +29,11 @@ final class FelActivo implements CertificadorFel, ConsultaContribuyente
         return $this->esForcon() ? $this->forcon->certificar($solicitud) : $this->simulado->certificar($solicitud);
     }
 
+    public function anular(SolicitudAnulacion $solicitud): void
+    {
+        $this->esForcon() ? $this->forcon->anular($solicitud) : $this->simulado->anular($solicitud);
+    }
+
     public function nombreDeNit(string $nit): ?string
     {
         return $this->esForcon() ? $this->consultaForcon->nombreDeNit($nit) : $this->consultaSimulada->nombreDeNit($nit);

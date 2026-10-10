@@ -77,6 +77,7 @@ class MigradorIAM {
             'cliente.crear',
             'tarifa.ver'
         ],
+        'Anulacion y Reasignacion de Boletos' => ['boleto.anular', 'boleto.reasignar'],
         'Gestion Usuarios' => ['usuario.ver', 'usuario.editar', 'iam.ver', 'iam.editar'],
         'Gestion Reportes' => ['reporte.ventas', 'config.ver'],
         'Gestion Config' => ['config.ver', 'config.editar', 'empresa.editar', 'ruta.editar', 'tarifa.editar'],

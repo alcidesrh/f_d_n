@@ -20,6 +20,7 @@ class PermisoFixtures extends Fixture
             'Gestion Permisos' => ['permiso.listar', 'permiso.crear', 'permiso.editar', 'permiso.eliminar', 'permiso.ver'],
             'Gestion Acciones' => ['action.listar', 'action.crear', 'action.editar', 'action.eliminar', 'action.ver'],
             'Gestion Boletos'  => ['boleto.listar', 'boleto.crear', 'boleto.editar', 'boleto.eliminar', 'boleto.anular', 'boleto.ver'],
+            'Anulacion y Reasignacion de Boletos' => ['boleto.anular', 'boleto.reasignar'],
             'Gestion Rutas'    => ['ruta.listar', 'ruta.crear', 'ruta.editar', 'ruta.eliminar', 'ruta.ver'],
             'Venta Taquilla'   => ['venta.vender'],
             'Supervision Venta' => ['venta.vender', 'venta.cortesia', 'venta.sin_factura', 'agencia.acreditar'],

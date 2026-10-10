@@ -12,7 +12,7 @@ use Symfony\Component\Uid\Uuid;
  * red. Para probar los flujos de error:
  *
  * - receptor con NIT `0` → rechazo del documento (no recuperable);
- * - `FEL_SIMULADO_FALLA=1` → sin respuesta (recuperable).
+ * - `FEL_SIMULADO_FALLA=1` → sin respuesta (recuperable), también al anular.
  */
 final class CertificadorSimulado implements CertificadorFel
 {
@@ -44,5 +44,12 @@ final class CertificadorSimulado implements CertificadorFel
             certificadorNit: "SIMULADO",
             certificadorNombre: "Certificador simulado (desarrollo)",
         );
+    }
+
+    public function anular(SolicitudAnulacion $solicitud): void
+    {
+        if ($this->falla) {
+            throw CertificacionFallida::sinRespuesta();
+        }
     }
 }

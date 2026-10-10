@@ -78,6 +78,9 @@
           <Button severity="secondary" text rounded size="small" class="tap-target" aria-label="Reportar por chat" v-tooltip.top="'Reportar por chat'" @click="reportar = s">
                 <template #icon><icon name="forum-outline" /></template>
               </Button>
+              <Button severity="secondary" text rounded size="small" class="tap-target" aria-label="Bitácora" v-tooltip.top="'Bitácora'" @click="bitacora = s.id">
+                <template #icon><icon name="history" /></template>
+              </Button>
               <Button severity="secondary" text rounded size="small" class="tap-target" aria-label="Manifiestos" v-tooltip.top="'Manifiestos (PDF)'" aria-haspopup="menu" @click="abrirMenu($event, s)">
             <template #icon><icon name="picture-as-pdf-outline" /></template>
           </Button>
@@ -137,6 +140,9 @@
               <Button severity="secondary" text rounded size="small" aria-label="Reportar por chat" v-tooltip.top="'Reportar por chat'" @click="reportar = data">
                 <template #icon><icon name="forum-outline" /></template>
               </Button>
+              <Button severity="secondary" text rounded size="small" aria-label="Bitácora" v-tooltip.top="'Bitácora'" @click="bitacora = data.id">
+                <template #icon><icon name="history" /></template>
+              </Button>
               <Button severity="secondary" text rounded size="small" aria-label="Manifiestos" v-tooltip.top="'Manifiestos (PDF)'" aria-haspopup="menu" @click="abrirMenu($event, data)">
                 <template #icon><icon name="picture-as-pdf-outline" /></template>
               </Button>
@@ -168,6 +174,7 @@
 
     <Menu ref="menuManifiestos" :model="itemsManifiestos" popup />
     <VerSalidaDialog :salida="verSalida" @cerrar="cerrarVer" />
+    <BitacoraDialog v-if="bitacora !== null" :visible="true" tipo="salida" :id="bitacora" @update:visible="(v: boolean) => !v && (bitacora = null)" />
     <EnviarPorChatDialog :visible="!!reportar" :referencias="reportar ? [{ tipo: 'Salida', id: reportar.id }] : []" @update:visible="(v: boolean) => !v && (reportar = null)" />
     <EditarSalidaDialog v-if="opciones" :salida="operacion === 'editar' ? seleccion : null" :opciones="opciones" @cerrar="seleccion = null" @hecho="alTerminar" />
     <ConfirmarOperacionDialog :salida="operacion !== 'editar' ? seleccion : null" :operacion="operacion === 'eliminar' ? 'eliminar' : 'anular'" @cerrar="seleccion = null" @hecho="alTerminar" />
@@ -186,6 +193,7 @@ import ConfirmarOperacionDialog from "./ConfirmarOperacionDialog.vue";
 import EditarSalidaDialog from "./EditarSalidaDialog.vue";
 import ResultadoOperacionDialog from "./ResultadoOperacionDialog.vue";
 import VerSalidaDialog from "./VerSalidaDialog.vue";
+import BitacoraDialog from "@/shared/bitacora/BitacoraDialog.vue";
 import EnviarPorChatDialog from "@/shared/chat/EnviarPorChatDialog.vue";
 import { anunciarEnPantalla } from "@/shared/chat/integracion";
 import { abrirManifiesto, MANIFIESTOS } from "./manifiesto";
@@ -208,6 +216,8 @@ const resultado = shallowRef<ResultadoOperacion | null>(null);
 /** La que muestra "Ver"; también llega por `?ver=id` (enlaces del chat). */
 const verSalida = ref<Pick<SalidaFila, "id"> | null>(null);
 const reportar = ref<SalidaFila | null>(null);
+/** Salida cuya bitácora se está viendo. */
+const bitacora = ref<number | null>(null);
 const route = useRoute();
 const router = useRouter();
 watch(
