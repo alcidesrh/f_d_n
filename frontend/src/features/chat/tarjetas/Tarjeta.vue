@@ -1,14 +1,14 @@
 <!--
-  Un registro compartido en el chat: cabecera (tipo, id, abrir) y el cuerpo
+  Un registro compartido en el chat: cabecera (id en la base de datos y abrir;
+  el tipo y su ícono ya los dice el grupo de `TarjetasMensaje`) y el cuerpo
   propio del tipo, o la etiqueta si no tiene. Si quien lee no tiene permiso o
   el registro ya no existe, lo dice en lugar de mostrar datos.
 -->
 <template>
   <article class="tarjeta" :class="{ 'tarjeta--apagada': adjunto.estado !== 'ok' }">
     <header class="tarjeta__cabeza">
-      <span class="tarjeta__icono"><icon :name="tipo.icono" color="text-current" /></span>
       <span class="min-w-0 flex-1">
-        <span class="tarjeta__tipo">{{ tipo.nombre }} · {{ adjunto.id }}</span>
+        <span class="tarjeta__tipo">ID {{ adjunto.id }}</span>
         <span v-if="adjunto.estado === 'ok' && !tipo.componente" class="tarjeta__titulo">{{ adjunto.datos?.titulo }}</span>
       </span>
       <router-link v-if="adjunto.estado === 'ok'" :to="tipo.destino(adjunto)" class="tarjeta__abrir tap-target" :aria-label="`Abrir ${tipo.nombre} ${adjunto.id}`" v-tooltip.top="'Abrir'">
@@ -50,16 +50,6 @@ const tipo = computed(() => tipoTarjeta(props.adjunto.tipo))
   align-items: center;
   gap: 0.6rem;
   min-width: 0;
-}
-.tarjeta__icono {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 0.55rem;
-  color: var(--p-primary-color);
-  background: color-mix(in srgb, var(--p-primary-color) 12%, transparent);
 }
 .tarjeta__tipo {
   display: block;

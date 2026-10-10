@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Chat\Tarjeta;
 
 use App\Entity\BoletoAsiento;
-use App\Venta\Boleto\DatosBoleto;
+use App\Salida\DetalleSalida;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
-/** Boleto (`BoletoAsiento`): estado, pasajero, asiento, trayecto, salida y venta. */
+/** Boleto (`BoletoAsiento`): estado, cliente, asiento, trayecto, salida, cuándo y quién lo vendió. */
 final class TarjetaBoleto implements Tarjeta
 {
     public function __construct(
@@ -37,35 +37,19 @@ final class TarjetaBoleto implements Tarjeta
             $venta = $b->getBoletoVenta();
             $cliente = $b->getCliente();
             $datos[(int) $b->getId()] = [
-                "titulo" => sprintf("Boleto %d", $b->getId()),
+                "titulo" => $trayecto
+                    ? sprintf("%s → %s · asiento %s", $trayecto->getOrigen()?->getNombre(), $trayecto->getDestino()?->getNombre(), $b->getAsiento()?->getNumero() ?? "?")
+                    : sprintf("Boleto %d", $b->getId()),
                 "estado" => $b->getEstado()->value,
-                "asiento" => $b->getAsiento() ? [
-                    "numero" => $b->getAsiento()->getNumero(),
-                    "clase" => $b->getAsiento()->getClase()->value,
-                ] : null,
-                "pasajero" => $cliente ? [
-                    "nombre" => $cliente->getNombreCompleto(),
-                    "documento" => $cliente->getNumeroDocumento(),
-                ] : null,
+                "asiento" => $b->getAsiento()?->getNumero(),
+                "cliente" => $cliente?->getNombreCompleto(),
                 "trayecto" => $trayecto ? [
                     "origen" => $trayecto->getOrigen()?->getNombre(),
                     "destino" => $trayecto->getDestino()?->getNombre(),
                 ] : null,
-                "salida" => $salida ? [
-                    "id" => $salida->getId(),
-                    "fecha" => $salida->getFecha()?->format(DATE_ATOM),
-                    "bus" => $salida->getBus()?->getCodigo(),
-                ] : null,
-                "precio" => DatosBoleto::importe($b->getPrecio()),
-                "venta" => $venta ? [
-                    "id" => $venta->getId(),
-                    "canal" => $venta->getCanal()->value,
-                    "fecha" => $venta->getCreada()?->format(DATE_ATOM),
-                    "lugar" => $venta->getAgencia()?->getNombre() ?? $venta->getEstacion()?->getNombre(),
-                    "vendedor" => $venta->getUsuario()?->getUsername(),
-                    "sinCobro" => $venta->isCortesia() ? "cortesia" : ($venta->isVoucher() ? "voucher" : null),
-                ] : null,
-                "observacion" => $b->getObservacion(),
+                "salida" => $salida ? ["id" => $salida->getId(), "fecha" => $salida->getFecha()?->format(DATE_ATOM)] : null,
+                "creado" => $venta?->getCreada()?->format(DATE_ATOM),
+                "vendedor" => DetalleSalida::quien($venta?->getUsuario()),
             ];
         }
 

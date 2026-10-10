@@ -8,6 +8,7 @@ import type { RouteLocationRaw } from 'vue-router'
 import type { Adjunto } from '@/core/chat/types'
 import { entitySlug } from '@/core/entities/slug'
 import TarjetaBoleto from './TarjetaBoleto.vue'
+import TarjetaBus from './TarjetaBus.vue'
 import TarjetaSalida from './TarjetaSalida.vue'
 
 export interface TipoTarjeta {
@@ -23,9 +24,9 @@ const formulario = (a: Adjunto): RouteLocationRaw => ({ name: 'entity-form', par
 export const TARJETAS: Record<string, TipoTarjeta> = {
   BoletoAsiento: { nombre: 'Boleto', icono: 'confirmation-number-outline', componente: TarjetaBoleto, destino: formulario },
   Salida: { nombre: 'Salida', icono: 'directions-bus-outline', componente: TarjetaSalida, destino: (a) => ({ name: 'salidas', query: { ver: a.id } }) },
+  Bus: { nombre: 'Bus', icono: 'airport-shuttle-outline', componente: TarjetaBus, destino: formulario },
   // Sin vista propia (tarjeta genérica): solo nombre e ícono.
   BoletoVenta: { nombre: 'Venta', icono: 'receipt-long-outline' },
-  Bus: { nombre: 'Bus', icono: 'airport-shuttle-outline' },
   Cliente: { nombre: 'Cliente', icono: 'person-outline' },
   Piloto: { nombre: 'Piloto', icono: 'badge-outline' },
   Agencia: { nombre: 'Agencia', icono: 'storefront-outline' },

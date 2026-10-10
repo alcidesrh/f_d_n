@@ -45,7 +45,8 @@ final class DetalleSalida
         ];
     }
 
-    private static function quien(?\App\Entity\Usuario $u): ?string
+    /** Nombre y apellido del usuario, o su usuario si no los tiene. */
+    public static function quien(?\App\Entity\Usuario $u): ?string
     {
         if ($u === null) {
             return null;

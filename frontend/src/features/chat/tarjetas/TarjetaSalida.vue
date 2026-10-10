@@ -1,41 +1,40 @@
 <!--
   Cuerpo de la tarjeta de una salida: el reporte de salida calculado desde la
-  venta (ocupación, desglose por canal, cobrado) y el croquis plegable.
+  venta (ocupación y desglose de los ocupados por canal) y el croquis vertical
+  (en los de dos plantas, la de clase B primero).
 -->
 <template>
   <div class="flex flex-col gap-2.5 text-sm">
     <div class="flex items-start justify-between gap-2">
-      <div class="min-w-0">
-        <div class="font-semibold leading-snug">{{ d.titulo }}</div>
-        <div class="text-xs text-muted-color first-letter:uppercase">
-          {{ fecha(d.salida) }}<template v-if="d.bus"> · bus {{ d.bus.codigo }}</template><template v-if="d.empresa"> · {{ d.empresa.nombre }}</template>
-        </div>
-      </div>
+      <div class="font-semibold leading-snug">{{ d.titulo }}</div>
       <Tag :value="estado.etiqueta" :severity="estado.severidad" class="!text-xs shrink-0" />
     </div>
+    <dl class="m-0 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1">
+      <dt>Salida</dt>
+      <dd class="first-letter:uppercase">{{ fecha(d.salida) }}<span v-if="d.bus" class="text-muted-color"> · bus {{ d.bus.codigo }}</span></dd>
+      <template v-if="d.empresa"><dt>Empresa</dt><dd>{{ d.empresa.nombre }}</dd></template>
+      <template v-if="d.creadaEn || d.creadaPor">
+        <dt>Creada</dt>
+        <dd><template v-if="d.creadaEn">{{ fecha(d.creadaEn) }}</template><template v-if="d.creadaPor"> por {{ d.creadaPor }}</template></dd>
+      </template>
+    </dl>
 
     <div class="flex flex-col gap-1">
       <div class="ocupacion" role="img" :aria-label="`${ocupados} de ${r.asientos} asientos ocupados`">
-        <span v-for="s in segmentos" :key="s.clave" :class="`ocupacion__${s.clave}`" :style="{ width: `${(s.n / Math.max(r.asientos, 1)) * 100}%` }" />
+        <span v-for="s in desglose" :key="s.clave" :class="`ocupacion__${s.clave}`" :style="{ width: `${(s.n / Math.max(r.asientos, 1)) * 100}%` }" />
       </div>
       <div class="flex justify-between text-xs tabular-nums">
-        <span><b>{{ ocupados }}</b> de {{ r.asientos }} ocupados</span>
-        <span class="text-muted-color">{{ libres }} libres</span>
+        <span><b>{{ ocupados }}</b> ocupados</span>
+        <span><b>{{ libres }}</b> libres</span>
       </div>
     </div>
 
-    <div v-if="canales.length" class="flex flex-wrap gap-1">
-      <span v-for="c in canales" :key="c.clave" class="chip"><i :class="`punto ocupacion__${c.clave}`" />{{ c.etiqueta }} {{ c.n }}</span>
+    <div v-if="desglose.length" class="flex flex-wrap gap-1">
+      <span v-for="c in desglose" :key="c.clave" class="chip"><i :class="`punto ocupacion__${c.clave}`" />{{ c.etiqueta }} {{ c.n }}</span>
     </div>
 
-    <div class="flex items-center justify-between gap-2">
-      <span class="text-xs text-muted-color">Cobrado <b class="text-color tabular-nums">{{ r.ingresos?.texto ?? 'Q 0.00' }}</b></span>
-      <button v-if="d.croquis.length" type="button" class="ver-croquis" :aria-expanded="croquis" @click="croquis = !croquis">
-        <icon :name="croquis ? 'expand-less' : 'airline-seat-recline-normal-outline'" size="1rem" color="text-current" />{{ croquis ? 'Ocultar' : 'Croquis' }}
-      </button>
-    </div>
-    <div v-if="croquis" class="overflow-x-auto pb-1">
-      <BusMap :elementos="d.croquis" :estado="estadoAsiento" orientacion="horizontal" tamano="xs" class="justify-center" />
+    <div v-if="d.croquis.length" class="flex justify-center pt-1">
+      <BusMap :elementos="d.croquis" :plantas="plantasClaseBPrimero(d.croquis)" :estado="estadoAsiento" tamano="sm" class="justify-center" />
     </div>
   </div>
 </template>
@@ -45,11 +44,11 @@ import BusMap from '@/shared/bus-map/BusMap.vue'
 import { etiquetaEstado } from '@/core/salida/filtro'
 import type { DetalleSalida } from '@/core/salida/types'
 import { estadoEnMapa } from '@/core/venta/modelo'
+import { plantasClaseBPrimero } from './croquis'
 
 const props = defineProps<{ datos: unknown }>()
 const d = computed(() => props.datos as DetalleSalida & { titulo: string })
 const r = computed(() => d.value.resumen)
-const croquis = ref(false)
 
 const estado = computed(() => etiquetaEstado(d.value.estado))
 const ocupados = computed(() => r.value.vendidos + r.value.reservados)
@@ -60,7 +59,8 @@ const ETIQUETAS = { estacion: 'Estación', agencia: 'Agencia', web: 'Página', c
 const canales = computed(() =>
   (Object.keys(ETIQUETAS) as (keyof typeof ETIQUETAS)[]).map((clave) => ({ clave, etiqueta: ETIQUETAS[clave], n: r.value.canales[clave] })).filter((c) => c.n > 0),
 )
-const segmentos = computed(() => [...canales.value, { clave: 'reservado', n: r.value.reservados }].filter((s) => s.n > 0))
+/** Los ocupados por canal (cortesía y voucher aparte) y los apartados en la página. */
+const desglose = computed(() => [...canales.value, { clave: 'reservado', etiqueta: 'Preventa', n: r.value.reservados }].filter((s) => s.n > 0))
 const fecha = (iso: string) => new Intl.DateTimeFormat('es-GT', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date(iso))
 </script>
 
@@ -105,18 +105,13 @@ const fecha = (iso: string) => new Intl.DateTimeFormat('es-GT', { weekday: 'shor
   height: 0.45rem;
   border-radius: 50%;
 }
-.ver-croquis {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.2rem 0.5rem;
-  border-radius: 0.45rem;
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--p-primary-color);
-  cursor: pointer;
-  &:hover {
-    background: var(--p-surface-100);
-  }
+dt {
+  color: var(--p-surface-500);
+  font-size: 0.78rem;
+  padding-top: 0.05rem;
+}
+dd {
+  margin: 0;
+  min-width: 0;
 }
 </style>
