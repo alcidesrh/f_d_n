@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { agrupar, aplicarAviso, coincide, etiquetaDia, iniciales, medidasReducidas, segmentos, tamanoLegible, unir, vistoPor } from '../modelo'
+import { agrupar, aplicarAviso, aplicarPresencia, coincide, etiquetaDia, iniciales, medidasReducidas, segmentos, tamanoLegible, unir, vistoPor } from '../modelo'
 import type { Canal, Mensaje, Perfil } from '../types'
 
 const ana: Perfil = { id: 1, nombre: 'Ana López', ambito: 'administracion', lugar: null }
@@ -132,5 +132,14 @@ describe('archivos', () => {
     expect(medidasReducidas(4000, 3000, 1600)).toEqual({ ancho: 1600, alto: 1200 })
     expect(medidasReducidas(3000, 4000, 1600)).toEqual({ ancho: 1200, alto: 1600 })
     expect(medidasReducidas(800, 600, 1600)).toEqual({ ancho: 800, alto: 600 })
+  })
+})
+
+describe('aplicarPresencia', () => {
+  it('agrega al que se conecta sin repetirlo y quita al que se desconecta', () => {
+    expect(aplicarPresencia([1], 2, true)).toEqual([1, 2])
+    expect(aplicarPresencia([1, 2], 2, true)).toEqual([1, 2])
+    expect(aplicarPresencia([1, 2], 1, false)).toEqual([2])
+    expect(aplicarPresencia([], 5, false)).toEqual([])
   })
 })

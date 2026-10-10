@@ -1,7 +1,8 @@
 <!--
   Avatar del chat: iniciales sobre un tono estable por id (persona o grupo),
   campana para los avisos del sistema y, opcionalmente, una marca del ámbito
-  (estación / agencia). Con `foto` (URL) muestra la foto de perfil en su lugar;
+  (estación / agencia) y, con `enLinea` (true/false), un punto de presencia
+  (verde en línea, gris desconectado; null = sin indicador). Con `foto` (URL) muestra la foto de perfil en su lugar;
   si la imagen no carga, vuelve a las iniciales.
 -->
 <template>
@@ -10,6 +11,7 @@
     <icon v-else-if="sistema" name="notifications-outline" color="text-current" />
     <icon v-else-if="grupo" name="group-outline" color="text-current" />
     <template v-else>{{ iniciales(nombre) }}</template>
+    <span v-if="enLinea !== null" class="chat-avatar__presencia" :class="{ 'chat-avatar__presencia--on': enLinea }" role="img" :aria-label="enLinea ? 'En línea' : 'Desconectado'" :title="enLinea ? 'En línea' : 'Desconectado'" />
     <span v-if="ambito && ambito !== 'administracion'" class="chat-avatar__ambito" :title="ambito === 'agencia' ? 'Agencia' : 'Estación'">
       <icon :name="ambito === 'agencia' ? 'handshake-outline' : 'storefront-outline'" size=".65rem" color="text-current" />
     </span>
@@ -22,7 +24,7 @@ import { urlFoto } from '@/core/cuenta/api'
 import { iniciales, tono } from '@/core/chat/modelo'
 import type { Ambito } from '@/core/chat/types'
 
-const props = withDefaults(defineProps<{ id: number; nombre: string; ambito?: Ambito | null; grupo?: boolean; sistema?: boolean; foto?: string | null; tamano?: 'sm' | 'md' | 'lg' | 'xl' }>(), { ambito: null, grupo: false, sistema: false, foto: null, tamano: 'md' })
+const props = withDefaults(defineProps<{ id: number; nombre: string; ambito?: Ambito | null; grupo?: boolean; sistema?: boolean; foto?: string | null; enLinea?: boolean | null; tamano?: 'sm' | 'md' | 'lg' | 'xl' }>(), { ambito: null, grupo: false, sistema: false, foto: null, enLinea: null, tamano: 'md' })
 
 /** `foto` llega como URL absoluta (la propia) o como ruta firmada de la API (la de otros). */
 const src = computed(() => (props.foto?.startsWith('/') ? urlFoto(props.foto) : props.foto))
@@ -65,6 +67,23 @@ watch(() => props.foto, () => (fallo.value = false))
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
+}
+.chat-avatar__presencia {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: var(--p-surface-400);
+  box-shadow: 0 0 0 2px var(--p-content-background);
+}
+.chat-avatar__presencia--on {
+  background: #22c55e;
+}
+.chat-avatar--sm .chat-avatar__presencia {
+  width: 0.55rem;
+  height: 0.55rem;
 }
 .chat-avatar__ambito {
   position: absolute;

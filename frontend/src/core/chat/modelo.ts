@@ -98,7 +98,7 @@ export const totalNoLeidos = (canales: Canal[]) => canales.reduce((n, c) => n + 
  * (hay que recargarla). `leyendo`: el canal está abierto y visible, así que
  * el mensaje no cuenta como no leído.
  */
-export function aplicarAviso(canales: Canal[], aviso: Aviso, yo: number | null, leyendo: number | null): Canal[] | null {
+export function aplicarAviso(canales: Canal[], aviso: Exclude<Aviso, { tipo: 'presencia' }>, yo: number | null, leyendo: number | null): Canal[] | null {
   const canal = canales.find((c) => c.id === aviso.canal)
   if (!canal) return aviso.tipo === 'leido' ? canales : null
   if (aviso.tipo === 'canal') return canales
@@ -168,4 +168,10 @@ export function tamanoLegible(bytes: number): string {
 export function medidasReducidas(ancho: number, alto: number, max: number): { ancho: number; alto: number } {
   const factor = Math.min(1, max / Math.max(ancho, alto, 1))
   return { ancho: Math.round(ancho * factor), alto: Math.round(alto * factor) }
+}
+
+/** La lista de usuarios en línea después de que uno se conecta o desconecta. */
+export function aplicarPresencia(enLinea: number[], usuario: number, conectado: boolean): number[] {
+  const sin = enLinea.filter((id) => id !== usuario)
+  return conectado ? [...sin, usuario] : sin
 }

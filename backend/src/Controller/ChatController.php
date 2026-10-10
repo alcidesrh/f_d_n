@@ -8,6 +8,7 @@ use App\Chat\Archivos;
 use App\Chat\AvisosChat;
 use App\Chat\ChatRechazado;
 use App\Chat\Conversaciones;
+use App\Chat\Presencia;
 use App\Chat\Tarjeta\Tarjetas;
 use App\Entity\ChatArchivo;
 use App\Entity\Usuario;
@@ -37,6 +38,7 @@ final class ChatController extends AbstractController
         private readonly Archivos $archivos,
         private readonly EntityManagerInterface $em,
         private readonly Tarjetas $tarjetas,
+        private readonly Presencia $presencia,
     ) {}
 
     /** Token de suscripción a los avisos privados del usuario (Mercure). */
@@ -44,6 +46,47 @@ final class ChatController extends AbstractController
     public function token(#[CurrentUser] Usuario $yo): JsonResponse
     {
         return $this->responder(fn() => $this->avisos->token((int) $yo->getId()));
+    }
+
+    /**
+     * Latido de una pestaña: `{ conexion, ids?: [usuarios] }` → `{ enLinea: [ids] }`,
+     * los de `ids` con quienes puede conversar que tienen la aplicación abierta.
+     * Si con esto el usuario pasa a estar en línea, se avisa al instante a los
+     * que lo ven (aviso `presencia`).
+     */
+    #[Route("/presencia", name: "presencia", methods: ["POST"])]
+    public function presencia(Request $request, #[CurrentUser] Usuario $yo): JsonResponse
+    {
+        $datos = $request->toArray();
+        if ($this->presencia->latir((int) $yo->getId(), self::conexion($datos["conexion"] ?? null))) {
+            $this->difundirPresencia($yo, true);
+        }
+        $ids = array_slice(self::ids($datos["ids"] ?? []), 0, 500);
+
+        return $this->json(["enLinea" => $this->presencia->enLinea($this->chat->conversables($yo, $ids))]);
+    }
+
+    /** `?conexion=`: la pestaña se cierra (o termina la sesión); si era la última, deja de figurar en línea. */
+    #[Route("/presencia", name: "presencia_salir", methods: ["DELETE"])]
+    public function salir(Request $request, #[CurrentUser] Usuario $yo): JsonResponse
+    {
+        if ($this->presencia->salir((int) $yo->getId(), self::conexion($request->query->get("conexion")))) {
+            $this->difundirPresencia($yo, false);
+        }
+
+        return $this->json(null, Response::HTTP_NO_CONTENT);
+    }
+
+    /** Avisa el cambio solo a los que conversan con `$yo` y están en línea. */
+    private function difundirPresencia(Usuario $yo, bool $enLinea): void
+    {
+        $contactos = array_map(static fn(array $c) => (int) $c["id"], $this->chat->contactos($yo));
+        $this->avisos->avisar($this->presencia->enLinea($contactos), "presencia", ["usuario" => (int) $yo->getId(), "enLinea" => $enLinea]);
+    }
+
+    private static function conexion(mixed $valor): string
+    {
+        return is_string($valor) && preg_match('/^[\w-]{1,64}$/', $valor) ? $valor : "-";
     }
 
     #[Route("/contactos", name: "contactos", methods: ["GET"])]

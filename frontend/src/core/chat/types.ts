@@ -91,6 +91,7 @@ export type Aviso =
   | { tipo: 'mensaje'; canal: number; mensaje: number; autor: Perfil | null; extracto: string }
   | { tipo: 'leido'; canal: number; usuario: number; hasta: number }
   | { tipo: 'canal'; canal: number }
+  | { tipo: 'presencia'; usuario: number; enLinea: boolean }
 
 export interface Destinos {
   usuarios: number[]

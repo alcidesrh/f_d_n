@@ -38,6 +38,29 @@ final class Conversaciones
         return Perfil::de($u, $this->fotos);
     }
 
+    /**
+     * De `$ids`, los usuarios con quienes `$yo` puede conversar (el mismo criterio que `contactos`).
+     *
+     * @param list<int> $ids
+     * @return list<int>
+     */
+    public function conversables(Usuario $yo, array $ids): array
+    {
+        $ids = array_values(array_diff(array_unique($ids), [(int) $yo->getId()]));
+        if ($ids === []) {
+            return [];
+        }
+        $usuarios = $this->em->createQuery(
+            "SELECT u, a, e, emp FROM App\Entity\Usuario u LEFT JOIN u.agencia a LEFT JOIN u.estacion e LEFT JOIN u.empresa emp WHERE u.id IN (:ids)",
+        )->setParameter("ids", $ids)->getResult();
+        $mio = $this->perfil($yo);
+
+        return array_values(array_map(
+            static fn(Perfil $p) => $p->id,
+            array_filter(array_map($this->perfil(...), $usuarios), static fn(Perfil $p) => Directorio::puedenConversar($mio, $p)),
+        ));
+    }
+
     /** @return list<array<string, mixed>> con quién puede hablar `$yo`, por nombre */
     public function contactos(Usuario $yo): array
     {

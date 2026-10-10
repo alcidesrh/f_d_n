@@ -12,6 +12,19 @@ export const fetchContactos = () => http.get<Perfil[]>(`${BASE}/contactos`, fond
 export const fetchRecursos = () => http.get<Recurso[]>(`${BASE}/recursos`, fondo)
 export const fetchToken = () => http.get<{ token: string; topico: string }>(`${BASE}/token`, fondo)
 
+/** Latido de presencia; devuelve, de `ids`, quiénes están en línea. */
+export const latir = (conexion: string, ids: number[]) => http.post<{ enLinea: number[] }>(`${BASE}/presencia`, { conexion, ids }, fondo)
+
+/** Esta pestaña se va. Con `keepalive` sale aunque la página se esté cerrando. */
+export function salirDeLinea(conexion: string) {
+  const token = useSessionStore().token
+  return fetch(`${config.restUrl}${BASE}/presencia?conexion=${encodeURIComponent(conexion)}`, {
+    method: 'DELETE',
+    keepalive: true,
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  }).catch(() => undefined)
+}
+
 export const abrirDirecto = (usuario: number) => http.post<Canal>(`${BASE}/canales/directo`, { usuario })
 export const crearGrupo = (nombre: string, miembros: number[]) => http.post<Canal>(`${BASE}/canales/grupo`, { nombre, miembros })
 

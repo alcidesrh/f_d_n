@@ -7,12 +7,14 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { suscribir } from '@/core/realtime'
 import * as api from './api'
-import { aplicarAviso, totalNoLeidos, ultimo, unir } from './modelo'
+import { aplicarAviso, aplicarPresencia, totalNoLeidos, ultimo, unir } from './modelo'
 import type { Aviso, Canal, Destinos, Mensaje, Perfil, Recurso, Referencia } from './types'
 
 
 const RESPALDO_MS = 30_000
 const REINTENTO_MS = 15_000
+/** Cada cuánto se avisa que seguimos aquí (y se pregunta quién está en línea). */
+const LATIDO_MS = 30_000
 
 export const useChatStore = defineStore('chat', () => {
   const yo = ref<Perfil | null>(null)
@@ -26,12 +28,35 @@ export const useChatStore = defineStore('chat', () => {
   const activo = ref<number | null>(null)
   const listo = ref(false)
   const enVivo = ref(false)
+  /** Usuarios con la aplicación abierta, de los que conozco (se actualiza con cada latido). */
+  const enLinea = ref<number[]>([])
   /** Último mensaje ajeno fuera de la conversación en pantalla (lo muestra el shell). */
   const entrante = ref<{ canal: number; autor: Perfil | null; extracto: string; n: number } | null>(null)
 
   const noLeidos = computed(() => totalNoLeidos(canales.value))
   const canal = (id: number) => canales.value.find((c) => c.id === id) ?? null
 
+  const estaEnLinea = (usuario: number) => enLinea.value.includes(usuario)
+  /** Los usuarios cuya presencia se muestra: contactos, miembros de mis canales y la lista de contactos si ya se cargó. */
+  const conocidos = () => {
+    const ids = new Set<number>(contactos.value?.map((p) => p.id))
+    for (const c of canales.value) {
+      if (c.contacto) ids.add(c.contacto.id)
+      for (const m of c.miembros) ids.add(m.id)
+    }
+    ids.delete(yo.value?.id ?? 0)
+    return [...ids]
+  }
+
+  /** Identifica esta pestaña: el usuario sigue en línea mientras alguna siga viva. */
+  const conexion = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`
+
+  async function latir() {
+    const r = await api.latir(conexion, conocidos()).catch(() => null)
+    if (r) enLinea.value = r.enLinea
+  }
+
+  let latido: ReturnType<typeof setInterval> | null = null
   let desuscribir: (() => void) | null = null
   let respaldo: ReturnType<typeof setInterval> | null = null
   let reintento: ReturnType<typeof setTimeout> | null = null
@@ -41,14 +66,22 @@ export const useChatStore = defineStore('chat', () => {
   const leyendo = () => (visible() ? activo.value : null)
   /** Al volver a la pestaña, lo que llegó a la conversación abierta queda leído. */
   const alVolver = () => {
-    if (visible() && activo.value) void leer(activo.value)
+    if (!visible()) return
+    void latir()
+    if (activo.value) void leer(activo.value)
   }
+
+  /** Se cierra la pestaña: se avisa antes de que el navegador la corte. */
+  const alIrse = () => void api.salirDeLinea(conexion)
 
   async function iniciar() {
     if (respaldo) return
     document.addEventListener('visibilitychange', alVolver)
+    window.addEventListener('pagehide', alIrse)
     await refrescar()
     void conectar()
+    void latir()
+    latido = setInterval(() => void latir(), LATIDO_MS)
     respaldo = setInterval(() => {
       if (enVivo.value) return
       void refrescar(true)
@@ -57,9 +90,15 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   function detener() {
+    if (latido) {
+      clearInterval(latido)
+      latido = null
+      if (yo.value) void api.salirDeLinea(conexion)
+    }
     desuscribir?.()
     desuscribir = null
     document.removeEventListener('visibilitychange', alVolver)
+    window.removeEventListener('pagehide', alIrse)
     if (respaldo) clearInterval(respaldo)
     if (reintento) clearTimeout(reintento)
     respaldo = reintento = null
@@ -71,6 +110,7 @@ export const useChatStore = defineStore('chat', () => {
     recursos.value = null
     activo.value = null
     entrante.value = null
+    enLinea.value = []
     listo.value = enVivo.value = false
   }
 
@@ -86,6 +126,8 @@ export const useChatStore = defineStore('chat', () => {
         },
       })
       enVivo.value = true
+      // Pudo perderse algún cambio mientras estaba cortado.
+      void latir()
     } catch {
       enVivo.value = false
     }
@@ -100,6 +142,10 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   async function recibir(aviso: Aviso) {
+    if (aviso.tipo === 'presencia') {
+      enLinea.value = aplicarPresencia(enLinea.value, aviso.usuario, aviso.enLinea)
+      return
+    }
     const despues = aplicarAviso(canales.value, aviso, yo.value?.id ?? null, leyendo())
     if (despues) canales.value = despues
     else await refrescar(true)
@@ -202,7 +248,7 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   return {
-    yo, canales, mensajes, completos, contactos, recursos, activo, listo, enVivo, entrante, noLeidos,
+    yo, canales, mensajes, completos, contactos, recursos, activo, listo, enVivo, enLinea, entrante, noLeidos, estaEnLinea,
     canal, iniciar, detener, refrescar, cargar, abrir, cerrar, cargarAnteriores, leer, enviar, cargarContactos, cargarRecursos, directo, grupo, compartir,
   }
 })

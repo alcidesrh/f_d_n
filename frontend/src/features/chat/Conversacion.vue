@@ -12,10 +12,12 @@
         <icon name="arrow-back" color="text-current" />
       </button>
       <template v-if="canal">
-        <ChatAvatar :id="canal.id" :nombre="canal.nombre" :grupo="canal.tipo === 'grupo'" :sistema="esSistema" :ambito="canal.contacto?.ambito" :foto="canal.contacto?.foto" />
+        <ChatAvatar :id="canal.id" :nombre="canal.nombre" :grupo="canal.tipo === 'grupo'" :sistema="esSistema" :ambito="canal.contacto?.ambito" :foto="canal.contacto?.foto" :en-linea="enLinea" />
         <div class="min-w-0">
           <div class="conv__nombre">{{ canal.nombre }}</div>
-          <div class="conv__sub" :title="miembros">{{ subtitulo }}</div>
+          <div class="conv__sub" :title="miembros">
+            <span v-if="enLinea" class="conv__en-linea">En línea</span><span v-if="enLinea && subtitulo"> · </span>{{ subtitulo }}
+          </div>
         </div>
       </template>
     </header>
@@ -129,6 +131,9 @@ const esSistema = computed(() => canal.value?.tipo === "sistema");
 const lista = computed(() => chat.mensajes[props.canalId] ?? []);
 const bloques = computed(() => agrupar(lista.value, chat.yo?.id ?? null));
 const miembros = computed(() => canal.value?.miembros.map((m) => (m.id === chat.yo?.id ? "Tú" : m.nombre)).join(", ") ?? "");
+/** Solo en las directas: null (sin indicador) en grupos y avisos del sistema. */
+const enLinea = computed(() => (canal.value?.tipo === "directo" && canal.value.contacto ? chat.estaEnLinea(canal.value.contacto.id) : null));
+
 const subtitulo = computed(() => {
   const c = canal.value;
   if (!c) return "";
@@ -278,6 +283,10 @@ watch(
 </script>
 
 <style scoped>
+.conv__en-linea {
+  color: #16a34a;
+  font-weight: 500;
+}
 .conv {
   position: relative;
   display: flex;
