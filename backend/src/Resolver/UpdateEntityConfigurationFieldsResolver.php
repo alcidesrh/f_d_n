@@ -42,6 +42,9 @@ final class UpdateEntityConfigurationFieldsResolver implements MutationResolverI
                 $field->loadData($data);
             }
         }
+        if (\array_key_exists('listOptions', $args)) {
+            $entity->setListOptions($args['listOptions']);
+        }
         $entity->markAsUpdated();
         $this->entityManager->flush();
 

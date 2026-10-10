@@ -55,6 +55,36 @@
       />
     </label>
 
+    <label v-if="variant === 'collection'" class="cell w-28">
+      <span class="cell__label">
+        width
+        <span v-if="widthInvalid" class="cell__error">· inválido</span>
+      </span>
+      <InputText
+        :model-value="(row as CollectionFieldRow).width ?? ''"
+        size="small"
+        class="font-mono"
+        placeholder="auto"
+        :invalid="widthInvalid"
+        title="Preset (xs, sm, md, lg, xl), longitud (12rem, 160px) o fracción (2fr). Vacío: flexible."
+        @update:model-value="(row as CollectionFieldRow).width = ($event as string) || null"
+      />
+    </label>
+
+    <label class="cell flex-1 min-w-40">
+      <span class="cell__label">
+        attrs (JSON)
+        <span v-if="attrsInvalid" class="cell__error">· JSON inválido</span>
+      </span>
+      <InputText
+        :model-value="attrsText"
+        size="small"
+        class="font-mono"
+        :invalid="attrsInvalid"
+        placeholder='{ "class": "text-right" }'
+        @update:model-value="onAttrsInput"
+      />
+    </label>
     <div class="cell cell--switch">
       <span class="cell__label">visible</span>
       <ToggleSwitch
@@ -79,27 +109,13 @@
         />
       </div>
     </template>
-
-    <label class="cell flex-1 min-w-40">
-      <span class="cell__label">
-        attrs (JSON)
-        <span v-if="attrsInvalid" class="cell__error">· JSON inválido</span>
-      </span>
-      <InputText
-        :model-value="attrsText"
-        size="small"
-        class="font-mono"
-        :invalid="attrsInvalid"
-        placeholder='{ "class": "text-right" }'
-        @update:model-value="onAttrsInput"
-      />
-    </label>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useEntityConfigStore } from './store'
 import type { CollectionFieldRow, FormFieldRow } from './store'
+import { isValidWidth } from '@/shared/data-grid/layout'
 
 defineOptions({ name: 'FieldConfigPanel' })
 
@@ -114,12 +130,17 @@ const props = defineProps<{
 /** Valores que produce `CollectionFieldConfig::setData()`; el campo admite otros. */
 const KIND_OPTIONS = ['scalar', 'date', 'list']
 
+
 const store = useEntityConfigStore()
 
 const row = computed<CollectionFieldRow | FormFieldRow | null>(() => {
   const list = props.variant === 'collection' ? store.collectionFields : store.formFields
   return list.find((item) => item.key === props.fieldKey) ?? null
 })
+
+const widthInvalid = computed(() => props.variant === 'collection' && !isValidWidth((row.value as CollectionFieldRow | null)?.width))
+
+watch(widthInvalid, (invalid) => store.setAttrsError(`${props.fieldKey}#width`, invalid))
 
 const attrsText = ref('')
 const attrsInvalid = ref(false)
@@ -168,7 +189,10 @@ watch(
   { immediate: true },
 )
 
-onBeforeUnmount(() => store.setAttrsError(props.fieldKey, false))
+onBeforeUnmount(() => {
+  store.setAttrsError(props.fieldKey, false)
+  store.setAttrsError(`${props.fieldKey}#width`, false)
+})
 </script>
 
 <style scoped>

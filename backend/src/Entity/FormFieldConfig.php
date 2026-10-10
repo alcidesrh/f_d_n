@@ -20,11 +20,6 @@ class FormFieldConfig extends FieldConfig
 
     public function __construct(array $data)
     {
-        $this->setData($data);
-    }
-
-    public function setData(array $data)
-    {
         $this->setField($data[0])
             ->setVisible(true)
             ->setGroupName(null)
@@ -41,6 +36,11 @@ class FormFieldConfig extends FieldConfig
         ) {
             $this->visible = false;
         }
+    }
+
+    /** Sincronizar con el mapeo no pisa lo que configuró el usuario. */
+    public function setData(array $data)
+    {
     }
     public function getGroupName(): ?string
     {

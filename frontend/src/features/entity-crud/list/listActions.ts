@@ -26,6 +26,8 @@ export interface EntityBulkAction {
   icon: string
   /** Si hace falta un permiso, la acción se oculta a quien no lo tiene. */
   permiso?: PermisoAccion
+  /** Acción destructiva (se pinta en rojo). */
+  severity?: 'danger'
   /** Diálogo con props `ids` y `visible`. */
   component?: EntityFormLoader
   /** Lleva a otra pantalla con los ids de la selección. */
