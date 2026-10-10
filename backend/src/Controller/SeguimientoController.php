@@ -27,10 +27,6 @@ final class SeguimientoController extends AbstractController
     {
         $this->denyAccessUnlessGranted(self::VER);
 
-        try {
-            return $this->json($this->seguimiento->enRecorrido(new \DateTimeImmutable('now', new \DateTimeZone('America/Guatemala'))));
-        } catch (\PDOException $e) {
-            return $this->json(['error' => 'El sistema legado no responde.', 'codigo' => 'legado_no_disponible'], 503);
-        }
+        return $this->json($this->seguimiento->enRecorrido(new \DateTimeImmutable('now', new \DateTimeZone('America/Guatemala'))));
     }
 }

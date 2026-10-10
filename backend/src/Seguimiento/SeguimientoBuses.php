@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Seguimiento;
 
-use Doctrine\DBAL\Connection;
+use App\Entity\Enum\EstadoSalida;
+use App\Entity\Salida;
 
 /**
- * Buses en recorrido ahora: las salidas del legado que ya salieron (por horario), ubicadas con
+ * Buses en recorrido ahora: las salidas que ya salieron (por horario), ubicadas con
  * GPS si hay lectura reciente y, si no, con la simulación de `PlanDeViaje`.
  */
 final class SeguimientoBuses
@@ -22,9 +23,8 @@ final class SeguimientoBuses
     private const GPS_VIGENCIA_SEGUNDOS = 300;
 
     public function __construct(
-        private readonly LegadoEnRecorrido $legado,
+        private readonly SalidasEnRecorrido $salidas,
         private readonly FuenteGps $gps,
-        private readonly Connection $db,
         private readonly ParametrosSimulacion $parametros = new ParametrosSimulacion(),
     ) {}
 
@@ -33,12 +33,11 @@ final class SeguimientoBuses
      */
     public function enRecorrido(\DateTimeImmutable $ahora): array
     {
-        $filas = $this->legado->salidasEnRecorrido(
+        $filas = $this->salidas->buscar(
             $ahora->modify('-' . self::VENTANA_HORAS . ' hours'),
             $ahora,
             $ahora->modify('+' . self::ADELANTO_MINUTOS . ' minutes'),
         );
-        $estaciones = $this->conCoordenadasNuevas($this->legado->estacionesPorRuta($filas));
 
         $t = $ahora->getTimestamp();
         $trazos = [];
@@ -47,39 +46,46 @@ final class SeguimientoBuses
         $sinTrazado = 0;
 
         foreach ($filas as $f) {
-            $codigo = (string) $f['ruta_codigo'];
-            $trazos[$codigo] ??= TrazadoDeRuta::trazar($estaciones[$codigo] ?? [], (float) $f['kilometros']);
+            /** @var Salida $salida */
+            $salida = $f['salida'];
+            $trayecto = $salida->getTrayecto();
+            $codigo = (string) $trayecto->getId();
+            $trazos[$codigo] ??= TrazadoDeRuta::trazar($f['paradas'], $f['kilometros']);
             if (null === $trazos[$codigo]) {
                 ++$sinTrazado;
                 continue;
             }
 
-            $partida = new \DateTimeImmutable((string) $f['fecha'], $ahora->getTimezone());
-            $plan = PlanDeViaje::construir($trazos[$codigo], $partida, (int) $f['id'], $this->parametros);
+            $partida = new \DateTimeImmutable($salida->getFecha()->format('Y-m-d H:i:s'), $ahora->getTimezone());
+            $plan = PlanDeViaje::construir($trazos[$codigo], $partida, (int) $salida->getId(), $this->parametros);
             if ($t > $plan->llegada() + self::GRACIA_LLEGADA_MINUTOS * 60) {
                 continue;
             }
 
-            $real = $this->gps->ultima((string) $f['bus_codigo']);
+            $bus = $salida->getBus();
+            $real = $this->gps->ultima((string) $bus->getCodigo());
             $vigente = null !== $real && $t - $real->instante <= self::GPS_VIGENCIA_SEGUNDOS;
             $pos = $vigente ? $real : $plan->posicionEn($t);
             $proxima = $plan->proximaParada($t);
 
-            $empresaId = (int) $f['empresa_id'];
-            $empresas[$empresaId] = ['id' => $empresaId, 'nombre' => (string) ($f['empresa'] ?? "Empresa $empresaId")];
+            $empresa = $salida->getEmpresa();
+            $empresaId = (int) $empresa?->getId();
+            $empresas[$empresaId] = ['id' => $empresaId, 'nombre' => (string) ($empresa?->getNombreCorto() ?? "Empresa $empresaId")];
+            $piloto = $bus->getPiloto();
+            $estado = $salida->getEstado();
 
             $buses[] = [
-                'salidaId' => (int) $f['id'],
+                'salidaId' => (int) $salida->getId(),
                 // Si el sistema ya la marcó iniciada; si no, se asume por la hora y los boletos vendidos.
-                'marcadaIniciada' => 3 === (int) $f['estado_id'],
-                'estadoSistema' => match ((int) $f['estado_id']) { 1 => 'programada', 2 => 'abordando', 3 => 'iniciada', default => 'otro' },
+                'marcadaIniciada' => EstadoSalida::INICIADA === $estado,
+                'estadoSistema' => match ($estado) { EstadoSalida::PROGRAMADA => 'programada', EstadoSalida::ABORDANDO => 'abordando', EstadoSalida::INICIADA => 'iniciada', default => 'otro' },
                 'empresaId' => $empresaId,
                 'empresa' => $empresas[$empresaId]['nombre'],
-                'bus' => (string) $f['bus_codigo'],
-                'placa' => $f['placa'] ?? null,
-                'piloto' => trim(($f['piloto_nombre'] ?? '') . ' ' . ($f['piloto_apellidos'] ?? '')) ?: null,
+                'bus' => (string) $bus->getCodigo(),
+                'placa' => $bus->getMatricula(),
+                'piloto' => $piloto ? trim($piloto->getNombre() . ' ' . $piloto->getApellido()) : null,
                 'ruta' => $codigo,
-                'rutaNombre' => (string) $f['ruta'],
+                'rutaNombre' => (string) ($trayecto->getNombre() ?? $plan->paradas[0]->nombre . ' → ' . $plan->paradas[count($plan->paradas) - 1]->nombre),
                 'origen' => $plan->paradas[0]->nombre,
                 'destino' => $plan->paradas[count($plan->paradas) - 1]->nombre,
                 'partida' => $plan->partida(),
@@ -115,44 +121,5 @@ final class SeguimientoBuses
         usort($empresas, static fn(array $a, array $b) => strcmp($a['nombre'], $b['nombre']));
 
         return ['generado' => $t, 'buses' => $buses, 'empresas' => array_values($empresas), 'sinTrazado' => $sinTrazado];
-    }
-
-    /**
-     * Las estaciones sin GPS en el legado toman la coordenada del enclave del modelo
-     * nuevo (mismo id que la estación), geocodificada con `app:enclave:geocodificar`.
-     *
-     * @param array<string, list<array<string, mixed>>> $porRuta
-     * @return array<string, list<array<string, mixed>>>
-     */
-    private function conCoordenadasNuevas(array $porRuta): array
-    {
-        $sin = [];
-        foreach ($porRuta as $estaciones) {
-            foreach ($estaciones as $e) {
-                if (null === TrazadoDeRuta::normalizarGps($e['latitude'], $e['longitude'])) {
-                    $sin[$e['id']] = true;
-                }
-            }
-        }
-        if ([] === $sin) {
-            return $porRuta;
-        }
-
-        $coords = [];
-        foreach ($this->db->fetchAllAssociative('SELECT id, latitud, longitud FROM enclave WHERE latitud IS NOT NULL AND longitud IS NOT NULL AND id IN (?)', [array_keys($sin)], [\Doctrine\DBAL\ArrayParameterType::INTEGER]) as $c) {
-            $coords[(int) $c['id']] = $c;
-        }
-        foreach ($porRuta as &$estaciones) {
-            foreach ($estaciones as &$e) {
-                if (isset($coords[$e['id']]) && null === TrazadoDeRuta::normalizarGps($e['latitude'], $e['longitude'])) {
-                    $e['latitude'] = $coords[$e['id']]['latitud'];
-                    $e['longitude'] = $coords[$e['id']]['longitud'];
-                }
-            }
-            unset($e);
-        }
-        unset($estaciones);
-
-        return $porRuta;
     }
 }

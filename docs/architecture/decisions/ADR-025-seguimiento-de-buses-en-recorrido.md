@@ -4,13 +4,13 @@
 
 ## Contexto
 
-Operaciones necesita ver en un mapa dónde van los buses que están en recorrido, filtrando por empresa y por salida. Todavía no hay GPS instalados, y las salidas en curso viven solo en el legado (SQL Server, `salida.estado_id = 3` iniciada): el modelo nuevo aún no tiene enclaves con coordenadas ni salidas reales.
+Operaciones necesita ver en un mapa dónde van los buses que están en recorrido, filtrando por empresa y por salida. Todavía no hay GPS instalados, y las salidas en curso se leen del modelo nuevo (`Salida`, `Trayecto`, `Enclave`); el legado ya no interviene.
 
 ## Decisión
 
-### Fuente de datos: el legado, solo lectura
+### Fuente de datos: el modelo nuevo
 
-`App\Seguimiento\LegadoEnRecorrido` consulta por PDO (`oldPdo`, con el preflight de `SondaLegado`) las salidas de las últimas 30 h y las estaciones de sus rutas (origen, intermedias por `posicion`, destino). El criterio es el horario, no el estado: el personal casi nunca marca "iniciada". Salió toda salida que pasó su hora, no está cancelada (4) ni finalizada (5) y tiene al menos un boleto vigente (emitido, chequeado o en tránsito: ni anulado, reasignado ni cancelado); las marcadas "iniciada" (3) salen aunque no tengan boletos. El detalle avisa cuando el sistema no la tiene como iniciada. Se descartan las que ya llegaron según el cronograma (más 10 min de gracia).
+`App\Seguimiento\SalidasEnRecorrido` consulta `Salida` de las últimas 30 h y obtiene las paradas de cada trayecto con `App\Venta\Itinerarios` (enclaves en orden de itinerario). El criterio es el horario, no el estado: el personal casi nunca marca "iniciada". Salió toda salida que pasó su hora, no está cancelada ni finalizada y tiene al menos un boleto vigente (emitido, chequeado o en tránsito: ni anulado, reasignado ni cancelado); las marcadas "iniciada" salen aunque no tengan boletos. El detalle avisa cuando el sistema no la tiene como iniciada. Se descartan las que ya llegaron según el cronograma (más 10 min de gracia).
 
 ### Posición inferida (`PlanDeViaje`)
 
@@ -18,7 +18,7 @@ Dada la hora de salida, los km de la ruta y una velocidad media (68 km/h en marc
 
 ### Trazado de la ruta (`TrazadoDeRuta`)
 
-Solo 15 de 225 estaciones del legado tienen GPS, y en esas la latitud y la longitud vienen a veces intercambiadas. Se resuelve cada estación por GPS → catálogo por nombre (`Gazetario`) → centro del departamento. Como el legado no garantiza que las intermedias sean un recorrido ordenado ni estén bien ubicadas: las intermedias solo ubicadas por departamento se descartan, las consecutivas a menos de 2 km se funden y las que obligan a un desvío mayor que el trayecto directo (y 30 km) se descartan. Origen y destino son obligatorios; si no se ubican, la salida no se muestra y la pantalla avisa cuántas quedaron fuera. Los km se reparten según la distancia en línea recta pero suman los `kilometros` de la ruta. El mapa une las estaciones en línea recta (sin geometría de carretera); para que las rutas que comparten tramo no se tapen, cada ruta se dibuja arqueada con una curvatura propia y estable según su código (`core/seguimiento/arco.ts`), y el bus se mueve por el mismo arco.
+Pocos enclaves tienen coordenadas, y algunas vienen con latitud y longitud intercambiadas. Se resuelve cada estación por GPS → catálogo por nombre (`Gazetario`) → centro del departamento. Como el legado no garantiza que las intermedias sean un recorrido ordenado ni estén bien ubicadas: las intermedias solo ubicadas por departamento se descartan, las consecutivas a menos de 2 km se funden y las que obligan a un desvío mayor que el trayecto directo (y 30 km) se descartan. Origen y destino son obligatorios; si no se ubican, la salida no se muestra y la pantalla avisa cuántas quedaron fuera. Los km se reparten según la distancia en línea recta pero suman los `kilometros` de la ruta. El mapa une las estaciones en línea recta (sin geometría de carretera); para que las rutas que comparten tramo no se tapen, cada ruta se dibuja arqueada con una curvatura propia y estable según su código (`core/seguimiento/arco.ts`), y el bus se mueve por el mismo arco.
 
 ### GPS real: punto de enchufe
 
@@ -26,7 +26,7 @@ Solo 15 de 225 estaciones del legado tienen GPS, y en esas la latitud y la longi
 
 ### API y permisos
 
-`GET /api/seguimiento/buses` (permiso `salida.ver`: es otra vista de las mismas salidas). Responde 503 `legado_no_disponible` si el legado no contesta.
+`GET /api/seguimiento/buses` (permiso `salida.ver`: es otra vista de las mismas salidas).
 
 ### Frontend
 
@@ -36,8 +36,7 @@ Ruta `/seguimiento` (`features/seguimiento/`, Leaflet con teselas de OpenStreetM
 
 - Dependencia nueva: `leaflet` (+ `@types/leaflet`), sin alternativa ya presente para mapas.
 - Mientras las estaciones no tengan coordenadas reales, los trazos y estaciones intermedias son aproximados (el mapa marca con círculo vacío las ubicadas por nombre). Registrar el GPS de las estaciones mejora el trazado sin cambiar código.
-- Al migrar salidas al modelo nuevo, `LegadoEnRecorrido` se reemplaza por una consulta a `Salida` + `Trayecto`/`Enclave`; `PlanDeViaje`, `FuenteGps` y el frontend no cambian.
 
 ## Coordenadas de los enclaves
 
-`php bin/console app:enclave:geocodificar [--dry-run]` busca cada enclave en Nominatim (OpenStreetMap, 1 petición/s; Photon como respaldo para erratas), limitado a Guatemala y a su departamento (los internacionales, a El Salvador, Honduras, Belice y México y sin coincidencias ambiguas). Solo rellena los que no tienen coordenadas y corrige el nombre local cuando es una errata evidente (parecido ≥ 0.7, misma inicial). Un enclave sin resultado copia las coordenadas de otra terminal del mismo lugar ("Aguilar Batres1"). `SeguimientoBuses` usa estas coordenadas para las estaciones del legado sin GPS (los enclaves reutilizan el id de la estación). `Mapeador::estacion` ya normaliza la latitud/longitud intercambiadas del legado.
+`php bin/console app:enclave:geocodificar [--dry-run]` busca cada enclave en Nominatim (OpenStreetMap, 1 petición/s; Photon como respaldo para erratas), limitado a Guatemala y a su departamento (los internacionales, a El Salvador, Honduras, Belice y México y sin coincidencias ambiguas). Solo rellena los que no tienen coordenadas y corrige el nombre local cuando es una errata evidente (parecido ≥ 0.7, misma inicial). Un enclave sin resultado copia las coordenadas de otra terminal del mismo lugar ("Aguilar Batres1"). `SalidasEnRecorrido` entrega esas coordenadas a `TrazadoDeRuta`. `Mapeador::estacion` ya normaliza la latitud/longitud intercambiadas del legado.
