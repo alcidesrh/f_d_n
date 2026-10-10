@@ -260,7 +260,7 @@ export const componentsPreset = (parent: ThemePreset): Tokens => {
       // ...base.components.datatable,
       header: {
         cell: {
-          padding: "10px 0",
+          padding: "0 10px",
           sm: {
             padding: "0 10px",
           },

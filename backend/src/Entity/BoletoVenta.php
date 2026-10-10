@@ -8,6 +8,7 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\GraphQl\Query;
 use ApiPlatform\Metadata\GraphQl\QueryCollection;
+use App\Filter\ColumnaFilter;
 use App\Entity\Base\TimeLegacyStatusBase;
 use App\Entity\Embeddable\Precio;
 use App\Entity\Enum\CanalVenta;
@@ -31,7 +32,7 @@ use Symfony\Component\Uid\Uuid;
 #[
     ApiResource(
         operations: [new Get(), new GetCollection()],
-        graphQlOperations: [new Query(), new QueryCollection()],
+        graphQlOperations: [new Query(), new QueryCollection(filters: [ColumnaFilter::class])],
     ),
 ]
 class BoletoVenta extends TimeLegacyStatusBase

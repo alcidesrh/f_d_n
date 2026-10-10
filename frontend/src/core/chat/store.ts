@@ -89,12 +89,19 @@ export const useChatStore = defineStore('chat', () => {
     }, RESPALDO_MS)
   }
 
+  /**
+   * Deja de figurar en línea. Al cerrar sesión hay que esperarlo antes del
+   * logout: después el token ya está revocado y el aviso no pasaría.
+   */
+  async function salirDeLinea() {
+    if (!latido) return
+    clearInterval(latido)
+    latido = null
+    if (yo.value) await api.salirDeLinea(conexion)
+  }
+
   function detener() {
-    if (latido) {
-      clearInterval(latido)
-      latido = null
-      if (yo.value) void api.salirDeLinea(conexion)
-    }
+    void salirDeLinea()
     desuscribir?.()
     desuscribir = null
     document.removeEventListener('visibilitychange', alVolver)
@@ -249,6 +256,6 @@ export const useChatStore = defineStore('chat', () => {
 
   return {
     yo, canales, mensajes, completos, contactos, recursos, activo, listo, enVivo, enLinea, entrante, noLeidos, estaEnLinea,
-    canal, iniciar, detener, refrescar, cargar, abrir, cerrar, cargarAnteriores, leer, enviar, cargarContactos, cargarRecursos, directo, grupo, compartir,
+    canal, iniciar, detener, salirDeLinea, refrescar, cargar, abrir, cerrar, cargarAnteriores, leer, enviar, cargarContactos, cargarRecursos, directo, grupo, compartir,
   }
 })

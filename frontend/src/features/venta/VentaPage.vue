@@ -11,16 +11,6 @@
 -->
 <template>
   <div class="flex flex-col gap-4">
-    <Toolbar v-if="store.contexto?.agencia || store.contexto?.estacion">
-      <!-- <template #start><PageHead /></template> -->
-      <template #end>
-        <div class="flex flex-wrap items-center gap-2">
-          <Tag v-if="store.contexto?.agencia" severity="info" :value="`${store.contexto.agencia.nombre} · saldo ${store.contexto.agencia.saldo.texto}`" />
-          <Tag v-else-if="store.contexto?.estacion" severity="secondary" :value="`Taquilla ${store.contexto.estacion.nombre}`" />
-        </div>
-      </template>
-    </Toolbar>
-
     <Message v-if="store.errorCarga" severity="error" :closable="false">
       {{ store.errorCarga }}
       <Button label="Reintentar" size="small" text @click="store.iniciar()" />
@@ -32,18 +22,19 @@
         <div class="flex min-w-0 flex-col gap-4">
           <section v-if="store.reasignacion" class="panel flex flex-col gap-3 reasignacion">
             <div class="flex flex-wrap items-center justify-between gap-2">
-              <div class="font-semibold">Reasignar {{ store.reasignacion.boletos.length === 1 ? 'un boleto' : `${store.reasignacion.boletos.length} boletos` }}</div>
-              <Button label="Cancelar reasignación" severity="secondary" size="small" text @click="store.cancelarReasignacion()" />
+              <div class="font-semibold">Reasignar {{ store.reasignacion.boletos.length === 1 ? "un boleto" : `${store.reasignacion.boletos.length} boletos` }}</div>
+              <Button label="Cancelar reasignación" severity="secondary" size="small" outlined @click="store.cancelarReasignacion()" />
             </div>
-            <p class="m-0 text-sm text-muted-color">Elija la salida y el asiento nuevo de cada boleto, con el mismo precio. No se cobra ni se factura: el boleto original queda reasignado y su asiento libre.</p>
+            <!-- <p class="m-0 text-sm text-muted-color">Elija la salida y el asiento nuevo de cada boleto, con el mismo precio. No se cobra ni se factura: el boleto original queda reasignado y su asiento libre.</p> -->
             <ul class="m-0 flex list-none flex-col gap-1.5 p-0">
-              <li v-for="p in store.parejas" :key="p.boleto.id" class="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 text-sm">
+              <li v-for="p in store.parejas" :key="p.boleto.id" class="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3">
                 <span class="min-w-0">
-                  <b>Asiento {{ p.boleto.asiento.numero }}</b> · {{ p.boleto.pasajero ?? 'sin pasajero' }}
-                  <span class="block truncate text-xs text-muted-color">{{ p.boleto.trayecto.origen }} → {{ p.boleto.trayecto.destino }} · {{ fechaHoraCorta(p.boleto.salida.fecha) }} · {{ p.boleto.precio?.texto }}</span>
+                  <!-- · {{ p.boleto.pasajero ?? "sin pasajero" }} -->
+                  <span class="block truncate text-muted-color">{{ fechaHoraCorta(p.boleto.salida.fecha) }} · {{ p.boleto.precio?.texto }}</span>
+                  <b>Asiento #{{ p.boleto.asiento.numero }}</b>
                 </span>
                 <span class="whitespace-nowrap tabular-nums" :class="{ 'text-green-700': p.igual === true, 'text-red-600': p.igual === false }">
-                  <template v-if="p.asiento !== null">→ asiento {{ numeroDe(p.asiento) }} · {{ p.precio?.texto ?? '…' }}</template>
+                  <template v-if="p.asiento !== null">→ asiento {{ numeroDe(p.asiento) }} · {{ p.precio?.texto ?? "…" }}</template>
                   <template v-else><span class="text-muted-color">→ elija el asiento</span></template>
                 </span>
               </li>
@@ -51,8 +42,10 @@
             <Message v-if="store.parejas.some((p) => p.igual === false)" severity="warn" :closable="false">El precio del asiento elegido no coincide con el del boleto. Cambie de asiento, el tramo o marque «cobrar el trayecto completo» si así se vendió.</Message>
           </section>
           <section class="panel flex flex-col gap-2">
-            <label class="text-sm font-medium" for="venta-cliente">{{ store.reasignacion ? 'Cliente de la venta' : 'Cliente (facturar a)' }}</label>
-            <div v-if="store.reasignacion" class="text-sm">{{ store.cliente?.nombreCompleto ?? '—' }}<span v-if="store.cliente" class="text-muted-color"> · NIT {{ store.cliente.nit }}</span></div>
+            <label class="text-sm font-medium" for="venta-cliente">{{ store.reasignacion ? "Cliente de la venta" : "Cliente (facturar a)" }}</label>
+            <div v-if="store.reasignacion" class="text-sm">
+              {{ store.cliente?.nombreCompleto ?? "—" }}<span v-if="store.cliente" class="text-muted-color"> · NIT {{ store.cliente.nit }}</span>
+            </div>
             <ClienteBuscador v-else v-model="store.cliente" input-id="venta-cliente" />
           </section>
           <section class="panel flex flex-col gap-3">

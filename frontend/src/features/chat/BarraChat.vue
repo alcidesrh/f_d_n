@@ -95,9 +95,9 @@ function alTocar(e: MouseEvent) {
   gap: 0.5rem;
   height: 44px;
   padding: 0 0.35rem 0 0.9rem;
-  border-bottom: 1px solid var(--p-surface-200);
+  border-bottom: 1px solid var(--p-surface-300);
   color: var(--p-surface-700);
-  background: var(--p-surface-200);
+  background: var(--p-surface-50);
   user-select: none;
 }
 .barra--minimizada {

@@ -18,22 +18,22 @@
 </template>
 
 <script setup lang="ts">
-import BarraChat from './BarraChat.vue'
-import ChatVista from './ChatVista.vue'
-import { destinoDeRuta, useVentanaChat } from './ventana'
+import BarraChat from "./BarraChat.vue";
+import ChatVista from "./ChatVista.vue";
+import { destinoDeRuta, useVentanaChat } from "./ventana";
 
-const route = useRoute()
-const router = useRouter()
-const ventana = useVentanaChat()
+const route = useRoute();
+const router = useRouter();
+const ventana = useVentanaChat();
 
-const destino = computed(() => destinoDeRuta(route.params, route.query))
+const destino = computed(() => destinoDeRuta(route.params, route.query));
 watch(
   () => destino.value.canal,
   (canal) => (ventana.canal = canal),
   { immediate: true },
-)
+);
 
-const ir = (canal: number | null) => void router.push({ name: 'chat', params: { canal: canal ?? undefined } })
+const ir = (canal: number | null) => void router.push({ name: "chat", params: { canal: canal ?? undefined } });
 </script>
 
 <style scoped>

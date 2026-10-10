@@ -7,8 +7,7 @@ import {
   fromServerFilters,
   idDisplay,
   isEmptyFilterValue,
-  isLocalFilter,
-  matchesFilters,
+  hasServerFilter,
   nextOrder,
   noServerFilter,
   rangeToIso,
@@ -259,25 +258,10 @@ describe('toServerFilters / fromServerFilters', () => {
     ])
   })
 
-  it('isLocalFilter marca los campos sin argumento', () => {
-    expect(isLocalFilter(schema, 'name')).toBe(false)
-    expect(isLocalFilter(schema, 'amount')).toBe(true)
-  })
-})
-
-describe('matchesFilters', () => {
-  const item = {
-    name: 'Home',
-    createdAt: '2026-01-15',
-    category: { id: '/api/categories/1', label: 'Navegación' },
-  }
-  it('texto contiene, relación por id o label y fecha por rango inclusivo', () => {
-    expect(matchesFilters(item, { name: 'hom' }, schema)).toBe(true)
-    expect(matchesFilters(item, { name: 'x' }, schema)).toBe(false)
-    expect(matchesFilters(item, { category: '/api/categories/1' }, schema)).toBe(true)
-    expect(matchesFilters(item, { category: 'naveg' }, schema)).toBe(true)
-    expect(matchesFilters(item, { createdAt: ['2026-01-15', '2026-01-15'] }, schema)).toBe(true)
-    expect(matchesFilters(item, { createdAt: ['2026-02-01', '2026-02-10'] }, schema)).toBe(false)
+  it('hasServerFilter distingue los campos sin argumento (no se filtran)', () => {
+    expect(hasServerFilter(schema, 'name')).toBe(true)
+    expect(hasServerFilter(schema, 'createdAt')).toBe(true)
+    expect(hasServerFilter(schema, 'amount')).toBe(false)
   })
 })
 

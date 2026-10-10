@@ -20,6 +20,7 @@ use ApiPlatform\Metadata\GraphQl\Query;
 use ApiPlatform\Metadata\GraphQl\QueryCollection;
 use ApiPlatform\Metadata\QueryParameter;
 use App\Entity\Base\PersonaBase;
+use App\Filter\ColumnaFilter;
 use App\Filter\IdPartialSearchFilter;
 use App\Repository\UsuarioRepository;
 use App\Resolver\UserByUsernameResolver;
@@ -42,6 +43,7 @@ use Symfony\Component\Validator\Constraints as Assert;
             ),
             new QueryCollection(
                 paginationType: "page",
+                filters: [ColumnaFilter::class],
                 parameters: [
                     "id" => new QueryParameter(
                         filter: new OrFilter(new IdPartialSearchFilter()),

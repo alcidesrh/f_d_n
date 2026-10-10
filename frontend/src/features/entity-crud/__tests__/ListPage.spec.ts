@@ -343,17 +343,14 @@ describe('ListPage', () => {
     expect(store.fetchItems).toHaveBeenCalledTimes(2)
   })
 
-  it('filtro sin arg de servidor avisa "filtro local" y no puebla filtros del servidor', async () => {
+  it('una columna sin arg de servidor no ofrece filtro (no se filtra la página cargada)', async () => {
     schemaMock.find.mockReturnValue(iconSchema)
     wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
     await flushPromises()
 
-    await wrapper.find('input[name="filter_description"]').setValue('Ini')
-    await new Promise((resolve) => setTimeout(resolve, 350))
-    expect(wrapper.text()).toContain('Filtro local')
-
-    await new Promise((resolve) => setTimeout(resolve, 650))
-    expect(store.filters).toEqual({})
+    expect(wrapper.find('input[name="filter_name"]').exists()).toBe(true)
+    expect(wrapper.find('input[name="filter_description"]').exists()).toBe(false)
+    expect(wrapper.find('[aria-label="Filtrar Descripción"]').exists()).toBe(false)
   })
 
   it('confirma y elimina el registro seleccionado', async () => {

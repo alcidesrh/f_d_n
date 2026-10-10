@@ -107,7 +107,7 @@ export function noServerFilter(match: FilterArgMatch): boolean {
 /**
  * Resuelve los argumentos de filtro de la colección que matchean la columna:
  * arg exacto con el nombre del campo, `{campo}_after`/`{campo}_before` para
- * fechas y `{campo}_contains` para strings. Sin match → el filtro es local.
+ * fechas y `{campo}_contains` para strings. Sin match → la columna no se filtra.
  */
 export function resolveFilterArgs(entity: EntitySchema, field: string): FilterArgMatch {
   const kind = fieldKind(entity, field);
@@ -158,9 +158,9 @@ export function isEmptyFilterValue(value: unknown): boolean {
   return false;
 }
 
-/** Filtros sin argumento en el backend: se aplican en cliente sobre la página cargada. */
-export function isLocalFilter(entity: EntitySchema, field: string): boolean {
-  return noServerFilter(resolveFilterArgs(entity, field));
+/** ¿La colección acepta un argumento para filtrar este campo en la base de datos? */
+export function hasServerFilter(entity: EntitySchema, field: string): boolean {
+  return !noServerFilter(resolveFilterArgs(entity, field));
 }
 
 function toServerScalar(value: unknown, kind: FilterFieldKind): unknown {
@@ -204,30 +204,6 @@ export function fromServerFilters(entity: EntitySchema, server: Record<string, u
     }
   }
   return filters;
-}
-
-const DAY_MS = 86_400_000;
-
-/** ¿El item cumple todos los filtros? (texto: contiene; relación: id o label; fecha: rango). */
-export function matchesFilters(item: unknown, filters: Record<string, unknown>, entity: EntitySchema, entityName?: string): boolean {
-  return Object.entries(filters).every(([field, value]) => {
-    if (isEmptyFilterValue(value)) return true;
-    const raw = (item as Record<string, unknown>)[field];
-    switch (fieldKind(entity, field)) {
-      case "date": {
-        const { after, before } = rangeToIso(value);
-        const time = new Date(String(raw ?? "")).getTime();
-        if (Number.isNaN(time)) return !after && !before;
-        return (!after || time >= new Date(after).getTime()) && (!before || time <= new Date(before).getTime() + DAY_MS);
-      }
-      case "relation": {
-        const needle = String(value);
-        return (Array.isArray(raw) ? raw : [raw]).some((entry) => entry != null && (String((entry as { id?: unknown }).id ?? "") === needle || (presentedText({ [field]: entry }, field, entityName) ?? cellLabel(entry)).toLowerCase().includes(needle.toLowerCase())));
-      }
-      default:
-        return (presentedText(item, field, entityName) ?? cellValue(item, field)).toLowerCase().includes(String(value).toLowerCase());
-    }
-  });
 }
 
 /**

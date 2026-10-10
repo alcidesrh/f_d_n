@@ -5,6 +5,7 @@ namespace App\Entity;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GraphQl\Query;
 use ApiPlatform\Metadata\GraphQl\QueryCollection;
+use App\Filter\ColumnaFilter;
 use App\Entity\Base\Base;
 use App\Entity\Embeddable\Precio;
 use App\Entity\Enum\EstadoBoletoAsiento;
@@ -35,7 +36,7 @@ use Money\Money;
         order: ["id" => "DESC"],
         graphQlOperations: [
             new Query(),
-            new QueryCollection(filters: ["order.filter"]),
+            new QueryCollection(filters: ["order.filter", ColumnaFilter::class]),
         ],
     ),
 ]

@@ -7,6 +7,7 @@ namespace App\Entity;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GraphQl\Query;
 use ApiPlatform\Metadata\GraphQl\QueryCollection;
+use App\Filter\ColumnaFilter;
 use App\Entity\Enum\TipoMovimientoAgencia;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -24,7 +25,7 @@ use Doctrine\ORM\Mapping as ORM;
         order: ["fecha" => "DESC"],
         graphQlOperations: [
             new Query(),
-            new QueryCollection(filters: ["order.filter"]),
+            new QueryCollection(filters: ["order.filter", ColumnaFilter::class]),
         ],
     ),
 ]

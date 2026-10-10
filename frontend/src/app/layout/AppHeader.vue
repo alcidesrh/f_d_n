@@ -161,6 +161,7 @@ const menuUsuario = ref<InstanceType<typeof Menu> | null>(null);
 const opcionesUsuario: MenuItem[] = [{ label: "Mi cuenta", iconName: "manage-accounts-outline", command: () => void router.push({ name: "mi-cuenta" }) }, { separator: true }, { label: "Cerrar sesión", iconName: "logout", command: () => void logout() }];
 
 async function logout() {
+  await chat.salirDeLinea();
   await session.logout();
   await router.push({ name: "login" });
 }

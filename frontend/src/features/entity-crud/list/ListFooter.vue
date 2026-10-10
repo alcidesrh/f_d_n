@@ -1,9 +1,6 @@
 <template>
   <div class="flex flex-wrap items-center justify-between gap-3 border-t p-2">
-    <span v-if="localFilter" class="text-xs text-surface-500"
-      >Filtro local: aplica sobre la página cargada</span
-    >
-    <span v-else-if="!pagination" class="text-xs text-surface-500">{{ count }} registros</span>
+    <span v-if="!pagination" class="text-xs text-surface-500">{{ count }} registros</span>
     <span v-else />
     <Paginator
       v-if="pagination"
@@ -37,7 +34,7 @@ const PAGINATOR_TEMPLATE = {
   default: 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown',
 }
 
-const props = defineProps<{ pagination?: PaginationState; count: number; localFilter: boolean }>()
+const props = defineProps<{ pagination?: PaginationState; count: number }>()
 
 const emit = defineEmits<{ page: [value: { page: number; rows: number }] }>()
 

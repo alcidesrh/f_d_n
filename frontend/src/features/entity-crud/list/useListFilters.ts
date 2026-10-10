@@ -6,21 +6,21 @@
  *   concretos (carga, ocultar/restaurar columna, reset): PrimeVue remonta la
  *   cabecera en cada fetch y reconstruir mientras se teclea robaba el foco.
  * - Texto y número esperan 500 ms sin teclear; el resto se aplica al instante.
- * - Los filtros con argumento en el backend van a `store.filters` (refetch);
- *   los que no, filtran en cliente la página cargada (`visibleItems`).
+ * - Siempre se filtra en la base de datos: los valores van a `store.filters`
+ *   (refetch). Una columna sin argumento de filtro en la colección GraphQL
+ *   (p. ej. un campo calculado) no ofrece filtro.
  * - El resaltado de coincidencias usa los filtros ya aplicados al store, no
  *   el tecleo en vivo, y se actualiza al renderizar el resultado del fetch.
  */
-import { computed, reactive, ref, useId, watch, type ComputedRef } from 'vue'
+import { reactive, ref, useId, watch, type ComputedRef } from 'vue'
 import type { FormKitSchemaNode } from '@formkit/core'
 import { getEntity } from '@/core/entities/registry'
 import type { CollectionFieldConfig, EntityStore } from '@/core/entities/types'
 import {
   fieldKind,
   fromServerFilters,
+  hasServerFilter,
   isEmptyFilterValue,
-  isLocalFilter,
-  matchesFilters,
   resolveFilterArgs,
   toServerFilters,
   type FilterFieldKind,
@@ -76,7 +76,8 @@ export function useListFilters(
   }
 
   function buildNode(column: CollectionFieldConfig): FormKitSchemaNode | null {
-    if (column.filterable === false || !entity()) return null
+    const metadata = entity()
+    if (column.filterable === false || !metadata || !hasServerFilter(metadata, column.field)) return null
     const { field } = column
     const kind = kindOf(field)
     const name = `filter_${field}`
@@ -138,29 +139,11 @@ export function useListFilters(
     if (current && metadata) Object.assign(filters, fromServerFilters(metadata, current.filters))
   }
 
-  const hasLocalFilter = computed(() => {
-    const metadata = entity()
-    return Object.entries(filters).some(
-      ([field, value]) =>
-        !isEmptyFilterValue(value) && (!metadata || isLocalFilter(metadata, field)),
-    )
-  })
-
-  /** Items de la página, con los filtros locales aplicados. */
-  const visibleItems = computed<unknown[]>(() => {
-    const items = store.value?.items ?? []
-    const metadata = entity()
-    return hasLocalFilter.value && metadata
-      ? items.filter((item) => matchesFilters(item, filters, metadata, store.value?.name))
-      : items
-  })
-
   /** Texto a resaltar en una columna (solo texto/número). */
   function highlightFor(field: string): unknown {
-    const metadata = entity()
     const kind = kindOf(field)
-    if (!metadata || (kind !== 'text' && kind !== 'number')) return undefined
-    return isLocalFilter(metadata, field) ? filters[field] : highlightFilters.value[field]
+    if (kind !== 'text' && kind !== 'number') return undefined
+    return highlightFilters.value[field]
   }
 
   watch(
@@ -184,8 +167,6 @@ export function useListFilters(
   return {
     filters,
     filterNodes,
-    hasLocalFilter,
-    visibleItems,
     rebuild,
     clear,
     hydrate,

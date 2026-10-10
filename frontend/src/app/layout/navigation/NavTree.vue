@@ -40,7 +40,20 @@ const props = withDefaults(defineProps<{ items: NavItem[]; sidebar: SidebarStore
 
 const toggleIndent = computed(() => ({ marginInlineStart: `${0.5 + props.depth * 0.9}rem` }));
 const router = useRouter();
+const route = useRoute();
 const expanded = ref(new Set<number>());
+
+const contieneRuta = (item: NavItem, name: unknown): boolean => item.children.some((c) => c.route.name === name || contieneRuta(c, name));
+
+/** Despliega los ítems que contienen la ruta actual (al montar y al navegar). */
+watch(
+  () => route.name,
+  (name) => {
+    const padres = props.items.filter((i) => contieneRuta(i, name) && !expanded.value.has(i.id));
+    if (padres.length) expanded.value = new Set([...expanded.value, ...padres.map((i) => i.id)]);
+  },
+  { immediate: true },
+);
 
 /** Submenú: se despliega de alto 0 a su altura natural y sus ítems entran escalonados. */
 function onEnter(el: Element, done: () => void) {

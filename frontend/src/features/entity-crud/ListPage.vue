@@ -1,7 +1,7 @@
 <template>
   <div v-if="store" class="card flex flex-col" :class="{ 'h-full': enSelector }" style="min-height: 400px">
     <ListToolbar :selection-mode="modoSeleccion" :selectable="!enSelector" :selected-count="selection.length" :hidden-columns="hiddenColumns" :configurable="configurable && !enSelector" :acciones="accionesDisponibles" @configure="emit('configure')" @toggle-selection="toggleSelection" @share="compartir = true" @accion="ejecutarAccion" @restore="(field) => setColumnVisible(field, true)" @reset="resetView" />
-    <DataTable :selection="enSelector ? seleccion : selection" :value="visibleItems" :loading="loading.loading" :data-key="claveFila" scrollable :scroll-height="enSelector ? 'flex' : '800px'" reorderable-columns :edit-mode="canEdit && !enSelector ? 'cell' : undefined" @update:selection="alSeleccionar" @column-reorder="onColumnReorder" @cell-edit-complete="onCellEditComplete">
+    <DataTable :selection="enSelector ? seleccion : selection" :value="store.items" :loading="loading.loading" :data-key="claveFila" scrollable :scroll-height="enSelector ? 'flex' : '800px'" reorderable-columns :edit-mode="canEdit && !enSelector ? 'cell' : undefined" @update:selection="alSeleccionar" @column-reorder="onColumnReorder" @cell-edit-complete="onCellEditComplete">
       <Column v-for="col in visibleColumns" :key="col.field" :field="col.field">
         <template #header>
           <div class="relative w-full" v-bind="col.attrs">
@@ -40,7 +40,7 @@
         </template>
       </Column>
     </DataTable>
-    <ListFooter :pagination="store.pagination" :count="store.items.length" :local-filter="hasLocalFilter" @page="onPage" />
+    <ListFooter :pagination="store.pagination" :count="store.items.length" @page="onPage" />
     <EnviarPorChatDialog v-if="!enSelector" v-model:visible="compartir" :referencias="referencias" @enviado="toggleSelection" />
     <component :is="activeAction.component" v-if="activeAction" v-model:visible="actionVisible" :item="activeAction.item" @after-hide="activeAction = null" />
     <component :is="activeBulk.component" v-if="activeBulk" v-model:visible="bulkVisible" :ids="activeBulk.ids" @listo="alTerminarAccion" @after-hide="activeBulk = null" />
@@ -106,7 +106,7 @@ const store = computed<EntityStore | null>(() => (schema.find(entityName.value) 
 const visibleColumns = computed(() => (store.value?.columns ?? []).filter((column) => column.visible !== false));
 const hiddenColumns = computed(() => (store.value?.columns ?? []).filter((column) => column.visible === false));
 
-const { filters, filterNodes, hasLocalFilter, visibleItems, rebuild, hydrate, highlightFor } = useListFilters(store, visibleColumns);
+const { filters, filterNodes, rebuild, hydrate, highlightFor } = useListFilters(store, visibleColumns);
 
 function setColumnVisible(field: string, visible: boolean) {
   const column = store.value?.columns.find((c) => c.field === field);
@@ -165,9 +165,7 @@ const activeBulk = shallowRef<{ component: Component; ids: number[] } | null>(nu
 const bulkVisible = ref(false);
 
 /** Las de la entidad que el usuario puede hacer (las de boletos dependen de sus permisos). */
-const accionesDisponibles = computed(() =>
-  (entityBulkActions[entityName.value] ?? []).filter((a) => !a.permiso || permisosBoleto[a.permiso]),
-);
+const accionesDisponibles = computed(() => (entityBulkActions[entityName.value] ?? []).filter((a) => !a.permiso || permisosBoleto[a.permiso]));
 
 async function ejecutarAccion(accion: EntityBulkAction) {
   const ids = selection.value.map((fila) => Number(idDisplay((fila as { id?: unknown }).id))).filter((id) => Number.isInteger(id) && id > 0);
@@ -206,7 +204,7 @@ const claveFila = (fila: unknown) => idDisplay((fila as { id?: unknown }).id);
  */
 function alSeleccionar(nueva: unknown[]) {
   if (!enSelector.value) return void (selection.value = nueva);
-  const pagina = new Map(visibleItems.value.map((fila) => [claveFila(fila), fila]));
+  const pagina = new Map((store.value?.items ?? []).map((fila) => [claveFila(fila), fila]));
   const elegidas = new Set(nueva.map(claveFila).filter((k) => pagina.has(k)));
   const previas = (props.seleccion ?? []).filter((f) => !pagina.has(claveFila(f)) || elegidas.has(claveFila(f))).map((f) => pagina.get(claveFila(f)) ?? f);
   const ya = new Set(previas.map(claveFila));
@@ -369,6 +367,13 @@ watch(
   /* z-index: 3; */
   /* background: var(--p-datatable-header-background); */
   background: transparent;
+}
+:deep(.p-datatable-thead > tr) {
+  height: 1px;
+}
+:deep(.p-datatable-column-header-content) {
+  height: 100%;
+  background-color: red;
 }
 
 :deep(.p-datatable-tbody > tr > td.col-actions) {

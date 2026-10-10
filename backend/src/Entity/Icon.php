@@ -7,6 +7,7 @@ namespace App\Entity;
 use ApiPlatform\Doctrine\Orm\Filter\OrFilter;
 use ApiPlatform\Doctrine\Orm\Filter\PartialSearchFilter;
 use ApiPlatform\Metadata\GraphQl\QueryCollection;
+use App\Filter\ColumnaFilter;
 use ApiPlatform\Metadata\QueryParameter;
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
@@ -20,6 +21,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
     ApiResourcePaginationPage(
         graphQlOperations: [
             new QueryCollection(
+                filters: [ColumnaFilter::class],
                 parameters: [
                     "icon" => new QueryParameter(
                         filter: new OrFilter(new PartialSearchFilter()),

@@ -101,7 +101,7 @@
   /*background-color: var(--p-gray-100);*/
   flex: none;
   position: relative;
-  /*width: fit-content;*/
+  width: 100%;
   /*right: 0px;*/
   margin-left: auto;
   display: flex;
@@ -116,15 +116,9 @@
     display: inline-flex;
     cursor: pointer;
     padding: 4px;
-    /*background-color: var(--p-surface-200);*/
-    /*border-radius: 999px;*/
-    /*box-shadow: 2px 2px 7px -1px var(--p-surface-500);*/
     border-radius: 999px;
-    /*transition: box-shadow var(--transition);*/
     &:hover {
       border-radius: 999px;
-      /*background-color: var(--p-surface-200);*/
-      /*box-shadow: var(--shadow);*/
       box-shadow: 0px 0px 2px 0px var(--p-surface-700);
     }
   }
@@ -169,6 +163,16 @@
     background-color: var(--bg);
   }
   /*transition: background-color 0.2s ease;*/
+  /* Ítem cuya ruta es la actual (RouterLink pone la clase y aria-current="page"). */
+  &.router-link-exact-active {
+    background-color: color-mix(in srgb, var(--p-primary-color) 12%, transparent);
+    color: var(--p-primary-color);
+    font-weight: 600;
+    box-shadow: inset 3px 0 0 var(--p-primary-color);
+    & .menu-icon {
+      color: inherit;
+    }
+  }
 }
 
 /*.menu-link:hover {
@@ -190,6 +194,8 @@
 .sidebar.mini {
   & .sidebar-control {
     justify-content: center;
+    padding: 0px;
+    margin-top: 3px;
   }
   /* Solo íconos (la columna mide `--sb-mini`). Al pasar el mouse el texto aparece
      flotando sobre el contenido. Es `position: fixed` para no ser recortado por el
