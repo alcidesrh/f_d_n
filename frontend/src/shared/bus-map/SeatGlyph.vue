@@ -112,7 +112,9 @@ withDefaults(
   --seat-fill: var(--p-neutral-100);
   --seat-stroke: var(--p-neutral-400);
   --seat-ink: var(--p-neutral-500);
-  opacity: 0.6;
+  &:first-child {
+    opacity: 0.6;
+  }
 }
 .seat__marca {
   & circle {
@@ -120,7 +122,7 @@ withDefaults(
     stroke-width: 0;
   }
   &.cortesia circle {
-    fill: var(--p-blue-600);
+    fill: var(--p-emerald-600);
     stroke-width: 0;
   }
 }

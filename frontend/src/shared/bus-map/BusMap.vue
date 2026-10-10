@@ -11,12 +11,7 @@
 -->
 <template>
   <div class="bm" :class="[`bm--${orientacion}`, `bm--${tamano}`]" :data-orientacion="orientacion">
-    <section
-      v-for="planta in plantasVisibles"
-      :key="planta"
-      class="bm-planta"
-      :aria-label="nombrePlanta(planta)"
-    >
+    <section v-for="planta in plantasVisibles" :key="planta" class="bm-planta" :aria-label="nombrePlanta(planta)">
       <header v-if="conEtiquetas" class="bm-planta__head">
         <slot name="planta-cabecera" :planta="planta" :nombre="nombrePlanta(planta)">
           <span class="bm-planta__name">{{ nombrePlanta(planta) }}</span>
@@ -29,42 +24,11 @@
         <span class="bm-bus__mirror bm-bus__mirror--a" aria-hidden="true" />
         <span class="bm-bus__mirror bm-bus__mirror--b" aria-hidden="true" />
         <div class="bm-grid" :style="estiloRejilla(planta)">
-          <span
-            v-for="columna in pasillos[planta]"
-            :key="`pasillo-${columna}`"
-            class="bm-aisle"
-            :style="estiloPasillo(planta, columna)"
-            aria-hidden="true"
-          />
-          <component
-            :is="esBoton(celda.elemento) ? 'button' : 'div'"
-            v-for="celda in celdasDe(planta)"
-            :key="celda.clave"
-            class="bm-cell"
-            :class="claseCelda(celda.elemento)"
-            :style="estiloCelda(planta, celda)"
-            :data-celda="celda.clave"
-            :data-planta="celda.planta"
-            :data-fila="celda.fila"
-            :data-columna="celda.columna"
-            v-bind="atributosCelda(celda.elemento)"
-            @click="onClick(celda, $event)"
-          >
+          <span v-for="columna in pasillos[planta]" :key="`pasillo-${columna}`" class="bm-aisle" :style="estiloPasillo(planta, columna)" aria-hidden="true" />
+          <component :is="esBoton(celda.elemento) ? 'button' : 'div'" v-for="celda in celdasDe(planta)" :key="celda.clave" class="bm-cell" :class="claseCelda(celda.elemento)" :style="estiloCelda(planta, celda)" :data-celda="celda.clave" :data-planta="celda.planta" :data-fila="celda.fila" :data-columna="celda.columna" v-bind="atributosCelda(celda.elemento)" @click="onClick(celda, $event)">
             <slot name="celda" v-bind="celda">
-              <SeatGlyph
-                v-if="celda.elemento && celda.elemento.tipo === 'asiento'"
-                :clase="celda.elemento.clase"
-                :numero="celda.elemento.numero"
-                :estado="estadoDe(celda.elemento)"
-                :rotacion="rotacion"
-                :con-numero="tamano !== 'xs'"
-              />
-              <SignalGlyph
-                v-else-if="celda.elemento"
-                :tipo="celda.elemento.tipo"
-                :rotacion="rotacion"
-                :espejo="esIzquierda(planta, celda.elemento)"
-              />
+              <SeatGlyph v-if="celda.elemento && celda.elemento.tipo === 'asiento'" :clase="celda.elemento.clase" :numero="celda.elemento.numero" :estado="estadoDe(celda.elemento)" :rotacion="rotacion" :con-numero="tamano !== 'xs'" />
+              <SignalGlyph v-else-if="celda.elemento" :tipo="celda.elemento.tipo" :rotacion="rotacion" :espejo="esIzquierda(planta, celda.elemento)" />
             </slot>
           </component>
         </div>
@@ -76,207 +40,175 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import {
-  celda as claveCelda,
-  columnasPasillo,
-  esAsiento,
-  indexar,
-  plantasDe,
-  rejillas,
-} from '@/core/croquis/model'
-import { ESTADOS_NO_SELECCIONABLES } from '@/core/croquis/types'
-import type {
-  AsientoCroquis,
-  ElementoCroquis,
-  EstadoAsiento,
-  Posicion,
-  Rejilla,
-} from '@/core/croquis/types'
-import SeatGlyph from './SeatGlyph.vue'
-import SignalGlyph from './SignalGlyph.vue'
-import './busMap.css'
+import { computed } from "vue";
+import { celda as claveCelda, columnasPasillo, esAsiento, indexar, plantasDe, rejillas } from "@/core/croquis/model";
+import { ESTADOS_NO_SELECCIONABLES } from "@/core/croquis/types";
+import type { AsientoCroquis, ElementoCroquis, EstadoAsiento, Posicion, Rejilla } from "@/core/croquis/types";
+import SeatGlyph from "./SeatGlyph.vue";
+import SignalGlyph from "./SignalGlyph.vue";
+import "./busMap.css";
 
 export interface CeldaMapa extends Posicion {
-  clave: string
-  elemento: ElementoCroquis | null
+  clave: string;
+  elemento: ElementoCroquis | null;
 }
 
 const props = withDefaults(
   defineProps<{
-    elementos: readonly ElementoCroquis[]
+    elementos: readonly ElementoCroquis[];
     /** Plantas a pintar (por defecto, las que tienen elementos). */
-    plantas?: readonly number[]
+    plantas?: readonly number[];
     /** Rejilla por planta; por defecto la mínima que contiene los elementos. */
-    rejilla?: Record<number, Rejilla>
+    rejilla?: Record<number, Rejilla>;
     /** `vertical`: frente arriba. `horizontal`: frente a la izquierda. */
-    orientacion?: 'vertical' | 'horizontal'
-    tamano?: 'xs' | 'sm' | 'md' | 'lg'
+    orientacion?: "vertical" | "horizontal";
+    tamano?: "xs" | "sm" | "md" | "lg";
     /** Estado con el que se pinta cada asiento (venta, ocupación, …). */
-    estado?: (asiento: AsientoCroquis) => EstadoAsiento | undefined
+    estado?: (asiento: AsientoCroquis) => EstadoAsiento | undefined;
     /** Asientos como botones (`@asiento`); los ocupados/reservados/bloqueados quedan deshabilitados. */
-    interactivo?: boolean
+    interactivo?: boolean;
     /** Los asientos ocupados/reservados son botones que emiten `@ocupado` (detalle para el personal). */
-    inspeccionable?: boolean
+    inspeccionable?: boolean;
     /** Pinta también las celdas vacías (editor). */
-    celdasVacias?: boolean
+    celdasVacias?: boolean;
     /** Cabecera por planta; por defecto solo si hay más de una. */
-    etiquetas?: boolean
+    etiquetas?: boolean;
   }>(),
   {
     plantas: undefined,
     rejilla: undefined,
-    orientacion: 'vertical',
-    tamano: 'md',
+    orientacion: "vertical",
+    tamano: "md",
     estado: undefined,
     interactivo: false,
     inspeccionable: false,
     celdasVacias: false,
     etiquetas: undefined,
   },
-)
+);
 
 const emit = defineEmits<{
-  asiento: [asiento: AsientoCroquis]
-  celda: [celda: CeldaMapa]
-  ocupado: [asiento: AsientoCroquis, evento: MouseEvent]
-}>()
+  asiento: [asiento: AsientoCroquis];
+  celda: [celda: CeldaMapa];
+  ocupado: [asiento: AsientoCroquis, evento: MouseEvent];
+}>();
 
-const plantasVisibles = computed(() => props.plantas ?? plantasDe(props.elementos))
-const rejillasPorPlanta = computed(
-  () => props.rejilla ?? rejillas(props.elementos, {}, plantasVisibles.value),
-)
-const porCelda = computed(() => indexar(props.elementos))
-const conEtiquetas = computed(() => props.etiquetas ?? plantasVisibles.value.length > 1)
-const rotacion = computed(() => (props.orientacion === 'horizontal' ? -90 : 0))
+const plantasVisibles = computed(() => props.plantas ?? plantasDe(props.elementos));
+const rejillasPorPlanta = computed(() => props.rejilla ?? rejillas(props.elementos, {}, plantasVisibles.value));
+const porCelda = computed(() => indexar(props.elementos));
+const conEtiquetas = computed(() => props.etiquetas ?? plantasVisibles.value.length > 1);
+const rotacion = computed(() => (props.orientacion === "horizontal" ? -90 : 0));
 
-const pasillos = computed(() =>
-  Object.fromEntries(
-    plantasVisibles.value.map((planta) => [
-      planta,
-      columnasPasillo(props.elementos, planta, rejillaDe(planta)),
-    ]),
-  ),
-)
+const pasillos = computed(() => Object.fromEntries(plantasVisibles.value.map((planta) => [planta, columnasPasillo(props.elementos, planta, rejillaDe(planta))])));
 
 function rejillaDe(planta: number): Rejilla {
-  return rejillasPorPlanta.value[planta] ?? { filas: 1, columnas: 5 }
+  return rejillasPorPlanta.value[planta] ?? { filas: 1, columnas: 5 };
 }
 
 function nombrePlanta(planta: number): string {
-  if (plantasVisibles.value.length === 1 && planta === 1) return 'Planta única'
-  return planta === 1 ? 'Planta baja' : 'Planta alta'
+  if (plantasVisibles.value.length === 1 && planta === 1) return "Planta única";
+  return planta === 1 ? "Planta baja" : "Planta alta";
 }
 
-const asientosEn = (planta: number) =>
-  props.elementos.filter((e) => e.planta === planta && esAsiento(e)).length
+const asientosEn = (planta: number) => props.elementos.filter((e) => e.planta === planta && esAsiento(e)).length;
 
 function celdasDe(planta: number): CeldaMapa[] {
   if (!props.celdasVacias) {
-    return props.elementos
-      .filter((e) => e.planta === planta)
-      .map((e) => ({ clave: claveCelda(e), planta, fila: e.fila, columna: e.columna, elemento: e }))
+    return props.elementos.filter((e) => e.planta === planta).map((e) => ({ clave: claveCelda(e), planta, fila: e.fila, columna: e.columna, elemento: e }));
   }
-  const { filas, columnas } = rejillaDe(planta)
-  const celdas: CeldaMapa[] = []
+  const { filas, columnas } = rejillaDe(planta);
+  const celdas: CeldaMapa[] = [];
   for (let fila = 1; fila <= filas; fila++) {
     for (let columna = 1; columna <= columnas; columna++) {
-      const clave = claveCelda({ planta, fila, columna })
-      celdas.push({ clave, planta, fila, columna, elemento: porCelda.value.get(clave) ?? null })
+      const clave = claveCelda({ planta, fila, columna });
+      celdas.push({ clave, planta, fila, columna, elemento: porCelda.value.get(clave) ?? null });
     }
   }
-  return celdas
+  return celdas;
 }
 
 // Geometría: (fila, columna) del croquis → (fila, columna) de la rejilla CSS.
 function estiloRejilla(planta: number) {
-  const { filas, columnas } = rejillaDe(planta)
-  const [cols, rows] = props.orientacion === 'horizontal' ? [filas, columnas] : [columnas, filas]
+  const { filas, columnas } = rejillaDe(planta);
+  const [cols, rows] = props.orientacion === "horizontal" ? [filas, columnas] : [columnas, filas];
   return {
     gridTemplateColumns: `repeat(${cols}, var(--bm-cell))`,
     gridTemplateRows: `repeat(${rows}, var(--bm-cell))`,
-  }
+  };
 }
 
 function posicionCss(planta: number, p: Posicion) {
-  const { columnas } = rejillaDe(planta)
-  return props.orientacion === 'horizontal'
-    ? { gridColumn: p.fila, gridRow: columnas + 1 - p.columna }
-    : { gridColumn: p.columna, gridRow: p.fila }
+  const { columnas } = rejillaDe(planta);
+  return props.orientacion === "horizontal" ? { gridColumn: p.fila, gridRow: columnas + 1 - p.columna } : { gridColumn: p.columna, gridRow: p.fila };
 }
 
-const estiloCelda = (planta: number, p: Posicion) => posicionCss(planta, p)
+const estiloCelda = (planta: number, p: Posicion) => posicionCss(planta, p);
 
 function estiloPasillo(planta: number, columna: number) {
-  const { filas } = rejillaDe(planta)
-  const base = posicionCss(planta, { planta, fila: 1, columna })
-  return props.orientacion === 'horizontal'
-    ? { gridRow: base.gridRow, gridColumn: `1 / span ${filas}` }
-    : { gridColumn: base.gridColumn, gridRow: `1 / span ${filas}` }
+  const { filas } = rejillaDe(planta);
+  const base = posicionCss(planta, { planta, fila: 1, columna });
+  return props.orientacion === "horizontal" ? { gridRow: base.gridRow, gridColumn: `1 / span ${filas}` } : { gridColumn: base.gridColumn, gridRow: `1 / span ${filas}` };
 }
 
 /** La señal está en la mitad izquierda del bus (una puerta se dibuja en ese costado). */
-const esIzquierda = (planta: number, e: ElementoCroquis) =>
-  e.columna <= rejillaDe(planta).columnas / 2
+const esIzquierda = (planta: number, e: ElementoCroquis) => e.columna <= rejillaDe(planta).columnas / 2;
 
 // Estado e interacción ------------------------------------------------------
-const estadoDe = (a: AsientoCroquis): EstadoAsiento => props.estado?.(a) ?? 'disponible'
+const estadoDe = (a: AsientoCroquis): EstadoAsiento => props.estado?.(a) ?? "disponible";
 
-const noSeleccionable = (a: AsientoCroquis) => ESTADOS_NO_SELECCIONABLES.includes(estadoDe(a))
+const noSeleccionable = (a: AsientoCroquis) => ESTADOS_NO_SELECCIONABLES.includes(estadoDe(a));
 
 /** Con alguien dentro (vendido, reservado, cortesía…): no libre, ni elegido, ni bloqueado. */
-const esOcupado = (a: AsientoCroquis) =>
-  !['disponible', 'seleccionado', 'bloqueado'].includes(estadoDe(a))
+const esOcupado = (a: AsientoCroquis) => !["disponible", "seleccionado", "bloqueado"].includes(estadoDe(a));
 
-const esBoton = (e: ElementoCroquis | null): e is AsientoCroquis =>
-  !!e && esAsiento(e) && (props.interactivo || (props.inspeccionable && esOcupado(e)))
+const esBoton = (e: ElementoCroquis | null): e is AsientoCroquis => !!e && esAsiento(e) && (props.interactivo || (props.inspeccionable && esOcupado(e)));
 
 /** Un ocupado se abre (detalle) en vez de deshabilitarse. */
-const seInspecciona = (a: AsientoCroquis) => props.inspeccionable && esOcupado(a)
+const seInspecciona = (a: AsientoCroquis) => props.inspeccionable && esOcupado(a);
 
 const ETIQUETA_ESTADO: Record<EstadoAsiento, string> = {
-  disponible: 'disponible',
-  ocupado: 'ocupado',
-  'ocupado-web': 'vendido en la página',
-  'ocupado-agencia': 'vendido por agencia',
-  cortesia: 'cortesía',
-  voucher: 'voucher',
-  seleccionado: 'seleccionado',
-  reservado: 'reservado',
-  bloqueado: 'bloqueado',
-}
+  disponible: "disponible",
+  ocupado: "ocupado",
+  "ocupado-web": "vendido en la página",
+  "ocupado-agencia": "vendido por agencia",
+  cortesia: "cortesía",
+  voucher: "voucher",
+  seleccionado: "seleccionado",
+  reservado: "reservado",
+  bloqueado: "bloqueado",
+};
 
 function etiqueta(e: ElementoCroquis): string {
-  if (!esAsiento(e)) return e.tipo === 'chofer' ? 'Chofer' : 'Puerta'
-  const estado = props.estado ? `, ${ETIQUETA_ESTADO[estadoDe(e)]}` : ''
-  return `Asiento ${e.numero}, clase ${e.clase}${estado}`
+  if (!esAsiento(e)) return e.tipo === "chofer" ? "Chofer" : "Puerta";
+  const estado = props.estado ? `, ${ETIQUETA_ESTADO[estadoDe(e)]}` : "";
+  return `Asiento ${e.numero}, clase ${e.clase}${estado}`;
 }
 
 function atributosCelda(e: ElementoCroquis | null) {
-  if (!e) return {}
+  if (!e) return {};
   if (esBoton(e)) {
     return {
-      type: 'button',
+      type: "button",
       disabled: noSeleccionable(e) && !seInspecciona(e),
-      'aria-pressed': estadoDe(e) === 'seleccionado',
-      'aria-label': etiqueta(e),
+      "aria-pressed": estadoDe(e) === "seleccionado",
+      "aria-label": etiqueta(e),
       title: etiqueta(e),
-    }
+    };
   }
-  return { role: 'img', 'aria-label': etiqueta(e), title: etiqueta(e) }
+  return { role: "img", "aria-label": etiqueta(e), title: etiqueta(e) };
 }
 
 function claseCelda(e: ElementoCroquis | null) {
-  if (!e) return 'bm-cell--vacia'
-  return [`bm-cell--${e.tipo}`, esBoton(e) ? 'bm-cell--boton' : '']
+  if (!e) return "bm-cell--vacia";
+  return [`bm-cell--${e.tipo}`, esBoton(e) ? "bm-cell--boton" : ""];
 }
 
 function onClick(celda: CeldaMapa, evento: MouseEvent) {
-  emit('celda', celda)
-  const e = celda.elemento
-  if (!esBoton(e)) return
-  if (seInspecciona(e)) emit('ocupado', e, evento)
-  else if (!noSeleccionable(e)) emit('asiento', e)
+  emit("celda", celda);
+  const e = celda.elemento;
+  if (!esBoton(e)) return;
+  if (seInspecciona(e)) emit("ocupado", e, evento);
+  else if (!noSeleccionable(e)) emit("asiento", e);
 }
 </script>
 
@@ -353,8 +285,7 @@ function onClick(celda: CeldaMapa, evento: MouseEvent) {
   right: 14%;
   top: calc(var(--bm-cell) * 0.2);
   height: calc(var(--bm-cell) * 0.3);
-  border-radius: calc(var(--bm-cell) * 0.5) calc(var(--bm-cell) * 0.5) calc(var(--bm-cell) * 0.12)
-    calc(var(--bm-cell) * 0.12);
+  border-radius: calc(var(--bm-cell) * 0.5) calc(var(--bm-cell) * 0.5) calc(var(--bm-cell) * 0.12) calc(var(--bm-cell) * 0.12);
   background: linear-gradient(180deg, var(--bm-glass), transparent 140%);
   border: 1px solid color-mix(in srgb, var(--bm-glass) 70%, var(--bm-hull-border));
 }
@@ -365,8 +296,7 @@ function onClick(celda: CeldaMapa, evento: MouseEvent) {
   right: auto;
   width: calc(var(--bm-cell) * 0.3);
   height: auto;
-  border-radius: calc(var(--bm-cell) * 0.5) calc(var(--bm-cell) * 0.12) calc(var(--bm-cell) * 0.12)
-    calc(var(--bm-cell) * 0.5);
+  border-radius: calc(var(--bm-cell) * 0.5) calc(var(--bm-cell) * 0.12) calc(var(--bm-cell) * 0.12) calc(var(--bm-cell) * 0.5);
   background: linear-gradient(90deg, var(--bm-glass), transparent 140%);
 }
 .bm-bus__mirror {
