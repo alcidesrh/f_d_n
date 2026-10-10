@@ -26,10 +26,17 @@ import type {
 
 export const fetchContexto = () => http.get<ContextoVenta>('/venta/contexto')
 
-export const fetchSalidas = (fecha: string, estacion: number | null) =>
-  http.get<SalidaResumen[]>(
-    `/venta/salidas?fecha=${encodeURIComponent(fecha)}${estacion ? `&estacion=${estacion}` : ''}`,
-  )
+/** Salidas de un día, o de un rango con hora (`desde`–`hasta`, "AAAA-MM-DDTHH:MM"), por origen y destino. */
+export const fetchSalidas = (
+  cuando: { fecha: string } | { desde: string; hasta: string },
+  estacion: number | null,
+  destino: number | null = null,
+) => {
+  const q = new URLSearchParams('fecha' in cuando ? { fecha: cuando.fecha } : { desde: cuando.desde, hasta: cuando.hasta })
+  if (estacion) q.set('estacion', String(estacion))
+  if (destino) q.set('destino', String(destino))
+  return http.get<SalidaResumen[]>(`/venta/salidas?${q}`)
+}
 
 export const fetchSalida = (id: number) => http.get<SalidaDetalle>(`/venta/salidas/${id}`)
 

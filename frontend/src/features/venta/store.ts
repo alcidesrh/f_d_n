@@ -21,6 +21,12 @@ export interface OpcionesCobro {
   sinFacturaElectronica?: boolean;
 }
 
+const dos = (n: number) => String(n).padStart(2, "0");
+const inicioDeDia = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0);
+const finDeDia = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59);
+/** "AAAA-MM-DDTHH:MM" en hora local, como lo espera `/venta/salidas`. */
+const localISO = (d: Date) => `${diaISO(d)}T${dos(d.getHours())}:${dos(d.getMinutes())}`;
+
 export const useVentaStore = defineStore("venta", () => {
   const contexto = shallowRef<ContextoVenta | null>(null);
   const errorCarga = ref("");
@@ -29,19 +35,25 @@ export const useVentaStore = defineStore("venta", () => {
   const estacionId = ref<number | null>(null);
   const salidas = ref<SalidaResumen[]>([]);
   const cargandoSalidas = ref(false);
-  /** Filtro por empresa (en el cliente, sobre las salidas ya cargadas); null = todas. */
-  const empresaId = ref<number | null>(null);
+  /** Filtro por empresas (en el cliente, sobre las salidas ya cargadas); vacío = todas. */
+  const empresaIds = ref<number[]>([]);
   const empresas = computed(() => {
     const porId = new Map<number, string>();
     for (const r of salidas.value) if (r.empresa) porId.set(r.empresa.id, r.empresa.nombre);
     return [...porId].map(([id, nombre]) => ({ id, nombre })).sort((a, b) => a.nombre.localeCompare(b.nombre));
   });
+  /** Destino (estación): lo resuelve el servidor, igual que el origen. */
+  const destinoId = ref<number | null>(null);
+  /** Buscar por rango de fecha y hora en vez de un solo día. */
+  const porRango = ref(false);
+  const desde = ref(inicioDeDia(new Date()));
+  const hasta = ref(finDeDia(new Date()));
   /** Reasignando: los boletos que se pasan a otro asiento o salida (todos de una venta); null = venta normal. */
   const reasignacion = shallowRef<{ boletos: BoletoOperable[]; ventaId: number } | null>(null);
   /** El comprobante que se muestra es de una reasignación (no de una venta). */
   const comprobanteReasignado = ref(false);
   const salidasVisibles = computed(() => {
-    const filtradas = empresaId.value == null ? salidas.value : salidas.value.filter((r) => r.empresa?.id === empresaId.value);
+    const filtradas = salidas.value.filter((r) => (empresaIds.value.length === 0 || (r.empresa != null && empresaIds.value.includes(r.empresa.id))));
     return reasignacion.value ? salidasReasignables(filtradas, reasignacion.value.boletos, new Date()) : filtradas;
   });
 
@@ -110,8 +122,9 @@ export const useVentaStore = defineStore("venta", () => {
   async function cargarSalidas() {
     cargandoSalidas.value = true;
     try {
-      salidas.value = await api.fetchSalidas(diaISO(fecha.value), estacionId.value);
-      if (empresaId.value != null && !salidas.value.some((r) => r.empresa?.id === empresaId.value)) empresaId.value = null;
+      const cuando = porRango.value ? { desde: localISO(desde.value), hasta: localISO(hasta.value) } : { fecha: diaISO(fecha.value) };
+      salidas.value = await api.fetchSalidas(cuando, estacionId.value, destinoId.value);
+      empresaIds.value = empresaIds.value.filter((id) => salidas.value.some((r) => r.empresa?.id === id));
       if (salidaId.value && !salidas.value.some((r) => r.id === salidaId.value)) {
         cerrarSalida();
       }
@@ -330,7 +343,9 @@ export const useVentaStore = defineStore("venta", () => {
     cliente.value = boletos[0]!.venta.cliente;
     const salida = new Date(boletos[0]!.salida.fecha);
     fecha.value = salida.getTime() > Date.now() ? salida : new Date();
-    empresaId.value = null;
+    empresaIds.value = [];
+    destinoId.value = null;
+    porRango.value = false;
     await cargarSalidas();
     return true;
   }
@@ -385,8 +400,12 @@ export const useVentaStore = defineStore("venta", () => {
     fecha,
     estacionId,
     salidas,
-    empresaId,
+    empresaIds,
     empresas,
+    destinoId,
+    porRango,
+    desde,
+    hasta,
     salidasVisibles,
     cargandoSalidas,
     salidaId,

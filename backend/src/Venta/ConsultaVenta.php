@@ -39,14 +39,16 @@ final class ConsultaVenta
      * la última) con algún trayecto tarifado que sube ahí: desde ahí se les
      * puede vender. Sin estación, todas las que tienen algún trayecto
      * tarifado. Con empresa, solo las suyas (agencias que venden para una
-     * sola empresa).
+     * sola empresa). Con `$hasta` se buscan las salidas entre `$dia` (con
+     * su hora) y `$hasta`, ambos inclusive; con `$destinoId`, las que llegan
+     * a ese destino después de la estación.
      *
      * @return list<array<string, mixed>>
      */
-    public function salidasDeEstacion(\DateTimeImmutable $dia, ?int $estacionId, ?int $empresaId = null, bool $incluirAnuladas = true): array
+    public function salidasDeEstacion(\DateTimeImmutable $dia, ?int $estacionId, ?int $empresaId = null, bool $incluirAnuladas = true, ?int $destinoId = null, ?\DateTimeImmutable $hasta = null): array
     {
         $salidas = array_values(array_filter(
-            $this->salidasDelDia($dia),
+            $this->salidasDelDia($dia, $hasta),
             static fn(Salida $r) => ($empresaId === null || $r->getEmpresa()?->getId() === $empresaId)
                 && ($incluirAnuladas || $r->getEstado() !== EstadoSalida::CANCELADA),
         ));
@@ -59,6 +61,10 @@ final class ConsultaVenta
             $it = $itinerarios[$r->getTrayecto()->getId()];
             $pos = $estacionId !== null ? $it->posicion($estacionId) : 0;
             if ($pos === null || $pos >= count($it->paradas) - 1) {
+                continue;
+            }
+            // Con destino, debe estar en el itinerario después de la estación de salida.
+            if ($destinoId !== null && (($posDestino = $it->posicion($destinoId)) === null || $posDestino <= $pos)) {
                 continue;
             }
             $clases = $r->getBus() !== null ? array_keys($asientos[$r->getBus()->getId()] ?? []) : self::todasLasClases();
@@ -288,10 +294,10 @@ final class ConsultaVenta
     /**
      * @return list<Salida>
      */
-    private function salidasDelDia(\DateTimeImmutable $dia): array
+    private function salidasDelDia(\DateTimeImmutable $dia, ?\DateTimeImmutable $hastaInclusive = null): array
     {
-        $desde = \DateTime::createFromImmutable($dia->setTime(0, 0));
-        $hasta = \DateTime::createFromImmutable($dia->setTime(0, 0)->modify("+1 day"));
+        $desde = \DateTime::createFromImmutable($hastaInclusive === null ? $dia->setTime(0, 0) : $dia);
+        $hasta = \DateTime::createFromImmutable($hastaInclusive === null ? $dia->setTime(0, 0)->modify("+1 day") : $hastaInclusive->modify("+1 minute"));
 
         return $this->em->createQueryBuilder()
             ->select("r", "t", "o", "d", "b", "e")

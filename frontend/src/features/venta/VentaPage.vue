@@ -56,23 +56,36 @@
             <ClienteBuscador v-else v-model="store.cliente" input-id="venta-cliente" />
           </section>
           <section class="panel flex flex-col gap-3">
-            <div class="grid grid-cols-1 gap-3 @xl:grid-cols-3 mb-6">
+            <div class="grid grid-cols-1 items-start gap-3 @xl:grid-cols-4 mb-6">
+              <div class="flex flex-col gap-1">
+                <span class="text-sm font-medium">{{ store.porRango ? "Rango de salida" : "Fecha de salida" }}</span>
+                <DatePicker v-if="!store.porRango" v-model="store.fecha" date-format="dd/mm/yy" show-icon fluid @update:model-value="store.cargarSalidas()" />
+                <DatePicker v-else ref="selectorRango" v-model="borrador" selection-mode="range" :manual-input="false" date-format="dd/mm/yy" show-time hour-format="24" show-icon fluid placeholder="Desde – Hasta">
+                  <template #footer>
+                    <Button label="Aplicar" size="small" fluid :disabled="!borrador?.[0]" @click="aplicarRango" />
+                  </template>
+                </DatePicker>
+                <label class="flex cursor-pointer items-center gap-1 text-[0.65rem] leading-none text-muted-color">
+                  <ToggleSwitch v-model="store.porRango" class="scale-[0.6] origin-left -mr-3" @update:model-value="alCambiarModo" />
+                  Rango
+                </label>
+              </div>
               <label class="flex flex-col gap-1">
-                <span class="text-sm font-medium">Fecha de salida</span>
-                <DatePicker v-model="store.fecha" date-format="dd/mm/yy" show-icon fluid @update:model-value="store.cargarSalidas()" />
-              </label>
-              <label class="flex flex-col gap-1">
-                <span class="text-sm font-medium">Estación</span>
+                <span class="text-sm font-medium">Origen</span>
                 <estacion-select v-model="store.estacionId" :estaciones="store.contexto?.estaciones ?? []" :propio="store.contexto?.estacion?.departamento" placeholder="Todas" @update:model-value="store.cargarSalidas()" />
               </label>
               <label class="flex flex-col gap-1">
+                <span class="text-sm font-medium">Destino</span>
+                <estacion-select v-model="store.destinoId" :estaciones="store.contexto?.estaciones ?? []" show-clear placeholder="Todas" @update:model-value="store.cargarSalidas()" />
+              </label>
+              <label class="flex flex-col gap-1">
                 <span class="text-sm font-medium">Empresa</span>
-                <Select v-model="store.empresaId" :options="store.empresas" option-label="nombre" option-value="id" placeholder="Todas" show-clear fluid />
+                <MultiSelect v-model="store.empresaIds" :options="store.empresas" option-label="nombre" option-value="id" placeholder="Todas" display="chip" :show-toggle-all="false" fluid />
               </label>
             </div>
 
             <SalidasLista :salidas="store.salidasVisibles" :cargando="store.cargandoSalidas" :salida-id="store.salidaId" @elegir="store.elegirSalida" />
-            <div class="flex items-center justify-between gap-2">
+            <div v-if="!store.porRango" class="flex items-center justify-between gap-2">
               <Button :label="etiquetaDia(-1)" severity="secondary" text size="small" :disabled="store.cargandoSalidas" @click="moverDia(-1)">
                 <template #icon><icon name="chevron-left" class="mr-1" /></template>
               </Button>
@@ -206,6 +219,27 @@ const cortesia = ref(false);
 let ultimasOpciones: OpcionesCobro | null = null;
 
 const conteos = computed(() => conteosPorEstado(store.detalle?.croquis ?? [], store.estadoAsiento));
+
+/** Rango de fecha y hora: se elige en el selector y solo se busca al pulsar "Aplicar". */
+const borrador = ref<(Date | null)[] | null>(null);
+const selectorRango = ref<{ overlayVisible: boolean } | null>(null);
+function alCambiarModo(activo: boolean) {
+  if (activo) borrador.value = [store.desde, store.hasta];
+  void store.cargarSalidas();
+}
+function aplicarRango() {
+  const [d, h] = borrador.value ?? [];
+  if (!d) return;
+  // Sin fin, o con el fin a 00:00 sin hora elegida, el último día entra completo.
+  let fin = h ?? d;
+  if (fin.getHours() === 0 && fin.getMinutes() === 0) fin = new Date(fin.getFullYear(), fin.getMonth(), fin.getDate(), 23, 59);
+  const [desde, hasta] = fin < d ? [fin, d] : [d, fin];
+  store.desde = desde;
+  store.hasta = hasta;
+  borrador.value = [desde, hasta];
+  if (selectorRango.value) selectorRango.value.overlayVisible = false;
+  void store.cargarSalidas();
+}
 
 /** Paginado por día: mueve la fecha y recarga las salidas. */
 function moverDia(delta: number) {

@@ -108,14 +108,26 @@ final class VentaController extends AbstractController
         ]);
     }
 
-    /** `?fecha=AAAA-MM-DD&estacion={id}`: salidas del día que pasan por la estación. */
+    /**
+     * `?fecha=AAAA-MM-DD` o `?desde=AAAA-MM-DDTHH:MM&hasta=AAAA-MM-DDTHH:MM` (rango con hora),
+     * `&estacion={id}` (origen) y `&destino={id}`: salidas que pasan por la estación.
+     */
     #[Route("/salidas", name: "salidas", methods: ["GET"])]
     public function salidas(Request $request, #[CurrentUser] Usuario $usuario): JsonResponse
     {
         $this->denyAccessUnlessGranted(self::VENDER);
-        $dia = \DateTimeImmutable::createFromFormat("!Y-m-d", (string) $request->query->get("fecha"));
-        if ($dia === false) {
-            return $this->json(["error" => "Fecha inválida (AAAA-MM-DD)."], Response::HTTP_BAD_REQUEST);
+        $hasta = null;
+        if ($request->query->has("desde")) {
+            $dia = \DateTimeImmutable::createFromFormat("!Y-m-d\\TH:i", (string) $request->query->get("desde"));
+            $hasta = \DateTimeImmutable::createFromFormat("!Y-m-d\\TH:i", (string) $request->query->get("hasta"));
+            if ($dia === false || $hasta === false || $hasta < $dia) {
+                return $this->json(["error" => "Rango inválido (AAAA-MM-DDTHH:MM)."], Response::HTTP_BAD_REQUEST);
+            }
+        } else {
+            $dia = \DateTimeImmutable::createFromFormat("!Y-m-d", (string) $request->query->get("fecha"));
+            if ($dia === false) {
+                return $this->json(["error" => "Fecha inválida (AAAA-MM-DD)."], Response::HTTP_BAD_REQUEST);
+            }
         }
         $estacion = $request->query->getInt("estacion") ?: null;
 
@@ -125,6 +137,8 @@ final class VentaController extends AbstractController
             $usuario->getAgencia()?->getEmpresa()?->getId(),
             // Las anuladas solo las ve el SUPER_ADMIN.
             $this->isGranted("ROLE_SUPER_ADMIN"),
+            $request->query->getInt("destino") ?: null,
+            $hasta,
         ));
     }
 
