@@ -33,7 +33,7 @@ import { createBouncingBalls } from "./bouncingBalls";
 
 const props = defineProps<{ obstacle: HTMLElement | null }>();
 
-const SLIDE_MS = 5000;
+const SLIDE_MS = 3000;
 const SLIDE_COUNT = 10;
 const WHEELS = 5;
 /** Fotos claras: sobre ellas las ruedas se oscurecen (ver `.img.loginN` en el estilo). */
@@ -171,6 +171,8 @@ onMounted(() => {
   mostrarClima(clima.value, true);
   balls = createBouncingBalls([...logosEl.value!.children] as HTMLElement[], () => props.obstacle?.getBoundingClientRect());
   balls.start();
+  // Nacen quietas: sin este empujón esperarían al primer cambio de foto (SLIDE_MS) para moverse.
+  balls.scatter();
   timer = setInterval(advance, SLIDE_MS);
 });
 

@@ -31,6 +31,8 @@ async function bootstrap() {
   const uiStore = useUiStore();
   await uiStore.init();
   await useSchemaStore().init();
+  // Sin esto se monta con la ruta inicial sin resolver (sin `meta.layout`) y parpadea el layout de la app antes del de /login.
+  await router.isReady();
   app.mount("#app");
 
   void syncVueRoutes().then((result) => {

@@ -42,8 +42,10 @@ import { CustomEase } from "gsap/CustomEase";
 import { CustomWiggle } from "gsap/CustomWiggle";
 import { useRoute } from "vue-router";
 import { router } from "@/app/router";
+import { syncVueRoutes } from "@/app/routeSync";
 import { destinoSeguro, REDIRECT_QUERY } from "@/core/auth/redirect";
 import { useSessionStore } from "@/core/auth/session";
+import { useSchemaStore } from "@/core/entities/schema";
 import { HttpError } from "@/core/http";
 import { useLoadingStore } from "@/core/loading";
 import LoginBackground from "./LoginBackground.vue";
@@ -80,6 +82,9 @@ async function handleSubmit(credentials: { username: string; password: string },
   node.clearErrors();
   try {
     await session.login(credentials);
+    // Sin schema en localStorage el arranque lo pidió sin sesión (401): se reintenta ya autenticado.
+    await useSchemaStore().init();
+    void syncVueRoutes();
     await router.push(destinoSeguro(route.query[REDIRECT_QUERY]) ?? { name: "dashboard" });
   } catch (cause) {
     error.value = true;
