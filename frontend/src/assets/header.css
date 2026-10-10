@@ -9,8 +9,8 @@
   right: 0;
   height: var(--header-h);
   z-index: 50;
-  background: var(--p-surface-50);
-  /*border-bottom: var(--border);*/
+  background: var(--p-content-background);
+  border-bottom: var(--border);
   display: flex;
   align-items: center;
   gap: 0.25rem;
@@ -68,26 +68,31 @@
   font-variant-numeric: tabular-nums;
   font-size: 1.3rem;
   @variant md {
-    font-size: 2rem;
+    font-size: 1.8rem;
   }
-  font-weight: 500;
+  font-weight: 700;
   letter-spacing: 0.1em;
-  color: var(--p-surface-500);
+  color: var(--p-surface-600);
   white-space: nowrap;
   line-height: 1.2;
   z-index: 10;
 }
 /* Marca de agua decorativa (5 % de opacidad): solo con espacio (md+). */
 .brand-name {
+  z-index: 100;
+
   display: none;
   @variant md {
     display: block;
   }
   font-family: "diplomata-sc-regular", sans-serif;
-  font-size: 3.5rem;
-  opacity: 0.1;
-  letter-spacing: 0.5rem;
-  transform: scaleY(1.5);
+  font-size: 2.5rem;
+  opacity: 0.6;
+  color: var(--p-zinc-200);
+
+  letter-spacing: 1.8rem;
+  transform: scaleY(2.3);
+  /*transform: matrix(0, 1, 1, 0, 0, 0);*/
 }
 
 .btn-siderbar-header {
@@ -204,7 +209,7 @@
   color: inherit;
   cursor: pointer;
   &:hover,
-  &[aria-expanded='true'] {
+  &[aria-expanded="true"] {
     background: var(--p-content-hover-background);
   }
 }
