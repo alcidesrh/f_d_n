@@ -38,19 +38,19 @@
             :aria-sort="column.sort === 'asc' ? 'ascending' : column.sort === 'desc' ? 'descending' : undefined"
           >
             <span v-if="reorderable" data-grid-grip class="dg-grip" title="Arrastrar para mover la columna">
-              <icon name="drag-indicator" size="1rem" />
+              <icon name="drag-indicator" size="0.875rem" />
             </span>
             <button v-if="column.sortable" type="button" class="dg-hlabel dg-sortable" :aria-label="`Ordenar por ${column.label}`" @click="emit('sort', column.key)">
               <span class="truncate">{{ column.label }}</span>
-              <icon :name="SORT_ICONS[column.sort ?? 'none']" size="0.95rem" class="dg-sort-icon" />
+              <icon :name="SORT_ICONS[column.sort ?? 'none']" size="0.8rem" class="dg-sort-icon" />
             </button>
             <span v-else class="dg-hlabel truncate" :title="column.label">{{ column.label }}</span>
             <span class="dg-htools">
               <button v-if="column.filterable" type="button" class="dg-tool tap-target" :class="{ 'is-active': column.filterOpen }" :aria-pressed="Boolean(column.filterOpen)" :aria-label="column.filterOpen ? `Quitar filtro ${column.label}` : `Filtrar ${column.label}`" v-tooltip.top="column.filterOpen ? 'Quitar filtro' : 'Filtrar'" @click="emit('filter', column.key)">
-                <icon :name="column.filterOpen ? 'filter-alt' : 'filter-alt-outline'" size="1rem" />
+                <icon :name="column.filterOpen ? 'filter-alt' : 'filter-alt-outline'" size="0.85rem" />
               </button>
               <button v-if="hideable" type="button" class="dg-tool tap-target" :aria-label="`Ocultar columna ${column.label}`" @click="emit('hide', column.key)">
-                <icon name="visibility-off-outline" size="1rem" />
+                <icon name="visibility-off-outline" size="0.85rem" />
               </button>
             </span>
             <span v-if="resizable" class="dg-resizer" title="Arrastrar para cambiar el ancho (doble clic: ancho original)" @pointerdown="resize.start($event, column.key)" @dblclick.stop="resize.reset(column.key)" />
@@ -59,14 +59,20 @@
           <div v-if="actions" class="dg-cell dg-actions dg-sticky-r" role="columnheader" aria-label="Acciones" />
         </div>
 
+        <Transition name="dg-filters" :duration="220">
         <div v-if="filterRow" class="dg-row dg-filters" role="row">
           <div v-if="selectable" class="dg-cell dg-sel dg-sticky-l" />
           <div v-for="column in columns" :key="column.key" class="dg-cell" :data-grid-filter="column.key">
-            <slot v-if="column.filterable && column.filterOpen" name="filter" :column="column" />
+            <Transition name="dg-filter-input">
+              <div v-if="column.filterable && column.filterOpen" class="dg-filter-slot">
+                <slot name="filter" :column="column" />
+              </div>
+            </Transition>
           </div>
           <div v-if="template.filler" class="dg-cell dg-filler" />
           <div v-if="actions" class="dg-cell dg-actions dg-sticky-r" />
         </div>
+        </Transition>
 
         <template v-if="rows.length">
           <div
@@ -451,9 +457,9 @@ useColumnDrag({
 .dg-tool {
   display: inline-grid;
   place-items: center;
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: 0.375rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 0.3rem;
   color: var(--p-text-muted-color);
   cursor: pointer;
   transition: background-color 0.15s;
@@ -469,8 +475,8 @@ useColumnDrag({
   display: inline-grid;
   flex: none;
   place-items: center;
-  width: 1rem;
-  height: 1.75rem;
+  width: 0.875rem;
+  height: 1.5rem;
   cursor: grab;
   opacity: 0.25;
   touch-action: none;
@@ -530,6 +536,39 @@ useColumnDrag({
 .dg-filters .dg-cell {
   height: 2.75rem;
   padding-inline: 0.375rem;
+  overflow: hidden;
+}
+.dg-filter-slot {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+}
+/* La fila de filtros se despliega (alto) y cada input entra deslizándose. */
+.dg-filters-enter-active .dg-cell,
+.dg-filters-leave-active .dg-cell {
+  transition:
+    height 0.22s var(--ease),
+    opacity 0.22s var(--ease);
+}
+.dg-filters-enter-from .dg-cell,
+.dg-filters-leave-to .dg-cell {
+  height: 0;
+  opacity: 0;
+}
+.dg-filter-input-enter-active,
+.dg-filter-input-leave-active {
+  transition:
+    opacity 0.2s var(--ease),
+    transform 0.2s var(--ease);
+}
+.dg-filter-input-enter-from,
+.dg-filter-input-leave-to {
+  opacity: 0;
+  transform: translateY(-0.375rem);
+}
+.dg-filter-input-leave-active {
+  position: absolute;
+  inset-inline: 0.375rem;
 }
 
 .dg-brow .dg-cell {

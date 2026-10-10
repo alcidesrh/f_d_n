@@ -93,14 +93,17 @@ export function useColumnDrag({ header, keys, enabled, onMove }: DragOptions) {
     kill()
     await nextTick()
     if (!enabled() || !header.value) return
-    const scroller = header.value.closest<HTMLElement>('[data-grid-scroll]') ?? undefined
+    // Límite: la fila de cabecera entera. Con el contenedor con scroll como
+    // límite, GSAP empujaba hacia adentro las cabeceras que arrancan fuera de
+    // la parte visible y se desalineaban de su columna.
+    const bounds = header.value
     for (const cell of header.value.querySelectorAll<HTMLElement>('[data-grid-col]')) {
       const grip = cell.querySelector<HTMLElement>('[data-grid-grip]')
       if (!grip) continue
       const [draggable] = Draggable.create(cell, {
         type: 'x',
         trigger: grip,
-        bounds: scroller,
+        bounds,
         autoScroll: 1,
         zIndexBoost: true,
         cursor: 'grab',
