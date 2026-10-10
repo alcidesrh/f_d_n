@@ -39,7 +39,7 @@
         >
           <template #planta-cabecera="{ planta }">
             <span class="text-sm font-semibold">{{ nombrePlanta(planta) }}</span>
-            <span class="text-xs text-muted-color">{{ t('croquis.asientos', { n: asientosEn(planta) }) }}</span>
+            <span v-if="precioPlanta(planta)" class="text-sm font-semibold text-acento-700">{{ precioPlanta(planta) }}</span>
           </template>
         </BusMap>
       </div>
@@ -71,7 +71,7 @@ import type { AsientoCroquis, ClaseAsiento, EstadoAsiento } from '@/core/croquis
 import * as api from '@/api'
 import { mensajeDeError } from '@/errores'
 import { REGION, type Idioma } from '@/i18n'
-import { estadoEnMapa, quetzales, type AsientoElegido } from '@/modelo'
+import { estadoEnMapa, preciosDePlanta, quetzales, type AsientoElegido } from '@/modelo'
 import { suscribir } from '@/tiempoReal'
 import type { Salida, SalidaPublico } from '@/tipos'
 import { useViaje, type Sentido } from '@/viaje'
@@ -91,24 +91,20 @@ const precios = computed(() => new Map((detalle.value?.precios ?? []).map((p) =>
 const estado = computed(() => estadoEnMapa(detalle.value?.ocupacion ?? [], new Set(mios.value.map((a) => a.id)), new Set(precios.value.keys())))
 const plantas = computed(() => new Set((detalle.value?.croquis ?? []).map((e) => e.planta)))
 
-const leyenda = computed(() => {
-  const l: Array<{ estado: EstadoAsiento; clase: ClaseAsiento; texto: string }> = [
-    { estado: 'disponible', clase: 'A', texto: t('croquis.disponible') },
-    { estado: 'seleccionado', clase: 'A', texto: t('croquis.seleccionado') },
-    { estado: 'ocupado', clase: 'A', texto: t('croquis.ocupado') },
-  ]
-  if (precios.value.has('B')) {
-    l.push({ estado: 'disponible', clase: 'B', texto: t('croquis.claseB') })
-    l.push({ estado: 'disponible', clase: 'A', texto: t('croquis.claseA') })
-  }
-  return l
-})
+const leyenda = computed((): Array<{ estado: EstadoAsiento; clase: ClaseAsiento; texto: string }> => [
+  { estado: 'disponible', clase: 'A', texto: t('croquis.disponible') },
+  { estado: 'seleccionado', clase: 'A', texto: t('croquis.seleccionado') },
+  { estado: 'ocupado', clase: 'A', texto: t('croquis.ocupado') },
+])
 
 function nombrePlanta(planta: number) {
   if (plantas.value.size <= 1) return t('croquis.plantaUnica')
   return planta === 1 ? t('croquis.plantaBaja') : t('croquis.plantaAlta')
 }
-const asientosEn = (planta: number) => (detalle.value?.croquis ?? []).filter((e) => e.planta === planta && e.tipo === 'asiento').length
+const precioPlanta = (planta: number) =>
+  preciosDePlanta(detalle.value?.croquis ?? [], planta, precios.value)
+    .map((c) => quetzales(c, region.value))
+    .join(' · ')
 
 async function cargar() {
   try {

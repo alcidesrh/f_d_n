@@ -15,6 +15,7 @@ import {
   paises,
   porcentajeOcupado,
   porDepartamento,
+  preciosDePlanta,
   quetzales,
   restante,
   sumaCentavos,
@@ -56,6 +57,16 @@ it('estado del mapa: elegido = seleccionado; vendido y reservado por otro = ocup
   expect([1, 2, 3, 4, 5].map((id) => e(a(id)))).toEqual(['disponible', 'ocupado', 'ocupado', 'disponible', 'seleccionado'])
   // Una clase sin tarifa en línea no se vende en la web.
   expect(estadoEnMapa([], new Set(), new Set(['A']))(a(9, 'B'))).toBe('bloqueado')
+})
+
+it('precios de cada planta', () => {
+  const asiento = (id: number, planta: number, clase: 'A' | 'B'): AsientoCroquis => ({ tipo: 'asiento', id, numero: id, clase, planta, fila: 1, columna: id })
+  const croquis = [asiento(1, 1, 'B'), asiento(2, 1, 'B'), asiento(3, 2, 'A'), asiento(4, 2, 'B'), { tipo: 'chofer' as const, id: null, planta: 1, fila: 1, columna: 9 }]
+  const precios = new Map([['A', 27500], ['B', 35000]] as const)
+  expect(preciosDePlanta(croquis, 1, precios)).toEqual([35000])
+  expect(preciosDePlanta(croquis, 2, precios)).toEqual([27500, 35000])
+  // Sin tarifa en línea para la clase B: la planta baja queda sin precio.
+  expect(preciosDePlanta(croquis, 1, new Map([['A', 27500]]))).toEqual([])
 })
 
 describe('elección de asientos', () => {
