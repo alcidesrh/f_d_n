@@ -20,6 +20,7 @@ import List from '@/features/entity-crud/ListPage.vue'
 import Toasts from '@/app/layout/Toasts.vue'
 import DataGrid from '@/shared/data-grid/DataGrid.vue'
 import ListCellEditor from '@/features/entity-crud/list/ListCellEditor.vue'
+import ListDateRangeFilter from '@/features/entity-crud/list/ListDateRangeFilter.vue'
 
 if (typeof window.matchMedia !== 'function') {
   window.matchMedia = (query: string) =>
@@ -325,9 +326,10 @@ describe('ListPage', () => {
     return wrapper
   }
 
-  /** Abre la fila de filtros y devuelve el input de una columna. */
+  /** Activa el filtro de una columna y devuelve su input. */
   async function filterInput(field: string) {
-    store.view.filtersOpen = true
+    const column = store.columns.find((c) => c.field === field)
+    if (column) column.showFilter = true
     await flushPromises()
     return wrapper!.find(`[data-grid-filter="${field}"] input`)
   }
@@ -396,13 +398,62 @@ describe('ListPage', () => {
     expect(wrapper!.find('[aria-label="Filtrar Nombre"]').exists()).toBe(true)
   })
 
-  it('el embudo de la cabecera abre la fila de filtros', async () => {
-    await mountList(iconSchema)
+  it('el embudo activa solo el filtro de su columna; activado, lo limpia y lo oculta', async () => {
+    await mountList({ ...iconSchema, filterArgs: [...iconSchema.filterArgs, arg('_combinar')] })
     expect(wrapper!.find('.dg-filters').exists()).toBe(false)
+
     await wrapper!.find('button[aria-label="Filtrar Nombre"]').trigger('click')
     await flushPromises()
-    expect(store.view.filtersOpen).toBe(true)
-    expect(wrapper!.find('.dg-filters').exists()).toBe(true)
+    expect(wrapper!.find('[data-grid-filter="name"] input').exists()).toBe(true)
+    expect(wrapper!.find('[data-grid-filter="icon"] input').exists()).toBe(false)
+    expect(wrapper!.find('[data-grid-col="name"] button[aria-label="Quitar filtro Nombre"]').attributes('aria-pressed')).toBe('true')
+
+    await wrapper!.find('[data-grid-filter="name"] input').setValue('ho')
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    expect(store.filters).toEqual({ name: 'ho' })
+
+    await wrapper!.find('[data-grid-col="name"] button[aria-label="Quitar filtro Nombre"]').trigger('click')
+    await flushPromises()
+    expect(store.filters).toEqual({})
+    expect(wrapper!.find('.dg-filters').exists()).toBe(false)
+    expect(wrapper!.find('button[aria-label="Filtrar Nombre"]').exists()).toBe(true)
+  })
+
+  it('sin filterable: true explícito no se ofrece filtro', async () => {
+    store.init = vi.fn<() => Promise<void>>(async () => {
+      store.columns = columns.map((col) => ({ ...col, filterable: col.field === 'icon' ? true : null }))
+    }) as never
+    await mountList(iconSchema)
+    expect(wrapper!.find('[aria-label="Filtrar Nombre"]').exists()).toBe(false)
+    expect(wrapper!.find('[aria-label="Filtrar Icono"]').exists()).toBe(true)
+  })
+
+  it('el rango de fechas se aplica con Buscar (con hora) y no antes', async () => {
+    const withDate: EntitySchema = {
+      ...editableSchema,
+      filterArgs: [...iconSchema.filterArgs, arg('createdAt_after'), arg('createdAt_before')],
+      fields: [...iconSchema.fields, field('createdAt', 'Date')],
+    }
+    store.init = vi.fn<() => Promise<void>>(async () => {
+      store.columns = [...columns.map((col) => ({ ...col })), { field: 'createdAt', label: 'Creado', filterable: true }]
+    }) as never
+    await mountList(withDate)
+    await wrapper!.find('button[aria-label="Filtrar Creado"]').trigger('click')
+    await flushPromises()
+
+    const range = wrapper!.findComponent(ListDateRangeFilter)
+    const vm = range.vm as unknown as { open: (e: Event) => void; search: () => void; days: Date[]; fromTime: Date; toTime: Date }
+    vm.open(new MouseEvent('click'))
+    vm.days = [new Date(2026, 9, 1), new Date(2026, 9, 5)]
+    vm.fromTime = new Date(2000, 0, 1, 8, 30)
+    await flushPromises()
+    expect(store.fetchItems).toHaveBeenCalledTimes(1)
+
+    vm.search()
+    await flushPromises()
+    expect(store.filters).toEqual({ createdAt_after: '2026-10-01T08:30', createdAt_before: '2026-10-05T23:59' })
+    expect(store.fetchItems).toHaveBeenCalledTimes(2)
+    expect(wrapper!.text()).toContain('01/10/2026 08:30 – 05/10/2026 23:59')
   })
 
   it('varios filtros se combinan con OR por defecto y con AND al elegir "Todos"', async () => {
@@ -663,6 +714,9 @@ describe('ListPage', () => {
 
   it('pinta el orden en la cabecera según el estado del store', async () => {
     store.order = [{ name: 'ASC' }]
+    store.init = vi.fn<() => Promise<void>>(async () => {
+      store.columns = columns.map((col) => ({ ...col, sortable: true }))
+    }) as never
     await mountList({ ...iconSchema, orderInput: 'IconFilter_order', orderFields: ['name'] })
 
     const header = () => wrapper!.find('[data-grid-col="name"]')
@@ -676,6 +730,9 @@ describe('ListPage', () => {
   })
 
   it('no permite ordenar columnas fuera del input de orden del backend', async () => {
+    store.init = vi.fn<() => Promise<void>>(async () => {
+      store.columns = columns.map((col) => ({ ...col, sortable: true }))
+    }) as never
     await mountList({ ...iconSchema, orderInput: 'IconFilter_order', orderFields: ['name'] })
     expect(wrapper!.find('[aria-label="Ordenar por Nombre"]').exists()).toBe(true)
     expect(wrapper!.find('[aria-label="Ordenar por Icono"]').exists()).toBe(false)

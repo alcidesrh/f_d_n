@@ -40,8 +40,8 @@ final class EntityConfigurationListOptionsTest extends TestCase
     public function testSincronizarNoPisaLaConfiguracionDeLaColumna(): void
     {
         $columna = new CollectionFieldConfig(['nombre', 'text']);
-        self::assertNull($columna->isSortable());
-        self::assertNull($columna->isFilterable());
+        self::assertFalse($columna->isSortable());
+        self::assertFalse($columna->isFilterable());
 
         $columna->setSortable(false)->setFilterable(true)->setLabel('Nombre')->setVisible(false)->setWidth(' 12rem ');
         $columna->setData(['nombre', 'datetime']);

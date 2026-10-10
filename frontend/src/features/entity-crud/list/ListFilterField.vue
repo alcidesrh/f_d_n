@@ -1,18 +1,5 @@
 <template>
-  <DatePicker
-    v-if="kind === 'date'"
-    :model-value="(modelValue as Date[] | null) ?? null"
-    selection-mode="range"
-    :manual-input="false"
-    date-format="dd/mm/yy"
-    placeholder="Rango de fechas"
-    show-button-bar
-    size="small"
-    fluid
-    :input-id="inputId"
-    :aria-label="`Filtrar ${label}`"
-    @update:model-value="emit('update:modelValue', $event)"
-  />
+  <ListDateRangeFilter v-if="kind === 'date'" :model-value="modelValue" :label="label" :input-id="inputId" @update:model-value="emit('update:modelValue', $event)" />
   <MultiSelect
     v-else-if="kind === 'relation' && multiple"
     :model-value="(modelValue as unknown[] | null) ?? []"
@@ -76,6 +63,7 @@
 
 <script setup lang="ts">
 /** Input del filtro de una columna según su tipo (texto, número, sí/no, relación, rango de fechas). */
+import ListDateRangeFilter from './ListDateRangeFilter.vue'
 import type { FilterFieldKind } from './listUtils'
 import type { FilterOption } from './useListFilters'
 

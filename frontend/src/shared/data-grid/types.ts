@@ -22,6 +22,8 @@ export interface GridColumn {
   filterable?: boolean
   /** Hay un filtro aplicado en esta columna. */
   filtered?: boolean
+  /** El input del filtro de esta columna está activado (se ve en la fila de filtros). */
+  filterOpen?: boolean
   /** La celda se edita en línea (lo decide el padre al recibir `cell-click`). */
   editable?: boolean
   align?: 'start' | 'center' | 'end'

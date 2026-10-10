@@ -7,6 +7,7 @@
         :columns="store.columns"
         :view="store.view"
         :active-filters="filters.active.value.length"
+        :filter-panel="cardsMode"
         :selection-mode="modoSeleccion"
         :selected-count="selectedRows.length"
         :acciones="enSelector ? [] : accionesDisponibles"
@@ -30,15 +31,15 @@
             <span v-for="field in filters.active.value" :key="field" class="list-chip">
               <span class="text-surface-500">{{ titleOf(field) }}:</span>
               <span class="truncate">{{ filters.describe(field) }}</span>
-              <button type="button" class="list-chip__x" :aria-label="`Quitar filtro ${titleOf(field)}`" @click="filters.clear(field)"><icon name="close" size="0.85rem" /></button>
+              <button type="button" class="list-chip__x" :aria-label="`Quitar filtro ${titleOf(field)}`" @click="removeFilter(field)"><icon name="close" size="0.85rem" /></button>
             </span>
             <SelectButton v-if="filters.active.value.length > 1" :model-value="store.view.filterMode" :options="FILTER_MODES" option-label="label" option-value="value" :allow-empty="false" size="small" aria-label="Cómo se combinan los filtros" @update:model-value="filters.setMode($event)" />
-            <Button label="Limpiar" size="small" text severity="secondary" @click="filters.clear()" />
+            <Button label="Limpiar" size="small" text severity="secondary" @click="removeFilter()" />
           </div>
         </template>
       </ListToolbar>
 
-      <!-- En tarjetas no hay cabecera: filtros y orden van en este panel. -->
+      <!-- En tarjetas no hay cabecera: filtros y orden van en este panel (botón Filtros de la barra). -->
       <div v-if="cardsMode && store.view.filtersOpen && (features.filter || features.sort)" class="list-panel">
         <label v-for="column in filterableColumns" :key="column.field" class="list-panel__field">
           <span>{{ titleOf(column.field) }}</span>
@@ -70,13 +71,12 @@
         :reorderable="features.reorder"
         :resizable="features.resize"
         :hideable="features.columns && visibleColumns.length > 1"
-        :filters-open="features.filter && store.view.filtersOpen"
         :editing="editing ? { row: editing.row, column: editing.field } : null"
         :row-clickable="modoSeleccion"
         :max-height="fill ? undefined : 'min(72dvh, 56rem)'"
         @mode="cardsMode = $event === 'cards'"
         @sort="toggleSort"
-        @filter="openFilter"
+        @filter="toggleFilter"
         @hide="(field) => setColumnVisible(field, false)"
         @reorder="onColumnReorder"
         @resize="onColumnResize"
@@ -100,7 +100,7 @@
         <template #empty>
           <icon :name="filters.active.value.length ? 'filter-alt-off-outline' : 'inbox-outline'" size="2rem" />
           <span>{{ filters.active.value.length ? 'Ningún registro coincide con los filtros' : 'Sin registros' }}</span>
-          <Button v-if="filters.active.value.length" label="Quitar filtros" size="small" text @click="filters.clear()" />
+          <Button v-if="filters.active.value.length" label="Quitar filtros" size="small" text @click="removeFilter()" />
         </template>
       </DataGrid>
 
@@ -209,9 +209,9 @@ const titleOf = (field: string) => columnTitle(configOf(field));
 
 const filters = useListFilters(store);
 
-/** Ordenable si la configuración no lo impide y el backend acepta el campo. */
+/** Ordenable si la configuración lo habilita (`sortable: true`) y el backend acepta el campo. */
 function isSortable(column: CollectionFieldConfig) {
-  return column.sortable !== false && Boolean(store.value?.metadata.orderFields.includes(column.field));
+  return column.sortable === true && Boolean(store.value?.metadata.orderFields.includes(column.field));
 }
 
 /** Editable en línea si la mutación de update acepta el campo (las relaciones a muchos, en el formulario). */
@@ -234,6 +234,7 @@ const gridColumns = computed<GridColumn[]>(() => {
       sort: sortDirection(order, column.field),
       filterable: features.value.filter && filters.isFilterable(column),
       filtered: filters.active.value.includes(column.field),
+      filterOpen: column.showFilter === true,
       editable: features.value.inlineEdit && !modoSeleccion.value && canEditCell(column),
       align: type === "Int" || type === "Float" ? "end" : "start",
     };
@@ -316,11 +317,21 @@ function onPage({ page, rows }: { page: number; rows: number }) {
 // Filtros -----------------------------------------------------------------
 const cardsMode = ref(false);
 
-/** Embudo de una cabecera: abre la fila de filtros y lleva el foco a esa columna. */
-async function openFilter(field: string) {
-  const current = store.value;
-  if (!current) return;
-  current.view.filtersOpen = true;
+/** Quita el filtro de una columna (o todos) y oculta su input. */
+function removeFilter(field?: string) {
+  for (const column of store.value?.columns ?? []) if (!field || column.field === field) column.showFilter = false;
+  filters.clear(field);
+}
+
+/**
+ * Embudo de una cabecera: activa el input de filtro de esa columna (y le da
+ * el foco); si ya estaba activado, quita su filtro y lo oculta.
+ */
+async function toggleFilter(field: string) {
+  const column = store.value?.columns.find((c) => c.field === field);
+  if (!column) return;
+  if (column.showFilter) return removeFilter(field);
+  column.showFilter = true;
   await nextTick();
   // `field` es un nombre de propiedad (identificador): no hace falta escaparlo.
   document.querySelector<HTMLElement>(`[data-grid-filter="${field}"] input, [data-grid-filter="${field}"] [tabindex="0"]`)?.focus();
@@ -525,6 +536,8 @@ onBeforeUnmount(() => document.removeEventListener("keydown", onKeydown));
 async function load(current: EntityStore, forceConfig = false) {
   await current.init(forceConfig);
   filters.hydrate();
+  // Las columnas con un filtro guardado muestran su input (para verlo y quitarlo).
+  for (const column of current.columns) if (filters.active.value.includes(column.field)) column.showFilter = true;
   await current.fetchItems();
   await filters.preloadOptions(current.columns);
 }

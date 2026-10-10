@@ -55,39 +55,21 @@
       />
     </label>
 
-    <div class="cell cell--switch">
-      <span class="cell__label">visible</span>
-      <ToggleSwitch
-        :model-value="row.visible"
-        @update:model-value="store.setVisible(variant, fieldKey, $event as boolean)"
+    <label v-if="variant === 'collection'" class="cell w-28">
+      <span class="cell__label">
+        width
+        <span v-if="widthInvalid" class="cell__error">· inválido</span>
+      </span>
+      <InputText
+        :model-value="(row as CollectionFieldRow).width ?? ''"
+        size="small"
+        class="font-mono"
+        placeholder="auto"
+        :invalid="widthInvalid"
+        title="Preset (xs, sm, md, lg, xl), longitud (12rem, 160px) o fracción (2fr). Vacío: flexible."
+        @update:model-value="(row as CollectionFieldRow).width = ($event as string) || null"
       />
-    </div>
-
-    <template v-if="variant === 'collection'">
-      <label class="cell w-24">
-        <span class="cell__label" title="Auto: si la API permite ordenar por este campo">sortable</span>
-        <Select v-model="(row as CollectionFieldRow).sortable" :options="TRISTATE" option-label="label" option-value="value" size="small" />
-      </label>
-      <label class="cell w-24">
-        <span class="cell__label" title="Auto: si la API permite filtrar por este campo">filterable</span>
-        <Select v-model="(row as CollectionFieldRow).filterable" :options="TRISTATE" option-label="label" option-value="value" size="small" />
-      </label>
-      <label class="cell w-28">
-        <span class="cell__label">
-          width
-          <span v-if="widthInvalid" class="cell__error">· inválido</span>
-        </span>
-        <InputText
-          :model-value="(row as CollectionFieldRow).width ?? ''"
-          size="small"
-          class="font-mono"
-          placeholder="auto"
-          :invalid="widthInvalid"
-          title="Preset (xs, sm, md, lg, xl), longitud (12rem, 160px) o fracción (2fr). Vacío: flexible."
-          @update:model-value="(row as CollectionFieldRow).width = ($event as string) || null"
-        />
-      </label>
-    </template>
+    </label>
 
     <label class="cell flex-1 min-w-40">
       <span class="cell__label">
@@ -103,6 +85,30 @@
         @update:model-value="onAttrsInput"
       />
     </label>
+    <div class="cell cell--switch">
+      <span class="cell__label">visible</span>
+      <ToggleSwitch
+        :model-value="row.visible"
+        @update:model-value="store.setVisible(variant, fieldKey, $event as boolean)"
+      />
+    </div>
+
+    <template v-if="variant === 'collection'">
+      <div class="cell cell--switch">
+        <span class="cell__label">sortable</span>
+        <ToggleSwitch
+          :model-value="Boolean((row as CollectionFieldRow).sortable)"
+          @update:model-value="(row as CollectionFieldRow).sortable = $event as boolean"
+        />
+      </div>
+      <div class="cell cell--switch">
+        <span class="cell__label">filterable</span>
+        <ToggleSwitch
+          :model-value="Boolean((row as CollectionFieldRow).filterable)"
+          @update:model-value="(row as CollectionFieldRow).filterable = $event as boolean"
+        />
+      </div>
+    </template>
   </div>
 </template>
 
@@ -124,12 +130,6 @@ const props = defineProps<{
 /** Valores que produce `CollectionFieldConfig::setData()`; el campo admite otros. */
 const KIND_OPTIONS = ['scalar', 'date', 'list']
 
-/** `null`: lo decide la API (si la colección acepta ordenar/filtrar por el campo). */
-const TRISTATE = [
-  { label: 'Auto', value: null },
-  { label: 'Sí', value: true },
-  { label: 'No', value: false },
-]
 
 const store = useEntityConfigStore()
 

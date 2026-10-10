@@ -33,12 +33,12 @@ class CollectionFieldConfig  extends FieldConfig
     private ?string $width = null;
 
     /**
-     * `sortable`/`filterable` nacen en null ("lo que permita la API"): el
-     * listado ordena o filtra si la colección GraphQL acepta el campo. Un
-     * `false` explícito lo apaga.
+     * `sortable`/`filterable` nacen apagados: ordenar o filtrar por una
+     * columna se habilita explícitamente (null y false significan lo mismo).
      */
     public function __construct(array $data)
     {
+        $this->setSortable(false)->setFilterable(false);
         $this->setField($data[0])->setVisible(true)->setLabel($data[0])->setAttrs(null);
         $this->setData($data);
         if (\in_array($data[0], ['legacyId', 'apiTokens'])) {

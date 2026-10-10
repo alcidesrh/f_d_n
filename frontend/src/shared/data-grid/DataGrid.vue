@@ -7,8 +7,8 @@
     de fila es fijo (densidad). Lo que no cabe se corta con elipsis.
   - Cabecera fija arriba; selección fija a la izquierda y acciones a la
     derecha (`position: sticky`) con scroll horizontal en el medio.
-  - Columnas: ordenar (clic en el título), filtrar (embudo: lo resuelve el
-    padre), ocultar, reordenar (GSAP, desde el tirador) y redimensionar (borde
+  - Columnas: ordenar (clic en el título), filtrar (embudo: activa el input
+    de esa columna en la fila de filtros; lo resuelve el padre), ocultar, reordenar (GSAP, desde el tirador) y redimensionar (borde
     derecho; doble clic vuelve al ancho configurado).
   - Por debajo de `cardsBelow` rem de ancho del contenedor (o con
     `layout="cards"`) cada fila es una tarjeta del mismo alto con las primeras
@@ -46,8 +46,8 @@
             </button>
             <span v-else class="dg-hlabel truncate" :title="column.label">{{ column.label }}</span>
             <span class="dg-htools">
-              <button v-if="column.filterable" type="button" class="dg-tool tap-target" :class="{ 'is-active': column.filtered }" :aria-label="`Filtrar ${column.label}`" @click="emit('filter', column.key)">
-                <icon :name="column.filtered ? 'filter-alt' : 'filter-alt-outline'" size="1rem" />
+              <button v-if="column.filterable" type="button" class="dg-tool tap-target" :class="{ 'is-active': column.filterOpen }" :aria-pressed="Boolean(column.filterOpen)" :aria-label="column.filterOpen ? `Quitar filtro ${column.label}` : `Filtrar ${column.label}`" v-tooltip.top="column.filterOpen ? 'Quitar filtro' : 'Filtrar'" @click="emit('filter', column.key)">
+                <icon :name="column.filterOpen ? 'filter-alt' : 'filter-alt-outline'" size="1rem" />
               </button>
               <button v-if="hideable" type="button" class="dg-tool tap-target" :aria-label="`Ocultar columna ${column.label}`" @click="emit('hide', column.key)">
                 <icon name="visibility-off-outline" size="1rem" />
@@ -59,10 +59,10 @@
           <div v-if="actions" class="dg-cell dg-actions dg-sticky-r" role="columnheader" aria-label="Acciones" />
         </div>
 
-        <div v-if="filtersOpen" class="dg-row dg-filters" role="row">
+        <div v-if="filterRow" class="dg-row dg-filters" role="row">
           <div v-if="selectable" class="dg-cell dg-sel dg-sticky-l" />
           <div v-for="column in columns" :key="column.key" class="dg-cell" :data-grid-filter="column.key">
-            <slot v-if="column.filterable" name="filter" :column="column" />
+            <slot v-if="column.filterable && column.filterOpen" name="filter" :column="column" />
           </div>
           <div v-if="template.filler" class="dg-cell dg-filler" />
           <div v-if="actions" class="dg-cell dg-actions dg-sticky-r" />
@@ -201,8 +201,6 @@ const props = withDefaults(
     reorderable?: boolean
     resizable?: boolean
     hideable?: boolean
-    /** Fila de filtros bajo la cabecera (slot `filter`). */
-    filtersOpen?: boolean
     editing?: GridEditing | null
     /** La fila entera responde al clic (p. ej. en modo selección). */
     rowClickable?: boolean
@@ -221,7 +219,6 @@ const props = withDefaults(
     reorderable: false,
     resizable: false,
     hideable: false,
-    filtersOpen: false,
     editing: null,
     rowClickable: false,
     maxHeight: undefined,
@@ -278,6 +275,9 @@ const pageState = computed<'none' | 'some' | 'all'>(() => {
   if (!selected) return 'none'
   return selected === props.rows.length ? 'all' : 'some'
 })
+
+/** Fila de filtros bajo la cabecera: si alguna columna tiene su filtro activado (slot `filter`). */
+const filterRow = computed(() => props.columns.some((column) => column.filterable && column.filterOpen))
 
 const isSelected = (row: unknown) => props.selectedKeys.has(props.rowKey(row))
 const isEditing = (row: unknown, column: GridColumn) => props.editing?.column === column.key && props.editing.row === props.rowKey(row)
@@ -431,12 +431,12 @@ useColumnDrag({
 }
 .dg-sort-icon {
   flex: none;
-  opacity: 0;
+  opacity: 0.45;
   transition: opacity 0.15s;
 }
-.dg-hcell:hover .dg-sort-icon,
+.dg-sortable:hover .dg-sort-icon,
 .dg-sortable:focus-visible .dg-sort-icon {
-  opacity: 0.45;
+  opacity: 0.8;
 }
 .dg-hcell.is-sorted .dg-sort-icon {
   opacity: 1;
@@ -456,21 +456,14 @@ useColumnDrag({
   border-radius: 0.375rem;
   color: var(--p-text-muted-color);
   cursor: pointer;
-  opacity: 0;
-  transition:
-    opacity 0.15s,
-    background-color 0.15s;
+  transition: background-color 0.15s;
 }
 .dg-tool:hover {
   background: color-mix(in srgb, var(--p-surface-500) 14%, transparent);
 }
-.dg-tool.is-active {
+.dg-tool.is-active,
+.dg-tool.is-active :deep(span) {
   color: var(--p-primary-color);
-  opacity: 1;
-}
-.dg-hcell:hover .dg-tool,
-.dg-hcell:focus-within .dg-tool {
-  opacity: 1;
 }
 .dg-grip {
   display: inline-grid;
@@ -486,12 +479,8 @@ useColumnDrag({
 .dg-hcell:hover .dg-grip {
   opacity: 0.7;
 }
-/* Sin hover (táctil): herramientas siempre visibles, discretas. */
+/* Sin hover (táctil): el tirador también se ve. */
 @media (hover: none) {
-  .dg-tool,
-  .dg-sort-icon {
-    opacity: 0.6;
-  }
   .dg-grip {
     opacity: 0.5;
   }

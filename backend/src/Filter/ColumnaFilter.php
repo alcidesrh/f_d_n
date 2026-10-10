@@ -21,7 +21,9 @@ use Doctrine\Persistence\ManagerRegistry;
  *
  * - texto (y enums): `campo`, contiene, sin distinguir mayúsculas;
  * - número: `campo`, igual; booleano: `campo`, igual;
- * - fecha: `campo_after` / `campo_before` (`yyyy-mm-dd`, ambos inclusive);
+ * - fecha: `campo_after` / `campo_before`, ambos inclusive: `yyyy-mm-dd` (el
+ *   día entero) o `yyyy-mm-ddTHH:mm` (hasta ese minuto incluido). En columnas
+ *   de solo fecha la hora se ignora;
  * - relación: `campo`, IRI o id del registro (a uno: igual; a muchos: lo contiene),
  *   o `campo_list` con varios (cualquiera de ellos);
  * - `id`: IRI o número.
@@ -44,6 +46,7 @@ final class ColumnaFilter implements FilterInterface
         Types::DATETIME_MUTABLE, Types::DATETIME_IMMUTABLE,
         Types::DATETIMETZ_MUTABLE, Types::DATETIMETZ_IMMUTABLE,
     ];
+    private const SOLO_FECHA = [Types::DATE_MUTABLE, Types::DATE_IMMUTABLE];
 
     /** Argumento que elige cómo se combinan los filtros de distintas columnas. */
     public const COMBINAR = '_combinar';
@@ -163,9 +166,11 @@ final class ColumnaFilter implements FilterInterface
 
                 return "$columna = :$p";
             case 'desde':
-                return $this->fecha($queryBuilder, "$columna >= :$p", $p, (string) $valor);
+            case 'desde_dia':
+                return $this->fecha($queryBuilder, "$columna >= :$p", $p, (string) $valor, false, $tipo === 'desde_dia');
             case 'hasta':
-                return $this->fecha($queryBuilder, "$columna < :$p", $p, (string) $valor, '+1 day');
+            case 'hasta_dia':
+                return $this->fecha($queryBuilder, "$columna < :$p", $p, (string) $valor, true, $tipo === 'hasta_dia');
             case 'id':
                 return $this->id($queryBuilder, "$columna = :$p", $p, $valor);
             case 'a_uno':
@@ -177,13 +182,24 @@ final class ColumnaFilter implements FilterInterface
         return null;
     }
 
-    private function fecha(QueryBuilder $queryBuilder, string $condicion, string $p, string $valor, string $mas = '+0 day'): ?string
+    /**
+     * `desde`: el instante dado; `hasta` (`$siguiente`): justo después (el día
+     * siguiente, o el minuto siguiente si trae hora). En columnas de solo
+     * fecha (`$soloDia`) cuenta el día.
+     */
+    private function fecha(QueryBuilder $queryBuilder, string $condicion, string $p, string $valor, bool $siguiente, bool $soloDia): ?string
     {
-        $fecha = \DateTimeImmutable::createFromFormat('!Y-m-d', substr($valor, 0, 10));
+        $conHora = !$soloDia && preg_match('/^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/', $valor) === 1;
+        $fecha = $conHora
+            ? \DateTimeImmutable::createFromFormat('!Y-m-d H:i', str_replace('T', ' ', substr($valor, 0, 16)))
+            : \DateTimeImmutable::createFromFormat('!Y-m-d', substr($valor, 0, 10));
         if ($fecha === false) {
             return null;
         }
-        $queryBuilder->setParameter($p, $fecha->modify($mas));
+        if ($siguiente) {
+            $fecha = $fecha->modify($conHora ? '+1 minute' : '+1 day');
+        }
+        $queryBuilder->setParameter($p, $fecha);
 
         return $condicion;
     }
@@ -231,8 +247,9 @@ final class ColumnaFilter implements FilterInterface
             } elseif ($tipo === Types::BOOLEAN) {
                 $argumentos[$campo] = ['tipo' => 'booleano', 'campo' => $campo];
             } elseif (\in_array($tipo, self::FECHA, true)) {
-                $argumentos["{$campo}_after"] = ['tipo' => 'desde', 'campo' => $campo];
-                $argumentos["{$campo}_before"] = ['tipo' => 'hasta', 'campo' => $campo];
+                $dia = \in_array($tipo, self::SOLO_FECHA, true) ? '_dia' : '';
+                $argumentos["{$campo}_after"] = ['tipo' => "desde$dia", 'campo' => $campo];
+                $argumentos["{$campo}_before"] = ['tipo' => "hasta$dia", 'campo' => $campo];
             }
         }
 

@@ -1,12 +1,13 @@
 /**
  * Filtros por columna del listado.
  *
+ * - Solo columnas con `filterable: true` (se habilita en la configuración).
  * - Siempre se filtra en la base de datos: los valores se traducen a los
  *   argumentos de la colección (`toServerFilters`) y van a `store.filters`
  *   (refetch, vuelta a la página 1). Una columna sin argumento de filtro (p.
  *   ej. un campo calculado) no ofrece filtro.
- * - Texto y número esperan 400 ms sin teclear; un rango de fechas, a que
- *   esté completo; lo demás se aplica al instante.
+ * - Texto y número esperan 400 ms sin teclear; un rango de fechas se aplica
+ *   con su botón Buscar; lo demás, al instante.
  * - Varias columnas filtradas se combinan según `store.view.filterMode`:
  *   `or` (basta con una, por defecto) o `and` (todas).
  * - Relaciones: a uno, un valor (select); a muchos, varios (multiselect,
@@ -23,7 +24,7 @@ import {
   hasServerFilter,
   isEmptyFilterValue,
   isToMany,
-  rangeToIso,
+  dateRangeLabel,
   resolveFilterArgs,
   toServerFilters,
   type FilterFieldKind,
@@ -41,11 +42,6 @@ export interface FilterOption {
   value: unknown
 }
 
-/** `dd/mm/yyyy` de un `yyyy-mm-dd`. */
-const dayLabel = (iso?: string) => (iso ? iso.split('-').reverse().join('/') : '…')
-
-/** Rango a medio elegir en el DatePicker (`[inicio, null]`): todavía no filtra. */
-const isPartialRange = (value: unknown) => Array.isArray(value) && value.length === 2 && value[0] && !value[1]
 
 export function useListFilters(store: ComputedRef<EntityStore | null>) {
   /** Valor de cada input (campo → valor), antes de traducirse a args del backend. */
@@ -65,7 +61,7 @@ export function useListFilters(store: ComputedRef<EntityStore | null>) {
 
   function isFilterable(column: CollectionFieldConfig) {
     const metadata = entity()
-    return column.filterable !== false && Boolean(metadata && hasServerFilter(metadata, column.field))
+    return column.filterable === true && Boolean(metadata && hasServerFilter(metadata, column.field))
   }
 
   function relationTarget(field: string) {
@@ -96,7 +92,6 @@ export function useListFilters(store: ComputedRef<EntityStore | null>) {
     values[field] = value
     clearTimeout(timer)
     const kind = kindOf(field)
-    if (kind === 'date' && isPartialRange(value)) return
     if (!isEmptyFilterValue(value) && (kind === 'text' || kind === 'number')) timer = setTimeout(commit, DEBOUNCE_MS)
     else commit()
   }
@@ -112,12 +107,13 @@ export function useListFilters(store: ComputedRef<EntityStore | null>) {
     void current.fetchItems()
   }
 
-  /** Quita el filtro de una columna (o todos) y refetcha. */
+  /** Quita el filtro de una columna (o todos); refetcha solo si había uno aplicado. */
   function clear(field?: string) {
     clearTimeout(timer)
+    const applied = field ? active.value.includes(field) : active.value.length > 0
     if (field) delete values[field]
     else for (const key of Object.keys(values)) delete values[key]
-    commit()
+    if (applied) commit()
   }
 
   function setMode(mode: FilterMode) {
@@ -153,10 +149,7 @@ export function useListFilters(store: ComputedRef<EntityStore | null>) {
     if (!current || !metadata) return ''
     const value = fromServerFilters(metadata, current.filters)[field]
     const kind = kindOf(field)
-    if (kind === 'date') {
-      const { after, before } = rangeToIso(value)
-      return `${dayLabel(after)} – ${dayLabel(before)}`
-    }
+    if (kind === 'date') return dateRangeLabel(value)
     if (kind === 'boolean') return value === true || value === 'true' ? 'Sí' : 'No'
     if (kind === 'relation') {
       const options = optionsFor(field)

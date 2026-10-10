@@ -20,14 +20,15 @@ Además, la configuración de columnas (`CollectionFieldConfig`) no funcionaba c
 - **CSS Grid con una plantilla compartida.** Cada fila es un `display: grid` con la misma `grid-template-columns` (`--dg-cols`) y el mismo ancho (el del cuerpo, con `min-width` = suma de los mínimos de cada pista). Las columnas se alinean sin medir contenido; lo que no cabe se corta con elipsis. Las pistas: preset (`xs`…`xl`), longitud (`12rem`, `160px`) o fracción (`2fr`, con mínimo `10rem`); sin ancho, `minmax(10rem, 1fr)`. Sin columnas flexibles se agrega un relleno para que las acciones queden a la derecha. Cálculo puro en `layout.ts` (con tests).
 - **Alto de fila fijo** por densidad (`compact`, `normal`, `comfortable`).
 - **Fijas con `position: sticky`:** cabecera (y fila de filtros) arriba, selección a la izquierda, acciones a la derecha.
-- **Columnas:** ordenar (clic en el título), filtrar (embudo: abre la fila de filtros), ocultar, reordenar con GSAP Draggable desde un tirador (las vecinas se corren mientras se arrastra; la soltada aterriza con FLIP) y redimensionar desde el borde (doble clic: vuelve al ancho configurado).
+- **Columnas:** ordenar (clic en el título), filtrar (embudo), ocultar, reordenar con GSAP Draggable desde un tirador (las vecinas se corren mientras se arrastra; la soltada aterriza con FLIP) y redimensionar desde el borde (doble clic: vuelve al ancho configurado).
 - **Tarjetas** por debajo de `md` (48rem) **de ancho del contenedor** (`ResizeObserver`, no media query: el mismo listado está en la página y en el chat), o forzadas desde la vista. Todas del mismo alto, con las primeras 4 columnas.
 - Resaltado de coincidencias con `<mark>` (`highlight.ts`, sin distinguir mayúsculas ni acentos). Reemplaza a la CSS Custom Highlight API y su registro global.
 - Slots `cell`, `editor`, `filter`, `actions`, `empty`; emite `sort`, `filter`, `hide`, `reorder`, `resize`, `row-click`, `cell-click`, `toggle-row`, `toggle-page`, `mode`.
 
 **Adaptador: `ListPage.vue`** conserva su API (`entity`, `configurable`, `v-model:seleccion`, `@configure`) y suma `features` (`list/listFeatures.ts`): cada vista apaga lo que no quiere (barra, acciones, filtros, edición, selección…). Precedencia: lo que la entidad no permite nunca se enciende; después la prop, después `listOptions`, después el modo (el selector del chat no edita ni opera y siempre selecciona).
 
-- **Filtros** en la base de datos, con inputs de PrimeVue (sin FormKit): texto, número, sí/no, relación a uno (select), relación a muchos (multiselect) y rango de fechas. Varias columnas se combinan con **OR por defecto** ("Cualquiera") o AND ("Todos"); los aplicados se ven como chips.
+- **Filtros** en la base de datos, con inputs de PrimeVue (sin FormKit): texto, número, sí/no, relación a uno (select), relación a muchos (multiselect) y rango de fechas con hora (calendario + hora desde/hasta; se aplica con **Buscar**, Cancelar descarta). **Se activan por columna:** el embudo muestra solo el input de esa columna (embudo relleno); tocarlo activado quita ese filtro y oculta el input. En tarjetas, un panel con todos los filtros desde la barra. Varias columnas se combinan con **OR por defecto** ("Cualquiera") o AND ("Todos"); los aplicados se ven como chips.
+- **Herramientas de la cabecera siempre visibles:** ordenar si la columna es ordenable, filtrar si es filtrable, y ocultar.
 - **Selección** opcional (apagada al abrir), por clave: sobrevive a páginas y filtros. Acción por defecto: **eliminar los seleccionados** (uno a uno: un registro con dependencias no frena al resto), más las de la entidad (`entityBulkActions`) y "Enviar por chat".
 - **Edición en línea:** clic en una celda editable; Enter, elegir una opción o tocar fuera guarda; Escape cancela. Solo campos de la mutación de update; las relaciones a muchos se editan en el formulario.
 - **Vista:** densidad, disposición (auto/tabla/tarjetas), maximizar (Escape restaura) y restablecer. Todo persiste en el store de la entidad (`view`, `columns` con su `width`).
@@ -36,11 +37,12 @@ Además, la configuración de columnas (`CollectionFieldConfig`) no funcionaba c
 
 - `CollectionFieldConfig.width` (longitud CSS o preset).
 - `EntityConfiguration.listOptions` (JSON): `pageSize`, `pageSizes`, `density`, `filterMode`, `selectable`, `inlineEdit`. `setListOptions` descarta claves y valores no válidos. Se edita en "Configuración de entidades", pestaña Listado.
-- `sortable`/`filterable` en `null` significan **"lo que permita la API"**; `false` lo apaga. Sincronizar con el mapeo de Doctrine ya no pisa lo configurado (solo actualiza `kind`). La migración pasa a `null` los `false` de las entidades donde ninguna columna se configuró a mano.
+- **Ordenar y filtrar están apagados por defecto** y se habilitan explícitamente por columna (`sortable`/`filterable` en `true`; `null` y `false` son lo mismo). Además, la colección GraphQL tiene que aceptar el campo. En el editor son interruptores, junto a `visible`, al final de cada fila. Sincronizar con el mapeo de Doctrine ya no pisa lo configurado (solo actualiza `kind`).
 
 **Filtro (`App\Filter\ColumnaFilter`)**
 
 - Relaciones (a uno y a muchos): además de `campo`, `campo_list: [String]` (cualquiera de los valores).
+- Fechas: `campo_after`/`campo_before` aceptan `yyyy-mm-dd` (el día entero) o `yyyy-mm-ddTHH:mm` (hasta ese minuto incluido); en columnas de solo fecha la hora se ignora.
 - `_combinar: "or"`: basta con que se cumpla un filtro. Sin él, AND como hasta ahora (otros consumidores no cambian). El rango de una fecha cuenta como un solo filtro.
 
 ## Consecuencias

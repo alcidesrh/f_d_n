@@ -141,18 +141,18 @@ export interface DateRangeFilter {
   before?: string;
 }
 
+/** `yyyy-mm-ddTHH:mm` en la hora local (la que eligió el usuario, no la de UTC). */
 function toIso(value: unknown): string | undefined {
-  // El día que eligió el usuario en su zona horaria (no el de UTC).
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
-    return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}`;
+    return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}T${pad(value.getHours())}:${pad(value.getMinutes())}`;
   }
-  if (typeof value === "string" && value.length >= 10) return value.slice(0, 10);
+  if (typeof value === "string" && value.length >= 10) return value.length >= 16 && value[10] === "T" ? value.slice(0, 16) : value.slice(0, 10);
   return undefined;
 }
 
 /**
- * Normaliza el valor del DatePicker en modo rango a `{ after, before }` ISO
- * (`yyyy-mm-dd`). Soporta tanto `[Date, Date]` como `{ start, end }`.
+ * Normaliza el rango del filtro a `{ after, before }` (`yyyy-mm-ddTHH:mm`, o
+ * `yyyy-mm-dd` si llegó sin hora). Soporta `[Date, Date]` y `{ start, end }`.
  */
 export function rangeToIso(range: unknown): DateRangeFilter {
   if (Array.isArray(range) && range.length >= 2) {
@@ -163,6 +163,28 @@ export function rangeToIso(range: unknown): DateRangeFilter {
     return { after: toIso(record.start), before: toIso(record.end) };
   }
   return {};
+}
+
+/** `yyyy-mm-dd[THH:mm]` → Date local (sin hora: medianoche). */
+export function fromIso(value: string): Date {
+  return new Date(value.length >= 16 ? value.slice(0, 16) : `${value.slice(0, 10)}T00:00:00`);
+}
+
+/** `dd/mm/yyyy HH:mm – dd/mm/yyyy HH:mm` de un rango (`…` el extremo que falte). */
+export function dateRangeLabel(range: unknown): string {
+  const label = (iso?: string) => {
+    if (!iso) return "…";
+    const [day, time] = iso.split("T");
+    return `${day!.split("-").reverse().join("/")}${time ? ` ${time}` : ""}`;
+  };
+  const { after, before } = rangeToIso(range);
+  return `${label(after)} – ${label(before)}`;
+}
+
+/** Un día (de un calendario) con la hora y los minutos de otro Date. */
+export function withTime(day: Date, time: Date | null | undefined, fallback: [number, number]): Date {
+  const [hours, minutes] = time ? [time.getHours(), time.getMinutes()] : fallback;
+  return new Date(day.getFullYear(), day.getMonth(), day.getDate(), hours, minutes);
 }
 
 /** True si el valor de un filtro está "vacío" (no filtra). */
@@ -223,7 +245,7 @@ export function fromServerFilters(entity: EntitySchema, server: Record<string, u
       const after = args.after ? server[args.after] : undefined;
       const before = args.before ? server[args.before] : undefined;
       if (typeof after === "string" || typeof before === "string")
-        filters[field] = [typeof after === "string" ? new Date(`${after}T00:00:00`) : null, typeof before === "string" ? new Date(`${before}T00:00:00`) : null];
+        filters[field] = [typeof after === "string" ? fromIso(after) : null, typeof before === "string" ? fromIso(before) : null];
     } else if (args.list && Array.isArray(server[args.list])) {
       filters[field] = server[args.list];
     } else if (args.single && server[args.single] !== undefined) {

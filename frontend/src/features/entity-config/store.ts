@@ -84,8 +84,9 @@ function collectionPayload(row: CollectionFieldRow, index: number): CollectionFi
     visible: Boolean(row.visible),
     kind: row.kind ?? null,
     attrs: row.attrs ?? null,
-    sortable: row.sortable ?? null,
-    filterable: row.filterable ?? null,
+    // Ordenar y filtrar se habilitan a mano: null y false son lo mismo (apagado).
+    sortable: Boolean(row.sortable),
+    filterable: Boolean(row.filterable),
     width: row.width?.trim() || null,
   }
 }

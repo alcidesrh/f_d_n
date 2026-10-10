@@ -24,12 +24,11 @@ const configRequests = new Map<string, Promise<void>>()
 
 /**
  * Columnas por defecto cuando el backend no tiene `entity_configurations`:
- * todas las propiedades escalares (menos `id`); ordenables solo las que acepta
- * el input de orden.
+ * todas las propiedades escalares (menos `id`), sin ordenar ni filtrar (se
+ * habilitan en la configuración).
  */
 export function buildFallbackColumns(name: string): CollectionFieldConfig[] {
   const schema = useSchemaStore().require(name)
-  const orderable = new Set(schema.orderFields)
   return schema.scalarFields
     .filter((field) => field !== 'id' && field !== '_id')
     .map((field, index) => ({
@@ -37,8 +36,8 @@ export function buildFallbackColumns(name: string): CollectionFieldConfig[] {
       label: field,
       position: index + 1,
       visible: true,
-      sortable: Boolean(schema.orderInput) && orderable.has(field),
-      filterable: true,
+      sortable: false,
+      filterable: false,
       showFilter: false,
     }))
 }

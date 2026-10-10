@@ -22,7 +22,7 @@
     </div>
 
     <div class="list-toolbar__controls" role="toolbar" aria-label="Controles del listado">
-      <button v-if="features.filter" type="button" class="list-toolbar__btn tap-target" :class="{ 'is-on': view.filtersOpen }" :aria-pressed="view.filtersOpen" aria-label="Filtros" v-tooltip.bottom="'Filtros'" @click="emit('toggle-filters')">
+      <button v-if="features.filter && filterPanel" type="button" class="list-toolbar__btn tap-target" :class="{ 'is-on': view.filtersOpen }" :aria-pressed="view.filtersOpen" aria-label="Filtros" v-tooltip.bottom="'Filtros'" @click="emit('toggle-filters')">
         <OverlayBadge v-if="activeFilters > 0" :value="String(activeFilters)" size="small">
           <icon name="filter-alt-outline" size="1.25rem" />
         </OverlayBadge>
@@ -111,6 +111,8 @@ const props = withDefaults(
     columns: CollectionFieldConfig[]
     view: ListViewState
     activeFilters?: number
+    /** En tarjetas (sin cabeceras) los filtros van en un panel que abre este botón. */
+    filterPanel?: boolean
     selectionMode: boolean
     selectedCount: number
     /** Acciones sobre la selección (eliminar y las de la entidad), ya filtradas por permiso. */
@@ -119,7 +121,7 @@ const props = withDefaults(
     /** Muestra la opción que reemplaza el listado por la configuración de la entidad. */
     configurable?: boolean
   }>(),
-  { activeFilters: 0, acciones: () => [], maximized: false, configurable: false },
+  { activeFilters: 0, filterPanel: false, acciones: () => [], maximized: false, configurable: false },
 )
 
 const emit = defineEmits<{
