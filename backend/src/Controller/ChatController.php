@@ -61,7 +61,7 @@ final class ChatController extends AbstractController
         if ($this->presencia->latir((int) $yo->getId(), self::conexion($datos["conexion"] ?? null))) {
             $this->difundirPresencia($yo, true);
         }
-        $ids = array_slice(self::ids($datos["ids"] ?? []), 0, 500);
+        $ids = array_slice(self::usuarios($datos["ids"] ?? []), 0, 500);
 
         return $this->json(["enLinea" => $this->presencia->enLinea($this->chat->conversables($yo, $ids))]);
     }
@@ -121,7 +121,7 @@ final class ChatController extends AbstractController
     {
         $datos = $request->toArray();
 
-        return $this->responder(fn() => $this->chat->crearGrupo($yo, (string) ($datos["nombre"] ?? ""), self::ids($datos["miembros"] ?? [])));
+        return $this->responder(fn() => $this->chat->crearGrupo($yo, (string) ($datos["nombre"] ?? ""), self::usuarios($datos["miembros"] ?? [])));
     }
 
     /** `?antes=id` (anteriores) o `?despues=id` (nuevos). */
@@ -204,7 +204,7 @@ final class ChatController extends AbstractController
 
         return $this->responder(fn() => ["canales" => $this->chat->compartir(
             $yo,
-            self::ids($datos["usuarios"] ?? []),
+            self::usuarios($datos["usuarios"] ?? []),
             self::ids($datos["canales"] ?? []),
             (string) ($datos["texto"] ?? ""),
             $datos["adjuntos"] ?? [],
@@ -215,6 +215,12 @@ final class ChatController extends AbstractController
     private static function ids(mixed $valor): array
     {
         return is_array($valor) ? array_values(array_filter(array_map("intval", $valor), static fn(int $id) => $id > 0)) : [];
+    }
+
+    /** @return list<int> ids de usuario: pueden ser negativos (`admin` es -1) */
+    private static function usuarios(mixed $valor): array
+    {
+        return is_array($valor) ? array_values(array_filter(array_map("intval", $valor), static fn(int $id) => $id !== 0)) : [];
     }
 
     private function responder(callable $operacion): JsonResponse
