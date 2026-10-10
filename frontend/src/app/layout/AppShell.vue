@@ -38,7 +38,7 @@ import { useCuentaStore } from '@/core/cuenta/store'
 import ChatAviso from '@/features/chat/ChatAviso.vue'
 import ChatVentana from '@/features/chat/ChatVentana.vue'
 import { useVentanaChat } from '@/features/chat/ventana'
-import { LISTADO_DE_REGISTROS } from '@/shared/chat/integracion'
+import { LISTADO_DE_REGISTROS, REPORTES_ADJUNTABLES } from '@/shared/chat/integracion'
 import AppHeader from './AppHeader.vue'
 import NavArea from './navigation/NavArea.vue'
 import Sidebar from './Sidebar.vue'
@@ -55,6 +55,11 @@ const ventana = useVentanaChat()
 
 // El selector de registros del chat usa el listado genérico (una feature no importa a otra).
 provide(LISTADO_DE_REGISTROS, defineAsyncComponent(() => import('@/features/entity-crud/ListPage.vue')))
+
+provide(REPORTES_ADJUNTABLES, [
+  { id: 'cuadre-venta-boletos', nombre: 'Cuadre de venta', icono: 'request-quote-outline', componente: defineAsyncComponent(() => import('@/features/reporte/CuadreVentaBoletosPage.vue')) },
+  { id: 'detalle-factura-boletos', nombre: 'Detalle de facturas', icono: 'receipt-long-outline', componente: defineAsyncComponent(() => import('@/features/reporte/DetalleFacturaBoletosPage.vue')) },
+])
 
 // Menús y chat del usuario: se cargan al entrar al shell y al cambiar de usuario.
 watch(

@@ -12,7 +12,7 @@
     <div class="sel">
       <div class="sel__pestanas" role="tablist">
         <button v-for="p in PESTANAS" :key="p.id" type="button" role="tab" class="sel__pestana" :aria-selected="pestana === p.id" @click="pestana = p.id">
-          {{ p.nombre }}<span v-if="p.id === 'carrito' && elegidos.length" class="sel__cuenta">{{ elegidos.length }}</span>
+          {{ p.nombre }}<span v-if="p.id === 'carrito' && total" class="sel__cuenta">{{ total }}</span>
         </button>
       </div>
 
@@ -31,11 +31,47 @@
               <span v-if="cuantos(r.tipo)" class="sel__cuenta">{{ cuantos(r.tipo) }}</span>
             </button>
           </template>
-          <p v-if="!cargando && !grupos.some((g) => g.recursos.length)" class="sel__nota">Sin resultados.</p>
+          <template v-if="reportesVisibles.length">
+            <p class="sel__seccion">Reportes</p>
+            <button v-for="r in reportesVisibles" :key="r.id" type="button" class="recurso" :aria-current="recurso === `${PREFIJO_REPORTE}${r.id}`" @click="elegirRecurso(`${PREFIJO_REPORTE}${r.id}`)">
+              <icon :name="r.icono" size="1.15rem" color="text-current" />
+              <span class="recurso__nombre">{{ r.nombre }}</span>
+              <span v-if="cuantosReportes(r.id)" class="sel__cuenta">{{ cuantosReportes(r.id) }}</span>
+            </button>
+          </template>
+          <p v-if="!cargando && !grupos.some((g) => g.recursos.length) && !reportesVisibles.length" class="sel__nota">Sin resultados.</p>
         </nav>
 
         <section class="sel__lista">
-          <template v-if="recurso && listado">
+          <template v-if="reporteActual">
+            <header class="sel__lista-cabeza">
+              <icon :name="reporteActual.icono" color="text-current" />
+              <span class="font-semibold">{{ reporteActual.nombre }}</span>
+              <span class="text-xs text-muted-color">{{ previa ? 'Revise el archivo: puede descartarlo o adjuntarlo al mensaje.' : 'Complete los parámetros y genere el reporte para verlo antes de adjuntarlo.' }}</span>
+            </header>
+            <div class="sel__listado">
+              <div v-if="previa" class="previa">
+                <div class="previa__barra">
+                  <icon :name="previa.nombre.endsWith('.pdf') ? 'picture-as-pdf-outline' : 'table-chart-outline'" color="text-current" />
+                  <span class="previa__nombre">{{ previa.nombre }}</span>
+                  <span class="text-xs text-muted-color">{{ tamano(previa.blob.size) }}</span>
+                  <Button label="Descartar" severity="secondary" text size="small" @click="descartarPrevia">
+                    <template #icon><icon name="delete-outline" size="1rem" color="text-current" class="mr-1" /></template>
+                  </Button>
+                  <Button label="Adjuntar" size="small" @click="adjuntarPrevia">
+                    <template #icon><icon name="attach-file" size="1rem" color="text-current" class="mr-1" /></template>
+                  </Button>
+                </div>
+                <iframe v-if="previa.nombre.endsWith('.pdf')" :src="previa.url" class="previa__pdf" :title="previa.nombre" />
+                <div v-else class="sel__vacio">
+                  <icon name="table-chart-outline" size="2.5rem" color="text-current" />
+                  <p>El Excel no se puede mostrar aquí. Se adjunta tal como se generó.</p>
+                </div>
+              </div>
+              <component :is="reporteActual.componente" v-show="!previa" :key="reporteActual.id" adjuntar @generado="alGenerar(reporteActual!, $event)" />
+            </div>
+          </template>
+          <template v-else-if="recurso && listado">
             <header class="sel__lista-cabeza">
               <icon :name="tipoTarjeta(recurso).icono" color="text-current" />
               <span class="font-semibold">{{ tipoTarjeta(recurso).nombre }}</span>
@@ -55,9 +91,9 @@
           <header class="sel__carrito-cabeza">
             <span class="font-semibold">Selección</span>
             <span class="text-xs" :class="elegidos.length >= MAXIMO ? 'text-red-500' : 'text-muted-color'">{{ elegidos.length }}/{{ MAXIMO }}</span>
-            <button v-if="elegidos.length" type="button" class="sel__limpiar" @click="elegidos = []">Quitar todo</button>
+            <button v-if="elegidos.length || archivos.length" type="button" class="sel__limpiar" @click="((elegidos = []), (archivos = []))">Quitar todo</button>
           </header>
-          <div v-if="!elegidos.length" class="sel__vacio sel__vacio--chico">
+          <div v-if="!elegidos.length && !archivos.length" class="sel__vacio sel__vacio--chico">
             <icon name="shopping-cart" size="2rem" color="text-current" />
             <p>Lo que marque aparece aquí, agrupado por recurso.</p>
           </div>
@@ -77,13 +113,26 @@
               </li>
             </TransitionGroup>
           </div>
+          <div v-if="archivos.length" class="grupo">
+            <p class="sel__seccion !mx-1">Reportes</p>
+            <TransitionGroup tag="ul" name="item" class="grupo__items">
+              <li v-for="a in archivos" :key="a.clave" class="item">
+                <icon :name="a.nombre.endsWith('.pdf') ? 'picture-as-pdf-outline' : 'table-chart-outline'" size="1rem" color="text-current" />
+                <span class="min-w-0 flex-1">
+                  <span class="item__etiqueta">{{ a.nombre }}</span>
+                  <span class="item__id">{{ tamano(a.blob.size) }}</span>
+                </span>
+                <button type="button" class="item__quitar tap-target" :aria-label="`Quitar ${a.nombre}`" @click="archivos = archivos.filter((x) => x !== a)"><icon name="close" size=".9rem" color="text-current" /></button>
+              </li>
+            </TransitionGroup>
+          </div>
         </aside>
       </div>
     </div>
 
     <template #footer>
       <Button label="Cancelar" severity="secondary" text @click="emit('update:visible', false)" />
-      <Button :label="elegidos.length ? `Adjuntar ${elegidos.length}` : 'Adjuntar'" :disabled="!cambio" @click="aceptar">
+      <Button :label="total ? `Adjuntar ${total}` : 'Adjuntar'" :disabled="!cambio" @click="aceptar">
         <template #icon><icon name="check" size="1rem" color="text-current" class="mr-1.5" /></template>
       </Button>
     </template>
@@ -96,11 +145,11 @@ import { coincide } from "@/core/chat/modelo";
 import type { Recurso, Registro } from "@/core/chat/types";
 import { useSchemaStore } from "@/core/entities/schema";
 import { notify } from "@/core/notify";
-import { LISTADO_DE_REGISTROS, etiquetaDeFila } from "@/shared/chat/integracion";
+import { LISTADO_DE_REGISTROS, REPORTES_ADJUNTABLES, etiquetaDeFila, type ReporteAdjuntable, type ReporteGenerado } from "@/shared/chat/integracion";
 import { HABITUALES, tipoTarjeta } from "./tarjetas/catalogo";
 
 const props = defineProps<{ visible: boolean; inicial: Registro[] }>();
-const emit = defineEmits<{ "update:visible": [boolean]; aceptar: [registros: Registro[]] }>();
+const emit = defineEmits<{ "update:visible": [boolean]; aceptar: [registros: Registro[]]; archivos: [archivos: File[]] }>();
 
 /** Lo que el backend admite por mensaje (`Tarjetas::MAXIMO`). */
 const MAXIMO = 20;
@@ -118,6 +167,23 @@ interface Elegido extends Registro {
 const chat = useChatStore();
 const schema = useSchemaStore();
 const listado = inject(LISTADO_DE_REGISTROS, null);
+const reportes = inject(REPORTES_ADJUNTABLES, []);
+
+/** Prefijo de `recurso` cuando lo elegido es un reporte y no un listado. */
+const PREFIJO_REPORTE = "reporte:";
+
+/** Un reporte ya generado y aceptado: se sube como archivo al aceptar. */
+interface ArchivoReporte {
+  clave: number;
+  reporte: string;
+  nombre: string;
+  blob: Blob;
+}
+/** Un reporte recién generado, a la espera de descartarlo o adjuntarlo. */
+interface Previa extends ReporteGenerado {
+  reporte: string;
+  url: string;
+}
 
 const recursos = ref<Recurso[]>([]);
 const cargando = ref(false);
@@ -127,7 +193,37 @@ const elegidos = ref<Elegido[]>([]);
 const pestana = ref<(typeof PESTANAS)[number]["id"]>("recursos");
 
 const clave = (r: Registro) => `${r.tipo}:${r.id}`;
-const cambio = computed(() => elegidos.value.map(clave).join() !== props.inicial.map(clave).join());
+const archivos = ref<ArchivoReporte[]>([]);
+const previa = ref<Previa | null>(null);
+let claves = 0;
+
+const total = computed(() => elegidos.value.length + archivos.value.length);
+const cambio = computed(() => archivos.value.length > 0 || elegidos.value.map(clave).join() !== props.inicial.map(clave).join());
+
+const reportesVisibles = computed(() => reportes.filter((r) => (!busqueda.value || coincide(`${r.nombre} reporte`, busqueda.value))));
+const reporteActual = computed(() => reportes.find((r) => recurso.value === `${PREFIJO_REPORTE}${r.id}`) ?? null);
+const cuantosReportes = (id: string) => archivos.value.filter((a) => a.reporte === id).length;
+const tamano = (bytes: number) => (bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1024 / 1024).toFixed(1)} MB`);
+
+function alGenerar(r: ReporteAdjuntable, generado: ReporteGenerado) {
+  soltarPrevia();
+  previa.value = { ...generado, reporte: r.id, url: URL.createObjectURL(generado.blob) };
+}
+
+function soltarPrevia() {
+  if (previa.value) URL.revokeObjectURL(previa.value.url);
+  previa.value = null;
+}
+
+const descartarPrevia = soltarPrevia;
+
+function adjuntarPrevia() {
+  const p = previa.value;
+  if (!p) return;
+  archivos.value = [...archivos.value, { clave: ++claves, reporte: p.reporte, nombre: p.nombre, blob: p.blob }];
+  soltarPrevia();
+  notify.success(`${p.nombre} agregado a la selección.`);
+}
 
 /** Solo los que tienen listado (colección en GraphQL). */
 const grupos = computed(() => {
@@ -184,12 +280,15 @@ function quitar(e: Elegido) {
 }
 
 function elegirRecurso(tipo: string) {
+  if (recurso.value !== tipo) soltarPrevia();
   recurso.value = tipo;
   pestana.value = "lista";
 }
 
 async function preparar() {
   elegidos.value = props.inicial.map((r) => ({ ...r }));
+  archivos.value = [];
+  soltarPrevia();
   busqueda.value = "";
   pestana.value = recurso.value ? "lista" : "recursos";
   if (recursos.value.length) return;
@@ -204,11 +303,18 @@ async function preparar() {
   }
 }
 
+watch(
+  () => props.visible,
+  (visible) => visible || soltarPrevia(),
+);
+onBeforeUnmount(soltarPrevia);
+
 function aceptar() {
   emit(
     "aceptar",
     elegidos.value.map(({ tipo, id, etiqueta }) => ({ tipo, id, etiqueta })),
   );
+  if (archivos.value.length) emit("archivos", archivos.value.map((a) => new File([a.blob], a.nombre, { type: a.blob.type })));
   emit("update:visible", false);
 }
 </script>
@@ -409,6 +515,36 @@ function aceptar() {
   p {
     margin: 0;
   }
+}
+.previa {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  height: 100%;
+  min-height: 24rem;
+}
+.previa__barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--p-surface-700);
+}
+.previa__nombre {
+  flex: 1;
+  min-width: 8rem;
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.previa__pdf {
+  flex: 1;
+  width: 100%;
+  min-height: 20rem;
+  border: 1px solid var(--p-surface-200);
+  border-radius: 0.6rem;
+  background: var(--p-surface-100);
 }
 .sel__vacio--chico {
   height: auto;

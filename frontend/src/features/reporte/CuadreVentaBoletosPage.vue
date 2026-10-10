@@ -26,8 +26,8 @@
     </div>
 
     <template #acciones>
-      <Button :disabled="!!problema || !opciones" :loading="generando" @click="generar" label="Generar PDF" class="shrink-0 whitespace-nowrap"><template #icon><icon name="picture-as-pdf-outline" class="mr-1.5" color="text-white" /></template></Button>
-      <small class="text-muted-color">Se abre en una pestaña nueva.</small>
+      <Button :disabled="!!problema || !opciones" :loading="generando" @click="generar" :label="adjuntar ? 'Generar vista previa' : 'Generar PDF'" class="shrink-0 whitespace-nowrap"><template #icon><icon name="picture-as-pdf-outline" class="mr-1.5" color="text-white" /></template></Button>
+      <small v-if="!adjuntar" class="text-muted-color">Se abre en una pestaña nueva.</small>
     </template>
 
     <template #resumen>
@@ -55,8 +55,13 @@ import type { Moneda, OpcionesReporte } from '@/core/reporte/types'
 import { notify } from '@/core/notify'
 import CifraReporte from './CifraReporte.vue'
 import ReporteLayout from './ReporteLayout.vue'
-import { generarReporte } from './descarga'
+import type { ReporteGenerado } from '@/shared/chat/integracion'
+import { generarReporte, obtenerReporte } from './descarga'
 import { useResumen } from './useResumen'
+
+/** `adjuntar`: no abre el PDF, lo entrega en `generado` (selector del chat). */
+const props = defineProps<{ adjuntar?: boolean }>()
+const emit = defineEmits<{ generado: [reporte: ReporteGenerado] }>()
 
 const opciones = ref<OpcionesReporte | null>(null)
 const filtro = reactive<FiltroCuadre>({ fecha: null, estacion: null, empresa: null, moneda: null })
@@ -96,7 +101,10 @@ async function generar() {
   if (!query.value) return
   generando.value = true
   try {
-    await generarReporte('cuadre-venta-boletos', query.value, 'pdf', `cuadre_venta_boletos_${filtro.moneda}`)
+    const nombre = `cuadre_venta_boletos_${filtro.moneda}`
+    if (!props.adjuntar) return void (await generarReporte('cuadre-venta-boletos', query.value, 'pdf', nombre))
+    const blob = await obtenerReporte('cuadre-venta-boletos', query.value, 'pdf')
+    if (blob) emit('generado', { blob, nombre: `${nombre}.pdf` })
   } finally {
     generando.value = false
   }

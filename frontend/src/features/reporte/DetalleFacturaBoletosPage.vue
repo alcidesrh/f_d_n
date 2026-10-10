@@ -34,8 +34,8 @@
     </div>
 
     <template #acciones>
-      <Button :disabled="!!problema || !opciones" :loading="generando === 'pdf'" @click="generar('pdf')" label="Generar PDF" class="shrink-0 whitespace-nowrap"><template #icon><icon name="picture-as-pdf-outline" class="mr-1.5" color="text-white" /></template></Button>
-      <Button severity="secondary" outlined :disabled="!!problema || !opciones" :loading="generando === 'xlsx'" @click="generar('xlsx')" label="Descargar Excel" class="shrink-0 whitespace-nowrap"><template #icon><icon name="table-chart-outline" class="mr-1.5" color="text-primary" /></template></Button>
+      <Button :disabled="!!problema || !opciones" :loading="generando === 'pdf'" @click="generar('pdf')" :label="adjuntar ? 'Vista previa PDF' : 'Generar PDF'" class="shrink-0 whitespace-nowrap"><template #icon><icon name="picture-as-pdf-outline" class="mr-1.5" color="text-white" /></template></Button>
+      <Button severity="secondary" outlined :disabled="!!problema || !opciones" :loading="generando === 'xlsx'" @click="generar('xlsx')" :label="adjuntar ? 'Generar Excel' : 'Descargar Excel'" class="shrink-0 whitespace-nowrap"><template #icon><icon name="table-chart-outline" class="mr-1.5" color="text-primary" /></template></Button>
     </template>
 
     <template #resumen>
@@ -61,8 +61,13 @@ import type { FormatoReporte, OpcionesReporte } from '@/core/reporte/types'
 import { notify } from '@/core/notify'
 import CifraReporte from './CifraReporte.vue'
 import ReporteLayout from './ReporteLayout.vue'
-import { generarReporte } from './descarga'
+import type { ReporteGenerado } from '@/shared/chat/integracion'
+import { generarReporte, obtenerReporte } from './descarga'
 import { useResumen } from './useResumen'
+
+/** `adjuntar`: no abre ni descarga el archivo, lo entrega en `generado` (selector del chat). */
+const props = defineProps<{ adjuntar?: boolean }>()
+const emit = defineEmits<{ generado: [reporte: ReporteGenerado] }>()
 
 const opciones = ref<OpcionesReporte | null>(null)
 const filtro = reactive<FiltroDetalle>({ rango: null, estacion: null, empresa: null, autorizacion: '', referencia: '', soloTarjetas: false, soloReferencias: false })
@@ -89,7 +94,10 @@ async function generar(formato: FormatoReporte) {
   generando.value = formato
   try {
     const [desde, hasta] = filtro.rango!
-    await generarReporte('detalle-factura-boletos', query.value, formato, `detalle_factura_boletos_${aDia(desde!)}_${aDia(hasta ?? desde!)}`)
+    const nombre = `detalle_factura_boletos_${aDia(desde!)}_${aDia(hasta ?? desde!)}`
+    if (!props.adjuntar) return void (await generarReporte('detalle-factura-boletos', query.value, formato, nombre))
+    const blob = await obtenerReporte('detalle-factura-boletos', query.value, formato)
+    if (blob) emit('generado', { blob, nombre: `${nombre}.${formato}` })
   } finally {
     generando.value = null
   }

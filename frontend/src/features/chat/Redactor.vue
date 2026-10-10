@@ -40,7 +40,7 @@
       <button type="button" class="redactor__boton tap-target" aria-label="Adjuntar foto o archivo" v-tooltip.top="'Foto o archivo'" @click="selector?.click()">
         <icon name="attach-file" size="1.35rem" color="text-current" />
       </button>
-      <button type="button" class="redactor__boton tap-target" aria-label="Adjuntar registros" v-tooltip.top="'Boletos, salidas, buses…'" @click="eligiendo = true">
+      <button type="button" class="redactor__boton tap-target" aria-label="Adjuntar registros" v-tooltip.top="'Boletos, salidas, buses, reportes…'" @click="eligiendo = true">
         <icon name="add-circle-outline" size="1.35rem" color="text-current" />
       </button>
       <textarea ref="campo" v-model="texto" class="redactor__texto" rows="1" placeholder="Escriba un mensaje" aria-label="Mensaje" :maxlength="4000" @keydown.enter.exact.prevent="enviar" @input="ajustar" />
@@ -50,7 +50,7 @@
     </div>
     <input ref="selector" type="file" multiple :accept="ACEPTA" class="hidden" @change="alElegir" />
 
-    <SelectorRegistros v-model:visible="eligiendo" :inicial="adjuntos" @aceptar="alElegirRegistros" />
+    <SelectorRegistros v-model:visible="eligiendo" :inicial="adjuntos" @aceptar="alElegirRegistros" @archivos="agregarArchivos" />
   </form>
 </template>
 

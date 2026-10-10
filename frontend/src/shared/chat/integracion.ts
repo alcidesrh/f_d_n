@@ -15,6 +15,26 @@ import type { Registro } from '@/core/chat/types'
 
 export const LISTADO_DE_REGISTROS: InjectionKey<Component> = Symbol('listado-de-registros')
 
+/**
+ * Reportes que el selector de registros ofrece como categoría "Reportes".
+ * `componente` es la pantalla del reporte en modo adjuntar (prop `adjuntar`):
+ * en vez de abrir el archivo emite `generado` con él.
+ */
+export interface ReporteAdjuntable {
+  id: string
+  nombre: string
+  icono: string
+  componente: Component
+}
+
+export interface ReporteGenerado {
+  blob: Blob
+  /** Con extensión. */
+  nombre: string
+}
+
+export const REPORTES_ADJUNTABLES: InjectionKey<ReporteAdjuntable[]> = Symbol('reportes-adjuntables')
+
 const fuentes = reactive(new Map<symbol, () => Registro[]>())
 
 /** Anuncia lo que muestra el componente que lo llama, mientras viva. */
