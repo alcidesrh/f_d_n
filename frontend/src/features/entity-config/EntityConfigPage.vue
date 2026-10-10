@@ -30,7 +30,7 @@
         <div v-else class="relative">
           <div class="mb-2 flex flex-wrap items-center justify-end gap-3 lg:absolute lg:right-0 lg:top-0 lg:z-10 lg:mb-0">
             <span v-if="store.dirty" class="text-sm text-amber-600">Cambios sin guardar</span>
-            <span v-if="store.attrsErrors.length" class="text-sm text-red-500"> {{ store.attrsErrors.length }} panel(es) con attrs inválido </span>
+            <span v-if="store.attrsErrors.length" class="text-sm text-red-500"> {{ store.attrsErrors.length }} valor(es) inválido(s) </span>
             <icon name="restart-alt" lg title="Descartar cambios y recargar" @click="reload" />
             <Button label="Volver al listado" severity="secondary" size="small" @click="view = 'list'">
               <template #icon><icon name="arrow-back" /></template>
@@ -46,6 +46,7 @@
             </TabList>
             <TabPanels>
               <TabPanel value="collection">
+                <ListOptionsPanel />
                 <p class="mb-3 text-xs text-surface-500">
                   Orden de las columnas del listado. Arrastrá
                   <icon name="drag-indicator" class="inline align-text-bottom" /> para cambiar la posición.
@@ -84,6 +85,7 @@
 import { useConfirm } from "primevue/useconfirm";
 import ListPage from "@/features/entity-crud/ListPage.vue";
 import FieldConfigPanel from "./FieldConfigPanel.vue";
+import ListOptionsPanel from "./ListOptionsPanel.vue";
 import SortablePanelList from "@/shared/ui/SortablePanelList.vue";
 import { useEntityConfigStore } from "./store";
 import { useSchemaStore } from "@/core/entities/schema";

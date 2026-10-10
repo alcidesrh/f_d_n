@@ -18,7 +18,8 @@ import type { AgnosticOption, EntitySchema } from '@/core/graphql/types'
 import type { CollectionFieldConfig, EntityStore } from '@/core/entities/types'
 import List from '@/features/entity-crud/ListPage.vue'
 import Toasts from '@/app/layout/Toasts.vue'
-import { HIGHLIGHT_NAME } from '@/features/entity-crud/list/cellHighlight'
+import DataGrid from '@/shared/data-grid/DataGrid.vue'
+import ListCellEditor from '@/features/entity-crud/list/ListCellEditor.vue'
 
 if (typeof window.matchMedia !== 'function') {
   window.matchMedia = (query: string) =>
@@ -114,6 +115,18 @@ const iconSchema: EntitySchema = {
   delete: null,
 }
 
+const deletableSchema: EntitySchema = {
+  ...iconSchema,
+  delete: {
+    kind: 'delete',
+    field: 'deleteIcon',
+    inputType: 'deleteIconInput',
+    payloadType: 'deleteIconPayload',
+    returnsField: 'icon',
+    inputFields: [],
+  },
+}
+
 const editableSchema: EntitySchema = {
   ...iconSchema,
   scalarFields: [...iconSchema.scalarFields, 'createdAt'],
@@ -192,6 +205,8 @@ function makeStore(): EntityStore<IconItem> {
     item: null,
     fullList: [],
     formFields: [],
+    listOptions: {},
+    view: { density: 'normal', layout: 'auto', filterMode: 'or', filtersOpen: false },
     init: vi.fn<(force?: boolean) => Promise<void>>(async (force = false) => {
       if (force || store.columns.length === 0) store.columns = columns.map((col) => ({ ...col }))
     }),
@@ -237,6 +252,8 @@ function makeCategoryStore(): EntityStore {
     item: null,
     fullList: [{ id: '/api/categories/1', label: 'Navegación' }],
     formFields: [],
+    listOptions: {},
+    view: { density: 'normal', layout: 'auto', filterMode: 'or', filtersOpen: false },
     init: vi.fn<() => Promise<void>>(async () => {}),
     fetchItems: vi.fn<() => Promise<unknown[]>>(async () => []),
     fetchItem: vi.fn<(id: string | number) => Promise<unknown>>(async () => ({})),
@@ -301,6 +318,25 @@ describe('ListPage', () => {
     dismissAll()
   })
 
+  async function mountList(schema: EntitySchema, props: Record<string, unknown> = {}) {
+    schemaMock.find.mockImplementation((name: string) => (name === 'Category' ? null : schema))
+    wrapper = mount(List, { props: { entity: 'Icon', ...props }, attachTo: document.body, ...pluginMount() })
+    await flushPromises()
+    return wrapper
+  }
+
+  /** Abre la fila de filtros y devuelve el input de una columna. */
+  async function filterInput(field: string) {
+    store.view.filtersOpen = true
+    await flushPromises()
+    return wrapper!.find(`[data-grid-filter="${field}"] input`)
+  }
+
+  const bodyButton = (text: string) =>
+    Array.from(document.body.querySelectorAll('button')).find((button) => button.textContent?.trim() === text)
+
+  const dataCells = () => wrapper!.findAll('.dg-brow .dg-dcell')
+
   it('muestra error si la entidad no existe', async () => {
     schemaMock.find.mockReturnValue(null)
     wrapper = mount(List, { props: { entity: 'Nope' }, ...pluginMount() })
@@ -308,248 +344,293 @@ describe('ListPage', () => {
     expect(document.body.textContent).toContain('no encontrada')
   })
 
-  it('renderiza título, filas, acciones y precarga relaciones', async () => {
-    schemaMock.find.mockReturnValue(iconSchema)
+  it('renderiza cabeceras, filas, acciones y precarga relaciones', async () => {
     // Entidad no paginada (collectionKind "list"): su store no lleva `pagination`.
     delete (store as { pagination?: unknown }).pagination
-    wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
-    await flushPromises()
+    // `category` con filtro en el backend: su select necesita las opciones.
+    await mountList({ ...iconSchema, filterArgs: [...iconSchema.filterArgs, arg('category')] })
 
     expect(store.init).toHaveBeenCalled()
     expect(store.fetchItems).toHaveBeenCalledTimes(1)
-    expect(wrapper.text()).toContain('Icon')
-    expect(wrapper.text()).toContain('home')
-    expect(wrapper.text()).toContain('Navegación')
-    expect(wrapper.findAll('[aria-label="Editar"]')).toHaveLength(1)
-    expect(wrapper.findAll('[aria-label="Eliminar"]')).toHaveLength(1)
+    expect(wrapper!.findAll('[role="columnheader"][data-grid-col]').map((h) => h.attributes('data-grid-col'))).toEqual([
+      'id',
+      'name',
+      'icon',
+      'description',
+      'category',
+    ])
+    expect(wrapper!.text()).toContain('home')
+    expect(wrapper!.text()).toContain('Navegación')
+    expect(wrapper!.findAll('[aria-label="Editar"]')).toHaveLength(1)
+    // Sin mutación de delete no se ofrece eliminar.
+    expect(wrapper!.findAll('[aria-label="Eliminar"]')).toHaveLength(0)
     expect(registryMock.getEntity).toHaveBeenCalledWith('Category')
     expect(categoryStore.loadFullList).toHaveBeenCalled()
-    expect(wrapper.find('.p-paginator').exists()).toBe(false)
+    expect(wrapper!.find('.p-paginator').exists()).toBe(false)
   })
 
-  it('filtro de texto con debounce de 500ms aplica al store y refetcha', async () => {
-    schemaMock.find.mockReturnValue(iconSchema)
-    wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
-    await flushPromises()
+  it('las celdas de relación muestran label, nombre, name o id en ese orden', async () => {
+    store.items = [{ ...items[0]!, category: { id: '/api/categories/9', nombre: 'Rutas', name: 'routes' } as never }]
+    await mountList(iconSchema)
+    expect(dataCells()[4]!.text()).toBe('Rutas')
+  })
 
-    const input = wrapper.find('input[name="filter_name"]')
+  it('filtro de texto con debounce aplica al store y refetcha', async () => {
+    await mountList(iconSchema)
+    const input = await filterInput('name')
     expect(input.exists()).toBe(true)
     await input.setValue('ho')
     await flushPromises()
     expect(store.fetchItems).toHaveBeenCalledTimes(1)
 
-    await new Promise((resolve) => setTimeout(resolve, 650))
+    await new Promise((resolve) => setTimeout(resolve, 500))
     expect(store.filters).toEqual({ name: 'ho' })
     expect(store.fetchItems).toHaveBeenCalledTimes(2)
   })
 
-  it('una columna sin arg de servidor no ofrece filtro (no se filtra la página cargada)', async () => {
-    schemaMock.find.mockReturnValue(iconSchema)
-    wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
-    await flushPromises()
-
-    expect(wrapper.find('input[name="filter_name"]').exists()).toBe(true)
-    expect(wrapper.find('input[name="filter_description"]').exists()).toBe(false)
-    expect(wrapper.find('[aria-label="Filtrar Descripción"]').exists()).toBe(false)
+  it('una columna sin arg de servidor no ofrece filtro', async () => {
+    await mountList(iconSchema)
+    expect((await filterInput('name')).exists()).toBe(true)
+    expect((await filterInput('description')).exists()).toBe(false)
+    expect(wrapper!.find('[aria-label="Filtrar Descripción"]').exists()).toBe(false)
+    expect(wrapper!.find('[aria-label="Filtrar Nombre"]').exists()).toBe(true)
   })
 
-  it('confirma y elimina el registro seleccionado', async () => {
-    schemaMock.find.mockReturnValue(iconSchema)
-    wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
+  it('el embudo de la cabecera abre la fila de filtros', async () => {
+    await mountList(iconSchema)
+    expect(wrapper!.find('.dg-filters').exists()).toBe(false)
+    await wrapper!.find('button[aria-label="Filtrar Nombre"]').trigger('click')
     await flushPromises()
+    expect(store.view.filtersOpen).toBe(true)
+    expect(wrapper!.find('.dg-filters').exists()).toBe(true)
+  })
 
-    await wrapper.findAll('[aria-label="Eliminar"]')[0]?.trigger('click')
+  it('varios filtros se combinan con OR por defecto y con AND al elegir "Todos"', async () => {
+    store.filters = { name: 'ho', icon: 'pi' }
+    await mountList({ ...iconSchema, filterArgs: [...iconSchema.filterArgs, arg('_combinar')] })
+
+    // Los filtros hidratados aparecen como chips con el selector de combinación.
+    expect(wrapper!.text()).toContain('Nombre:')
+    expect(wrapper!.text()).toContain('Cualquiera')
+    const input = await filterInput('name')
+    await input.setValue('hom')
+    await new Promise((resolve) => setTimeout(resolve, 500))
+    expect(store.filters).toEqual({ name: 'hom', icon: 'pi', _combinar: 'or' })
+
+    const todos = wrapper!.findAll('[role="radio"], button').find((b) => b.text() === 'Todos')
+    await todos?.trigger('click')
+    await flushPromises()
+    expect(store.view.filterMode).toBe('and')
+    expect(store.filters).toEqual({ name: 'hom', icon: 'pi' })
+  })
+
+  it('confirma y elimina un registro desde su fila', async () => {
+    await mountList(deletableSchema)
+
+    await wrapper!.findAll('[aria-label="Eliminar"]')[0]?.trigger('click')
     await flushPromises()
     expect(document.body.textContent).toContain('Confirmar eliminación')
 
-    const confirmEl = Array.from(document.body.querySelectorAll('button')).find(
-      (button) => button.textContent === 'Eliminar',
-    )
-    expect(confirmEl).toBeTruthy()
-    await new DOMWrapper(confirmEl!).trigger('click')
+    await new DOMWrapper(bodyButton('Eliminar')!).trigger('click')
     await flushPromises()
-
     await settleToasts()
     expect(store.remove).toHaveBeenCalledWith('/api/icons/1')
     expect(store.fetchItems).toHaveBeenCalledTimes(2)
-    expect(document.body.textContent).not.toContain('Confirmar eliminación')
     expect(document.body.textContent).toContain('Registro eliminado')
   })
 
   it('muestra el id como número, no como IRI del resource', async () => {
-    schemaMock.find.mockReturnValue(iconSchema)
-    wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
-    await flushPromises()
-
-    expect(wrapper.text()).not.toContain('/api/icons/1')
-    expect(wrapper.find('tbody tr td').text()).toBe('1')
+    await mountList(iconSchema)
+    expect(wrapper!.text()).not.toContain('/api/icons/1')
+    expect(dataCells()[0]!.text()).toBe('1')
   })
 
   it('limpia el filtro de texto con el icono, sin esperar el debounce', async () => {
-    schemaMock.find.mockReturnValue(iconSchema)
-    wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
-    await flushPromises()
-
-    const input = wrapper.find('input[name="filter_name"]')
+    await mountList(iconSchema)
+    const input = await filterInput('name')
     await input.setValue('ho')
     await flushPromises()
     expect(store.fetchItems).toHaveBeenCalledTimes(1)
 
-    const clear = wrapper.find('[aria-label="Limpiar"]')
-    expect(clear.exists()).toBe(true)
-    await clear.trigger('click')
+    await wrapper!.find('[aria-label="Limpiar filtro Nombre"]').trigger('click')
     await flushPromises()
-    await new Promise((resolve) => setTimeout(resolve, 20))
-
     expect(store.filters).toEqual({})
     expect(store.fetchItems).toHaveBeenCalledTimes(2)
   })
 
-  it('oculta columnas y las restaura desde el indicador', async () => {
-    schemaMock.find.mockReturnValue(iconSchema)
-    wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
-    await flushPromises()
-
-    const hideIcon = wrapper.find('[aria-label="Ocultar columna Icono"]')
-    expect(hideIcon.exists()).toBe(true)
-    await hideIcon.trigger('click')
+  it('oculta columnas desde la cabecera y las restaura desde el menú de columnas', async () => {
+    await mountList(iconSchema)
+    await wrapper!.find('[aria-label="Ocultar columna Icono"]').trigger('click')
     await flushPromises()
 
     expect(store.columns.find((col) => col.field === 'icon')?.visible).toBe(false)
-    expect(wrapper.find('[aria-label="Ocultar columna Icono"]').exists()).toBe(false)
+    expect(wrapper!.find('[data-grid-col="icon"]').exists()).toBe(false)
 
-    const indicator = wrapper.find('[aria-label="1 columnas ocultas"]')
-    expect(indicator.exists()).toBe(true)
-    await indicator.trigger('click')
+    await wrapper!.find('[aria-label="Columnas"]').trigger('click')
     await flushPromises()
-    expect(document.body.textContent).toContain('Columnas ocultas')
-
-    const restoreBtn = Array.from(document.body.querySelectorAll('button')).find(
-      (button) => button.textContent?.trim() === 'Icono',
-    )
-    expect(restoreBtn).toBeTruthy()
-    await new DOMWrapper(restoreBtn!).trigger('click')
+    const label = Array.from(document.body.querySelectorAll('label')).find((l) => l.textContent?.trim() === 'Icono')
+    expect(label).toBeTruthy()
+    await new DOMWrapper(label!.querySelector('input')!).trigger('click')
     await flushPromises()
 
     expect(store.columns.find((col) => col.field === 'icon')?.visible).toBe(true)
-    expect(wrapper.find('[aria-label="1 columnas ocultas"]').exists()).toBe(false)
+    // La columna que aparece necesita sus datos.
+    expect(store.fetchItems).toHaveBeenCalledTimes(2)
   })
 
-  it('reordena columnas y sincroniza el array del store', async () => {
-    schemaMock.find.mockReturnValue(iconSchema)
-    wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
+  it('reordena columnas y sincroniza el array del store (las ocultas quedan en su sitio)', async () => {
+    await mountList(iconSchema)
+    store.columns.find((c) => c.field === 'description')!.visible = false
     await flushPromises()
 
-    const dataTable = wrapper.findComponent({ name: 'DataTable' })
-    dataTable.vm.$emit('column-reorder', { originalEvent: {}, dragIndex: 0, dropIndex: 2 })
+    wrapper!.findComponent(DataGrid).vm.$emit('reorder', 0, 2)
     await flushPromises()
+    expect(store.columns.map((col) => col.field)).toEqual(['name', 'icon', 'id', 'description', 'category'])
+  })
 
-    expect(store.columns.map((col) => col.field)).toEqual([
-      'name',
-      'icon',
-      'id',
-      'description',
-      'category',
-    ])
+  it('cambia el ancho de una columna y el doble clic vuelve al de la configuración', async () => {
+    await mountList(iconSchema)
+    const grid = wrapper!.findComponent(DataGrid)
+    grid.vm.$emit('resize', 'name', '240px')
+    await flushPromises()
+    expect(store.columns.find((c) => c.field === 'name')?.width).toBe('240px')
+    expect((wrapper!.find('.dg').element as HTMLElement).style.getPropertyValue('--dg-cols')).toContain('240px')
+
+    grid.vm.$emit('resize', 'name', null)
+    await flushPromises()
+    expect(store.columns.find((c) => c.field === 'name')?.width ?? null).toBeNull()
   })
 
   it('hidrata los filtros persistidos del store', async () => {
-    schemaMock.find.mockReturnValue(iconSchema)
     store.filters = { name: 'ho' }
-    wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
-    await flushPromises()
-    await new Promise((resolve) => setTimeout(resolve, 20))
-
-    const input = wrapper.find('input[name="filter_name"]')
+    await mountList(iconSchema)
+    const input = await filterInput('name')
     expect((input.element as HTMLInputElement).value).toBe('ho')
   })
 
-  it('edita celdas en línea y persiste solo el campo editado', async () => {
-    schemaMock.find.mockReturnValue(editableSchema)
-    wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
+  it('edita una celda en línea y persiste solo el campo editado', async () => {
+    await mountList(editableSchema)
+
+    const nameCell = dataCells()[1]!
+    expect(nameCell.classes()).toContain('is-editable')
+    await nameCell.trigger('click')
     await flushPromises()
-
-    const dataTable = wrapper.findComponent({ name: 'DataTable' })
-    expect(dataTable.props('editMode')).toBe('cell')
-
-    dataTable.vm.$emit('cell-edit-complete', {
-      originalEvent: {},
-      data: { ...items[0], createdAt: '2014-02-27T11:54:20-06:00' },
-      newData: { ...items[0], name: 'dashboard' },
-      value: 'home',
-      newValue: 'dashboard',
-      field: 'name',
-      index: 0,
-    })
+    const input = nameCell.find('input')
+    expect(input.exists()).toBe(true)
+    await input.setValue('dashboard')
+    await input.trigger('keydown', { key: 'Enter' })
     await flushPromises()
 
     expect(store.update).toHaveBeenCalledWith({ id: '/api/icons/1', name: 'dashboard' })
-    expect(store.update).not.toHaveBeenCalledWith(
-      expect.objectContaining({ createdAt: expect.anything() }),
-    )
     expect(store.fetchItems).toHaveBeenCalledTimes(2)
     await settleToasts()
     expect(document.body.textContent).toContain('Cambio guardado')
   })
 
+  it('Escape cancela la edición y no guarda nada', async () => {
+    await mountList(editableSchema)
+    const nameCell = dataCells()[1]!
+    await nameCell.trigger('click')
+    await flushPromises()
+    await nameCell.find('input').setValue('otro')
+    await nameCell.find('input').trigger('keydown', { key: 'Escape' })
+    await flushPromises()
+    expect(store.update).not.toHaveBeenCalled()
+    expect(wrapper!.findComponent(ListCellEditor).exists()).toBe(false)
+  })
+
   it('normaliza fechas a YYYY-MM-DD al editar una celda', async () => {
-    schemaMock.find.mockReturnValue(editableSchema)
-    wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
-    await flushPromises()
-
+    await mountList(editableSchema)
     store.columns = [...store.columns, { field: 'createdAt', label: 'Creado', filterable: false }]
+    store.items = [{ ...items[0]!, createdAt: '2014-02-27T11:54:20-06:00' } as never]
     await flushPromises()
 
-    const dataTable = wrapper.findComponent({ name: 'DataTable' })
-    dataTable.vm.$emit('cell-edit-complete', {
-      originalEvent: {},
-      data: { ...items[0], createdAt: '2014-02-27T11:54:20-06:00' },
-      newData: { ...items[0], createdAt: '2014-02-27' },
-      value: '2014-02-27T11:54:20-06:00',
-      newValue: new Date('2014-02-27T11:54:20-06:00'),
-      field: 'createdAt',
-      index: 0,
-    })
+    await dataCells()[5]!.trigger('click')
+    await flushPromises()
+    const editor = wrapper!.findComponent(ListCellEditor)
+    ;(editor.props('data') as Record<string, unknown>).createdAt = new Date(2014, 2, 3)
+    editor.vm.$emit('commit')
     await flushPromises()
 
-    expect(store.update).toHaveBeenCalledWith({ id: '/api/icons/1', createdAt: '2014-02-27' })
+    expect(store.update).toHaveBeenCalledWith({ id: '/api/icons/1', createdAt: '2014-03-03' })
   })
 
-  it('modo selección: oculta acciones, marca filas y muestra el contador', async () => {
-    schemaMock.find.mockReturnValue(iconSchema)
-    wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
+  it('modo selección: oculta acciones, marca filas al tocarlas y muestra el contador', async () => {
+    await mountList(iconSchema)
+    expect(wrapper!.findAll('[aria-label="Editar"]')).toHaveLength(1)
+
+    await wrapper!.find('[aria-label="Modo selección"]').trigger('click')
     await flushPromises()
+    expect(wrapper!.findAll('[aria-label="Editar"]')).toHaveLength(0)
+    expect(wrapper!.find('[aria-label="Seleccionar la página"]').exists()).toBe(true)
 
-    expect(wrapper.findAll('[aria-label="Editar"]')).toHaveLength(1)
-    await wrapper.find('[aria-label="Modo selección"]').trigger('click')
+    await wrapper!.find('.dg-brow').trigger('click')
     await flushPromises()
-
-    expect(wrapper.findAll('[aria-label="Editar"]')).toHaveLength(0)
-    expect(wrapper.text()).toContain('0 seleccionados')
-
-    const dataTable = wrapper.findComponent({ name: 'DataTable' })
-    dataTable.vm.$emit('update:selection', [items[0]])
-    await flushPromises()
-
-    expect(wrapper.text()).toContain('1 seleccionados')
+    expect(wrapper!.text()).toContain('1 seleccionado')
+    expect(wrapper!.find('.dg-brow').classes()).toContain('is-selected')
   })
 
-  it('restablecer la vista limpia filtros, orden, página, ocultas y selección', async () => {
-    schemaMock.find.mockReturnValue(iconSchema)
+  it('elimina los seleccionados (acción por defecto de la selección)', async () => {
+    store.items = [...items, { ...items[0]!, id: '/api/icons/2', name: 'menu' }]
+    await mountList(deletableSchema)
+    await wrapper!.find('[aria-label="Modo selección"]').trigger('click')
+    wrapper!.findComponent(DataGrid).vm.$emit('toggle-page', true)
+    await flushPromises()
+    expect(wrapper!.text()).toContain('2 seleccionados')
+
+    await wrapper!.find('[aria-label="Eliminar"]').trigger('click')
+    await flushPromises()
+    expect(document.body.textContent).toContain('Eliminar seleccionados')
+    const confirmButtons = Array.from(document.body.querySelectorAll('.p-confirmdialog button'))
+    await new DOMWrapper(confirmButtons.find((b) => b.textContent?.trim() === 'Eliminar')!).trigger('click')
+    await flushPromises()
+    await settleToasts()
+
+    expect(store.remove).toHaveBeenCalledWith('/api/icons/1')
+    expect(store.remove).toHaveBeenCalledWith('/api/icons/2')
+    expect(document.body.textContent).toContain('2 registros eliminados')
+  })
+
+  it('como selector: siempre en selección, sin acciones, y emite la selección', async () => {
+    await mountList(iconSchema, { seleccion: [] })
+    expect(wrapper!.findAll('[aria-label="Editar"]')).toHaveLength(0)
+    expect(wrapper!.find('[aria-label="Modo selección"]').exists()).toBe(true)
+    await wrapper!.find('.dg-brow').trigger('click')
+    expect(wrapper!.emitted('update:seleccion')?.[0]?.[0]).toEqual([items[0]])
+  })
+
+  it('features apaga partes del listado en una vista', async () => {
+    await mountList(iconSchema, { features: { toolbar: false, rowActions: false, filter: false } })
+    expect(wrapper!.find('[aria-label="Controles del listado"]').exists()).toBe(false)
+    expect(wrapper!.findAll('[aria-label="Editar"]')).toHaveLength(0)
+    expect(wrapper!.find('[aria-label="Filtrar Nombre"]').exists()).toBe(false)
+  })
+
+  it('maximiza sobre toda la pantalla y Escape lo restaura', async () => {
+    await mountList(iconSchema)
+    await wrapper!.find('[aria-label="Maximizar"]').trigger('click')
+    await flushPromises()
+    expect(document.body.querySelector('.list-page.is-maximized')).toBeTruthy()
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+    await flushPromises()
+    expect(document.body.querySelector('.list-page.is-maximized')).toBeFalsy()
+  })
+
+  it('restablecer la vista limpia filtros, orden, página, vista, ocultas y selección', async () => {
     store.filters = { name: 'ho' }
     store.order = [{ name: 'ASC' }]
     store.pagination!.currentPage = 3
     store.pagination!.itemsPerPage = 25
-    wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
+    await mountList(iconSchema)
+    store.view.density = 'compact'
+    store.view.filtersOpen = true
+
+    store.columns.find((col) => col.field === 'icon')!.visible = false
+    await wrapper!.find('[aria-label="Modo selección"]').trigger('click')
     await flushPromises()
 
-    const iconCol = store.columns.find((col) => col.field === 'icon')
-    if (iconCol) iconCol.visible = false
-    await wrapper.find('[aria-label="Modo selección"]').trigger('click')
-    await flushPromises()
-
-    expect(wrapper.find('[aria-label="Restablecer vista"]').exists()).toBe(true)
-    await wrapper.find('[aria-label="Restablecer vista"]').trigger('click')
+    await wrapper!.find('[aria-label="Restablecer vista"]').trigger('click')
     await flushPromises()
 
     expect(store.init).toHaveBeenLastCalledWith(true)
@@ -557,85 +638,55 @@ describe('ListPage', () => {
     expect(store.order).toEqual([])
     expect(store.pagination?.currentPage).toBe(1)
     expect(store.pagination?.itemsPerPage).toBe(10)
+    expect(store.view).toEqual({ density: 'normal', layout: 'auto', filterMode: 'or', filtersOpen: false })
     expect(store.columns.find((col) => col.field === 'icon')?.visible).not.toBe(false)
-    expect(wrapper.findAll('[aria-label="Editar"]')).toHaveLength(1)
-    expect(wrapper.text()).not.toContain('seleccionados')
+    expect(wrapper!.findAll('[aria-label="Editar"]')).toHaveLength(1)
   })
 
   it('resalta coincidencias solo tras renderizar el resultado del fetch', async () => {
-    class FakeHighlight extends Set {}
-    const highlights = new Map()
-    vi.stubGlobal('Highlight', FakeHighlight)
-    vi.stubGlobal('CSS', { highlights })
-    try {
-      schemaMock.find.mockReturnValue(iconSchema)
-      wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
-      await flushPromises()
+    await mountList(iconSchema)
+    expect(wrapper!.find('mark').exists()).toBe(false)
 
-      store.filters = { name: 'ho' }
-      store.items = [...items]
-      await flushPromises()
-      await flushPromises()
-
-      const highlight = highlights.get(HIGHLIGHT_NAME)
-      expect(highlight).toBeInstanceOf(FakeHighlight)
-      expect((highlight as Set<unknown>).size).toBeGreaterThan(0)
-    } finally {
-      vi.unstubAllGlobals()
-    }
+    store.filters = { name: 'ho' }
+    store.items = [...items]
+    await flushPromises()
+    expect(wrapper!.find('mark').text()).toBe('ho')
   })
 
-  it('no resalta mientras el filtro no se haya commiteado al store', async () => {
-    class FakeHighlight extends Set {}
-    const highlights = new Map()
-    vi.stubGlobal('Highlight', FakeHighlight)
-    vi.stubGlobal('CSS', { highlights })
-    try {
-      schemaMock.find.mockReturnValue(iconSchema)
-      wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
-      await flushPromises()
-
-      await wrapper.find('input[name="filter_name"]').setValue('ho')
-      await new Promise((resolve) => setTimeout(resolve, 20))
-      await flushPromises()
-
-      expect(highlights.has(HIGHLIGHT_NAME)).toBe(false)
-    } finally {
-      vi.unstubAllGlobals()
-    }
+  it('no resalta mientras el filtro no se haya aplicado al store', async () => {
+    await mountList(iconSchema)
+    await (await filterInput('name')).setValue('ho')
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    await flushPromises()
+    expect(wrapper!.find('mark').exists()).toBe(false)
   })
 
-  it('pinta la flecha de orden junto al nombre según el estado del store', async () => {
-    schemaMock.find.mockReturnValue({
-      ...iconSchema,
-      orderInput: 'IconFilter_order',
-      orderFields: ['name'],
-    })
+  it('pinta el orden en la cabecera según el estado del store', async () => {
     store.order = [{ name: 'ASC' }]
-    wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
+    await mountList({ ...iconSchema, orderInput: 'IconFilter_order', orderFields: ['name'] })
+
+    const header = () => wrapper!.find('[data-grid-col="name"]')
+    expect(header().attributes('aria-sort')).toBe('ascending')
+
+    await wrapper!.find('[aria-label="Ordenar por Nombre"]').trigger('click')
     await flushPromises()
-
-    const sortName = () => wrapper!.find('[aria-label="Ordenar por Nombre"]')
-    expect(sortName().attributes('data-sort')).toBe('asc')
-
-    await sortName().trigger('click')
-    await flushPromises()
-
     expect(store.order).toEqual([{ name: 'DESC' }])
-    expect(sortName().attributes('data-sort')).toBe('desc')
+    expect(header().attributes('aria-sort')).toBe('descending')
     expect(store.fetchItems).toHaveBeenCalledTimes(2)
   })
 
   it('no permite ordenar columnas fuera del input de orden del backend', async () => {
-    schemaMock.find.mockReturnValue({
-      ...iconSchema,
-      orderInput: 'IconFilter_order',
-      orderFields: ['name'],
-    })
-    wrapper = mount(List, { props: { entity: 'Icon' }, ...pluginMount() })
-    await flushPromises()
+    await mountList({ ...iconSchema, orderInput: 'IconFilter_order', orderFields: ['name'] })
+    expect(wrapper!.find('[aria-label="Ordenar por Nombre"]').exists()).toBe(true)
+    expect(wrapper!.find('[aria-label="Ordenar por Icono"]').exists()).toBe(false)
+  })
 
-    expect(wrapper.find('[aria-label="Ordenar por Nombre"]').exists()).toBe(true)
-    expect(wrapper.find('[aria-label="Ordenar por Icono"]').exists()).toBe(false)
+  it('una columna con sortable/filterable en false no ordena ni filtra', async () => {
+    store.init = vi.fn<() => Promise<void>>(async () => {
+      store.columns = columns.map((col) => ({ ...col, sortable: false, filterable: col.field === 'name' ? false : col.filterable }))
+    }) as never
+    await mountList({ ...iconSchema, orderInput: 'IconFilter_order', orderFields: ['name'] })
+    expect(wrapper!.find('[aria-label="Ordenar por Nombre"]').exists()).toBe(false)
+    expect(wrapper!.find('[aria-label="Filtrar Nombre"]').exists()).toBe(false)
   })
 })

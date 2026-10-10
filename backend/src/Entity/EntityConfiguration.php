@@ -98,6 +98,11 @@ use Symfony\Component\Serializer\Attribute\Groups; // Carga automáticamente la 
                     "collectionFieldConfig" => [
                         "type" => "[updateCollectionFieldConfigInput]",
                     ],
+                    "listOptions" => [
+                        "type" => "Iterable",
+                        "description" =>
+                            "Opciones del listado (ver EntityConfiguration::LIST_OPTIONS)",
+                    ],
                 ],
             ),
         ],
@@ -143,6 +148,31 @@ class EntityConfiguration
 
     #[ORM\ManyToOne]
     private ?Icon $icon = null;
+
+    /**
+     * Opciones del listado de la entidad (no de una columna). Claves admitidas
+     * y su tipo; lo demás se descarta al guardar. Null o ausente: el valor por
+     * defecto del frontend.
+     *
+     * - `pageSize`: filas por página al abrir o restablecer el listado.
+     * - `pageSizes`: opciones del selector de filas por página.
+     * - `density`: `compact` | `normal` | `comfortable` (alto de fila).
+     * - `filterMode`: `or` (cualquier filtro) | `and` (todos).
+     * - `selectable`: ofrecer el modo selección.
+     * - `inlineEdit`: permitir la edición en línea.
+     */
+    public const LIST_OPTIONS = [
+        "pageSize" => "int",
+        "pageSizes" => "int[]",
+        "density" => ["compact", "normal", "comfortable"],
+        "filterMode" => ["or", "and"],
+        "selectable" => "bool",
+        "inlineEdit" => "bool",
+    ];
+
+    #[ORM\Column(type: "json", nullable: true)]
+    #[Groups(["read:dto"])]
+    private ?array $listOptions = null;
 
     public function __construct(string $entityClass)
     {
@@ -263,6 +293,37 @@ class EntityConfiguration
             }
             $field->setPosition($position++);
         }
+    }
+
+    public function getListOptions(): ?array
+    {
+        return $this->listOptions;
+    }
+
+    /** Guarda solo las claves de `LIST_OPTIONS` con un valor válido. */
+    public function setListOptions(?array $options): static
+    {
+        $limpias = [];
+        foreach (self::LIST_OPTIONS as $clave => $tipo) {
+            $valor = $options[$clave] ?? null;
+            $valido = match (true) {
+                $valor === null => false,
+                \is_array($tipo) => \in_array($valor, $tipo, true),
+                $tipo === "int" => \is_int($valor) && $valor > 0 && $valor <= 500,
+                $tipo === "bool" => \is_bool($valor),
+                $tipo === "int[]" => \is_array($valor)
+                    && $valor !== []
+                    && array_is_list($valor)
+                    && array_filter($valor, static fn ($n) => !\is_int($n) || $n <= 0 || $n > 500) === [],
+                default => false,
+            };
+            if ($valido) {
+                $limpias[$clave] = $valor;
+            }
+        }
+        $this->listOptions = $limpias === [] ? null : $limpias;
+
+        return $this;
     }
 
     public function getIcon(): ?Icon

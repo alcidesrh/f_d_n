@@ -22,8 +22,13 @@ use Doctrine\Persistence\ManagerRegistry;
  * - texto (y enums): `campo`, contiene, sin distinguir mayúsculas;
  * - número: `campo`, igual; booleano: `campo`, igual;
  * - fecha: `campo_after` / `campo_before` (`yyyy-mm-dd`, ambos inclusive);
- * - relación: `campo`, IRI o id del registro (a uno: igual; a muchos: lo contiene);
+ * - relación: `campo`, IRI o id del registro (a uno: igual; a muchos: lo contiene),
+ *   o `campo_list` con varios (cualquiera de ellos);
  * - `id`: IRI o número.
+ *
+ * Los filtros de varias columnas se cumplen todos (AND), salvo con
+ * `_combinar: "or"`: basta con uno. El rango de una fecha cuenta como un solo
+ * filtro (desde y hasta se cumplen juntos).
  *
  * Los campos con `ApiProperty(readable: false)` (contraseñas, tokens…) no se
  * filtran: sería un oráculo para adivinarlos. Si la operación ya declara un
@@ -39,6 +44,9 @@ final class ColumnaFilter implements FilterInterface
         Types::DATETIME_MUTABLE, Types::DATETIME_IMMUTABLE,
         Types::DATETIMETZ_MUTABLE, Types::DATETIMETZ_IMMUTABLE,
     ];
+
+    /** Argumento que elige cómo se combinan los filtros de distintas columnas. */
+    public const COMBINAR = '_combinar';
 
     /** @var array<class-string, array<string, array{tipo: string, campo: string}>> */
     private array $cache = [];
@@ -63,6 +71,17 @@ final class ColumnaFilter implements FilterInterface
                 },
                 'required' => false,
             ];
+            if ($tipo === 'a_uno' || $tipo === 'a_muchos') {
+                $description["{$nombre}[]"] = ['property' => $campo, 'type' => 'string', 'required' => false];
+            }
+        }
+        if ($description !== []) {
+            $description[self::COMBINAR] = [
+                'property' => null,
+                'type' => 'string',
+                'required' => false,
+                'description' => '"or": basta con que se cumpla un filtro; si no, todos.',
+            ];
         }
 
         return $description;
@@ -74,48 +93,110 @@ final class ColumnaFilter implements FilterInterface
         $alias = $queryBuilder->getRootAliases()[0];
         $parametros = $operation?->getParameters();
 
+        /** @var array<string, list<string>> $condiciones campo → condiciones (todas se cumplen) */
+        $condiciones = [];
         foreach ($this->argumentos($resourceClass) as $nombre => ['tipo' => $tipo, 'campo' => $campo]) {
             $valor = $filtros[$nombre] ?? null;
-            if ($valor === null || $valor === '' || \is_array($valor) || $parametros?->has($nombre)) {
+            if ($valor === null || $valor === '' || $valor === [] || $parametros?->has($nombre)) {
+                continue;
+            }
+            if (\is_array($valor) && $tipo !== 'a_uno' && $tipo !== 'a_muchos') {
                 continue;
             }
 
-            $p = $queryNameGenerator->generateParameterName($campo);
-            $columna = "$alias.$campo";
+            $condicion = $this->condicion($queryBuilder, $queryNameGenerator, $tipo, "$alias.$campo", $campo, $valor);
+            if ($condicion !== null) {
+                $condiciones[$campo][] = $condicion;
+            }
+        }
 
-            match ($tipo) {
-                'texto' => $queryBuilder
-                    ->andWhere("LOWER($columna) LIKE :$p")
-                    ->setParameter($p, '%'.addcslashes(mb_strtolower((string) $valor), '%_\\').'%'),
-                'entero', 'decimal' => $queryBuilder->andWhere("$columna = :$p")->setParameter($p, $valor),
-                'booleano' => $queryBuilder->andWhere("$columna = :$p")->setParameter($p, filter_var($valor, \FILTER_VALIDATE_BOOL)),
-                'desde' => $this->fecha($queryBuilder, "$columna >= :$p", $p, (string) $valor),
-                'hasta' => $this->fecha($queryBuilder, "$columna < :$p", $p, (string) $valor, '+1 day'),
-                'id' => $this->id($queryBuilder, "$columna = :$p", $p, $valor),
-                'a_uno' => $this->id($queryBuilder, "IDENTITY($columna) = :$p", $p, $valor),
-                'a_muchos' => $this->id($queryBuilder, ":$p MEMBER OF $columna", $p, $valor),
-            };
+        $grupos = array_map(
+            static fn (array $partes) => \count($partes) === 1 ? $partes[0] : '('.implode(' AND ', $partes).')',
+            array_values($condiciones),
+        );
+        if ($grupos === []) {
+            return;
+        }
+        if (\count($grupos) > 1 && ($filtros[self::COMBINAR] ?? null) === 'or') {
+            $queryBuilder->andWhere($queryBuilder->expr()->orX(...$grupos));
+
+            return;
+        }
+        foreach ($grupos as $grupo) {
+            $queryBuilder->andWhere($grupo);
         }
     }
 
-    private function fecha(QueryBuilder $queryBuilder, string $condicion, string $p, string $valor, string $mas = '+0 day'): void
+    /** DQL de un filtro (con sus parámetros ya puestos); null si el valor no sirve. */
+    private function condicion(QueryBuilder $queryBuilder, QueryNameGeneratorInterface $queryNameGenerator, string $tipo, string $columna, string $campo, mixed $valor): ?string
+    {
+        if (\is_array($valor)) {
+            $partes = [];
+            foreach (array_values(array_unique(array_map('strval', $valor))) as $uno) {
+                $parte = $this->condicion($queryBuilder, $queryNameGenerator, $tipo, $columna, $campo, $uno);
+                if ($parte !== null) {
+                    $partes[] = $parte;
+                }
+            }
+
+            return match (\count($partes)) {
+                0 => null,
+                1 => $partes[0],
+                default => '('.implode(' OR ', $partes).')',
+            };
+        }
+
+        $p = $queryNameGenerator->generateParameterName($campo);
+
+        switch ($tipo) {
+            case 'texto':
+                $queryBuilder->setParameter($p, '%'.addcslashes(mb_strtolower((string) $valor), '%_\\').'%');
+
+                return "LOWER($columna) LIKE :$p";
+            case 'entero':
+            case 'decimal':
+                $queryBuilder->setParameter($p, $valor);
+
+                return "$columna = :$p";
+            case 'booleano':
+                $queryBuilder->setParameter($p, filter_var($valor, \FILTER_VALIDATE_BOOL));
+
+                return "$columna = :$p";
+            case 'desde':
+                return $this->fecha($queryBuilder, "$columna >= :$p", $p, (string) $valor);
+            case 'hasta':
+                return $this->fecha($queryBuilder, "$columna < :$p", $p, (string) $valor, '+1 day');
+            case 'id':
+                return $this->id($queryBuilder, "$columna = :$p", $p, $valor);
+            case 'a_uno':
+                return $this->id($queryBuilder, "IDENTITY($columna) = :$p", $p, $valor);
+            case 'a_muchos':
+                return $this->id($queryBuilder, ":$p MEMBER OF $columna", $p, $valor);
+        }
+
+        return null;
+    }
+
+    private function fecha(QueryBuilder $queryBuilder, string $condicion, string $p, string $valor, string $mas = '+0 day'): ?string
     {
         $fecha = \DateTimeImmutable::createFromFormat('!Y-m-d', substr($valor, 0, 10));
         if ($fecha === false) {
-            return;
+            return null;
         }
-        $queryBuilder->andWhere($condicion)->setParameter($p, $fecha->modify($mas));
+        $queryBuilder->setParameter($p, $fecha->modify($mas));
+
+        return $condicion;
     }
 
     /** IRI (`/api/buses/12`) o número; cualquier otra cosa no encuentra nada. */
-    private function id(QueryBuilder $queryBuilder, string $condicion, string $p, mixed $valor): void
+    private function id(QueryBuilder $queryBuilder, string $condicion, string $p, mixed $valor): string
     {
         if (preg_match('~(?:^|/)(-?\d+)$~', (string) $valor, $m) !== 1) {
-            $queryBuilder->andWhere('1 = 0');
-
-            return;
+            return '1 = 0';
         }
-        $queryBuilder->andWhere($condicion)->setParameter($p, (int) $m[1]);
+        $queryBuilder->setParameter($p, (int) $m[1]);
+
+        return $condicion;
     }
 
     /** @return array<string, array{tipo: string, campo: string}> nombre del argumento → tipo y campo */

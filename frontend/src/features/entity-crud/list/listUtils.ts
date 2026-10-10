@@ -9,11 +9,14 @@ import { presenterFor } from "@/core/entities/columnPresenters";
 import type { EntitySchema, OrderCondition } from "@/core/graphql/types";
 
 /** Prioridad de propiedades para etiquetar un objeto relación. */
-const LABEL_PROPS = ["name", "label", "id"] as const;
+const LABEL_PROPS = ["label", "nombre", "name", "id"] as const;
+
+/** Argumento de la colección que combina los filtros con OR (`ColumnaFilter::COMBINAR`). */
+export const COMBINE_ARG = "_combinar";
 
 export type FilterFieldKind = "date" | "relation" | "number" | "boolean" | "text";
 
-/** Etiqueta de una celda: primitivo tal cual, objeto por `name`/`label`/`id`. */
+/** Etiqueta de una celda: primitivo tal cual, objeto por `label`/`nombre`/`name`/`id`. */
 export function cellLabel(value: unknown): string {
   if (value === null || value === undefined) return "";
   if (Array.isArray(value)) {
@@ -91,9 +94,17 @@ export function fieldKind(entity: EntitySchema, field: string): FilterFieldKind 
   return "text";
 }
 
+/** Relación a muchos (OneToMany/ManyToMany): se filtra por varios valores a la vez. */
+export function isToMany(entity: EntitySchema, field: string): boolean {
+  const entry = entity.fields.find((f) => f.name === field);
+  return Boolean(entry?.isRelation && entry.isList);
+}
+
 export interface FilterArgMatch {
   /** Arg de colección que recibe el valor único (null si no hay). */
   single: string | null;
+  /** Arg `{campo}_list` con varios valores (relaciones a muchos), null si no hay. */
+  list?: string | null;
   /** Arg `{campo}_after` para rangos de fecha (null si no hay). */
   after: string | null;
   /** Arg `{campo}_before` para rangos de fecha (null si no hay). */
@@ -101,17 +112,19 @@ export interface FilterArgMatch {
 }
 
 export function noServerFilter(match: FilterArgMatch): boolean {
-  return match.single === null && match.after === null && match.before === null;
+  return match.single === null && !match.list && match.after === null && match.before === null;
 }
 
 /**
  * Resuelve los argumentos de filtro de la colección que matchean la columna:
  * arg exacto con el nombre del campo, `{campo}_after`/`{campo}_before` para
- * fechas y `{campo}_contains` para strings. Sin match → la columna no se filtra.
+ * fechas, `{campo}_list` para relaciones a muchos (varios valores) y
+ * `{campo}_contains` para strings. Sin match → la columna no se filtra.
  */
 export function resolveFilterArgs(entity: EntitySchema, field: string): FilterArgMatch {
   const kind = fieldKind(entity, field);
   const byName = (name: string) => entity.filterArgs.find((arg) => arg.name === name);
+  if (isToMany(entity, field) && byName(`${field}_list`)) return { single: null, list: `${field}_list`, after: null, before: null };
   if (byName(field)) return { single: field, after: null, before: null };
   if (kind === "date") {
     const after = byName(`${field}_after`) ? `${field}_after` : null;
@@ -129,8 +142,9 @@ export interface DateRangeFilter {
 }
 
 function toIso(value: unknown): string | undefined {
+  // El día que eligió el usuario en su zona horaria (no el de UTC).
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
-    return value.toISOString().slice(0, 10);
+    return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}`;
   }
   if (typeof value === "string" && value.length >= 10) return value.slice(0, 10);
   return undefined;
@@ -172,21 +186,31 @@ function toServerScalar(value: unknown, kind: FilterFieldKind): unknown {
   return value;
 }
 
-/** Filtros de la UI (campo → valor) → argumentos de la colección GraphQL. */
-export function toServerFilters(entity: EntitySchema, filters: Record<string, unknown>): Record<string, unknown> {
+/**
+ * Filtros de la UI (campo → valor) → argumentos de la colección GraphQL. Con
+ * `mode` `or` y más de un filtro, agrega `_combinar: "or"` (si la colección lo
+ * acepta): basta con que se cumpla uno.
+ */
+export function toServerFilters(entity: EntitySchema, filters: Record<string, unknown>, mode: "or" | "and" = "and"): Record<string, unknown> {
   const server: Record<string, unknown> = {};
+  let active = 0;
   for (const [field, value] of Object.entries(filters)) {
     if (isEmptyFilterValue(value)) continue;
     const kind = fieldKind(entity, field);
     const args = resolveFilterArgs(entity, field);
+    const before = Object.keys(server).length;
     if (kind === "date") {
-      const { after, before } = rangeToIso(value);
+      const { after, before: until } = rangeToIso(value);
       if (args.after && after) server[args.after] = after;
-      if (args.before && before) server[args.before] = before;
+      if (args.before && until) server[args.before] = until;
+    } else if (args.list) {
+      server[args.list] = Array.isArray(value) ? value : [value];
     } else if (args.single) {
-      server[args.single] = toServerScalar(value, kind);
+      server[args.single] = toServerScalar(Array.isArray(value) ? value[0] : value, kind);
     }
+    if (Object.keys(server).length > before) active += 1;
   }
+  if (mode === "or" && active > 1 && entity.filterArgs.some((arg) => arg.name === COMBINE_ARG)) server[COMBINE_ARG] = "or";
   return server;
 }
 
@@ -198,7 +222,10 @@ export function fromServerFilters(entity: EntitySchema, server: Record<string, u
     if (fieldKind(entity, field) === "date") {
       const after = args.after ? server[args.after] : undefined;
       const before = args.before ? server[args.before] : undefined;
-      if (typeof after === "string" && typeof before === "string") filters[field] = [new Date(after), new Date(before)];
+      if (typeof after === "string" || typeof before === "string")
+        filters[field] = [typeof after === "string" ? new Date(`${after}T00:00:00`) : null, typeof before === "string" ? new Date(`${before}T00:00:00`) : null];
+    } else if (args.list && Array.isArray(server[args.list])) {
+      filters[field] = server[args.list];
     } else if (args.single && server[args.single] !== undefined) {
       filters[field] = server[args.single];
     }
@@ -236,4 +263,36 @@ export function nextOrder(order: OrderCondition[], field: string): OrderConditio
   if (current === null) return [{ [field]: "ASC" }];
   if (current === "asc") return [{ [field]: "DESC" }];
   return [];
+}
+
+/**
+ * ¿El valor editado en línea es el mismo que tenía la celda? Relaciones por
+ * su id, fechas por el día, lo demás por igualdad.
+ */
+export function sameCellValue(before: unknown, after: unknown): boolean {
+  const norm = (value: unknown): unknown => {
+    if (value === undefined || value === "") return null;
+    if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value.toISOString().slice(0, 10);
+    if (Array.isArray(value)) return value.map(norm).join("|");
+    if (value && typeof value === "object") return idDisplay((value as { id?: unknown; value?: unknown }).id ?? (value as { value?: unknown }).value);
+    if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}T/.test(value)) return value.slice(0, 10);
+    return value;
+  };
+  return norm(before) === norm(after);
+}
+
+/**
+ * Título de una columna: el `label` configurado; si es el nombre de la
+ * propiedad (lo que pone la sincronización), legible: `fechaSalida` →
+ * `Fecha salida`.
+ */
+export function columnTitle(column: { field: string; label?: string | null }): string {
+  const label = column.label?.trim();
+  if (label && label !== column.field) return label;
+  const words = column.field
+    .replace(/^_+/, "")
+    .replace(/([a-z\d])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .toLowerCase();
+  return words.charAt(0).toUpperCase() + words.slice(1);
 }

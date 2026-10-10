@@ -1,64 +1,28 @@
 <template>
-  <div ref="cellRef" class="max-h-[50px] overflow-y-auto">{{ cellDisplay(data, column, entity) }}</div>
+  <GridText :text="text" :needle="filterValue" />
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, useId, watch } from "vue";
-import { cellDisplay, isEmptyFilterValue } from "./listUtils";
-import { registerCellHighlight, unregisterCellHighlight } from "./cellHighlight";
-import type { CollectionFieldConfig } from "@/core/entities/types";
+/**
+ * Celda del listado: el texto de `cellDisplay` (relaciones por `label` →
+ * `nombre` → `name` → `id`, fechas formateadas, presentadores) en una línea,
+ * con las coincidencias del filtro aplicado resaltadas.
+ */
+import { computed } from 'vue'
+import GridText from '@/shared/data-grid/GridText.vue'
+import type { CollectionFieldConfig } from '@/core/entities/types'
+import { cellDisplay } from './listUtils'
 
-defineOptions({ name: "ListCell" });
+defineOptions({ name: 'ListCell' })
 
 const props = defineProps<{
-  column: CollectionFieldConfig;
+  column: CollectionFieldConfig
   /** Entidad del listado (para el presentador de la columna). */
-  entity?: string;
-  data: unknown;
-  /** Valor del filtro local de la columna (solo texto/número); resalta los matches. */
-  filterValue?: unknown;
-}>();
+  entity?: string
+  data: unknown
+  /** Valor del filtro aplicado de la columna (solo texto/número); resalta los matches. */
+  filterValue?: unknown
+}>()
 
-const cellRef = ref<HTMLElement | null>(null);
-const uid = useId();
-
-/** Clave única por instancia de celda en el registro global de highlights. */
-const key = computed(() => `cell-${uid}`);
-
-/** Offsets [inicio, fin) de las coincidencias (case-insensitive) en el texto mostrado. */
-const offsets = computed<Array<[number, number]>>(() => {
-  const needle = props.filterValue;
-  const text = cellDisplay(props.data, props.column, props.entity);
-  if (!text || isEmptyFilterValue(needle)) return [];
-  const target = String(needle).toLowerCase();
-  if (!target) return [];
-  const matches: Array<[number, number]> = [];
-  const lower = text.toLowerCase();
-  let index = lower.indexOf(target);
-  while (index !== -1) {
-    matches.push([index, index + target.length]);
-    index = lower.indexOf(target, index + target.length);
-  }
-  return matches;
-});
-
-function syncHighlight() {
-  const node = cellRef.value?.firstChild;
-  const textNode = node && node.nodeType === 3 ? (node as Text) : null;
-  if (!textNode) {
-    unregisterCellHighlight(key.value);
-    return;
-  }
-  const ranges = offsets.value.map(([start, end]) => {
-    const range = document.createRange();
-    range.setStart(textNode, start);
-    range.setEnd(textNode, end);
-    return range;
-  });
-  registerCellHighlight(key.value, ranges);
-}
-
-watch(offsets, syncHighlight, { flush: "post" });
-onMounted(syncHighlight);
-onBeforeUnmount(() => unregisterCellHighlight(key.value));
+const text = computed(() => cellDisplay(props.data, props.column, props.entity))
 </script>

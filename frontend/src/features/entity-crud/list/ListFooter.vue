@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-wrap items-center justify-between gap-3 border-t p-2">
+  <div class="list-footer flex flex-wrap items-center justify-between gap-3 px-1 pt-2">
     <span v-if="!pagination" class="text-xs text-surface-500">{{ count }} registros</span>
     <span v-else />
     <Paginator
@@ -7,7 +7,7 @@
       :rows="pagination.itemsPerPage"
       :first="(pagination.currentPage - 1) * pagination.itemsPerPage"
       :total-records="pagination.totalCount"
-      :rows-per-page-options="[10, 25, 50]"
+      :rows-per-page-options="pageSizes"
       :template="PAGINATOR_TEMPLATE"
       @page="(event) => emit('page', { page: event.page + 1, rows: event.rows })"
     >
@@ -34,7 +34,10 @@ const PAGINATOR_TEMPLATE = {
   default: 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown',
 }
 
-const props = defineProps<{ pagination?: PaginationState; count: number }>()
+const props = withDefaults(defineProps<{ pagination?: PaginationState; count: number; pageSizes?: number[] }>(), {
+  pagination: undefined,
+  pageSizes: () => [10, 25, 50, 100],
+})
 
 const emit = defineEmits<{ page: [value: { page: number; rows: number }] }>()
 

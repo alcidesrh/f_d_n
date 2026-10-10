@@ -155,6 +155,8 @@ function makeStore(): EntityStore<{ id: number; numero: string }> {
     order: [],
     item: null,
     fullList: [],
+    listOptions: {},
+    view: { density: 'normal', layout: 'auto', filterMode: 'or', filtersOpen: false },
     metadata: boletoSchema,
     slug: 'boleto-asiento',
     init: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),

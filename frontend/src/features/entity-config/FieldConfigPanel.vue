@@ -64,20 +64,29 @@
     </div>
 
     <template v-if="variant === 'collection'">
-      <div class="cell cell--switch">
-        <span class="cell__label">sortable</span>
-        <ToggleSwitch
-          :model-value="Boolean((row as CollectionFieldRow).sortable)"
-          @update:model-value="(row as CollectionFieldRow).sortable = $event as boolean"
+      <label class="cell w-24">
+        <span class="cell__label" title="Auto: si la API permite ordenar por este campo">sortable</span>
+        <Select v-model="(row as CollectionFieldRow).sortable" :options="TRISTATE" option-label="label" option-value="value" size="small" />
+      </label>
+      <label class="cell w-24">
+        <span class="cell__label" title="Auto: si la API permite filtrar por este campo">filterable</span>
+        <Select v-model="(row as CollectionFieldRow).filterable" :options="TRISTATE" option-label="label" option-value="value" size="small" />
+      </label>
+      <label class="cell w-28">
+        <span class="cell__label">
+          width
+          <span v-if="widthInvalid" class="cell__error">· inválido</span>
+        </span>
+        <InputText
+          :model-value="(row as CollectionFieldRow).width ?? ''"
+          size="small"
+          class="font-mono"
+          placeholder="auto"
+          :invalid="widthInvalid"
+          title="Preset (xs, sm, md, lg, xl), longitud (12rem, 160px) o fracción (2fr). Vacío: flexible."
+          @update:model-value="(row as CollectionFieldRow).width = ($event as string) || null"
         />
-      </div>
-      <div class="cell cell--switch">
-        <span class="cell__label">filterable</span>
-        <ToggleSwitch
-          :model-value="Boolean((row as CollectionFieldRow).filterable)"
-          @update:model-value="(row as CollectionFieldRow).filterable = $event as boolean"
-        />
-      </div>
+      </label>
     </template>
 
     <label class="cell flex-1 min-w-40">
@@ -100,6 +109,7 @@
 <script setup lang="ts">
 import { useEntityConfigStore } from './store'
 import type { CollectionFieldRow, FormFieldRow } from './store'
+import { isValidWidth } from '@/shared/data-grid/layout'
 
 defineOptions({ name: 'FieldConfigPanel' })
 
@@ -114,12 +124,23 @@ const props = defineProps<{
 /** Valores que produce `CollectionFieldConfig::setData()`; el campo admite otros. */
 const KIND_OPTIONS = ['scalar', 'date', 'list']
 
+/** `null`: lo decide la API (si la colección acepta ordenar/filtrar por el campo). */
+const TRISTATE = [
+  { label: 'Auto', value: null },
+  { label: 'Sí', value: true },
+  { label: 'No', value: false },
+]
+
 const store = useEntityConfigStore()
 
 const row = computed<CollectionFieldRow | FormFieldRow | null>(() => {
   const list = props.variant === 'collection' ? store.collectionFields : store.formFields
   return list.find((item) => item.key === props.fieldKey) ?? null
 })
+
+const widthInvalid = computed(() => props.variant === 'collection' && !isValidWidth((row.value as CollectionFieldRow | null)?.width))
+
+watch(widthInvalid, (invalid) => store.setAttrsError(`${props.fieldKey}#width`, invalid))
 
 const attrsText = ref('')
 const attrsInvalid = ref(false)
@@ -168,7 +189,10 @@ watch(
   { immediate: true },
 )
 
-onBeforeUnmount(() => store.setAttrsError(props.fieldKey, false))
+onBeforeUnmount(() => {
+  store.setAttrsError(props.fieldKey, false)
+  store.setAttrsError(`${props.fieldKey}#width`, false)
+})
 </script>
 
 <style scoped>

@@ -18,6 +18,7 @@ import {
   type FormFieldConfigDto,
 } from './api'
 import { entityStores } from '@/core/entities/registry'
+import type { ListOptions } from '@/core/entities/types'
 
 /** Fila arrastrable: el DTO más una `key` estable (el IRI) para el drag & drop. */
 export type CollectionFieldRow = CollectionFieldConfigDto & { key: string }
@@ -28,6 +29,8 @@ export interface EntityConfigState {
   selected: string
   collectionFields: CollectionFieldRow[]
   formFields: FormFieldRow[]
+  /** Opciones del listado de la entidad (filas por página, densidad…). */
+  listOptions: ListOptions
   /** Snapshot serializado de la última carga/guardado: base de `dirty`. */
   baseline: string
   /** Keys (IRIs) de paneles con `attrs` que no es JSON válido: bloquean el guardado. */
@@ -83,6 +86,7 @@ function collectionPayload(row: CollectionFieldRow, index: number): CollectionFi
     attrs: row.attrs ?? null,
     sortable: row.sortable ?? null,
     filterable: row.filterable ?? null,
+    width: row.width?.trim() || null,
   }
 }
 
@@ -99,10 +103,19 @@ function formPayload(row: FormFieldRow, index: number): FormFieldConfigDto {
   }
 }
 
-function snapshot(collection: CollectionFieldRow[], form: FormFieldRow[]): string {
+/** Solo las opciones con valor (lo vacío toma el valor por defecto del listado). */
+function listOptionsPayload(options: ListOptions): ListOptions | null {
+  const clean = Object.fromEntries(
+    Object.entries(options).filter(([, value]) => value !== null && value !== undefined && !(Array.isArray(value) && !value.length)),
+  ) as ListOptions
+  return Object.keys(clean).length ? clean : null
+}
+
+function snapshot(collection: CollectionFieldRow[], form: FormFieldRow[], options: ListOptions): string {
   return JSON.stringify({
     collection: collection.map(collectionPayload),
     form: form.map(formPayload),
+    options: listOptionsPayload(options),
   })
 }
 
@@ -112,6 +125,7 @@ export const useEntityConfigStore = defineStore('entityConfig', {
     selected: '',
     collectionFields: [],
     formFields: [],
+    listOptions: {},
     baseline: '',
     attrsErrors: [],
     status: 'idle',
@@ -122,7 +136,7 @@ export const useEntityConfigStore = defineStore('entityConfig', {
   getters: {
     /** Hay cambios sin guardar (incluye el reordenamiento por drag & drop). */
     dirty: (st): boolean =>
-      st.baseline !== '' && st.baseline !== snapshot(st.collectionFields, st.formFields),
+      st.baseline !== '' && st.baseline !== snapshot(st.collectionFields, st.formFields, st.listOptions),
     loading: (st): boolean => st.status === 'loading',
     canSave(): boolean {
       return this.dirty && this.attrsErrors.length === 0 && !this.saving
@@ -183,7 +197,8 @@ export const useEntityConfigStore = defineStore('entityConfig', {
     applyConfig(config: EntityConfigurationDetailDto | null): void {
       this.collectionFields = toRows(config?.collectionFieldConfig)
       this.formFields = toRows(config?.formFields)
-      this.baseline = config ? snapshot(this.collectionFields, this.formFields) : ''
+      this.listOptions = { ...config?.listOptions }
+      this.baseline = config ? snapshot(this.collectionFields, this.formFields, this.listOptions) : ''
       this.attrsErrors = []
     },
 
@@ -221,6 +236,7 @@ export const useEntityConfigStore = defineStore('entityConfig', {
           entityClass: this.selected,
           collectionFieldConfig: this.collectionFields.map(collectionPayload),
           formFields: this.formFields.map(formPayload),
+          listOptions: listOptionsPayload(this.listOptions),
         })
         this.applyConfig(saved)
         this.error = ''

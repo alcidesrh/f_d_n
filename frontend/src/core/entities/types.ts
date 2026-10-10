@@ -22,7 +22,37 @@ export interface CollectionFieldConfig {
   showFilter?: boolean | null;
   attrs?: Record<string, unknown> | null;
   kind?: string;
+  /** Ancho: preset (`xs`…`xl`), longitud (`12rem`) o fracción (`2fr`). Null: flexible. */
+  width?: string | null;
+  /** El `width` de la configuración (el usuario puede cambiar `width` arrastrando el borde). */
+  configWidth?: string | null;
   [key: string]: unknown;
+}
+
+export type ListDensity = "compact" | "normal" | "comfortable";
+export type ListLayout = "auto" | "table" | "cards";
+/** `or`: basta con un filtro; `and`: se cumplen todos. */
+export type FilterMode = "or" | "and";
+
+/** Opciones del listado de la entidad (`EntityConfiguration.listOptions`); lo ausente toma el valor por defecto. */
+export interface ListOptions {
+  pageSize?: number;
+  pageSizes?: number[];
+  density?: ListDensity;
+  filterMode?: FilterMode;
+  /** Ofrecer el modo selección. */
+  selectable?: boolean;
+  /** Permitir la edición en línea. */
+  inlineEdit?: boolean;
+}
+
+/** Cómo dejó el usuario el listado (persistido con el store). */
+export interface ListViewState {
+  density: ListDensity;
+  layout: ListLayout;
+  filterMode: FilterMode;
+  /** Fila de filtros abierta. */
+  filtersOpen: boolean;
 }
 
 export interface PaginationState {
@@ -49,6 +79,9 @@ export interface EntityStoreState<T = unknown> {
   item: T | null;
   /** Todos los registros como options (`collectionAgnostic`). */
   fullList: AgnosticOption[];
+  /** Opciones del listado configuradas para la entidad. */
+  listOptions: ListOptions;
+  view: ListViewState;
 }
 
 export interface EntityStore<T = unknown> extends EntityStoreState<T> {

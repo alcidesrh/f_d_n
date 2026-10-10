@@ -81,7 +81,3 @@
   margin-top: 3px;
 }
 
-/* ---- Resaltado de coincidencias de filtro (CSS Custom Highlight API) ---- */
-::highlight(list-filter-match) {
-  background-color: #fef08a;
-}

@@ -1,63 +1,56 @@
 /**
  * Filtros por columna del listado.
  *
- * - Cada columna filtrable tiene un input FormKit en su cabecera (`filterNodes`).
- *   Los nodos llevan siempre el valor vigente y solo se reconstruyen en puntos
- *   concretos (carga, ocultar/restaurar columna, reset): PrimeVue remonta la
- *   cabecera en cada fetch y reconstruir mientras se teclea robaba el foco.
- * - Texto y número esperan 500 ms sin teclear; el resto se aplica al instante.
- * - Siempre se filtra en la base de datos: los valores van a `store.filters`
- *   (refetch). Una columna sin argumento de filtro en la colección GraphQL
- *   (p. ej. un campo calculado) no ofrece filtro.
+ * - Siempre se filtra en la base de datos: los valores se traducen a los
+ *   argumentos de la colección (`toServerFilters`) y van a `store.filters`
+ *   (refetch, vuelta a la página 1). Una columna sin argumento de filtro (p.
+ *   ej. un campo calculado) no ofrece filtro.
+ * - Texto y número esperan 400 ms sin teclear; un rango de fechas, a que
+ *   esté completo; lo demás se aplica al instante.
+ * - Varias columnas filtradas se combinan según `store.view.filterMode`:
+ *   `or` (basta con una, por defecto) o `and` (todas).
+ * - Relaciones: a uno, un valor (select); a muchos, varios (multiselect,
+ *   cualquiera de ellos).
  * - El resaltado de coincidencias usa los filtros ya aplicados al store, no
- *   el tecleo en vivo, y se actualiza al renderizar el resultado del fetch.
+ *   el tecleo en vivo, y cambia cuando llega el resultado.
  */
-import { reactive, ref, useId, watch, type ComputedRef } from 'vue'
-import type { FormKitSchemaNode } from '@formkit/core'
+import { computed, reactive, ref, watch, type ComputedRef } from 'vue'
 import { getEntity } from '@/core/entities/registry'
-import type { CollectionFieldConfig, EntityStore } from '@/core/entities/types'
+import type { CollectionFieldConfig, EntityStore, FilterMode } from '@/core/entities/types'
 import {
   fieldKind,
   fromServerFilters,
   hasServerFilter,
   isEmptyFilterValue,
+  isToMany,
+  rangeToIso,
   resolveFilterArgs,
   toServerFilters,
   type FilterFieldKind,
 } from './listUtils'
 
-const DEBOUNCE_MS = 500
-const BOOLEAN_OPTIONS = [
+const DEBOUNCE_MS = 400
+
+export const BOOLEAN_OPTIONS = [
   { label: 'Sí', value: true },
   { label: 'No', value: false },
 ]
 
-/** Input FormKit por tipo de columna. */
-const FILTER_INPUTS: Record<FilterFieldKind, Record<string, unknown>> = {
-  text: { type: 'InputText', clearable: true },
-  number: { type: 'InputNumber', placeholder: 'Todos', showClear: true },
-  boolean: { type: 'Select', placeholder: 'Todos', showClear: true, options: BOOLEAN_OPTIONS },
-  relation: { type: 'Select', placeholder: 'Todos', showClear: true },
-  date: {
-    type: 'DatePicker',
-    placeholder: 'Rango',
-    selectionMode: 'range',
-    showIcon: true,
-    showClear: true,
-  },
+export interface FilterOption {
+  label: string
+  value: unknown
 }
 
-export function useListFilters(
-  store: ComputedRef<EntityStore | null>,
-  columns: ComputedRef<CollectionFieldConfig[]>,
-) {
+/** `dd/mm/yyyy` de un `yyyy-mm-dd`. */
+const dayLabel = (iso?: string) => (iso ? iso.split('-').reverse().join('/') : '…')
+
+/** Rango a medio elegir en el DatePicker (`[inicio, null]`): todavía no filtra. */
+const isPartialRange = (value: unknown) => Array.isArray(value) && value.length === 2 && value[0] && !value[1]
+
+export function useListFilters(store: ComputedRef<EntityStore | null>) {
   /** Valor de cada input (campo → valor), antes de traducirse a args del backend. */
-  const filters = reactive<Record<string, unknown>>({})
-  const filterNodes = ref(new Map<string, FormKitSchemaNode>())
-  const highlightFilters = ref<Record<string, unknown>>({})
-  /** Cambia la `key` de los nodos para remontar los inputs (reset). */
-  const generation = ref(0)
-  const uid = useId()
+  const values = reactive<Record<string, unknown>>({})
+  const highlights = ref<Record<string, unknown>>({})
   let timer: ReturnType<typeof setTimeout> | undefined
 
   const entity = () => store.value?.metadata ?? null
@@ -65,85 +58,119 @@ export function useListFilters(
     const metadata = entity()
     return metadata ? fieldKind(metadata, field) : 'text'
   }
-
-  function relationOptions(field: string) {
-    const target = entity()?.fields.find((f) => f.name === field)?.namedType
-    if (!target) return []
-    return getEntity(target).fullList.map((option) => ({
-      label: option.label,
-      value: option.value ?? option.id,
-    }))
-  }
-
-  function buildNode(column: CollectionFieldConfig): FormKitSchemaNode | null {
+  const isMulti = (field: string) => {
     const metadata = entity()
-    if (column.filterable === false || !metadata || !hasServerFilter(metadata, column.field)) return null
-    const { field } = column
+    return Boolean(metadata && isToMany(metadata, field))
+  }
+
+  function isFilterable(column: CollectionFieldConfig) {
+    const metadata = entity()
+    return column.filterable !== false && Boolean(metadata && hasServerFilter(metadata, column.field))
+  }
+
+  function relationTarget(field: string) {
+    return entity()?.fields.find((f) => f.name === field)?.namedType ?? null
+  }
+
+  function optionsFor(field: string): FilterOption[] {
     const kind = kindOf(field)
-    const name = `filter_${field}`
-    return {
-      key: `${name}_${uid}_${generation.value}`,
-      $cmp: 'FormKit',
-      props: {
-        ...FILTER_INPUTS[kind],
-        ...(kind === 'relation' ? { options: relationOptions(field) } : {}),
-        name,
-        value: filters[field],
-        size: 'small',
-        outerClass: 'mb-0! w-full',
-        class: 'w-full',
-        onInput: (value: unknown) => apply(field, kind, value),
-      },
-    } as FormKitSchemaNode
+    if (kind === 'boolean') return BOOLEAN_OPTIONS
+    if (kind !== 'relation') return []
+    const target = relationTarget(field)
+    if (!target) return []
+    return getEntity(target).fullList.map((option) => ({ label: option.label, value: option.value ?? option.id }))
   }
 
-  /** Reconstruye los inputs con los valores vigentes de `filters`. */
-  function rebuild() {
-    const next = new Map<string, FormKitSchemaNode>()
-    for (const column of columns.value) {
-      const node = buildNode(column)
-      if (node) next.set(column.field, node)
-    }
-    filterNodes.value = next
+  /** Carga las opciones de los filtros de relación de estas columnas. */
+  function preloadOptions(columns: CollectionFieldConfig[]) {
+    return Promise.all(
+      columns
+        .filter((column) => isFilterable(column) && kindOf(column.field) === 'relation')
+        .map((column) => relationTarget(column.field))
+        .filter((target): target is string => Boolean(target))
+        .map((target) => getEntity(target).loadFullList()),
+    )
   }
 
-  function apply(field: string, kind: FilterFieldKind, value: unknown) {
-    filters[field] = value
+  function set(field: string, value: unknown) {
+    values[field] = value
     clearTimeout(timer)
-    if (!isEmptyFilterValue(value) && (kind === 'text' || kind === 'number'))
-      timer = setTimeout(commit, DEBOUNCE_MS)
+    const kind = kindOf(field)
+    if (kind === 'date' && isPartialRange(value)) return
+    if (!isEmptyFilterValue(value) && (kind === 'text' || kind === 'number')) timer = setTimeout(commit, DEBOUNCE_MS)
     else commit()
   }
 
   /** Traduce los filtros a args del backend, vuelve a la página 1 y refetcha. */
   function commit() {
+    clearTimeout(timer)
     const current = store.value
     const metadata = entity()
     if (!current || !metadata) return
-    current.filters = toServerFilters(metadata, filters)
+    current.filters = toServerFilters(metadata, values, current.view.filterMode)
     if (current.pagination) current.pagination.currentPage = 1
     void current.fetchItems()
   }
 
-  function clear() {
+  /** Quita el filtro de una columna (o todos) y refetcha. */
+  function clear(field?: string) {
     clearTimeout(timer)
-    for (const key of Object.keys(filters)) delete filters[key]
-    generation.value += 1
+    if (field) delete values[field]
+    else for (const key of Object.keys(values)) delete values[key]
+    commit()
+  }
+
+  function setMode(mode: FilterMode) {
+    const current = store.value
+    if (!current || current.view.filterMode === mode) return
+    current.view.filterMode = mode
+    if (active.value.length > 1) commit()
   }
 
   /** Muestra en los inputs los filtros persistidos en el store. */
   function hydrate() {
+    clearTimeout(timer)
+    for (const key of Object.keys(values)) delete values[key]
     const current = store.value
     const metadata = entity()
-    clear()
-    if (current && metadata) Object.assign(filters, fromServerFilters(metadata, current.filters))
+    if (current && metadata) Object.assign(values, fromServerFilters(metadata, current.filters))
+  }
+
+  /** Campos con un filtro aplicado (en el store, no lo que se está tecleando). */
+  const active = computed(() => {
+    const current = store.value
+    const metadata = entity()
+    if (!current || !metadata) return []
+    return Object.entries(fromServerFilters(metadata, current.filters))
+      .filter(([, value]) => !isEmptyFilterValue(value))
+      .map(([field]) => field)
+  })
+
+  /** Texto corto del filtro aplicado de una columna (para los chips). */
+  function describe(field: string): string {
+    const current = store.value
+    const metadata = entity()
+    if (!current || !metadata) return ''
+    const value = fromServerFilters(metadata, current.filters)[field]
+    const kind = kindOf(field)
+    if (kind === 'date') {
+      const { after, before } = rangeToIso(value)
+      return `${dayLabel(after)} – ${dayLabel(before)}`
+    }
+    if (kind === 'boolean') return value === true || value === 'true' ? 'Sí' : 'No'
+    if (kind === 'relation') {
+      const options = optionsFor(field)
+      const chosen = (Array.isArray(value) ? value : [value]).map((v) => options.find((o) => o.value === v)?.label ?? String(v))
+      return chosen.length > 2 ? `${chosen.slice(0, 2).join(', ')} +${chosen.length - 2}` : chosen.join(', ')
+    }
+    return `“${String(value)}”`
   }
 
   /** Texto a resaltar en una columna (solo texto/número). */
   function highlightFor(field: string): unknown {
     const kind = kindOf(field)
     if (kind !== 'text' && kind !== 'number') return undefined
-    return highlightFilters.value[field]
+    return highlights.value[field]
   }
 
   watch(
@@ -159,17 +186,25 @@ export function useListFilters(
         const arg = resolveFilterArgs(metadata, field).single
         if (arg && current.filters[arg] !== undefined) next[field] = current.filters[arg]
       }
-      highlightFilters.value = next
+      highlights.value = next
     },
     { flush: 'post' },
   )
 
   return {
-    filters,
-    filterNodes,
-    rebuild,
+    values,
+    active,
+    kindOf,
+    isMulti,
+    isFilterable,
+    optionsFor,
+    preloadOptions,
+    set,
+    commit,
     clear,
+    setMode,
     hydrate,
+    describe,
     highlightFor,
   }
 }

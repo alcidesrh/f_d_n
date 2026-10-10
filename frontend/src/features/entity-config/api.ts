@@ -12,6 +12,7 @@
 
 import { gql } from '@apollo/client'
 import { graphql } from '@/core/graphql/client'
+import type { ListOptions } from '@/core/entities/types'
 
 /** Campos comunes a `CollectionFieldConfig` y `FormFieldConfig` (`FieldConfig`). */
 export interface FieldConfigDto {
@@ -28,6 +29,8 @@ export interface FieldConfigDto {
 export interface CollectionFieldConfigDto extends FieldConfigDto {
   sortable: boolean | null
   filterable: boolean | null
+  /** Ancho en el listado: preset (`xs`…`xl`), longitud (`12rem`) o fracción (`2fr`). */
+  width: string | null
 }
 
 export interface FormFieldConfigDto extends FieldConfigDto {
@@ -39,6 +42,7 @@ export interface EntityConfigurationDetailDto {
   entityClass: string
   collectionFieldConfig: CollectionFieldConfigDto[]
   formFields: FormFieldConfigDto[]
+  listOptions: ListOptions | null
 }
 
 /** Entrada de `updateWithRelationsEntityConfiguration`: la entidad y sus dos listas. */
@@ -46,6 +50,7 @@ export interface UpdateEntityConfigurationInput {
   entityClass: string
   collectionFieldConfig: CollectionFieldConfigDto[]
   formFields: FormFieldConfigDto[]
+  listOptions: ListOptions | null
 }
 
 const ENTITY_CLASSES_QUERY = gql`
@@ -62,6 +67,7 @@ const ENTITY_CONFIGURATION_QUERY = gql`
     entityConfigurations(entityClass: $entityClass) {
       id
       entityClass
+      listOptions
       collectionFieldConfig {
         id
         field
@@ -72,6 +78,7 @@ const ENTITY_CONFIGURATION_QUERY = gql`
         attrs
         sortable
         filterable
+        width
       }
       formFields {
         id
@@ -93,6 +100,7 @@ const UPDATE_ENTITY_CONFIGURATION = gql`
       entityConfiguration {
         id
         entityClass
+        listOptions
         collectionFieldConfig {
           id
           field
@@ -103,6 +111,7 @@ const UPDATE_ENTITY_CONFIGURATION = gql`
           attrs
           sortable
           filterable
+          width
         }
         formFields {
           id

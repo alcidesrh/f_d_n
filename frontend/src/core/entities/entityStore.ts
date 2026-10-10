@@ -8,10 +8,11 @@ import { fetchEntityConfiguration } from '@/core/metadata/entityConfiguration'
 import { repository } from './repository'
 import { useSchemaStore } from './schema'
 import { entitySlug } from './slug'
+import { DEFAULT_PAGE_SIZE, defaultView } from './listView'
 import type { CollectionFieldConfig, EntityStore, EntityStoreState } from './types'
 
 const DEFAULT_PAGINATION = {
-  itemsPerPage: 10,
+  itemsPerPage: DEFAULT_PAGE_SIZE,
   currentPage: 1,
   totalCount: 0,
   lastPage: 1,
@@ -58,6 +59,8 @@ function createEntityStore(name: string) {
       order: [],
       item: null,
       fullList: [],
+      listOptions: {},
+      view: defaultView(),
       ...(paginated ? { pagination: { ...DEFAULT_PAGINATION } } : {}),
     }),
     getters: {
@@ -71,10 +74,15 @@ function createEntityStore(name: string) {
         if (!request) {
           request = fetchEntityConfiguration(this.name)
             .then((config) => {
+              const firstLoad = this.columns.length === 0
+              this.listOptions = config?.listOptions ?? {}
+              if (firstLoad || force) this.view = defaultView(this.listOptions)
+              if (this.pagination && (firstLoad || force))
+                this.pagination.itemsPerPage = this.listOptions.pageSize ?? DEFAULT_PAGE_SIZE
               this.formFields = config?.formFields ?? []
               const columns = config?.collectionFieldConfig ?? []
               this.columns = columns.length
-                ? columns.map((column) => ({ ...column, showFilter: false }))
+                ? columns.map((column) => ({ ...column, showFilter: false, configWidth: column.width ?? null }))
                 : buildFallbackColumns(this.name)
             })
             .catch((error: unknown) =>

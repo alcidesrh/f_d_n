@@ -4,7 +4,7 @@
  * `features/entity-config`; la consumen listados y formularios.
  */
 import { http } from '@/core/http'
-import type { CollectionFieldConfig } from '@/core/entities/types'
+import type { CollectionFieldConfig, ListOptions } from '@/core/entities/types'
 
 /** Campo del formulario de una entidad (`FormFieldConfig` del backend). */
 export interface FormFieldConfig {
@@ -21,6 +21,7 @@ export interface EntityConfigurationDto {
   entityClass?: string
   collectionFieldConfig?: CollectionFieldConfig[]
   formFields?: FormFieldConfig[]
+  listOptions?: ListOptions | null
 }
 
 /** `null` si el backend no tiene configuración guardada para la entidad. */
