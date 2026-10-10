@@ -9,7 +9,7 @@
   Maximizar (o Esc para salir): filtros, mapa y lista cubren toda la pantalla.
 -->
 <template>
-  <div class="@container flex flex-col gap-4" :class="maximizado ? 'fixed inset-0 z-[900] overflow-auto bg-surface-0 p-3 dark:bg-surface-900' : ''">
+  <div class="@container flex flex-col gap-4" :class="maximizado ? 'fixed inset-0 z-[900] overflow-auto bg-surface-0 p-3' : ''">
     <!-- <Toolbar>
       <template #start><PageHead /></template>
       <template #end> -->
@@ -53,7 +53,7 @@
       <!-- La clase dinámica va en el padre: Vue reescribiría el class del contenedor de Leaflet y le borraría las clases que él añade. -->
       <div class="relative min-h-0" :class="{ 'mapa-maximizado': maximizado }">
         <div ref="mapaEl" class="mapa-buses rounded-border border border-surface-200" role="application" aria-label="Mapa de buses en recorrido" />
-        <p v-if="datos && !cargando && visibles.length === 0" class="pointer-events-none absolute inset-x-0 top-1/2 z-[500] mx-auto w-fit -translate-y-1/2 rounded-border bg-surface-0/90 px-3 py-2 text-sm shadow dark:bg-surface-900/90">No hay buses en recorrido{{ hayFiltro ? " con este filtro" : " en este momento" }}.</p>
+        <p v-if="datos && !cargando && visibles.length === 0" class="pointer-events-none absolute inset-x-0 top-1/2 z-[500] mx-auto w-fit -translate-y-1/2 rounded-border bg-surface-0/90 px-3 py-2 text-sm shadow">No hay buses en recorrido{{ hayFiltro ? " con este filtro" : " en este momento" }}.</p>
       </div>
 
       <aside class="flex min-h-0 flex-col gap-3" :class="maximizado ? 'overflow-y-auto' : ''">

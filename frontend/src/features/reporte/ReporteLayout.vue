@@ -24,7 +24,7 @@
 
         <Message v-if="problema" severity="warn" size="small" :closable="false">{{ problema }}</Message>
 
-        <div class="flex flex-wrap items-center gap-2 pt-4 dark:border-surface-700">
+        <div class="flex flex-wrap items-center gap-2 pt-4">
           <slot name="acciones" />
         </div>
       </section>

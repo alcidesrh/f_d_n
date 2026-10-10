@@ -77,6 +77,7 @@ Los tests viven junto al código, en carpetas `__tests__/`.
 ## Convenciones
 
 - Siempre `<script setup lang="ts">`.
+- **Tema claro/oscuro** (`app/ui.ts` + `app/theme.ts`): el modo oscuro **invierte las rampas** (`surface-*`, `primary-*` y los colores de PrimeVue: 50 ↔ 950) y pone `dark` en `<html>`. Por eso `bg-surface-0`, `text-surface-700` o `var(--p-surface-100)` ya funcionan en ambos modos: no los combines con `dark:` (se invertiría dos veces) ni uses `white`/`#fff`/`black` para superficies. `dark:` (sigue a la clase `.dark`, no al SO) solo para colores fijos de Tailwind (`text-red-600 dark:text-red-400`). El modo inicial sale del SO; se cambia con el botón del header o en el personalizador.
 - **Mobile-first** (ADR-020, `docs/frontend/responsive.md`): estilos base para móvil y `md:`/`lg:`/`xl:` (o `@container`) para mejorar; sin breakpoints nuevos ni `max-width`. Iconos clicables con `tap-target` y `aria-label`. Una pantalla no está terminada si solo funciona en escritorio.
 - **Imports explícitos.** El auto-import solo cubre Vue, Vue Router y Pinia; el auto-registro de componentes solo `shared/ui` y `shared/icons`. Todo lo demás se importa (`import { notify } from '@/core/notify'`).
 - **Estado en stores, lógica en funciones puras.** Filtros, orden, serialización de formularios, etc. van en módulos sin estado (con tests); los componentes orquestan.

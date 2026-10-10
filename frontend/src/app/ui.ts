@@ -12,6 +12,12 @@ function isBelowDesktop(): boolean {
   return !window.matchMedia(DESKTOP_QUERY).matches;
 }
 
+/** Primera visita (sin preferencia guardada): el modo del sistema operativo. */
+function systemMode(): ThemeMode {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return "light";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
 export interface UiState {
   mode: ThemeMode;
   primary: PrimaryColor;
@@ -29,7 +35,7 @@ export interface UiState {
 export const useUiStore = defineStore("ui", {
   persist: { omit: ["isMobile"] },
   state: (): UiState => ({
-    mode: "light",
+    mode: systemMode(),
     primary: "blue",
     surface: "slate",
     preset: "lara",
@@ -40,6 +46,9 @@ export const useUiStore = defineStore("ui", {
     setMode(mode: ThemeMode) {
       this.mode = mode;
       this.applyTheme();
+    },
+    toggleMode() {
+      this.setMode(this.mode === "dark" ? "light" : "dark");
     },
     setPrimary(primary: PrimaryColor) {
       this.primary = primary;

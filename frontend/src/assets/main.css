@@ -15,6 +15,11 @@
 @import "./content.css";
 @import "./utilities.css";
 
+/* `dark:` de Tailwind sigue a la clase `.dark` de <html> (no al SO). Las rampas
+   `surface-*`/`primary-*` ya se invierten con el tema (app/theme.ts), así que
+   `dark:` solo se usa con colores fijos de Tailwind (red-*, orange-*…). */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ============================= RESET ============================= */
 /* *,
 *::before,
@@ -28,7 +33,12 @@ body {
   height: 100%;
   font-size: 14px;
 }
+html.light {
+  color-scheme: light;
+}
 html.dark {
+  /* Scrollbars, autocompletado y controles nativos oscuros. */
+  color-scheme: dark;
   & > body {
     background-color: #000000;
   }

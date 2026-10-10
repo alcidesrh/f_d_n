@@ -22,7 +22,7 @@
         <Select v-model="modelo.claseId" :options="clases" option-value="id" option-label="nombre" show-clear fluid placeholder="Cualquiera" aria-label="Clase de bus" />
       </label>
     </div>
-    <div v-if="elegido" class="overflow-x-auto rounded-md border border-surface-200 p-2 dark:border-surface-700">
+    <div v-if="elegido" class="overflow-x-auto rounded-md border border-surface-200 p-2">
       <BusMap :elementos="elegido.elementos" orientacion="horizontal" tamano="xs" class="justify-center" />
     </div>
   </div>

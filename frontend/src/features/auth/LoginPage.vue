@@ -1,12 +1,12 @@
 <template>
   <div class="flex-center flex min-h-dvh w-full py-4">
     <LoginBackground :obstacle="card" />
-    <div id="login" ref="card" class="m-auto bg-white/90">
+    <div id="login" ref="card" class="m-auto bg-surface-0/90">
       <Card class="card-login p-4" style="width: min(400px, 90vw)" :class="{ 'opacity-50': loading }">
         <template #title>
           <div class="mb-[15px] w-full text-center">
-            <div class="text-[4rem] opacity-80" style="font-family: Faster One; line-height: 1">F D N</div>
-            <div class="font-semibold opacity-80">Transportes Fuentes del Norte</div>
+            <div class="text-[4rem] opacity-80 dark:opacity-100" style="font-family: Faster One; line-height: 1">F D N</div>
+            <div class="font-semibold opacity-80 dark:opacity-100">Transportes Fuentes del Norte</div>
           </div>
         </template>
         <template #content>
@@ -24,7 +24,7 @@
           <div class="companies">
             <div class="companies-title">Empresas del grupo</div>
             <ul>
-              <li v-for="c in COMPANIES" :key="c.name"><img :src="c.logo" :alt="c.name" /></li>
+              <li v-for="c in COMPANIES" :key="c.name"><img :src="c.logo" :alt="c.name" class="dark:opacity-75 dark:brightness-0 dark:invert" /></li>
             </ul>
           </div>
         </template>

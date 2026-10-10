@@ -86,7 +86,7 @@ const filtro = ref('')
 const abiertos = ref(new Set<string>())
 
 const ptSelect = {
-  overlay: { class: '!min-w-64 !bg-white' },
+  overlay: { class: '!min-w-64 !bg-surface-0' },
   optionGroup: { class: '!bg-surface-100 !py-1.5' },
   option: { class: '!pl-9' },
 }

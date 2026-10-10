@@ -130,7 +130,7 @@ const avance = (adjuntos: Adjunto[]) => adjuntos.map((a) => (a.estado === "ok" ?
 }
 .grupo__cuerpo :deep(.tarjeta) {
   border-color: var(--p-surface-100);
-  background: white;
+  background: var(--p-surface-0);
   /*var(--p-surface-50);*/
 }
 </style>

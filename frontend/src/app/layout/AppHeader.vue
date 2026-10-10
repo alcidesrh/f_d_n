@@ -39,6 +39,10 @@
       <div class="header-actions">
         <slot name="menu-content"></slot>
 
+        <button class="icon-btn cursor-pointer" :title="ui.mode === 'dark' ? 'Modo claro' : 'Modo oscuro'" :aria-label="ui.mode === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'" @click="ui.toggleMode()">
+          <icon :name="ui.mode === 'dark' ? 'light-mode-outline' : 'dark-mode-outline'" />
+        </button>
+
         <button class="icon-btn cursor-pointer" title="Personalizar apariencia" aria-label="Personalizar apariencia" @click.stop="showThemeEditor()">
           <icon name="palette-outline" />
         </button>

@@ -8,23 +8,25 @@ import colors from "tailwindcss/colors";
 
 const RAMP_STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950] as const;
 
-/** Reverses every color ramp of a palette (50 ↔ 950, 100 ↔ 900, …). */
+const isRamp = (value: unknown): value is Record<string, string> => {
+  const ramp = value as Record<string, unknown> | null;
+  return !!ramp && RAMP_STEPS.every((step) => typeof ramp[step] === "string");
+};
+
+/** Reverses one color ramp (50 ↔ 950, 100 ↔ 900, …); any other value passes through. */
+export function invertRamp<T>(ramp: T): T {
+  if (!isRamp(ramp)) return ramp;
+  const reversed: Record<string, string> = {};
+  RAMP_STEPS.forEach((step, i) => {
+    reversed[String(step)] = ramp[RAMP_STEPS[RAMP_STEPS.length - 1 - i]!]!;
+  });
+  return reversed as T;
+}
+
+/** Reverses every color ramp of a palette collection (`{ blue: ramp, slate: ramp, … }`). */
 export function invertPalette<T>(palette: T): T {
   const out: Record<string, unknown> = {};
-  for (const [name, value] of Object.entries(palette as object)) {
-    const ramp = value as Record<string, unknown> | null;
-    const isRamp = !!ramp && RAMP_STEPS.every((step) => typeof ramp[step] === "string");
-    if (isRamp) {
-      const reversed: Record<string, string> = {};
-      RAMP_STEPS.forEach((step, i) => {
-        const mirror = RAMP_STEPS[RAMP_STEPS.length - 1 - i]!;
-        reversed[String(step)] = String(ramp![mirror]);
-      });
-      out[name] = reversed;
-    } else {
-      out[name] = value;
-    }
-  }
+  for (const [name, value] of Object.entries(palette as object)) out[name] = invertRamp(value);
   return out as T;
 }
 
@@ -110,8 +112,8 @@ export const themeColors = (theme: ThemePreset, primaryName: PrimaryColor, surfa
   let surface: Palette;
   if (mode === "dark") {
     primitive = invertPalette({ ...base.primitive, ...colors });
-    primary = invertPalette(palette(primaryName));
-    surface = { "0": "#000000", ...invertPalette(palette(surfaceName)) };
+    primary = invertRamp(palette(primaryName));
+    surface = { "0": "#000000", ...invertRamp(palette(surfaceName)) };
   } else {
     primitive = { ...base.primitive, ...colors };
     primary = palette(primaryName);

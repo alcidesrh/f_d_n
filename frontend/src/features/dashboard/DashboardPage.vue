@@ -20,7 +20,7 @@
                   />
                   <Avatar
                     shape="circle"
-                    class="w-24! h-24! border-3 border-surface-0 dark:border-surface-900 absolute! -bottom-12! left-4!"
+                    class="w-24! h-24! border-3 border-surface-0 absolute! -bottom-12! left-4!"
                   >
                     <img
                       src="https://images.unsplash.com/photo-1722495178488-c8056c4ec2c0?q=80&w=2081&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
@@ -79,7 +79,7 @@
                 header="Edit Profile"
                 :style="{ width: '25rem' }"
               >
-                <span class="text-surface-500 dark:text-surface-400 block mb-8"
+                <span class="text-surface-500 block mb-8"
                   >Update your information.</span
                 >
                 <div class="flex items-center gap-4 mb-4">

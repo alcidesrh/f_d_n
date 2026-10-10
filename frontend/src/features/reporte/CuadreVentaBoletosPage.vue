@@ -41,7 +41,7 @@
         <CifraReporte v-if="resumen.anulado" etiqueta="Anulado" :valor="importe(resumen.anulado, resumen.moneda)" alerta />
         <p v-if="!resumen.boletos" class="m-0 text-sm text-muted-color">No hay ventas con estos parámetros; el reporte saldrá con las secciones vacías.</p>
         <ul v-else class="m-0 flex list-none flex-wrap gap-1.5 p-0 text-xs">
-          <li v-for="e in secciones" :key="e" class="rounded-full bg-surface-100 px-2.5 py-1 dark:bg-surface-800">{{ e }}</li>
+          <li v-for="e in secciones" :key="e" class="rounded-full bg-surface-100 px-2.5 py-1">{{ e }}</li>
         </ul>
       </template>
     </template>

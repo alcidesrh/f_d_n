@@ -17,7 +17,7 @@
           <Tag :value="`Nuevo ${formatearNumero(store.indicadores.total?.nuevo ?? 0)} / Legado ${formatearNumero(store.indicadores.total?.legado ?? 0)}`" severity="info" />
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-          <div v-for="fila in filasIndicadores" :key="fila.nombre" class="flex flex-col gap-1 border border-surface-200 dark:border-surface-700 rounded-lg p-3">
+          <div v-for="fila in filasIndicadores" :key="fila.nombre" class="flex flex-col gap-1 border border-surface-200 rounded-lg p-3">
             <div class="flex items-center justify-between text-sm">
               <span class="font-medium">{{ fila.etiqueta }}</span>
               <span class="text-xs text-muted-color">{{ fila.nombre }}</span>

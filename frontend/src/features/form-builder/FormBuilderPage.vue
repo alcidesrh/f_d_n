@@ -1,5 +1,5 @@
 <template>
-  <div class="border border-surface-300 bg-white px-[min(2rem,var(--page-gutter))] py-[var(--page-gutter)]">
+  <div class="border border-surface-300 bg-surface-0 px-[min(2rem,var(--page-gutter))] py-[var(--page-gutter)]">
     <PageHead
       title="Form Builder"
       subtitle="Grids responsivos + custom inputs → JSON FormKitSchema"
