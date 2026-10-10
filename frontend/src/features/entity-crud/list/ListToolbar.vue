@@ -5,6 +5,11 @@
     <button v-if="selectable" type="button" class="tap-target" aria-label="Modo selección" @click="emit('toggle-selection')">
       <icon name="check-box-outline" :class="{ 'text-primary': selectionMode }" />
     </button>
+    <template v-if="selectable && selectionMode && selectedCount > 0">
+      <button v-for="accion in acciones" :key="accion.key" type="button" class="tap-target flex items-center gap-1.5 text-sm text-primary" :aria-label="`${accion.label} (${selectedCount})`" v-tooltip.bottom="accion.label" @click="emit('accion', accion)">
+        <icon :name="accion.icon" class="text-primary" />
+      </button>
+    </template>
     <button v-if="selectable && selectionMode && selectedCount > 0" type="button" class="tap-target flex items-center gap-1.5 text-sm text-primary" :aria-label="`Enviar ${selectedCount} por chat`" v-tooltip.bottom="'Enviar por chat'" @click="emit('share')">
       <icon name="forum-outline" class="text-primary" />{{ selectedCount }}
     </button>
@@ -37,6 +42,7 @@
 import { ref } from "vue";
 import type { Popover as PopoverType } from "primevue";
 import type { CollectionFieldConfig } from "@/core/entities/types";
+import type { EntityBulkAction } from "./listActions";
 
 withDefaults(defineProps<{
   selectionMode: boolean;
@@ -46,12 +52,16 @@ withDefaults(defineProps<{
   hiddenColumns: CollectionFieldConfig[];
   /** Muestra la opción que reemplaza el listado por la configuración de la entidad. */
   configurable?: boolean;
-}>(), { selectable: true });
+  /** Acciones de la entidad sobre la selección (anular, reasignar…), ya filtradas por permiso. */
+  acciones?: EntityBulkAction[];
+}>(), { selectable: true, acciones: () => [] });
 
 const emit = defineEmits<{
   "toggle-selection": [];
   /** Enviar los seleccionados por el chat interno. */
   share: [];
+  /** Una acción de la entidad sobre la selección. */
+  accion: [accion: EntityBulkAction];
   restore: [field: string];
   reset: [];
   configure: [];

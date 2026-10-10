@@ -6,6 +6,7 @@ namespace App\Venta\Facturacion\Forcon;
 
 use App\Venta\Facturacion\CertificadorFel;
 use App\Venta\Facturacion\DteCertificado;
+use App\Venta\Facturacion\SolicitudAnulacion;
 use App\Venta\Facturacion\SolicitudDte;
 
 /** Certificación de facturas con Forcon (`EmitirDteJson`, firma del emisor en Forcon). */
@@ -22,6 +23,13 @@ final class CertificadorForcon implements CertificadorFel
 
         return DteJsonForcon::respuesta(
             $this->cliente->post(ClienteForcon::EMITIR_JSON, DteJsonForcon::construir($solicitud, $emisor), $solicitud->emisorNit),
+        );
+    }
+
+    public function anular(SolicitudAnulacion $solicitud): void
+    {
+        DteJsonForcon::respuestaAnulacion(
+            $this->cliente->post(ClienteForcon::ANULAR_JSON, DteJsonForcon::construirAnulacion($solicitud), $solicitud->emisorNit),
         );
     }
 }

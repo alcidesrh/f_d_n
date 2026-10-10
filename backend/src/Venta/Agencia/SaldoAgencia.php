@@ -52,6 +52,20 @@ final class SaldoAgencia
     }
 
     /**
+     * Devuelve el precio de boletos anulados (`$centavos` > 0).
+     */
+    public function reintegrarAnulacion(Agencia $agencia, int $centavos, \Money\Currency $moneda, BoletoVenta $venta, Usuario $usuario, string $observacion): void
+    {
+        $this->bloquear($agencia);
+        $this->exigirMoneda($agencia, new Money(0, $moneda));
+        if ($centavos <= 0) {
+            return;
+        }
+
+        $this->mover($agencia, TipoMovimientoAgencia::ANULACION, $centavos, $usuario, $venta, null, mb_substr($observacion, 0, 255));
+    }
+
+    /**
      * Registra un depósito y, si corresponde, su bonificación
      * (`porcentajeBonificacion` sobre el importe).
      *

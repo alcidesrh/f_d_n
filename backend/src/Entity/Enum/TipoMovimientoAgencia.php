@@ -16,6 +16,8 @@ enum TipoMovimientoAgencia: string
     case BONIFICACION = "bonificacion";
     /** Venta de boletos: se descuenta su total. */
     case VENTA = "venta";
+    /** Boletos anulados: se devuelve su precio. */
+    case ANULACION = "anulacion";
     /** Corrección manual (positiva o negativa). */
     case AJUSTE = "ajuste";
 }

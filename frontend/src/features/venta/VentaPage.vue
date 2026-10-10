@@ -30,9 +30,30 @@
       <div class="grid grid-cols-1 items-start gap-4 @3xl:grid-cols-[minmax(0,1fr)_20rem]">
         <!-- Columna principal -->
         <div class="flex min-w-0 flex-col gap-4">
+          <section v-if="store.reasignacion" class="panel flex flex-col gap-3 reasignacion">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="font-semibold">Reasignar {{ store.reasignacion.boletos.length === 1 ? 'un boleto' : `${store.reasignacion.boletos.length} boletos` }}</div>
+              <Button label="Cancelar reasignación" severity="secondary" size="small" text @click="store.cancelarReasignacion()" />
+            </div>
+            <p class="m-0 text-sm text-muted-color">Elija la salida y el asiento nuevo de cada boleto, con el mismo precio. No se cobra ni se factura: el boleto original queda reasignado y su asiento libre.</p>
+            <ul class="m-0 flex list-none flex-col gap-1.5 p-0">
+              <li v-for="p in store.parejas" :key="p.boleto.id" class="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 text-sm">
+                <span class="min-w-0">
+                  <b>Asiento {{ p.boleto.asiento.numero }}</b> · {{ p.boleto.pasajero ?? 'sin pasajero' }}
+                  <span class="block truncate text-xs text-muted-color">{{ p.boleto.trayecto.origen }} → {{ p.boleto.trayecto.destino }} · {{ fechaHoraCorta(p.boleto.salida.fecha) }} · {{ p.boleto.precio?.texto }}</span>
+                </span>
+                <span class="whitespace-nowrap tabular-nums" :class="{ 'text-green-700': p.igual === true, 'text-red-600': p.igual === false }">
+                  <template v-if="p.asiento !== null">→ asiento {{ numeroDe(p.asiento) }} · {{ p.precio?.texto ?? '…' }}</template>
+                  <template v-else><span class="text-muted-color">→ elija el asiento</span></template>
+                </span>
+              </li>
+            </ul>
+            <Message v-if="store.parejas.some((p) => p.igual === false)" severity="warn" :closable="false">El precio del asiento elegido no coincide con el del boleto. Cambie de asiento, el tramo o marque «cobrar el trayecto completo» si así se vendió.</Message>
+          </section>
           <section class="panel flex flex-col gap-2">
-            <label class="text-sm font-medium" for="venta-cliente">Cliente (facturar a)</label>
-            <ClienteBuscador v-model="store.cliente" input-id="venta-cliente" />
+            <label class="text-sm font-medium" for="venta-cliente">{{ store.reasignacion ? 'Cliente de la venta' : 'Cliente (facturar a)' }}</label>
+            <div v-if="store.reasignacion" class="text-sm">{{ store.cliente?.nombreCompleto ?? '—' }}<span v-if="store.cliente" class="text-muted-color"> · NIT {{ store.cliente.nit }}</span></div>
+            <ClienteBuscador v-else v-model="store.cliente" input-id="venta-cliente" />
           </section>
           <section class="panel flex flex-col gap-3">
             <div class="grid grid-cols-1 gap-3 @xl:grid-cols-3 mb-6">
@@ -77,13 +98,13 @@
               <Checkbox v-model="store.cobrarTrayectoCompleto" binary input-id="venta-completo" @update:model-value="store.recotizar()" />
               <span> Cobrar la tarifa del trayecto completo ({{ store.detalle.trayecto.origen.nombre }} → {{ store.detalle.trayecto.destino.nombre }}) </span>
             </label>
-            <label class="flex flex-col gap-1">
+            <label v-if="!store.reasignacion" class="flex flex-col gap-1">
               <span class="text-sm font-medium">Observación</span>
               <InputText v-model="store.observacion" maxlength="255" placeholder="P. ej. viaja con mascota, se baja en un punto intermedio…" fluid />
             </label>
           </section>
 
-          <section v-if="store.seleccion.length" class="panel flex flex-col gap-2">
+          <section v-if="store.seleccion.length && !store.reasignacion" class="panel flex flex-col gap-2">
             <div class="text-sm font-medium">Pasajeros</div>
             <ul class="flex flex-col gap-2">
               <li v-for="linea in lineas" :key="linea.asiento" class="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-2 @xl:grid-cols-[3rem_minmax(0,1fr)_6rem]">
@@ -113,7 +134,7 @@
                 <BusMapLegend :items="leyenda" :conteos="conteos" />
                 <div class="overflow-x-auto mt-4">
                   <BusMap :elementos="store.detalle.croquis" :estado="store.estadoAsiento" interactivo inspeccionable tamano="md" class="justify-center" @asiento="(a) => a.id != null && store.alternarAsiento(a.id)" @ocupado="verOcupado" />
-                  <AsientoOcupadoPopover ref="detalleAsiento" />
+                  <AsientoOcupadoPopover ref="detalleAsiento" @anular="(b) => (anular = [b.id])" @reasignar="(b) => void store.iniciarReasignacion([b.id])" />
                 </div>
                 <Divider align="center" class="my-0! before:border-surface-400!" type="dashed">
                   <span class="text-xs font-bold text-surface-500">{{ store.ocupados.length }} / {{ store.asientosCroquis.length }}</span>
@@ -126,7 +147,10 @@
                   {{ store.errorCotizacion }}
                 </Message>
                 <Message v-if="!store.cliente && store.seleccion.length" severity="info" :closable="false"> Elija el cliente para facturar. </Message>
-                <div class="flex flex-wrap justify-end gap-2">
+                <div v-if="store.reasignacion" class="flex flex-wrap justify-end gap-2">
+                  <Button label="Reasignar" :loading="store.vendiendo" :disabled="!store.puedeReasignar" @click="confirmarReasignacion" />
+                </div>
+                <div v-else class="flex flex-wrap justify-end gap-2">
                   <Button v-if="store.contexto?.permisos.cortesia" label="Cortesía" severity="secondary" outlined :disabled="!store.puedeVender" @click="abrirCobro(true)" />
                   <Button :label="store.contexto?.canal === 'agencia' ? 'Vender' : 'Facturar'" :disabled="!store.puedeVender || !store.cotizacion" @click="abrirCobro(false)" />
                 </div>
@@ -143,7 +167,8 @@
 
     <CobroDialog v-model:visible="cobro" :cortesia="cortesia" @confirmar="confirmar" />
     <FacturacionFallidaDialog :fallo="store.falloFacturacion" :ocupado="store.vendiendo" @cancelar="store.cancelarVenta()" @reintentar="reintentar" />
-    <VentaExitosaDialog :comprobante="store.comprobante" @cerrar="store.comprobante = null" />
+    <VentaExitosaDialog :comprobante="store.comprobante" :reasignacion="store.comprobanteReasignado" @cerrar="store.comprobante = null" />
+    <AnularBoletosDialog :visible="anular.length > 0" :ids="anular" @update:visible="(v) => !v && (anular = [])" @listo="alAnular" />
   </div>
 </template>
 
@@ -152,6 +177,7 @@ import { computed, onMounted, ref } from "vue";
 import BusMap from "@/shared/bus-map/BusMap.vue";
 import type { AsientoCroquis } from "@/core/croquis/types";
 import AsientoOcupadoPopover from "@/shared/bus-map/AsientoOcupadoPopover.vue";
+import AnularBoletosDialog from "@/shared/boleto/AnularBoletosDialog.vue";
 import BusMapLegend, { type ItemLeyenda } from "@/shared/bus-map/BusMapLegend.vue";
 import { conteosPorEstado, hora } from "@/core/venta/modelo";
 import type { Parada } from "@/core/venta/types";
@@ -161,9 +187,16 @@ import FacturacionFallidaDialog from "./FacturacionFallidaDialog.vue";
 import SalidasLista from "./SalidasLista.vue";
 import VentaExitosaDialog from "./VentaExitosaDialog.vue";
 import { type OpcionesCobro, useVentaStore } from "./store";
-import { imprimirTicket } from "./ticket";
+import { imprimirTicket } from "@/shared/boleto/ticket";
+import { useConfirm } from "primevue/useconfirm";
+import { notify } from "@/core/notify";
 
 const store = useVentaStore();
+const route = useRoute();
+const router = useRouter();
+const confirm = useConfirm();
+/** Boletos que se están anulando (desde el detalle del asiento). */
+const anular = ref<number[]>([]);
 const detalleAsiento = ref<InstanceType<typeof AsientoOcupadoPopover> | null>(null);
 const verOcupado = (a: AsientoCroquis, e: MouseEvent) => {
   if (store.salidaId && a.id != null) void detalleAsiento.value?.abrir(e, store.salidaId, a.id);
@@ -211,9 +244,41 @@ const lineas = computed(() => {
     .sort((a, b) => a.numero - b.numero);
 });
 
-onMounted(() => {
-  if (!store.contexto) void store.iniciar();
+onMounted(async () => {
+  if (!store.contexto) await store.iniciar();
+  // Llegó desde un listado de boletos con «Reasignar».
+  const ids = String(route.query.reasignar ?? "")
+    .split(",")
+    .map(Number)
+    .filter((id) => Number.isInteger(id) && id > 0);
+  if (ids.length) {
+    await router.replace({ query: { ...route.query, reasignar: undefined } });
+    await store.iniciarReasignacion(ids);
+  }
 });
+
+const numeroDe = (asiento: number) => store.asientosCroquis.find((a) => a.id === asiento)?.numero ?? asiento;
+const fechaHoraCorta = (iso: string) => new Intl.DateTimeFormat("es-GT", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }).format(new Date(iso));
+
+/** Se anuló algo desde el detalle del asiento: el croquis y las salidas se vuelven a leer. */
+function alAnular() {
+  void store.cargarSalidas();
+  if (store.salidaId) void store.elegirSalida(store.salidaId).then(() => notify.success("Croquis actualizado"));
+}
+
+function confirmarReasignacion() {
+  const n = store.reasignacion?.boletos.length ?? 0;
+  confirm.require({
+    header: "Confirmar reasignación",
+    message: `¿Reasignar ${n === 1 ? "el boleto" : `los ${n} boletos`} a la salida elegida? El boleto original quedará reasignado y su asiento libre.`,
+    acceptProps: { label: "Reasignar" },
+    rejectProps: { label: "Cancelar", severity: "secondary" },
+    accept: async () => {
+      const c = await store.reasignar();
+      if (c) void imprimirTicket(c);
+    },
+  });
+}
 
 function abrirCobro(esCortesia: boolean) {
   cortesia.value = esCortesia;

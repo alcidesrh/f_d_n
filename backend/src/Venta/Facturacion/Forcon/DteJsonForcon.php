@@ -6,6 +6,7 @@ namespace App\Venta\Facturacion\Forcon;
 
 use App\Venta\Facturacion\CertificacionFallida;
 use App\Venta\Facturacion\DteCertificado;
+use App\Venta\Facturacion\SolicitudAnulacion;
 use App\Venta\Facturacion\SolicitudDte;
 use Money\Money;
 
@@ -154,6 +155,50 @@ final class DteJsonForcon
             certificadorNombre: self::CERTIFICADOR_NOMBRE,
             xml: isset($r["XMLCertificado"]) ? (string) $r["XMLCertificado"] : null,
             urlPdf: isset($r["RutaPDF"]) ? (string) $r["RutaPDF"] : null,
+        );
+    }
+
+    /**
+     * Anulación (`Ejemplos JSON Esquema SAT/- Anulacion.json`): se identifica el
+     * DTE por su UUID de autorización.
+     *
+     * @return array<string, mixed>
+     */
+    public static function construirAnulacion(SolicitudAnulacion $s): array
+    {
+        $formato = "Y-m-d\\TH:i:s.vP";
+
+        return [
+            "DatosGeneralesAnulacion" => [
+                "FechaEmisionDocumentoAnular" => $s->fechaEmision->format($formato),
+                "FechaHoraAnulacion" => $s->fechaAnulacion->format($formato),
+                "IDReceptor" => $s->receptorNit,
+                "MotivoAnulacion" => mb_substr($s->motivo, 0, 255),
+                "NITEmisor" => $s->emisorNit,
+                "NumeroDocumentoAAnular" => strtoupper($s->uuid),
+            ],
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $r respuesta de `AnularDteJson`
+     *
+     * @throws CertificacionFallida si no se anuló
+     */
+    public static function respuestaAnulacion(array $r): void
+    {
+        if (($r["Resultado"] ?? false) === true) {
+            return;
+        }
+        $descripcion = (string) ($r["Descripcion"] ?? "");
+        $texto = trim(preg_replace('/^\s*ERROR\s+[A-Z]{3}-\d{3}\s*:\s*/', "", $descripcion) ?? $descripcion);
+        $codigo = preg_match('/\b([A-Z]{3}-\d{3})\b/', $descripcion, $m) ? $m[1] : null;
+
+        throw new CertificacionFallida(
+            $texto !== "" ? "El certificador no anuló la factura: {$texto}" : "El certificador no anuló la factura.",
+            // Sin código de error es una falla del servicio: vale reintentar.
+            $codigo === null || in_array($codigo, ["EAL-020", "ESW-043"], true),
+            $codigo,
         );
     }
 

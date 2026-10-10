@@ -15,4 +15,11 @@ interface CertificadorFel
      * @throws CertificacionFallida si no se certificó (nada quedó emitido)
      */
     public function certificar(SolicitudDte $solicitud): DteCertificado;
+
+    /**
+     * Anula un DTE certificado.
+     *
+     * @throws CertificacionFallida si no se anuló (el DTE sigue vigente)
+     */
+    public function anular(SolicitudAnulacion $solicitud): void;
 }

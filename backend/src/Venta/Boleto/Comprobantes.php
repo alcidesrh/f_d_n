@@ -17,14 +17,18 @@ final class Comprobantes
         private readonly HorasSalida $horas,
     ) {}
 
-    /** @return array<string, mixed> */
-    public function de(BoletoVenta $venta): array
+    /**
+     * @param list<int>|null $soloIds boletos que se imprimen; por defecto, los vivos de la venta
+     *
+     * @return array<string, mixed>
+     */
+    public function de(BoletoVenta $venta, ?array $soloIds = null): array
     {
-        $boleto = $venta->getAsientos()->first() ?: null;
+        $boleto = DatosBoleto::boletos($venta, $soloIds)[0] ?? null;
         $salida = $boleto === null
             ? null
             : $this->horas->salidaDesde($boleto->getSalida(), (int) $boleto->getTrayecto()->getOrigen()->getId());
 
-        return DatosBoleto::de($venta, $salida);
+        return DatosBoleto::de($venta, $salida, $soloIds);
     }
 }

@@ -10,7 +10,8 @@ import { alternar, bajadaPorDefecto, clasesDelTrayecto, depurarSeleccion, diaISO
 import { suscribir } from "@/core/realtime";
 import { notify } from "@/core/notify";
 import type { AsientoCroquis } from "@/core/croquis/types";
-import type { AsientoOcupado, Cliente, Comprobante, ContextoVenta, Cotizacion, ErrorVenta, SalidaDetalle, SalidaResumen } from "@/core/venta/types";
+import { emparejar, listaParaReasignar, motivoNoOperable, salidasReasignables, tramoDelBoleto } from "@/core/venta/reasignacion";
+import type { AsientoOcupado, BoletoOperable, Cliente, Comprobante, ContextoVenta, Cotizacion, ErrorVenta, Importe, SalidaDetalle, SalidaResumen } from "@/core/venta/types";
 
 export interface OpcionesCobro {
   tipoPago: number | null;
@@ -35,7 +36,14 @@ export const useVentaStore = defineStore("venta", () => {
     for (const r of salidas.value) if (r.empresa) porId.set(r.empresa.id, r.empresa.nombre);
     return [...porId].map(([id, nombre]) => ({ id, nombre })).sort((a, b) => a.nombre.localeCompare(b.nombre));
   });
-  const salidasVisibles = computed(() => (empresaId.value == null ? salidas.value : salidas.value.filter((r) => r.empresa?.id === empresaId.value)));
+  /** Reasignando: los boletos que se pasan a otro asiento o salida (todos de una venta); null = venta normal. */
+  const reasignacion = shallowRef<{ boletos: BoletoOperable[]; ventaId: number } | null>(null);
+  /** El comprobante que se muestra es de una reasignación (no de una venta). */
+  const comprobanteReasignado = ref(false);
+  const salidasVisibles = computed(() => {
+    const filtradas = empresaId.value == null ? salidas.value : salidas.value.filter((r) => r.empresa?.id === empresaId.value);
+    return reasignacion.value ? salidasReasignables(filtradas, reasignacion.value.boletos, new Date()) : filtradas;
+  });
 
   const salidaId = ref<number | null>(null);
   const detalle = shallowRef<SalidaDetalle | null>(null);
@@ -74,6 +82,10 @@ export const useVentaStore = defineStore("venta", () => {
   const estadoAsiento = computed(() => estadoEnMapa(ocupados.value, seleccion.value, noVendible.value ? [] : clasesVendibles.value));
   const asientosCroquis = computed(() => detalle.value?.croquis.filter((e): e is AsientoCroquis => e.tipo === "asiento") ?? []);
   const libres = computed(() => asientosCroquis.value.length - ocupados.value.filter((o) => o.estado !== "propio").length);
+  const preciosCotizados = computed(() => new Map<number, Importe>((cotizacion.value?.asientos ?? []).map((a) => [a.asiento, a.precio])));
+  /** Reasignando: cada boleto con el asiento que se le eligió y si cuesta lo mismo. */
+  const parejas = computed(() => (reasignacion.value ? emparejar(reasignacion.value.boletos, seleccion.value, preciosCotizados.value) : []));
+  const puedeReasignar = computed(() => !!reasignacion.value && !!detalle.value && !noVendible.value && trayectoId.value != null && listaParaReasignar(parejas.value) && !vendiendo.value);
   const puedeVender = computed(() => !!cliente.value && !!detalle.value && !noVendible.value && trayectoId.value != null && seleccion.value.length > 0 && !vendiendo.value);
 
   async function iniciar() {
@@ -122,6 +134,12 @@ export const useVentaStore = defineStore("venta", () => {
       detalle.value = d;
       sube.value = subidaPorDefecto(d, estacionId.value);
       baja.value = bajadaPorDefecto(d, sube.value);
+      // Reasignando: el mismo tramo que tenía el boleto, si la salida lo ofrece.
+      const tramo = reasignacion.value ? tramoDelBoleto(d, reasignacion.value.boletos[0]!) : null;
+      if (tramo) {
+        sube.value = tramo.sube;
+        baja.value = tramo.baja;
+      }
       await cargarOcupacion();
       desuscribir = suscribir(d.topico, () => void refrescarOcupacion());
     } catch (e) {
@@ -186,6 +204,10 @@ export const useVentaStore = defineStore("venta", () => {
 
   function alternarAsiento(id: number) {
     if (noVendible.value) return;
+    if (reasignacion.value && !seleccion.value.includes(id) && seleccion.value.length >= reasignacion.value.boletos.length) {
+      notify.warning(`Solo puede elegir ${reasignacion.value.boletos.length} asiento(s): uno por boleto. Quite uno para cambiarlo.`);
+      return;
+    }
     seleccion.value = alternar(seleccion.value, id);
     if (!seleccion.value.includes(id)) delete pasajeros.value[id];
     void recotizar();
@@ -206,6 +228,7 @@ export const useVentaStore = defineStore("venta", () => {
         asientos: seleccion.value,
         cobrarTrayectoCompleto: cobrarTrayectoCompleto.value,
         cortesia,
+        venta: reasignacion.value?.ventaId,
       });
       if (n === cotizacionEnCurso) cotizacion.value = c;
     } catch (e) {
@@ -243,6 +266,7 @@ export const useVentaStore = defineStore("venta", () => {
         sinFacturaElectronica: opciones.sinFacturaElectronica ?? false,
       });
       comprobante.value = c;
+      comprobanteReasignado.value = false;
       terminarVenta();
       if (contexto.value?.canal === "agencia") void refrescarContexto();
       void refrescarOcupacion();
@@ -278,7 +302,84 @@ export const useVentaStore = defineStore("venta", () => {
     token.value = nuevoToken();
   }
 
+  /**
+   * Pone la pantalla en modo reasignación para esos boletos: carga los datos
+   * de la venta (cliente) y deja elegir salida y asientos. Devuelve false si
+   * no se puede (y avisa por qué).
+   */
+  async function iniciarReasignacion(ids: number[]): Promise<boolean> {
+    if (!contexto.value) await iniciar();
+    let boletos: BoletoOperable[];
+    try {
+      boletos = await api.fetchBoletos(ids);
+    } catch (e) {
+      notify.error(api.errorVenta(e)?.error ?? "No se pudieron cargar los boletos.");
+      return false;
+    }
+    const bloqueo = motivoNoOperable(boletos);
+    if (bloqueo) {
+      notify.error(bloqueo);
+      return false;
+    }
+    if (new Set(boletos.map((b) => b.venta.id)).size > 1) {
+      notify.error("Los boletos de una reasignación deben ser de una misma venta.");
+      return false;
+    }
+    cerrarSalida();
+    reasignacion.value = { boletos, ventaId: boletos[0]!.venta.id };
+    cliente.value = boletos[0]!.venta.cliente;
+    const salida = new Date(boletos[0]!.salida.fecha);
+    fecha.value = salida.getTime() > Date.now() ? salida : new Date();
+    empresaId.value = null;
+    await cargarSalidas();
+    return true;
+  }
+
+  function cancelarReasignacion() {
+    reasignacion.value = null;
+    cliente.value = null;
+    cerrarSalida();
+    token.value = nuevoToken();
+  }
+
+  /** Registra la reasignación. Devuelve el comprobante de los boletos nuevos (para imprimir). */
+  async function reasignar(): Promise<Comprobante | null> {
+    if (!puedeReasignar.value || !reasignacion.value || !salidaId.value) return null;
+    vendiendo.value = true;
+    try {
+      const c = await api.reasignarBoletos({
+        boletos: reasignacion.value.boletos.map((b) => b.id),
+        salida: salidaId.value,
+        trayecto: trayectoId.value,
+        asientos: seleccion.value,
+        cobrarTrayectoCompleto: cobrarTrayectoCompleto.value,
+      });
+      comprobante.value = c;
+      comprobanteReasignado.value = true;
+      reasignacion.value = null;
+      cliente.value = null;
+      terminarVenta();
+      void refrescarOcupacion();
+      void cargarSalidas();
+      return c;
+    } catch (e) {
+      const err = api.errorVenta(e);
+      notify.error(err?.error ?? "No se pudo reasignar.");
+      if (err?.codigo === "asientos_no_disponibles") await refrescarOcupacion();
+      return null;
+    } finally {
+      vendiendo.value = false;
+    }
+  }
+
   return {
+    reasignacion,
+    comprobanteReasignado,
+    parejas,
+    puedeReasignar,
+    iniciarReasignacion,
+    cancelarReasignacion,
+    reasignar,
     contexto,
     errorCarga,
     fecha,

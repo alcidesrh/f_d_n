@@ -8,9 +8,11 @@ use App\Entity\Asiento;
 use App\Entity\BoletoAsiento;
 use App\Entity\BoletoVenta;
 use App\Entity\Enum\EstadoBoletoAsiento;
+use App\Entity\Enum\EstadoBoletoVenta;
 use App\Entity\ReservaAsiento;
 use App\Entity\Salida;
 use App\Venta\Boleto\DatosBoleto;
+use App\Venta\Excepcion\VentaRechazada;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 
@@ -81,6 +83,7 @@ final class DetalleAsiento
             "id" => $b->getId(),
             "completo" => $completo,
             "estado" => $b->getEstado()->value,
+            "operable" => $this->operable($b),
             "trayecto" => self::trayecto($b->getTrayecto()),
             "venta" => [
                 "id" => $venta->getId(),
@@ -128,6 +131,19 @@ final class DetalleAsiento
                 ],
             ],
         ];
+    }
+
+    /** Si todavía se puede anular o reasignar (emitido y antes de la hora de salida); el permiso se comprueba aparte. */
+    private function operable(BoletoAsiento $b): bool
+    {
+        try {
+            ReglasBoletos::exigirEmitido($b);
+            ReglasBoletos::exigirAntesDeSalir($b->getSalida(), $this->reloj->now(), "operar");
+        } catch (VentaRechazada) {
+            return false;
+        }
+
+        return $b->getBoletoVenta()->getEstado() === EstadoBoletoVenta::CONFIRMADA;
     }
 
     /** @return array{id: ?int, origen: string, destino: string} */

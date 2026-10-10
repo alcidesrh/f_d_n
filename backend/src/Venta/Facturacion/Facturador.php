@@ -56,6 +56,33 @@ final class Facturador
         return $factura;
     }
 
+    /**
+     * Anula la factura certificada de la venta en el certificador y la marca
+     * anulada (sin hacer flush). Si ya estaba anulada no vuelve a llamarlo:
+     * sirve para reintentar una anulación que se quedó a medias.
+     *
+     * @throws CertificacionFallida si el certificador no la anuló
+     */
+    public function anular(BoletoVenta $venta, string $motivo): ?Factura
+    {
+        $factura = $venta->getFactura();
+        if ($factura === null || $factura->isAnulada()) {
+            return $factura;
+        }
+        $ahora = $this->reloj->now();
+        $this->certificador->anular(new SolicitudAnulacion(
+            uuid: (string) $factura->getUuid()?->toRfc4122(),
+            emisorNit: (string) $factura->getEmisorNit(),
+            receptorNit: (string) $factura->getReceptopNit(),
+            fechaEmision: \DateTimeImmutable::createFromMutable($factura->getFecha()),
+            fechaAnulacion: $ahora,
+            motivo: $motivo,
+        ));
+        $factura->marcarAnulada($motivo, $ahora);
+
+        return $factura;
+    }
+
     public function solicitud(BoletoVenta $venta): SolicitudDte
     {
         $boletos = $venta->getAsientos()->toArray();

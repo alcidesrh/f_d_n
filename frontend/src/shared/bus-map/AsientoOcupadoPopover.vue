@@ -82,6 +82,15 @@
             <p v-else-if="b.venta.estadoFacturacion === 'pendiente'" class="m-0 text-sm text-muted-color">Factura pendiente de certificar.</p>
           </template>
           <p v-else class="m-0 text-sm text-muted-color">Vendido por otro usuario: no tiene acceso al detalle de esa venta.</p>
+
+          <div v-if="b.completo && b.operable && (permisos.anular || permisos.reasignar)" class="flex flex-wrap justify-end gap-2">
+            <Button v-if="permisos.reasignar" label="Reasignar" size="small" severity="secondary" outlined @click="elegir('reasignar', b)">
+              <template #icon><icon name="swap-horiz" class="mr-1" /></template>
+            </Button>
+            <Button v-if="permisos.anular" label="Anular" size="small" severity="danger" outlined @click="elegir('anular', b)">
+              <template #icon><icon name="cancel-outline" class="mr-1" /></template>
+            </Button>
+          </div>
         </article>
       </template>
     </div>
@@ -91,7 +100,24 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { fetchDetalleAsiento } from '@/core/venta/api'
+import { usePermisosBoleto } from '@/core/venta/permisos'
 import type { BoletoDeAsiento, DetalleAsiento, TrayectoAsiento } from '@/core/venta/types'
+
+const emit = defineEmits<{
+  /** Anular este boleto (el que muestra el detalle). */
+  anular: [boleto: BoletoDeAsiento]
+  /** Reasignar este boleto. */
+  reasignar: [boleto: BoletoDeAsiento]
+}>()
+
+const permisos = usePermisosBoleto()
+void permisos.cargar()
+
+function elegir(accion: 'anular' | 'reasignar', boleto: BoletoDeAsiento) {
+  popover.value?.hide()
+  if (accion === 'anular') emit('anular', boleto)
+  else emit('reasignar', boleto)
+}
 
 const ESTADOS: Record<string, string> = {
   emitido: 'Emitido',

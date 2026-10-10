@@ -93,6 +93,8 @@ export interface TrayectoAsiento {
 
 export interface BoletoDeAsiento {
   id: number
+  /** Emitido y antes de la hora de salida: se puede anular o reasignar (si el usuario tiene permiso). */
+  operable: boolean
   /** `false`: venta de otro vendedor; solo se ve lo operativo. */
   completo: boolean
   estado: string
@@ -190,7 +192,7 @@ export interface Comprobante {
   token: string | null
   canal: CanalVenta
   estado: 'pendiente' | 'confirmada'
-  estadoFacturacion: 'certificada' | 'pendiente' | 'no_aplica'
+  estadoFacturacion: 'certificada' | 'pendiente' | 'no_aplica' | 'anulada'
   /** Número de acceso de la SAT de una venta en contingencia (sin factura aún). */
   numeroAcceso: number | null
   cortesia: boolean
@@ -244,12 +246,15 @@ export interface ErrorVenta {
   /** Facturación: el usuario puede seguir sin factura electrónica. */
   permiteSinFactura?: boolean
   asientos?: number[]
+  /** `venta_incompleta`: la venta y los boletos suyos que faltan para anularla completa. */
+  venta?: number
+  boletos?: number[]
 }
 
 export interface MovimientoAgencia {
   id: number
   fecha: string
-  tipo: 'deposito' | 'bonificacion' | 'venta' | 'ajuste'
+  tipo: 'deposito' | 'bonificacion' | 'venta' | 'ajuste' | 'anulacion'
   monto: Importe
   saldo: Importe
   referencia: string | null
@@ -265,4 +270,53 @@ export interface EstadoAgencia {
   porcentajeBonificacion: string | null
   puedeAcreditar: boolean
   movimientos: MovimientoAgencia[]
+}
+
+/** Un boleto con lo necesario para anularlo, reasignarlo o reimprimirlo (`GET /venta/boletos`). */
+export interface BoletoOperable {
+  id: number
+  estado: string
+  asiento: { id: number; numero: number; clase: 'A' | 'B' }
+  pasajero: string | null
+  precio: Importe | null
+  observacion: string | null
+  trayecto: { id: number; origenId: number; destinoId: number; origen: string; destino: string }
+  salida: {
+    id: number
+    fecha: string
+    estado: SalidaResumen['estado']
+    empresa: Opcion | null
+    bus: string | null
+  }
+  venta: {
+    id: number
+    canal: CanalVenta
+    cortesia: boolean
+    estadoFacturacion: Comprobante['estadoFacturacion']
+    cliente: Cliente | null
+  }
+  /** Se puede anular o reasignar todavía; si no, `motivo` dice por qué. */
+  operable: boolean
+  motivo: string | null
+}
+
+/** Qué puede hacer el usuario con los boletos (`GET /venta/boletos/permisos`). */
+export interface PermisosBoleto {
+  anular: boolean
+  reasignar: boolean
+}
+
+/** Resultado de anular: por venta, lo que se anuló y lo que no. */
+export interface ResultadoAnulacion {
+  anulados: number[]
+  fallidos: Array<ErrorVenta & { venta: number; boletos: number[] }>
+}
+
+export interface PedidoReasignacion {
+  /** Boletos que se reasignan; el boleto `boletos[i]` pasa al asiento `asientos[i]`. */
+  boletos: number[]
+  salida: number
+  trayecto: number | null
+  asientos: number[]
+  cobrarTrayectoCompleto?: boolean
 }

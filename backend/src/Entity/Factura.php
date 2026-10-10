@@ -86,6 +86,13 @@ class Factura {
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $xml = null;
 
+    /** Cuándo se anuló en el certificador; null mientras sigue vigente. */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $anuladaEn = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $motivoAnulacion = null;
+
     /** Etiqueta para mostrar la factura como relación (`serie-dte`). */
     public function getLabel(): string {
         return trim(($this->serie ?? '') . '-' . ($this->dte ?? ''), '-');
@@ -251,6 +258,26 @@ class Factura {
 
     public function setUrlPdf(?string $urlPdf): static {
         $this->urlPdf = $urlPdf;
+
+        return $this;
+    }
+
+    public function getAnuladaEn(): ?\DateTimeImmutable {
+        return $this->anuladaEn;
+    }
+
+    public function getMotivoAnulacion(): ?string {
+        return $this->motivoAnulacion;
+    }
+
+    public function isAnulada(): bool {
+        return $this->anuladaEn !== null;
+    }
+
+    /** Deja constancia de que el certificador anuló el DTE. */
+    public function marcarAnulada(string $motivo, \DateTimeImmutable $cuando): static {
+        $this->anuladaEn = $cuando;
+        $this->motivoAnulacion = mb_substr($motivo, 0, 255);
 
         return $this;
     }
