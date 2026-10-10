@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Chat;
 
 use Psr\Cache\CacheItemPoolInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Quién tiene la aplicación abierta. Cada pestaña ("conexión") late cada
  * ~30 s; un usuario está en línea mientras alguna de sus conexiones haya
  * latido hace menos de `VIGENCIA` segundos. Nada va a la base de datos: los
- * latidos viven en la caché y se apagan solos.
+ * latidos viven en el pool `cache.presencia` (en archivos, para que lo vean todos
+ * los procesos) y se apagan solos.
  *
  * `latir` y `salir` informan si el usuario cambió de estado, para avisarlo
  * al instante (`AvisosChat`); un cierre sin aviso (corte de red, navegador
@@ -21,7 +23,7 @@ final class Presencia
     /** Más de tres latidos: tolera pestañas en segundo plano, donde el navegador frena los temporizadores. */
     public const VIGENCIA = 100;
 
-    public function __construct(private readonly CacheItemPoolInterface $cache) {}
+    public function __construct(#[Autowire(service: "cache.presencia")] private readonly CacheItemPoolInterface $cache) {}
 
     private static function clave(int $usuario): string
     {

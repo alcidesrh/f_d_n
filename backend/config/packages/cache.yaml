@@ -21,6 +21,10 @@ framework:
             cache.migracion:
                 adapter: cache.adapter.filesystem
                 default_lifetime: 300
+            # Latidos de presencia del chat: compartidos entre procesos (en dev `cache.app` es un array por proceso).
+            cache.presencia:
+                adapter: cache.adapter.filesystem
+                default_lifetime: 100
 
 when@dev:
     framework:
