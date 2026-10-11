@@ -20,9 +20,7 @@
         {{ v.trayecto.origen }} → {{ v.trayecto.destino }}
       </div>
       <div class="text-sm first-letter:uppercase text-muted-color">
-        {{ fechaLarga(v.salida.salidaOrigen, region) }},
-        {{ hora(v.salida.salidaOrigen, region)
-        }}<template v-if="v.salida.empresa">
+        <HoraSubida :s="v.salida" /><template v-if="v.salida.empresa">
           · <span class="normal-case">{{ v.salida.empresa }}</span></template
         >
       </div>
@@ -77,12 +75,11 @@ import { computed, onBeforeUnmount, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useCarrito } from "@/carrito";
 import { REGION, type Idioma } from "@/i18n";
-import { fechaLarga, hora, restante } from "@/modelo";
+import { restante } from "@/modelo";
 
 const emit = defineEmits<{ vencio: [] }>();
 const { t, locale } = useI18n();
 const carrito = useCarrito();
-const region = computed(() => REGION[locale.value as Idioma]);
 const ahora = ref(Date.now());
 const reloj = setInterval(() => {
   ahora.value = Date.now();

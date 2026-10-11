@@ -9,8 +9,10 @@ use App\Entity\Asiento;
 use App\Entity\Enclave;
 use App\Entity\Enum\AsientoClase;
 use App\Entity\Enum\EstadoSalida;
+use App\Entity\Enum\PrecisionHora;
 use App\Entity\Salida;
 use App\Venta\Boleto\DatosBoleto;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 
@@ -80,12 +82,18 @@ final class ConsultaVenta
             ["trayecto" => $ofrecido, "precios" => $precios] = $this->precios($r, $it, $subeEn, $destinoId, $sube, $clases);
             $tramo = ($ofrecido !== null ? $it->tramo($ofrecido) : null) ?? new Tramo($p["sube"], $p["baja"] ?? count($it->paradas) - 1);
             $tramos[] = ["salida" => (int) $r->getId(), "sube" => $tramo->desde, "baja" => $tramo->hasta];
-            $filas[] = [$r, $it, $estacionId, $precios];
+            $filas[] = [$r, $it, $estacionId, $precios, $tramo];
         }
         $vendidos = $this->buscador->vendidosEnTramos($tramos);
         $capacidad = array_map(static fn(array $porClase) => array_sum($porClase), $asientos);
 
-        return array_map(fn(array $f) => [...$this->resumen($f[0], $f[1], $f[2], $vendidos, $capacidad), "precios" => $f[3]], $filas);
+        $nombres = $this->nombres(array_merge([], ...array_map(static fn(array $f) => [$f[1]->paradas[$f[4]->desde], $f[1]->paradas[$f[4]->hasta]], $filas)));
+
+        return array_map(fn(array $f) => [
+            ...$this->resumen($f[0], $f[1], $f[2], $vendidos, $capacidad),
+            "precios" => $f[3],
+            "viaje" => self::viaje($f[1], $f[4], $nombres),
+        ], $filas);
     }
 
     /**
@@ -142,6 +150,9 @@ final class ConsultaVenta
                 "salidaInicio" => $r->getFecha()->format(DATE_ATOM),
                 "empresa" => $r->getEmpresa()?->getAlias() ?: $r->getEmpresa()?->getNombre(),
                 "ruta" => $r->getRuta()->getPuntas(),
+                "rutaOrigen" => $r->getRuta()->getOrigen()?->getNombre(),
+                // La hora en la parada del cliente es estimada salvo en el origen del bus.
+                "subeEnOrigen" => $tramo->desde === 0,
                 "clases" => array_map(
                     static function (string $c, $precio) use ($asientos, $estados) {
                         $deClase = array_filter($asientos->toArray(), static fn(Asiento $a) => $a->getClase()->value === $c);
@@ -244,6 +255,25 @@ final class ConsultaVenta
         }
 
         return $lista;
+    }
+
+    /**
+     * Asientos libres que conviene vender para el tramo (`Recomendacion`).
+     *
+     * @return list<int>
+     */
+    public function recomendados(Salida $salida, Tramo $tramo): array
+    {
+        if ($salida->getBus() === null) {
+            return [];
+        }
+
+        return Recomendacion::asientos(
+            array_map(static fn(Asiento $a) => (int) $a->getId(), $salida->getBus()->getAsientos()->toArray()),
+            count($this->itinerarios->deSalida($salida)->paradas) - 1,
+            $tramo,
+            $this->disponibilidad->ocupantes($salida),
+        );
     }
 
     /**
@@ -379,6 +409,48 @@ final class ConsultaVenta
             "vendidos" => $ocupados[$r->getId()] ?? 0,
             "capacidad" => $busId !== null ? ($capacidad[$busId] ?? null) : null,
         ];
+    }
+
+    /**
+     * El viaje del cliente dentro de la salida: dónde sube y dónde baja, a
+     * qué hora (null si no se conoce; `aprox` si es estimada) y cuántas
+     * paradas hay en medio.
+     *
+     * @param array<int, string> $nombres por id de enclave
+     *
+     * @return array{sube: array<string, mixed>, baja: array<string, mixed>, intermedias: int}
+     */
+    private static function viaje(Itinerario $it, Tramo $tramo, array $nombres): array
+    {
+        $parada = static function (int $posicion) use ($it, $nombres): array {
+            $id = $it->paradas[$posicion];
+            $h = $it->hora($id);
+
+            return [
+                "id" => $id,
+                "nombre" => $nombres[$id] ?? null,
+                "hora" => $h !== null && $h["precision"] !== PrecisionHora::DESCONOCIDA ? $h["hora"]->format(DATE_ATOM) : null,
+                "aprox" => $h !== null && $h["precision"] === PrecisionHora::ESTIMADA,
+            ];
+        };
+
+        return ["sube" => $parada($tramo->desde), "baja" => $parada($tramo->hasta), "intermedias" => $tramo->hasta - $tramo->desde - 1];
+    }
+
+    /**
+     * @param list<?int> $ids
+     *
+     * @return array<int, string> nombre por id de enclave
+     */
+    private function nombres(array $ids): array
+    {
+        $ids = array_values(array_unique(array_filter($ids)));
+
+        return $ids === [] ? [] : array_map("strval", $this->em->getConnection()->fetchAllKeyValue(
+            "SELECT id, nombre FROM enclave WHERE id IN (:ids)",
+            ["ids" => $ids],
+            ["ids" => ArrayParameterType::INTEGER],
+        ));
     }
 
     /** Hora estimada del salida en una parada (ISO), si se conoce la duración. */

@@ -37,7 +37,7 @@
           </p>
           <dl class="m-0 grid grid-cols-1 gap-x-6 gap-y-2.5 text-sm sm:grid-cols-2">
             <div><dt class="text-muted-color">{{ t('compra.viaje') }}</dt><dd class="m-0 font-medium">{{ c.origen?.nombre }} → {{ c.destino?.nombre }}</dd></div>
-            <div><dt class="text-muted-color">{{ t('compra.salida') }}</dt><dd class="m-0 font-medium first-letter:uppercase">{{ fechaLarga(c.salida?.salidaOrigen, region) }}, {{ hora(c.salida?.salidaOrigen, region) }}</dd></div>
+            <div><dt class="text-muted-color">{{ t('compra.salida') }}</dt><dd class="m-0 font-medium"><HoraSubida v-if="c.salida" :s="c.salida" /></dd></div>
             <div><dt class="text-muted-color">{{ t('compra.asientos') }}</dt><dd class="m-0 font-medium">{{ c.boletos.map((b) => b.asiento).join(', ') }}</dd></div>
             <div><dt class="text-muted-color">{{ t('compra.total') }}</dt><dd class="m-0 font-medium">{{ c.total.texto }}</dd></div>
             <div><dt class="text-muted-color">{{ t('compra.numero') }}</dt><dd class="m-0 font-mono">{{ c.codigoBarras }}</dd></div>
@@ -80,11 +80,11 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import HoraSubida from '@/componentes/HoraSubida.vue'
 import * as api from '@/api'
 import { useCarrito } from '@/carrito'
 import { mensajeDeError } from '@/errores'
-import { REGION, type Idioma } from '@/i18n'
-import { fechaLarga, hora } from '@/modelo'
+
 import type { Compra } from '@/tipos'
 
 const props = defineProps<{ token: string; error: string | null }>()
@@ -94,7 +94,6 @@ const compras = ref<Compra[]>([])
 const mensaje = ref(props.error ?? '')
 const cargando = ref(true)
 const descargado = ref(false)
-const region = computed(() => REGION[locale.value as Idioma])
 
 onMounted(async () => {
   try {

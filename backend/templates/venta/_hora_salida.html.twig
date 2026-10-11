@@ -1,0 +1,6 @@
+{#- Hora de subida del pasajero (ADR-030): exacta, aproximada o, si no se conoce, la del origen del bus dicha como tal. -#}
+{% if s.salidaPrecision == 'desconocida' %}
+  <div class="val">{{ s.salidaOrigen|date('d/m/Y') }}</div><div class="muted">El bus sale de {{ s.rutaOrigen }} a las {{ s.salidaOrigen|date('h:i A') }}; confirme la hora de abordaje en la estación.</div>
+{% else %}
+  <div class="val">{{ s.salidaOrigen|date('d/m/Y h:i A') }}{% if s.salidaPrecision == 'estimada' %} <span class="muted">aprox.</span>{% endif %}</div>
+{% endif %}

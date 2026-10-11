@@ -7,6 +7,7 @@ namespace App\Venta\Boleto;
 use App\Entity\BoletoAsiento;
 use App\Entity\BoletoVenta;
 use App\Entity\Enum\EstadoBoletoAsiento;
+use App\Entity\Enum\PrecisionHora;
 use Money\Money;
 
 /**
@@ -45,7 +46,10 @@ final class DatosBoleto
      *
      * @return array<string, mixed>
      */
-    public static function de(BoletoVenta $venta, ?\DateTimeImmutable $salidaOrigen = null, ?array $soloIds = null): array
+    /**
+     * @param array{hora: \DateTimeImmutable, precision: PrecisionHora}|null $subida hora donde sube el pasajero (`HorasSalida::subida`)
+     */
+    public static function de(BoletoVenta $venta, ?array $subida = null, ?array $soloIds = null): array
     {
         $boletos = self::boletos($venta, $soloIds);
         $todos = $venta->getAsientos()->count();
@@ -96,9 +100,13 @@ final class DatosBoleto
             ],
             "salida" => $salida === null ? null : [
                 "id" => $salida->getId(),
-                // Salida del inicio de la ruta y hora estimada donde sube el pasajero.
+                // Salida del inicio de la ruta y hora donde sube el pasajero, con su
+                // precisión (`estimada` se imprime "aprox."; `desconocida` es la del
+                // origen del bus y se imprime como tal, ADR-030).
                 "salida" => $salida->getFecha()->format(DATE_ATOM),
-                "salidaOrigen" => ($salidaOrigen ?? \DateTimeImmutable::createFromMutable($salida->getFecha()))->format(DATE_ATOM),
+                "salidaOrigen" => ($subida["hora"] ?? \DateTimeImmutable::createFromMutable($salida->getFecha()))->format(DATE_ATOM),
+                "salidaPrecision" => ($subida["precision"] ?? PrecisionHora::EXACTA)->value,
+                "rutaOrigen" => $salida->getRuta()?->getOrigen()?->getNombre(),
                 "bus" => $salida->getBus()?->getCodigo(),
             ],
             "origen" => $trayecto === null ? null : [

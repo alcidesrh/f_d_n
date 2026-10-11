@@ -273,7 +273,7 @@ function etiquetaDia(delta: number) {
   if (dif === 1) return "Mañana";
   return new Intl.DateTimeFormat("es-GT", { weekday: "short", day: "numeric", month: "short" }).format(d);
 }
-const leyenda: ItemLeyenda[] = ["disponible", "seleccionado", "ocupado", "ocupado-web", "ocupado-agencia", "reservado", "cortesia", "voucher"];
+const leyenda: ItemLeyenda[] = ["disponible", "recomendado", "seleccionado", "ocupado", "ocupado-web", "ocupado-agencia", "reservado", "cortesia", "voucher"];
 
 const opcionesParada = (paradas: Parada[]) =>
   paradas.map((p) => ({

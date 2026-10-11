@@ -22,10 +22,16 @@ final class HorasSalida
         return $h === null || $h["precision"] === PrecisionHora::DESCONOCIDA ? null : $h["hora"];
     }
 
-    /** Como `enParada`, pero cae en la salida del salida si no se conoce. */
-    public function salidaDesde(Salida $salida, int $enclaveId): \DateTimeImmutable
+    /**
+     * Hora de subida en una parada con su precisión. Si no se conoce, la hora
+     * en el origen del bus marcada `desconocida`: quien la muestra no debe
+     * presentarla como la hora del pasajero.
+     *
+     * @return array{hora: \DateTimeImmutable, precision: PrecisionHora}
+     */
+    public function subida(Salida $salida, int $enclaveId): array
     {
-        return $this->enParada($salida, $enclaveId)
-            ?? \DateTimeImmutable::createFromMutable($salida->getFecha());
+        return $this->itinerarios->deSalida($salida)->hora($enclaveId)
+            ?? ["hora" => \DateTimeImmutable::createFromMutable($salida->getFecha()), "precision" => PrecisionHora::DESCONOCIDA];
     }
 }

@@ -30,7 +30,7 @@ Reutiliza del frontend por alias (ver `vite.config.ts` y `tsconfig.app.json`): `
 | `src/modelo.ts` | Reglas puras (tarjeta, estado del mapa, elección, departamentos, fechas, importes) — con tests |
 | `src/errores.ts` | Código del backend → mensaje traducido (+ motivo del banco) |
 | `src/paginas/` | `InicioPagina` (toda la compra), `PagoPagina`, `CompraPagina`; informativas: `Servicios`, `Estaciones`, `Nosotros`, `Politicas`, `Contacto` |
-| `src/componentes/compra/` | `BuscadorViaje`, `ListaSalidas` (acordeón), `TarjetaSalida`, `CroquisSalida` (mapa en vivo), `BarraCompra` (total + "Pagar asientos") |
+| `src/componentes/compra/` | `BuscadorViaje`, `ListaSalidas` (acordeón), `TarjetaSalida` (horas del viaje del cliente: "aprox." fuera del origen del bus, "+1 día", la ruta del bus aparte; ADR-030), `CroquisSalida` (mapa en vivo), `BarraCompra` (total + "Pagar asientos") |
 | `src/componentes/` | Encabezado (menú en cajón en móvil), pie, selector de idioma, resumen del carrito, desafío del banco, íconos |
 | `src/tresDs.ts` | Pasos del navegador en 3-D Secure (formularios a iframes, datos del navegador, huella) |
 | `scripts/prerender.mjs` | HTML por idioma, `sitemap.xml`, `robots.txt` |

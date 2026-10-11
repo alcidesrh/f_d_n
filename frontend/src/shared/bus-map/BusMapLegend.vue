@@ -34,6 +34,7 @@ const ETIQUETAS: Record<ItemLeyenda, string> = {
   A: "Clase A",
   B: "Clase B",
   disponible: "Disponible",
+  recomendado: "Recomendado",
   ocupado: "Estación",
   "ocupado-web": "Página",
   "ocupado-agencia": "Agencia",

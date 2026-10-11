@@ -67,6 +67,13 @@ describe('ticketHtml', () => {
     expect(html).toContain('Formularios Continuos de Centro America')
   })
 
+  it('marca la hora de subida estimada y, si no se conoce, dice que es la del origen del bus', () => {
+    const conSalida = (salidaPrecision: 'exacta' | 'estimada' | 'desconocida') => ticketHtml({ ...base, salida: { ...base.salida!, salidaPrecision, rutaOrigen: 'Guatemala' } })
+    expect(conSalida('estimada')).toMatch(/10:45[^<]* aprox\./)
+    expect(conSalida('exacta')).not.toContain('aprox.')
+    expect(conSalida('desconocida')).toContain('(sale de Guatemala)')
+  })
+
   it('escapa el HTML de los datos', () => {
     expect(ticketHtml(base)).toContain('Jenner &lt;b&gt;')
   })

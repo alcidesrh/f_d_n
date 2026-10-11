@@ -3,8 +3,12 @@
 
   Sobre `shared/data-grid/DataGrid.vue` (ADR-029): tabla cuando el contenedor
   mide 45rem o más (lo que suman los mínimos de las columnas) y, por debajo,
-  tarjetas de dos líneas: hora y trayecto; empresa, precios y asientos
+  tarjetas de dos líneas: hora y viaje; empresa, precios y asientos
   vendidos/libres (el bus solo en la tabla). La salida elegida queda resaltada.
+
+  El viaje es el del cliente (ADR-030): la hora en la estación donde sube
+  ("≈" si es estimada), de dónde a dónde, la llegada ("+1" si es otro día) y
+  las paradas en medio; la ruta del bus queda como dato secundario.
 -->
 <template>
   <DataGrid :columns="columns" :rows="salidas" :row-key="rowKey" :loading="cargando" :selected-keys="seleccion" :row-class="rowClass" :cards-below="45" max-height="38rem" row-clickable class="salidas" @row-click="emit('elegir', ($event as SalidaResumen).id)">
@@ -21,7 +25,10 @@
         <div class="font-medium tabular-nums">{{ horaDe(s(row)) }}</div>
         <div v-if="desdeOrigen(s(row))" class="truncate text-xs text-muted-color" :title="desdeOrigen(s(row))!">{{ desdeOrigen(s(row)) }}</div>
       </div>
-      <GridText v-else-if="column.key === 'trayecto'" :text="trayecto(s(row))" />
+      <div v-else-if="column.key === 'trayecto'" class="min-w-0 leading-tight">
+        <div class="truncate font-medium" :title="trayecto(s(row))">{{ trayecto(s(row)) }}</div>
+        <div v-if="llegada(s(row))" class="truncate text-xs text-muted-color" :title="llegada(s(row))!">{{ llegada(s(row)) }}</div>
+      </div>
       <GridText v-else-if="column.key === 'empresa'" :text="s(row).empresa?.nombre ?? ''" />
       <template v-else-if="column.key === 'bus'">
         <span v-if="s(row).bus" class="truncate" :title="bus(s(row))">
@@ -47,7 +54,7 @@
         </div>
         <div class="tarjeta__linea text-xs text-muted-color">
           <span class="min-w-0 truncate">
-            <template v-if="desdeOrigen(s(row))">{{ desdeOrigen(s(row)) }} · </template>{{ s(row).empresa?.nombre ?? "—" }}
+            <template v-if="llegada(s(row))">{{ llegada(s(row)) }} · </template><template v-if="desdeOrigen(s(row))">{{ desdeOrigen(s(row)) }} · </template>{{ s(row).empresa?.nombre ?? "—" }}
           </span>
           <span v-if="s(row).precios?.length" class="precios">
             <span v-for="p in s(row).precios" :key="p.clase"><b>{{ p.clase }}</b> {{ precioCorto(p.precio) }}</span>
@@ -72,7 +79,7 @@ import { computed } from "vue";
 import DataGrid from "@/shared/data-grid/DataGrid.vue";
 import GridText from "@/shared/data-grid/GridText.vue";
 import type { GridColumn } from "@/shared/data-grid/types";
-import { hora } from "@/core/venta/modelo";
+import { diasEntre, hora, horaViaje } from "@/core/venta/modelo";
 import type { Importe, SalidaResumen } from "@/core/venta/types";
 
 const props = defineProps<{
@@ -84,7 +91,7 @@ const emit = defineEmits<{ elegir: [id: number] }>();
 
 const columns: GridColumn[] = [
   { key: "salida", label: "Salida", width: "6rem" },
-  { key: "trayecto", label: "Trayecto", minWidth: "10rem", width: "2fr" },
+  { key: "trayecto", label: "Viaje", minWidth: "10rem", width: "2fr" },
   { key: "empresa", label: "Empresa", minWidth: "6rem" },
   { key: "bus", label: "Bus", width: "5.5rem" },
   { key: "estado", label: "Estado", width: "6rem" },
@@ -102,11 +109,19 @@ const rowClass = (row: unknown) => {
   return { "is-cancelada": r.estado === "cancelada", "is-no-vendible": !vendible(r) };
 };
 
-/** Hora en la estación elegida (si se conoce) o la de salida del origen. */
-const horaDe = (r: SalidaResumen) => hora(r.salidaEstacion ?? r.salida);
-/** "sale 08:00 de Guatemala" cuando la hora en la estación no es la del origen. */
-const desdeOrigen = (r: SalidaResumen) => (r.salidaEstacion && r.salidaEstacion !== r.salida ? `sale ${hora(r.salida)} de ${r.ruta.origen.nombre}` : null);
-const trayecto = (r: SalidaResumen) => `${r.ruta.origen.nombre ?? ""} → ${r.ruta.destino.nombre ?? ""}`;
+/** Hora donde sube el cliente ("≈" si es estimada; "—" si no se conoce). */
+const horaDe = (r: SalidaResumen) => (r.viaje ? horaViaje(r.viaje.sube) : hora(r.salidaEstacion ?? r.salida));
+/** "sale 08:00 de Guatemala" cuando no se sube en el origen del bus. */
+const desdeOrigen = (r: SalidaResumen) => (r.viaje && r.viaje.sube.id !== r.ruta.origen.id ? `bus sale ${hora(r.salida)} de ${r.ruta.origen.nombre}` : null);
+const trayecto = (r: SalidaResumen) => (r.viaje ? `${r.viaje.sube.nombre ?? ""} → ${r.viaje.baja.nombre ?? ""}` : `${r.ruta.origen.nombre ?? ""} → ${r.ruta.destino.nombre ?? ""}`);
+/** "llega ≈ 05:20 (+1) · 7 paradas". */
+const llegada = (r: SalidaResumen) => {
+  if (!r.viaje) return null;
+  const { sube, baja, intermedias } = r.viaje;
+  const dias = baja.hora ? diasEntre(sube.hora ?? r.salida, baja.hora) : 0;
+  const partes = [baja.hora ? `llega ${horaViaje(baja)}${dias > 0 ? ` (+${dias})` : ""}` : null, intermedias ? `${intermedias} parada${intermedias === 1 ? "" : "s"}` : "directo"];
+  return partes.filter(Boolean).join(" · ");
+};
 const bus = (r: SalidaResumen) => [r.bus?.codigo, r.bus?.gama].filter(Boolean).join(" · ");
 const libres = (r: SalidaResumen) => (r.capacidad ?? 0) - (r.vendidos ?? 0);
 /** "Q 100.00" → "Q 100": en la lista los centavos solo se ven si los hay. */

@@ -92,7 +92,9 @@ export const useVentaStore = defineStore("venta", () => {
   const clasesVendibles = computed(() => (detalle.value ? clasesDelTrayecto(detalle.value, trayectoId.value) : []));
   /** Motivo por el que el salida ya no se vende (p. ej. de un día pasado): el croquis queda de solo lectura. */
   const noVendible = computed(() => detalle.value?.noVendible ?? null);
-  const estadoAsiento = computed(() => estadoEnMapa(ocupados.value, seleccion.value, noVendible.value ? [] : clasesVendibles.value));
+  /** Libres que conviene vender para el tramo (no fragmentan el bus, ADR-030). */
+  const recomendados = shallowRef<number[]>([]);
+  const estadoAsiento = computed(() => estadoEnMapa(ocupados.value, seleccion.value, noVendible.value ? [] : clasesVendibles.value, noVendible.value ? [] : recomendados.value));
   const asientosCroquis = computed(() => detalle.value?.croquis.filter((e): e is AsientoCroquis => e.tipo === "asiento") ?? []);
   const libres = computed(() => asientosCroquis.value.length - ocupados.value.filter((o) => o.estado !== "propio").length);
   const preciosCotizados = computed(() => new Map<number, Importe>((cotizacion.value?.asientos ?? []).map((a) => [a.asiento, a.precio])));
@@ -170,6 +172,7 @@ export const useVentaStore = defineStore("venta", () => {
     salidaId.value = null;
     detalle.value = null;
     ocupados.value = [];
+    recomendados.value = [];
     seleccion.value = [];
     pasajeros.value = {};
     cotizacion.value = null;
@@ -178,7 +181,9 @@ export const useVentaStore = defineStore("venta", () => {
 
   async function cargarOcupacion(silenciosa = false) {
     if (!salidaId.value || trayectoId.value == null) return;
-    ocupados.value = await api.fetchOcupacion(salidaId.value, trayectoId.value, silenciosa);
+    const r = await api.fetchOcupacion(salidaId.value, trayectoId.value, silenciosa);
+    ocupados.value = r.asientos;
+    recomendados.value = r.recomendados ?? [];
   }
 
   /** Refresco en vivo: si otro vendió un asiento elegido, se avisa y se quita. */

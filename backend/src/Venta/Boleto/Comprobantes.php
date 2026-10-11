@@ -25,10 +25,10 @@ final class Comprobantes
     public function de(BoletoVenta $venta, ?array $soloIds = null): array
     {
         $boleto = DatosBoleto::boletos($venta, $soloIds)[0] ?? null;
-        $salida = $boleto === null
+        $subida = $boleto === null
             ? null
-            : $this->horas->salidaDesde($boleto->getSalida(), (int) $boleto->getTrayecto()->getOrigen()->getId());
+            : $this->horas->subida($boleto->getSalida(), (int) $boleto->getTrayecto()->getOrigen()->getId());
 
-        return DatosBoleto::de($venta, $salida, $soloIds);
+        return DatosBoleto::de($venta, $subida, $soloIds);
     }
 }

@@ -38,6 +38,26 @@ describe('SalidasLista', () => {
     w.unmount()
   })
 
+  it('muestra el viaje del cliente: sube y baja, llegada estimada y la ruta del bus aparte', () => {
+    const w = montar([
+      salida(1, {
+        salida: '2026-10-10T23:30:00-06:00',
+        viaje: {
+          sube: { id: 76, nombre: 'Coatepeque', hora: '2026-10-11T00:50:00-06:00', aprox: true },
+          baja: { id: 74, nombre: 'Aguilar Batres', hora: '2026-10-11T05:20:00-06:00', aprox: true },
+          intermedias: 7,
+        },
+      }),
+    ])
+    const fila = w.find('.dg-brow').text()
+    expect(fila).toContain('≈ 12:50')
+    expect(fila).toContain('Coatepeque → Aguilar Batres')
+    expect(fila).toContain('llega ≈ 05:20')
+    expect(fila).toContain('7 paradas')
+    expect(fila).toContain('bus sale 11:30 p. m. de Guatemala')
+    w.unmount()
+  })
+
   it('emite elegir con clic y con Enter, y resalta la elegida', async () => {
     const w = montar([salida(1), salida(2)], 2)
     const filas = w.findAll('.dg-brow')

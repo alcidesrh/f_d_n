@@ -147,3 +147,13 @@ describe('pago: país y 3-D Secure', () => {
     expect(esRetorno3ds('fdn-3ds')).toBe(false)
   })
 })
+
+describe('llegada otro día', async () => {
+  const { diasEntre } = await import('@/modelo')
+
+  it('cuenta días de calendario en Guatemala', () => {
+    expect(diasEntre('2026-10-10T23:30:00-06:00', '2026-10-11T05:20:00-06:00')).toBe(1)
+    expect(diasEntre('2026-10-11T00:50:00-06:00', '2026-10-11T05:20:00-06:00')).toBe(0)
+    expect(diasEntre(null, '2026-10-11T05:20:00-06:00')).toBe(0)
+  })
+})
