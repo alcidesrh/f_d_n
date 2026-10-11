@@ -8,6 +8,8 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use App\Entity\Enum\EstadoSalida;
 use App\Entity\Salida;
 use App\Entity\Trayecto;
+use App\Ruta\Horarios;
+use App\Ruta\RutaDeTrayecto;
 use App\Venta\Transaccion;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
@@ -37,6 +39,8 @@ final class GestionSalidas
         private readonly Esquemas $esquemas,
         private readonly Transaccion $transaccion,
         private readonly EventDispatcherInterface $eventos,
+        private readonly RutaDeTrayecto $rutas,
+        private readonly Horarios $horarios,
     ) {}
 
     /**
@@ -80,6 +84,9 @@ final class GestionSalidas
             if ($trayecto !== $salida->getTrayecto() && $trayecto->getActivo() === false) {
                 throw new SalidaRechazada("El trayecto " . VistaSalida::ruta($trayecto) . " está inactivo.", "trayecto_inactivo");
             }
+            $ruta = $trayecto === $salida->getTrayecto() && $salida->getRuta() !== null
+                ? $salida->getRuta()
+                : ($this->rutas->para($trayecto) ?? throw new SalidaRechazada("El trayecto " . VistaSalida::ruta($trayecto) . " no tiene una ruta con paradas.", "trayecto_sin_ruta"));
             $bus = isset($datos["busId"]) ? $this->esquemas->buses([(int) $datos["busId"]])[(int) $datos["busId"]] : $salida->getBus();
             $fecha = isset($datos["fecha"]) ? self::fecha($datos["fecha"]) : $salida->getFecha();
             if ($fecha != $salida->getFecha() && $fecha < new \DateTime()) {
@@ -99,16 +106,21 @@ final class GestionSalidas
                 array_values($seMueven),
             );
 
-            return $this->aplicar($objetivos, function (Salida $s) use ($trayecto, $bus, $nuevas, $agenda): ?array {
+            $resultado = $this->aplicar($objetivos, function (Salida $s) use ($trayecto, $ruta, $bus, $nuevas, $agenda): ?array {
                 $nueva = $nuevas[$s->getId()];
                 if ($bus !== null && ($choque = $agenda->choque((int) $bus->getId(), $nueva, $trayecto->getDuracionEstimadaMinutos())) !== null) {
                     return ["motivo" => self::CONFLICTO, "choque" => array_diff_key($choque, ["trayectoId" => true])];
                 }
-                $s->setTrayecto($trayecto)->setBus($bus)->setEmpresa($bus?->getEmpresa() ?? $s->getEmpresa())->setFecha($nueva);
+                $s->setTrayecto($trayecto)->setRuta($ruta)->setBus($bus)->setEmpresa($bus?->getEmpresa() ?? $s->getEmpresa())->setFecha($nueva);
                 $bus !== null && $agenda->ocupar((int) $bus->getId(), $nueva, $trayecto->getDuracionEstimadaMinutos(), VistaSalida::referencia($s));
 
                 return null;
             });
+            // El horario se rehace con la fecha, la ruta y el bus nuevos (las que tienen asientos no cambian).
+            $this->em->flush();
+            $this->horarios->fijar(...array_map(static fn(array $a) => (int) $a["id"], $resultado["aplicadas"]));
+
+            return $resultado;
         });
     }
 

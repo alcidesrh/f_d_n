@@ -18,9 +18,10 @@ final class OcupacionTest extends TestCase
     protected function setUp(): void
     {
         // A(1) → B(2) → C(3); trayecto 1 = A→C, 10 = A→B, 11 = B→C.
-        $this->it = Itinerario::construir(1, 1, 3, [
-            ["trayecto" => 10, "origen" => 1, "destino" => 2],
-            ["trayecto" => 11, "origen" => 2, "destino" => 3],
+        $this->it = Itinerario::deParadas(1, [1, 2, 3], [
+            1 => ["origen" => 1, "destino" => 3],
+            10 => ["origen" => 1, "destino" => 2],
+            11 => ["origen" => 2, "destino" => 3],
         ]);
     }
 
@@ -83,12 +84,13 @@ final class OcupacionTest extends TestCase
     public function testUnAsientoSeRevendeEnLosSubtrayectosQueNoSeSolapan(): void
     {
         // Guatemala(1) → Morales(2) → Río Dulce(3) → Santa Elena(4), todos los pares.
-        $it = Itinerario::construir(1, 1, 4, [
-            ["trayecto" => 12, "origen" => 1, "destino" => 2],
-            ["trayecto" => 10, "origen" => 1, "destino" => 3],
-            ["trayecto" => 23, "origen" => 2, "destino" => 3],
-            ["trayecto" => 24, "origen" => 2, "destino" => 4],
-            ["trayecto" => 11, "origen" => 3, "destino" => 4],
+        $it = Itinerario::deParadas(1, [1, 2, 3, 4], [
+            1 => ["origen" => 1, "destino" => 4],
+            12 => ["origen" => 1, "destino" => 2],
+            10 => ["origen" => 1, "destino" => 3],
+            23 => ["origen" => 2, "destino" => 3],
+            24 => ["origen" => 2, "destino" => 4],
+            11 => ["origen" => 3, "destino" => 4],
         ]);
         // Asiento 5 vendido Guatemala → Morales por la agencia; asiento 6 Río Dulce → Santa Elena en la web.
         $ocupantes = [

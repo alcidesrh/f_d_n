@@ -6,7 +6,7 @@ namespace App\Migration\Salida;
 
 use App\Entity\Trayecto;
 use App\Ruta\Horarios;
-use App\Venta\Itinerarios;
+use App\Ruta\RutaDeTrayecto;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
@@ -17,9 +17,8 @@ use Doctrine\ORM\EntityManagerInterface;
  *
  * 1. Migra todas las rutas del legado con sus paradas y tiempos.
  * 2. A cada salida del legado le asigna la ruta de su itinerario del legado.
- *    Las creadas en el sistema nuevo (sin legado) toman la ruta del legado
- *    con las mismas puntas que más salidas tiene; si no hay, se crea una
- *    con el orden deducido de sus subtrayectos (`App\Venta\Itinerario`).
+ *    Las creadas en el sistema nuevo (sin legado) toman la ruta con las
+ *    mismas puntas que más salidas tiene (`RutaDeTrayecto`).
  * 3. Fija el horario de todas las salidas (`Horarios`).
  * 4. Pone el tramo por orden a boletos y reservas a partir de su trayecto
  *    (el par que se migró del legado); fuera de la ruta, la salida completa.
@@ -34,7 +33,7 @@ final class RellenoRutas
         private readonly LectorLegado $legado,
         private readonly RutasLegado $rutas,
         private readonly Horarios $horarios,
-        private readonly Itinerarios $itinerarios,
+        private readonly RutaDeTrayecto $rutaDeTrayecto,
         private readonly EntityManagerInterface $em,
     ) {}
 
@@ -107,56 +106,28 @@ final class RellenoRutas
 
     /**
      * Las filas de `$tabla` (salida o esquema) sin ruta toman la ruta con sus
-     * mismas puntas que más salidas tiene; si no hay, una nueva desde el
-     * orden de los subtrayectos.
+     * mismas puntas que más salidas tiene (`RutaDeTrayecto`); si no hay, se
+     * cuentan y quedan sin ruta.
      *
      * @return array<string, int>
      */
     private function rutasPorPuntas(string $tabla): array
     {
-        $trayectos = array_map("intval", $this->db->fetchFirstColumn(
-            "SELECT DISTINCT trayecto_id FROM {$tabla} WHERE ruta_id IS NULL",
-        ));
-        $existentes = 0;
-        $creadas = 0;
-        foreach ($trayectos as $trayectoId) {
-            $rutaId = $this->db->fetchOne(
-                "SELECT r.id FROM ruta r
-                   JOIN trayecto t ON t.id = :t
-                   JOIN parada po ON po.ruta_id = r.id AND po.orden = 0 AND po.enclave_id = t.origen_id
-                   JOIN parada pd ON pd.ruta_id = r.id AND pd.enclave_id = t.destino_id
-                    AND pd.orden = (SELECT MAX(orden) FROM parada WHERE ruta_id = r.id)
-                  ORDER BY (SELECT COUNT(*) FROM salida s WHERE s.ruta_id = r.id) DESC, r.id
-                  LIMIT 1",
-                ["t" => $trayectoId],
-            );
-            if ($rutaId === false) {
-                $rutaId = $this->crearDesdeSubtrayectos($trayectoId);
-                $creadas++;
-            } else {
-                $existentes++;
+        $con = 0;
+        $sin = 0;
+        foreach ($this->db->fetchFirstColumn("SELECT DISTINCT trayecto_id FROM {$tabla} WHERE ruta_id IS NULL") as $trayectoId) {
+            $ruta = $this->rutaDeTrayecto->para($this->em->find(Trayecto::class, (int) $trayectoId));
+            if ($ruta === null) {
+                $sin++;
+                continue;
             }
+            $con++;
             $this->db->executeStatement(
                 "UPDATE {$tabla} SET ruta_id = :r WHERE trayecto_id = :t AND ruta_id IS NULL",
-                ["r" => $rutaId, "t" => $trayectoId],
+                ["r" => $ruta->getId(), "t" => $trayectoId],
             );
         }
 
-        return ["{$tabla}_por_puntas" => $existentes, "{$tabla}_ruta_creada" => $creadas];
-    }
-
-    private function crearDesdeSubtrayectos(int $trayectoId): int
-    {
-        $trayecto = $this->em->find(Trayecto::class, $trayectoId);
-        $paradas = $this->itinerarios->deTrayecto($trayecto)->paradas;
-        $rutaId = (int) $this->db->fetchOne(
-            "INSERT INTO ruta (nombre, kilometros, activo, legacy_id) VALUES (:n, NULL, true, NULL) RETURNING id",
-            ["n" => sprintf("%s - %s", $trayecto->getOrigen()->getNombre(), $trayecto->getDestino()->getNombre())],
-        );
-        foreach ($paradas as $orden => $enclave) {
-            $this->db->insert("parada", ["ruta_id" => $rutaId, "enclave_id" => $enclave, "orden" => $orden, "permite_subir" => "true", "permite_bajar" => "true"]);
-        }
-
-        return $rutaId;
+        return ["{$tabla}_por_puntas" => $con, "{$tabla}_trayecto_sin_ruta" => $sin];
     }
 }

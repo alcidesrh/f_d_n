@@ -96,13 +96,13 @@ final class ReglasVenta
             ->modify(sprintf("-%d minutes", self::LIBERACION_MINUTOS));
     }
 
-    /** Trayecto que viaja el cliente: el del salida o uno de sus subtrayectos. */
+    /** Trayecto que viaja el cliente: el de la salida o el de un par de sus paradas. */
     public function trayecto(Salida $salida, ?int $trayectoId): Trayecto
     {
         if ($trayectoId === null || $trayectoId === $salida->getTrayecto()->getId()) {
             return $salida->getTrayecto();
         }
-        if (!$this->itinerarios->deTrayecto($salida->getTrayecto())->contieneTrayecto($trayectoId)) {
+        if (!$this->itinerarios->deSalida($salida)->contieneTrayecto($trayectoId)) {
             throw new VentaRechazada("El trayecto elegido no es parte del salida.");
         }
 
@@ -112,7 +112,7 @@ final class ReglasVenta
 
     public function tramo(Salida $salida, Trayecto $trayecto): Tramo
     {
-        return $this->itinerarios->deTrayecto($salida->getTrayecto())->tramo((int) $trayecto->getId())
+        return $this->itinerarios->deSalida($salida)->tramo((int) $trayecto->getId())
             ?? throw new VentaRechazada("El trayecto elegido no es parte del salida.");
     }
 

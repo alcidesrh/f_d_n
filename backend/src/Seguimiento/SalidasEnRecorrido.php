@@ -66,7 +66,7 @@ class SalidasEnRecorrido
             return [];
         }
 
-        $itinerarios = $this->itinerarios->deTrayectos(array_map(static fn(Salida $s) => $s->getTrayecto(), $salidas));
+        $itinerarios = $this->itinerarios->deSalidas($salidas);
         $ids = [];
         foreach ($itinerarios as $it) {
             array_push($ids, ...$it->paradas);
@@ -85,7 +85,7 @@ class SalidasEnRecorrido
         $out = [];
         foreach ($salidas as $s) {
             $paradas = [];
-            foreach ($itinerarios[$s->getTrayecto()->getId()]->paradas as $id) {
+            foreach ($itinerarios[$s->getId()]->paradas as $id) {
                 if (isset($enclaves[$id])) {
                     $paradas[] = $enclaves[$id];
                 }

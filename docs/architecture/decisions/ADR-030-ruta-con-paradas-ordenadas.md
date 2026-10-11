@@ -67,7 +67,7 @@ Cada fase deja la aplicación funcionando y actualiza docs y borra lo que queda 
 |---|---|---|
 | 0 | Este ADR y el glosario | Hecha |
 | 1 | Entidades nuevas (aditivas), migrador desde el legado, `app:ruta:rellenar` | Hecha |
-| 2 | `Itinerarios` y las horas leen de `Parada`/`SalidaParada`; fuera el orden topológico | |
+| 2 | `Itinerarios` y las horas leen de `Parada`/`SalidaParada`; fuera el orden topológico | Hecha: `Itinerarios::deSalida` lee `salida_parada`; el programador y la edición fijan ruta (`RutaDeTrayecto`, transitorio) y horario |
 | 3 | Búsqueda por hora en el origen; libres por tramo | |
 | 4 | Ocupación por `orden`; restricción de exclusión | |
 | 5 | `Salida.ruta` y `EsquemaSalida.ruta` obligatorias; fuera `Salida.trayecto` | |

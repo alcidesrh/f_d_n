@@ -103,7 +103,7 @@ final class Disponibilidad
     public function estados(Salida $salida, Tramo $tramo, ?string $tokenPropio = null): array
     {
         return Ocupacion::estados(
-            $this->itinerarios->deTrayecto($salida->getTrayecto()),
+            $this->itinerarios->deSalida($salida),
             $tramo,
             $this->ocupantes($salida),
             $tokenPropio,

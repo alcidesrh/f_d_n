@@ -52,13 +52,13 @@ final class ConsultaVenta
             static fn(Salida $r) => ($empresaId === null || $r->getEmpresa()?->getId() === $empresaId)
                 && ($incluirAnuladas || $r->getEstado() !== EstadoSalida::CANCELADA),
         ));
-        $itinerarios = $this->itinerarios->deTrayectos(array_map(static fn(Salida $r) => $r->getTrayecto(), $salidas));
+        $itinerarios = $this->itinerarios->deSalidas($salidas);
 
         $asientos = $this->asientosPorBus($salidas);
 
         $filas = [];
         foreach ($salidas as $r) {
-            $it = $itinerarios[$r->getTrayecto()->getId()];
+            $it = $itinerarios[$r->getId()];
             $pos = $estacionId !== null ? $it->posicion($estacionId) : 0;
             if ($pos === null || $pos >= count($it->paradas) - 1) {
                 continue;
@@ -99,11 +99,11 @@ final class ConsultaVenta
                 && $r->getBus() !== null
                 && $ahora < $this->reglas->cierreEnLinea($r),
         );
-        $itinerarios = $this->itinerarios->deTrayectos(array_map(static fn(Salida $r) => $r->getTrayecto(), $salidas));
+        $itinerarios = $this->itinerarios->deSalidas($salidas);
 
         $resultado = [];
         foreach ($salidas as $r) {
-            $it = $itinerarios[$r->getTrayecto()->getId()];
+            $it = $itinerarios[$r->getId()];
             $trayectoId = $it->trayectoEntre($origenId, $destinoId);
             if ($trayectoId === null) {
                 continue;
@@ -173,7 +173,7 @@ final class ConsultaVenta
      */
     public function detalle(Salida $salida): array
     {
-        $it = $this->itinerarios->deTrayecto($salida->getTrayecto());
+        $it = $this->itinerarios->deSalida($salida);
         $enclaves = $this->enclaves($it->paradas);
         $croquis = $salida->getBus() !== null ? $this->croquis->leer($salida->getBus())["elementos"] : [];
         // Sin bus asignado aún no hay asientos: se informa con todas las clases.

@@ -4,87 +4,99 @@ declare(strict_types=1);
 
 namespace App\Venta;
 
-use App\Entity\Subtrayecto;
-use App\Entity\Trayecto;
+use App\Entity\Enum\PrecisionHora;
+use App\Entity\Salida;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Contracts\Service\ResetInterface;
 
 /**
- * Lee el `Itinerario` de un trayecto desde sus subtrayectos. Memoiza por
- * petición (se vacía en cada request: FrankenPHP en modo worker reutiliza
- * el servicio).
+ * Lee el `Itinerario` de una salida desde su horario (`salida_parada`,
+ * ADR-030) y los trayectos que unen sus paradas. Memoiza por petición (se
+ * vacía en cada request: FrankenPHP en modo worker reutiliza el servicio).
+ * Una salida sin horario (no debería haberla) queda con sus dos puntas.
  */
 final class Itinerarios implements ResetInterface
 {
-    /** @var array<int, Itinerario> */
+    /** @var array<int, Itinerario> por id de salida */
     private array $cache = [];
 
     public function __construct(
         private readonly EntityManagerInterface $em,
     ) {}
 
-    public function deTrayecto(Trayecto $trayecto): Itinerario
+    public function deSalida(Salida $salida): Itinerario
     {
-        return $this->deTrayectos([$trayecto])[$trayecto->getId()];
+        return $this->deSalidas([$salida])[$salida->getId()];
     }
 
     /**
-     * @param iterable<Trayecto> $trayectos
+     * @param iterable<Salida> $salidas
      *
-     * @return array<int, Itinerario> por id de trayecto
+     * @return array<int, Itinerario> por id de salida
      */
-    public function deTrayectos(iterable $trayectos): array
+    public function deSalidas(iterable $salidas): array
     {
         $faltan = [];
         $resultado = [];
-        foreach ($trayectos as $t) {
-            if (isset($this->cache[$t->getId()])) {
-                $resultado[$t->getId()] = $this->cache[$t->getId()];
+        foreach ($salidas as $s) {
+            if (isset($this->cache[$s->getId()])) {
+                $resultado[$s->getId()] = $this->cache[$s->getId()];
             } else {
-                $faltan[$t->getId()] = $t;
+                $faltan[$s->getId()] = $s;
             }
         }
         if ($faltan === []) {
             return $resultado;
         }
 
-        $filas = $this->em->createQueryBuilder()
-            ->select(
-                "IDENTITY(s.belowTo) AS padre",
-                "t.id AS trayecto",
-                "IDENTITY(t.origen) AS origen",
-                "IDENTITY(t.destino) AS destino",
-                "t.duracionEstimadaMinutos AS minutos",
-            )
-            ->from(Subtrayecto::class, "s")
-            ->join("s.trayecto", "t")
-            ->where("s.belowTo IN (:padres)")
-            ->andWhere("s.activo IS NULL OR s.activo = true")
-            ->setParameter("padres", array_keys($faltan))
-            ->getQuery()
-            ->getArrayResult();
-
-        $porPadre = [];
-        foreach ($filas as $f) {
-            $porPadre[(int) $f["padre"]][] = [
-                "trayecto" => (int) $f["trayecto"],
-                "origen" => (int) $f["origen"],
-                "destino" => (int) $f["destino"],
-                "minutos" => $f["minutos"] !== null ? (int) $f["minutos"] : null,
+        $db = $this->em->getConnection();
+        $ids = array_keys($faltan);
+        $paradas = [];
+        $horas = [];
+        foreach ($db->fetchAllAssociative(
+            "SELECT salida_id, enclave_id, hora, precision FROM salida_parada WHERE salida_id IN (:ids) ORDER BY salida_id, orden",
+            ["ids" => $ids],
+            ["ids" => ArrayParameterType::INTEGER],
+        ) as $f) {
+            $s = (int) $f["salida_id"];
+            $e = (int) $f["enclave_id"];
+            $paradas[$s][] = $e;
+            $horas[$s][$e] = [
+                "hora" => new \DateTimeImmutable((string) $f["hora"]),
+                "precision" => PrecisionHora::from((string) $f["precision"]),
             ];
         }
+        $trayectos = [];
+        foreach ($db->fetchAllAssociative(
+            "SELECT o.salida_id, t.id, t.origen_id, t.destino_id
+               FROM salida_parada o
+               JOIN salida_parada d ON d.salida_id = o.salida_id AND d.orden > o.orden
+               JOIN trayecto t ON t.origen_id = o.enclave_id AND t.destino_id = d.enclave_id
+              WHERE o.salida_id IN (:ids)",
+            ["ids" => $ids],
+            ["ids" => ArrayParameterType::INTEGER],
+        ) as $f) {
+            $trayectos[(int) $f["salida_id"]][(int) $f["id"]] = ["origen" => (int) $f["origen_id"], "destino" => (int) $f["destino_id"]];
+        }
 
-        foreach ($faltan as $id => $t) {
-            $resultado[$id] = $this->cache[$id] = Itinerario::construir(
-                $id,
-                (int) $t->getOrigen()->getId(),
-                (int) $t->getDestino()->getId(),
-                $porPadre[$id] ?? [],
-                $t->getDuracionEstimadaMinutos(),
+        foreach ($faltan as $id => $s) {
+            $t = $s->getTrayecto();
+            $resultado[$id] = $this->cache[$id] = Itinerario::deParadas(
+                (int) $t->getId(),
+                $paradas[$id] ?? [(int) $t->getOrigen()->getId(), (int) $t->getDestino()->getId()],
+                ($trayectos[$id] ?? []) + [(int) $t->getId() => ["origen" => (int) $t->getOrigen()->getId(), "destino" => (int) $t->getDestino()->getId()]],
+                $horas[$id] ?? [],
             );
         }
 
         return $resultado;
+    }
+
+    /** Olvida lo leído de una salida (su horario cambió en esta petición). */
+    public function olvidar(int $salidaId): void
+    {
+        unset($this->cache[$salidaId]);
     }
 
     public function reset(): void

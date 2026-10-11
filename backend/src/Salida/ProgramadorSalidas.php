@@ -5,11 +5,14 @@ declare(strict_types=1);
 namespace App\Salida;
 
 use App\Entity\Bus;
+use App\Entity\Ruta;
 use App\Entity\Salida;
 use App\Entity\Trayecto;
 use App\Entity\Usuario;
 use App\Salida\Programacion\Momento;
 use App\Salida\Programacion\Programacion;
+use App\Ruta\Horarios;
+use App\Ruta\RutaDeTrayecto;
 use App\Venta\Transaccion;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
@@ -38,6 +41,8 @@ final class ProgramadorSalidas
         private readonly AgendaFlota $agendas,
         private readonly Esquemas $esquemas,
         private readonly Transaccion $transaccion,
+        private readonly RutaDeTrayecto $rutas,
+        private readonly Horarios $horarios,
     ) {}
 
     /** @return array{items: list<array<string, mixed>>, resumen: array<string, int>} */
@@ -60,21 +65,23 @@ final class ProgramadorSalidas
             $this->em->find(Trayecto::class, $p->trayectoId, LockMode::PESSIMISTIC_WRITE);
             $plan = $this->plan($p);
 
-            $creadas = 0;
+            $creadas = [];
             foreach ($plan["items"] as $i) {
                 if ($i["estado"] !== self::NUEVA) {
                     continue;
                 }
                 $salida = (new Salida())
                     ->setTrayecto($plan["trayecto"])
+                    ->setRuta($plan["ruta"])
                     ->setBus($i["bus"])
                     ->setEmpresa($i["bus"]->getEmpresa())
                     ->setCreatedBy($usuario)
                     ->setFecha(\DateTime::createFromImmutable($i["fecha"]));
                 $this->em->persist($salida);
-                ++$creadas;
+                $creadas[] = $salida;
             }
             $this->em->flush();
+            $this->horarios->fijar(...array_map(static fn(Salida $s) => (int) $s->getId(), $creadas));
 
             $esquema = null;
             if ($guardarComo !== null && trim($guardarComo) !== "") {
@@ -87,7 +94,7 @@ final class ProgramadorSalidas
             }
 
             return [
-                "creadas" => $creadas,
+                "creadas" => count($creadas),
                 "resumen" => self::resumen($plan["items"]),
                 "omitidas" => array_values(array_map(
                     self::item(...),
@@ -99,7 +106,7 @@ final class ProgramadorSalidas
     }
 
     /**
-     * @return array{trayecto: Trayecto, items: list<array{fecha: \DateTimeImmutable, bus: Bus, estado: string, choque: mixed}>}
+     * @return array{trayecto: Trayecto, ruta: Ruta, items: list<array{fecha: \DateTimeImmutable, bus: Bus, estado: string, choque: mixed}>}
      */
     private function plan(Programacion $p): array
     {
@@ -108,6 +115,8 @@ final class ProgramadorSalidas
         if ($trayecto->getActivo() === false) {
             throw new SalidaRechazada("El trayecto " . VistaSalida::ruta($trayecto) . " está inactivo.", "trayecto_inactivo");
         }
+        $ruta = $this->rutas->para($trayecto)
+            ?? throw new SalidaRechazada("El trayecto " . VistaSalida::ruta($trayecto) . " no tiene una ruta con paradas.", "trayecto_sin_ruta");
         $buses = $this->esquemas->buses($p->busIds());
         $duracion = $trayecto->getDuracionEstimadaMinutos();
         $agenda = $this->agendas->de($p->busIds(), $p->desde, $p->hasta->modify("+3 days"));
@@ -128,7 +137,7 @@ final class ProgramadorSalidas
             $items[] = ["fecha" => $fecha, "bus" => $buses[$busId], "estado" => $estado, "choque" => $choque];
         }
 
-        return ["trayecto" => $trayecto, "items" => $items];
+        return ["trayecto" => $trayecto, "ruta" => $ruta, "items" => $items];
     }
 
     /** @param array{fecha: \DateTimeImmutable, bus: Bus, estado: string, choque: mixed} $i @return array<string, mixed> */
