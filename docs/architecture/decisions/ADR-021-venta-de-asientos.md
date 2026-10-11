@@ -1,6 +1,6 @@
 # ADR-021: Venta de asientos por tres canales (taquilla, agencia, web) con factura electrónica
 
-**Estado:** Aceptada (carrito, cierre en línea y flujo de la página web: reemplazados por [ADR-023](ADR-023-pagina-web-compra-en-una-pagina.md))
+**Estado:** Aceptada; itinerario, tramo y ocupación enmendados por [ADR-030](ADR-030-ruta-con-paradas-ordenadas.md) (paradas guardadas en `Ruta`, tramo por `orden`). (Carrito, cierre en línea y flujo de la página web: reemplazados por [ADR-023](ADR-023-pagina-web-compra-en-una-pagina.md))
 
 ## Contexto
 
