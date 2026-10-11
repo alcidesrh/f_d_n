@@ -31,7 +31,7 @@ final class DetalleSalida
         $detalle = $this->consulta->detalle($salida);
         $ocupados = $this->consulta->ocupacion(
             $salida,
-            $this->itinerarios->deTrayecto($salida->getTrayecto())->completo(),
+            $this->itinerarios->deSalida($salida)->completo(),
         );
         $manifiesto = $this->manifiestos->de($salida);
 

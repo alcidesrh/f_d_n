@@ -15,6 +15,14 @@ const esc = (v: unknown) =>
 
 const SEP = '<div class="sep">**************************</div>'
 
+
+/** Hora de subida (ADR-030): "aprox." si es estimada; si no se conoce, la del origen del bus dicha como tal. */
+function horaSalida(c: Comprobante): string {
+  const s = c.salida
+  if (s?.salidaPrecision === 'desconocida') return `${esc(hora(s.salidaOrigen))} (sale de ${esc(s.rutaOrigen)})`
+  return `${esc(hora(s?.salidaOrigen))}${s?.salidaPrecision === 'estimada' ? ' aprox.' : ''}`
+}
+
 export function ticketHtml(c: Comprobante): string {
   const f = c.factura
   const pasajeros = c.boletos
@@ -55,7 +63,7 @@ ${factura}
 ${SEP}
 <p class="c"><b>VÁLIDO ÚNICAMENTE PARA LA HORA Y FECHA DE SALIDA.</b></p>
 <div class="g">
-  <div><span class="lbl">Hora salida:</span><br>${esc(hora(c.salida?.salidaOrigen))}</div>
+  <div><span class="lbl">Hora salida:</span><br>${horaSalida(c)}</div>
   <div><span class="lbl">Día:</span><br>${esc(fecha(c.salida?.salidaOrigen))}</div>
   <div><span class="lbl">Sale de:</span><br>${esc(c.origen?.nombre)}</div>
   <div><span class="lbl">Destino:</span><br>${esc(c.destino?.nombre)}</div>

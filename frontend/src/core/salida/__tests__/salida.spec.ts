@@ -9,7 +9,7 @@ const hoy = new Date(2026, 9, 2, 9, 0)
 
 const form = (extra: Partial<ProgramadorForm> = {}): ProgramadorForm => ({
   ...formInicial(hoy),
-  trayectoId: 7,
+  rutaId: 7,
   momentos: [
     { hora: '6:05', busId: 1 },
     { hora: '14:30', busId: 2 },
@@ -21,7 +21,7 @@ const form = (extra: Partial<ProgramadorForm> = {}): ProgramadorForm => ({
 const esquema: Esquema = {
   id: 3,
   nombre: 'Xela mañana',
-  trayecto: { id: 7, origen: 'Xela', destino: 'Guatemala', ruta: 'Xela → Guatemala', duracionMinutos: 240 },
+  ruta: { id: 7, nombre: 'Xela → Guatemala', origen: 'Xela', destino: 'Guatemala', paradas: 5, duracionMinutos: 240 },
   intervaloDias: 2,
   momentos: [
     { hora: '06:05', busId: 1, bus: '95' },
@@ -38,7 +38,7 @@ describe('programador de salidas', () => {
     expect(diasProgramados(f)).toEqual(['2026-10-05'])
     expect(errores(f, hoy)).toEqual([])
     expect(aPayload(f)).toEqual({
-      trayectoId: 7,
+      rutaId: 7,
       momentos: [
         { hora: '06:05', busId: 1 },
         { hora: '14:30', busId: 2 },
@@ -66,7 +66,7 @@ describe('programador de salidas', () => {
   })
 
   it('valida antes de pedir la vista previa', () => {
-    expect(errores(form({ trayectoId: null }), hoy)).toContain('Elija el trayecto.')
+    expect(errores(form({ rutaId: null }), hoy)).toContain('Elija la ruta.')
     expect(errores(form({ momentos: [{ hora: '25:00', busId: 1 }] }), hoy)[0]).toMatch(/no es válida/)
     expect(errores(form({ momentos: [{ hora: '07:00', busId: null }] }), hoy)[0]).toMatch(/Elija el bus/)
     expect(errores(form({ momentos: [{ hora: '7:00', busId: 1 }, { hora: '07:00', busId: 1 }] }), hoy)[0]).toMatch(/dos veces/)
@@ -84,8 +84,8 @@ describe('programador de salidas', () => {
   })
 
   it('carga un esquema y detecta cambios', () => {
-    const f = conEsquema(form({ trayectoId: null, momentos: [] }), esquema)
-    expect(f.trayectoId).toBe(7)
+    const f = conEsquema(form({ rutaId: null, momentos: [] }), esquema)
+    expect(f.rutaId).toBe(7)
     expect(f.momentos).toEqual([
       { hora: '06:05', busId: 1 },
       { hora: '14:30', busId: 2 },
@@ -95,7 +95,7 @@ describe('programador de salidas', () => {
     expect(difiereDeEsquema({ ...f, momentos: [{ hora: '6:05', busId: 1 }, { hora: '14:30', busId: 2 }] }, esquema)).toBe(false)
     expect(difiereDeEsquema({ ...f, momentos: [{ hora: '06:05', busId: 3 }, { hora: '14:30', busId: 2 }] }, esquema)).toBe(true)
     expect(difiereDeEsquema({ ...f, momentos: [{ hora: '06:05', busId: 1 }] }, esquema)).toBe(true)
-    expect(aEsquema(f, ' Nuevo ')).toEqual({ nombre: 'Nuevo', trayectoId: 7, intervaloDias: 2, momentos: [{ hora: '06:05', busId: 1 }, { hora: '14:30', busId: 2 }] })
+    expect(aEsquema(f, ' Nuevo ')).toEqual({ nombre: 'Nuevo', rutaId: 7, intervaloDias: 2, momentos: [{ hora: '06:05', busId: 1 }, { hora: '14:30', busId: 2 }] })
   })
 })
 

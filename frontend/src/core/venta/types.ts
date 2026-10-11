@@ -31,6 +31,30 @@ export interface ContextoVenta {
   naciones: Opcion[]
 }
 
+/** Ruta que recorre el bus de una salida (ADR-030). */
+export interface RutaVenta {
+  id: number
+  nombre: string
+  origen: Opcion
+  destino: Opcion
+}
+
+/** Una punta del viaje del cliente: hora null si no se conoce; `aprox` si es estimada. */
+export interface ParadaViaje {
+  id: number
+  nombre: string | null
+  hora: string | null
+  aprox: boolean
+}
+
+/** El viaje del cliente dentro de la salida (ADR-030). */
+export interface ViajeCliente {
+  sube: ParadaViaje
+  baja: ParadaViaje
+  /** Paradas entre la de subida y la de bajada. */
+  intermedias: number
+}
+
 export interface SalidaResumen {
   id: number
   /** Salida del origen del salida (ISO). */
@@ -40,9 +64,17 @@ export interface SalidaResumen {
   estado: 'programada' | 'abordando' | 'iniciada' | 'finalizada' | 'cancelada'
   empresa: Opcion | null
   bus: { id: number; codigo: string; gama: string | null } | null
-  trayecto: { id: number; origen: Opcion; destino: Opcion }
+  ruta: RutaVenta
+  /** Asientos ocupados en el tramo que se ofrece (en la lista de la estación). */
   vendidos: number | null
   capacidad: number | null
+  /**
+   * Precio por clase de asiento desde la estación hasta el destino elegido
+   * (o hasta el final); vacío si ese tramo no tiene tarifa. Solo en la lista.
+   */
+  precios?: { clase: ClaseAsiento; precio: Importe | null }[]
+  /** Dónde sube y baja quien compra en la estación (solo en la lista). */
+  viaje?: ViajeCliente
 }
 
 export interface Parada {
@@ -53,7 +85,7 @@ export interface Parada {
   hora: string | null
 }
 
-/** Trayecto de la salida (el suyo o un subtrayecto) con tarifa: solo esos se venden. */
+/** Par de paradas de la salida con tarifa: solo esos se venden. `completo`: de la primera a la última. */
 export interface TrayectoVendible {
   id: number
   origen: number
@@ -220,8 +252,12 @@ export interface Comprobante {
     urlPdf: string | null
   } | null
   cliente: { nombre: string; nit: string; email: string | null } | null
-  /** `salida`: inicio de la ruta; `salidaOrigen`: hora estimada donde sube el pasajero. */
-  salida: { id: number; salida: string; salidaOrigen: string; bus: string | null } | null
+  /**
+   * `salida`: inicio de la ruta; `salidaOrigen`: hora donde sube el pasajero,
+   * `exacta` (sube en el origen del bus), `estimada` o `desconocida` (entonces
+   * es la del origen del bus, `rutaOrigen`; ADR-030).
+   */
+  salida: { id: number; salida: string; salidaOrigen: string; salidaPrecision?: 'exacta' | 'estimada' | 'desconocida'; rutaOrigen?: string | null; bus: string | null } | null
   origen: { nombre: string; direccion: string | null } | null
   destino: { nombre: string; direccion: string | null } | null
   boletos: Array<{

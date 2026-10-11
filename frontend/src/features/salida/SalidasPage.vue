@@ -2,7 +2,7 @@
   Salidas (ADR-024): por defecto sin finalizadas ni anuladas, primero las
   que están en ruta, luego las que abordan y después las programadas de la
   más próxima a la más lejana. Filtros por estado (con conteo), fechas,
-  empresa, trayecto y bus. Por fila: editar, anular (queda como cancelada)
+  empresa, ruta y bus. Por fila: editar, anular (queda como cancelada)
   y eliminar, con la opción de propagarlo a las futuras idénticas. Ver abre el
   croquis con la ocupación y el resumen de venta; el menú PDF genera el
   manifiesto interno y el del piloto.
@@ -38,8 +38,8 @@
           <DatePicker v-model="hasta" date-format="dd/mm/yy" show-icon show-button-bar fluid :min-date="desde ?? undefined" />
         </label>
         <label class="col-span-2 flex flex-col gap-1 @3xl:col-span-1">
-          <span class="text-xs font-medium text-muted-color">Trayecto</span>
-          <Select v-model="filtro.trayecto" :options="opciones?.trayectos ?? []" option-label="ruta" option-value="id" filter show-clear fluid :virtual-scroller-options="{ itemSize: 38 }" placeholder="Todos" />
+          <span class="text-xs font-medium text-muted-color">Ruta</span>
+          <Select v-model="filtro.ruta" :options="opciones?.rutas ?? []" option-label="nombre" option-value="id" filter :filter-fields="['nombre', 'origen', 'destino']" show-clear fluid :virtual-scroller-options="{ itemSize: 38 }" placeholder="Todas" />
         </label>
         <Button severity="secondary" outlined class="col-span-2 @3xl:col-span-1" @click="masFiltros = true">
           <icon name="filter-alt-outline" class="mr-1" />Más filtros
@@ -59,7 +59,7 @@
         <div class="flex items-start justify-between gap-2">
           <div>
             <div class="font-semibold">{{ fechaHora(s.fecha) }}</div>
-            <div class="text-sm">{{ s.trayecto.ruta }}</div>
+            <div class="text-sm">{{ s.ruta.nombre }}</div>
             <div class="text-xs text-muted-color">
               <template v-if="s.bus">Bus {{ s.bus.codigo }}</template
               ><template v-else>Sin bus</template> <template v-if="s.empresa"> · {{ s.empresa.nombre }}</template> · #{{ s.id }}
@@ -101,8 +101,8 @@
             <div class="text-xs text-muted-color">#{{ data.id }}</div>
           </template>
         </Column>
-        <Column header="Trayecto">
-          <template #body="{ data }">{{ data.trayecto.ruta }}</template>
+        <Column header="Ruta">
+          <template #body="{ data }">{{ data.ruta.nombre }}</template>
         </Column>
         <Column header="Bus">
           <template #body="{ data }">
@@ -231,8 +231,8 @@ watch(
 anunciarEnPantalla(() => {
   const v = verSalida.value;
   if (!v) return [];
-  const fila = "trayecto" in v ? (v as SalidaFila) : datos.value?.items.find((s) => s.id === v.id);
-  return [{ tipo: "Salida", id: v.id, etiqueta: fila ? `${fila.trayecto.ruta} · ${new Date(fila.fecha).toLocaleString("es-GT", { dateStyle: "short", timeStyle: "short" })}` : `Salida ${v.id}` }];
+  const fila = "ruta" in v ? (v as SalidaFila) : datos.value?.items.find((s) => s.id === v.id);
+  return [{ tipo: "Salida", id: v.id, etiqueta: fila ? `${fila.ruta.nombre} · ${new Date(fila.fecha).toLocaleString("es-GT", { dateStyle: "short", timeStyle: "short" })}` : `Salida ${v.id}` }];
 });
 function cerrarVer() {
   verSalida.value = null;

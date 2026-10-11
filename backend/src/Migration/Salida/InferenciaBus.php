@@ -51,7 +51,7 @@ class InferenciaBus
      *
      * @return array{bus: int, criterio: string, referencia: ?string}|array{motivo: string}
      */
-    public function inferir(array $salida, int $empresaId, int $trayectoId, \DateTimeImmutable $ahora): array
+    public function inferir(array $salida, int $empresaId, int $rutaId, \DateTimeImmutable $ahora): array
     {
         $tipo = (int) ($salida["tipo_bus_id"] ?: ($salida["it_tipo_bus_id"] ?? 0));
         if ($tipo <= 0) {
@@ -64,7 +64,7 @@ class InferenciaBus
 
         $fecha = new \DateTimeImmutable((string) $this->mapeador->salida($salida, null, null)["fecha"]);
         $limite = min($fecha, $ahora);
-        $minutos = $this->duracion($trayectoId);
+        $minutos = $this->duracion($rutaId);
         $legacyId = (string) $salida["id"];
         $filtro = [
             "tipo" => $tipo,
@@ -178,7 +178,7 @@ class InferenciaBus
         $desde = $fecha->modify("-3 days")->format("Y-m-d H:i:s");
         $hasta = $fecha->modify("+3 days")->format("Y-m-d H:i:s");
         foreach ($this->db->fetchAllAssociative(
-            "SELECT s.fecha, t.duracion_estimada_minutos AS minutos FROM salida s JOIN trayecto t ON t.id = s.trayecto_id
+            "SELECT s.fecha, (SELECT GREATEST(p.minutos, (SELECT MAX(t.minutos) FROM parada_tiempo t WHERE t.parada_id = p.id)) FROM parada p WHERE p.ruta_id = s.ruta_id ORDER BY p.orden DESC LIMIT 1) AS minutos FROM salida s
               WHERE s.bus_id = :bus AND s.estado <> 'cancelada' AND s.fecha BETWEEN :desde AND :hasta
                 AND (s.legacy_id IS NULL OR s.legacy_id <> :lid)",
             ["bus" => $bus, "desde" => $desde, "hasta" => $hasta, "lid" => $legacyId],
@@ -198,9 +198,10 @@ class InferenciaBus
         return $agenda->choque($bus, $fecha, $minutos) === null;
     }
 
-    private function duracion(int $trayectoId): ?int
+    /** Minutos hasta la última parada de la ruta (el mayor de las clases de bus), como `Ruta::getDuracionMinutos`. */
+    private function duracion(int $rutaId): ?int
     {
-        $m = $this->db->fetchOne("SELECT duracion_estimada_minutos FROM trayecto WHERE id = :id", ["id" => $trayectoId]);
+        $m = $this->db->fetchOne("SELECT (SELECT GREATEST(p.minutos, (SELECT MAX(t.minutos) FROM parada_tiempo t WHERE t.parada_id = p.id)) FROM parada p WHERE p.ruta_id = :id ORDER BY p.orden DESC LIMIT 1)", ["id" => $rutaId]);
 
         return $m === false || $m === null ? null : (int) $m;
     }

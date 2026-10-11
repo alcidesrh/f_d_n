@@ -29,11 +29,12 @@ final class AgendaFlota
             return $agenda;
         }
         $qb = $this->em->createQueryBuilder()
-            ->select("s", "t", "o", "d", "b")
+            ->select("s", "r", "p", "e", "t", "b")
             ->from(Salida::class, "s")
-            ->join("s.trayecto", "t")
-            ->join("t.origen", "o")
-            ->join("t.destino", "d")
+            ->join("s.ruta", "r")
+            ->join("r.paradas", "p")
+            ->join("p.enclave", "e")
+            ->leftJoin("p.tiempos", "t")
             ->join("s.bus", "b")
             ->where("b.id IN (:buses)")
             ->andWhere("s.estado != :cancelada")
@@ -48,7 +49,7 @@ final class AgendaFlota
         /** @var list<Salida> $salidas */
         $salidas = $qb->getQuery()->getResult();
         foreach ($salidas as $s) {
-            $agenda->ocupar((int) $s->getBus()->getId(), $s->getFecha(), $s->getTrayecto()->getDuracionEstimadaMinutos(), VistaSalida::referencia($s) + ["trayectoId" => $s->getTrayecto()->getId()]);
+            $agenda->ocupar((int) $s->getBus()->getId(), $s->getFecha(), $s->getRuta()->getDuracionMinutos(), VistaSalida::referencia($s) + ["rutaId" => $s->getRuta()->getId()]);
         }
 
         return $agenda;

@@ -143,6 +143,7 @@ final class ReasignacionBoletos
             $nuevo = (new BoletoAsiento())
                 ->setAsiento($asientos[$i])
                 ->setTrayecto($trayecto)
+                ->ocuparTramo($tramo->desde, $tramo->hasta)
                 ->setSalida($destino)
                 ->setCliente($b->getCliente())
                 ->setPrecio($b->getPrecio())

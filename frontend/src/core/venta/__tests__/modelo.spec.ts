@@ -146,3 +146,20 @@ describe('tarifa por tramo', () => {
     expect(soloVendibles([1, 2, 3], croquis, [])).toEqual([])
   })
 })
+
+describe('viaje del cliente', async () => {
+  const { diasEntre, horaViaje } = await import('../modelo')
+
+  it('cuenta los días de calendario en Guatemala', () => {
+    expect(diasEntre('2026-10-10T23:30:00-06:00', '2026-10-11T05:20:00-06:00')).toBe(1)
+    expect(diasEntre('2026-10-11T00:50:00-06:00', '2026-10-11T05:20:00-06:00')).toBe(0)
+    // 23:00 en Guatemala ya es el día siguiente en UTC: no cuenta.
+    expect(diasEntre('2026-10-10T20:00:00-06:00', '2026-10-10T23:00:00-06:00')).toBe(0)
+  })
+
+  it('marca la hora estimada', () => {
+    expect(horaViaje({ hora: '2026-10-11T05:20:00-06:00', aprox: true })).toMatch(/^≈ 05:20/)
+    expect(horaViaje({ hora: '2026-10-11T05:20:00-06:00', aprox: false })).toMatch(/^05:20/)
+    expect(horaViaje({ hora: null, aprox: false })).toBe('—')
+  })
+})

@@ -159,7 +159,7 @@ const estadoDe = (a: AsientoCroquis): EstadoAsiento => props.estado?.(a) ?? "dis
 const noSeleccionable = (a: AsientoCroquis) => ESTADOS_NO_SELECCIONABLES.includes(estadoDe(a));
 
 /** Con alguien dentro (vendido, reservado, cortesía…): no libre, ni elegido, ni bloqueado. */
-const esOcupado = (a: AsientoCroquis) => !["disponible", "seleccionado", "bloqueado"].includes(estadoDe(a));
+const esOcupado = (a: AsientoCroquis) => !["disponible", "recomendado", "seleccionado", "bloqueado"].includes(estadoDe(a));
 
 const esBoton = (e: ElementoCroquis | null): e is AsientoCroquis => !!e && esAsiento(e) && (props.interactivo || (props.inspeccionable && esOcupado(e)));
 
@@ -168,6 +168,7 @@ const seInspecciona = (a: AsientoCroquis) => props.inspeccionable && esOcupado(a
 
 const ETIQUETA_ESTADO: Record<EstadoAsiento, string> = {
   disponible: "disponible",
+  recomendado: "disponible, recomendado para este tramo",
   ocupado: "ocupado",
   "ocupado-web": "vendido en la página",
   "ocupado-agencia": "vendido por agencia",

@@ -60,10 +60,12 @@ export interface PlantillaCroquis {
  * En la venta, `ocupado` es vendido en taquilla; `ocupado-web` y
  * `ocupado-agencia` distinguen los otros canales (ADR-021), `reservado` es
  * la precompra de la página web, y `cortesia` / `voucher` son vendidos sin
- * cobro (cortesía de taquilla, voucher del legado).
+ * cobro (cortesía de taquilla, voucher del legado). `recomendado` es un
+ * libre que conviene vender en taquilla para no fragmentar el bus (ADR-030).
  */
 export type EstadoAsiento =
   | 'disponible'
+  | 'recomendado'
   | 'ocupado'
   | 'ocupado-web'
   | 'ocupado-agencia'

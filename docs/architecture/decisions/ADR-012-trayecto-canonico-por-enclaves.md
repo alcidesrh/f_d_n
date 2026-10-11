@@ -1,6 +1,6 @@
 # ADR-012: Trayecto canónico por par de enclaves (origen, destino)
 
-**Estado:** Aceptada
+**Estado:** Aceptada; reemplazada en parte por [ADR-030](ADR-030-ruta-con-paradas-ordenadas.md): el trayecto sigue siendo único por par de enclaves, pero ya no describe el camino del bus (eso es la `Ruta` con sus `Parada`) y `Subtrayecto` se retira.
 
 ## Contexto
 

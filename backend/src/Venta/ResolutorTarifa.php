@@ -26,7 +26,7 @@ use Symfony\Contracts\Service\ResetInterface;
  * Lee con DBAL a propósito: el `TenantFilter` del ORM dejaría fuera las
  * tarifas sin empresa (comodín), que también aplican. Memoiza las tarifas
  * por trayecto durante la petición (se vacía en cada request, como
- * `Itinerarios`): los subtrayectos de una salida se resuelven con una
+ * `Itinerarios`): los trayectos de una salida (pares de sus paradas) se resuelven con una
  * consulta y las salidas del mismo trayecto no vuelven a consultar.
  */
 final class ResolutorTarifa implements ResetInterface
@@ -65,7 +65,7 @@ final class ResolutorTarifa implements ResetInterface
 
     /**
      * Mejor tarifa por clase de asiento de varios trayectos de la salida (el
-     * suyo y sus subtrayectos): cada uno hereda de la salida la empresa, el
+     * pares de sus paradas): cada uno hereda de la salida la empresa, el
      * bus, la clase de bus y la hora en que parte.
      *
      * @param list<int>    $trayectoIds

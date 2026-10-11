@@ -36,7 +36,11 @@ export interface Salida {
   llegada: string | null
   salidaInicio: string
   empresa: string | null
+  /** Ruta del bus, `Origen → Destino` (ADR-030). */
   ruta: string
+  rutaOrigen: string | null
+  /** Se sube en el origen del bus: la hora de salida es exacta; si no, estimada. */
+  subeEnOrigen: boolean
   /** Precio en la web (con recargo) y asientos de cada clase. */
   clases: Array<{ clase: 'A' | 'B'; precio: Importe; asientos: number; ocupados: number }>
   desde: Importe
@@ -65,9 +69,15 @@ export interface SalidaPublico {
   topico: string
 }
 
+/** Hora donde sube el pasajero (ADR-030); si es `desconocida`, `salidaOrigen` es la del origen del bus (`rutaOrigen`). */
+export interface HoraSubida {
+  salidaOrigen: string
+  salidaPrecision?: 'exacta' | 'estimada' | 'desconocida'
+  rutaOrigen?: string | null
+}
+
 export interface ViajeCarrito {
-  /** `salidaOrigen`: hora estimada donde sube el pasajero. */
-  salida: { id: number; salida: string; salidaOrigen: string; llegada: string | null; empresa: string | null }
+  salida: { id: number; salida: string; llegada: string | null; empresa: string | null } & HoraSubida
   trayecto: { id: number; origen: string; destino: string }
   asientos: Array<{ asiento: number; numero: number; clase: 'A' | 'B'; precio: Importe }>
   total: Importe
@@ -122,7 +132,7 @@ export interface Compra {
   empresa: { nombre: string; nit: string | null } | null
   factura: { numero: number; serie: string; uuid: string; urlPdf: string | null } | null
   cliente: { nombre: string; nit: string; email: string | null } | null
-  salida: { id: number; salida: string; salidaOrigen: string } | null
+  salida: ({ id: number; salida: string } & HoraSubida) | null
   origen: { nombre: string; direccion: string | null } | null
   destino: { nombre: string; direccion: string | null } | null
   boletos: Array<{ asiento: number; clase: 'A' | 'B'; precio: Importe | null }>

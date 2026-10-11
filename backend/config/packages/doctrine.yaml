@@ -5,6 +5,8 @@ doctrine:
             default:
                 # configure these for your database server
                 url: "%env(DATABASE_URL)%"
+                # Ignora los índices de restricciones de exclusión (`ex_*`, ADR-030).
+                schema_manager_factory: App\Doctrine\Schema\ExclusionConstraintsSchemaManagerFactory
                 logging: true
                 profiling_collect_backtrace: "%kernel.debug%"
 

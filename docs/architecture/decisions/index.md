@@ -15,7 +15,7 @@
 | [ADR-009](ADR-009-autoimport-system.md) | Sistema de auto-import mediante unplugin | Reemplazada por ADR-017 |
 | [ADR-010](ADR-010-dynamic-entity-config.md) | Configuración dinámica de entidades vía metadatos | Aceptada |
 | [ADR-011](ADR-011-recorrido-lleva-trayecto.md) | Recorrido lleva el trayecto directamente (sin plantilla intermedia) | Aceptada |
-| [ADR-012](ADR-012-trayecto-canonico-por-enclaves.md) | Trayecto canónico por par de enclaves (origen, destino) | Aceptada |
+| [ADR-012](ADR-012-trayecto-canonico-por-enclaves.md) | Trayecto canónico por par de enclaves (origen, destino) | Aceptada (en parte reemplazada por ADR-030) |
 | [ADR-013](ADR-013-rename-servicio-a-recorrido.md) | Renombrar la entidad Servicio a Recorrido | Aceptada |
 | [ADR-014](ADR-014-estados-tipados-por-entidad.md) | Estados tipados por entidad (enum) en vez de catálogo Status genérico | Aceptada |
 | [ADR-015](ADR-015-tenant-filter.md) | TenantFilter: aislamiento por empresa vía Doctrine SQLFilter | Aceptada |
@@ -24,7 +24,7 @@
 | [ADR-018](ADR-018-taxonomia-agnostica-y-menus.md) | Taxonomía agnóstica (referencia polimórfica) y menús de navegación sobre ella | Aceptada |
 | [ADR-019](ADR-019-croquis-del-bus.md) | Croquis del bus (asientos, chofer y puertas por planta) y mapa reutilizable | Aceptada |
 | [ADR-020](ADR-020-frontend-mobile-first.md) | Frontend mobile-first con breakpoints centralizados | Aceptada |
-| [ADR-021](ADR-021-venta-de-asientos.md) | Venta de asientos por tres canales (taquilla, agencia, web) con factura electrónica | Aceptada |
+| [ADR-021](ADR-021-venta-de-asientos.md) | Venta de asientos por tres canales (taquilla, agencia, web) con factura electrónica | Aceptada (enmendada por ADR-030) |
 | [ADR-022](ADR-022-rename-recorrido-a-salida.md) | Renombrar la entidad Recorrido a Salida (código y base de datos) | Aceptada |
 | [ADR-023](ADR-023-pagina-web-compra-en-una-pagina.md) | Página web: compra en una sola página, ida y vuelta, recargo, idiomas y SEO | Aceptada |
 | [ADR-024](ADR-024-gestion-de-salidas.md) | Gestión de salidas: programador, esquemas guardados y editar/anular/eliminar con propagación | Aceptada |
@@ -33,3 +33,4 @@
 | [ADR-027](ADR-027-croquis-molde-y-bus-inferido.md) | Croquis como molde para elegir el bus y bus inferido en la migración | Aceptada |
 | [ADR-028](ADR-028-anulacion-reasignacion-y-bitacora.md) | Anulación y reasignación de boletos (con anulación de la factura en Forcon) y bitácora de boletos y salidas | Aceptada |
 | [ADR-029](ADR-029-listado-sobre-css-grid.md) | Listado genérico sobre CSS Grid: columnas, filtros OR/AND, selección, edición en línea y tarjetas | Aceptada |
+| [ADR-030](ADR-030-ruta-con-paradas-ordenadas.md) | Ruta con paradas ordenadas; el trayecto queda como par comercial | Aceptada |

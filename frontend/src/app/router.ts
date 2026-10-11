@@ -98,6 +98,26 @@ export const router = createRouter({
       },
     },
     {
+      path: '/rutas',
+      name: 'rutas',
+      component: () => import('@/features/ruta/RutasPage.vue'),
+      meta: {
+        title: 'Rutas',
+        label: 'Rutas',
+        icon: 'route',
+      },
+    },
+    {
+      path: '/rutas/:id(nueva|\\d+)',
+      name: 'ruta',
+      component: () => import('@/features/ruta/RutaEditorPage.vue'),
+      meta: {
+        title: 'Ruta',
+        label: 'Ruta',
+        icon: 'route',
+      },
+    },
+    {
       path: '/seguimiento',
       name: 'seguimiento',
       component: () => import('@/features/seguimiento/SeguimientoPage.vue'),

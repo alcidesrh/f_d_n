@@ -146,6 +146,14 @@ withDefaults(
   --seat-ink: var(--p-blue-50);
   filter: drop-shadow(0 2px 5px color-mix(in srgb, var(--p-blue-700) 45%, transparent));
 }
+/* Libre que conviene vender (encaja con el tramo, ADR-030): borde y halo esmeralda. */
+.seat--recomendado {
+  --seat-stroke: var(--p-emerald-500);
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--p-emerald-500) 60%, transparent));
+}
+.seat--recomendado rect {
+  stroke-width: 2;
+}
 .seat--reservado rect {
   stroke: var(--bm-reserved);
   stroke-dasharray: 3 2.2;

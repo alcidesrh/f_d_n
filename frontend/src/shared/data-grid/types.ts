@@ -16,6 +16,8 @@ export interface GridColumn {
   label: string
   /** Preset (`xs`…`xl`), longitud (`12rem`, `160px`) o fracción (`2fr`). Vacío: flexible. */
   width?: string | null
+  /** Mínimo de una columna flexible (longitud); por defecto `FLEX_MIN`. */
+  minWidth?: string | null
   sortable?: boolean
   sort?: SortState
   /** Ofrece el botón de filtro en la cabecera. */

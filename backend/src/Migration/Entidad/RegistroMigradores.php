@@ -52,7 +52,7 @@ class RegistroMigradores
         "bus",
         "asiento",
         "senal",
-        "trayecto",
+        "ruta",
         "tarifa",
     ];
 
@@ -204,19 +204,19 @@ class RegistroMigradores
                 ["bus"],
                 "SELECT COUNT(*) FROM bus_senal s JOIN bus b ON b.tipo_id = s.tipoBus_id",
             ),
-            "trayecto" => $estatica(
-                "trayecto",
-                "Trayectos",
+            "ruta" => $estatica(
                 "ruta",
-                ["trayecto", "subtrayecto"],
-                ["estacion"],
+                "Rutas y paradas",
+                "ruta",
+                ["ruta", "parada", "parada_tiempo", "trayecto"],
+                ["estacion", "bus_clase"],
             ),
             "tarifa" => $estatica(
                 "tarifa",
                 "Tarifas",
                 "tarifas_boleto",
                 ["boleto_tarifa"],
-                ["trayecto", "bus_clase", "usuario"],
+                ["ruta", "bus_clase", "usuario"],
                 IndicadoresMigracion::LEGADO_TARIFAS,
             ),
             "salida" => new MigradorEntidadSalida($this->migrador),

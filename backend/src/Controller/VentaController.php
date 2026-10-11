@@ -154,7 +154,11 @@ final class VentaController extends AbstractController
         ]);
     }
 
-    /** `?trayecto={id}`: asientos ocupados para ese trayecto (por defecto, el del salida). */
+    /**
+     * `?trayecto={id}`: asientos ocupados para ese trayecto (por defecto, el
+     * completo) y los que conviene vender para no fragmentar el bus
+     * (`recomendados`, ADR-030).
+     */
     #[Route("/salidas/{id<\d+>}/ocupacion", name: "ocupacion", methods: ["GET"])]
     public function ocupacion(Salida $salida, Request $request): JsonResponse
     {
@@ -163,7 +167,9 @@ final class VentaController extends AbstractController
         return $this->responder(function () use ($salida, $request) {
             $trayecto = $this->reglas->trayecto($salida, $request->query->getInt("trayecto") ?: null);
 
-            return ["asientos" => $this->consulta->ocupacion($salida, $this->reglas->tramo($salida, $trayecto))];
+            $tramo = $this->reglas->tramo($salida, $trayecto);
+
+            return ["asientos" => $this->consulta->ocupacion($salida, $tramo), "recomendados" => $this->consulta->recomendados($salida, $tramo)];
         });
     }
 

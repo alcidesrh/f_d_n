@@ -1,14 +1,19 @@
 /** Contratos de la gestión de salidas (`/api/gestion-salidas/*`, ADR-024). */
 import type { ElementoCroquis } from '@/core/croquis/types'
-import type { AsientoOcupado, Importe } from '@/core/venta/types'
+import type { AsientoOcupado, Importe, RutaVenta } from '@/core/venta/types'
 
 export type EstadoSalida = 'programada' | 'abordando' | 'iniciada' | 'finalizada' | 'cancelada'
 
-export interface TrayectoOpcion {
+/** Ruta con paradas que recorre el bus (ADR-030). */
+export interface RutaOpcion {
   id: number
+  /** Para mostrar: el nombre de la ruta (o `Origen → Destino`). */
+  nombre: string
   origen: string | null
   destino: string | null
-  ruta: string
+  /** Cuántas paradas tiene, contando origen y destino. */
+  paradas: number
+  /** Minutos hasta la última parada (la clase de bus más lenta); null si no se conoce. */
   duracionMinutos: number | null
 }
 
@@ -41,7 +46,7 @@ export interface Opcion {
 
 export interface OpcionesSalidas {
   empresas: Opcion[]
-  trayectos: TrayectoOpcion[]
+  rutas: RutaOpcion[]
   buses: BusOpcion[]
   /** Moldes y clases de los buses visibles: filtros para elegir un bus compatible. */
   croquis: CroquisMolde[]
@@ -56,7 +61,7 @@ export interface SalidaFila {
   estado: EstadoSalida
   /** Programada y ya debió salir. */
   atrasada: boolean
-  trayecto: TrayectoOpcion
+  ruta: RutaOpcion
   bus: BusOpcion | null
   empresa: Opcion | null
   /** Asientos comprometidos: boletos vivos + reservas web vigentes. */
@@ -87,7 +92,7 @@ export interface Momento {
 }
 
 export interface ProgramacionPayload {
-  trayectoId: number
+  rutaId: number
   momentos: Array<{ hora: string; busId: number }>
   /** `AAAA-MM-DD` */
   desde: string
@@ -121,7 +126,7 @@ export interface ResultadoProgramacion {
 export interface Esquema {
   id: number
   nombre: string
-  trayecto: TrayectoOpcion
+  ruta: RutaOpcion
   intervaloDias: number
   momentos: Array<{ hora: string; busId: number; bus: string }>
   actualizadoEn: string
@@ -130,7 +135,7 @@ export interface Esquema {
 
 export interface EsquemaPayload {
   nombre: string
-  trayectoId: number
+  rutaId: number
   intervaloDias: number
   momentos: Array<{ hora: string; busId: number }>
 }
@@ -151,7 +156,7 @@ export interface ResultadoOperacion {
 }
 
 export interface CambioSalida {
-  trayectoId?: number
+  rutaId?: number
   busId?: number
   /** `AAAA-MM-DDTHH:MM` local */
   fecha?: string
@@ -188,7 +193,7 @@ export interface DetalleSalida {
   estado: EstadoSalida
   empresa: Opcion | null
   bus: { id: number; codigo: string; gama: string | null } | null
-  trayecto: { id: number; origen: Opcion; destino: Opcion }
+  ruta: RutaVenta
   croquis: ElementoCroquis[]
   /** Asientos ocupados para el viaje completo (los libres no aparecen). */
   ocupados: AsientoOcupado[]

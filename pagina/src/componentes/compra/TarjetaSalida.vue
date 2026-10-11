@@ -1,6 +1,8 @@
 <!--
   Una salida de la lista: hora, llegada, empresa, bus, precios por clase,
-  ocupación y precio "desde". Es el encabezado del acordeón: al tocarla se
+  ocupación y precio "desde". Las horas son las del viaje del cliente
+  (ADR-030): donde sube ("aprox." si no es el origen del bus) y donde baja
+  ("+1 día" si llega otro día); la ruta del bus va aparte, como contexto. Es el encabezado del acordeón: al tocarla se
   abre el croquis debajo (slot por defecto).
 -->
 <template>
@@ -28,11 +30,21 @@
         <span class="col-start-1 row-start-1 flex min-w-0 flex-col gap-1">
           <span class="flex flex-wrap items-baseline gap-x-2">
             <span class="text-2xl font-bold tabular-nums tracking-tight">{{
-              hora(s.salida ?? s.salidaInicio, region)
+              horaSube ? hora(horaSube, region) : "—"
             }}</span>
+            <span
+              v-if="horaSube && !s.subeEnOrigen"
+              class="text-xs font-medium text-muted-color"
+              >{{ t("salidas.aprox") }}</span
+            >
             <span v-if="s.llegada" class="text-sm text-muted-color">
               <icon name="arrow-right" size="0.85rem" class="align-[-1px]" />
-              {{ t("salidas.llega") }} {{ hora(s.llegada, region) }}
+              {{ t("salidas.llega") }} {{ hora(s.llegada, region)
+              }}<sup
+                v-if="diasLlegada > 0"
+                class="ml-0.5 font-semibold text-acento-700"
+                >{{ t("salidas.masDias", diasLlegada) }}</sup
+              >
             </span>
           </span>
           <span
@@ -50,6 +62,17 @@
               }}</span
             >
           </span>
+          <span
+            v-if="!s.subeEnOrigen && s.rutaOrigen"
+            class="text-xs text-muted-color"
+            >{{
+              t(s.salida ? "salidas.rutaBus" : "salidas.sinHora", {
+                ruta: s.ruta,
+                origen: s.rutaOrigen,
+                hora: hora(s.salidaInicio, region),
+              })
+            }}</span
+          >
         </span>
 
         <!-- Precio desde (móvil: arriba a la derecha) -->
@@ -151,7 +174,7 @@ import { gsap } from "gsap";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { REGION, type Idioma } from "@/i18n";
-import { duracion, hora, porcentajeOcupado } from "@/modelo";
+import { diasEntre, duracion, hora, porcentajeOcupado } from "@/modelo";
 import type { Salida } from "@/tipos";
 
 const props = defineProps<{
@@ -200,7 +223,12 @@ function alSalir(el: Element, hecho: () => void) {
 const pocos = computed(
   () => props.s.disponibles > 0 && props.s.disponibles <= 5,
 );
-const tiempo = computed(() =>
-  duracion(props.s.salida ?? props.s.salidaInicio, props.s.llegada),
+/** Hora donde sube el cliente; sin ella (desconocida), nada: la del origen del bus no es la suya. */
+const horaSube = computed(() =>
+  props.s.salida ?? (props.s.subeEnOrigen ? props.s.salidaInicio : null),
+);
+const tiempo = computed(() => duracion(horaSube.value, props.s.llegada));
+const diasLlegada = computed(() =>
+  diasEntre(horaSube.value ?? props.s.salidaInicio, props.s.llegada),
 );
 </script>

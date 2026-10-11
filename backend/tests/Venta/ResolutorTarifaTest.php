@@ -15,7 +15,7 @@ use Symfony\Component\Clock\MockClock;
 
 /**
  * Salida Guatemala → Santa Elena (trayecto 1) de la empresa 3, bus 7 de
- * clase 2, a las 08:00. Subtrayectos: 10 Guatemala → Río Dulce, 11 Río
+ * clase 2, a las 08:00. Pares de paradas: 10 Guatemala → Río Dulce, 11 Río
  * Dulce → Santa Elena, 12 Guatemala → Morales.
  */
 final class ResolutorTarifaTest extends TestCase
@@ -60,12 +60,12 @@ final class ResolutorTarifaTest extends TestCase
         return new ResolutorTarifa($conexion, new MockClock("2026-10-02 12:00"));
     }
 
-    public function testSoloLosSubtrayectosConTarifaAsignableQuedanTarifados(): void
+    public function testSoloLosParesConTarifaAsignableQuedanTarifados(): void
     {
         $r = $this->resolutor([
             self::fila(1, 1, "A", 25000),
             self::fila(2, 1, "B", 32500),
-            // Propia del subtrayecto, sin más condiciones.
+            // Propia del par, sin más condiciones.
             self::fila(3, 10, "A", 15000),
             // Asignable por lo que hereda de la salida (empresa 3, clase de bus 2).
             self::fila(4, 11, "A", 12000, ["empresa_id" => 3, "bus_clase_id" => 2]),
@@ -83,7 +83,7 @@ final class ResolutorTarifaTest extends TestCase
         $this->assertSame([], $t[12], "Guatemala → Morales no tiene tarifa: no se vende");
     }
 
-    public function testUnaTarifaSinTrayectoTarifaTodosLosSubtrayectos(): void
+    public function testUnaTarifaSinTrayectoTarifaTodosLosPares(): void
     {
         $r = $this->resolutor([self::fila(9, null, "A", 5000, ["empresa_id" => 3])]);
 

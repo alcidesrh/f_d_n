@@ -320,27 +320,6 @@ class Mapeador
         ];
     }
 
-    /**
-     * Trayecto old PK is string (ruta.codigo) → keep legacy_id.
-     */
-    public function trayecto(
-        array $oldRuta,
-        int $origenId,
-        int $destinoId,
-        bool $esRuta,
-    ): array {
-        return [
-            "origen_id" => $origenId,
-            "destino_id" => $destinoId,
-            "distancia_km" => $esRuta ? $oldRuta["kilometros"] ?? null : null,
-            "duracion_estimada_minutos" => null,
-            "activo" => $this->toBool(
-                $esRuta ? $oldRuta["activo"] ?? true : true,
-            ),
-            "legacy_id" => $esRuta ? $oldRuta["codigo"] : null,
-        ];
-    }
-
     /** `salida_estado` del legado → EstadoSalida (mismos cinco estados). */
     private const ESTADO_SALIDA = [
         1 => EstadoSalida::PROGRAMADA,
@@ -364,13 +343,13 @@ class Mapeador
         array $old,
         ?int $busId,
         ?int $empresaId,
-        ?int $trayectoId = null,
+        ?int $rutaId = null,
     ): array {
         return [
             "fecha" => $this->formatDatetime($old["fecha"]),
             "bus_id" => $busId,
             "empresa_id" => $empresaId,
-            "trayecto_id" => $trayectoId,
+            "ruta_id" => $rutaId,
             "estado" => self::estadoSalida($old["estado_id"] ?? null)->value,
             "legacy_id" => (string) $old["id"],
         ];

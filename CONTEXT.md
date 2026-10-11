@@ -1,7 +1,7 @@
 # Operativo — Ventas de Transporte (FDN)
 
 Contexto que modela la operación de salidas de buses y la venta de pasajes:
-geografía (enclaves y trayectos), flota (buses y asientos) y ventas (salidas y boletos).
+geografía (enclaves, rutas y trayectos), flota (buses y asientos) y ventas (salidas y boletos).
 IAM/seguridad y configuración de menús son contextos separados.
 
 ## Geografía
@@ -15,13 +15,22 @@ Un enclave donde los pasajeros abordan; es terminal de salida y de venta.
 _Avoid_: terminal, estación rural
 
 **Trayecto**:
-Un servicio geográfico vectorial entre dos enclaves (origen → destino).
-Es único por par de enclaves y puede estar compuesto de subtrayectos.
-_Avoid_: ruta, servicio, tramo
+El par comercial vectorial entre dos enclaves (origen → destino): lo que pide el cliente,
+lo que lleva tarifa y lo que se factura. Es único por par de enclaves. No describe por dónde
+pasa el bus (eso es la ruta): el mismo trayecto puede viajarse en salidas de rutas distintas.
+_Avoid_: ruta, servicio, tramo, subtrayecto
 
-**Subtrayecto**:
-Un segmento de un trayecto compuesto: un trayecto hijo con posición dentro de su trayecto padre.
-_Avoid_: tramo, subservicio, subruta
+**Ruta**:
+El camino que recorre un bus: una secuencia ordenada de paradas, de la primera (origen) a la
+última (destino). No depende de la empresa ni de la fecha. Cualquier par de paradas en orden
+es un trayecto que se puede vender en ella (si tiene tarifa). Varias rutas pueden unir las
+mismas puntas por caminos distintos. Equivale a `ruta` del legado (ADR-030).
+_Avoid_: itinerario (en el legado es la plantilla de horarios), recorrido
+
+**Parada**:
+El paso de una ruta por un enclave, con su orden, los minutos estimados desde el origen
+(por clase de bus cuando difieren) y si ahí se puede subir y bajar.
+_Avoid_: punto de parada, escala
 
 ## Flota
 
@@ -58,26 +67,30 @@ _Avoid_: conductor, chofer
 ## Ventas
 
 **Salida**:
-La salida concreta de un bus: un trayecto, una fecha y un bus.
-Cada salida fija su ruta al crearse, resolviendo el trayecto de sus enclaves de origen y destino.
+La salida concreta de un bus: una ruta, una fecha (la hora en la primera parada) y un bus.
 Estado (`EstadoSalida`): `programada → abordando → iniciada → finalizada` en ese orden;
 `cancelada` solo es alcanzable desde `programada`.
 _Avoid_: servicio, recorrido, itinerario, viaje
 
 **Esquema de salidas**:
-Una configuración guardada con un nombre para programar salidas: un trayecto, las horas del día
+Una configuración guardada con un nombre para programar salidas: una ruta, las horas del día
 con su bus y cada cuántos días se repite. Es una plantilla: cambiarla no toca las salidas ya creadas.
 _Avoid_: plantilla, horario
 
+**Horario de la salida** (`SalidaParada`):
+A qué hora pasa una salida por cada parada de su ruta. Se fija al crear la salida (y al cambiar
+su fecha, hora o bus); la de cada parada intermedia es estimada. Las salidas con boletos lo
+conservan aunque se edite la ruta, así un boleto nunca cambia de tramo.
+_Avoid_: itinerario
+
 **Salidas idénticas**:
-Salidas futuras programadas con el mismo trayecto, bus, empresa y hora; solo cambia el día.
+Salidas futuras programadas con la misma ruta, bus, empresa y hora; solo cambia el día.
 Editar, anular o eliminar una salida puede propagarse a ellas, salvo a las que tienen asientos vendidos.
 
 **BoletoAsiento**:
-Un asiento vendido dentro de un salida, para un cliente y un trayecto
-(puede ser un subtramo del salida completo), con precio y estado propios.
-Único por `(asiento, trayecto, salida)`: el mismo asiento puede venderse dos veces
-en el mismo salida solo si es para trayectos (subtramos) distintos.
+Un asiento vendido dentro de una salida, para un cliente y un tramo de su ruta,
+con el trayecto que se le cobró, precio y estado propios.
+El mismo asiento se vende varias veces en la misma salida solo para tramos que no se solapan.
 Estado (`EstadoBoletoAsiento`): `emitido → chequeado → transito → finalizado` en ese orden;
 `anulado` y `reasignado` solo son alcanzables desde `emitido`.
 _Avoid_: boleto, ticket
@@ -95,8 +108,10 @@ Por dónde entra una venta: `estacion` (taquilla, un usuario de la empresa), `ag
 (usuario de una agencia, descuenta saldo, sin factura electrónica) o `web` (el propio cliente en la página).
 
 **Tramo**:
-La porción de un salida entre dos de sus paradas, por posición. Un asiento está ocupado para un tramo
-si algún boleto vivo o alguna reserva vigente se solapa con él; tramos que no se solapan comparten asiento.
+La porción de una salida entre dos paradas de su ruta, por orden: `[sube, baja)`. Un asiento está
+ocupado para un tramo si algún boleto vivo o alguna reserva vigente se solapa con él; tramos que no se
+solapan comparten asiento. En taquilla se puede cobrar el trayecto completo de la ruta aunque el pasajero
+viaje un tramo: el tramo ocupado no cambia.
 
 **Reserva** (precompra):
 Asiento apartado en la página web mientras el cliente paga (`ReservaAsiento`). Se aparta al pulsar "Pagar asientos",

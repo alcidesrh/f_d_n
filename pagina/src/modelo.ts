@@ -165,6 +165,13 @@ export function diaLargo(dia: string | null | undefined, region = 'es-GT'): stri
 }
 
 /** Minutos entre dos fechas ISO como `5 h 30 min` (null si falta alguna). */
+/** Días de calendario (en Guatemala) entre dos instantes: el "+1" de una llegada al día siguiente. */
+export function diasEntre(desde: string | null | undefined, hasta: string | null | undefined): number {
+  if (!desde || !hasta) return 0
+  const dia = (iso: string) => new Intl.DateTimeFormat('en-CA', { timeZone: ZONA }).format(new Date(iso))
+  return Math.round((Date.parse(dia(hasta)) - Date.parse(dia(desde))) / 86_400_000)
+}
+
 export function duracion(desde: string | null | undefined, hasta: string | null | undefined): string | null {
   if (!desde || !hasta) return null
   const min = Math.round((Date.parse(hasta) - Date.parse(desde)) / 60000)

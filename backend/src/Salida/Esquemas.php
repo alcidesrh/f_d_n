@@ -7,7 +7,7 @@ namespace App\Salida;
 use App\Entity\Bus;
 use App\Entity\EsquemaSalida;
 use App\Entity\EsquemaSalidaMomento;
-use App\Entity\Trayecto;
+use App\Entity\Ruta;
 use App\Entity\Usuario;
 use App\Salida\Programacion\Momento;
 use App\Salida\Programacion\Programacion;
@@ -31,11 +31,9 @@ final class Esquemas
     {
         /** @var list<EsquemaSalida> $esquemas */
         $esquemas = $this->em->createQueryBuilder()
-            ->select("e", "m", "t", "o", "d", "b")
+            ->select("e", "m", "r", "b")
             ->from(EsquemaSalida::class, "e")
-            ->join("e.trayecto", "t")
-            ->join("t.origen", "o")
-            ->join("t.destino", "d")
+            ->join("e.ruta", "r")
             ->leftJoin("e.momentos", "m")
             ->leftJoin("m.bus", "b")
             ->orderBy("e.nombre", "ASC")
@@ -48,7 +46,7 @@ final class Esquemas
 
     /**
      * Crea (`$id` nulo) o reemplaza un esquema.
-     * `$datos`: `{ nombre, trayectoId, intervaloDias, momentos: [{ hora, busId }] }`.
+     * `$datos`: `{ nombre, rutaId, intervaloDias, momentos: [{ hora, busId }] }`.
      *
      * @param array<string, mixed> $datos
      *
@@ -60,8 +58,8 @@ final class Esquemas
         if ($nombre === "" || mb_strlen($nombre) > self::MAX_NOMBRE) {
             throw new SalidaRechazada("El esquema necesita un nombre de 1 a " . self::MAX_NOMBRE . " caracteres.", "nombre_invalido");
         }
-        $trayecto = $this->em->find(Trayecto::class, (int) ($datos["trayectoId"] ?? 0))
-            ?? throw new SalidaRechazada("Elija el trayecto.", "trayecto_requerido");
+        $ruta = $this->em->find(Ruta::class, (int) ($datos["rutaId"] ?? 0))
+            ?? throw new SalidaRechazada("Elija la ruta.", "ruta_requerida");
         $intervalo = (int) ($datos["intervaloDias"] ?? 1);
         if ($intervalo < 1 || $intervalo > Programacion::MAX_INTERVALO) {
             throw new SalidaRechazada("El intervalo debe estar entre 1 y " . Programacion::MAX_INTERVALO . " días.", "intervalo_invalido");
@@ -70,7 +68,7 @@ final class Esquemas
         $buses = $this->buses(array_map(static fn(Momento $m) => $m->busId, $momentos));
 
         if ($id === null) {
-            $esquema = new EsquemaSalida($nombre, $usuario?->getEmpresa(), $trayecto);
+            $esquema = new EsquemaSalida($nombre, $usuario?->getEmpresa(), $ruta);
             $this->em->persist($esquema);
         } else {
             $esquema = $this->buscar($id);
@@ -79,7 +77,7 @@ final class Esquemas
 
         $esquema->reemplazar(
             $nombre,
-            $trayecto,
+            $ruta,
             $intervalo,
             array_map(static fn(Momento $m) => ["hora" => $m->hora, "bus" => $buses[$m->busId]], $momentos),
             $usuario,
@@ -150,7 +148,7 @@ final class Esquemas
         return [
             "id" => $e->getId(),
             "nombre" => $e->getNombre(),
-            "trayecto" => VistaSalida::trayecto($e->getTrayecto()),
+            "ruta" => VistaSalida::rutaOpcion($e->getRuta()),
             "intervaloDias" => $e->getIntervaloDias(),
             "momentos" => array_map(static fn(EsquemaSalidaMomento $m) => [
                 "hora" => $m->getHora(),

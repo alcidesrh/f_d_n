@@ -4,6 +4,8 @@ namespace App\Migration;
 
 use App\Croquis\Moldes;
 use App\Migration\Job\Progreso;
+use App\Migration\Salida\RutasLegado;
+use App\Ruta\Trayectos;
 use App\Venta\Facturacion\CredencialesFel;
 use DateTime;
 use Doctrine\DBAL\ArrayParameterType;
@@ -12,14 +14,16 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\Attribute\Target;
 
+
 /**
  * Migrates static (non-growing) entities from legacy FDN to the new system.
  *
  * Order matters: Empresa → Estacion → BusClase → Bus → Asiento/Señal → Cliente → Usuario
- * Trayectos and Tarifas are handled separately due to their complex derivation logic.
+ * Rutas (with their paradas and the trayecto of each pair, ADR-030) and Tarifas
+ * are handled separately due to their derivation logic.
  *
  * Static entities with numeric old PKs (empresa, estacion, cliente, usuario, tarifa)
- * reuse the old PK as the new id. Entities with string old PKs (bus, ruta→trayecto)
+ * reuse the old PK as the new id. Entities with string old PKs (bus, ruta)
  * keep a legacy_id column. Asientos y señales del croquis son del tipo de bus en
  * el legado: se copian a cada bus con id nuevo.
  */
@@ -35,6 +39,8 @@ class MigradorEstaticos
         private Mapeador $mapeador,
         private CredencialesFel $credencialesFel,
         private Moldes $moldes,
+        private RutasLegado $rutas,
+        private Trayectos $trayectos,
     ) {
         $this->oldPdo->setAttribute(
             \PDO::ATTR_ERRMODE,
@@ -60,7 +66,7 @@ class MigradorEstaticos
             "senal" => 0,
             "cliente" => 0,
             "usuario" => 0,
-            "trayecto" => 0,
+            "ruta" => 0,
             "tarifa" => 0,
             "piloto" => 0,
             "bus_marca" => 0,
@@ -113,7 +119,7 @@ class MigradorEstaticos
                 $contadores["bus"] = $this->migrarBuss($output);
                 $contadores["asiento"] = $this->migrarAsientos($output);
                 $contadores["senal"] = $this->migrarSenales($output);
-                $contadores["trayecto"] = $this->migrarTrayectos($output);
+                $contadores["ruta"] = $this->migrarRutas($output);
                 $contadores["tarifa"] = $this->migrarTarifas($output);
             }
             foreach (self::TABLAS_ID_EXPLICITO as $tabla) {
@@ -148,7 +154,7 @@ class MigradorEstaticos
         "bus" => "migrarBuss",
         "asiento" => "migrarAsientos",
         "senal" => "migrarSenales",
-        "trayecto" => "migrarTrayectos",
+        "ruta" => "migrarRutas",
         "tarifa" => "migrarTarifas",
         "piloto" => "migrarPilotos",
         "marca" => "migrarMarcas",
@@ -566,255 +572,19 @@ class MigradorEstaticos
         return $claves;
     }
 
-    // ─── Trayecto (ruta + subtrayectos) ────────────────────────────
+    // ─── Ruta y paradas (ADR-030) ───────────────────────────────────
 
-    private function migrarTrayectos(?OutputInterface $output = null): int
+    private function migrarRutas(?OutputInterface $output = null): int
     {
         if ($output) {
-            $output->write("<info>Trayectos...</info>");
+            $output->write("<info>Rutas...</info>");
         }
-        $rutas = $this->fetchOldNoGenerator("SELECT * FROM ruta");
-        $count = 0;
-
-        foreach ($rutas as $ruta) {
-            if (empty($ruta["codigo"])) {
-                continue;
-            }
-            $rutaCodigo = $ruta["codigo"];
-            if ($this->existe("trayecto", $rutaCodigo)) {
-                continue;
-            }
-
-            $origenId = $this->resolveEstacionId(
-                (int) $ruta["estacion_origen_id"],
-            );
-            $destinoId = $this->resolveEstacionId(
-                (int) $ruta["estacion_destino_id"],
-            );
-            if (!$origenId || !$destinoId) {
-                continue;
-            }
-
-            $data = $this->mapeador->trayecto(
-                $ruta,
-                $origenId,
-                $destinoId,
-                true,
-            );
-
-            if (
-                $this->existByColumns("trayecto", [
-                    "origen_id" => $data["origen_id"],
-                    "destino_id" => $data["destino_id"],
-                ])
-            ) {
-                continue;
-            }
-
-            $trayectoId = $this->newConn->fetchOne(
-                "INSERT INTO trayecto (origen_id, destino_id, distancia_km, duracion_estimada_minutos, activo, legacy_id) VALUES (:origen_id, :destino_id, :distancia_km, :duracion_estimada_minutos, :activo,  :legacy_id) RETURNING id",
-                $data,
-            );
-            $count++;
-
-            $subCount = $this->migrarSubTrayectos(
-                $rutaCodigo,
-                (int) $trayectoId,
-                $origenId,
-                $destinoId,
-            );
-            $count += $subCount;
-
-            $allCount = $this->migrarTrayectosInversos(
-                $rutaCodigo,
-                (int) $trayectoId,
-                $origenId,
-                $destinoId,
-            );
-            $count += $allCount;
-        }
-
+        $n = $this->rutas->migrarTodas();
         if ($output) {
-            $output->writeln(" <info>{$count}</info>");
-        }
-        return $count;
-    }
-
-    private function migrarSubTrayectos(
-        string $rutaCodigo,
-        int $trayectoPadreId,
-        int $rutaOrigenId,
-        int $rutaDestinoId,
-    ): int {
-        $items = $this->fetchOld(
-            "SELECT rei.*, e.nombre, e.id as estacion_id FROM ruta_estacion_item rei JOIN estacion e ON e.id = rei.estacion_id WHERE rei.ruta_codigo = :codigo ORDER BY rei.posicion ASC",
-            ["codigo" => $rutaCodigo],
-        );
-        if (empty($items)) {
-            return 0;
+            $output->writeln(" <info>{$n}</info>");
         }
 
-        $estacionIds = [$rutaOrigenId];
-        foreach ($items as $item) {
-            $estId = $this->resolveEstacionId((int) $item["estacion_id"]);
-            if ($estId) {
-                $estacionIds[] = $estId;
-            }
-        }
-        $estacionIds[] = $rutaDestinoId;
-
-        return $this->generarTrayectosDesdeEnclaves(
-            $rutaCodigo,
-            $trayectoPadreId,
-            $estacionIds,
-            false,
-        );
-    }
-
-    /**
-     * Generates all forward sub-trayectos between every pair of enclaves
-     * (A→B, A→C, ..., B→C, B→D, ...) for the given ordered enclave list.
-     */
-    private function generarTrayectosDesdeEnclaves(
-        string $rutaCodigo,
-        int $trayectoPadreId,
-        array $estacionIds,
-        bool $invertido,
-    ): int {
-        $n = count($estacionIds);
-        $count = 0;
-
-        for ($i = 0; $i < $n - 1; $i++) {
-            for ($j = $i + 1; $j < $n; $j++) {
-                $origen = $invertido ? $estacionIds[$j] : $estacionIds[$i];
-                $destino = $invertido ? $estacionIds[$i] : $estacionIds[$j];
-                $subLegacy = sprintf(
-                    "%s-SUB-%d-%d",
-                    $rutaCodigo,
-                    $origen,
-                    $destino,
-                );
-
-                if ($this->existe("trayecto", $subLegacy)) {
-                    $subId = $this->getTrayectoIdByLegacy($subLegacy);
-                    if ($subId) {
-                        $this->linkTrayecto($trayectoPadreId, $subId);
-                    }
-                    continue;
-                }
-                // Ya existe (p. ej. como trayecto de otra ruta): se enlaza igual,
-                // o el itinerario de esta ruta pierde la parada.
-                $existente = $this->newConn->fetchOne(
-                    "SELECT id FROM trayecto WHERE origen_id = :o AND destino_id = :d",
-                    ["o" => $origen, "d" => $destino],
-                );
-                if ($existente !== false) {
-                    $this->linkTrayecto($trayectoPadreId, (int) $existente);
-                    continue;
-                }
-
-                $subId = $this->newConn->fetchOne(
-                    "INSERT INTO trayecto (origen_id, destino_id, activo,  legacy_id) VALUES (:origen_id, :destino_id, true, :legacy_id) RETURNING id",
-                    [
-                        "origen_id" => $origen,
-                        "destino_id" => $destino,
-                        "legacy_id" => $subLegacy,
-                    ],
-                );
-
-                $this->linkTrayecto($trayectoPadreId, (int) $subId);
-                $count++;
-            }
-        }
-
-        return $count;
-    }
-
-    /**
-     * Generates reverse route (E→A) + all reverse sub-trayectos.
-     */
-    private function migrarTrayectosInversos(
-        string $rutaCodigo,
-        int $trayectoPadreId,
-        int $rutaOrigenId,
-        int $rutaDestinoId,
-    ): int {
-        $items = $this->fetchOld(
-            "SELECT rei.*, e.id as estacion_id FROM ruta_estacion_item rei JOIN estacion e ON e.id = rei.estacion_id WHERE rei.ruta_codigo = :codigo ORDER BY rei.posicion ASC",
-            ["codigo" => $rutaCodigo],
-        );
-
-        $estacionIds = [$rutaDestinoId];
-        foreach ($items as $item) {
-            $estId = $this->resolveEstacionId((int) $item["estacion_id"]);
-            if ($estId) {
-                array_unshift($estacionIds, $estId);
-            }
-        }
-        $estacionIds[] = $rutaOrigenId;
-        $estacionIds = array_unique($estacionIds);
-
-        $rutaInversaLegacy = sprintf("REV-%s", $rutaCodigo);
-        if (!$this->existe("trayecto", $rutaInversaLegacy)) {
-            $stmt = $this->oldPdo->prepare(
-                "SELECT * FROM ruta WHERE codigo = :codigo",
-            );
-            $stmt->execute(["codigo" => $rutaCodigo]);
-            $oldRuta = $stmt->fetch();
-            if (!$oldRuta) {
-                return 0;
-            }
-            $oldRuta = $this->sanitizeUtf8($oldRuta);
-            $data = $this->mapeador->trayecto(
-                $oldRuta,
-                $rutaDestinoId,
-                $rutaOrigenId,
-                true,
-            );
-            $data["legacy_id"] = $rutaInversaLegacy;
-            $data["distancia_km"] = $oldRuta["kilometros"] ?? null;
-
-            if (
-                $this->existByColumns("trayecto", [
-                    "origen_id" => $data["origen_id"],
-                    "destino_id" => $data["destino_id"],
-                ])
-            ) {
-                return 0;
-            }
-
-            $revId = $this->newConn->fetchOne(
-                "INSERT INTO trayecto (origen_id, destino_id, distancia_km, duracion_estimada_minutos, activo,  legacy_id) VALUES (:origen_id, :destino_id, :distancia_km, :duracion_estimada_minutos, :activo, :legacy_id) RETURNING id",
-                $data,
-            );
-            $this->linkTrayecto($trayectoPadreId, (int) $revId);
-
-            return 1 +
-                $this->generarTrayectosDesdeEnclaves(
-                    $rutaCodigo,
-                    (int) $revId,
-                    $estacionIds,
-                    true,
-                );
-        }
-
-        return 0;
-    }
-
-    private function linkTrayecto(int $padreId, int $hijoId): void
-    {
-        $exists = $this->newConn->fetchOne(
-            "SELECT id FROM subtrayecto WHERE below_to_id = :padre AND trayecto_id = :hijo",
-            ["padre" => $padreId, "hijo" => $hijoId],
-        );
-        if ($exists) {
-            return;
-        }
-
-        $this->newConn->executeStatement(
-            "INSERT INTO subtrayecto (trayecto_id, below_to_id, activo) VALUES (:hijo, :padre, true)",
-            ["hijo" => $hijoId, "padre" => $padreId],
-        );
+        return $n;
     }
 
     // ─── Tarifa ────────────────────────────────────────────────────
@@ -824,9 +594,8 @@ class MigradorEstaticos
      * destino, clase de asiento, clase de bus y horario), por
      * `fechaEfectividad` y luego id, como las elegía el legado. Las demás del
      * grupo son historial: no se migran, y si ya estaban migradas se borran.
-     * Tampoco se migran las de un par origen→destino sin trayecto en el
-     * modelo nuevo (aplicarían a cualquier trayecto) ni las de una clase de
-     * bus sin migrar. Las ganadoras se insertan o se corrigen (upsert por id).
+     * El trayecto de su par origen→destino se crea si falta (ADR-030). No
+     * se migran las de una estación o una clase de bus sin migrar. Las ganadoras se insertan o se corrigen (upsert por id).
      */
     private function migrarTarifas(?OutputInterface $output = null): int
     {
@@ -965,11 +734,8 @@ class MigradorEstaticos
             return null;
         }
 
-        $id = $this->newConn->fetchOne(
-            "SELECT id FROM trayecto WHERE origen_id = :origen AND destino_id = :destino ORDER BY id LIMIT 1",
-            ["origen" => $origen, "destino" => $destino],
-        );
-        return $id !== false ? (int) $id : null;
+        // El par existe aunque ninguna ruta lo tenga: la tarifa es un hecho del legado.
+        return $origen === $destino ? null : $this->trayectos->par($origen, $destino);
     }
 
     // ─── Piloto ────────────────────────────────────────────────────
@@ -1272,7 +1038,6 @@ class MigradorEstaticos
             "agencia"
                 => "SELECT 1 FROM {$tabla} WHERE id = :lid",
             "bus" => "SELECT 1 FROM {$tabla} WHERE codigo = :lid",
-            "trayecto" => "SELECT 1 FROM {$tabla} WHERE legacy_id = :lid",
             default => "SELECT 1 FROM {$tabla} WHERE legacy_id = :lid",
         };
         return $this->newConn->fetchOne($sql, ["lid" => $legacyId]) !== false;
@@ -1327,15 +1092,6 @@ class MigradorEstaticos
         $id = $this->newConn->fetchOne(
             "SELECT id FROM bus WHERE codigo = :lid",
             ["lid" => $codigo],
-        );
-        return $id !== false ? (int) $id : null;
-    }
-
-    private function getTrayectoIdByLegacy(string $legacyId): ?int
-    {
-        $id = $this->newConn->fetchOne(
-            "SELECT id FROM trayecto WHERE legacy_id = :lid",
-            ["lid" => $legacyId],
         );
         return $id !== false ? (int) $id : null;
     }

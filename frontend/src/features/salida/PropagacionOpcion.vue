@@ -1,6 +1,6 @@
 <!--
   Opción de propagar una operación (editar, anular, eliminar) a las salidas
-  futuras idénticas (mismo trayecto, bus, empresa y hora; solo cambia el
+  futuras idénticas (misma ruta, bus, empresa y hora; solo cambia el
   día) que siguen programadas. Avisa de antemano cuántas tienen asientos y
   no se tocarán.
 -->
@@ -17,7 +17,7 @@
           <Checkbox v-model="propagar" binary :input-id="`prop-${salidaId}`" />
           <label :for="`prop-${salidaId}`" class="text-sm">
             {{ capital(verbo) }} también las <b>{{ info.identicas }}</b> salida(s) futuras idénticas
-            <span class="text-muted-color">(mismo trayecto, bus y hora, hasta el {{ dia(info.ultima!) }})</span>
+            <span class="text-muted-color">(misma ruta, bus y hora, hasta el {{ dia(info.ultima!) }})</span>
           </label>
         </div>
         <p v-if="propagar && info.identicasConAsientos" class="m-0 pl-7 text-xs text-orange-600 dark:text-orange-400">

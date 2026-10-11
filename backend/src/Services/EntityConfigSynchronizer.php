@@ -103,6 +103,11 @@ final class EntityConfigSynchronizer
             }
             $config->addcollectionFieldConfig($collectionFieldConfig);
         }
+        // Los campos que ya no están en el mapeo no se acumulan (p. ej. `Salida.trayecto`, ADR-030).
+        foreach (array_diff_key($existing, array_flip(array_column($currentFields, 0))) as $huerfano) {
+            $config->getCollectionFieldConfig()->removeElement($huerfano);
+            $this->entityManager->remove($huerfano);
+        }
         $config->orderFields($config->getCollectionFieldConfig());
     }
 
@@ -125,6 +130,10 @@ final class EntityConfigSynchronizer
 
             $config->addFormField($formField);
 
+        }
+        foreach (array_diff_key($existing, array_flip(array_column($currentFields, 0))) as $huerfano) {
+            $config->getFormFields()->removeElement($huerfano);
+            $this->entityManager->remove($huerfano);
         }
         $config->orderFields($config->getFormFields());
     }

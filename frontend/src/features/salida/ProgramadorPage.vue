@@ -1,5 +1,5 @@
 <!--
-  Programador de salidas (ADR-024): trayecto, horas del día con su bus y
+  Programador de salidas (ADR-024): ruta, horas del día con su bus y
   días (uno solo, N días o hasta una fecha, cada X días). La vista previa
   se pide sola al backend y marca las que ya existen, chocan con otro viaje
   del bus o ya pasaron; solo se crean las nuevas.
@@ -33,7 +33,7 @@
                 <template #option="{ option }">
                   <div class="flex flex-col">
                     <span>{{ option.nombre }}</span>
-                    <span class="text-xs text-muted-color">{{ option.trayecto.ruta }} · {{ option.momentos.length }} hora(s){{ option.intervaloDias > 1 ? ` · cada ${option.intervaloDias} días` : "" }}</span>
+                    <span class="text-xs text-muted-color">{{ option.ruta.nombre }} · {{ option.momentos.length }} hora(s){{ option.intervaloDias > 1 ? ` · cada ${option.intervaloDias} días` : "" }}</span>
                   </div>
                 </template>
               </Select>
@@ -61,12 +61,19 @@
           <span class="text-surface-500 font-semibold">Programar salidas</span>
         </Divider>
 
-        <!-- Trayecto -->
-        <section class="panel flex flex-col gap-3 mb-5" aria-labelledby="pg-trayecto">
-          <h2 id="pg-trayecto" class="m-0 flex items-center gap-2 text-base font-semibold"><icon name="route" />Trayecto</h2>
-          <Select v-model="form.trayectoId" :options="opciones?.trayectos ?? []" option-label="ruta" option-value="id" filter fluid :virtual-scroller-options="{ itemSize: 38 }" placeholder="Origen → destino" :loading="!opciones" aria-label="Trayecto" />
-          <p v-if="trayecto?.duracionMinutos" class="m-0 text-xs text-muted-color">Duración estimada: {{ duracion(trayecto.duracionMinutos) }}. Un bus no se programa mientras está en otro viaje.</p>
-          <p v-else-if="trayecto" class="m-0 text-xs text-muted-color">El trayecto no tiene duración estimada: solo se evita el mismo bus a la misma hora.</p>
+        <!-- Ruta -->
+        <section class="panel flex flex-col gap-3 mb-5" aria-labelledby="pg-ruta">
+          <h2 id="pg-ruta" class="m-0 flex items-center gap-2 text-base font-semibold"><icon name="route" />Ruta</h2>
+          <Select v-model="form.rutaId" :options="opciones?.rutas ?? []" option-label="nombre" option-value="id" filter :filter-fields="['nombre', 'origen', 'destino']" fluid :virtual-scroller-options="{ itemSize: 52 }" placeholder="Elegir la ruta" :loading="!opciones" aria-label="Ruta">
+            <template #option="{ option }">
+              <div class="flex flex-col">
+                <span>{{ option.nombre }}</span>
+                <span class="text-xs text-muted-color">{{ option.origen }} → {{ option.destino }} · {{ option.paradas }} paradas</span>
+              </div>
+            </template>
+          </Select>
+          <p v-if="ruta?.duracionMinutos" class="m-0 text-xs text-muted-color">Duración estimada: {{ duracion(ruta.duracionMinutos) }}. Un bus no se programa mientras está en otro viaje.</p>
+          <p v-else-if="ruta" class="m-0 text-xs text-muted-color">La ruta no tiene duración estimada: solo se evita el mismo bus a la misma hora.</p>
         </section>
         <!-- <divider /> -->
 
@@ -143,7 +150,7 @@
             <label for="pg-guardar" class="font-medium">Guardar esta configuración como esquema</label>
           </div>
           <InputText v-if="guardar" v-model="nombreEsquema" placeholder="Nombre del esquema, p. ej. «Xela–Guate diario»" maxlength="100" fluid aria-label="Nombre del esquema" />
-          <p class="m-0 text-xs text-muted-color">Guarda el trayecto, las horas con su bus y el intervalo; los días se eligen cada vez que se usa.</p>
+          <p class="m-0 text-xs text-muted-color">Guarda la ruta, las horas con su bus y el intervalo; los días se eligen cada vez que se usa.</p>
         </section>
       </div>
 
@@ -252,7 +259,7 @@ const resultado = shallowRef<ResultadoProgramacion | null>(null);
 
 const esquema = computed(() => esquemas.value.find((e) => e.id === esquemaId.value) ?? null);
 const cambiosEsquema = computed(() => !!esquema.value && difiereDeEsquema(form, esquema.value));
-const trayecto = computed(() => opciones.value?.trayectos.find((t) => t.id === form.trayectoId) ?? null);
+const ruta = computed(() => opciones.value?.rutas.find((r) => r.id === form.rutaId) ?? null);
 const dias = computed(() => diasProgramados(form));
 const errores = computed(() => erroresDe(form));
 

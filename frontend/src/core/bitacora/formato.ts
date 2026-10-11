@@ -33,7 +33,8 @@ export function lineasDeDetalle(tipo: TipoBitacora, e: Pick<EntradaBitacora, 'op
     } else if (d.de && d.a) {
       lineas.push(`Estado: ${ESTADOS[String(d.de)] ?? d.de} → ${ESTADOS[String(d.a)] ?? d.a}`)
     } else {
-      if (d.trayecto) lineas.push(String(d.trayecto))
+      // `trayecto`: entradas anteriores a ADR-030 (la bitácora no se reescribe).
+      if (d.ruta ?? d.trayecto) lineas.push(String(d.ruta ?? d.trayecto))
       if (d.bus) lineas.push(`Bus ${d.bus}`)
     }
   } else {

@@ -7,7 +7,6 @@ namespace App\Tests\Migration;
 use App\Entity\Enum\CanalVenta;
 use App\Entity\Enum\EstadoSalida;
 use App\Migration\Mapeador;
-use App\Migration\Salida\RutaMigrada;
 use PHPUnit\Framework\TestCase;
 
 final class MapeadorSalidaTest extends TestCase
@@ -93,12 +92,4 @@ final class MapeadorSalidaTest extends TestCase
         $this->assertNull($b["numeroSeguro"]);
     }
 
-    public function testParesDeLaRuta(): void
-    {
-        $ruta = new RutaMigrada(10, 1, 3, ["1:3" => 10, "1:2" => 11, "2:3" => 12]);
-
-        $this->assertSame(11, $ruta->entre(1, 2));
-        $this->assertSame(10, $ruta->entre(1, 3));
-        $this->assertNull($ruta->entre(3, 1), "los trayectos son vectoriales");
-    }
 }

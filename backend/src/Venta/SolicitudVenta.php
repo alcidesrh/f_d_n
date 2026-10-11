@@ -26,7 +26,7 @@ final readonly class SolicitudVenta
         /** Estación donde se vende (taquilla). */
         public ?int $estacionId = null,
         public ?string $observacion = null,
-        /** Cobrar la tarifa del trayecto completo del salida aunque viaje un subtrayecto. */
+        /** Cobrar la tarifa del trayecto completo de la salida aunque viaje un tramo intermedio. */
         public bool $cobrarTrayectoCompleto = false,
         public ?int $tipoPagoId = null,
         public ?int $monedaId = null,

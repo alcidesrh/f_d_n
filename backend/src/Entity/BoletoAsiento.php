@@ -17,18 +17,12 @@ use Money\Money;
  * Un asiento vendido. Solo lectura por la API: se crea, anula y reasigna por
  * `App\Venta` (ADR-021), que valida disponibilidad, tarifa y factura.
  *
- * La restricción única solo cuenta los boletos vivos: un asiento anulado o
- * reasignado se puede volver a vender en el mismo trayecto y salida.
+ * Dos boletos vivos del mismo asiento y salida no pueden tener tramos que
+ * se solapen: lo garantiza la restricción de exclusión
+ * `ex_boleto_asiento_tramo` (solo en migraciones, ADR-030). Un asiento
+ * anulado o reasignado se puede volver a vender.
  */
 #[ORM\Entity(repositoryClass: BoletoAsientoRepository::class)]
-#[
-    ORM\UniqueConstraint(
-        name: "uq_boleto_asiento_asiento_trayecto_salida",
-        columns: ["asiento_id", "trayecto_id", "salida_id"],
-        // Tal como lo devuelve PostgreSQL (`pg_get_expr`): así el esquema no marca diferencias.
-        options: ["where" => "((estado)::text <> ALL ((ARRAY['anulado'::character varying, 'reasignado'::character varying])::text[]))"],
-    ),
-]
 #[
     ApiResource(
         operations: [],
@@ -49,6 +43,13 @@ class BoletoAsiento extends Base
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
     private ?Trayecto $trayecto = null;
+
+    /** Tramo ocupado `[ordenSube, ordenBaja)` en el orden de las paradas de la ruta de la salida (ADR-030). */
+    #[ORM\Column(type: "smallint")]
+    private ?int $ordenSube = null;
+
+    #[ORM\Column(type: "smallint")]
+    private ?int $ordenBaja = null;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
@@ -106,6 +107,28 @@ class BoletoAsiento extends Base
     public function setTrayecto(?Trayecto $trayecto): static
     {
         $this->trayecto = $trayecto;
+
+        return $this;
+    }
+
+    public function getOrdenSube(): ?int
+    {
+        return $this->ordenSube;
+    }
+
+    public function getOrdenBaja(): ?int
+    {
+        return $this->ordenBaja;
+    }
+
+    /** El tramo que ocupa, por orden de paradas de la ruta de la salida. */
+    public function ocuparTramo(int $sube, int $baja): static
+    {
+        if ($sube < 0 || $sube >= $baja) {
+            throw new \InvalidArgumentException("Tramo inválido: [{$sube}, {$baja}).");
+        }
+        $this->ordenSube = $sube;
+        $this->ordenBaja = $baja;
 
         return $this;
     }

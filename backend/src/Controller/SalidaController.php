@@ -7,7 +7,7 @@ namespace App\Controller;
 use App\Croquis\Moldes;
 use App\Entity\Bus;
 use App\Entity\Empresa;
-use App\Entity\Trayecto;
+use App\Entity\Ruta;
 use App\Entity\Usuario;
 use App\Entity\Salida;
 use App\Salida\ConsultaSalidas;
@@ -63,7 +63,7 @@ final class SalidaController extends AbstractController
     }
 
     /**
-     * Empresas, trayectos activos y buses (de la empresa del usuario) para
+     * Empresas, rutas activas y buses (de la empresa del usuario) para
      * filtros y formularios, los moldes de croquis y clases de bus de esos
      * buses (para elegir uno compatible) y qué puede hacer el usuario.
      */
@@ -71,16 +71,17 @@ final class SalidaController extends AbstractController
     public function opciones(): JsonResponse
     {
         $this->denyAccessUnlessGranted(self::VER);
-        $trayectos = $this->em->createQueryBuilder()
-            ->select("t", "o", "d")
-            ->from(Trayecto::class, "t")
-            ->join("t.origen", "o")
-            ->join("t.destino", "d")
-            ->where("t.activo = true")
-            ->orderBy("o.nombre")
-            ->addOrderBy("d.nombre")
+        /** @var list<Ruta> $rutas */
+        $rutas = $this->em->createQueryBuilder()
+            ->select("r", "p", "e", "t")
+            ->from(Ruta::class, "r")
+            ->join("r.paradas", "p")
+            ->join("p.enclave", "e")
+            ->leftJoin("p.tiempos", "t")
+            ->where("r.activo = true")
             ->getQuery()
             ->getResult();
+        usort($rutas, static fn(Ruta $a, Ruta $b) => strnatcasecmp(VistaSalida::ruta($a), VistaSalida::ruta($b)));
         /** @var list<Bus> $buses */
         $buses = $this->em->createQueryBuilder()
             ->select("b", "c", "k")
@@ -110,7 +111,7 @@ final class SalidaController extends AbstractController
                 static fn(Empresa $e) => ["id" => $e->getId(), "nombre" => $e->getNombreCorto()],
                 $this->em->getRepository(Empresa::class)->findBy([], ["nombre" => "ASC"]),
             ),
-            "trayectos" => array_map(VistaSalida::trayecto(...), $trayectos),
+            "rutas" => array_map(VistaSalida::rutaOpcion(...), $rutas),
             "buses" => array_map(VistaSalida::bus(...), $buses),
             "croquis" => $moldes,
             "clases" => $clases,
@@ -154,7 +155,7 @@ final class SalidaController extends AbstractController
         return $this->json(["items" => $this->esquemas->listar()]);
     }
 
-    /** `{ nombre, trayectoId, intervaloDias, momentos: [{ hora, busId }] }` */
+    /** `{ nombre, rutaId, intervaloDias, momentos: [{ hora, busId }] }` */
     #[Route("/esquemas", name: "esquema_crear", methods: ["POST"])]
     public function crearEsquema(Request $request, #[CurrentUser] Usuario $usuario): JsonResponse
     {
@@ -219,7 +220,7 @@ final class SalidaController extends AbstractController
         return $this->responder(fn() => $this->gestion->propagacion($id));
     }
 
-    /** `{ trayectoId?, busId?, fecha?: AAAA-MM-DDTHH:MM, propagar?: bool }` */
+    /** `{ rutaId?, busId?, fecha?: AAAA-MM-DDTHH:MM, propagar?: bool }` */
     #[Route("/{id<\d+>}", name: "editar", methods: ["PUT"])]
     public function editar(int $id, Request $request): JsonResponse
     {

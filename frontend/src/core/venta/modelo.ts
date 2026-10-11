@@ -10,15 +10,16 @@ import type { AsientoOcupado, Parada, SalidaDetalle } from "./types";
  * `clasesVendibles`, un asiento libre de otra clase queda `bloqueado`: no
  * tiene tarifa en el tramo elegido.
  */
-export function estadoEnMapa(ocupados: readonly AsientoOcupado[], seleccion: readonly number[], clasesVendibles?: readonly ClaseAsiento[]): (asiento: AsientoCroquis) => EstadoAsiento {
+export function estadoEnMapa(ocupados: readonly AsientoOcupado[], seleccion: readonly number[], clasesVendibles?: readonly ClaseAsiento[], recomendados: readonly number[] = []): (asiento: AsientoCroquis) => EstadoAsiento {
   const porId = new Map(ocupados.map((o) => [o.asiento, o]));
   const elegidos = new Set(seleccion);
+  const sugeridos = new Set(recomendados);
   return (asiento) => {
     const id = asiento.id ?? -1;
     const o = porId.get(id);
     if (!o) {
       if (clasesVendibles && !clasesVendibles.includes(asiento.clase)) return "bloqueado";
-      return elegidos.has(id) ? "seleccionado" : "disponible";
+      return elegidos.has(id) ? "seleccionado" : sugeridos.has(id) ? "recomendado" : "disponible";
     }
     if (o.estado === "propio") return "seleccionado";
     if (o.estado === "reservado") return "reservado";
@@ -132,3 +133,12 @@ export function diaISO(d: Date): string {
 export function nuevoToken(): string {
   return globalThis.crypto.randomUUID();
 }
+
+/** Días de calendario (en Guatemala) entre dos instantes: el "+1" de una llegada al día siguiente. */
+export function diasEntre(desde: string, hasta: string): number {
+  const dia = (iso: string) => new Intl.DateTimeFormat("en-CA", { timeZone: ZONA }).format(new Date(iso))
+  return Math.round((Date.parse(dia(hasta)) - Date.parse(dia(desde))) / 86_400_000)
+}
+
+/** Hora de una punta del viaje: "≈ 05:20 a. m." si es estimada, "—" si no se conoce. */
+export const horaViaje = (p: { hora: string | null; aprox: boolean }) => (p.hora ? `${p.aprox ? "≈ " : ""}${hora(p.hora)}` : "—")

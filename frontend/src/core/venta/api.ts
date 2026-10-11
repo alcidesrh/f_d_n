@@ -41,18 +41,11 @@ export const fetchSalidas = (
 export const fetchSalida = (id: number) => http.get<SalidaDetalle>(`/venta/salidas/${id}`)
 
 /** Ocupación para un trayecto; `silent` para refrescos por Mercure. */
-export async function fetchOcupacion(
-  salida: number,
-  trayecto: number | null,
-  silent = false,
-): Promise<AsientoOcupado[]> {
-  const q = trayecto ? `?trayecto=${trayecto}` : ''
-  return (
-    await http.get<{ asientos: AsientoOcupado[] }>(`/venta/salidas/${salida}/ocupacion${q}`, {
-      silent,
-    })
-  ).asientos
-}
+/** Ocupados para el tramo y los libres que conviene vender (`recomendados`, ADR-030). */
+export const fetchOcupacion = (salida: number, trayecto: number | null, silent = false) =>
+  http.get<{ asientos: AsientoOcupado[]; recomendados: number[] }>(`/venta/salidas/${salida}/ocupacion${trayecto ? `?trayecto=${trayecto}` : ''}`, {
+    silent,
+  })
 
 export const fetchDetalleAsiento = (salida: number, asiento: number) =>
   http.get<DetalleAsiento>(`/venta/salidas/${salida}/asientos/${asiento}`, { silent: true })

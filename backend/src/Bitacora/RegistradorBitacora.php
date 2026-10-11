@@ -71,7 +71,7 @@ final class RegistradorBitacora implements ResetInterface
             $this->escribir($args->getObjectManager()->getConnection(), $e, (int) $e->getId(), OperacionSalida::CREADA, [
                 "fecha" => $e->getFecha()?->format(DATE_ATOM),
                 "bus" => $e->getBus()?->getCodigo(),
-                "trayecto" => self::viaje($e->getTrayecto()),
+                "ruta" => $e->getRuta()?->getNombre(),
             ]);
         } elseif ($e instanceof BoletoAsiento) {
             $this->escribir($args->getObjectManager()->getConnection(), $e, (int) $e->getId(), OperacionBoleto::CREADO, [
@@ -131,7 +131,7 @@ final class RegistradorBitacora implements ResetInterface
                 $this->porEliminar[$e] = ["id" => (int) $e->getId(), "detalle" => [
                     "fecha" => $e->getFecha()?->format(DATE_ATOM),
                     "bus" => $e->getBus()?->getCodigo(),
-                    "trayecto" => self::viaje($e->getTrayecto()),
+                    "ruta" => $e->getRuta()?->getNombre(),
                 ]];
             }
         }

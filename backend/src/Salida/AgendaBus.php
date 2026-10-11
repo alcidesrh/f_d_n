@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Salida;
 
 /**
- * Cuándo está ocupado cada bus: un intervalo [salida, salida + duración del
- * trayecto) por salida. Sirve para no programar ni mover un bus a una hora
+ * Cuándo está ocupado cada bus: un intervalo [salida, salida + duración de la
+ * ruta) por salida. Sirve para no programar ni mover un bus a una hora
  * en que todavía va en otro viaje. Si no se conoce la duración, el bus solo
  * choca consigo mismo a la misma hora exacta. Puro.
  */

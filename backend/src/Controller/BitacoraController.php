@@ -62,8 +62,8 @@ final class BitacoraController extends AbstractController
         return sprintf(
             "Salida %d · %s → %s · %s",
             $id,
-            $salida->getTrayecto()?->getOrigen()?->getNombre(),
-            $salida->getTrayecto()?->getDestino()?->getNombre(),
+            $salida->getRuta()?->getOrigen()?->getNombre(),
+            $salida->getRuta()?->getDestino()?->getNombre(),
             $salida->getFecha()?->format("d/m/Y H:i"),
         );
     }

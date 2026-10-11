@@ -96,23 +96,28 @@ final class ReglasVenta
             ->modify(sprintf("-%d minutes", self::LIBERACION_MINUTOS));
     }
 
-    /** Trayecto que viaja el cliente: el del salida o uno de sus subtrayectos. */
+    /** Trayecto que viaja el cliente: el de un par de paradas de la salida (sin elegir, el completo). */
     public function trayecto(Salida $salida, ?int $trayectoId): Trayecto
     {
-        if ($trayectoId === null || $trayectoId === $salida->getTrayecto()->getId()) {
-            return $salida->getTrayecto();
-        }
-        if (!$this->itinerarios->deTrayecto($salida->getTrayecto())->contieneTrayecto($trayectoId)) {
-            throw new VentaRechazada("El trayecto elegido no es parte del salida.");
+        $trayectoId ??= $this->completo($salida);
+        if (!$this->itinerarios->deSalida($salida)->contieneTrayecto($trayectoId)) {
+            throw new VentaRechazada("El trayecto elegido no es parte de la salida.");
         }
 
         return $this->em->find(Trayecto::class, $trayectoId)
             ?? throw new VentaRechazada("El trayecto elegido no existe.");
     }
 
+    /** Id del trayecto entre la primera y la última parada de la salida. */
+    private function completo(Salida $salida): int
+    {
+        return $this->itinerarios->deSalida($salida)->trayectoId
+            ?? throw new VentaRechazada("La ruta de la salida no tiene trayecto entre sus puntas.", "sin_trayecto_completo");
+    }
+
     public function tramo(Salida $salida, Trayecto $trayecto): Tramo
     {
-        return $this->itinerarios->deTrayecto($salida->getTrayecto())->tramo((int) $trayecto->getId())
+        return $this->itinerarios->deSalida($salida)->tramo((int) $trayecto->getId())
             ?? throw new VentaRechazada("El trayecto elegido no es parte del salida.");
     }
 
@@ -163,7 +168,7 @@ final class ReglasVenta
      * Precio de cada asiento. Se cobra la tarifa del trayecto que viaja, o la
      * del trayecto completo del salida si así se pide. Una cortesía vale 0.
      *
-     * Solo se vende un trayecto (o subtrayecto) con tarifa para la clase del
+     * Solo se vende un trayecto (par de paradas de la salida) con tarifa para la clase del
      * asiento, en todos los canales: también en una cortesía o cobrando el
      * trayecto completo, el tramo que viaja tiene que ser tarifable.
      *
@@ -176,7 +181,7 @@ final class ReglasVenta
         bool $cobrarTrayectoCompleto = false,
         bool $cortesia = false,
     ): Cotizacion {
-        $trayectoTarifa = $cobrarTrayectoCompleto ? $salida->getTrayecto() : $viaja;
+        $trayectoTarifa = $cobrarTrayectoCompleto ? $this->trayecto($salida, null) : $viaja;
         $tarifas = $this->tarifas->porTrayectos(
             $salida,
             [(int) $viaja->getId(), (int) $trayectoTarifa->getId()],

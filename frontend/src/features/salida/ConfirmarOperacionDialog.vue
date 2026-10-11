@@ -6,7 +6,7 @@
   <Dialog :visible="!!salida" modal :header="titulo" class="w-[min(30rem,calc(100vw-1rem))]" @update:visible="(v: boolean) => !v && emit('cerrar')">
     <div v-if="salida" class="flex flex-col gap-3">
       <p class="m-0">
-        ¿{{ operacion === 'anular' ? 'Anular' : 'Eliminar' }} la salida <b>#{{ salida.id }}</b> {{ salida.trayecto.ruta }} del
+        ¿{{ operacion === 'anular' ? 'Anular' : 'Eliminar' }} la salida <b>#{{ salida.id }}</b> {{ salida.ruta.nombre }} del
         <b>{{ fechaHora(salida.fecha) }}</b><template v-if="salida.bus"> (bus {{ salida.bus.codigo }})</template>?
       </p>
       <p class="m-0 text-xs text-muted-color">

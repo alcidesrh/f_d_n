@@ -82,16 +82,19 @@ export const useVentaStore = defineStore("venta", () => {
   let desuscribir: (() => void) | null = null;
 
   const trayectoId = computed(() => (detalle.value ? trayectoEntre(detalle.value, sube.value, baja.value) : null));
-  const esSubtrayecto = computed(() => !!detalle.value && trayectoId.value !== detalle.value.trayecto.id);
-  /** Cobrar el trayecto completo solo si se viaja un subtrayecto y el completo tiene tarifa. */
-  const puedeCobrarCompleto = computed(() => esSubtrayecto.value && !!detalle.value?.trayectos.some((t) => t.completo));
+  /** Se viaja un tramo intermedio de la ruta (no de la primera a la última parada). */
+  const esTramoIntermedio = computed(() => !!detalle.value && !detalle.value.trayectos.find((t) => t.id === trayectoId.value)?.completo);
+  /** Cobrar el trayecto completo solo si se viaja un tramo intermedio y el completo tiene tarifa. */
+  const puedeCobrarCompleto = computed(() => esTramoIntermedio.value && !!detalle.value?.trayectos.some((t) => t.completo));
   const subidas = computed(() => (detalle.value ? paradasDeSubida(detalle.value) : []));
   const bajadas = computed(() => (detalle.value ? paradasDeBajada(detalle.value, sube.value) : []));
   /** Clases de asiento con tarifa en el tramo elegido: las demás se ven bloqueadas. */
   const clasesVendibles = computed(() => (detalle.value ? clasesDelTrayecto(detalle.value, trayectoId.value) : []));
   /** Motivo por el que el salida ya no se vende (p. ej. de un día pasado): el croquis queda de solo lectura. */
   const noVendible = computed(() => detalle.value?.noVendible ?? null);
-  const estadoAsiento = computed(() => estadoEnMapa(ocupados.value, seleccion.value, noVendible.value ? [] : clasesVendibles.value));
+  /** Libres que conviene vender para el tramo (no fragmentan el bus, ADR-030). */
+  const recomendados = shallowRef<number[]>([]);
+  const estadoAsiento = computed(() => estadoEnMapa(ocupados.value, seleccion.value, noVendible.value ? [] : clasesVendibles.value, noVendible.value ? [] : recomendados.value));
   const asientosCroquis = computed(() => detalle.value?.croquis.filter((e): e is AsientoCroquis => e.tipo === "asiento") ?? []);
   const libres = computed(() => asientosCroquis.value.length - ocupados.value.filter((o) => o.estado !== "propio").length);
   const preciosCotizados = computed(() => new Map<number, Importe>((cotizacion.value?.asientos ?? []).map((a) => [a.asiento, a.precio])));
@@ -169,6 +172,7 @@ export const useVentaStore = defineStore("venta", () => {
     salidaId.value = null;
     detalle.value = null;
     ocupados.value = [];
+    recomendados.value = [];
     seleccion.value = [];
     pasajeros.value = {};
     cotizacion.value = null;
@@ -177,7 +181,9 @@ export const useVentaStore = defineStore("venta", () => {
 
   async function cargarOcupacion(silenciosa = false) {
     if (!salidaId.value || trayectoId.value == null) return;
-    ocupados.value = await api.fetchOcupacion(salidaId.value, trayectoId.value, silenciosa);
+    const r = await api.fetchOcupacion(salidaId.value, trayectoId.value, silenciosa);
+    ocupados.value = r.asientos;
+    recomendados.value = r.recomendados ?? [];
   }
 
   /** Refresco en vivo: si otro vendió un asiento elegido, se avisa y se quita. */
@@ -425,7 +431,7 @@ export const useVentaStore = defineStore("venta", () => {
     falloFacturacion,
     comprobante,
     trayectoId,
-    esSubtrayecto,
+    esTramoIntermedio,
     puedeCobrarCompleto,
     clasesVendibles,
     noVendible,

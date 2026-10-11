@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiProperty;
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
 use App\Entity\Base\Traits\TimestampableEntityTrait;
@@ -12,7 +13,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: SalidaRepository::class)]
-#[ORM\Index(columns: ["fecha", "empresa_id", "trayecto_id"], name: "idx_salida_fecha_empresa_trayecto")]
+#[ORM\Index(columns: ["fecha", "empresa_id", "ruta_id"], name: "idx_salida_fecha_empresa_ruta")]
 #[ApiResourcePaginationPage]
 class Salida extends Base
 {
@@ -39,9 +40,20 @@ class Salida extends Base
     #[ORM\OneToMany(targetEntity: BoletoAsiento::class, mappedBy: "salida")]
     private Collection $boletoAsientos;
 
+    /** Ruta que recorre (ADR-030). */
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Trayecto $trayecto = null;
+    private ?Ruta $ruta = null;
+
+    /**
+     * Horario en cada parada; lo escribe `App\Ruta\Horarios`.
+     *
+     * @var Collection<int, SalidaParada>
+     */
+    #[ApiProperty(readable: false, writable: false)]
+    #[ORM\OneToMany(targetEntity: SalidaParada::class, mappedBy: "salida", cascade: ["remove"])]
+    #[ORM\OrderBy(["orden" => "ASC"])]
+    private Collection $horario;
 
     /** Quien programó la salida; nulo en las migradas del legado (no lo guardaba). */
     #[ORM\ManyToOne]
@@ -51,6 +63,7 @@ class Salida extends Base
     public function __construct()
     {
         $this->boletoAsientos = new ArrayCollection();
+        $this->horario = new ArrayCollection();
     }
 
     public function getFecha(): ?\DateTime
@@ -174,15 +187,21 @@ class Salida extends Base
         return $this;
     }
 
-    public function getTrayecto(): ?Trayecto
+    public function getRuta(): ?Ruta
     {
-        return $this->trayecto;
+        return $this->ruta;
     }
 
-    public function setTrayecto(?Trayecto $trayecto): static
+    public function setRuta(?Ruta $ruta): static
     {
-        $this->trayecto = $trayecto;
+        $this->ruta = $ruta;
 
         return $this;
+    }
+
+    /** @return Collection<int, SalidaParada> en orden */
+    public function getHorario(): Collection
+    {
+        return $this->horario;
     }
 }
