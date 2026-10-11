@@ -53,4 +53,11 @@ class ParadaTiempo
     {
         return $this->minutos;
     }
+
+    public function setMinutos(int $minutos): static
+    {
+        $this->minutos = $minutos;
+
+        return $this;
+    }
 }

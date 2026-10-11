@@ -32,7 +32,7 @@ Se guarda el hecho (la secuencia) y se derivan las consecuencias (los pares vend
 | **Salida** | Viaje concreto. | `ruta` en lugar de `trayecto`. |
 | **BoletoAsiento** / **ReservaAsiento** | Asiento vendido / apartado. | `ordenSube`, `ordenBaja` (el tramo `[sube, baja)`); `trayecto` se queda: es el par que viaja el pasajero (tarifa, factura, reportes); el tramo lo fija la venta y ya no se recalcula. |
 | **EsquemaSalida** | Plantilla del programador. | `ruta` en lugar de `trayecto`. |
-| **Trayecto** | Solo el **par comercial** origen→destino: lo que se pide, se tarifa y se factura. | Igual; pierde `subtrayectos` y la duración. Se crea cuando hace falta (al tarifar o al vender), no por cada combinación. |
+| **Trayecto** | Solo el **par comercial** origen→destino: lo que se pide, se tarifa y se factura. | Igual; pierde `subtrayectos` y la duración. Al guardar una ruta existe el de cada par de sus paradas en orden (el catálogo de lo que se puede tarifar con el CRUD de tarifas); los que no son par de ninguna ruta ni tienen tarifa ni boletos se eliminan. |
 | **Subtrayecto** | — | Se elimina: un subtrayecto es cualquier par `i < j` de paradas de una ruta. |
 
 Reglas:
@@ -72,7 +72,7 @@ Cada fase deja la aplicación funcionando y actualiza docs y borra lo que queda 
 | 3 | Búsqueda por hora en el origen; libres por tramo | Hecha: `BuscadorSalidas` (taquilla y web); `vendidos` de la lista de taquilla por tramo; orígenes, destinos y directorio de la web desde paradas de rutas activas con tarifa |
 | 4 | Ocupación por `orden`; restricción de exclusión | Hecha (antes que la 3: la búsqueda cuenta libres por tramo con el orden). Verificado: venta de tramos que no se solapan en el mismo asiento, rechazo del solape en la aplicación y en la base |
 | 5 | `Salida.ruta` y `EsquemaSalida.ruta` obligatorias; fuera `Salida.trayecto` | Hecha: el programador, la edición, los esquemas y el filtro eligen ruta (`rutaId`); la duración para choques es la de la ruta; el trayecto completo se deduce del horario; los avisos de salidas anuladas llegan a todas las estaciones donde se sube; la bitácora de salidas guarda `ruta`. El sincronizador de configuración de entidades ahora quita los campos que ya no existen |
-| 6 | Gestión de rutas (editor de paradas) y tarifas por par | |
+| 6 | Gestión de rutas (editor de paradas) y tarifas por par | Hecha: `/rutas` (lista, nueva, ruta de regreso, duplicar, eliminar sin uso) y `/rutas/:id` (paradas reordenables, minutos/km desde el origen, sube/baja, minutos por clase, mapa). REST `/api/gestion-rutas/*` (ver: `salida.ver`; editar: `ruta.editar`, en el permiso "Gestion Salidas"). Los minutos que retroceden se avisan, no se rechazan: hay 6 rutas del legado así (p. ej. RUT001 con Morales y El Estor, ramales) |
 | 7 | Presentación en taquilla, página y boleto | |
 | 8 | Retiro de `Subtrayecto`, trayectos huérfanos y documentación final | |
 
