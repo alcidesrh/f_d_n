@@ -11,7 +11,7 @@ const salida = (id: number, extra: Partial<SalidaResumen> = {}): SalidaResumen =
   estado: 'programada',
   empresa: { id: 1, nombre: 'Fuente del Norte' },
   bus: { id: 7, codigo: 'B-07', gama: 'Oro' },
-  trayecto: { id: 3, origen: { id: 1, nombre: 'Guatemala' }, destino: { id: 2, nombre: 'Flores' } },
+  ruta: { id: 3, nombre: 'Guatemala - Flores', origen: { id: 1, nombre: 'Guatemala' }, destino: { id: 2, nombre: 'Flores' } },
   vendidos: 12,
   capacidad: 40,
   precios: [

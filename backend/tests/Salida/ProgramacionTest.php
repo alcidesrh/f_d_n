@@ -25,7 +25,7 @@ final class ProgramacionTest extends TestCase
     private static function programacion(array $extra = []): Programacion
     {
         return Programacion::desdeArray([
-            "trayectoId" => 7,
+            "rutaId" => 7,
             "momentos" => [["hora" => "14:30", "busId" => 2], ["hora" => "6:05", "busId" => 1]],
             "desde" => "2026-10-05",
             ...$extra,
@@ -67,7 +67,7 @@ final class ProgramacionTest extends TestCase
     /** @return iterable<string, array{array<string, mixed>, string}> */
     public static function invalidas(): iterable
     {
-        yield "sin trayecto" => [["trayectoId" => null], "trayecto_requerido"];
+        yield "sin ruta" => [["rutaId" => null], "ruta_requerida"];
         yield "sin momentos" => [["momentos" => []], "sin_momentos"];
         yield "hora inválida" => [["momentos" => [["hora" => "24:00", "busId" => 1]]], "hora_invalida"];
         yield "minutos inválidos" => [["momentos" => [["hora" => "10:60", "busId" => 1]]], "hora_invalida"];
@@ -148,7 +148,7 @@ final class ProgramacionTest extends TestCase
         $f = FiltroSalidas::desdeQuery([
             "estado" => "finalizada,nada,cancelada",
             "empresa" => "3",
-            "trayecto" => "x",
+            "ruta" => "x",
             "desde" => "2026-10-01",
             "hasta" => "2026-13-01",
             "orden" => "fecha",
@@ -158,7 +158,7 @@ final class ProgramacionTest extends TestCase
         ]);
         $this->assertSame([EstadoSalida::FINALIZADA, EstadoSalida::CANCELADA], $f->estados);
         $this->assertSame(3, $f->empresa);
-        $this->assertNull($f->trayecto);
+        $this->assertNull($f->ruta);
         $this->assertSame("2026-10-01", $f->desde?->format("Y-m-d"));
         $this->assertNull($f->hasta);
         $this->assertSame([FiltroSalidas::FECHA, "desc", 1, 25], [$f->orden, $f->direccion, $f->pagina, $f->porPagina]);

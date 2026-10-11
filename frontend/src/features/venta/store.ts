@@ -82,9 +82,10 @@ export const useVentaStore = defineStore("venta", () => {
   let desuscribir: (() => void) | null = null;
 
   const trayectoId = computed(() => (detalle.value ? trayectoEntre(detalle.value, sube.value, baja.value) : null));
-  const esSubtrayecto = computed(() => !!detalle.value && trayectoId.value !== detalle.value.trayecto.id);
-  /** Cobrar el trayecto completo solo si se viaja un subtrayecto y el completo tiene tarifa. */
-  const puedeCobrarCompleto = computed(() => esSubtrayecto.value && !!detalle.value?.trayectos.some((t) => t.completo));
+  /** Se viaja un tramo intermedio de la ruta (no de la primera a la última parada). */
+  const esTramoIntermedio = computed(() => !!detalle.value && !detalle.value.trayectos.find((t) => t.id === trayectoId.value)?.completo);
+  /** Cobrar el trayecto completo solo si se viaja un tramo intermedio y el completo tiene tarifa. */
+  const puedeCobrarCompleto = computed(() => esTramoIntermedio.value && !!detalle.value?.trayectos.some((t) => t.completo));
   const subidas = computed(() => (detalle.value ? paradasDeSubida(detalle.value) : []));
   const bajadas = computed(() => (detalle.value ? paradasDeBajada(detalle.value, sube.value) : []));
   /** Clases de asiento con tarifa en el tramo elegido: las demás se ven bloqueadas. */
@@ -425,7 +426,7 @@ export const useVentaStore = defineStore("venta", () => {
     falloFacturacion,
     comprobante,
     trayectoId,
-    esSubtrayecto,
+    esTramoIntermedio,
     puedeCobrarCompleto,
     clasesVendibles,
     noVendible,

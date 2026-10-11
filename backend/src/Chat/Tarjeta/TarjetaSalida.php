@@ -38,7 +38,7 @@ final class TarjetaSalida implements Tarjeta
         foreach ($this->em->getRepository(Salida::class)->findBy(["id" => $ids]) as $salida) {
             $d = $this->detalle->de($salida);
             $datos[(int) $salida->getId()] = [
-                "titulo" => sprintf("%s → %s", $d["trayecto"]["origen"]["nombre"] ?? "?", $d["trayecto"]["destino"]["nombre"] ?? "?"),
+                "titulo" => $d["ruta"]["nombre"] ?: sprintf("%s → %s", $d["ruta"]["origen"]["nombre"] ?? "?", $d["ruta"]["destino"]["nombre"] ?? "?"),
                 ...$d,
             ];
         }

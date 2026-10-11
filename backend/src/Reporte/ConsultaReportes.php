@@ -133,7 +133,7 @@ final class ConsultaReportes
     private function base(?int $empresaId): QueryBuilder
     {
         $qb = $this->em->createQueryBuilder()
-            ->select("b", "a", "v", "u", "f", "tp", "s", "bus", "pil", "t", "o", "d", "st", "so", "sd")
+            ->select("b", "a", "v", "u", "f", "tp", "s", "bus", "pil", "t", "o", "d", "sr")
             ->from(BoletoAsiento::class, "b")
             ->join("b.asiento", "a")
             ->join("b.boletoVenta", "v")
@@ -141,9 +141,7 @@ final class ConsultaReportes
             ->join("b.trayecto", "t")
             ->join("t.origen", "o")
             ->join("t.destino", "d")
-            ->join("s.trayecto", "st")
-            ->join("st.origen", "so")
-            ->join("st.destino", "sd")
+            ->join("s.ruta", "sr")
             ->leftJoin("s.bus", "bus")
             ->leftJoin("bus.piloto", "pil")
             ->leftJoin("v.usuario", "u")
@@ -179,7 +177,7 @@ final class ConsultaReportes
         return array_map(function (BoletoAsiento $b) use ($referencias): LineaBoleto {
             $venta = $b->getBoletoVenta();
             $salida = $b->getSalida();
-            $trayecto = $salida->getTrayecto();
+            $ruta = $salida->getRuta();
             $factura = $venta->getFactura();
             $usuario = $venta->getUsuario();
             $precio = $b->getPrecio();
@@ -199,7 +197,7 @@ final class ConsultaReportes
                 \DateTimeImmutable::createFromInterface($salida->getFecha()),
                 $salida->getBus()?->getCodigo(),
                 $salida->getBus()?->getPiloto()?->getCodigo(),
-                sprintf("%s - %s", $trayecto->getOrigen()?->getNombre() ?? "?", $trayecto->getDestino()?->getNombre() ?? "?"),
+                sprintf("%s - %s", $ruta->getOrigen()?->getNombre() ?? "?", $ruta->getDestino()?->getNombre() ?? "?"),
                 (string) $b->getTrayecto()->getOrigen()?->getNombre(),
                 (string) $b->getTrayecto()->getDestino()?->getNombre(),
                 (int) $b->getAsiento()->getNumero(),

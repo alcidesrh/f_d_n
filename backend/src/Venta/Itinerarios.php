@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Venta;
 
 use App\Entity\Enum\PrecisionHora;
+use App\Entity\Parada;
 use App\Entity\Salida;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\ORM\EntityManagerInterface;
@@ -14,7 +15,7 @@ use Symfony\Contracts\Service\ResetInterface;
  * Lee el `Itinerario` de una salida desde su horario (`salida_parada`,
  * ADR-030) y los trayectos que unen sus paradas. Memoiza por petición (se
  * vacía en cada request: FrankenPHP en modo worker reutiliza el servicio).
- * Una salida sin horario (no debería haberla) queda con sus dos puntas.
+ * Una salida sin horario (no debería haberla) toma las paradas de su ruta.
  */
 final class Itinerarios implements ResetInterface
 {
@@ -81,11 +82,9 @@ final class Itinerarios implements ResetInterface
         }
 
         foreach ($faltan as $id => $s) {
-            $t = $s->getTrayecto();
             $resultado[$id] = $this->cache[$id] = Itinerario::deParadas(
-                (int) $t->getId(),
-                $paradas[$id] ?? [(int) $t->getOrigen()->getId(), (int) $t->getDestino()->getId()],
-                ($trayectos[$id] ?? []) + [(int) $t->getId() => ["origen" => (int) $t->getOrigen()->getId(), "destino" => (int) $t->getDestino()->getId()]],
+                $paradas[$id] ?? array_map(static fn(Parada $p) => (int) $p->getEnclave()->getId(), $s->getRuta()->getParadas()->toArray()),
+                $trayectos[$id] ?? [],
                 $horas[$id] ?? [],
             );
         }

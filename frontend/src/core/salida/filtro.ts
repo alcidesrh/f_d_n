@@ -9,7 +9,7 @@ export interface FiltroSalidas {
   /** Vacío = todos. */
   estados: EstadoSalida[]
   empresa: number | null
-  trayecto: number | null
+  ruta: number | null
   bus: number | null
   /** `AAAA-MM-DD`, inclusive */
   desde: string | null
@@ -38,7 +38,7 @@ export function filtroInicial(): FiltroSalidas {
   return {
     estados: ['iniciada', 'abordando', 'programada'],
     empresa: null,
-    trayecto: null,
+    ruta: null,
     bus: null,
     desde: null,
     hasta: null,
@@ -53,7 +53,7 @@ export function filtroInicial(): FiltroSalidas {
 export function aQuery(f: FiltroSalidas): string {
   const p = new URLSearchParams()
   p.set('estado', f.estados.join(','))
-  for (const k of ['empresa', 'trayecto', 'bus', 'desde', 'hasta'] as const) {
+  for (const k of ['empresa', 'ruta', 'bus', 'desde', 'hasta'] as const) {
     const v = f[k]
     if (v !== null && v !== '') p.set(k, String(v))
   }
@@ -66,7 +66,7 @@ export function aQuery(f: FiltroSalidas): string {
 
 /** Cuántos filtros (además del estado) están activos: para el botón "Filtros". */
 export function filtrosActivos(f: FiltroSalidas): number {
-  return [f.empresa, f.trayecto, f.bus, f.desde, f.hasta].filter((v) => v !== null && v !== '').length
+  return [f.empresa, f.ruta, f.bus, f.desde, f.hasta].filter((v) => v !== null && v !== '').length
 }
 
 const dos = (n: number) => String(n).padStart(2, '0')

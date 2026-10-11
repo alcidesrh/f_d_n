@@ -48,8 +48,8 @@ final class SeguimientoBuses
         foreach ($filas as $f) {
             /** @var Salida $salida */
             $salida = $f['salida'];
-            $trayecto = $salida->getTrayecto();
-            $codigo = (string) $trayecto->getId();
+            $ruta = $salida->getRuta();
+            $codigo = (string) $ruta->getId();
             $trazos[$codigo] ??= TrazadoDeRuta::trazar($f['paradas'], $f['kilometros']);
             if (null === $trazos[$codigo]) {
                 ++$sinTrazado;
@@ -85,7 +85,7 @@ final class SeguimientoBuses
                 'placa' => $bus->getMatricula(),
                 'piloto' => $piloto ? trim($piloto->getNombre() . ' ' . $piloto->getApellido()) : null,
                 'ruta' => $codigo,
-                'rutaNombre' => (string) ($trayecto->getNombre() ?? $plan->paradas[0]->nombre . ' → ' . $plan->paradas[count($plan->paradas) - 1]->nombre),
+                'rutaNombre' => (string) ($ruta->getNombre() ?: $plan->paradas[0]->nombre . ' → ' . $plan->paradas[count($plan->paradas) - 1]->nombre),
                 'origen' => $plan->paradas[0]->nombre,
                 'destino' => $plan->paradas[count($plan->paradas) - 1]->nombre,
                 'partida' => $plan->partida(),

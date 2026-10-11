@@ -7,12 +7,10 @@ namespace App\Salida;
 use App\Entity\Bus;
 use App\Entity\Ruta;
 use App\Entity\Salida;
-use App\Entity\Trayecto;
 use App\Entity\Usuario;
 use App\Salida\Programacion\Momento;
 use App\Salida\Programacion\Programacion;
 use App\Ruta\Horarios;
-use App\Ruta\RutaDeTrayecto;
 use App\Venta\Transaccion;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
@@ -22,8 +20,8 @@ use Doctrine\ORM\EntityManagerInterface;
  * concretas y decide qué pasa con cada una antes de crearla:
  *
  * - `nueva`: se crea.
- * - `existe`: ya hay una salida igual (mismo trayecto, bus y hora); no se duplica.
- * - `conflicto`: el bus está en otro viaje a esa hora (según la duración estimada del trayecto).
+ * - `existe`: ya hay una salida igual (misma ruta, bus y hora); no se duplica.
+ * - `conflicto`: el bus está en otro viaje a esa hora (según la duración estimada de la ruta).
  * - `pasada`: la hora ya pasó (solo puede ocurrir el día de hoy).
  *
  * La vista previa y la creación usan el mismo plan; la creación lo recalcula
@@ -41,7 +39,6 @@ final class ProgramadorSalidas
         private readonly AgendaFlota $agendas,
         private readonly Esquemas $esquemas,
         private readonly Transaccion $transaccion,
-        private readonly RutaDeTrayecto $rutas,
         private readonly Horarios $horarios,
     ) {}
 
@@ -61,8 +58,8 @@ final class ProgramadorSalidas
     public function programar(Programacion $p, ?string $guardarComo, ?Usuario $usuario): array
     {
         return $this->transaccion->ejecutar(function () use ($p, $guardarComo, $usuario): array {
-            // Serializa las programaciones del mismo trayecto (dos usuarios a la vez no duplican).
-            $this->em->find(Trayecto::class, $p->trayectoId, LockMode::PESSIMISTIC_WRITE);
+            // Serializa las programaciones de la misma ruta (dos usuarios a la vez no duplican).
+            $this->em->find(Ruta::class, $p->rutaId, LockMode::PESSIMISTIC_WRITE);
             $plan = $this->plan($p);
 
             $creadas = [];
@@ -71,7 +68,6 @@ final class ProgramadorSalidas
                     continue;
                 }
                 $salida = (new Salida())
-                    ->setTrayecto($plan["trayecto"])
                     ->setRuta($plan["ruta"])
                     ->setBus($i["bus"])
                     ->setEmpresa($i["bus"]->getEmpresa())
@@ -87,7 +83,7 @@ final class ProgramadorSalidas
             if ($guardarComo !== null && trim($guardarComo) !== "") {
                 $esquema = $this->esquemas->guardar(null, [
                     "nombre" => $guardarComo,
-                    "trayectoId" => $p->trayectoId,
+                    "rutaId" => $p->rutaId,
                     "intervaloDias" => $p->intervaloDias,
                     "momentos" => array_map(static fn(Momento $m) => $m->toArray(), $p->momentos),
                 ], $usuario);
@@ -106,19 +102,17 @@ final class ProgramadorSalidas
     }
 
     /**
-     * @return array{trayecto: Trayecto, ruta: Ruta, items: list<array{fecha: \DateTimeImmutable, bus: Bus, estado: string, choque: mixed}>}
+     * @return array{ruta: Ruta, items: list<array{fecha: \DateTimeImmutable, bus: Bus, estado: string, choque: mixed}>}
      */
     private function plan(Programacion $p): array
     {
-        $trayecto = $this->em->find(Trayecto::class, $p->trayectoId)
-            ?? throw new SalidaRechazada("El trayecto no existe.", "trayecto_inexistente", 404);
-        if ($trayecto->getActivo() === false) {
-            throw new SalidaRechazada("El trayecto " . VistaSalida::ruta($trayecto) . " está inactivo.", "trayecto_inactivo");
+        $ruta = $this->em->find(Ruta::class, $p->rutaId)
+            ?? throw new SalidaRechazada("La ruta no existe.", "ruta_inexistente", 404);
+        if (!$ruta->isActivo()) {
+            throw new SalidaRechazada("La ruta " . VistaSalida::ruta($ruta) . " está inactiva.", "ruta_inactiva");
         }
-        $ruta = $this->rutas->para($trayecto)
-            ?? throw new SalidaRechazada("El trayecto " . VistaSalida::ruta($trayecto) . " no tiene una ruta con paradas.", "trayecto_sin_ruta");
         $buses = $this->esquemas->buses($p->busIds());
-        $duracion = $trayecto->getDuracionEstimadaMinutos();
+        $duracion = $ruta->getDuracionMinutos();
         $agenda = $this->agendas->de($p->busIds(), $p->desde, $p->hasta->modify("+3 days"));
         $ahora = new \DateTimeImmutable();
 
@@ -128,7 +122,7 @@ final class ProgramadorSalidas
             if ($fecha < $ahora) {
                 $estado = self::PASADA;
             } elseif (($choque = $agenda->choque($busId, $fecha, $duracion)) !== null) {
-                $igual = ($choque["trayectoId"] ?? null) === $trayecto->getId() && ($choque["fecha"] ?? null) === $fecha->format(DATE_ATOM);
+                $igual = ($choque["rutaId"] ?? null) === $ruta->getId() && ($choque["fecha"] ?? null) === $fecha->format(DATE_ATOM);
                 $estado = $igual ? self::EXISTE : self::CONFLICTO;
             } else {
                 $estado = self::NUEVA;
@@ -137,13 +131,13 @@ final class ProgramadorSalidas
             $items[] = ["fecha" => $fecha, "bus" => $buses[$busId], "estado" => $estado, "choque" => $choque];
         }
 
-        return ["trayecto" => $trayecto, "ruta" => $ruta, "items" => $items];
+        return ["ruta" => $ruta, "items" => $items];
     }
 
     /** @param array{fecha: \DateTimeImmutable, bus: Bus, estado: string, choque: mixed} $i @return array<string, mixed> */
     private static function item(array $i): array
     {
-        $choque = is_array($i["choque"]) ? array_diff_key($i["choque"], ["trayectoId" => true]) : null;
+        $choque = is_array($i["choque"]) ? array_diff_key($i["choque"], ["rutaId" => true]) : null;
 
         return [
             "fecha" => $i["fecha"]->format(DATE_ATOM),

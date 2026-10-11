@@ -105,8 +105,8 @@ const rowClass = (row: unknown) => {
 /** Hora en la estación elegida (si se conoce) o la de salida del origen. */
 const horaDe = (r: SalidaResumen) => hora(r.salidaEstacion ?? r.salida);
 /** "sale 08:00 de Guatemala" cuando la hora en la estación no es la del origen. */
-const desdeOrigen = (r: SalidaResumen) => (r.salidaEstacion && r.salidaEstacion !== r.salida ? `sale ${hora(r.salida)} de ${r.trayecto.origen.nombre}` : null);
-const trayecto = (r: SalidaResumen) => `${r.trayecto.origen.nombre ?? ""} → ${r.trayecto.destino.nombre ?? ""}`;
+const desdeOrigen = (r: SalidaResumen) => (r.salidaEstacion && r.salidaEstacion !== r.salida ? `sale ${hora(r.salida)} de ${r.ruta.origen.nombre}` : null);
+const trayecto = (r: SalidaResumen) => `${r.ruta.origen.nombre ?? ""} → ${r.ruta.destino.nombre ?? ""}`;
 const bus = (r: SalidaResumen) => [r.bus?.codigo, r.bus?.gama].filter(Boolean).join(" · ");
 const libres = (r: SalidaResumen) => (r.capacidad ?? 0) - (r.vendidos ?? 0);
 /** "Q 100.00" → "Q 100": en la lista los centavos solo se ven si los hay. */

@@ -1,27 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { invertPalette, invertRamp, themeColors } from '../theme'
+import { invertPalette, themeColors } from '../theme'
 
 const ramp = { 50: 'a', 100: 'b', 200: 'c', 300: 'd', 400: 'e', 500: 'f', 600: 'g', 700: 'h', 800: 'i', 900: 'j', 950: 'k' }
 
-describe('invertRamp', () => {
-  it('reverses a single ramp', () => {
-    const inverted = invertRamp(ramp)
-    expect(inverted[50]).toBe('k')
-    expect(inverted[500]).toBe('f')
-    expect(inverted[950]).toBe('a')
-  })
-
-  it('passes through anything that is not a ramp', () => {
-    expect(invertRamp('#fff')).toBe('#fff')
-    expect(invertRamp({ 50: 'a' })).toEqual({ 50: 'a' })
-  })
-})
-
 describe('invertPalette', () => {
   it('reverses each ramp of a collection and keeps plain values', () => {
-    const out = invertPalette({ blue: ramp, white: '#fff' })
+    const out = invertPalette({ blue: ramp, white: '#fff', corta: { 50: 'a' } })
     expect(out.blue[50]).toBe('k')
+    expect(out.blue[500]).toBe('f')
+    expect(out.blue[950]).toBe('a')
     expect(out.white).toBe('#fff')
+    expect(out.corta).toEqual({ 50: 'a' })
   })
 })
 

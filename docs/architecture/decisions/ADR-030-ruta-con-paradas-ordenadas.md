@@ -58,7 +58,7 @@ El cliente piensa en su viaje: en primer plano la hora en su origen, la llegada 
 - `tiempo` → `Parada.minutos` (menor de las clases) y `ParadaTiempo` (las clases que difieren). Clase del legado = `BusClase` (mismo id).
 - Salida → `Ruta` por `itineario.ruta_codigo`. Boleto → `ordenSube`/`ordenBaja` por sus estaciones de subida y bajada; un boleto fuera de la ruta ocupa la salida completa y se cobra su trayecto suelto (como hoy).
 - Una **agencia** del legado (estación tipo 4) que es parada o punta de una ruta también es un **lugar**: se crea su `Enclave` (Belice City, Belice, Chetumal; rutas RUT201/202/212–215). La agencia como vendedora sigue siendo `Agencia`. Antes, esas rutas y sus salidas (unas 1 350 en el legado) no se migraban.
-- Las bases ya migradas se rellenan con `app:ruta:rellenar` (lee el legado; solo lectura). Primer relleno: 124 rutas, 1 215 paradas (502 con minutos, 205 tiempos por clase), 4 193 salidas con su ruta y horario (56 % de las paradas con hora estimada, el resto desconocida porque `tiempo` solo cubre 50 rutas), 81 887 boletos con tramo y **ningún solape** entre boletos vivos.
+- La base migrada antes de este ADR se rellenó una vez con un comando transitorio (`app:ruta:rellenar`, retirado en la fase 5: dependía de `salida.trayecto_id`); otra base anterior se vuelve a migrar desde el legado. Primer relleno: 124 rutas, 1 215 paradas (502 con minutos, 205 tiempos por clase), 4 193 salidas con su ruta y horario (56 % de las paradas con hora estimada, el resto desconocida porque `tiempo` solo cubre 50 rutas), 81 887 boletos con tramo y **ningún solape** entre boletos vivos.
 
 ## Plan
 
@@ -67,11 +67,11 @@ Cada fase deja la aplicación funcionando y actualiza docs y borra lo que queda 
 | Fase | Contenido | Estado |
 |---|---|---|
 | 0 | Este ADR y el glosario | Hecha |
-| 1 | Entidades nuevas (aditivas), migrador desde el legado, `app:ruta:rellenar` | Hecha |
+| 1 | Entidades nuevas (aditivas), migrador desde el legado, relleno de la base existente | Hecha |
 | 2 | `Itinerarios` y las horas leen de `Parada`/`SalidaParada`; fuera el orden topológico | Hecha: `Itinerarios::deSalida` lee `salida_parada`; el programador y la edición fijan ruta (`RutaDeTrayecto`, transitorio) y horario |
 | 3 | Búsqueda por hora en el origen; libres por tramo | Hecha: `BuscadorSalidas` (taquilla y web); `vendidos` de la lista de taquilla por tramo; orígenes, destinos y directorio de la web desde paradas de rutas activas con tarifa |
 | 4 | Ocupación por `orden`; restricción de exclusión | Hecha (antes que la 3: la búsqueda cuenta libres por tramo con el orden). Verificado: venta de tramos que no se solapan en el mismo asiento, rechazo del solape en la aplicación y en la base |
-| 5 | `Salida.ruta` y `EsquemaSalida.ruta` obligatorias; fuera `Salida.trayecto` | |
+| 5 | `Salida.ruta` y `EsquemaSalida.ruta` obligatorias; fuera `Salida.trayecto` | Hecha: el programador, la edición, los esquemas y el filtro eligen ruta (`rutaId`); la duración para choques es la de la ruta; el trayecto completo se deduce del horario; los avisos de salidas anuladas llegan a todas las estaciones donde se sube; la bitácora de salidas guarda `ruta`. El sincronizador de configuración de entidades ahora quita los campos que ya no existen |
 | 6 | Gestión de rutas (editor de paradas) y tarifas por par | |
 | 7 | Presentación en taquilla, página y boleto | |
 | 8 | Retiro de `Subtrayecto`, trayectos huérfanos y documentación final | |

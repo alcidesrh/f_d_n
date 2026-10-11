@@ -20,28 +20,35 @@ final class Itinerario
      * @param array<int, array{hora: \DateTimeImmutable, precision: PrecisionHora}> $horas  por id de enclave
      */
     private function __construct(
-        public readonly int $trayectoId,
+        /** Trayecto entre la primera y la última parada (el "completo"), si existe. */
+        public readonly ?int $trayectoId,
         public readonly array $paradas,
         private readonly array $trayectos,
         private readonly array $horas,
     ) {}
 
     /**
-     * @param int                                                             $trayectoId trayecto de las puntas (el de la salida)
      * @param list<int>                                                       $paradas    ids de enclave en orden
      * @param array<int, array{origen: int, destino: int}>                    $trayectos  pares con trayecto, por id
      * @param array<int, array{hora: \DateTimeImmutable, precision: PrecisionHora}> $horas por id de enclave
      */
-    public static function deParadas(int $trayectoId, array $paradas, array $trayectos, array $horas = []): self
+    public static function deParadas(array $paradas, array $trayectos, array $horas = []): self
     {
+        $paradas = array_values($paradas);
         $posicion = array_flip($paradas);
         $validos = array_filter(
             $trayectos,
             static fn(array $t) => isset($posicion[$t["origen"]], $posicion[$t["destino"]])
                 && $posicion[$t["origen"]] < $posicion[$t["destino"]],
         );
+        $completo = null;
+        foreach ($validos as $id => $t) {
+            if ($t["origen"] === ($paradas[0] ?? null) && $t["destino"] === ($paradas[count($paradas) - 1] ?? null)) {
+                $completo = $id;
+            }
+        }
 
-        return new self($trayectoId, array_values($paradas), $validos, $horas);
+        return new self($completo, $paradas, $validos, $horas);
     }
 
     public function contieneTrayecto(int $trayectoId): bool

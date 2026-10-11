@@ -14,7 +14,7 @@ use Doctrine\ORM\EntityManagerInterface;
 
 /**
  * Salidas del modelo nuevo que ya salieron y sus paradas (enclaves en el orden
- * del itinerario del trayecto), listas para trazar la ruta.
+ * del horario de la salida), listas para trazar la ruta.
  */
 class SalidasEnRecorrido
 {
@@ -43,9 +43,9 @@ class SalidasEnRecorrido
             ->andWhere('bo.estado IN (:vigentes)')
             ->getDQL();
 
-        $salidas = $qb->select('s', 't', 'b', 'e')
+        $salidas = $qb->select('s', 'r', 'b', 'e')
             ->from(Salida::class, 's')
-            ->join('s.trayecto', 't')
+            ->join('s.ruta', 'r')
             ->join('s.bus', 'b')
             ->leftJoin('s.empresa', 'e')
             ->where('s.fecha >= :desde')
@@ -90,7 +90,7 @@ class SalidasEnRecorrido
                     $paradas[] = $enclaves[$id];
                 }
             }
-            $out[] = ['salida' => $s, 'kilometros' => (float) $s->getTrayecto()->getDistanciaKm(), 'paradas' => $paradas];
+            $out[] = ['salida' => $s, 'kilometros' => (float) $s->getRuta()->getKilometros(), 'paradas' => $paradas];
         }
 
         return $out;

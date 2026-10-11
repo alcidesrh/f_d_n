@@ -13,7 +13,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: SalidaRepository::class)]
-#[ORM\Index(columns: ["fecha", "empresa_id", "trayecto_id"], name: "idx_salida_fecha_empresa_trayecto")]
+#[ORM\Index(columns: ["fecha", "empresa_id", "ruta_id"], name: "idx_salida_fecha_empresa_ruta")]
 #[ApiResourcePaginationPage]
 class Salida extends Base
 {
@@ -40,12 +40,9 @@ class Salida extends Base
     #[ORM\OneToMany(targetEntity: BoletoAsiento::class, mappedBy: "salida")]
     private Collection $boletoAsientos;
 
+    /** Ruta que recorre (ADR-030). */
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Trayecto $trayecto = null;
-
-    /** Ruta que recorre (ADR-030; obligatoria al cerrar la fase 5). */
-    #[ORM\ManyToOne]
     private ?Ruta $ruta = null;
 
     /**
@@ -186,18 +183,6 @@ class Salida extends Base
     public function setCreatedBy(?Usuario $createdBy): static
     {
         $this->createdBy = $createdBy;
-
-        return $this;
-    }
-
-    public function getTrayecto(): ?Trayecto
-    {
-        return $this->trayecto;
-    }
-
-    public function setTrayecto(?Trayecto $trayecto): static
-    {
-        $this->trayecto = $trayecto;
 
         return $this;
     }

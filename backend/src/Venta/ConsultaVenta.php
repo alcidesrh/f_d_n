@@ -141,7 +141,7 @@ final class ConsultaVenta
                 "llegada" => $this->horaEn($r, $it, $destinoId),
                 "salidaInicio" => $r->getFecha()->format(DATE_ATOM),
                 "empresa" => $r->getEmpresa()?->getAlias() ?: $r->getEmpresa()?->getNombre(),
-                "ruta" => sprintf("%s → %s", $r->getTrayecto()->getOrigen()->getNombre(), $r->getTrayecto()->getDestino()->getNombre()),
+                "ruta" => $r->getRuta()->getPuntas(),
                 "clases" => array_map(
                     static function (string $c, $precio) use ($asientos, $estados) {
                         $deClase = array_filter($asientos->toArray(), static fn(Asiento $a) => $a->getClase()->value === $c);
@@ -338,11 +338,9 @@ final class ConsultaVenta
         }
         $porId = [];
         foreach ($this->em->createQueryBuilder()
-            ->select("r", "t", "o", "d", "b", "e")
+            ->select("r", "ru", "b", "e")
             ->from(Salida::class, "r")
-            ->join("r.trayecto", "t")
-            ->join("t.origen", "o")
-            ->join("t.destino", "d")
+            ->join("r.ruta", "ru")
             ->leftJoin("r.bus", "b")
             ->leftJoin("r.empresa", "e")
             ->where("r.id IN (:ids)")
@@ -372,10 +370,11 @@ final class ConsultaVenta
             "estado" => $r->getEstado()->value,
             "empresa" => $r->getEmpresa() === null ? null : ["id" => $r->getEmpresa()->getId(), "nombre" => $r->getEmpresa()->getAlias() ?? $r->getEmpresa()->getNombre()],
             "bus" => $r->getBus() === null ? null : ["id" => $busId, "codigo" => $r->getBus()->getCodigo(), "gama" => $r->getBus()->getGama()],
-            "trayecto" => [
-                "id" => $r->getTrayecto()->getId(),
-                "origen" => ["id" => $r->getTrayecto()->getOrigen()->getId(), "nombre" => $r->getTrayecto()->getOrigen()->getNombre()],
-                "destino" => ["id" => $r->getTrayecto()->getDestino()->getId(), "nombre" => $r->getTrayecto()->getDestino()->getNombre()],
+            "ruta" => [
+                "id" => $r->getRuta()->getId(),
+                "nombre" => $r->getRuta()->getNombre(),
+                "origen" => ["id" => $r->getRuta()->getOrigen()?->getId(), "nombre" => $r->getRuta()->getOrigen()?->getNombre()],
+                "destino" => ["id" => $r->getRuta()->getDestino()?->getId(), "nombre" => $r->getRuta()->getDestino()?->getNombre()],
             ],
             "vendidos" => $ocupados[$r->getId()] ?? 0,
             "capacidad" => $busId !== null ? ($capacidad[$busId] ?? null) : null,

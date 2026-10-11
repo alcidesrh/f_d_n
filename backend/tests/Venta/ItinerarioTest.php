@@ -14,7 +14,7 @@ final class ItinerarioTest extends TestCase
     /** Salida A(1) → B(2) → C(3) → D(4): trayecto 1 = A→D, 10+ los pares que tienen trayecto. */
     private static function abcd(): Itinerario
     {
-        return Itinerario::deParadas(1, [1, 2, 3, 4], [
+        return Itinerario::deParadas([1, 2, 3, 4], [
             1 => ["origen" => 1, "destino" => 4],
             10 => ["origen" => 1, "destino" => 2],
             11 => ["origen" => 2, "destino" => 3],
@@ -32,6 +32,7 @@ final class ItinerarioTest extends TestCase
         $it = self::abcd();
 
         $this->assertSame([1, 10, 11, 12], array_keys($it->trayectos()));
+        $this->assertSame(1, $it->trayectoId, "el completo une la primera y la última parada");
         $this->assertFalse($it->contieneTrayecto(99), "hacia atrás");
         $this->assertFalse($it->contieneTrayecto(98), "una punta fuera de la salida");
     }

@@ -17,7 +17,7 @@ export const MAX_SALIDAS = 3000
 export type Repeticion = 'no' | 'hasta' | 'veces'
 
 export interface ProgramadorForm {
-  trayectoId: number | null
+  rutaId: number | null
   momentos: Momento[]
   /** `AAAA-MM-DD` */
   desde: string | null
@@ -32,7 +32,7 @@ export interface ProgramadorForm {
 
 export function formInicial(hoy = new Date()): ProgramadorForm {
   return {
-    trayectoId: null,
+    rutaId: null,
     momentos: [{ hora: '06:00', busId: null }],
     desde: aDia(hoy),
     repeticion: 'no',
@@ -79,7 +79,7 @@ export const totalSalidas = (f: ProgramadorForm) => diasProgramados(f).length * 
 /** Problemas que impiden programar, en el orden del formulario. Vacío = se puede pedir la vista previa. */
 export function errores(f: ProgramadorForm, hoy = new Date()): string[] {
   const e: string[] = []
-  if (!f.trayectoId) e.push('Elija el trayecto.')
+  if (!f.rutaId) e.push('Elija la ruta.')
   if (!f.momentos.length) e.push('Agregue al menos una hora de salida.')
   if (f.momentos.length > MAX_MOMENTOS) e.push(`No más de ${MAX_MOMENTOS} horas por día.`)
   const vistos = new Set<string>()
@@ -112,7 +112,7 @@ const momentosPayload = (f: ProgramadorForm) =>
 /** Payload de la vista previa / creación (llamar solo sin `errores`). */
 export function aPayload(f: ProgramadorForm): ProgramacionPayload {
   const p: ProgramacionPayload = {
-    trayectoId: f.trayectoId as number,
+    rutaId: f.rutaId as number,
     momentos: momentosPayload(f),
     desde: f.desde as string,
     hasta: fechaHasta(f),
@@ -122,11 +122,11 @@ export function aPayload(f: ProgramadorForm): ProgramacionPayload {
   return p
 }
 
-/** Carga un esquema en el formulario: trayecto, horas con su bus e intervalo; conserva los días elegidos. */
+/** Carga un esquema en el formulario: ruta, horas con su bus e intervalo; conserva los días elegidos. */
 export function conEsquema(f: ProgramadorForm, e: Esquema): ProgramadorForm {
   return {
     ...f,
-    trayectoId: e.trayecto.id,
+    rutaId: e.ruta.id,
     momentos: e.momentos.map((m) => ({ hora: m.hora, busId: m.busId })),
     intervaloDias: e.intervaloDias,
     repeticion: f.repeticion === 'no' && e.intervaloDias > 1 ? 'veces' : f.repeticion,
@@ -135,12 +135,12 @@ export function conEsquema(f: ProgramadorForm, e: Esquema): ProgramadorForm {
 }
 
 export function aEsquema(f: ProgramadorForm, nombre: string): EsquemaPayload {
-  return { nombre: nombre.trim(), trayectoId: f.trayectoId as number, intervaloDias: f.intervaloDias, momentos: momentosPayload(f) }
+  return { nombre: nombre.trim(), rutaId: f.rutaId as number, intervaloDias: f.intervaloDias, momentos: momentosPayload(f) }
 }
 
-/** ¿El formulario tiene cambios respecto del esquema cargado (trayecto, intervalo u horas/buses)? */
+/** ¿El formulario tiene cambios respecto del esquema cargado (ruta, intervalo u horas/buses)? */
 export function difiereDeEsquema(f: ProgramadorForm, e: Esquema): boolean {
   const firma = (ms: Array<{ hora: string; busId: number | null }>) =>
     ms.map((m) => `${horaValida(m.hora) ? normalizarHora(m.hora) : m.hora}|${m.busId}`).sort().join(',')
-  return f.trayectoId !== e.trayecto.id || f.intervaloDias !== e.intervaloDias || firma(f.momentos) !== firma(e.momentos)
+  return f.rutaId !== e.ruta.id || f.intervaloDias !== e.intervaloDias || firma(f.momentos) !== firma(e.momentos)
 }

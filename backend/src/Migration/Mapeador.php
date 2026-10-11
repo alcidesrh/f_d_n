@@ -364,13 +364,13 @@ class Mapeador
         array $old,
         ?int $busId,
         ?int $empresaId,
-        ?int $trayectoId = null,
+        ?int $rutaId = null,
     ): array {
         return [
             "fecha" => $this->formatDatetime($old["fecha"]),
             "bus_id" => $busId,
             "empresa_id" => $empresaId,
-            "trayecto_id" => $trayectoId,
+            "ruta_id" => $rutaId,
             "estado" => self::estadoSalida($old["estado_id"] ?? null)->value,
             "legacy_id" => (string) $old["id"],
         ];

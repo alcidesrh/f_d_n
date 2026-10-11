@@ -110,6 +110,27 @@ class Ruta extends Base
         return $primera instanceof Parada ? $primera->getEnclave() : null;
     }
 
+    /** `Origen → Destino`. */
+    public function getPuntas(): string
+    {
+        return sprintf("%s → %s", $this->getOrigen()?->getNombre() ?? "?", $this->getDestino()?->getNombre() ?? "?");
+    }
+
+    /**
+     * Minutos hasta la última parada; con varias clases de bus, el mayor
+     * (para no chocar dos salidas del mismo bus). Null si no se conoce.
+     */
+    public function getDuracionMinutos(): ?int
+    {
+        $ultima = $this->paradas->last();
+        if (!$ultima instanceof Parada) {
+            return null;
+        }
+        $minutos = array_filter([$ultima->getMinutos(), ...array_map(static fn(ParadaTiempo $t) => $t->getMinutos(), $ultima->getTiempos()->toArray())], static fn(?int $m) => $m !== null);
+
+        return $minutos === [] ? null : max($minutos);
+    }
+
     public function getDestino(): ?Enclave
     {
         $ultima = $this->paradas->last();

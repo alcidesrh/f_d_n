@@ -195,8 +195,8 @@ class Migrador
         $ruta = $this->trayectos->deRuta($salida["ruta_codigo"] ?? null);
         $rutaNueva = $this->rutas->deCodigo($salida["ruta_codigo"] ?? null);
         if ($ruta === null || $rutaNueva === null) {
-            // `salida.trayecto_id` es obligatorio: sin ruta no hay salida.
-            $this->omitir($contadores, "salida_sin_trayecto", "salida {$legacyId} (ruta " . ($salida["ruta_codigo"] ?: "—") . ")");
+            // `salida.ruta_id` es obligatorio: sin ruta no hay salida.
+            $this->omitir($contadores, "salida_sin_ruta", "salida {$legacyId} (ruta " . ($salida["ruta_codigo"] ?: "—") . ")");
 
             return;
         }
@@ -206,7 +206,7 @@ class Migrador
             $this->omitir($contadores, "bus_no_migrable", "bus {$salida["bus_codigo"]} (salida {$legacyId})");
         }
 
-        $data = $this->mapeador->salida($salida, $busId, $empresaId, $ruta->trayectoId) + ["ruta_id" => $rutaNueva->id];
+        $data = $this->mapeador->salida($salida, $busId, $empresaId, $rutaNueva->id);
         $existente = $this->newConn->fetchAssociative(
             "SELECT s.id, s.bus_id, s.estado, s.ruta_id, i.bus_id AS inferido FROM salida s
                LEFT JOIN salida_bus_inferido i ON i.salida_id = s.id
@@ -225,7 +225,7 @@ class Migrador
             }
             $inferencia = $empresaId === null
                 ? ["motivo" => "sin_empresa"]
-                : $this->inferencia->inferir($salida, $empresaId, $ruta->trayectoId, $this->ahora());
+                : $this->inferencia->inferir($salida, $empresaId, $rutaNueva->id, $this->ahora());
             if (isset($inferencia["motivo"])) {
                 $this->omitir($contadores, "salida_sin_bus_inferible", "salida {$legacyId} ({$inferencia["motivo"]}, " . count($boletos) . " boletos)");
 
@@ -238,8 +238,8 @@ class Migrador
 
         if ($existente === false) {
             $salidaId = (int) $this->newConn->fetchOne(
-                "INSERT INTO salida (fecha, bus_id, empresa_id, trayecto_id, ruta_id, estado, legacy_id, created_at, updated_at)
-                 VALUES (:fecha, :bus_id, :empresa_id, :trayecto_id, :ruta_id, :estado, :legacy_id, NOW(), NOW()) RETURNING id",
+                "INSERT INTO salida (fecha, bus_id, empresa_id, ruta_id, estado, legacy_id, created_at, updated_at)
+                 VALUES (:fecha, :bus_id, :empresa_id, :ruta_id, :estado, :legacy_id, NOW(), NOW()) RETURNING id",
                 $data,
             );
             $contadores["salida"]++;

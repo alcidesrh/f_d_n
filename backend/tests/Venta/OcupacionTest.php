@@ -18,7 +18,7 @@ final class OcupacionTest extends TestCase
     protected function setUp(): void
     {
         // A(1) → B(2) → C(3); trayecto 1 = A→C, 10 = A→B, 11 = B→C.
-        $this->it = Itinerario::deParadas(1, [1, 2, 3], [
+        $this->it = Itinerario::deParadas([1, 2, 3], [
             1 => ["origen" => 1, "destino" => 3],
             10 => ["origen" => 1, "destino" => 2],
             11 => ["origen" => 2, "destino" => 3],
@@ -78,7 +78,7 @@ final class OcupacionTest extends TestCase
     public function testUnAsientoSeRevendeEnLosSubtrayectosQueNoSeSolapan(): void
     {
         // Guatemala(1) → Morales(2) → Río Dulce(3) → Santa Elena(4), todos los pares.
-        $it = Itinerario::deParadas(1, [1, 2, 3, 4], [
+        $it = Itinerario::deParadas([1, 2, 3, 4], [
             1 => ["origen" => 1, "destino" => 4],
             12 => ["origen" => 1, "destino" => 2],
             10 => ["origen" => 1, "destino" => 3],

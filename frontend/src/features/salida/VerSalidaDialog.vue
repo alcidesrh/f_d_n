@@ -14,7 +14,7 @@
     <div v-else class="@container flex flex-col gap-4">
       <header class="flex flex-col gap-3">
         <div class="flex flex-wrap items-start justify-between gap-2">
-          <div class="text-lg font-semibold">{{ detalle.trayecto.origen.nombre }} → {{ detalle.trayecto.destino.nombre }}</div>
+          <div class="text-lg font-semibold">{{ detalle.ruta.nombre }}</div>
           <Tag :value="etiquetaEstado(detalle.estado).etiqueta" :severity="etiquetaEstado(detalle.estado).severidad" />
         </div>
         <dl class="panel !p-3 m-0 grid grid-cols-2 gap-x-4 gap-y-2 text-sm @2xl:grid-cols-4">

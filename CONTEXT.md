@@ -73,13 +73,12 @@ _Avoid_: conductor, chofer
 
 **Salida**:
 La salida concreta de un bus: una ruta, una fecha (la hora en la primera parada) y un bus.
-(Hasta completar ADR-030 apunta todavía a un trayecto.)
 Estado (`EstadoSalida`): `programada → abordando → iniciada → finalizada` en ese orden;
 `cancelada` solo es alcanzable desde `programada`.
 _Avoid_: servicio, recorrido, itinerario, viaje
 
 **Esquema de salidas**:
-Una configuración guardada con un nombre para programar salidas: un trayecto, las horas del día
+Una configuración guardada con un nombre para programar salidas: una ruta, las horas del día
 con su bus y cada cuántos días se repite. Es una plantilla: cambiarla no toca las salidas ya creadas.
 _Avoid_: plantilla, horario
 
@@ -90,7 +89,7 @@ conservan aunque se edite la ruta, así un boleto nunca cambia de tramo.
 _Avoid_: itinerario
 
 **Salidas idénticas**:
-Salidas futuras programadas con el mismo trayecto, bus, empresa y hora; solo cambia el día.
+Salidas futuras programadas con la misma ruta, bus, empresa y hora; solo cambia el día.
 Editar, anular o eliminar una salida puede propagarse a ellas, salvo a las que tienen asientos vendidos.
 
 **BoletoAsiento**:

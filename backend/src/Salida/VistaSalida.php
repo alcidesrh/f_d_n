@@ -7,26 +7,27 @@ namespace App\Salida;
 use App\Entity\Bus;
 use App\Entity\Enum\EstadoSalida;
 use App\Entity\Salida;
-use App\Entity\Trayecto;
+use App\Entity\Ruta;
 
 /** Cómo se ve una salida (y sus partes) en la API de gestión de salidas. */
 final class VistaSalida
 {
-    /** `Origen → Destino` (o el nombre del trayecto si lo tiene). */
-    public static function ruta(Trayecto $t): string
+    /** Nombre de la ruta (o `Origen → Destino` si no lo tiene). */
+    public static function ruta(Ruta $r): string
     {
-        return $t->getNombre() ?: sprintf("%s → %s", $t->getOrigen()?->getNombre() ?? "?", $t->getDestino()?->getNombre() ?? "?");
+        return $r->getNombre() ?: $r->getPuntas();
     }
 
-    /** @return array{id: int, origen: ?string, destino: ?string, ruta: string, duracionMinutos: ?int} */
-    public static function trayecto(Trayecto $t): array
+    /** @return array{id: int, nombre: string, origen: ?string, destino: ?string, paradas: int, duracionMinutos: ?int} */
+    public static function rutaOpcion(Ruta $r): array
     {
         return [
-            "id" => (int) $t->getId(),
-            "origen" => $t->getOrigen()?->getNombre(),
-            "destino" => $t->getDestino()?->getNombre(),
-            "ruta" => self::ruta($t),
-            "duracionMinutos" => $t->getDuracionEstimadaMinutos(),
+            "id" => (int) $r->getId(),
+            "nombre" => self::ruta($r),
+            "origen" => $r->getOrigen()?->getNombre(),
+            "destino" => $r->getDestino()?->getNombre(),
+            "paradas" => $r->getParadas()->count(),
+            "duracionMinutos" => $r->getDuracionMinutos(),
         ];
     }
 
@@ -54,7 +55,7 @@ final class VistaSalida
         return [
             "id" => $s->getId(),
             "fecha" => $s->getFecha()?->format(DATE_ATOM),
-            "ruta" => self::ruta($s->getTrayecto()),
+            "ruta" => self::ruta($s->getRuta()),
             "bus" => $s->getBus()?->getCodigo(),
         ];
     }
@@ -67,7 +68,7 @@ final class VistaSalida
             "fecha" => $s->getFecha()?->format(DATE_ATOM),
             "estado" => $s->getEstado()->value,
             "atrasada" => $s->getEstado() === EstadoSalida::PROGRAMADA && $s->getFecha() < $ahora,
-            "trayecto" => self::trayecto($s->getTrayecto()),
+            "ruta" => self::rutaOpcion($s->getRuta()),
             "bus" => $s->getBus() ? self::bus($s->getBus()) : null,
             "empresa" => $s->getEmpresa() ? ["id" => $s->getEmpresa()->getId(), "nombre" => $s->getEmpresa()->getNombreCorto()] : null,
             "vendidos" => $vendidos,

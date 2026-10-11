@@ -103,7 +103,7 @@
             </div>
             <label v-if="store.puedeCobrarCompleto" class="flex items-center gap-2 text-sm">
               <Checkbox v-model="store.cobrarTrayectoCompleto" binary input-id="venta-completo" @update:model-value="store.recotizar()" />
-              <span> Cobrar la tarifa del trayecto completo ({{ store.detalle.trayecto.origen.nombre }} → {{ store.detalle.trayecto.destino.nombre }}) </span>
+              <span> Cobrar la tarifa del trayecto completo ({{ store.detalle.ruta.origen.nombre }} → {{ store.detalle.ruta.destino.nombre }}) </span>
             </label>
             <label v-if="!store.reasignacion" class="flex flex-col gap-1">
               <span class="text-sm font-medium">Observación</span>

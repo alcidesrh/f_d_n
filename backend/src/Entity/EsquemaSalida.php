@@ -10,7 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * Esquema de salidas guardado con un nombre desde el programador (ADR-024):
- * un trayecto, las horas del día con su bus y cada cuántos días se repite.
+ * una ruta, las horas del día con su bus y cada cuántos días se repite.
  * Es una plantilla: aplicarlo crea salidas independientes; cambiarlo o
  * borrarlo no toca las salidas ya creadas. Aislado por empresa (TenantFilter);
  * `empresa` nula = esquema de un usuario sin empresa (ve todo).
@@ -33,12 +33,7 @@ class EsquemaSalida
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false, onDelete: "CASCADE")]
-    private Trayecto $trayecto;
-
-    /** Ruta que programa (ADR-030; obligatoria al cerrar la fase 5). */
-    #[ORM\ManyToOne]
-    #[ORM\JoinColumn(onDelete: "CASCADE")]
-    private ?Ruta $ruta = null;
+    private Ruta $ruta;
 
     #[ORM\Column(type: "smallint", options: ["default" => 1])]
     private int $intervaloDias = 1;
@@ -55,11 +50,11 @@ class EsquemaSalida
     #[ORM\Column]
     private \DateTimeImmutable $actualizadoEn;
 
-    public function __construct(string $nombre, ?Empresa $empresa, Trayecto $trayecto)
+    public function __construct(string $nombre, ?Empresa $empresa, Ruta $ruta)
     {
         $this->nombre = $nombre;
         $this->empresa = $empresa;
-        $this->trayecto = $trayecto;
+        $this->ruta = $ruta;
         $this->momentos = new ArrayCollection();
         $this->actualizadoEn = new \DateTimeImmutable();
     }
@@ -79,21 +74,9 @@ class EsquemaSalida
         return $this->empresa;
     }
 
-    public function getTrayecto(): Trayecto
-    {
-        return $this->trayecto;
-    }
-
-    public function getRuta(): ?Ruta
+    public function getRuta(): Ruta
     {
         return $this->ruta;
-    }
-
-    public function setRuta(?Ruta $ruta): static
-    {
-        $this->ruta = $ruta;
-
-        return $this;
     }
 
     public function getIntervaloDias(): int
@@ -118,14 +101,14 @@ class EsquemaSalida
     }
 
     /**
-     * Reemplaza todo el contenido del esquema (nombre, trayecto, intervalo y momentos).
+     * Reemplaza todo el contenido del esquema (nombre, ruta, intervalo y momentos).
      *
      * @param list<array{hora: string, bus: Bus}> $momentos
      */
-    public function reemplazar(string $nombre, Trayecto $trayecto, int $intervaloDias, array $momentos, ?Usuario $por): void
+    public function reemplazar(string $nombre, Ruta $ruta, int $intervaloDias, array $momentos, ?Usuario $por): void
     {
         $this->nombre = $nombre;
-        $this->trayecto = $trayecto;
+        $this->ruta = $ruta;
         $this->intervaloDias = $intervaloDias;
         $this->momentos->clear();
         foreach ($momentos as $m) {

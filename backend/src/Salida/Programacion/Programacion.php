@@ -7,7 +7,7 @@ namespace App\Salida\Programacion;
 use App\Salida\SalidaRechazada;
 
 /**
- * Lo que pide el programador de salidas: un trayecto, las horas del día
+ * Lo que pide el programador de salidas: una ruta, las horas del día
  * (cada una con su bus) y los días en que se repite —desde un día hasta
  * otro, cada `intervaloDias` días (1 = diario, 2 = día por medio, …)—.
  * Puro: valida y despliega las fechas; no sabe de la base de datos.
@@ -25,7 +25,7 @@ final class Programacion
      * @param list<Momento> $momentos ordenados por hora
      */
     private function __construct(
-        public readonly int $trayectoId,
+        public readonly int $rutaId,
         public readonly array $momentos,
         public readonly \DateTimeImmutable $desde,
         public readonly \DateTimeImmutable $hasta,
@@ -33,16 +33,16 @@ final class Programacion
     ) {}
 
     /**
-     * `{ trayectoId, momentos: [{ hora, busId }], desde: AAAA-MM-DD, hasta?: AAAA-MM-DD, intervaloDias?: n }`.
+     * `{ rutaId, momentos: [{ hora, busId }], desde: AAAA-MM-DD, hasta?: AAAA-MM-DD, intervaloDias?: n }`.
      * Sin `hasta`, solo el día `desde`. `$hoy` es el primer día permitido.
      *
      * @param array<string, mixed> $datos
      */
     public static function desdeArray(array $datos, \DateTimeImmutable $hoy): self
     {
-        $trayectoId = (int) ($datos["trayectoId"] ?? 0);
-        if ($trayectoId <= 0) {
-            throw new SalidaRechazada("Elija el trayecto.", "trayecto_requerido");
+        $rutaId = (int) ($datos["rutaId"] ?? 0);
+        if ($rutaId <= 0) {
+            throw new SalidaRechazada("Elija la ruta.", "ruta_requerida");
         }
         $momentos = Momento::lista($datos["momentos"] ?? null, self::MAX_MOMENTOS);
 
@@ -64,7 +64,7 @@ final class Programacion
             throw new SalidaRechazada("El intervalo debe estar entre 1 y " . self::MAX_INTERVALO . " días.", "intervalo_invalido");
         }
 
-        $p = new self($trayectoId, $momentos, $desde, $hasta, $intervalo);
+        $p = new self($rutaId, $momentos, $desde, $hasta, $intervalo);
         $total = count($p->dias()) * count($momentos);
         if ($total > self::MAX_SALIDAS) {
             throw new SalidaRechazada(

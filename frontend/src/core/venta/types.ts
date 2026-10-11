@@ -31,6 +31,14 @@ export interface ContextoVenta {
   naciones: Opcion[]
 }
 
+/** Ruta que recorre el bus de una salida (ADR-030). */
+export interface RutaVenta {
+  id: number
+  nombre: string
+  origen: Opcion
+  destino: Opcion
+}
+
 export interface SalidaResumen {
   id: number
   /** Salida del origen del salida (ISO). */
@@ -40,7 +48,8 @@ export interface SalidaResumen {
   estado: 'programada' | 'abordando' | 'iniciada' | 'finalizada' | 'cancelada'
   empresa: Opcion | null
   bus: { id: number; codigo: string; gama: string | null } | null
-  trayecto: { id: number; origen: Opcion; destino: Opcion }
+  ruta: RutaVenta
+  /** Asientos ocupados en el tramo que se ofrece (en la lista de la estación). */
   vendidos: number | null
   capacidad: number | null
   /**
@@ -58,7 +67,7 @@ export interface Parada {
   hora: string | null
 }
 
-/** Trayecto de la salida (el suyo o un subtrayecto) con tarifa: solo esos se venden. */
+/** Par de paradas de la salida con tarifa: solo esos se venden. `completo`: de la primera a la última. */
 export interface TrayectoVendible {
   id: number
   origen: number

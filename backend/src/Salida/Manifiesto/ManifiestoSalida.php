@@ -42,15 +42,15 @@ final class ManifiestoSalida
             ->getQuery()
             ->getResult();
 
-        $trayecto = $salida->getTrayecto();
+        $ruta = $salida->getRuta();
         $bus = $salida->getBus();
         $empresa = $salida->getEmpresa();
 
         return new Manifiesto(
             (int) $salida->getId(),
             \DateTimeImmutable::createFromMutable($salida->getFecha()),
-            (string) $trayecto->getOrigen()?->getNombre(),
-            sprintf("%s - %s", $trayecto->getOrigen()?->getNombre() ?? "?", $trayecto->getDestino()?->getNombre() ?? "?"),
+            (string) $ruta->getOrigen()?->getNombre(),
+            sprintf("%s - %s", $ruta->getOrigen()?->getNombre() ?? "?", $ruta->getDestino()?->getNombre() ?? "?"),
             $empresa?->getNombre() ?? "",
             $bus?->getCodigo(),
             [self::piloto($bus?->getPiloto()), self::piloto($bus?->getCopiloto())],

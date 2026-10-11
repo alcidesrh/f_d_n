@@ -24,7 +24,7 @@ final class FiltroSalidas
     public function __construct(
         public readonly array $estados,
         public readonly ?int $empresa = null,
-        public readonly ?int $trayecto = null,
+        public readonly ?int $ruta = null,
         public readonly ?int $origen = null,
         public readonly ?int $destino = null,
         public readonly ?int $bus = null,
@@ -45,7 +45,7 @@ final class FiltroSalidas
 
     /**
      * `estado` (lista separada por comas; vacío = todos; ausente = por defecto),
-     * `empresa`, `trayecto`, `origen`, `destino`, `bus`, `desde`/`hasta`
+     * `empresa`, `ruta`, `origen`, `destino` (puntas de la ruta), `bus`, `desde`/`hasta`
      * (AAAA-MM-DD), `orden` (proximas|fecha), `direccion`, `pagina`, `porPagina`.
      * Los valores inválidos se ignoran.
      *
@@ -65,7 +65,7 @@ final class FiltroSalidas
         return new self(
             estados: $estados,
             empresa: self::id($q["empresa"] ?? null),
-            trayecto: self::id($q["trayecto"] ?? null),
+            ruta: self::id($q["ruta"] ?? null),
             origen: self::id($q["origen"] ?? null),
             destino: self::id($q["destino"] ?? null),
             bus: self::id($q["bus"] ?? null),

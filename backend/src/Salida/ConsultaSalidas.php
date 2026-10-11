@@ -28,7 +28,7 @@ final class ConsultaSalidas
             $porEstado[$c["estado"] instanceof \BackedEnum ? $c["estado"]->value : (string) $c["estado"]] = (int) $c["n"];
         }
 
-        $qb = (clone $base)->select("s", "t", "o", "d", "b", "e");
+        $qb = (clone $base)->select("s", "r", "b", "e");
         if ($f->estados !== []) {
             $qb->andWhere("s.estado IN (:estados)")->setParameter("estados", array_map(static fn($e) => $e->value, $f->estados));
         }
@@ -69,17 +69,25 @@ final class ConsultaSalidas
     {
         $qb = $this->em->createQueryBuilder()
             ->from(Salida::class, "s")
-            ->join("s.trayecto", "t")
-            ->join("t.origen", "o")
-            ->join("t.destino", "d")
+            ->join("s.ruta", "r")
             ->leftJoin("s.bus", "b")
             ->leftJoin("s.empresa", "e");
-        $iguales = ["s.empresa" => $f->empresa, "s.trayecto" => $f->trayecto, "t.origen" => $f->origen, "t.destino" => $f->destino, "s.bus" => $f->bus];
+        $iguales = ["s.empresa" => $f->empresa, "s.ruta" => $f->ruta, "s.bus" => $f->bus];
         $n = 0;
         foreach ($iguales as $campo => $valor) {
             if ($valor !== null) {
                 $qb->andWhere("{$campo} = :p" . ++$n)->setParameter("p{$n}", $valor);
             }
+        }
+        // Origen y destino: las puntas de la ruta.
+        if ($f->origen !== null) {
+            $qb->andWhere("EXISTS (SELECT 1 FROM App\Entity\Parada po WHERE po.ruta = s.ruta AND po.orden = 0 AND po.enclave = :origen)")
+                ->setParameter("origen", $f->origen);
+        }
+        if ($f->destino !== null) {
+            $qb->andWhere("EXISTS (SELECT 1 FROM App\Entity\Parada pd WHERE pd.ruta = s.ruta AND pd.enclave = :destino
+                AND pd.orden = (SELECT MAX(px.orden) FROM App\Entity\Parada px WHERE px.ruta = s.ruta))")
+                ->setParameter("destino", $f->destino);
         }
         if ($f->desde !== null) {
             $qb->andWhere("s.fecha >= :desde")->setParameter("desde", $f->desde);

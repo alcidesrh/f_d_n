@@ -20,7 +20,7 @@ const boleto = (id: number, extra: Partial<BoletoOperable> = {}, venta: Partial<
 })
 
 const salida = (id: number, fecha: string, empresa: number | null, estado: SalidaResumen['estado'] = 'programada'): SalidaResumen =>
-  ({ id, salida: fecha, salidaEstacion: null, estado, empresa: empresa === null ? null : { id: empresa, nombre: `E${empresa}` }, bus: null, trayecto: { id: 5, origen: { id: 1, nombre: 'A' }, destino: { id: 2, nombre: 'B' } }, vendidos: 0, capacidad: 40 }) as SalidaResumen
+  ({ id, salida: fecha, salidaEstacion: null, estado, empresa: empresa === null ? null : { id: empresa, nombre: `E${empresa}` }, bus: null, ruta: { id: 5, nombre: 'A - B', origen: { id: 1, nombre: 'A' }, destino: { id: 2, nombre: 'B' } }, vendidos: 0, capacidad: 40 }) as SalidaResumen
 
 describe('salidas a las que se puede reasignar', () => {
   const ahora = new Date('2026-10-10T12:00:00-06:00')

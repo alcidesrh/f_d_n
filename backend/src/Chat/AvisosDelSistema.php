@@ -48,11 +48,13 @@ final class AvisosDelSistema
         $this->seguro(function () use ($e) {
             /** @var list<Salida> $salidas */
             $salidas = $this->em->getRepository(Salida::class)->findBy(["id" => $e->ids], ["fecha" => "ASC"]);
+            // Se avisa en cada estación donde se sube a la salida, no solo en su origen (ADR-030).
             $porOrigen = [];
             foreach ($salidas as $s) {
-                $origen = $s->getTrayecto()?->getOrigen()?->getId();
-                if ($origen !== null) {
-                    $porOrigen[$origen][] = $s;
+                $paradas = $s->getRuta()?->getParadas()->toArray() ?? [];
+                array_pop($paradas);
+                foreach ($paradas as $p) {
+                    $porOrigen[(int) $p->getEnclave()->getId()][] = $s;
                 }
             }
             foreach ($porOrigen as $origen => $grupo) {
@@ -85,11 +87,11 @@ final class AvisosDelSistema
         return sprintf("Se ajustó su saldo en %s%s%s. %s", $e->importe < 0 ? "−" : "+", $q($e->importe), $e->observacion ? ": " . $e->observacion : "", $saldo);
     }
 
-    /** @param list<Salida> $salidas mismo origen, por fecha */
+    /** @param list<Salida> $salidas que se suben en la misma estación, por fecha */
     public static function textoAnuladas(array $salidas): string
     {
         $fmt = new \IntlDateFormatter("es_GT", \IntlDateFormatter::NONE, \IntlDateFormatter::NONE, "America/Guatemala", null, "EEE d 'de' MMM, h:mm a");
-        $ruta = static fn(Salida $s) => sprintf("%s → %s", $s->getTrayecto()?->getOrigen()?->getNombre() ?? "?", $s->getTrayecto()?->getDestino()?->getNombre() ?? "?");
+        $ruta = static fn(Salida $s) => sprintf("%s → %s", $s->getRuta()?->getOrigen()?->getNombre() ?? "?", $s->getRuta()?->getDestino()?->getNombre() ?? "?");
         $primera = $salidas[0];
         if (count($salidas) === 1) {
             // La hora en español ya termina en punto ("a. m."): sin duplicarlo.

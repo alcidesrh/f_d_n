@@ -1,15 +1,16 @@
 <!--
-  Editar una salida programada: trayecto, bus y fecha/hora. Con
-  propagación, las futuras idénticas toman el trayecto, el bus y la hora
+  Editar una salida programada: ruta, bus y fecha/hora. Con
+  propagación, las futuras idénticas toman la ruta, el bus y la hora
   (cada una conserva su día). Emite `hecho` con el resultado del backend.
 -->
 <template>
   <Dialog :visible="!!salida" modal header="Editar salida" class="w-[min(32rem,calc(100vw-1rem))]" @update:visible="(v: boolean) => !v && emit('cerrar')">
     <div v-if="salida" class="flex flex-col gap-4">
-      <p class="m-0 text-sm text-muted-color">Salida #{{ salida.id }} · {{ salida.trayecto.ruta }}</p>
+      <p class="m-0 text-sm text-muted-color">Salida #{{ salida.id }} · {{ salida.ruta.nombre }}</p>
       <label class="flex flex-col gap-1">
-        <span class="text-xs font-medium text-muted-color">Trayecto</span>
-        <Select v-model="trayectoId" :options="opciones.trayectos" option-label="ruta" option-value="id" filter fluid :virtual-scroller-options="{ itemSize: 38 }" />
+        <span class="text-xs font-medium text-muted-color">Ruta</span>
+        <Select v-model="rutaId" :options="opciones.rutas" option-label="nombre" option-value="id" filter :filter-fields="['nombre', 'origen', 'destino']" fluid :virtual-scroller-options="{ itemSize: 38 }" />
+        <span class="text-xs text-muted-color">La ruta solo se cambia si la salida no tiene asientos vendidos ni apartados.</span>
       </label>
       <FiltroBus v-model="filtroBus" :croquis="opciones.croquis" :clases="opciones.clases" />
       <label class="flex flex-col gap-1">
@@ -22,7 +23,7 @@
         <DatePicker v-model="fecha" date-format="dd/mm/yy" show-time hour-format="24" show-icon fluid />
       </label>
       <PropagacionOpcion v-model="propagar" :salida-id="salida.id" verbo="cambiará" />
-      <p v-if="propagar" class="m-0 text-xs text-muted-color">Las idénticas conservan su día y toman el trayecto, el bus y la hora nuevos.</p>
+      <p v-if="propagar" class="m-0 text-xs text-muted-color">Las idénticas conservan su día y toman la ruta, el bus y la hora nuevos.</p>
     </div>
     <template #footer>
       <Button label="Cancelar" severity="secondary" text @click="emit('cerrar')" />
@@ -43,7 +44,7 @@ import PropagacionOpcion from './PropagacionOpcion.vue'
 const props = defineProps<{ salida: SalidaFila | null; opciones: OpcionesSalidas }>()
 const emit = defineEmits<{ cerrar: []; hecho: [ResultadoOperacion] }>()
 
-const trayectoId = ref<number | null>(null)
+const rutaId = ref<number | null>(null)
 const busId = ref<number | null>(null)
 const fecha = ref<Date | null>(null)
 const propagar = ref(false)
@@ -58,7 +59,7 @@ watch(
   () => props.salida,
   (s) => {
     if (!s) return
-    trayectoId.value = s.trayecto.id
+    rutaId.value = s.ruta.id
     busId.value = s.bus?.id ?? null
     filtroBus.value = filtroDeBus(props.opciones.buses.find((b) => b.id === s.bus?.id))
     fecha.value = new Date(s.fecha)
@@ -71,7 +72,7 @@ const cambio = computed<CambioSalida | null>(() => {
   const s = props.salida
   if (!s || !fecha.value) return null
   const c: CambioSalida = { propagar: propagar.value }
-  if (trayectoId.value && trayectoId.value !== s.trayecto.id) c.trayectoId = trayectoId.value
+  if (rutaId.value && rutaId.value !== s.ruta.id) c.rutaId = rutaId.value
   if (busId.value && busId.value !== s.bus?.id) c.busId = busId.value
   const f = aFechaHora(fecha.value)
   if (f !== aFechaHora(new Date(s.fecha))) c.fecha = f
