@@ -115,7 +115,7 @@
               }}
               · {{ c.precio.texto }}
             </span>
-            <span class="whitespace-nowrap tabular-nums">{{
+            <span class="whitespace-nowrap tabular-nums font-medium">{{
               t("salidas.libresOcupados", {
                 libres: Math.max(0, c.asientos - c.ocupados),
                 ocupados: c.ocupados,
@@ -224,8 +224,8 @@ const pocos = computed(
   () => props.s.disponibles > 0 && props.s.disponibles <= 5,
 );
 /** Hora donde sube el cliente; sin ella (desconocida), nada: la del origen del bus no es la suya. */
-const horaSube = computed(() =>
-  props.s.salida ?? (props.s.subeEnOrigen ? props.s.salidaInicio : null),
+const horaSube = computed(
+  () => props.s.salida ?? (props.s.subeEnOrigen ? props.s.salidaInicio : null),
 );
 const tiempo = computed(() => duracion(horaSube.value, props.s.llegada));
 const diasLlegada = computed(() =>

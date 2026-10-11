@@ -366,6 +366,19 @@ export const componentsPreset = (parent: ThemePreset): Tokens => {
         },
       },
     },
+    message: {
+      ...base.components.message,
+      colorScheme: {
+        ...base.components.message.colorScheme,
+        light: {
+          ...base.components.message.colorScheme?.light,
+          warn: {
+            background: "{orange.500}",
+            color: "{surface.0}",
+          },
+        },
+      },
+    },
     tabs: {
       ...base.components.tabs,
       tablist: {

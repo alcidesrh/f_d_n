@@ -20,7 +20,7 @@
     <div class="@container">
       <div ref="grilla" class="grid grid-cols-1 items-start gap-2 md:gap-4 @3xl:grid-cols-[minmax(0,1fr)_20rem]">
         <!-- Columna principal -->
-        <div class="flex min-w-0 flex-col gap-1 md:gap-4">
+        <div class="flex min-w-0 flex-col gap-1">
           <section v-if="store.reasignacion" class="panel flex flex-col gap-3 reasignacion">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div class="font-semibold">Reasignar {{ store.reasignacion.boletos.length === 1 ? "un boleto" : `${store.reasignacion.boletos.length} boletos` }}</div>
@@ -42,16 +42,10 @@
             </ul>
             <Message v-if="store.parejas.some((p) => p.igual === false)" severity="warn" :closable="false">El precio del asiento elegido no coincide con el del boleto. Cambie de asiento, el tramo o marque «cobrar el trayecto completo» si así se vendió.</Message>
           </section>
-          <section class="panel flex flex-col gap-2">
-            <label class="text-sm font-medium" for="venta-cliente">{{ store.reasignacion ? "Cliente de la venta" : "Cliente (facturar a)" }}</label>
-            <div v-if="store.reasignacion" class="text-sm">
-              {{ store.cliente?.nombreCompleto ?? "—" }}<span v-if="store.cliente" class="text-muted-color"> · NIT {{ store.cliente.nit }}</span>
-            </div>
-            <ClienteBuscador v-else v-model="store.cliente" input-id="venta-cliente" />
-          </section>
+
           <section class="panel flex flex-col gap-3">
-            <div class="grid grid-cols-2 items-start gap-x-2 gap-y-1.5 mb-1 md:mb-6 md:gap-3 @xl:grid-cols-4">
-              <div class="campo">
+            <div class="grid grid-cols-2 items-start gap-x-2 gap-y-1.5 mb-1 md:gap-3 @xl:grid-cols-4">
+              <div class="campo col-span-2 @xl:col-span-1">
                 <span class="text-sm font-medium">{{ store.porRango ? "Rango de salida" : "Fecha de salida" }}</span>
                 <DatePicker v-if="!store.porRango" v-model="store.fecha" date-format="dd/mm/yy" show-icon fluid @update:model-value="store.cargarSalidas()" />
                 <DatePicker v-else ref="selectorRango" v-model="borrador" selection-mode="range" :manual-input="false" date-format="dd/mm/yy" show-time hour-format="24" show-icon fluid placeholder="Desde – Hasta">
@@ -64,15 +58,15 @@
                   Rango
                 </label>
               </div>
-              <label class="campo">
+              <label class="campo col-span-1">
                 <span class="text-sm font-medium">Origen</span>
                 <estacion-select v-model="store.estacionId" :estaciones="store.contexto?.estaciones ?? []" :propio="store.contexto?.estacion?.departamento" placeholder="Todas" @update:model-value="store.cargarSalidas()" />
               </label>
-              <label class="campo">
+              <label class="campo col-span-1">
                 <span class="text-sm font-medium">Destino</span>
                 <estacion-select v-model="store.destinoId" :estaciones="store.contexto?.estaciones ?? []" show-clear placeholder="Todas" @update:model-value="store.cargarSalidas()" />
               </label>
-              <label class="campo">
+              <label class="campo col-span-2 @xl:col-span-1">
                 <span class="text-sm font-medium">Empresa</span>
                 <MultiSelect v-model="store.empresaIds" :options="store.empresas" option-label="nombre" option-value="id" placeholder="Todas" display="chip" :show-toggle-all="false" fluid />
               </label>
@@ -88,16 +82,22 @@
               </Button>
             </div>
           </section>
-          <divider class="max-md:my-1!" />
-
+          <divider class="my-[0px]! max-md:my-1!" />
+          <section class="panel flex flex-col gap-2 max-w-[50%]">
+            <label class="font-medium" for="venta-cliente">{{ store.reasignacion ? "Cliente de la venta" : "Cliente (facturar a)" }}</label>
+            <div v-if="store.reasignacion">
+              {{ store.cliente?.nombreCompleto ?? "—" }}<span v-if="store.cliente" class="text-muted-color"> · NIT {{ store.cliente.nit }}</span>
+            </div>
+            <ClienteBuscador v-else v-model="store.cliente" input-id="venta-cliente" />
+          </section>
           <section v-if="store.detalle" class="panel flex flex-col gap-3">
             <div class="grid grid-cols-1 gap-3 @xl:grid-cols-2">
               <label class="flex flex-col gap-1">
-                <span class="text-sm font-medium">Sube en</span>
+                <span class="font-medium">Sube en</span>
                 <Select :model-value="store.sube" :options="opcionesParada(store.subidas)" option-label="label" option-value="value" fluid @update:model-value="store.cambiarSubida" />
               </label>
               <label class="flex flex-col gap-1">
-                <span class="text-sm font-medium">Baja en</span>
+                <span class="font-medium">Baja en</span>
                 <Select :model-value="store.baja" :options="opcionesParada(store.bajadas)" option-label="label" option-value="value" fluid @update:model-value="store.cambiarBajada" />
               </label>
             </div>
@@ -106,13 +106,13 @@
               <span> Cobrar la tarifa del trayecto completo ({{ store.detalle.ruta.origen.nombre }} → {{ store.detalle.ruta.destino.nombre }}) </span>
             </label>
             <label v-if="!store.reasignacion" class="flex flex-col gap-1">
-              <span class="text-sm font-medium">Observación</span>
+              <span class="font-medium">Observación</span>
               <InputText v-model="store.observacion" maxlength="255" placeholder="P. ej. viaja con mascota, se baja en un punto intermedio…" fluid />
             </label>
           </section>
 
           <section v-if="store.seleccion.length && !store.reasignacion" class="panel flex flex-col gap-2">
-            <div class="text-sm font-medium">Pasajeros</div>
+            <div class="font-medium">Pasajeros</div>
             <ul class="flex flex-col gap-2">
               <li v-for="linea in lineas" :key="linea.asiento" class="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-2 @xl:grid-cols-[3rem_minmax(0,1fr)_6rem]">
                 <span class="font-mono text-lg font-semibold">{{ linea.numero }}</span>
@@ -132,11 +132,6 @@
                 <Skeleton height="20rem" />
               </div>
               <div v-else-if="store.detalle" :key="`salida-${store.salidaId}`" class="flex flex-col gap-3">
-                <!-- <div class="flex items-baseline justify-between gap-2">
-                <div class="font-medium">{{ store.detalle.bus?.codigo ?? "Sin bus" }}</div>
-                <div class="text-sm text-muted-color">Libres {{ store.libres }}/{{ store.asientosCroquis.length }}</div>
-              </div> -->
-
                 <Message v-if="store.noVendible" severity="warn" :closable="false">{{ store.noVendible }}</Message>
                 <BusMapLegend :items="leyenda" :conteos="conteos" />
                 <div class="overflow-x-auto mt-1 md:mt-4">

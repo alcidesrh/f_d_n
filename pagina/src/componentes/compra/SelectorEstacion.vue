@@ -30,15 +30,31 @@
     @hide="reiniciarFiltro"
   >
     <template #value="{ value, placeholder: ph }">
-      <span v-if="value != null && nombrePorId.has(value)">{{ nombrePorId.get(value) }}</span>
+      <span v-if="value != null && nombrePorId.has(value)">{{
+        nombrePorId.get(value)
+      }}</span>
       <span v-else>{{ ph }}</span>
     </template>
 
     <template #header>
-      <div v-if="!filtro && grupos.length > 1" class="flex justify-end border-b border-surface-200 px-2 py-1">
-        <button type="button" class="inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent px-1 py-0.5 text-xs font-medium text-primary" @click="alternarTodos">
-          <icon :name="todosAbiertos ? 'chevrons-up' : 'chevrons-down'" size="0.95rem" />
-          {{ todosAbiertos ? t('buscador.contraerTodo') : t('buscador.expandirTodo') }}
+      <div
+        v-if="!filtro && grupos.length > 1"
+        class="flex justify-end border-b border-surface-200 px-2 py-1"
+      >
+        <button
+          type="button"
+          class="inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent px-1 py-0.5 text-xs font-medium text-primary"
+          @click="alternarTodos"
+        >
+          <icon
+            :name="todosAbiertos ? 'chevrons-up' : 'chevrons-down'"
+            size="0.95rem"
+          />
+          {{
+            todosAbiertos
+              ? t("buscador.contraerTodo")
+              : t("buscador.expandirTodo")
+          }}
         </button>
       </div>
     </template>
@@ -51,12 +67,23 @@
         :aria-expanded="abiertos.has(option.departamento)"
         @click.stop="alternar(option.departamento)"
       >
-        <icon :name="abiertos.has(option.departamento) ? 'chevron-down' : 'chevron-right'" size="0.9rem" />
+        <icon
+          :name="
+            abiertos.has(option.departamento) ? 'chevron-down' : 'chevron-right'
+          "
+          size="0.9rem"
+        />
         <icon name="map-pin" size="0.85rem" />
         <span class="flex-1">{{ option.departamento }}</span>
-        <span class="font-normal normal-case tracking-normal">{{ totales.get(option.departamento) }}</span>
+        <span class="font-normal normal-case tracking-normal">{{
+          totales.get(option.departamento)
+        }}</span>
       </button>
-      <span v-else class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-color"><icon name="map-pin" size="0.85rem" />{{ option.departamento }}</span>
+      <span
+        v-else
+        class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-color"
+        ><icon name="map-pin" size="0.85rem" />{{ option.departamento }}</span
+      >
     </template>
 
     <template #filtericon>
@@ -77,64 +104,92 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { SELECT_PANEL } from '@/panelSelect'
-import type { Estacion } from '@/tipos'
+import { computed, ref } from "vue";
+import { useI18n } from "vue-i18n";
+import { SELECT_PANEL } from "@/panelSelect";
+import type { Estacion } from "@/tipos";
 
 interface Grupo {
-  departamento: string
-  estaciones: Estacion[]
+  departamento: string;
+  estaciones: Estacion[];
 }
 
 const props = defineProps<{
-  modelValue: number | null
-  grupos: Grupo[]
-  placeholder: string
-  inputId: string
-  disabled?: boolean
-  cargando?: boolean
-  vacio?: string
-}>()
-const emit = defineEmits<{ 'update:modelValue': [id: number | null] }>()
-const { t } = useI18n()
+  modelValue: number | null;
+  grupos: Grupo[];
+  placeholder: string;
+  inputId: string;
+  disabled?: boolean;
+  cargando?: boolean;
+  vacio?: string;
+}>();
+const emit = defineEmits<{ "update:modelValue": [id: number | null] }>();
+const { t } = useI18n();
 
 // Instancia de PrimeVue Select: se limpia su buscador interno (`filterValue`).
-const select = ref<{ filterValue: string | null; $el: HTMLElement } | null>(null)
-const filtro = ref('')
-const abiertos = ref(new Set<string>())
+const select = ref<{ filterValue: string | null; $el: HTMLElement } | null>(
+  null,
+);
+const filtro = ref("");
+const abiertos = ref(new Set<string>());
 
 /** Panel con fondo sólido y ancho suficiente para nombres largos. */
 const ptSelect = {
   overlay: { class: `!bg-white ${SELECT_PANEL}` },
   // Departamento con fondo tenue; sus estaciones sangradas para marcar la jerarquía.
-  optionGroup: { class: '!bg-marca-50 !py-1.5' },
-  option: { class: '!pl-9' },
-}
+  optionGroup: { class: "!py-1.5" },
+  option: { class: "!pl-9" },
+};
 
-const nombrePorId = computed(() => new Map(props.grupos.flatMap((g) => g.estaciones.map((e) => [e.id, e.nombre] as const))))
-const totales = computed(() => new Map(props.grupos.map((g) => [g.departamento, g.estaciones.length] as const)))
-const todosAbiertos = computed(() => props.grupos.every((g) => abiertos.value.has(g.departamento)))
+const nombrePorId = computed(
+  () =>
+    new Map(
+      props.grupos.flatMap((g) =>
+        g.estaciones.map((e) => [e.id, e.nombre] as const),
+      ),
+    ),
+);
+const totales = computed(
+  () =>
+    new Map(
+      props.grupos.map((g) => [g.departamento, g.estaciones.length] as const),
+    ),
+);
+const todosAbiertos = computed(() =>
+  props.grupos.every((g) => abiertos.value.has(g.departamento)),
+);
 /** Sin búsqueda: solo las estaciones de los departamentos abiertos. Buscando: todas. */
-const visibles = computed(() => (filtro.value ? props.grupos : props.grupos.map((g) => (abiertos.value.has(g.departamento) ? g : { ...g, estaciones: [] }))))
+const visibles = computed(() =>
+  filtro.value
+    ? props.grupos
+    : props.grupos.map((g) =>
+        abiertos.value.has(g.departamento) ? g : { ...g, estaciones: [] },
+      ),
+);
 
 function alternar(departamento: string) {
-  const s = new Set(abiertos.value)
-  if (!s.delete(departamento)) s.add(departamento)
-  abiertos.value = s
+  const s = new Set(abiertos.value);
+  if (!s.delete(departamento)) s.add(departamento);
+  abiertos.value = s;
 }
 
 function alternarTodos() {
-  abiertos.value = todosAbiertos.value ? new Set() : new Set(props.grupos.map((g) => g.departamento))
+  abiertos.value = todosAbiertos.value
+    ? new Set()
+    : new Set(props.grupos.map((g) => g.departamento));
 }
 
 function reiniciarFiltro() {
-  filtro.value = ''
+  filtro.value = "";
 }
 
 function limpiarFiltro() {
-  filtro.value = ''
-  if (select.value) select.value.filterValue = null
-  document.querySelector<HTMLInputElement>('.p-select-overlay input[role="searchbox"]')?.focus()
+  filtro.value = "";
+  if (select.value) select.value.filterValue = null;
+  document
+    .querySelector<HTMLInputElement>(
+      '.p-select-overlay input[role="searchbox"]',
+    )
+    ?.focus();
 }
 </script>

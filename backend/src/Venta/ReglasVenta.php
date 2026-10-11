@@ -40,7 +40,7 @@ final class ReglasVenta
         private readonly AjustesPagina $ajustes,
     ) {}
 
-    /** Taquilla y agencias venden mientras el salida está programado o abordando, y no es de un día pasado. */
+    /** Taquilla y agencias venden mientras el salida está programado o abordando, y su hora de salida no ha pasado. */
     public function exigirVendibleEnTaquilla(Salida $salida): void
     {
         $motivo = $this->motivoNoVendibleEnTaquilla($salida);
@@ -56,10 +56,10 @@ final class ReglasVenta
         if (!in_array($salida->getEstado(), [EstadoSalida::PROGRAMADA, EstadoSalida::ABORDANDO], true)) {
             return sprintf("El salida está %s: ya no se venden boletos.", $salida->getEstado()->value);
         }
-        // Un salida de un día pasado que nunca se marcó iniciado tampoco se vende.
+        // Un salida cuya fecha y hora de inicio ya pasaron, aunque nunca se marcara iniciada, tampoco se vende.
         $fecha = $salida->getFecha();
-        if ($fecha !== null && $fecha->format("Y-m-d") < $this->reloj->now()->format("Y-m-d")) {
-            return "El salida es de un día pasado: ya no se venden boletos.";
+        if ($fecha !== null && $fecha <= $this->reloj->now()) {
+            return "La hora de salida ya pasó: ya no se venden boletos.";
         }
 
         return null;
