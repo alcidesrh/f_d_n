@@ -69,7 +69,7 @@ Cada fase deja la aplicación funcionando y actualiza docs y borra lo que queda 
 | 0 | Este ADR y el glosario | Hecha |
 | 1 | Entidades nuevas (aditivas), migrador desde el legado, `app:ruta:rellenar` | Hecha |
 | 2 | `Itinerarios` y las horas leen de `Parada`/`SalidaParada`; fuera el orden topológico | Hecha: `Itinerarios::deSalida` lee `salida_parada`; el programador y la edición fijan ruta (`RutaDeTrayecto`, transitorio) y horario |
-| 3 | Búsqueda por hora en el origen; libres por tramo | |
+| 3 | Búsqueda por hora en el origen; libres por tramo | Hecha: `BuscadorSalidas` (taquilla y web); `vendidos` de la lista de taquilla por tramo; orígenes, destinos y directorio de la web desde paradas de rutas activas con tarifa |
 | 4 | Ocupación por `orden`; restricción de exclusión | Hecha (antes que la 3: la búsqueda cuenta libres por tramo con el orden). Verificado: venta de tramos que no se solapan en el mismo asiento, rechazo del solape en la aplicación y en la base |
 | 5 | `Salida.ruta` y `EsquemaSalida.ruta` obligatorias; fuera `Salida.trayecto` | |
 | 6 | Gestión de rutas (editor de paradas) y tarifas por par | |
