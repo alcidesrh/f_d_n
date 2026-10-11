@@ -53,7 +53,7 @@ export const useVentaStore = defineStore("venta", () => {
   /** El comprobante que se muestra es de una reasignación (no de una venta). */
   const comprobanteReasignado = ref(false);
   const salidasVisibles = computed(() => {
-    const filtradas = salidas.value.filter((r) => (empresaIds.value.length === 0 || (r.empresa != null && empresaIds.value.includes(r.empresa.id))));
+    const filtradas = salidas.value.filter((r) => r.estado !== "cancelada" && (empresaIds.value.length === 0 || (r.empresa != null && empresaIds.value.includes(r.empresa.id))));
     return reasignacion.value ? salidasReasignables(filtradas, reasignacion.value.boletos, new Date()) : filtradas;
   });
 

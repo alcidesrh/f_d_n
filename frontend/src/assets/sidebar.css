@@ -160,7 +160,7 @@
   text-decoration: none;
   white-space: nowrap;
   &:hover {
-    background-color: var(--bg);
+    background-color: var(--p-content-hover-background);
   }
   /*transition: background-color 0.2s ease;*/
   /* Ítem cuya ruta es la actual (RouterLink pone la clase y aria-current="page"). */
@@ -216,7 +216,7 @@
       max-width: calc(var(--sb-open) - var(--sb-mini));
       overflow: hidden;
       text-overflow: ellipsis;
-      background-color: var(--bg);
+      background-color: var(--p-content-hover-background);
       box-shadow: 0 2px 8px rgb(0 0 0 / 0.15);
       opacity: 0;
       pointer-events: none;
