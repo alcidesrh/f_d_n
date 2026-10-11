@@ -47,9 +47,10 @@ export interface Track {
 /**
  * Pista de una columna según su `width`: preset (`md`), longitud (`12rem`,
  * `160px`), fracción (`2fr`, flexible con mínimo `FLEX_MIN`) o nada
- * (flexible `1fr`). Lo que no se entiende se trata como nada.
+ * (flexible `1fr`). Lo que no se entiende se trata como nada. `min` cambia
+ * el mínimo de una pista flexible (longitud válida; si no, `FLEX_MIN`).
  */
-export function trackFor(width: string | null | undefined): Track {
+export function trackFor(width: string | null | undefined, min?: string | null): Track {
   const value = width?.trim() ?? ''
   if (value in WIDTH_PRESETS) {
     const length = WIDTH_PRESETS[value as keyof typeof WIDTH_PRESETS]
@@ -58,7 +59,8 @@ export function trackFor(width: string | null | undefined): Track {
   if (LENGTH.test(value) && !value.endsWith('%')) return { track: value, min: value, flexible: false }
   const fraction = FRACTION.exec(value)
   const fr = fraction ? Number(fraction[1]) || 1 : 1
-  return { track: `minmax(${FLEX_MIN}, ${fr}fr)`, min: FLEX_MIN, flexible: true }
+  const floor = min && LENGTH.test(min.trim()) && !min.trim().endsWith('%') ? min.trim() : FLEX_MIN
+  return { track: `minmax(${floor}, ${fr}fr)`, min: floor, flexible: true }
 }
 
 /** ¿`width` es un valor que el grid entiende? (vacío también vale: automático). */
@@ -88,10 +90,10 @@ export interface GridTemplate {
  * agrega un relleno antes de las acciones, para que queden pegadas a la
  * derecha en un contenedor ancho.
  */
-export function gridTemplate(columns: readonly Pick<GridColumn, 'key' | 'width'>[], options: GridTemplateOptions = {}): GridTemplate {
+export function gridTemplate(columns: readonly Pick<GridColumn, 'key' | 'width' | 'minWidth'>[], options: GridTemplateOptions = {}): GridTemplate {
   const tracks = columns.map((column) => {
     const live = options.live?.[column.key]
-    return live ? trackFor(`${Math.round(live)}px`) : trackFor(column.width)
+    return live ? trackFor(`${Math.round(live)}px`) : trackFor(column.width, column.minWidth)
   })
   const parts = tracks.map((t) => t.track)
   const mins = tracks.map((t) => t.min)

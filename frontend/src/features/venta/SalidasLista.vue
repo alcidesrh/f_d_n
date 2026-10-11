@@ -1,65 +1,79 @@
-<!-- Salidas del día que pasan por la estación; clic = abrir su croquis. -->
-<template>
-  <DataTable :value="salidas" :loading="cargando" data-key="id" selection-mode="single" :selection="seleccionado" scrollable scroll-height="38rem" size="small" :row-class="(r: SalidaResumen) => (vendible(r) ? '' : r.estado)" @row-select="emit('elegir', $event.data.id)">
-    <template #empty>
-      <div class="p-3 text-center text-muted-color">No hay salidas para esa fecha y estación.</div>
-    </template>
-    <Column header="Salida" class="whitespace-nowrap">
-      <template #body="{ data }">
-        <div class="font-medium">{{ hora(data.salidaEstacion ?? data.salida) }}</div>
-        <div v-if="data.salidaEstacion && data.salidaEstacion !== data.salida" class="text-xs text-muted-color">sale {{ hora(data.salida) }} de {{ data.trayecto.origen.nombre }}</div>
-      </template>
-    </Column>
-    <Column header="Origen" field="trayecto.origen.nombre" style="min-width: 8rem" />
-    <Column header="Destino" field="trayecto.destino.nombre" style="min-width: 8rem" />
-    <Column header="Empresa" field="empresa.nombre" style="min-width: 8rem" />
-    <Column header="Bus" style="min-width: 7rem">
-      <template #body="{ data }">
-        <template v-if="data.bus"
-          >{{ data.bus.codigo }}<span v-if="data.bus.gama" class="text-xs text-muted-color"> · {{ data.bus.gama }}</span></template
-        >
-        <icon v-else name="no_transfer" class="text-surface-500" size="1.2rem" />
-        <!-- <Chip v-else label="Sin bus" class="chip-warn" /> -->
-      </template>
-    </Column>
-    <Column header="Estado">
-      <template #body="{ data }">
-        <div class="text-sm tracking-wider estado" v-text="data.estado" />
-      </template>
-    </Column>
-    <Column class="whitespace-nowrap">
-      <template #header>
-        <div class="flex">
-          <div class="w-[25px] text-center">
-            <icon size="1.2rem" name="airline_seat_recline_extra" class="text-blue-600" />
-          </div>
-          <div class="w-[25px] mx-[5px] text-center">
-            <icon name="tatami_seat" class="text-neutral-500" size="1.2rem" :weight="300" />
-          </div>
-          <div class="w-[25px] text-center">
-            <icon size="1.2rem" name="airline_seat_recline_extra" class="text-surface-700" />
+<!--
+  Salidas del día que pasan por la estación; clic (o Enter) = abrir su croquis.
 
-            <icon name="tatami_seat" size="1.2rem" :weight="300" class="text-surface-700" />
-          </div>
-        </div>
+  Sobre `shared/data-grid/DataGrid.vue` (ADR-029): tabla cuando el contenedor
+  mide 45rem o más (lo que suman los mínimos de las columnas) y, por debajo,
+  tarjetas de dos líneas: hora y trayecto; empresa, precios y asientos
+  vendidos/libres (el bus solo en la tabla). La salida elegida queda resaltada.
+-->
+<template>
+  <DataGrid :columns="columns" :rows="salidas" :row-key="rowKey" :loading="cargando" :selected-keys="seleccion" :row-class="rowClass" :cards-below="45" max-height="38rem" row-clickable class="salidas" @row-click="emit('elegir', ($event as SalidaResumen).id)">
+    <template #header="{ column }">
+      <span v-if="column.key === 'asientos'" class="asientos" aria-label="Vendidos y libres">
+        <icon name="airline_seat_recline_extra" size="1.1rem" class="asientos__vendidos" title="Vendidos" />
+        <icon name="tatami_seat" size="1.1rem" :weight="300" class="asientos__libres" title="Libres" />
+      </span>
+      <template v-else>{{ column.label }}</template>
+    </template>
+
+    <template #cell="{ row, column }">
+      <div v-if="column.key === 'salida'" class="min-w-0 leading-tight">
+        <div class="font-medium tabular-nums">{{ horaDe(s(row)) }}</div>
+        <div v-if="desdeOrigen(s(row))" class="truncate text-xs text-muted-color" :title="desdeOrigen(s(row))!">{{ desdeOrigen(s(row)) }}</div>
+      </div>
+      <GridText v-else-if="column.key === 'trayecto'" :text="trayecto(s(row))" />
+      <GridText v-else-if="column.key === 'empresa'" :text="s(row).empresa?.nombre ?? ''" />
+      <template v-else-if="column.key === 'bus'">
+        <span v-if="s(row).bus" class="truncate" :title="bus(s(row))">
+          {{ s(row).bus!.codigo }}<span v-if="s(row).bus!.gama" class="text-xs text-muted-color"> · {{ s(row).bus!.gama }}</span>
+        </span>
+        <icon v-else name="no_transfer" class="text-surface-500" size="1.2rem" title="Sin bus" />
       </template>
-      <template #body="{ data }">
-        <div v-if="data.capacidad" class="m-auto flex text-sm font-bold">
-          <div class="w-[25px] text-center text-blue-600">{{ data.vendidos ?? 0 }}</div>
-          <div class="w-[25px] text-neutral-500 mx-[5px] text-center">{{ data.capacidad - data.vendidos }}</div>
-          <div class="w-[25px] text-center text-surface-700">
-            {{ data.capacidad }}
-          </div>
+      <span v-else-if="column.key === 'estado'" class="estado">{{ s(row).estado }}</span>
+      <span v-else-if="column.key === 'precios' && s(row).precios?.length" class="precios precios--columna">
+        <span v-for="p in s(row).precios" :key="p.clase"><b>{{ p.clase }}</b> {{ precioCorto(p.precio) }}</span>
+      </span>
+      <span v-else-if="column.key === 'asientos' && s(row).capacidad" class="asientos asientos--valores">
+        <span class="asientos__vendidos">{{ s(row).vendidos ?? 0 }}</span>
+        <span class="asientos__libres">{{ libres(s(row)) }}</span>
+      </span>
+    </template>
+
+    <template #card="{ row }">
+      <div class="tarjeta">
+        <div class="tarjeta__linea">
+          <span class="flex-none font-semibold tabular-nums">{{ horaDe(s(row)) }}</span>
+          <span class="min-w-0 flex-1 truncate text-right font-medium" :title="trayecto(s(row))">{{ trayecto(s(row)) }}</span>
         </div>
-      </template>
-    </Column>
-  </DataTable>
+        <div class="tarjeta__linea text-xs text-muted-color">
+          <span class="min-w-0 truncate">
+            <template v-if="desdeOrigen(s(row))">{{ desdeOrigen(s(row)) }} · </template>{{ s(row).empresa?.nombre ?? "—" }}
+          </span>
+          <span v-if="s(row).precios?.length" class="precios">
+            <span v-for="p in s(row).precios" :key="p.clase"><b>{{ p.clase }}</b> {{ precioCorto(p.precio) }}</span>
+          </span>
+          <span v-if="s(row).capacidad" class="asientos asientos--valores ml-auto" :aria-label="`${s(row).vendidos ?? 0} vendidos, ${libres(s(row))} libres`">
+            <span class="asientos__vendidos">{{ s(row).vendidos ?? 0 }}</span>
+            <span class="asientos__libres">{{ libres(s(row)) }}</span>
+          </span>
+        </div>
+      </div>
+    </template>
+
+    <template #empty>
+      <icon name="directions-bus-outline" size="2rem" />
+      <span>No hay salidas para esa fecha y estación.</span>
+    </template>
+  </DataGrid>
 </template>
 
 <script setup lang="ts">
 import { computed } from "vue";
+import DataGrid from "@/shared/data-grid/DataGrid.vue";
+import GridText from "@/shared/data-grid/GridText.vue";
+import type { GridColumn } from "@/shared/data-grid/types";
 import { hora } from "@/core/venta/modelo";
-import type { SalidaResumen } from "@/core/venta/types";
+import type { Importe, SalidaResumen } from "@/core/venta/types";
 
 const props = defineProps<{
   salidas: SalidaResumen[];
@@ -68,34 +82,125 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{ elegir: [id: number] }>();
 
-const seleccionado = computed(() => props.salidas.find((r) => r.id === props.salidaId) ?? null);
+const columns: GridColumn[] = [
+  { key: "salida", label: "Salida", width: "6rem" },
+  { key: "trayecto", label: "Trayecto", minWidth: "10rem", width: "2fr" },
+  { key: "empresa", label: "Empresa", minWidth: "6rem" },
+  { key: "bus", label: "Bus", width: "5.5rem" },
+  { key: "estado", label: "Estado", width: "6rem" },
+  { key: "precios", label: "Precio", width: "6.5rem" },
+  { key: "asientos", label: "Asientos", width: "4.5rem", align: "center" },
+];
+
+const s = (row: unknown) => row as SalidaResumen;
+const rowKey = (row: unknown) => String(s(row).id);
+const seleccion = computed(() => new Set(props.salidaId == null ? [] : [String(props.salidaId)]));
+
 const vendible = (r: SalidaResumen) => ["programada", "abordando"].includes(r.estado) && !!r.bus;
+const rowClass = (row: unknown) => {
+  const r = s(row);
+  return { "is-cancelada": r.estado === "cancelada", "is-no-vendible": !vendible(r) };
+};
+
+/** Hora en la estación elegida (si se conoce) o la de salida del origen. */
+const horaDe = (r: SalidaResumen) => hora(r.salidaEstacion ?? r.salida);
+/** "sale 08:00 de Guatemala" cuando la hora en la estación no es la del origen. */
+const desdeOrigen = (r: SalidaResumen) => (r.salidaEstacion && r.salidaEstacion !== r.salida ? `sale ${hora(r.salida)} de ${r.trayecto.origen.nombre}` : null);
+const trayecto = (r: SalidaResumen) => `${r.trayecto.origen.nombre ?? ""} → ${r.trayecto.destino.nombre ?? ""}`;
+const bus = (r: SalidaResumen) => [r.bus?.codigo, r.bus?.gama].filter(Boolean).join(" · ");
+const libres = (r: SalidaResumen) => (r.capacidad ?? 0) - (r.vendidos ?? 0);
+/** "Q 100.00" → "Q 100": en la lista los centavos solo se ven si los hay. */
+const precioCorto = (p: Importe | null) => (p ? p.texto.replace(/[.,]00$/, "") : "—");
 </script>
 
 <style scoped>
-:deep(.p-datatable-mask) {
-  background: color-mix(in srgb, var(--p-content-background) 45%, transparent);
-  transition: opacity 0.2s ease;
-}
-:deep(tr.anulada),
-:deep(tr.cancelada) {
+/* Cancelada: tachada (fila y tarjeta). */
+.salidas :deep(.dg-brow.is-cancelada),
+.salidas :deep(.dg-card.is-cancelada) {
   position: relative;
-  &::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 50%;
-    border-top: 1px solid var(--p-red-400);
-    pointer-events: none;
-  }
 }
+.salidas :deep(.dg-brow.is-cancelada)::after,
+.salidas :deep(.dg-card.is-cancelada)::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  border-top: 1px solid var(--p-red-400);
+  pointer-events: none;
+}
+/* Tarjetas de dos líneas: lo justo de aire para leerlas y tocarlas. */
+.salidas :deep(.dg-cards) {
+  gap: 0.375rem;
+}
+.salidas :deep(.dg-card--custom) {
+  padding: 0.375rem 0.625rem;
+  border-radius: 0.5rem;
+}
+
 .estado {
-  font-weight: 500;
   width: fit-content;
-  font-size: 9.5px;
-  padding: 4px 8px !important;
-  border-radius: 5px;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.3rem;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
+}
+
+/* Precio por clase de asiento: la letra en gris, el monto en negrita. */
+.precios {
+  display: inline-flex;
+  flex: none;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.precios b {
+  color: var(--p-text-muted-color);
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+.tarjeta .precios {
+  color: var(--p-text-color);
+}
+.precios--columna {
+  flex-direction: column;
+  gap: 0;
+  line-height: 1.2;
+}
+
+/* Vendidos · libres, en columnas de ancho fijo para que se alineen. */
+.asientos {
+  display: inline-grid;
+  flex: none;
+  grid-template-columns: repeat(2, 1.6rem);
+  justify-items: center;
+  gap: 0.125rem;
+}
+.asientos--valores {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.asientos__vendidos {
+  color: var(--p-blue-600);
+}
+.asientos__libres {
+  color: var(--p-text-muted-color);
+}
+
+.tarjeta {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  line-height: 1.35;
+}
+.tarjeta__linea {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 0.5rem;
 }
 </style>

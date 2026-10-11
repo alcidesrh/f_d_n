@@ -14,8 +14,10 @@
     `layout="cards"`) cada fila es una tarjeta del mismo alto con las primeras
     `cardFields` columnas.
 
-  No sabe de entidades ni de APIs: emite y deja los slots `cell`, `editor`,
-  `filter`, `actions` y `empty`.
+  No sabe de entidades ni de APIs: emite y deja los slots `cell`, `header`
+  (título de una columna), `editor`, `filter`, `actions`, `card` (contenido
+  entero de la tarjeta) y `empty`. Las filas clicables (`rowClickable`) se
+  eligen también con Enter o Espacio.
 -->
 <template>
   <div ref="root" class="dg" :class="[`dg--${density}`, { 'dg--cards': cards, 'dg--loading': loading }]" :style="rootVars">
@@ -28,23 +30,15 @@
           <div v-if="selectable" class="dg-cell dg-sel dg-sticky-l" role="columnheader">
             <Checkbox binary :model-value="pageState === 'all'" :indeterminate="pageState === 'some'" :disabled="!rows.length" aria-label="Seleccionar la página" @update:model-value="emit('toggle-page', Boolean($event))" />
           </div>
-          <div
-            v-for="column in columns"
-            :key="column.key"
-            class="dg-cell dg-hcell"
-            :class="[alignClass(column), { 'is-sorted': column.sort, 'is-filtered': column.filtered }]"
-            :data-grid-col="column.key"
-            role="columnheader"
-            :aria-sort="column.sort === 'asc' ? 'ascending' : column.sort === 'desc' ? 'descending' : undefined"
-          >
+          <div v-for="column in columns" :key="column.key" class="dg-cell dg-hcell" :class="[alignClass(column), { 'is-sorted': column.sort, 'is-filtered': column.filtered }]" :data-grid-col="column.key" role="columnheader" :aria-sort="column.sort === 'asc' ? 'ascending' : column.sort === 'desc' ? 'descending' : undefined">
             <span v-if="reorderable" data-grid-grip class="dg-grip" title="Arrastrar para mover la columna">
               <icon name="drag-indicator" size="0.875rem" />
             </span>
             <button v-if="column.sortable" type="button" class="dg-hlabel dg-sortable" :aria-label="`Ordenar por ${column.label}`" @click="emit('sort', column.key)">
-              <span class="truncate">{{ column.label }}</span>
+              <span class="truncate"><slot name="header" :column="column">{{ column.label }}</slot></span>
               <icon :name="SORT_ICONS[column.sort ?? 'none']" size="0.8rem" class="dg-sort-icon" />
             </button>
-            <span v-else class="dg-hlabel truncate" :title="column.label">{{ column.label }}</span>
+            <span v-else class="dg-hlabel truncate" :title="column.label"><slot name="header" :column="column">{{ column.label }}</slot></span>
             <span class="dg-htools">
               <button v-if="column.filterable" type="button" class="dg-tool tap-target" :class="{ 'is-active': column.filterOpen }" :aria-pressed="Boolean(column.filterOpen)" :aria-label="column.filterOpen ? `Quitar filtro ${column.label}` : `Filtrar ${column.label}`" v-tooltip.top="column.filterOpen ? 'Quitar filtro' : 'Filtrar'" @click="emit('filter', column.key)">
                 <icon :name="column.filterOpen ? 'filter-alt' : 'filter-alt-outline'" size="0.85rem" />
@@ -60,44 +54,26 @@
         </div>
 
         <Transition name="dg-filters" :duration="220">
-        <div v-if="filterRow" class="dg-row dg-filters" role="row">
-          <div v-if="selectable" class="dg-cell dg-sel dg-sticky-l" />
-          <div v-for="column in columns" :key="column.key" class="dg-cell" :data-grid-filter="column.key">
-            <Transition name="dg-filter-input">
-              <div v-if="column.filterable && column.filterOpen" class="dg-filter-slot">
-                <slot name="filter" :column="column" />
-              </div>
-            </Transition>
+          <div v-if="filterRow" class="dg-row dg-filters" role="row">
+            <div v-if="selectable" class="dg-cell dg-sel dg-sticky-l" />
+            <div v-for="column in columns" :key="column.key" class="dg-cell" :data-grid-filter="column.key">
+              <Transition name="dg-filter-input">
+                <div v-if="column.filterable && column.filterOpen" class="dg-filter-slot">
+                  <slot name="filter" :column="column" />
+                </div>
+              </Transition>
+            </div>
+            <div v-if="template.filler" class="dg-cell dg-filler" />
+            <div v-if="actions" class="dg-cell dg-actions dg-sticky-r" />
           </div>
-          <div v-if="template.filler" class="dg-cell dg-filler" />
-          <div v-if="actions" class="dg-cell dg-actions dg-sticky-r" />
-        </div>
         </Transition>
 
         <template v-if="rows.length">
-          <div
-            v-for="(row, index) in rows"
-            :key="rowKey(row)"
-            class="dg-row dg-brow"
-            :class="{ 'is-selected': isSelected(row), 'is-clickable': rowClickable }"
-            role="row"
-            :aria-rowindex="index + 2"
-            :aria-selected="selectable ? isSelected(row) : undefined"
-            @click="emit('row-click', row)"
-          >
+          <div v-for="(row, index) in rows" :key="rowKey(row)" class="dg-row dg-brow" :class="[rowClass?.(row), { 'is-selected': isSelected(row), 'is-clickable': rowClickable }]" role="row" :aria-rowindex="index + 2" :aria-selected="selectable ? isSelected(row) : undefined" :aria-current="!selectable && isSelected(row) ? true : undefined" :tabindex="rowClickable ? 0 : undefined" @click="emit('row-click', row)" @keydown.enter.self.prevent="emit('row-click', row)" @keydown.space.self.prevent="emit('row-click', row)">
             <div v-if="selectable" class="dg-cell dg-sel dg-sticky-l" role="gridcell" @click.stop>
               <Checkbox binary :model-value="isSelected(row)" :aria-label="`Seleccionar fila ${index + 1}`" @update:model-value="emit('toggle-row', row, Boolean($event))" />
             </div>
-            <div
-              v-for="column in columns"
-              :key="column.key"
-              class="dg-cell dg-dcell"
-              :class="[alignClass(column), { 'is-editable': column.editable && !isEditing(row, column), 'is-editing': isEditing(row, column) }]"
-              role="gridcell"
-              :tabindex="column.editable && !isEditing(row, column) ? 0 : undefined"
-              @click="onCellClick(row, column, $event)"
-              @keydown.enter.self.prevent="onCellClick(row, column, $event)"
-            >
+            <div v-for="column in columns" :key="column.key" class="dg-cell dg-dcell" :class="[alignClass(column), { 'is-editable': column.editable && !isEditing(row, column), 'is-editing': isEditing(row, column) }]" role="gridcell" :tabindex="column.editable && !isEditing(row, column) ? 0 : undefined" @click="onCellClick(row, column, $event)" @keydown.enter.self.prevent="onCellClick(row, column, $event)">
               <slot v-if="isEditing(row, column)" name="editor" :row="row" :column="column" />
               <slot v-else name="cell" :row="row" :column="column">
                 <GridText :text="String((row as Record<string, unknown>)?.[column.key] ?? '')" />
@@ -133,14 +109,9 @@
         <label :for="`${uid}-page`" class="text-sm text-surface-500">Seleccionar la página</label>
       </div>
       <div v-if="rows.length" class="dg-cards" role="list">
-        <article
-          v-for="row in rows"
-          :key="rowKey(row)"
-          class="dg-card"
-          :class="{ 'is-selected': isSelected(row), 'is-clickable': rowClickable }"
-          role="listitem"
-          @click="emit('row-click', row)"
-        >
+        <article v-for="row in rows" :key="rowKey(row)" class="dg-card" :class="[rowClass?.(row), { 'is-selected': isSelected(row), 'is-clickable': rowClickable, 'dg-card--custom': $slots.card }]" role="listitem" :aria-current="!selectable && isSelected(row) ? true : undefined" :tabindex="rowClickable ? 0 : undefined" @click="emit('row-click', row)" @keydown.enter.self.prevent="emit('row-click', row)" @keydown.space.self.prevent="emit('row-click', row)">
+          <slot v-if="$slots.card" name="card" :row="row" :selected="isSelected(row)" />
+          <template v-else>
           <header class="dg-card-head">
             <span v-if="selectable" class="dg-card-check" @click.stop>
               <Checkbox binary :model-value="isSelected(row)" aria-label="Seleccionar" @update:model-value="emit('toggle-row', row, Boolean($event))" />
@@ -162,6 +133,7 @@
               </dd>
             </div>
           </dl>
+          </template>
         </article>
       </div>
       <div v-else-if="!loading" class="dg-empty">
@@ -175,48 +147,50 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, useId, watch } from 'vue'
-import GridText from './GridText.vue'
-import { ROW_HEIGHT, gridTemplate } from './layout'
-import type { GridColumn, GridDensity, GridEditing, GridLayout } from './types'
-import { useColumnDrag } from './useColumnDrag'
-import { useColumnResize } from './useColumnResize'
-import { useElementWidth } from './useElementWidth'
+import { computed, ref, useId, watch } from "vue";
+import GridText from "./GridText.vue";
+import { ROW_HEIGHT, gridTemplate } from "./layout";
+import type { GridColumn, GridDensity, GridEditing, GridLayout } from "./types";
+import { useColumnDrag } from "./useColumnDrag";
+import { useColumnResize } from "./useColumnResize";
+import { useElementWidth } from "./useElementWidth";
 
-defineOptions({ name: 'DataGrid' })
+defineOptions({ name: "DataGrid" });
 
-const SORT_ICONS = { asc: 'arrow-upward', desc: 'arrow-downward', none: 'swap-vert' } as const
+const SORT_ICONS = { asc: "arrow-upward", desc: "arrow-downward", none: "swap-vert" } as const;
 
 const props = withDefaults(
   defineProps<{
-    columns: GridColumn[]
-    rows: unknown[]
-    rowKey: (row: unknown) => string
-    loading?: boolean
-    density?: GridDensity
-    layout?: GridLayout
+    columns: GridColumn[];
+    rows: unknown[];
+    rowKey: (row: unknown) => string;
+    loading?: boolean;
+    density?: GridDensity;
+    layout?: GridLayout;
     /** Ancho del contenedor (rem) por debajo del cual `auto` pasa a tarjetas (`md`). */
-    cardsBelow?: number
+    cardsBelow?: number;
     /** Columnas que muestra cada tarjeta (la primera es el título). */
-    cardFields?: number
+    cardFields?: number;
     /** Columna de selección con casillas. */
-    selectable?: boolean
-    selectedKeys?: ReadonlySet<string>
+    selectable?: boolean;
+    selectedKeys?: ReadonlySet<string>;
     /** Columna de acciones fija a la derecha, con su ancho. */
-    actions?: string | null
-    reorderable?: boolean
-    resizable?: boolean
-    hideable?: boolean
-    editing?: GridEditing | null
+    actions?: string | null;
+    reorderable?: boolean;
+    resizable?: boolean;
+    hideable?: boolean;
+    editing?: GridEditing | null;
     /** La fila entera responde al clic (p. ej. en modo selección). */
-    rowClickable?: boolean
+    rowClickable?: boolean;
     /** Alto del área con scroll (CSS); por defecto crece con las filas. */
-    maxHeight?: string
+    maxHeight?: string;
+    /** Clases extra de cada fila (y de su tarjeta), p. ej. por estado. */
+    rowClass?: (row: unknown) => string | string[] | Record<string, boolean> | undefined;
   }>(),
   {
     loading: false,
-    density: 'normal',
-    layout: 'auto',
+    density: "normal",
+    layout: "auto",
     cardsBelow: 48,
     cardFields: 4,
     selectable: false,
@@ -228,72 +202,73 @@ const props = withDefaults(
     editing: null,
     rowClickable: false,
     maxHeight: undefined,
+    rowClass: undefined,
   },
-)
+);
 
 const emit = defineEmits<{
-  sort: [key: string]
-  filter: [key: string]
-  hide: [key: string]
-  reorder: [from: number, to: number]
-  resize: [key: string, width: string | null]
-  'row-click': [row: unknown]
-  'cell-click': [row: unknown, column: GridColumn]
-  'toggle-row': [row: unknown, selected: boolean]
-  'toggle-page': [selected: boolean]
+  sort: [key: string];
+  filter: [key: string];
+  hide: [key: string];
+  reorder: [from: number, to: number];
+  resize: [key: string, width: string | null];
+  "row-click": [row: unknown];
+  "cell-click": [row: unknown, column: GridColumn];
+  "toggle-row": [row: unknown, selected: boolean];
+  "toggle-page": [selected: boolean];
   /** Cambió la disposición efectiva (con `auto`, según el ancho). */
-  mode: [mode: 'table' | 'cards']
-}>()
+  mode: [mode: "table" | "cards"];
+}>();
 
-const uid = useId()
-const root = ref<HTMLElement | null>(null)
-const headerRow = ref<HTMLElement | null>(null)
-const width = useElementWidth(root)
+const uid = useId();
+const root = ref<HTMLElement | null>(null);
+const headerRow = ref<HTMLElement | null>(null);
+const width = useElementWidth(root);
 
 /** px por rem del documento (para comparar con `cardsBelow`). */
-const remPx = () => (typeof document === 'undefined' ? 16 : Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16)
+const remPx = () => (typeof document === "undefined" ? 16 : Number.parseFloat(getComputedStyle(document.documentElement).fontSize) || 16);
 
-const cards = computed(() => props.layout === 'cards' || (props.layout === 'auto' && width.value > 0 && width.value < props.cardsBelow * remPx()))
-const cardColumns = computed(() => props.columns.slice(0, Math.max(1, props.cardFields)))
-watch(cards, (value) => emit('mode', value ? 'cards' : 'table'), { immediate: true })
+const cards = computed(() => props.layout === "cards" || (props.layout === "auto" && width.value > 0 && width.value < props.cardsBelow * remPx()));
+const cardColumns = computed(() => props.columns.slice(0, Math.max(1, props.cardFields)));
+watch(cards, (value) => emit("mode", value ? "cards" : "table"), { immediate: true });
 
-const resize = useColumnResize((key, value) => emit('resize', key, value))
+const resize = useColumnResize((key, value) => emit("resize", key, value));
 
 const template = computed(() =>
   gridTemplate(props.columns, {
-    selection: props.selectable ? '3rem' : null,
+    selection: props.selectable ? "3rem" : null,
     actions: props.actions,
     live: resize.live,
   }),
-)
+);
 
 const rootVars = computed(() => ({
-  '--dg-cols': template.value.columns,
-  '--dg-row-h': ROW_HEIGHT[props.density],
-  '--dg-card-lines': String(Math.max(0, cardColumns.value.length - 1)),
-  ...(props.maxHeight ? { '--dg-max-h': props.maxHeight } : {}),
-}))
+  "--dg-cols": template.value.columns,
+  "--dg-row-h": ROW_HEIGHT[props.density],
+  "--dg-card-lines": String(Math.max(0, cardColumns.value.length - 1)),
+  ...(props.maxHeight ? { "--dg-max-h": props.maxHeight } : {}),
+}));
 
-const skeletonRows = 6
+const skeletonRows = 6;
 
-const pageState = computed<'none' | 'some' | 'all'>(() => {
-  const selected = props.rows.filter((row) => props.selectedKeys.has(props.rowKey(row))).length
-  if (!selected) return 'none'
-  return selected === props.rows.length ? 'all' : 'some'
-})
+const pageState = computed<"none" | "some" | "all">(() => {
+  const selected = props.rows.filter((row) => props.selectedKeys.has(props.rowKey(row))).length;
+  if (!selected) return "none";
+  return selected === props.rows.length ? "all" : "some";
+});
 
 /** Fila de filtros bajo la cabecera: si alguna columna tiene su filtro activado (slot `filter`). */
-const filterRow = computed(() => props.columns.some((column) => column.filterable && column.filterOpen))
+const filterRow = computed(() => props.columns.some((column) => column.filterable && column.filterOpen));
 
-const isSelected = (row: unknown) => props.selectedKeys.has(props.rowKey(row))
-const isEditing = (row: unknown, column: GridColumn) => props.editing?.column === column.key && props.editing.row === props.rowKey(row)
-const alignClass = (column: GridColumn) => (column.align && column.align !== 'start' ? `is-${column.align}` : '')
+const isSelected = (row: unknown) => props.selectedKeys.has(props.rowKey(row));
+const isEditing = (row: unknown, column: GridColumn) => props.editing?.column === column.key && props.editing.row === props.rowKey(row);
+const alignClass = (column: GridColumn) => (column.align && column.align !== "start" ? `is-${column.align}` : "");
 
 function onCellClick(row: unknown, column: GridColumn, event: Event) {
-  if (isEditing(row, column)) return event.stopPropagation()
+  if (isEditing(row, column)) return event.stopPropagation();
   if (column.editable && !props.rowClickable) {
-    event.stopPropagation()
-    emit('cell-click', row, column)
+    event.stopPropagation();
+    emit("cell-click", row, column);
   }
 }
 
@@ -301,15 +276,16 @@ useColumnDrag({
   header: headerRow,
   keys: () => (cards.value ? [] : props.columns.map((c) => c.key)),
   enabled: () => props.reorderable && !cards.value,
-  onMove: (from, to) => emit('reorder', from, to),
-})
+  onMove: (from, to) => emit("reorder", from, to),
+});
 </script>
 
 <style scoped>
 .dg {
   --dg-bg: var(--p-content-background);
   --dg-border: var(--p-content-border-color);
-  --dg-head-bg: color-mix(in srgb, var(--p-surface-500) 6%, var(--dg-bg));
+  --dg-head-bg: var(--p-surface-100);
+  /*--dg-head-bg: color-mix(in srgb, var(--p-surface-200) 50%, var(--dg-bg));*/
   --dg-hover: color-mix(in srgb, var(--p-surface-500) 7%, var(--dg-bg));
   --dg-selected: color-mix(in srgb, var(--p-primary-color) 11%, var(--dg-bg));
   --dg-pad-x: 0.75rem;
@@ -335,7 +311,7 @@ useColumnDrag({
   background: color-mix(in srgb, var(--p-primary-color) 15%, transparent);
 }
 .dg-progress::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0 auto 0 0;
   width: 35%;
@@ -510,7 +486,7 @@ useColumnDrag({
   touch-action: none;
 }
 .dg-resizer::after {
-  content: '';
+  content: "";
   position: absolute;
   inset-block: 0;
   left: 3px;
@@ -583,6 +559,11 @@ useColumnDrag({
 }
 .dg-brow.is-clickable {
   cursor: pointer;
+}
+.dg-brow.is-clickable:focus-visible,
+.dg-card.is-clickable:focus-visible {
+  outline: 2px solid var(--p-primary-color);
+  outline-offset: -2px;
 }
 .dg-dcell.is-editable {
   cursor: text;
@@ -693,6 +674,11 @@ useColumnDrag({
 }
 .dg-card.is-clickable {
   cursor: pointer;
+}
+/* Tarjeta con contenido propio (slot `card`): el alto lo decide el contenido. */
+.dg-card--custom {
+  display: block;
+  height: auto;
 }
 .dg-card-head {
   display: flex;

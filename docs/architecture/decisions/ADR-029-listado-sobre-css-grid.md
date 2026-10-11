@@ -23,7 +23,9 @@ Además, la configuración de columnas (`CollectionFieldConfig`) no funcionaba c
 - **Columnas:** ordenar (clic en el título), filtrar (embudo), ocultar, reordenar con GSAP Draggable desde un tirador (las vecinas se corren mientras se arrastra; la soltada aterriza con FLIP) y redimensionar desde el borde (doble clic: vuelve al ancho configurado).
 - **Tarjetas** por debajo de `md` (48rem) **de ancho del contenedor** (`ResizeObserver`, no media query: el mismo listado está en la página y en el chat), o forzadas desde la vista. Todas del mismo alto, con las primeras 4 columnas.
 - Resaltado de coincidencias con `<mark>` (`highlight.ts`, sin distinguir mayúsculas ni acentos). Reemplaza a la CSS Custom Highlight API y su registro global.
-- Slots `cell`, `editor`, `filter`, `actions`, `empty`; emite `sort`, `filter`, `hide`, `reorder`, `resize`, `row-click`, `cell-click`, `toggle-row`, `toggle-page`, `mode`.
+- Slots `cell`, `header` (título de una columna), `editor`, `filter`, `actions`, `card` (contenido entero de la tarjeta) y `empty`; emite `sort`, `filter`, `hide`, `reorder`, `resize`, `row-click`, `cell-click`, `toggle-row`, `toggle-page`, `mode`.
+- `rowClass` (clases por fila y tarjeta), `minWidth` por columna flexible (mínimo distinto de `10rem`) y filas clicables con teclado (Enter/Espacio). Con `selectedKeys` sin `selectable` resalta una fila elegida (`aria-current`): selección simple.
+- **No es solo para el listado genérico:** es la pieza con la que se reemplazan las tablas de PrimeVue en las pantallas propias. Primera: las salidas de la venta (`features/venta/SalidasLista.vue`: columnas fijas, tarjeta propia, sin herramientas de cabecera).
 
 **Adaptador: `ListPage.vue`** conserva su API (`entity`, `configurable`, `v-model:seleccion`, `@configure`) y suma `features` (`list/listFeatures.ts`): cada vista apaga lo que no quiere (barra, acciones, filtros, edición, selección…). Precedencia: lo que la entidad no permite nunca se enciende; después la prop, después `listOptions`, después el modo (el selector del chat no edita ni opera y siempre selecciona).
 

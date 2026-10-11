@@ -10,6 +10,13 @@ describe('trackFor', () => {
     expect(trackFor(null)).toEqual({ track: 'minmax(10rem, 1fr)', min: '10rem', flexible: true })
   })
 
+  it('una pista flexible acepta otro mínimo (solo longitudes)', () => {
+    expect(trackFor(null, '7rem')).toEqual({ track: 'minmax(7rem, 1fr)', min: '7rem', flexible: true })
+    expect(trackFor('2fr', '90px')).toEqual({ track: 'minmax(90px, 2fr)', min: '90px', flexible: true })
+    expect(trackFor(null, '20%').min).toBe('10rem')
+    expect(trackFor('md', '2rem')).toEqual({ track: '13rem', min: '13rem', flexible: false })
+  })
+
   it('lo que no entiende (o porcentajes) es automático', () => {
     expect(trackFor('ancho').flexible).toBe(true)
     expect(trackFor('50%').flexible).toBe(true)

@@ -6,20 +6,21 @@
   vivo (otros vendedores y la página web).  4. Asientos → "Facturar" (o
   "Cortesía"): cobro, certificación de la factura y ticket.
 
-  Móvil: todo en una columna, el croquis después del viaje. Desde que el
-  contenido mide 48rem (container query), croquis fijo a la derecha.
+  Móvil: todo en una columna, el croquis después del viaje (al elegir una
+  salida se baja hasta él) y con menos aire vertical. Desde que el contenido
+  mide 48rem (container query), croquis fijo a la derecha.
 -->
 <template>
-  <div class="flex flex-col gap-4">
+  <div class="venta flex flex-col gap-2 md:gap-4">
     <Message v-if="store.errorCarga" severity="error" :closable="false">
       {{ store.errorCarga }}
       <Button label="Reintentar" size="small" text @click="store.iniciar()" />
     </Message>
 
     <div class="@container">
-      <div class="grid grid-cols-1 items-start gap-4 @3xl:grid-cols-[minmax(0,1fr)_20rem]">
+      <div ref="grilla" class="grid grid-cols-1 items-start gap-2 md:gap-4 @3xl:grid-cols-[minmax(0,1fr)_20rem]">
         <!-- Columna principal -->
-        <div class="flex min-w-0 flex-col gap-4">
+        <div class="flex min-w-0 flex-col gap-1 md:gap-4">
           <section v-if="store.reasignacion" class="panel flex flex-col gap-3 reasignacion">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div class="font-semibold">Reasignar {{ store.reasignacion.boletos.length === 1 ? "un boleto" : `${store.reasignacion.boletos.length} boletos` }}</div>
@@ -49,8 +50,8 @@
             <ClienteBuscador v-else v-model="store.cliente" input-id="venta-cliente" />
           </section>
           <section class="panel flex flex-col gap-3">
-            <div class="grid grid-cols-1 items-start gap-3 @xl:grid-cols-4 mb-6">
-              <div class="flex flex-col gap-1">
+            <div class="grid grid-cols-2 items-start gap-x-2 gap-y-1.5 mb-1 md:mb-6 md:gap-3 @xl:grid-cols-4">
+              <div class="campo">
                 <span class="text-sm font-medium">{{ store.porRango ? "Rango de salida" : "Fecha de salida" }}</span>
                 <DatePicker v-if="!store.porRango" v-model="store.fecha" date-format="dd/mm/yy" show-icon fluid @update:model-value="store.cargarSalidas()" />
                 <DatePicker v-else ref="selectorRango" v-model="borrador" selection-mode="range" :manual-input="false" date-format="dd/mm/yy" show-time hour-format="24" show-icon fluid placeholder="Desde – Hasta">
@@ -63,21 +64,21 @@
                   Rango
                 </label>
               </div>
-              <label class="flex flex-col gap-1">
+              <label class="campo">
                 <span class="text-sm font-medium">Origen</span>
                 <estacion-select v-model="store.estacionId" :estaciones="store.contexto?.estaciones ?? []" :propio="store.contexto?.estacion?.departamento" placeholder="Todas" @update:model-value="store.cargarSalidas()" />
               </label>
-              <label class="flex flex-col gap-1">
+              <label class="campo">
                 <span class="text-sm font-medium">Destino</span>
                 <estacion-select v-model="store.destinoId" :estaciones="store.contexto?.estaciones ?? []" show-clear placeholder="Todas" @update:model-value="store.cargarSalidas()" />
               </label>
-              <label class="flex flex-col gap-1">
+              <label class="campo">
                 <span class="text-sm font-medium">Empresa</span>
                 <MultiSelect v-model="store.empresaIds" :options="store.empresas" option-label="nombre" option-value="id" placeholder="Todas" display="chip" :show-toggle-all="false" fluid />
               </label>
             </div>
 
-            <SalidasLista :salidas="store.salidasVisibles" :cargando="store.cargandoSalidas" :salida-id="store.salidaId" @elegir="store.elegirSalida" />
+            <SalidasLista :salidas="store.salidasVisibles" :cargando="store.cargandoSalidas" :salida-id="store.salidaId" @elegir="elegirSalida" />
             <div v-if="!store.porRango" class="flex items-center justify-between gap-2">
               <Button :label="etiquetaDia(-1)" severity="secondary" text size="small" :disabled="store.cargandoSalidas" @click="moverDia(-1)">
                 <template #icon><icon name="chevron-left" class="mr-1" /></template>
@@ -87,7 +88,7 @@
               </Button>
             </div>
           </section>
-          <divider />
+          <divider class="max-md:my-1!" />
 
           <section v-if="store.detalle" class="panel flex flex-col gap-3">
             <div class="grid grid-cols-1 gap-3 @xl:grid-cols-2">
@@ -124,9 +125,9 @@
 
         <!-- Croquis + cobro -->
         <div class="flex">
-          <divider layout="vertical" />
-          <aside class="panel flex flex-col gap-3 @3xl:sticky @3xl:top-4">
-            <Transition name="croquis" mode="out-in">
+          <divider layout="vertical" class="@max-3xl:hidden!" />
+          <aside ref="croquis" class="panel flex min-w-0 flex-1 scroll-mt-20 flex-col gap-3 @3xl:sticky @3xl:top-4">
+            <Transition name="croquis" mode="out-in" @enter="alMostrarCroquis">
               <div v-if="store.cargandoDetalle" key="cargando">
                 <Skeleton height="20rem" />
               </div>
@@ -138,7 +139,7 @@
 
                 <Message v-if="store.noVendible" severity="warn" :closable="false">{{ store.noVendible }}</Message>
                 <BusMapLegend :items="leyenda" :conteos="conteos" />
-                <div class="overflow-x-auto mt-4">
+                <div class="overflow-x-auto mt-1 md:mt-4">
                   <BusMap :elementos="store.detalle.croquis" :estado="store.estadoAsiento" interactivo inspeccionable tamano="md" class="justify-center" @asiento="(a) => a.id != null && store.alternarAsiento(a.id)" @ocupado="verOcupado" />
                   <AsientoOcupadoPopover ref="detalleAsiento" @anular="(b) => (anular = [b.id])" @reasignar="(b) => void store.iniciarReasignacion([b.id])" />
                 </div>
@@ -179,7 +180,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, nextTick, onMounted, ref } from "vue";
 import BusMap from "@/shared/bus-map/BusMap.vue";
 import type { AsientoCroquis } from "@/core/croquis/types";
 import AsientoOcupadoPopover from "@/shared/bus-map/AsientoOcupadoPopover.vue";
@@ -210,6 +211,27 @@ const verOcupado = (a: AsientoCroquis, e: MouseEvent) => {
 const cobro = ref(false);
 const cortesia = ref(false);
 let ultimasOpciones: OpcionesCobro | null = null;
+
+/** Columnas de la página y croquis: si están apiladas (móvil), al elegir una salida se baja hasta el croquis. */
+const grilla = ref<HTMLElement | null>(null);
+const croquis = ref<HTMLElement | null>(null);
+const apilado = () => !!grilla.value && getComputedStyle(grilla.value).gridTemplateColumns.trim().split(/\s+/).length === 1;
+let bajarAlCroquis = false;
+function elegirSalida(id: number) {
+  bajarAlCroquis = apilado();
+  void store.elegirSalida(id);
+}
+/**
+ * Se baja cuando entra el croquis de la salida (no al terminar de cargar): con
+ * `out-in` el skeleton ya salió, el detalle del viaje ya está encima y la
+ * página tiene su alto final.
+ */
+function alMostrarCroquis() {
+  if (!bajarAlCroquis || !store.detalle) return;
+  bajarAlCroquis = false;
+  const suave = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  void nextTick(() => croquis.value?.scrollIntoView({ behavior: suave ? "smooth" : "auto", block: "start" }));
+}
 
 const conteos = computed(() => conteosPorEstado(store.detalle?.croquis ?? [], store.estadoAsiento));
 
@@ -349,5 +371,30 @@ async function reintentar(sinFactura: boolean) {
   /*border: 1px solid var(--p-content-border-color);*/
   /*border-radius: var(--p-content-border-radius, 0.75rem);*/
   padding: 1rem;
+}
+.campo {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+/* Móvil: menos aire vertical (paneles, etiquetas e inputs) sin achicar la letra. */
+@media (width < 48rem) {
+  .panel {
+    padding: 0.375rem 0;
+  }
+  .campo {
+    gap: 0.125rem;
+  }
+  .campo > span {
+    font-size: 0.8125rem;
+    line-height: 1.2;
+  }
+  .venta {
+    --p-inputtext-padding-y: 0.375rem;
+    --p-select-padding-y: 0.375rem;
+    --p-multiselect-padding-y: 0.25rem;
+    --p-autocomplete-padding-y: 0.375rem;
+  }
 }
 </style>

@@ -76,12 +76,12 @@ final class ConsultaVenta
             if ($sube === []) {
                 continue;
             }
-            $filas[] = [$r, $it, $estacionId];
+            $filas[] = [$r, $it, $estacionId, $this->precios($r, $it, $estacionId, $destinoId, $sube, $clases)];
         }
         $ocupados = $this->boletosVivosPorSalida(array_map(static fn(array $f) => $f[0], $filas));
         $capacidad = array_map(static fn(array $porClase) => array_sum($porClase), $asientos);
 
-        return array_map(fn(array $f) => $this->resumen($f[0], $f[1], $f[2], $ocupados, $capacidad), $filas);
+        return array_map(fn(array $f) => [...$this->resumen($f[0], $f[1], $f[2], $ocupados, $capacidad), "precios" => $f[3]], $filas);
     }
 
     /**
@@ -408,6 +408,45 @@ final class ConsultaVenta
         }
 
         return $tarifados;
+    }
+
+    /**
+     * Precio por clase de asiento del tramo que ofrece la lista de salidas:
+     * desde la estación (o el origen) hasta el destino elegido (o el final).
+     * Sin destino elegido y sin tarifa hasta el final, el tramo con tarifa
+     * más largo que sale de la estación.
+     *
+     * @param array<int, list<string>> $sube    trayectos con tarifa que salen de la estación
+     * @param list<string>             $clases
+     *
+     * @return list<array{clase: string, precio: array<string, mixed>|null}> por clase (A, B…); vacío si no hay
+     */
+    private function precios(Salida $r, Itinerario $it, ?int $estacionId, ?int $destinoId, array $sube, array $clases): array
+    {
+        $desde = $estacionId ?? $it->paradas[0];
+        $id = $it->trayectoEntre($desde, $destinoId ?? $it->paradas[count($it->paradas) - 1]);
+        if (($id === null || !isset($sube[$id])) && $destinoId === null) {
+            $id = null;
+            $lejos = -1;
+            foreach (array_keys($sube) as $t) {
+                $tramo = $it->trayectos()[$t];
+                $pos = $it->posicion($tramo["destino"]) ?? -1;
+                if ($tramo["origen"] === $desde && $pos > $lejos) {
+                    [$id, $lejos] = [$t, $pos];
+                }
+            }
+        }
+        if ($id === null || !isset($sube[$id])) {
+            return [];
+        }
+        $porClase = $this->tarifas->porTrayectos($r, [$id], $clases)[$id] ?? [];
+        ksort($porClase);
+
+        return array_map(
+            static fn(string $clase, CandidatoTarifa $t) => ["clase" => $clase, "precio" => DatosBoleto::importe($t->precio)],
+            array_keys($porClase),
+            array_values($porClase),
+        );
     }
 
     /** @return list<string> */

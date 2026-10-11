@@ -43,6 +43,11 @@ export interface SalidaResumen {
   trayecto: { id: number; origen: Opcion; destino: Opcion }
   vendidos: number | null
   capacidad: number | null
+  /**
+   * Precio por clase de asiento desde la estación hasta el destino elegido
+   * (o hasta el final); vacío si ese tramo no tiene tarifa. Solo en la lista.
+   */
+  precios?: { clase: ClaseAsiento; precio: Importe | null }[]
 }
 
 export interface Parada {
