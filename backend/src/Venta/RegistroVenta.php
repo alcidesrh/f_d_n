@@ -152,6 +152,7 @@ final class RegistroVenta
             $boleto = (new BoletoAsiento())
                 ->setAsiento($asiento)
                 ->setTrayecto($trayecto)
+                ->ocuparTramo($tramo->desde, $tramo->hasta)
                 ->setSalida($salida)
                 ->setCliente($pasajeros[$s->asientos[$i]["cliente"] ?? $cliente->getId()])
                 ->setPrecio($cotizacion->precioDe($asiento))

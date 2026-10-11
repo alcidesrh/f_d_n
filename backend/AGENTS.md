@@ -49,7 +49,7 @@ Main stack:
 | `Services/` | Sincronización de `EntityConfiguration` y `VueRoute`, publicación de cambios (Mercure/SSE), hasher de contraseñas. |
 | `Migration/`, `Command/` | Migración desde el sistema legado (TerminalOmnibus) y sus comandos de consola. Las salidas sin bus del legado reciben uno inferido (`Salida/InferenciaBus`, control en `salida_bus_inferido`, ADR-027). Rutas, paradas y tiempos desde `ruta`/`ruta_estacion_item`/`tiempo` con `Salida/RutasLegado` (también en estáticos, entidad `ruta`); `app:ruta:rellenar` (`Salida/RellenoRutas`) completa bases migradas antes de ADR-030 (transitorio). |
 | `EntitySistemaFdn/` | Entidades del sistema legado (SQL Server). Solo lectura para la migración: **no tocar**. |
-| `Doctrine/`, `GraphQL/` | Filtro multi-empresa, función `CAST`, driver dblib; tipo GraphQL `Date`. |
+| `Doctrine/`, `GraphQL/` | Filtro multi-empresa, función `CAST`, driver dblib, `Schema/ExclusionConstraintsSchemaManager` (ignora los índices `ex_*` de restricciones de exclusión, que solo viven en migraciones); tipo GraphQL `Date`. |
 
 Reglas de la casa:
 

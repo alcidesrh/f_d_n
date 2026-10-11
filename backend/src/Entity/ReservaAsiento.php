@@ -46,10 +46,10 @@ class ReservaAsiento
     private Trayecto $trayecto;
 
     /** Tramo ocupado `[ordenSube, ordenBaja)` en el orden de las paradas de la ruta de la salida (ADR-030). */
-    #[ORM\Column(type: "smallint", nullable: true)]
+    #[ORM\Column(type: "smallint")]
     private ?int $ordenSube = null;
 
-    #[ORM\Column(type: "smallint", nullable: true)]
+    #[ORM\Column(type: "smallint")]
     private ?int $ordenBaja = null;
 
     #[ORM\Column]

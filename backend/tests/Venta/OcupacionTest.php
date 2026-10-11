@@ -27,24 +27,24 @@ final class OcupacionTest extends TestCase
 
     public function testUnAsientoVendidoParaUnTramoQuedaLibreEnElOtro(): void
     {
-        $ocupantes = [new Ocupante(5, 10, Ocupante::VENDIDO, CanalVenta::ESTACION)];
+        $ocupantes = [new Ocupante(5, 0, 1, Ocupante::VENDIDO, CanalVenta::ESTACION)];
 
-        $this->assertSame([], Ocupacion::estados($this->it, $this->it->tramo(11), $ocupantes));
+        $this->assertSame([], Ocupacion::estados($this->it->tramo(11), $ocupantes));
         $this->assertSame(
             [5 => ["estado" => Ocupacion::VENDIDO, "canal" => "estacion", "sinCobro" => null]],
-            Ocupacion::estados($this->it, $this->it->tramo(1), $ocupantes),
+            Ocupacion::estados($this->it->tramo(1), $ocupantes),
         );
     }
 
     public function testCortesiasYVouchersSeDistinguenDeLoCobrado(): void
     {
         $ocupantes = [
-            new Ocupante(1, 1, Ocupante::VENDIDO, CanalVenta::ESTACION, sinCobro: Ocupacion::CORTESIA),
-            new Ocupante(2, 1, Ocupante::VENDIDO, CanalVenta::AGENCIA, sinCobro: Ocupacion::VOUCHER),
-            new Ocupante(3, 1, Ocupante::VENDIDO, CanalVenta::WEB),
+            new Ocupante(1, 0, 2, Ocupante::VENDIDO, CanalVenta::ESTACION, sinCobro: Ocupacion::CORTESIA),
+            new Ocupante(2, 0, 2, Ocupante::VENDIDO, CanalVenta::AGENCIA, sinCobro: Ocupacion::VOUCHER),
+            new Ocupante(3, 0, 2, Ocupante::VENDIDO, CanalVenta::WEB),
         ];
 
-        $estados = Ocupacion::estados($this->it, $this->it->tramo(1), $ocupantes);
+        $estados = Ocupacion::estados($this->it->tramo(1), $ocupantes);
 
         $this->assertSame(Ocupacion::CORTESIA, $estados[1]["sinCobro"]);
         $this->assertSame(["estado" => Ocupacion::VENDIDO, "canal" => "agencia", "sinCobro" => Ocupacion::VOUCHER], $estados[2]);
@@ -54,10 +54,10 @@ final class OcupacionTest extends TestCase
     public function testLasReservasPropiasSeDistinguenDeLasAjenas(): void
     {
         $ocupantes = [
-            new Ocupante(1, 1, Ocupante::RESERVADO, token: "yo"),
-            new Ocupante(2, 1, Ocupante::RESERVADO, token: "otro"),
+            new Ocupante(1, 0, 2, Ocupante::RESERVADO, token: "yo"),
+            new Ocupante(2, 0, 2, Ocupante::RESERVADO, token: "otro"),
         ];
-        $estados = Ocupacion::estados($this->it, $this->it->tramo(1), $ocupantes, "yo");
+        $estados = Ocupacion::estados($this->it->tramo(1), $ocupantes, "yo");
 
         $this->assertSame(Ocupacion::PROPIO, $estados[1]["estado"]);
         $this->assertSame(Ocupacion::RESERVADO, $estados[2]["estado"]);
@@ -67,19 +67,13 @@ final class OcupacionTest extends TestCase
     public function testVendidoPrevaleceSobreReservado(): void
     {
         $ocupantes = [
-            new Ocupante(3, 10, Ocupante::RESERVADO, token: "yo"),
-            new Ocupante(3, 1, Ocupante::VENDIDO, CanalVenta::WEB),
+            new Ocupante(3, 0, 1, Ocupante::RESERVADO, token: "yo"),
+            new Ocupante(3, 0, 2, Ocupante::VENDIDO, CanalVenta::WEB),
         ];
 
-        $this->assertSame(Ocupacion::VENDIDO, Ocupacion::estados($this->it, new Tramo(0, 1), $ocupantes, "yo")[3]["estado"]);
+        $this->assertSame(Ocupacion::VENDIDO, Ocupacion::estados(new Tramo(0, 1), $ocupantes, "yo")[3]["estado"]);
     }
 
-    public function testUnTrayectoAjenoAlItinerarioOcupaTodoElSalida(): void
-    {
-        $ocupantes = [new Ocupante(8, 999, Ocupante::VENDIDO, CanalVenta::AGENCIA)];
-
-        $this->assertArrayHasKey(8, Ocupacion::estados($this->it, $this->it->tramo(11), $ocupantes));
-    }
 
     public function testUnAsientoSeRevendeEnLosSubtrayectosQueNoSeSolapan(): void
     {
@@ -94,10 +88,10 @@ final class OcupacionTest extends TestCase
         ]);
         // Asiento 5 vendido Guatemala → Morales por la agencia; asiento 6 Río Dulce → Santa Elena en la web.
         $ocupantes = [
-            new Ocupante(5, 12, Ocupante::VENDIDO, CanalVenta::AGENCIA),
-            new Ocupante(6, 11, Ocupante::VENDIDO, CanalVenta::WEB),
+            new Ocupante(5, 0, 1, Ocupante::VENDIDO, CanalVenta::AGENCIA),
+            new Ocupante(6, 2, 3, Ocupante::VENDIDO, CanalVenta::WEB),
         ];
-        $ocupados = static fn(int $trayecto) => array_keys(Ocupacion::estados($it, $it->tramo($trayecto), $ocupantes));
+        $ocupados = static fn(int $trayecto) => array_keys(Ocupacion::estados($it->tramo($trayecto), $ocupantes));
 
         $this->assertSame([], $ocupados(23), "Morales → Río Dulce: ambos libres");
         $this->assertSame([6], $ocupados(24), "Morales → Santa Elena: el 5 ya bajó");

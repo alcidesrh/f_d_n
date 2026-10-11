@@ -30,7 +30,7 @@ Se guarda el hecho (la secuencia) y se derivan las consecuencias (los pares vend
 | **ParadaTiempo** (nueva) | Minutos hasta la parada para una clase de bus, cuando difiere. | `parada`, `busClase`, `minutos`. Única `(parada, busClase)`. |
 | **SalidaParada** (nueva) | El horario de una salida concreta: a qué hora pasa por cada parada. | `salida`, `orden`, `enclave`, `hora`, `precision` (`exacta` en el origen, `estimada` con minutos conocidos, `desconocida`: se usa la hora del origen), `permiteSubir`/`permiteBajar` (copiados de la parada, para buscar sin unir la ruta). Única `(salida, orden)`; índice `(enclave, hora)`. |
 | **Salida** | Viaje concreto. | `ruta` en lugar de `trayecto`. |
-| **BoletoAsiento** / **ReservaAsiento** | Asiento vendido / apartado. | `ordenSube`, `ordenBaja` (el tramo `[sube, baja)`); `trayecto` se queda como el **producto cobrado** (tarifa, factura, reportes). |
+| **BoletoAsiento** / **ReservaAsiento** | Asiento vendido / apartado. | `ordenSube`, `ordenBaja` (el tramo `[sube, baja)`); `trayecto` se queda: es el par que viaja el pasajero (tarifa, factura, reportes); el tramo lo fija la venta y ya no se recalcula. |
 | **EsquemaSalida** | Plantilla del programador. | `ruta` en lugar de `trayecto`. |
 | **Trayecto** | Solo el **par comercial** origen→destino: lo que se pide, se tarifa y se factura. | Igual; pierde `subtrayectos` y la duración. Se crea cuando hace falta (al tarifar o al vender), no por cada combinación. |
 | **Subtrayecto** | — | Se elimina: un subtrayecto es cualquier par `i < j` de paradas de una ruta. |
@@ -40,8 +40,9 @@ Reglas:
 - **Pares vendibles** de una salida: paradas `i < j` con `permiteSubir` en `i`, `permiteBajar` en `j` y tarifa asignable para el trayecto `(enclave_i, enclave_j)` (la regla "solo se vende lo tarifado" de ADR-021 sigue igual).
 - **Minutos por parada**: `ParadaTiempo` de la clase del bus de la salida; si no hay, `Parada.minutos`. Al migrar, `Parada.minutos` es el **menor** de las clases: para subir, llegar antes es seguro y llegar tarde pierde el bus.
 - **`SalidaParada` es una foto**: se genera al crear la salida y al cambiar su fecha, hora o bus. Editar una ruta regenera el horario de sus salidas futuras **sin boletos ni reservas**; las que ya vendieron conservan el suyo, así un boleto nunca cambia de tramo. Por eso la ruta no necesita versiones.
-- **"Cobrar el trayecto completo"** (ADR-021) queda limpio: `trayecto` es lo que se cobró y `[ordenSube, ordenBaja)` lo que se ocupa.
-- **Sin solapes por base de datos**: `EXCLUDE USING gist (salida_id WITH =, asiento_id WITH =, int4range(orden_sube, orden_baja) WITH &&)` sobre boletos vivos (extensión `btree_gist`). Reemplaza el índice único parcial `(asiento, trayecto, salida)`. Las reservas, que vencen solas, siguen validándose en la aplicación con la salida bloqueada.
+- **"Cobrar el trayecto completo"** (ADR-021) no cambia: el boleto guarda el trayecto que viaja y su tramo `[ordenSube, ordenBaja)`; solo el precio sale del trayecto completo.
+- **Sin solapes por base de datos**: `ex_boleto_asiento_tramo`, `EXCLUDE USING gist (salida_id WITH =, asiento_id WITH =, int4range(orden_sube, orden_baja) WITH &&)` sobre boletos vivos (extensión `btree_gist`), más `CHECK (0 <= orden_sube < orden_baja)` en boletos y reservas. Reemplaza el índice único parcial `(asiento, trayecto, salida)`. Doctrine no mapea restricciones de exclusión: `App\Doctrine\Schema\ExclusionConstraintsSchemaManager` ignora los índices `ex_*` para que `schema:update` y `migrations:diff` no los borren; se crean solo en migraciones. Las reservas, que vencen solas, siguen validándose en la aplicación con la salida bloqueada.
+- **Migración**: los boletos anulados y reasignados del legado se migran todos (no ocupan); entre los vivos, uno que se solapa con otro en el mismo asiento se omite y se cuenta (`boleto_asiento_repetido`). Antes se descartaban también los anulados repetidos.
 
 ### Búsqueda
 
@@ -69,7 +70,7 @@ Cada fase deja la aplicación funcionando y actualiza docs y borra lo que queda 
 | 1 | Entidades nuevas (aditivas), migrador desde el legado, `app:ruta:rellenar` | Hecha |
 | 2 | `Itinerarios` y las horas leen de `Parada`/`SalidaParada`; fuera el orden topológico | Hecha: `Itinerarios::deSalida` lee `salida_parada`; el programador y la edición fijan ruta (`RutaDeTrayecto`, transitorio) y horario |
 | 3 | Búsqueda por hora en el origen; libres por tramo | |
-| 4 | Ocupación por `orden`; restricción de exclusión | |
+| 4 | Ocupación por `orden`; restricción de exclusión | Hecha (antes que la 3: la búsqueda cuenta libres por tramo con el orden). Verificado: venta de tramos que no se solapan en el mismo asiento, rechazo del solape en la aplicación y en la base |
 | 5 | `Salida.ruta` y `EsquemaSalida.ruta` obligatorias; fuera `Salida.trayecto` | |
 | 6 | Gestión de rutas (editor de paradas) y tarifas por par | |
 | 7 | Presentación en taquilla, página y boleto | |

@@ -337,10 +337,10 @@ class Migrador
     }
 
     /**
-     * Boletos de la salida. Los que ocupan el asiento van primero: si el
-     * legado anuló un asiento y lo volvió a vender en el mismo tramo, el
-     * modelo nuevo admite uno solo por `(asiento, trayecto, salida)` y se
-     * conserva el vigente.
+     * Boletos de la salida. Los anulados y reasignados no ocupan el asiento y
+     * se migran todos; entre los vivos, el modelo nuevo no admite dos con
+     * tramos que se solapan en el mismo asiento (ADR-030): se conserva el
+     * primero y el otro se omite y se cuenta.
      *
      * @param array<string, int> $contadores
      */
@@ -365,12 +365,15 @@ class Migrador
         ) as [$lid, $sinTramo]) {
             $migrados[(string) $lid] = (bool) $sinTramo;
         }
+        // Tramos ocupados por asiento (solo boletos vivos: los anulados y reasignados no ocupan).
         $ocupados = [];
         foreach ($this->newConn->fetchAllNumeric(
-            "SELECT asiento_id, trayecto_id FROM boleto_asiento WHERE salida_id = :s",
-            ["s" => $salidaId],
-        ) as [$a, $t]) {
-            $ocupados["{$a}:{$t}"] = true;
+            "SELECT asiento_id, orden_sube, orden_baja FROM boleto_asiento
+              WHERE salida_id = :s AND orden_sube IS NOT NULL AND estado NOT IN (:libres)",
+            ["s" => $salidaId, "libres" => self::ESTADOS_LIBERAN],
+            ["libres" => ArrayParameterType::STRING],
+        ) as [$a, $sube, $baja]) {
+            $ocupados[(int) $a][] = [(int) $sube, (int) $baja];
         }
 
         $this->dependencias->precargarClientes([
@@ -407,11 +410,15 @@ class Migrador
                 $this->omitir($contadores, "boleto_sin_trayecto", "boleto {$lid}");
                 continue;
             }
-            if (isset($ocupados["{$asientoId}:{$trayectoId}"])) {
+            [$sube, $baja] = $this->tramoDelBoleto($old, $ruta, $rutaNueva);
+            $estado = $this->resolverEstadoBoletoAsiento($old);
+            $vivo = !in_array($estado, self::ESTADOS_LIBERAN, true);
+            $seSolapa = static fn(array $t) => $t[0] < $baja && $sube < $t[1];
+            if ($vivo && array_filter($ocupados[$asientoId] ?? [], $seSolapa) !== []) {
                 $this->omitir($contadores, "boleto_asiento_repetido", sprintf(
-                    "boleto %s (%s): asiento %s ya vendido en el mismo tramo",
+                    "boleto %s (%s): asiento %s ya vendido en un tramo que se solapa",
                     $lid,
-                    $this->resolverEstadoBoletoAsiento($old),
+                    $estado,
                     $old["asiento_numero"],
                 ));
                 continue;
@@ -425,7 +432,6 @@ class Migrador
             }
 
             $ventaId = $this->ventaDelBoleto($old, $pasajero, $empresaId, $contadores);
-            [$sube, $baja] = $this->tramoDelBoleto($old, $ruta, $rutaNueva);
             $this->newConn->executeStatement(
                 'INSERT INTO boleto_asiento (salida_id, asiento_id, cliente_id, trayecto_id, estado, boleto_venta_id, precio_monto, precio_moneda, observacion, legacy_id, orden_sube, orden_baja)
                  VALUES (:salida_id, :asiento_id, :cliente_id, :trayecto_id, :estado, :boleto_venta_id, :precio_monto, :precio_moneda, :observacion, :legacy_id, :orden_sube, :orden_baja)',
@@ -439,7 +445,9 @@ class Migrador
                     $ventaId,
                 ),
             );
-            $ocupados["{$asientoId}:{$trayectoId}"] = true;
+            if ($vivo) {
+                $ocupados[$asientoId][] = [$sube, $baja];
+            }
             $ventasTocadas[$ventaId] = true;
             $contadores["boleto_asiento"]++;
         }

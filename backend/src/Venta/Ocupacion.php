@@ -5,11 +5,9 @@ declare(strict_types=1);
 namespace App\Venta;
 
 /**
- * Estado de cada asiento de un salida para un tramo, a partir de lo que
+ * Estado de cada asiento de una salida para un tramo, a partir de lo que
  * lo ocupa (pura). Un asiento está ocupado para un tramo si algún ocupante
- * tiene un tramo que se solapa. Un ocupante con un trayecto ajeno al
- * itinerario (datos inconsistentes) ocupa el salida completo: ante la
- * duda, no se vende dos veces.
+ * tiene un tramo que se solapa (por orden de las paradas, ADR-030).
  */
 final class Ocupacion
 {
@@ -30,7 +28,6 @@ final class Ocupacion
      * @return array<int, array{estado: string, canal: ?string, sinCobro: ?string}> por id de asiento; los libres no aparecen
      */
     public static function estados(
-        Itinerario $itinerario,
         Tramo $tramo,
         iterable $ocupantes,
         ?string $tokenPropio = null,
@@ -39,8 +36,7 @@ final class Ocupacion
         $estados = [];
 
         foreach ($ocupantes as $o) {
-            $suyo = $itinerario->tramo($o->trayectoId) ?? $itinerario->completo();
-            if (!$suyo->seSolapaCon($tramo)) {
+            if (!(new Tramo($o->sube, $o->baja))->seSolapaCon($tramo)) {
                 continue;
             }
 

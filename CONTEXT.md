@@ -116,8 +116,8 @@ Por dónde entra una venta: `estacion` (taquilla, un usuario de la empresa), `ag
 **Tramo**:
 La porción de una salida entre dos paradas de su ruta, por orden: `[sube, baja)`. Un asiento está
 ocupado para un tramo si algún boleto vivo o alguna reserva vigente se solapa con él; tramos que no se
-solapan comparten asiento. Lo que se ocupa (tramo) puede ser menos que lo que se cobra (trayecto):
-en taquilla se puede cobrar el trayecto completo de la ruta.
+solapan comparten asiento. En taquilla se puede cobrar el trayecto completo de la ruta aunque el pasajero
+viaje un tramo: el tramo ocupado no cambia.
 
 **Reserva** (precompra):
 Asiento apartado en la página web mientras el cliente paga (`ReservaAsiento`). Se aparta al pulsar "Pagar asientos",

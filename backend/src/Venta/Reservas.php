@@ -75,7 +75,8 @@ final class Reservas
                 $this->reglas->exigirVendibleEnLinea($salida);
                 $trayecto = $this->reglas->trayecto($salida, $v["trayecto"]);
                 $asientos = $this->reglas->asientos($salida, $v["asientos"]);
-                $estados = $this->disponibilidad->estados($salida, $this->reglas->tramo($salida, $trayecto), $token->toRfc4122());
+                $tramo = $this->reglas->tramo($salida, $trayecto);
+                $estados = $this->disponibilidad->estados($salida, $tramo, $token->toRfc4122());
                 $noLibres = Ocupacion::noDisponibles($v["asientos"], $estados);
                 if ($noLibres !== []) {
                     $ocupados[] = [
@@ -91,17 +92,17 @@ final class Reservas
                 }
                 // No se aparta lo que no se puede cobrar.
                 $this->reglas->cotizarEnLinea($salida, $trayecto, $asientos);
-                $apartar[] = [$salida, $trayecto, $asientos];
+                $apartar[] = [$salida, $trayecto, $tramo, $asientos];
             }
             if ($ocupados !== []) {
                 throw AsientosNoDisponibles::enViajes($ocupados);
             }
 
             $expira = $this->vencimiento(array_values($salidas));
-            foreach ($apartar as [$salida, $trayecto, $asientos]) {
+            foreach ($apartar as [$salida, $trayecto, $tramo, $asientos]) {
                 $cambios[$salida->getId()] = true;
                 foreach ($asientos as $asiento) {
-                    $this->em->persist(new ReservaAsiento($token, $salida, $asiento, $trayecto, $expira));
+                    $this->em->persist((new ReservaAsiento($token, $salida, $asiento, $trayecto, $expira))->ocuparTramo($tramo->desde, $tramo->hasta));
                 }
             }
         });

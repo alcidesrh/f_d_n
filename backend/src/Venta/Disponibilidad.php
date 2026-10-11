@@ -21,7 +21,6 @@ final class Disponibilidad
 {
     public function __construct(
         private readonly EntityManagerInterface $em,
-        private readonly Itinerarios $itinerarios,
         private readonly ClockInterface $reloj,
     ) {}
 
@@ -33,7 +32,8 @@ final class Disponibilidad
         $vendidos = $this->em->createQueryBuilder()
             ->select(
                 "IDENTITY(b.asiento) AS asiento",
-                "IDENTITY(b.trayecto) AS trayecto",
+                "b.ordenSube AS sube",
+                "b.ordenBaja AS baja",
                 "v.canal AS canal",
                 "v.cortesia AS cortesia",
                 "v.voucher AS voucher",
@@ -53,7 +53,8 @@ final class Disponibilidad
         $reservas = $this->em->createQueryBuilder()
             ->select(
                 "IDENTITY(r.asiento) AS asiento",
-                "IDENTITY(r.trayecto) AS trayecto",
+                "r.ordenSube AS sube",
+                "r.ordenBaja AS baja",
                 "r.token AS token",
             )
             ->from(ReservaAsiento::class, "r")
@@ -68,7 +69,8 @@ final class Disponibilidad
             ...array_map(
                 static fn(array $f) => new Ocupante(
                     (int) $f["asiento"],
-                    (int) $f["trayecto"],
+                    (int) $f["sube"],
+                    (int) $f["baja"],
                     Ocupante::VENDIDO,
                     $f["canal"] instanceof CanalVenta
                         ? $f["canal"]
@@ -85,7 +87,8 @@ final class Disponibilidad
             ...array_map(
                 static fn(array $f) => new Ocupante(
                     (int) $f["asiento"],
-                    (int) $f["trayecto"],
+                    (int) $f["sube"],
+                    (int) $f["baja"],
                     Ocupante::RESERVADO,
                     null,
                     (string) $f["token"],
@@ -103,7 +106,6 @@ final class Disponibilidad
     public function estados(Salida $salida, Tramo $tramo, ?string $tokenPropio = null): array
     {
         return Ocupacion::estados(
-            $this->itinerarios->deSalida($salida),
             $tramo,
             $this->ocupantes($salida),
             $tokenPropio,

@@ -7,8 +7,9 @@ namespace App\Venta;
 use App\Entity\Enum\CanalVenta;
 
 /**
- * Algo que aparta un asiento de un salida para un trayecto: un boleto
- * vendido (o en venta pendiente de factura) o una reserva web vigente.
+ * Algo que aparta un asiento de una salida para un tramo `[sube, baja)` (por
+ * orden de las paradas, ADR-030): un boleto vendido (o en venta pendiente de
+ * factura) o una reserva web vigente.
  */
 final readonly class Ocupante
 {
@@ -17,7 +18,8 @@ final readonly class Ocupante
 
     public function __construct(
         public int $asientoId,
-        public int $trayectoId,
+        public int $sube,
+        public int $baja,
         public string $tipo,
         public ?CanalVenta $canal = null,
         /** Token del carrito, en las reservas. */

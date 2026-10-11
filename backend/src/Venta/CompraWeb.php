@@ -349,7 +349,8 @@ final class CompraWeb
             $trayecto = $reservas[0]->getTrayecto();
             $asientos = array_map(static fn(ReservaAsiento $r) => $r->getAsiento(), $reservas);
             // Las reservas propias no estorban (aunque hayan vencido durante el pago).
-            $this->reglas->exigirDisponibles($salida, $this->reglas->tramo($salida, $trayecto), $asientos, $token->toRfc4122());
+            $tramo = $this->reglas->tramo($salida, $trayecto);
+            $this->reglas->exigirDisponibles($salida, $tramo, $asientos, $token->toRfc4122());
             $cotizacion = $this->reglas->cotizarEnLinea($salida, $trayecto, $asientos, $recargo);
             $total = $total === null ? $cotizacion->total : $total->add($cotizacion->total);
 
@@ -369,6 +370,7 @@ final class CompraWeb
                 $boleto = (new BoletoAsiento())
                     ->setAsiento($asiento)
                     ->setTrayecto($trayecto)
+                    ->ocuparTramo($tramo->desde, $tramo->hasta)
                     ->setSalida($salida)
                     ->setCliente($cliente)
                     ->setPrecio($cotizacion->precioDe($asiento));
