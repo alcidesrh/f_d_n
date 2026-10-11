@@ -13,6 +13,16 @@ final readonly class RutaLegada
         public array $ordenes,
     ) {}
 
+    public function origen(): int
+    {
+        return (int) array_search(0, $this->ordenes, true);
+    }
+
+    public function destino(): int
+    {
+        return (int) array_search($this->ultima(), $this->ordenes, true);
+    }
+
     /** Última parada (el destino). */
     public function ultima(): int
     {

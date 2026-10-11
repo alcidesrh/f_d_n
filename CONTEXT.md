@@ -18,7 +18,7 @@ _Avoid_: terminal, estación rural
 El par comercial vectorial entre dos enclaves (origen → destino): lo que pide el cliente,
 lo que lleva tarifa y lo que se factura. Es único por par de enclaves. No describe por dónde
 pasa el bus (eso es la ruta): el mismo trayecto puede viajarse en salidas de rutas distintas.
-_Avoid_: ruta, servicio, tramo
+_Avoid_: ruta, servicio, tramo, subtrayecto
 
 **Ruta**:
 El camino que recorre un bus: una secuencia ordenada de paradas, de la primera (origen) a la
@@ -31,11 +31,6 @@ _Avoid_: itinerario (en el legado es la plantilla de horarios), recorrido
 El paso de una ruta por un enclave, con su orden, los minutos estimados desde el origen
 (por clase de bus cuando difieren) y si ahí se puede subir y bajar.
 _Avoid_: punto de parada, escala
-
-**Subtrayecto** (en retiro, ADR-030):
-Un segmento de un trayecto compuesto: un trayecto hijo dentro de su trayecto padre. Se reemplaza
-por los pares de paradas de la ruta.
-_Avoid_: tramo, subservicio, subruta
 
 ## Flota
 

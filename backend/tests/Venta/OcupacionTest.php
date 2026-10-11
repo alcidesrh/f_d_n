@@ -75,7 +75,7 @@ final class OcupacionTest extends TestCase
     }
 
 
-    public function testUnAsientoSeRevendeEnLosSubtrayectosQueNoSeSolapan(): void
+    public function testUnAsientoSeRevendeEnTramosQueNoSeSolapan(): void
     {
         // Guatemala(1) → Morales(2) → Río Dulce(3) → Santa Elena(4), todos los pares.
         $it = Itinerario::deParadas([1, 2, 3, 4], [

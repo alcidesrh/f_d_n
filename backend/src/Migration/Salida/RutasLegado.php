@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Migration\Salida;
 
+use App\Ruta\Trayectos;
 use Doctrine\DBAL\Connection;
 
 /**
@@ -12,6 +13,8 @@ use Doctrine\DBAL\Connection;
  * minutos de `tiempo` (desde el origen, por clase de bus). `parada.minutos`
  * es el menor de las clases (para subir, llegar antes es seguro) y las
  * clases que difieren quedan en `parada_tiempo`.
+ *
+ * Cada par de paradas en orden tiene su trayecto (`Trayectos`).
  *
  * Idempotente por código (`ruta.legacy_id`): una ruta ya migrada se
  * actualiza. Si cambiaron sus paradas se reemplazan; las salidas existentes
@@ -26,6 +29,7 @@ class RutasLegado
         private readonly Connection $db,
         private readonly LectorLegado $legado,
         private readonly DependenciasLegado $dependencias,
+        private readonly Trayectos $trayectos,
     ) {}
 
     /** Null si la ruta no existe o sus puntas no se pueden migrar. */
@@ -135,6 +139,7 @@ class RutasLegado
             }
         }
         $this->escribirMinutos($id, $minutos);
+        $this->trayectos->asegurarDeRuta($id);
 
         return new RutaLegada($id, array_flip($enclaves));
     }

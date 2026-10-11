@@ -168,7 +168,7 @@ final class ReglasVenta
      * Precio de cada asiento. Se cobra la tarifa del trayecto que viaja, o la
      * del trayecto completo del salida si así se pide. Una cortesía vale 0.
      *
-     * Solo se vende un trayecto (o subtrayecto) con tarifa para la clase del
+     * Solo se vende un trayecto (par de paradas de la salida) con tarifa para la clase del
      * asiento, en todos los canales: también en una cortesía o cobrando el
      * trayecto completo, el tramo que viaja tiene que ser tarifable.
      *

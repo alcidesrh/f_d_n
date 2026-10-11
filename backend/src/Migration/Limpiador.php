@@ -14,7 +14,6 @@ class Limpiador
         "parada_tiempo",
         "parada",
         "ruta",
-        "subtrayecto",
         "trayecto",
         "asiento",
         "bus",

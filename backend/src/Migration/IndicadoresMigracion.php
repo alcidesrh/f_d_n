@@ -105,10 +105,6 @@ final class IndicadoresMigracion
             "legado" =>
                 "SELECT COUNT(*) FROM bus_senal s JOIN bus b ON b.tipo_id = s.tipoBus_id",
         ],
-        "trayecto" => [
-            "nuevo" => "SELECT COUNT(*) FROM trayecto",
-            "legado" => "SELECT COUNT(*) FROM ruta",
-        ],
         "ruta" => [
             "nuevo" => "SELECT COUNT(*) FROM ruta WHERE legacy_id IS NOT NULL",
             "legado" => "SELECT COUNT(*) FROM ruta",

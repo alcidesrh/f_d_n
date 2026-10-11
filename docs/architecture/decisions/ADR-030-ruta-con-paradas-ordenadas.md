@@ -1,6 +1,6 @@
 # ADR-030: Ruta con paradas ordenadas; el trayecto queda como par comercial
 
-**Estado:** En curso (refactorización por fases; ver "Plan")
+**Estado:** Aceptada (implementada en 8 fases, 2026-10; ver "Plan")
 
 ## Contexto
 
@@ -74,7 +74,7 @@ Cada fase deja la aplicación funcionando y actualiza docs y borra lo que queda 
 | 5 | `Salida.ruta` y `EsquemaSalida.ruta` obligatorias; fuera `Salida.trayecto` | Hecha: el programador, la edición, los esquemas y el filtro eligen ruta (`rutaId`); la duración para choques es la de la ruta; el trayecto completo se deduce del horario; los avisos de salidas anuladas llegan a todas las estaciones donde se sube; la bitácora de salidas guarda `ruta`. El sincronizador de configuración de entidades ahora quita los campos que ya no existen |
 | 6 | Gestión de rutas (editor de paradas) y tarifas por par | Hecha: `/rutas` (lista, nueva, ruta de regreso, duplicar, eliminar sin uso) y `/rutas/:id` (paradas reordenables, minutos/km desde el origen, sube/baja, minutos por clase, mapa). REST `/api/gestion-rutas/*` (ver: `salida.ver`; editar: `ruta.editar`, en el permiso "Gestion Salidas"). Los minutos que retroceden se avisan, no se rechazan: hay 6 rutas del legado así (p. ej. RUT001 con Morales y El Estor, ramales) |
 | 7 | Presentación en taquilla, página y boleto | Hecha: lista de taquilla con el viaje del cliente (`viaje`: sube/baja con hora, ≈ si estimada, llegada +N, paradas en medio; ruta del bus aparte) y asiento recomendado por mejor encaje (`Recomendacion`, ocupación de taquilla `recomendados`); tarjeta web con "aprox.", "+1 día" y la ruta del bus; boleto (PDF, correo, ticket de 80 mm, web) con la precisión de la hora de subida: si no se conoce, dice la hora a la que el bus sale de su origen en vez de presentarla como la del pasajero |
-| 8 | Retiro de `Subtrayecto`, trayectos huérfanos y documentación final | |
+| 8 | Retiro de `Subtrayecto`, trayectos huérfanos y documentación final | Hecha: fuera `subtrayecto`, `trayecto.distancia_km`/`duracion_estimada_minutos`/`legacy_id` y 114 trayectos huérfanos (casi todos de las rutas inversas inventadas); el migrador ya no crea trayectos "padre" ni rutas inversas: `RutasLegado` asegura el trayecto de cada par (`App\Ruta\Trayectos`) y las tarifas del legado crean el de su par si falta. `App\Venta\Itinerario` conserva su nombre: es la vista de venta del horario de una salida, no la ruta |
 
 ## Alternativas descartadas
 

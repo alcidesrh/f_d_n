@@ -128,7 +128,7 @@ async function onSelectEntity(event: { value: string | null }) {
   if (!ok) return;
   view.value = "list";
   store.choose(entityClass);
-  // Sin colección GraphQL (p. ej. BusSenal, Subtrayecto) no hay listado que mostrar: va directo a la configuración.
+  // Sin colección GraphQL (p. ej. BusSenal, Parada) no hay listado que mostrar: va directo a la configuración.
   if (!schema.find(entityClass)?.queryCollection) await openConfig();
 }
 

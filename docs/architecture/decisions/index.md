@@ -33,4 +33,4 @@
 | [ADR-027](ADR-027-croquis-molde-y-bus-inferido.md) | Croquis como molde para elegir el bus y bus inferido en la migración | Aceptada |
 | [ADR-028](ADR-028-anulacion-reasignacion-y-bitacora.md) | Anulación y reasignación de boletos (con anulación de la factura en Forcon) y bitácora de boletos y salidas | Aceptada |
 | [ADR-029](ADR-029-listado-sobre-css-grid.md) | Listado genérico sobre CSS Grid: columnas, filtros OR/AND, selección, edición en línea y tarjetas | Aceptada |
-| [ADR-030](ADR-030-ruta-con-paradas-ordenadas.md) | Ruta con paradas ordenadas; el trayecto queda como par comercial | En curso |
+| [ADR-030](ADR-030-ruta-con-paradas-ordenadas.md) | Ruta con paradas ordenadas; el trayecto queda como par comercial | Aceptada |

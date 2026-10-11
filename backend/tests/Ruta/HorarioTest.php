@@ -61,5 +61,7 @@ final class HorarioTest extends TestCase
         $this->assertNull($ruta->tramo(9, 5), "hacia atrás no es un tramo");
         $this->assertNull($ruta->tramo(1, 42), "una estación fuera de la ruta");
         $this->assertSame(3, $ruta->ultima());
+        $this->assertSame(1, $ruta->origen());
+        $this->assertSame(3, $ruta->destino());
     }
 }

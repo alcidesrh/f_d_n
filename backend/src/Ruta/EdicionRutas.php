@@ -26,6 +26,7 @@ final class EdicionRutas
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly Horarios $horarios,
+        private readonly Trayectos $trayectos,
     ) {}
 
     /** @return list<array<string, mixed>> */
@@ -137,7 +138,7 @@ final class EdicionRutas
             $id === null && $this->em->persist($ruta);
             $this->reemplazarParadas($ruta, $paradas);
             $this->em->flush();
-            $this->asegurarTrayectos((int) $ruta->getId());
+            $this->trayectos->asegurarDeRuta((int) $ruta->getId());
             $this->horarios->fijar(...$this->salidasFuturas((int) $ruta->getId()));
 
             return (int) $ruta->getId();
@@ -224,19 +225,6 @@ final class EdicionRutas
                 $parada->getTiempos()->add(new ParadaTiempo($parada, $clases[$clase], $minutos));
             }
         }
-    }
-
-    /** Cada par de paradas en orden tiene su trayecto (lo que se tarifa y se vende). */
-    private function asegurarTrayectos(int $rutaId): void
-    {
-        $this->em->getConnection()->executeStatement(
-            "INSERT INTO trayecto (origen_id, destino_id, activo)
-             SELECT o.enclave_id, d.enclave_id, true
-               FROM parada o JOIN parada d ON d.ruta_id = o.ruta_id AND d.orden > o.orden
-              WHERE o.ruta_id = :r
-             ON CONFLICT (origen_id, destino_id) DO NOTHING",
-            ["r" => $rutaId],
-        );
     }
 
     /** @return list<int> */

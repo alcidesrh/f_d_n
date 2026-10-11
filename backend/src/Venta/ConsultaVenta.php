@@ -184,7 +184,7 @@ final class ConsultaVenta
     /**
      * Paradas, trayectos vendibles y croquis de un salida.
      *
-     * Vendibles son el trayecto de la salida y los subtrayectos que tienen
+     * Vendibles son los trayectos de la salida (pares de sus paradas) que tienen
      * tarifa —propia o asignable con lo que heredan de la salida: empresa,
      * bus, clase de bus y hora— para alguna clase de asiento del bus; cada
      * uno dice para qué clases (`clases`). Lo mismo rige en taquilla,
@@ -475,7 +475,7 @@ final class ConsultaVenta
     }
 
     /**
-     * Trayectos de la salida (el suyo y sus subtrayectos) con tarifa para
+     * Trayectos de la salida (pares de sus paradas) con tarifa para
      * alguna de las clases de asiento dadas, con esas clases.
      *
      * @param list<string> $clases
