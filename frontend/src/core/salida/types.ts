@@ -15,6 +15,10 @@ export interface RutaOpcion {
   paradas: number
   /** Minutos hasta la última parada (la clase de bus más lenta); null si no se conoce. */
   duracionMinutos: number | null
+  /** Minutos hasta la última parada sin clase de bus (los generales, o la más lenta si no hay). */
+  duracionGeneral?: number | null
+  /** Clases de bus con minutos propios: id de clase → minutos hasta la última parada. */
+  duracionPorClase?: Record<string, number>
 }
 
 export interface BusOpcion {
@@ -46,6 +50,8 @@ export interface Opcion {
 
 export interface OpcionesSalidas {
   empresas: Opcion[]
+  /** Empresa del usuario; null = puede elegirla en el programador para filtrar distribuciones y buses. */
+  miEmpresaId: number | null
   rutas: RutaOpcion[]
   buses: BusOpcion[]
   /** Moldes y clases de los buses visibles: filtros para elegir un bus compatible. */
@@ -85,15 +91,22 @@ export interface SalidaRef {
   bus: string | null
 }
 
+/** Una hora del programador: la distribución de asientos (para elegir el bus) y el bus (ADR-031). */
 export interface Momento {
   /** `HH:MM` */
   hora: string
+  croquisId: number | null
   busId: number | null
+}
+
+export interface MomentoPayload {
+  hora: string
+  busId: number
 }
 
 export interface ProgramacionPayload {
   rutaId: number
-  momentos: Array<{ hora: string; busId: number }>
+  momentos: MomentoPayload[]
   /** `AAAA-MM-DD` */
   desde: string
   hasta: string | null
@@ -137,7 +150,7 @@ export interface EsquemaPayload {
   nombre: string
   rutaId: number
   intervaloDias: number
-  momentos: Array<{ hora: string; busId: number }>
+  momentos: MomentoPayload[]
 }
 
 export interface Propagacion {
@@ -148,7 +161,7 @@ export interface Propagacion {
   ultima: string | null
 }
 
-export type MotivoOmision = 'asientos' | 'conflicto' | 'historial'
+export type MotivoOmision = 'asientos' | 'conflicto' | 'historial' | 'otro_croquis'
 
 export interface ResultadoOperacion {
   aplicadas: SalidaRef[]
@@ -157,6 +170,7 @@ export interface ResultadoOperacion {
 
 export interface CambioSalida {
   rutaId?: number
+  /** Con asientos vendidos, solo por uno de la misma distribución (ADR-031). */
   busId?: number
   /** `AAAA-MM-DDTHH:MM` local */
   fecha?: string

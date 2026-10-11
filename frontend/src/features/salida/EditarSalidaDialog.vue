@@ -1,5 +1,7 @@
 <!--
-  Editar una salida programada: ruta, bus y fecha/hora. Con
+  Editar una salida programada: ruta, bus (por distribución de asientos) y
+  fecha/hora. Con asientos vendidos solo se cambia el bus, por otro con la
+  misma distribución: los boletos pasan al mismo número (ADR-031). Con
   propagación, las futuras idénticas toman la ruta, el bus y la hora
   (cada una conserva su día). Emite `hecho` con el resultado del backend.
 -->
@@ -9,18 +11,23 @@
       <p class="m-0 text-sm text-muted-color">Salida #{{ salida.id }} · {{ salida.ruta.nombre }}</p>
       <label class="flex flex-col gap-1">
         <span class="text-xs font-medium text-muted-color">Ruta</span>
-        <Select v-model="rutaId" :options="opciones.rutas" option-label="nombre" option-value="id" filter :filter-fields="['nombre', 'origen', 'destino']" fluid :virtual-scroller-options="{ itemSize: 38 }" />
+        <RutaSelect v-model="rutaId" :rutas="opciones.rutas" />
         <span class="text-xs text-muted-color">La ruta solo se cambia si la salida no tiene asientos vendidos ni apartados.</span>
       </label>
-      <FiltroBus v-model="filtroBus" :croquis="opciones.croquis" :clases="opciones.clases" />
+      <div class="flex flex-col gap-1">
+        <span class="text-xs font-medium text-muted-color">Distribución de asientos</span>
+        <CroquisSelector :model-value="croquisId" :croquis="opciones.croquis" :buses="opciones.buses" :disabled="salida.vendidos > 0 && croquisId !== null" @update:model-value="elegirCroquis" />
+      </div>
       <label class="flex flex-col gap-1">
         <span class="text-xs font-medium text-muted-color">Bus</span>
-        <Select v-model="busId" :options="busesCompatibles(opciones.buses, filtroBus, busId)" :option-label="etiquetaBus" option-value="id" filter :filter-fields="['codigo', 'matricula']" fluid placeholder="Bus" />
-        <span class="text-xs text-muted-color">El bus solo se cambia si la salida no tiene asientos vendidos ni apartados.</span>
+        <Select :model-value="busId" :options="busesPara(opciones.buses, { croquisId }, busId)" :option-label="etiquetaBus" option-value="id" filter :filter-fields="['codigo', 'matricula']" fluid placeholder="Bus" :empty-message="croquisId ? 'Ningún bus con esta distribución' : 'Sin buses'" @update:model-value="elegirBus">
+          <template #option="{ option }"><BusOpcionItem :bus="option" :empresas="empresas" :clases="clases" /></template>
+        </Select>
+        <span class="text-xs text-muted-color">{{ salida.vendidos ? `Tiene ${salida.vendidos} asiento(s) vendidos o apartados: elija un bus con la misma distribución y pasarán al mismo número.` : 'Sin asientos vendidos, el bus se cambia libremente.' }}</span>
       </label>
       <label class="flex flex-col gap-1">
         <span class="text-xs font-medium text-muted-color">Fecha y hora</span>
-        <DatePicker v-model="fecha" date-format="dd/mm/yy" show-time hour-format="24" show-icon fluid />
+        <DatePicker v-model="fecha" date-format="dd/mm/yy" show-time hour-format="24" :step-minute="5" show-icon fluid />
       </label>
       <PropagacionOpcion v-model="propagar" :salida-id="salida.id" verbo="cambiará" />
       <p v-if="propagar" class="m-0 text-xs text-muted-color">Las idénticas conservan su día y toman la ruta, el bus y la hora nuevos.</p>
@@ -37,8 +44,10 @@ import { editarSalida } from '@/core/salida/api'
 import { aFechaHora } from '@/core/salida/filtro'
 import type { BusOpcion, CambioSalida, OpcionesSalidas, ResultadoOperacion, SalidaFila } from '@/core/salida/types'
 import { notify } from '@/core/notify'
-import { busesCompatibles, filtroBusVacio, filtroDeBus } from '@/core/salida/buses'
-import FiltroBus from './FiltroBus.vue'
+import { busesPara } from '@/core/salida/buses'
+import CroquisSelector from './CroquisSelector.vue'
+import RutaSelect from './RutaSelect.vue'
+import BusOpcionItem from './BusOpcionItem.vue'
 import PropagacionOpcion from './PropagacionOpcion.vue'
 
 const props = defineProps<{ salida: SalidaFila | null; opciones: OpcionesSalidas }>()
@@ -46,14 +55,28 @@ const emit = defineEmits<{ cerrar: []; hecho: [ResultadoOperacion] }>()
 
 const rutaId = ref<number | null>(null)
 const busId = ref<number | null>(null)
+const croquisId = ref<number | null>(null)
 const fecha = ref<Date | null>(null)
 const propagar = ref(false)
-/** Arranca con el croquis y la clase del bus actual: sugiere uno equivalente. */
-const filtroBus = ref(filtroBusVacio())
 const guardando = ref(false)
 
 const empresas = computed(() => new Map(props.opciones.empresas.map((e) => [e.id, e.nombre])))
+const clases = computed(() => new Map(props.opciones.clases.map((c) => [c.id, c.nombre])))
 const etiquetaBus = (b: BusOpcion) => [b.codigo, b.matricula, b.empresaId ? empresas.value.get(b.empresaId) : null].filter(Boolean).join(' · ')
+const busDe = (id: number | null) => (id ? (props.opciones.buses.find((b) => b.id === id) ?? null) : null)
+
+/** Otra distribución: si el bus elegido no la tiene, se quita. */
+function elegirCroquis(id: number | null) {
+  croquisId.value = id
+  if (busId.value && busDe(busId.value)?.croquisId !== id) busId.value = null
+}
+
+/** Elegir un bus fija la distribución a la suya. */
+function elegirBus(id: number | null) {
+  busId.value = id
+  const bus = busDe(id)
+  if (bus?.croquisId) croquisId.value = bus.croquisId
+}
 
 watch(
   () => props.salida,
@@ -61,7 +84,7 @@ watch(
     if (!s) return
     rutaId.value = s.ruta.id
     busId.value = s.bus?.id ?? null
-    filtroBus.value = filtroDeBus(props.opciones.buses.find((b) => b.id === s.bus?.id))
+    croquisId.value = s.bus?.croquisId ?? null
     fecha.value = new Date(s.fecha)
   },
   { immediate: true },

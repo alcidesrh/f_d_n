@@ -1,6 +1,6 @@
 # ADR-027: Croquis como molde para elegir el bus y bus inferido en la migración
 
-**Estado:** Aceptada
+**Estado:** Aceptada. Completada por [ADR-031](ADR-031-bus-por-hora-y-cambio-de-bus-por-numero.md): la distribución y el bus se eligen por hora (sin el filtro de croquis y clase) y el bus de una salida con boletos se puede cambiar por otro del mismo molde (los boletos pasan por número).
 
 ## Contexto
 
@@ -26,7 +26,7 @@ Se discutieron y descartaron:
 - **Un molde no se edita ni se duplica.** Si cambia la distribución de un bus, el bus pasa al molde que le corresponde, y si no existe se crea (`App\Croquis\Moldes::asociar`). Lo hacen `CroquisBus::guardar`, los dos migradores y `app:croquis:asociar` (relleno inicial, idempotente).
 - **El croquis de un bus no cambia mientras el bus tenga salidas activas.** Activa es `programada`, `abordando` o `iniciada` con fecha de hace menos de un día o futura. Las más viejas en esos estados quedaron así sin que nadie las cerrara (muchas, del legado) y bloquearían el bus para siempre. `PUT /api/buses/{id}/croquis` responde 422 si la firma cambia. Guardar sin cambiar la distribución está permitido.
 - **El croquis y la clase de bus (`BusClase`) son filtros** para elegir el bus al programar o editar una salida. `GET /api/gestion-salidas/opciones` devuelve `croquis` (moldes de la flota visible, con sus elementos para dibujarlos) y `clases`, y cada bus con `croquisId` y `claseId`. En el frontend, `features/salida/FiltroBus.vue` + `core/salida/buses.ts`. En "Editar salida" el filtro arranca con el croquis y la clase del bus actual.
-- **Cambiar el bus de una salida** exige que no tenga asientos vendidos ni apartados: sus boletos tienen que estar anulados o reasignados. Ya lo aplicaba `GestionSalidas` con `AsientosVendidos` (ADR-024); no cambia.
+- **Cambiar el bus de una salida** exige que no tenga asientos vendidos ni apartados: sus boletos tienen que estar anulados o reasignados. Ya lo aplicaba `GestionSalidas` con `AsientosVendidos` (ADR-024). *(ADR-031: con el mismo molde se permite y los boletos pasan por número.)*
 
 **Migración del legado** (`App\Migration\Salida\InferenciaBus`, usada por `Migrador`)
 

@@ -1,31 +1,17 @@
 /**
- * Elegir el bus de una salida (ADR-027): primero la distribución de asientos
- * (molde de croquis) y la clase de bus, luego un bus compatible. Puro.
+ * Elegir el bus de una salida (ADR-027, ADR-031): primero la distribución de
+ * asientos (molde de croquis) y luego un bus con ese molde. Toda salida
+ * tiene bus; con asientos vendidos se cambia por otro del mismo molde. Puro.
  */
-import type { BusOpcion, CroquisMolde } from './types'
-
-export interface FiltroBus {
-  croquisId: number | null
-  claseId: number | null
-}
-
-export const filtroBusVacio = (): FiltroBus => ({ croquisId: null, claseId: null })
-
-/** El filtro con el croquis y la clase de ese bus (vacío si no hay bus). */
-export const filtroDeBus = (bus: BusOpcion | null | undefined): FiltroBus => ({
-  croquisId: bus?.croquisId ?? null,
-  claseId: bus?.claseId ?? null,
-})
-
-export const cumpleFiltro = (bus: BusOpcion, f: FiltroBus): boolean =>
-  (f.croquisId === null || bus.croquisId === f.croquisId) && (f.claseId === null || bus.claseId === f.claseId)
+import type { BusOpcion, CroquisMolde, RutaOpcion } from './types'
 
 /**
- * Buses que cumplen el filtro. El ya elegido (`actual`) se conserva aunque no
- * lo cumpla, para no vaciar una selección hecha antes de filtrar.
+ * Buses con ese molde (cualquiera si no hay molde) y de esa empresa (si se
+ * pide). El ya elegido (`actual`) se conserva aunque no cumpla, para no
+ * vaciar una selección hecha antes.
  */
-export function busesCompatibles(buses: readonly BusOpcion[], f: FiltroBus, actual?: number | null): BusOpcion[] {
-  return buses.filter((b) => b.id === actual || cumpleFiltro(b, f))
+export function busesPara(buses: readonly BusOpcion[], f: { croquisId: number | null; empresaId?: number | null }, actual?: number | null): BusOpcion[] {
+  return buses.filter((b) => b.id === actual || ((f.croquisId === null || b.croquisId === f.croquisId) && (!f.empresaId || !b.empresaId || b.empresaId === f.empresaId)))
 }
 
 /** `47 asientos · 12 B · 2 plantas` */
@@ -37,4 +23,21 @@ export function etiquetaCroquis(m: Pick<CroquisMolde, 'asientos' | 'asientosB' |
   ]
     .filter(Boolean)
     .join(' · ')
+}
+
+/**
+ * Minutos hasta la última parada con esa clase de bus (como
+ * `Ruta::duracionPara`): los de la clase o, si no tiene, los generales.
+ */
+export function duracionConClase(r: Pick<RutaOpcion, 'duracionMinutos' | 'duracionGeneral' | 'duracionPorClase'>, claseId: number | null): number | null {
+  const propia = claseId !== null ? r.duracionPorClase?.[String(claseId)] : undefined
+  return propia ?? r.duracionGeneral ?? r.duracionMinutos
+}
+
+/** `HH:MM` + minutos → la hora de llegada y cuántos días después. */
+export function sumarMinutos(hora: string, minutos: number): { hora: string; dias: number } {
+  const [h, m] = hora.split(':').map(Number)
+  const total = (h ?? 0) * 60 + (m ?? 0) + minutos
+  const enDia = ((total % 1440) + 1440) % 1440
+  return { hora: `${String(Math.floor(enDia / 60)).padStart(2, '0')}:${String(enDia % 60).padStart(2, '0')}`, dias: Math.floor(total / 1440) }
 }

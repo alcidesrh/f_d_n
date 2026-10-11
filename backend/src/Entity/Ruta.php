@@ -120,6 +120,7 @@ class Ruta extends Base
      * Minutos hasta la última parada; con varias clases de bus, el mayor
      * (para no chocar dos salidas del mismo bus). Null si no se conoce.
      */
+    /** Minutos hasta la última parada con la clase de bus más lenta; null si no se conoce. */
     public function getDuracionMinutos(): ?int
     {
         $ultima = $this->paradas->last();
@@ -129,6 +130,40 @@ class Ruta extends Base
         $minutos = array_filter([$ultima->getMinutos(), ...array_map(static fn(ParadaTiempo $t) => $t->getMinutos(), $ultima->getTiempos()->toArray())], static fn(?int $m) => $m !== null);
 
         return $minutos === [] ? null : max($minutos);
+    }
+
+    /**
+     * Minutos hasta la última parada para una clase de bus: los de esa clase
+     * (`ParadaTiempo`) o, si no tiene (o no hay clase), los generales, como
+     * `Horarios`. Sin minutos generales, los de la clase más lenta.
+     */
+    public function duracionPara(?BusClase $clase): ?int
+    {
+        $ultima = $this->paradas->last();
+        if (!$ultima instanceof Parada) {
+            return null;
+        }
+        if ($clase !== null) {
+            foreach ($ultima->getTiempos() as $t) {
+                if ($t->getBusClase() === $clase) {
+                    return $t->getMinutos();
+                }
+            }
+        }
+
+        return $ultima->getMinutos() ?? $this->getDuracionMinutos();
+    }
+
+    /** @return array<int, int> minutos hasta la última parada por id de clase de bus (solo las que difieren) */
+    public function duracionPorClase(): array
+    {
+        $ultima = $this->paradas->last();
+        $porClase = [];
+        foreach ($ultima instanceof Parada ? $ultima->getTiempos() : [] as $t) {
+            $porClase[(int) $t->getBusClase()->getId()] = $t->getMinutos();
+        }
+
+        return $porClase;
     }
 
     public function getDestino(): ?Enclave

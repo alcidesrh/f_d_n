@@ -1,6 +1,8 @@
 <!--
-  Programador de salidas (ADR-024): ruta, horas del día con su bus y
-  días (uno solo, N días o hasta una fecha, cada X días). La vista previa
+  Programador de salidas (ADR-024): ruta, horas del día (cada una con su
+  distribución de asientos y un bus que la tiene, ADR-031) y días (uno solo,
+  N días o hasta una fecha, cada X días). Un usuario sin empresa puede
+  elegirla para ver solo sus distribuciones y buses. La vista previa
   se pide sola al backend y marca las que ya existen, chocan con otro viaje
   del bus o ya pasaron; solo se crean las nuevas.
   Esquemas: la configuración se puede guardar con un nombre al crear, y un
@@ -57,38 +59,35 @@
           </p>
         </section>
 
-        <Divider align="center" type="dashed" class="before:border-surface-600!">
-          <span class="text-surface-500 font-semibold">Programar salidas</span>
-        </Divider>
-
         <!-- Ruta -->
         <section class="panel flex flex-col gap-3 mb-5" aria-labelledby="pg-ruta">
           <h2 id="pg-ruta" class="m-0 flex items-center gap-2 text-base font-semibold"><icon name="route" />Ruta</h2>
-          <Select v-model="form.rutaId" :options="opciones?.rutas ?? []" option-label="nombre" option-value="id" filter :filter-fields="['nombre', 'origen', 'destino']" fluid :virtual-scroller-options="{ itemSize: 52 }" placeholder="Elegir la ruta" :loading="!opciones" aria-label="Ruta">
-            <template #option="{ option }">
-              <div class="flex flex-col">
-                <span>{{ option.nombre }}</span>
-                <span class="text-xs text-muted-color">{{ option.origen }} → {{ option.destino }} · {{ option.paradas }} paradas</span>
-              </div>
-            </template>
-          </Select>
-          <p v-if="ruta?.duracionMinutos" class="m-0 text-xs text-muted-color">Duración estimada: {{ duracion(ruta.duracionMinutos) }}. Un bus no se programa mientras está en otro viaje.</p>
+          <RutaSelect v-model="form.rutaId" :rutas="opciones?.rutas ?? []" placeholder="Elegir la ruta" :loading="!opciones" aria-label="Ruta" />
+          <p v-if="ruta?.duracionMinutos" class="m-0 text-xs text-muted-color">Duración estimada: {{ duracion(duracionConClase(ruta, null) ?? ruta.duracionMinutos) }}<template v-if="Object.keys(ruta.duracionPorClase ?? {}).length"> (varía según la clase del bus)</template>. Un bus no se programa mientras está en otro viaje.</p>
           <p v-else-if="ruta" class="m-0 text-xs text-muted-color">La ruta no tiene duración estimada: solo se evita el mismo bus a la misma hora.</p>
+          <label v-if="pideEmpresa" class="flex flex-col gap-1">
+            <span class="text-xs font-medium text-muted-color">Empresa</span>
+            <Select v-model="form.empresaId" :options="opciones?.empresas ?? []" option-label="nombre" option-value="id" show-clear fluid placeholder="Elegir la empresa" aria-label="Empresa" />
+            <span class="text-xs text-muted-color">Muestra solo sus distribuciones y buses; la salida es de la empresa de su bus.</span>
+          </label>
         </section>
         <!-- <divider /> -->
 
-        <!-- Horas y buses -->
+        <!-- Horas: distribución y bus -->
         <section class="panel flex flex-col gap-3 mb-5" aria-labelledby="pg-horas">
-          <h2 id="pg-horas" class="m-0 flex items-center gap-2 text-base font-semibold"><icon name="schedule-outline" />Horas de salida y bus</h2>
-          <FiltroBus v-model="filtroBus" :croquis="opciones?.croquis ?? []" :clases="opciones?.clases ?? []" />
-          <p v-if="filtroBus.croquisId !== null || filtroBus.claseId !== null" class="m-0 text-xs text-muted-color">{{ compatibles.length }} {{ compatibles.length === 1 ? "bus compatible" : "buses compatibles" }}.</p>
-          <ul class="m-0 flex list-none flex-col gap-2 p-0">
-            <li v-for="(m, i) in form.momentos" :key="i" class="grid grid-cols-[7rem_minmax(0,1fr)_auto] items-center gap-2">
-              <InputText v-model="m.hora" type="time" :aria-label="`Hora n.º ${i + 1}`" class="tabular-nums" />
-              <Select v-model="m.busId" :options="busesCompatibles(opciones?.buses ?? [], filtroBus, m.busId)" :option-label="etiquetaBus" option-value="id" filter :filter-fields="['codigo', 'matricula']" fluid placeholder="Bus" :aria-label="`Bus de la hora n.º ${i + 1}`" />
-              <Button severity="secondary" text rounded class="tap-target" :aria-label="`Quitar la hora n.º ${i + 1}`" :disabled="form.momentos.length === 1" @click="form.momentos.splice(i, 1)">
+          <h2 id="pg-horas" class="m-0 flex items-center gap-2 text-base font-semibold"><icon name="schedule-outline" />Horas de salida</h2>
+          <p class="m-0 text-xs text-muted-color">Elija la distribución de asientos y luego un bus que la tenga. Si después cambia de bus por otro con la misma distribución, los boletos vendidos pasan solos al mismo número de asiento.</p>
+          <ul class="m-0 flex list-none flex-col gap-3 p-0">
+            <li v-for="(m, i) in form.momentos" :key="i" class="momento">
+              <InputText v-model="m.hora" type="time" :step="PASO_MINUTOS * 60" :aria-label="`Hora n.º ${i + 1}`" class="momento__hora tabular-nums" @change="m.hora = redondearHora(m.hora)" />
+              <CroquisSelector :model-value="m.croquisId" :croquis="croquisVisibles" :buses="busesVisibles" :aria-label="`Distribución de la hora n.º ${i + 1}`" class="momento__croquis" @update:model-value="(id) => elegirCroquis(m, id)" />
+              <Select :model-value="m.busId" :options="busesPara(busesVisibles, { croquisId: m.croquisId }, m.busId)" :option-label="etiquetaBus" option-value="id" filter :filter-fields="['codigo', 'matricula']" fluid placeholder="Bus" :empty-message="m.croquisId ? 'Ningún bus con esta distribución' : 'Sin buses'" :aria-label="`Bus de la hora n.º ${i + 1}`" class="momento__bus" @update:model-value="(id: number | null) => elegirBus(m, id)">
+                <template #option="{ option }"><BusOpcionItem :bus="option" :empresas="empresas" :clases="clases" /></template>
+              </Select>
+              <Button severity="secondary" text rounded class="tap-target momento__quitar" :aria-label="`Quitar la hora n.º ${i + 1}`" :disabled="form.momentos.length === 1" @click="form.momentos.splice(i, 1)">
                 <template #icon><icon name="close" /></template>
               </Button>
+              <p v-if="detalleMomento(m)" class="momento__detalle m-0 text-xs text-muted-color">{{ detalleMomento(m) }}</p>
             </li>
           </ul>
           <div class="flex flex-wrap gap-2">
@@ -178,7 +177,7 @@
                     <Tag v-if="g.problemas" severity="warn" :value="`${g.problemas} sin crear`" class="ml-1 !text-xs" />
                   </summary>
                   <ul class="m-0 mt-2 flex list-none flex-col gap-1 p-0 text-sm">
-                    <li v-for="it in g.items" :key="it.fecha + it.busId" class="flex flex-wrap items-baseline gap-x-2">
+                    <li v-for="(it, j) in g.items" :key="j" class="flex flex-wrap items-baseline gap-x-2">
                       <span class="w-12 tabular-nums">{{ horaDe(it.fecha) }}</span>
                       <span class="font-medium">Bus {{ it.bus }}</span>
                       <Tag :severity="ESTADO_PLAN[it.estado].severidad" :value="ESTADO_PLAN[it.estado].etiqueta" class="!text-xs" />
@@ -222,10 +221,12 @@
 <script setup lang="ts">
 import { eliminarEsquema, fetchEsquemas, fetchOpciones, guardarEsquema, programar, vistaPrevia } from "@/core/salida/api";
 import { aDia, deDia, horaDe } from "@/core/salida/filtro";
-import { aEsquema, aPayload, conEsquema, diasProgramados, difiereDeEsquema, errores as erroresDe, formInicial, horaValida, MAX_DIAS, MAX_INTERVALO, MAX_MOMENTOS, normalizarHora, totalSalidas, type ProgramadorForm } from "@/core/salida/programacion";
-import type { BusOpcion, EstadoPlan, Esquema, ItemPlan, OpcionesSalidas, ResultadoProgramacion, VistaPrevia } from "@/core/salida/types";
-import { busesCompatibles, filtroBusVacio } from "@/core/salida/buses";
-import FiltroBus from "./FiltroBus.vue";
+import { aEsquema, aPayload, conEsquema, diasProgramados, difiereDeEsquema, errores as erroresDe, formInicial, horaValida, MAX_DIAS, MAX_INTERVALO, MAX_MOMENTOS, normalizarHora, PASO_MINUTOS, redondearHora, totalSalidas, type ProgramadorForm } from "@/core/salida/programacion";
+import type { BusOpcion, EstadoPlan, Esquema, ItemPlan, Momento, OpcionesSalidas, ResultadoProgramacion, VistaPrevia } from "@/core/salida/types";
+import { busesPara, duracionConClase, sumarMinutos } from "@/core/salida/buses";
+import CroquisSelector from "./CroquisSelector.vue";
+import RutaSelect from "./RutaSelect.vue";
+import BusOpcionItem from "./BusOpcionItem.vue";
 import { HttpError } from "@/core/http";
 import { notify } from "@/core/notify";
 
@@ -241,8 +242,6 @@ const hoy = new Date();
 hoy.setHours(0, 0, 0, 0);
 
 const form = reactive<ProgramadorForm>(formInicial());
-/** Distribución y clase del bus: solo filtra la lista de buses (no se guarda en el esquema). */
-const filtroBus = reactive(filtroBusVacio());
 const opciones = shallowRef<OpcionesSalidas | null>(null);
 const sinPermiso = ref(false);
 const esquemas = ref<Esquema[]>([]);
@@ -261,11 +260,58 @@ const esquema = computed(() => esquemas.value.find((e) => e.id === esquemaId.val
 const cambiosEsquema = computed(() => !!esquema.value && difiereDeEsquema(form, esquema.value));
 const ruta = computed(() => opciones.value?.rutas.find((r) => r.id === form.rutaId) ?? null);
 const dias = computed(() => diasProgramados(form));
+/** El usuario no tiene empresa (ve toda la flota): puede elegir una para filtrar distribuciones y buses. */
+const pideEmpresa = computed(() => !!opciones.value && opciones.value.miEmpresaId === null && opciones.value.empresas.length > 1);
 const errores = computed(() => erroresDe(form));
 
 const empresas = computed(() => new Map((opciones.value?.empresas ?? []).map((e) => [e.id, e.nombre])));
-const compatibles = computed(() => busesCompatibles(opciones.value?.buses ?? [], filtroBus));
+const clases = computed(() => new Map((opciones.value?.clases ?? []).map((c) => [c.id, c.nombre])));
 const etiquetaBus = (b: BusOpcion) => [b.codigo, b.matricula, b.empresaId ? empresas.value.get(b.empresaId) : null].filter(Boolean).join(" · ");
+/** Los buses de la empresa elegida (todos si no se eligió). */
+const busesVisibles = computed(() => busesPara(opciones.value?.buses ?? [], { croquisId: null, empresaId: form.empresaId }));
+/** Solo las distribuciones que tiene algún bus de la empresa elegida: siempre hay un bus para asignar. */
+const croquisVisibles = computed(() => {
+  const conBus = new Set(busesVisibles.value.map((b) => b.croquisId));
+  return (opciones.value?.croquis ?? []).filter((c) => conBus.has(c.id));
+});
+const busDe = (id: number | null) => (id ? (opciones.value?.buses.find((b) => b.id === id) ?? null) : null);
+
+/** Otra distribución: si el bus elegido no la tiene, se quita. */
+function elegirCroquis(m: Momento, croquisId: number | null) {
+  m.croquisId = croquisId;
+  if (m.busId && busDe(m.busId)?.croquisId !== croquisId) m.busId = null;
+}
+
+/** Elegir un bus fija la distribución a la suya. */
+function elegirBus(m: Momento, busId: number | null) {
+  m.busId = busId;
+  const bus = busDe(busId);
+  if (bus?.croquisId) m.croquisId = bus.croquisId;
+}
+
+/** "Llega a Flores a las 16:30, en Platino." */
+function detalleMomento(m: Momento): string | null {
+  if (!m.busId) return null;
+  const bus = busDe(m.busId);
+  const minutos = ruta.value ? duracionConClase(ruta.value, bus?.claseId ?? null) : null;
+  if (minutos === null || !horaValida(m.hora)) return null;
+  const llegada = sumarMinutos(normalizarHora(m.hora), minutos);
+  const clase = bus?.claseId ? clases.value.get(bus.claseId) : null;
+  return `Llega a ${ruta.value?.destino ?? "su destino"} a las ${llegada.hora}${llegada.dias ? ` (+${llegada.dias} d)` : ""}${clase ? `, en ${clase}` : ""}.`;
+}
+
+// Al cambiar de empresa se quitan los buses de otra empresa y las distribuciones que ella no tiene.
+watch(
+  () => form.empresaId,
+  (empresaId) => {
+    if (!empresaId) return;
+    const disponibles = new Set(croquisVisibles.value.map((c) => c.id));
+    for (const m of form.momentos) {
+      if (m.busId && (busDe(m.busId)?.empresaId ?? empresaId) !== empresaId) m.busId = null;
+      if (m.croquisId && !disponibles.has(m.croquisId)) m.croquisId = null;
+    }
+  },
+);
 
 watch(guardar, (g) => (form.guardarComo = g ? nombreEsquema.value : null));
 watch(nombreEsquema, (n) => guardar.value && (form.guardarComo = n));
@@ -277,13 +323,17 @@ const desde = computed<Date | null>({ get: () => (form.desde ? deDia(form.desde)
 const hasta = computed<Date | null>({ get: () => (form.hasta ? deDia(form.hasta) : null), set: (d) => (form.hasta = d ? aDia(d) : null) });
 
 watch(esquemaId, () => {
-  if (esquema.value) Object.assign(form, conEsquema(form, esquema.value));
+  if (esquema.value)
+    Object.assign(
+      form,
+      conEsquema(form, esquema.value, (busId) => busDe(busId)?.croquisId ?? null),
+    );
   guardar.value = false;
 });
 
 function agregarHora() {
   const ultima = form.momentos[form.momentos.length - 1];
-  form.momentos.push({ hora: ultima?.hora ?? "06:00", busId: null });
+  form.momentos.push({ hora: ultima?.hora ?? "06:00", croquisId: ultima?.croquisId ?? null, busId: null });
 }
 
 function ordenar() {
@@ -405,3 +455,42 @@ onMounted(async () => {
   }
 });
 </script>
+
+<style scoped>
+/* Angosto: hora, distribución y quitar; el bus debajo. Ancho: todo en una línea. */
+.momento {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr) auto;
+  grid-template-areas:
+    "hora croquis quitar"
+    "bus bus bus"
+    "detalle detalle detalle";
+  align-items: center;
+  gap: 0.5rem;
+}
+.momento__hora {
+  grid-area: hora;
+}
+.momento__croquis {
+  grid-area: croquis;
+}
+.momento__bus {
+  grid-area: bus;
+  min-width: 0;
+}
+.momento__quitar {
+  grid-area: quitar;
+}
+.momento__detalle {
+  grid-area: detalle;
+}
+@container (min-width: 40rem) {
+  .momento {
+    grid-template-columns: 6.5rem minmax(0, 1fr) minmax(0, 1fr) auto;
+    grid-template-areas:
+      "hora croquis bus quitar"
+      ". detalle detalle .";
+    row-gap: 0.25rem;
+  }
+}
+</style>

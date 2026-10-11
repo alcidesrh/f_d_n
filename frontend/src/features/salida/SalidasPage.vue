@@ -39,7 +39,7 @@
         </label>
         <label class="col-span-2 flex flex-col gap-1 @3xl:col-span-1">
           <span class="text-xs font-medium text-muted-color">Ruta</span>
-          <Select v-model="filtro.ruta" :options="opciones?.rutas ?? []" option-label="nombre" option-value="id" filter :filter-fields="['nombre', 'origen', 'destino']" show-clear fluid :virtual-scroller-options="{ itemSize: 38 }" placeholder="Todas" />
+          <RutaSelect v-model="filtro.ruta" :rutas="opciones?.rutas ?? []" show-clear placeholder="Todas" />
         </label>
         <Button severity="secondary" outlined class="col-span-2 @3xl:col-span-1" @click="masFiltros = true">
           <icon name="filter-alt-outline" class="mr-1" />Más filtros
@@ -191,6 +191,7 @@ import { HttpError } from "@/core/http";
 import { notify } from "@/core/notify";
 import ConfirmarOperacionDialog from "./ConfirmarOperacionDialog.vue";
 import EditarSalidaDialog from "./EditarSalidaDialog.vue";
+import RutaSelect from "./RutaSelect.vue";
 import ResultadoOperacionDialog from "./ResultadoOperacionDialog.vue";
 import VerSalidaDialog from "./VerSalidaDialog.vue";
 import BitacoraDialog from "@/shared/bitacora/BitacoraDialog.vue";

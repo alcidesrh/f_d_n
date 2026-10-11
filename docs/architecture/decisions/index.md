@@ -34,3 +34,4 @@
 | [ADR-028](ADR-028-anulacion-reasignacion-y-bitacora.md) | Anulación y reasignación de boletos (con anulación de la factura en Forcon) y bitácora de boletos y salidas | Aceptada |
 | [ADR-029](ADR-029-listado-sobre-css-grid.md) | Listado genérico sobre CSS Grid: columnas, filtros OR/AND, selección, edición en línea y tarjetas | Aceptada |
 | [ADR-030](ADR-030-ruta-con-paradas-ordenadas.md) | Ruta con paradas ordenadas; el trayecto queda como par comercial | Aceptada |
+| [ADR-031](ADR-031-bus-por-hora-y-cambio-de-bus-por-numero.md) | Bus por hora en el programador (distribución y bus por fila) y cambio de bus con boletos por número de asiento | Aceptada |

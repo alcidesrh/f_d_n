@@ -21,7 +21,8 @@ use Doctrine\ORM\EntityManagerInterface;
  *
  * - `nueva`: se crea.
  * - `existe`: ya hay una salida igual (misma ruta, bus y hora); no se duplica.
- * - `conflicto`: el bus está en otro viaje a esa hora (según la duración estimada de la ruta).
+ * - `conflicto`: el bus está en otro viaje a esa hora (según lo que dura la
+ *   ruta con la clase de ese bus, `Ruta::duracionPara`).
  * - `pasada`: la hora ya pasó (solo puede ocurrir el día de hoy).
  *
  * La vista previa y la creación usan el mismo plan; la creación lo recalcula
@@ -112,13 +113,13 @@ final class ProgramadorSalidas
             throw new SalidaRechazada("La ruta " . VistaSalida::ruta($ruta) . " está inactiva.", "ruta_inactiva");
         }
         $buses = $this->esquemas->buses($p->busIds());
-        $duracion = $ruta->getDuracionMinutos();
         $agenda = $this->agendas->de($p->busIds(), $p->desde, $p->hasta->modify("+3 days"));
         $ahora = new \DateTimeImmutable();
 
         $items = [];
         foreach ($p->salidas() as ["fecha" => $fecha, "busId" => $busId]) {
             $choque = null;
+            $duracion = $ruta->duracionPara($buses[$busId]->getClase());
             if ($fecha < $ahora) {
                 $estado = self::PASADA;
             } elseif (($choque = $agenda->choque($busId, $fecha, $duracion)) !== null) {

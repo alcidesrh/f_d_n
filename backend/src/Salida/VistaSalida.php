@@ -18,7 +18,12 @@ final class VistaSalida
         return $r->getNombre() ?: $r->getPuntas();
     }
 
-    /** @return array{id: int, nombre: string, origen: ?string, destino: ?string, paradas: int, duracionMinutos: ?int} */
+    /**
+     * `duracionMinutos` es la de la clase de bus más lenta; `duracionPorClase`,
+     * las clases con minutos propios (id de clase → minutos).
+     *
+     * @return array{id: int, nombre: string, origen: ?string, destino: ?string, paradas: int, duracionMinutos: ?int, duracionGeneral: ?int, duracionPorClase: array<int, int>}
+     */
     public static function rutaOpcion(Ruta $r): array
     {
         return [
@@ -28,6 +33,8 @@ final class VistaSalida
             "destino" => $r->getDestino()?->getNombre(),
             "paradas" => $r->getParadas()->count(),
             "duracionMinutos" => $r->getDuracionMinutos(),
+            "duracionGeneral" => $r->duracionPara(null),
+            "duracionPorClase" => (object) $r->duracionPorClase(),
         ];
     }
 

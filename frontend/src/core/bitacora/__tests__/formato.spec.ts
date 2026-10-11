@@ -5,6 +5,7 @@ describe('bitácora: detalle legible', () => {
   it('cambio de bus de una salida', () => {
     expect(lineasDeDetalle('salida', { operacion: 'cambio_bus', detalle: { de: '42', a: '111' } })).toEqual(['Bus 42 → Bus 111'])
     expect(lineasDeDetalle('salida', { operacion: 'cambio_bus', detalle: { a: '111' } })).toEqual(['Sin bus → Bus 111'])
+    expect(lineasDeDetalle('salida', { operacion: 'cambio_bus', detalle: { de: '42', a: '43', asientosPorNumero: 36 } })).toEqual(['Bus 42 → Bus 43', '36 asiento(s) pasados al mismo número'])
   })
 
   it('cambio de estado de una salida', () => {

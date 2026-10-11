@@ -8,7 +8,10 @@ use App\Entity\Enum\EstadoSalida;
 use App\Entity\Salida;
 use Doctrine\ORM\EntityManagerInterface;
 
-/** Arma la `AgendaBus` de unos buses con sus salidas vigentes (no canceladas) en un rango. */
+/**
+ * Arma la `AgendaBus` de unos buses con sus salidas vigentes (no canceladas)
+ * en un rango; cada salida dura lo que su ruta con la clase de su bus.
+ */
 final class AgendaFlota
 {
     /** Margen antes del rango: una salida de la víspera puede seguir en ruta. */
@@ -29,13 +32,14 @@ final class AgendaFlota
             return $agenda;
         }
         $qb = $this->em->createQueryBuilder()
-            ->select("s", "r", "p", "e", "t", "b")
+            ->select("s", "r", "p", "e", "t", "b", "k")
             ->from(Salida::class, "s")
             ->join("s.ruta", "r")
             ->join("r.paradas", "p")
             ->join("p.enclave", "e")
             ->leftJoin("p.tiempos", "t")
             ->join("s.bus", "b")
+            ->leftJoin("b.clase", "k")
             ->where("b.id IN (:buses)")
             ->andWhere("s.estado != :cancelada")
             ->andWhere("s.fecha >= :desde AND s.fecha < :hasta")
@@ -49,7 +53,7 @@ final class AgendaFlota
         /** @var list<Salida> $salidas */
         $salidas = $qb->getQuery()->getResult();
         foreach ($salidas as $s) {
-            $agenda->ocupar((int) $s->getBus()->getId(), $s->getFecha(), $s->getRuta()->getDuracionMinutos(), VistaSalida::referencia($s) + ["rutaId" => $s->getRuta()->getId()]);
+            $agenda->ocupar((int) $s->getBus()->getId(), $s->getFecha(), $s->getRuta()->duracionPara($s->getBus()->getClase()), VistaSalida::referencia($s) + ["rutaId" => $s->getRuta()->getId()]);
         }
 
         return $agenda;

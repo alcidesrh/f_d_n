@@ -68,7 +68,7 @@ final class SalidaController extends AbstractController
      * buses (para elegir uno compatible) y qué puede hacer el usuario.
      */
     #[Route("/opciones", name: "opciones", methods: ["GET"])]
-    public function opciones(): JsonResponse
+    public function opciones(#[CurrentUser] Usuario $usuario): JsonResponse
     {
         $this->denyAccessUnlessGranted(self::VER);
         /** @var list<Ruta> $rutas */
@@ -111,6 +111,8 @@ final class SalidaController extends AbstractController
                 static fn(Empresa $e) => ["id" => $e->getId(), "nombre" => $e->getNombreCorto()],
                 $this->em->getRepository(Empresa::class)->findBy([], ["nombre" => "ASC"]),
             ),
+            // Sin empresa, el programador ofrece elegirla para filtrar distribuciones y buses.
+            "miEmpresaId" => $this->em->find(Usuario::class, $usuario->getId())?->getEmpresa()?->getId(),
             "rutas" => array_map(VistaSalida::rutaOpcion(...), $rutas),
             "buses" => array_map(VistaSalida::bus(...), $buses),
             "croquis" => $moldes,

@@ -30,6 +30,8 @@ export function lineasDeDetalle(tipo: TipoBitacora, e: Pick<EntradaBitacora, 'op
   if (tipo === 'salida') {
     if (e.operacion === 'cambio_bus') {
       lineas.push(`${d.de ? `Bus ${d.de}` : 'Sin bus'} → ${d.a ? `Bus ${d.a}` : 'sin bus'}`)
+      // Con boletos, el bus nuevo tiene la misma distribución y pasan por número (ADR-031).
+      if (d.asientosPorNumero) lineas.push(`${d.asientosPorNumero} asiento(s) pasados al mismo número`)
     } else if (d.de && d.a) {
       lineas.push(`Estado: ${ESTADOS[String(d.de)] ?? d.de} → ${ESTADOS[String(d.a)] ?? d.a}`)
     } else {

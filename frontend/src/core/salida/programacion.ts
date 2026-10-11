@@ -1,11 +1,11 @@
 /**
- * Programador de salidas (ADR-024): estado del formulario → payload de
+ * Programador de salidas (ADR-024, ADR-031): estado del formulario → payload de
  * `/api/gestion-salidas/programacion` (espejo de `App\Salida\Programacion`),
  * validación previa, días que se programan y conversión desde/hacia un
  * esquema guardado. Funciones puras.
  */
 import { aDia, deDia } from './filtro'
-import type { Esquema, EsquemaPayload, Momento, ProgramacionPayload } from './types'
+import type { Esquema, EsquemaPayload, Momento, MomentoPayload, ProgramacionPayload } from './types'
 
 /** Topes del backend (`Programacion::MAX_*`). */
 export const MAX_MOMENTOS = 48
@@ -18,6 +18,8 @@ export type Repeticion = 'no' | 'hasta' | 'veces'
 
 export interface ProgramadorForm {
   rutaId: number | null
+  /** Solo filtra distribuciones y buses cuando el usuario no tiene empresa; no se envía. */
+  empresaId: number | null
   momentos: Momento[]
   /** `AAAA-MM-DD` */
   desde: string | null
@@ -33,7 +35,8 @@ export interface ProgramadorForm {
 export function formInicial(hoy = new Date()): ProgramadorForm {
   return {
     rutaId: null,
-    momentos: [{ hora: '06:00', busId: null }],
+    empresaId: null,
+    momentos: [{ hora: '06:00', croquisId: null, busId: null }],
     desde: aDia(hoy),
     repeticion: 'no',
     intervaloDias: 1,
@@ -49,6 +52,17 @@ export const horaValida = (h: string) => /^([01]?\d|2[0-3]):[0-5]\d$/.test(h.tri
 export const normalizarHora = (h: string) => {
   const [hh, mm] = h.trim().split(':')
   return `${String(Number(hh)).padStart(2, '0')}:${mm}`
+}
+
+/** Las horas se eligen de 5 en 5 minutos. */
+export const PASO_MINUTOS = 5
+
+/** `HH:MM` al múltiplo de `PASO_MINUTOS` más cercano (sin pasar de 23:55); una hora no válida queda igual. */
+export function redondearHora(h: string): string {
+  if (!horaValida(h)) return h
+  const [hh, mm] = normalizarHora(h).split(':').map(Number)
+  const total = Math.min(Math.round(((hh ?? 0) * 60 + (mm ?? 0)) / PASO_MINUTOS) * PASO_MINUTOS, 1440 - PASO_MINUTOS)
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
 }
 
 export function sumarDias(dia: string, n: number): string {
@@ -86,7 +100,7 @@ export function errores(f: ProgramadorForm, hoy = new Date()): string[] {
   f.momentos.forEach((m, i) => {
     if (!horaValida(m.hora)) e.push(`La hora n.º ${i + 1} no es válida (HH:MM).`)
     if (!m.busId) e.push(`Elija el bus de la hora n.º ${i + 1}.`)
-    const clave = `${horaValida(m.hora) ? normalizarHora(m.hora) : m.hora}|${m.busId}`
+    const clave = claveMomento(m)
     if (m.busId && vistos.has(clave)) e.push(`El mismo bus está dos veces a las ${m.hora}.`)
     vistos.add(clave)
   })
@@ -106,7 +120,10 @@ export function errores(f: ProgramadorForm, hoy = new Date()): string[] {
   return e
 }
 
-const momentosPayload = (f: ProgramadorForm) =>
+/** Clave de un momento: la hora con su bus. */
+const claveMomento = (m: Pick<Momento, 'hora' | 'busId'>) => `${horaValida(m.hora) ? normalizarHora(m.hora) : m.hora}|${m.busId}`
+
+const momentosPayload = (f: ProgramadorForm): MomentoPayload[] =>
   f.momentos.filter((m) => m.busId).map((m) => ({ hora: normalizarHora(m.hora), busId: m.busId as number }))
 
 /** Payload de la vista previa / creación (llamar solo sin `errores`). */
@@ -122,12 +139,15 @@ export function aPayload(f: ProgramadorForm): ProgramacionPayload {
   return p
 }
 
-/** Carga un esquema en el formulario: ruta, horas con su bus e intervalo; conserva los días elegidos. */
-export function conEsquema(f: ProgramadorForm, e: Esquema): ProgramadorForm {
+/**
+ * Carga un esquema en el formulario: ruta, horas con su bus (y la
+ * distribución de ese bus, `croquisDe`) e intervalo; conserva los días elegidos.
+ */
+export function conEsquema(f: ProgramadorForm, e: Esquema, croquisDe: (busId: number) => number | null = () => null): ProgramadorForm {
   return {
     ...f,
     rutaId: e.ruta.id,
-    momentos: e.momentos.map((m) => ({ hora: m.hora, busId: m.busId })),
+    momentos: e.momentos.map((m) => ({ hora: m.hora, croquisId: croquisDe(m.busId), busId: m.busId })),
     intervaloDias: e.intervaloDias,
     repeticion: f.repeticion === 'no' && e.intervaloDias > 1 ? 'veces' : f.repeticion,
     guardarComo: null,
@@ -140,7 +160,6 @@ export function aEsquema(f: ProgramadorForm, nombre: string): EsquemaPayload {
 
 /** ¿El formulario tiene cambios respecto del esquema cargado (ruta, intervalo u horas/buses)? */
 export function difiereDeEsquema(f: ProgramadorForm, e: Esquema): boolean {
-  const firma = (ms: Array<{ hora: string; busId: number | null }>) =>
-    ms.map((m) => `${horaValida(m.hora) ? normalizarHora(m.hora) : m.hora}|${m.busId}`).sort().join(',')
+  const firma = (ms: Array<Pick<Momento, 'hora' | 'busId'>>) => ms.map(claveMomento).sort().join(',')
   return f.rutaId !== e.ruta.id || f.intervaloDias !== e.intervaloDias || firma(f.momentos) !== firma(e.momentos)
 }

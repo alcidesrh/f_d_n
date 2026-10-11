@@ -13,7 +13,8 @@ const PARTICIPIO: Record<Operacion, [string, string]> = {
 }
 
 export const MOTIVOS: Record<MotivoOmision, string> = {
-  asientos: 'Tiene asientos vendidos o apartados: reasígnelos o anúlelos en la venta y vuelva a intentarlo.',
+  asientos: 'Tiene asientos vendidos o apartados: solo se le puede cambiar el bus (por uno con la misma distribución); para lo demás, reasigne o anule esos asientos en la venta.',
+  otro_croquis: 'Tiene asientos vendidos o apartados y el bus nuevo tiene otra distribución: elija uno con la misma (los boletos pasan al mismo número) o reasígnelos en la venta.',
   conflicto: 'El bus está en otro viaje a esa hora.',
   historial: 'Tiene boletos en su historial: no se borra, anúlela.',
 }
