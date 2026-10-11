@@ -13,6 +13,7 @@ El modelo no guardaba esa secuencia. `Salida` apuntaba a un `Trayecto` (único p
 - La hora en una parada se tomaba de `Trayecto.duracionEstimadaMinutos` del par origen→parada, que nunca se migró (0 trayectos con duración): las horas intermedias eran siempre desconocidas.
 - La restricción única `(asiento, trayecto, salida)` no impide vender A→C y B→D en el mismo asiento; solo lo evitaba el bloqueo de la aplicación.
 - El tramo de un boleto se recalculaba al leer: si cambiaban los subtrayectos, cambiaba el tramo de boletos ya vendidos.
+- Comparado con las rutas del legado, el orden deducido era **distinto en 1 710 de 4 193 salidas (41 %)**, con 33 525 boletos (RUT113: 503 salidas, RUT101: 367, RUT104: 170, …): esos boletos ocupaban tramos que no eran los suyos.
 
 El legado **sí** guarda la secuencia: `ruta` (origen, destino, km) + `ruta_estacion_item` (paradas intermedias con `posicion`, sin repetir ni incluir las puntas) + `tiempo` (minutos desde el origen de la ruta hasta cada estación, **por clase de bus**: p. ej. RUT001 a Santa Elena 600 min en Clase Oro y 680 en Económica). 124 rutas (115 activas), 89 con su inversa propia en el legado, 9 pares de puntas servidos por más de una ruta; `tiempo` cubre 50 rutas. La salida del legado llega a su ruta por `salida.itinerario_id → itineario.ruta_codigo`; el boleto guarda sus estaciones de subida y bajada (`estacion_origen_id`, `estacion_destino_id`).
 
@@ -27,7 +28,7 @@ Se guarda el hecho (la secuencia) y se derivan las consecuencias (los pares vend
 | **Ruta** (nueva) | El camino con paradas que recorre un bus. Independiente de empresa y fecha. Equivale a `ruta` del legado. | `nombre`, `kilometros`, `activo`, `legacyId` (código). Origen y destino son su primera y última parada. |
 | **Parada** (nueva) | El paso de una ruta por un enclave. | `ruta`, `enclave`, `orden` (0 = origen), `minutos` desde el origen (opcional), `km` (opcional), `permiteSubir`, `permiteBajar`. Únicas `(ruta, orden)` y `(ruta, enclave)`. |
 | **ParadaTiempo** (nueva) | Minutos hasta la parada para una clase de bus, cuando difiere. | `parada`, `busClase`, `minutos`. Única `(parada, busClase)`. |
-| **SalidaParada** (nueva) | El horario de una salida concreta: a qué hora pasa por cada parada. | `salida`, `orden`, `enclave`, `hora`, `precision` (`exacta` en el origen, `estimada` con minutos conocidos, `desconocida`: se usa la hora del origen). Única `(salida, orden)`; índice `(enclave, hora)`. |
+| **SalidaParada** (nueva) | El horario de una salida concreta: a qué hora pasa por cada parada. | `salida`, `orden`, `enclave`, `hora`, `precision` (`exacta` en el origen, `estimada` con minutos conocidos, `desconocida`: se usa la hora del origen), `permiteSubir`/`permiteBajar` (copiados de la parada, para buscar sin unir la ruta). Única `(salida, orden)`; índice `(enclave, hora)`. |
 | **Salida** | Viaje concreto. | `ruta` en lugar de `trayecto`. |
 | **BoletoAsiento** / **ReservaAsiento** | Asiento vendido / apartado. | `ordenSube`, `ordenBaja` (el tramo `[sube, baja)`); `trayecto` se queda como el **producto cobrado** (tarifa, factura, reportes). |
 | **EsquemaSalida** | Plantilla del programador. | `ruta` en lugar de `trayecto`. |
@@ -55,7 +56,8 @@ El cliente piensa en su viaje: en primer plano la hora en su origen, la llegada 
 - `ruta` → `Ruta` 1:1 (`legacyId` = código); paradas: origen, `ruta_estacion_item` por `posicion`, destino. No se inventan rutas inversas: las que existen en el legado se migran como cualquier otra.
 - `tiempo` → `Parada.minutos` (menor de las clases) y `ParadaTiempo` (las clases que difieren). Clase del legado = `BusClase` (mismo id).
 - Salida → `Ruta` por `itineario.ruta_codigo`. Boleto → `ordenSube`/`ordenBaja` por sus estaciones de subida y bajada; un boleto fuera de la ruta ocupa la salida completa y se cobra su trayecto suelto (como hoy).
-- Las bases ya migradas se rellenan con `app:ruta:rellenar` (lee el legado; solo lectura).
+- Una **agencia** del legado (estación tipo 4) que es parada o punta de una ruta también es un **lugar**: se crea su `Enclave` (Belice City, Belice, Chetumal; rutas RUT201/202/212–215). La agencia como vendedora sigue siendo `Agencia`. Antes, esas rutas y sus salidas (unas 1 350 en el legado) no se migraban.
+- Las bases ya migradas se rellenan con `app:ruta:rellenar` (lee el legado; solo lectura). Primer relleno: 124 rutas, 1 215 paradas (502 con minutos, 205 tiempos por clase), 4 193 salidas con su ruta y horario (56 % de las paradas con hora estimada, el resto desconocida porque `tiempo` solo cubre 50 rutas), 81 887 boletos con tramo y **ningún solape** entre boletos vivos.
 
 ## Plan
 
@@ -64,7 +66,7 @@ Cada fase deja la aplicación funcionando y actualiza docs y borra lo que queda 
 | Fase | Contenido | Estado |
 |---|---|---|
 | 0 | Este ADR y el glosario | Hecha |
-| 1 | Entidades nuevas (aditivas), migrador desde el legado, `app:ruta:rellenar` | |
+| 1 | Entidades nuevas (aditivas), migrador desde el legado, `app:ruta:rellenar` | Hecha |
 | 2 | `Itinerarios` y las horas leen de `Parada`/`SalidaParada`; fuera el orden topológico | |
 | 3 | Búsqueda por hora en el origen; libres por tramo | |
 | 4 | Ocupación por `orden`; restricción de exclusión | |

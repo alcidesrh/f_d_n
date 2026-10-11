@@ -4,6 +4,7 @@ namespace App\Migration;
 
 use App\Croquis\Moldes;
 use App\Migration\Job\Progreso;
+use App\Migration\Salida\RutasLegado;
 use App\Venta\Facturacion\CredencialesFel;
 use DateTime;
 use Doctrine\DBAL\ArrayParameterType;
@@ -11,6 +12,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\Attribute\Target;
+
 
 /**
  * Migrates static (non-growing) entities from legacy FDN to the new system.
@@ -35,6 +37,7 @@ class MigradorEstaticos
         private Mapeador $mapeador,
         private CredencialesFel $credencialesFel,
         private Moldes $moldes,
+        private RutasLegado $rutas,
     ) {
         $this->oldPdo->setAttribute(
             \PDO::ATTR_ERRMODE,
@@ -61,6 +64,7 @@ class MigradorEstaticos
             "cliente" => 0,
             "usuario" => 0,
             "trayecto" => 0,
+            "ruta" => 0,
             "tarifa" => 0,
             "piloto" => 0,
             "bus_marca" => 0,
@@ -114,6 +118,7 @@ class MigradorEstaticos
                 $contadores["asiento"] = $this->migrarAsientos($output);
                 $contadores["senal"] = $this->migrarSenales($output);
                 $contadores["trayecto"] = $this->migrarTrayectos($output);
+                $contadores["ruta"] = $this->migrarRutas($output);
                 $contadores["tarifa"] = $this->migrarTarifas($output);
             }
             foreach (self::TABLAS_ID_EXPLICITO as $tabla) {
@@ -149,6 +154,7 @@ class MigradorEstaticos
         "asiento" => "migrarAsientos",
         "senal" => "migrarSenales",
         "trayecto" => "migrarTrayectos",
+        "ruta" => "migrarRutas",
         "tarifa" => "migrarTarifas",
         "piloto" => "migrarPilotos",
         "marca" => "migrarMarcas",
@@ -564,6 +570,21 @@ class MigradorEstaticos
         }
 
         return $claves;
+    }
+
+    // ─── Ruta y paradas (ADR-030) ───────────────────────────────────
+
+    private function migrarRutas(?OutputInterface $output = null): int
+    {
+        if ($output) {
+            $output->write("<info>Rutas...</info>");
+        }
+        $n = $this->rutas->migrarTodas();
+        if ($output) {
+            $output->writeln(" <info>{$n}</info>");
+        }
+
+        return $n;
     }
 
     // ─── Trayecto (ruta + subtrayectos) ────────────────────────────

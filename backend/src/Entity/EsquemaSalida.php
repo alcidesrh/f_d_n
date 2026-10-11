@@ -35,6 +35,11 @@ class EsquemaSalida
     #[ORM\JoinColumn(nullable: false, onDelete: "CASCADE")]
     private Trayecto $trayecto;
 
+    /** Ruta que programa (ADR-030; obligatoria al cerrar la fase 5). */
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(onDelete: "CASCADE")]
+    private ?Ruta $ruta = null;
+
     #[ORM\Column(type: "smallint", options: ["default" => 1])]
     private int $intervaloDias = 1;
 
@@ -77,6 +82,18 @@ class EsquemaSalida
     public function getTrayecto(): Trayecto
     {
         return $this->trayecto;
+    }
+
+    public function getRuta(): ?Ruta
+    {
+        return $this->ruta;
+    }
+
+    public function setRuta(?Ruta $ruta): static
+    {
+        $this->ruta = $ruta;
+
+        return $this;
     }
 
     public function getIntervaloDias(): int

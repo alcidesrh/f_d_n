@@ -109,6 +109,10 @@ final class IndicadoresMigracion
             "nuevo" => "SELECT COUNT(*) FROM trayecto",
             "legado" => "SELECT COUNT(*) FROM ruta",
         ],
+        "ruta" => [
+            "nuevo" => "SELECT COUNT(*) FROM ruta WHERE legacy_id IS NOT NULL",
+            "legado" => "SELECT COUNT(*) FROM ruta",
+        ],
         "tarifa" => [
             "nuevo" => "SELECT COUNT(*) FROM boleto_tarifa",
             "legado" => self::LEGADO_TARIFAS,

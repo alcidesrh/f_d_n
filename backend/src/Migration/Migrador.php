@@ -5,8 +5,11 @@ namespace App\Migration;
 use App\Entity\Enum\EstadoBoletoAsiento;
 use App\Migration\Salida\DependenciasLegado;
 use App\Migration\Salida\InferenciaBus;
+use App\Migration\Salida\RutaLegada;
 use App\Migration\Salida\RutaMigrada;
+use App\Migration\Salida\RutasLegado;
 use App\Migration\Salida\TrayectosLegado;
+use App\Ruta\Horarios;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -17,9 +20,10 @@ use Symfony\Component\DependencyInjection\Attribute\Target;
  * relaciones y se escribe en una transacción, en el orden que exigen las FK
  * del modelo nuevo:
  *
- *   empresa → estaciones + trayecto de la ruta (con sus subtrayectos)
+ *   empresa → estaciones + ruta con sus paradas (ADR-030) y el trayecto de
+ *   la ruta (con sus subtrayectos, hasta retirarlos)
  *   → bus (empresa, marca, clase, piloto, copiloto, asientos y señales)
- *   → salida (con su estado)
+ *   → salida (con su estado, su ruta y su horario en cada parada)
  *   → por boleto: estaciones y trayecto del tramo, pasajero y comprador
  *     (tipo de documento, nacionalidad), usuario (estación o agencia),
  *     agencia, tipo de pago, moneda, factura certificada → boleto_venta
@@ -68,6 +72,8 @@ class Migrador
         private DependenciasLegado $dependencias,
         private TrayectosLegado $trayectos,
         private InferenciaBus $inferencia,
+        private RutasLegado $rutas,
+        private Horarios $horarios,
     ) {
         $this->oldPdo->setAttribute(
             \PDO::ATTR_ERRMODE,
@@ -129,6 +135,7 @@ class Migrador
                 $contadores = $antes;
                 $this->dependencias->restaurar($marca);
                 $this->trayectos->olvidar();
+                $this->rutas->olvidar();
                 $this->ventasPorFactura = $ventas;
                 $contadores["errores"]++;
                 if ($output) {
@@ -186,7 +193,8 @@ class Migrador
         );
 
         $ruta = $this->trayectos->deRuta($salida["ruta_codigo"] ?? null);
-        if ($ruta === null) {
+        $rutaNueva = $this->rutas->deCodigo($salida["ruta_codigo"] ?? null);
+        if ($ruta === null || $rutaNueva === null) {
             // `salida.trayecto_id` es obligatorio: sin ruta no hay salida.
             $this->omitir($contadores, "salida_sin_trayecto", "salida {$legacyId} (ruta " . ($salida["ruta_codigo"] ?: "—") . ")");
 
@@ -198,9 +206,9 @@ class Migrador
             $this->omitir($contadores, "bus_no_migrable", "bus {$salida["bus_codigo"]} (salida {$legacyId})");
         }
 
-        $data = $this->mapeador->salida($salida, $busId, $empresaId, $ruta->trayectoId);
+        $data = $this->mapeador->salida($salida, $busId, $empresaId, $ruta->trayectoId) + ["ruta_id" => $rutaNueva->id];
         $existente = $this->newConn->fetchAssociative(
-            "SELECT s.id, s.bus_id, s.estado, i.bus_id AS inferido FROM salida s
+            "SELECT s.id, s.bus_id, s.estado, s.ruta_id, i.bus_id AS inferido FROM salida s
                LEFT JOIN salida_bus_inferido i ON i.salida_id = s.id
               WHERE s.legacy_id = :lid",
             ["lid" => $legacyId],
@@ -230,8 +238,8 @@ class Migrador
 
         if ($existente === false) {
             $salidaId = (int) $this->newConn->fetchOne(
-                "INSERT INTO salida (fecha, bus_id, empresa_id, trayecto_id, estado, legacy_id, created_at, updated_at)
-                 VALUES (:fecha, :bus_id, :empresa_id, :trayecto_id, :estado, :legacy_id, NOW(), NOW()) RETURNING id",
+                "INSERT INTO salida (fecha, bus_id, empresa_id, trayecto_id, ruta_id, estado, legacy_id, created_at, updated_at)
+                 VALUES (:fecha, :bus_id, :empresa_id, :trayecto_id, :ruta_id, :estado, :legacy_id, NOW(), NOW()) RETURNING id",
                 $data,
             );
             $contadores["salida"]++;
@@ -252,7 +260,11 @@ class Migrador
                 );
                 $contadores["salida_actualizada"]++;
             }
+            if ((int) $existente["ruta_id"] !== $rutaNueva->id) {
+                $this->newConn->executeStatement("UPDATE salida SET ruta_id = :r WHERE id = :id", ["r" => $rutaNueva->id, "id" => $salidaId]);
+            }
         }
+        $this->horarios->fijar($salidaId);
         if ($inferencia !== null) {
             $this->newConn->executeStatement(
                 "INSERT INTO salida_bus_inferido (salida_id, bus_id, criterio, referencia_legado, creado_en)
@@ -267,6 +279,7 @@ class Migrador
             $boletos,
             $salidaId,
             $ruta,
+            $rutaNueva,
             $busId,
             $empresaId,
             $contadores,
@@ -336,6 +349,7 @@ class Migrador
         array $boletos,
         int $salidaId,
         RutaMigrada $ruta,
+        RutaLegada $rutaNueva,
         ?int $busId,
         ?int $empresaId,
         array &$contadores,
@@ -344,10 +358,13 @@ class Migrador
             return;
         }
 
-        $migrados = array_flip($this->newConn->fetchFirstColumn(
-            "SELECT legacy_id FROM boleto_asiento WHERE salida_id = :s AND legacy_id IS NOT NULL",
+        $migrados = [];
+        foreach ($this->newConn->fetchAllNumeric(
+            "SELECT legacy_id, orden_sube IS NULL FROM boleto_asiento WHERE salida_id = :s AND legacy_id IS NOT NULL",
             ["s" => $salidaId],
-        ));
+        ) as [$lid, $sinTramo]) {
+            $migrados[(string) $lid] = (bool) $sinTramo;
+        }
         $ocupados = [];
         foreach ($this->newConn->fetchAllNumeric(
             "SELECT asiento_id, trayecto_id FROM boleto_asiento WHERE salida_id = :s",
@@ -365,6 +382,13 @@ class Migrador
         foreach ($boletos as $old) {
             $lid = (string) $old["id"];
             if (isset($migrados[$lid])) {
+                if ($migrados[$lid]) {
+                    [$sube, $baja] = $this->tramoDelBoleto($old, $ruta, $rutaNueva);
+                    $this->newConn->executeStatement(
+                        "UPDATE boleto_asiento SET orden_sube = :s, orden_baja = :b WHERE salida_id = :salida AND legacy_id = :lid",
+                        ["s" => $sube, "b" => $baja, "salida" => $salidaId, "lid" => $lid],
+                    );
+                }
                 continue;
             }
             if ($busId === null) {
@@ -401,10 +425,11 @@ class Migrador
             }
 
             $ventaId = $this->ventaDelBoleto($old, $pasajero, $empresaId, $contadores);
+            [$sube, $baja] = $this->tramoDelBoleto($old, $ruta, $rutaNueva);
             $this->newConn->executeStatement(
-                'INSERT INTO boleto_asiento (salida_id, asiento_id, cliente_id, trayecto_id, estado, boleto_venta_id, precio_monto, precio_moneda, observacion, legacy_id)
-                 VALUES (:salida_id, :asiento_id, :cliente_id, :trayecto_id, :estado, :boleto_venta_id, :precio_monto, :precio_moneda, :observacion, :legacy_id)',
-                $this->mapeador->boletoAsiento(
+                'INSERT INTO boleto_asiento (salida_id, asiento_id, cliente_id, trayecto_id, estado, boleto_venta_id, precio_monto, precio_moneda, observacion, legacy_id, orden_sube, orden_baja)
+                 VALUES (:salida_id, :asiento_id, :cliente_id, :trayecto_id, :estado, :boleto_venta_id, :precio_monto, :precio_moneda, :observacion, :legacy_id, :orden_sube, :orden_baja)',
+                ["orden_sube" => $sube, "orden_baja" => $baja] + $this->mapeador->boletoAsiento(
                     $old,
                     $salidaId,
                     $asientoId,
@@ -429,6 +454,21 @@ class Migrador
                 ["libres" => ArrayParameterType::STRING, "ids" => ArrayParameterType::INTEGER],
             );
         }
+    }
+
+    /**
+     * Tramo `[sube, baja)` del boleto en el orden de las paradas de la ruta
+     * (ADR-030). Fuera de la ruta ocupa la salida completa, como el
+     * `Ocupacion` de la venta: ante la duda, no se vende dos veces.
+     *
+     * @return array{0: int, 1: int}
+     */
+    private function tramoDelBoleto(array $old, RutaMigrada $ruta, RutaLegada $rutaNueva): array
+    {
+        $origen = $this->dependencias->estacion($old["estacion_origen_id"] ?? null) ?? $ruta->origenId;
+        $destino = $this->dependencias->estacion($old["estacion_destino_id"] ?? null) ?? $ruta->destinoId;
+
+        return $rutaNueva->tramo($origen, $destino) ?? [0, $rutaNueva->ultima()];
     }
 
     /**

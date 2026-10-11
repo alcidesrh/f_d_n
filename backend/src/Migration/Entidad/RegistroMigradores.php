@@ -53,6 +53,7 @@ class RegistroMigradores
         "asiento",
         "senal",
         "trayecto",
+        "ruta",
         "tarifa",
     ];
 
@@ -210,6 +211,13 @@ class RegistroMigradores
                 "ruta",
                 ["trayecto", "subtrayecto"],
                 ["estacion"],
+            ),
+            "ruta" => $estatica(
+                "ruta",
+                "Rutas y paradas",
+                "ruta",
+                ["ruta", "parada", "parada_tiempo"],
+                ["estacion", "bus_clase"],
             ),
             "tarifa" => $estatica(
                 "tarifa",

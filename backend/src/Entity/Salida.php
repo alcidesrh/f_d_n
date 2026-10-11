@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiProperty;
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
 use App\Entity\Base\Traits\TimestampableEntityTrait;
@@ -43,6 +44,20 @@ class Salida extends Base
     #[ORM\JoinColumn(nullable: false)]
     private ?Trayecto $trayecto = null;
 
+    /** Ruta que recorre (ADR-030; obligatoria al cerrar la fase 5). */
+    #[ORM\ManyToOne]
+    private ?Ruta $ruta = null;
+
+    /**
+     * Horario en cada parada; lo escribe `App\Ruta\Horarios`.
+     *
+     * @var Collection<int, SalidaParada>
+     */
+    #[ApiProperty(readable: false, writable: false)]
+    #[ORM\OneToMany(targetEntity: SalidaParada::class, mappedBy: "salida", cascade: ["remove"])]
+    #[ORM\OrderBy(["orden" => "ASC"])]
+    private Collection $horario;
+
     /** Quien programó la salida; nulo en las migradas del legado (no lo guardaba). */
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: true, onDelete: "SET NULL")]
@@ -51,6 +66,7 @@ class Salida extends Base
     public function __construct()
     {
         $this->boletoAsientos = new ArrayCollection();
+        $this->horario = new ArrayCollection();
     }
 
     public function getFecha(): ?\DateTime
@@ -184,5 +200,23 @@ class Salida extends Base
         $this->trayecto = $trayecto;
 
         return $this;
+    }
+
+    public function getRuta(): ?Ruta
+    {
+        return $this->ruta;
+    }
+
+    public function setRuta(?Ruta $ruta): static
+    {
+        $this->ruta = $ruta;
+
+        return $this;
+    }
+
+    /** @return Collection<int, SalidaParada> en orden */
+    public function getHorario(): Collection
+    {
+        return $this->horario;
     }
 }

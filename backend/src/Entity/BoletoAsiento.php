@@ -50,6 +50,13 @@ class BoletoAsiento extends Base
     #[ORM\JoinColumn(nullable: false)]
     private ?Trayecto $trayecto = null;
 
+    /** Tramo ocupado `[ordenSube, ordenBaja)` en el orden de las paradas de la ruta de la salida (ADR-030). */
+    #[ORM\Column(type: "smallint", nullable: true)]
+    private ?int $ordenSube = null;
+
+    #[ORM\Column(type: "smallint", nullable: true)]
+    private ?int $ordenBaja = null;
+
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
     private ?Cliente $cliente = null;
@@ -106,6 +113,28 @@ class BoletoAsiento extends Base
     public function setTrayecto(?Trayecto $trayecto): static
     {
         $this->trayecto = $trayecto;
+
+        return $this;
+    }
+
+    public function getOrdenSube(): ?int
+    {
+        return $this->ordenSube;
+    }
+
+    public function getOrdenBaja(): ?int
+    {
+        return $this->ordenBaja;
+    }
+
+    /** El tramo que ocupa, por orden de paradas de la ruta de la salida. */
+    public function ocuparTramo(int $sube, int $baja): static
+    {
+        if ($sube < 0 || $sube >= $baja) {
+            throw new \InvalidArgumentException("Tramo inválido: [{$sube}, {$baja}).");
+        }
+        $this->ordenSube = $sube;
+        $this->ordenBaja = $baja;
 
         return $this;
     }

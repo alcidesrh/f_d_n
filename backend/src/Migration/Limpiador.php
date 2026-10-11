@@ -9,7 +9,11 @@ class Limpiador
     private array $tables = [
         "boleto_asiento",
         "boleto",
+        "salida_parada",
         "salida",
+        "parada_tiempo",
+        "parada",
+        "ruta",
         "subtrayecto",
         "trayecto",
         "asiento",

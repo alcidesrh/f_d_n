@@ -84,6 +84,33 @@ class DependenciasLegado
     }
 
     /**
+     * Enclave de una parada o punta de ruta (ADR-030): como `estacion()`, pero
+     * una agencia que es parada de una ruta también es un lugar —el bus llega
+     * ahí (Belice City, Chetumal)—. Como vendedora sigue siendo `agencia()`.
+     */
+    public function lugar(mixed $legacyId): ?int
+    {
+        $id = $this->estacion($legacyId);
+        if ($id !== null || !is_numeric($legacyId) || (int) $legacyId <= 0) {
+            return $id;
+        }
+        $old = $this->legado->fila(
+            "SELECT e.*, d.nombre AS departamento_nombre FROM estacion e
+             LEFT JOIN departamento d ON d.id = e.departamento_id WHERE e.id = :id",
+            ["id" => (int) $legacyId],
+        );
+        if ($old === null) {
+            return null;
+        }
+
+        return $this->ids["enclave"][(int) $legacyId] = $this->insertar(
+            "enclave",
+            ["tipo" => "estacion"] + $this->mapeador->estacion($old),
+            "estacion_de_agencia",
+        );
+    }
+
+    /**
      * Agencia (estación tipo 4 del legado), como en la migración de
      * estáticos: el saldo actual entra como ajuste y sus usuarios ya migrados
      * quedan vinculados.
