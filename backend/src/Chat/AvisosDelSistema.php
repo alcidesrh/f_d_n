@@ -7,6 +7,7 @@ namespace App\Chat;
 use App\Entity\Salida;
 use App\Entity\Usuario;
 use App\Salida\SalidasAnuladas;
+use App\Venta\Agencia\DepositoRechazado;
 use App\Venta\Agencia\SaldoAcreditado;
 use App\Venta\Boleto\DatosBoleto;
 use Doctrine\ORM\EntityManagerInterface;
@@ -39,6 +40,28 @@ final class AvisosDelSistema
                 $this->chat->avisarSistema($usuarios, self::textoSaldo($e));
             }
         });
+    }
+
+    /** A los usuarios de la agencia: por qué no se acreditó su boleta. */
+    #[AsEventListener]
+    public function depositoRechazado(DepositoRechazado $e): void
+    {
+        $this->seguro(function () use ($e) {
+            $usuarios = $this->em->getRepository(Usuario::class)->findBy(["agencia" => $e->agenciaId]);
+            if ($usuarios !== []) {
+                $this->chat->avisarSistema($usuarios, self::textoRechazo($e));
+            }
+        });
+    }
+
+    public static function textoRechazo(DepositoRechazado $e): string
+    {
+        return sprintf(
+            "Se rechazó su depósito de %s (boleta %s): %s",
+            DatosBoleto::importe(new Money($e->importe, new Currency($e->moneda)))["texto"],
+            $e->numeroBoleta,
+            $e->motivo,
+        );
     }
 
     /** A la estación de origen de cada salida anulada, con la salida como tarjeta. */

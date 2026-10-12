@@ -4,6 +4,7 @@ namespace App\Migration;
 
 use App\Croquis\Croquis;
 use App\Entity\Enum\CanalVenta;
+use App\Entity\Enum\EstadoDepositoAgencia;
 use App\Entity\Enum\EstadoFacturacion;
 use App\Entity\Enum\EstadoSalida;
 use App\Entity\Enum\TipoBusSenal;
@@ -242,6 +243,35 @@ class Mapeador
             "porcentaje_bonificacion" => $porcentaje,
             "activo" => filter_var($old["activo"] ?? true, FILTER_VALIDATE_BOOL) ? "true" : "false",
             "legacy_id" => "estacion-" . (int) $old["id"],
+        ];
+    }
+
+    /**
+     * `agencia_deposito` del legado → `agencia_deposito` (ADR-034). La agencia
+     * y el usuario conservan su id; el estado 1/2/3 pasa al enum.
+     *
+     * @param array<string, mixed> $old fila de `agencia_deposito` (+ `moneda_sigla`)
+     */
+    public function depositoAgencia(array $old): array
+    {
+        $centavos = static fn(mixed $v) => (int) round(((float) ($v ?? 0)) * 100);
+        $creado = new \DateTimeImmutable((string) ($old["fecha_creacion"] ?? "now"));
+        $estado = EstadoDepositoAgencia::deLegado((int) ($old["estado_id"] ?? 1));
+
+        return [
+            "agencia" => (int) $old["estacion_id"],
+            "fecha" => (new \DateTimeImmutable((string) $old["fecha"]))->format("Y-m-d"),
+            "importe" => $centavos($old["importe"]),
+            "moneda" => strtoupper($this->truncate($old["moneda_sigla"] ?? null, 3) ?: "GTQ"),
+            "numero_boleta" => $this->truncate(trim((string) ($old["numero_boleta"] ?? "")), 30) ?: "s/n",
+            "aplica_bono" => filter_var($old["aplica_bono"] ?? true, FILTER_VALIDATE_BOOL) ? "true" : "false",
+            "bono" => $estado === EstadoDepositoAgencia::ACREDITADO ? $centavos($old["bono"]) : 0,
+            "observacion" => $this->truncate($old["observacion"] ?? null, 200),
+            "estado" => $estado->value,
+            "motivo_rechazo" => $this->truncate($old["motivo_rechazo"] ?? null, 200),
+            "usuario" => $old["usuario_creacion_id"] !== null ? (int) $old["usuario_creacion_id"] : null,
+            "creado_en" => $creado->format("Y-m-d H:i:s"),
+            "legacy_id" => "agencia_deposito-" . (int) $old["id"],
         ];
     }
 

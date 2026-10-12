@@ -39,13 +39,13 @@ function boleto(cambios: Partial<BoletoFila> = {}): BoletoFila {
 
 describe('listado de boletos', () => {
   it('arma la query sin los filtros vacíos', () => {
-    const f = { ...filtroInicial('2026-10-01', '2026-10-31'), id: 7, estados: ['emitido', 'chequeado'] as const, serie: '  ', origen: ' Quetzal ', clienteBoleto: { id: 3, label: 'Ana' } }
-    expect(aQuery({ ...f, estados: [...f.estados] }, paginaInicial())).toBe('desde=2026-10-01&hasta=2026-10-31&id=7&estado=emitido%2Cchequeado&origen=Quetzal&clienteBoleto=3&pagina=1&porPagina=15&orden=id&dir=desc')
+    const f = { ...filtroInicial('2026-10-01', '2026-10-31'), id: 7, estados: ['emitido', 'chequeado'] as const, serie: '  ', origen: 7, destino: 9 }
+    expect(aQuery({ ...f, estados: [...f.estados] }, paginaInicial())).toBe('desde=2026-10-01&hasta=2026-10-31&id=7&estado=emitido%2Cchequeado&origen=7&destino=9&pagina=1&porPagina=15&orden=id&dir=desc')
   })
 
   it('cuenta los filtros aplicados sin el rango', () => {
     expect(filtrosActivos(filtroInicial('2026-10-01', '2026-10-31'))).toBe(0)
-    expect(filtrosActivos({ ...filtroInicial(), estados: ['anulado'], asiento: 0, clienteDocumento: { id: 1, label: 'x' } })).toBe(3)
+    expect(filtrosActivos({ ...filtroInicial(), estados: ['anulado'], asiento: 0, origen: 4 })).toBe(3)
   })
 
   it('alterna el orden de una columna y vuelve a la primera página', () => {

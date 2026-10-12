@@ -2,7 +2,8 @@
   Sección "Saldo" del formulario genérico de Agencia (`formExtensions`):
   saldo, depósitos (con bonificación) y ajustes, y los últimos movimientos.
   El saldo no se edita en el formulario: cada cambio es un movimiento
-  (`AgenciaController`, permiso `agencia.acreditar`).
+  (`AgenciaController`, permiso `agencia.acreditar`). Un depósito de aquí
+  queda registrado y acreditado a la vez (ADR-034).
 -->
 <template>
   <div class="flex flex-col gap-4">
@@ -52,7 +53,7 @@
               validation="required"
               fluid
             />
-            <FormKit type="InputText" name="referencia" label="Boleta / referencia" fluid />
+            <FormKit type="InputText" name="referencia" label="Número de boleta" help="Obligatorio en un depósito." fluid />
           </div>
           <FormKit type="InputText" name="observacion" label="Observación" fluid />
         </div>

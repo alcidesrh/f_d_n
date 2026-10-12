@@ -58,6 +58,7 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     Row: typeof import('primevue/row')['default']
+    SalidaSelect: typeof import('./shared/ui/SalidaSelect.vue')['default']
     Select: typeof import('primevue/select')['default']
     SelectButton: typeof import('primevue/selectbutton')['default']
     Skeleton: typeof import('primevue/skeleton')['default']

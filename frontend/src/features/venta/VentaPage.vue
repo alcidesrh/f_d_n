@@ -43,7 +43,7 @@
             <Message v-if="store.parejas.some((p) => p.igual === false)" severity="warn" :closable="false">El precio del asiento elegido no coincide con el del boleto. Cambie de asiento, el tramo o marque «cobrar el trayecto completo» si así se vendió.</Message>
           </section>
 
-          <section class="panel flex flex-col gap-3">
+          <section class="panel flex flex-col">
             <div class="grid grid-cols-2 items-start gap-x-2 gap-y-1.5 md:gap-3 @xl:grid-cols-3">
               <div class="campo col-span-2 @xl:col-span-1">
                 <span class="text-sm font-medium">{{ store.porRango ? "Rango de salida" : "Fecha de salida" }}</span>
@@ -68,23 +68,26 @@
               </label>
             </div>
 
-            <div v-if="store.empresas.length > 1" class="flex flex-wrap items-center justify-end gap-2">
-              <span class="text-xs font-medium text-muted-color">Empresa:</span>
-              <button v-for="e in store.empresas" :key="e.id" type="button" class="rounded-full border px-2.5 py-1 text-ms font-medium" :class="store.empresaIds.includes(e.id) ? 'border-primary bg-primary text-primary-contrast' : 'border-surface-300 bg-transparent text-color'" :aria-pressed="store.empresaIds.includes(e.id)" @click="alternarEmpresa(e.id)">
+            <div v-if="store.empresas.length > 1" class="flex flex-wrap items-center justify-end gap-2 mb-3">
+              <button v-for="e in store.empresas" :key="e.id" type="button" class="rounded-full border px-2.5 py-1 text-xs font-semibold" :class="store.empresaIds.includes(e.id) ? 'border-primary bg-primary text-primary-contrast' : 'border-surface-300 bg-transparent text-color'" :aria-pressed="store.empresaIds.includes(e.id)" @click="alternarEmpresa(e.id)">
                 {{ e.nombre }}
               </button>
             </div>
-            <SalidasLista :salidas="store.salidasVisibles" :cargando="store.cargandoSalidas" :salida-id="store.salidaId" @elegir="elegirSalida" />
-            <div v-if="!store.porRango" class="flex items-center justify-between gap-2">
-              <Button :label="etiquetaDia(-1)" severity="secondary" text size="small" :disabled="store.cargandoSalidas" @click="moverDia(-1)">
+            <div class="relative">
+              <SalidasLista :salidas="salidasMostradas" :cargando="store.cargandoSalidas" :salida-id="store.salidaId" @elegir="elegirSalida" />
+              <!-- Flota en el borde entre la cabecera de la tabla y las salidas. -->
+              <Button v-if="anteriores.length && !store.porRango" :label="verAnteriores ? 'Ocultar anteriores' : `Ver anteriores (${anteriores.length})`" size="small" rounded severity="secondary" class="anteriores shadow-md" @click="verAnteriores = !verAnteriores" />
+            </div>
+            <div v-if="!store.porRango" class="flex items-center justify-between gap-2 mt-2">
+              <Button :label="etiquetaDia(-1)" severity="secondary" size="small" :disabled="store.cargandoSalidas" @click="moverDia(-1)">
                 <template #icon><icon name="chevron-left" class="mr-1" /></template>
               </Button>
-              <Button :label="etiquetaDia(1)" severity="secondary" text size="small" icon-pos="right" :disabled="store.cargandoSalidas" @click="moverDia(1)">
+              <Button :label="etiquetaDia(1)" severity="secondary" size="small" icon-pos="right" :disabled="store.cargandoSalidas" @click="moverDia(1)">
                 <template #icon><icon name="chevron-right" class="ml-1" /></template>
               </Button>
             </div>
           </section>
-          <divider class="my-[0px]! max-md:my-1!" />
+          <divider class="!" />
           <section class="panel flex flex-col gap-2 max-w-[50%]">
             <label class="font-medium" for="venta-cliente">{{ store.reasignacion ? "Cliente de la venta" : "Cliente (facturar a)" }}</label>
             <div v-if="store.reasignacion">
@@ -133,7 +136,7 @@
               <div v-if="store.cargandoDetalle" key="cargando">
                 <Skeleton height="20rem" />
               </div>
-              <div v-else-if="store.detalle" :key="`salida-${store.salidaId}`" class="flex flex-col gap-3">
+              <div v-else-if="store.detalle" :key="`salida-${store.salidaId}`" class="flex flex-col gap-3 tex-sm">
                 <Message v-if="store.noVendible" severity="warn" :closable="false">{{ store.noVendible }}</Message>
                 <BusMapLegend :items="leyenda" :conteos="conteos" />
                 <div class="overflow-x-auto mt-1 md:mt-4">
@@ -177,14 +180,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import BusMap from "@/shared/bus-map/BusMap.vue";
 import type { AsientoCroquis } from "@/core/croquis/types";
 import AsientoOcupadoPopover from "@/shared/bus-map/AsientoOcupadoPopover.vue";
 import AnularBoletosDialog from "@/shared/boleto/AnularBoletosDialog.vue";
 import BusMapLegend, { type ItemLeyenda } from "@/shared/bus-map/BusMapLegend.vue";
 import { conteosPorEstado, hora } from "@/core/venta/modelo";
-import type { Parada } from "@/core/venta/types";
+import type { Parada, SalidaResumen } from "@/core/venta/types";
 import ClienteBuscador from "./ClienteBuscador.vue";
 import CobroDialog from "./CobroDialog.vue";
 import FacturacionFallidaDialog from "./FacturacionFallidaDialog.vue";
@@ -233,6 +236,20 @@ function alMostrarCroquis() {
 function alternarEmpresa(id: number) {
   store.empresaIds = store.empresaIds.includes(id) ? store.empresaIds.filter((x) => x !== id) : [...store.empresaIds, id];
 }
+
+/** Hoy solo se ven las salidas que aún no han salido; cualquier otro día (o un rango), todas. */
+const ahora = ref(Date.now());
+const reloj = window.setInterval(() => (ahora.value = Date.now()), 60_000);
+onBeforeUnmount(() => window.clearInterval(reloj));
+const verAnteriores = ref(false);
+const esHoy = computed(() => !store.porRango && store.fecha.toDateString() === new Date(ahora.value).toDateString());
+const horaInicio = (r: SalidaResumen) => new Date(r.viaje?.sube.hora ?? r.salidaEstacion ?? r.salida).getTime();
+const anteriores = computed(() => (esHoy.value ? store.salidasVisibles.filter((r) => horaInicio(r) < ahora.value) : []));
+const salidasMostradas = computed(() => (esHoy.value && !verAnteriores.value ? store.salidasVisibles.filter((r) => horaInicio(r) >= ahora.value) : store.salidasVisibles));
+watch(
+  () => store.fecha.toDateString(),
+  () => (verAnteriores.value = false),
+);
 
 const conteos = computed(() => conteosPorEstado(store.detalle?.croquis ?? [], store.estadoAsiento));
 
@@ -372,6 +389,19 @@ async function reintentar(sinFactura: boolean) {
   /*border: 1px solid var(--p-content-border-color);*/
   /*border-radius: var(--p-content-border-radius, 0.75rem);*/
   padding: 1rem;
+}
+.anteriores {
+  position: absolute;
+  left: 50%;
+  top: 0.25rem;
+  z-index: 3;
+  transform: translateX(-50%);
+}
+@media (width >= 48rem) {
+  /* Justo bajo la cabecera de la tabla. */
+  .anteriores {
+    top: 2.75rem;
+  }
 }
 .campo {
   display: flex;

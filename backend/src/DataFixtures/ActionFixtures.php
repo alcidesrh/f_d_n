@@ -52,7 +52,8 @@ class ActionFixtures extends Fixture
             ['codigo' => 'venta.vender',      'recurso' => 'BoletoVenta', 'operacion' => 'create', 'grupo' => 'Venta', 'nombre' => 'Vender boletos (taquilla/agencia)'],
             ['codigo' => 'venta.cortesia',    'recurso' => 'BoletoVenta', 'operacion' => 'courtesy', 'grupo' => 'Venta', 'nombre' => 'Emitir cortesías (sin cobro)'],
             ['codigo' => 'venta.sin_factura', 'recurso' => 'BoletoVenta', 'operacion' => 'contingency', 'grupo' => 'Venta', 'nombre' => 'Vender sin factura electrónica (contingencia)'],
-            ['codigo' => 'agencia.acreditar', 'recurso' => 'Agencia', 'operacion' => 'credit', 'grupo' => 'Venta', 'nombre' => 'Acreditar/ajustar saldo de agencias'],
+            ['codigo' => 'agencia.acreditar', 'recurso' => 'Agencia', 'operacion' => 'credit', 'grupo' => 'Venta', 'nombre' => 'Acreditar/rechazar depósitos y ajustar saldo de agencias'],
+            ['codigo' => 'agencia.depositar', 'recurso' => 'Agencia', 'operacion' => 'deposit', 'grupo' => 'Venta', 'nombre' => 'Registrar depósitos y consultar saldos de agencias'],
             // Gestión de salidas (ADR-024)
             ['codigo' => 'salida.ver',      'recurso' => 'Salida', 'operacion' => 'read',   'grupo' => 'Salidas', 'nombre' => 'Ver salidas'],
             ['codigo' => 'salida.crear',    'recurso' => 'Salida', 'operacion' => 'create', 'grupo' => 'Salidas', 'nombre' => 'Programar salidas y administrar esquemas'],

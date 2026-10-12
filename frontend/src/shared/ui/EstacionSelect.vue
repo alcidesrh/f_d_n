@@ -17,6 +17,7 @@
     filter
     auto-filter-focus
     :show-clear="showClear"
+    :size="size"
     filter-placeholder="Buscar estación"
     empty-filter-message="Sin resultados"
     empty-message="Sin resultados"
@@ -77,8 +78,9 @@ const props = withDefaults(
     inputId?: string
     disabled?: boolean
     showClear?: boolean
+    size?: 'small' | 'large'
   }>(),
-  { propio: null, placeholder: 'Todas las estaciones', inputId: undefined, disabled: false, showClear: true },
+  { propio: null, placeholder: 'Todas las estaciones', inputId: undefined, disabled: false, showClear: true, size: undefined },
 )
 const emit = defineEmits<{ 'update:modelValue': [id: number | null] }>()
 

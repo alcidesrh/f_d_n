@@ -51,7 +51,7 @@
           <icon name="fullscreen" />
         </button>
         <button type="button" class="icon-btn header-chat" :aria-label="chat.noLeidos ? `Mensajes, ${chat.noLeidos} sin leer` : 'Mensajes'" v-tooltip.bottom="'Mensajes'" @click="invocarChat">
-          <icon name="forum-outline" />
+          <icon name="chat" />
           <span v-if="chat.noLeidos" class="header-chat__badge">{{ chat.noLeidos > 99 ? "99+" : chat.noLeidos }}</span>
         </button>
         <div style="position: relative">

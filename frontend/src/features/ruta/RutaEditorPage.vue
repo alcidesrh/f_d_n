@@ -11,7 +11,9 @@
   <div class="@container flex flex-col gap-4">
     <div class="flex flex-wrap items-center gap-2">
       <RouterLink :to="{ name: 'rutas' }" class="no-underline">
-        <Button label="Rutas" severity="secondary" text size="small"><template #icon><icon name="arrow-back" class="mr-1" /></template></Button>
+        <Button label="Rutas" severity="secondary" text size="small"
+          ><template #icon><icon name="arrow-back" class="mr-1" /></template
+        ></Button>
       </RouterLink>
       <span v-if="detalle?.codigo" class="text-xs text-muted-color">Código del legado: {{ detalle.codigo }}</span>
     </div>
@@ -46,7 +48,9 @@
 
         <section class="panel flex flex-col gap-3" aria-labelledby="ruta-paradas">
           <div class="flex flex-wrap items-center justify-between gap-2">
-            <h2 id="ruta-paradas" class="m-0 flex items-center gap-2 text-base font-semibold"><icon name="pin-drop" />Paradas <span class="text-sm font-normal text-muted-color">({{ form.paradas.length }})</span></h2>
+            <h2 id="ruta-paradas" class="m-0 flex items-center gap-2 text-base font-semibold">
+              <icon name="pin-drop" />Paradas <span class="text-sm font-normal text-muted-color">({{ form.paradas.length }})</span>
+            </h2>
             <span class="text-xs text-muted-color">Minutos y km desde el origen</span>
           </div>
 
@@ -68,9 +72,15 @@
                     <Button text rounded size="small" severity="secondary" :disabled="index === 0" v-tooltip.top="'Minutos por clase de bus'" :aria-label="`Minutos por clase de bus de la parada ${index + 1}`" :badge="row.tiempos.length ? String(row.tiempos.length) : undefined" @click="tiemposDe = index">
                       <template #icon><icon name="timer-outline" /></template>
                     </Button>
-                    <Button text rounded size="small" severity="secondary" :disabled="!puedeEditar || index === 0" aria-label="Subir la parada" @click="moverParada(index, -1)"><template #icon><icon name="arrow-upward" /></template></Button>
-                    <Button text rounded size="small" severity="secondary" :disabled="!puedeEditar || index === form.paradas.length - 1" aria-label="Bajar la parada" @click="moverParada(index, 1)"><template #icon><icon name="arrow-downward" /></template></Button>
-                    <Button text rounded size="small" severity="danger" :disabled="!puedeEditar || form.paradas.length <= 2" aria-label="Quitar la parada" @click="quitar(index)"><template #icon><icon name="close" /></template></Button>
+                    <Button text rounded size="small" severity="secondary" :disabled="!puedeEditar || index === 0" aria-label="Subir la parada" @click="moverParada(index, -1)"
+                      ><template #icon><icon name="arrow-upward" /></template
+                    ></Button>
+                    <Button text rounded size="small" severity="secondary" :disabled="!puedeEditar || index === form.paradas.length - 1" aria-label="Bajar la parada" @click="moverParada(index, 1)"
+                      ><template #icon><icon name="arrow-downward" /></template
+                    ></Button>
+                    <Button text rounded size="small" severity="danger" :disabled="!puedeEditar || form.paradas.length <= 2" aria-label="Quitar la parada" @click="quitar(index)"
+                      ><template #icon><icon name="close" /></template
+                    ></Button>
                   </div>
                 </div>
               </template>
@@ -95,7 +105,7 @@
 
       <section class="panel flex flex-col gap-2 min-w-0 @5xl:sticky @5xl:top-4 @5xl:self-start" aria-labelledby="ruta-mapa">
         <h2 id="ruta-mapa" class="m-0 flex items-center gap-2 text-base font-semibold"><icon name="map-outline" />Mapa</h2>
-        <MapaRuta :paradas="enMapa" />
+        <MapaRuta :paradas="enMapa" :enclaves="opciones?.lugares ?? []" />
         <p class="m-0 text-xs text-muted-color">Duración hasta el destino: {{ duracion(form.paradas[form.paradas.length - 1]?.minutos ?? null) }}</p>
       </section>
     </div>
@@ -106,7 +116,9 @@
         <div v-for="(t, i) in form.paradas[tiemposDe]!.tiempos" :key="i" class="flex items-center gap-2">
           <Select v-model="t.claseId" :options="opciones?.clases ?? []" option-label="nombre" option-value="id" filter placeholder="Clase" :disabled="!puedeEditar" class="flex-1 min-w-0" />
           <InputNumber v-model="t.minutos" :min="0" :use-grouping="false" suffix=" min" :disabled="!puedeEditar" class="w-28" input-class="w-full" />
-          <Button text rounded severity="danger" size="small" :disabled="!puedeEditar" aria-label="Quitar" @click="form.paradas[tiemposDe]!.tiempos.splice(i, 1)"><template #icon><icon name="close" /></template></Button>
+          <Button text rounded severity="danger" size="small" :disabled="!puedeEditar" aria-label="Quitar" @click="form.paradas[tiemposDe]!.tiempos.splice(i, 1)"
+            ><template #icon><icon name="close" /></template
+          ></Button>
         </div>
         <Button v-if="puedeEditar" label="Agregar clase" severity="secondary" outlined size="small" class="self-start" @click="form.paradas[tiemposDe]!.tiempos.push({ claseId: 0, minutos: form.paradas[tiemposDe]!.minutos ?? 0 })">
           <template #icon><icon name="add" class="mr-1" /></template>
@@ -216,7 +228,9 @@ onBeforeUnmount(() => observador?.disconnect());
   padding: 0 0.5rem;
   border: 1px solid var(--p-content-border-color);
   border-radius: var(--p-content-border-radius);
-  background: var(--p-content-background);
+  /*background: var(--p-content-background);*/
+
+  background-color: var(--p-surface-100);
 }
 .parada--medio,
 .parada--angosto {

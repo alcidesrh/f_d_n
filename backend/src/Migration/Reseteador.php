@@ -25,10 +25,12 @@ final class Reseteador
         private readonly EntityManagerInterface $em,
         private readonly Limpiador $limpiador,
         private readonly AsegurarUsuarioAdmin $asegurarUsuarioAdmin,
+        private readonly CoordenadasEnclaves $coordenadas,
     ) {}
 
     public function hard(): void
     {
+        $this->coordenadas->guardar();
         $conn = $this->em->getConnection();
         $conn->executeStatement("DROP SCHEMA public CASCADE");
         $conn->executeStatement("CREATE SCHEMA public");
@@ -43,6 +45,7 @@ final class Reseteador
 
     public function soft(): void
     {
+        $this->coordenadas->guardar();
         $this->limpiador->limpiar();
         $this->asegurarUsuarioAdmin->asegurar();
     }

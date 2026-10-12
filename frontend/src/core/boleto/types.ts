@@ -95,5 +95,6 @@ export interface OpcionesBoletos {
   hasta: string
   maxDias: number
   porPagina: number[]
+  estaciones: Array<{ id: number; nombre: string; departamento: string | null }>
   puede: PuedeBoleto
 }

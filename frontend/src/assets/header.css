@@ -9,7 +9,7 @@
   right: 0;
   height: var(--header-h);
   z-index: 50;
-  background: var(--p-content-background);
+  background: var(--bg);
   border-bottom: var(--border);
   display: flex;
   align-items: center;
@@ -64,13 +64,13 @@
 }
 .header-clock {
   position: relative;
-  font-family: "Rajdha";
+  font-family: "Rajdha", sans-serif;
   font-variant-numeric: tabular-nums;
   font-size: 1.3rem;
   @variant md {
     font-size: 1.8rem;
   }
-  font-weight: 700;
+  /*font-weight: 700;*/
   letter-spacing: 0.1em;
   color: var(--p-surface-500);
   white-space: nowrap;

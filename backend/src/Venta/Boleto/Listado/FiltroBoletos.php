@@ -39,8 +39,10 @@ final readonly class FiltroBoletos
         public ?AsientoClase $clase = null,
         public ?string $serieFactura = null,
         public ?int $numeroFactura = null,
-        public ?string $origen = null,
-        public ?string $destino = null,
+        /** Id de la estación (enclave) donde sube. */
+        public ?int $origen = null,
+        /** Id de la estación (enclave) donde baja. */
+        public ?int $destino = null,
         public ?string $referenciaExterna = null,
         public ?string $autorizacion = null,
         public ?int $clienteDocumento = null,
@@ -97,8 +99,8 @@ final readonly class FiltroBoletos
             clase: $clase === null ? null : (AsientoClase::tryFrom(strtoupper($clase)) ?? throw new VentaRechazada("La clase de asiento no es válida.", "parametro_invalido", 400)),
             serieFactura: self::texto($q["serie"] ?? null),
             numeroFactura: self::entero($q["factura"] ?? null, "el número de factura"),
-            origen: self::texto($q["origen"] ?? null),
-            destino: self::texto($q["destino"] ?? null),
+            origen: self::entero($q["origen"] ?? null, "el origen"),
+            destino: self::entero($q["destino"] ?? null, "el destino"),
             referenciaExterna: self::texto($q["referencia"] ?? null),
             autorizacion: self::texto($q["autorizacion"] ?? null),
             clienteDocumento: self::entero($q["clienteDocumento"] ?? null, "el cliente del documento"),

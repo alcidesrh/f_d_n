@@ -1,0 +1,177 @@
+{
+    "1": {
+        "nombre": "Guatemala",
+        "latitud": 14.631349,
+        "longitud": -90.512406
+    },
+    "2": {
+        "nombre": "Centra Norte",
+        "latitud": 14.646925,
+        "longitud": -90.451032
+    },
+    "3": {
+        "nombre": "Santa Elena, Flores, Peten",
+        "latitud": 16.920841,
+        "longitud": -89.893606
+    },
+    "4": {
+        "nombre": "Cruce de Morales",
+        "latitud": 15.501,
+        "longitud": -88.838
+    },
+    "5": {
+        "nombre": "Morales",
+        "latitud": 15.473591,
+        "longitud": -88.828462
+    },
+    "7": {
+        "nombre": "Melchor de Mencos",
+        "latitud": 17.058113,
+        "longitud": -89.15262
+    },
+    "9": {
+        "nombre": "Los Amates, Izabal",
+        "latitud": 15.256,
+        "longitud": -89.097
+    },
+    "10": {
+        "nombre": "San Luis",
+        "latitud": 16.13671,
+        "longitud": -89.47948
+    },
+    "11": {
+        "nombre": "Poptun, Peten",
+        "latitud": 16.331,
+        "longitud": -89.416
+    },
+    "12": {
+        "nombre": "Rio Dulce",
+        "latitud": 15.659133,
+        "longitud": -89.002974
+    },
+    "13": {
+        "nombre": "Rio Hondo",
+        "latitud": 15.09526,
+        "longitud": -89.58998
+    },
+    "14": {
+        "nombre": "Chal Santa Ana",
+        "latitud": 16.77305,
+        "longitud": -89.66878
+    },
+    "24": {
+        "nombre": "Belice",
+        "latitud": 17.494111,
+        "longitud": -88.184727
+    },
+    "26": {
+        "nombre": "El Progreso, Guastatoya",
+        "latitud": 14.91713,
+        "longitud": -90
+    },
+    "27": {
+        "nombre": "Dolores, Peten",
+        "latitud": 16.5118,
+        "longitud": -89.4161
+    },
+    "28": {
+        "nombre": "Gualan, Zacapa",
+        "latitud": 15.11952,
+        "longitud": -89.35721
+    },
+    "29": {
+        "nombre": "Cadenas, Modesto Mendez",
+        "latitud": 15.89521,
+        "longitud": -89.22934
+    },
+    "30": {
+        "nombre": "Chacte, Peten",
+        "latitud": 16,
+        "longitud": -89.5
+    },
+    "31": {
+        "nombre": "Chal, Peten",
+        "latitud": 16.6424389,
+        "longitud": -89.651321
+    },
+    "35": {
+        "nombre": "Teculutan, Zacapa",
+        "latitud": 15.05422,
+        "longitud": -89.75475
+    },
+    "36": {
+        "nombre": "Sanarate",
+        "latitud": 14.795,
+        "longitud": -90.192
+    },
+    "50": {
+        "nombre": "El Estor",
+        "latitud": 15.53333,
+        "longitud": -89.35
+    },
+    "54": {
+        "nombre": "Zacapa",
+        "latitud": 14.97138,
+        "longitud": -89.46475
+    },
+    "74": {
+        "nombre": "Aguilar Batres",
+        "latitud": 14.609202,
+        "longitud": -90.540054
+    },
+    "84": {
+        "nombre": "Turicentro Santa Isabel",
+        "latitud": 16.6419726,
+        "longitud": -89.6338564
+    },
+    "103": {
+        "nombre": "Cruce de San Juan",
+        "latitud": 16.6332692,
+        "longitud": -89.6060104
+    },
+    "110": {
+        "nombre": "Chetumal",
+        "latitud": 18.494553,
+        "longitud": -88.295496
+    },
+    "140": {
+        "nombre": "Guatemala Boletos a Melchor",
+        "latitud": 14.631349,
+        "longitud": -90.512406
+    },
+    "143": {
+        "nombre": "Centra Norte a Quetzaltenango, Xela",
+        "latitud": 14.646925,
+        "longitud": -90.451032
+    },
+    "144": {
+        "nombre": "Santa Elena Trans Rosita, Flores, Peten",
+        "latitud": 16.920841,
+        "longitud": -89.893606
+    },
+    "172": {
+        "nombre": "Aguilar Batres Web",
+        "latitud": 14.609202,
+        "longitud": -90.540054
+    },
+    "190": {
+        "nombre": "Los Amates Starbus",
+        "latitud": 15.256,
+        "longitud": -89.097
+    },
+    "191": {
+        "nombre": "Mayuelas Gualan StarBus",
+        "latitud": 15.11952,
+        "longitud": -89.35721
+    },
+    "194": {
+        "nombre": "El Estor StarBus",
+        "latitud": 15.53333,
+        "longitud": -89.35
+    },
+    "211": {
+        "nombre": "El Chal",
+        "latitud": 16.6424389,
+        "longitud": -89.651321
+    }
+}

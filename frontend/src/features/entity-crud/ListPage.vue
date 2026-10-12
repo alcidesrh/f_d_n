@@ -1,119 +1,69 @@
 <template>
-  <Teleport v-if="store" to="body" :disabled="!maximized">
-    <div class="list-page card" :class="{ 'is-maximized': maximized, 'is-fill': fill }" :aria-modal="maximized || undefined" :role="maximized ? 'dialog' : undefined">
-      <ListToolbar
-        v-if="features.toolbar"
-        :features="features"
-        :columns="store.columns"
-        :view="store.view"
-        :active-filters="filters.active.value.length"
-        :filter-panel="cardsMode"
-        :selection-mode="modoSeleccion"
-        :selected-count="selectedRows.length"
-        :acciones="enSelector ? [] : accionesDisponibles"
-        :maximized="maximized"
-        :configurable="configurable && !enSelector"
-        @toggle-selection="toggleSelectionMode"
-        @clear-selection="setSelection([])"
-        @share="compartir = true"
-        @accion="ejecutarAccion"
-        @column-visible="setColumnVisible"
-        @show-all-columns="showAllColumns"
-        @toggle-filters="store.view.filtersOpen = !store.view.filtersOpen"
-        @density="store.view.density = $event"
-        @layout="store.view.layout = $event"
-        @maximize="maximized = !maximized"
-        @reset="resetView"
-        @configure="emit('configure')"
-      >
-        <template #start>
-          <div v-if="filters.active.value.length" class="list-chips" aria-label="Filtros aplicados">
-            <span v-for="field in filters.active.value" :key="field" class="list-chip">
-              <span class="text-surface-500">{{ titleOf(field) }}:</span>
-              <span class="truncate">{{ filters.describe(field) }}</span>
-              <button type="button" class="list-chip__x" :aria-label="`Quitar filtro ${titleOf(field)}`" @click="removeFilter(field)"><icon name="close" size="0.85rem" /></button>
-            </span>
-            <SelectButton v-if="filters.active.value.length > 1" :model-value="store.view.filterMode" :options="FILTER_MODES" option-label="label" option-value="value" :allow-empty="false" size="small" aria-label="Cómo se combinan los filtros" @update:model-value="filters.setMode($event)" />
-            <Button label="Limpiar" size="small" text severity="secondary" @click="removeFilter()" />
-          </div>
-        </template>
-      </ListToolbar>
+  <div>
+    <Teleport v-if="store" to="body" :disabled="!maximized">
+      <div class="list-page card" :class="{ 'is-maximized': maximized, 'is-fill': fill }" :aria-modal="maximized || undefined" :role="maximized ? 'dialog' : undefined">
+        <ListToolbar v-if="features.toolbar" :features="features" :columns="store.columns" :view="store.view" :active-filters="filters.active.value.length" :filter-panel="cardsMode" :selection-mode="modoSeleccion" :selected-count="selectedRows.length" :acciones="enSelector ? [] : accionesDisponibles" :maximized="maximized" :configurable="configurable && !enSelector" @toggle-selection="toggleSelectionMode" @clear-selection="setSelection([])" @share="compartir = true" @accion="ejecutarAccion" @column-visible="setColumnVisible" @show-all-columns="showAllColumns" @toggle-filters="store.view.filtersOpen = !store.view.filtersOpen" @density="store.view.density = $event" @layout="store.view.layout = $event" @maximize="maximized = !maximized" @reset="resetView" @configure="emit('configure')">
+          <template #start>
+            <div v-if="filters.active.value.length" class="list-chips" aria-label="Filtros aplicados">
+              <span v-for="field in filters.active.value" :key="field" class="list-chip">
+                <span class="text-surface-500">{{ titleOf(field) }}:</span>
+                <span class="truncate">{{ filters.describe(field) }}</span>
+                <button type="button" class="list-chip__x" :aria-label="`Quitar filtro ${titleOf(field)}`" @click="removeFilter(field)"><icon name="close" size="0.85rem" /></button>
+              </span>
+              <SelectButton v-if="filters.active.value.length > 1" :model-value="store.view.filterMode" :options="FILTER_MODES" option-label="label" option-value="value" :allow-empty="false" size="small" aria-label="Cómo se combinan los filtros" @update:model-value="filters.setMode($event)" />
+              <Button label="Limpiar" size="small" text severity="secondary" @click="removeFilter()" />
+            </div>
+          </template>
+        </ListToolbar>
 
-      <!-- En tarjetas no hay cabecera: filtros y orden van en este panel (botón Filtros de la barra). -->
-      <div v-if="cardsMode && store.view.filtersOpen && (features.filter || features.sort)" class="list-panel">
-        <label v-for="column in filterableColumns" :key="column.field" class="list-panel__field">
-          <span>{{ titleOf(column.field) }}</span>
-          <ListFilterField :kind="filters.kindOf(column.field)" :label="titleOf(column.field)" :model-value="filters.values[column.field]" :options="filters.optionsFor(column.field)" :multiple="filters.isMulti(column.field)" @update:model-value="filters.set(column.field, $event)" />
-        </label>
-        <div v-if="features.sort && sortableColumns.length" class="list-panel__field">
-          <span>Ordenar por</span>
-          <div class="flex gap-1">
-            <Select :model-value="currentSort?.field ?? null" :options="sortableColumns.map((c) => ({ label: titleOf(c.field), value: c.field }))" option-label="label" option-value="value" placeholder="Sin orden" show-clear size="small" fluid @update:model-value="setSort($event, currentSort?.dir ?? 'asc')" />
-            <Button v-if="currentSort" size="small" severity="secondary" outlined :aria-label="currentSort.dir === 'asc' ? 'Ascendente' : 'Descendente'" @click="setSort(currentSort.field, currentSort.dir === 'asc' ? 'desc' : 'asc')">
-              <icon :name="currentSort.dir === 'asc' ? 'arrow-upward' : 'arrow-downward'" size="1rem" />
-            </Button>
+        <!-- En tarjetas no hay cabecera: filtros y orden van en este panel (botón Filtros de la barra). -->
+        <div v-if="cardsMode && store.view.filtersOpen && (features.filter || features.sort)" class="list-panel">
+          <label v-for="column in filterableColumns" :key="column.field" class="list-panel__field">
+            <span>{{ titleOf(column.field) }}</span>
+            <ListFilterField :kind="filters.kindOf(column.field)" :label="titleOf(column.field)" :model-value="filters.values[column.field]" :options="filters.optionsFor(column.field)" :multiple="filters.isMulti(column.field)" @update:model-value="filters.set(column.field, $event)" />
+          </label>
+          <div v-if="features.sort && sortableColumns.length" class="list-panel__field">
+            <span>Ordenar por</span>
+            <div class="flex gap-1">
+              <Select :model-value="currentSort?.field ?? null" :options="sortableColumns.map((c) => ({ label: titleOf(c.field), value: c.field }))" option-label="label" option-value="value" placeholder="Sin orden" show-clear size="small" fluid @update:model-value="setSort($event, currentSort?.dir ?? 'asc')" />
+              <Button v-if="currentSort" size="small" severity="secondary" outlined :aria-label="currentSort.dir === 'asc' ? 'Ascendente' : 'Descendente'" @click="setSort(currentSort.field, currentSort.dir === 'asc' ? 'desc' : 'asc')">
+                <icon :name="currentSort.dir === 'asc' ? 'arrow-upward' : 'arrow-downward'" size="1rem" />
+              </Button>
+            </div>
           </div>
         </div>
+
+        <DataGrid ref="grid" class="list-page__grid" :columns="gridColumns" :rows="store.items" :row-key="claveFila" :loading="loading.loading" :density="store.view.density" :layout="store.view.layout" :selectable="modoSeleccion" :selected-keys="selectedKeys" :actions="actionsWidth" :reorderable="features.reorder" :resizable="features.resize" :hideable="features.columns && visibleColumns.length > 1" :editing="editing ? { row: editing.row, column: editing.field } : null" :row-clickable="modoSeleccion" :max-height="fill ? undefined : 'min(72dvh, 56rem)'" @mode="cardsMode = $event === 'cards'" @sort="toggleSort" @filter="toggleFilter" @hide="(field) => setColumnVisible(field, false)" @reorder="onColumnReorder" @resize="onColumnResize" @row-click="onRowClick" @cell-click="startEdit" @toggle-row="(row, on) => setSelection(toggleRows(selectedRows, [row], on, claveFila))" @toggle-page="(on) => setSelection(toggleRows(selectedRows, store!.items, on, claveFila))">
+          <template #cell="{ row, column }">
+            <ListCell :column="configOf(column.key)" :entity="entityName" :data="row" :filter-value="filters.highlightFor(column.key)" />
+          </template>
+          <template #editor="{ column }">
+            <ListCellEditor v-if="editing" :entity="entityName" :column="configOf(column.key)" :data="editing.draft" @commit="commitEdit" @cancel="editing = null" />
+          </template>
+          <template #filter="{ column }">
+            <ListFilterField :kind="filters.kindOf(column.key)" :label="column.label" :model-value="filters.values[column.key]" :options="filters.optionsFor(column.key)" :multiple="filters.isMulti(column.key)" :input-id="`${uid}-f-${column.key}`" @update:model-value="filters.set(column.key, $event)" />
+          </template>
+          <template #actions="{ row }">
+            <ListActions :item="row" :actions="extraActions" :can-edit="canEditRow" :can-delete="canDeleteRow" @edit="onEdit" @delete="askDelete" @action="openAction" />
+          </template>
+          <template #empty>
+            <icon :name="filters.active.value.length ? 'filter-alt-off-outline' : 'inbox-outline'" size="2rem" />
+            <span>{{ filters.active.value.length ? "Ningún registro coincide con los filtros" : "Sin registros" }}</span>
+            <Button v-if="filters.active.value.length" label="Quitar filtros" size="small" text @click="removeFilter()" />
+          </template>
+        </DataGrid>
+
+        <ListFooter v-if="features.pagination" :pagination="store.pagination" :count="store.items.length" :page-sizes="pageSizes" @page="onPage" />
+        <EnviarPorChatDialog v-if="!enSelector" v-model:visible="compartir" :referencias="referencias" @enviado="toggleSelectionMode" />
+        <component :is="activeAction.component" v-if="activeAction" v-model:visible="actionVisible" :item="activeAction.item" @after-hide="activeAction = null" />
+        <component :is="activeBulk.component" v-if="activeBulk" v-model:visible="bulkVisible" :ids="activeBulk.ids" @listo="alTerminarAccion" @after-hide="activeBulk = null" />
       </div>
+    </Teleport>
 
-      <DataGrid
-        ref="grid"
-        class="list-page__grid"
-        :columns="gridColumns"
-        :rows="store.items"
-        :row-key="claveFila"
-        :loading="loading.loading"
-        :density="store.view.density"
-        :layout="store.view.layout"
-        :selectable="modoSeleccion"
-        :selected-keys="selectedKeys"
-        :actions="actionsWidth"
-        :reorderable="features.reorder"
-        :resizable="features.resize"
-        :hideable="features.columns && visibleColumns.length > 1"
-        :editing="editing ? { row: editing.row, column: editing.field } : null"
-        :row-clickable="modoSeleccion"
-        :max-height="fill ? undefined : 'min(72dvh, 56rem)'"
-        @mode="cardsMode = $event === 'cards'"
-        @sort="toggleSort"
-        @filter="toggleFilter"
-        @hide="(field) => setColumnVisible(field, false)"
-        @reorder="onColumnReorder"
-        @resize="onColumnResize"
-        @row-click="onRowClick"
-        @cell-click="startEdit"
-        @toggle-row="(row, on) => setSelection(toggleRows(selectedRows, [row], on, claveFila))"
-        @toggle-page="(on) => setSelection(toggleRows(selectedRows, store!.items, on, claveFila))"
-      >
-        <template #cell="{ row, column }">
-          <ListCell :column="configOf(column.key)" :entity="entityName" :data="row" :filter-value="filters.highlightFor(column.key)" />
-        </template>
-        <template #editor="{ column }">
-          <ListCellEditor v-if="editing" :entity="entityName" :column="configOf(column.key)" :data="editing.draft" @commit="commitEdit" @cancel="editing = null" />
-        </template>
-        <template #filter="{ column }">
-          <ListFilterField :kind="filters.kindOf(column.key)" :label="column.label" :model-value="filters.values[column.key]" :options="filters.optionsFor(column.key)" :multiple="filters.isMulti(column.key)" :input-id="`${uid}-f-${column.key}`" @update:model-value="filters.set(column.key, $event)" />
-        </template>
-        <template #actions="{ row }">
-          <ListActions :item="row" :actions="extraActions" :can-edit="canEditRow" :can-delete="canDeleteRow" @edit="onEdit" @delete="askDelete" @action="openAction" />
-        </template>
-        <template #empty>
-          <icon :name="filters.active.value.length ? 'filter-alt-off-outline' : 'inbox-outline'" size="2rem" />
-          <span>{{ filters.active.value.length ? 'Ningún registro coincide con los filtros' : 'Sin registros' }}</span>
-          <Button v-if="filters.active.value.length" label="Quitar filtros" size="small" text @click="removeFilter()" />
-        </template>
-      </DataGrid>
-
-      <ListFooter v-if="features.pagination" :pagination="store.pagination" :count="store.items.length" :page-sizes="pageSizes" @page="onPage" />
-      <EnviarPorChatDialog v-if="!enSelector" v-model:visible="compartir" :referencias="referencias" @enviado="toggleSelectionMode" />
-      <component :is="activeAction.component" v-if="activeAction" v-model:visible="actionVisible" :item="activeAction.item" @after-hide="activeAction = null" />
-      <component :is="activeBulk.component" v-if="activeBulk" v-model:visible="bulkVisible" :ids="activeBulk.ids" @listo="alTerminarAccion" @after-hide="activeBulk = null" />
+    <div v-else class="card flex items-center justify-center py-12">
+      <ProgressSpinner v-if="loading.loading" style="width: 2rem; height: 2rem" />
+      <span v-else class="text-surface-500">Sin entidad</span>
     </div>
-  </Teleport>
-
-  <div v-else class="card flex items-center justify-center py-12">
-    <ProgressSpinner v-if="loading.loading" style="width: 2rem; height: 2rem" />
-    <span v-else class="text-surface-500">Sin entidad</span>
   </div>
 </template>
 
@@ -416,10 +366,7 @@ const activeBulk = shallowRef<{ component: Component; ids: number[] } | null>(nu
 const bulkVisible = ref(false);
 
 /** Eliminar (si se puede) y las de la entidad que el usuario puede hacer. */
-const accionesDisponibles = computed(() => [
-  ...(features.value.bulkDelete ? [ELIMINAR] : []),
-  ...(entityBulkActions[entityName.value] ?? []).filter((a) => !a.permiso || permisosBoleto[a.permiso]),
-]);
+const accionesDisponibles = computed(() => [...(features.value.bulkDelete ? [ELIMINAR] : []), ...(entityBulkActions[entityName.value] ?? []).filter((a) => !a.permiso || permisosBoleto[a.permiso])]);
 
 async function ejecutarAccion(accion: EntityBulkAction) {
   if (accion.key === ELIMINAR.key) return confirmBulkDelete();

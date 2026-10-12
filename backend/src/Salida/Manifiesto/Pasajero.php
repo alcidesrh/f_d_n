@@ -27,6 +27,8 @@ final readonly class Pasajero
         /** Dónde se emitió: estación, agencia o página web. */
         public string $emitidoEn,
         public ?string $observacion,
+        /** Vendido un día antes de la salida (o antes): el "Prepagado" del manifiesto de boletos. */
+        public bool $prepagado = false,
     ) {}
 
     public function etiquetaEstado(): string
@@ -41,6 +43,18 @@ final readonly class Pasajero
     public function importe(): string
     {
         return Manifiesto::importe($this->cobrado(), $this->moneda);
+    }
+
+    /** Importe cobrado el día de la salida (el "Importe día" del manifiesto de boletos). */
+    public function importeDia(): string
+    {
+        return Manifiesto::importe($this->prepagado ? 0 : $this->cobrado(), $this->moneda);
+    }
+
+    /** Importe cobrado antes del día de la salida. */
+    public function importePrepagado(): string
+    {
+        return Manifiesto::importe($this->prepagado ? $this->cobrado() : 0, $this->moneda);
     }
 
     /** Importe que cuenta para el ingreso (los boletos sin cobro valen 0). */

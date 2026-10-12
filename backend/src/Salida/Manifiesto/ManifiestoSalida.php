@@ -92,6 +92,7 @@ final class ManifiestoSalida
                 default => "—",
             },
             $b->getObservacion() ? trim($b->getObservacion()) : null,
+            $venta->getCreada() !== null && $venta->getCreada()->format("Y-m-d") < $b->getSalida()->getFecha()->format("Y-m-d"),
         );
     }
 

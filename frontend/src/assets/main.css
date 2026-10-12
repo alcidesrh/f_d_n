@@ -98,6 +98,9 @@ svg[stroke-width] path {
 .fade-leave-to {
   opacity: 0;
 }
+button {
+  cursor: pointer;
+}
 
 /* ============================= RESPONSIVE =============================
    Sin reglas por página aquí. Breakpoints en tokens.css, reglas y patrones

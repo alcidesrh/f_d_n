@@ -14,7 +14,10 @@
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-const props = defineProps<{ paradas: Array<{ nombre: string; latitud: number | null; longitud: number | null }> }>();
+const props = defineProps<{
+  paradas: Array<{ nombre: string; latitud: number | null; longitud: number | null }>;
+  enclaves?: Array<{ nombre: string; latitud: number | null; longitud: number | null }>;
+}>();
 
 const CENTRO: L.LatLngExpression = [15.5, -90.3];
 const mapaEl = ref<HTMLElement | null>(null);
@@ -25,17 +28,25 @@ let observador: ResizeObserver | null = null;
 const conCoordenadas = computed(() => props.paradas.map((p, i) => ({ ...p, n: i + 1 })).filter((p) => p.latitud !== null && p.longitud !== null));
 const sinCoordenadas = computed(() => props.paradas.filter((p) => p.latitud === null || p.longitud === null).map((p) => p.nombre));
 
+const escapar = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+
 function dibujar() {
   if (!mapa || !capa) return;
   capa.clearLayers();
   // Leaflet pone el color como atributo SVG, donde `var()` no se resuelve.
   const color = getComputedStyle(mapaEl.value!).getPropertyValue("--p-primary-color").trim() || "#3b82f6";
   const puntos = conCoordenadas.value.map((p) => [p.latitud!, p.longitud!] as L.LatLngTuple);
+  // Todos los enclaves con su nombre; la ruta se dibuja encima.
+  for (const e of props.enclaves ?? []) {
+    if (e.latitud === null || e.longitud === null) continue;
+    L.circleMarker([e.latitud, e.longitud], { radius: 4, color: "#64748b", weight: 2, fillColor: "#fff", fillOpacity: 1 })
+      .bindTooltip(escapar(e.nombre), { permanent: true, direction: "right", offset: [8, 0], className: "parada-chip", interactive: false })
+      .addTo(capa);
+  }
   if (puntos.length > 1) L.polyline(puntos, { color, weight: 3, opacity: 0.85 }).addTo(capa);
   conCoordenadas.value.forEach((p, i) => {
     const punta = i === 0 || i === conCoordenadas.value.length - 1;
     L.circleMarker([p.latitud!, p.longitud!], { radius: punta ? 7 : 5, color, weight: 2, fillColor: punta ? color : "#fff", fillOpacity: 1 })
-      .bindTooltip(`${p.n}. ${p.nombre}`, { direction: "right" })
       .addTo(capa!);
   });
   if (puntos.length) mapa.fitBounds(L.latLngBounds(puntos), { padding: [24, 24], maxZoom: 11 });
@@ -51,7 +62,7 @@ onMounted(() => {
   dibujar();
 });
 
-watch(() => props.paradas, dibujar, { deep: true });
+watch(() => [props.paradas, props.enclaves], dibujar, { deep: true });
 
 onBeforeUnmount(() => {
   observador?.disconnect();
@@ -63,5 +74,35 @@ onBeforeUnmount(() => {
 .mapa-ruta {
   height: clamp(16rem, 45vh, 32rem);
   border: 1px solid var(--p-content-border-color);
+}
+</style>
+
+<style>
+/* Mismo chip que los nombres de enclaves del seguimiento. */
+.leaflet-tooltip.parada-chip {
+  padding: 1px 6px;
+  font-size: 10px;
+  line-height: 1.4;
+  font-weight: 700;
+  color: var(--p-surface-800);
+  background: #fff;
+  border: 1px solid var(--p-surface-400);
+  border-radius: 4px;
+  box-shadow: none;
+  white-space: nowrap;
+}
+.leaflet-tooltip.parada-chip.leaflet-tooltip-right::before {
+  border-right-color: var(--p-surface-400);
+}
+.leaflet-tooltip.parada-chip.leaflet-tooltip-right::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  margin-top: -5px;
+  margin-left: -9px;
+  border: 5px solid transparent;
+  border-right-color: #fff;
+  pointer-events: none;
 }
 </style>

@@ -25,6 +25,8 @@ class PermisoFixtures extends Fixture
             'Venta Taquilla'   => ['venta.vender'],
             'Supervision Venta' => ['venta.vender', 'venta.cortesia', 'venta.sin_factura', 'agencia.acreditar'],
             'Administracion Pagina Web' => ['pagina.administrar'],
+            'Depositos de Agencia' => ['agencia.depositar'],
+            'Acreditacion de Depositos de Agencia' => ['agencia.depositar', 'agencia.acreditar'],
             'Gestion Salidas'  => ['salida.ver', 'salida.crear', 'salida.editar', 'salida.cancelar', 'salida.eliminar'],
             'Abordaje de Salidas' => ['boleto.chequear', 'salida.abordar', 'salida.iniciar', 'salida.finalizar'],
         ];

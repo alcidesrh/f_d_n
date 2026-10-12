@@ -158,6 +158,36 @@ export const router = createRouter({
       },
     },
     {
+      path: '/agencias/depositos/registrar',
+      name: 'agencia-depositos-registrar',
+      component: () => import('@/features/agencia/RegistrarDepositoPage.vue'),
+      meta: {
+        title: 'Registrar depósito de agencia',
+        label: 'Registrar depósito',
+        icon: 'savings-outline',
+      },
+    },
+    {
+      path: '/agencias/depositos',
+      name: 'agencia-depositos',
+      component: () => import('@/features/agencia/DepositosPage.vue'),
+      meta: {
+        title: 'Depósitos de agencia',
+        label: 'Buscar depósito',
+        icon: 'account-balance-outline',
+      },
+    },
+    {
+      path: '/agencias/saldos',
+      name: 'agencia-saldos',
+      component: () => import('@/features/agencia/SaldosAgenciaPage.vue'),
+      meta: {
+        title: 'Saldos de agencia',
+        label: 'Consultar saldos',
+        icon: 'account-balance-wallet-outline',
+      },
+    },
+    {
       path: '/reporte/cuadre-venta-boletos',
       name: 'reporte-cuadre-venta-boletos',
       component: () => import('@/features/reporte/CuadreVentaBoletosPage.vue'),
@@ -175,6 +205,28 @@ export const router = createRouter({
         title: 'Detalle de factura de boletos',
         label: 'Detalle de facturas',
         icon: 'receipt-long-outline',
+      },
+    },
+    {
+      path: '/reporte/boleto-manifiesto',
+      name: 'reporte-boleto-manifiesto',
+      component: () => import('@/features/reporte/ManifiestoSalidaPage.vue'),
+      props: { tipo: 'boleto' },
+      meta: {
+        title: 'Boleto Manifiesto',
+        label: 'Boleto Manifiesto',
+        icon: 'description-outline',
+      },
+    },
+    {
+      path: '/reporte/boleto-manifiesto-piloto',
+      name: 'reporte-boleto-manifiesto-piloto',
+      component: () => import('@/features/reporte/ManifiestoSalidaPage.vue'),
+      props: { tipo: 'piloto' },
+      meta: {
+        title: 'Boleto Manifiesto Piloto',
+        label: 'Boleto Manifiesto Piloto',
+        icon: 'sports-motorsports-outline',
       },
     },
     {

@@ -30,8 +30,8 @@
   flex: 1;
   min-width: 0;
   overflow-y: auto;
-  background: var(--p-content-background);
-  /*var(--p-surface-50);*/
+  /*background: var(--p-content-background);*/
+  background: var(--bg2);
   container-type: inline-size;
   container-name: main;
   /* Desde `lg` los sidebars fijos empujan el contenido; debajo son drawers. */

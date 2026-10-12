@@ -43,7 +43,7 @@ final class FiltroBoletosTest extends TestCase
             "estado" => "emitido,chequeado,emitido",
             "clase" => "b",
             "documento" => "voucher",
-            "origen" => "  Quetzal ",
+            "origen" => " 7 ",
             "serie" => "",
             "pagina" => "0",
             "porPagina" => "33",
@@ -55,7 +55,7 @@ final class FiltroBoletosTest extends TestCase
         $this->assertSame([EstadoBoletoAsiento::EMITIDO, EstadoBoletoAsiento::CHEQUEADO], $f->estados);
         $this->assertSame(AsientoClase::B, $f->clase);
         $this->assertSame("voucher", $f->documento);
-        $this->assertSame("Quetzal", $f->origen);
+        $this->assertSame(7, $f->origen);
         $this->assertNull($f->serieFactura);
         $this->assertSame(1, $f->pagina);
         // Un tamaño que no se ofrece vuelve al de siempre.

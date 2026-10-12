@@ -21,28 +21,28 @@
     </template>
 
     <template #cell="{ row, column }">
-      <div v-if="column.key === 'salida'" class="min-w-0 leading-tight">
-        <div class="font-medium tabular-nums">{{ horaDe(s(row)) }}</div>
-        <div v-if="desdeOrigen(s(row))" class="truncate text-xs text-muted-color" :title="desdeOrigen(s(row))!">{{ desdeOrigen(s(row)) }}</div>
+      <div v-if="column.key === 'salida'" class="celda min-w-0 leading-tight">
+        <div class="font-medium tabular-nums whitespace-nowrap">{{ horaDe(s(row)) }}</div>
+        <div v-if="desdeOrigen(s(row))" class="truncate text-xs text-muted-color desde" :title="desdeOrigen(s(row))!">{{ desdeOrigen(s(row)) }}</div>
       </div>
-      <div v-else-if="column.key === 'trayecto'" class="min-w-0 leading-tight">
+      <div v-else-if="column.key === 'trayecto'" class="celda min-w-0 leading-tight">
         <div class="truncate font-medium" :title="trayecto(s(row))">{{ trayecto(s(row)) }}</div>
         <div v-if="llegada(s(row))" class="truncate text-xs text-muted-color" :title="llegada(s(row))!">{{ llegada(s(row)) }}</div>
       </div>
-      <GridText v-else-if="column.key === 'empresa'" :text="s(row).empresa?.nombre ?? ''" />
+      <GridText v-else-if="column.key === 'empresa'" class="celda" :text="nombreEmpresa(s(row))" />
       <template v-else-if="column.key === 'bus'">
-        <span v-if="s(row).bus" class="truncate" :title="bus(s(row))">
+        <span v-if="s(row).bus" class="celda truncate" :title="bus(s(row))">
           {{ s(row).bus!.codigo }}<span v-if="s(row).bus!.gama" class="text-xs text-muted-color"> · {{ s(row).bus!.gama }}</span>
         </span>
         <icon v-else name="no_transfer" class="text-surface-500" size="1.2rem" title="Sin bus" />
       </template>
-      <span v-else-if="column.key === 'estado'" class="estado">{{ s(row).estado }}</span>
+      <span v-else-if="column.key === 'estado'" class="estado" :class="`estado--${s(row).estado}`" :title="s(row).estado">{{ s(row).estado.charAt(0).toUpperCase() }}</span>
       <span v-else-if="column.key === 'precios' && s(row).precios?.length" class="precios precios--columna">
         <span v-for="(p, i) in s(row).precios" :key="p.clase" :class="{ 'text-orange-600 mt-1': i }"
           ><b>{{ p.clase }}</b> {{ precioCorto(p.precio) }}</span
         >
       </span>
-      <span v-else-if="column.key === 'asientos' && s(row).capacidad" class="asientos asientos--valores">
+      <span v-else-if="column.key === 'asientos' && s(row).capacidad" class="celda asientos asientos--valores">
         <span class="asientos__vendidos">{{ s(row).vendidos ?? 0 }}</span>
         <span class="asientos__libres">{{ libres(s(row)) }}</span>
       </span>
@@ -56,7 +56,7 @@
         </div>
         <div class="tarjeta__linea text-xs text-muted-color">
           <span class="min-w-0 truncate">
-            <template v-if="llegada(s(row))">{{ llegada(s(row)) }} · </template><template v-if="desdeOrigen(s(row))">{{ desdeOrigen(s(row)) }} · </template>{{ s(row).empresa?.nombre ?? "—" }}
+            <template v-if="llegada(s(row))">{{ llegada(s(row)) }} · </template><template v-if="desdeOrigen(s(row))">{{ desdeOrigen(s(row)) }} · </template>{{ nombreEmpresa(s(row)) || "—" }}
           </span>
           <span v-if="s(row).precios?.length" class="precios">
             <span v-for="p in s(row).precios" :key="p.clase"
@@ -94,11 +94,11 @@ const props = defineProps<{
 const emit = defineEmits<{ elegir: [id: number] }>();
 
 const columns: GridColumn[] = [
-  { key: "salida", label: "Salida", width: "6rem" },
-  { key: "trayecto", label: "Viaje", minWidth: "10rem", width: "2fr" },
+  { key: "salida", label: "Hora", width: "7rem" },
+  { key: "trayecto", label: "Ruta", minWidth: "9rem", width: "1.5fr" },
   { key: "empresa", label: "Empresa", minWidth: "6rem" },
-  { key: "bus", label: "Bus", width: "5.5rem" },
-  { key: "estado", label: "Estado", width: "6rem" },
+  { key: "bus", label: "Bus", width: "6.5rem" },
+  { key: "estado", label: "Estado", width: "7rem" },
   { key: "precios", label: "Precio", width: "6.5rem" },
   { key: "asientos", label: "Asientos", width: "4.5rem", align: "center" },
 ];
@@ -133,6 +133,8 @@ const llegada = (r: SalidaResumen) => {
   const partes = [baja.hora ? `llega ${horaViaje(baja)}${dias > 0 ? ` (+${dias})` : ""}` : null, intermedias ? `${intermedias} parada${intermedias === 1 ? "" : "s"}` : "directo"];
   return partes.filter(Boolean).join(" · ");
 };
+/** "TRANSPORTES FUENTES" → "Transportes Fuentes". */
+const nombreEmpresa = (r: SalidaResumen) => (r.empresa?.nombre ?? "").toLocaleLowerCase("es").replace(/(^|[\s-])(\p{L})/gu, (_, sep: string, c: string) => sep + c.toLocaleUpperCase("es"));
 const bus = (r: SalidaResumen) => [r.bus?.codigo, r.bus?.gama].filter(Boolean).join(" · ");
 const libres = (r: SalidaResumen) => (r.capacidad ?? 0) - (r.vendidos ?? 0);
 /** "Q 100.00" → "Q 100": en la lista los centavos solo se ven si los hay. */
@@ -163,14 +165,50 @@ const precioCorto = (p: Importe | null) => (p ? p.texto.replace(/[.,]00$/, "") :
   border-radius: 0.5rem;
 }
 
+/* Fuera de móvil la tabla pasa a 1rem (los precios conservan su tamaño). */
+@media (min-width: 48rem) {
+  .celda,
+  .celda .desde {
+    font-size: 1rem;
+  }
+  .celda .asientos--valores,
+  .asientos--valores.celda {
+    font-size: 1rem;
+  }
+}
+
+/* Estado: inicial en un círculo del color del estado. */
 .estado {
-  width: fit-content;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.3rem;
-  font-size: 0.6rem;
-  font-weight: 500;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  display: inline-flex;
+  width: 1.75rem;
+  height: 1.75rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: var(--p-surface-200);
+  color: var(--p-surface-700);
+  font-size: 0.875rem;
+  cursor: default;
+}
+.estado--programada {
+  background: var(--p-blue-100);
+  color: var(--p-blue-700);
+}
+.estado--abordando {
+  background: var(--p-amber-100);
+  color: var(--p-amber-700);
+}
+.estado--iniciada {
+  background: var(--p-green-100);
+  color: var(--p-green-700);
+}
+.estado--finalizada {
+  background: var(--p-surface-200);
+  color: var(--p-surface-700);
+}
+.estado--cancelada {
+  background: var(--p-red-100);
+  color: var(--p-red-700);
 }
 
 /* Precio por clase de asiento: la letra en gris, el monto en negrita. */
@@ -179,7 +217,7 @@ const precioCorto = (p: Importe | null) => (p ? p.texto.replace(/[.,]00$/, "") :
   flex: none;
   gap: 0.5rem;
   font-size: 0.8125rem;
-  font-weight: 600;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -207,7 +245,6 @@ const precioCorto = (p: Importe | null) => (p ? p.texto.replace(/[.,]00$/, "") :
 }
 .asientos--valores {
   font-size: 0.8125rem;
-  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 .asientos__vendidos {

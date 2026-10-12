@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Entity\Agencia;
 use App\Entity\AgenciaMovimiento;
 use App\Entity\Usuario;
+use App\Venta\Agencia\DepositosAgencia;
 use App\Venta\Agencia\SaldoAgencia;
 use App\Venta\Boleto\DatosBoleto;
 use App\Venta\Excepcion\VentaRechazada;
@@ -14,6 +15,7 @@ use App\Venta\Transaccion;
 use Doctrine\ORM\EntityManagerInterface;
 use Money\Currency;
 use Money\Money;
+use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -24,7 +26,8 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 /**
  * Saldo de las agencias (ADR-021). Los datos de la agencia van por el CRUD
- * genérico; el saldo solo cambia por aquí, con permiso `agencia.acreditar`.
+ * genérico; el saldo solo cambia por aquí o al acreditar un depósito
+ * (`DepositoAgenciaController`, ADR-034), con permiso `agencia.acreditar`.
  */
 #[AsController]
 #[Route("/api/agencias/{id<\d+>}", name: "api_agencia_")]
@@ -36,20 +39,27 @@ final class AgenciaController extends AbstractController
         private readonly EntityManagerInterface $em,
         private readonly SaldoAgencia $saldo,
         private readonly Transaccion $transaccion,
+        private readonly DepositosAgencia $depositos,
+        private readonly ClockInterface $reloj,
     ) {}
 
     /** Saldo y últimos movimientos. Una agencia solo ve el suyo. */
     #[Route("/saldo", name: "saldo", methods: ["GET"])]
     public function saldo(Agencia $agencia, #[CurrentUser] Usuario $usuario): JsonResponse
     {
-        if ($usuario->getAgencia()?->getId() !== $agencia->getId() && !$this->isGranted("ROLE_ADMIN")) {
+        $propia = $usuario->getAgencia()?->getId();
+        if ($propia !== null ? $propia !== $agencia->getId() : !$this->puedeVerSaldos()) {
             $this->denyAccessUnlessGranted("read", Agencia::class);
         }
 
         return $this->json($this->estado($agencia));
     }
 
-    /** `{ importe: centavos, referencia?, observacion?, bonificacion?: bool }` */
+    /**
+     * Depósito ya verificado: queda registrado y acreditado en un paso
+     * (ADR-034). `{ importe: centavos, referencia (número de boleta),
+     * fecha?: AAAA-MM-DD, observacion?, bonificacion?: bool }`
+     */
     #[Route("/depositos", name: "deposito", methods: ["POST"])]
     public function depositar(Agencia $agencia, Request $request, #[CurrentUser] Usuario $usuario): JsonResponse
     {
@@ -57,14 +67,16 @@ final class AgenciaController extends AbstractController
         $datos = $request->toArray();
 
         return $this->responder(function () use ($agencia, $datos, $usuario) {
-            $this->transaccion->ejecutar(fn() => $this->saldo->depositar(
-                $this->em->find(Agencia::class, $agencia->getId()),
+            $fecha = \DateTimeImmutable::createFromFormat("!Y-m-d", (string) ($datos["fecha"] ?? "")) ?: $this->reloj->now();
+            $this->depositos->registrarAcreditado(
+                (int) $agencia->getId(),
+                $fecha,
                 (int) ($datos["importe"] ?? 0),
-                $this->em->find(Usuario::class, $usuario->getId()),
-                self::texto($datos["referencia"] ?? null, 50),
-                self::texto($datos["observacion"] ?? null, 255),
+                (string) ($datos["referencia"] ?? ""),
                 (bool) ($datos["bonificacion"] ?? true),
-            ));
+                self::texto($datos["observacion"] ?? null, 200),
+                $usuario,
+            );
 
             return $this->estado($this->em->find(Agencia::class, $agencia->getId()));
         });
@@ -115,6 +127,11 @@ final class AgenciaController extends AbstractController
                 "venta" => $m->getBoletoVenta()?->getId(),
             ], $movimientos),
         ];
+    }
+
+    private function puedeVerSaldos(): bool
+    {
+        return $this->isGranted("ROLE_ADMIN") || $this->isGranted(self::ACREDITAR) || $this->isGranted(DepositoAgenciaController::DEPOSITAR);
     }
 
     private function responder(callable $operacion): JsonResponse

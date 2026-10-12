@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Entity\BoletoAsiento;
 use App\Entity\BoletoVenta;
+use App\Entity\Estacion;
 use App\Entity\Usuario;
 use App\Salida\Abordaje\Abordaje;
 use App\Salida\SalidaRechazada;
@@ -59,6 +60,10 @@ final class BoletoController extends AbstractController
             "hasta" => $hoy->modify("+30 days")->format("Y-m-d"),
             "maxDias" => FiltroBoletos::MAX_DIAS,
             "porPagina" => FiltroBoletos::POR_PAGINA,
+            "estaciones" => array_map(
+                static fn(Estacion $e) => ["id" => $e->getId(), "nombre" => $e->getNombre(), "departamento" => $e->getDepartamento()],
+                $this->em->getRepository(Estacion::class)->findBy([], ["nombre" => "ASC"]),
+            ),
             "puede" => [
                 "cancelar" => $this->isGranted(self::CANCELAR),
                 "anular" => $this->isGranted(VentaController::ANULAR),

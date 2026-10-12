@@ -25,15 +25,19 @@
     <!-- </template>
     </Toolbar> -->
 
-    <section class="panel grid grid-cols-1 gap-3 @xl:grid-cols-[1fr_1.4fr_auto] @xl:items-end">
-      <label class="flex flex-col gap-1">
-        <span class="text-xs font-medium text-muted-color">Empresa</span>
-        <Select v-model="filtro.empresaId" :options="datos?.empresas ?? []" option-label="nombre" option-value="id" show-clear placeholder="Todas" fluid @change="alCambiarEmpresa" />
-      </label>
-      <label class="flex flex-col gap-1">
-        <span class="text-xs font-medium text-muted-color">Salida</span>
-        <Select v-model="filtro.salidaId" :options="opcionesSalida" option-label="etiqueta" option-value="id" show-clear filter placeholder="Todas" fluid :disabled="opcionesSalida.length === 0" @change="alCambiarSalida" />
-      </label>
+    <!-- Mismas columnas que mapa + lista: el borde derecho de las empresas es el del mapa. -->
+    <section class="panel grid grid-cols-1 gap-3 @4xl:grid-cols-[minmax(0,1fr)_22rem] @4xl:items-end">
+      <div class="flex flex-wrap items-end justify-between gap-3">
+        <label class="flex w-full flex-col gap-1 @xl:w-[28rem]">
+          <span class="text-xs font-medium text-muted-color">Salida</span>
+          <Select v-model="filtro.salidaId" :options="opcionesSalida" option-label="etiqueta" option-value="id" show-clear filter placeholder="Todas" fluid :disabled="opcionesSalida.length === 0" @change="alCambiarSalida" />
+        </label>
+        <div v-if="(datos?.empresas.length ?? 0) > 1" class="flex flex-wrap items-center justify-end gap-2">
+          <button v-for="e in datos?.empresas" :key="e.id" type="button" class="rounded-full border px-2.5 py-1 text-xs font-semibold" :class="filtro.empresaId === e.id ? 'border-primary bg-primary text-primary-contrast' : 'border-surface-300 bg-transparent text-color'" :aria-pressed="filtro.empresaId === e.id" @click="alternarEmpresa(e.id)">
+            {{ e.nombre }}
+          </button>
+        </div>
+      </div>
       <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-color">
         <label class="flex cursor-pointer items-center gap-2">
           <ToggleSwitch v-model="mostrarNombres" input-id="nombres-enclaves" />
@@ -265,6 +269,11 @@ function elegir(id: number | null, centrar: boolean) {
   const b = seleccionado.value;
   const p = b ? estimadas.value.get(b.salidaId) : null;
   if (centrar && b && p && mapa) mapa.flyTo(posicionEnArco(b, p, arcoDe(b)), Math.max(mapa.getZoom(), 9), { duration: 0.6 });
+}
+
+function alternarEmpresa(id: number) {
+  filtro.empresaId = filtro.empresaId === id ? null : id;
+  alCambiarEmpresa();
 }
 
 function alCambiarEmpresa() {

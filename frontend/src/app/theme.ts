@@ -368,6 +368,11 @@ export const componentsPreset = (parent: ThemePreset): Tokens => {
     },
     message: {
       ...base.components.message,
+      text: {
+        font: {
+          size: ".85rem",
+        },
+      },
       colorScheme: {
         ...base.components.message.colorScheme,
         light: {
@@ -398,6 +403,19 @@ export const componentsPreset = (parent: ThemePreset): Tokens => {
           tab: {
             ...base.components.tabs.colorScheme.light.tab,
             activeBackground: "{surface.50}",
+          },
+        },
+      },
+    },
+    accordion: {
+      ...base.components.accordion,
+      colorScheme: {
+        ...base.components.accordion.colorScheme,
+        light: {
+          ...base.components.accordion.colorScheme?.light,
+          header: {
+            ...base.components.accordion.colorScheme?.light.header,
+            background: "{bg}",
           },
         },
       },

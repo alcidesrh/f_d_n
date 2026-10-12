@@ -177,7 +177,7 @@ export interface CambioSalida {
   propagar: boolean
 }
 
-export type TipoManifiesto = 'interno' | 'piloto'
+export type TipoManifiesto = 'interno' | 'piloto' | 'boleto'
 
 export interface ResumenClase {
   clase: 'A' | 'B'

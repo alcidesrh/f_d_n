@@ -1,0 +1,99 @@
+{# Boleto Manifiesto: boletos de la salida por lugar de emisión. Solo blanco, grises y negro (ahorra tinta). Datos: ver ManifiestoPdf::generar. #}
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><title>Manifiesto de pasajeros {{ m.salidaId }}</title>
+<style>
+  @page { margin: 28px 30px 42px; }
+  body { font-family: "DejaVu Sans", sans-serif; font-size: 8px; color: #111; }
+  table { border-collapse: collapse; }
+  .muted { color: #555; }
+  .banda { width: 100%; border-bottom: 1.5px solid #111; padding-bottom: 6px; }
+  .marca { font-size: 7.5px; letter-spacing: .12em; text-transform: uppercase; color: #555; }
+  .titulo { font-size: 16px; font-weight: bold; margin-top: 2px; }
+  .meta td { font-size: 7.5px; color: #555; text-align: right; padding: 0 0 1px 8px; }
+  .meta td b { color: #111; }
+  .ficha { width: 100%; margin-top: 8px; border: 1px solid #999; }
+  .ficha td { padding: 4px 8px; vertical-align: top; width: 50%; }
+  .lbl { font-size: 6.5px; letter-spacing: .06em; text-transform: uppercase; color: #555; }
+  .val { font-size: 9px; font-weight: bold; margin-top: 1px; }
+  .emision { margin-top: 12px; font-size: 9px; font-weight: bold; border-bottom: 1px solid #111; padding-bottom: 2px; }
+  .datos { width: 100%; table-layout: fixed; }
+  .datos th { font-size: 7px; letter-spacing: .04em; text-transform: uppercase; text-align: left; padding: 4px 4px; border-bottom: 1px solid #111; border-top: 1px solid #111; }
+  .datos td { padding: 3px 4px; border-bottom: 1px solid #ddd; vertical-align: top; }
+  .datos tr { page-break-inside: avoid; }
+  .datos .der { text-align: right; }
+  .datos .centro { text-align: center; }
+  .datos tr.sub td { border-top: 1px solid #111; border-bottom: 0; font-weight: bold; padding-top: 4px; }
+  .total { width: 100%; margin-top: 10px; border-top: 1.5px solid #111; }
+  .total td { padding-top: 4px; font-weight: bold; font-size: 9px; }
+</style></head>
+<body>
+<table class="banda"><tr>
+  <td>
+    <div class="marca">Transporte Fuente del Norte</div>
+    <div class="titulo">Manifiesto de pasajeros</div>
+  </td>
+  <td align="right">
+    <table class="meta" align="right">
+      <tr><td>Fecha</td><td><b>{{ generado }}</b></td></tr>
+      <tr><td>Usuario</td><td><b>{{ usuario }}</b></td></tr>
+    </table>
+  </td>
+</tr></table>
+
+<table class="ficha">
+  <tr>
+    <td><div class="lbl">Identificador</div><div class="val">{{ m.salidaId }}</div></td>
+    <td><div class="lbl">Fecha salida</div><div class="val">{{ fecha }}</div></td>
+  </tr>
+  <tr>
+    <td><div class="lbl">Estación</div><div class="val">{{ m.estacion }}</div></td>
+    <td><div class="lbl">Ruta</div><div class="val">{{ m.ruta }}</div></td>
+  </tr>
+  <tr>
+    <td><div class="lbl">Empresa</div><div class="val">{{ m.empresa ?: '—' }}</div></td>
+    <td><div class="lbl">Bus</div><div class="val">{{ m.bus ?? '—' }}</div></td>
+  </tr>
+  <tr>
+    <td><div class="lbl">Piloto 1</div><div class="val">{{ m.pilotos[0] }}</div></td>
+    <td><div class="lbl">Piloto 2</div><div class="val">{{ m.pilotos[1] }}</div></td>
+  </tr>
+</table>
+
+{% for emitidoEn, g in grupos %}
+  <div class="emision">Emitido en: {{ emitidoEn }}</div>
+  <table class="datos">
+    <thead><tr>
+      <th style="width: 8%">ID</th><th>Pasajero</th><th style="width: 12%">Documento</th><th class="centro" style="width: 7%">Asiento</th>
+      <th style="width: 12%">Sube</th><th style="width: 12%">Baja</th><th style="width: 9%">Estado</th><th class="der" style="width: 11%">Importe día</th><th class="der" style="width: 11%">Prepagado</th>
+    </tr></thead>
+    <tbody>
+    {% for p in g.pasajeros %}
+      <tr>
+        <td>{{ p.boletoId }}</td>
+        <td>{{ p.nombre }}</td>
+        <td>{{ p.documento ?? '—' }}</td>
+        <td class="centro"><b>{{ p.asiento }}</b></td>
+        <td>{{ p.sube }}</td>
+        <td>{{ p.baja }}</td>
+        <td>{{ p.etiquetaEstado }}</td>
+        <td class="der">{{ p.importeDia }}</td>
+        <td class="der">{{ p.importePrepagado }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+    <tfoot><tr class="sub">
+      <td colspan="6">Cantidad: {{ g.pasajeros|length }}</td>
+      <td colspan="3" class="der">Totales: {{ g.importe }}</td>
+    </tr></tfoot>
+  </table>
+{% else %}
+  <p class="muted" style="text-align: center; margin-top: 24px">Esta salida no tiene boletos vigentes.</p>
+{% endfor %}
+
+<table class="total"><tr>
+  <td>Cantidad total: {{ m.pasajeros|length }}</td>
+  <td align="right">Total: {{ total }}</td>
+</tr></table>
+</body>
+</html>

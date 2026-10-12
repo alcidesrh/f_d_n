@@ -17,3 +17,19 @@ export async function abrirManifiesto(salidaId: number, tipo: TipoManifiesto): P
     notify.error('No se pudo generar el manifiesto.')
   }
 }
+
+/** Descarga el PDF de un manifiesto de la salida (en vez de abrirlo en otra pestaña). */
+export async function descargarManifiesto(salidaId: number, tipo: TipoManifiesto): Promise<boolean> {
+  try {
+    const url = URL.createObjectURL(await fetchManifiestoPdf(salidaId, tipo))
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `manifiesto_${tipo}_${salidaId}.pdf`
+    a.click()
+    setTimeout(() => URL.revokeObjectURL(url), 60_000)
+    return true
+  } catch {
+    notify.error('No se pudo generar el manifiesto.')
+    return false
+  }
+}

@@ -149,7 +149,7 @@ class RegistroMigradores
                 "agencia",
                 "Agencias",
                 "estacion",
-                ["agencia", "agencia_movimiento"],
+                ["agencia", "agencia_movimiento", "agencia_deposito"],
                 ["moneda", "usuario"],
                 "SELECT COUNT(*) FROM estacion WHERE tipoEstacion_id = 4",
             ),

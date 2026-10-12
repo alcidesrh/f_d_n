@@ -41,6 +41,7 @@ class MigradorEstaticos
         private Moldes $moldes,
         private RutasLegado $rutas,
         private Trayectos $trayectos,
+        private CoordenadasEnclaves $coordenadas,
     ) {
         $this->oldPdo->setAttribute(
             \PDO::ATTR_ERRMODE,
@@ -290,6 +291,8 @@ class MigradorEstaticos
             );
             $count++;
         }
+        // El legado deja muchas estaciones sin GPS: se rellenan con las guardadas antes del reset.
+        $this->coordenadas->completar();
 
         if ($output) {
             $output->writeln(" <info>{$count}</info>");
@@ -955,8 +958,70 @@ class MigradorEstaticos
             $count++;
         }
         $this->reiniciarIdentidad("agencia");
+        $bonos = $this->migrarBonosAgencias();
+        $depositos = $this->migrarDepositosAgencia();
         if ($output) {
-            $output->writeln(" <info>{$count}</info>");
+            $output->writeln(" <info>{$count}</info> (depósitos: {$depositos}, bonos: {$bonos})");
+        }
+
+        return $count;
+    }
+
+    private const OBSERVACION_BONO_MIGRADO = "Bono migrado del sistema anterior";
+
+    /**
+     * El legado lleva el bono (`agencia_bonificacion`) como un saldo aparte;
+     * el modelo nuevo tiene uno solo (ADR-021), así que entra como una
+     * bonificación en el libro de la agencia. Una sola vez por agencia: el
+     * valor es el del legado en la corrida en que se agrega.
+     */
+    private function migrarBonosAgencias(): int
+    {
+        $count = 0;
+        $ahora = (new DateTime())->format("Y-m-d H:i:s");
+        foreach ($this->fetchOld("SELECT id, agencia_bonificacion FROM estacion WHERE tipoEstacion_id = " . self::TIPO_ESTACION_AGENCIA . " AND agencia_bonificacion > 0") as $row) {
+            $centavos = (int) round(((float) $row["agencia_bonificacion"]) * 100);
+            $agencia = (int) $row["id"];
+            $ya = $this->newConn->fetchOne(
+                "SELECT 1 FROM agencia_movimiento WHERE agencia_id = :agencia AND tipo = 'bonificacion' AND observacion = :obs",
+                ["agencia" => $agencia, "obs" => self::OBSERVACION_BONO_MIGRADO],
+            );
+            if ($centavos <= 0 || $ya) {
+                continue;
+            }
+            $saldo = $this->newConn->fetchOne("UPDATE agencia SET saldo = saldo + :c WHERE id = :agencia RETURNING saldo", ["c" => $centavos, "agencia" => $agencia]);
+            if ($saldo === false) {
+                continue;
+            }
+            $this->newConn->executeStatement(
+                "INSERT INTO agencia_movimiento (agencia_id, tipo, monto, saldo_resultante, observacion, fecha) VALUES (:agencia, 'bonificacion', :monto, :saldo, :obs, :fecha)",
+                ["agencia" => $agencia, "monto" => $centavos, "saldo" => (int) $saldo, "obs" => self::OBSERVACION_BONO_MIGRADO, "fecha" => $ahora],
+            );
+            $count++;
+        }
+
+        return $count;
+    }
+
+    /**
+     * Depósitos de agencia del legado con su estado (ADR-034). No mueven el
+     * saldo (ya migrado): un depósito que sigue registrado se acredita en el
+     * modelo nuevo y entonces suma. Los ya migrados se saltan.
+     */
+    private function migrarDepositosAgencia(): int
+    {
+        $agencias = array_flip(array_map("intval", $this->newConn->fetchFirstColumn("SELECT id FROM agencia")));
+        $count = 0;
+        foreach ($this->fetchOld("SELECT d.*, m.sigla AS moneda_sigla FROM agencia_deposito d LEFT JOIN moneda m ON m.id = d.moneda_id") as $row) {
+            if (!isset($agencias[(int) $row["estacion_id"]])) {
+                continue;
+            }
+            $count += $this->newConn->executeStatement(
+                "INSERT INTO agencia_deposito (agencia_id, fecha, importe, moneda, numero_boleta, aplica_bono, bono, observacion, estado, motivo_rechazo, creado_por_id, creado_en, legacy_id)
+                 VALUES (:agencia, :fecha, :importe, :moneda, :numero_boleta, :aplica_bono, :bono, :observacion, :estado, :motivo_rechazo, (SELECT id FROM usuario WHERE id = :usuario), :creado_en, :legacy_id)
+                 ON CONFLICT (legacy_id) DO NOTHING",
+                $this->mapeador->depositoAgencia($row),
+            );
         }
 
         return $count;

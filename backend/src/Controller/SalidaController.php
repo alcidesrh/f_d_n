@@ -195,8 +195,8 @@ final class SalidaController extends AbstractController
         return $this->responder(fn() => $detalle->de($this->salida($id)));
     }
 
-    /** PDF del manifiesto `interno` o `piloto` de la salida. */
-    #[Route("/{id<\d+>}/manifiesto/{tipo<interno|piloto>}", name: "manifiesto", methods: ["GET"])]
+    /** PDF del manifiesto `interno`, `piloto` o `boleto` de la salida. */
+    #[Route("/{id<\d+>}/manifiesto/{tipo<interno|piloto|boleto>}", name: "manifiesto", methods: ["GET"])]
     public function manifiesto(int $id, string $tipo, #[CurrentUser] Usuario $usuario, ManifiestoSalida $manifiestos, ManifiestoPdf $pdf): Response
     {
         $this->denyAccessUnlessGranted(self::VER);

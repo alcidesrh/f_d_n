@@ -253,8 +253,8 @@ final class ListadoBoletos
 
     private function filtrar(QueryBuilder $qb, FiltroBoletos $f): void
     {
-        // Un id exacto se busca en cualquier fecha (enlaces del chat, "Consultar" de otro boleto).
-        if ($f->id === null) {
+        // Un id exacto o una salida concreta se buscan en cualquier fecha (enlaces del chat, "Consultar" de otro boleto).
+        if ($f->id === null && $f->salida === null) {
             $qb->andWhere("(s.fecha >= :desde AND s.fecha < :fin) OR (v.createdAt >= :desde AND v.createdAt < :fin)")
                 ->setParameter("desde", $f->desde)
                 ->setParameter("fin", $f->finExclusivo());
@@ -264,6 +264,8 @@ final class ListadoBoletos
             "b.id" => $f->id,
             "IDENTITY(b.reasignadoDe)" => $f->reasignadoDe,
             "s.id" => $f->salida,
+            "t.origen" => $f->origen,
+            "t.destino" => $f->destino,
             "a.numero" => $f->numeroAsiento,
             "a.clase" => $f->clase?->value,
             "f.dte" => $f->numeroFactura,
@@ -280,8 +282,6 @@ final class ListadoBoletos
 
         $contiene = [
             "f.serie" => $f->serieFactura,
-            "o.nombre" => $f->origen,
-            "d.nombre" => $f->destino,
             "v.referenciaPago" => $f->autorizacion,
         ];
         foreach ($contiene as $campo => $texto) {

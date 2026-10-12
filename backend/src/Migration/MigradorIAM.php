@@ -61,6 +61,7 @@ class MigradorIAM {
         ['venta.cortesia', 'BoletoVenta', 'courtesy', 'Venta'],
         ['venta.sin_factura', 'BoletoVenta', 'contingency', 'Venta'],
         ['agencia.acreditar', 'Agencia', 'credit', 'Venta'],
+        ['agencia.depositar', 'Agencia', 'deposit', 'Venta'],
         // Página web (ADR-023)
         ['pagina.administrar', 'Pagina', 'manage', 'Página web'],
     ];
@@ -90,8 +91,22 @@ class MigradorIAM {
         'Venta Taquilla' => ['venta.vender'],
         'Supervision Venta' => ['venta.vender', 'venta.cortesia', 'venta.sin_factura', 'agencia.acreditar'],
         'Administracion Pagina Web' => ['pagina.administrar'],
+        'Depositos de Agencia' => ['agencia.depositar'],
+        'Acreditacion de Depositos de Agencia' => ['agencia.depositar', 'agencia.acreditar'],
         'Gestion Salidas' => ['salida.ver', 'salida.crear', 'salida.editar', 'salida.cancelar', 'salida.eliminar'],
         'Abordaje de Salidas' => ['boleto.chequear', 'salida.abordar', 'salida.iniciar', 'salida.finalizar'],
+    ];
+
+    /**
+     * Permisos del modelo nuevo para los roles del legado que tenían esas
+     * pantallas (p. ej. el menú "Agencia", ADR-034). Se aplican aunque el
+     * rol ya exista.
+     */
+    private const PERMISOS_ROLES_LEGACY = [
+        'ROLE_AGENCIA' => ['Depositos de Agencia'],
+        'ROLE_SUPERVISOR_AGENCIA' => ['Acreditacion de Depositos de Agencia'],
+        'ROLE_PROPIETARIO' => ['Acreditacion de Depositos de Agencia'],
+        'ROLE_ADMINISTRATIVOS' => ['Acreditacion de Depositos de Agencia'],
     ];
 
     public function __construct(
@@ -284,6 +299,17 @@ class MigradorIAM {
                 ['nombre' => $nombre]
             );
             $count++;
+        }
+
+        foreach (self::PERMISOS_ROLES_LEGACY as $rol => $permisos) {
+            foreach ($permisos as $permiso) {
+                $this->newConn->executeStatement(
+                    'INSERT INTO role_permiso (role_id, permiso_id)
+                     SELECT r.id, p.id FROM role r, permiso p WHERE r.nombre = :rol AND p.nombre = :permiso
+                     ON CONFLICT DO NOTHING',
+                    ['rol' => $rol, 'permiso' => $permiso]
+                );
+            }
         }
 
         return $count;

@@ -34,18 +34,11 @@ export function documentoTexto(d: BoletoFila['documento']): string {
   return d.tipo === 'factura' && d.numero !== null ? `${etiqueta} - ${[d.serie, d.numero].filter(Boolean).join(' ')}` : etiqueta
 }
 
-/** Cliente elegido en un filtro (por id; la etiqueta solo se muestra). */
-export interface ClienteFiltro {
-  id: number
-  label: string
-}
-
 export interface FiltroBoletos {
   /** `AAAA-MM-DD`, ambos incluidos; entra el boleto cuya salida o venta cae en el rango. */
   desde: string | null
   hasta: string | null
   id: number | null
-  reasignado: number | null
   salida: number | null
   documento: TipoDocumento | null
   /** Vacío = todos. */
@@ -54,12 +47,10 @@ export interface FiltroBoletos {
   clase: 'A' | 'B' | null
   serie: string
   factura: number | null
-  origen: string
-  destino: string
-  referencia: string
-  autorizacion: string
-  clienteDocumento: ClienteFiltro | null
-  clienteBoleto: ClienteFiltro | null
+  /** Id de la estación donde sube. */
+  origen: number | null
+  /** Id de la estación donde baja. */
+  destino: number | null
 }
 
 export interface Pagina {
@@ -75,7 +66,6 @@ export function filtroInicial(desde: string | null = null, hasta: string | null 
     desde,
     hasta,
     id: null,
-    reasignado: null,
     salida: null,
     documento: null,
     estados: [],
@@ -83,12 +73,8 @@ export function filtroInicial(desde: string | null = null, hasta: string | null 
     clase: null,
     serie: '',
     factura: null,
-    origen: '',
-    destino: '',
-    referencia: '',
-    autorizacion: '',
-    clienteDocumento: null,
-    clienteBoleto: null,
+    origen: null,
+    destino: null,
   }
 }
 
@@ -104,7 +90,6 @@ export function aQuery(f: FiltroBoletos, p: Pagina): string {
   poner('desde', f.desde)
   poner('hasta', f.hasta)
   poner('id', f.id)
-  poner('reasignado', f.reasignado)
   poner('salida', f.salida)
   poner('documento', f.documento)
   poner('estado', f.estados.join(','))
@@ -114,10 +99,6 @@ export function aQuery(f: FiltroBoletos, p: Pagina): string {
   poner('factura', f.factura)
   poner('origen', f.origen)
   poner('destino', f.destino)
-  poner('referencia', f.referencia)
-  poner('autorizacion', f.autorizacion)
-  poner('clienteDocumento', f.clienteDocumento?.id)
-  poner('clienteBoleto', f.clienteBoleto?.id)
   q.set('pagina', String(p.pagina))
   q.set('porPagina', String(p.porPagina))
   q.set('orden', p.orden)

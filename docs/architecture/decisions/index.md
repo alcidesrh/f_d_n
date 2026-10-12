@@ -37,3 +37,4 @@
 | [ADR-031](ADR-031-bus-por-hora-y-cambio-de-bus-por-numero.md) | Bus por hora en el programador (distribución y bus por fila) y cambio de bus con boletos por número de asiento | Aceptada |
 | [ADR-032](ADR-032-abordaje-y-chequeo-de-boletos.md) | Abordaje de salidas y chequeo de boletos; estado cancelado (no se presentó) | Aceptada |
 | [ADR-033](ADR-033-listado-de-boletos.md) | Listado de boletos (filtros y acciones del legado) y cancelar desde el listado | Aceptada |
+| [ADR-034](ADR-034-depositos-de-agencia.md) | Depósitos de agencia (registrar, acreditar o rechazar) y consulta de saldos | Aceptada |

@@ -18,7 +18,9 @@ final class ManifiestoPdf
 {
     public const INTERNO = "interno";
     public const PILOTO = "piloto";
-    public const TIPOS = [self::INTERNO, self::PILOTO];
+    /** "Boleto Manifiesto": listado de boletos por lugar de emisión (en blanco y gris, para imprimir sin gastar tinta). */
+    public const BOLETO = "boleto";
+    public const TIPOS = [self::INTERNO, self::PILOTO, self::BOLETO];
 
     public function __construct(
         private readonly Environment $twig,
@@ -44,12 +46,12 @@ final class ManifiestoPdf
         $opciones->setDefaultFont("DejaVu Sans");
         $pdf = new Dompdf($opciones);
         $pdf->loadHtml($html, "UTF-8");
-        $pdf->setPaper("letter", "landscape");
+        $pdf->setPaper("letter", $tipo === self::BOLETO ? "portrait" : "landscape");
         $pdf->render();
 
         $canvas = $pdf->getCanvas();
         $fuente = $pdf->getFontMetrics()->getFont("DejaVu Sans");
-        $canvas->page_text($canvas->get_width() - 140, $canvas->get_height() - 26, "Página {PAGE_NUM} de {PAGE_COUNT}", $fuente, 8, [0.42, 0.45, 0.5]);
+        $canvas->page_text($canvas->get_width() - ($tipo === self::BOLETO ? 110 : 140), $canvas->get_height() - 26, "Página {PAGE_NUM} de {PAGE_COUNT}", $fuente, 8, [0.42, 0.45, 0.5]);
 
         return (string) $pdf->output();
     }
@@ -61,6 +63,10 @@ final class ManifiestoPdf
 
     public static function titulo(string $tipo): string
     {
-        return $tipo === self::PILOTO ? "Manifiesto del piloto" : "Manifiesto interno de pasajeros";
+        return match ($tipo) {
+            self::PILOTO => "Manifiesto del piloto",
+            self::BOLETO => "Manifiesto de pasajeros",
+            default => "Manifiesto interno de pasajeros",
+        };
     }
 }
