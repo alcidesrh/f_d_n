@@ -81,7 +81,10 @@
               <Button severity="secondary" text rounded size="small" class="tap-target" aria-label="Bitácora" v-tooltip.top="'Bitácora'" @click="bitacora = s.id">
                 <template #icon><icon name="history" /></template>
               </Button>
-              <Button severity="secondary" text rounded size="small" class="tap-target" aria-label="Manifiestos" v-tooltip.top="'Manifiestos (PDF)'" aria-haspopup="menu" @click="abrirMenu($event, s)">
+              <Button v-if="chequeable(s)" severity="secondary" text rounded size="small" class="tap-target" aria-label="Chequear boletos" v-tooltip.top="'Chequear boletos'" @click="router.push({ name: 'salidas-chequeo', query: { salida: s.id } })">
+                <template #icon><icon name="how-to-reg-outline" /></template>
+              </Button>
+          <Button severity="secondary" text rounded size="small" class="tap-target" aria-label="Manifiestos" v-tooltip.top="'Manifiestos (PDF)'" aria-haspopup="menu" @click="abrirMenu($event, s)">
             <template #icon><icon name="picture-as-pdf-outline" /></template>
           </Button>
           <Button v-for="a in acciones(s)" :key="a.op" :severity="a.severidad" text rounded size="small" class="tap-target" :disabled="!a.habilitada" :aria-label="a.etiqueta" v-tooltip.top="a.ayuda" @click="abrir(a.op, s)">
@@ -142,6 +145,9 @@
               </Button>
               <Button severity="secondary" text rounded size="small" aria-label="Bitácora" v-tooltip.top="'Bitácora'" @click="bitacora = data.id">
                 <template #icon><icon name="history" /></template>
+              </Button>
+              <Button v-if="chequeable(data)" severity="secondary" text rounded size="small" aria-label="Chequear boletos" v-tooltip.top="'Chequear boletos'" @click="router.push({ name: 'salidas-chequeo', query: { salida: data.id } })">
+                <template #icon><icon name="how-to-reg-outline" /></template>
               </Button>
               <Button severity="secondary" text rounded size="small" aria-label="Manifiestos" v-tooltip.top="'Manifiestos (PDF)'" aria-haspopup="menu" @click="abrirMenu($event, data)">
                 <template #icon><icon name="picture-as-pdf-outline" /></template>
@@ -276,6 +282,9 @@ function acciones(s: SalidaFila) {
     },
   ];
 }
+
+/** Se chequean boletos (ADR-032) mientras la salida no ha terminado. */
+const chequeable = (s: SalidaFila) => ["programada", "abordando", "iniciada"].includes(s.estado);
 
 /** Menú de los dos manifiestos (PDF) de la fila. */
 function abrirMenu(e: Event, s: SalidaFila) {

@@ -11,7 +11,7 @@ use Doctrine\ORM\EntityManagerInterface;
 
 /**
  * Cuántos asientos tiene comprometidos cada salida: boletos vivos (todo menos
- * anulado/reasignado) más reservas vigentes de la página web (un cliente que
+ * anulado/reasignado/cancelado) más reservas vigentes de la página web (un cliente que
  * está pagando). Una salida con asientos comprometidos no se edita, anula ni
  * elimina: primero hay que reasignar o anular esos asientos (ADR-024).
  */
@@ -39,7 +39,7 @@ final class AsientosVendidos
             ->andWhere("b.estado NOT IN (:libres)")
             ->groupBy("b.salida")
             ->setParameter("salidas", $salidaIds)
-            ->setParameter("libres", [EstadoBoletoAsiento::ANULADO->value, EstadoBoletoAsiento::REASIGNADO->value])
+            ->setParameter("libres", EstadoBoletoAsiento::liberanAsiento())
             ->getQuery()
             ->getArrayResult();
         foreach ($boletos as $f) {

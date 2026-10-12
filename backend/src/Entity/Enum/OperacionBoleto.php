@@ -12,6 +12,11 @@ enum OperacionBoleto: string implements Operacion
     case CREADO = "creado";
     case ANULADO = "anulado";
     case REASIGNADO = "reasignado";
+    case CHEQUEADO = "chequeado";
+    case TRANSITO = "transito";
+    case CANCELADO = "cancelado";
+    case FINALIZADO = "finalizado";
+    case REVERTIDO = "revertido";
 
     public function etiqueta(): string
     {
@@ -19,6 +24,11 @@ enum OperacionBoleto: string implements Operacion
             self::CREADO => "Boleto creado",
             self::ANULADO => "Boleto anulado",
             self::REASIGNADO => "Boleto reasignado",
+            self::CHEQUEADO => "Boleto chequeado",
+            self::TRANSITO => "En tránsito",
+            self::CANCELADO => "No se presentó a abordar",
+            self::FINALIZADO => "Viaje finalizado",
+            self::REVERTIDO => "Cancelación revertida",
         };
     }
 }

@@ -38,7 +38,7 @@ final class ManifiestoSalida
             ->where("b.salida = :salida")
             ->andWhere("b.estado NOT IN (:libres)")
             ->setParameter("salida", $salida)
-            ->setParameter("libres", [EstadoBoletoAsiento::ANULADO->value, EstadoBoletoAsiento::REASIGNADO->value])
+            ->setParameter("libres", EstadoBoletoAsiento::liberanAsiento())
             ->getQuery()
             ->getResult();
 

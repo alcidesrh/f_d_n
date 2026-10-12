@@ -316,6 +316,15 @@ export const useVentaStore = defineStore("venta", () => {
     falloFacturacion.value = null;
   }
 
+  /** «Nueva venta»: cierra el comprobante y limpia cliente y salida; conserva fecha, estación y filtros. */
+  function nuevaVenta() {
+    comprobante.value = null;
+    cliente.value = null;
+    observacion.value = "";
+    cerrarSalida();
+    token.value = nuevoToken();
+  }
+
   function cancelarVenta() {
     falloFacturacion.value = null;
     token.value = nuevoToken();
@@ -400,6 +409,7 @@ export const useVentaStore = defineStore("venta", () => {
     puedeReasignar,
     iniciarReasignacion,
     cancelarReasignacion,
+    nuevaVenta,
     reasignar,
     contexto,
     errorCarga,

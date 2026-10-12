@@ -111,6 +111,12 @@ final class RegistradorBitacora implements ResetInterface
             $operacion = match (self::estado(EstadoBoletoAsiento::class, $args->getNewValue("estado"))) {
                 EstadoBoletoAsiento::ANULADO => OperacionBoleto::ANULADO,
                 EstadoBoletoAsiento::REASIGNADO => OperacionBoleto::REASIGNADO,
+                EstadoBoletoAsiento::CHEQUEADO => OperacionBoleto::CHEQUEADO,
+                EstadoBoletoAsiento::TRANSITO => OperacionBoleto::TRANSITO,
+                EstadoBoletoAsiento::CANCELADO => OperacionBoleto::CANCELADO,
+                EstadoBoletoAsiento::FINALIZADO => OperacionBoleto::FINALIZADO,
+                // Solo se vuelve a emitido revirtiendo un cancelado.
+                EstadoBoletoAsiento::EMITIDO => OperacionBoleto::REVERTIDO,
                 default => null,
             };
             if ($operacion !== null) {

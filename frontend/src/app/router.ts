@@ -88,6 +88,16 @@ export const router = createRouter({
       },
     },
     {
+      path: '/boletos',
+      name: 'boletos',
+      component: () => import('@/features/boleto/BoletosPage.vue'),
+      meta: {
+        title: 'Boletos',
+        label: 'Boletos',
+        icon: 'confirmation-number-outline',
+      },
+    },
+    {
       path: '/salidas',
       name: 'salidas',
       component: () => import('@/features/salida/SalidasPage.vue'),
@@ -135,6 +145,16 @@ export const router = createRouter({
         title: 'Programar salidas',
         label: 'Programar salidas',
         icon: 'calendar-add-on-outline',
+      },
+    },
+    {
+      path: '/salidas/chequeo',
+      name: 'salidas-chequeo',
+      component: () => import('@/features/salida/ChequeoPage.vue'),
+      meta: {
+        title: 'Chequear boletos por salida',
+        label: 'Chequear boletos',
+        icon: 'how-to-reg-outline',
       },
     },
     {

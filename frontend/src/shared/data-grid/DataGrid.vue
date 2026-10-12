@@ -35,10 +35,14 @@
               <icon name="drag-indicator" size="0.875rem" />
             </span>
             <button v-if="column.sortable" type="button" class="dg-hlabel dg-sortable" :aria-label="`Ordenar por ${column.label}`" @click="emit('sort', column.key)">
-              <span class="truncate"><slot name="header" :column="column">{{ column.label }}</slot></span>
+              <span class="truncate"
+                ><slot name="header" :column="column">{{ column.label }}</slot></span
+              >
               <icon :name="SORT_ICONS[column.sort ?? 'none']" size="0.8rem" class="dg-sort-icon" />
             </button>
-            <span v-else class="dg-hlabel truncate" :title="column.label"><slot name="header" :column="column">{{ column.label }}</slot></span>
+            <span v-else class="dg-hlabel truncate" :title="column.label"
+              ><slot name="header" :column="column">{{ column.label }}</slot></span
+            >
             <span class="dg-htools">
               <button v-if="column.filterable" type="button" class="dg-tool tap-target" :class="{ 'is-active': column.filterOpen }" :aria-pressed="Boolean(column.filterOpen)" :aria-label="column.filterOpen ? `Quitar filtro ${column.label}` : `Filtrar ${column.label}`" v-tooltip.top="column.filterOpen ? 'Quitar filtro' : 'Filtrar'" @click="emit('filter', column.key)">
                 <icon :name="column.filterOpen ? 'filter-alt' : 'filter-alt-outline'" size="0.85rem" />
@@ -112,27 +116,27 @@
         <article v-for="row in rows" :key="rowKey(row)" class="dg-card" :class="[rowClass?.(row), { 'is-selected': isSelected(row), 'is-clickable': rowClickable, 'dg-card--custom': $slots.card }]" role="listitem" :aria-current="!selectable && isSelected(row) ? true : undefined" :tabindex="rowClickable ? 0 : undefined" @click="emit('row-click', row)" @keydown.enter.self.prevent="emit('row-click', row)" @keydown.space.self.prevent="emit('row-click', row)">
           <slot v-if="$slots.card" name="card" :row="row" :selected="isSelected(row)" />
           <template v-else>
-          <header class="dg-card-head">
-            <span v-if="selectable" class="dg-card-check" @click.stop>
-              <Checkbox binary :model-value="isSelected(row)" aria-label="Seleccionar" @update:model-value="emit('toggle-row', row, Boolean($event))" />
-            </span>
-            <div v-if="cardColumns[0]" class="dg-card-title" :class="{ 'is-editable': cardColumns[0].editable }" @click="onCellClick(row, cardColumns[0], $event)">
-              <slot v-if="isEditing(row, cardColumns[0])" name="editor" :row="row" :column="cardColumns[0]" />
-              <slot v-else name="cell" :row="row" :column="cardColumns[0]" />
-            </div>
-            <span v-if="actions" class="dg-card-actions" @click.stop>
-              <slot name="actions" :row="row" />
-            </span>
-          </header>
-          <dl class="dg-card-fields">
-            <div v-for="column in cardColumns.slice(1)" :key="column.key" class="dg-card-field">
-              <dt class="truncate">{{ column.label }}</dt>
-              <dd :class="{ 'is-editable': column.editable && !isEditing(row, column) }" @click="onCellClick(row, column, $event)">
-                <slot v-if="isEditing(row, column)" name="editor" :row="row" :column="column" />
-                <slot v-else name="cell" :row="row" :column="column" />
-              </dd>
-            </div>
-          </dl>
+            <header class="dg-card-head">
+              <span v-if="selectable" class="dg-card-check" @click.stop>
+                <Checkbox binary :model-value="isSelected(row)" aria-label="Seleccionar" @update:model-value="emit('toggle-row', row, Boolean($event))" />
+              </span>
+              <div v-if="cardColumns[0]" class="dg-card-title" :class="{ 'is-editable': cardColumns[0].editable }" @click="onCellClick(row, cardColumns[0], $event)">
+                <slot v-if="isEditing(row, cardColumns[0])" name="editor" :row="row" :column="cardColumns[0]" />
+                <slot v-else name="cell" :row="row" :column="cardColumns[0]" />
+              </div>
+              <span v-if="actions" class="dg-card-actions" @click.stop>
+                <slot name="actions" :row="row" />
+              </span>
+            </header>
+            <dl class="dg-card-fields">
+              <div v-for="column in cardColumns.slice(1)" :key="column.key" class="dg-card-field">
+                <dt class="truncate">{{ column.label }}</dt>
+                <dd :class="{ 'is-editable': column.editable && !isEditing(row, column) }" @click="onCellClick(row, column, $event)">
+                  <slot v-if="isEditing(row, column)" name="editor" :row="row" :column="column" />
+                  <slot v-else name="cell" :row="row" :column="column" />
+                </dd>
+              </div>
+            </dl>
           </template>
         </article>
       </div>

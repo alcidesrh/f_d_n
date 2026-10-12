@@ -9,9 +9,11 @@ final readonly class EnviarBoletoPorCorreo
 {
     /**
      * @param list<int> $otrasVentas ventas que viajan en el mismo correo y PDF (el regreso de una compra web)
+     * @param ?string   $correo      destinatario (el reenvío desde el listado de boletos); por defecto, el del cliente
      */
     public function __construct(
         public int $ventaId,
         public array $otrasVentas = [],
+        public ?string $correo = null,
     ) {}
 }

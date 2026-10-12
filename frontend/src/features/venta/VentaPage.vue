@@ -44,7 +44,7 @@
           </section>
 
           <section class="panel flex flex-col gap-3">
-            <div class="grid grid-cols-2 items-start gap-x-2 gap-y-1.5 mb-1 md:gap-3 @xl:grid-cols-4">
+            <div class="grid grid-cols-2 items-start gap-x-2 gap-y-1.5 md:gap-3 @xl:grid-cols-3">
               <div class="campo col-span-2 @xl:col-span-1">
                 <span class="text-sm font-medium">{{ store.porRango ? "Rango de salida" : "Fecha de salida" }}</span>
                 <DatePicker v-if="!store.porRango" v-model="store.fecha" date-format="dd/mm/yy" show-icon fluid @update:model-value="store.cargarSalidas()" />
@@ -66,12 +66,14 @@
                 <span class="text-sm font-medium">Destino</span>
                 <estacion-select v-model="store.destinoId" :estaciones="store.contexto?.estaciones ?? []" show-clear placeholder="Todas" @update:model-value="store.cargarSalidas()" />
               </label>
-              <label class="campo col-span-2 @xl:col-span-1">
-                <span class="text-sm font-medium">Empresa</span>
-                <MultiSelect v-model="store.empresaIds" :options="store.empresas" option-label="nombre" option-value="id" placeholder="Todas" display="chip" :show-toggle-all="false" fluid />
-              </label>
             </div>
 
+            <div v-if="store.empresas.length > 1" class="flex flex-wrap items-center justify-end gap-2">
+              <span class="text-xs font-medium text-muted-color">Empresa:</span>
+              <button v-for="e in store.empresas" :key="e.id" type="button" class="rounded-full border px-2.5 py-1 text-ms font-medium" :class="store.empresaIds.includes(e.id) ? 'border-primary bg-primary text-primary-contrast' : 'border-surface-300 bg-transparent text-color'" :aria-pressed="store.empresaIds.includes(e.id)" @click="alternarEmpresa(e.id)">
+                {{ e.nombre }}
+              </button>
+            </div>
             <SalidasLista :salidas="store.salidasVisibles" :cargando="store.cargandoSalidas" :salida-id="store.salidaId" @elegir="elegirSalida" />
             <div v-if="!store.porRango" class="flex items-center justify-between gap-2">
               <Button :label="etiquetaDia(-1)" severity="secondary" text size="small" :disabled="store.cargandoSalidas" @click="moverDia(-1)">
@@ -114,9 +116,9 @@
           <section v-if="store.seleccion.length && !store.reasignacion" class="panel flex flex-col gap-2">
             <div class="font-medium">Pasajeros</div>
             <ul class="flex flex-col gap-2">
-              <li v-for="linea in lineas" :key="linea.asiento" class="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-2 @xl:grid-cols-[3rem_minmax(0,1fr)_6rem]">
+              <li v-for="(linea, i) in lineas" :key="linea.asiento" class="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-2 @xl:grid-cols-[3rem_minmax(0,1fr)_6rem]">
                 <span class="font-mono text-lg font-semibold">{{ linea.numero }}</span>
-                <ClienteBuscador compacto :model-value="store.pasajeros[linea.asiento] ?? null" :placeholder="`Viaja: ${store.cliente?.nombreCompleto ?? 'el cliente'}`" @update:model-value="store.pasajeros[linea.asiento] = $event" />
+                <ClienteBuscador compacto :model-value="store.pasajeros[linea.asiento] ?? (i === 0 ? store.cliente : null)" :placeholder="i === 0 ? `Viaja: ${store.cliente?.nombreCompleto ?? 'el cliente'}` : 'Viaja: nombre del cliente o puede elegir otro cliente'" @update:model-value="store.pasajeros[linea.asiento] = $event" />
                 <span class="col-start-2 text-right tabular-nums @xl:col-start-auto">{{ linea.precio }}</span>
               </li>
             </ul>
@@ -169,7 +171,7 @@
 
     <CobroDialog v-model:visible="cobro" :cortesia="cortesia" @confirmar="confirmar" />
     <FacturacionFallidaDialog :fallo="store.falloFacturacion" :ocupado="store.vendiendo" @cancelar="store.cancelarVenta()" @reintentar="reintentar" />
-    <VentaExitosaDialog :comprobante="store.comprobante" :reasignacion="store.comprobanteReasignado" @cerrar="store.comprobante = null" />
+    <VentaExitosaDialog :comprobante="store.comprobante" :reasignacion="store.comprobanteReasignado" @cerrar="store.nuevaVenta()" />
     <AnularBoletosDialog :visible="anular.length > 0" :ids="anular" @update:visible="(v) => !v && (anular = [])" @listo="alAnular" />
   </div>
 </template>
@@ -226,6 +228,10 @@ function alMostrarCroquis() {
   bajarAlCroquis = false;
   const suave = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   void nextTick(() => croquis.value?.scrollIntoView({ behavior: suave ? "smooth" : "auto", block: "start" }));
+}
+
+function alternarEmpresa(id: number) {
+  store.empresaIds = store.empresaIds.includes(id) ? store.empresaIds.filter((x) => x !== id) : [...store.empresaIds, id];
 }
 
 const conteos = computed(() => conteosPorEstado(store.detalle?.croquis ?? [], store.estadoAsiento));

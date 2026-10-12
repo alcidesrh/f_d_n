@@ -22,7 +22,7 @@ export interface TipoTarjeta {
 const formulario = (a: Adjunto): RouteLocationRaw => ({ name: 'entity-form', params: { entity: entitySlug(a.tipo), id: a.id } })
 
 export const TARJETAS: Record<string, TipoTarjeta> = {
-  BoletoAsiento: { nombre: 'Boleto', icono: 'confirmation-number-outline', componente: TarjetaBoleto, destino: formulario },
+  BoletoAsiento: { nombre: 'Boleto', icono: 'confirmation-number-outline', componente: TarjetaBoleto, destino: (a) => ({ name: 'boletos', query: { id: a.id } }) },
   Salida: { nombre: 'Salida', icono: 'directions-bus-outline', componente: TarjetaSalida, destino: (a) => ({ name: 'salidas', query: { ver: a.id } }) },
   Bus: { nombre: 'Bus', icono: 'airport-shuttle-outline', componente: TarjetaBus, destino: formulario },
   // Sin vista propia (tarjeta genérica): solo nombre e ícono.

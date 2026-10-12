@@ -10,6 +10,8 @@ enum EstadoBoletoAsiento: string
     case FINALIZADO = "finalizado";
     case ANULADO = "anulado";
     case REASIGNADO = "reasignado";
+    /** El pasajero no se presentó a abordar: el asiento queda libre, la venta y su factura siguen (ADR-032). Se revierte a emitido si el asiento sigue libre (ADR-033). */
+    case CANCELADO = "cancelado";
 
     /**
      * @return list<self>
@@ -19,11 +21,17 @@ enum EstadoBoletoAsiento: string
         return match ($this) {
             self::EMITIDO => [
                 self::CHEQUEADO,
+                // Chequeado con la salida ya iniciada (sube en una parada intermedia).
+                self::TRANSITO,
                 self::ANULADO,
                 self::REASIGNADO,
+                self::CANCELADO,
             ],
-            self::CHEQUEADO => [self::TRANSITO],
+            // Chequeado que al final no viajó: se cancela desde el listado de boletos.
+            self::CHEQUEADO => [self::TRANSITO, self::CANCELADO],
             self::TRANSITO => [self::FINALIZADO],
+            // Revertir la cancelación (el pasajero sí viaja), si el asiento sigue libre.
+            self::CANCELADO => [self::EMITIDO],
             self::FINALIZADO, self::ANULADO, self::REASIGNADO => [],
         };
     }
@@ -31,5 +39,16 @@ enum EstadoBoletoAsiento: string
     public function puedeTransicionarA(self $siguiente): bool
     {
         return in_array($siguiente, $this->transicionesPermitidas(), true);
+    }
+
+    /**
+     * Estados que no ocupan el asiento: se puede volver a vender en ese tramo.
+     * Debe coincidir con la condición de `ex_boleto_asiento_tramo`.
+     *
+     * @return list<string>
+     */
+    public static function liberanAsiento(): array
+    {
+        return [self::ANULADO->value, self::REASIGNADO->value, self::CANCELADO->value];
     }
 }

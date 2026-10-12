@@ -69,7 +69,7 @@ final class BuscadorSalidas
             return [];
         }
         $valores = [];
-        $params = ["libres" => [EstadoBoletoAsiento::ANULADO->value, EstadoBoletoAsiento::REASIGNADO->value]];
+        $params = ["libres" => EstadoBoletoAsiento::liberanAsiento()];
         foreach ($tramos as $i => $t) {
             $valores[] = "(:s{$i}::int, :a{$i}::int, :b{$i}::int)";
             $params["s{$i}"] = $t["salida"];

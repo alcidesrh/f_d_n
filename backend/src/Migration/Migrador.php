@@ -35,10 +35,9 @@ use Symfony\Component\DependencyInjection\Attribute\Target;
 class Migrador
 {
     /**
-     * Mapa de estado_id legacy → EstadoBoletoAsiento. El legacy "Cancelado" (6)
-     * no tiene equivalente propio en el enum nuevo; se resuelve como ANULADO
-     * (el estado terminal más cercano semánticamente). Ajustar si el negocio
-     * llega a distinguir ambos casos.
+     * Mapa de estado_id legacy → EstadoBoletoAsiento. El "Cancelado" (6) del
+     * legado es el pasajero que no se presentó a abordar (ADR-032): libera el
+     * asiento pero conserva la venta y su factura, a diferencia de "Anulado".
      */
     private const LEGACY_ESTADO_BOLETO_MAP = [
         1 => EstadoBoletoAsiento::EMITIDO,
@@ -46,11 +45,14 @@ class Migrador
         3 => EstadoBoletoAsiento::TRANSITO,
         4 => EstadoBoletoAsiento::ANULADO,
         5 => EstadoBoletoAsiento::REASIGNADO,
-        6 => EstadoBoletoAsiento::ANULADO,
+        6 => EstadoBoletoAsiento::CANCELADO,
     ];
 
-    /** Estados que no ocupan el asiento: no cuentan en el total de la venta. */
-    private const ESTADOS_LIBERAN = ["anulado", "reasignado"];
+    /** Estados que no ocupan el asiento (`EstadoBoletoAsiento::liberanAsiento`). */
+    private const ESTADOS_LIBERAN = ["anulado", "reasignado", "cancelado"];
+
+    /** Estados que no cuentan en el total de la venta: el cancelado se cobró (su factura sigue). */
+    private const ESTADOS_SIN_COBRO = ["anulado", "reasignado"];
 
     /** Ejemplos por motivo de omisión que se escriben en el log. */
     private const EJEMPLOS_POR_MOTIVO = 5;
@@ -453,7 +455,7 @@ class Migrador
                      SELECT SUM(b.precio_monto) FROM boleto_asiento b
                      WHERE b.boleto_venta_id = v.id AND b.estado NOT IN (:libres)), 0)
                  WHERE v.id IN (:ids)",
-                ["libres" => self::ESTADOS_LIBERAN, "ids" => array_keys($ventasTocadas)],
+                ["libres" => self::ESTADOS_SIN_COBRO, "ids" => array_keys($ventasTocadas)],
                 ["libres" => ArrayParameterType::STRING, "ids" => ArrayParameterType::INTEGER],
             );
         }
@@ -814,6 +816,51 @@ class Migrador
             }
         }
         $marcar();
+
+        return $count;
+    }
+
+    /**
+     * Pasa a `cancelado` los boletos ya migrados como `anulado` que en el
+     * legado son "Cancelado" (6): las migraciones anteriores a ADR-032 los
+     * confundían. Devuelve los corregidos. El total de esas ventas se
+     * recalcula (el cancelado sí se cobró).
+     */
+    public function actualizarCancelados(): int
+    {
+        $count = 0;
+        $ids = [];
+        $corregir = function () use (&$ids, &$count) {
+            if ($ids === []) {
+                return;
+            }
+            $ventas = $this->newConn->fetchFirstColumn(
+                "UPDATE boleto_asiento SET estado = 'cancelado'
+                  WHERE legacy_id IN (:ids) AND estado = 'anulado'
+              RETURNING boleto_venta_id",
+                ["ids" => $ids],
+                ["ids" => ArrayParameterType::STRING],
+            );
+            $count += count($ventas);
+            if ($ventas !== []) {
+                $this->newConn->executeStatement(
+                    "UPDATE boleto_venta v SET total_monto = COALESCE((
+                         SELECT SUM(b.precio_monto) FROM boleto_asiento b
+                         WHERE b.boleto_venta_id = v.id AND b.estado NOT IN (:libres)), 0)
+                     WHERE v.id IN (:ventas)",
+                    ["libres" => self::ESTADOS_SIN_COBRO, "ventas" => array_values(array_unique(array_map("intval", $ventas)))],
+                    ["libres" => ArrayParameterType::STRING, "ventas" => ArrayParameterType::INTEGER],
+                );
+            }
+            $ids = [];
+        };
+        foreach ($this->fetchOld("SELECT id FROM boleto WHERE estado_id = 6") as $row) {
+            $ids[] = (string) $row["id"];
+            if (count($ids) >= 1000) {
+                $corregir();
+            }
+        }
+        $corregir();
 
         return $count;
     }

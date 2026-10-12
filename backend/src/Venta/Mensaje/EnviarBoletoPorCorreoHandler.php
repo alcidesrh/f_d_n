@@ -30,7 +30,7 @@ final class EnviarBoletoPorCorreoHandler
     public function __invoke(EnviarBoletoPorCorreo $mensaje): void
     {
         $venta = $this->em->find(BoletoVenta::class, $mensaje->ventaId);
-        $correo = $venta?->getCliente()?->getEmail();
+        $correo = $mensaje->correo ?? $venta?->getCliente()?->getEmail();
         if ($venta === null || !$correo) {
             $this->logger->info("Boleto {id} sin venta o sin correo: no se envía.", ["id" => $mensaje->ventaId]);
 

@@ -152,8 +152,9 @@ class BoletoAsiento extends Base
 
     /**
      * Transiciona el boleto al nuevo estado, validando la máquina de estados:
-     * emitido -> chequeado -> transito -> finalizado (lineal),
-     * y emitido -> anulado / emitido -> reasignado (solo desde emitido).
+     * emitido -> chequeado -> transito -> finalizado (lineal), emitido ->
+     * transito (chequeado con la salida ya iniciada), emitido -> anulado /
+     * reasignado (solo desde emitido) y emitido/chequeado -> cancelado.
      *
      * @throws \DomainException si la transición no está permitida
      */

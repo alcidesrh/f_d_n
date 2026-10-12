@@ -34,6 +34,11 @@ describe('bitácora: detalle legible', () => {
     expect(lineasDeDetalle('boleto', { operacion: 'anulado', detalle: { asiento: 3, motivo: 'Pasajero desistió', venta: 7 } })).toEqual(['Asiento 3', 'Motivo: Pasajero desistió', 'Venta 7'])
   })
 
+  it('abordaje: chequeado y no presentado', () => {
+    expect(lineasDeDetalle('boleto', { operacion: 'chequeado', detalle: { asiento: 3, salida: 9, venta: 7 } })).toEqual(['Asiento 3', 'Venta 7'])
+    expect(lineasDeDetalle('boleto', { operacion: 'cancelado', detalle: { asiento: 3, motivo: 'No se presentó a abordar.', venta: 7 } })).toEqual(['Asiento 3', 'Motivo: No se presentó a abordar.', 'Venta 7'])
+  })
+
   it('importes y autor', () => {
     expect(quetzales('5050')).toBe('Q 50.50')
     expect(quetzales('x')).toBeNull()

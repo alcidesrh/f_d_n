@@ -41,6 +41,7 @@ class ActionFixtures extends Fixture
             ['codigo' => 'boleto.eliminar','recurso' => 'Boleto',  'operacion' => 'delete', 'grupo' => 'Boletos', 'nombre' => 'Eliminar boletos'],
             ['codigo' => 'boleto.anular',  'recurso' => 'Boleto',  'operacion' => 'void',   'grupo' => 'Boletos', 'nombre' => 'Anular boletos'],
             ['codigo' => 'boleto.reasignar','recurso' => 'Boleto', 'operacion' => 'reassign', 'grupo' => 'Boletos', 'nombre' => 'Reasignar boletos'],
+            ['codigo' => 'boleto.cancelar', 'recurso' => 'Boleto', 'operacion' => 'cancel', 'grupo' => 'Boletos', 'nombre' => 'Cancelar boletos (no viaja)'],
             ['codigo' => 'boleto.ver',     'recurso' => 'Boleto',  'operacion' => 'read',   'grupo' => 'Boletos', 'nombre' => 'Ver boleto'],
             ['codigo' => 'ruta.listar',  'recurso' => 'Ruta',  'operacion' => 'list',   'grupo' => 'Rutas', 'nombre' => 'Listar rutas'],
             ['codigo' => 'ruta.crear',   'recurso' => 'Ruta',  'operacion' => 'create', 'grupo' => 'Rutas', 'nombre' => 'Crear rutas'],
@@ -58,6 +59,11 @@ class ActionFixtures extends Fixture
             ['codigo' => 'salida.editar',   'recurso' => 'Salida', 'operacion' => 'update', 'grupo' => 'Salidas', 'nombre' => 'Editar salidas'],
             ['codigo' => 'salida.cancelar', 'recurso' => 'Salida', 'operacion' => 'cancel', 'grupo' => 'Salidas', 'nombre' => 'Anular salidas'],
             ['codigo' => 'salida.eliminar', 'recurso' => 'Salida', 'operacion' => 'delete', 'grupo' => 'Salidas', 'nombre' => 'Eliminar salidas'],
+            // Abordaje (ADR-032)
+            ['codigo' => 'boleto.chequear', 'recurso' => 'Boleto', 'operacion' => 'check', 'grupo' => 'Salidas', 'nombre' => 'Chequear boletos al abordar'],
+            ['codigo' => 'salida.abordar',  'recurso' => 'Salida', 'operacion' => 'board', 'grupo' => 'Salidas', 'nombre' => 'Poner salidas en abordaje'],
+            ['codigo' => 'salida.iniciar',  'recurso' => 'Salida', 'operacion' => 'start', 'grupo' => 'Salidas', 'nombre' => 'Iniciar salidas'],
+            ['codigo' => 'salida.finalizar', 'recurso' => 'Salida', 'operacion' => 'finish', 'grupo' => 'Salidas', 'nombre' => 'Finalizar salidas'],
             // Página web (ADR-023)
             ['codigo' => 'pagina.administrar', 'recurso' => 'Pagina', 'operacion' => 'manage', 'grupo' => 'Página web', 'nombre' => 'Compras en línea y configuración de la página web'],
         ];

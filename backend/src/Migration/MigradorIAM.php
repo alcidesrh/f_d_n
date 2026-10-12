@@ -30,11 +30,16 @@ class MigradorIAM {
         ['boleto.editar', 'Boleto', 'update', 'Boletos'],
         ['boleto.anular', 'Boleto', 'delete', 'Boletos'],
         ['boleto.reasignar', 'Boleto', 'reassign', 'Boletos'],
+        ['boleto.cancelar', 'Boleto', 'cancel', 'Boletos'],
         ['salida.crear', 'Salida', 'create', 'Salidas'],
         ['salida.ver', 'Salida', 'read', 'Salidas'],
         ['salida.editar', 'Salida', 'update', 'Salidas'],
         ['salida.cancelar', 'Salida', 'cancel', 'Salidas'],
         ['salida.eliminar', 'Salida', 'delete', 'Salidas'],
+        ['boleto.chequear', 'Boleto', 'check', 'Salidas'],
+        ['salida.abordar', 'Salida', 'board', 'Salidas'],
+        ['salida.iniciar', 'Salida', 'start', 'Salidas'],
+        ['salida.finalizar', 'Salida', 'finish', 'Salidas'],
         ['ruta.ver', 'Ruta', 'read', 'Rutas'],
         ['ruta.editar', 'Ruta', 'update', 'Rutas'],
         ['empresa.ver', 'Empresa', 'read', 'Empresas'],
@@ -77,7 +82,7 @@ class MigradorIAM {
             'cliente.crear',
             'tarifa.ver'
         ],
-        'Anulacion y Reasignacion de Boletos' => ['boleto.anular', 'boleto.reasignar'],
+        'Anulacion y Reasignacion de Boletos' => ['boleto.anular', 'boleto.reasignar', 'boleto.cancelar'],
         'Gestion Usuarios' => ['usuario.ver', 'usuario.editar', 'iam.ver', 'iam.editar'],
         'Gestion Reportes' => ['reporte.ventas', 'config.ver'],
         'Gestion Config' => ['config.ver', 'config.editar', 'empresa.editar', 'ruta.editar', 'tarifa.editar'],
@@ -86,6 +91,7 @@ class MigradorIAM {
         'Supervision Venta' => ['venta.vender', 'venta.cortesia', 'venta.sin_factura', 'agencia.acreditar'],
         'Administracion Pagina Web' => ['pagina.administrar'],
         'Gestion Salidas' => ['salida.ver', 'salida.crear', 'salida.editar', 'salida.cancelar', 'salida.eliminar'],
+        'Abordaje de Salidas' => ['boleto.chequear', 'salida.abordar', 'salida.iniciar', 'salida.finalizar'],
     ];
 
     public function __construct(

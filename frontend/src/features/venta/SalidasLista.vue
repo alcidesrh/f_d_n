@@ -11,7 +11,7 @@
   las paradas en medio; la ruta del bus queda como dato secundario.
 -->
 <template>
-  <DataGrid :columns="columns" :rows="salidas" :row-key="rowKey" :loading="cargando" :selected-keys="seleccion" :row-class="rowClass" :cards-below="45" max-height="38rem" row-clickable class="salidas" @row-click="emit('elegir', ($event as SalidaResumen).id)">
+  <DataGrid :columns="columns" :rows="salidas" :row-key="rowKey" :loading="cargando" :selected-keys="seleccion" :row-class="rowClass" :cards-below="45" :density="ancho ? 'comfortable' : 'normal'" max-height="38rem" row-clickable class="salidas" @row-click="emit('elegir', ($event as SalidaResumen).id)">
     <template #header="{ column }">
       <span v-if="column.key === 'asientos'" class="asientos" aria-label="Vendidos y libres">
         <icon name="airline_seat_recline_extra" size="1.1rem" class="asientos__vendidos" title="Vendidos" />
@@ -38,7 +38,9 @@
       </template>
       <span v-else-if="column.key === 'estado'" class="estado">{{ s(row).estado }}</span>
       <span v-else-if="column.key === 'precios' && s(row).precios?.length" class="precios precios--columna">
-        <span v-for="p in s(row).precios" :key="p.clase"><b>{{ p.clase }}</b> {{ precioCorto(p.precio) }}</span>
+        <span v-for="(p, i) in s(row).precios" :key="p.clase" :class="{ 'text-orange-600 mt-1': i }"
+          ><b>{{ p.clase }}</b> {{ precioCorto(p.precio) }}</span
+        >
       </span>
       <span v-else-if="column.key === 'asientos' && s(row).capacidad" class="asientos asientos--valores">
         <span class="asientos__vendidos">{{ s(row).vendidos ?? 0 }}</span>
@@ -57,7 +59,9 @@
             <template v-if="llegada(s(row))">{{ llegada(s(row)) }} · </template><template v-if="desdeOrigen(s(row))">{{ desdeOrigen(s(row)) }} · </template>{{ s(row).empresa?.nombre ?? "—" }}
           </span>
           <span v-if="s(row).precios?.length" class="precios">
-            <span v-for="p in s(row).precios" :key="p.clase"><b>{{ p.clase }}</b> {{ precioCorto(p.precio) }}</span>
+            <span v-for="p in s(row).precios" :key="p.clase"
+              ><b>{{ p.clase }}</b> {{ precioCorto(p.precio) }}</span
+            >
           </span>
           <span v-if="s(row).capacidad" class="asientos asientos--valores ml-auto" :aria-label="`${s(row).vendidos ?? 0} vendidos, ${libres(s(row))} libres`">
             <span class="asientos__vendidos">{{ s(row).vendidos ?? 0 }}</span>
@@ -68,14 +72,14 @@
     </template>
 
     <template #empty>
-      <icon name="directions-bus-outline" size="2rem" />
+      <icon name="no-transfer-outline" size="2rem" color="text-surface-400" />
       <span>No hay salidas para esa fecha y estación.</span>
     </template>
   </DataGrid>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onBeforeUnmount, ref } from "vue";
 import DataGrid from "@/shared/data-grid/DataGrid.vue";
 import GridText from "@/shared/data-grid/GridText.vue";
 import type { GridColumn } from "@/shared/data-grid/types";
@@ -98,6 +102,13 @@ const columns: GridColumn[] = [
   { key: "precios", label: "Precio", width: "6.5rem" },
   { key: "asientos", label: "Asientos", width: "4.5rem", align: "center" },
 ];
+
+/** Desde `lg` (64rem) las filas de la tabla respiran más. */
+const consulta = window.matchMedia("(min-width: 64rem)");
+const ancho = ref(consulta.matches);
+const alCambiar = (e: MediaQueryListEvent) => (ancho.value = e.matches);
+consulta.addEventListener("change", alCambiar);
+onBeforeUnmount(() => consulta.removeEventListener("change", alCambiar));
 
 const s = (row: unknown) => row as SalidaResumen;
 const rowKey = (row: unknown) => String(s(row).id);

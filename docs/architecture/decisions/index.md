@@ -35,3 +35,5 @@
 | [ADR-029](ADR-029-listado-sobre-css-grid.md) | Listado genérico sobre CSS Grid: columnas, filtros OR/AND, selección, edición en línea y tarjetas | Aceptada |
 | [ADR-030](ADR-030-ruta-con-paradas-ordenadas.md) | Ruta con paradas ordenadas; el trayecto queda como par comercial | Aceptada |
 | [ADR-031](ADR-031-bus-por-hora-y-cambio-de-bus-por-numero.md) | Bus por hora en el programador (distribución y bus por fila) y cambio de bus con boletos por número de asiento | Aceptada |
+| [ADR-032](ADR-032-abordaje-y-chequeo-de-boletos.md) | Abordaje de salidas y chequeo de boletos; estado cancelado (no se presentó) | Aceptada |
+| [ADR-033](ADR-033-listado-de-boletos.md) | Listado de boletos (filtros y acciones del legado) y cancelar desde el listado | Aceptada |

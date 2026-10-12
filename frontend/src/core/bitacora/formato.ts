@@ -49,9 +49,11 @@ export function lineasDeDetalle(tipo: TipoBitacora, e: Pick<EntradaBitacora, 'op
     } else if (e.operacion === 'reasignado') {
       lineas.push(texto(d.asiento) ? `Asiento ${d.asiento} → asiento ${d.haciaAsiento ?? '?'}` : null)
       lineas.push(d.haciaSalida && d.haciaSalida !== d.salida ? `A la salida ${d.haciaSalida}` : null)
-    } else if (e.operacion === 'anulado') {
+    } else if (e.operacion === 'anulado' || e.operacion === 'cancelado') {
       lineas.push(texto(d.asiento) ? `Asiento ${d.asiento}` : null)
       lineas.push(d.motivo ? `Motivo: ${d.motivo}` : null)
+    } else if (e.operacion === 'chequeado' || e.operacion === 'transito' || e.operacion === 'finalizado' || e.operacion === 'revertido') {
+      lineas.push(texto(d.asiento) ? `Asiento ${d.asiento}` : null)
     }
     if (d.venta) lineas.push(`Venta ${d.venta}`)
   }

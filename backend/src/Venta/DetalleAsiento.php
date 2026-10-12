@@ -46,7 +46,7 @@ final class DetalleAsiento
             ->andWhere("b.estado NOT IN (:libres)")
             ->setParameter("salida", $salida)
             ->setParameter("asiento", $asiento)
-            ->setParameter("libres", [EstadoBoletoAsiento::ANULADO->value, EstadoBoletoAsiento::REASIGNADO->value])
+            ->setParameter("libres", EstadoBoletoAsiento::liberanAsiento())
             ->orderBy("b.id")
             ->getQuery()
             ->getResult();
