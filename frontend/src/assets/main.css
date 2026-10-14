@@ -70,8 +70,8 @@ svg[stroke-width] path {
   color: inherit !important;
 }
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 2px;
+  height: 3px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;

@@ -27,8 +27,13 @@ const ESTADOS: Record<
 
 export const formatearNumero = (n: number) => new Intl.NumberFormat('es-AR').format(n)
 
-export function etiquetaTipo(job: { tipo: TipoJobMigracion; entidad: string | null }): string {
-  return job.entidad ? `${TIPOS[job.tipo]} → ${job.entidad}` : TIPOS[job.tipo]
+export function etiquetaTipo(job: {
+  tipo: TipoJobMigracion
+  entidad: string | null
+  parametros?: { conservar?: boolean }
+}): string {
+  const tipo = TIPOS[job.tipo] + (job.parametros?.conservar ? ' (conservando configuración)' : '')
+  return job.entidad ? `${tipo} → ${job.entidad}` : tipo
 }
 
 export const etiquetaEstado = (estado: string) =>

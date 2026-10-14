@@ -7,7 +7,7 @@
 <template>
   <div class="kpi" :title="ayuda">
     <div class="flex items-center gap-1.5 text-xs font-medium text-muted-color">
-      <icon v-if="icono" :name="icono" />
+      <icon v-if="icono" :name="icono" :weight="300" />
       <span class="truncate">{{ etiqueta }}</span>
     </div>
     <div class="valor tabular-nums">{{ valor }}</div>
@@ -24,18 +24,18 @@
 </template>
 
 <script setup lang="ts">
-import type { Variacion } from '@/core/tablero/formato'
+import type { Variacion } from "@/core/tablero/formato";
 
 defineProps<{
-  etiqueta: string
-  valor: string
-  variacion?: Variacion | null
+  etiqueta: string;
+  valor: string;
+  variacion?: Variacion | null;
   /** Valor del periodo anterior ya formateado. */
-  anterior?: string
-  detalle?: string
-  icono?: string
-  ayuda?: string
-}>()
+  anterior?: string;
+  detalle?: string;
+  icono?: string;
+  ayuda?: string;
+}>();
 </script>
 
 <style scoped>
@@ -50,13 +50,14 @@ defineProps<{
   min-width: 0;
 }
 .valor {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   line-height: 1.2;
   font-weight: 600;
   color: var(--p-text-color);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin: 5px 0;
 }
 .variacion {
   display: inline-flex;
@@ -65,6 +66,7 @@ defineProps<{
   font-weight: 600;
   border-radius: 999px;
   padding: 0 0.375rem;
+  margin-top: 5px;
 }
 .variacion.buena {
   color: #0a7a0a;

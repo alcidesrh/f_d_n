@@ -50,6 +50,12 @@ class MigrarTodoCommand extends Command
             "Limpia la BD antes de migrar",
         )
             ->addOption(
+                "conservar",
+                null,
+                InputOption::VALUE_NONE,
+                "Con --clean: vacía solo lo que viene del legado y conserva menús, rutas, íconos, IAM y configuración",
+            )
+            ->addOption(
                 "estaticos",
                 null,
                 InputOption::VALUE_NONE,
@@ -109,7 +115,16 @@ class MigrarTodoCommand extends Command
         $steps = [];
 
         // ─── Paso 1: Reset (opcional) ─────────────────────────────
-        if ($clean) {
+        if ($clean && $input->getOption("conservar")) {
+            $output->writeln("<info>[1/5] Vaciando lo que viene del legado...</info>");
+            $r = $this->reseteador->conservando();
+            $output->writeln(sprintf(
+                "<info>✓ %d tablas vaciadas; conservadas: %s</info>",
+                count($r["vaciadas"]),
+                implode(", ", $r["conservadas"]),
+            ));
+            $steps[] = "reset (conservando)";
+        } elseif ($clean) {
             $output->writeln("<info>[1/5] Limpiando base de datos...</info>");
             $this->resetDB($input, $output, true);
             $output->writeln("<info>✓ Base de datos limpiada</info>");

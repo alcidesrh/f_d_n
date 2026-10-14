@@ -195,5 +195,19 @@ export function createBouncingBalls(elements: HTMLElement[], obstacle: () => DOM
         ball.rotationSpeed = random(-4, 4)
       })
     },
+    /**
+     * Impulsa cada elemento hacia `angulo` (radianes, el mismo sentido en que se
+     * desliza la foto), con algo de dispersión. Gira como si rodara.
+     */
+    empujar(angulo: number) {
+      balls.forEach((ball) => {
+        const direccion = angulo + random(-0.35, 0.35)
+        const speed = random(...IMPULSE_SPEED)
+        ball.vx = Math.cos(direccion) * speed
+        ball.vy = Math.sin(direccion) * speed
+        // Rodando sin resbalar: el giro (grados por fotograma) sigue el sentido del avance.
+        ball.rotationSpeed = (ball.vx / ball.radius) * (180 / Math.PI)
+      })
+    },
   }
 }

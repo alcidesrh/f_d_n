@@ -165,6 +165,17 @@
             <Checkbox v-model="cleanTodo" input-id="migracion-clean" binary :disabled="ocupado" />
             <label for="migracion-clean" class="text-sm">Todo (con reset previo)</label>
           </div>
+          <div v-if="cleanTodo" class="flex items-center gap-2">
+            <Checkbox
+              v-model="conservarTodo"
+              input-id="migracion-conservar"
+              binary
+              :disabled="ocupado"
+            />
+            <label for="migracion-conservar" class="text-sm">
+              Conservar menús, rutas, íconos, IAM y configuración
+            </label>
+          </div>
           <Button
             label="Migración completa"
             icon="pi pi-forward"
@@ -222,6 +233,16 @@
             @click="confirmarTruncar"
           />
           <Button
+            label="Truncar conservando configuración"
+            icon="pi pi-filter-slash"
+            size="small"
+            outlined
+            severity="warning"
+            class="w-full mt-2"
+            :disabled="ocupado"
+            @click="confirmarTruncarConservando"
+          />
+          <Button
             label="Reset duro de BD"
             icon="pi pi-exclamation-triangle"
             size="small"
@@ -260,6 +281,7 @@ const cantidad = ref<number | null>(null)
 const salidasDesde = ref<Date | null>(null)
 const salidasHasta = ref<Date | null>(null)
 const cleanTodo = ref(false)
+const conservarTodo = ref(true)
 const modoResetDuro = ref(false)
 const textoReset = ref('')
 
@@ -327,11 +349,19 @@ function confirmarSalidasRango(): void {
 }
 
 function confirmarTodo(): void {
+  const conservar = cleanTodo.value && conservarTodo.value
   conConfirmacion(
-    cleanTodo.value
-      ? 'Migración COMPLETA con RESET previo de la base de datos. ¿Continuar?'
-      : 'Migración completa (estáticos + IAM + configuración + rutas + salidas). ¿Continuar?',
-    () => iniciar({ tipo: 'todo', clean: cleanTodo.value || undefined }),
+    conservar
+      ? 'Migración COMPLETA vaciando antes lo que viene del legado (se conservan menús, rutas, íconos, IAM y configuración). ¿Continuar?'
+      : cleanTodo.value
+        ? 'Migración COMPLETA con RESET previo de la base de datos. ¿Continuar?'
+        : 'Migración completa (estáticos + IAM + configuración + rutas + salidas). ¿Continuar?',
+    () =>
+      iniciar({
+        tipo: 'todo',
+        clean: cleanTodo.value || undefined,
+        conservar: conservar || undefined,
+      }),
   )
 }
 
@@ -339,6 +369,13 @@ function confirmarTruncar(): void {
   conConfirmacion(
     'Truncar todas las tablas migrables? La migración posterior vuelve a insertar desde cero.',
     () => iniciar({ tipo: 'truncar' }),
+  )
+}
+
+function confirmarTruncarConservando(): void {
+  conConfirmacion(
+    'Vaciar lo que viene del legado? Se conservan menús, rutas del frontend, íconos, IAM (roles, permisos, acciones), configuración de entidades y de la página.',
+    () => iniciar({ tipo: 'truncar', conservar: true }),
   )
 }
 

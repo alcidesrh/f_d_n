@@ -155,6 +155,10 @@ class EjecutarJobCommand extends Command
                 break;
 
             case "truncar":
+                if (!empty($params["conservar"])) {
+                    $this->truncarConservando($salida);
+                    break;
+                }
                 $salida->writeln("<info>Truncando tablas migrables…</info>");
                 $this->reseteador->soft();
                 $salida->writeln("<info>✓ Tablas migrables truncadas.</info>");
@@ -203,7 +207,10 @@ class EjecutarJobCommand extends Command
                 break;
 
             case "todo":
-                if (!empty($params["clean"])) {
+                if (!empty($params["clean"]) && !empty($params["conservar"])) {
+                    $salida->writeln("<info>[1/6] Vaciando lo que viene del legado…</info>");
+                    $this->truncarConservando($salida);
+                } elseif (!empty($params["clean"])) {
                     $salida->writeln("<info>[1/6] Reset de BD…</info>");
                     $this->reseteador->hard();
                 }
@@ -277,6 +284,20 @@ class EjecutarJobCommand extends Command
         }
 
         return $contadores;
+    }
+
+    /** Vacía lo que viene del legado y conserva menús, rutas, íconos, IAM y configuración. */
+    private function truncarConservando(SalidaJobOutput $salida): void
+    {
+        $salida->writeln(
+            "<info>Truncando tablas del legado (se conserva lo que no depende de él)…</info>",
+        );
+        $r = $this->reseteador->conservando();
+        $salida->writeln(sprintf(
+            "<info>✓ %d tablas vaciadas; conservadas: %s</info>",
+            count($r["vaciadas"]),
+            implode(", ", $r["conservadas"]),
+        ));
     }
 
     /**

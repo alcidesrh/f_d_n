@@ -2,10 +2,10 @@
   <aside ref="panel" class="sidebar" :class="[sidebarStore.side, sidebarStore.shown]">
     <div :class="[sidebarStore.side, nomini ? 'nomini' : '']" class="sidebar-control">
       <button type="button" class="toggle-sidebar tap-target" :aria-label="sidebarStore.mode != 'mini' ? 'Solo íconos' : 'Mostrar textos'" @click="sidebarStore.setMode(sidebarStore.mode == 'mini' ? 'open' : 'mini')">
-        <icon :name="sidebarStore.mode != 'mini' ? 'horizontal_align_left' : 'horizontal_align_right'" size="1.2rem" class="text-surface-500 font-bold" :class="{ 'rotate-180': sidebarStore.side != 'left' }" :weight="400" />
+        <icon :name="sidebarStore.mode != 'mini' ? 'horizontal_align_left' : 'horizontal_align_right'" size="1.2rem" class="text-surface-600" :class="{ 'rotate-180': sidebarStore.side != 'left' }" :weight="400" />
       </button>
       <button type="button" class="close-sidebar tap-target" aria-label="Cerrar panel" @click="sidebarStore.dismiss()">
-        <icon name="close" size="1.2rem" class="text-surface-500" :weight="400" />
+        <icon name="close" size="1.2rem" class="text-surface-600" :weight="400" />
       </button>
     </div>
     <nav class="mt-2">

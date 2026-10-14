@@ -230,9 +230,9 @@ onBeforeUnmount(() => {
  */
 
 .tablero {
-  --serie-estacion: #2a78d6;
-  --serie-agencia: #eb6834;
-  --serie-web: #1baf7a;
+  --serie-estacion: var(--p-blue-500);
+  --serie-agencia: var(--p-emerald-500);
+  --serie-web: var(--p-amber-500);
   --linea-referencia: #8a8985;
   --secuencial-min: #e6f0fd;
   --secuencial-max: #0d366b;
@@ -241,6 +241,7 @@ onBeforeUnmount(() => {
   --estado-serio: #ec835a;
   --estado-critico: #d03b3b;
   --estado-info: #2a78d6;
+  --estado-generico: var(--p-emerald-500);
 }
 .dark .tablero {
   --serie-estacion: #3987e5;

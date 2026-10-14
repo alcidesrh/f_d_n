@@ -19,38 +19,38 @@
           <span v-else class="sin text-muted-color" aria-hidden="true">—</span>
         </div>
         <div class="flex flex-col text-center text-xs leading-tight" :class="i === 0 ? 'font-semibold' : 'text-muted-color'">
-          <span>{{ i === 0 ? 'Hoy' : etiquetaCubo(d.dia, false).split(' ')[0] }}</span>
+          <span>{{ i === 0 ? "Hoy" : etiquetaCubo(d.dia, false).split(" ")[0] }}</span>
           <span class="tabular-nums">{{ d.dia.slice(8) }}</span>
         </div>
       </div>
     </div>
     <p v-if="ritmo" class="text-sm">
       <icon :name="ritmo.vendida >= ritmo.semanaAnterior ? 'check-circle-outline' : 'pending-outline'" class="mr-1 align-middle text-muted-color" />
-      Ya vendido el <strong>{{ porciento(ritmo.vendida) }}</strong> de los asientos de los próximos {{ ritmo.dias }} días con salidas; la semana pasada esos días terminaron en
-      <strong>{{ porciento(ritmo.semanaAnterior) }}</strong>.
+      Ya vendido el <strong>{{ porciento(ritmo.vendida) }}</strong> de los asientos de los próximos {{ ritmo.dias }} días con salidas; la semana pasada esos días terminaron en <strong>{{ porciento(ritmo.semanaAnterior) }}</strong
+      >.
     </p>
     <p v-if="sinProgramar.length" class="text-sm text-amber-700 dark:text-amber-400">
       <icon name="event-busy-outline" class="mr-1 align-middle" />
-      Sin salidas programadas: {{ sinProgramar.join(', ') }}.
+      Sin salidas programadas: {{ sinProgramar.join(", ") }}.
       <RouterLink to="/salidas/programar" class="font-medium underline">Programar</RouterLink>
     </p>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { ritmoAnticipada } from '@/core/tablero/analisis'
-import { etiquetaCubo, fechaCorta, numero, porciento } from '@/core/tablero/formato'
-import type { DiaAnticipado } from '@/core/tablero/types'
+import { computed } from "vue";
+import { ritmoAnticipada } from "@/core/tablero/analisis";
+import { etiquetaCubo, fechaCorta, numero, porciento } from "@/core/tablero/formato";
+import type { DiaAnticipado } from "@/core/tablero/types";
 
-const props = defineProps<{ dias: DiaAnticipado[] }>()
+const props = defineProps<{ dias: DiaAnticipado[] }>();
 
-const ritmo = computed(() => ritmoAnticipada(props.dias))
-const sinProgramar = computed(() => props.dias.filter((d) => d.salidas === 0).map((d) => etiquetaCubo(d.dia, false)))
+const ritmo = computed(() => ritmoAnticipada(props.dias));
+const sinProgramar = computed(() => props.dias.filter((d) => d.salidas === 0).map((d) => etiquetaCubo(d.dia, false)));
 
 function detalle(d: DiaAnticipado): string {
-  const base = `${fechaCorta(d.dia)}: ${d.salidas} salidas, ${numero(d.boletos)} de ${numero(d.asientos)} asientos vendidos`
-  return d.semanaAnterior !== null ? `${base}. Semana pasada terminó en ${porciento(d.semanaAnterior)}.` : base
+  const base = `${fechaCorta(d.dia)}: ${d.salidas} salidas, ${numero(d.boletos)} de ${numero(d.asientos)} asientos vendidos`;
+  return d.semanaAnterior !== null ? `${base}. Semana pasada terminó en ${porciento(d.semanaAnterior)}.` : base;
 }
 </script>
 
@@ -71,7 +71,7 @@ function detalle(d: DiaAnticipado): string {
   width: 0.625rem;
   height: 0.625rem;
   border-radius: 2px;
-  background: var(--serie-estacion);
+  background: var(--estado-generico);
 }
 .muestra-raya {
   width: 1rem;
@@ -99,7 +99,7 @@ function detalle(d: DiaAnticipado): string {
   inset-inline: 18%;
   bottom: 0;
   border-radius: 4px 4px 0 0;
-  background: var(--serie-estacion);
+  background: var(--estado-generico);
 }
 .raya {
   position: absolute;

@@ -41,6 +41,7 @@ export interface ParametrosJobMigracion {
   hasta: string | null
   cantidad: number | null
   clean: boolean
+  conservar?: boolean
 }
 
 export interface JobMigracion {
@@ -83,6 +84,8 @@ export interface PayloadEjecutar {
   hasta?: string | null
   cantidad?: number | null
   clean?: boolean
+  /** truncar / todo con clean: conservar lo que no depende del legado. */
+  conservar?: boolean
   /** Árbol de rutas del router; lo agrega el store para `rutas` y `todo`. */
   rutas?: VueRouteDTO[]
 }

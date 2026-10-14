@@ -7,11 +7,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { nivelOcupacion, porciento } from '@/core/tablero/formato'
+import { computed } from "vue";
+import { nivelOcupacion, porciento } from "@/core/tablero/formato";
 
-const props = defineProps<{ valor: number | null; titulo?: string }>()
-const nivel = computed(() => nivelOcupacion(props.valor))
+const props = defineProps<{ valor: number | null; titulo?: string }>();
+const nivel = computed(() => nivelOcupacion(props.valor));
 </script>
 
 <style scoped>
@@ -34,7 +34,8 @@ const nivel = computed(() => nivelOcupacion(props.valor))
 .relleno {
   height: 100%;
   border-radius: 999px;
-  background: var(--serie-estacion);
+  /*background: var(--serie-estacion);*/
+  background: var(--estado-generico);
 }
 .relleno.baja {
   background: var(--estado-serio);

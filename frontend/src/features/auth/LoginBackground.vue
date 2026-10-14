@@ -33,14 +33,14 @@ import { createBouncingBalls } from "./bouncingBalls";
 
 const props = defineProps<{ obstacle: HTMLElement | null }>();
 
-const SLIDE_MS = 3000;
+const SLIDE_MS = 5000;
 const SLIDE_COUNT = 10;
 const WHEELS = 5;
 /** Fotos claras: sobre ellas las ruedas se oscurecen (ver `.img.loginN` en el estilo). */
 const FOTOS_CLARAS = new Set([1, 2, 3, 8, 9]);
 
 /** Opacidad de la foto de fondo: con sol se ve más que con lluvia. */
-const opacidadFoto = (n: number) => (FOTOS_CLARAS.has(n) ? 0.6 : 0.3);
+const opacidadFoto = (n: number) => 1; //(FOTOS_CLARAS.has(n) ? 0.6 : 0.3);
 
 /** Gotas de lluvia: posición, largo y brillo al azar (la caída la anima GSAP). */
 const GOTAS = Array.from({ length: 80 }, () => ({
@@ -76,6 +76,8 @@ const clima = computed<Clima>(() => (FOTOS_CLARAS.has(visible.value) ? "amanecer
 
 let timer: ReturnType<typeof setInterval> | undefined;
 let timeline: gsap.core.Timeline | undefined;
+/** Capa que sale en la transición en curso. */
+let saliente: HTMLElement | null = null;
 let balls: ReturnType<typeof createBouncingBalls> | undefined;
 let climaCtx: gsap.Context | undefined;
 /** Bucles de cada clima: solo corren mientras ese clima se ve. */
@@ -121,7 +123,21 @@ function mostrarClima(c: Clima, inmediato = false) {
   });
 }
 
+/**
+ * Cierra la transición en curso (si la hay). El intervalo de `SLIDE_MS` puede
+ * llegar antes de que acabe la línea de tiempo: sin esto, `advance` tomaría
+ * como saliente la capa que ya no está en pantalla y la misma foto volvería a entrar.
+ */
+function terminarTransicion() {
+  if (!timeline || !saliente) return;
+  timeline.kill();
+  timeline = undefined;
+  showingA = !showingA;
+  gsap.set(saliente, { opacity: 0, clearProps: "transform" });
+}
+
 function advance() {
+  terminarTransicion();
   const [from, to] = showingA ? [layerA.value, layerB.value] : [layerB.value, layerA.value];
   const next = nextSlide(slides.value[showingA ? 0 : 1]);
   slides.value[showingA ? 1 : 0] = next;
@@ -135,13 +151,9 @@ function advance() {
   gsap.set(to, { zIndex: 0, opacity: 0.3, x: 0, y: 0 });
   // Si la nueva foto trae sol, se ilumina al quedar a la vista (fuera del timeline: debe acabar antes del próximo tirón).
   gsap.to(to, { opacity: opacidadFoto(next), duration: 2, delay: 2.6, ease: "sine.inOut" });
+  saliente = from;
   timeline = gsap
-    .timeline({
-      onComplete: () => {
-        showingA = !showingA;
-        gsap.set(from, { opacity: 0, clearProps: "transform" });
-      },
-    })
+    .timeline({ onComplete: terminarTransicion })
     .to(
       from,
       {
@@ -155,7 +167,8 @@ function advance() {
     .call(
       () => {
         visible.value = next;
-        balls?.scatter();
+        // Las ruedas salen hacia donde se desliza la foto.
+        balls?.empujar(angle);
       },
       [],
       2.6,

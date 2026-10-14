@@ -63,11 +63,11 @@ const style = computed(() => ({
   height: size_.value,
   minWidth: size_.value,
   minHeight: size_.value,
-  fontVariationSettings: `'FILL' ${parsed.value.fill}, 'wght' ${props.weight ?? "var(--icon-weight, 400)"}`,
+  fontVariationSettings: `'FILL' ${parsed.value.fill}, 'wght' ${props.weight ?? "var(--icon-weight, 300)"}`,
 }));
 
 /** Color por defecto solo si no llega ni `color` ni una `class` propia. */
-const classes = computed(() => ["app-icon", "cursor-pointer", props.color || (attrs.class ? "" : "text-surface-600")]);
+const classes = computed(() => ["app-icon", "cursor-pointer", props.color || (attrs.class ? "" : "text-surface-700")]);
 </script>
 
 <style>

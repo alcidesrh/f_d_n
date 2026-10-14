@@ -216,6 +216,8 @@ class MigracionController extends AbstractController
                 ? max(1, (int) $data["cantidad"])
                 : null,
             "clean" => (bool) ($data["clean"] ?? false),
+            // truncar / todo con clean: conservar lo que no depende del legado.
+            "conservar" => (bool) ($data["conservar"] ?? false),
         ];
         if (in_array($tipo, ["rutas", "todo"], true) && is_array($rutas)) {
             $parametros["rutas"] = $rutas;

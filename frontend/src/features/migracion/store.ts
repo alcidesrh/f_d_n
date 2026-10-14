@@ -138,7 +138,7 @@ export const useMigracionStore = defineStore('migracion', () => {
 
   /** Relanza un job con los mismos parámetros. */
   function reejecutar(job: JobMigracion): Promise<JobMigracion> {
-    const { entidad, desde, hasta, cantidad, clean } = job.parametros ?? {}
+    const { entidad, desde, hasta, cantidad, clean, conservar } = job.parametros ?? {}
     return arrancarJob({
       tipo: job.tipo,
       ...(entidad ? { entidad } : {}),
@@ -146,6 +146,7 @@ export const useMigracionStore = defineStore('migracion', () => {
       ...(hasta ? { hasta } : {}),
       ...(cantidad != null ? { cantidad } : {}),
       ...(clean ? { clean: true } : {}),
+      ...(conservar ? { conservar: true } : {}),
     })
   }
 

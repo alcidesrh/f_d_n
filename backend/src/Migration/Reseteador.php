@@ -12,6 +12,8 @@ use Doctrine\ORM\Tools\SchemaTool;
  *
  * - hard(): DROP SCHEMA public CASCADE + recreate + SchemaTool (esquema completo).
  * - soft(): Limpiador → truncado de tablas migrables e IAM, sin tocar el esquema.
+ * - conservando(): como soft(), pero conserva lo que no depende del legado
+ *   (menús, rutas del frontend, íconos, IAM, configuración; Limpiador::CONSERVABLES).
  *
  * Tras vaciar la BD (incluida la tabla `usuario`), ambos modos regeneran el
  * usuario de respaldo `admin` (ROLE_SUPER_ADMIN) vía AsegurarUsuarioAdmin.
@@ -48,5 +50,15 @@ final class Reseteador
         $this->coordenadas->guardar();
         $this->limpiador->limpiar();
         $this->asegurarUsuarioAdmin->asegurar();
+    }
+
+    /** @return array{conservadas: list<string>, vaciadas: list<string>} */
+    public function conservando(): array
+    {
+        $this->coordenadas->guardar();
+        $resultado = $this->limpiador->limpiarConservando();
+        $this->asegurarUsuarioAdmin->asegurar();
+
+        return $resultado;
     }
 }
