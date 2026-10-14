@@ -51,8 +51,8 @@ final class MoldesTest extends TestCase
                 ["numero" => 2, "clase_id" => 1, "nivel2" => 0, "coordenadaX" => 150, "coordenadaY" => 0],
             ]
             : [
-                ["tipo_nombre" => "CHOFER", "nivel2" => 0, "coordenada_x" => 200, "coordenada_y" => 0],
-                ["tipo_nombre" => "CHOFER", "nivel2" => 0, "coordenada_x" => 200, "coordenada_y" => 0],
+                ["tipo_nombre" => "CHOFER", "nivel2" => 0, "coordenadaX" => 200, "coordenadaY" => 0],
+                ["tipo_nombre" => "CHOFER", "nivel2" => 0, "coordenadaX" => 200, "coordenadaY" => 0],
             ]);
         $inferencia = new InferenciaBus(
             $this->createStub(Connection::class),

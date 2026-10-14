@@ -425,5 +425,35 @@ export const componentsPreset = (parent: ThemePreset): Tokens => {
         },
       },
     },
+    tag: {
+      ...base.components.tag,
+      root: {
+        fontSize: "0.875rem",
+        fontWeight: "600",
+        padding: "0.25rem 0.5rem",
+        gap: "0.25rem",
+        borderRadius: "{content.border.radius}",
+        roundedBorderRadius: "{border.radius.xl}",
+      },
+      colorScheme: {
+        ...base.components.tag.colorScheme,
+        light: {
+          ...base.components.tag.colorScheme.light,
+
+          success: {
+            background: "{emerald.500}",
+            color: "{surface.0}",
+          },
+        },
+        dark: {
+          ...base.components.tag.colorScheme.dark,
+
+          success: {
+            background: "{emerald.400}",
+            color: "{emerald.950}",
+          },
+        },
+      },
+    },
   };
 };

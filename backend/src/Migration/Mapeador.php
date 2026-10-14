@@ -127,8 +127,8 @@ class Mapeador
         return [
             "tipo" => $tipo->value,
             "planta" => $this->planta($old["nivel2"] ?? null),
-            "fila" => Croquis::desdeLegado($old["coordenada_y"] ?? 0),
-            "columna" => Croquis::desdeLegado($old["coordenada_x"] ?? 0),
+            "fila" => Croquis::desdeLegado($old["coordenadaY"] ?? 0),
+            "columna" => Croquis::desdeLegado($old["coordenadaX"] ?? 0),
             "bus_id" => $busId,
         ];
     }

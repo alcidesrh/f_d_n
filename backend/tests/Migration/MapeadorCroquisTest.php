@@ -34,7 +34,7 @@ final class MapeadorCroquisTest extends TestCase
     public function testSenalReconoceElTipoPorNombre(): void
     {
         $data = (new Mapeador())->senal(
-            ['tipo_nombre' => 'PUERTA', 'nivel2' => false, 'coordenada_x' => 200, 'coordenada_y' => 50],
+            ['tipo_nombre' => 'PUERTA', 'nivel2' => false, 'coordenadaX' => 200, 'coordenadaY' => 50],
             3,
         );
 
@@ -43,7 +43,7 @@ final class MapeadorCroquisTest extends TestCase
 
     public function testSenalDeTipoDesconocidoSeOmite(): void
     {
-        $this->assertNull((new Mapeador())->senal(['tipo_nombre' => 'Televisor', 'coordenada_x' => 0, 'coordenada_y' => 0], 3));
+        $this->assertNull((new Mapeador())->senal(['tipo_nombre' => 'Televisor', 'coordenadaX' => 0, 'coordenadaY' => 0], 3));
     }
 
     public function testNombresLegadoDeTipoDeSenal(): void

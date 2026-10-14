@@ -248,7 +248,7 @@ const precioCorto = (p: Importe | null) => (p ? p.texto.replace(/[.,]00$/, "") :
   font-variant-numeric: tabular-nums;
 }
 .asientos__vendidos {
-  color: var(--p-blue-600);
+  color: var(--p-emerald-600);
 }
 .asientos__libres {
   color: var(--p-text-muted-color);
