@@ -9,7 +9,6 @@
   top: var(--header-h);
   bottom: 0;
   background-color: var(--bg);
-  /*background-color: var(--p-content-background); */
   z-index: 100;
   width: min(var(--sb-open), 85vw);
   height: calc(100% - var(--header-h));

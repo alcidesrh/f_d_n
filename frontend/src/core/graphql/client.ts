@@ -154,9 +154,11 @@ export class ApiPlatformClient {
     if (!entity.queryCollection)
       throw new Error(`[graphql] "${entity.name}" no expone query collection`)
     const { query, variables } = buildCollectionQuery(entity, spec)
+    // Red siempre: tras un borrado la caché de Apollo aún tiene el registro en la colección.
     const result = await this.client.query<Record<string, unknown>>({
       query: toDocument(query),
       variables,
+      fetchPolicy: 'network-only',
     })
 
     return normalizeCollection<T>(entity, result.data![entity.queryCollection])

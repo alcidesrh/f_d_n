@@ -67,6 +67,14 @@ export const entityListActions: Record<string, EntityListAction[]> = {
   BoletoAsiento: [bitacoraBoleto],
 }
 
+/**
+ * Borrado propio de una entidad, en lugar del eliminar genérico (fila y
+ * selección): el diálogo recibe `ids` y `visible`, como las acciones sobre la selección.
+ */
+export const entityDeleteDialogs: Record<string, EntityFormLoader> = {
+  Usuario: () => import('@/features/usuario/EliminarUsuariosDialog.vue'),
+}
+
 export const entityBulkActions: Record<string, EntityBulkAction[]> = {
   BoletoAsiento: [
     {

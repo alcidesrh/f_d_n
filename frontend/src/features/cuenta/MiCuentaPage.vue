@@ -139,8 +139,7 @@
                   type="Password"
                   name="password"
                   label="Nueva contraseña"
-                  :validation="`required|length:${MINIMO}`"
-                  :validation-messages="{ length: `Al menos ${MINIMO} caracteres.` }"
+                  validation="required"
                   autocomplete="new-password"
                   fluid
                 />
@@ -176,9 +175,6 @@ import { notify } from '@/core/notify'
 import ChatAvatar from '@/shared/chat/ChatAvatar.vue'
 import PageHead from '@/shared/ui/PageHead.vue'
 import { recortarCuadrada } from './foto'
-
-/** Igual que `MiCuentaController::MINIMO_PASSWORD`. */
-const MINIMO = 6
 
 const cuenta = useCuentaStore()
 const elegir = ref<HTMLInputElement | null>(null)

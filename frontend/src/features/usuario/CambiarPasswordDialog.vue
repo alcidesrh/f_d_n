@@ -22,8 +22,7 @@
           type="Password"
           name="password"
           label="Nueva contraseña"
-          :validation="`required|length:${MINIMO}`"
-          :validation-messages="{ length: `Al menos ${MINIMO} caracteres.` }"
+          validation="required"
           autocomplete="new-password"
           fluid
         />
@@ -55,9 +54,6 @@
 import { computed, ref, watch } from 'vue'
 import { http } from '@/core/http'
 import { notify } from '@/core/notify'
-
-/** Igual que `CambiarPasswordController::MINIMO`. */
-const MINIMO = 6
 
 interface UsuarioFila {
   id: string | number

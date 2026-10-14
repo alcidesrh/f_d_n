@@ -52,7 +52,11 @@ export function useSidebarMotion(store: SidebarStore, panel: Ref<HTMLElement | n
   const miniPadding = () => (store.mini - 24) / 2;
 
   function resetContent() {
-    for (const [selector, props] of CONTENT_CLEAR) gsap.set(all(selector), { clearProps: props });
+    for (const [selector, props] of CONTENT_CLEAR) {
+      const els = all(selector);
+      // GSAP avisa en consola si el target está vacío (p. ej. sin submenús).
+      if (els.length) gsap.set(els, { clearProps: props });
+    }
   }
 
   // ---- Escritorio: ancho + contenido -----------------------------------------

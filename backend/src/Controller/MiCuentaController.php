@@ -27,8 +27,6 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 #[AsController]
 final class MiCuentaController extends AbstractController
 {
-    public const MINIMO_PASSWORD = 6;
-
     /** Campo => [máximo de caracteres, obligatorio]. */
     private const CAMPOS = [
         "nombre" => [255, true],
@@ -94,11 +92,8 @@ final class MiCuentaController extends AbstractController
         if (!is_string($actual) || !$this->hasher->isPasswordValid($yo, $actual)) {
             return $this->error("La contraseña actual no es correcta.");
         }
-        if (!is_string($nueva) || mb_strlen($nueva) < self::MINIMO_PASSWORD) {
-            return $this->error(sprintf("La contraseña nueva debe tener al menos %d caracteres.", self::MINIMO_PASSWORD));
-        }
-        if ($nueva === $actual) {
-            return $this->error("La contraseña nueva debe ser distinta de la actual.");
+        if (!is_string($nueva) || $nueva === '') {
+            return $this->error("La contraseña nueva es obligatoria.");
         }
 
         $yo->setPassword($this->hasher->hashPassword($yo, $nueva));

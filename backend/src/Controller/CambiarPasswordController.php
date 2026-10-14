@@ -25,7 +25,6 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
 final class CambiarPasswordController extends AbstractController
 {
     public const EDITAR = 'usuario.editar';
-    public const MINIMO = 6;
 
     public function __construct(
         private readonly EntityManagerInterface $em,
@@ -39,9 +38,9 @@ final class CambiarPasswordController extends AbstractController
         $this->denyAccessUnlessGranted(self::EDITAR);
 
         $password = $request->toArray()['password'] ?? null;
-        if (!is_string($password) || mb_strlen($password) < self::MINIMO) {
+        if (!is_string($password) || $password === '') {
             return $this->json(
-                ['error' => sprintf('La contraseña debe tener al menos %d caracteres.', self::MINIMO)],
+                ['error' => 'La contraseña es obligatoria.'],
                 Response::HTTP_UNPROCESSABLE_ENTITY,
             );
         }

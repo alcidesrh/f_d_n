@@ -87,7 +87,6 @@
               </Button>
             </div>
           </section>
-          <divider class="!" />
           <section class="panel flex flex-col gap-2 max-w-[50%]">
             <label class="font-medium" for="venta-cliente">{{ store.reasignacion ? "Cliente de la venta" : "Cliente (facturar a)" }}</label>
             <div v-if="store.reasignacion">
@@ -129,45 +128,42 @@
         </div>
 
         <!-- Croquis + cobro -->
-        <div class="flex">
-          <divider layout="vertical" class="@max-3xl:hidden!" />
-          <aside ref="croquis" class="panel flex min-w-0 flex-1 scroll-mt-20 flex-col gap-3 @3xl:sticky @3xl:top-4">
-            <Transition name="croquis" mode="out-in" @enter="alMostrarCroquis">
-              <div v-if="store.cargandoDetalle" key="cargando">
-                <Skeleton height="20rem" />
+        <aside ref="croquis" class="panel flex min-w-0 flex-1 scroll-mt-20 flex-col gap-3 @3xl:sticky @3xl:top-4">
+          <Transition name="croquis" mode="out-in" @enter="alMostrarCroquis">
+            <div v-if="store.cargandoDetalle" key="cargando">
+              <Skeleton height="20rem" />
+            </div>
+            <div v-else-if="store.detalle" :key="`salida-${store.salidaId}`" class="flex flex-col gap-3 tex-sm">
+              <BusMapLegend :items="leyenda" :conteos="conteos" />
+              <div class="overflow-x-auto mt-1 md:mt-4">
+                <BusMap :elementos="store.detalle.croquis" :estado="store.estadoAsiento" interactivo inspeccionable tamano="md" class="justify-center" @asiento="(a) => a.id != null && store.alternarAsiento(a.id)" @ocupado="verOcupado" />
+                <AsientoOcupadoPopover ref="detalleAsiento" @anular="(b) => (anular = [b.id])" @reasignar="(b) => void store.iniciarReasignacion([b.id])" />
               </div>
-              <div v-else-if="store.detalle" :key="`salida-${store.salidaId}`" class="flex flex-col gap-3 tex-sm">
-                <BusMapLegend :items="leyenda" :conteos="conteos" />
-                <div class="overflow-x-auto mt-1 md:mt-4">
-                  <BusMap :elementos="store.detalle.croquis" :estado="store.estadoAsiento" interactivo inspeccionable tamano="md" class="justify-center" @asiento="(a) => a.id != null && store.alternarAsiento(a.id)" @ocupado="verOcupado" />
-                  <AsientoOcupadoPopover ref="detalleAsiento" @anular="(b) => (anular = [b.id])" @reasignar="(b) => void store.iniciarReasignacion([b.id])" />
-                </div>
-                <Divider align="center" class="my-0! before:border-surface-400!" type="dashed">
-                  <span class="text-xs font-bold text-surface-500">{{ store.ocupados.length }} / {{ store.asientosCroquis.length }}</span>
-                </Divider>
-                <div class="flex items-baseline justify-between">
-                  <span class="text-muted-color">Total</span>
-                  <span class="text-xl font-semibold tabular-nums">{{ store.cotizacion?.total.texto ?? "—" }}</span>
-                </div>
-                <Message v-if="store.errorCotizacion" severity="warn" :closable="false">
-                  {{ store.errorCotizacion }}
-                </Message>
-                <Message v-if="!store.cliente && store.seleccion.length" severity="info" :closable="false"> Elija el cliente para facturar. </Message>
-                <div v-if="store.reasignacion" class="flex flex-wrap justify-end gap-2">
-                  <Button label="Reasignar" :loading="store.vendiendo" :disabled="!store.puedeReasignar" @click="confirmarReasignacion" />
-                </div>
-                <div v-else class="flex flex-wrap justify-end gap-2">
-                  <Button v-if="store.contexto?.permisos.cortesia" label="Cortesía" severity="secondary" outlined :disabled="!store.puedeVender" @click="abrirCobro(true)" />
-                  <Button :label="store.contexto?.canal === 'agencia' ? 'Vender' : 'Facturar'" :disabled="!store.puedeVender || !store.cotizacion" @click="abrirCobro(false)" />
-                </div>
+              <Divider align="center" class="my-0! before:border-surface-400!" type="dashed">
+                <span class="text-xs font-bold text-surface-500">{{ store.ocupados.length }} / {{ store.asientosCroquis.length }}</span>
+              </Divider>
+              <div class="flex items-baseline justify-between">
+                <span class="text-muted-color">Total</span>
+                <span class="text-xl font-semibold tabular-nums">{{ store.cotizacion?.total.texto ?? "—" }}</span>
               </div>
-              <div v-else key="vacio" class="py-10 text-center text-muted-color">
-                <icon name="directions-bus-outline" class="mb-2 text-3xl" />
-                <p>Elija un salida para ver sus asientos.</p>
+              <Message v-if="store.errorCotizacion" severity="warn" :closable="false">
+                {{ store.errorCotizacion }}
+              </Message>
+              <Message v-if="!store.cliente && store.seleccion.length" severity="info" :closable="false"> Elija el cliente para facturar. </Message>
+              <div v-if="store.reasignacion" class="flex flex-wrap justify-end gap-2">
+                <Button label="Reasignar" :loading="store.vendiendo" :disabled="!store.puedeReasignar" @click="confirmarReasignacion" />
               </div>
-            </Transition>
-          </aside>
-        </div>
+              <div v-else class="flex flex-wrap justify-end gap-2">
+                <Button v-if="store.contexto?.permisos.cortesia" label="Cortesía" severity="secondary" outlined :disabled="!store.puedeVender" @click="abrirCobro(true)" />
+                <Button :label="store.contexto?.canal === 'agencia' ? 'Vender' : 'Facturar'" :disabled="!store.puedeVender || !store.cotizacion" @click="abrirCobro(false)" />
+              </div>
+            </div>
+            <div v-else key="vacio" class="py-10 text-center text-muted-color">
+              <icon name="directions-bus-outline" class="mb-2 text-3xl" />
+              <p>Elija un salida para ver sus asientos.</p>
+            </div>
+          </Transition>
+        </aside>
       </div>
     </div>
 
@@ -395,6 +391,7 @@ async function reintentar(sinFactura: boolean) {
   top: 0.25rem;
   z-index: 3;
   transform: translateX(-50%);
+  background: var(--p-surface-50);
 }
 @media (width >= 48rem) {
   /* Justo bajo la cabecera de la tabla. */

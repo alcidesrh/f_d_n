@@ -42,16 +42,10 @@
       </template>
 
       <template v-if="datos">
-        <!-- <Divider align="center" type="dashed" class="before:border-surface-300! before:border! before:border-dashed my-15! mb-10!">
-          <span class="text-surface-600 text-xl font-semibold">Alertas</span>
-        </Divider> -->
         <Fieldset legend="Alerta" :toggleable="true" class="fieldset">
           <AlertasTablero :alertas="datos.alertas" />
         </Fieldset>
 
-        <!-- <Divider align="center" type="dotted" class="before:border-surface-300! before:border! before:border-dashed my-15! mb-10!">
-          <span class="text-surface-600 text-xl font-semibold">Ventas</span>
-        </Divider> -->
         <Fieldset legend="Ventas" :toggleable="true" class="fieldset">
           <div class="kpis mt-5 mb-10">
             <KpiTile etiqueta="Ingresos" icono="payments-outline" :valor="dinero(k.ingresos.actual, true)" :variacion="variacion(k.ingresos.actual, k.ingresos.anterior)" :anterior="dinero(k.ingresos.anterior, true)" ayuda="Boletos vendidos y cobrados en el periodo (por fecha de venta), sin anulados ni cortesías." />

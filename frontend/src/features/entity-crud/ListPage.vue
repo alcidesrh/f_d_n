@@ -97,7 +97,8 @@ import DataGrid from "@/shared/data-grid/DataGrid.vue";
 import { moveItem } from "@/shared/data-grid/layout";
 import type { GridColumn } from "@/shared/data-grid/types";
 import ListActions from "./list/ListActions.vue";
-import { entityBulkActions, entityListActions, entityReadOnly, type EntityBulkAction, type EntityListAction } from "./list/listActions";
+import { entityBulkActions, entityDeleteDialogs, entityListActions, entityReadOnly, type EntityBulkAction, type EntityListAction } from "./list/listActions";
+import type { EntityFormLoader } from "./form/formOverrides";
 import ListCell from "./list/ListCell.vue";
 import ListCellEditor from "./list/ListCellEditor.vue";
 import { resolveListFeatures, type ListFeatures } from "./list/listFeatures";
@@ -316,6 +317,8 @@ function askDelete(item: unknown) {
   const current = store.value;
   const id = (item as { id?: string | number }).id;
   if (!current || id === undefined) return;
+  const dialogo = entityDeleteDialogs[entityName.value];
+  if (dialogo) return abrirBorradoPropio(dialogo, [Number(claveFila(item))]);
   confirm.require({
     header: "Confirmar eliminación",
     message: "¿Eliminar este registro? Esta acción no se puede deshacer.",
@@ -385,10 +388,18 @@ async function ejecutarAccion(accion: EntityBulkAction) {
   }
 }
 
+/** Borrado con diálogo propio de la entidad (p. ej. usuarios con sus dependencias). */
+function abrirBorradoPropio(loader: EntityFormLoader, ids: number[]) {
+  activeBulk.value = { component: defineAsyncComponent(loader), ids };
+  bulkVisible.value = true;
+}
+
 function confirmBulkDelete() {
   const current = store.value;
   const rows = [...selectedRows.value];
   if (!current || !rows.length) return;
+  const dialogo = entityDeleteDialogs[entityName.value];
+  if (dialogo) return abrirBorradoPropio(dialogo, rows.map((fila) => Number(claveFila(fila))));
   confirm.require({
     header: "Eliminar seleccionados",
     message: `¿Eliminar ${rows.length === 1 ? "el registro seleccionado" : `los ${rows.length} registros seleccionados`}? Esta acción no se puede deshacer.`,

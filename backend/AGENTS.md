@@ -247,20 +247,13 @@ findByEmail()
 
 Whenever code changes:
 
-### Data Fixture
+### Credenciales de desarrollo
 
-```bash
-docker compose exec backend php bin/console doctrine:fixtures:load --append --no-interaction
-```
+| Usuario | Contraseña                 | Rol                                 |
+| :------ | :------------------------- | :---------------------------------- |
+| `admin` | cuatro espacios (`"    "`)    | ROLE_SUPER_ADMIN (acceso total)     |
 
-#### Resultado
-
-| Usuario                | Features demostradas                         | Actions count |
-| :--------------------- | :------------------------------------------- | :-----------: |
-| superadmin / super123  | Role full access via ROLE_SUPER_ADMIN        |      31       |
-| admin / admin123       | Rol + direct permiso Gestion Acciones        |      26       |
-| operador / operador123 | Rol + direct action usuario.ver              |       7       |
-| consulta / consulta123 | Direct permiso + denied action boleto.anular |       5       |
+Login: `POST /api/login` con `{"username": "admin", "password": "    "}` → `200` y `token` (Bearer).
 
 ### Unit Tests
 
