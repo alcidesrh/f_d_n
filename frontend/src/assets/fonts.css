@@ -30,12 +30,27 @@
   font-style: normal;
   src: url("/fonts/Rajdhani-Bold.ttf") format("truetype");
 }*/
-@font-face {
-  font-family: "Rajdhani";
-  src: url("/fonts/Rajdhani-Bold-fixed.ttf") format("truetype");
+/*@font-face {
+  font-family: "Rajdhani-700";
+  src: url("/fonts/Rajdhani/Rajdhani-Bold.ttf") format("truetype");
   font-style: normal;
   font-weight: 700;
+}*/
+
+/*@font-face {
+  font-family: "Rajdhani-500";
+  src: url("/fonts/Rajdhani/Rajdhani-Medium.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 500;
+}*/
+
+@font-face {
+  font-family: "Rajdhani-600";
+  src: url("/fonts/Rajdhani/Rajdhani-SemiBold-fixed.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 600;
 }
+
 @font-face {
   font-family: "Chakra_Petch";
   font-optical-sizing: auto;

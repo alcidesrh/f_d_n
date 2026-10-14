@@ -40,7 +40,8 @@ defineProps<{
 
 <style scoped>
 .kpi {
-  background: var(--p-content-background);
+  /*background: var(--p-content-background);*/
+  background: var(--p-surface-0);
   border: 1px solid var(--p-content-border-color);
   border-radius: var(--p-content-border-radius, 0.75rem);
   padding: 0.75rem 0.875rem;

@@ -25,6 +25,8 @@ defineProps<{ titulo: string; subtitulo?: string; ayuda?: string; icono?: string
 <style scoped>
 .tablero-panel {
   background: var(--p-content-background);
+  background: var(--p-surface-0);
+  /*var(--p-content-background);*/
   /*border: 1px solid var(--p-surface-400);*/
   border: 1px solid var(--p-content-border-color);
   border-radius: var(--p-content-border-radius, 0.75rem);

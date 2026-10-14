@@ -42,86 +42,65 @@
       </template>
 
       <template v-if="datos">
-        <!-- <Divider align="center" type="dashed" class="before:border-surface-300! before:border! before:border-dashed my-15! mb-10!">
-          <span class="text-surface-600 text-xl font-semibold">Alertas</span>
-        </Divider> -->
-        <Fieldset legend="Alerta" :toggleable="true" class="border-0! shadow-md mt-10!">
-          <AlertasTablero :alertas="datos.alertas" />
-        </Fieldset>
+        <div class="section-header text-sm mt-[0.5rem] mb-[0.3rem] md:text-[1.5rem] lg:mt-[1.5rem] pb-[5px] lg:mb-[1rem]">Alerta</div>
+        <AlertasTablero :alertas="datos.alertas" />
 
-        <!-- <Divider align="center" type="dotted" class="before:border-surface-300! before:border! before:border-dashed my-15! mb-10!">
-          <span class="text-surface-600 text-xl font-semibold">Ventas</span>
-        </Divider> -->
-        <Fieldset legend="Ventas" :toggleable="true" class="border-0! shadow-md mt-10!">
-          <div class="kpis">
-            <KpiTile etiqueta="Ingresos" icono="payments-outline" :valor="dinero(k.ingresos.actual, true)" :variacion="variacion(k.ingresos.actual, k.ingresos.anterior)" :anterior="dinero(k.ingresos.anterior, true)" ayuda="Boletos vendidos y cobrados en el periodo (por fecha de venta), sin anulados ni cortesías." />
-            <KpiTile etiqueta="Boletos vendidos" icono="confirmation-number-outline" :valor="numero(k.boletos.actual)" :variacion="variacion(k.boletos.actual, k.boletos.anterior)" :anterior="numero(k.boletos.anterior)" />
-            <KpiTile etiqueta="Ticket promedio" icono="sell-outline" :valor="dinero(k.ticketPromedio.actual)" :variacion="variacion(k.ticketPromedio.actual, k.ticketPromedio.anterior)" :anterior="dinero(k.ticketPromedio.anterior)" />
-            <KpiTile etiqueta="Ocupación" icono="airline-seat-recline-normal-outline" :valor="porciento(k.ocupacion.actual, 1)" :variacion="variacion(k.ocupacion.actual, k.ocupacion.anterior, { puntos: true })" :anterior="porciento(k.ocupacion.anterior, 1)" ayuda="Asiento-tramos vendidos sobre los ofrecidos, de las salidas que ya salieron en el periodo (un asiento revendido por tramos cuenta lo que ocupa)." />
-            <KpiTile etiqueta="Ingreso por salida" icono="directions-bus-outline" :valor="dinero(k.ingresoPorSalida.actual, true)" :variacion="variacion(k.ingresoPorSalida.actual, k.ingresoPorSalida.anterior)" :detalle="`${numero(k.salidas.actual)} salidas${k.salidasCanceladas.actual ? ` · ${k.salidasCanceladas.actual} anuladas` : ''}`" ayuda="Lo vendido para las salidas que ya salieron, dividido entre esas salidas. Mide si cada viaje paga su costo." />
-            <KpiTile etiqueta="Anulación" icono="cancel-outline" :valor="porciento(k.tasaAnulacion.actual, 1)" :variacion="variacion(k.tasaAnulacion.actual, k.tasaAnulacion.anterior, { puntos: true, inverso: true })" :detalle="`${numero(k.anulados.actual)} boletos · ${dinero(k.montoAnulado.actual, true)}`" ayuda="Boletos anulados sobre los vendidos en el periodo. Una tasa alta suele ser errores de venta." />
-            <KpiTile etiqueta="No se presentaron" icono="person-off-outline" :valor="porciento(k.tasaNoPresentados.actual, 1)" :variacion="variacion(k.tasaNoPresentados.actual, k.tasaNoPresentados.anterior, { puntos: true, inverso: true })" ayuda="Boletos cancelados al abordar (el pasajero no llegó) sobre los de las salidas que ya salieron. Liberan el asiento pero conservan el cobro." />
-            <KpiTile etiqueta="Sin cobro" icono="redeem-outline" :valor="dinero(k.valorCortesias.actual, true)" :variacion="variacion(k.valorCortesias.actual, k.valorCortesias.anterior, { inverso: true })" :detalle="`${numero(k.cortesias.actual)} cortesías y vouchers`" ayuda="Valor de los boletos emitidos sin cobro (vouchers a precio de tarifa; las cortesías nuevas van a Q 0). Es ingreso que no entra." />
-          </div>
-          <Divider class="vertical-separador2 mt-10!" />
+        <div class="section-header text-sm mt-[0.5rem] mb-[0.3rem] md:text-[1.5rem] lg:mt-[1.5rem] pb-[5px] lg:mb-[1rem">Venta</div>
+        <div class="kpis">
+          <KpiTile etiqueta="Ingresos" icono="payments-outline" :valor="dinero(k.ingresos.actual, true)" :variacion="variacion(k.ingresos.actual, k.ingresos.anterior)" :anterior="dinero(k.ingresos.anterior, true)" ayuda="Boletos vendidos y cobrados en el periodo (por fecha de venta), sin anulados ni cortesías." />
+          <KpiTile etiqueta="Boletos vendidos" icono="confirmation-number-outline" :valor="numero(k.boletos.actual)" :variacion="variacion(k.boletos.actual, k.boletos.anterior)" :anterior="numero(k.boletos.anterior)" />
+          <KpiTile etiqueta="Ticket promedio" icono="sell-outline" :valor="dinero(k.ticketPromedio.actual)" :variacion="variacion(k.ticketPromedio.actual, k.ticketPromedio.anterior)" :anterior="dinero(k.ticketPromedio.anterior)" />
+          <KpiTile etiqueta="Ocupación" icono="airline-seat-recline-normal-outline" :valor="porciento(k.ocupacion.actual, 1)" :variacion="variacion(k.ocupacion.actual, k.ocupacion.anterior, { puntos: true })" :anterior="porciento(k.ocupacion.anterior, 1)" ayuda="Asiento-tramos vendidos sobre los ofrecidos, de las salidas que ya salieron en el periodo (un asiento revendido por tramos cuenta lo que ocupa)." />
+          <KpiTile etiqueta="Ingreso por salida" icono="directions-bus-outline" :valor="dinero(k.ingresoPorSalida.actual, true)" :variacion="variacion(k.ingresoPorSalida.actual, k.ingresoPorSalida.anterior)" :detalle="`${numero(k.salidas.actual)} salidas${k.salidasCanceladas.actual ? ` · ${k.salidasCanceladas.actual} anuladas` : ''}`" ayuda="Lo vendido para las salidas que ya salieron, dividido entre esas salidas. Mide si cada viaje paga su costo." />
+          <KpiTile etiqueta="Anulación" icono="cancel-outline" :valor="porciento(k.tasaAnulacion.actual, 1)" :variacion="variacion(k.tasaAnulacion.actual, k.tasaAnulacion.anterior, { puntos: true, inverso: true })" :detalle="`${numero(k.anulados.actual)} boletos · ${dinero(k.montoAnulado.actual, true)}`" ayuda="Boletos anulados sobre los vendidos en el periodo. Una tasa alta suele ser errores de venta." />
+          <KpiTile etiqueta="No se presentaron" icono="person-off-outline" :valor="porciento(k.tasaNoPresentados.actual, 1)" :variacion="variacion(k.tasaNoPresentados.actual, k.tasaNoPresentados.anterior, { puntos: true, inverso: true })" ayuda="Boletos cancelados al abordar (el pasajero no llegó) sobre los de las salidas que ya salieron. Liberan el asiento pero conservan el cobro." />
+          <KpiTile etiqueta="Sin cobro" icono="redeem-outline" :valor="dinero(k.valorCortesias.actual, true)" :variacion="variacion(k.valorCortesias.actual, k.valorCortesias.anterior, { inverso: true })" :detalle="`${numero(k.cortesias.actual)} cortesías y vouchers`" ayuda="Valor de los boletos emitidos sin cobro (vouchers a precio de tarifa; las cortesías nuevas van a Q 0). Es ingreso que no entra." />
+        </div>
 
-          <div class="fila-2-1 mt-10">
-            <TableroPanel titulo="Tendencia de ingresos" icono="show-chart" :subtitulo="datos.periodo.porHora ? 'Por hora de venta, por canal' : 'Por día de venta, por canal'" ayuda="Barras: lo vendido en cada hora o día, por canal. Línea: el periodo anterior alineado (hoy contra el mismo día de la semana pasada).">
-              <TendenciaVentas :serie="datos.serie" :por-hora="datos.periodo.porHora" :rotulo-anterior="datos.periodo.rotuloAnterior" />
-            </TableroPanel>
-            <Divider class="vertical-separador" layout="vertical" />
-
-            <TableroPanel titulo="Canales de venta" icono="storefront-outline" subtitulo="Participación en los ingresos">
-              <CanalesVenta :canales="datos.canales" />
-            </TableroPanel>
-          </div>
-          <Divider class="vertical-separador2" />
-
-          <div class="fila-1-1 mt-10">
-            <TableroPanel titulo="Operación de hoy" icono="today-outline" :subtitulo="`${datos.operacionHoy.total} salidas programadas para hoy`">
-              <OperacionHoy :operacion="datos.operacionHoy" :ahora="ahora" />
-            </TableroPanel>
-            <Divider class="vertical-separador vertical" layout="vertical" />
-
-            <TableroPanel titulo="Venta anticipada" icono="event-upcoming-outline" subtitulo="Hoy y los próximos 7 días" ayuda="Ocupación ya vendida de las salidas de cada día contra la ocupación final del mismo día de la semana anterior.">
-              <VentaAnticipada :dias="datos.anticipada" />
-            </TableroPanel>
-          </div>
-        </Fieldset>
-
-        <!-- <Divider align="center" type="dashed" class="before:border-surface-300! before:border! before:border-dashed my-15! mb-10!">
-          <span class="text-surface-600 text-xl font-semibold">Tendencias</span>
-        </Divider> -->
-        <Fieldset legend="Tendencias" :toggleable="true" class="border-0! shadow-md mt-10!">
-          <TableroPanel titulo="Rendimiento por ruta" icono="route-outline" subtitulo="Salidas que ya salieron en el periodo" :ayuda="`Saturada: ocupación de ${porciento(OCUPACION_SATURADA)} o más (sumar frecuencia o un bus más grande). Baja: menos de ${porciento(OCUPACION_BAJA)} (sobran salidas o hay que promoverla). Se juzga con 3 salidas o más.`">
-            <RendimientoRutas :rutas="datos.rutas" />
+        <div class="section-header text-sm mt-[0.5rem] mb-[0.3rem] md:text-[1.5rem] lg:mt-[1.5rem] pb-[5px] lg:mb-[1rem">Estadísticas</div>
+        <div class="fila-2-1">
+          <TableroPanel titulo="Tendencia de ingresos" icono="show-chart" :subtitulo="datos.periodo.porHora ? 'Por hora de venta, por canal' : 'Por día de venta, por canal'" ayuda="Barras: lo vendido en cada hora o día, por canal. Línea: el periodo anterior alineado (hoy contra el mismo día de la semana pasada).">
+            <TendenciaVentas :serie="datos.serie" :por-hora="datos.periodo.porHora" :rotulo-anterior="datos.periodo.rotuloAnterior" />
           </TableroPanel>
-          <Divider class="vertical-separador2" />
 
-          <div class="fila-2-1">
-            <TableroPanel titulo="Demanda por día y hora" icono="grid-on-outline" subtitulo="Ocupación media según la hora de salida" ayuda="Mira al menos las últimas 4 semanas. Mover salidas de las franjas claras a las oscuras sube la ocupación sin sumar buses.">
-              <MapaDemanda :demanda="datos.demanda" />
-            </TableroPanel>
+          <TableroPanel titulo="Canales de venta" icono="storefront-outline" subtitulo="Participación en los ingresos">
+            <CanalesVenta :canales="datos.canales" />
+          </TableroPanel>
+        </div>
 
-            <Divider class="vertical-separador" layout="vertical" />
+        <div class="fila-1-1 mt-10">
+          <TableroPanel titulo="Operación de hoy" icono="today-outline" :subtitulo="`${datos.operacionHoy.total} salidas programadas para hoy`">
+            <OperacionHoy :operacion="datos.operacionHoy" :ahora="ahora" />
+          </TableroPanel>
 
-            <TableroPanel titulo="Mejores puntos de venta" icono="leaderboard-outline" subtitulo="Por ingresos del periodo">
-              <PuntosVenta :puntos="datos.puntos" />
-            </TableroPanel>
-          </div>
-        </Fieldset>
-        <Fieldset legend="Agencia" :toggleable="true" class="border-0! shadow-md mt-10!">
-          <div class="fila-1-1">
-            <TableroPanel titulo="Saldo de agencias" icono="account-balance-wallet-outline" subtitulo="Días de venta que cubre el saldo" ayuda="Saldo disponible dividido entre lo que la agencia vendió por día la última semana.">
-              <CoberturaAgencias :agencias="datos.agencias" />
-            </TableroPanel>
-            <Divider class="vertical-separador" layout="vertical" />
+          <TableroPanel titulo="Venta anticipada" icono="event-upcoming-outline" subtitulo="Hoy y los próximos 7 días" ayuda="Ocupación ya vendida de las salidas de cada día contra la ocupación final del mismo día de la semana anterior.">
+            <VentaAnticipada :dias="datos.anticipada" />
+          </TableroPanel>
+        </div>
 
-            <TableroPanel titulo="Flota" icono="airport-shuttle-outline" subtitulo="Buses con salidas del último mes o de la próxima semana">
-              <EstadoFlota :flota="datos.flota" />
-            </TableroPanel>
-          </div>
-        </Fieldset>
+        <TableroPanel titulo="Rendimiento por ruta" icono="route-outline" subtitulo="Salidas que ya salieron en el periodo" :ayuda="`Saturada: ocupación de ${porciento(OCUPACION_SATURADA)} o más (sumar frecuencia o un bus más grande). Baja: menos de ${porciento(OCUPACION_BAJA)} (sobran salidas o hay que promoverla). Se juzga con 3 salidas o más.`">
+          <RendimientoRutas :rutas="datos.rutas" />
+        </TableroPanel>
+
+        <div class="fila-2-1 mt-10">
+          <TableroPanel titulo="Demanda por día y hora" icono="grid-on-outline" subtitulo="Ocupación media según la hora de salida" ayuda="Mira al menos las últimas 4 semanas. Mover salidas de las franjas claras a las oscuras sube la ocupación sin sumar buses.">
+            <MapaDemanda :demanda="datos.demanda" />
+          </TableroPanel>
+
+          <TableroPanel titulo="Mejores puntos de venta" icono="leaderboard-outline" subtitulo="Por ingresos del periodo">
+            <PuntosVenta :puntos="datos.puntos" />
+          </TableroPanel>
+        </div>
+        <div class="section-header text-sm mt-[0.5rem] mb-[0.3rem] md:text-[1.5rem] lg:mt-[1.5rem] pb-[5px] lg:mb-[1rem">Agencia</div>
+        <div class="fila-1-1">
+          <TableroPanel titulo="Saldo de agencias" icono="account-balance-wallet-outline" subtitulo="Días de venta que cubre el saldo" ayuda="Saldo disponible dividido entre lo que la agencia vendió por día la última semana.">
+            <CoberturaAgencias :agencias="datos.agencias" />
+          </TableroPanel>
+
+          <TableroPanel titulo="Flota" icono="airport-shuttle-outline" subtitulo="Buses con salidas del último mes o de la próxima semana">
+            <EstadoFlota :flota="datos.flota" />
+          </TableroPanel>
+        </div>
       </template>
     </template>
   </div>
@@ -238,9 +217,9 @@ onBeforeUnmount(() => {
  */
 
 .tablero {
-  --serie-estacion: #2a78d6;
-  --serie-agencia: #eb6834;
-  --serie-web: #1baf7a;
+  --serie-estacion: var(--p-blue-500);
+  --serie-agencia: var(--p-emerald-500);
+  --serie-web: var(--p-amber-500);
   --linea-referencia: #8a8985;
   --secuencial-min: #e6f0fd;
   --secuencial-max: #0d366b;
@@ -249,6 +228,7 @@ onBeforeUnmount(() => {
   --estado-serio: #ec835a;
   --estado-critico: #d03b3b;
   --estado-info: #2a78d6;
+  --estado-generico: var(--p-emerald-500);
 }
 .dark .tablero {
   --serie-estacion: #3987e5;
@@ -270,8 +250,18 @@ onBeforeUnmount(() => {
   grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
 }
-.vertical-separador {
-  display: none;
+
+.fieldset {
+  border-color: var(--p-surface-400);
+  border-style: dashed !important;
+  border-width: 1px;
+  padding: 1.5rem;
+  background-color: var(--p-surface-50);
+  margin-top: 2rem;
+  /*border: none;*/
+  /*var(--border);*/
+  /*box-shadow: var(--shadow);  */
+  /*border-0! shadow-md mt-10!*/
 }
 /*.shadow-md {
   box-shadow: 0px 3px 7px var(--p-surface-300);
@@ -306,24 +296,28 @@ onBeforeUnmount(() => {
 }
 @container (min-width: 56rem) {
   .fila-1-1 {
-    /*grid-template-columns: repeat(2, minmax(0, 1fr)) ;*/
-    grid-template-columns: minmax(0, 1fr) 20px minmax(0, 1fr);
-    & .vertical-separador {
-      display: inline-block;
-    }
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 @container (min-width: 64rem) {
   .fila-2-1 {
-    grid-template-columns: minmax(0, 2fr) 20px minmax(0, 1fr);
-    & .vertical-separador {
-      display: inline-block;
-    }
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
   }
 }
 @container (min-width: 80rem) {
   .kpis {
     grid-template-columns: repeat(8, minmax(0, 1fr));
   }
+}
+.section-header {
+  font-family: "Rajdhani-600", sans-serif;
+  border-bottom: var(--border);
+  border-color: var(--p-surface-300);
+  display: flex;
+  /*font-weight: 400px;*/
+  width: 20%;
+  color: var(--p-surface-500);
+  /*justify-content: end;*/
+  /*margin-left: auto;*/
 }
 </style>

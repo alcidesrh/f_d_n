@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cuadre de caja por taquillero y estación</title>
+<style>
+  /* Paleta de referencia de la skill dataviz (palette.md). Light y dark seleccionados. */
+  :root {
+    color-scheme: light;
+    --surface-1: #fcfcfb;
+    --page: #f9f9f7;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #898781;
+    --grid: #e1e0d9;
+    --baseline: #c3c2b7;
+    --border: rgba(11,11,11,0.10);
+    --series-1: #2a78d6;   /* efectivo */
+    --series-2: #eb6834;   /* pagos electrónicos */
+    --neg: #e34948;        /* diferencia negativa (faltante) */
+    --pos: #2a78d6;        /* diferencia positiva (sobrante) */
+    --st-ok: #0ca30c;
+    --st-warn: #fab219;
+    --st-serious: #ec835a;
+    --st-crit: #d03b3b;
+    --good-ink: #006300;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --surface-1: #1a1a19;
+      --page: #0d0d0d;
+      --text-primary: #f0efec;
+      --text-secondary: #c3c2b7;
+      --text-muted: #898781;
+      --grid: #2c2c2a;
+      --baseline: #383835;
+      --border: rgba(255,255,255,0.10);
+      --series-1: #3987e5;
+      --series-2: #d95926;
+      --neg: #e66767;
+      --pos: #3987e5;
+      --st-ok: #0ca30c;
+      --st-warn: #fab219;
+      --st-serious: #ec835a;
+      --st-crit: #d03b3b;
+      --good-ink: #0ca30c;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-1: #1a1a19;
+    --page: #0d0d0d;
+    --text-primary: #f0efec;
+    --text-secondary: #c3c2b7;
+    --text-muted: #898781;
+    --grid: #2c2c2a;
+    --baseline: #383835;
+    --border: rgba(255,255,255,0.10);
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --neg: #e66767;
+    --pos: #3987e5;
+    --good-ink: #0ca30c;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--page); color: var(--text-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 14px;
+  }
+  main { max-width: 1200px; margin: 0 auto; padding: 24px 16px 48px; display: grid; gap: 16px; }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  h1 { font-size: 22px; margin: 0; }
+  h2 { font-size: 15px; margin: 0 0 4px; }
+  .muted { color: var(--text-secondary); font-size: 13px; }
+  .note { color: var(--text-secondary); font-size: 13px; margin: 6px 0 0; }
+
+  /* Filtros: una fila sobre todo lo que alcanzan */
+  .filters { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+  .filters label { display: grid; gap: 4px; font-size: 12px; color: var(--text-secondary); }
+  select, input[type="date"] {
+    font: inherit; color: var(--text-primary); background: var(--surface-1);
+    border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; min-width: 160px;
+  }
+  .check { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--text-secondary); }
+
+  /* KPI row */
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+  .kpi .v { font-size: 26px; font-weight: 600; margin-top: 4px; }
+  .kpi.hero .v { font-size: 40px; }
+  .kpi .d { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+  /* Estados: siempre ícono + texto, nunca solo color */
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600;
+    padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); white-space: nowrap;
+  }
+  .chip::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+  .chip.ok { --c: var(--st-ok); }
+  .chip.warn { --c: var(--st-warn); }
+  .chip.serious { --c: var(--st-serious); }
+  .chip.crit { --c: var(--st-crit); }
+  .flag { font-size: 12px; color: var(--text-primary); }
+
+  /* Gráfico 1: diferencia (divergente, centro en cero) */
+  .bars { display: grid; gap: 10px; margin-top: 12px; }
+  .brow { display: grid; grid-template-columns: 200px 1fr 230px; gap: 10px; align-items: center; }
+  .brow .name { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .track { position: relative; height: 14px; }
+  .track::before { content: ""; position: absolute; left: 50%; top: -4px; bottom: -4px; width: 1px; background: var(--baseline); }
+  .fill { position: absolute; top: 0; height: 14px; border-radius: 0 4px 4px 0; }
+  .fill.pos { left: 50%; background: var(--pos); }
+  .fill.neg { right: 50%; background: var(--neg); border-radius: 4px 0 0 4px; }
+  .val { font-variant-numeric: tabular-nums; text-align: right; font-size: 13px; display: flex; justify-content: flex-end; align-items: center; gap: 8px; white-space: nowrap; }
+
+  /* Gráfico 2: cobro apilado (efectivo + electrónico) */
+  .stack { display: flex; gap: 2px; height: 14px; }
+  .stack span { display: block; height: 14px; border-radius: 3px; }
+  .seg-ef { background: var(--series-1); }
+  .seg-el { background: var(--series-2); }
+  .legend { display: flex; gap: 14px; font-size: 12px; color: var(--text-secondary); margin-top: 8px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+
+  /* Tabla de detalle */
+  .table-wrap { overflow-x: auto; margin-top: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+  th { font-weight: 600; color: var(--text-secondary); font-size: 12px; }
+  td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+  tr.exp > td { background: var(--page); }
+  button.linkish {
+    font: inherit; color: var(--text-primary); background: none; border: 1px solid var(--border);
+    border-radius: 6px; padding: 3px 8px; cursor: pointer; min-height: 28px;
+  }
+  button.linkish:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--series-1); outline-offset: 2px; }
+  .trail { display: grid; gap: 6px; font-variant-numeric: tabular-nums; }
+  .trail div { display: flex; justify-content: space-between; max-width: 420px; }
+  .empty { color: var(--text-secondary); padding: 12px 0; }
+</style>
+</head>
+<body>
+<main>
+
+  <section class="card">
+    <h1>Cuadre de caja por taquillero y estación</h1>
+    <p class="note"><strong>Datos de ejemplo.</strong> El modelo actual registra las ventas (<code>BoletoVenta</code>, <code>BoletoAsiento</code>) pero no tiene el conteo de caja. La columna «Efectivo contado» es la entrada que hay que integrar (ver «Fuente de datos»).</p>
+    <div class="filters" style="margin-top:12px">
+      <label>Fecha
+        <input type="date" id="fecha" value="2026-10-13">
+      </label>
+      <label>Estación
+        <select id="estacion"></select>
+      </label>
+      <label class="check"><input type="checkbox" id="soloDif"> Solo con diferencia o anulaciones altas</label>
+    </div>
+  </section>
+
+  <section class="kpis" aria-label="Indicadores del día">
+    <div class="card kpi"><div class="muted">Boletos emitidos</div><div class="v" id="kBoletos">–</div><div class="d" id="kBoletosD"></div></div>
+    <div class="card kpi"><div class="muted">Efectivo esperado</div><div class="v" id="kEsperado">–</div><div class="d">Efectivo cobrado − anulado en efectivo</div></div>
+    <div class="card kpi"><div class="muted">Pagos electrónicos</div><div class="v" id="kElectronico">–</div><div class="d" id="kElectronicoD"></div></div>
+    <div class="card kpi"><div class="muted">Anulaciones</div><div class="v" id="kAnulado">–</div><div class="d" id="kAnuladoD"></div></div>
+    <div class="card kpi hero"><div class="muted">Diferencia de caja neta</div><div class="v" id="kDif">–</div><div class="d" id="kDifD"></div></div>
+  </section>
+
+  <section class="card">
+    <h2>Discrepancias por taquillero</h2>
+    <p class="muted">Diferencia = efectivo contado − efectivo esperado. Azul: sobrante. Rojo: faltante. Gris: cuadra.</p>
+    <div class="bars" id="barrasDif"></div>
+  </section>
+
+  <section class="card">
+    <h2>Cobro por taquillero</h2>
+    <p class="muted">Total cobrado, separado por forma de pago. Las anulaciones están en la tabla.</p>
+    <div class="bars" id="barrasCobro"></div>
+    <div class="legend">
+      <span><i class="seg-ef"></i>Efectivo</span>
+      <span><i class="seg-el"></i>Pagos electrónicos</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Detalle para investigar</h2>
+    <p class="muted">Una fila por taquillero y estación. Ordenado por diferencia absoluta. Abra una fila para ver cómo se llegó a la diferencia y qué anulaciones la explican.</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Taquillero</th>
+            <th>Estación</th>
+            <th class="n">Boletos</th>
+            <th class="n">Efectivo</th>
+            <th class="n">Electrónico</th>
+            <th class="n">Anulado</th>
+            <th class="n">Esperado</th>
+            <th class="n">Contado</th>
+            <th class="n">Diferencia</th>
+            <th>Estado</th>
+            <th><span class="muted">Detalle</span></th>
+          </tr>
+        </thead>
+        <tbody id="tabla"></tbody>
+      </table>
+    </div>
+    <p class="empty" id="vacio" hidden>Ninguna fila cumple el filtro.</p>
+  </section>
+
+  <section class="card">
+    <h2>Fuente de datos y reglas</h2>
+    <ul class="muted">
+      <li><strong>Boletos emitidos, efectivo, electrónico y anulado:</strong> <code>BoletoVenta</code> agrupado por <code>usuario</code>, <code>estacion</code> y <code>tipoPago</code> (catálogo «Efectivo» / «Tarjeta»). Un boleto anulado conserva su importe para mostrarlo, pero no entra en el esperado si se devolvió en efectivo.</li>
+      <li><strong>Efectivo contado:</strong> <em>no existe en el modelo</em>. Hace falta una entidad de cierre de caja (taquillero, estación, fecha, turno, monto contado, quién lo cuadró). Hasta entonces el tablero muestra la columna vacía o de ejemplo.</li>
+      <li><strong>Estados:</strong> Cuadra = 0. Leve ≤ Q100. Alta ≤ Q500. Crítica &gt; Q500. Anulaciones altas: anulado mayor al 5% del cobro. Umbrales a confirmar con administración.</li>
+      <li><strong>Supuesto a confirmar:</strong> una anulación pagada en efectivo se devuelve en efectivo ese mismo día, por eso sale del esperado.</li>
+    </ul>
+  </section>
+
+</main>
+
+<script>
+  // Datos de ejemplo. Forma esperada de cada fila de cierre.
+  const DATOS = [
+    { taquillero: "Ana Morales", estacion: "Guatemala", boletos: 86, efectivo: 12450, electronico: 6820, contado: 12150,
+      anulaciones: [
+        { boleto: "B-1043", factura: "F-2281", asiento: 12, hora: "06:40", importe: 300, pago: "efectivo" },
+        { boleto: "B-1051", factura: "F-2290", asiento: 3, hora: "07:10", importe: 240, pago: "electronico" } ] },
+    { taquillero: "Luis Pérez", estacion: "Guatemala", boletos: 63, efectivo: 9800, electronico: 4100, contado: 9575,
+      anulaciones: [
+        { boleto: "B-1017", factura: "F-2249", asiento: 7, hora: "05:50", importe: 180, pago: "efectivo" } ] },
+    { taquillero: "Marta Cifuentes", estacion: "Guatemala", boletos: 48, efectivo: 7300, electronico: 2200, contado: 6650,
+      anulaciones: [] },
+    { taquillero: "Jorge Ruiz", estacion: "Cobán", boletos: 38, efectivo: 5400, electronico: 900, contado: 5310,
+      anulaciones: [
+        { boleto: "B-0988", factura: "F-1930", asiento: 19, hora: "08:20", importe: 150, pago: "efectivo" } ] },
+    { taquillero: "Sofía Lima", estacion: "Cobán", boletos: 29, efectivo: 4100, electronico: 1500, contado: 4100,
+      anulaciones: [] },
+    { taquillero: "Diego Paredo", estacion: "Flores", boletos: 28, efectivo: 3200, electronico: 2600, contado: 2940,
+      anulaciones: [
+        { boleto: "B-0871", factura: "F-1702", asiento: 5, hora: "11:00", importe: 400, pago: "electronico" },
+        { boleto: "B-0880", factura: "F-1711", asiento: 9, hora: "12:30", importe: 260, pago: "efectivo" } ] },
+  ];
+
+  const ANULADO_ALTO = 0.05;
+  const fmt = new Intl.NumberFormat("es-GT", { style: "currency", currency: "GTQ", maximumFractionDigits: 0 });
+  const num = new Intl.NumberFormat("es-GT", { maximumFractionDigits: 0 });
+  const suma = (lista, f) => lista.reduce((s, x) => s + f(x), 0);
+
+  const esperado = (r) => r.efectivo - suma(r.anulaciones.filter(a => a.pago === "efectivo"), a => a.importe);
+  const diferencia = (r) => r.contado - esperado(r);
+  const anulado = (r) => suma(r.anulaciones, a => a.importe);
+  const anuladoAlto = (r) => anulado(r) / (r.efectivo + r.electronico) > ANULADO_ALTO;
+
+  function estado(d) {
+    const a = Math.abs(d);
+    if (a === 0) return { k: "ok", t: "✓ Cuadra" };
+    if (a <= 100) return { k: "warn", t: "! Leve" };
+    if (a <= 500) return { k: "serious", t: "▲ Alta" };
+    return { k: "crit", t: "✕ Crítica" };
+  }
+  const signo = (d) => (d > 0 ? "+" : d < 0 ? "−" : "") + fmt.format(Math.abs(d));
+
+  const estacionSel = document.getElementById("estacion");
+  const fechaSel = document.getElementById("fecha");
+  const soloDif = document.getElementById("soloDif");
+  const expandidas = new Set();
+
+  const estaciones = [...new Set(DATOS.map(r => r.estacion))];
+  estacionSel.innerHTML = `<option value="">Todas</option>` + estaciones.map(e => `<option>${e}</option>`).join("");
+
+  function filtradas() {
+    const e = estacionSel.value;
+    return DATOS
+      .filter(r => !e || r.estacion === e)
+      .filter(r => !soloDif.checked || diferencia(r) !== 0 || anuladoAlto(r))
+      .sort((a, b) => Math.abs(diferencia(b)) - Math.abs(diferencia(a)) || anulado(b) - anulado(a));
+  }
+
+  function renderKpis(rows) {
+    const boletos = suma(rows, r => r.boletos);
+    const esp = suma(rows, esperado);
+    const el = suma(rows, r => r.electronico);
+    const anu = suma(rows, anulado);
+    const nAnul = suma(rows, r => r.anulaciones.length);
+    const dif = suma(rows, diferencia);
+    const conDif = rows.filter(r => diferencia(r) !== 0).length;
+    document.getElementById("kBoletos").textContent = num.format(boletos);
+    document.getElementById("kBoletosD").textContent = `${rows.length} taquilleros`;
+    document.getElementById("kEsperado").textContent = fmt.format(esp);
+    document.getElementById("kElectronico").textContent = fmt.format(el);
+    document.getElementById("kElectronicoD").textContent = `${Math.round(100 * el / (el + suma(rows, r => r.efectivo))) || 0}% del cobro`;
+    document.getElementById("kAnulado").textContent = fmt.format(anu);
+    document.getElementById("kAnuladoD").textContent = `${nAnul} boletos · ${rows.filter(anuladoAlto).length} con anulaciones altas`;
+    const kDif = document.getElementById("kDif");
+    kDif.textContent = signo(dif);
+    kDif.style.color = dif < 0 ? "var(--neg)" : "var(--text-primary)";
+    document.getElementById("kDifD").textContent = `${conDif} con diferencia · ${estado(dif).t}`;
+  }
+
+  function renderBarrasDif(rows) {
+    const max = Math.max(1, ...rows.map(r => Math.abs(diferencia(r))));
+    document.getElementById("barrasDif").innerHTML = rows.map(r => {
+      const d = diferencia(r);
+      const w = (Math.abs(d) / max) * 50;
+      const side = d >= 0 ? "pos" : "neg";
+      const est = estado(d);
+      return `<div class="brow">
+        <div class="name" title="${r.taquillero} · ${r.estacion}">${r.taquillero} <span class="muted">${r.estacion}</span></div>
+        <div class="track" title="Esperado ${fmt.format(esperado(r))} · Contado ${fmt.format(r.contado)}">
+          ${d === 0 ? "" : `<div class="fill ${side}" style="width:${w}%"></div>`}
+        </div>
+        <div class="val"><span class="chip ${est.k}">${est.t}</span> ${signo(d)}</div>
+      </div>`;
+    }).join("") || `<p class="empty">Sin datos.</p>`;
+  }
+
+  function renderBarrasCobro(rows) {
+    const max = Math.max(1, ...rows.map(r => r.efectivo + r.electronico));
+    document.getElementById("barrasCobro").innerHTML = rows.map(r => {
+      const tot = r.efectivo + r.electronico;
+      const pe = (r.efectivo / max) * 100;
+      const pl = (r.electronico / max) * 100;
+      return `<div class="brow">
+        <div class="name" title="${r.taquillero} · ${r.estacion}">${r.taquillero} <span class="muted">${r.estacion}</span></div>
+        <div class="stack" style="width:100%" role="img" aria-label="Efectivo ${fmt.format(r.efectivo)}, electrónico ${fmt.format(r.electronico)}">
+          <span class="seg-ef" style="width:${pe}%" title="Efectivo ${fmt.format(r.efectivo)}"></span>
+          <span class="seg-el" style="width:${pl}%" title="Electrónico ${fmt.format(r.electronico)}"></span>
+        </div>
+        <div class="val">${fmt.format(tot)}</div>
+      </div>`;
+    }).join("") || `<p class="empty">Sin datos.</p>`;
+  }
+
+  function renderTabla(rows) {
+    const cuerpo = document.getElementById("tabla");
+    document.getElementById("vacio").hidden = rows.length > 0;
+    cuerpo.innerHTML = rows.map((r, i) => {
+      const id = `${i}-${r.taquillero.replace(/\W/g, "")}`;
+      const d = diferencia(r);
+      const est = estado(d);
+      const alta = anuladoAlto(r);
+      const abierta = expandidas.has(id);
+      const fila = `<tr class="${abierta ? "exp" : ""}">
+        <td>${r.taquillero}</td>
+        <td>${r.estacion}</td>
+        <td class="n">${num.format(r.boletos)}</td>
+        <td class="n">${fmt.format(r.efectivo)}</td>
+        <td class="n">${fmt.format(r.electronico)}</td>
+        <td class="n">${fmt.format(anulado(r))}${alta ? ` <span class="flag">▲ alto</span>` : ""}</td>
+        <td class="n">${fmt.format(esperado(r))}</td>
+        <td class="n">${fmt.format(r.contado)}</td>
+        <td class="n"><strong>${signo(d)}</strong></td>
+        <td><span class="chip ${est.k}">${est.t}</span></td>
+        <td><button class="linkish" aria-expanded="${abierta}" aria-controls="det-${id}" data-id="${id}">${abierta ? "Ocultar" : "Investigar"}</button></td>
+      </tr>`;
+      const detalle = abierta ? `<tr class="exp" id="det-${id}"><td colspan="11">
+        <div class="trail">
+          <div><span>Efectivo cobrado</span><span>${fmt.format(r.efectivo)}</span></div>
+          <div><span>− Anulado pagado en efectivo</span><span>${fmt.format(r.efectivo - esperado(r))}</span></div>
+          <div><strong>= Efectivo esperado</strong><strong>${fmt.format(esperado(r))}</strong></div>
+          <div><span>Efectivo contado</span><span>${fmt.format(r.contado)}</span></div>
+          <div><strong>Diferencia</strong><strong>${signo(d)}</strong></div>
+        </div>
+        ${r.anulaciones.length ? `<table style="margin-top:12px"><thead><tr>
+            <th>Boleto</th><th>Factura</th><th class="n">Asiento</th><th>Hora</th><th>Pago original</th><th class="n">Importe</th></tr></thead><tbody>
+            ${r.anulaciones.map(a => `<tr><td>${a.boleto}</td><td>${a.factura}</td><td class="n">${a.asiento}</td><td>${a.hora}</td><td>${a.pago === "efectivo" ? "Efectivo" : "Electrónico"}</td><td class="n">${fmt.format(a.importe)}</td></tr>`).join("")}
+          </tbody></table>` : `<p class="muted" style="margin:12px 0 0">Sin anulaciones en este cierre.</p>`}
+      </td></tr>` : "";
+      return fila + detalle;
+    }).join("");
+
+    cuerpo.querySelectorAll("button[data-id]").forEach(b => b.addEventListener("click", () => {
+      const id = b.dataset.id;
+      expandidas.has(id) ? expandidas.delete(id) : expandidas.add(id);
+      renderTabla(filtradas());
+      cuerpo.querySelector(`button[data-id="${id}"]`)?.focus();
+    }));
+  }
+
+  function render() {
+    const rows = filtradas();
+    renderKpis(rows);
+    renderBarrasDif(rows);
+    renderBarrasCobro(rows);
+    renderTabla(rows);
+  }
+
+  estacionSel.addEventListener("change", render);
+  soloDif.addEventListener("change", render);
+  fechaSel.addEventListener("change", render);
+  render();
+</script>
+</body>
+</html>

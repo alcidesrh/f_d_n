@@ -64,13 +64,12 @@
 }
 .header-clock {
   position: relative;
-  font-family: "Rajdhani", sans-serif;
+  font-family: "Rajdhani-600", sans-serif;
   font-variant-numeric: tabular-nums;
   font-size: 1.3rem;
   @variant md {
-    font-size: 1.8rem;
+    font-size: 2.2rem;
   }
-  font-weight: 700;
   letter-spacing: 0.1em;
   color: var(--p-surface-500);
   white-space: nowrap;
