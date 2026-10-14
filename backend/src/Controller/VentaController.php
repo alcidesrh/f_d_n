@@ -190,7 +190,11 @@ final class VentaController extends AbstractController
         }
         $todo = $this->isGranted(SalidaController::VER);
 
-        return $this->json($detalle->de($salida, $entidad, fn(BoletoVenta $v) => $todo || $this->puedeVer($v, $usuario)));
+        return $this->json([
+            ...$detalle->de($salida, $entidad, fn(BoletoVenta $v) => $todo || $this->puedeVer($v, $usuario)),
+            // El detalle muestra la venta y la bitácora del boleto solo al SUPER_ADMIN.
+            "superAdmin" => $this->isGranted("ROLE_SUPER_ADMIN"),
+        ]);
     }
 
     /**

@@ -69,12 +69,13 @@ final class Disponibilidad
                     (int) $f["sube"],
                     (int) $f["baja"],
                     Ocupante::VENDIDO,
-                    $f["canal"] instanceof CanalVenta
+                    $canal = $f["canal"] instanceof CanalVenta
                         ? $f["canal"]
                         : CanalVenta::tryFrom((string) $f["canal"]),
                     null,
                     match (true) {
-                        (bool) $f["voucher"] => Ocupacion::VOUCHER,
+                        // Lo de agencia se cobró: el legado lo marca voucher por `voucher_agencia_id`.
+                        (bool) $f["voucher"] && $canal !== CanalVenta::AGENCIA => Ocupacion::VOUCHER,
                         (bool) $f["cortesia"] => Ocupacion::CORTESIA,
                         default => null,
                     },

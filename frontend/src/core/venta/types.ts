@@ -169,6 +169,8 @@ export interface DetalleAsiento {
   asiento: { id: number; numero: number; clase: 'A' | 'B' }
   reserva: { creada: string; expiraEn: string; trayecto: TrayectoAsiento } | null
   boletos: BoletoDeAsiento[]
+  /** Quien consulta es SUPER_ADMIN: ve la venta y la bitácora, no los datos del pasajero. */
+  superAdmin?: boolean
 }
 
 export interface LineaCotizacion {

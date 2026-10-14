@@ -14,8 +14,8 @@
 
   /*
    * Ocupados (venta, ADR-021/023): tonos claros que no chocan con los libres
-   * (A y B pizarra) ni entre sí. Estación = verde azulado, página = ámbar,
-   * agencia = naranja, cortesía = lima, voucher = rosa; la
+   * (A y B pizarra) ni entre sí. Estación = azul, página = ámbar,
+   * agencia = verde azulado (teal), cortesía = lima, voucher = rosa; la
    * preventa es un contorno naranja punteado (es temporal).
    */
   --bm-occupied: color-mix(in srgb, var(--p-blue-500, #14b8a6) 22%, var(--p-content-background));
@@ -25,9 +25,9 @@
   --bm-sold-web: color-mix(in srgb, var(--p-amber-400, #fbbf24) 20%, var(--p-content-background));
   --bm-sold-web-stroke: color-mix(in srgb, var(--p-amber-600, #d97706) 78%, var(--p-content-background));
   --bm-sold-web-ink: var(--p-amber-800, #92400e);
-  --bm-sold-agency: color-mix(in srgb, var(--p-orange-500, #f97316) 30%, var(--p-content-background));
-  --bm-sold-agency-stroke: color-mix(in srgb, var(--p-orange-600, #ea580c) 80%, var(--p-content-background));
-  --bm-sold-agency-ink: var(--p-orange-800, #9a3412);
+  --bm-sold-agency: color-mix(in srgb, var(--p-teal-500, #14b8a6) 30%, var(--p-content-background));
+  --bm-sold-agency-stroke: color-mix(in srgb, var(--p-teal-600, #0d9488) 80%, var(--p-content-background));
+  --bm-sold-agency-ink: var(--p-teal-800, #115e59);
 
   --bm-courtesy: color-mix(in srgb, var(--p-lime-500, #84cc16) 26%, var(--p-content-background));
   --bm-courtesy-stroke: color-mix(in srgb, var(--p-lime-600, #65a30d) 70%, var(--p-content-background));

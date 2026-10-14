@@ -3,6 +3,8 @@
   y "Ver salida"; la página pública no lo usa). Se abre con `abrir(evento,
   salida, asiento)` y agrupa lo que hay detrás del asiento: pasajero, viaje,
   venta, cobro y factura (uno por tramo vendido), o la reserva web vigente.
+  Al SUPER_ADMIN no se le muestra el pasajero; solo él ve la venta (con la
+  estación) y la bitácora del boleto.
 -->
 <template>
   <Popover ref="popover" class="aop" @hide="detalle = null">
@@ -30,7 +32,7 @@
             <Tag :severity="b.estado === 'emitido' ? 'info' : 'success'" :value="ESTADOS[b.estado] ?? b.estado" />
           </div>
 
-          <section v-if="b.pasajero" class="aop-grupo">
+          <section v-if="b.pasajero && !detalle.superAdmin" class="aop-grupo">
             <h4>Pasajero</h4>
             <dl>
               <dt>Nombre</dt><dd>{{ b.pasajero.nombre }}</dd>
@@ -50,12 +52,13 @@
           </section>
 
           <template v-if="b.completo">
-            <section class="aop-grupo">
+            <section v-if="detalle.superAdmin" class="aop-grupo">
               <h4>Venta #{{ b.venta.id }}</h4>
               <dl>
                 <template v-if="b.venta.creada"><dt>Fecha</dt><dd>{{ fechaHora(b.venta.creada) }}</dd></template>
                 <template v-if="b.venta.vendedor"><dt>Vendedor</dt><dd>{{ b.venta.vendedor }}</dd></template>
-                <template v-if="b.venta.estacion ?? b.venta.agencia"><dt>{{ b.venta.agencia ? 'Agencia' : 'Estación' }}</dt><dd>{{ b.venta.agencia ?? b.venta.estacion }}</dd></template>
+                <dt>Estación</dt><dd>{{ b.venta.estacion ?? '—' }}</dd>
+                <template v-if="b.venta.agencia"><dt>Agencia</dt><dd>{{ b.venta.agencia }}</dd></template>
                 <template v-if="b.venta.comprador && b.venta.comprador !== b.pasajero?.nombre"><dt>Comprador</dt><dd>{{ b.venta.comprador }}</dd></template>
               </dl>
             </section>
@@ -83,11 +86,14 @@
           </template>
           <p v-else class="m-0 text-sm text-muted-color">Vendido por otro usuario: no tiene acceso al detalle de esa venta.</p>
 
-          <div v-if="b.completo && b.operable && (permisos.anular || permisos.reasignar)" class="flex flex-wrap justify-end gap-2">
-            <Button v-if="permisos.reasignar" label="Reasignar" size="small" severity="secondary" outlined @click="elegir('reasignar', b)">
+          <div v-if="detalle.superAdmin || (b.completo && b.operable && (permisos.anular || permisos.reasignar))" class="flex flex-wrap justify-end gap-2">
+            <Button v-if="detalle.superAdmin" label="Bitácora" size="small" severity="secondary" text @click="verBitacora(b)">
+              <template #icon><icon name="history" class="mr-1" /></template>
+            </Button>
+            <Button v-if="b.completo && b.operable && permisos.reasignar" label="Reasignar" size="small" severity="secondary" outlined @click="elegir('reasignar', b)">
               <template #icon><icon name="swap-horiz" class="mr-1" /></template>
             </Button>
-            <Button v-if="permisos.anular" label="Anular" size="small" severity="danger" outlined @click="elegir('anular', b)">
+            <Button v-if="b.completo && b.operable && permisos.anular" label="Anular" size="small" severity="danger" outlined @click="elegir('anular', b)">
               <template #icon><icon name="cancel-outline" class="mr-1" /></template>
             </Button>
           </div>
@@ -95,12 +101,15 @@
       </template>
     </div>
   </Popover>
+  <!-- Fuera del popover: al abrirse el diálogo el popover se cierra. -->
+  <BitacoraDialog v-if="bitacoraId !== null" :visible="true" tipo="boleto" :id="bitacoraId" @update:visible="(v: boolean) => !v && (bitacoraId = null)" />
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { fetchDetalleAsiento } from '@/core/venta/api'
 import { usePermisosBoleto } from '@/core/venta/permisos'
+import BitacoraDialog from '@/shared/bitacora/BitacoraDialog.vue'
 import type { BoletoDeAsiento, DetalleAsiento, TrayectoAsiento } from '@/core/venta/types'
 
 const emit = defineEmits<{
@@ -117,6 +126,13 @@ function elegir(accion: 'anular' | 'reasignar', boleto: BoletoDeAsiento) {
   popover.value?.hide()
   if (accion === 'anular') emit('anular', boleto)
   else emit('reasignar', boleto)
+}
+
+/** Boleto cuya bitácora se está viendo (solo SUPER_ADMIN). */
+const bitacoraId = ref<number | null>(null)
+function verBitacora(boleto: BoletoDeAsiento) {
+  popover.value?.hide()
+  bitacoraId.value = boleto.id
 }
 
 const ESTADOS: Record<string, string> = {
@@ -152,10 +168,11 @@ async function abrir(evento: Event, salida: number, asiento: number) {
 defineExpose({ abrir })
 
 const tramo = (t: TrayectoAsiento) => `${t.origen} → ${t.destino}`
-const sinCobro = (b: BoletoDeAsiento) => b.venta.cortesia || b.venta.voucher
+// Lo de agencia se cobró aunque el legado lo marque voucher (`voucher_agencia_id`).
+const sinCobro = (b: BoletoDeAsiento) => b.venta.cortesia || (b.venta.voucher && b.venta.canal !== 'agencia')
 
 function etiquetaCanal(b: BoletoDeAsiento): string {
-  if (b.venta.voucher) return 'Voucher'
+  if (b.venta.voucher && b.venta.canal !== 'agencia') return 'Voucher'
   if (b.venta.cortesia) return 'Cortesía'
   return { estacion: 'Taquilla', agencia: 'Agencia', web: 'Página web' }[b.venta.canal] ?? b.venta.canal
 }

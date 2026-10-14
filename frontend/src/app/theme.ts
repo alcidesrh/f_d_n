@@ -307,6 +307,11 @@ export const componentsPreset = (parent: ThemePreset): Tokens => {
         overlay: { background: "{surface.50}" },
         "border.color": "{surface.400}",
       },
+      optionGroup: {
+        fontWeight: 500,
+        color: "{surface.600}",
+        padding: "0px 5px",
+      },
     },
     popover: {
       ...base.components.popover,
