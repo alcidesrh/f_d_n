@@ -2,6 +2,8 @@
   Vista previa de una ruta en el mapa (Leaflet, como el seguimiento): las
   paradas con coordenadas unidas en orden. Las que no tienen coordenadas se
   cuentan debajo; el trazo salta de la anterior a la siguiente que sí tiene.
+  De `enclaves` (todos los lugares) solo se muestran, con su nombre, los que
+  quedan sobre el trayecto (`core/ruta/trayecto.ts`).
 -->
 <template>
   <div class="flex flex-col gap-2">
@@ -13,6 +15,7 @@
 <script setup lang="ts">
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { sobreElTrayecto, type PuntoGeo } from "@/core/ruta/trayecto";
 
 const props = defineProps<{
   paradas: Array<{ nombre: string; latitud: number | null; longitud: number | null }>;
@@ -36,10 +39,10 @@ function dibujar() {
   // Leaflet pone el color como atributo SVG, donde `var()` no se resuelve.
   const color = getComputedStyle(mapaEl.value!).getPropertyValue("--p-primary-color").trim() || "#3b82f6";
   const puntos = conCoordenadas.value.map((p) => [p.latitud!, p.longitud!] as L.LatLngTuple);
-  // Todos los enclaves con su nombre; la ruta se dibuja encima.
-  for (const e of props.enclaves ?? []) {
-    if (e.latitud === null || e.longitud === null) continue;
-    L.circleMarker([e.latitud, e.longitud], { radius: 4, color: "#64748b", weight: 2, fillColor: "#fff", fillOpacity: 1 })
+  // Solo los enclaves sobre el trayecto, con su nombre; la ruta se dibuja encima.
+  const trayecto = conCoordenadas.value.map((p) => [p.latitud!, p.longitud!] as PuntoGeo);
+  for (const e of sobreElTrayecto(props.enclaves ?? [], trayecto)) {
+    L.circleMarker([e.latitud!, e.longitud!], { radius: 4, color: "#64748b", weight: 2, fillColor: "#fff", fillOpacity: 1 })
       .bindTooltip(escapar(e.nombre), { permanent: true, direction: "right", offset: [8, 0], className: "parada-chip", interactive: false })
       .addTo(capa);
   }
@@ -84,15 +87,15 @@ onBeforeUnmount(() => {
   font-size: 10px;
   line-height: 1.4;
   font-weight: 700;
-  color: var(--p-surface-800);
-  background: #fff;
-  border: 1px solid var(--p-surface-400);
+  color: var(--p-slate-50);
+  background: var(--p-slate-800);
+  border: 1px solid var(--p-slate-800);
   border-radius: 4px;
   box-shadow: none;
   white-space: nowrap;
 }
 .leaflet-tooltip.parada-chip.leaflet-tooltip-right::before {
-  border-right-color: var(--p-surface-400);
+  border-right-color: var(--p-slate-800);
 }
 .leaflet-tooltip.parada-chip.leaflet-tooltip-right::after {
   content: "";
@@ -102,7 +105,7 @@ onBeforeUnmount(() => {
   margin-top: -5px;
   margin-left: -9px;
   border: 5px solid transparent;
-  border-right-color: #fff;
+  border-right-color: var(--p-slate-800);
   pointer-events: none;
 }
 </style>

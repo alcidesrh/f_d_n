@@ -60,11 +60,11 @@
               </div>
               <label class="campo col-span-1">
                 <span class="text-sm font-medium">Origen</span>
-                <estacion-select size="small" v-model="store.estacionId" :estaciones="store.contexto?.estaciones ?? []" :propio="store.contexto?.estacion?.departamento" placeholder="Todas" @update:model-value="store.cargarSalidas()" />
+                <estacion-select size="small" v-model="store.estacionId" :estaciones="store.contexto?.estaciones ?? []" :propio="store.contexto?.estacion?.departamento" placeholder="Todas" @update:model-value="store.cambiarFiltroEstacion()" />
               </label>
               <label class="campo col-span-1">
                 <span class="text-sm font-medium">Destino</span>
-                <estacion-select size="small" v-model="store.destinoId" :estaciones="store.contexto?.estaciones ?? []" show-clear placeholder="Todas" @update:model-value="store.cargarSalidas()" />
+                <estacion-select size="small" v-model="store.destinoId" :estaciones="store.contexto?.estaciones ?? []" show-clear placeholder="Todas" @update:model-value="store.cambiarFiltroEstacion()" />
               </label>
             </div>
 
@@ -130,21 +130,27 @@
         <!-- Croquis + cobro -->
         <aside ref="croquis" class="panel flex min-w-0 flex-1 scroll-mt-20 flex-col gap-3 @3xl:sticky @3xl:top-4">
           <Transition name="croquis" mode="out-in" @enter="alMostrarCroquis">
-            <div v-if="store.cargandoDetalle" key="cargando">
+            <!-- <div v-if="store.cargandoDetalle" key="cargando">
               <Skeleton height="20rem" />
-            </div>
-            <div v-else-if="store.detalle" :key="`salida-${store.salidaId}`" class="flex flex-col gap-3 tex-sm">
+            </div> -->
+            <div v-if="store.detalle || store.cargandoDetalle" :key="`salida-${store.salidaId}`" class="flex flex-col gap-5 pt-5 tex-sm">
               <BusMapLegend :items="leyenda" :conteos="conteos" />
-              <div class="overflow-x-auto mt-1 md:mt-4">
+              <div class="overflow-x-auto mt-1">
                 <BusMap :elementos="store.detalle.croquis" :estado="store.estadoAsiento" interactivo inspeccionable tamano="md" class="justify-center" @asiento="(a) => a.id != null && store.alternarAsiento(a.id)" @ocupado="verOcupado" />
                 <AsientoOcupadoPopover ref="detalleAsiento" @anular="(b) => (anular = [b.id])" @reasignar="(b) => void store.iniciarReasignacion([b.id])" />
               </div>
               <Divider align="center" class="my-0! before:border-surface-400!" type="dashed">
                 <span class="text-xs font-bold text-surface-500">{{ store.ocupados.length }} / {{ store.asientosCroquis.length }}</span>
               </Divider>
-              <div class="flex items-baseline justify-between">
-                <span class="text-muted-color">Total</span>
-                <span class="text-xl font-semibold tabular-nums">{{ store.cotizacion?.total.texto ?? "—" }}</span>
+              <div class="flex items-center justify-between gap-3">
+                <span class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold tabular-nums" :class="store.seleccion.length ? 'bg-primary text-primary-contrast' : 'bg-surface-200 text-muted-color'" aria-live="polite">
+                  <span class="text-base leading-none">{{ store.seleccion.length }}</span>
+                  {{ store.seleccion.length === 1 ? "asiento" : "asientos" }}
+                </span>
+                <div class="flex items-baseline gap-2">
+                  <span class="text-muted-color">Total</span>
+                  <span class="text-xl font-semibold tabular-nums">{{ store.cotizacion?.total.texto ?? "—" }}</span>
+                </div>
               </div>
               <Message v-if="store.errorCotizacion" severity="warn" :closable="false">
                 {{ store.errorCotizacion }}
@@ -158,9 +164,15 @@
                 <Button :label="store.contexto?.canal === 'agencia' ? 'Vender' : 'Facturar'" :disabled="!store.puedeVender || !store.cotizacion" @click="abrirCobro(false)" />
               </div>
             </div>
-            <div v-else key="vacio" class="py-10 text-center text-muted-color">
-              <icon name="directions-bus-outline" class="mb-2 text-3xl" />
-              <p>Elija un salida para ver sus asientos.</p>
+            <div v-else key="vacio" class="relative flex flex-col gap-5 pt-5 tex-sm">
+              <BusMapLegend :items="leyenda" :conteos="conteos" class="opacity-40" />
+              <CroquisPlaceholder />
+              <div class="absolute inset-0 grid place-items-center p-4">
+                <p class="m-0 flex items-center gap-2 rounded-full bg-surface-0 px-4 py-2 text-center text-sm text-muted-color shadow-md">
+                  <icon name="directions-bus-outline" />
+                  Elija una salida para ver sus asientos.
+                </p>
+              </div>
             </div>
           </Transition>
         </aside>
@@ -177,6 +189,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import BusMap from "@/shared/bus-map/BusMap.vue";
+import CroquisPlaceholder from "@/shared/bus-map/CroquisPlaceholder.vue";
 import type { AsientoCroquis } from "@/core/croquis/types";
 import AsientoOcupadoPopover from "@/shared/bus-map/AsientoOcupadoPopover.vue";
 import AnularBoletosDialog from "@/shared/boleto/AnularBoletosDialog.vue";
@@ -286,7 +299,7 @@ function etiquetaDia(delta: number) {
   if (dif === 1) return "Mañana";
   return new Intl.DateTimeFormat("es-GT", { weekday: "short", day: "numeric", month: "short" }).format(d);
 }
-const leyenda: ItemLeyenda[] = ["disponible", "recomendado", "seleccionado", "ocupado", "ocupado-web", "ocupado-agencia", "reservado", "cortesia", "voucher"];
+const leyenda: ItemLeyenda[] = ["disponible", "recomendado", "ocupado", "ocupado-web", "ocupado-agencia", "reservado", "cortesia", "voucher"];
 
 const opcionesParada = (paradas: Parada[]) =>
   paradas.map((p) => ({

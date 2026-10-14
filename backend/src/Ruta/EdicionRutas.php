@@ -27,6 +27,7 @@ final class EdicionRutas
         private readonly EntityManagerInterface $em,
         private readonly Horarios $horarios,
         private readonly Trayectos $trayectos,
+        private readonly KilometrosCarretera $carretera,
     ) {}
 
     /** @return list<array<string, mixed>> */
@@ -121,7 +122,7 @@ final class EdicionRutas
      *
      * @param array<string, mixed> $datos
      *
-     * @return array<string, mixed> la ruta leída de nuevo, con `horarios: { actualizadas }`
+     * @return array<string, mixed> la ruta leída de nuevo, con `kilometrosSinCalcular` (tramos sin km por carretera)
      */
     public function guardar(?int $id, array $datos): array
     {
@@ -131,6 +132,10 @@ final class EdicionRutas
         }
         $paradas = Paradas::desdeArray($datos["paradas"] ?? null);
         $kilometros = isset($datos["kilometros"]) && $datos["kilometros"] !== "" ? max(0, (int) $datos["kilometros"]) : null;
+        // Antes de la transacción: las consultas HTTP no deben retener el bloqueo de la ruta.
+        $carretera = $this->kilometrosDeCarretera($paradas, $kilometros);
+        $paradas = $carretera["paradas"];
+        $kilometros = $carretera["kilometros"];
 
         $rutaId = $this->em->wrapInTransaction(function () use ($id, $nombre, $paradas, $kilometros, $datos): int {
             $ruta = $id === null ? new Ruta() : $this->ruta($id, LockMode::PESSIMISTIC_WRITE);
@@ -145,7 +150,48 @@ final class EdicionRutas
         });
         $this->em->clear();
 
-        return $this->leer($rutaId);
+        return [...$this->leer($rutaId), "kilometrosSinCalcular" => $carretera["sinCalcular"]];
+    }
+
+    /**
+     * Km por carretera de cada parada. Si todos los tramos se
+     * calculan, reemplazan los km de las paradas y el total de la ruta. Si
+     * falta alguno, la ruta conserva los que escribió la persona y se avisa
+     * qué tramos quedaron sin calcular.
+     *
+     * @param list<array{enclaveId: int, minutos: ?int, km: ?int, permiteSubir: bool, permiteBajar: bool, tiempos: array<int, int>}> $paradas
+     *
+     * @return array{paradas: list<array{enclaveId: int, minutos: ?int, km: ?int, permiteSubir: bool, permiteBajar: bool, tiempos: array<int, int>}>, kilometros: ?int, sinCalcular: list<string>}
+     */
+    private function kilometrosDeCarretera(array $paradas, ?int $kilometros): array
+    {
+        $enclaves = $this->porId(Enclave::class, array_column($paradas, "enclaveId"), "Un lugar de la ruta no existe.");
+        $tramos = [];
+        $sinCalcular = [];
+        for ($i = 1; $i < count($paradas); $i++) {
+            $a = $enclaves[$paradas[$i - 1]["enclaveId"]];
+            $b = $enclaves[$paradas[$i]["enclaveId"]];
+            $km = $this->carretera->entre(
+                self::coordenada($a->getLatitud()), self::coordenada($a->getLongitud()),
+                self::coordenada($b->getLatitud()), self::coordenada($b->getLongitud()),
+            );
+            $tramos[] = $km;
+            $km === null && $sinCalcular[] = sprintf("%s → %s", $a->getNombre(), $b->getNombre());
+        }
+        $acumulados = KilometrosCarretera::acumular($tramos);
+        if ($acumulados === null) {
+            return ["paradas" => $paradas, "kilometros" => $kilometros, "sinCalcular" => $sinCalcular];
+        }
+        foreach ($paradas as $i => $p) {
+            $paradas[$i]["km"] = $acumulados[$i];
+        }
+
+        return ["paradas" => $paradas, "kilometros" => end($acumulados), "sinCalcular" => []];
+    }
+
+    private static function coordenada(?string $valor): ?float
+    {
+        return $valor !== null && is_numeric($valor) ? (float) $valor : null;
     }
 
     /** Copia de una ruta; con `$invertir`, la de regreso. @return array<string, mixed> */

@@ -68,10 +68,10 @@
   font-variant-numeric: tabular-nums;
   font-size: 1.3rem;
   @variant md {
-    font-size: 2.2rem;
+    font-size: 2rem;
   }
   letter-spacing: 0.1em;
-  color: var(--p-surface-500);
+  color: var(--p-surface-600);
   white-space: nowrap;
   line-height: 1.2;
   z-index: 10;

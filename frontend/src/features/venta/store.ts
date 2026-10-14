@@ -139,6 +139,15 @@ export const useVentaStore = defineStore("venta", () => {
     }
   }
 
+  /**
+   * Cambio de origen o destino: la salida abierta pertenece al filtro anterior,
+   * así que se cierra (lista sin marca, croquis vacío) antes de recargar.
+   */
+  async function cambiarFiltroEstacion() {
+    cerrarSalida();
+    await cargarSalidas();
+  }
+
   async function elegirSalida(id: number) {
     if (id === salidaId.value && detalle.value) return;
     cerrarSalida();
@@ -453,6 +462,7 @@ export const useVentaStore = defineStore("venta", () => {
     puedeVender,
     iniciar,
     cargarSalidas,
+    cambiarFiltroEstacion,
     elegirSalida,
     cerrarSalida,
     cambiarSubida,

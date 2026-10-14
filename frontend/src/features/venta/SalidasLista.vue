@@ -190,20 +190,23 @@ const precioCorto = (p: Importe | null) => (p ? p.texto.replace(/[.,]00$/, "") :
   font-size: 0.875rem;
   cursor: default;
 }
-.estado--programada {
-  background: var(--p-blue-100);
-  color: var(--p-blue-700);
-}
-.estado--abordando {
+/*.estado--programada {
   background: var(--p-amber-100);
   color: var(--p-amber-700);
 }
-.estado--iniciada {
-  background: var(--p-green-100);
-  color: var(--p-green-700);
+.estado--abordando {
+  background: var(--p-lime-100);
+  color: var(--p-lime-700);
 }
+.estado--iniciada {
+  background: var(--p-emerald-100);
+  color: var(--p-emerald-700);
+}*/
+.estado--programada,
+.estado--abordando,
+.estado--iniciada,
 .estado--finalizada {
-  background: var(--p-surface-200);
+  background: var(--p-surface-100);
   color: var(--p-surface-700);
 }
 .estado--cancelada {
@@ -248,7 +251,7 @@ const precioCorto = (p: Importe | null) => (p ? p.texto.replace(/[.,]00$/, "") :
   font-variant-numeric: tabular-nums;
 }
 .asientos__vendidos {
-  color: var(--p-emerald-600);
+  color: var(--p-blue-600);
 }
 .asientos__libres {
   color: var(--p-text-muted-color);

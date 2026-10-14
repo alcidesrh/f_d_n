@@ -21,8 +21,8 @@
 
       <div class="bm-bus">
         <span class="bm-bus__glass" aria-hidden="true" />
-        <span class="bm-bus__mirror bm-bus__mirror--a" aria-hidden="true" />
-        <span class="bm-bus__mirror bm-bus__mirror--b" aria-hidden="true" />
+        <!-- <span class="bm-bus__mirror bm-bus__mirror--a" aria-hidden="true" />  -->
+        <!-- <span class="bm-bus__mirror bm-bus__mirror--b" aria-hidden="true" /> -->
         <div class="bm-grid" :style="estiloRejilla(planta)">
           <span v-for="columna in pasillos[planta]" :key="`pasillo-${columna}`" class="bm-aisle" :style="estiloPasillo(planta, columna)" aria-hidden="true" />
           <component :is="esBoton(celda.elemento) ? 'button' : 'div'" v-for="celda in celdasDe(planta)" :key="celda.clave" class="bm-cell" :class="claseCelda(celda.elemento)" :style="estiloCelda(planta, celda)" :data-celda="celda.clave" :data-planta="celda.planta" :data-fila="celda.fila" :data-columna="celda.columna" v-bind="atributosCelda(celda.elemento)" @click="onClick(celda, $event)">

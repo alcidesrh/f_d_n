@@ -56,6 +56,8 @@ const ETIQUETAS: Record<ItemLeyenda, string> = {
   gap: 0.35rem 1rem;
   font-size: 0.78rem;
   color: var(--p-text-muted-color);
+  width: calc(2.45rem * 5);
+  margin: auto;
 }
 .bm-legend__item {
   display: inline-flex;

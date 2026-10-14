@@ -353,16 +353,16 @@ onBeforeUnmount(() => {
   font-size: 10px;
   line-height: 1.4;
   font-weight: 700;
-  color: var(--p-surface-800);
-  background: #fff;
-  border: 1px solid var(--p-surface-400);
+  color: var(--p-slate-50);
+  background: var(--p-slate-800);
+  border: 1px solid var(--p-slate-800);
   border-radius: 4px;
   box-shadow: none;
   white-space: nowrap;
 }
-/* Saeta hacia el punto: ::before es el borde y ::after el relleno blanco. */
+/* Saeta hacia el punto: ::before es el borde y ::after el relleno, ambos del mismo slate. */
 .leaflet-tooltip.enclave-chip.leaflet-tooltip-right::before {
-  border-right-color: var(--p-surface-400);
+  border-right-color: var(--p-slate-800);
 }
 .leaflet-tooltip.enclave-chip.leaflet-tooltip-right::after {
   content: "";
@@ -372,7 +372,7 @@ onBeforeUnmount(() => {
   margin-top: -5px;
   margin-left: -9px;
   border: 5px solid transparent;
-  border-right-color: #fff;
+  border-right-color: var(--p-slate-800);
   pointer-events: none;
 }
 .mapa-maximizado .mapa-buses {

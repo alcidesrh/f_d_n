@@ -16,6 +16,8 @@ parameters:
     pago_pasarela_defecto: "simulada"
     # API de Cybersource: pruebas; producción es https://api.cybersource.com (CYBERSOURCE_URL).
     pago_cybersource_url_defecto: "https://apitest.cybersource.com"
+    # Servicio de rutas OSRM para los km por carretera de las rutas (sobrescribible con OSRM_URL).
+    ruta_osrm_url_defecto: "https://router.project-osrm.org"
 
 services:
     # default configuration for services in *this* file
