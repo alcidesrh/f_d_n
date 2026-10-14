@@ -2,11 +2,11 @@
 import { config } from '@/core/config'
 import { useSessionStore } from '@/core/auth/session'
 import { HttpError, http } from '@/core/http'
-import type { FormatoReporte, OpcionesReporte, ResumenCuadre, ResumenDetalle } from './types'
+import type { FormatoReporte, OpcionesReporte, ResumenCuadre, ResumenDetalle, ResumenVoucher } from './types'
 
 const BASE = '/reportes'
 
-export type ReporteId = 'cuadre-venta-boletos' | 'detalle-factura-boletos'
+export type ReporteId = 'cuadre-venta-boletos' | 'detalle-factura-boletos' | 'cuadre-voucher'
 
 export const fetchOpciones = () => http.get<OpcionesReporte>(`${BASE}/opciones`)
 
@@ -14,6 +14,8 @@ export const fetchOpciones = () => http.get<OpcionesReporte>(`${BASE}/opciones`)
 export const fetchResumenCuadre = (query: string) => http.get<ResumenCuadre>(`${BASE}/cuadre-venta-boletos?${query}&formato=resumen`, { silent: true })
 
 export const fetchResumenDetalle = (query: string) => http.get<ResumenDetalle>(`${BASE}/detalle-factura-boletos?${query}&formato=resumen`, { silent: true })
+
+export const fetchResumenVoucher = (query: string) => http.get<ResumenVoucher>(`${BASE}/cuadre-voucher?${query}&formato=resumen`, { silent: true })
 
 /** Archivo del reporte como `Blob` (lleva el Bearer, por eso no es un enlace). */
 export async function fetchArchivo(reporte: ReporteId, query: string, formato: FormatoReporte): Promise<Blob> {

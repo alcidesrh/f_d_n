@@ -7,7 +7,6 @@
  * desde el móvil y viceversa.
  */
 import { defineStore } from "pinia";
-import { gsap } from "gsap";
 import { useUiStore } from "@/app/ui";
 
 export type SidebarMode = "open" | "mini" | "close";
@@ -16,6 +15,11 @@ export interface SidebarStoreState {
   side: "left" | "right";
   mode: SidebarMode;
   prevMode: SidebarMode;
+  /**
+   * Modo con el que está dibujado el menú. Sigue a `mode`, pero lo mueve
+   * `sidebarMotion.ts` en el momento exacto de la animación (no persistido).
+   */
+  shown: SidebarMode;
   open: number;
   mini: number;
   close: number;
@@ -31,6 +35,7 @@ function createDefinition(side: "left" | "right", name: string) {
       side: side,
       mode: "open",
       prevMode: "mini",
+      shown: "open",
       open: 250,
       mini: 60,
       close: 0,
@@ -38,8 +43,8 @@ function createDefinition(side: "left" | "right", name: string) {
     }),
     getters: {
       width: (s: SidebarStoreState): number => ({ open: s.open, mini: s.mini, close: s.close })[s.mode],
-      /** Solo íconos: `mini` en escritorio (el drawer siempre muestra los textos). */
-      collapsed: (s: SidebarStoreState): boolean => s.mode === "mini" && !useUiStore().isMobile,
+      /** Menú dibujado solo con íconos: `mini` en escritorio (el drawer siempre muestra los textos). */
+      compact: (s: SidebarStoreState): boolean => s.shown === "mini" && !useUiStore().isMobile,
     },
     actions: {
       /** Botón de menú de la cabecera: abre/cierra el drawer o alterna el modo de escritorio. */
@@ -65,45 +70,9 @@ function createDefinition(side: "left" | "right", name: string) {
           this.prevMode = this.mode == "open" ? "mini" : "open";
         }
       },
-      /**
-       * Anima el ancho del panel. Solo escribe variables CSS (`--sb-<lado>-w`
-       * y `--sb-<lado>-open`, ver `assets/tokens.css`); `sidebar.css` y
-       * `content.css` deciden por breakpoint cómo usarlas (empujar el
-       * contenido en escritorio, drawer en móvil). En `mini` los textos se
-       * ocultan y el enlace con hover se despliega, todo por CSS (`sidebar.css`).
-       *
-       * `--sb-<lado>-w` no se hereda: se anima sobre el panel y sobre `.main`
-       * (no en `:root`, que recalcularía el estilo de toda la página en cada
-       * fotograma).
-       */
-      sidebarUpdate() {
-        const panel = document.querySelector<HTMLElement>(`.sidebar.${this.side}`);
-        const main = document.querySelector<HTMLElement>(".main");
-        if (!panel || !main) return;
-        const name = `--sb-${this.side}-w`;
-        const current = widths[this.side];
-        panel.style.setProperty(`--sb-${this.side}-open`, `${this.open}px`);
-        // Un panel recién montado (p. ej. el de una ruta) arranca del ancho actual.
-        panel.style.setProperty(name, `${current.px}px`);
-        // Se anima un número y se escribe en `onUpdate`: GSAP no lee estilos del DOM
-        // (leerlos al arrancar forzaba un recálculo de estilo en el primer fotograma).
-        gsap.to(current, {
-          px: this.width,
-          duration: 0.3,
-          ease: "power1.out",
-          overwrite: true,
-          onUpdate: () => {
-            panel.style.setProperty(name, `${current.px}px`);
-            main.style.setProperty(name, `${current.px}px`);
-          },
-        });
-      },
     },
   });
 }
-
-/** Ancho animado actual de cada lado (px); arranca en el `initial-value` de `--sb-<lado>-w`. */
-const widths: Record<"left" | "right", { px: number }> = { left: { px: 250 }, right: { px: 250 } };
 
 type SidebarDefinition = ReturnType<typeof createDefinition>;
 export type SidebarStore = ReturnType<SidebarDefinition>;

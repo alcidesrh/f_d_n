@@ -49,7 +49,7 @@
   --sidebar-width: 250px;
   --sb-mini: 60px;
   --sb-close: 0px;
-  /* Ancho abierto de cada sidebar (lo escribe `sidebarStore.sidebarUpdate()`
+  /* Ancho abierto de cada sidebar (lo escribe `sidebarMotion.ts`
      sobre su panel). El ancho animado (`--sb-<lado>-w`) está abajo. */
   --sb-left-open: var(--sidebar-width);
   --sb-right-open: var(--sidebar-width);
@@ -72,7 +72,7 @@
 }
 
 /* Ancho actual (animado) de cada sidebar. Registradas y SIN herencia a
-   propósito: `sidebarStore.sidebarUpdate()` las anima solo sobre `.sidebar`
+   propósito: `sidebarMotion.ts` las anima solo sobre `.sidebar`
    y `.main`, los únicos que las leen. Una variable heredada animada en
    `:root` recalculaba el estilo de todo el documento en cada fotograma
    (animación a tirones). */

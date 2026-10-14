@@ -6,6 +6,7 @@ namespace App\Tests\Reporte;
 
 use App\Reporte\CuadreVentaBoletos;
 use App\Reporte\DetalleFacturaBoletos;
+use App\Reporte\CuadreVoucher;
 use App\Reporte\Dinero;
 use App\Reporte\FiltroCuadre;
 use App\Reporte\FiltroDetalle;
@@ -94,6 +95,25 @@ final class ReportesTest extends TestCase
         $this->assertSame("123", DetalleFacturaBoletos::estadoDte($con));
         $this->assertSame("Aut. 012384", DetalleFacturaBoletos::descripcion($con));
         $this->assertSame(1, $d->resumen()["sinFactura"]);
+    }
+
+    public function testCuadreVoucherAgrupaPorEstacionYDiaYSumaElPrecio(): void
+    {
+        $l = static fn(int $id, string $vendida, string $estado = "transito", string $estacion = "Guatemala") => new LineaBoleto(
+            $id, $id, new \DateTimeImmutable($vendida), "ada", "Ada", false, 25000, "GTQ", true,
+            1, new \DateTimeImmutable("2026-10-12 06:30"), null, null, "A - B", "GUA", "SEP", $id,
+            null, null, null, "no_aplica", false, null, null, $estado, $estacion,
+        );
+        $c = new CuadreVoucher("11/10/2026 al 12/10/2026", null, null, [
+            $l(1, "2026-10-12 08:00"), $l(2, "2026-10-11 09:00", "chequeado"), $l(3, "2026-10-12 10:00"),
+        ]);
+
+        $this->assertSame(["2026-10-11", "2026-10-12"], array_map(static fn(array $g) => $g["dia"]->format("Y-m-d"), $c->grupos));
+        $this->assertSame(["GTQ" => ["cantidad" => 2, "total" => 50000]], $c->grupos[1]["totales"]);
+        $this->assertSame(3, $c->cantidad(), "el importe es el precio aunque no se cobre");
+        $this->assertSame(75000, $c->totales["GTQ"]["total"]);
+        $this->assertSame("Tránsito", $c->estado($c->grupos[1]["filas"][0]));
+        $this->assertSame("Chequeado", $c->estado($c->grupos[0]["filas"][0]));
     }
 
     public function testFiltrosValidanFechasYRango(): void

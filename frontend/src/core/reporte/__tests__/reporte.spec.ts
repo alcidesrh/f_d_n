@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { aDia, cuadreInicial, cuadreQuery, deDia, detalleInicial, detalleQuery, errorDetalle, importe } from '../filtro'
+import { aDia, cuadreInicial, cuadreQuery, deDia, detalleInicial, detalleQuery, errorDetalle, importe, voucherInicial, voucherQuery } from '../filtro'
 import type { OpcionesReporte } from '../types'
 
 const opciones = (alcance = { estacion: null as number | null, empresa: null as number | null }): OpcionesReporte => ({
@@ -47,5 +47,12 @@ describe('filtros de reportes', () => {
   it('da formato a los importes', () => {
     expect(importe(2049500, 'GTQ')).toBe('GTQ 20,495.00')
     expect(importe(50, 'USD')).toBe('USD 0.50')
+  })
+
+  it('el cuadre de voucher usa el rango y omite lo vacío', () => {
+    const f = voucherInicial(opciones({ estacion: 1, empresa: null }))
+    expect(voucherQuery(f)).toBe('desde=2026-10-03&hasta=2026-10-03&estacion=1')
+    expect(voucherQuery({ ...f, rango: [deDia('2026-10-11'), null], empresa: 2 })).toBe('desde=2026-10-11&hasta=2026-10-11&estacion=1&empresa=2')
+    expect(voucherQuery({ ...f, rango: null })).toBeNull()
   })
 })

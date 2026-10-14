@@ -15,7 +15,7 @@ export const router = createRouter({
       name: 'dashboard',
       component: () => import('@/features/dashboard/DashboardPage.vue'),
       meta: {
-        title: 'Resumen operativo',
+        title: 'Tablero de gestión',
       },
     },
     {
@@ -208,6 +208,16 @@ export const router = createRouter({
       },
     },
     {
+      path: '/reporte/cuadre-voucher',
+      name: 'reporte-cuadre-voucher',
+      component: () => import('@/features/reporte/CuadreVoucherPage.vue'),
+      meta: {
+        title: 'Cuadre de voucher',
+        label: 'Cuadre de voucher',
+        icon: 'confirmation-number-outline',
+      },
+    },
+    {
       path: '/reporte/boleto-manifiesto',
       name: 'reporte-boleto-manifiesto',
       component: () => import('@/features/reporte/ManifiestoSalidaPage.vue'),
@@ -216,6 +226,17 @@ export const router = createRouter({
         title: 'Boleto Manifiesto',
         label: 'Boleto Manifiesto',
         icon: 'description-outline',
+      },
+    },
+    {
+      path: '/reporte/boleto-manifiesto-interno',
+      name: 'reporte-boleto-manifiesto-interno',
+      component: () => import('@/features/reporte/ManifiestoSalidaPage.vue'),
+      props: { tipo: 'interno' },
+      meta: {
+        title: 'Boleto Manifiesto Interno',
+        label: 'Boleto Manifiesto Interno',
+        icon: 'assignment-outline',
       },
     },
     {

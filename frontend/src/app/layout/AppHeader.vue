@@ -3,7 +3,8 @@
     <div class="left-header" :class="[sidebarStore.mode]">
       <div class="flex btn-siderbar-header">
         <button type="button" class="icon-btn" aria-label="Menú de navegación" :aria-expanded="ui.isMobile ? sidebarStore.drawer : sidebarStore.mode !== 'close'" @click="sidebarStore.toggle()">
-          <icon name="left_panel_open" size="35px" :weight="100" color="text-surface-500" />
+          <!-- <icon name="menu" size="35px" :weight="300" color="text-surface-500" /> -->
+          <icon name="menu" size="25px" :weight="400" color="text-surface-500" />
         </button>
         <Divider layout="vertical" class="mx-[5px]!" />
       </div>
@@ -47,11 +48,8 @@
           <icon name="palette-outline" />
         </button>
 
-        <button class="icon-btn header-fullscreen" title="Pantalla completa" aria-label="Pantalla completa" @click="toggleFullscreen" :class="{ 'active-state': openPopover === 'fullscreen' }">
-          <icon name="fullscreen" />
-        </button>
         <button type="button" class="icon-btn header-chat" :aria-label="chat.noLeidos ? `Mensajes, ${chat.noLeidos} sin leer` : 'Mensajes'" v-tooltip.bottom="'Mensajes'" @click="invocarChat">
-          <icon name="chat" />
+          <icon name="forum-outline" />
           <span v-if="chat.noLeidos" class="header-chat__badge">{{ chat.noLeidos > 99 ? "99+" : chat.noLeidos }}</span>
         </button>
         <div style="position: relative">
@@ -59,7 +57,9 @@
             <icon name="notifications-outline" />
           </button>
         </div>
-
+        <button class="icon-btn header-fullscreen" title="Pantalla completa" aria-label="Pantalla completa" @click="toggleFullscreen" :class="{ 'active-state': openPopover === 'fullscreen' }">
+          <icon name="fullscreen" />
+        </button>
         <div style="position: relative">
           <button type="button" class="header-user" :title="session.user ?? ''" aria-haspopup="true" aria-controls="menu-usuario" @click="menuUsuario?.toggle($event)">
             <ChatAvatar :id="cuenta.cuenta?.id ?? 0" :nombre="cuenta.nombre" :foto="cuenta.foto" tamano="sm" />
@@ -88,7 +88,7 @@
       <div class="flex btn-siderbar-header">
         <Divider layout="vertical" class="mx-[5px]!" />
         <button type="button" class="icon-btn right" title="Mostrar/ocultar menú" aria-label="Panel lateral derecho" :aria-expanded="ui.isMobile ? rightSidebar.drawer : rightSidebar.mode !== 'close'" @click="rightSidebar.toggle()">
-          <icon name="menu" />
+          <icon name="menu" size="25px" :weight="400" color="text-surface-500" />
         </button>
       </div>
     </div>

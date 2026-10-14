@@ -6,8 +6,8 @@
 <template>
   <ul class="sidebar-menu nav-tree" :class="{ 'nav-tree--nested': depth > 0 }">
     <li v-for="item in items" :key="item.id" class="menu-item">
-      <div class="nav-row" :class="{ 'nav-row--mini': sidebar.collapsed }">
-        <template v-if="!sidebar.collapsed">
+      <div class="nav-row" :class="{ 'nav-row--mini': sidebar.compact }">
+        <template v-if="!sidebar.compact">
           <button v-if="item.children.length" type="button" class="nav-toggle" :style="toggleIndent" :aria-expanded="expanded.has(item.id)" :title="expanded.has(item.id) ? 'Contraer' : 'Desplegar'" @click="toggle(item.id)">
             <icon :name="expanded.has(item.id) ? 'remove' : 'add'" size="0.9rem" />
           </button>
@@ -19,7 +19,7 @@
         </component>
       </div>
       <Transition :css="false" @enter="onEnter" @leave="onLeave">
-        <NavTree v-if="item.children.length && expanded.has(item.id) && !sidebar.collapsed" :items="item.children" :depth="depth + 1" :sidebar="sidebar" />
+        <NavTree v-if="item.children.length && expanded.has(item.id) && !sidebar.compact" :items="item.children" :depth="depth + 1" :sidebar="sidebar" />
       </Transition>
     </li>
   </ul>
@@ -38,7 +38,8 @@ const props = withDefaults(defineProps<{ items: NavItem[]; sidebar: SidebarStore
   depth: 0,
 });
 
-const toggleIndent = computed(() => ({ marginInlineStart: `${0.5 + props.depth * 0.9}rem` }));
+/** Sangría por nivel: el margen sale del CSS (`--depth`) para que GSAP pueda animarlo sin pisar estilos de Vue. */
+const toggleIndent = computed(() => ({ "--depth": props.depth }));
 const router = useRouter();
 const route = useRoute();
 const expanded = ref(new Set<number>());
@@ -129,6 +130,8 @@ function toggle(id: number) {
 }
 .nav-toggle {
   flex: none;
+  overflow: hidden;
+  margin-inline-start: calc(0.5rem + var(--depth, 0) * 0.9rem);
   display: flex;
   width: 1.5rem;
   height: 1.5rem;

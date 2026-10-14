@@ -44,3 +44,9 @@ export interface ResumenDetalle {
 }
 
 export type FormatoReporte = 'pdf' | 'xlsx'
+
+export interface ResumenVoucher {
+  cantidad: number
+  dias: number
+  totales: { moneda: string; cantidad: number; total: number }[]
+}

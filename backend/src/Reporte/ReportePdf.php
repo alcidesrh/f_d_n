@@ -31,6 +31,11 @@ final class ReportePdf
         return $this->pdf("reporte/detalle_factura_boletos.html.twig", ["d" => $d], $usuario, "landscape");
     }
 
+    public function voucher(CuadreVoucher $c, string $usuario): string
+    {
+        return $this->pdf("reporte/cuadre_voucher.html.twig", ["c" => $c], $usuario, "portrait");
+    }
+
     /** @param array<string, mixed> $datos */
     private function pdf(string $plantilla, array $datos, string $usuario, string $orientacion): string
     {

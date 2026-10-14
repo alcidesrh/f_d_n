@@ -99,6 +99,26 @@ final class ConsultaReportes
         );
     }
 
+    /** Boletos emitidos como voucher o cortesía (no se cobran) en el rango de fechas de venta. Los anulados no cuentan. */
+    public function voucher(FiltroVoucher $f): CuadreVoucher
+    {
+        $consulta = $this->base($f->empresaId)
+            ->andWhere("v.createdAt >= :inicio AND v.createdAt < :fin")
+            ->andWhere("v.voucher = true OR v.cortesia = true")
+            ->andWhere("b.estado <> :anulado")
+            ->setParameter("inicio", $f->desde)
+            ->setParameter("fin", $f->hasta->modify("+1 day"))
+            ->setParameter("anulado", EstadoBoletoAsiento::ANULADO->value);
+        $this->deEstacion($consulta, $f->estacionId);
+
+        return new CuadreVoucher(
+            $f->rotulo(),
+            $this->nombreEstacion($f->estacionId),
+            $this->nombreEmpresa($f->empresaId),
+            $this->lineas($consulta),
+        );
+    }
+
     /** @return list<array{id: int, nombre: string, departamento: ?string}> */
     public function estaciones(?int $soloId = null): array
     {
@@ -208,6 +228,8 @@ final class ConsultaReportes
                 $venta->getCanal() === CanalVenta::WEB || stripos((string) $venta->getTipoPago()?->getNombre(), "tarjeta") !== false,
                 $autorizacion !== null && $autorizacion !== "" ? $autorizacion : null,
                 $referencias[(int) $venta->getId()] ?? null,
+                $b->getEstado()->value,
+                (string) $venta->getEstacion()?->getNombre(),
             );
         }, $boletos);
     }

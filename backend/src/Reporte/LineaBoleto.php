@@ -39,6 +39,10 @@ final readonly class LineaBoleto
         public bool $tarjeta,
         public ?string $autorizacion,
         public ?string $referenciaExterna,
+        /** `EstadoBoletoAsiento` del boleto. */
+        public string $estado = "emitido",
+        /** Estación donde se emitió la venta (vacío si no tiene). */
+        public string $estacionVenta = "",
     ) {}
 
     public function cobrado(): int

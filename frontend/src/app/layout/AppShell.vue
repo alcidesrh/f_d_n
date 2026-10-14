@@ -59,6 +59,7 @@ provide(LISTADO_DE_REGISTROS, defineAsyncComponent(() => import('@/features/enti
 provide(REPORTES_ADJUNTABLES, [
   { id: 'cuadre-venta-boletos', nombre: 'Cuadre de venta', icono: 'request-quote-outline', componente: defineAsyncComponent(() => import('@/features/reporte/CuadreVentaBoletosPage.vue')) },
   { id: 'detalle-factura-boletos', nombre: 'Detalle de facturas', icono: 'receipt-long-outline', componente: defineAsyncComponent(() => import('@/features/reporte/DetalleFacturaBoletosPage.vue')) },
+  { id: 'cuadre-voucher', nombre: 'Cuadre de voucher', icono: 'confirmation-number-outline', componente: defineAsyncComponent(() => import('@/features/reporte/CuadreVoucherPage.vue')) },
 ])
 
 // Menús y chat del usuario: se cargan al entrar al shell y al cambiar de usuario.

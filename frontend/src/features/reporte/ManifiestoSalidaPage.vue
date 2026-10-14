@@ -1,5 +1,5 @@
 <!--
-  Reportes "Boleto Manifiesto" y "Boleto Manifiesto Piloto": se elige la salida
+  Reportes "Boleto Manifiesto", "Boleto Manifiesto Interno" y "Boleto Manifiesto Piloto": se elige la salida
   (de las de un día) y se descarga el PDF del manifiesto. Mismo reporte que
   "Ver/PDF" en /salidas y "Manif. piloto" en /salidas/chequeo. Permiso `salida.ver`.
 -->
@@ -7,10 +7,10 @@
   <div class="@container flex flex-col gap-4">
     <section class="panel mx-auto flex w-full max-w-2xl flex-col gap-5">
       <header class="flex items-start gap-3">
-        <span class="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"><icon :name="piloto ? 'sports-motorsports-outline' : 'description-outline'" lg color="text-primary" /></span>
+        <span class="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"><icon :name="info.icono" lg color="text-primary" /></span>
         <div>
-          <h2 class="m-0 text-base font-semibold">{{ piloto ? 'Manifiesto del piloto' : 'Manifiesto de pasajeros' }}</h2>
-          <p class="m-0 mt-0.5 text-sm text-muted-color">{{ piloto ? 'Pasajeros por asiento con nacionalidad, documento y espacio para las firmas.' : 'Boletos de la salida por lugar de emisión, con importes del día y prepagados.' }}</p>
+          <h2 class="m-0 text-base font-semibold">{{ info.titulo }}</h2>
+          <p class="m-0 mt-0.5 text-sm text-muted-color">{{ info.descripcion }}</p>
         </div>
       </header>
 
@@ -37,11 +37,18 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { aDia } from '@/core/salida/filtro'
+import type { TipoManifiesto } from '@/core/salida/types'
 import SalidaSelect from '@/shared/ui/SalidaSelect.vue'
 import { descargarManifiesto } from '@/features/salida/manifiesto'
 
-const props = defineProps<{ tipo: 'boleto' | 'piloto' }>()
-const piloto = computed(() => props.tipo === 'piloto')
+const props = defineProps<{ tipo: TipoManifiesto }>()
+
+const TEXTOS: Record<TipoManifiesto, { icono: string; titulo: string; descripcion: string }> = {
+  boleto: { icono: 'description-outline', titulo: 'Manifiesto de pasajeros', descripcion: 'Boletos de la salida por lugar de emisión, con importes del día y prepagados.' },
+  interno: { icono: 'assignment-outline', titulo: 'Manifiesto interno', descripcion: 'Boletos de la salida por lugar de emisión, con importes, para uso interno de la empresa.' },
+  piloto: { icono: 'sports-motorsports-outline', titulo: 'Manifiesto del piloto', descripcion: 'Pasajeros por asiento con nacionalidad, documento y espacio para las firmas.' },
+}
+const info = computed(() => TEXTOS[props.tipo])
 
 const fecha = ref<Date | null>(new Date())
 const dia = computed(() => aDia(fecha.value ?? new Date()))

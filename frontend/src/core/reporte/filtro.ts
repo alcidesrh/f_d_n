@@ -25,6 +25,13 @@ export interface FiltroDetalle {
   soloReferencias: boolean
 }
 
+export interface FiltroVoucher {
+  /** `[desde, hasta]`; `hasta` es `null` mientras se elige el segundo día. */
+  rango: (Date | null)[] | null
+  estacion: number | null
+  empresa: number | null
+}
+
 const dos = (n: number) => String(n).padStart(2, '0')
 
 /** `Date` local → `AAAA-MM-DD`. */
@@ -58,6 +65,12 @@ export const detalleInicial = (o: OpcionesReporte): FiltroDetalle => ({
   soloReferencias: false,
 })
 
+export const voucherInicial = (o: OpcionesReporte): FiltroVoucher => ({
+  rango: [deDia(o.hoy), deDia(o.hoy)],
+  estacion: o.alcance.estacion,
+  empresa: o.alcance.empresa,
+})
+
 /** Primer problema del filtro, o `null` si se puede consultar. */
 export function errorCuadre(f: FiltroCuadre): string | null {
   if (!f.fecha) return 'Elige la fecha de venta.'
@@ -66,6 +79,13 @@ export function errorCuadre(f: FiltroCuadre): string | null {
 }
 
 export function errorDetalle(f: FiltroDetalle): string | null {
+  const [desde, hasta] = f.rango ?? []
+  if (!desde) return 'Elige la fecha o el rango de fechas.'
+  if (hasta && diasEntre(desde, hasta) >= MAX_DIAS_DETALLE) return `El rango no puede pasar de ${MAX_DIAS_DETALLE} días.`
+  return null
+}
+
+export function errorVoucher(f: FiltroVoucher): string | null {
   const [desde, hasta] = f.rango ?? []
   if (!desde) return 'Elige la fecha o el rango de fechas.'
   if (hasta && diasEntre(desde, hasta) >= MAX_DIAS_DETALLE) return `El rango no puede pasar de ${MAX_DIAS_DETALLE} días.`
@@ -100,6 +120,12 @@ export function detalleQuery(f: FiltroDetalle): string | null {
     soloTarjetas: f.soloTarjetas,
     soloReferencias: f.soloReferencias,
   })
+}
+
+export function voucherQuery(f: FiltroVoucher): string | null {
+  if (errorVoucher(f)) return null
+  const [desde, hasta] = f.rango!
+  return query({ desde: aDia(desde!), hasta: aDia(hasta ?? desde!), estacion: f.estacion, empresa: f.empresa })
 }
 
 const numero = new Intl.NumberFormat('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })

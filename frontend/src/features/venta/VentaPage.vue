@@ -47,8 +47,8 @@
             <div class="grid grid-cols-2 items-start gap-x-2 gap-y-1.5 md:gap-3 @xl:grid-cols-3">
               <div class="campo col-span-2 @xl:col-span-1">
                 <span class="text-sm font-medium">{{ store.porRango ? "Rango de salida" : "Fecha de salida" }}</span>
-                <DatePicker v-if="!store.porRango" v-model="store.fecha" date-format="dd/mm/yy" show-icon fluid @update:model-value="store.cargarSalidas()" />
-                <DatePicker v-else ref="selectorRango" v-model="borrador" selection-mode="range" :manual-input="false" date-format="dd/mm/yy" show-time hour-format="24" show-icon fluid placeholder="Desde – Hasta">
+                <DatePicker size="small" v-if="!store.porRango" v-model="store.fecha" date-format="dd/mm/yy" show-icon fluid @update:model-value="store.cargarSalidas()" />
+                <DatePicker size="small" v-else ref="selectorRango" v-model="borrador" selection-mode="range" :manual-input="false" date-format="dd/mm/yy" show-time hour-format="24" show-icon fluid placeholder="Desde – Hasta">
                   <template #footer>
                     <Button label="Aplicar" size="small" fluid :disabled="!borrador?.[0]" @click="aplicarRango" />
                   </template>
@@ -60,11 +60,11 @@
               </div>
               <label class="campo col-span-1">
                 <span class="text-sm font-medium">Origen</span>
-                <estacion-select v-model="store.estacionId" :estaciones="store.contexto?.estaciones ?? []" :propio="store.contexto?.estacion?.departamento" placeholder="Todas" @update:model-value="store.cargarSalidas()" />
+                <estacion-select size="small" v-model="store.estacionId" :estaciones="store.contexto?.estaciones ?? []" :propio="store.contexto?.estacion?.departamento" placeholder="Todas" @update:model-value="store.cargarSalidas()" />
               </label>
               <label class="campo col-span-1">
                 <span class="text-sm font-medium">Destino</span>
-                <estacion-select v-model="store.destinoId" :estaciones="store.contexto?.estaciones ?? []" show-clear placeholder="Todas" @update:model-value="store.cargarSalidas()" />
+                <estacion-select size="small" v-model="store.destinoId" :estaciones="store.contexto?.estaciones ?? []" show-clear placeholder="Todas" @update:model-value="store.cargarSalidas()" />
               </label>
             </div>
 
@@ -137,7 +137,6 @@
                 <Skeleton height="20rem" />
               </div>
               <div v-else-if="store.detalle" :key="`salida-${store.salidaId}`" class="flex flex-col gap-3 tex-sm">
-                <Message v-if="store.noVendible" severity="warn" :closable="false">{{ store.noVendible }}</Message>
                 <BusMapLegend :items="leyenda" :conteos="conteos" />
                 <div class="overflow-x-auto mt-1 md:mt-4">
                   <BusMap :elementos="store.detalle.croquis" :estado="store.estadoAsiento" interactivo inspeccionable tamano="md" class="justify-center" @asiento="(a) => a.id != null && store.alternarAsiento(a.id)" @ocupado="verOcupado" />

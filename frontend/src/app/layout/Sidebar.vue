@@ -1,5 +1,5 @@
 <template>
-  <aside ref="panel" class="sidebar" :class="[sidebarStore.side, sidebarStore.mode, { 'drawer-open': sidebarStore.drawer }]">
+  <aside ref="panel" class="sidebar" :class="[sidebarStore.side, sidebarStore.shown]">
     <div :class="[sidebarStore.side, nomini ? 'nomini' : '']" class="sidebar-control">
       <button type="button" class="toggle-sidebar tap-target" :aria-label="sidebarStore.mode != 'mini' ? 'Solo íconos' : 'Mostrar textos'" @click="sidebarStore.setMode(sidebarStore.mode == 'mini' ? 'open' : 'mini')">
         <icon :name="sidebarStore.mode != 'mini' ? 'horizontal_align_left' : 'horizontal_align_right'" size="1.2rem" class="text-surface-500 font-bold" :class="{ 'rotate-180': sidebarStore.side != 'left' }" :weight="400" />
@@ -14,27 +14,15 @@
   </aside>
 </template>
 <script setup lang="ts">
-import { nextTick, useTemplateRef } from "vue";
+import { useTemplateRef } from "vue";
 import { defineSidebarStore, type SidebarStore } from "./sidebarStore";
+import { useSidebarMotion } from "./sidebarMotion";
 
 const props = defineProps<{ side?: "left" | "right"; store?: SidebarStore; nomini?: boolean }>();
 
 const sidebarStore = props.store ?? defineSidebarStore(props.side ?? "left")();
 const panel = useTemplateRef<HTMLElement>("panel");
 
-watch(
-  () => sidebarStore.mode,
-  () => sidebarStore.sidebarUpdate(),
-);
-onMounted(() => sidebarStore.sidebarUpdate());
-
-// Drawer (móvil): al abrirse, el foco entra al panel.
-watch(
-  () => sidebarStore.drawer,
-  async (open) => {
-    if (!open) return;
-    await nextTick();
-    panel.value?.querySelector<HTMLElement>(".close-sidebar")?.focus();
-  },
-);
+// Ancho, modo y drawer: todo el movimiento lo lleva GSAP (ver `sidebarMotion.ts`).
+useSidebarMotion(sidebarStore, panel);
 </script>

@@ -7,12 +7,12 @@
   <NavMenuBar v-if="area === 'topbar_right'" :menus="menus" />
   <template v-else>
     <section v-for="menu in menus" :key="menu.id" class="nav-section">
-      <button v-if="menus.length > 1 && !sidebar?.collapsed" type="button" class="nav-section-title" :aria-expanded="!closed.has(menu.id)" :title="closed.has(menu.id) ? 'Desplegar' : 'Contraer'" @click="toggle(menu.id)">
+      <button v-if="menus.length > 1 && !sidebar?.compact" type="button" class="nav-section-title" :aria-expanded="!closed.has(menu.id)" :title="closed.has(menu.id) ? 'Desplegar' : 'Contraer'" @click="toggle(menu.id)">
         <icon :name="closed.has(menu.id) ? 'add' : 'remove'" size="0.9rem" />
         <span>{{ menu.nombre }}</span>
       </button>
       <Transition :css="false" @enter="onEnter" @leave="onLeave">
-        <div v-if="sidebar && (sidebar.collapsed || menus.length < 2 || !closed.has(menu.id))">
+        <div v-if="sidebar && (sidebar.compact || menus.length < 2 || !closed.has(menu.id))">
           <NavTree :items="menu.items" :sidebar="sidebar" />
         </div>
       </Transition>

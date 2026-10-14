@@ -7,6 +7,7 @@
 -->
 <template>
   <Select
+    ref="selectRef"
     v-model="modelo"
     :options="visibles"
     option-label="nombre"
@@ -50,6 +51,7 @@
 </template>
 
 <script setup lang="ts">
+import { watch, nextTick } from 'vue'
 import { agruparRutas, palabras, normalizar } from '@/core/salida/rutas'
 import type { RutaOpcion } from '@/core/salida/types'
 import { FilterService } from '@primevue/core/api'
@@ -66,8 +68,21 @@ FilterService.register(MODO, (valor: unknown, filtro: unknown) => {
 const props = defineProps<{ rutas: readonly RutaOpcion[] }>()
 const modelo = defineModel<number | null>({ required: true })
 const busqueda = ref('')
-const grupos = computed(() => agruparRutas(props.rutas, busqueda.value))
+const selectRef = ref<any>(null)
 const abiertos = ref(new Set<string>())
+
+// Limpia automáticamente el filtro cuando se selecciona algo, esperando a que Vue procese primero.
+// Antes abre el grupo de la ruta elegida: si quedara recogido, PrimeVue no la encuentra para mostrarla.
+watch(modelo, async (nuevoModelo) => {
+  const origen = props.rutas.find((r) => r.id === nuevoModelo)?.origen
+  if (origen && !abiertos.value.has(origen)) alternar(origen)
+  if (nuevoModelo !== null && busqueda.value.trim()) {
+    await nextTick()
+    busqueda.value = ''
+  }
+})
+
+const grupos = computed(() => agruparRutas(props.rutas, busqueda.value))
 const abierto = (origen: string) => !!busqueda.value.trim() || abiertos.value.has(origen)
 /** Los grupos recogidos van sin rutas (la cabecera dice cuántas tiene). */
 const visibles = computed(() => grupos.value.map((g) => ({ ...g, total: g.rutas.length, rutas: abierto(g.origen) ? g.rutas : [] })))

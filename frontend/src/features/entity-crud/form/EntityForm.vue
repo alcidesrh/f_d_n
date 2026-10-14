@@ -1,7 +1,9 @@
 <template>
-  <!-- Contenedor de consultas: las filas del formulario pasan a dos columnas
-       según el ancho de esta tarjeta (formSchema), no del viewport. -->
   <div class="relative @container">
+    <!-- Contenedor de consultas: las filas del formulario pasan a dos columnas
+         según el ancho de esta tarjeta (formSchema), no del viewport. Este
+         comentario va dentro del div: fuera sería una raíz de fragmento, que
+         rompe el <transition mode="out-in"> de App.vue. -->
     <div v-if="loading" class="flex flex-col gap-4">
       <Skeleton v-for="i in 6" :key="i" height="3.5rem" />
     </div>

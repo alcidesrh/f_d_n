@@ -1,0 +1,54 @@
+{# Cuadre de voucher. Datos: ver ReportePdf::voucher (c = CuadreVoucher, dinero). #}
+{% extends 'reporte/_base.html.twig' %}
+{% set titulo = 'Cuadre de voucher' %}
+
+{% block ficha %}
+<table class="ficha">
+  <tr>
+    <td style="width:30%"><div class="lbl">Fecha de venta</div><div class="val">{{ c.rotulo }}</div></td>
+    <td style="width:30%"><div class="lbl">Estación de venta</div><div class="val">{{ c.estacion ?? 'Todas las estaciones' }}</div></td>
+    <td style="width:25%"><div class="lbl">Empresa</div><div class="val">{{ c.empresa ?? 'Todas' }}</div></td>
+    <td style="width:15%"><div class="lbl">Vouchers</div><div class="val">{{ c.cantidad }}</div></td>
+  </tr>
+</table>
+{% endblock %}
+
+{% block cuerpo %}
+{% for g in c.grupos %}
+<div class="seccion">{{ g.estacion ?: 'Sin estación' }} · {{ g.dia|date('d/m/Y') }}</div>
+<table class="datos">
+  <thead><tr>
+    <th>ID</th><th class="centro">Asiento</th><th>Estado</th><th>Salida</th><th>Origen</th><th>Destino</th><th>Usuario</th><th class="der">Importe</th>
+  </tr></thead>
+  <tbody>
+  {% for l in g.filas %}
+    <tr class="{{ loop.index is even ? 'par' : '' }}">
+      <td>{{ l.boletoId }}</td>
+      <td class="centro"><b>{{ l.asiento }}</b></td>
+      <td>{{ c.estado(l) }}</td>
+      <td>{{ l.salidaId }}</td>
+      <td>{{ l.origen }}</td>
+      <td>{{ l.destino }}</td>
+      <td>{{ l.usuario }}</td>
+      <td class="der num">{{ l.moneda }} {{ dinero.num(l.centavos) }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+  <tfoot>
+  {% for moneda, t in g.totales %}
+    <tr class="total"><td colspan="5">Cantidad: {{ t.cantidad }}</td><td colspan="2" class="der">Total {{ moneda }}</td><td class="der num">{{ dinero.num(t.total) }}</td></tr>
+  {% endfor %}
+  </tfoot>
+</table>
+{% else %}
+<table class="datos"><tr class="vacio"><td>No hay vouchers con estos parámetros.</td></tr></table>
+{% endfor %}
+
+{% if c.grupos|length > 1 %}
+<table class="datos" style="margin-top:12px"><tfoot>
+  {% for moneda, t in c.totales %}
+    <tr class="total"><td>Cantidad: {{ t.cantidad }}</td><td class="der">Total general {{ moneda }}: {{ dinero.num(t.total) }}</td></tr>
+  {% endfor %}
+</tfoot></table>
+{% endif %}
+{% endblock %}

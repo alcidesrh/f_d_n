@@ -8,6 +8,7 @@ use App\Entity\Usuario;
 use App\Reporte\ConsultaReportes;
 use App\Reporte\FiltroCuadre;
 use App\Reporte\FiltroDetalle;
+use App\Reporte\FiltroVoucher;
 use App\Reporte\ReportePdf;
 use App\Reporte\ReporteRechazado;
 use App\Reporte\ReporteXlsx;
@@ -101,6 +102,30 @@ final class ReporteController extends AbstractController
             "xlsx" => $this->archivo($xlsx->detalle($detalle, $usuario->getUsername()), self::XLSX, "{$nombre}.xlsx"),
             default => $this->archivo($pdf->detalle($detalle, $usuario->getUsername()), "application/pdf", "{$nombre}.pdf"),
         };
+    }
+
+    #[Route("/cuadre-voucher", name: "voucher", methods: ["GET"])]
+    public function voucher(Request $request, #[CurrentUser] Usuario $usuario, ReportePdf $pdf): Response
+    {
+        $this->denyAccessUnlessGranted(self::VER);
+
+        try {
+            $filtro = FiltroVoucher::desdeQuery($request->query->all())->conAlcance($usuario->getEstacion()?->getId(), $usuario->getEmpresa()?->getId());
+            $formato = $this->formato($request, ["pdf", "resumen"]);
+            $cuadre = $this->consulta->voucher($filtro);
+        } catch (ReporteRechazado $e) {
+            return $this->json($e->toArray(), $e->estadoHttp);
+        }
+
+        if ($formato === "resumen") {
+            return $this->json($cuadre->resumen());
+        }
+
+        return $this->archivo(
+            $pdf->voucher($cuadre, $usuario->getUsername()),
+            "application/pdf",
+            sprintf("cuadre_voucher_%s_%s.pdf", $filtro->desde->format("Ymd"), $filtro->hasta->format("Ymd")),
+        );
     }
 
     /** @param list<string> $permitidos */

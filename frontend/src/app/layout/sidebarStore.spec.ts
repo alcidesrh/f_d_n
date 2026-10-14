@@ -35,7 +35,8 @@ describe('defineSidebarStore', () => {
     const left = defineSidebarStore('left')()
     left.toggle()
     expect(left.mode).toBe('mini')
-    expect(left.collapsed).toBe(true)
+    left.shown = 'mini'
+    expect(left.compact).toBe(true)
     left.dismiss()
     expect(left.mode).toBe('close')
     expect(left.drawer).toBe(false)
@@ -49,7 +50,7 @@ describe('defineSidebarStore', () => {
     expect(left.drawer).toBe(true)
     expect(left.mode).toBe('mini')
     // El drawer siempre muestra los textos, aunque el modo de escritorio sea `mini`.
-    expect(left.collapsed).toBe(false)
+    expect(left.compact).toBe(false)
     left.dismiss()
     expect(left.drawer).toBe(false)
     expect(left.mode).toBe('mini')

@@ -194,6 +194,20 @@ class RutasLegado
     {
         $nombre = trim((string) ($ruta["descripcion"] ?? "")) ?: trim((string) ($ruta["nombre"] ?? ""));
 
-        return mb_substr($nombre !== "" ? $nombre : (string) $ruta["codigo"], 0, 255);
+        return mb_substr($nombre !== "" ? self::sinMayusculas($nombre) : (string) $ruta["codigo"], 0, 255);
+    }
+
+    /**
+     * Las palabras escritas en mayúsculas (`GUATEMALA`, `SAN-JOSE`) quedan con
+     * mayúscula inicial (`Guatemala`, `San-Jose`). Solo cuentan las de dos
+     * letras o más: una letra suelta (`A`) queda igual. Puro.
+     */
+    public static function sinMayusculas(string $texto): string
+    {
+        return preg_replace_callback(
+            '/(?<!\p{L})\p{Lu}{2,}(?!\p{L})/u',
+            static fn (array $m): string => mb_strtoupper(mb_substr($m[0], 0, 1)) . mb_strtolower(mb_substr($m[0], 1)),
+            $texto,
+        ) ?? $texto;
     }
 }

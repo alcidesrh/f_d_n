@@ -1,6 +1,7 @@
 /* BARRA DE NAVEGACIÓN LATERAL
    Mobile-first: debajo de `lg` cada sidebar es un drawer sobre el contenido
-   (ancho abierto, sin `mini`), oculto hasta que su store abre `drawer`.
+   (ancho abierto, sin `mini`), oculto hasta que su store abre `drawer`
+   (lo desliza `sidebarMotion.ts`).
    Desde `lg` es fijo: su ancho es `--sb-<lado>-w` (lo anima el store) y el
    contenido se corre ese ancho (`.main` en content.css). */
 .sidebar {
@@ -15,18 +16,12 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  /* Cerrado queda fuera del orden de tabulación (visibility) al terminar de salir. */
-  visibility: hidden;
-  transition:
-    transform var(--transition) var(--ease),
-    visibility 0s linear var(--transition);
+  /* Movimiento (desplazamiento del drawer, ancho, visibilidad): `sidebarMotion.ts`. */
   &.left {
     --sb-open: var(--sb-left-open);
     left: 0;
     /*box-shadow: 2px 1px 6px 0px var(--p-surface-300);*/
     border-right: var(--border);
-
-    transform: translateX(-100%);
   }
 
   &.right {
@@ -38,37 +33,19 @@
     /*box-shadow: var(--shadow-inset);*/
 
     right: 0;
-    transform: translateX(100%);
-  }
-
-  &.drawer-open {
-    visibility: visible;
-    transform: none;
-    box-shadow: 0 12px 32px rgb(0 0 0 / 0.2);
-    transition: transform var(--transition) var(--ease);
   }
 
   @variant lg {
-    visibility: visible;
-    transform: none;
-    box-shadow: none;
-    transition: none;
     &.left {
       width: var(--sb-left-w);
-      transform: none;
     }
     &.right {
       width: var(--sb-right-w);
-      transform: none;
     }
     /* En `mini` el scroll del menú no muestra barra; el texto de cada enlace sale por
        fuera del panel con `position: fixed` (ver `.sidebar.mini` abajo). */
     &.mini > nav {
       scrollbar-width: none;
-    }
-    &.close {
-      visibility: hidden;
-      transition: visibility 0s linear var(--transition);
     }
   }
 }
@@ -190,7 +167,6 @@
 .menu-text {
   margin-left: 15px;
   opacity: 1;
-  transition: opacity calc(var(--transition) * 0.8) var(--ease);
 }
 .sidebar.mini {
   & .sidebar-control {
@@ -219,9 +195,9 @@
       text-overflow: ellipsis;
       background-color: var(--p-content-hover-background);
       box-shadow: 0 2px 8px rgb(0 0 0 / 0.15);
+      /* Aparece al pasar el mouse o enfocar: lo anima GSAP (`sidebarMotion.ts`). */
       opacity: 0;
       pointer-events: none;
-      transition: opacity calc(var(--transition) * 0.5) var(--ease);
     }
     &.left .menu-text {
       left: var(--sb-mini);
@@ -230,12 +206,6 @@
     &.right .menu-text {
       right: var(--sb-mini);
       border-radius: 8px 0 0 8px;
-    }
-    & .menu-link:hover .menu-text,
-    & .menu-link:focus-visible .menu-text {
-      opacity: 1;
-      pointer-events: auto;
-      transition-duration: var(--transition);
     }
   }
 }
