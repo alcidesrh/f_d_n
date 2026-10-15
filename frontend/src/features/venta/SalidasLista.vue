@@ -8,7 +8,7 @@
 
   El viaje es el del cliente (ADR-030): "Sube en" y "Baja en" con la hora en
   cada parada ("≈" si es estimada, "+1" si llega otro día); la ruta del bus,
-  con la hora en sus puntas, queda como dato secundario. Una salida sin
+  con la hora en sus puntas (la de inicio, en negrita, delante), va primera en la tabla. Una salida sin
   tarifa para ese viaje lo dice en el precio y no se puede elegir.
 -->
 <template>
@@ -27,7 +27,7 @@
         <div class="truncate text-xs tabular-nums text-muted-color">{{ horaPunta(s(row), column.key) }}</div>
       </div>
       <div v-else-if="column.key === 'ruta'" class="celda ruta min-w-0 leading-tight">
-        <div class="truncate" :title="rutaInicio(s(row))">{{ rutaInicio(s(row)) }}</div>
+        <div class="truncate" :title="rutaInicio(s(row))"><b v-if="inicioRuta(s(row)).hora" class="tabular-nums">{{ inicioRuta(s(row)).hora }}</b> {{ inicioRuta(s(row)).nombre }}</div>
         <div class="truncate" :title="rutaFin(s(row))">{{ rutaFin(s(row)) }}</div>
       </div>
       <GridText v-else-if="column.key === 'empresa'" class="celda" :text="nombreEmpresa(s(row))" />
@@ -95,9 +95,9 @@ const props = defineProps<{
 const emit = defineEmits<{ elegir: [id: number] }>();
 
 const columns: GridColumn[] = [
+  { key: "ruta", label: "Ruta", minWidth: "9rem", width: "1.5fr" },
   { key: "sube", label: "Sube en", minWidth: "7rem" },
   { key: "baja", label: "Baja en", minWidth: "7rem" },
-  { key: "ruta", label: "Ruta", minWidth: "9rem", width: "1.5fr" },
   { key: "empresa", label: "Empresa", width: "7rem" },
   { key: "bus", label: "Bus", width: "4rem" },
   { key: "estado", label: "Estado", width: "3rem" },
@@ -128,8 +128,7 @@ function elegir(r: SalidaResumen) {
 }
 
 /** Dónde sube o baja el cliente; sin `viaje`, las puntas de la ruta (hora solo en el origen). */
-const punta = (r: SalidaResumen, cual: "sube" | "baja"): ParadaViaje =>
-  r.viaje?.[cual] ?? (cual === "sube" ? { ...r.ruta.origen, hora: r.salida, aprox: false } : { ...r.ruta.destino, hora: null, aprox: false });
+const punta = (r: SalidaResumen, cual: "sube" | "baja"): ParadaViaje => r.viaje?.[cual] ?? (cual === "sube" ? { ...r.ruta.origen, hora: r.salida, aprox: false } : { ...r.ruta.destino, hora: null, aprox: false });
 /** "≈ 05:20 a. m. (+1)": la hora en la parada y, con `desde`, los días que pasan desde entonces. */
 function horaDe(p: ParadaViaje | undefined, desde?: string | null) {
   if (!p?.hora) return "—";
@@ -141,12 +140,14 @@ const horaPunta = (r: SalidaResumen, cual: "sube" | "baja") => horaDe(punta(r, c
 const viaje = (r: SalidaResumen) => `${punta(r, "sube").nombre ?? ""} → ${punta(r, "baja").nombre ?? ""}`;
 /** Un extremo de la ruta del bus: "Guatemala 08:00 p. m.", con la hora si se conoce. */
 const extremo = (r: SalidaResumen, nombre: string | null | undefined, p: ParadaViaje | undefined) => [nombre ?? "", p?.hora ? horaDe(p, r.salida) : ""].filter(Boolean).join(" ");
-/** Origen de la ruta del bus con su hora (primera línea de la celda). */
-function rutaInicio(r: SalidaResumen) {
-  const inicio = r.viaje?.inicio ?? { id: r.ruta.origen.id, nombre: r.ruta.origen.nombre, hora: r.salida, aprox: false };
-  return extremo(r, r.ruta.origen.nombre, inicio);
-}
-/** Destino de la ruta del bus con su hora, "≈" si es estimada y "+1" si llega otro día (segunda línea). */
+/** Hora y nombre de un extremo, por separado: la columna Ruta pone la hora delante, en negrita. */
+const extremoPartes = (r: SalidaResumen, nombre: string | null | undefined, p: ParadaViaje | undefined) => ({ hora: p?.hora ? horaDe(p, r.salida) : "", nombre: nombre ?? "" });
+/** Origen de la ruta del bus; sin `viaje`, la hora de la salida. */
+const origenRuta = (r: SalidaResumen): ParadaViaje => r.viaje?.inicio ?? { id: r.ruta.origen.id, nombre: r.ruta.origen.nombre, hora: r.salida, aprox: false };
+/** Origen de la ruta del bus (primera línea de la celda). */
+const inicioRuta = (r: SalidaResumen) => extremoPartes(r, r.ruta.origen.nombre, origenRuta(r));
+/** Origen y destino con su hora en una sola línea: segunda línea de la celda (destino, sin negrita), título y tarjeta. */
+const rutaInicio = (r: SalidaResumen) => extremo(r, r.ruta.origen.nombre, origenRuta(r));
 const rutaFin = (r: SalidaResumen) => extremo(r, r.ruta.destino.nombre, r.viaje?.fin);
 /** "Guatemala 08:00 p. m. → Flores ≈ 05:20 a. m. (+1)": la ruta entera, para la tarjeta. */
 const ruta = (r: SalidaResumen) => `${rutaInicio(r)} → ${rutaFin(r)}`;
