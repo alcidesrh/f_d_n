@@ -75,8 +75,7 @@ final class ConsultaBoletos
             if ($venta->getEstado() !== EstadoBoletoVenta::CONFIRMADA) {
                 throw new VentaRechazada("La venta todavía se está procesando.");
             }
-            ReglasBoletos::exigirEmitido($b);
-            ReglasBoletos::exigirAntesDeSalir($salida, $this->reloj->now(), "operar sobre el boleto");
+            ReglasBoletos::exigirOperable($b, $this->reloj->now(), "operar sobre el boleto");
         } catch (VentaRechazada $e) {
             $motivo = $e->getMessage();
         }

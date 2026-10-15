@@ -7,11 +7,13 @@ namespace App\Controller;
 use App\Entity\ConfiguracionPagina;
 use App\Entity\Empresa;
 use App\Entity\MensajeContacto;
+use App\Entity\PagoWeb;
 use App\Entity\Usuario;
 use App\Venta\ConsultaVenta;
 use App\Venta\EnLinea\AjustesPagina;
 use App\Venta\EnLinea\ConsultaComprasWeb;
 use App\Venta\EnLinea\FiltroComprasWeb;
+use App\Venta\EnLinea\GestionCompraWeb;
 use App\Venta\EnLinea\Recargo;
 use App\Venta\Excepcion\VentaRechazada;
 use Doctrine\ORM\EntityManagerInterface;
@@ -24,7 +26,9 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 /**
  * Dashboard de la página web (ADR-023), en la app del personal: compras en
- * línea con filtro y calculadora, configuración (recargo, venta activa,
+ * línea con filtro y calculadora, acciones sobre una compra (corregir el
+ * comprador, posponer, reemitir la factura, reenviar el boleto; anular y
+ * reasignar van por `/api/venta/boletos/*`), configuración (recargo, venta activa,
  * cierre) y mensajes de contacto. Permiso `pagina.administrar`.
  */
 #[AsController]
@@ -45,6 +49,43 @@ final class PaginaAdminController extends AbstractController
         $this->denyAccessUnlessGranted(self::ADMINISTRAR);
 
         return $this->json($consulta->buscar(FiltroComprasWeb::desdeQuery($request->query->all())));
+    }
+
+    /** `{ nombre, apellido?, email, telefono?, nit }`: corrige el comprador (la factura cambia al reemitirla). */
+    #[Route("/compras/{id<\d+>}/comprador", name: "compra_comprador", methods: ["PUT"])]
+    public function editarComprador(int $id, Request $request, GestionCompraWeb $gestion, ConsultaComprasWeb $consulta): JsonResponse
+    {
+        $this->denyAccessUnlessGranted(self::ADMINISTRAR);
+
+        return $this->accion($id, $consulta, fn(PagoWeb $p) => $gestion->editarComprador($p, $request->toArray()));
+    }
+
+    /** `{ motivo }`: libera los asientos de los boletos emitidos; se reanuda reasignándolos. */
+    #[Route("/compras/{id<\d+>}/posponer", name: "compra_posponer", methods: ["POST"])]
+    public function posponer(int $id, Request $request, GestionCompraWeb $gestion, ConsultaComprasWeb $consulta): JsonResponse
+    {
+        $this->denyAccessUnlessGranted(self::ADMINISTRAR);
+
+        return $this->accion($id, $consulta, fn(PagoWeb $p) => $gestion->posponer($p, (string) ($request->toArray()["motivo"] ?? "")));
+    }
+
+    /** Anula la factura de cada viaje en el certificador y certifica una nueva con los datos actuales. */
+    #[Route("/compras/{id<\d+>}/factura", name: "compra_factura", methods: ["POST"])]
+    public function reemitirFactura(int $id, GestionCompraWeb $gestion, ConsultaComprasWeb $consulta): JsonResponse
+    {
+        $this->denyAccessUnlessGranted(self::ADMINISTRAR);
+
+        return $this->accion($id, $consulta, fn(PagoWeb $p) => $gestion->reemitirFactura($p));
+    }
+
+    /** `{ correo? }` (por defecto, el del comprador): reenvía el boleto de todos los viajes. */
+    #[Route("/compras/{id<\d+>}/correo", name: "compra_correo", methods: ["POST"])]
+    public function reenviar(int $id, Request $request, GestionCompraWeb $gestion, ConsultaComprasWeb $consulta): JsonResponse
+    {
+        $this->denyAccessUnlessGranted(self::ADMINISTRAR);
+        $correo = $request->getContent() !== "" ? ($request->toArray()["correo"] ?? null) : null;
+
+        return $this->accion($id, $consulta, fn(PagoWeb $p) => $gestion->reenviar($p, is_string($correo) ? $correo : null));
     }
 
     /** Empresas y estaciones para los filtros. */
@@ -124,6 +165,27 @@ final class PaginaAdminController extends AbstractController
         $this->em->flush();
 
         return $this->json(["id" => $id, "leido" => $mensaje->isLeido()]);
+    }
+
+    /**
+     * Ejecuta una acción sobre la compra y responde `{ resultado, compra }`
+     * (la fila del listado, refrescada).
+     *
+     * @param callable(PagoWeb): mixed $accion
+     */
+    private function accion(int $id, ConsultaComprasWeb $consulta, callable $accion): JsonResponse
+    {
+        $pago = $this->em->find(PagoWeb::class, $id) ?? throw $this->createNotFoundException();
+        try {
+            $resultado = $accion($pago);
+        } catch (VentaRechazada $e) {
+            return $this->json($e->toArray(), $e->estadoHttp);
+        }
+
+        return $this->json([
+            "resultado" => $resultado instanceof PagoWeb ? null : $resultado,
+            "compra" => $consulta->una($id),
+        ]);
     }
 
     /** @return array<string, mixed> */

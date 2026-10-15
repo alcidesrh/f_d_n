@@ -7,7 +7,17 @@ export interface Importe {
 }
 
 export type EstadoPago = 'autenticacion' | 'aprobado' | 'rechazado' | 'completado' | 'reembolsado' | 'reembolso_pendiente'
-export type EstadoFacturacion = 'certificada' | 'pendiente' | 'no_aplica'
+export type EstadoFacturacion = 'certificada' | 'pendiente' | 'no_aplica' | 'anulada'
+export type EstadoBoletoCompra = 'emitido' | 'chequeado' | 'transito' | 'finalizado' | 'anulado' | 'cancelado' | 'pospuesto'
+
+/** Boleto vigente de un viaje (sin los reasignados: su reemplazo está en la misma venta). */
+export interface BoletoCompra {
+  id: number
+  estado: EstadoBoletoCompra
+  asiento: number
+  salidaId: number
+  salida: string
+}
 
 export interface VentaCompra {
   id: number
@@ -22,7 +32,10 @@ export interface VentaCompra {
   total: Importe
   facturacion: EstadoFacturacion
   errorFacturacion: string | null
-  factura: { serie: string; numero: number; uuid: string; urlPdf: string | null } | null
+  factura: { serie: string; numero: number; uuid: string; urlPdf: string | null; anulada: boolean } | null
+  /** Último envío del boleto por correo (null: nunca, o antes de registrarse). */
+  correoEnviado: string | null
+  boletos: BoletoCompra[]
 }
 
 export interface CompraWeb {
@@ -39,7 +52,8 @@ export interface CompraWeb {
   referencia: string | null
   mensaje: string | null
   empresa: { id: number; nombre: string } | null
-  comprador: { nombre: string; email: string | null; telefono: string | null; nit: string }
+  /** `nombre`: nombre y apellido juntos; `nombres` y `apellido` por separado (para editarlos). */
+  comprador: { nombre: string; nombres: string; apellido: string | null; email: string | null; telefono: string | null; nit: string }
   ventas: VentaCompra[]
 }
 
@@ -66,6 +80,22 @@ export interface PaginaCompras {
   porPagina: number
   resumen: ResumenCompras
 }
+
+/** Respuesta de una acción sobre una compra: su resultado y la fila refrescada. */
+export interface AccionCompra<R = null> {
+  resultado: R
+  compra: CompraWeb | null
+}
+
+export interface DatosComprador {
+  nombre: string
+  apellido: string | null
+  email: string
+  telefono: string | null
+  nit: string
+}
+
+export type FacturaReemitida = Array<{ venta: number; factura: { serie: string | null; numero: number | null } | null; error: string | null }>
 
 export interface ConfiguracionPagina {
   recargoPorciento: string

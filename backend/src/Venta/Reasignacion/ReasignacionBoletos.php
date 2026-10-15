@@ -23,8 +23,9 @@ use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 
 /**
- * Cambio de asiento (y de salida) de boletos emitidos, antes de la hora de
- * salida. No cobra ni factura: el nuevo asiento debe costar lo mismo que el
+ * Cambio de asiento (y de salida, de la misma empresa) de boletos emitidos,
+ * antes de la hora de salida, o pospuestos (así se reanuda una compra web
+ * pospuesta). No cobra ni factura: el nuevo asiento debe costar lo mismo que el
  * boleto original, y el boleto nuevo queda en la misma venta (con su factura).
  * El original pasa a `reasignado` y el asiento que ocupaba queda libre.
  *
@@ -105,9 +106,8 @@ final class ReasignacionBoletos
         $ahora = $this->reloj->now();
         foreach ($viejos as $b) {
             $this->em->refresh($b);
-            ReglasBoletos::exigirEmitido($b);
-            ReglasBoletos::exigirAntesDeSalir($b->getSalida(), $ahora, "reasignar el boleto");
-            ReglasBoletos::exigirEmpresaCompatible($b->getSalida(), $destino, $venta);
+            ReglasBoletos::exigirOperable($b, $ahora, "reasignar el boleto");
+            ReglasBoletos::exigirEmpresaCompatible($b->getSalida(), $destino);
         }
         $this->reglas->exigirVendibleEnTaquilla($destino);
         ReglasBoletos::exigirAntesDeSalir($destino, $ahora, "reasignar a esa salida");

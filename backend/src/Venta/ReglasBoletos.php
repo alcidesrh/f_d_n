@@ -6,7 +6,6 @@ namespace App\Venta;
 
 use App\Entity\BoletoAsiento;
 use App\Entity\BoletoVenta;
-use App\Entity\Enum\CanalVenta;
 use App\Entity\Enum\EstadoBoletoAsiento;
 use App\Entity\Enum\EstadoFacturacion;
 use App\Entity\Enum\EstadoSalida;
@@ -55,6 +54,21 @@ final class ReglasBoletos
     }
 
     /**
+     * Lo que se anula o se reasigna: un boleto emitido antes de la hora de
+     * salida, o uno pospuesto (no ocupa asiento: su salida ya no importa).
+     *
+     * @throws VentaRechazada
+     */
+    public static function exigirOperable(BoletoAsiento $boleto, \DateTimeInterface $ahora, string $operacion): void
+    {
+        if ($boleto->getEstado() === EstadoBoletoAsiento::POSPUESTO) {
+            return;
+        }
+        self::exigirEmitido($boleto);
+        self::exigirAntesDeSalir($boleto->getSalida(), $ahora, $operacion);
+    }
+
+    /**
      * Una factura (certificada, o por certificar) cubre toda la venta y el
      * certificador no la anula por partes: hay que anular todos sus boletos
      * vivos juntos.
@@ -90,20 +104,15 @@ final class ReglasBoletos
     }
 
     /**
-     * Entre empresas distintas solo se reasigna lo vendido en la página web.
+     * Solo se reasigna entre salidas de la misma empresa (también lo vendido
+     * en la página web).
      *
      * @throws VentaRechazada
      */
-    public static function exigirEmpresaCompatible(Salida $origen, Salida $destino, BoletoVenta $venta): void
+    public static function exigirEmpresaCompatible(Salida $origen, Salida $destino): void
     {
-        if ($venta->getCanal() === CanalVenta::WEB) {
-            return;
-        }
         if ($origen->getEmpresa()?->getId() !== $destino->getEmpresa()?->getId()) {
-            throw new VentaRechazada(
-                "La salida elegida es de otra empresa: solo los boletos vendidos en la página web se reasignan entre empresas.",
-                "empresa_distinta",
-            );
+            throw new VentaRechazada("La salida elegida es de otra empresa: solo se reasigna entre salidas de la misma empresa.", "empresa_distinta");
         }
     }
 

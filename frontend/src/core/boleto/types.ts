@@ -1,7 +1,7 @@
 /** Listado de boletos (`/api/boletos`, el "Boletos" del legado). */
 import type { Importe } from '@/core/venta/types'
 
-export type EstadoBoleto = 'emitido' | 'chequeado' | 'transito' | 'finalizado' | 'anulado' | 'reasignado' | 'cancelado'
+export type EstadoBoleto = 'emitido' | 'chequeado' | 'transito' | 'finalizado' | 'anulado' | 'reasignado' | 'cancelado' | 'pospuesto'
 
 /** Documento de la venta (`ListadoBoletos::documento`). */
 export type TipoDocumento = 'factura' | 'pendiente' | 'sin_factura' | 'agencia' | 'cortesia' | 'voucher'

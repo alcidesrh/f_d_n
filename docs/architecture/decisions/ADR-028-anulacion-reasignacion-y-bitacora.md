@@ -22,7 +22,7 @@
 
 - Cambio de asiento, en la misma salida o en otra, también solo antes de la hora de salida (de la original y de la nueva).
 - **Mismo precio**, comparado por boleto (cada boleto nuevo toma el asiento de su misma posición en la selección). Se cotiza como la venta original (`POST /api/venta/cotizacion` con `venta`: su cortesía y, en la web, su recargo).
-- **No entre empresas distintas**, salvo lo vendido en la página web.
+- **No entre empresas distintas**, tampoco lo vendido en la página web (al principio se permitía; desde 2026-10-15 la reasignación de compras web también debe quedar en la misma empresa). Un boleto `pospuesto` (compra web pospuesta desde el dashboard) se anula o reasigna aunque su salida ya haya pasado.
 - Los boletos reasignados deben ser de una misma venta. No se cobra ni se factura: el boleto nuevo queda **en la misma venta** (y con su factura) y apunta al original (`BoletoAsiento.reasignadoDe`); el original pasa a `reasignado`. El original se libera antes de comprobar la disponibilidad, así se puede pasar a un asiento que hoy ocupa otro boleto de la selección.
 - Todo en una transacción con las salidas bloqueadas: si el asiento está tomado o el precio no coincide, no cambia nada.
 - Pantalla: `/venta` en modo reasignación (`store.iniciarReasignacion`; también `/venta?reasignar=ids`). Reutiliza la venta normal (croquis, tramo, "cobrar el trayecto completo" para igualar precios), con el botón "Reasignar" y, al terminar, el ticket nuevo.

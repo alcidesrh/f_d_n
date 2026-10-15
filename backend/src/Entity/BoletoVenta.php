@@ -113,6 +113,10 @@ class BoletoVenta extends TimeLegacyStatusBase
     #[ORM\Column(options: ["default" => false])]
     private bool $enviarCorreo = false;
 
+    /** Cuándo se envió el boleto por correo por última vez (lo marca `EnviarBoletoPorCorreoHandler`). */
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $correoEnviadoEn = null;
+
     /** Autorización de la pasarela de pago (web). */
     #[ORM\Column(length: 100, nullable: true)]
     private ?string $referenciaPago = null;
@@ -349,6 +353,18 @@ class BoletoVenta extends TimeLegacyStatusBase
     public function setVoucher(bool $voucher): static
     {
         $this->voucher = $voucher;
+
+        return $this;
+    }
+
+    public function getCorreoEnviadoEn(): ?\DateTimeImmutable
+    {
+        return $this->correoEnviadoEn;
+    }
+
+    public function marcarCorreoEnviado(\DateTimeImmutable $cuando): static
+    {
+        $this->correoEnviadoEn = $cuando;
 
         return $this;
     }

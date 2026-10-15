@@ -27,7 +27,7 @@ final class OperacionesTest extends TestCase
     {
         // Se guardan tal cual en `bitacora.operacion`: cambiarlos rompería la historia.
         $this->assertSame(["creada", "abordando", "iniciada", "finalizada", "cancelada", "cambio_bus", "eliminada"], array_column(OperacionSalida::cases(), "value"));
-        $this->assertSame(["creado", "anulado", "reasignado", "chequeado", "transito", "cancelado", "finalizado", "revertido"], array_column(OperacionBoleto::cases(), "value"));
+        $this->assertSame(["creado", "anulado", "reasignado", "chequeado", "transito", "cancelado", "finalizado", "revertido", "pospuesto"], array_column(OperacionBoleto::cases(), "value"));
     }
 
     public function testTodaOperacionTieneEtiqueta(): void

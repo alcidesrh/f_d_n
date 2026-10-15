@@ -146,15 +146,25 @@ final class ReglasBoletosTest extends TestCase
         $this->assertSame("venta_incompleta", $this->codigo(fn() => ReglasBoletos::exigirVentaCompleta($venta, [$b1])));
     }
 
-    public function testEntreEmpresasSoloSeReasignaLoVendidoEnLaWeb(): void
+    public function testSoloSeReasignaEntreSalidasDeLaMismaEmpresa(): void
     {
         $a = self::salida(1, "2026-10-11 08:00", 1);
         $b = self::salida(2, "2026-10-11 09:00", 2);
 
-        $this->assertSame("empresa_distinta", $this->codigo(fn() => ReglasBoletos::exigirEmpresaCompatible($a, $b, self::venta(EstadoFacturacion::CERTIFICADA, CanalVenta::ESTACION))));
-        $this->assertSame("empresa_distinta", $this->codigo(fn() => ReglasBoletos::exigirEmpresaCompatible($a, $b, self::venta(EstadoFacturacion::NO_APLICA, CanalVenta::AGENCIA))));
-        $this->assertNull($this->codigo(fn() => ReglasBoletos::exigirEmpresaCompatible($a, $b, self::venta(EstadoFacturacion::CERTIFICADA, CanalVenta::WEB))));
-        $this->assertNull($this->codigo(fn() => ReglasBoletos::exigirEmpresaCompatible($a, self::salida(3, "2026-10-12 08:00", 1), self::venta(EstadoFacturacion::CERTIFICADA))));
+        $this->assertSame("empresa_distinta", $this->codigo(fn() => ReglasBoletos::exigirEmpresaCompatible($a, $b)));
+        $this->assertNull($this->codigo(fn() => ReglasBoletos::exigirEmpresaCompatible($a, self::salida(3, "2026-10-12 08:00", 1))));
+    }
+
+    public function testUnPospuestoSeOperaAunqueSuSalidaYaHayaPasado(): void
+    {
+        $venta = self::venta(EstadoFacturacion::CERTIFICADA);
+        $b = self::boleto(1, $venta, 1);
+        $b->setEstado(EstadoBoletoAsiento::POSPUESTO);
+        $despues = new \DateTimeImmutable("2030-01-01 00:00");
+
+        $this->assertNull($this->codigo(fn() => ReglasBoletos::exigirOperable($b, $despues, "anular")));
+        $emitido = self::boleto(2, $venta, 2)->setSalida(self::salida(1, "2026-10-11 08:00"));
+        $this->assertSame("salida_iniciada", $this->codigo(fn() => ReglasBoletos::exigirOperable($emitido, $despues, "anular")));
     }
 
     public function testElNuevoAsientoDebeCostarLoMismo(): void

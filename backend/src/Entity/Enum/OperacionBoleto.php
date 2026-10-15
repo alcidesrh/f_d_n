@@ -17,6 +17,7 @@ enum OperacionBoleto: string implements Operacion
     case CANCELADO = "cancelado";
     case FINALIZADO = "finalizado";
     case REVERTIDO = "revertido";
+    case POSPUESTO = "pospuesto";
 
     public function etiqueta(): string
     {
@@ -29,6 +30,7 @@ enum OperacionBoleto: string implements Operacion
             self::CANCELADO => "No se presentó a abordar",
             self::FINALIZADO => "Viaje finalizado",
             self::REVERTIDO => "Cancelación revertida",
+            self::POSPUESTO => "Viaje pospuesto",
         };
     }
 }

@@ -12,6 +12,8 @@ enum EstadoBoletoAsiento: string
     case REASIGNADO = "reasignado";
     /** El pasajero no se presentó a abordar: el asiento queda libre, la venta y su factura siguen (ADR-032). Se revierte a emitido si el asiento sigue libre (ADR-033). */
     case CANCELADO = "cancelado";
+    /** Compra web pospuesta: el asiento queda libre, la venta y su factura siguen; se reanuda reasignándolo (o se anula). */
+    case POSPUESTO = "pospuesto";
 
     /**
      * @return list<self>
@@ -26,12 +28,15 @@ enum EstadoBoletoAsiento: string
                 self::ANULADO,
                 self::REASIGNADO,
                 self::CANCELADO,
+                self::POSPUESTO,
             ],
             // Chequeado que al final no viajó: se cancela desde el listado de boletos.
             self::CHEQUEADO => [self::TRANSITO, self::CANCELADO],
             self::TRANSITO => [self::FINALIZADO],
             // Revertir la cancelación (el pasajero sí viaja), si el asiento sigue libre.
             self::CANCELADO => [self::EMITIDO],
+            // Se reanuda reasignándolo a otra salida, o se anula.
+            self::POSPUESTO => [self::REASIGNADO, self::ANULADO],
             self::FINALIZADO, self::ANULADO, self::REASIGNADO => [],
         };
     }
@@ -49,6 +54,6 @@ enum EstadoBoletoAsiento: string
      */
     public static function liberanAsiento(): array
     {
-        return [self::ANULADO->value, self::REASIGNADO->value, self::CANCELADO->value];
+        return [self::ANULADO->value, self::REASIGNADO->value, self::CANCELADO->value, self::POSPUESTO->value];
     }
 }

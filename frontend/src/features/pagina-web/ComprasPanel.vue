@@ -3,7 +3,10 @@
   primero. Filtros rápidos (fecha de compra, estado, búsqueda) y "Más
   filtros" (salida, empresa, origen/destino, ida y vuelta, factura, tarjeta,
   monto). La calculadora suma TODO lo filtrado (no solo la página visible);
-  marcando filas se suma además la selección.
+  marcando filas se suma además la selección. Cada fila tiene un menú de
+  acciones: Ver, Editar (comprador), Reasignar (en la taquilla, misma
+  empresa), Posponer (libera los asientos), Anular, Crear factura (reemite
+  con los datos actuales) y Reenviar boleto.
   Contenido angosto (móvil o con los paneles del shell abiertos): tarjetas;
   desde 56rem de ancho del contenido (container query): tabla.
 -->
@@ -105,16 +108,23 @@
             <Checkbox v-model="seleccion" :value="c" :input-id="`sel-m-${c.id}`" />
             <label :for="`sel-m-${c.id}`">
               <span class="block font-semibold">{{ c.comprador.nombre || '—' }}</span>
-              <span class="block text-xs text-muted-color">{{ fechaHora(c.creado) }} · NIT {{ c.comprador.nit }}</span>
+              <span class="block text-xs text-muted-color">{{ fechaCorta(c.creado) }} · NIT {{ c.comprador.nit }}</span>
             </label>
           </div>
-          <div class="text-right">
-            <div class="font-bold tabular-nums">{{ c.monto.texto }}</div>
-            <Tag :value="etiquetaEstado(c.estado).etiqueta" :severity="etiquetaEstado(c.estado).severidad" class="!text-xs" />
+          <div class="flex items-start gap-1">
+            <div class="text-right">
+              <div class="font-bold tabular-nums">{{ c.monto.texto }}</div>
+              <span class="estado" :class="`estado--${estadoCompra(c)}`" :title="ESTADOS_COMPRA[estadoCompra(c)].etiqueta">{{ ESTADOS_COMPRA[estadoCompra(c)].inicial }}</span>
+            </div>
+            <Button text rounded size="small" severity="secondary" class="tap-target" :aria-label="`Acciones de la compra ${c.id}`" aria-haspopup="true" @click="abrirMenu($event, c)"><template #icon><icon name="more-vert" /></template></Button>
           </div>
         </div>
         <ViajesCompra :compra="c" />
-        <Button label="Detalle" size="small" text class="self-start !px-0" @click="detalle = c" />
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-color">
+          <span>{{ c.empresa?.nombre ?? '—' }}</span>
+          <span v-if="c.viajes === 2">Ida y vuelta</span>
+          <span><icon :name="correoEnviado(c) ? 'mark-email-read-outline' : 'unsubscribe-outline'" /> {{ correoEnviado(c) ? 'Correo enviado' : 'Correo sin enviar' }}</span>
+        </div>
       </article>
     </div>
 
@@ -142,20 +152,25 @@
     >
       <template #empty><p class="m-0 py-6 text-center text-sm text-muted-color">No hay compras con estos filtros.</p></template>
       <Column selection-mode="multiple" header-style="width: 3rem" />
-      <Column field="creado" header="Compra" sortable>
-        <template #body="{ data }"><span class="whitespace-nowrap">{{ fechaHora(data.creado) }}</span></template>
+      <Column field="creado" header="Creación" sortable>
+        <template #body="{ data }"><span class="whitespace-nowrap tabular-nums">{{ fechaCorta(data.creado) }}</span></template>
       </Column>
-      <Column header="Comprador">
+      <Column field="salida" header="Trayecto" sortable>
+        <template #body="{ data }"><ViajesCompra :compra="data" /></template>
+      </Column>
+      <Column header="Empresa">
+        <template #body="{ data }"><span class="text-sm">{{ data.empresa?.nombre ?? '—' }}</span></template>
+      </Column>
+      <Column header="Estado" class="text-center">
+        <template #body="{ data }">
+          <span class="estado" :class="`estado--${estadoCompra(data)}`" :title="ESTADOS_COMPRA[estadoCompra(data)].etiqueta" v-tooltip.top="ESTADOS_COMPRA[estadoCompra(data)].etiqueta">{{ ESTADOS_COMPRA[estadoCompra(data)].inicial }}</span>
+        </template>
+      </Column>
+      <Column header="Cliente">
         <template #body="{ data }">
           <div class="font-medium">{{ data.comprador.nombre || '—' }}</div>
           <div class="text-xs text-muted-color">{{ data.comprador.email }} · NIT {{ data.comprador.nit }}</div>
         </template>
-      </Column>
-      <Column field="salida" header="Viaje(s)" sortable>
-        <template #body="{ data }"><ViajesCompra :compra="data" /></template>
-      </Column>
-      <Column header="Cobra">
-        <template #body="{ data }"><span class="text-sm">{{ data.empresa?.nombre ?? '—' }}</span></template>
       </Column>
       <Column field="monto" header="Monto" sortable class="text-right">
         <template #body="{ data }">
@@ -163,13 +178,27 @@
           <div v-if="Number(data.recargoPorciento) > 0" class="text-xs text-muted-color">+{{ Number(data.recargoPorciento) }} %</div>
         </template>
       </Column>
-      <Column header="Estado">
-        <template #body="{ data }"><Tag :value="etiquetaEstado(data.estado).etiqueta" :severity="etiquetaEstado(data.estado).severidad" /></template>
-      </Column>
-      <Column header="Tarjeta">
+      <Column header="Pago id" class="text-center">
         <template #body="{ data }">
-          <div class="whitespace-nowrap text-sm">{{ data.tarjeta.marca }} ···· {{ data.tarjeta.ultimos4 }}</div>
-          <div v-if="data.autorizacion" class="text-xs text-muted-color">Aut. {{ data.autorizacion }}</div>
+          <Button v-if="data.referencia" text rounded size="small" severity="secondary" :aria-label="`Copiar el id de la transacción ${data.referencia}`" v-tooltip.top="data.referencia" @click.stop="copiar(data.referencia)"><template #icon><icon name="content-copy-outline" /></template></Button>
+          <span v-else class="text-muted-color">—</span>
+        </template>
+      </Column>
+      <Column header="Email enviado" class="text-center">
+        <template #body="{ data }">
+          <icon v-if="correoEnviado(data)" name="check-circle-outline" class="text-emerald-600" v-tooltip.top="`Enviado el ${fechaHora(correoEnviado(data)!)}`" aria-label="Sí" />
+          <icon v-else name="cancel-outline" class="text-muted-color" aria-label="No" />
+        </template>
+      </Column>
+      <Column header="Ida y vuelta" class="text-center">
+        <template #body="{ data }">
+          <icon v-if="data.viajes === 2" name="check-circle-outline" class="text-emerald-600" aria-label="Sí" />
+          <icon v-else name="remove" class="text-muted-color" aria-label="No" />
+        </template>
+      </Column>
+      <Column header-style="width: 3rem" body-class="!py-0">
+        <template #body="{ data }">
+          <Button text rounded size="small" severity="secondary" :aria-label="`Acciones de la compra ${data.id}`" aria-haspopup="true" @click.stop="abrirMenu($event, data)"><template #icon><icon name="more-vert" /></template></Button>
         </template>
       </Column>
     </DataTable>
@@ -216,15 +245,40 @@
     <Dialog :visible="!!detalle" modal :header="detalle ? `Compra #${detalle.id}` : ''" class="w-[min(40rem,calc(100vw-1rem))]" @update:visible="(v: boolean) => !v && (detalle = null)">
       <DetalleCompra v-if="detalle" :compra="detalle" />
     </Dialog>
+
+    <Menu ref="menu" :model="itemsMenu" popup>
+      <template #item="{ item, props: p }">
+        <a v-bind="p.action" class="flex items-center gap-2.5" :class="{ 'opacity-60': item.disabled }">
+          <icon :name="String(item.icono)" size="1.15rem" :class="item.peligro && !item.disabled ? 'text-red-600' : ''" />
+          <span class="flex-1">
+            <span class="block text-sm">{{ item.label }}</span>
+            <span v-if="item.motivo" class="block max-w-60 text-xs text-muted-color">{{ item.motivo }}</span>
+          </span>
+        </a>
+      </template>
+    </Menu>
+    <EditarCompraDialog :visible="dialogo === 'editar'" :compra="enMenu" @update:visible="cerrarDialogo" @listo="refrescar" />
+    <PosponerCompraDialog :visible="dialogo === 'posponer'" :compra="enMenu" @update:visible="cerrarDialogo" @listo="refrescar" />
+    <ReenviarBoletoDialog :visible="dialogo === 'reenviar'" :compra="enMenu" @update:visible="cerrarDialogo" />
+    <AnularBoletosDialog :visible="dialogo === 'anular'" :ids="enMenu ? boletosParaAnular(enMenu, new Date()) : []" @update:visible="cerrarDialogo" @listo="recargar" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { fetchCompras, fetchOpciones } from '@/core/pagina-web/api'
+import type { MenuItem } from 'primevue/menuitem'
+import { useConfirm } from 'primevue/useconfirm'
+import { boletosParaAnular, disponibilidadCompra, ESTADOS_COMPRA, estadoCompra, viajesReasignables, type AccionCompra } from '@/core/pagina-web/acciones'
+import { fetchCompras, fetchOpciones, reemitirFactura } from '@/core/pagina-web/api'
 import { aQuery, ESTADOS, etiquetaEstado, filtroInicial, filtrosActivos, quetzales, RANGOS, rango, sumaSeleccion, type FiltroCompras, type Rango } from '@/core/pagina-web/filtro'
 import type { CompraWeb, EstadoPago, Opcion, PaginaCompras } from '@/core/pagina-web/types'
 import { HttpError } from '@/core/http'
+import { notify } from '@/core/notify'
+import { usePermisosBoleto } from '@/core/venta/permisos'
+import AnularBoletosDialog from '@/shared/boleto/AnularBoletosDialog.vue'
 import DetalleCompra from './DetalleCompra.vue'
+import EditarCompraDialog from './EditarCompraDialog.vue'
+import PosponerCompraDialog from './PosponerCompraDialog.vue'
+import ReenviarBoletoDialog from './ReenviarBoletoDialog.vue'
 import ViajesCompra from './ViajesCompra.vue'
 
 const hoy = new Date()
@@ -275,6 +329,7 @@ const creadoHasta = comoFecha('creadoHasta')
 const salidaDesde = comoFecha('salidaDesde')
 const salidaHasta = comoFecha('salidaHasta')
 
+const fechaCorta = (iso: string) => new Intl.DateTimeFormat('es-GT', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(iso))
 const fechaHora = (iso: string) =>
   new Intl.DateTimeFormat('es-GT', { day: '2-digit', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(iso))
 
@@ -322,6 +377,123 @@ function alOrdenar(e: { sortField?: unknown; sortOrder?: number | null }) {
   filtro.direccion = e.sortOrder === 1 ? 'asc' : 'desc'
 }
 
+// —— Celdas ——
+/** El PDF que se le envía al cliente (todos los viajes, con los datos de la factura). */
+const boletoPdf = (c: CompraWeb) => `/api/publico/compras/${c.token}/boleto.pdf?ver=1`
+/** El correo sale con todos los viajes juntos: cuenta el envío de la ida. */
+const correoEnviado = (c: CompraWeb) => c.ventas[0]?.correoEnviado ?? null
+
+async function copiar(texto: string) {
+  try {
+    await navigator.clipboard.writeText(texto)
+    notify.success('Id de la transacción copiado')
+  } catch {
+    notify.error('No se pudo copiar: el navegador no lo permitió.')
+  }
+}
+
+// —— Acciones de cada fila ——
+const router = useRouter()
+const confirm = useConfirm()
+const permisos = usePermisosBoleto()
+const menu = ref<{ toggle: (e: Event) => void } | null>(null)
+const enMenu = ref<CompraWeb | null>(null)
+const dialogo = ref<'editar' | 'posponer' | 'reenviar' | 'anular' | null>(null)
+
+const ACCIONES: Array<{ accion: AccionCompra; etiqueta: string; icono: string; peligro?: boolean }> = [
+  { accion: 'ver', etiqueta: 'Ver', icono: 'visibility-outline' },
+  { accion: 'boleto', etiqueta: 'Boleto', icono: 'picture-as-pdf-outline' },
+  { accion: 'editar', etiqueta: 'Editar', icono: 'edit-outline' },
+  { accion: 'reasignar', etiqueta: 'Reasignar', icono: 'swap-horiz' },
+  { accion: 'posponer', etiqueta: 'Posponer', icono: 'event-busy-outline' },
+  { accion: 'anular', etiqueta: 'Anular', icono: 'cancel-outline', peligro: true },
+  { accion: 'factura', etiqueta: 'Crear factura', icono: 'receipt-long-outline' },
+  { accion: 'reenviar', etiqueta: 'Reenviar boleto', icono: 'forward-to-inbox-outline' },
+]
+
+const itemsMenu = computed<MenuItem[]>(() => {
+  const c = enMenu.value
+  if (!c) return []
+  const ahora = new Date()
+  const motivos = disponibilidadCompra(c, { anular: permisos.anular, reasignar: permisos.reasignar }, ahora)
+  return ACCIONES.flatMap((a) => {
+    // Reasignar va por viaje (la taquilla reasigna una venta a la vez): con ida y regreso, uno por cada uno.
+    const viajes = a.accion === 'reasignar' && !motivos.reasignar ? viajesReasignables(c, ahora) : []
+    if (viajes.length > 1) {
+      return viajes.map((v) => ({ label: `Reasignar ${v.etiqueta.toLowerCase()}`, icono: a.icono, command: () => void reasignar(v.boletos) }))
+    }
+    return [{ label: a.etiqueta, icono: a.icono, peligro: a.peligro, disabled: !!motivos[a.accion], motivo: motivos[a.accion], command: () => void ejecutar(a.accion, c) }]
+  })
+})
+
+function abrirMenu(e: Event, c: CompraWeb) {
+  enMenu.value = c
+  void permisos.cargar()
+  menu.value?.toggle(e)
+}
+
+async function ejecutar(accion: AccionCompra, c: CompraWeb) {
+  switch (accion) {
+    case 'ver':
+      detalle.value = c
+      break
+    case 'boleto':
+      window.open(boletoPdf(c), '_blank', 'noopener')
+      break
+    case 'reasignar':
+      await reasignar(viajesReasignables(c, new Date())[0]?.boletos ?? [])
+      break
+    case 'factura':
+      confirmarFactura(c)
+      break
+    default:
+      dialogo.value = accion
+  }
+}
+
+/** A la taquilla en modo reasignación (salidas de la misma empresa); de ahí sale el ticket nuevo. */
+async function reasignar(boletos: number[]) {
+  if (boletos.length) await router.push({ name: 'venta', query: { reasignar: boletos.join(',') } })
+}
+
+function confirmarFactura(c: CompraWeb) {
+  const certificadas = c.ventas.filter((v) => v.factura && !v.factura.anulada).length
+  confirm.require({
+    header: 'Crear factura',
+    message: `${certificadas ? `Se anulará en el certificador la factura vigente${certificadas > 1 ? ' de cada viaje' : ''} y se` : 'Se'} registrará una nueva con los datos actuales del comprador (${c.comprador.nombre || '—'}, NIT ${c.comprador.nit}). El boleto en PDF se genera con la factura nueva; no se envía al cliente.`,
+    acceptProps: { label: 'Crear factura' },
+    rejectProps: { label: 'Cancelar', severity: 'secondary' },
+    accept: async () => {
+      try {
+        const r = await reemitirFactura(c.id)
+        const fallidas = r.resultado.filter((x) => x.error)
+        if (fallidas.length) fallidas.forEach((f) => notify.error(`Venta ${f.venta}: ${f.error}`))
+        const hechas = r.resultado.filter((x) => x.factura)
+        if (hechas.length) notify.success(hechas.map((x) => `Factura ${x.factura!.serie ?? ''} · DTE ${x.factura!.numero ?? ''}`).join(' · '))
+        refrescar(r.compra)
+      } catch (e) {
+        notify.error(e instanceof HttpError ? e.message : 'No se pudo crear la factura.')
+      }
+    },
+  })
+}
+
+function cerrarDialogo(visible: boolean) {
+  if (!visible) dialogo.value = null
+}
+
+/** Reemplaza la fila con la que devolvió la acción (sin volver a pedir la página). */
+function refrescar(c: CompraWeb | null) {
+  if (!c || !datos.value) return void recargar()
+  datos.value = { ...datos.value, items: datos.value.items.map((x) => (x.id === c.id ? c : x)) }
+  if (detalle.value?.id === c.id) detalle.value = c
+}
+
+/** Vuelve a pedir la página actual (tras anular: cambian estados y totales). */
+function recargar() {
+  void cargar(aQuery(filtro))
+}
+
 let espera: ReturnType<typeof setTimeout> | null = null
 watch(texto, (v) => {
   if (espera) clearTimeout(espera)
@@ -337,30 +509,74 @@ watch(
 )
 
 let pedido = 0
-watch(
-  () => aQuery(filtro),
-  async (query) => {
-    const n = ++pedido
-    cargando.value = true
-    error.value = ''
-    try {
-      const r = await fetchCompras(query)
-      if (n !== pedido) return
-      datos.value = r
-      // La selección sigue solo con las compras que siguen a la vista.
-      const ids = new Set(r.items.map((c) => c.id))
-      seleccion.value = seleccion.value.filter((c) => ids.has(c.id))
-    } catch (e) {
-      if (n === pedido) error.value = e instanceof HttpError && e.status === 403 ? 'No tiene permiso para ver las compras de la página (pagina.administrar).' : e instanceof Error ? e.message : String(e)
-    } finally {
-      if (n === pedido) cargando.value = false
-    }
-  },
-  { immediate: true },
-)
+async function cargar(query: string) {
+  const n = ++pedido
+  cargando.value = true
+  error.value = ''
+  try {
+    const r = await fetchCompras(query)
+    if (n !== pedido) return
+    datos.value = r
+    // La selección sigue solo con las compras que siguen a la vista.
+    const ids = new Set(r.items.map((c) => c.id))
+    seleccion.value = seleccion.value.filter((c) => ids.has(c.id))
+  } catch (e) {
+    if (n === pedido) error.value = e instanceof HttpError && e.status === 403 ? 'No tiene permiso para ver las compras de la página (pagina.administrar).' : e instanceof Error ? e.message : String(e)
+  } finally {
+    if (n === pedido) cargando.value = false
+  }
+}
+watch(() => aQuery(filtro), cargar, { immediate: true })
 
 onMounted(async () => {
   const o = await fetchOpciones().catch(() => null)
   if (o) Object.assign(opciones, o)
 })
 </script>
+
+<style scoped>
+/* Estado: su inicial en un círculo de color (el nombre, en el tooltip). */
+.estado {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  padding: 0 0.35rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: default;
+}
+.estado--completado {
+  background: var(--p-emerald-100);
+  color: var(--p-emerald-700);
+}
+.estado--aprobado {
+  background: var(--p-blue-100);
+  color: var(--p-blue-700);
+}
+.estado--autenticacion {
+  background: var(--p-slate-100);
+  color: var(--p-slate-600);
+}
+.estado--rechazado,
+.estado--reembolso_pendiente {
+  background: var(--p-red-100);
+  color: var(--p-red-700);
+}
+.estado--reembolsado {
+  background: var(--p-amber-100);
+  color: var(--p-amber-700);
+}
+.estado--pospuesta {
+  background: var(--p-violet-100);
+  color: var(--p-violet-700);
+}
+.estado--anulada {
+  background: var(--p-surface-200);
+  color: var(--p-surface-600);
+  box-shadow: inset 0 0 0 1px var(--p-surface-300);
+  text-decoration: line-through;
+}
+</style>

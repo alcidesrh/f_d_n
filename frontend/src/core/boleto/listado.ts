@@ -15,6 +15,7 @@ export const ESTADOS: Array<{ valor: EstadoBoleto; etiqueta: string; severidad: 
   { valor: 'cancelado', etiqueta: 'Cancelado', severidad: 'warn' },
   { valor: 'anulado', etiqueta: 'Anulado', severidad: 'danger' },
   { valor: 'reasignado', etiqueta: 'Reasignado', severidad: 'contrast' },
+  { valor: 'pospuesto', etiqueta: 'Pospuesto', severidad: 'warn' },
 ]
 
 export const etiquetaEstado = (e: string) => ESTADOS.find((x) => x.valor === e) ?? { valor: e, etiqueta: e, severidad: 'secondary' as const }
@@ -159,6 +160,8 @@ export function disponibilidad(b: BoletoFila | null, puede: PuedeBoleto, ahora: 
   const enProceso = b.ventaConfirmada ? null : 'La venta todavía se está procesando'
   const yaSalio = new Date(b.fecha).getTime() <= ahora.getTime() ? 'La salida ya pasó su hora' : null
   const soloEmitido = b.estado === 'emitido' ? null : `El boleto está ${estado}: solo se opera un boleto emitido`
+  // Un pospuesto no ocupa asiento: se anula o se reasigna (así se reanuda) aunque su salida ya haya pasado.
+  const operable = b.estado === 'pospuesto' ? null : (soloEmitido ?? yaSalio)
   const sinValor = b.estado === 'anulado' || b.estado === 'reasignado' ? `El boleto está ${estado}` : null
 
   return {
@@ -178,8 +181,8 @@ export function disponibilidad(b: BoletoFila | null, puede: PuedeBoleto, ahora: 
         (b.canal === 'agencia' ? 'Los boletos de agencia cancelados no se revierten' : null) ??
         (SALIDA_CANCELABLE.includes(b.salidaEstado) ? null : `La salida está ${b.salidaEstado}`),
     ),
-    anular: con(puede.anular, enProceso ?? soloEmitido ?? yaSalio),
-    reasignar: con(puede.reasignar, enProceso ?? soloEmitido ?? yaSalio),
+    anular: con(puede.anular, enProceso ?? operable),
+    reasignar: con(puede.reasignar, enProceso ?? operable),
     chequear: con(puede.chequear, enProceso ?? soloEmitido ?? (SALIDA_CHEQUEABLE.includes(b.salidaEstado) ? null : 'Se chequea con la salida abordando o iniciada')),
     correo: sin(enProceso ?? sinValor),
     factura: sin(enProceso ?? sinValor),

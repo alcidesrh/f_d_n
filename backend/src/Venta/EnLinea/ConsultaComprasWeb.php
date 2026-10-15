@@ -18,7 +18,44 @@ use Money\Money;
  */
 final class ConsultaComprasWeb
 {
+    private const COLUMNAS = [
+        "p.id", "p.token", "p.estado", "p.creado", "p.actualizado", "p.monto_monto", "p.monto_moneda",
+        "p.marca", "p.ultimos4", "p.autorizacion", "p.referencia_pasarela", "p.mensaje", "p.comprador",
+        "p.recargo_porciento", "p.viajes", "p.boleto_venta_id", "p.boleto_venta_regreso_id",
+        "e.id AS empresa_id", "COALESCE(e.alias, e.nombre) AS empresa_nombre",
+    ];
+
     public function __construct(private readonly Connection $db) {}
+
+    /** Una compra, como en el listado (para refrescar la fila tras una acción). */
+    public function una(int $id): ?array
+    {
+        $fila = $this->db->createQueryBuilder()
+            ->select(...self::COLUMNAS)
+            ->from("pago_web", "p")
+            ->leftJoin("p", "empresa", "e", "e.id = p.empresa_id")
+            ->where("p.id = :id")
+            ->setParameter("id", $id)
+            ->executeQuery()
+            ->fetchAssociative();
+
+        return $fila === false ? null : $this->items([$fila])[0];
+    }
+
+    /**
+     * @param list<array<string, mixed>> $filas
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function items(array $filas): array
+    {
+        $ventas = $this->ventas(array_values(array_filter(array_merge(
+            array_column($filas, "boleto_venta_id"),
+            array_column($filas, "boleto_venta_regreso_id"),
+        ))));
+
+        return array_map(fn(array $p) => $this->item($p, $ventas), $filas);
+    }
 
     /**
      * @return array{items: list<array<string, mixed>>, total: int, pagina: int, porPagina: int, resumen: array<string, mixed>}
@@ -33,12 +70,7 @@ final class ConsultaComprasWeb
             default => "p.creado",
         };
         $filas = $this->filtrado($f)
-            ->select(
-                "p.id", "p.token", "p.estado", "p.creado", "p.actualizado", "p.monto_monto", "p.monto_moneda",
-                "p.marca", "p.ultimos4", "p.autorizacion", "p.referencia_pasarela", "p.mensaje", "p.comprador",
-                "p.recargo_porciento", "p.viajes", "p.boleto_venta_id", "p.boleto_venta_regreso_id",
-                "e.id AS empresa_id", "COALESCE(e.alias, e.nombre) AS empresa_nombre",
-            )
+            ->select(...self::COLUMNAS)
             ->orderBy($orden, $f->descendente ? "DESC" : "ASC")
             ->addOrderBy("p.id", $f->descendente ? "DESC" : "ASC")
             ->setFirstResult(($f->pagina - 1) * $f->porPagina)
@@ -46,13 +78,8 @@ final class ConsultaComprasWeb
             ->executeQuery()
             ->fetchAllAssociative();
 
-        $ventas = $this->ventas(array_values(array_filter(array_merge(
-            array_column($filas, "boleto_venta_id"),
-            array_column($filas, "boleto_venta_regreso_id"),
-        ))));
-
         return [
-            "items" => array_map(fn(array $p) => $this->item($p, $ventas), $filas),
+            "items" => $this->items($filas),
             "total" => $total,
             "pagina" => $f->pagina,
             "porPagina" => $f->porPagina,
@@ -83,6 +110,7 @@ final class ConsultaComprasWeb
             ->select("COUNT(b.id)")
             ->from("boleto_asiento", "b")
             ->where("b.boleto_venta_id IN (" . $this->idsVentas($f) . ")")
+            ->andWhere("b.estado <> 'reasignado'")
             ->setParameters($this->parametros($f), $this->tipos($f))
             ->executeQuery()
             ->fetchOne();
@@ -232,7 +260,8 @@ final class ConsultaComprasWeb
     }
 
     /**
-     * Resumen de cada venta: viaje, asientos y factura.
+     * Resumen de cada venta: viaje, asientos y factura. Sin los boletos
+     * reasignados: su reemplazo, en la misma venta, es el viaje vigente.
      *
      * @param list<int|string> $ids
      *
@@ -244,8 +273,9 @@ final class ConsultaComprasWeb
             return [];
         }
         $filas = $this->db->executeQuery(
-            "SELECT v.id, v.estado_facturacion, v.total_monto, v.total_moneda, v.error_facturacion,
-                    f.serie, f.dte, f.uuid, f.url_pdf,
+            "SELECT v.id, v.estado_facturacion, v.total_monto, v.total_moneda, v.error_facturacion, v.correo_enviado_en,
+                    f.serie, f.dte, f.uuid, f.url_pdf, f.anulada_en,
+                    JSON_AGG(JSON_BUILD_OBJECT('id', b.id, 'estado', b.estado, 'asiento', a.numero, 'salidaId', s.id, 'salida', s.fecha) ORDER BY b.id) AS boletos,
                     MIN(s.fecha) AS salida, MIN(s.id) AS salida_id,
                     MIN(o.nombre) AS origen, MIN(d.nombre) AS destino,
                     MIN(COALESCE(em.alias, em.nombre)) AS empresa,
@@ -260,7 +290,7 @@ final class ConsultaComprasWeb
              JOIN enclave o ON o.id = t.origen_id
              JOIN enclave d ON d.id = t.destino_id
              LEFT JOIN empresa em ON em.id = s.empresa_id
-             WHERE v.id IN (:ids)
+             WHERE v.id IN (:ids) AND b.estado <> 'reasignado'
              GROUP BY v.id, f.id",
             ["ids" => array_map("intval", $ids)],
             ["ids" => ArrayParameterType::INTEGER],
@@ -281,7 +311,15 @@ final class ConsultaComprasWeb
                 "total" => DatosBoleto::importe(new Money((int) $v["total_monto"], new Currency($v["total_moneda"]))),
                 "facturacion" => $v["estado_facturacion"],
                 "errorFacturacion" => $v["error_facturacion"],
-                "factura" => $v["uuid"] ? ["serie" => $v["serie"], "numero" => $v["dte"], "uuid" => $v["uuid"], "urlPdf" => $v["url_pdf"]] : null,
+                "factura" => $v["uuid"] ? ["serie" => $v["serie"], "numero" => $v["dte"], "uuid" => $v["uuid"], "urlPdf" => $v["url_pdf"], "anulada" => $v["anulada_en"] !== null] : null,
+                "correoEnviado" => $v["correo_enviado_en"] !== null ? (new \DateTimeImmutable($v["correo_enviado_en"]))->format(DATE_ATOM) : null,
+                "boletos" => array_map(static fn(array $b) => [
+                    "id" => (int) $b["id"],
+                    "estado" => $b["estado"],
+                    "asiento" => (int) $b["asiento"],
+                    "salidaId" => (int) $b["salidaId"],
+                    "salida" => (new \DateTimeImmutable($b["salida"]))->format(DATE_ATOM),
+                ], json_decode((string) $v["boletos"], true) ?: []),
             ];
         }
 
@@ -314,6 +352,8 @@ final class ConsultaComprasWeb
             "empresa" => $p["empresa_id"] !== null ? ["id" => (int) $p["empresa_id"], "nombre" => $p["empresa_nombre"]] : null,
             "comprador" => [
                 "nombre" => trim(($comprador["nombre"] ?? "") . " " . ($comprador["apellido"] ?? "")),
+                "nombres" => $comprador["nombre"] ?? "",
+                "apellido" => $comprador["apellido"] ?? null,
                 "email" => $comprador["email"] ?? null,
                 "telefono" => $comprador["telefono"] ?? null,
                 "nit" => $comprador["nit"] ?? "CF",

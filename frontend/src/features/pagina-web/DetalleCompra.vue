@@ -2,7 +2,7 @@
 <template>
   <div class="flex flex-col gap-4 text-sm">
     <div class="flex flex-wrap items-center gap-2">
-      <Tag :value="etiquetaEstado(compra.estado).etiqueta" :severity="etiquetaEstado(compra.estado).severidad" />
+      <Tag :value="ESTADOS_COMPRA[estadoCompra(compra)].etiqueta" :severity="estadoCompra(compra) === compra.estado ? etiquetaEstado(compra.estado).severidad : 'secondary'" />
       <span class="text-lg font-bold tabular-nums">{{ compra.monto.texto }}</span>
       <span v-if="Number(compra.recargoPorciento) > 0" class="text-muted-color">(incluye +{{ Number(compra.recargoPorciento) }} % web)</span>
     </div>
@@ -19,6 +19,7 @@
       <div><dt class="text-muted-color">Comercio que cobró</dt><dd class="m-0">{{ compra.empresa?.nombre ?? '—' }}</dd></div>
       <div><dt class="text-muted-color">Iniciada</dt><dd class="m-0">{{ fechaHora(compra.creado) }}</dd></div>
       <div><dt class="text-muted-color">Último cambio</dt><dd class="m-0">{{ fechaHora(compra.actualizado) }}</dd></div>
+      <div><dt class="text-muted-color">Boleto por correo</dt><dd class="m-0">{{ compra.ventas[0]?.correoEnviado ? `Enviado el ${fechaHora(compra.ventas[0].correoEnviado)}` : 'Sin enviar' }}</dd></div>
     </dl>
 
     <section v-for="(v, i) in compra.ventas" :key="v.id" class="rounded-lg border border-surface-200 p-3">
@@ -26,14 +27,21 @@
       <dl class="m-0 grid grid-cols-1 gap-x-6 gap-y-1.5 sm:grid-cols-2">
         <div><dt class="text-muted-color">Viaje</dt><dd class="m-0">{{ v.origen }} → {{ v.destino }}</dd></div>
         <div><dt class="text-muted-color">Salida</dt><dd class="m-0">{{ fechaHora(v.salida) }} · {{ v.empresa }}</dd></div>
-        <div><dt class="text-muted-color">Asientos</dt><dd class="m-0">{{ v.asientos }} ({{ v.cantidad }})</dd></div>
+        <div class="sm:col-span-2">
+          <dt class="text-muted-color">Boletos</dt>
+          <dd class="m-0 flex flex-wrap gap-1.5">
+            <span v-for="b in v.boletos" :key="b.id" class="inline-flex items-center gap-1">
+              Asiento {{ b.asiento }} <Tag :value="etiquetaBoleto(b.estado).etiqueta" :severity="etiquetaBoleto(b.estado).severidad" class="!text-xs" />
+            </span>
+          </dd>
+        </div>
         <div><dt class="text-muted-color">Total</dt><dd class="m-0">{{ v.total.texto }}</dd></div>
         <div class="sm:col-span-2">
           <dt class="text-muted-color">Factura</dt>
           <dd class="m-0">
-            <template v-if="v.factura">Serie {{ v.factura.serie }} · DTE {{ v.factura.numero }} <a v-if="v.factura.urlPdf" :href="v.factura.urlPdf" target="_blank" rel="noopener">ver</a></template>
+            <template v-if="v.factura">Serie {{ v.factura.serie }} · DTE {{ v.factura.numero }} <Tag v-if="v.factura.anulada" value="Anulada" severity="danger" class="!text-xs" /> <a v-else-if="v.factura.urlPdf" :href="v.factura.urlPdf" target="_blank" rel="noopener">ver</a></template>
             <template v-else>
-              <Tag :value="v.facturacion === 'pendiente' ? 'Pendiente' : 'No aplica'" :severity="v.facturacion === 'pendiente' ? 'warn' : 'secondary'" />
+              <Tag :value="v.facturacion === 'pendiente' ? 'Pendiente' : v.facturacion === 'anulada' ? 'Anulada' : 'No aplica'" :severity="v.facturacion === 'pendiente' ? 'warn' : 'secondary'" />
               <span v-if="v.errorFacturacion" class="ml-1 text-xs text-muted-color">{{ v.errorFacturacion }}</span>
             </template>
           </dd>
@@ -48,6 +56,8 @@
 </template>
 
 <script setup lang="ts">
+import { etiquetaEstado as etiquetaBoleto } from '@/core/boleto/listado'
+import { ESTADOS_COMPRA, estadoCompra } from '@/core/pagina-web/acciones'
 import { etiquetaEstado } from '@/core/pagina-web/filtro'
 import type { CompraWeb } from '@/core/pagina-web/types'
 

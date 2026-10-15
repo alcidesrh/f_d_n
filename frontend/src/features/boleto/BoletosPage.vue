@@ -318,7 +318,7 @@ function alternarEstado(e: EstadoBoleto) {
 }
 
 /** La columna Estado muestra solo esta inicial (como el estado de las salidas en la venta). */
-const INICIAL_ESTADO: Record<EstadoBoleto, string> = { emitido: "E", chequeado: "Ch", transito: "T", finalizado: "F", cancelado: "Ca", anulado: "A", reasignado: "R" };
+const INICIAL_ESTADO: Record<EstadoBoleto, string> = { emitido: "E", chequeado: "Ch", transito: "T", finalizado: "F", cancelado: "Ca", anulado: "A", reasignado: "R", pospuesto: "P" };
 const inicialEstado = (e: string) => INICIAL_ESTADO[e as EstadoBoleto] ?? e.charAt(0).toUpperCase();
 /** Igual para el tipo de documento (dos letras donde la inicial se repite). */
 const INICIAL_DOCUMENTO: Record<TipoDocumento, string> = { factura: "F", pendiente: "FP", sin_factura: "SF", agencia: "A", cortesia: "C", voucher: "V" };
@@ -376,7 +376,7 @@ watch(consulta, cargar);
 
 // —— Selección y acciones ——
 const seleccion = computed(() => new Set(elegido.value ? [String(elegido.value.id)] : []));
-const claseFila = (r: unknown) => ({ "fila-liberada": ["anulado", "reasignado", "cancelado"].includes((r as BoletoFila).estado) });
+const claseFila = (r: unknown) => ({ "fila-liberada": ["anulado", "reasignado", "cancelado", "pospuesto"].includes((r as BoletoFila).estado) });
 const estadoAcciones = computed(() => disponibilidad(elegido.value, opciones.value?.puede ?? { cancelar: false, anular: false, reasignar: false, chequear: false }, new Date()));
 
 function elegir(b: BoletoFila) {
@@ -563,6 +563,10 @@ onMounted(async () => {
   background: var(--p-neutral-200);
   color: var(--p-neutral-700);
   box-shadow: inset 0 0 0 1px var(--p-neutral-300);
+}
+.estado--pospuesto {
+  background: var(--p-violet-100);
+  color: var(--p-violet-700);
 }
 .estado--anulado {
   background: var(--p-surface-200);

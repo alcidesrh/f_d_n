@@ -115,6 +115,7 @@ final class RegistradorBitacora implements ResetInterface
                 EstadoBoletoAsiento::TRANSITO => OperacionBoleto::TRANSITO,
                 EstadoBoletoAsiento::CANCELADO => OperacionBoleto::CANCELADO,
                 EstadoBoletoAsiento::FINALIZADO => OperacionBoleto::FINALIZADO,
+                EstadoBoletoAsiento::POSPUESTO => OperacionBoleto::POSPUESTO,
                 // Solo se vuelve a emitido revirtiendo un cancelado.
                 EstadoBoletoAsiento::EMITIDO => OperacionBoleto::REVERTIDO,
                 default => null,

@@ -196,7 +196,7 @@ final class CompraWeb
     }
 
     /** Un NIT que la SAT no conoce haría fallar la factura; si la consulta falla, se sigue. */
-    private function exigirNitExistente(string $nit): void
+    public function exigirNitExistente(string $nit): void
     {
         if ($nit === "CF") {
             return;
@@ -392,7 +392,8 @@ final class CompraWeb
         return $ventas;
     }
 
-    private function cliente(Comprador $c): Cliente
+    /** El cliente con ese NIT (el más reciente) con los datos del comprador, o uno nuevo (siempre con CF). */
+    public function cliente(Comprador $c): Cliente
     {
         $cliente = $c->nit !== "CF"
             ? $this->em->getRepository(Cliente::class)->findOneBy(["nit" => $c->nit], ["id" => "DESC"])

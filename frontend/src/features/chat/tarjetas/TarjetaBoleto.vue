@@ -46,6 +46,7 @@ const ESTADOS: Record<string, { etiqueta: string; severidad: string }> = {
   anulado: { etiqueta: 'Anulado', severidad: 'danger' },
   reasignado: { etiqueta: 'Reasignado', severidad: 'contrast' },
   cancelado: { etiqueta: 'No se presentó', severidad: 'danger' },
+  pospuesto: { etiqueta: 'Pospuesto', severidad: 'warn' },
 }
 const estado = computed(() => ESTADOS[d.value.estado] ?? { etiqueta: d.value.estado, severidad: 'secondary' })
 const fecha = (iso: string) => new Intl.DateTimeFormat('es-GT', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date(iso))

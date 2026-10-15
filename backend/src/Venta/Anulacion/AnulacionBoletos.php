@@ -25,7 +25,7 @@ use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
 
 /**
- * Anulación de boletos antes de la hora de salida.
+ * Anulación de boletos antes de la hora de salida (o pospuestos).
  *
  * Por cada venta afectada: primero se anula su factura en el certificador
  * (llamada externa, fuera de transacción; si falla no cambia nada), y luego,
@@ -125,8 +125,7 @@ final class AnulacionBoletos
             if ($venta->getEstado() !== EstadoBoletoVenta::CONFIRMADA) {
                 throw new VentaRechazada("La venta todavía se está procesando.", "venta_en_proceso", 409);
             }
-            ReglasBoletos::exigirEmitido($b);
-            ReglasBoletos::exigirAntesDeSalir($b->getSalida(), $ahora, "anular el boleto");
+            ReglasBoletos::exigirOperable($b, $ahora, "anular el boleto");
             $grupos[(int) $venta->getId()][] = $b;
         }
 
@@ -189,8 +188,7 @@ final class AnulacionBoletos
         $devuelto = null;
         foreach ($boletos as $b) {
             $this->em->refresh($b);
-            ReglasBoletos::exigirEmitido($b);
-            ReglasBoletos::exigirAntesDeSalir($b->getSalida(), $ahora, "anular el boleto");
+            ReglasBoletos::exigirOperable($b, $ahora, "anular el boleto");
             $this->bitacora->anotar($b, ["motivo" => $motivo]);
             $b->setEstado(EstadoBoletoAsiento::ANULADO);
             $precio = $b->getPrecio();

@@ -6,6 +6,7 @@ namespace App\Venta\Facturacion;
 
 use App\Entity\BoletoVenta;
 use App\Entity\Empresa;
+use App\Entity\Enum\EstadoBoletoAsiento;
 use App\Entity\Establecimiento;
 use App\Entity\Factura;
 use Doctrine\ORM\EntityManagerInterface;
@@ -26,11 +27,13 @@ final class Facturador
     ) {}
 
     /**
+     * @param bool $reemision factura nueva de una venta cuya factura ya se anuló (con los datos actuales del cliente)
+     *
      * @throws CertificacionFallida
      */
-    public function certificar(BoletoVenta $venta): Factura
+    public function certificar(BoletoVenta $venta, bool $reemision = false): Factura
     {
-        $solicitud = $this->solicitud($venta);
+        $solicitud = $this->solicitud($venta, $reemision);
         $dte = $this->certificador->certificar($solicitud);
 
         $factura = (new Factura())
@@ -83,9 +86,16 @@ final class Facturador
         return $factura;
     }
 
-    public function solicitud(BoletoVenta $venta): SolicitudDte
+    /**
+     * Los boletos anulados o reasignados no se facturan (el reasignado tiene
+     * su reemplazo en la misma venta, al mismo precio).
+     */
+    public function solicitud(BoletoVenta $venta, bool $reemision = false): SolicitudDte
     {
-        $boletos = $venta->getAsientos()->toArray();
+        $boletos = array_values(array_filter(
+            $venta->getAsientos()->toArray(),
+            static fn($b) => !in_array($b->getEstado(), [EstadoBoletoAsiento::ANULADO, EstadoBoletoAsiento::REASIGNADO], true),
+        ));
         if ($boletos === []) {
             throw new \LogicException("Una venta sin boletos no se factura.");
         }
@@ -121,8 +131,8 @@ final class Facturador
         $cliente = $venta->getCliente();
         $nit = self::normalizarNit($cliente?->getNit());
 
-        // En contingencia el documento se emitió al vender (con su número de acceso).
-        $contingencia = $venta->getNumeroAcceso() !== null && $venta->getCreada() !== null;
+        // En contingencia el documento se emitió al vender (con su número de acceso); una reemisión es un documento nuevo.
+        $contingencia = !$reemision && $venta->getNumeroAcceso() !== null && $venta->getCreada() !== null;
 
         return new SolicitudDte(
             referenciaInterna: sprintf("FDN-VENTA-%d", $venta->getId()),
@@ -144,7 +154,7 @@ final class Facturador
             establecimientoCodigo: $this->establecimiento($empresa, $venta)->getCodigo(),
             afiliacionIva: $empresa->getAfiliacionIva(),
             frases: $empresa->frases(),
-            numeroAcceso: $venta->getNumeroAcceso(),
+            numeroAcceso: $reemision ? null : $venta->getNumeroAcceso(),
             ruta: sprintf("%s - %s", $trayecto->getOrigen()->getNombre(), $trayecto->getDestino()->getNombre()),
         );
     }

@@ -173,7 +173,7 @@ final class AbordajeTest extends TestCase
 
     public function testElCanceladoLiberaElAsiento(): void
     {
-        $this->assertSame(["anulado", "reasignado", "cancelado"], EstadoBoletoAsiento::liberanAsiento());
+        $this->assertSame(["anulado", "reasignado", "cancelado", "pospuesto"], EstadoBoletoAsiento::liberanAsiento());
     }
 
     public function testSeleccion(): void

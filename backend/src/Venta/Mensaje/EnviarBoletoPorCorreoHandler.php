@@ -8,6 +8,7 @@ use App\Entity\BoletoVenta;
 use App\Venta\Boleto\BoletoPdf;
 use App\Venta\Boleto\Comprobantes;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -23,6 +24,7 @@ final class EnviarBoletoPorCorreoHandler
         private readonly Comprobantes $comprobantes,
         private readonly MailerInterface $mailer,
         private readonly LoggerInterface $logger,
+        private readonly ClockInterface $reloj,
         #[Autowire(env: "default:venta_correo_remitente_defecto:VENTA_CORREO_REMITENTE")]
         private readonly string $remitente,
     ) {}
@@ -54,5 +56,11 @@ final class EnviarBoletoPorCorreoHandler
                 ->context(["b" => $datos, "otros" => array_map(fn(BoletoVenta $v) => $this->comprobantes->de($v), array_slice($ventas, 1))])
                 ->attach($this->pdf->generar(...$ventas), BoletoPdf::nombreArchivo($venta), "application/pdf"),
         );
+
+        $ahora = $this->reloj->now();
+        foreach ($ventas as $v) {
+            $v->marcarCorreoEnviado($ahora);
+        }
+        $this->em->flush();
     }
 }

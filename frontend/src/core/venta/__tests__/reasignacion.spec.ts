@@ -36,11 +36,11 @@ describe('salidas a las que se puede reasignar', () => {
     expect(salidasReasignables(salidas, [boleto(1)], ahora).map((s) => s.id)).toEqual([1, 5])
   })
 
-  it('lo vendido en la página puede ir a otra empresa', () => {
-    expect(salidasReasignables(salidas, [boleto(1, {}, { canal: 'web' })], ahora).map((s) => s.id)).toEqual([1, 2, 5])
+  it('lo vendido en la página tampoco va a otra empresa', () => {
+    expect(salidasReasignables(salidas, [boleto(1, {}, { canal: 'web' })], ahora).map((s) => s.id)).toEqual([1, 5])
   })
 
-  it('boletos de empresas distintas (venta por la web) solo van a otra salida si todos son web', () => {
+  it('boletos de empresas distintas no van a ninguna salida', () => {
     const mezcla = [boleto(1), boleto(2, { salida: { ...boleto(2).salida, empresa: { id: 2, nombre: 'E2' } } })]
     expect(salidasReasignables(salidas, mezcla, ahora)).toEqual([])
   })

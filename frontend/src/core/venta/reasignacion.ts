@@ -6,17 +6,17 @@ import type { BoletoOperable, Importe, SalidaDetalle, SalidaResumen } from './ty
 
 /**
  * Salidas a las que se pueden pasar los boletos: todavía no salen, siguen
- * programadas o abordando y, salvo lo vendido en la página web, son de la
- * misma empresa que los boletos.
+ * programadas o abordando y son de la misma empresa que los boletos
+ * (también lo vendido en la página web).
  */
 export function salidasReasignables(salidas: SalidaResumen[], boletos: BoletoOperable[], ahora: Date): SalidaResumen[] {
-  const web = boletos.every((b) => b.venta.canal === 'web')
   const empresas = new Set(boletos.map((b) => b.salida.empresa?.id ?? null))
   return salidas.filter(
     (s) =>
       (s.estado === 'programada' || s.estado === 'abordando') &&
       new Date(s.salida).getTime() > ahora.getTime() &&
-      (web || (empresas.size === 1 && empresas.has(s.empresa?.id ?? null))),
+      empresas.size === 1 &&
+      empresas.has(s.empresa?.id ?? null),
   )
 }
 

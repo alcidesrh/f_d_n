@@ -205,6 +205,17 @@ class PagoWeb
         return $this->boletoVenta;
     }
 
+    /**
+     * Datos del comprador corregidos desde el dashboard (la factura cambia solo al reemitirla).
+     *
+     * @param array<string, mixed> $comprador
+     */
+    public function cambiarComprador(array $comprador): void
+    {
+        $this->comprador = $comprador;
+        $this->actualizado = new \DateTimeImmutable();
+    }
+
     public function completar(BoletoVenta $venta, ?BoletoVenta $regreso = null): void
     {
         $this->boletoVenta = $venta;
