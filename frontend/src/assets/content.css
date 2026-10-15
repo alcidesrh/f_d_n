@@ -21,6 +21,9 @@
   height: calc(100vh - var(--header-h));
   height: calc(100dvh - var(--header-h));
   position: relative;
+  /* Mientras un sidebar se mueve, `.main` va desplazado con `transform`
+     (`sidebarMotion.ts`): lo que sobresale se recorta sin crear scroll. */
+  overflow-x: clip;
 }
 
 /* ---- MAIN CONTENT ----

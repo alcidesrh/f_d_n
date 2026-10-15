@@ -35,6 +35,11 @@ defineProps<{ titulo: string; subtitulo?: string; ayuda?: string; icono?: string
   flex-direction: column;
   gap: 0.75rem;
   min-width: 0;
+  /* Fuera de pantalla no se dibuja ni se recalcula: abrir o plegar un sidebar
+     cambia el ancho del tablero en cada fotograma y solo paga lo visible.
+     El alto estimado solo vale hasta el primer render (luego recuerda el real). */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 20rem;
 }
 .ayuda {
   display: inline-flex;

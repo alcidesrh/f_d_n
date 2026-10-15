@@ -86,8 +86,10 @@ const bucles: Record<Clima, gsap.core.Animation[]> = { lluvia: [], amanecer: [] 
 /** Crea los bucles del clima: gotas cayendo con ráfagas de viento e intensidad variable; rayos que giran y titilan. */
 function animarClima() {
   climaCtx = gsap.context(() => {
-    gsap.set(cortina.value, { rotation: 12, opacity: 0.3 });
-    const caidas = gotas.value!.map((gota) => gsap.fromTo(gota, { yPercent: -100, y: 0 }, { y: () => cortina.value!.offsetHeight, duration: gsap.utils.random(0.1, 0.6), ease: "none", repeat: -1, repeatRefresh: true }).progress(Math.random()));
+    // El elemento, no la ref: la ref ya es `null` si un tween se inicializa al desmontar.
+    const telon = cortina.value!;
+    gsap.set(telon, { rotation: 12, opacity: 0.3 });
+    const caidas = gotas.value!.map((gota) => gsap.fromTo(gota, { yPercent: -100, y: 0 }, { y: () => telon.offsetHeight, duration: gsap.utils.random(0.1, 0.6), ease: "none", repeat: -1, repeatRefresh: true }).progress(Math.random()));
 
     const intensidad = { v: 1 };
     bucles.lluvia = [
@@ -192,7 +194,8 @@ onMounted(() => {
 watch(clima, (c) => mostrarClima(c));
 
 onBeforeUnmount(() => {
-  climaCtx?.revert();
+  // Matar sin revertir: revertir inicializaba tweens que aún no habían corrido y el DOM se va igual.
+  climaCtx?.kill();
   clearInterval(timer);
   timeline?.kill();
   balls?.stop();

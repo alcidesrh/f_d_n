@@ -1,7 +1,9 @@
 /* ---- HEADER ----
    Mobile-first: [menú][reloj] … [acciones][panel derecho]. Desde `lg` los
    botones de menú se deslizan fuera cuando su sidebar está visible (el
-   sidebar tiene su propio botón cerrar) y la marca se alinea con el sidebar. */
+   sidebar tiene su propio botón cerrar) y la marca se alinea con el sidebar.
+   El desplazamiento sale de `--sb-<lado>-h` (0 = sidebar visible, 1 = cerrado),
+   que anima `sidebarMotion.ts` en el mismo tween que el sidebar. */
 .app-header {
   position: fixed;
   top: 0;
@@ -39,7 +41,6 @@
 /* Reloj sobre la marca de agua "FDN": ambos en la misma celda de grid, así
    la marca mide lo que su contenido más ancho. */
 .brand {
-  transition: transform var(--transition);
   display: grid;
   place-items: center;
   position: relative;
@@ -48,7 +49,7 @@
   }
   @variant lg {
     width: 230px;
-    transform: translate(-40px, 0);
+    transform: translateX(calc(-40px * (1 - var(--sb-left-h, 0))));
   }
 }
 .brand-mark {
@@ -93,22 +94,15 @@
 }
 
 .btn-siderbar-header {
-  transition: transform var(--transition);
   width: 50px;
   flex: 0 0 auto;
   @variant lg {
-    transform: translate(calc(-50px - 0.5rem), 0);
+    transform: translateX(calc((-50px - 0.5rem) * (1 - var(--sb-left-h, 0))));
   }
 }
 @variant lg {
-  .left-header.close .btn-siderbar-header,
-  .left-header.close .brand,
-  .right-header.close .btn-siderbar-header,
-  .right-header.close .header-actions {
-    transform: translate(0px, 0);
-  }
   .right-header .btn-siderbar-header {
-    transform: translate(50px, 0);
+    transform: translateX(calc(50px * (1 - var(--sb-right-h, 0))));
   }
 }
 .icon-btn {
@@ -172,7 +166,6 @@
    cabecera (`topbar_right`): si no caben, la franja scrollea en horizontal
    y los botones de los sidebars quedan siempre visibles. */
 .header-actions {
-  transition: transform var(--transition);
   display: flex;
   align-items: center;
   gap: 4px;
@@ -185,7 +178,8 @@
   }
   @variant lg {
     overflow: visible;
-    transform: translate(50px, 0);
+    /* Deja sitio al botón del sidebar derecho cuando este se cierra. */
+    transform: translateX(calc(50px * (1 - var(--sb-right-h, 0))));
     padding-right: 0.5rem;
   }
 }

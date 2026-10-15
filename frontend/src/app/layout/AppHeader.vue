@@ -1,6 +1,6 @@
 <template>
   <header class="app-header">
-    <div class="left-header" :class="[sidebarStore.mode]">
+    <div class="left-header">
       <div class="flex btn-siderbar-header">
         <button type="button" class="icon-btn" aria-label="Menú de navegación" :aria-expanded="ui.isMobile ? sidebarStore.drawer : sidebarStore.mode !== 'close'" @click="sidebarStore.toggle()">
           <!-- <icon name="menu" size="35px" :weight="300" color="text-surface-500" /> -->
@@ -36,7 +36,7 @@
       </nav>
     </div>
 
-    <div class="right-header" :class="[rightSidebar.mode]">
+    <div class="right-header">
       <div class="header-actions">
         <slot name="menu-content"></slot>
 
