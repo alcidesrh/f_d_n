@@ -4,9 +4,9 @@
  * asientos, cliente y cotización. La lógica pura está en `core/venta/modelo`.
  */
 import { defineStore } from "pinia";
-import { computed, ref, shallowRef } from "vue";
+import { computed, onScopeDispose, ref, shallowRef } from "vue";
 import * as api from "@/core/venta/api";
-import { alternar, bajadaPorDefecto, clasesDelTrayecto, depurarSeleccion, diaISO, estadoEnMapa, nuevoToken, paradasDeBajada, paradasDeSubida, soloVendibles, subidaPorDefecto, trayectoEntre } from "@/core/venta/modelo";
+import { alternar, bajadaPorDefecto, clasesDelTrayecto, depurarSeleccion, diaISO, estadoEnMapa, nuevoToken, subidaPorDefecto, trayectoEntre } from "@/core/venta/modelo";
 import { suscribir } from "@/core/realtime";
 import { notify } from "@/core/notify";
 import type { AsientoCroquis } from "@/core/croquis/types";
@@ -48,8 +48,11 @@ export const useVentaStore = defineStore("venta", () => {
   const porRango = ref(false);
   const desde = ref(inicioDeDia(new Date()));
   const hasta = ref(finDeDia(new Date()));
-  /** Reasignando: los boletos que se pasan a otro asiento o salida (todos de una venta); null = venta normal. */
-  const reasignacion = shallowRef<{ boletos: BoletoOperable[]; ventaId: number } | null>(null);
+  /**
+   * Reasignando: los boletos que se pasan a otro asiento o salida (todos de una
+   * venta) y los filtros "Sube en"/"Baja en" que había, que se reponen al terminar; null = venta normal.
+   */
+  const reasignacion = shallowRef<{ boletos: BoletoOperable[]; ventaId: number; filtros: { estacionId: number | null; destinoId: number | null } } | null>(null);
   /** El comprobante que se muestra es de una reasignación (no de una venta). */
   const comprobanteReasignado = ref(false);
   const salidasVisibles = computed(() => {
@@ -60,6 +63,7 @@ export const useVentaStore = defineStore("venta", () => {
   const salidaId = ref<number | null>(null);
   const detalle = shallowRef<SalidaDetalle | null>(null);
   const cargandoDetalle = ref(false);
+  /** Tramo del viaje: el de la fila elegida, que resuelve el servidor con los filtros "Sube en" y "Baja en". */
   const sube = ref<number | null>(null);
   const baja = ref<number | null>(null);
   const ocupados = ref<AsientoOcupado[]>([]);
@@ -80,14 +84,14 @@ export const useVentaStore = defineStore("venta", () => {
   const comprobante = shallowRef<Comprobante | null>(null);
 
   let desuscribir: (() => void) | null = null;
+  // Al descartar la store (cambio de usuario) deja de oír la ocupación.
+  onScopeDispose(() => desuscribir?.());
 
   const trayectoId = computed(() => (detalle.value ? trayectoEntre(detalle.value, sube.value, baja.value) : null));
   /** Se viaja un tramo intermedio de la ruta (no de la primera a la última parada). */
   const esTramoIntermedio = computed(() => !!detalle.value && !detalle.value.trayectos.find((t) => t.id === trayectoId.value)?.completo);
   /** Cobrar el trayecto completo solo si se viaja un tramo intermedio y el completo tiene tarifa. */
   const puedeCobrarCompleto = computed(() => esTramoIntermedio.value && !!detalle.value?.trayectos.some((t) => t.completo));
-  const subidas = computed(() => (detalle.value ? paradasDeSubida(detalle.value) : []));
-  const bajadas = computed(() => (detalle.value ? paradasDeBajada(detalle.value, sube.value) : []));
   /** Clases de asiento con tarifa en el tramo elegido: las demás se ven bloqueadas. */
   const clasesVendibles = computed(() => (detalle.value ? clasesDelTrayecto(detalle.value, trayectoId.value) : []));
   /** Motivo por el que el salida ya no se vende (p. ej. de un día pasado): el croquis queda de solo lectura. */
@@ -157,14 +161,12 @@ export const useVentaStore = defineStore("venta", () => {
       const d = await api.fetchSalida(id);
       if (salidaId.value !== id) return;
       detalle.value = d;
-      sube.value = subidaPorDefecto(d, estacionId.value);
-      baja.value = bajadaPorDefecto(d, sube.value);
-      // Reasignando: el mismo tramo que tenía el boleto, si la salida lo ofrece.
-      const tramo = reasignacion.value ? tramoDelBoleto(d, reasignacion.value.boletos[0]!) : null;
-      if (tramo) {
-        sube.value = tramo.sube;
-        baja.value = tramo.baja;
-      }
+      // Reasignando: el mismo tramo que tenía el boleto, si la salida lo ofrece;
+      // si no, el viaje de la fila (o, sin él, la estación hasta el final).
+      const viaje = salidas.value.find((r) => r.id === id)?.viaje;
+      const tramo = (reasignacion.value ? tramoDelBoleto(d, reasignacion.value.boletos[0]!) : null) ?? (viaje && trayectoEntre(d, viaje.sube.id, viaje.baja.id) != null ? { sube: viaje.sube.id, baja: viaje.baja.id } : null);
+      sube.value = tramo?.sube ?? subidaPorDefecto(d, estacionId.value);
+      baja.value = tramo?.baja ?? bajadaPorDefecto(d, sube.value);
       await cargarOcupacion();
       desuscribir = suscribir(d.topico, () => void refrescarOcupacion());
     } catch (e) {
@@ -208,26 +210,6 @@ export const useVentaStore = defineStore("venta", () => {
       seleccion.value = depurada;
       void recotizar();
     }
-  }
-
-  async function cambiarSubida(id: number | null) {
-    sube.value = id;
-    if (detalle.value && !bajadas.value.some((p) => p.id === baja.value)) {
-      baja.value = bajadaPorDefecto(detalle.value, id);
-    }
-    await cambioDeTramo();
-  }
-
-  async function cambiarBajada(id: number | null) {
-    baja.value = id;
-    await cambioDeTramo();
-  }
-
-  async function cambioDeTramo() {
-    if (!puedeCobrarCompleto.value) cobrarTrayectoCompleto.value = false;
-    await cargarOcupacion();
-    seleccion.value = soloVendibles(depurarSeleccion(seleccion.value, ocupados.value), asientosCroquis.value, clasesVendibles.value);
-    await recotizar();
   }
 
   function alternarAsiento(id: number) {
@@ -284,7 +266,8 @@ export const useVentaStore = defineStore("venta", () => {
           cliente: pasajeros.value[asiento]?.id ?? null,
         })),
         cliente: cliente.value.id,
-        estacion: contexto.value?.canal === "estacion" ? estacionId.value : null,
+        // Lugar de emisión: la estación del usuario, no el filtro "Sube en" (que es dónde sube el pasajero).
+        estacion: contexto.value?.canal === "estacion" ? (contexto.value.estacion?.id ?? null) : null,
         observacion: observacion.value.trim() || null,
         cobrarTrayectoCompleto: cobrarTrayectoCompleto.value,
         tipoPago: opciones.tipoPago,
@@ -363,22 +346,35 @@ export const useVentaStore = defineStore("venta", () => {
       return false;
     }
     cerrarSalida();
-    reasignacion.value = { boletos, ventaId: boletos[0]!.venta.id };
+    const filtros = reasignacion.value?.filtros ?? { estacionId: estacionId.value, destinoId: destinoId.value };
+    reasignacion.value = { boletos, ventaId: boletos[0]!.venta.id, filtros };
     cliente.value = boletos[0]!.venta.cliente;
     const salida = new Date(boletos[0]!.salida.fecha);
     fecha.value = salida.getTime() > Date.now() ? salida : new Date();
     empresaIds.value = [];
-    destinoId.value = null;
+    // Las salidas que hacen el mismo viaje que el boleto.
+    estacionId.value = boletos[0]!.trayecto.origenId;
+    destinoId.value = boletos[0]!.trayecto.destinoId;
     porRango.value = false;
     await cargarSalidas();
     return true;
   }
 
   function cancelarReasignacion() {
-    reasignacion.value = null;
+    terminarReasignacion();
     cliente.value = null;
     cerrarSalida();
     token.value = nuevoToken();
+    void cargarSalidas();
+  }
+
+  /** Sale del modo reasignación y repone los filtros "Sube en"/"Baja en" que había. */
+  function terminarReasignacion() {
+    const filtros = reasignacion.value?.filtros;
+    reasignacion.value = null;
+    if (!filtros) return;
+    estacionId.value = filtros.estacionId;
+    destinoId.value = filtros.destinoId;
   }
 
   /** Registra la reasignación. Devuelve el comprobante de los boletos nuevos (para imprimir). */
@@ -395,7 +391,7 @@ export const useVentaStore = defineStore("venta", () => {
       });
       comprobante.value = c;
       comprobanteReasignado.value = true;
-      reasignacion.value = null;
+      terminarReasignacion();
       cliente.value = null;
       terminarVenta();
       void refrescarOcupacion();
@@ -454,8 +450,6 @@ export const useVentaStore = defineStore("venta", () => {
     puedeCobrarCompleto,
     clasesVendibles,
     noVendible,
-    subidas,
-    bajadas,
     estadoAsiento,
     asientosCroquis,
     libres,
@@ -465,8 +459,6 @@ export const useVentaStore = defineStore("venta", () => {
     cambiarFiltroEstacion,
     elegirSalida,
     cerrarSalida,
-    cambiarSubida,
-    cambiarBajada,
     alternarAsiento,
     recotizar,
     vender,

@@ -1,8 +1,11 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import PrimeVue from 'primevue/config'
 import SalidasLista from '@/features/venta/SalidasLista.vue'
 import type { SalidaResumen } from '@/core/venta/types'
+
+// jsdom no trae matchMedia (la lista lo usa para la densidad de las filas).
+vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }))
 
 const salida = (id: number, extra: Partial<SalidaResumen> = {}): SalidaResumen => ({
   id,
@@ -25,11 +28,11 @@ const montar = (salidas: SalidaResumen[], salidaId: number | null = null) =>
   mount(SalidasLista, { props: { salidas, cargando: false, salidaId }, global: { plugins: [PrimeVue] }, attachTo: document.body })
 
 describe('SalidasLista', () => {
-  it('pinta una fila por salida con trayecto, bus, precios y asientos', () => {
+  it('pinta una fila por salida con ruta, bus, precios y asientos', () => {
     const w = montar([salida(1), salida(2, { bus: null, vendidos: null })])
     const filas = w.findAll('.dg-brow')
     expect(filas).toHaveLength(2)
-    expect(filas[0]!.text()).toContain('Guatemala → Flores')
+    expect(filas[0]!.findAll('.ruta .truncate').map((l) => l.text())).toEqual(['Guatemala 08:00 a. m.', 'Flores'])
     expect(filas[0]!.find('.precios').text()).toBe('A Q 100B Q 125.50')
     expect(filas[0]!.find('.asientos__total').exists()).toBe(false)
     expect(filas[0]!.text()).toContain('B-07')
@@ -38,7 +41,7 @@ describe('SalidasLista', () => {
     w.unmount()
   })
 
-  it('muestra el viaje del cliente: sube y baja, llegada estimada y la ruta del bus aparte', () => {
+  it('muestra sube en y baja en con su hora, y la ruta del bus con la hora en sus puntas', () => {
     const w = montar([
       salida(1, {
         salida: '2026-10-10T23:30:00-06:00',
@@ -46,15 +49,32 @@ describe('SalidasLista', () => {
           sube: { id: 76, nombre: 'Coatepeque', hora: '2026-10-11T00:50:00-06:00', aprox: true },
           baja: { id: 74, nombre: 'Aguilar Batres', hora: '2026-10-11T05:20:00-06:00', aprox: true },
           intermedias: 7,
+          inicio: { id: 1, nombre: 'Guatemala', hora: '2026-10-10T23:30:00-06:00', aprox: false },
+          fin: { id: 2, nombre: 'Flores', hora: '2026-10-11T08:00:00-06:00', aprox: true },
         },
       }),
     ])
-    const fila = w.find('.dg-brow').text()
-    expect(fila).toContain('≈ 12:50')
-    expect(fila).toContain('Coatepeque → Aguilar Batres')
-    expect(fila).toContain('llega ≈ 05:20')
-    expect(fila).toContain('7 paradas')
-    expect(fila).toContain('bus sale 11:30 p. m. de Guatemala')
+    const fila = w.find('.dg-brow')
+    const celdas = fila.findAll('.celda')
+    expect(celdas[0]!.text()).toContain('Coatepeque')
+    expect(celdas[0]!.text()).toContain('≈ 12:50')
+    expect(celdas[1]!.text()).toContain('Aguilar Batres')
+    expect(celdas[1]!.text()).toContain('≈ 05:20')
+    expect(celdas[1]!.text()).not.toContain('+1')
+    expect(fila.findAll('.ruta .truncate').map((l) => l.text())).toEqual(['Guatemala 11:30 p. m.', 'Flores ≈ 08:00 a. m. (+1)'])
+    expect(fila.text()).not.toContain('llega')
+    w.unmount()
+  })
+
+  it('sin tarifa lo dice en el precio y no deja elegir la salida', async () => {
+    const w = montar([salida(1, { precios: [] }), salida(2)])
+    const [sinTarifa, conTarifa] = w.findAll('.dg-brow')
+    expect(sinTarifa!.classes()).toContain('is-sin-tarifa')
+    expect(sinTarifa!.text()).toContain('Sin tarifa')
+    expect(conTarifa!.classes()).not.toContain('is-sin-tarifa')
+    await sinTarifa!.trigger('click')
+    await conTarifa!.trigger('click')
+    expect(w.emitted('elegir')).toEqual([[2]])
     w.unmount()
   })
 

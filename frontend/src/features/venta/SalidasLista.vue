@@ -2,16 +2,17 @@
   Salidas del día que pasan por la estación; clic (o Enter) = abrir su croquis.
 
   Sobre `shared/data-grid/DataGrid.vue` (ADR-029): tabla cuando el contenedor
-  mide 45rem o más (lo que suman los mínimos de las columnas) y, por debajo,
-  tarjetas de dos líneas: hora y viaje; empresa, precios y asientos
+  mide 47rem o más (lo que suman los mínimos de las columnas) y, por debajo,
+  tarjetas de dos líneas: viaje del cliente; ruta, empresa, precios y asientos
   vendidos/libres (el bus solo en la tabla). La salida elegida queda resaltada.
 
-  El viaje es el del cliente (ADR-030): la hora en la estación donde sube
-  ("≈" si es estimada), de dónde a dónde, la llegada ("+1" si es otro día) y
-  las paradas en medio; la ruta del bus queda como dato secundario.
+  El viaje es el del cliente (ADR-030): "Sube en" y "Baja en" con la hora en
+  cada parada ("≈" si es estimada, "+1" si llega otro día); la ruta del bus,
+  con la hora en sus puntas, queda como dato secundario. Una salida sin
+  tarifa para ese viaje lo dice en el precio y no se puede elegir.
 -->
 <template>
-  <DataGrid :columns="columns" :rows="salidas" :row-key="rowKey" :loading="cargando" :selected-keys="seleccion" :row-class="rowClass" :cards-below="45" :density="ancho ? 'comfortable' : 'normal'" max-height="38rem" row-clickable class="salidas" @row-click="emit('elegir', ($event as SalidaResumen).id)">
+  <DataGrid :columns="columns" :rows="salidas" :row-key="rowKey" :loading="cargando" :selected-keys="seleccion" :row-class="rowClass" :cards-below="47" :density="ancho ? 'comfortable' : 'normal'" max-height="38rem" row-clickable class="salidas" @row-click="elegir($event as SalidaResumen)">
     <template #header="{ column }">
       <span v-if="column.key === 'asientos'" class="asientos" aria-label="Vendidos y libres">
         <icon name="airline_seat_recline_extra" size="1.1rem" class="asientos__vendidos" title="Vendidos" />
@@ -21,27 +22,28 @@
     </template>
 
     <template #cell="{ row, column }">
-      <div v-if="column.key === 'salida'" class="celda min-w-0 leading-tight">
-        <div class="font-medium tabular-nums whitespace-nowrap">{{ horaDe(s(row)) }}</div>
-        <div v-if="desdeOrigen(s(row))" class="truncate text-xs text-muted-color desde" :title="desdeOrigen(s(row))!">{{ desdeOrigen(s(row)) }}</div>
+      <div v-if="column.key === 'sube' || column.key === 'baja'" class="celda min-w-0 leading-tight">
+        <div class="truncate font-medium" :title="punta(s(row), column.key).nombre ?? ''">{{ punta(s(row), column.key).nombre ?? "—" }}</div>
+        <div class="truncate text-xs tabular-nums text-muted-color">{{ horaPunta(s(row), column.key) }}</div>
       </div>
-      <div v-else-if="column.key === 'trayecto'" class="celda min-w-0 leading-tight">
-        <div class="truncate font-medium" :title="trayecto(s(row))">{{ trayecto(s(row)) }}</div>
-        <div v-if="llegada(s(row))" class="truncate text-xs text-muted-color" :title="llegada(s(row))!">{{ llegada(s(row)) }}</div>
+      <div v-else-if="column.key === 'ruta'" class="celda ruta min-w-0 leading-tight">
+        <div class="truncate" :title="rutaInicio(s(row))">{{ rutaInicio(s(row)) }}</div>
+        <div class="truncate" :title="rutaFin(s(row))">{{ rutaFin(s(row)) }}</div>
       </div>
       <GridText v-else-if="column.key === 'empresa'" class="celda" :text="nombreEmpresa(s(row))" />
       <template v-else-if="column.key === 'bus'">
-        <span v-if="s(row).bus" class="celda truncate" :title="bus(s(row))">
-          {{ s(row).bus!.codigo }}<span v-if="s(row).bus!.gama" class="text-xs text-muted-color"> · {{ s(row).bus!.gama }}</span>
-        </span>
+        <span v-if="s(row).bus" class="celda truncate" :title="bus(s(row))">{{ s(row).bus!.codigo }}</span>
         <icon v-else name="no_transfer" class="text-surface-500" size="1.2rem" title="Sin bus" />
       </template>
       <span v-else-if="column.key === 'estado'" class="estado" :class="`estado--${s(row).estado}`" :title="s(row).estado">{{ s(row).estado.charAt(0).toUpperCase() }}</span>
-      <span v-else-if="column.key === 'precios' && s(row).precios?.length" class="precios precios--columna">
-        <span v-for="(p, i) in s(row).precios" :key="p.clase" :class="{ 'text-orange-600 mt-1': i }"
-          ><b>{{ p.clase }}</b> {{ precioCorto(p.precio) }}</span
-        >
-      </span>
+      <template v-else-if="column.key === 'precios'">
+        <span v-if="conTarifa(s(row))" class="precios precios--columna">
+          <span v-for="(p, i) in s(row).precios" :key="p.clase" :class="{ 'text-orange-600 mt-1': i }"
+            ><b>{{ p.clase }}</b> {{ precioCorto(p.precio) }}</span
+          >
+        </span>
+        <span v-else class="sin-tarifa">Sin tarifa</span>
+      </template>
       <span v-else-if="column.key === 'asientos' && s(row).capacidad" class="celda asientos asientos--valores">
         <span class="asientos__vendidos">{{ s(row).vendidos ?? 0 }}</span>
         <span class="asientos__libres">{{ libres(s(row)) }}</span>
@@ -51,18 +53,17 @@
     <template #card="{ row }">
       <div class="tarjeta">
         <div class="tarjeta__linea">
-          <span class="flex-none font-semibold tabular-nums">{{ horaDe(s(row)) }}</span>
-          <span class="min-w-0 flex-1 truncate text-right font-medium" :title="trayecto(s(row))">{{ trayecto(s(row)) }}</span>
+          <span class="flex-none font-semibold tabular-nums">{{ horaPunta(s(row), "sube") }}</span>
+          <span class="min-w-0 flex-1 truncate text-right font-medium" :title="viaje(s(row))">{{ viaje(s(row)) }}</span>
         </div>
         <div class="tarjeta__linea text-xs text-muted-color">
-          <span class="min-w-0 truncate">
-            <template v-if="llegada(s(row))">{{ llegada(s(row)) }} · </template><template v-if="desdeOrigen(s(row))">{{ desdeOrigen(s(row)) }} · </template>{{ nombreEmpresa(s(row)) || "—" }}
-          </span>
-          <span v-if="s(row).precios?.length" class="precios">
+          <span class="min-w-0 truncate" :title="ruta(s(row))">{{ ruta(s(row)) }} · {{ nombreEmpresa(s(row)) || "—" }}</span>
+          <span v-if="conTarifa(s(row))" class="precios">
             <span v-for="p in s(row).precios" :key="p.clase"
               ><b>{{ p.clase }}</b> {{ precioCorto(p.precio) }}</span
             >
           </span>
+          <span v-else class="sin-tarifa">Sin tarifa</span>
           <span v-if="s(row).capacidad" class="asientos asientos--valores ml-auto" :aria-label="`${s(row).vendidos ?? 0} vendidos, ${libres(s(row))} libres`">
             <span class="asientos__vendidos">{{ s(row).vendidos ?? 0 }}</span>
             <span class="asientos__libres">{{ libres(s(row)) }}</span>
@@ -83,8 +84,8 @@ import { computed, onBeforeUnmount, ref } from "vue";
 import DataGrid from "@/shared/data-grid/DataGrid.vue";
 import GridText from "@/shared/data-grid/GridText.vue";
 import type { GridColumn } from "@/shared/data-grid/types";
-import { diasEntre, hora, horaViaje } from "@/core/venta/modelo";
-import type { Importe, SalidaResumen } from "@/core/venta/types";
+import { diasEntre, horaViaje } from "@/core/venta/modelo";
+import type { Importe, ParadaViaje, SalidaResumen } from "@/core/venta/types";
 
 const props = defineProps<{
   salidas: SalidaResumen[];
@@ -94,12 +95,13 @@ const props = defineProps<{
 const emit = defineEmits<{ elegir: [id: number] }>();
 
 const columns: GridColumn[] = [
-  { key: "salida", label: "Hora", width: "7rem" },
-  { key: "trayecto", label: "Ruta", minWidth: "9rem", width: "1.5fr" },
-  { key: "empresa", label: "Empresa", minWidth: "6rem" },
-  { key: "bus", label: "Bus", width: "6.5rem" },
-  { key: "estado", label: "Estado", width: "7rem" },
-  { key: "precios", label: "Precio", width: "6.5rem" },
+  { key: "sube", label: "Sube en", minWidth: "7rem" },
+  { key: "baja", label: "Baja en", minWidth: "7rem" },
+  { key: "ruta", label: "Ruta", minWidth: "9rem", width: "1.5fr" },
+  { key: "empresa", label: "Empresa", width: "7rem" },
+  { key: "bus", label: "Bus", width: "4rem" },
+  { key: "estado", label: "Estado", width: "3rem" },
+  { key: "precios", label: "Precio", width: "5rem" },
   { key: "asientos", label: "Asientos", width: "4.5rem", align: "center" },
 ];
 
@@ -115,24 +117,39 @@ const rowKey = (row: unknown) => String(s(row).id);
 const seleccion = computed(() => new Set(props.salidaId == null ? [] : [String(props.salidaId)]));
 
 const vendible = (r: SalidaResumen) => ["programada", "abordando"].includes(r.estado) && !!r.bus;
+/** Hay tarifa para el viaje del cliente: sin ella no se vende, así que no se elige. */
+const conTarifa = (r: SalidaResumen) => !!r.precios?.length;
 const rowClass = (row: unknown) => {
   const r = s(row);
-  return { "is-cancelada": r.estado === "cancelada", "is-no-vendible": !vendible(r) };
+  return { "is-cancelada": r.estado === "cancelada", "is-no-vendible": !vendible(r), "is-sin-tarifa": !conTarifa(r) };
 };
+function elegir(r: SalidaResumen) {
+  if (conTarifa(r)) emit("elegir", r.id);
+}
 
-/** Hora donde sube el cliente ("≈" si es estimada; "—" si no se conoce). */
-const horaDe = (r: SalidaResumen) => (r.viaje ? horaViaje(r.viaje.sube) : hora(r.salidaEstacion ?? r.salida));
-/** "sale 08:00 de Guatemala" cuando no se sube en el origen del bus. */
-const desdeOrigen = (r: SalidaResumen) => (r.viaje && r.viaje.sube.id !== r.ruta.origen.id ? `bus sale ${hora(r.salida)} de ${r.ruta.origen.nombre}` : null);
-const trayecto = (r: SalidaResumen) => (r.viaje ? `${r.viaje.sube.nombre ?? ""} → ${r.viaje.baja.nombre ?? ""}` : `${r.ruta.origen.nombre ?? ""} → ${r.ruta.destino.nombre ?? ""}`);
-/** "llega ≈ 05:20 (+1) · 7 paradas". */
-const llegada = (r: SalidaResumen) => {
-  if (!r.viaje) return null;
-  const { sube, baja, intermedias } = r.viaje;
-  const dias = baja.hora ? diasEntre(sube.hora ?? r.salida, baja.hora) : 0;
-  const partes = [baja.hora ? `llega ${horaViaje(baja)}${dias > 0 ? ` (+${dias})` : ""}` : null, intermedias ? `${intermedias} parada${intermedias === 1 ? "" : "s"}` : "directo"];
-  return partes.filter(Boolean).join(" · ");
-};
+/** Dónde sube o baja el cliente; sin `viaje`, las puntas de la ruta (hora solo en el origen). */
+const punta = (r: SalidaResumen, cual: "sube" | "baja"): ParadaViaje =>
+  r.viaje?.[cual] ?? (cual === "sube" ? { ...r.ruta.origen, hora: r.salida, aprox: false } : { ...r.ruta.destino, hora: null, aprox: false });
+/** "≈ 05:20 a. m. (+1)": la hora en la parada y, con `desde`, los días que pasan desde entonces. */
+function horaDe(p: ParadaViaje | undefined, desde?: string | null) {
+  if (!p?.hora) return "—";
+  const dias = desde ? diasEntre(desde, p.hora) : 0;
+  return `${horaViaje(p)}${dias > 0 ? ` (+${dias})` : ""}`;
+}
+/** La subida, a secas; la bajada, con "+1" si se llega otro día que el que se sube. */
+const horaPunta = (r: SalidaResumen, cual: "sube" | "baja") => horaDe(punta(r, cual), cual === "baja" ? (punta(r, "sube").hora ?? r.salida) : null);
+const viaje = (r: SalidaResumen) => `${punta(r, "sube").nombre ?? ""} → ${punta(r, "baja").nombre ?? ""}`;
+/** Un extremo de la ruta del bus: "Guatemala 08:00 p. m.", con la hora si se conoce. */
+const extremo = (r: SalidaResumen, nombre: string | null | undefined, p: ParadaViaje | undefined) => [nombre ?? "", p?.hora ? horaDe(p, r.salida) : ""].filter(Boolean).join(" ");
+/** Origen de la ruta del bus con su hora (primera línea de la celda). */
+function rutaInicio(r: SalidaResumen) {
+  const inicio = r.viaje?.inicio ?? { id: r.ruta.origen.id, nombre: r.ruta.origen.nombre, hora: r.salida, aprox: false };
+  return extremo(r, r.ruta.origen.nombre, inicio);
+}
+/** Destino de la ruta del bus con su hora, "≈" si es estimada y "+1" si llega otro día (segunda línea). */
+const rutaFin = (r: SalidaResumen) => extremo(r, r.ruta.destino.nombre, r.viaje?.fin);
+/** "Guatemala 08:00 p. m. → Flores ≈ 05:20 a. m. (+1)": la ruta entera, para la tarjeta. */
+const ruta = (r: SalidaResumen) => `${rutaInicio(r)} → ${rutaFin(r)}`;
 /** "TRANSPORTES FUENTES" → "Transportes Fuentes". */
 const nombreEmpresa = (r: SalidaResumen) => (r.empresa?.nombre ?? "").toLocaleLowerCase("es").replace(/(^|[\s-])(\p{L})/gu, (_, sep: string, c: string) => sep + c.toLocaleUpperCase("es"));
 const bus = (r: SalidaResumen) => [r.bus?.codigo, r.bus?.gama].filter(Boolean).join(" · ");
@@ -165,11 +182,27 @@ const precioCorto = (p: Importe | null) => (p ? p.texto.replace(/[.,]00$/, "") :
   border-radius: 0.5rem;
 }
 
-/* Fuera de móvil la tabla pasa a 1rem (los precios conservan su tamaño). */
+/* Sin tarifa: no se puede elegir. */
+.salidas :deep(.dg-brow.is-sin-tarifa),
+.salidas :deep(.dg-card.is-sin-tarifa) {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.sin-tarifa {
+  color: var(--p-text-muted-color);
+  font-size: 0.75rem;
+  font-style: italic;
+  white-space: nowrap;
+}
+
+/* Fuera de móvil la tabla pasa a 1rem (los precios y la ruta conservan su tamaño). */
 @media (min-width: 48rem) {
-  .celda,
-  .celda .desde {
+  .celda {
     font-size: 1rem;
+  }
+  .celda .text-xs,
+  .celda.ruta {
+    font-size: 0.8125rem;
   }
   .celda .asientos--valores,
   .asientos--valores.celda {

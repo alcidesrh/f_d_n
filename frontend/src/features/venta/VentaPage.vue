@@ -1,9 +1,9 @@
 <!--
   Venta de boletos en taquilla y agencias (ADR-021).
 
-  1. Cliente (buscar o registrar).  2. Fecha y estación → salidas.
-  3. Salida → paradas "sube en / baja en" y croquis con la ocupación en
-  vivo (otros vendedores y la página web).  4. Asientos → "Facturar" (o
+  1. Cliente (buscar o registrar).  2. Fecha, "sube en" y "baja en" →
+  salidas (cada una con el tramo que hace el cliente).  3. Salida → croquis
+  con la ocupación en vivo de ese tramo (otros vendedores y la página web).  4. Asientos → "Facturar" (o
   "Cortesía"): cobro, certificación de la factura y ticket.
 
   Móvil: todo en una columna, el croquis después del viaje (al elegir una
@@ -59,11 +59,11 @@
                 </label>
               </div>
               <label class="campo col-span-1">
-                <span class="text-sm font-medium">Origen</span>
+                <span class="text-sm font-medium">Sube en</span>
                 <estacion-select size="small" v-model="store.estacionId" :estaciones="store.contexto?.estaciones ?? []" :propio="store.contexto?.estacion?.departamento" placeholder="Todas" @update:model-value="store.cambiarFiltroEstacion()" />
               </label>
               <label class="campo col-span-1">
-                <span class="text-sm font-medium">Destino</span>
+                <span class="text-sm font-medium">Baja en</span>
                 <estacion-select size="small" v-model="store.destinoId" :estaciones="store.contexto?.estaciones ?? []" show-clear placeholder="Todas" @update:model-value="store.cambiarFiltroEstacion()" />
               </label>
             </div>
@@ -95,16 +95,6 @@
             <ClienteBuscador v-else v-model="store.cliente" input-id="venta-cliente" />
           </section>
           <section v-if="store.detalle" class="panel flex flex-col gap-3">
-            <div class="grid grid-cols-1 gap-3 @xl:grid-cols-2">
-              <label class="flex flex-col gap-1">
-                <span class="font-medium">Sube en</span>
-                <Select :model-value="store.sube" :options="opcionesParada(store.subidas)" option-label="label" option-value="value" fluid @update:model-value="store.cambiarSubida" />
-              </label>
-              <label class="flex flex-col gap-1">
-                <span class="font-medium">Baja en</span>
-                <Select :model-value="store.baja" :options="opcionesParada(store.bajadas)" option-label="label" option-value="value" fluid @update:model-value="store.cambiarBajada" />
-              </label>
-            </div>
             <label v-if="store.puedeCobrarCompleto" class="flex items-center gap-2 text-sm">
               <Checkbox v-model="store.cobrarTrayectoCompleto" binary input-id="venta-completo" @update:model-value="store.recotizar()" />
               <span> Cobrar la tarifa del trayecto completo ({{ store.detalle.ruta.origen.nombre }} → {{ store.detalle.ruta.destino.nombre }}) </span>
@@ -136,7 +126,7 @@
             <div v-if="store.detalle || store.cargandoDetalle" :key="`salida-${store.salidaId}`" class="flex flex-col gap-5 pt-5 tex-sm">
               <BusMapLegend :items="leyenda" :conteos="conteos" />
               <div class="overflow-x-auto mt-1">
-                <BusMap :elementos="store.detalle.croquis" :estado="store.estadoAsiento" interactivo inspeccionable tamano="md" class="justify-center" @asiento="(a) => a.id != null && store.alternarAsiento(a.id)" @ocupado="verOcupado" />
+                <BusMap :elementos="store.detalle?.croquis ?? []" :estado="store.estadoAsiento" interactivo inspeccionable tamano="md" class="justify-center" @asiento="(a) => a.id != null && store.alternarAsiento(a.id)" @ocupado="verOcupado" />
                 <AsientoOcupadoPopover ref="detalleAsiento" @anular="(b) => (anular = [b.id])" @reasignar="(b) => void store.iniciarReasignacion([b.id])" />
               </div>
               <Divider align="center" class="my-0! before:border-surface-400!" type="dashed">
@@ -194,8 +184,8 @@ import type { AsientoCroquis } from "@/core/croquis/types";
 import AsientoOcupadoPopover from "@/shared/bus-map/AsientoOcupadoPopover.vue";
 import AnularBoletosDialog from "@/shared/boleto/AnularBoletosDialog.vue";
 import BusMapLegend, { type ItemLeyenda } from "@/shared/bus-map/BusMapLegend.vue";
-import { conteosPorEstado, hora } from "@/core/venta/modelo";
-import type { Parada, SalidaResumen } from "@/core/venta/types";
+import { conteosPorEstado } from "@/core/venta/modelo";
+import type { SalidaResumen } from "@/core/venta/types";
 import ClienteBuscador from "./ClienteBuscador.vue";
 import CobroDialog from "./CobroDialog.vue";
 import FacturacionFallidaDialog from "./FacturacionFallidaDialog.vue";
@@ -259,7 +249,11 @@ watch(
   () => (verAnteriores.value = false),
 );
 
-const conteos = computed(() => conteosPorEstado(store.detalle?.croquis ?? [], store.estadoAsiento));
+/** Los recomendados no tienen renglón en la leyenda: cuentan como disponibles. */
+const conteos = computed(() => {
+  const { recomendado = 0, ...n } = conteosPorEstado(store.detalle?.croquis ?? [], store.estadoAsiento);
+  return { ...n, disponible: (n.disponible ?? 0) + recomendado };
+});
 
 /** Rango de fecha y hora: se elige en el selector y solo se busca al pulsar "Aplicar". */
 const borrador = ref<(Date | null)[] | null>(null);
@@ -299,20 +293,15 @@ function etiquetaDia(delta: number) {
   if (dif === 1) return "Mañana";
   return new Intl.DateTimeFormat("es-GT", { weekday: "short", day: "numeric", month: "short" }).format(d);
 }
-const leyenda: ItemLeyenda[] = ["disponible", "recomendado", "ocupado", "ocupado-web", "ocupado-agencia", "reservado", "cortesia", "voucher"];
+/** Sin "recomendado": en el croquis se ve como un vendido en estación que parpadea a libre. */
+const leyenda: ItemLeyenda[] = ["disponible", "ocupado", "ocupado-web", "ocupado-agencia", "reservado", "cortesia", "voucher"];
 
 /** El recomendado toma el color del canal que vende esta pantalla: estación = azul, agencia = esmeralda. */
 const colorRecomendado = computed(() =>
   store.contexto?.canal === "agencia"
-    ? { "--bm-recommended": "var(--bm-sold-agency)", "--bm-recommended-stroke": "var(--bm-sold-agency-stroke)" }
-    : { "--bm-recommended": "var(--bm-occupied)", "--bm-recommended-stroke": "var(--bm-occupied-stroke)" },
+    ? { "--bm-recommended": "var(--bm-sold-agency)", "--bm-recommended-stroke": "var(--bm-sold-agency-stroke)", "--bm-recommended-ink": "var(--bm-sold-agency-ink)" }
+    : { "--bm-recommended": "var(--bm-occupied)", "--bm-recommended-stroke": "var(--bm-occupied-stroke)", "--bm-recommended-ink": "var(--bm-occupied-ink)" },
 );
-
-const opcionesParada = (paradas: Parada[]) =>
-  paradas.map((p) => ({
-    value: p.id,
-    label: p.hora ? `${hora(p.hora)} · ${p.nombre}` : (p.nombre ?? ""),
-  }));
 
 const lineas = computed(() => {
   const precios = new Map(store.cotizacion?.asientos.map((a) => [a.asiento, a.precio.texto]));

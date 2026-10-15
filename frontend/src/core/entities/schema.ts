@@ -11,6 +11,7 @@ import { entityNameFromSlug } from './slug'
 export const SCHEMA_VERSION = 13
 
 export const useSchemaStore = defineStore('schema', {
+  global: true,
   persist: { pick: ['entities', 'schemaVersion', 'loadedAt'] },
 
   state: () => ({

@@ -36,6 +36,7 @@ use Symfony\Component\Validator\Constraints as Assert;
             new Mutation(
                 name: "create",
                 processor: UsuarioPasswordHasher::class,
+                validationContext: ["groups" => ["Default", "usuario:crear"]],
             ),
             new Mutation(
                 name: "update",
@@ -129,7 +130,8 @@ class Usuario extends PersonaBase implements
     #[Ignore]
     private ?string $foto = null;
 
-    #[Assert\NotBlank]
+    // Solo al crear: al editar, vacío significa "no cambiar la contraseña" (ver UsuarioPasswordHasher).
+    #[Assert\NotBlank(groups: ["usuario:crear"])]
     private ?string $plainPassword = null;
     private ?string $fullName;
 

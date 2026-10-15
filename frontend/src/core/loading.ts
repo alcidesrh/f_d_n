@@ -6,6 +6,7 @@
 import { defineStore } from 'pinia'
 
 export const useLoadingStore = defineStore('loading', {
+  global: true,
   state: () => ({ ops: {} as Record<string, number> }),
   getters: {
     /** Peticiones en curso (todas las keys). */

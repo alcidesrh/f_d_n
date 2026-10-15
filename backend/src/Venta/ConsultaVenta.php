@@ -87,7 +87,7 @@ final class ConsultaVenta
         $vendidos = $this->buscador->vendidosEnTramos($tramos);
         $capacidad = array_map(static fn(array $porClase) => array_sum($porClase), $asientos);
 
-        $nombres = $this->nombres(array_merge([], ...array_map(static fn(array $f) => [$f[1]->paradas[$f[4]->desde], $f[1]->paradas[$f[4]->hasta]], $filas)));
+        $nombres = $this->nombres(array_merge([], ...array_map(static fn(array $f) => [$f[1]->paradas[$f[4]->desde], $f[1]->paradas[$f[4]->hasta], $f[1]->paradas[0], $f[1]->paradas[count($f[1]->paradas) - 1]], $filas)));
 
         return array_map(fn(array $f) => [
             ...$this->resumen($f[0], $f[1], $f[2], $vendidos, $capacidad),
@@ -414,11 +414,11 @@ final class ConsultaVenta
     /**
      * El viaje del cliente dentro de la salida: dónde sube y dónde baja, a
      * qué hora (null si no se conoce; `aprox` si es estimada) y cuántas
-     * paradas hay en medio.
+     * paradas hay en medio; `inicio` y `fin`, las puntas de la ruta del bus.
      *
      * @param array<int, string> $nombres por id de enclave
      *
-     * @return array{sube: array<string, mixed>, baja: array<string, mixed>, intermedias: int}
+     * @return array{sube: array<string, mixed>, baja: array<string, mixed>, intermedias: int, inicio: array<string, mixed>, fin: array<string, mixed>}
      */
     private static function viaje(Itinerario $it, Tramo $tramo, array $nombres): array
     {
@@ -434,7 +434,13 @@ final class ConsultaVenta
             ];
         };
 
-        return ["sube" => $parada($tramo->desde), "baja" => $parada($tramo->hasta), "intermedias" => $tramo->hasta - $tramo->desde - 1];
+        return [
+            "sube" => $parada($tramo->desde),
+            "baja" => $parada($tramo->hasta),
+            "intermedias" => $tramo->hasta - $tramo->desde - 1,
+            "inicio" => $parada(0),
+            "fin" => $parada(count($it->paradas) - 1),
+        ];
     }
 
     /**

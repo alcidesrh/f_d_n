@@ -6,7 +6,7 @@
   elegido.
 -->
 <template>
-  <Select ref="select" :model-value="modelValue" :options="visibles" option-label="nombre" option-value="id" option-group-label="departamento" option-group-children="estaciones" filter auto-filter-focus :show-clear="showClear" :size="size" filter-placeholder="Buscar estación" empty-filter-message="Sin resultados" empty-message="Sin resultados" :placeholder="placeholder" :disabled="disabled" :input-id="inputId" fluid scroll-height="18rem" :pt="ptSelect" @update:model-value="emit('update:modelValue', $event ?? null)" @filter="filtro = $event.value ?? ''" @show="alAbrir" @hide="filtro = ''">
+  <Select ref="select" :model-value="modelValue" :options="visibles" option-label="nombre" option-value="id" option-group-label="departamento" option-group-children="estaciones" filter auto-filter-focus reset-filter-on-hide :label-style="estiloEtiqueta" :show-clear="showClear" :size="size" filter-placeholder="Buscar estación" empty-filter-message="Sin resultados" empty-message="Sin resultados" :placeholder="placeholder" :disabled="disabled" :input-id="inputId" fluid scroll-height="18rem" :pt="ptSelect" @update:model-value="emit('update:modelValue', $event ?? null)" @filter="filtro = $event.value ?? ''" @show="alAbrir" @hide="filtro = ''">
     <template #value="{ value, placeholder: ph }">
       <span v-if="value != null && nombrePorId.has(value)">{{ nombrePorId.get(value) }}</span>
       <span v-else>{{ ph }}</span>
@@ -64,6 +64,11 @@ const ptSelect = {
 
 const grupos = computed(() => agruparPorDepartamento(props.estaciones, { propio: props.propio }));
 const nombrePorId = computed(() => new Map(props.estaciones.map((e) => [e.id, e.nombre] as const)));
+/**
+ * PrimeVue marca la etiqueta como placeholder cuando la estación elegida no está entre las
+ * opciones visibles (su departamento está contraído). Con valor elegido, se fuerza el color normal.
+ */
+const estiloEtiqueta = computed(() => (props.modelValue != null && nombrePorId.value.has(props.modelValue) ? { color: "var(--p-text-color)" } : undefined));
 const totales = computed(() => new Map(grupos.value.map((g) => [g.departamento, g.estaciones.length] as const)));
 const todosAbiertos = computed(() => grupos.value.every((g) => abiertos.value.has(g.departamento)));
 /** Sin búsqueda: solo las estaciones de los departamentos abiertos. Buscando: todas. */

@@ -52,11 +52,18 @@ withDefaults(
   --seat-fill: var(--bm-seat-a);
   --seat-stroke: var(--bm-seat-a-stroke);
   --seat-ink: var(--bm-seat-a-ink);
+  /* Los colores del libre de su clase: a ellos vuelve el recomendado al parpadear. */
+  --seat-free-fill: var(--bm-seat-a);
+  --seat-free-stroke: var(--bm-seat-a-stroke);
+  --seat-free-ink: var(--bm-seat-a-ink);
 }
 .seat--B {
   --seat-fill: var(--bm-seat-b);
   --seat-stroke: var(--bm-seat-b-stroke);
   --seat-ink: var(--bm-seat-b-ink);
+  --seat-free-fill: var(--bm-seat-b);
+  --seat-free-stroke: var(--bm-seat-b-stroke);
+  --seat-free-ink: var(--bm-seat-b-ink);
 }
 .seat rect,
 .seat line {
@@ -147,39 +154,39 @@ withDefaults(
   filter: drop-shadow(0 2px 5px color-mix(in srgb, var(--p-blue-700) 45%, transparent));
 }
 /*
- * Libre que conviene vender (encaja con el tramo, ADR-030): alterna entre el color
- * del libre y el del canal que vende (`--bm-recommended`, ver busMap.css). No se
- * apaga con `prefers-reduced-motion`: es una señal que se pidió a propósito.
+ * Libre que conviene vender (encaja con el tramo, ADR-030): se ve como un vendido
+ * del canal que vende (`--bm-recommended`, ver busMap.css) y cada tanto vuelve un
+ * instante a libre, para llamar la atención sobre él. Se anima el color del
+ * asiento entero (relleno, borde y número; `@property` en busMap.css), así que
+ * conserva el sombreado de cojín y brazos. No se apaga con `prefers-reduced-motion`:
+ * es una señal que se pidió a propósito.
  */
-/* Una luz que se enciende y se apaga: el color del canal y su resplandor suben y bajan juntos. */
 .seat--recomendado {
-  animation: seat-luz 1.6s ease-in-out infinite;
+  --seat-fill: var(--bm-recommended);
+  --seat-stroke: var(--bm-recommended-stroke);
+  --seat-ink: var(--bm-recommended-ink);
+  animation: seat-recomendado 2.4s ease-in-out infinite;
 }
-.seat--recomendado rect {
-  animation: seat-luz-relleno 1.6s ease-in-out infinite;
+/* El color ya lo mueve la animación: sin la transición de `.seat rect`, que lo retrasaría. */
+.seat--recomendado rect,
+.seat--recomendado line,
+.seat--recomendado text {
+  transition: none;
 }
-@keyframes seat-luz {
+@keyframes seat-recomendado {
   0%,
+  55%,
   100% {
-    filter: drop-shadow(0 0 0 transparent);
+    --seat-fill: var(--bm-recommended);
+    --seat-stroke: var(--bm-recommended-stroke);
+    --seat-ink: var(--bm-recommended-ink);
   }
-  50% {
-    filter: drop-shadow(0 0 5px color-mix(in srgb, var(--bm-recommended-stroke) 85%, transparent));
+  65%,
+  90% {
+    --seat-fill: var(--seat-free-fill);
+    --seat-stroke: var(--seat-free-stroke);
+    --seat-ink: var(--seat-free-ink);
   }
-}
-@keyframes seat-luz-relleno {
-  0%,
-  100% {
-    fill: var(--bm-seat-a);
-    stroke: var(--bm-seat-a-stroke);
-  }
-  50% {
-    fill: var(--bm-recommended);
-    stroke: var(--bm-recommended-stroke);
-  }
-}
-.seat--recomendado rect {
-  stroke-width: 2;
 }
 .seat--reservado rect {
   stroke: var(--bm-reserved);

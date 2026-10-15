@@ -33,6 +33,8 @@ export interface UiState {
  * (`layout/sidebarStore.ts`).
  */
 export const useUiStore = defineStore("ui", {
+  // App.vue la usa siempre: al entrar otro usuario se recarga con su tema.
+  permanente: { alRecargar: (): void => useUiStore().applyTheme() },
   persist: { omit: ["isMobile"] },
   state: (): UiState => ({
     mode: systemMode(),

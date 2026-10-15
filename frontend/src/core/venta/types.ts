@@ -53,6 +53,9 @@ export interface ViajeCliente {
   baja: ParadaViaje
   /** Paradas entre la de subida y la de bajada. */
   intermedias: number
+  /** Primera y última parada de la ruta del bus, con su hora. */
+  inicio: ParadaViaje
+  fin: ParadaViaje
 }
 
 export interface SalidaResumen {

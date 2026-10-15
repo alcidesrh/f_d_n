@@ -100,6 +100,7 @@ import type Menu from "primevue/menu";
 import { useDialog } from "primevue/usedialog";
 import { router } from "@/app/router";
 import { useUiStore } from "@/app/ui";
+import { salirDeStores } from "@/core/auth/alcanceSesion";
 import { useSessionStore } from "@/core/auth/session";
 import { useChatStore } from "@/core/chat/store";
 import { useCuentaStore } from "@/core/cuenta/store";
@@ -168,5 +169,7 @@ async function logout() {
   await chat.salirDeLinea();
   await session.logout();
   await router.push({ name: "login" });
+  // Ya fuera de las pantallas del usuario: nada montado usa sus stores.
+  salirDeStores();
 }
 </script>

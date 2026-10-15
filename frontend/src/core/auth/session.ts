@@ -5,6 +5,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { request } from '@/core/http'
+import { entrarComo } from './alcanceSesion'
 
 interface LoginResponse {
   username: string
@@ -31,6 +32,7 @@ export const useSessionStore = defineStore(
       user.value = response.username
       token.value = response.token
       permissions.value = response.permissions ?? []
+      entrarComo(response.username)
     }
 
     async function logout() {
@@ -49,5 +51,5 @@ export const useSessionStore = defineStore(
 
     return { user, token, permissions, isAuthenticated, login, logout, clear }
   },
-  { persist: { pick: ['user', 'token', 'permissions'] } },
+  { global: true, persist: { pick: ['user', 'token', 'permissions'] } },
 )

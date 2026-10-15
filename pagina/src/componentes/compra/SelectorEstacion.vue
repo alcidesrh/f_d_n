@@ -14,7 +14,9 @@
     option-group-children="estaciones"
     filter
     auto-filter-focus
+    reset-filter-on-hide
     show-clear
+    :label-style="estiloEtiqueta"
     :filter-placeholder="t('buscador.buscarEstacion')"
     :empty-filter-message="t('buscador.sinResultados')"
     :empty-message="vacio ?? t('buscador.sinResultados')"
@@ -148,6 +150,15 @@ const nombrePorId = computed(
         g.estaciones.map((e) => [e.id, e.nombre] as const),
       ),
     ),
+);
+/**
+ * PrimeVue marca la etiqueta como placeholder si la estación elegida no está entre las opciones
+ * visibles (los departamentos arrancan contraídos). Con valor elegido se fuerza el color normal.
+ */
+const estiloEtiqueta = computed(() =>
+  props.modelValue != null && nombrePorId.value.has(props.modelValue)
+    ? { color: "var(--p-text-color)" }
+    : undefined,
 );
 const totales = computed(
   () =>

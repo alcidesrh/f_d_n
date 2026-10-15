@@ -148,6 +148,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref, shallowRef, toRaw, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { claveDeUsuario } from "@/core/auth/alcanceSesion";
 import { fetchBoletosListado, fetchOpcionesBoletos } from "@/core/boleto/api";
 import { aQuery, alternarOrden, disponibilidad, DOCUMENTOS, documentoTexto, ESTADOS, etiquetaEstado, filtroInicial, paginaInicial, type AccionBoleto, type FiltroBoletos, type Pagina } from "@/core/boleto/listado";
 import type { EstadoBoleto, TipoDocumento } from "@/core/boleto/types";
@@ -234,10 +235,10 @@ const consultarId = ref<number | null>(null);
 const bitacoraId = ref<number | null>(null);
 const ocupado = ref<AccionBoleto | null>(null);
 
-// —— Columnas: visibles y anchos, recordados en el navegador ——
+// —— Columnas: visibles y anchos, recordados por usuario ——
 function leerPreferencias(): { visibles?: string[]; anchos?: Record<string, string> } {
   try {
-    return JSON.parse(localStorage.getItem(PREFERENCIAS) ?? "{}");
+    return JSON.parse(localStorage.getItem(claveDeUsuario(PREFERENCIAS)) ?? "{}");
   } catch {
     return {};
   }
@@ -249,7 +250,7 @@ watch(
   [visibles, anchos],
   () => {
     try {
-      localStorage.setItem(PREFERENCIAS, JSON.stringify({ visibles: visibles.value, anchos: anchos.value }));
+      localStorage.setItem(claveDeUsuario(PREFERENCIAS), JSON.stringify({ visibles: visibles.value, anchos: anchos.value }));
     } catch {
       // Sin almacenamiento: solo dura la visita.
     }

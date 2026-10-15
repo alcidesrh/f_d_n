@@ -108,6 +108,7 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from "vue";
+import { claveDeUsuario } from "@/core/auth/alcanceSesion";
 import { HttpError } from "@/core/http";
 import { fetchTablero } from "@/core/tablero/api";
 import { OCUPACION_BAJA, OCUPACION_SATURADA, dinero, hora, numero, porciento, rango, variacion } from "@/core/tablero/formato";
@@ -145,7 +146,7 @@ const PREFERENCIAS = "tablero.preferencias";
 /** Periodo y empresa elegidos, recordados en este navegador (si el almacenamiento falla, se arranca con 7 días). */
 function leerPreferencias(): { dias: DiasTablero; empresa: number | null } {
   try {
-    const p = JSON.parse(localStorage.getItem(PREFERENCIAS) ?? "{}") as { dias?: number; empresa?: number | null };
+    const p = JSON.parse(localStorage.getItem(claveDeUsuario(PREFERENCIAS)) ?? "{}") as { dias?: number; empresa?: number | null };
     return { dias: PERIODOS.some((x) => x.dias === p.dias) ? (p.dias as DiasTablero) : 7, empresa: typeof p.empresa === "number" ? p.empresa : null };
   } catch {
     return { dias: 7, empresa: null };
@@ -184,7 +185,7 @@ async function cargar(silencioso = false) {
 
 watch([dias, empresa], () => {
   try {
-    localStorage.setItem(PREFERENCIAS, JSON.stringify({ dias: dias.value, empresa: empresa.value }));
+    localStorage.setItem(claveDeUsuario(PREFERENCIAS), JSON.stringify({ dias: dias.value, empresa: empresa.value }));
   } catch {
     /* sin almacenamiento: solo no se recuerda */
   }
