@@ -146,10 +146,37 @@ withDefaults(
   --seat-ink: var(--p-blue-50);
   filter: drop-shadow(0 2px 5px color-mix(in srgb, var(--p-blue-700) 45%, transparent));
 }
-/* Libre que conviene vender (encaja con el tramo, ADR-030): borde y halo esmeralda. */
+/*
+ * Libre que conviene vender (encaja con el tramo, ADR-030): alterna entre el color
+ * del libre y el del canal que vende (`--bm-recommended`, ver busMap.css). No se
+ * apaga con `prefers-reduced-motion`: es una señal que se pidió a propósito.
+ */
+/* Una luz que se enciende y se apaga: el color del canal y su resplandor suben y bajan juntos. */
 .seat--recomendado {
-  --seat-stroke: var(--p-emerald-500);
-  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--p-emerald-500) 60%, transparent));
+  animation: seat-luz 1.6s ease-in-out infinite;
+}
+.seat--recomendado rect {
+  animation: seat-luz-relleno 1.6s ease-in-out infinite;
+}
+@keyframes seat-luz {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  50% {
+    filter: drop-shadow(0 0 5px color-mix(in srgb, var(--bm-recommended-stroke) 85%, transparent));
+  }
+}
+@keyframes seat-luz-relleno {
+  0%,
+  100% {
+    fill: var(--bm-seat-a);
+    stroke: var(--bm-seat-a-stroke);
+  }
+  50% {
+    fill: var(--bm-recommended);
+    stroke: var(--bm-recommended-stroke);
+  }
 }
 .seat--recomendado rect {
   stroke-width: 2;

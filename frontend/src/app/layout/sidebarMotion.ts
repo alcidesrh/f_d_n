@@ -1,14 +1,19 @@
 /**
- * Movimiento de un panel lateral, todo con GSAP (el CSS solo describe estados
- * finales, sin `transition`).
+ * Movimiento de un panel lateral, todo con GSAP (el CSS solo describe estados,
+ * sin `transition`).
  *
- * Escritorio (desde `lg`): el ancho (`--sb-<lado>-w`, lo leen el panel y `.main`)
- * y el contenido se animan en una misma línea de tiempo. La estructura del menú
- * (`store.shown`: toggles, encabezados, submenús, textos en línea o flotantes) solo
- * cambia cuando el panel ya "se ve" como el modo destino, así no hay saltos:
- *  - `open → mini`: primero el contenido se pliega al aspecto `mini`, luego se cambia `shown`.
- *  - `mini → open`: se cambia `shown` y el contenido se despliega desde el aspecto `mini`.
+ * Escritorio (desde `lg`): un único tween sobre `{ px, c }` por panel:
+ *  - `px`: ancho (`--sb-<lado>-w`, lo leen el panel y `.main`).
+ *  - `c`: pliegue `open ⇄ mini` (0 = aspecto `open`, 1 = aspecto `mini`). Mientras
+ *    dura, el panel lleva `data-sb-morph` y el CSS (`sidebar.css`) deriva de `--sb-c`
+ *    todo el contenido: una sola escritura por fotograma, sin estilos por elemento.
+ *
+ * La estructura del menú (`store.shown`: toggles, encabezados, submenús, textos en
+ * línea o flotantes) solo cambia cuando el panel ya "se ve" como el destino:
+ *  - `open → mini`: se pliega con la estructura de `open` y al final se cambia `shown`.
+ *  - `mini → open`: se cambia `shown` con el pliegue en 1 (idéntico a `mini`) y se despliega.
  *  - `close`: solo el ancho; la estructura cambia con el panel invisible.
+ * Un cambio a medio camino parte siempre de los valores actuales: nunca salta.
  *
  * Móvil (debajo de `lg`): el panel es un drawer que se desliza con `xPercent`.
  * En escritorio el `transform` se elimina: un ancestro transformado volvería
@@ -20,121 +25,158 @@ import { useUiStore } from "@/app/ui";
 import type { SidebarStore } from "./sidebarStore";
 
 const DURATION = 0.3;
-const EASE = "power2.inOut";
+const EASE = "circ.out";
 const SHADOW = "0 12px 32px rgb(0 0 0 / 0.2)";
 const SHADOW_OFF = "0 12px 32px rgb(0 0 0 / 0)";
+const MORPH = "data-sb-morph";
+/** Lo que el pliegue lleva a alto 0: miden su alto natural en `--h` al empezar. */
+const FOLDING = ".nav-section-title, .nav-tree--nested";
 
 /**
- * Ancho animado actual de cada lado (px). Se anima un número y se escribe en
- * `onUpdate`: GSAP no lee estilos del DOM (leerlos al arrancar forzaba un
- * recálculo de estilo en el primer fotograma).
+ * Ancho actual de cada lado (px), compartido: un panel recién montado (p. ej. el
+ * de una ruta) arranca del ancho del anterior. `.main` lee el mismo valor.
  */
 const widths: Record<"left" | "right", { px: number; ready: boolean }> = {
   left: { px: 250, ready: false },
   right: { px: 250, ready: false },
 };
 
-/** Propiedades en línea que la animación deja sobre el contenido del menú. */
-const CONTENT_CLEAR: Array<[string, string]> = [
-  [".menu-text", "opacity,pointerEvents"],
-  [".nav-row > .menu-link", "paddingInlineStart"],
-  [".nav-toggle", "width,marginInlineStart,opacity"],
-  [".nav-section-title", "height,paddingTop,paddingBottom,opacity,overflow"],
-  [".nav-tree--nested", "height,opacity,overflow"],
-];
-
 export function useSidebarMotion(store: SidebarStore, panel: Ref<HTMLElement | null>) {
   const ui = useUiStore();
-  let modeTl: gsap.core.Timeline | null = null;
+  const shared = widths[store.side];
+  const varName = `--sb-${store.side}-w`;
+  /** Lo que anima GSAP; `render` lo vuelca al DOM. */
+  const state = { px: shared.px, c: 0 };
+  let writtenC = -1;
+  let main: HTMLElement | null = null;
+  let modeTween: gsap.core.Tween | null = null;
   let drawerTl: gsap.core.Timeline | null = null;
+  /** Descarta continuaciones (`await nextTick()`) de un cambio de modo ya superado. */
+  let generation = 0;
 
-  const all = (selector: string) => panel.value?.querySelectorAll<HTMLElement>(selector) ?? [];
-  const miniPadding = () => (store.mini - 24) / 2;
+  // ---- Escritorio: ancho + pliegue -------------------------------------------
 
-  function resetContent() {
-    for (const [selector, props] of CONTENT_CLEAR) {
-      const els = all(selector);
-      // GSAP avisa en consola si el target está vacío (p. ej. sin submenús).
-      if (els.length) gsap.set(els, { clearProps: props });
+  function render() {
+    const el = panel.value;
+    if (!el) return;
+    shared.px = state.px;
+    const width = `${state.px}px`;
+    el.style.setProperty(varName, width);
+    main?.style.setProperty(varName, width);
+    // `--sb-c` se hereda dentro del panel: solo se escribe si cambia (en `close` no).
+    if (state.c !== writtenC) {
+      writtenC = state.c;
+      el.style.setProperty("--sb-c", String(state.c));
     }
   }
 
-  // ---- Escritorio: ancho + contenido -----------------------------------------
-
-  /** Pliega el contenido al aspecto `mini` (lo mismo que dibuja `shown = "mini"`). */
-  function collapseContent(tl: gsap.core.Timeline) {
-    tl.to(all(".menu-text"), { opacity: 0, duration: DURATION * 0.4, ease: "power1.in" }, 0)
-      .to(all(".nav-toggle"), { width: 0, marginInlineStart: 0, opacity: 0, duration: DURATION, ease: EASE }, 0)
-      .to(all(".nav-row > .menu-link"), { paddingInlineStart: miniPadding(), duration: DURATION, ease: EASE }, 0)
-      .to(all(".nav-section-title"), { height: 0, paddingTop: 0, paddingBottom: 0, opacity: 0, overflow: "hidden", duration: DURATION, ease: EASE }, 0)
-      .to(all(".nav-tree--nested"), { height: 0, opacity: 0, overflow: "hidden", duration: DURATION, ease: EASE }, 0);
+  /** Activa el pliegue sobre la estructura de `open` (si no lo estaba ya). */
+  function beginFold(el: HTMLElement) {
+    store.morphing = true;
+    if (el.hasAttribute(MORPH)) return;
+    // Rótulos flotantes de `mini` que hayan quedado a medias.
+    const texts = el.querySelectorAll<HTMLElement>(".menu-text");
+    if (texts.length) {
+      gsap.killTweensOf(texts);
+      gsap.set(texts, { clearProps: "opacity,pointerEvents" });
+    }
+    // Primero todas las lecturas, luego las escrituras: un solo cálculo de layout.
+    const folding = [...el.querySelectorAll<HTMLElement>(FOLDING)];
+    const heights = folding.map((node) => node.offsetHeight);
+    folding.forEach((node, i) => node.style.setProperty("--h", `${heights[i]}px`));
+    render();
+    el.setAttribute(MORPH, "");
   }
 
-  /** Despliega el contenido desde el aspecto `mini` hasta el natural. */
-  function expandContent(tl: gsap.core.Timeline) {
-    tl.from(all(".nav-toggle"), { width: 0, marginInlineStart: 0, opacity: 0, duration: DURATION, ease: EASE, clearProps: "width,marginInlineStart,opacity" }, 0)
-      .from(all(".nav-row > .menu-link"), { paddingInlineStart: miniPadding(), duration: DURATION, ease: EASE, clearProps: "paddingInlineStart" }, 0)
-      .from(all(".nav-section-title"), { height: 0, paddingTop: 0, paddingBottom: 0, opacity: 0, overflow: "hidden", duration: DURATION, ease: EASE, clearProps: "height,paddingTop,paddingBottom,opacity,overflow" }, 0)
-      .from(all(".menu-text"), { opacity: 0, duration: DURATION * 0.6, ease: "power1.out", clearProps: "opacity" }, DURATION * 0.4);
+  function endFold(el: HTMLElement) {
+    el.removeAttribute(MORPH);
+    state.c = 0;
+    store.morphing = false;
   }
 
-  /** Anima el panel al modo actual del store. `initial`: primer montaje. */
-  async function syncMode(initial = false) {
+  /** Coloca el panel en su modo sin animar (primer montaje, móvil). */
+  function snap(el: HTMLElement) {
+    shared.ready = true;
+    state.px = store.width;
+    store.shown = store.mode;
+    endFold(el);
+    render();
+    if (!ui.isMobile) el.style.visibility = store.mode === "close" ? "hidden" : "visible";
+  }
+
+  /** Anima el panel al modo actual del store. `mounted`: el panel acaba de montarse. */
+  async function syncMode(mounted = false) {
     const el = panel.value;
-    const main = document.querySelector<HTMLElement>(".main");
+    main = document.querySelector<HTMLElement>(".main");
     if (!el || !main) return;
-    const side = store.side;
-    const name = `--sb-${side}-w`;
-    const current = widths[side];
-    const write = () => {
-      el.style.setProperty(name, `${current.px}px`);
-      main.style.setProperty(name, `${current.px}px`);
-    };
 
-    modeTl?.kill();
-    modeTl = null;
-    resetContent();
-    el.style.setProperty(`--sb-${side}-open`, `${store.open}px`);
+    const interrupted = modeTween?.isActive() ?? false;
+    modeTween?.kill();
+    modeTween = null;
+    const gen = ++generation;
+    el.style.setProperty(`--sb-${store.side}-open`, `${store.open}px`);
+
+    // Primer panel de este lado, o móvil (el ancho no se ve): sin animación.
+    if ((mounted && !shared.ready) || ui.isMobile) return snap(el);
 
     const to = store.mode;
-    const from = store.shown;
+    let targetC = state.c;
+    let onDone: (() => void) | undefined;
 
-    // Primer montaje del lado, o móvil (el ancho no se ve): sin animación.
-    if ((initial && !current.ready) || ui.isMobile) {
-      current.ready = true;
-      current.px = store.width;
+    if (mounted) {
+      // Panel nuevo (cambio de ruta, vuelta de móvil): la estructura del destino ya,
+      // solo el ancho se anima desde el del panel anterior.
       store.shown = to;
-      write();
-      if (!ui.isMobile) gsap.set(el, { visibility: to === "close" ? "hidden" : "visible" });
-      return;
-    }
-    current.ready = true;
-    // Un panel recién montado (p. ej. el de una ruta) arranca del ancho actual.
-    write();
-
-    const tl = gsap.timeline({ defaults: { duration: DURATION, ease: EASE } });
-    modeTl = tl;
-    const flipAtEnd = to === "close" || (from === "open" && to === "mini");
-
-    if (to !== "close") tl.set(el, { visibility: "visible" }, 0);
-    if (!flipAtEnd) {
-      store.shown = to;
-      await nextTick();
-      if (modeTl !== tl) return;
-    }
-
-    tl.to(current, { px: store.width, onUpdate: write }, 0);
-    if (from === "open" && to === "mini") collapseContent(tl);
-    else if (from === "mini" && to === "open") expandContent(tl);
-
-    if (flipAtEnd) {
-      tl.call(async () => {
-        store.shown = to;
+      endFold(el);
+      render();
+      if (to === "close") onDone = () => (el.style.visibility = "hidden");
+    } else if (to === "open") {
+      if (store.shown === "mini") {
+        // Estructura de `open` con el pliegue en 1: se ve igual que `mini`.
+        state.c = 1;
+        store.morphing = true;
+        store.shown = "open";
         await nextTick();
-        resetContent();
-        if (to === "close") gsap.set(el, { visibility: "hidden" });
-      });
+        if (gen !== generation) return;
+        beginFold(el);
+      } else {
+        store.shown = "open";
+      }
+      targetC = 0;
+      onDone = () => endFold(el);
+    } else if (to === "mini") {
+      if (store.shown === "close") {
+        // Desde oculto: la estructura de `mini` directamente.
+        endFold(el);
+        store.shown = "mini";
+      } else if (store.shown === "open") {
+        beginFold(el);
+        targetC = 1;
+        onDone = async () => {
+          store.shown = "mini";
+          await nextTick();
+          if (gen === generation) endFold(el);
+        };
+      }
+    } else {
+      onDone = async () => {
+        el.style.visibility = "hidden";
+        store.shown = "close";
+        await nextTick();
+        if (gen === generation) endFold(el);
+      };
     }
+
+    if (to !== "close") el.style.visibility = "visible";
+    modeTween = gsap.to(state, {
+      px: store.width,
+      c: targetC,
+      duration: DURATION,
+      // Interrumpido ya va en movimiento: arrancar desde reposo se sentiría como un tirón.
+      ease: interrupted ? "circ.out" : EASE,
+      onUpdate: render,
+      onComplete: onDone,
+    });
   }
 
   // ---- Móvil: drawer -----------------------------------------------------------
@@ -199,8 +241,12 @@ export function useSidebarMotion(store: SidebarStore, panel: Ref<HTMLElement | n
   });
 
   onBeforeUnmount(() => {
-    modeTl?.kill();
+    modeTween?.kill();
     drawerTl?.kill();
+    generation++;
+    // El store sobrevive al panel: que el siguiente no herede un pliegue a medias.
+    store.morphing = false;
+    if (store.shown !== store.mode) store.shown = store.mode;
     const el = panel.value;
     el?.removeEventListener("mouseover", onOver);
     el?.removeEventListener("mouseout", onOut);

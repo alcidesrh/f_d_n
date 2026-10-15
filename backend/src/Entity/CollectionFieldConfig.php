@@ -33,6 +33,16 @@ class CollectionFieldConfig  extends FieldConfig
     private ?string $width = null;
 
     /**
+     * Relación a una entidad con muchos registros (cientos o miles, p. ej.
+     * `BoletoTarifa.trayecto`): su filtro es un autocompletado que busca en el
+     * servidor mientras se teclea, en lugar de cargar todos los registros.
+     * Solo tiene efecto en columnas de relación filtrables.
+     */
+    #[ORM\Column(nullable: true)]
+    #[Groups(['read:dto'])]
+    private ?bool $autocomplete = null;
+
+    /**
      * `sortable`/`filterable` nacen apagados: ordenar o filtrar por una
      * columna se habilita explícitamente (null y false significan lo mismo).
      */
@@ -109,4 +119,15 @@ class CollectionFieldConfig  extends FieldConfig
         return $this;
     }
 
+    public function isAutocomplete(): ?bool
+    {
+        return $this->autocomplete;
+    }
+
+    public function setAutocomplete(?bool $autocomplete): static
+    {
+        $this->autocomplete = $autocomplete;
+
+        return $this;
+    }
 }

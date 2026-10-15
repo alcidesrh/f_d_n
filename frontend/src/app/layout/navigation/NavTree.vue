@@ -58,6 +58,8 @@ watch(
 
 /** Submenú: se despliega de alto 0 a su altura natural y sus ítems entran escalonados. */
 function onEnter(el: Element, done: () => void) {
+  // Al desplegarse el panel desde `mini` el alto lo anima el pliegue (`sidebarMotion.ts`).
+  if (props.sidebar.morphing) return done();
   gsap
     .timeline({ onComplete: done })
     .fromTo(
@@ -88,6 +90,8 @@ function onEnter(el: Element, done: () => void) {
 
 /** Se pliega hasta alto 0. */
 function onLeave(el: Element, done: () => void) {
+  // Al llegar a `mini` el pliegue ya lo dejó en alto 0.
+  if (props.sidebar.morphing) return done();
   gsap.to(el, {
     height: 0,
     opacity: 0,

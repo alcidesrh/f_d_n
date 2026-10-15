@@ -29,6 +29,8 @@ export interface ListFeatures {
   bulkDelete: boolean
   /** "Enviar por chat" la selección. */
   share: boolean
+  /** Botón "Nuevo" que abre el formulario de un registro nuevo. */
+  create: boolean
   pagination: boolean
   /** Densidad y disposición (tabla/tarjetas). */
   view: boolean
@@ -39,9 +41,10 @@ export interface ListFeatures {
 export interface FeatureContext {
   /** El listado es un selector (`v-model:seleccion`): siempre en selección, sin editar. */
   selector: boolean
-  /** La entidad tiene mutación de update / delete. */
+  /** La entidad tiene mutación de update / delete / create. */
   canUpdate: boolean
   canDelete: boolean
+  canCreate: boolean
   /** Entidad de solo lectura (`entityReadOnly`). */
   readOnly: boolean
   options?: ListOptions
@@ -60,6 +63,7 @@ const ALL_ON: ListFeatures = {
   selection: true,
   bulkDelete: true,
   share: true,
+  create: true,
   pagination: true,
   view: true,
   maximize: true,
@@ -72,6 +76,7 @@ const SELECTOR_OFF: Partial<ListFeatures> = {
   rowActions: false,
   bulkDelete: false,
   share: false,
+  create: false,
   maximize: false,
 }
 
@@ -89,6 +94,7 @@ export function resolveListFeatures(context: FeatureContext): ListFeatures {
 
   if (!context.canUpdate || context.readOnly) features.inlineEdit = false
   if (!context.canDelete || context.readOnly) features.bulkDelete = false
+  if (!context.canCreate || context.readOnly) features.create = false
   // En el selector la selección es el propósito: no se puede apagar.
   if (context.selector) features.selection = true
   return features

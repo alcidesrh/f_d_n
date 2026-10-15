@@ -29,6 +29,8 @@ export interface FieldConfigDto {
 export interface CollectionFieldConfigDto extends FieldConfigDto {
   sortable: boolean | null
   filterable: boolean | null
+  /** Relación con muchos registros: su filtro autocompleta en el servidor. */
+  autocomplete: boolean | null
   /** Ancho en el listado: preset (`xs`…`xl`), longitud (`12rem`) o fracción (`2fr`). */
   width: string | null
 }
@@ -78,6 +80,7 @@ const ENTITY_CONFIGURATION_QUERY = gql`
         attrs
         sortable
         filterable
+        autocomplete
         width
       }
       formFields {
@@ -111,6 +114,7 @@ const UPDATE_ENTITY_CONFIGURATION = gql`
           attrs
           sortable
           filterable
+          autocomplete
           width
         }
         formFields {

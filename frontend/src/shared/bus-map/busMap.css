@@ -41,6 +41,14 @@
   --bm-voucher-stroke: color-mix(in srgb, var(--p-neutral-800, #f43f5e) 60%, var(--p-content-background));
   --bm-voucher-ink: var(--p-neutral-800, #9f1239);
 
+  /*
+   * Libre que conviene vender (ADR-030): alterna con el libre y toma el color del
+   * canal que vende. VentaPage.vue lo fija por canal (estación = azul, agencia =
+   * esmeralda); este es el de la estación.
+   */
+  --bm-recommended: var(--bm-occupied);
+  --bm-recommended-stroke: var(--bm-occupied-stroke);
+
   --bm-reserved: var(--p-orange-500, #f97316);
   --bm-reserved-soft: color-mix(in srgb, var(--p-orange-500, #f97316) 10%, var(--p-content-background));
 

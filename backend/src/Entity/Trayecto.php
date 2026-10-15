@@ -13,7 +13,12 @@ use Doctrine\ORM\Mapping as ORM;
  * de paradas en orden de cada ruta (`App\Ruta\Trayectos`).
  */
 #[ORM\Entity]
-#[ORM\UniqueConstraint(name: "uq_trayecto_origen_destino", columns: ["origen_id", "destino_id"])]
+#[
+    ORM\UniqueConstraint(
+        name: "uq_trayecto_origen_destino",
+        columns: ["origen_id", "destino_id"],
+    ),
+]
 #[ApiResourcePaginationPage]
 class Trayecto extends Base
 {
@@ -74,7 +79,19 @@ class Trayecto extends Base
 
     public function getNombre(): ?string
     {
-        return $this->nombre;
+        return $this->nombre ?? $this->getLabel();
+    }
+
+    /** Sin `nombre`, el par se muestra como `origen → destino` (no como el id). */
+    public function getLabel(): string
+    {
+        if ($this->nombre) {
+            return $this->nombre;
+        }
+
+        return ($this->origen?->getLabel() ?? "?") .
+            " → " .
+            ($this->destino?->getLabel() ?? "?");
     }
 
     public function setNombre(?string $nombre): static

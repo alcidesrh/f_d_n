@@ -180,6 +180,28 @@ export class ApiPlatformClient {
     return Array.isArray(data) ? (data as AgnosticOption[]) : []
   }
 
+  /**
+   * Unas pocas options de una entidad con muchos registros: las que coinciden
+   * con `search` (autocompletado, los primeros `limit`) o las de `ids` (IRIs;
+   * la etiqueta de lo ya elegido). Sin caché: `Agnostic` no tiene un id
+   * estable y Apollo mezclaría respuestas.
+   */
+  async agnosticSearch(
+    resource: string,
+    args: { search?: string; ids?: string[]; limit?: number },
+  ): Promise<AgnosticOption[]> {
+    const query = toDocument(
+      `query OptionSearch($resource: String!, $search: String, $ids: [String], $limit: Int) {\n  collectionAgnostic(resource: $resource, search: $search, ids: $ids, limit: $limit) {\n    data\n  }\n}`,
+    )
+    const result = await this.client.query<{ collectionAgnostic: { data: unknown } }>({
+      query,
+      variables: { resource, ...args },
+      fetchPolicy: 'no-cache',
+    })
+    const data = result.data?.collectionAgnostic?.data
+    return Array.isArray(data) ? (data as AgnosticOption[]) : []
+  }
+
   async create<T>(entity: EntitySchema, input: Record<string, unknown>): Promise<T> {
     return this.runMutation<T>(entity, entity.create, input)
   }

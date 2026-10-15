@@ -87,6 +87,7 @@ function collectionPayload(row: CollectionFieldRow, index: number): CollectionFi
     // Ordenar y filtrar se habilitan a mano: null y false son lo mismo (apagado).
     sortable: Boolean(row.sortable),
     filterable: Boolean(row.filterable),
+    autocomplete: Boolean(row.autocomplete),
     width: row.width?.trim() || null,
   }
 }

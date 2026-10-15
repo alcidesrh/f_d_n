@@ -11,7 +11,7 @@
   mide 48rem (container query), croquis fijo a la derecha.
 -->
 <template>
-  <div class="venta flex flex-col gap-2 md:gap-4">
+  <div class="venta flex flex-col gap-2 md:gap-4" :style="colorRecomendado">
     <Message v-if="store.errorCarga" severity="error" :closable="false">
       {{ store.errorCarga }}
       <Button label="Reintentar" size="small" text @click="store.iniciar()" />
@@ -300,6 +300,13 @@ function etiquetaDia(delta: number) {
   return new Intl.DateTimeFormat("es-GT", { weekday: "short", day: "numeric", month: "short" }).format(d);
 }
 const leyenda: ItemLeyenda[] = ["disponible", "recomendado", "ocupado", "ocupado-web", "ocupado-agencia", "reservado", "cortesia", "voucher"];
+
+/** El recomendado toma el color del canal que vende esta pantalla: estación = azul, agencia = esmeralda. */
+const colorRecomendado = computed(() =>
+  store.contexto?.canal === "agencia"
+    ? { "--bm-recommended": "var(--bm-sold-agency)", "--bm-recommended-stroke": "var(--bm-sold-agency-stroke)" }
+    : { "--bm-recommended": "var(--bm-occupied)", "--bm-recommended-stroke": "var(--bm-occupied-stroke)" },
+);
 
 const opcionesParada = (paradas: Parada[]) =>
   paradas.map((p) => ({

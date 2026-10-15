@@ -29,7 +29,18 @@ use App\Resolver\DeleteMultipleMutationResolver;
                 name: "collection",
                 resolver: CollectionResolver::class,
                 read: false,
-                args: ["resource" => ["type" => "String"]],
+                args: [
+                    "resource" => ["type" => "String"],
+                    "search" => [
+                        "type" => "String",
+                        "description" => "Autocompletado: los primeros `limit` que coinciden (aunque sea vacío).",
+                    ],
+                    "ids" => [
+                        "type" => "[String]",
+                        "description" => "Solo estos registros (IRIs o ids): la etiqueta de lo ya elegido.",
+                    ],
+                    "limit" => ["type" => "Int"],
+                ],
                 output: Agnostic::class,
             ),
         ],

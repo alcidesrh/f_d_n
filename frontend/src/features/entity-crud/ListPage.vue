@@ -2,7 +2,7 @@
   <div>
     <Teleport v-if="store" to="body" :disabled="!maximized">
       <div class="list-page card" :class="{ 'is-maximized': maximized, 'is-fill': fill }" :aria-modal="maximized || undefined" :role="maximized ? 'dialog' : undefined">
-        <ListToolbar v-if="features.toolbar" :features="features" :columns="store.columns" :view="store.view" :active-filters="filters.active.value.length" :filter-panel="cardsMode" :selection-mode="modoSeleccion" :selected-count="selectedRows.length" :acciones="enSelector ? [] : accionesDisponibles" :maximized="maximized" :configurable="configurable && !enSelector" @toggle-selection="toggleSelectionMode" @clear-selection="setSelection([])" @share="compartir = true" @accion="ejecutarAccion" @column-visible="setColumnVisible" @show-all-columns="showAllColumns" @toggle-filters="store.view.filtersOpen = !store.view.filtersOpen" @density="store.view.density = $event" @layout="store.view.layout = $event" @maximize="maximized = !maximized" @reset="resetView" @configure="emit('configure')">
+        <ListToolbar v-if="features.toolbar" :features="features" :columns="store.columns" :view="store.view" :active-filters="filters.active.value.length" :filter-panel="cardsMode" :selection-mode="modoSeleccion" :selected-count="selectedRows.length" :acciones="enSelector ? [] : accionesDisponibles" :maximized="maximized" :configurable="configurable && !enSelector" @toggle-selection="toggleSelectionMode" @clear-selection="setSelection([])" @share="compartir = true" @accion="ejecutarAccion" @column-visible="setColumnVisible" @show-all-columns="showAllColumns" @toggle-filters="store.view.filtersOpen = !store.view.filtersOpen" @density="store.view.density = $event" @layout="store.view.layout = $event" @maximize="maximized = !maximized" @reset="resetView" @create="onCreate" @configure="emit('configure')">
           <template #start>
             <div v-if="filters.active.value.length" class="list-chips" aria-label="Filtros aplicados">
               <span v-for="field in filters.active.value" :key="field" class="list-chip">
@@ -20,7 +20,7 @@
         <div v-if="cardsMode && store.view.filtersOpen && (features.filter || features.sort)" class="list-panel">
           <label v-for="column in filterableColumns" :key="column.field" class="list-panel__field">
             <span>{{ titleOf(column.field) }}</span>
-            <ListFilterField :kind="filters.kindOf(column.field)" :label="titleOf(column.field)" :model-value="filters.values[column.field]" :options="filters.optionsFor(column.field)" :multiple="filters.isMulti(column.field)" @update:model-value="filters.set(column.field, $event)" />
+            <ListFilterField :kind="filters.kindOf(column.field)" :label="titleOf(column.field)" :model-value="filters.values[column.field]" :options="filters.optionsFor(column.field)" :search="filters.isRemote(column.field) ? (q: string) => filters.search(column.field, q) : undefined" :multiple="filters.isMulti(column.field)" @update:model-value="filters.set(column.field, $event)" />
           </label>
           <div v-if="features.sort && sortableColumns.length" class="list-panel__field">
             <span>Ordenar por</span>
@@ -41,7 +41,7 @@
             <ListCellEditor v-if="editing" :entity="entityName" :column="configOf(column.key)" :data="editing.draft" @commit="commitEdit" @cancel="editing = null" />
           </template>
           <template #filter="{ column }">
-            <ListFilterField :kind="filters.kindOf(column.key)" :label="column.label" :model-value="filters.values[column.key]" :options="filters.optionsFor(column.key)" :multiple="filters.isMulti(column.key)" :input-id="`${uid}-f-${column.key}`" @update:model-value="filters.set(column.key, $event)" />
+            <ListFilterField :kind="filters.kindOf(column.key)" :label="column.label" :model-value="filters.values[column.key]" :options="filters.optionsFor(column.key)" :search="filters.isRemote(column.key) ? (q: string) => filters.search(column.key, q) : undefined" :multiple="filters.isMulti(column.key)" :input-id="`${uid}-f-${column.key}`" @update:model-value="filters.set(column.key, $event)" />
           </template>
           <template #actions="{ row }">
             <ListActions :item="row" :actions="extraActions" :can-edit="canEditRow" :can-delete="canDeleteRow" @edit="onEdit" @delete="askDelete" @action="openAction" />
@@ -146,6 +146,7 @@ const features = computed(() =>
     selector: enSelector.value,
     canUpdate: Boolean(store.value?.metadata.update),
     canDelete: Boolean(store.value?.metadata.delete),
+    canCreate: Boolean(store.value?.metadata.create),
     readOnly: soloLectura.value,
     options: store.value?.listOptions,
     overrides: props.features,
@@ -313,6 +314,11 @@ function onEdit(item: unknown) {
   void router.push({ name: "entity-form", params: { entity: entityName.value, id } });
 }
 
+function onCreate() {
+  if (maximized.value) maximized.value = false;
+  void router.push({ name: "entity-form", params: { entity: entityName.value } });
+}
+
 function askDelete(item: unknown) {
   const current = store.value;
   const id = (item as { id?: string | number }).id;
@@ -399,7 +405,11 @@ function confirmBulkDelete() {
   const rows = [...selectedRows.value];
   if (!current || !rows.length) return;
   const dialogo = entityDeleteDialogs[entityName.value];
-  if (dialogo) return abrirBorradoPropio(dialogo, rows.map((fila) => Number(claveFila(fila))));
+  if (dialogo)
+    return abrirBorradoPropio(
+      dialogo,
+      rows.map((fila) => Number(claveFila(fila))),
+    );
   confirm.require({
     header: "Eliminar seleccionados",
     message: `¿Eliminar ${rows.length === 1 ? "el registro seleccionado" : `los ${rows.length} registros seleccionados`}? Esta acción no se puede deshacer.`,

@@ -108,6 +108,13 @@
           @update:model-value="(row as CollectionFieldRow).filterable = $event as boolean"
         />
       </div>
+      <div class="cell cell--switch" title="Relación con muchos registros: el filtro busca en el servidor al teclear en lugar de cargarlos todos.">
+        <span class="cell__label">autocomplete</span>
+        <ToggleSwitch
+          :model-value="Boolean((row as CollectionFieldRow).autocomplete)"
+          @update:model-value="(row as CollectionFieldRow).autocomplete = $event as boolean"
+        />
+      </div>
     </template>
   </div>
 </template>

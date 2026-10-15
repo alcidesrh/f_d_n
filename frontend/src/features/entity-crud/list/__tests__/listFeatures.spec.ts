@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { resolveListFeatures } from '../listFeatures'
 
-const base = { selector: false, canUpdate: true, canDelete: true, readOnly: false }
+const base = { selector: false, canUpdate: true, canDelete: true, canCreate: true, readOnly: false }
 
 describe('resolveListFeatures', () => {
   it('en la página todo está disponible', () => {
@@ -10,7 +10,11 @@ describe('resolveListFeatures', () => {
   })
 
   it('el selector no edita ni opera, pero siempre selecciona', () => {
-    const features = resolveListFeatures({ ...base, selector: true, overrides: { selection: false } })
+    const features = resolveListFeatures({
+      ...base,
+      selector: true,
+      overrides: { selection: false },
+    })
     expect(features.selection).toBe(true)
     expect(features.inlineEdit).toBe(false)
     expect(features.rowActions).toBe(false)
@@ -20,12 +24,32 @@ describe('resolveListFeatures', () => {
 
   it('las opciones de la entidad apagan, y la prop manda sobre ellas', () => {
     expect(resolveListFeatures({ ...base, options: { selectable: false } }).selection).toBe(false)
-    expect(resolveListFeatures({ ...base, options: { selectable: false }, overrides: { selection: true } }).selection).toBe(true)
+    expect(
+      resolveListFeatures({
+        ...base,
+        options: { selectable: false },
+        overrides: { selection: true },
+      }).selection,
+    ).toBe(true)
     expect(resolveListFeatures({ ...base, overrides: { toolbar: false } }).toolbar).toBe(false)
   })
 
+  it('"Nuevo" solo si la entidad tiene create, nunca en el selector ni en solo lectura', () => {
+    expect(resolveListFeatures({ ...base, canCreate: false }).create).toBe(false)
+    expect(resolveListFeatures({ ...base, selector: true }).create).toBe(false)
+    expect(
+      resolveListFeatures({ ...base, readOnly: true, overrides: { create: true } }).create,
+    ).toBe(false)
+    expect(resolveListFeatures({ ...base, overrides: { create: false } }).create).toBe(false)
+  })
+
   it('lo que la entidad no permite no se enciende ni con la prop', () => {
-    const features = resolveListFeatures({ ...base, canUpdate: false, readOnly: true, overrides: { inlineEdit: true, bulkDelete: true } })
+    const features = resolveListFeatures({
+      ...base,
+      canUpdate: false,
+      readOnly: true,
+      overrides: { inlineEdit: true, bulkDelete: true },
+    })
     expect(features.inlineEdit).toBe(false)
     expect(features.bulkDelete).toBe(false)
   })

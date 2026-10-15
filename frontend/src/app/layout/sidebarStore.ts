@@ -20,6 +20,11 @@ export interface SidebarStoreState {
    * `sidebarMotion.ts` en el momento exacto de la animación (no persistido).
    */
   shown: SidebarMode;
+  /**
+   * Pliegue `open ⇄ mini` en curso (lo mueve `sidebarMotion.ts`, no persistido):
+   * los submenús entran y salen sin su propia animación, la lleva el pliegue.
+   */
+  morphing: boolean;
   open: number;
   mini: number;
   close: number;
@@ -36,6 +41,7 @@ function createDefinition(side: "left" | "right", name: string) {
       mode: "open",
       prevMode: "mini",
       shown: "open",
+      morphing: false,
       open: 250,
       mini: 60,
       close: 0,

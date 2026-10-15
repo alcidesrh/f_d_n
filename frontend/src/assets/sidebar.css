@@ -168,10 +168,10 @@
   opacity: 1;
 }
 .sidebar.mini {
+  /* Mismo alto que en `open` (padding, no margin): el menú no brinca al cambiar de modo. */
   & .sidebar-control {
     justify-content: center;
-    padding: 0px;
-    margin-top: 3px;
+    padding: 3px 0 0;
   }
   /* Solo íconos (la columna mide `--sb-mini`). Al pasar el mouse el texto aparece
      flotando sobre el contenido. Es `position: fixed` para no ser recortado por el
@@ -206,5 +206,44 @@
       right: var(--sb-mini);
       border-radius: 8px 0 0 8px;
     }
+  }
+}
+
+/* Pliegue `open ⇄ mini` (lo anima `sidebarMotion.ts`). Con `data-sb-morph` el menú
+   conserva la estructura de `open` y `--sb-c` (0 = open, 1 = mini) lo lleva al aspecto
+   exacto de `mini`: en 1 no se distingue de él y el cambio de estructura no se nota.
+   Todo sale de una sola variable que GSAP escribe en el panel; `--h` es el alto
+   natural de cada encabezado o submenú, medido al empezar. */
+.sidebar[data-sb-morph] {
+  --sb-k: calc(1 - var(--sb-c));
+  & > nav {
+    scrollbar-width: none;
+  }
+  /* Botones: de `padding 7px` alineados al borde a centrados en `--sb-mini` (3px). */
+  & .sidebar-control {
+    padding-inline: calc(7px - 4px * var(--sb-c));
+  }
+  /* El texto se va en el primer 40 % del pliegue (y vuelve en el último 40 %). */
+  & .menu-text {
+    opacity: clamp(0, 1 - 2.5 * var(--sb-c), 1);
+  }
+  & .nav-row:not(.nav-row--mini) > .menu-link {
+    padding-inline-start: calc(0.5rem + ((var(--sb-mini) - 24px) / 2 - 0.5rem) * var(--sb-c));
+  }
+  & .nav-toggle {
+    width: calc(1.5rem * var(--sb-k));
+    margin-inline-start: calc((0.5rem + var(--depth, 0) * 0.9rem) * var(--sb-k));
+    opacity: var(--sb-k);
+  }
+  & .nav-section-title {
+    height: calc(var(--h) * var(--sb-k));
+    padding-block: calc(0.5rem * var(--sb-k));
+    overflow: hidden;
+    opacity: clamp(0, 1 - 2.5 * var(--sb-c), 1);
+  }
+  & .nav-tree--nested {
+    height: calc(var(--h) * var(--sb-k));
+    overflow: hidden;
+    opacity: var(--sb-k);
   }
 }

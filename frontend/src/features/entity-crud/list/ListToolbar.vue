@@ -2,7 +2,7 @@
   <div class="list-toolbar">
     <!-- Con filas elegidas: qué hacer con ellas. Si no, lo que ponga el listado (filtros aplicados). -->
     <div v-if="selectionMode && selectedCount > 0" class="list-toolbar__selection" role="region" aria-label="Selección">
-      <span class="whitespace-nowrap text-sm font-medium">{{ selectedCount }} {{ selectedCount === 1 ? 'seleccionado' : 'seleccionados' }}</span>
+      <span class="whitespace-nowrap text-sm font-medium">{{ selectedCount }} {{ selectedCount === 1 ? "seleccionado" : "seleccionados" }}</span>
       <span class="flex flex-wrap items-center gap-1">
         <Button v-for="accion in acciones" :key="accion.key" size="small" text :severity="accion.severity ?? 'primary'" :aria-label="accion.label" v-tooltip.bottom="accion.label" @click="emit('accion', accion)">
           <icon :name="accion.icon" size="1.15rem" :class="accion.severity === 'danger' ? 'text-red-500' : 'text-primary'" />
@@ -22,13 +22,6 @@
     </div>
 
     <div class="list-toolbar__controls" role="toolbar" aria-label="Controles del listado">
-      <button v-if="features.filter && filterPanel" type="button" class="list-toolbar__btn tap-target" :class="{ 'is-on': view.filtersOpen }" :aria-pressed="view.filtersOpen" aria-label="Filtros" v-tooltip.bottom="'Filtros'" @click="emit('toggle-filters')">
-        <OverlayBadge v-if="activeFilters > 0" :value="String(activeFilters)" size="small">
-          <icon name="filter-alt-outline" size="1.25rem" />
-        </OverlayBadge>
-        <icon v-else name="filter-alt-outline" size="1.25rem" />
-      </button>
-
       <button v-if="features.columns" type="button" class="list-toolbar__btn tap-target" aria-label="Columnas" v-tooltip.bottom="'Columnas'" @click="columnsPopover?.toggle($event)">
         <OverlayBadge v-if="hiddenCount > 0" :value="String(hiddenCount)" severity="secondary" size="small">
           <icon name="view-column-outline" size="1.25rem" />
@@ -51,7 +44,7 @@
       </Popover>
 
       <button v-if="features.view" type="button" class="list-toolbar__btn tap-target" aria-label="Vista" v-tooltip.bottom="'Vista'" @click="viewPopover?.toggle($event)">
-        <icon :name="DENSITY_ICON[view.density]" size="1.25rem" />
+        <icon :name="DENSITY_ICON[view.density]" size="1rem" :weight="500" />
       </button>
       <Popover ref="viewPopover">
         <div class="flex flex-col gap-3 p-1">
@@ -66,8 +59,21 @@
         </div>
       </Popover>
 
+      <span v-if="features.view || features.columns" class="list-toolbar__sep" aria-hidden="true" />
+
+      <button v-if="features.filter && filterPanel" type="button" class="list-toolbar__btn tap-target" :class="{ 'is-on': view.filtersOpen }" :aria-pressed="view.filtersOpen" aria-label="Filtros" v-tooltip.bottom="'Filtros'" @click="emit('toggle-filters')">
+        <OverlayBadge v-if="activeFilters > 0" :value="String(activeFilters)" size="small">
+          <icon name="filter-alt-outline" size="1.25rem" />
+        </OverlayBadge>
+        <icon v-else name="filter-alt-outline" size="1.25rem" />
+      </button>
+
       <button v-if="features.selection" type="button" class="list-toolbar__btn tap-target" :class="{ 'is-on': selectionMode }" :aria-pressed="selectionMode" aria-label="Modo selección" v-tooltip.bottom="'Seleccionar'" @click="emit('toggle-selection')">
         <icon :name="selectionMode ? 'check-box' : 'check-box-outline'" size="1.25rem" />
+      </button>
+
+      <button v-if="features.create" type="button" class="list-toolbar__btn tap-target" aria-label="Nuevo" v-tooltip.bottom="'Nuevo'" @click="emit('create')">
+        <icon name="add" size="1.55rem" />
       </button>
 
       <span v-if="features.maximize || configurable || features.reset" class="list-toolbar__sep" aria-hidden="true" />
@@ -86,66 +92,68 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import type { Popover as PopoverType } from 'primevue'
-import type { CollectionFieldConfig, ListDensity, ListLayout, ListViewState } from '@/core/entities/types'
-import type { EntityBulkAction } from './listActions'
-import type { ListFeatures } from './listFeatures'
+import { computed, ref } from "vue";
+import type { Popover as PopoverType } from "primevue";
+import type { CollectionFieldConfig, ListDensity, ListLayout, ListViewState } from "@/core/entities/types";
+import type { EntityBulkAction } from "./listActions";
+import type { ListFeatures } from "./listFeatures";
 
 const DENSITIES: Array<{ label: string; value: ListDensity }> = [
-  { label: 'Compacta', value: 'compact' },
-  { label: 'Normal', value: 'normal' },
-  { label: 'Amplia', value: 'comfortable' },
-]
+  { label: "Compacta", value: "compact" },
+  { label: "Normal", value: "normal" },
+  { label: "Amplia", value: "comfortable" },
+];
 const LAYOUTS: Array<{ label: string; value: ListLayout }> = [
-  { label: 'Auto', value: 'auto' },
-  { label: 'Tabla', value: 'table' },
-  { label: 'Tarjetas', value: 'cards' },
-]
-const DENSITY_ICON: Record<ListDensity, string> = { compact: 'density-small', normal: 'density-medium', comfortable: 'density-large' }
+  { label: "Auto", value: "auto" },
+  { label: "Tabla", value: "table" },
+  { label: "Tarjetas", value: "cards" },
+];
+const DENSITY_ICON: Record<ListDensity, string> = { compact: "density-small", normal: "density-medium", comfortable: "density-large" };
 
 const props = withDefaults(
   defineProps<{
-    features: ListFeatures
+    features: ListFeatures;
     /** Todas las columnas (visibles y ocultas), en orden. */
-    columns: CollectionFieldConfig[]
-    view: ListViewState
-    activeFilters?: number
+    columns: CollectionFieldConfig[];
+    view: ListViewState;
+    activeFilters?: number;
     /** En tarjetas (sin cabeceras) los filtros van en un panel que abre este botón. */
-    filterPanel?: boolean
-    selectionMode: boolean
-    selectedCount: number
+    filterPanel?: boolean;
+    selectionMode: boolean;
+    selectedCount: number;
     /** Acciones sobre la selección (eliminar y las de la entidad), ya filtradas por permiso. */
-    acciones?: EntityBulkAction[]
-    maximized?: boolean
+    acciones?: EntityBulkAction[];
+    maximized?: boolean;
     /** Muestra la opción que reemplaza el listado por la configuración de la entidad. */
-    configurable?: boolean
+    configurable?: boolean;
   }>(),
   { activeFilters: 0, filterPanel: false, acciones: () => [], maximized: false, configurable: false },
-)
+);
 
 const emit = defineEmits<{
-  'toggle-selection': []
-  'clear-selection': []
+  "toggle-selection": [];
+  "clear-selection": [];
+  /** Abrir el formulario de un registro nuevo. */
+  create: [];
   /** Enviar los seleccionados por el chat interno. */
-  share: []
+  share: [];
   /** Una acción sobre la selección. */
-  accion: [accion: EntityBulkAction]
-  'column-visible': [field: string, visible: boolean]
-  'show-all-columns': []
-  'toggle-filters': []
-  density: [density: ListDensity]
-  layout: [layout: ListLayout]
-  maximize: []
-  reset: []
-  configure: []
-}>()
+  accion: [accion: EntityBulkAction];
+  "column-visible": [field: string, visible: boolean];
+  "show-all-columns": [];
+  "toggle-filters": [];
+  density: [density: ListDensity];
+  layout: [layout: ListLayout];
+  maximize: [];
+  reset: [];
+  configure: [];
+}>();
 
-const columnsPopover = ref<InstanceType<typeof PopoverType> | null>(null)
-const viewPopover = ref<InstanceType<typeof PopoverType> | null>(null)
+const columnsPopover = ref<InstanceType<typeof PopoverType> | null>(null);
+const viewPopover = ref<InstanceType<typeof PopoverType> | null>(null);
 
-const hiddenCount = computed(() => props.columns.filter((c) => c.visible === false).length)
-const visibleCount = computed(() => props.columns.length - hiddenCount.value)
+const hiddenCount = computed(() => props.columns.filter((c) => c.visible === false).length);
+const visibleCount = computed(() => props.columns.length - hiddenCount.value);
 </script>
 
 <style scoped>
