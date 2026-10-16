@@ -11,7 +11,7 @@
       <p class="m-0 text-sm text-muted-color">Salida #{{ salida.id }} · {{ salida.ruta.nombre }}</p>
       <label class="flex flex-col gap-1">
         <span class="text-xs font-medium text-muted-color">Ruta</span>
-        <RutaSelect v-model="rutaId" :rutas="opciones.rutas" />
+        <RutaSelect v-model="rutaId" />
         <span class="text-xs text-muted-color">La ruta solo se cambia si la salida no tiene asientos vendidos ni apartados.</span>
       </label>
       <div class="flex flex-col gap-1">

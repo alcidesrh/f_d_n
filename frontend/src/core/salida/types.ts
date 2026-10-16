@@ -52,7 +52,6 @@ export interface OpcionesSalidas {
   empresas: Opcion[]
   /** Empresa del usuario; null = puede elegirla en el programador para filtrar distribuciones y buses. */
   miEmpresaId: number | null
-  rutas: RutaOpcion[]
   buses: BusOpcion[]
   /** Moldes y clases de los buses visibles: filtros para elegir un bus compatible. */
   croquis: CroquisMolde[]

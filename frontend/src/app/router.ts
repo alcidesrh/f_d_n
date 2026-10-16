@@ -128,6 +128,16 @@ export const router = createRouter({
       },
     },
     {
+      path: "/tarifas/mapa",
+      name: "tarifas-mapa",
+      component: () => import("@/features/tarifa/TarifasMapaPage.vue"),
+      meta: {
+        title: "Tarifas en el mapa",
+        label: "Tarifas en el mapa",
+        icon: "map-outline",
+      },
+    },
+    {
       path: "/seguimiento",
       name: "seguimiento",
       component: () => import("@/features/seguimiento/SeguimientoPage.vue"),
@@ -273,7 +283,7 @@ export const router = createRouter({
       },
     },
     {
-      path: "/lista/:entity",
+      path: "/lista/:entity?",
       name: "entity-list",
       props: true,
       component: () => import("@/features/entity-crud/ListPage.vue"),

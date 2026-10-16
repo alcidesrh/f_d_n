@@ -83,7 +83,9 @@
 
 <script setup lang="ts">
 import { useConfirm } from "primevue/useconfirm";
+import { useRoute } from "vue-router";
 import ListPage from "@/features/entity-crud/ListPage.vue";
+import { entityNameFromSlug } from "@/core/entities/slug";
 import FieldConfigPanel from "./FieldConfigPanel.vue";
 import ListOptionsPanel from "./ListOptionsPanel.vue";
 import SortablePanelList from "@/shared/ui/SortablePanelList.vue";
@@ -100,6 +102,7 @@ const GAP = 10;
 const store = useEntityConfigStore();
 const schema = useSchemaStore();
 const confirm = useConfirm();
+const route = useRoute();
 const tab = ref("collection");
 /** `list`: listado real de la entidad; `config`: tabs de configuración. */
 const view = ref<"list" | "config">("list");
@@ -153,5 +156,16 @@ async function save() {
 
 onBeforeRouteLeave(() => confirmDiscard("Vas a salir del editor y se perderán los cambios."));
 
-onMounted(() => store.loadEntityClasses());
+/** `?entidad=bus` (desde el listado de la entidad) abre esa entidad directamente. */
+async function abrirDeQuery() {
+  const slug = route.query.entidad;
+  if (typeof slug !== "string") return;
+  const entityClass = entityNameFromSlug(slug);
+  if (store.entityClasses.includes(entityClass)) await onSelectEntity({ value: entityClass });
+}
+
+onMounted(async () => {
+  await store.loadEntityClasses();
+  await abrirDeQuery();
+});
 </script>

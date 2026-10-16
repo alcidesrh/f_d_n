@@ -113,12 +113,23 @@ final class VueRouteSynchronizer
     }
 
     /**
+     * Parámetros obligatorios de la ruta: `:entity?` (opcional) no cuenta, porque
+     * la ruta funciona sin él (p. ej. `/lista` muestra el selector de entidad).
+     *
      * @return list<string>
      */
     public static function extractParams(string $path): array
     {
-        preg_match_all('/:(\w+)/', $path, $matches);
+        // Grupos: 1 = nombre, 2 = restricción opcional `(\d+)`, 3 = `?` si es opcional.
+        preg_match_all('/:(\w+)(\([^)]*\))?(\?)?/', $path, $matches, PREG_SET_ORDER);
 
-        return $matches[1];
+        $required = [];
+        foreach ($matches as $match) {
+            if (($match[3] ?? '') === '') {
+                $required[] = $match[1];
+            }
+        }
+
+        return $required;
     }
 }

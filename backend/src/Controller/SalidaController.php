@@ -63,7 +63,7 @@ final class SalidaController extends AbstractController
     }
 
     /**
-     * Empresas, rutas activas y buses (de la empresa del usuario) para
+     * Empresas y buses (de la empresa del usuario) para
      * filtros y formularios, los moldes de croquis y clases de bus de esos
      * buses (para elegir uno compatible) y qué puede hacer el usuario.
      */
@@ -71,17 +71,6 @@ final class SalidaController extends AbstractController
     public function opciones(#[CurrentUser] Usuario $usuario): JsonResponse
     {
         $this->denyAccessUnlessGranted(self::VER);
-        /** @var list<Ruta> $rutas */
-        $rutas = $this->em->createQueryBuilder()
-            ->select("r", "p", "e", "t")
-            ->from(Ruta::class, "r")
-            ->join("r.paradas", "p")
-            ->join("p.enclave", "e")
-            ->leftJoin("p.tiempos", "t")
-            ->where("r.activo = true")
-            ->getQuery()
-            ->getResult();
-        usort($rutas, static fn(Ruta $a, Ruta $b) => strnatcasecmp(VistaSalida::ruta($a), VistaSalida::ruta($b)));
         /** @var list<Bus> $buses */
         $buses = $this->em->createQueryBuilder()
             ->select("b", "c", "k")
@@ -113,7 +102,6 @@ final class SalidaController extends AbstractController
             ),
             // Sin empresa, el programador ofrece elegirla para filtrar distribuciones y buses.
             "miEmpresaId" => $this->em->find(Usuario::class, $usuario->getId())?->getEmpresa()?->getId(),
-            "rutas" => array_map(VistaSalida::rutaOpcion(...), $rutas),
             "buses" => array_map(VistaSalida::bus(...), $buses),
             "croquis" => $moldes,
             "clases" => $clases,

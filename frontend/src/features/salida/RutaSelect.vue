@@ -1,9 +1,9 @@
 <!--
-  Elegir una ruta: agrupadas por estación de salida y buscadas por palabras
-  sueltas en origen, destino o nombre (`guatem santa elena`), las que más
-  coinciden primero (`core/salida/rutas.ts`). Los grupos empiezan recogidos
-  (salvo el de la ruta elegida) y se abren al pulsarlos; al buscar se ven
-  todos abiertos. `v-model` es el id de la ruta.
+  Elegir una ruta: agrupadas por estación de salida. Las rutas se buscan en el
+  servidor al teclear (palabras sueltas en origen, destino o nombre, `guatem
+  santa elena`), hasta un límite: nunca se cargan todas. Los grupos empiezan
+  recogidos (salvo el de la ruta elegida) y se abren al pulsarlos; al buscar se
+  ven todos abiertos. `v-model` es el id de la ruta.
 -->
 <template>
   <Select
@@ -21,6 +21,7 @@
     :virtual-scroller-options="{ itemSize: 52 }"
     scroll-height="22rem"
     fluid
+    :loading="cargando"
     :pt="{ optionGroup: { class: '!p-0' } }"
     v-bind="$attrs"
     @filter="(e) => (busqueda = e.value)"
@@ -44,7 +45,9 @@
     <template #option="{ option }">
       <div class="flex flex-col">
         <span>{{ option.nombre }}</span>
-        <span class="text-xs text-muted-color">{{ option.origen }} → {{ option.destino }} · {{ option.paradas }} paradas</span>
+        <span class="text-xs text-muted-color"
+          >{{ option.origen }} → {{ option.destino }} · {{ option.paradas }} paradas</span
+        >
       </div>
     </template>
   </Select>
@@ -52,6 +55,7 @@
 
 <script setup lang="ts">
 import { watch, nextTick } from 'vue'
+import { fetchBuscarRutas } from '@/core/ruta/api'
 import { agruparRutas, palabras, normalizar } from '@/core/salida/rutas'
 import type { RutaOpcion } from '@/core/salida/types'
 import { FilterService } from '@primevue/core/api'
@@ -65,16 +69,38 @@ FilterService.register(MODO, (valor: unknown, filtro: unknown) => {
   return palabras(String(filtro ?? '')).some((t) => campo.includes(t))
 })
 
-const props = defineProps<{ rutas: readonly RutaOpcion[] }>()
 const modelo = defineModel<number | null>({ required: true })
 const busqueda = ref('')
+const rutas = ref<RutaOpcion[]>([])
+const cargando = ref(false)
 const selectRef = ref<any>(null)
 const abiertos = ref(new Set<string>())
+
+/** Pide al servidor las coincidencias y la ruta elegida (para que su etiqueta aparezca). */
+let carga = 0
+async function buscar(texto: string) {
+  const mia = ++carga
+  cargando.value = true
+  try {
+    const r = await fetchBuscarRutas(texto.trim(), modelo.value !== null ? [modelo.value] : [])
+    if (mia === carga) rutas.value = r.items
+  } finally {
+    if (mia === carga) cargando.value = false
+  }
+}
+
+let pausa: ReturnType<typeof setTimeout> | undefined
+watch(busqueda, (texto) => {
+  clearTimeout(pausa)
+  pausa = setTimeout(() => void buscar(texto), 200)
+})
 
 // Limpia automáticamente el filtro cuando se selecciona algo, esperando a que Vue procese primero.
 // Antes abre el grupo de la ruta elegida: si quedara recogido, PrimeVue no la encuentra para mostrarla.
 watch(modelo, async (nuevoModelo) => {
-  const origen = props.rutas.find((r) => r.id === nuevoModelo)?.origen
+  if (nuevoModelo !== null && !rutas.value.some((r) => r.id === nuevoModelo))
+    void buscar(busqueda.value)
+  const origen = rutas.value.find((r) => r.id === nuevoModelo)?.origen
   if (origen && !abiertos.value.has(origen)) alternar(origen)
   if (nuevoModelo !== null && busqueda.value.trim()) {
     await nextTick()
@@ -82,10 +108,16 @@ watch(modelo, async (nuevoModelo) => {
   }
 })
 
-const grupos = computed(() => agruparRutas(props.rutas, busqueda.value))
+const grupos = computed(() => agruparRutas(rutas.value, busqueda.value))
 const abierto = (origen: string) => !!busqueda.value.trim() || abiertos.value.has(origen)
 /** Los grupos recogidos van sin rutas (la cabecera dice cuántas tiene). */
-const visibles = computed(() => grupos.value.map((g) => ({ ...g, total: g.rutas.length, rutas: abierto(g.origen) ? g.rutas : [] })))
+const visibles = computed(() =>
+  grupos.value.map((g) => ({
+    ...g,
+    total: g.rutas.length,
+    rutas: abierto(g.origen) ? g.rutas : [],
+  })),
+)
 
 function alternar(origen: string) {
   const s = new Set(abiertos.value)
@@ -93,9 +125,15 @@ function alternar(origen: string) {
   abiertos.value = s
 }
 
-/** Al abrir, se ve desplegado el grupo de la ruta elegida. */
+/** Al abrir: las primeras rutas, y desplegado el grupo de la ruta elegida. */
 function abrirElegido() {
-  const origen = props.rutas.find((r) => r.id === modelo.value)?.origen
+  // Si ya se escribe, la búsqueda de lo tecleado manda: no se pide la lista general encima.
+  if (rutas.value.length === 0 && !busqueda.value.trim()) void buscar('')
+  const origen = rutas.value.find((r) => r.id === modelo.value)?.origen
   if (origen && !abiertos.value.has(origen)) alternar(origen)
 }
+
+onMounted(() => {
+  if (modelo.value !== null) void buscar('')
+})
 </script>

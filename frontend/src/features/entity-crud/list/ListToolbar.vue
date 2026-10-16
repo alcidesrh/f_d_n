@@ -75,6 +75,10 @@
         <icon v-else :name="customFilter.icon" size="1.25rem" />
       </button>
 
+      <button v-if="configurable" type="button" class="list-toolbar__btn tap-target" aria-label="Configurar entidad" v-tooltip.bottom="'Configurar entidad'" @click="emit('configure')">
+        <icon name="settings-outline" size="1.25rem" />
+      </button>
+
       <button v-if="features.selection" type="button" class="list-toolbar__btn tap-target" :class="{ 'is-on': selectionMode }" :aria-pressed="selectionMode" aria-label="Modo selección" v-tooltip.bottom="'Seleccionar'" @click="emit('toggle-selection')">
         <icon :name="selectionMode ? 'check-box' : 'check-box-outline'" size="1.25rem" />
       </button>
@@ -87,9 +91,6 @@
 
       <button v-if="features.maximize" type="button" class="list-toolbar__btn tap-target" :aria-label="maximized ? 'Restaurar tamaño' : 'Maximizar'" v-tooltip.bottom="maximized ? 'Restaurar (Esc)' : 'Maximizar'" @click="emit('maximize')">
         <icon :name="maximized ? 'fullscreen-exit' : 'fullscreen'" size="1.3rem" />
-      </button>
-      <button v-if="configurable" type="button" class="list-toolbar__btn tap-target" aria-label="Configurar entidad" v-tooltip.bottom="'Configurar'" @click="emit('configure')">
-        <icon name="settings-outline" size="1.25rem" />
       </button>
       <button v-if="features.reset" type="button" class="list-toolbar__btn tap-target" aria-label="Restablecer vista" v-tooltip.bottom="'Restablecer vista'" @click="emit('reset')">
         <icon name="ink-eraser-outline" size="1.25rem" />

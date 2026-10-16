@@ -1,8 +1,13 @@
 <template>
   <div>
+    <!-- Super admin: elige la entidad cuya lista se carga (también en `/lista`, sin entidad). -->
+    <div v-if="esSuperAdmin" class="mb-3 max-w-sm">
+      <Select :model-value="entityName ? entitySlug(entityName) : null" :options="entidadesOpciones" option-label="label" option-value="value" filter placeholder="Elegir entidad" size="small" fluid aria-label="Entidad" @update:model-value="elegirEntidad" />
+    </div>
+
     <Teleport v-if="store" to="body" :disabled="!maximized">
       <div class="list-page card" :class="{ 'is-maximized': maximized, 'is-fill': fill }" :aria-modal="maximized || undefined" :role="maximized ? 'dialog' : undefined">
-        <ListToolbar v-if="features.toolbar" :features="features" :columns="store.columns" :view="store.view" :active-filters="filters.active.value.length" :filter-panel="cardsMode" :selection-mode="modoSeleccion" :selected-count="selectedRows.length" :acciones="enSelector ? [] : accionesDisponibles" :maximized="maximized" :configurable="configurable && !enSelector" :custom-filter="customFilterButton" @toggle-custom-filter="store.view.customFilterOpen = !store.view.customFilterOpen" @toggle-selection="toggleSelectionMode" @clear-selection="setSelection([])" @share="compartir = true" @accion="ejecutarAccion" @column-visible="setColumnVisible" @show-all-columns="showAllColumns" @toggle-filters="store.view.filtersOpen = !store.view.filtersOpen" @density="store.view.density = $event" @layout="store.view.layout = $event" @maximize="maximized = !maximized" @reset="resetView" @create="onCreate" @configure="emit('configure')">
+        <ListToolbar v-if="features.toolbar" :features="features" :columns="store.columns" :view="store.view" :active-filters="filters.active.value.length" :filter-panel="cardsMode" :selection-mode="modoSeleccion" :selected-count="selectedRows.length" :acciones="enSelector ? [] : accionesDisponibles" :maximized="maximized" :configurable="!enSelector" :custom-filter="customFilterButton" @toggle-custom-filter="store.view.customFilterOpen = !store.view.customFilterOpen" @toggle-selection="toggleSelectionMode" @clear-selection="setSelection([])" @share="compartir = true" @accion="ejecutarAccion" @column-visible="setColumnVisible" @show-all-columns="showAllColumns" @toggle-filters="store.view.filtersOpen = !store.view.filtersOpen" @density="store.view.density = $event" @layout="store.view.layout = $event" @maximize="maximized = !maximized" @reset="resetView" @create="onCreate" @configure="onConfigure">
           <template #start>
             <div v-if="store.customFilter" class="list-chips" :aria-label="`${customFilter?.label ?? 'Filtro'} aplicado`">
               <span v-for="chip in store.customFilter.chips" :key="chip.label" class="list-chip list-chip--custom">
@@ -74,7 +79,7 @@
 
     <div v-else class="card flex items-center justify-center py-12">
       <ProgressSpinner v-if="loading.loading" style="width: 2rem; height: 2rem" />
-      <span v-else class="text-surface-500">Sin entidad</span>
+      <span v-else class="text-surface-500">{{ esSuperAdmin ? "Elige una entidad para cargar su lista" : "Sin entidad" }}</span>
     </div>
   </div>
 </template>
@@ -100,7 +105,8 @@ import { router } from "@/app/router";
 import { DEFAULT_PAGE_SIZE, DEFAULT_PAGE_SIZES, defaultView } from "@/core/entities/listView";
 import { getEntity } from "@/core/entities/registry";
 import { useSchemaStore } from "@/core/entities/schema";
-import { entityNameFromSlug } from "@/core/entities/slug";
+import { entityNameFromSlug, entitySlug } from "@/core/entities/slug";
+import { useCuentaStore } from "@/core/cuenta/store";
 import { customFilterOrNull, type CustomListFilterState } from "@/core/entities/listCustomFilter";
 import type { CollectionFieldConfig, EntityStore, FilterMode } from "@/core/entities/types";
 import { useLoadingStore } from "@/core/loading";
@@ -153,6 +159,23 @@ const confirm = useConfirm();
 const entityName = computed(() => entityNameFromSlug((Array.isArray(props.entity) ? props.entity[0] : props.entity) ?? ""));
 const store = computed<EntityStore | null>(() => (schema.find(entityName.value) ? getEntity(entityName.value) : null));
 const enSelector = computed(() => props.seleccion !== undefined);
+
+// Selector de entidad (solo super admin) ----------------------------------
+const cuenta = useCuentaStore();
+const esSuperAdmin = computed(() => cuenta.cuenta?.roles.includes("ROLE_SUPER_ADMIN") ?? false);
+/** Entidades con colección consultable, por nombre. */
+const entidadesOpciones = computed(() =>
+  Object.values(schema.entities)
+    .filter((entity) => entity.queryCollection)
+    .map((entity) => ({ label: entity.name, value: entitySlug(entity.name) }))
+    .sort((a, b) => a.label.localeCompare(b.label)),
+);
+
+function elegirEntidad(slug: string | null) {
+  if (!slug || slug === entitySlug(entityName.value)) return;
+  if (maximized.value) maximized.value = false;
+  void router.push({ name: "entity-list", params: { entity: slug } });
+}
 
 // Qué se ofrece ------------------------------------------------------------
 /** Boletos, ventas…: se operan con acciones propias, no se editan ni se eliminan a mano. */
@@ -355,6 +378,13 @@ function onEdit(item: unknown) {
   const id = idDisplay((item as { id?: unknown }).id);
   if (maximized.value) maximized.value = false;
   void router.push({ name: "entity-form", params: { entity: entityName.value, id } });
+}
+
+/** En el editor de configuración lo gestiona la página; desde `/lista` abre la entidad en `/configuracion/entidades`. */
+function onConfigure() {
+  if (props.configurable) return emit("configure");
+  if (maximized.value) maximized.value = false;
+  void router.push({ name: "entity-config", query: { entidad: entitySlug(entityName.value) } });
 }
 
 function onCreate() {
@@ -576,9 +606,11 @@ watch(
   entityName,
   (name) => {
     editing.value = null;
+    // `/lista` sin entidad: el super admin la elige en el selector; no es un error.
+    if (!name) return;
     if (entityBulkActions[name]) void permisosBoleto.cargar();
-    const entity = name ? schema.find(name) : null;
-    if (!entity) return notify.error(name ? `Entidad "${name}" no encontrada en el schema GraphQL` : "Entidad no especificada");
+    const entity = schema.find(name);
+    if (!entity) return notify.error(`Entidad "${name}" no encontrada en el schema GraphQL`);
     if (!entity.queryCollection) return notify.error(`"${name}" no expone una colección consultable`);
     void load(getEntity(name));
   },

@@ -455,5 +455,24 @@ export const componentsPreset = (parent: ThemePreset): Tokens => {
         },
       },
     },
+    toggleswitch: {
+      ...base.components.toggleswitch,
+      root: {
+        ...base.components.toggleswitch.root,
+        height: "10px",
+      },
+      colorScheme: {
+        ...base.components.toggleswitch.colorScheme,
+
+        light: {
+          ...base.components.toggleswitch.colorScheme.light,
+          handle: {
+            ...base.components.toggleswitch.colorScheme.light.handle,
+            background: "{surface.100}",
+            checkedBackground: "{primary.100}",
+          },
+        },
+      },
+    },
   };
 };

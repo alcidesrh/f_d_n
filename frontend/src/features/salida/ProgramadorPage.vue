@@ -21,38 +21,70 @@
     <!-- </template> -->
     <!-- </Toolbar> -->
 
-    <Message v-if="sinPermiso" severity="warn" :closable="false">No tiene permiso para programar salidas (salida.crear).</Message>
+    <Message v-if="sinPermiso" severity="warn" :closable="false"
+      >No tiene permiso para programar salidas (salida.crear).</Message
+    >
 
     <div v-else class="grid gap-4 @5xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] @5xl:items-start">
       <div class="flex flex-col gap-4">
         <!-- Esquema guardado -->
         <section class="panel flex flex-col gap-3 mb-4" aria-labelledby="pg-esquema">
-          <h2 id="pg-esquema" class="m-0 flex items-center gap-2 text-base font-semibold"><icon name="bookmark-outline" />Esquema guardado</h2>
+          <h2 id="pg-esquema" class="m-0 flex items-center gap-2 text-base font-semibold">
+            <icon name="bookmark-outline" />Esquema guardado
+          </h2>
           <div class="flex flex-col gap-2 @xl:flex-row @xl:items-end">
             <label class="flex flex-1 flex-col gap-1">
               <span class="text-xs font-medium text-muted-color">Cargar un esquema</span>
-              <Select v-model="esquemaId" :options="esquemas" option-label="nombre" option-value="id" show-clear filter fluid :placeholder="esquemas.length ? 'Elegir…' : 'No hay esquemas guardados'" :disabled="!esquemas.length">
+              <Select
+                v-model="esquemaId"
+                :options="esquemas"
+                option-label="nombre"
+                option-value="id"
+                show-clear
+                filter
+                fluid
+                :placeholder="esquemas.length ? 'Elegir…' : 'No hay esquemas guardados'"
+                :disabled="!esquemas.length"
+              >
                 <template #option="{ option }">
                   <div class="flex flex-col">
                     <span>{{ option.nombre }}</span>
-                    <span class="text-xs text-muted-color">{{ option.ruta.nombre }} · {{ option.momentos.length }} hora(s){{ option.intervaloDias > 1 ? ` · cada ${option.intervaloDias} días` : "" }}</span>
+                    <span class="text-xs text-muted-color"
+                      >{{ option.ruta.nombre }} · {{ option.momentos.length }} hora(s){{
+                        option.intervaloDias > 1 ? ` · cada ${option.intervaloDias} días` : ''
+                      }}</span
+                    >
                   </div>
                 </template>
               </Select>
             </label>
             <div v-if="esquema" class="flex flex-wrap gap-2">
-              <Button label="Guardar cambios" size="small" :disabled="!cambiosEsquema || !!errores.length" :loading="guardandoEsquema" @click="actualizarEsquema">
+              <Button
+                label="Guardar cambios"
+                size="small"
+                :disabled="!cambiosEsquema || !!errores.length"
+                :loading="guardandoEsquema"
+                @click="actualizarEsquema"
+              >
                 <template #icon><icon name="save-outline" class="mr-1" /></template>
               </Button>
-              <Button label="Borrar" size="small" severity="danger" outlined @click="borrarEsquema = true"
+              <Button
+                label="Borrar"
+                size="small"
+                severity="danger"
+                outlined
+                @click="borrarEsquema = true"
                 ><template #icon><icon name="delete-outline" class="mr-1" /></template
               ></Button>
             </div>
           </div>
           <p v-if="esquema" class="m-0 text-xs text-muted-color">
-            <template v-if="cambiosEsquema">Tiene cambios sin guardar en «{{ esquema.nombre }}».</template>
+            <template v-if="cambiosEsquema"
+              >Tiene cambios sin guardar en «{{ esquema.nombre }}».</template
+            >
             <template v-else
-              >Sin cambios. Último cambio: {{ fechaHora(esquema.actualizadoEn) }}<template v-if="esquema.actualizadoPor"> por {{ esquema.actualizadoPor }}</template
+              >Sin cambios. Último cambio: {{ fechaHora(esquema.actualizadoEn)
+              }}<template v-if="esquema.actualizadoPor"> por {{ esquema.actualizadoPor }}</template
               >.</template
             >
             Cambiar el esquema no toca las salidas ya creadas.
@@ -61,40 +93,122 @@
 
         <!-- Ruta -->
         <section class="panel flex flex-col gap-3 mb-5" aria-labelledby="pg-ruta">
-          <h2 id="pg-ruta" class="m-0 flex items-center gap-2 text-base font-semibold"><icon name="route" />Ruta</h2>
-          <RutaSelect v-model="form.rutaId" :rutas="opciones?.rutas ?? []" placeholder="Elegir la ruta" :loading="!opciones" aria-label="Ruta" />
-          <p v-if="ruta?.duracionMinutos" class="m-0 text-xs text-muted-color">Duración estimada: {{ duracion(duracionConClase(ruta, null) ?? ruta.duracionMinutos) }}<template v-if="Object.keys(ruta.duracionPorClase ?? {}).length"> (varía según la clase del bus)</template>. Un bus no se programa mientras está en otro viaje.</p>
-          <p v-else-if="ruta" class="m-0 text-xs text-muted-color">La ruta no tiene duración estimada: solo se evita el mismo bus a la misma hora.</p>
+          <h2 id="pg-ruta" class="m-0 flex items-center gap-2 text-base font-semibold">
+            <icon name="route" />Ruta
+          </h2>
+          <RutaSelect
+            v-model="form.rutaId"
+            placeholder="Elegir la ruta"
+            :loading="!opciones"
+            aria-label="Ruta"
+          />
+          <p v-if="ruta?.duracionMinutos" class="m-0 text-xs text-muted-color">
+            Duración estimada: {{ duracion(duracionConClase(ruta, null) ?? ruta.duracionMinutos)
+            }}<template v-if="Object.keys(ruta.duracionPorClase ?? {}).length">
+              (varía según la clase del bus)</template
+            >. Un bus no se programa mientras está en otro viaje.
+          </p>
+          <p v-else-if="ruta" class="m-0 text-xs text-muted-color">
+            La ruta no tiene duración estimada: solo se evita el mismo bus a la misma hora.
+          </p>
           <label v-if="pideEmpresa" class="flex flex-col gap-1">
             <span class="text-xs font-medium text-muted-color">Empresa</span>
-            <Select v-model="form.empresaId" :options="opciones?.empresas ?? []" option-label="nombre" option-value="id" show-clear fluid placeholder="Elegir la empresa" aria-label="Empresa" />
-            <span class="text-xs text-muted-color">Muestra solo sus distribuciones y buses; la salida es de la empresa de su bus.</span>
+            <Select
+              v-model="form.empresaId"
+              :options="opciones?.empresas ?? []"
+              option-label="nombre"
+              option-value="id"
+              show-clear
+              fluid
+              placeholder="Elegir la empresa"
+              aria-label="Empresa"
+            />
+            <span class="text-xs text-muted-color"
+              >Muestra solo sus distribuciones y buses; la salida es de la empresa de su bus.</span
+            >
           </label>
         </section>
         <!-- <divider /> -->
 
         <!-- Horas: distribución y bus -->
         <section class="panel flex flex-col gap-3 mb-5" aria-labelledby="pg-horas">
-          <h2 id="pg-horas" class="m-0 flex items-center gap-2 text-base font-semibold"><icon name="schedule-outline" />Horas de salida</h2>
-          <p class="m-0 text-xs text-muted-color">Elija la distribución de asientos y luego un bus que la tenga. Si después cambia de bus por otro con la misma distribución, los boletos vendidos pasan solos al mismo número de asiento.</p>
+          <h2 id="pg-horas" class="m-0 flex items-center gap-2 text-base font-semibold">
+            <icon name="schedule-outline" />Horas de salida
+          </h2>
+          <p class="m-0 text-xs text-muted-color">
+            Elija la distribución de asientos y luego un bus que la tenga. Si después cambia de bus
+            por otro con la misma distribución, los boletos vendidos pasan solos al mismo número de
+            asiento.
+          </p>
           <ul class="m-0 flex list-none flex-col gap-3 p-0">
             <li v-for="(m, i) in form.momentos" :key="i" class="momento">
-              <InputText v-model="m.hora" type="time" :step="PASO_MINUTOS * 60" :aria-label="`Hora n.º ${i + 1}`" class="momento__hora tabular-nums" @change="m.hora = redondearHora(m.hora)" />
-              <CroquisSelector :model-value="m.croquisId" :croquis="croquisVisibles" :buses="busesVisibles" :aria-label="`Distribución de la hora n.º ${i + 1}`" class="momento__croquis" @update:model-value="(id) => elegirCroquis(m, id)" />
-              <Select :model-value="m.busId" :options="busesPara(busesVisibles, { croquisId: m.croquisId }, m.busId)" :option-label="etiquetaBus" option-value="id" filter :filter-fields="['codigo', 'matricula']" fluid placeholder="Bus" :empty-message="m.croquisId ? 'Ningún bus con esta distribución' : 'Sin buses'" :aria-label="`Bus de la hora n.º ${i + 1}`" class="momento__bus" @update:model-value="(id: number | null) => elegirBus(m, id)">
-                <template #option="{ option }"><BusOpcionItem :bus="option" :empresas="empresas" :clases="clases" /></template>
+              <InputText
+                v-model="m.hora"
+                type="time"
+                :step="PASO_MINUTOS * 60"
+                :aria-label="`Hora n.º ${i + 1}`"
+                class="momento__hora tabular-nums"
+                @change="m.hora = redondearHora(m.hora)"
+              />
+              <CroquisSelector
+                :model-value="m.croquisId"
+                :croquis="croquisVisibles"
+                :buses="busesVisibles"
+                :aria-label="`Distribución de la hora n.º ${i + 1}`"
+                class="momento__croquis"
+                @update:model-value="(id) => elegirCroquis(m, id)"
+              />
+              <Select
+                :model-value="m.busId"
+                :options="busesPara(busesVisibles, { croquisId: m.croquisId }, m.busId)"
+                :option-label="etiquetaBus"
+                option-value="id"
+                filter
+                :filter-fields="['codigo', 'matricula']"
+                fluid
+                placeholder="Bus"
+                :empty-message="m.croquisId ? 'Ningún bus con esta distribución' : 'Sin buses'"
+                :aria-label="`Bus de la hora n.º ${i + 1}`"
+                class="momento__bus"
+                @update:model-value="(id: number | null) => elegirBus(m, id)"
+              >
+                <template #option="{ option }"
+                  ><BusOpcionItem :bus="option" :empresas="empresas" :clases="clases"
+                /></template>
               </Select>
-              <Button severity="secondary" text rounded class="tap-target momento__quitar" :aria-label="`Quitar la hora n.º ${i + 1}`" :disabled="form.momentos.length === 1" @click="form.momentos.splice(i, 1)">
+              <Button
+                severity="secondary"
+                text
+                rounded
+                class="tap-target momento__quitar"
+                :aria-label="`Quitar la hora n.º ${i + 1}`"
+                :disabled="form.momentos.length === 1"
+                @click="form.momentos.splice(i, 1)"
+              >
                 <template #icon><icon name="close" /></template>
               </Button>
-              <p v-if="detalleMomento(m)" class="momento__detalle m-0 text-xs text-muted-color">{{ detalleMomento(m) }}</p>
+              <p v-if="detalleMomento(m)" class="momento__detalle m-0 text-xs text-muted-color">
+                {{ detalleMomento(m) }}
+              </p>
             </li>
           </ul>
           <div class="flex flex-wrap gap-2">
-            <Button label="Agregar hora" size="small" severity="secondary" outlined :disabled="form.momentos.length >= MAX_MOMENTOS" @click="agregarHora"
+            <Button
+              label="Agregar hora"
+              size="small"
+              severity="secondary"
+              outlined
+              :disabled="form.momentos.length >= MAX_MOMENTOS"
+              @click="agregarHora"
               ><template #icon><icon name="add" class="mr-1" /></template
             ></Button>
-            <Button v-if="form.momentos.length > 1" label="Ordenar por hora" size="small" text @click="ordenar">
+            <Button
+              v-if="form.momentos.length > 1"
+              label="Ordenar por hora"
+              size="small"
+              text
+              @click="ordenar"
+            >
               <template #icon><icon name="sort" class="mr-1" /></template>
             </Button>
           </div>
@@ -102,7 +216,9 @@
 
         <!-- Días -->
         <section class="panel flex flex-col gap-3" aria-labelledby="pg-dias">
-          <h2 id="pg-dias" class="m-0 flex items-center gap-2 text-base font-semibold"><icon name="calendar-month-outline" />Días</h2>
+          <h2 id="pg-dias" class="m-0 flex items-center gap-2 text-base font-semibold">
+            <icon name="calendar-month-outline" />Días
+          </h2>
           <label class="flex flex-col gap-1">
             <span class="text-xs font-medium text-muted-color">Día (primera salida)</span>
             <DatePicker v-model="desde" date-format="dd/mm/yy" show-icon fluid :min-date="hoy" />
@@ -125,7 +241,14 @@
           <div v-if="form.repeticion !== 'no'" class="grid grid-cols-2 gap-3">
             <label class="flex flex-col gap-1">
               <span class="text-xs font-medium text-muted-color">Cada</span>
-              <InputNumber v-model="intervalo" :min="1" :max="MAX_INTERVALO" show-buttons suffix=" día(s)" fluid />
+              <InputNumber
+                v-model="intervalo"
+                :min="1"
+                :max="MAX_INTERVALO"
+                show-buttons
+                suffix=" día(s)"
+                fluid
+              />
             </label>
             <label v-if="form.repeticion === 'veces'" class="flex flex-col gap-1">
               <span class="text-xs font-medium text-muted-color">Cuántos días</span>
@@ -133,11 +256,22 @@
             </label>
             <label v-else class="flex flex-col gap-1">
               <span class="text-xs font-medium text-muted-color">Hasta (incluido)</span>
-              <DatePicker v-model="hasta" date-format="dd/mm/yy" show-icon fluid :min-date="desde ?? hoy" />
+              <DatePicker
+                v-model="hasta"
+                date-format="dd/mm/yy"
+                show-icon
+                fluid
+                :min-date="desde ?? hoy"
+              />
             </label>
           </div>
           <p v-if="dias.length" class="m-0 text-sm">
-            <b>{{ dias.length }}</b> día(s){{ dias.length > 1 ? `, del ${diaCorto(dias[0]!)} al ${diaCorto(dias[dias.length - 1]!)}` : `: ${diaLargo(dias[0]!)}` }} · <b>{{ totalSalidas(form) }}</b> salida(s) en total
+            <b>{{ dias.length }}</b> día(s){{
+              dias.length > 1
+                ? `, del ${diaCorto(dias[0]!)} al ${diaCorto(dias[dias.length - 1]!)}`
+                : `: ${diaLargo(dias[0]!)}`
+            }}
+            · <b>{{ totalSalidas(form) }}</b> salida(s) en total
           </p>
         </section>
         <divider />
@@ -146,10 +280,22 @@
         <section class="panel flex flex-col gap-3">
           <div class="flex items-center gap-2">
             <Checkbox v-model="guardar" binary input-id="pg-guardar" />
-            <label for="pg-guardar" class="font-medium">Guardar esta configuración como esquema</label>
+            <label for="pg-guardar" class="font-medium"
+              >Guardar esta configuración como esquema</label
+            >
           </div>
-          <InputText v-if="guardar" v-model="nombreEsquema" placeholder="Nombre del esquema, p. ej. «Xela–Guate diario»" maxlength="100" fluid aria-label="Nombre del esquema" />
-          <p class="m-0 text-xs text-muted-color">Guarda la ruta, las horas con su bus y el intervalo; los días se eligen cada vez que se usa.</p>
+          <InputText
+            v-if="guardar"
+            v-model="nombreEsquema"
+            placeholder="Nombre del esquema, p. ej. «Xela–Guate diario»"
+            maxlength="100"
+            fluid
+            aria-label="Nombre del esquema"
+          />
+          <p class="m-0 text-xs text-muted-color">
+            Guarda la ruta, las horas con su bus y el intervalo; los días se eligen cada vez que se
+            usa.
+          </p>
         </section>
       </div>
 
@@ -157,34 +303,65 @@
       <div class="flex flex-wsrap w-full gap-4">
         <divider layout="vertical" />
 
-        <section class="panel w-full flex flex-col gap-3 @5xl:sticky @5xl:top-4" aria-labelledby="pg-previa">
-          <h2 id="pg-previa" class="m-0 flex items-center gap-2 text-base font-semibold"><icon name="visibility-outline" />Vista previa</h2>
+        <section
+          class="panel w-full flex flex-col gap-3 @5xl:sticky @5xl:top-4"
+          aria-labelledby="pg-previa"
+        >
+          <h2 id="pg-previa" class="m-0 flex items-center gap-2 text-base font-semibold">
+            <icon name="visibility-outline" />Vista previa
+          </h2>
           <ul v-if="errores.length" class="m-0 flex flex-col gap-1 pl-4 text-sm text-muted-color">
             <li v-for="e in errores" :key="e">{{ e }}</li>
           </ul>
           <template v-else>
-            <Message v-if="errorPrevia" severity="error" :closable="false">{{ errorPrevia }}</Message>
+            <Message v-if="errorPrevia" severity="error" :closable="false">{{
+              errorPrevia
+            }}</Message>
             <Skeleton v-else-if="!previa" height="6rem" />
             <template v-else>
               <div class="flex flex-wrap gap-2" :class="{ 'opacity-60': cargandoPrevia }">
-                <Tag v-for="r in resumenPrevia" :key="r.estado" :severity="r.severidad" :value="`${r.n} ${r.etiqueta}`" />
+                <Tag
+                  v-for="r in resumenPrevia"
+                  :key="r.estado"
+                  :severity="r.severidad"
+                  :value="`${r.n} ${r.etiqueta}`"
+                />
               </div>
               <div class="flex max-h-[28rem] flex-col gap-2 overflow-auto">
-                <details v-for="g in porDia" :key="g.dia" class="rounded-border border border-surface-200 px-3 py-2" :open="porDia.length <= 3 || g.problemas > 0">
+                <details
+                  v-for="g in porDia"
+                  :key="g.dia"
+                  class="rounded-border border border-surface-200 px-3 py-2"
+                  :open="porDia.length <= 3 || g.problemas > 0"
+                >
                   <summary class="cursor-pointer text-sm font-medium">
                     {{ diaLargo(g.dia) }}
                     <span class="text-muted-color">· {{ g.items.length }}</span>
-                    <Tag v-if="g.problemas" severity="warn" :value="`${g.problemas} sin crear`" class="ml-1 !text-xs" />
+                    <Tag
+                      v-if="g.problemas"
+                      severity="warn"
+                      :value="`${g.problemas} sin crear`"
+                      class="ml-1 !text-xs"
+                    />
                   </summary>
                   <ul class="m-0 mt-2 flex list-none flex-col gap-1 p-0 text-sm">
-                    <li v-for="(it, j) in g.items" :key="j" class="flex flex-wrap items-baseline gap-x-2">
+                    <li
+                      v-for="(it, j) in g.items"
+                      :key="j"
+                      class="flex flex-wrap items-baseline gap-x-2"
+                    >
                       <span class="w-12 tabular-nums">{{ horaDe(it.fecha) }}</span>
                       <span class="font-medium">Bus {{ it.bus }}</span>
-                      <Tag :severity="ESTADO_PLAN[it.estado].severidad" :value="ESTADO_PLAN[it.estado].etiqueta" class="!text-xs" />
+                      <Tag
+                        :severity="ESTADO_PLAN[it.estado].severidad"
+                        :value="ESTADO_PLAN[it.estado].etiqueta"
+                        class="!text-xs"
+                      />
                       <span v-if="it.choque" class="basis-full pl-14 text-xs text-muted-color">
-                        {{ it.estado === "existe" ? "Ya existe" : "Choca con" }}
+                        {{ it.estado === 'existe' ? 'Ya existe' : 'Choca con' }}
                         <template v-if="it.choque.id">la salida #{{ it.choque.id }}</template
-                        ><template v-else>otra hora de esta programación</template>: {{ it.choque.ruta }}, {{ fechaHora(it.choque.fecha) }}
+                        ><template v-else>otra hora de esta programación</template>:
+                        {{ it.choque.ruta }}, {{ fechaHora(it.choque.fecha) }}
                       </span>
                     </li>
                   </ul>
@@ -192,15 +369,39 @@
               </div>
             </template>
           </template>
-          <Button :label="previa && !errores.length ? `Crear ${previa.resumen.nueva} salida(s)` : 'Crear salidas'" :disabled="!!errores.length || !previa || cargandoPrevia || (previa.resumen.nueva === 0 && !form.guardarComo)" :loading="creando" @click="crear">
+          <Button
+            :label="
+              previa && !errores.length
+                ? `Crear ${previa.resumen.nueva} salida(s)`
+                : 'Crear salidas'
+            "
+            :disabled="
+              !!errores.length ||
+              !previa ||
+              cargandoPrevia ||
+              (previa.resumen.nueva === 0 && !form.guardarComo)
+            "
+            :loading="creando"
+            @click="crear"
+          >
             <template #icon><icon name="calendar-add-on-outline" class="mr-1" /></template>
           </Button>
-          <Message v-if="resultado" :severity="resultado.creadas ? 'success' : 'warn'" :closable="false">
+          <Message
+            v-if="resultado"
+            :severity="resultado.creadas ? 'success' : 'warn'"
+            :closable="false"
+          >
             <div class="flex flex-col gap-1">
               <span
-                >Se crearon <b>{{ resultado.creadas }}</b> salida(s){{ resultado.omitidas.length ? `; ${resultado.omitidas.length} no se crearon (ya existían, chocaban o ya pasaron)` : "" }}.</span
+                >Se crearon <b>{{ resultado.creadas }}</b> salida(s){{
+                  resultado.omitidas.length
+                    ? `; ${resultado.omitidas.length} no se crearon (ya existían, chocaban o ya pasaron)`
+                    : ''
+                }}.</span
               >
-              <span v-if="resultado.esquema">Esquema «{{ resultado.esquema.nombre }}» guardado.</span>
+              <span v-if="resultado.esquema"
+                >Esquema «{{ resultado.esquema.nombre }}» guardado.</span
+              >
               <RouterLink :to="{ name: 'salidas' }">Ver el listado de salidas</RouterLink>
             </div>
           </Message>
@@ -208,252 +409,364 @@
       </div>
     </div>
 
-    <Dialog v-model:visible="borrarEsquema" modal header="Borrar esquema" class="w-[min(26rem,calc(100vw-1rem))]">
-      <p class="m-0">¿Borrar el esquema «{{ esquema?.nombre }}»? Las salidas ya creadas con él no cambian.</p>
+    <Dialog
+      v-model:visible="borrarEsquema"
+      modal
+      header="Borrar esquema"
+      class="w-[min(26rem,calc(100vw-1rem))]"
+    >
+      <p class="m-0">
+        ¿Borrar el esquema «{{ esquema?.nombre }}»? Las salidas ya creadas con él no cambian.
+      </p>
       <template #footer>
         <Button label="Cancelar" severity="secondary" text @click="borrarEsquema = false" />
-        <Button label="Borrar" severity="danger" :loading="guardandoEsquema" @click="confirmarBorrarEsquema" />
+        <Button
+          label="Borrar"
+          severity="danger"
+          :loading="guardandoEsquema"
+          @click="confirmarBorrarEsquema"
+        />
       </template>
     </Dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { eliminarEsquema, fetchEsquemas, fetchOpciones, guardarEsquema, programar, vistaPrevia } from "@/core/salida/api";
-import { aDia, deDia, horaDe } from "@/core/salida/filtro";
-import { aEsquema, aPayload, conEsquema, diasProgramados, difiereDeEsquema, errores as erroresDe, formInicial, horaValida, MAX_DIAS, MAX_INTERVALO, MAX_MOMENTOS, normalizarHora, PASO_MINUTOS, redondearHora, totalSalidas, type ProgramadorForm } from "@/core/salida/programacion";
-import type { BusOpcion, EstadoPlan, Esquema, ItemPlan, Momento, OpcionesSalidas, ResultadoProgramacion, VistaPrevia } from "@/core/salida/types";
-import { busesPara, duracionConClase, sumarMinutos } from "@/core/salida/buses";
-import CroquisSelector from "./CroquisSelector.vue";
-import RutaSelect from "./RutaSelect.vue";
-import BusOpcionItem from "./BusOpcionItem.vue";
-import { HttpError } from "@/core/http";
-import { notify } from "@/core/notify";
+import {
+  eliminarEsquema,
+  fetchEsquemas,
+  fetchOpciones,
+  guardarEsquema,
+  programar,
+  vistaPrevia,
+} from '@/core/salida/api'
+import { aDia, deDia, horaDe } from '@/core/salida/filtro'
+import {
+  aEsquema,
+  aPayload,
+  conEsquema,
+  diasProgramados,
+  difiereDeEsquema,
+  errores as erroresDe,
+  formInicial,
+  horaValida,
+  MAX_DIAS,
+  MAX_INTERVALO,
+  MAX_MOMENTOS,
+  normalizarHora,
+  PASO_MINUTOS,
+  redondearHora,
+  totalSalidas,
+  type ProgramadorForm,
+} from '@/core/salida/programacion'
+import type {
+  BusOpcion,
+  EstadoPlan,
+  Esquema,
+  ItemPlan,
+  Momento,
+  OpcionesSalidas,
+  ResultadoProgramacion,
+  RutaOpcion,
+  VistaPrevia,
+} from '@/core/salida/types'
+import { fetchBuscarRutas } from '@/core/ruta/api'
+import { busesPara, duracionConClase, sumarMinutos } from '@/core/salida/buses'
+import CroquisSelector from './CroquisSelector.vue'
+import RutaSelect from './RutaSelect.vue'
+import BusOpcionItem from './BusOpcionItem.vue'
+import { HttpError } from '@/core/http'
+import { notify } from '@/core/notify'
 
-const ESTADO_PLAN: Record<EstadoPlan, { etiqueta: string; severidad: "success" | "secondary" | "warn" | "danger" }> = {
-  nueva: { etiqueta: "nueva", severidad: "success" },
-  existe: { etiqueta: "ya existe", severidad: "secondary" },
-  conflicto: { etiqueta: "bus ocupado", severidad: "danger" },
-  pasada: { etiqueta: "hora pasada", severidad: "warn" },
-};
+const ESTADO_PLAN: Record<
+  EstadoPlan,
+  { etiqueta: string; severidad: 'success' | 'secondary' | 'warn' | 'danger' }
+> = {
+  nueva: { etiqueta: 'nueva', severidad: 'success' },
+  existe: { etiqueta: 'ya existe', severidad: 'secondary' },
+  conflicto: { etiqueta: 'bus ocupado', severidad: 'danger' },
+  pasada: { etiqueta: 'hora pasada', severidad: 'warn' },
+}
 
-const route = useRoute();
-const hoy = new Date();
-hoy.setHours(0, 0, 0, 0);
+const route = useRoute()
+const hoy = new Date()
+hoy.setHours(0, 0, 0, 0)
 
-const form = reactive<ProgramadorForm>(formInicial());
-const opciones = shallowRef<OpcionesSalidas | null>(null);
-const sinPermiso = ref(false);
-const esquemas = ref<Esquema[]>([]);
-const esquemaId = ref<number | null>(null);
-const guardandoEsquema = ref(false);
-const borrarEsquema = ref(false);
-const guardar = ref(false);
-const nombreEsquema = ref("");
-const previa = shallowRef<VistaPrevia | null>(null);
-const cargandoPrevia = ref(false);
-const errorPrevia = ref("");
-const creando = ref(false);
-const resultado = shallowRef<ResultadoProgramacion | null>(null);
+const form = reactive<ProgramadorForm>(formInicial())
+const opciones = shallowRef<OpcionesSalidas | null>(null)
+const sinPermiso = ref(false)
+const esquemas = ref<Esquema[]>([])
+const esquemaId = ref<number | null>(null)
+const guardandoEsquema = ref(false)
+const borrarEsquema = ref(false)
+const guardar = ref(false)
+const nombreEsquema = ref('')
+const previa = shallowRef<VistaPrevia | null>(null)
+const cargandoPrevia = ref(false)
+const errorPrevia = ref('')
+const creando = ref(false)
+const resultado = shallowRef<ResultadoProgramacion | null>(null)
 
-const esquema = computed(() => esquemas.value.find((e) => e.id === esquemaId.value) ?? null);
-const cambiosEsquema = computed(() => !!esquema.value && difiereDeEsquema(form, esquema.value));
-const ruta = computed(() => opciones.value?.rutas.find((r) => r.id === form.rutaId) ?? null);
-const dias = computed(() => diasProgramados(form));
+const esquema = computed(() => esquemas.value.find((e) => e.id === esquemaId.value) ?? null)
+const cambiosEsquema = computed(() => !!esquema.value && difiereDeEsquema(form, esquema.value))
+/** La ruta elegida con sus datos (duración, paradas): se pide por id, no se carga el listado de rutas. */
+const ruta = shallowRef<RutaOpcion | null>(null)
+watch(
+  () => form.rutaId,
+  async (id) => {
+    ruta.value =
+      id === null
+        ? null
+        : ((await fetchBuscarRutas('', [id])).items.find((r) => r.id === id) ?? null)
+  },
+  { immediate: true },
+)
+const dias = computed(() => diasProgramados(form))
 /** El usuario no tiene empresa (ve toda la flota): puede elegir una para filtrar distribuciones y buses. */
-const pideEmpresa = computed(() => !!opciones.value && opciones.value.miEmpresaId === null && opciones.value.empresas.length > 1);
-const errores = computed(() => erroresDe(form));
+const pideEmpresa = computed(
+  () =>
+    !!opciones.value && opciones.value.miEmpresaId === null && opciones.value.empresas.length > 1,
+)
+const errores = computed(() => erroresDe(form))
 
-const empresas = computed(() => new Map((opciones.value?.empresas ?? []).map((e) => [e.id, e.nombre])));
-const clases = computed(() => new Map((opciones.value?.clases ?? []).map((c) => [c.id, c.nombre])));
-const etiquetaBus = (b: BusOpcion) => [b.codigo, b.matricula, b.empresaId ? empresas.value.get(b.empresaId) : null].filter(Boolean).join(" · ");
+const empresas = computed(
+  () => new Map((opciones.value?.empresas ?? []).map((e) => [e.id, e.nombre])),
+)
+const clases = computed(() => new Map((opciones.value?.clases ?? []).map((c) => [c.id, c.nombre])))
+const etiquetaBus = (b: BusOpcion) =>
+  [b.codigo, b.matricula, b.empresaId ? empresas.value.get(b.empresaId) : null]
+    .filter(Boolean)
+    .join(' · ')
 /** Los buses de la empresa elegida (todos si no se eligió). */
-const busesVisibles = computed(() => busesPara(opciones.value?.buses ?? [], { croquisId: null, empresaId: form.empresaId }));
+const busesVisibles = computed(() =>
+  busesPara(opciones.value?.buses ?? [], { croquisId: null, empresaId: form.empresaId }),
+)
 /** Solo las distribuciones que tiene algún bus de la empresa elegida: siempre hay un bus para asignar. */
 const croquisVisibles = computed(() => {
-  const conBus = new Set(busesVisibles.value.map((b) => b.croquisId));
-  return (opciones.value?.croquis ?? []).filter((c) => conBus.has(c.id));
-});
-const busDe = (id: number | null) => (id ? (opciones.value?.buses.find((b) => b.id === id) ?? null) : null);
+  const conBus = new Set(busesVisibles.value.map((b) => b.croquisId))
+  return (opciones.value?.croquis ?? []).filter((c) => conBus.has(c.id))
+})
+const busDe = (id: number | null) =>
+  id ? (opciones.value?.buses.find((b) => b.id === id) ?? null) : null
 
 /** Otra distribución: si el bus elegido no la tiene, se quita. */
 function elegirCroquis(m: Momento, croquisId: number | null) {
-  m.croquisId = croquisId;
-  if (m.busId && busDe(m.busId)?.croquisId !== croquisId) m.busId = null;
+  m.croquisId = croquisId
+  if (m.busId && busDe(m.busId)?.croquisId !== croquisId) m.busId = null
 }
 
 /** Elegir un bus fija la distribución a la suya. */
 function elegirBus(m: Momento, busId: number | null) {
-  m.busId = busId;
-  const bus = busDe(busId);
-  if (bus?.croquisId) m.croquisId = bus.croquisId;
+  m.busId = busId
+  const bus = busDe(busId)
+  if (bus?.croquisId) m.croquisId = bus.croquisId
 }
 
 /** "Llega a Flores a las 16:30, en Platino." */
 function detalleMomento(m: Momento): string | null {
-  if (!m.busId) return null;
-  const bus = busDe(m.busId);
-  const minutos = ruta.value ? duracionConClase(ruta.value, bus?.claseId ?? null) : null;
-  if (minutos === null || !horaValida(m.hora)) return null;
-  const llegada = sumarMinutos(normalizarHora(m.hora), minutos);
-  const clase = bus?.claseId ? clases.value.get(bus.claseId) : null;
-  return `Llega a ${ruta.value?.destino ?? "su destino"} a las ${llegada.hora}${llegada.dias ? ` (+${llegada.dias} d)` : ""}${clase ? `, en ${clase}` : ""}.`;
+  if (!m.busId) return null
+  const bus = busDe(m.busId)
+  const minutos = ruta.value ? duracionConClase(ruta.value, bus?.claseId ?? null) : null
+  if (minutos === null || !horaValida(m.hora)) return null
+  const llegada = sumarMinutos(normalizarHora(m.hora), minutos)
+  const clase = bus?.claseId ? clases.value.get(bus.claseId) : null
+  return `Llega a ${ruta.value?.destino ?? 'su destino'} a las ${llegada.hora}${llegada.dias ? ` (+${llegada.dias} d)` : ''}${clase ? `, en ${clase}` : ''}.`
 }
 
 // Al cambiar de empresa se quitan los buses de otra empresa y las distribuciones que ella no tiene.
 watch(
   () => form.empresaId,
   (empresaId) => {
-    if (!empresaId) return;
-    const disponibles = new Set(croquisVisibles.value.map((c) => c.id));
+    if (!empresaId) return
+    const disponibles = new Set(croquisVisibles.value.map((c) => c.id))
     for (const m of form.momentos) {
-      if (m.busId && (busDe(m.busId)?.empresaId ?? empresaId) !== empresaId) m.busId = null;
-      if (m.croquisId && !disponibles.has(m.croquisId)) m.croquisId = null;
+      if (m.busId && (busDe(m.busId)?.empresaId ?? empresaId) !== empresaId) m.busId = null
+      if (m.croquisId && !disponibles.has(m.croquisId)) m.croquisId = null
     }
   },
-);
+)
 
-watch(guardar, (g) => (form.guardarComo = g ? nombreEsquema.value : null));
-watch(nombreEsquema, (n) => guardar.value && (form.guardarComo = n));
+watch(guardar, (g) => (form.guardarComo = g ? nombreEsquema.value : null))
+watch(nombreEsquema, (n) => guardar.value && (form.guardarComo = n))
 
 /** Campos numéricos/fecha de PrimeVue ↔ el formulario. */
-const intervalo = computed<number | null>({ get: () => form.intervaloDias, set: (v) => (form.intervaloDias = v ?? 1) });
-const veces = computed<number | null>({ get: () => form.veces, set: (v) => (form.veces = v ?? 1) });
-const desde = computed<Date | null>({ get: () => (form.desde ? deDia(form.desde) : null), set: (d) => (form.desde = d ? aDia(d) : null) });
-const hasta = computed<Date | null>({ get: () => (form.hasta ? deDia(form.hasta) : null), set: (d) => (form.hasta = d ? aDia(d) : null) });
+const intervalo = computed<number | null>({
+  get: () => form.intervaloDias,
+  set: (v) => (form.intervaloDias = v ?? 1),
+})
+const veces = computed<number | null>({ get: () => form.veces, set: (v) => (form.veces = v ?? 1) })
+const desde = computed<Date | null>({
+  get: () => (form.desde ? deDia(form.desde) : null),
+  set: (d) => (form.desde = d ? aDia(d) : null),
+})
+const hasta = computed<Date | null>({
+  get: () => (form.hasta ? deDia(form.hasta) : null),
+  set: (d) => (form.hasta = d ? aDia(d) : null),
+})
 
 watch(esquemaId, () => {
   if (esquema.value)
     Object.assign(
       form,
       conEsquema(form, esquema.value, (busId) => busDe(busId)?.croquisId ?? null),
-    );
-  guardar.value = false;
-});
+    )
+  guardar.value = false
+})
 
 function agregarHora() {
-  const ultima = form.momentos[form.momentos.length - 1];
-  form.momentos.push({ hora: ultima?.hora ?? "06:00", croquisId: ultima?.croquisId ?? null, busId: null });
+  const ultima = form.momentos[form.momentos.length - 1]
+  form.momentos.push({
+    hora: ultima?.hora ?? '06:00',
+    croquisId: ultima?.croquisId ?? null,
+    busId: null,
+  })
 }
 
 function ordenar() {
-  form.momentos.sort((a, b) => (horaValida(a.hora) ? normalizarHora(a.hora) : a.hora).localeCompare(horaValida(b.hora) ? normalizarHora(b.hora) : b.hora));
+  form.momentos.sort((a, b) =>
+    (horaValida(a.hora) ? normalizarHora(a.hora) : a.hora).localeCompare(
+      horaValida(b.hora) ? normalizarHora(b.hora) : b.hora,
+    ),
+  )
 }
 
 // Vista previa automática (con espera) cada vez que el formulario es válido y cambia.
-let espera: ReturnType<typeof setTimeout> | null = null;
-let pedido = 0;
+let espera: ReturnType<typeof setTimeout> | null = null
+let pedido = 0
 watch(
-  () => (errores.value.length ? null : JSON.stringify({ ...aPayload(form), guardarComo: undefined })),
+  () =>
+    errores.value.length ? null : JSON.stringify({ ...aPayload(form), guardarComo: undefined }),
   (clave) => {
-    if (espera) clearTimeout(espera);
-    resultado.value = null;
-    if (!clave) return;
-    espera = setTimeout(cargarPrevia, 400);
+    if (espera) clearTimeout(espera)
+    resultado.value = null
+    if (!clave) return
+    espera = setTimeout(cargarPrevia, 400)
   },
-);
+)
 
 async function cargarPrevia() {
-  const n = ++pedido;
-  cargandoPrevia.value = true;
-  errorPrevia.value = "";
+  const n = ++pedido
+  cargandoPrevia.value = true
+  errorPrevia.value = ''
   try {
-    const r = await vistaPrevia(aPayload(form));
-    if (n === pedido) previa.value = r;
+    const r = await vistaPrevia(aPayload(form))
+    if (n === pedido) previa.value = r
   } catch (e) {
     if (n === pedido) {
-      previa.value = null;
-      errorPrevia.value = mensaje(e);
+      previa.value = null
+      errorPrevia.value = mensaje(e)
     }
   } finally {
-    if (n === pedido) cargandoPrevia.value = false;
+    if (n === pedido) cargandoPrevia.value = false
   }
 }
 
 const resumenPrevia = computed(() => {
-  const r = previa.value?.resumen;
-  if (!r) return [];
-  return (Object.keys(ESTADO_PLAN) as EstadoPlan[]).filter((e) => r[e] > 0).map((e) => ({ estado: e, n: r[e], ...ESTADO_PLAN[e] }));
-});
+  const r = previa.value?.resumen
+  if (!r) return []
+  return (Object.keys(ESTADO_PLAN) as EstadoPlan[])
+    .filter((e) => r[e] > 0)
+    .map((e) => ({ estado: e, n: r[e], ...ESTADO_PLAN[e] }))
+})
 
 const porDia = computed(() => {
-  const grupos = new Map<string, ItemPlan[]>();
+  const grupos = new Map<string, ItemPlan[]>()
   for (const it of previa.value?.items ?? []) {
-    const dia = aDia(new Date(it.fecha));
-    grupos.set(dia, [...(grupos.get(dia) ?? []), it]);
+    const dia = aDia(new Date(it.fecha))
+    grupos.set(dia, [...(grupos.get(dia) ?? []), it])
   }
-  return [...grupos].map(([dia, items]) => ({ dia, items, problemas: items.filter((i) => i.estado !== "nueva").length }));
-});
+  return [...grupos].map(([dia, items]) => ({
+    dia,
+    items,
+    problemas: items.filter((i) => i.estado !== 'nueva').length,
+  }))
+})
 
 async function crear() {
-  creando.value = true;
+  creando.value = true
   try {
-    const r = await programar(aPayload(form));
-    resultado.value = r;
-    notify[r.creadas ? "success" : "warning"](`Se crearon ${r.creadas} salida(s).`);
+    const r = await programar(aPayload(form))
+    resultado.value = r
+    notify[r.creadas ? 'success' : 'warning'](`Se crearon ${r.creadas} salida(s).`)
     if (r.esquema) {
-      esquemas.value = [...esquemas.value, r.esquema].sort((a, b) => a.nombre.localeCompare(b.nombre));
-      esquemaId.value = r.esquema.id;
+      esquemas.value = [...esquemas.value, r.esquema].sort((a, b) =>
+        a.nombre.localeCompare(b.nombre),
+      )
+      esquemaId.value = r.esquema.id
     }
-    void cargarPrevia().then(() => (resultado.value = r));
+    void cargarPrevia().then(() => (resultado.value = r))
   } catch (e) {
-    notify.error(mensaje(e));
+    notify.error(mensaje(e))
   } finally {
-    creando.value = false;
+    creando.value = false
   }
 }
 
 async function actualizarEsquema() {
-  if (!esquema.value) return;
-  guardandoEsquema.value = true;
+  if (!esquema.value) return
+  guardandoEsquema.value = true
   try {
-    const e = await guardarEsquema(esquema.value.id, aEsquema(form, esquema.value.nombre));
-    esquemas.value = esquemas.value.map((x) => (x.id === e.id ? e : x));
-    notify.success(`Esquema «${e.nombre}» actualizado.`);
+    const e = await guardarEsquema(esquema.value.id, aEsquema(form, esquema.value.nombre))
+    esquemas.value = esquemas.value.map((x) => (x.id === e.id ? e : x))
+    notify.success(`Esquema «${e.nombre}» actualizado.`)
   } catch (e) {
-    notify.error(mensaje(e));
+    notify.error(mensaje(e))
   } finally {
-    guardandoEsquema.value = false;
+    guardandoEsquema.value = false
   }
 }
 
 async function confirmarBorrarEsquema() {
-  if (!esquema.value) return;
-  guardandoEsquema.value = true;
+  if (!esquema.value) return
+  guardandoEsquema.value = true
   try {
-    const { id } = await eliminarEsquema(esquema.value.id);
-    const nombre = esquema.value.nombre;
-    esquemaId.value = null;
-    esquemas.value = esquemas.value.filter((x) => x.id !== id);
-    borrarEsquema.value = false;
-    notify.success(`Esquema «${nombre}» borrado.`);
+    const { id } = await eliminarEsquema(esquema.value.id)
+    const nombre = esquema.value.nombre
+    esquemaId.value = null
+    esquemas.value = esquemas.value.filter((x) => x.id !== id)
+    borrarEsquema.value = false
+    notify.success(`Esquema «${nombre}» borrado.`)
   } catch (e) {
-    notify.error(mensaje(e));
+    notify.error(mensaje(e))
   } finally {
-    guardandoEsquema.value = false;
+    guardandoEsquema.value = false
   }
 }
 
-const mensaje = (e: unknown) => (e instanceof Error ? e.message : String(e));
+const mensaje = (e: unknown) => (e instanceof Error ? e.message : String(e))
 
-const fechaHora = (iso: string) => new Intl.DateTimeFormat("es-GT", { day: "2-digit", month: "short", hour: "numeric", minute: "2-digit" }).format(new Date(iso));
-const diaCorto = (d: string) => new Intl.DateTimeFormat("es-GT", { day: "numeric", month: "short" }).format(deDia(d));
-const diaLargo = (d: string) => new Intl.DateTimeFormat("es-GT", { weekday: "short", day: "numeric", month: "short", year: "numeric" }).format(deDia(d));
-const duracion = (min: number) => (min >= 60 ? `${Math.floor(min / 60)} h${min % 60 ? ` ${min % 60} min` : ""}` : `${min} min`);
+const fechaHora = (iso: string) =>
+  new Intl.DateTimeFormat('es-GT', {
+    day: '2-digit',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(new Date(iso))
+const diaCorto = (d: string) =>
+  new Intl.DateTimeFormat('es-GT', { day: 'numeric', month: 'short' }).format(deDia(d))
+const diaLargo = (d: string) =>
+  new Intl.DateTimeFormat('es-GT', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(deDia(d))
+const duracion = (min: number) =>
+  min >= 60 ? `${Math.floor(min / 60)} h${min % 60 ? ` ${min % 60} min` : ''}` : `${min} min`
 
 onMounted(async () => {
   try {
-    const [o, e] = await Promise.all([fetchOpciones(), fetchEsquemas()]);
-    opciones.value = o;
-    esquemas.value = e.items;
-    if (!o.puede.crear) sinPermiso.value = true;
-    const pedido = Number(route.query.esquema);
-    if (pedido && e.items.some((x) => x.id === pedido)) esquemaId.value = pedido;
+    const [o, e] = await Promise.all([fetchOpciones(), fetchEsquemas()])
+    opciones.value = o
+    esquemas.value = e.items
+    if (!o.puede.crear) sinPermiso.value = true
+    const pedido = Number(route.query.esquema)
+    if (pedido && e.items.some((x) => x.id === pedido)) esquemaId.value = pedido
   } catch (e) {
-    if (e instanceof HttpError && e.status === 403) sinPermiso.value = true;
-    else notify.error(mensaje(e));
+    if (e instanceof HttpError && e.status === 403) sinPermiso.value = true
+    else notify.error(mensaje(e))
   }
-});
+})
 </script>
 
 <style scoped>
@@ -462,9 +775,9 @@ onMounted(async () => {
   display: grid;
   grid-template-columns: 6.5rem minmax(0, 1fr) auto;
   grid-template-areas:
-    "hora croquis quitar"
-    "bus bus bus"
-    "detalle detalle detalle";
+    'hora croquis quitar'
+    'bus bus bus'
+    'detalle detalle detalle';
   align-items: center;
   gap: 0.5rem;
 }
@@ -488,8 +801,8 @@ onMounted(async () => {
   .momento {
     grid-template-columns: 6.5rem minmax(0, 1fr) minmax(0, 1fr) auto;
     grid-template-areas:
-      "hora croquis bus quitar"
-      ". detalle detalle .";
+      'hora croquis bus quitar'
+      '. detalle detalle .';
     row-gap: 0.25rem;
   }
 }

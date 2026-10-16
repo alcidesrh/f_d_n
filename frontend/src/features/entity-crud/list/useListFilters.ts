@@ -20,6 +20,7 @@
  *   aplicar uno quita el otro.
  */
 import { computed, reactive, ref, watch, type ComputedRef } from 'vue'
+import { esBusquedaRemota } from '@/core/entities/busquedaRemota'
 import { getEntity } from '@/core/entities/registry'
 import { graphql } from '@/core/graphql/client'
 import type { CollectionFieldConfig, EntityStore, FilterMode } from '@/core/entities/types'
@@ -47,7 +48,6 @@ export interface FilterOption {
   value: unknown
 }
 
-
 export function useListFilters(store: ComputedRef<EntityStore | null>) {
   /** Valor de cada input (campo → valor), antes de traducirse a args del backend. */
   const values = reactive<Record<string, unknown>>({})
@@ -68,16 +68,26 @@ export function useListFilters(store: ComputedRef<EntityStore | null>) {
 
   function isFilterable(column: CollectionFieldConfig) {
     const metadata = entity()
-    return column.filterable === true && Boolean(metadata && hasServerFilter(metadata, column.field))
+    return (
+      column.filterable === true && Boolean(metadata && hasServerFilter(metadata, column.field))
+    )
   }
 
   function relationTarget(field: string) {
     return entity()?.fields.find((f) => f.name === field)?.namedType ?? null
   }
 
-  /** Relación marcada `autocomplete` en la configuración: se busca en el servidor. */
+  /**
+   * Relación que se busca en el servidor: marcada `autocomplete` en la
+   * configuración, o de una entidad con muchos registros (usuarios, trayectos,
+   * rutas, enclaves), que nunca se carga entera.
+   */
   function isRemote(field: string) {
-    return kindOf(field) === 'relation' && store.value?.columns.find((c) => c.field === field)?.autocomplete === true
+    if (kindOf(field) !== 'relation') return false
+    return (
+      store.value?.columns.find((c) => c.field === field)?.autocomplete === true ||
+      esBusquedaRemota(relationTarget(field))
+    )
   }
 
   function optionsFor(field: string): FilterOption[] {
@@ -87,7 +97,10 @@ export function useListFilters(store: ComputedRef<EntityStore | null>) {
     if (isRemote(field)) return remote[field] ?? []
     const target = relationTarget(field)
     if (!target) return []
-    return getEntity(target).fullList.map((option) => ({ label: option.label, value: option.value ?? option.id }))
+    return getEntity(target).fullList.map((option) => ({
+      label: option.label,
+      value: option.value ?? option.id,
+    }))
   }
 
   function remember(field: string, found: FilterOption[]) {
@@ -99,7 +112,10 @@ export function useListFilters(store: ComputedRef<EntityStore | null>) {
   async function fetchRemote(field: string, args: { search?: string; ids?: string[] }) {
     const target = relationTarget(field)
     if (!target) return []
-    const found = (await graphql.agnosticSearch(target, args)).map((option) => ({ label: option.label, value: option.value ?? option.id }))
+    const found = (await graphql.agnosticSearch(target, args)).map((option) => ({
+      label: option.label,
+      value: option.value ?? option.id,
+    }))
     remember(field, found)
     return found
   }
@@ -114,7 +130,9 @@ export function useListFilters(store: ComputedRef<EntityStore | null>) {
    * completa, o en las de autocompletado solo la etiqueta de lo ya elegido.
    */
   function preloadOptions(columns: CollectionFieldConfig[]) {
-    const relations = columns.filter((column) => isFilterable(column) && kindOf(column.field) === 'relation')
+    const relations = columns.filter(
+      (column) => isFilterable(column) && kindOf(column.field) === 'relation',
+    )
     const full = relations
       .filter((column) => !isRemote(column.field))
       .map((column) => relationTarget(column.field))
@@ -124,8 +142,12 @@ export function useListFilters(store: ComputedRef<EntityStore | null>) {
       .filter((column) => isRemote(column.field))
       .map((column) => {
         const value = values[column.field]
-        const ids = (Array.isArray(value) ? value : [value]).filter((v): v is string => typeof v === 'string' && v !== '')
-        const unknown = ids.filter((id) => !remote[column.field]?.some((option) => option.value === id))
+        const ids = (Array.isArray(value) ? value : [value]).filter(
+          (v): v is string => typeof v === 'string' && v !== '',
+        )
+        const unknown = ids.filter(
+          (id) => !remote[column.field]?.some((option) => option.value === id),
+        )
         return unknown.length ? fetchRemote(column.field, { ids: unknown }) : null
       })
     return Promise.all([...full, ...chosen])
@@ -135,7 +157,8 @@ export function useListFilters(store: ComputedRef<EntityStore | null>) {
     values[field] = value
     clearTimeout(timer)
     const kind = kindOf(field)
-    if (!isEmptyFilterValue(value) && (kind === 'text' || kind === 'number')) timer = setTimeout(commit, DEBOUNCE_MS)
+    if (!isEmptyFilterValue(value) && (kind === 'text' || kind === 'number'))
+      timer = setTimeout(commit, DEBOUNCE_MS)
     else commit()
   }
 
@@ -205,8 +228,12 @@ export function useListFilters(store: ComputedRef<EntityStore | null>) {
     if (kind === 'boolean') return value === true || value === 'true' ? 'Sí' : 'No'
     if (kind === 'relation') {
       const options = optionsFor(field)
-      const chosen = (Array.isArray(value) ? value : [value]).map((v) => options.find((o) => o.value === v)?.label ?? String(v))
-      return chosen.length > 2 ? `${chosen.slice(0, 2).join(', ')} +${chosen.length - 2}` : chosen.join(', ')
+      const chosen = (Array.isArray(value) ? value : [value]).map(
+        (v) => options.find((o) => o.value === v)?.label ?? String(v),
+      )
+      return chosen.length > 2
+        ? `${chosen.slice(0, 2).join(', ')} +${chosen.length - 2}`
+        : chosen.join(', ')
     }
     return `“${String(value)}”`
   }

@@ -10,6 +10,8 @@ use App\Entity\Enum\EstadoSalida;
 use App\Entity\Parada;
 use App\Entity\ParadaTiempo;
 use App\Entity\Ruta;
+use App\Salida\VistaSalida;
+use App\Services\BuscadorOpciones;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -28,11 +30,28 @@ final class EdicionRutas
         private readonly Horarios $horarios,
         private readonly Trayectos $trayectos,
         private readonly KilometrosCarretera $carretera,
+        private readonly BuscadorOpciones $buscador,
     ) {}
 
-    /** @return list<array<string, mixed>> */
-    public function listar(): array
+    /** Rutas por página en el listado; el resto, con "afine la búsqueda". */
+    public const LIMITE_LISTADO = 50;
+
+    /**
+     * Rutas para el listado: las que coinciden con `$texto` (o las primeras por
+     * nombre si no hay texto), sin las inactivas salvo que se pidan. Filtra en
+     * la base de datos y trae hasta `$limite`; `truncado` si hay más.
+     *
+     * @return array{items: list<array<string, mixed>>, truncado: bool}
+     */
+    public function listar(string $texto = "", bool $inactivas = true, int $limite = self::LIMITE_LISTADO): array
     {
+        $ids = $this->idsQueCoinciden($texto, $inactivas, $limite + 1);
+        $truncado = count($ids) > $limite;
+        $ids = array_slice($ids, 0, $limite);
+        if ($ids === []) {
+            return ["items" => [], "truncado" => false];
+        }
+
         /** @var list<Ruta> $rutas */
         $rutas = $this->em->createQueryBuilder()
             ->select("r", "p", "e", "t")
@@ -40,6 +59,8 @@ final class EdicionRutas
             ->leftJoin("r.paradas", "p")
             ->leftJoin("p.enclave", "e")
             ->leftJoin("p.tiempos", "t")
+            ->where("r.id IN (:ids)")
+            ->setParameter("ids", $ids)
             ->getQuery()
             ->getResult();
         $futuras = $this->em->getConnection()->fetchAllKeyValue(
@@ -48,7 +69,7 @@ final class EdicionRutas
         );
         usort($rutas, static fn(Ruta $a, Ruta $b) => strnatcasecmp($a->getNombre(), $b->getNombre()));
 
-        return array_map(static fn(Ruta $r) => [
+        $items = array_map(static fn(Ruta $r) => [
             "id" => (int) $r->getId(),
             "nombre" => $r->getNombre(),
             "origen" => $r->getOrigen()?->getNombre(),
@@ -60,6 +81,57 @@ final class EdicionRutas
             "codigo" => $r->getLegacyId(),
             "salidasFuturas" => (int) ($futuras[$r->getId()] ?? 0),
         ], $rutas);
+
+        return ["items" => $items, "truncado" => $truncado];
+    }
+
+    /**
+     * Ids de las rutas que coinciden con `$texto` (o las primeras por nombre
+     * sin texto), hasta `$limite`. Sin texto, la base ordena y corta.
+     *
+     * @return list<int>
+     */
+    private function idsQueCoinciden(string $texto, bool $inactivas, int $limite): array
+    {
+        if (trim($texto) === "") {
+            $qb = $this->em->createQueryBuilder()->select("r.id")->from(Ruta::class, "r")->orderBy("r.nombre", "ASC")->setMaxResults($limite);
+            if (!$inactivas) {
+                $qb->where("r.activo = true");
+            }
+
+            return array_map(intval(...), array_column($qb->getQuery()->getScalarResult(), "id"));
+        }
+
+        $rutas = $this->buscador->buscar(Ruta::class, $texto, $limite);
+
+        return array_values(array_map(
+            static fn(Ruta $r) => (int) $r->getId(),
+            array_filter($rutas, static fn(Ruta $r) => $inactivas || $r->isActivo()),
+        ));
+    }
+
+    /**
+     * Rutas para el programador (`VistaSalida::rutaOpcion`): las activas que
+     * coinciden con `$texto` (o las primeras sin texto) y, siempre, las de
+     * `$ids` (la ya elegida, aunque esté inactiva).
+     *
+     * @param list<int|string> $ids
+     * @return list<array<string, mixed>>
+     */
+    public function buscarOpciones(string $texto, array $ids): array
+    {
+        $porIds = $this->buscador->porIds(Ruta::class, $ids);
+        $coinciden = array_filter(
+            $this->buscador->buscar(Ruta::class, $texto, 20),
+            static fn(Ruta $r) => $r->isActivo(),
+        );
+
+        $rutas = [];
+        foreach ([...$porIds, ...$coinciden] as $ruta) {
+            $rutas[(int) $ruta->getId()] = $ruta;
+        }
+
+        return array_map(VistaSalida::rutaOpcion(...), array_values($rutas));
     }
 
     /** Lugares y clases de bus para el editor. @return array<string, mixed> */

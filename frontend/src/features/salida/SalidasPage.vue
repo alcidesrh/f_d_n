@@ -39,7 +39,7 @@
         </label>
         <label class="col-span-2 flex flex-col gap-1 @3xl:col-span-1">
           <span class="text-xs font-medium text-muted-color">Ruta</span>
-          <RutaSelect v-model="filtro.ruta" :rutas="opciones?.rutas ?? []" show-clear placeholder="Todas" />
+          <RutaSelect v-model="filtro.ruta" show-clear placeholder="Todas" />
         </label>
         <Button severity="secondary" outlined class="col-span-2 @3xl:col-span-1" @click="masFiltros = true">
           <icon name="filter-alt-outline" class="mr-1" />Más filtros
