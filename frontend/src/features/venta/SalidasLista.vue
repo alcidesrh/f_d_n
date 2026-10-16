@@ -8,29 +8,34 @@
 
   El viaje es el del cliente (ADR-030): "Sube en" y "Baja en" con la hora en
   cada parada ("≈" si es estimada, "+1" si llega otro día); la ruta del bus,
-  con la hora en sus puntas (la de inicio, en negrita, delante), va primera en la tabla. Una salida sin
+  La tabla abre con la hora de salida y sigue con la ruta del bus, sin horas. Una salida sin
   tarifa para ese viaje lo dice en el precio y no se puede elegir.
 -->
 <template>
-  <DataGrid :columns="columns" :rows="salidas" :row-key="rowKey" :loading="cargando" :selected-keys="seleccion" :row-class="rowClass" :cards-below="47" :density="ancho ? 'comfortable' : 'normal'" max-height="38rem" row-clickable class="salidas" @row-click="elegir($event as SalidaResumen)">
+  <DataGrid :columns="columns" :rows="salidas" :row-key="rowKey" :loading="cargando" :selected-keys="seleccion" :row-class="rowClass" :cards-below="54" :density="ancho ? 'comfortable' : 'normal'" max-height="38rem" row-clickable class="salidas" @row-click="elegir($event as SalidaResumen)">
     <template #header="{ column }">
       <span v-if="column.key === 'asientos'" class="asientos" aria-label="Vendidos y libres">
         <icon name="airline_seat_recline_extra" size="1.1rem" class="asientos__vendidos" title="Vendidos" />
         <icon name="tatami_seat" size="1.1rem" :weight="300" class="asientos__libres" title="Libres" />
       </span>
+      <span v-if="column.key === 'hora'" class="pl-0.4">{{ column.label }}</span>
       <template v-else>{{ column.label }}</template>
     </template>
 
     <template #cell="{ row, column }">
       <div v-if="column.key === 'sube' || column.key === 'baja'" class="celda min-w-0 leading-tight">
-        <div class="truncate font-medium" :title="punta(s(row), column.key).nombre ?? ''">{{ punta(s(row), column.key).nombre ?? "—" }}</div>
-        <div class="truncate text-xs tabular-nums text-muted-color">{{ horaPunta(s(row), column.key) }}</div>
+        <div class="truncate" :title="punta(s(row), column.key).nombre ?? ''">{{ punta(s(row), column.key).nombre ?? "—" }}</div>
+        <div class="truncate font-medium text-xs tabular-nums text-muted-color">{{ horaPunta(s(row), column.key) }}</div>
+      </div>
+      <div v-else-if="column.key === 'hora'" class="celda leading-tight text-[0.9rem]">
+        <div class="font-medium tracking-wider text-[.95rem] truncate tabular-nums whitespace-nowrap">{{ fecha(s(row).salida) }}</div>
+        <div class="font-medium tracking-wider text-[.95rem] mt-1 text-center tabular-nums whitespace-nowrap">{{ hora(s(row).salida) }}</div>
       </div>
       <div v-else-if="column.key === 'ruta'" class="celda ruta min-w-0 leading-tight">
-        <div class="truncate" :title="rutaInicio(s(row))"><b v-if="inicioRuta(s(row)).hora" class="tabular-nums">{{ inicioRuta(s(row)).hora }}</b> {{ inicioRuta(s(row)).nombre }}</div>
+        <div class="truncate" :title="rutaInicio(s(row))">{{ rutaInicio(s(row)) }}</div>
         <div class="truncate" :title="rutaFin(s(row))">{{ rutaFin(s(row)) }}</div>
       </div>
-      <GridText v-else-if="column.key === 'empresa'" class="celda" :text="nombreEmpresa(s(row))" />
+      <GridText v-else-if="column.key === 'empresa'" class="celda text-[0.9rem]!" :text="nombreEmpresa(s(row))" />
       <template v-else-if="column.key === 'bus'">
         <span v-if="s(row).bus" class="celda truncate" :title="bus(s(row))">{{ s(row).bus!.codigo }}</span>
         <icon v-else name="no_transfer" class="text-surface-500" size="1.2rem" title="Sin bus" />
@@ -84,7 +89,7 @@ import { computed, onBeforeUnmount, ref } from "vue";
 import DataGrid from "@/shared/data-grid/DataGrid.vue";
 import GridText from "@/shared/data-grid/GridText.vue";
 import type { GridColumn } from "@/shared/data-grid/types";
-import { diasEntre, horaViaje } from "@/core/venta/modelo";
+import { diasEntre, fecha, hora, horaViaje } from "@/core/venta/modelo";
 import type { Importe, ParadaViaje, SalidaResumen } from "@/core/venta/types";
 
 const props = defineProps<{
@@ -95,6 +100,7 @@ const props = defineProps<{
 const emit = defineEmits<{ elegir: [id: number] }>();
 
 const columns: GridColumn[] = [
+  { key: "hora", label: "Hora", minWidth: "6.75rem" },
   { key: "ruta", label: "Ruta", minWidth: "9rem", width: "1.5fr" },
   { key: "sube", label: "Sube en", minWidth: "7rem" },
   { key: "baja", label: "Baja en", minWidth: "7rem" },
@@ -138,18 +144,10 @@ function horaDe(p: ParadaViaje | undefined, desde?: string | null) {
 /** La subida, a secas; la bajada, con "+1" si se llega otro día que el que se sube. */
 const horaPunta = (r: SalidaResumen, cual: "sube" | "baja") => horaDe(punta(r, cual), cual === "baja" ? (punta(r, "sube").hora ?? r.salida) : null);
 const viaje = (r: SalidaResumen) => `${punta(r, "sube").nombre ?? ""} → ${punta(r, "baja").nombre ?? ""}`;
-/** Un extremo de la ruta del bus: "Guatemala 08:00 p. m.", con la hora si se conoce. */
-const extremo = (r: SalidaResumen, nombre: string | null | undefined, p: ParadaViaje | undefined) => [nombre ?? "", p?.hora ? horaDe(p, r.salida) : ""].filter(Boolean).join(" ");
-/** Hora y nombre de un extremo, por separado: la columna Ruta pone la hora delante, en negrita. */
-const extremoPartes = (r: SalidaResumen, nombre: string | null | undefined, p: ParadaViaje | undefined) => ({ hora: p?.hora ? horaDe(p, r.salida) : "", nombre: nombre ?? "" });
-/** Origen de la ruta del bus; sin `viaje`, la hora de la salida. */
-const origenRuta = (r: SalidaResumen): ParadaViaje => r.viaje?.inicio ?? { id: r.ruta.origen.id, nombre: r.ruta.origen.nombre, hora: r.salida, aprox: false };
-/** Origen de la ruta del bus (primera línea de la celda). */
-const inicioRuta = (r: SalidaResumen) => extremoPartes(r, r.ruta.origen.nombre, origenRuta(r));
-/** Origen y destino con su hora en una sola línea: segunda línea de la celda (destino, sin negrita), título y tarjeta. */
-const rutaInicio = (r: SalidaResumen) => extremo(r, r.ruta.origen.nombre, origenRuta(r));
-const rutaFin = (r: SalidaResumen) => extremo(r, r.ruta.destino.nombre, r.viaje?.fin);
-/** "Guatemala 08:00 p. m. → Flores ≈ 05:20 a. m. (+1)": la ruta entera, para la tarjeta. */
+/** Origen y destino de la ruta del bus, sin horas: las dos líneas de la celda Ruta. */
+const rutaInicio = (r: SalidaResumen) => r.ruta.origen.nombre ?? "";
+const rutaFin = (r: SalidaResumen) => r.ruta.destino.nombre ?? "";
+/** "Guatemala → Flores": la ruta entera, para la tarjeta. */
 const ruta = (r: SalidaResumen) => `${rutaInicio(r)} → ${rutaFin(r)}`;
 /** "TRANSPORTES FUENTES" → "Transportes Fuentes". */
 const nombreEmpresa = (r: SalidaResumen) => (r.empresa?.nombre ?? "").toLocaleLowerCase("es").replace(/(^|[\s-])(\p{L})/gu, (_, sep: string, c: string) => sep + c.toLocaleUpperCase("es"));
@@ -203,7 +201,7 @@ const precioCorto = (p: Importe | null) => (p ? p.texto.replace(/[.,]00$/, "") :
   }
   .celda .text-xs,
   .celda.ruta {
-    font-size: 0.8125rem;
+    font-size: 0.9125rem;
   }
   .celda .asientos--valores,
   .asientos--valores.celda {
