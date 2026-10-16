@@ -20,6 +20,8 @@ export interface ListFeatures {
   resize: boolean
   sort: boolean
   filter: boolean
+  /** Filtro a la medida de la entidad, si tiene (`listCustomFilters`). */
+  customFilter: boolean
   inlineEdit: boolean
   /** Columna fija de acciones por fila (editar, eliminar y las de la entidad). */
   rowActions: boolean
@@ -58,6 +60,7 @@ const ALL_ON: ListFeatures = {
   resize: true,
   sort: true,
   filter: true,
+  customFilter: true,
   inlineEdit: true,
   rowActions: true,
   selection: true,

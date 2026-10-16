@@ -5,6 +5,7 @@
  */
 import type { AgnosticOption, EntitySchema, OrderCondition } from "@/core/graphql/types";
 import type { FormFieldConfig } from "@/core/metadata/entityConfiguration";
+import type { CustomListFilterState } from "./listCustomFilter";
 
 export type { OrderCondition };
 
@@ -55,6 +56,8 @@ export interface ListViewState {
   filterMode: FilterMode;
   /** Fila de filtros abierta. */
   filtersOpen: boolean;
+  /** Panel del filtro a la medida abierto (`listCustomFilter`). */
+  customFilterOpen?: boolean;
 }
 
 export interface PaginationState {
@@ -76,6 +79,8 @@ export interface EntityStoreState<T = unknown> {
   /** Solo en entidades paginadas (`page-connection`). */
   pagination?: PaginationState;
   filters: Record<string, unknown>;
+  /** Filtro a la medida aplicado (excluyente con `filters`, ver `listCustomFilter`). */
+  customFilter: CustomListFilterState | null;
   order: OrderCondition[];
   /** Último item leído o guardado. */
   item: T | null;

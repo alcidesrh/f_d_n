@@ -2,33 +2,41 @@
  * Reglas puras de la pantalla de venta: estado de cada asiento en el mapa,
  * paradas donde se puede subir/bajar y selección de asientos.
  */
-import type { AsientoCroquis, ClaseAsiento, EstadoAsiento } from "@/core/croquis/types";
+import type { AsientoCroquis, ClaseAsiento, EstadoAsiento, EstadoVenta } from "@/core/croquis/types";
 import type { AsientoOcupado, Parada, SalidaDetalle } from "./types";
+
+/** Cómo se ve una venta o una reserva en el mapa. */
+export function estadoDeVenta(o: AsientoOcupado): EstadoVenta {
+  if (o.estado === "reservado") return "reservado";
+  // Sin cobro antes que el canal: importa más que no se cobró que dónde se emitió.
+  if (o.sinCobro === "voucher") return "voucher";
+  if (o.sinCobro === "cortesia") return "cortesia";
+  if (o.canal === "web") return "ocupado-web";
+  if (o.canal === "agencia") return "ocupado-agencia";
+  return "ocupado";
+}
 
 /**
  * Cómo se pinta cada asiento en la taquilla, según lo que lo ocupa. Con
  * `clasesVendibles`, un asiento libre de otra clase queda `bloqueado`: no
- * tiene tarifa en el tramo elegido.
+ * tiene tarifa en el tramo elegido. Un libre recomendado (`recomendados`, el
+ * ocupante que lo recomienda) queda `recomendado-<su estado de venta>`.
  */
-export function estadoEnMapa(ocupados: readonly AsientoOcupado[], seleccion: readonly number[], clasesVendibles?: readonly ClaseAsiento[], recomendados: readonly number[] = []): (asiento: AsientoCroquis) => EstadoAsiento {
+export function estadoEnMapa(ocupados: readonly AsientoOcupado[], seleccion: readonly number[], clasesVendibles?: readonly ClaseAsiento[], recomendados: readonly AsientoOcupado[] = []): (asiento: AsientoCroquis) => EstadoAsiento {
   const porId = new Map(ocupados.map((o) => [o.asiento, o]));
   const elegidos = new Set(seleccion);
-  const sugeridos = new Set(recomendados);
+  const sugeridos = new Map(recomendados.map((r) => [r.asiento, r]));
   return (asiento) => {
     const id = asiento.id ?? -1;
     const o = porId.get(id);
     if (!o) {
       if (clasesVendibles && !clasesVendibles.includes(asiento.clase)) return "bloqueado";
-      return elegidos.has(id) ? "seleccionado" : sugeridos.has(id) ? "recomendado" : "disponible";
+      if (elegidos.has(id)) return "seleccionado";
+      const vecino = sugeridos.get(id);
+      return vecino ? `recomendado-${estadoDeVenta(vecino)}` : "disponible";
     }
     if (o.estado === "propio") return "seleccionado";
-    if (o.estado === "reservado") return "reservado";
-    // Sin cobro antes que el canal: importa más que no se cobró que dónde se emitió.
-    if (o.sinCobro === "voucher") return "voucher";
-    if (o.sinCobro === "cortesia") return "cortesia";
-    if (o.canal === "web") return "ocupado-web";
-    if (o.canal === "agencia") return "ocupado-agencia";
-    return "ocupado";
+    return estadoDeVenta(o);
   };
 }
 
@@ -115,7 +123,7 @@ export const hora = (iso: string | null | undefined) =>
 /** `27/09/2026` en la hora de Guatemala. */
 export const fecha = (iso: string | null | undefined) =>
   iso
-    ? new Intl.DateTimeFormat("es-GT", {
+    ? new Intl.DateTimeFormat("nl-NL", {
         day: "2-digit",
         month: "2-digit",
         year: "numeric",
@@ -136,9 +144,9 @@ export function nuevoToken(): string {
 
 /** Días de calendario (en Guatemala) entre dos instantes: el "+1" de una llegada al día siguiente. */
 export function diasEntre(desde: string, hasta: string): number {
-  const dia = (iso: string) => new Intl.DateTimeFormat("en-CA", { timeZone: ZONA }).format(new Date(iso))
-  return Math.round((Date.parse(dia(hasta)) - Date.parse(dia(desde))) / 86_400_000)
+  const dia = (iso: string) => new Intl.DateTimeFormat("en-CA", { timeZone: ZONA }).format(new Date(iso));
+  return Math.round((Date.parse(dia(hasta)) - Date.parse(dia(desde))) / 86_400_000);
 }
 
 /** Hora de una punta del viaje: "≈ 05:20 a. m." si es estimada, "—" si no se conoce. */
-export const horaViaje = (p: { hora: string | null; aprox: boolean }) => (p.hora ? `${p.aprox ? "≈ " : ""}${hora(p.hora)}` : "—")
+export const horaViaje = (p: { hora: string | null; aprox: boolean }) => (p.hora ? `${p.aprox ? "≈ " : ""}${hora(p.hora)}` : "—");

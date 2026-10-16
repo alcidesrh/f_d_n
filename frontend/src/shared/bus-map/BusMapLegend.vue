@@ -22,7 +22,8 @@ import SeatGlyph from "./SeatGlyph.vue";
 import SignalGlyph from "./SignalGlyph.vue";
 import "./busMap.css";
 
-export type ItemLeyenda = ClaseAsiento | EstadoAsiento | TipoSenal;
+/** Los recomendados no tienen renglón: se cuentan como disponibles (VentaPage). */
+export type ItemLeyenda = ClaseAsiento | Exclude<EstadoAsiento, `recomendado-${string}`> | TipoSenal;
 
 defineProps<{
   items: readonly ItemLeyenda[];
@@ -34,7 +35,6 @@ const ETIQUETAS: Record<ItemLeyenda, string> = {
   A: "Clase A",
   B: "Clase B",
   disponible: "Disponible",
-  recomendado: "Recomendado",
   ocupado: "Estación",
   "ocupado-web": "Página",
   "ocupado-agencia": "Agencia",

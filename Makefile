@@ -63,6 +63,22 @@ test: ## Run all tests
 testf: ## Run tests by name filter (usage: make testf F="testMethodName")
 	@$(DOCKER_COMP) exec backend vendor/bin/phpunit -c phpunit.dist.xml --filter "$(F)"
 
+# Cuenta de pruebas (Playwright, agentes, curl): credenciales en .env.e2e.local (fuera de git).
+E2E_ENV      = .env.e2e.local
+E2E_BASE_URL ?= http://localhost
+
+e2e-usuario: ## Crea o reinicia la cuenta de pruebas y guarda sus credenciales en .env.e2e.local (solo desarrollo)
+	@umask 077 && $(DOCKER_COMP) exec -T backend bin/console app:usuario:pruebas --no-ansi > $(E2E_ENV).tmp \
+		&& { echo "E2E_BASE_URL=$(E2E_BASE_URL)"; cat $(E2E_ENV).tmp; } > $(E2E_ENV) && rm -f $(E2E_ENV).tmp \
+		&& echo "Credenciales de la cuenta de pruebas en $(E2E_ENV)" \
+		|| { rm -f $(E2E_ENV).tmp; exit 1; }
+
+e2e-token: ## Imprime un token Bearer de la cuenta de pruebas (uso: curl -H "Authorization: Bearer $$(make -s e2e-token)" ...)
+	@test -f $(E2E_ENV) || { echo "Falta $(E2E_ENV): make e2e-usuario" >&2; exit 1; }
+	@. ./$(E2E_ENV) && curl -skf -X POST "$$E2E_BASE_URL/api/login" -H 'Content-Type: application/json' \
+		-d "{\"username\":\"$$E2E_ADMIN_USER\",\"password\":\"$$E2E_ADMIN_PASSWORD\"}" \
+		| grep -o '"token":"[^"]*"' | head -n 1 | cut -d '"' -f 4
+
 ## —— Docker 🐳 ————————————————————————————————————————————————————————————————
 up: ## Start the docker hub (PHP,caddy,MySQL,redis,adminer,elasticsearch)
 	$(DOCKER_COMP) up --detach

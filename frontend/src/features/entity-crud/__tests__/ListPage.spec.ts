@@ -44,6 +44,24 @@ const { schemaMock, registryMock } = vi.hoisted(() => ({
 vi.mock('@/core/entities/schema', () => ({ useSchemaStore: () => schemaMock }))
 vi.mock('@/core/entities/registry', () => ({ getEntity: registryMock.getEntity }))
 
+// Filtro a la medida de prueba para `Icon`: "Aplicar" emite un término, "Vaciar" ninguno.
+vi.mock('@/features/entity-crud/list/listCustomFilters', async () => {
+  const { defineComponent, h } = await import('vue')
+  const Filtro = defineComponent({
+    props: { applied: { type: Object, default: null } },
+    emits: ['apply'],
+    setup(props, { emit }) {
+      return () =>
+        h('div', { class: 'filtro-prueba' }, [
+          h('output', JSON.stringify(props.applied)),
+          h('button', { type: 'button', onClick: () => emit('apply', { values: { q: 'ca' }, args: { icon: 'ca' }, chips: [{ label: 'Icono', value: 'ca' }] }) }, 'Aplicar'),
+          h('button', { type: 'button', onClick: () => emit('apply', { values: {}, args: {}, chips: [] }) }, 'Vaciar'),
+        ])
+    },
+  })
+  return { entityCustomFilters: { Icon: { label: 'Buscar íconos', icon: 'manage-search', component: async () => Filtro } } }
+})
+
 interface IconItem {
   id: string
   name: string
@@ -207,6 +225,7 @@ function makeStore(): EntityStore<IconItem> {
     fullList: [],
     formFields: [],
     listOptions: {},
+    customFilter: null,
     view: { density: 'normal', layout: 'auto', filterMode: 'or', filtersOpen: false },
     init: vi.fn<(force?: boolean) => Promise<void>>(async (force = false) => {
       if (force || store.columns.length === 0) store.columns = columns.map((col) => ({ ...col }))
@@ -254,6 +273,7 @@ function makeCategoryStore(): EntityStore {
     fullList: [{ id: '/api/categories/1', label: 'Navegación' }],
     formFields: [],
     listOptions: {},
+    customFilter: null,
     view: { density: 'normal', layout: 'auto', filterMode: 'or', filtersOpen: false },
     init: vi.fn<() => Promise<void>>(async () => {}),
     fetchItems: vi.fn<() => Promise<unknown[]>>(async () => []),
@@ -388,6 +408,70 @@ describe('ListPage', () => {
     await new Promise((resolve) => setTimeout(resolve, 500))
     expect(store.filters).toEqual({ name: 'ho' })
     expect(store.fetchItems).toHaveBeenCalledTimes(2)
+  })
+
+  describe('filtro a la medida', () => {
+    async function abrirPanel() {
+      await wrapper!.find('[aria-label="Buscar íconos"]').trigger('click')
+      await flushPromises()
+      await new Promise((resolve) => setTimeout(resolve, 0))
+      await flushPromises()
+      return wrapper!.find('.filtro-prueba')
+    }
+
+    it('aplicarlo quita los filtros de columna, vuelve a la página 1 y conserva el orden', async () => {
+      store.filters = { name: 'ho' }
+      store.order = [{ name: 'DESC' }]
+      store.pagination!.currentPage = 3
+      await mountList(iconSchema)
+      expect(wrapper!.find('[data-grid-filter="name"] input').exists()).toBe(true)
+
+      const panel = await abrirPanel()
+      expect(panel.exists()).toBe(true)
+      await panel.findAll('button').find((b) => b.text() === 'Aplicar')!.trigger('click')
+      await flushPromises()
+
+      expect(store.filters).toEqual({})
+      expect(store.customFilter?.args).toEqual({ icon: 'ca' })
+      expect(store.order).toEqual([{ name: 'DESC' }])
+      expect(store.pagination?.currentPage).toBe(1)
+      expect(store.fetchItems).toHaveBeenCalledTimes(2)
+      expect(wrapper!.find('[data-grid-filter="name"] input').exists()).toBe(false)
+      expect(wrapper!.find('.list-chip--custom').text()).toContain('Icono')
+      expect(wrapper!.find('.filtro-prueba output').text()).toContain('"q":"ca"')
+    })
+
+    it('un filtro de columna lo quita y el panel vuelve a vacío', async () => {
+      store.customFilter = { values: { q: 'ca' }, args: { icon: 'ca' }, chips: [{ label: 'Icono', value: 'ca' }] }
+      store.order = [{ name: 'ASC' }]
+      await mountList(iconSchema)
+      await abrirPanel()
+
+      await (await filterInput('name')).setValue('ho')
+      await new Promise((resolve) => setTimeout(resolve, 500))
+      await flushPromises()
+
+      expect(store.filters).toEqual({ name: 'ho' })
+      expect(store.customFilter).toBeNull()
+      expect(store.order).toEqual([{ name: 'ASC' }])
+      expect(wrapper!.find('.filtro-prueba output').text()).toBe('null')
+      expect(wrapper!.find('.list-chip--custom').exists()).toBe(false)
+    })
+
+    it('sin términos (o con Limpiar) se quita', async () => {
+      store.customFilter = { values: { q: 'ca' }, args: { icon: 'ca' }, chips: [{ label: 'Icono', value: 'ca' }] }
+      await mountList(iconSchema)
+      const panel = await abrirPanel()
+      await panel.findAll('button').find((b) => b.text() === 'Vaciar')!.trigger('click')
+      await flushPromises()
+      expect(store.customFilter).toBeNull()
+
+      store.customFilter = { values: { q: 'ca' }, args: { icon: 'ca' }, chips: [{ label: 'Icono', value: 'ca' }] }
+      await flushPromises()
+      await wrapper!.findAll('button').find((b) => b.text() === 'Limpiar')!.trigger('click')
+      await flushPromises()
+      expect(store.customFilter).toBeNull()
+    })
   })
 
   it('una columna sin arg de servidor no ofrece filtro', async () => {
@@ -670,6 +754,7 @@ describe('ListPage', () => {
 
   it('restablecer la vista limpia filtros, orden, página, vista, ocultas y selección', async () => {
     store.filters = { name: 'ho' }
+    store.customFilter = { values: {}, args: { icon: 'x' }, chips: [] }
     store.order = [{ name: 'ASC' }]
     store.pagination!.currentPage = 3
     store.pagination!.itemsPerPage = 25
@@ -689,7 +774,8 @@ describe('ListPage', () => {
     expect(store.order).toEqual([])
     expect(store.pagination?.currentPage).toBe(1)
     expect(store.pagination?.itemsPerPage).toBe(10)
-    expect(store.view).toEqual({ density: 'normal', layout: 'auto', filterMode: 'or', filtersOpen: false })
+    expect(store.view).toEqual({ density: 'normal', layout: 'auto', filterMode: 'or', filtersOpen: false, customFilterOpen: false })
+    expect(store.customFilter).toBeNull()
     expect(store.columns.find((col) => col.field === 'icon')?.visible).not.toBe(false)
     expect(wrapper!.findAll('[aria-label="Editar"]')).toHaveLength(1)
   })

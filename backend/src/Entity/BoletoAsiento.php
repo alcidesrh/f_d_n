@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GraphQl\Query;
 use ApiPlatform\Metadata\GraphQl\QueryCollection;
@@ -208,6 +209,7 @@ class BoletoAsiento extends Base
     }
 
     /** El precio ya formateado con su moneda (`Q 100.00`), para los listados de la API. */
+    #[ApiProperty(writable: false)]
     public function getImporte(): ?string
     {
         $precio = $this->getPrecio();

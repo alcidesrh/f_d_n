@@ -11,7 +11,7 @@
   mide 48rem (container query), croquis fijo a la derecha.
 -->
 <template>
-  <div class="venta flex flex-col gap-2 md:gap-4" :style="colorRecomendado">
+  <div class="venta flex flex-col gap-2 md:gap-4">
     <Message v-if="store.errorCarga" severity="error" :closable="false">
       {{ store.errorCarga }}
       <Button label="Reintentar" size="small" text @click="store.iniciar()" />
@@ -53,7 +53,7 @@
                     <Button label="Aplicar" size="small" fluid :disabled="!borrador?.[0]" @click="aplicarRango" />
                   </template>
                 </DatePicker>
-                <label class="flex cursor-pointer items-center gap-1 text-[0.65rem] leading-none text-muted-color">
+                <label class="flex cursor-pointer items-center gap-1 text-[0.65rem] leading-none text-muted-color absolute right-0 -mb-1 blottom-0">
                   <ToggleSwitch v-model="store.porRango" class="scale-[0.6] origin-left -mr-3" @update:model-value="alCambiarModo" />
                   Rango
                 </label>
@@ -68,7 +68,7 @@
               </label>
             </div>
 
-            <div v-if="store.empresas.length > 1" class="flex flex-wrap items-center justify-end gap-2 mb-3">
+            <div v-if="store.empresas.length > 1" class="flex flex-wrap items-center justify-start gap-2 my-3">
               <button v-for="e in store.empresas" :key="e.id" type="button" class="rounded-full border px-2.5 py-1 text-xs font-semibold" :class="store.empresaIds.includes(e.id) ? 'border-primary bg-primary text-primary-contrast' : 'border-surface-300 bg-transparent text-color'" :aria-pressed="store.empresaIds.includes(e.id)" @click="alternarEmpresa(e.id)">
                 {{ e.nombre }}
               </button>
@@ -251,8 +251,9 @@ watch(
 
 /** Los recomendados no tienen renglón en la leyenda: cuentan como disponibles. */
 const conteos = computed(() => {
-  const { recomendado = 0, ...n } = conteosPorEstado(store.detalle?.croquis ?? [], store.estadoAsiento);
-  return { ...n, disponible: (n.disponible ?? 0) + recomendado };
+  const n = conteosPorEstado(store.detalle?.croquis ?? [], store.estadoAsiento);
+  const recomendados = Object.entries(n).reduce((total, [estado, k]) => (estado.startsWith("recomendado-") ? total + (k ?? 0) : total), 0);
+  return { ...n, disponible: (n.disponible ?? 0) + recomendados };
 });
 
 /** Rango de fecha y hora: se elige en el selector y solo se busca al pulsar "Aplicar". */
@@ -293,15 +294,8 @@ function etiquetaDia(delta: number) {
   if (dif === 1) return "Mañana";
   return new Intl.DateTimeFormat("es-GT", { weekday: "short", day: "numeric", month: "short" }).format(d);
 }
-/** Sin "recomendado": en el croquis se ve como un vendido en estación que parpadea a libre. */
+/** Sin los recomendados: en el croquis parpadean entre libre y el estado de su vecino, sin renglón propio. */
 const leyenda: ItemLeyenda[] = ["disponible", "ocupado", "ocupado-web", "ocupado-agencia", "reservado", "cortesia", "voucher"];
-
-/** El recomendado toma el color del canal que vende esta pantalla: estación = azul, agencia = esmeralda. */
-const colorRecomendado = computed(() =>
-  store.contexto?.canal === "agencia"
-    ? { "--bm-recommended": "var(--bm-sold-agency)", "--bm-recommended-stroke": "var(--bm-sold-agency-stroke)", "--bm-recommended-ink": "var(--bm-sold-agency-ink)" }
-    : { "--bm-recommended": "var(--bm-occupied)", "--bm-recommended-stroke": "var(--bm-occupied-stroke)", "--bm-recommended-ink": "var(--bm-occupied-ink)" },
-);
 
 const lineas = computed(() => {
   const precios = new Map(store.cotizacion?.asientos.map((a) => [a.asiento, a.precio.texto]));
@@ -397,15 +391,21 @@ async function reintentar(sinFactura: boolean) {
 .anteriores {
   position: absolute;
   left: 50%;
-  top: 0.25rem;
+  top: 0.55rem;
   z-index: 3;
   transform: translateX(-50%);
   background: var(--p-surface-50);
+  padding: 1px 10px;
+
+  & > :deep(span) {
+    /*font-weight: 400 !important;*/
+    font-size: 10px !important;
+  }
 }
 @media (width >= 48rem) {
   /* Justo bajo la cabecera de la tabla. */
   .anteriores {
-    top: 2.75rem;
+    top: 3rem;
   }
 }
 .campo {
@@ -413,6 +413,7 @@ async function reintentar(sinFactura: boolean) {
   min-width: 0;
   flex-direction: column;
   gap: 0.25rem;
+  position: relative;
 }
 /* Móvil: menos aire vertical (paneles, etiquetas e inputs) sin achicar la letra. */
 @media (width < 48rem) {

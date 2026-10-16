@@ -60,20 +60,13 @@ export interface PlantillaCroquis {
  * En la venta, `ocupado` es vendido en taquilla; `ocupado-web` y
  * `ocupado-agencia` distinguen los otros canales (ADR-021), `reservado` es
  * la precompra de la página web, y `cortesia` / `voucher` son vendidos sin
- * cobro (cortesía de taquilla, voucher del legado). `recomendado` es un
- * libre que conviene vender en taquilla para no fragmentar el bus (ADR-030).
+ * cobro (cortesía de taquilla, voucher del legado). `recomendado-<estado>` es un
+ * libre que conviene vender en taquilla para no fragmentar el bus (ADR-030): parpadea
+ * entre el estado de la venta del asiento vecino que lo recomienda y `seleccionado`.
  */
-export type EstadoAsiento =
-  | 'disponible'
-  | 'recomendado'
-  | 'ocupado'
-  | 'ocupado-web'
-  | 'ocupado-agencia'
-  | 'cortesia'
-  | 'voucher'
-  | 'seleccionado'
-  | 'reservado'
-  | 'bloqueado'
+export type EstadoVenta = 'ocupado' | 'ocupado-web' | 'ocupado-agencia' | 'cortesia' | 'voucher' | 'reservado'
+
+export type EstadoAsiento = 'disponible' | 'seleccionado' | 'bloqueado' | EstadoVenta | `recomendado-${EstadoVenta}`
 
 /** Estados que no se pueden elegir en un mapa interactivo. */
 export const ESTADOS_NO_SELECCIONABLES: readonly EstadoAsiento[] = [

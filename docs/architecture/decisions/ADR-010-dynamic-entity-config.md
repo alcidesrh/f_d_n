@@ -22,6 +22,7 @@ Se implementa un sistema de **configuración dinámica de entidades** basado en 
    - `SyncEntityConfigurationCommand` escanea las entidades anotadas con atributos de API Platform y crea/actualiza las configuraciones automáticamente.
    - `app:config:sync-metadata` es el comando Makefile correspondiente (`make entity-setup`).
    - El `EntityConfigSynchronizer` orquesta la comparación entre los metadatos actuales de Doctrine y la configuración persistida.
+   - Los subcampos de un embeddable (`precio.monto`) no se configuran: no existen en la API (un `Money` no tiene tipo en GraphQL). En su lugar, la entidad expone getters escalares marcados con `#[ApiProperty]` (p. ej. `BoletoTarifa::getImporte()` para leer y `getPrecioMonto()`/`setPrecioMonto()` para escribir), que el sincronizador suma como campos. Solo los marcados, para no sumar cualquier getter.
 
 3. **Exposición**:
    - Endpoint REST `GET /api/entity_configuration_dtos` sin paginación.

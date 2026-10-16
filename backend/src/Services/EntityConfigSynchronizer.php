@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use ApiPlatform\Metadata\ApiProperty;
 use App\Entity\CollectionFieldConfig;
 use App\Entity\EntityConfiguration;
 use App\Entity\FormFieldConfig;
@@ -56,7 +57,8 @@ final class EntityConfigSynchronizer
         // Para mayor detalle puedes hacer:
         $detalle = [];
         foreach ($camposSimples as $campo) {
-            if (\in_array($campo, ['legacyId', 'password', 'foto', 'apiTokens'])) {
+            // Subcampos de un embeddable (`precio.monto`): no existen en la API.
+            if (\in_array($campo, ['legacyId', 'password', 'foto', 'apiTokens']) || str_contains($campo, '.')) {
                 continue;
             }
             $mapping = $metadata->getFieldMapping($campo);
@@ -82,7 +84,46 @@ final class EntityConfigSynchronizer
                 substr($targetClass, strrpos($targetClass, '\\') + 1)
             ];
         }
-        return $detalle;
+        return [...$detalle, ...self::camposDeLaApi($metadata->getReflectionClass(), array_column($detalle, 0))];
+    }
+
+    /**
+     * Campos de la API sin columna propia: getters marcados con `#[ApiProperty]`
+     * (legibles) que devuelven un escalar, p. ej. `BoletoTarifa::getImporte()`
+     * en lugar de su embeddable `precio`. La marca explícita evita sumar
+     * cualquier getter de la entidad.
+     *
+     * @param list<string> $yaIncluidos
+     * @return list<array{0: string, 1: string}>
+     */
+    private static function camposDeLaApi(\ReflectionClass $clase, array $yaIncluidos): array
+    {
+        $campos = [];
+        foreach ($clase->getMethods(\ReflectionMethod::IS_PUBLIC) as $metodo) {
+            if ($metodo->isStatic() || $metodo->getNumberOfRequiredParameters() > 0 || !preg_match('/^(?:get|is)(.+)$/', $metodo->getName(), $m)) {
+                continue;
+            }
+            $atributo = $metodo->getAttributes(ApiProperty::class)[0] ?? null;
+            if ($atributo === null || $atributo->newInstance()->isReadable() === false) {
+                continue;
+            }
+            $tipo = $metodo->getReturnType();
+            $nombre = lcfirst($m[1]);
+            if (!$tipo instanceof \ReflectionNamedType || \in_array($nombre, $yaIncluidos, true)) {
+                continue;
+            }
+            $kind = match ($tipo->getName()) {
+                'string' => 'text',
+                'int', 'float' => 'number',
+                'bool' => 'boolean',
+                default => null,
+            };
+            if ($kind !== null) {
+                $campos[] = [$nombre, $kind];
+            }
+        }
+
+        return $campos;
     }
 
 

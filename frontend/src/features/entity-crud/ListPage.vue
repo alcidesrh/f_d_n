@@ -2,9 +2,16 @@
   <div>
     <Teleport v-if="store" to="body" :disabled="!maximized">
       <div class="list-page card" :class="{ 'is-maximized': maximized, 'is-fill': fill }" :aria-modal="maximized || undefined" :role="maximized ? 'dialog' : undefined">
-        <ListToolbar v-if="features.toolbar" :features="features" :columns="store.columns" :view="store.view" :active-filters="filters.active.value.length" :filter-panel="cardsMode" :selection-mode="modoSeleccion" :selected-count="selectedRows.length" :acciones="enSelector ? [] : accionesDisponibles" :maximized="maximized" :configurable="configurable && !enSelector" @toggle-selection="toggleSelectionMode" @clear-selection="setSelection([])" @share="compartir = true" @accion="ejecutarAccion" @column-visible="setColumnVisible" @show-all-columns="showAllColumns" @toggle-filters="store.view.filtersOpen = !store.view.filtersOpen" @density="store.view.density = $event" @layout="store.view.layout = $event" @maximize="maximized = !maximized" @reset="resetView" @create="onCreate" @configure="emit('configure')">
+        <ListToolbar v-if="features.toolbar" :features="features" :columns="store.columns" :view="store.view" :active-filters="filters.active.value.length" :filter-panel="cardsMode" :selection-mode="modoSeleccion" :selected-count="selectedRows.length" :acciones="enSelector ? [] : accionesDisponibles" :maximized="maximized" :configurable="configurable && !enSelector" :custom-filter="customFilterButton" @toggle-custom-filter="store.view.customFilterOpen = !store.view.customFilterOpen" @toggle-selection="toggleSelectionMode" @clear-selection="setSelection([])" @share="compartir = true" @accion="ejecutarAccion" @column-visible="setColumnVisible" @show-all-columns="showAllColumns" @toggle-filters="store.view.filtersOpen = !store.view.filtersOpen" @density="store.view.density = $event" @layout="store.view.layout = $event" @maximize="maximized = !maximized" @reset="resetView" @create="onCreate" @configure="emit('configure')">
           <template #start>
-            <div v-if="filters.active.value.length" class="list-chips" aria-label="Filtros aplicados">
+            <div v-if="store.customFilter" class="list-chips" :aria-label="`${customFilter?.label ?? 'Filtro'} aplicado`">
+              <span v-for="chip in store.customFilter.chips" :key="chip.label" class="list-chip list-chip--custom">
+                <span class="text-surface-500">{{ chip.label }}:</span>
+                <span class="truncate">{{ chip.value }}</span>
+              </span>
+              <Button label="Limpiar" size="small" text severity="secondary" @click="applyCustomFilter(null)" />
+            </div>
+            <div v-else-if="filters.active.value.length" class="list-chips" aria-label="Filtros aplicados">
               <span v-for="field in filters.active.value" :key="field" class="list-chip">
                 <span class="text-surface-500">{{ titleOf(field) }}:</span>
                 <span class="truncate">{{ filters.describe(field) }}</span>
@@ -15,6 +22,11 @@
             </div>
           </template>
         </ListToolbar>
+
+        <!-- Filtro a la medida de la entidad: excluyente con los de columna. -->
+        <div v-if="customFilterComponent && store.view.customFilterOpen" class="list-custom-filter" role="search" :aria-label="customFilter?.label">
+          <component :is="customFilterComponent" :entity="entityName" :applied="store.customFilter?.values ?? null" @apply="applyCustomFilter" />
+        </div>
 
         <!-- En tarjetas no hay cabecera: filtros y orden van en este panel (botón Filtros de la barra). -->
         <div v-if="cardsMode && store.view.filtersOpen && (features.filter || features.sort)" class="list-panel">
@@ -47,9 +59,9 @@
             <ListActions :item="row" :actions="extraActions" :can-edit="canEditRow" :can-delete="canDeleteRow" @edit="onEdit" @delete="askDelete" @action="openAction" />
           </template>
           <template #empty>
-            <icon :name="filters.active.value.length ? 'filter-alt-off-outline' : 'inbox-outline'" size="2rem" />
-            <span>{{ filters.active.value.length ? "Ningún registro coincide con los filtros" : "Sin registros" }}</span>
-            <Button v-if="filters.active.value.length" label="Quitar filtros" size="small" text @click="removeFilter()" />
+            <icon :name="hayFiltros ? 'filter-alt-off-outline' : 'inbox-outline'" size="2rem" />
+            <span>{{ hayFiltros ? "Ningún registro coincide con los filtros" : "Sin registros" }}</span>
+            <Button v-if="hayFiltros" label="Quitar filtros" size="small" text @click="store.customFilter ? applyCustomFilter(null) : removeFilter()" />
           </template>
         </DataGrid>
 
@@ -74,7 +86,9 @@
  * columna en la base de datos (combinados con OR o AND), orden, paginación,
  * edición en línea, selección con acciones (eliminar y las de la entidad) y
  * vista (densidad, tabla/tarjetas, maximizar). El estado persiste en el
- * store de la entidad; los filtros viven en `useListFilters`.
+ * store de la entidad; los filtros viven en `useListFilters`. Una entidad
+ * puede sumar un filtro a la medida (`listCustomFilters`), excluyente con
+ * los de columna.
  *
  * Con `v-model:seleccion` es un selector (el del chat, `LISTADO_DE_REGISTROS`):
  * siempre en selección, sin editar ni acciones, y la selección sobrevive al
@@ -87,6 +101,7 @@ import { DEFAULT_PAGE_SIZE, DEFAULT_PAGE_SIZES, defaultView } from "@/core/entit
 import { getEntity } from "@/core/entities/registry";
 import { useSchemaStore } from "@/core/entities/schema";
 import { entityNameFromSlug } from "@/core/entities/slug";
+import { customFilterOrNull, type CustomListFilterState } from "@/core/entities/listCustomFilter";
 import type { CollectionFieldConfig, EntityStore, FilterMode } from "@/core/entities/types";
 import { useLoadingStore } from "@/core/loading";
 import { notify } from "@/core/notify";
@@ -99,6 +114,7 @@ import type { GridColumn } from "@/shared/data-grid/types";
 import ListActions from "./list/ListActions.vue";
 import { entityBulkActions, entityDeleteDialogs, entityListActions, entityReadOnly, type EntityBulkAction, type EntityListAction } from "./list/listActions";
 import type { EntityFormLoader } from "./form/formOverrides";
+import { entityCustomFilters } from "./list/listCustomFilters";
 import ListCell from "./list/ListCell.vue";
 import ListCellEditor from "./list/ListCellEditor.vue";
 import { resolveListFeatures, type ListFeatures } from "./list/listFeatures";
@@ -287,6 +303,33 @@ async function toggleFilter(field: string) {
   await nextTick();
   // `field` es un nombre de propiedad (identificador): no hace falta escaparlo.
   document.querySelector<HTMLElement>(`[data-grid-filter="${field}"] input, [data-grid-filter="${field}"] [tabindex="0"]`)?.focus();
+}
+
+// Filtro a la medida --------------------------------------------------------
+const customFilter = computed(() => (features.value.customFilter ? entityCustomFilters[entityName.value] : undefined));
+const customFilterComponent = computed(() => (customFilter.value ? defineAsyncComponent(customFilter.value.component) : null));
+const customFilterButton = computed(() =>
+  customFilter.value && store.value
+    ? { label: customFilter.value.label, icon: customFilter.value.icon, open: Boolean(store.value.view.customFilterOpen), active: store.value.customFilter?.chips.length ?? 0 }
+    : null,
+);
+const hayFiltros = computed(() => filters.active.value.length > 0 || Boolean(store.value?.customFilter));
+
+/**
+ * Cada cambio del panel: quita los filtros de columna (y sus inputs), aplica
+ * el del panel y vuelve a la página 1. El orden de las columnas se conserva.
+ */
+function applyCustomFilter(state: CustomListFilterState | null) {
+  const current = store.value;
+  if (!current) return;
+  const next = customFilterOrNull(state);
+  if (!next && !current.customFilter) return;
+  for (const column of current.columns) column.showFilter = false;
+  filters.reset();
+  current.customFilter = next;
+  if (current.pagination) current.pagination.currentPage = 1;
+  editing.value = null;
+  void current.fetchItems();
 }
 
 // Acciones por fila -------------------------------------------------------
@@ -515,6 +558,7 @@ async function resetView() {
   const current = store.value;
   if (!current) return;
   current.filters = {};
+  current.customFilter = null;
   current.order = [];
   current.view = defaultView(current.listOptions);
   if (current.pagination) {
@@ -598,6 +642,16 @@ watch(
 }
 .list-chip__x:hover {
   background: color-mix(in srgb, var(--p-surface-500) 15%, transparent);
+}
+
+.list-custom-filter {
+  margin-bottom: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: 0.75rem;
+}
+.list-chip--custom {
+  padding-right: 0.625rem;
 }
 
 .list-panel {

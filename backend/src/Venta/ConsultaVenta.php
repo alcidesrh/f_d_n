@@ -258,9 +258,10 @@ final class ConsultaVenta
     }
 
     /**
-     * Asientos libres que conviene vender para el tramo (`Recomendacion`).
+     * Asientos libres que conviene vender para el tramo (`Recomendacion`), con
+     * el estado del ocupante que los recomienda (mismo formato que `ocupacion`).
      *
-     * @return list<int>
+     * @return list<array{asiento: int, estado: string, canal: ?string, sinCobro: ?string}>
      */
     public function recomendados(Salida $salida, Tramo $tramo): array
     {
@@ -268,12 +269,18 @@ final class ConsultaVenta
             return [];
         }
 
-        return Recomendacion::asientos(
+        $lista = [];
+        $vecinos = Recomendacion::asientos(
             array_map(static fn(Asiento $a) => (int) $a->getId(), $salida->getBus()->getAsientos()->toArray()),
             count($this->itinerarios->deSalida($salida)->paradas) - 1,
             $tramo,
             $this->disponibilidad->ocupantes($salida),
         );
+        foreach ($vecinos as $asiento => $o) {
+            $lista[] = ["asiento" => $asiento, "estado" => $o->tipo, "canal" => $o->canal?->value, "sinCobro" => $o->sinCobro];
+        }
+
+        return $lista;
     }
 
     /**

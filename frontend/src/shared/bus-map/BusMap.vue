@@ -159,7 +159,8 @@ const estadoDe = (a: AsientoCroquis): EstadoAsiento => props.estado?.(a) ?? "dis
 const noSeleccionable = (a: AsientoCroquis) => ESTADOS_NO_SELECCIONABLES.includes(estadoDe(a));
 
 /** Con alguien dentro (vendido, reservado, cortesía…): no libre, ni elegido, ni bloqueado. */
-const esOcupado = (a: AsientoCroquis) => !["disponible", "recomendado", "seleccionado", "bloqueado"].includes(estadoDe(a));
+const esLibre = (e: EstadoAsiento) => e === "disponible" || e === "seleccionado" || e === "bloqueado" || e.startsWith("recomendado-");
+const esOcupado = (a: AsientoCroquis) => !esLibre(estadoDe(a));
 
 const esBoton = (e: ElementoCroquis | null): e is AsientoCroquis => !!e && esAsiento(e) && (props.interactivo || (props.inspeccionable && esOcupado(e)));
 
@@ -168,7 +169,12 @@ const seInspecciona = (a: AsientoCroquis) => props.inspeccionable && esOcupado(a
 
 const ETIQUETA_ESTADO: Record<EstadoAsiento, string> = {
   disponible: "disponible",
-  recomendado: "disponible, recomendado para este tramo",
+  "recomendado-ocupado": "disponible, recomendado para este tramo (vendido en estación)",
+  "recomendado-ocupado-web": "disponible, recomendado para este tramo (vendido en la página)",
+  "recomendado-ocupado-agencia": "disponible, recomendado para este tramo (vendido por agencia)",
+  "recomendado-cortesia": "disponible, recomendado para este tramo (cortesía)",
+  "recomendado-voucher": "disponible, recomendado para este tramo (voucher)",
+  "recomendado-reservado": "disponible, recomendado para este tramo (reservado)",
   ocupado: "ocupado",
   "ocupado-web": "vendido en la página",
   "ocupado-agencia": "vendido por agencia",

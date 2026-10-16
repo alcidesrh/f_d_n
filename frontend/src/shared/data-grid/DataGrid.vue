@@ -569,6 +569,11 @@ useColumnDrag({
   outline: 2px solid var(--p-primary-color);
   outline-offset: -2px;
 }
+.dg-dcell:nth-of-type(1) > :deep(.celda) {
+  &:nth-of-type(2) {
+    font-size: 0.5rem;
+  }
+}
 .dg-dcell.is-editable {
   cursor: text;
 }

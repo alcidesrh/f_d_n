@@ -5,8 +5,9 @@ import { test, expect, type Locator, type Page } from '@playwright/test'
  * ítems → menú → árbol con drag & drop (GSAP Draggable) → área → shell.
  *
  * Crea datos con prefijo `E2E` y los borra al final. Necesita un usuario con
- * `ROLE_ADMIN`/`ROLE_SUPER_ADMIN`:
- *   E2E_ADMIN_USER=admin E2E_ADMIN_PASSWORD='…' npm run test:e2e -- menu-builder
+ * `ROLE_ADMIN`/`ROLE_SUPER_ADMIN`: la cuenta de pruebas de `.env.e2e.local`
+ * (`make e2e-usuario`) o E2E_ADMIN_USER/E2E_ADMIN_PASSWORD en el entorno:
+ *   npm run test:e2e -- menu-builder
  */
 const USER = process.env.E2E_ADMIN_USER ?? 'admin'
 const PASSWORD = process.env.E2E_ADMIN_PASSWORD

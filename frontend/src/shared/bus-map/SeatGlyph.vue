@@ -5,7 +5,7 @@
   en horizontal (`rotacion`).
 -->
 <template>
-  <svg viewBox="0 0 40 40" class="seat" :class="[`seat--${clase}`, `seat--${estado}`]" aria-hidden="true" focusable="false">
+  <svg viewBox="0 0 40 40" class="seat" :class="[`seat--${clase}`, `seat--${estado}`, { 'seat--recomendado': estado.startsWith('recomendado-') }]" :style="{ animationDelay: `-${fase}ms` }" aria-hidden="true" focusable="false">
     <g :transform="rotacion ? `rotate(${rotacion} 20 20)` : undefined">
       <rect v-if="clase === 'B'" class="seat__rest" x="11" y="1.5" width="18" height="4" rx="2" />
       <rect class="seat__arm" x="2.5" y="11" width="5" height="21" rx="2.5" />
@@ -27,10 +27,21 @@
   </svg>
 </template>
 
+<script lang="ts">
+/**
+ * Reloj común de los recomendados: todos parpadean en el mismo compás aunque
+ * uno empiece más tarde (al volver de seleccionado). Debe coincidir con la
+ * duración de `.seat--recomendado` (2 s).
+ */
+const INICIO_RELOJ = performance.now();
+const CICLO_RECOMENDADO_MS = 2000;
+</script>
+
 <script setup lang="ts">
+import { ref, watch } from "vue";
 import type { ClaseAsiento, EstadoAsiento } from "@/core/croquis/types";
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     clase: ClaseAsiento;
     numero?: number | null;
@@ -41,6 +52,19 @@ withDefaults(
     conNumero?: boolean;
   }>(),
   { numero: null, estado: "disponible", rotacion: 0, conNumero: true },
+);
+
+/**
+ * Desfase del parpadeo: al empezar a ser recomendado, el asiento arranca su
+ * animación en la fase que lleva el reloj común.
+ */
+const fase = ref(0);
+watch(
+  () => props.estado.startsWith("recomendado-"),
+  (recomendado) => {
+    if (recomendado) fase.value = (performance.now() - INICIO_RELOJ) % CICLO_RECOMENDADO_MS;
+  },
+  { immediate: true },
 );
 </script>
 
@@ -154,18 +178,47 @@ withDefaults(
   filter: drop-shadow(0 2px 5px color-mix(in srgb, var(--p-blue-700) 45%, transparent));
 }
 /*
- * Libre que conviene vender (encaja con el tramo, ADR-030): se ve como un vendido
- * del canal que vende (`--bm-recommended`, ver busMap.css) y cada tanto vuelve un
- * instante a libre, para llamar la atención sobre él. Se anima el color del
- * asiento entero (relleno, borde y número; `@property` en busMap.css), así que
- * conserva el sombreado de cojín y brazos. No se apaga con `prefers-reduced-motion`:
- * es una señal que se pidió a propósito.
+ * Libre que conviene vender (encaja con el tramo, ADR-030): cada poco se ve como la venta
+ * del asiento vecino que lo recomienda (`seat--recomendado-<estado>`, la del tramo anterior
+ * más cercano, o la del posterior) y vuelve a "seleccionado" (el azul del asiento elegido en la
+ * venta, antes de facturar) con un fundido de ida y vuelta. Se anima
+ * el color del asiento entero (relleno, borde y número; `@property` en busMap.css), así que
+ * conserva el sombreado de cojín y brazos. No se apaga con `prefers-reduced-motion`: es una
+ * señal que se pidió a propósito.
  */
 .seat--recomendado {
-  --seat-fill: var(--bm-recommended);
-  --seat-stroke: var(--bm-recommended-stroke);
-  --seat-ink: var(--bm-recommended-ink);
-  animation: seat-recomendado 2.4s ease-in-out infinite;
+  /* El otro color del parpadeo: el de "seleccionado" (igual que `.seat--seleccionado`). */
+  --seat-pick-fill: var(--p-blue-700);
+  --seat-pick-stroke: color-mix(in srgb, var(--p-blue-700) 70%, black);
+  --seat-pick-ink: var(--p-blue-50);
+  animation: seat-recomendado 2s ease-in-out infinite;
+}
+/* Color de la venta del vecino: a él fluye el recomendado desde "seleccionado". */
+.seat--recomendado-ocupado {
+  --seat-sold-fill: var(--bm-occupied);
+  --seat-sold-stroke: var(--bm-occupied-stroke);
+  --seat-sold-ink: var(--bm-occupied-ink);
+}
+.seat--recomendado-ocupado-web {
+  --seat-sold-fill: var(--bm-sold-web);
+  --seat-sold-stroke: var(--bm-sold-web-stroke);
+  --seat-sold-ink: var(--bm-sold-web-ink);
+}
+.seat--recomendado-ocupado-agencia {
+  --seat-sold-fill: var(--bm-sold-agency);
+  --seat-sold-stroke: var(--bm-sold-agency-stroke);
+  --seat-sold-ink: var(--bm-sold-agency-ink);
+}
+.seat--recomendado-cortesia,
+.seat--recomendado-voucher {
+  --seat-sold-fill: var(--p-neutral-100);
+  --seat-sold-stroke: var(--p-neutral-400);
+  --seat-sold-ink: var(--p-neutral-500);
+}
+.seat--recomendado-reservado {
+  --seat-sold-fill: var(--bm-reserved-soft);
+  --seat-sold-stroke: var(--bm-reserved);
+  --seat-sold-ink: var(--bm-reserved);
 }
 /* El color ya lo mueve la animación: sin la transición de `.seat rect`, que lo retrasaría. */
 .seat--recomendado rect,
@@ -173,19 +226,20 @@ withDefaults(
 .seat--recomendado text {
   transition: none;
 }
+/* Ciclo de 2 s: 0,7 s en color de la venta del vecino, fundido de 0,5 s a "seleccionado", 0,3 s en él y fundido de vuelta. */
 @keyframes seat-recomendado {
   0%,
-  55%,
+  35%,
   100% {
-    --seat-fill: var(--bm-recommended);
-    --seat-stroke: var(--bm-recommended-stroke);
-    --seat-ink: var(--bm-recommended-ink);
+    --seat-fill: var(--seat-sold-fill);
+    --seat-stroke: var(--seat-sold-stroke);
+    --seat-ink: var(--seat-sold-ink);
   }
-  65%,
-  90% {
-    --seat-fill: var(--seat-free-fill);
-    --seat-stroke: var(--seat-free-stroke);
-    --seat-ink: var(--seat-free-ink);
+  60%,
+  75% {
+    --seat-fill: var(--seat-pick-fill);
+    --seat-stroke: var(--seat-pick-stroke);
+    --seat-ink: var(--seat-pick-ink);
   }
 }
 .seat--reservado rect {

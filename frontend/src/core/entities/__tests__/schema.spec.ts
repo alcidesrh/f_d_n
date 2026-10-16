@@ -152,6 +152,7 @@ function makeStore(): EntityStore<{ id: number; numero: string }> {
       hasNextPage: false,
     },
     filters: {},
+    customFilter: null,
     order: [],
     item: null,
     fullList: [],

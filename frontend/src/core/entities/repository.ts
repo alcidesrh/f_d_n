@@ -51,7 +51,8 @@ export const repository = {
 
     const result = await graphql.collection<T>(entity, {
       ...(page ? { currentPage: page.currentPage, itemsPerPage: page.itemsPerPage } : {}),
-      filters: store.filters,
+      // Columnas y filtro a la medida son excluyentes: a lo sumo uno trae algo.
+      filters: { ...store.filters, ...store.customFilter?.args },
       order,
       fields,
       selections: fields ? selectionsFor(entity.name, fields) : undefined,

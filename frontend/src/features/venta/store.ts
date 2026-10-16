@@ -97,7 +97,7 @@ export const useVentaStore = defineStore("venta", () => {
   /** Motivo por el que el salida ya no se vende (p. ej. de un día pasado): el croquis queda de solo lectura. */
   const noVendible = computed(() => detalle.value?.noVendible ?? null);
   /** Libres que conviene vender para el tramo (no fragmentan el bus, ADR-030). */
-  const recomendados = shallowRef<number[]>([]);
+  const recomendados = shallowRef<AsientoOcupado[]>([]);
   const estadoAsiento = computed(() => estadoEnMapa(ocupados.value, seleccion.value, noVendible.value ? [] : clasesVendibles.value, noVendible.value ? [] : recomendados.value));
   const asientosCroquis = computed(() => detalle.value?.croquis.filter((e): e is AsientoCroquis => e.tipo === "asiento") ?? []);
   const libres = computed(() => asientosCroquis.value.length - ocupados.value.filter((o) => o.estado !== "propio").length);

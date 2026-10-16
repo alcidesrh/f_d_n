@@ -23,6 +23,7 @@
         <icon name="chevron-right" size=".8rem"></icon>
         <template v-for="(crumb, i) in navigationHistory.entries" :key="crumb.path + i">
           <icon v-if="i > 0" name="chevron-right" size=".8rem"></icon>
+          <icon v-if="crumb.icon" :name="crumb.icon" size=".8rem"></icon>
           <router-link
             :to="crumb.name ? { name: crumb.name, params: crumb.params } : crumb.path"
             class="crumb-link"

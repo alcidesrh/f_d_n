@@ -15,5 +15,6 @@ export function defaultView(options: ListOptions = {}): ListViewState {
     layout: 'auto',
     filterMode: options.filterMode ?? 'or',
     filtersOpen: false,
+    customFilterOpen: false,
   }
 }

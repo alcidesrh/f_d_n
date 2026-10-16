@@ -43,7 +43,7 @@ export const fetchSalida = (id: number) => http.get<SalidaDetalle>(`/venta/salid
 /** Ocupación para un trayecto; `silent` para refrescos por Mercure. */
 /** Ocupados para el tramo y los libres que conviene vender (`recomendados`, ADR-030). */
 export const fetchOcupacion = (salida: number, trayecto: number | null, silent = false) =>
-  http.get<{ asientos: AsientoOcupado[]; recomendados: number[] }>(`/venta/salidas/${salida}/ocupacion${trayecto ? `?trayecto=${trayecto}` : ''}`, {
+  http.get<{ asientos: AsientoOcupado[]; recomendados: AsientoOcupado[] }>(`/venta/salidas/${salida}/ocupacion${trayecto ? `?trayecto=${trayecto}` : ''}`, {
     silent,
   })
 

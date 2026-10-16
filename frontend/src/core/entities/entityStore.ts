@@ -9,6 +9,7 @@ import { repository } from './repository'
 import { useSchemaStore } from './schema'
 import { entitySlug } from './slug'
 import { DEFAULT_PAGE_SIZE, defaultView } from './listView'
+import { mergeColumns } from './columnMerge'
 import type { CollectionFieldConfig, EntityStore, EntityStoreState } from './types'
 
 const DEFAULT_PAGINATION = {
@@ -21,6 +22,13 @@ const DEFAULT_PAGINATION = {
 
 /** Carga de configuración en curso por entidad (evita pedirla dos veces a la vez). */
 const configRequests = new Map<string, Promise<void>>()
+
+/**
+ * Stores cuya configuración ya se pidió al servidor en esta sesión. Lo
+ * persistido se reusa sin pedirla otra vez, pero la primera vez se mezcla
+ * con la del servidor (ver `mergeColumns`).
+ */
+const configuredStores = new WeakSet<object>()
 
 /**
  * Columnas por defecto cuando el backend no tiene `entity_configurations`:
@@ -55,6 +63,7 @@ function createEntityStore(name: string) {
       formFields: [],
       items: [],
       filters: {},
+      customFilter: null,
       order: [],
       item: null,
       fullList: [],
@@ -68,7 +77,7 @@ function createEntityStore(name: string) {
     },
     actions: {
       async init(force = false) {
-        if (!force && this.columns.length > 0 && this.formFields.length > 0) return
+        if (!force && configuredStores.has(this) && this.columns.length > 0 && this.formFields.length > 0) return
         let request = configRequests.get(this.name)
         if (!request) {
           request = fetchEntityConfiguration(this.name)
@@ -80,9 +89,13 @@ function createEntityStore(name: string) {
                 this.pagination.itemsPerPage = this.listOptions.pageSize ?? DEFAULT_PAGE_SIZE
               this.formFields = config?.formFields ?? []
               const columns = config?.collectionFieldConfig ?? []
+              // Con `force` (guardar o restablecer) se toma el servidor tal cual; si no, se respeta la vista del usuario.
               this.columns = columns.length
-                ? columns.map((column) => ({ ...column, showFilter: false, configWidth: column.width ?? null }))
+                ? force
+                  ? columns.map((column) => ({ ...column, showFilter: false, configWidth: column.width ?? null }))
+                  : mergeColumns(this.columns, columns)
                 : buildFallbackColumns(this.name)
+              if (columns.length) configuredStores.add(this)
             })
             .catch((error: unknown) =>
               console.warn(`[entity:${this.name}] sin configuración REST:`, error),

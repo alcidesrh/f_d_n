@@ -61,6 +61,27 @@ describe('estadoEnMapa', () => {
     expect([1, 2, 3].map((id) => e(asiento(id)))).toEqual(['cortesia', 'voucher', 'ocupado-web'])
   })
 
+  it('un libre recomendado toma el estado de la venta que lo recomienda', () => {
+    const e = estadoEnMapa(
+      [{ asiento: 1, estado: 'vendido', canal: 'estacion' }],
+      [7],
+      undefined,
+      [
+        { asiento: 2, estado: 'vendido', canal: 'web' },
+        { asiento: 3, estado: 'reservado', canal: null },
+        { asiento: 4, estado: 'vendido', canal: 'agencia', sinCobro: 'cortesia' },
+      ],
+    )
+    expect([2, 3, 4, 5, 7, 1].map((id) => e(asiento(id)))).toEqual([
+      'recomendado-ocupado-web',
+      'recomendado-reservado',
+      'recomendado-cortesia',
+      'disponible',
+      'seleccionado',
+      'ocupado',
+    ])
+  })
+
   it('distingue el canal de lo vendido', () => {
     expect([1, 2, 3].map((id) => estado(asiento(id)))).toEqual([
       'ocupado',

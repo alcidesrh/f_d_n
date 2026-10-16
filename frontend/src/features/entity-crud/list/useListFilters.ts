@@ -16,6 +16,8 @@
  *   teclear (`search`) y solo piden la etiqueta de lo ya elegido.
  * - El resaltado de coincidencias usa los filtros ya aplicados al store, no
  *   el tecleo en vivo, y cambia cuando llega el resultado.
+ * - Son excluyentes con el filtro a la medida (`store.customFilter`):
+ *   aplicar uno quita el otro.
  */
 import { computed, reactive, ref, watch, type ComputedRef } from 'vue'
 import { getEntity } from '@/core/entities/registry'
@@ -144,6 +146,7 @@ export function useListFilters(store: ComputedRef<EntityStore | null>) {
     const metadata = entity()
     if (!current || !metadata) return
     current.filters = toServerFilters(metadata, values, current.view.filterMode)
+    current.customFilter = null
     if (current.pagination) current.pagination.currentPage = 1
     void current.fetchItems()
   }
@@ -155,6 +158,13 @@ export function useListFilters(store: ComputedRef<EntityStore | null>) {
     if (field) delete values[field]
     else for (const key of Object.keys(values)) delete values[key]
     if (applied) commit()
+  }
+
+  /** Quita todos los filtros sin volver a leer (lo hace quien aplica otro filtro). */
+  function reset() {
+    clearTimeout(timer)
+    for (const key of Object.keys(values)) delete values[key]
+    if (store.value) store.value.filters = {}
   }
 
   function setMode(mode: FilterMode) {
@@ -239,6 +249,7 @@ export function useListFilters(store: ComputedRef<EntityStore | null>) {
     set,
     commit,
     clear,
+    reset,
     setMode,
     hydrate,
     describe,

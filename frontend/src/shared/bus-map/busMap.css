@@ -41,15 +41,6 @@
   --bm-voucher-stroke: color-mix(in srgb, var(--p-neutral-800, #f43f5e) 60%, var(--p-content-background));
   --bm-voucher-ink: var(--p-neutral-800, #9f1239);
 
-  /*
-   * Libre que conviene vender (ADR-030): se ve como vendido y parpadea a libre; toma el color del
-   * canal que vende. VentaPage.vue lo fija por canal (estación = azul, agencia =
-   * esmeralda); este es el de la estación.
-   */
-  --bm-recommended: var(--bm-occupied);
-  --bm-recommended-stroke: var(--bm-occupied-stroke);
-  --bm-recommended-ink: var(--bm-occupied-ink);
-
   --bm-reserved: var(--p-orange-500, #f97316);
   --bm-reserved-soft: color-mix(in srgb, var(--p-orange-500, #f97316) 10%, var(--p-content-background));
 
@@ -65,7 +56,7 @@
 
 /*
  * Colores del asiento registrados como <color> para poder animarlos: el
- * recomendado (SeatGlyph.vue) pasa de vendido a libre animando estas variables.
+ * recomendado (SeatGlyph.vue) pasa de la venta de su vecino a libre animando estas variables.
  */
 @property --seat-fill {
   syntax: "<color>";

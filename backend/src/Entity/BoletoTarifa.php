@@ -2,23 +2,33 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Metadata\ApiProperty;
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
 use App\Entity\Embeddable\Precio;
 use App\Entity\Enum\AsientoClase;
+use App\Filter\BoletoTarifaFilter;
 use App\Repository\BoletoTarifaRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Money\Currency;
 use Money\Money;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Precio de un asiento. Fija algunos de empresa, trayecto, horario, clase de
  * bus, bus y clase de asiento (obligatoria); los demás son comodín. Rige desde
  * `vigenteDesde`: una tarifa nueva con fecha futura no aplica hasta entonces.
  * Elección: `App\Venta\EspecificidadTarifa` (ADR-021).
+ *
+ * El listado la busca además por los enclaves del trayecto y el horario
+ * (`BoletoTarifaFilter`). `Money` no tiene tipo en GraphQL: la API lee el
+ * precio como `importe` (formateado) y lo escribe como `precioMonto`.
  */
 #[ORM\Entity(repositoryClass: BoletoTarifaRepository::class)]
 #[ApiResourcePaginationPage]
+#[ApiFilter(BoletoTarifaFilter::class)]
 class BoletoTarifa extends Base
 {
     #[ORM\Column(length: 255)]
@@ -91,6 +101,38 @@ class BoletoTarifa extends Base
     {
         $this->precio = Precio::fromMoney($money);
         return $this;
+    }
+
+    /** El precio ya formateado con su moneda (`Q 100.00`), para los listados de la API. */
+    #[ApiProperty(writable: false)]
+    public function getImporte(): ?string
+    {
+        $precio = $this->getPrecio();
+        if ($precio === null) {
+            return null;
+        }
+        $moneda = $precio->getCurrency()->getCode();
+
+        return sprintf("%s %s", $moneda === "GTQ" ? "Q" : $moneda, number_format((int) $precio->getAmount() / 100, 2));
+    }
+
+    /** Precio en unidades de su moneda (`125.5`) para el formulario; se guarda en centavos. */
+    #[ApiProperty]
+    #[Assert\NotNull(message: "El precio es obligatorio.")]
+    #[Assert\PositiveOrZero]
+    public function getPrecioMonto(): ?float
+    {
+        $precio = $this->getPrecio();
+
+        return $precio === null ? null : (int) $precio->getAmount() / 100;
+    }
+
+    /** Conserva la moneda; una tarifa nueva, en quetzales. */
+    public function setPrecioMonto(float $monto): static
+    {
+        $moneda = $this->getPrecio()?->getCurrency() ?? new Currency("GTQ");
+
+        return $this->setPrecio(new Money((int) round($monto * 100), $moneda));
     }
 
     public function getEmpresa(): ?Empresa

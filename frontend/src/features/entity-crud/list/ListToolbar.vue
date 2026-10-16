@@ -68,6 +68,13 @@
         <icon v-else name="filter-alt-outline" size="1.25rem" />
       </button>
 
+      <button v-if="customFilter" type="button" class="list-toolbar__btn tap-target" :class="{ 'is-on': customFilter.open }" :aria-pressed="customFilter.open" :aria-label="customFilter.label" v-tooltip.bottom="customFilter.label" @click="emit('toggle-custom-filter')">
+        <OverlayBadge v-if="customFilter.active > 0" :value="String(customFilter.active)" size="small">
+          <icon :name="customFilter.icon" size="1.25rem" />
+        </OverlayBadge>
+        <icon v-else :name="customFilter.icon" size="1.25rem" />
+      </button>
+
       <button v-if="features.selection" type="button" class="list-toolbar__btn tap-target" :class="{ 'is-on': selectionMode }" :aria-pressed="selectionMode" aria-label="Modo selección" v-tooltip.bottom="'Seleccionar'" @click="emit('toggle-selection')">
         <icon :name="selectionMode ? 'check-box' : 'check-box-outline'" size="1.25rem" />
       </button>
@@ -126,8 +133,10 @@ const props = withDefaults(
     maximized?: boolean;
     /** Muestra la opción que reemplaza el listado por la configuración de la entidad. */
     configurable?: boolean;
+    /** Botón del filtro a la medida de la entidad (`active`: términos aplicados). */
+    customFilter?: { label: string; icon: string; open: boolean; active: number } | null;
   }>(),
-  { activeFilters: 0, filterPanel: false, acciones: () => [], maximized: false, configurable: false },
+  { activeFilters: 0, filterPanel: false, acciones: () => [], maximized: false, configurable: false, customFilter: null },
 );
 
 const emit = defineEmits<{
@@ -142,6 +151,7 @@ const emit = defineEmits<{
   "column-visible": [field: string, visible: boolean];
   "show-all-columns": [];
   "toggle-filters": [];
+  "toggle-custom-filter": [];
   density: [density: ListDensity];
   layout: [layout: ListLayout];
   maximize: [];
