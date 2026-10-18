@@ -10,7 +10,7 @@ Guía para asistentes IA que trabajan en este repo.
 
 **Descripcion**: Un grupo de empresas brindan un servicio de buses para el transporte de pasajeros en trayectos largos, medianos y cortos. También proveen un servicio secundario de envío de paquetes o encomiendas que son recibidas y entregadas siempre en las estaciones de los trayectos. Los trayectos pueden ser itinerarios exclusivos de una empresa o pueden estar compartido en cuyo caso las empresas involucradas se alternan los días para dar el servicio. Cada empresa gestiona un flujo de datos independiente propio de la empresa como las finanzas, su inventario de buses, estaciones y empleados. Sin embargo todas operan y gestionan el negocio de la misma manera y no hay procesos personalizados.
 
-Monorepo con `backend/` (Symfony 8 + API Platform), `frontend/` (Quasar + Vue 3) y `pagina/` (página web pública de venta de boletos, Vue 3; se sirve desde el backend en `/pagina`).
+Monorepo con `backend/` (Symfony 8 + API Platform), `frontend/` (Vue 3 + Vite) y `pagina/` (página web pública de venta de boletos, Vue 3; se sirve desde el backend en `/pagina`).
 Orquestación vía Docker Compose (`compose.yaml` + overrides).
 
 ### Domain terminology
@@ -72,7 +72,7 @@ Despliegue
 | Servicio   | Tecnología                                                          | Puerto |
 | ---------- | ------------------------------------------------------------------- | ------ |
 | `backend`  | FrankenPHP/Caddy, PHP 8.4, Symfony 8, API Platform (REST + GraphQL) | 80/443 |
-| `frontend` | Quasar, Vue 3, Vite 8, PrimeVue 4, FormKit 2                        | 9000   |
+| `frontend` | Vue 3, Vite 8, PrimeVue 4, FormKit 2                                | 9000   |
 | `pagina/` (no es servicio) | Vue 3, PrimeVue 4, FormKit 2, Tailwind 4; se compila en `backend/public/pagina` y la sirve el backend en `/pagina` | (dev 9100) |
 | `database` | PostgreSQL 16                                                       | 5432   |
 
@@ -205,7 +205,7 @@ No existe un sitio MkDocs — se eliminó el 2026-09 por documentar un modelo de
 | Convención de exploración de dominio para skills | `docs/agents/domain.md` |
 | Convención de issue tracker | `docs/agents/issue-tracker.md` |
 | Backend (Symfony, Doctrine, GraphQL) | `backend/AGENTS.md` |
-| Frontend (Quasar, Vue, stores) | `frontend/AGENTS.md` |
+| Frontend (Vue, Vite, stores) | `frontend/AGENTS.md` |
 | Página web pública | `pagina/AGENTS.md` |
 | Responsive (breakpoints, patrones mobile-first) | `docs/frontend/responsive.md` |
 

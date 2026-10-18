@@ -1,6 +1,7 @@
 <!--
   Tarifas sobre el mapa (como el seguimiento de buses). Sin ruta: los enclaves,
-  solo con su nombre. Con una ruta: su trazo con las paradas, los enclaves que
+  solo con su nombre; clic en uno y luego en otro los elige como origen y destino.
+  Con una ruta: su trazo con las paradas, los enclaves que
   no están en ella se ocultan y, a medio camino de cada trayecto con tarifas,
   un indicador con su número. Clic en el indicador: popup con un acordeón de
   las tarifas (detalle y «Editar»). Los filtros aplican al cambiar cada uno;
@@ -79,6 +80,10 @@
           <ToggleSwitch v-model="mostrarNombres" input-id="nombres-tarifas" />
           <span>Nombres de enclaves</span>
         </label>
+        <label class="flex cursor-pointer items-center gap-2">
+          <ToggleSwitch v-model="mostrarTarifas" input-id="tarifas-mapa" />
+          <span>Tarifas</span>
+        </label>
       </div>
     </section>
 
@@ -105,6 +110,8 @@ import { HttpError } from "@/core/http";
 
 /** Centro aproximado de Guatemala. */
 const CENTRO: L.LatLngTuple = [15.4, -90.2];
+/** Relleno del enclave elegido como origen; el mismo ámbar del trayecto en la ruta. */
+const COLOR_ORIGEN = "#f59e0b";
 const CLASES = [
   { valor: "A", etiqueta: "A" },
   { valor: "B", etiqueta: "B (confort)" },
@@ -123,16 +130,21 @@ const lugares = ref<Lugar[]>([]);
 const rutaId = ref<number | null>(null);
 const origenId = ref<number | null>(null);
 const destinoId = ref<number | null>(null);
+const datos = ref<RutaTarifasMapa | null>(null);
 const avisoTrayecto = computed(() => {
-  if (rutaId.value !== null) return "";
-  if (origenId.value !== null && destinoId.value !== null && origenId.value === destinoId.value) return "El origen y el destino son el mismo enclave.";
+  const ambos = origenId.value !== null && destinoId.value !== null;
+  if (ambos && origenId.value === destinoId.value) return "El origen y el destino son el mismo enclave.";
+  if (rutaId.value !== null) {
+    if (ambos && datos.value && trayectosVista.value.length === 0) return "Esta ruta no tiene un trayecto de ese origen a ese destino (el origen va antes que el destino).";
+    return "";
+  }
   if ((origenId.value === null) !== (destinoId.value === null)) return "Elija también el otro extremo para ver el trayecto.";
   return "";
 });
-const datos = ref<RutaTarifasMapa | null>(null);
 const cargandoRuta = ref(false);
 const error = ref("");
-const mostrarNombres = ref(true);
+const mostrarNombres = ref(false);
+const mostrarTarifas = ref(false);
 const maximizado = ref(false);
 
 /** Pantalla completa: cubre la ventana y bloquea el scroll de la página detrás. */
@@ -147,8 +159,21 @@ const alTeclear = (ev: KeyboardEvent) => {
 const filtro = reactive<FiltroMapaTarifa>({ ...FILTRO_MAPA_VACIO });
 
 /** Trayectos con las tarifas que cumplen el filtro; solo los que tienen alguna. */
-const trayectos = computed<TrayectoMapa[]>(() => (datos.value?.trayectos ?? []).map((t) => ({ ...t, tarifas: filtrarTarifas(t.tarifas, filtro) })).filter((t) => t.tarifas.length > 0));
-const totalTarifas = computed(() => (datos.value?.trayectos ?? []).reduce((n, t) => n + t.tarifas.length, 0));
+/** Con una ruta y origen + destino elegidos, solo el trayecto entre ellos (en el orden de la ruta). */
+const trayectosVista = computed(() => {
+  const todos = datos.value?.trayectos ?? [];
+  if (rutaId.value === null || origenId.value === null || destinoId.value === null) return todos;
+  const desde = indiceParada(origenId.value);
+  const hasta = indiceParada(destinoId.value);
+  return todos.filter((t) => t.desde === desde && t.hasta === hasta);
+});
+const trayectos = computed<TrayectoMapa[]>(() => trayectosVista.value.map((t) => ({ ...t, tarifas: filtrarTarifas(t.tarifas, filtro) })).filter((t) => t.tarifas.length > 0));
+const totalTarifas = computed(() => trayectosVista.value.reduce((n, t) => n + t.tarifas.length, 0));
+
+/** Posición del enclave en la ruta cargada; -1 si no está. */
+function indiceParada(enclaveId: number): number {
+  return datos.value?.ruta.paradas.findIndex((p) => p.enclaveId === enclaveId) ?? -1;
+}
 const mostradas = computed(() => trayectos.value.reduce((n, t) => n + t.tarifas.length, 0));
 const hayFiltro = computed(() => Object.values(filtro).some((v) => v !== null));
 const sinUbicar = computed(() => (datos.value?.ruta.paradas ?? []).filter((p) => p.latitud === null || p.longitud === null).map((p) => p.nombre));
@@ -197,20 +222,42 @@ function chip(punto: L.CircleMarker, nombre: string) {
 function dibujarEnclaves() {
   if (!capaEnclaves) return;
   capaEnclaves.clearLayers();
-  if (datos.value) return;
+  // Con una ruta se ocultan; con un trayecto siguen, para elegir otro destino (u origen) con clics.
+  if (rutaId.value !== null) return;
   for (const lugar of lugares.value) {
     if (lugar.latitud === null || lugar.longitud === null) continue;
     const punto = L.circleMarker([lugar.latitud, lugar.longitud], {
-      radius: 4,
+      radius: radioEnclave(),
       color: "#64748b",
       weight: 2,
-      fillColor: "#fff",
+      fillColor: lugar.id === origenId.value ? COLOR_ORIGEN : "#fff",
       fillOpacity: 1,
     });
     if (mostrarNombres.value) chip(punto, lugar.nombre);
     else punto.bindTooltip(escapar(lugar.nombre), { className: "tarifa-tip" });
+    punto.on("click", () => elegirEnclave(lugar.id));
     punto.addTo(capaEnclaves);
   }
+}
+
+/**
+ * Clic en un enclave sin ruta: el primero es el origen, el segundo el destino
+ * (igual que elegirlos en los selectores). Clic en el origen lo quita.
+ */
+function elegirEnclave(id: number) {
+  if (origenId.value === null) {
+    origenId.value = id;
+    destinoId.value = null;
+  } else if (origenId.value === id) {
+    // Quitar el origen; si hay destino, pasa a ser el origen.
+    origenId.value = destinoId.value;
+    destinoId.value = null;
+  } else destinoId.value = id;
+}
+
+/** El círculo de cada enclave crece un poco con el zoom. */
+function radioEnclave(): number {
+  return Math.min(16, Math.max(5, 6 + ((mapa?.getZoom() ?? 7) - 7)));
 }
 
 /** Trazo de la ruta con sus paradas (solo las que tienen ubicación). */
@@ -221,16 +268,27 @@ function dibujarRuta() {
   const color = getComputedStyle(mapaEl.value!).getPropertyValue("--p-primary-color").trim() || "#3b82f6";
   const paradas = datos.value.ruta.paradas.filter((p) => p.latitud !== null && p.longitud !== null);
   const puntos = paradas.map((p) => [p.latitud!, p.longitud!] as L.LatLngTuple);
-  if (puntos.length > 1) L.polyline(puntos, { color, weight: 3, opacity: 0.85 }).addTo(capaRuta);
+  if (puntos.length > 1) L.polyline(puntos, { color, weight: 3, opacity: 0.85, interactive: false }).addTo(capaRuta);
+  // Con una ruta, el trayecto origen→destino va por su mismo trazo, en otro color.
+  const io = indiceParada(origenId.value ?? -1);
+  const id = indiceParada(destinoId.value ?? -1);
+  if (rutaId.value !== null && io !== -1 && id !== -1 && io < id) {
+    const tramo = datos.value.ruta.paradas
+      .slice(io, id + 1)
+      .filter((p) => p.latitud !== null && p.longitud !== null)
+      .map((p) => [p.latitud!, p.longitud!] as L.LatLngTuple);
+    if (tramo.length > 1) L.polyline(tramo, { color: "#f59e0b", weight: 6, opacity: 0.95, interactive: false }).addTo(capaRuta);
+  }
   paradas.forEach((p, i) => {
     const punta = i === 0 || i === paradas.length - 1;
     const punto = L.circleMarker([p.latitud!, p.longitud!], {
-      radius: punta ? 7 : 5,
+      radius: punta ? radioEnclave() + 2 : radioEnclave(),
       color,
       weight: 2,
-      fillColor: punta ? color : "#fff",
+      fillColor: p.enclaveId === origenId.value ? COLOR_ORIGEN : punta ? color : "#fff",
       fillOpacity: 1,
     });
+    punto.on("click", () => elegirEnclave(p.enclaveId));
     if (mostrarNombres.value) chip(punto, p.nombre);
     punto.addTo(capaRuta!);
   });
@@ -241,7 +299,7 @@ function dibujarTarifas() {
   if (!capaTarifas) return;
   capaTarifas.clearLayers();
   mapa?.closePopup();
-  if (!datos.value) return;
+  if (!mostrarTarifas.value || !datos.value) return;
   const paradas = datos.value.ruta.paradas;
   for (const t of trayectos.value) {
     const punto = puntoMedio(paradas, t.desde, t.hasta);
@@ -353,7 +411,6 @@ async function cargarVista() {
   dibujarEnclaves();
   dibujarRuta();
   dibujarTarifas();
-  enfocar();
 }
 
 /** Elegir una ruta quita origen y destino; elegir origen o destino quita la ruta. */
@@ -365,10 +422,14 @@ watch(rutaId, (id) => {
   void cargarVista();
 });
 watch([origenId, destinoId], () => {
-  if (origenId.value !== null || destinoId.value !== null) rutaId.value = null;
-  void cargarVista();
+  // El origen se marca con su color, así que cada cambio redibuja los enclaves y la ruta.
+  dibujarEnclaves();
+  dibujarRuta();
+  // Con una ruta, el trayecto sale de sus paradas: no hay nada que pedir al servidor.
+  if (rutaId.value === null) void cargarVista();
 });
 watch(trayectos, dibujarTarifas);
+watch(mostrarTarifas, dibujarTarifas);
 watch(mostrarNombres, () => {
   dibujarEnclaves();
   dibujarRuta();
@@ -379,6 +440,11 @@ onMounted(async () => {
   if (!mapaEl.value) return;
   // Sin `keyboard`: Leaflet enfoca el mapa al pulsarlo y el navegador desplaza la página para mostrarlo, con lo que se pierde el clic en un indicador.
   mapa = L.map(mapaEl.value, { center: CENTRO, zoom: 7, keyboard: false });
+  // Al cambiar el zoom se redibujan los círculos con su nuevo tamaño.
+  mapa.on("zoomend", () => {
+    dibujarEnclaves();
+    dibujarRuta();
+  });
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 18,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',

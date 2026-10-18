@@ -201,7 +201,7 @@ export const themeColors = (theme: ThemePreset, primaryName: PrimaryColor, surfa
         },
         overlay: {
           select: {
-            background: "{surface.100}",
+            background: "{surface.0}",
             borderColor: "{surface.300}",
             color: "{text.color}",
           },
@@ -300,6 +300,7 @@ export const componentsPreset = (parent: ThemePreset): Tokens => {
         },
       },
     },
+
     select: {
       ...base.components.select,
       root: {
@@ -307,7 +308,9 @@ export const componentsPreset = (parent: ThemePreset): Tokens => {
         overlay: { background: "{surface.50}" },
         "border.color": "{surface.400}",
       },
+      overlay: { background: "{surface.50}" },
       optionGroup: {
+        ...base.components.select.optionGroup,
         fontWeight: 500,
         color: "{surface.600}",
         padding: "0px 5px",
@@ -472,6 +475,16 @@ export const componentsPreset = (parent: ThemePreset): Tokens => {
             checkedBackground: "{primary.100}",
           },
         },
+      },
+    },
+    autocomplete: {
+      ...base.components.autocomplete,
+      overlay: {
+        background: "{overlay.select.background}",
+        borderColor: "{overlay.select.border.color}",
+        borderRadius: "{overlay.select.border.radius}",
+        color: "{overlay.select.color}",
+        shadow: "{overlay.select.shadow}",
       },
     },
   };
