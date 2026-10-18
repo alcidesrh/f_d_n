@@ -183,6 +183,14 @@
     padding-right: 0.5rem;
   }
 }
+/* Si la franja no cabe, el tema y la apariencia quedan al final: mensajes y
+   notificaciones primero, a la vista. */
+.header-secundario {
+  order: 1;
+  @variant lg {
+    order: 0;
+  }
+}
 /* Pantalla completa: sin utilidad en teléfonos (iOS no la soporta). */
 .header-fullscreen {
   display: none;
@@ -191,6 +199,15 @@
   }
 }
 /* Usuario: avatar y nombre abren el menú (en móvil solo el avatar). */
+.header-user-wrap {
+  position: relative;
+  flex: 0 0 auto;
+  @variant lg {
+    /* Acompaña a las acciones cuando se cierra el sidebar derecho. */
+    transform: translateX(calc(50px * (1 - var(--sb-right-h, 0))));
+    padding-right: 0.5rem;
+  }
+}
 .header-user {
   display: inline-flex;
   align-items: center;

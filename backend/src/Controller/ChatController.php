@@ -9,6 +9,7 @@ use App\Chat\AvisosChat;
 use App\Chat\ChatRechazado;
 use App\Chat\Conversaciones;
 use App\Chat\Presencia;
+use App\Chat\Push\AvisosPush;
 use App\Chat\Tarjeta\Tarjetas;
 use App\Entity\ChatArchivo;
 use App\Entity\Usuario;
@@ -39,7 +40,43 @@ final class ChatController extends AbstractController
         private readonly EntityManagerInterface $em,
         private readonly Tarjetas $tarjetas,
         private readonly Presencia $presencia,
+        private readonly AvisosPush $push,
     ) {}
+
+    /**
+     * Notificaciones con la app cerrada: `?endpoint=` (la suscripción que
+     * tiene el navegador) → `{ clave, mia }`. `clave` null = no configuradas.
+     */
+    #[Route("/push", name: "push", methods: ["GET"])]
+    public function push(Request $request, #[CurrentUser] Usuario $yo): JsonResponse
+    {
+        $endpoint = $request->query->get("endpoint");
+
+        return $this->json($this->push->estado($yo, is_string($endpoint) ? $endpoint : null));
+    }
+
+    /** Suscribe este navegador (`PushSubscription.toJSON()`) a las notificaciones de `$yo`. */
+    #[Route("/push", name: "push_suscribir", methods: ["POST"])]
+    public function suscribirPush(Request $request, #[CurrentUser] Usuario $yo): JsonResponse
+    {
+        return $this->responder(function () use ($request, $yo) {
+            $this->push->suscribir($yo, $request->toArray());
+
+            return null;
+        });
+    }
+
+    /** `{ endpoint }`: este navegador deja de recibirlas (desactivar, cerrar sesión). */
+    #[Route("/push", name: "push_desuscribir", methods: ["DELETE"])]
+    public function desuscribirPush(Request $request): JsonResponse
+    {
+        $endpoint = $request->toArray()["endpoint"] ?? null;
+        if (is_string($endpoint)) {
+            $this->push->desuscribir($endpoint);
+        }
+
+        return $this->json(null, Response::HTTP_NO_CONTENT);
+    }
 
     /** Token de suscripción a los avisos privados del usuario (Mercure). */
     #[Route("/token", name: "token", methods: ["GET"])]

@@ -7,6 +7,7 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { suscribir } from '@/core/realtime'
 import * as api from './api'
+import { revisarPush } from './push'
 import { aplicarAviso, aplicarPresencia, totalNoLeidos, ultimo, unir } from './modelo'
 import type { Aviso, Canal, Destinos, Mensaje, Perfil, Recurso, Referencia } from './types'
 
@@ -81,6 +82,8 @@ export const useChatStore = defineStore('chat', () => {
     await refrescar()
     void conectar()
     void latir()
+    // Si este navegador quedó suscrito a las notificaciones de otro usuario, se da de baja.
+    void revisarPush().catch(() => undefined)
     latido = setInterval(() => void latir(), LATIDO_MS)
     respaldo = setInterval(() => {
       if (enVivo.value) return

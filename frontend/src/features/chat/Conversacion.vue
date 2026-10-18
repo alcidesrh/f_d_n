@@ -4,9 +4,12 @@
   responde y "visto" en los propios) y el redactor. Abre pegada al final; si
   llega algo mientras se lee más arriba, ofrece bajar en lugar de saltar. Se
   pueden soltar archivos encima. Los avisos del sistema son de solo lectura.
+  Con el dedo: deslizar un mensaje a la derecha lo responde, mantenerlo
+  pulsado abre sus acciones y, con la app instalada en el teléfono, deslizar
+  desde el borde izquierdo vuelve a la bandeja (`gestosTactiles.ts`).
 -->
 <template>
-  <section class="conv" @dragenter.prevent="alEntrar" @dragover.prevent @dragleave="alSalir" @drop.prevent="alSoltar">
+  <section ref="raiz" class="conv" @dragenter.prevent="alEntrar" @dragover.prevent @dragleave="alSalir" @drop.prevent="alSoltar">
     <header class="conv__cabeza">
       <button type="button" class="conv__volver tap-target" aria-label="Volver a la bandeja" @click="emit('volver')">
         <icon name="arrow-back" color="text-current" />
@@ -43,7 +46,8 @@
               <ChatAvatar v-if="!r.mio && canal?.tipo === 'grupo'" :id="r.autor?.id ?? 0" :nombre="r.autor?.nombre ?? 'Sistema'" :foto="r.autor?.foto" tamano="sm" class="racha__avatar" />
               <div class="racha__mensajes">
                 <span v-if="!r.mio && canal?.tipo === 'grupo'" class="racha__autor" :style="{ '--tono': tono(r.autor?.id ?? 0) * 45 }">{{ r.autor?.nombre ?? "Sistema" }}</span>
-                <div v-for="m in r.mensajes" :key="m.id" class="mensaje">
+                <div v-for="m in r.mensajes" :key="m.id" class="mensaje" :data-id="m.id">
+                  <span v-if="!esSistema" class="mensaje__deslizar" aria-hidden="true"><icon name="reply" size="1.1rem" color="text-current" /></span>
                   <div :id="`m-${m.id}`" class="burbuja" :class="{ 'burbuja--suelta': !m.texto && !m.respuesta, 'burbuja--resaltada': resaltado === m.id }">
                     <button v-if="m.respuesta" type="button" class="burbuja__cita" @click="irA(m.respuesta.id)">
                       <span class="burbuja__cita-autor">{{ m.respuesta.autor }}</span>
@@ -88,6 +92,7 @@
     <Transition name="fade">
       <div v-if="arrastrando" class="conv__soltar"><icon name="upload-file-outline" size="2.5rem" color="text-current" />Suelte aquí para adjuntar</div>
     </Transition>
+    <HojaAcciones :visible="menuDe !== null" :acciones="accionesMenu" :titulo="menuDe ? extracto(menuDe) : ''" @update:visible="!$event && (menuDe = null)" />
     <VisorImagen :fotos="visor.fotos" :inicio="visor.inicio" @cerrar="visor.fotos = []" />
   </section>
 </template>
@@ -100,8 +105,11 @@ import type { Archivo, Mensaje, Referencia } from "@/core/chat/types";
 import { notify } from "@/core/notify";
 import ChatAvatar from "@/shared/chat/ChatAvatar.vue";
 import ArchivosMensaje from "./ArchivosMensaje.vue";
+import { appInstalada, useGestosMensajes, useVolverDesdeElBorde } from "./gestosTactiles";
+import HojaAcciones, { type AccionHoja } from "./HojaAcciones.vue";
 import Redactor from "./Redactor.vue";
 import TarjetasMensaje from "./tarjetas/TarjetasMensaje.vue";
+import { useVentanaChat } from "./ventana";
 import VisorImagen from "./VisorImagen.vue";
 
 /** `activa`: a la vista (minimizada o cerrada no marca leído lo que llega). */
@@ -115,6 +123,8 @@ const CERCA = 120;
 const MAX_PAGINAS_CITA = 10;
 
 const chat = useChatStore();
+const ventana = useVentanaChat();
+const raiz = ref<HTMLElement | null>(null);
 const lienzo = ref<HTMLElement | null>(null);
 const redactor = ref<InstanceType<typeof Redactor> | null>(null);
 const cargado = ref(false);
@@ -125,6 +135,8 @@ const respondiendo = ref<Mensaje | null>(null);
 const resaltado = ref<number | null>(null);
 const arrastrando = ref(false);
 const visor = reactive<{ fotos: Archivo[]; inicio: number }>({ fotos: [], inicio: 0 });
+/** Mensaje mantenido pulsado: sus acciones en la hoja. */
+const menuDe = ref<Mensaje | null>(null);
 
 const canal = computed(() => chat.canal(props.canalId));
 const esSistema = computed(() => canal.value?.tipo === "sistema");
@@ -210,6 +222,39 @@ async function irA(id: number) {
 function responder(m: Mensaje) {
   respondiendo.value = m;
   redactor.value?.enfocar();
+}
+
+// Gestos táctiles ----------------------------------------------------------
+const mensajePorId = (id: number) => lista.value.find((m) => m.id === id);
+useGestosMensajes(lienzo, {
+  puedeResponder: () => !esSistema.value,
+  responder: (id) => {
+    const m = mensajePorId(id);
+    if (m) responder(m);
+  },
+  acciones: (id) => (menuDe.value = mensajePorId(id) ?? null),
+});
+useVolverDesdeElBorde(raiz, () => ventana.movil && appInstalada(), () => emit("volver"));
+
+const extracto = (m: Mensaje) => m.texto || (m.archivos.length ? (m.archivos.every((a) => a.imagen) ? "Foto" : m.archivos[0]!.nombre) : `${m.adjuntos.length} registro(s)`);
+
+const accionesMenu = computed<AccionHoja[]>(() => {
+  const m = menuDe.value;
+  if (!m) return [];
+  return [
+    ...(!esSistema.value ? [{ etiqueta: "Responder", icono: "reply", accion: () => responder(m) }] : []),
+    ...(m.texto ? [{ etiqueta: "Copiar texto", icono: "content-copy-outline", accion: () => void copiar(m.texto) }] : []),
+    ...(m.respuesta ? [{ etiqueta: "Ver el mensaje citado", icono: "format-quote-outline", accion: () => void irA(m.respuesta!.id) }] : []),
+  ];
+});
+
+async function copiar(texto: string) {
+  try {
+    await navigator.clipboard.writeText(texto);
+    notify.success("Texto copiado.");
+  } catch {
+    notify.error("No se pudo copiar el texto.");
+  }
 }
 
 function verFotos(fotos: Archivo[], inicio: number) {
@@ -435,11 +480,29 @@ watch(
 }
 /* Mensaje = burbuja + botón responder (al lado, aparece al pasar o enfocar). */
 .mensaje {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.25rem;
   max-width: 100%;
   min-width: 0;
+}
+/* Aparece a la izquierda mientras se desliza el mensaje para responderlo (`--arrastre` 0 → 1). */
+.mensaje__deslizar {
+  position: absolute;
+  top: 50%;
+  left: -2.5rem;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  color: var(--p-primary-color);
+  background: var(--p-content-background);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+  opacity: var(--arrastre, 0);
+  transform: translateY(-50%) scale(calc(0.6 + var(--arrastre, 0) * 0.4));
+  pointer-events: none;
 }
 .racha--mia .mensaje {
   flex-direction: row-reverse;
@@ -467,10 +530,23 @@ watch(
 .mensaje:hover .mensaje__responder {
   opacity: 1;
 }
-/* En táctil no hay hover: siempre visible, discreto. */
+/* En táctil se responde deslizando o manteniendo pulsado: sin botón, el
+   desplazamiento vertical sigue siendo del navegador y el texto no se
+   selecciona al mantener (para copiarlo está la hoja). */
 @media (pointer: coarse) {
   .mensaje__responder {
-    opacity: 0.55;
+    display: none;
+  }
+  /* Lo horizontal es de los gestos (responder, volver desde el borde). */
+  .conv__cabeza,
+  .conv__lienzo {
+    touch-action: pan-y;
+  }
+  .mensaje {
+    touch-action: pan-y;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
   }
 }
 .burbuja {

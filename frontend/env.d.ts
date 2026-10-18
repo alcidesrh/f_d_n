@@ -1,3 +1,3 @@
 /// <reference types="vite/client" />
-
-import 'pinia-plugin-persistedstate'
+/// <reference types="vite-plugin-pwa/vue" />
+/// <reference types="vite-plugin-pwa/info" />

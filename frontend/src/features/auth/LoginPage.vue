@@ -12,7 +12,7 @@
         <template #content>
           <FormKit type="form" :actions="false" @submit-invalid="shake" @submit="handleSubmit">
             <div class="grid gap-[20px]">
-              <FormKit type="InputText" name="username" validation="required" prepend="person" placeholder="Usuario" fluid />
+              <FormKit type="InputText" name="username" validation="required" prepend="person" autocapitalize="none" autocomplete="username" autocorrect="off" spellcheck="false" :style="{ textTransform: 'none' }" placeholder="Usuario" fluid />
               <FormKit type="Password" name="password" validation="required" placeholder="Contraseña" fluid class="mt-2" />
             </div>
             <Button type="submit" label="Aceptar" :loading="loading" class="mt-6 w-full" />

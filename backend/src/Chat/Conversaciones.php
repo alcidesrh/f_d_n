@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Chat;
 
+use App\Chat\Push\AvisosPush;
 use App\Chat\Tarjeta\Tarjetas;
 use App\Cuenta\FotoPerfil;
 use App\Entity\ChatArchivo;
@@ -31,6 +32,7 @@ final class Conversaciones
         private readonly AvisosChat $avisos,
         private readonly Archivos $archivos,
         private readonly FotoPerfil $fotos,
+        private readonly AvisosPush $push,
     ) {}
 
     private function perfil(Usuario $u): Perfil
@@ -316,15 +318,28 @@ final class Conversaciones
             $m->getCanal()->miembro($autor)?->leyoHasta((int) $m->getId());
             $this->em->flush();
         }
+        $miembros = $this->idsMiembros($m->getCanal());
+        $perfil = $autor ? $this->perfil($autor) : null;
+        $extracto = self::extracto($m);
         $this->avisos->avisar(
-            $this->idsMiembros($m->getCanal()),
+            $miembros,
             "mensaje",
             [
                 "canal" => $m->getCanal()->getId(),
                 "mensaje" => $m->getId(),
-                "autor" => $autor ? $this->perfil($autor)->aArray() : null,
-                "extracto" => self::extracto($m),
+                "autor" => $perfil?->aArray(),
+                "extracto" => $extracto,
             ],
+        );
+        // Con la app cerrada: a todos menos al autor (el navegador la calla si la app está a la vista).
+        $canal = $m->getCanal();
+        $this->push->avisarMensaje(
+            array_values(array_filter($miembros, static fn(int $id) => $id !== $perfil?->id)),
+            (int) $canal->getId(),
+            $canal->getTipo(),
+            $canal->getNombre(),
+            $perfil?->nombre,
+            $extracto,
         );
     }
 

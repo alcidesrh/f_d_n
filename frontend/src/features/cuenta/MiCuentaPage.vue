@@ -1,6 +1,7 @@
 <!--
   "Mi cuenta" (`/mi-cuenta`): lo que el usuario puede editar de su propio
-  perfil: foto, datos personales y contraseña (`MiCuentaController`). El
+  perfil: foto, datos personales, contraseña (`MiCuentaController`) y las
+  notificaciones del chat en este dispositivo (`core/chat/push.ts`). El
   usuario, los roles y los permisos los administra otra persona.
 -->
 <template>
@@ -118,6 +119,28 @@
             </FormKit>
           </section>
 
+          <section v-if="estadoPush !== 'no-disponible'" class="card">
+            <h2 class="mb-3 text-base font-semibold">Notificaciones</h2>
+            <div class="flex items-start justify-between gap-4">
+              <label for="notificaciones-chat" class="min-w-0">
+                <span class="block font-medium">Mensajes del chat en este dispositivo</span>
+                <span class="block text-sm text-muted-color">
+                  {{
+                    estadoPush === 'bloqueadas'
+                      ? 'El navegador las tiene bloqueadas para este sitio: permítalas en su configuración.'
+                      : 'Avisa quién escribe y el inicio del mensaje aunque la app esté cerrada. Se desactivan al cerrar sesión.'
+                  }}
+                </span>
+              </label>
+              <ToggleSwitch
+                input-id="notificaciones-chat"
+                :model-value="estadoPush === 'activas'"
+                :disabled="estadoPush === 'bloqueadas' || cambiandoPush"
+                @update:model-value="alternarPush"
+              />
+            </div>
+          </section>
+
           <section class="card">
             <h2 class="mb-3 text-base font-semibold">Cambiar contraseña</h2>
             <FormKit
@@ -169,6 +192,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { activarPush, desactivarPush, estadoPush, revisarPush } from '@/core/chat/push'
 import { cambiarPassword } from '@/core/cuenta/api'
 import { useCuentaStore } from '@/core/cuenta/store'
 import { notify } from '@/core/notify'
@@ -181,11 +205,27 @@ const elegir = ref<HTMLInputElement | null>(null)
 const subiendo = ref(false)
 const guardando = ref(false)
 const cambiando = ref(false)
+const cambiandoPush = ref(false)
 const claveForm = ref(0)
 /** Cambia al guardar para que el formulario vuelva a leer los valores guardados. */
 const version = ref(0)
 
-onMounted(() => void cuenta.cargar())
+onMounted(() => {
+  void cuenta.cargar()
+  void revisarPush().catch(() => undefined)
+})
+
+async function alternarPush(activar: boolean) {
+  cambiandoPush.value = true
+  try {
+    if (!activar) await desactivarPush()
+    else if ((await activarPush()) === 'activas') notify.success('Notificaciones activadas en este dispositivo.')
+  } catch (e) {
+    notify.error(mensaje(e, 'No se pudieron cambiar las notificaciones.'))
+  } finally {
+    cambiandoPush.value = false
+  }
+}
 
 const inicial = computed(() => {
   const c = cuenta.cuenta

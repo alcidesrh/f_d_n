@@ -8,7 +8,17 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import type { LocationQuery, RouteParams } from 'vue-router'
 import type { Referencia } from '@/core/chat/types'
-import type { Caja, ModoVentana } from '@/core/chat/ventana'
+import { MOVIL, type Caja, type ModoVentana } from '@/core/chat/ventana'
+
+/**
+ * Pantalla de teléfono (más angosta que `MOVIL`): el chat es siempre su
+ * página, a pantalla completa, como una app de mensajería; el modo elegido
+ * (esquina, flotante) vuelve al ensanchar. Del navegador, no del usuario: va
+ * fuera de la store, que se rehace al cambiar de usuario.
+ */
+const consultaMovil = typeof window !== 'undefined' && typeof window.matchMedia === 'function' ? window.matchMedia(`(width < ${MOVIL}px)`) : null
+const movil = ref(consultaMovil?.matches ?? false)
+consultaMovil?.addEventListener('change', (e) => (movil.value = e.matches))
 
 export const useVentanaChat = defineStore(
   'chat-ventana',
@@ -28,7 +38,7 @@ export const useVentanaChat = defineStore(
     /** Sube con cada `invocar()` estando ya a la vista: la ventana llama la atención. */
     const llamado = ref(0)
 
-    const esVentana = computed(() => modo.value !== 'centro')
+    const esVentana = computed(() => !movil.value && modo.value !== 'centro')
     /** La conversación se está leyendo (marca leído lo que llega). */
     const aLaVista = computed(() => !esVentana.value || (abierta.value && !minimizada.value))
 
@@ -65,7 +75,7 @@ export const useVentanaChat = defineStore(
     }
     const cerrar = () => esVentana.value && (abierta.value = false)
 
-    return { modo, abierta, pagina, minimizada, maximizada, flotante, canal, adjuntar, llamado, esVentana, aLaVista, abrir, invocar, cambiarModo, minimizar, restaurar, alternarMaximizada, cerrar }
+    return { modo, abierta, pagina, minimizada, maximizada, flotante, canal, adjuntar, llamado, movil, esVentana, aLaVista, abrir, invocar, cambiarModo, minimizar, restaurar, alternarMaximizada, cerrar }
   },
   { persist: { pick: ['modo', 'abierta', 'minimizada', 'maximizada', 'flotante', 'canal'] } },
 )

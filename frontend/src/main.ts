@@ -17,6 +17,10 @@ import formkitConfig from "@/shared/formkit/config";
 import { useUiStore } from "@/app/ui";
 import { useSchemaStore } from "@/core/entities/schema";
 import { syncVueRoutes } from "@/app/routeSync";
+import { escucharInstalacion } from "@/app/pwa";
+
+// Antes de montar: el aviso de instalación del navegador llega pronto y una sola vez.
+escucharInstalacion();
 
 async function bootstrap() {
   const app = createApp(App)

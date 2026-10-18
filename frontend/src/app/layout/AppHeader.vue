@@ -41,11 +41,11 @@
       <div class="header-actions">
         <slot name="menu-content"></slot>
 
-        <button class="icon-btn cursor-pointer" :title="ui.mode === 'dark' ? 'Modo claro' : 'Modo oscuro'" :aria-label="ui.mode === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'" @click="ui.toggleMode()">
+        <button class="icon-btn header-secundario cursor-pointer" :title="ui.mode === 'dark' ? 'Modo claro' : 'Modo oscuro'" :aria-label="ui.mode === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'" @click="ui.toggleMode()">
           <icon :name="ui.mode === 'dark' ? 'light-mode-outline' : 'dark-mode-outline'" />
         </button>
 
-        <button class="icon-btn cursor-pointer" title="Personalizar apariencia" aria-label="Personalizar apariencia" @click.stop="showThemeEditor()">
+        <button class="icon-btn header-secundario cursor-pointer" title="Personalizar apariencia" aria-label="Personalizar apariencia" @click.stop="showThemeEditor()">
           <icon name="palette-outline" />
         </button>
 
@@ -61,30 +61,31 @@
         <button class="icon-btn header-fullscreen" title="Pantalla completa" aria-label="Pantalla completa" @click="toggleFullscreen" :class="{ 'active-state': openPopover === 'fullscreen' }">
           <icon name="fullscreen" />
         </button>
-        <div style="position: relative">
-          <button type="button" class="header-user" :title="session.user ?? ''" aria-haspopup="true" aria-controls="menu-usuario" @click="menuUsuario?.toggle($event)">
-            <ChatAvatar :id="cuenta.cuenta?.id ?? 0" :nombre="cuenta.nombre" :foto="cuenta.foto" tamano="sm" />
-            <span class="header-user__name">{{ session.user }}</span>
-            <icon name="keyboard-arrow-down" size=".9rem" />
-          </button>
-          <Menu id="menu-usuario" ref="menuUsuario" :model="opcionesUsuario" popup>
-            <template #start>
-              <div class="header-user__card">
-                <ChatAvatar :id="cuenta.cuenta?.id ?? 0" :nombre="cuenta.nombre" :foto="cuenta.foto" tamano="lg" />
-                <div class="min-w-0">
-                  <div class="truncate font-semibold">{{ cuenta.nombre }}</div>
-                  <div class="truncate text-xs text-muted-color">@{{ session.user }}</div>
-                </div>
+      </div>
+      <!-- Fuera de la franja que scrollea: Mi cuenta, Instalar app y Cerrar sesión siempre a la vista. -->
+      <div class="header-user-wrap">
+        <button type="button" class="header-user" :title="session.user ?? ''" aria-haspopup="true" aria-controls="menu-usuario" @click="menuUsuario?.toggle($event)">
+          <ChatAvatar :id="cuenta.cuenta?.id ?? 0" :nombre="cuenta.nombre" :foto="cuenta.foto" tamano="sm" />
+          <span class="header-user__name">{{ session.user }}</span>
+          <icon name="keyboard-arrow-down" size=".9rem" />
+        </button>
+        <Menu id="menu-usuario" ref="menuUsuario" :model="opcionesUsuario" popup>
+          <template #start>
+            <div class="header-user__card">
+              <ChatAvatar :id="cuenta.cuenta?.id ?? 0" :nombre="cuenta.nombre" :foto="cuenta.foto" tamano="lg" />
+              <div class="min-w-0">
+                <div class="truncate font-semibold">{{ cuenta.nombre }}</div>
+                <div class="truncate text-xs text-muted-color">@{{ session.user }}</div>
               </div>
-            </template>
-            <template #item="{ item, props }">
-              <a v-bind="props.action" class="flex items-center gap-2">
-                <icon :name="String(item.iconName)" size="1.1rem" />
-                <span>{{ item.label }}</span>
-              </a>
-            </template>
-          </Menu>
-        </div>
+            </div>
+          </template>
+          <template #item="{ item, props }">
+            <a v-bind="props.action" class="flex items-center gap-2">
+              <icon :name="String(item.iconName)" size="1.1rem" />
+              <span>{{ item.label }}</span>
+            </a>
+          </template>
+        </Menu>
       </div>
       <div class="flex btn-siderbar-header">
         <Divider layout="vertical" class="mx-[5px]!" />
@@ -99,10 +100,12 @@
 import type { MenuItem } from "primevue/menuitem";
 import type Menu from "primevue/menu";
 import { useDialog } from "primevue/usedialog";
+import { instalar, puedeInstalar } from "@/app/pwa";
 import { router } from "@/app/router";
 import { useUiStore } from "@/app/ui";
 import { salirDeStores } from "@/core/auth/alcanceSesion";
 import { useSessionStore } from "@/core/auth/session";
+import { desactivarPush } from "@/core/chat/push";
 import { useChatStore } from "@/core/chat/store";
 import { useCuentaStore } from "@/core/cuenta/store";
 import { useVentanaChat } from "@/features/chat/ventana";
@@ -164,9 +167,16 @@ function toggle(name: Exclude<PopoverName, null>) {
 }
 
 const menuUsuario = ref<InstanceType<typeof Menu> | null>(null);
-const opcionesUsuario: MenuItem[] = [{ label: "Mi cuenta", iconName: "manage-accounts-outline", command: () => void router.push({ name: "mi-cuenta" }) }, { separator: true }, { label: "Cerrar sesión", iconName: "logout", command: () => void logout() }];
+const opcionesUsuario = computed<MenuItem[]>(() => [
+  { label: "Mi cuenta", iconName: "manage-accounts-outline", command: () => void router.push({ name: "mi-cuenta" }) },
+  ...(puedeInstalar.value ? [{ label: "Instalar app", iconName: "install-mobile", command: () => void instalar() }] : []),
+  { separator: true },
+  { label: "Cerrar sesión", iconName: "logout", command: () => void logout() },
+]);
 
 async function logout() {
+  // Antes del logout (después el token ya no vale): en una taquilla compartida el siguiente no debe recibirlas.
+  await desactivarPush().catch(() => undefined);
   await chat.salirDeLinea();
   await session.logout();
   await router.push({ name: "login" });

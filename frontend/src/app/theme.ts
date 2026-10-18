@@ -97,33 +97,56 @@ type Tokens = Record<string, any>;
 type Palette = Record<string, string>;
 const palette = (name: string) => (colors as unknown as Record<string, Palette>)[name] ?? {};
 
+const esObjeto = (valor: unknown): valor is Tokens => typeof valor === "object" && valor !== null && !Array.isArray(valor);
+
+/**
+ * Completa `modificaciones` con lo que `base` no sobrescribe: recursivo por
+ * clave; donde ambos traen un objeto se combinan, en cualquier otro caso gana
+ * la modificación. No muta ninguno de los dos.
+ */
+export function completarConBase(base: Tokens, modificaciones: Tokens): Tokens {
+  const out: Tokens = { ...base };
+  for (const [clave, valor] of Object.entries(modificaciones)) {
+    const valorBase = base[clave];
+    out[clave] = esObjeto(valorBase) && esObjeto(valor) ? completarConBase(valorBase, valor) : valor;
+  }
+  return out;
+}
+
 /** Preset base de PrimeVue (Aura, Lara…); si la clave no existe, el primero. */
 function presetOf(key: ThemePreset): Tokens {
   return (PRESET_OPTIONS.find((o) => o.key === key) ?? PRESET_OPTIONS[0]).value as Tokens;
 }
 
-/** Preset completo: base + paletas (primaria y superficie) + ajustes propios, en claro u oscuro. */
-export const themeColors = (theme: ThemePreset, primaryName: PrimaryColor, surfaceName: SurfacePalette, mode: ThemeMode): Tokens => {
+/**
+ * Preset completo para aplicar: el base + las modificaciones de `themeColors`.
+ * Como antes, el `colorScheme` del base entra en su nivel de primer nivel (el
+ * claro) y no se toma su versión oscura: el modo oscuro sale de invertir rampas.
+ */
+export const presetCompleto = (theme: ThemePreset, primaryName: PrimaryColor, surfaceName: SurfacePalette, mode: ThemeMode): Tokens => {
   const base = presetOf(theme);
+  const baseClaro = { ...base, semantic: { ...base.semantic, colorScheme: base.semantic.colorScheme.light } };
+  return completarConBase(baseClaro, themeColors(primaryName, surfaceName, mode));
+};
+
+/** Solo las modificaciones sobre el preset base, en claro u oscuro (ver `presetCompleto`). */
+export const themeColors = (primaryName: PrimaryColor, surfaceName: SurfacePalette, mode: ThemeMode): Tokens => {
   let primitive: Tokens;
   let primary: Palette;
   let surface: Palette;
   if (mode === "dark") {
-    primitive = invertPalette({ ...base.primitive, ...colors });
+    primitive = invertPalette(colors);
     primary = invertPalette(palette(primaryName));
     surface = { "0": "#000000", ...invertPalette(palette(surfaceName)) };
   } else {
-    primitive = { ...base.primitive, ...colors };
+    primitive = colors;
     primary = palette(primaryName);
     surface = { "0": "#ffffff", ...palette(surfaceName) };
   }
   return {
-    ...base,
     primitive: primitive,
     semantic: {
-      ...base.semantic,
       formField: {
-        ...base.semantic.formField,
         borderRadius: "4px",
       },
 
@@ -140,7 +163,6 @@ export const themeColors = (theme: ThemePreset, primaryName: PrimaryColor, surfa
         activeColor: "#0e7490",
       },
       colorScheme: {
-        ...base.semantic?.colorScheme?.light,
         surface: surface,
         primary: {
           // color: "{primary.500}",
@@ -218,46 +240,35 @@ export const themeColors = (theme: ThemePreset, primaryName: PrimaryColor, surfa
         },
       },
     },
-    components: { ...base.components, ...componentsPreset(theme) },
+    components: componentsPreset(),
   };
 };
 //#region Componentes
-export const componentsPreset = (parent: ThemePreset): Tokens => {
-  const base = presetOf(parent);
+export const componentsPreset = (): Tokens => {
   return {
     multiselect: {
-      ...base.components.multiselect,
       root: {
-        ...base.components.multiselect?.root,
         overlay: { background: "{surface.50}" },
         // "border.color": "{surface.400}",
       },
       colorScheme: {
-        ...base.components.multiselect?.colorScheme,
         dark: {
-          ...base.components.multiselect?.colorScheme?.dark,
           background: "{surface.50}",
           "border.color": "{surface.400}",
         },
       },
     },
     inputtext: {
-      ...base.components.inputtext,
       colorScheme: {
-        ...base.components.inputtext?.colorScheme,
         "border.color": "{surface.400}",
 
         dark: {
-          ...base.components.inputtext?.colorScheme?.dark,
           background: "{surface.50}",
           "border.color": "{surface.400}",
         },
       },
     },
     datatable: {
-      ...base.components.datatable,
-
-      // ...base.components.datatable,
       header: {
         cell: {
           padding: "0 10px",
@@ -275,7 +286,6 @@ export const componentsPreset = (parent: ThemePreset): Tokens => {
       //   },
       // },
       colorScheme: {
-        ...base.components.datatable?.colorScheme,
         // body: {
         //   cell: {
         //     sm: {
@@ -288,7 +298,6 @@ export const componentsPreset = (parent: ThemePreset): Tokens => {
           // "striped.background": "{surface.200}",
         },
         dark: {
-          ...base.components.datatable?.colorScheme.dark,
           // header: {
           //   background: "{surface.100}",
           //   "cell.background": "{surface.100}",
@@ -302,48 +311,32 @@ export const componentsPreset = (parent: ThemePreset): Tokens => {
     },
 
     select: {
-      ...base.components.select,
       root: {
-        ...base.components.select?.root,
         overlay: { background: "{surface.50}" },
         "border.color": "{surface.400}",
       },
-      overlay: { background: "{surface.50}" },
+      overlay: { background: "{surface.0}" },
       optionGroup: {
-        ...base.components.select.optionGroup,
         fontWeight: 500,
         color: "{surface.600}",
         padding: "0px 5px",
       },
     },
     popover: {
-      ...base.components.popover,
       root: {
-        ...base.components.popover?.root,
         background: "{surface.50}",
         "border.color": "{surface.300}",
       },
-      // colorScheme: {
-      // ...base.components.popover?.colorScheme,
-      //   dark: {
-      //     ...base.components.popover.dark,
-      //     background: "{surface.100}",
-      //   },
-      // },
     },
     divider: {
-      ...base.components.divider,
       root: {
-        ...base.components.divider?.root,
         border: {
           color: "{surface.200}",
         },
       },
     },
     dialog: {
-      ...base.components.dialog,
       root: {
-        ...base.components.dialog?.root,
         background: "{overlay.modal.background}",
       },
     },
@@ -358,12 +351,9 @@ export const componentsPreset = (parent: ThemePreset): Tokens => {
       },
     },
     button: {
-      ...base.components.button,
       colorScheme: {
         light: {
-          ...base.components.button.colorScheme?.light,
           outlined: {
-            ...base.components.button.colorScheme?.light?.outlined,
             secondary: {
               hoverBackground: "{surface.50}",
               activeBackground: "{surface.100}",
@@ -375,16 +365,13 @@ export const componentsPreset = (parent: ThemePreset): Tokens => {
       },
     },
     message: {
-      ...base.components.message,
       text: {
         font: {
           size: ".85rem",
         },
       },
       colorScheme: {
-        ...base.components.message.colorScheme,
         light: {
-          ...base.components.message.colorScheme?.light,
           warn: {
             background: "{orange.500}",
             color: "{surface.0}",
@@ -393,43 +380,24 @@ export const componentsPreset = (parent: ThemePreset): Tokens => {
       },
     },
     tabs: {
-      ...base.components.tabs,
-      tablist: {
-        ...base.components.tabs.tablist,
-      },
-      tab: {
-        ...base.components.tabs.tab,
-      },
-      tabpanel: {
-        ...base.components.tabs.tabpanel,
-        // background: "transparent",
-      },
       colorScheme: {
-        ...base.components.tabs.colorScheme,
         light: {
-          ...base.components.tabs.colorScheme.light,
           tab: {
-            ...base.components.tabs.colorScheme.light.tab,
             activeBackground: "{surface.50}",
           },
         },
       },
     },
     accordion: {
-      ...base.components.accordion,
       colorScheme: {
-        ...base.components.accordion.colorScheme,
         light: {
-          ...base.components.accordion.colorScheme?.light,
           header: {
-            ...base.components.accordion.colorScheme?.light.header,
             background: "{bg}",
           },
         },
       },
     },
     tag: {
-      ...base.components.tag,
       root: {
         fontSize: "0.875rem",
         fontWeight: "600",
@@ -439,18 +407,13 @@ export const componentsPreset = (parent: ThemePreset): Tokens => {
         roundedBorderRadius: "{border.radius.xl}",
       },
       colorScheme: {
-        ...base.components.tag.colorScheme,
         light: {
-          ...base.components.tag.colorScheme.light,
-
           success: {
             background: "{emerald.500}",
             color: "{surface.0}",
           },
         },
         dark: {
-          ...base.components.tag.colorScheme.dark,
-
           success: {
             background: "{emerald.400}",
             color: "{emerald.950}",
@@ -459,18 +422,12 @@ export const componentsPreset = (parent: ThemePreset): Tokens => {
       },
     },
     toggleswitch: {
-      ...base.components.toggleswitch,
       root: {
-        ...base.components.toggleswitch.root,
         height: "10px",
       },
       colorScheme: {
-        ...base.components.toggleswitch.colorScheme,
-
         light: {
-          ...base.components.toggleswitch.colorScheme.light,
           handle: {
-            ...base.components.toggleswitch.colorScheme.light.handle,
             background: "{surface.100}",
             checkedBackground: "{primary.100}",
           },
@@ -478,7 +435,6 @@ export const componentsPreset = (parent: ThemePreset): Tokens => {
       },
     },
     autocomplete: {
-      ...base.components.autocomplete,
       overlay: {
         background: "{overlay.select.background}",
         borderColor: "{overlay.select.border.color}",

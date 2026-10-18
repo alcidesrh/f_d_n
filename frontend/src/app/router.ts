@@ -289,6 +289,7 @@ export const router = createRouter({
       component: () => import("@/features/entity-crud/ListPage.vue"),
       meta: {
         title: "Lista de entidad",
+        label: "entidades",
       },
     },
     {
@@ -330,6 +331,7 @@ router.beforeEach((to, from) => {
   }
 
   // Chat en esquina o flotante: `/chat` abre la ventana sobre la página actual.
+  // En el teléfono no hay ventanas (`esVentana` es falso): el chat es su página, a pantalla completa.
   const ventana = useVentanaChat();
   if (to.name === "chat" && ventana.esVentana) {
     const { canal, adjuntar } = destinoDeRuta(to.params, to.query);

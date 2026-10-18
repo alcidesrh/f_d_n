@@ -24,6 +24,20 @@ services:
       - host.docker.internal:host-gateway
     tty: true
 
+  # Con el código montado; tras cambiar un handler: `docker compose restart worker`.
+  worker:
+    build:
+      context: ./backend
+      target: frankenphp_dev
+    volumes:
+      - ./backend:/app
+      - /app/var
+      - ./backend/frankenphp/conf.d/20-app.dev.ini:/usr/local/etc/php/app.conf.d/20-app.dev.ini:ro
+    environment:
+      XDEBUG_MODE: 'off'
+    extra_hosts:
+      - host.docker.internal:host-gateway
+
   frontend:
     build:
       context: ./frontend

@@ -3,7 +3,9 @@
   documentos (clip, pegar o arrastrar; las fotos se reducen antes de subir),
   registros elegidos de sus listados con el selector (llegan como tarjetas),
   lo que la app tiene en pantalla bajo el chat (un clic lo adjunta) y, si se
-  está respondiendo, la cita del mensaje original.
+  está respondiendo, la cita del mensaje original. En el teléfono el clip
+  abre una hoja (cámara, fotos y archivos, registros), como en una app de
+  mensajería.
 -->
 <template>
   <form class="redactor" @submit.prevent="enviar" @paste="alPegar">
@@ -37,10 +39,13 @@
     </div>
 
     <div class="redactor__fila">
-      <button type="button" class="redactor__boton tap-target" aria-label="Adjuntar foto o archivo" v-tooltip.top="'Foto o archivo'" @click="selector?.click()">
+      <button v-if="ventana.movil" type="button" class="redactor__boton tap-target" aria-label="Adjuntar" aria-haspopup="menu" @click="adjuntando = true">
         <icon name="attach-file" size="1.35rem" color="text-current" />
       </button>
-      <button type="button" class="redactor__boton tap-target" aria-label="Adjuntar registros" v-tooltip.top="'Boletos, salidas, buses, reportes…'" @click="eligiendo = true">
+      <button v-else type="button" class="redactor__boton tap-target" aria-label="Adjuntar foto o archivo" v-tooltip.top="'Foto o archivo'" @click="selector?.click()">
+        <icon name="attach-file" size="1.35rem" color="text-current" />
+      </button>
+      <button v-if="!ventana.movil" type="button" class="redactor__boton tap-target" aria-label="Adjuntar registros" v-tooltip.top="'Boletos, salidas, buses, reportes…'" @click="eligiendo = true">
         <icon name="add-circle-outline" size="1.35rem" color="text-current" />
       </button>
       <textarea ref="campo" v-model="texto" class="redactor__texto" rows="1" placeholder="Escriba un mensaje" aria-label="Mensaje" :maxlength="4000" @keydown.enter.exact.prevent="enviar" @input="ajustar" />
@@ -49,6 +54,8 @@
       </button>
     </div>
     <input ref="selector" type="file" multiple :accept="ACEPTA" class="hidden" @change="alElegir" />
+    <input ref="camara" type="file" accept="image/*" capture="environment" class="hidden" @change="alElegir" />
+    <HojaAcciones v-model:visible="adjuntando" :acciones="accionesAdjuntar" titulo="Adjuntar" />
 
     <SelectorRegistros v-model:visible="eligiendo" :inicial="adjuntos" @aceptar="alElegirRegistros" @archivos="agregarArchivos" />
   </form>
@@ -59,9 +66,11 @@ import { subirArchivo, type Envio } from '@/core/chat/api'
 import type { Archivo, Mensaje, Referencia, Registro } from '@/core/chat/types'
 import { notify } from '@/core/notify'
 import { enPantalla } from '@/shared/chat/integracion'
+import HojaAcciones, { type AccionHoja } from './HojaAcciones.vue'
 import { ACEPTA, prepararArchivo } from './imagen'
 import SelectorRegistros from './SelectorRegistros.vue'
 import { tipoTarjeta } from './tarjetas/catalogo'
+import { useVentanaChat } from './ventana'
 
 const emit = defineEmits<{ enviar: [envio: Envio]; cancelarRespuesta: [] }>()
 const props = defineProps<{ enviando?: boolean; respondiendo?: Mensaje | null }>()
@@ -86,6 +95,16 @@ const adjuntos = ref<Registro[]>([])
 const subidas = ref<Subida[]>([])
 const campo = ref<HTMLTextAreaElement | null>(null)
 const selector = ref<HTMLInputElement | null>(null)
+const camara = ref<HTMLInputElement | null>(null)
+const ventana = useVentanaChat()
+/** La hoja de adjuntar (teléfono) está abierta. */
+const adjuntando = ref(false)
+// Cada acción corre dentro del toque: el navegador deja abrir la cámara o el selector.
+const accionesAdjuntar: AccionHoja[] = [
+  { etiqueta: 'Cámara', icono: 'photo-camera-outline', accion: () => camara.value?.click() },
+  { etiqueta: 'Fotos y archivos', icono: 'perm-media-outline', accion: () => selector.value?.click() },
+  { etiqueta: 'Boletos, salidas y más', icono: 'add-circle-outline', accion: () => (eligiendo.value = true) },
+]
 /** El selector de registros está abierto. */
 const eligiendo = ref(false)
 let claves = 0

@@ -25,7 +25,8 @@ export default (idioma: Idioma) =>
     },
     config: {
       classes: {
-        outer: 'mb-4',
+        form: '@container',
+      outer: 'mb-4',
         label: 'block font-medium mb-1.5 text-sm',
         help: 'mt-1 text-xs text-muted-color',
         messages: 'list-none p-0 m-0 mt-1',

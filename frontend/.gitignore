@@ -40,3 +40,6 @@ __screenshots__/
 
 test-results/
 playwright-report/
+
+# Service worker de desarrollo (VITE_PWA_DEV)
+dev-dist

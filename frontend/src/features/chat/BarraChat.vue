@@ -1,25 +1,27 @@
 <!--
   Barra de título del chat: a la izquierda el título, en vivo y sin leer; al
   centro el modo (ícono y nombre); a la derecha minimizar, maximizar y
-  cerrar (en modo centro solo maximizar). En la flotante es además el asa para arrastrarla. Cambiar de/a
+  cerrar (en modo centro solo maximizar). En el teléfono no hay modos ni
+  controles: una flecha vuelve a la app. En la flotante es además el asa para arrastrarla. Cambiar de/a
   centro navega: el centro es la página `/chat`.
 -->
 <template>
   <header class="barra" :class="{ 'barra--minimizada': ventana.minimizada && ventana.esVentana }" @click="alTocar">
     <span class="barra__titulo">
-      <icon name="forum-outline" size="1.15rem" color="text-current" />
+      <button v-if="ventana.movil" type="button" class="control" aria-label="Volver a la app" @click="volverALaApp"><icon name="arrow-back" size="1.2rem" color="text-current" /></button>
+      <icon v-else name="forum-outline" size="1.15rem" color="text-current" />
       <span>Mensajes</span>
       <span class="vivo" :class="{ 'vivo--off': !chat.enVivo }" v-tooltip.bottom="chat.enVivo ? 'En vivo' : 'Sin conexión en vivo: se actualiza cada 30 s'" />
       <span v-if="chat.noLeidos" class="barra__badge" :aria-label="`${chat.noLeidos} sin leer`">{{ chat.noLeidos > 99 ? "99+" : chat.noLeidos }}</span>
     </span>
 
-    <button v-if="!(ventana.esVentana && ventana.minimizada)" type="button" class="modo" aria-haspopup="true" aria-controls="chat-modos" :aria-label="`Modo: ${MODOS[ventana.modo].nombre}`" v-tooltip.bottom="'Modo de la ventana'" @click="menu?.toggle($event)">
+    <button v-if="!ventana.movil && !(ventana.esVentana && ventana.minimizada)" type="button" class="modo" aria-haspopup="true" aria-controls="chat-modos" :aria-label="`Modo: ${MODOS[ventana.modo].nombre}`" v-tooltip.bottom="'Modo de la ventana'" @click="menu?.toggle($event)">
       <icon :name="MODOS[ventana.modo].icono" size="1.05rem" color="text-current" />
       <span class="modo__nombre">{{ MODOS[ventana.modo].nombre }}</span>
       <icon name="keyboard-arrow-down" size="1rem" color="text-current" class="modo__flecha" />
     </button>
 
-    <span class="barra__controles">
+    <span v-if="!ventana.movil" class="barra__controles">
       <template v-if="ventana.esVentana && ventana.minimizada">
         <button type="button" class="control" aria-label="Restaurar" v-tooltip.bottom="'Restaurar'" @click="ventana.restaurar()"><icon name="keyboard-arrow-up" size="1.2rem" color="text-current" /></button>
       </template>
@@ -77,6 +79,9 @@ function elegir(modo: ModoVentana) {
   if (modo === "centro") void router.push({ name: "chat", params: { canal: ventana.canal ?? undefined } });
   else if (antes === "centro") void router.push(ventana.pagina ?? "/");
 }
+
+/** En el teléfono el chat tapa la app: se sale a la última página que se usó. */
+const volverALaApp = () => void router.push(ventana.pagina ?? "/");
 
 /** Minimizada, tocar la barra (fuera de los botones) la restaura. */
 function alTocar(e: MouseEvent) {

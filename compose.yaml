@@ -7,7 +7,7 @@ services:
     depends_on:
       database:
         condition: service_healthy
-    environment:
+    environment: &backend-environment
       TZ: America/Guatemala
       FRONTEND_UPSTREAM: frontend:9000
       SERVER_NAME: ${SERVER_NAME:-localhost}, backend:80
@@ -42,6 +42,24 @@ services:
       timeout: 5s
       retries: 5
       start_period: 60s
+
+  # Cola asíncrona de Messenger (transporte `async`): correos de boletos y
+  # notificaciones push del chat. Misma imagen y entorno que el backend; sale
+  # cada hora (o al pasar 256 MB) y Docker lo vuelve a levantar con el código al día.
+  worker:
+    image: ${IMAGES_PREFIX:-}app-php
+    container_name: worker
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    environment: *backend-environment
+    command: ["php", "bin/console", "messenger:consume", "async", "--time-limit=3600", "--memory-limit=256M", "-v"]
+    volumes:
+      - caddy_data:/data
+    # El de la imagen mira Caddy, que aquí no corre.
+    healthcheck:
+      disable: true
 
   frontend:
     image: ${IMAGES_PREFIX:-}app-frontend

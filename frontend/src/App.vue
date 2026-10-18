@@ -12,9 +12,11 @@
   <ConfirmDialog />
   <DynamicDialog />
   <Toasts />
+  <ActualizacionApp />
 </template>
 
 <script setup lang="ts">
+import ActualizacionApp from '@/app/layout/ActualizacionApp.vue'
 import AppLayout from '@/app/layout/AppLayout.vue'
 import Toasts from '@/app/layout/Toasts.vue'
 import TopLoadingBar from '@/app/layout/TopLoadingBar.vue'

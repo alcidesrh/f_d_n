@@ -1,7 +1,8 @@
 <!--
   Contenido del chat, el mismo en la página (modo centro) y en la ventana
   (esquina, flotante): bandeja y conversación lado a lado si el propio chat
-  mide 40rem o más (contenedor `chat`, no la página); si no, una u otra.
+  mide 40rem o más (contenedor `chat`, no la página); si no, una u otra,
+  deslizándose al pasar de una a otra.
 -->
 <template>
   <div class="vista">
@@ -51,7 +52,31 @@ const emit = defineEmits<{ abrir: [canal: number | null]; adjuntado: [] }>();
 .vista--abierta .vista__conversacion {
   display: flex;
 }
+/* Una sola columna (teléfono): la conversación entra desde la derecha y la bandeja, al volver, desde la izquierda. */
+@media (prefers-reduced-motion: no-preference) {
+  .vista--abierta .vista__conversacion {
+    animation: vista-entra-derecha 0.22s ease-out;
+  }
+  .vista__rejilla:not(.vista--abierta) .vista__bandeja {
+    animation: vista-entra-izquierda 0.22s ease-out;
+  }
+}
+@keyframes vista-entra-derecha {
+  from {
+    transform: translateX(100%);
+  }
+}
+@keyframes vista-entra-izquierda {
+  from {
+    opacity: 0;
+    transform: translateX(-25%);
+  }
+}
 @container chat (min-width: 40rem) {
+  .vista--abierta .vista__conversacion,
+  .vista__rejilla:not(.vista--abierta) .vista__bandeja {
+    animation: none;
+  }
   .vista__rejilla {
     grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr);
   }

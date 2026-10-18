@@ -8,6 +8,8 @@ parameters:
     venta_correo_remitente_defecto: "boletos@transportesfuentedelnorte.com"
     # Buzón que recibe el formulario de contacto de la página (sobrescribible con PAGINA_CONTACTO_CORREO).
     pagina_contacto_correo_defecto: "contacto@transportesfuentedelnorte.com"
+    # Contacto que se declara a los servicios de push (VAPID `subject`; sobrescribible con PUSH_VAPID_CONTACTO).
+    push_vapid_contacto_defecto: "mailto:soporte@transportesfuentedelnorte.com"
     # Certificador FEL: "simulado" (desarrollo) o "forcon" (sobrescribible con FEL_CERTIFICADOR).
     fel_certificador_defecto: "simulado"
     # API de Forcon: ambiente de pruebas; la URL de producción la entrega su soporte (FEL_FORCON_URL).

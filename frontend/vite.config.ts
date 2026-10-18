@@ -1,6 +1,6 @@
 import { fileURLToPath, URL } from "node:url";
 
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import vue from "@vitejs/plugin-vue";
 import vueDevTools from "vite-plugin-vue-devtools";
 import tailwindcss from "@tailwindcss/vite";
@@ -9,8 +9,12 @@ import Components from "unplugin-vue-components/vite";
 import { PrimeVueResolver } from "@primevue/auto-import-resolver";
 import Icons from "unplugin-icons/vite";
 import IconsResolver from "unplugin-icons/resolver";
+import { VitePWA } from "vite-plugin-pwa";
 
 // https://vite.dev/config/
+// `.env.local` con VITE_PWA_DEV=true: service worker y manifest también en `npm run dev`.
+const pwaEnDesarrollo = loadEnv("development", process.cwd(), "").VITE_PWA_DEV === "true";
+
 export default defineConfig({
   plugins: [
     vue(),
@@ -39,6 +43,58 @@ export default defineConfig({
     Icons({
       compiler: "vue3",
       autoInstall: true,
+    }),
+    // App instalable (PWA): toda la app del personal; se abre en el chat.
+    VitePWA({
+      // La versión nueva espera a que el usuario la acepte (`ActualizacionApp`): recargar solo cortaría una venta.
+      registerType: "prompt",
+      injectRegister: false,
+      // En `npm run dev` no hay service worker ni manifest, salvo con VITE_PWA_DEV=true
+      // en `.env.local`: para instalar la app de desarrollo en un teléfono de la red local.
+      // Las navegaciones van a la red: Caddy manda `/index.html` al backend (la doc de API Platform), no a Vite.
+      devOptions: { enabled: pwaEnDesarrollo, navigateFallback: "index.html", navigateFallbackAllowlist: [/^$/] },
+      manifest: {
+        name: "Fuentes del Norte",
+        short_name: "FDN",
+        description: "Venta de boletos, salidas y mensajes del personal de Transportes Fuentes del Norte.",
+        lang: "es",
+        // Abre en el chat, como una app de mensajería; «Volver a la app» lleva al resto.
+        // `id` fijo: sin él se deriva de `start_url` y cambiarla haría de la instalada otra app.
+        id: "/",
+        start_url: "/chat",
+        scope: "/",
+        display: "standalone",
+        theme_color: "#0f172a",
+        background_color: "#f8fafc",
+        icons: [
+          { src: "/pwa/icono-192.png", sizes: "192x192", type: "image/png" },
+          { src: "/pwa/icono-512.png", sizes: "512x512", type: "image/png" },
+          { src: "/pwa/icono-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+        ],
+        shortcuts: [
+          { name: "Inicio", url: "/" },
+          { name: "Venta", url: "/venta" },
+          { name: "Boletos", url: "/boletos" },
+          { name: "Salidas", url: "/salidas" },
+        ],
+      },
+      workbox: {
+        // Solo el código de la app. Las respuestas de la API no se guardan: una taquilla
+        // la usan varios usuarios y la caché del service worker no distingue entre ellos.
+        globPatterns: ["**/*.{js,css,html,woff2}", "favicon.ico", "pwa/*.png"],
+        // El catálogo de íconos (8 MB) solo lo usa el selector de íconos: se baja cuando se abre.
+        globIgnores: ["**/material-symbols-*.js"],
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
+        cleanupOutdatedCaches: true,
+        navigateFallback: "/index.html",
+        // "/" no se sirve como "/index.html" de la caché: lo responde `navigateFallback` (en
+        // desarrollo, la red). La copia de desarrollo la baja de Caddy, que la manda al backend.
+        directoryIndex: "",
+        // Lo que sirve el backend (Caddy) y no la SPA.
+        navigateFallbackDenylist: [/^\/(api|graphql|pagina|docs|bundles|contexts|_profiler|_wdt|\.well-known|auth|logout|index)/],
+        // Notificaciones del chat con la app cerrada (Web Push).
+        importScripts: ["/push-sw.js"],
+      },
     }),
   ],
   resolve: {

@@ -43,7 +43,7 @@ export default defineFormKitConfig({
   },
   config: {
     classes: {
-      outer: "mb-4 min-w-[25rem] max-w-[25rem]",
+      outer: "mb-4 w-full max-w-[25rem]",
       label: "block font-medium mb-1.5",
       help: "mt-1 text-xs text-muted-color",
       messages: "list-none p-0 m-0 mt-1",

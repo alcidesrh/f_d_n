@@ -2,7 +2,7 @@ import { defineStore } from "pinia";
 import type { PrimaryColor, SurfacePalette, ThemeMode, ThemePreset } from "./themeTypes";
 import { usePreset } from "@primeuix/themes";
 import { mediaUp } from "./breakpoints";
-import { themeColors } from "./theme";
+import { presetCompleto } from "./theme";
 
 /** Desde `lg` el shell tiene sidebars fijos; debajo, drawers. */
 const DESKTOP_QUERY = mediaUp("lg");
@@ -65,7 +65,7 @@ export const useUiStore = defineStore("ui", {
       this.applyTheme();
     },
     applyTheme() {
-      usePreset(themeColors(this.preset, this.primary, this.surface, this.mode));
+      usePreset(presetCompleto(this.preset, this.primary, this.surface, this.mode));
     },
     syncViewport() {
       this.isMobile = isBelowDesktop();
