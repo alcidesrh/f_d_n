@@ -98,6 +98,36 @@ export const router = createRouter({
       },
     },
     {
+      path: "/encomiendas",
+      name: "encomiendas",
+      component: () => import("@/features/encomienda/EncomiendasPage.vue"),
+      meta: {
+        title: "Encomiendas",
+        label: "Encomiendas",
+        icon: "inventory-2-outline",
+      },
+    },
+    {
+      path: "/encomiendas/registrar",
+      name: "encomienda-registrar",
+      component: () => import("@/features/encomienda/RegistrarEncomiendaPage.vue"),
+      meta: {
+        title: "Registrar encomienda",
+        label: "Registrar encomienda",
+        icon: "package-2-outline",
+      },
+    },
+    {
+      path: "/encomiendas/salida",
+      name: "encomienda-salida",
+      component: () => import("@/features/encomienda/ProcesarSalidaPage.vue"),
+      meta: {
+        title: "Encomiendas por salida",
+        label: "Procesar por salida",
+        icon: "local-shipping-outline",
+      },
+    },
+    {
       path: "/salidas",
       name: "salidas",
       component: () => import("@/features/salida/SalidasPage.vue"),

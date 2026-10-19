@@ -4,7 +4,10 @@
  * asientos, cliente y cotización. La lógica pura está en `core/venta/modelo`.
  */
 import { defineStore } from "pinia";
-import { computed, onScopeDispose, ref, shallowRef } from "vue";
+import { computed, onScopeDispose, ref, shallowRef, watch } from "vue";
+import { cotizarEncomienda } from "@/core/encomienda/api";
+import { errorArticulos, limpiarArticulos } from "@/core/encomienda/reglas";
+import type { ArticuloPedido, CotizacionEncomienda } from "@/core/encomienda/types";
 import * as api from "@/core/venta/api";
 import { alternar, bajadaPorDefecto, clasesDelTrayecto, depurarSeleccion, diaISO, estadoEnMapa, nuevoToken, subidaPorDefecto, trayectoEntre } from "@/core/venta/modelo";
 import { suscribir } from "@/core/realtime";
@@ -105,7 +108,49 @@ export const useVentaStore = defineStore("venta", () => {
   /** Reasignando: cada boleto con el asiento que se le eligió y si cuesta lo mismo. */
   const parejas = computed(() => (reasignacion.value ? emparejar(reasignacion.value.boletos, seleccion.value, preciosCotizados.value) : []));
   const puedeReasignar = computed(() => !!reasignacion.value && !!detalle.value && !noVendible.value && trayectoId.value != null && listaParaReasignar(parejas.value) && !vendiendo.value);
-  const puedeVender = computed(() => !!cliente.value && !!detalle.value && !noVendible.value && trayectoId.value != null && seleccion.value.length > 0 && !vendiendo.value);
+  // —— Encomienda del pasajero (ADR-035): de donde sube a donde baja, en la misma factura ——
+  const encomiendaArticulos = ref<ArticuloPedido[]>([]);
+  const encomiendaObservacion = ref("");
+  const cotizacionEncomienda = shallowRef<CotizacionEncomienda | null>(null);
+  const errorEncomienda = ref("");
+  /** Sin encomienda, o con sus artículos completos y cotizados. */
+  const encomiendaLista = computed(() => !encomiendaArticulos.value.length || (!errorArticulos(encomiendaArticulos.value) && !!cotizacionEncomienda.value && !errorEncomienda.value));
+  let encomiendaEnCurso = 0;
+  let esperaEncomienda: ReturnType<typeof setTimeout> | undefined;
+  watch(
+    [encomiendaArticulos, sube, baja],
+    () => {
+      clearTimeout(esperaEncomienda);
+      errorEncomienda.value = "";
+      if (!encomiendaArticulos.value.length || errorArticulos(encomiendaArticulos.value) || !sube.value || !baja.value) {
+        cotizacionEncomienda.value = null;
+        return;
+      }
+      esperaEncomienda = setTimeout(async () => {
+        const n = ++encomiendaEnCurso;
+        try {
+          const c = await cotizarEncomienda({ origen: sube.value, destino: baja.value!, articulos: limpiarArticulos(encomiendaArticulos.value) });
+          if (n === encomiendaEnCurso) cotizacionEncomienda.value = c;
+        } catch (e) {
+          if (n !== encomiendaEnCurso) return;
+          cotizacionEncomienda.value = null;
+          errorEncomienda.value = api.errorVenta(e)?.error ?? "No se pudo cotizar la encomienda.";
+        }
+      }, 350);
+    },
+    { deep: true },
+  );
+  onScopeDispose(() => clearTimeout(esperaEncomienda));
+  /** Lo que se cobra: los asientos más la encomienda. */
+  const total = computed<Importe | null>(() => {
+    const asientos = cotizacion.value?.total ?? null;
+    const encomienda = cotizacionEncomienda.value?.total ?? null;
+    if (!asientos || !encomiendaArticulos.value.length || !encomienda) return asientos;
+    const centavos = asientos.centavos + encomienda.centavos;
+    return { centavos, moneda: asientos.moneda, texto: `${asientos.moneda === "GTQ" ? "Q" : asientos.moneda} ${(centavos / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` };
+  });
+
+  const puedeVender = computed(() => !!cliente.value && !!detalle.value && !noVendible.value && trayectoId.value != null && seleccion.value.length > 0 && !vendiendo.value && encomiendaLista.value);
 
   async function iniciar() {
     errorCarga.value = "";
@@ -275,6 +320,7 @@ export const useVentaStore = defineStore("venta", () => {
         enviarCorreo: opciones.enviarCorreo,
         cortesia: opciones.cortesia,
         sinFacturaElectronica: opciones.sinFacturaElectronica ?? false,
+        encomiendas: encomiendaArticulos.value.length && !opciones.cortesia ? [{ articulos: limpiarArticulos(encomiendaArticulos.value), observacion: encomiendaObservacion.value.trim() || null }] : [],
       });
       comprobante.value = c;
       comprobanteReasignado.value = false;
@@ -306,6 +352,9 @@ export const useVentaStore = defineStore("venta", () => {
     observacion.value = "";
     cotizacion.value = null;
     falloFacturacion.value = null;
+    encomiendaArticulos.value = [];
+    encomiendaObservacion.value = "";
+    cotizacionEncomienda.value = null;
   }
 
   /** «Nueva venta»: cierra el comprobante y limpia cliente y salida; conserva fecha, estación y filtros. */
@@ -454,6 +503,11 @@ export const useVentaStore = defineStore("venta", () => {
     asientosCroquis,
     libres,
     puedeVender,
+    encomiendaArticulos,
+    encomiendaObservacion,
+    cotizacionEncomienda,
+    errorEncomienda,
+    total,
     iniciar,
     cargarSalidas,
     cambiarFiltroEstacion,

@@ -7,14 +7,19 @@ namespace App\Venta;
 use App\Entity\Agencia;
 use App\Entity\BoletoAsiento;
 use App\Entity\BoletoVenta;
+use App\Encomienda\TarifasEncomienda;
 use App\Entity\Cliente;
+use App\Entity\Encomienda;
 use App\Entity\Enum\CanalVenta;
 use App\Entity\Enum\EstadoBoletoVenta;
+use App\Entity\Enum\EstadoEncomienda;
 use App\Entity\Enum\EstadoFacturacion;
+use App\Entity\Enum\ModalidadEncomienda;
 use App\Entity\Estacion;
 use App\Entity\Moneda;
 use App\Entity\Salida;
 use App\Entity\TipoPago;
+use App\Entity\Trayecto;
 use App\Entity\Usuario;
 use App\Venta\Agencia\SaldoAgencia;
 use App\Venta\Excepcion\FacturacionFallida;
@@ -51,6 +56,7 @@ final class RegistroVenta
         private readonly ReglasVenta $reglas,
         private readonly SaldoAgencia $saldo,
         private readonly Facturador $facturador,
+        private readonly TarifasEncomienda $tarifasEncomienda,
         private readonly PublicadorOcupacion $publicador,
         private readonly MessageBusInterface $bus,
         private readonly LoggerInterface $logger,
@@ -74,6 +80,9 @@ final class RegistroVenta
         $canal = $agencia !== null ? CanalVenta::AGENCIA : CanalVenta::ESTACION;
         if ($agencia !== null && ($s->cortesia || $s->sinFacturaElectronica)) {
             throw new VentaRechazada("Las agencias solo venden boletos: sin cortesías ni contingencia de factura.", "permiso", 403);
+        }
+        if ($s->encomiendas !== [] && ($agencia !== null || $s->cortesia)) {
+            throw new VentaRechazada("Las encomiendas se registran en la venta de una estación, y no en una cortesía.", "encomienda_no_permitida", 403);
         }
         $conFactura = $canal === CanalVenta::ESTACION && !$s->cortesia;
 
@@ -161,11 +170,56 @@ final class RegistroVenta
             $this->em->persist($boleto);
         }
 
+        $this->agregarEncomiendas($s, $venta, $salida, $trayecto, $cliente, $usuario);
+
         if ($agencia !== null) {
             $this->saldo->debitarVenta($agencia, $venta, $usuario);
         }
 
         return $venta;
+    }
+
+    /**
+     * Las encomiendas del pasajero (ADR-035): de donde sube a donde baja, a
+     * su nombre, embarcadas en la salida del boleto. Su importe se suma al
+     * total de la venta (y a su factura).
+     */
+    private function agregarEncomiendas(SolicitudVenta $s, BoletoVenta $venta, Salida $salida, Trayecto $trayecto, Cliente $cliente, Usuario $usuario): void
+    {
+        if ($s->encomiendas === []) {
+            return;
+        }
+        $total = $venta->getTotal();
+        $boleto = $venta->getAsientos()->first() ?: null;
+        foreach ($s->encomiendas as $pedido) {
+            ['cotizacion' => $cotizacion, 'articulos' => $articulos] = $this->tarifasEncomienda->cotizar($trayecto->getOrigen(), $trayecto->getDestino(), $pedido["articulos"]);
+            $encomienda = (new Encomienda())
+                ->setEmpresa($salida->getEmpresa() ?? throw new VentaRechazada("La salida no tiene empresa."))
+                ->setOrigen($trayecto->getOrigen())
+                ->setDestino($trayecto->getDestino())
+                ->setRuta($salida->getRuta())
+                ->setRemitente($cliente)
+                ->setDestinatario($cliente)
+                ->setModalidad(ModalidadEncomienda::CON_BOLETO)
+                ->setEstado(EstadoEncomienda::EMBARCADA)
+                ->setSalida($salida)
+                ->setBoleto($boleto)
+                ->setTotal($cotizacion->total)
+                ->setDescuento($cotizacion->descuento)
+                ->setUsuario($usuario)
+                ->setEstacion($venta->getEstacion())
+                ->setObservacion($pedido["observacion"]);
+            foreach ($articulos as $a) {
+                $encomienda->addArticulo($a);
+            }
+            $venta->addEncomienda($encomienda);
+            $this->em->persist($encomienda);
+            $total = $total->add($cotizacion->total);
+        }
+        $venta->setTotal($total);
+        if ($venta->getEstadoFacturacion() === EstadoFacturacion::PENDIENTE) {
+            $this->reglas->exigirReceptorFacturable($cliente->getNit(), $total);
+        }
     }
 
     private function certificarOAnular(BoletoVenta $venta, bool $permiteSinFactura): void

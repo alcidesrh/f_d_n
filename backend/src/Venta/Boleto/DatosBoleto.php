@@ -6,6 +6,9 @@ namespace App\Venta\Boleto;
 
 use App\Entity\BoletoAsiento;
 use App\Entity\BoletoVenta;
+use App\Entity\Encomienda;
+use App\Entity\Enum\EstadoEncomienda;
+use App\Encomienda\DatosEncomienda;
 use App\Entity\Enum\EstadoBoletoAsiento;
 use App\Entity\Enum\PrecisionHora;
 use Money\Money;
@@ -59,6 +62,11 @@ final class DatosBoleto
         $empresa = $salida?->getEmpresa();
         $factura = $venta->getFactura();
         $cliente = $venta->getCliente();
+        /** @var list<Encomienda> $encomiendas */
+        $encomiendas = $soloIds !== null ? [] : array_values(array_filter(
+            $venta->getEncomiendas()->toArray(),
+            static fn(Encomienda $e) => $e->getEstado() !== EstadoEncomienda::ANULADA,
+        ));
 
         return [
             "id" => $venta->getId(),
@@ -126,7 +134,9 @@ final class DatosBoleto
                 "observacion" => $b->getObservacion(),
                 "estado" => $b->getEstado()->value,
             ], $boletos),
-            "total" => self::importe(count($boletos) === $todos ? $venta->getTotal() : self::suma($boletos, $venta->getTotal())),
+            // Encomiendas que lleva el pasajero (ADR-035): van en el ticket de la venta y cada bulto con su guía.
+            "encomiendas" => array_map(static fn(Encomienda $e) => DatosEncomienda::de($e), $encomiendas),
+            "total" => self::importe(count($boletos) === $todos ? $venta->getTotal() : self::suma($boletos, $venta->getTotal(), $encomiendas)),
             "tipoPago" => $venta->getTipoPago()?->getNombre(),
         ];
     }
@@ -136,14 +146,17 @@ final class DatosBoleto
      * los de la venta.
      *
      * @param list<BoletoAsiento> $boletos
+     * @param list<Encomienda>     $encomiendas
      */
-    private static function suma(array $boletos, Money $venta): Money
+    private static function suma(array $boletos, Money $venta, array $encomiendas = []): Money
     {
-        return array_reduce(
+        $total = array_reduce(
             $boletos,
             static fn(Money $total, BoletoAsiento $b) => $b->getPrecio() === null ? $total : $total->add($b->getPrecio()),
             new Money(0, $venta->getCurrency()),
         );
+
+        return array_reduce($encomiendas, static fn(Money $t, Encomienda $e) => $t->add($e->getTotal()), $total);
     }
 
     /** @return array{centavos: int, moneda: string, texto: string}|null */

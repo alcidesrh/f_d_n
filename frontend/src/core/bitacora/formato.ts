@@ -14,6 +14,8 @@ const ESTADOS: Record<string, string> = {
   cancelada: 'cancelada',
 }
 
+const MODALIDADES: Record<string, string> = { pagada: 'Pagada', por_cobrar: 'Por cobrar', interna: 'Interna (sin cobro)', con_boleto: 'Con boleto' }
+
 const CANALES: Record<string, string> = { estacion: 'taquilla', agencia: 'agencia', web: 'la página web' }
 
 /** Importe en centavos (`"27000"`) como `Q 270.00`. */
@@ -39,6 +41,19 @@ export function lineasDeDetalle(tipo: TipoBitacora, e: Pick<EntradaBitacora, 'op
       if (d.ruta ?? d.trayecto) lineas.push(String(d.ruta ?? d.trayecto))
       if (d.bus) lineas.push(`Bus ${d.bus}`)
     }
+  } else if (tipo === 'encomienda') {
+    // ADR-035: lo que anota `RegistradorBitacora` para una encomienda.
+    if (e.operacion === 'recibida' && !d.de) {
+      lineas.push(d.origen && d.destino ? `${d.origen} → ${d.destino}` : null)
+      lineas.push(d.modalidad ? `${MODALIDADES[String(d.modalidad)] ?? d.modalidad}` : null)
+      lineas.push(texto(d.bultos) ? `${d.bultos} ${Number(d.bultos) === 1 ? 'bulto' : 'bultos'}` : null)
+      lineas.push(Number(d.total) > 0 ? quetzales(d.total) : null)
+      lineas.push(d.venta ? `Con la venta ${d.venta}` : null)
+    }
+    lineas.push(texto(d.estacion) ? `En ${d.estacion}` : null)
+    lineas.push(texto(d.salida) ? `Salida ${d.salida}` : null)
+    lineas.push(texto(d.retira) ? `La retiró ${d.retira}` : null)
+    lineas.push(d.motivo ? `Motivo: ${d.motivo}` : null)
   } else {
     if (e.operacion === 'creado') {
       lineas.push(texto(d.asiento) ? `Asiento ${d.asiento}` : null)

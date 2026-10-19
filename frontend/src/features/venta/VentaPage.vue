@@ -115,6 +115,15 @@
               </li>
             </ul>
           </section>
+          <section v-if="store.seleccion.length && !store.reasignacion && store.contexto?.encomiendas?.permitido" class="panel flex flex-col gap-2" aria-labelledby="venta-encomienda">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span id="venta-encomienda" class="font-medium">Encomienda <span class="font-normal text-muted-color">(en la bodega, de {{ nombreParada(store.sube) }} a {{ nombreParada(store.baja) }})</span></span>
+              <span v-if="store.cotizacionEncomienda && store.encomiendaArticulos.length" class="tabular-nums">{{ store.cotizacionEncomienda.total.texto }}</span>
+            </div>
+            <ArticulosEditor v-model="store.encomiendaArticulos" :especiales="store.contexto.encomiendas.especiales" :cotizacion="store.cotizacionEncomienda" />
+            <InputText v-if="store.encomiendaArticulos.length" v-model="store.encomiendaObservacion" maxlength="255" placeholder="Observación de la encomienda (frágil, contenido…)" size="small" fluid />
+            <Message v-if="store.errorEncomienda" severity="warn" :closable="false">{{ store.errorEncomienda }}</Message>
+          </section>
         </div>
 
         <!-- Croquis + cobro -->
@@ -139,7 +148,7 @@
                 </span>
                 <div class="flex items-baseline gap-2">
                   <span class="text-muted-color">Total</span>
-                  <span class="text-xl font-semibold tabular-nums">{{ store.cotizacion?.total.texto ?? "—" }}</span>
+                  <span class="text-xl font-semibold tabular-nums">{{ store.total?.texto ?? "—" }}</span>
                 </div>
               </div>
               <Message v-if="store.errorCotizacion" severity="warn" :closable="false">
@@ -150,7 +159,7 @@
                 <Button label="Reasignar" :loading="store.vendiendo" :disabled="!store.puedeReasignar" @click="confirmarReasignacion" />
               </div>
               <div v-else class="flex flex-wrap justify-end gap-2">
-                <Button v-if="store.contexto?.permisos.cortesia" label="Cortesía" severity="secondary" outlined :disabled="!store.puedeVender" @click="abrirCobro(true)" />
+                <Button v-if="store.contexto?.permisos.cortesia" label="Cortesía" severity="secondary" outlined :disabled="!store.puedeVender || store.encomiendaArticulos.length > 0" v-tooltip.top="store.encomiendaArticulos.length ? 'Una cortesía no lleva encomienda' : undefined" @click="abrirCobro(true)" />
                 <Button :label="store.contexto?.canal === 'agencia' ? 'Vender' : 'Facturar'" :disabled="!store.puedeVender || !store.cotizacion" @click="abrirCobro(false)" />
               </div>
             </div>
@@ -186,13 +195,16 @@ import AnularBoletosDialog from "@/shared/boleto/AnularBoletosDialog.vue";
 import BusMapLegend, { type ItemLeyenda } from "@/shared/bus-map/BusMapLegend.vue";
 import { conteosPorEstado } from "@/core/venta/modelo";
 import type { SalidaResumen } from "@/core/venta/types";
-import ClienteBuscador from "./ClienteBuscador.vue";
+import ClienteBuscador from "@/shared/cliente/ClienteBuscador.vue";
 import CobroDialog from "./CobroDialog.vue";
-import FacturacionFallidaDialog from "./FacturacionFallidaDialog.vue";
+import FacturacionFallidaDialog from "@/shared/facturacion/FacturacionFallidaDialog.vue";
 import SalidasLista from "./SalidasLista.vue";
 import VentaExitosaDialog from "./VentaExitosaDialog.vue";
 import { type OpcionesCobro, useVentaStore } from "./store";
 import { imprimirTicket } from "@/shared/boleto/ticket";
+import ArticulosEditor from "@/shared/encomienda/ArticulosEditor.vue";
+import { imprimirGuias } from "@/shared/encomienda/impresion";
+import type { Comprobante } from "@/core/venta/types";
 import { useConfirm } from "primevue/useconfirm";
 import { notify } from "@/core/notify";
 
@@ -354,14 +366,22 @@ async function confirmar(opciones: OpcionesCobro) {
   ultimasOpciones = opciones;
   const c = await store.vender(opciones);
   cobro.value = false;
-  if (c) imprimirTicket(c);
+  if (c) void imprimir(c);
 }
 
 async function reintentar(sinFactura: boolean) {
   if (!ultimasOpciones) return;
   const c = await store.vender({ ...ultimasOpciones, sinFacturaElectronica: sinFactura });
-  if (c) imprimirTicket(c);
+  if (c) void imprimir(c);
 }
+
+/** El ticket y, si lleva encomiendas, una guía por bulto para pegar en cada uno. */
+async function imprimir(c: Comprobante) {
+  await imprimirTicket(c);
+  for (const e of c.encomiendas ?? []) await imprimirGuias(e);
+}
+
+const nombreParada = (id: number | null) => store.detalle?.paradas.find((p) => p.id === id)?.nombre ?? "—";
 </script>
 
 <style scoped>

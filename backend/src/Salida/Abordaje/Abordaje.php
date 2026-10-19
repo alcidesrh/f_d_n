@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Salida\Abordaje;
 
 use App\Bitacora\RegistradorBitacora;
+use App\Encomienda\MovimientosEncomienda;
 use App\Entity\BoletoAsiento;
 use App\Entity\BoletoVenta;
 use App\Entity\Cliente;
@@ -43,6 +44,7 @@ final class Abordaje
         private readonly RegistradorBitacora $bitacora,
         private readonly ClockInterface $reloj,
         private readonly Disponibilidad $disponibilidad,
+        private readonly MovimientosEncomienda $encomiendas,
     ) {}
 
     /**
@@ -309,6 +311,9 @@ final class Abordaje
                     $b->setEstado($nuevo);
                 }
             }
+
+            // Las encomiendas que van en la salida pasan a tránsito (ADR-035).
+            $this->encomiendas->alIniciarSalida($salida);
 
             return $conteo;
         });

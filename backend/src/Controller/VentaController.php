@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Entity\Asiento;
 use App\Entity\BoletoVenta;
 use App\Entity\Cliente;
+use App\Entity\EncomiendaEspecial;
 use App\Entity\Estacion;
 use App\Entity\Moneda;
 use App\Entity\Nacion;
@@ -105,6 +106,13 @@ final class VentaController extends AbstractController
             "monedas" => $catalogo(Moneda::class, static fn(Moneda $m) => ["id" => $m->getId(), "sigla" => $m->getSigla(), "nombre" => $m->getNombre()]),
             "tiposDocumento" => $catalogo(TipoDocumento::class, static fn(TipoDocumento $t) => ["id" => $t->getId(), "nombre" => $t->getNombre()]),
             "naciones" => $catalogo(Nacion::class, static fn(Nacion $n) => ["id" => $n->getId(), "nombre" => $n->getNombre()]),
+            // Encomiendas que lleva el pasajero (ADR-035): solo en taquilla, con permiso.
+            "encomiendas" => $agencia === null && $this->isGranted(EncomiendaController::REGISTRAR)
+                ? ["permitido" => true, "especiales" => array_map(
+                    static fn(EncomiendaEspecial $e) => ["id" => $e->getId(), "nombre" => $e->getNombre(), "descripcion" => $e->getDescripcion(), "precio" => DatosBoleto::importe($e->getPrecio()), "permitePorCobrar" => $e->isPermitePorCobrar()],
+                    $this->em->getRepository(EncomiendaEspecial::class)->findBy(["activo" => true], ["nombre" => "ASC"]),
+                )]
+                : ["permitido" => false, "especiales" => []],
         ]);
     }
 
@@ -356,7 +364,7 @@ final class VentaController extends AbstractController
     #[Route("/clientes", name: "clientes", methods: ["GET"])]
     public function clientes(Request $request): JsonResponse
     {
-        $this->denyAccessUnlessGranted(self::VENDER);
+        $this->denyUnlessClientes();
 
         return $this->json($this->clientes->buscar((string) $request->query->get("q", "")));
     }
@@ -365,7 +373,7 @@ final class VentaController extends AbstractController
     #[Route("/nit", name: "nit", methods: ["GET"])]
     public function nit(Request $request, ConsultaContribuyente $contribuyentes): JsonResponse
     {
-        $this->denyAccessUnlessGranted(self::VENDER);
+        $this->denyUnlessClientes();
         $nit = Facturador::normalizarNit((string) $request->query->get("nit"));
         if ($nit === "CF" || !Comprador::nitValido($nit)) {
             return $this->json(["error" => "NIT inválido (dígito verificador).", "codigo" => "nit_invalido"], Response::HTTP_UNPROCESSABLE_ENTITY);
@@ -381,11 +389,27 @@ final class VentaController extends AbstractController
             : $this->json(["nit" => $nit, "nombre" => $nombre]);
     }
 
+    /** Catálogos del formulario de cliente (tipo de documento y nacionalidad). */
+    #[Route("/clientes/catalogos", name: "clientes_catalogos", methods: ["GET"])]
+    public function catalogosCliente(): JsonResponse
+    {
+        $this->denyUnlessClientes();
+        $catalogo = fn(string $clase, callable $fila) => array_map($fila, $this->em->getRepository($clase)->findBy(
+            property_exists($clase, "activo") ? ["activo" => true] : [],
+            ["nombre" => "ASC"],
+        ));
+
+        return $this->json([
+            "tiposDocumento" => $catalogo(TipoDocumento::class, static fn(TipoDocumento $t) => ["id" => $t->getId(), "nombre" => $t->getNombre()]),
+            "naciones" => $catalogo(Nacion::class, static fn(Nacion $n) => ["id" => $n->getId(), "nombre" => $n->getNombre()]),
+        ]);
+    }
+
     /** Alta rápida de cliente desde la venta. */
     #[Route("/clientes", name: "cliente_crear", methods: ["POST"])]
     public function crearCliente(Request $request): JsonResponse
     {
-        $this->denyAccessUnlessGranted(self::VENDER);
+        $this->denyUnlessClientes();
 
         return $this->responder(fn() => Clientes::fila($this->clientes->crear($request->toArray())), Response::HTTP_CREATED);
     }
@@ -394,7 +418,7 @@ final class VentaController extends AbstractController
     #[Route("/clientes/{id<\d+>}", name: "cliente_editar", methods: ["PUT"])]
     public function editarCliente(Cliente $cliente, Request $request): JsonResponse
     {
-        $this->denyAccessUnlessGranted(self::VENDER);
+        $this->denyUnlessClientes();
 
         return $this->responder(fn() => Clientes::fila($this->clientes->actualizar($cliente, $request->toArray())));
     }
@@ -408,6 +432,14 @@ final class VentaController extends AbstractController
             return $this->json($operacion(), $estado);
         } catch (VentaRechazada $e) {
             return $this->json($e->toArray(), $e->estadoHttp);
+        }
+    }
+
+    /** Buscar y registrar clientes: quien vende boletos o atiende encomiendas (remitente, destinatario, quien retira). */
+    private function denyUnlessClientes(): void
+    {
+        if (!$this->isGranted(self::VENDER) && !$this->isGranted(EncomiendaController::REGISTRAR) && !$this->isGranted(EncomiendaController::ENTREGAR)) {
+            throw $this->createAccessDeniedException();
         }
     }
 

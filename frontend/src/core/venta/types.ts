@@ -3,6 +3,7 @@
  * agencias) y `AgenciaController`. Ids numéricos; importes en centavos.
  */
 import type { ClaseAsiento, ElementoCroquis } from '@/core/croquis/types'
+import type { ArticuloPedido, DatosEncomienda, EspecialOpcion } from '@/core/encomienda/types'
 
 export type CanalVenta = 'estacion' | 'agencia' | 'web'
 
@@ -29,6 +30,8 @@ export interface ContextoVenta {
   monedas: Array<Opcion & { sigla: string }>
   tiposDocumento: Opcion[]
   naciones: Opcion[]
+  /** Encomiendas que lleva el pasajero (ADR-035): taquilla con `encomienda.registrar`. */
+  encomiendas: { permitido: boolean; especiales: EspecialOpcion[] }
 }
 
 /** Ruta que recorre el bus de una salida (ADR-030). */
@@ -221,6 +224,8 @@ export interface PedidoVenta {
   enviarCorreo?: boolean
   cortesia?: boolean
   sinFacturaElectronica?: boolean
+  /** Encomiendas del pasajero: se suman al total y van en la misma factura. */
+  encomiendas?: Array<{ articulos: ArticuloPedido[]; observacion?: string | null }>
 }
 
 /** Comprobante de una venta (`App\Venta\Boleto\DatosBoleto`). */
@@ -274,6 +279,8 @@ export interface Comprobante {
     observacion: string | null
     estado: string
   }>
+  /** Encomiendas que lleva el pasajero (cada bulto con su guía). */
+  encomiendas?: DatosEncomienda[]
   total: Importe
   tipoPago: string | null
 }

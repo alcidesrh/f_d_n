@@ -23,6 +23,15 @@ function horaSalida(c: Comprobante): string {
   return `${esc(hora(s?.salidaOrigen))}${s?.salidaPrecision === 'estimada' ? ' aprox.' : ''}`
 }
 
+/** Encomiendas que lleva el pasajero (ADR-035): código, contenido y precio. */
+function encomiendas(c: Comprobante): string {
+  if (!c.encomiendas?.length) return ''
+  const filas = c.encomiendas
+    .map((e) => `<tr><td>ID: ${esc(e.codigo)}. ${esc(e.articulos.map((a) => a.resumen).join('; '))}</td><td class="r">${e.bultos}</td><td class="r">${esc(e.total.texto)}</td></tr>`)
+    .join('')
+  return `<table><tr><td><span class="lbl">Encomiendas:</span></td><td class="r"><span class="lbl">Cant</span></td><td class="r"><span class="lbl">Precio</span></td></tr>${filas}</table>`
+}
+
 export function ticketHtml(c: Comprobante): string {
   const f = c.factura
   const pasajeros = c.boletos
@@ -74,6 +83,7 @@ ${SEP}
   <div class="r"><span class="lbl">Cliente NIT:</span><br>${esc(f?.receptorNit ?? c.cliente?.nit)}</div>
 </div>
 <table><tr><td><span class="lbl">Pasajeros:</span></td><td class="r"><span class="lbl">Asiento</span></td><td class="r"><span class="lbl">Precio</span></td></tr>${pasajeros}</table>
+${encomiendas(c)}
 <p class="total"><span class="lbl">Total: ${esc(c.total.texto)}</span></p>
 ${f?.certificador ? `<p class="c">Datos del certificador: ${esc(f.certificador)}${f.certificadorNit ? ` NIT ${esc(f.certificadorNit)}` : ''}</p>` : ''}
 <div class="sep">------------------------------</div>
@@ -90,10 +100,15 @@ ${c.boletos.some((b) => b.observacion) ? `<p class="small">Obs.: ${esc(c.boletos
  * cuando se lanzó la impresión, para imprimir varios tickets uno tras otro.
  */
 export function imprimirTicket(c: Comprobante): Promise<void> {
-  return new Promise((resolver) => lanzar(c, resolver))
+  return imprimirHtml(ticketHtml(c))
 }
 
-function lanzar(c: Comprobante, listo: () => void): void {
+/** Imprime un documento HTML autónomo en un iframe oculto (tickets, recibos, guías). */
+export function imprimirHtml(html: string): Promise<void> {
+  return new Promise((resolver) => lanzar(html, resolver))
+}
+
+function lanzar(html: string, listo: () => void): void {
   const iframe = document.createElement('iframe')
   iframe.setAttribute('aria-hidden', 'true')
   Object.assign(iframe.style, {
@@ -107,7 +122,7 @@ function lanzar(c: Comprobante, listo: () => void): void {
   document.body.appendChild(iframe)
   const doc = iframe.contentDocument!
   doc.open()
-  doc.write(ticketHtml(c))
+  doc.write(html)
   doc.close()
   const imprimir = () => {
     iframe.contentWindow?.focus()

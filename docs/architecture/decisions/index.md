@@ -38,3 +38,4 @@
 | [ADR-032](ADR-032-abordaje-y-chequeo-de-boletos.md) | Abordaje de salidas y chequeo de boletos; estado cancelado (no se presentó) | Aceptada |
 | [ADR-033](ADR-033-listado-de-boletos.md) | Listado de boletos (filtros y acciones del legado) y cancelar desde el listado | Aceptada |
 | [ADR-034](ADR-034-depositos-de-agencia.md) | Depósitos de agencia (registrar, acreditar o rechazar) y consulta de saldos | Aceptada |
+| [ADR-035](ADR-035-encomiendas.md) | Encomiendas: envío con artículos, cuatro modalidades, tarifas del legado, embarque con transbordo y bitácora | Aceptada |

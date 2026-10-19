@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Command;
 
 use App\Entity\BoletoVenta;
+use App\Entity\Encomienda;
 use App\Entity\Enum\CanalVenta;
 use App\Entity\Enum\EstadoBoletoVenta;
 use App\Entity\Enum\EstadoFacturacion;
@@ -19,8 +20,9 @@ use Symfony\Component\Messenger\MessageBusInterface;
 
 /**
  * Certifica las facturas que quedaron pendientes: ventas de taquilla en
- * contingencia ("continuar sin factura electrónica") y ventas web cuyo
- * certificador falló después del cobro. Pensado para cron.
+ * contingencia ("continuar sin factura electrónica"), ventas web cuyo
+ * certificador falló después del cobro y encomiendas cobradas en
+ * contingencia (al recibirlas o al entregarlas, ADR-035). Pensado para cron.
  */
 #[AsCommand(name: "app:venta:certificar-pendientes", description: "Reintenta certificar las facturas pendientes")]
 final class VentaCertificarPendientesCommand
@@ -58,7 +60,31 @@ final class VentaCertificarPendientesCommand
             }
         }
 
-        $io->success(sprintf("%d de %d facturas certificadas.", $ok, count($ventas)));
+        /** @var list<Encomienda> $encomiendas */
+        $encomiendas = $this->em->getRepository(Encomienda::class)->findBy(
+            ["estadoFacturacion" => EstadoFacturacion::PENDIENTE],
+            ["id" => "ASC"],
+            $limite,
+        );
+        $intentos = count($ventas);
+        foreach ($encomiendas as $encomienda) {
+            // Solo las que se cobraron (en contingencia): las demás aún se están registrando.
+            if ($encomienda->getNumeroAcceso() === null) {
+                continue;
+            }
+            $intentos++;
+            try {
+                $this->facturador->certificarEncomienda($encomienda);
+                $this->em->flush();
+                $ok++;
+            } catch (CertificacionFallida $e) {
+                $encomienda->setErrorFacturacion($e->getMessage());
+                $this->em->flush();
+                $io->warning(sprintf("Encomienda %s: %s", $encomienda->getCodigo(), $e->getMessage()));
+            }
+        }
+
+        $io->success(sprintf("%d de %d facturas certificadas.", $ok, $intentos));
 
         return 0;
     }

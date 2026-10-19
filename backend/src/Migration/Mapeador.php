@@ -38,6 +38,7 @@ class Mapeador
             "id" => (int) $old["id"],
             "nombre" => $this->truncate($old["nombre"] ?? "", 255),
             "direccion" => $this->truncate($old["direccion"] ?? null, 255),
+            "alias" => $this->truncate($old["alias"] ?? null, 10),
             "latitud" => $gps[0] ?? null,
             "longitud" => $gps[1] ?? null,
             "departamento" => $this->truncate($old["departamento_nombre"] ?? null, 60),

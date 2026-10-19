@@ -29,6 +29,9 @@ class PermisoFixtures extends Fixture
             'Acreditacion de Depositos de Agencia' => ['agencia.depositar', 'agencia.acreditar'],
             'Gestion Salidas'  => ['salida.ver', 'salida.crear', 'salida.editar', 'salida.cancelar', 'salida.eliminar'],
             'Abordaje de Salidas' => ['boleto.chequear', 'salida.abordar', 'salida.iniciar', 'salida.finalizar'],
+            'Recepcion de Encomiendas' => ['encomienda.ver', 'encomienda.registrar', 'encomienda.embarcar', 'encomienda.entregar'],
+            'Supervision de Encomiendas' => ['encomienda.ver', 'encomienda.registrar', 'encomienda.interna', 'encomienda.embarcar', 'encomienda.entregar', 'encomienda.anular'],
+            'Consulta de Encomiendas' => ['encomienda.ver'],
         ];
 
         foreach ($permisos as $nombre => $actionCodes) {

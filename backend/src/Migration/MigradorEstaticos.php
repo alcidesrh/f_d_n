@@ -286,7 +286,7 @@ class MigradorEstaticos
             }
             $data = $this->mapeador->estacion($row);
             $this->newConn->executeStatement(
-                "INSERT INTO enclave (id, tipo, nombre, direccion, latitud, longitud, departamento) VALUES (:id, 'estacion', :nombre, :direccion, :latitud, :longitud, :departamento)",
+                "INSERT INTO enclave (id, tipo, nombre, direccion, alias, latitud, longitud, departamento) VALUES (:id, 'estacion', :nombre, :direccion, :alias, :latitud, :longitud, :departamento)",
                 $data,
             );
             $count++;

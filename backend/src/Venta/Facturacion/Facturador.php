@@ -6,6 +6,9 @@ namespace App\Venta\Facturacion;
 
 use App\Entity\BoletoVenta;
 use App\Entity\Empresa;
+use App\Entity\Encomienda;
+use App\Entity\Enum\EstadoEncomienda;
+use App\Entity\Estacion;
 use App\Entity\Enum\EstadoBoletoAsiento;
 use App\Entity\Establecimiento;
 use App\Entity\Factura;
@@ -34,9 +37,30 @@ final class Facturador
     public function certificar(BoletoVenta $venta, bool $reemision = false): Factura
     {
         $solicitud = $this->solicitud($venta, $reemision);
-        $dte = $this->certificador->certificar($solicitud);
+        $factura = $this->factura($solicitud, $this->certificador->certificar($solicitud));
+        $venta->certificar($factura);
 
-        $factura = (new Factura())
+        return $factura;
+    }
+
+    /**
+     * Factura propia de una encomienda (pagada al recibirla o por cobrar al
+     * entregarla, ADR-035), al `clienteFactura`. Sin flush.
+     *
+     * @throws CertificacionFallida
+     */
+    public function certificarEncomienda(Encomienda $encomienda): Factura
+    {
+        $solicitud = $this->solicitudEncomienda($encomienda);
+        $factura = $this->factura($solicitud, $this->certificador->certificar($solicitud));
+        $encomienda->certificar($factura);
+
+        return $factura;
+    }
+
+    private function factura(SolicitudDte $solicitud, DteCertificado $dte): Factura
+    {
+        return (new Factura())
             ->setDte($dte->numero)
             ->setUuid(Uuid::fromString($dte->uuid))
             ->setSerie($dte->serie)
@@ -53,10 +77,6 @@ final class Facturador
             ->setTotal($solicitud->total)
             ->setUrlPdf($dte->urlPdf)
             ->setXml($dte->xml);
-
-        $venta->certificar($factura);
-
-        return $factura;
     }
 
     /**
@@ -68,7 +88,16 @@ final class Facturador
      */
     public function anular(BoletoVenta $venta, string $motivo): ?Factura
     {
-        $factura = $venta->getFactura();
+        return $this->anularFactura($venta->getFactura(), $motivo);
+    }
+
+    /**
+     * Igual que `anular()` para cualquier factura (la de una encomienda).
+     *
+     * @throws CertificacionFallida si el certificador no la anuló
+     */
+    public function anularFactura(?Factura $factura, string $motivo): ?Factura
+    {
         if ($factura === null || $factura->isAnulada()) {
             return $factura;
         }
@@ -126,6 +155,12 @@ final class Facturador
                 $b->getCliente()?->getNombreCompleto(),
             );
         }
+        // Encomiendas del pasajero (ADR-035): un renglón por encomienda.
+        foreach ($venta->getEncomiendas() as $e) {
+            if ($e->getEstado() !== EstadoEncomienda::ANULADA && !$e->getTotal()->isZero()) {
+                $items[] = self::itemEncomienda($e);
+            }
+        }
         $trayecto = $boletos[0]->getTrayecto();
 
         $cliente = $venta->getCliente();
@@ -151,7 +186,7 @@ final class Facturador
             receptorCorreo: $venta->isEnviarCorreo() ? $cliente?->getEmail() : null,
             items: $items,
             total: $venta->getTotal(),
-            establecimientoCodigo: $this->establecimiento($empresa, $venta)->getCodigo(),
+            establecimientoCodigo: $this->establecimiento($empresa, $venta->getEstacion())->getCodigo(),
             afiliacionIva: $empresa->getAfiliacionIva(),
             frases: $empresa->frases(),
             numeroAcceso: $reemision ? null : $venta->getNumeroAcceso(),
@@ -159,12 +194,66 @@ final class Facturador
         );
     }
 
+    /**
+     * Una factura por encomienda con un solo renglón (su total ya con el
+     * descuento por bultos): «Encomienda 00000123 Guatemala - Flores: …».
+     */
+    public function solicitudEncomienda(Encomienda $encomienda): SolicitudDte
+    {
+        $empresa = $encomienda->getEmpresa();
+        if ($empresa === null || !$empresa->getNit()) {
+            throw new CertificacionFallida("La empresa de la encomienda no tiene NIT configurado: no se puede facturar.", false, "emisor_sin_nit");
+        }
+        $cliente = $encomienda->getClienteFactura() ?? $encomienda->getRemitente();
+        $nit = self::normalizarNit($cliente?->getNit());
+        // Donde se cobra: la estación donde se recibió (pagada) o la del destino al entregarla (por cobrar).
+        $estacion = $encomienda->getEntregadaEn() !== null && $encomienda->getDestino() instanceof Estacion
+            ? $encomienda->getDestino()
+            : $encomienda->getEstacion();
+        $contingencia = $encomienda->getNumeroAcceso() !== null;
+
+        return new SolicitudDte(
+            referenciaInterna: sprintf("FDN-ENCOMIENDA-%d", $encomienda->getId()),
+            fechaEmision: $contingencia
+                ? ($encomienda->getEntregadaEn() ?? $encomienda->getCreada())
+                : $this->reloj->now(),
+            emisorNit: $empresa->getNit(),
+            emisorNombre: $empresa->getNombre(),
+            emisorDireccion: $empresa->getDireccion(),
+            establecimiento: $estacion?->getNombre() ?? "Encomiendas",
+            receptorNit: $nit,
+            receptorNombre: $nit === "CF"
+                ? ($cliente?->getNombreCompleto() ?: "Consumidor final")
+                : ($cliente?->getNombreCompleto() ?: "Sin nombre"),
+            receptorCorreo: null,
+            items: [self::itemEncomienda($encomienda)],
+            total: $encomienda->getTotal(),
+            establecimientoCodigo: $this->establecimiento($empresa, $estacion)->getCodigo(),
+            afiliacionIva: $empresa->getAfiliacionIva(),
+            frases: $empresa->frases(),
+            numeroAcceso: $encomienda->getNumeroAcceso(),
+            ruta: sprintf("%s - %s", $encomienda->getOrigen()?->getNombre(), $encomienda->getDestino()?->getNombre()),
+        );
+    }
+
+    private static function itemEncomienda(Encomienda $e): ItemDte
+    {
+        $articulos = implode("; ", array_map(static fn($a) => $a->getResumen(), $e->getArticulos()->toArray()));
+
+        return new ItemDte(
+            mb_substr(sprintf("Encomienda %s %s - %s: %s", $e->getCodigo(), $e->getOrigen()?->getNombre(), $e->getDestino()?->getNombre(), $articulos), 0, 500),
+            1,
+            $e->getTotal(),
+            $e->getTotal(),
+        );
+    }
+
     /** El de la estación que vende o, si no tiene, el por defecto de la empresa. */
-    private function establecimiento(Empresa $empresa, BoletoVenta $venta): Establecimiento
+    private function establecimiento(Empresa $empresa, ?Estacion $estacion): Establecimiento
     {
         $repo = $this->em->getRepository(Establecimiento::class);
-        $propio = $venta->getEstacion() !== null
-            ? $repo->findOneBy(["empresa" => $empresa, "estacion" => $venta->getEstacion()])
+        $propio = $estacion !== null
+            ? $repo->findOneBy(["empresa" => $empresa, "estacion" => $estacion])
             : null;
 
         return $propio

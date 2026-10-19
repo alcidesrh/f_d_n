@@ -1,5 +1,5 @@
 /** Bitácora de un registro (`GET /api/bitacora/{tipo}/{id}`). */
-export type TipoBitacora = 'salida' | 'boleto'
+export type TipoBitacora = 'salida' | 'boleto' | 'encomienda'
 
 export interface EntradaBitacora {
   id: number

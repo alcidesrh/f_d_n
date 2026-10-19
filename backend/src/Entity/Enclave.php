@@ -24,6 +24,10 @@ class Enclave extends Base
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $direccion = null;
 
+    /** Sigla corta (GUA, SEP): se imprime en grande en las guías de encomienda (ADR-035). */
+    #[ORM\Column(length: 10, nullable: true)]
+    private ?string $alias = null;
+
     /** Departamento (Guatemala) o distrito/estado fuera del país: agrupa los enclaves en la página web. */
     #[ORM\Column(length: 60, nullable: true)]
     private ?string $departamento = null;
@@ -64,6 +68,18 @@ class Enclave extends Base
     public function setDireccion(?string $direccion): static
     {
         $this->direccion = $direccion;
+
+        return $this;
+    }
+
+    public function getAlias(): ?string
+    {
+        return $this->alias;
+    }
+
+    public function setAlias(?string $alias): static
+    {
+        $this->alias = $alias !== null && trim($alias) !== "" ? mb_strtoupper(trim($alias)) : null;
 
         return $this;
     }

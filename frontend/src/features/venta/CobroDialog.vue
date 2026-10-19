@@ -19,6 +19,10 @@
         <dd>{{ viaje }}</dd>
         <dt class="text-muted-color">Asientos</dt>
         <dd>{{ numeros }}</dd>
+        <template v-if="!cortesia && store.cotizacionEncomienda && store.encomiendaArticulos.length">
+          <dt class="text-muted-color">Encomienda</dt>
+          <dd>{{ store.cotizacionEncomienda.bultos }} {{ store.cotizacionEncomienda.bultos === 1 ? 'bulto' : 'bultos' }} · {{ store.cotizacionEncomienda.total.texto }}</dd>
+        </template>
       </dl>
 
       <template v-if="!cortesia">
@@ -86,7 +90,7 @@ const monedas = computed(() =>
 )
 const correo = computed(() => store.cliente?.email ?? null)
 const facturaElectronica = computed(() => store.contexto?.canal === 'estacion')
-const total = computed(() => store.cotizacion?.total.texto ?? '—')
+const total = computed(() => store.total?.texto ?? '—')
 const numeros = computed(() =>
   (store.cotizacion?.asientos ?? [])
     .map((a) => a.numero)

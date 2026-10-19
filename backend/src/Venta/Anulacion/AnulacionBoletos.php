@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Venta\Anulacion;
 
 use App\Bitacora\RegistradorBitacora;
+use App\Encomienda\MovimientosEncomienda;
 use App\Entity\BoletoAsiento;
 use App\Entity\BoletoVenta;
 use App\Entity\Enum\EstadoBoletoAsiento;
@@ -48,6 +49,7 @@ final class AnulacionBoletos
         private readonly SaldoAgencia $saldo,
         private readonly PublicadorOcupacion $publicador,
         private readonly RegistradorBitacora $bitacora,
+        private readonly MovimientosEncomienda $encomiendas,
         private readonly ClockInterface $reloj,
         private readonly LoggerInterface $logger,
     ) {}
@@ -200,6 +202,10 @@ final class AnulacionBoletos
         $vivos = $venta->getAsientos()->filter(static fn(BoletoAsiento $b) => !in_array($b->getEstado(), [EstadoBoletoAsiento::ANULADO, EstadoBoletoAsiento::REASIGNADO], true));
         if ($vivos->isEmpty() && in_array($venta->getEstadoFacturacion(), [EstadoFacturacion::CERTIFICADA, EstadoFacturacion::PENDIENTE], true)) {
             $venta->setEstadoFacturacion(EstadoFacturacion::ANULADA);
+        }
+        // Sin pasajeros, sus encomiendas no viajan (ADR-035).
+        if ($vivos->isEmpty()) {
+            $this->encomiendas->alAnularVenta($venta, $motivo);
         }
 
         $agencia = $venta->getAgencia();

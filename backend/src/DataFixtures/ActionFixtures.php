@@ -52,6 +52,13 @@ class ActionFixtures extends Fixture
             ['codigo' => 'venta.vender',      'recurso' => 'BoletoVenta', 'operacion' => 'create', 'grupo' => 'Venta', 'nombre' => 'Vender boletos (taquilla/agencia)'],
             ['codigo' => 'venta.cortesia',    'recurso' => 'BoletoVenta', 'operacion' => 'courtesy', 'grupo' => 'Venta', 'nombre' => 'Emitir cortesías (sin cobro)'],
             ['codigo' => 'venta.sin_factura', 'recurso' => 'BoletoVenta', 'operacion' => 'contingency', 'grupo' => 'Venta', 'nombre' => 'Vender sin factura electrónica (contingencia)'],
+            // Encomiendas (ADR-035)
+            ['codigo' => 'encomienda.ver',       'recurso' => 'Encomienda', 'operacion' => 'read',     'grupo' => 'Encomiendas', 'nombre' => 'Ver encomiendas'],
+            ['codigo' => 'encomienda.registrar', 'recurso' => 'Encomienda', 'operacion' => 'create',   'grupo' => 'Encomiendas', 'nombre' => 'Registrar encomiendas'],
+            ['codigo' => 'encomienda.interna',   'recurso' => 'Encomienda', 'operacion' => 'internal', 'grupo' => 'Encomiendas', 'nombre' => 'Registrar encomiendas internas (sin cobro)'],
+            ['codigo' => 'encomienda.embarcar',  'recurso' => 'Encomienda', 'operacion' => 'board',    'grupo' => 'Encomiendas', 'nombre' => 'Embarcar y desembarcar encomiendas'],
+            ['codigo' => 'encomienda.entregar',  'recurso' => 'Encomienda', 'operacion' => 'deliver',  'grupo' => 'Encomiendas', 'nombre' => 'Entregar encomiendas'],
+            ['codigo' => 'encomienda.anular',    'recurso' => 'Encomienda', 'operacion' => 'void',     'grupo' => 'Encomiendas', 'nombre' => 'Anular encomiendas'],
             ['codigo' => 'agencia.acreditar', 'recurso' => 'Agencia', 'operacion' => 'credit', 'grupo' => 'Venta', 'nombre' => 'Acreditar/rechazar depósitos y ajustar saldo de agencias'],
             ['codigo' => 'agencia.depositar', 'recurso' => 'Agencia', 'operacion' => 'deposit', 'grupo' => 'Venta', 'nombre' => 'Registrar depósitos y consultar saldos de agencias'],
             // Gestión de salidas (ADR-024)

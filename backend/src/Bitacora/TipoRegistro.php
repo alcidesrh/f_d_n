@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Bitacora;
 
 use App\Entity\BoletoAsiento;
+use App\Entity\Encomienda;
 use App\Entity\Enum\OperacionBoleto;
+use App\Entity\Enum\OperacionEncomienda;
 use App\Entity\Enum\OperacionSalida;
 use App\Entity\Salida;
 
@@ -17,6 +19,7 @@ enum TipoRegistro: string
 {
     case SALIDA = "salida";
     case BOLETO = "boleto";
+    case ENCOMIENDA = "encomienda";
 
     /** @return class-string */
     public function clase(): string
@@ -24,6 +27,7 @@ enum TipoRegistro: string
         return match ($this) {
             self::SALIDA => Salida::class,
             self::BOLETO => BoletoAsiento::class,
+            self::ENCOMIENDA => Encomienda::class,
         };
     }
 
@@ -33,6 +37,7 @@ enum TipoRegistro: string
         return match ($this) {
             self::SALIDA => OperacionSalida::class,
             self::BOLETO => OperacionBoleto::class,
+            self::ENCOMIENDA => OperacionEncomienda::class,
         };
     }
 
@@ -41,6 +46,7 @@ enum TipoRegistro: string
         return match (true) {
             $entidad instanceof Salida => self::SALIDA,
             $entidad instanceof BoletoAsiento => self::BOLETO,
+            $entidad instanceof Encomienda => self::ENCOMIENDA,
             default => null,
         };
     }

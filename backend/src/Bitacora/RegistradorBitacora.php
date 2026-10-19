@@ -6,9 +6,12 @@ namespace App\Bitacora;
 
 use App\Entity\BoletoAsiento;
 use App\Entity\Bus;
+use App\Entity\Encomienda;
 use App\Entity\Enum\EstadoBoletoAsiento;
+use App\Entity\Enum\EstadoEncomienda;
 use App\Entity\Enum\EstadoSalida;
 use App\Entity\Enum\OperacionBoleto;
+use App\Entity\Enum\OperacionEncomienda;
 use App\Entity\Enum\OperacionSalida;
 use App\Entity\Salida;
 use App\Entity\Usuario;
@@ -24,7 +27,7 @@ use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Contracts\Service\ResetInterface;
 
 /**
- * Bitácora automática de `Salida` y `BoletoAsiento`: engancha los eventos de
+ * Bitácora automática de `Salida`, `BoletoAsiento` y `Encomienda`: engancha los eventos de
  * Doctrine, así queda anotado cualquier cambio sin importar por dónde llegue
  * (venta, gestión de salidas, GraphQL, consola).
  *
@@ -83,6 +86,16 @@ final class RegistradorBitacora implements ResetInterface
                 "precio" => $e->getPrecio()?->getAmount(),
                 "reasignadoDe" => $e->getReasignadoDe()?->getId(),
             ]);
+        } elseif ($e instanceof Encomienda) {
+            $this->escribir($args->getObjectManager()->getConnection(), $e, (int) $e->getId(), OperacionEncomienda::deEstado($e->getEstado()), [
+                "modalidad" => $e->getModalidad()->value,
+                "origen" => $e->getOrigen()?->getNombre(),
+                "destino" => $e->getDestino()?->getNombre(),
+                "bultos" => $e->getBultos(),
+                "total" => $e->getTotal()->getAmount(),
+                "venta" => $e->getBoletoVenta()?->getId(),
+                "salida" => $e->getSalida()?->getId(),
+            ]);
         }
     }
 
@@ -107,6 +120,13 @@ final class RegistradorBitacora implements ResetInterface
                     "a" => $args->getNewValue("bus") instanceof Bus ? $args->getNewValue("bus")->getCodigo() : null,
                 ]);
             }
+        } elseif ($e instanceof Encomienda && $args->hasChangedField("estado")) {
+            $nuevo = self::estado(EstadoEncomienda::class, $args->getNewValue("estado"));
+            $this->escribir($conexion, $e, (int) $e->getId(), OperacionEncomienda::deEstado($nuevo), [
+                "de" => self::estado(EstadoEncomienda::class, $args->getOldValue("estado"))->value,
+                "a" => $nuevo->value,
+                "salida" => $nuevo->aBordo() || $nuevo === EstadoEncomienda::DESEMBARCADA ? self::salida($e->getSalida()) : null,
+            ]);
         } elseif ($e instanceof BoletoAsiento && $args->hasChangedField("estado")) {
             $operacion = match (self::estado(EstadoBoletoAsiento::class, $args->getNewValue("estado"))) {
                 EstadoBoletoAsiento::ANULADO => OperacionBoleto::ANULADO,
@@ -205,6 +225,19 @@ final class RegistradorBitacora implements ResetInterface
     private static function estado(string $enum, \BackedEnum|string $valor): \BackedEnum
     {
         return $valor instanceof \BackedEnum ? $valor : $enum::from($valor);
+    }
+
+    /** «1234 · 18/10/2026 14:30 · Guatemala → Flores (bus 101)». */
+    private static function salida(?Salida $s): ?string
+    {
+        return $s === null ? null : sprintf(
+            "%d · %s · %s → %s%s",
+            $s->getId(),
+            $s->getFecha()?->format("d/m/Y H:i"),
+            $s->getRuta()?->getOrigen()?->getNombre(),
+            $s->getRuta()?->getDestino()?->getNombre(),
+            $s->getBus() !== null ? sprintf(" (bus %s)", $s->getBus()->getCodigo()) : "",
+        );
     }
 
     private static function viaje(?\App\Entity\Trayecto $t): ?string

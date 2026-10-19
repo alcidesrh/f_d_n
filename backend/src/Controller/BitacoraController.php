@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Bitacora\ConsultaBitacora;
 use App\Bitacora\TipoRegistro;
 use App\Entity\BoletoAsiento;
+use App\Entity\Encomienda;
 use App\Entity\Salida;
 use App\Entity\Usuario;
 use App\Venta\Acceso\AccesoVentas;
@@ -18,9 +19,10 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 /**
- * Bitácora de salidas y boletos: `GET /api/bitacora/{salida|boleto}/{id}`.
+ * Bitácora de salidas, boletos y encomiendas: `GET /api/bitacora/{salida|boleto|encomienda}/{id}`.
  * La de una salida la ve quien puede ver salidas (`salida.ver`); la de un
- * boleto, quien puede ver su venta o leer boletos.
+ * boleto, quien puede ver su venta o leer boletos; la de una encomienda,
+ * quien puede ver encomiendas (`encomienda.ver`).
  */
 #[AsController]
 #[Route("/api/bitacora", name: "api_bitacora_")]
@@ -40,6 +42,7 @@ final class BitacoraController extends AbstractController
         $etiqueta = match ($registro) {
             TipoRegistro::SALIDA => $this->etiquetaSalida($id),
             TipoRegistro::BOLETO => $this->etiquetaBoleto($id, $usuario),
+            TipoRegistro::ENCOMIENDA => $this->etiquetaEncomienda($id),
         };
 
         return $this->json([
@@ -48,6 +51,14 @@ final class BitacoraController extends AbstractController
             "etiqueta" => $etiqueta,
             "entradas" => $this->consulta->de($registro, $id),
         ]);
+    }
+
+    private function etiquetaEncomienda(int $id): string
+    {
+        $this->denyAccessUnlessGranted(EncomiendaController::VER);
+        $e = $this->em->find(Encomienda::class, $id) ?? throw $this->createNotFoundException();
+
+        return sprintf("Encomienda %s · %s → %s · %s", $e->getCodigo(), $e->getOrigen()?->getNombre(), $e->getDestino()?->getNombre(), $e->getCreada()->format("d/m/Y H:i"));
     }
 
     private function etiquetaSalida(int $id): string

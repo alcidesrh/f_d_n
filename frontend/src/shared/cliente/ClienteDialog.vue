@@ -81,7 +81,7 @@ import { computed, ref, watch } from 'vue'
 import { consultarNit, crearCliente, editarCliente, errorVenta } from '@/core/venta/api'
 import { normalizarNit, nitValido as validarNit } from '@/core/venta/nit'
 import type { Cliente, ClienteDatos } from '@/core/venta/types'
-import { useVentaStore } from './store'
+import { useCatalogosCliente } from './catalogos'
 
 const props = defineProps<{ visible: boolean; cliente: Cliente | null; sugerido?: string }>()
 const emit = defineEmits<{
@@ -89,7 +89,7 @@ const emit = defineEmits<{
   guardado: [cliente: Cliente]
 }>()
 
-const store = useVentaStore()
+const catalogos = useCatalogosCliente()
 const datos = ref<Record<string, unknown>>({})
 const guardando = ref(false)
 const error = ref('')
@@ -97,8 +97,8 @@ const clave = ref(0)
 
 const opciones = (lista: Array<{ id: number; nombre: string }> | undefined) =>
   (lista ?? []).map((o) => ({ label: o.nombre, value: o.id }))
-const naciones = computed(() => opciones(store.contexto?.naciones))
-const tiposDocumento = computed(() => opciones(store.contexto?.tiposDocumento))
+const naciones = computed(() => opciones(catalogos.value?.naciones))
+const tiposDocumento = computed(() => opciones(catalogos.value?.tiposDocumento))
 
 const nitValido = (nodo: { value: unknown }) => validarNit(String(nodo.value ?? ''))
 

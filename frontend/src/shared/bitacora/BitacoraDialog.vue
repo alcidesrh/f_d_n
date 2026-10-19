@@ -3,7 +3,7 @@
   viejo a lo más nuevo. Se alimenta de `GET /api/bitacora/{tipo}/{id}`.
 -->
 <template>
-  <Dialog :visible="visible" modal :header="`Bitácora · ${tipo === 'salida' ? 'Salida' : 'Boleto'} ${id}`" class="w-[min(34rem,calc(100vw-1rem))]" @update:visible="emit('update:visible', $event)" @show="cargar">
+  <Dialog :visible="visible" modal :header="`Bitácora · ${TITULOS[tipo]} ${id}`" class="w-[min(34rem,calc(100vw-1rem))]" @update:visible="emit('update:visible', $event)" @show="cargar">
     <div class="flex flex-col gap-3">
       <Skeleton v-if="cargando" height="9rem" />
       <Message v-else-if="error" severity="error" :closable="false">{{ error }}</Message>
@@ -35,6 +35,7 @@ import type { Bitacora, EntradaBitacora, TipoBitacora } from '@/core/bitacora/ty
 import { HttpError } from '@/core/http'
 
 const props = defineProps<{ visible: boolean; tipo: TipoBitacora; id: number }>()
+const TITULOS: Record<TipoBitacora, string> = { salida: 'Salida', boleto: 'Boleto', encomienda: 'Encomienda' }
 const emit = defineEmits<{ 'update:visible': [visible: boolean] }>()
 
 const bitacora = ref<Bitacora | null>(null)

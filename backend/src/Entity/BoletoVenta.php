@@ -54,6 +54,16 @@ class BoletoVenta extends TimeLegacyStatusBase
     ]
     private Collection $asientos;
 
+    /**
+     * Encomiendas que lleva el pasajero (ADR-035): se cobran y facturan con la venta.
+     *
+     * @var Collection<int, Encomienda>
+     */
+    #[ApiProperty(readable: false, writable: false)]
+    #[ORM\OneToMany(targetEntity: Encomienda::class, mappedBy: "boletoVenta", cascade: ["persist", "remove"])]
+    #[ORM\OrderBy(["id" => "ASC"])]
+    private Collection $encomiendas;
+
     #[ORM\OneToOne(cascade: ["persist", "remove"])]
     private ?Factura $factura = null;
 
@@ -132,6 +142,7 @@ class BoletoVenta extends TimeLegacyStatusBase
     public function __construct()
     {
         $this->asientos = new ArrayCollection();
+        $this->encomiendas = new ArrayCollection();
         $this->total = new Precio();
     }
 
@@ -172,6 +183,24 @@ class BoletoVenta extends TimeLegacyStatusBase
             if ($asiento->getBoletoVenta() === $this) {
                 $asiento->setBoletoVenta(null);
             }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Encomienda>
+     */
+    public function getEncomiendas(): Collection
+    {
+        return $this->encomiendas;
+    }
+
+    public function addEncomienda(Encomienda $encomienda): static
+    {
+        if (!$this->encomiendas->contains($encomienda)) {
+            $this->encomiendas->add($encomienda);
+            $encomienda->setBoletoVenta($this);
         }
 
         return $this;

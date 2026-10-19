@@ -37,6 +37,8 @@ declare module 'vue' {
     IconLucideMoon: typeof import('~icons/lucide/moon')['default']
     IconLucideSun: typeof import('~icons/lucide/sun')['default']
     IconPicker: typeof import('./shared/icons/IconPicker.vue')['default']
+    InputGroup: typeof import('primevue/inputgroup')['default']
+    InputGroupAddon: typeof import('primevue/inputgroupaddon')['default']
     InputIcon: typeof import('primevue/inputicon')['default']
     InputMask: typeof import('primevue/inputmask')['default']
     InputNumber: typeof import('primevue/inputnumber')['default']

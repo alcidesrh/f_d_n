@@ -64,6 +64,13 @@ class MigradorIAM {
         ['agencia.depositar', 'Agencia', 'deposit', 'Venta'],
         // Página web (ADR-023)
         ['pagina.administrar', 'Pagina', 'manage', 'Página web'],
+        // Encomiendas (ADR-035)
+        ['encomienda.ver', 'Encomienda', 'read', 'Encomiendas'],
+        ['encomienda.registrar', 'Encomienda', 'create', 'Encomiendas'],
+        ['encomienda.interna', 'Encomienda', 'internal', 'Encomiendas'],
+        ['encomienda.embarcar', 'Encomienda', 'board', 'Encomiendas'],
+        ['encomienda.entregar', 'Encomienda', 'deliver', 'Encomiendas'],
+        ['encomienda.anular', 'Encomienda', 'void', 'Encomiendas'],
     ];
 
     private const BASE_PERMISOS = [
@@ -95,6 +102,9 @@ class MigradorIAM {
         'Acreditacion de Depositos de Agencia' => ['agencia.depositar', 'agencia.acreditar'],
         'Gestion Salidas' => ['salida.ver', 'salida.crear', 'salida.editar', 'salida.cancelar', 'salida.eliminar'],
         'Abordaje de Salidas' => ['boleto.chequear', 'salida.abordar', 'salida.iniciar', 'salida.finalizar'],
+        'Recepcion de Encomiendas' => ['encomienda.ver', 'encomienda.registrar', 'encomienda.embarcar', 'encomienda.entregar'],
+        'Supervision de Encomiendas' => ['encomienda.ver', 'encomienda.registrar', 'encomienda.interna', 'encomienda.embarcar', 'encomienda.entregar', 'encomienda.anular'],
+        'Consulta de Encomiendas' => ['encomienda.ver'],
     ];
 
     /**
@@ -107,6 +117,12 @@ class MigradorIAM {
         'ROLE_SUPERVISOR_AGENCIA' => ['Acreditacion de Depositos de Agencia'],
         'ROLE_PROPIETARIO' => ['Acreditacion de Depositos de Agencia'],
         'ROLE_ADMINISTRATIVOS' => ['Acreditacion de Depositos de Agencia'],
+        // Menú «Encomienda» (ADR-035).
+        'ROLE_RECEPTOR_ENCOMIENDAS' => ['Recepcion de Encomiendas'],
+        'ROLE_ENTREGA_MULTIPLE_ENCOMIENDA' => ['Recepcion de Encomiendas'],
+        'ROLE_ENCOMIENDA_REGISTRAR_ESPECIAL' => ['Recepcion de Encomiendas'],
+        'ROLE_SUPERVISOR_ENCOMIENDA' => ['Supervision de Encomiendas'],
+        'ROLE_INSPECTOR_ENCOMIENDA' => ['Consulta de Encomiendas'],
     ];
 
     public function __construct(
