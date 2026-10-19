@@ -80,8 +80,9 @@ export function disponibilidad(
 
   const entregar = !puede.entregar
     ? oculta
-    : f.estado !== 'desembarcada' || f.ubicacion?.id !== f.destino.id
-      ? no('Se entrega desembarcada en su destino')
+    : // En tránsito, el backend comprueba que su salida pase por el destino (se desembarca al entregarla).
+      !(f.estado === 'desembarcada' && f.ubicacion?.id === f.destino.id) && f.estado !== 'transito'
+      ? no('Se entrega desembarcada en su destino o en tránsito hacia él')
       : !aqui(f.destino.id)
         ? no(`La entrega la estación ${f.destino.nombre}`)
         : si
@@ -198,4 +199,38 @@ export function abreviar(nombre: string): string {
     .filter(Boolean)
   if (palabras.length >= 3) return palabras.slice(0, 3).map((p) => p[0]).join('').toUpperCase()
   return (palabras[0] ?? '').slice(0, 3).toUpperCase()
+}
+
+/** Lo marcado para entregar: cuántas, bultos, cuánto se cobra (centavos) y a qué destinatarios van. */
+export function resumenEntrega(filas: readonly FilaEncomienda[], marcadas: readonly number[]) {
+  const elegidas = filas.filter((f) => marcadas.includes(f.id))
+  const porCobrar = elegidas.filter((f) => f.porCobrar)
+  return {
+    cantidad: elegidas.length,
+    bultos: bultos(elegidas.map((f) => ({ cantidad: f.bultos }))),
+    porCobrar: porCobrar.length,
+    cobrar: porCobrar.reduce((n, f) => n + f.total.centavos, 0),
+    destinatarios: [...new Map(elegidas.map((f) => [f.destinatario.id, f.destinatario])).values()],
+  }
+}
+
+/** Días de calendario desde que se registró (0 = hoy). */
+export function antiguedad(creada: string, hoy: Date = new Date()): number {
+  const d = new Date(creada)
+  const a = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())
+  const b = Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate())
+  return Math.max(0, Math.round((b - a) / 86_400_000))
+}
+
+/** Agrupa por destino, en orden alfabético; dentro, lo más antiguo primero. */
+export function porDestino<T extends Pick<FilaEncomienda, 'id' | 'destino'>>(filas: readonly T[]): Array<{ destino: T['destino']; filas: T[] }> {
+  const grupos = new Map<number, { destino: T['destino']; filas: T[] }>()
+  for (const f of filas) {
+    const g = grupos.get(f.destino.id) ?? { destino: f.destino, filas: [] as T[] }
+    g.filas.push(f)
+    grupos.set(f.destino.id, g)
+  }
+  return [...grupos.values()]
+    .map((g) => ({ ...g, filas: [...g.filas].sort((a, b) => a.id - b.id) }))
+    .sort((a, b) => a.destino.nombre.localeCompare(b.destino.nombre, 'es'))
 }

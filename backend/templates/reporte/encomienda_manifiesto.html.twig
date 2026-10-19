@@ -1,0 +1,55 @@
+{# Manifiesto de carga de una salida. Datos: m = ManifiestoEncomiendas, dinero. #}
+{% extends 'reporte/_base.html.twig' %}
+{% set titulo = m.titulo %}
+
+{% block estilos %}
+  .firma { width: 120px; border-bottom: 1px solid #9ca3af; }
+{% endblock %}
+
+{% block ficha %}
+<table class="ficha">
+  <tr>
+    <td style="width:16%"><div class="lbl">Salida</div><div class="val">{{ m.salidaId }}</div></td>
+    <td style="width:22%"><div class="lbl">Fecha</div><div class="val">{{ m.fecha|date('d/m/Y H:i') }}</div></td>
+    <td style="width:34%"><div class="lbl">Ruta</div><div class="val">{{ m.ruta }}</div></td>
+    <td style="width:28%"><div class="lbl">Empresa</div><div class="val">{{ m.empresa }}</div></td>
+  </tr>
+  <tr>
+    <td><div class="lbl">Bus</div><div class="val">{{ m.bus ?? '—' }}</div></td>
+    <td colspan="2"><div class="lbl">Pilotos</div><div class="val">{{ m.pilotos|join(', ') }}</div></td>
+    <td><div class="lbl">Encomiendas · bultos</div><div class="val">{{ m.totales.cantidad }} · {{ m.totales.bultos }}</div></td>
+  </tr>
+</table>
+{% endblock %}
+
+{% block cuerpo %}
+<table class="datos">
+  <thead><tr>
+    <th>Código</th><th>Documento</th><th>Emitida</th><th>Estado</th><th>Destinatario</th><th>Contenido</th><th class="centro">Bultos</th><th class="der">Importe</th><th>Firma de entrega</th>
+  </tr></thead>
+  <tbody>
+  {% for g in m.grupos %}
+    <tr class="grupo"><td colspan="9">{{ g.destino }}{% if g.alias %} ({{ g.alias }}){% endif %} · {{ g.totales.cantidad }} {{ g.totales.cantidad == 1 ? 'encomienda' : 'encomiendas' }}</td></tr>
+    {% for l in g.filas %}
+    <tr class="{{ loop.index is even ? 'par' : '' }}">
+      <td class="num"><b>{{ l.codigo }}</b></td>
+      <td>{{ l.documento }}</td>
+      <td class="num">{{ l.creada|date('d/m/Y H:i') }}</td>
+      <td>{{ l.estadoEtiqueta }}</td>
+      <td>{{ l.destinatario }}</td>
+      <td>{{ l.contenido }}</td>
+      <td class="centro">{{ l.bultos }}</td>
+      <td class="der num">{% if l.esPorCobrar %}<span class="etq etq-cobrar">Cobrar</span> {% endif %}{{ l.moneda }} {{ dinero.num(l.total) }}</td>
+      <td><div class="firma">&nbsp;</div></td>
+    </tr>
+    {% endfor %}
+    <tr class="subtotal"><td colspan="6" class="der">Subtotal {{ g.destino }} (por cobrar GTQ {{ dinero.num(g.totales.porCobrar) }})</td><td class="centro">{{ g.totales.bultos }}</td><td class="der num">GTQ {{ dinero.num(g.totales.total) }}</td><td></td></tr>
+  {% else %}
+    <tr class="vacio"><td colspan="9">La salida no lleva encomiendas{% if m.destino %} para {{ m.destino }}{% endif %}.</td></tr>
+  {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr class="total"><td colspan="6">Cantidad: {{ m.totales.cantidad }} · Por cobrar: GTQ {{ dinero.num(m.totales.porCobrar) }}</td><td class="centro">{{ m.totales.bultos }}</td><td class="der num">GTQ {{ dinero.num(m.totales.total) }}</td><td></td></tr>
+  </tfoot>
+</table>
+{% endblock %}

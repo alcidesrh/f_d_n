@@ -36,6 +36,16 @@ final class ReportePdf
         return $this->pdf("reporte/cuadre_voucher.html.twig", ["c" => $c], $usuario, "portrait");
     }
 
+    /**
+     * Reportes de encomiendas (`templates/reporte/encomienda_*.html.twig`).
+     *
+     * @param array<string, mixed> $datos
+     */
+    public function encomienda(string $reporte, array $datos, string $usuario, string $orientacion = "landscape"): string
+    {
+        return $this->pdf("reporte/encomienda_{$reporte}.html.twig", $datos, $usuario, $orientacion);
+    }
+
     /** @param array<string, mixed> $datos */
     private function pdf(string $plantilla, array $datos, string $usuario, string $orientacion): string
     {

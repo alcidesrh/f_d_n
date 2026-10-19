@@ -24,6 +24,8 @@ use Doctrine\ORM\QueryBuilder;
 final class ConsultaEncomiendas
 {
     public const POR_PAGINA = [10, 15, 25, 50, 100];
+    /** Tope de los listados de pendientes (no se paginan). */
+    public const MAX_PENDIENTES = 500;
 
     public function __construct(
         private readonly EntityManagerInterface $em,
@@ -168,6 +170,55 @@ final class ConsultaEncomiendas
     }
 
     /**
+     * Lo que espera en la bodega de la estación para salir (recibidas y
+     * transbordos), lo más antiguo primero: los «pendientes de envío».
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function pendientesEnvio(Estacion $estacion, ?int $empresaId): array
+    {
+        return $this->filas(array_slice(array_column($this->enBodega($estacion, $empresaId), "id"), 0, self::MAX_PENDIENTES));
+    }
+
+    /**
+     * Lo que se puede entregar en la estación: desembarcado aquí o en
+     * tránsito en una salida que llega aquí (se desembarca al entregarlo).
+     * Con `$q`, solo las de ese código o cliente (remitente o destinatario).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function pendientesEntrega(Estacion $estacion, ?int $empresaId, ?string $q = null): array
+    {
+        $qb = $this->em->createQueryBuilder()
+            ->select("e.id", "IDENTITY(e.salida) AS salida")
+            ->from(Encomienda::class, "e")
+            ->where("e.destino = :estacion")
+            ->andWhere("(e.estado = :desembarcada AND e.ubicacion = :estacion) OR e.estado = :transito")
+            ->setParameter("estacion", $estacion)
+            ->setParameter("desembarcada", EstadoEncomienda::DESEMBARCADA->value)
+            ->setParameter("transito", EstadoEncomienda::TRANSITO->value)
+            ->orderBy("e.id", "ASC");
+        $this->filtrar($qb, ["q" => $q], $empresaId);
+
+        $aqui = (int) $estacion->getId();
+        $paradas = [];
+        $ids = [];
+        foreach ($qb->getQuery()->getScalarResult() as $r) {
+            $salida = $r["salida"] === null ? null : (int) $r["salida"];
+            if ($salida !== null && !isset($paradas[$salida])) {
+                $s = $this->em->find(Salida::class, $salida);
+                $paradas[$salida] = $s === null ? [] : RutasEncomienda::idsDeSalida($s);
+            }
+            // En tránsito, solo si su salida pasa por aquí (si no, hará transbordo antes).
+            if ($salida === null || in_array($aqui, $paradas[$salida], true)) {
+                $ids[] = (int) $r["id"];
+            }
+        }
+
+        return $this->filas(array_slice($ids, 0, self::MAX_PENDIENTES));
+    }
+
+    /**
      * Filas del listado, en el orden de los ids.
      *
      * @param list<int> $ids
@@ -181,7 +232,7 @@ final class ConsultaEncomiendas
         }
         /** @var list<Encomienda> $encomiendas */
         $encomiendas = $this->em->createQueryBuilder()
-            ->select("e", "o", "d", "u", "rem", "des", "s", "em", "a", "esp", "usr")
+            ->select("e", "o", "d", "u", "rem", "des", "s", "em", "a", "esp", "usr", "r")
             ->from(Encomienda::class, "e")
             ->join("e.origen", "o")
             ->join("e.destino", "d")
@@ -193,6 +244,7 @@ final class ConsultaEncomiendas
             ->leftJoin("e.articulos", "a")
             ->leftJoin("a.especial", "esp")
             ->leftJoin("e.usuario", "usr")
+            ->leftJoin("e.ruta", "r")
             ->where("e.id IN (:ids)")
             ->setParameter("ids", $ids)
             ->getQuery()
@@ -218,6 +270,7 @@ final class ConsultaEncomiendas
                 "destino" => ["id" => $e->getDestino()?->getId(), "nombre" => $e->getDestino()?->getNombre()],
                 "ubicacion" => $e->getUbicacion() === null ? null : ["id" => $e->getUbicacion()->getId(), "nombre" => $e->getUbicacion()->getNombre()],
                 "salida" => $s === null ? null : ["id" => $s->getId(), "fecha" => $s->getFecha()?->format(DATE_ATOM), "bus" => $s->getBus()?->getCodigo()],
+                "ruta" => $e->getRuta() === null ? null : ["id" => $e->getRuta()->getId(), "nombre" => $e->getRuta()->getNombre()],
                 "remitente" => DatosEncomienda::cliente($e->getRemitente()),
                 "destinatario" => DatosEncomienda::cliente($e->getDestinatario()),
                 "bultos" => $e->getBultos(),

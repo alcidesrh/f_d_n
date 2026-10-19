@@ -44,8 +44,9 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
  *
  * Permisos: `encomienda.ver`, `encomienda.registrar`, `encomienda.interna`
  * (sin cobro), `encomienda.embarcar` (embarcar y desembarcar),
- * `encomienda.entregar`, `encomienda.anular`; `venta.sin_factura` para la
- * contingencia de la factura. `ROLE_ADMIN` los tiene todos.
+ * `encomienda.entregar`, `encomienda.anular`, `encomienda.especiales`
+ * (catálogo de especiales); `venta.sin_factura` para la contingencia de la
+ * factura. `ROLE_ADMIN` los tiene todos.
  */
 #[AsController]
 #[Route("/api/encomiendas", name: "api_encomiendas_")]
@@ -57,6 +58,7 @@ final class EncomiendaController extends AbstractController
     public const EMBARCAR = "encomienda.embarcar";
     public const ENTREGAR = "encomienda.entregar";
     public const ANULAR = "encomienda.anular";
+    public const ESPECIALES = "encomienda.especiales";
 
     public function __construct(
         private readonly EntityManagerInterface $em,
@@ -84,6 +86,7 @@ final class EncomiendaController extends AbstractController
                 "embarcar" => $this->isGranted(self::EMBARCAR),
                 "entregar" => $this->isGranted(self::ENTREGAR),
                 "anular" => $this->isGranted(self::ANULAR),
+                "especiales" => $this->isGranted(self::ESPECIALES),
                 "sinFactura" => $this->isGranted(VentaController::SIN_FACTURA),
             ],
             "empresas" => array_map(
@@ -248,6 +251,95 @@ final class EncomiendaController extends AbstractController
         )));
     }
 
+    /**
+     * Entrega múltiple: `{ encomiendas: [id], receptor?, clienteFactura?, tipoPago?, moneda?, sinFacturaElectronica? }`
+     * → `{ entregadas: [id], fallidas: [{ id, codigo, error, facturacion?, recuperable? }] }`.
+     */
+    #[Route("/entregar", name: "entregar_varias", methods: ["POST"])]
+    public function entregarVarias(Request $request, #[CurrentUser] Usuario $usuario, MovimientosEncomienda $movimientos): JsonResponse
+    {
+        $this->denyAccessUnlessGranted(self::ENTREGAR);
+
+        return $this->responder(function () use ($request, $usuario, $movimientos) {
+            $datos = $request->toArray();
+
+            return $movimientos->entregarVarias(
+                array_map("intval", (array) ($datos["encomiendas"] ?? [])),
+                EntregaEncomienda::desdeArray($datos),
+                $usuario,
+                $this->isGranted(VentaController::SIN_FACTURA),
+                fn(Encomienda $e) => $this->puedeVer($e, $usuario),
+            );
+        });
+    }
+
+    /** `{ ruta }`: otra ruta para la que espera en bodega (pendientes de envío). */
+    #[Route("/{id<\d+>}/ruta", name: "ruta", methods: ["POST"])]
+    public function cambiarRuta(int $id, Request $request, #[CurrentUser] Usuario $usuario, MovimientosEncomienda $movimientos, RutasEncomienda $rutas): JsonResponse
+    {
+        $this->denyAccessUnlessGranted(self::REGISTRAR);
+        $this->encomienda($id, $usuario);
+
+        return $this->responder(fn() => DatosEncomienda::de($movimientos->cambiarRuta(
+            $id,
+            (int) SolicitudEncomienda::entero($request->toArray()["ruta"] ?? null, "ruta"),
+            $usuario,
+            $rutas,
+        )));
+    }
+
+    /** `?estacion=`: lo que espera en la bodega de la estación (la del usuario, si tiene) para salir. */
+    #[Route("/pendientes-envio", name: "pendientes_envio", methods: ["GET"])]
+    public function pendientesEnvio(Request $request, #[CurrentUser] Usuario $usuario): JsonResponse
+    {
+        $this->denyAccessUnlessGranted(self::VER);
+
+        return $this->responder(fn() => $this->consulta->pendientesEnvio($this->estacion($request, $usuario), $usuario->getEmpresa()?->getId()));
+    }
+
+    /** `?estacion=&q=`: lo que se puede entregar en la estación (la del usuario, si tiene). */
+    #[Route("/pendientes-entrega", name: "pendientes_entrega", methods: ["GET"])]
+    public function pendientesEntrega(Request $request, #[CurrentUser] Usuario $usuario): JsonResponse
+    {
+        $this->denyAccessUnlessGranted(self::ENTREGAR);
+
+        return $this->responder(fn() => $this->consulta->pendientesEntrega(
+            $this->estacion($request, $usuario),
+            $usuario->getEmpresa()?->getId(),
+            trim((string) $request->query->get("q", "")) ?: null,
+        ));
+    }
+
+    /** Catálogo de especiales, también los inactivos (para administrarlo). */
+    #[Route("/especiales", name: "especiales", methods: ["GET"])]
+    public function especiales(): JsonResponse
+    {
+        $this->denyAccessUnlessGranted(self::ESPECIALES);
+
+        return $this->json(array_map(
+            static fn(EncomiendaEspecial $e) => self::especial($e),
+            $this->em->getRepository(EncomiendaEspecial::class)->findBy([], ["activo" => "DESC", "nombre" => "ASC"]),
+        ));
+    }
+
+    /** `{ nombre, descripcion?, precio, permitePorCobrar, activo }` (el «Registrar especial» del legado). */
+    #[Route("/especiales", name: "especial_crear", methods: ["POST"])]
+    public function crearEspecial(Request $request): JsonResponse
+    {
+        $this->denyAccessUnlessGranted(self::ESPECIALES);
+
+        return $this->responder(fn() => self::especial($this->guardarEspecial(new EncomiendaEspecial(), $request->toArray())), Response::HTTP_CREATED);
+    }
+
+    #[Route("/especiales/{id<\d+>}", name: "especial_editar", methods: ["POST"])]
+    public function editarEspecial(int $id, Request $request): JsonResponse
+    {
+        $this->denyAccessUnlessGranted(self::ESPECIALES);
+        $especial = $this->em->find(EncomiendaEspecial::class, $id) ?? throw $this->createNotFoundException();
+
+        return $this->responder(fn() => self::especial($this->guardarEspecial($especial, $request->toArray())));
+    }
+
     /** `{ motivo }`: anula la que no ha viajado (y su factura en el certificador). */
     #[Route("/{id<\d+>}/anular", name: "anular", methods: ["POST"])]
     public function anular(int $id, Request $request, #[CurrentUser] Usuario $usuario, MovimientosEncomienda $movimientos): JsonResponse
@@ -279,6 +371,55 @@ final class EncomiendaController extends AbstractController
         $this->denyAccessUnlessGranted(self::EMBARCAR);
 
         return $this->responder(fn() => $this->consulta->procesar($salida, $this->estacion($request, $usuario), $usuario->getEmpresa()?->getId()));
+    }
+
+    /** @param array<string, mixed> $d */
+    private function guardarEspecial(EncomiendaEspecial $e, array $d): EncomiendaEspecial
+    {
+        $nombre = trim((string) ($d["nombre"] ?? ""));
+        if ($nombre === "" || mb_strlen($nombre) > 100) {
+            throw new EncomiendaRechazada("Indique el nombre (hasta 100 caracteres).");
+        }
+        $precio = $d["precio"] ?? null;
+        if (!is_numeric($precio) || (float) $precio < 0 || (float) $precio > 100000) {
+            throw new EncomiendaRechazada("Indique un precio válido.");
+        }
+        // Uno nuevo todavía no tiene id (y `Base::$id` no se lee antes de persistirlo).
+        $id = $this->em->contains($e) ? $e->getId() : null;
+        $repetido = $this->em->createQueryBuilder()
+            ->select("COUNT(x.id)")->from(EncomiendaEspecial::class, "x")
+            ->where("LOWER(x.nombre) = :n AND x.activo = true" . ($id !== null ? " AND x.id <> :id" : ""))
+            ->setParameter("n", mb_strtolower($nombre));
+        if ($id !== null) {
+            $repetido->setParameter("id", $id);
+        }
+        if ((bool) ($d["activo"] ?? true) && (int) $repetido->getQuery()->getSingleScalarResult() > 0) {
+            throw new EncomiendaRechazada("Ya hay un especial activo con ese nombre.", "repetido", 409);
+        }
+        $descripcion = trim((string) ($d["descripcion"] ?? ""));
+        $e->setNombre($nombre)
+            ->setDescripcion($descripcion === "" ? null : mb_substr($descripcion, 0, 255))
+            ->setPrecioMonto(round((float) $precio, 2))
+            ->setPermitePorCobrar((bool) ($d["permitePorCobrar"] ?? true))
+            ->setActivo((bool) ($d["activo"] ?? true));
+        $this->em->persist($e);
+        $this->em->flush();
+
+        return $e;
+    }
+
+    /** @return array<string, mixed> */
+    private static function especial(EncomiendaEspecial $e): array
+    {
+        return [
+            "id" => $e->getId(),
+            "nombre" => $e->getNombre(),
+            "descripcion" => $e->getDescripcion(),
+            "precio" => DatosBoleto::importe($e->getPrecio()),
+            "permitePorCobrar" => $e->isPermitePorCobrar(),
+            "activo" => $e->isActivo(),
+            "legado" => $e->getLegacyId() !== null,
+        ];
     }
 
     private function estacion(Request $request, Usuario $usuario): Estacion

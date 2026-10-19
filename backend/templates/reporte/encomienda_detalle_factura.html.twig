@@ -1,0 +1,50 @@
+{# Detalle de factura de encomiendas. Datos: d = DetalleFacturaEncomiendas, dinero. #}
+{% extends 'reporte/_base.html.twig' %}
+{% set titulo = 'Detalle de factura de encomiendas' %}
+
+{% block ficha %}
+<table class="ficha">
+  <tr>
+    <td style="width:25%"><div class="lbl">Fecha de cobro</div><div class="val">{{ d.rotulo }}</div></td>
+    <td style="width:30%"><div class="lbl">Estación</div><div class="val">{{ d.estacion ?? 'Todas las estaciones' }}</div></td>
+    <td style="width:25%"><div class="lbl">Empresa</div><div class="val">{{ d.empresa ?? 'Todas' }}</div></td>
+    <td style="width:20%"><div class="lbl">Facturas</div><div class="val">{{ d.cantidad }}</div></td>
+  </tr>
+</table>
+{% endblock %}
+
+{% block cuerpo %}
+{% for g in d.grupos %}
+<div class="seccion">{{ g.dia|date('d/m/Y') }}</div>
+<table class="datos">
+  <thead><tr>
+    <th>Encomienda</th><th>Hora</th><th>Serie DTE</th><th>Número DTE</th><th>Tipo</th><th>Origen</th><th>Cliente facturado</th><th>Usuario</th><th class="der">Importe</th>
+  </tr></thead>
+  <tbody>
+  {% for dest in g.destinos %}
+    <tr class="grupo"><td colspan="9">Destino: {{ dest.destino }}</td></tr>
+    {% for l in dest.filas %}
+    <tr class="{{ loop.index is even ? 'par' : '' }}">
+      <td class="num"><b>{{ l.codigo }}</b></td>
+      <td class="num">{{ (l.esPorCobrar and l.entregadaEn ? l.entregadaEn : l.creada)|date('H:i:s') }}</td>
+      <td class="num">{{ l.serie ?? '' }}</td>
+      <td class="num">{% if l.dte is not null %}{{ l.dte }}{% else %}<span class="etq etq-cobrar">{{ l.estadoFacturacion == 'pendiente' ? 'Pendiente' : 'Sin factura' }}</span>{% endif %}</td>
+      <td>{{ l.esPorCobrar ? 'Por cobrar' : 'Pagada' }}</td>
+      <td>{{ l.origen }}</td>
+      <td>{{ l.clienteFactura ?? l.remitente }}</td>
+      <td>{{ l.esPorCobrar ? (l.entregadaPor ?? '—') : l.usuario }}</td>
+      <td class="der num">{{ l.moneda }} {{ dinero.num(l.total) }}</td>
+    </tr>
+    {% endfor %}
+    <tr class="subtotal"><td colspan="8" class="der">{{ dest.destino }} · {{ dest.filas|length }} · Total</td><td class="der num">GTQ {{ dinero.num(dest.total) }}</td></tr>
+  {% endfor %}
+  </tbody>
+  <tfoot><tr class="total"><td colspan="8">{{ g.dia|date('d/m/Y') }} · Cantidad: {{ g.cantidad }}</td><td class="der num">GTQ {{ dinero.num(g.total) }}</td></tr></tfoot>
+</table>
+{% else %}
+<table class="datos"><tr class="vacio"><td>No hay encomiendas facturadas con estos parámetros.</td></tr></table>
+{% endfor %}
+{% if d.grupos|length > 1 %}
+<table class="datos" style="margin-top:12px"><tfoot><tr class="total"><td>Cantidad: {{ d.cantidad }}</td><td class="der">Total general GTQ {{ dinero.num(d.total) }}</td></tr></tfoot></table>
+{% endif %}
+{% endblock %}

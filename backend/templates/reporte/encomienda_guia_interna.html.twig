@@ -1,0 +1,47 @@
+{# Detalle de guías internas. Datos: g = GuiaInternaEncomiendas, dinero. #}
+{% extends 'reporte/_base.html.twig' %}
+{% set titulo = 'Detalle de guías internas de encomiendas' %}
+
+{% block ficha %}
+<table class="ficha">
+  <tr>
+    <td style="width:25%"><div class="lbl">Fecha de emisión</div><div class="val">{{ g.rotulo }}</div></td>
+    <td style="width:30%"><div class="lbl">Estación de emisión</div><div class="val">{{ g.estacion ?? 'Todas las estaciones' }}</div></td>
+    <td style="width:25%"><div class="lbl">Empresa</div><div class="val">{{ g.empresa ?? 'Todas' }}</div></td>
+    <td style="width:20%"><div class="lbl">Guías · bultos</div><div class="val">{{ g.totales.cantidad }} · {{ g.totales.bultos }}</div></td>
+  </tr>
+</table>
+{% endblock %}
+
+{% block cuerpo %}
+{% for grupo in g.grupos %}
+<div class="seccion">{{ grupo.dia|date('d/m/Y') }}</div>
+<table class="datos">
+  <thead><tr>
+    <th>Código</th><th>Hora</th><th>Emitida por</th><th>Estado</th><th class="centro">Bultos</th><th>Tipo</th><th>Salida</th><th>Fecha de viaje</th><th>Origen → destino</th>
+  </tr></thead>
+  <tbody>
+  {% for l in grupo.filas %}
+    <tr>
+      <td class="num"><b>{{ l.codigo }}</b></td>
+      <td class="num">{{ l.creada|date('H:i:s') }}</td>
+      <td>{{ l.usuario }}</td>
+      <td>{% if l.anulada %}<span class="etq etq-anul">Anulada</span>{% else %}{{ l.estadoEtiqueta }}{% endif %}</td>
+      <td class="centro">{{ l.bultos }}</td>
+      <td>{{ l.tipo }}</td>
+      <td>{{ l.salidaId ?? '—' }}</td>
+      <td class="num">{{ l.salidaFecha ? l.salidaFecha|date('d/m/Y H:i') : '—' }}</td>
+      <td>{{ l.origen }} → {{ l.destino }}</td>
+    </tr>
+    <tr class="sub"><td colspan="9">
+      <b>Ruta:</b> {{ l.ruta ?? '—' }} · <b>Remitente:</b> {{ l.remitente }} · <b>Destinatario:</b> {{ l.destinatario }}<br>
+      <b>Contenido:</b> {{ l.contenido }}{% if l.observacion %}<br><b>Motivo:</b> {{ l.observacion }}{% endif %}{% if l.anulada and l.motivoAnulacion %}<br><b>Anulada:</b> {{ l.motivoAnulacion }}{% endif %}
+    </td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<table class="datos"><tr class="vacio"><td>No hay guías internas con estos parámetros.</td></tr></table>
+{% endfor %}
+<table class="datos" style="margin-top:12px"><tfoot><tr class="total"><td>Cantidad: {{ g.totales.cantidad }} guías · {{ g.totales.bultos }} bultos</td></tr></tfoot></table>
+{% endblock %}

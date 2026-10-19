@@ -85,7 +85,23 @@ export function reciboHtml(e: DatosEncomienda, contrato = true): string {
         .join('')}</ol>`
     : ''
 
-  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Encomienda ${esc(e.codigo)}</title><style>${ESTILOS}</style></head><body>
+  return documentoHtml(`Encomienda ${e.codigo}`, reciboCuerpo(e, articulos, certificador, firma))
+}
+
+/** Varios recibos en un solo trabajo de impresión, uno por página (entrega múltiple). */
+export function recibosHtml(lista: DatosEncomienda[], contrato = false): string {
+  const cuerpos = lista.map((e) => {
+    const html = reciboHtml(e, contrato)
+    return `<div class="guia">${html.slice(html.indexOf('<body>') + 6, html.lastIndexOf('</body>'))}</div>`
+  })
+  return documentoHtml(`Encomiendas ${lista.map((e) => e.codigo).join(', ')}`, cuerpos.join(''))
+}
+
+const documentoHtml = (titulo: string, cuerpo: string) =>
+  `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${esc(titulo)}</title><style>${ESTILOS}</style></head><body>${cuerpo}</body></html>`
+
+function reciboCuerpo(e: DatosEncomienda, articulos: string, certificador: string, firma: string): string {
+  return `
 ${e.estado === 'anulada' ? '<h1>*** ANULADA ***</h1>' : ''}
 ${encabezado(e)}
 ${SEP}
@@ -107,7 +123,7 @@ ${e.observacion ? `<p class="small">Obs.: ${esc(e.observacion)}</p>` : ''}
 ${certificador}
 ${firma}
 ${SEP}
-</body></html>`
+`
 }
 
 /** Una guía por bulto (adjunto 3 del legado): se pega al paquete y la conserva el empleado. */
@@ -142,6 +158,8 @@ ${SEP}
 
 
 export const imprimirRecibo = (e: DatosEncomienda, contrato = true) => imprimirHtml(reciboHtml(e, contrato))
+
+export const imprimirRecibos = (lista: DatosEncomienda[]) => imprimirHtml(recibosHtml(lista))
 
 export const imprimirGuias = (e: DatosEncomienda) => imprimirHtml(guiasHtml(e))
 

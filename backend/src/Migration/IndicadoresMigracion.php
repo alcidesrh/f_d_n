@@ -121,6 +121,10 @@ final class IndicadoresMigracion
             "nuevo" => "SELECT COUNT(*) FROM boleto_asiento",
             "legado" => "SELECT COUNT(*) FROM boleto",
         ],
+        "encomienda" => [
+            "nuevo" => "SELECT COUNT(*) FROM encomienda WHERE legacy_id IS NOT NULL",
+            "legado" => "SELECT COUNT(*) FROM encomienda",
+        ],
         "iam" => [
             "nuevo" =>
                 "SELECT (SELECT COUNT(*) FROM action) + (SELECT COUNT(*) FROM permiso) + (SELECT COUNT(*) FROM role)",

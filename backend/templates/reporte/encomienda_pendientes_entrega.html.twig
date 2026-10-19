@@ -1,0 +1,46 @@
+{# Encomiendas pendientes de entregar. Datos: p = PendientesEntregaEncomiendas, dinero. #}
+{% extends 'reporte/_base.html.twig' %}
+{% set titulo = 'Encomiendas pendientes de entregar' %}
+
+{% block ficha %}
+<table class="ficha">
+  <tr>
+    <td style="width:30%"><div class="lbl">Estación de entrega</div><div class="val">{{ p.estacion ?? 'Todas las estaciones' }}</div></td>
+    <td style="width:25%"><div class="lbl">Empresa</div><div class="val">{{ p.empresa ?? 'Todas' }}</div></td>
+    <td style="width:20%"><div class="lbl">Pendientes</div><div class="val">{{ p.totales.cantidad }}</div></td>
+    <td style="width:25%"><div class="lbl">La más antigua</div><div class="val">{{ p.masAntigua }} {{ p.masAntigua == 1 ? 'día' : 'días' }}</div></td>
+  </tr>
+</table>
+{% endblock %}
+
+{% block cuerpo %}
+{% for g in p.grupos %}
+<div class="seccion">Registradas el {{ g.dia|date('d/m/Y') }}</div>
+<table class="datos">
+  <thead><tr>
+    <th>Código</th><th class="centro">Días</th><th>Salida</th><th>Bus</th><th>Estado</th><th>Documento</th><th>Origen</th>{% if not p.estacion %}<th>Destino</th>{% endif %}<th>Tipo</th><th>Detalle</th><th class="der">Importe</th>
+  </tr></thead>
+  <tbody>
+  {% for l in g.filas %}
+    <tr class="{{ loop.index is even ? 'par' : '' }}">
+      <td class="num"><b>{{ l.codigo }}</b></td>
+      <td class="centro">{{ p.dias(l) }}</td>
+      <td>{{ l.salidaId ?? '—' }}</td>
+      <td>{{ l.bus ?? '—' }}</td>
+      <td>{{ l.estadoEtiqueta }}</td>
+      <td>{{ l.documento }}</td>
+      <td>{{ l.origen }}</td>
+      {% if not p.estacion %}<td>{{ l.destino }}</td>{% endif %}
+      <td>{{ l.tipo }}</td>
+      <td>{{ l.bultos }} {{ l.bultos == 1 ? 'bulto' : 'bultos' }}. {{ l.contenido }}<br><span class="muted">Para {{ l.destinatario }}</span></td>
+      <td class="der num">{% if l.esPorCobrar %}<span class="etq etq-cobrar">Cobrar</span> {% endif %}{{ dinero.num(l.total) }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+  <tfoot><tr class="subtotal"><td colspan="{{ p.estacion ? 9 : 10 }}" class="der">Cantidad: {{ g.totales.cantidad }} · Por cobrar GTQ {{ dinero.num(g.totales.porCobrar) }} · Total</td><td class="der num">GTQ {{ dinero.num(g.totales.total) }}</td></tr></tfoot>
+</table>
+{% else %}
+<table class="datos"><tr class="vacio"><td>No hay encomiendas pendientes de entregar.</td></tr></table>
+{% endfor %}
+<table class="datos" style="margin-top:12px"><tfoot><tr class="total"><td>Cantidad: {{ p.totales.cantidad }} · {{ p.totales.bultos }} bultos</td><td class="der">Por cobrar GTQ {{ dinero.num(p.totales.porCobrar) }} · Total GTQ {{ dinero.num(p.totales.total) }}</td></tr></tfoot></table>
+{% endblock %}

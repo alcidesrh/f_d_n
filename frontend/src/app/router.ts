@@ -128,6 +128,36 @@ export const router = createRouter({
       },
     },
     {
+      path: "/encomiendas/entregar",
+      name: "encomienda-entregar",
+      component: () => import("@/features/encomienda/EntregarEncomiendasPage.vue"),
+      meta: {
+        title: "Entregar encomiendas",
+        label: "Entregar",
+        icon: "handshake-outline",
+      },
+    },
+    {
+      path: "/encomiendas/pendientes-envio",
+      name: "encomienda-pendientes-envio",
+      component: () => import("@/features/encomienda/PendientesEnvioPage.vue"),
+      meta: {
+        title: "Encomiendas pendientes de envío",
+        label: "Pendientes de envío",
+        icon: "pending-actions",
+      },
+    },
+    {
+      path: "/encomiendas/especiales",
+      name: "encomienda-especiales",
+      component: () => import("@/features/encomienda/EspecialesPage.vue"),
+      meta: {
+        title: "Encomiendas especiales",
+        label: "Especiales",
+        icon: "category-outline",
+      },
+    },
+    {
       path: "/salidas",
       name: "salidas",
       component: () => import("@/features/salida/SalidasPage.vue"),
@@ -288,6 +318,71 @@ export const router = createRouter({
         title: "Boleto Manifiesto Piloto",
         label: "Boleto Manifiesto Piloto",
         icon: "sports-motorsports-outline",
+      },
+    },
+    {
+      path: "/reporte/encomienda-manifiesto",
+      name: "reporte-encomienda-manifiesto",
+      component: () => import("@/features/reporte/ManifiestoEncomiendasPage.vue"),
+      meta: {
+        title: "Manifiesto de encomiendas",
+        label: "Encomienda Manifiesto",
+        icon: "local-shipping-outline",
+      },
+    },
+    {
+      path: "/reporte/encomienda-cuadre",
+      name: "reporte-encomienda-cuadre",
+      component: () => import("@/features/reporte/ReporteEncomiendaPage.vue"),
+      props: { tipo: "cuadre" },
+      meta: {
+        title: "Cuadre de encomiendas",
+        label: "Encomienda Cuadre",
+        icon: "request-quote-outline",
+      },
+    },
+    {
+      path: "/reporte/encomienda-detalle-factura",
+      name: "reporte-encomienda-detalle-factura",
+      component: () => import("@/features/reporte/ReporteEncomiendaPage.vue"),
+      props: { tipo: "detalle-factura" },
+      meta: {
+        title: "Detalle de factura de encomiendas",
+        label: "Encomienda Detalle Factura",
+        icon: "receipt-long-outline",
+      },
+    },
+    {
+      path: "/reporte/encomienda-detalle-general",
+      name: "reporte-encomienda-detalle-general",
+      component: () => import("@/features/reporte/ReporteEncomiendaPage.vue"),
+      props: { tipo: "detalle-general" },
+      meta: {
+        title: "Detalle general de encomiendas",
+        label: "Encomienda Detalle General",
+        icon: "list-alt-outline",
+      },
+    },
+    {
+      path: "/reporte/encomienda-guia-interna",
+      name: "reporte-encomienda-guia-interna",
+      component: () => import("@/features/reporte/ReporteEncomiendaPage.vue"),
+      props: { tipo: "guia-interna" },
+      meta: {
+        title: "Detalle de guías internas",
+        label: "Encomienda Guía Interna",
+        icon: "assignment-ind-outline",
+      },
+    },
+    {
+      path: "/reporte/encomienda-pendientes-entrega",
+      name: "reporte-encomienda-pendientes-entrega",
+      component: () => import("@/features/reporte/ReporteEncomiendaPage.vue"),
+      props: { tipo: "pendientes-entrega" },
+      meta: {
+        title: "Encomiendas pendientes de entregar",
+        label: "Encomienda Pendientes de Entrega",
+        icon: "pending-actions",
       },
     },
     {

@@ -15,6 +15,8 @@ enum OperacionEncomienda: string implements Operacion
     case DESEMBARCADA = "desembarcada";
     case ENTREGADA = "entregada";
     case ANULADA = "anulada";
+    /** Cambió la ruta mientras esperaba en bodega (pendientes de envío). */
+    case RUTA_CAMBIADA = "ruta_cambiada";
 
     public static function deEstado(EstadoEncomienda $estado): self
     {
@@ -30,6 +32,7 @@ enum OperacionEncomienda: string implements Operacion
             self::DESEMBARCADA => "Desembarcada",
             self::ENTREGADA => "Entregada",
             self::ANULADA => "Encomienda anulada",
+            self::RUTA_CAMBIADA => "Cambio de ruta",
         };
     }
 }

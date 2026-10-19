@@ -4,6 +4,7 @@ namespace App\Migration;
 
 use App\Entity\Enum\EstadoBoletoAsiento;
 use App\Migration\Salida\DependenciasLegado;
+use App\Migration\Salida\EncomiendasLegado;
 use App\Migration\Salida\InferenciaBus;
 use App\Migration\Salida\RutaLegada;
 use App\Migration\Salida\RutasLegado;
@@ -26,7 +27,9 @@ use Symfony\Component\DependencyInjection\Attribute\Target;
  *   → por boleto: estaciones y trayecto del tramo, pasajero y comprador
  *     (tipo de documento, nacionalidad), usuario (estación o agencia),
  *     agencia, tipo de pago, moneda, factura certificada → boleto_venta
- *     → boleto_asiento; al final, el total de cada venta.
+ *     → boleto_asiento; al final, el total de cada venta
+ *   → las encomiendas que viajaron en ella, con su árbol (clientes,
+ *     especial, factura, boleto, artículo y bitácora; `EncomiendasLegado`).
  *
  * Es idempotente: una salida ya migrada se completa (estado, bus que se le
  * asignó después, boletos que faltan) en vez de saltarse. Lo que el modelo
@@ -75,6 +78,7 @@ class Migrador
         private RutasLegado $rutas,
         private Horarios $horarios,
         private Trayectos $trayectos,
+        private EncomiendasLegado $encomiendas,
     ) {
         $this->oldPdo->setAttribute(
             \PDO::ATTR_ERRMODE,
@@ -136,6 +140,7 @@ class Migrador
                 $contadores = $antes;
                 $this->dependencias->restaurar($marca);
                 $this->rutas->olvidar();
+                $this->encomiendas->olvidar();
                 $this->ventasPorFactura = $ventas;
                 $contadores["errores"]++;
                 if ($output) {
@@ -281,6 +286,16 @@ class Migrador
             $busId,
             $empresaId,
             $contadores,
+        );
+
+        $this->encomiendas->migrarDeSalida(
+            (int) $salida["id"],
+            $salidaId,
+            $empresaId,
+            $contadores,
+            function (string $motivo, string $ejemplo) use (&$contadores): void {
+                $this->omitir($contadores, $motivo, $ejemplo);
+            },
         );
     }
 
@@ -915,6 +930,9 @@ class Migrador
             "boleto_asiento" => 0,
             "boleto_venta" => 0,
             "factura" => 0,
+            "encomienda" => 0,
+            "encomienda_actualizada" => 0,
+            "encomienda_bitacora" => 0,
             "boleto_tramo_fuera_de_ruta" => 0,
             "errores" => 0,
         ];

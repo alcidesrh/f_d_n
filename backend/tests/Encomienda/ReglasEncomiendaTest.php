@@ -71,6 +71,16 @@ final class ReglasEncomiendaTest extends TestCase
         $this->assertSame("otra_estacion", $this->codigo(fn() => ReglasEncomienda::exigirEntregable(EstadoEncomienda::DESEMBARCADA, self::FLORES, self::FLORES, self::GUATE)));
     }
 
+    public function testSeEntregaEnTransitoSiSuSalidaLlegaAlDestino(): void
+    {
+        // El bus llegó y nadie la desembarcó: se entrega igual (se desembarca al entregarla).
+        ReglasEncomienda::exigirEntregable(EstadoEncomienda::TRANSITO, null, self::FLORES, self::FLORES, self::PARADAS);
+
+        // Su salida no pasa por el destino (hará transbordo) o todavía no salió.
+        $this->assertSame("estado", $this->codigo(fn() => ReglasEncomienda::exigirEntregable(EstadoEncomienda::TRANSITO, null, self::FLORES, self::FLORES, [self::GUATE, self::RIO_DULCE])));
+        $this->assertSame("estado", $this->codigo(fn() => ReglasEncomienda::exigirEntregable(EstadoEncomienda::EMBARCADA, null, self::FLORES, self::FLORES, self::PARADAS)));
+    }
+
     public function testSeAnulaSoloSiNoHaViajado(): void
     {
         ReglasEncomienda::exigirAnulable(EstadoEncomienda::RECIBIDA, ModalidadEncomienda::PAGADA, self::GUATE, self::GUATE, self::GUATE);

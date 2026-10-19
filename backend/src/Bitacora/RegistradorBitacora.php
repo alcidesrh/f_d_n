@@ -127,6 +127,10 @@ final class RegistradorBitacora implements ResetInterface
                 "a" => $nuevo->value,
                 "salida" => $nuevo->aBordo() || $nuevo === EstadoEncomienda::DESEMBARCADA ? self::salida($e->getSalida()) : null,
             ]);
+        } elseif ($e instanceof Encomienda && $args->hasChangedField("ruta")) {
+            $this->escribir($conexion, $e, (int) $e->getId(), OperacionEncomienda::RUTA_CAMBIADA, [
+                "ruta" => $e->getRuta()?->getNombre(),
+            ]);
         } elseif ($e instanceof BoletoAsiento && $args->hasChangedField("estado")) {
             $operacion = match (self::estado(EstadoBoletoAsiento::class, $args->getNewValue("estado"))) {
                 EstadoBoletoAsiento::ANULADO => OperacionBoleto::ANULADO,

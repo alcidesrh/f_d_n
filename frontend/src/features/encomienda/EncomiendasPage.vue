@@ -252,7 +252,7 @@ watch(consulta, cargar);
 // —— Selección y acciones ——
 const seleccion = computed(() => new Set(elegida.value ? [String(elegida.value.id)] : []));
 const claseFila = (r: unknown) => ({ "fila-cerrada": ["entregada", "anulada"].includes((r as FilaEncomienda).estado) });
-const sinPermisos = { ver: false, registrar: false, interna: false, embarcar: false, entregar: false, anular: false, sinFactura: false };
+const sinPermisos = { ver: false, registrar: false, interna: false, embarcar: false, entregar: false, anular: false, especiales: false, sinFactura: false };
 const acciones = computed(() => disponibilidad(elegida.value, contexto.value?.permisos ?? sinPermisos, contexto.value?.estacion?.id ?? null));
 function elegir(e: FilaEncomienda) {
   elegida.value = elegida.value?.id === e.id ? null : e;

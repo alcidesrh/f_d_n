@@ -1,0 +1,100 @@
+{# Cuadre de encomiendas de un día. Datos: c = CuadreEncomiendas, dinero. #}
+{% extends 'reporte/_base.html.twig' %}
+{% set titulo = 'Cuadre de encomiendas' %}
+
+{% block ficha %}
+<table class="ficha">
+  <tr>
+    <td style="width:22%"><div class="lbl">Fecha</div><div class="val">{{ c.fecha|date('d/m/Y') }}</div></td>
+    <td style="width:30%"><div class="lbl">Estación</div><div class="val">{{ c.estacion ?? 'Todas las estaciones' }}</div></td>
+    <td style="width:24%"><div class="lbl">Empresa</div><div class="val">{{ c.empresa ?? 'Todas' }}</div></td>
+    <td style="width:24%"><div class="lbl">Ingreso del día</div><div class="val">GTQ {{ dinero.num(c.ingreso) }}</div></td>
+  </tr>
+</table>
+<table class="cifras"><tr>
+  <td><div class="lbl">Facturado al recibir</div><div class="n">GTQ {{ dinero.num(c.totalUsuarios.facturado) }}</div><div class="muted">{{ c.totalUsuarios.facturadas }} encomiendas</div></td>
+  <td><div class="lbl">Cobrado al entregar</div><div class="n">GTQ {{ dinero.num(c.totalUsuarios.cobrado) }}</div><div class="muted">{{ c.totalUsuarios.cobradas }} encomiendas</div></td>
+  <td><div class="lbl">Registrado por cobrar</div><div class="n">GTQ {{ dinero.num(c.totalUsuarios.porCobrar) }}</div><div class="muted">{{ c.totalUsuarios.porCobrarCantidad }} encomiendas</div></td>
+  <td><div class="lbl">Guías internas</div><div class="n">{{ c.totalUsuarios.internas }}</div></td>
+</tr></table>
+{% endblock %}
+
+{% block cuerpo %}
+<div class="seccion">Encomiendas por usuario</div>
+<table class="datos">
+  <thead><tr><th>Usuario</th><th>Nombre</th><th class="der">Facturado</th><th class="der">Cobrado al entregar</th><th class="der">Por cobrar</th><th class="centro">Guías internas</th></tr></thead>
+  <tbody>
+  {% for u in c.usuarios %}
+    <tr class="{{ loop.index is even ? 'par' : '' }}">
+      <td><b>{{ u.usuario }}</b></td><td>{{ u.nombre }}</td>
+      <td class="der num">GTQ {{ dinero.num(u.facturado) }} ({{ u.facturadas }})</td>
+      <td class="der num">GTQ {{ dinero.num(u.cobrado) }} ({{ u.cobradas }})</td>
+      <td class="der num">GTQ {{ dinero.num(u.porCobrar) }} ({{ u.porCobrarCantidad }})</td>
+      <td class="centro">{{ u.internas }}</td>
+    </tr>
+  {% else %}
+    <tr class="vacio"><td colspan="6">Sin movimiento.</td></tr>
+  {% endfor %}
+  </tbody>
+  <tfoot><tr class="total"><td colspan="2">Totales</td>
+    <td class="der num">GTQ {{ dinero.num(c.totalUsuarios.facturado) }} ({{ c.totalUsuarios.facturadas }})</td>
+    <td class="der num">GTQ {{ dinero.num(c.totalUsuarios.cobrado) }} ({{ c.totalUsuarios.cobradas }})</td>
+    <td class="der num">GTQ {{ dinero.num(c.totalUsuarios.porCobrar) }} ({{ c.totalUsuarios.porCobrarCantidad }})</td>
+    <td class="centro">{{ c.totalUsuarios.internas }}</td></tr></tfoot>
+</table>
+
+<div class="seccion">Encomiendas enviadas por salida</div>
+<table class="datos">
+  <thead><tr><th>Salida</th><th>Hora</th><th>Bus</th><th>Pilotos</th><th>Ruta</th><th class="centro">Cantidad</th><th class="der">Pagado</th><th class="der">Por cobrar</th><th class="der">Total</th></tr></thead>
+  <tbody>
+  {% for s in c.salidas %}
+    <tr class="{{ loop.index is even ? 'par' : '' }}">
+      <td>{{ s.salidaId }}</td><td class="num">{{ s.fecha ? s.fecha|date('H:i') : '—' }}</td><td>{{ s.bus ?? '—' }}</td><td>{{ s.pilotos|join(', ') }}</td><td>{{ s.ruta }}</td>
+      <td class="centro">{{ s.totales.cantidad }}</td>
+      <td class="der num">GTQ {{ dinero.num(s.totales.pagado) }}</td><td class="der num">GTQ {{ dinero.num(s.totales.porCobrar) }}</td><td class="der num">GTQ {{ dinero.num(s.totales.total) }}</td>
+    </tr>
+  {% else %}
+    <tr class="vacio"><td colspan="9">No salieron encomiendas este día.</td></tr>
+  {% endfor %}
+  </tbody>
+  <tfoot><tr class="total"><td colspan="5">Totales</td><td class="centro">{{ c.totalSalidas.cantidad }}</td><td class="der num">GTQ {{ dinero.num(c.totalSalidas.pagado) }}</td><td class="der num">GTQ {{ dinero.num(c.totalSalidas.porCobrar) }}</td><td class="der num">GTQ {{ dinero.num(c.totalSalidas.total) }}</td></tr></tfoot>
+</table>
+
+<div class="seccion">Pendientes de envío del día</div>
+<table class="datos">
+  <thead><tr><th>Encomienda</th><th>Documento</th><th>Destino</th><th>Contenido</th><th class="der">Importe</th></tr></thead>
+  <tbody>
+  {% for l in c.pendientesEnvio %}
+    <tr class="{{ loop.index is even ? 'par' : '' }}"><td class="num"><b>{{ l.codigo }}</b></td><td>{{ l.documento }}</td><td>{{ l.destino }}</td><td>{{ l.contenido }}</td><td class="der num">{{ l.total > 0 ? 'GTQ ' ~ dinero.num(l.total) : 'N/D' }}</td></tr>
+  {% else %}
+    <tr class="vacio"><td colspan="5">Todo lo recibido este día ya salió.</td></tr>
+  {% endfor %}
+  </tbody>
+  <tfoot><tr class="total"><td colspan="4">Cantidad: {{ c.pendientesEnvio|length }}</td><td class="der num">GTQ {{ dinero.num(c.pendientesEnvio|reduce((s, l) => s + l.total, 0)) }}</td></tr></tfoot>
+</table>
+
+<div class="seccion">Por cobrar entregadas (facturadas al entregar)</div>
+<table class="datos">
+  <thead><tr><th>Encomienda</th><th>Recibida</th><th>Origen</th><th>Entregó</th><th>Serie DTE</th><th>Número DTE</th><th>Bus</th><th class="der">Importe</th></tr></thead>
+  <tbody>
+  {% for l in c.cobradas %}
+    <tr class="{{ loop.index is even ? 'par' : '' }}"><td class="num"><b>{{ l.codigo }}</b></td><td class="num">{{ l.creada|date('d/m/Y') }}</td><td>{{ l.origen }}</td><td>{{ l.entregadaPor ?? '—' }}</td><td>{{ l.serie ?? '' }}</td><td class="num">{% if l.dte is not null %}{{ l.dte }}{% else %}<span class="etq etq-cobrar">Pendiente</span>{% endif %}</td><td>{{ l.bus ?? '—' }}</td><td class="der num">GTQ {{ dinero.num(l.total) }}</td></tr>
+  {% else %}
+    <tr class="vacio"><td colspan="8">No se entregaron encomiendas por cobrar.</td></tr>
+  {% endfor %}
+  </tbody>
+  <tfoot><tr class="total"><td colspan="7">Cantidad: {{ c.cobradas|length }}</td><td class="der num">GTQ {{ dinero.num(c.totalUsuarios.cobrado) }}</td></tr></tfoot>
+</table>
+
+<div class="seccion">Encomiendas anuladas</div>
+<table class="datos">
+  <thead><tr><th>Encomienda</th><th>Documento</th><th>Creada por</th><th>Anulada por</th><th>Motivo</th><th class="der">Importe</th></tr></thead>
+  <tbody>
+  {% for l in c.anuladas %}
+    <tr class="{{ loop.index is even ? 'par' : '' }}"><td class="num"><b>{{ l.codigo }}</b></td><td>{{ l.documento }}{% if l.facturaAnulada %} <span class="etq etq-anul">Factura anulada</span>{% endif %}</td><td>{{ l.usuario }}</td><td>{{ l.anuladaPor ?? '—' }}</td><td>{{ l.motivoAnulacion }}</td><td class="der num tachado">GTQ {{ dinero.num(l.total) }}</td></tr>
+  {% else %}
+    <tr class="vacio"><td colspan="6">No se anularon encomiendas.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

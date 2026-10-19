@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { abreviar, aQuery, codigoAId, disponibilidad, errorArticulos, filtroInicial, guias, limpiarArticulos } from '../reglas'
+import { abreviar, antiguedad, aQuery, codigoAId, disponibilidad, errorArticulos, filtroInicial, guias, limpiarArticulos, porDestino, resumenEntrega } from '../reglas'
 import type { FilaEncomienda, PermisosEncomienda } from '../types'
 
-const TODO: PermisosEncomienda = { ver: true, registrar: true, interna: true, embarcar: true, entregar: true, anular: true, sinFactura: true }
+const TODO: PermisosEncomienda = { ver: true, registrar: true, interna: true, embarcar: true, entregar: true, anular: true, especiales: true, sinFactura: true }
 const GUATE = { id: 1, nombre: 'Guatemala' }
 const FLORES = { id: 3, nombre: 'Flores' }
 
@@ -19,6 +19,7 @@ function fila(parcial: Partial<FilaEncomienda>): FilaEncomienda {
     destino: FLORES,
     ubicacion: GUATE,
     salida: null,
+    ruta: null,
     remitente: { id: 1, nombre: 'Ana', nit: 'CF', telefono: null, documento: null },
     destinatario: { id: 2, nombre: 'Luis', nit: 'CF', telefono: null, documento: null },
     bultos: 1,
@@ -116,5 +117,38 @@ describe('sigla del destino sin alias', () => {
     expect(abreviar('Melchor de Mencos')).toBe('MDM')
     expect(abreviar('Poptun, Peten')).toBe('POP')
     expect(abreviar('Petén')).toBe('PET')
+  })
+})
+
+describe('entrega múltiple y pendientes', () => {
+  const PETEN = { id: 9, nombre: 'Poptún' }
+  const filas = [
+    fila({ id: 1, bultos: 2, porCobrar: true, total: { centavos: 4000, moneda: 'GTQ', texto: 'Q 40.00' } }),
+    fila({ id: 2, bultos: 1 }),
+    fila({ id: 3, bultos: 3, porCobrar: true, destino: PETEN, destinatario: { id: 5, nombre: 'Eva', nit: 'CF', telefono: null, documento: null } }),
+  ]
+
+  it('resume lo marcado: bultos, cobro y destinatarios distintos', () => {
+    expect(resumenEntrega(filas, [1, 2])).toMatchObject({ cantidad: 2, bultos: 3, porCobrar: 1, cobrar: 4000 })
+    expect(resumenEntrega(filas, [1, 2]).destinatarios.map((d) => d.nombre)).toEqual(['Luis'])
+    expect(resumenEntrega(filas, [1, 3]).destinatarios).toHaveLength(2)
+    expect(resumenEntrega(filas, []).cantidad).toBe(0)
+  })
+
+  it('cuenta los días de calendario desde que se registró', () => {
+    expect(antiguedad('2026-10-18T23:50:00', new Date(2026, 9, 19, 0, 10))).toBe(1)
+    expect(antiguedad('2026-10-19T08:00:00', new Date(2026, 9, 19, 20, 0))).toBe(0)
+  })
+
+  it('agrupa por destino en orden alfabético', () => {
+    expect(porDestino(filas).map((g) => [g.destino.nombre, g.filas.map((f) => f.id)])).toEqual([
+      ['Flores', [1, 2]],
+      ['Poptún', [3]],
+    ])
+  })
+
+  it('se puede intentar entregar lo que va en tránsito (el backend comprueba la salida)', () => {
+    expect(disponibilidad(fila({ estado: 'transito', ubicacion: null }), TODO, FLORES.id).entregar.habilitada).toBe(true)
+    expect(disponibilidad(fila({ estado: 'embarcada', ubicacion: null }), TODO, FLORES.id).entregar.habilitada).toBe(false)
   })
 })

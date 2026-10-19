@@ -71,6 +71,8 @@ class MigradorIAM {
         ['encomienda.embarcar', 'Encomienda', 'board', 'Encomiendas'],
         ['encomienda.entregar', 'Encomienda', 'deliver', 'Encomiendas'],
         ['encomienda.anular', 'Encomienda', 'void', 'Encomiendas'],
+        ['encomienda.especiales', 'EncomiendaEspecial', 'manage', 'Encomiendas'],
+        ['reporte.encomiendas', 'Reporte', 'parcels', 'Reportes'],
     ];
 
     private const BASE_PERMISOS = [
@@ -92,7 +94,7 @@ class MigradorIAM {
         ],
         'Anulacion y Reasignacion de Boletos' => ['boleto.anular', 'boleto.reasignar', 'boleto.cancelar'],
         'Gestion Usuarios' => ['usuario.ver', 'usuario.editar', 'iam.ver', 'iam.editar'],
-        'Gestion Reportes' => ['reporte.ventas', 'config.ver'],
+        'Gestion Reportes' => ['reporte.ventas', 'reporte.encomiendas', 'config.ver'],
         'Gestion Config' => ['config.ver', 'config.editar', 'empresa.editar', 'ruta.editar', 'tarifa.editar'],
         'Gestion Asientos' => ['asiento.ver'],
         'Venta Taquilla' => ['venta.vender'],
@@ -103,8 +105,9 @@ class MigradorIAM {
         'Gestion Salidas' => ['salida.ver', 'salida.crear', 'salida.editar', 'salida.cancelar', 'salida.eliminar'],
         'Abordaje de Salidas' => ['boleto.chequear', 'salida.abordar', 'salida.iniciar', 'salida.finalizar'],
         'Recepcion de Encomiendas' => ['encomienda.ver', 'encomienda.registrar', 'encomienda.embarcar', 'encomienda.entregar'],
-        'Supervision de Encomiendas' => ['encomienda.ver', 'encomienda.registrar', 'encomienda.interna', 'encomienda.embarcar', 'encomienda.entregar', 'encomienda.anular'],
+        'Supervision de Encomiendas' => ['encomienda.ver', 'encomienda.registrar', 'encomienda.interna', 'encomienda.embarcar', 'encomienda.entregar', 'encomienda.anular', 'encomienda.especiales', 'reporte.encomiendas'],
         'Consulta de Encomiendas' => ['encomienda.ver'],
+        'Catalogo de Encomiendas' => ['encomienda.ver', 'encomienda.especiales'],
     ];
 
     /**
@@ -120,7 +123,7 @@ class MigradorIAM {
         // Menú «Encomienda» (ADR-035).
         'ROLE_RECEPTOR_ENCOMIENDAS' => ['Recepcion de Encomiendas'],
         'ROLE_ENTREGA_MULTIPLE_ENCOMIENDA' => ['Recepcion de Encomiendas'],
-        'ROLE_ENCOMIENDA_REGISTRAR_ESPECIAL' => ['Recepcion de Encomiendas'],
+        'ROLE_ENCOMIENDA_REGISTRAR_ESPECIAL' => ['Recepcion de Encomiendas', 'Catalogo de Encomiendas'],
         'ROLE_SUPERVISOR_ENCOMIENDA' => ['Supervision de Encomiendas'],
         'ROLE_INSPECTOR_ENCOMIENDA' => ['Consulta de Encomiendas'],
     ];

@@ -69,11 +69,21 @@ final class ReglasEncomienda
         }
     }
 
-    /** @throws EncomiendaRechazada */
-    public static function exigirEntregable(EstadoEncomienda $estado, ?int $ubicacion, int $destino, ?int $estacionUsuario): void
+    /**
+     * Se entrega desembarcada en su destino o, como en el legado, en tránsito
+     * en una salida que pasa por su destino (se desembarca al entregarla:
+     * el bus llegó y nadie la bajó en el sistema).
+     *
+     * @param list<int> $paradasSalida enclaves de la ruta de su salida (vacío si no va en ninguna)
+     *
+     * @throws EncomiendaRechazada
+     */
+    public static function exigirEntregable(EstadoEncomienda $estado, ?int $ubicacion, int $destino, ?int $estacionUsuario, array $paradasSalida = []): void
     {
-        if ($estado !== EstadoEncomienda::DESEMBARCADA || $ubicacion !== $destino) {
-            throw new EncomiendaRechazada("Solo se entrega una encomienda desembarcada en su destino.", "estado");
+        $desembarcada = $estado === EstadoEncomienda::DESEMBARCADA && $ubicacion === $destino;
+        $llega = $estado === EstadoEncomienda::TRANSITO && in_array($destino, $paradasSalida, true);
+        if (!$desembarcada && !$llega) {
+            throw new EncomiendaRechazada("Solo se entrega una encomienda desembarcada en su destino o en tránsito hacia él.", "estado");
         }
         if ($estacionUsuario !== null && $estacionUsuario !== $destino) {
             throw new EncomiendaRechazada("La entrega un usuario de la estación de destino.", "otra_estacion", 403);

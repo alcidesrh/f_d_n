@@ -6,11 +6,15 @@ import type {
   CotizacionEncomienda,
   DatosEncomienda,
   EntregaPedido,
+  EspecialAdmin,
+  EspecialPedido,
+  FilaEncomienda,
   PaginaEncomiendas,
   PedidoEncomienda,
   ProcesoSalida,
   ResultadoDesembarque,
   ResultadoEmbarque,
+  ResultadoEntrega,
   RutaOpcion,
   SalidaEstacion,
 } from './types'
@@ -45,3 +49,21 @@ export const fetchSalidasEstacion = (fecha: string, estacion: number | null, des
 
 export const fetchProcesoSalida = (salida: number, estacion: number | null, silent = false) =>
   http.get<ProcesoSalida>(`${BASE}/salidas/${salida}${estacion ? `?estacion=${estacion}` : ''}`, { silent })
+
+/** Entrega múltiple: las mismas condiciones para todas (quien retira, a quién se factura). */
+export const entregarEncomiendas = (encomiendas: number[], pedido: EntregaPedido) => http.post<ResultadoEntrega>(`${BASE}/entregar`, { encomiendas, ...pedido })
+
+export const cambiarRutaEncomienda = (id: number, ruta: number) => http.post<DatosEncomienda>(`${BASE}/${id}/ruta`, { ruta })
+
+const conEstacion = (estacion: number | null, extra = '') => (estacion ? `?estacion=${estacion}${extra ? `&${extra}` : ''}` : extra ? `?${extra}` : '')
+
+export const fetchPendientesEnvio = (estacion: number | null, silent = false) => http.get<FilaEncomienda[]>(`${BASE}/pendientes-envio${conEstacion(estacion)}`, { silent })
+
+export const fetchPendientesEntrega = (estacion: number | null, q = '', silent = false) =>
+  http.get<FilaEncomienda[]>(`${BASE}/pendientes-entrega${conEstacion(estacion, q.trim() ? `q=${encodeURIComponent(q.trim())}` : '')}`, { silent })
+
+export const fetchEspeciales = () => http.get<EspecialAdmin[]>(`${BASE}/especiales`)
+
+export const crearEspecial = (pedido: EspecialPedido) => http.post<EspecialAdmin>(`${BASE}/especiales`, pedido)
+
+export const editarEspecial = (id: number, pedido: EspecialPedido) => http.post<EspecialAdmin>(`${BASE}/especiales/${id}`, pedido)

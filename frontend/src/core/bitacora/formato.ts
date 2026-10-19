@@ -50,6 +50,7 @@ export function lineasDeDetalle(tipo: TipoBitacora, e: Pick<EntradaBitacora, 'op
       lineas.push(Number(d.total) > 0 ? quetzales(d.total) : null)
       lineas.push(d.venta ? `Con la venta ${d.venta}` : null)
     }
+    if (e.operacion === 'ruta_cambiada') lineas.push(`Ruta: ${texto(d.antes) ?? 'sin ruta'} → ${texto(d.ruta) ?? 'sin ruta'}`)
     lineas.push(texto(d.estacion) ? `En ${d.estacion}` : null)
     lineas.push(texto(d.salida) ? `Salida ${d.salida}` : null)
     lineas.push(texto(d.retira) ? `La retiró ${d.retira}` : null)

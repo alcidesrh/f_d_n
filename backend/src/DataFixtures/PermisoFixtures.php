@@ -30,8 +30,9 @@ class PermisoFixtures extends Fixture
             'Gestion Salidas'  => ['salida.ver', 'salida.crear', 'salida.editar', 'salida.cancelar', 'salida.eliminar'],
             'Abordaje de Salidas' => ['boleto.chequear', 'salida.abordar', 'salida.iniciar', 'salida.finalizar'],
             'Recepcion de Encomiendas' => ['encomienda.ver', 'encomienda.registrar', 'encomienda.embarcar', 'encomienda.entregar'],
-            'Supervision de Encomiendas' => ['encomienda.ver', 'encomienda.registrar', 'encomienda.interna', 'encomienda.embarcar', 'encomienda.entregar', 'encomienda.anular'],
+            'Supervision de Encomiendas' => ['encomienda.ver', 'encomienda.registrar', 'encomienda.interna', 'encomienda.embarcar', 'encomienda.entregar', 'encomienda.anular', 'encomienda.especiales', 'reporte.encomiendas'],
             'Consulta de Encomiendas' => ['encomienda.ver'],
+            'Catalogo de Encomiendas' => ['encomienda.ver', 'encomienda.especiales'],
         ];
 
         foreach ($permisos as $nombre => $actionCodes) {

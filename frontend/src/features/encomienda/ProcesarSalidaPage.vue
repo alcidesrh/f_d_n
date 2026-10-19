@@ -64,6 +64,9 @@
           <InputText ref="lector" v-model="codigo" placeholder="Escanee o escriba el código y Enter" fluid @keydown.enter.prevent="escanear" />
         </IconField>
         <span v-if="avisoLector" class="text-sm" :class="avisoLector.ok ? 'text-green-700' : 'text-red-600'" aria-live="polite">{{ avisoLector.texto }}</span>
+        <Button class="ml-auto" label="Manifiesto" size="small" severity="secondary" outlined :loading="descargando" v-tooltip.top="'Manifiesto de carga de la salida (PDF)'" @click="manifiesto">
+          <template #icon><icon name="picture-as-pdf-outline" class="mr-1.5" color="text-primary" /></template>
+        </Button>
       </section>
 
       <Skeleton v-if="cargandoProceso && !proceso" height="12rem" />
@@ -107,6 +110,7 @@ import type { ContextoEncomienda, Fallida, ProcesoSalida, SalidaEstacion } from 
 import { errorVenta } from "@/core/venta/api";
 import { diaISO, hora } from "@/core/venta/modelo";
 import { notify } from "@/core/notify";
+import { fetchArchivoEncomienda } from "@/core/reporte/encomienda";
 import ListaProceso from "./ListaProceso.vue";
 
 const contexto = shallowRef<ContextoEncomienda | null>(null);
@@ -124,6 +128,7 @@ const fallidas = ref<Fallida[]>([]);
 const codigo = ref("");
 const avisoLector = ref<{ ok: boolean; texto: string } | null>(null);
 const lector = ref<{ $el: HTMLInputElement } | null>(null);
+const descargando = ref(false);
 
 const estacionId = computed(() => contexto.value?.estacion?.id ?? estacion.value);
 const nombreEstacion = computed(() => contexto.value?.estacion?.nombre ?? contexto.value?.estaciones.find((e) => e.id === estacion.value)?.nombre ?? "la estación");
@@ -238,6 +243,21 @@ async function desembarcar() {
     notify.error(errorVenta(e)?.error ?? "No se pudo desembarcar.");
   } finally {
     enviando.value = null;
+  }
+}
+
+/** Manifiesto de carga de la salida elegida, en otra pestaña. */
+async function manifiesto() {
+  if (!salidaId.value) return;
+  descargando.value = true;
+  try {
+    const url = URL.createObjectURL(await fetchArchivoEncomienda("manifiesto", `salida=${salidaId.value}`, "pdf"));
+    window.open(url, "_blank", "noopener");
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  } catch (e) {
+    notify.error(e instanceof Error && e.message ? e.message : "No se pudo generar el manifiesto.");
+  } finally {
+    descargando.value = false;
   }
 }
 

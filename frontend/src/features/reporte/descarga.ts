@@ -16,6 +16,12 @@ export async function obtenerReporte(reporte: ReporteId, query: string, formato:
 export async function generarReporte(reporte: ReporteId, query: string, formato: FormatoReporte, nombre: string): Promise<boolean> {
   const blob = await obtenerReporte(reporte, query, formato)
   if (!blob) return false
+  entregarArchivo(blob, formato, nombre)
+  return true
+}
+
+/** El PDF se abre en otra pestaña; el Excel se descarga como `nombre.formato`. */
+export function entregarArchivo(blob: Blob, formato: FormatoReporte, nombre: string): void {
   const url = URL.createObjectURL(blob)
   if (formato === 'pdf') {
     window.open(url, '_blank', 'noopener')
@@ -26,5 +32,4 @@ export async function generarReporte(reporte: ReporteId, query: string, formato:
     a.click()
   }
   setTimeout(() => URL.revokeObjectURL(url), 60_000)
-  return true
 }

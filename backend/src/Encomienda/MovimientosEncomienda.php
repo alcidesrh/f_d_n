@@ -113,6 +113,7 @@ final class MovimientosEncomienda
             $encomienda->getUbicacion()?->getId(),
             (int) $encomienda->getDestino()?->getId(),
             $usuario->getEstacion()?->getId(),
+            $encomienda->getSalida() !== null ? RutasEncomienda::idsDeSalida($encomienda->getSalida()) : [],
         );
         $receptor = $s->receptorId !== null
             ? ($this->em->find(Cliente::class, $s->receptorId) ?? throw new EncomiendaRechazada("El cliente que retira no existe."))
@@ -153,6 +154,12 @@ final class MovimientosEncomienda
 
         $this->transaccion->ejecutar(function () use ($encomienda, $receptor, $ahora) {
             $this->em->lock($encomienda, LockMode::PESSIMISTIC_WRITE);
+            if ($encomienda->getEstado()->aBordo()) {
+                // Llegó en tránsito: primero se desembarca en su destino (queda en la bitácora).
+                $this->bitacora->anotar($encomienda, ["estacion" => $encomienda->getDestino()?->getNombre()]);
+                $encomienda->setEstado(EstadoEncomienda::DESEMBARCADA)->setUbicacion($encomienda->getDestino());
+                $this->em->flush();
+            }
             $this->bitacora->anotar($encomienda, ["estacion" => $encomienda->getUbicacion()?->getNombre(), "retira" => $receptor?->getNombreCompleto()]);
             $encomienda
                 ->setEstado(EstadoEncomienda::ENTREGADA)
@@ -162,6 +169,84 @@ final class MovimientosEncomienda
         });
 
         return $encomienda;
+    }
+
+    /**
+     * Entrega varias a la misma persona (la «entrega múltiple» del legado).
+     * Cada una por su cuenta: la por cobrar con su propia factura al mismo
+     * cliente; las que no se pueden quedan en `fallidas` con el motivo (y,
+     * si falló el certificador, `recuperable` para reintentarlas).
+     *
+     * @param list<int> $ids
+     * @param callable(Encomienda): bool $puedeVer
+     *
+     * @return array{entregadas: list<int>, fallidas: list<array<string, mixed>>}
+     */
+    public function entregarVarias(array $ids, EntregaEncomienda $s, Usuario $usuario, bool $permiteSinFactura, callable $puedeVer): array
+    {
+        $ids = array_values(array_unique(array_filter($ids, static fn($id) => is_int($id) && $id > 0)));
+        if ($ids === []) {
+            throw new EncomiendaRechazada("Elija al menos una encomienda.");
+        }
+        if (count($ids) > 100) {
+            throw new EncomiendaRechazada("Demasiadas encomiendas en una sola entrega.");
+        }
+        $hechas = [];
+        $fallidas = [];
+        foreach ($ids as $id) {
+            $e = $this->em->find(Encomienda::class, $id);
+            if ($e === null || !$puedeVer($e)) {
+                $fallidas[] = ["id" => $id, "codigo" => sprintf("%08d", $id), "error" => "No existe o no es de su empresa."];
+                continue;
+            }
+            try {
+                $this->entregar($id, $s, $usuario, $permiteSinFactura);
+                $hechas[] = $id;
+            } catch (FacturacionFallida $x) {
+                $fallidas[] = ["id" => $id, "codigo" => $e->getCodigo(), "error" => $x->getMessage(), "facturacion" => true, "recuperable" => (bool) ($x->detalle["recuperable"] ?? false)];
+            } catch (EncomiendaRechazada $x) {
+                $fallidas[] = ["id" => $id, "codigo" => $e->getCodigo(), "error" => $x->getMessage()];
+            }
+        }
+
+        return ["entregadas" => $hechas, "fallidas" => $fallidas];
+    }
+
+    /**
+     * Cambia la ruta por la que viajará una encomienda que espera en bodega
+     * (pendientes de envío): una que pase por donde está y luego por su
+     * destino. No cambia la empresa (ni su factura).
+     *
+     * @throws EncomiendaRechazada
+     */
+    public function cambiarRuta(int $id, int $rutaId, Usuario $usuario, RutasEncomienda $rutas): Encomienda
+    {
+        return $this->transaccion->ejecutar(function () use ($id, $rutaId, $usuario, $rutas) {
+            $e = $this->em->find(Encomienda::class, $id, LockMode::PESSIMISTIC_WRITE) ?? throw new EncomiendaRechazada("La encomienda no existe.", "no_encontrado", 404);
+            $aqui = $e->getUbicacion()?->getId();
+            if (!$e->getEstado()->enBodega() || $aqui === null) {
+                throw new EncomiendaRechazada("Solo se cambia la ruta de una encomienda en bodega.", "estado");
+            }
+            $estacion = $usuario->getEstacion()?->getId();
+            if ($estacion !== null && $estacion !== $aqui) {
+                throw new EncomiendaRechazada("La encomienda está en la bodega de otra estación.", "otra_estacion", 403);
+            }
+            $ruta = null;
+            foreach ($rutas->entre($aqui, (int) $e->getDestino()?->getId()) as $r) {
+                if ($r->getId() === $rutaId) {
+                    $ruta = $r;
+                }
+            }
+            if ($ruta === null) {
+                throw new EncomiendaRechazada("Esa ruta no pasa por donde está la encomienda y luego por su destino.", "fuera_de_ruta");
+            }
+            if ($ruta->getId() !== $e->getRuta()?->getId()) {
+                $this->bitacora->anotar($e, ["estacion" => $e->getUbicacion()?->getNombre(), "antes" => $e->getRuta()?->getNombre()]);
+                $e->setRuta($ruta);
+            }
+
+            return $e;
+        });
     }
 
     /**

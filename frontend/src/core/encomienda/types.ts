@@ -35,6 +35,8 @@ export interface PermisosEncomienda {
   embarcar: boolean
   entregar: boolean
   anular: boolean
+  /** Administrar el catálogo de especiales. */
+  especiales: boolean
   sinFactura: boolean
 }
 
@@ -180,6 +182,8 @@ export interface FilaEncomienda {
   destino: Opcion
   ubicacion: Opcion | null
   salida: { id: number; fecha: string; bus: string | null } | null
+  /** La ruta por la que viaja (la elegida al registrarla). */
+  ruta: Opcion | null
   remitente: ClienteResumen
   destinatario: ClienteResumen
   bultos: number
@@ -256,4 +260,31 @@ export interface EntregaPedido {
   tipoPago?: number | null
   moneda?: number | null
   sinFacturaElectronica?: boolean
+}
+
+/** Una que no se entregó: con `facturacion`, falló el certificador (y `recuperable` si vale reintentar). */
+export interface FallidaEntrega extends Fallida {
+  facturacion?: boolean
+  recuperable?: boolean
+}
+
+export interface ResultadoEntrega {
+  entregadas: number[]
+  fallidas: FallidaEntrega[]
+}
+
+/** Un especial del catálogo, para administrarlo. */
+export interface EspecialAdmin extends EspecialOpcion {
+  activo: boolean
+  /** Vino del legado (`app:encomienda:legado`). */
+  legado: boolean
+}
+
+export interface EspecialPedido {
+  nombre: string
+  descripcion: string | null
+  /** En quetzales. */
+  precio: number
+  permitePorCobrar: boolean
+  activo: boolean
 }

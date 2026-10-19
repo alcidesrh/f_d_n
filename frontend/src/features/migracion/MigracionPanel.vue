@@ -343,7 +343,7 @@ function confirmarSalidasRango(): void {
   const hasta = aYmd(salidasHasta.value)
   if (!desde || !hasta) return
   conConfirmacion(
-    `Migrar todas las salidas del ${desde} al ${hasta} (también canceladas y finalizadas)? Se crea lo que falte de cada una: empresa, ruta con sus paradas, bus con su croquis, clientes, usuarios, ventas, facturas y boletos. Las ya migradas se completan.`,
+    `Migrar todas las salidas del ${desde} al ${hasta} (también canceladas y finalizadas)? Se crea lo que falte de cada una: empresa, ruta con sus paradas, bus con su croquis, clientes, usuarios, ventas, facturas, boletos y las encomiendas que viajaron en ellas. Las ya migradas se completan.`,
     () => iniciar({ tipo: 'salidas', desde, hasta }),
   )
 }

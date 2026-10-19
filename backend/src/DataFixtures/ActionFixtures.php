@@ -59,6 +59,8 @@ class ActionFixtures extends Fixture
             ['codigo' => 'encomienda.embarcar',  'recurso' => 'Encomienda', 'operacion' => 'board',    'grupo' => 'Encomiendas', 'nombre' => 'Embarcar y desembarcar encomiendas'],
             ['codigo' => 'encomienda.entregar',  'recurso' => 'Encomienda', 'operacion' => 'deliver',  'grupo' => 'Encomiendas', 'nombre' => 'Entregar encomiendas'],
             ['codigo' => 'encomienda.anular',    'recurso' => 'Encomienda', 'operacion' => 'void',     'grupo' => 'Encomiendas', 'nombre' => 'Anular encomiendas'],
+            ['codigo' => 'encomienda.especiales', 'recurso' => 'EncomiendaEspecial', 'operacion' => 'manage', 'grupo' => 'Encomiendas', 'nombre' => 'Administrar el catálogo de encomiendas especiales'],
+            ['codigo' => 'reporte.encomiendas',  'recurso' => 'Reporte',    'operacion' => 'parcels',  'grupo' => 'Reportes',    'nombre' => 'Reportes de caja de encomiendas'],
             ['codigo' => 'agencia.acreditar', 'recurso' => 'Agencia', 'operacion' => 'credit', 'grupo' => 'Venta', 'nombre' => 'Acreditar/rechazar depósitos y ajustar saldo de agencias'],
             ['codigo' => 'agencia.depositar', 'recurso' => 'Agencia', 'operacion' => 'deposit', 'grupo' => 'Venta', 'nombre' => 'Registrar depósitos y consultar saldos de agencias'],
             // Gestión de salidas (ADR-024)
