@@ -98,7 +98,7 @@
             <span class="shrink-0 font-medium tabular-nums">{{ f(row).importe.texto }}</span>
           </div>
           <div class="truncate text-xs text-muted-color">{{ texto(f(row), 'bono') }} de bono · {{ f(row).creadoPor ?? '—' }}</div>
-          <div v-if="f(row).motivoRechazo" class="truncate text-xs text-red-600 dark:text-red-400">{{ f(row).motivoRechazo }}</div>
+          <div v-if="f(row).motivoRechazo" class="truncate text-xs text-red-600">{{ f(row).motivoRechazo }}</div>
         </div>
       </template>
       <template #empty>

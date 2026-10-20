@@ -231,10 +231,9 @@ onBeforeUnmount(() => {
   --estado-info: #2a78d6;
   --estado-generico: var(--p-emerald-500);
 }
+/* Las series no cambian: el tono 500 es el mismo en ambos modos (la rampa
+   invertida lo conserva) y cada canal tiene un solo color, como en el croquis. */
 .dark .tablero {
-  --serie-estacion: #3987e5;
-  --serie-agencia: #d95926;
-  --serie-web: #199e70;
   --linea-referencia: #a3a29b;
   --secuencial-min: #1b2636;
   --secuencial-max: #9ec5f4;

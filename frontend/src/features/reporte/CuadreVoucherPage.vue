@@ -22,7 +22,7 @@
     </div>
 
     <template #acciones>
-      <Button :disabled="!!problema || !opciones" :loading="generando" @click="generar" :label="adjuntar ? 'Vista previa PDF' : 'Generar PDF'" class="shrink-0 whitespace-nowrap"><template #icon><icon name="picture-as-pdf-outline" class="mr-1.5" color="text-white" /></template></Button>
+      <Button :disabled="!!problema || !opciones" :loading="generando" @click="generar" :label="adjuntar ? 'Vista previa PDF' : 'Generar PDF'" class="shrink-0 whitespace-nowrap"><template #icon><icon name="picture-as-pdf-outline" class="mr-1.5" color="text-inherit" /></template></Button>
     </template>
 
     <template #resumen>

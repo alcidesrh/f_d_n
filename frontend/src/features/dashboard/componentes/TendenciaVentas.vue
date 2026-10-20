@@ -59,7 +59,7 @@
           <span>{{ rotuloAnterior }}</span>
           <span class="tabular-nums">{{ dinero(cuboActivo.anterior.total, true) }}</span>
         </div>
-        <div v-if="varActiva" class="text-right font-semibold" :class="varActiva.valoracion === 'buena' ? 'text-green-700 dark:text-green-400' : varActiva.valoracion === 'mala' ? 'text-red-700 dark:text-red-400' : ''">
+        <div v-if="varActiva" class="text-right font-semibold" :class="varActiva.valoracion === 'buena' ? 'text-green-700' : varActiva.valoracion === 'mala' ? 'text-red-700' : ''">
           {{ varActiva.texto }}
         </div>
       </div>

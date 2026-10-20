@@ -24,7 +24,7 @@
 
     <template #acciones>
       <Button :label="adjuntar ? 'Vista previa PDF' : 'Generar PDF'" :disabled="!query" :loading="generando" class="shrink-0 whitespace-nowrap" @click="generar">
-        <template #icon><icon name="picture-as-pdf-outline" class="mr-1.5" color="text-white" /></template>
+        <template #icon><icon name="picture-as-pdf-outline" class="mr-1.5" color="text-inherit" /></template>
       </Button>
     </template>
 

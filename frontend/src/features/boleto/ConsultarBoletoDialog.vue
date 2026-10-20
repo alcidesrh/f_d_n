@@ -43,10 +43,10 @@
           <template v-if="b.factura">
             <div v-if="b.factura.uuid" class="break-all text-xs text-muted-color">{{ b.factura.uuid }}</div>
             <div class="text-xs text-muted-color">Receptor {{ b.factura.receptorNit }} · {{ b.factura.receptorNombre }}</div>
-            <div v-if="b.factura.anulada" class="text-xs text-red-600 dark:text-red-400">Anulada {{ fecha(b.factura.anulada) }}<template v-if="b.factura.motivoAnulacion">: {{ b.factura.motivoAnulacion }}</template></div>
+            <div v-if="b.factura.anulada" class="text-xs text-red-600">Anulada {{ fecha(b.factura.anulada) }}<template v-if="b.factura.motivoAnulacion">: {{ b.factura.motivoAnulacion }}</template></div>
             <a v-if="b.factura.urlPdf" :href="b.factura.urlPdf" target="_blank" rel="noopener" class="text-xs">PDF del certificador</a>
           </template>
-          <div v-if="b.venta.errorFacturacion" class="text-xs text-red-600 dark:text-red-400">{{ b.venta.errorFacturacion }}</div>
+          <div v-if="b.venta.errorFacturacion" class="text-xs text-red-600">{{ b.venta.errorFacturacion }}</div>
         </Dato>
         <Dato v-if="b.referenciaExterna || b.autorizacion" titulo="Pago con tarjeta">
           <div v-if="b.autorizacion" class="text-sm">Autorización {{ b.autorizacion }}</div>

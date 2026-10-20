@@ -11,11 +11,11 @@
         <span class="text-xs text-muted-color">trabajaron en el periodo</span>
       </div>
       <div class="cifra">
-        <span class="text-lg font-semibold tabular-nums" :class="{ 'text-red-700 dark:text-red-400': flota.vencidas.length }">{{ flota.vencidas.length }}</span>
+        <span class="text-lg font-semibold tabular-nums" :class="{ 'text-red-700': flota.vencidas.length }">{{ flota.vencidas.length }}</span>
         <span class="text-xs text-muted-color">tarjeta vencida</span>
       </div>
       <div class="cifra">
-        <span class="text-lg font-semibold tabular-nums" :class="{ 'text-amber-700 dark:text-amber-400': flota.porVencer.length }">{{ flota.porVencer.length }}</span>
+        <span class="text-lg font-semibold tabular-nums" :class="{ 'text-amber-700': flota.porVencer.length }">{{ flota.porVencer.length }}</span>
         <span class="text-xs text-muted-color">vence en 30 días</span>
       </div>
     </div>
@@ -26,13 +26,13 @@
       <div v-for="b in lista" :key="b.id" class="bus">
         <icon name="directions-bus-outline" class="text-muted-color" />
         <span class="font-medium">Bus {{ b.codigo }}</span>
-        <span class="ml-auto text-xs tabular-nums" :class="b.vencida ? 'text-red-700 dark:text-red-400' : 'text-amber-700 dark:text-amber-400'">
+        <span class="ml-auto text-xs tabular-nums" :class="b.vencida ? 'text-red-700' : 'text-amber-700'">
           {{ b.vencida ? 'venció' : 'vence' }} {{ fechaCorta(b.vence) }}{{ anio(b.vence) !== anioActual ? ` ${anio(b.vence)}` : '' }}
         </span>
       </div>
       <p v-if="total > lista.length" class="pt-1 text-xs text-muted-color">y {{ total - lista.length }} más.</p>
     </div>
-    <p v-else class="text-sm text-green-700 dark:text-green-400"><icon name="verified-outline" class="mr-1 align-middle" />Todas las tarjetas de operación al día.</p>
+    <p v-else class="text-sm text-green-700"><icon name="verified-outline" class="mr-1 align-middle" />Todas las tarjetas de operación al día.</p>
   </div>
 </template>
 

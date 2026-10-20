@@ -23,7 +23,7 @@
       <RouterLink v-for="s in operacion.proximas" :key="s.id" :to="{ path: '/salidas' }" class="proxima">
         <div class="flex flex-col">
           <span class="tabular-nums font-semibold">{{ hora(s.fecha) }}</span>
-          <span class="text-xs" :class="atrasada(s) ? 'font-semibold text-red-700 dark:text-red-400' : 'text-muted-color'">{{ atrasada(s) ? 'sin abordar' : cuentaRegresiva(s.fecha, ahora) }}</span>
+          <span class="text-xs" :class="atrasada(s) ? 'font-semibold text-red-700' : 'text-muted-color'">{{ atrasada(s) ? 'sin abordar' : cuentaRegresiva(s.fecha, ahora) }}</span>
         </div>
         <div class="min-w-0">
           <div class="truncate text-sm">{{ s.ruta }}</div>

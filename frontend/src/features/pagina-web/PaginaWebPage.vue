@@ -5,15 +5,6 @@
 -->
 <template>
   <div class="flex flex-col gap-4">
-    <Toolbar>
-      <template #start><PageHead /></template>
-      <template #end>
-        <a href="/pagina/" target="_blank" rel="noopener" class="no-underline">
-          <Button label="Ver la página" severity="secondary" text size="small"><template #icon><icon name="open-in-new" class="mr-1" /></template></Button>
-        </a>
-      </template>
-    </Toolbar>
-
     <Tabs v-model:value="pestana">
       <TabList>
         <Tab value="compras"><icon name="receipt-outline" class="mr-1.5" />Compras</Tab>
@@ -33,18 +24,18 @@
 </template>
 
 <script setup lang="ts">
-import { fetchMensajes } from '@/core/pagina-web/api'
-import ComprasPanel from './ComprasPanel.vue'
-import ConfiguracionPanel from './ConfiguracionPanel.vue'
-import MensajesPanel from './MensajesPanel.vue'
+import { fetchMensajes } from "@/core/pagina-web/api";
+import ComprasPanel from "./ComprasPanel.vue";
+import ConfiguracionPanel from "./ConfiguracionPanel.vue";
+import MensajesPanel from "./MensajesPanel.vue";
 
-const route = useRoute()
-const router = useRouter()
-const pestana = ref(String(route.query.pestana ?? 'compras'))
-const sinLeer = ref(0)
+const route = useRoute();
+const router = useRouter();
+const pestana = ref(String(route.query.pestana ?? "compras"));
+const sinLeer = ref(0);
 
-watch(pestana, (p) => void router.replace({ query: { ...route.query, pestana: p } }))
+watch(pestana, (p) => void router.replace({ query: { ...route.query, pestana: p } }));
 onMounted(async () => {
-  sinLeer.value = (await fetchMensajes().catch(() => null))?.sinLeer ?? 0
-})
+  sinLeer.value = (await fetchMensajes().catch(() => null))?.sinLeer ?? 0;
+});
 </script>

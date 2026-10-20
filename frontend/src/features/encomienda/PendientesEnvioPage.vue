@@ -85,7 +85,7 @@
             <RadioButton v-model="cambio.ruta" :value="r.id" name="ruta-encomienda" />
             <span class="min-w-0 flex-1">
               <span class="block truncate">{{ r.nombre }}<span v-if="r.id === cambio.fila.ruta?.id" class="text-xs text-muted-color"> (actual)</span></span>
-              <span class="block truncate text-xs" :class="operaSuEmpresa(r) ? 'text-muted-color' : 'text-amber-700 dark:text-amber-400'">
+              <span class="block truncate text-xs" :class="operaSuEmpresa(r) ? 'text-muted-color' : 'text-amber-700'">
                 {{ operaSuEmpresa(r) ? `Con salidas de ${cambio.fila.empresa.alias ?? cambio.fila.empresa.nombre} esta semana` : "Su empresa no tiene salidas en esta ruta esta semana" }}
               </span>
             </span>

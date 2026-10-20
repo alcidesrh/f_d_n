@@ -31,7 +31,7 @@ const props = defineProps<{ agencias: AgenciaCobertura[] }>()
 type Nivel = 'critico' | 'alerta' | 'bien' | 'sinVenta'
 const nivel = (a: AgenciaCobertura): Nivel => (a.cobertura === null ? 'sinVenta' : a.cobertura < 1 ? 'critico' : a.cobertura < 3 ? 'alerta' : 'bien')
 const ICONOS: Record<Nivel, string> = { critico: 'error', alerta: 'warning', bien: 'check-circle', sinVenta: 'remove' }
-const CLASES: Record<Nivel, string> = { critico: 'text-red-700 dark:text-red-400', alerta: 'text-amber-700 dark:text-amber-400', bien: 'text-green-700 dark:text-green-400', sinVenta: 'text-muted-color' }
+const CLASES: Record<Nivel, string> = { critico: 'text-red-700', alerta: 'text-amber-700', bien: 'text-green-700', sinVenta: 'text-muted-color' }
 const ETIQUETAS: Record<Nivel, string> = { critico: 'recargar ya', alerta: 'avisar', bien: 'cubierta', sinVenta: 'sin venta reciente' }
 const visibles = computed(() => props.agencias.slice(0, 8))
 </script>

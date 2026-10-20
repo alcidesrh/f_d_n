@@ -45,8 +45,9 @@ watch(() => props.foto, () => (fallo.value = false))
   font-size: calc(var(--d) * 0.38);
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: hsl(calc(var(--tono) * 1deg) 55% 32%);
-  background: hsl(calc(var(--tono) * 1deg) 70% 90%);
+  /* Tono generado (no es una rampa del tema): `light-dark()` sigue al `color-scheme` de <html>. */
+  color: light-dark(hsl(calc(var(--tono) * 1deg) 55% 32%), hsl(calc(var(--tono) * 1deg) 70% 85%));
+  background: light-dark(hsl(calc(var(--tono) * 1deg) 70% 90%), hsl(calc(var(--tono) * 1deg) 35% 26%));
   user-select: none;
 }
 .chat-avatar--sistema {
@@ -79,7 +80,7 @@ watch(() => props.foto, () => (fallo.value = false))
   box-shadow: 0 0 0 2px var(--p-content-background);
 }
 .chat-avatar__presencia--on {
-  background: #22c55e;
+  background: var(--p-green-500);
 }
 .chat-avatar--sm .chat-avatar__presencia {
   width: 0.55rem;

@@ -26,7 +26,7 @@
     </div>
 
     <template #acciones>
-      <Button :disabled="!!problema || !opciones" :loading="generando" @click="generar" :label="adjuntar ? 'Generar vista previa' : 'Generar PDF'" class="shrink-0 whitespace-nowrap"><template #icon><icon name="picture-as-pdf-outline" class="mr-1.5" color="text-white" /></template></Button>
+      <Button :disabled="!!problema || !opciones" :loading="generando" @click="generar" :label="adjuntar ? 'Generar vista previa' : 'Generar PDF'" class="shrink-0 whitespace-nowrap"><template #icon><icon name="picture-as-pdf-outline" class="mr-1.5" color="text-inherit" /></template></Button>
       <small v-if="!adjuntar" class="text-muted-color">Se abre en una pestaña nueva.</small>
     </template>
 

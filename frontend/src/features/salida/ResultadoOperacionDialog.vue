@@ -14,7 +14,7 @@
             <span class="font-medium">#{{ s.id }}</span>
             <span>{{ fechaHora(s.fecha) }}</span>
             <span class="text-muted-color">{{ s.ruta }}<template v-if="s.bus"> · bus {{ s.bus }}</template></span>
-            <span v-if="s.asientos" class="text-orange-600 dark:text-orange-400">{{ s.asientos }} asiento(s)</span>
+            <span v-if="s.asientos" class="text-orange-600">{{ s.asientos }} asiento(s)</span>
             <span v-if="s.choque" class="basis-full text-xs text-muted-color">Choca con #{{ s.choque.id }} {{ s.choque.ruta }}, {{ fechaHora(s.choque.fecha) }}</span>
           </li>
         </ul>

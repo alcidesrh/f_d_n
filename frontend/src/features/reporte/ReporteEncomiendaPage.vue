@@ -38,7 +38,7 @@
 
     <template #acciones>
       <Button v-for="f in cfg.formatos" :key="f" :severity="f === 'pdf' ? undefined : 'secondary'" :outlined="f !== 'pdf'" :disabled="!!problema || !!sinPermiso || !opciones" :loading="generando === f" class="shrink-0 whitespace-nowrap" :label="etiquetaBoton(f)" @click="generar(f)">
-        <template #icon><icon :name="f === 'pdf' ? 'picture-as-pdf-outline' : 'table-chart-outline'" class="mr-1.5" :color="f === 'pdf' ? 'text-white' : 'text-primary'" /></template>
+        <template #icon><icon :name="f === 'pdf' ? 'picture-as-pdf-outline' : 'table-chart-outline'" class="mr-1.5" :color="f === 'pdf' ? 'text-inherit' : 'text-primary'" /></template>
       </Button>
     </template>
 

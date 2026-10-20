@@ -32,7 +32,7 @@
       <Button severity="secondary" text :loading="cargando" aria-label="Actualizar" v-tooltip.left="'Actualizar'" @click="cargar()">
         <template #icon><icon name="refresh" /></template>
       </Button>
-      <p v-if="aviso" class="m-0 basis-full text-sm" :class="aviso.ok ? 'text-green-700 dark:text-green-400' : 'text-red-600 dark:text-red-400'" aria-live="polite">{{ aviso.texto }}</p>
+      <p v-if="aviso" class="m-0 basis-full text-sm" :class="aviso.ok ? 'text-green-700' : 'text-red-600'" aria-live="polite">{{ aviso.texto }}</p>
     </section>
 
     <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>

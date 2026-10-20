@@ -70,21 +70,15 @@ defineProps<{
   margin-top: 5px;
 }
 .variacion.buena {
-  color: #0a7a0a;
-  background: rgba(12, 163, 12, 0.12);
+  color: var(--c-success-ink);
+  background: var(--c-success-soft);
 }
 .variacion.mala {
-  color: #b42828;
-  background: rgba(208, 59, 59, 0.12);
+  color: var(--c-danger-ink);
+  background: var(--c-danger-soft);
 }
 .variacion.neutra {
   color: var(--p-text-muted-color);
   background: var(--p-content-hover-background, rgba(127, 127, 127, 0.1));
-}
-.dark .variacion.buena {
-  color: #4ccf4c;
-}
-.dark .variacion.mala {
-  color: #f08080;
 }
 </style>

@@ -36,7 +36,7 @@
               <template #icon><icon name="arrow-back" /></template>
             </Button>
             <Button label="Guardar cambios" size="small" :disabled="!store.canSave" :loading="store.saving" @click="save">
-              <template #icon><icon name="save-outline" class="text-white" /></template>
+              <template #icon><icon name="save-outline" class="text-inherit" /></template>
             </Button>
           </div>
           <Tabs v-model:value="tab">

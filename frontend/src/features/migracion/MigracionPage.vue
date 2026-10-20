@@ -23,7 +23,7 @@
               <span class="text-xs text-muted-color">{{ fila.nombre }}</span>
             </div>
             <div class="flex items-center justify-between text-sm">
-              <span class="text-green-600 dark:text-green-400 font-mono"> {{ formatearNumero(fila.conteo.nuevo) }} nuevo </span>
+              <span class="text-green-600 font-mono"> {{ formatearNumero(fila.conteo.nuevo) }} nuevo </span>
               <span class="text-muted-color font-mono"> {{ formatearNumero(fila.conteo.legado) }} legado </span>
             </div>
             <ProgressBar :value="porcentajeNuevo(fila.conteo)" :show-value="false" class="h-2.5!" />
@@ -47,7 +47,7 @@
                 {{ store.estado.actual.id }}
               </span>
               <span v-if="store.estado.actual.duracion != null" class="text-xs"> ⏱ {{ store.estado.actual.duracion }} s </span>
-              <span v-if="store.estado.actual.solicitud_cancelacion" class="text-xs text-amber-600 dark:text-amber-400"> Cancelación solicitada… </span>
+              <span v-if="store.estado.actual.solicitud_cancelacion" class="text-xs text-amber-600"> Cancelación solicitada… </span>
             </div>
             <div v-if="store.estado.actual.total != null && store.estado.actual.total > 0" class="flex flex-col gap-1">
               <ProgressBar :value="porcentajeProgreso(store.estado.actual)" class="h-2" />

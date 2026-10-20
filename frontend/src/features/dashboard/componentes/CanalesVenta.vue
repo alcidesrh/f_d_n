@@ -36,7 +36,7 @@ const nombre = (c: Canal) => NOMBRES[c]
 const total = computed(() => props.canales.reduce((s, c) => s + c.ingresos, 0))
 const conVenta = computed(() => props.canales.filter((c) => c.ingresos > 0))
 const parte = (c: CanalVentas) => (total.value ? c.ingresos / total.value : 0)
-const clase = (v: string) => (v === 'buena' ? 'text-green-700 dark:text-green-400 font-semibold' : v === 'mala' ? 'text-red-700 dark:text-red-400 font-semibold' : '')
+const clase = (v: string) => (v === 'buena' ? 'text-green-700 font-semibold' : v === 'mala' ? 'text-red-700 font-semibold' : '')
 </script>
 
 <style scoped>

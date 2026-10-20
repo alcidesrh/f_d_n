@@ -7,17 +7,19 @@
 @import "tailwindcss-primeui";
 @import "./primevue/index.css";
 
+@import "./palette.css";
 @import "./tokens.css";
 @import "./fonts.css";
 @import "./header.css";
-@import "./theme-editor.css";
 @import "./sidebar.css";
 @import "./content.css";
 @import "./utilities.css";
 
-/* `dark:` de Tailwind sigue a la clase `.dark` de <html> (no al SO). Las rampas
-   `surface-*`/`primary-*` ya se invierten con el tema (app/theme.ts), así que
-   `dark:` solo se usa con colores fijos de Tailwind (red-*, orange-*…). */
+/* `dark:` de Tailwind sigue a la clase `.dark` de <html> (no al SO). Todas las
+   rampas de color (`surface-*`, `primary-*` y las fijas red-*, amber-*…, ver
+   palette.css) ya se invierten con el tema (app/theme.ts): `dark:` no se usa
+   para colores (se invertirían dos veces), solo para lo que no es una rampa
+   (invertir un logo, opacidad). */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ============================= RESET ============================= */
@@ -40,7 +42,7 @@ html.dark {
   /* Scrollbars, autocompletado y controles nativos oscuros. */
   color-scheme: dark;
   & > body {
-    background-color: #000000;
+    background-color: var(--p-surface-0);
   }
 }
 body {
@@ -106,3 +108,10 @@ button {
    Sin reglas por página aquí. Breakpoints en tokens.css, reglas y patrones
    en docs/frontend/responsive.md; cada regla vive junto a lo que adapta
    (shell en content/header/sidebar.css, PrimeVue en primevue/*.css). */
+
+/* Mapas (Leaflet + OpenStreetMap) en oscuro: se invierten solo los mosaicos
+   (el giro de tono devuelve agua azul y parques verdes); marcadores y trazos
+   están en otras capas y conservan sus colores. */
+html.dark .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9);
+}

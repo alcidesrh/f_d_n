@@ -34,7 +34,7 @@
     </div>
 
     <template #acciones>
-      <Button :disabled="!!problema || !opciones" :loading="generando === 'pdf'" @click="generar('pdf')" :label="adjuntar ? 'Vista previa PDF' : 'Generar PDF'" class="shrink-0 whitespace-nowrap"><template #icon><icon name="picture-as-pdf-outline" class="mr-1.5" color="text-white" /></template></Button>
+      <Button :disabled="!!problema || !opciones" :loading="generando === 'pdf'" @click="generar('pdf')" :label="adjuntar ? 'Vista previa PDF' : 'Generar PDF'" class="shrink-0 whitespace-nowrap"><template #icon><icon name="picture-as-pdf-outline" class="mr-1.5" color="text-inherit" /></template></Button>
       <Button severity="secondary" outlined :disabled="!!problema || !opciones" :loading="generando === 'xlsx'" @click="generar('xlsx')" :label="adjuntar ? 'Generar Excel' : 'Descargar Excel'" class="shrink-0 whitespace-nowrap"><template #icon><icon name="table-chart-outline" class="mr-1.5" color="text-primary" /></template></Button>
     </template>
 

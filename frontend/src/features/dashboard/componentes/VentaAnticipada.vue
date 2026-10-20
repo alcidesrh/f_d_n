@@ -29,7 +29,7 @@
       Ya vendido el <strong>{{ porciento(ritmo.vendida) }}</strong> de los asientos de los próximos {{ ritmo.dias }} días con salidas; la semana pasada esos días terminaron en <strong>{{ porciento(ritmo.semanaAnterior) }}</strong
       >.
     </p>
-    <p v-if="sinProgramar.length" class="text-sm text-amber-700 dark:text-amber-400">
+    <p v-if="sinProgramar.length" class="text-sm text-amber-700">
       <icon name="event-busy-outline" class="mr-1 align-middle" />
       Sin salidas programadas: {{ sinProgramar.join(", ") }}.
       <RouterLink to="/salidas/programar" class="font-medium underline">Programar</RouterLink>

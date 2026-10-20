@@ -17,7 +17,7 @@
         <span>Ver inactivos ({{ inactivos }})</span>
       </label>
       <Button class="ml-auto" label="Nuevo especial" size="small" @click="abrir(null)">
-        <template #icon><icon name="add" class="mr-1" color="text-white" /></template>
+        <template #icon><icon name="add" class="mr-1" color="text-inherit" /></template>
       </Button>
     </div>
 

@@ -329,7 +329,7 @@ watch(
 
 <style scoped>
 .conv__en-linea {
-  color: #16a34a;
+  color: var(--p-green-600);
   font-weight: 500;
 }
 .conv {
@@ -476,7 +476,7 @@ watch(
   margin: 0 0 0.1rem 0.75rem;
   font-size: 0.75rem;
   font-weight: 600;
-  color: hsl(calc(var(--tono) * 1deg) 50% 40%);
+  color: light-dark(hsl(calc(var(--tono) * 1deg) 50% 40%), hsl(calc(var(--tono) * 1deg) 60% 72%));
 }
 /* Mensaje = burbuja + botón responder (al lado, aparece al pasar o enfocar). */
 .mensaje {
@@ -609,7 +609,7 @@ watch(
   border-left: 3px solid currentColor;
   border-radius: 0.45rem;
   text-align: left;
-  background: rgb(0 0 0 / 0.05);
+  background: color-mix(in srgb, currentColor 6%, transparent);
   cursor: pointer;
 }
 .racha--mia .burbuja__cita {

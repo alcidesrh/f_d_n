@@ -141,19 +141,13 @@ function ordenar(campo: Campo) {
   text-align: end;
 }
 .delta.buena {
-  color: #0a7a0a;
+  color: var(--c-success-ink);
 }
 .delta.mala {
-  color: #b42828;
+  color: var(--c-danger-ink);
 }
 .delta.neutra {
   color: var(--p-text-muted-color);
-}
-.dark .delta.buena {
-  color: #4ccf4c;
-}
-.dark .delta.mala {
-  color: #f08080;
 }
 @container (min-width: 46rem) {
   .fila {

@@ -5,7 +5,7 @@
 -->
 <template>
   <div v-if="!alertas.length" class="sin-alertas">
-    <icon name="task-alt" class="text-green-700 dark:text-green-400" />
+    <icon name="task-alt" class="text-green-700" />
     <span>Nada urgente: facturación, flota, agencias y salidas en orden.</span>
   </div>
   <ul v-else class="alertas" aria-label="Alertas">

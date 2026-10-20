@@ -6,7 +6,7 @@
 -->
 <template>
   <div class="flex min-w-0 gap-1">
-    <Button type="button" severity="secondary" variant="outlined" fluid class="min-w-0 justify-between bg-white!" :disabled="disabled" :aria-label="ariaLabel ?? 'Distribución de asientos'" @click="abierto = true">
+    <Button type="button" severity="secondary" variant="outlined" fluid class="min-w-0 justify-between bg-surface-0!" :disabled="disabled" :aria-label="ariaLabel ?? 'Distribución de asientos'" @click="abierto = true">
       <span class="truncate" :class="{ 'text-muted-color': !elegido }">{{ elegido ? etiquetaCroquis(elegido) : "Croquis…" }}</span>
       <icon name="mitre" />
     </Button>

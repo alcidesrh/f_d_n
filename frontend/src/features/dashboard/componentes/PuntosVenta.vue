@@ -10,7 +10,7 @@
       <div class="pista"><div class="relleno" :style="{ width: `${(p.ingresos / maximo) * 100}%`, background: `var(--serie-${p.tipo})` }" /></div>
       <div class="flex justify-between gap-2 text-xs text-muted-color">
         <span>{{ TIPOS[p.tipo] }} · {{ numero(p.boletos) }} boletos</span>
-        <span v-if="variacion(p.ingresos, p.anterior)" :class="variacion(p.ingresos, p.anterior)!.valoracion === 'mala' ? 'text-red-700 dark:text-red-400' : variacion(p.ingresos, p.anterior)!.valoracion === 'buena' ? 'text-green-700 dark:text-green-400' : ''">
+        <span v-if="variacion(p.ingresos, p.anterior)" :class="variacion(p.ingresos, p.anterior)!.valoracion === 'mala' ? 'text-red-700' : variacion(p.ingresos, p.anterior)!.valoracion === 'buena' ? 'text-green-700' : ''">
           {{ variacion(p.ingresos, p.anterior)!.texto }}
         </span>
         <span v-else-if="!p.anterior">nuevo</span>

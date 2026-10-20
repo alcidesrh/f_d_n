@@ -25,7 +25,7 @@
         <div class="date-range__actions">
           <Button label="Cancelar" size="small" text severity="secondary" @click="cancel" />
           <Button label="Buscar" size="small" :disabled="!draftReady" @click="search">
-            <template #icon><icon name="search" size="1rem" class="text-white" /></template>
+            <template #icon><icon name="search" size="1rem" class="text-inherit" /></template>
           </Button>
         </div>
       </div>

@@ -27,7 +27,8 @@ async function bootstrap() {
     .use(pinia)
     .use(router)
     .use(formkitPlugin, formkitDefaultConfig(formkitConfig()))
-    .use(PrimeVue, { locale: es, theme: { options: { darkModeSelector: ".darks" } } })
+    // Sin modo oscuro propio de PrimeVue: el oscuro sale de invertir las rampas (app/theme.ts).
+    .use(PrimeVue, { locale: es, theme: { options: { darkModeSelector: false } } })
     .use(DialogService)
     .use(ConfirmationService)
     .use(ToastService);

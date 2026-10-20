@@ -49,7 +49,7 @@
           </div>
           <dl class="m-0 grid grid-cols-3 gap-x-4 gap-y-0 text-center">
             <div><dt class="text-xs text-muted-color">Boletos</dt><dd class="m-0 text-lg font-semibold tabular-nums">{{ cuenta.total }}</dd></div>
-            <div><dt class="text-xs text-muted-color">A bordo</dt><dd class="m-0 text-lg font-semibold tabular-nums text-green-700 dark:text-green-400">{{ cuenta.abordo }}</dd></div>
+            <div><dt class="text-xs text-muted-color">A bordo</dt><dd class="m-0 text-lg font-semibold tabular-nums text-green-700">{{ cuenta.abordo }}</dd></div>
             <div><dt class="text-xs text-muted-color">Sin chequear</dt><dd class="m-0 text-lg font-semibold tabular-nums">{{ cuenta.pendientes }}</dd></div>
           </dl>
         </div>
@@ -164,7 +164,7 @@
       <div class="flex flex-wrap items-center justify-end gap-3">
         <span class="text-sm">
           <strong class="tabular-nums">{{ envio.si.length }}</strong> presente(s)<template v-if="envio.no.length">
-            · <strong class="tabular-nums text-red-600 dark:text-red-400">{{ envio.no.length }}</strong> no se presentó</template
+            · <strong class="tabular-nums text-red-600">{{ envio.no.length }}</strong> no se presentó</template
           >
         </span>
         <Button label="Descartar" size="small" severity="secondary" text @click="marcas = {}" />
@@ -229,8 +229,8 @@ const fechaHora = (iso: string) => new Intl.DateTimeFormat("es-GT", { weekday: "
 
 function claseFila(b: BoletoAbordaje) {
   const m = marcas.value[b.id];
-  if (m === "si") return "!bg-green-50 dark:!bg-green-950/40";
-  if (m === "no") return "!bg-red-50 dark:!bg-red-950/40";
+  if (m === "si") return "!bg-green-50";
+  if (m === "no") return "!bg-red-50";
   return b.estado === "emitido" && !b.chequeable ? "opacity-70" : "";
 }
 

@@ -27,6 +27,9 @@ export interface UiState {
   isMobile: boolean;
 }
 
+/** Tema de fábrica (sin el modo: ese lo toma del sistema operativo). */
+const TEMA_POR_DEFECTO = { primary: "blue", surface: "slate", preset: "lara" } as const satisfies Omit<UiState, "mode" | "isMobile">;
+
 /**
  * Preferencias de interfaz (tema: modo, preset, color primario y superficie)
  * y viewport móvil. Los paneles laterales tienen su propio store
@@ -38,9 +41,7 @@ export const useUiStore = defineStore("ui", {
   persist: { omit: ["isMobile"] },
   state: (): UiState => ({
     mode: systemMode(),
-    primary: "blue",
-    surface: "slate",
-    preset: "lara",
+    ...TEMA_POR_DEFECTO,
     isMobile: isBelowDesktop(),
   }),
 
@@ -62,6 +63,13 @@ export const useUiStore = defineStore("ui", {
     },
     setPreset(preset: ThemePreset) {
       this.preset = preset;
+      this.applyTheme();
+    },
+    /** Vuelve a color, superficie y preset de fábrica; el modo claro/oscuro se conserva. */
+    restablecerTema() {
+      this.primary = TEMA_POR_DEFECTO.primary;
+      this.surface = TEMA_POR_DEFECTO.surface;
+      this.preset = TEMA_POR_DEFECTO.preset;
       this.applyTheme();
     },
     applyTheme() {

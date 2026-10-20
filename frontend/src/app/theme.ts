@@ -8,23 +8,22 @@ import colors from "tailwindcss/colors";
 
 const RAMP_STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950] as const;
 
-/** Reverses every color ramp of a palette (50 ↔ 950, 100 ↔ 900, …). */
+const isRamp = (value: unknown): value is Record<string, string> =>
+  !!value && typeof value === "object" && RAMP_STEPS.every((step) => typeof (value as Record<string, unknown>)[step] === "string");
+
+/** Reverses one color ramp (50 ↔ 950, 100 ↔ 900, …; 500 stays). */
+export function invertRamp(ramp: Record<string, string>): Record<string, string> {
+  const reversed: Record<string, string> = {};
+  RAMP_STEPS.forEach((step, i) => {
+    reversed[String(step)] = ramp[RAMP_STEPS[RAMP_STEPS.length - 1 - i]!]!;
+  });
+  return reversed;
+}
+
+/** Reverses every color ramp of a palette (`{ red: {50…950}, … }`); other entries stay. */
 export function invertPalette<T>(palette: T): T {
   const out: Record<string, unknown> = {};
-  for (const [name, value] of Object.entries(palette as object)) {
-    const ramp = value as Record<string, unknown> | null;
-    const isRamp = !!ramp && RAMP_STEPS.every((step) => typeof ramp[step] === "string");
-    if (isRamp) {
-      const reversed: Record<string, string> = {};
-      RAMP_STEPS.forEach((step, i) => {
-        const mirror = RAMP_STEPS[RAMP_STEPS.length - 1 - i]!;
-        reversed[String(step)] = String(ramp![mirror]);
-      });
-      out[name] = reversed;
-    } else {
-      out[name] = value;
-    }
-  }
+  for (const [name, value] of Object.entries(palette as object)) out[name] = isRamp(value) ? invertRamp(value) : value;
   return out as T;
 }
 
@@ -136,8 +135,9 @@ export const themeColors = (primaryName: PrimaryColor, surfaceName: SurfacePalet
   let surface: Palette;
   if (mode === "dark") {
     primitive = invertPalette(colors);
-    primary = invertPalette(palette(primaryName));
-    surface = { "0": "#000000", ...invertPalette(palette(surfaceName)) };
+    // Una sola rampa: `invertPalette` invierte las rampas que contiene, no la rampa misma.
+    primary = invertRamp(palette(primaryName));
+    surface = { "0": "#000000", ...invertRamp(palette(surfaceName)) };
   } else {
     primitive = colors;
     primary = palette(primaryName);
@@ -244,28 +244,22 @@ export const themeColors = (primaryName: PrimaryColor, surfaceName: SurfacePalet
   };
 };
 //#region Componentes
+/**
+ * Ajustes por componente. Solo `colorScheme.light` (o sin `colorScheme`): PrimeVue
+ * no tiene modo oscuro propio (`darkModeSelector: false`, main.ts), el claro es
+ * el único que aplica y el oscuro sale de invertir las rampas; un bloque `dark`
+ * aquí nunca se usaría.
+ */
 export const componentsPreset = (): Tokens => {
   return {
     multiselect: {
       root: {
         overlay: { background: "{surface.50}" },
-        // "border.color": "{surface.400}",
-      },
-      colorScheme: {
-        dark: {
-          background: "{surface.50}",
-          "border.color": "{surface.400}",
-        },
       },
     },
     inputtext: {
       colorScheme: {
         "border.color": "{surface.400}",
-
-        dark: {
-          background: "{surface.50}",
-          "border.color": "{surface.400}",
-        },
       },
     },
     datatable: {
@@ -295,17 +289,6 @@ export const componentsPreset = (): Tokens => {
         // },
         row: {
           background: "{surface.0}",
-          // "striped.background": "{surface.200}",
-        },
-        dark: {
-          // header: {
-          //   background: "{surface.100}",
-          //   "cell.background": "{surface.100}",
-          // },
-          row: {
-            background: "{surface.100}",
-            "striped.background": "{surface.200}",
-          },
         },
       },
     },
@@ -413,12 +396,6 @@ export const componentsPreset = (): Tokens => {
           success: {
             background: "{emerald.500}",
             color: "{surface.0}",
-          },
-        },
-        dark: {
-          success: {
-            background: "{emerald.400}",
-            color: "{emerald.950}",
           },
         },
       },

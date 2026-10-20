@@ -41,13 +41,16 @@
       <div class="header-actions">
         <slot name="menu-content"></slot>
 
-        <button class="icon-btn header-secundario cursor-pointer" :title="ui.mode === 'dark' ? 'Modo claro' : 'Modo oscuro'" :aria-label="ui.mode === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'" @click="ui.toggleMode()">
+        <!-- <button class="icon-btn header-secundario cursor-pointer" :title="ui.mode === 'dark' ? 'Modo claro' : 'Modo oscuro'" :aria-label="ui.mode === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'" @click="ui.toggleMode()">
           <icon :name="ui.mode === 'dark' ? 'light-mode-outline' : 'dark-mode-outline'" />
-        </button>
+        </button> -->
 
-        <button class="icon-btn header-secundario cursor-pointer" title="Personalizar apariencia" aria-label="Personalizar apariencia" @click.stop="showThemeEditor()">
+        <button class="icon-btn header-secundario cursor-pointer" title="Personalizar apariencia" aria-label="Personalizar apariencia" aria-haspopup="dialog" :class="{ 'active-state': temaAbierto }" @click="temaPopover?.toggle($event)">
           <icon name="palette-outline" />
         </button>
+        <Popover ref="temaPopover" @show="temaAbierto = true" @hide="temaAbierto = false">
+          <ThemeEditor />
+        </Popover>
 
         <button type="button" class="icon-btn header-chat" :aria-label="chat.noLeidos ? `Mensajes, ${chat.noLeidos} sin leer` : 'Mensajes'" v-tooltip.bottom="'Mensajes'" @click="invocarChat">
           <icon name="forum-outline" />
@@ -99,7 +102,7 @@
 <script setup lang="ts">
 import type { MenuItem } from "primevue/menuitem";
 import type Menu from "primevue/menu";
-import { useDialog } from "primevue/usedialog";
+import type Popover from "primevue/popover";
 import { instalar, puedeInstalar } from "@/app/pwa";
 import { router } from "@/app/router";
 import { useUiStore } from "@/app/ui";
@@ -129,9 +132,8 @@ function invocarChat() {
   void router.push({ name: "chat", params: { canal: ventanaChat.canal ?? undefined } });
 }
 
-const dialog = useDialog();
-
-const showThemeEditor = () => dialog.open(ThemeEditor, { props: { header: "Edit Profile" } });
+const temaPopover = ref<InstanceType<typeof Popover> | null>(null);
+const temaAbierto = ref(false);
 
 const sidebarStore = defineSidebarStore("left")();
 type PopoverName = "notif" | "customizer" | "user" | "fullscreen" | null;
@@ -167,12 +169,7 @@ function toggle(name: Exclude<PopoverName, null>) {
 }
 
 const menuUsuario = ref<InstanceType<typeof Menu> | null>(null);
-const opcionesUsuario = computed<MenuItem[]>(() => [
-  { label: "Mi cuenta", iconName: "manage-accounts-outline", command: () => void router.push({ name: "mi-cuenta" }) },
-  ...(puedeInstalar.value ? [{ label: "Instalar app", iconName: "install-mobile", command: () => void instalar() }] : []),
-  { separator: true },
-  { label: "Cerrar sesión", iconName: "logout", command: () => void logout() },
-]);
+const opcionesUsuario = computed<MenuItem[]>(() => [{ label: "Mi cuenta", iconName: "manage-accounts-outline", command: () => void router.push({ name: "mi-cuenta" }) }, ...(puedeInstalar.value ? [{ label: "Instalar app", iconName: "install-mobile", command: () => void instalar() }] : []), { separator: true }, { label: "Cerrar sesión", iconName: "logout", command: () => void logout() }]);
 
 async function logout() {
   // Antes del logout (después el token ya no vale): en una taquilla compartida el siguiente no debe recibirlas.

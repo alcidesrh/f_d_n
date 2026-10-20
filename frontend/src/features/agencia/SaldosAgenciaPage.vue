@@ -46,8 +46,8 @@
           <dt>Bono acreditado</dt>
           <dd>{{ a.totalBonificado.texto }}<span v-if="a.porcentajeBonificacion" class="text-muted-color"> ({{ a.porcentajeBonificacion }}%)</span></dd>
           <template v-if="a.pendientes">
-            <dt class="text-amber-700 dark:text-amber-400">Por acreditar ({{ a.pendientes }})</dt>
-            <dd class="text-amber-700 dark:text-amber-400">{{ a.importePendiente.texto }}</dd>
+            <dt class="text-amber-700">Por acreditar ({{ a.pendientes }})</dt>
+            <dd class="text-amber-700">{{ a.importePendiente.texto }}</dd>
           </template>
         </dl>
       </button>

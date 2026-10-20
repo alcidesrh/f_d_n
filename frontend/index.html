@@ -12,6 +12,22 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="apple-touch-icon" href="/pwa/apple-touch-icon.png">
     <title>Fuentes del Norte</title>
+    <!-- Modo del tema antes de cargar la app, sin destello blanco en oscuro: lo guardado
+         por la store `ui` del usuario (app/ui.ts, claves de core/auth/alcanceSesion.ts) o
+         el del SO. Después lo mantiene App.vue. #000 = `surface-0` del oscuro. -->
+    <script>
+      (function () {
+        try {
+          var usuario = localStorage.getItem('sesion:propietario')
+          var ui = JSON.parse(localStorage.getItem(usuario ? 'usuario/' + usuario + '/ui' : 'sin-usuario/ui') || '{}')
+          var oscuro = ui.mode ? ui.mode === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches
+          document.documentElement.className = oscuro ? 'dark' : 'light'
+        } catch (e) {}
+      })()
+    </script>
+    <style>
+      html.dark { color-scheme: dark; background: #000; }
+    </style>
   </head>
   <body>
     <div id="app"></div>

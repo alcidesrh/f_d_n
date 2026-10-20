@@ -20,7 +20,7 @@
             <span class="text-muted-color">(misma ruta, bus y hora, hasta el {{ dia(info.ultima!) }})</span>
           </label>
         </div>
-        <p v-if="propagar && info.identicasConAsientos" class="m-0 pl-7 text-xs text-orange-600 dark:text-orange-400">
+        <p v-if="propagar && info.identicasConAsientos" class="m-0 pl-7 text-xs text-orange-600">
           {{ info.identicasConAsientos }} de ellas tienen asientos vendidos y quedarán sin cambios.
         </p>
       </template>
