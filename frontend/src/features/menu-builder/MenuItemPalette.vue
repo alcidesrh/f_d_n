@@ -26,7 +26,7 @@
         <icon :name="item.icon.icon" class="text-primary" />
         <div class="flex min-w-0 flex-1 flex-col leading-tight">
           <span class="truncate text-sm font-medium">{{ item.nombre }}</span>
-          <span class="truncate text-xs text-muted-color">{{ item.route.path }}</span>
+          <span class="truncate text-xs text-muted-color">{{ item.route?.path ?? 'Grupo' }}</span>
         </div>
         <button type="button" class="palette-btn" title="Editar" @click="emit('edit', item)">
           <icon name="edit-outline" />
@@ -62,7 +62,7 @@ const visible = computed(() => {
   const needle = query.value.trim().toLowerCase()
   if (!needle) return props.items
   return props.items.filter((item) =>
-    `${item.nombre} ${item.route.path ?? ''}`.toLowerCase().includes(needle),
+    `${item.nombre} ${item.route?.path ?? ''}`.toLowerCase().includes(needle),
   )
 })
 

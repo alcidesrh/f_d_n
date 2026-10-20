@@ -4,7 +4,7 @@
 
 | Comando | Descripción |
 |---|---|
-| `npm run dev` | Dev server (vite, puerto 9000; en Docker se sirve detrás de Caddy en `http://localhost`) |
+| `npm run dev` | Dev server (vite, puerto 9000; en Docker se sirve detrás de Caddy en `https://localhost`) |
 | `npm run build` | `type-check` + `vite build` (rolldown) |
 | `npm run type-check` | `vue-tsc --build` |
 | `npm run lint` | oxlint + eslint (ambos con `--fix`) |

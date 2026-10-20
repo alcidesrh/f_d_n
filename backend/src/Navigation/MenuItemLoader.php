@@ -32,7 +32,7 @@ final class MenuItemLoader
             ->select('i', 'icon', 'route')
             ->from(MenuItem::class, 'i')
             ->join('i.icon', 'icon')
-            ->join('i.route', 'route')
+            ->leftJoin('i.route', 'route')
             ->where('i.id IN (:ids)')
             ->setParameter('ids', array_values(array_unique($ids)))
             ->getQuery()
@@ -47,7 +47,7 @@ final class MenuItemLoader
     }
 
     /**
-     * @return array{id: int, label: string, icon: ?string, route: array{id: int, name: ?string, path: ?string, params: list<string>}}
+     * @return array{id: int, label: string, icon: ?string, route: ?array{id: int, name: ?string, path: ?string, params: list<string>}}
      */
     public static function serialize(MenuItem $item): array
     {
@@ -57,7 +57,7 @@ final class MenuItemLoader
             'id' => $item->getId(),
             'label' => $item->getLabel(),
             'icon' => $item->getIcon()?->getIcon(),
-            'route' => [
+            'route' => $route === null ? null : [
                 'id' => $route->getId(),
                 'name' => $route->getVueRouteName(),
                 'path' => $route->getPath(),

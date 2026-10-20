@@ -309,12 +309,12 @@ async function removeMenu() {
 
 const itemDialog = ref(false)
 const itemSaving = ref(false)
-const itemDraft = ref<MenuItemDraft>({ nombre: '', icon: '', route: '' })
+const itemDraft = ref<MenuItemDraft>({ nombre: '', icon: '', route: null })
 
 function editItem(item: MenuItemDto | null) {
   itemDraft.value = item
-    ? { id: item.id, nombre: item.nombre, icon: item.icon.icon, route: item.route.id }
-    : { nombre: '', icon: '', route: '' }
+    ? { id: item.id, nombre: item.nombre, icon: item.icon.icon, route: item.route?.id ?? null }
+    : { nombre: '', icon: '', route: null }
   itemDialog.value = true
 }
 

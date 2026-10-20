@@ -22,7 +22,9 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? 'github' : 'list',
   use: {
-    baseURL: process.env.E2E_BASE_URL ?? 'http://localhost',
+    baseURL: process.env.E2E_BASE_URL ?? 'https://localhost',
+    // Caddy firma `localhost` con su CA local: el navegador de prueba no la conoce.
+    ignoreHTTPSErrors: true,
     trace: 'on-first-retry',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],

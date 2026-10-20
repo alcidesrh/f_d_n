@@ -14,6 +14,8 @@ use Symfony\Component\Validator\Constraints as Assert;
  * luego se coloca en uno o varios `Menu` (cada menú decide su jerarquía y
  * orden en su propia `Taxonomy`, por eso `position` no vive aquí).
  *
+ * Sin `route` es un grupo: solo agrupa a sus hijos en el menú, no navega.
+ *
  * El texto es `nombre`; `label` es derivado de solo lectura, como en todas
  * las entidades.
  */
@@ -30,10 +32,12 @@ class MenuItem extends Base
     #[ORM\JoinColumn(nullable: false)]
     private ?Icon $icon = null;
 
-    /** Si la ruta desaparece del router (sincronización), el ítem se borra con ella. */
-    #[Assert\NotNull]
+    /**
+     * Si la ruta desaparece del router (sincronización), el ítem se borra con ella.
+     * Nulo en un grupo.
+     */
     #[ORM\ManyToOne]
-    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'CASCADE')]
     private ?VueRoute $route = null;
 
     public function getNombre(): ?string
@@ -65,6 +69,7 @@ class MenuItem extends Base
         return $this->route;
     }
 
+    /** Nulo convierte el ítem en un grupo. */
     public function setRoute(?VueRoute $route): static
     {
         $this->route = $route;

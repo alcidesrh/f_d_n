@@ -54,7 +54,7 @@
       <icon :name="itemsById.get(row.id)?.icon.icon ?? 'fiber-manual-record'" class="text-primary" />
       <div class="mo-text">
         <span class="mo-label">{{ itemsById.get(row.id)?.nombre ?? `#${row.id}` }}</span>
-        <span class="mo-route">{{ itemsById.get(row.id)?.route.path }}</span>
+        <span class="mo-route">{{ itemsById.get(row.id)?.route?.path ?? 'Grupo' }}</span>
       </div>
       <div class="mo-actions">
         <button

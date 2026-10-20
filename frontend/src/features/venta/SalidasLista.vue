@@ -24,11 +24,11 @@
 
     <template #cell="{ row, column }">
       <div v-if="column.key === 'sube' || column.key === 'baja'" class="celda min-w-0 leading-tight">
-        <div class="truncate font-semibold" :title="punta(s(row), column.key).nombre ?? ''">{{ punta(s(row), column.key).nombre ?? "—" }}</div>
+        <div class="truncate font-medium" :title="punta(s(row), column.key).nombre ?? ''">{{ punta(s(row), column.key).nombre ?? "—" }}</div>
         <div class="truncate font-medium text-xs tabular-nums text-muted-color">{{ horaPunta(s(row), column.key) }}</div>
       </div>
       <div v-else-if="column.key === 'hora'" class="celda leading-tight text-[0.9rem]">
-        <div class="font-semibold tracking-wider text-[1rem] text-center tabular-nums whitespace-nowrap">{{ hora(s(row).salida) }}</div>
+        <div class="font-medium tracking-wider text-[1rem] text-center tabular-nums whitespace-nowrap">{{ hora(s(row).salida) }}</div>
         <div class="mt-0.5 tracking-wider text-[.85rem] truncate tabular-nums whitespace-nowrap">{{ fecha(s(row).salida) }}</div>
       </div>
       <div v-else-if="column.key === 'ruta'" class="celda ruta min-w-0 leading-tight">

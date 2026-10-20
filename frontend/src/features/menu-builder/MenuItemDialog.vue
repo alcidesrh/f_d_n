@@ -2,6 +2,7 @@
   Alta/edición de un ítem navegable: texto, ícono (catálogo Material Symbols) y ruta
   (`VueRoute`). Las rutas con parámetros (`/lista/:entity`) no se ofrecen:
   el ítem no guarda valores de parámetros, así que no serían navegables.
+  «Solo agrupa» lo deja sin ruta: un grupo despliega a sus hijos y no navega.
 -->
 <template>
   <Dialog
@@ -21,17 +22,24 @@
           <span class="text-sm font-medium">Texto</span>
           <InputText v-model="draft.nombre" autofocus required maxlength="255" />
         </label>
-        <label class="flex flex-col gap-1">
-          <span class="text-sm font-medium">Ruta</span>
-          <Select
-            v-model="draft.route"
-            :options="routeOptions"
-            option-label="label"
-            option-value="value"
-            filter
-            placeholder="Elegí una ruta"
-          />
-        </label>
+        <div class="flex flex-col gap-1">
+          <label class="flex flex-col gap-1">
+            <span class="text-sm font-medium">Ruta</span>
+            <Select
+              v-model="draft.route"
+              :options="routeOptions"
+              option-label="label"
+              option-value="value"
+              filter
+              :disabled="soloAgrupa"
+              placeholder="Elegí una ruta"
+            />
+          </label>
+          <label class="flex items-center gap-2 text-sm">
+            <Checkbox v-model="soloAgrupa" binary />
+            Solo agrupa (sin ruta: despliega sus hijos y no navega)
+          </label>
+        </div>
       </div>
       <div class="flex flex-col gap-1" :class="{ 'min-h-0 flex-1': maximized }">
         <span class="text-sm font-medium">
@@ -71,10 +79,14 @@ const emit = defineEmits<{ 'update:visible': [visible: boolean]; save: [draft: M
 
 const maximized = ref(false)
 const draft = ref<MenuItemDraft>({ ...props.initial })
+/** Un ítem ya guardado sin ruta es un grupo. */
+const soloAgrupa = ref(false)
 watch(
   () => [props.visible, props.initial] as const,
   ([visible]) => {
-    if (visible) draft.value = { ...props.initial }
+    if (!visible) return
+    draft.value = { ...props.initial }
+    soloAgrupa.value = Boolean(props.initial.id) && props.initial.route === null
   },
 )
 
@@ -85,10 +97,15 @@ const routeOptions = computed(() =>
 )
 
 const valid = computed(() =>
-  Boolean(draft.value.nombre.trim() && draft.value.icon && draft.value.route),
+  Boolean(draft.value.nombre.trim() && draft.value.icon && (soloAgrupa.value || draft.value.route)),
 )
 
 function submit() {
-  if (valid.value) emit('save', { ...draft.value, nombre: draft.value.nombre.trim() })
+  if (!valid.value) return
+  emit('save', {
+    ...draft.value,
+    nombre: draft.value.nombre.trim(),
+    route: soloAgrupa.value ? null : draft.value.route,
+  })
 }
 </script>

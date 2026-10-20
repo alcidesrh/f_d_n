@@ -45,7 +45,7 @@
 		anonymous
 		# Enable the subscription API (double-check that it's what you want)
 		subscriptions
-		cors_origins http://localhost:9000 http://localhost
+		cors_origins https://localhost http://localhost:9000 http://localhost
 		# Extra directives
 		{$MERCURE_EXTRA_DIRECTIVES}
 	}

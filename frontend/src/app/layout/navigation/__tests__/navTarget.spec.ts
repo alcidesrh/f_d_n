@@ -6,11 +6,11 @@ const router = {
   hasRoute: (name: string | symbol) => ['dashboard', 'entity-list'].includes(String(name)),
 }
 
-const item = (route: Partial<NavItem['route']>): NavItem => ({
+const item = (route: Partial<NavItem['route']> | null): NavItem => ({
   id: 1,
   label: 'Inicio',
   icon: 'home',
-  route: { id: 1, name: 'dashboard', path: '/', params: [], ...route },
+  route: route === null ? null : { id: 1, name: 'dashboard', path: '/', params: [], ...route },
   children: [],
 })
 
@@ -28,5 +28,9 @@ describe('navTarget', () => {
   it('no navega si la ruta ya no está en el router o no tiene nombre', () => {
     expect(navTarget(item({ name: 'borrada' }), router)).toBeNull()
     expect(navTarget(item({ name: null }), router)).toBeNull()
+  })
+
+  it('no navega un grupo (ítem sin ruta)', () => {
+    expect(navTarget(item(null), router)).toBeNull()
   })
 })

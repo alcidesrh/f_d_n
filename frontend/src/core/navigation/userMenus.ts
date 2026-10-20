@@ -29,7 +29,8 @@ export interface NavItem {
   id: number
   label: string
   icon: string | null
-  route: NavRoute
+  /** Nulo en un grupo: agrupa a sus hijos y no navega. */
+  route: NavRoute | null
   children: NavItem[]
 }
 

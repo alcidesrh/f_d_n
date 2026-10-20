@@ -65,7 +65,7 @@ testf: ## Run tests by name filter (usage: make testf F="testMethodName")
 
 # Cuenta de pruebas (Playwright, agentes, curl): credenciales en .env.e2e.local (fuera de git).
 E2E_ENV      = .env.e2e.local
-E2E_BASE_URL ?= http://localhost
+E2E_BASE_URL ?= https://localhost
 
 e2e-usuario: ## Crea o reinicia la cuenta de pruebas y guarda sus credenciales en .env.e2e.local (solo desarrollo)
 	@umask 077 && $(DOCKER_COMP) exec -T backend bin/console app:usuario:pruebas --no-ansi > $(E2E_ENV).tmp \
@@ -140,13 +140,13 @@ db_port: ## up with xdebug
 	symfony var:export --multiline | grep DATABASE_SERVER
 
 debug-build:
-	SERVER_NAME=:80 MERCURE_PUBLIC_URL=http://localhost/.well-known/mercure XDEBUG_MODE=debug  APP_ENV=dev $(DOCKER_COMP) up --build  -d
+	SERVER_NAME=localhost MERCURE_PUBLIC_URL=https://localhost/.well-known/mercure XDEBUG_MODE=debug  APP_ENV=dev $(DOCKER_COMP) up --build  -d
 debug:
-	SERVER_NAME=:80 MERCURE_PUBLIC_URL=http://localhost/.well-known/mercure XDEBUG_MODE=debug  APP_ENV=dev $(DOCKER_COMP) up -d
+	SERVER_NAME=localhost MERCURE_PUBLIC_URL=https://localhost/.well-known/mercure XDEBUG_MODE=debug  APP_ENV=dev $(DOCKER_COMP) up -d
 dev-build:
-	SERVER_NAME=:80 MERCURE_PUBLIC_URL=http://localhost/.well-known/mercure APP_ENV=dev $(DOCKER_COMP) up --build  -d
+	SERVER_NAME=localhost MERCURE_PUBLIC_URL=https://localhost/.well-known/mercure APP_ENV=dev $(DOCKER_COMP) up --build  -d
 dev:
-	SERVER_NAME=:80 MERCURE_PUBLIC_URL=http://localhost/.well-known/mercure APP_ENV=dev $(DOCKER_COMP) up -d
+	SERVER_NAME=localhost MERCURE_PUBLIC_URL=https://localhost/.well-known/mercure APP_ENV=dev $(DOCKER_COMP) up -d
 
 restart_debug:
 	$(DOCKER_COMP) down --remove-orphans && XDEBUG_MODE=debug  APP_ENV=dev $(DOCKER_COMP) up -d
@@ -194,4 +194,4 @@ mon-restart: ## Restart monitoring
 	$(MON_UP) restart
 
 mon-debug: ## Start full stack (app + monitoring) with Xdebug
-	SERVER_NAME=:80 MERCURE_PUBLIC_URL=http://localhost/.well-known/mercure XDEBUG_MODE=debug  APP_ENV=dev $(MON_FULL) up --detach
+	SERVER_NAME=localhost MERCURE_PUBLIC_URL=https://localhost/.well-known/mercure XDEBUG_MODE=debug  APP_ENV=dev $(MON_FULL) up --detach

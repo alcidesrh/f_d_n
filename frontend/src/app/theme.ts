@@ -341,10 +341,12 @@ export const componentsPreset = (): Tokens => {
       },
     },
     progressbar: {
-      background: "{surface.300}",
-      height: "5px",
-      label: {
-        color: "{surface.0}",
+      root: {
+        background: "{surface.300}",
+        height: "5px",
+        label: {
+          color: "{surface.0}",
+        },
       },
       value: {
         background: "{surface.500}",

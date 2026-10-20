@@ -31,7 +31,8 @@ export interface MenuItemDto {
   id: string
   nombre: string
   icon: { id: string; icon: string }
-  route: VueRouteDto
+  /** Nulo en un grupo: agrupa a sus hijos y no navega. */
+  route: VueRouteDto | null
 }
 
 export interface MenuDto {
@@ -105,7 +106,12 @@ export const saveMenu = (input: { id?: string; nombre: string; roles: string[] }
 
 export const deleteMenu = (id: string) => mutate<{ id: string }>('deleteMenu', 'menu', 'id', { id })
 
-export const saveMenuItem = (input: { id?: string; nombre: string; icon: string; route: string }) =>
+export const saveMenuItem = (input: {
+  id?: string
+  nombre: string
+  icon: string
+  route: string | null
+}) =>
   mutate<MenuItemDto>(
     input.id ? 'updateMenuItem' : 'createMenuItem',
     'menuItem',

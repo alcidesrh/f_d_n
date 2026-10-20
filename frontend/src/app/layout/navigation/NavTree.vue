@@ -1,7 +1,8 @@
 <!--
   Árbol vertical de ítems de un menú para las barras laterales. Un ítem con
-  hijos navega a su ruta y además se despliega con el botón +/− a su izquierda; en modo
-  `mini` solo se ven las raíces (íconos).
+  hijos navega a su ruta y además se despliega con el botón +/− a su izquierda; un
+  grupo (sin ruta) solo se despliega, con su fila entera. En modo `mini` solo se
+  ven las raíces (íconos).
 -->
 <template>
   <ul class="sidebar-menu nav-tree" :class="{ 'nav-tree--nested': depth > 0 }">
@@ -13,7 +14,7 @@
           </button>
           <span v-else class="nav-toggle nav-toggle--spacer" :style="toggleIndent" aria-hidden="true" />
         </template>
-        <component :is="navTarget(item, router) ? RouterLink : 'span'" :to="navTarget(item, router) ?? undefined" class="menu-link" :class="{ 'nav-disabled': !navTarget(item, router) }" :title="navTarget(item, router) ? item.label : `${item.label} (ruta no navegable)`">
+        <component :is="linkTag(item)" :to="navTarget(item, router) ?? undefined" :type="linkTag(item) === 'button' ? 'button' : undefined" class="menu-link" :class="{ 'nav-disabled': !navTarget(item, router) && !isGroup(item) }" :title="titleOf(item)" :aria-expanded="isGroup(item) ? expanded.has(item.id) : undefined" @click="isGroup(item) ? toggle(item.id) : undefined">
           <span class="menu-icon"><icon :name="item.icon ?? 'fiber-manual-record'" size="1.3rem" /></span>
           <span class="menu-text">{{ item.label }}</span>
         </component>
@@ -44,7 +45,19 @@ const router = useRouter();
 const route = useRoute();
 const expanded = ref(new Set<number>());
 
-const contieneRuta = (item: NavItem, name: unknown): boolean => item.children.some((c) => c.route.name === name || contieneRuta(c, name));
+const contieneRuta = (item: NavItem, name: unknown): boolean => item.children.some((c) => c.route?.name === name || contieneRuta(c, name));
+
+/** Un ítem que solo despliega: no navega y tiene hijos (un grupo, o uno cuya ruta ya no existe). */
+const isGroup = (item: NavItem): boolean => !navTarget(item, router) && item.children.length > 0 && !props.sidebar.compact;
+
+/** Los grupos son botones que despliegan; el resto, enlaces o texto. */
+const linkTag = (item: NavItem) => (navTarget(item, router) ? RouterLink : isGroup(item) ? "button" : "span");
+
+function titleOf(item: NavItem): string {
+  if (navTarget(item, router)) return item.label;
+  if (!item.route) return item.children.length ? item.label : `${item.label} (grupo vacío)`;
+  return `${item.label} (ruta no navegable)`;
+}
 
 /** Despliega los ítems que contienen la ruta actual (al montar y al navegar). */
 watch(
