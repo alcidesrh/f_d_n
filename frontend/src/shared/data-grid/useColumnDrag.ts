@@ -118,7 +118,11 @@ export function useColumnDrag({ header, keys, enabled, onMove }: DragOptions) {
     }
   }
 
-  watch(() => [keys().join('|'), enabled()], sync, { flush: 'post' })
+  // Fuentes primitivas: se comparan por valor y solo se recrean los draggables
+  // si cambian las claves o `enabled` (no con cada recálculo de las columnas).
+  // `immediate`: al montar con las columnas ya presentes (store persistido)
+  // nadie más llamaría a `sync`.
+  watch([() => keys().join('|'), enabled], sync, { flush: 'post', immediate: true })
   onBeforeUnmount(kill)
 
   return { sync }
