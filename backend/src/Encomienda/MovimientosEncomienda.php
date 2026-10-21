@@ -11,6 +11,7 @@ use App\Entity\Encomienda;
 use App\Entity\Enum\EstadoEncomienda;
 use App\Entity\Enum\EstadoFacturacion;
 use App\Entity\Enum\ModalidadEncomienda;
+use App\Entity\Enum\TransicionEncomienda;
 use App\Entity\Estacion;
 use App\Entity\Moneda;
 use App\Entity\Salida;
@@ -26,9 +27,11 @@ use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 
 /**
- * Embarcar, desembarcar, entregar y anular encomiendas (ADR-035). Las reglas
- * puras están en `ReglasEncomienda`; la bitácora la escribe el listener al
- * cambiar el estado (con la estación y la salida que se anotan aquí).
+ * Embarcar, desembarcar, entregar y anular encomiendas (ADR-035). El estado
+ * cambia por una transición del workflow `encomienda` (`FlujoEncomienda`,
+ * ADR-038), con lo que va a la bitácora (estación, motivo) en su contexto;
+ * aquí quedan la salida en que se embarca, la estación donde se baja y quién
+ * opera (`ReglasEncomienda`).
  */
 final class MovimientosEncomienda
 {
@@ -36,6 +39,7 @@ final class MovimientosEncomienda
         private readonly EntityManagerInterface $em,
         private readonly Transaccion $transaccion,
         private readonly RegistradorBitacora $bitacora,
+        private readonly FlujoEncomienda $flujo,
         private readonly Facturador $facturador,
         private readonly ReglasVenta $reglasVenta,
         private readonly ClockInterface $reloj,
@@ -57,18 +61,15 @@ final class MovimientosEncomienda
             $paradas = RutasEncomienda::idsDeSalida($salida);
             $estacion = $usuario->getEstacion()?->getId();
 
-            return $this->porCada($ids, $puedeVer, "embarcadas", function (Encomienda $e) use ($salida, $paradas, $estacion) {
-                $nuevo = ReglasEncomienda::alEmbarcar(
-                    $e->getEstado(),
-                    $e->getUbicacion()?->getId(),
-                    $estacion,
-                    $salida->getEstado(),
-                    $paradas,
-                    $e->getEmpresa()?->getId(),
-                    $salida->getEmpresa()?->getId(),
-                );
-                $this->bitacora->anotar($e, ["estacion" => $e->getUbicacion()?->getNombre()]);
-                $e->setEstado($nuevo)->setSalida($salida)->setUbicacion(null);
+            $transicion = TransicionEncomienda::alEmbarcar($salida->getEstado());
+
+            return $this->porCada($ids, $puedeVer, "embarcadas", function (Encomienda $e) use ($salida, $paradas, $estacion, $transicion) {
+                $this->flujo->exigir($e, $transicion);
+                $aqui = (int) $e->getUbicacion()?->getId();
+                ReglasEncomienda::exigirEstacion($estacion, $aqui, "La encomienda está en la bodega de otra estación: la embarca un usuario de esa estación.");
+                ReglasEncomienda::exigirSalidaParaEmbarcar($aqui, $salida->getEstado(), $paradas, $e->getEmpresa()?->getId(), $salida->getEmpresa()?->getId());
+                $this->flujo->aplicar($e, $transicion, ["estacion" => $e->getUbicacion()?->getNombre()]);
+                $e->setSalida($salida)->setUbicacion(null);
             });
         });
     }
@@ -90,10 +91,10 @@ final class MovimientosEncomienda
                 ?? throw new EncomiendaRechazada("Indique la estación donde se desembarcan.");
 
             return $this->porCada($ids, $puedeVer, "desembarcadas", function (Encomienda $e) use ($estacion) {
-                $salida = $e->getSalida() ?? throw new EncomiendaRechazada("La encomienda no va en ninguna salida.", "estado");
-                ReglasEncomienda::exigirDesembarcable($e->getEstado(), (int) $estacion->getId(), RutasEncomienda::idsDeSalida($salida));
-                $this->bitacora->anotar($e, ["estacion" => $estacion->getNombre()]);
-                $e->setEstado(EstadoEncomienda::DESEMBARCADA)->setUbicacion($estacion);
+                $this->flujo->exigir($e, TransicionEncomienda::DESEMBARCAR);
+                ReglasEncomienda::exigirParadaDeSalida((int) $estacion->getId(), RutasEncomienda::idsDeSalida($e->getSalida()));
+                $this->flujo->aplicar($e, TransicionEncomienda::DESEMBARCAR, ["estacion" => $estacion->getNombre()]);
+                $e->setUbicacion($estacion);
             });
         });
     }
@@ -108,13 +109,11 @@ final class MovimientosEncomienda
     public function entregar(int $id, EntregaEncomienda $s, Usuario $usuario, bool $permiteSinFactura): Encomienda
     {
         $encomienda = $this->em->find(Encomienda::class, $id) ?? throw new EncomiendaRechazada("La encomienda no existe.", "no_encontrado", 404);
-        ReglasEncomienda::exigirEntregable(
-            $encomienda->getEstado(),
-            $encomienda->getUbicacion()?->getId(),
-            (int) $encomienda->getDestino()?->getId(),
-            $usuario->getEstacion()?->getId(),
-            $encomienda->getSalida() !== null ? RutasEncomienda::idsDeSalida($encomienda->getSalida()) : [],
-        );
+        $rechazo = $this->flujo->rechazoEntrega($encomienda);
+        if ($rechazo !== null) {
+            throw $rechazo;
+        }
+        ReglasEncomienda::exigirEstacion($usuario->getEstacion()?->getId(), $encomienda->getDestino()?->getId(), "La entrega un usuario de la estación de destino.");
         $receptor = $s->receptorId !== null
             ? ($this->em->find(Cliente::class, $s->receptorId) ?? throw new EncomiendaRechazada("El cliente que retira no existe."))
             : $encomienda->getDestinatario();
@@ -156,13 +155,12 @@ final class MovimientosEncomienda
             $this->em->lock($encomienda, LockMode::PESSIMISTIC_WRITE);
             if ($encomienda->getEstado()->aBordo()) {
                 // Llegó en tránsito: primero se desembarca en su destino (queda en la bitácora).
-                $this->bitacora->anotar($encomienda, ["estacion" => $encomienda->getDestino()?->getNombre()]);
-                $encomienda->setEstado(EstadoEncomienda::DESEMBARCADA)->setUbicacion($encomienda->getDestino());
+                $this->flujo->aplicar($encomienda, TransicionEncomienda::DESEMBARCAR, ["estacion" => $encomienda->getDestino()?->getNombre()]);
+                $encomienda->setUbicacion($encomienda->getDestino());
                 $this->em->flush();
             }
-            $this->bitacora->anotar($encomienda, ["estacion" => $encomienda->getUbicacion()?->getNombre(), "retira" => $receptor?->getNombreCompleto()]);
+            $this->flujo->aplicar($encomienda, TransicionEncomienda::ENTREGAR, ["estacion" => $encomienda->getUbicacion()?->getNombre(), "retira" => $receptor?->getNombreCompleto()]);
             $encomienda
-                ->setEstado(EstadoEncomienda::ENTREGADA)
                 ->setReceptor($receptor)
                 ->setEntregadaEn($ahora)
                 ->setUbicacion(null);
@@ -262,13 +260,8 @@ final class MovimientosEncomienda
             throw new EncomiendaRechazada("Indique el motivo de la anulación.");
         }
         $encomienda = $this->em->find(Encomienda::class, $id) ?? throw new EncomiendaRechazada("La encomienda no existe.", "no_encontrado", 404);
-        ReglasEncomienda::exigirAnulable(
-            $encomienda->getEstado(),
-            $encomienda->getModalidad(),
-            $encomienda->getUbicacion()?->getId(),
-            (int) $encomienda->getOrigen()?->getId(),
-            $usuario->getEstacion()?->getId(),
-        );
+        $this->flujo->exigir($encomienda, TransicionEncomienda::ANULAR);
+        ReglasEncomienda::exigirEstacion($usuario->getEstacion()?->getId(), $encomienda->getOrigen()?->getId(), "La anula un usuario de la estación de origen.");
 
         if ($encomienda->getFactura() !== null && !$encomienda->getFactura()->isAnulada()) {
             try {
@@ -282,7 +275,7 @@ final class MovimientosEncomienda
 
         $this->transaccion->ejecutar(function () use ($encomienda, $motivo) {
             $this->em->lock($encomienda, LockMode::PESSIMISTIC_WRITE);
-            $this->anularEnTransaccion($encomienda, $motivo);
+            $this->anularEnTransaccion($encomienda, TransicionEncomienda::ANULAR, $motivo);
         });
 
         return $encomienda;
@@ -297,7 +290,7 @@ final class MovimientosEncomienda
         /** @var list<Encomienda> $embarcadas */
         $embarcadas = $this->em->getRepository(Encomienda::class)->findBy(["salida" => $salida, "estado" => EstadoEncomienda::EMBARCADA->value]);
         foreach ($embarcadas as $e) {
-            $e->setEstado(EstadoEncomienda::TRANSITO);
+            $this->flujo->aplicar($e, TransicionEncomienda::PARTIR);
         }
 
         return count($embarcadas);
@@ -311,17 +304,17 @@ final class MovimientosEncomienda
     public function alAnularVenta(BoletoVenta $venta, string $motivo): void
     {
         foreach ($venta->getEncomiendas() as $e) {
-            if ($e->getEstado()->puedeTransicionarA(EstadoEncomienda::ANULADA)) {
-                $this->anularEnTransaccion($e, $motivo);
+            // La que ya viajó (o se entregó) no se anula.
+            if ($this->flujo->puede($e, TransicionEncomienda::ANULAR_CON_BOLETO)) {
+                $this->anularEnTransaccion($e, TransicionEncomienda::ANULAR_CON_BOLETO, $motivo);
             }
         }
     }
 
-    private function anularEnTransaccion(Encomienda $e, string $motivo): void
+    private function anularEnTransaccion(Encomienda $e, TransicionEncomienda $transicion, string $motivo): void
     {
-        $this->bitacora->anotar($e, ["motivo" => $motivo]);
-        $e->setEstado(EstadoEncomienda::ANULADA)
-            ->setUbicacion(null)
+        $this->flujo->aplicar($e, $transicion, ["motivo" => $motivo]);
+        $e->setUbicacion(null)
             ->setMotivoAnulacion($motivo);
         if ($e->getEstadoFacturacion() !== EstadoFacturacion::NO_APLICA) {
             // También la pendiente (contingencia): así el cron no la certifica.

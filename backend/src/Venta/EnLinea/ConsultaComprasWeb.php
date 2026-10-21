@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace App\Venta\EnLinea;
 
+use App\Entity\BoletoAsiento;
+use App\Entity\Enum\TransicionBoleto;
 use App\Venta\Boleto\DatosBoleto;
+use App\Venta\Boleto\Flujo\FlujoBoleto;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Doctrine\ORM\EntityManagerInterface;
 use Money\Currency;
 use Money\Money;
 
@@ -15,6 +19,8 @@ use Money\Money;
  * Compras de la página web para el dashboard (ADR-023): cada intento de pago
  * (`pago_web`) con sus ventas (ida y regreso), y la "calculadora" con los
  * totales de todo lo filtrado (no solo de la página visible). Solo lectura.
+ * Cada boleto trae lo que admite de las acciones de la compra (anular,
+ * reasignar, posponer): las transiciones del workflow del boleto (ADR-037).
  */
 final class ConsultaComprasWeb
 {
@@ -25,7 +31,14 @@ final class ConsultaComprasWeb
         "e.id AS empresa_id", "COALESCE(e.alias, e.nombre) AS empresa_nombre",
     ];
 
-    public function __construct(private readonly Connection $db) {}
+    /** Las acciones de la compra que son transiciones de sus boletos. */
+    private const TRANSICIONES = [TransicionBoleto::ANULAR, TransicionBoleto::REASIGNAR, TransicionBoleto::POSPONER];
+
+    public function __construct(
+        private readonly Connection $db,
+        private readonly EntityManagerInterface $em,
+        private readonly FlujoBoleto $flujo,
+    ) {}
 
     /** Una compra, como en el listado (para refrescar la fila tras una acción). */
     public function una(int $id): ?array
@@ -296,6 +309,9 @@ final class ConsultaComprasWeb
             ["ids" => ArrayParameterType::INTEGER],
         )->fetchAllAssociative();
 
+        $boletos = array_map(static fn(array $v) => json_decode((string) $v["boletos"], true) ?: [], array_column($filas, null, "id"));
+        $acciones = $this->acciones(array_merge(...array_map(static fn(array $bs) => array_map("intval", array_column($bs, "id")), array_values($boletos))));
+
         $porId = [];
         foreach ($filas as $v) {
             $porId[(int) $v["id"]] = [
@@ -319,11 +335,46 @@ final class ConsultaComprasWeb
                     "asiento" => (int) $b["asiento"],
                     "salidaId" => (int) $b["salidaId"],
                     "salida" => (new \DateTimeImmutable($b["salida"]))->format(DATE_ATOM),
-                ], json_decode((string) $v["boletos"], true) ?: []),
+                    "acciones" => $acciones[(int) $b["id"]],
+                ], $boletos[$v["id"]]),
             ];
         }
 
         return $porId;
+    }
+
+    /**
+     * Lo que admite cada boleto (null o el motivo, por transición), con las
+     * entidades cargadas de una vez. El que no se carga es de una salida de
+     * otra empresa (el filtro de empresa del usuario, ADR-015): no se opera.
+     *
+     * @param list<int> $ids
+     *
+     * @return array<int, array<string, ?string>>
+     */
+    private function acciones(array $ids): array
+    {
+        $otra = array_fill_keys(array_map(static fn(TransicionBoleto $t) => $t->value, self::TRANSICIONES), "El boleto es de una salida de otra empresa.");
+        $acciones = array_fill_keys($ids, $otra);
+        if ($ids === []) {
+            return $acciones;
+        }
+        /** @var list<BoletoAsiento> $boletos */
+        $boletos = $this->em->createQueryBuilder()
+            ->select("b", "s", "v", "a")
+            ->from(BoletoAsiento::class, "b")
+            ->join("b.salida", "s")
+            ->join("b.boletoVenta", "v")
+            ->leftJoin("b.asiento", "a")
+            ->where("b.id IN (:ids)")
+            ->setParameter("ids", $ids)
+            ->getQuery()
+            ->getResult();
+        foreach ($boletos as $b) {
+            $acciones[(int) $b->getId()] = $this->flujo->motivos($b, ...self::TRANSICIONES);
+        }
+
+        return $acciones;
     }
 
     /**

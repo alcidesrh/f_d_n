@@ -17,7 +17,15 @@ export interface BoletoCompra {
   asiento: number
   salidaId: number
   salida: string
+  /**
+   * Lo que admite ahora según el flujo del boleto en el backend (ADR-037):
+   * null = se puede; si no, el motivo. El permiso va aparte.
+   */
+  acciones: Record<TransicionCompra, string | null>
 }
+
+/** Las acciones de la compra que son transiciones de sus boletos. */
+export type TransicionCompra = 'anular' | 'reasignar' | 'posponer'
 
 export interface VentaCompra {
   id: number

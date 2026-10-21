@@ -260,7 +260,7 @@
     <EditarCompraDialog :visible="dialogo === 'editar'" :compra="enMenu" @update:visible="cerrarDialogo" @listo="refrescar" />
     <PosponerCompraDialog :visible="dialogo === 'posponer'" :compra="enMenu" @update:visible="cerrarDialogo" @listo="refrescar" />
     <ReenviarBoletoDialog :visible="dialogo === 'reenviar'" :compra="enMenu" @update:visible="cerrarDialogo" />
-    <AnularBoletosDialog :visible="dialogo === 'anular'" :ids="enMenu ? boletosParaAnular(enMenu, new Date()) : []" @update:visible="cerrarDialogo" @listo="recargar" />
+    <AnularBoletosDialog :visible="dialogo === 'anular'" :ids="enMenu ? boletosParaAnular(enMenu) : []" @update:visible="cerrarDialogo" @listo="recargar" />
   </div>
 </template>
 
@@ -414,11 +414,10 @@ const ACCIONES: Array<{ accion: AccionCompra; etiqueta: string; icono: string; p
 const itemsMenu = computed<MenuItem[]>(() => {
   const c = enMenu.value
   if (!c) return []
-  const ahora = new Date()
-  const motivos = disponibilidadCompra(c, { anular: permisos.anular, reasignar: permisos.reasignar }, ahora)
+  const motivos = disponibilidadCompra(c, { anular: permisos.anular, reasignar: permisos.reasignar })
   return ACCIONES.flatMap((a) => {
     // Reasignar va por viaje (la taquilla reasigna una venta a la vez): con ida y regreso, uno por cada uno.
-    const viajes = a.accion === 'reasignar' && !motivos.reasignar ? viajesReasignables(c, ahora) : []
+    const viajes = a.accion === 'reasignar' && !motivos.reasignar ? viajesReasignables(c) : []
     if (viajes.length > 1) {
       return viajes.map((v) => ({ label: `Reasignar ${v.etiqueta.toLowerCase()}`, icono: a.icono, command: () => void reasignar(v.boletos) }))
     }
@@ -441,7 +440,7 @@ async function ejecutar(accion: AccionCompra, c: CompraWeb) {
       window.open(boletoPdf(c), '_blank', 'noopener')
       break
     case 'reasignar':
-      await reasignar(viajesReasignables(c, new Date())[0]?.boletos ?? [])
+      await reasignar(viajesReasignables(c)[0]?.boletos ?? [])
       break
     case 'factura':
       confirmarFactura(c)

@@ -38,6 +38,7 @@
 | [ADR-032](ADR-032-abordaje-y-chequeo-de-boletos.md) | Abordaje de salidas y chequeo de boletos; estado cancelado (no se presentó) | Aceptada |
 | [ADR-033](ADR-033-listado-de-boletos.md) | Listado de boletos (filtros y acciones del legado) y cancelar desde el listado | Aceptada |
 | [ADR-034](ADR-034-depositos-de-agencia.md) | Depósitos de agencia (registrar, acreditar o rechazar) y consulta de saldos | Aceptada |
-| [ADR-035](ADR-035-encomiendas.md) | Encomiendas: envío con artículos, cuatro modalidades, tarifas del legado, embarque con transbordo y bitácora | Aceptada |
+| [ADR-035](ADR-035-encomiendas.md) | Encomiendas: envío con artículos, cuatro modalidades, tarifas del legado, embarque con transbordo y bitácora | Aceptada (transiciones de estado reemplazadas por ADR-038) |
 | [ADR-036](ADR-036-metadata-del-cliente-por-revisiones.md) | Metadata del cliente por revisiones: el navegador se pone al día solo (automático) o cuando un administrador publica (manual) | Aceptada |
 | [ADR-037](ADR-037-flujo-del-boleto-con-symfony-workflow.md) | Flujo del boleto con `symfony/workflow`: transiciones con nombre, guards y acciones calculadas por el backend | Aceptada |
+| [ADR-038](ADR-038-flujo-de-la-encomienda-con-symfony-workflow.md) | Flujo de la encomienda con `symfony/workflow`: transiciones con nombre, guards y acciones del listado calculadas por el backend | Aceptada |

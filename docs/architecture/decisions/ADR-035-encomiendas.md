@@ -1,6 +1,6 @@
 # ADR-035: Encomiendas (paquetería en la bodega de los buses)
 
-**Estado:** Aceptada
+**Estado:** Aceptada (las transiciones de estado, reemplazadas por ADR-038)
 
 ## Contexto
 

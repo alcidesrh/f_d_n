@@ -65,11 +65,15 @@ emitido -->|posponer| pospuesto
 
 ### Bitácora
 
-`RegistradorBitacora` escucha `workflow.boleto_asiento.transition` y anota en el detalle de la próxima entrada del boleto el nombre de la transición (`transicion`) y lo que el servicio pasó en el contexto (`FlujoBoleto::BITACORA`: motivo, salida y asiento destino de la reasignación). La entrada la sigue escribiendo el listener de Doctrine en la misma transacción, y la operación (`OperacionBoleto`) no cambia: las entradas viejas y la pantalla de bitácora siguen igual. Los servicios ya no llaman a `anotar()` para un cambio de estado.
+`RegistradorBitacora` escucha `workflow.boleto_asiento.transition` y anota en el detalle de la próxima entrada del boleto el nombre de la transición (`transicion`) y lo que el servicio pasó en el contexto (`RegistradorBitacora::CONTEXTO`: motivo, salida y asiento destino de la reasignación; la misma clave sirve al workflow de la encomienda, ADR-038). La entrada la sigue escribiendo el listener de Doctrine en la misma transacción, y la operación (`OperacionBoleto`) no cambia: las entradas viejas y la pantalla de bitácora siguen igual. Los servicios ya no llaman a `anotar()` para un cambio de estado.
 
 ### Acciones del listado calculadas por el backend
 
 Cada fila de `GET /api/boletos` (y el detalle) trae `acciones: { chequear, cancelar, revertir, anular, reasignar }`: `null` si el boleto la admite ahora, o el motivo (`FlujoBoleto::acciones`, con «chequear» según la salida: `TransicionBoleto::alChequear`). El frontend (`core/boleto/listado.ts`) ya no repite las reglas: suma el permiso de quien mira (`puede`, de `/api/boletos/opciones`) y decide solo lo que no es transición (correo, reimprimir factura). Lo que depende de quién y de la base lo valida el backend al operar.
+
+### Acciones del dashboard de compras web
+
+En `GET /api/pagina/compras` cada boleto de cada viaje trae `acciones: { anular, reasignar, posponer }` (`FlujoBoleto::motivos`; `ConsultaComprasWeb` carga las entidades de la página en una consulta). El dashboard (`core/pagina-web/acciones.ts`) las junta por compra: «Anular» toma los boletos que admiten `anular`, «Reasignar» ofrece los viajes con boletos que admiten `reasignar` y «Posponer» se habilita si alguno admite `posponer`. Si ninguno la admite muestra el motivo del backend cuando es el mismo para todos (un solo boleto, la misma salida) y uno general si no. El frontend ya no compara la hora de salida con el reloj del navegador. Un boleto de una salida de otra empresa (filtro de empresa del usuario, ADR-015) no se carga y no se opera.
 
 ## Consecuencias
 
@@ -82,6 +86,5 @@ Cada fila de `GET /api/boletos` (y el detalle) trae `acciones: { chequear, cance
 
 **Negativas:**
 
-- Una dependencia nueva y un segundo patrón de estados en el proyecto: `Salida`, `Encomienda`, `PagoWeb` y `AgenciaDeposito` siguen con enums (ADR-014, ADR-035). Migrarlos queda para cuando lo justifiquen; `Encomienda` es la candidata natural (transbordo, anulación desde varios estados).
-- Los guards se evalúan en cada `can()`/`apply()`: el listado los corre cinco veces por fila. Son puros y sobre lo que ya está cargado (salida, venta), sin consultas.
-- El dashboard de compras web (`core/pagina-web/acciones.ts`) todavía decide en el frontend qué compras se anulan, reasignan o posponen. Usa reglas por compra (varios viajes), no por boleto; pasarlo al backend es el siguiente paso.
+- Una dependencia nueva y un segundo patrón de estados en el proyecto: `Salida`, `PagoWeb` y `AgenciaDeposito` siguen con enums (ADR-014). `Encomienda` pasó al mismo patrón en ADR-038.
+- Los guards se evalúan en cada `can()`/`apply()`: el listado los corre cinco veces por fila, y el dashboard tres por boleto. Son puros y sobre lo que ya está cargado (salida, venta), sin consultas.

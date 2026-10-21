@@ -1,8 +1,7 @@
 /**
  * Reglas puras de las pantallas de encomiendas (ADR-035): etiquetas, qué
- * acción admite una encomienda y por qué no, validación de artículos, la
- * consulta del listado y las guías a imprimir. Espejo de
- * `App\Encomienda\ReglasEncomienda`; el backend decide igual.
+ * acción admite una encomienda y por qué no (lo decide el backend, ADR-038),
+ * validación de artículos, la consulta del listado y las guías a imprimir.
  */
 import type { ArticuloPedido, DatosEncomienda, EstadoEncomienda, FilaEncomienda, ModalidadEncomienda, PermisosEncomienda } from './types'
 
@@ -26,9 +25,6 @@ export const etiquetaEstado = (e: string) => ESTADOS.find((x) => x.valor === e)?
 export const inicialEstado = (e: string) => ESTADOS.find((x) => x.valor === e)?.inicial ?? e.charAt(0).toUpperCase()
 export const etiquetaModalidad = (m: string) => MODALIDADES.find((x) => x.valor === m)?.etiqueta ?? m
 
-export const enBodega = (e: EstadoEncomienda) => e === 'recibida' || e === 'desembarcada'
-export const aBordo = (e: EstadoEncomienda) => e === 'embarcada' || e === 'transito'
-
 export type AccionEncomienda = 'consultar' | 'embarcar' | 'desembarcar' | 'entregar' | 'anular' | 'recibo' | 'guias' | 'bitacora'
 
 export interface EstadoAccion {
@@ -43,8 +39,11 @@ const no = (motivo: string): EstadoAccion => ({ visible: true, habilitada: false
 const oculta: EstadoAccion = { visible: false, habilitada: false, motivo: null }
 
 /**
- * Qué se puede hacer con la encomienda elegida. `estacion` es la del usuario
- * (null = oficina, opera en cualquiera).
+ * Qué se puede hacer con la encomienda elegida. Las que cambian su estado
+ * las decide el backend (`f.acciones`, el workflow de la encomienda,
+ * ADR-038); aquí solo se suman el permiso y la estación de quien mira
+ * (`estacion`, null = oficina, opera en cualquiera). Al operar, el backend
+ * vuelve a exigir todo, y además la salida en que se embarca.
  */
 export function disponibilidad(
   f: FilaEncomienda | null,
@@ -64,40 +63,23 @@ export function disponibilidad(
       bitacora: sinElegir,
     }
   }
-  const aqui = (id: number | undefined) => estacion === null || estacion === id
+  /** La estación donde se opera, si no es la de quien mira. */
+  const otra = (id: number | undefined, mensaje: string) => (estacion === null || estacion === id ? null : mensaje)
+  /** Con el permiso: primero lo que dice el backend, luego la estación. */
+  const accion = (permiso: boolean, motivo: string | null, deOtra: string | null = null): EstadoAccion =>
+    !permiso ? oculta : motivo !== null ? no(motivo) : deOtra !== null ? no(deOtra) : si
 
-  const embarcar = !puede.embarcar
-    ? oculta
-    : !enBodega(f.estado)
-      ? no(`Está ${etiquetaEstado(f.estado).toLowerCase()}: solo se embarca desde la bodega`)
-      : !aqui(f.ubicacion?.id)
-        ? no(`Está en la bodega de ${f.ubicacion?.nombre ?? 'otra estación'}`)
-        : f.ubicacion?.id === f.destino.id
-          ? no('Ya está en su destino: se entrega')
-          : si
-
-  const desembarcar = !puede.embarcar ? oculta : !aBordo(f.estado) ? no('No va en ningún bus') : si
-
-  const entregar = !puede.entregar
-    ? oculta
-    : // En tránsito, el backend comprueba que su salida pase por el destino (se desembarca al entregarla).
-      !(f.estado === 'desembarcada' && f.ubicacion?.id === f.destino.id) && f.estado !== 'transito'
-      ? no('Se entrega desembarcada en su destino o en tránsito hacia él')
-      : !aqui(f.destino.id)
-        ? no(`La entrega la estación ${f.destino.nombre}`)
-        : si
-
-  const anular = !puede.anular
-    ? oculta
-    : f.modalidad === 'con_boleto'
-      ? no('Va con un boleto: se anula al anular el boleto')
-      : !enBodega(f.estado) || f.ubicacion?.id !== f.origen.id
-        ? no('Solo se anula si no ha viajado (en la bodega de su origen)')
-        : !aqui(f.origen.id)
-          ? no(`La anula la estación ${f.origen.nombre}`)
-          : si
-
-  return { consultar: si, embarcar, desembarcar, entregar, anular, recibo: si, guias: f.estado === 'anulada' ? no('Está anulada') : si, bitacora: si }
+  return {
+    consultar: si,
+    embarcar: accion(puede.embarcar, f.acciones.embarcar, otra(f.ubicacion?.id, `Está en la bodega de ${f.ubicacion?.nombre ?? 'otra estación'}`)),
+    // La estación donde se baja la comprueba el backend (una parada de su salida).
+    desembarcar: accion(puede.embarcar, f.acciones.desembarcar),
+    entregar: accion(puede.entregar, f.acciones.entregar, otra(f.destino.id, `La entrega la estación ${f.destino.nombre}`)),
+    anular: accion(puede.anular, f.acciones.anular, otra(f.origen.id, `La anula la estación ${f.origen.nombre}`)),
+    recibo: si,
+    guias: f.estado === 'anulada' ? no('Está anulada') : si,
+    bitacora: si,
+  }
 }
 
 /**

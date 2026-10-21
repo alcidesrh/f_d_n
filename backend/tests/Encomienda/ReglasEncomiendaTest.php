@@ -8,10 +8,13 @@ use App\Encomienda\EncomiendaRechazada;
 use App\Encomienda\ReglasEncomienda;
 use App\Entity\Enum\EstadoEncomienda;
 use App\Entity\Enum\EstadoSalida;
-use App\Entity\Enum\ModalidadEncomienda;
 use PHPUnit\Framework\TestCase;
 
-/** Reglas puras de los movimientos de una encomienda (ADR-035). */
+/**
+ * Reglas puras de los movimientos de una encomienda (ADR-035) que dependen de
+ * la operación: la salida, la parada y quién opera. Las de la encomienda
+ * misma (guards del workflow) están en `FlujoEncomiendaTest`.
+ */
 final class ReglasEncomiendaTest extends TestCase
 {
     private const GUATE = 1;
@@ -32,65 +35,33 @@ final class ReglasEncomiendaTest extends TestCase
         return null;
     }
 
-    public function testSeEmbarcaDesdeLaBodegaDeLaEstacion(): void
+    public function testSeEmbarcaEnUnaSalidaAbiertaDeSuEmpresaQueSigue(): void
     {
-        $embarcar = fn(EstadoEncomienda $e, ?int $usuario = self::GUATE, EstadoSalida $s = EstadoSalida::PROGRAMADA, int $donde = self::GUATE, int $empresa = self::EMPRESA) => ReglasEncomienda::alEmbarcar($e, $donde, $usuario, $s, self::PARADAS, self::EMPRESA, $empresa);
+        $embarcar = fn(int $donde = self::GUATE, EstadoSalida $s = EstadoSalida::PROGRAMADA, int $empresa = self::EMPRESA) => ReglasEncomienda::exigirSalidaParaEmbarcar($donde, $s, self::PARADAS, self::EMPRESA, $empresa);
 
-        $this->assertSame(EstadoEncomienda::EMBARCADA, $embarcar(EstadoEncomienda::RECIBIDA));
-        $this->assertSame(EstadoEncomienda::EMBARCADA, $embarcar(EstadoEncomienda::RECIBIDA, null));
-        // Con la salida en camino va directo a tránsito (se sube en una parada intermedia).
-        $this->assertSame(EstadoEncomienda::TRANSITO, $embarcar(EstadoEncomienda::DESEMBARCADA, self::RIO_DULCE, EstadoSalida::INICIADA, self::RIO_DULCE));
+        $this->assertNull($this->codigo(fn() => $embarcar()));
+        // Con la salida en camino se sube en una parada intermedia.
+        $this->assertNull($this->codigo(fn() => $embarcar(self::RIO_DULCE, EstadoSalida::INICIADA)));
 
-        $this->assertSame("estado", $this->codigo(fn() => $embarcar(EstadoEncomienda::EMBARCADA)));
-        $this->assertSame("estado", $this->codigo(fn() => $embarcar(EstadoEncomienda::ENTREGADA)));
-        $this->assertSame("otra_estacion", $this->codigo(fn() => $embarcar(EstadoEncomienda::RECIBIDA, self::FLORES)));
-        $this->assertSame("salida_cerrada", $this->codigo(fn() => $embarcar(EstadoEncomienda::RECIBIDA, s: EstadoSalida::FINALIZADA)));
-        $this->assertSame("otra_empresa", $this->codigo(fn() => $embarcar(EstadoEncomienda::RECIBIDA, empresa: 99)));
+        $this->assertSame("salida_cerrada", $this->codigo(fn() => $embarcar(s: EstadoSalida::FINALIZADA)));
+        $this->assertSame("salida_cerrada", $this->codigo(fn() => $embarcar(s: EstadoSalida::CANCELADA)));
+        $this->assertSame("otra_empresa", $this->codigo(fn() => $embarcar(empresa: 99)));
         // En la última parada la salida ya no sigue.
-        $this->assertSame("fuera_de_ruta", $this->codigo(fn() => $embarcar(EstadoEncomienda::DESEMBARCADA, self::FLORES, donde: self::FLORES)));
-        $this->assertSame("fuera_de_ruta", $this->codigo(fn() => $embarcar(EstadoEncomienda::RECIBIDA, 50, donde: 50)));
+        $this->assertSame("fuera_de_ruta", $this->codigo(fn() => $embarcar(self::FLORES)));
+        $this->assertSame("fuera_de_ruta", $this->codigo(fn() => $embarcar(50)));
     }
 
     public function testSeDesembarcaEnUnaParadaDeSuSalida(): void
     {
-        ReglasEncomienda::exigirDesembarcable(EstadoEncomienda::TRANSITO, self::RIO_DULCE, self::PARADAS);
-        ReglasEncomienda::exigirDesembarcable(EstadoEncomienda::EMBARCADA, self::GUATE, self::PARADAS);
-
-        $this->assertSame("estado", $this->codigo(fn() => ReglasEncomienda::exigirDesembarcable(EstadoEncomienda::RECIBIDA, self::GUATE, self::PARADAS)));
-        $this->assertSame("fuera_de_ruta", $this->codigo(fn() => ReglasEncomienda::exigirDesembarcable(EstadoEncomienda::TRANSITO, 50, self::PARADAS)));
+        $this->assertNull($this->codigo(fn() => ReglasEncomienda::exigirParadaDeSalida(self::RIO_DULCE, self::PARADAS)));
+        $this->assertSame("fuera_de_ruta", $this->codigo(fn() => ReglasEncomienda::exigirParadaDeSalida(50, self::PARADAS)));
     }
 
-    public function testSeEntregaDesembarcadaEnSuDestino(): void
+    public function testOperaUnUsuarioDeEsaEstacionODeOficina(): void
     {
-        ReglasEncomienda::exigirEntregable(EstadoEncomienda::DESEMBARCADA, self::FLORES, self::FLORES, self::FLORES);
-        ReglasEncomienda::exigirEntregable(EstadoEncomienda::DESEMBARCADA, self::FLORES, self::FLORES, null);
-
-        // En un transbordo todavía no se entrega.
-        $this->assertSame("estado", $this->codigo(fn() => ReglasEncomienda::exigirEntregable(EstadoEncomienda::DESEMBARCADA, self::RIO_DULCE, self::FLORES, self::RIO_DULCE)));
-        $this->assertSame("estado", $this->codigo(fn() => ReglasEncomienda::exigirEntregable(EstadoEncomienda::TRANSITO, null, self::FLORES, self::FLORES)));
-        $this->assertSame("otra_estacion", $this->codigo(fn() => ReglasEncomienda::exigirEntregable(EstadoEncomienda::DESEMBARCADA, self::FLORES, self::FLORES, self::GUATE)));
-    }
-
-    public function testSeEntregaEnTransitoSiSuSalidaLlegaAlDestino(): void
-    {
-        // El bus llegó y nadie la desembarcó: se entrega igual (se desembarca al entregarla).
-        ReglasEncomienda::exigirEntregable(EstadoEncomienda::TRANSITO, null, self::FLORES, self::FLORES, self::PARADAS);
-
-        // Su salida no pasa por el destino (hará transbordo) o todavía no salió.
-        $this->assertSame("estado", $this->codigo(fn() => ReglasEncomienda::exigirEntregable(EstadoEncomienda::TRANSITO, null, self::FLORES, self::FLORES, [self::GUATE, self::RIO_DULCE])));
-        $this->assertSame("estado", $this->codigo(fn() => ReglasEncomienda::exigirEntregable(EstadoEncomienda::EMBARCADA, null, self::FLORES, self::FLORES, self::PARADAS)));
-    }
-
-    public function testSeAnulaSoloSiNoHaViajado(): void
-    {
-        ReglasEncomienda::exigirAnulable(EstadoEncomienda::RECIBIDA, ModalidadEncomienda::PAGADA, self::GUATE, self::GUATE, self::GUATE);
-        // Se bajó en el origen antes de salir.
-        ReglasEncomienda::exigirAnulable(EstadoEncomienda::DESEMBARCADA, ModalidadEncomienda::POR_COBRAR, self::GUATE, self::GUATE, null);
-
-        $this->assertSame("estado", $this->codigo(fn() => ReglasEncomienda::exigirAnulable(EstadoEncomienda::DESEMBARCADA, ModalidadEncomienda::PAGADA, self::FLORES, self::GUATE, null)));
-        $this->assertSame("estado", $this->codigo(fn() => ReglasEncomienda::exigirAnulable(EstadoEncomienda::EMBARCADA, ModalidadEncomienda::PAGADA, null, self::GUATE, null)));
-        $this->assertSame("con_boleto", $this->codigo(fn() => ReglasEncomienda::exigirAnulable(EstadoEncomienda::EMBARCADA, ModalidadEncomienda::CON_BOLETO, null, self::GUATE, null)));
-        $this->assertSame("otra_estacion", $this->codigo(fn() => ReglasEncomienda::exigirAnulable(EstadoEncomienda::RECIBIDA, ModalidadEncomienda::INTERNA, self::GUATE, self::GUATE, self::FLORES)));
+        $this->assertNull($this->codigo(fn() => ReglasEncomienda::exigirEstacion(self::GUATE, self::GUATE, "otra")));
+        $this->assertNull($this->codigo(fn() => ReglasEncomienda::exigirEstacion(null, self::GUATE, "otra")));
+        $this->assertSame("otra_estacion", $this->codigo(fn() => ReglasEncomienda::exigirEstacion(self::FLORES, self::GUATE, "otra")));
     }
 
     public function testLlegaADestino(): void

@@ -29,6 +29,7 @@ final class ConsultaEncomiendas
 
     public function __construct(
         private readonly EntityManagerInterface $em,
+        private readonly FlujoEncomienda $flujo,
     ) {}
 
     /**
@@ -254,7 +255,7 @@ final class ConsultaEncomiendas
             $porId[(int) $e->getId()] = $e;
         }
 
-        return array_values(array_map(static function (int $id) use ($porId) {
+        return array_values(array_map(function (int $id) use ($porId) {
             $e = $porId[$id];
             $s = $e->getSalida();
 
@@ -279,6 +280,8 @@ final class ConsultaEncomiendas
                 "estadoFacturacion" => $e->getEstadoFacturacion()->value,
                 "venta" => $e->getBoletoVenta()?->getId(),
                 "usuario" => $e->getUsuario()?->getUsername(),
+                // Qué transiciones admite y, si no, por qué (ADR-038): el panel solo suma el permiso y la estación.
+                "acciones" => $this->flujo->acciones($e),
             ];
         }, array_filter($ids, static fn(int $id) => isset($porId[$id]))));
     }

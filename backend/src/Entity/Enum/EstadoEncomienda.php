@@ -8,7 +8,8 @@ namespace App\Entity\Enum;
  * Estado de una `Encomienda` (ADR-035):
  * `recibida → embarcada → transito → desembarcada → entregada`, con transbordo
  * (desembarcada → embarcada) y `anulada` desde la bodega de su origen (o
- * embarcada, si va con un boleto que se anula).
+ * embarcada, si va con un boleto que se anula). Cambia solo por una
+ * transición del workflow `encomienda` (`TransicionEncomienda`, ADR-038).
  */
 enum EstadoEncomienda: string
 {
@@ -24,19 +25,22 @@ enum EstadoEncomienda: string
     case ENTREGADA = "entregada";
     case ANULADA = "anulada";
 
-    /** @return list<self> */
+    /**
+     * Los estados a los que llega alguna transición del flujo
+     * (`TransicionEncomienda`, ADR-038).
+     *
+     * @return list<self>
+     */
     public function transicionesPermitidas(): array
     {
-        return match ($this) {
-            self::RECIBIDA => [self::EMBARCADA, self::TRANSITO, self::ANULADA],
-            // Se baja antes de salir (o en una parada) y queda en bodega ahí.
-            // Anulada: la de un pasajero cuyo boleto se anula antes de salir.
-            self::EMBARCADA => [self::TRANSITO, self::DESEMBARCADA, self::ANULADA],
-            self::TRANSITO => [self::DESEMBARCADA],
-            // Transbordo: se embarca en otra salida; en su destino se entrega.
-            self::DESEMBARCADA => [self::EMBARCADA, self::TRANSITO, self::ENTREGADA, self::ANULADA],
-            self::ENTREGADA, self::ANULADA => [],
-        };
+        $hacia = [];
+        foreach (TransicionEncomienda::cases() as $t) {
+            if (in_array($this, $t->desde(), true) && !in_array($t->hacia(), $hacia, true)) {
+                $hacia[] = $t->hacia();
+            }
+        }
+
+        return $hacia;
     }
 
     public function puedeTransicionarA(self $nuevo): bool

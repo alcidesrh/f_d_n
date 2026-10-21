@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Venta\Boleto\Flujo;
 
+use App\Bitacora\RegistradorBitacora;
 use App\Entity\BoletoAsiento;
 use App\Entity\Enum\TransicionBoleto;
 use App\Salida\SalidaRechazada;
@@ -26,9 +27,6 @@ use Symfony\Component\Workflow\WorkflowInterface;
  */
 final class FlujoBoleto
 {
-    /** Clave del contexto de `apply()` con lo que va al detalle de la bitácora. */
-    public const BITACORA = "bitacora";
-
     public function __construct(
         #[Target(TransicionBoleto::WORKFLOW)]
         private readonly WorkflowInterface $flujo,
@@ -42,7 +40,7 @@ final class FlujoBoleto
     public function aplicar(BoletoAsiento $b, TransicionBoleto $t, array $bitacora = []): void
     {
         try {
-            $this->flujo->apply($b, $t->value, [self::BITACORA => $bitacora]);
+            $this->flujo->apply($b, $t->value, [RegistradorBitacora::CONTEXTO => $bitacora]);
         } catch (NotEnabledTransitionException $e) {
             throw self::rechazoDe($b, $t, $e->getTransitionBlockerList());
         }
@@ -68,6 +66,21 @@ final class FlujoBoleto
         $bloqueos = $this->flujo->buildTransitionBlockerList($b, $t->value);
 
         return $bloqueos->isEmpty() ? null : self::rechazoDe($b, $t, $bloqueos);
+    }
+
+    /**
+     * Lo que admite el boleto, por transición: null si se puede, o el motivo.
+     *
+     * @return array<string, ?string> por nombre de la transición
+     */
+    public function motivos(BoletoAsiento $b, TransicionBoleto ...$transiciones): array
+    {
+        $motivos = [];
+        foreach ($transiciones as $t) {
+            $motivos[$t->value] = $this->rechazo($b, $t)?->getMessage();
+        }
+
+        return $motivos;
     }
 
     /**

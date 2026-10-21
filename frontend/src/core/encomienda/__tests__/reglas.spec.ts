@@ -6,6 +6,21 @@ const TODO: PermisosEncomienda = { ver: true, registrar: true, interna: true, em
 const GUATE = { id: 1, nombre: 'Guatemala' }
 const FLORES = { id: 3, nombre: 'Flores' }
 
+/** Lo que manda el backend (`FlujoEncomienda::acciones`) para una recibida en su origen. */
+const EN_ORIGEN: FilaEncomienda['acciones'] = {
+  embarcar: null,
+  desembarcar: 'La encomienda está recibida: solo se desembarca una encomienda embarcada o en tránsito.',
+  entregar: 'La encomienda está recibida: solo se entrega una encomienda desembarcada en su destino o en tránsito hacia él.',
+  anular: null,
+}
+/** Y para una desembarcada en su destino. */
+const EN_DESTINO: FilaEncomienda['acciones'] = {
+  embarcar: 'La encomienda ya está en su destino: se entrega.',
+  desembarcar: 'La encomienda está desembarcada: solo se desembarca una encomienda embarcada o en tránsito.',
+  entregar: null,
+  anular: 'Solo se anula una encomienda que no ha viajado (en la bodega de su origen).',
+}
+
 function fila(parcial: Partial<FilaEncomienda>): FilaEncomienda {
   return {
     id: 7,
@@ -28,39 +43,40 @@ function fila(parcial: Partial<FilaEncomienda>): FilaEncomienda {
     estadoFacturacion: 'certificada',
     venta: null,
     usuario: 'ana',
+    acciones: EN_ORIGEN,
     ...parcial,
   }
 }
 
 describe('disponibilidad de acciones', () => {
-  it('en bodega en su origen se embarca y se anula, no se entrega', () => {
+  it('lo que admite la encomienda lo dice el backend, con su motivo', () => {
     const a = disponibilidad(fila({}), TODO, GUATE.id)
     expect(a.embarcar.habilitada).toBe(true)
     expect(a.anular.habilitada).toBe(true)
-    expect(a.entregar.habilitada).toBe(false)
-    expect(a.desembarcar.habilitada).toBe(false)
+    expect(a.entregar).toEqual({ visible: true, habilitada: false, motivo: EN_ORIGEN.entregar })
+    expect(a.desembarcar).toEqual({ visible: true, habilitada: false, motivo: EN_ORIGEN.desembarcar })
   })
 
   it('desde otra estación no se embarca ni se anula', () => {
     const a = disponibilidad(fila({}), TODO, FLORES.id)
-    expect(a.embarcar.motivo).toContain('Guatemala')
-    expect(a.anular.habilitada).toBe(false)
+    expect(a.embarcar.motivo).toBe('Está en la bodega de Guatemala')
+    expect(a.anular.motivo).toBe('La anula la estación Guatemala')
   })
 
   it('desembarcada en su destino se entrega allí (u oficina)', () => {
-    const f = fila({ estado: 'desembarcada', ubicacion: FLORES })
+    const f = fila({ estado: 'desembarcada', ubicacion: FLORES, acciones: EN_DESTINO })
     expect(disponibilidad(f, TODO, FLORES.id).entregar.habilitada).toBe(true)
     expect(disponibilidad(f, TODO, null).entregar.habilitada).toBe(true)
-    expect(disponibilidad(f, TODO, GUATE.id).entregar.habilitada).toBe(false)
-    expect(disponibilidad(f, TODO, FLORES.id).embarcar.habilitada).toBe(false)
-    // Ya viajó: no se anula.
-    expect(disponibilidad(f, TODO, null).anular.habilitada).toBe(false)
+    expect(disponibilidad(f, TODO, GUATE.id).entregar.motivo).toBe('La entrega la estación Flores')
+    expect(disponibilidad(f, TODO, FLORES.id).embarcar.motivo).toBe(EN_DESTINO.embarcar)
+    expect(disponibilidad(f, TODO, null).anular.motivo).toBe(EN_DESTINO.anular)
   })
 
-  it('la que va con boleto no se anula sola; a bordo se desembarca', () => {
-    const a = disponibilidad(fila({ modalidad: 'con_boleto', estado: 'embarcada', ubicacion: null }), TODO, null)
-    expect(a.anular.motivo).toContain('boleto')
-    expect(a.desembarcar.habilitada).toBe(true)
+  it('el motivo del backend va antes que la estación', () => {
+    const a = disponibilidad(fila({ estado: 'desembarcada', ubicacion: FLORES, acciones: EN_DESTINO }), TODO, GUATE.id)
+    expect(a.embarcar.motivo).toBe(EN_DESTINO.embarcar)
+    // Desembarcar no mira la estación: el backend comprueba que sea una parada de su salida.
+    expect(disponibilidad(fila({ acciones: { ...EN_ORIGEN, desembarcar: null } }), TODO, FLORES.id).desembarcar.habilitada).toBe(true)
   })
 
   it('sin permiso la acción no se muestra', () => {
@@ -147,8 +163,4 @@ describe('entrega múltiple y pendientes', () => {
     ])
   })
 
-  it('se puede intentar entregar lo que va en tránsito (el backend comprueba la salida)', () => {
-    expect(disponibilidad(fila({ estado: 'transito', ubicacion: null }), TODO, FLORES.id).entregar.habilitada).toBe(true)
-    expect(disponibilidad(fila({ estado: 'embarcada', ubicacion: null }), TODO, FLORES.id).entregar.habilitada).toBe(false)
-  })
 })

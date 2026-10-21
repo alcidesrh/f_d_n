@@ -4,14 +4,18 @@ declare(strict_types=1);
 
 namespace App\Encomienda;
 
-use App\Entity\Enum\EstadoEncomienda;
+use App\Entity\Encomienda;
 use App\Entity\Enum\EstadoSalida;
 use App\Entity\Enum\ModalidadEncomienda;
+use App\Entity\Enum\TransicionEncomienda;
 
 /**
- * Reglas puras de los movimientos de una encomienda (ADR-035). Los enclaves
- * van por id; `$estacionUsuario` null es un usuario de oficina (sin estación),
- * que puede operar en cualquiera.
+ * Reglas puras de los movimientos de una encomienda (ADR-035). `rechazo()`
+ * son los guards del workflow `encomienda` (ADR-038): lo que se sabe de la
+ * encomienda misma. Lo demás depende de la operación y lo exige el servicio:
+ * la salida en que se embarca, la estación donde se baja y quién opera. Los
+ * enclaves van por id; `$estacionUsuario` null es un usuario de oficina (sin
+ * estación), que puede operar en cualquiera.
  */
 final class ReglasEncomienda
 {
@@ -19,27 +23,47 @@ final class ReglasEncomienda
     private const SALIDAS_EMBARCABLES = [EstadoSalida::PROGRAMADA, EstadoSalida::ABORDANDO, EstadoSalida::INICIADA];
 
     /**
-     * Estado en que queda al embarcarla en esa salida: en tránsito si la salida ya inició.
+     * Por qué la encomienda no admite la transición (además de su estado, que
+     * lo decide la máquina), o null si la admite.
+     */
+    public static function rechazo(TransicionEncomienda $t, Encomienda $e): ?EncomiendaRechazada
+    {
+        $ubicacion = $e->getUbicacion()?->getId();
+
+        return match ($t) {
+            TransicionEncomienda::EMBARCAR, TransicionEncomienda::EMBARCAR_EN_RUTA => match (true) {
+                $ubicacion === null => new EncomiendaRechazada("La encomienda no está en la bodega de ninguna estación.", "estado"),
+                $ubicacion === $e->getDestino()?->getId() => new EncomiendaRechazada("La encomienda ya está en su destino: se entrega.", "en_destino"),
+                default => null,
+            },
+            TransicionEncomienda::PARTIR => $e->getSalida()?->getEstado() === EstadoSalida::INICIADA
+                ? null
+                : new EncomiendaRechazada(sprintf("La salida está %s: la encomienda parte cuando inicia su salida.", $e->getSalida()?->getEstado()->value ?? "sin asignar"), "salida_no_iniciada", 409),
+            TransicionEncomienda::DESEMBARCAR => $e->getSalida() === null ? new EncomiendaRechazada("La encomienda no va en ninguna salida.", "estado") : null,
+            TransicionEncomienda::ENTREGAR => $ubicacion !== null && $ubicacion === $e->getDestino()?->getId()
+                ? null
+                : new EncomiendaRechazada("Solo se entrega una encomienda desembarcada en su destino o en tránsito hacia él.", "estado"),
+            TransicionEncomienda::ANULAR => match (true) {
+                $e->getModalidad() === ModalidadEncomienda::CON_BOLETO => new EncomiendaRechazada("La encomienda va con un boleto: se anula al anular el boleto.", "con_boleto"),
+                $ubicacion === null || $ubicacion !== $e->getOrigen()?->getId() => new EncomiendaRechazada("Solo se anula una encomienda que no ha viajado (en la bodega de su origen).", "estado"),
+                default => null,
+            },
+            TransicionEncomienda::ANULAR_CON_BOLETO => $e->getModalidad() === ModalidadEncomienda::CON_BOLETO
+                ? null
+                : new EncomiendaRechazada("Solo la encomienda que va con un boleto se anula con su venta.", "sin_boleto"),
+        };
+    }
+
+    /**
+     * La salida en que se embarca: que esté abierta, sea de su empresa y siga
+     * después de la estación donde está la encomienda.
      *
      * @param list<int> $paradas enclaves de la ruta de la salida, en orden
      *
      * @throws EncomiendaRechazada
      */
-    public static function alEmbarcar(
-        EstadoEncomienda $estado,
-        ?int $ubicacion,
-        ?int $estacionUsuario,
-        EstadoSalida $estadoSalida,
-        array $paradas,
-        ?int $empresaEncomienda,
-        ?int $empresaSalida,
-    ): EstadoEncomienda {
-        if (!$estado->enBodega() || $ubicacion === null) {
-            throw new EncomiendaRechazada(sprintf("Solo se embarca una encomienda en bodega (recibida o desembarcada); esta está %s.", mb_strtolower($estado->etiqueta())), "estado");
-        }
-        if ($estacionUsuario !== null && $estacionUsuario !== $ubicacion) {
-            throw new EncomiendaRechazada("La encomienda está en la bodega de otra estación: la embarca un usuario de esa estación.", "otra_estacion", 403);
-        }
+    public static function exigirSalidaParaEmbarcar(int $ubicacion, EstadoSalida $estadoSalida, array $paradas, ?int $empresaEncomienda, ?int $empresaSalida): void
+    {
         if (!in_array($estadoSalida, self::SALIDAS_EMBARCABLES, true)) {
             throw new EncomiendaRechazada("La salida ya terminó o está anulada: no se le suben encomiendas.", "salida_cerrada");
         }
@@ -50,62 +74,32 @@ final class ReglasEncomienda
         if ($posicion === false || $posicion === count($paradas) - 1) {
             throw new EncomiendaRechazada("La ruta de la salida no sale de la estación donde está la encomienda.", "fuera_de_ruta");
         }
-
-        return $estadoSalida === EstadoSalida::INICIADA ? EstadoEncomienda::TRANSITO : EstadoEncomienda::EMBARCADA;
     }
 
     /**
+     * Se desembarca en una parada de su salida.
+     *
      * @param list<int> $paradas enclaves de la ruta de su salida
      *
      * @throws EncomiendaRechazada
      */
-    public static function exigirDesembarcable(EstadoEncomienda $estado, int $estacion, array $paradas): void
+    public static function exigirParadaDeSalida(int $estacion, array $paradas): void
     {
-        if (!$estado->aBordo()) {
-            throw new EncomiendaRechazada(sprintf("Solo se desembarca una encomienda embarcada o en tránsito; esta está %s.", mb_strtolower($estado->etiqueta())), "estado");
-        }
         if (!in_array($estacion, $paradas, true)) {
             throw new EncomiendaRechazada("La salida de la encomienda no pasa por esa estación.", "fuera_de_ruta");
         }
     }
 
     /**
-     * Se entrega desembarcada en su destino o, como en el legado, en tránsito
-     * en una salida que pasa por su destino (se desembarca al entregarla:
-     * el bus llegó y nadie la bajó en el sistema).
-     *
-     * @param list<int> $paradasSalida enclaves de la ruta de su salida (vacío si no va en ninguna)
+     * Quién opera: un usuario de esa estación (la bodega donde está, su
+     * destino al entregar, su origen al anular) o de oficina.
      *
      * @throws EncomiendaRechazada
      */
-    public static function exigirEntregable(EstadoEncomienda $estado, ?int $ubicacion, int $destino, ?int $estacionUsuario, array $paradasSalida = []): void
+    public static function exigirEstacion(?int $estacionUsuario, ?int $estacion, string $mensaje): void
     {
-        $desembarcada = $estado === EstadoEncomienda::DESEMBARCADA && $ubicacion === $destino;
-        $llega = $estado === EstadoEncomienda::TRANSITO && in_array($destino, $paradasSalida, true);
-        if (!$desembarcada && !$llega) {
-            throw new EncomiendaRechazada("Solo se entrega una encomienda desembarcada en su destino o en tránsito hacia él.", "estado");
-        }
-        if ($estacionUsuario !== null && $estacionUsuario !== $destino) {
-            throw new EncomiendaRechazada("La entrega un usuario de la estación de destino.", "otra_estacion", 403);
-        }
-    }
-
-    /**
-     * Se anula mientras no haya viajado: en bodega en su origen. La que va con
-     * boleto se anula con su venta.
-     *
-     * @throws EncomiendaRechazada
-     */
-    public static function exigirAnulable(EstadoEncomienda $estado, ModalidadEncomienda $modalidad, ?int $ubicacion, int $origen, ?int $estacionUsuario): void
-    {
-        if ($modalidad === ModalidadEncomienda::CON_BOLETO) {
-            throw new EncomiendaRechazada("La encomienda va con un boleto: se anula al anular el boleto.", "con_boleto");
-        }
-        if (!$estado->enBodega() || $ubicacion !== $origen) {
-            throw new EncomiendaRechazada("Solo se anula una encomienda que no ha viajado (en la bodega de su origen).", "estado");
-        }
-        if ($estacionUsuario !== null && $estacionUsuario !== $origen) {
-            throw new EncomiendaRechazada("La anula un usuario de la estación de origen.", "otra_estacion", 403);
+        if ($estacionUsuario !== null && $estacionUsuario !== $estacion) {
+            throw new EncomiendaRechazada($mensaje, "otra_estacion", 403);
         }
     }
 

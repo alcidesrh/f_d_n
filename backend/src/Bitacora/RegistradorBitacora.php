@@ -14,9 +14,9 @@ use App\Entity\Enum\OperacionBoleto;
 use App\Entity\Enum\OperacionEncomienda;
 use App\Entity\Enum\OperacionSalida;
 use App\Entity\Enum\TransicionBoleto;
+use App\Entity\Enum\TransicionEncomienda;
 use App\Entity\Salida;
 use App\Entity\Usuario;
-use App\Venta\Boleto\Flujo\FlujoBoleto;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Types\Types;
@@ -38,8 +38,9 @@ use Symfony\Contracts\Service\ResetInterface;
  * Cada fila se escribe con DBAL dentro de la misma transacción del flush: si
  * la operación se revierte, su bitácora también. Los datos que solo conoce el
  * servicio que opera (el motivo de una anulación) se pasan con `anotar()`
- * antes del flush. Un boleto cambia de estado por una transición del
- * workflow (ADR-037): su nombre y el contexto que trae van al detalle solos.
+ * antes del flush. Un boleto o una encomienda cambian de estado por una
+ * transición de su workflow (ADR-037): su nombre y lo que trae el contexto
+ * (`CONTEXTO`) van al detalle solos.
  *
  * No anota lo que viene de la migración del legado (registro con
  * `legacyId` y sin usuario en sesión): son miles de filas sin autor.
@@ -50,6 +51,9 @@ use Symfony\Contracts\Service\ResetInterface;
 #[AsDoctrineListener(event: Events::postRemove)]
 final class RegistradorBitacora implements ResetInterface
 {
+    /** Clave del contexto de `apply()` con lo que va al detalle (motivo, estación…). */
+    public const CONTEXTO = "bitacora";
+
     /** @var \WeakMap<object, array<string, mixed>> datos extra por registro (un objeto liberado no deja su nota a otro) */
     private \WeakMap $notas;
 
@@ -73,14 +77,15 @@ final class RegistradorBitacora implements ResetInterface
     }
 
     /**
-     * La transición del boleto (`transicion`: cancelar desde el listado y no
-     * presentarse dejan el mismo estado) y lo que el servicio pasó en el
-     * contexto (`FlujoBoleto::BITACORA`).
+     * La transición (`transicion`: cancelar desde el listado y no
+     * presentarse dejan el mismo estado del boleto) y lo que el servicio pasó
+     * en el contexto (`CONTEXTO`).
      */
     #[AsEventListener(event: "workflow." . TransicionBoleto::WORKFLOW . ".transition")]
+    #[AsEventListener(event: "workflow." . TransicionEncomienda::WORKFLOW . ".transition")]
     public function alTransicionar(TransitionEvent $event): void
     {
-        $this->anotar($event->getSubject(), ["transicion" => $event->getTransition()?->getName(), ...($event->getContext()[FlujoBoleto::BITACORA] ?? [])]);
+        $this->anotar($event->getSubject(), ["transicion" => $event->getTransition()?->getName(), ...($event->getContext()[self::CONTEXTO] ?? [])]);
     }
 
     public function postPersist(PostPersistEventArgs $args): void

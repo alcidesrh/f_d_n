@@ -192,7 +192,16 @@ export interface FilaEncomienda {
   estadoFacturacion: DatosEncomienda['estadoFacturacion']
   venta: number | null
   usuario: string | null
+  /**
+   * Lo que la encomienda admite ahora según el flujo del backend
+   * (`FlujoEncomienda::acciones`, ADR-038): null = se puede; si no, el
+   * motivo. El permiso y la estación de quien mira van aparte.
+   */
+  acciones: Record<AccionTransicionEncomienda, string | null>
 }
+
+/** Las acciones del listado que cambian el estado de la encomienda (transiciones del workflow `encomienda`). */
+export type AccionTransicionEncomienda = 'embarcar' | 'desembarcar' | 'entregar' | 'anular'
 
 export interface PaginaEncomiendas {
   items: FilaEncomienda[]

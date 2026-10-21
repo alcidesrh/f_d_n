@@ -279,7 +279,9 @@ class Encomienda
     }
 
     /**
-     * Cambia el estado validando la transición (la bitácora la anota el listener).
+     * Lo usa el workflow `encomienda` (ADR-038): fuera de la creación, el
+     * estado se cambia con `App\Encomienda\FlujoEncomienda`, nunca aquí
+     * directo. Valida igual que la máquina (la bitácora la anota el listener).
      *
      * @throws \DomainException si la transición no está permitida
      */

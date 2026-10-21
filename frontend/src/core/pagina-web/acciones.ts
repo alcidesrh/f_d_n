@@ -1,11 +1,12 @@
 /**
  * Acciones sobre una compra de la página web (dashboard, menú de cada fila):
  * qué se puede hacer y por qué no, el estado que se muestra (el del pago o,
- * si se completó, el de sus boletos) y qué boletos toma cada acción. Espejo
- * de lo que exige el backend (`App\Venta\EnLinea\GestionCompraWeb`,
- * `App\Venta\ReglasBoletos`); el backend es quien manda. Funciones puras.
+ * si se completó, el de sus boletos) y qué boletos toma cada acción. Lo que
+ * admite cada boleto (anular, reasignar, posponer) lo dice el backend
+ * (`acciones`, el workflow del boleto, ADR-037); aquí se junta por compra y
+ * se suma el permiso. Funciones puras.
  */
-import type { BoletoCompra, CompraWeb, EstadoPago, VentaCompra } from './types'
+import type { BoletoCompra, CompraWeb, EstadoPago, TransicionCompra, VentaCompra } from './types'
 
 export type EstadoCompra = EstadoPago | 'pospuesta' | 'anulada'
 
@@ -35,19 +36,24 @@ export function estadoCompra(c: CompraWeb): EstadoCompra {
   return 'completado'
 }
 
-/** Emitido antes de la hora de salida, o pospuesto (no ocupa asiento: se opera aunque su salida haya pasado). */
-const operable = (b: BoletoCompra, ahora: Date) => b.estado === 'pospuesto' || (b.estado === 'emitido' && new Date(b.salida).getTime() > ahora.getTime())
+const admite = (b: BoletoCompra, t: TransicionCompra) => b.acciones[t] === null
+
+/** Ninguno la admite: el motivo del backend si es el mismo para todos (un solo boleto, la misma salida); si no, `general`. */
+function ninguno(bs: BoletoCompra[], t: TransicionCompra, general: string): string {
+  const motivos = new Set(bs.map((b) => b.acciones[t]))
+  return motivos.size === 1 ? ([...motivos][0] ?? general) : general
+}
 
 /** Los boletos que anula «Anular»: todos los que todavía se pueden anular. */
-export const boletosParaAnular = (c: CompraWeb, ahora: Date): number[] => boletos(c).filter((b) => operable(b, ahora)).map((b) => b.id)
+export const boletosParaAnular = (c: CompraWeb): number[] => boletos(c).filter((b) => admite(b, 'anular')).map((b) => b.id)
 
 /** Viajes que se pueden reasignar, cada uno con sus boletos (la taquilla reasigna una venta a la vez). */
-export function viajesReasignables(c: CompraWeb, ahora: Date): Array<{ venta: VentaCompra; etiqueta: string; boletos: number[] }> {
+export function viajesReasignables(c: CompraWeb): Array<{ venta: VentaCompra; etiqueta: string; boletos: number[] }> {
   return c.ventas
     .map((venta, i) => ({
       venta,
       etiqueta: c.ventas.length > 1 ? (i === 0 ? 'Ida' : 'Regreso') : 'Viaje',
-      boletos: venta.boletos.filter((b) => operable(b, ahora)).map((b) => b.id),
+      boletos: venta.boletos.filter((b) => admite(b, 'reasignar')).map((b) => b.id),
     }))
     .filter((v) => v.boletos.length > 0)
 }
@@ -60,7 +66,7 @@ export interface PermisosCompra {
 }
 
 /** Por acción: `null` si se puede; si no, el motivo. */
-export function disponibilidadCompra(c: CompraWeb, puede: PermisosCompra, ahora: Date): Record<AccionCompra, string | null> {
+export function disponibilidadCompra(c: CompraWeb, puede: PermisosCompra): Record<AccionCompra, string | null> {
   const completada = c.estado === 'completado' && c.ventas.length > 0 ? null : 'La compra no se completó: no tiene boletos'
   const bs = boletos(c)
   const sinPermiso = (p: boolean) => (p ? null : 'Sin permiso')
@@ -71,10 +77,9 @@ export function disponibilidadCompra(c: CompraWeb, puede: PermisosCompra, ahora:
     reasignar:
       completada ??
       sinPermiso(puede.reasignar) ??
-      (viajesReasignables(c, ahora).length ? null : 'No hay boletos emitidos antes de su hora de salida ni pospuestos'),
-    posponer:
-      completada ?? (bs.some((b) => b.estado === 'emitido' && new Date(b.salida).getTime() > ahora.getTime()) ? null : 'No hay boletos emitidos antes de su hora de salida'),
-    anular: completada ?? sinPermiso(puede.anular) ?? (boletosParaAnular(c, ahora).length ? null : 'No hay boletos que se puedan anular'),
+      (viajesReasignables(c).length ? null : ninguno(bs, 'reasignar', 'No hay boletos emitidos antes de su hora de salida ni pospuestos')),
+    posponer: completada ?? (bs.some((b) => admite(b, 'posponer')) ? null : ninguno(bs, 'posponer', 'No hay boletos emitidos antes de su hora de salida')),
+    anular: completada ?? sinPermiso(puede.anular) ?? (boletosParaAnular(c).length ? null : ninguno(bs, 'anular', 'No hay boletos que se puedan anular')),
     factura:
       completada ??
       (c.ventas.some((v) => (v.facturacion === 'certificada' || v.facturacion === 'pendiente') && v.boletos.some((b) => b.estado !== 'anulado'))
