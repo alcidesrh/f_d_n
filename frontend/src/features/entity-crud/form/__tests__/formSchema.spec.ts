@@ -4,6 +4,7 @@ import {
   humanizeLabel,
   capitalizeLabel,
   inferInputType,
+  isTransferListField,
   buildFieldOptions,
   validationFor,
   hydrateInitialValues,
@@ -78,6 +79,24 @@ describe('capitalizeLabel', () => {
     expect(capitalizeLabel('localidad')).toBe('Localidad')
     expect(capitalizeLabel('Número de boleto')).toBe('Número de boleto')
     expect(capitalizeLabel('CUIT')).toBe('CUIT')
+  })
+})
+
+describe('isTransferListField', () => {
+  it('usa la lista de transferencia para los permisos y acciones del rol', () => {
+    const permisos = field({ name: 'permisos', namedType: 'Permiso', isRelation: true, isList: true })
+    const acciones = field({ name: 'actions', namedType: 'Action', isRelation: true, isList: true })
+
+    expect(isTransferListField('Role', permisos)).toBe(true)
+    expect(isTransferListField('Role', acciones)).toBe(true)
+  })
+
+  it('deja el MultiSelect en otras entidades y en relaciones que no son listas', () => {
+    const permisos = field({ name: 'permisos', namedType: 'Permiso', isRelation: true, isList: true })
+    const rol = field({ name: 'rol', namedType: 'Role', isRelation: true })
+
+    expect(isTransferListField('Usuario', permisos)).toBe(false)
+    expect(isTransferListField('Role', rol)).toBe(false)
   })
 })
 

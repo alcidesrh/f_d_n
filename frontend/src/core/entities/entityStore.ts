@@ -17,7 +17,7 @@ import { repository } from './repository'
 import { useSchemaStore } from './schema'
 import { entitySlug } from './slug'
 import { DEFAULT_PAGE_SIZE, defaultView } from './listView'
-import { mergeColumns } from './columnMerge'
+import { columnaDeConfig, mergeColumns } from './columnMerge'
 import type { CollectionFieldConfig, EntityStore, EntityStoreState } from './types'
 
 const DEFAULT_PAGINATION = {
@@ -124,7 +124,7 @@ function createEntityStore(name: string) {
               // Con `force` (guardar o restablecer) se toma el servidor tal cual; si no, se respeta la vista del usuario.
               this.columns = columns.length
                 ? force
-                  ? columns.map((column) => ({ ...column, showFilter: false, configWidth: column.width ?? null }))
+                  ? columns.map(columnaDeConfig)
                   : mergeColumns(this.columns, columns)
                 : buildFallbackColumns(this.name)
               this.revisionConfig = revision

@@ -37,6 +37,10 @@
         path /data/mercure.db
     }
 
+		# Mercure 1.x: un nombre fijo para que localhost y backend:80 compartan el transporte
+		name fdn
+		# Mercure 1.x: publisher_jwt/subscriber_jwt solo en modo de compatibilidad
+		protocol_version_compatibility 8
 		# Publisher JWT key
 		publisher_jwt {env.MERCURE_PUBLISHER_JWT_KEY} {env.MERCURE_PUBLISHER_JWT_ALG}
 		# Subscriber JWT key

@@ -29,6 +29,8 @@ export interface CollectionFieldConfig {
   width?: string | null;
   /** El `width` de la configuración (el usuario puede cambiar `width` arrastrando el borde). */
   configWidth?: string | null;
+  /** El `visible` de la configuración (el usuario puede mostrar u ocultar la columna en su vista). */
+  configVisible?: boolean;
   [key: string]: unknown;
 }
 

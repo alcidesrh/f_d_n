@@ -1,75 +1,76 @@
 <!--
-  Ítems navegables que aún no están en el menú abierto. Cada uno se arrastra
-  (GSAP Draggable) hasta el `MenuOutline`, que previsualiza dónde y en qué
-  nivel quedaría; soltarlo fuera lo devuelve a su sitio.
+  Elementos que aún no están en el árbol (ítems navegables fuera del menú
+  abierto, roles fuera de la jerarquía). Cada uno se arrastra (GSAP
+  Draggable) hasta el `OutlineTree`, que previsualiza dónde y en qué nivel
+  quedaría; soltarlo fuera lo devuelve a su sitio. Lo que muestra cada uno
+  lo pone quien lo usa (slot `item`).
 -->
 <template>
   <div class="flex flex-col gap-2">
     <IconField>
       <InputIcon><icon name="search" /></InputIcon>
-      <InputText v-model="query" class="w-full" size="small" placeholder="Filtrar ítems" />
+      <InputText v-model="query" class="w-full" size="small" :placeholder="placeholder" />
     </IconField>
     <p v-if="!visible.length" class="py-4 text-center text-sm text-muted-color">
-      {{ items.length ? 'Sin coincidencias' : 'Todos los ítems están en el menú' }}
+      {{ items.length ? 'Sin coincidencias' : emptyText }}
     </p>
     <ul class="flex flex-col gap-1.5">
       <li
         v-for="item in visible"
-        :key="item.id"
-        :ref="(el) => setRef(item.id, el)"
+        :key="idOf(item)"
+        :ref="(el) => setRef(idOf(item), el)"
         class="palette-item"
-        :data-id="item.id"
       >
-        <span class="palette-handle" data-drag-handle title="Arrastrar al menú">
+        <span class="palette-handle" data-drag-handle title="Arrastrar al árbol">
           <icon name="drag-indicator" />
         </span>
-        <icon :name="item.icon.icon" class="text-primary" />
-        <div class="flex min-w-0 flex-1 flex-col leading-tight">
-          <span class="truncate text-sm font-medium">{{ item.nombre }}</span>
-          <span class="truncate text-xs text-muted-color">{{ item.route?.path ?? 'Grupo' }}</span>
-        </div>
-        <button type="button" class="palette-btn" title="Editar" @click="emit('edit', item)">
-          <icon name="edit-outline" />
-        </button>
-        <button type="button" class="palette-btn" title="Eliminar" @click="emit('remove', item)">
-          <icon name="delete-outline" />
-        </button>
+        <slot name="item" :item="item" />
       </li>
     </ul>
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" generic="T">
 import { gsap } from 'gsap'
 import { Draggable } from 'gsap/Draggable'
 import { nextTick } from 'vue'
-import { numericId, type MenuItemDto } from './api'
 
 gsap.registerPlugin(Draggable)
 
-/** Lo que la paleta necesita del `MenuOutline` (su API expuesta). */
-export interface DropTarget {
+/** Lo que la paleta necesita del `OutlineTree` (su API expuesta). */
+interface DropTarget {
   previewIncoming(rect: DOMRect, pointer?: PointerEvent | MouseEvent | TouchEvent): boolean
   commitIncoming(id: number): boolean
   cancelIncoming(): void
 }
 
-const props = defineProps<{ items: MenuItemDto[]; target: DropTarget | null }>()
-const emit = defineEmits<{ edit: [item: MenuItemDto]; remove: [item: MenuItemDto] }>()
+const props = withDefaults(
+  defineProps<{
+    items: T[]
+    target: DropTarget | null
+    /** Id numérico del nodo que crea en el árbol. */
+    idOf: (item: T) => number
+    /** Texto en el que busca el filtro. */
+    textOf: (item: T) => string
+    placeholder?: string
+    /** Texto cuando todos los elementos ya están en el árbol. */
+    emptyText?: string
+  }>(),
+  { placeholder: 'Filtrar', emptyText: 'Todos los elementos están en el árbol' },
+)
+defineSlots<{ item(props: { item: T }): unknown }>()
 
 const query = ref('')
 const visible = computed(() => {
   const needle = query.value.trim().toLowerCase()
   if (!needle) return props.items
-  return props.items.filter((item) =>
-    `${item.nombre} ${item.route?.path ?? ''}`.toLowerCase().includes(needle),
-  )
+  return props.items.filter((item) => props.textOf(item).toLowerCase().includes(needle))
 })
 
-const els = new Map<string, HTMLElement>()
-const drags = new Map<string, Draggable>()
+const els = new Map<number, HTMLElement>()
+const drags = new Map<number, Draggable>()
 
-function setRef(id: string, el: unknown) {
+function setRef(id: number, el: unknown) {
   if (el) els.set(id, el as HTMLElement)
   else els.delete(id)
 }
@@ -97,7 +98,7 @@ function sync() {
       },
       onRelease() {
         el.classList.remove('is-dragging')
-        const dropped = props.target?.commitIncoming(numericId(id)) ?? false
+        const dropped = props.target?.commitIncoming(id) ?? false
         // Insertado: la fila desaparece de la paleta; si no, vuelve a su sitio.
         if (!dropped) gsap.to(el, { x: 0, y: 0, duration: 0.3, ease: 'power2.out' })
       },
@@ -107,7 +108,7 @@ function sync() {
 }
 
 watch(
-  () => visible.value.map((item) => item.id).join('|'),
+  () => visible.value.map(props.idOf).join('|'),
   async () => {
     await nextTick()
     sync()
@@ -140,14 +141,18 @@ onBeforeUnmount(() => {
   cursor: grab;
   color: var(--p-text-muted-color);
 }
-.palette-btn {
+</style>
+
+<!-- Sin `scoped`: botones del contenido del slot `item`. -->
+<style>
+.outline-btn {
   display: flex;
   padding: 0.3rem;
   border-radius: 999px;
   color: var(--p-text-muted-color);
   cursor: pointer;
 }
-.palette-btn:hover {
+.outline-btn:hover {
   background-color: var(--p-content-hover-background);
   color: var(--p-text-color);
 }

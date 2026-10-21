@@ -75,6 +75,10 @@
         <icon v-else :name="customFilter.icon" size="1.25rem" />
       </button>
 
+      <RouterLink v-for="enlace in enlaces" :key="enlace.key" :to="enlace.to" class="list-toolbar__btn tap-target" :aria-label="enlace.label" v-tooltip.bottom="enlace.label">
+        <icon :name="enlace.icon" size="1.25rem" />
+      </RouterLink>
+
       <button v-if="configurable" type="button" class="list-toolbar__btn tap-target" aria-label="Configurar entidad" v-tooltip.bottom="'Configurar entidad'" @click="emit('configure')">
         <icon name="settings-outline" size="1.25rem" />
       </button>
@@ -103,7 +107,7 @@
 import { computed, ref } from "vue";
 import type { Popover as PopoverType } from "primevue";
 import type { CollectionFieldConfig, ListDensity, ListLayout, ListViewState } from "@/core/entities/types";
-import type { EntityBulkAction } from "./listActions";
+import type { EntityBulkAction, EntityListLink } from "./listActions";
 import type { ListFeatures } from "./listFeatures";
 
 const DENSITIES: Array<{ label: string; value: ListDensity }> = [
@@ -132,12 +136,14 @@ const props = withDefaults(
     /** Acciones sobre la selección (eliminar y las de la entidad), ya filtradas por permiso. */
     acciones?: EntityBulkAction[];
     maximized?: boolean;
+    /** Enlaces a pantallas propias de la entidad (`entityListLinks`). */
+    enlaces?: EntityListLink[];
     /** Muestra la opción que reemplaza el listado por la configuración de la entidad. */
     configurable?: boolean;
     /** Botón del filtro a la medida de la entidad (`active`: términos aplicados). */
     customFilter?: { label: string; icon: string; open: boolean; active: number } | null;
   }>(),
-  { activeFilters: 0, filterPanel: false, acciones: () => [], maximized: false, configurable: false, customFilter: null },
+  { activeFilters: 0, filterPanel: false, acciones: () => [], enlaces: () => [], maximized: false, configurable: false, customFilter: null },
 );
 
 const emit = defineEmits<{

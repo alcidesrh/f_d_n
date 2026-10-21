@@ -12,7 +12,7 @@ import { gql } from '@apollo/client'
 import { graphql } from '@/core/graphql/client'
 import { http, request } from '@/core/http'
 import type { LayoutArea } from '@/core/navigation/userMenus'
-import type { TreeNode } from './outline'
+import type { TreeNode } from '@/core/outline/outline'
 
 export interface RoleDto {
   id: string

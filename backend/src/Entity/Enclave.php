@@ -9,12 +9,10 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity]
 #[ORM\InheritanceType("SINGLE_TABLE")]
 #[ORM\DiscriminatorColumn(name: "tipo", type: "string")]
-#[
-    ORM\DiscriminatorMap([
-        "enclave" => "Enclave",
-        "estacion" => "Estacion",
-    ]),
-]
+#[ORM\DiscriminatorMap([
+    "enclave" => "Enclave",
+    "estacion" => "Estacion",
+])]
 #[ApiResourcePaginationPage]
 class Enclave extends Base
 {
@@ -41,6 +39,9 @@ class Enclave extends Base
     /** Inactivo: deja de ofrecerse en las listas de estaciones (venta, boletos, encomiendas, reportes y página web); lo ya vendido se conserva. */
     #[ORM\Column(options: ["default" => true])]
     private bool $activo = true;
+
+    #[ORM\Column(nullable: true)]
+    private bool $test = true;
 
     public function __construct()
     {
@@ -83,7 +84,10 @@ class Enclave extends Base
 
     public function setAlias(?string $alias): static
     {
-        $this->alias = $alias !== null && trim($alias) !== "" ? mb_strtoupper(trim($alias)) : null;
+        $this->alias =
+            $alias !== null && trim($alias) !== ""
+                ? mb_strtoupper(trim($alias))
+                : null;
 
         return $this;
     }
@@ -132,6 +136,17 @@ class Enclave extends Base
     public function setActivo(bool $activo): static
     {
         $this->activo = $activo;
+
+        return $this;
+    }
+    public function isTest(): bool
+    {
+        return $this->test;
+    }
+
+    public function setTest(bool $activo): static
+    {
+        $this->test = $activo;
 
         return $this;
     }

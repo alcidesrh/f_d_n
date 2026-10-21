@@ -7,7 +7,7 @@
 
     <Teleport v-if="store" to="body" :disabled="!maximized">
       <div class="list-page card" :class="{ 'is-maximized': maximized, 'is-fill': fill }" :aria-modal="maximized || undefined" :role="maximized ? 'dialog' : undefined">
-        <ListToolbar v-if="features.toolbar" :features="features" :columns="store.columns" :view="store.view" :active-filters="filters.active.value.length" :filter-panel="cardsMode" :selection-mode="modoSeleccion" :selected-count="selectedRows.length" :acciones="enSelector ? [] : accionesDisponibles" :maximized="maximized" :configurable="!enSelector" :custom-filter="customFilterButton" @toggle-custom-filter="store.view.customFilterOpen = !store.view.customFilterOpen" @toggle-selection="toggleSelectionMode" @clear-selection="setSelection([])" @share="compartir = true" @accion="ejecutarAccion" @column-visible="setColumnVisible" @show-all-columns="showAllColumns" @toggle-filters="store.view.filtersOpen = !store.view.filtersOpen" @density="store.view.density = $event" @layout="store.view.layout = $event" @maximize="maximized = !maximized" @reset="resetView" @create="onCreate" @configure="onConfigure">
+        <ListToolbar v-if="features.toolbar" :features="features" :columns="store.columns" :view="store.view" :active-filters="filters.active.value.length" :filter-panel="cardsMode" :selection-mode="modoSeleccion" :selected-count="selectedRows.length" :acciones="enSelector ? [] : accionesDisponibles" :enlaces="enSelector ? [] : (entityListLinks[entityName] ?? [])" :maximized="maximized" :configurable="!enSelector" :custom-filter="customFilterButton" @toggle-custom-filter="store.view.customFilterOpen = !store.view.customFilterOpen" @toggle-selection="toggleSelectionMode" @clear-selection="setSelection([])" @share="compartir = true" @accion="ejecutarAccion" @column-visible="setColumnVisible" @show-all-columns="showAllColumns" @toggle-filters="store.view.filtersOpen = !store.view.filtersOpen" @density="store.view.density = $event" @layout="store.view.layout = $event" @maximize="maximized = !maximized" @reset="resetView" @create="onCreate" @configure="onConfigure">
           <template #start>
             <div v-if="store.customFilter" class="list-chips" :aria-label="`${customFilter?.label ?? 'Filtro'} aplicado`">
               <span v-for="chip in store.customFilter.chips" :key="chip.label" class="list-chip list-chip--custom">
@@ -119,7 +119,7 @@ import DataGrid from "@/shared/data-grid/DataGrid.vue";
 import { moveItem } from "@/shared/data-grid/layout";
 import type { GridColumn } from "@/shared/data-grid/types";
 import ListActions from "./list/ListActions.vue";
-import { entityBulkActions, entityDeleteDialogs, entityListActions, entityReadOnly, type EntityBulkAction, type EntityListAction } from "./list/listActions";
+import { entityBulkActions, entityDeleteDialogs, entityListActions, entityListLinks, entityReadOnly, type EntityBulkAction, type EntityListAction } from "./list/listActions";
 import type { EntityFormLoader } from "./form/formOverrides";
 import { entityCustomFilters } from "./list/listCustomFilters";
 import ListCell from "./list/ListCell.vue";

@@ -17,8 +17,8 @@ describe('mergeColumns', () => {
     expect(mergeColumns(saved, server)[0]).toMatchObject({ width: '320px', configWidth: 'xl' })
   })
 
-  it('conserva el orden y la visibilidad del usuario, y agrega las columnas nuevas al final', () => {
-    const saved = [col('bus', { visible: false }), col('nombre')]
+  it('conserva el orden y la visibilidad que eligió el usuario, y agrega las columnas nuevas al final', () => {
+    const saved = [col('bus', { visible: false, configVisible: true }), col('nombre', { configVisible: true })]
     const server = [col('nombre'), col('bus'), col('empresa')]
     const merged = mergeColumns(saved, server)
     expect(merged.map((c) => c.field)).toEqual(['bus', 'nombre', 'empresa'])
@@ -34,5 +34,20 @@ describe('mergeColumns', () => {
   it('sin configWidth guardado, usa el ancho del servidor', () => {
     const merged = mergeColumns([col('nombre', { width: '12rem' })], [col('nombre', { width: 'lg' })])
     expect(merged[0]?.width).toBe('lg')
+  })
+
+  it('oculta la columna que el servidor ocultó si el usuario no la tocó', () => {
+    const merged = mergeColumns([col('activo', { configVisible: true })], [col('activo', { visible: false })])
+    expect(merged[0]).toMatchObject({ visible: false, configVisible: false })
+  })
+
+  it('vuelve a mostrar la que el servidor muestra otra vez', () => {
+    const merged = mergeColumns([col('activo', { visible: false, configVisible: false })], [col('activo', { visible: true })])
+    expect(merged[0]?.visible).toBe(true)
+  })
+
+  it('sin configVisible guardado (vista anterior), manda la visibilidad del servidor', () => {
+    const merged = mergeColumns([col('activo')], [col('activo', { visible: false })])
+    expect(merged[0]?.visible).toBe(false)
   })
 })

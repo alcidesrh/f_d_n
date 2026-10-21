@@ -27,7 +27,7 @@ import {
   type RoleDto,
   type VueRouteDto,
 } from './api'
-import { flatten, liftRow, toTree, type OutlineRow } from './outline'
+import { flatten, liftRow, toTree, type OutlineRow } from '@/core/outline/outline'
 
 export interface MenuItemDraft {
   id?: string

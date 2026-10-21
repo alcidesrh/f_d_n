@@ -248,6 +248,7 @@ class MigradorIAM {
             'ROLE_ADMIN' => ['Gestion Acciones', 'Gestion Usuarios', 'Gestion Reportes', 'Gestion Config', 'Gestion Asientos'],
             'ROLE_OPERADOR' => ['Gestion Acciones'],
             'ROLE_CONSULTA' => [],
+            'ROLE_USER' => [],
         ];
 
         $actionIds = [];
@@ -376,6 +377,13 @@ class MigradorIAM {
                 $count++;
             }
         }
+
+        // Rol base de todos los usuarios (menús y administración para cualquier empleado).
+        $count += (int) $this->newConn->executeStatement(
+            "INSERT INTO user_role (user_id, role_id)
+             SELECT u.id, r.id FROM usuario u CROSS JOIN role r WHERE r.nombre = 'ROLE_USER'
+             ON CONFLICT DO NOTHING"
+        );
 
         return $count;
     }

@@ -1,14 +1,16 @@
 <!--
-  Editor del árbol de un menú como esquema con sangría (ver `outline.ts`),
+  Editor de un árbol como esquema con sangría (ver `core/outline/outline.ts`),
   con GSAP Draggable. Todos los nodos están "expandidos": cada fila es un
-  ítem desplazado a la derecha según su profundidad.
+  nodo desplazado a la derecha según su profundidad. Lo que muestra cada
+  fila lo pone quien lo usa (slot `row`, con el `id`; clases `outline-text`,
+  `outline-label` y `outline-sub`): el editor de menús y la jerarquía de roles.
 
-  - Arrastrar el tirador mueve el bloque (el ítem y sus descendientes):
+  - Arrastrar el tirador mueve el bloque (el nodo y sus descendientes):
     la posición vertical elige la fila destino y la horizontal la sangría
     (un nivel cada `INDENT` px, ajustada a lo que el árbol admite).
-  - Soltar un bloque fuera del contenedor lo quita del menú (vuelve a la
+  - Soltar un bloque fuera del contenedor lo quita del árbol (vuelve a la
     paleta). Los botones ←/→ cambian el nivel sin arrastrar.
-  - La paleta (`MenuItemPalette`) inserta ítems nuevos con la API expuesta
+  - La paleta (`OutlinePalette`) inserta nodos nuevos con la API expuesta
     `previewIncoming` / `commitIncoming` / `cancelIncoming`.
 
   Docs de GSAP Draggable: https://gsap.com/docs/v3/Plugins/Draggable/
@@ -22,7 +24,7 @@
   >
     <div v-if="!rows.length && incoming === null" class="mo-empty">
       <icon name="drag-pan" lg />
-      <span>Arrastrá ítems de la paleta hasta aquí</span>
+      <span>{{ emptyText }}</span>
     </div>
 
     <div
@@ -51,11 +53,7 @@
       <span class="mo-handle" data-drag-handle title="Arrastrar">
         <icon name="drag-indicator" />
       </span>
-      <icon :name="itemsById.get(row.id)?.icon.icon ?? 'fiber-manual-record'" class="text-primary" />
-      <div class="mo-text">
-        <span class="mo-label">{{ itemsById.get(row.id)?.nombre ?? `#${row.id}` }}</span>
-        <span class="mo-route">{{ itemsById.get(row.id)?.route?.path ?? 'Grupo' }}</span>
-      </div>
+      <slot name="row" :id="row.id" :depth="row.depth" />
       <div class="mo-actions">
         <button
           type="button"
@@ -75,7 +73,7 @@
         </button>
         <button
           type="button"
-          title="Quitar del menú"
+          :title="removeTitle"
           @click="emit('update:rows', liftRow(rows, index))"
         >
           <icon name="close" />
@@ -89,7 +87,6 @@
 import { gsap } from 'gsap'
 import { Draggable } from 'gsap/Draggable'
 import { nextTick } from 'vue'
-import type { MenuItemDto } from './api'
 import {
   clampDepth,
   depthRange,
@@ -99,13 +96,23 @@ import {
   rowKey,
   takeBlock,
   type OutlineRow,
-} from './outline'
+} from '@/core/outline/outline'
 
 gsap.registerPlugin(Draggable)
 
-defineOptions({ name: 'MenuOutline' })
+defineOptions({ name: 'OutlineTree' })
 
-const props = defineProps<{ rows: OutlineRow[]; itemsById: Map<number, MenuItemDto> }>()
+const props = withDefaults(
+  defineProps<{
+    rows: OutlineRow[]
+    /** Texto del árbol vacío. */
+    emptyText?: string
+    /** Título del botón que quita un nodo (sus hijos suben un nivel). */
+    removeTitle?: string
+  }>(),
+  { emptyText: 'Arrastrá elementos de la paleta hasta aquí', removeTitle: 'Quitar' },
+)
+defineSlots<{ row(props: { id: number; depth: number }): unknown }>()
 const emit = defineEmits<{ 'update:rows': [rows: OutlineRow[]] }>()
 
 /** Alto de fila (incluye `GAP`), sangría por nivel y márgenes, en px. */
@@ -113,7 +120,7 @@ const ROW_H = 52
 const GAP = 6
 const INDENT = 32
 const PADDING = 8
-/** Margen alrededor del contenedor dentro del cual soltar no quita el ítem. */
+/** Margen alrededor del contenedor dentro del cual soltar no quita el nodo. */
 const KEEP_MARGIN = 24
 
 const rootEl = ref<HTMLElement | null>(null)
@@ -124,7 +131,7 @@ const drags = new Map<string, Draggable>()
 let drag: { from: number; block: OutlineRow[]; rest: OutlineRow[] } | null = null
 const dragKeys = ref(new Set<string>())
 const removing = ref(false)
-/** Destino calculado del arrastre (o de un ítem que llega de la paleta). */
+/** Destino calculado del arrastre (o de un nodo que llega de la paleta). */
 const target = ref<{ index: number; depth: number; size: number } | null>(null)
 const incoming = ref<{ index: number; depth: number } | null>(null)
 
@@ -290,7 +297,7 @@ function syncDraggables() {
 // --- API para la paleta --------------------------------------------------
 
 /**
- * Previsualiza la llegada de un ítem arrastrado: `pointer` (evento del
+ * Previsualiza la llegada de un nodo arrastrado: `pointer` (evento del
  * arrastre) decide si está sobre el contenedor; la esquina superior
  * izquierda de su elemento (`rect`, coordenadas de viewport) decide la fila
  * y la sangría, igual que al arrastrar una fila propia.
@@ -315,7 +322,7 @@ function previewIncoming(rect: DOMRect, pointer?: PointerEvent | MouseEvent | To
   return true
 }
 
-/** Inserta el ítem `id` donde se previsualizó; `false` si no había destino. */
+/** Inserta el nodo `id` donde se previsualizó; `false` si no había destino. */
 function commitIncoming(id: number): boolean {
   const at = incoming.value
   cancelIncoming()
@@ -428,26 +435,6 @@ onBeforeUnmount(() => {
   cursor: grab;
   color: var(--p-text-muted-color);
 }
-.mo-text {
-  display: flex;
-  min-width: 0;
-  flex: 1;
-  flex-direction: column;
-  line-height: 1.15;
-}
-.mo-label {
-  overflow: hidden;
-  font-weight: 500;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.mo-route {
-  overflow: hidden;
-  font-size: 0.75rem;
-  color: var(--p-text-muted-color);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 .mo-actions {
   display: flex;
   gap: 0.1rem;
@@ -466,5 +453,29 @@ onBeforeUnmount(() => {
 .mo-actions button:disabled {
   opacity: 0.35;
   cursor: default;
+}
+</style>
+
+<!-- Sin `scoped`: las usa el contenido de los slots (fila del árbol y de la paleta). -->
+<style>
+.outline-text {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  line-height: 1.15;
+}
+.outline-label {
+  overflow: hidden;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.outline-sub {
+  overflow: hidden;
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

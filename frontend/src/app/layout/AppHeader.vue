@@ -90,7 +90,7 @@
           </template>
         </Menu>
       </div>
-      <div class="flex btn-siderbar-header">
+      <div v-if="rightSidebar" class="flex btn-siderbar-header">
         <Divider layout="vertical" class="mx-[5px]!" />
         <button type="button" class="icon-btn right" title="Mostrar/ocultar menú" aria-label="Panel lateral derecho" :aria-expanded="ui.isMobile ? rightSidebar.drawer : rightSidebar.mode !== 'close'" @click="rightSidebar.toggle()">
           <icon name="menu" size="25px" :weight="400" color="text-surface-500" />
@@ -118,7 +118,7 @@ import { defineSidebarStore, type SidebarStore } from "./sidebarStore";
 import ThemeEditor from "./ThemeEditor.vue";
 
 /** Store del panel derecho visible (menú o panel propio de la ruta). */
-defineProps<{ rightSidebar: SidebarStore }>();
+defineProps<{ rightSidebar: SidebarStore | null }>();
 
 const session = useSessionStore();
 const chat = useChatStore();

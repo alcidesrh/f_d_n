@@ -98,6 +98,16 @@ export const router = createRouter({
       },
     },
     {
+      path: "/configuracion/roles",
+      name: "rol-jerarquia",
+      component: () => import("@/features/rol-jerarquia/RolJerarquiaPage.vue"),
+      meta: {
+        title: "Jerarquía de roles",
+        label: "Jerarquía de roles",
+        icon: "account-tree-outline",
+      },
+    },
+    {
       path: "/venta",
       name: "venta",
       component: () => import("@/features/venta/VentaPage.vue"),

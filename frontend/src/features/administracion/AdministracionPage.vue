@@ -1,6 +1,6 @@
 <!--
   Administración (`/administracion`): el "Administrar" del legado (cajas con
-  "Agregar nuevo" y "Listar"), en un muro de cajas de colores que ocupa el
+  "Agregar nuevo" y "Listar"), en un muro de cajas que ocupa el
   ancho disponible. Las cajas y sus enlaces viven en la base
   (`/api/administracion`): cada usuario ve las que le tocan por roles y
   usuarios. Con `config.editar`, "Personalizar" crea, edita, oculta, ordena
@@ -40,7 +40,7 @@
 
     <div ref="muro" class="muro" :style="{ gridTemplateColumns: `repeat(${columnas.length}, minmax(0, 1fr))` }">
       <div v-for="(columna, c) in columnas" :key="c" class="flex min-w-0 flex-col gap-4">
-        <section v-for="s in columna" :key="s.id" class="caja" :class="{ 'caja--apagada': store.configurando && !s.activa }" :style="tonos(s.color)" :aria-labelledby="`caja-${s.id}`">
+        <section v-for="s in columna" :key="s.id" class="caja" :class="{ 'caja--apagada': store.configurando && !s.activa }" :aria-labelledby="`caja-${s.id}`">
           <header class="caja-cabecera">
             <span class="caja-icono"><icon :name="s.icono" sm color="text-inherit" /></span>
             <h2 :id="`caja-${s.id}`" class="min-w-0 flex-1 truncate">{{ s.titulo }}</h2>
@@ -128,7 +128,6 @@ import SortablePanelList from "@/shared/ui/SortablePanelList.vue";
 import EnlaceDialog from "./EnlaceDialog.vue";
 import SeccionDialog from "./SeccionDialog.vue";
 import { useAdministracionStore } from "./store";
-import { tonos } from "./tonos";
 
 defineOptions({ name: "AdministracionPage" });
 
@@ -329,13 +328,13 @@ onBeforeUnmount(() => window.removeEventListener("keydown", atajo));
   align-items: start;
 }
 
-/* Cada caja con su color: franja superior, cabecera teñida, ícono y enlaces del mismo tono. */
+/* Cajas en la rampa de superficie (`--p-surface-*`): neutras, en ambos modos. */
 .caja {
   background: var(--p-content-background);
-  border: 1px solid var(--tono-200);
-  border-top: 4px solid var(--tono-500);
+  border: 1px solid var(--p-surface-200);
+  border-top: 4px solid var(--p-surface-500);
   border-radius: var(--p-content-border-radius, 0.75rem);
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--tono-900) 8%, transparent), 0 4px 12px -6px color-mix(in srgb, var(--tono-900) 18%, transparent);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--p-surface-900) 8%, transparent), 0 4px 12px -6px color-mix(in srgb, var(--p-surface-900) 18%, transparent);
   overflow: hidden;
   padding-bottom: 0.25rem;
   transition: opacity 0.15s;
@@ -351,9 +350,9 @@ onBeforeUnmount(() => window.removeEventListener("keydown", atajo));
   gap: 0.625rem;
   min-height: 3rem;
   padding: 0.5rem 0.5rem 0.5rem 0.75rem;
-  background: var(--tono-50);
-  border-bottom: 1px solid var(--tono-200);
-  color: var(--tono-900);
+  background: var(--p-surface-50);
+  border-bottom: 1px solid var(--p-surface-200);
+  color: var(--p-surface-900);
 }
 .caja-cabecera h2 {
   font-size: 0.9375rem;
@@ -366,22 +365,22 @@ onBeforeUnmount(() => window.removeEventListener("keydown", atajo));
   height: 2rem;
   flex: none;
   border-radius: 0.5rem;
-  background: var(--tono-500);
-  color: var(--tono-50);
+  background: var(--p-surface-500);
+  color: var(--p-surface-50);
 }
 .caja-cuenta {
   min-width: 1.5rem;
   padding: 0.0625rem 0.5rem;
   border-radius: 999px;
-  background: var(--tono-100);
-  color: var(--tono-800);
+  background: var(--p-surface-100);
+  color: var(--p-surface-800);
   font-size: 0.75rem;
   font-weight: 600;
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
 .caja-marca {
-  color: var(--tono-700);
+  color: var(--p-surface-700);
 }
 .caja-agregar {
   display: flex;
@@ -391,14 +390,14 @@ onBeforeUnmount(() => window.removeEventListener("keydown", atajo));
   width: calc(100% - 1rem);
   margin: 0.5rem 0.5rem 0.25rem;
   min-height: 2.25rem;
-  border: 1px dashed var(--tono-300);
+  border: 1px dashed var(--p-surface-300);
   border-radius: 0.5rem;
-  color: var(--tono-700);
+  color: var(--p-surface-700);
   font-size: 0.875rem;
 }
 .caja-agregar:hover,
 .caja-agregar:focus-visible {
-  background: var(--tono-50);
+  background: var(--p-surface-50);
   border-style: solid;
 }
 
@@ -412,11 +411,11 @@ onBeforeUnmount(() => window.removeEventListener("keydown", atajo));
   border-radius: 0.5rem;
 }
 .enlace + .enlace {
-  border-top: 1px solid color-mix(in srgb, var(--tono-200) 60%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--p-surface-200) 60%, transparent);
 }
 .enlace:hover,
 .enlace:focus-within {
-  background: var(--tono-50);
+  background: var(--p-surface-50);
 }
 .enlace-abrir {
   display: flex;
@@ -436,16 +435,16 @@ onBeforeUnmount(() => window.removeEventListener("keydown", atajo));
   cursor: not-allowed;
 }
 .enlace-icono {
-  color: var(--tono-600);
+  color: var(--p-surface-600);
 }
 .enlace-abrir:focus-visible,
 .enlace-agregar:focus-visible {
-  outline: 2px solid var(--tono-500);
+  outline: 2px solid var(--p-surface-500);
   outline-offset: -2px;
 }
 .enlace-flecha {
   opacity: 0;
-  color: var(--tono-600);
+  color: var(--p-surface-600);
   transition: opacity 0.15s;
 }
 .enlace:hover .enlace-flecha,
@@ -460,10 +459,10 @@ onBeforeUnmount(() => window.removeEventListener("keydown", atajo));
   height: 2rem;
   margin-inline-end: 0.125rem;
   border-radius: 0.5rem;
-  color: var(--tono-700);
+  color: var(--p-surface-700);
 }
 .enlace-agregar:hover {
-  background: var(--tono-100);
+  background: var(--p-surface-100);
 }
 
 .fila {
@@ -473,12 +472,12 @@ onBeforeUnmount(() => window.removeEventListener("keydown", atajo));
   height: 100%;
   padding-inline: 0.25rem 0.125rem;
   border-radius: 0.5rem;
-  border: 1px solid var(--tono-200);
+  border: 1px solid var(--p-surface-200);
   background: var(--p-content-background);
   font-size: 0.875rem;
 }
 .fila-icono {
-  color: var(--tono-600);
+  color: var(--p-surface-600);
 }
 .fila--oculta {
   color: var(--p-text-muted-color);

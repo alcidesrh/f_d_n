@@ -16,6 +16,7 @@ import FkSelect from "@/shared/formkit/inputs/FkSelect.vue";
 import FkSelectButton from "@/shared/formkit/inputs/FkSelectButton.vue";
 import FkTextArea from "@/shared/formkit/inputs/FkTextArea.vue";
 import FkToggleSwitch from "@/shared/formkit/inputs/FkToggleSwitch.vue";
+import FkTransferList from "@/shared/formkit/inputs/FkTransferList.vue";
 import FkTreeSelect from "@/shared/formkit/inputs/FkTreeSelect.vue";
 
 export default defineFormKitConfig({
@@ -38,6 +39,7 @@ export default defineFormKitConfig({
     TreeSelect: createInput(FkTreeSelect),
     ToggleSwitch: createInput(FkToggleSwitch),
     IconPicker: createInput(FkIconPicker),
+    TransferList: createInput(FkTransferList),
     // El label se pinta en el botón PrimeVue: se suprime la sección `label` de FormKit.
     Button: createInput(FkButton, {}, { label: null }),
   },

@@ -1,6 +1,6 @@
 <template>
   <div class="shell">
-    <AppHeader :right-sidebar="rightSidebar">
+    <AppHeader :right-sidebar="hasRightSidebar ? rightSidebar : null">
       <template #menu-content>
         <NavArea area="topbar_right" />
       </template>
@@ -21,7 +21,8 @@
           <component :is="panel" />
         </template>
       </Sidebar>
-      <SidebarRight v-else />
+      <!-- Sin menús en el área derecha para el usuario, no hay barra (ni su botón en la cabecera). -->
+      <SidebarRight v-else-if="hasRightMenus" />
     </div>
     <ChatAviso />
     <ChatVentana v-if="ventana.esVentana && session.user" />
@@ -92,6 +93,10 @@ const panel = computed(() =>
   route.meta.panel ? defineAsyncComponent(route.meta.panel.component) : null,
 )
 
+/** Barra derecha: el panel de la ruta o, si no tiene, los menús del área derecha del usuario. */
+const hasRightMenus = computed(() => userMenus.areas.sidebar_right.length > 0)
+const hasRightSidebar = computed(() => Boolean(panel.value) || hasRightMenus.value)
+
 const rightSidebar = computed(() => {
   if (!route.meta.panel) return defineSidebarStore('right')()
   const store = defineSidebarStore('right', `panel:${String(route.name)}`)()
@@ -102,7 +107,7 @@ const rightSidebar = computed(() => {
 // Drawers (debajo de `lg`) --------------------------------------------------
 const ui = useUiStore()
 const leftSidebar = defineSidebarStore('left')()
-const drawerOpen = computed(() => leftSidebar.drawer || rightSidebar.value.drawer)
+const drawerOpen = computed(() => leftSidebar.drawer || (hasRightSidebar.value && rightSidebar.value.drawer))
 
 function closeDrawers() {
   leftSidebar.drawer = false

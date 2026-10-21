@@ -55,6 +55,18 @@ export function capitalizeLabel(label: string): string {
   return label.replace(/^\w/, (c) => c.toUpperCase())
 }
 
+/**
+ * Relaciones a-muchos que se editan con `TransferList` (dos conjuntos con
+ * arrastre entre ellos) en vez de `MultiSelect`. Clave = entidad en PascalCase.
+ */
+export const TRANSFER_LIST_FIELDS: Record<string, string[]> = {
+  Role: ['permisos', 'actions'],
+}
+
+export function isTransferListField(entityName: string, entry: FormFieldSource): boolean {
+  return entry.isRelation && entry.isList && (TRANSFER_LIST_FIELDS[entityName]?.includes(entry.name) ?? false)
+}
+
 export function inferInputType(entry: FormFieldSource): string {
   if (isIconRelation(entry)) return 'IconPicker'
   if (entry.isRelation) return entry.isList ? 'MultiSelect' : 'Select'
@@ -208,7 +220,7 @@ function buildFieldNode(
   // `name` es la clave del valor enviado (debe ser el campo real); el label
   // configurado solo cambia el texto visible.
   const name = entry.name
-  const inputType = inferInputType(entry)
+  const inputType = isTransferListField(entityName, entry) ? 'TransferList' : inferInputType(entry)
   const node: Record<string, unknown> = {
     key: `${entityName}.${name}${opts.resetKey !== undefined ? `_${String(opts.resetKey)}` : ''}`,
     $formkit: inputType,
@@ -238,6 +250,9 @@ function buildFieldNode(
       node.optionLabel = 'label'
       node.optionValue = 'value'
       node.showClear = true
+      break
+    case 'TransferList':
+      node.options = buildFieldOptions(entry, opts.relationOptions?.[name] ?? [])
       break
     case 'DatePicker':
       node.dateFormat = 'dd/mm/yy'

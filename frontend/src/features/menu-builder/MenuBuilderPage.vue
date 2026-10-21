@@ -135,12 +135,24 @@
                   ordenar y a izquierda/derecha para cambiar de nivel. Soltar fuera del recuadro
                   quita el ítem (y sus hijos) del menú.
                 </p>
-                <MenuOutline
+                <OutlineTree
                   ref="outline"
                   :rows="store.rows"
-                  :items-by-id="store.itemsById"
+                  empty-text="Arrastrá ítems de la paleta hasta aquí"
+                  remove-title="Quitar del menú"
                   @update:rows="store.rows = $event"
-                />
+                >
+                  <template #row="{ id }">
+                    <icon
+                      :name="store.itemsById.get(id)?.icon.icon ?? 'fiber-manual-record'"
+                      class="text-primary"
+                    />
+                    <div class="outline-text">
+                      <span class="outline-label">{{ store.itemsById.get(id)?.nombre ?? `#${id}` }}</span>
+                      <span class="outline-sub">{{ store.itemsById.get(id)?.route?.path ?? 'Grupo' }}</span>
+                    </div>
+                  </template>
+                </OutlineTree>
               </template>
               <div
                 v-else-if="!menuDraft"
@@ -164,12 +176,28 @@
                   <template #icon><icon name="add" class="mr-1" /></template>
                 </Button>
               </div>
-              <MenuItemPalette
+              <OutlinePalette
                 :items="store.paletteItems"
                 :target="store.selectedMenuId !== null ? outline : null"
-                @edit="editItem"
-                @remove="removeItem"
-              />
+                :id-of="(item) => numericId(item.id)"
+                :text-of="(item) => `${item.nombre} ${item.route?.path ?? ''}`"
+                placeholder="Filtrar ítems"
+                empty-text="Todos los ítems están en el menú"
+              >
+                <template #item="{ item }">
+                  <icon :name="item.icon.icon" class="text-primary" />
+                  <div class="flex min-w-0 flex-1 flex-col leading-tight">
+                    <span class="truncate text-sm font-medium">{{ item.nombre }}</span>
+                    <span class="truncate text-xs text-muted-color">{{ item.route?.path ?? 'Grupo' }}</span>
+                  </div>
+                  <button type="button" class="outline-btn" title="Editar" @click="editItem(item)">
+                    <icon name="edit-outline" />
+                  </button>
+                  <button type="button" class="outline-btn" title="Eliminar" @click="removeItem(item)">
+                    <icon name="delete-outline" />
+                  </button>
+                </template>
+              </OutlinePalette>
             </div>
           </div>
         </TabPanel>
@@ -194,10 +222,10 @@
 import { useConfirm } from 'primevue/useconfirm'
 import { notify } from '@/core/notify'
 import { numericId, type MenuItemDto } from './api'
+import OutlinePalette from '@/shared/outline/OutlinePalette.vue'
+import OutlineTree from '@/shared/outline/OutlineTree.vue'
 import MenuItemDialog from './MenuItemDialog.vue'
-import MenuItemPalette from './MenuItemPalette.vue'
 import MenuLayoutEditor from './MenuLayoutEditor.vue'
-import MenuOutline from './MenuOutline.vue'
 import { useMenuBuilderStore, type MenuDraft, type MenuItemDraft } from './store'
 
 defineOptions({ name: 'MenuBuilderPage' })
@@ -205,7 +233,7 @@ defineOptions({ name: 'MenuBuilderPage' })
 const store = useMenuBuilderStore()
 const confirm = useConfirm()
 const tab = ref<'menus' | 'areas'>('menus')
-const outline = ref<InstanceType<typeof MenuOutline> | null>(null)
+const outline = ref<InstanceType<typeof OutlineTree> | null>(null)
 
 const menuOptions = computed(() =>
   store.menus.map((menu) => ({ id: numericId(menu.id), nombre: menu.nombre })),

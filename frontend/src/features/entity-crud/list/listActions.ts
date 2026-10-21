@@ -6,6 +6,8 @@
  * - Sobre la selección (`entityBulkActions`), en el modo selección: abren un
  *   diálogo con props `ids` (los ids numéricos) y `visible`, o ejecutan algo
  *   directamente (`ejecutar`) o llevan a otra pantalla (`ruta`).
+ * - En la barra (`entityListLinks`): llevan a una pantalla propia de la
+ *   entidad (p. ej. la jerarquía de roles).
  */
 import type { RouteLocationRaw } from 'vue-router'
 import type { EntityFormLoader } from '../form/formOverrides'
@@ -34,6 +36,19 @@ export interface EntityBulkAction {
   ruta?: (ids: number[]) => RouteLocationRaw
   /** Hace algo con los ids (y avisa lo que corresponda). */
   ejecutar?: (ids: number[]) => Promise<void>
+}
+
+/** Enlace de la barra del listado a una pantalla propia de la entidad. */
+export interface EntityListLink {
+  key: string
+  label: string
+  icon: string
+  to: RouteLocationRaw
+}
+
+/** Clave = nombre de la entidad en PascalCase. */
+export const entityListLinks: Record<string, EntityListLink[]> = {
+  Role: [{ key: 'jerarquia', label: 'Jerarquía de roles', icon: 'account-tree-outline', to: { name: 'rol-jerarquia' } }],
 }
 
 /** Entidades cuyo listado no ofrece editar ni eliminar (solo sus acciones propias). */

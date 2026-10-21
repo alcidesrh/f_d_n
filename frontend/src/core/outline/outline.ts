@@ -1,6 +1,7 @@
 /**
- * Árbol de un menú como esquema plano con sangría: cada fila es un ítem con
- * su `depth` (0 = raíz) y el orden del array es el salida en preorden.
+ * Árbol como esquema plano con sangría (el de un menú, la jerarquía de
+ * roles): cada fila es un nodo con su `depth` (0 = raíz) y el orden del
+ * array es el recorrido en preorden.
  * Así el editor pinta todos los nodos "expandidos" y un arrastre solo decide
  * dos números: la fila destino y la sangría.
  *
@@ -10,7 +11,7 @@
  * con `depth` mayor).
  */
 
-/** Nodo del árbol tal como lo guarda/lee el backend (`/menus/{id}/tree`). */
+/** Nodo del árbol tal como lo guarda/lee el backend (`/menus/{id}/tree`, `/rol-jerarquia`). */
 export interface TreeNode {
   id: number
   children?: TreeNode[]
@@ -19,7 +20,7 @@ export interface TreeNode {
 export interface OutlineRow {
   /** Clave estable para el v-for y el drag & drop. */
   key: string
-  /** Id del `MenuItem`. */
+  /** Id del nodo (`MenuItem`, `Role`). */
   id: number
   depth: number
 }
