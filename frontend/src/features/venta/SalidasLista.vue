@@ -34,14 +34,14 @@
       <div v-else-if="column.key === 'ruta'" class="celda ruta min-w-0 leading-tight">
         <div class="ruta__punta" :title="`Sale de ${rutaInicio(s(row))}`">
           <span class="bus-mov bus-mov--sale" aria-hidden="true">
-            <icon name="directions_bus-outline" size=".75rem" class="bus-msov__flecha ml-[6px] text-surface-500" :weight="400" />
-            <icon name="switch_access_shortcut" size="1rem" class="absolute -ml-[5px] rotate-x-180 mt-[7px] text-surface-400" :weight="400" />
+            <icon name="airport_shuttle-outline" size="1rem" class="bus-msov__flecha mt-[2px] ml-[6px] text-surface-400 rotate-y-180" :weight="400" />
+            <icon name="switch_access_shortcut" size="1.2rem" class="absolute -ml-[7px] rotate-x-180 mt-[9px] text-surface-400" :weight="400" />
           </span>
           <span class="truncate font-medium">{{ rutaInicio(s(row)) }}</span>
         </div>
         <div class="ruta__punta" :title="`Llega a ${rutaFin(s(row))}`">
           <span class="bus-mov bus-mov--llega" aria-hidden="true">
-            <icon name="garage_door_open-outline" size=".75rem" class="buss-mov__flecha ml-[5px] text-surface-500" :weight="400" />
+            <icon name="airport_shuttle-outline" size="1rem" class="buss-mov__flecha mt-[2px] ml-[6px] text-surface-400" :weight="400" />
           </span>
           <span class="truncate font-medium">{{ rutaFin(s(row)) }}</span>
         </div>
