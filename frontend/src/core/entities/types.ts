@@ -89,6 +89,10 @@ export interface EntityStoreState<T = unknown> {
   /** Opciones del listado configuradas para la entidad. */
   listOptions: ListOptions;
   view: ListViewState;
+  /** Huella de la metadata de la entidad con la que se armó este estado; null: todavía ninguna (ADR-036). */
+  huellaEsquema: string | null;
+  /** Revisión del manifiesto con la que se pidió la configuración; null: nunca se pidió. */
+  revisionConfig: number | null;
 }
 
 export interface EntityStore<T = unknown> extends EntityStoreState<T> {
@@ -101,8 +105,13 @@ export interface EntityStore<T = unknown> extends EntityStoreState<T> {
   /** Slug para URLs (`BoletoAsiento` → `boleto-asiento`). */
   readonly slug: string;
 
-  /** Carga la configuración de columnas/campos (una vez, salvo `force`). */
+  /**
+   * Pone el estado al día con la metadata y carga la configuración de
+   * columnas/campos si la guardada ya no está vigente (o con `force`).
+   */
   init(force?: boolean): Promise<void>;
+  /** Si cambió la metadata de la entidad, ajusta filtros, orden y caché a la nueva (`core/metadata/reconciliar`). */
+  reconciliar(): void;
   fetchItems(): Promise<T[]>;
   /** Item por id o IRI; con `fields` solo se piden esos campos (+ `id`). */
   fetchItem(id: string | number, fields?: string[]): Promise<T>;

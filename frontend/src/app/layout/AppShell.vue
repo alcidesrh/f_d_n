@@ -35,6 +35,7 @@ import { useSessionStore } from '@/core/auth/session'
 import { useUserMenusStore } from '@/core/navigation/userMenus'
 import { useChatStore } from '@/core/chat/store'
 import { useCuentaStore } from '@/core/cuenta/store'
+import { useMetadataStore } from '@/core/metadata/sincronizacion'
 import ChatAviso from '@/features/chat/ChatAviso.vue'
 import ChatVentana from '@/features/chat/ChatVentana.vue'
 import { useVentanaChat } from '@/features/chat/ventana'
@@ -51,6 +52,7 @@ const session = useSessionStore()
 const userMenus = useUserMenusStore()
 const chat = useChatStore()
 const cuenta = useCuentaStore()
+const metadata = useMetadataStore()
 const ventana = useVentanaChat()
 
 // El selector de registros del chat usa el listado genérico (una feature no importa a otra).
@@ -63,10 +65,12 @@ provide(REPORTES_ADJUNTABLES, [
 ])
 
 // Menús y chat del usuario: se cargan al entrar al shell y al cambiar de usuario.
+// La metadata del cliente (ADR-036) se escucha mientras hay sesión.
 watch(
   () => session.user,
   (user) => {
     chat.detener()
+    metadata.detener()
     if (!user) {
       cuenta.limpiar()
       return userMenus.clear()
@@ -74,10 +78,14 @@ watch(
     void userMenus.load()
     void cuenta.cargar()
     void chat.iniciar()
+    metadata.iniciar()
   },
   { immediate: true },
 )
-onBeforeUnmount(() => chat.detener())
+onBeforeUnmount(() => {
+  chat.detener()
+  metadata.detener()
+})
 
 /** Panel propio de la ruta (`meta.panel`), con su propio store de ancho/modo. */
 const panel = computed(() =>

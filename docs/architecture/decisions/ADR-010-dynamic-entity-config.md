@@ -1,6 +1,6 @@
 # ADR-010: Configuración dinámica de entidades vía metadatos
 
-**Estado:** Aceptada
+**Estado:** Aceptada; la caché del frontend (configuración y schema guardados en el navegador) se pone al día por revisiones según [ADR-036](ADR-036-metadata-del-cliente-por-revisiones.md), sin recargar la página.
 
 ## Contexto
 

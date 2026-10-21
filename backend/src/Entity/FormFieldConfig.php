@@ -3,12 +3,13 @@
 namespace App\Entity;
 
 use App\Attribute\ApiResourceNoPagination;
+use App\Metadata\ConfiguracionDelCliente;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity]
 #[ApiResourceNoPagination]
-class FormFieldConfig extends FieldConfig
+class FormFieldConfig extends FieldConfig implements ConfiguracionDelCliente
 {
     #[ORM\Column(length: 255, nullable: true)]
     #[Groups(["read:dto"])]
@@ -63,5 +64,10 @@ class FormFieldConfig extends FieldConfig
         $this->entityConfig = $entityConfig;
 
         return $this;
+    }
+
+    public function entidadConfigurada(): ?string
+    {
+        return isset($this->entityConfig) ? $this->entityConfig->getEntityClass() : null;
     }
 }

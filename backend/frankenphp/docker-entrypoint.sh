@@ -37,6 +37,14 @@ if [ "$1" = 'frankenphp' ] || [ "$1" = 'php' ] || [ "$1" = 'bin/console' ]; then
 		# else
 		# 	echo 'No legacy schema detected: skipping schema migrations.'
 		# fi
+
+		# Metadata del cliente (ADR-036): configuración de entidades al día con el mapeo y,
+		# si cambió el schema GraphQL o la configuración, una revisión para los navegadores.
+		# Solo en el contenedor del servidor (el worker usa la misma imagen y se reinicia cada
+		# hora). Si falla (p. ej. base sin migrar) avisa y arranca igual.
+		if [ "$1" = 'frankenphp' ]; then
+			php bin/console app:metadata:revisar --sincronizar --no-interaction || echo 'No se pudo revisar la metadata del cliente (app:metadata:revisar).'
+		fi
 	fi
 
 	echo 'PHP app ready!'

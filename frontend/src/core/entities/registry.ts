@@ -5,8 +5,8 @@
  * la próxima llamada crea la instancia del usuario que entra.
  * Acepta nombre (`VueRoute`) o slug (`vue-route`); lanza si la entidad no existe.
  */
-import { alDescartar } from '@/core/auth/alcanceSesion'
-import { defineEntityStore } from './entityStore'
+import { alDescartar, olvidarDeTodos } from '@/core/auth/alcanceSesion'
+import { defineEntityStore, olvidarDefinicion } from './entityStore'
 import { useSchemaStore } from './schema'
 import type { EntityStore } from './types'
 
@@ -22,4 +22,16 @@ export function getEntity<T = unknown>(name: string): EntityStore<T> {
     void store.init()
   }
   return store as EntityStore<T>
+}
+
+/**
+ * La entidad ya no está en el schema (ADR-036): suelta su store y lo que
+ * guardó de ella cada usuario del navegador.
+ */
+export function olvidarEntidad(name: string): void {
+  const store = entityStores.get(name) as (EntityStore & { $dispose?: () => void }) | undefined
+  entityStores.delete(name)
+  store?.$dispose?.()
+  olvidarDefinicion(name)
+  olvidarDeTodos(`entity:${name}`)
 }

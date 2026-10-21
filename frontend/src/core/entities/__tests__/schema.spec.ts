@@ -4,6 +4,7 @@ import { useSchemaStore, SCHEMA_VERSION } from '@/core/entities/schema'
 import { repository } from '@/core/entities/repository'
 import type { EntityStore, EntityStoreState } from '@/core/entities/types'
 import type { AgnosticOption, EntitySchema } from '@/core/graphql/types'
+import type { Manifiesto } from '@/core/metadata/manifiesto'
 
 const { apolloMock } = vi.hoisted(() => ({
   apolloMock: {
@@ -158,9 +159,12 @@ function makeStore(): EntityStore<{ id: number; numero: string }> {
     fullList: [],
     listOptions: {},
     view: { density: 'normal', layout: 'auto', filterMode: 'or', filtersOpen: false },
+    huellaEsquema: null,
+    revisionConfig: null,
     metadata: boletoSchema,
     slug: 'boleto-asiento',
     init: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
+    reconciliar: vi.fn<() => void>(),
     loadFullList: vi.fn<() => Promise<AgnosticOption[]>>().mockResolvedValue([]),
     fetchItems: vi.fn<() => Promise<Array<{ id: number; numero: string }>>>(),
     fetchItem: vi.fn<(id: string | number) => Promise<{ id: number; numero: string }>>(),
@@ -218,6 +222,66 @@ describe('useSchemaStore', () => {
     store.schemaVersion = SCHEMA_VERSION + 1
     await store.init()
     expect(apolloMock.introspect).toHaveBeenCalledOnce()
+  })
+
+  describe('con el manifiesto de la metadata (ADR-036)', () => {
+    const manifiesto = (huella: string, revision = 3, completa = 0): Manifiesto => ({
+      revision,
+      esquema: { revision: 1, huella },
+      configs: {},
+      completa,
+      aviso: null,
+    })
+
+    it('reusa el guardado si el schema del servidor es el mismo y lo vuelve a pedir si es otro', async () => {
+      const store = useSchemaStore()
+      await store.init(manifiesto('s1', 3))
+      expect(apolloMock.introspect).toHaveBeenCalledOnce()
+      expect(store.huellaServidor).toBe('s1')
+      expect(store.revision).toBe(3)
+
+      await store.init(manifiesto('s1', 4))
+      expect(apolloMock.introspect).toHaveBeenCalledOnce()
+
+      await store.init(manifiesto('s2', 5))
+      expect(apolloMock.introspect).toHaveBeenCalledTimes(2)
+      expect(store.huellaServidor).toBe('s2')
+    })
+
+    it('recargar todo lo vuelve a pedir aunque el schema sea el mismo', async () => {
+      const store = useSchemaStore()
+      await store.init(manifiesto('s1', 3))
+      expect(store.desactualizado(manifiesto('s1', 4, 4))).toBe(true)
+      expect(store.desactualizado(manifiesto('s1', 4, 3))).toBe(false)
+    })
+
+    it('recargar dice qué entidades cambiaron', async () => {
+      const store = useSchemaStore()
+      await store.init(manifiesto('s1'))
+      const otraVersion = { ...boletoSchema, scalarFields: ['id', 'numero'] }
+      apolloMock.introspect.mockResolvedValueOnce({ Boleto: otraVersion, Cliente: { ...boletoSchema, name: 'Cliente' } })
+      expect(await store.recargar(manifiesto('s2', 6))).toEqual({ agregadas: ['Cliente'], modificadas: ['Boleto'], eliminadas: [] })
+      expect(store.entities.Boleto).toEqual(otraVersion)
+      expect(Object.keys(store.huellas)).toEqual(['Boleto', 'Cliente'])
+    })
+
+    it('si la recarga falla se queda con el schema que tenía', async () => {
+      const store = useSchemaStore()
+      await store.init(manifiesto('s1'))
+      apolloMock.introspect.mockRejectedValueOnce(new Error('caído'))
+      expect(await store.recargar(manifiesto('s2', 6))).toBeNull()
+      expect(store.status).toBe('ready')
+      expect(store.entities.Boleto).toEqual(boletoSchema)
+      expect(store.huellaServidor).toBe('s1')
+    })
+
+    it('una copia guardada sin huellas las calcula sin volver a pedir el schema', async () => {
+      const store = useSchemaStore()
+      store.entities = { Boleto: boletoSchema }
+      await store.init()
+      expect(apolloMock.introspect).not.toHaveBeenCalled()
+      expect(Object.keys(store.huellas)).toEqual(['Boleto'])
+    })
   })
 
   it('carga una colección en el store de la entidad', async () => {

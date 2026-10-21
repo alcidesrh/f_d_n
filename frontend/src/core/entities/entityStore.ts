@@ -2,9 +2,17 @@
  * Fábrica de stores de entidad. `defineEntityStore(name)` devuelve la
  * definición Pinia (`entity:{name}`, persistida: el listado se reencuentra
  * como se dejó). Se usa vía `getEntity(name)` (`registry.ts`).
+ *
+ * Lo persistido sirve mientras no cambie la metadata (ADR-036): la
+ * configuración se vuelve a pedir solo si el manifiesto dice que cambió
+ * después de pedirla (`revisionConfig`), y filtros, orden y caché se ajustan
+ * si cambió la metadata de la entidad (`huellaEsquema`).
  */
 import { defineStore } from 'pinia'
+import { alDescartar } from '@/core/auth/alcanceSesion'
 import { fetchEntityConfiguration } from '@/core/metadata/entityConfiguration'
+import { manifiestoActual, revisionVigenteDeConfig } from '@/core/metadata/manifiesto'
+import { reconciliarEstado } from '@/core/metadata/reconciliar'
 import { repository } from './repository'
 import { useSchemaStore } from './schema'
 import { entitySlug } from './slug'
@@ -24,11 +32,11 @@ const DEFAULT_PAGINATION = {
 const configRequests = new Map<string, Promise<void>>()
 
 /**
- * Stores cuya configuración ya se pidió al servidor en esta sesión. Lo
- * persistido se reusa sin pedirla otra vez, pero la primera vez se mezcla
- * con la del servidor (ver `mergeColumns`).
+ * Entidades cuya configuración se pidió en esta página. Sin manifiesto (no
+ * llegó o falló) no se sabe si cambió: se pide una vez por página.
  */
-const configuredStores = new WeakSet<object>()
+const pedidas = new Set<string>()
+alDescartar(() => pedidas.clear())
 
 /**
  * Columnas por defecto cuando el backend no tiene `entity_configurations`:
@@ -69,6 +77,8 @@ function createEntityStore(name: string) {
       fullList: [],
       listOptions: {},
       view: defaultView(),
+      huellaEsquema: null,
+      revisionConfig: null,
       ...(paginated ? { pagination: { ...DEFAULT_PAGINATION } } : {}),
     }),
     getters: {
@@ -76,10 +86,32 @@ function createEntityStore(name: string) {
       slug: (st) => entitySlug(st.name),
     },
     actions: {
+      reconciliar() {
+        const entity = schema.find(this.name)
+        const huella = schema.huellas[this.name] ?? null
+        if (!entity || huella === null || huella === this.huellaEsquema) return
+        const reconciliado = reconciliarEstado(this, entity)
+        this.$patch((state) => Object.assign(state, reconciliado))
+        this.huellaEsquema = huella
+      },
       async init(force = false) {
-        if (!force && configuredStores.has(this) && this.columns.length > 0 && this.formFields.length > 0) return
+        this.reconciliar()
+        const vigente = revisionVigenteDeConfig(this.name)
+        const alDia =
+          this.columns.length > 0 &&
+          this.revisionConfig !== null &&
+          (vigente === null ? pedidas.has(this.name) : this.revisionConfig >= vigente)
+        if (!force && alDia) return
         let request = configRequests.get(this.name)
         if (!request) {
+          // La del manifiesto antes de pedir: lo que llegue es por lo menos de esa revisión.
+          const revision = manifiestoActual.value?.revision ?? 0
+          // Recargar todo (publicación manual): también los datos guardados.
+          if (this.revisionConfig !== null && (manifiestoActual.value?.completa ?? 0) > this.revisionConfig) {
+            this.items = []
+            this.item = null
+            this.fullList = []
+          }
           request = fetchEntityConfiguration(this.name)
             .then((config) => {
               const firstLoad = this.columns.length === 0
@@ -95,7 +127,8 @@ function createEntityStore(name: string) {
                   ? columns.map((column) => ({ ...column, showFilter: false, configWidth: column.width ?? null }))
                   : mergeColumns(this.columns, columns)
                 : buildFallbackColumns(this.name)
-              if (columns.length) configuredStores.add(this)
+              this.revisionConfig = revision
+              pedidas.add(this.name)
             })
             .catch((error: unknown) =>
               console.warn(`[entity:${this.name}] sin configuración REST:`, error),
@@ -137,4 +170,10 @@ export function defineEntityStore(name: string) {
     definitions.set(name, definition)
   }
   return definition
+}
+
+/** La entidad dejó de existir en el schema: si vuelve, su definición se arma con la metadata nueva. */
+export function olvidarDefinicion(name: string): void {
+  definitions.delete(name)
+  pedidas.delete(name)
 }

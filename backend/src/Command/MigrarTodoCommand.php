@@ -171,31 +171,10 @@ class MigrarTodoCommand extends Command
                 "<info>[4/5] Sincronizando EntityConfiguration...</info>",
             );
             try {
-                $metadataFactory = $this->entityManager->getMetadataFactory();
                 $synced = 0;
-                foreach ($metadataFactory->getAllMetadata() as $metadata) {
-                    if (
-                        !$metadata->isMappedSuperclass &&
-                        !$metadata->isEmbeddedClass
-                    ) {
-                        $shortName = $metadata
-                            ->getReflectionClass()
-                            ->getShortName();
-                        if (
-                            !in_array(
-                                $shortName,
-                                [
-                                    "EntityConfiguration",
-                                    "CollectionFieldConfig",
-                                    "FormFieldConfig",
-                                ],
-                                true,
-                            )
-                        ) {
-                            $this->configSynchronizer->syncEntity($shortName);
-                            $synced++;
-                        }
-                    }
+                foreach ($this->configSynchronizer->entidades() as $shortName) {
+                    $this->configSynchronizer->syncEntity($shortName);
+                    $synced++;
                 }
                 $output->writeln(
                     "<info>✓ {$synced} entidades sincronizadas</info>",

@@ -94,6 +94,19 @@ export function alDescartar(aviso: () => void): void {
   avisosAlDescartar.add(aviso)
 }
 
+/**
+ * Borra lo guardado con `clave` por cada usuario del navegador (y sin
+ * usuario): p. ej. el listado de una entidad que ya no existe en la API.
+ */
+export function olvidarDeTodos(clave: string): void {
+  const sufijo = `/${clave}`
+  for (let i = localStorage.length - 1; i >= 0; i--) {
+    const guardada = localStorage.key(i)
+    if (guardada?.endsWith(sufijo) && (guardada.startsWith('usuario/') || guardada.startsWith('sin-usuario/')))
+      localStorage.removeItem(guardada)
+  }
+}
+
 /** Descarta de memoria las stores del usuario (lo persistido queda en sus claves). */
 export function descartarStoresDeUsuario(): void {
   for (const store of [...descartables.values()]) store.$dispose()

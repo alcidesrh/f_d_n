@@ -34,14 +34,14 @@ Dependencias en una sola dirección: `app → features → shared → core`. **U
 
 | Carpeta | Qué hay | Empezar por |
 |---|---|---|
-| `main.ts` | Arranque: plugins → tema → schema GraphQL → montaje; sincroniza rutas con el backend | — |
+| `main.ts` | Arranque: plugins → tema → manifiesto de la metadata y schema GraphQL (`useMetadataStore().arrancar()`) → montaje; sincroniza rutas con el backend | — |
 | `app/` | Router y guards, tema (`ui.ts`, `theme.ts`), breakpoints (`breakpoints.ts`), sincronización de rutas (`routeSync.ts`), app instalable (PWA: `vite-plugin-pwa` en `vite.config.ts`, abre en `/chat` como una app de mensajería, íconos en `public/pwa/`; «Instalar app» del menú del usuario en `pwa.ts`, aviso de versión nueva en `layout/ActualizacionApp.vue`; el service worker solo precarga el código, nunca respuestas de la API) | `router.ts` |
 | `app/layout/` | Shell: `AppShell` (header + sidebars; drawers debajo de `lg`), `BlankLayout`, toasts, barra de carga. Una ruta añade su panel derecho con `meta.panel` | `AppShell.vue` |
-| `core/http.ts` | Único cliente REST (`Accept: application/ld+json`, Bearer, 401 → login, `silent` para polling) | — |
+| `core/http.ts` | Único cliente REST (`Accept: application/ld+json`, Bearer, 401 → login, `silent` para polling). Sus respuestas y las de GraphQL pasan por `core/respuestas.ts` (`observarRespuestas`: leer cabeceras sin acoplarse) | — |
 | `core/graphql/` | Cliente Apollo (`graphql`), documentos generados desde la metadata, introspección | `client.ts` |
 | `core/auth/` | Sesión (`login`/`logout`), manejo de 401 | `session.ts` |
 | `core/entities/` | Capa de datos de entidades: `schema` (metadata: `find`/`require`), `repository` (leer/escribir), `entityStore` (estado por entidad), `registry` (`getEntity(nombre)`) | `registry.ts` |
-| `core/metadata/` | Configuración de presentación (`/api/entity_configurations`) | — |
+| `core/metadata/` | Configuración de presentación (`/api/entity_configurations`) y su puesta al día por revisiones (ADR-036): manifiesto (`manifiesto.ts`), `useMetadataStore` (`sincronizacion.ts`: arranque, Mercure `/metadata`, cabecera `X-Metadata-Revision`, regreso a la pestaña, red de seguridad ante errores de schema viejo —`core/graphql/desfase.ts`—; `versionDe(entidad)` para las pantallas abiertas, `aviso` publicado), reglas puras con tests: huellas por `EntitySchema` (`huellas.ts`), reconciliación genérica del estado de una entidad (`reconciliar.ts`), avisos juntos (`agenda.ts`), y REST de la publicación manual (`publicacion.ts`) | `sincronizacion.ts` |
 | `core/navigation/` | Menús del usuario por área (`GET /me/menus`, `useUserMenusStore`); los pinta `app/layout/navigation/` (`NavArea`) | `userMenus.ts` |
 | `core/venta/` | Venta de asientos (ADR-021): tipos, REST (`/venta/*`, `/agencias/*`), reglas puras (mapa, sube/baja, selección) y NIT | `modelo.ts` |
 | `core/realtime.ts` | Suscripción a tópicos de Mercure (`suscribir(topico, cb, { token? })`; con `token`, tópicos privados) | — |
@@ -71,6 +71,7 @@ Dependencias en una sola dirección: `app → features → shared → core`. **U
 | `features/agencia/` | Gestión de agencias (ADR-034): registrar depósito `/agencias/depositos/registrar` (`RegistrarDepositoForm`, también en diálogo), buscar depósitos `/agencias/depositos` (filtros, Registrar/Acreditar/Rechazar, `DataGrid`; `?id=` o `?agencia=&estado=`) y saldos `/agencias/saldos` (tarjetas, totales por moneda, movimientos). Reglas puras en `core/agencia/` (con tests). Y la sección "Saldo" del formulario genérico de Agencia | `DepositosPage.vue`, `AgenciaSaldoSection.vue` |
 | `features/bus/` | Editor del croquis del bus (sección "Croquis" del formulario de `Bus`): pilas, arrastre por puntero, pincel, deshacer, plantillas | `editor.ts`, `CroquisEditor.vue` |
 | `features/entity-config/` | Editor de columnas/campos por entidad | `EntityConfigPage.vue` |
+| `features/metadata-publicacion/` | Publicación de la configuración (ADR-036), ruta `/configuracion/publicacion` (`config.editar`): modo, lo pendiente, publicar con nota, aviso («Recargar» en cada navegador) o recargar todo, y las últimas revisiones. El aviso publicado lo muestra `app/layout/AvisoMetadata.vue` | `PublicacionPage.vue` |
 | `features/form-builder/` | Constructor de formularios FormKit | `FormBuilderPage.vue` |
 | `features/menu-builder/` | Constructor de menús (ADR-018): árbol con GSAP Draggable sobre un esquema con sangría, paleta de ítems, áreas del shell | `outline.ts`, `MenuBuilderPage.vue` |
 | `features/migracion/` | Panel de migración desde el sistema legado | `MigracionPage.vue` |
@@ -100,7 +101,7 @@ Los tests viven junto al código, en carpetas `__tests__/`.
 
 - Las colecciones GraphQL paginadas son hulls `PageConnection` (`{ collection { id } paginationInfo { totalCount } }`); `core/graphql/client` ya las aplana.
 - Los ids son IRIs (`/api/buses/5`); `itemIri(entity, id)` los arma desde un id numérico.
-- La introspección se guarda en el navegador. Si cambia el schema de forma incompatible, subir `SCHEMA_VERSION` en `core/entities/schema.ts`.
+- La introspección y la configuración de cada entidad se guardan en el navegador y se ponen al día solas por revisión (ADR-036): no hace falta borrar el almacenamiento ni recargar tras un despliegue. `SCHEMA_VERSION` (`core/entities/schema.ts`) se sube solo si cambia el formato de la copia guardada. El listado genérico se recarga solo al cambiar la metadata de su entidad; un formulario abierto muestra «Recargar» (no se rearma solo).
 - `label` es un campo derivado de solo lectura en todas las entidades: no se envía al crear/editar.
 
 ---

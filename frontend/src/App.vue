@@ -12,11 +12,16 @@
   <ConfirmDialog />
   <DynamicDialog />
   <Toasts />
-  <ActualizacionApp />
+  <!-- Versión nueva de la app y cambios publicados en la configuración, apilados abajo al centro. -->
+  <div class="avisos-app">
+    <AvisoMetadata />
+    <ActualizacionApp />
+  </div>
 </template>
 
 <script setup lang="ts">
 import ActualizacionApp from '@/app/layout/ActualizacionApp.vue'
+import AvisoMetadata from '@/app/layout/AvisoMetadata.vue'
 import AppLayout from '@/app/layout/AppLayout.vue'
 import Toasts from '@/app/layout/Toasts.vue'
 import TopLoadingBar from '@/app/layout/TopLoadingBar.vue'
@@ -38,3 +43,22 @@ watchEffect(() => {
   document.documentElement.className = `${ui.mode} primary-${ui.primary} surface-${ui.surface}`
 })
 </script>
+
+<style scoped>
+.avisos-app {
+  position: fixed;
+  left: 50%;
+  bottom: calc(1rem + env(safe-area-inset-bottom));
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: min(28rem, calc(100% - 2rem));
+  transform: translateX(-50%);
+  /* Sin avisos no tapa lo que hay debajo. */
+  pointer-events: none;
+}
+.avisos-app > :deep(*) {
+  pointer-events: auto;
+}
+</style>

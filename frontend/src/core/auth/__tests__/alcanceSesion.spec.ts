@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { createPinia, defineStore, setActivePinia } from 'pinia'
 import { createPersistedState } from 'pinia-plugin-persistedstate'
 import { createApp, nextTick, onScopeDispose, ref } from 'vue'
-import { alcanceSesion, almacenPorUsuario, claveDeUsuario, entrarComo, salirDeStores } from '../alcanceSesion'
+import { alcanceSesion, almacenPorUsuario, claveDeUsuario, entrarComo, olvidarDeTodos, salirDeStores } from '../alcanceSesion'
 
 let desuscritas = 0
 let recargas = 0
@@ -101,5 +101,12 @@ describe('alcanceSesion', () => {
     expect(claveDeUsuario('boletos.columnas')).toBe('usuario/ana/boletos.columnas')
     entrarComo('beto')
     expect(claveDeUsuario('boletos.columnas')).toBe('usuario/beto/boletos.columnas')
+  })
+
+  it('olvidarDeTodos borra esa clave de cada usuario y nada más', () => {
+    for (const clave of ['usuario/ana/entity:Viejo', 'usuario/beto/entity:Viejo', 'sin-usuario/entity:Viejo', 'usuario/ana/entity:ViejoBus', 'usuario/ana/entity:Bus', 'entity:Viejo'])
+      localStorage.setItem(clave, '{}')
+    olvidarDeTodos('entity:Viejo')
+    expect(Object.keys(localStorage).sort()).toEqual(['entity:Viejo', 'sesion:propietario', 'usuario/ana/entity:Bus', 'usuario/ana/entity:ViejoBus'])
   })
 })
