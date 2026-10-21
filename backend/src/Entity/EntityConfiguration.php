@@ -16,6 +16,7 @@ use ApiPlatform\Metadata\QueryParameter;
 use App\ApiResource\EntityConfigurationByEntityClassProvider;
 use App\Attribute\ApiResourceNoPagination;
 use App\Entity\Icon;
+use App\Metadata\ConfiguracionDelCliente;
 use App\Repository\EntityConfigurationRepository;
 use App\Resolver\UpdateEntityConfigurationFieldsResolver;
 use Symfony\Component\Serializer\Attribute\Groups; // Carga automáticamente la entidad
@@ -108,7 +109,7 @@ use Symfony\Component\Serializer\Attribute\Groups; // Carga automáticamente la 
         ],
     ),
 ]
-class EntityConfiguration
+class EntityConfiguration implements ConfiguracionDelCliente
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -201,6 +202,11 @@ class EntityConfiguration
     }
 
     public function getEntityClass(): string
+    {
+        return $this->entityClass;
+    }
+
+    public function entidadConfigurada(): ?string
     {
         return $this->entityClass;
     }

@@ -1,5 +1,6 @@
 /**
- * Arranque de la aplicación: plugins → tema → schema GraphQL → montaje.
+ * Arranque de la aplicación: plugins → tema → schema GraphQL (el guardado, si
+ * el manifiesto de la metadata dice que sigue vigente; ADR-036) → montaje.
  * La sincronización de rutas con el backend se lanza sin bloquear.
  */
 import { createApp } from "vue";
@@ -15,7 +16,7 @@ import { pinia } from "@/app/pinia";
 import { router } from "@/app/router";
 import formkitConfig from "@/shared/formkit/config";
 import { useUiStore } from "@/app/ui";
-import { useSchemaStore } from "@/core/entities/schema";
+import { useMetadataStore } from "@/core/metadata/sincronizacion";
 import { syncVueRoutes } from "@/app/routeSync";
 import { escucharInstalacion } from "@/app/pwa";
 
@@ -35,7 +36,7 @@ async function bootstrap() {
 
   const uiStore = useUiStore();
   await uiStore.init();
-  await useSchemaStore().init();
+  await useMetadataStore().arrancar();
   // Sin esto se monta con la ruta inicial sin resolver (sin `meta.layout`) y parpadea el layout de la app antes del de /login.
   await router.isReady();
   app.mount("#app");

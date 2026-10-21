@@ -25,6 +25,11 @@ framework:
             cache.presencia:
                 adapter: cache.adapter.filesystem
                 default_lifetime: 100
+            # Huella del schema GraphQL (ADR-036): se calcula una vez por compilación del
+            # contenedor. El adaptador de sistema se versiona con cada compilación, también
+            # en dev (ahí `cache.system` es un array y la recalcularía en cada request).
+            cache.metadata:
+                adapter: cache.adapter.system
 
 when@dev:
     framework:

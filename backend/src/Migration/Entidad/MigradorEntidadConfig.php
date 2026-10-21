@@ -6,7 +6,6 @@ namespace App\Migration\Entidad;
 
 use App\Migration\Job\Progreso;
 use App\Services\EntityConfigSynchronizer;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
@@ -15,15 +14,8 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 final class MigradorEntidadConfig implements MigradorEntidadInterface
 {
-    private const EXCLUIDAS = [
-        "EntityConfiguration",
-        "CollectionFieldConfig",
-        "FormFieldConfig",
-    ];
-
     public function __construct(
         private readonly EntityConfigSynchronizer $synchronizer,
-        private readonly EntityManagerInterface $em,
     ) {}
 
     public function nombre(): string
@@ -71,17 +63,7 @@ final class MigradorEntidadConfig implements MigradorEntidadInterface
         ?OutputInterface $output,
         Progreso $progreso,
     ): array {
-        $metadata = $this->em->getMetadataFactory()->getAllMetadata();
-        $pendientes = [];
-        foreach ($metadata as $m) {
-            if ($m->isMappedSuperclass || $m->isEmbeddedClass) {
-                continue;
-            }
-            $short = $m->getReflectionClass()->getShortName();
-            if (!in_array($short, self::EXCLUIDAS, true)) {
-                $pendientes[] = $short;
-            }
-        }
+        $pendientes = $this->synchronizer->entidades();
 
         $total = count($pendientes);
         $progreso->informar(

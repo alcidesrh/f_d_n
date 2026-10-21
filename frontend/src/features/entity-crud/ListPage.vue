@@ -110,6 +110,7 @@ import { useCuentaStore } from "@/core/cuenta/store";
 import { customFilterOrNull, type CustomListFilterState } from "@/core/entities/listCustomFilter";
 import type { CollectionFieldConfig, EntityStore, FilterMode } from "@/core/entities/types";
 import { useLoadingStore } from "@/core/loading";
+import { useMetadataStore } from "@/core/metadata/sincronizacion";
 import { notify } from "@/core/notify";
 import { usePermisosBoleto } from "@/core/venta/permisos";
 import EnviarPorChatDialog from "@/shared/chat/EnviarPorChatDialog.vue";
@@ -615,6 +616,18 @@ watch(
     void load(getEntity(name));
   },
   { immediate: true },
+);
+
+// Cambió en el servidor la metadata de la entidad abierta (ADR-036): se vuelve a cargar con la nueva.
+// Con una celda en edición se espera a la próxima carga para no perderla.
+const metadata = useMetadataStore();
+watch(
+  () => [entityName.value, metadata.versionDe(entityName.value)] as const,
+  ([name, version], [nameBefore, versionBefore]) => {
+    const current = store.value;
+    if (name !== nameBefore || version === versionBefore || !current || editing.value) return;
+    void load(current);
+  },
 );
 </script>
 

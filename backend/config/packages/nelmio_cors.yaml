@@ -4,7 +4,8 @@ nelmio_cors:
         allow_origin: ['%env(CORS_ALLOW_ORIGIN)%']
         allow_methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
         allow_headers: ['Content-Type', 'Authorization']
-        expose_headers: ['Link']
+        # X-Metadata-Revision: revisión de la metadata del cliente (ADR-036), por si la app se sirve desde otro origen.
+        expose_headers: ['Link', 'X-Metadata-Revision']
         max_age: 3600
     paths:
         '^/': null

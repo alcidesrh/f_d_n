@@ -27,17 +27,13 @@ const { needRefresh, updateServiceWorker } = useRegisterSW({
 </script>
 
 <style scoped>
+/* La ubica `App.vue` (`.avisos-app`), apilada con el de la metadata. */
 .actualizacion {
-  position: fixed;
-  left: 50%;
-  bottom: calc(1rem + env(safe-area-inset-bottom));
-  z-index: 1000;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  width: min(28rem, calc(100% - 2rem));
+  width: 100%;
   padding: 0.5rem 0.5rem 0.5rem 1rem;
-  transform: translateX(-50%);
   border: 1px solid var(--p-content-border-color);
   border-radius: 0.75rem;
   background: var(--p-content-background);
@@ -53,6 +49,6 @@ const { needRefresh, updateServiceWorker } = useRegisterSW({
 .actualizacion-enter-from,
 .actualizacion-leave-to {
   opacity: 0;
-  transform: translate(-50%, 0.5rem);
+  transform: translateY(0.5rem);
 }
 </style>

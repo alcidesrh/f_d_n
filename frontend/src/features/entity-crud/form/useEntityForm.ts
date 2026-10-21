@@ -8,6 +8,9 @@
  *   `update` + el IRI del registro. Sin `id`, `create`.
  * - Relaciones: se precargan sus opciones; las de `Icon` se editan por nombre
  *   (`iconRelation.ts`).
+ * - Si la metadata de la entidad cambia en el servidor con el formulario
+ *   armado (ADR-036), no se rearma solo (se perdería lo escrito):
+ *   `desactualizado` lo dice y `reset` lo vuelve a armar.
  */
 import { computed, ref, toRef, watch, type MaybeRefOrGetter } from 'vue'
 import type { FormKitSchemaNode } from '@formkit/core'
@@ -16,6 +19,7 @@ import { useSchemaStore } from '@/core/entities/schema'
 import type { EntityStore } from '@/core/entities/types'
 import { itemIri } from '@/core/graphql/documents'
 import type { AgnosticOption } from '@/core/graphql/types'
+import { useMetadataStore } from '@/core/metadata/sincronizacion'
 import { notify } from '@/core/notify'
 import { formFieldEntries, pickInputFields } from './formFields'
 import {
@@ -71,6 +75,8 @@ export function useEntityForm(
   const loading = ref(false)
   const submitting = ref(false)
   const error = ref('')
+  /** La metadata de la entidad cambió después de armar el formulario. */
+  const desactualizado = ref(false)
 
   /** Inputs del formulario vigente (los que se envían al guardar). */
   let fields: FormFieldSource[] = []
@@ -88,6 +94,7 @@ export function useEntityForm(
     const seq = ++buildSeq
     loading.value = true
     error.value = ''
+    desactualizado.value = false
     try {
       const entity = useSchemaStore().require(name.value)
       const mutation = entity[mode.value]
@@ -169,5 +176,13 @@ export function useEntityForm(
 
   watch([name, recordId], () => void build(), { immediate: true })
 
-  return { schema, loading, submitting, error, mode, submit, remove, reset: build }
+  const metadata = useMetadataStore()
+  watch(
+    () => [name.value, metadata.versionDe(name.value)] as const,
+    ([entidad, version], [entidadAntes, versionAntes]) => {
+      if (entidad === entidadAntes && version !== versionAntes && schema.value.length > 0) desactualizado.value = true
+    },
+  )
+
+  return { schema, loading, submitting, error, desactualizado, mode, submit, remove, reset: build }
 }

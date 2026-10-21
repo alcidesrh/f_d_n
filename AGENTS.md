@@ -131,8 +131,9 @@ Despliegue
 - **GraphQL collections** son `PageConnection` hulls, no arrays: `{ collection { id } paginationInfo { totalCount } }`.
 - **REST** requiere `Accept: application/ld+json` (sin header → 406).
 - **CRUD dinámico**: backend expone metadatos → frontend genera forms/listas via introspection GraphQL.
+- **Metadata del cliente por revisiones** (ADR-036): el schema GraphQL y la configuración de entidades que el navegador guarda se ponen al día por revisiones (`App\Metadata`, tabla `revision_metadata`). Manifiesto `GET /api/metadata` (ETag = revisión), aviso por Mercure en `/metadata` (solo el número) y cabecera `X-Metadata-Revision` en cada respuesta. Huellas sin código por entidad: sha256 del SDL (guardado por compilación del contenedor) y de las filas de la configuración (DBAL). `METADATA_PUBLICACION=automatica` (al terminar la petición que guardó configuración, una revisión por petición o comando) o `manual` (se publica en `/configuracion/publicacion`, `config.editar`: pendiente, nota, aviso «Recargar», recargar todo); el schema se publica solo en ambos. `app:metadata:revisar --sincronizar` en el entrypoint del backend. Frontend: `core/metadata/sincronizacion.ts` (manifiesto al arrancar, Mercure, cabecera, regreso a la pestaña; red de seguridad ante «Cannot query field…»), marcas `revisionConfig`/`huellaEsquema` en cada store de entidad y reconciliación genérica de filtros y orden.
 - **Frontend por capas** (ADR-017): `app → features → shared → core`, imports explícitos. Mapa completo en `frontend/AGENTS.md`.
-- **Boot order frontend** (`main.ts`): plugins (Pinia, router, FormKit, PrimeVue) → tema → introspección GraphQL → montaje → sincronización de rutas.
+- **Boot order frontend** (`main.ts`): plugins (Pinia, router, FormKit, PrimeVue) → tema → manifiesto de la metadata e introspección GraphQL (la guardada si sigue vigente, ADR-036) → montaje → sincronización de rutas.
 - **`label`** es derivado (de `nombre`/`name`) y de solo lectura en todas las entidades: no forma parte de los inputs de create/update.
 - **Tokens de API**: el valor del Bearer solo lo entrega `POST /api/login`; nunca se expone por GraphQL/REST. `POST /api/logout` lo revoca (`App\EventListener\LogoutListener`).
 - **Menús de navegación** (ADR-018): `GET /api/me/menus` devuelve, por área del shell, los menús visibles para el usuario; se editan en `/configuracion/menus`. El árbol de cada menú es una `Taxonomy` genérica (`App\Taxonomy`), reutilizable para clasificar cualquier entidad.
@@ -192,7 +193,7 @@ Hay una cuenta solo para pruebas en desarrollo (`pruebas`, ROLE_SUPER_ADMIN; no 
 - `config/packages/*` / `config/services.yaml`
 - `migrations/*`
 - GraphQL schema definitions
-- `frontend/src/core/entities/schema.ts` (`SCHEMA_VERSION`: subirla si cambia el schema de forma incompatible) / `frontend/src/core/http.ts` / `frontend/src/core/graphql/client.ts`
+- `frontend/src/core/entities/schema.ts` (`SCHEMA_VERSION`: subirla si cambia el formato de la copia guardada; los cambios del schema llegan solos por revisión, ADR-036) / `frontend/src/core/http.ts` / `frontend/src/core/graphql/client.ts`
 - `backend/src/Attribute/*` (operaciones GraphQL de todas las entidades) / `backend/src/Entity/Base/Base.php`
 - `CONTEXT.md`
 
@@ -206,7 +207,7 @@ No existe un sitio MkDocs — se eliminó el 2026-09 por documentar un modelo de
 | ------------------- | ---------------------------------------- |
 | Contexto de dominio | `CONTEXT.md`                             |
 | Terminología + estado del modelo | `AGENTS.md` (este archivo, sección "Domain terminology") |
-| ADRs (decisiones de arquitectura) | `docs/architecture/decisions/` (ADR-001 a ADR-035, ver `index.md`) |
+| ADRs (decisiones de arquitectura) | `docs/architecture/decisions/` (ADR-001 a ADR-036, ver `index.md`) |
 | Convención de exploración de dominio para skills | `docs/agents/domain.md` |
 | Convención de issue tracker | `docs/agents/issue-tracker.md` |
 | Backend (Symfony, Doctrine, GraphQL) | `backend/AGENTS.md` |

@@ -21,6 +21,7 @@ import { getIntrospectionQuery, parse } from 'graphql'
 import { config } from '@/core/config'
 import { createErrorLink } from '@/core/graphql/links/errorLink'
 import { createLoadingLink } from '@/core/graphql/links/loadingLink'
+import { fetchObservado } from '@/core/respuestas'
 import {
   buildCollectionQuery,
   buildItemQuery,
@@ -106,7 +107,7 @@ export class ApiPlatformClient {
         new RemoveTypenameFromVariablesLink(),
         createErrorLink(),
         createLoadingLink(),
-        new HttpLink({ uri: this.uri, fetch: options.fetch }),
+        new HttpLink({ uri: this.uri, fetch: options.fetch ?? fetchObservado }),
       ]),
       cache: new InMemoryCache(),
       devtools: {
@@ -116,10 +117,16 @@ export class ApiPlatformClient {
     })
   }
 
-  /** Ejecuta la introspección y la traduce a metadatos planos por entidad. */
+  /**
+   * Ejecuta la introspección y la traduce a metadatos planos por entidad.
+   * Siempre a la red: se vuelve a pedir cuando cambia el schema (ADR-036).
+   */
   async introspect(): Promise<Record<string, EntitySchema>> {
     const query = gql(getIntrospectionQuery({ descriptions: true }))
-    const result = await this.client.query<{ __schema: IntrospectionSchemaLike }>({ query })
+    const result = await this.client.query<{ __schema: IntrospectionSchemaLike }>({
+      query,
+      fetchPolicy: 'no-cache',
+    })
     return parseIntrospection(result.data!.__schema)
   }
 

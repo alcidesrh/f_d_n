@@ -41,7 +41,7 @@ final class EntityConfigurationByEntityClassProvider implements ProviderInterfac
             ->findOneBy(['entityClass' => $entityClass]);
 
         if (!$config) {
-            return $this->configSynchronizer->syncEntity($entityClass, false);
+            return $this->configSynchronizer->syncEntity($entityClass);
         }
 
         return $config;

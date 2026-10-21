@@ -13,7 +13,11 @@ import { entityStores, getEntity } from '@/core/entities/registry'
 
 const { restMock, schemaMock } = vi.hoisted(() => ({
   restMock: { getEntityConfiguration: vi.fn<(entityClass: string) => Promise<unknown>>() },
-  schemaMock: { require: vi.fn<(name: string) => unknown>() },
+  schemaMock: {
+    require: vi.fn<(name: string) => unknown>(),
+    find: vi.fn<(name: string) => unknown>(),
+    huellas: {} as Record<string, string>,
+  },
 }))
 
 vi.mock('@/core/metadata/entityConfiguration', () => ({
@@ -30,6 +34,7 @@ describe('getEntity', () => {
       if (name === 'Nope') throw new Error('No existe la entidad: Nope')
       return { name, scalarFields: ['id', 'numero', 'total'], orderFields: [], orderInput: null }
     })
+    schemaMock.find.mockImplementation((name: string) => (name === 'Nope' ? null : schemaMock.require(name)))
   })
 
   it('crea el store de la entidad por demanda', () => {

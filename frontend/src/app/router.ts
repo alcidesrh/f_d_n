@@ -78,6 +78,16 @@ export const router = createRouter({
       },
     },
     {
+      path: "/configuracion/publicacion",
+      name: "metadata-publicacion",
+      component: () => import("@/features/metadata-publicacion/PublicacionPage.vue"),
+      meta: {
+        title: "Publicación de la configuración",
+        label: "Publicar configuración",
+        icon: "published-with-changes",
+      },
+    },
+    {
       path: "/configuracion/menus",
       name: "menu-builder",
       component: () => import("@/features/menu-builder/MenuBuilderPage.vue"),

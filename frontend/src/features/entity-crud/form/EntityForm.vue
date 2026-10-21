@@ -14,6 +14,14 @@
 
     <template v-else-if="schema.length > 0">
       <Message v-if="error" severity="error" :closable="false" class="mb-4">{{ error }}</Message>
+      <Message v-if="desactualizado" severity="info" :closable="false" class="mb-4">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="min-w-0 flex-1">
+            La configuración de este formulario cambió. Recárgalo para verla; lo que no hayas guardado se pierde.
+          </span>
+          <Button label="Recargar" size="small" :disabled="submitting" @click="reset" />
+        </div>
+      </Message>
       <SplitButton
         class="absolute! right-0 z-10"
         label="Guardar"
@@ -120,7 +128,7 @@ const emit = defineEmits<{
   error: [message: string]
 }>()
 
-const { schema, loading, submitting, error, mode, submit, remove, reset } = useEntityForm(
+const { schema, loading, submitting, error, desactualizado, mode, submit, remove, reset } = useEntityForm(
   () => props.entity,
   { id: () => props.id },
 )

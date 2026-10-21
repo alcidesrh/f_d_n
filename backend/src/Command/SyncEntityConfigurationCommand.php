@@ -3,7 +3,6 @@
 namespace App\Command;
 
 use App\Services\EntityConfigSynchronizer;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -28,7 +27,6 @@ class SyncEntityConfigurationCommand extends Command
 {
   public function __construct(
     private readonly EntityConfigSynchronizer $synchronizer,
-    private readonly EntityManagerInterface $entityManager,
   ) {
     parent::__construct();
   }
@@ -46,7 +44,7 @@ class SyncEntityConfigurationCommand extends Command
 
     $classesToSync = $entityClass
       ? [$entityClass]
-      : $this->getAllEntityClasses();
+      : $this->synchronizer->entidades();
 
     $io->title('Sincronizando configuración de entidades');
 
@@ -57,24 +55,9 @@ class SyncEntityConfigurationCommand extends Command
     }
 
     $io->newLine();
+    // Los navegadores se enteran por la revisión de la metadata que se publica al terminar (ADR-036).
     $io->success('Sincronización completada');
 
     return Command::SUCCESS;
-  }
-
-  private function getAllEntityClasses(): array
-  {
-    $classes = [];
-    $metadataFactory = $this->entityManager->getMetadataFactory();
-
-    foreach ($metadataFactory->getAllMetadata() as $metadata) {
-      if (!$metadata->isMappedSuperclass && !$metadata->isEmbeddedClass) {
-        if (!in_array(($name = $metadata->getReflectionClass()->getShortName()), ['EntityConfiguration', 'CollectionFieldConfig', 'FormFieldConfig'], true)) {
-          $classes[] = $name;
-        }
-      }
-    }
-
-    return $classes;
   }
 }

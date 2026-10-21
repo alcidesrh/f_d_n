@@ -221,10 +221,7 @@ class RegistroMigradores
             ),
             "salida" => new MigradorEntidadSalida($this->migrador),
             "iam" => new MigradorEntidadIam($this->iam),
-            "config" => new MigradorEntidadConfig(
-                $this->configSynchronizer,
-                $this->em,
-            ),
+            "config" => new MigradorEntidadConfig($this->configSynchronizer),
         ];
 
         return $catalogo;

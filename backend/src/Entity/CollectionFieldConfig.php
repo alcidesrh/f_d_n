@@ -4,12 +4,13 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiProperty;
 use App\Attribute\ApiResourceNoPagination;
+use App\Metadata\ConfiguracionDelCliente;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity]
 #[ApiResourceNoPagination()]
-class CollectionFieldConfig  extends FieldConfig
+class CollectionFieldConfig  extends FieldConfig implements ConfiguracionDelCliente
 {
 
     #[ApiProperty(readable: false)]
@@ -80,6 +81,11 @@ class CollectionFieldConfig  extends FieldConfig
         $this->entityConfig = $entityConfig;
 
         return $this;
+    }
+
+    public function entidadConfigurada(): ?string
+    {
+        return isset($this->entityConfig) ? $this->entityConfig->getEntityClass() : null;
     }
 
     public function isSortable(): ?bool

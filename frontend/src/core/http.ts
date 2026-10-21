@@ -8,6 +8,7 @@
  */
 import { config } from './config'
 import { useLoadingStore } from './loading'
+import { fetchObservado } from './respuestas'
 import { handleUnauthorized } from '@/core/auth/unauthorized'
 import { useSessionStore } from '@/core/auth/session'
 
@@ -55,7 +56,7 @@ export async function request<T = unknown>(path: string, options: RequestOptions
   const loading = options.silent ? null : useLoadingStore()
   loading?.start(loadingKey)
   try {
-    const response = await fetch(`${config.restUrl}${path}`, {
+    const response = await fetchObservado(`${config.restUrl}${path}`, {
       method,
       headers: {
         Accept: 'application/ld+json',

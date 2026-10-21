@@ -79,6 +79,11 @@ vi.mock('@/core/notify', () => ({ notify: { error: vi.fn<(text: string) => void>
 vi.mock('@/core/entities/registry', () => ({
   getEntity: (name: string) => (name === 'Ruta' ? rutaStore : busStore),
 }))
+// Versión de la metadata por entidad (`core/metadata/sincronizacion`).
+const versiones = ref<Record<string, number>>({})
+vi.mock('@/core/metadata/sincronizacion', () => ({
+  useMetadataStore: () => ({ versionDe: (entidad: string) => versiones.value[entidad] ?? 0 }),
+}))
 
 const { useEntityForm } = await import('@/features/entity-crud/form/useEntityForm')
 
@@ -123,6 +128,7 @@ describe('useEntityForm', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     busStore.formFields = []
+    versiones.value = {}
   })
 
   it('sin formFields usa los fields del schema que acepta la mutación (alta)', async () => {
@@ -185,5 +191,26 @@ describe('useEntityForm', () => {
     await flushPromises()
     expect(form.schema.value).toEqual([])
     expect(form.error.value).toContain('No existe Bus con id 404')
+  })
+
+  it('si cambia la metadata de la entidad con el formulario armado avisa y no lo rearma solo', async () => {
+    const form = useEntityForm('Bus')
+    await flushPromises()
+    const armado = form.schema.value
+    expect(busStore.init).toHaveBeenCalledOnce()
+
+    versiones.value = { Ruta: 1 }
+    await flushPromises()
+    expect(form.desactualizado.value).toBe(false)
+
+    versiones.value = { Ruta: 1, Bus: 1 }
+    await flushPromises()
+    expect(form.desactualizado.value).toBe(true)
+    expect(form.schema.value).toBe(armado)
+    expect(busStore.init).toHaveBeenCalledOnce()
+
+    await form.reset()
+    expect(form.desactualizado.value).toBe(false)
+    expect(busStore.init).toHaveBeenCalledTimes(2)
   })
 })

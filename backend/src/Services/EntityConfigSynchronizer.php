@@ -6,19 +6,45 @@ use ApiPlatform\Metadata\ApiProperty;
 use App\Entity\CollectionFieldConfig;
 use App\Entity\EntityConfiguration;
 use App\Entity\FormFieldConfig;
+use App\Entity\RevisionMetadata;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use Psr\Log\LoggerInterface;
 
+/**
+ * Sincroniza la configuración de cada entidad con su mapeo de Doctrine. Los
+ * navegadores se enteran de lo que cambie por la revisión de la metadata que
+ * se publica al terminar la petición o el comando (ADR-036).
+ */
 final class EntityConfigSynchronizer
 {
+    /** No se configuran: son la configuración misma y sus revisiones. */
+    private const EXCLUIDAS = [EntityConfiguration::class, CollectionFieldConfig::class, FormFieldConfig::class, RevisionMetadata::class];
+
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $logger,
-        private readonly ConfigChangePublisher $configChangePublisher,
     ) {}
 
-    public function syncEntity(string $entityClass, $publish = true): EntityConfiguration
+    /**
+     * Entidades que se configuran, por nombre corto (`Bus`).
+     *
+     * @return list<string>
+     */
+    public function entidades(): array
+    {
+        $entidades = [];
+        foreach ($this->entityManager->getMetadataFactory()->getAllMetadata() as $metadata) {
+            if ($metadata->isMappedSuperclass || $metadata->isEmbeddedClass || \in_array($metadata->getName(), self::EXCLUIDAS, true)) {
+                continue;
+            }
+            $entidades[] = $metadata->getReflectionClass()->getShortName();
+        }
+
+        return $entidades;
+    }
+
+    public function syncEntity(string $entityClass): EntityConfiguration
     {
         $config = $this->entityManager->getRepository(EntityConfiguration::class)
             ->findOneBy(['entityClass' => $entityClass]);
@@ -34,9 +60,7 @@ final class EntityConfigSynchronizer
         $this->syncFormFields($config, $currentFields);
 
         $this->entityManager->flush();
-        if ($publish) {
-            $this->configChangePublisher->entityConfigChanged($config);
-        }
+
         return $config;
     }
 
