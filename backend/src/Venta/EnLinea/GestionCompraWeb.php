@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace App\Venta\EnLinea;
 
-use App\Bitacora\RegistradorBitacora;
 use App\Entity\BoletoAsiento;
 use App\Entity\BoletoVenta;
 use App\Entity\Enum\EstadoBoletoAsiento;
 use App\Entity\Enum\EstadoBoletoVenta;
 use App\Entity\Enum\EstadoFacturacion;
 use App\Entity\Enum\EstadoPagoWeb;
+use App\Entity\Enum\TransicionBoleto;
 use App\Entity\PagoWeb;
 use App\Entity\Salida;
+use App\Venta\Boleto\Flujo\FlujoBoleto;
 use App\Venta\Comprador;
 use App\Venta\CompraWeb;
 use App\Venta\Excepcion\VentaRechazada;
@@ -20,12 +21,10 @@ use App\Venta\Facturacion\CertificacionFallida;
 use App\Venta\Facturacion\Facturador;
 use App\Venta\Mensaje\EnviarBoletoPorCorreo;
 use App\Venta\PublicadorOcupacion;
-use App\Venta\ReglasBoletos;
 use App\Venta\ReglasVenta;
 use App\Venta\Transaccion;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
-use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 
@@ -44,9 +43,8 @@ final class GestionCompraWeb
         private readonly ReglasVenta $reglas,
         private readonly Facturador $facturador,
         private readonly PublicadorOcupacion $publicador,
-        private readonly RegistradorBitacora $bitacora,
+        private readonly FlujoBoleto $flujo,
         private readonly MessageBusInterface $bus,
-        private readonly ClockInterface $reloj,
         private readonly LoggerInterface $logger,
     ) {}
 
@@ -132,21 +130,18 @@ final class GestionCompraWeb
                 $this->em->find(Salida::class, $id, LockMode::PESSIMISTIC_WRITE);
             }
 
-            $ahora = $this->reloj->now();
             $pospuestos = [];
             $afectadas = [];
             $motivoNo = null;
             foreach ($boletos as $b) {
                 $this->em->refresh($b);
-                try {
-                    ReglasBoletos::exigirOperable($b, $ahora, "posponer el viaje");
-                } catch (VentaRechazada $e) {
-                    $motivoNo ??= $e;
+                $rechazo = $this->flujo->rechazo($b, TransicionBoleto::POSPONER);
+                if ($rechazo !== null) {
+                    $motivoNo ??= $rechazo;
 
                     continue;
                 }
-                $this->bitacora->anotar($b, ["motivo" => $motivo]);
-                $b->setEstado(EstadoBoletoAsiento::POSPUESTO);
+                $this->flujo->aplicar($b, TransicionBoleto::POSPONER, ["motivo" => $motivo]);
                 $pospuestos[] = (int) $b->getId();
                 $afectadas[(int) $b->getSalida()->getId()] = true;
             }

@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace App\Salida\Abordaje;
 
-use App\Bitacora\RegistradorBitacora;
 use App\Encomienda\MovimientosEncomienda;
 use App\Entity\BoletoAsiento;
 use App\Entity\BoletoVenta;
 use App\Entity\Cliente;
 use App\Entity\Enum\CanalVenta;
 use App\Entity\Enum\EstadoBoletoAsiento;
-use App\Entity\Enum\EstadoBoletoVenta;
 use App\Entity\Enum\EstadoSalida;
+use App\Entity\Enum\TransicionBoleto;
 use App\Entity\Parada;
 use App\Entity\Salida;
 use App\Entity\Usuario;
 use App\Salida\SalidaRechazada;
 use App\Salida\VistaSalida;
+use App\Venta\Boleto\Flujo\FlujoBoleto;
 use App\Venta\Disponibilidad;
 use App\Venta\Ocupacion;
 use App\Venta\PublicadorOcupacion;
@@ -31,7 +31,8 @@ use Psr\Clock\ClockInterface;
  * Abordaje de una salida (ADR-032): ponerla a abordar, chequear sus boletos
  * (presentes → chequeado/tránsito; no presentados → cancelado), iniciarla y
  * finalizarla al llegar.
- * Reglas en `ReglasAbordaje`. Cada operación bloquea la salida (como la
+ * Reglas en `ReglasAbordaje`; cada boleto cambia de estado por su
+ * transición (`FlujoBoleto`, ADR-037). Cada operación bloquea la salida (como la
  * venta) para no chocar con una venta o reasignación en curso, y avisa el
  * cambio de ocupación por Mercure: un cancelado libera su asiento.
  */
@@ -41,7 +42,7 @@ final class Abordaje
         private readonly EntityManagerInterface $em,
         private readonly Transaccion $transaccion,
         private readonly PublicadorOcupacion $ocupacion,
-        private readonly RegistradorBitacora $bitacora,
+        private readonly FlujoBoleto $flujo,
         private readonly ClockInterface $reloj,
         private readonly Disponibilidad $disponibilidad,
         private readonly MovimientosEncomienda $encomiendas,
@@ -131,7 +132,7 @@ final class Abordaje
             "topico" => PublicadorOcupacion::topico($salidaId),
             "chequeable" => $motivo === null,
             "motivo" => $motivo,
-            "boletos" => array_map(fn(BoletoAsiento $b) => $this->vistaBoleto($b, $estacion, $motivo === null), $boletos),
+            "boletos" => array_map(fn(BoletoAsiento $b) => $this->vistaBoleto($b, $estacion), $boletos),
         ];
     }
 
@@ -176,15 +177,16 @@ final class Abordaje
             if (count($boletos) !== count($si) + count($no)) {
                 throw new SalidaRechazada("Algún boleto no existe o no es de esta salida.", "boleto_inexistente", 404);
             }
-            $alChequear = ReglasAbordaje::estadoAlChequear($salida->getEstado());
+            $alChequear = TransicionBoleto::alChequear($salida->getEstado());
             foreach ($boletos as $b) {
                 $this->em->refresh($b);
-                $this->exigirChequeable($b, $estacion);
+                // El NO también exige un boleto que se pueda chequear (emitido, venta confirmada).
+                $this->flujo->exigir($b, $alChequear);
+                $this->exigirEstacion($b, $estacion);
                 if (in_array($b->getId(), $si, true)) {
-                    $b->setEstado($alChequear);
+                    $this->flujo->aplicar($b, $alChequear);
                 } else {
-                    $this->bitacora->anotar($b, ["motivo" => "No se presentó a abordar."]);
-                    $b->setEstado(EstadoBoletoAsiento::CANCELADO);
+                    $this->flujo->aplicar($b, TransicionBoleto::NO_PRESENTARSE, ["motivo" => "No se presentó a abordar."]);
                 }
             }
 
@@ -201,8 +203,7 @@ final class Abordaje
      * Cancela un boleto desde el listado de boletos (el pasajero no viaja):
      * libera el asiento y conserva la venta y su factura, como el chequeo NO.
      * A diferencia del chequeo, no depende de la estación ni de la hora
-     * (`ReglasAbordaje::exigirCancelable`); lo exige el permiso
-     * `boleto.cancelar`.
+     * (`TransicionBoleto::CANCELAR`); lo exige el permiso `boleto.cancelar`.
      *
      * @param callable(BoletoVenta): bool $puedeOperar si el usuario puede operar sobre esa venta
      *
@@ -218,17 +219,12 @@ final class Abordaje
         $motivo = mb_substr(trim($motivo), 0, 200);
 
         $this->transaccion->ejecutar(function () use ($boleto, $salidaId, $motivo, $puedeOperar) {
-            $salida = $this->bloquear($salidaId);
+            $this->bloquear($salidaId);
             $this->em->refresh($boleto);
             if (!$puedeOperar($boleto->getBoletoVenta())) {
                 throw new SalidaRechazada("No puede operar sobre boletos de esta venta.", "permiso", 403);
             }
-            if ($boleto->getBoletoVenta()->getEstado() !== EstadoBoletoVenta::CONFIRMADA) {
-                throw new SalidaRechazada("La venta todavía se está procesando.", "venta_en_proceso", 409);
-            }
-            ReglasAbordaje::exigirCancelable($boleto->getEstado(), $salida->getEstado());
-            $this->bitacora->anotar($boleto, ["motivo" => $motivo === "" ? "Cancelado desde el listado de boletos." : $motivo]);
-            $boleto->setEstado(EstadoBoletoAsiento::CANCELADO);
+            $this->flujo->aplicar($boleto, TransicionBoleto::CANCELAR, ["motivo" => $motivo === "" ? "Cancelado desde el listado de boletos." : $motivo]);
         });
         $this->ocupacion->cambio($salidaId);
 
@@ -239,8 +235,7 @@ final class Abordaje
      * Revierte un cancelado a emitido (el pasajero sí viaja; el "Revertir"
      * del legado): vuelve a ocupar su asiento, así que antes comprueba que
      * nadie lo haya vendido o apartado en un tramo que se solape. Reglas en
-     * `ReglasAbordaje::exigirRevertible`; lo exige el permiso
-     * `boleto.cancelar`.
+     * `TransicionBoleto::REVERTIR`; lo exige el permiso `boleto.cancelar`.
      *
      * @param callable(BoletoVenta): bool $puedeOperar si el usuario puede operar sobre esa venta
      *
@@ -261,15 +256,16 @@ final class Abordaje
             if (!$puedeOperar($venta)) {
                 throw new SalidaRechazada("No puede operar sobre boletos de esta venta.", "permiso", 403);
             }
-            ReglasAbordaje::exigirRevertible($boleto->getEstado(), $salida->getEstado(), $venta->isCortesia(), $venta->getAgencia() !== null);
+            $this->flujo->exigir($boleto, TransicionBoleto::REVERTIR);
 
+            // Lo que el workflow no sabe: vuelve a ocupar su asiento.
             $asiento = $boleto->getAsiento();
             $estados = Ocupacion::estados(new Tramo((int) $boleto->getOrdenSube(), (int) $boleto->getOrdenBaja()), $this->disponibilidad->ocupantes($salida));
             if (isset($estados[(int) $asiento->getId()])) {
                 $ocupado = $estados[(int) $asiento->getId()]["estado"] === Ocupacion::VENDIDO ? "se volvió a vender" : "está apartado en la página web";
                 throw new SalidaRechazada(sprintf("El asiento %d %s en ese tramo: el boleto no se puede revertir.", $asiento->getNumero(), $ocupado), "asiento_ocupado", 409);
             }
-            $boleto->setEstado(EstadoBoletoAsiento::EMITIDO);
+            $this->flujo->aplicar($boleto, TransicionBoleto::REVERTIR);
         });
         $this->ocupacion->cambio($salidaId);
 
@@ -300,15 +296,13 @@ final class Abordaje
                 "estado" => [EstadoBoletoAsiento::EMITIDO->value, EstadoBoletoAsiento::CHEQUEADO->value],
             ]);
             foreach ($boletos as $b) {
-                $nuevo = ReglasAbordaje::estadoAlIniciar($b->getEstado(), (int) $b->getOrdenSube());
-                if ($nuevo === EstadoBoletoAsiento::CANCELADO) {
-                    $this->bitacora->anotar($b, ["motivo" => "Inició la salida y el boleto no se chequeó."]);
+                $transicion = ReglasAbordaje::transicionAlIniciar($b->getEstado(), (int) $b->getOrdenSube());
+                if ($transicion === TransicionBoleto::NO_PRESENTARSE) {
+                    $this->flujo->aplicar($b, $transicion, ["motivo" => "Inició la salida y el boleto no se chequeó."]);
                     $conteo["cancelados"]++;
-                } elseif ($nuevo === EstadoBoletoAsiento::TRANSITO) {
+                } elseif ($transicion === TransicionBoleto::PARTIR) {
+                    $this->flujo->aplicar($b, $transicion);
                     $conteo["enTransito"]++;
-                }
-                if ($nuevo !== null) {
-                    $b->setEstado($nuevo);
                 }
             }
 
@@ -348,16 +342,13 @@ final class Abordaje
             foreach ($boletos as $b) {
                 $pasos = ReglasAbordaje::pasosAlFinalizar($b->getEstado());
                 foreach ($pasos as $paso) {
-                    if ($paso === EstadoBoletoAsiento::CANCELADO) {
-                        $this->bitacora->anotar($b, ["motivo" => "Finalizó la salida y el boleto no se chequeó."]);
-                    }
-                    $b->setEstado($paso);
+                    $this->flujo->aplicar($b, $paso, $paso === TransicionBoleto::NO_PRESENTARSE ? ["motivo" => "Finalizó la salida y el boleto no se chequeó."] : []);
                     // Un flush por paso: la bitácora anota cada transición.
                     if (count($pasos) > 1) {
                         $this->em->flush();
                     }
                 }
-                match (end($pasos)) {
+                match ($pasos === [] ? null : end($pasos)->hacia()) {
                     EstadoBoletoAsiento::FINALIZADO => $conteo["finalizados"]++,
                     EstadoBoletoAsiento::CANCELADO => $conteo["cancelados"]++,
                     default => null,
@@ -371,19 +362,17 @@ final class Abordaje
         return ["salida" => $this->vistaSalida($this->salida($salidaId))] + $conteo;
     }
 
-    /** @throws SalidaRechazada */
-    private function exigirChequeable(BoletoAsiento $b, ?int $estacion): void
+    /**
+     * Quién chequea (el resto lo dice el flujo): la estación donde sube el
+     * pasajero, o un usuario de oficina.
+     *
+     * @throws SalidaRechazada
+     */
+    private function exigirEstacion(BoletoAsiento $b, ?int $estacion): void
     {
-        $asiento = $b->getAsiento()->getNumero();
-        if ($b->getEstado() !== EstadoBoletoAsiento::EMITIDO) {
-            throw new SalidaRechazada(sprintf("El boleto %d (asiento %d) está %s: solo se chequea un boleto emitido.", $b->getId(), $asiento, $b->getEstado()->value), "boleto_no_emitido", 409);
-        }
-        if ($b->getBoletoVenta()->getEstado() !== EstadoBoletoVenta::CONFIRMADA) {
-            throw new SalidaRechazada(sprintf("La venta del boleto %d todavía se está procesando.", $b->getId()), "venta_en_proceso", 409);
-        }
         $sube = $b->getTrayecto()->getOrigen();
         if (!ReglasAbordaje::puedeChequearEn($estacion, (int) $sube?->getId())) {
-            throw new SalidaRechazada(sprintf("El boleto %d (asiento %d) sube en %s: lo chequea esa estación.", $b->getId(), $asiento, $sube?->getNombre() ?? "otra parada"), "estacion_no_sube", 403);
+            throw new SalidaRechazada(sprintf("El boleto %d (asiento %d) sube en %s: lo chequea esa estación.", $b->getId(), $b->getAsiento()->getNumero(), $sube?->getNombre() ?? "otra parada"), "estacion_no_sube", 403);
         }
     }
 
@@ -430,13 +419,12 @@ final class Abordaje
     }
 
     /** @return array<string, mixed> */
-    private function vistaBoleto(BoletoAsiento $b, ?int $estacion, bool $salidaChequeable): array
+    private function vistaBoleto(BoletoAsiento $b, ?int $estacion): array
     {
         $venta = $b->getBoletoVenta();
         $cliente = $b->getCliente() ?? $venta->getCliente();
         $factura = $venta->getFactura();
         $sube = $b->getTrayecto()->getOrigen();
-        $emitido = $b->getEstado() === EstadoBoletoAsiento::EMITIDO;
 
         return [
             "id" => (int) $b->getId(),
@@ -455,7 +443,7 @@ final class Abordaje
             "baja" => $b->getTrayecto()->getDestino()?->getNombre(),
             "ordenSube" => $b->getOrdenSube(),
             "cliente" => $cliente instanceof Cliente ? mb_strtoupper($cliente->getNombreCompleto()) : null,
-            "chequeable" => $salidaChequeable && $emitido && $venta->getEstado() === EstadoBoletoVenta::CONFIRMADA
+            "chequeable" => $this->flujo->puede($b, TransicionBoleto::alChequear($b->getSalida()->getEstado()))
                 && ReglasAbordaje::puedeChequearEn($estacion, (int) $sube?->getId()),
         ];
     }

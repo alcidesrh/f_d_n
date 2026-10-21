@@ -13,8 +13,10 @@ use App\Entity\Enum\EstadoSalida;
 use App\Entity\Enum\OperacionBoleto;
 use App\Entity\Enum\OperacionEncomienda;
 use App\Entity\Enum\OperacionSalida;
+use App\Entity\Enum\TransicionBoleto;
 use App\Entity\Salida;
 use App\Entity\Usuario;
+use App\Venta\Boleto\Flujo\FlujoBoleto;
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Types\Types;
@@ -24,6 +26,8 @@ use Doctrine\ORM\Event\PostRemoveEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Events;
 use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
+use Symfony\Component\Workflow\Event\TransitionEvent;
 use Symfony\Contracts\Service\ResetInterface;
 
 /**
@@ -34,7 +38,8 @@ use Symfony\Contracts\Service\ResetInterface;
  * Cada fila se escribe con DBAL dentro de la misma transacción del flush: si
  * la operación se revierte, su bitácora también. Los datos que solo conoce el
  * servicio que opera (el motivo de una anulación) se pasan con `anotar()`
- * antes del flush.
+ * antes del flush. Un boleto cambia de estado por una transición del
+ * workflow (ADR-037): su nombre y el contexto que trae van al detalle solos.
  *
  * No anota lo que viene de la migración del legado (registro con
  * `legacyId` y sin usuario en sesión): son miles de filas sin autor.
@@ -65,6 +70,17 @@ final class RegistradorBitacora implements ResetInterface
     public function anotar(object $entidad, array $detalle): void
     {
         $this->notas[$entidad] = [...($this->notas[$entidad] ?? []), ...$detalle];
+    }
+
+    /**
+     * La transición del boleto (`transicion`: cancelar desde el listado y no
+     * presentarse dejan el mismo estado) y lo que el servicio pasó en el
+     * contexto (`FlujoBoleto::BITACORA`).
+     */
+    #[AsEventListener(event: "workflow." . TransicionBoleto::WORKFLOW . ".transition")]
+    public function alTransicionar(TransitionEvent $event): void
+    {
+        $this->anotar($event->getSubject(), ["transicion" => $event->getTransition()?->getName(), ...($event->getContext()[FlujoBoleto::BITACORA] ?? [])]);
     }
 
     public function postPersist(PostPersistEventArgs $args): void
@@ -140,7 +156,7 @@ final class RegistradorBitacora implements ResetInterface
                 EstadoBoletoAsiento::CANCELADO => OperacionBoleto::CANCELADO,
                 EstadoBoletoAsiento::FINALIZADO => OperacionBoleto::FINALIZADO,
                 EstadoBoletoAsiento::POSPUESTO => OperacionBoleto::POSPUESTO,
-                // Solo se vuelve a emitido revirtiendo un cancelado.
+                // Solo se vuelve a emitido revirtiendo un cancelado (`TransicionBoleto::REVERTIR`).
                 EstadoBoletoAsiento::EMITIDO => OperacionBoleto::REVERTIDO,
                 default => null,
             };

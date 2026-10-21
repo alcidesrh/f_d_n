@@ -128,15 +128,15 @@ export interface EstadoAccion {
   motivo: string | null
 }
 
-const SALIDA_CANCELABLE = ['programada', 'abordando', 'iniciada']
-const SALIDA_CHEQUEABLE = ['abordando', 'iniciada']
-
 /**
- * Qué acciones del panel admite el boleto elegido. Son las reglas del
- * backend que se pueden ver desde la fila; el backend vuelve a validarlas
- * (estación, ventana de chequeo, venta completa, etc.).
+ * Qué acciones del panel admite el boleto elegido. Las que cambian su
+ * estado las decide el backend (`b.acciones`, el workflow del boleto,
+ * ADR-037); aquí solo se suman el permiso de quien mira y las que no son
+ * transiciones (correo, factura). Al operar, el backend vuelve a validar
+ * lo que depende de quién y de la base (estación, asiento libre, venta
+ * completa).
  */
-export function disponibilidad(b: BoletoFila | null, puede: PuedeBoleto, ahora: Date): Record<AccionBoleto, EstadoAccion> {
+export function disponibilidad(b: BoletoFila | null, puede: PuedeBoleto): Record<AccionBoleto, EstadoAccion> {
   const sin = (motivo: string | null, visible = true): EstadoAccion => ({ visible, habilitada: motivo === null, motivo })
   const con = (permiso: boolean, motivo: string | null) => sin(permiso ? motivo : 'Sin permiso', permiso)
 
@@ -156,34 +156,19 @@ export function disponibilidad(b: BoletoFila | null, puede: PuedeBoleto, ahora: 
     }
   }
 
-  const estado = etiquetaEstado(b.estado).etiqueta.toLowerCase()
   const enProceso = b.ventaConfirmada ? null : 'La venta todavía se está procesando'
-  const yaSalio = new Date(b.fecha).getTime() <= ahora.getTime() ? 'La salida ya pasó su hora' : null
-  const soloEmitido = b.estado === 'emitido' ? null : `El boleto está ${estado}: solo se opera un boleto emitido`
-  // Un pospuesto no ocupa asiento: se anula o se reasigna (así se reanuda) aunque su salida ya haya pasado.
-  const operable = b.estado === 'pospuesto' ? null : (soloEmitido ?? yaSalio)
-  const sinValor = b.estado === 'anulado' || b.estado === 'reasignado' ? `El boleto está ${estado}` : null
+  const sinValor = b.estado === 'anulado' || b.estado === 'reasignado' ? `El boleto está ${etiquetaEstado(b.estado).etiqueta.toLowerCase()}` : null
 
   return {
     consultar: sin(null),
     bitacora: sin(null),
-    cancelar: con(
-      puede.cancelar,
-      enProceso ??
-        (['emitido', 'chequeado'].includes(b.estado) ? null : `El boleto está ${estado}: solo se cancela un boleto emitido o chequeado`) ??
-        (SALIDA_CANCELABLE.includes(b.salidaEstado) ? null : `La salida está ${b.salidaEstado}`),
-    ),
-    // El backend comprueba además que el asiento siga libre.
-    revertir: con(
-      puede.cancelar,
-      (b.estado === 'cancelado' ? null : `El boleto está ${estado}: solo se revierte un boleto cancelado`) ??
-        (b.documento.tipo === 'cortesia' ? 'Las cortesías canceladas no se revierten' : null) ??
-        (b.canal === 'agencia' ? 'Los boletos de agencia cancelados no se revierten' : null) ??
-        (SALIDA_CANCELABLE.includes(b.salidaEstado) ? null : `La salida está ${b.salidaEstado}`),
-    ),
-    anular: con(puede.anular, enProceso ?? operable),
-    reasignar: con(puede.reasignar, enProceso ?? operable),
-    chequear: con(puede.chequear, enProceso ?? soloEmitido ?? (SALIDA_CHEQUEABLE.includes(b.salidaEstado) ? null : 'Se chequea con la salida abordando o iniciada')),
+    cancelar: con(puede.cancelar, b.acciones.cancelar),
+    // Revertir es parte de cancelar (mismo permiso); el backend comprueba además que el asiento siga libre.
+    revertir: con(puede.cancelar, b.acciones.revertir),
+    anular: con(puede.anular, b.acciones.anular),
+    reasignar: con(puede.reasignar, b.acciones.reasignar),
+    // La estación donde sube la comprueba el backend al chequear.
+    chequear: con(puede.chequear, b.acciones.chequear),
     correo: sin(enProceso ?? sinValor),
     factura: sin(enProceso ?? sinValor),
     chat: sin(null),

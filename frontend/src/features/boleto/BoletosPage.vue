@@ -377,7 +377,7 @@ watch(consulta, cargar);
 // —— Selección y acciones ——
 const seleccion = computed(() => new Set(elegido.value ? [String(elegido.value.id)] : []));
 const claseFila = (r: unknown) => ({ "fila-liberada": ["anulado", "reasignado", "cancelado", "pospuesto"].includes((r as BoletoFila).estado) });
-const estadoAcciones = computed(() => disponibilidad(elegido.value, opciones.value?.puede ?? { cancelar: false, anular: false, reasignar: false, chequear: false }, new Date()));
+const estadoAcciones = computed(() => disponibilidad(elegido.value, opciones.value?.puede ?? { cancelar: false, anular: false, reasignar: false, chequear: false }));
 
 function elegir(b: BoletoFila) {
   elegido.value = elegido.value?.id === b.id ? null : b;

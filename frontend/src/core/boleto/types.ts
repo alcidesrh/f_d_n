@@ -44,7 +44,16 @@ export interface BoletoFila {
   creada: string | null
   usuario: string | null
   estacion: string | null
+  /**
+   * Lo que el boleto admite ahora según el flujo del backend
+   * (`FlujoBoleto::acciones`, ADR-037): null = se puede; si no, el motivo.
+   * El permiso de quien mira va aparte (`PuedeBoleto`).
+   */
+  acciones: Record<AccionTransicion, string | null>
 }
+
+/** Las acciones del panel que cambian el estado del boleto (transiciones del workflow `boleto_asiento`). */
+export type AccionTransicion = 'chequear' | 'cancelar' | 'revertir' | 'anular' | 'reasignar'
 
 export interface PaginaBoletos {
   items: BoletoFila[]

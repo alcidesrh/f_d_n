@@ -152,12 +152,12 @@ class BoletoAsiento extends Base
     }
 
     /**
-     * Transiciona el boleto al nuevo estado, validando la máquina de estados:
-     * emitido -> chequeado -> transito -> finalizado (lineal), emitido ->
-     * transito (chequeado con la salida ya iniciada), emitido -> anulado /
-     * reasignado (solo desde emitido) y emitido/chequeado -> cancelado.
+     * Lo llama el workflow `boleto_asiento` (marking store) al aplicar una
+     * transición: el estado se cambia con `App\Venta\Boleto\Flujo\FlujoBoleto`,
+     * que valida además las reglas de cada una (ADR-037). Aquí queda la
+     * última barrera: solo un estado al que llega alguna `TransicionBoleto`.
      *
-     * @throws \DomainException si la transición no está permitida
+     * @throws \DomainException si ninguna transición lleva de un estado al otro
      */
     public function setEstado(EstadoBoletoAsiento $estado): static
     {

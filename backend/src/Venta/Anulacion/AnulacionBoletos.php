@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace App\Venta\Anulacion;
 
-use App\Bitacora\RegistradorBitacora;
 use App\Encomienda\MovimientosEncomienda;
 use App\Entity\BoletoAsiento;
 use App\Entity\BoletoVenta;
 use App\Entity\Enum\EstadoBoletoAsiento;
-use App\Entity\Enum\EstadoBoletoVenta;
 use App\Entity\Enum\EstadoFacturacion;
+use App\Entity\Enum\TransicionBoleto;
 use App\Entity\Salida;
 use App\Entity\Usuario;
 use App\Venta\Agencia\SaldoAgencia;
+use App\Venta\Boleto\Flujo\FlujoBoleto;
 use App\Venta\Excepcion\VentaRechazada;
 use App\Venta\Facturacion\CertificacionFallida;
 use App\Venta\Facturacion\Facturador;
@@ -22,7 +22,6 @@ use App\Venta\ReglasBoletos;
 use App\Venta\Transaccion;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
-use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -48,9 +47,8 @@ final class AnulacionBoletos
         private readonly Facturador $facturador,
         private readonly SaldoAgencia $saldo,
         private readonly PublicadorOcupacion $publicador,
-        private readonly RegistradorBitacora $bitacora,
+        private readonly FlujoBoleto $flujo,
         private readonly MovimientosEncomienda $encomiendas,
-        private readonly ClockInterface $reloj,
         private readonly LoggerInterface $logger,
     ) {}
 
@@ -116,7 +114,6 @@ final class AnulacionBoletos
             throw new VentaRechazada("Algún boleto no existe.", "no_encontrado", 404);
         }
 
-        $ahora = $this->reloj->now();
         /** @var array<int, list<BoletoAsiento>> $grupos */
         $grupos = [];
         foreach ($boletos as $b) {
@@ -124,10 +121,7 @@ final class AnulacionBoletos
             if (!$puedeOperar($venta)) {
                 throw new VentaRechazada("No puede anular boletos de esta venta.", "permiso", 403);
             }
-            if ($venta->getEstado() !== EstadoBoletoVenta::CONFIRMADA) {
-                throw new VentaRechazada("La venta todavía se está procesando.", "venta_en_proceso", 409);
-            }
-            ReglasBoletos::exigirOperable($b, $ahora, "anular el boleto");
+            $this->flujo->exigir($b, TransicionBoleto::ANULAR);
             $grupos[(int) $venta->getId()][] = $b;
         }
 
@@ -186,13 +180,10 @@ final class AnulacionBoletos
             $this->em->find(Salida::class, $id, LockMode::PESSIMISTIC_WRITE);
         }
 
-        $ahora = $this->reloj->now();
         $devuelto = null;
         foreach ($boletos as $b) {
             $this->em->refresh($b);
-            ReglasBoletos::exigirOperable($b, $ahora, "anular el boleto");
-            $this->bitacora->anotar($b, ["motivo" => $motivo]);
-            $b->setEstado(EstadoBoletoAsiento::ANULADO);
+            $this->flujo->aplicar($b, TransicionBoleto::ANULAR, ["motivo" => $motivo]);
             $precio = $b->getPrecio();
             if ($precio !== null) {
                 $devuelto = $devuelto === null ? $precio : $devuelto->add($precio);

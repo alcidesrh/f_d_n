@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace App\Venta\Reasignacion;
 
-use App\Bitacora\RegistradorBitacora;
 use App\Entity\BoletoAsiento;
 use App\Entity\BoletoVenta;
 use App\Entity\Enum\CanalVenta;
-use App\Entity\Enum\EstadoBoletoAsiento;
-use App\Entity\Enum\EstadoBoletoVenta;
+use App\Entity\Enum\TransicionBoleto;
 use App\Entity\PagoWeb;
 use App\Entity\Salida;
+use App\Venta\Boleto\Flujo\FlujoBoleto;
 use App\Venta\EnLinea\Recargo;
 use App\Venta\Excepcion\VentaRechazada;
 use App\Venta\PublicadorOcupacion;
@@ -39,7 +38,7 @@ final class ReasignacionBoletos
         private readonly Transaccion $transaccion,
         private readonly ReglasVenta $reglas,
         private readonly PublicadorOcupacion $publicador,
-        private readonly RegistradorBitacora $bitacora,
+        private readonly FlujoBoleto $flujo,
         private readonly ClockInterface $reloj,
     ) {}
 
@@ -89,9 +88,6 @@ final class ReasignacionBoletos
         if (!$puedeOperar($venta)) {
             throw new VentaRechazada("No puede reasignar boletos de esta venta.", "permiso", 403);
         }
-        if ($venta->getEstado() !== EstadoBoletoVenta::CONFIRMADA) {
-            throw new VentaRechazada("La venta todavía se está procesando.", "venta_en_proceso", 409);
-        }
 
         $salidaIds = array_map(static fn(BoletoAsiento $b) => (int) $b->getSalida()->getId(), $viejos);
         $salidaIds[] = $s->salidaId;
@@ -106,7 +102,7 @@ final class ReasignacionBoletos
         $ahora = $this->reloj->now();
         foreach ($viejos as $b) {
             $this->em->refresh($b);
-            ReglasBoletos::exigirOperable($b, $ahora, "reasignar el boleto");
+            $this->flujo->exigir($b, TransicionBoleto::REASIGNAR);
             ReglasBoletos::exigirEmpresaCompatible($b->getSalida(), $destino);
         }
         $this->reglas->exigirVendibleEnTaquilla($destino);
@@ -127,8 +123,7 @@ final class ReasignacionBoletos
 
         // Los asientos actuales se liberan primero: se puede pasar a uno que hoy ocupa otro boleto de la selección.
         foreach ($viejos as $i => $b) {
-            $this->bitacora->anotar($b, ["haciaSalida" => $destino->getId(), "haciaAsiento" => $asientos[$i]->getNumero()]);
-            $b->setEstado(EstadoBoletoAsiento::REASIGNADO);
+            $this->flujo->aplicar($b, TransicionBoleto::REASIGNAR, ["haciaSalida" => $destino->getId(), "haciaAsiento" => $asientos[$i]->getNumero()]);
         }
         $this->em->flush();
 

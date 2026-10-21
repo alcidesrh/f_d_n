@@ -6,6 +6,7 @@ namespace App\Tests\Salida;
 
 use App\Entity\Enum\EstadoBoletoAsiento;
 use App\Entity\Enum\EstadoSalida;
+use App\Entity\Enum\TransicionBoleto;
 use App\Salida\Abordaje\ReglasAbordaje;
 use App\Salida\SalidaRechazada;
 use PHPUnit\Framework\TestCase;
@@ -97,8 +98,8 @@ final class AbordajeTest extends TestCase
 
     public function testChequeadoConLaSalidaIniciadaQuedaEnTransito(): void
     {
-        $this->assertSame(EstadoBoletoAsiento::CHEQUEADO, ReglasAbordaje::estadoAlChequear(EstadoSalida::ABORDANDO));
-        $this->assertSame(EstadoBoletoAsiento::TRANSITO, ReglasAbordaje::estadoAlChequear(EstadoSalida::INICIADA));
+        $this->assertSame(EstadoBoletoAsiento::CHEQUEADO, TransicionBoleto::alChequear(EstadoSalida::ABORDANDO)->hacia());
+        $this->assertSame(EstadoBoletoAsiento::TRANSITO, TransicionBoleto::alChequear(EstadoSalida::INICIADA)->hacia());
         $this->assertTrue(EstadoBoletoAsiento::EMITIDO->puedeTransicionarA(EstadoBoletoAsiento::TRANSITO));
         $this->assertTrue(EstadoBoletoAsiento::EMITIDO->puedeTransicionarA(EstadoBoletoAsiento::CANCELADO));
         // Chequeado que al final no viaja: se cancela desde el listado de boletos.
@@ -135,12 +136,12 @@ final class AbordajeTest extends TestCase
 
     public function testAlIniciarSeCancelanLosNoChequeadosDelOrigen(): void
     {
-        $this->assertSame(EstadoBoletoAsiento::TRANSITO, ReglasAbordaje::estadoAlIniciar(EstadoBoletoAsiento::CHEQUEADO, 0));
-        $this->assertSame(EstadoBoletoAsiento::TRANSITO, ReglasAbordaje::estadoAlIniciar(EstadoBoletoAsiento::CHEQUEADO, 2));
-        $this->assertSame(EstadoBoletoAsiento::CANCELADO, ReglasAbordaje::estadoAlIniciar(EstadoBoletoAsiento::EMITIDO, 0));
+        $this->assertSame(TransicionBoleto::PARTIR, ReglasAbordaje::transicionAlIniciar(EstadoBoletoAsiento::CHEQUEADO, 0));
+        $this->assertSame(TransicionBoleto::PARTIR, ReglasAbordaje::transicionAlIniciar(EstadoBoletoAsiento::CHEQUEADO, 2));
+        $this->assertSame(TransicionBoleto::NO_PRESENTARSE, ReglasAbordaje::transicionAlIniciar(EstadoBoletoAsiento::EMITIDO, 0));
         // Sube más adelante: lo chequea su parada.
-        $this->assertNull(ReglasAbordaje::estadoAlIniciar(EstadoBoletoAsiento::EMITIDO, 2));
-        $this->assertNull(ReglasAbordaje::estadoAlIniciar(EstadoBoletoAsiento::ANULADO, 0));
+        $this->assertNull(ReglasAbordaje::transicionAlIniciar(EstadoBoletoAsiento::EMITIDO, 2));
+        $this->assertNull(ReglasAbordaje::transicionAlIniciar(EstadoBoletoAsiento::ANULADO, 0));
     }
 
     public function testSoloElDestinoOOficinaFinalizanUnaIniciada(): void
@@ -156,17 +157,17 @@ final class AbordajeTest extends TestCase
 
     public function testAlFinalizarSeCierranLosBoletos(): void
     {
-        $this->assertSame([EstadoBoletoAsiento::FINALIZADO], ReglasAbordaje::pasosAlFinalizar(EstadoBoletoAsiento::TRANSITO));
-        $this->assertSame([EstadoBoletoAsiento::TRANSITO, EstadoBoletoAsiento::FINALIZADO], ReglasAbordaje::pasosAlFinalizar(EstadoBoletoAsiento::CHEQUEADO));
-        $this->assertSame([EstadoBoletoAsiento::CANCELADO], ReglasAbordaje::pasosAlFinalizar(EstadoBoletoAsiento::EMITIDO));
+        $this->assertSame([TransicionBoleto::LLEGAR], ReglasAbordaje::pasosAlFinalizar(EstadoBoletoAsiento::TRANSITO));
+        $this->assertSame([TransicionBoleto::PARTIR, TransicionBoleto::LLEGAR], ReglasAbordaje::pasosAlFinalizar(EstadoBoletoAsiento::CHEQUEADO));
+        $this->assertSame([TransicionBoleto::NO_PRESENTARSE], ReglasAbordaje::pasosAlFinalizar(EstadoBoletoAsiento::EMITIDO));
         $this->assertSame([], ReglasAbordaje::pasosAlFinalizar(EstadoBoletoAsiento::ANULADO));
         $this->assertSame([], ReglasAbordaje::pasosAlFinalizar(EstadoBoletoAsiento::CANCELADO));
-        // Cada paso es una transición válida.
+        // Cada paso sale del estado en que dejó el anterior.
         foreach (EstadoBoletoAsiento::cases() as $estado) {
             $actual = $estado;
             foreach (ReglasAbordaje::pasosAlFinalizar($estado) as $paso) {
-                $this->assertTrue($actual->puedeTransicionarA($paso), "{$actual->value} → {$paso->value}");
-                $actual = $paso;
+                $this->assertContains($actual, $paso->desde(), "{$actual->value} → {$paso->value}");
+                $actual = $paso->hacia();
             }
         }
     }

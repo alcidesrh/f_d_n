@@ -16,34 +16,40 @@ enum EstadoBoletoAsiento: string
     case POSPUESTO = "pospuesto";
 
     /**
+     * Los estados a los que llega alguna transición del flujo
+     * (`TransicionBoleto`, ADR-037).
+     *
      * @return list<self>
      */
     public function transicionesPermitidas(): array
     {
-        return match ($this) {
-            self::EMITIDO => [
-                self::CHEQUEADO,
-                // Chequeado con la salida ya iniciada (sube en una parada intermedia).
-                self::TRANSITO,
-                self::ANULADO,
-                self::REASIGNADO,
-                self::CANCELADO,
-                self::POSPUESTO,
-            ],
-            // Chequeado que al final no viajó: se cancela desde el listado de boletos.
-            self::CHEQUEADO => [self::TRANSITO, self::CANCELADO],
-            self::TRANSITO => [self::FINALIZADO],
-            // Revertir la cancelación (el pasajero sí viaja), si el asiento sigue libre.
-            self::CANCELADO => [self::EMITIDO],
-            // Se reanuda reasignándolo a otra salida, o se anula.
-            self::POSPUESTO => [self::REASIGNADO, self::ANULADO],
-            self::FINALIZADO, self::ANULADO, self::REASIGNADO => [],
-        };
+        $hacia = [];
+        foreach (TransicionBoleto::cases() as $t) {
+            if (in_array($this, $t->desde(), true) && !in_array($t->hacia(), $hacia, true)) {
+                $hacia[] = $t->hacia();
+            }
+        }
+
+        return $hacia;
     }
 
     public function puedeTransicionarA(self $siguiente): bool
     {
         return in_array($siguiente, $this->transicionesPermitidas(), true);
+    }
+
+    public function etiqueta(): string
+    {
+        return match ($this) {
+            self::EMITIDO => "Emitido",
+            self::CHEQUEADO => "Chequeado",
+            self::TRANSITO => "En tránsito",
+            self::FINALIZADO => "Finalizado",
+            self::ANULADO => "Anulado",
+            self::REASIGNADO => "Reasignado",
+            self::CANCELADO => "Cancelado",
+            self::POSPUESTO => "Pospuesto",
+        };
     }
 
     /**

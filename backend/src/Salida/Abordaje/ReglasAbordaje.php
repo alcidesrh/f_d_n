@@ -6,6 +6,7 @@ namespace App\Salida\Abordaje;
 
 use App\Entity\Enum\EstadoBoletoAsiento;
 use App\Entity\Enum\EstadoSalida;
+use App\Entity\Enum\TransicionBoleto;
 use App\Salida\SalidaRechazada;
 
 /**
@@ -180,40 +181,34 @@ final class ReglasAbordaje
         return $estacionUsuario === null || $estacionUsuario === $sube;
     }
 
-    /** El estado en que queda un boleto chequeado. */
-    public static function estadoAlChequear(EstadoSalida $salida): EstadoBoletoAsiento
-    {
-        return $salida === EstadoSalida::INICIADA ? EstadoBoletoAsiento::TRANSITO : EstadoBoletoAsiento::CHEQUEADO;
-    }
-
     /**
-     * Al iniciar la salida: el chequeado pasa a tránsito; el emitido que subía
-     * en el origen, a cancelado; los demás (suben más adelante, o ya no
-     * ocupan) no cambian.
+     * Al iniciar la salida: el chequeado parte (tránsito); el emitido que
+     * subía en el origen no se presentó (cancelado); los demás (suben más
+     * adelante, o ya no ocupan) no cambian.
      */
-    public static function estadoAlIniciar(EstadoBoletoAsiento $estado, int $ordenSube): ?EstadoBoletoAsiento
+    public static function transicionAlIniciar(EstadoBoletoAsiento $estado, int $ordenSube): ?TransicionBoleto
     {
         return match (true) {
-            $estado === EstadoBoletoAsiento::CHEQUEADO => EstadoBoletoAsiento::TRANSITO,
-            $estado === EstadoBoletoAsiento::EMITIDO && $ordenSube === 0 => EstadoBoletoAsiento::CANCELADO,
+            $estado === EstadoBoletoAsiento::CHEQUEADO => TransicionBoleto::PARTIR,
+            $estado === EstadoBoletoAsiento::EMITIDO && $ordenSube === 0 => TransicionBoleto::NO_PRESENTARSE,
             default => null,
         };
     }
 
     /**
-     * Al finalizar la salida, los pasos de cada boleto vivo (uno por
-     * transición, para la bitácora): tránsito → finalizado; chequeado (de
-     * una salida migrada que no pasó por "iniciar") → tránsito → finalizado;
-     * emitido (nadie lo chequeó) → cancelado.
+     * Al finalizar la salida, las transiciones de cada boleto vivo (una por
+     * paso, para la bitácora): tránsito → llega; chequeado (de una salida
+     * migrada que no pasó por "iniciar") → parte y llega; emitido (nadie lo
+     * chequeó) → no se presentó.
      *
-     * @return list<EstadoBoletoAsiento>
+     * @return list<TransicionBoleto>
      */
     public static function pasosAlFinalizar(EstadoBoletoAsiento $estado): array
     {
         return match ($estado) {
-            EstadoBoletoAsiento::TRANSITO => [EstadoBoletoAsiento::FINALIZADO],
-            EstadoBoletoAsiento::CHEQUEADO => [EstadoBoletoAsiento::TRANSITO, EstadoBoletoAsiento::FINALIZADO],
-            EstadoBoletoAsiento::EMITIDO => [EstadoBoletoAsiento::CANCELADO],
+            EstadoBoletoAsiento::TRANSITO => [TransicionBoleto::LLEGAR],
+            EstadoBoletoAsiento::CHEQUEADO => [TransicionBoleto::PARTIR, TransicionBoleto::LLEGAR],
+            EstadoBoletoAsiento::EMITIDO => [TransicionBoleto::NO_PRESENTARSE],
             default => [],
         };
     }

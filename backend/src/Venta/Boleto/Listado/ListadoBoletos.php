@@ -16,6 +16,7 @@ use App\Entity\PagoWeb;
 use App\Entity\TipoPago;
 use App\Entity\Usuario;
 use App\Venta\Boleto\DatosBoleto;
+use App\Venta\Boleto\Flujo\FlujoBoleto;
 use App\Venta\Excepcion\VentaRechazada;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\ORM\EntityManagerInterface;
@@ -54,6 +55,7 @@ final class ListadoBoletos
 
     public function __construct(
         private readonly EntityManagerInterface $em,
+        private readonly FlujoBoleto $flujo,
     ) {}
 
     /**
@@ -355,6 +357,8 @@ final class ListadoBoletos
             "creada" => $venta->getCreada()?->format(DATE_ATOM),
             "usuario" => $usuario === null ? null : (trim((string) $usuario->getFullName()) ?: $usuario->getUsername()),
             "estacion" => $venta->getEstacion()?->getNombre() ?? $venta->getAgencia()?->getNombre(),
+            // Lo que el boleto admite ahora (null) o por qué no, para el panel de acciones (ADR-037).
+            "acciones" => $this->flujo->acciones($b),
         ];
     }
 

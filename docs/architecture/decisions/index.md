@@ -17,7 +17,7 @@
 | [ADR-011](ADR-011-recorrido-lleva-trayecto.md) | Recorrido lleva el trayecto directamente (sin plantilla intermedia) | Aceptada |
 | [ADR-012](ADR-012-trayecto-canonico-por-enclaves.md) | Trayecto canónico por par de enclaves (origen, destino) | Aceptada (en parte reemplazada por ADR-030) |
 | [ADR-013](ADR-013-rename-servicio-a-recorrido.md) | Renombrar la entidad Servicio a Recorrido | Aceptada |
-| [ADR-014](ADR-014-estados-tipados-por-entidad.md) | Estados tipados por entidad (enum) en vez de catálogo Status genérico | Aceptada |
+| [ADR-014](ADR-014-estados-tipados-por-entidad.md) | Estados tipados por entidad (enum) en vez de catálogo Status genérico | Aceptada (para `BoletoAsiento`, en parte reemplazada por ADR-037) |
 | [ADR-015](ADR-015-tenant-filter.md) | TenantFilter: aislamiento por empresa vía Doctrine SQLFilter | Aceptada |
 | [ADR-016](ADR-016-piloto-vuelve-a-bus.md) | La asignación de Piloto vuelve a Bus (no Recorrido); pilotoAux → copiloto | Aceptada |
 | [ADR-017](ADR-017-frontend-por-capas.md) | Frontend por capas (core / shared / features) con imports explícitos | Aceptada |
@@ -40,3 +40,4 @@
 | [ADR-034](ADR-034-depositos-de-agencia.md) | Depósitos de agencia (registrar, acreditar o rechazar) y consulta de saldos | Aceptada |
 | [ADR-035](ADR-035-encomiendas.md) | Encomiendas: envío con artículos, cuatro modalidades, tarifas del legado, embarque con transbordo y bitácora | Aceptada |
 | [ADR-036](ADR-036-metadata-del-cliente-por-revisiones.md) | Metadata del cliente por revisiones: el navegador se pone al día solo (automático) o cuando un administrador publica (manual) | Aceptada |
+| [ADR-037](ADR-037-flujo-del-boleto-con-symfony-workflow.md) | Flujo del boleto con `symfony/workflow`: transiciones con nombre, guards y acciones calculadas por el backend | Aceptada |
