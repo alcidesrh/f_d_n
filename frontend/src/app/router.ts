@@ -68,8 +68,9 @@ export const router = createRouter({
       },
     },
     {
-      path: "/configuracion/entidades",
+      path: "/configuracion/entidades/:entidad",
       name: "entity-config",
+      props: true,
       component: () => import("@/features/entity-config/EntityConfigPage.vue"),
       meta: {
         title: "Configuración de entidades",

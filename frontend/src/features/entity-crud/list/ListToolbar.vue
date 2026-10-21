@@ -97,7 +97,7 @@
         <icon :name="maximized ? 'fullscreen-exit' : 'fullscreen'" size="1.3rem" />
       </button>
       <button v-if="features.reset" type="button" class="list-toolbar__btn tap-target" aria-label="Restablecer vista" v-tooltip.bottom="'Restablecer vista'" @click="emit('reset')">
-        <icon name="ink-eraser-outline" size="1.25rem" />
+        <icon name="refresh" size="1.25rem" />
       </button>
     </div>
   </div>

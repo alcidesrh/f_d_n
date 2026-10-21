@@ -143,14 +143,13 @@ const ELIMINAR: EntityBulkAction = { key: "eliminar", label: "Eliminar", icon: "
 const props = withDefaults(
   defineProps<{
     entity: string | string[];
-    configurable?: boolean;
     seleccion?: unknown[];
     /** Partes del listado a apagar (o encender) en esta vista; ver `ListFeatures`. */
     features?: Partial<ListFeatures>;
   }>(),
-  { entity: "", configurable: false, seleccion: undefined, features: undefined },
+  { entity: "", seleccion: undefined, features: undefined },
 );
-const emit = defineEmits<{ configure: []; "update:seleccion": [filas: unknown[]] }>();
+const emit = defineEmits<{ "update:seleccion": [filas: unknown[]] }>();
 
 const uid = useId();
 const schema = useSchemaStore();
@@ -381,11 +380,10 @@ function onEdit(item: unknown) {
   void router.push({ name: "entity-form", params: { entity: entityName.value, id } });
 }
 
-/** En el editor de configuración lo gestiona la página; desde `/lista` abre la entidad en `/configuracion/entidades`. */
+/** La configuración de la entidad tiene su propia pantalla, sin el listado. */
 function onConfigure() {
-  if (props.configurable) return emit("configure");
   if (maximized.value) maximized.value = false;
-  void router.push({ name: "entity-config", query: { entidad: entitySlug(entityName.value) } });
+  void router.push({ name: "entity-config", params: { entidad: entitySlug(entityName.value) } });
 }
 
 function onCreate() {
