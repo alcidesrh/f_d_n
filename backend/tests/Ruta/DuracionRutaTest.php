@@ -36,6 +36,6 @@ final class DuracionRutaTest extends TestCase
 
     private static function enclave(): Enclave
     {
-        return (new \ReflectionClass(Enclave::class))->newInstanceWithoutConstructor();
+        return new Enclave();
     }
 }

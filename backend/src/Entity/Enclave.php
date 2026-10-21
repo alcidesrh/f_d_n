@@ -43,11 +43,6 @@ class Enclave extends Base
     #[ORM\Column(nullable: true)]
     private bool $test = true;
 
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
     public function getId(): ?int
     {
         return $this->id;

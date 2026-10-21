@@ -40,9 +40,7 @@ final class FlujoEncomiendaTest extends KernelTestCase
         self::bootKernel();
         $this->flujo = self::getContainer()->get(FlujoEncomienda::class);
         foreach ([self::GUATE => "Guatemala", self::RIO_DULCE => "Río Dulce", self::FLORES => "Flores"] as $id => $nombre) {
-            // `Enclave::__construct` llama a un constructor que `Base` no tiene: se crea sin él.
-            $enclave = (new \ReflectionClass(Enclave::class))->newInstanceWithoutConstructor();
-            $this->enclaves[$id] = $enclave->setNombre($nombre)->setId($id);
+            $this->enclaves[$id] = (new Enclave())->setNombre($nombre)->setId($id);
         }
     }
 

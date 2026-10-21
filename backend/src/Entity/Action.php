@@ -49,7 +49,6 @@ class Action extends Base
 
     public function __construct()
     {
-        parent::__construct();
         $this->roles = new ArrayCollection();
         $this->permisos = new ArrayCollection();
     }
