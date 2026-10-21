@@ -12,6 +12,7 @@ import PrimeVue from 'primevue/config'
 import ConfirmationService from 'primevue/confirmationservice'
 import ConfirmDialog from 'primevue/confirmdialog'
 import { reactive } from 'vue'
+import { Draggable } from 'gsap/Draggable'
 import formkitConfig from '@/shared/formkit/config'
 import { dismissAll } from '@/core/notify'
 import type { AgnosticOption, EntitySchema } from '@/core/graphql/types'
@@ -61,6 +62,15 @@ vi.mock('@/features/entity-crud/list/listCustomFilters', async () => {
   })
   return { entityCustomFilters: { Icon: { label: 'Buscar íconos', icon: 'manage-search', component: async () => Filtro } } }
 })
+
+// Arrastrar columnas (GSAP Draggable en `useColumnDrag`) no se prueba aquí: el test de reordenar
+// emite `reorder` desde el DataGrid. En jsdom cada Draggable pide `getComputedStyle` de su celda y
+// de cada ancestro, y jsdom lo resuelve recorriendo todas las hojas de estilo: era más de la mitad
+// del tiempo del archivo y lo que hacía pasar algunos tests de 5 s con la suite en paralelo.
+vi.spyOn(Draggable, 'create').mockReturnValue([])
+
+/** Espera de los filtros de texto y número antes de aplicarse (`DEBOUNCE_MS` de `useListFilters`). */
+const DEBOUNCE_MS = 400
 
 interface IconItem {
   id: string
@@ -354,6 +364,18 @@ describe('ListPage', () => {
     return wrapper!.find(`[data-grid-filter="${field}"] input`)
   }
 
+  /**
+   * Reloj falso para el debounce de los filtros: se adelanta en lugar de esperarlo, y con la suite
+   * cargada no vence antes de tiempo. Solo `setTimeout`/`clearTimeout`: con `Date` congelado, Vue
+   * ignora un evento en los listeners puestos en el mismo instante. `afterEach` vuelve al real.
+   */
+  const relojFalso = () => vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+
+  async function adelantar(ms: number) {
+    vi.advanceTimersByTime(ms)
+    await flushPromises()
+  }
+
   const bodyButton = (text: string) =>
     Array.from(document.body.querySelectorAll('button')).find((button) => button.textContent?.trim() === text)
 
@@ -401,11 +423,13 @@ describe('ListPage', () => {
     await mountList(iconSchema)
     const input = await filterInput('name')
     expect(input.exists()).toBe(true)
+    relojFalso()
     await input.setValue('ho')
-    await flushPromises()
+    await adelantar(DEBOUNCE_MS - 1)
+    expect(store.filters).toEqual({})
     expect(store.fetchItems).toHaveBeenCalledTimes(1)
 
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    await adelantar(1)
     expect(store.filters).toEqual({ name: 'ho' })
     expect(store.fetchItems).toHaveBeenCalledTimes(2)
   })
@@ -447,9 +471,10 @@ describe('ListPage', () => {
       await mountList(iconSchema)
       await abrirPanel()
 
-      await (await filterInput('name')).setValue('ho')
-      await new Promise((resolve) => setTimeout(resolve, 500))
-      await flushPromises()
+      const input = await filterInput('name')
+      relojFalso()
+      await input.setValue('ho')
+      await adelantar(DEBOUNCE_MS)
 
       expect(store.filters).toEqual({ name: 'ho' })
       expect(store.customFilter).toBeNull()
@@ -492,8 +517,9 @@ describe('ListPage', () => {
     expect(wrapper!.find('[data-grid-filter="icon"] input').exists()).toBe(false)
     expect(wrapper!.find('[data-grid-col="name"] button[aria-label="Quitar filtro Nombre"]').attributes('aria-pressed')).toBe('true')
 
+    relojFalso()
     await wrapper!.find('[data-grid-filter="name"] input').setValue('ho')
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    await adelantar(DEBOUNCE_MS)
     expect(store.filters).toEqual({ name: 'ho' })
 
     await wrapper!.find('[data-grid-col="name"] button[aria-label="Quitar filtro Nombre"]').trigger('click')
@@ -548,8 +574,9 @@ describe('ListPage', () => {
     expect(wrapper!.text()).toContain('Nombre:')
     expect(wrapper!.text()).toContain('Cualquiera')
     const input = await filterInput('name')
+    relojFalso()
     await input.setValue('hom')
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    await adelantar(DEBOUNCE_MS)
     expect(store.filters).toEqual({ name: 'hom', icon: 'pi', _combinar: 'or' })
 
     const todos = wrapper!.findAll('[role="radio"], button').find((b) => b.text() === 'Todos')
@@ -583,12 +610,18 @@ describe('ListPage', () => {
   it('limpia el filtro de texto con el icono, sin esperar el debounce', async () => {
     await mountList(iconSchema)
     const input = await filterInput('name')
+    relojFalso()
     await input.setValue('ho')
     await flushPromises()
     expect(store.fetchItems).toHaveBeenCalledTimes(1)
 
     await wrapper!.find('[aria-label="Limpiar filtro Nombre"]').trigger('click')
     await flushPromises()
+    expect(store.filters).toEqual({})
+    expect(store.fetchItems).toHaveBeenCalledTimes(2)
+
+    // El debounce pendiente se canceló: no aplica "ho" después.
+    await adelantar(DEBOUNCE_MS)
     expect(store.filters).toEqual({})
     expect(store.fetchItems).toHaveBeenCalledTimes(2)
   })
@@ -792,9 +825,10 @@ describe('ListPage', () => {
 
   it('no resalta mientras el filtro no se haya aplicado al store', async () => {
     await mountList(iconSchema)
-    await (await filterInput('name')).setValue('ho')
-    await new Promise((resolve) => setTimeout(resolve, 20))
-    await flushPromises()
+    const input = await filterInput('name')
+    relojFalso()
+    await input.setValue('ho')
+    await adelantar(DEBOUNCE_MS - 1)
     expect(wrapper!.find('mark').exists()).toBe(false)
   })
 
