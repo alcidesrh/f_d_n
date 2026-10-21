@@ -9,7 +9,8 @@
  * - Al entrar otro usuario las instancias en memoria se descartan y el próximo
  *   `useX()` las crea de nuevo con lo de él. Las `permanente` (las usa la app
  *   entera, p. ej. el tema en `App.vue`) no se pueden descartar: se recargan en
- *   el sitio y luego se llama a su `alRecargar`.
+ *   el sitio y luego se llama a su `alRecargar`. Quien guarde instancias fuera
+ *   de Pinia (el registro de entidades) las suelta con `alDescartar`.
  *
  * El dueño se guarda en localStorage: si la sesión vence (401) y vuelve el
  * mismo usuario, conserva su trabajo; si entra otro, se descarta.
@@ -32,6 +33,7 @@ const PROPIETARIO = 'sesion:propietario'
 const clavesGlobales = new Set<string>()
 const descartables = new Map<string, Store>()
 const permanentes = new Map<string, { store: Store; alRecargar?: () => void }>()
+const avisosAlDescartar = new Set<() => void>()
 /** Recargando una permanente: su `$reset` no debe pisar lo guardado del usuario. */
 let silencio = false
 
@@ -84,9 +86,18 @@ export function alcanceSesion({ store, options, pinia }: PiniaPluginContext): vo
   }
 }
 
+/**
+ * `aviso` corre cada vez que se descartan las stores del usuario: quien guarda
+ * instancias fuera de Pinia las suelta ahí (Pinia ya no las tiene ni las persiste).
+ */
+export function alDescartar(aviso: () => void): void {
+  avisosAlDescartar.add(aviso)
+}
+
 /** Descarta de memoria las stores del usuario (lo persistido queda en sus claves). */
 export function descartarStoresDeUsuario(): void {
   for (const store of [...descartables.values()]) store.$dispose()
+  avisosAlDescartar.forEach((aviso) => aviso())
 }
 
 /** Entra `usuario`: si las stores eran de otro (o de nadie), toma las suyas. */

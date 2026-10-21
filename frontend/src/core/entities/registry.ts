@@ -1,13 +1,17 @@
 /**
  * Registro de stores de entidad: `getEntity("Bus")` devuelve siempre la misma
  * instancia (la crea la primera vez y dispara la carga de su configuración).
+ * Al descartar las stores del usuario (`alcanceSesion`) el registro se vacía:
+ * la próxima llamada crea la instancia del usuario que entra.
  * Acepta nombre (`VueRoute`) o slug (`vue-route`); lanza si la entidad no existe.
  */
+import { alDescartar } from '@/core/auth/alcanceSesion'
 import { defineEntityStore } from './entityStore'
 import { useSchemaStore } from './schema'
 import type { EntityStore } from './types'
 
 export const entityStores = new Map<string, EntityStore>()
+alDescartar(() => entityStores.clear())
 
 export function getEntity<T = unknown>(name: string): EntityStore<T> {
   const entity = useSchemaStore().require(name)
