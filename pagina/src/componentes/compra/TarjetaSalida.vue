@@ -9,10 +9,10 @@
   <article
     class="overflow-hidden rounded-2xl border bg-white shadow-tarjeta transition-colors"
     :class="
-      abierta
-        ? 'border-marca-700 ring-1 ring-marca-700'
-        : elegida
-          ? 'border-acento-500'
+      elegida
+        ? 'border-2 border-acento-500 bg-acento-50 shadow-md ring-2 ring-acento-500/40'
+        : abierta
+          ? 'border-marca-700 ring-1 ring-marca-700'
           : 'border-surface-200'
     "
   >
@@ -34,10 +34,10 @@
             }}</span>
             <span
               v-if="horaSube && !s.subeEnOrigen"
-              class="text-xs font-medium text-muted-color"
+              class="rounded-md bg-slate-100 px-1.5 py-0.5 text-xs font-semibold text-slate-700"
               >{{ t("salidas.aprox") }}</span
             >
-            <span v-if="s.llegada" class="text-sm text-muted-color">
+            <span v-if="s.llegada" class="text-sm font-medium text-slate-700">
               <icon name="arrow-right" size="0.85rem" class="align-[-1px]" />
               {{ t("salidas.llega") }} {{ hora(s.llegada, region)
               }}<sup
@@ -48,9 +48,9 @@
             </span>
           </span>
           <span
-            class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-color"
+            class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-medium text-slate-600"
           >
-            <span v-if="s.empresa" class="font-bold text-slate-600">{{
+            <span v-if="s.empresa" class="font-bold text-slate-800">{{
               s.empresa
             }}</span>
             <span v-if="tiempo" class="inline-flex items-center gap-1"
@@ -64,7 +64,7 @@
           </span>
           <span
             v-if="!s.subeEnOrigen && s.rutaOrigen"
-            class="text-xs text-muted-color"
+            class="text-xs font-medium text-slate-600"
             >{{
               t(s.salida ? "salidas.rutaBus" : "salidas.sinHora", {
                 ruta: s.ruta,

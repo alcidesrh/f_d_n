@@ -78,9 +78,10 @@
     </Message>
     <p
       v-else-if="!lista.salidas.length"
-      class="panel m-0 flex items-start gap-2 text-sm text-muted-color"
+      class="panel m-0 flex items-center gap-3 !border-amber-300 !bg-amber-50 text-[0.95rem] font-medium text-amber-950"
+      role="status"
     >
-      <icon name="info" class="mt-0.5" />{{ t("salidas.ninguna") }}
+      <span class="grid size-10 shrink-0 place-items-center rounded-full bg-amber-100 text-amber-700"><icon name="calendar-off" size="1.3rem" /></span>{{ t("salidas.ninguna") }}
     </p>
     <ul
       v-else

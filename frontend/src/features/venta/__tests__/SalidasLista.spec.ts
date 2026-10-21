@@ -32,7 +32,7 @@ describe('SalidasLista', () => {
     const w = montar([salida(1), salida(2, { bus: null, vendidos: null })])
     const filas = w.findAll('.dg-brow')
     expect(filas).toHaveLength(2)
-    expect(filas[0]!.findAll('.ruta .truncate').map((l) => l.text())).toEqual(['Guatemala 08:00 a. m.', 'Flores'])
+    expect(filas[0]!.findAll('.ruta .truncate').map((l) => l.text())).toEqual(['Guatemala', 'Flores'])
     expect(filas[0]!.find('.precios').text()).toBe('A Q 100B Q 125.50')
     expect(filas[0]!.find('.asientos__total').exists()).toBe(false)
     expect(filas[0]!.text()).toContain('B-07')
@@ -41,7 +41,7 @@ describe('SalidasLista', () => {
     w.unmount()
   })
 
-  it('muestra sube en y baja en con su hora, y la ruta del bus con la hora en sus puntas', () => {
+  it('muestra la hora de salida, la ruta del bus sin horas y sube en / baja en con su hora', () => {
     const w = montar([
       salida(1, {
         salida: '2026-10-10T23:30:00-06:00',
@@ -56,12 +56,16 @@ describe('SalidasLista', () => {
     ])
     const fila = w.find('.dg-brow')
     const celdas = fila.findAll('.celda')
-    expect(celdas[0]!.text()).toContain('Coatepeque')
-    expect(celdas[0]!.text()).toContain('≈ 12:50')
-    expect(celdas[1]!.text()).toContain('Aguilar Batres')
-    expect(celdas[1]!.text()).toContain('≈ 05:20')
-    expect(celdas[1]!.text()).not.toContain('+1')
-    expect(fila.findAll('.ruta .truncate').map((l) => l.text())).toEqual(['Guatemala 11:30 p. m.', 'Flores ≈ 08:00 a. m. (+1)'])
+    // Hora, ruta, sube en, baja en.
+    expect(celdas[0]!.text()).toContain('11:30')
+    expect(celdas[2]!.text()).toContain('Coatepeque')
+    expect(celdas[2]!.text()).toContain('≈ 12:50')
+    expect(celdas[3]!.text()).toContain('Aguilar Batres')
+    expect(celdas[3]!.text()).toContain('≈ 05:20')
+    expect(celdas[3]!.text()).not.toContain('+1')
+    expect(fila.findAll('.ruta .truncate').map((l) => l.text())).toEqual(['Guatemala', 'Flores'])
+    expect(fila.find('.bus-mov--sale').exists()).toBe(true)
+    expect(fila.find('.bus-mov--llega').exists()).toBe(true)
     expect(fila.text()).not.toContain('llega')
     w.unmount()
   })

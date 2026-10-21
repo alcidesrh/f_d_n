@@ -39,8 +39,12 @@ body {
   font-family: var(--font-sans);
   -webkit-tap-highlight-color: transparent;
 }
-a {
-  color: var(--p-primary-color);
+/* En la capa base: un color de utilidad (`text-blue-50` en el pie) lo pisa. Fuera de
+   capa ganaba a todas las utilidades y los enlaces del pie salían azules sobre azul. */
+@layer base {
+  a {
+    color: var(--p-primary-color);
+  }
 }
 
 @layer components {

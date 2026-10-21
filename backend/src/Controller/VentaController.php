@@ -100,7 +100,7 @@ final class VentaController extends AbstractController
             ],
             "estaciones" => array_map(
                 static fn(Estacion $e) => ["id" => $e->getId(), "nombre" => $e->getNombre(), "direccion" => $e->getDireccion(), "departamento" => $e->getDepartamento()],
-                $this->em->getRepository(Estacion::class)->findBy([], ["nombre" => "ASC"]),
+                $this->em->getRepository(Estacion::class)->findBy(["activo" => true], ["nombre" => "ASC"]),
             ),
             "tiposPago" => $catalogo(TipoPago::class, static fn(TipoPago $t) => ["id" => $t->getId(), "nombre" => $t->getNombre()]),
             "monedas" => $catalogo(Moneda::class, static fn(Moneda $m) => ["id" => $m->getId(), "sigla" => $m->getSigla(), "nombre" => $m->getNombre()]),

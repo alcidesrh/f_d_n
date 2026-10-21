@@ -45,12 +45,9 @@
       </label>
     </div>
 
-    <div class="grid grid-cols-2 items-end gap-3 lg:grid-cols-[auto_1fr_1fr]">
-      <label class="col-span-2 flex cursor-pointer select-none items-center gap-2 py-1 lg:col-span-1 lg:mb-2.5 lg:pr-2">
-        <ToggleSwitch v-model="busqueda.idaVuelta" :input-id="`${id}-iv`" />
-        <span class="text-sm font-medium">{{ t('buscador.idaVuelta') }}</span>
-      </label>
-      <label class="flex min-w-0 flex-col gap-1.5" :class="{ 'col-span-2 lg:col-span-1': !busqueda.idaVuelta }">
+    <!-- Mismas columnas que origen ⇄ destino: la ida bajo el origen, el interruptor bajo ⇄ y el regreso bajo el destino. -->
+    <div class="grid grid-cols-[1fr_auto] items-end gap-x-2 gap-y-3 lg:grid-cols-[1fr_auto_1fr]">
+      <label class="col-start-1 flex min-w-0 flex-col gap-1.5">
         <span class="text-sm font-medium">{{ t('buscador.fechaIda') }}</span>
         <DatePicker
           v-model="fechaIda"
@@ -65,7 +62,11 @@
           :pt="{ pcInputText: { root: { class: '!bg-white' } } }"
         />
       </label>
-      <label v-if="busqueda.idaVuelta" class="flex min-w-0 flex-col gap-1.5">
+      <label class="col-start-2 row-start-1 flex cursor-pointer select-none items-center gap-2 pb-2.5">
+        <ToggleSwitch v-model="busqueda.idaVuelta" :input-id="`${id}-iv`" />
+        <span class="whitespace-nowrap text-sm font-medium">{{ t('buscador.idaVuelta') }}</span>
+      </label>
+      <label v-if="busqueda.idaVuelta" class="col-span-2 flex min-w-0 flex-col gap-1.5 lg:col-span-1 lg:col-start-3 lg:row-start-1">
         <span class="text-sm font-medium">{{ t('buscador.fechaRegreso') }}</span>
         <DatePicker
           v-model="fechaRegreso"

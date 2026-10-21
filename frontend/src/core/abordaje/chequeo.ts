@@ -3,6 +3,7 @@
  * boleto (excluyentes, como las casillas del legado), lo que se envía, los
  * conteos y qué se puede hacer con la salida.
  */
+import type { EstadoSalida } from '@/core/salida/types'
 import type { BoletoAbordaje, PuedeAbordaje, SalidaAbordaje } from './types'
 
 /** `si`: se presentó; `no`: no se presentó (queda cancelado y libera el asiento). */
@@ -82,4 +83,25 @@ export function acciones(salida: Pick<SalidaAbordaje, 'estado'>, puede: PuedeAbo
 export function etiquetaSalida(s: SalidaAbordaje): string {
   const fecha = new Intl.DateTimeFormat('es-GT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(s.fecha))
   return [fecha.replace(',', ''), s.ruta, s.empresa, s.bus ? `Bus ${s.bus}` : null].filter(Boolean).join(' · ')
+}
+
+/** Filtro del selector de salidas; vacío = todas. */
+export interface FiltroSalidasAbordaje {
+  empresas: readonly string[]
+  estados: readonly EstadoSalida[]
+}
+
+/** Empresas de las salidas, sin repetir y en orden alfabético. */
+export function empresasDe(salidas: readonly SalidaAbordaje[]): string[] {
+  return [...new Set(salidas.map((s) => s.empresa).filter((e): e is string => !!e))].sort((a, b) => a.localeCompare(b, 'es'))
+}
+
+/** Estados presentes en las salidas, en el orden de `orden`. */
+export function estadosDe(salidas: readonly SalidaAbordaje[], orden: readonly EstadoSalida[]): EstadoSalida[] {
+  const hay = new Set(salidas.map((s) => s.estado))
+  return orden.filter((e) => hay.has(e))
+}
+
+export function filtrarSalidas(salidas: readonly SalidaAbordaje[], f: FiltroSalidasAbordaje): SalidaAbordaje[] {
+  return salidas.filter((s) => (f.empresas.length === 0 || (s.empresa != null && f.empresas.includes(s.empresa))) && (f.estados.length === 0 || f.estados.includes(s.estado)))
 }

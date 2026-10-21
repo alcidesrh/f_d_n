@@ -95,7 +95,7 @@ final class EncomiendaController extends AbstractController
             ),
             "estaciones" => array_map(
                 static fn(Estacion $e) => ["id" => $e->getId(), "nombre" => $e->getNombre(), "direccion" => $e->getDireccion(), "departamento" => $e->getDepartamento()],
-                $this->em->getRepository(Estacion::class)->findBy([], ["nombre" => "ASC"]),
+                $this->em->getRepository(Estacion::class)->findBy(["activo" => true], ["nombre" => "ASC"]),
             ),
             "especiales" => array_map(
                 static fn(EncomiendaEspecial $e) => ["id" => $e->getId(), "nombre" => $e->getNombre(), "descripcion" => $e->getDescripcion(), "precio" => DatosBoleto::importe($e->getPrecio()), "permitePorCobrar" => $e->isPermitePorCobrar()],

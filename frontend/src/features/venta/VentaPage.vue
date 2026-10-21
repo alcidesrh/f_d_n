@@ -117,7 +117,9 @@
           </section>
           <section v-if="store.seleccion.length && !store.reasignacion && store.contexto?.encomiendas?.permitido" class="panel flex flex-col gap-2" aria-labelledby="venta-encomienda">
             <div class="flex flex-wrap items-center justify-between gap-2">
-              <span id="venta-encomienda" class="font-medium">Encomienda <span class="font-normal text-muted-color">(en la bodega, de {{ nombreParada(store.sube) }} a {{ nombreParada(store.baja) }})</span></span>
+              <span id="venta-encomienda" class="font-medium"
+                >Encomienda <span class="font-normal text-muted-color">(en la bodega, de {{ nombreParada(store.sube) }} a {{ nombreParada(store.baja) }})</span></span
+              >
               <span v-if="store.cotizacionEncomienda && store.encomiendaArticulos.length" class="tabular-nums">{{ store.cotizacionEncomienda.total.texto }}</span>
             </div>
             <ArticulosEditor v-model="store.encomiendaArticulos" :especiales="store.contexto.encomiendas.especiales" :cotizacion="store.cotizacionEncomienda" />
@@ -414,18 +416,18 @@ const nombreParada = (id: number | null) => store.detalle?.paradas.find((p) => p
   top: 0.55rem;
   z-index: 3;
   transform: translateX(-50%);
-  background: var(--p-surface-50);
+  background: var(--p-surface-0) !important;
   padding: 1px 10px;
 
   & > :deep(span) {
-    /*font-weight: 400 !important;*/
+    font-weight: 700 !important;
     font-size: 10px !important;
   }
 }
 @media (width >= 48rem) {
   /* Justo bajo la cabecera de la tabla. */
   .anteriores {
-    top: 3rem;
+    top: 2.5rem;
   }
 }
 .campo {

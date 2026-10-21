@@ -38,6 +38,10 @@ class Enclave extends Base
     #[ORM\Column(type: "decimal", precision: 10, scale: 7, nullable: true)]
     private ?string $longitud = null;
 
+    /** Inactivo: deja de ofrecerse en las listas de estaciones (venta, boletos, encomiendas, reportes y página web); lo ya vendido se conserva. */
+    #[ORM\Column(options: ["default" => true])]
+    private bool $activo = true;
+
     public function __construct()
     {
         parent::__construct();
@@ -116,6 +120,18 @@ class Enclave extends Base
     public function setLongitud(?string $longitud): static
     {
         $this->longitud = $longitud;
+
+        return $this;
+    }
+
+    public function isActivo(): bool
+    {
+        return $this->activo;
+    }
+
+    public function setActivo(bool $activo): static
+    {
+        $this->activo = $activo;
 
         return $this;
     }

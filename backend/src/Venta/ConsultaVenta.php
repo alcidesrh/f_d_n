@@ -304,7 +304,7 @@ final class ConsultaVenta
     {
         return self::lugares($this->em->getConnection()->fetchAllAssociative(
             "SELECT e.id, e.nombre, e.departamento FROM enclave e
-              WHERE e.id IN (SELECT origen_id FROM (" . self::PARES_VENDIBLES . ") p)
+              WHERE e.activo AND e.id IN (SELECT origen_id FROM (" . self::PARES_VENDIBLES . ") p)
               ORDER BY e.nombre",
         ));
     }
@@ -328,7 +328,7 @@ final class ConsultaVenta
             ],
             $this->em->getConnection()->fetchAllAssociative(
                 "SELECT e.id, e.nombre, e.direccion, e.departamento, e.latitud, e.longitud FROM enclave e
-                  WHERE e.tipo = 'estacion'
+                  WHERE e.tipo = 'estacion' AND e.activo
                     AND e.id IN (SELECT origen_id FROM (" . self::PARES_VENDIBLES . ") p UNION SELECT destino_id FROM (" . self::PARES_VENDIBLES . ") q)
                   ORDER BY e.departamento, e.nombre",
             ),
@@ -344,7 +344,7 @@ final class ConsultaVenta
     {
         return self::lugares($this->em->getConnection()->fetchAllAssociative(
             "SELECT e.id, e.nombre, e.departamento FROM enclave e
-              WHERE e.id IN (SELECT destino_id FROM (" . self::PARES_VENDIBLES . ") p WHERE p.origen_id = :origen)
+              WHERE e.activo AND e.id IN (SELECT destino_id FROM (" . self::PARES_VENDIBLES . ") p WHERE p.origen_id = :origen)
               ORDER BY e.nombre",
             ["origen" => $origenId],
         ));

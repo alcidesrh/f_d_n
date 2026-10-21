@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { acciones, alternar, conteo, etiquetaSalida, marcarTodos, seleccion, vigentes, type Marcas } from '../chequeo'
-import type { BoletoAbordaje, PuedeAbordaje } from '../types'
+import { acciones, alternar, conteo, empresasDe, estadosDe, etiquetaSalida, filtrarSalidas, marcarTodos, seleccion, vigentes, type Marcas } from '../chequeo'
+import type { BoletoAbordaje, PuedeAbordaje, SalidaAbordaje } from '../types'
 
 const boleto = (id: number, extra: Partial<BoletoAbordaje> = {}): BoletoAbordaje => ({
   id,
@@ -63,5 +63,25 @@ describe('chequeo de boletos', () => {
     const e = etiquetaSalida({ id: 1, fecha: '2026-10-11T18:00:00-06:00', estado: 'abordando', ruta: 'MELCHOR - GUATE', origenId: 1, destinoId: 2, empresa: 'MAYA DE ORO', bus: '39' })
     expect(e).toContain('MELCHOR - GUATE · MAYA DE ORO · Bus 39')
     expect(e).toMatch(/^\d{2}\/\d{2}\/2026 \d{2}:\d{2} · /)
+  })
+})
+
+describe('filtro de salidas', () => {
+  const salida = (id: number, empresa: string | null, estado: SalidaAbordaje['estado']): SalidaAbordaje => ({ id, fecha: '2026-10-20T08:00:00-06:00', estado, ruta: 'A → B', origenId: 1, destinoId: 2, empresa, bus: null })
+  const salidas = [salida(1, 'Fuentes', 'programada'), salida(2, 'Atitrans', 'abordando'), salida(3, 'Fuentes', 'iniciada'), salida(4, null, 'programada')]
+
+  it('empresas sin repetir y ordenadas', () => {
+    expect(empresasDe(salidas)).toEqual(['Atitrans', 'Fuentes'])
+  })
+
+  it('estados presentes en el orden dado', () => {
+    expect(estadosDe(salidas, ['iniciada', 'abordando', 'programada', 'finalizada'])).toEqual(['iniciada', 'abordando', 'programada'])
+  })
+
+  it('vacío = todas; combina empresa y estado', () => {
+    expect(filtrarSalidas(salidas, { empresas: [], estados: [] }).map((s) => s.id)).toEqual([1, 2, 3, 4])
+    expect(filtrarSalidas(salidas, { empresas: ['Fuentes'], estados: [] }).map((s) => s.id)).toEqual([1, 3])
+    expect(filtrarSalidas(salidas, { empresas: ['Fuentes'], estados: ['programada'] }).map((s) => s.id)).toEqual([1])
+    expect(filtrarSalidas(salidas, { empresas: [], estados: ['programada'] }).map((s) => s.id)).toEqual([1, 4])
   })
 })

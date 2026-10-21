@@ -34,8 +34,6 @@ declare module 'vue' {
     Fluid: typeof import('primevue/fluid')['default']
     Icon: typeof import('./shared/ui/Icon.vue')['default']
     IconField: typeof import('primevue/iconfield')['default']
-    IconLucideMoon: typeof import('~icons/lucide/moon')['default']
-    IconLucideSun: typeof import('~icons/lucide/sun')['default']
     IconPicker: typeof import('./shared/icons/IconPicker.vue')['default']
     InputGroup: typeof import('primevue/inputgroup')['default']
     InputGroupAddon: typeof import('primevue/inputgroupaddon')['default']

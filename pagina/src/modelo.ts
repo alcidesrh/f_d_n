@@ -104,10 +104,24 @@ export const sumaCentavos = (asientos: readonly { centavos: number }[]) => asien
 /**
  * Orígenes o destinos agrupados por departamento (como en la página
  * anterior): primero Guatemala y Petén (en ese orden), luego los demás por
- * nombre y, sin departamento, `otros` al final. Estaciones por nombre.
+ * nombre y, sin departamento, `otros` al final. Estaciones por nombre; en
+ * Guatemala y Petén, las primeras estaciones van antes que el resto.
  */
 const DEPARTAMENTOS_PRIMERO = ['guatemala', 'peten']
+/** Sin acentos; «melchor» vale por «Melchor de Mencos». */
+const PRIMERAS_ESTACIONES: Record<string, string[]> = {
+  guatemala: ['aguilar batres', 'guatemala'],
+  peten: ['santa elena', 'melchor', 'poptun'],
+}
 const clave = (d: string) => d.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
+
+/** Posición de la estación entre las primeras de su departamento; sin lugar, al final. */
+const posicionEstacion = (departamento: string, nombre: string) => {
+  const lista = PRIMERAS_ESTACIONES[clave(departamento)] ?? []
+  const n = clave(nombre)
+  const i = lista.findIndex((p) => n === p || n.startsWith(`${p} `) || n.startsWith(`${p},`))
+  return i < 0 ? lista.length : i
+}
 
 export function porDepartamento<E extends Estacion>(estaciones: readonly E[], otros: string, idioma = 'es'): Array<{ departamento: string; estaciones: E[] }> {
   const grupos = new Map<string, E[]>()
@@ -124,7 +138,10 @@ export function porDepartamento<E extends Estacion>(estaciones: readonly E[], ot
       if (pa !== pb) return (pa < 0 ? Infinity : pa) - (pb < 0 ? Infinity : pb)
       return orden(a, b)
     })
-    .map(([d, lista]) => ({ departamento: d || otros, estaciones: [...lista].sort((x, y) => orden(x.nombre, y.nombre)) }))
+    .map(([d, lista]) => ({
+      departamento: d || otros,
+      estaciones: [...lista].sort((x, y) => posicionEstacion(d, x.nombre) - posicionEstacion(d, y.nombre) || orden(x.nombre, y.nombre)),
+    }))
 }
 
 const ZONA = 'America/Guatemala'

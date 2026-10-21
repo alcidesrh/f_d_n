@@ -29,6 +29,19 @@
           <template #icon><icon name="refresh" /></template>
         </Button>
       </div>
+      <div v-if="empresas.length > 1 || estados.length > 1" class="flex flex-col gap-2">
+        <div v-if="empresas.length > 1" class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrar por empresa">
+          <button v-for="e in empresas" :key="e" type="button" class="chip" :class="{ 'chip--activo': filtroEmpresas.includes(e) }" :aria-pressed="filtroEmpresas.includes(e)" @click="filtroEmpresas = alternarEn(filtroEmpresas, e)">
+            {{ e }}
+          </button>
+        </div>
+        <div v-if="estados.length > 1" class="flex flex-wrap items-center gap-2" role="group" aria-label="Filtrar por estado">
+          <button v-for="e in estados" :key="e" type="button" class="chip" :class="{ 'chip--activo': filtroEstados.includes(e) }" :aria-pressed="filtroEstados.includes(e)" @click="filtroEstados = alternarEn(filtroEstados, e)">
+            <span class="chip__punto" :class="`chip__punto--${e}`" aria-hidden="true" />{{ etiquetaEstado(e).etiqueta }}
+            <span class="tabular-nums opacity-70">{{ porEstado[e] ?? 0 }}</span>
+          </button>
+        </div>
+      </div>
       <Message v-if="errorSalidas" severity="error" :closable="false">{{ errorSalidas }}</Message>
     </section>
 
@@ -180,9 +193,10 @@
 
 <script setup lang="ts">
 import { abordarSalida, chequearBoletos, fetchDetalleAbordaje, fetchSalidasAbordaje, finalizarSalida, iniciarSalida } from "@/core/abordaje/api";
-import { acciones, alternar, conteo, etiquetaSalida, marcarTodos, seleccion, vigentes, type Marca, type Marcas } from "@/core/abordaje/chequeo";
+import { acciones, alternar, conteo, empresasDe, estadosDe, etiquetaSalida, filtrarSalidas, marcarTodos, seleccion, vigentes, type Marca, type Marcas } from "@/core/abordaje/chequeo";
 import type { BoletoAbordaje, DetalleAbordaje, PuedeAbordaje, SalidaAbordaje } from "@/core/abordaje/types";
-import { etiquetaEstado } from "@/core/salida/filtro";
+import { ESTADOS, etiquetaEstado } from "@/core/salida/filtro";
+import type { EstadoSalida } from "@/core/salida/types";
 import { HttpError } from "@/core/http";
 import { notify } from "@/core/notify";
 import { suscribir } from "@/core/realtime";
@@ -211,9 +225,26 @@ const salidaId = computed<number | null>({
   set: (id) => void router.replace({ query: { ...route.query, salida: id ?? undefined } }),
 });
 
-/** Las del selector, más la abierta si no está (llegó por enlace). */
+/** Filtros del selector por empresa y estado (en el cliente); vacío = todas. */
+const filtroEmpresas = ref<string[]>([]);
+const filtroEstados = ref<EstadoSalida[]>([]);
+const empresas = computed(() => empresasDe(salidas.value));
+const estados = computed(() => estadosDe(salidas.value, ESTADOS.map((e) => e.valor)));
+const porEstado = computed(() => {
+  const n: Partial<Record<EstadoSalida, number>> = {};
+  for (const s of filtrarSalidas(salidas.value, { empresas: filtroEmpresas.value, estados: [] })) n[s.estado] = (n[s.estado] ?? 0) + 1;
+  return n;
+});
+const alternarEn = <T,>(lista: T[], v: T) => (lista.includes(v) ? lista.filter((x) => x !== v) : [...lista, v]);
+// Una recarga puede dejar fuera una empresa o un estado elegido.
+watch(salidas, () => {
+  filtroEmpresas.value = filtroEmpresas.value.filter((e) => empresas.value.includes(e));
+  filtroEstados.value = filtroEstados.value.filter((e) => estados.value.includes(e));
+});
+
+/** Las del selector (filtradas), más la abierta si no está (llegó por enlace). */
 const opcionesSalida = computed(() => {
-  const lista = [...salidas.value];
+  const lista = filtrarSalidas(salidas.value, { empresas: filtroEmpresas.value, estados: filtroEstados.value });
   const actual = detalle.value?.salida;
   if (actual && !lista.some((s) => s.id === actual.id)) lista.unshift(actual);
   return lista.map((s) => ({ ...s, etiqueta: etiquetaSalida(s) }));
@@ -395,3 +426,49 @@ onMounted(() => {
   void cargarDetalle();
 });
 </script>
+
+<style scoped>
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border: 1px solid var(--p-surface-300);
+  border-radius: 9999px;
+  background: transparent;
+  padding: 0.25rem 0.625rem;
+  color: var(--p-text-color);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+.chip--activo {
+  border-color: var(--p-primary-color);
+  background: var(--p-primary-color);
+  color: var(--p-primary-contrast-color);
+}
+.chip__punto {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: var(--p-surface-400);
+}
+.chip__punto--iniciada {
+  background: var(--p-green-500);
+}
+.chip__punto--abordando {
+  background: var(--p-sky-500);
+}
+.chip__punto--finalizada {
+  background: var(--p-surface-700);
+}
+.chip__punto--cancelada {
+  background: var(--p-red-500);
+}
+.chip--activo .chip__punto {
+  box-shadow: 0 0 0 1.5px var(--p-primary-contrast-color);
+}
+</style>

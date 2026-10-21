@@ -20,6 +20,8 @@ import ChatOutline from '~icons/material-symbols/chat-outline'
 import DirectionsBusOutline from '~icons/material-symbols/directions-bus-outline'
 import CalendarMonthOutline from '~icons/material-symbols/calendar-month-outline'
 import EventRepeatOutline from '~icons/material-symbols/event-repeat-outline'
+import EventBusyOutline from '~icons/material-symbols/event-busy-outline'
+import RestartAlt from '~icons/material-symbols/restart-alt'
 import CheckCircleOutline from '~icons/material-symbols/check-circle-outline'
 import KeyboardArrowDown from '~icons/material-symbols/keyboard-arrow-down'
 import KeyboardDoubleArrowDown from '~icons/material-symbols/keyboard-double-arrow-down'
@@ -65,6 +67,7 @@ const ICONOS = {
   'brand-whatsapp': ChatOutline,
   bus: DirectionsBusOutline,
   calendar: CalendarMonthOutline,
+  'calendar-off': EventBusyOutline,
   'calendar-repeat': EventRepeatOutline,
   check: CheckCircleOutline,
   'chevron-down': KeyboardArrowDown,
@@ -88,6 +91,7 @@ const ICONOS = {
   package: Package2Outline,
   phone: CallOutline,
   punto: FiberManualRecord,
+  reiniciar: RestartAlt,
   route: Route,
   search: Search,
   send: SendOutline,

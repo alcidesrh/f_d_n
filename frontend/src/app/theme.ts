@@ -8,8 +8,7 @@ import colors from "tailwindcss/colors";
 
 const RAMP_STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950] as const;
 
-const isRamp = (value: unknown): value is Record<string, string> =>
-  !!value && typeof value === "object" && RAMP_STEPS.every((step) => typeof (value as Record<string, unknown>)[step] === "string");
+const isRamp = (value: unknown): value is Record<string, string> => !!value && typeof value === "object" && RAMP_STEPS.every((step) => typeof (value as Record<string, unknown>)[step] === "string");
 
 /** Reverses one color ramp (50 ↔ 950, 100 ↔ 900, …; 500 stays). */
 export function invertRamp(ramp: Record<string, string>): Record<string, string> {
@@ -402,7 +401,7 @@ export const componentsPreset = (): Tokens => {
     },
     toggleswitch: {
       root: {
-        height: "10px",
+        height: "15px",
       },
       colorScheme: {
         light: {

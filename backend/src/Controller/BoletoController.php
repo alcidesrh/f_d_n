@@ -62,7 +62,7 @@ final class BoletoController extends AbstractController
             "porPagina" => FiltroBoletos::POR_PAGINA,
             "estaciones" => array_map(
                 static fn(Estacion $e) => ["id" => $e->getId(), "nombre" => $e->getNombre(), "departamento" => $e->getDepartamento()],
-                $this->em->getRepository(Estacion::class)->findBy([], ["nombre" => "ASC"]),
+                $this->em->getRepository(Estacion::class)->findBy(["activo" => true], ["nombre" => "ASC"]),
             ),
             "puede" => [
                 "cancelar" => $this->isGranted(self::CANCELAR),

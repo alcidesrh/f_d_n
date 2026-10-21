@@ -34,12 +34,9 @@ const props = defineProps<{ area: LayoutArea; sidebar?: SidebarStore }>();
 const userMenus = useUserMenusStore();
 const menus = computed(() => userMenus.areas[props.area]);
 
-const closed = ref(new Set<number>());
-function toggle(id: number) {
-  const next = new Set(closed.value);
-  if (!next.delete(id)) next.add(id);
-  closed.value = next;
-}
+/** Menús contraídos: los guarda el store del panel (por usuario). */
+const closed = computed(() => new Set(props.sidebar?.collapsedMenus ?? []));
+const toggle = (id: number) => props.sidebar?.toggleMenu(id);
 
 function onEnter(el: Element, done: () => void) {
   gsap.fromTo(

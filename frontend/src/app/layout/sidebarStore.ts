@@ -4,7 +4,8 @@
  * Desde `lg` el panel es fijo y empuja el contenido: modo `open`/`mini`/`close`
  * (persistido). Debajo de `lg` es un drawer sobre el contenido: `drawer`
  * (no persistido, siempre empieza cerrado). El modo de escritorio no se toca
- * desde el móvil y viceversa.
+ * desde el móvil y viceversa. También se persiste (por usuario, como toda
+ * store) qué menús están contraídos y qué ítems del árbol desplegados.
  */
 import { defineStore } from "pinia";
 import { useUiStore } from "@/app/ui";
@@ -30,12 +31,16 @@ export interface SidebarStoreState {
   close: number;
   /** Drawer abierto (solo debajo de `lg`). */
   drawer: boolean;
+  /** Secciones (menús) contraídas, por id de menú (persistido). */
+  collapsedMenus: number[];
+  /** Ítems desplegados del árbol, por id de ítem (persistido). */
+  expandedItems: number[];
 }
 
 function createDefinition(side: "left" | "right", name: string) {
   return defineStore(name, {
     // Solo el modo: los anchos son constantes (un valor viejo persistido pisaría el nuevo).
-    persist: { pick: ["mode", "prevMode"] },
+    persist: { pick: ["mode", "prevMode", "collapsedMenus", "expandedItems"] },
     state: (): SidebarStoreState => ({
       side: side,
       mode: "open",
@@ -46,6 +51,8 @@ function createDefinition(side: "left" | "right", name: string) {
       mini: 60,
       close: 0,
       drawer: false,
+      collapsedMenus: [],
+      expandedItems: [],
     }),
     getters: {
       width: (s: SidebarStoreState): number => ({ open: s.open, mini: s.mini, close: s.close })[s.mode],
@@ -62,6 +69,16 @@ function createDefinition(side: "left" | "right", name: string) {
       dismiss() {
         if (useUiStore().isMobile) this.drawer = false;
         else this.setMode("close");
+      },
+      toggleMenu(id: number) {
+        this.collapsedMenus = this.collapsedMenus.includes(id) ? this.collapsedMenus.filter((x) => x !== id) : [...this.collapsedMenus, id];
+      },
+      toggleItem(id: number) {
+        this.expandedItems = this.expandedItems.includes(id) ? this.expandedItems.filter((x) => x !== id) : [...this.expandedItems, id];
+      },
+      expandItems(ids: number[]) {
+        const nuevos = ids.filter((id) => !this.expandedItems.includes(id));
+        if (nuevos.length) this.expandedItems = [...this.expandedItems, ...nuevos];
       },
       setMode(mode?: SidebarMode) {
         if (mode && mode != this.mode) {

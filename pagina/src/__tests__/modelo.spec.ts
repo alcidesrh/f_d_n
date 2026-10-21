@@ -105,7 +105,7 @@ it('agrupa estaciones por departamento, "otros" al final', () => {
     'Otros',
   )
   expect(g.map((x) => x.departamento)).toEqual(['Guatemala', 'Petén', 'Alta Verapaz', 'Escuintla', 'Otros'])
-  expect(g[1]!.estaciones.map((e) => e.nombre)).toEqual(['Melchor', 'Santa Elena'])
+  expect(g[1]!.estaciones.map((e) => e.nombre)).toEqual(['Santa Elena', 'Melchor'])
 })
 
 it('importes, días y duración', () => {

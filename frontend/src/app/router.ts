@@ -58,6 +58,16 @@ export const router = createRouter({
       },
     },
     {
+      path: "/administracion",
+      name: "administracion",
+      component: () => import("@/features/administracion/AdministracionPage.vue"),
+      meta: {
+        title: "Administración",
+        label: "Administración",
+        icon: "admin-panel-settings-outline",
+      },
+    },
+    {
       path: "/configuracion/entidades",
       name: "entity-config",
       component: () => import("@/features/entity-config/EntityConfigPage.vue"),

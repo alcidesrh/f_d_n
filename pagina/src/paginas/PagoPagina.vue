@@ -21,336 +21,347 @@
       />
     </Transition>
 
-    <div class="relative z-[30] mb-3 flex items-center justify-between gap-3">
+    <!-- Volver y cancelar: botones con contorno, legibles sobre el velo oscuro y sin él. -->
+    <div
+      class="barra-pago relative z-[30] mb-4 flex items-center justify-between gap-3"
+      :class="{ 'barra-pago--velo': !cargando && !carrito.vacio }"
+    >
       <button
         type="button"
-        class="inline-flex items-center gap-1 border-0 bg-transparent p-0 text-sm font-medium text-primary"
-        :class="{ '!text-white': !cargando && !carrito.vacio }"
+        class="accion-pago accion-pago--volver"
         :disabled="pagando"
         @click="volver"
       >
-        <icon name="arrow-left" size="1rem" />{{ t("pago.volver") }}
+        <icon name="arrow-left" size="1.1rem" /><span>{{ t("pago.volver") }}</span>
       </button>
       <button
         type="button"
-        class="inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent p-0 text-sm font-medium text-primary"
-        :class="{ '!text-white': !cargando && !carrito.vacio }"
+        class="accion-pago accion-pago--cancelar"
         :disabled="pagando"
         @click="cancelarCompra"
       >
-        <icon name="x" size="1rem" />{{ t("barra.cancelar") }}
+        <icon name="x" size="1.1rem" /><span>{{ t("barra.cancelar") }}</span>
       </button>
     </div>
 
-    <div v-if="cargando" class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
-      <Skeleton height="28rem" border-radius="1rem" /><Skeleton
-        height="16rem"
-        border-radius="1rem"
-      />
-    </div>
+    <Transition name="entra-pago" mode="out-in" appear>
+      <div v-if="cargando" class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <Skeleton height="28rem" border-radius="1rem" /><Skeleton
+          height="16rem"
+          border-radius="1rem"
+        />
+      </div>
 
-    <div
-      v-else-if="carrito.vacio"
-      class="panel mx-auto flex max-w-xl flex-col items-center gap-3 py-8 text-center"
-    >
-      <icon name="clock" size="2.5rem" class="text-acento-500" />
-      <p class="m-0 font-medium">
-        {{ vencido ? t("pago.vencido") : t("pago.sinCarrito") }}
-      </p>
-      <Button
-        :label="vencido ? t('pago.elegirDeNuevo') : t('pago.buscar')"
-        @click="volver"
-      />
-    </div>
-
-    <div
-      v-else
-      class="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_23rem] lg:gap-6"
-    >
-      <h1
-        class="relative z-[30] m-0 text-2xl font-bold text-white lg:col-span-2"
+      <div
+        v-else-if="carrito.vacio"
+        class="panel mx-auto flex max-w-xl flex-col items-center gap-3 py-8 text-center"
       >
-        {{ t("pago.titulo") }}
-      </h1>
-
-      <!-- Resumen: arriba en móvil, al lado en escritorio -->
-      <aside
-        class="panel relative z-[30] lg:sticky lg:top-20 lg:col-start-2 lg:row-start-2"
-        :aria-label="t('pago.resumen')"
-      >
-        <h2 class="m-0 mb-3 text-base font-semibold">
-          {{ t("pago.resumen") }}
-        </h2>
-        <ResumenCarrito @vencio="vencio" />
-        <div class="mt-4 hidden lg:block">
-          <Button
-            class="boton-compra"
-            size="large"
-            fluid
-            :loading="pagando"
-            @click="enviar"
-          >
-            <icon name="lock" size="1.1rem" /><span>{{
-              pagando
-                ? t("pago.pagando")
-                : t("pago.pagar", {
-                    total: carrito.carrito?.total?.texto ?? "",
-                  })
-            }}</span>
-          </Button>
-        </div>
-        <p class="m-0 mt-3 flex items-center gap-1.5 text-xs text-muted-color">
-          <icon name="shield-check" size="1rem" />{{ t("pago.seguro") }}
+        <icon name="clock" size="2.5rem" class="text-acento-500" />
+        <p class="m-0 font-medium">
+          {{ vencido ? t("pago.vencido") : t("pago.sinCarrito") }}
         </p>
-      </aside>
+        <Button
+          :label="vencido ? t('pago.elegirDeNuevo') : t('pago.buscar')"
+          @click="volver"
+        />
+      </div>
 
-      <FormKit
-        id="pago"
-        v-model="datos"
-        type="form"
-        :actions="false"
-        :incomplete-message="t('pago.revise')"
-        form-class="relative z-[30] flex flex-col gap-4"
-        class="relative z-[30] lg:col-start-1 lg:row-start-2"
-        @submit="pagar"
+      <div
+        v-else
+        class="relative z-[30] grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_23rem] lg:gap-6"
       >
-        <section class="panel">
-          <h2 class="m-0 mb-4 flex items-center gap-2 text-lg font-semibold">
-            <icon name="users" class="text-marca-700" />{{ t("pago.datos") }}
-          </h2>
-          <div class="grid grid-cols-1 gap-x-4 md:grid-cols-2">
-            <FormKit
-              type="InputText"
-              name="nombre"
-              :label="t('pago.nombre')"
-              validation="required"
-              fluid
-              autocomplete="given-name"
-            />
-            <FormKit
-              type="InputText"
-              name="apellido"
-              :label="t('pago.apellido')"
-              fluid
-              autocomplete="family-name"
-            />
-            <FormKit
-              type="InputText"
-              name="email"
-              :label="t('pago.email')"
-              :help="t('pago.emailAyuda')"
-              validation="required|email"
-              fluid
-              autocomplete="email"
-              inputmode="email"
-            />
-            <FormKit
-              type="InputText"
-              name="telefono"
-              :label="t('pago.telefono')"
-              fluid
-              autocomplete="tel"
-              inputmode="tel"
-            />
-            <FormKit
-              type="InputText"
-              name="nit"
-              :label="t('pago.nit')"
-              :help="t('pago.nitAyuda')"
-              validation="required"
-              fluid
-            />
-            <FormKit
-              type="Select"
-              name="nacionalidad"
-              :label="t('pago.nacionalidad')"
-              :options="naciones"
-              show-clear
-              filter
-              fluid
-            />
-            <FormKit
-              type="Select"
-              name="tipoDocumento"
-              :label="t('pago.documento')"
-              :options="documentos"
-              show-clear
-              fluid
-            />
-            <FormKit
-              type="InputText"
-              name="numeroDocumento"
-              :label="t('pago.numeroDocumento')"
-              fluid
-            />
-          </div>
-        </section>
-
-        <section class="panel">
-          <h2 class="m-0 mb-1 flex items-center gap-2 text-lg font-semibold">
-            <icon name="credit-card" class="text-marca-700" />{{
-              t("pago.tarjeta")
-            }}
-          </h2>
-          <p class="m-0 mb-4 text-sm text-muted-color">
-            {{ t("pago.tarjetaAyuda") }}
-          </p>
-          <div class="grid grid-cols-2 gap-x-4">
-            <FormKit
-              type="InputText"
-              name="titular"
-              :label="t('pago.titular')"
-              validation="required"
-              fluid
-              autocomplete="cc-name"
-              outer-class="col-span-2 md:col-span-1"
-            />
-            <FormKit
-              type="InputText"
-              name="numero"
-              :label="t('pago.numero')"
-              validation="required|tarjeta"
-              :validation-rules="{ tarjeta: tarjetaValida }"
-              :validation-messages="{ tarjeta: t('pago.tarjetaInvalida') }"
-              fluid
-              autocomplete="cc-number"
-              inputmode="numeric"
-              outer-class="col-span-2 md:col-span-1"
-            />
-            <FormKit
-              type="InputMask"
-              name="expira"
-              :label="t('pago.vence')"
-              mask="99/99"
-              placeholder="MM/AA"
-              validation="required|vigente"
-              :validation-rules="{ vigente }"
-              :validation-messages="{ vigente: t('pago.venceInvalida') }"
-              fluid
-              autocomplete="cc-exp"
-              inputmode="numeric"
-            />
-            <FormKit
-              type="InputText"
-              name="cvv"
-              :label="t('pago.cvv')"
-              validation="required|cvv"
-              :validation-rules="{ cvv: cvvValido }"
-              :validation-messages="{ cvv: t('pago.cvvInvalido') }"
-              fluid
-              autocomplete="cc-csc"
-              inputmode="numeric"
-              maxlength="4"
-            />
-          </div>
-        </section>
-
-        <section class="panel">
-          <h2 class="m-0 mb-1 flex items-center gap-2 text-lg font-semibold">
-            <icon name="map-pin" class="text-marca-700" />{{
-              t("pago.direccion")
-            }}
-          </h2>
-          <p class="m-0 mb-4 text-sm text-muted-color">
-            {{ t("pago.direccionAyuda") }}
-          </p>
-          <div class="grid grid-cols-1 gap-x-4 md:grid-cols-2">
-            <FormKit
-              type="Select"
-              name="pais"
-              :label="t('pago.pais')"
-              :options="listaPaises"
-              filter
-              validation="required"
-              fluid
-              autocomplete="country"
-            />
-            <FormKit
-              type="InputText"
-              name="region"
-              :label="
-                usaCodigoPostal ? t('pago.regionCodigo') : t('pago.region')
-              "
-              :validation="
-                usaCodigoPostal ? 'required|matches:/^[A-Za-z]{2}$/' : ''
-              "
-              :validation-messages="{ matches: t('pago.regionInvalida') }"
-              fluid
-              autocomplete="address-level1"
-            />
-            <FormKit
-              type="InputText"
-              name="ciudad"
-              :label="t('pago.ciudad')"
-              validation="required"
-              fluid
-              autocomplete="address-level2"
-              maxlength="50"
-            />
-            <FormKit
-              type="InputText"
-              name="direccion"
-              :label="t('pago.calle')"
-              validation="required"
-              fluid
-              autocomplete="address-line1"
-              maxlength="60"
-            />
-            <FormKit
-              v-if="usaCodigoPostal"
-              type="InputText"
-              name="codigoPostal"
-              :label="t('pago.codigoPostal')"
-              validation="required"
-              fluid
-              autocomplete="postal-code"
-              maxlength="10"
-            />
-          </div>
-        </section>
-
-        <Message v-if="error" severity="error" :closable="false">
-          <div class="font-semibold">{{ t("pago.errorTitulo") }}</div>
-          <div class="mt-1">{{ error.titulo }}</div>
-          <div v-if="error.detalle" class="mt-1 text-sm opacity-90">
-            {{ error.detalle }}
-          </div>
-        </Message>
-
-        <p class="m-0 text-center text-xs text-muted-color">
-          <i18n-t keypath="pago.aceptaTerminos" tag="span" scope="global">
-            <template #terminos>
-              <RouterLink
-                :to="{ name: 'politicas', params: { idioma: locale } }"
-                target="_blank"
-                >{{ t("pago.terminos") }}</RouterLink
-              >
-            </template>
-          </i18n-t>
-        </p>
-
-        <!-- Móvil: botón fijo abajo -->
-        <div
-          class="fixed inset-x-0 bottom-0 z-20 border-t border-surface-200 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur lg:hidden"
+        <h1
+          class="relative z-[30] m-0 text-2xl font-bold text-white lg:col-span-2"
         >
-          <Button
-            type="submit"
-            class="boton-compra"
-            size="large"
-            fluid
-            :loading="pagando"
+          {{ t("pago.titulo") }}
+        </h1>
+
+        <!-- Resumen: arriba en móvil, al lado en escritorio -->
+        <aside
+          class="panel relative z-[30] lg:sticky lg:top-20 lg:col-start-2 lg:row-start-2"
+          :aria-label="t('pago.resumen')"
+        >
+          <h2 class="m-0 mb-3 text-base font-semibold">
+            {{ t("pago.resumen") }}
+          </h2>
+          <ResumenCarrito @vencio="vencio" />
+          <div class="mt-4 hidden lg:block">
+            <Button
+              class="boton-compra"
+              size="large"
+              fluid
+              :loading="pagando"
+              @click="enviar"
+            >
+              <icon name="lock" size="1.1rem" /><span>{{
+                pagando
+                  ? t("pago.pagando")
+                  : t("pago.pagar", {
+                      total: carrito.carrito?.total?.texto ?? "",
+                    })
+              }}</span>
+            </Button>
+          </div>
+          <p class="m-0 mt-3 flex items-center gap-1.5 text-xs text-muted-color">
+            <icon name="shield-check" size="1rem" />{{ t("pago.seguro") }}
+          </p>
+        </aside>
+
+        <FormKit
+          id="pago"
+          v-model="datos"
+          type="form"
+          :actions="false"
+          :incomplete-message="t('pago.revise')"
+          form-class="relative z-[30] flex flex-col gap-4"
+          class="relative z-[30] lg:col-start-1 lg:row-start-2"
+          @submit="pagar"
+        >
+          <section class="panel">
+            <h2 class="m-0 mb-4 flex items-center gap-2 text-lg font-semibold">
+              <icon name="users" class="text-marca-700" />{{ t("pago.datos") }}
+            </h2>
+            <div class="grid grid-cols-1 gap-x-4 md:grid-cols-2">
+              <FormKit
+                type="InputText"
+                name="nombre"
+                :label="t('pago.nombre')"
+                validation="required"
+                fluid
+                autocomplete="given-name"
+              />
+              <FormKit
+                type="InputText"
+                name="apellido"
+                :label="t('pago.apellido')"
+                fluid
+                autocomplete="family-name"
+              />
+              <FormKit
+                type="InputText"
+                name="email"
+                :label="t('pago.email')"
+                :help="t('pago.emailAyuda')"
+                validation="required|email"
+                fluid
+                autocomplete="email"
+                inputmode="email"
+              />
+              <FormKit
+                type="InputText"
+                name="telefono"
+                :label="t('pago.telefono')"
+                fluid
+                autocomplete="tel"
+                inputmode="tel"
+              />
+              <FormKit
+                type="InputText"
+                name="nit"
+                :label="t('pago.nit')"
+                :help="t('pago.nitAyuda')"
+                validation="required"
+                fluid
+              />
+              <FormKit
+                type="Select"
+                name="nacionalidad"
+                :label="t('pago.nacionalidad')"
+                :options="naciones"
+                show-clear
+                filter
+                fluid
+              />
+              <FormKit
+                type="Select"
+                name="tipoDocumento"
+                :label="t('pago.documento')"
+                :options="documentos"
+                show-clear
+                fluid
+              />
+              <FormKit
+                type="InputText"
+                name="numeroDocumento"
+                :label="t('pago.numeroDocumento')"
+                fluid
+              />
+            </div>
+          </section>
+
+          <section class="panel">
+            <h2 class="m-0 mb-1 flex items-center gap-2 text-lg font-semibold">
+              <icon name="credit-card" class="text-marca-700" />{{
+                t("pago.tarjeta")
+              }}
+            </h2>
+            <p class="m-0 mb-4 text-sm text-muted-color">
+              {{ t("pago.tarjetaAyuda") }}
+            </p>
+            <div class="grid grid-cols-2 gap-x-4">
+              <FormKit
+                type="InputText"
+                name="titular"
+                :label="t('pago.titular')"
+                validation="required"
+                fluid
+                autocomplete="cc-name"
+                outer-class="col-span-2 md:col-span-1"
+              />
+              <FormKit
+                type="InputText"
+                name="numero"
+                :label="t('pago.numero')"
+                validation="required|tarjeta"
+                :validation-rules="{ tarjeta: tarjetaValida }"
+                :validation-messages="{ tarjeta: t('pago.tarjetaInvalida') }"
+                fluid
+                autocomplete="cc-number"
+                inputmode="numeric"
+                outer-class="col-span-2 md:col-span-1"
+              />
+              <FormKit
+                type="InputMask"
+                name="expira"
+                :label="t('pago.vence')"
+                mask="99/99"
+                placeholder="MM/AA"
+                validation="required|vigente"
+                :validation-rules="{ vigente }"
+                :validation-messages="{ vigente: t('pago.venceInvalida') }"
+                fluid
+                autocomplete="cc-exp"
+                inputmode="numeric"
+              />
+              <FormKit
+                type="InputText"
+                name="cvv"
+                :label="t('pago.cvv')"
+                validation="required|cvv"
+                :validation-rules="{ cvv: cvvValido }"
+                :validation-messages="{ cvv: t('pago.cvvInvalido') }"
+                fluid
+                autocomplete="cc-csc"
+                inputmode="numeric"
+                maxlength="4"
+              />
+            </div>
+          </section>
+
+          <section class="panel">
+            <h2 class="m-0 mb-1 flex items-center gap-2 text-lg font-semibold">
+              <icon name="map-pin" class="text-marca-700" />{{
+                t("pago.direccion")
+              }}
+            </h2>
+            <p class="m-0 mb-4 text-sm text-muted-color">
+              {{ t("pago.direccionAyuda") }}
+            </p>
+            <div class="grid grid-cols-1 gap-x-4 md:grid-cols-2">
+              <FormKit
+                type="Select"
+                name="pais"
+                :label="t('pago.pais')"
+                :options="listaPaises"
+                filter
+                validation="required"
+                fluid
+                autocomplete="country"
+              />
+              <FormKit
+                type="InputText"
+                name="region"
+                :label="
+                  usaCodigoPostal ? t('pago.regionCodigo') : t('pago.region')
+                "
+                :validation="
+                  usaCodigoPostal ? 'required|matches:/^[A-Za-z]{2}$/' : ''
+                "
+                :validation-messages="{ matches: t('pago.regionInvalida') }"
+                fluid
+                autocomplete="address-level1"
+              />
+              <FormKit
+                type="InputText"
+                name="ciudad"
+                :label="t('pago.ciudad')"
+                validation="required"
+                fluid
+                autocomplete="address-level2"
+                maxlength="50"
+              />
+              <FormKit
+                type="InputText"
+                name="direccion"
+                :label="t('pago.calle')"
+                validation="required"
+                fluid
+                autocomplete="address-line1"
+                maxlength="60"
+              />
+              <FormKit
+                v-if="usaCodigoPostal"
+                type="InputText"
+                name="codigoPostal"
+                :label="t('pago.codigoPostal')"
+                validation="required"
+                fluid
+                autocomplete="postal-code"
+                maxlength="10"
+              />
+            </div>
+          </section>
+
+          <Message v-if="error" severity="error" :closable="false">
+            <div class="font-semibold">{{ t("pago.errorTitulo") }}</div>
+            <div class="mt-1">{{ error.titulo }}</div>
+            <div v-if="error.detalle" class="mt-1 text-sm opacity-90">
+              {{ error.detalle }}
+            </div>
+          </Message>
+
+          <p
+            class="m-0 flex items-center gap-3 rounded-2xl border border-surface-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-tarjeta"
           >
-            <icon name="lock" size="1.1rem" /><span>{{
-              pagando
-                ? t("pago.pagando")
-                : t("pago.pagar", {
-                    total: carrito.carrito?.total?.texto ?? "",
-                  })
-            }}</span>
-          </Button>
-        </div>
-      </FormKit>
-    </div>
+            <span
+              class="grid size-8 shrink-0 place-items-center rounded-full bg-marca-50 text-marca-700"
+              ><icon name="info" size="1.1rem"
+            /></span>
+            <i18n-t keypath="pago.aceptaTerminos" tag="span" scope="global">
+              <template #terminos>
+                <RouterLink
+                  :to="{ name: 'politicas', params: { idioma: locale } }"
+                  target="_blank"
+                  class="font-semibold text-marca-700 underline decoration-marca-700/40 underline-offset-2 hover:decoration-marca-700"
+                  >{{ t("pago.terminos") }}</RouterLink
+                >
+              </template>
+            </i18n-t>
+          </p>
+
+          <!-- Móvil: botón fijo abajo -->
+          <div
+            class="fixed inset-x-0 bottom-0 z-20 border-t border-surface-200 bg-white/95 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur lg:hidden"
+          >
+            <Button
+              type="submit"
+              class="boton-compra"
+              size="large"
+              fluid
+              :loading="pagando"
+            >
+              <icon name="lock" size="1.1rem" /><span>{{
+                pagando
+                  ? t("pago.pagando")
+                  : t("pago.pagar", {
+                      total: carrito.carrito?.total?.texto ?? "",
+                    })
+              }}</span>
+            </Button>
+          </div>
+        </FormKit>
+      </div>
+    </Transition>
 
     <Dialog
       :visible="pagando && !desafio"
@@ -588,6 +599,75 @@ function desafiar(
 </script>
 
 <style scoped>
+/* Volver y cancelar. */
+.accion-pago {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border: 1.5px solid var(--color-marca-700);
+  border-radius: 9999px;
+  background: var(--p-content-background);
+  padding: 0.45rem 0.95rem 0.45rem 0.75rem;
+  color: var(--color-marca-700);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.08);
+  transition:
+    background-color 0.15s,
+    color 0.15s,
+    border-color 0.15s,
+    transform 0.15s;
+}
+.accion-pago:hover:not(:disabled) {
+  background: var(--color-marca-700);
+  color: #fff;
+}
+.accion-pago:active:not(:disabled) {
+  transform: scale(0.97);
+}
+.accion-pago:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+.accion-pago:focus-visible {
+  outline: 2px solid var(--color-acento-500);
+  outline-offset: 2px;
+}
+.accion-pago--cancelar {
+  border-color: var(--p-red-600);
+  color: var(--p-red-700);
+}
+.accion-pago--cancelar:hover:not(:disabled) {
+  background: var(--p-red-600);
+  color: #fff;
+}
+/* Sobre el velo oscuro: fondo blanco sólido y sombra para que resalten. */
+.barra-pago--velo .accion-pago {
+  border-color: transparent;
+  box-shadow: 0 4px 14px -4px rgb(0 0 0 / 0.45);
+}
+.barra-pago--velo .accion-pago--cancelar {
+  background: var(--p-red-50);
+}
+
+/* Entrada al formulario de pago: sube y aparece. */
+.entra-pago-enter-active {
+  transition:
+    opacity 0.35s ease,
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.entra-pago-leave-active {
+  transition: opacity 0.15s ease;
+}
+.entra-pago-enter-from {
+  opacity: 0;
+  transform: translateY(1.25rem) scale(0.99);
+}
+.entra-pago-leave-to {
+  opacity: 0;
+}
+
 .velo-enter-active,
 .velo-leave-active {
   transition: opacity 0.25s ease;

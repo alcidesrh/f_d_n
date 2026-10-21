@@ -125,6 +125,8 @@ final class ConsultaReportes
         $qb = $this->em->createQueryBuilder()->select("e.id", "e.nombre", "e.departamento")->from(Estacion::class, "e")->orderBy("e.nombre");
         if ($soloId !== null) {
             $qb->andWhere("e.id = :id")->setParameter("id", $soloId);
+        } else {
+            $qb->andWhere("e.activo = true");
         }
 
         return array_map(static fn(array $r) => ["id" => (int) $r["id"], "nombre" => (string) $r["nombre"], "departamento" => $r["departamento"]], $qb->getQuery()->getArrayResult());
