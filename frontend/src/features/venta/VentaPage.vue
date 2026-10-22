@@ -327,7 +327,23 @@ const lineas = computed(() => {
 });
 
 onMounted(async () => {
+  // Llegó desde una salida del calendario: su día y la salida elegida.
+  const fechaPedida = String(route.query.fecha ?? "");
+  const salidaPedida = Number(route.query.salida ?? 0);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(fechaPedida)) {
+    const [y, m, d] = fechaPedida.split("-").map(Number);
+    store.fecha = new Date(y!, m! - 1, d!);
+  }
   if (!store.contexto) await store.iniciar();
+  if (Number.isInteger(salidaPedida) && salidaPedida > 0) {
+    // Sin el filtro de taquilla ni de empresa, la salida aparece en la lista aunque no pase por esta estación.
+    store.estacionId = null;
+    store.destinoId = null;
+    store.empresaIds = [];
+    await store.cargarSalidas();
+    await router.replace({ query: { ...route.query, salida: undefined, fecha: undefined } });
+    await store.elegirSalida(salidaPedida);
+  } else if (fechaPedida) await store.cargarSalidas();
   // Llegó desde un listado de boletos con «Reasignar».
   const ids = String(route.query.reasignar ?? "")
     .split(",")

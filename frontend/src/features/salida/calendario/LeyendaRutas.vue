@@ -1,44 +1,29 @@
 <!--
-  Leyenda del calendario: el color de cada ruta con salidas en la ventana y
-  cuántas tiene. Pasar sobre una (o enfocarla) resalta sus salidas; pulsarla
-  filtra el calendario por esa ruta (y otra vez, la quita).
+  Leyenda del calendario: cada ruta con salidas en la ventana y cuántas tiene.
+  Pasar sobre una resalta sus salidas y atenúa las demás; pulsarla fija ese
+  resaltado hasta que se vuelva a pulsar. El filtro por ruta está en los controles.
 -->
 <template>
   <div v-if="store.rutas.length" class="leyenda" role="list" aria-label="Rutas">
-    <button
-      v-for="e in visibles"
-      :key="e.ruta.id"
-      type="button"
-      role="listitem"
-      class="leyenda__item"
-      :class="{ 'leyenda__item--activa': store.ruta === e.ruta.id }"
-      :style="{ '--tono': e.tono }"
-      :title="e.ruta.nombre"
-      :aria-pressed="store.ruta === e.ruta.id"
-      @mouseenter="store.resaltada = e.ruta.id"
-      @mouseleave="store.resaltada = null"
-      @focus="store.resaltada = e.ruta.id"
-      @blur="store.resaltada = null"
-      @click="store.ruta = store.ruta === e.ruta.id ? null : e.ruta.id"
-    >
+    <button v-for="e in visibles" :key="e.ruta.id" type="button" role="listitem" class="leyenda__item" :class="{ 'leyenda__item--activa': store.fijada === e.ruta.id }" :title="e.ruta.nombre" :aria-pressed="store.fijada === e.ruta.id" @mouseenter="store.resaltada = e.ruta.id" @mouseleave="store.resaltada = null" @focus="store.resaltada = e.ruta.id" @blur="store.resaltada = null" @click="store.fijada = store.fijada === e.ruta.id ? null : e.ruta.id">
       <span class="leyenda__color" />
       <span class="truncate">{{ puntas(e.ruta) }}</span>
       <span class="tabular-nums text-muted-color">{{ e.salidas }}</span>
     </button>
     <button v-if="store.rutas.length > LIMITE" type="button" class="leyenda__mas" @click="todas = !todas">
-      {{ todas ? 'Menos' : `+${store.rutas.length - LIMITE} rutas` }}
+      {{ todas ? "Menos" : `+${store.rutas.length - LIMITE} rutas` }}
     </button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { puntas } from '@/core/salida/calendario'
-import { useCalendarioSalidasStore } from './store'
+import { puntas } from "@/core/salida/calendario";
+import { useCalendarioSalidasStore } from "./store";
 
-const LIMITE = 12
-const store = useCalendarioSalidasStore()
-const todas = ref(false)
-const visibles = computed(() => (todas.value ? store.rutas : store.rutas.slice(0, LIMITE)))
+const LIMITE = 12;
+const store = useCalendarioSalidasStore();
+const todas = ref(false);
+const visibles = computed(() => (todas.value ? store.rutas : store.rutas.slice(0, LIMITE)));
 </script>
 
 <style scoped>
@@ -74,18 +59,19 @@ const visibles = computed(() => (todas.value ? store.rutas : store.rutas.slice(0
 }
 .leyenda__item:hover,
 .leyenda__item:focus-visible {
-  border-color: light-dark(hsl(calc(var(--tono) * 1deg) 60% 45%), hsl(calc(var(--tono) * 1deg) 60% 65%));
+  border-color: var(--p-surface-400);
 }
 .leyenda__item--activa {
-  background: light-dark(hsl(calc(var(--tono) * 1deg) 70% 93%), hsl(calc(var(--tono) * 1deg) 30% 22%));
-  border-color: light-dark(hsl(calc(var(--tono) * 1deg) 60% 45%), hsl(calc(var(--tono) * 1deg) 60% 65%));
+  background: var(--p-surface-100);
+  /*border-color: var(--p-primary-400);*/
+  border: 3px dashed var(--p-primary-500);
 }
 .leyenda__color {
   width: 0.75rem;
   height: 0.75rem;
   flex: none;
   border-radius: 0.2rem;
-  background: light-dark(hsl(calc(var(--tono) * 1deg) 62% 48%), hsl(calc(var(--tono) * 1deg) 60% 62%));
+  background: var(--p-surface-500);
 }
 .leyenda__mas {
   padding: 0.2rem 0.55rem;

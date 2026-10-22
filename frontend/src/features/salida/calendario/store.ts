@@ -32,8 +32,12 @@ export const useCalendarioSalidasStore = defineStore(
     const datos = shallowRef<Calendario | null>(null)
     const cargando = ref(false)
     const error = ref('')
-    /** Ruta que se resalta (al pasar sobre la leyenda o una salida): las demás se atenúan. */
+    /** Ruta resaltada al pasar sobre la leyenda: las demás salidas se atenúan. */
     const resaltada = ref<number | null>(null)
+    /** Ruta fijada al pulsarla en la leyenda: su resaltado no cambia hasta que se vuelva a pulsar. */
+    const fijada = ref<number | null>(null)
+    /** Lo que se muestra: la ruta fijada manda sobre el paso del puntero. */
+    const resaltadaEfectiva = computed(() => fijada.value ?? resaltada.value)
     const ahora = ref(new Date())
 
     const filtro = computed(() => ({ fecha: fecha.value, dias: dias.value, estados: estados.value, empresa: empresa.value, ruta: ruta.value, bus: bus.value }))
@@ -121,6 +125,8 @@ export const useCalendarioSalidasStore = defineStore(
       cargando,
       error,
       resaltada,
+      fijada,
+      resaltadaEfectiva,
       ahora,
       filtro,
       columnas,

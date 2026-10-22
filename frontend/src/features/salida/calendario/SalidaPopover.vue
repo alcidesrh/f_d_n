@@ -67,6 +67,9 @@
             <template #icon><icon name="how-to-reg-outline" class="mr-1" /></template>
           </Button>
         </RouterLink>
+        <Button v-if="puedeEmitir" label="Emitir boleto" size="small" @click="emitir">
+          <template #icon><icon name="confirmation-number-outline" class="mr-1" /></template>
+        </Button>
         <Button label="Ver croquis" size="small" severity="secondary" outlined @click="ver">
           <template #icon><icon name="airline-seat-recline-normal" class="mr-1" /></template>
         </Button>
@@ -79,6 +82,7 @@
 import { useAccesoStore } from '@/core/acceso/store'
 import { etiquetaCroquis } from '@/core/salida/buses'
 import { detalleOcupacion, fraccion, puntas, tonoRuta } from '@/core/salida/calendario'
+import { aDia } from '@/core/salida/filtro'
 import { fetchDetalle } from '@/core/salida/api'
 import { etiquetaEstado } from '@/core/salida/filtro'
 import type { ResumenSalida, SalidaCalendario } from '@/core/salida/types'
@@ -93,6 +97,7 @@ const emit = defineEmits<{
 
 const store = useCalendarioSalidasStore()
 const acceso = useAccesoStore()
+const router = useRouter()
 const popover = ref<InstanceType<typeof import('primevue/popover').default> | null>(null)
 const s = shallowRef<SalidaCalendario | null>(null)
 const resumen = shallowRef<ResumenSalida | null>(null)
@@ -105,6 +110,8 @@ const molde = computed(() => (bus.value?.croquisId ? store.croquisPorId.get(bus.
 const puedeChequear = computed(
   () => !!s.value && ['programada', 'abordando', 'iniciada'].includes(s.value.estado) && acceso.puede(['boleto.chequear', 'salida.abordar', 'salida.iniciar', 'salida.finalizar']),
 )
+/** Emitir un boleto: solo en salidas que aún no partieron, con el permiso de vender. */
+const puedeEmitir = computed(() => !!s.value && ['programada', 'abordando'].includes(s.value.estado) && acceso.puede('venta.vender'))
 const canales = computed(() => {
   const c = resumen.value?.canales
   return c
@@ -136,6 +143,13 @@ async function abrir(evento: Event, salida: SalidaCalendario) {
   } finally {
     if (mio === pedido) cargando.value = false
   }
+}
+
+/** La venta abre con esta salida elegida (`/venta?salida=&fecha=`). */
+function emitir() {
+  const actual = s.value
+  popover.value?.hide()
+  if (actual) void router.push({ name: 'venta', query: { salida: actual.id, fecha: aDia(new Date(actual.fecha)) } })
 }
 
 function ver() {
