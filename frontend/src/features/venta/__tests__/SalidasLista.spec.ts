@@ -14,7 +14,7 @@ const salida = (id: number, extra: Partial<SalidaResumen> = {}): SalidaResumen =
   estado: 'programada',
   empresa: { id: 1, nombre: 'Fuente del Norte' },
   bus: { id: 7, codigo: 'B-07', gama: 'Oro' },
-  ruta: { id: 3, nombre: 'Guatemala - Flores', origen: { id: 1, nombre: 'Guatemala' }, destino: { id: 2, nombre: 'Flores' } },
+  ruta: { id: 3, nombre: 'Guatemala - Flores', origen: { id: 1, nombre: 'Guatemala', alias: 'GUA' }, destino: { id: 2, nombre: 'Flores', alias: 'FLO' } },
   vendidos: 12,
   capacidad: 40,
   precios: [
@@ -32,7 +32,7 @@ describe('SalidasLista', () => {
     const w = montar([salida(1), salida(2, { bus: null, vendidos: null })])
     const filas = w.findAll('.dg-brow')
     expect(filas).toHaveLength(2)
-    expect(filas[0]!.findAll('.ruta .truncate').map((l) => l.text())).toEqual(['Guatemala', 'Flores'])
+    expect(filas[0]!.findAll('.ruta .truncate').map((l) => l.text())).toEqual(['GUA - FLO', 'Guatemala-Flores'])
     expect(filas[0]!.find('.precios').text()).toBe('A Q 100B Q 125.50')
     expect(filas[0]!.find('.asientos__total').exists()).toBe(false)
     expect(filas[0]!.text()).toContain('B-07')
@@ -63,7 +63,7 @@ describe('SalidasLista', () => {
     expect(celdas[3]!.text()).toContain('Aguilar Batres')
     expect(celdas[3]!.text()).toContain('≈ 05:20')
     expect(celdas[3]!.text()).not.toContain('+1')
-    expect(fila.findAll('.ruta .truncate').map((l) => l.text())).toEqual(['Guatemala', 'Flores'])
+    expect(fila.findAll('.ruta .truncate').map((l) => l.text())).toEqual(['GUA - FLO', 'Guatemala-Flores'])
     expect(fila.find('.bus-mov--sale').exists()).toBe(true)
     expect(fila.find('.bus-mov--llega').exists()).toBe(true)
     expect(fila.text()).not.toContain('llega')

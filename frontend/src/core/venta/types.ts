@@ -38,8 +38,9 @@ export interface ContextoVenta {
 export interface RutaVenta {
   id: number
   nombre: string
-  origen: Opcion
-  destino: Opcion
+  /** `alias`: la sigla de la estación (GUA, SEP); sin ella, se muestra el nombre. */
+  origen: Opcion & { alias: string | null }
+  destino: Opcion & { alias: string | null }
 }
 
 /** Una punta del viaje del cliente: hora null si no se conoce; `aprox` si es estimada. */

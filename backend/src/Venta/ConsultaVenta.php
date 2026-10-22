@@ -410,8 +410,8 @@ final class ConsultaVenta
             "ruta" => [
                 "id" => $r->getRuta()->getId(),
                 "nombre" => $r->getRuta()->getNombre(),
-                "origen" => ["id" => $r->getRuta()->getOrigen()?->getId(), "nombre" => $r->getRuta()->getOrigen()?->getNombre()],
-                "destino" => ["id" => $r->getRuta()->getDestino()?->getId(), "nombre" => $r->getRuta()->getDestino()?->getNombre()],
+                "origen" => ["id" => $r->getRuta()->getOrigen()?->getId(), "nombre" => $r->getRuta()->getOrigen()?->getNombre(), "alias" => $r->getRuta()->getOrigen()?->getAlias()],
+                "destino" => ["id" => $r->getRuta()->getDestino()?->getId(), "nombre" => $r->getRuta()->getDestino()?->getNombre(), "alias" => $r->getRuta()->getDestino()?->getAlias()],
             ],
             "vendidos" => $ocupados[$r->getId()] ?? 0,
             "capacidad" => $busId !== null ? ($capacidad[$busId] ?? null) : null,

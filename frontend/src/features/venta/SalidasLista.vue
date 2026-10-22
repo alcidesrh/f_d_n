@@ -7,8 +7,8 @@
   vendidos/libres (el bus solo en la tabla). La salida elegida queda resaltada.
 
   El viaje es el del cliente (ADR-030): "Sube en" y "Baja en" con la hora en
-  cada parada ("≈" si es estimada, "+1" si llega otro día); la ruta del bus,
-  La tabla abre con la hora de salida y sigue con la ruta del bus, sin horas. Una salida sin
+  cada parada ("≈" si es estimada, "+1" si llega otro día), con el nombre debajo.
+  La ruta del bus, por siglas y debajo los nombres. Una salida sin
   tarifa para ese viaje lo dice en el precio y no se puede elegir.
 -->
 <template>
@@ -24,20 +24,16 @@
 
     <template #cell="{ row, column }">
       <div v-if="column.key === 'sube' || column.key === 'baja'" class="celda min-w-0 leading-tight">
-        <div class="truncate" :title="punta(s(row), column.key).nombre ?? ''">{{ punta(s(row), column.key).nombre ?? "—" }}</div>
-        <div class="truncate text-xs tabular-nums text-muted-color">{{ horaPunta(s(row), column.key) }}</div>
+        <div class="truncate tabular-nums">{{ horaPunta(s(row), column.key) }}</div>
+        <div class="truncate text-xs text-muted-color" :title="punta(s(row), column.key).nombre ?? ''">{{ punta(s(row), column.key).nombre ?? "—" }}</div>
       </div>
       <div v-else-if="column.key === 'hora'" class="celda">
         <div class="tracking-wide text-center tabular-nums whitespace-nowrap">{{ hora(s(row).salida) }}</div>
         <div class="text-xs tabular-nums text-muted-color whitespace-nowrap">{{ fecha(s(row).salida) }}</div>
       </div>
       <div v-else-if="column.key === 'ruta'" class="celda ruta min-w-0 leading-tight">
-        <div class="ruta__punta" :title="`Sale de ${rutaInicio(s(row))}`">
-          <span class="truncate">{{ rutaInicio(s(row)) }}</span>
-        </div>
-        <div class="ruta__punta" :title="`Llega a ${rutaFin(s(row))}`">
-          <span class="truncate">{{ rutaFin(s(row)) }}</span>
-        </div>
+        <div class="truncate" :title="rutaNombres(s(row))">{{ rutaSiglas(s(row)) }}</div>
+        <div class="truncate text-xs tabular-nums text-muted-color" :title="rutaNombres(s(row))">{{ rutaNombres(s(row)) }}</div>
       </div>
       <GridText v-else-if="column.key === 'empresa'" class="celda text-[0.9rem]!" :text="nombreEmpresa(s(row))" />
       <template v-else-if="column.key === 'bus'">
@@ -94,7 +90,7 @@ import DataGrid from "@/shared/data-grid/DataGrid.vue";
 import GridText from "@/shared/data-grid/GridText.vue";
 import type { GridColumn } from "@/shared/data-grid/types";
 import { diasEntre, fecha, hora, horaViaje } from "@/core/venta/modelo";
-import type { Importe, ParadaViaje, SalidaResumen } from "@/core/venta/types";
+import type { Importe, Opcion, ParadaViaje, SalidaResumen } from "@/core/venta/types";
 
 const props = defineProps<{
   salidas: SalidaResumen[];
@@ -151,6 +147,11 @@ const viaje = (r: SalidaResumen) => `${punta(r, "sube").nombre ?? ""} → ${punt
 /** Origen y destino de la ruta del bus, sin horas: las dos líneas de la celda Ruta. */
 const rutaInicio = (r: SalidaResumen) => r.ruta.origen.nombre ?? "";
 const rutaFin = (r: SalidaResumen) => r.ruta.destino.nombre ?? "";
+/** "GUA - FLO": la sigla de cada punta de la ruta del bus (el nombre, si no tiene). */
+const rutaSiglas = (r: SalidaResumen) => `${etiqueta(r.ruta.origen)} - ${etiqueta(r.ruta.destino)}`;
+/** "Guatemala-Flores": los nombres completos, debajo de las siglas y en el tooltip. */
+const rutaNombres = (r: SalidaResumen) => `${r.ruta.origen.nombre}-${r.ruta.destino.nombre}`;
+const etiqueta = (o: Opcion & { alias: string | null }) => o.alias || o.nombre;
 /** "Guatemala → Flores": la ruta entera, para la tarjeta. */
 const ruta = (r: SalidaResumen) => `${rutaInicio(r)} → ${rutaFin(r)}`;
 /** "TRANSPORTES FUENTES" → "Transportes Fuentes". */
@@ -213,13 +214,6 @@ const precioCorto = (p: Importe | null) => (p ? p.texto.replace(/[.,]00$/, "") :
   }
 }
 
-/* Ruta: bus que sale (origen) y bus que llega (destino) delante de cada punta. */
-.ruta__punta {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 0.375rem;
-}
 .bus-mov {
   position: relative;
   display: inline-flex;
