@@ -7,7 +7,7 @@
  *   diálogo con props `ids` (los ids numéricos) y `visible`, o ejecutan algo
  *   directamente (`ejecutar`) o llevan a otra pantalla (`ruta`).
  * - En la barra (`entityListLinks`): llevan a una pantalla propia de la
- *   entidad (p. ej. la jerarquía de roles).
+ *   entidad (p. ej. el editor de roles).
  */
 import type { RouteLocationRaw } from 'vue-router'
 import type { EntityFormLoader } from '../form/formOverrides'
@@ -48,7 +48,8 @@ export interface EntityListLink {
 
 /** Clave = nombre de la entidad en PascalCase. */
 export const entityListLinks: Record<string, EntityListLink[]> = {
-  Role: [{ key: 'jerarquia', label: 'Jerarquía de roles', icon: 'account-tree-outline', to: { name: 'rol-jerarquia' } }],
+  Role: [{ key: 'roles', label: 'Editar roles y capacidades', icon: 'badge-outline', to: { name: 'acceso-roles' } }],
+  Usuario: [{ key: 'accesos', label: '¿Quién puede?', icon: 'shield-person-outline', to: { name: 'accesos' } }],
 }
 
 /** Entidades cuyo listado no ofrece editar ni eliminar (solo sus acciones propias). */
@@ -71,6 +72,12 @@ const bitacoraBoleto: EntityListAction = {
 /** Clave = nombre de la entidad en PascalCase. */
 export const entityListActions: Record<string, EntityListAction[]> = {
   Usuario: [
+    {
+      key: 'accesos',
+      label: 'Accesos (roles y alcance)',
+      icon: 'shield-person-outline',
+      component: () => import('@/features/usuario/AccesosAccion.vue'),
+    },
     {
       key: 'password',
       label: 'Cambiar contraseña',

@@ -48,3 +48,27 @@ describe('bitácora: detalle legible', () => {
     expect(quien({ usuario: null, detalle: null })).toBe('Sistema')
   })
 })
+
+describe('bitácora de accesos (ADR-039)', () => {
+  it('una asignación otorgada: rol, alcance, vigencia y motivo', () => {
+    const lineas = lineasDeDetalle('usuario', {
+      operacion: 'asignacion_otorgada',
+      detalle: { rol: 'ROLE_VENDEDOR_BOLETOS', empresas: [1, 2], estaciones: 'todas', hasta: '2026-12-31', motivo: 'Suplencia' },
+    })
+
+    expect(lineas).toEqual(['ROLE_VENDEDOR_BOLETOS · empresas 1, 2 · todas las estaciones', 'Vigencia: … a 2026-12-31', 'Motivo: Suplencia'])
+  })
+
+  it('una modificación muestra antes y ahora', () => {
+    const lineas = lineasDeDetalle('usuario', {
+      operacion: 'asignacion_modificada',
+      detalle: { antes: { rol: 'A', empresas: [1], estaciones: [3] }, ahora: { rol: 'A', empresas: [1], estaciones: [3, 4] } },
+    })
+
+    expect(lineas).toEqual(['Antes: A · empresas 1 · estaciones 3', 'Ahora: A · empresas 1 · estaciones 3, 4'])
+  })
+
+  it('un rol modificado: lo que agrega y quita', () => {
+    expect(lineasDeDetalle('rol', { operacion: 'modificado', detalle: { nombre: 'Vendedor', agregadas: ['boleto.ver'], quitadas: null } })).toEqual(['Vendedor', 'Agrega: boleto.ver'])
+  })
+})

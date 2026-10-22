@@ -19,7 +19,8 @@ use Doctrine\ORM\QueryBuilder;
 /**
  * Lecturas de encomiendas (ADR-035): el listado con filtros, las salidas de
  * una estación para procesar y, por salida, lo que va a bordo y lo que espera
- * en bodega. `$empresaId` limita a una empresa (usuario con empresa).
+ * en bodega. `$empresas` limita a esas empresas (el alcance de quien consulta,
+ * ADR-039); null = todas.
  */
 final class ConsultaEncomiendas
 {
@@ -37,14 +38,14 @@ final class ConsultaEncomiendas
      *
      * @return array{items: list<array<string, mixed>>, total: int, pagina: int, porPagina: int}
      */
-    public function listado(array $f, ?int $empresaId): array
+    public function listado(array $f, ?array $empresas): array
     {
         $porPagina = (int) ($f["porPagina"] ?? 25);
         $porPagina = in_array($porPagina, self::POR_PAGINA, true) ? $porPagina : 25;
         $pagina = max(1, (int) ($f["pagina"] ?? 1));
 
         $qb = $this->em->createQueryBuilder()->from(Encomienda::class, "e");
-        $this->filtrar($qb, $f, $empresaId);
+        $this->filtrar($qb, $f, $empresas);
 
         $total = (int) (clone $qb)->select("COUNT(e.id)")->getQuery()->getSingleScalarResult();
         /** @var list<int> $ids */
@@ -63,7 +64,7 @@ final class ConsultaEncomiendas
      *
      * @return list<array<string, mixed>>
      */
-    public function salidasDeEstacion(\DateTimeImmutable $dia, Estacion $estacion, ?int $empresaId, ?int $destino = null): array
+    public function salidasDeEstacion(\DateTimeImmutable $dia, Estacion $estacion, ?array $empresas, ?int $destino = null): array
     {
         $qb = $this->em->createQueryBuilder()
             ->select("sp", "s", "r", "b", "em")
@@ -78,8 +79,8 @@ final class ConsultaEncomiendas
             ->setParameter("hasta", $dia->setTime(0, 0)->modify("+1 day"))
             ->setParameter("cancelada", EstadoSalida::CANCELADA->value)
             ->orderBy("sp.hora", "ASC");
-        if ($empresaId !== null) {
-            $qb->andWhere("s.empresa = :empresa")->setParameter("empresa", $empresaId);
+        if ($empresas !== null) {
+            $qb->andWhere("s.empresa IN (:empresas)")->setParameter("empresas", $empresas);
         }
         /** @var list<SalidaParada> $paradas */
         $paradas = $qb->getQuery()->getResult();
@@ -90,7 +91,7 @@ final class ConsultaEncomiendas
 
         $aBordo = $this->contarPorSalida($salidaIds, null);
         $bajan = $this->contarPorSalida($salidaIds, (int) $estacion->getId());
-        $bodega = $this->enBodega($estacion, $empresaId);
+        $bodega = $this->enBodega($estacion, $empresas);
 
         return array_map(function (SalidaParada $p) use ($aBordo, $bajan, $bodega, $estacion, $destino) {
             $s = $p->getSalida();
@@ -125,7 +126,7 @@ final class ConsultaEncomiendas
      *
      * @return array<string, mixed>
      */
-    public function procesar(Salida $salida, Estacion $estacion, ?int $empresaId): array
+    public function procesar(Salida $salida, Estacion $estacion, ?array $empresas): array
     {
         $paradas = RutasEncomienda::paradasDeSalida($salida);
         $ids = array_column($paradas, "id");
@@ -143,7 +144,7 @@ final class ConsultaEncomiendas
             ->getQuery()->getScalarResult(), "id"));
 
         // Lo que la salida puede subir aquí: lo de su empresa, si sigue más adelante.
-        $bodega = $posicion !== false && $posicion < count($ids) - 1 && ($empresaId === null || $empresaId === $salida->getEmpresa()?->getId())
+        $bodega = $posicion !== false && $posicion < count($ids) - 1 && ($empresas === null || in_array($salida->getEmpresa()?->getId(), $empresas, true))
             ? array_column($this->enBodega($estacion, $salida->getEmpresa()?->getId()), "id")
             : [];
 
@@ -176,9 +177,9 @@ final class ConsultaEncomiendas
      *
      * @return list<array<string, mixed>>
      */
-    public function pendientesEnvio(Estacion $estacion, ?int $empresaId): array
+    public function pendientesEnvio(Estacion $estacion, ?array $empresas): array
     {
-        return $this->filas(array_slice(array_column($this->enBodega($estacion, $empresaId), "id"), 0, self::MAX_PENDIENTES));
+        return $this->filas(array_slice(array_column($this->enBodega($estacion, $empresas), "id"), 0, self::MAX_PENDIENTES));
     }
 
     /**
@@ -188,7 +189,7 @@ final class ConsultaEncomiendas
      *
      * @return list<array<string, mixed>>
      */
-    public function pendientesEntrega(Estacion $estacion, ?int $empresaId, ?string $q = null): array
+    public function pendientesEntrega(Estacion $estacion, ?array $empresas, ?string $q = null): array
     {
         $qb = $this->em->createQueryBuilder()
             ->select("e.id", "IDENTITY(e.salida) AS salida")
@@ -199,7 +200,7 @@ final class ConsultaEncomiendas
             ->setParameter("desembarcada", EstadoEncomienda::DESEMBARCADA->value)
             ->setParameter("transito", EstadoEncomienda::TRANSITO->value)
             ->orderBy("e.id", "ASC");
-        $this->filtrar($qb, ["q" => $q], $empresaId);
+        $this->filtrar($qb, ["q" => $q], $empresas);
 
         $aqui = (int) $estacion->getId();
         $paradas = [];
@@ -291,7 +292,7 @@ final class ConsultaEncomiendas
      *
      * @return list<array{id: int, destino: int, empresa: int}>
      */
-    private function enBodega(Estacion $estacion, ?int $empresaId): array
+    private function enBodega(Estacion $estacion, ?array $empresas): array
     {
         $qb = $this->em->createQueryBuilder()
             ->select("e.id", "IDENTITY(e.destino) AS destino", "IDENTITY(e.empresa) AS empresa")
@@ -300,8 +301,8 @@ final class ConsultaEncomiendas
             ->setParameter("estacion", $estacion)
             ->setParameter("estados", [EstadoEncomienda::RECIBIDA->value, EstadoEncomienda::DESEMBARCADA->value])
             ->orderBy("e.id", "ASC");
-        if ($empresaId !== null) {
-            $qb->andWhere("e.empresa = :empresa")->setParameter("empresa", $empresaId);
+        if ($empresas !== null) {
+            $qb->andWhere("e.empresa IN (:empresas)")->setParameter("empresas", $empresas);
         }
 
         return array_map(static fn(array $r) => ["id" => (int) $r["id"], "destino" => (int) $r["destino"], "empresa" => (int) $r["empresa"]], $qb->getQuery()->getScalarResult());
@@ -335,10 +336,10 @@ final class ConsultaEncomiendas
     }
 
     /** @param array<string, mixed> $f */
-    private function filtrar(QueryBuilder $qb, array $f, ?int $empresaId): void
+    private function filtrar(QueryBuilder $qb, array $f, ?array $empresas): void
     {
-        if ($empresaId !== null) {
-            $qb->andWhere("e.empresa = :empresa")->setParameter("empresa", $empresaId);
+        if ($empresas !== null) {
+            $qb->andWhere("e.empresa IN (:empresas)")->setParameter("empresas", $empresas);
         }
         $q = trim((string) ($f["q"] ?? ""));
         if ($q !== "") {

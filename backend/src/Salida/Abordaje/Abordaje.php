@@ -5,6 +5,10 @@ declare(strict_types=1);
 namespace App\Salida\Abordaje;
 
 use App\Encomienda\MovimientosEncomienda;
+use App\Acceso\Autorizacion;
+use App\Acceso\Capacidad;
+use App\Acceso\Ubicacion;
+use App\Acceso\Ubicador;
 use App\Entity\BoletoAsiento;
 use App\Entity\BoletoVenta;
 use App\Entity\Cliente;
@@ -46,6 +50,7 @@ final class Abordaje
         private readonly ClockInterface $reloj,
         private readonly Disponibilidad $disponibilidad,
         private readonly MovimientosEncomienda $encomiendas,
+        private readonly Autorizacion $autorizacion,
     ) {}
 
     /**
@@ -77,10 +82,10 @@ final class Abordaje
             ->getResult();
 
         $estacion = $this->estacionDe($usuario);
-        $visibles = array_filter($salidas, static function (Salida $s) use ($estacion) {
+        $visibles = array_filter($salidas, function (Salida $s) use ($estacion, $usuario) {
             $enclaves = array_map(static fn(Parada $p) => (int) $p->getEnclave()->getId(), $s->getRuta()->getParadas()->toArray());
 
-            return $enclaves !== [] && ReglasAbordaje::visibleEnSelector($s->getEstado(), $estacion, array_shift($enclaves), $enclaves);
+            return $enclaves !== [] && $this->alcanza($s, $usuario) && ReglasAbordaje::visibleEnSelector($s->getEstado(), $estacion, array_shift($enclaves), $enclaves);
         });
 
         return array_values(array_map($this->vistaSalida(...), $visibles));
@@ -96,6 +101,9 @@ final class Abordaje
     public function detalle(int $salidaId, Usuario $usuario): array
     {
         $salida = $this->salida($salidaId);
+        if (!$this->alcanza($salida, $usuario)) {
+            throw new SalidaRechazada("Fuera de su alcance: esta salida no es de sus empresas o estaciones.", "alcance", 403);
+        }
         $estacion = $this->estacionDe($usuario);
         $motivo = null;
         try {
@@ -145,6 +153,7 @@ final class Abordaje
     {
         $this->transaccion->ejecutar(function () use ($salidaId, $usuario) {
             $salida = $this->bloquear($salidaId);
+            $this->exigirAlcance(Capacidad::SALIDA_ABORDAR, $salida, $usuario);
             $this->exigirDesdeElOrigen($salida, $usuario, "poner la salida a abordar");
             ReglasAbordaje::exigirAbordable($salida->getEstado(), $salida->getFecha(), $this->reloj->now());
             $salida->setEstado(EstadoSalida::ABORDANDO);
@@ -169,6 +178,7 @@ final class Abordaje
         [$si, $no] = ReglasAbordaje::seleccion($si, $no);
         $resultado = $this->transaccion->ejecutar(function () use ($salidaId, $si, $no, $usuario) {
             $salida = $this->bloquear($salidaId);
+            $this->exigirAlcance(Capacidad::BOLETO_CHEQUEAR, $salida, $usuario);
             ReglasAbordaje::exigirChequeable($salida->getEstado(), $salida->getFecha(), $this->reloj->now());
             $estacion = $this->estacionDe($usuario);
 
@@ -285,6 +295,7 @@ final class Abordaje
     {
         $conteo = $this->transaccion->ejecutar(function () use ($salidaId, $usuario) {
             $salida = $this->bloquear($salidaId);
+            $this->exigirAlcance(Capacidad::SALIDA_INICIAR, $salida, $usuario);
             $this->exigirDesdeElOrigen($salida, $usuario, "iniciar la salida");
             ReglasAbordaje::exigirIniciable($salida->getEstado());
             $salida->setEstado(EstadoSalida::INICIADA);
@@ -328,6 +339,7 @@ final class Abordaje
     {
         $conteo = $this->transaccion->ejecutar(function () use ($salidaId, $usuario) {
             $salida = $this->bloquear($salidaId);
+            $this->exigirAlcance(Capacidad::SALIDA_FINALIZAR, $salida, $usuario);
             $destino = $salida->getRuta()?->getDestino();
             ReglasAbordaje::exigirDesdeElDestino($this->estacionDe($usuario), (int) $destino?->getId(), (string) $destino?->getNombre(), "finalizar la salida");
             ReglasAbordaje::exigirFinalizable($salida->getEstado());
@@ -381,6 +393,38 @@ final class Abordaje
     {
         $origen = $salida->getRuta()?->getOrigen();
         ReglasAbordaje::exigirDesdeElOrigen($this->estacionDe($usuario), (int) $origen?->getId(), (string) $origen?->getNombre(), $operacion);
+    }
+
+    /**
+     * Alcance (ADR-039): la capacidad sobre la empresa de la salida y desde
+     * donde opera el usuario (su estación de trabajo, o su agencia).
+     *
+     * @throws SalidaRechazada
+     */
+    private function exigirAlcance(Capacidad $capacidad, Salida $salida, Usuario $usuario): void
+    {
+        if (!$this->autorizacion->de($usuario)->puede($capacidad->value, $this->donde($salida, $usuario))) {
+            throw new SalidaRechazada(Autorizacion::mensaje($capacidad, Ubicacion::ninguna()), "alcance", 403);
+        }
+    }
+
+    /** Puede hacer algo del abordaje con esta salida. */
+    private function alcanza(Salida $salida, Usuario $usuario): bool
+    {
+        $permisos = $this->autorizacion->de($usuario);
+        $donde = $this->donde($salida, $usuario);
+        foreach ([Capacidad::BOLETO_CHEQUEAR, Capacidad::SALIDA_ABORDAR, Capacidad::SALIDA_INICIAR, Capacidad::SALIDA_FINALIZAR] as $c) {
+            if ($permisos->puede($c->value, $donde)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function donde(Salida $salida, Usuario $usuario): Ubicacion
+    {
+        return Ubicador::operacion($salida->getEmpresa()?->getId(), $usuario, $this->estacionDe($usuario));
     }
 
     /** Id de la estación del usuario (una estación es un enclave), o null si es de oficina. */

@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use App\Attribute\ApiResourceNoPagination;
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
@@ -10,6 +11,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: StatusRepository::class)]
 #[ApiResourceNoPagination]
+#[Recurso(nombre: "Estados", area: "Catálogos", lecturaLibre: true)]
 class Status extends Base {
 
     #[ORM\Column(length: 255)]

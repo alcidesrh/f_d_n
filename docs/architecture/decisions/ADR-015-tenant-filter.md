@@ -1,6 +1,6 @@
 # ADR-015: TenantFilter — aislamiento por empresa vía Doctrine SQLFilter
 
-**Estado:** Aceptada
+**Estado:** Aceptada. Modificada por [ADR-039](ADR-039-accesos-con-alcance.md): `Usuario.empresa` ya no existe; el filtro usa la unión de empresas de las asignaciones vigentes (más los registros sin empresa) y cubre también `EsquemaSalida` y `Establecimiento`.
 
 ## Contexto
 

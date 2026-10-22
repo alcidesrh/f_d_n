@@ -24,10 +24,42 @@ export function quetzales(centavos: unknown): string | null {
   return Number.isFinite(n) ? `Q ${(n / 100).toFixed(2)}` : null
 }
 
+/** Una asignación anotada (`BitacoraAcceso`): rol y alcance en una línea, la vigencia y el motivo aparte. */
+function asignacion(d: Record<string, unknown>): Array<string | null> {
+  const lista = (v: unknown, que: string) => (v === 'todas' || v === null || v === undefined ? `todas las ${que}` : Array.isArray(v) && v.length ? `${que} ${v.join(', ')}` : `ninguna ${que.replace(/s$/, '')}`)
+  return [
+    d.rol ? `${d.rol} · ${lista(d.empresas, 'empresas')} · ${lista(d.estaciones, 'estaciones')}` : null,
+    d.desde || d.hasta ? `Vigencia: ${texto(d.desde) ?? '…'} a ${texto(d.hasta) ?? '…'}` : null,
+    d.motivo ? `Motivo: ${d.motivo}` : null,
+  ]
+}
+
 /** Líneas de detalle de una entrada, ya listas para mostrar (sin vacías). */
 export function lineasDeDetalle(tipo: TipoBitacora, e: Pick<EntradaBitacora, 'operacion' | 'detalle'>): string[] {
   const d = e.detalle ?? {}
   const lineas: Array<string | null> = []
+
+  if (tipo === 'usuario') {
+    if (e.operacion === 'asignacion_modificada') {
+      const [antes, ahora] = [asignacion((d.antes ?? {}) as Record<string, unknown>), asignacion((d.ahora ?? {}) as Record<string, unknown>)]
+      lineas.push(antes[0] ? `Antes: ${antes[0]}` : null, ahora[0] ? `Ahora: ${ahora[0]}` : null, ahora[1] ?? null, ahora[2] ?? null)
+    } else if (e.operacion === 'estacion_trabajo') {
+      lineas.push(`${texto(d.antes) ?? 'Sin estación'} → ${texto(d.ahora) ?? 'sin estación'}`)
+    } else {
+      lineas.push(...asignacion(d))
+    }
+    return lineas.filter((l): l is string => l !== null)
+  }
+  if (tipo === 'rol') {
+    const nombres = (v: unknown) => (Array.isArray(v) && v.length ? v.join(', ') : null)
+    lineas.push(texto(d.nombre))
+    if (e.operacion === 'modificado') {
+      lineas.push(nombres(d.agregadas) ? `Agrega: ${nombres(d.agregadas)}` : null, nombres(d.quitadas) ? `Quita: ${nombres(d.quitadas)}` : null, d.limites ? 'Cambió los límites' : null)
+    } else if (Array.isArray(d.capacidades)) {
+      lineas.push(`${d.capacidades.length} capacidades`)
+    }
+    return lineas.filter((l): l is string => l !== null)
+  }
 
   if (tipo === 'salida') {
     if (e.operacion === 'cambio_bus') {

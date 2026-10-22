@@ -2,132 +2,25 @@
 
 namespace App\Migration;
 
+use App\Acceso\Legado\EquivalenciasLegado;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\Attribute\Target;
 
 /**
- * Adapts the legacy role/user model to the new Flat Permission Set architecture.
+ * Accesos del legado en el modelo nuevo (ADR-039), paso «iam» de la
+ * migración y `app:acceso:alcance-legado`. Idempotente.
  *
- * Legacy: custom_rol (name-only), custom_user.roles (JSON array of role names).
- * New: Role (hierarchical, with Permiso/Action links), Usuario.
- *
- * Steps:
- * 1. Create base Action codes for all business operations.
- * 2. Create base Permiso groups, link to Actions.
- * 3. Create base Roles (ADMIN, OPERADOR, CONSULTA), link to Permisos/Actions.
- * 4. Migrate legacy roles → new Roles.
- * 5. Migrate legacy user → new Usuario (if not already migrated).
- * 6. Assign legacy user-role mappings (also done when each user is created).
- *
- * Note: Role, Permiso, and Action entities use StatusTrait (status_id FK)
- * instead of an 'activo' boolean column.
+ * 1. Roles: uno por `custom_rol` (con su descripción); al crearse lleva las
+ *    capacidades de `EquivalenciasLegado` —los que ya existen conservan las
+ *    suyas, que pueden haberse editado en el sistema nuevo—. ROLE_SUPER_ADMIN
+ *    es el de sistema.
+ * 2. Usuarios ya migrados: si siguen activos (`enabled`, sin `locked` ni
+ *    `expired`) y una asignación por rol con el alcance del legado
+ *    (`custom_user_empresa`, `custom_user.estacion_id`, `custom_user_estacion`).
+ *    Rehace solo las asignaciones de la migración (`RolesUsuarioLegado`).
  */
 class MigradorIAM {
-    private const BASE_ACTIONS = [
-        ['boleto.crear', 'Boleto', 'create', 'Boletos'],
-        ['boleto.ver', 'Boleto', 'read', 'Boletos'],
-        ['boleto.editar', 'Boleto', 'update', 'Boletos'],
-        ['boleto.anular', 'Boleto', 'delete', 'Boletos'],
-        ['boleto.reasignar', 'Boleto', 'reassign', 'Boletos'],
-        ['boleto.cancelar', 'Boleto', 'cancel', 'Boletos'],
-        ['salida.crear', 'Salida', 'create', 'Salidas'],
-        ['salida.ver', 'Salida', 'read', 'Salidas'],
-        ['salida.editar', 'Salida', 'update', 'Salidas'],
-        ['salida.cancelar', 'Salida', 'cancel', 'Salidas'],
-        ['salida.eliminar', 'Salida', 'delete', 'Salidas'],
-        ['boleto.chequear', 'Boleto', 'check', 'Salidas'],
-        ['salida.abordar', 'Salida', 'board', 'Salidas'],
-        ['salida.iniciar', 'Salida', 'start', 'Salidas'],
-        ['salida.finalizar', 'Salida', 'finish', 'Salidas'],
-        ['ruta.ver', 'Ruta', 'read', 'Rutas'],
-        ['ruta.editar', 'Ruta', 'update', 'Rutas'],
-        ['empresa.ver', 'Empresa', 'read', 'Empresas'],
-        ['empresa.editar', 'Empresa', 'update', 'Empresas'],
-        ['usuario.ver', 'Usuario', 'read', 'Usuarios'],
-        ['usuario.editar', 'Usuario', 'update', 'Usuarios'],
-        ['cliente.ver', 'Cliente', 'read', 'Clientes'],
-        ['cliente.crear', 'Cliente', 'create', 'Clientes'],
-        ['tarifa.ver', 'Tarifa', 'read', 'Tarifas'],
-        ['tarifa.editar', 'Tarifa', 'update', 'Tarifas'],
-        ['asiento.ver', 'Asiento', 'read', 'Asientos'],
-        ['reporte.ventas', 'Reporte', 'read', 'Reportes'],
-        ['config.ver', 'Config', 'read', 'Configuración'],
-        ['config.editar', 'Config', 'update', 'Configuración'],
-        ['iam.ver', 'IAM', 'read', 'IAM'],
-        ['iam.editar', 'IAM', 'update', 'IAM'],
-        // Venta de asientos (ADR-021)
-        ['venta.vender', 'BoletoVenta', 'create', 'Venta'],
-        ['venta.cortesia', 'BoletoVenta', 'courtesy', 'Venta'],
-        ['venta.sin_factura', 'BoletoVenta', 'contingency', 'Venta'],
-        ['agencia.acreditar', 'Agencia', 'credit', 'Venta'],
-        ['agencia.depositar', 'Agencia', 'deposit', 'Venta'],
-        // Página web (ADR-023)
-        ['pagina.administrar', 'Pagina', 'manage', 'Página web'],
-        // Encomiendas (ADR-035)
-        ['encomienda.ver', 'Encomienda', 'read', 'Encomiendas'],
-        ['encomienda.registrar', 'Encomienda', 'create', 'Encomiendas'],
-        ['encomienda.interna', 'Encomienda', 'internal', 'Encomiendas'],
-        ['encomienda.embarcar', 'Encomienda', 'board', 'Encomiendas'],
-        ['encomienda.entregar', 'Encomienda', 'deliver', 'Encomiendas'],
-        ['encomienda.anular', 'Encomienda', 'void', 'Encomiendas'],
-        ['encomienda.especiales', 'EncomiendaEspecial', 'manage', 'Encomiendas'],
-        ['reporte.encomiendas', 'Reporte', 'parcels', 'Reportes'],
-    ];
-
-    private const BASE_PERMISOS = [
-        'Gestion Acciones' => [
-            'boleto.crear',
-            'boleto.ver',
-            'boleto.editar',
-            'boleto.anular',
-            'boleto.reasignar',
-            'salida.crear',
-            'salida.ver',
-            'salida.editar',
-            'salida.cancelar',
-            'ruta.ver',
-            'empresa.ver',
-            'cliente.ver',
-            'cliente.crear',
-            'tarifa.ver'
-        ],
-        'Anulacion y Reasignacion de Boletos' => ['boleto.anular', 'boleto.reasignar', 'boleto.cancelar'],
-        'Gestion Usuarios' => ['usuario.ver', 'usuario.editar', 'iam.ver', 'iam.editar'],
-        'Gestion Reportes' => ['reporte.ventas', 'reporte.encomiendas', 'config.ver'],
-        'Gestion Config' => ['config.ver', 'config.editar', 'empresa.editar', 'ruta.editar', 'tarifa.editar'],
-        'Gestion Asientos' => ['asiento.ver'],
-        'Venta Taquilla' => ['venta.vender'],
-        'Supervision Venta' => ['venta.vender', 'venta.cortesia', 'venta.sin_factura', 'agencia.acreditar'],
-        'Administracion Pagina Web' => ['pagina.administrar'],
-        'Depositos de Agencia' => ['agencia.depositar'],
-        'Acreditacion de Depositos de Agencia' => ['agencia.depositar', 'agencia.acreditar'],
-        'Gestion Salidas' => ['salida.ver', 'salida.crear', 'salida.editar', 'salida.cancelar', 'salida.eliminar'],
-        'Abordaje de Salidas' => ['boleto.chequear', 'salida.abordar', 'salida.iniciar', 'salida.finalizar'],
-        'Recepcion de Encomiendas' => ['encomienda.ver', 'encomienda.registrar', 'encomienda.embarcar', 'encomienda.entregar'],
-        'Supervision de Encomiendas' => ['encomienda.ver', 'encomienda.registrar', 'encomienda.interna', 'encomienda.embarcar', 'encomienda.entregar', 'encomienda.anular', 'encomienda.especiales', 'reporte.encomiendas'],
-        'Consulta de Encomiendas' => ['encomienda.ver'],
-        'Catalogo de Encomiendas' => ['encomienda.ver', 'encomienda.especiales'],
-    ];
-
-    /**
-     * Permisos del modelo nuevo para los roles del legado que tenían esas
-     * pantallas (p. ej. el menú "Agencia", ADR-034). Se aplican aunque el
-     * rol ya exista.
-     */
-    private const PERMISOS_ROLES_LEGACY = [
-        'ROLE_AGENCIA' => ['Depositos de Agencia'],
-        'ROLE_SUPERVISOR_AGENCIA' => ['Acreditacion de Depositos de Agencia'],
-        'ROLE_PROPIETARIO' => ['Acreditacion de Depositos de Agencia'],
-        'ROLE_ADMINISTRATIVOS' => ['Acreditacion de Depositos de Agencia'],
-        // Menú «Encomienda» (ADR-035).
-        'ROLE_RECEPTOR_ENCOMIENDAS' => ['Recepcion de Encomiendas'],
-        'ROLE_ENTREGA_MULTIPLE_ENCOMIENDA' => ['Recepcion de Encomiendas'],
-        'ROLE_ENCOMIENDA_REGISTRAR_ESPECIAL' => ['Recepcion de Encomiendas', 'Catalogo de Encomiendas'],
-        'ROLE_SUPERVISOR_ENCOMIENDA' => ['Supervision de Encomiendas'],
-        'ROLE_INSPECTOR_ENCOMIENDA' => ['Consulta de Encomiendas'],
-    ];
-
     public function __construct(
         private Connection $newConn,
         #[Target('oldPdo')] private \PDO $oldPdo,
@@ -137,36 +30,41 @@ class MigradorIAM {
         $this->oldPdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
     }
 
+    /** @return array{roles: int, usuarios: int, asignaciones: int, desactivados: int} */
     public function migrar(?OutputInterface $output = null): array {
-        $contadores = [
-            'actions' => 0,
-            'permisos' => 0,
-            'roles' => 0,
-            'rol_legacy' => 0,
-            'user_role' => 0,
-        ];
+        $contadores = ['roles' => 0, 'usuarios' => 0, 'asignaciones' => 0, 'desactivados' => 0];
 
         $this->newConn->beginTransaction();
         try {
-            if ($output) $output->write('<info>Actions...</info>');
-            $contadores['actions'] = $this->crearActionsBase();
-            if ($output) $output->writeln(" <info>{$contadores['actions']}</info>");
+            if ($output) $output->write('<info>Roles...</info>');
+            foreach ($this->fetchOld('SELECT nombre, descripcion FROM custom_rol') as $row) {
+                $existia = $this->newConn->fetchOne('SELECT 1 FROM role WHERE nombre = :nombre', ['nombre' => $row['nombre']]) !== false;
+                $this->rolesUsuario->rol((string) $row['nombre'], $row['descripcion'] !== null ? (string) $row['descripcion'] : null);
+                $contadores['roles'] += $existia ? 0 : 1;
+            }
+            $this->newConn->executeStatement('UPDATE role SET sistema = true WHERE nombre = :nombre', ['nombre' => EquivalenciasLegado::SISTEMA]);
+            if ($output) $output->writeln(" <info>{$contadores['roles']} nuevos</info>");
 
-            if ($output) $output->write('<info>Permisos...</info>');
-            $contadores['permisos'] = $this->crearPermisosBase();
-            if ($output) $output->writeln(" <info>{$contadores['permisos']}</info>");
-
-            if ($output) $output->write('<info>Roles base...</info>');
-            $contadores['roles'] = $this->crearRolesBase();
-            if ($output) $output->writeln(" <info>{$contadores['roles']}</info>");
-
-            if ($output) $output->write('<info>Roles legacy...</info>');
-            $contadores['rol_legacy'] = $this->migrarRolesLegacy();
-            if ($output) $output->writeln(" <info>{$contadores['rol_legacy']}</info>");
-
-            if ($output) $output->write('<info>User-Role...</info>');
-            $contadores['user_role'] = $this->asignarRolesUsuarios();
-            if ($output) $output->writeln(" <info>{$contadores['user_role']}</info>");
+            if ($output) $output->write('<info>Usuarios y asignaciones...</info>');
+            $empresas = $this->agrupar('SELECT user_id, empresa_id AS id FROM custom_user_empresa');
+            $estaciones = $this->agrupar('SELECT user_id, estacion_id AS id FROM custom_user_estacion');
+            foreach ($this->fetchOld('SELECT id, roles, estacion_id, enabled, locked, expired FROM custom_user') as $row) {
+                $id = (int) $row['id'];
+                if ($this->newConn->fetchOne('SELECT 1 FROM usuario WHERE id = :id', ['id' => $id]) === false) {
+                    continue;
+                }
+                $activo = RolesUsuarioLegado::activo($row);
+                $contadores['usuarios']++;
+                $contadores['desactivados'] += $activo ? 0 : 1;
+                $contadores['asignaciones'] += $this->rolesUsuario->asignar(
+                    $id,
+                    $row['roles'] ?? null,
+                    $empresas[$id] ?? [],
+                    [...(empty($row['estacion_id']) ? [] : [(int) $row['estacion_id']]), ...($estaciones[$id] ?? [])],
+                    $activo,
+                );
+            }
+            if ($output) $output->writeln(" <info>{$contadores['usuarios']} usuarios, {$contadores['asignaciones']} asignaciones, {$contadores['desactivados']} desactivados</info>");
 
             $this->newConn->commit();
         } catch (\Throwable $e) {
@@ -177,187 +75,14 @@ class MigradorIAM {
         return $contadores;
     }
 
-    private function crearActionsBase(): int {
-        $count = 0;
-
-        // Las tuplas de BASE_ACTIONS conservan [codigo, recurso, operacion,
-        // grupo] como referencia, pero la tabla `action` actual (entidad
-        // Action) solo persiste codigo + nombre.
-        foreach (self::BASE_ACTIONS as [$codigo]) {
-            $exists = $this->newConn->fetchOne(
-                'SELECT 1 FROM action WHERE codigo = :codigo',
-                ['codigo' => $codigo]
-            );
-            if ($exists) {
-                continue;
-            }
-
-            $this->newConn->executeStatement(
-                'INSERT INTO action (codigo, nombre) VALUES (:codigo, :nombre)',
-                [
-                    'codigo' => $codigo,
-                    'nombre' => $codigo,
-                ]
-            );
-            $count++;
+    /** @return array<int, list<int>> por usuario */
+    private function agrupar(string $sql): array {
+        $grupos = [];
+        foreach ($this->fetchOld($sql) as $row) {
+            $grupos[(int) $row['user_id']][] = (int) $row['id'];
         }
 
-        return $count;
-    }
-
-    private function crearPermisosBase(): int {
-        $count = 0;
-
-        foreach (self::BASE_PERMISOS as $nombre => $actionCodigos) {
-            $exists = $this->newConn->fetchOne(
-                'SELECT id FROM permiso WHERE nombre = :nombre',
-                ['nombre' => $nombre]
-            );
-            if ($exists) {
-                $permisoId = (int) $exists;
-            } else {
-                $permisoId = (int) $this->newConn->fetchOne(
-                    'INSERT INTO permiso (nombre) VALUES (:nombre) RETURNING id',
-                    ['nombre' => $nombre]
-                );
-                $count++;
-            }
-
-            foreach ($actionCodigos as $codigo) {
-                $actionId = $this->newConn->fetchOne(
-                    'SELECT id FROM action WHERE codigo = :codigo',
-                    ['codigo' => $codigo]
-                );
-                if (!$actionId) {
-                    continue;
-                }
-
-                $this->newConn->executeStatement(
-                    'INSERT INTO permiso_action (permiso_id, action_id) VALUES (:pid, :aid) ON CONFLICT DO NOTHING',
-                    ['pid' => $permisoId, 'aid' => (int) $actionId]
-                );
-            }
-        }
-
-        return $count;
-    }
-
-    private function crearRolesBase(): int {
-        $count = 0;
-
-        $roles = [
-            'ROLE_ADMIN' => ['Gestion Acciones', 'Gestion Usuarios', 'Gestion Reportes', 'Gestion Config', 'Gestion Asientos'],
-            'ROLE_OPERADOR' => ['Gestion Acciones'],
-            'ROLE_CONSULTA' => [],
-            'ROLE_USER' => [],
-        ];
-
-        $actionIds = [];
-        foreach (self::BASE_ACTIONS as [$codigo]) {
-            $aid = $this->newConn->fetchOne('SELECT id FROM action WHERE codigo = :codigo', ['codigo' => $codigo]);
-            if ($aid) {
-                $actionIds[$codigo] = (int) $aid;
-            }
-        }
-
-        foreach ($roles as $nombre => $permisoNombres) {
-            $exists = $this->newConn->fetchOne(
-                'SELECT 1 FROM role WHERE nombre = :nombre',
-                ['nombre' => $nombre]
-            );
-            if ($exists) {
-                continue;
-            }
-
-            $roleId = (int) $this->newConn->fetchOne(
-                'INSERT INTO role (nombre) VALUES (:nombre) RETURNING id',
-                ['nombre' => $nombre]
-            );
-            $count++;
-
-            foreach ($permisoNombres as $permisoNombre) {
-                $permisoId = $this->newConn->fetchOne(
-                    'SELECT id FROM permiso WHERE nombre = :nombre',
-                    ['nombre' => $permisoNombre]
-                );
-                if ($permisoId) {
-                    $this->newConn->executeStatement(
-                        'INSERT INTO role_permiso (role_id, permiso_id) VALUES (:rid, :pid) ON CONFLICT DO NOTHING',
-                        ['rid' => $roleId, 'pid' => (int) $permisoId]
-                    );
-                }
-            }
-
-            if ($nombre === 'ROLE_ADMIN') {
-                foreach ($actionIds as $codigo => $aid) {
-                    $this->newConn->executeStatement(
-                        'INSERT INTO role_action (role_id, action_id) VALUES (:rid, :aid) ON CONFLICT DO NOTHING',
-                        ['rid' => $roleId, 'aid' => $aid]
-                    );
-                }
-            }
-        }
-
-        return $count;
-    }
-
-    private function migrarRolesLegacy(): int {
-        $rows = $this->fetchOld('SELECT * FROM custom_rol');
-        $count = 0;
-
-        foreach ($rows as $row) {
-            $nombre = $row['nombre'];
-            $exists = $this->newConn->fetchOne(
-                'SELECT 1 FROM role WHERE nombre = :nombre',
-                ['nombre' => $nombre]
-            );
-            if ($exists) {
-                continue;
-            }
-
-            $this->newConn->executeStatement(
-                'INSERT INTO role (nombre) VALUES (:nombre)',
-                ['nombre' => $nombre]
-            );
-            $count++;
-        }
-
-        foreach (self::PERMISOS_ROLES_LEGACY as $rol => $permisos) {
-            foreach ($permisos as $permiso) {
-                $this->newConn->executeStatement(
-                    'INSERT INTO role_permiso (role_id, permiso_id)
-                     SELECT r.id, p.id FROM role r, permiso p WHERE r.nombre = :rol AND p.nombre = :permiso
-                     ON CONFLICT DO NOTHING',
-                    ['rol' => $rol, 'permiso' => $permiso]
-                );
-            }
-        }
-
-        return $count;
-    }
-
-    /**
-     * Roles del legado (`custom_user.roles`) de los usuarios ya migrados, más
-     * `ROLE_USER` para todos. Al crear un usuario ya se le asignan
-     * (`RolesUsuarioLegado`); esto cubre los creados antes de esa corrección.
-     */
-    private function asignarRolesUsuarios(): int {
-        $count = 0;
-        foreach ($this->fetchOld('SELECT id, roles FROM custom_user') as $row) {
-            $existe = $this->newConn->fetchOne('SELECT 1 FROM usuario WHERE id = :id', ['id' => (int) $row['id']]);
-            if ($existe !== false) {
-                $count += $this->rolesUsuario->asignar((int) $row['id'], $row['roles']);
-            }
-        }
-
-        // Rol base de todos los usuarios (menús y administración para cualquier empleado).
-        $count += (int) $this->newConn->executeStatement(
-            "INSERT INTO user_role (user_id, role_id)
-             SELECT u.id, r.id FROM usuario u CROSS JOIN role r WHERE r.nombre = 'ROLE_USER'
-             ON CONFLICT DO NOTHING"
-        );
-
-        return $count;
+        return $grupos;
     }
 
     private function sanitizeUtf8(array $row): array {

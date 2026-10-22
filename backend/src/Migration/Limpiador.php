@@ -9,14 +9,14 @@ class Limpiador
     /**
      * Tablas que no dependen del legado: las crea o edita la gente en el
      * sistema nuevo (menús, rutas del frontend, íconos, IAM, configuración de
-     * entidades y de la página) y limpiarConservando() no las toca. El IAM se
-     * conserva porque menús y rutas lo referencian; MigradorIAM es idempotente
-     * por nombre/código y solo agrega lo que falte.
+     * entidades y de la página) y limpiarConservando() no las toca. Los roles
+     * se conservan porque menús y administración los referencian, y pueden
+     * haberse editado en el sistema nuevo; las asignaciones se vacían con los
+     * usuarios y MigradorIAM las rehace (ADR-039).
      */
     public const CONSERVABLES = [
         "icon",
         "vue_route",
-        "vue_route_role",
         "menu",
         "menu_item",
         "menu_placement",
@@ -27,13 +27,6 @@ class Limpiador
         "collection_field_config",
         "form_field_config",
         "role",
-        "role_role",
-        "role_permiso",
-        "role_action",
-        "permiso",
-        "permiso_permiso",
-        "permiso_action",
-        "action",
         "status",
         "configuracion_pagina",
     ];
@@ -52,16 +45,7 @@ class Limpiador
         "cliente",
         "enclave",
         "empresa",
-        "user_direct_action",
-        "user_denied_action",
-        "user_role",
-        "role_action",
-        "role_permiso",
-        "permiso_action",
-        "role_role",
-        "permiso_permiso",
-        "action",
-        "permiso",
+        "asignacion",
         "role",
         "usuario",
         "api_token",
@@ -79,8 +63,7 @@ class Limpiador
         "empresa_id_seq",
         "usuario_id_seq",
         "api_token_id_seq",
-        "action_id_seq",
-        "permiso_id_seq",
+        "asignacion_id_seq",
         "role_id_seq",
     ];
 
@@ -123,7 +106,7 @@ class Limpiador
      * Una conservada que apunta a una vaciada (p. ej. `configuracion_pagina`
      * → `usuario`) pierde la referencia si la columna admite NULL; si no la
      * admite, la fila depende de un dato del legado y la tabla se vacía
-     * también (p. ej. `vue_route_usuario_permitidos`).
+     * también (p. ej. `asignacion` → `usuario`).
      *
      * Postgres no deja truncar una tabla referida por otra que no se trunca,
      * aunque la referencia esté en NULL: las referidas por conservadas (y lo

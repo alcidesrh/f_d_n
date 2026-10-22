@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GraphQl\Query;
 use ApiPlatform\Metadata\GraphQl\QueryCollection;
@@ -29,6 +30,7 @@ use Doctrine\ORM\Mapping as ORM;
         ],
     ),
 ]
+#[Recurso(nombre: "Movimientos de saldo de agencias", area: "Agencias", soloLectura: true, ver: "agencia.acreditar")]
 class AgenciaMovimiento
 {
     #[ORM\Id]

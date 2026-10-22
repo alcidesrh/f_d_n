@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use ApiPlatform\Metadata\ApiProperty;
 use App\Attribute\ApiResourceNoPagination;
 use App\Metadata\ConfiguracionDelCliente;
@@ -10,6 +11,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity]
 #[ApiResourceNoPagination()]
+#[Recurso(nombre: "Columnas de los listados", area: "Configuración", lecturaLibre: true, editar: "config.editar", eliminar: "config.editar")]
 class CollectionFieldConfig  extends FieldConfig implements ConfiguracionDelCliente
 {
 

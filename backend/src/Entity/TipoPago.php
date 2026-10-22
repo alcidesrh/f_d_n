@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use App\Attribute\ApiResourceNoPagination;
 use App\Entity\Base\Base;
 use Doctrine\ORM\Mapping as ORM;
@@ -15,6 +16,7 @@ use Doctrine\ORM\Mapping as ORM;
  */
 #[ORM\Entity]
 #[ApiResourceNoPagination]
+#[Recurso(nombre: "Tipos de pago", area: "Catálogos", lecturaLibre: true)]
 class TipoPago extends Base
 {
     #[ORM\Column(length: 50, unique: true)]

@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Acceso\Alcance;
+use App\Acceso\Autorizacion;
+use App\Acceso\Capacidad;
+use App\Acceso\Ubicacion;
 use App\Entity\Usuario;
 use App\Reporte\ConsultaReportes;
 use App\Reporte\FiltroCuadre;
@@ -39,22 +43,25 @@ final class ReporteController extends AbstractController
     public function __construct(
         private readonly ConsultaReportes $consulta,
         private readonly ClockInterface $reloj,
+        private readonly Autorizacion $autorizacion,
     ) {}
 
-    /** Catálogos de los formularios y el alcance del usuario (estación/empresa fijas si las tiene). */
+    /**
+     * Catálogos de los formularios, limitados a su alcance (ADR-039), y la
+     * estación o empresa fija si el alcance tiene una sola.
+     */
     #[Route("/opciones", name: "opciones", methods: ["GET"])]
-    public function opciones(#[CurrentUser] Usuario $usuario): JsonResponse
+    public function opciones(): JsonResponse
     {
         $this->denyAccessUnlessGranted(self::VER);
-        $estacion = $usuario->getEstacion()?->getId();
-        $empresa = $usuario->getEmpresa()?->getId();
+        $alcance = $this->alcance();
 
         return $this->json([
             "hoy" => $this->reloj->now()->format("Y-m-d"),
-            "estaciones" => $this->consulta->estaciones($estacion),
-            "empresas" => $this->consulta->empresas($empresa),
+            "estaciones" => $this->consulta->estaciones($alcance->estaciones()),
+            "empresas" => $this->consulta->empresas($alcance->empresas()),
             "monedas" => $this->consulta->monedas(),
-            "alcance" => ["estacion" => $estacion, "empresa" => $empresa],
+            "alcance" => ["estacion" => $alcance->estacionUnica(), "empresa" => $alcance->empresaUnica()],
         ]);
     }
 
@@ -64,9 +71,11 @@ final class ReporteController extends AbstractController
         $this->denyAccessUnlessGranted(self::VER);
 
         try {
-            $filtro = FiltroCuadre::desdeQuery($request->query->all())->conAlcance($usuario->getEstacion()?->getId(), $usuario->getEmpresa()?->getId());
+            $alcance = $this->alcance();
+            $filtro = FiltroCuadre::desdeQuery($request->query->all())->conAlcance($alcance->estacionUnica(), $alcance->empresaUnica());
+            $this->exigirDentro($alcance, $filtro->estacionId, $filtro->empresaId);
             $formato = $this->formato($request, ["pdf", "resumen"]);
-            $cuadre = $this->consulta->cuadre($filtro);
+            $cuadre = $this->consulta->cuadre($filtro, $alcance);
         } catch (ReporteRechazado $e) {
             return $this->json($e->toArray(), $e->estadoHttp);
         }
@@ -88,9 +97,11 @@ final class ReporteController extends AbstractController
         $this->denyAccessUnlessGranted(self::VER);
 
         try {
-            $filtro = FiltroDetalle::desdeQuery($request->query->all())->conAlcance($usuario->getEstacion()?->getId(), $usuario->getEmpresa()?->getId());
+            $alcance = $this->alcance();
+            $filtro = FiltroDetalle::desdeQuery($request->query->all())->conAlcance($alcance->estacionUnica(), $alcance->empresaUnica());
+            $this->exigirDentro($alcance, $filtro->estacionId, $filtro->empresaId);
             $formato = $this->formato($request, ["pdf", "xlsx", "resumen"]);
-            $detalle = $this->consulta->detalle($filtro);
+            $detalle = $this->consulta->detalle($filtro, $alcance);
         } catch (ReporteRechazado $e) {
             return $this->json($e->toArray(), $e->estadoHttp);
         }
@@ -110,9 +121,11 @@ final class ReporteController extends AbstractController
         $this->denyAccessUnlessGranted(self::VER);
 
         try {
-            $filtro = FiltroVoucher::desdeQuery($request->query->all())->conAlcance($usuario->getEstacion()?->getId(), $usuario->getEmpresa()?->getId());
+            $alcance = $this->alcance();
+            $filtro = FiltroVoucher::desdeQuery($request->query->all())->conAlcance($alcance->estacionUnica(), $alcance->empresaUnica());
+            $this->exigirDentro($alcance, $filtro->estacionId, $filtro->empresaId);
             $formato = $this->formato($request, ["pdf", "resumen"]);
-            $cuadre = $this->consulta->voucher($filtro);
+            $cuadre = $this->consulta->voucher($filtro, $alcance);
         } catch (ReporteRechazado $e) {
             return $this->json($e->toArray(), $e->estadoHttp);
         }
@@ -126,6 +139,23 @@ final class ReporteController extends AbstractController
             "application/pdf",
             sprintf("cuadre_voucher_%s_%s.pdf", $filtro->desde->format("Ymd"), $filtro->hasta->format("Ymd")),
         );
+    }
+
+    private function alcance(): Alcance
+    {
+        return $this->autorizacion->alcance(Capacidad::REPORTE_VENTAS);
+    }
+
+    /** @throws ReporteRechazado si la estación o empresa elegida está fuera de su alcance */
+    private function exigirDentro(Alcance $alcance, ?int $estacion, ?int $empresa): void
+    {
+        $donde = $empresa !== null ? Ubicacion::empresa($empresa) : Ubicacion::ninguna();
+        if ($estacion !== null) {
+            $donde = $donde->conEstacion($estacion);
+        }
+        if (!$alcance->contiene($donde)) {
+            throw new ReporteRechazado("Fuera de su alcance: esa estación o empresa no es de las suyas.", "alcance", 403);
+        }
     }
 
     /** @param list<string> $permitidos */

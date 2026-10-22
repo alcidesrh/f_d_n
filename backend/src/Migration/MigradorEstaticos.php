@@ -357,6 +357,14 @@ class MigradorEstaticos
         if ($output) {
             $output->write("<info>Usuarios...</info>");
         }
+        // Alcance de cada usuario en el legado (ADR-039), antes de recorrerlos: dblib no admite consultas anidadas.
+        $alcance = ["empresas" => [], "estaciones" => []];
+        foreach ($this->fetchOldNoGenerator("SELECT user_id, empresa_id FROM custom_user_empresa") as $r) {
+            $alcance["empresas"][(int) $r["user_id"]][] = (int) $r["empresa_id"];
+        }
+        foreach ($this->fetchOldNoGenerator("SELECT user_id, estacion_id FROM custom_user_estacion") as $r) {
+            $alcance["estaciones"][(int) $r["user_id"]][] = (int) $r["estacion_id"];
+        }
         $rows = $this->fetchOld("SELECT * FROM custom_user");
         $count = 0;
         $date = new DateTime()->format("Y-m-d H:i:s");
@@ -382,7 +390,14 @@ class MigradorEstaticos
                     ["estacion" => (int) $row["estacion_id"], "id" => (int) $row["id"]],
                 );
             }
-            $this->rolesUsuario->asignar((int) $row["id"], $row["roles"] ?? null);
+            // Accesos (ADR-039): sus roles con las empresas y estaciones que tenía en el legado.
+            $this->rolesUsuario->asignar(
+                (int) $row["id"],
+                $row["roles"] ?? null,
+                $alcance["empresas"][(int) $row["id"]] ?? [],
+                [...(empty($row["estacion_id"]) ? [] : [(int) $row["estacion_id"]]), ...($alcance["estaciones"][(int) $row["id"]] ?? [])],
+                RolesUsuarioLegado::activo($row),
+            );
             $token = "fdn_" . bin2hex(random_bytes(32));
             $data = [
                 "expira" => null,

@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use ApiPlatform\Doctrine\Orm\Filter\ExactFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
@@ -109,6 +110,7 @@ use Symfony\Component\Serializer\Attribute\Groups; // Carga automáticamente la 
         ],
     ),
 ]
+#[Recurso(nombre: "Configuración de entidades", area: "Configuración", lecturaLibre: true, editar: "config.editar", eliminar: "config.editar")]
 class EntityConfiguration implements ConfiguracionDelCliente
 {
     #[ORM\Id]

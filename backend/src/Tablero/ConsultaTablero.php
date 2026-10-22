@@ -50,12 +50,17 @@ final class ConsultaTablero
         );
     }
 
-    /** @return list<array{id: int, nombre: string}> */
-    public function empresas(?int $soloId): array
+    /**
+     * @param list<int>|null $ids solo esas (el alcance); null = todas
+     *
+     * @return list<array{id: int, nombre: string}>
+     */
+    public function empresas(?array $ids): array
     {
         $filas = $this->db->fetchAllAssociative(
-            "SELECT id, COALESCE(NULLIF(alias, ''), nombre) AS nombre FROM empresa" . ($soloId !== null ? " WHERE id = :id" : "") . " ORDER BY 2",
-            $soloId !== null ? ["id" => $soloId] : [],
+            "SELECT id, COALESCE(NULLIF(alias, ''), nombre) AS nombre FROM empresa" . ($ids !== null ? " WHERE id IN (:ids)" : "") . " ORDER BY 2",
+            $ids !== null ? ["ids" => $ids === [] ? [0] : $ids] : [],
+            $ids !== null ? ["ids" => \Doctrine\DBAL\ArrayParameterType::INTEGER] : [],
         );
 
         return array_map(static fn(array $f) => ["id" => (int) $f["id"], "nombre" => (string) $f["nombre"]], $filas);
@@ -253,7 +258,7 @@ final class ConsultaTablero
                   WHERE a.activo AND a.moneda = :moneda %s
                   ORDER BY a.nombre",
                 $empresa !== null
-                    ? "AND (a.empresa_id = :empresa OR EXISTS (SELECT 1 FROM boleto_venta v JOIN boleto_asiento b ON b.boleto_venta_id = v.id JOIN salida s ON s.id = b.salida_id
+                    ? "AND (EXISTS (SELECT 1 FROM agencia_empresa ae WHERE ae.agencia_id = a.id AND ae.empresa_id = :empresa) OR EXISTS (SELECT 1 FROM boleto_venta v JOIN boleto_asiento b ON b.boleto_venta_id = v.id JOIN salida s ON s.id = b.salida_id
                                                                  WHERE v.agencia_id = a.id AND s.empresa_id = :empresa AND v.created_at >= :mes))"
                     : "",
             ),
@@ -302,7 +307,7 @@ final class ConsultaTablero
                 "SELECT COUNT(*) AS pendientes, COALESCE(SUM(d.importe), 0) AS importe
                    FROM agencia_deposito d JOIN agencia a ON a.id = d.agencia_id
                   WHERE d.estado = :registrado %s",
-                $empresa !== null ? "AND a.empresa_id = :empresa" : "",
+                $empresa !== null ? "AND EXISTS (SELECT 1 FROM agencia_empresa ae WHERE ae.agencia_id = a.id AND ae.empresa_id = :empresa)" : "",
             ),
             ["registrado" => EstadoDepositoAgencia::REGISTRADO->value] + ($empresa !== null ? ["empresa" => $empresa] : []),
         ) ?: [];

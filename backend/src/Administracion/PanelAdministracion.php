@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Administracion;
 
+use App\Acceso\Autorizacion;
 use App\Entity\EnlaceAdministracion;
 use App\Entity\Role;
 use App\Entity\SeccionAdministracion;
@@ -18,7 +19,10 @@ use Doctrine\ORM\EntityManagerInterface;
  */
 final class PanelAdministracion
 {
-    public function __construct(private readonly EntityManagerInterface $em) {}
+    public function __construct(
+        private readonly EntityManagerInterface $em,
+        private readonly Autorizacion $autorizacion,
+    ) {}
 
     /**
      * Lo que ve el usuario: cajas activas que puede ver con sus enlaces
@@ -28,8 +32,10 @@ final class PanelAdministracion
      */
     public function paraUsuario(Usuario $usuario): array
     {
-        $roles = [...$usuario->getUserRoles()];
-        $ve = static fn(SeccionAdministracion|EnlaceAdministracion $r) => Acceso::permite((int) $usuario->getId(), $roles, $r->getRoles(), $r->getUsuarios());
+        $permisos = $this->autorizacion->de($usuario);
+        $roles = $permisos->roles();
+        $sistema = $permisos->sistema();
+        $ve = static fn(SeccionAdministracion|EnlaceAdministracion $r) => Acceso::permite((int) $usuario->getId(), $roles, $sistema, $r->getRoles(), $r->getUsuarios());
 
         $resultado = [];
         foreach ($this->secciones() as $seccion) {

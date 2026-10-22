@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use ApiPlatform\Metadata\ApiProperty;
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
@@ -19,6 +20,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  */
 #[ORM\Entity]
 #[ApiResourcePaginationPage(order: ["nombre" => "ASC"])]
+#[Recurso(nombre: "Encomiendas especiales", area: "Encomiendas", lecturaLibre: true, editar: "encomienda.especiales", eliminar: "encomienda.especiales")]
 class EncomiendaEspecial extends Base
 {
     #[ORM\Column(length: 100)]

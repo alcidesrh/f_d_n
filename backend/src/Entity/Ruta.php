@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use ApiPlatform\Metadata\ApiProperty;
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
@@ -19,6 +20,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity]
 #[ORM\UniqueConstraint(name: "uq_ruta_legacy_id", columns: ["legacy_id"])]
 #[ApiResourcePaginationPage]
+#[Recurso(nombre: "Rutas", area: "Rutas y tarifas", lecturaLibre: true, editar: "ruta.editar", eliminar: "ruta.editar")]
 class Ruta extends Base
 {
     #[ORM\Column(length: 255)]

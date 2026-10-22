@@ -15,14 +15,9 @@ use PHPUnit\Framework\TestCase;
 
 final class AdministracionTest extends TestCase
 {
-    private static function rol(int $id, Role ...$padres): Role
+    private static function rol(int $id, ?string $nombre = null): Role
     {
-        $rol = (new Role())->setId($id);
-        foreach ($padres as $padre) {
-            $rol->addParent($padre);
-        }
-
-        return $rol;
+        return (new Role())->setNombre($nombre ?? "ROLE_$id")->setId($id);
     }
 
     private static function usuario(int $id): Usuario
@@ -32,23 +27,22 @@ final class AdministracionTest extends TestCase
 
     public function testSinRestriccionesLoVeCualquiera(): void
     {
-        $this->assertTrue(Acceso::permite(5, [], [], []));
+        $this->assertTrue(Acceso::permite(5, [], false, [], []));
     }
 
     public function testElUsuarioNombradoLoVeAunqueNoTengaElRol(): void
     {
-        $this->assertTrue(Acceso::permite(5, [], [self::rol(1)], [self::usuario(5)]));
-        $this->assertFalse(Acceso::permite(6, [], [self::rol(1)], [self::usuario(5)]));
+        $this->assertTrue(Acceso::permite(5, [], false, [self::rol(1)], [self::usuario(5)]));
+        $this->assertFalse(Acceso::permite(6, [], false, [self::rol(1)], [self::usuario(5)]));
     }
 
-    public function testElRolOUnAscendienteLoDejaVer(): void
+    public function testElRolAsignadoLoDejaVerSinJerarquia(): void
     {
-        $jefe = self::rol(1);
-        $cajero = self::rol(2, $jefe);
-        $this->assertTrue(Acceso::permite(5, [$cajero], [$cajero], []));
-        $this->assertTrue(Acceso::permite(5, [$jefe], [$cajero], []), 'el ascendiente ve lo del hijo');
-        $this->assertFalse(Acceso::permite(5, [$cajero], [$jefe], []), 'el hijo no ve lo del ascendiente');
-        $this->assertFalse(Acceso::permite(5, [], [$cajero], []));
+        $this->assertTrue(Acceso::permite(5, [2], false, [self::rol(2)], []));
+        $this->assertFalse(Acceso::permite(5, [1], false, [self::rol(2)], []), 'otro rol no hereda');
+        $this->assertFalse(Acceso::permite(5, [], false, [self::rol(2)], []));
+        $this->assertTrue(Acceso::permite(5, [], true, [self::rol(2)], []), 'el de sistema ve todo');
+        $this->assertTrue(Acceso::permite(5, [], false, [self::rol(9, Role::user)], []), 'el rol base lo ven todos');
     }
 
     public function testDestinoPorRutaConParametros(): void

@@ -176,8 +176,8 @@ export interface DetalleAsiento {
   asiento: { id: number; numero: number; clase: 'A' | 'B' }
   reserva: { creada: string; expiraEn: string; trayecto: TrayectoAsiento } | null
   boletos: BoletoDeAsiento[]
-  /** Quien consulta es SUPER_ADMIN: ve la venta y la bitácora, no los datos del pasajero. */
-  superAdmin?: boolean
+  /** Quien consulta audita (`bitacora.ver` en la empresa de la salida, ADR-039): ve la venta y la bitácora, no los datos del pasajero. */
+  auditoria?: boolean
 }
 
 export interface LineaCotizacion {

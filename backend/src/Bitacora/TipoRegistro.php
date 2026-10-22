@@ -8,8 +8,12 @@ use App\Entity\BoletoAsiento;
 use App\Entity\Encomienda;
 use App\Entity\Enum\OperacionBoleto;
 use App\Entity\Enum\OperacionEncomienda;
+use App\Entity\Enum\OperacionRol;
 use App\Entity\Enum\OperacionSalida;
+use App\Entity\Enum\OperacionUsuario;
+use App\Entity\Role;
 use App\Entity\Salida;
+use App\Entity\Usuario;
 
 /**
  * Qué registros tienen bitácora. El valor es lo que se guarda en
@@ -20,6 +24,9 @@ enum TipoRegistro: string
     case SALIDA = "salida";
     case BOLETO = "boleto";
     case ENCOMIENDA = "encomienda";
+    /** Accesos del usuario: asignaciones, activación, contraseña (ADR-039). */
+    case USUARIO = "usuario";
+    case ROL = "rol";
 
     /** @return class-string */
     public function clase(): string
@@ -28,6 +35,8 @@ enum TipoRegistro: string
             self::SALIDA => Salida::class,
             self::BOLETO => BoletoAsiento::class,
             self::ENCOMIENDA => Encomienda::class,
+            self::USUARIO => Usuario::class,
+            self::ROL => Role::class,
         };
     }
 
@@ -38,6 +47,8 @@ enum TipoRegistro: string
             self::SALIDA => OperacionSalida::class,
             self::BOLETO => OperacionBoleto::class,
             self::ENCOMIENDA => OperacionEncomienda::class,
+            self::USUARIO => OperacionUsuario::class,
+            self::ROL => OperacionRol::class,
         };
     }
 

@@ -38,7 +38,7 @@ final class Perfil
             $nombre !== "" ? $nombre : $u->getUsername(),
             $agencia?->getId(),
             $estacion?->getId(),
-            $agencia?->getNombre() ?? $estacion?->getNombre() ?? $u->getEmpresa()?->getNombre(),
+            $agencia?->getNombre() ?? $estacion?->getNombre(),
             $fotos?->url($u),
         );
     }

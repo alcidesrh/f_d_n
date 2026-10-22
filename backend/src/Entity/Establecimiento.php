@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
 use Doctrine\ORM\Mapping as ORM;
@@ -17,6 +18,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity]
 #[ORM\UniqueConstraint(name: "uq_establecimiento_empresa_estacion", columns: ["empresa_id", "estacion_id"])]
 #[ApiResourcePaginationPage]
+#[Recurso(nombre: "Establecimientos (factura electrónica)", area: "Facturación", empresa: "empresa")]
 class Establecimiento extends Base
 {
     #[ORM\ManyToOne]

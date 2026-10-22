@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use App\Attribute\ApiResourceNoPagination;
 use App\Entity\Base\Base;
 use Doctrine\ORM\Mapping as ORM;
@@ -21,6 +22,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  */
 #[ORM\Entity]
 #[ApiResourceNoPagination]
+#[Recurso(nombre: "Ítems de menú", area: "Configuración", lecturaLibre: true, editar: "menu.editar", eliminar: "menu.editar")]
 class MenuItem extends Base
 {
     #[Assert\NotBlank]

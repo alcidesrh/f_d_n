@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use App\Attribute\ApiResourceNoPagination;
 use App\Entity\Base\Base;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -10,6 +11,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
 #[ApiResourceNoPagination]
+#[Recurso(nombre: "Empresas", area: "Empresas", lecturaLibre: true, empresa: "@id")]
 class Empresa extends Base
 {
     #[ORM\Column(length: 255)]

@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Acceso\Autorizacion;
+use App\Acceso\Capacidad;
+use App\Acceso\EstacionTrabajo;
+use App\Acceso\Ubicacion;
+use App\Acceso\Ubicador;
 use App\Encomienda\ArticuloSolicitado;
 use App\Encomienda\ConsultaEncomiendas;
 use App\Encomienda\DatosEncomienda;
@@ -63,6 +68,8 @@ final class EncomiendaController extends AbstractController
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly ConsultaEncomiendas $consulta,
+        private readonly Autorizacion $autorizacion,
+        private readonly EstacionTrabajo $estacionTrabajo,
     ) {}
 
     /** Quién opera y con qué: estación, empresa, permisos y catálogos del formulario. */
@@ -72,8 +79,11 @@ final class EncomiendaController extends AbstractController
         if (!$this->isGranted(self::VER) && !$this->isGranted(self::REGISTRAR)) {
             throw $this->createAccessDeniedException();
         }
-        $empresa = $usuario->getEmpresa();
-        $estacion = $usuario->getEstacion();
+        // La estación de trabajo y, si registra en una sola empresa, esa (ADR-039).
+        $alcance = $this->autorizacion->alcance($this->isGranted(self::REGISTRAR) ? Capacidad::ENCOMIENDA_REGISTRAR : Capacidad::ENCOMIENDA_VER);
+        $empresas = $alcance->empresas();
+        $empresa = ($id = $alcance->empresaUnica()) !== null ? $this->em->find(Empresa::class, $id) : null;
+        $estacion = $this->estacionTrabajo->actual($usuario);
 
         return $this->json([
             "usuario" => ["id" => $usuario->getId(), "username" => $usuario->getUsername()],
@@ -91,7 +101,7 @@ final class EncomiendaController extends AbstractController
             ],
             "empresas" => array_map(
                 static fn(Empresa $e) => ["id" => $e->getId(), "nombre" => $e->getNombre(), "alias" => $e->getAlias()],
-                $empresa !== null ? [$empresa] : $this->em->getRepository(Empresa::class)->findBy([], ["nombre" => "ASC"]),
+                $this->em->getRepository(Empresa::class)->findBy($empresas === null ? [] : ["id" => $empresas], ["nombre" => "ASC"]),
             ),
             "estaciones" => array_map(
                 static fn(Estacion $e) => ["id" => $e->getId(), "nombre" => $e->getNombre(), "direccion" => $e->getDireccion(), "departamento" => $e->getDepartamento()],
@@ -118,7 +128,7 @@ final class EncomiendaController extends AbstractController
         return $this->responder(function () use ($request, $usuario, $tarifas) {
             $datos = $request->toArray();
             $origenId = SolicitudEncomienda::entero($datos["origen"] ?? null, "origen", false);
-            $origen = $origenId !== null ? $this->em->find(Enclave::class, $origenId) : $usuario->getEstacion();
+            $origen = $origenId !== null ? $this->em->find(Enclave::class, $origenId) : $this->estacionTrabajo->actual($usuario);
             $destino = $this->em->find(Enclave::class, (int) SolicitudEncomienda::entero($datos["destino"] ?? null, "destino"));
             if ($origen === null || $destino === null) {
                 throw new EncomiendaRechazada("Indique el origen y el destino.");
@@ -189,7 +199,7 @@ final class EncomiendaController extends AbstractController
     {
         $this->denyAccessUnlessGranted(self::VER);
 
-        return $this->json($this->consulta->listado($request->query->all(), $usuario->getEmpresa()?->getId()));
+        return $this->json($this->consulta->listado($request->query->all(), $this->autorizacion->alcance(Capacidad::ENCOMIENDA_VER)->empresas()));
     }
 
     #[Route("/{id<\d+>}", name: "ver", methods: ["GET"])]
@@ -197,7 +207,7 @@ final class EncomiendaController extends AbstractController
     {
         $this->denyAccessUnlessGranted(self::VER);
 
-        return $this->json(DatosEncomienda::de($this->encomienda($id, $usuario)));
+        return $this->json(DatosEncomienda::de($this->encomienda($id, $usuario, Capacidad::ENCOMIENDA_VER)));
     }
 
     /** `{ encomiendas: [id], salida }` → `{ embarcadas: [id], fallidas: [{ id, codigo, error }] }`. */
@@ -213,7 +223,7 @@ final class EncomiendaController extends AbstractController
                 array_map("intval", (array) ($datos["encomiendas"] ?? [])),
                 (int) SolicitudEncomienda::entero($datos["salida"] ?? null, "salida"),
                 $usuario,
-                fn(Encomienda $e) => $this->puedeVer($e, $usuario),
+                fn(Encomienda $e) => $this->puedeOperar($e, $usuario, Capacidad::ENCOMIENDA_EMBARCAR),
             );
         });
     }
@@ -231,7 +241,7 @@ final class EncomiendaController extends AbstractController
                 array_map("intval", (array) ($datos["encomiendas"] ?? [])),
                 SolicitudEncomienda::entero($datos["estacion"] ?? null, "estacion", false),
                 $usuario,
-                fn(Encomienda $e) => $this->puedeVer($e, $usuario),
+                fn(Encomienda $e) => $this->puedeOperar($e, $usuario, Capacidad::ENCOMIENDA_EMBARCAR),
             );
         });
     }
@@ -241,7 +251,7 @@ final class EncomiendaController extends AbstractController
     public function entregar(int $id, Request $request, #[CurrentUser] Usuario $usuario, MovimientosEncomienda $movimientos): JsonResponse
     {
         $this->denyAccessUnlessGranted(self::ENTREGAR);
-        $this->encomienda($id, $usuario);
+        $this->encomienda($id, $usuario, Capacidad::ENCOMIENDA_ENTREGAR);
 
         return $this->responder(fn() => DatosEncomienda::de($movimientos->entregar(
             $id,
@@ -268,7 +278,7 @@ final class EncomiendaController extends AbstractController
                 EntregaEncomienda::desdeArray($datos),
                 $usuario,
                 $this->isGranted(VentaController::SIN_FACTURA),
-                fn(Encomienda $e) => $this->puedeVer($e, $usuario),
+                fn(Encomienda $e) => $this->puedeOperar($e, $usuario, Capacidad::ENCOMIENDA_ENTREGAR),
             );
         });
     }
@@ -278,7 +288,7 @@ final class EncomiendaController extends AbstractController
     public function cambiarRuta(int $id, Request $request, #[CurrentUser] Usuario $usuario, MovimientosEncomienda $movimientos, RutasEncomienda $rutas): JsonResponse
     {
         $this->denyAccessUnlessGranted(self::REGISTRAR);
-        $this->encomienda($id, $usuario);
+        $this->encomienda($id, $usuario, Capacidad::ENCOMIENDA_REGISTRAR);
 
         return $this->responder(fn() => DatosEncomienda::de($movimientos->cambiarRuta(
             $id,
@@ -294,7 +304,10 @@ final class EncomiendaController extends AbstractController
     {
         $this->denyAccessUnlessGranted(self::VER);
 
-        return $this->responder(fn() => $this->consulta->pendientesEnvio($this->estacion($request, $usuario), $usuario->getEmpresa()?->getId()));
+        return $this->responder(fn() => $this->consulta->pendientesEnvio(
+            $this->estacion($request, $usuario, Capacidad::ENCOMIENDA_VER),
+            $this->autorizacion->alcance(Capacidad::ENCOMIENDA_VER)->empresas(),
+        ));
     }
 
     /** `?estacion=&q=`: lo que se puede entregar en la estación (la del usuario, si tiene). */
@@ -304,8 +317,8 @@ final class EncomiendaController extends AbstractController
         $this->denyAccessUnlessGranted(self::ENTREGAR);
 
         return $this->responder(fn() => $this->consulta->pendientesEntrega(
-            $this->estacion($request, $usuario),
-            $usuario->getEmpresa()?->getId(),
+            $this->estacion($request, $usuario, Capacidad::ENCOMIENDA_ENTREGAR),
+            $this->autorizacion->alcance(Capacidad::ENCOMIENDA_ENTREGAR)->empresas(),
             trim((string) $request->query->get("q", "")) ?: null,
         ));
     }
@@ -345,7 +358,7 @@ final class EncomiendaController extends AbstractController
     public function anular(int $id, Request $request, #[CurrentUser] Usuario $usuario, MovimientosEncomienda $movimientos): JsonResponse
     {
         $this->denyAccessUnlessGranted(self::ANULAR);
-        $this->encomienda($id, $usuario);
+        $this->encomienda($id, $usuario, Capacidad::ENCOMIENDA_ANULAR);
 
         return $this->responder(fn() => DatosEncomienda::de($movimientos->anular($id, (string) ($request->toArray()["motivo"] ?? ""), $usuario)));
     }
@@ -360,7 +373,12 @@ final class EncomiendaController extends AbstractController
             $dia = \DateTimeImmutable::createFromFormat("!Y-m-d", (string) $request->query->get("fecha"))
                 ?: throw new EncomiendaRechazada("Fecha inválida (AAAA-MM-DD).");
 
-            return $this->consulta->salidasDeEstacion($dia, $this->estacion($request, $usuario), $usuario->getEmpresa()?->getId(), $request->query->getInt("destino") ?: null);
+            return $this->consulta->salidasDeEstacion(
+                $dia,
+                $this->estacion($request, $usuario, Capacidad::ENCOMIENDA_EMBARCAR),
+                $this->autorizacion->alcance(Capacidad::ENCOMIENDA_EMBARCAR)->empresas(),
+                $request->query->getInt("destino") ?: null,
+            );
         });
     }
 
@@ -370,7 +388,11 @@ final class EncomiendaController extends AbstractController
     {
         $this->denyAccessUnlessGranted(self::EMBARCAR);
 
-        return $this->responder(fn() => $this->consulta->procesar($salida, $this->estacion($request, $usuario), $usuario->getEmpresa()?->getId()));
+        return $this->responder(fn() => $this->consulta->procesar(
+            $salida,
+            $this->estacion($request, $usuario, Capacidad::ENCOMIENDA_EMBARCAR),
+            $this->autorizacion->alcance(Capacidad::ENCOMIENDA_EMBARCAR)->empresas(),
+        ));
     }
 
     /** @param array<string, mixed> $d */
@@ -422,26 +444,44 @@ final class EncomiendaController extends AbstractController
         ];
     }
 
-    private function estacion(Request $request, Usuario $usuario): Estacion
+    /**
+     * La estación de trabajo; sin ella (usuario de oficina), la que se pide,
+     * si está dentro del alcance de esa capacidad.
+     */
+    private function estacion(Request $request, Usuario $usuario, Capacidad $capacidad): Estacion
     {
-        return $usuario->getEstacion()
-            ?? $this->em->find(Estacion::class, $request->query->getInt("estacion"))
+        $trabajo = $this->estacionTrabajo->actual($usuario);
+        if ($trabajo !== null) {
+            return $trabajo;
+        }
+        $pedida = $this->em->find(Estacion::class, $request->query->getInt("estacion"))
             ?? throw new EncomiendaRechazada("Elija la estación.");
+        $estaciones = $this->autorizacion->alcance($capacidad)->estaciones();
+        if ($estaciones !== null && !in_array((int) $pedida->getId(), $estaciones, true)) {
+            throw new EncomiendaRechazada("Fuera de su alcance: esa estación no es de las suyas.", "alcance", 403);
+        }
+
+        return $pedida;
     }
 
-    private function encomienda(int $id, Usuario $usuario): Encomienda
+    /** La encomienda, si tiene esa capacidad sobre ella (ver: su empresa; operar: además, desde su estación). */
+    private function encomienda(int $id, Usuario $usuario, Capacidad $capacidad): Encomienda
     {
         $e = $this->em->find(Encomienda::class, $id) ?? throw $this->createNotFoundException();
-        if (!$this->puedeVer($e, $usuario)) {
-            throw $this->createAccessDeniedException();
+        $ok = $capacidad === Capacidad::ENCOMIENDA_VER
+            ? $this->autorizacion->puede($capacidad, Ubicacion::empresa($e->getEmpresa()?->getId()))
+            : $this->puedeOperar($e, $usuario, $capacidad);
+        if (!$ok) {
+            throw $this->createAccessDeniedException(Autorizacion::mensaje($capacidad, Ubicacion::ninguna()));
         }
 
         return $e;
     }
 
-    private function puedeVer(Encomienda $e, Usuario $usuario): bool
+    /** La capacidad sobre la empresa de la encomienda, desde donde opera el usuario. */
+    private function puedeOperar(Encomienda $e, Usuario $usuario, Capacidad $capacidad): bool
     {
-        return $usuario->getEmpresa() === null || $usuario->getEmpresa()->getId() === $e->getEmpresa()?->getId();
+        return $this->autorizacion->de($usuario)->puede($capacidad->value, Ubicador::operacion($e->getEmpresa()?->getId(), $usuario));
     }
 
     /**

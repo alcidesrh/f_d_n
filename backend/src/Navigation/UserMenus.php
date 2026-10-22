@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace App\Navigation;
 
+use App\Acceso\Autorizacion;
 use App\Entity\Usuario;
 use App\Taxonomy\TaxonomyTreeReader;
 
 /**
  * Navegación de un usuario: por área, los menús colocados en ella que puede
  * ver (`MenuVisibility`), en su orden, cada uno con su árbol de ítems.
- * Consultas fijas: placements (+menú +roles), nodos, ítems (+ícono +ruta);
- * los ascendientes de roles se cargan de forma diferida (grafo pequeño).
+ * Consultas fijas: placements (+menú +roles), nodos, ítems (+ícono +ruta) y
+ * las asignaciones del usuario (ADR-039).
  */
 final class UserMenus
 {
@@ -19,6 +20,7 @@ final class UserMenus
         private readonly MenuLayout $layout,
         private readonly TaxonomyTreeReader $reader,
         private readonly MenuItemLoader $items,
+        private readonly Autorizacion $autorizacion,
     ) {}
 
     /**
@@ -26,9 +28,12 @@ final class UserMenus
      */
     public function for(Usuario $user): array
     {
+        $permisos = $this->autorizacion->de($user);
+        $roles = $permisos->roles();
+        $sistema = $permisos->sistema();
         $visible = array_values(array_filter(
             $this->layout->placements(),
-            static fn ($placement) => MenuVisibility::isVisibleTo($user->getUserRoles(), $placement->getMenu()->getRoles()),
+            static fn ($placement) => MenuVisibility::isVisibleTo($roles, $sistema, $placement->getMenu()->getRoles()),
         ));
 
         $taxonomyIds = array_values(array_unique(array_map(

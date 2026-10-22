@@ -2,6 +2,8 @@
 
 namespace App\EventListener;
 
+use App\Acceso\Autorizacion;
+use App\Doctrine\TenantFilter;
 use App\Entity\Usuario;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
@@ -10,8 +12,9 @@ use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
- * Habilita/deshabilita App\Doctrine\TenantFilter en cada request según la empresa
- * del Usuario autenticado.
+ * Habilita/deshabilita App\Doctrine\TenantFilter en cada request con las
+ * empresas de las asignaciones vigentes del usuario (ADR-039): apagado sin
+ * sesión o con alcance sobre todas las empresas.
  *
  * Se hace explícitamente en cada petición (no solo "si hace falta habilitarlo")
  * porque FrankenPHP en worker mode mantiene el kernel — y con él el
@@ -24,6 +27,7 @@ final class TenantFilterListener implements EventSubscriberInterface
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly Security $security,
+        private readonly Autorizacion $autorizacion,
     ) {}
 
     public static function getSubscribedEvents(): array
@@ -38,20 +42,19 @@ final class TenantFilterListener implements EventSubscriberInterface
         }
 
         $filters = $this->entityManager->getFilters();
+        if ($filters->isEnabled("tenant_filter")) {
+            $filters->disable("tenant_filter");
+        }
         $user = $this->security->getUser();
-        $empresaId =
-            $user instanceof Usuario ? $user->getEmpresa()?->getId() : null;
-
-        if ($empresaId !== null) {
-            $filters
-                ->enable("tenant_filter")
-                ->setParameter("empresaId", $empresaId, "integer");
-
+        if (!$user instanceof Usuario) {
             return;
         }
 
-        if ($filters->isEnabled("tenant_filter")) {
-            $filters->disable("tenant_filter");
+        $empresas = $this->autorizacion->de($user)->general()->empresas();
+        if ($empresas !== null) {
+            $filters
+                ->enable("tenant_filter")
+                ->setParameterList(TenantFilter::PARAMETRO, $empresas, "integer");
         }
     }
 }

@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Acceso\Autorizacion;
+use App\Acceso\Capacidad;
+use App\Acceso\FiltroAlcance;
+use App\Acceso\Ubicador;
 use App\Croquis\Moldes;
 use App\Entity\Bus;
 use App\Entity\Empresa;
@@ -35,6 +39,7 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
  * guardados) y editar/anular/eliminar con propagación a las idénticas
  * futuras. Bajo `/api/gestion-salidas` para no chocar con el recurso
  * `Salida` de API Platform. Las respuestas de error son `{ error, codigo }`.
+ * Cada capacidad rige sobre la empresa de la salida (ADR-039).
  */
 #[AsController]
 #[Route("/api/gestion-salidas", name: "api_gestion_salidas_")]
@@ -51,6 +56,7 @@ final class SalidaController extends AbstractController
         private readonly GestionSalidas $gestion,
         private readonly ProgramadorSalidas $programador,
         private readonly Esquemas $esquemas,
+        private readonly Autorizacion $autorizacion,
     ) {}
 
     /** Ver `FiltroSalidas::desdeQuery` para los parámetros. */
@@ -59,7 +65,7 @@ final class SalidaController extends AbstractController
     {
         $this->denyAccessUnlessGranted(self::VER);
 
-        return $this->json($consulta->buscar(FiltroSalidas::desdeQuery($request->query->all())));
+        return $this->json($consulta->buscar(FiltroSalidas::desdeQuery($request->query->all()), $this->autorizacion->alcance(Capacidad::SALIDA_VER)));
     }
 
     /**
@@ -71,15 +77,16 @@ final class SalidaController extends AbstractController
     public function opciones(#[CurrentUser] Usuario $usuario): JsonResponse
     {
         $this->denyAccessUnlessGranted(self::VER);
-        /** @var list<Bus> $buses */
-        $buses = $this->em->createQueryBuilder()
+        $ver = $this->autorizacion->alcance(Capacidad::SALIDA_VER);
+        $qb = $this->em->createQueryBuilder()
             ->select("b", "c", "k")
             ->from(Bus::class, "b")
             ->leftJoin("b.croquis", "c")
             ->leftJoin("b.clase", "k")
-            ->orderBy("b.codigo", "ASC")
-            ->getQuery()
-            ->getResult();
+            ->orderBy("b.codigo", "ASC");
+        /** @var list<Bus> $buses */
+        $buses = FiltroAlcance::aplicar($qb, $ver, "b.empresa", compartidos: true)->getQuery()->getResult();
+        $empresasVisibles = $ver->empresas();
         // Filtros del bus al programar (ADR-027): solo los moldes y clases que tiene la flota visible.
         $moldes = [];
         $clases = [];
@@ -98,10 +105,10 @@ final class SalidaController extends AbstractController
         return $this->json([
             "empresas" => array_map(
                 static fn(Empresa $e) => ["id" => $e->getId(), "nombre" => $e->getNombreCorto()],
-                $this->em->getRepository(Empresa::class)->findBy([], ["nombre" => "ASC"]),
+                $this->em->getRepository(Empresa::class)->findBy($empresasVisibles === null ? [] : ["id" => $empresasVisibles], ["nombre" => "ASC"]),
             ),
-            // Sin empresa, el programador ofrece elegirla para filtrar distribuciones y buses.
-            "miEmpresaId" => $this->em->find(Usuario::class, $usuario->getId())?->getEmpresa()?->getId(),
+            // Con una sola empresa donde programa, esa; si no, el programador ofrece elegirla para filtrar distribuciones y buses.
+            "miEmpresaId" => $this->autorizacion->alcance(Capacidad::SALIDA_CREAR)->empresaUnica() ?? $ver->empresaUnica(),
             "buses" => array_map(VistaSalida::bus(...), $buses),
             "croquis" => $moldes,
             "clases" => $clases,
@@ -180,7 +187,7 @@ final class SalidaController extends AbstractController
     {
         $this->denyAccessUnlessGranted(self::VER);
 
-        return $this->responder(fn() => $detalle->de($this->salida($id)));
+        return $this->responder(fn() => $detalle->de($this->salida($id, Capacidad::SALIDA_VER)));
     }
 
     /** PDF del manifiesto `interno`, `piloto` o `boleto` de la salida. */
@@ -190,7 +197,7 @@ final class SalidaController extends AbstractController
         $this->denyAccessUnlessGranted(self::VER);
 
         try {
-            $manifiesto = $manifiestos->de($this->salida($id));
+            $manifiesto = $manifiestos->de($this->salida($id, Capacidad::SALIDA_VER));
         } catch (SalidaRechazada $e) {
             return $this->json($e->toArray(), $e->estadoHttp);
         }
@@ -207,7 +214,11 @@ final class SalidaController extends AbstractController
     {
         $this->denyAccessUnlessGranted(self::VER);
 
-        return $this->responder(fn() => $this->gestion->propagacion($id));
+        return $this->responder(function () use ($id) {
+            $this->salida($id, Capacidad::SALIDA_VER);
+
+            return $this->gestion->propagacion($id);
+        });
     }
 
     /** `{ rutaId?, busId?, fecha?: AAAA-MM-DDTHH:MM, propagar?: bool }` */
@@ -217,7 +228,11 @@ final class SalidaController extends AbstractController
         $this->denyAccessUnlessGranted(self::EDITAR);
         $datos = $request->toArray();
 
-        return $this->responder(fn() => $this->gestion->editar($id, $datos, (bool) ($datos["propagar"] ?? false)));
+        return $this->responder(function () use ($id, $datos) {
+            $this->salida($id, Capacidad::SALIDA_EDITAR);
+
+            return $this->gestion->editar($id, $datos, (bool) ($datos["propagar"] ?? false));
+        });
     }
 
     /** `{ propagar?: bool }` */
@@ -227,7 +242,11 @@ final class SalidaController extends AbstractController
         $this->denyAccessUnlessGranted(self::ANULAR);
         $propagar = (bool) ($request->getContent() !== "" ? ($request->toArray()["propagar"] ?? false) : false);
 
-        return $this->responder(fn() => $this->gestion->anular($id, $propagar));
+        return $this->responder(function () use ($id, $propagar) {
+            $this->salida($id, Capacidad::SALIDA_CANCELAR);
+
+            return $this->gestion->anular($id, $propagar);
+        });
     }
 
     /** `?propagar=1` */
@@ -236,13 +255,23 @@ final class SalidaController extends AbstractController
     {
         $this->denyAccessUnlessGranted(self::ELIMINAR);
 
-        return $this->responder(fn() => $this->gestion->eliminar($id, $request->query->getBoolean("propagar")));
+        return $this->responder(function () use ($id, $request) {
+            $this->salida($id, Capacidad::SALIDA_ELIMINAR);
+
+            return $this->gestion->eliminar($id, $request->query->getBoolean("propagar"));
+        });
     }
 
-    private function salida(int $id): Salida
+    /** La salida, si el usuario tiene esa capacidad sobre su empresa. */
+    private function salida(int $id, Capacidad $capacidad): Salida
     {
-        return $this->em->find(Salida::class, $id)
+        $salida = $this->em->find(Salida::class, $id)
             ?? throw new SalidaRechazada("La salida no existe.", "salida_inexistente", 404);
+        if (!$this->autorizacion->puede($capacidad, Ubicador::salida($salida))) {
+            throw new SalidaRechazada(Autorizacion::mensaje($capacidad, Ubicador::salida($salida)), "alcance", 403);
+        }
+
+        return $salida;
     }
 
     /** @param callable(): mixed $operacion */

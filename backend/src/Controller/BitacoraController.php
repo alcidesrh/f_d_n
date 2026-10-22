@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Acceso\Capacidad;
+use App\Acceso\Ubicacion;
+use App\Acceso\Ubicador;
+use App\Entity\Role;
 use App\Bitacora\ConsultaBitacora;
 use App\Bitacora\TipoRegistro;
 use App\Entity\BoletoAsiento;
@@ -19,10 +23,12 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 /**
- * Bitácora de salidas, boletos y encomiendas: `GET /api/bitacora/{salida|boleto|encomienda}/{id}`.
- * La de una salida la ve quien puede ver salidas (`salida.ver`); la de un
- * boleto, quien puede ver su venta o leer boletos; la de una encomienda,
- * quien puede ver encomiendas (`encomienda.ver`).
+ * Bitácora de salidas, boletos, encomiendas, usuarios y roles:
+ * `GET /api/bitacora/{salida|boleto|encomienda|usuario|rol}/{id}`. La de una
+ * salida la ve quien puede ver salidas de su empresa (`salida.ver`); la de un
+ * boleto, quien puede ver su venta; la de una encomienda, quien ve
+ * encomiendas de su empresa (`encomienda.ver`); las de usuarios y roles
+ * (sus accesos), quien ve accesos (`iam.ver`). ADR-039.
  */
 #[AsController]
 #[Route("/api/bitacora", name: "api_bitacora_")]
@@ -43,6 +49,8 @@ final class BitacoraController extends AbstractController
             TipoRegistro::SALIDA => $this->etiquetaSalida($id),
             TipoRegistro::BOLETO => $this->etiquetaBoleto($id, $usuario),
             TipoRegistro::ENCOMIENDA => $this->etiquetaEncomienda($id),
+            TipoRegistro::USUARIO => $this->etiquetaUsuario($id),
+            TipoRegistro::ROL => $this->etiquetaRol($id),
         };
 
         return $this->json([
@@ -53,10 +61,27 @@ final class BitacoraController extends AbstractController
         ]);
     }
 
+    private function etiquetaUsuario(int $id): string
+    {
+        $this->denyAccessUnlessGranted(Capacidad::IAM_VER->value);
+        $u = $this->em->find(Usuario::class, $id);
+
+        return $u === null ? sprintf("Usuario %d", $id) : sprintf("Accesos de %s", $u->getLabel());
+    }
+
+    private function etiquetaRol(int $id): string
+    {
+        $this->denyAccessUnlessGranted(Capacidad::IAM_VER->value);
+        $r = $this->em->find(Role::class, $id);
+
+        return $r === null ? sprintf("Rol %d", $id) : sprintf("Rol %s", $r->getNombre());
+    }
+
     private function etiquetaEncomienda(int $id): string
     {
         $this->denyAccessUnlessGranted(EncomiendaController::VER);
         $e = $this->em->find(Encomienda::class, $id) ?? throw $this->createNotFoundException();
+        $this->denyAccessUnlessGranted(EncomiendaController::VER, Ubicacion::empresa($e->getEmpresa()?->getId()));
 
         return sprintf("Encomienda %s · %s → %s · %s", $e->getCodigo(), $e->getOrigen()?->getNombre(), $e->getDestino()?->getNombre(), $e->getCreada()->format("d/m/Y H:i"));
     }
@@ -69,6 +94,7 @@ final class BitacoraController extends AbstractController
             // Eliminada: la bitácora sigue ahí.
             return sprintf("Salida %d", $id);
         }
+        $this->denyAccessUnlessGranted(SalidaController::VER, Ubicador::salida($salida));
 
         return sprintf(
             "Salida %d · %s → %s · %s",
@@ -82,7 +108,7 @@ final class BitacoraController extends AbstractController
     private function etiquetaBoleto(int $id, Usuario $usuario): string
     {
         $boleto = $this->em->find(BoletoAsiento::class, $id) ?? throw $this->createNotFoundException();
-        if (!$this->acceso->puedeVer($boleto->getBoletoVenta(), $usuario) && !$this->isGranted("read", BoletoAsiento::class)) {
+        if (!$this->acceso->puedeVer($boleto->getBoletoVenta(), $usuario)) {
             throw $this->createAccessDeniedException();
         }
 

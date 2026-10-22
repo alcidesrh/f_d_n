@@ -5,6 +5,7 @@
  */
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+import { useAccesoStore } from '@/core/acceso/store'
 import { suscribir } from '@/core/realtime'
 import * as api from './api'
 import { revisarPush } from './push'
@@ -152,6 +153,10 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   async function recibir(aviso: Aviso) {
+    if (aviso.tipo === 'acceso') {
+      void useAccesoStore().cargar()
+      return
+    }
     if (aviso.tipo === 'presencia') {
       enLinea.value = aplicarPresencia(enLinea.value, aviso.usuario, aviso.enLinea)
       return

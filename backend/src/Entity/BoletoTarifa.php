@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiProperty;
 use App\Attribute\ApiResourcePaginationPage;
@@ -29,6 +30,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: BoletoTarifaRepository::class)]
 #[ApiResourcePaginationPage]
 #[ApiFilter(BoletoTarifaFilter::class)]
+#[Recurso(nombre: "Tarifas de boletos", area: "Rutas y tarifas", codigo: "tarifa", empresa: "empresa")]
 class BoletoTarifa extends Base
 {
     #[ORM\Column(length: 255)]

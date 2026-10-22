@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 use ApiPlatform\Metadata\ApiFilter;
 use App\Attribute\ApiResourcePaginationPage;
@@ -13,6 +14,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: LocalidadRepository::class)]
 #[ApiResourcePaginationPage]
 #[ApiFilter(OrderFilter::class, alias: 'order.filter', properties: ['id'], arguments: ['orderParameterName' => 'order'])]
+#[Recurso(nombre: "Localidades", area: "Geografía", lecturaLibre: true)]
 class Localidad extends Base {
 
     use LegacyTrait;

@@ -39,15 +39,17 @@ final class ConsultaVenta
      * Salidas que pasan por la estación (en cualquier parada salvo la
      * última) **a una hora del día pedido** —la hora en la estación, no la
      * del origen del bus (ADR-030)— con algún trayecto tarifado que sube ahí.
-     * Sin estación, por la hora en su origen. Con empresa, solo las suyas
-     * (agencias que venden para una sola empresa). Con `$hasta` se buscan
+     * Sin estación, por la hora en su origen. Con `$empresas`, solo las de
+     * esas empresas (el alcance de quien vende, ADR-039). Con `$hasta` se buscan
      * entre `$dia` (con su hora) y `$hasta`, ambos inclusive; con
      * `$destinoId`, las que llegan a ese destino después de la estación.
      * `vendidos` cuenta los asientos ocupados en el tramo que se ofrece.
      *
+     * @param list<int>|null $empresas null = todas
+     *
      * @return list<array<string, mixed>>
      */
-    public function salidasDeEstacion(\DateTimeImmutable $dia, ?int $estacionId, ?int $empresaId = null, bool $incluirAnuladas = true, ?int $destinoId = null, ?\DateTimeImmutable $hasta = null): array
+    public function salidasDeEstacion(\DateTimeImmutable $dia, ?int $estacionId, ?array $empresas = null, bool $incluirAnuladas = true, ?int $destinoId = null, ?\DateTimeImmutable $hasta = null): array
     {
         [$desde, $hastaExclusivo] = $hasta === null
             ? [$dia->setTime(0, 0), $dia->setTime(0, 0)->modify("+1 day")]
@@ -55,7 +57,7 @@ final class ConsultaVenta
         $pasan = $this->buscador->pasanPor($desde, $hastaExclusivo, $estacionId, $destinoId);
         $salidas = array_filter(
             $this->salidas(array_column($pasan, "salida")),
-            static fn(Salida $r) => ($empresaId === null || $r->getEmpresa()?->getId() === $empresaId)
+            static fn(Salida $r) => ($empresas === null || in_array($r->getEmpresa()?->getId(), $empresas, true))
                 && ($incluirAnuladas || $r->getEstado() !== EstadoSalida::CANCELADA),
         );
         $itinerarios = $this->itinerarios->deSalidas($salidas);

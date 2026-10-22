@@ -4,7 +4,12 @@ declare(strict_types=1);
 
 namespace App\Salida;
 
+use App\Acceso\Autorizacion;
+use App\Acceso\Capacidad;
+use App\Acceso\FiltroAlcance;
+use App\Acceso\Ubicacion;
 use App\Entity\Bus;
+use App\Entity\Empresa;
 use App\Entity\EsquemaSalida;
 use App\Entity\EsquemaSalidaMomento;
 use App\Entity\Ruta;
@@ -16,7 +21,9 @@ use Doctrine\ORM\EntityManagerInterface;
 /**
  * Esquemas de salidas guardados (ADR-024): se crean desde el programador
  * ("guardar esta configuración") y ahí mismo se cargan, cambian (buses,
- * horas, quitar un momento) o borran. Aislados por empresa (TenantFilter).
+ * horas, quitar un momento) o borran. Aislados por empresa: cada uno es de
+ * la empresa de sus buses, y solo se ven y tocan los de las empresas donde se
+ * programa (`salida.crear`, ADR-039).
  */
 final class Esquemas
 {
@@ -24,20 +31,22 @@ final class Esquemas
 
     public function __construct(
         private readonly EntityManagerInterface $em,
+        private readonly Autorizacion $autorizacion,
     ) {}
 
     /** @return list<array<string, mixed>> */
     public function listar(): array
     {
-        /** @var list<EsquemaSalida> $esquemas */
-        $esquemas = $this->em->createQueryBuilder()
+        $qb = $this->em->createQueryBuilder()
             ->select("e", "m", "r", "b")
             ->from(EsquemaSalida::class, "e")
             ->join("e.ruta", "r")
             ->leftJoin("e.momentos", "m")
             ->leftJoin("m.bus", "b")
             ->orderBy("e.nombre", "ASC")
-            ->addOrderBy("m.hora", "ASC")
+            ->addOrderBy("m.hora", "ASC");
+        /** @var list<EsquemaSalida> $esquemas */
+        $esquemas = FiltroAlcance::aplicar($qb, $this->autorizacion->alcance(Capacidad::SALIDA_CREAR), "e.empresa", compartidos: true)
             ->getQuery()
             ->getResult();
 
@@ -68,7 +77,8 @@ final class Esquemas
         $buses = $this->buses(array_map(static fn(Momento $m) => $m->busId, $momentos));
 
         if ($id === null) {
-            $esquema = new EsquemaSalida($nombre, $usuario?->getEmpresa(), $ruta);
+            $empresa = $this->empresaDe($buses);
+            $esquema = new EsquemaSalida($nombre, $empresa === null ? null : $this->em->getReference(Empresa::class, $empresa), $ruta);
             $this->em->persist($esquema);
         } else {
             $esquema = $this->buscar($id);
@@ -89,6 +99,7 @@ final class Esquemas
 
     public function eliminar(int $id): void
     {
+        // `buscar` ya exige que sea de su alcance.
         $this->em->remove($this->buscar($id));
         $this->em->flush();
     }
@@ -101,7 +112,7 @@ final class Esquemas
      *
      * @return array<int, Bus>
      */
-    public function buses(array $ids): array
+    public function buses(array $ids, Capacidad $capacidad = Capacidad::SALIDA_CREAR): array
     {
         $ids = array_values(array_unique($ids));
         $buses = [];
@@ -112,14 +123,39 @@ final class Esquemas
         if ($faltan !== []) {
             throw new SalidaRechazada("El bus #" . implode(", #", $faltan) . " no existe o no es de su empresa.", "bus_inexistente");
         }
+        foreach ($buses as $id => $b) {
+            if (!$this->autorizacion->puede($capacidad, Ubicacion::empresa($b->getEmpresa()?->getId()))) {
+                throw new SalidaRechazada(sprintf("Fuera de su alcance: el bus #%d es de una empresa donde usted no programa salidas.", $id), "alcance", 403);
+            }
+        }
 
         return $buses;
     }
 
+    /**
+     * La empresa del esquema: la de sus buses si es una sola; si no, la única
+     * de su alcance; si tampoco, ninguna (compartido).
+     *
+     * @param array<int, Bus> $buses
+     */
+    private function empresaDe(array $buses): ?int
+    {
+        $empresas = array_values(array_unique(array_map(static fn(Bus $b) => $b->getEmpresa()?->getId(), $buses)));
+
+        return count($empresas) === 1 && $empresas[0] !== null
+            ? $empresas[0]
+            : $this->autorizacion->alcance(Capacidad::SALIDA_CREAR)->empresaUnica();
+    }
+
     private function buscar(int $id): EsquemaSalida
     {
-        return $this->em->find(EsquemaSalida::class, $id)
+        $esquema = $this->em->find(EsquemaSalida::class, $id)
             ?? throw new SalidaRechazada("El esquema ya no existe.", "esquema_inexistente", 404);
+        if (!$this->autorizacion->puede(Capacidad::SALIDA_CREAR, Ubicacion::empresa($esquema->getEmpresa()?->getId()))) {
+            throw new SalidaRechazada("Fuera de su alcance: el esquema es de otra empresa.", "alcance", 403);
+        }
+
+        return $esquema;
     }
 
     private function exigirNombreLibre(string $nombre, EsquemaSalida $esquema): void

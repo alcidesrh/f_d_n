@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
@@ -35,6 +36,7 @@ use Symfony\Component\Uid\Uuid;
         graphQlOperations: [new Query(), new QueryCollection(filters: [ColumnaFilter::class])],
     ),
 ]
+#[Recurso(nombre: "Ventas de boletos", area: "Venta", soloLectura: true)]
 class BoletoVenta extends TimeLegacyStatusBase
 {
     /** Quien vendió (taquilla o agencia); null en las ventas de la página web. */

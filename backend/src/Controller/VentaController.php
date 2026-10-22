@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Acceso\Autorizacion;
+use App\Acceso\Capacidad;
+use App\Acceso\EstacionTrabajo;
+use App\Acceso\Ubicador;
 use App\Entity\Asiento;
 use App\Entity\BoletoVenta;
 use App\Entity\Cliente;
@@ -49,10 +53,12 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
  * agencia usan los mismos endpoints: la venta descuenta su saldo y no lleva
  * factura electrónica.
  *
- * Permisos (acciones planas, ADR-003): `venta.vender`; `venta.cortesia`
- * (asientos sin cobro); `venta.sin_factura` (continuar sin factura
- * electrónica si el certificador no responde); `boleto.anular` y
- * `boleto.reasignar` (antes de la hora de salida). `ROLE_ADMIN` los tiene todos.
+ * Capacidades (ADR-039): `venta.vender`; `venta.cortesia` (asientos sin
+ * cobro); `venta.sin_factura` (continuar sin factura electrónica si el
+ * certificador no responde); `boleto.anular` y `boleto.reasignar` (antes de
+ * la hora de salida). Cada una sobre la empresa de la salida y la estación
+ * de trabajo (o la agencia) de quien opera; las de una venta hecha, donde
+ * cae esa venta (`AccesoVentas`).
  */
 #[AsController]
 #[Route("/api/venta", name: "api_venta_")]
@@ -72,6 +78,8 @@ final class VentaController extends AbstractController
         private readonly Clientes $clientes,
         private readonly Comprobantes $comprobantes,
         private readonly AccesoVentas $acceso,
+        private readonly Autorizacion $autorizacion,
+        private readonly EstacionTrabajo $estacionTrabajo,
     ) {}
 
     /** Quién vende y con qué: canal, estación/agencia, permisos y catálogos del formulario. */
@@ -80,6 +88,7 @@ final class VentaController extends AbstractController
     {
         $this->denyAccessUnlessGranted(self::VENDER);
         $agencia = $usuario->getAgencia();
+        $estacion = $agencia === null ? $this->estacionTrabajo->actual($usuario) : null;
         $catalogo = fn(string $clase, callable $fila) => array_map($fila, $this->em->getRepository($clase)->findBy(
             property_exists($clase, "activo") ? ["activo" => true] : [],
             ["nombre" => "ASC"],
@@ -88,7 +97,8 @@ final class VentaController extends AbstractController
         return $this->json([
             "canal" => $agencia !== null ? "agencia" : "estacion",
             "usuario" => ["id" => $usuario->getId(), "username" => $usuario->getUsername(), "nombre" => $usuario->getFullName()],
-            "estacion" => $usuario->getEstacion() === null ? null : ["id" => $usuario->getEstacion()->getId(), "nombre" => $usuario->getEstacion()->getNombre(), "departamento" => $usuario->getEstacion()->getDepartamento()],
+            // Estación de trabajo (lugar de emisión), si está dentro de su alcance.
+            "estacion" => $estacion === null ? null : ["id" => $estacion->getId(), "nombre" => $estacion->getNombre(), "departamento" => $estacion->getDepartamento()],
             "agencia" => $agencia === null ? null : [
                 "id" => $agencia->getId(),
                 "nombre" => $agencia->getNombre(),
@@ -142,9 +152,10 @@ final class VentaController extends AbstractController
         return $this->json($this->consulta->salidasDeEstacion(
             $dia,
             $estacion,
-            $usuario->getAgencia()?->getEmpresa()?->getId(),
-            // Las anuladas solo las ve el SUPER_ADMIN.
-            $this->isGranted("ROLE_SUPER_ADMIN"),
+            // Solo las de las empresas donde vende.
+            $this->autorizacion->alcance(Capacidad::VENTA_VENDER)->empresas(),
+            // Las anuladas, quien audita.
+            $this->isGranted(Capacidad::BITACORA_VER->value),
             $request->query->getInt("destino") ?: null,
             $hasta,
         ));
@@ -200,8 +211,8 @@ final class VentaController extends AbstractController
 
         return $this->json([
             ...$detalle->de($salida, $entidad, fn(BoletoVenta $v) => $todo || $this->puedeVer($v, $usuario)),
-            // El detalle muestra la venta y la bitácora del boleto solo al SUPER_ADMIN.
-            "superAdmin" => $this->isGranted("ROLE_SUPER_ADMIN"),
+            // El detalle muestra la venta y la bitácora del boleto a quien audita.
+            "auditoria" => $this->isGranted(Capacidad::BITACORA_VER->value, Ubicador::salida($salida)),
         ]);
     }
 
@@ -224,7 +235,7 @@ final class VentaController extends AbstractController
             // Al reasignar: el precio como lo pagó esa venta (cortesía, recargo de la página).
             $venta = isset($datos["venta"]) ? $this->em->find(BoletoVenta::class, (int) $datos["venta"]) : null;
             if ($venta !== null) {
-                $this->denyUnlessPuedeOperar($venta, $usuario);
+                $this->denyUnlessPuedeOperar($venta, $usuario, Capacidad::BOLETO_REASIGNAR);
             }
 
             $cotizacion = $this->reglas->cotizar(
@@ -299,10 +310,13 @@ final class VentaController extends AbstractController
     {
         $opera = $this->isGranted(self::ANULAR) || $this->isGranted(self::REASIGNAR);
 
+        $puedeOperar = fn(BoletoVenta $v) => $this->acceso->puedeOperar($v, $usuario, Capacidad::BOLETO_ANULAR)
+            || $this->acceso->puedeOperar($v, $usuario, Capacidad::BOLETO_REASIGNAR);
+
         return $this->responder(fn() => $boletos->de(
             $this->ids((string) $request->query->get("ids", "")),
-            fn(BoletoVenta $v) => $this->acceso->puedeOperar($v, $usuario),
-            fn(BoletoVenta $v) => $this->puedeVer($v, $usuario) || ($opera && $this->acceso->puedeOperar($v, $usuario)),
+            $puedeOperar,
+            fn(BoletoVenta $v) => $this->puedeVer($v, $usuario) || ($opera && $puedeOperar($v)),
         ));
     }
 
@@ -324,7 +338,7 @@ final class VentaController extends AbstractController
                 array_map("intval", (array) ($datos["boletos"] ?? [])),
                 $usuario,
                 (string) ($datos["motivo"] ?? ""),
-                fn(BoletoVenta $v) => $this->acceso->puedeOperar($v, $usuario),
+                fn(BoletoVenta $v) => $this->acceso->puedeOperar($v, $usuario, Capacidad::BOLETO_ANULAR),
             );
         });
     }
@@ -342,7 +356,7 @@ final class VentaController extends AbstractController
         return $this->responder(function () use ($request, $usuario, $reasignacion) {
             $resultado = $reasignacion->reasignar(
                 SolicitudReasignacion::desdeArray($request->toArray()),
-                fn(BoletoVenta $v) => $this->acceso->puedeOperar($v, $usuario),
+                fn(BoletoVenta $v) => $this->acceso->puedeOperar($v, $usuario, Capacidad::BOLETO_REASIGNAR),
             );
 
             return $this->comprobantes->de($resultado["venta"], $resultado["nuevos"]);
@@ -443,10 +457,10 @@ final class VentaController extends AbstractController
         }
     }
 
-    /** El vendedor, su agencia, o quien tenga permiso de lectura de ventas. */
-    private function denyUnlessPuedeOperar(BoletoVenta $venta, Usuario $usuario): void
+    /** Tiene la capacidad donde cae la venta. */
+    private function denyUnlessPuedeOperar(BoletoVenta $venta, Usuario $usuario, Capacidad $capacidad): void
     {
-        if (!$this->acceso->puedeOperar($venta, $usuario)) {
+        if (!$this->acceso->puedeOperar($venta, $usuario, $capacidad)) {
             throw $this->createAccessDeniedException();
         }
     }

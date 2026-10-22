@@ -11,9 +11,11 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 /**
  * Garantiza una cuenta de administrador de respaldo en la tabla `usuario`.
  *
- * Regla: si no existe un usuario con username `admin`, lo crea con el rol
- * ROLE_SUPER_ADMIN y password `'    '` (cuatro espacios en blanco). Idempotente:
- * si `admin` ya existe (p. ej. migrado desde el legado) no hace nada.
+ * Regla: si no existe un usuario con username `admin`, lo crea con una
+ * asignación del rol de sistema sobre todo (ADR-039; el rol se crea como
+ * ROLE_SUPER_ADMIN si no hay ninguno) y password `'    '` (cuatro espacios en
+ * blanco). Idempotente: si `admin` ya existe (p. ej. migrado desde el legado)
+ * no hace nada.
  *
  * El id se fija en -1 (negativo, reservado) a propósito: la migración del
  * legado conserva los ids originales (positivos) en `usuario.id`
@@ -49,13 +51,10 @@ final class AsegurarUsuarioAdmin
             return; // ya existe un usuario `admin`
         }
 
-        $roleId = $this->conn->fetchOne(
-            'SELECT id FROM role WHERE nombre = :nombre',
-            ['nombre' => self::ROLE],
-        );
+        $roleId = $this->conn->fetchOne('SELECT id FROM role WHERE sistema = true ORDER BY id LIMIT 1');
         if ($roleId === false) {
             $roleId = $this->conn->fetchOne(
-                'INSERT INTO role (nombre) VALUES (:nombre) RETURNING id',
+                "INSERT INTO role (nombre, descripcion, sistema, capacidades, limites) VALUES (:nombre, 'Administración total del sistema', true, '[]', '{}') RETURNING id",
                 ['nombre' => self::ROLE],
             );
         }
@@ -78,8 +77,9 @@ final class AsegurarUsuarioAdmin
             ],
         );
 
+        // Sobre todas las empresas y estaciones (empresas y estaciones NULL).
         $this->conn->executeStatement(
-            'INSERT INTO user_role (user_id, role_id) VALUES (:userId, :roleId) ON CONFLICT DO NOTHING',
+            "INSERT INTO asignacion (usuario_id, rol_id, motivo, creada, modificada) VALUES (:userId, :roleId, 'Cuenta de respaldo', NOW(), NOW())",
             ['userId' => self::ID, 'roleId' => (int) $roleId],
         );
     }

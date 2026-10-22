@@ -102,6 +102,7 @@
 import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, ref, shallowRef, useId, watch, type Component } from "vue";
 import { useConfirm } from "primevue/useconfirm";
 import { router } from "@/app/router";
+import { useAccesoStore } from "@/core/acceso/store";
 import { DEFAULT_PAGE_SIZE, DEFAULT_PAGE_SIZES, defaultView } from "@/core/entities/listView";
 import { getEntity } from "@/core/entities/registry";
 import { useSchemaStore } from "@/core/entities/schema";
@@ -180,12 +181,14 @@ function elegirEntidad(slug: string | null) {
 // Qué se ofrece ------------------------------------------------------------
 /** Boletos, ventas…: se operan con acciones propias, no se editan ni se eliminan a mano. */
 const soloLectura = computed(() => entityReadOnly.has(entityName.value));
+const acceso = useAccesoStore();
 const features = computed(() =>
   resolveListFeatures({
     selector: enSelector.value,
-    canUpdate: Boolean(store.value?.metadata.update),
-    canDelete: Boolean(store.value?.metadata.delete),
-    canCreate: Boolean(store.value?.metadata.create),
+    // La mutación existe y el usuario tiene la capacidad (ADR-039); la API decide igual.
+    canUpdate: Boolean(store.value?.metadata.update) && acceso.puedeRecurso(entityName.value, "editar"),
+    canDelete: Boolean(store.value?.metadata.delete) && acceso.puedeRecurso(entityName.value, "eliminar"),
+    canCreate: Boolean(store.value?.metadata.create) && acceso.puedeRecurso(entityName.value, "editar"),
     readOnly: soloLectura.value,
     options: store.value?.listOptions,
     overrides: props.features,
@@ -357,8 +360,8 @@ function applyCustomFilter(state: CustomListFilterState | null) {
 
 // Acciones por fila -------------------------------------------------------
 const extraActions = computed<EntityListAction[]>(() => (features.value.rowActions ? (entityListActions[entityName.value] ?? []) : []));
-const canEditRow = computed(() => features.value.rowActions && !soloLectura.value);
-const canDeleteRow = computed(() => features.value.rowActions && !soloLectura.value && Boolean(store.value?.metadata.delete));
+const canEditRow = computed(() => features.value.rowActions && !soloLectura.value && acceso.puedeRecurso(entityName.value, "editar"));
+const canDeleteRow = computed(() => features.value.rowActions && !soloLectura.value && Boolean(store.value?.metadata.delete) && acceso.puedeRecurso(entityName.value, "eliminar"));
 /** Ancho de la columna fija de acciones: 2rem por botón. En selección no hay acciones por fila. */
 const actionsWidth = computed(() => {
   if (modoSeleccion.value) return null;

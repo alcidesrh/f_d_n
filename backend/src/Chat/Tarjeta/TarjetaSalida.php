@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Chat\Tarjeta;
 
+use App\Acceso\Ubicador;
 use App\Entity\Salida;
 use App\Salida\DetalleSalida;
 use Doctrine\ORM\EntityManagerInterface;
@@ -36,6 +37,10 @@ final class TarjetaSalida implements Tarjeta
     {
         $datos = [];
         foreach ($this->em->getRepository(Salida::class)->findBy(["id" => $ids]) as $salida) {
+            // Solo las de las empresas donde el lector ve salidas (ADR-039).
+            if (!$this->auth->isGranted("salida.ver", Ubicador::salida($salida))) {
+                continue;
+            }
             $d = $this->detalle->de($salida);
             $datos[(int) $salida->getId()] = [
                 "titulo" => $d["ruta"]["nombre"] ?: sprintf("%s → %s", $d["ruta"]["origen"]["nombre"] ?? "?", $d["ruta"]["destino"]["nombre"] ?? "?"),

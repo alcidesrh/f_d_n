@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Encomienda;
 
+use App\Acceso\Autorizacion;
+use App\Acceso\Capacidad;
+use App\Acceso\Ubicacion;
 use App\Entity\Cliente;
 use App\Entity\Empresa;
 use App\Entity\Encomienda;
@@ -47,6 +50,7 @@ final class RegistroEncomienda
         private readonly ReglasVenta $reglasVenta,
         private readonly Facturador $facturador,
         private readonly LoggerInterface $logger,
+        private readonly Autorizacion $autorizacion,
     ) {}
 
     /**
@@ -92,8 +96,14 @@ final class RegistroEncomienda
             ?? throw new EncomiendaRechazada("La estación de destino no existe.");
         $empresa = $this->em->find(Empresa::class, $s->empresaId)
             ?? throw new EncomiendaRechazada("La empresa no existe.");
-        if ($usuario->getEmpresa() !== null && $usuario->getEmpresa()->getId() !== $empresa->getId()) {
-            throw new EncomiendaRechazada("Solo registra encomiendas de su empresa.", "otra_empresa", 403);
+        // Alcance (ADR-039): registra para esa empresa en la estación de origen.
+        $donde = Ubicacion::empresa($empresa->getId())->conEstacion($origen->getId());
+        $permisos = $this->autorizacion->de($usuario);
+        if (!$permisos->puede(Capacidad::ENCOMIENDA_REGISTRAR->value, $donde)) {
+            throw new EncomiendaRechazada("Fuera de su alcance: no registra encomiendas de esa empresa en esa estación.", "alcance", 403);
+        }
+        if ($s->modalidad === ModalidadEncomienda::INTERNA && !$permisos->puede(Capacidad::ENCOMIENDA_INTERNA->value, $donde)) {
+            throw new EncomiendaRechazada("Fuera de su alcance: no registra encomiendas internas ahí.", "alcance", 403);
         }
         $ruta = null;
         if ($s->rutaId !== null) {

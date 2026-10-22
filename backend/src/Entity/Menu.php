@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use ApiPlatform\Metadata\ApiProperty;
 use App\Attribute\ApiResourceNoPagination;
 use App\Entity\Base\Base;
@@ -22,6 +23,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  */
 #[ORM\Entity]
 #[ApiResourceNoPagination]
+#[Recurso(nombre: "Menús", area: "Configuración", lecturaLibre: true)]
 class Menu extends Base
 {
     public const SUBJECT = 'MenuItem';

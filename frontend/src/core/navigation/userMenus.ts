@@ -5,6 +5,7 @@
  * editor de menús (`features/menu-builder`) tras guardar.
  */
 import { defineStore } from 'pinia'
+import { podarMenu } from '@/core/acceso/reglas'
 import { http } from '@/core/http'
 
 /** Áreas del shell (`LayoutArea` del backend), una por slot `menu-content`. */
@@ -44,6 +45,13 @@ export type MenusByArea = Record<LayoutArea, NavMenu[]>
 
 const emptyAreas = (): MenusByArea => ({ sidebar_left: [], topbar_right: [], sidebar_right: [] })
 
+/** Qué pantallas puede abrir el usuario (lo fija el shell con `core/acceso`). */
+let filtro: ((nombreRuta: string) => boolean) | undefined
+
+export function filtrarMenusCon(permitido: ((nombreRuta: string) => boolean) | undefined): void {
+  filtro = permitido
+}
+
 export const useUserMenusStore = defineStore('userMenus', {
   state: () => ({
     areas: emptyAreas(),
@@ -51,11 +59,20 @@ export const useUserMenusStore = defineStore('userMenus', {
   }),
 
   actions: {
-    /** Carga (o recarga) los menús; un fallo deja las áreas vacías sin romper el shell. */
-    async load(): Promise<void> {
+    /**
+     * Carga (o recarga) los menús; un fallo deja las áreas vacías sin romper
+     * el shell. Con `permitido`, sin los ítems de pantallas que el usuario no
+     * puede abrir (ADR-039) ni los menús que se quedan vacíos.
+     */
+    async load(permitido: ((nombreRuta: string) => boolean) | undefined = filtro): Promise<void> {
       try {
-        const data = await http.get<Partial<MenusByArea>>('/me/menus', { silent: true })
-        this.areas = { ...emptyAreas(), ...data }
+        const data = { ...emptyAreas(), ...(await http.get<Partial<MenusByArea>>('/me/menus', { silent: true })) }
+        if (permitido) {
+          for (const area of LAYOUT_AREAS) {
+            data[area] = data[area].map((m) => ({ ...m, items: podarMenu(m.items, permitido) })).filter((m) => m.items.length > 0)
+          }
+        }
+        this.areas = data
       } catch (error) {
         this.areas = emptyAreas()
         console.warn('[menus] no se pudieron cargar los menús del usuario:', error)

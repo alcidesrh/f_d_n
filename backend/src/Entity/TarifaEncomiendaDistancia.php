@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use ApiPlatform\Metadata\ApiProperty;
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
@@ -22,6 +23,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity]
 #[ORM\Index(columns: ["origen_id", "destino_id"], name: "idx_tarifa_encomienda_distancia_par")]
 #[ApiResourcePaginationPage]
+#[Recurso(nombre: "Tarifas de encomienda por distancia", area: "Encomiendas", lecturaLibre: true)]
 class TarifaEncomiendaDistancia extends Base
 {
     #[ORM\ManyToOne]

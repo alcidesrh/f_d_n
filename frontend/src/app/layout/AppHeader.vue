@@ -65,6 +65,11 @@
           <icon name="fullscreen" />
         </button>
       </div>
+      <!-- Estación de trabajo (ADR-039): donde opera; se cambia entre las de sus asignaciones. -->
+      <button v-if="acceso.estacionTrabajo || acceso.debeElegirEstacion" type="button" class="header-estacion tap-target" :class="{ 'header-estacion--falta': !acceso.estacionTrabajo }" :aria-label="acceso.estacionTrabajo ? `Estación de trabajo: ${acceso.estacionTrabajo.nombre}. Cambiar` : 'Elegir estación de trabajo'" v-tooltip.bottom="acceso.estaciones.length > 1 ? 'Estación de trabajo' : undefined" :disabled="acceso.estaciones.length < 2 && !!acceso.estacionTrabajo" @click="acceso.eligiendoEstacion = true">
+        <icon name="location-on-outline" size="1.05rem" />
+        <span class="header-estacion__nombre">{{ acceso.estacionTrabajo?.nombre ?? "Elegir estación" }}</span>
+      </button>
       <!-- Fuera de la franja que scrollea: Mi cuenta, Instalar app y Cerrar sesión siempre a la vista. -->
       <div class="header-user-wrap">
         <button type="button" class="header-user" :title="session.user ?? ''" aria-haspopup="true" aria-controls="menu-usuario" @click="menuUsuario?.toggle($event)">
@@ -108,6 +113,7 @@ import { router } from "@/app/router";
 import { useUiStore } from "@/app/ui";
 import { salirDeStores } from "@/core/auth/alcanceSesion";
 import { useSessionStore } from "@/core/auth/session";
+import { useAccesoStore } from "@/core/acceso/store";
 import { desactivarPush } from "@/core/chat/push";
 import { useChatStore } from "@/core/chat/store";
 import { useCuentaStore } from "@/core/cuenta/store";
@@ -121,6 +127,7 @@ import ThemeEditor from "./ThemeEditor.vue";
 defineProps<{ rightSidebar: SidebarStore | null }>();
 
 const session = useSessionStore();
+const acceso = useAccesoStore();
 const chat = useChatStore();
 const cuenta = useCuentaStore();
 const ui = useUiStore();
@@ -169,7 +176,7 @@ function toggle(name: Exclude<PopoverName, null>) {
 }
 
 const menuUsuario = ref<InstanceType<typeof Menu> | null>(null);
-const opcionesUsuario = computed<MenuItem[]>(() => [{ label: "Mi cuenta", iconName: "manage-accounts-outline", command: () => void router.push({ name: "mi-cuenta" }) }, ...(puedeInstalar.value ? [{ label: "Instalar app", iconName: "install-mobile", command: () => void instalar() }] : []), { separator: true }, { label: "Cerrar sesión", iconName: "logout", command: () => void logout() }]);
+const opcionesUsuario = computed<MenuItem[]>(() => [{ label: "Mi cuenta", iconName: "manage-accounts-outline", command: () => void router.push({ name: "mi-cuenta" }) }, ...(acceso.estaciones.length > 1 ? [{ label: "Estación de trabajo", iconName: "location-on-outline", command: () => (acceso.eligiendoEstacion = true) }] : []), ...(puedeInstalar.value ? [{ label: "Instalar app", iconName: "install-mobile", command: () => void instalar() }] : []), { separator: true }, { label: "Cerrar sesión", iconName: "logout", command: () => void logout() }]);
 
 async function logout() {
   // Antes del logout (después el token ya no vale): en una taquilla compartida el siguiente no debe recibirlas.

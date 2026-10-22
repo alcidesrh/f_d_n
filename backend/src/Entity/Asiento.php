@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
 use App\Entity\Enum\AsientoClase;
@@ -9,6 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
 #[ApiResourcePaginationPage]
+#[Recurso(nombre: "Asientos", area: "Flota", lecturaLibre: true, soloLectura: true)]
 class Asiento extends Base
 {
     #[ORM\Column]

@@ -32,7 +32,7 @@
             <Tag :severity="b.estado === 'emitido' ? 'info' : 'success'" :value="ESTADOS[b.estado] ?? b.estado" />
           </div>
 
-          <section v-if="b.pasajero && !detalle.superAdmin" class="aop-grupo">
+          <section v-if="b.pasajero && !detalle.auditoria" class="aop-grupo">
             <h4>Pasajero</h4>
             <dl>
               <dt>Nombre</dt><dd>{{ b.pasajero.nombre }}</dd>
@@ -52,7 +52,7 @@
           </section>
 
           <template v-if="b.completo">
-            <section v-if="detalle.superAdmin" class="aop-grupo">
+            <section v-if="detalle.auditoria" class="aop-grupo">
               <h4>Venta #{{ b.venta.id }}</h4>
               <dl>
                 <template v-if="b.venta.creada"><dt>Fecha</dt><dd>{{ fechaHora(b.venta.creada) }}</dd></template>
@@ -86,8 +86,8 @@
           </template>
           <p v-else class="m-0 text-sm text-muted-color">Vendido por otro usuario: no tiene acceso al detalle de esa venta.</p>
 
-          <div v-if="detalle.superAdmin || (b.completo && b.operable && (permisos.anular || permisos.reasignar))" class="flex flex-wrap justify-end gap-2">
-            <Button v-if="detalle.superAdmin" label="Bitácora" size="small" severity="secondary" text @click="verBitacora(b)">
+          <div v-if="detalle.auditoria || (b.completo && b.operable && (permisos.anular || permisos.reasignar))" class="flex flex-wrap justify-end gap-2">
+            <Button v-if="detalle.auditoria" label="Bitácora" size="small" severity="secondary" text @click="verBitacora(b)">
               <template #icon><icon name="history" class="mr-1" /></template>
             </Button>
             <Button v-if="b.completo && b.operable && permisos.reasignar" label="Reasignar" size="small" severity="secondary" outlined @click="elegir('reasignar', b)">

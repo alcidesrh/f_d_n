@@ -60,19 +60,17 @@ services:
             $password: "%env(systemfdn_password)%"
             $timeout: 5
 
-    App\Security\Voter\ActionVoter:
-        tags: ["security.voter"]
+    # Accesos (ADR-039): denegar por defecto en la API genérica. Prioridad 0:
+    # por dentro de la caché de la metadata (-10), después de los demás decoradores.
+    App\Acceso\Api\SeguridadPorDefecto:
+        decorates: api_platform.metadata.resource.metadata_collection_factory
+        decoration_priority: 0
         arguments:
-            $permissionManager: '@App\Security\PermissionManager'
+            $interna: '@.inner'
 
-    App\Security\Voter\EntityVoter:
-        tags: ["security.voter"]
+    App\Acceso\Catalogo\CatalogoRecursos:
         arguments:
-            $permissionManager: '@App\Security\PermissionManager'
-
-    App\Security\ActionExpressionProvider:
-        tags:
-            - { name: "security.expression_language_provider" }
+            $nombres: '@api_platform.metadata.resource.name_collection_factory'
 
     App\Security\GraphiQLRequestMatcher:
         tags: ["security.request_matcher"]

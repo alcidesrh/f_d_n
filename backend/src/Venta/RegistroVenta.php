@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace App\Venta;
 
+use App\Acceso\Autorizacion;
+use App\Acceso\Capacidad;
+use App\Acceso\Limite;
+use App\Acceso\Ubicacion;
+use App\Acceso\Ubicador;
 use App\Entity\Agencia;
 use App\Entity\BoletoAsiento;
 use App\Entity\BoletoVenta;
@@ -11,6 +16,7 @@ use App\Encomienda\TarifasEncomienda;
 use App\Entity\Cliente;
 use App\Entity\Encomienda;
 use App\Entity\Enum\CanalVenta;
+use App\Entity\Enum\EstadoBoletoAsiento;
 use App\Entity\Enum\EstadoBoletoVenta;
 use App\Entity\Enum\EstadoEncomienda;
 use App\Entity\Enum\EstadoFacturacion;
@@ -47,6 +53,11 @@ use Symfony\Component\Uid\Uuid;
  *    permiso, reintentar sin factura electrónica (contingencia).
  *
  * Idempotente por `token`: repetir el mismo pedido devuelve la misma venta.
+ *
+ * Alcance (ADR-039): `venta.vender` —y `venta.cortesia` o
+ * `venta.sin_factura` si se piden— sobre la empresa de la salida y el lugar
+ * de emisión (la estación, o la agencia del usuario); las cortesías, con el
+ * límite diario del rol.
  */
 final class RegistroVenta
 {
@@ -60,6 +71,7 @@ final class RegistroVenta
         private readonly PublicadorOcupacion $publicador,
         private readonly MessageBusInterface $bus,
         private readonly LoggerInterface $logger,
+        private readonly Autorizacion $autorizacion,
     ) {}
 
     /**
@@ -119,6 +131,8 @@ final class RegistroVenta
         if ($agencia !== null) {
             $this->exigirAgenciaPuedeVender($agencia, $salida);
         }
+        $estacion = $canal === CanalVenta::ESTACION ? $this->estacion($s, $usuario) : null;
+        $this->exigirAlcance($s, $usuario, Ubicador::operacion($salida->getEmpresa()?->getId(), $usuario, $estacion?->getId()));
 
         $trayecto = $this->reglas->trayecto($salida, $s->trayectoId);
         $tramo = $this->reglas->tramo($salida, $trayecto);
@@ -138,7 +152,7 @@ final class RegistroVenta
             ->setCanal($canal)
             ->setUsuario($usuario)
             ->setAgencia($agencia)
-            ->setEstacion($canal === CanalVenta::ESTACION ? $this->estacion($s, $usuario) : null)
+            ->setEstacion($estacion)
             ->setCliente($cliente)
             ->setTipoPago($s->tipoPagoId ? $this->em->find(TipoPago::class, $s->tipoPagoId) : null)
             ->setMoneda($s->monedaId ? $this->em->find(Moneda::class, $s->monedaId) : null)
@@ -260,10 +274,46 @@ final class RegistroVenta
         if (!$agencia->isActivo()) {
             throw new VentaRechazada("La agencia está inactiva: no puede vender.", "agencia_inactiva", 403);
         }
-        $empresa = $agencia->getEmpresa();
-        if ($empresa !== null && $salida->getEmpresa()?->getId() !== $empresa->getId()) {
+        if (!$agencia->vende($salida->getEmpresa())) {
             throw new VentaRechazada("La agencia no vende salidas de esta empresa.", "agencia_empresa", 403);
         }
+    }
+
+    /** @throws VentaRechazada */
+    private function exigirAlcance(SolicitudVenta $s, Usuario $usuario, Ubicacion $donde): void
+    {
+        $permisos = $this->autorizacion->de($usuario);
+        if (!$permisos->puede(Capacidad::VENTA_VENDER->value, $donde)) {
+            throw new VentaRechazada("Fuera de su alcance: no vende salidas de esta empresa en esta estación.", "alcance", 403);
+        }
+        if ($s->sinFacturaElectronica && !$permisos->puede(Capacidad::VENTA_SIN_FACTURA->value, $donde)) {
+            throw new VentaRechazada("Fuera de su alcance: no puede vender sin factura electrónica aquí.", "alcance", 403);
+        }
+        if (!$s->cortesia) {
+            return;
+        }
+        if (!$permisos->puede(Capacidad::VENTA_CORTESIA->value, $donde)) {
+            throw new VentaRechazada("Fuera de su alcance: no puede emitir cortesías aquí.", "alcance", 403);
+        }
+        $limite = $permisos->limite(Capacidad::VENTA_CORTESIA->value, Limite::CORTESIAS_POR_DIA, $donde);
+        if ($limite !== null && $this->cortesiasDeHoy($usuario) + count($s->asientos) > $limite) {
+            throw new VentaRechazada(sprintf("Llegó al límite de %d asientos de cortesía por día.", $limite), "limite", 403);
+        }
+    }
+
+    /** Asientos de cortesía que emitió hoy (sin contar los anulados). */
+    private function cortesiasDeHoy(Usuario $usuario): int
+    {
+        return (int) $this->em->createQueryBuilder()
+            ->select("COUNT(b.id)")
+            ->from(BoletoAsiento::class, "b")
+            ->join("b.boletoVenta", "v")
+            ->where("v.usuario = :usuario AND v.cortesia = true AND v.createdAt >= :hoy AND b.estado <> :anulado")
+            ->setParameter("usuario", $usuario->getId())
+            ->setParameter("hoy", new \DateTime("today"))
+            ->setParameter("anulado", EstadoBoletoAsiento::ANULADO)
+            ->getQuery()
+            ->getSingleScalarResult();
     }
 
     private function estacion(SolicitudVenta $s, Usuario $usuario): ?Estacion

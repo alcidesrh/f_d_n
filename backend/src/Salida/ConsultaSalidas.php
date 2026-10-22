@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Salida;
 
+use App\Acceso\Alcance;
+use App\Acceso\FiltroAlcance;
 use App\Entity\Asiento;
 use App\Entity\Salida;
 use Doctrine\ORM\EntityManagerInterface;
@@ -17,10 +19,17 @@ final class ConsultaSalidas
         private readonly AsientosVendidos $vendidos,
     ) {}
 
-    /** @return array<string, mixed> */
-    public function buscar(FiltroSalidas $f): array
+    /**
+     * Con `$alcance`, solo las salidas de esas empresas (ADR-039).
+     *
+     * @return array<string, mixed>
+     */
+    public function buscar(FiltroSalidas $f, ?Alcance $alcance = null): array
     {
         $base = $this->base($f);
+        if ($alcance !== null) {
+            FiltroAlcance::aplicar($base, $alcance, "s.empresa", compartidos: true);
+        }
 
         $porEstado = [];
         $conteo = (clone $base)->select("s.estado AS estado", "COUNT(s.id) AS n")->groupBy("s.estado")->getQuery()->getArrayResult();

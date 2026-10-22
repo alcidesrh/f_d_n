@@ -1,6 +1,6 @@
 # ADR-003: Flat Permission Set vs RBAC tradicional
 
-**Estado:** Aceptada
+**Estado:** Reemplazada por [ADR-039](ADR-039-accesos-con-alcance.md) (accesos con alcance). Se conserva como historia: el modelo de acciones, permisos, jerarquía y excepciones por usuario ya no existe.
 
 ## Contexto
 

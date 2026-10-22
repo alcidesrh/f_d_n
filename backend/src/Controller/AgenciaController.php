@@ -49,7 +49,7 @@ final class AgenciaController extends AbstractController
     {
         $propia = $usuario->getAgencia()?->getId();
         if ($propia !== null ? $propia !== $agencia->getId() : !$this->puedeVerSaldos()) {
-            $this->denyAccessUnlessGranted("read", Agencia::class);
+            throw $this->createAccessDeniedException("No puede ver el saldo de esta agencia.");
         }
 
         return $this->json($this->estado($agencia));
@@ -131,7 +131,7 @@ final class AgenciaController extends AbstractController
 
     private function puedeVerSaldos(): bool
     {
-        return $this->isGranted("ROLE_ADMIN") || $this->isGranted(self::ACREDITAR) || $this->isGranted(DepositoAgenciaController::DEPOSITAR);
+        return $this->isGranted(self::ACREDITAR) || $this->isGranted(DepositoAgenciaController::DEPOSITAR);
     }
 
     private function responder(callable $operacion): JsonResponse

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Acceso\Autorizacion;
+use App\Acceso\Capacidad;
 use App\Entity\Usuario;
 use App\Tablero\ConsultaTablero;
 use App\Tablero\Periodo;
@@ -29,6 +31,7 @@ final class TableroController extends AbstractController
     public function __construct(
         private readonly ConsultaTablero $consulta,
         private readonly ClockInterface $reloj,
+        private readonly Autorizacion $autorizacion,
     ) {}
 
     #[Route("", name: "", methods: ["GET"])]
@@ -41,13 +44,28 @@ final class TableroController extends AbstractController
         } catch (\InvalidArgumentException $e) {
             return $this->json(["error" => $e->getMessage(), "codigo" => "periodo_invalido"], 400);
         }
-        $fija = $usuario->getEmpresa()?->getId();
+        // Alcance (ADR-039): el tablero es de una empresa entera (todas sus
+        // estaciones). Con varias, la pedida o la primera; con una, fija.
+        $todas = false;
+        $empresas = [];
+        foreach ($this->autorizacion->alcance(Capacidad::REPORTE_VENTAS)->ambitos() as $a) {
+            if ($a->estaciones === null) {
+                $todas = $todas || $a->empresas === null;
+                $empresas = [...$empresas, ...($a->empresas ?? [])];
+            }
+        }
+        $empresas = array_values(array_unique($empresas));
+        sort($empresas);
+        if (!$todas && $empresas === []) {
+            return $this->json(["error" => "El tablero es por empresa: su alcance es por estación.", "codigo" => "alcance"], 403);
+        }
         $pedida = $request->query->get("empresa");
-        $empresa = $fija ?? (is_scalar($pedida) && ctype_digit((string) $pedida) ? (int) $pedida : null);
+        $pedida = is_scalar($pedida) && ctype_digit((string) $pedida) ? (int) $pedida : null;
+        $empresa = $todas ? $pedida : (in_array($pedida, $empresas, true) ? $pedida : $empresas[0]);
 
         return $this->json([
-            "alcance" => ["empresa" => $empresa, "fija" => $fija !== null],
-            "empresas" => $this->consulta->empresas($fija),
+            "alcance" => ["empresa" => $empresa, "fija" => !$todas && count($empresas) === 1],
+            "empresas" => $this->consulta->empresas($todas ? null : $empresas),
             "moneda" => ConsultaTablero::MONEDA,
         ] + $this->consulta->tablero($periodo, $empresa)->toArray());
     }

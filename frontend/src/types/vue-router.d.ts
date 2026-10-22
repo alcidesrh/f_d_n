@@ -14,5 +14,11 @@ declare module 'vue-router' {
     panel?: { component: () => Promise<Component | { default: Component }>; width?: number }
     /** La página no se vuelve a montar al cambiar los parámetros (p. ej. el chat al cambiar de conversación). */
     conservar?: boolean
+    /**
+     * Capacidad que exige la pantalla (o cualquiera de varias), ADR-039: el
+     * router no la abre y los menús la esconden a quien no la tiene. Quien
+     * autoriza de verdad es la API.
+     */
+    capacidad?: string | readonly string[]
   }
 }

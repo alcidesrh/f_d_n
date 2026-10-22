@@ -2,12 +2,14 @@
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\PersonaBase;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
 #[ApiResourcePaginationPage()]
+#[Recurso(nombre: "Pilotos", area: "Flota", empresa: "empresa")]
 class Piloto extends PersonaBase {
 
     #[ORM\Column(name: 'fechaNacimiento', type: 'date', nullable: true)]

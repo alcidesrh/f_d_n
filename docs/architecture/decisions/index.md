@@ -6,7 +6,7 @@
 |-----|--------|--------|
 | [ADR-001](ADR-001-api-platform-graphql.md) | API Platform + GraphQL como capa primaria de datos | Aceptada |
 | [ADR-002](ADR-002-dual-entity-manager.md) | Dual Entity Manager (PostgreSQL + SQL Server legacy) | Aceptada |
-| [ADR-003](ADR-003-flat-permission-set.md) | Flat Permission Set vs RBAC tradicional | Aceptada |
+| [ADR-003](ADR-003-flat-permission-set.md) | Flat Permission Set vs RBAC tradicional | Reemplazada por ADR-039 |
 | [ADR-004](ADR-004-dynamic-crud-store-factory.md) | Dynamic CRUD via runtime store factory | Aceptada |
 | [ADR-005](ADR-005-frankenphp-mercure.md) | FrankenPHP + Caddy + Mercure integrado | Aceptada |
 | [ADR-006](ADR-006-subdomains-bounded-contexts.md) | Subdominios como bounded contexts | Aceptada |
@@ -18,10 +18,10 @@
 | [ADR-012](ADR-012-trayecto-canonico-por-enclaves.md) | Trayecto canónico por par de enclaves (origen, destino) | Aceptada (en parte reemplazada por ADR-030) |
 | [ADR-013](ADR-013-rename-servicio-a-recorrido.md) | Renombrar la entidad Servicio a Recorrido | Aceptada |
 | [ADR-014](ADR-014-estados-tipados-por-entidad.md) | Estados tipados por entidad (enum) en vez de catálogo Status genérico | Aceptada (para `BoletoAsiento`, en parte reemplazada por ADR-037) |
-| [ADR-015](ADR-015-tenant-filter.md) | TenantFilter: aislamiento por empresa vía Doctrine SQLFilter | Aceptada |
+| [ADR-015](ADR-015-tenant-filter.md) | TenantFilter: aislamiento por empresa vía Doctrine SQLFilter | Aceptada (filtro por las empresas de las asignaciones: ADR-039) |
 | [ADR-016](ADR-016-piloto-vuelve-a-bus.md) | La asignación de Piloto vuelve a Bus (no Recorrido); pilotoAux → copiloto | Aceptada |
 | [ADR-017](ADR-017-frontend-por-capas.md) | Frontend por capas (core / shared / features) con imports explícitos | Aceptada |
-| [ADR-018](ADR-018-taxonomia-agnostica-y-menus.md) | Taxonomía agnóstica (referencia polimórfica) y menús de navegación sobre ella | Aceptada |
+| [ADR-018](ADR-018-taxonomia-agnostica-y-menus.md) | Taxonomía agnóstica (referencia polimórfica) y menús de navegación sobre ella | Aceptada (visibilidad sin jerarquía de roles: ADR-039) |
 | [ADR-019](ADR-019-croquis-del-bus.md) | Croquis del bus (asientos, chofer y puertas por planta) y mapa reutilizable | Aceptada |
 | [ADR-020](ADR-020-frontend-mobile-first.md) | Frontend mobile-first con breakpoints centralizados | Aceptada |
 | [ADR-021](ADR-021-venta-de-asientos.md) | Venta de asientos por tres canales (taquilla, agencia, web) con factura electrónica | Aceptada (enmendada por ADR-030) |
@@ -42,3 +42,4 @@
 | [ADR-036](ADR-036-metadata-del-cliente-por-revisiones.md) | Metadata del cliente por revisiones: el navegador se pone al día solo (automático) o cuando un administrador publica (manual) | Aceptada |
 | [ADR-037](ADR-037-flujo-del-boleto-con-symfony-workflow.md) | Flujo del boleto con `symfony/workflow`: transiciones con nombre, guards y acciones calculadas por el backend | Aceptada |
 | [ADR-038](ADR-038-flujo-de-la-encomienda-con-symfony-workflow.md) | Flujo de la encomienda con `symfony/workflow`: transiciones con nombre, guards y acciones del listado calculadas por el backend | Aceptada |
+| [ADR-039](ADR-039-accesos-con-alcance.md) | Accesos con alcance: capacidades en el código, roles planos y asignaciones por empresa y estación; denegar por defecto en la API genérica | Aceptada |

@@ -1,6 +1,6 @@
 # ADR-018: Taxonomía agnóstica (referencia polimórfica) y menús de navegación sobre ella
 
-**Estado:** Aceptada
+**Estado:** Aceptada. La visibilidad por roles cambió con [ADR-039](ADR-039-accesos-con-alcance.md): sin jerarquía (`Role.parents` ya no existe); un menú se ve con un rol asignado, el rol base o el de sistema, y cada ítem solo si se puede abrir su pantalla. Editar menús pide `menu.editar`.
 
 ## Contexto
 

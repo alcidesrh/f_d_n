@@ -16,13 +16,8 @@ security:
                 class: App\Entity\Usuario
                 property: username
 
-    role_hierarchy:
-        ROLE_SUPER_ADMIN: [ROLE_ADMIN]
-        ROLE_ADMIN: [ROLE_OPERADOR, ROLE_USER]
-        ROLE_OPERADOR: [ROLE_CONSULTA, ROLE_USER]
-        ROLE_CONSULTA: [ROLE_USER]
-        ROLE_FULL_USER:
-            [ROLE_USER_EDIT, ROLE_TREASURE_CREATE, ROLE_TREASURE_EDIT]
+    # Sin role_hierarchy: para Symfony todo usuario es ROLE_USER; lo que puede
+    # hacer cada uno lo deciden sus asignaciones (App\Acceso\CapacidadVoter, ADR-039).
 
     firewalls:
         dev:
@@ -31,6 +26,8 @@ security:
         main:
             lazy: true
             provider: app_user_provider
+            # Un usuario desactivado no entra, ni con un token que ya tenía.
+            user_checker: App\Acceso\UsuarioActivo
             json_login:
                 check_path: /api/login
                 username_path: username

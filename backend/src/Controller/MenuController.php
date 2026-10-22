@@ -10,7 +10,6 @@ use App\Navigation\InvalidMenuLayout;
 use App\Navigation\MenuLayout;
 use App\Navigation\MenuTree;
 use App\Navigation\UserMenus;
-use App\Security\Voter\EntityVoter;
 use App\Taxonomy\InvalidTaxonomyTree;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -28,6 +27,9 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
 #[AsController]
 class MenuController extends AbstractController
 {
+    /** Editar menús y su distribución: la capacidad del CRUD de `Menu` (ADR-039). */
+    public const EDITAR = 'menu.editar';
+
     public function __construct(
         private readonly MenuTree $menuTree,
         private readonly MenuLayout $menuLayout,
@@ -45,7 +47,7 @@ class MenuController extends AbstractController
     #[Route('/api/menus/{id<\d+>}/tree', name: 'api_menu_tree', methods: ['GET'])]
     public function tree(Menu $menu): JsonResponse
     {
-        $this->denyUnlessAllowed(EntityVoter::READ);
+        $this->denyAccessUnlessGranted(self::EDITAR);
 
         return $this->json($this->menuTree->read($menu));
     }
@@ -54,7 +56,7 @@ class MenuController extends AbstractController
     #[Route('/api/menus/{id<\d+>}/tree', name: 'api_menu_tree_save', methods: ['PUT'])]
     public function saveTree(Menu $menu, Request $request): JsonResponse
     {
-        $this->denyUnlessAllowed(EntityVoter::UPDATE);
+        $this->denyAccessUnlessGranted(self::EDITAR);
 
         try {
             $this->menuTree->write($menu, $request->toArray());
@@ -69,7 +71,7 @@ class MenuController extends AbstractController
     #[Route('/api/menu-layout', name: 'api_menu_layout', methods: ['GET'])]
     public function layout(): JsonResponse
     {
-        $this->denyUnlessAllowed(EntityVoter::READ);
+        $this->denyAccessUnlessGranted(self::EDITAR);
 
         return $this->json($this->menuLayout->get());
     }
@@ -78,7 +80,7 @@ class MenuController extends AbstractController
     #[Route('/api/menu-layout', name: 'api_menu_layout_save', methods: ['PUT'])]
     public function saveLayout(Request $request): JsonResponse
     {
-        $this->denyUnlessAllowed(EntityVoter::UPDATE);
+        $this->denyAccessUnlessGranted(self::EDITAR);
 
         try {
             $this->menuLayout->replace($request->toArray());
@@ -89,14 +91,4 @@ class MenuController extends AbstractController
         return $this->json($this->menuLayout->get());
     }
 
-    /**
-     * `ROLE_ADMIN` resuelto con `role_hierarchy` (incluye `ROLE_SUPER_ADMIN`)
-     * o el permiso plano `menu.{read,update}` de `EntityVoter`.
-     */
-    private function denyUnlessAllowed(string $attribute): void
-    {
-        if (!$this->isGranted('ROLE_ADMIN')) {
-            $this->denyAccessUnlessGranted($attribute, Menu::class);
-        }
-    }
 }

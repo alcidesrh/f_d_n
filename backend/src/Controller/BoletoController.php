@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Acceso\Capacidad;
 use App\Entity\BoletoAsiento;
 use App\Entity\BoletoVenta;
 use App\Entity\Estacion;
@@ -28,7 +29,8 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 /**
- * Listado de boletos (el "Boletos" del legado, permiso `boleto.ver`):
+ * Listado de boletos (el "Boletos" del legado, permiso `boleto.ver`, sobre
+ * las ventas de su alcance, ADR-039):
  * filtros, una fila por asiento vendido, "Consultar", cancelar (no se
  * presentó, `boleto.cancelar`), revertir un cancelado y reenviar por correo. Anular y reasignar
  * siguen en `/api/venta/boletos/*`, chequear en `/api/abordaje/*`.
@@ -115,7 +117,7 @@ final class BoletoController extends AbstractController
         return $this->responder(fn() => $abordaje->cancelar(
             $id,
             (string) ($datos["motivo"] ?? ""),
-            fn(BoletoVenta $v) => $this->acceso->puedeOperar($v, $usuario),
+            fn(BoletoVenta $v) => $this->acceso->puedeOperar($v, $usuario, Capacidad::BOLETO_CANCELAR),
         ));
     }
 
@@ -125,7 +127,7 @@ final class BoletoController extends AbstractController
     {
         $this->denyAccessUnlessGranted(self::CANCELAR);
 
-        return $this->responder(fn() => $abordaje->revertir($id, fn(BoletoVenta $v) => $this->acceso->puedeOperar($v, $usuario)));
+        return $this->responder(fn() => $abordaje->revertir($id, fn(BoletoVenta $v) => $this->acceso->puedeOperar($v, $usuario, Capacidad::BOLETO_CANCELAR)));
     }
 
     /** `{ correo }`: manda el boleto (PDF con los datos de la factura) a esa dirección. 202. */
@@ -137,8 +139,8 @@ final class BoletoController extends AbstractController
         return $this->responder(function () use ($id, $request, $usuario, $bus) {
             $boleto = $this->em->find(BoletoAsiento::class, $id) ?? throw new VentaRechazada("El boleto no existe.", "no_encontrado", 404);
             $venta = $boleto->getBoletoVenta();
-            if (!$this->acceso->puedeOperar($venta, $usuario)) {
-                throw new VentaRechazada("No puede operar sobre boletos de esta venta.", "permiso", 403);
+            if (!$this->acceso->puedeVer($venta, $usuario)) {
+                throw new VentaRechazada("Fuera de su alcance: no puede operar sobre boletos de esta venta.", "permiso", 403);
             }
             $correo = trim((string) ($request->toArray()["correo"] ?? ""));
             if (filter_var($correo, FILTER_VALIDATE_EMAIL) === false) {

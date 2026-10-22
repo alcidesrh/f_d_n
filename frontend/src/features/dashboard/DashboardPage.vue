@@ -24,9 +24,9 @@
     </header>
 
     <div v-if="sinPermiso" class="flex flex-col gap-3">
-      <Message severity="secondary" :closable="false">El tablero de gestión necesita el permiso de reportes de venta. Estos son los accesos más usados:</Message>
+      <Message severity="secondary" :closable="false">El tablero de gestión necesita el permiso de reportes de venta de toda una empresa. Estos son sus accesos más usados:</Message>
       <div class="accesos">
-        <RouterLink v-for="a in ACCESOS" :key="a.ruta" :to="a.ruta" class="acceso">
+        <RouterLink v-for="a in accesos" :key="a.ruta" :to="a.ruta" class="acceso">
           <icon :name="a.icono" lg class="text-primary" />
           <span class="font-medium">{{ a.nombre }}</span>
         </RouterLink>
@@ -117,6 +117,7 @@ import AlertasTablero from "./componentes/AlertasTablero.vue";
 import CanalesVenta from "./componentes/CanalesVenta.vue";
 import CoberturaAgencias from "./componentes/CoberturaAgencias.vue";
 import EstadoFlota from "./componentes/EstadoFlota.vue";
+import { useAccesoStore } from "@/core/acceso/store";
 import KpiTile from "./componentes/KpiTile.vue";
 import MapaDemanda from "./componentes/MapaDemanda.vue";
 import OperacionHoy from "./componentes/OperacionHoy.vue";
@@ -140,6 +141,15 @@ const ACCESOS = [
   { ruta: "/seguimiento", nombre: "Seguimiento", icono: "map-outline" },
   { ruta: "/chat", nombre: "Chat", icono: "chat-outline" },
 ];
+/** Solo las pantallas que el usuario puede abrir (ADR-039). */
+const acceso = useAccesoStore();
+const router = useRouter();
+const accesos = computed(() =>
+  ACCESOS.filter((a) => {
+    const r = router.resolve(a.ruta);
+    return acceso.puedeEntrar({ name: r.name, params: r.params, meta: r.meta });
+  }),
+);
 const ACTUALIZAR_MS = 5 * 60_000;
 const PREFERENCIAS = "tablero.preferencias";
 

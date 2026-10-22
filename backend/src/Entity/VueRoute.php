@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use App\Acceso\Recurso;
 use App\Attribute\ApiResourceNoPagination;
 use App\Entity\Base\Base;
 use App\Repository\VueRouteRepository;
@@ -11,8 +12,13 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
+/**
+ * Ruta del frontend, sincronizada desde su router (`SyncVueRoutesController`).
+ * No decide accesos: cada pantalla exige su capacidad en el backend (ADR-039).
+ */
 #[ORM\Entity(repositoryClass: VueRouteRepository::class)]
 #[ApiResourceNoPagination]
+#[Recurso(nombre: "Rutas del frontend", area: "Configuración", lecturaLibre: true, soloLectura: true)]
 class VueRoute extends Base
 {
     #[ORM\Column(length: 255)]
@@ -30,26 +36,6 @@ class VueRoute extends Base
     #[ORM\ManyToOne]
     private ?Icon $icon = null;
 
-    /**
-     * @var Collection<int, Role>
-     */
-    #[ORM\ManyToMany(targetEntity: Role::class)]
-    private Collection $roles;
-
-    /**
-     * @var Collection<int, Usuario>
-     */
-    #[ORM\ManyToMany(targetEntity: Usuario::class)]
-    #[ORM\JoinTable(name: "vue_route_usuario_permitidos")]
-    private Collection $usuariosPermitidos;
-
-    /**
-     * @var Collection<int, Usuario>
-     */
-    #[ORM\ManyToMany(targetEntity: Usuario::class)]
-    #[ORM\JoinTable(name: "vue_route_usuario_denegados")]
-    private Collection $usuariosDenegados;
-
     #[ORM\ManyToOne(targetEntity: self::class, inversedBy: "hijos")]
     private ?self $vueRoute = null;
 
@@ -61,9 +47,6 @@ class VueRoute extends Base
 
     public function __construct()
     {
-        $this->roles = new ArrayCollection();
-        $this->usuariosPermitidos = new ArrayCollection();
-        $this->usuariosDenegados = new ArrayCollection();
         $this->hijos = new ArrayCollection();
     }
 
@@ -123,78 +106,6 @@ class VueRoute extends Base
     public function setIcon(?Icon $icon): static
     {
         $this->icon = $icon;
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Role>
-     */
-    public function getRoles(): Collection
-    {
-        return $this->roles;
-    }
-
-    public function addRole(Role $role): static
-    {
-        if (!$this->roles->contains($role)) {
-            $this->roles->add($role);
-        }
-
-        return $this;
-    }
-
-    public function removeRole(Role $role): static
-    {
-        $this->roles->removeElement($role);
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Usuario>
-     */
-    public function getUsuariosPermitidos(): Collection
-    {
-        return $this->usuariosPermitidos;
-    }
-
-    public function addUsuariosPermitido(Usuario $usuariosPermitido): static
-    {
-        if (!$this->usuariosPermitidos->contains($usuariosPermitido)) {
-            $this->usuariosPermitidos->add($usuariosPermitido);
-        }
-
-        return $this;
-    }
-
-    public function removeUsuariosPermitido(Usuario $usuariosPermitido): static
-    {
-        $this->usuariosPermitidos->removeElement($usuariosPermitido);
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Usuario>
-     */
-    public function getUsuariosDenegados(): Collection
-    {
-        return $this->usuariosDenegados;
-    }
-
-    public function addUsuariosDenegado(Usuario $usuariosDenegado): static
-    {
-        if (!$this->usuariosDenegados->contains($usuariosDenegado)) {
-            $this->usuariosDenegados->add($usuariosDenegado);
-        }
-
-        return $this;
-    }
-
-    public function removeUsuariosDenegado(Usuario $usuariosDenegado): static
-    {
-        $this->usuariosDenegados->removeElement($usuariosDenegado);
 
         return $this;
     }

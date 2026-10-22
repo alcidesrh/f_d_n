@@ -4,9 +4,14 @@ declare(strict_types=1);
 
 namespace App\Venta\Reasignacion;
 
+use App\Acceso\Autorizacion;
+use App\Acceso\Capacidad;
+use App\Acceso\Limite;
+use App\Acceso\Ubicador;
 use App\Entity\BoletoAsiento;
 use App\Entity\BoletoVenta;
 use App\Entity\Enum\CanalVenta;
+use App\Entity\Enum\OperacionBoleto;
 use App\Entity\Enum\TransicionBoleto;
 use App\Entity\PagoWeb;
 use App\Entity\Salida;
@@ -29,7 +34,8 @@ use Psr\Clock\ClockInterface;
  * El original pasa a `reasignado` y el asiento que ocupaba queda libre.
  *
  * Todo en una transacción con las salidas implicadas bloqueadas: si algo
- * falla (asiento tomado, precio distinto…) no cambia nada.
+ * falla (asiento tomado, precio distinto…) no cambia nada. Quien reasigna
+ * respeta el límite diario de su rol (ADR-039).
  */
 final class ReasignacionBoletos
 {
@@ -40,6 +46,7 @@ final class ReasignacionBoletos
         private readonly PublicadorOcupacion $publicador,
         private readonly FlujoBoleto $flujo,
         private readonly ClockInterface $reloj,
+        private readonly Autorizacion $autorizacion,
     ) {}
 
     /**
@@ -88,6 +95,7 @@ final class ReasignacionBoletos
         if (!$puedeOperar($venta)) {
             throw new VentaRechazada("No puede reasignar boletos de esta venta.", "permiso", 403);
         }
+        $this->exigirLimite($venta, count($viejos));
 
         $salidaIds = array_map(static fn(BoletoAsiento $b) => (int) $b->getSalida()->getId(), $viejos);
         $salidaIds[] = $s->salidaId;
@@ -174,5 +182,23 @@ final class ReasignacionBoletos
             ->getOneOrNullResult();
 
         return $pago === null ? Recargo::ninguno() : Recargo::de($pago->getRecargoPorciento());
+    }
+
+    /** @throws VentaRechazada si con estos pasa el límite diario de reasignaciones de quien opera */
+    private function exigirLimite(BoletoVenta $venta, int $cuantos): void
+    {
+        $usuario = $this->autorizacion->actual();
+        $limite = $usuario === null ? null : $this->autorizacion->de($usuario)
+            ->limite(Capacidad::BOLETO_REASIGNAR->value, Limite::REASIGNACIONES_POR_DIA, Ubicador::venta($venta));
+        if ($limite === null) {
+            return;
+        }
+        $hechas = (int) $this->em->getConnection()->fetchOne(
+            "SELECT COUNT(*) FROM bitacora WHERE entidad = 'boleto' AND operacion = :operacion AND usuario_id = :usuario AND fecha >= :hoy",
+            ["operacion" => OperacionBoleto::REASIGNADO->value, "usuario" => $usuario->getId(), "hoy" => (new \DateTimeImmutable("today"))->format("Y-m-d H:i:s")],
+        );
+        if ($hechas + $cuantos > $limite) {
+            throw new VentaRechazada(sprintf("Llegó al límite de %d boletos reasignados por día.", $limite), "limite", 403);
+        }
     }
 }

@@ -51,7 +51,7 @@ final class AsegurarUsuarioAdminTest extends TestCase
     public function testCreaAdminCuandoLaTablaEstaVacia(): void
     {
         $ejecutados = [];
-        // sin admin, sin role ROLE_SUPER_ADMIN, insert rol → id 42
+        // sin admin, sin rol de sistema, insert rol → id 42
         $conn = $this->conexion([false, false, 42], $ejecutados);
 
         $hasher = $this->createStub(
@@ -85,7 +85,7 @@ final class AsegurarUsuarioAdminTest extends TestCase
         self::assertSame("admin@fdn.local", $usuario["email"]);
 
         [$linkSql, $link] = $ejecutados[1];
-        self::assertStringContainsString("user_role", $linkSql);
+        self::assertStringContainsString("INSERT INTO asignacion", $linkSql);
         self::assertSame(-1, $link["userId"]);
         self::assertSame(42, $link["roleId"]);
     }
@@ -107,7 +107,7 @@ final class AsegurarUsuarioAdminTest extends TestCase
     public function testReutilizaElRolExistente(): void
     {
         $ejecutados = [];
-        // sin admin, pero el rol ROLE_SUPER_ADMIN ya existe con id 7
+        // sin admin, pero ya hay un rol de sistema con id 7
         $conn = $this->conexion([false, 7], $ejecutados);
 
         $hasher = $this->createStub(

@@ -4,12 +4,18 @@ declare(strict_types=1);
 
 namespace App\Chat\Tarjeta;
 
+use App\Acceso\Capacidad;
+use App\Acceso\Ubicador;
 use App\Entity\BoletoAsiento;
 use App\Salida\DetalleSalida;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
-/** Boleto (`BoletoAsiento`): estado, cliente, asiento, trayecto, salida, cuándo y quién lo vendió. */
+/**
+ * Boleto (`BoletoAsiento`): estado, cliente, asiento, trayecto, salida, cuándo
+ * y quién lo vendió. Solo los que el lector puede ver (`boleto.ver` donde cae
+ * la venta, ADR-039).
+ */
 final class TarjetaBoleto implements Tarjeta
 {
     public function __construct(
@@ -24,7 +30,7 @@ final class TarjetaBoleto implements Tarjeta
 
     public function puedeVer(): bool
     {
-        return $this->auth->isGranted("read", BoletoAsiento::class);
+        return $this->auth->isGranted(Capacidad::BOLETO_VER->value);
     }
 
     public function resolver(array $ids): array
@@ -32,6 +38,9 @@ final class TarjetaBoleto implements Tarjeta
         $datos = [];
         /** @var BoletoAsiento $b */
         foreach ($this->em->getRepository(BoletoAsiento::class)->findBy(["id" => $ids]) as $b) {
+            if ($b->getBoletoVenta() === null || !$this->auth->isGranted(Capacidad::BOLETO_VER->value, Ubicador::venta($b->getBoletoVenta()))) {
+                continue;
+            }
             $trayecto = $b->getTrayecto();
             $salida = $b->getSalida();
             $venta = $b->getBoletoVenta();

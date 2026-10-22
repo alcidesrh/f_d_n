@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Reporte;
 
+use App\Acceso\Alcance;
+use App\Acceso\Ambito;
+use App\Acceso\FiltroAlcance;
 use App\Entity\BoletoAsiento;
 use App\Entity\Empresa;
 use App\Entity\Enum\CanalVenta;
@@ -23,12 +26,13 @@ final class ConsultaReportes
         private readonly EntityManagerInterface $em,
     ) {}
 
-    public function cuadre(FiltroCuadre $f): CuadreVentaBoletos
+    /** Con `$alcance`, solo lo vendido en sus empresas y estaciones (ADR-039). */
+    public function cuadre(FiltroCuadre $f, ?Alcance $alcance = null): CuadreVentaBoletos
     {
         $inicio = $f->fecha;
         $fin = $inicio->modify("+1 day");
 
-        $ventas = $this->base($f->empresaId)
+        $ventas = $this->base($f->empresaId, $alcance)
             ->andWhere("v.createdAt >= :inicio AND v.createdAt < :fin")
             ->andWhere("b.precio.moneda = :moneda")
             ->setParameter("inicio", $inicio)
@@ -38,7 +42,11 @@ final class ConsultaReportes
 
         $otras = [];
         if ($f->estacionId !== null) {
-            $consulta = $this->base($f->empresaId)
+            $consulta = $this->base($f->empresaId, $alcance === null ? null : new Alcance(array_map(
+                // Lo vendido en otras estaciones que sube en la suya: cuenta solo la empresa.
+                static fn(Ambito $a) => new Ambito($a->empresas, null),
+                $alcance->ambitos(),
+            )))
                 ->andWhere("s.fecha >= :inicio AND s.fecha < :fin")
                 ->andWhere("v.createdAt < :inicio")
                 ->andWhere("b.estado <> :anulado")
@@ -63,9 +71,9 @@ final class ConsultaReportes
         );
     }
 
-    public function detalle(FiltroDetalle $f): DetalleFacturaBoletos
+    public function detalle(FiltroDetalle $f, ?Alcance $alcance = null): DetalleFacturaBoletos
     {
-        $consulta = $this->base($f->empresaId)
+        $consulta = $this->base($f->empresaId, $alcance)
             ->andWhere("v.createdAt >= :inicio AND v.createdAt < :fin")
             ->andWhere("b.estado <> :anulado")
             ->setParameter("inicio", $f->desde)
@@ -100,9 +108,9 @@ final class ConsultaReportes
     }
 
     /** Boletos emitidos como voucher o cortesía (no se cobran) en el rango de fechas de venta. Los anulados no cuentan. */
-    public function voucher(FiltroVoucher $f): CuadreVoucher
+    public function voucher(FiltroVoucher $f, ?Alcance $alcance = null): CuadreVoucher
     {
-        $consulta = $this->base($f->empresaId)
+        $consulta = $this->base($f->empresaId, $alcance)
             ->andWhere("v.createdAt >= :inicio AND v.createdAt < :fin")
             ->andWhere("v.voucher = true OR v.cortesia = true")
             ->andWhere("b.estado <> :anulado")
@@ -119,12 +127,16 @@ final class ConsultaReportes
         );
     }
 
-    /** @return list<array{id: int, nombre: string, departamento: ?string}> */
-    public function estaciones(?int $soloId = null): array
+    /**
+     * @param list<int>|null $ids solo esas (el alcance); null = las activas
+     *
+     * @return list<array{id: int, nombre: string, departamento: ?string}>
+     */
+    public function estaciones(?array $ids = null): array
     {
         $qb = $this->em->createQueryBuilder()->select("e.id", "e.nombre", "e.departamento")->from(Estacion::class, "e")->orderBy("e.nombre");
-        if ($soloId !== null) {
-            $qb->andWhere("e.id = :id")->setParameter("id", $soloId);
+        if ($ids !== null) {
+            $qb->andWhere("e.id IN (:ids)")->setParameter("ids", $ids === [] ? [0] : $ids);
         } else {
             $qb->andWhere("e.activo = true");
         }
@@ -132,12 +144,14 @@ final class ConsultaReportes
         return array_map(static fn(array $r) => ["id" => (int) $r["id"], "nombre" => (string) $r["nombre"], "departamento" => $r["departamento"]], $qb->getQuery()->getArrayResult());
     }
 
-    /** @return list<array{id: int, nombre: string}> */
-    public function empresas(?int $soloId = null): array
+    /**
+     * @param list<int>|null $ids solo esas (el alcance); null = todas
+     *
+     * @return list<array{id: int, nombre: string}>
+     */
+    public function empresas(?array $ids = null): array
     {
-        $empresas = $soloId !== null
-            ? array_filter([$this->em->find(Empresa::class, $soloId)])
-            : $this->em->getRepository(Empresa::class)->findBy([], ["nombre" => "ASC"]);
+        $empresas = $this->em->getRepository(Empresa::class)->findBy($ids === null ? [] : ["id" => $ids], ["nombre" => "ASC"]);
 
         return array_values(array_map(static fn(Empresa $e) => ["id" => (int) $e->getId(), "nombre" => $e->getNombreCorto()], $empresas));
     }
@@ -152,7 +166,7 @@ final class ConsultaReportes
     }
 
     /** Boletos de ventas confirmadas, sin reasignados, con todo lo que el reporte necesita ya cargado. */
-    private function base(?int $empresaId): QueryBuilder
+    private function base(?int $empresaId, ?Alcance $alcance = null): QueryBuilder
     {
         $qb = $this->em->createQueryBuilder()
             ->select("b", "a", "v", "u", "f", "tp", "s", "bus", "pil", "t", "o", "d", "sr")
@@ -177,6 +191,9 @@ final class ConsultaReportes
             ->addOrderBy("b.id");
         if ($empresaId !== null) {
             $qb->andWhere("s.empresa = :empresa")->setParameter("empresa", $empresaId);
+        }
+        if ($alcance !== null) {
+            FiltroAlcance::aplicar($qb, $alcance, "s.empresa", "v.estacion");
         }
 
         return $qb;

@@ -24,6 +24,9 @@ class SyncVueRoutesController extends AbstractController
     #[Route('/api/vue-routes/sync', name: 'api_vue_routes_sync', methods: ['POST'])]
     public function __invoke(Request $request): JsonResponse
     {
+        // Reescribe el catálogo de rutas de los menús: quien configura la aplicación (ADR-039).
+        $this->denyAccessUnlessGranted('config.editar');
+
         $payload = json_decode($request->getContent(), true);
 
         if (!is_array($payload) || !isset($payload['routes'])) {

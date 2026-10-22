@@ -11,7 +11,7 @@
  * con `depth` mayor).
  */
 
-/** Nodo del árbol tal como lo guarda/lee el backend (`/menus/{id}/tree`, `/rol-jerarquia`). */
+/** Nodo del árbol tal como lo guarda/lee el backend (`/menus/{id}/tree`). */
 export interface TreeNode {
   id: number
   children?: TreeNode[]

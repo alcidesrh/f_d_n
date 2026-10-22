@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use ApiPlatform\Metadata\ApiProperty;
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
@@ -15,6 +16,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: SalidaRepository::class)]
 #[ORM\Index(columns: ["fecha", "empresa_id", "ruta_id"], name: "idx_salida_fecha_empresa_ruta")]
 #[ApiResourcePaginationPage]
+#[Recurso(nombre: "Salidas", area: "Salidas", soloLectura: true, ver: "salida.ver", empresa: "empresa")]
 class Salida extends Base
 {
     use TimestampableEntityTrait;

@@ -9,8 +9,9 @@ use App\Migration\MigradorIAM;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * Migrador del bloque IAM (acciones, permisos y roles base).
- * Idempotente; no aplica rango de fechas ni cantidad.
+ * Migrador del bloque IAM (ADR-039): roles del legado con sus capacidades y
+ * asignaciones con el alcance del legado. Idempotente; no aplica rango de
+ * fechas ni cantidad.
  */
 final class MigradorEntidadIam implements MigradorEntidadInterface
 {
@@ -23,7 +24,7 @@ final class MigradorEntidadIam implements MigradorEntidadInterface
 
     public function etiqueta(): string
     {
-        return "IAM (acciones, permisos, roles)";
+        return "IAM (roles y asignaciones con su alcance)";
     }
 
     public function dependencias(): array
@@ -38,7 +39,7 @@ final class MigradorEntidadIam implements MigradorEntidadInterface
 
     public function tablasDestino(): array
     {
-        return ["action", "permiso", "role"];
+        return ["role", "asignacion"];
     }
 
     public function soportaRangoFechas(): bool
@@ -65,7 +66,7 @@ final class MigradorEntidadIam implements MigradorEntidadInterface
             0,
             1,
             [],
-            "Migrando IAM (acciones, permisos, roles)…",
+            "Migrando IAM (roles y asignaciones)…",
         );
         $contadores = $this->iam->migrar($output);
         $progreso->informar(1, 1, $contadores, "IAM migrado");

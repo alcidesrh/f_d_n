@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
@@ -27,6 +28,7 @@ use Symfony\Component\Uid\Uuid;
         graphQlOperations: [new Query(), new QueryCollection(filters: [ColumnaFilter::class])],
     ),
 ]
+#[Recurso(nombre: "Facturas", area: "Venta", soloLectura: true)]
 class Factura {
     use TimestampableEntityTrait;
 

@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\PersonaBase;
 use Doctrine\ORM\Mapping as ORM;
@@ -9,6 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity]
 #[ORM\Index(columns: ["nit"], name: "idx_cliente_nit")]
 #[ApiResourcePaginationPage()]
+#[Recurso(nombre: "Clientes", area: "Venta")]
 class Cliente extends PersonaBase {
 
     /** Documento de identificación (opcional): tipo + número. */

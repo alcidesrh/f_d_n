@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use ApiPlatform\Metadata\ApiProperty;
 use App\Attribute\ApiResourceNoPagination;
 use App\Entity\Base\Base;
@@ -12,6 +13,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ApiResourceNoPagination]
 #[ORM\Entity(repositoryClass: ApiTokenRepository::class)]
+#[Recurso(nombre: "Sesiones (tokens)", area: "Accesos", oculto: true)]
 class ApiToken extends Base {
     use TimestampableEntityTrait;
 

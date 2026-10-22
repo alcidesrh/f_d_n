@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Venta\Boleto\Listado;
 
+use App\Acceso\Autorizacion;
+use App\Acceso\Capacidad;
+use App\Acceso\FiltroAlcance;
 use App\Entity\Agencia;
 use App\Entity\BoletoAsiento;
 use App\Entity\BoletoVenta;
@@ -25,9 +28,9 @@ use Doctrine\ORM\QueryBuilder;
 /**
  * Listado de boletos (el "Boletos" del legado): una fila por asiento vendido
  * con su salida, documento, trayecto, clientes, precio y quién lo vendió, y
- * el detalle de uno ("Consultar"). Solo lectura. Un usuario de agencia solo
- * ve lo vendido por su agencia; el filtro de empresa (ADR-015) acota las
- * salidas como en el resto de la API.
+ * el detalle de uno ("Consultar"). Solo lectura. Cada usuario ve lo suyo y
+ * lo vendido dentro del alcance de su `boleto.ver` (empresa de la salida y
+ * estación donde se vendió, ADR-039); uno de agencia, solo lo de su agencia.
  */
 final class ListadoBoletos
 {
@@ -56,6 +59,7 @@ final class ListadoBoletos
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly FlujoBoleto $flujo,
+        private readonly Autorizacion $autorizacion,
     ) {}
 
     /**
@@ -183,7 +187,15 @@ final class ListadoBoletos
             $qb->andWhere("v.agencia = :agenciaUsuario")->setParameter("agenciaUsuario", $agencia->getId());
         }
 
-        return $qb;
+        // Lo de su alcance, y lo que vendió él.
+        return FiltroAlcance::aplicar(
+            $qb,
+            $this->autorizacion->de($usuario)->alcance(Capacidad::BOLETO_VER->value),
+            "s.empresa",
+            "v.estacion",
+            o: "v.usuario = :usuarioListado",
+            parametrosO: ["usuarioListado" => $usuario->getId()],
+        );
     }
 
     /** Agrega (una vez) la unión de un alias que usa un filtro o el orden. */

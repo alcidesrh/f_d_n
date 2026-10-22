@@ -9,7 +9,6 @@ use App\Croquis\CroquisBus;
 use App\Croquis\InvalidCroquis;
 use App\Croquis\PlantillasCroquis;
 use App\Entity\Bus;
-use App\Security\Voter\EntityVoter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -25,6 +24,10 @@ use Symfony\Component\Routing\Attribute\Route;
 #[AsController]
 class BusCroquisController extends AbstractController
 {
+    /** Las del bus en la API genérica, sobre su empresa (ADR-039). */
+    public const VER = "bus.ver";
+    public const EDITAR = "bus.editar";
+
     public function __construct(
         private readonly CroquisBus $croquis,
         private readonly PlantillasCroquis $plantillas,
@@ -34,7 +37,7 @@ class BusCroquisController extends AbstractController
     #[Route("/api/buses/{id<\d+>}/croquis", name: "api_bus_croquis", methods: ["GET"])]
     public function show(Bus $bus): JsonResponse
     {
-        $this->denyUnlessAllowed(EntityVoter::READ);
+        $this->denyAccessUnlessGranted(self::VER, $bus);
 
         return $this->json($this->croquis->leer($bus));
     }
@@ -43,7 +46,7 @@ class BusCroquisController extends AbstractController
     #[Route("/api/buses/{id<\d+>}/croquis", name: "api_bus_croquis_save", methods: ["PUT"])]
     public function save(Bus $bus, Request $request): JsonResponse
     {
-        $this->denyUnlessAllowed(EntityVoter::UPDATE);
+        $this->denyAccessUnlessGranted(self::EDITAR, $bus);
 
         try {
             $this->croquis->guardar($bus, Croquis::desdeArray($request->toArray()));
@@ -61,19 +64,9 @@ class BusCroquisController extends AbstractController
     #[Route("/api/croquis/plantillas", name: "api_croquis_plantillas", methods: ["GET"])]
     public function plantillas(): JsonResponse
     {
-        $this->denyUnlessAllowed(EntityVoter::READ);
+        $this->denyAccessUnlessGranted(self::VER);
 
         return $this->json($this->plantillas->listar());
     }
 
-    /**
-     * `ROLE_ADMIN` resuelto con `role_hierarchy` (incluye `ROLE_SUPER_ADMIN`)
-     * o el permiso plano `bus.{read,update}` de `EntityVoter`.
-     */
-    private function denyUnlessAllowed(string $attribute): void
-    {
-        if (!$this->isGranted("ROLE_ADMIN")) {
-            $this->denyAccessUnlessGranted($attribute, Bus::class);
-        }
-    }
 }

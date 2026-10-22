@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace App\Chat\Tarjeta;
 
+use App\Acceso\Ubicacion;
 use App\Croquis\CroquisBus;
 use App\Entity\Bus;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
-/** Bus: código, empresa, clase, asientos y su croquis. */
+/** Bus: código, empresa, clase, asientos y su croquis. Los de las empresas donde el lector ve buses (ADR-039). */
 final class TarjetaBus implements Tarjeta
 {
     public function __construct(
@@ -25,7 +26,7 @@ final class TarjetaBus implements Tarjeta
 
     public function puedeVer(): bool
     {
-        return $this->auth->isGranted("read", Bus::class);
+        return $this->auth->isGranted("bus.ver");
     }
 
     public function resolver(array $ids): array
@@ -33,6 +34,9 @@ final class TarjetaBus implements Tarjeta
         $datos = [];
         /** @var Bus $bus */
         foreach ($this->em->getRepository(Bus::class)->findBy(["id" => $ids]) as $bus) {
+            if (!$this->auth->isGranted("bus.ver", Ubicacion::empresa($bus->getEmpresa()?->getId()))) {
+                continue;
+            }
             $croquis = $this->croquis->leer($bus)["elementos"];
             $empresa = $bus->getEmpresa();
             $datos[(int) $bus->getId()] = [

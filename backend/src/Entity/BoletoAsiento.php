@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\GraphQl\Query;
@@ -35,6 +36,7 @@ use Money\Money;
         ],
     ),
 ]
+#[Recurso(nombre: "Boletos", area: "Venta", soloLectura: true, ver: "boleto.ver", empresa: "salida.empresa")]
 class BoletoAsiento extends Base
 {
     #[ORM\ManyToOne]

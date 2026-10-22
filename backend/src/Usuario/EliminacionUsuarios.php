@@ -13,7 +13,7 @@ use Doctrine\ORM\EntityManagerInterface;
  * Borrado de usuarios (`/api/usuarios/eliminacion`). Los registros que apuntan
  * a `usuario` se leen de las claves foráneas de la base, así que una tabla
  * nueva aparece sola. Cada tabla con registros de esos usuarios:
- *  - de accesos (tokens, permisos, rutas del usuario): se borra sola con el usuario (cascada);
+ *  - de accesos (tokens, asignaciones, chat): se borra sola con el usuario (cascada);
  *  - con la columna anulable: se puede desvincular (`NULL`) o eliminar sus filas;
  *  - con la columna obligatoria: solo se pueden eliminar sus filas;
  *  - fiscal (`boleto_venta`): solo se desvincula, nunca se borra.
@@ -26,13 +26,8 @@ final class EliminacionUsuarios
     /** Tablas de accesos del usuario: la cascada de la base las limpia sin preguntar. */
     private const ACCESOS = [
         'api_token',
+        'asignacion',
         'chat_miembro',
-        'user_role',
-        'user_direct_action',
-        'user_denied_action',
-        'usuario_permiso',
-        'vue_route_usuario_denegados',
-        'vue_route_usuario_permitidos',
     ];
 
     /** Registros con valor fiscal: se desvinculan, no se borran. */

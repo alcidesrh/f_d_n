@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Chat\Tarjeta;
 
+use App\Acceso\Catalogo\CatalogoRecursos;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 /**
  * Cualquier entidad de `App\Entity`: su etiqueta y un enlace al formulario
- * genérico. Permiso: `{entidad}.read` (EntityVoter).
+ * genérico. Se ve con la capacidad de lectura de su `#[Recurso]` (ADR-039):
+ * ninguna si es de lectura libre; una oculta o sin publicar, nadie.
  */
 final class TarjetaGenerica
 {
@@ -20,6 +22,7 @@ final class TarjetaGenerica
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly AuthorizationCheckerInterface $auth,
+        private readonly CatalogoRecursos $recursos,
     ) {}
 
     public function existe(string $tipo): bool
@@ -54,7 +57,12 @@ final class TarjetaGenerica
 
     public function puedeVer(string $tipo): bool
     {
-        return $this->auth->isGranted("read", self::NAMESPACE . $tipo);
+        $recurso = $this->recursos->de(self::NAMESPACE . $tipo);
+        if ($recurso === null || $recurso->oculto) {
+            return false;
+        }
+
+        return $recurso->lecturaLibre || ($recurso->ver !== null && $this->auth->isGranted($recurso->ver));
     }
 
     /**
@@ -65,7 +73,12 @@ final class TarjetaGenerica
     public function resolver(string $tipo, array $ids): array
     {
         $datos = [];
+        $ver = $this->recursos->de(self::NAMESPACE . $tipo)?->ver;
         foreach ($this->em->getRepository(self::NAMESPACE . $tipo)->findBy(["id" => $ids]) as $registro) {
+            // Cada registro, en su empresa.
+            if ($ver !== null && !$this->auth->isGranted($ver, $registro)) {
+                continue;
+            }
             $datos[$registro->getId()] = ["titulo" => self::etiqueta($registro)];
         }
 

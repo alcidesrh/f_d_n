@@ -10,18 +10,19 @@ use App\Navigation\MenuVisibility;
 
 /**
  * Quién ve una caja o un enlace de la administración (puro): sin roles ni
- * usuarios, cualquiera; si no, el usuario nombrado o el que tenga alguno de
- * los roles o un ascendiente de alguno (`Role.parents`, la misma regla de
- * los menús, `MenuVisibility`). Un enlace se ve solo si también se ve su caja.
+ * usuarios, cualquiera; si no, el usuario nombrado o quien tenga asignado
+ * alguno de los roles (la misma regla de los menús, `MenuVisibility`: el rol
+ * base lo tienen todos, el de sistema ve todo, sin jerarquía). Un enlace se
+ * ve solo si también se ve su caja.
  */
 final class Acceso
 {
     /**
-     * @param iterable<Role> $rolesUsuario
-     * @param iterable<Role> $roles
+     * @param list<int>         $rolesUsuario ids de sus roles con asignación vigente
+     * @param iterable<Role>    $roles
      * @param iterable<Usuario> $usuarios
      */
-    public static function permite(int $usuarioId, iterable $rolesUsuario, iterable $roles, iterable $usuarios): bool
+    public static function permite(int $usuarioId, array $rolesUsuario, bool $sistema, iterable $roles, iterable $usuarios): bool
     {
         $roles = [...$roles];
         $usuarios = [...$usuarios];
@@ -34,6 +35,6 @@ final class Acceso
             }
         }
 
-        return $roles !== [] && MenuVisibility::isVisibleTo($rolesUsuario, $roles);
+        return $roles !== [] && MenuVisibility::isVisibleTo($rolesUsuario, $sistema, $roles);
     }
 }

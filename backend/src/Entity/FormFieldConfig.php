@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use App\Attribute\ApiResourceNoPagination;
 use App\Metadata\ConfiguracionDelCliente;
 use Doctrine\ORM\Mapping as ORM;
@@ -9,6 +10,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity]
 #[ApiResourceNoPagination]
+#[Recurso(nombre: "Campos de los formularios", area: "Configuración", lecturaLibre: true, editar: "config.editar", eliminar: "config.editar")]
 class FormFieldConfig extends FieldConfig implements ConfiguracionDelCliente
 {
     #[ORM\Column(length: 255, nullable: true)]

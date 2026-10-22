@@ -4,39 +4,33 @@ declare(strict_types=1);
 
 namespace App\Venta\Acceso;
 
+use App\Acceso\Autorizacion;
+use App\Acceso\Capacidad;
+use App\Acceso\Ubicador;
 use App\Entity\BoletoVenta;
 use App\Entity\Usuario;
-use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
-/** Quién ve y quién opera sobre una venta. */
+/**
+ * Quién ve y quién opera sobre una venta (ADR-039): la capacidad donde cae
+ * la venta —la empresa de su salida, la estación donde se vendió y su
+ * agencia—. Un usuario de agencia solo alcanza las de la suya.
+ */
 final class AccesoVentas
 {
     public function __construct(
-        private readonly AuthorizationCheckerInterface $autorizacion,
+        private readonly Autorizacion $autorizacion,
     ) {}
 
-    /** El vendedor, su agencia, o quien tenga permiso de lectura de ventas. */
+    /** Quien la vendió, o quien tiene `boleto.ver` donde cae. */
     public function puedeVer(BoletoVenta $venta, Usuario $usuario): bool
     {
-        $agencia = $usuario->getAgencia();
-        if ($agencia !== null) {
-            return $venta->getAgencia()?->getId() === $agencia->getId();
-        }
-
-        return $venta->getUsuario()?->getId() === $usuario->getId()
-            || $this->autorizacion->isGranted("ROLE_ADMIN")
-            || $this->autorizacion->isGranted("read", BoletoVenta::class);
+        return ($venta->getUsuario()?->getId() === $usuario->getId() && $usuario->getId() !== null)
+            || $this->puedeOperar($venta, $usuario, Capacidad::BOLETO_VER);
     }
 
-    /**
-     * Sobre quién puede anular o reasignar (el permiso de la acción se
-     * exige aparte): cualquier venta, salvo los usuarios de una agencia, que
-     * solo operan las de su agencia.
-     */
-    public function puedeOperar(BoletoVenta $venta, Usuario $usuario): bool
+    /** Tiene esa capacidad (anular, reasignar, cancelar…) donde cae la venta. */
+    public function puedeOperar(BoletoVenta $venta, Usuario $usuario, Capacidad $capacidad): bool
     {
-        $agencia = $usuario->getAgencia();
-
-        return $agencia === null || $venta->getAgencia()?->getId() === $agencia->getId();
+        return $this->autorizacion->de($usuario)->puede($capacidad->value, Ubicador::venta($venta));
     }
 }

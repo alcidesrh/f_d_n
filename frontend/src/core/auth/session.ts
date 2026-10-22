@@ -1,6 +1,7 @@
 /**
- * Sesión del usuario: identidad, token y permisos (persistidos). Login y
- * logout viven aquí para que las pantallas solo llamen a la acción.
+ * Sesión del usuario: identidad y token (persistidos). Login y logout viven
+ * aquí para que las pantallas solo llamen a la acción. Lo que puede hacer el
+ * usuario no va aquí: lo trae `core/acceso` (`GET /api/me/acceso`, ADR-039).
  */
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
@@ -10,7 +11,6 @@ import { entrarComo } from './alcanceSesion'
 interface LoginResponse {
   username: string
   token: string
-  permissions?: string[]
 }
 
 export const useSessionStore = defineStore(
@@ -18,7 +18,6 @@ export const useSessionStore = defineStore(
   () => {
     const user = ref<string | null>(null)
     const token = ref<string | null>(null)
-    const permissions = ref<string[]>([])
     const isAuthenticated = computed(() => Boolean(user.value && token.value))
 
     /** Lanza `HttpError` (401 = credenciales inválidas) para que el formulario lo muestre. */
@@ -31,7 +30,6 @@ export const useSessionStore = defineStore(
       })
       user.value = response.username
       token.value = response.token
-      permissions.value = response.permissions ?? []
       entrarComo(response.username)
     }
 
@@ -46,10 +44,9 @@ export const useSessionStore = defineStore(
     function clear() {
       user.value = null
       token.value = null
-      permissions.value = []
     }
 
-    return { user, token, permissions, isAuthenticated, login, logout, clear }
+    return { user, token, isAuthenticated, login, logout, clear }
   },
-  { global: true, persist: { pick: ['user', 'token', 'permissions'] } },
+  { global: true, persist: { pick: ['user', 'token'] } },
 )

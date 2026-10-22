@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
 use App\Entity\Base\Traits\LegacyTrait;
@@ -12,6 +13,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: 'pais')]
 
 #[ApiResourcePaginationPage]
+#[Recurso(nombre: "Naciones", area: "Geografía", lecturaLibre: true)]
 class Nacion extends Base {
 
     use LegacyTrait;

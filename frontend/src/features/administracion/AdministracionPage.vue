@@ -123,6 +123,7 @@
 import { useConfirm } from "primevue/useconfirm";
 import { RouterLink } from "vue-router";
 import type { Acceso, Destino, Enlace, EnlacePayload, Seccion, SeccionPayload } from "@/core/administracion/api";
+import { useAccesoStore } from "@/core/acceso/store";
 import { describirDestino, enlacePayload, moverEnlace, moverSeccion, ordenarEnlaces, repartirEnColumnas, restringido, seccionesVisibles, seccionPayload, ubicacion } from "@/core/administracion/disposicion";
 import SortablePanelList from "@/shared/ui/SortablePanelList.vue";
 import EnlaceDialog from "./EnlaceDialog.vue";
@@ -139,14 +140,37 @@ const SEPARACION = 16;
 const MAX_COLUMNAS = 5;
 
 const store = useAdministracionStore();
+const acceso = useAccesoStore();
 const router = useRouter();
 const confirm = useConfirm();
 
 const busqueda = ref("");
 onMounted(() => void store.cargar());
 
-/** Configurando, todas tal cual; si no, las visibles que coinciden con la búsqueda. */
-const secciones = computed<Seccion[]>(() => (store.configurando ? store.secciones : seccionesVisibles(store.secciones, busqueda.value)));
+/**
+ * Configurando, todas tal cual; si no, las visibles que coinciden con la
+ * búsqueda, sin los enlaces a pantallas que el usuario no puede abrir
+ * (ADR-039) ni las cajas que se quedan vacías.
+ */
+const secciones = computed<Seccion[]>(() =>
+  store.configurando
+    ? store.secciones
+    : seccionesVisibles(store.secciones, busqueda.value)
+        .map((s) => ({ ...s, enlaces: s.enlaces.filter((e) => puedeAbrir(e.abrir)) }))
+        .filter((s) => s.enlaces.length > 0),
+);
+
+/** Lleva a una pantalla del frontend que el usuario puede abrir (un path o una URL externa, siempre). */
+function puedeAbrir(d: Destino | null): boolean {
+  const u = ubicacion(d, existeRuta);
+  if (u?.tipo !== "ruta") return true;
+  try {
+    const r = router.resolve(u.to);
+    return acceso.puedeEntrar({ name: r.name, params: r.params, meta: r.meta });
+  } catch {
+    return true;
+  }
+}
 
 const resumen = computed(() => {
   const n = secciones.value.reduce((t, s) => t + s.enlaces.length, 0);

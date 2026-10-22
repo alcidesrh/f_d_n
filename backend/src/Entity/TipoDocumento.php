@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use App\Attribute\ApiResourceNoPagination;
 use App\Entity\Base\Base;
 use Doctrine\ORM\Mapping as ORM;
@@ -14,6 +15,7 @@ use Doctrine\ORM\Mapping as ORM;
  */
 #[ORM\Entity]
 #[ApiResourceNoPagination]
+#[Recurso(nombre: "Tipos de documento", area: "Catálogos", lecturaLibre: true)]
 class TipoDocumento extends Base
 {
     #[ORM\Column(length: 3, nullable: true)]

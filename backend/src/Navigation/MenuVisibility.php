@@ -7,57 +7,36 @@ namespace App\Navigation;
 use App\Entity\Role;
 
 /**
- * Regla de visibilidad de un menú por roles: un usuario lo ve si alguno de
- * sus roles es uno de los roles del menú o un ascendiente (`Role.parents`,
- * transitivo) de alguno de ellos. Un menú sin roles no lo ve nadie.
+ * Regla de visibilidad de un menú por roles (ADR-018, ADR-039): un usuario
+ * lo ve si tiene una asignación vigente de alguno de sus roles, si el menú
+ * lleva el rol base (`ROLE_USER`: lo ven todos) o si tiene el rol de
+ * sistema. Un menú sin roles no lo ve nadie. Ya no hay jerarquía de roles:
+ * un rol no hereda los menús de otro.
+ *
+ * Los ítems de cada menú los filtra el frontend por la capacidad que exige
+ * su pantalla; la que decide al final es la API.
  */
 final class MenuVisibility
 {
     /**
-     * @param iterable<Role> $userRoles
+     * @param list<int>      $rolesUsuario ids de los roles con asignación vigente
      * @param iterable<Role> $menuRoles
      */
-    public static function isVisibleTo(iterable $userRoles, iterable $menuRoles): bool
+    public static function isVisibleTo(array $rolesUsuario, bool $sistema, iterable $menuRoles): bool
     {
-        $userRoleIds = [];
-        foreach ($userRoles as $role) {
-            $userRoleIds[$role->getId()] = true;
-        }
-        if ($userRoleIds === []) {
+        $menuRoles = [...$menuRoles];
+        if ($menuRoles === []) {
             return false;
         }
-
+        if ($sistema) {
+            return true;
+        }
         foreach ($menuRoles as $role) {
-            foreach (self::lineage($role) as $id => $_) {
-                if (isset($userRoleIds[$id])) {
-                    return true;
-                }
+            if ($role->esBase() || in_array($role->getId(), $rolesUsuario, true)) {
+                return true;
             }
         }
 
         return false;
-    }
-
-    /**
-     * El rol y todos sus ascendientes, por id (tolera ciclos).
-     *
-     * @return array<int, Role>
-     */
-    public static function lineage(Role $role): array
-    {
-        $lineage = [];
-        $pending = [$role];
-        while ($pending !== []) {
-            $current = array_pop($pending);
-            if (isset($lineage[$current->getId()])) {
-                continue;
-            }
-            $lineage[$current->getId()] = $current;
-            foreach ($current->getParents() as $parent) {
-                $pending[] = $parent;
-            }
-        }
-
-        return $lineage;
     }
 }

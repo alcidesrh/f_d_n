@@ -198,6 +198,42 @@
     display: flex;
   }
 }
+/* Estación de trabajo (ADR-039): en móvil solo el ícono; en ámbar si falta elegirla. */
+.header-estacion {
+  display: inline-flex;
+  flex: 0 1 auto;
+  min-width: 0;
+  align-items: center;
+  gap: 0.3rem;
+  margin-right: 0.25rem;
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--p-surface-200);
+  border-radius: 999px;
+  color: var(--p-surface-600);
+  font-size: 0.8rem;
+  cursor: pointer;
+  &:hover:not(:disabled) {
+    background: var(--p-content-hover-background);
+  }
+  &:disabled {
+    cursor: default;
+  }
+}
+.header-estacion--falta {
+  border-color: var(--p-amber-300);
+  background: var(--c-warning-soft);
+  color: var(--c-warning-ink);
+}
+.header-estacion__nombre {
+  display: none;
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  @variant md {
+    display: inline;
+  }
+}
 /* Usuario: avatar y nombre abren el menú (en móvil solo el avatar). */
 .header-user-wrap {
   position: relative;

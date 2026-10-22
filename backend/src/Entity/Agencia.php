@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiProperty;
+use App\Acceso\Recurso;
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -18,9 +21,13 @@ use Doctrine\ORM\Mapping as ORM;
  * El saldo solo cambia por `App\Venta\Agencia\SaldoAgencia` (depósitos,
  * ventas, ajustes), que deja cada cambio en `AgenciaMovimiento`. En el
  * legado era una `estacion` con `tipoEstacion_id = 4`.
+ *
+ * `empresas` son las que vende (sin ninguna, todas): son también el alcance
+ * de sus usuarios (ADR-039).
  */
 #[ORM\Entity]
 #[ApiResourcePaginationPage]
+#[Recurso(nombre: "Agencias", area: "Agencias", lecturaLibre: true)]
 class Agencia extends Base
 {
     #[ORM\Column(length: 255)]
@@ -38,9 +45,21 @@ class Agencia extends Base
     #[ORM\Column(length: 100, nullable: true)]
     private ?string $email = null;
 
-    /** Empresa para la que vende; null = puede vender salidas de cualquier empresa. */
-    #[ORM\ManyToOne]
-    private ?Empresa $empresa = null;
+    /**
+     * Empresas cuyas salidas vende; sin ninguna, las de cualquier empresa.
+     *
+     * @var Collection<int, Empresa>
+     */
+    #[ORM\ManyToMany(targetEntity: Empresa::class)]
+    #[ORM\JoinTable(name: "agencia_empresa")]
+    #[ORM\JoinColumn(onDelete: "CASCADE")]
+    #[ORM\InverseJoinColumn(onDelete: "CASCADE")]
+    private Collection $empresas;
+
+    public function __construct()
+    {
+        $this->empresas = new ArrayCollection();
+    }
 
     /** Saldo disponible en centavos de `moneda`. Solo lo cambia `SaldoAgencia`. */
     #[ApiProperty(writable: false)]
@@ -120,16 +139,42 @@ class Agencia extends Base
         return $this;
     }
 
-    public function getEmpresa(): ?Empresa
+    /** @return Collection<int, Empresa> */
+    public function getEmpresas(): Collection
     {
-        return $this->empresa;
+        return $this->empresas;
     }
 
-    public function setEmpresa(?Empresa $empresa): static
+    public function addEmpresa(Empresa $empresa): static
     {
-        $this->empresa = $empresa;
+        if (!$this->empresas->contains($empresa)) {
+            $this->empresas->add($empresa);
+        }
 
         return $this;
+    }
+
+    public function removeEmpresa(Empresa $empresa): static
+    {
+        $this->empresas->removeElement($empresa);
+
+        return $this;
+    }
+
+    /** @return list<int>|null ids de las empresas que vende; null = todas */
+    public function empresaIds(): ?array
+    {
+        $ids = array_values(array_map(static fn(Empresa $e) => (int) $e->getId(), $this->empresas->toArray()));
+
+        return $ids === [] ? null : $ids;
+    }
+
+    /** Vende salidas de esa empresa. */
+    public function vende(?Empresa $empresa): bool
+    {
+        $ids = $this->empresaIds();
+
+        return $ids === null || ($empresa !== null && in_array((int) $empresa->getId(), $ids, true));
     }
 
     public function getSaldo(): int

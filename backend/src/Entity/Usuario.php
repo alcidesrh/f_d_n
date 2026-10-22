@@ -9,6 +9,7 @@ use ApiPlatform\Doctrine\Orm\Filter\PartialSearchFilter;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiProperty;
+use App\Acceso\Recurso;
 use App\Attribute\ApiResourcePaginationPage;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -29,6 +30,8 @@ use Symfony\Component\Serializer\Attribute\Ignore;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: UsuarioRepository::class)]
+// Se borran por `/api/usuarios/eliminacion` (decide qué hacer con lo que depende de ellos).
+#[Recurso(nombre: "Usuarios", area: "Accesos", borrable: false)]
 #[
     ApiResourcePaginationPage(
         graphQlOperations: [
@@ -85,8 +88,6 @@ use Symfony\Component\Validator\Constraints as Assert;
     ApiFilter(
         SearchFilter::class,
         properties: [
-            "permisos.id" => "exact",
-            "userRoles.id" => "exact",
             "localidad.id" => "exact",
             "status.id" => "exact",
         ],
@@ -138,80 +139,32 @@ class Usuario extends PersonaBase implements
     #[ORM\OneToMany(mappedBy: "usuario", targetEntity: ApiToken::class)]
     private Collection $apiTokens;
 
-    #[ORM\JoinTable(name: "user_role")]
-    #[
-        ORM\JoinColumn(
-            name: "user_id",
-            referencedColumnName: "id",
-            onDelete: "CASCADE",
-        ),
-    ]
-    #[
-        ORM\InverseJoinColumn(
-            name: "role_id",
-            referencedColumnName: "id",
-            onDelete: "CASCADE",
-        ),
-    ]
-    #[ORM\ManyToMany(targetEntity: Role::class)]
-    private Collection $userRoles;
-
     /**
-     * @var Collection<int, Permiso>
+     * Roles concedidos con su alcance (ADR-039). Se escriben por
+     * `/api/acceso`, nunca por la API genérica.
+     *
+     * @var Collection<int, Asignacion>
      */
-    #[ORM\ManyToMany(targetEntity: Permiso::class)]
-    private Collection $permisos;
+    #[ORM\OneToMany(mappedBy: "usuario", targetEntity: Asignacion::class)]
+    #[ApiProperty(readable: false, writable: false)]
+    #[Ignore]
+    private Collection $asignaciones;
 
-    /**
-     * @var Collection<int, Action>
-     */
-    #[ORM\ManyToMany(targetEntity: Action::class)]
-    #[ORM\JoinTable(name: "user_direct_action")]
-    #[
-        ORM\JoinColumn(
-            name: "user_id",
-            referencedColumnName: "id",
-            onDelete: "CASCADE",
-        ),
-    ]
-    #[
-        ORM\InverseJoinColumn(
-            name: "action_id",
-            referencedColumnName: "id",
-            onDelete: "CASCADE",
-        ),
-    ]
-    private Collection $directActions;
-
-    /**
-     * @var Collection<int, Action>
-     */
-    #[ORM\ManyToMany(targetEntity: Action::class)]
-    #[ORM\JoinTable(name: "user_denied_action")]
-    #[
-        ORM\JoinColumn(
-            name: "user_id",
-            referencedColumnName: "id",
-            onDelete: "CASCADE",
-        ),
-    ]
-    #[
-        ORM\InverseJoinColumn(
-            name: "action_id",
-            referencedColumnName: "id",
-            onDelete: "CASCADE",
-        ),
-    ]
-    private Collection $deniedActions;
-
-    #[ORM\ManyToOne]
-    private ?Empresa $empresa = null;
+    /** Sin activar no entra (`App\Acceso\UsuarioActivo`). Se cambia por `/api/acceso/usuarios/{id}/activo`. */
+    #[ORM\Column(options: ["default" => true])]
+    #[ApiProperty(writable: false)]
+    private bool $activo = true;
 
     /** Si es usuario de una agencia: vende con el saldo de esta (ADR-021). */
     #[ORM\ManyToOne]
     private ?Agencia $agencia = null;
 
-    /** Estación donde trabaja (taquilla): valor inicial de la venta. */
+    /**
+     * Estación de trabajo: donde opera ahora (vende, chequea, recibe). La
+     * fija el administrador y el usuario la cambia entre las de sus
+     * asignaciones (`App\Acceso\EstacionTrabajo`); una fuera de su alcance
+     * no le sirve para operar.
+     */
     #[ORM\ManyToOne]
     private ?Estacion $estacion = null;
 
@@ -222,10 +175,7 @@ class Usuario extends PersonaBase implements
         }
 
         $this->apiTokens = new ArrayCollection();
-        $this->userRoles = new ArrayCollection();
-        $this->permisos = new ArrayCollection();
-        $this->directActions = new ArrayCollection();
-        $this->deniedActions = new ArrayCollection();
+        $this->asignaciones = new ArrayCollection();
     }
 
     public function getFullName()
@@ -255,16 +205,33 @@ class Usuario extends PersonaBase implements
      * @see UserInterface
      */
 
-    public function getUserRoles(): Collection
-    {
-        return $this->userRoles;
-    }
+    /**
+     * Para Symfony todos son `ROLE_USER`: lo que cada uno puede hacer lo
+     * deciden sus asignaciones (`App\Acceso\CapacidadVoter`), no los roles
+     * de seguridad.
+     */
     #[Ignore]
     public function getRoles(): array
     {
-        return $this->userRoles
-            ->map(fn(Role $role) => $role->getNombre())
-            ->toArray();
+        return [Role::user];
+    }
+
+    /** @return Collection<int, Asignacion> */
+    public function getAsignaciones(): Collection
+    {
+        return $this->asignaciones;
+    }
+
+    public function isActivo(): bool
+    {
+        return $this->activo;
+    }
+
+    public function setActivo(bool $activo): static
+    {
+        $this->activo = $activo;
+
+        return $this;
     }
 
     /**
@@ -373,106 +340,6 @@ class Usuario extends PersonaBase implements
             ->filter(fn(ApiToken $token) => $token->isValid())
             ->map(fn(ApiToken $token) => $token->getToken())
             ->first();
-    }
-
-    public function addUserRole(Role $role): static
-    {
-        if (!$this->userRoles->contains($role)) {
-            $this->userRoles->add($role);
-        }
-
-        return $this;
-    }
-
-    public function removeUserRole(Role $role): static
-    {
-        $this->userRoles->removeElement($role);
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Permiso>
-     */
-    public function getPermisos(): Collection
-    {
-        return $this->permisos;
-    }
-
-    public function addPermiso(Permiso $permiso): static
-    {
-        if (!$this->permisos->contains($permiso)) {
-            $this->permisos->add($permiso);
-        }
-
-        return $this;
-    }
-
-    public function removePermiso(Permiso $permiso): static
-    {
-        $this->permisos->removeElement($permiso);
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Action>
-     */
-    public function getDirectActions(): Collection
-    {
-        return $this->directActions;
-    }
-
-    public function addDirectAction(Action $action): static
-    {
-        if (!$this->directActions->contains($action)) {
-            $this->directActions->add($action);
-        }
-
-        return $this;
-    }
-
-    public function removeDirectAction(Action $action): static
-    {
-        $this->directActions->removeElement($action);
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Action>
-     */
-    public function getDeniedActions(): Collection
-    {
-        return $this->deniedActions;
-    }
-
-    public function addDeniedAction(Action $action): static
-    {
-        if (!$this->deniedActions->contains($action)) {
-            $this->deniedActions->add($action);
-        }
-
-        return $this;
-    }
-
-    public function removeDeniedAction(Action $action): static
-    {
-        $this->deniedActions->removeElement($action);
-
-        return $this;
-    }
-
-    public function getEmpresa(): ?Empresa
-    {
-        return $this->empresa;
-    }
-
-    public function setEmpresa(?Empresa $empresa): static
-    {
-        $this->empresa = $empresa;
-
-        return $this;
     }
 
     public function getAgencia(): ?Agencia

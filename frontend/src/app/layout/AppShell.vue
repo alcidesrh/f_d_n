@@ -26,6 +26,7 @@
     </div>
     <ChatAviso />
     <ChatVentana v-if="ventana.esVentana && session.user" />
+    <EstacionTrabajoDialog v-if="session.user" />
   </div>
 </template>
 
@@ -33,10 +34,12 @@
 import { defineAsyncComponent, provide } from 'vue'
 import { useUiStore } from '@/app/ui'
 import { useSessionStore } from '@/core/auth/session'
-import { useUserMenusStore } from '@/core/navigation/userMenus'
+import { useAccesoStore } from '@/core/acceso/store'
+import { filtrarMenusCon, useUserMenusStore } from '@/core/navigation/userMenus'
 import { useChatStore } from '@/core/chat/store'
 import { useCuentaStore } from '@/core/cuenta/store'
 import { useMetadataStore } from '@/core/metadata/sincronizacion'
+import EstacionTrabajoDialog from '@/features/acceso/EstacionTrabajoDialog.vue'
 import ChatAviso from '@/features/chat/ChatAviso.vue'
 import ChatVentana from '@/features/chat/ChatVentana.vue'
 import { useVentanaChat } from '@/features/chat/ventana'
@@ -49,6 +52,7 @@ import SidebarRight from './SidebarRight.vue'
 import { defineSidebarStore } from './sidebarStore'
 
 const route = useRoute()
+const router = useRouter()
 const session = useSessionStore()
 const userMenus = useUserMenusStore()
 const chat = useChatStore()
@@ -65,7 +69,23 @@ provide(REPORTES_ADJUNTABLES, [
   { id: 'cuadre-voucher', nombre: 'Cuadre de voucher', icono: 'confirmation-number-outline', componente: defineAsyncComponent(() => import('@/features/reporte/CuadreVoucherPage.vue')) },
 ])
 
-// Menús y chat del usuario: se cargan al entrar al shell y al cambiar de usuario.
+// Los menús solo muestran las pantallas que el usuario puede abrir (ADR-039).
+const acceso = useAccesoStore()
+filtrarMenusCon((nombre) => {
+  try {
+    const r = router.resolve({ name: nombre })
+    return acceso.puedeEntrar({ name: r.name, params: r.params, meta: r.meta })
+  } catch {
+    // Una ruta con parámetros obligatorios: el ítem se pinta deshabilitado de todos modos.
+    return true
+  }
+})
+const dejarDeEscuchar = acceso.suscribir(() => void userMenus.load())
+/** Al volver a la pestaña, por si cambiaron sus accesos mientras no miraba. */
+const alVolver = () => document.visibilityState === 'visible' && session.user && void acceso.cargar()
+document.addEventListener('visibilitychange', alVolver)
+
+// Accesos, menús y chat del usuario: se cargan al entrar al shell y al cambiar de usuario.
 // La metadata del cliente (ADR-036) se escucha mientras hay sesión.
 watch(
   () => session.user,
@@ -74,9 +94,10 @@ watch(
     metadata.detener()
     if (!user) {
       cuenta.limpiar()
+      acceso.limpiar()
       return userMenus.clear()
     }
-    void userMenus.load()
+    void acceso.cargar().then(() => userMenus.load())
     void cuenta.cargar()
     void chat.iniciar()
     metadata.iniciar()
@@ -86,6 +107,8 @@ watch(
 onBeforeUnmount(() => {
   chat.detener()
   metadata.detener()
+  dejarDeEscuchar()
+  document.removeEventListener('visibilitychange', alVolver)
 })
 
 /** Panel propio de la ruta (`meta.panel`), con su propio store de ancho/modo. */

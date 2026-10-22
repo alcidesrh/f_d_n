@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Command;
 
+use App\Entity\Asignacion;
 use App\Entity\Role;
 use App\Entity\Usuario;
 use App\Repository\UsuarioRepository;
@@ -18,7 +19,7 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 /**
  * Cuenta para probar contra el stack de desarrollo (Playwright, agentes,
- * `curl`): crea el usuario (ROLE_SUPER_ADMIN) o le pone una contraseña nueva
+ * `curl`): crea el usuario (rol de sistema sobre todo, ADR-039) o le pone una contraseña nueva
  * al azar y escribe en la salida `E2E_ADMIN_USER=…` y `E2E_ADMIN_PASSWORD=…`.
  * `make e2e-usuario` guarda eso en `.env.e2e.local` (raíz, fuera de git).
  *
@@ -68,14 +69,16 @@ final class UsuarioPruebasCommand extends Command
             $this->entityManager->persist($usuario);
         }
 
-        $role = $this->entityManager->getRepository(Role::class)->findOneBy(['nombre' => self::ROLE]);
+        $role = $this->entityManager->getRepository(Role::class)->findOneBy(['sistema' => true], ['id' => 'ASC']);
         if ($role === null) {
-            $role = (new Role())->setNombre(self::ROLE);
+            $role = (new Role())->setNombre(self::ROLE)->setDescripcion('Administración total del sistema')->setSistema(true);
             $this->entityManager->persist($role);
         }
-        if (!$usuario->getUserRoles()->contains($role)) {
-            $usuario->addUserRole($role);
+        $tiene = $usuario->getAsignaciones()->exists(static fn($i, Asignacion $a) => $a->getRol() === $role && $a->getEmpresas() === null && $a->getEstaciones() === null);
+        if (!$tiene) {
+            $this->entityManager->persist((new Asignacion($usuario, $role))->setMotivo('Cuenta de pruebas'));
         }
+        $usuario->setActivo(true);
 
         $password = bin2hex(random_bytes(16));
         $usuario->setPassword($this->passwordHasher->hashPassword($usuario, $password));

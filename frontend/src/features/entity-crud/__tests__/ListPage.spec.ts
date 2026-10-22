@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createPinia, getActivePinia, setActivePinia } from 'pinia'
+import { useAccesoStore } from '@/core/acceso/store'
 import {
   DOMWrapper,
   flushPromises,
@@ -324,6 +325,18 @@ describe('ListPage', () => {
 
   beforeEach(() => {
     setActivePinia(createPinia())
+    // El usuario puede todo con estas entidades (ADR-039: el listado esconde lo que no puede).
+    const todo = { ver: true, editar: true, eliminar: true }
+    useAccesoStore().acceso = {
+      usuario: { id: 1, username: 'u' },
+      sistema: false,
+      capacidades: {},
+      recursos: { Icon: todo, Category: todo },
+      agencia: null,
+      estacionTrabajo: null,
+      estaciones: [],
+      huella: 'h',
+    }
     store = makeStore()
     categoryStore = makeCategoryStore()
     schemaMock.find.mockReset()

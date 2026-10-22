@@ -10,57 +10,38 @@ use PHPUnit\Framework\TestCase;
 
 final class MenuVisibilityTest extends TestCase
 {
-    private static function role(int $id, Role ...$parents): Role
+    private static function role(int $id, ?string $nombre = null): Role
     {
-        $role = (new Role())->setNombre('ROLE_' . $id);
+        $role = (new Role())->setNombre($nombre ?? 'ROLE_' . $id);
         $role->setId($id);
-        foreach ($parents as $parent) {
-            $role->addParent($parent);
-        }
 
         return $role;
     }
 
-    public function testVisibleSiElUsuarioTieneUnoDeLosRolesDelMenu(): void
+    public function testVisibleSiTieneAsignadoUnoDeLosRolesDelMenu(): void
     {
-        $operador = self::role(2);
-
-        $this->assertTrue(MenuVisibility::isVisibleTo([self::role(9), $operador], [$operador]));
+        $this->assertTrue(MenuVisibility::isVisibleTo([9, 2], false, [self::role(2)]));
+        $this->assertFalse(MenuVisibility::isVisibleTo([9], false, [self::role(2)]));
     }
 
-    public function testVisibleSiUnRolDelUsuarioEsAscendienteDeUnRolDelMenu(): void
+    public function testSinJerarquiaUnRolNoHeredaLosMenusDeOtro(): void
     {
-        $admin = self::role(1);
-        $operador = self::role(2, $admin);
-        $consulta = self::role(3, $operador);
-
-        // admin → operador → consulta: admin es abuelo de consulta.
-        $this->assertTrue(MenuVisibility::isVisibleTo([$admin], [$consulta]));
+        // Antes ROLE_SUPER_ADMIN veía lo de ROLE_ADMIN por ser su ascendiente; ahora no.
+        $this->assertFalse(MenuVisibility::isVisibleTo([1], false, [self::role(2)]));
     }
 
-    public function testNoVisibleSiElRolDelUsuarioEsDescendiente(): void
+    public function testElRolBaseLoVenTodos(): void
     {
-        $admin = self::role(1);
-        $consulta = self::role(3, $admin);
-
-        $this->assertFalse(MenuVisibility::isVisibleTo([$consulta], [$admin]));
+        $this->assertTrue(MenuVisibility::isVisibleTo([], false, [self::role(36, Role::user)]));
     }
 
-    public function testMenuSinRolesOUsuarioSinRolesNoEsVisible(): void
+    public function testElRolDeSistemaVeTodo(): void
     {
-        $this->assertFalse(MenuVisibility::isVisibleTo([self::role(1)], []));
-        $this->assertFalse(MenuVisibility::isVisibleTo([], [self::role(1)]));
+        $this->assertTrue(MenuVisibility::isVisibleTo([], true, [self::role(2)]));
     }
 
-    public function testLineageToleraCiclos(): void
+    public function testUnMenuSinRolesNoLoVeNadie(): void
     {
-        $a = self::role(1);
-        $b = self::role(2, $a);
-        $a->addParent($b);
-
-        $ids = array_keys(MenuVisibility::lineage($a));
-        sort($ids);
-        $this->assertSame([1, 2], $ids);
-        $this->assertFalse(MenuVisibility::isVisibleTo([self::role(7)], [$a]));
+        $this->assertFalse(MenuVisibility::isVisibleTo([1], true, []));
     }
 }

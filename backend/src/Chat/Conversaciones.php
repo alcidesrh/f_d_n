@@ -53,7 +53,7 @@ final class Conversaciones
             return [];
         }
         $usuarios = $this->em->createQuery(
-            "SELECT u, a, e, emp FROM App\Entity\Usuario u LEFT JOIN u.agencia a LEFT JOIN u.estacion e LEFT JOIN u.empresa emp WHERE u.id IN (:ids)",
+            "SELECT u, a, e FROM App\Entity\Usuario u LEFT JOIN u.agencia a LEFT JOIN u.estacion e WHERE u.id IN (:ids)",
         )->setParameter("ids", $ids)->getResult();
         $mio = $this->perfil($yo);
 
@@ -67,7 +67,7 @@ final class Conversaciones
     public function contactos(Usuario $yo): array
     {
         $usuarios = $this->em->createQuery(
-            "SELECT u, a, e, emp FROM App\Entity\Usuario u LEFT JOIN u.agencia a LEFT JOIN u.estacion e LEFT JOIN u.empresa emp WHERE u.id != :yo",
+            "SELECT u, a, e FROM App\Entity\Usuario u LEFT JOIN u.agencia a LEFT JOIN u.estacion e WHERE u.id != :yo",
         )->setParameter("yo", $yo->getId())->getResult();
         $mio = $this->perfil($yo);
         $perfiles = array_values(array_filter(

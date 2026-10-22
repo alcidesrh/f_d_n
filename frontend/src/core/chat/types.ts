@@ -92,6 +92,8 @@ export type Aviso =
   | { tipo: 'leido'; canal: number; usuario: number; hasta: number }
   | { tipo: 'canal'; canal: number }
   | { tipo: 'presencia'; usuario: number; enLinea: boolean }
+  /** Cambiaron sus roles, su alcance o su activación (ADR-039): el cliente vuelve a pedir lo que puede. */
+  | { tipo: 'acceso' }
 
 export interface Destinos {
   usuarios: number[]

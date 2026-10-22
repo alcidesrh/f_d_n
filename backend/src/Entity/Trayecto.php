@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
 use Doctrine\ORM\Mapping as ORM;
@@ -20,6 +21,7 @@ use Doctrine\ORM\Mapping as ORM;
     ),
 ]
 #[ApiResourcePaginationPage]
+#[Recurso(nombre: "Trayectos", area: "Rutas y tarifas", lecturaLibre: true, editar: "ruta.editar", eliminar: "ruta.editar")]
 class Trayecto extends Base
 {
     #[ORM\ManyToOne]

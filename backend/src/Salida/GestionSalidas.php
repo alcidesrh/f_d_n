@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Salida;
 
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
+use App\Acceso\Capacidad;
 use App\Entity\Enum\EstadoSalida;
 use App\Entity\Salida;
 use App\Entity\Ruta;
@@ -92,7 +93,7 @@ final class GestionSalidas
             if ($ruta !== $salida->getRuta() && !$ruta->isActivo()) {
                 throw new SalidaRechazada("La ruta " . VistaSalida::ruta($ruta) . " está inactiva.", "ruta_inactiva");
             }
-            $bus = isset($datos["busId"]) ? $this->esquemas->buses([(int) $datos["busId"]])[(int) $datos["busId"]] : $salida->getBus();
+            $bus = isset($datos["busId"]) ? $this->esquemas->buses([(int) $datos["busId"]], Capacidad::SALIDA_EDITAR)[(int) $datos["busId"]] : $salida->getBus();
             $fecha = isset($datos["fecha"]) ? self::fecha($datos["fecha"]) : $salida->getFecha();
             if ($fecha != $salida->getFecha() && $fecha < new \DateTime()) {
                 throw new SalidaRechazada("No se puede mover una salida a una hora que ya pasó.", "fecha_pasada");

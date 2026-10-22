@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
 use Doctrine\ORM\Mapping as ORM;
@@ -14,6 +15,7 @@ use Doctrine\ORM\Mapping as ORM;
     "estacion" => "Estacion",
 ])]
 #[ApiResourcePaginationPage]
+#[Recurso(nombre: "Enclaves", area: "Geografía", lecturaLibre: true)]
 class Enclave extends Base
 {
     #[ORM\Column(length: 255)]

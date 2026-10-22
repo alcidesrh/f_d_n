@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Acceso\Autorizacion;
 use App\Cuenta\FotoPerfil;
 use App\Entity\Usuario;
 use Doctrine\ORM\EntityManagerInterface;
@@ -42,6 +43,7 @@ final class MiCuentaController extends AbstractController
         private readonly FotoPerfil $fotos,
         private readonly UserPasswordHasherInterface $hasher,
         private readonly ValidatorInterface $validator,
+        private readonly Autorizacion $autorizacion,
     ) {}
 
     #[Route("/api/me/cuenta", name: "api_me_cuenta", methods: ["GET"])]
@@ -168,10 +170,10 @@ final class MiCuentaController extends AbstractController
             "nit" => $u->getNit(),
             "direccion" => $u->getDireccion(),
             "foto" => $this->fotos->url($u),
-            "empresa" => $u->getEmpresa()?->getNombre(),
             "estacion" => $u->getEstacion()?->getNombre(),
             "agencia" => $u->getAgencia()?->getNombre(),
-            "roles" => $u->getRoles(),
+            // Los roles que tiene vigentes (ADR-039).
+            "roles" => array_values(array_unique(array_map(static fn($c) => $c->rolNombre, $this->autorizacion->de($u)->concesiones()))),
         ];
     }
 

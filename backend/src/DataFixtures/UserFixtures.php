@@ -5,133 +5,57 @@ declare(strict_types=1);
 namespace App\DataFixtures;
 
 use App\Entity\ApiToken;
+use App\Entity\Asignacion;
+use App\Entity\Role;
 use App\Entity\Usuario;
 use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\Common\DataFixtures\DependentFixtureInterface;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
-class UserFixtures extends Fixture
+/** Usuarios de ejemplo con asignaciones (ADR-039). */
+class UserFixtures extends Fixture implements DependentFixtureInterface
 {
-    private UserPasswordHasherInterface $passwordHasher;
-
-    public function __construct(UserPasswordHasherInterface $passwordHasher)
-    {
-        $this->passwordHasher = $passwordHasher;
-    }
+    public function __construct(
+        private readonly UserPasswordHasherInterface $passwordHasher,
+    ) {}
 
     public function load(ObjectManager $manager): void
     {
-        $this->createUser(
-            manager: $manager,
-            username: 'superadmin',
-            nombre: 'Super',
-            apellido: 'Admin',
-            email: 'super@fdn.local',
-            plainPassword: 'super123',
-            roleRefs: ['ROLE_SUPER_ADMIN'],
-            directPermisoRefs: [],
-            directActionRefs: [],
-            deniedActionRefs: [],
-        );
-
-        $this->createUser(
-            manager: $manager,
-            username: 'admin',
-            nombre: 'Admin',
-            apellido: 'Usuario',
-            email: 'admin@fdn.local',
-            plainPassword: 'admin123',
-            roleRefs: ['ROLE_ADMIN'],
-            directPermisoRefs: ['Gestion Acciones'],
-            directActionRefs: [],
-            deniedActionRefs: [],
-        );
-
-        $this->createUser(
-            manager: $manager,
-            username: 'operador',
-            nombre: 'Operador',
-            apellido: 'Perez',
-            email: 'operador@fdn.local',
-            plainPassword: 'operador123',
-            roleRefs: ['ROLE_OPERADOR'],
-            directPermisoRefs: [],
-            directActionRefs: ['usuario.ver'],
-            deniedActionRefs: [],
-        );
-
-        $this->createUser(
-            manager: $manager,
-            username: 'consulta',
-            nombre: 'Consulta',
-            apellido: 'Garcia',
-            email: 'consulta@fdn.local',
-            plainPassword: 'consulta123',
-            roleRefs: ['ROLE_CONSULTA'],
-            directPermisoRefs: ['Gestion Boletos'],
-            directActionRefs: [],
-            deniedActionRefs: ['boleto.anular'],
-        );
+        $this->crear($manager, 'superadmin', 'Super', 'Admin', 'super123', [[RoleFixtures::SISTEMA, null, null]]);
+        // Vende en dos empresas desde una estación; supervisa solo una.
+        $this->crear($manager, 'vendedor', 'Vendedor', 'Pérez', 'vendedor123', [[RoleFixtures::VENDEDOR, [1, 2], [1]]]);
+        $this->crear($manager, 'supervisor', 'Supervisor', 'García', 'supervisor123', [[RoleFixtures::SUPERVISOR, [1], [1]]]);
 
         $manager->flush();
     }
 
-    private function createUser(
-        ObjectManager $manager,
-        string $username,
-        string $nombre,
-        string $apellido,
-        string $email,
-        string $plainPassword,
-        array $roleRefs,
-        array $directPermisoRefs,
-        array $directActionRefs,
-        array $deniedActionRefs,
-    ): Usuario {
-        $user = new Usuario();
-        $user->setUsername($username);
-        $user->setNombre($nombre);
-        $user->setApellido($apellido);
-        $user->setEmail($email);
-
-        $hashed = $this->passwordHasher->hashPassword($user, $plainPassword);
-        $user->setPassword($hashed);
-
-        foreach ($roleRefs as $roleName) {
-            $role = $this->getReference(RoleFixtures::REF_PREFIX . $roleName, \App\Entity\Role::class);
-            $user->addUserRole($role);
-        }
-
-        foreach ($directPermisoRefs as $permisoNombre) {
-            $permiso = $this->getReference(PermisoFixtures::REF_PREFIX . $permisoNombre, \App\Entity\Permiso::class);
-            $user->addPermiso($permiso);
-        }
-
-        foreach ($directActionRefs as $actionCode) {
-            $action = $this->getReference(ActionFixtures::REF_PREFIX . $actionCode, \App\Entity\Action::class);
-            $user->addDirectAction($action);
-        }
-
-        foreach ($deniedActionRefs as $actionCode) {
-            $action = $this->getReference(ActionFixtures::REF_PREFIX . $actionCode, \App\Entity\Action::class);
-            $user->addDeniedAction($action);
-        }
-
-        $token = new ApiToken();
-        $token->setUsuario($user);
-        $token->setActivo(true);
-        $user->addApiToken($token);
-        $manager->persist($token);
-
+    /**
+     * @param list<array{0: string, 1: list<int>|null, 2: list<int>|null}> $asignaciones rol, empresas, estaciones
+     */
+    private function crear(ObjectManager $manager, string $username, string $nombre, string $apellido, string $password, array $asignaciones): void
+    {
+        $user = (new Usuario())
+            ->setUsername($username)
+            ->setNombre($nombre)
+            ->setApellido($apellido)
+            ->setEmail("$username@fdn.local");
+        $user->setPassword($this->passwordHasher->hashPassword($user, $password));
         $manager->persist($user);
 
-        return $user;
+        foreach ($asignaciones as [$rol, $empresas, $estaciones]) {
+            $manager->persist((new Asignacion($user, $this->getReference(RoleFixtures::REF_PREFIX . $rol, Role::class)))
+                ->setEmpresas($empresas)
+                ->setEstaciones($estaciones));
+        }
+
+        $token = (new ApiToken())->setUsuario($user)->setActivo(true);
+        $user->addApiToken($token);
+        $manager->persist($token);
     }
 
     public function getDependencies(): array
     {
-        return [
-            RoleFixtures::class,
-        ];
+        return [RoleFixtures::class];
     }
 }

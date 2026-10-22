@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use ApiPlatform\Metadata\ApiProperty;
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
@@ -22,6 +23,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity]
 #[ORM\Index(columns: ["vigente_desde"], name: "idx_tarifa_encomienda_peso_vigente")]
 #[ApiResourcePaginationPage(order: ["pesoDesde" => "ASC"])]
+#[Recurso(nombre: "Tarifas de encomienda por peso", area: "Encomiendas", lecturaLibre: true)]
 class TarifaEncomiendaPeso extends Base
 {
     #[ORM\Column(type: Types::FLOAT)]

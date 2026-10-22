@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use ApiPlatform\Metadata\ApiProperty;
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
@@ -12,6 +13,7 @@ use Override;
 
 #[ORM\Entity]
 #[ApiResourcePaginationPage]
+#[Recurso(nombre: "Buses", area: "Flota", empresa: "empresa")]
 class Bus extends Base
 {
     #[ORM\Column(length: 50)]

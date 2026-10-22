@@ -2,78 +2,56 @@
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use App\Attribute\ApiResourceNoPagination;
-
 use App\Entity\Base\Base;
 use App\Entity\Base\Constants\RolesTrait;
 use App\Repository\RoleRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
+/**
+ * Rol (ADR-039): un puesto con nombre y el conjunto de capacidades del
+ * catálogo que concede (`App\Acceso\Catalogo`), más sus límites. Plano: no
+ * hereda de otros roles. Lo concede una `Asignacion` sobre un alcance; el rol
+ * en sí no tiene alcance.
+ *
+ * - El de sistema (`sistema`) tiene todas las capacidades, también las que se
+ *   agreguen al catálogo después; no se edita.
+ * - `ROLE_USER` es el rol base: lo tiene todo usuario sin asignárselo y solo
+ *   sirve para mostrar menús y cajas de administración a todos; no lleva
+ *   capacidades.
+ *
+ * Se escribe por `/api/acceso/roles` (`App\Acceso\Administracion\AdministracionAccesos`),
+ * que impide la escalada de privilegios; por la API genérica solo se lee.
+ */
 #[ORM\Entity(repositoryClass: RoleRepository::class)]
 #[ApiResourceNoPagination]
+#[Recurso(nombre: 'Roles', area: 'Accesos', lecturaLibre: true, soloLectura: true)]
 class Role extends Base
 {
     use RolesTrait;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, unique: true)]
     private ?string $nombre = null;
 
-    /**
-     * @var Collection<int, self>
-     */
-    #[ORM\ManyToMany(targetEntity: self::class, inversedBy: "children")]
-    #[ORM\JoinTable(name: "role_role")]
-    #[
-        ORM\JoinColumn(
-            name: "parent_id",
-            referencedColumnName: "id",
-            onDelete: "CASCADE",
-        ),
-    ]
-    #[
-        ORM\InverseJoinColumn(
-            name: "child_id",
-            referencedColumnName: "id",
-            onDelete: "CASCADE",
-        ),
-    ]
-    private ?Collection $parents;
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $descripcion = null;
 
-    /**
-     * @var Collection<int, self>
-     */
-    #[ORM\ManyToMany(targetEntity: self::class, mappedBy: "parents")]
-    private ?Collection $children;
+    /** @var list<string> códigos del catálogo */
+    #[ORM\Column(type: Types::JSON, options: ['default' => '[]'])]
+    private array $capacidades = [];
 
-    /**
-     * @var Collection<int, Permiso>
-     */
-    #[ORM\ManyToMany(targetEntity: Permiso::class, inversedBy: "roles")]
-    #[ORM\JoinColumn(onDelete: "CASCADE")]
-    #[ORM\InverseJoinColumn(onDelete: "CASCADE")]
-    private ?Collection $permisos;
+    /** @var array<string, int> código de `App\Acceso\Limite` → valor */
+    #[ORM\Column(type: Types::JSON, options: ['default' => '{}'])]
+    private array $limites = [];
 
-    /**
-     * @var Collection<int, Action>
-     */
-    #[ORM\ManyToMany(targetEntity: Action::class, inversedBy: "roles")]
-    #[ORM\JoinColumn(onDelete: "CASCADE")]
-    #[ORM\InverseJoinColumn(onDelete: "CASCADE")]
-    private Collection $actions;
-
-    public function __construct()
-    {
-        $this->parents = new ArrayCollection();
-        $this->children = new ArrayCollection();
-        $this->permisos = new ArrayCollection();
-        $this->actions = new ArrayCollection();
-    }
+    #[ORM\Column(options: ['default' => false])]
+    private bool $sistema = false;
 
     public function getId(): ?int
     {
-        return $this->id;
+        return $this->id ?? null;
     }
 
     public function getNombre(): ?string
@@ -88,113 +66,69 @@ class Role extends Base
         return $this;
     }
 
-    /**
-     * @return Collection<int, self>
-     */
-    public function getParents(): Collection
+    public function getDescripcion(): ?string
     {
-        return $this->parents;
+        return $this->descripcion;
     }
 
-    public function addParent(self $parent): static
+    public function setDescripcion(?string $descripcion): static
     {
-        if (!$this->parents->contains($parent)) {
-            $this->parents->add($parent);
-        }
+        $this->descripcion = $descripcion;
 
         return $this;
     }
 
-    public function removeParent(self $parent): static
+    /** @return list<string> */
+    public function getCapacidades(): array
     {
-        $this->parents->removeElement($parent);
+        return $this->capacidades;
+    }
+
+    /** @param list<string> $capacidades */
+    public function setCapacidades(array $capacidades): static
+    {
+        $capacidades = array_values(array_unique($capacidades));
+        sort($capacidades);
+        $this->capacidades = $capacidades;
 
         return $this;
     }
 
-    /**
-     * @return Collection<int, self>
-     */
-    public function getChildren(): Collection
+    /** @return array<string, int> */
+    public function getLimites(): array
     {
-        return $this->children;
+        return $this->limites;
     }
 
-    public function addChild(self $child): static
+    /** @param array<string, int> $limites */
+    public function setLimites(array $limites): static
     {
-        if (!$this->children->contains($child)) {
-            $this->children->add($child);
-            $child->addParent($this);
-        }
+        ksort($limites);
+        $this->limites = $limites;
 
         return $this;
     }
 
-    public function removeChild(self $child): static
+    public function isSistema(): bool
     {
-        if ($this->children->removeElement($child)) {
-            $child->removeParent($this);
-        }
+        return $this->sistema;
+    }
+
+    public function setSistema(bool $sistema): static
+    {
+        $this->sistema = $sistema;
 
         return $this;
     }
 
-    /**
-     * @return Collection<int, Permiso>
-     */
-    public function getPermisos(): Collection
+    /** El rol base (`ROLE_USER`): lo tiene todo usuario, sin capacidades. */
+    public function esBase(): bool
     {
-        return $this->permisos;
-    }
-
-    public function addPermiso(Permiso $permiso): static
-    {
-        if (!$this->permisos->contains($permiso)) {
-            $this->permisos->add($permiso);
-            $permiso->addRole($this);
-        }
-
-        return $this;
-    }
-
-    public function removePermiso(Permiso $permiso): static
-    {
-        if ($this->permisos->removeElement($permiso)) {
-            $permiso->removeRole($this);
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Action>
-     */
-    public function getActions(): Collection
-    {
-        return $this->actions;
-    }
-
-    public function addAction(Action $action): static
-    {
-        if (!$this->actions->contains($action)) {
-            $this->actions->add($action);
-            $action->addRole($this);
-        }
-
-        return $this;
-    }
-
-    public function removeAction(Action $action): static
-    {
-        if ($this->actions->removeElement($action)) {
-            $action->removeRole($this);
-        }
-
-        return $this;
+        return $this->nombre === self::user;
     }
 
     public function __toString(): string
     {
-        return $this->getNombre() ?? "";
+        return $this->getNombre() ?? '';
     }
 }

@@ -391,7 +391,14 @@ class DependenciasLegado
 
             $usuario = $this->insertar("usuario", $data);
             if ($usuario !== null) {
-                $this->rolesUsuario->asignar($usuario, $old["roles"] ?? null);
+                // Accesos (ADR-039): sus roles con las empresas y estaciones que tenía en el legado.
+                $this->rolesUsuario->asignar(
+                    $usuario,
+                    $old["roles"] ?? null,
+                    array_column($this->legado->filas(RolesUsuarioLegado::SQL_EMPRESAS, ["id" => $id]), "empresa_id"),
+                    [...(empty($old["estacion_id"]) ? [] : [(int) $old["estacion_id"]]), ...array_column($this->legado->filas(RolesUsuarioLegado::SQL_ESTACIONES, ["id" => $id]), "estacion_id")],
+                    RolesUsuarioLegado::activo($old),
+                );
             }
 
             return $usuario;

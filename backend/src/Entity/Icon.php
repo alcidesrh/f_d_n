@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Acceso\Recurso;
 use ApiPlatform\Doctrine\Orm\Filter\OrFilter;
 use ApiPlatform\Doctrine\Orm\Filter\PartialSearchFilter;
 use ApiPlatform\Metadata\GraphQl\QueryCollection;
@@ -36,6 +37,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
         ],
     ),
 ]
+#[Recurso(nombre: "Íconos", area: "Configuración", lecturaLibre: true, editar: "config.editar", eliminar: "config.editar")]
 class Icon extends Base
 {
     #[Groups(["read", "write", "icon:read", "icon:write"])]
