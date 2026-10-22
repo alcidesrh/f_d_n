@@ -1,5 +1,5 @@
 <template>
-  <div class="shell">
+  <div class="shell" :class="{ 'shell--sin-derecha': !hasRightSidebar }">
     <AppHeader :right-sidebar="hasRightSidebar ? rightSidebar : null">
       <template #menu-content>
         <NavArea area="topbar_right" />

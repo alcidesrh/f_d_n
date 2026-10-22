@@ -207,6 +207,10 @@
   gap: 0.3rem;
   margin-right: 0.25rem;
   padding: 0.2rem 0.55rem;
+  @variant lg {
+    /* Se corre con las acciones y el usuario cuando se cierra el sidebar derecho. */
+    transform: translateX(calc(50px * (1 - var(--sb-right-h, 0))));
+  }
   border: 1px solid var(--p-surface-200);
   border-radius: 999px;
   color: var(--p-surface-600);
@@ -232,6 +236,12 @@
   white-space: nowrap;
   @variant md {
     display: inline;
+  }
+}
+/* Sin barra derecha no hay botón que la reabra: nada se corre a ocupar su lugar. */
+.shell--sin-derecha :is(.header-actions, .header-estacion, .header-user-wrap) {
+  @variant lg {
+    transform: none;
   }
 }
 /* Usuario: avatar y nombre abren el menú (en móvil solo el avatar). */

@@ -44,6 +44,13 @@
   }
 }
 
+/* Sin barra derecha (ni menús del usuario en ella ni panel de la ruta): sin su margen. */
+.shell--sin-derecha .main {
+  @variant lg {
+    margin-right: 0;
+  }
+}
+
 .main-inner {
   padding: var(--page-gutter);
   padding-top: 2rem;
