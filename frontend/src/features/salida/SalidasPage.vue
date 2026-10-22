@@ -13,11 +13,18 @@
     <!-- <Toolbar> -->
     <!-- <template #start><PageHead /></template> -->
     <!-- <template #end> -->
-    <RouterLink v-if="opciones?.puede.crear" :to="{ name: 'salidas-programar' }" class="no-underline ml-auto">
-      <Button label="Programar salidas" size="small"
-        ><template #icon><icon name="calendar-add-on-outline" class="mr-1" /></template
-      ></Button>
-    </RouterLink>
+    <div class="ml-auto flex flex-wrap gap-2">
+      <RouterLink :to="{ name: 'salidas-calendario' }" class="no-underline">
+        <Button label="Calendario" size="small" severity="secondary" outlined
+          ><template #icon><icon name="calendar-view-week" class="mr-1" /></template
+        ></Button>
+      </RouterLink>
+      <RouterLink v-if="opciones?.puede.crear" :to="{ name: 'salidas-programar' }" class="no-underline">
+        <Button label="Programar salidas" size="small"
+          ><template #icon><icon name="calendar-add-on-outline" class="mr-1" /></template
+        ></Button>
+      </RouterLink>
+    </div>
     <!-- </template> -->
     <!-- </Toolbar> -->
 

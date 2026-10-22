@@ -7,13 +7,18 @@ namespace App\Salida;
 use App\Acceso\Alcance;
 use App\Acceso\FiltroAlcance;
 use App\Entity\Asiento;
+use App\Entity\Enum\EstadoSalida;
+use App\Entity\Ruta;
 use App\Entity\Salida;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 
-/** Listado paginado de salidas para la gestión logística (ADR-024). */
+/** Listado paginado de salidas para la gestión logística (ADR-024) y su calendario. */
 final class ConsultaSalidas
 {
+    /** Tope de salidas del calendario: más que esto es un rango que no se puede leer en pantalla. */
+    public const MAX_CALENDARIO = 6000;
+
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly AsientosVendidos $vendidos,
@@ -71,6 +76,97 @@ final class ConsultaSalidas
             "porPagina" => $f->porPagina,
             "porEstado" => $porEstado,
         ];
+    }
+
+    /**
+     * Calendario de salidas (días × horas): todas las del rango que cumplen el
+     * filtro, sin paginar y compactas (ids en lugar de objetos), con lo
+     * comprometido, la capacidad del bus y la llegada estimada según la clase
+     * de su bus. Las rutas que aparecen van aparte, una vez cada una.
+     *
+     * @return array{items: list<array<string, mixed>>, rutas: list<array<string, mixed>>, porEstado: array<string, int>, truncado: bool}
+     */
+    public function calendario(FiltroSalidas $f, ?Alcance $alcance = null): array
+    {
+        $base = $this->base($f);
+        if ($alcance !== null) {
+            FiltroAlcance::aplicar($base, $alcance, "s.empresa", compartidos: true);
+        }
+        $porEstado = [];
+        foreach ((clone $base)->select("s.estado AS estado", "COUNT(s.id) AS n")->groupBy("s.estado")->getQuery()->getArrayResult() as $c) {
+            $porEstado[$c["estado"] instanceof \BackedEnum ? $c["estado"]->value : (string) $c["estado"]] = (int) $c["n"];
+        }
+
+        $qb = (clone $base)->select("s", "r", "b", "k")->leftJoin("b.clase", "k");
+        if ($f->estados !== []) {
+            $qb->andWhere("s.estado IN (:estados)")->setParameter("estados", array_map(static fn($e) => $e->value, $f->estados));
+        }
+        /** @var list<Salida> $salidas */
+        $salidas = $qb->orderBy("s.fecha", "ASC")->addOrderBy("s.id", "ASC")->setMaxResults(self::MAX_CALENDARIO + 1)->getQuery()->getResult();
+        $truncado = count($salidas) > self::MAX_CALENDARIO;
+        $salidas = array_slice($salidas, 0, self::MAX_CALENDARIO);
+
+        $vendidos = $this->vendidos->porSalida(array_map(static fn(Salida $s) => (int) $s->getId(), $salidas));
+        $capacidad = $this->capacidad(array_values(array_unique(array_filter(array_map(static fn(Salida $s) => $s->getBus()?->getId(), $salidas)))));
+        $this->conParadas(array_values(array_unique(array_map(static fn(Salida $s) => (int) $s->getRuta()->getId(), $salidas))));
+        $ahora = new \DateTimeImmutable();
+
+        $items = [];
+        $rutas = [];
+        foreach ($salidas as $s) {
+            $ruta = $s->getRuta();
+            $rutas[(int) $ruta->getId()] ??= [
+                "id" => (int) $ruta->getId(),
+                "nombre" => VistaSalida::ruta($ruta),
+                "origen" => $ruta->getOrigen()?->getNombre(),
+                "destino" => $ruta->getDestino()?->getNombre(),
+                "origenAlias" => $ruta->getOrigen()?->getAlias(),
+                "destinoAlias" => $ruta->getDestino()?->getAlias(),
+                "paradas" => $ruta->getParadas()->count(),
+            ];
+            $fecha = $s->getFecha();
+            $duracion = $ruta->duracionPara($s->getBus()?->getClase());
+            $items[] = [
+                "id" => (int) $s->getId(),
+                "fecha" => $fecha?->format(DATE_ATOM),
+                "llegada" => $fecha !== null && $duracion !== null ? \DateTimeImmutable::createFromInterface($fecha)->modify("+{$duracion} minutes")->format(DATE_ATOM) : null,
+                "estado" => $s->getEstado()->value,
+                "atrasada" => $s->getEstado() === EstadoSalida::PROGRAMADA && $fecha < $ahora,
+                "rutaId" => (int) $ruta->getId(),
+                "busId" => $s->getBus()?->getId(),
+                "empresaId" => $s->getEmpresa()?->getId(),
+                "vendidos" => $vendidos[$s->getId()] ?? 0,
+                "capacidad" => $capacidad[$s->getBus()?->getId()] ?? null,
+            ];
+        }
+        $rutas = array_values($rutas);
+        usort($rutas, static fn(array $a, array $b) => strnatcasecmp($a["nombre"], $b["nombre"]));
+
+        return ["items" => $items, "rutas" => $rutas, "porEstado" => $porEstado, "truncado" => $truncado];
+    }
+
+    /**
+     * Carga de una vez las paradas (con su enclave y tiempos por clase) de
+     * esas rutas: puntas y duración sin una consulta por ruta.
+     *
+     * @param list<int> $rutaIds
+     */
+    private function conParadas(array $rutaIds): void
+    {
+        if ($rutaIds === []) {
+            return;
+        }
+        $this->em->createQueryBuilder()
+            ->select("r", "p", "e", "t")
+            ->from(Ruta::class, "r")
+            ->leftJoin("r.paradas", "p")
+            ->leftJoin("p.enclave", "e")
+            ->leftJoin("p.tiempos", "t")
+            ->where("r.id IN (:ids)")
+            ->orderBy("p.orden", "ASC")
+            ->setParameter("ids", $rutaIds)
+            ->getQuery()
+            ->getResult();
     }
 
     /** Todo el filtro salvo el estado (el conteo por estado lo ignora). */

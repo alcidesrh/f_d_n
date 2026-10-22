@@ -121,6 +121,8 @@ export interface ItemPlan {
   bus: string
   estado: EstadoPlan
   choque: SalidaRef | null
+  /** Solo en el resultado de crear: el id de la salida creada (las `nueva`). */
+  id?: number | null
 }
 
 export interface VistaPrevia {
@@ -130,7 +132,10 @@ export interface VistaPrevia {
 
 export interface ResultadoProgramacion {
   creadas: number
+  /** El plan tal como se aplicó, en el orden de la vista previa: las creadas con su `id`. */
+  items: ItemPlan[]
   resumen: VistaPrevia['resumen']
+  /** Las que no se crearon: ya existían antes de crear, chocaban o ya pasaron. */
   omitidas: ItemPlan[]
   esquema: Esquema | null
 }
@@ -216,4 +221,46 @@ export interface DetalleSalida {
   creadaPor: string | null
   creadaEn: string | null
   resumen: ResumenSalida
+}
+
+/** Una salida en el calendario (`GET /gestion-salidas/calendario`): compacta, con ids en lugar de objetos. */
+export interface SalidaCalendario {
+  id: number
+  /** ISO con zona */
+  fecha: string
+  /** Llegada estimada a la última parada (según la clase del bus); null si la ruta no tiene duración. */
+  llegada: string | null
+  estado: EstadoSalida
+  /** Programada y ya debió salir. */
+  atrasada: boolean
+  rutaId: number
+  busId: number | null
+  empresaId: number | null
+  /** Asientos comprometidos: boletos vivos + reservas web vigentes. */
+  vendidos: number
+  capacidad: number | null
+}
+
+/** Ruta que aparece en el calendario. */
+export interface RutaCalendario {
+  id: number
+  nombre: string
+  origen: string | null
+  destino: string | null
+  /** Siglas de las puntas (GUA, SEP). */
+  origenAlias: string | null
+  destinoAlias: string | null
+  paradas: number
+}
+
+export interface Calendario {
+  /** `AAAA-MM-DD` */
+  desde: string
+  hasta: string
+  items: SalidaCalendario[]
+  rutas: RutaCalendario[]
+  /** Del rango y el resto del filtro, sin contar el estado. */
+  porEstado: Partial<Record<EstadoSalida, number>>
+  /** Había más salidas de las que se devuelven. */
+  truncado: boolean
 }

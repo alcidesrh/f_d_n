@@ -238,6 +238,17 @@ export const router = createRouter({
       },
     },
     {
+      path: "/salidas/calendario",
+      name: "salidas-calendario",
+      component: () => import("@/features/salida/CalendarioPage.vue"),
+      meta: {
+        capacidad: "salida.ver",
+        title: "Calendario de salidas",
+        label: "Calendario de salidas",
+        icon: "calendar-view-week",
+      },
+    },
+    {
       path: "/rutas",
       name: "rutas",
       component: () => import("@/features/ruta/RutasPage.vue"),

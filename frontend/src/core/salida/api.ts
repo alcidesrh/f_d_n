@@ -3,6 +3,7 @@ import { config } from '@/core/config'
 import { useSessionStore } from '@/core/auth/session'
 import { HttpError, http, request } from '@/core/http'
 import type {
+  Calendario,
   CambioSalida,
   DetalleSalida,
   Esquema,
@@ -20,6 +21,8 @@ import type {
 const BASE = '/gestion-salidas'
 
 export const fetchSalidas = (query: string, silent = false) => http.get<PaginaSalidas>(`${BASE}?${query}`, { silent })
+
+export const fetchCalendario = (query: string, silent = false) => http.get<Calendario>(`${BASE}/calendario?${query}`, { silent })
 
 export const fetchOpciones = () => http.get<OpcionesSalidas>(`${BASE}/opciones`)
 

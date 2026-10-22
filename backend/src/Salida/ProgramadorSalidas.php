@@ -26,7 +26,9 @@ use Doctrine\ORM\EntityManagerInterface;
  * - `pasada`: la hora ya pasó (solo puede ocurrir el día de hoy).
  *
  * La vista previa y la creación usan el mismo plan; la creación lo recalcula
- * dentro de la transacción y crea solo las nuevas.
+ * dentro de la transacción y crea solo las nuevas. Su respuesta trae el plan
+ * con el id de cada salida creada: lo que se omitió es lo que ya estaba
+ * antes de crear, no lo recién creado.
  */
 final class ProgramadorSalidas
 {
@@ -64,7 +66,7 @@ final class ProgramadorSalidas
             $plan = $this->plan($p);
 
             $creadas = [];
-            foreach ($plan["items"] as $i) {
+            foreach ($plan["items"] as $n => $i) {
                 if ($i["estado"] !== self::NUEVA) {
                     continue;
                 }
@@ -75,7 +77,7 @@ final class ProgramadorSalidas
                     ->setCreatedBy($usuario)
                     ->setFecha(\DateTime::createFromImmutable($i["fecha"]));
                 $this->em->persist($salida);
-                $creadas[] = $salida;
+                $creadas[$n] = $salida;
             }
             $this->em->flush();
             $this->horarios->fijar(...array_map(static fn(Salida $s) => (int) $s->getId(), $creadas));
@@ -90,13 +92,17 @@ final class ProgramadorSalidas
                 ], $usuario);
             }
 
+            $items = [];
+            foreach ($plan["items"] as $n => $i) {
+                $items[] = self::item($i) + ["id" => isset($creadas[$n]) ? (int) $creadas[$n]->getId() : null];
+            }
+
             return [
                 "creadas" => count($creadas),
                 "resumen" => self::resumen($plan["items"]),
-                "omitidas" => array_values(array_map(
-                    self::item(...),
-                    array_filter($plan["items"], static fn(array $i) => $i["estado"] !== self::NUEVA),
-                )),
+                // Cada salida del plan; las creadas, con su id.
+                "items" => $items,
+                "omitidas" => array_values(array_filter($items, static fn(array $i) => $i["estado"] !== self::NUEVA)),
                 "esquema" => $esquema,
             ];
         });

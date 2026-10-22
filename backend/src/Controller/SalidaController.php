@@ -50,6 +50,7 @@ final class SalidaController extends AbstractController
     public const EDITAR = "salida.editar";
     public const ANULAR = "salida.cancelar";
     public const ELIMINAR = "salida.eliminar";
+    public const MAX_DIAS_CALENDARIO = 62;
 
     public function __construct(
         private readonly EntityManagerInterface $em,
@@ -66,6 +67,30 @@ final class SalidaController extends AbstractController
         $this->denyAccessUnlessGranted(self::VER);
 
         return $this->json($consulta->buscar(FiltroSalidas::desdeQuery($request->query->all()), $this->autorizacion->alcance(Capacidad::SALIDA_VER)));
+    }
+
+    /**
+     * Calendario (días × horas): todas las salidas entre `desde` y `hasta`
+     * (AAAA-MM-DD, a lo sumo `MAX_DIAS_CALENDARIO` días) con el resto del
+     * filtro del listado (`estado`, `empresa`, `ruta`, `bus`, `origen`,
+     * `destino`), sin paginar.
+     */
+    #[Route("/calendario", name: "calendario", methods: ["GET"])]
+    public function calendario(Request $request, ConsultaSalidas $consulta): JsonResponse
+    {
+        $this->denyAccessUnlessGranted(self::VER);
+        $filtro = FiltroSalidas::desdeQuery($request->query->all());
+        if ($filtro->desde === null || $filtro->hasta === null || $filtro->hasta < $filtro->desde) {
+            return $this->json(["error" => "Indique el rango de días (desde y hasta, AAAA-MM-DD).", "codigo" => "rango"], 400);
+        }
+        if ($filtro->desde->diff($filtro->hasta)->days >= self::MAX_DIAS_CALENDARIO) {
+            return $this->json(["error" => sprintf("El calendario muestra a lo sumo %d días.", self::MAX_DIAS_CALENDARIO), "codigo" => "rango"], 400);
+        }
+
+        return $this->json($consulta->calendario($filtro, $this->autorizacion->alcance(Capacidad::SALIDA_VER)) + [
+            "desde" => $filtro->desde->format("Y-m-d"),
+            "hasta" => $filtro->hasta->format("Y-m-d"),
+        ]);
     }
 
     /**
