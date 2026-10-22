@@ -59,10 +59,12 @@ export const useVentaStore = defineStore("venta", () => {
   const reasignacion = shallowRef<{ boletos: BoletoOperable[]; ventaId: number; filtros: { estacionId: number | null; destinoId: number | null } } | null>(null);
   /** El comprobante que se muestra es de una reasignación (no de una venta). */
   const comprobanteReasignado = ref(false);
-  const salidasVisibles = computed(() => {
-    const filtradas = salidas.value.filter((r) => r.estado !== "cancelada" && (empresaIds.value.length === 0 || (r.empresa != null && empresaIds.value.includes(r.empresa.id))));
+  /** Lo que se ofrece de una lista de salidas: sin canceladas, con el filtro de empresas y, reasignando, solo las que admiten los boletos. */
+  function visibles(lista: SalidaResumen[]): SalidaResumen[] {
+    const filtradas = lista.filter((r) => r.estado !== "cancelada" && (empresaIds.value.length === 0 || (r.empresa != null && empresaIds.value.includes(r.empresa.id))));
     return reasignacion.value ? salidasReasignables(filtradas, reasignacion.value.boletos, new Date()) : filtradas;
-  });
+  }
+  const salidasVisibles = computed(() => visibles(salidas.value));
 
   const salidaId = ref<number | null>(null);
   const detalle = shallowRef<SalidaDetalle | null>(null);
@@ -481,6 +483,7 @@ export const useVentaStore = defineStore("venta", () => {
     desde,
     hasta,
     salidasVisibles,
+    visibles,
     cargandoSalidas,
     salidaId,
     detalle,
