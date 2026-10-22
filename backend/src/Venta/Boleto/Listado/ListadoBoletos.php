@@ -21,6 +21,7 @@ use App\Entity\Usuario;
 use App\Venta\Boleto\DatosBoleto;
 use App\Venta\Boleto\Flujo\FlujoBoleto;
 use App\Venta\Excepcion\VentaRechazada;
+use App\Venta\ReglasBoletos;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
@@ -371,6 +372,8 @@ final class ListadoBoletos
             "estacion" => $venta->getEstacion()?->getNombre() ?? $venta->getAgencia()?->getNombre(),
             // Lo que el boleto admite ahora (null) o por qué no, para el panel de acciones (ADR-037).
             "acciones" => $this->flujo->acciones($b),
+            // Solo la hora impide anularlo o reasignarlo: se puede con una autorización fuera de hora (ADR-040).
+            "fueraDeHora" => ReglasBoletos::soloPorHora($b, new \DateTimeImmutable()),
         ];
     }
 

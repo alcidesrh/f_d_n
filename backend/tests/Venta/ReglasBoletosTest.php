@@ -175,4 +175,30 @@ final class ReglasBoletosTest extends TestCase
         $this->assertSame("precio_distinto", $this->codigo(fn() => ReglasBoletos::exigirMismoPrecio($b, Money::GTQ(25000), 5)));
         $this->assertSame("precio_distinto", $this->codigo(fn() => ReglasBoletos::exigirMismoPrecio($b, Money::USD(27000), 5)), "otra moneda");
     }
+
+    public function testFueraDeHoraConAutorizacionMientrasLaSalidaNoSeCierre(): void
+    {
+        $ahora = new \DateTimeImmutable("2026-10-10 12:00");
+        $boleto = function (EstadoSalida $estado, string $fecha = "2026-10-10 08:00"): BoletoAsiento {
+            $b = self::boleto(1, self::venta(EstadoFacturacion::CERTIFICADA));
+            $b->setSalida(self::salida(1, $fecha, 1, $estado));
+
+            return $b;
+        };
+
+        // Ya salió: solo la hora lo impide.
+        $this->assertTrue(ReglasBoletos::soloPorHora($boleto(EstadoSalida::PROGRAMADA), $ahora));
+        $this->assertTrue(ReglasBoletos::soloPorHora($boleto(EstadoSalida::INICIADA), $ahora));
+        $this->assertNull($this->codigo(fn() => ReglasBoletos::exigirOperableFueraDeHora($boleto(EstadoSalida::INICIADA), "anular")));
+        // A tiempo no hace falta; con la salida finalizada, ni con autorización.
+        $this->assertFalse(ReglasBoletos::soloPorHora($boleto(EstadoSalida::PROGRAMADA, "2026-10-10 18:00"), $ahora));
+        $finalizada = $boleto(EstadoSalida::INICIADA);
+        $finalizada->getSalida()->setEstado(EstadoSalida::FINALIZADA);
+        $this->assertFalse(ReglasBoletos::soloPorHora($finalizada, $ahora));
+        $this->assertSame("salida_no_operable", $this->codigo(fn() => ReglasBoletos::exigirOperableFueraDeHora($finalizada, "anular")));
+        // Un boleto que no está emitido tampoco.
+        $chequeado = $boleto(EstadoSalida::INICIADA);
+        $chequeado->setEstado(EstadoBoletoAsiento::CHEQUEADO);
+        $this->assertFalse(ReglasBoletos::soloPorHora($chequeado, $ahora));
+    }
 }

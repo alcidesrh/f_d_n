@@ -8,13 +8,19 @@ use App\Acceso\Autorizacion;
 use App\Acceso\Capacidad;
 use App\Acceso\Limite;
 use App\Acceso\Ubicador;
+use App\Autorizacion\Autorizable;
+use App\Autorizacion\DispensasEnCurso;
+use App\Autorizacion\Pases;
 use App\Entity\BoletoAsiento;
 use App\Entity\BoletoVenta;
 use App\Entity\Enum\CanalVenta;
+use App\Entity\Enum\Dispensa;
 use App\Entity\Enum\OperacionBoleto;
 use App\Entity\Enum\TransicionBoleto;
 use App\Entity\PagoWeb;
 use App\Entity\Salida;
+use App\Entity\SolicitudAutorizacion;
+use App\Entity\Usuario;
 use App\Venta\Boleto\Flujo\FlujoBoleto;
 use App\Venta\EnLinea\Recargo;
 use App\Venta\Excepcion\VentaRechazada;
@@ -35,7 +41,9 @@ use Psr\Clock\ClockInterface;
  *
  * Todo en una transacción con las salidas implicadas bloqueadas: si algo
  * falla (asiento tomado, precio distinto…) no cambia nada. Quien reasigna
- * respeta el límite diario de su rol (ADR-039).
+ * respeta el límite diario de su rol (ADR-039). Sin el permiso sobre la
+ * venta, pasado el límite o con la salida ya pasada de hora, se puede con
+ * una autorización aprobada (ADR-040), que se usa en la misma transacción.
  */
 final class ReasignacionBoletos
 {
@@ -47,6 +55,8 @@ final class ReasignacionBoletos
         private readonly FlujoBoleto $flujo,
         private readonly ClockInterface $reloj,
         private readonly Autorizacion $autorizacion,
+        private readonly Pases $pases,
+        private readonly DispensasEnCurso $dispensas,
     ) {}
 
     /**
@@ -92,10 +102,13 @@ final class ReasignacionBoletos
                 throw new VentaRechazada("Los boletos de una reasignación deben ser de una misma venta.", "ventas_distintas");
             }
         }
+        $usuario = $this->usuario();
+        /** @var list<SolicitudAutorizacion> $pases las autorizaciones que se usan */
+        $pases = [];
         if (!$puedeOperar($venta)) {
-            throw new VentaRechazada("No puede reasignar boletos de esta venta.", "permiso", 403);
+            $pases[] = $this->pases->exigir($usuario, Autorizable::boletos(Capacidad::BOLETO_REASIGNAR, Dispensa::PERMISO, $s->boletos), "No puede reasignar boletos de esta venta.", "permiso");
         }
-        $this->exigirLimite($venta, count($viejos));
+        $pases = [...$pases, ...$this->exigirLimite($venta, $s->boletos, $usuario)];
 
         $salidaIds = array_map(static fn(BoletoAsiento $b) => (int) $b->getSalida()->getId(), $viejos);
         $salidaIds[] = $s->salidaId;
@@ -110,7 +123,9 @@ final class ReasignacionBoletos
         $ahora = $this->reloj->now();
         foreach ($viejos as $b) {
             $this->em->refresh($b);
-            $this->flujo->exigir($b, TransicionBoleto::REASIGNAR);
+        }
+        $pases = [...$pases, ...$this->exigirHora($viejos, $usuario, $ahora)];
+        foreach ($viejos as $b) {
             ReglasBoletos::exigirEmpresaCompatible($b->getSalida(), $destino);
         }
         $this->reglas->exigirVendibleEnTaquilla($destino);
@@ -129,9 +144,13 @@ final class ReasignacionBoletos
             }
         }
 
+        foreach ($pases as $pase) {
+            $this->pases->usar($pase, $usuario);
+        }
+        $autorizaciones = array_map(static fn(SolicitudAutorizacion $p) => (int) $p->getId(), $pases) ?: null;
         // Los asientos actuales se liberan primero: se puede pasar a uno que hoy ocupa otro boleto de la selección.
         foreach ($viejos as $i => $b) {
-            $this->flujo->aplicar($b, TransicionBoleto::REASIGNAR, ["haciaSalida" => $destino->getId(), "haciaAsiento" => $asientos[$i]->getNumero()]);
+            $this->flujo->aplicar($b, TransicionBoleto::REASIGNAR, ["haciaSalida" => $destino->getId(), "haciaAsiento" => $asientos[$i]->getNumero(), "autorizaciones" => $autorizaciones]);
         }
         $this->em->flush();
 
@@ -184,21 +203,79 @@ final class ReasignacionBoletos
         return $pago === null ? Recargo::ninguno() : Recargo::de($pago->getRecargoPorciento());
     }
 
-    /** @throws VentaRechazada si con estos pasa el límite diario de reasignaciones de quien opera */
-    private function exigirLimite(BoletoVenta $venta, int $cuantos): void
+    /**
+     * Si con estos pasa el límite diario de reasignaciones de quien opera,
+     * la autorización que lo cubre.
+     *
+     * @param list<int> $boletos
+     *
+     * @return list<SolicitudAutorizacion>
+     *
+     * @throws VentaRechazada si la pasa y no tiene autorización
+     */
+    private function exigirLimite(BoletoVenta $venta, array $boletos, Usuario $usuario): array
     {
-        $usuario = $this->autorizacion->actual();
-        $limite = $usuario === null ? null : $this->autorizacion->de($usuario)
+        $cuantos = count($boletos);
+        $limite = $this->autorizacion->de($usuario)
             ->limite(Capacidad::BOLETO_REASIGNAR->value, Limite::REASIGNACIONES_POR_DIA, Ubicador::venta($venta));
         if ($limite === null) {
-            return;
+            return [];
         }
         $hechas = (int) $this->em->getConnection()->fetchOne(
             "SELECT COUNT(*) FROM bitacora WHERE entidad = 'boleto' AND operacion = :operacion AND usuario_id = :usuario AND fecha >= :hoy",
             ["operacion" => OperacionBoleto::REASIGNADO->value, "usuario" => $usuario->getId(), "hoy" => (new \DateTimeImmutable("today"))->format("Y-m-d H:i:s")],
         );
-        if ($hechas + $cuantos > $limite) {
-            throw new VentaRechazada(sprintf("Llegó al límite de %d boletos reasignados por día.", $limite), "limite", 403);
+        if ($hechas + $cuantos <= $limite) {
+            return [];
         }
+
+        return [$this->pases->exigir($usuario, Autorizable::boletos(Capacidad::BOLETO_REASIGNAR, Dispensa::LIMITE, $boletos), sprintf("Llegó al límite de %d boletos reasignados por día.", $limite), "limite")];
+    }
+
+    /**
+     * Lo que el flujo exige a cada boleto; si a alguno solo lo detiene la hora
+     * de su salida, la autorización fuera de hora que lo cubre (y la dispensa
+     * para el guard del flujo).
+     *
+     * @param list<BoletoAsiento> $viejos
+     *
+     * @return list<SolicitudAutorizacion>
+     *
+     * @throws VentaRechazada|\App\Salida\SalidaRechazada
+     */
+    private function exigirHora(array $viejos, Usuario $usuario, \DateTimeImmutable $ahora): array
+    {
+        $fueraDeHora = [];
+        $rechazoHora = null;
+        foreach ($viejos as $b) {
+            $rechazo = $this->flujo->rechazo($b, TransicionBoleto::REASIGNAR);
+            if ($rechazo === null) {
+                continue;
+            }
+            if (!ReglasBoletos::soloPorHora($b, $ahora)) {
+                throw $rechazo;
+            }
+            $fueraDeHora[] = (int) $b->getId();
+            $rechazoHora ??= $rechazo;
+        }
+        if ($rechazoHora === null) {
+            return [];
+        }
+        // Con la dispensa, que no lo detenga otra cosa (antes de pedir la autorización).
+        $this->dispensas->permitirFueraDeHora(...$fueraDeHora);
+        foreach ($viejos as $b) {
+            $this->flujo->exigir($b, TransicionBoleto::REASIGNAR);
+        }
+
+        return [$this->pases->exigir($usuario, Autorizable::boletos(Capacidad::BOLETO_REASIGNAR, Dispensa::HORA, $fueraDeHora), $rechazoHora->getMessage(), $rechazoHora->codigo, 409)];
+    }
+
+    /** @throws VentaRechazada */
+    private function usuario(): Usuario
+    {
+        $usuario = $this->autorizacion->actual() ?? throw new VentaRechazada("Inicie sesión para reasignar.", "sin_sesion", 401);
+
+        // El de la sesión puede no estar en este EntityManager (worker): el de la base, para usar autorizaciones.
+        return $this->em->find(Usuario::class, $usuario->getId()) ?? $usuario;
     }
 }

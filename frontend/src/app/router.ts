@@ -238,6 +238,17 @@ export const router = createRouter({
       },
     },
     {
+      path: "/autorizaciones",
+      name: "autorizaciones",
+      component: () => import("@/features/autorizacion/AutorizacionesPage.vue"),
+      // Cualquiera con sesión: pide las suyas; resolver exige `autorizacion.aprobar` (lo decide el backend).
+      meta: {
+        title: "Autorizaciones",
+        label: "Autorizaciones",
+        icon: "verified-user-outline",
+      },
+    },
+    {
       path: "/salidas/calendario",
       name: "salidas-calendario",
       component: () => import("@/features/salida/CalendarioPage.vue"),

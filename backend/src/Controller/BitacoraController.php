@@ -7,7 +7,10 @@ namespace App\Controller;
 use App\Acceso\Capacidad;
 use App\Acceso\Ubicacion;
 use App\Acceso\Ubicador;
+use App\Autorizacion\ConsultaAutorizaciones;
+use App\Autorizacion\VistaAutorizacion;
 use App\Entity\Role;
+use App\Entity\SolicitudAutorizacion;
 use App\Bitacora\ConsultaBitacora;
 use App\Bitacora\TipoRegistro;
 use App\Entity\BoletoAsiento;
@@ -23,12 +26,13 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 /**
- * Bitácora de salidas, boletos, encomiendas, usuarios y roles:
- * `GET /api/bitacora/{salida|boleto|encomienda|usuario|rol}/{id}`. La de una
+ * Bitácora de salidas, boletos, encomiendas, usuarios, roles y autorizaciones:
+ * `GET /api/bitacora/{salida|boleto|encomienda|usuario|rol|autorizacion}/{id}`. La de una
  * salida la ve quien puede ver salidas de su empresa (`salida.ver`); la de un
  * boleto, quien puede ver su venta; la de una encomienda, quien ve
  * encomiendas de su empresa (`encomienda.ver`); las de usuarios y roles
- * (sus accesos), quien ve accesos (`iam.ver`). ADR-039.
+ * (sus accesos), quien ve accesos (`iam.ver`), ADR-039; la de una
+ * autorización, quien la pidió o quien aprueba donde cae (ADR-040).
  */
 #[AsController]
 #[Route("/api/bitacora", name: "api_bitacora_")]
@@ -38,6 +42,7 @@ final class BitacoraController extends AbstractController
         private readonly EntityManagerInterface $em,
         private readonly ConsultaBitacora $consulta,
         private readonly AccesoVentas $acceso,
+        private readonly ConsultaAutorizaciones $autorizaciones,
     ) {}
 
     #[Route("/{tipo}/{id<\d+>}", name: "ver", methods: ["GET"])]
@@ -51,6 +56,7 @@ final class BitacoraController extends AbstractController
             TipoRegistro::ENCOMIENDA => $this->etiquetaEncomienda($id),
             TipoRegistro::USUARIO => $this->etiquetaUsuario($id),
             TipoRegistro::ROL => $this->etiquetaRol($id),
+            TipoRegistro::AUTORIZACION => $this->etiquetaAutorizacion($id, $usuario),
         };
 
         return $this->json([
@@ -59,6 +65,17 @@ final class BitacoraController extends AbstractController
             "etiqueta" => $etiqueta,
             "entradas" => $this->consulta->de($registro, $id),
         ]);
+    }
+
+    /** La de una autorización: quien la pidió o quien aprueba donde cae (ADR-040). */
+    private function etiquetaAutorizacion(int $id, Usuario $usuario): string
+    {
+        $s = $this->em->find(SolicitudAutorizacion::class, $id) ?? throw $this->createNotFoundException();
+        if (!$this->autorizaciones->puedeVer($s, $usuario)) {
+            throw $this->createAccessDeniedException();
+        }
+
+        return sprintf("Autorización %d · %s", $id, VistaAutorizacion::titulo($s));
     }
 
     private function etiquetaUsuario(int $id): string

@@ -9,6 +9,8 @@ use App\Acceso\Capacidad;
 use App\Acceso\Limite;
 use App\Acceso\Ubicacion;
 use App\Acceso\Ubicador;
+use App\Autorizacion\Autorizable;
+use App\Autorizacion\Pases;
 use App\Entity\Agencia;
 use App\Entity\BoletoAsiento;
 use App\Entity\BoletoVenta;
@@ -16,6 +18,7 @@ use App\Encomienda\TarifasEncomienda;
 use App\Entity\Cliente;
 use App\Entity\Encomienda;
 use App\Entity\Enum\CanalVenta;
+use App\Entity\Enum\Dispensa;
 use App\Entity\Enum\EstadoBoletoAsiento;
 use App\Entity\Enum\EstadoBoletoVenta;
 use App\Entity\Enum\EstadoEncomienda;
@@ -72,6 +75,7 @@ final class RegistroVenta
         private readonly MessageBusInterface $bus,
         private readonly LoggerInterface $logger,
         private readonly Autorizacion $autorizacion,
+        private readonly Pases $pases,
     ) {}
 
     /**
@@ -292,12 +296,26 @@ final class RegistroVenta
         if (!$s->cortesia) {
             return;
         }
+        // Sin el permiso o pasado el límite, con una autorización para esta salida (ADR-040); se usa en esta transacción.
+        $asientos = count($s->asientos);
         if (!$permisos->puede(Capacidad::VENTA_CORTESIA->value, $donde)) {
-            throw new VentaRechazada("Fuera de su alcance: no puede emitir cortesías aquí.", "alcance", 403);
+            $this->pases->usar($this->pases->exigir(
+                $usuario,
+                Autorizable::salida(Capacidad::VENTA_CORTESIA, Dispensa::PERMISO, $s->salidaId, $asientos),
+                "Fuera de su alcance: no puede emitir cortesías aquí.",
+                "alcance",
+            ), $usuario);
+
+            return;
         }
         $limite = $permisos->limite(Capacidad::VENTA_CORTESIA->value, Limite::CORTESIAS_POR_DIA, $donde);
-        if ($limite !== null && $this->cortesiasDeHoy($usuario) + count($s->asientos) > $limite) {
-            throw new VentaRechazada(sprintf("Llegó al límite de %d asientos de cortesía por día.", $limite), "limite", 403);
+        if ($limite !== null && $this->cortesiasDeHoy($usuario) + $asientos > $limite) {
+            $this->pases->usar($this->pases->exigir(
+                $usuario,
+                Autorizable::salida(Capacidad::VENTA_CORTESIA, Dispensa::LIMITE, $s->salidaId, $asientos),
+                sprintf("Llegó al límite de %d asientos de cortesía por día.", $limite),
+                "limite",
+            ), $usuario);
         }
     }
 

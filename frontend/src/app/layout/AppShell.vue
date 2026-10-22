@@ -27,6 +27,7 @@
     <ChatAviso />
     <ChatVentana v-if="ventana.esVentana && session.user" />
     <EstacionTrabajoDialog v-if="session.user" />
+    <SolicitarAutorizacionDialog v-if="session.user" />
   </div>
 </template>
 
@@ -38,11 +39,13 @@ import { useAccesoStore } from '@/core/acceso/store'
 import { filtrarMenusCon, useUserMenusStore } from '@/core/navigation/userMenus'
 import { useChatStore } from '@/core/chat/store'
 import { useCuentaStore } from '@/core/cuenta/store'
+import { useAutorizacionesStore } from '@/core/autorizacion/store'
 import { useMetadataStore } from '@/core/metadata/sincronizacion'
 import EstacionTrabajoDialog from '@/features/acceso/EstacionTrabajoDialog.vue'
 import ChatAviso from '@/features/chat/ChatAviso.vue'
 import ChatVentana from '@/features/chat/ChatVentana.vue'
 import { useVentanaChat } from '@/features/chat/ventana'
+import SolicitarAutorizacionDialog from '@/shared/autorizacion/SolicitarAutorizacionDialog.vue'
 import { LISTADO_DE_REGISTROS, REPORTES_ADJUNTABLES } from '@/shared/chat/integracion'
 import AppHeader from './AppHeader.vue'
 import NavArea from './navigation/NavArea.vue'
@@ -59,6 +62,7 @@ const chat = useChatStore()
 const cuenta = useCuentaStore()
 const metadata = useMetadataStore()
 const ventana = useVentanaChat()
+const autorizaciones = useAutorizacionesStore()
 
 // El selector de registros del chat usa el listado genérico (una feature no importa a otra).
 provide(LISTADO_DE_REGISTROS, defineAsyncComponent(() => import('@/features/entity-crud/ListPage.vue')))
@@ -99,6 +103,7 @@ watch(
     }
     void acceso.cargar().then(() => userMenus.load())
     void cuenta.cargar()
+    void autorizaciones.cargarResumen()
     void chat.iniciar()
     metadata.iniciar()
   },

@@ -12,7 +12,7 @@ namespace App\Acceso\Legado;
  *
  * Es una decisión de negocio: revisarla con quien opera cada puesto.
  * `ROLE_SUPER_ADMIN` es el rol de sistema; `ROLE_ADMIN`, todo menos la
- * migración; `ROLE_USER`, el rol base; `ROLE_NO_VENDER_VOUCHER` no concede
+ * migración; aprueban autorizaciones (ADR-040) los que lo hacían en el legado; `ROLE_USER`, el rol base; `ROLE_NO_VENDER_VOUCHER` no concede
  * nada (era una negación: el modelo nuevo no las tiene).
  */
 final class EquivalenciasLegado
@@ -32,14 +32,14 @@ final class EquivalenciasLegado
             'venta.vender', 'venta.cortesia', 'venta.sin_factura',
             'reporte.ventas', 'reporte.encomiendas', 'encomienda.ver',
             'bus.ver', 'bus.editar', 'piloto.ver', 'piloto.editar', 'tarifa.ver', 'tarifa.editar',
-            'establecimiento.ver', 'empresa.editar', 'iam.ver', 'iam.asignar', 'usuario.ver', 'usuario.editar', 'bitacora.ver',
+            'establecimiento.ver', 'empresa.editar', 'iam.ver', 'iam.asignar', 'usuario.ver', 'usuario.editar', 'bitacora.ver', 'autorizacion.aprobar',
         ]],
         'ROLE_ADMIN_ESTACION' => [true, [
             'venta.vender', 'venta.cortesia', 'venta.sin_factura',
             'boleto.ver', 'boleto.anular', 'boleto.reasignar', 'boleto.cancelar', 'boleto.chequear',
             'salida.ver', 'salida.abordar', 'salida.iniciar', 'salida.finalizar',
             'encomienda.ver', 'encomienda.registrar', 'encomienda.embarcar', 'encomienda.entregar', 'encomienda.anular',
-            'reporte.ventas', 'reporte.encomiendas', 'iam.ver', 'usuario.ver',
+            'reporte.ventas', 'reporte.encomiendas', 'iam.ver', 'usuario.ver', 'autorizacion.aprobar',
         ]],
         'ROLE_ADMIN_BUSES' => [false, ['bus.ver', 'bus.editar', 'bus.eliminar', 'bus_clase.editar', 'bus_marca.editar', 'salida.ver']],
         'ROLE_ADMIN_PILOTOS' => [false, ['piloto.ver', 'piloto.editar', 'piloto.eliminar', 'bus.ver']],
@@ -54,7 +54,7 @@ final class EquivalenciasLegado
         'ROLE_AGENCIA_SALIDA' => [false, ['salida.abordar', 'salida.iniciar', 'boleto.chequear', 'salida.ver']],
         'ROLE_ALQUILER' => [false, ['bus.ver', 'salida.ver']],
         'ROLE_ASIGNADOR_BUSES_PILOTOS' => [false, ['salida.ver', 'salida.crear', 'salida.editar', 'bus.ver', 'bus.editar', 'piloto.ver']],
-        'ROLE_AUTORIZADOR' => [true, ['venta.cortesia', 'boleto.ver']],
+        'ROLE_AUTORIZADOR' => [true, ['venta.cortesia', 'boleto.ver', 'autorizacion.aprobar']],
         'ROLE_CHECK_BOLETO_MOVIL' => [true, ['boleto.chequear', 'salida.ver']],
         'ROLE_CHECK_BOLETO_WEB' => [true, ['boleto.chequear', 'salida.ver']],
         'ROLE_EMISOR_CORTESIA' => [true, ['venta.vender', 'venta.cortesia']],
@@ -64,7 +64,7 @@ final class EquivalenciasLegado
         'ROLE_INSPECTOR_ENCOMIENDA' => [false, ['encomienda.ver']],
         'ROLE_MANIFIESTO_ESPECIAL' => [false, ['salida.ver']],
         'ROLE_NO_VENDER_VOUCHER' => [false, []],
-        'ROLE_PROPIETARIO' => [false, ['reporte.ventas', 'reporte.encomiendas', 'agencia.depositar', 'agencia.acreditar', 'salida.ver', 'boleto.ver', 'encomienda.ver', 'bitacora.ver']],
+        'ROLE_PROPIETARIO' => [false, ['reporte.ventas', 'reporte.encomiendas', 'agencia.depositar', 'agencia.acreditar', 'salida.ver', 'boleto.ver', 'encomienda.ver', 'bitacora.ver', 'autorizacion.aprobar']],
         'ROLE_REASIGNACION' => [true, ['boleto.ver', 'boleto.reasignar']],
         'ROLE_RECEPTOR_ENCOMIENDAS' => [true, ['encomienda.ver', 'encomienda.registrar', 'encomienda.embarcar', 'encomienda.entregar']],
         'ROLE_REVISOR' => [false, ['boleto.ver', 'encomienda.ver', 'salida.ver']],

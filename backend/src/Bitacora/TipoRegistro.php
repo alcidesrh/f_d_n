@@ -6,6 +6,7 @@ namespace App\Bitacora;
 
 use App\Entity\BoletoAsiento;
 use App\Entity\Encomienda;
+use App\Entity\Enum\OperacionAutorizacion;
 use App\Entity\Enum\OperacionBoleto;
 use App\Entity\Enum\OperacionEncomienda;
 use App\Entity\Enum\OperacionRol;
@@ -13,6 +14,7 @@ use App\Entity\Enum\OperacionSalida;
 use App\Entity\Enum\OperacionUsuario;
 use App\Entity\Role;
 use App\Entity\Salida;
+use App\Entity\SolicitudAutorizacion;
 use App\Entity\Usuario;
 
 /**
@@ -27,6 +29,8 @@ enum TipoRegistro: string
     /** Accesos del usuario: asignaciones, activación, contraseña (ADR-039). */
     case USUARIO = "usuario";
     case ROL = "rol";
+    /** Autorizaciones (pases de un solo uso, ADR-040). */
+    case AUTORIZACION = "autorizacion";
 
     /** @return class-string */
     public function clase(): string
@@ -37,6 +41,7 @@ enum TipoRegistro: string
             self::ENCOMIENDA => Encomienda::class,
             self::USUARIO => Usuario::class,
             self::ROL => Role::class,
+            self::AUTORIZACION => SolicitudAutorizacion::class,
         };
     }
 
@@ -49,6 +54,7 @@ enum TipoRegistro: string
             self::ENCOMIENDA => OperacionEncomienda::class,
             self::USUARIO => OperacionUsuario::class,
             self::ROL => OperacionRol::class,
+            self::AUTORIZACION => OperacionAutorizacion::class,
         };
     }
 

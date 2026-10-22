@@ -123,8 +123,17 @@ como reservado.
 _Avoid_: preventa, bloqueo
 
 **Cortesía**:
-Venta de asientos que no se cobran (el "voucher" del legado): total 0 y sin factura. Solo taquilla, con permiso.
+Venta de asientos que no se cobran (el "voucher" del legado): total 0 y sin factura. Solo taquilla, con permiso
+(o con una autorización).
 _Avoid_: voucher, regalo
+
+**Autorización** (`SolicitudAutorizacion`):
+Un pase de un solo uso para que un usuario haga, sobre registros concretos, lo que una regla le impide: anular o
+reasignar boletos sin el permiso, pasado su límite diario o con la salida ya pasada de hora; emitir cortesías sin
+el permiso o pasado su límite. La pide quien quedó bloqueado, con un motivo; la aprueba o la rechaza quien aprueba
+autorizaciones donde cae la operación; se usa sola al repetir la operación y vence a las 24 horas.
+Estado: `pendiente → aprobada → usada`, o `rechazada`, `retirada`, `vencida`.
+_Avoid_: pase, permiso temporal, excepción
 
 **Agencia**:
 Entidad externa que vende boletos por comisión con usuarios propios. Cada venta descuenta su total del saldo,

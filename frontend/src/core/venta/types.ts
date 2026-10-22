@@ -347,6 +347,12 @@ export interface BoletoOperable {
   /** Se puede anular o reasignar todavía; si no, `motivo` dice por qué. */
   operable: boolean
   motivo: string | null
+  /**
+   * No es operable pero se puede con una autorización (ADR-040): sin el
+   * permiso sobre su venta o con la salida ya pasada de hora. La operación se
+   * intenta y el backend la usa (o responde qué pedir).
+   */
+  conAutorizacion?: 'permiso' | 'hora' | null
 }
 
 /** Qué puede hacer el usuario con los boletos (`GET /venta/boletos/permisos`). */

@@ -61,6 +61,12 @@ export function lineasDeDetalle(tipo: TipoBitacora, e: Pick<EntradaBitacora, 'op
     return lineas.filter((l): l is string => l !== null)
   }
 
+  // Autorizaciones (ADR-040): el motivo de quien la pidió, la nota o el motivo de quien la resolvió.
+  if (tipo === 'autorizacion') {
+    lineas.push(d.motivo ? `Motivo: ${d.motivo}` : null, d.nota ? `Nota: ${d.nota}` : null)
+    return lineas.filter((l): l is string => l !== null)
+  }
+
   if (tipo === 'salida') {
     if (e.operacion === 'cambio_bus') {
       lineas.push(`${d.de ? `Bus ${d.de}` : 'Sin bus'} → ${d.a ? `Bus ${d.a}` : 'sin bus'}`)
@@ -102,7 +108,12 @@ export function lineasDeDetalle(tipo: TipoBitacora, e: Pick<EntradaBitacora, 'op
       lineas.push(d.motivo ? `Motivo: ${d.motivo}` : null)
     } else if (e.operacion === 'chequeado' || e.operacion === 'transito' || e.operacion === 'finalizado' || e.operacion === 'revertido') {
       lineas.push(texto(d.asiento) ? `Asiento ${d.asiento}` : null)
+    } else if (e.operacion.startsWith('autorizacion_')) {
+      lineas.push(d.autorizacion ? `Autorización #${d.autorizacion}: ${texto(d.operacion) ?? ''} (${texto(d.dispensa)?.toLowerCase() ?? ''})` : null)
+      lineas.push(d.motivo ? `Motivo: ${d.motivo}` : null, d.nota ? `Nota: ${d.nota}` : null)
     }
+    // Anulado o reasignado con una autorización (ADR-040).
+    if (Array.isArray(d.autorizaciones) && d.autorizaciones.length) lineas.push(`Con la autorización ${d.autorizaciones.map((a) => `#${a}`).join(', ')}`)
     if (d.venta) lineas.push(`Venta ${d.venta}`)
   }
 

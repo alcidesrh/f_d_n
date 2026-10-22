@@ -126,6 +126,8 @@ export interface EstadoAccion {
   habilitada: boolean
   /** Por qué no se puede, para el tooltip. */
   motivo: string | null
+  /** Se puede solo con una autorización (ADR-040): se intenta y el backend la usa o dice qué pedir. */
+  conAutorizacion?: boolean
 }
 
 /**
@@ -134,11 +136,19 @@ export interface EstadoAccion {
  * ADR-037); aquí solo se suman el permiso de quien mira y las que no son
  * transiciones (correo, factura). Al operar, el backend vuelve a validar
  * lo que depende de quién y de la base (estación, asiento libre, venta
- * completa).
+ * completa). Anular y reasignar sin el permiso, o con la salida ya pasada de
+ * hora, se ofrecen con autorización (ADR-040).
  */
 export function disponibilidad(b: BoletoFila | null, puede: PuedeBoleto): Record<AccionBoleto, EstadoAccion> {
   const sin = (motivo: string | null, visible = true): EstadoAccion => ({ visible, habilitada: motivo === null, motivo })
   const con = (permiso: boolean, motivo: string | null) => sin(permiso ? motivo : 'Sin permiso', permiso)
+  /** Anular o reasignar: lo que impide la falta de permiso o la hora se salva con una autorización. */
+  const autorizable = (permiso: boolean, motivo: string | null): EstadoAccion => {
+    const porHora = motivo !== null && !!b?.fueraDeHora
+    if (permiso && !porHora) return sin(motivo)
+    if (motivo !== null && !porHora) return sin(motivo)
+    return { visible: true, habilitada: true, motivo: [permiso ? null : 'Sin permiso', porHora ? motivo : null, 'Requiere una autorización.'].filter(Boolean).join(' · '), conAutorizacion: true }
+  }
 
   if (!b) {
     const elija = 'Elija un boleto de la lista'
@@ -147,9 +157,9 @@ export function disponibilidad(b: BoletoFila | null, puede: PuedeBoleto): Record
       bitacora: sin(elija),
       cancelar: con(puede.cancelar, elija),
       revertir: con(puede.cancelar, elija),
-      anular: con(puede.anular, elija),
+      anular: sin(elija),
       chequear: con(puede.chequear, elija),
-      reasignar: con(puede.reasignar, elija),
+      reasignar: sin(elija),
       correo: sin(elija),
       factura: sin(elija),
       chat: sin(elija),
@@ -165,8 +175,8 @@ export function disponibilidad(b: BoletoFila | null, puede: PuedeBoleto): Record
     cancelar: con(puede.cancelar, b.acciones.cancelar),
     // Revertir es parte de cancelar (mismo permiso); el backend comprueba además que el asiento siga libre.
     revertir: con(puede.cancelar, b.acciones.revertir),
-    anular: con(puede.anular, b.acciones.anular),
-    reasignar: con(puede.reasignar, b.acciones.reasignar),
+    anular: autorizable(puede.anular, b.acciones.anular),
+    reasignar: autorizable(puede.reasignar, b.acciones.reasignar),
     // La estación donde sube la comprueba el backend al chequear.
     chequear: con(puede.chequear, b.acciones.chequear),
     correo: sin(enProceso ?? sinValor),

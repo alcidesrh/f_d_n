@@ -56,11 +56,11 @@
           <icon name="forum-outline" />
           <span v-if="chat.noLeidos" class="header-chat__badge">{{ chat.noLeidos > 99 ? "99+" : chat.noLeidos }}</span>
         </button>
-        <div style="position: relative">
-          <button class="icon-btn" title="Notificaciones" aria-label="Notificaciones" @click.stop="toggle('notif')">
-            <icon name="notifications-outline" />
-          </button>
-        </div>
+        <!-- Autorizaciones (ADR-040): las que espera resolver y sus pases aprobados sin usar. -->
+        <RouterLink :to="{ name: 'autorizaciones', query: autorizacionesPendientes && autorizaciones.resumen?.porResolver ? { vista: 'por-resolver' } : {} }" class="icon-btn header-chat" :aria-label="autorizacionesPendientes ? `Autorizaciones, ${autorizacionesPendientes} por atender` : 'Autorizaciones'" v-tooltip.bottom="'Autorizaciones'">
+          <icon name="notifications-outline" />
+          <span v-if="autorizacionesPendientes" class="header-chat__badge">{{ autorizacionesPendientes > 99 ? "99+" : autorizacionesPendientes }}</span>
+        </RouterLink>
         <button class="icon-btn header-fullscreen" title="Pantalla completa" aria-label="Pantalla completa" @click="toggleFullscreen" :class="{ 'active-state': openPopover === 'fullscreen' }">
           <icon name="fullscreen" />
         </button>
@@ -117,6 +117,8 @@ import { useAccesoStore } from "@/core/acceso/store";
 import { desactivarPush } from "@/core/chat/push";
 import { useChatStore } from "@/core/chat/store";
 import { useCuentaStore } from "@/core/cuenta/store";
+import { pendientesDe } from "@/core/autorizacion/reglas";
+import { useAutorizacionesStore } from "@/core/autorizacion/store";
 import { useVentanaChat } from "@/features/chat/ventana";
 import ChatAvatar from "@/shared/chat/ChatAvatar.vue";
 import { useNavigationHistoryStore } from "./navigationHistory";
@@ -130,6 +132,8 @@ const session = useSessionStore();
 const acceso = useAccesoStore();
 const chat = useChatStore();
 const cuenta = useCuentaStore();
+const autorizaciones = useAutorizacionesStore();
+const autorizacionesPendientes = computed(() => pendientesDe(autorizaciones.resumen));
 const ui = useUiStore();
 const ventanaChat = useVentanaChat();
 

@@ -89,6 +89,8 @@ describe('motivo de no operar', () => {
   it('nombra el primer boleto que no se puede operar', () => {
     expect(motivoNoOperable([boleto(1), boleto(2, { operable: false, motivo: 'La salida ya empezó.' })])).toBe('Asiento 2: La salida ya empezó.')
     expect(motivoNoOperable([boleto(1)])).toBeNull()
+    // Fuera de hora o sin permiso se intenta: el backend usa la autorización o dice qué pedir.
+    expect(motivoNoOperable([boleto(2, { operable: false, motivo: 'La salida ya empezó.', conAutorizacion: 'hora' })])).toBeNull()
   })
 })
 

@@ -6,6 +6,7 @@ namespace App\Venta\Boleto;
 
 use App\Entity\BoletoAsiento;
 use App\Entity\BoletoVenta;
+use App\Entity\Enum\Dispensa;
 use App\Entity\Enum\EstadoBoletoVenta;
 use App\Venta\Clientes;
 use App\Venta\Excepcion\VentaRechazada;
@@ -68,8 +69,11 @@ final class ConsultaBoletos
         $cliente = $b->getCliente();
 
         $motivo = null;
+        // Lo que lo impide pero se puede salvar con una autorización (ADR-040): sin el permiso o fuera de hora.
+        $conAutorizacion = null;
         try {
             if (!$puedeOperar($venta)) {
+                $conAutorizacion = Dispensa::PERMISO->value;
                 throw new VentaRechazada("No puede operar sobre boletos de esta venta.");
             }
             if ($venta->getEstado() !== EstadoBoletoVenta::CONFIRMADA) {
@@ -78,6 +82,9 @@ final class ConsultaBoletos
             ReglasBoletos::exigirOperable($b, $this->reloj->now(), "operar sobre el boleto");
         } catch (VentaRechazada $e) {
             $motivo = $e->getMessage();
+            if ($conAutorizacion === null && $venta->getEstado() === EstadoBoletoVenta::CONFIRMADA && ReglasBoletos::soloPorHora($b, $this->reloj->now())) {
+                $conAutorizacion = Dispensa::HORA->value;
+            }
         }
 
         return [
@@ -110,6 +117,7 @@ final class ConsultaBoletos
             ],
             "operable" => $motivo === null,
             "motivo" => $motivo,
+            "conAutorizacion" => $conAutorizacion,
         ];
     }
 }

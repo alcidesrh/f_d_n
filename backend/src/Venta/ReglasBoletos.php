@@ -69,6 +69,46 @@ final class ReglasBoletos
     }
 
     /**
+     * Lo que permite una autorización fuera de hora (ADR-040): un boleto
+     * emitido (o pospuesto) aunque su salida ya haya pasado su hora o
+     * iniciado, mientras no se haya finalizado ni anulado.
+     *
+     * @throws VentaRechazada
+     */
+    public static function exigirOperableFueraDeHora(BoletoAsiento $boleto, string $operacion): void
+    {
+        if ($boleto->getEstado() === EstadoBoletoAsiento::POSPUESTO) {
+            return;
+        }
+        self::exigirEmitido($boleto);
+        $salida = $boleto->getSalida();
+        if (!in_array($salida->getEstado(), [EstadoSalida::PROGRAMADA, EstadoSalida::ABORDANDO, EstadoSalida::INICIADA], true)) {
+            throw new VentaRechazada(
+                sprintf("La salida está %s: ya no se puede %s, ni con autorización.", $salida->getEstado()->value, $operacion),
+                "salida_no_operable",
+            );
+        }
+    }
+
+    /** ¿Solo la hora impide anularlo o reasignarlo? Entonces se puede con una autorización fuera de hora. */
+    public static function soloPorHora(BoletoAsiento $boleto, \DateTimeInterface $ahora): bool
+    {
+        try {
+            self::exigirOperable($boleto, $ahora, "operarlo");
+
+            return false;
+        } catch (VentaRechazada) {
+        }
+        try {
+            self::exigirOperableFueraDeHora($boleto, "operarlo");
+
+            return true;
+        } catch (VentaRechazada) {
+            return false;
+        }
+    }
+
+    /**
      * Una factura (certificada, o por certificar) cubre toda la venta y el
      * certificador no la anula por partes: hay que anular todos sus boletos
      * vivos juntos.

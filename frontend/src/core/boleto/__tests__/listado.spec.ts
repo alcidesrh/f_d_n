@@ -84,9 +84,23 @@ describe('acciones del panel', () => {
   })
 
   it('sin permiso no se muestra aunque el boleto la admita', () => {
-    const a = disponibilidad(boleto(), { ...TODO, anular: false })
-    expect(a.anular).toMatchObject({ visible: false, habilitada: false })
+    const a = disponibilidad(boleto(), { ...TODO, cancelar: false })
+    expect(a.cancelar).toMatchObject({ visible: false, habilitada: false })
     expect(a.reasignar.visible).toBe(true)
+  })
+
+  it('anular y reasignar sin permiso o fuera de hora se ofrecen con autorización (ADR-040)', () => {
+    const sinPermiso = disponibilidad(boleto(), { ...TODO, anular: false })
+    expect(sinPermiso.anular).toMatchObject({ visible: true, habilitada: true, conAutorizacion: true })
+
+    const motivo = 'La salida de las 07:56 ya empezó: solo se puede anular el boleto antes de la hora de salida.'
+    const tarde = disponibilidad(boleto({ fueraDeHora: true, acciones: { ...LIBRES, anular: motivo, reasignar: motivo } }), TODO)
+    expect(tarde.anular).toMatchObject({ habilitada: true, conAutorizacion: true })
+    expect(tarde.anular.motivo).toContain('Requiere una autorización')
+
+    // Lo que ni con autorización se puede (un anulado) sigue deshabilitado, con su motivo.
+    const anulado = disponibilidad(boleto({ estado: 'anulado', acciones: { ...LIBRES, anular: 'El boleto está anulado' } }), { ...TODO, anular: false })
+    expect(anulado.anular).toEqual({ visible: true, habilitada: false, motivo: 'El boleto está anulado' })
   })
 
   it('un anulado no se reenvía ni se reimprime; una venta en proceso tampoco', () => {

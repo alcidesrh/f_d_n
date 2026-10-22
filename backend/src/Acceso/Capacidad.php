@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Acceso;
 
+use App\Entity\Enum\Dispensa;
+
 /**
  * Catálogo de capacidades del dominio (ADR-039): lo que el código exige con
  * `isGranted()`. Vive en el código porque solo el código las consulta; los
@@ -59,6 +61,8 @@ enum Capacidad: string
     case IAM_ASIGNAR = 'iam.asignar';
     case IAM_ROLES = 'iam.roles';
 
+    case AUTORIZACION_APROBAR = 'autorizacion.aprobar';
+
     case BITACORA_VER = 'bitacora.ver';
 
     case MIGRACION_EJECUTAR = 'migracion.ejecutar';
@@ -99,6 +103,7 @@ enum Capacidad: string
             self::IAM_VER => 'Ver usuarios, roles y asignaciones',
             self::IAM_ASIGNAR => 'Otorgar y revocar asignaciones de roles',
             self::IAM_ROLES => 'Crear y editar roles',
+            self::AUTORIZACION_APROBAR => 'Aprobar o rechazar autorizaciones (pases de un solo uso)',
             self::BITACORA_VER => 'Ver lo anulado y las bitácoras en el detalle de venta',
             self::MIGRACION_EJECUTAR => 'Ejecutar la migración desde el sistema legado',
         };
@@ -116,7 +121,7 @@ enum Capacidad: string
             'reporte' => 'Reportes',
             'pagina' => 'Página web',
             'config' => 'Configuración',
-            'iam' => 'Accesos',
+            'iam', 'autorizacion' => 'Accesos',
             'bitacora' => 'Auditoría',
             default => 'Sistema',
         };
@@ -138,9 +143,24 @@ enum Capacidad: string
             self::ENCOMIENDA_VER, self::ENCOMIENDA_REGISTRAR, self::ENCOMIENDA_INTERNA, self::ENCOMIENDA_EMBARCAR,
             self::ENCOMIENDA_ENTREGAR, self::ENCOMIENDA_ANULAR,
             self::REPORTE_VENTAS, self::REPORTE_ENCOMIENDAS,
-            self::IAM_ASIGNAR => [Dimension::EMPRESA, Dimension::ESTACION],
+            self::IAM_ASIGNAR, self::AUTORIZACION_APROBAR => [Dimension::EMPRESA, Dimension::ESTACION],
             self::SALIDA_VER, self::SALIDA_CREAR, self::SALIDA_EDITAR, self::SALIDA_CANCELAR, self::SALIDA_ELIMINAR,
             self::BITACORA_VER => [Dimension::EMPRESA],
+            default => [],
+        };
+    }
+
+    /**
+     * De qué reglas puede dispensar una autorización al operar con esta
+     * capacidad (ADR-040). Vacío: no se autoriza por excepción.
+     *
+     * @return list<Dispensa>
+     */
+    public function dispensas(): array
+    {
+        return match ($this) {
+            self::BOLETO_ANULAR, self::BOLETO_REASIGNAR => [Dispensa::PERMISO, Dispensa::LIMITE, Dispensa::HORA],
+            self::VENTA_CORTESIA => [Dispensa::PERMISO, Dispensa::LIMITE],
             default => [],
         };
     }

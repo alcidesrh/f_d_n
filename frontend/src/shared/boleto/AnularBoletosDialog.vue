@@ -2,6 +2,9 @@
   Anular boletos (antes de la hora de salida). Muestra los boletos, pide el
   motivo y avisa lo que implica: la factura electrónica de la venta se anula
   en la SAT y, en agencias, se devuelve el saldo. El asiento queda libre.
+  Lo que una regla impide pero admite autorización (sin permiso, fuera de
+  hora, pasado el límite diario) se intenta igual: con una aprobada se usa
+  sola; sin ella, ofrece pedirla (ADR-040).
 -->
 <template>
   <Dialog :visible="visible" modal header="Anular boletos" class="w-[min(36rem,calc(100vw-1rem))]" @update:visible="emit('update:visible', $event)" @show="cargar">
@@ -10,13 +13,14 @@
       <Message v-else-if="errorCarga" severity="error" :closable="false">{{ errorCarga }}</Message>
       <template v-else>
         <ul class="m-0 flex list-none flex-col gap-1.5 p-0">
-          <li v-for="b in boletos" :key="b.id" class="boleto" :class="{ 'boleto-no': !b.operable }">
+          <li v-for="b in boletos" :key="b.id" class="boleto" :class="{ 'boleto-no': !b.operable && !b.conAutorizacion }">
             <div class="flex items-baseline justify-between gap-2">
               <span class="font-semibold">Asiento {{ b.asiento.numero }} <span class="font-normal text-muted-color">· {{ b.pasajero ?? 'sin pasajero' }}</span></span>
               <span class="tabular-nums">{{ b.precio?.texto ?? '—' }}</span>
             </div>
             <div class="text-xs text-muted-color">{{ b.trayecto.origen }} → {{ b.trayecto.destino }} · {{ fechaHora(b.salida.fecha) }} · venta {{ b.venta.id }}</div>
-            <div v-if="!b.operable" class="text-xs text-red-600">{{ b.motivo }}</div>
+            <div v-if="!b.operable && b.conAutorizacion" class="text-xs text-amber-700">{{ b.motivo }} Se puede con una autorización.</div>
+            <div v-else-if="!b.operable" class="text-xs text-red-600">{{ b.motivo }}</div>
           </li>
         </ul>
 
@@ -29,9 +33,12 @@
           <Textarea v-model="motivo" rows="2" auto-resize maxlength="200" placeholder="P. ej. el pasajero desistió del viaje" :disabled="enviando || !!resultado" fluid />
         </label>
 
-        <Message v-if="error" severity="error" :closable="false">
+        <Message v-if="error" :severity="autorizable ? 'warn' : 'error'" :closable="false">
           {{ error }}
           <Button v-if="faltantes.length" :label="`Incluir ${faltantes.length === 1 ? 'el boleto que falta' : `los ${faltantes.length} boletos que faltan`}`" size="small" severity="secondary" class="ml-2" @click="incluirFaltantes" />
+          <Button v-if="autorizable" label="Pedir autorización" size="small" class="ml-2" @click="pedirAutorizacion">
+            <template #icon><icon name="verified-user-outline" class="mr-1" /></template>
+          </Button>
         </Message>
         <template v-if="resultado">
           <Message v-if="resultado.anulados.length" severity="success" :closable="false">{{ resultado.anulados.length }} boleto(s) anulado(s).</Message>
@@ -47,11 +54,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, shallowRef } from 'vue'
 import { anularBoletos, errorVenta, fetchBoletos } from '@/core/venta/api'
 import { motivoNoOperable } from '@/core/venta/reasignacion'
 import type { BoletoOperable, ResultadoAnulacion } from '@/core/venta/types'
 import { notify } from '@/core/notify'
+import { bloqueoAutorizable } from '@/core/autorizacion/reglas'
+import { useAutorizacionesStore } from '@/core/autorizacion/store'
 
 const props = defineProps<{ visible: boolean; ids: number[] }>()
 const emit = defineEmits<{
@@ -70,6 +79,15 @@ const resultado = ref<ResultadoAnulacion | null>(null)
 /** Boletos de la misma venta que hay que sumar para anular su factura completa. */
 const extra = ref<number[]>([])
 const faltantes = ref<number[]>([])
+/** El último bloqueo, si admite autorización (para ofrecer pedirla). */
+const autorizable = shallowRef<unknown>(null)
+const autorizaciones = useAutorizacionesStore()
+
+/** Se cierra: la solicitud tiene su propio diálogo; aprobada, se vuelve a anular. */
+function pedirAutorizacion() {
+  autorizaciones.ofrecer(autorizable.value)
+  emit('update:visible', false)
+}
 const todos = computed(() => [...new Set([...props.ids, ...extra.value])])
 
 const ventasConFactura = computed(() => [...new Set(boletos.value.filter((b) => b.venta.estadoFacturacion === 'certificada').map((b) => b.venta.id))])
@@ -99,6 +117,7 @@ async function cargar() {
 async function anular() {
   enviando.value = true
   error.value = ''
+  autorizable.value = null
   try {
     const r = await anularBoletos(todos.value, motivo.value.trim())
     resultado.value = r
@@ -112,6 +131,7 @@ async function anular() {
   } catch (e) {
     const err = errorVenta(e)
     error.value = err?.error ?? 'No se pudo anular.'
+    autorizable.value = bloqueoAutorizable(e) ? e : null
     faltantes.value = err?.codigo === 'venta_incompleta' ? (err.boletos ?? []).filter((id) => !todos.value.includes(id)) : []
   } finally {
     enviando.value = false

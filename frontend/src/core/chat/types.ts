@@ -94,6 +94,8 @@ export type Aviso =
   | { tipo: 'presencia'; usuario: number; enLinea: boolean }
   /** Cambiaron sus roles, su alcance o su activación (ADR-039): el cliente vuelve a pedir lo que puede. */
   | { tipo: 'acceso' }
+  /** Se pidió, resolvió o retiró una autorización que le toca (ADR-040). */
+  | { tipo: 'autorizacion'; id: number }
 
 export interface Destinos {
   usuarios: number[]

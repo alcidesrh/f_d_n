@@ -34,11 +34,15 @@ final class ReglasTransicion
         TransicionBoleto::POSPONER,
     ];
 
-    /** El motivo por el que no se puede, o null. */
-    public static function rechazo(TransicionBoleto $t, BoletoAsiento $b, \DateTimeImmutable $ahora): SalidaRechazada|VentaRechazada|null
+    /**
+     * El motivo por el que no se puede, o null. `$fueraDeHora`: con una
+     * autorización fuera de hora (ADR-040) anular o reasignar no mira la hora
+     * de la salida, solo que no esté finalizada ni anulada.
+     */
+    public static function rechazo(TransicionBoleto $t, BoletoAsiento $b, \DateTimeImmutable $ahora, bool $fueraDeHora = false): SalidaRechazada|VentaRechazada|null
     {
         try {
-            self::exigir($t, $b, $ahora);
+            self::exigir($t, $b, $ahora, $fueraDeHora);
         } catch (SalidaRechazada|VentaRechazada $e) {
             return $e;
         }
@@ -47,7 +51,7 @@ final class ReglasTransicion
     }
 
     /** @throws SalidaRechazada|VentaRechazada */
-    public static function exigir(TransicionBoleto $t, BoletoAsiento $b, \DateTimeImmutable $ahora): void
+    public static function exigir(TransicionBoleto $t, BoletoAsiento $b, \DateTimeImmutable $ahora, bool $fueraDeHora = false): void
     {
         $salida = $b->getSalida();
         $venta = $b->getBoletoVenta();
@@ -65,8 +69,8 @@ final class ReglasTransicion
             TransicionBoleto::LLEGAR => self::exigirSalida($estado, [EstadoSalida::FINALIZADA], "el pasajero llega cuando finaliza la salida", "salida_no_finalizada"),
             TransicionBoleto::CANCELAR => ReglasAbordaje::exigirCancelable($b->getEstado(), $estado),
             TransicionBoleto::REVERTIR => ReglasAbordaje::exigirRevertible($b->getEstado(), $estado, $venta->isCortesia(), $venta->getAgencia() !== null),
-            TransicionBoleto::ANULAR => ReglasBoletos::exigirOperable($b, $ahora, "anular el boleto"),
-            TransicionBoleto::REASIGNAR => ReglasBoletos::exigirOperable($b, $ahora, "reasignar el boleto"),
+            TransicionBoleto::ANULAR => $fueraDeHora ? ReglasBoletos::exigirOperableFueraDeHora($b, "anular el boleto") : ReglasBoletos::exigirOperable($b, $ahora, "anular el boleto"),
+            TransicionBoleto::REASIGNAR => $fueraDeHora ? ReglasBoletos::exigirOperableFueraDeHora($b, "reasignar el boleto") : ReglasBoletos::exigirOperable($b, $ahora, "reasignar el boleto"),
             TransicionBoleto::POSPONER => ReglasBoletos::exigirOperable($b, $ahora, "posponer el viaje"),
         };
     }

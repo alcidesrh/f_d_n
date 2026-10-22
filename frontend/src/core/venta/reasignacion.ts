@@ -64,7 +64,8 @@ export function agruparParaTicket(boletos: BoletoOperable[]): Array<{ venta: num
 
 /** Motivo común por el que no se puede operar sobre la selección; null si todos se pueden. */
 export function motivoNoOperable(boletos: BoletoOperable[]): string | null {
-  const malo = boletos.find((b) => !b.operable)
+  // Lo que se salva con una autorización no bloquea: se intenta y el backend la usa o dice qué pedir (ADR-040).
+  const malo = boletos.find((b) => !b.operable && !b.conAutorizacion)
   return malo ? `Asiento ${malo.asiento.numero}: ${malo.motivo ?? 'no se puede operar'}` : null
 }
 

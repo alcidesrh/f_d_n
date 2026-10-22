@@ -262,9 +262,7 @@ final class VentaController extends AbstractController
 
         return $this->responder(function () use ($request, $usuario) {
             $solicitud = SolicitudVenta::desdeArray($request->toArray());
-            if ($solicitud->cortesia && !$this->isGranted(self::CORTESIA)) {
-                throw new VentaRechazada("No tiene permiso para emitir cortesías.", "permiso", 403);
-            }
+            // La cortesía la exige `RegistroVenta` donde cae la venta; sin el permiso ofrece pedir una autorización (ADR-040).
             if ($solicitud->sinFacturaElectronica && !$this->isGranted(self::SIN_FACTURA)) {
                 throw new VentaRechazada("No tiene permiso para vender sin factura electrónica.", "permiso", 403);
             }
@@ -324,13 +322,14 @@ final class VentaController extends AbstractController
      * `{ boletos: [id], motivo }`. Anula los boletos (y la factura de su venta
      * en el certificador) antes de la hora de salida. Responde `{ anulados:
      * [id], fallidos: [{ venta, boletos, error, codigo }] }`: lo que ya se
-     * anuló no se revierte si otra venta falla.
+     * anuló no se revierte si otra venta falla. Lo que se puede con una
+     * autorización (sin permiso, pasado el límite, fuera de hora) responde
+     * el bloqueo con `autorizable` si no la tiene aprobada (ADR-040).
      */
     #[Route("/boletos/anular", name: "boletos_anular", methods: ["POST"])]
     public function anularBoletos(Request $request, #[CurrentUser] Usuario $usuario, AnulacionBoletos $anulacion): JsonResponse
     {
-        $this->denyAccessUnlessGranted(self::ANULAR);
-
+        // Sin `boleto.anular` no se corta aquí: el servicio lo exige por venta y, sin él, ofrece pedir una autorización (ADR-040).
         return $this->responder(function () use ($request, $usuario, $anulacion) {
             $datos = $request->toArray();
 
@@ -351,8 +350,7 @@ final class VentaController extends AbstractController
     #[Route("/boletos/reasignar", name: "boletos_reasignar", methods: ["POST"])]
     public function reasignarBoletos(Request $request, #[CurrentUser] Usuario $usuario, ReasignacionBoletos $reasignacion): JsonResponse
     {
-        $this->denyAccessUnlessGranted(self::REASIGNAR);
-
+        // Como anular: el permiso lo exige el servicio por venta, con la opción de una autorización (ADR-040).
         return $this->responder(function () use ($request, $usuario, $reasignacion) {
             $resultado = $reasignacion->reasignar(
                 SolicitudReasignacion::desdeArray($request->toArray()),

@@ -98,7 +98,7 @@ export const totalNoLeidos = (canales: Canal[]) => canales.reduce((n, c) => n + 
  * (hay que recargarla). `leyendo`: el canal está abierto y visible, así que
  * el mensaje no cuenta como no leído.
  */
-export function aplicarAviso(canales: Canal[], aviso: Exclude<Aviso, { tipo: 'presencia' | 'acceso' }>, yo: number | null, leyendo: number | null): Canal[] | null {
+export function aplicarAviso(canales: Canal[], aviso: Exclude<Aviso, { tipo: 'presencia' | 'acceso' | 'autorizacion' }>, yo: number | null, leyendo: number | null): Canal[] | null {
   const canal = canales.find((c) => c.id === aviso.canal)
   if (!canal) return aviso.tipo === 'leido' ? canales : null
   if (aviso.tipo === 'canal') return canales

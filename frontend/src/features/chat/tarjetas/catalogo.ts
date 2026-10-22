@@ -25,6 +25,8 @@ export const TARJETAS: Record<string, TipoTarjeta> = {
   BoletoAsiento: { nombre: 'Boleto', icono: 'confirmation-number-outline', componente: TarjetaBoleto, destino: (a) => ({ name: 'boletos', query: { id: a.id } }) },
   Salida: { nombre: 'Salida', icono: 'directions-bus-outline', componente: TarjetaSalida, destino: (a) => ({ name: 'salidas', query: { ver: a.id } }) },
   Bus: { nombre: 'Bus', icono: 'airport-shuttle-outline', componente: TarjetaBus, destino: formulario },
+  // Llega en los avisos del sistema (ADR-040): sin vista propia, «Abrir» lleva a la autorización.
+  SolicitudAutorizacion: { nombre: 'Autorización', icono: 'verified-user-outline', destino: (a) => ({ name: 'autorizaciones', query: { id: a.id } }) },
   // Sin vista propia (tarjeta genérica): solo nombre e ícono.
   BoletoVenta: { nombre: 'Venta', icono: 'receipt-long-outline' },
   Cliente: { nombre: 'Cliente', icono: 'person-outline' },

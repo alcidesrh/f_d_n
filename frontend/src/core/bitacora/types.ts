@@ -1,5 +1,5 @@
 /** Bitácora de un registro (`GET /api/bitacora/{tipo}/{id}`); `usuario` y `rol` son los cambios de accesos (ADR-039). */
-export type TipoBitacora = 'salida' | 'boleto' | 'encomienda' | 'usuario' | 'rol'
+export type TipoBitacora = 'salida' | 'boleto' | 'encomienda' | 'usuario' | 'rol' | 'autorizacion'
 
 export interface EntradaBitacora {
   id: number

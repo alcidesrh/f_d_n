@@ -12,6 +12,7 @@ import * as api from "@/core/venta/api";
 import { alternar, bajadaPorDefecto, clasesDelTrayecto, depurarSeleccion, diaISO, estadoEnMapa, nuevoToken, subidaPorDefecto, trayectoEntre } from "@/core/venta/modelo";
 import { suscribir } from "@/core/realtime";
 import { notify } from "@/core/notify";
+import { useAutorizacionesStore } from "@/core/autorizacion/store";
 import type { AsientoCroquis } from "@/core/croquis/types";
 import { emparejar, listaParaReasignar, motivoNoOperable, salidasReasignables, tramoDelBoleto } from "@/core/venta/reasignacion";
 import type { AsientoOcupado, BoletoOperable, Cliente, Comprobante, ContextoVenta, Cotizacion, ErrorVenta, Importe, SalidaDetalle, SalidaResumen } from "@/core/venta/types";
@@ -333,7 +334,8 @@ export const useVentaStore = defineStore("venta", () => {
       const err = api.errorVenta(e);
       if (err?.codigo === "facturacion") {
         falloFacturacion.value = err;
-      } else {
+      } else if (!useAutorizacionesStore().ofrecer(e)) {
+        // Sin el permiso de cortesía o pasado su límite se ofrece pedir una autorización (ADR-040).
         notify.error(err?.error ?? "No se pudo registrar la venta.");
         if (err?.codigo === "asientos_no_disponibles") await refrescarOcupacion();
         if (err?.codigo === "saldo_insuficiente") void refrescarContexto();
@@ -448,6 +450,8 @@ export const useVentaStore = defineStore("venta", () => {
       return c;
     } catch (e) {
       const err = api.errorVenta(e);
+      // Sin permiso, pasado el límite o fuera de hora: se ofrece pedir una autorización (ADR-040).
+      if (useAutorizacionesStore().ofrecer(e)) return null;
       notify.error(err?.error ?? "No se pudo reasignar.");
       if (err?.codigo === "asientos_no_disponibles") await refrescarOcupacion();
       return null;

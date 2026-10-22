@@ -7,6 +7,7 @@ namespace App\Tests\Bitacora;
 use App\Bitacora\TipoRegistro;
 use App\Entity\BoletoAsiento;
 use App\Entity\Enum\EstadoSalida;
+use App\Entity\Enum\OperacionAutorizacion;
 use App\Entity\Enum\OperacionBoleto;
 use App\Entity\Enum\OperacionSalida;
 use App\Entity\Salida;
@@ -27,12 +28,13 @@ final class OperacionesTest extends TestCase
     {
         // Se guardan tal cual en `bitacora.operacion`: cambiarlos rompería la historia.
         $this->assertSame(["creada", "abordando", "iniciada", "finalizada", "cancelada", "cambio_bus", "eliminada"], array_column(OperacionSalida::cases(), "value"));
-        $this->assertSame(["creado", "anulado", "reasignado", "chequeado", "transito", "cancelado", "finalizado", "revertido", "pospuesto"], array_column(OperacionBoleto::cases(), "value"));
+        $this->assertSame(["creado", "anulado", "reasignado", "chequeado", "transito", "cancelado", "finalizado", "revertido", "pospuesto", "autorizacion_solicitada", "autorizacion_aprobada", "autorizacion_rechazada"], array_column(OperacionBoleto::cases(), "value"));
+        $this->assertSame(["solicitada", "aprobada", "rechazada", "retirada", "usada"], array_column(OperacionAutorizacion::cases(), "value"));
     }
 
     public function testTodaOperacionTieneEtiqueta(): void
     {
-        foreach ([...OperacionSalida::cases(), ...OperacionBoleto::cases()] as $operacion) {
+        foreach ([...OperacionSalida::cases(), ...OperacionBoleto::cases(), ...OperacionAutorizacion::cases()] as $operacion) {
             $this->assertNotSame("", $operacion->etiqueta());
         }
     }

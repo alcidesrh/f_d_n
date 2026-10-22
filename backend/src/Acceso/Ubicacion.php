@@ -49,6 +49,26 @@ final class Ubicacion
         return new self($this->conEmpresa, $this->empresa, $this->conEstacion, $this->estacion, true, $agencia);
     }
 
+    /**
+     * La inversa de `toArray()`: cada clave presente es una dimensión puesta
+     * (con su valor, que puede ser null).
+     *
+     * @param array<string, mixed> $datos
+     */
+    public static function desdeArray(array $datos): self
+    {
+        $id = static fn(string $clave) => isset($datos[$clave]) && is_numeric($datos[$clave]) ? (int) $datos[$clave] : null;
+
+        return new self(
+            array_key_exists('empresa', $datos),
+            $id('empresa'),
+            array_key_exists('estacion', $datos),
+            $id('estacion'),
+            array_key_exists('agencia', $datos),
+            $id('agencia'),
+        );
+    }
+
     /** @return array<string, int|null> */
     public function toArray(): array
     {

@@ -16,6 +16,8 @@ use Symfony\Component\DependencyInjection\Attribute\AutowireIterator;
 final class Tarjetas
 {
     public const MAXIMO = 20;
+    /** Tipos que llegan en los avisos del sistema pero no se comparten desde el selector (no tienen listado). */
+    public const SOLO_AVISOS = ["SolicitudAutorizacion"];
 
     /** @var array<string, Tarjeta> */
     private array $propias = [];
@@ -72,7 +74,7 @@ final class Tarjetas
     {
         $tipos = array_values(array_unique([...array_keys($this->propias), ...$this->generica->tipos()]));
         $lista = [];
-        foreach ($tipos as $tipo) {
+        foreach (array_diff($tipos, self::SOLO_AVISOS) as $tipo) {
             if ($this->puedeVer($tipo)) {
                 $lista[] = ["tipo" => $tipo, "propia" => isset($this->propias[$tipo])];
             }

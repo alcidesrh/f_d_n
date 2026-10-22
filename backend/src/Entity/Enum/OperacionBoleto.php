@@ -18,6 +18,10 @@ enum OperacionBoleto: string implements Operacion
     case FINALIZADO = "finalizado";
     case REVERTIDO = "revertido";
     case POSPUESTO = "pospuesto";
+    /** Autorizaciones sobre el boleto (ADR-040); su uso va en el detalle de la anulación o reasignación. */
+    case AUTORIZACION_SOLICITADA = "autorizacion_solicitada";
+    case AUTORIZACION_APROBADA = "autorizacion_aprobada";
+    case AUTORIZACION_RECHAZADA = "autorizacion_rechazada";
 
     public function etiqueta(): string
     {
@@ -31,6 +35,9 @@ enum OperacionBoleto: string implements Operacion
             self::FINALIZADO => "Viaje finalizado",
             self::REVERTIDO => "Cancelación revertida",
             self::POSPUESTO => "Viaje pospuesto",
+            self::AUTORIZACION_SOLICITADA => "Autorización solicitada",
+            self::AUTORIZACION_APROBADA => "Autorización aprobada",
+            self::AUTORIZACION_RECHAZADA => "Autorización rechazada",
         };
     }
 }

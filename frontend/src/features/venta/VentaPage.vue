@@ -161,7 +161,10 @@
                 <Button label="Reasignar" :loading="store.vendiendo" :disabled="!store.puedeReasignar" @click="confirmarReasignacion" />
               </div>
               <div v-else class="flex flex-wrap justify-end gap-2">
-                <Button v-if="store.contexto?.permisos.cortesia" label="Cortesía" severity="secondary" outlined :disabled="!store.puedeVender || store.encomiendaArticulos.length > 0" v-tooltip.top="store.encomiendaArticulos.length ? 'Una cortesía no lleva encomienda' : undefined" @click="abrirCobro(true)" />
+                <!-- Sin el permiso, en taquilla también: la venta pide una autorización (ADR-040). -->
+                <Button v-if="store.contexto?.permisos.cortesia || store.contexto?.canal === 'estacion'" label="Cortesía" severity="secondary" outlined :disabled="!store.puedeVender || store.encomiendaArticulos.length > 0" v-tooltip.top="store.encomiendaArticulos.length ? 'Una cortesía no lleva encomienda' : !store.contexto?.permisos.cortesia ? 'Requiere una autorización' : undefined" @click="abrirCobro(true)">
+                  <template v-if="!store.contexto?.permisos.cortesia" #icon><icon name="lock-outline" class="mr-1" /></template>
+                </Button>
                 <Button :label="store.contexto?.canal === 'agencia' ? 'Vender' : 'Facturar'" :disabled="!store.puedeVender || !store.cotizacion" @click="abrirCobro(false)" />
               </div>
             </div>

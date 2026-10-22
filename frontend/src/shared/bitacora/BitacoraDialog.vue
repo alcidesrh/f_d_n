@@ -35,7 +35,7 @@ import type { Bitacora, EntradaBitacora, TipoBitacora } from '@/core/bitacora/ty
 import { HttpError } from '@/core/http'
 
 const props = defineProps<{ visible: boolean; tipo: TipoBitacora; id: number }>()
-const TITULOS: Record<TipoBitacora, string> = { salida: 'Salida', boleto: 'Boleto', encomienda: 'Encomienda', usuario: 'Accesos del usuario', rol: 'Rol' }
+const TITULOS: Record<TipoBitacora, string> = { salida: 'Salida', boleto: 'Boleto', encomienda: 'Encomienda', usuario: 'Accesos del usuario', rol: 'Rol', autorizacion: 'Autorización' }
 const emit = defineEmits<{ 'update:visible': [visible: boolean] }>()
 
 const bitacora = ref<Bitacora | null>(null)

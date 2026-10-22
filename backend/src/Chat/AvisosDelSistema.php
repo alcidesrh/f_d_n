@@ -4,7 +4,14 @@ declare(strict_types=1);
 
 namespace App\Chat;
 
+use App\Autorizacion\AutorizacionResuelta;
+use App\Autorizacion\AutorizacionSolicitada;
+use App\Autorizacion\AutorizacionUsada;
+use App\Autorizacion\ConsultaAutorizaciones;
+use App\Autorizacion\VistaAutorizacion;
+use App\Entity\Enum\EstadoAutorizacion;
 use App\Entity\Salida;
+use App\Entity\SolicitudAutorizacion;
 use App\Entity\Usuario;
 use App\Salida\SalidasAnuladas;
 use App\Venta\Agencia\DepositoRechazado;
@@ -28,7 +35,73 @@ final class AvisosDelSistema
         private readonly EntityManagerInterface $em,
         private readonly Conversaciones $chat,
         private readonly LoggerInterface $logger,
+        private readonly ConsultaAutorizaciones $autorizaciones,
+        private readonly AvisosChat $avisos,
     ) {}
+
+    /**
+     * A quienes la pueden resolver más cerca de la operación (ADR-040), con
+     * la autorización como tarjeta; la bandeja de todos los que la pueden
+     * resolver se refresca sola.
+     */
+    #[AsEventListener]
+    public function autorizacionSolicitada(AutorizacionSolicitada $e): void
+    {
+        $this->seguro(function () use ($e) {
+            $s = $this->em->find(SolicitudAutorizacion::class, $e->id);
+            if ($s === null) {
+                return;
+            }
+            // Por el chat, a los más cercanos a la operación; la bandeja de todos se refresca.
+            $cercanos = $this->autorizaciones->resolvedoresCercanos($s);
+            if ($cercanos !== []) {
+                $this->chat->avisarSistema($cercanos, self::textoSolicitada($s), [["tipo" => "SolicitudAutorizacion", "id" => $e->id]]);
+            }
+            $resolvedores = $this->autorizaciones->resolvedores($s);
+            $this->avisos->avisar([(int) $s->getSolicitante()->getId(), ...array_map(static fn(Usuario $u) => (int) $u->getId(), $resolvedores)], "autorizacion", ["id" => $e->id]);
+        });
+    }
+
+    /** A quien la pidió: aprobada (ya puede repetir la operación) o rechazada (y por qué). */
+    #[AsEventListener]
+    public function autorizacionResuelta(AutorizacionResuelta $e): void
+    {
+        $this->seguro(function () use ($e) {
+            $s = $this->em->find(SolicitudAutorizacion::class, $e->id);
+            if ($s === null) {
+                return;
+            }
+            $texto = self::textoResuelta($s);
+            if ($texto !== null) {
+                $this->chat->avisarSistema([$s->getSolicitante()], $texto, [["tipo" => "SolicitudAutorizacion", "id" => $e->id]]);
+            }
+            $this->avisos->avisar([(int) $s->getSolicitante()->getId(), ...array_map(static fn(Usuario $u) => (int) $u->getId(), $this->autorizaciones->resolvedores($s))], "autorizacion", ["id" => $e->id]);
+        });
+    }
+
+    /** Sin mensaje: solo la campana de quien la pidió (un pase menos por usar). */
+    #[AsEventListener]
+    public function autorizacionUsada(AutorizacionUsada $e): void
+    {
+        $this->seguro(fn() => $this->avisos->avisar([$e->solicitante], "autorizacion", ["id" => $e->id]));
+    }
+
+    public static function textoSolicitada(SolicitudAutorizacion $s): string
+    {
+        return sprintf("%s pide autorización #%d. %s. Motivo: %s", $s->getSolicitante()->getFullName() ?: $s->getSolicitante()->getUsername(), $s->getId(), VistaAutorizacion::titulo($s), $s->getMotivo());
+    }
+
+    /** Null si no hay nada que contarle (la retiró él mismo). */
+    public static function textoResuelta(SolicitudAutorizacion $s): ?string
+    {
+        $quien = $s->getResueltaPor()?->getFullName() ?: $s->getResueltaPor()?->getUsername() ?? "Alguien";
+
+        return match ($s->getEstado()) {
+            EstadoAutorizacion::APROBADA => sprintf("%s aprobó su autorización #%d (%s): ya puede repetir la operación; sirve una vez.%s", $quien, $s->getId(), VistaAutorizacion::titulo($s), $s->getRespuesta() ? " Nota: " . $s->getRespuesta() : ""),
+            EstadoAutorizacion::RECHAZADA => sprintf("%s rechazó su autorización #%d (%s): %s", $quien, $s->getId(), VistaAutorizacion::titulo($s), $s->getRespuesta()),
+            default => null,
+        };
+    }
 
     /** A los usuarios de la agencia: el WhatsApp de "ya le acreditamos". */
     #[AsEventListener]
