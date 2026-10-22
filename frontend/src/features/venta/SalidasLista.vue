@@ -214,30 +214,6 @@ const precioCorto = (p: Importe | null) => (p ? p.texto.replace(/[.,]00$/, "") :
   }
 }
 
-.bus-mov {
-  position: relative;
-  display: inline-flex;
-  flex: none;
-  width: 1.25rem;
-  line-height: 1;
-}
-.bus-mov--sale {
-  color: var(--p-surface-500);
-}
-.bus-mov--llega {
-  color: var(--p-surface-500);
-}
-.bus-mov__flecha {
-  position: absolute;
-  right: -0.05rem;
-  top: -0.2rem;
-  font-weight: 700;
-}
-.bus-mov--llega .bus-mov__flecha {
-  top: auto;
-  bottom: -0.2rem;
-}
-
 /* Estado: inicial en un círculo del color del estado. */
 .estado {
   display: inline-flex;

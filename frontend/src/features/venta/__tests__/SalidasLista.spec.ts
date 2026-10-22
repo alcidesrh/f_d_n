@@ -64,8 +64,6 @@ describe('SalidasLista', () => {
     expect(celdas[3]!.text()).toContain('≈ 05:20')
     expect(celdas[3]!.text()).not.toContain('+1')
     expect(fila.findAll('.ruta .truncate').map((l) => l.text())).toEqual(['GUA - FLO', 'Guatemala-Flores'])
-    expect(fila.find('.bus-mov--sale').exists()).toBe(true)
-    expect(fila.find('.bus-mov--llega').exists()).toBe(true)
     expect(fila.text()).not.toContain('llega')
     w.unmount()
   })
