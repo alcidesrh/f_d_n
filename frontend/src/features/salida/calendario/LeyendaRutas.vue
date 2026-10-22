@@ -37,6 +37,7 @@ const visibles = computed(() => (todas.value ? store.rutas : store.rutas.slice(0
 }
 .leyenda > * {
   flex: none;
+  margin-bottom: 10px;
 }
 @container (min-width: 48rem) {
   .leyenda {
@@ -56,6 +57,7 @@ const visibles = computed(() => (todas.value ? store.rutas : store.rutas.slice(0
   color: var(--p-text-color);
   font-size: 0.75rem;
   cursor: pointer;
+  box-shadow: var(--p-overlay-select-shadow);
 }
 .leyenda__item:hover,
 .leyenda__item:focus-visible {

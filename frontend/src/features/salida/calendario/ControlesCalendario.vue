@@ -25,53 +25,26 @@
         <span>En porciento</span>
       </label>
 
-      <Button severity="secondary" outlined size="small" class="controles__plegar" :aria-expanded="abiertos" aria-controls="cal-filtros" @click="abiertos = !abiertos">
-        <icon name="filter-alt-outline" class="mr-1" />Filtros<Badge v-if="store.filtrosActivos" :value="store.filtrosActivos" class="ml-1.5" />
-      </Button>
+      <Button severity="secondary" outlined size="small" class="controles__plegar" :aria-expanded="abiertos" aria-controls="cal-filtros" @click="abiertos = !abiertos"> <icon name="filter-alt-outline" class="mr-1" />Filtros<Badge v-if="store.filtrosActivos" :value="store.filtrosActivos" class="ml-1.5" /> </Button>
     </div>
 
     <div id="cal-filtros" class="controles__filtros" :class="{ 'controles__filtros--abiertos': abiertos }">
+      <div class="grid grid-cols-1 gap-2 @2xl:grid-cols-2">
+        <RutaSelect v-model="store.ruta" show-clear placeholder="Todas las rutas" aria-label="Ruta" />
+        <Select v-model="store.bus" :options="buses" :option-label="(b: BusOpcion) => [b.codigo, b.matricula].filter(Boolean).join(' · ')" option-value="id" filter :filter-fields="['codigo', 'matricula']" show-clear fluid placeholder="Todos los buses" aria-label="Bus" />
+      </div>
       <div class="flex flex-wrap items-center gap-1.5" role="group" aria-label="Estados">
-        <button
-          v-for="e in ESTADOS"
-          :key="e.valor"
-          type="button"
-          class="estado"
-          :class="{ 'estado--activo': store.estados.includes(e.valor) }"
-          :aria-pressed="store.estados.includes(e.valor)"
-          @click="store.alternarEstado(e.valor)"
-        >
-          <span class="estado__punto" :class="`estado__punto--${e.valor}`" />{{ e.etiqueta
-          }}<span v-if="store.datos?.porEstado[e.valor]" class="tabular-nums opacity-70">{{ store.datos.porEstado[e.valor] }}</span>
+        <button v-for="e in ESTADOS" :key="e.valor" type="button" class="estado" :class="{ 'estado--activo': store.estados.includes(e.valor) }" :aria-pressed="store.estados.includes(e.valor)" @click="store.alternarEstado(e.valor)">
+          <span class="estado__punto" :class="`estado__punto--${e.valor}`" />{{ e.etiqueta }}<span v-if="store.datos?.porEstado[e.valor]" class="tabular-nums opacity-70">{{ store.datos.porEstado[e.valor] }}</span>
         </button>
       </div>
-      <div class="grid grid-cols-1 gap-2 @2xl:grid-cols-3">
-        <Select
-          v-if="(store.opciones?.empresas.length ?? 0) > 1"
-          v-model="store.empresa"
-          :options="store.opciones?.empresas ?? []"
-          option-label="nombre"
-          option-value="id"
-          show-clear
-          fluid
-          placeholder="Todas las empresas"
-          aria-label="Empresa"
-        />
-        <RutaSelect v-model="store.ruta" show-clear placeholder="Todas las rutas" aria-label="Ruta" />
-        <Select
-          v-model="store.bus"
-          :options="buses"
-          :option-label="(b: BusOpcion) => [b.codigo, b.matricula].filter(Boolean).join(' · ')"
-          option-value="id"
-          filter
-          :filter-fields="['codigo', 'matricula']"
-          show-clear
-          fluid
-          placeholder="Todos los buses"
-          aria-label="Bus"
-        />
+      <div v-if="(store.opciones?.empresas.length ?? 0) > 1" class="flex flex-wrap items-center gap-1.5" role="group" aria-label="Empresas">
+        <button v-for="e in store.opciones?.empresas ?? []" :key="e.id" type="button" class="estado" :class="{ 'estado--activo': store.empresa === e.id }" :aria-pressed="store.empresa === e.id" @click="store.empresa = store.empresa === e.id ? null : e.id">
+          {{ e.nombre }}
+        </button>
       </div>
-      <div v-if="store.filtrosActivos" class="flex justify-end">
+
+      <div v-if="store.filtrosActivos" class="flex justify-end absolute right-0 -mt-[40px]">
         <Button label="Limpiar filtros" size="small" text @click="store.limpiar" />
       </div>
     </div>
@@ -79,26 +52,26 @@
 </template>
 
 <script setup lang="ts">
-import { aDia, deDia, ESTADOS } from '@/core/salida/filtro'
-import type { BusOpcion } from '@/core/salida/types'
-import RutaSelect from '../RutaSelect.vue'
-import { useCalendarioSalidasStore } from './store'
+import { aDia, deDia, ESTADOS } from "@/core/salida/filtro";
+import type { BusOpcion } from "@/core/salida/types";
+import RutaSelect from "../RutaSelect.vue";
+import { useCalendarioSalidasStore } from "./store";
 
-const emit = defineEmits<{ hoy: [] }>()
+const emit = defineEmits<{ hoy: [] }>();
 
 const OPCIONES_DIAS = [
-  { v: 7, l: '7 días' },
-  { v: 15, l: '15' },
-  { v: 31, l: '31' },
-]
+  { v: 7, l: "7 días" },
+  { v: 15, l: "15" },
+  { v: 31, l: "31" },
+];
 
-const store = useCalendarioSalidasStore()
-const abiertos = ref(false)
+const store = useCalendarioSalidasStore();
+const abiertos = ref(false);
 
-const fecha = computed<Date | null>({ get: () => deDia(store.fecha), set: (d) => d && store.irA(aDia(d)) })
-const esHoy = computed(() => store.fecha === aDia(store.ahora))
-const porciento = computed({ get: () => store.modo === 'porciento', set: (v: boolean) => (store.modo = v ? 'porciento' : 'asientos') })
-const buses = computed(() => (store.opciones?.buses ?? []).filter((b) => !store.empresa || !b.empresaId || b.empresaId === store.empresa))
+const fecha = computed<Date | null>({ get: () => deDia(store.fecha), set: (d) => d && store.irA(aDia(d)) });
+const esHoy = computed(() => store.fecha === aDia(store.ahora));
+const porciento = computed({ get: () => store.modo === "porciento", set: (v: boolean) => (store.modo = v ? "porciento" : "asientos") });
+const buses = computed(() => (store.opciones?.buses ?? []).filter((b) => !store.empresa || !b.empresaId || b.empresaId === store.empresa));
 </script>
 
 <style scoped>
@@ -121,6 +94,7 @@ const buses = computed(() => (store.opciones?.buses ?? []).filter((b) => !store.
   display: none;
   flex-direction: column;
   gap: 0.75rem;
+  position: relative;
 }
 .controles__filtros--abiertos {
   display: flex;
