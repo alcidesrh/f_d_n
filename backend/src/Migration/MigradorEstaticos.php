@@ -42,6 +42,7 @@ class MigradorEstaticos
         private RutasLegado $rutas,
         private Trayectos $trayectos,
         private CoordenadasEnclaves $coordenadas,
+        private RolesUsuarioLegado $rolesUsuario,
     ) {
         $this->oldPdo->setAttribute(
             \PDO::ATTR_ERRMODE,
@@ -381,6 +382,7 @@ class MigradorEstaticos
                     ["estacion" => (int) $row["estacion_id"], "id" => (int) $row["id"]],
                 );
             }
+            $this->rolesUsuario->asignar((int) $row["id"], $row["roles"] ?? null);
             $token = "fdn_" . bin2hex(random_bytes(32));
             $data = [
                 "expira" => null,

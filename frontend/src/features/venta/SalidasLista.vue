@@ -24,26 +24,19 @@
 
     <template #cell="{ row, column }">
       <div v-if="column.key === 'sube' || column.key === 'baja'" class="celda min-w-0 leading-tight">
-        <div class="truncate font-[550]" :title="punta(s(row), column.key).nombre ?? ''">{{ punta(s(row), column.key).nombre ?? "—" }}</div>
-        <div class="truncate font-medium text-xs tabular-nums text-muted-color">{{ horaPunta(s(row), column.key) }}</div>
+        <div class="truncate" :title="punta(s(row), column.key).nombre ?? ''">{{ punta(s(row), column.key).nombre ?? "—" }}</div>
+        <div class="truncate text-xs tabular-nums text-muted-color">{{ horaPunta(s(row), column.key) }}</div>
       </div>
       <div v-else-if="column.key === 'hora'" class="celda">
-        <div class="font-[600] tracking-wider text-center tabular-nums whitespace-nowrap">{{ hora(s(row).salida) }}</div>
-        <div class="mt-0.5 font-medium text-xs tabular-nums text-muted-color whitespace-nowrap">{{ fecha(s(row).salida) }}</div>
+        <div class="tracking-wide text-center tabular-nums whitespace-nowrap">{{ hora(s(row).salida) }}</div>
+        <div class="text-xs tabular-nums text-muted-color whitespace-nowrap">{{ fecha(s(row).salida) }}</div>
       </div>
       <div v-else-if="column.key === 'ruta'" class="celda ruta min-w-0 leading-tight">
         <div class="ruta__punta" :title="`Sale de ${rutaInicio(s(row))}`">
-          <span class="bus-mov bus-mov--sale" aria-hidden="true">
-            <icon name="airport_shuttle-outline" size="1rem" class="bus-msov__flecha mt-[2px] ml-[6px] text-surface-400 rotate-y-180" :weight="400" />
-            <icon name="switch_access_shortcut" size="1.2rem" class="absolute -ml-[7px] rotate-x-180 mt-[9px] text-surface-400" :weight="400" />
-          </span>
-          <span class="truncate font-medium">{{ rutaInicio(s(row)) }}</span>
+          <span class="truncate">{{ rutaInicio(s(row)) }}</span>
         </div>
         <div class="ruta__punta" :title="`Llega a ${rutaFin(s(row))}`">
-          <span class="bus-mov bus-mov--llega" aria-hidden="true">
-            <icon name="airport_shuttle-outline" size="1rem" class="buss-mov__flecha mt-[2px] ml-[6px] text-surface-400" :weight="400" />
-          </span>
-          <span class="truncate font-medium">{{ rutaFin(s(row)) }}</span>
+          <span class="truncate">{{ rutaFin(s(row)) }}</span>
         </div>
       </div>
       <GridText v-else-if="column.key === 'empresa'" class="celda text-[0.9rem]!" :text="nombreEmpresa(s(row))" />
@@ -321,11 +314,11 @@ const precioCorto = (p: Importe | null) => (p ? p.texto.replace(/[.,]00$/, "") :
   gap: 0.125rem;
 }
 .asientos--valores {
-  font-size: 0.8125rem;
   font-variant-numeric: tabular-nums;
+  font-weight: 560;
 }
 .asientos__vendidos {
-  color: var(--p-blue-600);
+  color: var(--p-emerald-600);
 }
 .asientos__libres {
   color: var(--p-text-muted-color);

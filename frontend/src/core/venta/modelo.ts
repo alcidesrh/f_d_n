@@ -123,7 +123,7 @@ export const hora = (iso: string | null | undefined) =>
 /** `27/09/2026` en la hora de Guatemala. */
 export const fecha = (iso: string | null | undefined) =>
   iso
-    ? new Intl.DateTimeFormat("nl-NL", {
+    ? new Intl.DateTimeFormat("es-Es", {
         day: "2-digit",
         month: "2-digit",
         year: "numeric",

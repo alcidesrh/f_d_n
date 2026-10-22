@@ -18,7 +18,7 @@ use Symfony\Component\DependencyInjection\Attribute\Target;
  * 3. Create base Roles (ADMIN, OPERADOR, CONSULTA), link to Permisos/Actions.
  * 4. Migrate legacy roles → new Roles.
  * 5. Migrate legacy user → new Usuario (if not already migrated).
- * 6. Assign legacy user-role mappings.
+ * 6. Assign legacy user-role mappings (also done when each user is created).
  *
  * Note: Role, Permiso, and Action entities use StatusTrait (status_id FK)
  * instead of an 'activo' boolean column.
@@ -131,6 +131,7 @@ class MigradorIAM {
     public function __construct(
         private Connection $newConn,
         #[Target('oldPdo')] private \PDO $oldPdo,
+        private RolesUsuarioLegado $rolesUsuario,
     ) {
         $this->oldPdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         $this->oldPdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
@@ -336,45 +337,16 @@ class MigradorIAM {
     }
 
     /**
-     * Assigns user-role relationships from the legacy custom_user.roles JSON column.
-     *
-     * The roles column contains a JSON array of role names (e.g. ["ROLE_ADMIN"]).
-     * Each name matches the role.nombre in the local database.
+     * Roles del legado (`custom_user.roles`) de los usuarios ya migrados, más
+     * `ROLE_USER` para todos. Al crear un usuario ya se le asignan
+     * (`RolesUsuarioLegado`); esto cubre los creados antes de esa corrección.
      */
     private function asignarRolesUsuarios(): int {
-        $rows = $this->fetchOld(
-            'SELECT id, roles FROM custom_user WHERE roles IS NOT NULL AND roles != \'[]\''
-        );
-
         $count = 0;
-        foreach ($rows as $row) {
-            $userId = $this->newConn->fetchOne(
-                'SELECT id FROM usuario WHERE id = :id',
-                ['id' => $row['id']]
-            );
-            if (!$userId) {
-                continue;
-            }
-
-            $roleNames = unserialize($row['roles']);
-            if (!is_array($roleNames)) {
-                continue;
-            }
-
-            foreach ($roleNames as $roleName) {
-                $roleId = $this->newConn->fetchOne(
-                    'SELECT id FROM role WHERE nombre = :nombre',
-                    ['nombre' => $roleName]
-                );
-                if (!$roleId) {
-                    continue;
-                }
-
-                $this->newConn->executeStatement(
-                    'INSERT INTO user_role (user_id, role_id) VALUES (:uid, :rid) ON CONFLICT DO NOTHING',
-                    ['uid' => (int) $userId, 'rid' => (int) $roleId]
-                );
-                $count++;
+        foreach ($this->fetchOld('SELECT id, roles FROM custom_user') as $row) {
+            $existe = $this->newConn->fetchOne('SELECT 1 FROM usuario WHERE id = :id', ['id' => (int) $row['id']]);
+            if ($existe !== false) {
+                $count += $this->rolesUsuario->asignar((int) $row['id'], $row['roles']);
             }
         }
 

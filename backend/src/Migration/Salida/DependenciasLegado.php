@@ -6,6 +6,7 @@ namespace App\Migration\Salida;
 
 use App\Croquis\Moldes;
 use App\Migration\Mapeador;
+use App\Migration\RolesUsuarioLegado;
 use Doctrine\DBAL\Connection;
 
 /**
@@ -47,6 +48,7 @@ class DependenciasLegado
         private readonly LectorLegado $legado,
         private readonly Mapeador $mapeador,
         private readonly Moldes $moldes,
+        private readonly RolesUsuarioLegado $rolesUsuario,
     ) {}
 
     // ─── Empresa y lugares ─────────────────────────────────────────
@@ -387,7 +389,12 @@ class DependenciasLegado
                 $data["estacion_id"] = $data["agencia_id"] === null ? $this->estacion($old["estacion_id"]) : null;
             }
 
-            return $this->insertar("usuario", $data);
+            $usuario = $this->insertar("usuario", $data);
+            if ($usuario !== null) {
+                $this->rolesUsuario->asignar($usuario, $old["roles"] ?? null);
+            }
+
+            return $usuario;
         });
     }
 

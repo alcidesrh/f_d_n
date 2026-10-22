@@ -76,7 +76,7 @@
             <div class="relative">
               <SalidasLista :salidas="salidasMostradas" :cargando="store.cargandoSalidas" :salida-id="store.salidaId" @elegir="elegirSalida" />
               <!-- Flota en el borde entre la cabecera de la tabla y las salidas. -->
-              <Button v-if="anteriores.length && !store.porRango" :label="verAnteriores ? 'Ocultar anteriores' : `Ver anteriores (${anteriores.length})`" size="small" rounded severity="secondary" class="anteriores shadow-md" @click="verAnteriores = !verAnteriores" />
+              <Button v-if="anteriores.length && !store.porRango" :label="verAnteriores ? 'Ocultar anteriores' : `Ver anteriores (${anteriores.length})`" size="small" rounded severity="secondary" class="anteriores shadow-md hover:bg-surface-50!" @click="verAnteriores = !verAnteriores" />
             </div>
             <div v-if="!store.porRango" class="flex items-center justify-between gap-2 mt-2">
               <Button :label="etiquetaDia(-1)" severity="secondary" size="small" :disabled="store.cargandoSalidas" @click="moverDia(-1)">
