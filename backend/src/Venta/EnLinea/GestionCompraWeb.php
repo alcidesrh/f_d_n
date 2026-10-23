@@ -49,8 +49,9 @@ final class GestionCompraWeb
     ) {}
 
     /**
-     * Corrige nombre, apellido, correo, teléfono y NIT del comprador. La
-     * factura ya emitida no cambia: para eso, `reemitirFactura`. Con otro
+     * Corrige nombre, apellido, correo, teléfono, NIT y nombre de la factura
+     * del comprador (con NIT, la razón social de la SAT). La factura ya
+     * emitida no cambia: para eso, `reemitirFactura`. Con otro
      * NIT las ventas pasan al cliente de ese NIT (o a uno nuevo): el cliente
      * de un NIT lo comparten otras compras y no se le cambia el NIT.
      *
@@ -63,19 +64,26 @@ final class GestionCompraWeb
         $actual = $pago->getComprador();
         $nuevo = Comprador::desdeArray([
             ...$actual,
-            ...array_intersect_key($datos, array_flip(["nombre", "apellido", "email", "telefono", "nit"])),
+            ...array_intersect_key($datos, array_flip(["nombre", "apellido", "email", "telefono", "nit", "nombreFactura"])),
         ]);
         $ventas = $this->ventas($pago);
         foreach ($ventas as $v) {
             $this->reglas->exigirReceptorFacturable($nuevo->nit, $v->getTotal());
         }
         $cambiaNit = $nuevo->nit !== Comprador::desdeArray($actual)->nit;
-        if ($cambiaNit) {
-            $this->compras->exigirNitExistente($nuevo->nit);
+        if ($cambiaNit && !array_key_exists("nombreFactura", $datos)) {
+            $nuevo = $nuevo->conNombreFactura(null); // la del NIT anterior ya no aplica
+        }
+        $razonSocial = $cambiaNit ? $this->compras->exigirNitExistente($nuevo->nit) : null;
+        if ($razonSocial !== null) {
+            $nuevo = $nuevo->conNombreFactura($razonSocial);
         }
 
         $this->transaccion->ejecutar(function () use ($pago, $nuevo, $ventas, $cambiaNit) {
             $pago->cambiarComprador($nuevo->toArray());
+            foreach ($ventas as $v) {
+                $v->setNombreFactura($nuevo->nombreFactura);
+            }
             $anterior = $ventas[0]->getCliente();
             if ($anterior === null || $cambiaNit) {
                 $cliente = $this->compras->cliente($nuevo);

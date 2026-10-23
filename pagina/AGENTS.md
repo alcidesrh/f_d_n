@@ -40,7 +40,7 @@ Reutiliza del frontend por alias (ver `vite.config.ts` y `tsconfig.app.json`): `
 1. Inicio: origen y destino (agrupados por departamento), ida y vuelta, fechas. Al cambiar cualquier campo se buscan las salidas de ida (y de regreso); la búsqueda queda en la URL (`?o=&d=&f=&r=`).
 2. Cada salida (hora, llegada, empresa, bus, paradas, precios A/B, libres de total) se abre como acordeón con el croquis en vivo (Mercure). Tocar un asiento lo elige **en el navegador**; si otro lo ocupa, se quita y se avisa. La barra de abajo suma el total.
 3. "Pagar asientos": `POST /api/publico/carritos` aparta ida y regreso juntos o nada; si otro tomó alguno (409), se quitan de la elección y se avisa sin pasar al pago.
-4. Pago: resumen con tiempo restante, datos del comprador, tarjeta y dirección de facturación. 3-D Secure como antes (`tresDs.ts`, `DesafioBanco.vue`); tras cada paso se reenvía el pago con `continuar`. "Volver a los asientos" o salir sin pagar suelta los asientos.
+4. Pago: resumen con tiempo restante, datos del comprador, tarjeta, dirección de facturación (país → región → ciudad de listas, texto libre donde no hay datos) y factura (NIT, buscado en la SAT, y «A nombre de»; ADR-041). 3-D Secure como antes (`tresDs.ts`, `DesafioBanco.vue`); tras cada paso se reenvía el pago con `continuar`. "Volver a los asientos" o salir sin pagar suelta los asientos.
 5. Compra: se descarga el PDF (ida y regreso en el mismo archivo) una vez y queda el botón; el boleto también llega por correo.
 
 Con `CYBERSOURCE_ORG_ID`, la página carga el script de huella del dispositivo del banco (`/api/publico/carritos/{token}/huella`).

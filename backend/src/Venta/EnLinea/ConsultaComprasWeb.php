@@ -408,6 +408,7 @@ final class ConsultaComprasWeb
                 "email" => $comprador["email"] ?? null,
                 "telefono" => $comprador["telefono"] ?? null,
                 "nit" => $comprador["nit"] ?? "CF",
+                "nombreFactura" => $comprador["nombreFactura"] ?? null,
             ],
             "ventas" => array_values(array_filter([
                 $ventas[(int) $p["boleto_venta_id"]] ?? null,

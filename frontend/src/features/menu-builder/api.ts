@@ -2,7 +2,7 @@
  * Transporte del editor de menús (ADR-018).
  *
  * - GraphQL (CRUD genérico): `Menu` (nombre, roles), `MenuItem` (nombre,
- *   ícono, ruta) y catálogos (roles, rutas). Los ids que devuelve son IRIs.
+ *   ícono, ruta o enlace) y catálogos (roles, rutas). Los ids que devuelve son IRIs.
  * - REST (`MenuController`): el árbol de cada menú y la distribución de
  *   menús por área, que trabajan con ids numéricos.
  *
@@ -31,8 +31,10 @@ export interface MenuItemDto {
   id: string
   nombre: string
   icon: { id: string; icon: string }
-  /** Nulo en un grupo: agrupa a sus hijos y no navega. */
+  /** Nulo en un enlace o un grupo. */
   route: VueRouteDto | null
+  /** Enlace escrito a mano; nulo si navega por `route` o es un grupo. */
+  path: string | null
 }
 
 export interface MenuDto {
@@ -54,7 +56,7 @@ export type MenuLayoutDto = Record<LayoutArea, number[]>
 export const numericId = (iri: string) => Number(iri.split('/').pop())
 
 const ROUTE_FIELDS = 'id nombre vueRouteName path params'
-const ITEM_FIELDS = `id nombre icon { id icon } route { ${ROUTE_FIELDS} }`
+const ITEM_FIELDS = `id nombre icon { id icon } route { ${ROUTE_FIELDS} } path`
 const MENU_FIELDS = 'id nombre roles { id nombre }'
 
 const CATALOG_QUERY = gql`
@@ -111,6 +113,7 @@ export const saveMenuItem = (input: {
   nombre: string
   icon: string
   route: string | null
+  path: string | null
 }) =>
   mutate<MenuItemDto>(
     input.id ? 'updateMenuItem' : 'createMenuItem',

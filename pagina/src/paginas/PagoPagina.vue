@@ -155,37 +155,6 @@
                 autocomplete="tel"
                 inputmode="tel"
               />
-              <FormKit
-                type="InputText"
-                name="nit"
-                :label="t('pago.nit')"
-                :help="t('pago.nitAyuda')"
-                validation="required"
-                fluid
-              />
-              <FormKit
-                type="Select"
-                name="nacionalidad"
-                :label="t('pago.nacionalidad')"
-                :options="naciones"
-                show-clear
-                filter
-                fluid
-              />
-              <FormKit
-                type="Select"
-                name="tipoDocumento"
-                :label="t('pago.documento')"
-                :options="documentos"
-                show-clear
-                fluid
-              />
-              <FormKit
-                type="InputText"
-                name="numeroDocumento"
-                :label="t('pago.numeroDocumento')"
-                fluid
-              />
             </div>
           </section>
 
@@ -268,7 +237,20 @@
                 fluid
                 autocomplete="country"
               />
+              <!-- Departamento y ciudad de una lista (sin faltas de ortografía que hagan fallar el pago); texto libre donde no hay datos. -->
               <FormKit
+                v-if="regiones.length"
+                type="Select"
+                name="regionId"
+                :label="t('pago.region')"
+                :options="opcionesRegion"
+                filter
+                validation="required"
+                fluid
+                autocomplete="address-level1"
+              />
+              <FormKit
+                v-else
                 type="InputText"
                 name="region"
                 :label="
@@ -282,6 +264,18 @@
                 autocomplete="address-level1"
               />
               <FormKit
+                v-if="ciudades.length"
+                type="Select"
+                name="ciudad"
+                :label="t('pago.ciudad')"
+                :options="ciudades"
+                filter
+                validation="required"
+                fluid
+                autocomplete="address-level2"
+              />
+              <FormKit
+                v-else
                 type="InputText"
                 name="ciudad"
                 :label="t('pago.ciudad')"
@@ -310,6 +304,54 @@
                 maxlength="10"
               />
             </div>
+          </section>
+
+          <!-- A nombre de quién sale la factura: puede no ser el comprador ni el titular de la tarjeta. -->
+          <section class="panel">
+            <h2 class="m-0 mb-1 flex items-center gap-2 text-lg font-semibold">
+              <icon name="receipt" class="text-marca-700" />{{
+                t("pago.factura")
+              }}
+            </h2>
+            <p class="m-0 mb-4 text-sm text-muted-color">
+              {{ t("pago.facturaAyuda") }}
+            </p>
+            <div class="grid grid-cols-1 gap-x-4 md:grid-cols-[12rem_minmax(0,1fr)]">
+              <FormKit
+                type="InputText"
+                name="nit"
+                :label="t('pago.nit')"
+                :help="consultaNit.estado === 'buscando' ? t('pago.nitBuscando') : t('pago.nitAyuda')"
+                validation="required|nit"
+                :validation-rules="{ nit: nitAceptable }"
+                :validation-messages="{ nit: t('pago.nitInvalido') }"
+                fluid
+              />
+              <FormKit
+                type="InputText"
+                name="nombreFactura"
+                :label="t('pago.nombreFactura')"
+                :help="
+                  consultaNit.estado === 'encontrado'
+                    ? t('pago.nombreFacturaSat')
+                    : consultaNit.estado === 'sin_respuesta'
+                      ? t('pago.nombreFacturaSinSat')
+                      : t('pago.nombreFacturaAyuda')
+                "
+                :placeholder="nombreComprador"
+                :readonly="consultaNit.estado === 'encontrado'"
+                maxlength="255"
+                fluid
+                autocomplete="organization"
+              />
+            </div>
+            <Message
+              v-if="consultaNit.estado === 'inexistente'"
+              severity="warn"
+              :closable="false"
+              class="mt-1"
+              >{{ t("errores.comprador_nit") }}</Message
+            >
           </section>
 
           <Message v-if="error" severity="error" :closable="false">
@@ -391,7 +433,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { onBeforeRouteLeave, useRouter } from "vue-router";
 import { getNode } from "@formkit/core";
@@ -400,12 +442,22 @@ import { useCarrito } from "@/carrito";
 import DesafioBanco from "@/componentes/DesafioBanco.vue";
 import ResumenCarrito from "@/componentes/ResumenCarrito.vue";
 import { mensajeDeError, type MensajeError } from "@/errores";
-import { exigeCodigoPostal, expiraValida, luhn, marca, paises } from "@/modelo";
+import {
+  exigeCodigoPostal,
+  expiraValida,
+  luhn,
+  marca,
+  nitValido,
+  normalizarNit,
+  paises,
+  regionParaBanco,
+} from "@/modelo";
 import { cargarHuella, datosNavegador, recolectarDispositivo } from "@/tresDs";
 import type {
   Comprador,
   DatosFacturacion,
   DatosTarjeta,
+  Region,
   ResultadoPago,
   SolicitudPago,
 } from "@/tipos";
@@ -422,12 +474,95 @@ const vencido = ref(false);
 const error = ref<MensajeError | null>(null);
 let completado = false;
 
-const opciones = (l: Array<{ id: number; nombre: string }> | undefined) =>
-  (l ?? []).map((o) => ({ label: o.nombre, value: o.id }));
-const naciones = computed(() => opciones(viaje.catalogos?.naciones));
-const documentos = computed(() => opciones(viaje.catalogos?.tiposDocumento));
 const listaPaises = computed(() => paises(locale.value));
 const usaCodigoPostal = computed(() => exigeCodigoPostal(datos.value.pais));
+
+/** Pone o quita un valor del formulario (los campos con `v-if` pueden no existir). */
+function poner(campo: string, valor: unknown) {
+  getNode("pago")?.at(campo)?.input(valor);
+}
+
+// Departamento → ciudad (ADR-041): vacías = el país o la región no tiene datos y se escribe a mano.
+const regiones = ref<Region[]>([]);
+const ciudades = ref<Array<{ label: string; value: string }>>([]);
+const opcionesRegion = computed(() =>
+  regiones.value.map((r) => ({ label: r.nombre, value: r.id })),
+);
+let pedidoRegiones = 0;
+let pedidoCiudades = 0;
+
+watch(
+  () => datos.value.pais,
+  async (pais) => {
+    const pedido = ++pedidoRegiones;
+    regiones.value = [];
+    ciudades.value = [];
+    poner("regionId", undefined);
+    poner("region", undefined);
+    poner("ciudad", undefined);
+    if (typeof pais !== "string" || !pais) return;
+    const lista = await api.regiones(pais).catch(() => []);
+    if (pedido === pedidoRegiones) regiones.value = lista;
+  },
+  { immediate: true },
+);
+
+watch(
+  () => datos.value.regionId,
+  async (id) => {
+    const pedido = ++pedidoCiudades;
+    ciudades.value = [];
+    poner("ciudad", undefined);
+    if (typeof id !== "number") return;
+    const lista = await api.ciudades(id).catch(() => []);
+    if (pedido === pedidoCiudades)
+      ciudades.value = lista.map((c) => ({ label: c, value: c }));
+  },
+);
+
+// Factura: con NIT sale a nombre de la razón social de la SAT; con CF, a nombre del comprador o del que escriba.
+const nombreComprador = computed(() =>
+  [datos.value.nombre, datos.value.apellido]
+    .map((p) => String(p ?? "").trim())
+    .filter(Boolean)
+    .join(" "),
+);
+const consultaNit = reactive<{
+  nit: string;
+  estado: "cf" | "buscando" | "encontrado" | "inexistente" | "sin_respuesta";
+}>({ nit: "CF", estado: "cf" });
+const nitAceptable = (n: { value: unknown }) =>
+  normalizarNit(n.value) === "CF" || nitValido(n.value);
+
+/** Busca la razón social del NIT en la SAT; descarta la respuesta si el NIT cambió mientras tanto. */
+async function buscarNit(nit: string) {
+  consultaNit.estado = "buscando";
+  try {
+    const r = await api.nit(nit);
+    if (consultaNit.nit !== nit) return;
+    consultaNit.estado = "encontrado";
+    poner("nombreFactura", r.nombre);
+  } catch (e) {
+    if (consultaNit.nit !== nit) return;
+    consultaNit.estado =
+      e instanceof api.ErrorPublico && e.estado === 404 ? "inexistente" : "sin_respuesta";
+  }
+}
+
+// Al escribir un NIT válido se busca solo (sin esperar a salir del campo); el nombre del NIT anterior ya no aplica.
+let esperaNit: ReturnType<typeof setTimeout> | undefined;
+watch(
+  () => normalizarNit(datos.value.nit),
+  (nit) => {
+    if (nit === consultaNit.nit) return;
+    clearTimeout(esperaNit);
+    if (consultaNit.estado === "encontrado") poner("nombreFactura", undefined);
+    consultaNit.nit = nit;
+    consultaNit.estado = "cf";
+    if (nit !== "CF" && nitValido(nit)) esperaNit = setTimeout(() => buscarNit(nit), 400);
+  },
+);
+onBeforeUnmount(() => clearTimeout(esperaNit));
 
 /** Desafío del banco en curso: `fin` recibe lo que envió el banco (o null si se canceló). */
 const desafio = ref<{
@@ -501,6 +636,13 @@ async function vencio() {
   if (carrito.vacio) vencido.value = true;
 }
 
+/** Región para el banco: la de la lista (código en EE. UU. y Canadá) o la escrita a mano. */
+function regionElegida(v: Record<string, unknown>): string | undefined {
+  const region = regiones.value.find((r) => r.id === v.regionId);
+  if (region) return regionParaBanco(v.pais, region);
+  return v.region ? String(v.region) : undefined;
+}
+
 async function pagar(v: Record<string, unknown>) {
   if (!carrito.token) return;
   pagando.value = true;
@@ -510,10 +652,8 @@ async function pagar(v: Record<string, unknown>) {
     apellido: v.apellido ? String(v.apellido) : undefined,
     email: String(v.email ?? ""),
     telefono: v.telefono ? String(v.telefono) : undefined,
-    nit: String(v.nit ?? "CF"),
-    tipoDocumento: (v.tipoDocumento as number | null) ?? null,
-    numeroDocumento: v.numeroDocumento ? String(v.numeroDocumento) : undefined,
-    nacionalidad: (v.nacionalidad as number | null) ?? null,
+    nit: normalizarNit(v.nit),
+    nombreFactura: String(v.nombreFactura ?? "").trim() || undefined,
   };
   const tarjeta: DatosTarjeta = {
     numero: String(v.numero ?? ""),
@@ -523,7 +663,7 @@ async function pagar(v: Record<string, unknown>) {
   };
   const facturacion: DatosFacturacion = {
     pais: String(v.pais ?? "GT"),
-    region: v.region ? String(v.region) : undefined,
+    region: regionElegida(v),
     ciudad: String(v.ciudad ?? ""),
     direccion: String(v.direccion ?? ""),
     codigoPostal:

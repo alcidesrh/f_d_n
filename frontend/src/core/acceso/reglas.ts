@@ -2,6 +2,7 @@
  * Reglas puras de accesos en el cliente (ADR-039). Solo deciden qué se
  * muestra: quien autoriza es siempre el backend.
  */
+import type { RouteLocationRaw } from 'vue-router'
 import type { NavItem } from '@/core/navigation/userMenus'
 import type { Ambito, DefinicionCapacidad, Exige, MiAcceso } from './tipos'
 
@@ -58,11 +59,13 @@ export function puedeEntrar(acceso: MiAcceso | null, ruta: RutaDestino): boolean
  * sin los grupos que se quedan vacíos. Un ítem sin ruta conocida se deja
  * (se pinta deshabilitado, como siempre).
  */
-export function podarMenu(items: NavItem[], permitido: (nombreRuta: string) => boolean): NavItem[] {
+export function podarMenu(items: NavItem[], permitido: (destino: RouteLocationRaw) => boolean): NavItem[] {
   const resultado: NavItem[] = []
   for (const item of items) {
-    if (item.route) {
-      if (!item.route.name || permitido(item.route.name)) resultado.push({ ...item, children: podarMenu(item.children, permitido) })
+    if (item.path || item.route) {
+      // Un enlace se pide por su path; una ruta sin nombre se deja (se pinta deshabilitada).
+      const destino = item.path ?? (item.route?.name ? { name: item.route.name } : null)
+      if (!destino || permitido(destino)) resultado.push({ ...item, children: podarMenu(item.children, permitido) })
       continue
     }
     const hijos = podarMenu(item.children, permitido)

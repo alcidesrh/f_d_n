@@ -1,7 +1,7 @@
 <!--
   Editar una compra web: corrige los datos del comprador (nombre, correo,
-  teléfono, NIT). La factura ya emitida no cambia: «Crear factura» la
-  reemite con estos datos.
+  teléfono, NIT y a nombre de quién sale la factura). La factura ya
+  emitida no cambia: «Crear factura» la reemite con estos datos.
 -->
 <template>
   <Dialog :visible="visible" modal :header="compra ? `Editar compra #${compra.id}` : ''" class="w-[min(32rem,calc(100vw-1rem))]" @update:visible="emit('update:visible', $event)" @show="abrir">
@@ -27,6 +27,11 @@
           <span class="text-sm font-medium">NIT</span>
           <InputText v-model="datos.nit" maxlength="20" placeholder="CF" :disabled="guardando" fluid />
         </label>
+        <label class="flex flex-col gap-1">
+          <span class="text-sm font-medium">Factura a nombre de</span>
+          <InputText v-model="nombreFactura" maxlength="255" :placeholder="datos.nombre" :disabled="guardando" fluid />
+          <small class="text-muted-color">Vacío: el del comprador. Con otro NIT se usa el de la SAT.</small>
+        </label>
       </div>
       <Message severity="info" :closable="false">La factura ya emitida no cambia. Para facturar con estos datos use «Crear factura».</Message>
       <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
@@ -48,15 +53,16 @@ import { notify } from '@/core/notify'
 const props = defineProps<{ visible: boolean; compra: CompraWeb | null }>()
 const emit = defineEmits<{ 'update:visible': [visible: boolean]; listo: [compra: CompraWeb | null] }>()
 
-const datos = reactive<DatosComprador>({ nombre: '', apellido: null, email: '', telefono: null, nit: 'CF' })
+const datos = reactive<DatosComprador>({ nombre: '', apellido: null, email: '', telefono: null, nit: 'CF', nombreFactura: null })
 const apellido = computed({ get: () => datos.apellido ?? '', set: (v: string) => (datos.apellido = v.trim() ? v : null) })
 const telefono = computed({ get: () => datos.telefono ?? '', set: (v: string) => (datos.telefono = v.trim() ? v : null) })
+const nombreFactura = computed({ get: () => datos.nombreFactura ?? '', set: (v: string) => (datos.nombreFactura = v.trim() ? v : null) })
 const guardando = ref(false)
 const error = ref('')
 
 function abrir() {
   const c = props.compra?.comprador
-  Object.assign(datos, { nombre: c?.nombres ?? '', apellido: c?.apellido ?? null, email: c?.email ?? '', telefono: c?.telefono ?? null, nit: c?.nit ?? 'CF' })
+  Object.assign(datos, { nombre: c?.nombres ?? '', apellido: c?.apellido ?? null, email: c?.email ?? '', telefono: c?.telefono ?? null, nit: c?.nit ?? 'CF', nombreFactura: c?.nombreFactura ?? null })
   error.value = ''
 }
 

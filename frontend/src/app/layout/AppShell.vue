@@ -75,9 +75,10 @@ provide(REPORTES_ADJUNTABLES, [
 
 // Los menús solo muestran las pantallas que el usuario puede abrir (ADR-039).
 const acceso = useAccesoStore()
-filtrarMenusCon((nombre) => {
+filtrarMenusCon((destino) => {
   try {
-    const r = router.resolve({ name: nombre })
+    // Ruta por nombre o enlace por path: en ambos casos, lo que el router dice de esa pantalla.
+    const r = router.resolve(destino)
     return acceso.puedeEntrar({ name: r.name, params: r.params, meta: r.meta })
   } catch {
     // Una ruta con parámetros obligatorios: el ítem se pinta deshabilitado de todos modos.

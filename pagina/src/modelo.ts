@@ -270,3 +270,27 @@ export function esRetorno3ds(dato: unknown): dato is { tipo: 'fdn-3ds'; datos: R
   const d = dato as { tipo?: unknown; datos?: unknown }
   return d.tipo === 'fdn-3ds' && typeof d.datos === 'object' && d.datos !== null
 }
+
+/** NIT sin espacios ni guiones, en mayúsculas; vacío o «C/F» es CF. */
+export function normalizarNit(nit: unknown): string {
+  const n = String(nit ?? '').replace(/[\s-]+/g, '').toUpperCase()
+  return n === '' || n === 'C/F' ? 'CF' : n
+}
+
+/** NIT guatemalteco: dígitos + dígito verificador (0–9 o K) por módulo 11 (como `Comprador::nitValido`). */
+export function nitValido(nit: unknown): boolean {
+  const m = /^(\d+)([\dK])$/.exec(normalizarNit(nit))
+  if (!m) return false
+  const cuerpo = m[1]!.split('').reverse()
+  const suma = cuerpo.reduce((s, d, i) => s + Number(d) * (i + 2), 0)
+  const verificador = (11 - (suma % 11)) % 11
+  return m[2] === (verificador === 10 ? 'K' : String(verificador))
+}
+
+/**
+ * Lo que va al banco como estado o departamento: en EE. UU. y Canadá el
+ * código de 2 letras (lo exige el banco), en los demás el nombre.
+ */
+export function regionParaBanco(pais: unknown, region: { codigo: string | null; nombre: string }): string {
+  return exigeCodigoPostal(pais) && region.codigo ? region.codigo : region.nombre
+}

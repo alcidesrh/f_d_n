@@ -149,7 +149,7 @@
                     />
                     <div class="outline-text">
                       <span class="outline-label">{{ store.itemsById.get(id)?.nombre ?? `#${id}` }}</span>
-                      <span class="outline-sub">{{ store.itemsById.get(id)?.route?.path ?? 'Grupo' }}</span>
+                      <span class="outline-sub">{{ destinoDe(store.itemsById.get(id)) }}</span>
                     </div>
                   </template>
                 </OutlineTree>
@@ -180,7 +180,7 @@
                 :items="store.paletteItems"
                 :target="store.selectedMenuId !== null ? outline : null"
                 :id-of="(item) => numericId(item.id)"
-                :text-of="(item) => `${item.nombre} ${item.route?.path ?? ''}`"
+                :text-of="(item) => `${item.nombre} ${item.route?.path ?? item.path ?? ''}`"
                 placeholder="Filtrar ítems"
                 empty-text="Todos los ítems están en el menú"
               >
@@ -188,7 +188,7 @@
                   <icon :name="item.icon.icon" class="text-primary" />
                   <div class="flex min-w-0 flex-1 flex-col leading-tight">
                     <span class="truncate text-sm font-medium">{{ item.nombre }}</span>
-                    <span class="truncate text-xs text-muted-color">{{ item.route?.path ?? 'Grupo' }}</span>
+                    <span class="truncate text-xs text-muted-color">{{ destinoDe(item) }}</span>
                   </div>
                   <button type="button" class="outline-btn" title="Editar" @click="editItem(item)">
                     <icon name="edit-outline" />
@@ -337,12 +337,15 @@ async function removeMenu() {
 
 const itemDialog = ref(false)
 const itemSaving = ref(false)
-const itemDraft = ref<MenuItemDraft>({ nombre: '', icon: '', route: null })
+const itemDraft = ref<MenuItemDraft>({ nombre: '', icon: '', route: null, path: null })
+
+/** Lo que el ítem muestra en las listas: su ruta, su enlace o «Grupo». */
+const destinoDe = (item: MenuItemDto | undefined) => item?.route?.path ?? item?.path ?? 'Grupo'
 
 function editItem(item: MenuItemDto | null) {
   itemDraft.value = item
-    ? { id: item.id, nombre: item.nombre, icon: item.icon.icon, route: item.route?.id ?? null }
-    : { nombre: '', icon: '', route: null }
+    ? { id: item.id, nombre: item.nombre, icon: item.icon.icon, route: item.route?.id ?? null, path: item.path }
+    : { nombre: '', icon: '', route: null, path: null }
   itemDialog.value = true
 }
 

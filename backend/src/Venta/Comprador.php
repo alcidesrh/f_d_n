@@ -15,9 +15,8 @@ final readonly class Comprador
         public string $email,
         public ?string $telefono,
         public string $nit,
-        public ?int $tipoDocumentoId = null,
-        public ?string $numeroDocumento = null,
-        public ?int $nacionalidadId = null,
+        /** A nombre de quién sale la factura si no es el comprador (ADR-041); con NIT, la razón social de la SAT. */
+        public ?string $nombreFactura = null,
     ) {}
 
     /**
@@ -26,7 +25,6 @@ final readonly class Comprador
     public static function desdeArray(array $datos): self
     {
         $texto = static fn(string $campo, int $max) => ($v = trim((string) ($datos[$campo] ?? ""))) !== "" ? mb_substr($v, 0, $max) : null;
-        $id = static fn(string $campo) => is_numeric($datos[$campo] ?? null) && (int) $datos[$campo] > 0 ? (int) $datos[$campo] : null;
 
         $nombre = $texto("nombre", 255);
         if ($nombre === null) {
@@ -47,10 +45,13 @@ final readonly class Comprador
             email: $email,
             telefono: $texto("telefono", 15),
             nit: $nit,
-            tipoDocumentoId: $id("tipoDocumento"),
-            numeroDocumento: $texto("numeroDocumento", 40),
-            nacionalidadId: $id("nacionalidad"),
+            nombreFactura: $texto("nombreFactura", 255),
         );
+    }
+
+    public function conNombreFactura(?string $nombre): self
+    {
+        return new self($this->nombre, $this->apellido, $this->email, $this->telefono, $this->nit, $nombre);
     }
 
     /**

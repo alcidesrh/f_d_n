@@ -18,8 +18,6 @@ export interface Estacion extends Opcion {
 }
 
 export interface Catalogos {
-  tiposDocumento: Opcion[]
-  naciones: Opcion[]
   cierreMinutos: number
   reservaMinutos: number
   /** Por viaje. */
@@ -112,9 +110,15 @@ export interface Comprador {
   email: string
   telefono?: string
   nit?: string
-  tipoDocumento?: number | null
-  numeroDocumento?: string
-  nacionalidad?: number | null
+  /** A nombre de quién sale la factura si no es el comprador; con NIT manda la razón social de la SAT. */
+  nombreFactura?: string
+}
+
+/** Departamento, estado o provincia (`codigo`: el de 2 letras que piden los bancos en EE. UU. y Canadá). */
+export interface Region {
+  id: number
+  codigo: string | null
+  nombre: string
 }
 
 export interface DatosTarjeta {

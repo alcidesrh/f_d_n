@@ -56,6 +56,10 @@
           <icon name="forum-outline" />
           <span v-if="chat.noLeidos" class="header-chat__badge">{{ chat.noLeidos > 99 ? "99+" : chat.noLeidos }}</span>
         </button>
+        <!-- Ayuda: abre las guías de la pantalla actual (o todas si no hay). -->
+        <RouterLink :to="{ name: 'ayuda', query: ayudaPantalla ? { pantalla: ayudaPantalla } : {} }" class="icon-btn header-secundario" aria-label="Ayuda" v-tooltip.bottom="'Ayuda'">
+          <icon name="help-outline" />
+        </RouterLink>
         <!-- Autorizaciones (ADR-040): las que espera resolver y sus pases aprobados sin usar. -->
         <RouterLink :to="{ name: 'autorizaciones', query: autorizacionesPendientes && autorizaciones.resumen?.porResolver ? { vista: 'por-resolver' } : {} }" class="icon-btn header-chat" :aria-label="autorizacionesPendientes ? `Autorizaciones, ${autorizacionesPendientes} por atender` : 'Autorizaciones'" v-tooltip.bottom="'Autorizaciones'">
           <icon name="notifications-outline" />
@@ -118,6 +122,7 @@ import { desactivarPush } from "@/core/chat/push";
 import { useChatStore } from "@/core/chat/store";
 import { useCuentaStore } from "@/core/cuenta/store";
 import { pendientesDe } from "@/core/autorizacion/reglas";
+import { clavesDeRuta } from "@/core/ayuda/reglas";
 import { useAutorizacionesStore } from "@/core/autorizacion/store";
 import { useVentanaChat } from "@/features/chat/ventana";
 import ChatAvatar from "@/shared/chat/ChatAvatar.vue";
@@ -134,6 +139,11 @@ const chat = useChatStore();
 const cuenta = useCuentaStore();
 const autorizaciones = useAutorizacionesStore();
 const autorizacionesPendientes = computed(() => pendientesDe(autorizaciones.resumen));
+/** Pantalla actual para la ayuda contextual (la clave más específica); en la ayuda misma, ninguna. */
+const ayudaPantalla = computed(() => {
+  const r = router.currentRoute.value;
+  return r.name === "ayuda" ? null : (clavesDeRuta(r.name, r.params)[0] ?? null);
+});
 const ui = useUiStore();
 const ventanaChat = useVentanaChat();
 

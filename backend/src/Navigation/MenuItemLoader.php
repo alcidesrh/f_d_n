@@ -9,7 +9,8 @@ use Doctrine\ORM\EntityManagerInterface;
 
 /**
  * Carga `MenuItem` por lotes con su ícono y su ruta en la misma consulta
- * (cargador de sujetos para `TaxonomyTreeReader`), y los serializa.
+ * (cargador de sujetos para `TaxonomyTreeReader`), y los serializa. El destino
+ * es `route` o `path` (enlace); los dos nulos, un grupo.
  */
 final class MenuItemLoader
 {
@@ -47,7 +48,7 @@ final class MenuItemLoader
     }
 
     /**
-     * @return array{id: int, label: string, icon: ?string, route: ?array{id: int, name: ?string, path: ?string, params: list<string>}}
+     * @return array{id: int, label: string, icon: ?string, route: ?array{id: int, name: ?string, path: ?string, params: list<string>}, path: ?string}
      */
     public static function serialize(MenuItem $item): array
     {
@@ -63,6 +64,7 @@ final class MenuItemLoader
                 'path' => $route->getPath(),
                 'params' => array_values($route->getParams() ?? []),
             ],
+            'path' => $item->getPath(),
         ];
     }
 }

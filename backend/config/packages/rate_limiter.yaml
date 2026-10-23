@@ -15,3 +15,8 @@ framework:
             policy: sliding_window
             limit: 5
             interval: '1 hour'
+        # Consulta de NIT en la SAT desde el pago (razón social para la factura).
+        publico_nit:
+            policy: sliding_window
+            limit: 20
+            interval: '10 minutes'

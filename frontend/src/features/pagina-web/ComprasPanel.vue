@@ -459,7 +459,7 @@ function confirmarFactura(c: CompraWeb) {
   const certificadas = c.ventas.filter((v) => v.factura && !v.factura.anulada).length
   confirm.require({
     header: 'Crear factura',
-    message: `${certificadas ? `Se anulará en el certificador la factura vigente${certificadas > 1 ? ' de cada viaje' : ''} y se` : 'Se'} registrará una nueva con los datos actuales del comprador (${c.comprador.nombre || '—'}, NIT ${c.comprador.nit}). El boleto en PDF se genera con la factura nueva; no se envía al cliente.`,
+    message: `${certificadas ? `Se anulará en el certificador la factura vigente${certificadas > 1 ? ' de cada viaje' : ''} y se` : 'Se'} registrará una nueva con los datos actuales del comprador (${c.comprador.nombreFactura || c.comprador.nombre || '—'}, NIT ${c.comprador.nit}). El boleto en PDF se genera con la factura nueva; no se envía al cliente.`,
     acceptProps: { label: 'Crear factura' },
     rejectProps: { label: 'Cancelar', severity: 'secondary' },
     accept: async () => {

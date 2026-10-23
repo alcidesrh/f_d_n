@@ -60,8 +60,11 @@ export interface CompraWeb {
   referencia: string | null
   mensaje: string | null
   empresa: { id: number; nombre: string } | null
-  /** `nombre`: nombre y apellido juntos; `nombres` y `apellido` por separado (para editarlos). */
-  comprador: { nombre: string; nombres: string; apellido: string | null; email: string | null; telefono: string | null; nit: string }
+  /**
+   * `nombre`: nombre y apellido juntos; `nombres` y `apellido` por separado (para editarlos).
+   * `nombreFactura`: a nombre de quién sale la factura si no es el comprador (con NIT, la razón social de la SAT).
+   */
+  comprador: { nombre: string; nombres: string; apellido: string | null; email: string | null; telefono: string | null; nit: string; nombreFactura: string | null }
   ventas: VentaCompra[]
 }
 
@@ -101,6 +104,8 @@ export interface DatosComprador {
   email: string
   telefono: string | null
   nit: string
+  /** Vacío: a nombre del comprador. Con otro NIT se reemplaza por la razón social de la SAT. */
+  nombreFactura: string | null
 }
 
 export type FacturaReemitida = Array<{ venta: number; factura: { serie: string | null; numero: number | null } | null; error: string | null }>

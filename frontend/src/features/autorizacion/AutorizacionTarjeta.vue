@@ -11,8 +11,13 @@
       <div class="flex min-w-0 items-start gap-2">
         <icon :name="DISPENSAS[a.dispensa]?.icono ?? 'verified-user-outline'" class="aut__icono" />
         <div class="min-w-0">
-          <div class="font-semibold">{{ queSePide(a) }} <span class="font-normal text-muted-color">· #{{ a.id }}</span></div>
-          <div class="text-xs text-muted-color">{{ a.dispensaNombre }}<template v-if="a.empresa"> · {{ a.empresa.nombre }}</template><template v-if="a.estacion"> · {{ a.estacion.nombre }}</template></div>
+          <div class="font-semibold">
+            {{ queSePide(a) }} <span class="font-normal text-muted-color">· #{{ a.id }}</span>
+          </div>
+          <div class="text-xs text-muted-color">
+            {{ a.dispensaNombre }}<template v-if="a.empresa"> · {{ a.empresa.nombre }}</template
+            ><template v-if="a.estacion"> · {{ a.estacion.nombre }}</template>
+          </div>
         </div>
       </div>
       <div class="flex flex-col items-end gap-1">
@@ -30,7 +35,9 @@
       <li v-for="b in a.detalle.boletos" :key="b.id">
         <span class="font-medium tabular-nums">Boleto {{ b.id }}</span>
         <span>asiento {{ b.asiento }} · {{ b.trayecto }}</span>
-        <span class="text-muted-color">{{ b.ruta }}<template v-if="b.fecha"> · {{ fecha(b.fecha) }}</template> · salida {{ b.salida }}</span>
+        <span class="text-muted-color"
+          >{{ b.ruta }}<template v-if="b.fecha"> · {{ fecha(b.fecha) }}</template> · salida {{ b.salida }}</span
+        >
         <span v-if="b.pasajero" class="text-muted-color">{{ b.pasajero }}</span>
       </li>
     </ul>
@@ -40,11 +47,14 @@
     </p>
 
     <p v-if="a.resueltaPor" class="m-0 text-sm">
-      <span class="text-muted-color">{{ a.estado === 'rechazada' ? 'Rechazó' : 'Aprobó' }} {{ a.resueltaPor.nombre }}<template v-if="a.resueltaEn"> · {{ fecha(a.resueltaEn) }}</template>:</span>
-      {{ a.respuesta ?? 'sin nota' }}
+      <span class="text-muted-color"
+        >{{ a.estado === "rechazada" ? "Rechazó" : "Aprobó" }} {{ a.resueltaPor.nombre }}<template v-if="a.resueltaEn"> · {{ fecha(a.resueltaEn) }}</template
+        >:</span
+      >
+      {{ a.respuesta ?? "sin nota" }}
     </p>
     <p v-if="a.usadaEn" class="m-0 text-xs text-muted-color">Usada el {{ fecha(a.usadaEn) }}.</p>
-    <p v-else-if="a.estado === 'aprobada' && propia" class="m-0 text-sm">Ya puede repetir la operación: la autorización se usa sola.</p>
+    <p v-else-if="a.estado === 'aprobada' && propia" class="m-0 text-sm">Ya puede repetir la operación: la autorización es de un solo uso.</p>
 
     <footer class="flex flex-wrap justify-end gap-2">
       <Button label="Bitácora" size="small" severity="secondary" text @click="emit('bitacora', a)">
@@ -62,20 +72,20 @@
 </template>
 
 <script setup lang="ts">
-import { DISPENSAS, ESTADOS, queSePide, vigencia } from '@/core/autorizacion/reglas'
-import type { Autorizacion } from '@/core/autorizacion/types'
+import { DISPENSAS, ESTADOS, queSePide, vigencia } from "@/core/autorizacion/reglas";
+import type { Autorizacion } from "@/core/autorizacion/types";
 
-const props = defineProps<{ a: Autorizacion; destacada?: boolean; propia?: boolean }>()
+const props = defineProps<{ a: Autorizacion; destacada?: boolean; propia?: boolean }>();
 const emit = defineEmits<{
-  resolver: [a: Autorizacion, como: 'aprobar' | 'rechazar']
-  retirar: [a: Autorizacion]
-  bitacora: [a: Autorizacion]
-}>()
+  resolver: [a: Autorizacion, como: "aprobar" | "rechazar"];
+  retirar: [a: Autorizacion];
+  bitacora: [a: Autorizacion];
+}>();
 
-const ACENTOS: Record<string, string> = { pendiente: 'warning', aprobada: 'success', rechazada: 'danger', usada: 'info' }
-const acento = computed(() => ACENTOS[props.a.estado] ?? 'info')
+const ACENTOS: Record<string, string> = { pendiente: "warning", aprobada: "success", rechazada: "danger", usada: "info" };
+const acento = computed(() => ACENTOS[props.a.estado] ?? "info");
 
-const fecha = (iso: string) => new Intl.DateTimeFormat('es-GT', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date(iso))
+const fecha = (iso: string) => new Intl.DateTimeFormat("es-GT", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }).format(new Date(iso));
 </script>
 
 <style scoped>

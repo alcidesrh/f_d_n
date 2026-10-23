@@ -33,6 +33,7 @@ import CancelOutline from '~icons/material-symbols/cancel-outline'
 import ScheduleOutline from '~icons/material-symbols/schedule-outline'
 import WorkspacePremiumOutline from '~icons/material-symbols/workspace-premium-outline'
 import CreditCardOutline from '~icons/material-symbols/credit-card-outline'
+import ReceiptLongOutline from '~icons/material-symbols/receipt-long-outline'
 import Download from '~icons/material-symbols/download'
 import OpenInNew from '~icons/material-symbols/open-in-new'
 import VisibilityOutline from '~icons/material-symbols/visibility-outline'
@@ -91,6 +92,7 @@ const ICONOS = {
   package: Package2Outline,
   phone: CallOutline,
   punto: FiberManualRecord,
+  receipt: ReceiptLongOutline,
   reiniciar: RestartAlt,
   route: Route,
   search: Search,

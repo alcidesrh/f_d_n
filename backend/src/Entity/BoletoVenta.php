@@ -134,6 +134,14 @@ class BoletoVenta extends TimeLegacyStatusBase
     private ?string $referenciaPago = null;
 
     /**
+     * Nombre del receptor de la factura cuando no es el del cliente: en la
+     * página web el comprador puede facturar a otro nombre (ADR-041). Con NIT
+     * es la razón social de la SAT.
+     */
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $nombreFactura = null;
+
+    /**
      * Identificador público de la venta (web): con él el cliente descarga su
      * boleto sin iniciar sesión. Es el token del carrito de reservas.
      */
@@ -420,6 +428,18 @@ class BoletoVenta extends TimeLegacyStatusBase
     public function setReferenciaPago(?string $referenciaPago): static
     {
         $this->referenciaPago = $referenciaPago;
+
+        return $this;
+    }
+
+    public function getNombreFactura(): ?string
+    {
+        return $this->nombreFactura;
+    }
+
+    public function setNombreFactura(?string $nombreFactura): static
+    {
+        $this->nombreFactura = $nombreFactura;
 
         return $this;
     }

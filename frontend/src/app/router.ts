@@ -18,6 +18,8 @@ export const router = createRouter({
       component: () => import("@/features/dashboard/DashboardPage.vue"),
       meta: {
         title: "Tablero de gestión",
+        label: "Tablero",
+        icon: "dashboard-outline",
       },
     },
     {
@@ -27,6 +29,8 @@ export const router = createRouter({
       meta: {
         layout: "blank",
         title: "Iniciar Sesión",
+        label: "Iniciar sesión",
+        icon: "login",
         public: true,
       },
     },
@@ -36,6 +40,8 @@ export const router = createRouter({
       component: () => import("@/features/cuenta/MiCuentaPage.vue"),
       meta: {
         title: "Mi cuenta",
+        label: "Mi cuenta",
+        icon: "manage-accounts-outline",
       },
     },
     {
@@ -45,6 +51,8 @@ export const router = createRouter({
       meta: {
         capacidad: "config.editar",
         title: "Constructor de formularios",
+        label: "Constructor de formularios",
+        icon: "dynamic-form-outline",
         panel: {
           component: () => import("@/features/form-builder/FormBuilderPanel.vue"),
           width: 350,
@@ -58,6 +66,8 @@ export const router = createRouter({
       meta: {
         capacidad: "migracion.ejecutar",
         title: "Migración legado → nuevo",
+        label: "Migración",
+        icon: "swap-horiz",
         panel: { component: () => import("@/features/migracion/MigracionPanel.vue"), width: 340 },
       },
     },
@@ -136,6 +146,7 @@ export const router = createRouter({
         capacidad: "iam.ver",
         title: "Accesos del usuario",
         label: "Accesos del usuario",
+        icon: "person-outline",
       },
     },
     {
@@ -235,6 +246,17 @@ export const router = createRouter({
         title: "Salidas",
         label: "Salidas",
         icon: "directions-bus-outline",
+      },
+    },
+    {
+      // Manual de uso: cualquiera con sesión; cada guía se muestra a quien encaja en su audiencia.
+      path: "/ayuda/:guia?",
+      name: "ayuda",
+      component: () => import("@/features/ayuda/AyudaPage.vue"),
+      meta: {
+        title: "Ayuda",
+        label: "Ayuda",
+        icon: "help-outline",
       },
     },
     {
@@ -528,7 +550,8 @@ export const router = createRouter({
       component: () => import("@/features/entity-crud/ListPage.vue"),
       meta: {
         title: "Lista de entidad",
-        label: "entidades",
+        label: "Entidades",
+        icon: "table-rows-outline",
       },
     },
     {
@@ -538,6 +561,8 @@ export const router = createRouter({
       component: () => import("@/features/entity-crud/FormPage.vue"),
       meta: {
         title: "Formulario de entidad",
+        label: "Formulario",
+        icon: "edit-document",
       },
     },
     {
@@ -547,6 +572,8 @@ export const router = createRouter({
       meta: {
         layout: "blank",
         title: "Página no encontrada",
+        label: "No encontrada",
+        icon: "search-off",
       },
     },
   ],

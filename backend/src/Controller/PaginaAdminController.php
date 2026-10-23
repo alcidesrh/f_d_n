@@ -51,7 +51,7 @@ final class PaginaAdminController extends AbstractController
         return $this->json($consulta->buscar(FiltroComprasWeb::desdeQuery($request->query->all())));
     }
 
-    /** `{ nombre, apellido?, email, telefono?, nit }`: corrige el comprador (la factura cambia al reemitirla). */
+    /** `{ nombre, apellido?, email, telefono?, nit, nombreFactura? }`: corrige el comprador (la factura cambia al reemitirla). */
     #[Route("/compras/{id<\d+>}/comprador", name: "compra_comprador", methods: ["PUT"])]
     public function editarComprador(int $id, Request $request, GestionCompraWeb $gestion, ConsultaComprasWeb $consulta): JsonResponse
     {

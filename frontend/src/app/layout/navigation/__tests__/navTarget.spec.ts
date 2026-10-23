@@ -11,6 +11,7 @@ const item = (route: Partial<NavItem['route']> | null): NavItem => ({
   label: 'Inicio',
   icon: 'home',
   route: route === null ? null : { id: 1, name: 'dashboard', path: '/', params: [], ...route },
+  path: null,
   children: [],
 })
 
@@ -30,7 +31,11 @@ describe('navTarget', () => {
     expect(navTarget(item({ name: null }), router)).toBeNull()
   })
 
-  it('no navega un grupo (ítem sin ruta)', () => {
+  it('no navega un grupo (ítem sin ruta ni path)', () => {
     expect(navTarget(item(null), router)).toBeNull()
+  })
+
+  it('un enlace navega a su path, sin consultar el router', () => {
+    expect(navTarget({ ...item(null), path: '/salidas/chequeo' }, router)).toBe('/salidas/chequeo')
   })
 })

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { RouteLocationRaw } from 'vue-router'
 import type { NavItem } from '@/core/navigation/userMenus'
 import { agruparCatalogo, cambiosDeCapacidades, debeElegirEstacion, describirAmbito, podarMenu, puedeEntrar, recursoDeRuta, tiene } from '../reglas'
 import type { DefinicionCapacidad, MiAcceso } from '../tipos'
@@ -20,8 +21,11 @@ const item = (id: number, nombre: string | null, children: NavItem[] = []): NavI
   label: `item ${id}`,
   icon: null,
   route: nombre === null ? null : { id, name: nombre, path: null, params: [] },
+  path: null,
   children,
 })
+
+const enlace = (id: number, path: string): NavItem => ({ ...item(id, null), path })
 
 describe('tiene', () => {
   it('con una capacidad, o cualquiera de varias', () => {
@@ -60,7 +64,8 @@ describe('puedeEntrar', () => {
 })
 
 describe('podarMenu', () => {
-  const permitido = (n: string) => n !== 'salidas'
+  const nombreDe = (destino: RouteLocationRaw) => (typeof destino === 'object' && 'name' in destino ? destino.name : destino)
+  const permitido = (destino: RouteLocationRaw) => !['salidas', '/reservado'].includes(String(nombreDe(destino)))
 
   it('quita lo que no puede abrir y los grupos que quedan vacíos', () => {
     const menu = [item(1, 'venta'), item(2, null, [item(3, 'salidas')]), item(4, null, [item(5, 'venta'), item(6, 'salidas')])]
@@ -69,6 +74,14 @@ describe('podarMenu', () => {
 
     expect(podado.map((i) => i.id)).toEqual([1, 4])
     expect(podado[1]!.children.map((i) => i.id)).toEqual([5])
+  })
+
+  it('pide por su path a un enlace: lo quita si no puede abrirlo', () => {
+    const menu = [enlace(1, '/chequeo'), enlace(2, '/reservado'), item(3, null, [enlace(4, '/reservado')])]
+
+    const podado = podarMenu(menu, permitido)
+
+    expect(podado.map((i) => i.id)).toEqual([1])
   })
 })
 

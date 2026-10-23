@@ -1,63 +1,60 @@
 <!--
-  Salidas en tres días: el elegido en el centro (el de la fecha del filtro)
-  y, a los lados, el anterior y el siguiente, alineados por la hora a la que
-  sube el cliente. Alternativa a `SalidasLista.vue`; el vendedor elige cuál ve.
+  Salidas en calendario: horas en el eje vertical y, en cada hora, las
+  salidas por la hora a la que sube el cliente. Alternativa a
+  `SalidasLista.vue`; el vendedor elige cuál ve.
 
-  Solo las salidas del centro se eligen (clic = abrir su croquis, como en la
-  lista). Las de los lados se ven atenuadas: pulsarlas (o la cabecera de su
-  día, o ←/→ en el teclado) mueve la fecha a ese día y resalta la pulsada.
-  Sin tarifa para el viaje del cliente, la ficha no se elige.
+  Con una fecha, ese día solo (←/→ en el teclado mueve la fecha). Con un
+  rango, una columna por día desde el primero, tantas como quepan; si
+  quedan días fuera, "Siguiente" pone el primero que no se veía a la
+  izquierda (←/→ pasan de página). Clic en una salida = abrir su croquis,
+  como en la lista; sin tarifa para el viaje del cliente, no se elige.
 
-  Los días vecinos se piden aparte con los mismos filtros ("Sube en", "Baja
-  en"); lo que se cargó hace menos de un minuto se reutiliza al cambiar de
-  día, así el día al que se llega aparece al instante. Reglas en `core/venta/tresDias`.
+  Lo cargado de un día hace menos de un minuto se reutiliza al volver a él,
+  así aparece al instante. Reglas en `core/venta/calendario`.
 -->
 <template>
-  <div class="td" :class="{ 'td--cargando': cargandoCentro }" @keydown="teclado">
-    <!-- Cabecera: los tres días; los laterales llevan a su fecha. -->
-    <div class="td__cabecera">
-      <span class="td__esquina" aria-hidden="true"><icon name="schedule-outline" size="1rem" /></span>
-      <button type="button" class="td__dia td__dia--lado" :aria-label="`Ir al ${diaLargo(dias[0])}`" @click="mover(-1)">
-        <icon name="chevron-left" size="1.1rem" class="td__flecha" />
-        <span class="td__dia-texto">
-          <span class="td__dia-rel">{{ relativo(dias[0]) }}</span>
-          <span class="td__dia-cuenta tabular-nums">{{ cuenta(laterales.antes) }}</span>
-        </span>
+  <div ref="raiz" class="td" :class="{ 'td--cargando': cargando, 'td--rango': store.porRango }" :style="{ '--n': Math.max(1, columnas.length) }" @keydown="teclado">
+    <!-- Rango con más días de los que caben: cuáles se ven y pasar a los demás. -->
+    <div v-if="store.porRango && todos.length > columnas.length" class="td__paginas">
+      <button type="button" class="td__pagina" :disabled="inicio === 0" @click="pasar(-1)">
+        <icon name="chevron-left" size="1.1rem" />
+        <span>Anterior</span>
       </button>
-      <div class="td__dia td__dia--centro" aria-live="polite">
-        <span class="td__dia-semana">{{ semana(dias[1]) }}</span>
-        <span class="td__dia-fecha">{{ numero(dias[1]) }}<em v-if="relativoCentro" class="td__dia-hoy">{{ relativoCentro }}</em></span>
-        <span class="td__dia-cuenta tabular-nums">
-          <template v-if="centro">{{ cuenta(centro) }}<template v-if="libresCentro !== null"> · {{ libresCentro }} libres</template></template>
-          <template v-else>Cargando…</template>
-        </span>
-      </div>
-      <button type="button" class="td__dia td__dia--lado td__dia--despues" :aria-label="`Ir al ${diaLargo(dias[2])}`" @click="mover(1)">
-        <span class="td__dia-texto">
-          <span class="td__dia-rel">{{ relativo(dias[2]) }}</span>
-          <span class="td__dia-cuenta tabular-nums">{{ cuenta(laterales.despues) }}</span>
-        </span>
-        <icon name="chevron-right" size="1.1rem" class="td__flecha" />
+      <span class="td__paginas-texto tabular-nums">
+        {{ tramo }}<small> · {{ columnas.length }} de {{ todos.length }} días</small>
+      </span>
+      <button type="button" class="td__pagina" :disabled="!siguiente" :title="siguiente ? `Desde el ${diaLargo(siguiente)}` : undefined" @click="pasar(1)">
+        <span>Siguiente</span>
+        <small v-if="siguiente" class="td__pagina-dia">{{ corto(siguiente) }}</small>
+        <icon name="chevron-right" size="1.1rem" />
       </button>
     </div>
 
-    <div ref="cuerpo" :key="claveDia" class="td__cuerpo" :class="`td__cuerpo--${direccion}`">
-      <template v-if="centro">
-        <div v-if="!centro.length && filas.length" class="td__fila td__fila--aviso">
-          <span />
-          <span class="td__lado" />
-          <p class="td__vacio-dia"><icon name="no-transfer-outline" size="1.1rem" /> Sin salidas este día</p>
-          <span class="td__lado" />
-        </div>
+    <div class="td__cabecera">
+      <span class="td__esquina" aria-hidden="true"><icon name="schedule-outline" size="1rem" /></span>
+      <div v-for="c in columnas" :key="c.clave" class="td__dia" :class="{ 'td__dia--hoy': c.hoy }" aria-live="polite">
+        <span class="td__dia-semana">{{ semana(c.dia) }}</span>
+        <span class="td__dia-fecha">{{ numero(c.dia) }}<em v-if="relativo(c.dia)" class="td__dia-hoy">{{ relativo(c.dia) }}</em></span>
+        <span class="td__dia-cuenta tabular-nums">
+          <template v-if="c.salidas">{{ cuenta(c.salidas) }}<template v-if="libresDe(c.salidas) !== null"> · {{ libresDe(c.salidas) }} libres</template></template>
+          <template v-else>Cargando…</template>
+        </span>
+      </div>
+    </div>
 
-        <div v-for="f in filas" :key="f.hora" class="td__fila" :data-hora="f.hora">
-          <span class="td__hora tabular-nums" :class="{ 'td__hora--ahora': esHoy && f.hora === ahoraHM[0] }">{{ String(f.hora).padStart(2, "0") }}<small>:00</small></span>
+    <div ref="cuerpo" :key="claveVista" class="td__cuerpo" :class="`td__cuerpo--${direccion}`">
+      <template v-if="listo">
+        <template v-for="f in filas" :key="f.hora">
+          <!-- Renglón del grupo: de la primera a la última salida de la hora en cada día. -->
+          <div class="td__fila td__rango" aria-hidden="true">
+            <span />
+            <span v-for="(lista, i) in f.dias" :key="i">{{ rango(lista) }}</span>
+          </div>
+          <div class="td__fila" :data-hora="f.hora">
+            <span class="td__hora tabular-nums" :class="{ 'td__hora--ahora': hayHoy && f.hora === ahoraHM[0] }">{{ String(f.hora).padStart(2, "0") }}<small>:00</small></span>
 
-          <div v-for="(lista, i) in f.dias" :key="i" :class="i === 1 ? 'td__centro' : 'td__lado'">
-            <span v-if="i === 1 && esHoy && f.hora === ahoraHM[0]" class="td__ahora" :style="{ top: `${(ahoraHM[1] / 60) * 100}%` }" aria-hidden="true" />
-
-            <!-- Centro: fichas completas, elegibles. -->
-            <template v-if="i === 1">
+            <div v-for="(lista, i) in f.dias" :key="i" class="td__col">
+              <span v-if="columnas[i]?.hoy && f.hora === ahoraHM[0]" class="td__ahora" :style="{ top: `${(ahoraHM[1] / 60) * 100}%` }" aria-hidden="true" />
               <button
                 v-for="r in lista"
                 :key="r.id"
@@ -98,32 +95,13 @@
                 </span>
                 <span class="ficha__barra" aria-hidden="true" />
               </button>
-            </template>
-
-            <!-- Lados: fichas mínimas; pulsarlas lleva a su día. -->
-            <template v-else>
-              <button
-                v-for="r in lista"
-                :key="r.id"
-                type="button"
-                class="sombra"
-                :class="{ 'sombra--lleno': nivelOcupacion(r) === 'lleno', 'sombra--sin-tarifa': !conTarifa(r) }"
-                :style="{ '--f': `${(ocupacion(r) ?? 0) * 100}%` }"
-                :title="`${reloj(subidaDe(r))} · ${viaje(r)} — ver el ${diaLargo(dias[i]!)}`"
-                :aria-label="`${diaLargo(dias[i]!)}, ${reloj(subidaDe(r))}, ${viaje(r)}. Ir a ese día`"
-                tabindex="-1"
-                @click="mover(i === 0 ? -1 : 1, r.id)"
-              >
-                <span class="sombra__hora tabular-nums">{{ reloj(subidaDe(r)) }}</span>
-                <span class="sombra__ruta">{{ siglas(r) }}</span>
-              </button>
-            </template>
+            </div>
           </div>
-        </div>
+        </template>
 
         <div v-if="!filas.length" class="td__vacio">
           <icon name="no-transfer-outline" size="2rem" color="text-surface-400" />
-          <span>No hay salidas para estos días y estación.</span>
+          <span>{{ store.porRango ? "No hay salidas en estos días y estación." : "No hay salidas este día y estación." }}</span>
         </div>
       </template>
 
@@ -131,9 +109,7 @@
       <div v-else class="td__esqueleto" aria-busy="true">
         <div v-for="n in 5" :key="n" class="td__fila">
           <span />
-          <span class="td__lado" />
-          <div class="td__centro"><Skeleton height="3.25rem" border-radius="0.6rem" /></div>
-          <span class="td__lado" />
+          <div v-for="c in columnas" :key="c.clave" class="td__col"><Skeleton height="3.25rem" border-radius="0.6rem" /></div>
         </div>
       </div>
     </div>
@@ -141,37 +117,33 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, reactive, ref, watch } from "vue";
-import * as api from "@/core/venta/api";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { diaISO, diasEntre, hora } from "@/core/venta/modelo";
-import { diaVecino, filasPorHora, horaMinuto, nivelOcupacion, ocupacion, reloj, subidaDe } from "@/core/venta/tresDias";
+import { diaVecino, diasDelRango, filasPorHora, horaMinuto, nivelOcupacion, ocupacion, porDia, reloj, subidaDe } from "@/core/venta/calendario";
 import type { Importe, Opcion, SalidaResumen } from "@/core/venta/types";
 import { useVentaStore } from "./store";
 
 const emit = defineEmits<{ elegir: [id: number]; mover: [delta: number] }>();
 const store = useVentaStore();
 
-/** Lo cargado hace menos de esto se reutiliza al moverse de día. */
+/** Lo cargado hace menos de esto se reutiliza al volver a un día. */
 const VIGENCIA = 60_000;
+/** Ancho mínimo de la columna de un día con rango (px): por debajo, la ficha ya no se lee. */
+const ANCHO_DIA = 224;
 
 const ahora = ref(Date.now());
 const reloj60 = window.setInterval(() => (ahora.value = Date.now()), 30_000);
 onBeforeUnmount(() => window.clearInterval(reloj60));
 const ahoraHM = computed(() => horaMinuto(new Date(ahora.value).toISOString()));
+const hoyISO = computed(() => diaISO(new Date(ahora.value)));
 
-const dias = computed(() => [diaVecino(store.fecha, -1), diaVecino(store.fecha, 0), diaVecino(store.fecha, 1)] as const);
 const claveDe = (d: Date) => `${diaISO(d)}|${store.estacionId ?? ""}|${store.destinoId ?? ""}`;
 const claveDia = computed(() => claveDe(store.fecha));
-const esHoy = computed(() => diaISO(store.fecha) === diaISO(new Date(ahora.value)));
 
-// —— Datos: el centro es el de la store; los lados se piden aquí ——
+// —— Un día: el de la store o, mientras llega, el que ya se tenía ——
 const cache = new Map<string, { en: number; salidas: SalidaResumen[] }>();
-const vigente = (clave: string) => {
-  const c = cache.get(clave);
-  return c && Date.now() - c.en < VIGENCIA ? c.salidas : null;
-};
 /** El día que tiene cargado la store (con sus filtros); null mientras carga otro o antes de la primera carga. */
-const diaCargado = ref<string | null>(store.contexto && !store.cargandoSalidas ? claveDia.value : null);
+const diaCargado = ref<string | null>(store.contexto && !store.cargandoSalidas && !store.porRango ? claveDia.value : null);
 watch(
   () => store.cargandoSalidas,
   (cargando) => {
@@ -180,82 +152,89 @@ watch(
     cache.set(claveDia.value, { en: Date.now(), salidas: store.salidas });
   },
 );
-/** Las salidas del centro: las de la store o, mientras llega, las que ya se tenían de ese día. */
-const centro = computed<SalidaResumen[] | null>(() => {
+const delDia = computed<SalidaResumen[] | null>(() => {
   if (diaCargado.value === claveDia.value) return store.salidasVisibles;
-  const previas = vigente(claveDia.value);
-  return previas ? store.visibles(previas) : null;
+  const c = cache.get(claveDia.value);
+  return c && Date.now() - c.en < VIGENCIA ? store.visibles(c.salidas) : null;
 });
-const cargandoCentro = computed(() => store.cargandoSalidas && !!centro.value);
 
-const crudos = reactive({ antes: [] as SalidaResumen[], despues: [] as SalidaResumen[] });
-const laterales = computed(() => ({ antes: store.visibles(crudos.antes), despues: store.visibles(crudos.despues) }));
-let turno = 0;
-async function lateral(d: Date): Promise<SalidaResumen[]> {
-  const clave = claveDe(d);
-  const previas = vigente(clave);
-  if (previas) return previas;
-  try {
-    const salidas = await api.fetchSalidas({ fecha: diaISO(d) }, store.estacionId, store.destinoId);
-    cache.set(clave, { en: Date.now(), salidas });
-    return salidas;
-  } catch {
-    return [];
-  }
-}
+// —— Rango: una columna por día, tantas como quepan ——
+const raiz = ref<HTMLElement | null>(null);
+const ancho = ref(0);
+const observador = new ResizeObserver(([e]) => (ancho.value = e!.contentRect.width));
+onMounted(() => raiz.value && observador.observe(raiz.value));
+onBeforeUnmount(() => observador.disconnect());
+const cupo = computed(() => Math.max(1, Math.floor((ancho.value - (ancho.value < 640 ? 36 : 52)) / ANCHO_DIA)));
+
+const todos = computed(() => (store.porRango ? diasDelRango(store.desde, store.hasta) : []));
+/** El primer día que se ve (índice en `todos`). */
+const inicio = ref(0);
 watch(
-  claveDia,
-  async () => {
-    const n = ++turno;
-    const [antes, despues] = await Promise.all([lateral(dias.value[0]), lateral(dias.value[2])]);
-    if (n !== turno) return;
-    crudos.antes = antes;
-    crudos.despues = despues;
-  },
-  { immediate: true },
+  () => [store.porRango, store.desde.getTime(), store.hasta.getTime()],
+  () => (inicio.value = 0),
 );
+const visibles = computed(() => todos.value.slice(inicio.value, inicio.value + cupo.value));
+const siguiente = computed(() => todos.value[inicio.value + visibles.value.length] ?? null);
+/** Antes de la primera carga del rango no hay nada que repartir. */
+const rangoListo = computed(() => store.porRango && !!store.contexto);
 
-const filas = computed(() => filasPorHora([laterales.value.antes, centro.value ?? [], laterales.value.despues]));
-const libresCentro = computed(() => (centro.value?.some((r) => r.capacidad) ? centro.value.reduce((n, r) => n + libres(r), 0) : null));
+interface Columna {
+  dia: Date;
+  clave: string;
+  hoy: boolean;
+  salidas: SalidaResumen[] | null;
+}
+const columnas = computed<Columna[]>(() => {
+  if (!store.porRango) {
+    const clave = diaISO(store.fecha);
+    return [{ dia: store.fecha, clave, hoy: clave === hoyISO.value, salidas: delDia.value }];
+  }
+  const claves = visibles.value.map(diaISO);
+  const listas = rangoListo.value ? porDia(store.salidasVisibles, claves) : [];
+  return visibles.value.map((dia, i) => ({ dia, clave: claves[i]!, hoy: claves[i] === hoyISO.value, salidas: listas[i] ?? null }));
+});
+const listo = computed(() => (store.porRango ? rangoListo.value : !!delDia.value));
+const cargando = computed(() => store.cargandoSalidas && listo.value);
+const hayHoy = computed(() => columnas.value.some((c) => c.hoy));
+const filas = computed(() => filasPorHora(columnas.value.map((c) => c.salidas ?? [])));
 
-// —— Moverse de día ——
+// —— Moverse: de día con una fecha, de página con un rango ——
 const direccion = ref<"izq" | "der" | "quieto">("quieto");
-/** La salida lateral que se pulsó: al llegar a su día se lleva a la vista y se resalta. */
-const destacada = ref<number | null>(null);
-function mover(delta: number, id: number | null = null) {
+function mover(delta: number) {
   direccion.value = delta < 0 ? "izq" : "der";
-  destacada.value = id;
   emit("mover", delta);
+}
+/** "Siguiente": el primer día que no se veía queda a la izquierda. */
+function pasar(delta: number) {
+  if (delta > 0 ? !siguiente.value : inicio.value === 0) return;
+  direccion.value = delta < 0 ? "izq" : "der";
+  inicio.value = delta > 0 ? inicio.value + visibles.value.length : Math.max(0, inicio.value - cupo.value);
 }
 function teclado(e: KeyboardEvent) {
   if (e.altKey || e.ctrlKey || e.metaKey || (e.key !== "ArrowLeft" && e.key !== "ArrowRight")) return;
   e.preventDefault();
-  mover(e.key === "ArrowLeft" ? -1 : 1);
+  const delta = e.key === "ArrowLeft" ? -1 : 1;
+  if (store.porRango) pasar(delta);
+  else mover(delta);
 }
+const claveVista = computed(() => (store.porRango ? `rango|${diaISO(store.desde)}|${diaISO(store.hasta)}|${inicio.value}` : claveDia.value));
 
-// —— Al llegar a un día: la destacada, la elegida, el ahora (hoy) o la primera salida ——
+// —— Al llegar: la elegida, el ahora (si hoy se ve) o la primera salida ——
 const cuerpo = ref<HTMLElement | null>(null);
 let ubicado: string | null = null;
-let apagar: ReturnType<typeof setTimeout> | undefined;
-onBeforeUnmount(() => clearTimeout(apagar));
 watch(
-  [claveDia, centro],
+  [claveVista, listo],
   async () => {
-    if (!centro.value || ubicado === claveDia.value) return;
-    ubicado = claveDia.value;
+    if (!listo.value || ubicado === claveVista.value) return;
+    ubicado = claveVista.value;
     await nextTick();
     const el = cuerpo.value;
     if (!el) return;
-    const id = destacada.value ?? store.salidaId;
-    const ficha = id != null ? el.querySelector<HTMLElement>(`.ficha[data-id="${id}"]`) : null;
-    const fila = ficha?.closest<HTMLElement>(".td__fila") ?? (esHoy.value ? [...el.querySelectorAll<HTMLElement>(".td__fila[data-hora]")].find((f) => Number(f.dataset.hora) >= ahoraHM.value[0]) : null);
+    const ficha = store.salidaId != null ? el.querySelector<HTMLElement>(`.ficha[data-id="${store.salidaId}"]`) : null;
+    const grupo = ficha?.closest<HTMLElement>(".td__fila") ?? (hayHoy.value ? [...el.querySelectorAll<HTMLElement>(".td__fila[data-hora]")].find((f) => Number(f.dataset.hora) >= ahoraHM.value[0]) : null);
+    // Desde el renglón del grupo (el rango de horas), que va justo encima.
+    const fila = (grupo?.previousElementSibling as HTMLElement | null) ?? grupo;
     el.scrollTop = fila ? Math.max(0, fila.offsetTop - el.clientHeight / 3) : 0;
-    if (ficha && destacada.value != null) {
-      ficha.classList.add("ficha--destacada");
-      clearTimeout(apagar);
-      apagar = setTimeout(() => ficha.classList.remove("ficha--destacada"), 2200);
-    }
-    destacada.value = null;
   },
   { immediate: true, flush: "post" },
 );
@@ -278,17 +257,28 @@ function claseFicha(r: SalidaResumen) {
 const semana = (d: Date) => new Intl.DateTimeFormat("es-GT", { weekday: "long" }).format(d);
 const numero = (d: Date) => new Intl.DateTimeFormat("es-GT", { day: "numeric", month: "long" }).format(d);
 const diaLargo = (d: Date) => new Intl.DateTimeFormat("es-GT", { weekday: "long", day: "numeric", month: "long" }).format(d);
-const difHoy = (d: Date) => Math.round((diaVecino(d, 0).getTime() - diaVecino(new Date(ahora.value), 0).getTime()) / 86_400_000);
-/** "Ayer", "Hoy", "Mañana" o "mié 21". */
+/** "jue 22". */
+const corto = (d: Date) => new Intl.DateTimeFormat("es-GT", { weekday: "short", day: "numeric" }).format(d).replace(".", "");
+/** "jue 22 – dom 25 de octubre": los días que se ven del rango. */
+const tramo = computed(() => {
+  const [a, b] = [visibles.value[0], visibles.value.at(-1)];
+  if (!a || !b) return "";
+  const mes = new Intl.DateTimeFormat("es-GT", { month: "long" }).format(b);
+  return a === b ? `${corto(a)} de ${mes}` : `${corto(a)} – ${corto(b)} de ${mes}`;
+});
+/** "hoy", "ayer", "mañana" o nada. */
 function relativo(d: Date) {
-  const n = difHoy(d);
-  if (n === -1) return "Ayer";
-  if (n === 0) return "Hoy";
-  if (n === 1) return "Mañana";
-  return new Intl.DateTimeFormat("es-GT", { weekday: "short", day: "numeric" }).format(d).replace(".", "");
+  const n = Math.round((diaVecino(d, 0).getTime() - diaVecino(new Date(ahora.value), 0).getTime()) / 86_400_000);
+  return ({ [-1]: "ayer", 0: "hoy", 1: "mañana" } as Record<number, string>)[n] ?? null;
 }
-const relativoCentro = computed(() => ({ [-1]: "ayer", 0: "hoy", 1: "mañana" })[difHoy(store.fecha)] ?? null);
+/** "11:30 a 11:55": la primera y la última hora de subida del grupo; una sola si coinciden. */
+function rango(l: SalidaResumen[]) {
+  if (!l.length) return "";
+  const [desde, hasta] = [reloj(subidaDe(l[0]!)), reloj(subidaDe(l.at(-1)!))];
+  return desde === hasta ? desde : `${desde} a ${hasta}`;
+}
 const cuenta = (l: SalidaResumen[]) => (l.length ? `${l.length} ${l.length === 1 ? "salida" : "salidas"}` : "Sin salidas");
+const libresDe = (l: SalidaResumen[]) => (l.some((r) => r.capacidad) ? l.reduce((n, r) => n + libres(r), 0) : null);
 
 const punta = (r: SalidaResumen, cual: "sube" | "baja") => r.viaje?.[cual].nombre ?? (cual === "sube" ? r.ruta.origen.nombre : r.ruta.destino.nombre) ?? "—";
 const viaje = (r: SalidaResumen) => `${punta(r, "sube")} → ${punta(r, "baja")}`;
@@ -310,15 +300,14 @@ const etiqueta = (r: SalidaResumen) =>
 
 <style scoped>
 /*
- * Tres columnas de día sobre un eje de horas. El centro es la "hoja": fondo
- * pleno y filos de color; los lados quedan hundidos (fondo tenue, fichas
- * mínimas y atenuadas) para que se lean como contexto, no como opciones.
+ * Columnas de día sobre un eje de horas. Cada día es una "hoja" (fondo
+ * pleno); el eje queda hundido. Con un solo día la cabecera es grande y
+ * centrada; con un rango, una por columna y el filo de color en la de hoy.
  */
 .td {
   --linea: var(--p-content-border-color);
   --hundido: color-mix(in srgb, var(--p-surface-500) 6%, var(--p-content-background));
-  --filo: color-mix(in srgb, var(--p-primary-color) 28%, transparent);
-  --cols: 3.25rem minmax(4.5rem, 0.75fr) minmax(0, 3fr) minmax(4.5rem, 0.75fr);
+  --cols: 3.25rem repeat(var(--n), minmax(0, 1fr));
   container-type: inline-size;
   overflow: hidden;
   border: 1px solid var(--linea);
@@ -328,7 +317,71 @@ const etiqueta = (r: SalidaResumen) =>
 @container (width < 40rem) {
   .td__cabecera,
   .td__fila {
-    --cols: 2.25rem 3.6rem minmax(0, 1fr) 3.6rem;
+    --cols: 2.25rem repeat(var(--n), minmax(0, 1fr));
+  }
+}
+
+/* —— Páginas del rango —— */
+.td__paginas {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.35rem 0.4rem;
+  border-bottom: 1px solid var(--linea);
+}
+.td__paginas-texto {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.td__paginas-texto small {
+  color: var(--p-text-muted-color);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+.td__pagina {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--p-text-color);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.td__pagina:hover:not(:disabled) {
+  border-color: var(--linea);
+  background: var(--p-content-background);
+}
+.td__pagina:focus-visible {
+  outline: 2px solid var(--p-primary-color);
+  outline-offset: 1px;
+}
+.td__pagina:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+.td__pagina-dia {
+  color: var(--p-primary-color);
+  font-size: 0.75rem;
+}
+@container (width < 40rem) {
+  .td__pagina > span,
+  .td__paginas-texto small {
+    display: none;
   }
 }
 
@@ -344,77 +397,23 @@ const etiqueta = (r: SalidaResumen) =>
   color: var(--p-text-muted-color);
 }
 .td__dia {
+  display: flex;
   min-width: 0;
+  flex-direction: column;
+  align-items: center;
   padding: 0.6rem 0.75rem;
-  border: 0;
-  background: transparent;
-  color: var(--p-text-color);
-  font: inherit;
-}
-.td__dia--lado {
-  display: flex;
-  align-items: center;
-  gap: 0.1rem;
-  padding-inline: 0.3rem;
-  color: var(--p-text-muted-color);
-  text-align: left;
-  cursor: pointer;
-  transition:
-    color 0.15s,
-    background 0.15s;
-}
-.td__dia--despues {
-  justify-content: flex-end;
-  text-align: right;
-}
-.td__dia--lado:hover,
-.td__dia--lado:focus-visible {
-  background: color-mix(in srgb, var(--p-primary-color) 7%, transparent);
-  color: var(--p-text-color);
-}
-.td__dia--lado:focus-visible {
-  outline: 2px solid var(--p-primary-color);
-  outline-offset: -2px;
-}
-.td__flecha {
-  flex: none;
-  transition: transform 0.15s;
-}
-.td__dia--lado:hover .td__flecha {
-  transform: translateX(-2px);
-}
-.td__dia--despues:hover .td__flecha {
-  transform: translateX(2px);
-}
-.td__dia-texto {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  line-height: 1.2;
-}
-.td__dia-rel {
-  overflow: hidden;
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.td__dia-cuenta {
-  overflow: hidden;
-  font-size: 0.7rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  opacity: 0.85;
-}
-.td__dia--centro {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  border-inline: 1px solid var(--filo);
+  border-left: 1px solid var(--linea);
   background: var(--p-content-background);
   box-shadow: inset 0 3px 0 var(--p-primary-color);
   line-height: 1.15;
   text-align: center;
+}
+.td--rango .td__dia {
+  padding: 0.45rem 0.5rem;
+  box-shadow: none;
+}
+.td--rango .td__dia--hoy {
+  box-shadow: inset 0 3px 0 var(--p-primary-color);
 }
 .td__dia-semana {
   color: var(--p-text-muted-color);
@@ -430,6 +429,10 @@ const etiqueta = (r: SalidaResumen) =>
   font-size: 1.25rem;
   font-weight: 650;
   letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.td--rango .td__dia-fecha {
+  font-size: 1rem;
 }
 .td__dia-hoy {
   color: var(--p-primary-color);
@@ -437,24 +440,18 @@ const etiqueta = (r: SalidaResumen) =>
   font-style: normal;
   font-weight: 600;
 }
-.td__dia--centro .td__dia-cuenta {
+.td__dia-cuenta {
+  max-width: 100%;
   margin-top: 0.15rem;
+  overflow: hidden;
   color: var(--p-text-muted-color);
+  font-size: 0.7rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 @container (width < 40rem) {
   .td__dia {
     padding: 0.5rem 0.25rem;
-  }
-  .td__dia--lado {
-    flex-direction: column;
-    justify-content: center;
-    text-align: center;
-  }
-  .td__dia--despues {
-    flex-direction: column-reverse;
-  }
-  .td__dia--lado .td__dia-cuenta {
-    display: none;
   }
   .td__dia-fecha {
     font-size: 1.05rem;
@@ -496,8 +493,25 @@ const etiqueta = (r: SalidaResumen) =>
   display: grid;
   grid-template-columns: var(--cols);
 }
-.td__fila + .td__fila > * {
+.td__fila + .td__rango > * {
   border-top: 1px dashed color-mix(in srgb, var(--linea) 80%, transparent);
+}
+/* Renglón del grupo: el rango de horas de cada día, sobre sus salidas. */
+.td__rango > * {
+  min-width: 0;
+  overflow: hidden;
+  padding: 0.3rem 0.75rem 0;
+  color: var(--p-text-muted-color);
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.td__rango > * + * {
+  border-left: 1px solid var(--linea);
+  background: var(--p-content-background);
 }
 .td__hora {
   padding: 0.55rem 0.45rem 0 0;
@@ -519,27 +533,23 @@ const etiqueta = (r: SalidaResumen) =>
     display: none;
   }
 }
-.td__lado {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  gap: 0.2rem;
-  padding: 0.35rem 0.4rem;
-}
-.td__centro {
+.td__col {
   position: relative;
   display: flex;
   min-width: 0;
   flex-direction: column;
   gap: 0.35rem;
   padding: 0.4rem 0.5rem;
-  border-inline: 1px solid var(--filo);
+  border-left: 1px solid var(--linea);
   background: var(--p-content-background);
-  /* La ficha se acomoda al ancho de esta columna, no al de la página. */
+  /* La ficha se acomoda al ancho de su día, no al de la página. */
   container: centro / inline-size;
 }
+.td--rango .td__col {
+  padding-inline: 0.4rem;
+}
 
-/* El ahora (solo hoy): una línea roja en la hora en curso. */
+/* El ahora (en el día de hoy): una línea roja en la hora en curso. */
 .td__ahora {
   position: absolute;
   z-index: 2;
@@ -560,7 +570,7 @@ const etiqueta = (r: SalidaResumen) =>
   content: "";
 }
 
-/* —— Ficha del centro —— */
+/* —— Ficha —— */
 .ficha {
   --tinta-barra: var(--p-emerald-500);
   position: relative;
@@ -611,14 +621,6 @@ const etiqueta = (r: SalidaResumen) =>
   border-color: var(--linea);
   box-shadow: none;
   transform: none;
-}
-.ficha--destacada {
-  animation: destacar 0.7s ease-in-out 3;
-}
-@keyframes destacar {
-  50% {
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--p-primary-color) 35%, transparent);
-  }
 }
 
 .ficha__hora {
@@ -779,86 +781,8 @@ const etiqueta = (r: SalidaResumen) =>
   }
 }
 
-/* —— Ficha de los lados: hora y siglas, atenuada —— */
-.sombra {
-  position: relative;
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  padding: 0.2rem 0.4rem 0.3rem;
-  overflow: hidden;
-  border: 1px solid transparent;
-  border-radius: 0.4rem;
-  background: color-mix(in srgb, var(--p-content-background) 55%, transparent);
-  color: var(--p-text-muted-color);
-  font: inherit;
-  line-height: 1.2;
-  text-align: left;
-  cursor: pointer;
-  opacity: 0.75;
-  transition:
-    opacity 0.15s,
-    border-color 0.15s;
-}
-.sombra::after {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  height: 2px;
-  background: linear-gradient(to right, color-mix(in srgb, var(--p-surface-500) 55%, transparent) var(--f), transparent var(--f));
-  content: "";
-}
-.sombra--lleno::after {
-  background: linear-gradient(to right, color-mix(in srgb, var(--p-red-500) 55%, transparent) var(--f), transparent var(--f));
-}
-.sombra:hover {
-  border-color: var(--linea);
-  color: var(--p-text-color);
-  opacity: 1;
-}
-.sombra--sin-tarifa {
-  opacity: 0.4;
-}
-.sombra__hora {
-  font-size: 0.78rem;
-  font-weight: 600;
-}
-.sombra__ruta {
-  overflow: hidden;
-  font-size: 0.66rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-@container (width < 40rem) {
-  .td__lado {
-    padding: 0.3rem 0.15rem;
-  }
-  .sombra {
-    align-items: center;
-    padding: 0.15rem 0.1rem 0.25rem;
-  }
-  .sombra__hora {
-    font-size: 0.7rem;
-  }
-  .sombra__ruta {
-    display: none;
-  }
-}
 
-/* —— Vacíos —— */
-.td__vacio-dia {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  margin: 0;
-  padding: 0.75rem;
-  border-inline: 1px solid var(--filo);
-  background: var(--p-content-background);
-  color: var(--p-text-muted-color);
-  font-size: 0.85rem;
-}
+/* —— Vacío —— */
 .td__vacio {
   display: flex;
   flex-direction: column;
@@ -871,13 +795,11 @@ const etiqueta = (r: SalidaResumen) =>
 
 @media (prefers-reduced-motion: reduce) {
   .td__cuerpo--izq,
-  .td__cuerpo--der,
-  .ficha--destacada {
+  .td__cuerpo--der {
     animation: none;
   }
   .ficha,
-  .sombra,
-  .td__flecha {
+  .td__pagina {
     transition: none;
   }
 }

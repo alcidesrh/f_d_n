@@ -1,12 +1,13 @@
 /**
- * Reglas puras de la vista de tres días de la venta: el día elegido en el
- * centro y sus vecinos a los lados, alineados por la hora a la que sube el
+ * Reglas puras de la vista de calendario de la venta: el día elegido o, con
+ * un rango, una columna por día, alineados por la hora a la que sube el
  * cliente (no la del origen de la ruta).
  */
 import type { SalidaResumen } from './types'
 
 const ZONA = 'America/Guatemala'
 const horaGT = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: ZONA })
+const diaGT = new Intl.DateTimeFormat('en-CA', { timeZone: ZONA })
 
 /** Cuándo sube el cliente: su parada si se conoce, si no la estación elegida o el origen. */
 export const subidaDe = (r: SalidaResumen): string => r.viaje?.sube.hora ?? r.salidaEstacion ?? r.salida
@@ -22,13 +23,13 @@ export const reloj = (iso: string) => horaMinuto(iso).map((n) => String(n).padSt
 
 export interface FilaHora {
   hora: number
-  /** Una lista por día, en el orden recibido (anterior, elegido, siguiente). */
+  /** Una lista por día, en el orden recibido. */
   dias: SalidaResumen[][]
 }
 
 /**
  * Las horas en que sube alguien en cualquiera de los días, en orden, con las
- * salidas de cada día en esa hora (por minuto). Las horas vacías en los tres no se pintan.
+ * salidas de cada día en esa hora (por minuto). Las horas vacías en todos no se pintan.
  */
 export function filasPorHora(dias: readonly (readonly SalidaResumen[])[]): FilaHora[] {
   const filas = new Map<number, SalidaResumen[][]>()
@@ -49,6 +50,20 @@ export function filasPorHora(dias: readonly (readonly SalidaResumen[])[]): FilaH
 /** El mismo día movido `delta` días (a medianoche local). */
 export function diaVecino(d: Date, delta: number): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate() + delta)
+}
+
+/** Los días (a medianoche local) de `desde` a `hasta`, ambos incluidos. */
+export function diasDelRango(desde: Date, hasta: Date): Date[] {
+  const dias: Date[] = []
+  for (let d = diaVecino(desde, 0); d <= hasta; d = diaVecino(d, 1)) dias.push(d)
+  return dias
+}
+
+/** Las salidas de cada día (`YYYY-MM-DD`) por el día en que sube el cliente, en la hora de Guatemala. */
+export function porDia(salidas: readonly SalidaResumen[], dias: readonly string[]): SalidaResumen[][] {
+  const listas = new Map(dias.map((d) => [d, [] as SalidaResumen[]]))
+  for (const r of salidas) listas.get(diaGT.format(new Date(subidaDe(r))))?.push(r)
+  return dias.map((d) => listas.get(d)!)
 }
 
 /** Ocupado del tramo, de 0 a 1; null si no se conoce la capacidad. */

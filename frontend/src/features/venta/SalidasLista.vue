@@ -24,16 +24,16 @@
 
     <template #cell="{ row, column }">
       <div v-if="column.key === 'sube' || column.key === 'baja'" class="celda min-w-0 leading-tight">
-        <div class="truncate tabular-nums">{{ horaPunta(s(row), column.key) }}</div>
-        <div class="truncate text-xs text-muted-color" :title="punta(s(row), column.key).nombre ?? ''">{{ punta(s(row), column.key).nombre ?? "—" }}</div>
+        <div class="truncate tabular-nums font-[450]">{{ horaPunta(s(row), column.key) }}</div>
+        <div class="truncate text-xs font-[350]" :title="punta(s(row), column.key).nombre ?? ''">{{ punta(s(row), column.key).nombre ?? "—" }}</div>
       </div>
       <div v-else-if="column.key === 'hora'" class="celda">
-        <div class="tracking-wide text-center tabular-nums whitespace-nowrap">{{ hora(s(row).salida) }}</div>
-        <div class="text-xs tabular-nums text-muted-color whitespace-nowrap">{{ fecha(s(row).salida) }}</div>
+        <div class="tracking-wide text-center tabular-nums whitespace-nowrap font-[450]">{{ hora(s(row).salida) }}</div>
+        <div class="text-xs tabular-nums whitespace-nowrap font-[350]">{{ fecha(s(row).salida) }}</div>
       </div>
       <div v-else-if="column.key === 'ruta'" class="celda ruta min-w-0 leading-tight">
-        <div class="truncate" :title="rutaNombres(s(row))">{{ rutaSiglas(s(row)) }}</div>
-        <div class="truncate text-xs tabular-nums text-muted-color" :title="rutaNombres(s(row))">{{ rutaNombres(s(row)) }}</div>
+        <div class="truncate font-[450]" :title="rutaNombres(s(row))">{{ rutaSiglas(s(row)) }}</div>
+        <div class="truncate text-xs tabular-nums font-[350]" :title="rutaNombres(s(row))">{{ rutaNombres(s(row)) }}</div>
       </div>
       <GridText v-else-if="column.key === 'empresa'" class="celda text-[0.9rem]!" :text="nombreEmpresa(s(row))" />
       <template v-else-if="column.key === 'bus'">

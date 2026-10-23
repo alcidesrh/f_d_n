@@ -11,11 +11,9 @@ use App\Entity\Enum\CanalVenta;
 use App\Entity\Enum\EstadoBoletoVenta;
 use App\Entity\Enum\EstadoFacturacion;
 use App\Entity\Enum\EstadoPagoWeb;
-use App\Entity\Nacion;
 use App\Entity\PagoWeb;
 use App\Entity\Salida;
 use App\Entity\ReservaAsiento;
-use App\Entity\TipoDocumento;
 use App\Venta\EnLinea\AjustesPagina;
 use App\Venta\EnLinea\Recargo;
 use App\Venta\Excepcion\VentaRechazada;
@@ -131,7 +129,11 @@ final class CompraWeb
             $this->reglas->exigirReceptorFacturable($comprador->nit, $cotizacion->total);
             $total = $total === null ? $cotizacion->total : $total->add($cotizacion->total);
         }
-        $this->exigirNitExistente($comprador->nit);
+        // Con NIT la factura sale a nombre de la razón social de la SAT, no del que escribió el comprador.
+        $razonSocial = $this->exigirNitExistente($comprador->nit);
+        if ($razonSocial !== null) {
+            $comprador = $comprador->conNombreFactura($razonSocial);
+        }
         $this->reservas->extender($token);
 
         // Cobra el comercio de la empresa de la ida.
@@ -195,20 +197,27 @@ final class CompraWeb
         );
     }
 
-    /** Un NIT que la SAT no conoce haría fallar la factura; si la consulta falla, se sigue. */
-    public function exigirNitExistente(string $nit): void
+    /**
+     * Un NIT que la SAT no conoce haría fallar la factura; si la consulta
+     * falla, se sigue.
+     *
+     * @return string|null razón social del NIT (null con CF o sin respuesta de la SAT)
+     */
+    public function exigirNitExistente(string $nit): ?string
     {
         if ($nit === "CF") {
-            return;
+            return null;
         }
         try {
-            $existe = $this->contribuyentes->nombreDeNit($nit) !== null;
+            $nombre = $this->contribuyentes->nombreDeNit($nit);
         } catch (CertificacionFallida) {
-            return;
+            return null;
         }
-        if (!$existe) {
+        if ($nombre === null) {
             throw new VentaRechazada("La SAT no reconoce ese NIT. Revíselo o use CF.", "comprador_nit");
         }
+
+        return $nombre;
     }
 
     /**
@@ -341,7 +350,8 @@ final class CompraWeb
         }
 
         $recargo = Recargo::de($pago->getRecargoPorciento());
-        $cliente = $this->cliente(Comprador::desdeArray($pago->getComprador()));
+        $comprador = Comprador::desdeArray($pago->getComprador());
+        $cliente = $this->cliente($comprador);
         $ventas = [];
         $total = null;
         foreach ($viajes as $i => $reservas) {
@@ -359,6 +369,7 @@ final class CompraWeb
                 ->setCanal(CanalVenta::WEB)
                 ->setCliente($cliente)
                 ->setTotal($cotizacion->total)
+                ->setNombreFactura($comprador->nombreFactura)
                 ->setEnviarCorreo(true)
                 ->setReferenciaPago($pago->getAutorizacion())
                 ->setEstado(EstadoBoletoVenta::CONFIRMADA)
@@ -406,14 +417,6 @@ final class CompraWeb
         $cliente->setEmail($c->email);
         if ($c->telefono) {
             $cliente->setTelefono($c->telefono);
-        }
-        if ($c->numeroDocumento) {
-            $cliente
-                ->setNumeroDocumento($c->numeroDocumento)
-                ->setTipoDocumento($c->tipoDocumentoId ? $this->em->find(TipoDocumento::class, $c->tipoDocumentoId) : null);
-        }
-        if ($c->nacionalidadId) {
-            $cliente->setNacionalidad($this->em->find(Nacion::class, $c->nacionalidadId));
         }
 
         return $cliente;

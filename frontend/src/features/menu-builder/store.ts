@@ -34,8 +34,10 @@ export interface MenuItemDraft {
   nombre: string
   /** Nombre de ícono Material Symbols (el `Icon` se busca o se crea al guardar). */
   icon: string
-  /** IRI de la `VueRoute`; nulo en un grupo. */
+  /** IRI de la `VueRoute`; nulo si es un enlace o un grupo. */
   route: string | null
+  /** Enlace escrito a mano; nulo si navega por ruta o es un grupo. */
+  path: string | null
 }
 
 export interface MenuDraft {

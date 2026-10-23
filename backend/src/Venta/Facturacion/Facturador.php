@@ -180,9 +180,9 @@ final class Facturador
             establecimiento: $venta->getEstacion()?->getNombre()
                 ?? ($venta->getAgencia()?->getNombre() ?? "Venta en línea"),
             receptorNit: $nit,
-            receptorNombre: $nit === "CF"
+            receptorNombre: $venta->getNombreFactura() ?: ($nit === "CF"
                 ? ($cliente?->getNombreCompleto() ?: "Consumidor final")
-                : ($cliente?->getNombreCompleto() ?: "Sin nombre"),
+                : ($cliente?->getNombreCompleto() ?: "Sin nombre")),
             receptorCorreo: $venta->isEnviarCorreo() ? $cliente?->getEmail() : null,
             items: $items,
             total: $venta->getTotal(),

@@ -54,7 +54,7 @@
                   </template>
                 </DatePicker>
                 <label class="flex cursor-pointer items-center gap-1 text-[0.65rem] leading-none text-muted-color absolute right-0 -mb-1 blottom-0">
-                  <ToggleSwitch v-model="store.porRango" class="scale-[0.6] origin-left -mr-3" @update:model-value="alCambiarModo" />
+                  <ToggleSwitch v-model="store.porRango" class="scale-[0.8] origin-left -mr-3" @update:model-value="alCambiarModo" />
                   Rango
                 </label>
               </div>
@@ -68,25 +68,25 @@
               </label>
             </div>
 
-            <div v-if="store.empresas.length > 1 || !store.porRango" class="flex flex-wrap items-center justify-start gap-2 my-3">
+            <div class="flex flex-wrap items-center justify-start gap-2 my-3">
               <button v-for="e in store.empresas.length > 1 ? store.empresas : []" :key="e.id" type="button" class="rounded-full border px-2.5 py-1 text-xs font-semibold" :class="store.empresaIds.includes(e.id) ? 'border-primary bg-primary text-primary-contrast' : 'border-surface-300 bg-transparent text-color'" :aria-pressed="store.empresaIds.includes(e.id)" @click="alternarEmpresa(e.id)">
                 {{ e.nombre }}
               </button>
-              <!-- Presentación de las salidas: lista o tres días (con rango, solo lista). -->
-              <div v-if="!store.porRango" class="vista ml-auto" role="group" aria-label="Presentación de las salidas">
+              <!-- Presentación de las salidas: lista o calendario. -->
+              <div class="vista ml-auto" role="group" aria-label="Presentación de las salidas">
                 <button v-for="v in VISTAS" :key="v.valor" type="button" class="vista__boton" :class="{ 'vista__boton--activa': vista === v.valor }" :aria-pressed="vista === v.valor" :title="v.titulo" @click="vista = v.valor">
                   <icon :name="v.icono" size="1.1rem" />
                   <span class="hidden @md:inline">{{ v.etiqueta }}</span>
                 </button>
               </div>
             </div>
-            <SalidasTresDias v-if="vistaEfectiva === 'dias'" @elegir="elegirSalida" @mover="moverDia" />
+            <SalidasCalendario v-if="vista === 'dias'" @elegir="elegirSalida" @mover="moverDia" />
             <div v-else class="relative">
               <SalidasLista :salidas="salidasMostradas" :cargando="store.cargandoSalidas" :salida-id="store.salidaId" @elegir="elegirSalida" />
               <!-- Flota en el borde entre la cabecera de la tabla y las salidas. -->
               <Button v-if="anteriores.length && !store.porRango" :label="verAnteriores ? 'Ocultar anteriores' : `Ver anteriores (${anteriores.length})`" size="small" rounded severity="secondary" class="anteriores shadow-md hover:bg-surface-50!" @click="verAnteriores = !verAnteriores" />
             </div>
-            <div v-if="vistaEfectiva === 'lista' && !store.porRango" class="flex items-center justify-between gap-2 mt-2">
+            <div v-if="!store.porRango" class="flex items-center justify-between gap-2 mt-2">
               <Button :label="etiquetaDia(-1)" severity="secondary" size="small" :disabled="store.cargandoSalidas" @click="moverDia(-1)">
                 <template #icon><icon name="chevron-left" class="mr-1" /></template>
               </Button>
@@ -212,7 +212,7 @@ import ClienteBuscador from "@/shared/cliente/ClienteBuscador.vue";
 import CobroDialog from "./CobroDialog.vue";
 import FacturacionFallidaDialog from "@/shared/facturacion/FacturacionFallidaDialog.vue";
 import SalidasLista from "./SalidasLista.vue";
-import SalidasTresDias from "./SalidasTresDias.vue";
+import SalidasCalendario from "./SalidasCalendario.vue";
 import { claveDeUsuario } from "@/core/auth/alcanceSesion";
 import VentaExitosaDialog from "./VentaExitosaDialog.vue";
 import { type OpcionesCobro, useVentaStore } from "./store";
@@ -258,11 +258,11 @@ function alMostrarCroquis() {
   void nextTick(() => croquis.value?.scrollIntoView({ behavior: suave ? "smooth" : "auto", block: "start" }));
 }
 
-/** Lista de la estación o tres días (ayer, el elegido, mañana); se recuerda por usuario en este navegador. */
+/** Lista de la estación o calendario (por hora; con rango, un día por columna); se recuerda por usuario en este navegador. */
 type Vista = "lista" | "dias";
 const VISTAS: { valor: Vista; icono: string; etiqueta: string; titulo: string }[] = [
   { valor: "lista", icono: "view-list-outline", etiqueta: "Lista", titulo: "Salidas del día en lista" },
-  { valor: "dias", icono: "view-week-outline", etiqueta: "Tres días", titulo: "El día, el anterior y el siguiente" },
+  { valor: "dias", icono: "view-week-outline", etiqueta: "Calendario", titulo: "Salidas por hora; con rango, un día por columna" },
 ];
 const PREFERENCIA_VISTA = "venta.vista-salidas";
 function leerVista(): Vista {
@@ -280,8 +280,6 @@ watch(vista, (v) => {
     // Sin almacenamiento: solo dura la visita.
   }
 });
-/** Con rango de fechas no hay "día del centro": siempre la lista. */
-const vistaEfectiva = computed<Vista>(() => (store.porRango ? "lista" : vista.value));
 
 function alternarEmpresa(id: number) {
   store.empresaIds = store.empresaIds.includes(id) ? store.empresaIds.filter((x) => x !== id) : [...store.empresaIds, id];

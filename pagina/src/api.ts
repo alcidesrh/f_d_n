@@ -8,6 +8,7 @@ import type {
   Catalogos,
   Compra,
   Estacion,
+  Region,
   ResultadoPago,
   Salida,
   SalidaPublico,
@@ -56,6 +57,20 @@ async function pedir<T>(ruta: string, opciones: { method?: string; body?: unknow
   return datos as T
 }
 
+/** Catálogos que no cambian mientras se usa la página: una sola petición por ruta (si falla, se reintenta). */
+const recordados = new Map<string, Promise<unknown>>()
+function recordado<T>(ruta: string): Promise<T> {
+  let p = recordados.get(ruta)
+  if (!p) {
+    p = pedir<T>(ruta).catch((e) => {
+      recordados.delete(ruta)
+      throw e
+    })
+    recordados.set(ruta, p)
+  }
+  return p as Promise<T>
+}
+
 export const estaciones = () => pedir<Estacion[]>('/estaciones')
 export interface EstacionDirectorio extends Estacion {
   direccion: string | null
@@ -65,6 +80,15 @@ export interface EstacionDirectorio extends Estacion {
 export const directorio = () => pedir<EstacionDirectorio[]>('/estaciones/directorio')
 export const destinos = (origen: number) => pedir<Estacion[]>(`/destinos?origen=${origen}`)
 export const catalogos = () => pedir<Catalogos>('/catalogos')
+
+/** Regiones del país (ISO alfa-2) para la dirección de la tarjeta; vacío = texto libre. */
+export const regiones = (pais: string) => recordado<Region[]>(`/geografia/${encodeURIComponent(pais)}/regiones`)
+
+/** Ciudades de una región; vacío = texto libre. */
+export const ciudades = (region: number) => recordado<string[]>(`/geografia/regiones/${region}/ciudades`)
+
+/** Razón social del NIT en la SAT (a ese nombre sale la factura). */
+export const nit = (valor: string) => pedir<{ nit: string; nombre: string }>(`/nit?nit=${encodeURIComponent(valor)}`)
 
 export const salidas = (origen: number, destino: number, fecha: string) =>
   pedir<Salida[]>(`/salidas?origen=${origen}&destino=${destino}&fecha=${fecha}`)

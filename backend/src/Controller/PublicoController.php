@@ -7,10 +7,9 @@ namespace App\Controller;
 use App\Entity\BoletoVenta;
 use App\Entity\Enum\EstadoSalida;
 use App\Entity\MensajeContacto;
-use App\Entity\Nacion;
 use App\Entity\Salida;
 use App\Entity\ReservaAsiento;
-use App\Entity\TipoDocumento;
+use App\Geografia\ConsultaGeografia;
 use App\Venta\Boleto\BoletoPdf;
 use App\Venta\Boleto\Comprobantes;
 use App\Venta\Boleto\DatosBoleto;
@@ -21,6 +20,9 @@ use App\Venta\HorasSalida;
 use App\Venta\EnLinea\AjustesPagina;
 use App\Venta\EnLinea\SolicitudCarrito;
 use App\Venta\Excepcion\VentaRechazada;
+use App\Venta\Facturacion\CertificacionFallida;
+use App\Venta\Facturacion\ConsultaContribuyente;
+use App\Venta\Facturacion\Facturador;
 use App\Venta\Pago\PasarelaPago;
 use App\Venta\Pago\DireccionFacturacion;
 use App\Venta\Pago\Navegador;
@@ -70,6 +72,7 @@ final class PublicoController extends AbstractController
         private readonly RateLimiterFactoryInterface $publicoLimiter,
         private readonly RateLimiterFactoryInterface $publicoPagoLimiter,
         private readonly RateLimiterFactoryInterface $publicoContactoLimiter,
+        private readonly RateLimiterFactoryInterface $publicoNitLimiter,
         private readonly AjustesPagina $ajustes,
     ) {}
 
@@ -92,18 +95,61 @@ final class PublicoController extends AbstractController
         return $this->limitado($request, fn() => $this->consulta->destinosDesde($request->query->getInt("origen")));
     }
 
-    /** Documentos y naciones para el formulario del comprador. */
+    /** Ajustes de la venta en línea para la página. */
     #[Route("/catalogos", name: "catalogos", methods: ["GET"])]
     public function catalogos(Request $request): JsonResponse
     {
         return $this->limitado($request, fn() => [
-            "tiposDocumento" => array_map(static fn(TipoDocumento $t) => ["id" => $t->getId(), "nombre" => $t->getNombre()], $this->em->getRepository(TipoDocumento::class)->findBy(["activo" => true], ["nombre" => "ASC"])),
-            "naciones" => array_map(static fn(Nacion $n) => ["id" => $n->getId(), "nombre" => $n->getNombre()], $this->em->getRepository(Nacion::class)->findBy([], ["nombre" => "ASC"])),
             "cierreMinutos" => $this->ajustes->actual()->getCierreMinutos(),
             "reservaMinutos" => Reservas::DURACION_MINUTOS,
             "maxAsientos" => SolicitudCarrito::MAX_ASIENTOS,
             "ventaEnLinea" => $this->ajustes->actual()->getVentaEnLinea(),
         ]);
+    }
+
+    /** Regiones del país (ISO alfa-2) para la dirección de la tarjeta; vacío = texto libre (ADR-041). */
+    #[Route("/geografia/{pais<[A-Za-z]{2}>}/regiones", name: "geografia_regiones", methods: ["GET"])]
+    public function regiones(string $pais, Request $request, ConsultaGeografia $geografia): JsonResponse
+    {
+        return self::cacheable($this->limitado($request, fn() => $geografia->regiones($pais)));
+    }
+
+    /** Ciudades de una región; vacío = texto libre (ADR-041). */
+    #[Route("/geografia/regiones/{id<\d+>}/ciudades", name: "geografia_ciudades", methods: ["GET"])]
+    public function ciudades(int $id, Request $request, ConsultaGeografia $geografia): JsonResponse
+    {
+        return self::cacheable($this->limitado($request, fn() => $geografia->ciudades($id)));
+    }
+
+    /** `?nit=`: razón social en la SAT, a cuyo nombre sale la factura (ADR-041). */
+    #[Route("/nit", name: "nit", methods: ["GET"])]
+    public function nit(Request $request, ConsultaContribuyente $contribuyentes): JsonResponse
+    {
+        return $this->limitado($request, function () use ($request, $contribuyentes) {
+            $nit = Facturador::normalizarNit((string) $request->query->get("nit"));
+            if ($nit === "CF" || !Comprador::nitValido($nit)) {
+                throw new VentaRechazada("El NIT no es válido. Si no tiene, use CF.", "comprador_nit", Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+            try {
+                $nombre = $contribuyentes->nombreDeNit($nit);
+            } catch (CertificacionFallida) {
+                throw new VentaRechazada("No pudimos consultar el NIT en la SAT. Puede continuar: se verificará al pagar.", "sin_respuesta", Response::HTTP_BAD_GATEWAY);
+            }
+
+            return $nombre !== null
+                ? ["nit" => $nit, "nombre" => $nombre]
+                : throw new VentaRechazada("La SAT no reconoce ese NIT. Revíselo o use CF.", "comprador_nit", Response::HTTP_NOT_FOUND);
+        }, $this->publicoNitLimiter);
+    }
+
+    /** El catálogo geográfico solo cambia al reimportarlo. */
+    private static function cacheable(JsonResponse $respuesta): JsonResponse
+    {
+        if ($respuesta->isSuccessful()) {
+            $respuesta->setPublic()->setMaxAge(86400);
+        }
+
+        return $respuesta;
     }
 
     /** `?origen&destino&fecha=AAAA-MM-DD` */

@@ -11,7 +11,6 @@
   <div class="tablero @container flex flex-col gap-4">
     <header class="flex flex-wrap items-end gap-3">
       <div class="min-w-0 flex-1">
-        <h1 class="text-lg font-semibold text-color">Tablero de gestión</h1>
         <p v-if="datos" class="text-xs text-muted-color">{{ rango(datos.periodo.desde, datos.periodo.hasta) }} · comparado con {{ datos.periodo.rotuloAnterior }} a la misma hora · actualizado {{ hora(datos.generado.slice(0, 16)) }}</p>
       </div>
       <template v-if="!sinPermiso">
@@ -24,7 +23,7 @@
     </header>
 
     <div v-if="sinPermiso" class="flex flex-col gap-3">
-      <Message severity="secondary" :closable="false">El tablero de gestión necesita el permiso de reportes de venta de toda una empresa. Estos son sus accesos más usados:</Message>
+      <!-- <Message severity="secondary" :closable="false">El tablero de gestión necesita el permiso de reportes de venta de toda una empresa. Estos son sus accesos más usados:</Message> -->
       <div class="accesos">
         <RouterLink v-for="a in accesos" :key="a.ruta" :to="a.ruta" class="acceso">
           <icon :name="a.icono" lg class="text-primary" />
@@ -126,6 +125,8 @@ import RendimientoRutas from "./componentes/RendimientoRutas.vue";
 import TableroPanel from "./componentes/TableroPanel.vue";
 import TendenciaVentas from "./componentes/TendenciaVentas.vue";
 import VentaAnticipada from "./componentes/VentaAnticipada.vue";
+
+const propietario = localStorage.getItem("sesion:propietario");
 
 const PERIODOS: { dias: DiasTablero; etiqueta: string }[] = [
   { dias: 1, etiqueta: "Hoy" },

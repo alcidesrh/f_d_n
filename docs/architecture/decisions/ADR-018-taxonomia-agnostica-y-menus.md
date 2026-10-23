@@ -22,7 +22,7 @@ Había además en la base de datos tablas huérfanas de un intento anterior de m
 
 **Menús** (`Menu`, `MenuItem`, `MenuPlacement`, módulo `App\Navigation`):
 
-- `MenuItem`: `nombre` (el `label` sigue siendo derivado), `icon` (`Icon`) y `route` (`VueRoute`), todos obligatorios. Se crea antes de usarse en un menú. `position` no vive en el ítem sino en el nodo de cada menú.
+- `MenuItem`: `nombre` (el `label` sigue siendo derivado) y `icon` (`Icon`), obligatorios. Su destino es uno de tres: `route` (`VueRoute`), `path` (un enlace escrito a mano, p. ej. `/salidas/chequeo`, para pantallas que se fijan sin depender del router) o ninguno, y entonces es un grupo. `route` y `path` son excluyentes (validación). Se crea antes de usarse en un menú. `position` no vive en el ítem sino en el nodo de cada menú.
 - `Menu`: `nombre`, `roles` (ManyToMany `Role`) y su propia `Taxonomy` (`subjectClass = MenuItem`), creada con el menú y oculta del CRUD.
 - `MenuPlacement`: menú + área (`LayoutArea`: `sidebar_left`, `sidebar_right`, `topbar_right`, una por slot `menu-content` del shell) + `position`. Un área admite varios menús ordenados; un menú puede estar en varias áreas.
 - Visibilidad (`MenuVisibility`): el usuario ve un menú colocado si alguno de sus roles es uno de los roles del menú **o un ascendiente** (`Role.parents`, transitivo) de alguno de ellos. Un menú sin roles no lo ve nadie.
@@ -45,5 +45,6 @@ La migración `Version20260925032716` elimina las tablas huérfanas de menús y 
 - `subjectId` no tiene clave foránea: la integridad referencial la cubre la aplicación. Si un sujeto se borra, sus nodos quedan colgados hasta el siguiente guardado del árbol; el lector los ignora y sube a sus hijos. Si se necesita limpieza inmediata, añadir un listener `postRemove` que borre los nodos por `(subjectClass, subjectId)`.
 - No se puede hacer `JOIN` DQL directo del nodo al sujeto; se carga por lotes por clase.
 - Renombrar una entidad clasificada exige actualizar `taxonomy_node.subject_class` y `taxonomy.subject_class`.
-- `MenuItem` no guarda valores de parámetros de ruta: las rutas con parámetros (`/lista/:entity`) no se ofrecen en el editor y se pintan deshabilitadas.
+- `MenuItem` no guarda valores de parámetros de ruta: las rutas con parámetros (`/lista/:entity`) no se ofrecen en el editor y se pintan deshabilitadas. Un enlace (`path`) sí puede llevar valores fijos en el path.
+- Un enlace se muestra según la pantalla a la que resuelve el path en el router (`router.resolve`, mismo filtro `meta.capacidad` que una ruta); un path que no resuelve a ninguna pantalla se muestra y su página la decide el router.
 - La ascendencia de roles sale de `Role.parents` (tabla `role_role`), no de `security.yaml` `role_hierarchy`; son dos jerarquías distintas.

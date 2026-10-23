@@ -47,7 +47,7 @@ const compra = (ventas: VentaCompra[], extra: Partial<CompraWeb> = {}): CompraWe
   referencia: 'ref',
   mensaje: null,
   empresa: { id: 1, nombre: 'FDN' },
-  comprador: { nombre: 'Ana', nombres: 'Ana', apellido: null, email: 'a@b.c', telefono: null, nit: 'CF' },
+  comprador: { nombre: 'Ana', nombres: 'Ana', apellido: null, email: 'a@b.c', telefono: null, nit: 'CF', nombreFactura: null },
   ventas,
   ...extra,
 })

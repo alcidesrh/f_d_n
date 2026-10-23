@@ -49,6 +49,26 @@ final class ValidacionesVentaTest extends TestCase
         $this->assertSame("CF", Comprador::desdeArray(["nombre" => "Ana", "email" => "ana@example.com"])->nit);
     }
 
+    public function testCompradorFacturaAOtroNombre(): void
+    {
+        $sinNombre = Comprador::desdeArray(["nombre" => "Ana", "email" => "ana@example.com", "nombreFactura" => "  "]);
+        $this->assertNull($sinNombre->nombreFactura, "vacío: a nombre del comprador");
+
+        $otro = Comprador::desdeArray(["nombre" => "Ana", "email" => "ana@example.com", "nombreFactura" => " Comercial Pérez "]);
+        $this->assertSame("Comercial Pérez", $otro->nombreFactura);
+        $this->assertSame("Comercial Pérez", Comprador::desdeArray($otro->toArray())->nombreFactura, "sobrevive al guardarse en el pago");
+
+        $sat = $otro->conNombreFactura("PEREZ LOPEZ, JUAN");
+        $this->assertSame("PEREZ LOPEZ, JUAN", $sat->nombreFactura);
+        $this->assertSame("Ana", $sat->nombre, "lo demás no cambia");
+    }
+
+    public function testCompradorIgnoraLosDatosDeDocumentoDeLaPaginaAnterior(): void
+    {
+        $c = Comprador::desdeArray(["nombre" => "Ana", "email" => "ana@example.com", "nacionalidad" => 3, "tipoDocumento" => 1, "numeroDocumento" => "X"]);
+        $this->assertArrayNotHasKey("nacionalidad", $c->toArray());
+    }
+
     public function testTarjetaValida(): void
     {
         $t = Tarjeta::desdeArray(["numero" => "4242 4242 4242 4242", "expira" => "12/30", "cvv" => "123", "titular" => "Ana"], new \DateTimeImmutable("2026-09-29"));

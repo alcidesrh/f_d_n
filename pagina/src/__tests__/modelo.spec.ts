@@ -12,11 +12,14 @@ import {
   expiraValida,
   luhn,
   marca,
+  nitValido,
+  normalizarNit,
   paises,
   porcentajeOcupado,
   porDepartamento,
   preciosDePlanta,
   quetzales,
+  regionParaBanco,
   restante,
   sumaCentavos,
   sumarDias,
@@ -133,6 +136,22 @@ describe('pago: país y 3-D Secure', () => {
     expect(exigeCodigoPostal('US')).toBe(true)
     expect(exigeCodigoPostal('CA')).toBe(true)
     expect(exigeCodigoPostal('GT')).toBe(false)
+  })
+
+  it('manda al banco el código del estado en EE. UU. y Canadá y el nombre en los demás', () => {
+    expect(regionParaBanco('US', { codigo: 'TX', nombre: 'Texas' })).toBe('TX')
+    expect(regionParaBanco('GT', { codigo: 'PE', nombre: 'Petén' })).toBe('Petén')
+    expect(regionParaBanco('CA', { codigo: null, nombre: 'Ontario' })).toBe('Ontario')
+  })
+
+  it('valida el NIT como la SAT (módulo 11, K como dígito)', () => {
+    expect(nitValido('28119266')).toBe(true)
+    expect(nitValido('4397700-6')).toBe(true)
+    expect(nitValido('28119267')).toBe(false)
+    expect(nitValido('CF')).toBe(false)
+    expect(normalizarNit(' c/f ')).toBe('CF')
+    expect(normalizarNit('')).toBe('CF')
+    expect(normalizarNit('4397700-6')).toBe('43977006')
   })
 
   it('acepta avisos solo de los orígenes esperados', () => {

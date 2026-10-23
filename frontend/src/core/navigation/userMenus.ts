@@ -5,6 +5,7 @@
  * editor de menús (`features/menu-builder`) tras guardar.
  */
 import { defineStore } from 'pinia'
+import type { RouteLocationRaw } from 'vue-router'
 import { podarMenu } from '@/core/acceso/reglas'
 import { http } from '@/core/http'
 
@@ -30,8 +31,11 @@ export interface NavItem {
   id: number
   label: string
   icon: string | null
-  /** Nulo en un grupo: agrupa a sus hijos y no navega. */
+  /** Ruta del router; nula si el ítem es un enlace o un grupo. */
   route: NavRoute | null
+  /** Enlace escrito a mano (`/salidas/chequeo`); nulo si navega por ruta o es un grupo. */
+  path: string | null
+  /** Con `route` y `path` nulos es un grupo: agrupa a sus hijos y no navega. */
   children: NavItem[]
 }
 
@@ -46,9 +50,9 @@ export type MenusByArea = Record<LayoutArea, NavMenu[]>
 const emptyAreas = (): MenusByArea => ({ sidebar_left: [], topbar_right: [], sidebar_right: [] })
 
 /** Qué pantallas puede abrir el usuario (lo fija el shell con `core/acceso`). */
-let filtro: ((nombreRuta: string) => boolean) | undefined
+let filtro: ((destino: RouteLocationRaw) => boolean) | undefined
 
-export function filtrarMenusCon(permitido: ((nombreRuta: string) => boolean) | undefined): void {
+export function filtrarMenusCon(permitido: ((destino: RouteLocationRaw) => boolean) | undefined): void {
   filtro = permitido
 }
 
@@ -64,7 +68,7 @@ export const useUserMenusStore = defineStore('userMenus', {
      * el shell. Con `permitido`, sin los ítems de pantallas que el usuario no
      * puede abrir (ADR-039) ni los menús que se quedan vacíos.
      */
-    async load(permitido: ((nombreRuta: string) => boolean) | undefined = filtro): Promise<void> {
+    async load(permitido: ((destino: RouteLocationRaw) => boolean) | undefined = filtro): Promise<void> {
       try {
         const data = { ...emptyAreas(), ...(await http.get<Partial<MenusByArea>>('/me/menus', { silent: true })) }
         if (permitido) {

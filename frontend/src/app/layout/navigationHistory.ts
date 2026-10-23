@@ -32,7 +32,7 @@ export const useNavigationHistoryStore = defineStore("navigationHistory", {
         path: route.fullPath,
         name: route.name ?? undefined,
         params: { ...route.params },
-        icon: route.meta?.icon,
+        icon: route.meta?.icon as string | undefined,
       });
 
       if (this.entries.length > MAX_CRUMBS) {

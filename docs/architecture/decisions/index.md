@@ -44,3 +44,4 @@
 | [ADR-038](ADR-038-flujo-de-la-encomienda-con-symfony-workflow.md) | Flujo de la encomienda con `symfony/workflow`: transiciones con nombre, guards y acciones del listado calculadas por el backend | Aceptada |
 | [ADR-039](ADR-039-accesos-con-alcance.md) | Accesos con alcance: capacidades en el código, roles planos y asignaciones por empresa y estación; denegar por defecto en la API genérica | Aceptada |
 | [ADR-040](ADR-040-autorizaciones-pases-de-un-solo-uso.md) | Autorizaciones: pases de un solo uso para lo que una regla impide (sin permiso, límite diario, fuera de hora) | Aceptada |
+| [ADR-041](ADR-041-datos-del-pago-en-la-pagina-web.md) | Datos del pago en la página web: dirección de la tarjeta por listas (país → región → ciudad) y factura a otro nombre o a la razón social del NIT | Aceptada |

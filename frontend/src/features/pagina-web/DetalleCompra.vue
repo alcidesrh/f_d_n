@@ -11,6 +11,7 @@
     <dl class="m-0 grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
       <div><dt class="text-muted-color">Comprador</dt><dd class="m-0 font-medium">{{ compra.comprador.nombre || '—' }}</dd></div>
       <div><dt class="text-muted-color">NIT</dt><dd class="m-0">{{ compra.comprador.nit }}</dd></div>
+      <div><dt class="text-muted-color">Factura a nombre de</dt><dd class="m-0">{{ compra.comprador.nombreFactura || compra.comprador.nombre || '—' }}</dd></div>
       <div><dt class="text-muted-color">Correo</dt><dd class="m-0"><a v-if="compra.comprador.email" :href="`mailto:${compra.comprador.email}`">{{ compra.comprador.email }}</a></dd></div>
       <div><dt class="text-muted-color">Teléfono</dt><dd class="m-0">{{ compra.comprador.telefono || '—' }}</dd></div>
       <div><dt class="text-muted-color">Tarjeta</dt><dd class="m-0">{{ compra.tarjeta.marca }} ···· {{ compra.tarjeta.ultimos4 }}</dd></div>

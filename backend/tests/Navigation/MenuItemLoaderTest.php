@@ -46,4 +46,19 @@ final class MenuItemLoaderTest extends TestCase
         $this->assertSame('/reporte/ventas', $serialized['route']['path']);
         $this->assertSame([], $serialized['route']['params']);
     }
+
+    public function testUnEnlaceSerializaSuPathSinRuta(): void
+    {
+        $serialized = MenuItemLoader::serialize(self::item(null)->setPath('/salidas/chequeo'));
+
+        $this->assertNull($serialized['route']);
+        $this->assertSame('/salidas/chequeo', $serialized['path']);
+    }
+
+    public function testUnItemConRutaNoTraePath(): void
+    {
+        $route = (new VueRoute())->setId(3)->setVueRouteName('reporte-ventas')->setPath('/reporte/ventas');
+
+        $this->assertNull(MenuItemLoader::serialize(self::item($route))['path']);
+    }
 }
