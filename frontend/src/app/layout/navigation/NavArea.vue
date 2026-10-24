@@ -80,6 +80,13 @@ function onLeave(el: Element, done: () => void) {
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--p-surface-400);
+  /* Una sola línea: si se partiera al angostarse el panel, empujaría al menú a mitad de la animación. */
+  white-space: nowrap;
+}
+.nav-section-title > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .nav-section-title:hover {
   background-color: var(--p-surface-200);
