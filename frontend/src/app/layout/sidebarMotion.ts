@@ -35,8 +35,8 @@ import { nextTick, onBeforeUnmount, onMounted, watch, type Ref } from "vue";
 import { useUiStore } from "@/app/ui";
 import type { SidebarStore } from "./sidebarStore";
 
-const DURATION = 0.2;
-const EASE = "power1.inOut";
+const DURATION = 0.3;
+const EASE = "power4.inOut";
 /**
  * Paso máximo por fotograma (ms). Un fotograma lento (el reacomodo único de `.main`,
  * el render de Vue del clic) cuenta como mucho esto: la animación se demora un
