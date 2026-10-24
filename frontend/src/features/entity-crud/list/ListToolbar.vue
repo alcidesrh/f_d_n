@@ -22,6 +22,26 @@
     </div>
 
     <div class="list-toolbar__controls" role="toolbar" aria-label="Controles del listado">
+      <button v-if="features.view" type="button" class="list-toolbar__btn tap-target" aria-label="Vista" v-tooltip.bottom="'Vista'" @click="viewPopover?.toggle($event)">
+        <icon :name="DENSITY_ICON[view.density]" size="1rem" :weight="500" />
+      </button>
+      <Popover ref="viewPopover">
+        <div class="flex flex-col gap-3 p-1">
+          <div class="flex flex-col gap-1.5">
+            <span class="text-xs font-semibold uppercase tracking-wide text-surface-500">Densidad</span>
+            <SelectButton :model-value="view.density" :options="DENSITIES" option-label="label" option-value="value" :allow-empty="false" size="small" @update:model-value="emit('density', $event)" />
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <span class="text-xs font-semibold uppercase tracking-wide text-surface-500">Disposición</span>
+            <SelectButton :model-value="view.layout" :options="LAYOUTS" option-label="label" option-value="value" :allow-empty="false" size="small" @update:model-value="emit('layout', $event)" />
+          </div>
+        </div>
+      </Popover>
+      <button v-if="features.maximize" type="button" class="list-toolbar__btn tap-target" :aria-label="maximized ? 'Restaurar tamaño' : 'Maximizar'" v-tooltip.bottom="maximized ? 'Restaurar (Esc)' : 'Maximizar'" @click="emit('maximize')">
+        <icon :name="maximized ? 'fullscreen-exit' : 'fullscreen'" size="1.3rem" />
+      </button>
+      <span v-if="features.view || features.columns" class="list-toolbar__sep" aria-hidden="true" />
+
       <button v-if="features.columns" type="button" class="list-toolbar__btn tap-target" aria-label="Columnas" v-tooltip.bottom="'Columnas'" @click="columnsPopover?.toggle($event)">
         <OverlayBadge v-if="hiddenCount > 0" :value="String(hiddenCount)" severity="secondary" size="small">
           <icon name="view-column-outline" size="1.25rem" />
@@ -43,24 +63,6 @@
         </div>
       </Popover>
 
-      <button v-if="features.view" type="button" class="list-toolbar__btn tap-target" aria-label="Vista" v-tooltip.bottom="'Vista'" @click="viewPopover?.toggle($event)">
-        <icon :name="DENSITY_ICON[view.density]" size="1rem" :weight="500" />
-      </button>
-      <Popover ref="viewPopover">
-        <div class="flex flex-col gap-3 p-1">
-          <div class="flex flex-col gap-1.5">
-            <span class="text-xs font-semibold uppercase tracking-wide text-surface-500">Densidad</span>
-            <SelectButton :model-value="view.density" :options="DENSITIES" option-label="label" option-value="value" :allow-empty="false" size="small" @update:model-value="emit('density', $event)" />
-          </div>
-          <div class="flex flex-col gap-1.5">
-            <span class="text-xs font-semibold uppercase tracking-wide text-surface-500">Disposición</span>
-            <SelectButton :model-value="view.layout" :options="LAYOUTS" option-label="label" option-value="value" :allow-empty="false" size="small" @update:model-value="emit('layout', $event)" />
-          </div>
-        </div>
-      </Popover>
-
-      <span v-if="features.view || features.columns" class="list-toolbar__sep" aria-hidden="true" />
-
       <button v-if="features.filter && filterPanel" type="button" class="list-toolbar__btn tap-target" :class="{ 'is-on': view.filtersOpen }" :aria-pressed="view.filtersOpen" aria-label="Filtros" v-tooltip.bottom="'Filtros'" @click="emit('toggle-filters')">
         <OverlayBadge v-if="activeFilters > 0" :value="String(activeFilters)" size="small">
           <icon name="filter-alt-outline" size="1.25rem" />
@@ -75,14 +77,6 @@
         <icon v-else :name="customFilter.icon" size="1.25rem" />
       </button>
 
-      <RouterLink v-for="enlace in enlaces" :key="enlace.key" :to="enlace.to" class="list-toolbar__btn tap-target" :aria-label="enlace.label" v-tooltip.bottom="enlace.label">
-        <icon :name="enlace.icon" size="1.25rem" />
-      </RouterLink>
-
-      <button v-if="configurable" type="button" class="list-toolbar__btn tap-target" aria-label="Configurar entidad" v-tooltip.bottom="'Configurar entidad'" @click="emit('configure')">
-        <icon name="settings-outline" size="1.25rem" />
-      </button>
-
       <button v-if="features.selection" type="button" class="list-toolbar__btn tap-target" :class="{ 'is-on': selectionMode }" :aria-pressed="selectionMode" aria-label="Modo selección" v-tooltip.bottom="'Seleccionar'" @click="emit('toggle-selection')">
         <icon :name="selectionMode ? 'check-box' : 'check-box-outline'" size="1.25rem" />
       </button>
@@ -93,9 +87,14 @@
 
       <span v-if="features.maximize || configurable || features.reset" class="list-toolbar__sep" aria-hidden="true" />
 
-      <button v-if="features.maximize" type="button" class="list-toolbar__btn tap-target" :aria-label="maximized ? 'Restaurar tamaño' : 'Maximizar'" v-tooltip.bottom="maximized ? 'Restaurar (Esc)' : 'Maximizar'" @click="emit('maximize')">
-        <icon :name="maximized ? 'fullscreen-exit' : 'fullscreen'" size="1.3rem" />
+      <RouterLink v-for="enlace in enlaces" :key="enlace.key" :to="enlace.to" class="list-toolbar__btn tap-target" :aria-label="enlace.label" v-tooltip.bottom="enlace.label">
+        <icon :name="enlace.icon" size="1.25rem" />
+      </RouterLink>
+
+      <button v-if="configurable" type="button" class="list-toolbar__btn tap-target" aria-label="Configurar entidad" v-tooltip.bottom="'Configurar entidad'" @click="emit('configure')">
+        <icon name="settings-outline" size="1.25rem" />
       </button>
+
       <button v-if="features.reset" type="button" class="list-toolbar__btn tap-target" aria-label="Restablecer vista" v-tooltip.bottom="'Restablecer vista'" @click="emit('reset')">
         <icon name="refresh" size="1.25rem" />
       </button>

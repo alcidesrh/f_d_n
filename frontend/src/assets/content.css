@@ -55,8 +55,8 @@
   padding: var(--page-gutter);
   padding-top: 2rem;
   padding-bottom: max(var(--page-gutter), 3rem);
-  max-width: var(--content-max);
-  margin: 0 auto;
+  /*max-width: var(--content-max);*/
+  /*margin: 0 auto;*/
 }
 .page-head {
   display: flex;
