@@ -244,6 +244,12 @@
       width: var(--sb-mini);
       overflow: visible;
     }
+    /* Sin el texto en el flujo el enlace mediría solo el ícono, menos que en `open`, y el
+       menú brincaría al cambiar de modo: una línea vacía le conserva el alto. */
+    & .menu-item .menu-link::before {
+      content: "";
+      height: 1lh;
+    }
     & .menu-text {
       position: fixed;
       margin: 0;
@@ -282,12 +288,21 @@
     scrollbar-width: none;
   }
   /* Botones: de `padding 8px` alineados al borde a centrados en `--sb-mini`; cerrar se
-     desvanece en el primer 40 % del pliegue. */
+     desvanece en el primer 40 % del pliegue y cede su lugar (ancho y separación) poco a
+     poco: el selector de modo llega a donde lo dibuja `mini` sin salirse del panel. */
   & .sidebar-control {
     padding-inline: calc(8px * var(--sb-k));
+    gap: calc(6px * var(--sb-k));
   }
   & .close-sidebar {
+    width: calc(28px * var(--sb-k));
+    min-width: 0;
+    overflow: hidden;
     opacity: var(--sb-fade);
+    /* Con dedo (`tap-target`) mide `--tap-min`. */
+    @media (pointer: coarse) {
+      min-width: calc(var(--tap-min) * var(--sb-k));
+    }
   }
   /* El texto se va en el primer 40 % del pliegue (y vuelve en el último 40 %). */
   & .menu-text {
