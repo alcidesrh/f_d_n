@@ -69,7 +69,7 @@
 
         <div class="fila-1-1 mt-10">
           <TableroPanel titulo="Operación de hoy" icono="today-outline" :subtitulo="`${datos.operacionHoy.total} salidas programadas para hoy`">
-            <OperacionHoy :operacion="datos.operacionHoy" :ahora="ahora" />
+            <OperacionHoy :operacion="datos.operacionHoy" />
           </TableroPanel>
 
           <TableroPanel titulo="Venta anticipada" icono="event-upcoming-outline" subtitulo="Hoy y los próximos 7 días" ayuda="Ocupación ya vendida de las salidas de cada día contra la ocupación final del mismo día de la semana anterior.">
@@ -229,8 +229,8 @@ onBeforeUnmount(() => {
  */
 
 .tablero {
-  --serie-estacion: var(--p-blue-500);
-  --serie-agencia: var(--p-emerald-500);
+  --serie-estacion: var(--p-emerald-600);
+  --serie-agencia: var(--p-blue-600);
   --serie-web: var(--p-amber-500);
   --linea-referencia: #8a8985;
   --secuencial-min: #e6f0fd;
@@ -242,8 +242,8 @@ onBeforeUnmount(() => {
   --estado-info: #2a78d6;
   --estado-generico: var(--p-emerald-500);
 }
-/* Las series no cambian: el tono 500 es el mismo en ambos modos (la rampa
-   invertida lo conserva) y cada canal tiene un solo color, como en el croquis. */
+/* Las series no cambian: cada canal tiene un solo tono, el mismo en ambos
+   modos, como en el croquis. */
 .dark .tablero {
   --linea-referencia: #a3a29b;
   --secuencial-min: #1b2636;

@@ -43,6 +43,7 @@ final class TableroTest extends TestCase
         array $facturacion = ["pendientes" => 0, "conError" => 0, "masAntigua" => null],
         array $flota = ["buses" => 0, "vencidas" => [], "porVencer" => []],
         ?array $incidencias = null,
+        array $boletosHoy = [],
     ): Tablero {
         $vacio = ["anulados" => 0, "montoAnulado" => 0, "cortesias" => 0, "valorCortesias" => 0];
 
@@ -57,7 +58,29 @@ final class TableroTest extends TestCase
             $facturacion,
             ["pendientes" => 0, "importe" => 0],
             $flota,
+            $boletosHoy,
         );
+    }
+
+    public function testBoletosDeHoyCuentanPorEstadoYRankeanALosVendedores(): void
+    {
+        $boletos = self::tablero(boletosHoy: [
+            ["usuarioId" => 7, "nombre" => "Ana Pérez", "usuario" => "ana.perez", "estado" => "emitido", "boletos" => 5],
+            ["usuarioId" => 7, "nombre" => "Ana Pérez", "usuario" => "ana.perez", "estado" => "anulado", "boletos" => 2],
+            ["usuarioId" => 8, "nombre" => "Luis Ruiz", "usuario" => "luis.ruiz", "estado" => "cancelado", "boletos" => 3],
+            ["usuarioId" => 8, "nombre" => "Luis Ruiz", "usuario" => "luis.ruiz", "estado" => "reasignado", "boletos" => 1],
+            ["usuarioId" => 8, "nombre" => "Luis Ruiz", "usuario" => "luis.ruiz", "estado" => "emitido", "boletos" => 1],
+            ["usuarioId" => null, "nombre" => null, "usuario" => null, "estado" => "emitido", "boletos" => 9],
+        ])->boletosDeHoy();
+
+        $this->assertSame(21, $boletos["total"]);
+        $this->assertSame(15, $boletos["estados"]["emitido"]);
+        $this->assertSame(2, $boletos["estados"]["anulado"]);
+        $this->assertSame(0, $boletos["estados"]["chequeado"], "los estados sin boletos salen en cero");
+        $this->assertSame([["id" => 7, "nombre" => "Ana Pérez", "usuario" => "ana.perez", "boletos" => 2]], $boletos["porEstado"]["anulado"]);
+        $this->assertSame([["id" => 8, "nombre" => "Luis Ruiz", "usuario" => "luis.ruiz", "boletos" => 1]], $boletos["porEstado"]["reasignado"]);
+        $this->assertSame([["id" => 8, "nombre" => "Luis Ruiz", "usuario" => "luis.ruiz", "boletos" => 3]], $boletos["porEstado"]["cancelado"]);
+        $this->assertArrayNotHasKey("emitido", $boletos["porEstado"], "los emitidos no se rankean");
     }
 
     public function testElPeriodoAnteriorSeCortaALaMismaHora(): void

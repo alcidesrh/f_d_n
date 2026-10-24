@@ -133,7 +133,7 @@ export const router = createRouter({
       meta: {
         capacidad: "iam.ver",
         title: "Accesos",
-        label: "¿Quién puede?",
+        label: "privilegios",
         icon: "shield-person-outline",
       },
     },

@@ -18,17 +18,26 @@
    * agencia = esmeralda, cortesía = lima, voucher = rosa; la
    * preventa es un contorno naranja punteado (es temporal).
    */
+  /*
+  --bm-sold-agency: color-mix(in srgb, var(--p-emerald-500, #10b981) 30%, var(--p-content-background));
+  --bm-sold-agency-stroke: color-mix(in srgb, var(--p-emerald-800, #059669) 80%, var(--p-content-background));
+  --bm-sold-agency-ink: var(--p-emerald-800, #065f46);
+
+  --bm-occupied: color-mix(in srgb, var(--p-blue-500, #14b8a6) 22%, var(--p-content-background));
+  --bm-occupied-stroke: color-mix(in srgb, var(--p-blue-800, #0d9488) 65%, var(--p-content-background));
+  --bm-occupied-ink: var(--p-blue-800, #115e59);*/
+
   --bm-occupied: color-mix(in srgb, var(--p-emerald-500, #10b981) 30%, var(--p-content-background));
   --bm-occupied-stroke: color-mix(in srgb, var(--p-emerald-600, #059669) 80%, var(--p-content-background));
   --bm-occupied-ink: var(--p-emerald-800, #065f46);
 
-  --bm-sold-web: color-mix(in srgb, var(--p-amber-400, #fbbf24) 20%, var(--p-content-background));
-  --bm-sold-web-stroke: color-mix(in srgb, var(--p-amber-600, #d97706) 78%, var(--p-content-background));
-  --bm-sold-web-ink: var(--p-amber-800, #92400e);
-
   --bm-sold-agency: color-mix(in srgb, var(--p-blue-500, #14b8a6) 22%, var(--p-content-background));
   --bm-sold-agency-stroke: color-mix(in srgb, var(--p-blue-600, #0d9488) 65%, var(--p-content-background));
   --bm-sold-agency-ink: var(--p-blue-800, #115e59);
+
+  --bm-sold-web: color-mix(in srgb, var(--p-amber-400, #fbbf24) 20%, var(--p-content-background));
+  --bm-sold-web-stroke: color-mix(in srgb, var(--p-amber-600, #d97706) 78%, var(--p-content-background));
+  --bm-sold-web-ink: var(--p-amber-800, #92400e);
 
   --bm-courtesy: color-mix(in srgb, var(--p-lime-500, #84cc16) 26%, var(--p-content-background));
   --bm-courtesy-stroke: color-mix(in srgb, var(--p-lime-600, #65a30d) 70%, var(--p-content-background));

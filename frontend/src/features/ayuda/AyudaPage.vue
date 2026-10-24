@@ -10,10 +10,22 @@
       <aside class="ayuda-indice" aria-label="Temas">
         <IconField>
           <InputIcon><icon name="search" /></InputIcon>
-          <InputText v-model="busqueda" placeholder="Buscar: contraseña, rol, estación…" aria-label="Buscar en la ayuda" fluid />
+          <InputText
+            v-model="busqueda"
+            placeholder="Buscar: contraseña, rol, estación…"
+            aria-label="Buscar en la ayuda"
+            fluid
+          />
         </IconField>
         <nav class="temas">
-          <button v-for="g in grupos" :key="g.tema.id" type="button" class="tema tap-target" :class="{ 'tema--activo': tema === g.tema.id }" @click="tema = tema === g.tema.id ? null : g.tema.id">
+          <button
+            v-for="g in grupos"
+            :key="g.tema.id"
+            type="button"
+            class="tema tap-target"
+            :class="{ 'tema--activo': tema === g.tema.id }"
+            @click="tema = tema === g.tema.id ? null : g.tema.id"
+          >
             <icon :name="g.tema.icono" />
             <span class="min-w-0 flex-1 truncate text-left">{{ g.tema.titulo }}</span>
             <span class="text-xs text-muted-color">{{ g.guias.length }}</span>
@@ -24,20 +36,39 @@
       <main class="flex min-w-0 flex-col gap-5">
         <Message v-if="pantalla" severity="info" :closable="false">
           <div class="flex flex-wrap items-center gap-2">
-            <span>{{ deEstaPantalla.length ? "Guías de la pantalla donde estaba." : "Todavía no hay guías para esa pantalla." }}</span>
+            <span>{{
+              deEstaPantalla.length
+                ? 'Guías de la pantalla donde estaba.'
+                : 'Todavía no hay guías para esa pantalla.'
+            }}</span>
             <Button label="Ver todas" size="small" text @click="verTodas" />
           </div>
         </Message>
 
-        <p v-if="!secciones.length" class="py-10 text-center text-muted-color">Nada coincide con «{{ busqueda }}».</p>
+        <p v-if="!secciones.length" class="py-10 text-center text-muted-color">
+          Nada coincide con «{{ busqueda }}».
+        </p>
 
         <section v-for="s in secciones" :key="s.tema.id" class="flex flex-col gap-2">
-          <h2 class="flex items-center gap-2 text-sm font-semibold tracking-wide text-muted-color uppercase">
+          <h2
+            class="flex items-center gap-2 text-sm font-semibold tracking-wide text-muted-color uppercase"
+          >
             <icon :name="s.tema.icono" />{{ s.tema.titulo }}
           </h2>
 
-          <article v-for="g in s.guias" :id="`guia-${g.id}`" :key="g.id" class="guia" :class="{ 'guia--abierta': abierta === g.id }">
-            <button type="button" class="guia-cabecera" :aria-expanded="abierta === g.id" @click="alternar(g.id)">
+          <article
+            v-for="g in s.guias"
+            :id="`guia-${g.id}`"
+            :key="g.id"
+            class="guia"
+            :class="{ 'guia--abierta': abierta === g.id }"
+          >
+            <button
+              type="button"
+              class="guia-cabecera"
+              :aria-expanded="abierta === g.id"
+              @click="alternar(g.id)"
+            >
               <span class="min-w-0 flex-1">
                 <span class="block font-medium">{{ g.titulo }}</span>
                 <span class="block text-sm text-muted-color">{{ g.resumen }}</span>
@@ -46,13 +77,18 @@
                   <Tag v-for="a in g.para" :key="a.etiqueta" :value="a.etiqueta" severity="info" />
                 </span>
               </span>
-              <icon :name="abierta === g.id ? 'expand-less' : 'expand-more'" class="text-muted-color" />
+              <icon
+                :name="abierta === g.id ? 'expand-less' : 'expand-more'"
+                class="text-muted-color"
+              />
             </button>
 
             <div v-if="abierta === g.id" class="guia-cuerpo">
               <p v-if="g.antes" class="antes">
                 <icon name="history" class="mt-0.5 shrink-0" />
-                <span><strong>Antes:</strong> {{ g.antes }}</span>
+                <span
+                  ><strong>Antes:</strong> <AyudaTexto :texto="g.antes" :visibles="idsVisibles"
+                /></span>
               </p>
 
               <div v-if="g.tabla" class="equivalencias" role="table" aria-label="Equivalencias">
@@ -62,23 +98,35 @@
                 </div>
                 <div v-for="f in g.tabla" :key="f.antes" class="equivalencia" role="row">
                   <span role="cell" class="text-muted-color">{{ f.antes }}</span>
-                  <span role="cell">{{ f.ahora }}</span>
+                  <span role="cell"><AyudaTexto :texto="f.ahora" :visibles="idsVisibles" /></span>
                 </div>
               </div>
 
               <ol v-if="g.pasos" class="pasos">
-                <li v-for="p in g.pasos" :key="p">{{ p }}</li>
+                <li v-for="p in g.pasos" :key="p">
+                  <AyudaTexto :texto="p" :visibles="idsVisibles" />
+                </li>
               </ol>
 
               <div v-if="g.ejemplo" class="ejemplo">
-                <p class="text-sm font-semibold"><icon name="lightbulb-outline" class="mr-1" />Ejemplo: {{ g.ejemplo.caso }}</p>
+                <p class="text-sm font-semibold">
+                  <icon name="lightbulb-outline" class="mr-1" />Ejemplo:
+                  <AyudaTexto :texto="g.ejemplo.caso" :visibles="idsVisibles" />
+                </p>
                 <ol class="pasos">
-                  <li v-for="p in g.ejemplo.pasos" :key="p">{{ p }}</li>
+                  <li v-for="p in g.ejemplo.pasos" :key="p">
+                    <AyudaTexto :texto="p" :visibles="idsVisibles" />
+                  </li>
                 </ol>
               </div>
 
               <ul v-if="g.ojo" class="ojo">
-                <li v-for="o in g.ojo" :key="o"><icon name="info-outline" class="mt-0.5 shrink-0 text-amber-600" />{{ o }}</li>
+                <li v-for="o in g.ojo" :key="o">
+                  <icon name="info-outline" class="mt-0.5 shrink-0 text-amber-600" /><AyudaTexto
+                    :texto="o"
+                    :visibles="idsVisibles"
+                  />
+                </li>
               </ul>
 
               <div v-if="g.abrir" class="flex justify-end">
@@ -99,6 +147,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAccesoStore } from '@/core/acceso/store'
 import { agruparPorTema, coincide, deLaPantalla, veGuia } from '@/core/ayuda/reglas'
+import AyudaTexto from './AyudaTexto.vue'
 import { GUIAS, TEMAS } from './contenido'
 
 defineOptions({ name: 'AyudaPage' })
@@ -111,11 +160,17 @@ const busqueda = ref('')
 const tema = ref<string | null>(null)
 
 const abierta = computed(() => (typeof route.params.guia === 'string' && route.params.guia) || null)
-const pantalla = computed(() => (typeof route.query.pantalla === 'string' ? route.query.pantalla : null))
+const pantalla = computed(() =>
+  typeof route.query.pantalla === 'string' ? route.query.pantalla : null,
+)
 
 const visibles = computed(() => GUIAS.filter((g) => veGuia(g, acceso.acceso)))
-const deEstaPantalla = computed(() => (pantalla.value ? visibles.value.filter((g) => deLaPantalla(g, [pantalla.value!])) : []))
+const deEstaPantalla = computed(() =>
+  pantalla.value ? visibles.value.filter((g) => deLaPantalla(g, [pantalla.value!])) : [],
+)
 const grupos = computed(() => agruparPorTema(TEMAS, visibles.value))
+/** Las guías que ve este usuario: los enlaces entre guías solo llevan a estas. */
+const idsVisibles = computed(() => new Set(visibles.value.map((g) => g.id)))
 
 const secciones = computed(() => {
   const base = deEstaPantalla.value.length ? deEstaPantalla.value : visibles.value
@@ -126,7 +181,10 @@ const secciones = computed(() => {
 })
 
 function alternar(id: string) {
-  void router.replace({ params: { guia: abierta.value === id ? undefined : id }, query: route.query })
+  void router.replace({
+    params: { guia: abierta.value === id ? undefined : id },
+    query: route.query,
+  })
 }
 
 function verTodas() {

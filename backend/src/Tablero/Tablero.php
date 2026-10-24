@@ -27,6 +27,12 @@ final class Tablero
     public const DIAS_COBERTURA = 3;
 
     private const CANALES = ["estacion", "agencia", "web"];
+    /** Estados de un boleto que puede tener una salida de hoy fuera de la web (`pospuesto` es solo web). */
+    private const ESTADOS_BOLETO = ["emitido", "chequeado", "transito", "finalizado", "anulado", "reasignado", "cancelado"];
+    /** Estados de boleto de los que "Operación de hoy" muestra quién más los hizo. */
+    private const ESTADOS_RANKING = ["anulado", "reasignado", "cancelado"];
+    /** Usuarios por estado en "Operación de hoy". */
+    public const USUARIOS_TOP = 3;
 
     /**
      * @param list<array{actual: bool, t: string, canal: string, ingresos: int, boletos: int}> $ventas cubos (hora o día) por canal
@@ -38,6 +44,7 @@ final class Tablero
      * @param array{pendientes: int, conError: int, masAntigua: ?string} $facturacion
      * @param array{pendientes: int, importe: int} $depositos
      * @param array{buses: int, vencidas: list<array{id: int, codigo: string, vence: string}>, porVencer: list<array{id: int, codigo: string, vence: string}>} $flota
+     * @param list<array{usuarioId: ?int, nombre: ?string, usuario: ?string, estado: string, boletos: int}> $boletosHoy boletos de las salidas de hoy sin la web, por estado y vendedor
      */
     public function __construct(
         private readonly Periodo $periodo,
@@ -50,6 +57,7 @@ final class Tablero
         private readonly array $facturacion,
         private readonly array $depositos,
         private readonly array $flota,
+        private readonly array $boletosHoy = [],
     ) {}
 
     /** @return array<string, mixed> */
@@ -200,8 +208,8 @@ final class Tablero
     }
 
     /**
-     * Salidas de hoy por estado y las próximas (de 30 min atrás a 4 h
-     * adelante) con lo vendido: lo que hay que mirar ahora mismo.
+     * Salidas de hoy y lo vendido en ellas, y los boletos de hoy por estado
+     * con quiénes más los anularon, reasignaron o cancelaron.
      *
      * @return array<string, mixed>
      */
@@ -209,35 +217,50 @@ final class Tablero
     {
         $p = $this->periodo;
         $manana = $p->hoy()->modify("+1 day");
-        $estados = ["programada" => 0, "abordando" => 0, "iniciada" => 0, "finalizada" => 0, "cancelada" => 0];
         $hoy = array_values(array_filter($this->salidas, static fn(SalidaTablero $s) => $s->fecha >= $p->hoy() && $s->fecha < $manana));
-        foreach ($hoy as $s) {
-            $estados[$s->estado] = ($estados[$s->estado] ?? 0) + 1;
-        }
-        $desde = $p->ahora->modify("-30 minutes");
-        $hasta = $p->ahora->modify("+4 hours");
-        $proximas = array_values(array_filter($this->salidas, static fn(SalidaTablero $s) => !$s->cancelada() && $s->fecha >= $desde && $s->fecha <= $hasta));
-        usort($proximas, static fn(SalidaTablero $a, SalidaTablero $b) => [$a->fecha, $a->id] <=> [$b->fecha, $b->id]);
-
         $vivas = array_filter($hoy, static fn(SalidaTablero $s) => !$s->cancelada());
 
         return [
             "total" => count($hoy),
-            "estados" => $estados,
+            "boletos" => $this->boletosDeHoy(),
             "asientosVendidos" => array_sum(array_map(static fn(SalidaTablero $s) => $s->boletos, $vivas)),
             "ocupacion" => self::ocupacionDe(array_values($vivas)),
-            "proximas" => array_map(static fn(SalidaTablero $s) => [
-                "id" => $s->id,
-                "fecha" => $s->fecha->format("Y-m-d\\TH:i"),
-                "ruta" => $s->ruta,
-                "bus" => $s->bus,
-                "empresa" => $s->empresa,
-                "estado" => $s->estado,
-                "boletos" => $s->boletos,
-                "asientos" => $s->asientos,
-                "ocupacion" => self::redondear($s->ocupacion()),
-            ], array_slice($proximas, 0, 12)),
-            "masProximas" => max(0, count($proximas) - 12),
+        ];
+    }
+
+    /**
+     * Boletos de hoy por estado (sin la web) y, para los que se anularon, se
+     * reasignaron o se cancelaron, los usuarios que más boletos tuvieron en
+     * cada uno. Un boleto cuenta a quien vendió la venta.
+     *
+     * @return array{total: int, estados: array<string, int>, porEstado: array<string, list<array{id: int, nombre: string, usuario: string, boletos: int}>>}
+     */
+    public function boletosDeHoy(): array
+    {
+        $estados = array_fill_keys(self::ESTADOS_BOLETO, 0);
+        $porEstado = [];
+        foreach ($this->boletosHoy as $f) {
+            $estados[$f["estado"]] = ($estados[$f["estado"]] ?? 0) + $f["boletos"];
+            if ($f["usuarioId"] === null || !in_array($f["estado"], self::ESTADOS_RANKING, true)) {
+                continue;
+            }
+            $u = &$porEstado[$f["estado"]][$f["usuarioId"]];
+            $u ??= ["id" => $f["usuarioId"], "nombre" => (string) $f["nombre"], "usuario" => (string) $f["usuario"], "boletos" => 0];
+            $u["boletos"] += $f["boletos"];
+            unset($u);
+        }
+
+        $ranking = [];
+        foreach (self::ESTADOS_RANKING as $estado) {
+            $lista = array_values($porEstado[$estado] ?? []);
+            usort($lista, static fn(array $a, array $b) => [$b["boletos"], $a["nombre"]] <=> [$a["boletos"], $b["nombre"]]);
+            $ranking[$estado] = array_slice($lista, 0, self::USUARIOS_TOP);
+        }
+
+        return [
+            "total" => array_sum($estados),
+            "estados" => $estados,
+            "porEstado" => $ranking,
         ];
     }
 

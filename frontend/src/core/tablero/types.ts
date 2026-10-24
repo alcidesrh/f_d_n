@@ -40,27 +40,30 @@ export interface CanalVentas {
   anterior: number
 }
 
-export type EstadoSalida = 'programada' | 'abordando' | 'iniciada' | 'finalizada' | 'cancelada'
+/** Estado de un boleto (`BoletoAsiento.estado`) en las salidas de hoy, sin la página web. */
+export type EstadoBoleto = 'emitido' | 'chequeado' | 'transito' | 'finalizado' | 'anulado' | 'reasignado' | 'cancelado'
 
-export interface SalidaProxima {
+/** Estados de los que "Operación de hoy" muestra quién más los hizo. */
+export type EstadoRanking = 'anulado' | 'reasignado' | 'cancelado'
+
+export interface UsuarioBoletos {
   id: number
-  fecha: string
-  ruta: string
-  bus: string | null
-  empresa: string | null
-  estado: EstadoSalida
+  nombre: string
+  usuario: string
   boletos: number
-  asientos: number
-  ocupacion: number | null
+}
+
+export interface BoletosHoy {
+  total: number
+  estados: Record<EstadoBoleto, number>
+  porEstado: Record<EstadoRanking, UsuarioBoletos[]>
 }
 
 export interface OperacionHoy {
   total: number
-  estados: Record<EstadoSalida, number>
+  boletos: BoletosHoy
   asientosVendidos: number
   ocupacion: number | null
-  proximas: SalidaProxima[]
-  masProximas: number
 }
 
 export interface RutaTablero {

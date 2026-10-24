@@ -40,12 +40,10 @@
             <button type="button" role="option" class="rol tap-target" :class="{ 'rol--activo': r.id === seleccion?.id }" :aria-selected="r.id === seleccion?.id" @click="elegir(r)">
               <icon :name="r.sistema ? 'shield-lock-outline' : r.base ? 'groups-outline' : 'badge-outline'" class="text-primary" />
               <span class="min-w-0 flex-1 text-left">
-                <span class="block truncate text-sm font-medium">{{ r.descripcion || r.nombre }}</span>
-                <span class="block truncate text-xs text-muted-color">{{ r.nombre }}</span>
+                <span class="block truncate text-sm font-medium">{{ r.nombre }}</span>
+                <span v-if="r.descripcion" class="block text-sm leading-snug text-muted-color">{{ r.descripcion }}</span>
               </span>
-              <span class="rol-cuenta" v-tooltip.left="`${r.usuarios} con asignación vigente`">
-                <icon name="person-outline" size=".85rem" />{{ r.usuarios }}
-              </span>
+              <span class="rol-cuenta" v-tooltip.left="`${r.usuarios} con asignación vigente`"> <icon name="person-outline" size=".85rem" />{{ r.usuarios }} </span>
             </button>
           </li>
           <li v-if="!rolesVisibles.length" class="py-4 text-center text-sm text-muted-color">Ningún rol coincide.</li>
@@ -77,12 +75,8 @@
             </div>
           </header>
 
-          <Message v-if="actual?.sistema" severity="secondary" :closable="false">
-            El rol de sistema tiene todas las capacidades, también las que se agreguen después, y no se edita. Se otorga con cuidado: quien lo tiene puede todo.
-          </Message>
-          <Message v-else-if="actual?.base" severity="secondary" :closable="false">
-            Lo tienen todos los usuarios sin asignárselo. Solo sirve para mostrar menús y cajas de administración a todos: no lleva capacidades.
-          </Message>
+          <Message v-if="actual?.sistema" severity="secondary" :closable="false"> El rol de sistema tiene todas las capacidades, también las que se agreguen después, y no se edita. Se otorga con cuidado: quien lo tiene puede todo. </Message>
+          <Message v-else-if="actual?.base" severity="secondary" :closable="false"> Lo tienen todos los usuarios sin asignárselo. Solo sirve para mostrar menús y cajas de administración a todos: no lleva capacidades. </Message>
 
           <template v-if="!actual?.sistema && !actual?.base">
             <div v-for="g in grupos" :key="g.area" class="area">
@@ -140,198 +134,205 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
-import { useConfirm } from 'primevue/useconfirm'
-import * as api from '@/core/acceso/api'
-import { agruparCatalogo, cambiosDeCapacidades, type GrupoCapacidades } from '@/core/acceso/reglas'
-import type { CatalogoAcceso, DefinicionCapacidad, Rol, RolPayload } from '@/core/acceso/tipos'
-import { notify } from '@/core/notify'
+import { computed, reactive, ref } from "vue";
+import { useConfirm } from "primevue/useconfirm";
+import * as api from "@/core/acceso/api";
+import { agruparCatalogo, cambiosDeCapacidades, type GrupoCapacidades } from "@/core/acceso/reglas";
+import type { CatalogoAcceso, DefinicionCapacidad, Rol, RolPayload } from "@/core/acceso/tipos";
+import { notify } from "@/core/notify";
 
-defineOptions({ name: 'RolesPage' })
+defineOptions({ name: "RolesPage" });
 
-const OPERACIONES = ['ver', 'editar', 'eliminar'] as const
+const OPERACIONES = ["ver", "editar", "eliminar"] as const;
 
-const confirm = useConfirm()
-const catalogo = ref<CatalogoAcceso | null>(null)
-const roles = ref<Rol[]>([])
-const cargando = ref(true)
-const guardando = ref(false)
-const error = ref<string | null>(null)
-const busqueda = ref('')
-const seleccion = ref<Rol | null>(null)
+const confirm = useConfirm();
+const catalogo = ref<CatalogoAcceso | null>(null);
+const roles = ref<Rol[]>([]);
+const cargando = ref(true);
+const guardando = ref(false);
+const error = ref<string | null>(null);
+const busqueda = ref("");
+const seleccion = ref<Rol | null>(null);
 
 interface Borrador {
-  nombre: string
-  descripcion: string
-  limites: Record<string, number | null>
+  nombre: string;
+  descripcion: string;
+  limites: Record<string, number | null>;
 }
-const borrador = ref<Borrador | null>(null)
+const borrador = ref<Borrador | null>(null);
 /** Casillas marcadas por código (el `Set` del borrador se arma de aquí). */
-const marcadas = reactive<Record<string, boolean>>({})
+const marcadas = reactive<Record<string, boolean>>({});
 
-const puedeEditar = computed(() => catalogo.value?.puede.roles ?? false)
-const actual = computed(() => (borrador.value ? seleccion.value : null))
-const soloLectura = computed(() => !puedeEditar.value || Boolean(actual.value?.sistema))
-const grupos = computed(() => agruparCatalogo(catalogo.value?.capacidades ?? []))
-const nombres = computed(() => new Map((catalogo.value?.capacidades ?? []).map((c) => [c.codigo, c.nombre])))
+const puedeEditar = computed(() => catalogo.value?.puede.roles ?? false);
+const actual = computed(() => (borrador.value ? seleccion.value : null));
+const soloLectura = computed(() => !puedeEditar.value || Boolean(actual.value?.sistema));
+const grupos = computed(() => agruparCatalogo(catalogo.value?.capacidades ?? []));
+const nombres = computed(() => new Map((catalogo.value?.capacidades ?? []).map((c) => [c.codigo, c.nombre])));
 
 const rolesVisibles = computed(() => {
-  const q = busqueda.value.trim().toLocaleLowerCase()
-  if (!q) return roles.value
-  return roles.value.filter((r) => `${r.nombre} ${r.descripcion ?? ''} ${r.capacidades.map((c) => `${c} ${nombres.value.get(c) ?? ''}`).join(' ')}`.toLocaleLowerCase().includes(q))
-})
+  const q = busqueda.value.trim().toLocaleLowerCase();
+  if (!q) return roles.value;
+  return roles.value.filter((r) => `${r.nombre} ${r.descripcion ?? ""} ${r.capacidades.map((c) => `${c} ${nombres.value.get(c) ?? ""}`).join(" ")}`.toLocaleLowerCase().includes(q));
+});
 
 async function cargar() {
-  cargando.value = true
-  error.value = null
+  cargando.value = true;
+  error.value = null;
   try {
-    ;[catalogo.value, roles.value] = await Promise.all([api.fetchCatalogo(), api.fetchRoles()])
+    [catalogo.value, roles.value] = await Promise.all([api.fetchCatalogo(), api.fetchRoles()]);
     if (seleccion.value) {
-      const otra = roles.value.find((r) => r.id === seleccion.value!.id)
-      if (otra) elegir(otra)
+      const otra = roles.value.find((r) => r.id === seleccion.value!.id);
+      if (otra) elegir(otra);
       else {
-        seleccion.value = null
-        borrador.value = null
+        seleccion.value = null;
+        borrador.value = null;
       }
     }
   } catch (e) {
-    error.value = e instanceof Error ? e.message : 'No se pudieron cargar los roles.'
+    error.value = e instanceof Error ? e.message : "No se pudieron cargar los roles.";
   } finally {
-    cargando.value = false
+    cargando.value = false;
   }
 }
-void cargar()
+void cargar();
 
 function llenar(capacidades: string[]) {
-  for (const k of Object.keys(marcadas)) delete marcadas[k]
-  for (const c of capacidades) marcadas[c] = true
+  for (const k of Object.keys(marcadas)) delete marcadas[k];
+  for (const c of capacidades) marcadas[c] = true;
 }
 
 function elegir(r: Rol) {
-  seleccion.value = r
-  borrador.value = { nombre: r.nombre, descripcion: r.descripcion ?? '', limites: { ...r.limites } }
-  llenar(r.capacidades)
+  seleccion.value = r;
+  borrador.value = { nombre: r.nombre, descripcion: r.descripcion ?? "", limites: { ...r.limites } };
+  llenar(r.capacidades);
 }
 
 function nuevo() {
-  seleccion.value = null
-  borrador.value = { nombre: '', descripcion: '', limites: {} }
-  llenar([])
+  seleccion.value = null;
+  borrador.value = { nombre: "", descripcion: "", limites: {} };
+  llenar([]);
 }
 
-const elegidas = computed(() => Object.entries(marcadas).filter(([, v]) => v).map(([k]) => k).sort())
+const elegidas = computed(() =>
+  Object.entries(marcadas)
+    .filter(([, v]) => v)
+    .map(([k]) => k)
+    .sort(),
+);
 
 const cambios = computed(() => {
-  if (!borrador.value) return ''
-  if (!actual.value) return borrador.value.nombre.trim() ? 'Rol nuevo sin guardar' : ''
-  const { agregadas, quitadas } = cambiosDeCapacidades(actual.value.capacidades, elegidas.value)
-  const datos = borrador.value.nombre !== actual.value.nombre || borrador.value.descripcion !== (actual.value.descripcion ?? '')
-  const limites = JSON.stringify(limpios(borrador.value.limites)) !== JSON.stringify(limpios(actual.value.limites))
-  const partes = [agregadas.length ? `+${agregadas.length}` : '', quitadas.length ? `−${quitadas.length}` : '', datos ? 'datos' : '', limites ? 'límites' : ''].filter(Boolean)
-  return partes.length ? `Sin guardar: ${partes.join(', ')}` : ''
-})
+  if (!borrador.value) return "";
+  if (!actual.value) return borrador.value.nombre.trim() ? "Rol nuevo sin guardar" : "";
+  const { agregadas, quitadas } = cambiosDeCapacidades(actual.value.capacidades, elegidas.value);
+  const datos = borrador.value.nombre !== actual.value.nombre || borrador.value.descripcion !== (actual.value.descripcion ?? "");
+  const limites = JSON.stringify(limpios(borrador.value.limites)) !== JSON.stringify(limpios(actual.value.limites));
+  const partes = [agregadas.length ? `+${agregadas.length}` : "", quitadas.length ? `−${quitadas.length}` : "", datos ? "datos" : "", limites ? "límites" : ""].filter(Boolean);
+  return partes.length ? `Sin guardar: ${partes.join(", ")}` : "";
+});
 
 function limpios(l: Record<string, number | null | undefined>): Record<string, number> {
-  return Object.fromEntries(Object.entries(l).filter(([, v]) => v !== null && v !== undefined).sort(([a], [b]) => a.localeCompare(b))) as Record<string, number>
+  return Object.fromEntries(
+    Object.entries(l)
+      .filter(([, v]) => v !== null && v !== undefined)
+      .sort(([a], [b]) => a.localeCompare(b)),
+  ) as Record<string, number>;
 }
 
 function limitesDe(c: DefinicionCapacidad) {
-  return (catalogo.value?.limites ?? []).filter((l) => l.capacidad === c.codigo)
+  return (catalogo.value?.limites ?? []).filter((l) => l.capacidad === c.codigo);
 }
 
 function codigosDe(g: GrupoCapacidades): string[] {
-  return [...g.dominio.map((c) => c.codigo), ...g.recursos.flatMap((r) => OPERACIONES.map((op) => r[op]?.codigo).filter((c): c is string => Boolean(c)))]
+  return [...g.dominio.map((c) => c.codigo), ...g.recursos.flatMap((r) => OPERACIONES.map((op) => r[op]?.codigo).filter((c): c is string => Boolean(c)))];
 }
 
 /** true: todas; false: ninguna; null: algunas. */
 function estadoArea(g: GrupoCapacidades): boolean | null {
-  const codigos = codigosDe(g)
-  const n = codigos.filter((c) => marcadas[c]).length
-  return n === 0 ? false : n === codigos.length ? true : null
+  const codigos = codigosDe(g);
+  const n = codigos.filter((c) => marcadas[c]).length;
+  return n === 0 ? false : n === codigos.length ? true : null;
 }
 
 function marcarArea(g: GrupoCapacidades, valor: boolean) {
-  for (const c of codigosDe(g)) marcadas[c] = valor
+  for (const c of codigosDe(g)) marcadas[c] = valor;
 }
 
 function cuantasDe(g: GrupoCapacidades): string {
-  const codigos = codigosDe(g)
-  return `${codigos.filter((c) => marcadas[c]).length} de ${codigos.length}`
+  const codigos = codigosDe(g);
+  return `${codigos.filter((c) => marcadas[c]).length} de ${codigos.length}`;
 }
 
 function descartar() {
-  if (actual.value) elegir(actual.value)
-  else borrador.value = null
+  if (actual.value) elegir(actual.value);
+  else borrador.value = null;
 }
 
 function payload(): RolPayload {
-  const b = borrador.value!
-  const capacidades = elegidas.value
+  const b = borrador.value!;
+  const capacidades = elegidas.value;
   // Un límite solo vale con su capacidad marcada.
-  const limites = Object.fromEntries(
-    Object.entries(limpios(b.limites)).filter(([codigo]) => capacidades.includes((catalogo.value?.limites ?? []).find((l) => l.codigo === codigo)?.capacidad ?? '')),
-  )
-  return { nombre: b.nombre.trim(), descripcion: b.descripcion.trim() || null, capacidades, limites }
+  const limites = Object.fromEntries(Object.entries(limpios(b.limites)).filter(([codigo]) => capacidades.includes((catalogo.value?.limites ?? []).find((l) => l.codigo === codigo)?.capacidad ?? "")));
+  return { nombre: b.nombre.trim(), descripcion: b.descripcion.trim() || null, capacidades, limites };
 }
 
 async function guardar() {
   if (!borrador.value?.nombre.trim()) {
-    notify.warning('El rol necesita un nombre.')
-    return
+    notify.warning("El rol necesita un nombre.");
+    return;
   }
-  const r = actual.value
+  const r = actual.value;
   if (r && r.usuarios > 0) {
-    const { agregadas, quitadas } = cambiosDeCapacidades(r.capacidades, elegidas.value)
+    const { agregadas, quitadas } = cambiosDeCapacidades(r.capacidades, elegidas.value);
     if (agregadas.length || quitadas.length) {
       const ok = await new Promise<boolean>((resolve) =>
         confirm.require({
-          header: 'Cambiar un rol asignado',
-          message: `Lo tienen ${r.usuarios} ${r.usuarios === 1 ? 'usuario' : 'usuarios'}: el cambio les rige desde ya.${agregadas.length ? `\n\nGanan: ${agregadas.map((c) => nombres.value.get(c) ?? c).join(', ')}.` : ''}${quitadas.length ? `\n\nPierden: ${quitadas.map((c) => nombres.value.get(c) ?? c).join(', ')}.` : ''}`,
-          acceptLabel: 'Guardar',
-          rejectLabel: 'Cancelar',
+          header: "Cambiar un rol asignado",
+          message: `Lo tienen ${r.usuarios} ${r.usuarios === 1 ? "usuario" : "usuarios"}: el cambio les rige desde ya.${agregadas.length ? `\n\nGanan: ${agregadas.map((c) => nombres.value.get(c) ?? c).join(", ")}.` : ""}${quitadas.length ? `\n\nPierden: ${quitadas.map((c) => nombres.value.get(c) ?? c).join(", ")}.` : ""}`,
+          acceptLabel: "Guardar",
+          rejectLabel: "Cancelar",
           accept: () => resolve(true),
           reject: () => resolve(false),
           onHide: () => resolve(false),
         }),
-      )
-      if (!ok) return
+      );
+      if (!ok) return;
     }
   }
-  guardando.value = true
+  guardando.value = true;
   try {
-    const guardado = r ? await api.guardarRol(r.id, payload()) : await api.crearRol(payload())
-    notify.success(r ? 'Rol guardado.' : 'Rol creado.')
-    await cargar()
-    const nuevoRol = roles.value.find((x) => x.id === guardado.id)
-    if (nuevoRol) elegir(nuevoRol)
+    const guardado = r ? await api.guardarRol(r.id, payload()) : await api.crearRol(payload());
+    notify.success(r ? "Rol guardado." : "Rol creado.");
+    await cargar();
+    const nuevoRol = roles.value.find((x) => x.id === guardado.id);
+    if (nuevoRol) elegir(nuevoRol);
   } catch (e) {
-    notify.error(e instanceof Error ? e.message : 'No se pudo guardar el rol.')
+    notify.error(e instanceof Error ? e.message : "No se pudo guardar el rol.");
   } finally {
-    guardando.value = false
+    guardando.value = false;
   }
 }
 
 function eliminar() {
-  const r = actual.value
-  if (!r) return
+  const r = actual.value;
+  if (!r) return;
   confirm.require({
-    header: 'Eliminar rol',
+    header: "Eliminar rol",
     message: `¿Eliminar «${r.descripcion || r.nombre}»? Solo se puede si nadie lo tiene asignado.`,
-    acceptLabel: 'Eliminar',
-    rejectLabel: 'Cancelar',
-    acceptProps: { severity: 'danger' },
+    acceptLabel: "Eliminar",
+    rejectLabel: "Cancelar",
+    acceptProps: { severity: "danger" },
     accept: async () => {
       try {
-        await api.eliminarRol(r.id)
-        notify.success('Rol eliminado.')
-        seleccion.value = null
-        borrador.value = null
-        await cargar()
+        await api.eliminarRol(r.id);
+        notify.success("Rol eliminado.");
+        seleccion.value = null;
+        borrador.value = null;
+        await cargar();
       } catch (e) {
-        notify.error(e instanceof Error ? e.message : 'No se pudo eliminar el rol.')
+        notify.error(e instanceof Error ? e.message : "No se pudo eliminar el rol.");
       }
     },
-  })
+  });
 }
 </script>
 
@@ -351,6 +352,7 @@ function eliminar() {
 }
 .roles-lista {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.15rem;
   max-height: min(40dvh, 22rem);
   overflow-y: auto;

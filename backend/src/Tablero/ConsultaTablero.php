@@ -47,7 +47,45 @@ final class ConsultaTablero
             $this->facturacion($empresa),
             $this->depositos($empresa),
             $this->flota($p, $empresa),
+            $this->boletosHoy($p, $empresa),
         );
+    }
+
+    /**
+     * Boletos de las salidas de hoy por estado y por quien los vendió, sin la
+     * página web (su operación va aparte). Solo ventas confirmadas.
+     *
+     * @return list<array{usuarioId: ?int, nombre: ?string, usuario: ?string, estado: string, boletos: int}>
+     */
+    private function boletosHoy(Periodo $p, ?int $empresa): array
+    {
+        $filas = $this->db->fetchAllAssociative(
+            sprintf(
+                "SELECT u.id AS usuario_id,
+                        COALESCE(NULLIF(TRIM(CONCAT(u.nombre, ' ', u.apellido)), ''), u.username) AS nombre,
+                        u.username AS usuario, b.estado, COUNT(*) AS boletos
+                   FROM boleto_asiento b
+                   JOIN boleto_venta v ON v.id = b.boleto_venta_id
+                   JOIN salida s ON s.id = b.salida_id
+                   LEFT JOIN usuario u ON u.id = v.usuario_id
+                  WHERE v.estado = 'confirmada' AND v.canal <> 'web'
+                    AND s.fecha >= :hoy AND s.fecha < :manana %s
+                  GROUP BY 1, 2, 3, 4",
+                self::deEmpresa($empresa),
+            ),
+            [
+                "hoy" => $p->hoy()->format("Y-m-d H:i:s"),
+                "manana" => $p->hoy()->modify("+1 day")->format("Y-m-d H:i:s"),
+            ] + ($empresa !== null ? ["empresa" => $empresa] : []),
+        );
+
+        return array_map(static fn(array $f) => [
+            "usuarioId" => $f["usuario_id"] !== null ? (int) $f["usuario_id"] : null,
+            "nombre" => $f["nombre"] !== null ? (string) $f["nombre"] : null,
+            "usuario" => $f["usuario"] !== null ? (string) $f["usuario"] : null,
+            "estado" => (string) $f["estado"],
+            "boletos" => (int) $f["boletos"],
+        ], $filas);
     }
 
     /**

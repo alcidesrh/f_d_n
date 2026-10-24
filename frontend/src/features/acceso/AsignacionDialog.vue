@@ -7,7 +7,7 @@
 -->
 <template>
   <Dialog :visible="visible" modal :header="asignacion ? 'Modificar asignación' : 'Otorgar rol'" class="w-[min(36rem,calc(100vw-1rem))]" @update:visible="emit('update:visible', $event)" @show="iniciar">
-    <form class="grid gap-4" @submit.prevent="guardar">
+    <form class="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4" @submit.prevent="guardar">
       <label class="campo">
         <span>Rol</span>
         <Select v-model="rol" :options="opcionesRoles" option-label="etiqueta" option-value="id" placeholder="Elija el rol" filter :filter-fields="['etiqueta', 'nombre']" fluid>
@@ -24,17 +24,17 @@
         Es usuario de la agencia <strong>{{ agencia }}</strong>: el rol rige en su agencia y en las empresas que esta vende.
       </Message>
       <template v-else>
-        <fieldset class="alcance">
+        <fieldset class="alcance min-w-0">
           <legend>Empresas</legend>
-          <div class="flex items-center gap-2">
+          <div class="flex min-w-0 items-center gap-2">
             <ToggleSwitch v-model="todasEmpresas" input-id="todas-empresas" />
             <label for="todas-empresas" class="text-sm">Todas (también las que se agreguen)</label>
           </div>
-          <MultiSelect v-if="!todasEmpresas" v-model="empresas" :options="catalogo.empresas" option-label="nombre" option-value="id" placeholder="Elija las empresas" display="chip" filter fluid />
+          <MultiSelect v-if="!todasEmpresas" v-model="empresas" :options="catalogo.empresas" option-label="nombre" option-value="id" placeholder="Elija las empresas" display="chip" filter :max-selected-labels="3" fluid />
         </fieldset>
-        <fieldset class="alcance">
+        <fieldset class="alcance min-w-0">
           <legend>Estaciones</legend>
-          <div class="flex items-center gap-2">
+          <div class="flex min-w-0 items-center gap-2">
             <ToggleSwitch v-model="todasEstaciones" input-id="todas-estaciones" />
             <label for="todas-estaciones" class="text-sm">Todas (oficina)</label>
           </div>
