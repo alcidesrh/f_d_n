@@ -38,6 +38,21 @@ class EncomiendasLegado
     /** @var array<int, ?string> salida → texto de la bitácora */
     private array $salidasTexto = [];
 
+    /** @var (\Closure(array<string, mixed>): bool)|null encomiendas del legado que no se traen (`excluir`) */
+    private ?\Closure $excluir = null;
+
+    /** Columnas de una encomienda del legado con su factura y la de su boleto. */
+    private const SELECT = "SELECT e.*, b.factura_generada_id AS boleto_fg,
+                    fg.sAutorizacionUUIDsat AS fg_uuid, fg.sNumeroDTEsat AS fg_dte, fg.sSerieDTEsat AS fg_serie,
+                    CONVERT(varchar(19), fg.fecha, 120) AS fg_fecha,
+                    CONVERT(varchar(19), fg.sFechaCertificaDTEsat, 120) AS fg_certificada,
+                    fg.importeTotal AS fg_total, fl.empresa_id AS fg_empresa_id,
+                    CONVERT(varchar(19), e.fecha_creacion, 120) AS fecha_creacion
+               FROM encomienda e
+               LEFT JOIN boleto b ON b.id = e.boleto_id
+               LEFT JOIN factura_generada fg ON fg.id = e.factura_generada_id
+               LEFT JOIN factura fl ON fl.id = fg.factura_id";
+
     public function __construct(
         private readonly Connection $db,
         private readonly LectorLegado $legado,
@@ -53,21 +68,53 @@ class EncomiendasLegado
     public function migrarDeSalida(int $salidaLegado, int $salidaId, ?int $empresaSalida, array &$contadores, \Closure $omitir): void
     {
         $filas = $this->legado->filas(
-            "SELECT e.*, b.factura_generada_id AS boleto_fg,
-                    fg.sAutorizacionUUIDsat AS fg_uuid, fg.sNumeroDTEsat AS fg_dte, fg.sSerieDTEsat AS fg_serie,
-                    CONVERT(varchar(19), fg.fecha, 120) AS fg_fecha,
-                    CONVERT(varchar(19), fg.sFechaCertificaDTEsat, 120) AS fg_certificada,
-                    fg.importeTotal AS fg_total, fl.empresa_id AS fg_empresa_id,
-                    CONVERT(varchar(19), e.fecha_creacion, 120) AS fecha_creacion
-               FROM encomienda e
-               LEFT JOIN boleto b ON b.id = e.boleto_id
-               LEFT JOIN factura_generada fg ON fg.id = e.factura_generada_id
-               LEFT JOIN factura fl ON fl.id = fg.factura_id
-              WHERE e.primera_salida_id = :s
+            self::SELECT . " WHERE e.primera_salida_id = :s
                  OR e.id IN (SELECT encomienda_id FROM encomienda_bitacora WHERE salida_id = :s2)
               ORDER BY e.id",
             ["s" => $salidaLegado, "s2" => $salidaLegado],
         );
+        $this->migrarFilas($filas, [$salidaLegado => $salidaId], $empresaSalida, $contadores, $omitir);
+    }
+
+    /**
+     * Encomiendas del legado por id, viajen o no en una salida (las que
+     * cambiaron en bodega, para la sincronización, ADR-042). Fuera de la
+     * transacción de una salida: quien llama abre la suya.
+     *
+     * @param list<int>                      $ids
+     * @param array<string, int>             $contadores
+     * @param \Closure(string, string): void $omitir motivo, ejemplo
+     */
+    public function migrarPorIds(array $ids, array &$contadores, \Closure $omitir): void
+    {
+        if ($ids === []) {
+            return;
+        }
+        $filas = $this->legado->filas(
+            self::SELECT . " WHERE e.id IN (" . implode(",", array_map("intval", $ids)) . ") ORDER BY e.id",
+        );
+        $this->migrarFilas($filas, [], null, $contadores, $omitir);
+    }
+
+    /**
+     * Encomiendas del legado que no se traen (la sincronización excluye las
+     * que escribió el sistema nuevo y aquí no están, ADR-042).
+     *
+     * @param (\Closure(array<string, mixed>): bool)|null $filtro fila de `encomienda` → true si se omite
+     */
+    public function excluir(?\Closure $filtro): void
+    {
+        $this->excluir = $filtro;
+    }
+
+    /**
+     * @param list<array<string, mixed>>     $filas
+     * @param array<int, int>                $conocidas salida del legado → id (la que se está migrando)
+     * @param array<string, int>             $contadores
+     * @param \Closure(string, string): void $omitir
+     */
+    private function migrarFilas(array $filas, array $conocidas, ?int $empresaSalida, array &$contadores, \Closure $omitir): void
+    {
         if ($filas === []) {
             return;
         }
@@ -88,14 +135,17 @@ class EncomiendasLegado
             ...array_column($filas, "cliente_documento"),
             ...array_column(array_merge(...array_values($eventos) ?: [[]]), "cliente_id"),
         ]);
-        $salidas = $this->salidasMigradas(array_merge($salidaLegado === 0 ? [] : [$salidaLegado], ...array_map(
+        $salidas = $this->salidasMigradas(array_merge(array_keys($conocidas), ...array_map(
             static fn(array $f) => EncomiendaLegada::salidas($f, $eventos[(int) $f["id"]] ?? []),
             $filas,
         )));
-        $salidas[$salidaLegado] = $salidaId;
+        $salidas = $conocidas + $salidas;
 
         foreach ($filas as $old) {
             $lid = (string) $old["id"];
+            if (!isset($existentes[$lid]) && $this->excluir !== null && ($this->excluir)($old)) {
+                continue;
+            }
             $this->migrarUna($old, EncomiendaLegada::ordenar($eventos[(int) $lid] ?? []), $existentes[$lid] ?? null, $salidas, $empresaSalida, $contadores, $omitir);
         }
     }

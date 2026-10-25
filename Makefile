@@ -51,7 +51,7 @@ migrar-entities: ## make migrar-entities entities='Empresa Localidad Estacion Pi
 migrar-todo:
 	$(CONSOLE) $(if $(prod),--env=prod) app:migrar:todo $(if $(clean),--clean) $(if $(conservar),--conservar) $(if $(estaticos),--estaticos) $(if $(iam),--iam) $(if $(config),--config) $(if $(data),--data) $(if $(boletos),boletos=$(boletos)) $(foreach u,$(entities),--entities=$(u))
 
-sincronizar: ## Sync new tickets from old FDN system
+sincronizar: ## Sincronización con el legado (ADR-042): un ciclo (con la sincronización encendida)
 	@$(CONSOLE) app:sincronizar
 
 reset-db: ## Reset database (drop, create, migrations, then migrate old data)

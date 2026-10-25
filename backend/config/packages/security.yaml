@@ -75,6 +75,8 @@ security:
         - { path: '^/api/chat/archivos/\d+/[0-9a-f]{32}$', roles: PUBLIC_ACCESS }
         # Fotos de perfil: URL firmada y estable (App\Cuenta\FotoPerfil), sin Bearer.
         - { path: '^/api/usuarios/-?\d+/foto/[0-9a-f]{32}$', roles: PUBLIC_ACCESS }
+        # Lo que llama el legado durante la sincronización (ADR-042): con clave compartida, sin Bearer.
+        - { path: "^/api/sincronizacion/legado/", roles: PUBLIC_ACCESS }
         - { path: "^/", roles: ROLE_USER }
 
 when@test:
