@@ -245,13 +245,22 @@ export const useVentaStore = defineStore("venta", () => {
     recomendados.value = r.recomendados ?? [];
   }
 
-  /** Refresco en vivo: si otro vendió un asiento elegido, se avisa y se quita. */
+  /** Hay una venta o reasignación de esta pantalla esperando respuesta. */
+  let enviando = false;
+
+  /**
+   * Refresco en vivo: si otro vendió un asiento elegido, se avisa y se quita.
+   * El aviso de la propia venta puede llegar antes que su respuesta: esos
+   * asientos los tomó esta pantalla, no otro vendedor.
+   */
   async function refrescarOcupacion() {
+    const durante = enviando;
     try {
       await cargarOcupacion(true);
     } catch {
       return;
     }
+    if (durante || enviando) return;
     const depurada = depurarSeleccion(seleccion.value, ocupados.value);
     if (depurada.length !== seleccion.value.length) {
       notify.warning("Otro vendedor tomó un asiento que tenía elegido: se quitó de la selección.");
@@ -305,6 +314,7 @@ export const useVentaStore = defineStore("venta", () => {
     vendiendo.value = true;
     falloFacturacion.value = null;
     try {
+      enviando = true;
       const c = await api.vender({
         token: token.value,
         salida: salidaId.value,
@@ -325,6 +335,7 @@ export const useVentaStore = defineStore("venta", () => {
         sinFacturaElectronica: opciones.sinFacturaElectronica ?? false,
         encomiendas: encomiendaArticulos.value.length && !opciones.cortesia ? [{ articulos: limpiarArticulos(encomiendaArticulos.value), observacion: encomiendaObservacion.value.trim() || null }] : [],
       });
+      enviando = false;
       comprobante.value = c;
       comprobanteReasignado.value = false;
       terminarVenta();
@@ -333,6 +344,7 @@ export const useVentaStore = defineStore("venta", () => {
       void cargarSalidas();
       return c;
     } catch (e) {
+      enviando = false;
       const err = api.errorVenta(e);
       if (err?.codigo === "facturacion") {
         falloFacturacion.value = err;
@@ -435,6 +447,7 @@ export const useVentaStore = defineStore("venta", () => {
     if (!puedeReasignar.value || !reasignacion.value || !salidaId.value) return null;
     vendiendo.value = true;
     try {
+      enviando = true;
       const c = await api.reasignarBoletos({
         boletos: reasignacion.value.boletos.map((b) => b.id),
         salida: salidaId.value,
@@ -442,6 +455,7 @@ export const useVentaStore = defineStore("venta", () => {
         asientos: seleccion.value,
         cobrarTrayectoCompleto: cobrarTrayectoCompleto.value,
       });
+      enviando = false;
       comprobante.value = c;
       comprobanteReasignado.value = true;
       terminarReasignacion();
@@ -451,6 +465,7 @@ export const useVentaStore = defineStore("venta", () => {
       void cargarSalidas();
       return c;
     } catch (e) {
+      enviando = false;
       const err = api.errorVenta(e);
       // Sin permiso, pasado el límite o fuera de hora: se ofrece pedir una autorización (ADR-040).
       if (useAutorizacionesStore().ofrecer(e)) return null;
