@@ -45,6 +45,7 @@ class ConexionLegado
      */
     public static function exigirSoloSync(string $sql): void
     {
+        $sql = (string) preg_replace('/--[^\n]*/', '', $sql);
         preg_match_all('/\b(?:INSERT\s+(?:INTO\s+)?|UPDATE\s+|DELETE\s+(?:FROM\s+)?|MERGE\s+(?:INTO\s+)?)(?:\[?dbo\]?\.)?\[?(@?\w+)/i', $sql, $m);
         foreach ($m[1] as $tabla) {
             // `AFTER INSERT, UPDATE AS` de un trigger; `@ids`, variable de tabla.

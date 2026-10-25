@@ -13,3 +13,5 @@ IF OBJECT_ID('dbo.sync_cambio', 'U') IS NOT NULL DROP TABLE dbo.sync_cambio;
 GO
 IF OBJECT_ID('dbo.sync_config', 'U') IS NOT NULL DROP TABLE dbo.sync_config;
 GO
+IF OBJECT_ID('dbo.sync_cambio_id', 'SO') IS NOT NULL DROP SEQUENCE dbo.sync_cambio_id;
+GO

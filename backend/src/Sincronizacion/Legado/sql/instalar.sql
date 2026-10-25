@@ -26,10 +26,27 @@ IF COL_LENGTH('dbo.sync_config', 'fdn_url') IS NULL
         si_falla VARCHAR(10) NOT NULL CONSTRAINT df_sync_config_si_falla DEFAULT 'permitir';
 GO
 
+-- El id de sync_cambio sale de una SECUENCIA, no de IDENTITY: un INSERT en una
+-- tabla con IDENTITY dentro del trigger cambiaría @@IDENTITY, que es lo que lee
+-- el driver del legado (PDO sqlsrv) como id de la fila que acaba de insertar.
+-- Con IDENTITY, una factura nueva tomaba el id de su fila de sync_cambio.
+IF OBJECT_ID('dbo.sync_cambio_id', 'SO') IS NULL
+    CREATE SEQUENCE dbo.sync_cambio_id AS BIGINT START WITH 1 INCREMENT BY 1;
+GO
+
+-- Instalaciones anteriores con IDENTITY: se aparta la tabla vieja y, creada la
+-- nueva, se copian sus filas (lo pendiente no se pierde).
+IF OBJECT_ID('dbo.sync_cambio', 'U') IS NOT NULL AND COLUMNPROPERTY(OBJECT_ID('dbo.sync_cambio'), 'id', 'IsIdentity') = 1
+BEGIN
+    DROP INDEX idx_sync_cambio_pendiente ON dbo.sync_cambio;
+    EXEC sp_rename 'dbo.sync_cambio', 'sync_cambio_viejo';
+END
+GO
+
 IF OBJECT_ID('dbo.sync_cambio', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.sync_cambio (
-        id BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+        id BIGINT NOT NULL PRIMARY KEY CONSTRAINT df_sync_cambio_id DEFAULT (NEXT VALUE FOR dbo.sync_cambio_id),
         tabla VARCHAR(30) NOT NULL,
         registro_id BIGINT NOT NULL,
         creado DATETIME NOT NULL DEFAULT GETDATE(),
@@ -38,6 +55,14 @@ BEGIN
         error NVARCHAR(MAX) NULL
     );
     CREATE INDEX idx_sync_cambio_pendiente ON dbo.sync_cambio (procesado, id);
+END
+GO
+
+IF OBJECT_ID('dbo.sync_cambio_viejo', 'U') IS NOT NULL
+BEGIN
+    INSERT INTO dbo.sync_cambio (tabla, registro_id, creado, procesado, intentos, error)
+        SELECT tabla, registro_id, creado, procesado, intentos, error FROM dbo.sync_cambio_viejo ORDER BY id;
+    DROP TABLE dbo.sync_cambio_viejo;
 END
 GO
 

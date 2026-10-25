@@ -27,6 +27,9 @@ final class InstaladorLegadoTest extends TestCase
             $this->assertNotEmpty(array_filter($desinstalar, static fn(string $l) => str_contains($l, "DROP TRIGGER dbo.{$trigger}")), "desinstala {$trigger}");
         }
         foreach ($instalar as $lote) {
+            // Un INSERT con IDENTITY dentro de un trigger cambia @@IDENTITY, que el
+            // legado lee como id de la fila que insertó: sync_cambio usa una secuencia.
+            $this->assertStringNotContainsString("IDENTITY(", $lote, "sync_cambio sin IDENTITY");
             if (str_contains($lote, "CREATE TRIGGER")) {
                 $this->assertStringContainsString("0x46444E53594E43", $lote, "todo trigger ignora lo que escribe FDN");
             }
