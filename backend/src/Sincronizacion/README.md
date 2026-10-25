@@ -31,6 +31,19 @@ mientras las estaciones se mudan. Diseño y límites: [ADR-042](../../../docs/ar
 Para un piloto con una estación basta con encenderla: los dos sistemas venden
 todo; lo que cambia es dónde trabaja cada estación.
 
+## FDN de desarrollo contra el legado de producción («solo traer»)
+
+Para ver en un FDN local lo que pasa en producción sin tocar sus ventas:
+
+1. En el `.env.local` de tu FDN: `systemfdn_*` del legado de producción y `SINCRONIZACION_SOLO_TRAER=1`. No hacen falta `SINCRONIZACION_CLAVE` ni `SINCRONIZACION_URL_FDN`.
+2. `bin/console doctrine:migrations:migrate` y, si tu base no la tiene, la migración inicial del legado.
+3. `bin/console app:sincronizacion:instalar-legado` contra producción, en horas de poca venta: crea las tablas `sync_*` y los triggers, que solo anotan ids. **No** se despliega el bundle en el legado.
+4. `bin/console app:sincronizar --cada=60` y encender (indicador o `interruptor encender`). El indicador dice «Sinc. (solo trae)».
+
+En este modo FDN no escribe en el legado fuera de `sync_*` (`ConexionLegado` rechaza la sentencia), deja `sync_config.activo = 0` (el legado no llama aquí), no exporta y la conciliación solo trae. Lo que vendas aquí queda solo aquí: si el legado vende después el mismo asiento, la importación de esa salida falla y lo muestra el indicador. Mejor no vender en local en salidas de producción.
+
+Solo un FDN puede leer el `sync_cambio` del legado (lo marca como procesado). Antes de conectar el FDN de producción, desinstalar (`--desinstalar`) y volver a instalar desde él. Mientras tu FDN está apagado, el legado sigue anotando; al volver se pone al día.
+
 ## Si algo falla
 
 - **El legado no responde**: aquí no se venden asientos de salidas que existen en los dos sistemas (error «No se pudo confirmar el asiento en el sistema anterior»). Lo demás queda en `sync_cambio` y se reintenta. Apagar la sincronización deja vender aquí sin comprobar.

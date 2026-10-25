@@ -67,7 +67,7 @@ class VigilanteCambios implements ResetInterface
         $em = $args->getObjectManager();
         $uow = $em->getUnitOfWork();
         $db = $em->getConnection();
-        if (!$this->interruptor->activo()) {
+        if (!$this->interruptor->activo() || $this->interruptor->soloTraer()) {
             return;
         }
 
@@ -125,7 +125,7 @@ class VigilanteCambios implements ResetInterface
         if ($e instanceof BoletoAsiento && isset($this->escritos[$e])) {
             $db->executeStatement("UPDATE boleto_asiento SET legacy_id = :l WHERE id = :id", ["l" => (string) $this->escritos[$e], "id" => $e->getId()]);
             unset($this->escritos[$e]);
-        } elseif ($e instanceof Encomienda && $this->interruptor->activo()) {
+        } elseif ($e instanceof Encomienda && $this->interruptor->activo() && !$this->interruptor->soloTraer()) {
             $this->encolar($db, "encomienda", (int) $e->getId());
         }
     }

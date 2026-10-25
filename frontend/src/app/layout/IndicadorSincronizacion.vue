@@ -12,7 +12,9 @@
     >
       <span class="sinc__punto" aria-hidden="true"></span>
       <icon :name="estado.activo ? 'sync' : 'sync-disabled'" size="1.05rem" />
-      <span class="sinc__texto">{{ estado.activo ? 'Sinc.' : 'Sinc. apagada' }}</span>
+      <span class="sinc__texto">{{
+        estado.activo ? (estado.soloTraer ? 'Sinc. (solo trae)' : 'Sinc.') : 'Sinc. apagada'
+      }}</span>
     </button>
     <Popover ref="detalle">
       <div class="sinc-detalle">

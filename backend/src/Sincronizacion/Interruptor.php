@@ -15,6 +15,9 @@ use Doctrine\DBAL\Connection;
  * Al encenderlo, el legado tiene que responder (si no, el legado seguiría
  * vendiendo sin avisar). Al apagarlo se apaga aquí aunque el legado no
  * responda, y se avisa.
+ *
+ * En modo «solo traer» (`SINCRONIZACION_SOLO_TRAER`) el legado queda siempre
+ * apagado: su bundle no llama aquí y aquí nada se escribe allá.
  */
 class Interruptor
 {
@@ -41,8 +44,13 @@ class Interruptor
         return (bool) $this->db->fetchOne("SELECT activo FROM sync_estado WHERE id = 1");
     }
 
+    public function soloTraer(): bool
+    {
+        return $this->legado->soloTraer;
+    }
+
     /**
-     * @return array{activo: bool, cambiadoEn: ?string, cambiadoPor: ?string, ultimoCicloEn: ?string, ultimoCiclo: ?array<string, mixed>, ultimoError: ?string, pendientes: int}
+     * @return array{activo: bool, soloTraer: bool, cambiadoEn: ?string, cambiadoPor: ?string, ultimoCicloEn: ?string, ultimoCiclo: ?array<string, mixed>, ultimoError: ?string, pendientes: int}
      */
     public function estado(): array
     {
@@ -50,6 +58,7 @@ class Interruptor
 
         return [
             "activo" => (bool) ($fila["activo"] ?? false),
+            "soloTraer" => $this->legado->soloTraer,
             "cambiadoEn" => self::iso($fila["cambiado_en"] ?? null),
             "cambiadoPor" => $fila["cambiado_por"] ?? null,
             "ultimoCicloEn" => self::iso($fila["ultimo_ciclo_en"] ?? null),
@@ -70,7 +79,7 @@ class Interruptor
         try {
             $this->legado->ejecutar(
                 "UPDATE sync_config SET activo = :activo, cambiado_en = GETDATE() WHERE id = 1",
-                ["activo" => $activo],
+                ["activo" => $activo && !$this->legado->soloTraer],
             );
         } catch (\Throwable $e) {
             $this->legado->cerrar();

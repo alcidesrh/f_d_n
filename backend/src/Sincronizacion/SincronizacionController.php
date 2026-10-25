@@ -99,6 +99,9 @@ class SincronizacionController extends AbstractController
     /** @param \Closure(array<string, mixed>): JsonResponse $accion */
     private function delLegado(Request $request, \Closure $accion): JsonResponse
     {
+        if ($this->interruptor->soloTraer()) {
+            return $this->json(["error" => "Esta instancia solo trae del legado (SINCRONIZACION_SOLO_TRAER): no aparta asientos."], 503);
+        }
         if ($this->clave === "") {
             return $this->json(["error" => "La sincronización no tiene clave configurada (SINCRONIZACION_CLAVE)."], 503);
         }

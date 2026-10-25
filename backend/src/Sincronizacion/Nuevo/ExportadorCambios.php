@@ -36,6 +36,9 @@ class ExportadorCambios
     public function procesar(int $limite = 500): array
     {
         $resumen = ["exportados" => 0, "fallidos" => 0];
+        if ($this->legado->soloTraer) {
+            return $resumen;
+        }
         if (!$this->db->fetchOne("SELECT pg_try_advisory_lock(:k)", ["k" => self::BLOQUEO])) {
             return $resumen;
         }

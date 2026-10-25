@@ -12,6 +12,8 @@ export interface EstadoSincronizacion {
   ultimoError: string | null
   /** Cambios de aquí que esperan llegar al sistema anterior. */
   pendientes: number
+  /** Solo trae del sistema anterior; nada de aquí se escribe allá (desarrollo). */
+  soloTraer?: boolean
 }
 
 export type Nivel = 'apagada' | 'bien' | 'atencion' | 'error'
@@ -47,6 +49,10 @@ export const ETIQUETA: Record<Nivel, string> = {
 export function avisos(estado: EstadoSincronizacion, ahora: Date): string[] {
   if (!estado.activo) return []
   const lineas: string[] = []
+  if (estado.soloTraer)
+    lineas.push(
+      'Solo trae del sistema anterior: lo que se haga aquí no se escribe allá ni se comprueba con allá.',
+    )
   if (estado.ultimoError) lineas.push(`Último ciclo con error: ${estado.ultimoError}`)
   if (cicloDetenido(estado, ahora))
     lineas.push(

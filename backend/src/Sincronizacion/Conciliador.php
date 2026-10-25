@@ -131,7 +131,8 @@ class Conciliador
             $this->importador->salidas($salidas);
             $hecho["boletos_traidos"] = count($diferencias["boletosFaltanAqui"]);
         }
-        foreach ($diferencias["boletosHuerfanosAlla"] as $id) {
+        // En modo «solo traer» solo se trae: nada se anula ni se lleva al legado.
+        foreach ($this->legado->soloTraer ? [] : $diferencias["boletosHuerfanosAlla"] as $id) {
             $this->escritor->cambiarEstado((string) $id, Traduccion::estadoBoleto(EstadoBoletoAsiento::ANULADO), null, "Venta no confirmada en FDN (conciliación).");
             $hecho["huerfanos_anulados"]++;
         }
@@ -139,7 +140,7 @@ class Conciliador
             $this->importador->encomiendas($diferencias["encomiendasFaltanAqui"]);
             $hecho["encomiendas_traidas"] = count($diferencias["encomiendasFaltanAqui"]);
         }
-        foreach ($diferencias["encomiendasFaltanAlla"] as $id) {
+        foreach ($this->legado->soloTraer ? [] : $diferencias["encomiendasFaltanAlla"] as $id) {
             $this->db->executeStatement("INSERT INTO sync_cambio (entidad, registro_id) VALUES ('encomienda', :id)", ["id" => $id]);
             $hecho["encomiendas_encoladas"]++;
         }

@@ -56,6 +56,10 @@ Un módulo aparte, `backend/src/Sincronizacion/` (más un bundle en el legado), 
 
 `app:sincronizacion:conciliar [día] [--reparar]` compara boletos de las salidas del día y encomiendas creadas ese día. Repara solo lo que no necesita decisión: trae lo que falta aquí, anula los `FDN:` huérfanos (más de 10 minutos) y encola las encomiendas de aquí que no llegaron. Los estados distintos y los boletos de aquí que faltan allá solo se informan.
 
+### 7. Modo «solo traer»
+
+Con `SINCRONIZACION_SOLO_TRAER=1`, un FDN (de desarrollo) trae del legado de producción y nunca escribe allá: `ConexionLegado` rechaza toda escritura fuera de las tablas `sync_*` y del esquema, el interruptor deja `sync_config.activo = 0`, no se vigila el flush ni se exporta, y los endpoints del legado responden 503. Solo hacen falta los triggers en el legado, no el bundle.
+
 ## Consecuencias
 
 - Una venta aquí espera además al SQL Server del legado (una transacción corta por venta); una venta en el legado espera a FDN (unos milisegundos; tope de 8 s).

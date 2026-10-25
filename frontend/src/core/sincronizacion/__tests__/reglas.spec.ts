@@ -40,3 +40,11 @@ describe('indicador de sincronización', () => {
     expect(avisos({ ...base, activo: false, pendientes: 3 }, ahora)).toEqual([])
   })
 })
+
+describe('solo trae', () => {
+  it('lo avisa en el detalle', () => {
+    expect(avisos({ ...base, soloTraer: true }, ahora)).toEqual([
+      expect.stringContaining('Solo trae'),
+    ])
+  })
+})

@@ -14,6 +14,10 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  * vuelve al sistema de donde salió.
  *
  * Habla UTF-8 con el servidor (`charset` de FreeTDS): sin conversiones a mano.
+ *
+ * Con `SINCRONIZACION_SOLO_TRAER=1` (un FDN de desarrollo contra el legado de
+ * producción) solo escribe en las tablas `sync_*` y en el esquema (instalar
+ * los triggers): nunca un boleto, un cliente o una encomienda.
  */
 class ConexionLegado
 {
@@ -29,7 +33,26 @@ class ConexionLegado
         #[Autowire(env: "systemfdn_dbname")] private readonly string $dbname,
         #[Autowire(env: "systemfdn_user")] private readonly string $usuario,
         #[Autowire(env: "systemfdn_password")] private readonly string $clave,
+        #[Autowire(env: "bool:SINCRONIZACION_SOLO_TRAER")] public readonly bool $soloTraer = false,
     ) {}
+
+    /**
+     * En modo «solo traer», rechaza la sentencia que escriba en una tabla que
+     * no sea `sync_*`. El DDL (CREATE/DROP TRIGGER, ALTER TABLE) pasa: es la
+     * instalación.
+     *
+     * @throws \LogicException
+     */
+    public static function exigirSoloSync(string $sql): void
+    {
+        preg_match_all('/\b(?:INSERT\s+(?:INTO\s+)?|UPDATE\s+|DELETE\s+(?:FROM\s+)?|MERGE\s+(?:INTO\s+)?)(?:\[?dbo\]?\.)?\[?(@?\w+)/i', $sql, $m);
+        foreach ($m[1] as $tabla) {
+            // `AFTER INSERT, UPDATE AS` de un trigger; `@ids`, variable de tabla.
+            if (!str_starts_with(strtolower($tabla), "sync_") && !str_starts_with($tabla, "@") && strtoupper($tabla) !== "AS") {
+                throw new \LogicException("Sincronización en modo «solo traer»: no se escribe en «{$tabla}» del legado.");
+            }
+        }
+    }
 
     /**
      * @param array<string, mixed> $params
@@ -69,6 +92,9 @@ class ConexionLegado
      */
     public function ejecutar(string $sql, array $params = []): int
     {
+        if ($this->soloTraer) {
+            self::exigirSoloSync($sql);
+        }
         $stmt = $this->pdo()->prepare($sql);
         $stmt->execute(self::parametros($params));
 
@@ -83,6 +109,9 @@ class ConexionLegado
      */
     public function insertar(string $tabla, array $datos): int
     {
+        if ($this->soloTraer) {
+            self::exigirSoloSync("INSERT INTO [{$tabla}]");
+        }
         $campos = implode(", ", array_map(static fn(string $c) => "[{$c}]", array_keys($datos)));
         $args = implode(", ", array_map(static fn(string $c) => ":{$c}", array_keys($datos)));
         $stmt = $this->pdo()->prepare(

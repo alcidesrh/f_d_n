@@ -34,7 +34,7 @@ final class InterruptorCommand
             }
         }
         $estado = $this->interruptor->estado();
-        $io->writeln(sprintf("Sincronización: <info>%s</info>", $estado["activo"] ? "ENCENDIDA" : "apagada"));
+        $io->writeln(sprintf("Sincronización: <info>%s</info>%s", $estado["activo"] ? "ENCENDIDA" : "apagada", $estado["soloTraer"] ? " (solo trae del legado)" : ""));
         $io->writeln(json_encode($estado, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
 
         return 0;

@@ -8,6 +8,9 @@ parameters:
     # URL de esta API vista desde el servidor del legado (p. ej. https://fdn.ejemplo.com).
     # `app:sincronizacion:instalar-legado` la deja en `sync_config` del legado.
     env(SINCRONIZACION_URL_FDN): ""
+    # 1: solo trae del legado y nunca escribe allá fuera de `sync_*` (un FDN de
+    # desarrollo contra el legado de producción). El legado queda apagado.
+    env(SINCRONIZACION_SOLO_TRAER): "0"
 
 doctrine:
     dbal:
