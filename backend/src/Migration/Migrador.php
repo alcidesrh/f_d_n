@@ -69,6 +69,9 @@ class Migrador
     /** @var array<string, list<string>> motivo → ejemplos */
     private array $ejemplos = [];
 
+    /** @var (\Closure(array<string, mixed>): bool)|null boletos del legado que no se traen (`excluirBoletos`) */
+    private ?\Closure $excluir = null;
+
     public function __construct(
         private Connection $newConn,
         #[Target("oldPdo")] private \PDO $oldPdo,
@@ -182,6 +185,17 @@ class Migrador
         }
 
         return $contadores;
+    }
+
+    /**
+     * Boletos del legado que no se traen aunque sean de la salida (la
+     * sincronización excluye los que escribió el sistema nuevo, ADR-042).
+     *
+     * @param (\Closure(array<string, mixed>): bool)|null $filtro fila de `boleto` → true si se omite
+     */
+    public function excluirBoletos(?\Closure $filtro): void
+    {
+        $this->excluir = $filtro;
     }
 
     // ─── Árbol de una salida ───────────────────────────────────────
@@ -396,6 +410,9 @@ class Migrador
         $ventasTocadas = [];
         foreach ($boletos as $old) {
             $lid = (string) $old["id"];
+            if (!isset($migrados[$lid]) && $this->excluir !== null && ($this->excluir)($old)) {
+                continue;
+            }
             if (isset($migrados[$lid])) {
                 if ($migrados[$lid] && ($viaje = $this->viajeDelBoleto($old, $ruta, $contadores)) !== null) {
                     ["sube" => $sube, "baja" => $baja] = $viaje;
@@ -715,6 +732,22 @@ class Migrador
         return $this->fetchOld(
             self::SELECT_SALIDA . self::filtroFechas($desde, $hasta, $params) . " ORDER BY s.fecha ASC, s.id ASC",
             $params,
+        );
+    }
+
+    /**
+     * Salidas del legado por id (las que cambiaron, para la sincronización).
+     *
+     * @param list<int> $ids
+     */
+    public function fetchSalidasPorIds(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        return $this->fetchOld(
+            self::SELECT_SALIDA . " AND s.id IN (" . implode(",", array_map("intval", $ids)) . ") ORDER BY s.fecha ASC, s.id ASC",
         );
     }
 

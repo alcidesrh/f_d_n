@@ -1,0 +1,6 @@
+# Sincronización temporal con el legado (ADR-042).
+sincronizacion:
+    resource:
+        path: ../../src/Sincronizacion/
+        namespace: App\Sincronizacion
+    type: attribute

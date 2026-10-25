@@ -43,6 +43,9 @@ class DependenciasLegado
     /** @var array<int, array<string, mixed>|null> clientes del legado leídos por adelantado */
     private array $clientesLegado = [];
 
+    /** @var (\Closure(string, int): ?int)|null id de aquí de un registro del legado que no conserva su id (`equivalencias`) */
+    private ?\Closure $equivalente = null;
+
     public function __construct(
         private readonly Connection $db,
         private readonly LectorLegado $legado,
@@ -436,6 +439,17 @@ class DependenciasLegado
         });
     }
 
+    /**
+     * Registros del legado que aquí tienen otro id: los clientes que el
+     * sistema nuevo creó y llevó al legado durante la sincronización (ADR-042).
+     *
+     * @param (\Closure(string, int): ?int)|null $equivalente tabla, id del legado → id de aquí (o null)
+     */
+    public function equivalencias(?\Closure $equivalente): void
+    {
+        $this->equivalente = $equivalente;
+    }
+
     // ─── Transacción, contadores e identidades ─────────────────────
 
     /** @return array<string, int> */
@@ -485,6 +499,9 @@ class DependenciasLegado
         $id = (int) $legacyId;
         if (array_key_exists($id, $this->ids[$tabla] ?? [])) {
             return $this->ids[$tabla][$id];
+        }
+        if ($this->equivalente !== null && ($equivalente = ($this->equivalente)($tabla, $id)) !== null) {
+            return $this->ids[$tabla][$id] = $equivalente;
         }
         $existe = $this->db->fetchOne("SELECT 1 FROM {$tabla} WHERE id = :id", ["id" => $id]) !== false;
 
