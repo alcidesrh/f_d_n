@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Sincronizacion\Legado;
 
 use App\Migration\Migrador;
+use App\Migration\PdoLegado;
 use App\Migration\Salida\DependenciasLegado;
 use App\Migration\Salida\EncomiendasLegado;
 use App\Sincronizacion\Identidades;
 use App\Sincronizacion\Nuevo\Traduccion;
 use Doctrine\DBAL\Connection;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Target;
 
 /**
  * Trae lo que cambió en el legado (ADR-042). Los triggers anotan en
@@ -38,6 +40,7 @@ class ImportadorLegado
         private readonly ActualizadorBoletos $actualizador,
         private readonly Identidades $identidades,
         private readonly LoggerInterface $logger,
+        #[Target("oldPdo")] private readonly \PDO $lectura,
     ) {}
 
     /**
@@ -297,12 +300,22 @@ class ImportadorLegado
             $resumen["importados"]++;
         } catch (\Throwable $e) {
             $this->logger->warning("Sincronización: no se trajo un cambio del legado: {error}", ["error" => $e->getMessage(), "exception" => $e]);
+            $this->soltarConexiones();
             $this->legado->ejecutar(
                 "UPDATE sync_cambio SET intentos = intentos + 1, error = :error WHERE id IN (" . implode(",", array_map("intval", $cambios)) . ")",
                 ["error" => mb_substr($e->getMessage(), 0, 2000)],
             );
             $resumen["fallidos"]++;
         }
+    }
+
+    /** Tras un error, que pudo matar la conexión («DBPROCESS is dead»): lo siguiente abre otra. */
+    public function soltarConexiones(): void
+    {
+        if ($this->lectura instanceof PdoLegado) {
+            $this->lectura->soltar();
+        }
+        $this->legado->cerrar();
     }
 
     /** @param list<int> $cambios */

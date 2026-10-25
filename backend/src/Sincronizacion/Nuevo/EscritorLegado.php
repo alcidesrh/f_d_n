@@ -34,6 +34,12 @@ class EscritorLegado
         #[Autowire(env: "default::int:SINCRONIZACION_USUARIO_LEGADO")] private readonly ?int $usuarioRespaldo = null,
     ) {}
 
+    /** Tras un error: la próxima escritura abre otra conexión (la de ahora pudo morir). */
+    public function cerrarConexion(): void
+    {
+        $this->legado->cerrar();
+    }
+
     // ─── Boletos ───────────────────────────────────────────────────
 
     /**

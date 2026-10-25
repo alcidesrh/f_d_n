@@ -215,6 +215,7 @@ class VigilanteCambios implements ResetInterface
             throw $e;
         } catch (\Throwable $e) {
             $this->logger->error("Sincronización: el legado no confirmó el asiento: {error}", ["error" => $e->getMessage(), "exception" => $e]);
+            $this->escritor->cerrarConexion();
 
             throw new VentaRechazada("No se pudo confirmar el asiento en el sistema anterior. Intente de nuevo en un momento.", "sincronizacion_legado", 503, [], $e);
         }

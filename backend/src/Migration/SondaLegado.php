@@ -84,4 +84,10 @@ final class SondaLegado
             $opciones,
         );
     }
+
+    /** El PDO que se abre al primer uso y se rehace si la conexión se cayó. */
+    public function crearPdoReconectable(): PdoLegado
+    {
+        return new PdoLegado(fn() => $this->crearPdo());
+    }
 }

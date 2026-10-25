@@ -47,9 +47,11 @@ services:
 
     # Conexión al SQL Server legacy con preflight TCP no bloqueante (SondaLegado):
     # si el host no responde, el PDO falla en ~1.5s en vez de colgar ~130s (kernel TCP).
+    # Se abre al primer uso y se rehace si se cayó (PdoLegado): el worker y el
+    # ciclo de la sincronización viven horas.
     PDO $oldPdo:
-        class: \PDO
-        factory: ['@App\Migration\SondaLegado', "crearPdo"]
+        class: App\Migration\PdoLegado
+        factory: ['@App\Migration\SondaLegado', "crearPdoReconectable"]
 
     App\Migration\SondaLegado:
         arguments:

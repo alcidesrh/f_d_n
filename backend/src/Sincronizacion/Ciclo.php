@@ -39,6 +39,7 @@ class Ciclo
             $this->db->executeStatement("DELETE FROM sync_cambio WHERE procesado_en < NOW() - INTERVAL '7 days'");
         } catch (\Throwable $e) {
             $error = $e->getMessage();
+            $this->importador->soltarConexiones();
 
             throw $e;
         } finally {

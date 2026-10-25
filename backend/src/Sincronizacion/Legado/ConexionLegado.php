@@ -6,6 +6,7 @@ namespace App\Sincronizacion\Legado;
 
 use App\Migration\SondaLegado;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * Conexión propia de la sincronización al SQL Server del legado (ADR-042),
@@ -15,16 +16,24 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  *
  * Habla UTF-8 con el servidor (`charset` de FreeTDS): sin conversiones a mano.
  *
+ * Vive en el worker de FrankenPHP y en el ciclo: la conexión se suelta al
+ * terminar cada petición (`reset`) y, si estuvo quieta, se comprueba antes de
+ * usarla. Una conexión dblib caída no se recupera sola.
+ *
  * Con `SINCRONIZACION_SOLO_TRAER=1` (un FDN de desarrollo contra el legado de
  * producción) solo escribe en las tablas `sync_*` y en el esquema (instalar
  * los triggers): nunca un boleto, un cliente o una encomienda.
  */
-class ConexionLegado
+class ConexionLegado implements ResetInterface
 {
+    /** Segundos sin uso tras los que se comprueba la conexión antes de usarla. */
+    private const COMPROBAR_TRAS = 5;
+
     /** `CONTEXT_INFO` de las escrituras de FDN ('FDNSYNC'); lo comparan los triggers. */
     public const MARCA = "0x46444E53594E43";
 
     private ?\PDO $pdo = null;
+    private int $ultimoUso = 0;
 
     public function __construct(
         private readonly SondaLegado $sonda,
@@ -172,8 +181,25 @@ class ConexionLegado
         $this->pdo = null;
     }
 
+    public function reset(): void
+    {
+        $this->cerrar();
+    }
+
     private function pdo(): \PDO
     {
+        $ahora = time();
+        if ($this->pdo !== null && $ahora - $this->ultimoUso >= self::COMPROBAR_TRAS && !$this->pdo->inTransaction()) {
+            try {
+                // Una conexión muerta a veces no lanza: devuelve vacío. Por eso se mira el 1.
+                if ((int) $this->pdo->query("SELECT 1")->fetchColumn() !== 1) {
+                    throw new \RuntimeException("La conexión al legado no respondió.");
+                }
+            } catch (\Throwable) {
+                $this->pdo = null;
+            }
+        }
+        $this->ultimoUso = $ahora;
         if ($this->pdo === null) {
             if (!$this->sonda->accesible()) {
                 throw new \PDOException("El SQL Server del legado no responde en {$this->host}:{$this->port}.");
