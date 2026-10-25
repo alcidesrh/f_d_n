@@ -69,7 +69,10 @@
           <icon name="fullscreen" />
         </button>
       </div>
-      <IndicadorSincronizacion />
+      <!-- Se corre con las acciones cuando se cierra el sidebar derecho (ver header.css). -->
+      <div class="header-sinc">
+        <IndicadorSincronizacion />
+      </div>
       <!-- Estación de trabajo (ADR-039): donde opera; se cambia entre las de sus asignaciones. -->
       <button v-if="acceso.estacionTrabajo || acceso.debeElegirEstacion" type="button" class="header-estacion tap-target" :class="{ 'header-estacion--falta': !acceso.estacionTrabajo }" :aria-label="acceso.estacionTrabajo ? `Estación de trabajo: ${acceso.estacionTrabajo.nombre}. Cambiar` : 'Elegir estación de trabajo'" v-tooltip.bottom="acceso.estaciones.length > 1 ? 'Estación de trabajo' : undefined" :disabled="acceso.estaciones.length < 2 && !!acceso.estacionTrabajo" @click="acceso.eligiendoEstacion = true">
         <icon name="location-on-outline" size="1.05rem" />

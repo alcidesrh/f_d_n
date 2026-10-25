@@ -238,8 +238,16 @@
     display: inline;
   }
 }
+/* Sincronización (ADR-042): va entre las acciones y la estación, así que se corre igual que ellas. */
+.header-sinc {
+  display: flex;
+  align-items: center;
+  @variant lg {
+    transform: translateX(calc(50px * (1 - var(--sb-right-h, 0))));
+  }
+}
 /* Sin barra derecha no hay botón que la reabra: nada se corre a ocupar su lugar. */
-.shell--sin-derecha :is(.header-actions, .header-estacion, .header-user-wrap) {
+.shell--sin-derecha :is(.header-actions, .header-sinc, .header-estacion, .header-user-wrap) {
   @variant lg {
     transform: none;
   }

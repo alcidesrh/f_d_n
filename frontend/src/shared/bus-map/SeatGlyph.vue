@@ -140,37 +140,26 @@ watch(
 }
 .seat--cortesia,
 .seat--voucher {
-  --seat-fill: var(--p-neutral-100);
-  --seat-stroke: var(--p-neutral-400);
-  --seat-ink: var(--p-neutral-500);
-  &:first-child {
-    opacity: 0.6;
-  }
+  /*--seat-fill: var(--p-surface-100);
+  --seat-stroke: var(--p-surface-400);
+  --seat-ink: var(--p-surface-500);*/
+  /*&:first-child {*/
+  /*& > *:not(.seat__marca) {
+    opacity: 0.7;
+  }*/
+  /*}*/
 }
 .seat__marca {
   & circle {
-    fill: var(--p-red-500);
+    fill: var(--p-red-400);
     stroke-width: 0;
   }
   &.cortesia circle {
-    fill: var(--p-emerald-600);
+    fill: var(--p-sky-500);
     stroke-width: 0;
   }
 }
 
-.seat__marca {
-  & text {
-    fill: var(--p-red-600);
-    font-size: 12px;
-    font-weight: 900;
-    text-anchor: middle;
-    dominant-baseline: central;
-    pointer-events: none;
-  }
-  &.cortesia text {
-    fill: var(--p-emerald-600);
-  }
-}
 .seat--seleccionado {
   --seat-fill: var(--p-blue-700);
   --seat-stroke: color-mix(in srgb, var(--p-blue-700) 70%, black);
@@ -249,9 +238,16 @@ watch(
 .seat--reservado {
   --seat-fill: var(--bm-reserved-soft);
 }
+.seat--cortesia,
+.seat--voucher,
 .seat--bloqueado {
-  opacity: 0.38;
+  /*opacity: 0.38;*/
+  & > *:not(.seat__marca) {
+    opacity: 0.38;
+  }
 }
+.seat--cortesia,
+.seat--voucher,
 .seat--bloqueado rect {
   stroke-dasharray: 2 2;
 }
