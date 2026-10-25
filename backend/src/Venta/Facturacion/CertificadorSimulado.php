@@ -16,6 +16,9 @@ use Symfony\Component\Uid\Uuid;
  */
 final class CertificadorSimulado implements CertificadorFel
 {
+    /** NIT con el que firma: marca los DTE ficticios. */
+    public const NIT = "SIMULADO";
+
     public function __construct(
         #[Autowire(env: "bool:default::FEL_SIMULADO_FALLA")]
         private readonly ?bool $falla = false,
@@ -41,7 +44,7 @@ final class CertificadorSimulado implements CertificadorFel
             serie: substr($uuid, 0, 8),
             numero: (int) hexdec(substr(str_replace("-", "", $uuid), 8, 7)),
             fechaCertificacion: new \DateTimeImmutable(),
-            certificadorNit: "SIMULADO",
+            certificadorNit: self::NIT,
             certificadorNombre: "Certificador simulado (desarrollo)",
         );
     }

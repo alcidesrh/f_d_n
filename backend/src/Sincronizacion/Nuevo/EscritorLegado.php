@@ -9,6 +9,7 @@ use App\Entity\Enum\ModalidadEncomienda;
 use App\Sincronizacion\Identidades;
 use App\Sincronizacion\Legado\ConexionLegado;
 use App\Venta\Excepcion\AsientosNoDisponibles;
+use App\Venta\Facturacion\CertificadorSimulado;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
@@ -224,7 +225,7 @@ class EscritorLegado
      * `factura_generada` por boleto (allá es una por boleto) con el UUID,
      * la serie y el número del DTE. Con la serie de la estación y la empresa;
      * sin ella, se anota en la observación del boleto. Si la factura se anuló
-     * aquí, también allá.
+     * aquí, también allá. Las del certificador simulado no se llevan.
      *
      * @return int boletos tocados
      */
@@ -232,7 +233,7 @@ class EscritorLegado
     {
         $venta = $this->db->fetchAssociative(
             "SELECT v.id, v.estacion_id, v.agencia_id, v.usuario_id, v.moneda_id, v.referencia_pago,
-                    f.uuid, f.serie, f.dte, f.fecha_certificacion, f.total_monto, f.anulada_en, s.empresa_id
+                    f.uuid, f.serie, f.dte, f.fecha_certificacion, f.total_monto, f.anulada_en, f.certificador_nit, s.empresa_id
                FROM boleto_venta v
                JOIN factura f ON f.id = v.factura_id
                LEFT JOIN LATERAL (SELECT salida_id FROM boleto_asiento WHERE boleto_venta_id = v.id LIMIT 1) b ON true
@@ -240,7 +241,8 @@ class EscritorLegado
               WHERE v.id = :id",
             ["id" => $ventaId],
         );
-        if ($venta === false) {
+        // Un DTE del certificador simulado (desarrollo) no es una factura: al legado no va.
+        if ($venta === false || $venta["certificador_nit"] === CertificadorSimulado::NIT) {
             return 0;
         }
         $boletos = $this->db->fetchFirstColumn(
