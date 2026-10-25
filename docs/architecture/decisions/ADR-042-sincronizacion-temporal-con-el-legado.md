@@ -44,7 +44,7 @@ Un módulo aparte, `backend/src/Sincronizacion/` (más un bundle en el legado), 
 
 - `SincronizacionFdnBundle` (en el legado) escucha `onFlush`: antes de guardar un boleto que ocupa un asiento llama a `POST /api/sincronizacion/legado/apartar` (`salida`, `origen`, `destino`, `asientos` por número). FDN bloquea la salida (como su propia venta), comprueba con `ReglasVenta::exigirDisponibles` y deja un `ReservaAsiento` de 10 minutos (como el carrito web). Con 409 el legado no vende («ya fue vendido o apartado en el sistema nuevo»).
 - Al terminar la petición del legado (`kernel.terminate`, ya hecho el commit o el rollback) llama a `confirmar`: FDN trae esa salida al momento y quita el apartado. Si el aviso se pierde, el ciclo trae la venta y `ApartadosLegado::limpiar` quita el apartado cuando el boleto llega; si no llega, vence.
-- Si FDN no responde: `sync_config.si_falla = 'bloquear'` (defecto) no vende; `'permitir'` vende igual. Apagado de emergencia desde SQL Server: `UPDATE sync_config SET activo = 0`.
+- Si FDN no responde: `sync_config.si_falla = 'permitir'` (defecto) vende igual y FDN lo trae al volver; `'bloquear'` no vende. Se eligió permitir: el legado está en producción y no debe detenerse por FDN; el riesgo es vender dos veces un asiento mientras FDN no responde, y la conciliación lo muestra. Apagado de emergencia desde SQL Server: `UPDATE sync_config SET activo = 0`.
 - Clave compartida en `X-Sincronizacion-Clave` (`SINCRONIZACION_CLAVE`); URL de FDN vista desde el legado en `SINCRONIZACION_URL_FDN`. Las dos las deja `app:sincronizacion:instalar-legado` en `sync_config`: la configuración del legado (`app/config`, fuera de git) no se toca.
 
 ### 5. Identidades
@@ -63,7 +63,7 @@ Con `SINCRONIZACION_SOLO_TRAER=1`, un FDN (de desarrollo) trae del legado de pro
 ## Consecuencias
 
 - Una venta aquí espera además al SQL Server del legado (una transacción corta por venta); una venta en el legado espera a FDN (unos milisegundos; tope de 8 s).
-- Con el legado caído no se vende aquí en salidas que existen en los dos; con FDN caído no se vende en el legado (salvo `si_falla = 'permitir'`). Es la consecuencia buscada de «nunca vender dos veces».
+- Con el legado caído no se vende aquí en salidas que existen en los dos; con FDN caído el legado sigue vendiendo (`si_falla = 'permitir'`) y el mismo asiento podría venderse en los dos hasta que FDN lo traiga; con `'bloquear'`, el legado no vende.
 - El croquis de un sistema refleja lo vendido en el otro en menos de un minuto (al instante si es apartado o venta propia).
 - Límites conocidos, que se informan y no se sincronizan: la caja del legado (`caja_operacion`), las salidas creadas solo aquí (sin `legacy_id`, el legado no puede venderlas), las reservaciones del legado (allá bloquean la venta de aquí, pero aquí no se ven) y una encomienda con varios artículos llega al legado como una sola fila. La factura en el legado (`factura_generada`) es de cortesía: si falta la serie o el tipo de cambio, sus datos van en la observación.
 - Si el legado tiene el índice único `CUSTOM_IDX_BOLETO_SALIDA_ASIENTO_ESTADO` sin filtro, un segundo boleto anulado del mismo asiento chocaría al llevarlo; queda en `sync_cambio` con su error y lo muestra el indicador.

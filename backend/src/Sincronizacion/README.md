@@ -47,7 +47,7 @@ Solo un FDN puede leer el `sync_cambio` del legado (lo marca como procesado). An
 ## Si algo falla
 
 - **El legado no responde**: aquí no se venden asientos de salidas que existen en los dos sistemas (error «No se pudo confirmar el asiento en el sistema anterior»). Lo demás queda en `sync_cambio` y se reintenta. Apagar la sincronización deja vender aquí sin comprobar.
-- **FDN no responde**: el legado no vende (con `si_falla = bloquear`). Para que siga vendiendo: `bin/console app:sincronizacion:instalar-legado --si-falla=permitir` o, desde SQL Server, `UPDATE sync_config SET si_falla = 'permitir'` (o `activo = 0`).
+- **FDN no responde**: el legado vende igual (`si_falla = permitir`, el defecto) y FDN lo trae al volver; correr luego `app:sincronizacion:conciliar`. Para que el legado no venda sin comprobar: `bin/console app:sincronizacion:instalar-legado --si-falla=bloquear`.
 - **Indicador ámbar o rojo**: `bin/console app:sincronizacion:interruptor` muestra el último ciclo, su error y lo pendiente; `SELECT * FROM sync_cambio WHERE procesado_en IS NULL` (aquí) y `SELECT * FROM sync_cambio WHERE procesado IS NULL` (legado) muestran cada cambio con su error.
 
 ## Cómo se quita

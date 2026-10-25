@@ -22,7 +22,7 @@ final class InstalarLegadoCommand
     public function __invoke(
         SymfonyStyle $io,
         #[Option(description: "Quitar en vez de instalar")] bool $desinstalar = false,
-        #[Option(description: "Si FDN no responde al apartar, el legado: bloquear (no vende) o permitir")] ?string $siFalla = null,
+        #[Option(description: "Si FDN no responde al apartar, el legado: permitir (vende igual; defecto) o bloquear (no vende)")] ?string $siFalla = null,
     ): int {
         if ($siFalla !== null) {
             $this->instalador->siFalla($siFalla);

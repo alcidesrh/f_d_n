@@ -32,7 +32,7 @@ class InstaladorLegado
         return $lotes;
     }
 
-    /** Qué hace el legado si FDN no responde al apartar: `bloquear` (no vende) o `permitir`. */
+    /** Qué hace el legado si FDN no responde al apartar: `permitir` (vende igual; defecto) o `bloquear` (no vende). */
     public function siFalla(string $modo): void
     {
         if (!in_array($modo, ["bloquear", "permitir"], true)) {

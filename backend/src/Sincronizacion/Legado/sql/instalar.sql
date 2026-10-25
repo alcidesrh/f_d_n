@@ -20,10 +20,10 @@ END
 GO
 
 -- Dónde está FDN y con qué clave se llama (los escribe la instalación desde el
--- entorno de FDN). si_falla: 'bloquear' (no vender si FDN no responde) o 'permitir'.
+-- entorno de FDN). si_falla: 'permitir' (vender aunque FDN no responda; defecto) o 'bloquear'.
 IF COL_LENGTH('dbo.sync_config', 'fdn_url') IS NULL
     ALTER TABLE dbo.sync_config ADD fdn_url NVARCHAR(255) NULL, fdn_clave NVARCHAR(255) NULL,
-        si_falla VARCHAR(10) NOT NULL CONSTRAINT df_sync_config_si_falla DEFAULT 'bloquear';
+        si_falla VARCHAR(10) NOT NULL CONSTRAINT df_sync_config_si_falla DEFAULT 'permitir';
 GO
 
 IF OBJECT_ID('dbo.sync_cambio', 'U') IS NULL
