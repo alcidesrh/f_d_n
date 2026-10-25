@@ -53,6 +53,9 @@ final class Traduccion
         return in_array($estadoLegado, self::OCUPAN_LEGADO, true);
     }
 
+    /** `boleto_documento_tipo` de la cortesía en el legado. */
+    public const DOCUMENTO_CORTESIA = 3;
+
     /**
      * `boleto_documento_tipo` del legado: factura, cortesía, voucher de
      * agencia o voucher de internet.
@@ -60,7 +63,7 @@ final class Traduccion
     public static function tipoDocumentoBoleto(CanalVenta $canal, bool $cortesia): int
     {
         return match (true) {
-            $cortesia => 3,
+            $cortesia => self::DOCUMENTO_CORTESIA,
             $canal === CanalVenta::AGENCIA => 5,
             $canal === CanalVenta::WEB => 8,
             default => 1,

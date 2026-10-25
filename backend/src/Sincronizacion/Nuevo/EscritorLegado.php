@@ -170,6 +170,10 @@ class EscritorLegado
     {
         $usuario = $this->usuario($b->usuario);
         $precio = Traduccion::quetzales($b->precio);
+        $moneda = $b->moneda ?? Traduccion::GTQ;
+        // El legado exige tarifa y tipo de cambio a todo boleto que no sea cortesía
+        // (sin ellos no deja anularlo ni editarlo); la cortesía no puede tenerlos.
+        $cortesia = $b->tipoDocumento === Traduccion::DOCUMENTO_CORTESIA;
         $id = $this->legado->insertar("boleto", [
             "identificador_web" => Traduccion::PREFIJO . $b->clave,
             "asiento_bus_id" => $asientoBus,
@@ -185,7 +189,9 @@ class EscritorLegado
             "tipo_documento_id" => $b->tipoDocumento,
             "precioCalculadoMonedaBase" => $precio,
             "precioCalculado" => $precio,
-            "moneda_id" => $b->moneda ?? Traduccion::GTQ,
+            "moneda_id" => $moneda,
+            "tarifa_id" => $cortesia ? null : $this->tarifa($b->salidaLegado, $asientoBus, $b->origen, $b->destino),
+            "tipo_cambio_id" => $cortesia ? null : $this->tipoCambio($moneda),
             "estado_id" => $b->estado,
             "observacion" => mb_substr(trim("Vendido en FDN. " . ($b->observacion ?? "")), 0, 255),
             "estacion_creacion_id" => $b->estacion,
@@ -195,6 +201,42 @@ class EscritorLegado
         $this->bitacoraBoleto($id, $b->estado, $usuario, "Emitido en FDN.");
 
         return $id;
+    }
+
+    /**
+     * La tarifa del legado para el tramo, como la busca él al vender
+     * (`TarifaBoletoRepository::getTarifaBoleto`): origen, destino, clase del
+     * asiento, clase del bus del itinerario (o, sin tarifa para ella, la del
+     * bus de la salida), hora de la salida y la vigente hoy.
+     */
+    private function tarifa(int $salida, int $asientoBus, int $origen, int $destino): ?int
+    {
+        $id = $this->legado->valor(
+            "SELECT TOP 1 t.id
+               FROM salida s
+               JOIN bus_tipo ts ON ts.id = s.tipo_bus_id
+               LEFT JOIN itineario i ON i.id = s.itinerario_id
+               LEFT JOIN bus_tipo ti ON ti.id = i.tipo_bus_id
+               JOIN bus_asiento a ON a.id = :asiento
+               JOIN tarifas_boleto t ON t.estacion_origen_id = :origen AND t.estacion_destino_id = :destino
+                AND t.clase_asiento_id = a.clase_id
+                AND t.clase_bus_id IN (COALESCE(ti.clase_id, ts.clase_id), ts.clase_id)
+                AND (t.horaInicialSalida IS NULL OR t.horaInicialSalida <= CAST(s.fecha AS time))
+                AND (t.horaFinalSalida IS NULL OR t.horaFinalSalida >= CAST(s.fecha AS time))
+                AND t.fechaEfectividad <= GETDATE()
+              WHERE s.id = :salida
+              ORDER BY CASE WHEN t.clase_bus_id = COALESCE(ti.clase_id, ts.clase_id) THEN 0 ELSE 1 END, t.fechaEfectividad DESC, t.id DESC",
+            ["asiento" => $asientoBus, "origen" => $origen, "destino" => $destino, "salida" => $salida],
+        );
+
+        return $id === null ? null : (int) $id;
+    }
+
+    private function tipoCambio(int $moneda): ?int
+    {
+        $id = $this->legado->valor("SELECT TOP 1 id FROM tipo_cambio WHERE moneda_id = :m ORDER BY fecha DESC, id DESC", ["m" => $moneda]);
+
+        return $id === null ? null : (int) $id;
     }
 
     /** El pasajero del boleto, si cambió aquí. */
