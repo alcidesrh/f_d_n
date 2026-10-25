@@ -12,6 +12,7 @@ use App\Sincronizacion\Identidades;
 use App\Sincronizacion\Nuevo\Traduccion;
 use Doctrine\DBAL\Connection;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Console\Output\BufferedOutput;
 use Symfony\Component\DependencyInjection\Attribute\Target;
 
 /**
@@ -220,9 +221,13 @@ class ImportadorLegado
         if ($filas === []) {
             return [];
         }
-        $contadores = $this->migrador->migrarSalida(salidasPrefetchadas: $filas);
+        // La migración escribe el error de la salida en su salida de consola: se guarda para decirlo.
+        $consola = new BufferedOutput();
+        $contadores = $this->migrador->migrarSalida(output: $consola, salidasPrefetchadas: $filas);
         if (($contadores["errores"] ?? 0) > 0) {
-            throw new \RuntimeException("La migración de la salida {$legacyId} del legado falló (ver log).");
+            $error = preg_match("/Error salida \\d+: (.+)/", $consola->fetch(), $m) ? $m[1] : "sin detalle";
+
+            throw new \RuntimeException("La migración de la salida {$legacyId} del legado falló: {$error}");
         }
 
         return array_filter($contadores, static fn(int $n) => $n !== 0);
