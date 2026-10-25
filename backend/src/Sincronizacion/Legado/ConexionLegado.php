@@ -32,6 +32,14 @@ class ConexionLegado implements ResetInterface
     /** `CONTEXT_INFO` de las escrituras de FDN ('FDNSYNC'); lo comparan los triggers. */
     public const MARCA = "0x46444E53594E43";
 
+    /**
+     * Las opciones de sesión de cualquier cliente de SQL Server salvo FreeTDS,
+     * que las deja apagadas: sin ellas no se puede escribir en una tabla con
+     * un índice filtrado (el legado tiene uno en `boleto`), error 1934.
+     */
+    public const OPCIONES_SESION = "SET ANSI_NULLS ON; SET ANSI_PADDING ON; SET ANSI_WARNINGS ON; SET ARITHABORT ON;"
+        . " SET CONCAT_NULL_YIELDS_NULL ON; SET QUOTED_IDENTIFIER ON; SET NUMERIC_ROUNDABORT OFF;";
+
     private ?\PDO $pdo = null;
     private int $ultimoUso = 0;
 
@@ -207,6 +215,7 @@ class ConexionLegado implements ResetInterface
             $pdo = new \PDO("dblib:host={$this->host}:{$this->port};dbname={$this->dbname};charset=UTF-8", $this->usuario, $this->clave);
             $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
             $pdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
+            $pdo->exec(self::OPCIONES_SESION);
             $pdo->prepare("SET CONTEXT_INFO " . self::MARCA)->execute();
             $this->pdo = $pdo;
         }
