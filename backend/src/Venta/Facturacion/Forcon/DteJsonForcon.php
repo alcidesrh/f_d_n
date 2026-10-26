@@ -100,7 +100,7 @@ final class DteJsonForcon
                     "AfiliacionIVA" => $s->afiliacionIva,
                     "CodigoEstablecimiento" => (string) $s->establecimientoCodigo,
                     "CorreoEmisor" => $emisor["correo"],
-                    "NITEmisor" => $s->emisorNit,
+                    "NITEmisor" => self::nit($s->emisorNit),
                     "NombreComercial" => $emisor["nombreComercial"],
                     "NombreEmisor" => $emisor["razonSocial"] ?? $s->emisorNombre,
                     "DireccionEmisor" => [
@@ -174,7 +174,7 @@ final class DteJsonForcon
                 "FechaHoraAnulacion" => $s->fechaAnulacion->format($formato),
                 "IDReceptor" => $s->receptorNit,
                 "MotivoAnulacion" => mb_substr($s->motivo, 0, 255),
-                "NITEmisor" => $s->emisorNit,
+                "NITEmisor" => self::nit($s->emisorNit),
                 "NumeroDocumentoAAnular" => strtoupper($s->uuid),
             ],
         ];
@@ -228,6 +228,12 @@ final class DteJsonForcon
 
         // Errores internos del certificador (EAL-020, ESW-043): vale reintentar.
         return new CertificacionFallida($mensaje, in_array($m[1], ["EAL-020", "ESW-043"], true), $m[1]);
+    }
+
+    /** NIT como lo espera Forcon: sin guion ni espacios (la base lo guarda como «6907303-1»). */
+    public static function nit(string $nit): string
+    {
+        return strtoupper(preg_replace('/[^A-Za-z0-9]+/', '', $nit) ?? "");
     }
 
     private static function decimal(Money $monto): float

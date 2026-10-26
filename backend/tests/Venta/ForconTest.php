@@ -57,6 +57,16 @@ final class ForconTest extends TestCase
         ]);
     }
 
+    /** La base guarda el NIT con guion («4397700-6»); Forcon lo espera sin él, como lo manda el legado. */
+    public function testNitDelEmisorSinGuion(): void
+    {
+        $base = self::solicitud();
+        $conGuion = new SolicitudDte(...array_merge(get_object_vars($base), ["emisorNit" => "4397700-6"]));
+
+        $this->assertSame("43977006", DteJsonForcon::construir($conGuion, self::emisor())["DatosEmision"]["Emisor"]["NITEmisor"]);
+        $this->assertSame("43977006", DteJsonForcon::nit(" 4397700-6 "));
+    }
+
     /** Mismas claves que el ejemplo oficial (salvo lo opcional). */
     public function testEstructuraIgualAlEjemploDeForcon(): void
     {

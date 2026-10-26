@@ -32,7 +32,7 @@ final class DatosEmisorForcon
             sprintf("forcon_emisor_%s_%d", preg_replace('/\W/', "", $nit), $establecimiento),
             function (ItemInterface $item) use ($nit, $establecimiento) {
                 $item->expiresAfter(43200);
-                $r = $this->cliente->get(ClienteForcon::DATOS_EMISOR, ["NIT" => $nit, "Establecimiento" => $establecimiento], $nit);
+                $r = $this->cliente->get(ClienteForcon::DATOS_EMISOR, ["NIT" => DteJsonForcon::nit($nit), "Establecimiento" => $establecimiento], $nit);
                 if (($r["Resultado"] ?? false) !== true) {
                     throw new CertificacionFallida(
                         sprintf(
