@@ -1,9 +1,13 @@
-# Production environment override
+# Production environment override (`make prod`). Variables y secretos en .env.prod.local (fuera de git):
+# compose los usa para interpolar (--env-file) y los contenedores de PHP los reciben con env_file,
+# porque la imagen de prod no lleva backend/.env.local.
 services:
   backend:
     build:
       context: ./backend
       target: frankenphp_prod
+    restart: unless-stopped
+    env_file: .env.prod.local
     environment:
       APP_SECRET: ${APP_SECRET}
       MERCURE_PUBLISHER_JWT_KEY: ${CADDY_MERCURE_JWT_SECRET}
@@ -13,6 +17,7 @@ services:
     build:
       context: ./backend
       target: frankenphp_prod
+    env_file: .env.prod.local
     environment:
       APP_SECRET: ${APP_SECRET}
       MERCURE_PUBLISHER_JWT_KEY: ${CADDY_MERCURE_JWT_SECRET}
@@ -22,7 +27,9 @@ services:
     build:
       context: ./frontend
       target: prod
+    restart: unless-stopped
 
   database:
+    restart: unless-stopped
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}

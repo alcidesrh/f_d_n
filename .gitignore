@@ -9,3 +9,6 @@ legacy/
 
 # Acceso por IP pública de la VPS (secretos, make vps)
 .env.vps.local
+
+# Producción en la VPS (secretos, make prod)
+.env.prod.local
