@@ -1,0 +1,15 @@
+# Ciclo de sincronización en desarrollo: el código montado como el worker de compose.override.yaml
+# (`extends` toma el worker de compose.yaml, sin el override). Lo usa `make dev-sync`.
+services:
+  sincronizacion:
+    build:
+      context: ./backend
+      target: frankenphp_dev
+    volumes:
+      - ./backend:/app
+      - /app/var
+      - ./backend/frankenphp/conf.d/20-app.dev.ini:/usr/local/etc/php/app.conf.d/20-app.dev.ini:ro
+    environment:
+      XDEBUG_MODE: 'off'
+    extra_hosts:
+      - host.docker.internal:host-gateway
