@@ -52,9 +52,9 @@
 }
 
 .main-inner {
-  padding: var(--page-gutter);
-  padding-top: 2rem;
-  padding-bottom: max(var(--page-gutter), 3rem);
+  padding: calc(var(--page-gutter) / 2);
+  padding-top: 1rem;
+  padding-bottom: max(calc(var(--page-gutter) / 2), 1.5rem);
   /*max-width: var(--content-max);*/
   /*margin: 0 auto;*/
 }

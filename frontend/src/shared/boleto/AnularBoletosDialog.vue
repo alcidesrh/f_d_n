@@ -2,6 +2,9 @@
   Anular boletos (antes de la hora de salida). Muestra los boletos, pide el
   motivo y avisa lo que implica: la factura electrónica de la venta se anula
   en la SAT y, en agencias, se devuelve el saldo. El asiento queda libre.
+  Una factura conjunta (varios boletos) se anula entera: el diálogo lo dice,
+  muestra los demás boletos que cubre para agregarlos y, si quedan algunos,
+  se certifica otra factura solo con ellos.
   Lo que una regla impide pero admite autorización (sin permiso, fuera de
   hora, pasado el límite diario) se intenta igual: con una aprobada se usa
   sola; sin ella, ofrece pedirla (ADR-040).
@@ -25,7 +28,23 @@
         </ul>
 
         <Message v-if="bloqueo" severity="warn" :closable="false">{{ bloqueo }}. Quítelo de la selección para continuar.</Message>
-        <Message v-if="conFactura" severity="warn" :closable="false">La factura electrónica de {{ ventasConFactura.length > 1 ? 'las ventas' : 'la venta' }} {{ ventasConFactura.join(', ') }} se anulará en la SAT. Una factura cubre todos los boletos de su venta: se anulan juntos.</Message>
+        <Message v-for="f in facturas" :key="f.venta" severity="warn" :closable="false">
+          <template v-if="f.cubre > 1">
+            <div class="font-semibold">Factura conjunta{{ f.factura ? ` ${f.factura}` : '' }} · venta {{ f.venta }}</div>
+            <div>Cubre {{ f.cubre }} boletos. Se anulará en la SAT{{ f.quedan.length ? ` y se emitirá una nueva con ${f.quedan.length === 1 ? 'el boleto que queda' : `los ${f.quedan.length} boletos que quedan`}` : '' }}.</div>
+            <ul v-if="f.quedan.length" class="m-0 mt-2 flex list-none flex-col gap-1 p-0">
+              <li v-for="c in companerosDe(f.quedan)" :key="c.id" class="flex items-center justify-between gap-2">
+                <span class="min-w-0 truncate">Asiento {{ c.asiento.numero }} · {{ c.pasajero ?? 'sin pasajero' }} · {{ c.precio?.texto ?? '—' }}</span>
+                <Button label="Agregar" size="small" severity="secondary" :disabled="!agregable(c) || enviando || !!resultado" :title="agregable(c) ? 'Anularlo también' : (c.motivo ?? '')" @click="agregar([c.id])">
+                  <template #icon><icon name="add" class="mr-1" /></template>
+                </Button>
+              </li>
+              <li v-if="companerosDe(f.quedan).length < f.quedan.length" class="text-xs">{{ f.quedan.length - companerosDe(f.quedan).length }} boleto(s) que no puede ver.</li>
+            </ul>
+            <Button v-if="companerosDe(f.quedan).filter(agregable).length > 1" label="Agregar todos" size="small" severity="secondary" variant="outlined" class="mt-2" :disabled="enviando || !!resultado" @click="agregar(companerosDe(f.quedan).filter(agregable).map((c) => c.id))" />
+          </template>
+          <template v-else>La factura electrónica{{ f.factura ? ` ${f.factura}` : '' }} de la venta {{ f.venta }} se anulará en la SAT.</template>
+        </Message>
         <Message v-if="deAgencia" severity="info" :closable="false">Se devolverá el precio al saldo de la agencia.</Message>
 
         <label class="flex flex-col gap-1">
@@ -35,7 +54,6 @@
 
         <Message v-if="error" :severity="autorizable ? 'warn' : 'error'" :closable="false">
           {{ error }}
-          <Button v-if="faltantes.length" :label="`Incluir ${faltantes.length === 1 ? 'el boleto que falta' : `los ${faltantes.length} boletos que faltan`}`" size="small" severity="secondary" class="ml-2" @click="incluirFaltantes" />
           <Button v-if="autorizable" label="Pedir autorización" size="small" class="ml-2" @click="pedirAutorizacion">
             <template #icon><icon name="verified-user-outline" class="mr-1" /></template>
           </Button>
@@ -43,6 +61,7 @@
         <template v-if="resultado">
           <Message v-if="resultado.anulados.length" severity="success" :closable="false">{{ resultado.anulados.length }} boleto(s) anulado(s).</Message>
           <Message v-for="f in resultado.fallidos" :key="f.venta" severity="error" :closable="false">Venta {{ f.venta }}: {{ f.error }}</Message>
+          <Message v-for="r in resultado.refacturadas ?? []" :key="`r${r.venta}`" :severity="r.error ? 'warn' : 'success'" :closable="false">{{ textoRefactura(r) }}</Message>
         </template>
       </template>
     </div>
@@ -57,6 +76,7 @@
 import { computed, ref, shallowRef } from 'vue'
 import { anularBoletos, errorVenta, fetchBoletos } from '@/core/venta/api'
 import { motivoNoOperable } from '@/core/venta/reasignacion'
+import { facturasEnAnulacion } from '@/core/venta/anulacion'
 import type { BoletoOperable, ResultadoAnulacion } from '@/core/venta/types'
 import { notify } from '@/core/notify'
 import { bloqueoAutorizable } from '@/core/autorizacion/reglas'
@@ -76,9 +96,10 @@ const motivo = ref('')
 const enviando = ref(false)
 const error = ref('')
 const resultado = ref<ResultadoAnulacion | null>(null)
-/** Boletos de la misma venta que hay que sumar para anular su factura completa. */
+/** Boletos de una factura conjunta que el usuario sumó a la selección. */
 const extra = ref<number[]>([])
-const faltantes = ref<number[]>([])
+/** Los demás boletos que cubren las facturas conjuntas (para ofrecer agregarlos). */
+const companeros = ref<BoletoOperable[]>([])
 /** El último bloqueo, si admite autorización (para ofrecer pedirla). */
 const autorizable = shallowRef<unknown>(null)
 const autorizaciones = useAutorizacionesStore()
@@ -90,8 +111,10 @@ function pedirAutorizacion() {
 }
 const todos = computed(() => [...new Set([...props.ids, ...extra.value])])
 
-const ventasConFactura = computed(() => [...new Set(boletos.value.filter((b) => b.venta.estadoFacturacion === 'certificada').map((b) => b.venta.id))])
-const conFactura = computed(() => ventasConFactura.value.length > 0)
+const facturas = computed(() => facturasEnAnulacion(boletos.value, todos.value))
+const companerosDe = (ids: number[]) => companeros.value.filter((c) => ids.includes(c.id))
+/** Se puede sumar si se puede anular (o se puede con una autorización). */
+const agregable = (b: BoletoOperable) => b.operable || !!b.conAutorizacion
 const deAgencia = computed(() => boletos.value.some((b) => b.venta.canal === 'agencia'))
 const bloqueo = computed(() => motivoNoOperable(boletos.value))
 const puedeAnular = computed(() => !cargando.value && boletos.value.length > 0 && !bloqueo.value && motivo.value.trim().length > 0 && !enviando.value)
@@ -103,10 +126,11 @@ async function cargar() {
   errorCarga.value = ''
   resultado.value = null
   extra.value = []
-  faltantes.value = []
+  companeros.value = []
   cargando.value = true
   try {
     boletos.value = await fetchBoletos(todos.value)
+    await cargarCompaneros()
   } catch (e) {
     errorCarga.value = errorVenta(e)?.error ?? 'No se pudieron cargar los boletos.'
   } finally {
@@ -123,8 +147,10 @@ async function anular() {
     resultado.value = r
     if (r.anulados.length) {
       emit('listo', r)
-      if (!r.fallidos.length) {
-        notify.success(r.anulados.length === 1 ? 'Boleto anulado' : `${r.anulados.length} boletos anulados`)
+      const refacturaFallida = r.refacturadas?.some((x) => x.error)
+      if (!r.fallidos.length && !refacturaFallida) {
+        const nuevas = r.refacturadas?.length ? ` · ${r.refacturadas.length === 1 ? 'factura nueva emitida' : `${r.refacturadas.length} facturas nuevas emitidas`}` : ''
+        notify.success((r.anulados.length === 1 ? 'Boleto anulado' : `${r.anulados.length} boletos anulados`) + nuevas)
         emit('update:visible', false)
       }
     }
@@ -132,22 +158,34 @@ async function anular() {
     const err = errorVenta(e)
     error.value = err?.error ?? 'No se pudo anular.'
     autorizable.value = bloqueoAutorizable(e) ? e : null
-    faltantes.value = err?.codigo === 'venta_incompleta' ? (err.boletos ?? []).filter((id) => !todos.value.includes(id)) : []
   } finally {
     enviando.value = false
   }
 }
 
-/** Suma los boletos que faltan de la venta y vuelve a mostrar la lista completa. */
-async function incluirFaltantes() {
-  extra.value = [...extra.value, ...faltantes.value]
-  faltantes.value = []
-  error.value = ''
+/** Los boletos de las facturas conjuntas que no están en la selección; si no se pueden leer, solo se dice cuántos son. */
+async function cargarCompaneros() {
+  const ids = [...new Set(facturas.value.flatMap((f) => f.quedan))]
+  if (!ids.length) return
   try {
-    boletos.value = await fetchBoletos(todos.value)
-  } catch (e) {
-    error.value = errorVenta(e)?.error ?? 'No se pudieron cargar los boletos.'
+    companeros.value = await fetchBoletos(ids)
+  } catch {
+    companeros.value = []
   }
+}
+
+/** Suma boletos de la factura conjunta a la selección. */
+function agregar(ids: number[]) {
+  const nuevos = companeros.value.filter((c) => ids.includes(c.id) && !todos.value.includes(c.id))
+  extra.value = [...extra.value, ...nuevos.map((c) => c.id)]
+  boletos.value = [...boletos.value, ...nuevos]
+  error.value = ''
+}
+
+function textoRefactura(r: NonNullable<ResultadoAnulacion['refacturadas']>[number]) {
+  if (r.error) return `Venta ${r.venta}: la factura de los boletos que quedan no se certificó (${r.error}). Quedó pendiente y se reintentará.`
+  const numero = [r.factura?.serie, r.factura?.numero].filter((x) => x != null).join('-')
+  return `Venta ${r.venta}: se emitió la factura ${numero} con los boletos que quedan.`
 }
 
 const fechaHora = (iso: string) => new Intl.DateTimeFormat('es-GT', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date(iso))

@@ -10,6 +10,11 @@
   cada parada ("≈" si es estimada, "+1" si llega otro día), con el nombre debajo.
   La ruta del bus, por siglas y debajo los nombres. Una salida sin
   tarifa para ese viaje lo dice en el precio y no se puede elegir.
+
+  Si la lista junta salidas de más de un día (por la hora de salida), cada
+  día se distingue: fondo celeste en el anterior (alternando hacia atrás
+  desde el último), una línea al empezar otro día y la fecha con el día de
+  la semana en una etiqueta.
 -->
 <template>
   <div class="salidas-lista">
@@ -34,7 +39,8 @@
           <div class="tracking-wide text-center tabular-nums whitespace-nowrap font-[450]">
             {{ hora(s(row).salida) }}
           </div>
-          <div class="text-xs tabular-nums whitespace-nowrap font-[350]">
+          <div v-if="variosDias" class="dia" :class="{ 'dia--alterno': alterno(s(row)) }">{{ diaSemana(s(row).salida) }}</div>
+          <div v-else class="text-xs tabular-nums whitespace-nowrap font-[350]">
             {{ fecha(s(row).salida) }}
           </div>
         </div>
@@ -69,6 +75,7 @@
       <template #card="{ row }">
         <div class="tarjeta">
           <div class="tarjeta__linea">
+            <span v-if="variosDias" class="dia flex-none" :class="{ 'dia--alterno': alterno(s(row)) }">{{ diaSemana(s(row).salida) }}</span>
             <span class="flex-none font-semibold tabular-nums">{{ horaPunta(s(row), "sube") }}</span>
             <span class="min-w-0 flex-1 truncate text-right font-medium" :title="viaje(s(row))">{{ viaje(s(row)) }}</span>
           </div>
@@ -138,6 +145,31 @@ const s = (row: unknown) => row as SalidaResumen;
 const rowKey = (row: unknown) => String(s(row).id);
 const seleccion = computed(() => new Set(props.salidaId == null ? [] : [String(props.salidaId)]));
 
+/** Día de cada salida (por su hora de salida) en el orden de la lista: el número de grupo y si lo abre. */
+const dias = computed(() => {
+  const porId = new Map<number, { indice: number; primero: boolean }>();
+  let anterior: string | null = null;
+  let indice = -1;
+  for (const r of props.salidas) {
+    const clave = fecha(r.salida);
+    const primero = clave !== anterior;
+    if (primero) indice++;
+    anterior = clave;
+    porId.set(r.id, { indice, primero });
+  }
+  return { porId, cuantos: indice + 1 };
+});
+const variosDias = computed(() => dias.value.cuantos > 1);
+const dia = (r: SalidaResumen) => dias.value.porId.get(r.id) ?? { indice: 0, primero: false };
+/** Con fondo los días anteriores al último, alternando hacia atrás: el día actual va sin fondo. */
+const alterno = (r: SalidaResumen) => variosDias.value && (dias.value.cuantos - 1 - dia(r).indice) % 2 === 1;
+/** "lun 26/10". */
+const diaSemana = (iso: string) => {
+  const partes = new Intl.DateTimeFormat("es-GT", { weekday: "short", day: "2-digit", month: "2-digit", timeZone: "America/Guatemala" }).formatToParts(new Date(iso));
+  const de = (t: string) => partes.find((p) => p.type === t)?.value ?? "";
+  return `${de("weekday").replace(".", "")} ${de("day")}/${de("month")}`;
+};
+
 const vendible = (r: SalidaResumen) => ["programada", "abordando"].includes(r.estado) && !!r.bus;
 /** Hay tarifa para el viaje del cliente: sin ella no se vende, así que no se elige. */
 const conTarifa = (r: SalidaResumen) => !!r.precios?.length;
@@ -147,6 +179,8 @@ const rowClass = (row: unknown) => {
     "is-cancelada": r.estado === "cancelada",
     "is-no-vendible": !vendible(r),
     "is-sin-tarifa": !conTarifa(r),
+    "is-dia-alterno": alterno(r),
+    "is-nuevo-dia": variosDias.value && dia(r).primero && dia(r).indice > 0,
   };
 };
 function elegir(r: SalidaResumen) {
@@ -210,6 +244,38 @@ const precioCorto = (p: Importe | null) => (p ? p.texto.replace(/[.,]00$/, "") :
   border-top: 1px solid var(--p-red-400);
   pointer-events: none;
 }
+/* Varios días: bandas alternas y una línea donde empieza otro día. */
+.salidas :deep(.dg-brow.is-dia-alterno:not(:hover, .is-selected)),
+.salidas :deep(.dg-card.is-dia-alterno:not(.is-selected)) {
+  --dg-row-bg: color-mix(in srgb, var(--p-sky-500) 7%, var(--dg-bg));
+}
+.salidas :deep(.dg-brow.is-nuevo-dia) {
+  box-shadow: inset 0 2px 0 var(--p-sky-500);
+}
+.salidas :deep(.dg-card.is-nuevo-dia) {
+  margin-top: 0.5rem;
+}
+.dia {
+  display: inline-block;
+  padding: 0 0.4rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.25rem;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  text-transform: capitalize;
+  background: var(--p-surface-200);
+  color: var(--p-surface-700);
+}
+.dia--alterno {
+  background: var(--p-sky-100);
+  color: var(--p-sky-800);
+}
+.celda .dia {
+  font-size: 0.75rem;
+}
+
 /* Tarjetas de dos líneas: lo justo de aire para leerlas y tocarlas. */
 .salidas :deep(.dg-cards) {
   gap: 0.375rem;

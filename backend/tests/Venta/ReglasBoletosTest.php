@@ -95,55 +95,45 @@ final class ReglasBoletosTest extends TestCase
         $this->assertSame("boleto_no_emitido", $this->codigo(fn() => ReglasBoletos::exigirEmitido($b)));
     }
 
-    public function testUnaFacturaExigeAnularTodosLosBoletosVivosDeLaVenta(): void
+    public function testLaFacturaCubreLosBoletosVivosDeLaVenta(): void
     {
-        $venta = self::venta(EstadoFacturacion::CERTIFICADA);
-        $b1 = self::boleto(1, $venta, 1);
-        $b2 = self::boleto(2, $venta, 2);
+        foreach ([EstadoFacturacion::CERTIFICADA, EstadoFacturacion::PENDIENTE] as $estado) {
+            $venta = self::venta($estado);
+            $b1 = self::boleto(1, $venta, 1);
+            $b2 = self::boleto(2, $venta, 2);
+            $b3 = self::boleto(3, $venta, 3);
+            $this->assertSame([$b1, $b2, $b3], ReglasBoletos::boletosDeLaFactura($venta), $estado->value);
 
-        $this->assertSame("venta_incompleta", $this->codigo(fn() => ReglasBoletos::exigirVentaCompleta($venta, [$b1])));
-        $this->assertNull($this->codigo(fn() => ReglasBoletos::exigirVentaCompleta($venta, [$b1, $b2])));
-
-        // Lo ya anulado o reasignado no cuenta como vivo.
-        $b2->setEstado(EstadoBoletoAsiento::REASIGNADO);
-        $this->assertNull($this->codigo(fn() => ReglasBoletos::exigirVentaCompleta($venta, [$b1])));
-    }
-
-    public function testElRechazoDiceQueBoletosFaltan(): void
-    {
-        $venta = self::venta(EstadoFacturacion::CERTIFICADA);
-        $b1 = self::boleto(1, $venta, 1);
-        self::boleto(2, $venta, 2);
-        self::boleto(3, $venta, 3);
-
-        try {
-            ReglasBoletos::exigirVentaCompleta($venta, [$b1]);
-            $this->fail("debía rechazar");
-        } catch (VentaRechazada $e) {
-            $this->assertSame([2, 3], $e->detalle["boletos"]);
-            $this->assertSame(7, $e->detalle["venta"]);
-            $this->assertStringContainsString("los asientos 2, 3", $e->getMessage());
+            // Lo ya anulado o reasignado no cuenta como vivo.
+            $b2->setEstado(EstadoBoletoAsiento::ANULADO);
+            $b3->setEstado(EstadoBoletoAsiento::REASIGNADO);
+            $this->assertSame([$b1], ReglasBoletos::boletosDeLaFactura($venta), $estado->value);
         }
     }
 
-    public function testVentasSinFacturaSePuedenAnularPorPartes(): void
+    public function testUnaVentaSinFacturaNoCubreBoletos(): void
     {
         foreach ([EstadoFacturacion::NO_APLICA, EstadoFacturacion::ANULADA] as $estado) {
             $venta = self::venta($estado);
-            $b1 = self::boleto(1, $venta, 1);
+            self::boleto(1, $venta, 1);
             self::boleto(2, $venta, 2);
 
-            $this->assertNull($this->codigo(fn() => ReglasBoletos::exigirVentaCompleta($venta, [$b1])), $estado->value);
+            $this->assertSame([], ReglasBoletos::boletosDeLaFactura($venta), $estado->value);
         }
     }
 
-    public function testUnaFacturaPorCertificarTambienCubreTodaLaVenta(): void
+    public function testLoQueQuedaDeUnaFacturaConjuntaSeFacturaSinLoAnulado(): void
     {
-        $venta = self::venta(EstadoFacturacion::PENDIENTE);
-        $b1 = self::boleto(1, $venta, 1);
-        self::boleto(2, $venta, 2);
+        $venta = self::venta(EstadoFacturacion::CERTIFICADA)->setTotal(Money::GTQ(45000));
+        self::boleto(1, $venta, 1, 10000);
+        $b2 = self::boleto(2, $venta, 2, 15000);
+        $b3 = self::boleto(3, $venta, 3, 20000);
+        $this->assertEquals(Money::GTQ(45000), ReglasBoletos::totalFacturable($venta));
 
-        $this->assertSame("venta_incompleta", $this->codigo(fn() => ReglasBoletos::exigirVentaCompleta($venta, [$b1])));
+        $b2->setEstado(EstadoBoletoAsiento::ANULADO);
+        // El reasignado sigue cobrado: su reemplazo está en la misma venta.
+        $b3->setEstado(EstadoBoletoAsiento::REASIGNADO);
+        $this->assertEquals(Money::GTQ(30000), ReglasBoletos::totalFacturable($venta));
     }
 
     public function testSoloSeReasignaEntreSalidasDeLaMismaEmpresa(): void

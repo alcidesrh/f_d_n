@@ -59,7 +59,7 @@ function vieneDeLaBandeja(): boolean {
 .chat {
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - var(--header-h) - 2rem - max(var(--page-gutter), 3rem));
+  height: calc(100dvh - var(--header-h) - 1rem - max(calc(var(--page-gutter) / 2), 1.5rem));
   min-height: 26rem;
   overflow: hidden;
   border-radius: 1rem;

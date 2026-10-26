@@ -13,6 +13,7 @@ use App\Entity\Estacion;
 use App\Entity\Enum\EstadoBoletoAsiento;
 use App\Entity\Establecimiento;
 use App\Entity\Factura;
+use App\Venta\ReglasBoletos;
 use Doctrine\ORM\EntityManagerInterface;
 use Money\Money;
 use Psr\Clock\ClockInterface;
@@ -190,7 +191,7 @@ final class Facturador
                 : ($cliente?->getNombreCompleto() ?: "Sin nombre")),
             receptorCorreo: $venta->isEnviarCorreo() ? $cliente?->getEmail() : null,
             items: $items,
-            total: $venta->getTotal(),
+            total: ReglasBoletos::totalFacturable($venta),
             establecimientoCodigo: $this->establecimiento($empresa, $venta->getEstacion())->getCodigo(),
             afiliacionIva: $empresa->getAfiliacionIva(),
             frases: $empresa->frases(),

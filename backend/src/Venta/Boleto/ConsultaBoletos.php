@@ -113,6 +113,9 @@ final class ConsultaBoletos
                 "canal" => $venta->getCanal()->value,
                 "cortesia" => $venta->isCortesia(),
                 "estadoFacturacion" => $venta->getEstadoFacturacion()->value,
+                "factura" => $venta->getFactura() === null ? null : ["serie" => $venta->getFactura()->getSerie(), "numero" => $venta->getFactura()->getDte()],
+                // Los que cubre su factura: con más de uno es conjunta (anular parte certifica otra con lo que quede).
+                "boletosFactura" => array_map(static fn(BoletoAsiento $x) => (int) $x->getId(), ReglasBoletos::boletosDeLaFactura($venta)),
                 "cliente" => $venta->getCliente() === null ? null : Clientes::fila($venta->getCliente()),
             ],
             "operable" => $motivo === null,

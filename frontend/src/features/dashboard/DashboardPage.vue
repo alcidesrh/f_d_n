@@ -11,7 +11,7 @@
   <div class="tablero @container flex flex-col gap-4">
     <header class="flex flex-wrap items-end gap-3">
       <div class="min-w-0 flex-1">
-        <p v-if="datos" class="text-xs text-muted-color">{{ rango(datos.periodo.desde, datos.periodo.hasta) }} · comparado con {{ datos.periodo.rotuloAnterior }} a la misma hora · actualizado {{ hora(datos.generado.slice(0, 16)) }}</p>
+        <p v-if="datos" class="text-sm md:text- lg lg:text-xl font-medium">{{ rango(datos.periodo.desde, datos.periodo.hasta) }} · comparado con {{ datos.periodo.rotuloAnterior }} a la misma hora · actualizado {{ hora(datos.generado.slice(0, 16)) }}</p>
       </div>
       <template v-if="!sinPermiso">
         <Select v-if="datos && !datos.alcance.fija && datos.empresas.length > 1" v-model="empresa" :options="datos.empresas" option-label="nombre" option-value="id" show-clear placeholder="Todas las empresas" size="small" class="w-full @md:w-52" aria-label="Empresa" />
@@ -41,11 +41,11 @@
       </template>
 
       <template v-if="datos">
-        <div class="section-header text-sm mt-[0.5rem] mb-[0.3rem] md:text-[1.5rem] lg:mt-[1.5rem] pb-[5px] lg:mb-[1rem]">Alerta</div>
-        <AlertasTablero :alertas="datos.alertas" />
+        <!-- <div class="section-header text-sm mt-[0.5rem] mb-[0.3rem] md:text-[1.5rem] lg:mt-[1.5rem] pb-[5px] lg:mb-[1rem]">Alerta</div>
+        <AlertasTablero :alertas="datos.alertas" /> -->
 
-        <div class="section-header text-sm mt-[0.5rem] mb-[0.3rem] md:text-[1.5rem] lg:mt-[1.5rem] pb-[5px] lg:mb-[1rem">Venta</div>
-        <div class="kpis">
+        <!-- <div class="section-header text-sm mt-[0.5rem] mb-[0.3rem] md:text-[1.5rem] lg:mt-[1.5rem] pb-[5px] lg:mb-[1rem">Venta</div> -->
+        <div class="kpis mt-[0.5rem] mb-[0.3rem] md:text-[1.5rem] lg:mt-[1.5rem] pb-[5px]">
           <KpiTile etiqueta="Ingresos" icono="payments-outline" :valor="dinero(k.ingresos.actual, true)" :variacion="variacion(k.ingresos.actual, k.ingresos.anterior)" :anterior="dinero(k.ingresos.anterior, true)" ayuda="Boletos vendidos y cobrados en el periodo (por fecha de venta), sin anulados ni cortesías." />
           <KpiTile etiqueta="Boletos vendidos" icono="confirmation-number-outline" :valor="numero(k.boletos.actual)" :variacion="variacion(k.boletos.actual, k.boletos.anterior)" :anterior="numero(k.boletos.anterior)" />
           <KpiTile etiqueta="Ticket promedio" icono="sell-outline" :valor="dinero(k.ticketPromedio.actual)" :variacion="variacion(k.ticketPromedio.actual, k.ticketPromedio.anterior)" :anterior="dinero(k.ticketPromedio.anterior)" />
@@ -56,14 +56,24 @@
           <KpiTile etiqueta="Sin cobro" icono="redeem-outline" :valor="dinero(k.valorCortesias.actual, true)" :variacion="variacion(k.valorCortesias.actual, k.valorCortesias.anterior, { inverso: true })" :detalle="`${numero(k.cortesias.actual)} cortesías y vouchers`" ayuda="Valor de los boletos emitidos sin cobro (vouchers a precio de tarifa; las cortesías nuevas van a Q 0). Es ingreso que no entra." />
         </div>
 
-        <div class="section-header text-sm mt-[0.5rem] mb-[0.3rem] md:text-[1.5rem] lg:mt-[1.5rem] pb-[5px] lg:mb-[1rem">Estadísticas</div>
-        <div class="fila-2-1">
-          <TableroPanel titulo="Tendencia de ingresos" icono="show-chart" :subtitulo="datos.periodo.porHora ? 'Por hora de venta, por canal' : 'Por día de venta, por canal'" ayuda="Barras: lo vendido en cada hora o día, por canal. Línea: el periodo anterior alineado (hoy contra el mismo día de la semana pasada).">
+        <!-- <div class="section-header text-sm mt-[0.5rem] mb-[0.3rem] md:text-[1.5rem] lg:mt-[1.5rem] pb-[5px] lg:mb-[1rem">Cananles de Ventas por estación, agencia y página.</div> -->
+        <div class="fila-2-1 mt-[0.5rem] mb-[0.3rem] md:text-[1.5rem] lg:mt-[1.5rem] pb-[5px]">
+          <TableroPanel titulo="Ingresos diario por canales de venta" icono="show-chart">
             <TendenciaVentas :serie="datos.serie" :por-hora="datos.periodo.porHora" :rotulo-anterior="datos.periodo.rotuloAnterior" />
           </TableroPanel>
 
-          <TableroPanel titulo="Canales de venta" icono="storefront-outline" subtitulo="Participación en los ingresos">
+          <TableroPanel titulo="Ingresos totales por canales de venta" icono="storefront-outline" subtitulo="Participación en los ingresos">
             <CanalesVenta :canales="datos.canales" />
+          </TableroPanel>
+        </div>
+
+        <div class="fila-2-1 mt-10">
+          <TableroPanel titulo="Demanda por día y hora" icono="grid-on-outline" subtitulo="Ocupación media según la hora de salida" ayuda="Mira al menos las últimas 4 semanas. Mover salidas de las franjas claras a las oscuras sube la ocupación sin sumar buses.">
+            <MapaDemanda :demanda="datos.demanda" />
+          </TableroPanel>
+
+          <TableroPanel titulo="Mejores puntos de venta" icono="leaderboard-outline" subtitulo="Por ingresos del periodo">
+            <PuntosVenta :puntos="datos.puntos" />
           </TableroPanel>
         </div>
 
@@ -81,15 +91,6 @@
           <RendimientoRutas :rutas="datos.rutas" />
         </TableroPanel>
 
-        <div class="fila-2-1 mt-10">
-          <TableroPanel titulo="Demanda por día y hora" icono="grid-on-outline" subtitulo="Ocupación media según la hora de salida" ayuda="Mira al menos las últimas 4 semanas. Mover salidas de las franjas claras a las oscuras sube la ocupación sin sumar buses.">
-            <MapaDemanda :demanda="datos.demanda" />
-          </TableroPanel>
-
-          <TableroPanel titulo="Mejores puntos de venta" icono="leaderboard-outline" subtitulo="Por ingresos del periodo">
-            <PuntosVenta :puntos="datos.puntos" />
-          </TableroPanel>
-        </div>
         <div class="section-header text-sm mt-[0.5rem] mb-[0.3rem] md:text-[1.5rem] lg:mt-[1.5rem] pb-[5px] lg:mb-[1rem">Agencia</div>
         <div class="fila-1-1">
           <TableroPanel titulo="Saldo de agencias" icono="account-balance-wallet-outline" subtitulo="Días de venta que cubre el saldo" ayuda="Saldo disponible dividido entre lo que la agencia vendió por día la última semana.">
@@ -326,7 +327,7 @@ onBeforeUnmount(() => {
   border-color: var(--p-surface-300);
   display: flex;
   /*font-weight: 400px;*/
-  width: 20%;
+  width: 40%;
   color: var(--p-surface-500);
   /*justify-content: end;*/
   /*margin-left: auto;*/

@@ -42,9 +42,14 @@ use Psr\Log\LoggerInterface;
  * (llamada externa, fuera de transacción; si falla no cambia nada), y luego,
  * en una transacción con las salidas bloqueadas, los boletos pasan a
  * `anulado` (el asiento queda libre y la bitácora deja constancia) y, si es
- * una agencia, se le devuelve el precio. Una factura cubre toda la venta:
- * no se anula con boletos vivos de la venta fuera de la selección
- * (`ReglasBoletos::exigirVentaCompleta`).
+ * una agencia, se le devuelve el precio.
+ *
+ * Una factura conjunta (varios boletos) no se anula por partes en el
+ * certificador: si quedan boletos vivos de la venta fuera de la selección,
+ * se anula entera y, ya confirmada la anulación de los boletos, se certifica
+ * otra con los que quedan (`ReglasBoletos::totalFacturable`). Si esa nueva no
+ * sale, la venta queda por certificar y la reintenta
+ * `app:venta:certificar-pendientes`.
  *
  * Si el certificador anuló la factura pero la transacción falla, la factura
  * queda marcada anulada: reintentar no la vuelve a anular, solo termina de
@@ -75,7 +80,7 @@ final class AnulacionBoletos
      * @param list<int>                        $ids        boletos a anular
      * @param callable(BoletoVenta): bool      $puedeOperar si el usuario puede operar sobre esa venta
      *
-     * @return array{anulados: list<int>, fallidos: list<array<string, mixed>>} por venta: lo que se anuló y lo que no
+     * @return array{anulados: list<int>, fallidos: list<array<string, mixed>>, refacturadas: list<array{venta: int, factura: ?array{serie: ?string, numero: ?int}, error: ?string}>} por venta: lo que se anuló, lo que no y las facturas nuevas de lo que quedó
      *
      * @throws VentaRechazada si algo de lo pedido no se puede anular (no se toca nada)
      */
@@ -97,10 +102,14 @@ final class AnulacionBoletos
 
         $anulados = [];
         $fallidos = [];
+        $refacturadas = [];
         foreach ($porVenta as $ventaId => ["boletos" => $boletoIds, "pases" => $pases]) {
             try {
-                $this->anularVenta($ventaId, $boletoIds, (int) $usuario->getId(), $motivo, $pases);
+                $refactura = $this->anularVenta($ventaId, $boletoIds, (int) $usuario->getId(), $motivo, $pases);
                 array_push($anulados, ...$boletoIds);
+                if ($refactura !== null) {
+                    $refacturadas[] = $refactura;
+                }
             } catch (VentaRechazada $e) {
                 $fallidos[] = ["venta" => $ventaId, "boletos" => $boletoIds, ...$e->toArray()];
             } catch (CertificacionFallida $e) {
@@ -114,7 +123,7 @@ final class AnulacionBoletos
             }
         }
 
-        return ["anulados" => $anulados, "fallidos" => $fallidos];
+        return ["anulados" => $anulados, "fallidos" => $fallidos, "refacturadas" => $refacturadas];
     }
 
     /**
@@ -159,7 +168,6 @@ final class AnulacionBoletos
                 }
                 $hechas += count($boletoIds);
             }
-            ReglasBoletos::exigirVentaCompleta($venta, $seleccion);
             $porVenta[$ventaId] = ["boletos" => $boletoIds, "pases" => array_map(static fn(SolicitudAutorizacion $p) => (int) $p->getId(), $pases)];
         }
 
@@ -215,9 +223,11 @@ final class AnulacionBoletos
      * @param list<int> $boletoIds
      * @param list<int> $pases     autorizaciones a usar en la transacción
      *
-     * @throws CertificacionFallida
+     * @return ?array{venta: int, factura: ?array{serie: ?string, numero: ?int}, error: ?string} la factura nueva de lo que quedó, si era conjunta
+     *
+     * @throws CertificacionFallida si no se pudo anular la factura (no cambia nada)
      */
-    private function anularVenta(int $ventaId, array $boletoIds, int $usuarioId, string $motivo, array $pases): void
+    private function anularVenta(int $ventaId, array $boletoIds, int $usuarioId, string $motivo, array $pases): ?array
     {
         $venta = $this->em->find(BoletoVenta::class, $ventaId) ?? throw new VentaRechazada("La venta no existe.", "no_encontrado", 404);
         if ($venta->getFactura() !== null) {
@@ -227,7 +237,7 @@ final class AnulacionBoletos
         }
 
         try {
-            $salidas = $this->transaccion->ejecutar(fn() => $this->aplicar($ventaId, $boletoIds, $usuarioId, $motivo, $pases));
+            ["salidas" => $salidas, "refacturar" => $refacturar] = $this->transaccion->ejecutar(fn() => $this->aplicar($ventaId, $boletoIds, $usuarioId, $motivo, $pases));
         } catch (VentaRechazada $e) {
             $this->logger->error("La factura de la venta {venta} se anuló pero sus boletos no: {error}", ["venta" => $ventaId, "error" => $e->getMessage()]);
             throw $e;
@@ -235,6 +245,31 @@ final class AnulacionBoletos
 
         foreach ($salidas as $salidaId) {
             $this->publicador->cambio($salidaId);
+        }
+
+        return $refacturar ? $this->refacturar($ventaId) : null;
+    }
+
+    /**
+     * Certifica la factura nueva de los boletos que quedaron de una factura
+     * conjunta. Si falla, la venta sigue por certificar (la reintenta el cron).
+     *
+     * @return array{venta: int, factura: ?array{serie: ?string, numero: ?int}, error: ?string}
+     */
+    private function refacturar(int $ventaId): array
+    {
+        $venta = $this->em->find(BoletoVenta::class, $ventaId) ?? throw new \LogicException("La venta {$ventaId} desapareció.");
+        try {
+            $factura = $this->facturador->certificar($venta);
+            $this->em->flush();
+
+            return ["venta" => $ventaId, "factura" => ["serie" => $factura->getSerie(), "numero" => $factura->getDte()], "error" => null];
+        } catch (CertificacionFallida $e) {
+            $venta->setErrorFacturacion($e->getMessage());
+            $this->em->flush();
+            $this->logger->warning("La factura nueva de la venta {venta} (anulación parcial) no se certificó: {error}", ["venta" => $ventaId, "error" => $e->getMessage()]);
+
+            return ["venta" => $ventaId, "factura" => null, "error" => $e->getMessage()];
         }
     }
 
@@ -245,7 +280,7 @@ final class AnulacionBoletos
      * @param list<int> $boletoIds
      * @param list<int> $pases
      *
-     * @return list<int> salidas afectadas
+     * @return array{salidas: list<int>, refacturar: bool} salidas afectadas y si hay que certificar otra factura con lo que quedó
      */
     private function aplicar(int $ventaId, array $boletoIds, int $usuarioId, string $motivo, array $pases): array
     {
@@ -276,8 +311,13 @@ final class AnulacionBoletos
         }
 
         $vivos = $venta->getAsientos()->filter(static fn(BoletoAsiento $b) => !in_array($b->getEstado(), [EstadoBoletoAsiento::ANULADO, EstadoBoletoAsiento::REASIGNADO], true));
+        $refacturar = false;
         if ($vivos->isEmpty() && in_array($venta->getEstadoFacturacion(), [EstadoFacturacion::CERTIFICADA, EstadoFacturacion::PENDIENTE], true)) {
             $venta->setEstadoFacturacion(EstadoFacturacion::ANULADA);
+        } elseif ($venta->getFactura()?->isAnulada()) {
+            // Factura conjunta: la anulada ya no cubre lo que quedó; queda por certificar otra (documento nuevo, sin el acceso de contingencia).
+            $venta->setFactura(null)->setNumeroAcceso(null)->setEstadoFacturacion(EstadoFacturacion::PENDIENTE)->setErrorFacturacion(null);
+            $refacturar = true;
         }
         // Sin pasajeros, sus encomiendas no viajan (ADR-035).
         if ($vivos->isEmpty()) {
@@ -296,6 +336,6 @@ final class AnulacionBoletos
             );
         }
 
-        return array_values($salidaIds);
+        return ["salidas" => array_values($salidaIds), "refacturar" => $refacturar];
     }
 }

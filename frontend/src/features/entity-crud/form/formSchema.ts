@@ -146,7 +146,8 @@ export function serializeSubmitValue(
       if (value instanceof Date && !Number.isNaN(value.getTime())) {
         out[key] = toDateOnly(value)
       } else if (typeof value === 'string') {
-        out[key] = value.slice(0, 10)
+        // Un campo vacío (p. ej. una hora opcional) va como null: "" no es una fecha válida para el backend.
+        out[key] = value.trim() === '' ? null : value.slice(0, 10)
       } else {
         out[key] = value
       }

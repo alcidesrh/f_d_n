@@ -243,7 +243,7 @@
             </div>
             <ClienteBuscador v-else v-model="store.cliente" input-id="venta-cliente" />
           </section>
-          <section v-if="store.detalle" class="panel flex flex-col gap-3">
+          <section v-if="store.detalle && store.puedeCobrarCompleto" class="panel flex flex-col gap-3">
             <label v-if="store.puedeCobrarCompleto" class="flex items-center gap-2 text-sm">
               <Checkbox
                 v-model="store.cobrarTrayectoCompleto"
@@ -255,15 +255,6 @@
                 Cobrar la tarifa del trayecto completo ({{ store.detalle.ruta.origen.nombre }} →
                 {{ store.detalle.ruta.destino.nombre }})
               </span>
-            </label>
-            <label v-if="!store.reasignacion" class="flex flex-col gap-1">
-              <span class="font-medium">Observación</span>
-              <InputText
-                v-model="store.observacion"
-                maxlength="255"
-                placeholder="P. ej. viaja con mascota, se baja en un punto intermedio…"
-                fluid
-              />
             </label>
           </section>
 
@@ -294,6 +285,17 @@
                 }}</span>
               </li>
             </ul>
+          </section>
+          <section v-if="store.detalle && conObservacion" class="panel">
+            <label class="flex flex-col gap-1">
+              <span class="font-medium">Observación</span>
+              <InputText
+                v-model="store.observacion"
+                maxlength="255"
+                placeholder="P. ej. viaja con mascota, se baja en un punto intermedio…"
+                fluid
+              />
+            </label>
           </section>
           <section
             v-if="
@@ -349,10 +351,9 @@
             <div
               v-if="store.detalle || store.cargandoDetalle"
               :key="`salida-${store.salidaId}`"
-              class="flex flex-col gap-5 pt-5 tex-sm"
+              class="flex flex-col gap-5 tex-sm"
             >
-              <BusMapLegend :items="leyenda" :conteos="conteos" />
-              <div class="overflow-x-auto mt-1">
+              <div class="flex items-start justify-center gap-3 overflow-x-auto">
                 <BusMap
                   :elementos="store.detalle?.croquis ?? []"
                   :estado="store.estadoAsiento"
@@ -368,6 +369,7 @@
                   @anular="(b) => (anular = [b.id])"
                   @reasignar="(b) => void store.iniciarReasignacion([b.id])"
                 />
+                <BusMapLegend :items="leyenda" :conteos="conteos" vertical />
               </div>
               <Divider align="center" class="my-0! before:border-surface-400!" type="dashed">
                 <span class="text-xs font-bold text-surface-500"
@@ -440,9 +442,11 @@
                 />
               </div>
             </div>
-            <div v-else key="vacio" class="relative flex flex-col gap-5 pt-5 tex-sm">
-              <BusMapLegend :items="leyenda" :conteos="conteos" class="opacity-40" />
-              <CroquisPlaceholder />
+            <div v-else key="vacio" class="relative flex flex-col gap-5 tex-sm">
+              <div class="flex items-start justify-center gap-3">
+                <CroquisPlaceholder />
+                <BusMapLegend :items="leyenda" vertical class="opacity-40" />
+              </div>
               <div class="absolute inset-0 grid place-items-center p-4">
                 <p
                   class="m-0 flex items-center gap-2 rounded-full bg-surface-0 px-4 py-2 text-center text-sm text-muted-color shadow-md"
@@ -586,6 +590,8 @@ const ahora = ref(Date.now())
 const reloj = window.setInterval(() => (ahora.value = Date.now()), 60_000)
 onBeforeUnmount(() => window.clearInterval(reloj))
 const verAnteriores = ref(false)
+/** La observación es de la venta: se pide cuando ya hay cliente (y no al reasignar). */
+const conObservacion = computed(() => !store.reasignacion && !!store.cliente)
 const esHoy = computed(
   () => !store.porRango && store.fecha.toDateString() === new Date(ahora.value).toDateString(),
 )

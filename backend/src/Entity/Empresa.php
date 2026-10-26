@@ -51,6 +51,13 @@ class Empresa extends Base
     #[ORM\Column(length: 100, options: ["default" => "1-1"])]
     private string $frasesFel = "1-1";
 
+    /**
+     * Solo las activas aparecen en filtros y selectores (`CollectionResolver`).
+     * Una desactivada sigue visible en su pantalla, para activarla de nuevo.
+     */
+    #[ORM\Column(nullable: true)]
+    private ?bool $activa = null;
+
     #[ORM\OneToMany(targetEntity: Bus::class, mappedBy: "empresa")]
     private Collection $buses;
 
@@ -191,6 +198,18 @@ class Empresa extends Base
     public function setFrasesFel(string $frasesFel): static
     {
         $this->frasesFel = $frasesFel;
+
+        return $this;
+    }
+
+    public function isActiva(): ?bool
+    {
+        return $this->activa;
+    }
+
+    public function setActiva(?bool $activa): static
+    {
+        $this->activa = $activa;
 
         return $this;
     }

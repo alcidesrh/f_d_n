@@ -42,8 +42,8 @@ import type { SidebarStore } from "./sidebarStore";
 
 gsap.registerPlugin(Flip);
 
-const DURATION = 0.3;
-const EASE = "power4.inOut";
+const DURATION = 0.2;
+const EASE = "ease";
 /** Lo que se acomoda con el panel ya quieto (el menú al llegar a `mini`). */
 const SETTLE: Motion = { duration: DURATION, ease: "power3.out" };
 /**

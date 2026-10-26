@@ -6,6 +6,7 @@ use ApiPlatform\GraphQl\Resolver\QueryItemResolverInterface;
 use ApiPlatform\Metadata\IriConverterInterface;
 use App\ApiResource\Agnostic;
 use App\Acceso\Catalogo\CatalogoRecursos;
+use App\Entity\Empresa;
 use App\Services\BuscadorOpciones;
 use App\Useful\Doctrine;
 use Doctrine\ORM\EntityManagerInterface;
@@ -42,15 +43,16 @@ final class CollectionResolver implements QueryItemResolverInterface {
       throw new AccessDeniedException('No tiene permiso para ver estos registros.');
     }
 
+    $filtros = $this->filtrosDeOpciones($class);
     if (isset($args['ids'])) {
       $records = $this->buscador->porIds($class, array_map(
         fn($id) => is_string($id) && str_contains($id, '/') ? basename($id) : $id,
         $args['ids'],
       ));
     } elseif (isset($args['search'])) {
-      $records = $this->buscador->buscar($class, $args['search'], $args['limit'] ?? BuscadorOpciones::LIMITE);
+      $records = $this->buscador->buscar($class, $args['search'], $args['limit'] ?? BuscadorOpciones::LIMITE, $filtros);
     } else {
-      $records = $this->entityManagerInterface->getRepository($class)->findAll();
+      $records = $this->entityManagerInterface->getRepository($class)->findBy($filtros);
     }
 
     if ($recurso->ver !== null && $recurso->empresa !== null) {
@@ -63,5 +65,15 @@ final class CollectionResolver implements QueryItemResolverInterface {
       $records,
     );
     return $metadata;
+  }
+
+  /**
+   * Qué registros cuentan como opción (filtros y selectores). Una empresa
+   * desactivada no aparece; `ids` no filtra, porque es la etiqueta de lo ya guardado.
+   *
+   * @return array<string, mixed>
+   */
+  private function filtrosDeOpciones(string $class): array {
+    return $class === Empresa::class ? ['activa' => true] : [];
   }
 }

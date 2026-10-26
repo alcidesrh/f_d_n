@@ -295,7 +295,6 @@ export interface ErrorVenta {
   /** Facturación: el usuario puede seguir sin factura electrónica. */
   permiteSinFactura?: boolean
   asientos?: number[]
-  /** `venta_incompleta`: la venta y los boletos suyos que faltan para anularla completa. */
   venta?: number
   boletos?: number[]
 }
@@ -342,6 +341,9 @@ export interface BoletoOperable {
     canal: CanalVenta
     cortesia: boolean
     estadoFacturacion: Comprobante['estadoFacturacion']
+    factura: { serie: string | null; numero: number | null } | null
+    /** Boletos vivos que cubre su factura; con más de uno es conjunta (anular parte certifica otra con lo que quede). */
+    boletosFactura: number[]
     cliente: Cliente | null
   }
   /** Se puede anular o reasignar todavía; si no, `motivo` dice por qué. */
@@ -365,6 +367,8 @@ export interface PermisosBoleto {
 export interface ResultadoAnulacion {
   anulados: number[]
   fallidos: Array<ErrorVenta & { venta: number; boletos: number[] }>
+  /** Factura nueva de lo que quedó de una factura conjunta; con `error`, quedó por certificar. */
+  refacturadas?: Array<{ venta: number; factura: { serie: string | null; numero: number | null } | null; error: string | null }>
 }
 
 export interface PedidoReasignacion {

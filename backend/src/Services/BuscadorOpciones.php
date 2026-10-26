@@ -32,11 +32,14 @@ final class BuscadorOpciones
      * @param class-string $clase
      * @return list<object>
      */
-    public function buscar(string $clase, string $texto, int $limite = self::LIMITE): array
+    public function buscar(string $clase, string $texto, int $limite = self::LIMITE, array $filtros = []): array
     {
         $limite = max(1, min($limite, self::LIMITE_MAXIMO));
         $metadata = $this->entityManager->getClassMetadata($clase);
         $qb = $this->entityManager->createQueryBuilder()->select('e')->from($clase, 'e');
+        foreach ($filtros as $campo => $valor) {
+            $qb->andWhere("e.$campo = :f$campo")->setParameter("f$campo", $valor);
+        }
 
         $campos = self::campos($metadata, 'e');
         foreach (self::relacionesATexto($metadata) as $i => [$relacion, $destino]) {

@@ -13,7 +13,7 @@ const boleto = (id: number, extra: Partial<BoletoOperable> = {}, venta: Partial<
   observacion: null,
   trayecto: { id: 5, origenId: 1, destinoId: 3, origen: 'A', destino: 'B' },
   salida: { id: 100, fecha: '2026-10-11T08:00:00-06:00', estado: 'programada', empresa: { id: 1, nombre: 'Maya' }, bus: '42' },
-  venta: { id: 7, canal: 'estacion', cortesia: false, estadoFacturacion: 'certificada', cliente: null, ...venta },
+  venta: { id: 7, canal: 'estacion', cortesia: false, estadoFacturacion: 'certificada', factura: null, boletosFactura: [], cliente: null, ...venta },
   operable: true,
   motivo: null,
   ...extra,

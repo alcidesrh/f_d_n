@@ -21,8 +21,6 @@
 -->
 <template>
   <div ref="root" class="dg" :class="[`dg--${density}`, { 'dg--cards': cards, 'dg--loading': loading }]" :style="rootVars">
-    <div v-if="loading" class="dg-progress" role="progressbar" aria-label="Cargando" />
-
     <!-- Tabla -->
     <div v-if="!cards" class="dg-scroll" data-grid-scroll role="grid" :aria-rowcount="rows.length + 1" :aria-colcount="columns.length" :aria-busy="loading">
       <div class="dg-body" :style="{ minWidth: template.minWidth }">
@@ -305,31 +303,7 @@ useColumnDrag({
   font-size: 0.8125rem;
 }
 
-/* Barra de carga: indeterminada, sin tapar los datos anteriores. */
-.dg-progress {
-  position: absolute;
-  inset: 0 0 auto;
-  z-index: 6;
-  height: 2px;
-  overflow: hidden;
-  background: color-mix(in srgb, var(--p-primary-color) 15%, transparent);
-}
-.dg-progress::after {
-  content: "";
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 35%;
-  background: var(--p-primary-color);
-  animation: dg-progress 1.1s var(--ease) infinite;
-}
-@keyframes dg-progress {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(300%);
-  }
-}
+/* Mientras carga, los datos anteriores se atenúan sin taparse. */
 .dg--loading .dg-brow:not(.dg-skeleton) {
   opacity: 0.55;
   transition: opacity 0.2s;

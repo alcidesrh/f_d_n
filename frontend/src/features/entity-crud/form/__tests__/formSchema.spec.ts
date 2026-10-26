@@ -413,6 +413,11 @@ describe('serializeSubmitValue', () => {
     expect(out.total).toBeNull()
   })
 
+  it('manda null, no cadena vacía, para una fecha u hora vacía (regresión: BoletoTarifa)', () => {
+    const out = serializeSubmitValue(fields, { fecha: '' })
+    expect(out.fecha).toBeNull()
+  })
+
   it('reduce relaciones a IRIs escalares sin importar la forma del valor (regresión)', () => {
     const local = new Date(2024, 0, 15, 12, 0, 0)
     const out = serializeSubmitValue(fields, {

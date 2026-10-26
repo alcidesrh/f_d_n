@@ -109,38 +109,39 @@ final class ReglasBoletos
     }
 
     /**
-     * Una factura (certificada, o por certificar) cubre toda la venta y el
-     * certificador no la anula por partes: hay que anular todos sus boletos
-     * vivos juntos.
+     * Boletos vivos que cubre la factura de la venta (certificada o por
+     * certificar); vacío si no tiene. Con más de uno es una factura conjunta:
+     * anular parte de ellos anula la factura y certifica otra con los que
+     * quedan (`AnulacionBoletos`).
      *
-     * @param list<BoletoAsiento> $seleccion los boletos que se quieren anular
-     *
-     * @throws VentaRechazada
+     * @return list<BoletoAsiento>
      */
-    public static function exigirVentaCompleta(BoletoVenta $venta, array $seleccion): void
+    public static function boletosDeLaFactura(BoletoVenta $venta): array
     {
         if (!in_array($venta->getEstadoFacturacion(), [EstadoFacturacion::CERTIFICADA, EstadoFacturacion::PENDIENTE], true)) {
-            return;
+            return [];
         }
-        /** @var list<BoletoAsiento> $faltan */
-        $faltan = array_values(array_filter(
+
+        return array_values(array_filter(
             $venta->getAsientos()->toArray(),
-            static fn(BoletoAsiento $b) => !in_array($b->getEstado(), [EstadoBoletoAsiento::ANULADO, EstadoBoletoAsiento::REASIGNADO], true)
-                && !in_array($b, $seleccion, true),
+            static fn(BoletoAsiento $b) => !in_array($b->getEstado(), [EstadoBoletoAsiento::ANULADO, EstadoBoletoAsiento::REASIGNADO], true),
         ));
-        if ($faltan !== []) {
-            throw new VentaRechazada(
-                sprintf(
-                    "La venta %d tiene una factura que cubre todos sus boletos: para anularla hay que anular también %s.",
-                    $venta->getId(),
-                    count($faltan) === 1 ? "el asiento " . $faltan[0]->getAsiento()?->getNumero() : "los asientos " . implode(", ", array_map(static fn(BoletoAsiento $b) => $b->getAsiento()?->getNumero(), $faltan)),
-                ),
-                "venta_incompleta",
-                422,
-                // Los boletos que faltan, para que la pantalla ofrezca incluirlos.
-                ["venta" => $venta->getId(), "boletos" => array_map(static fn(BoletoAsiento $b) => $b->getId(), $faltan)],
-            );
+    }
+
+    /**
+     * Lo que se factura de la venta: su total menos lo anulado (el reasignado
+     * tiene su reemplazo en la misma venta, al mismo precio).
+     */
+    public static function totalFacturable(BoletoVenta $venta): Money
+    {
+        $total = $venta->getTotal();
+        foreach ($venta->getAsientos() as $b) {
+            if ($b->getEstado() === EstadoBoletoAsiento::ANULADO && $b->getPrecio() !== null) {
+                $total = $total->subtract($b->getPrecio());
+            }
         }
+
+        return $total;
     }
 
     /**
