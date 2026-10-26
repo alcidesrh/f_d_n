@@ -256,12 +256,12 @@ class Mapeador
     public function depositoAgencia(array $old): array
     {
         $centavos = static fn(mixed $v) => (int) round(((float) ($v ?? 0)) * 100);
-        $creado = new \DateTimeImmutable((string) ($old["fecha_creacion"] ?? "now"));
+        $creado = $this->formatDatetime($old["fecha_creacion"] ?? null) ?? (new \DateTimeImmutable())->format("Y-m-d H:i:s");
         $estado = EstadoDepositoAgencia::deLegado((int) ($old["estado_id"] ?? 1));
 
         return [
             "agencia" => (int) $old["estacion_id"],
-            "fecha" => (new \DateTimeImmutable((string) $old["fecha"]))->format("Y-m-d"),
+            "fecha" => $this->formatDate($old["fecha"]) ?? $this->formatDate($creado),
             "importe" => $centavos($old["importe"]),
             "moneda" => strtoupper($this->truncate($old["moneda_sigla"] ?? null, 3) ?: "GTQ"),
             "numero_boleta" => $this->truncate(trim((string) ($old["numero_boleta"] ?? "")), 30) ?: "s/n",
@@ -271,7 +271,7 @@ class Mapeador
             "estado" => $estado->value,
             "motivo_rechazo" => $this->truncate($old["motivo_rechazo"] ?? null, 200),
             "usuario" => $old["usuario_creacion_id"] !== null ? (int) $old["usuario_creacion_id"] : null,
-            "creado_en" => $creado->format("Y-m-d H:i:s"),
+            "creado_en" => $creado,
             "legacy_id" => "agencia_deposito-" . (int) $old["id"],
         ];
     }
@@ -589,7 +589,7 @@ class Mapeador
             return $value->format("Y-m-d H:i:s");
         }
         if (is_string($value) && $value !== "") {
-            $normalized = preg_replace('/:([AP]M)$/i', ' $1', $value);
+            $normalized = preg_replace('/(:\d{3})?:?([AP]M)$/i', ' $2', $value);
             $dt = date_create($normalized);
             if ($dt !== false) {
                 return $dt->format("Y-m-d H:i:s");
@@ -606,7 +606,7 @@ class Mapeador
             return $value->format("Y-m-d");
         }
         if (is_string($value) && $value !== "") {
-            $normalized = preg_replace('/:([AP]M)$/i', ' $1', $value);
+            $normalized = preg_replace('/(:\d{3})?:?([AP]M)$/i', ' $2', $value);
             $dt = date_create($normalized);
             if ($dt !== false) {
                 return $dt->format("Y-m-d");

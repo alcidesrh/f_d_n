@@ -187,6 +187,17 @@ final class DepositoAgenciaTest extends TestCase
         $this->assertNull($fila["usuario"]);
     }
 
+    public function testFechasConElFormatoDelDriverDelLegado(): void
+    {
+        $fila = (new Mapeador())->depositoAgencia([
+            "id" => 903, "estacion_id" => 55, "fecha" => "Jul 31 2014 12:00:00:AM", "importe" => "100", "numero_boleta" => "1",
+            "aplica_bono" => "0", "bono" => "0", "estado_id" => 1, "usuario_creacion_id" => null, "fecha_creacion" => "Jul 31 2014 03:04:05:123PM",
+        ]);
+
+        $this->assertSame("2014-07-31", $fila["fecha"]);
+        $this->assertSame("2014-07-31 15:04:05", $fila["creado_en"]);
+    }
+
     public function testAvisoDeRechazo(): void
     {
         $this->assertSame(
