@@ -14,17 +14,7 @@
           </button>
           <span v-else class="nav-toggle nav-toggle--spacer" :style="toggleIndent" aria-hidden="true" />
         </template>
-        <component
-          :is="linkTag(item)"
-          :to="hasFlyout(item) ? undefined : (navTarget(item, router) ?? undefined)"
-          :type="linkTag(item) === 'button' ? 'button' : undefined"
-          class="menu-link"
-          :class="{ 'nav-disabled': !navTarget(item, router) && !isGroup(item) && !hasFlyout(item), 'menu-link--flyout': hasFlyout(item), 'is-open': abierto?.id === item.id, 'contiene-ruta': hasFlyout(item) && contieneRuta(item, route.name) }"
-          :title="titleOf(item)"
-          :aria-expanded="isGroup(item) || hasFlyout(item) ? (hasFlyout(item) ? abierto?.id === item.id : expanded.has(item.id)) : undefined"
-          :aria-haspopup="hasFlyout(item) ? 'menu' : undefined"
-          @click="onClick($event, item)"
-        >
+        <component :is="linkTag(item)" :to="hasFlyout(item) ? undefined : (navTarget(item, router) ?? undefined)" :type="linkTag(item) === 'button' ? 'button' : undefined" class="menu-link" :class="{ 'nav-disabled': !navTarget(item, router) && !isGroup(item) && !hasFlyout(item), 'menu-link--flyout': hasFlyout(item), 'is-open': abierto?.id === item.id, 'contiene-ruta': hasFlyout(item) && contieneRuta(item, route.name) }" :title="titleOf(item)" :aria-expanded="isGroup(item) || hasFlyout(item) ? (hasFlyout(item) ? abierto?.id === item.id : expanded.has(item.id)) : undefined" :aria-haspopup="hasFlyout(item) ? 'menu' : undefined" @click="onClick($event, item)">
           <span class="menu-icon"><icon :name="item.icon ?? 'fiber-manual-record'" size="1.3rem" /></span>
           <span class="menu-text">{{ item.label }}</span>
           <span v-if="hasFlyout(item)" class="menu-flyout-mark" aria-hidden="true" />

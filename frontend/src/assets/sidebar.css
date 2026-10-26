@@ -191,7 +191,7 @@
   width: 100%;
   display: flex;
   align-items: center;
-  padding: 14px calc((var(--sb-mini) - 24px) / 2);
+  padding: 0.5rem calc((var(--sb-mini) - 24px) / 2);
   color: var(--text-color);
   text-decoration: none;
   white-space: nowrap;
