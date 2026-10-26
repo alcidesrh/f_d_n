@@ -7,6 +7,7 @@ namespace App\Venta\Facturacion;
 use App\Entity\BoletoVenta;
 use App\Entity\Empresa;
 use App\Entity\Encomienda;
+use App\Entity\Enum\CanalVenta;
 use App\Entity\Enum\EstadoEncomienda;
 use App\Entity\Estacion;
 use App\Entity\Enum\EstadoBoletoAsiento;
@@ -27,6 +28,7 @@ final class Facturador
         private readonly CertificadorFel $certificador,
         private readonly EntityManagerInterface $em,
         private readonly ClockInterface $reloj,
+        private readonly EmisorEnLinea $emisorEnLinea = new EmisorEnLinea(),
     ) {}
 
     /**
@@ -136,6 +138,9 @@ final class Facturador
                 "emisor_sin_nit",
             );
         }
+        if ($venta->getCanal() === CanalVenta::WEB) {
+            $empresa = $this->emisorEnLinea($empresa);
+        }
 
         $items = [];
         foreach ($boletos as $b) {
@@ -233,6 +238,26 @@ final class Facturador
             frases: $empresa->frases(),
             numeroAcceso: $encomienda->getNumeroAcceso(),
             ruta: sprintf("%s - %s", $encomienda->getOrigen()?->getNombre(), $encomienda->getDestino()?->getNombre()),
+        );
+    }
+
+    /** La empresa que factura una venta en línea de `$empresa` (ella misma, salvo regla de `EmisorEnLinea`). */
+    private function emisorEnLinea(Empresa $empresa): Empresa
+    {
+        $nit = $this->emisorEnLinea->para($empresa->getNit());
+        if ($nit === null) {
+            return $empresa;
+        }
+        foreach ($this->em->getRepository(Empresa::class)->findAll() as $candidata) {
+            if ($candidata->getNit() !== null && EmisorEnLinea::normalizar($candidata->getNit()) === $nit) {
+                return $candidata;
+            }
+        }
+
+        throw new CertificacionFallida(
+            sprintf("Las ventas en línea de %s se facturan con el NIT %s, pero no hay empresa con ese NIT.", $empresa->getNombre(), $nit),
+            false,
+            "emisor_en_linea_inexistente",
         );
     }
 

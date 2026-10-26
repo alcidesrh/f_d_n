@@ -1085,8 +1085,65 @@ class MigradorEstaticos
             );
             $count++;
         }
+        $count += $this->migrarEstablecimientos();
         if ($output) {
             $output->writeln(" <info>{$count}</info>");
+        }
+
+        return $count;
+    }
+
+    /** Columna de `estacion` del legado con el número de establecimiento SAT de cada empresa (id del legado). */
+    private const ESTABLECIMIENTO_POR_EMPRESA = [
+        "numEstablecimientoSat" => 1,
+        "numEstablecimientoSatMayaDeOro" => 2,
+        "numEstablecimientoSatMitocha" => 4,
+        "numEstablecimientoStarbus" => 6,
+        "numEstablecimientoSatRosita" => 7,
+    ];
+
+    /** Estación del legado a la que se cargan las ventas de la página: su establecimiento es el de las ventas en línea. */
+    private const ESTACION_WEB_LEGADO = 5;
+
+    /**
+     * Establecimiento SAT de cada empresa en cada estación, como los elige el
+     * legado (`SatRestService::extraerDatos`). El de la estación web pasa a ser
+     * el de por defecto de la empresa, que es el que usan las ventas en línea.
+     */
+    private function migrarEstablecimientos(): int
+    {
+        $count = 0;
+        $columnas = implode(", ", array_keys(self::ESTABLECIMIENTO_POR_EMPRESA));
+        foreach ($this->fetchOld("SELECT id, nombre, {$columnas} FROM estacion") as $row) {
+            $estacionId = $this->resolveEstacionId((int) $row["id"]);
+            if ($estacionId === null) {
+                continue;
+            }
+            foreach (self::ESTABLECIMIENTO_POR_EMPRESA as $columna => $empresaLegado) {
+                $codigo = (int) ($row[$columna] ?? 0);
+                $empresaId = $this->resolveEmpresaId($empresaLegado);
+                if ($codigo <= 0 || $empresaId === null) {
+                    continue;
+                }
+                $this->newConn->executeStatement(
+                    "INSERT INTO establecimiento (empresa_id, estacion_id, codigo, nombre) VALUES (:empresa, :estacion, :codigo, :nombre)
+                     ON CONFLICT (empresa_id, estacion_id) DO UPDATE SET codigo = EXCLUDED.codigo",
+                    ["empresa" => $empresaId, "estacion" => $estacionId, "codigo" => $codigo, "nombre" => $row["nombre"] ?? null],
+                );
+                if ((int) $row["id"] === self::ESTACION_WEB_LEGADO) {
+                    $this->newConn->executeStatement(
+                        "INSERT INTO establecimiento (empresa_id, estacion_id, codigo, nombre)
+                         SELECT :empresa, NULL, :codigo, 'Principal'
+                         WHERE NOT EXISTS (SELECT 1 FROM establecimiento WHERE empresa_id = :empresa AND estacion_id IS NULL)",
+                        ["empresa" => $empresaId, "codigo" => $codigo],
+                    );
+                    $this->newConn->executeStatement(
+                        "UPDATE establecimiento SET codigo = :codigo WHERE empresa_id = :empresa AND estacion_id IS NULL",
+                        ["empresa" => $empresaId, "codigo" => $codigo],
+                    );
+                }
+                $count++;
+            }
         }
 
         return $count;

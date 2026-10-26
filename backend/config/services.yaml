@@ -14,6 +14,11 @@ parameters:
     fel_certificador_defecto: "simulado"
     # API de Forcon: ambiente de pruebas; la URL de producción la entrega su soporte (FEL_FORCON_URL).
     fel_forcon_url_defecto: "https://pruebasfel.eforcon.com"
+    # Temporal: las ventas en línea de estas empresas (NIT) se facturan a nombre de otra
+    # (NIT), como en el legado. Vaciar cuando cada empresa tenga su propia cuenta.
+    fel_emisor_en_linea:
+        "2033683-7": "6907303-1" # La Pionera → Transportes Rosita
+        "4397700-6": "6907303-1" # Maya de Oro → Transportes Rosita
     # Pasarela de pago: "simulada" (desarrollo) o "cybersource" (sobrescribible con PAGO_PASARELA).
     pago_pasarela_defecto: "simulada"
     # API de Cybersource: pruebas; producción es https://api.cybersource.com (CYBERSOURCE_URL).
