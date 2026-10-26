@@ -162,6 +162,10 @@ prod-build:
 dev-sync: ## Levanta el stack de dev y el ciclo de sincronización con el legado
 	SERVER_NAME=localhost MERCURE_PUBLIC_URL=https://localhost/.well-known/mercure APP_ENV=dev $(DOCKER_COMP) -f compose.yaml -f compose.override.yaml -f compose.sincronizacion.yaml -f compose.sincronizacion.dev.yaml up -d
 
+vps: ## Levanta el stack de dev accesible por la IP pública de la VPS (secretos en .env.vps.local)
+	@test -f .env.vps.local || { echo "Falta .env.vps.local (secretos, ver compose.vps.yaml)" >&2; exit 1; }
+	APP_ENV=dev $(DOCKER_COMP) --env-file .env.vps.local -f compose.yaml -f compose.override.yaml -f compose.vps.yaml up -d --build
+
 prod-sync: ## Levanta el stack de prod y el ciclo de sincronización con el legado
 	SERVER_NAME=transportesfuentedelnorte.com APP_SECRET=fdn.transportesfuentedelnorte.com CADDY_MERCURE_JWT_SECRET=fdn.transportesfuentedelnorte.com $(DOCKER_COMP) -f compose.yaml -f compose.prod.yaml -f compose.sincronizacion.yaml up -d
 

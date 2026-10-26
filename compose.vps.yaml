@@ -1,0 +1,16 @@
+# Acceso por la IP pública de la VPS (https://194.113.67.177). Se suma a compose.yaml y compose.override.yaml;
+# los secretos van en .env.vps.local (fuera de git). Lo levanta `make vps`.
+services:
+  backend:
+    environment: &vps-environment
+      APP_SECRET: ${APP_SECRET}
+      MERCURE_PUBLIC_URL: https://194.113.67.177/.well-known/mercure
+      TRUSTED_HOSTS: ^(localhost|194\.113\.67\.177)$$|backend$$
+      # Caddy no tiene certificado público para una IP: certificados de su CA local (el navegador avisa una vez).
+      # Un navegador que entra por la IP no manda SNI: default_sni le dice qué certificado ofrecer.
+      CADDY_GLOBAL_OPTIONS: "default_sni 194.113.67.177\n\tlocal_certs"
+  worker:
+    environment: *vps-environment
+  database:
+    # Sin puerto público: la base solo la usan los contenedores.
+    ports: !reset []

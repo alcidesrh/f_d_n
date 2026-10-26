@@ -33,6 +33,9 @@ RUN bun install --frozen-lockfile
 # Copiar el resto del proyecto
 COPY . .
 
+# Node real: el `node` de la imagen de bun es un shim y vue-tsc no encuentra los .vue bajo él
+RUN apk add --no-cache nodejs
+
 # Build (vue-tsc --noEmit && vite build) -> dist/
 RUN bun run build
 

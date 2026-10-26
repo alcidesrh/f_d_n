@@ -148,7 +148,6 @@ COPY --from=frankenphp_prod_builder /usr/local/etc/php/app.conf.d /usr/local/etc
 COPY --from=frankenphp_prod_builder /etc/frankenphp/Caddyfile /etc/frankenphp/Caddyfile
 
 # CA certificates for TLS, file/libmagic for Symfony MIME type detection
-COPY --from=frankenphp_prod_builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=frankenphp_prod_builder /etc/ssl/openssl.cnf /etc/ssl/openssl.cnf
 COPY --from=frankenphp_prod_builder /usr/bin/file /usr/bin/file
 COPY --from=frankenphp_prod_builder /usr/lib/file/magic.mgc /usr/lib/file/magic.mgc
@@ -165,7 +164,7 @@ EOF
 # Install Microsoft ODBC driver (required by sqlsrv extension at runtime)
 RUN <<-EOF
 	apt-get update
-	apt-get install -y --no-install-recommends curl gnupg
+	apt-get install -y --no-install-recommends ca-certificates curl gnupg
 	curl -sSL https://packages.microsoft.com/keys/microsoft-2025.asc | gpg --dearmor --yes --output /usr/share/keyrings/microsoft-prod.gpg
 	curl -sSL -o /etc/apt/sources.list.d/mssql-release.list https://packages.microsoft.com/config/debian/13/prod.list
 	apt-get update
@@ -174,6 +173,8 @@ RUN <<-EOF
 	rm -rf /var/lib/apt/lists/*
 EOF
 
+# Después de apt: el bundle del builder no trae la raíz de packages.microsoft.com y rompía la descarga del ODBC.
+COPY --from=frankenphp_prod_builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --link --exclude=var --from=frankenphp_prod_builder /app /app
 # Group 0 + g=u for arbitrary-UID runtimes (e.g. OpenShift).
 COPY --chown=www-data:0 --from=frankenphp_prod_builder /app/var /app/var

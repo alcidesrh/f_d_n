@@ -6,3 +6,6 @@ legacy/
 # Credenciales de la cuenta de pruebas (make e2e-usuario)
 .env.e2e.local
 .env.e2e.local.tmp
+
+# Acceso por IP pública de la VPS (secretos, make vps)
+.env.vps.local

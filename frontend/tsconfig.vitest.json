@@ -9,7 +9,8 @@
   "compilerOptions": {
     // Vitest runs in a different environment than the application code.
     // Adjust lib and types accordingly.
-    "lib": [],
+    // Sin ES en `lib` el código de la app (p. ej. `Array.prototype.at`) no compila en el proyecto de tests.
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["node", "jsdom"],
 
     // `vue-tsc --build` produces a .tsbuildinfo file for incremental type-checking.
