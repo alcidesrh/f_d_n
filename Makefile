@@ -158,11 +158,12 @@ prod-build:
 	SERVER_NAME=transportesfuentedelnorte.com  APP_SECRET=fdn.transportesfuentedelnorte.com CADDY_MERCURE_JWT_SECRET=fdn.transportesfuentedelnorte.com $(DOCKER_COMP)  -f docker-compose.yml -f docker-compose.prod.yml up --build -d
 
 # Ciclo de sincronización con el legado (ADR-042): servicio aparte que sale cada hora y Docker relanza.
-dev-sync: ## Levanta el ciclo de sincronización con el legado (dev)
-	SERVER_NAME=localhost MERCURE_PUBLIC_URL=https://localhost/.well-known/mercure APP_ENV=dev $(DOCKER_COMP) -f compose.yaml -f compose.override.yaml -f compose.sincronizacion.yaml -f compose.sincronizacion.dev.yaml up -d sincronizacion
+# Mismo stack que `make dev` más el servicio sincronizacion (temporal, mientras dure la mudanza).
+dev-sync: ## Levanta el stack de dev y el ciclo de sincronización con el legado
+	SERVER_NAME=localhost MERCURE_PUBLIC_URL=https://localhost/.well-known/mercure APP_ENV=dev $(DOCKER_COMP) -f compose.yaml -f compose.override.yaml -f compose.sincronizacion.yaml -f compose.sincronizacion.dev.yaml up -d
 
-prod-sync: ## Levanta el ciclo de sincronización con el legado (prod)
-	SERVER_NAME=transportesfuentedelnorte.com APP_SECRET=fdn.transportesfuentedelnorte.com CADDY_MERCURE_JWT_SECRET=fdn.transportesfuentedelnorte.com $(DOCKER_COMP) -f compose.yaml -f compose.prod.yaml -f compose.sincronizacion.yaml up -d sincronizacion
+prod-sync: ## Levanta el stack de prod y el ciclo de sincronización con el legado
+	SERVER_NAME=transportesfuentedelnorte.com APP_SECRET=fdn.transportesfuentedelnorte.com CADDY_MERCURE_JWT_SECRET=fdn.transportesfuentedelnorte.com $(DOCKER_COMP) -f compose.yaml -f compose.prod.yaml -f compose.sincronizacion.yaml up -d
 
 
 sf_sqlserver:
