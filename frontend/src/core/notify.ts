@@ -2,8 +2,8 @@
  * Notificaciones globales (toasts). Se pueden emitir desde cualquier módulo:
  * `notify.success("Guardado")`. `<Toasts />` pinta `toasts`.
  *
- * `info`/`success`/`warning` se cierran solas; `error` queda hasta que el
- * usuario la cierra. El push se difiere a un macrotask: si se notifica durante
+ * `info`/`success` se cierran solas; `warning` y `error` quedan hasta que el
+ * usuario las cierra. El push se difiere a un macrotask: si se notifica durante
  * un render que termina en error, Vue descartaría el re-render de `<Toasts />`.
  */
 import { reactive } from 'vue'
@@ -36,7 +36,7 @@ export function dismissAll() {
 
 function push(type: ToastType, text: string, duration = DEFAULT_DURATION) {
   const id = nextId++
-  const sticky = type === 'error'
+  const sticky = type === 'warning' || type === 'error'
   setTimeout(() => {
     toasts.push({ id, type, text, sticky })
     if (!sticky)

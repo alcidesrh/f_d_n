@@ -22,3 +22,7 @@
 ###> pagina (ADR-021): build de pagina/ ###
 /public/pagina/
 ###< pagina ###
+
+###> proyecto: archivo generado ###
+/config/reference.php
+###< proyecto: archivo generado ###

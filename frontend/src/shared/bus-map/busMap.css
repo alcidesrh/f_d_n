@@ -54,8 +54,9 @@
   --bm-reserved: var(--p-orange-500, #f97316);
   --bm-reserved-soft: color-mix(in srgb, var(--p-orange-500, #f97316) 10%, var(--p-content-background));
 
-  --bm-driver: color-mix(in srgb, var(--p-text-color) 70%, var(--p-content-background));
-  --bm-door: var(--p-amber-600, #0d9488);
+  --bm-driver: color-mix(in srgb, var(--p-surface-700) 70%, var(--p-content-background));
+  --bm-door: color-mix(in srgb, var(--p-surface-700) 70%, var(--p-content-background));
+  /*var(--p-amber-600, #0d9488);*/
 
   --bm-hull: var(--p-content-background);
   --bm-hull-border: color-mix(in srgb, var(--p-text-color) 16%, var(--p-content-background));

@@ -25,10 +25,10 @@
 
       <template #cell="{ row, column }">
         <div v-if="column.key === 'sube' || column.key === 'baja'" class="celda min-w-0 leading-tight">
-          <div class="truncate tabular-nums font-[450]">{{ horaPunta(s(row), column.key) }}</div>
-          <div class="truncate text-xs font-[350]" :title="punta(s(row), column.key).nombre ?? ''">
+          <div class="truncate tabular-nums font-[450]" :title="punta(s(row), column.key).nombre ?? ''">
             {{ punta(s(row), column.key).nombre ?? "—" }}
           </div>
+          <div class="truncate text-xs font-[350]">{{ horaPunta(s(row), column.key) }}</div>
         </div>
         <div v-else-if="column.key === 'hora'" class="celda">
           <div class="tracking-wide text-center tabular-nums whitespace-nowrap font-[450]">
