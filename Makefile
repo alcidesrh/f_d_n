@@ -151,11 +151,18 @@ dev:
 restart_debug:
 	$(DOCKER_COMP) down --remove-orphans && XDEBUG_MODE=debug  APP_ENV=dev $(DOCKER_COMP) up -d
 
-prod:
-	SERVER_NAME=transportesfuentedelnorte.com APP_SECRET=fdn.transportesfuentedelnorte.com CADDY_MERCURE_JWT_SECRET=fdn.transportesfuentedelnorte.com $(DOCKER_COMP)  -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Producción en la VPS con dominio propio: Caddy saca el certificado de Let's Encrypt para SERVER_NAME.
+# Secretos y variables en .env.prod.local (fuera de git; plantilla en .env.prod.dist).
+PROD_COMP = $(DOCKER_COMP) --env-file .env.prod.local -f compose.yaml -f compose.prod.yaml
 
-prod-build:
-	SERVER_NAME=transportesfuentedelnorte.com  APP_SECRET=fdn.transportesfuentedelnorte.com CADDY_MERCURE_JWT_SECRET=fdn.transportesfuentedelnorte.com $(DOCKER_COMP)  -f docker-compose.yml -f docker-compose.prod.yml up --build -d
+prod-env:
+	@test -f .env.prod.local || { echo "Falta .env.prod.local (copia .env.prod.dist y llénalo)" >&2; exit 1; }
+
+prod: prod-env ## Levanta el stack de producción (dominio y secretos en .env.prod.local)
+	$(PROD_COMP) up -d
+
+prod-build: prod-env ## Construye las imágenes de producción y levanta el stack
+	$(PROD_COMP) up -d --build
 
 # Ciclo de sincronización con el legado (ADR-042): servicio aparte que sale cada hora y Docker relanza.
 # Mismo stack que `make dev` más el servicio sincronizacion (temporal, mientras dure la mudanza).
@@ -166,9 +173,11 @@ vps: ## Levanta el stack de dev accesible por la IP pública de la VPS (secretos
 	@test -f .env.vps.local || { echo "Falta .env.vps.local (secretos, ver compose.vps.yaml)" >&2; exit 1; }
 	APP_ENV=dev $(DOCKER_COMP) --env-file .env.vps.local -f compose.yaml -f compose.override.yaml -f compose.vps.yaml up -d --build
 
-prod-sync: ## Levanta el stack de prod y el ciclo de sincronización con el legado
-	SERVER_NAME=transportesfuentedelnorte.com APP_SECRET=fdn.transportesfuentedelnorte.com CADDY_MERCURE_JWT_SECRET=fdn.transportesfuentedelnorte.com $(DOCKER_COMP) -f compose.yaml -f compose.prod.yaml -f compose.sincronizacion.yaml up -d
+prod-sync: prod-env ## Levanta el stack de prod y el ciclo de sincronización con el legado
+	$(PROD_COMP) -f compose.sincronizacion.yaml -f compose.sincronizacion.prod.yaml up -d
 
+prod-logs: prod-env ## Sigue los logs de producción (uso: make prod-logs s=backend)
+	$(PROD_COMP) -f compose.sincronizacion.yaml -f compose.sincronizacion.prod.yaml logs -f --tail=200 $(s)
 
 sf_sqlserver:
 	@$(DOCKER_COMP) exec sqlserver_php sh

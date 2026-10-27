@@ -1,0 +1,5 @@
+# Ciclo de sincronización en producción: `extends` toma el worker de compose.yaml, sin compose.prod.yaml,
+# así que aquí recibe los mismos secretos que el backend. Lo usa `make prod-sync`.
+services:
+  sincronizacion:
+    env_file: .env.prod.local
