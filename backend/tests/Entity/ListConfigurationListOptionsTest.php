@@ -4,13 +4,14 @@ namespace App\Tests\Entity;
 
 use App\Entity\CollectionFieldConfig;
 use App\Entity\EntityConfiguration;
+use App\Entity\ListConfiguration;
 use PHPUnit\Framework\TestCase;
 
-final class EntityConfigurationListOptionsTest extends TestCase
+final class ListConfigurationListOptionsTest extends TestCase
 {
     public function testGuardaSoloLasOpcionesValidas(): void
     {
-        $config = new EntityConfiguration('Bus');
+        $config = new ListConfiguration(new EntityConfiguration('Bus'), 'Por defecto');
         $config->setListOptions([
             'pageSize' => 25,
             'pageSizes' => [10, 25, 50],
@@ -18,18 +19,21 @@ final class EntityConfigurationListOptionsTest extends TestCase
             'filterMode' => 'xor',
             'selectable' => 'si',
             'inlineEdit' => false,
+            'create' => false,
+            'edit' => 'no',
+            'delete' => true,
             'otra' => 1,
         ]);
 
         self::assertSame(
-            ['pageSize' => 25, 'pageSizes' => [10, 25, 50], 'density' => 'compact', 'inlineEdit' => false],
+            ['pageSize' => 25, 'pageSizes' => [10, 25, 50], 'density' => 'compact', 'inlineEdit' => false, 'create' => false, 'delete' => true],
             $config->getListOptions(),
         );
     }
 
     public function testSinOpcionesValidasQuedaNull(): void
     {
-        $config = new EntityConfiguration('Bus');
+        $config = new ListConfiguration(new EntityConfiguration('Bus'), 'Por defecto');
         $config->setListOptions(['pageSize' => 0, 'pageSizes' => [10, -1]]);
         self::assertNull($config->getListOptions());
 

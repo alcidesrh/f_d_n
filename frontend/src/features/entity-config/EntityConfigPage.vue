@@ -1,8 +1,8 @@
 <!--
   Editor de la configuración dinámica de una entidad (ADR-010), en su propia
-  pantalla: `/configuracion/entidades/:entidad`. Se carga `EntityConfiguration`
-  con sus dos colecciones: `collectionFieldConfig` (columnas del listado) y
-  `formFields` (campos del formulario). Cada registro se despliega como un
+  pantalla: `/configuracion/entidades/:entidad`. Se cargan los campos del
+  formulario (`formFields`) y las configuraciones del listado de la entidad,
+  cada una con sus roles, columnas y opciones (ADR-043); se edita una a la vez. Cada registro se despliega como un
   panel-fila con todas sus propiedades editables; `position` es la posición del
   panel y se cambia arrastrando el tirador. Un único botón guarda ambas listas.
 
@@ -36,6 +36,7 @@
           </TabList>
           <TabPanels>
             <TabPanel value="collection">
+              <ListConfigBar />
               <ListOptionsPanel />
               <p class="mb-3 text-xs text-surface-500">
                 Orden de las columnas del listado. Arrastrá
@@ -75,6 +76,7 @@ import { useConfirm } from "primevue/useconfirm";
 import { useRouter } from "vue-router";
 import { entityNameFromSlug, entitySlug } from "@/core/entities/slug";
 import FieldConfigPanel from "./FieldConfigPanel.vue";
+import ListConfigBar from "./ListConfigBar.vue";
 import ListOptionsPanel from "./ListOptionsPanel.vue";
 import SortablePanelList from "@/shared/ui/SortablePanelList.vue";
 import { useEntityConfigStore } from "./store";

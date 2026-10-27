@@ -35,3 +35,14 @@ export function olvidarEntidad(name: string): void {
   olvidarDefinicion(name)
   olvidarDeTodos(`entity:${name}`)
 }
+
+/**
+ * Cambiaron los roles del usuario: la configuración de cada listado que le
+ * toca puede ser otra (ADR-043). Las stores vivas la vuelven a pedir.
+ */
+export function configuracionesVencidas(): void {
+  for (const store of entityStores.values()) {
+    store.revisionConfig = null
+    void store.init()
+  }
+}

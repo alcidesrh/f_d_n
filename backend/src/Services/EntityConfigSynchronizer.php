@@ -6,6 +6,7 @@ use ApiPlatform\Metadata\ApiProperty;
 use App\Entity\CollectionFieldConfig;
 use App\Entity\EntityConfiguration;
 use App\Entity\FormFieldConfig;
+use App\Entity\ListConfiguration;
 use App\Entity\RevisionMetadata;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Mapping\ClassMetadata;
@@ -19,7 +20,10 @@ use Psr\Log\LoggerInterface;
 final class EntityConfigSynchronizer
 {
     /** No se configuran: son la configuración misma y sus revisiones. */
-    private const EXCLUIDAS = [EntityConfiguration::class, CollectionFieldConfig::class, FormFieldConfig::class, RevisionMetadata::class];
+    private const EXCLUIDAS = [EntityConfiguration::class, ListConfiguration::class, CollectionFieldConfig::class, FormFieldConfig::class, RevisionMetadata::class];
+
+    /** Nombre de la configuración del listado que se crea con la entidad (la por defecto, sin roles). */
+    public const POR_DEFECTO = 'Por defecto';
 
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
@@ -56,7 +60,13 @@ final class EntityConfigSynchronizer
         $metadata = $this->entityManager->getClassMetadata('App\\Entity\\' . $entityClass);
         $currentFields = self::getAllFieldNames($metadata);
 
-        $this->syncCollectionFieldConfig($config, $currentFields);
+        if ($config->getListConfigurations()->isEmpty()) {
+            $this->entityManager->persist(new ListConfiguration($config, self::POR_DEFECTO));
+        }
+        // Cada configuración del listado (ADR-043) tiene todas las columnas.
+        foreach ($config->getListConfigurations() as $listado) {
+            $this->syncCollectionFieldConfig($listado, $currentFields);
+        }
         $this->syncFormFields($config, $currentFields);
 
         $this->entityManager->flush();
@@ -151,7 +161,7 @@ final class EntityConfigSynchronizer
     }
 
 
-    private function syncCollectionFieldConfig(EntityConfiguration $config, array $currentFields): void
+    private function syncCollectionFieldConfig(ListConfiguration $config, array $currentFields): void
     {
         $existing = [];
         foreach ($config->getCollectionFieldConfig() as $field) {
@@ -166,14 +176,14 @@ final class EntityConfigSynchronizer
                 $collectionFieldConfig = $existing[$data[0]];
                 $collectionFieldConfig->setData($data);
             }
-            $config->addcollectionFieldConfig($collectionFieldConfig);
+            $config->addCollectionFieldConfig($collectionFieldConfig);
         }
         // Los campos que ya no están en el mapeo no se acumulan (p. ej. `Salida.trayecto`, ADR-030).
         foreach (array_diff_key($existing, array_flip(array_column($currentFields, 0))) as $huerfano) {
             $config->getCollectionFieldConfig()->removeElement($huerfano);
             $this->entityManager->remove($huerfano);
         }
-        $config->orderFields($config->getCollectionFieldConfig());
+        $config->getEntityConfig()->orderFields($config->getCollectionFieldConfig());
     }
 
     private function syncFormFields(EntityConfiguration $config, array $currentFields): void

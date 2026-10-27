@@ -32,6 +32,7 @@
 </template>
 
 <script setup lang="ts">
+import { configuracionesVencidas } from '@/core/entities/registry'
 import { defineAsyncComponent, provide } from 'vue'
 import { useUiStore } from '@/app/ui'
 import { useSessionStore } from '@/core/auth/session'
@@ -85,7 +86,11 @@ filtrarMenusCon((destino) => {
     return true
   }
 })
-const dejarDeEscuchar = acceso.suscribir(() => void userMenus.load())
+// Con otros roles le puede tocar otra configuración de cada listado (ADR-043).
+const dejarDeEscuchar = acceso.suscribir(() => {
+  void userMenus.load()
+  configuracionesVencidas()
+})
 /** Al volver a la pestaña, por si cambiaron sus accesos mientras no miraba. */
 const alVolver = () => document.visibilityState === 'visible' && session.user && void acceso.cargar()
 document.addEventListener('visibilitychange', alVolver)

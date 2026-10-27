@@ -22,8 +22,10 @@ use Symfony\Contracts\Cache\CacheInterface;
  * entidades en memoria (al terminar una petición pueden tener cambios sin
  * guardar o estar en otro orden). Entra cada columna de `entity_configuration`
  * (menos su id y `updatedAt`, que cambia en cada guardado) y de sus hijas
- * `ConfiguracionDelCliente` (columnas y campos del formulario) en su orden:
- * una columna nueva entra sola, sin tocar este código.
+ * `ConfiguracionDelCliente` en su orden, a cualquier profundidad (campos del
+ * formulario; configuraciones del listado con sus columnas, ADR-043), más los
+ * ids de sus relaciones a muchos (los roles de cada configuración del
+ * listado): una columna nueva entra sola, sin tocar este código.
  */
 final class HuellasVigentes
 {
@@ -74,10 +76,7 @@ final class HuellasVigentes
 
         $id = $padre->getSingleIdentifierColumnName();
         $ids = array_map(static fn(array $fila): int => (int) $fila[$id], $filas);
-        $hijas = [];
-        foreach ($this->hijas($padre) as $nombre => $hija) {
-            $hijas[$nombre] = $this->filasHijas($conexion, $hija, $ids);
-        }
+        $hijas = $this->anidadas($conexion, $padre, $ids);
 
         $huellas = $entidades === null ? [] : array_fill_keys($entidades, null);
         $fuera = array_flip([$id, $padre->getColumnName("updatedAt")]);
@@ -93,10 +92,51 @@ final class HuellasVigentes
     }
 
     /**
+     * Por asociación: las filas hijas de cada uno de `$ids` (con sus propias
+     * hijas anidadas) o, en las a muchos con tabla intermedia, los ids
+     * relacionados.
+     *
+     * @param list<int> $ids
+     *
+     * @return array<string, array<int, list<mixed>>>
+     */
+    private function anidadas(Connection $conexion, ClassMetadata $padre, array $ids): array
+    {
+        $hijas = [];
+        foreach ($this->hijas($padre) as $nombre => $hija) {
+            $porPadre = $this->filasHijas($conexion, $hija, $ids);
+            $meta = $hija["meta"];
+            $idHija = $meta->getSingleIdentifierColumnName();
+            $idsHijas = [];
+            foreach ($porPadre as $lista) {
+                foreach ($lista as $fila) {
+                    $idsHijas[] = (int) $fila[$idHija];
+                }
+            }
+            $nietas = $this->anidadas($conexion, $meta, $idsHijas);
+            if ($nietas !== []) {
+                foreach ($porPadre as $padreId => $lista) {
+                    foreach ($lista as $i => $fila) {
+                        foreach ($nietas as $nombreNieta => $porHija) {
+                            $porPadre[$padreId][$i][$nombreNieta] = $porHija[(int) $fila[$idHija]] ?? [];
+                        }
+                    }
+                }
+            }
+            $hijas[$nombre] = $porPadre;
+        }
+        foreach ($this->aMuchos($padre) as $nombre => $tabla) {
+            $hijas[$nombre] = $this->idsRelacionados($conexion, $tabla, $ids);
+        }
+
+        return $hijas;
+    }
+
+    /**
      * Asociaciones a muchos de la configuración cuyo destino también es del
      * cliente (columnas del listado, campos del formulario).
      *
-     * @return array<string, array{tabla: string, fk: string, orden: string}>
+     * @return array<string, array{tabla: string, fk: string, orden: string, meta: ClassMetadata}>
      */
     private function hijas(ClassMetadata $padre): array
     {
@@ -115,6 +155,7 @@ final class HuellasVigentes
                 "tabla" => $meta->getTableName(),
                 "fk" => $meta->getSingleAssociationJoinColumnName($mapping->mappedBy),
                 "orden" => implode(", ", $orden),
+                "meta" => $meta,
             ];
         }
 
@@ -122,7 +163,52 @@ final class HuellasVigentes
     }
 
     /**
-     * @param array{tabla: string, fk: string, orden: string} $hija
+     * Relaciones a muchos con tabla intermedia de la que es dueña la configuración.
+     *
+     * @return array<string, array{tabla: string, fk: string, otra: string}>
+     */
+    private function aMuchos(ClassMetadata $padre): array
+    {
+        $tablas = [];
+        foreach ($padre->getAssociationMappings() as $nombre => $mapping) {
+            if (!$mapping->isManyToMany() || !$mapping->isOwningSide()) {
+                continue;
+            }
+            $tablas[$nombre] = [
+                "tabla" => $mapping->joinTable->name,
+                "fk" => $mapping->joinTable->joinColumns[0]->name,
+                "otra" => $mapping->joinTable->inverseJoinColumns[0]->name,
+            ];
+        }
+
+        return $tablas;
+    }
+
+    /**
+     * @param array{tabla: string, fk: string, otra: string} $tabla
+     * @param list<int> $ids
+     *
+     * @return array<int, list<int>> por id del dueño, ordenados
+     */
+    private function idsRelacionados(Connection $conexion, array $tabla, array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+        $porDuenio = [];
+        foreach ($conexion->fetchAllAssociative(
+            sprintf("SELECT %s AS duenio, %s AS otro FROM %s WHERE %s IN (?) ORDER BY 1, 2", $tabla["fk"], $tabla["otra"], $tabla["tabla"], $tabla["fk"]),
+            [$ids],
+            [ArrayParameterType::INTEGER],
+        ) as $fila) {
+            $porDuenio[(int) $fila["duenio"]][] = (int) $fila["otro"];
+        }
+
+        return $porDuenio;
+    }
+
+    /**
+     * @param array{tabla: string, fk: string, orden: string, meta: ClassMetadata} $hija
      * @param list<int> $ids
      *
      * @return array<int, list<array<string, mixed>>> por id de la configuración

@@ -363,8 +363,9 @@ function applyCustomFilter(state: CustomListFilterState | null) {
 
 // Acciones por fila -------------------------------------------------------
 const extraActions = computed<EntityListAction[]>(() => (features.value.rowActions ? (entityListActions[entityName.value] ?? []) : []));
-const canEditRow = computed(() => features.value.rowActions && !soloLectura.value && acceso.puedeRecurso(entityName.value, "editar"));
-const canDeleteRow = computed(() => features.value.rowActions && !soloLectura.value && Boolean(store.value?.metadata.delete) && acceso.puedeRecurso(entityName.value, "eliminar"));
+// La configuración del listado puede ocultar editar y eliminar (`features.edit`/`delete`, ADR-043).
+const canEditRow = computed(() => features.value.rowActions && features.value.edit && !soloLectura.value && acceso.puedeRecurso(entityName.value, "editar"));
+const canDeleteRow = computed(() => features.value.rowActions && features.value.delete && !soloLectura.value && Boolean(store.value?.metadata.delete) && acceso.puedeRecurso(entityName.value, "eliminar"));
 /** Ancho de la columna fija de acciones: 2rem por botón. En selección no hay acciones por fila. */
 const actionsWidth = computed(() => {
   if (modoSeleccion.value) return null;

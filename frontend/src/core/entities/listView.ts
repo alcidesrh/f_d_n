@@ -1,6 +1,6 @@
 /**
  * Valores por defecto del listado de una entidad cuando su configuración
- * (`EntityConfiguration.listOptions`) no los fija.
+ * (`ListConfiguration.listOptions`) no los fija.
  */
 import type { ListOptions, ListViewState } from './types'
 

@@ -29,7 +29,6 @@ use Symfony\Component\Serializer\Attribute\Groups; // Carga automáticamente la 
 #[
     ApiResource(
         order: [
-            "collectionFieldConfig.position" => "ASC",
             "formFields.position" => "ASC",
         ],
         operations: [
@@ -43,7 +42,6 @@ use Symfony\Component\Serializer\Attribute\Groups; // Carga automáticamente la 
             new GetCollection(
                 normalizationContext: ["groups" => ["read:dto"]],
                 order: [
-                    "collectionFieldConfig.position" => "ASC",
                     "formFields.position" => "ASC",
                 ],
                 paginationEnabled: false,
@@ -69,7 +67,6 @@ use Symfony\Component\Serializer\Attribute\Groups; // Carga automáticamente la 
             new QueryCollection(
                 name: "get",
                 order: [
-                    "collectionFieldConfig.position" => "ASC",
                     "formFields.position" => "ASC",
                 ],
                 normalizationContext: ["groups" => ["read:dto"]],
@@ -97,14 +94,6 @@ use Symfony\Component\Serializer\Attribute\Groups; // Carga automáticamente la 
                     "formFields" => [
                         "type" => "[updateFormFieldConfigInput]",
                     ],
-                    "collectionFieldConfig" => [
-                        "type" => "[updateCollectionFieldConfigInput]",
-                    ],
-                    "listOptions" => [
-                        "type" => "Iterable",
-                        "description" =>
-                            "Opciones del listado (ver EntityConfiguration::LIST_OPTIONS)",
-                    ],
                 ],
             ),
         ],
@@ -124,18 +113,15 @@ class EntityConfiguration implements ConfiguracionDelCliente
     #[ORM\Column(type: "datetime_immutable", nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
 
-    #[
-        ORM\OneToMany(
-            mappedBy: "entityConfig",
-            targetEntity: CollectionFieldConfig::class,
-            cascade: ["persist", "remove"],
-            orphanRemoval: true,
-            fetch: "LAZY",
-        ),
-    ]
-    #[ORM\OrderBy(["position" => "ASC"])]
-    #[Groups(["read:dto"])]
-    private Collection $collectionFieldConfig;
+    /**
+     * Configuraciones del listado (ADR-043): la por defecto (sin roles) y las
+     * de cada grupo de roles, por prioridad.
+     *
+     * @var Collection<int, ListConfiguration>
+     */
+    #[ORM\OneToMany(mappedBy: "entityConfig", targetEntity: ListConfiguration::class, cascade: ["persist", "remove"], orphanRemoval: true)]
+    #[ORM\OrderBy(["position" => "ASC", "id" => "ASC"])]
+    private Collection $listConfigurations;
 
     #[
         ORM\OneToMany(
@@ -152,35 +138,10 @@ class EntityConfiguration implements ConfiguracionDelCliente
     #[ORM\ManyToOne]
     private ?Icon $icon = null;
 
-    /**
-     * Opciones del listado de la entidad (no de una columna). Claves admitidas
-     * y su tipo; lo demás se descarta al guardar. Null o ausente: el valor por
-     * defecto del frontend.
-     *
-     * - `pageSize`: filas por página al abrir o restablecer el listado.
-     * - `pageSizes`: opciones del selector de filas por página.
-     * - `density`: `compact` | `normal` | `comfortable` (alto de fila).
-     * - `filterMode`: `or` (cualquier filtro) | `and` (todos).
-     * - `selectable`: ofrecer el modo selección.
-     * - `inlineEdit`: permitir la edición en línea.
-     */
-    public const LIST_OPTIONS = [
-        "pageSize" => "int",
-        "pageSizes" => "int[]",
-        "density" => ["compact", "normal", "comfortable"],
-        "filterMode" => ["or", "and"],
-        "selectable" => "bool",
-        "inlineEdit" => "bool",
-    ];
-
-    #[ORM\Column(type: "json", nullable: true)]
-    #[Groups(["read:dto"])]
-    private ?array $listOptions = null;
-
     public function __construct(string $entityClass)
     {
         $this->entityClass = $entityClass;
-        $this->collectionFieldConfig = new ArrayCollection();
+        $this->listConfigurations = new ArrayCollection();
         $this->formFields = new ArrayCollection();
         $this->updatedAt = new \DateTimeImmutable();
     }
@@ -218,40 +179,23 @@ class EntityConfiguration implements ConfiguracionDelCliente
         return $this->updatedAt;
     }
 
-    /**
-     * @return Collection<int, CollectionFieldConfig>
-     */
-    public function getCollectionFieldConfig(): Collection
+    /** @return Collection<int, ListConfiguration> */
+    public function getListConfigurations(): Collection
     {
-        return $this->collectionFieldConfig;
+        return $this->listConfigurations;
     }
 
-    public function setCollectionFieldConfig(
-        Collection $collectionFieldConfig,
-    ): Collection {
-        return $this->collectionFieldConfig = $collectionFieldConfig;
-    }
-
-    public function addCollectionFieldConfig(
-        CollectionFieldConfig $collectionFieldConfig,
-    ): self {
-        if (!$this->collectionFieldConfig->contains($collectionFieldConfig)) {
-            $this->collectionFieldConfig->add($collectionFieldConfig);
-            $collectionFieldConfig->setEntityConfig($this);
+    public function addListConfiguration(ListConfiguration $config): self
+    {
+        if (!$this->listConfigurations->contains($config)) {
+            $this->listConfigurations->add($config);
         }
         return $this;
     }
 
-    public function removeCollectionFieldConfig(
-        CollectionFieldConfig $collectionFieldConfig,
-    ): self {
-        if (
-            $this->collectionFieldConfig->removeElement($collectionFieldConfig)
-        ) {
-            if ($collectionFieldConfig->getEntityConfig() === $this) {
-                $collectionFieldConfig->setEntityConfig(null);
-            }
-        }
+    public function removeListConfiguration(ListConfiguration $config): self
+    {
+        $this->listConfigurations->removeElement($config);
         return $this;
     }
 
@@ -301,37 +245,6 @@ class EntityConfiguration implements ConfiguracionDelCliente
             }
             $field->setPosition($position++);
         }
-    }
-
-    public function getListOptions(): ?array
-    {
-        return $this->listOptions;
-    }
-
-    /** Guarda solo las claves de `LIST_OPTIONS` con un valor válido. */
-    public function setListOptions(?array $options): static
-    {
-        $limpias = [];
-        foreach (self::LIST_OPTIONS as $clave => $tipo) {
-            $valor = $options[$clave] ?? null;
-            $valido = match (true) {
-                $valor === null => false,
-                \is_array($tipo) => \in_array($valor, $tipo, true),
-                $tipo === "int" => \is_int($valor) && $valor > 0 && $valor <= 500,
-                $tipo === "bool" => \is_bool($valor),
-                $tipo === "int[]" => \is_array($valor)
-                    && $valor !== []
-                    && array_is_list($valor)
-                    && array_filter($valor, static fn ($n) => !\is_int($n) || $n <= 0 || $n > 500) === [],
-                default => false,
-            };
-            if ($valido) {
-                $limpias[$clave] = $valor;
-            }
-        }
-        $this->listOptions = $limpias === [] ? null : $limpias;
-
-        return $this;
     }
 
     public function getIcon(): ?Icon

@@ -46,3 +46,4 @@
 | [ADR-040](ADR-040-autorizaciones-pases-de-un-solo-uso.md) | Autorizaciones: pases de un solo uso para lo que una regla impide (sin permiso, límite diario, fuera de hora) | Aceptada |
 | [ADR-041](ADR-041-datos-del-pago-en-la-pagina-web.md) | Datos del pago en la página web: dirección de la tarjeta por listas (país → región → ciudad) y factura a otro nombre o a la razón social del NIT | Aceptada |
 | [ADR-042](ADR-042-sincronizacion-temporal-con-el-legado.md) | Sincronización temporal con el legado: el asiento se escribe primero en el otro sistema, triggers y ciclo por minuto para traer, apartado en FDN para lo que vende el legado, interruptor con indicador | Aceptada |
+| [ADR-043](ADR-043-configuracion-del-listado-por-rol.md) | Configuración del listado por rol: varias por entidad, la por defecto sin roles, un rol en una sola, botones Seleccionar/Nuevo/Editar/Eliminar configurables | Aceptada |

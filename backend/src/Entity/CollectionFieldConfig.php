@@ -2,22 +2,21 @@
 
 namespace App\Entity;
 
-use App\Acceso\Recurso;
-use ApiPlatform\Metadata\ApiProperty;
-use App\Attribute\ApiResourceNoPagination;
 use App\Metadata\ConfiguracionDelCliente;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
+/**
+ * Columna de una configuración del listado (`ListConfiguration`). Sin API
+ * Platform: se edita con su configuración (`ConfiguracionListadoController`).
+ */
 #[ORM\Entity]
-#[ApiResourceNoPagination()]
-#[Recurso(nombre: "Columnas de los listados", area: "Configuración", lecturaLibre: true, editar: "config.editar", eliminar: "config.editar")]
-class CollectionFieldConfig  extends FieldConfig implements ConfiguracionDelCliente
+class CollectionFieldConfig extends FieldConfig implements ConfiguracionDelCliente
 {
 
-    #[ApiProperty(readable: false)]
     #[ORM\ManyToOne(inversedBy: 'collectionFieldConfig')]
-    public EntityConfiguration $entityConfig;
+    #[ORM\JoinColumn(name: 'list_config_id', nullable: false, onDelete: 'CASCADE')]
+    public ListConfiguration $listConfig;
 
     #[ORM\Column(nullable: true)]
     #[Groups(['read:dto'])]
@@ -81,21 +80,31 @@ class CollectionFieldConfig  extends FieldConfig implements ConfiguracionDelClie
     }
 
 
-    public function getEntityConfig(): EntityConfiguration
+    public function getListConfig(): ListConfiguration
     {
-        return $this->entityConfig;
+        return $this->listConfig;
     }
 
-    public function setEntityConfig(EntityConfiguration $entityConfig): static
+    public function setListConfig(ListConfiguration $listConfig): static
     {
-        $this->entityConfig = $entityConfig;
+        $this->listConfig = $listConfig;
 
         return $this;
     }
 
     public function entidadConfigurada(): ?string
     {
-        return isset($this->entityConfig) ? $this->entityConfig->getEntityClass() : null;
+        return isset($this->listConfig) ? $this->listConfig->entidadConfigurada() : null;
+    }
+
+    /** La misma columna, sin configuración (para otra `ListConfiguration`). */
+    public function copia(): self
+    {
+        $copia = clone $this;
+        $copia->id = null;
+        unset($copia->listConfig);
+
+        return $copia;
     }
 
     public function isSortable(): ?bool
