@@ -49,7 +49,7 @@
           <icon name="palette-outline" />
         </button>
         <Popover ref="temaPopover" @show="temaAbierto = true" @hide="temaAbierto = false">
-          <ThemeEditor />
+          <ThemeEditor @cerrar="temaPopover?.hide()" />
         </Popover>
 
         <button type="button" class="icon-btn header-chat" :aria-label="chat.noLeidos ? `Mensajes, ${chat.noLeidos} sin leer` : 'Mensajes'" v-tooltip.bottom="'Mensajes'" @click="invocarChat">

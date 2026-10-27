@@ -1,11 +1,19 @@
 <template>
+  <!-- Con el alto acotado al viewport el popover cae debajo de la cabecera y no tapa su botón. -->
   <section
-    class="flex w-[22rem] max-w-[calc(100vw-2rem)] flex-col gap-5"
+    class="flex max-h-[calc(100dvh-var(--header-h)-1.5rem)] w-[22rem] max-w-[calc(100vw-2rem)] flex-col gap-5 overflow-y-auto overscroll-contain"
     aria-label="Personalizar apariencia"
   >
-    <header>
-      <h2 class="text-base font-semibold text-surface-900">Apariencia</h2>
-      <p class="text-sm text-surface-500">Se guarda en este navegador.</p>
+    <header class="flex items-start justify-between gap-2">
+      <div>
+        <h2 class="text-base font-semibold text-surface-900">Apariencia</h2>
+        <p class="text-sm text-surface-500">Se guarda en este navegador.</p>
+      </div>
+      <Button text rounded size="small" severity="secondary" aria-label="Cerrar" @click="emit('cerrar')">
+        <template #icon>
+          <icon name="close" size="1.1rem" />
+        </template>
+      </Button>
     </header>
 
     <!-- Vista previa con los componentes reales: refleja cada cambio al instante. -->
@@ -145,6 +153,7 @@
 import { PRESET_OPTIONS, PRIMARY_OPTIONS, SURFACE_OPTIONS } from '@/app/theme'
 import { useUiStore } from '@/app/ui'
 
+const emit = defineEmits<{ cerrar: [] }>()
 const ui = useUiStore()
 
 const MODOS = [
