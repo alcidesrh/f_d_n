@@ -84,10 +84,11 @@ function collectionPayload(row: CollectionFieldRow, index: number): CollectionFi
     visible: Boolean(row.visible),
     kind: row.kind ?? null,
     attrs: row.attrs ?? null,
-    // Ordenar y filtrar se habilitan a mano: null y false son lo mismo (apagado).
+    // Ordenar, filtrar y editar en línea se habilitan a mano: null y false son lo mismo (apagado).
     sortable: Boolean(row.sortable),
     filterable: Boolean(row.filterable),
     autocomplete: Boolean(row.autocomplete),
+    editable: Boolean(row.editable),
     width: row.width?.trim() || null,
   }
 }

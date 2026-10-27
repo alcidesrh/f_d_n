@@ -42,9 +42,6 @@ class Enclave extends Base
     #[ORM\Column(options: ["default" => true])]
     private bool $activo = true;
 
-    #[ORM\Column(nullable: true)]
-    private bool $test = true;
-
     public function getId(): ?int
     {
         return $this->id;
@@ -133,17 +130,6 @@ class Enclave extends Base
     public function setActivo(bool $activo): static
     {
         $this->activo = $activo;
-
-        return $this;
-    }
-    public function isTest(): bool
-    {
-        return $this->test;
-    }
-
-    public function setTest(bool $activo): static
-    {
-        $this->test = $activo;
 
         return $this;
     }

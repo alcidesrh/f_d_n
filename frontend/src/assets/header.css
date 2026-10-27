@@ -41,7 +41,7 @@
 /* Reloj sobre la marca de agua "FDN": ambos en la misma celda de grid, así
    la marca mide lo que su contenido más ancho. */
 .brand {
-  display: grid;
+  display: none;
   place-items: center;
   position: relative;
   & > * {
@@ -50,6 +50,9 @@
   @variant lg {
     width: 230px;
     transform: translateX(calc(-40px * (1 - var(--sb-left-h, 0))));
+  }
+  @variant md {
+    display: grid;
   }
 }
 .brand-mark {
@@ -63,7 +66,10 @@
   justify-content: center;
   color: var(--on-primary);
 }
+/* Reloj: solo con espacio (md+); en el teléfono la cabecera va a las acciones. */
 .header-clock {
+  display: block;
+
   position: relative;
   font-family: "Rajdhani-600", sans-serif;
   font-variant-numeric: tabular-nums;

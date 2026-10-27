@@ -8,7 +8,7 @@
 
   El viaje es el del cliente (ADR-030): "Sube en" y "Baja en" con la hora en
   cada parada ("≈" si es estimada, "+1" si llega otro día), con el nombre debajo.
-  La ruta del bus, por siglas y debajo los nombres. Una salida sin
+  La ruta del bus, de origen a destino. Una salida sin
   tarifa para ese viaje lo dice en el precio y no se puede elegir.
 
   Si la lista junta salidas de más de un día (por la hora de salida), cada
@@ -24,40 +24,33 @@
           <icon name="airline_seat_recline_extra" size="1.1rem" class="asientos__vendidos" title="Vendidos" />
           <icon name="tatami_seat" size="1.1rem" :weight="300" class="asientos__libres" title="Libres" />
         </span>
-        <span v-if="column.key === 'hora'" class="pl-0.4">{{ column.label }}</span>
         <template v-else>{{ column.label }}</template>
       </template>
 
       <template #cell="{ row, column }">
         <div v-if="column.key === 'sube' || column.key === 'baja'" class="celda min-w-0 leading-tight">
-          <div class="truncate tabular-nums font-[450]" :title="punta(s(row), column.key).nombre ?? ''">
+          <div class="truncate tabular-nums" :title="punta(s(row), column.key).nombre ?? ''">
             {{ punta(s(row), column.key).nombre ?? "—" }}
           </div>
-          <div class="truncate text-xs font-[350]">{{ horaPunta(s(row), column.key) }}</div>
+          <div class="truncate text-sm text-center text-muted-color font-[550]">{{ horaPunta(s(row), column.key) }}</div>
         </div>
         <div v-else-if="column.key === 'hora'" class="celda">
-          <div class="tracking-wide text-center tabular-nums whitespace-nowrap font-[450]">
+          <div class="tracking-wide text-center tabular-nums whitespace-nowrap font-[500]">
             {{ hora(s(row).salida) }}
           </div>
           <div v-if="variosDias" class="dia" :class="{ 'dia--alterno': alterno(s(row)) }">{{ diaSemana(s(row).salida) }}</div>
-          <div v-else class="text-xs tabular-nums whitespace-nowrap font-[350]">
+          <div v-else class="text-sm text-muted-color text-center tabular-nums whitespace-nowrap font-[550]">
             {{ fecha(s(row).salida) }}
           </div>
         </div>
-        <div v-else-if="column.key === 'ruta'" class="celda ruta min-w-0 leading-tight">
-          <div class="truncate font-[450]" :title="rutaNombres(s(row))">
-            {{ rutaSiglas(s(row)) }}
-          </div>
-          <div class="truncate text-xs tabular-nums font-[350]" :title="rutaNombres(s(row))">
-            {{ rutaNombres(s(row)) }}
-          </div>
+        <div v-else-if="column.key === 'ruta'" class="celda ruta min-w-0 font-medium">
+          <div class="truncate" :title="ruta(s(row))">{{ ruta(s(row)) }}</div>
         </div>
         <GridText v-else-if="column.key === 'empresa'" class="celda text-[0.9rem]!" :text="nombreEmpresa(s(row))" />
         <template v-else-if="column.key === 'bus'">
           <span v-if="s(row).bus" class="celda truncate" :title="bus(s(row))">{{ s(row).bus!.codigo }}</span>
           <icon v-else name="no_transfer" class="text-surface-500" size="1.2rem" title="Sin bus" />
         </template>
-        <span v-else-if="column.key === 'estado'" class="estado" :class="`estado--${s(row).estado}`" :title="s(row).estado">{{ s(row).estado.charAt(0).toUpperCase() }}</span>
         <template v-else-if="column.key === 'precios'">
           <span v-if="conTarifa(s(row))" class="precios precios--columna">
             <span v-for="(p, i) in s(row).precios" :key="p.clase" :class="{ 'text-orange-600 mt-1': i }"
@@ -79,7 +72,7 @@
             <span class="flex-none font-semibold tabular-nums">{{ horaPunta(s(row), "sube") }}</span>
             <span class="min-w-0 flex-1 truncate text-right font-medium" :title="viaje(s(row))">{{ viaje(s(row)) }}</span>
           </div>
-          <div class="tarjeta__linea text-xs text-muted-color">
+          <div class="tarjeta__linea text-sm text-muted-color">
             <span class="min-w-0 truncate" :title="ruta(s(row))">{{ ruta(s(row)) }} · {{ nombreEmpresa(s(row)) || "—" }}</span>
             <span v-if="conTarifa(s(row))" class="precios">
               <span v-for="p in s(row).precios" :key="p.clase"
@@ -110,7 +103,7 @@ import DataGrid from "@/shared/data-grid/DataGrid.vue";
 import GridText from "@/shared/data-grid/GridText.vue";
 import type { GridColumn } from "@/shared/data-grid/types";
 import { diasEntre, fecha, hora, horaViaje } from "@/core/venta/modelo";
-import type { Importe, Opcion, ParadaViaje, SalidaResumen } from "@/core/venta/types";
+import type { Importe, ParadaViaje, SalidaResumen } from "@/core/venta/types";
 
 const props = defineProps<{
   salidas: SalidaResumen[];
@@ -120,13 +113,12 @@ const props = defineProps<{
 const emit = defineEmits<{ elegir: [id: number] }>();
 
 const columns: GridColumn[] = [
-  { key: "hora", label: "Hora", minWidth: "6.75rem" },
+  { key: "hora", label: "Hora", width: "120px" },
   { key: "ruta", label: "Ruta", minWidth: "9rem", width: "1.5fr" },
   { key: "sube", label: "Sube en", minWidth: "7rem" },
   { key: "baja", label: "Baja en", minWidth: "7rem" },
   { key: "empresa", label: "Empresa", width: "7rem" },
   { key: "bus", label: "Bus", width: "4rem" },
-  { key: "estado", label: "Estado", width: "3rem" },
   { key: "precios", label: "Precio", width: "5rem" },
   { key: "asientos", label: "Asientos", width: "4.5rem", align: "center" },
 ];
@@ -198,14 +190,9 @@ function horaDe(p: ParadaViaje | undefined, desde?: string | null) {
 /** La subida, a secas; la bajada, con "+1" si se llega otro día que el que se sube. */
 const horaPunta = (r: SalidaResumen, cual: "sube" | "baja") => horaDe(punta(r, cual), cual === "baja" ? (punta(r, "sube").hora ?? r.salida) : null);
 const viaje = (r: SalidaResumen) => `${punta(r, "sube").nombre ?? ""} → ${punta(r, "baja").nombre ?? ""}`;
-/** Origen y destino de la ruta del bus, sin horas: las dos líneas de la celda Ruta. */
+/** Origen y destino de la ruta del bus, sin horas. */
 const rutaInicio = (r: SalidaResumen) => r.ruta.origen.nombre ?? "";
 const rutaFin = (r: SalidaResumen) => r.ruta.destino.nombre ?? "";
-/** "GUA - FLO": la sigla de cada punta de la ruta del bus (el nombre, si no tiene). */
-const rutaSiglas = (r: SalidaResumen) => `${etiqueta(r.ruta.origen)} - ${etiqueta(r.ruta.destino)}`;
-/** "Guatemala-Flores": los nombres completos, debajo de las siglas y en el tooltip. */
-const rutaNombres = (r: SalidaResumen) => `${r.ruta.origen.nombre}-${r.ruta.destino.nombre}`;
-const etiqueta = (o: Opcion & { alias: string | null }) => o.alias || o.nombre;
 /** "Guatemala → Flores": la ruta entera, para la tarjeta. */
 const ruta = (r: SalidaResumen) => `${rutaInicio(r)} → ${rutaFin(r)}`;
 /** "TRANSPORTES FUENTES" → "Transportes Fuentes". */
@@ -275,7 +262,9 @@ const precioCorto = (p: Importe | null) => (p ? p.texto.replace(/[.,]00$/, "") :
 .celda .dia {
   font-size: 0.75rem;
 }
-
+.celda {
+  line-height: 17px;
+}
 /* Tarjetas de dos líneas: lo justo de aire para leerlas y tocarlas. */
 .salidas :deep(.dg-cards) {
   gap: 0.375rem;
@@ -303,51 +292,14 @@ const precioCorto = (p: Importe | null) => (p ? p.texto.replace(/[.,]00$/, "") :
   .celda {
     font-size: 1rem;
   }
-  .celda .text-xs,
+  /*.celda .text-sm,
   .celda.ruta {
-    font-size: 0.9125rem;
-  }
+    font-size: 0.9525rem;
+  }*/
   .celda .asientos--valores,
   .asientos--valores.celda {
     font-size: 1rem;
   }
-}
-
-/* Estado: inicial en un círculo del color del estado. */
-.estado {
-  display: inline-flex;
-  width: 1.75rem;
-  height: 1.75rem;
-  align-items: center;
-  justify-content: center;
-  border-radius: 9999px;
-  background: var(--p-surface-200);
-  color: var(--p-surface-700);
-  font-size: 0.875rem;
-  cursor: default;
-}
-/*.estado--programada {
-  background: var(--p-amber-100);
-  color: var(--p-amber-700);
-}
-.estado--abordando {
-  background: var(--p-lime-100);
-  color: var(--p-lime-700);
-}
-.estado--iniciada {
-  background: var(--p-emerald-100);
-  color: var(--p-emerald-700);
-}*/
-.estado--programada,
-.estado--abordando,
-.estado--iniciada,
-.estado--finalizada {
-  background: var(--p-surface-100);
-  color: var(--p-surface-700);
-}
-.estado--cancelada {
-  background: var(--p-red-100);
-  color: var(--p-red-700);
 }
 
 /* Precio por clase de asiento: la letra en gris, el monto en negrita. */

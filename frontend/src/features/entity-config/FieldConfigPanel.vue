@@ -115,6 +115,13 @@
           @update:model-value="(row as CollectionFieldRow).autocomplete = $event as boolean"
         />
       </div>
+      <div class="cell cell--switch" title="Se edita en línea en el listado (clic en la celda).">
+        <span class="cell__label">editable</span>
+        <ToggleSwitch
+          :model-value="Boolean((row as CollectionFieldRow).editable)"
+          @update:model-value="(row as CollectionFieldRow).editable = $event as boolean"
+        />
+      </div>
     </template>
   </div>
 </template>

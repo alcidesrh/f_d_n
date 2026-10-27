@@ -22,6 +22,8 @@ export interface CollectionFieldConfig {
   filterable?: boolean | null;
   /** Relación con muchos registros: el filtro busca en el servidor al teclear (no carga la lista completa). */
   autocomplete?: boolean | null;
+  /** Se edita en línea en el listado; solo con `true` (null = no). */
+  editable?: boolean | null;
   showFilter?: boolean | null;
   attrs?: Record<string, unknown> | null;
   kind?: string;
