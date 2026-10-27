@@ -16,6 +16,8 @@ export interface PermisoRecurso {
 export interface OpcionEstacion {
   id: number
   nombre: string
+  /** Nombre corto de la estación (puede no tenerlo). */
+  alias?: string | null
   departamento: string | null
 }
 

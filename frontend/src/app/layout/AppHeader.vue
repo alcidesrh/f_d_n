@@ -4,7 +4,7 @@
       <div class="flex btn-siderbar-header">
         <button type="button" class="icon-btn" aria-label="Menú de navegación" :aria-expanded="ui.isMobile ? sidebarStore.drawer : sidebarStore.mode !== 'close'" @click="sidebarStore.toggle()">
           <!-- <icon name="menu" size="35px" :weight="300" color="text-surface-500" /> -->
-          <icon name="right_panel_close" size="30" color="text-surface-500" />
+          <icon name="right_panel_close" size="25" :weight="100" color="text-surface-600" />
         </button>
         <Divider layout="vertical" class="mx-[5px]!" />
       </div>
@@ -45,19 +45,19 @@
           <icon :name="ui.mode === 'dark' ? 'light-mode-outline' : 'dark-mode-outline'" />
         </button> -->
 
-        <button class="icon-btn header-secundario cursor-pointer" title="Personalizar apariencia" aria-label="Personalizar apariencia" aria-haspopup="dialog" :class="{ 'active-state': temaAbierto }" @click="temaPopover?.toggle($event)">
+        <button class="icon-btn header-secundario header-escritorio cursor-pointer" title="Personalizar apariencia" aria-label="Personalizar apariencia" aria-haspopup="dialog" :class="{ 'active-state': temaAbierto }" @click="temaPopover?.toggle($event)">
           <icon name="palette-outline" />
         </button>
         <Popover ref="temaPopover" @show="temaAbierto = true" @hide="temaAbierto = false">
           <ThemeEditor @cerrar="temaPopover?.hide()" />
         </Popover>
 
-        <button type="button" class="icon-btn header-chat" :aria-label="chat.noLeidos ? `Mensajes, ${chat.noLeidos} sin leer` : 'Mensajes'" v-tooltip.bottom="'Mensajes'" @click="invocarChat">
+        <button type="button" class="icon-btn header-chat header-escritorio" :aria-label="chat.noLeidos ? `Mensajes, ${chat.noLeidos} sin leer` : 'Mensajes'" v-tooltip.bottom="'Mensajes'" @click="invocarChat">
           <icon name="forum-outline" />
           <span v-if="chat.noLeidos" class="header-chat__badge">{{ chat.noLeidos > 99 ? "99+" : chat.noLeidos }}</span>
         </button>
         <!-- Ayuda: abre las guías de la pantalla actual (o todas si no hay). -->
-        <RouterLink :to="{ name: 'ayuda', query: ayudaPantalla ? { pantalla: ayudaPantalla } : {} }" class="icon-btn header-secundario" aria-label="Ayuda" v-tooltip.bottom="'Ayuda'">
+        <RouterLink :to="{ name: 'ayuda', query: ayudaPantalla ? { pantalla: ayudaPantalla } : {} }" class="icon-btn header-secundario header-escritorio" aria-label="Ayuda" v-tooltip.bottom="'Ayuda'">
           <icon name="help-outline" />
         </RouterLink>
         <!-- Autorizaciones (ADR-040): las que espera resolver y sus pases aprobados sin usar. -->
@@ -75,8 +75,8 @@
       </div>
       <!-- Estación de trabajo (ADR-039): donde opera; se cambia entre las de sus asignaciones. -->
       <button v-if="acceso.estacionTrabajo || acceso.debeElegirEstacion" type="button" class="icon-btn header-estacion" :class="{ 'header-estacion--falta': !acceso.estacionTrabajo }" :aria-label="acceso.estacionTrabajo ? `Estación de trabajo: ${acceso.estacionTrabajo.nombre}. Cambiar` : 'Elegir estación de trabajo'" v-tooltip.bottom="acceso.estaciones.length > 1 ? 'Estación de trabajo' : undefined" :disabled="acceso.estaciones.length < 2 && !!acceso.estacionTrabajo" @click="acceso.eligiendoEstacion = true">
-        <icon name="location_home-outline" :size="ui.isMobile ? undefined : '1.05rem'" />
-        <span class="header-estacion__nombre">{{ acceso.estacionTrabajo?.nombre ?? "Elegir estación" }}</span>
+        <icon name="person_pin_circle-outline" :size="ui.isMobile ? undefined : '1.05rem'" />
+        <span class="header-estacion__nombre">{{ acceso.estacionTrabajo?.alias || acceso.estacionTrabajo?.nombre || "Elegir estación" }}</span>
       </button>
       <!-- Fuera de la franja que scrollea: Mi cuenta, Instalar app y Cerrar sesión siempre a la vista. -->
       <div class="header-user-wrap">
@@ -106,7 +106,7 @@
       <div v-if="rightSidebar" class="flex btn-siderbar-header">
         <Divider layout="vertical" class="mx-[5px]!" />
         <button type="button" class="icon-btn right" title="Mostrar/ocultar menú" aria-label="Panel lateral derecho" :aria-expanded="ui.isMobile ? rightSidebar.drawer : rightSidebar.mode !== 'close'" @click="rightSidebar.toggle()">
-          <icon name="left_panel_close  " size="30px" color="text-surface-500" />
+          <icon name="left_panel_close  " size="25px" :weight="100" color="text-surface-600" />
         </button>
       </div>
     </div>

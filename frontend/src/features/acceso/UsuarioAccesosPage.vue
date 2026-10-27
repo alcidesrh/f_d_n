@@ -40,13 +40,21 @@
       <section class="card flex flex-col gap-3 p-3 md:p-4">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <h2 class="font-semibold">Asignaciones</h2>
-          <Button v-if="datos.puede.asignar" label="Otorgar rol" size="small" @click="abrir(null)">
-            <template #icon><icon name="add" class="mr-1" /></template>
-          </Button>
+          <div class="flex flex-wrap items-center gap-2">
+            <template v-if="revocables.length">
+              <Button v-if="modoSeleccion" label="Todas" text size="small" :disabled="!revocables.length" @click="marcarTodas" />
+              <Button v-if="modoSeleccion && seleccion.length" :label="`Revocar (${seleccion.length})`" severity="danger" size="small" outlined @click="revocarSeleccion" />
+              <Button :label="modoSeleccion ? 'Listo' : 'Seleccionar'" :severity="modoSeleccion ? 'secondary' : undefined" :text="!modoSeleccion" size="small" @click="alternarSeleccion" />
+            </template>
+            <Button v-if="datos.puede.asignar" label="Otorgar rol" size="small" @click="abrir(null)">
+              <template #icon><icon name="add" class="mr-1" /></template>
+            </Button>
+          </div>
         </div>
         <p v-if="!datos.asignaciones.length" class="text-sm text-muted-color">Sin asignaciones: no puede hacer nada más que entrar, usar el chat y ver lo que es de todos.</p>
         <ul class="asignaciones">
           <li v-for="a in datos.asignaciones" :key="a.id" class="asignacion" :class="{ 'asignacion--inactiva': !a.vigente }">
+            <Checkbox v-if="modoSeleccion && a.puedeEditar" v-model="seleccion" :value="a.id" :input-id="`asignacion-${a.id}`" :aria-label="`Seleccionar ${a.rol.descripcion || a.rol.nombre}`" class="mt-1" />
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="font-medium">{{ a.rol.descripcion || a.rol.nombre }}</span>
@@ -117,6 +125,10 @@ const error = ref<string | null>(null)
 const dialogo = ref(false)
 const editando = ref<Asignacion | null>(null)
 const bitacora = ref(false)
+const modoSeleccion = ref(false)
+const seleccion = ref<number[]>([])
+
+const revocables = computed(() => (datos.value?.asignaciones ?? []).filter((a) => a.puedeEditar))
 
 const nombres = computed(() => ({
   empresas: new Map((catalogo.value?.empresas ?? []).map((e) => [e.id, e.nombre])),
@@ -133,6 +145,8 @@ const porArea = computed(() => {
 async function cargar() {
   cargando.value = true
   error.value = null
+  modoSeleccion.value = false
+  seleccion.value = []
   try {
     ;[datos.value, catalogo.value, roles.value] = await Promise.all([api.fetchAccesos(props.id), catalogo.value ?? api.fetchCatalogo(), roles.value.length ? roles.value : api.fetchRoles()])
   } catch (e) {
@@ -171,6 +185,45 @@ function revocar(a: Asignacion) {
       } catch (e) {
         notify.error(e instanceof Error ? e.message : 'No se pudo revocar.')
       }
+    },
+  })
+}
+
+function alternarSeleccion() {
+  modoSeleccion.value = !modoSeleccion.value
+  seleccion.value = []
+}
+
+function marcarTodas() {
+  seleccion.value = seleccion.value.length === revocables.value.length ? [] : revocables.value.map((a) => a.id)
+}
+
+/** Revoca una a una (cada una con su bitácora y su permiso); sigue con las demás si una falla. */
+function revocarSeleccion() {
+  const ids = [...seleccion.value]
+  confirm.require({
+    header: 'Revocar asignaciones',
+    message: `¿Quitar las ${ids.length} asignaciones seleccionadas? Deja de poder hacer lo que concedían desde ya.`,
+    acceptLabel: `Revocar ${ids.length}`,
+    rejectLabel: 'Cancelar',
+    acceptProps: { severity: 'danger' },
+    accept: async () => {
+      let revocadas = 0
+      let fallidas = 0
+      let motivo = ''
+      for (const id of ids) {
+        try {
+          datos.value = await api.revocar(id)
+          revocadas++
+        } catch (e) {
+          fallidas++
+          motivo = e instanceof Error ? e.message : 'No se pudo revocar.'
+        }
+      }
+      seleccion.value = []
+      modoSeleccion.value = false
+      if (revocadas) notify.success(`${revocadas === 1 ? 'Asignación revocada' : `${revocadas} asignaciones revocadas`}.`)
+      if (fallidas) notify.error(`${fallidas} sin revocar. ${motivo}`)
     },
   })
 }

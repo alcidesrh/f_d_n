@@ -64,7 +64,7 @@ final class MiAccesoController extends AbstractController
             'capacidades' => (object) array_map(static fn($alcance) => $alcance->toArray(), $permisos->capacidades()),
             'recursos' => (object) $recursos,
             'agencia' => $agencia === null ? null : ['id' => (int) $agencia->getId(), 'nombre' => $agencia->getNombre()],
-            'estacionTrabajo' => $estacion === null ? null : ['id' => (int) $estacion->getId(), 'nombre' => $estacion->getNombre(), 'departamento' => $estacion->getDepartamento()],
+            'estacionTrabajo' => $estacion === null ? null : ['id' => (int) $estacion->getId(), 'nombre' => $estacion->getNombre(), 'alias' => $estacion->getAlias(), 'departamento' => $estacion->getDepartamento()],
             'estaciones' => $this->estacionTrabajo->opciones($usuario),
             'huella' => $permisos->huella() . ':' . ($estacion?->getId() ?? '-'),
         ]);

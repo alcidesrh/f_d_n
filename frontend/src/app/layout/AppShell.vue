@@ -26,6 +26,8 @@
     </div>
     <ChatAviso />
     <ChatVentana v-if="ventana.esVentana && session.user" />
+    <ChatFlotante />
+
     <EstacionTrabajoDialog v-if="session.user" />
     <SolicitarAutorizacionDialog v-if="session.user" />
   </div>
@@ -49,6 +51,7 @@ import { useVentanaChat } from '@/features/chat/ventana'
 import SolicitarAutorizacionDialog from '@/shared/autorizacion/SolicitarAutorizacionDialog.vue'
 import { LISTADO_DE_REGISTROS, REPORTES_ADJUNTABLES } from '@/shared/chat/integracion'
 import AppHeader from './AppHeader.vue'
+import ChatFlotante from './ChatFlotante.vue'
 import NavArea from './navigation/NavArea.vue'
 import Sidebar from './Sidebar.vue'
 import SidebarLeft from './SidebarLeft.vue'

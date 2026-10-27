@@ -57,7 +57,7 @@ final class EstacionTrabajo
         }
     }
 
-    /** @return list<array{id: int, nombre: string, departamento: string|null}> */
+    /** @return list<array{id: int, nombre: string, alias: string|null, departamento: string|null}> */
     public function opciones(Usuario $usuario): array
     {
         $permitidas = $this->permitidas($usuario);
@@ -70,7 +70,7 @@ final class EstacionTrabajo
         }
 
         return array_map(
-            static fn(Estacion $e) => ['id' => (int) $e->getId(), 'nombre' => (string) $e->getNombre(), 'departamento' => $e->getDepartamento()],
+            static fn(Estacion $e) => ['id' => (int) $e->getId(), 'nombre' => (string) $e->getNombre(), 'alias' => $e->getAlias(), 'departamento' => $e->getDepartamento()],
             $this->em->getRepository(Estacion::class)->findBy($criterio, ['nombre' => 'ASC']),
         );
     }

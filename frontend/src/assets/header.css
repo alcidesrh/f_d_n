@@ -204,6 +204,13 @@
     display: flex;
   }
 }
+/* Acciones solo de escritorio: en el teléfono no se muestran (el chat tiene su disparador flotante). */
+.header-escritorio {
+  display: none;
+  @variant md {
+    display: flex;
+  }
+}
 /* Estación de trabajo (ADR-039): debajo de `lg` es un `icon-btn` más (como chat o notificaciones);
    desde `lg`, píldora con el nombre. En ámbar si falta elegirla. */
 .header-estacion {

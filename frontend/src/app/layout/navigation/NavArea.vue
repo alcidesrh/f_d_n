@@ -89,6 +89,6 @@ function onLeave(el: Element, done: () => void) {
   text-overflow: ellipsis;
 }
 .nav-section-title:hover {
-  background-color: var(--p-surface-200);
+  background-color: var(--p-surface-50);
 }
 </style>
