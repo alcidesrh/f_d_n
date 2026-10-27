@@ -38,91 +38,91 @@
     <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
 
     <div class="grid grid-cols-1 items-start gap-3 @4xl:grid-cols-[minmax(0,1fr)_22rem]">
-      <section class="panel flex min-w-0 flex-col gap-2" aria-labelledby="ent-lista">
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <h2 id="ent-lista" class="titulo !m-0">
-            {{ filtro ? `Resultados de «${filtro}»` : `Por entregar en ${nombreEstacion}` }} ({{ filas.length }})
-          </h2>
-          <label v-if="filas.length" class="flex items-center gap-2 text-sm text-muted-color">
-            <Checkbox :model-value="todas" :indeterminate="marcadas.length > 0 && !todas" binary @update:model-value="alternarTodas" />
-            Todas
-          </label>
-        </div>
-        <Skeleton v-if="cargando && !filas.length" height="10rem" />
-        <p v-else-if="!estacionId" class="m-0 py-6 text-center text-sm text-muted-color">Elija la estación.</p>
-        <div v-else-if="!filas.length" class="flex flex-col items-center gap-2 py-8 text-muted-color">
-          <icon name="inventory-2-outline" size="2rem" />
-          <span class="text-sm">{{ filtro ? "Nada por entregar coincide con la búsqueda." : "No hay encomiendas por entregar aquí." }}</span>
-        </div>
-        <ul v-else class="m-0 flex max-h-[min(36rem,65dvh)] list-none flex-col gap-1 overflow-y-auto p-0">
-          <li v-for="f in filas" :key="f.id">
-            <label class="fila" :class="{ 'fila-on': marcadas.includes(f.id) }">
-              <Checkbox :model-value="marcadas.includes(f.id)" binary @update:model-value="alternar(f.id)" />
-              <span class="min-w-0">
-                <span class="flex flex-wrap items-baseline gap-x-2">
-                  <b class="font-mono">{{ f.codigo }}</b>
-                  <span class="truncate font-medium">{{ f.destinatario.nombre }}</span>
-                  <span class="truncate text-xs text-muted-color">de {{ f.remitente.nombre }}</span>
-                </span>
-                <span class="block truncate text-xs text-muted-color">
-                  {{ f.origen.nombre }} · {{ f.bultos }} {{ f.bultos === 1 ? "bulto" : "bultos" }} · {{ f.contenido }}
-                </span>
-              </span>
-              <span class="flex shrink-0 flex-col items-end gap-1">
-                <Tag v-if="f.estado === 'transito'" severity="info" class="!text-xs" :value="f.salida?.bus ? `En bus ${f.salida.bus}` : 'En tránsito'" v-tooltip.left="'Llega en un bus: se desembarca al entregarla'" />
-                <Tag v-if="f.porCobrar" severity="warn" class="!text-xs tabular-nums" :value="`Cobrar ${f.total.texto}`" />
-                <span v-else-if="f.modalidad === 'interna'" class="text-xs text-muted-color">Interna</span>
-                <span class="text-xs text-muted-color">{{ dias(f) }}</span>
-              </span>
+      <Fieldset :legend="`${filtro ? `Resultados de «${filtro}»` : `Por entregar en ${nombreEstacion}`} (${filas.length})`" class="min-w-0">
+          <div class="flex flex-col gap-2">
+          <div v-if="filas.length" class="flex justify-end">
+            <label class="flex items-center gap-2 text-sm text-muted-color">
+              <Checkbox :model-value="todas" :indeterminate="marcadas.length > 0 && !todas" binary @update:model-value="alternarTodas" />
+              Todas
             </label>
-          </li>
-        </ul>
-        <div v-if="sugerencia" class="flex flex-wrap items-center gap-2 rounded-lg bg-emphasis px-3 py-2 text-sm">
-          <icon name="lightbulb-outline" />
-          <span class="min-w-0 flex-1">{{ sugerencia.nombre }} tiene {{ sugerencia.ids.length }} {{ sugerencia.ids.length === 1 ? "encomienda más" : "encomiendas más" }} por retirar aquí.</span>
-          <Button size="small" text label="Marcarlas" @click="marcadas = [...marcadas, ...sugerencia.ids]" />
+          </div>
+          <Skeleton v-if="cargando && !filas.length" height="10rem" />
+          <p v-else-if="!estacionId" class="m-0 py-6 text-center text-sm text-muted-color">Elija la estación.</p>
+          <div v-else-if="!filas.length" class="flex flex-col items-center gap-2 py-8 text-muted-color">
+            <icon name="inventory-2-outline" size="2rem" />
+            <span class="text-sm">{{ filtro ? "Nada por entregar coincide con la búsqueda." : "No hay encomiendas por entregar aquí." }}</span>
+          </div>
+          <ul v-else class="m-0 flex max-h-[min(36rem,65dvh)] list-none flex-col gap-1 overflow-y-auto p-0">
+            <li v-for="f in filas" :key="f.id">
+              <label class="fila" :class="{ 'fila-on': marcadas.includes(f.id) }">
+                <Checkbox :model-value="marcadas.includes(f.id)" binary @update:model-value="alternar(f.id)" />
+                <span class="min-w-0">
+                  <span class="flex flex-wrap items-baseline gap-x-2">
+                    <b class="font-mono">{{ f.codigo }}</b>
+                    <span class="truncate font-medium">{{ f.destinatario.nombre }}</span>
+                    <span class="truncate text-xs text-muted-color">de {{ f.remitente.nombre }}</span>
+                  </span>
+                  <span class="block truncate text-xs text-muted-color">
+                    {{ f.origen.nombre }} · {{ f.bultos }} {{ f.bultos === 1 ? "bulto" : "bultos" }} · {{ f.contenido }}
+                  </span>
+                </span>
+                <span class="flex shrink-0 flex-col items-end gap-1">
+                  <Tag v-if="f.estado === 'transito'" severity="info" class="!text-xs" :value="f.salida?.bus ? `En bus ${f.salida.bus}` : 'En tránsito'" v-tooltip.left="'Llega en un bus: se desembarca al entregarla'" />
+                  <Tag v-if="f.porCobrar" severity="warn" class="!text-xs tabular-nums" :value="`Cobrar ${f.total.texto}`" />
+                  <span v-else-if="f.modalidad === 'interna'" class="text-xs text-muted-color">Interna</span>
+                  <span class="text-xs text-muted-color">{{ dias(f) }}</span>
+                </span>
+              </label>
+            </li>
+          </ul>
+          <div v-if="sugerencia" class="flex flex-wrap items-center gap-2 rounded-lg bg-emphasis px-3 py-2 text-sm">
+            <icon name="lightbulb-outline" />
+            <span class="min-w-0 flex-1">{{ sugerencia.nombre }} tiene {{ sugerencia.ids.length }} {{ sugerencia.ids.length === 1 ? "encomienda más" : "encomiendas más" }} por retirar aquí.</span>
+            <Button size="small" text label="Marcarlas" @click="marcadas = [...marcadas, ...sugerencia.ids]" />
+          </div>
         </div>
-      </section>
+      </Fieldset>
 
-      <aside class="panel entrega flex flex-col gap-3" aria-labelledby="ent-entrega">
-        <h2 id="ent-entrega" class="titulo !m-0">Entrega</h2>
-        <p v-if="!resumen.cantidad" class="m-0 text-sm text-muted-color">Marque las encomiendas que retira una misma persona.</p>
-        <template v-else>
-          <div class="grid grid-cols-2 gap-2">
-            <div class="cifra"><span>Encomiendas</span><strong>{{ resumen.cantidad }}</strong></div>
-            <div class="cifra"><span>Bultos</span><strong>{{ resumen.bultos }}</strong></div>
-          </div>
-          <div class="flex flex-col gap-1">
-            <label for="ent-receptor" class="text-sm font-medium">La retira</label>
-            <ClienteBuscador v-model="receptor" input-id="ent-receptor" :placeholder="placeholderReceptor" />
-            <small v-if="!receptor && resumen.destinatarios.length > 1" class="text-muted-color">Sin elegir, cada una la retira su destinatario.</small>
-          </div>
-          <template v-if="resumen.porCobrar">
-            <div class="flex items-baseline justify-between rounded-lg bg-emphasis p-3">
-              <span class="text-sm text-muted-color">Por cobrar ({{ resumen.porCobrar }})</span>
-              <span class="text-2xl font-semibold tabular-nums">{{ importe(resumen.cobrar) }}</span>
+      <Fieldset legend="Entrega" class="entrega">
+          <div class="flex flex-col gap-3">
+          <p v-if="!resumen.cantidad" class="m-0 text-sm text-muted-color">Marque las encomiendas que retira una misma persona.</p>
+          <template v-else>
+            <div class="grid grid-cols-2 gap-2">
+              <div class="cifra"><span>Encomiendas</span><strong>{{ resumen.cantidad }}</strong></div>
+              <div class="cifra"><span>Bultos</span><strong>{{ resumen.bultos }}</strong></div>
             </div>
             <div class="flex flex-col gap-1">
-              <label for="ent-factura" class="text-sm font-medium">Facturar a</label>
-              <ClienteBuscador v-model="clienteFactura" input-id="ent-factura" placeholder="Quien la retira" />
-              <small class="text-muted-color">Cada encomienda por cobrar lleva su propia factura.</small>
+              <label for="ent-receptor" class="text-sm font-medium">La retira</label>
+              <ClienteBuscador v-model="receptor" input-id="ent-receptor" :placeholder="placeholderReceptor" />
+              <small v-if="!receptor && resumen.destinatarios.length > 1" class="text-muted-color">Sin elegir, cada una la retira su destinatario.</small>
             </div>
-            <div class="grid grid-cols-2 gap-2">
-              <label class="flex flex-col gap-1">
-                <span class="text-sm font-medium">Tipo de pago</span>
-                <Select v-model="tipoPago" :options="contexto?.tiposPago ?? []" option-label="nombre" option-value="id" size="small" fluid />
-              </label>
-              <label class="flex flex-col gap-1">
-                <span class="text-sm font-medium">Moneda</span>
-                <Select v-model="moneda" :options="contexto?.monedas ?? []" option-label="sigla" option-value="id" size="small" fluid />
-              </label>
-            </div>
+            <template v-if="resumen.porCobrar">
+              <div class="flex items-baseline justify-between rounded-lg bg-emphasis p-3">
+                <span class="text-sm text-muted-color">Por cobrar ({{ resumen.porCobrar }})</span>
+                <span class="text-2xl font-semibold tabular-nums">{{ importe(resumen.cobrar) }}</span>
+              </div>
+              <div class="flex flex-col gap-1">
+                <label for="ent-factura" class="text-sm font-medium">Facturar a</label>
+                <ClienteBuscador v-model="clienteFactura" input-id="ent-factura" placeholder="Quien la retira" />
+                <small class="text-muted-color">Cada encomienda por cobrar lleva su propia factura.</small>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <label class="flex flex-col gap-1">
+                  <span class="text-sm font-medium">Tipo de pago</span>
+                  <Select v-model="tipoPago" :options="contexto?.tiposPago ?? []" option-label="nombre" option-value="id" size="small" fluid />
+                </label>
+                <label class="flex flex-col gap-1">
+                  <span class="text-sm font-medium">Moneda</span>
+                  <Select v-model="moneda" :options="contexto?.monedas ?? []" option-label="sigla" option-value="id" size="small" fluid />
+                </label>
+              </div>
+            </template>
+            <Button :label="resumen.porCobrar ? `Cobrar y entregar (${resumen.cantidad})` : `Entregar (${resumen.cantidad})`" :loading="enviando" :disabled="!contexto?.permisos.entregar" @click="entregar(marcadas, false)">
+              <template #icon><icon name="handshake-outline" class="mr-1.5" /></template>
+            </Button>
           </template>
-          <Button :label="resumen.porCobrar ? `Cobrar y entregar (${resumen.cantidad})` : `Entregar (${resumen.cantidad})`" :loading="enviando" :disabled="!contexto?.permisos.entregar" @click="entregar(marcadas, false)">
-            <template #icon><icon name="handshake-outline" class="mr-1.5" /></template>
-          </Button>
-        </template>
-      </aside>
+        </div>
+      </Fieldset>
     </div>
 
     <Dialog :visible="fallidas.length > 0" modal header="Algunas no se entregaron" class="w-[min(32rem,calc(100vw-1rem))]" @update:visible="!$event && (fallidas = [])">
@@ -300,11 +300,6 @@ async function entregar(ids: number[], sinFactura: boolean) {
   border: 1px solid var(--p-content-border-color);
   border-radius: var(--p-content-border-radius, 0.75rem);
   background: var(--p-content-background);
-}
-.titulo {
-  margin: 0 0 0.5rem;
-  font-size: 1rem;
-  font-weight: 600;
 }
 .campo {
   display: flex;

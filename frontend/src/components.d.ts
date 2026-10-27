@@ -11,6 +11,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AccionesSelect: typeof import('./shared/ui/AccionesSelect.vue')['default']
     Accordion: typeof import('primevue/accordion')['default']
     AccordionContent: typeof import('primevue/accordioncontent')['default']
     AccordionHeader: typeof import('primevue/accordionheader')['default']
@@ -31,6 +32,7 @@ declare module 'vue' {
     Drawer: typeof import('primevue/drawer')['default']
     DynamicDialog: typeof import('primevue/dynamicdialog')['default']
     EstacionSelect: typeof import('./shared/ui/EstacionSelect.vue')['default']
+    Fieldset: typeof import('primevue/fieldset')['default']
     Fluid: typeof import('primevue/fluid')['default']
     Icon: typeof import('./shared/ui/Icon.vue')['default']
     IconField: typeof import('primevue/iconfield')['default']

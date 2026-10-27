@@ -21,8 +21,7 @@
     <div class="grid grid-cols-1 items-start gap-4 @4xl:grid-cols-[minmax(0,1fr)_22rem]">
       <div class="flex min-w-0 flex-col gap-4">
         <!-- Viaje -->
-        <section class="panel" aria-labelledby="enc-viaje">
-          <h2 id="enc-viaje" class="titulo">Viaje</h2>
+        <Fieldset legend="Viaje">
           <div class="grid grid-cols-1 gap-3 @xl:grid-cols-2">
             <label class="campo">
               <span>Origen</span>
@@ -41,84 +40,83 @@
               <Select v-model="empresaId" :options="empresas" option-label="nombre" option-value="id" :disabled="!!contexto?.empresa || empresas.length <= 1" placeholder="Empresa" fluid input-id="enc-empresa" />
             </label>
           </div>
-        </section>
+        </Fieldset>
 
         <!-- Clientes -->
-        <section class="panel" aria-labelledby="enc-clientes">
-          <div class="flex items-center justify-between gap-2">
-            <h2 id="enc-clientes" class="titulo">Clientes</h2>
-            <Button text size="small" severity="secondary" :disabled="!remitente && !destinatario" v-tooltip.top="'Intercambiar remitente y destinatario'" aria-label="Intercambiar remitente y destinatario" @click="[remitente, destinatario] = [destinatario, remitente]">
-              <template #icon><icon name="swap-vert" /></template>
-            </Button>
-          </div>
+        <Fieldset legend="Clientes">
           <div class="grid grid-cols-1 gap-3 @xl:grid-cols-2">
             <div class="campo">
               <label for="enc-remitente">Remitente (envía)</label>
               <ClienteBuscador v-model="remitente" input-id="enc-remitente" />
             </div>
             <div class="campo">
-              <label for="enc-destinatario">Destinatario (recibe)</label>
+              <div class="flex items-center justify-between gap-2">
+                <label for="enc-destinatario">Destinatario (recibe)</label>
+                <Button text size="small" severity="secondary" class="!-my-1.5 !p-1" :disabled="!remitente && !destinatario" v-tooltip.top="'Intercambiar remitente y destinatario'" aria-label="Intercambiar remitente y destinatario" @click="[remitente, destinatario] = [destinatario, remitente]">
+                  <template #icon><icon name="swap-vert" /></template>
+                </Button>
+              </div>
               <ClienteBuscador v-model="destinatario" input-id="enc-destinatario" />
               <small v-if="destinatario && !destinatario.telefono" class="text-muted-color">Sin teléfono: conviene registrarlo para avisarle cuando llegue.</small>
             </div>
           </div>
-        </section>
+        </Fieldset>
 
         <!-- Artículos -->
-        <section class="panel" aria-labelledby="enc-articulos">
-          <h2 id="enc-articulos" class="titulo">Artículos</h2>
+        <Fieldset legend="Artículos">
           <ArticulosEditor v-model="articulos" :especiales="contexto?.especiales ?? []" :cotizacion="cotizacion" :por-cobrar="modalidad === 'por_cobrar'" :intentado="intentado" />
           <label class="campo mt-3">
             <span>Observación</span>
             <InputText v-model="observacion" maxlength="255" placeholder="P. ej. frágil, entregar solo con DPI…" fluid />
           </label>
-        </section>
+        </Fieldset>
       </div>
 
       <!-- Cobro -->
-      <aside class="panel flex flex-col gap-3 @4xl:sticky @4xl:top-4" aria-labelledby="enc-cobro">
-        <h2 id="enc-cobro" class="titulo">Cobro</h2>
-        <SelectButton v-model="modalidad" :options="modalidades" option-label="etiqueta" option-value="valor" :allow-empty="false" fluid aria-label="Modalidad de pago" />
-        <p class="m-0 text-sm text-muted-color">{{ MODALIDADES.find((m) => m.valor === modalidad)?.ayuda }}</p>
+      <Fieldset legend="Cobro" class="@4xl:sticky @4xl:top-4">
+        <div class="flex flex-col gap-3">
+          <SelectButton v-model="modalidad" :options="modalidades" option-label="etiqueta" option-value="valor" :allow-empty="false" fluid aria-label="Modalidad de pago" />
+          <p class="m-0 text-sm text-muted-color">{{ MODALIDADES.find((m) => m.valor === modalidad)?.ayuda }}</p>
 
-        <dl class="resumen">
-          <dt>Bultos</dt>
-          <dd>{{ cotizacion?.bultos ?? bultos(articulos) }}</dd>
-          <template v-if="cotizacion && cotizacion.descuento.centavos > 0">
-            <dt>Subtotal</dt>
-            <dd>{{ cotizacion.subtotal.texto }}</dd>
-            <dt>Descuento ({{ cotizacion.porcentajeDescuento }} %)</dt>
-            <dd>−{{ cotizacion.descuento.texto }}</dd>
+          <dl class="resumen">
+            <dt>Bultos</dt>
+            <dd>{{ cotizacion?.bultos ?? bultos(articulos) }}</dd>
+            <template v-if="cotizacion && cotizacion.descuento.centavos > 0">
+              <dt>Subtotal</dt>
+              <dd>{{ cotizacion.subtotal.texto }}</dd>
+              <dt>Descuento ({{ cotizacion.porcentajeDescuento }} %)</dt>
+              <dd>−{{ cotizacion.descuento.texto }}</dd>
+            </template>
+          </dl>
+          <div class="flex items-baseline justify-between rounded-lg bg-emphasis p-3">
+            <span class="text-muted-color">{{ modalidad === "por_cobrar" ? "Por cobrar" : modalidad === "interna" ? "Sin cobro" : "Total" }}</span>
+            <span class="text-2xl font-semibold tabular-nums" :class="{ 'line-through opacity-60': modalidad === 'interna' }">{{ cotizando ? "…" : (cotizacion?.total.texto ?? "—") }}</span>
+          </div>
+          <Message v-if="errorCotizacion" severity="warn" :closable="false">{{ errorCotizacion }}</Message>
+
+          <template v-if="modalidad === 'pagada'">
+            <div class="campo">
+              <label for="enc-factura">Facturar a</label>
+              <ClienteBuscador v-model="clienteFactura" input-id="enc-factura" :placeholder="remitente ? `${remitente.nombreCompleto} (remitente)` : 'El remitente'" />
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <label class="campo">
+                <span>Tipo de pago</span>
+                <Select v-model="tipoPago" :options="contexto?.tiposPago ?? []" option-label="nombre" option-value="id" fluid size="small" />
+              </label>
+              <label class="campo">
+                <span>Moneda</span>
+                <Select v-model="moneda" :options="contexto?.monedas ?? []" option-label="sigla" option-value="id" fluid size="small" />
+              </label>
+            </div>
           </template>
-        </dl>
-        <div class="flex items-baseline justify-between rounded-lg bg-emphasis p-3">
-          <span class="text-muted-color">{{ modalidad === "por_cobrar" ? "Por cobrar" : modalidad === "interna" ? "Sin cobro" : "Total" }}</span>
-          <span class="text-2xl font-semibold tabular-nums" :class="{ 'line-through opacity-60': modalidad === 'interna' }">{{ cotizando ? "…" : (cotizacion?.total.texto ?? "—") }}</span>
+
+          <Message v-if="intentado && faltante" severity="info" :closable="false">{{ faltante }}</Message>
+          <Button label="Registrar encomienda" :loading="registrando" :disabled="!contexto?.permisos.registrar" fluid @click="registrar(false)">
+            <template #icon><icon name="package-2-outline" class="mr-1" /></template>
+          </Button>
         </div>
-        <Message v-if="errorCotizacion" severity="warn" :closable="false">{{ errorCotizacion }}</Message>
-
-        <template v-if="modalidad === 'pagada'">
-          <div class="campo">
-            <label for="enc-factura">Facturar a</label>
-            <ClienteBuscador v-model="clienteFactura" input-id="enc-factura" :placeholder="remitente ? `${remitente.nombreCompleto} (remitente)` : 'El remitente'" />
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <label class="campo">
-              <span>Tipo de pago</span>
-              <Select v-model="tipoPago" :options="contexto?.tiposPago ?? []" option-label="nombre" option-value="id" fluid size="small" />
-            </label>
-            <label class="campo">
-              <span>Moneda</span>
-              <Select v-model="moneda" :options="contexto?.monedas ?? []" option-label="sigla" option-value="id" fluid size="small" />
-            </label>
-          </div>
-        </template>
-
-        <Message v-if="intentado && faltante" severity="info" :closable="false">{{ faltante }}</Message>
-        <Button label="Registrar encomienda" :loading="registrando" :disabled="!contexto?.permisos.registrar" fluid @click="registrar(false)">
-          <template #icon><icon name="package-2-outline" class="mr-1" /></template>
-        </Button>
-      </aside>
+      </Fieldset>
     </div>
 
     <FacturacionFallidaDialog :fallo="fallo" :ocupado="registrando" consecuencia="La encomienda no quedó registrada." @cancelar="fallo = null" @reintentar="registrar" />
@@ -135,8 +133,12 @@
       </div>
       <template #footer>
         <div class="flex flex-wrap justify-end gap-2">
-          <Button label="Recibo" severity="secondary" outlined size="small" @click="registrada && imprimirRecibo(registrada)"><template #icon><icon name="receipt-long-outline" class="mr-1" /></template></Button>
-          <Button label="Guías" severity="secondary" outlined size="small" @click="registrada && imprimirGuias(registrada)"><template #icon><icon name="label-outline" class="mr-1" /></template></Button>
+          <Button label="Recibo" severity="secondary" outlined size="small" @click="registrada && imprimirRecibo(registrada)"
+            ><template #icon><icon name="receipt-long-outline" class="mr-1" /></template
+          ></Button>
+          <Button label="Guías" severity="secondary" outlined size="small" @click="registrada && imprimirGuias(registrada)"
+            ><template #icon><icon name="label-outline" class="mr-1" /></template
+          ></Button>
           <Button label="Nueva encomienda" size="small" @click="nueva()" />
         </div>
       </template>
@@ -322,17 +324,6 @@ function nueva() {
 </script>
 
 <style scoped>
-.panel {
-  padding: 1rem;
-  border: 1px solid var(--p-content-border-color);
-  border-radius: var(--p-content-border-radius, 0.75rem);
-  background: var(--p-content-background);
-}
-.titulo {
-  margin: 0 0 0.75rem;
-  font-size: 1rem;
-  font-weight: 600;
-}
 .campo {
   display: flex;
   min-width: 0;
@@ -340,7 +331,8 @@ function nueva() {
   gap: 0.25rem;
 }
 .campo > span:first-child,
-.campo > label:first-child {
+.campo > label:first-child,
+.campo > div:first-child > label {
   font-size: 0.875rem;
   font-weight: 500;
 }
@@ -358,10 +350,5 @@ function nueva() {
   margin: 0;
   text-align: right;
   font-variant-numeric: tabular-nums;
-}
-@media (width < 48rem) {
-  .panel {
-    padding: 0.75rem;
-  }
 }
 </style>

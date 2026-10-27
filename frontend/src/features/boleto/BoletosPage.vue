@@ -86,6 +86,8 @@
             ><template #icon><icon name="close" /></template
           ></Button>
         </div>
+        <!-- Teléfono: las acciones en un desplegable; desde 36rem, botones. -->
+        <AccionesSelect class="@xl:!hidden" :acciones="accionesMenu" @ejecutar="ejecutar($event as AccionBoleto)" />
         <div class="acciones-botones">
           <template v-for="a in botones" :key="a.accion">
             <span v-if="estadoAcciones[a.accion].visible" v-tooltip.bottom="estadoAcciones[a.accion].motivo ?? a.ayuda">
@@ -99,7 +101,7 @@
           </template>
         </div>
       </div>
-      <MultiSelect v-model="visibles" :options="COLUMNAS" option-label="label" option-value="key" :max-selected-labels="0" selected-items-label="Columnas ({0})" placeholder="Columnas" size="small" class="w-44 shrink-0">
+      <MultiSelect v-model="visibles" :options="COLUMNAS" option-label="label" option-value="key" :max-selected-labels="0" selected-items-label="Columnas ({0})" placeholder="Columnas" size="small" class="w-36 shrink-0 @xl:w-44">
         <template #dropdownicon><icon name="view-column-outline" /></template>
       </MultiSelect>
     </div>
@@ -217,6 +219,18 @@ const BOTONES: Array<{ accion: AccionBoleto; etiqueta: string; icono: string; ay
   { accion: "chat", etiqueta: "Chat", icono: "forum-outline", ayuda: "Enviar el boleto por el chat" },
 ];
 const botones = BOTONES;
+/** Las mismas acciones para el desplegable del teléfono. */
+const accionesMenu = computed(() =>
+  BOTONES.filter((a) => estadoAcciones.value[a.accion].visible).map((a) => ({
+    valor: a.accion,
+    etiqueta: a.etiqueta,
+    icono: a.icono,
+    deshabilitada: !estadoAcciones.value[a.accion].habilitada || ocupado.value === a.accion,
+    motivo: estadoAcciones.value[a.accion].motivo,
+    bloqueada: estadoAcciones.value[a.accion].conAutorizacion,
+    peligro: a.severidad === "danger",
+  })),
+);
 
 const PREFERENCIAS = "boletos.columnas";
 type Dialogo = "consultar" | "cancelar" | "revertir" | "chequear" | "correo" | "anular" | "chat";
@@ -499,10 +513,11 @@ onMounted(async () => {
   background: var(--p-primary-color);
   color: var(--p-primary-contrast-color);
 }
+/* Teléfono: acciones y columnas en la misma línea, al pie del bloque. */
 .acciones {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
+  flex-wrap: nowrap;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 0.5rem 1rem;
 }
@@ -511,7 +526,19 @@ onMounted(async () => {
   flex-direction: column;
   gap: 0.375rem;
   min-width: 0;
-  flex: 1 1 18rem;
+  flex: 1 1 0;
+}
+@container (width >= 36rem) {
+  .acciones {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  .acciones-izq {
+    flex-basis: 18rem;
+  }
+  .acciones-botones {
+    display: flex;
+  }
 }
 .acciones-elegido {
   display: flex;
@@ -520,7 +547,7 @@ onMounted(async () => {
   min-width: 0;
 }
 .acciones-botones {
-  display: flex;
+  display: none;
   flex-wrap: wrap;
   gap: 0.375rem;
 }

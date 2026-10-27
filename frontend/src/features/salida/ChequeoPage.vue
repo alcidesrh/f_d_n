@@ -77,8 +77,11 @@
             <template #icon><icon name="flag-outline" class="mr-1" /></template>
           </Button>
           <template v-if="puede?.manifiestos">
-            <Button v-for="m in MANIFIESTOS" :key="m.tipo" :label="m.tipo === 'interno' ? 'Manif. interno' : 'Manif. piloto'" size="small" severity="secondary" outlined :aria-label="m.etiqueta" v-tooltip.top="m.etiqueta" @click="abrirManifiesto(detalle.salida.id, m.tipo)">
-              <template #icon><icon :name="m.icono" class="mr-1" /></template>
+            <!-- Teléfono: «Interno» y «Piloto», para que quepan junto a Abordar. -->
+            <Button v-for="m in MANIFIESTOS" :key="m.tipo" size="small" severity="secondary" outlined :aria-label="m.etiqueta" v-tooltip.top="m.etiqueta" @click="abrirManifiesto(detalle.salida.id, m.tipo)">
+              <icon :name="m.icono" class="mr-1" />
+              <span class="p-button-label @xl:hidden">{{ m.tipo === "interno" ? "Interno" : "Piloto" }}</span>
+              <span class="p-button-label hidden @xl:inline">{{ m.tipo === "interno" ? "Manif. interno" : "Manif. piloto" }}</span>
             </Button>
           </template>
           <Button label="Bitácora" size="small" severity="secondary" text @click="bitacora = true">

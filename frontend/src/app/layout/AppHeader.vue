@@ -4,7 +4,7 @@
       <div class="flex btn-siderbar-header">
         <button type="button" class="icon-btn" aria-label="Menú de navegación" :aria-expanded="ui.isMobile ? sidebarStore.drawer : sidebarStore.mode !== 'close'" @click="sidebarStore.toggle()">
           <!-- <icon name="menu" size="35px" :weight="300" color="text-surface-500" /> -->
-          <icon name="menu" size="25px" :weight="400" color="text-surface-500" />
+          <icon name="right_panel_close" size="30" color="text-surface-500" />
         </button>
         <Divider layout="vertical" class="mx-[5px]!" />
       </div>
@@ -75,7 +75,7 @@
       </div>
       <!-- Estación de trabajo (ADR-039): donde opera; se cambia entre las de sus asignaciones. -->
       <button v-if="acceso.estacionTrabajo || acceso.debeElegirEstacion" type="button" class="header-estacion tap-target" :class="{ 'header-estacion--falta': !acceso.estacionTrabajo }" :aria-label="acceso.estacionTrabajo ? `Estación de trabajo: ${acceso.estacionTrabajo.nombre}. Cambiar` : 'Elegir estación de trabajo'" v-tooltip.bottom="acceso.estaciones.length > 1 ? 'Estación de trabajo' : undefined" :disabled="acceso.estaciones.length < 2 && !!acceso.estacionTrabajo" @click="acceso.eligiendoEstacion = true">
-        <icon name="location-on-outline" size="1.05rem" />
+        <icon name="location_home-outline" size="1.05rem" />
         <span class="header-estacion__nombre">{{ acceso.estacionTrabajo?.nombre ?? "Elegir estación" }}</span>
       </button>
       <!-- Fuera de la franja que scrollea: Mi cuenta, Instalar app y Cerrar sesión siempre a la vista. -->
@@ -106,7 +106,7 @@
       <div v-if="rightSidebar" class="flex btn-siderbar-header">
         <Divider layout="vertical" class="mx-[5px]!" />
         <button type="button" class="icon-btn right" title="Mostrar/ocultar menú" aria-label="Panel lateral derecho" :aria-expanded="ui.isMobile ? rightSidebar.drawer : rightSidebar.mode !== 'close'" @click="rightSidebar.toggle()">
-          <icon name="menu" size="25px" :weight="400" color="text-surface-500" />
+          <icon name="left_panel_close  " size="30px" color="text-surface-500" />
         </button>
       </div>
     </div>

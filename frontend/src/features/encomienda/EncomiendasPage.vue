@@ -31,14 +31,17 @@
         <span>En bodega en</span>
         <estacion-select v-model="borrador.ubicacion" :estaciones="contexto?.estaciones ?? []" placeholder="Cualquiera" size="small" />
       </label>
-      <div class="campo col-span-2 @2xl:col-span-3 @5xl:col-span-3">
+      <!-- Teléfono: estado y modalidad en dos desplegables lado a lado; desde 42rem, chips. -->
+      <div class="campo col-span-1 @2xl:col-span-3 @5xl:col-span-3">
         <span>Estado</span>
+        <MultiSelect v-model="borrador.estados" :options="ESTADOS" option-label="etiqueta" option-value="valor" :max-selected-labels="1" selected-items-label="{0} estados" placeholder="Todos" size="small" fluid class="@2xl:!hidden" aria-label="Estado" />
         <div class="chips" role="group" aria-label="Estado">
           <button v-for="e in ESTADOS" :key="e.valor" type="button" class="chip" :class="{ 'chip-on': borrador.estados.includes(e.valor) }" :aria-pressed="borrador.estados.includes(e.valor)" @click="alternarEstado(e.valor)">{{ e.etiqueta }}</button>
         </div>
       </div>
-      <div class="campo col-span-2">
+      <div class="campo col-span-1 @2xl:col-span-2">
         <span>Modalidad</span>
+        <Select v-model="borrador.modalidad" :options="MODALIDADES" option-label="etiqueta" option-value="valor" placeholder="Todas" show-clear size="small" fluid class="@2xl:!hidden" aria-label="Modalidad" />
         <div class="chips" role="group" aria-label="Modalidad">
           <button v-for="m in MODALIDADES" :key="m.valor" type="button" class="chip" :class="{ 'chip-on': borrador.modalidad === m.valor }" :aria-pressed="borrador.modalidad === m.valor" @click="borrador.modalidad = borrador.modalidad === m.valor ? null : m.valor">{{ m.etiqueta }}</button>
         </div>
@@ -59,15 +62,17 @@
         <Button text rounded size="small" severity="secondary" aria-label="Quitar selección" @click="elegida = null"><template #icon><icon name="close" /></template></Button>
       </div>
       <div class="flex flex-wrap gap-1.5">
+        <!-- Teléfono: las acciones en un desplegable; desde 36rem, botones. -->
+        <AccionesSelect class="min-w-0 flex-1 @xl:!hidden" :acciones="accionesMenu" @ejecutar="ejecutar($event as AccionEncomienda)" />
         <template v-for="b in BOTONES" :key="b.accion">
-          <span v-if="acciones[b.accion].visible" v-tooltip.bottom="acciones[b.accion].motivo ?? b.ayuda">
+          <span v-if="acciones[b.accion].visible" class="hidden @xl:inline" v-tooltip.bottom="acciones[b.accion].motivo ?? b.ayuda">
             <Button :severity="b.severidad ?? 'secondary'" :outlined="!b.severidad" size="small" :disabled="!acciones[b.accion].habilitada" :aria-label="b.etiqueta" @click="ejecutar(b.accion)">
               <icon :name="b.icono" />
               <span class="hidden @xl:inline">{{ b.etiqueta }}</span>
             </Button>
           </span>
         </template>
-        <Button size="small" class="ml-auto" @click="router.push({ name: 'encomienda-registrar' })"><icon name="add" /><span class="hidden @xl:inline">Registrar</span></Button>
+        <Button size="small" class="ml-auto" @click="router.push({ name: 'encomienda-registrar' })"><icon name="add" color="text-inherit" /><span class="hidden @xl:inline">Registrar</span></Button>
       </div>
     </div>
 
@@ -254,6 +259,17 @@ const seleccion = computed(() => new Set(elegida.value ? [String(elegida.value.i
 const claseFila = (r: unknown) => ({ "fila-cerrada": ["entregada", "anulada"].includes((r as FilaEncomienda).estado) });
 const sinPermisos = { ver: false, registrar: false, interna: false, embarcar: false, entregar: false, anular: false, especiales: false, sinFactura: false };
 const acciones = computed(() => disponibilidad(elegida.value, contexto.value?.permisos ?? sinPermisos, contexto.value?.estacion?.id ?? null));
+/** Las mismas acciones para el desplegable del teléfono. */
+const accionesMenu = computed(() =>
+  BOTONES.filter((b) => acciones.value[b.accion].visible).map((b) => ({
+    valor: b.accion,
+    etiqueta: b.etiqueta,
+    icono: b.icono,
+    deshabilitada: !acciones.value[b.accion].habilitada,
+    motivo: acciones.value[b.accion].motivo,
+    peligro: b.severidad === "danger",
+  })),
+);
 function elegir(e: FilaEncomienda) {
   elegida.value = elegida.value?.id === e.id ? null : e;
 }
@@ -348,10 +364,16 @@ onMounted(async () => {
   font-weight: 500;
   color: var(--p-text-muted-color);
 }
+/* Teléfono: estado y modalidad van en desplegables; los chips, desde 42rem (@2xl). */
 .chips {
-  display: flex;
+  display: none;
   flex-wrap: wrap;
   gap: 0.375rem;
+}
+@container (width >= 42rem) {
+  .chips {
+    display: flex;
+  }
 }
 .chip {
   border: 1px solid var(--p-surface-300);
