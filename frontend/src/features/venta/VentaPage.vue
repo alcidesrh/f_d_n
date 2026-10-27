@@ -7,7 +7,7 @@
   "Cortesía"): cobro, certificación de la factura y ticket.
 
   Móvil: todo en una columna, el croquis después del viaje (al elegir una
-  salida se baja hasta él) y con menos aire vertical. Desde que el contenido
+  salida se baja hasta él) y antes del cliente, y con menos aire vertical. Desde que el contenido
   mide 48rem (container query), croquis fijo a la derecha.
 -->
 <template>
@@ -18,7 +18,7 @@
     </Message>
 
     <div class="@container">
-      <div ref="grilla" class="grid grid-cols-1 items-start gap-2 md:gap-4 @3xl:grid-cols-[minmax(0,1fr)_20rem]">
+      <div ref="grilla" class="grid grid-cols-1 items-start gap-2 md:gap-4 @3xl:grid-cols-[minmax(0,1fr)_20rem] @3xl:grid-rows-[auto_1fr]">
         <!-- Columna principal -->
         <div class="flex min-w-0 flex-col gap-1">
           <section v-if="store.reasignacion" class="panel flex flex-col gap-3 reasignacion">
@@ -98,51 +98,10 @@
               </Button>
             </div>
           </section>
-          <section class="panel flex flex-col gap-2 max-w-[50%]">
-            <label class="font-medium" for="venta-cliente">{{ store.reasignacion ? "Cliente de la venta" : "Cliente (facturar a)" }}</label>
-            <div v-if="store.reasignacion">
-              {{ store.cliente?.nombreCompleto ?? "—" }}<span v-if="store.cliente" class="text-muted-color"> · NIT {{ store.cliente.nit }}</span>
-            </div>
-            <ClienteBuscador v-else v-model="store.cliente" input-id="venta-cliente" />
-          </section>
-          <section v-if="store.detalle && store.puedeCobrarCompleto" class="panel flex flex-col gap-3">
-            <label v-if="store.puedeCobrarCompleto" class="flex items-center gap-2 text-sm">
-              <Checkbox v-model="store.cobrarTrayectoCompleto" binary input-id="venta-completo" @update:model-value="store.recotizar()" />
-              <span> Cobrar la tarifa del trayecto completo ({{ store.detalle.ruta.origen.nombre }} → {{ store.detalle.ruta.destino.nombre }}) </span>
-            </label>
-          </section>
-
-          <section v-if="store.seleccion.length && !store.reasignacion" class="panel flex flex-col gap-2">
-            <div class="font-medium">Pasajeros</div>
-            <ul class="flex flex-col gap-2">
-              <li v-for="(linea, i) in lineas" :key="linea.asiento" class="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-2 @xl:grid-cols-[3rem_minmax(0,1fr)_6rem]">
-                <span class="font-mono text-lg font-semibold">{{ linea.numero }}</span>
-                <ClienteBuscador compacto :model-value="store.pasajeros[linea.asiento] ?? (i === 0 ? store.cliente : null)" :placeholder="i === 0 ? `Viaja: ${store.cliente?.nombreCompleto ?? 'el cliente'}` : 'Viaja: nombre del cliente o puede elegir otro cliente'" @update:model-value="store.pasajeros[linea.asiento] = $event" />
-                <span class="col-start-2 text-right tabular-nums @xl:col-start-auto">{{ linea.precio }}</span>
-              </li>
-            </ul>
-          </section>
-          <section v-if="store.detalle && conObservacion" class="panel">
-            <label class="flex flex-col gap-1">
-              <span class="font-medium">Observación</span>
-              <InputText v-model="store.observacion" maxlength="255" placeholder="P. ej. viaja con mascota, se baja en un punto intermedio…" fluid />
-            </label>
-          </section>
-          <section v-if="store.seleccion.length && !store.reasignacion && store.contexto?.encomiendas?.permitido" class="panel flex flex-col gap-2" aria-labelledby="venta-encomienda">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <span id="venta-encomienda" class="font-medium"
-                >Encomienda <span class="font-normal text-muted-color">(en la bodega, de {{ nombreParada(store.sube) }} a {{ nombreParada(store.baja) }})</span></span
-              >
-              <span v-if="store.cotizacionEncomienda && store.encomiendaArticulos.length" class="tabular-nums">{{ store.cotizacionEncomienda.total.texto }}</span>
-            </div>
-            <ArticulosEditor v-model="store.encomiendaArticulos" :especiales="store.contexto.encomiendas.especiales" :cotizacion="store.cotizacionEncomienda" />
-            <InputText v-if="store.encomiendaArticulos.length" v-model="store.encomiendaObservacion" maxlength="255" placeholder="Observación de la encomienda (frágil, contenido…)" size="small" fluid />
-            <Message v-if="store.errorEncomienda" severity="warn" :closable="false">{{ store.errorEncomienda }}</Message>
-          </section>
         </div>
 
-        <!-- Croquis + cobro -->
-        <aside ref="croquis" class="panel flex min-w-0 flex-1 scroll-mt-20 flex-col gap-3 @3xl:sticky @3xl:top-4">
+        <!-- Croquis + cobro (en móvil, entre el viaje y el cliente) -->
+        <aside ref="croquis" class="panel flex min-w-0 flex-1 scroll-mt-20 flex-col gap-3 @3xl:sticky @3xl:top-4 @3xl:col-start-2 @3xl:row-span-2 @3xl:row-start-1">
           <Transition name="croquis" mode="out-in" @enter="alMostrarCroquis">
             <!-- <div v-if="store.cargandoDetalle" key="cargando">
               <Skeleton height="20rem" />
@@ -195,6 +154,51 @@
             </div>
           </Transition>
         </aside>
+
+        <!-- Cliente, pasajeros, observación y encomienda -->
+        <div class="flex min-w-0 flex-col gap-1 @3xl:col-start-1">
+          <section class="panel cliente flex flex-col gap-2 @5xl:max-w-[50%]">
+            <label class="flex items-center gap-1.5 font-semibold" for="venta-cliente"><icon name="person-search-outline" color="text-primary" />{{ store.reasignacion ? "Cliente de la venta" : "Cliente (facturar a)" }}</label>
+            <div v-if="store.reasignacion">
+              {{ store.cliente?.nombreCompleto ?? "—" }}<span v-if="store.cliente" class="text-muted-color"> · NIT {{ store.cliente.nit }}</span>
+            </div>
+            <ClienteBuscador v-else v-model="store.cliente" input-id="venta-cliente" />
+          </section>
+          <section v-if="store.detalle && store.puedeCobrarCompleto" class="panel flex flex-col gap-3">
+            <label v-if="store.puedeCobrarCompleto" class="flex items-center gap-2 text-sm">
+              <Checkbox v-model="store.cobrarTrayectoCompleto" binary input-id="venta-completo" @update:model-value="store.recotizar()" />
+              <span> Cobrar la tarifa del trayecto completo ({{ store.detalle.ruta.origen.nombre }} → {{ store.detalle.ruta.destino.nombre }}) </span>
+            </label>
+          </section>
+
+          <section v-if="store.seleccion.length && !store.reasignacion" class="panel flex flex-col gap-2">
+            <div class="font-medium">Pasajeros</div>
+            <ul class="flex flex-col gap-2">
+              <li v-for="(linea, i) in lineas" :key="linea.asiento" class="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-2 @xl:grid-cols-[3rem_minmax(0,1fr)_6rem]">
+                <span class="font-mono text-lg font-semibold">{{ linea.numero }}</span>
+                <ClienteBuscador compacto :model-value="store.pasajeros[linea.asiento] ?? (i === 0 ? store.cliente : null)" :placeholder="i === 0 ? `Viaja: ${store.cliente?.nombreCompleto ?? 'el cliente'}` : 'Viaja: nombre del cliente o puede elegir otro cliente'" @update:model-value="store.pasajeros[linea.asiento] = $event" />
+                <span class="col-start-2 text-right tabular-nums @xl:col-start-auto">{{ linea.precio }}</span>
+              </li>
+            </ul>
+          </section>
+          <section v-if="store.detalle && conObservacion" class="panel">
+            <label class="flex flex-col gap-1">
+              <span class="font-medium">Observación</span>
+              <InputText v-model="store.observacion" maxlength="255" placeholder="P. ej. viaja con mascota, se baja en un punto intermedio…" fluid />
+            </label>
+          </section>
+          <section v-if="store.seleccion.length && !store.reasignacion && store.contexto?.encomiendas?.permitido" class="panel flex flex-col gap-2" aria-labelledby="venta-encomienda">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span id="venta-encomienda" class="font-medium"
+                >Encomienda <span class="font-normal text-muted-color">(en la bodega, de {{ nombreParada(store.sube) }} a {{ nombreParada(store.baja) }})</span></span
+              >
+              <span v-if="store.cotizacionEncomienda && store.encomiendaArticulos.length" class="tabular-nums">{{ store.cotizacionEncomienda.total.texto }}</span>
+            </div>
+            <ArticulosEditor v-model="store.encomiendaArticulos" :especiales="store.contexto.encomiendas.especiales" :cotizacion="store.cotizacionEncomienda" />
+            <InputText v-if="store.encomiendaArticulos.length" v-model="store.encomiendaObservacion" maxlength="255" placeholder="Observación de la encomienda (frágil, contenido…)" size="small" fluid />
+            <Message v-if="store.errorEncomienda" severity="warn" :closable="false">{{ store.errorEncomienda }}</Message>
+          </section>
+        </div>
       </div>
     </div>
 
@@ -491,6 +495,12 @@ const nombreParada = (id: number | null) => store.detalle?.paradas.find((p) => p
   /*border-radius: var(--p-content-border-radius, 0.75rem);*/
   padding: 1rem;
 }
+/* Cliente: se distingue del resto con un acento del color primario. */
+.cliente {
+  border-left: 3px solid var(--p-primary-color);
+  border-radius: var(--p-content-border-radius, 0.5rem);
+  background: color-mix(in srgb, var(--p-primary-500) 7%, transparent);
+}
 .anteriores {
   position: absolute;
   left: 50%;
@@ -566,6 +576,9 @@ const nombreParada = (id: number | null) => store.detalle?.paradas.find((p) => p
 @media (width < 48rem) {
   .panel {
     padding: 0.375rem 0;
+  }
+  .panel.cliente {
+    padding: 0.625rem 0.75rem;
   }
   .campo {
     gap: 0.125rem;

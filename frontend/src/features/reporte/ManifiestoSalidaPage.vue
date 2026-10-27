@@ -25,7 +25,7 @@
         </label>
       </div>
 
-      <div class="flex flex-wrap items-center gap-2">
+      <div class="flex flex-wrap items-center justify-end gap-2">
         <Button label="Descargar manifiesto" :disabled="!salidaId" :loading="generando" class="shrink-0 whitespace-nowrap" @click="descargar">
           <template #icon><icon name="download" class="mr-1.5" /></template>
         </Button>

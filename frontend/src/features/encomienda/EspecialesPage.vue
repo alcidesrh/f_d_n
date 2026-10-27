@@ -8,7 +8,8 @@
 <template>
   <div class="@container flex flex-col gap-3">
     <div class="flex flex-wrap items-center gap-2">
-      <IconField class="min-w-0 flex-1 @xl:max-w-sm">
+      <!-- Teléfono: la búsqueda ocupa su línea; debajo, inactivos y «+». -->
+      <IconField class="w-full min-w-0 @xl:w-auto @xl:max-w-sm @xl:flex-1">
         <InputIcon><icon name="search" /></InputIcon>
         <InputText v-model="busqueda" placeholder="Buscar por nombre o descripción" aria-label="Buscar especial" fluid />
       </IconField>
@@ -16,8 +17,8 @@
         <Checkbox v-model="verInactivos" binary />
         <span>Ver inactivos ({{ inactivos }})</span>
       </label>
-      <Button class="ml-auto" label="Nuevo especial" size="small" @click="abrir(null)">
-        <template #icon><icon name="add" class="mr-1" color="text-inherit" /></template>
+      <Button class="ml-auto" size="small" aria-label="Nuevo especial" @click="abrir(null)">
+        <icon name="add" color="text-inherit" /><span class="p-button-label hidden @xl:inline">Nuevo especial</span>
       </Button>
     </div>
 

@@ -51,8 +51,11 @@
   }
 }
 
+/* Al menos 1rem a los lados: en el teléfono la mitad del gutter (0.5rem)
+   deja el contenido pegado a los bordes; desde ~700px ya es 1rem o más. */
 .main-inner {
   padding: calc(var(--page-gutter) / 2);
+  padding-inline: max(1rem, calc(var(--page-gutter) / 2));
   padding-top: 1rem;
   padding-bottom: max(calc(var(--page-gutter) / 2), 1.5rem);
   /*max-width: var(--content-max);*/

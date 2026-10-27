@@ -34,8 +34,7 @@
 
     <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
 
-    <section class="panel" aria-labelledby="proc-salidas">
-      <h2 id="proc-salidas" class="titulo">Salidas que pasan por {{ nombreEstacion }}</h2>
+    <Fieldset :legend="`Salidas que pasan por ${nombreEstacion}`">
       <Skeleton v-if="cargandoSalidas" height="6rem" />
       <p v-else-if="!estacionId" class="m-0 text-sm text-muted-color">Elija la estación.</p>
       <p v-else-if="!salidas.length" class="m-0 text-sm text-muted-color">No hay salidas ese día.</p>
@@ -55,7 +54,7 @@
           </button>
         </li>
       </ul>
-    </section>
+    </Fieldset>
 
     <template v-if="salidaId">
       <section class="panel flex flex-wrap items-center gap-2" aria-label="Escanear">
@@ -72,24 +71,26 @@
       <Skeleton v-if="cargandoProceso && !proceso" height="12rem" />
       <div v-else-if="proceso" class="grid grid-cols-1 items-start gap-3 @4xl:grid-cols-2">
         <!-- En bodega -->
-        <section class="panel flex flex-col gap-2" aria-labelledby="proc-bodega">
-          <div class="flex flex-wrap items-center justify-between gap-2">
-            <h2 id="proc-bodega" class="titulo !m-0">En bodega aquí ({{ proceso.enBodega.length }})</h2>
-            <Button :label="`Embarcar (${marcadasBodega.length})`" size="small" :disabled="!marcadasBodega.length || !proceso.pasaPorAqui" :loading="enviando === 'embarcar'" @click="embarcar"><template #icon><icon name="upload" class="mr-1" /></template></Button>
+        <Fieldset :legend="`En bodega aquí (${proceso.enBodega.length})`">
+            <div class="flex flex-col gap-2">
+            <div class="flex justify-end">
+              <Button :label="`Embarcar (${marcadasBodega.length})`" size="small" :disabled="!marcadasBodega.length || !proceso.pasaPorAqui" :loading="enviando === 'embarcar'" @click="embarcar"><template #icon><icon name="upload" class="mr-1" /></template></Button>
+            </div>
+            <p v-if="!proceso.enBodega.length" class="m-0 py-3 text-center text-sm text-muted-color">Nada que esta salida pueda llevar desde aquí.</p>
+            <ListaProceso v-else v-model="marcadas" :filas="bodegaOrdenada" modo="bodega" />
           </div>
-          <p v-if="!proceso.enBodega.length" class="m-0 py-3 text-center text-sm text-muted-color">Nada que esta salida pueda llevar desde aquí.</p>
-          <ListaProceso v-else v-model="marcadas" :filas="bodegaOrdenada" modo="bodega" />
-        </section>
+        </Fieldset>
 
         <!-- A bordo -->
-        <section class="panel flex flex-col gap-2" aria-labelledby="proc-bordo">
-          <div class="flex flex-wrap items-center justify-between gap-2">
-            <h2 id="proc-bordo" class="titulo !m-0">A bordo ({{ proceso.aBordo.length }})</h2>
-            <Button :label="`Desembarcar (${marcadasBordo.length})`" size="small" severity="secondary" :disabled="!marcadasBordo.length || !proceso.pasaPorAqui" :loading="enviando === 'desembarcar'" @click="desembarcar"><template #icon><icon name="download" class="mr-1" /></template></Button>
+        <Fieldset :legend="`A bordo (${proceso.aBordo.length})`">
+            <div class="flex flex-col gap-2">
+            <div class="flex justify-end">
+              <Button :label="`Desembarcar (${marcadasBordo.length})`" size="small" severity="secondary" :disabled="!marcadasBordo.length || !proceso.pasaPorAqui" :loading="enviando === 'desembarcar'" @click="desembarcar"><template #icon><icon name="download" class="mr-1" /></template></Button>
+            </div>
+            <p v-if="!proceso.aBordo.length" class="m-0 py-3 text-center text-sm text-muted-color">La salida no lleva encomiendas.</p>
+            <ListaProceso v-else v-model="marcadas" :filas="bordoOrdenado" modo="bordo" />
           </div>
-          <p v-if="!proceso.aBordo.length" class="m-0 py-3 text-center text-sm text-muted-color">La salida no lleva encomiendas.</p>
-          <ListaProceso v-else v-model="marcadas" :filas="bordoOrdenado" modo="bordo" />
-        </section>
+        </Fieldset>
       </div>
     </template>
 
@@ -277,11 +278,6 @@ async function refrescarConteos() {
   border: 1px solid var(--p-content-border-color);
   border-radius: var(--p-content-border-radius, 0.75rem);
   background: var(--p-content-background);
-}
-.titulo {
-  margin: 0 0 0.5rem;
-  font-size: 1rem;
-  font-weight: 600;
 }
 .campo {
   display: flex;

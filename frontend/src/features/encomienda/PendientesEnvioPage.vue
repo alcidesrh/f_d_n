@@ -44,11 +44,7 @@
       <span class="text-sm">{{ !estacionId ? "Elija la estación." : filas.length ? "Nada coincide con el filtro." : "No hay encomiendas esperando salir." }}</span>
     </div>
 
-    <section v-for="g in grupos" :key="g.destino.id" class="panel flex flex-col gap-1.5" :aria-label="`Hacia ${g.destino.nombre}`">
-      <h2 class="titulo flex items-center gap-2">
-        <icon name="location-on-outline" color="text-primary" />{{ g.destino.nombre }}
-        <span class="text-sm font-normal text-muted-color">· {{ g.filas.length }} {{ g.filas.length === 1 ? "encomienda" : "encomiendas" }}</span>
-      </h2>
+    <Fieldset v-for="g in grupos" :key="g.destino.id" :legend="`${g.destino.nombre} · ${g.filas.length} ${g.filas.length === 1 ? 'encomienda' : 'encomiendas'}`">
       <ul class="m-0 flex list-none flex-col gap-1 p-0">
         <li v-for="f in g.filas" :key="f.id" class="fila">
           <span class="min-w-0">
@@ -70,7 +66,7 @@
           </span>
         </li>
       </ul>
-    </section>
+    </Fieldset>
 
     <Dialog :visible="cambio !== null" modal header="Cambiar ruta" class="w-[min(30rem,calc(100vw-1rem))]" @update:visible="!$event && (cambio = null)">
       <div v-if="cambio" class="flex flex-col gap-3">
@@ -196,11 +192,6 @@ async function guardarRuta() {
   border: 1px solid var(--p-content-border-color);
   border-radius: var(--p-content-border-radius, 0.75rem);
   background: var(--p-content-background);
-}
-.titulo {
-  margin: 0 0 0.25rem;
-  font-size: 1rem;
-  font-weight: 600;
 }
 .campo {
   display: flex;

@@ -97,7 +97,7 @@ function llegada(m: Momento): string | null {
 /* Angosto: hora, distribución y quitar; el bus debajo. Ancho: todo en una línea. */
 .momento {
   display: grid;
-  grid-template-columns: 6.5rem minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   grid-template-areas:
     'hora croquis quitar'
     'bus bus bus'
@@ -105,8 +105,18 @@ function llegada(m: Momento): string | null {
   align-items: center;
   gap: 0.5rem;
 }
+/* La hora mide lo que el navegador dibuja (en el teléfono, «06:00 a. m.» y
+   su reloj no caben en 6.5rem y se montaban bajo la distribución). */
 .momento__hora {
   grid-area: hora;
+  width: 6.5rem;
+}
+@supports (field-sizing: content) {
+  .momento__hora {
+    width: auto;
+    min-width: 6.5rem;
+    field-sizing: content;
+  }
 }
 .momento__croquis {
   grid-area: croquis;
@@ -123,7 +133,7 @@ function llegada(m: Momento): string | null {
 }
 @container (min-width: 40rem) {
   .momento {
-    grid-template-columns: 6.5rem minmax(0, 1fr) minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr) auto;
     grid-template-areas:
       'hora croquis bus quitar'
       '. detalle detalle .';

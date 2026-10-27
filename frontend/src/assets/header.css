@@ -204,15 +204,25 @@
     display: flex;
   }
 }
-/* Estación de trabajo (ADR-039): en móvil solo el ícono; en ámbar si falta elegirla. */
+/* Estación de trabajo (ADR-039): en móvil solo el ícono, en el mismo cuadro que `.icon-btn`;
+   en ámbar si falta elegirla. */
 .header-estacion {
   display: inline-flex;
   flex: 0 1 auto;
   min-width: 0;
+  width: 38px;
+  height: 38px;
   align-items: center;
+  justify-content: center;
   gap: 0.3rem;
   margin-right: 0.25rem;
-  padding: 0.2rem 0.55rem;
+  padding: 0;
+  @variant md {
+    width: auto;
+    height: auto;
+    justify-content: normal;
+    padding: 0.2rem 0.55rem;
+  }
   @variant lg {
     /* Se corre con las acciones y el usuario cuando se cierra el sidebar derecho. */
     transform: translateX(calc(50px * (1 - var(--sb-right-h, 0))));
@@ -244,16 +254,8 @@
     display: inline;
   }
 }
-/* Sincronización (ADR-042): va entre las acciones y la estación, así que se corre igual que ellas. */
-.header-sinc {
-  display: flex;
-  align-items: center;
-  @variant lg {
-    transform: translateX(calc(50px * (1 - var(--sb-right-h, 0))));
-  }
-}
 /* Sin barra derecha no hay botón que la reabra: nada se corre a ocupar su lugar. */
-.shell--sin-derecha :is(.header-actions, .header-sinc, .header-estacion, .header-user-wrap) {
+.shell--sin-derecha :is(.header-actions, .header-estacion, .header-user-wrap) {
   @variant lg {
     transform: none;
   }
