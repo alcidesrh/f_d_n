@@ -204,29 +204,30 @@
     display: flex;
   }
 }
-/* Estación de trabajo (ADR-039): en móvil solo el ícono; en ámbar si falta elegirla. */
+/* Estación de trabajo (ADR-039): debajo de `lg` es un `icon-btn` más (como chat o notificaciones);
+   desde `lg`, píldora con el nombre. En ámbar si falta elegirla. */
 .header-estacion {
-  display: inline-flex;
   flex: 0 1 auto;
   min-width: 0;
-  align-items: center;
   gap: 0.3rem;
-  margin-right: 0.25rem;
-  padding: 0.2rem 0.55rem;
+  cursor: pointer;
+  &:disabled {
+    cursor: default;
+  }
   @variant lg {
     /* Se corre con las acciones y el usuario cuando se cierra el sidebar derecho. */
     transform: translateX(calc(50px * (1 - var(--sb-right-h, 0))));
-  }
-  border: 1px solid var(--p-surface-200);
-  border-radius: 999px;
-  color: var(--p-surface-600);
-  font-size: 0.8rem;
-  cursor: pointer;
-  &:hover:not(:disabled) {
-    background: var(--p-content-hover-background);
-  }
-  &:disabled {
-    cursor: default;
+    width: auto;
+    height: auto;
+    margin-right: 0.25rem;
+    padding: 0.2rem 0.55rem;
+    border: 1px solid var(--p-surface-200);
+    border-radius: 999px;
+    color: var(--p-surface-600);
+    font-size: 0.8rem;
+    &:hover:not(:disabled) {
+      background: var(--p-content-hover-background);
+    }
   }
 }
 .header-estacion--falta {
@@ -240,15 +241,17 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  @variant md {
+  @variant lg {
     display: inline;
   }
 }
-/* Sincronización (ADR-042): va entre las acciones y la estación, así que se corre igual que ellas. */
+/* Sincronización (ADR-042): va entre las acciones y la estación, así que se corre igual que ellas.
+   Debajo de `lg` (móvil) no se muestra. */
 .header-sinc {
-  display: flex;
+  display: none;
   align-items: center;
   @variant lg {
+    display: flex;
     transform: translateX(calc(50px * (1 - var(--sb-right-h, 0))));
   }
 }

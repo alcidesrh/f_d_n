@@ -72,7 +72,11 @@
   position: relative;
   width: 100%;
   margin-left: auto;
-  display: flex;
+  /* Debajo de `lg` (drawer) no hay barra: los íconos de cerrar y de modo son de escritorio. */
+  display: none;
+  @variant lg {
+    display: flex;
+  }
   justify-content: end;
   align-items: center;
   min-height: 2rem;

@@ -74,8 +74,8 @@
         <IndicadorSincronizacion />
       </div>
       <!-- Estación de trabajo (ADR-039): donde opera; se cambia entre las de sus asignaciones. -->
-      <button v-if="acceso.estacionTrabajo || acceso.debeElegirEstacion" type="button" class="header-estacion tap-target" :class="{ 'header-estacion--falta': !acceso.estacionTrabajo }" :aria-label="acceso.estacionTrabajo ? `Estación de trabajo: ${acceso.estacionTrabajo.nombre}. Cambiar` : 'Elegir estación de trabajo'" v-tooltip.bottom="acceso.estaciones.length > 1 ? 'Estación de trabajo' : undefined" :disabled="acceso.estaciones.length < 2 && !!acceso.estacionTrabajo" @click="acceso.eligiendoEstacion = true">
-        <icon name="location_home-outline" size="1.05rem" />
+      <button v-if="acceso.estacionTrabajo || acceso.debeElegirEstacion" type="button" class="icon-btn header-estacion" :class="{ 'header-estacion--falta': !acceso.estacionTrabajo }" :aria-label="acceso.estacionTrabajo ? `Estación de trabajo: ${acceso.estacionTrabajo.nombre}. Cambiar` : 'Elegir estación de trabajo'" v-tooltip.bottom="acceso.estaciones.length > 1 ? 'Estación de trabajo' : undefined" :disabled="acceso.estaciones.length < 2 && !!acceso.estacionTrabajo" @click="acceso.eligiendoEstacion = true">
+        <icon name="location_home-outline" :size="ui.isMobile ? undefined : '1.05rem'" />
         <span class="header-estacion__nombre">{{ acceso.estacionTrabajo?.nombre ?? "Elegir estación" }}</span>
       </button>
       <!-- Fuera de la franja que scrollea: Mi cuenta, Instalar app y Cerrar sesión siempre a la vista. -->
