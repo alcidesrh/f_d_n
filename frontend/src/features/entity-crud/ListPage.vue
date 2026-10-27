@@ -208,10 +208,13 @@ function isSortable(column: CollectionFieldConfig) {
   return column.sortable === true && Boolean(store.value?.metadata.orderFields.includes(column.field));
 }
 
-/** Editable en línea si la mutación de update acepta el campo (las relaciones a muchos, en el formulario). */
+/**
+ * Editable en línea si la configuración lo habilita (`editable: true`) y la
+ * mutación de update acepta el campo (las relaciones a muchos, en el formulario).
+ */
 function canEditCell(column: CollectionFieldConfig) {
   const metadata = store.value?.metadata;
-  if (!metadata?.update || column.field === "id" || isToMany(metadata, column.field)) return false;
+  if (column.editable !== true || !metadata?.update || column.field === "id" || isToMany(metadata, column.field)) return false;
   return metadata.update.inputFields.some((input) => input.name === column.field);
 }
 

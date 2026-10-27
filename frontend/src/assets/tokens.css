@@ -15,9 +15,9 @@
 }
 
 :root {
-  --bg: color-mix(in hsl, var(--p-surface-0) 50%, var(--p-surface-100) 50%);
+  --bg: color-mix(in hsl, var(--p-surface-100) 40%, var(--p-surface-50) 80%);
 
-  --bg2: color-mix(in hsl, var(--p-surface-0) 70%, var(--p-surface-50) 90%);
+  --bg2: color-mix(in hsl, var(--p-surface-0) 70%, var(--p-surface-50) 30%);
   /*var(--p-surface-50);*/
   /* --bg2: var(--p-surface-200); */
   /* --bg3: var(--p-surface-300); */

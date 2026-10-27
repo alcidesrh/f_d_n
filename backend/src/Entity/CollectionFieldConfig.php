@@ -46,6 +46,14 @@ class CollectionFieldConfig  extends FieldConfig implements ConfiguracionDelClie
     private ?bool $autocomplete = null;
 
     /**
+     * Se edita en línea en el listado (clic en la celda). Nace apagado: solo
+     * las columnas con `true` se editan ahí (null y false significan lo mismo).
+     */
+    #[ORM\Column(nullable: true)]
+    #[Groups(['read:dto'])]
+    private ?bool $editable = null;
+
+    /**
      * `sortable`/`filterable` nacen apagados: ordenar o filtrar por una
      * columna se habilita explícitamente (null y false significan lo mismo).
      */
@@ -135,6 +143,18 @@ class CollectionFieldConfig  extends FieldConfig implements ConfiguracionDelClie
     public function setAutocomplete(?bool $autocomplete): static
     {
         $this->autocomplete = $autocomplete;
+
+        return $this;
+    }
+
+    public function isEditable(): ?bool
+    {
+        return $this->editable;
+    }
+
+    public function setEditable(?bool $editable): static
+    {
+        $this->editable = $editable;
 
         return $this;
     }

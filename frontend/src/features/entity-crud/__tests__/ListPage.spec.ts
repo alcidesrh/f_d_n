@@ -689,8 +689,21 @@ describe('ListPage', () => {
     expect((input.element as HTMLInputElement).value).toBe('ho')
   })
 
+  it('sin `editable: true` en la configuración no se edita en línea', async () => {
+    await mountList(editableSchema)
+    store.columns = columns.map((col) => ({ ...col }))
+    await flushPromises()
+    const nameCell = dataCells()[1]!
+    expect(nameCell.classes()).not.toContain('is-editable')
+    await nameCell.trigger('click')
+    await flushPromises()
+    expect(wrapper!.findComponent(ListCellEditor).exists()).toBe(false)
+  })
+
   it('edita una celda en línea y persiste solo el campo editado', async () => {
     await mountList(editableSchema)
+    store.columns = columns.map((col) => ({ ...col, editable: true }))
+    await flushPromises()
 
     const nameCell = dataCells()[1]!
     expect(nameCell.classes()).toContain('is-editable')
@@ -710,6 +723,8 @@ describe('ListPage', () => {
 
   it('Escape cancela la edición y no guarda nada', async () => {
     await mountList(editableSchema)
+    store.columns = columns.map((col) => ({ ...col, editable: true }))
+    await flushPromises()
     const nameCell = dataCells()[1]!
     await nameCell.trigger('click')
     await flushPromises()
@@ -722,7 +737,7 @@ describe('ListPage', () => {
 
   it('normaliza fechas a YYYY-MM-DD al editar una celda', async () => {
     await mountList(editableSchema)
-    store.columns = [...store.columns, { field: 'createdAt', label: 'Creado', filterable: false }]
+    store.columns = [...store.columns, { field: 'createdAt', label: 'Creado', filterable: false, editable: true }]
     store.items = [{ ...items[0]!, createdAt: '2014-02-27T11:54:20-06:00' } as never]
     await flushPromises()
 

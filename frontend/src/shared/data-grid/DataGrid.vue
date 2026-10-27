@@ -362,7 +362,6 @@ useColumnDrag({
   text-transform: uppercase;
 }
 .dg-hcell {
-  padding-inline-start: 0.25rem;
   user-select: none;
 }
 .dg-hcell.is-sorted,
@@ -375,7 +374,6 @@ useColumnDrag({
   flex: 0 1 auto;
   align-items: center;
   gap: 0.25rem;
-  padding-inline-start: 0.25rem;
 }
 .dg-sortable {
   cursor: pointer;
