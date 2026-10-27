@@ -1,5 +1,5 @@
 // Sirve el build (dist/) en el puerto 9000. Las rutas que no son un archivo
-// devuelven index.html para que el router de la SPA resuelva la URL.
+// devuelven index.html para que el router de la SPA resuelva la URL (salvo los que parecen archivo).
 const dist = `${import.meta.dir}/dist`;
 
 Bun.serve({
@@ -13,6 +13,10 @@ Bun.serve({
 
     const archivo = Bun.file(path);
     if (pathname !== "/" && (await archivo.exists())) return new Response(archivo);
+
+    // Un archivo que no existe (un chunk de una versión anterior) no es una ruta de la SPA:
+    // devolver index.html ahí rompe el módulo en el navegador.
+    if (/\.[a-z0-9]+$/i.test(pathname)) return new Response("Not found", { status: 404 });
 
     return new Response(Bun.file(`${dist}/index.html`), {
       headers: { "Content-Type": "text/html; charset=utf-8" },
