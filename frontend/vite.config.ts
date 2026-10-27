@@ -14,6 +14,8 @@ import { VitePWA } from "vite-plugin-pwa";
 // https://vite.dev/config/
 // `.env.local` con VITE_PWA_DEV=true: service worker y manifest también en `npm run dev`.
 const pwaEnDesarrollo = loadEnv("development", process.cwd(), "").VITE_PWA_DEV === "true";
+// Revisión de la shell precacheada ("/"): cambia en cada build, así el service worker se actualiza.
+const BUILD_ID = Date.now().toString();
 
 export default defineConfig({
   plugins: [
@@ -81,14 +83,16 @@ export default defineConfig({
       workbox: {
         // Solo el código de la app. Las respuestas de la API no se guardan: una taquilla
         // la usan varios usuarios y la caché del service worker no distingue entre ellos.
-        globPatterns: ["**/*.{js,css,html,woff2}", "favicon.ico", "pwa/*.png"],
+        // El HTML no se precachea como `index.html`: Caddy manda `/index*` al backend (la doc de
+        // API Platform) y esa respuesta quedaría como shell offline en cada navegador tras cada despliegue.
+        globPatterns: ["**/*.{js,css,woff2}", "favicon.ico", "pwa/*.png"],
+        // La shell se pide a "/", que Caddy sirve desde el frontend (`frontend/server.ts`).
+        additionalManifestEntries: [{ url: "/", revision: BUILD_ID }],
         // El catálogo de íconos (8 MB) solo lo usa el selector de íconos: se baja cuando se abre.
         globIgnores: ["**/material-symbols-*.js"],
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         cleanupOutdatedCaches: true,
-        navigateFallback: "/index.html",
-        // "/" no se sirve como "/index.html" de la caché: lo responde `navigateFallback` (en
-        // desarrollo, la red). La copia de desarrollo la baja de Caddy, que la manda al backend.
+        navigateFallback: "/",
         directoryIndex: "",
         // Lo que sirve el backend (Caddy) y no la SPA.
         navigateFallbackDenylist: [/^\/(api|graphql|pagina|docs|bundles|contexts|_profiler|_wdt|\.well-known|auth|logout|index)/],
