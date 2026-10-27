@@ -1,10 +1,11 @@
 /**
- * Transporte GraphQL de la configuración dinámica de entidades (ADR-010).
+ * Transporte de la configuración dinámica de entidades (ADR-010, ADR-043).
  *
- * `EntityConfiguration` guarda, por entidad del dominio (`entityClass`), cómo
- * se presentan sus campos en el listado (`collectionFieldConfig`) y en el
- * formulario (`formFields`). Este módulo solo habla con la API: la pantalla de
- * edición vive en `stores/entityConfig.ts` + `pages/config/EntityConfigEditor.vue`.
+ * `EntityConfiguration` guarda, por entidad del dominio (`entityClass`), los
+ * campos del formulario (`formFields`, GraphQL) y una o más configuraciones
+ * del listado, cada una con sus roles, columnas y opciones (REST
+ * `/configuracion-listados/{entidad}`). Este módulo solo habla con la API:
+ * la pantalla de edición vive en `store.ts` + `EntityConfigPage.vue`.
  *
  * Lecturas con `network-only`: la configuración se edita en esta misma pantalla,
  * así que servir la caché de Apollo mostraría datos ya pisados por un guardado.
@@ -12,12 +13,13 @@
 
 import { gql } from '@apollo/client'
 import { graphql } from '@/core/graphql/client'
+import { http, request } from '@/core/http'
 import type { ListOptions } from '@/core/entities/types'
 
 /** Campos comunes a `CollectionFieldConfig` y `FormFieldConfig` (`FieldConfig`). */
 export interface FieldConfigDto {
-  /** IRI del registro (`/api/collection_field_configs/45`); es el id que espera la mutación. */
-  id: string
+  /** IRI del campo del formulario (`/api/form_field_configs/45`, lo espera la mutación) o id de la columna. */
+  id: string | number
   field: string
   label: string | null
   position: number
@@ -27,6 +29,7 @@ export interface FieldConfigDto {
 }
 
 export interface CollectionFieldConfigDto extends FieldConfigDto {
+  id: number
   sortable: boolean | null
   filterable: boolean | null
   /** Relación con muchos registros: su filtro autocompleta en el servidor. */
@@ -38,23 +41,52 @@ export interface CollectionFieldConfigDto extends FieldConfigDto {
 }
 
 export interface FormFieldConfigDto extends FieldConfigDto {
+  id: string
   groupName: string | null
 }
 
 export interface EntityConfigurationDetailDto {
   id: string
   entityClass: string
-  collectionFieldConfig: CollectionFieldConfigDto[]
   formFields: FormFieldConfigDto[]
-  listOptions: ListOptions | null
 }
 
-/** Entrada de `updateWithRelationsEntityConfiguration`: la entidad y sus dos listas. */
+/** Entrada de `updateWithRelationsEntityConfiguration`: la entidad y los campos del formulario. */
 export interface UpdateEntityConfigurationInput {
   entityClass: string
-  collectionFieldConfig: CollectionFieldConfigDto[]
   formFields: FormFieldConfigDto[]
+}
+
+/** Una configuración del listado de la entidad (`ListConfiguration`). */
+export interface ListConfigDto {
+  id: number
+  nombre: string
+  /** Prioridad: con roles en varias, al usuario le toca la de menor posición. */
+  position: number
+  /** Sin roles: la ven los usuarios sin un rol asociado a otra. */
+  porDefecto: boolean
+  roles: number[]
   listOptions: ListOptions | null
+  collectionFieldConfig: CollectionFieldConfigDto[]
+}
+
+export interface RolOpcion {
+  id: number
+  nombre: string
+  descripcion: string | null
+}
+
+export interface ListConfigsDto {
+  configuraciones: ListConfigDto[]
+  /** Roles que se pueden asociar (todos menos el base). */
+  roles: RolOpcion[]
+}
+
+export interface ListConfigInput {
+  nombre?: string
+  roles?: number[]
+  listOptions?: ListOptions | null
+  columnas?: CollectionFieldConfigDto[]
 }
 
 const ENTITY_CLASSES_QUERY = gql`
@@ -71,21 +103,6 @@ const ENTITY_CONFIGURATION_QUERY = gql`
     entityConfigurations(entityClass: $entityClass) {
       id
       entityClass
-      listOptions
-      collectionFieldConfig {
-        id
-        field
-        label
-        position
-        visible
-        kind
-        attrs
-        sortable
-        filterable
-        autocomplete
-        editable
-        width
-      }
       formFields {
         id
         field
@@ -106,22 +123,6 @@ const UPDATE_ENTITY_CONFIGURATION = gql`
       entityConfiguration {
         id
         entityClass
-        listOptions
-        collectionFieldConfig {
-          id
-          field
-          label
-          position
-          visible
-          kind
-          attrs
-          sortable
-          filterable
-          autocomplete
-          editable
-        editable
-          width
-        }
         formFields {
           id
           field
@@ -168,7 +169,7 @@ export async function fetchEntityConfiguration(
 }
 
 /**
- * Guarda campos de listado y de formulario en una sola mutación
+ * Guarda los campos del formulario
  * (`UpdateEntityConfigurationFieldsResolver`, que resuelve cada `id` como IRI).
  */
 export async function saveEntityConfiguration(
@@ -187,4 +188,25 @@ export async function saveEntityConfiguration(
     )
   }
   return saved
+}
+
+const listados = (entityClass: string) => `/configuracion-listados/${encodeURIComponent(entityClass)}`
+
+/** Las configuraciones del listado de la entidad, por prioridad. */
+export function fetchListConfigs(entityClass: string): Promise<ListConfigsDto> {
+  return http.get<ListConfigsDto>(listados(entityClass))
+}
+
+/** Una nueva, copia de `desde` (o de la por defecto) en columnas y opciones. */
+export function createListConfig(entityClass: string, input: { nombre: string; roles: number[]; desde?: number }): Promise<ListConfigsDto & { creada: number }> {
+  return request<ListConfigsDto & { creada: number }>(listados(entityClass), { method: 'POST', body: input })
+}
+
+/** Lo ausente no cambia. */
+export function saveListConfig(entityClass: string, id: number, input: ListConfigInput): Promise<ListConfigsDto> {
+  return request<ListConfigsDto>(`${listados(entityClass)}/${id}`, { method: 'PUT', body: input })
+}
+
+export function deleteListConfig(entityClass: string, id: number): Promise<ListConfigsDto> {
+  return request<ListConfigsDto>(`${listados(entityClass)}/${id}`, { method: 'DELETE' })
 }

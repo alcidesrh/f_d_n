@@ -41,7 +41,7 @@ export type ListLayout = "auto" | "table" | "cards";
 /** `or`: basta con un filtro; `and`: se cumplen todos. */
 export type FilterMode = "or" | "and";
 
-/** Opciones del listado de la entidad (`EntityConfiguration.listOptions`); lo ausente toma el valor por defecto. */
+/** Opciones del listado (`ListConfiguration.listOptions`, ADR-043); lo ausente toma el valor por defecto. Ocultar un botón no quita el permiso. */
 export interface ListOptions {
   pageSize?: number;
   pageSizes?: number[];
@@ -51,6 +51,11 @@ export interface ListOptions {
   selectable?: boolean;
   /** Permitir la edición en línea. */
   inlineEdit?: boolean;
+  /** Botón "Nuevo" sobre el listado. */
+  create?: boolean;
+  /** Íconos "Editar" y "Eliminar" de cada fila. */
+  edit?: boolean;
+  delete?: boolean;
 }
 
 /** Cómo dejó el usuario el listado (persistido con el store). */
@@ -92,6 +97,8 @@ export interface EntityStoreState<T = unknown> {
   fullList: AgnosticOption[];
   /** Opciones del listado configuradas para la entidad. */
   listOptions: ListOptions;
+  /** Configuración del listado que le tocó al usuario (ADR-043); al cambiar, la vista se arma de nuevo. */
+  listConfigId?: number | null;
   view: ListViewState;
   /** Huella de la metadata de la entidad con la que se armó este estado; null: todavía ninguna (ADR-036). */
   huellaEsquema: string | null;

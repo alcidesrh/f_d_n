@@ -7,6 +7,7 @@ namespace App\Tests\Metadata;
 use App\Entity\CollectionFieldConfig;
 use App\Entity\EntityConfiguration;
 use App\Entity\FormFieldConfig;
+use App\Entity\ListConfiguration;
 use App\Metadata\ConfiguracionesTocadas;
 use App\Metadata\VigilanteConfiguracion;
 use Doctrine\ORM\EntityManagerInterface;
@@ -38,7 +39,7 @@ final class VigilanteConfiguracionTest extends TestCase
     public function testAnotaLaEntidadDeCadaConfiguracionGuardada(): void
     {
         $bus = new EntityConfiguration("Bus");
-        $columna = (new CollectionFieldConfig(["codigo", "text"]))->setEntityConfig($bus);
+        $columna = (new CollectionFieldConfig(["codigo", "text"]))->setListConfig(new ListConfiguration($bus, "Por defecto"));
         $campo = (new FormFieldConfig(["piloto", "select", "Piloto"]))->setEntityConfig(new EntityConfiguration("Piloto"));
         $tocadas = new ConfiguracionesTocadas();
 

@@ -34,6 +34,14 @@ describe('resolveListFeatures', () => {
     expect(resolveListFeatures({ ...base, overrides: { toolbar: false } }).toolbar).toBe(false)
   })
 
+  it('la configuración del listado oculta Seleccionar, Nuevo, Editar y Eliminar (ADR-043)', () => {
+    const features = resolveListFeatures({ ...base, options: { selectable: false, create: false, edit: false, delete: false } })
+    expect([features.selection, features.create, features.edit, features.delete]).toEqual([false, false, false, false])
+    expect(features.rowActions).toBe(true)
+    // Encenderlas en la configuración no da lo que la entidad no permite.
+    expect(resolveListFeatures({ ...base, canCreate: false, options: { create: true } }).create).toBe(false)
+  })
+
   it('"Nuevo" solo si la entidad tiene create, nunca en el selector ni en solo lectura', () => {
     expect(resolveListFeatures({ ...base, canCreate: false }).create).toBe(false)
     expect(resolveListFeatures({ ...base, selector: true }).create).toBe(false)

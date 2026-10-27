@@ -25,6 +25,10 @@ export interface ListFeatures {
   inlineEdit: boolean
   /** Columna fija de acciones por fila (editar, eliminar y las de la entidad). */
   rowActions: boolean
+  /** Ícono "Editar" de cada fila. */
+  edit: boolean
+  /** Ícono "Eliminar" de cada fila. */
+  delete: boolean
   /** Ofrecer el modo selección (en el selector siempre está activo). */
   selection: boolean
   /** "Eliminar seleccionados" entre las acciones de la selección. */
@@ -63,6 +67,8 @@ const ALL_ON: ListFeatures = {
   customFilter: true,
   inlineEdit: true,
   rowActions: true,
+  edit: true,
+  delete: true,
   selection: true,
   bulkDelete: true,
   share: true,
@@ -87,6 +93,9 @@ export function resolveListFeatures(context: FeatureContext): ListFeatures {
   const fromOptions: Partial<ListFeatures> = {}
   if (context.options?.selectable === false) fromOptions.selection = false
   if (context.options?.inlineEdit === false) fromOptions.inlineEdit = false
+  if (context.options?.create === false) fromOptions.create = false
+  if (context.options?.edit === false) fromOptions.edit = false
+  if (context.options?.delete === false) fromOptions.delete = false
 
   const features: ListFeatures = {
     ...ALL_ON,

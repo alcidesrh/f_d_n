@@ -1,6 +1,6 @@
 <!--
-  Opciones del listado de la entidad (`EntityConfiguration.listOptions`,
-  ADR-029). Lo que se deja en "Por defecto" no se guarda y el listado usa
+  Opciones de la configuración del listado elegida (`ListConfiguration.listOptions`,
+  ADR-029, ADR-043). Lo que se deja en "Por defecto" no se guarda y el listado usa
   su valor de siempre. Edita `useEntityConfigStore().listOptions` en sitio.
 -->
 <template>
@@ -22,8 +22,20 @@
       <Select v-model="options.filterMode" :options="FILTER_MODES" option-label="label" option-value="value" placeholder="Por defecto (cualquiera)" show-clear size="small" />
     </label>
     <label class="cell">
-      <span class="cell__label">Modo selección</span>
+      <span class="cell__label">Botón Seleccionar</span>
       <Select v-model="options.selectable" :options="ON_OFF" option-label="label" option-value="value" placeholder="Por defecto (sí)" show-clear size="small" />
+    </label>
+    <label class="cell">
+      <span class="cell__label">Botón Nuevo</span>
+      <Select v-model="options.create" :options="ON_OFF" option-label="label" option-value="value" placeholder="Por defecto (sí)" show-clear size="small" />
+    </label>
+    <label class="cell">
+      <span class="cell__label">Ícono Editar (fila)</span>
+      <Select v-model="options.edit" :options="ON_OFF" option-label="label" option-value="value" placeholder="Por defecto (sí)" show-clear size="small" />
+    </label>
+    <label class="cell">
+      <span class="cell__label">Ícono Eliminar (fila)</span>
+      <Select v-model="options.delete" :options="ON_OFF" option-label="label" option-value="value" placeholder="Por defecto (sí)" show-clear size="small" />
     </label>
     <label class="cell">
       <span class="cell__label">Edición en línea</span>

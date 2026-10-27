@@ -5,11 +5,12 @@ namespace App\Resolver;
 use ApiPlatform\GraphQl\Resolver\MutationResolverInterface;
 use ApiPlatform\Metadata\IriConverterInterface;
 use App\Entity\EntityConfiguration;
-use App\Entity\collectionFieldConfigConfig;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
- * Guarda la configuración de una entidad desde el editor. Los navegadores se
+ * Guarda los campos del formulario de una entidad desde el editor (las
+ * configuraciones del listado van por `/api/configuracion-listados`,
+ * ADR-043). Los navegadores se
  * enteran por la revisión de la metadata que se publica al terminar la
  * petición (ADR-036).
  */
@@ -38,15 +39,6 @@ final class UpdateEntityConfigurationFieldsResolver implements MutationResolverI
                 $field = $this->iriConverter->getResourceFromIri($data['id']);
                 $field->loadData($data);
             }
-        }
-        if (isset($args['collectionFieldConfig'])) {
-            foreach ($args['collectionFieldConfig'] as $data) {
-                $field = $this->iriConverter->getResourceFromIri($data['id']);
-                $field->loadData($data);
-            }
-        }
-        if (\array_key_exists('listOptions', $args)) {
-            $entity->setListOptions($args['listOptions']);
         }
         $entity->markAsUpdated();
         $this->entityManager->flush();

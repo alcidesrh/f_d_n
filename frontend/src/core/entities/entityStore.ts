@@ -76,6 +76,7 @@ function createEntityStore(name: string) {
       item: null,
       fullList: [],
       listOptions: {},
+      listConfigId: null,
       view: defaultView(),
       huellaEsquema: null,
       revisionConfig: null,
@@ -114,7 +115,10 @@ function createEntityStore(name: string) {
           }
           request = fetchEntityConfiguration(this.name)
             .then((config) => {
-              const firstLoad = this.columns.length === 0
+              // Otra configuración del listado (cambiaron sus roles): la vista guardada era de la anterior.
+              const otra = (config?.listConfig?.id ?? null) !== (this.listConfigId ?? null)
+              const firstLoad = this.columns.length === 0 || otra
+              this.listConfigId = config?.listConfig?.id ?? null
               this.listOptions = config?.listOptions ?? {}
               if (firstLoad || force) this.view = defaultView(this.listOptions)
               if (this.pagination && (firstLoad || force))
@@ -123,7 +127,7 @@ function createEntityStore(name: string) {
               const columns = config?.collectionFieldConfig ?? []
               // Con `force` (guardar o restablecer) se toma el servidor tal cual; si no, se respeta la vista del usuario.
               this.columns = columns.length
-                ? force
+                ? force || otra
                   ? columns.map(columnaDeConfig)
                   : mergeColumns(this.columns, columns)
                 : buildFallbackColumns(this.name)

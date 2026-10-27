@@ -1,7 +1,8 @@
 /**
- * Configuración de presentación de una entidad (`/api/entity_configurations`):
- * columnas del listado y campos del formulario. La editan en
- * `features/entity-config`; la consumen listados y formularios.
+ * Configuración de presentación de una entidad para el usuario con sesión
+ * (`GET /api/me/configuracion/{entidad}`): campos del formulario y la
+ * configuración del listado que le toca por sus roles (ADR-043). La editan
+ * en `features/entity-config`; la consumen listados y formularios.
  */
 import { http } from '@/core/http'
 import type { CollectionFieldConfig, ListOptions } from '@/core/entities/types'
@@ -17,22 +18,19 @@ export interface FormFieldConfig {
 }
 
 export interface EntityConfigurationDto {
-  '@id'?: string
   entityClass?: string
+  /** La configuración del listado que le tocó (la por defecto si ninguno de sus roles tiene una). */
+  listConfig?: { id: number; nombre: string } | null
   collectionFieldConfig?: CollectionFieldConfig[]
   formFields?: FormFieldConfig[]
   listOptions?: ListOptions | null
 }
 
-/** `null` si el backend no tiene configuración guardada para la entidad. */
+/** `null` si la entidad no se configura. */
 export async function fetchEntityConfiguration(
   entityClass: string,
 ): Promise<EntityConfigurationDto | null> {
-  const data = await http.get<{
-    member?: EntityConfigurationDto[]
-    'hydra:member'?: EntityConfigurationDto[]
-  }>(`/entity_configurations?entityClass=${encodeURIComponent(entityClass)}`, {
+  return http.get<EntityConfigurationDto>(`/me/configuracion/${encodeURIComponent(entityClass)}`, {
     loadingKey: `config:${entityClass}`,
   })
-  return (data?.member ?? data?.['hydra:member'] ?? [])[0] ?? null
 }
