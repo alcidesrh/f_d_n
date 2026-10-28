@@ -29,6 +29,24 @@ final class FotoPerfil
     /** Guarda la foto, borra la anterior y devuelve la ruta relativa guardada. */
     public function guardar(UploadedFile $archivo, Usuario $usuario): string
     {
+        $ruta = $this->archivar($archivo, sprintf("%s/%d", self::SUBDIRECTORIO, $usuario->getId()));
+        $this->borra($usuario->getFoto());
+
+        return $ruta;
+    }
+
+    /** Borra del disco la foto actual del usuario (no toca la entidad). */
+    public function borrar(Usuario $usuario): void
+    {
+        $this->borra($usuario->getFoto());
+    }
+
+    /**
+     * Valida la imagen (tamaño y contenido) y la guarda como `<prefijo>-<azar>.<ext>`.
+     * Devuelve la ruta relativa al directorio de fotos.
+     */
+    public function archivar(UploadedFile $archivo, string $prefijo): string
+    {
         if (!$archivo->isValid()) {
             throw new \DomainException("No se pudo recibir la imagen.");
         }
@@ -42,21 +60,19 @@ final class FotoPerfil
             throw new \DomainException("Formato no permitido: use una imagen JPG, PNG o WebP.");
         }
 
-        $ruta = sprintf("%s/%d-%s.%s", self::SUBDIRECTORIO, $usuario->getId(), bin2hex(random_bytes(8)), $extension);
+        $ruta = sprintf("%s-%s.%s", $prefijo, bin2hex(random_bytes(8)), $extension);
         $destino = $this->absoluta($ruta);
         if (!is_dir(dirname($destino)) && !mkdir(dirname($destino), 0750, true) && !is_dir(dirname($destino))) {
             throw new \RuntimeException("No se pudo guardar la imagen.");
         }
         $archivo->move(dirname($destino), basename($destino));
-        $this->borrar($usuario);
 
         return $ruta;
     }
 
-    /** Borra del disco la foto actual del usuario (no toca la entidad). */
-    public function borrar(Usuario $usuario): void
+    /** Borra del disco una foto por su ruta relativa (null no hace nada). */
+    public function borra(?string $ruta): void
     {
-        $ruta = $usuario->getFoto();
         if ($ruta !== null && is_file($archivo = $this->absoluta($ruta))) {
             @unlink($archivo);
         }

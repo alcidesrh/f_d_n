@@ -14,6 +14,7 @@ use App\Entity\ChatMiembro;
 use App\Entity\Enum\TipoCanalChat;
 use App\Entity\Usuario;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 /**
  * Casos de uso del chat interno: directorio de contactos, bandeja, abrir
@@ -32,6 +33,7 @@ final class Conversaciones
         private readonly AvisosChat $avisos,
         private readonly Archivos $archivos,
         private readonly FotoPerfil $fotos,
+        private readonly FotoGrupo $fotosGrupo,
         private readonly AvisosPush $push,
     ) {}
 
@@ -117,6 +119,32 @@ final class Conversaciones
                 $ultimos[$c->getId()] ?? null,
             ), $canales),
         ];
+    }
+
+    /**
+     * Cambia la foto del grupo por `$archivo`, o la quita si es `null`. Solo los grupos
+     * la tienen, y cualquiera de sus miembros puede cambiarla; avisa a los demás.
+     *
+     * @return array<string, mixed> el canal
+     */
+    public function cambiarFotoGrupo(Usuario $yo, ChatCanal $canal, ?UploadedFile $archivo): array
+    {
+        if ($canal->getTipo() !== TipoCanalChat::Grupo) {
+            throw new ChatRechazado("Solo los grupos tienen foto.");
+        }
+        try {
+            if ($archivo === null) {
+                $this->fotosGrupo->quitar($canal);
+            } else {
+                $canal->setFoto($this->fotosGrupo->guardar($archivo, $canal));
+            }
+        } catch (\DomainException $e) {
+            throw new ChatRechazado($e->getMessage());
+        }
+        $this->em->flush();
+        $this->avisos->avisar($this->idsMiembros($canal), "canal", ["canal" => $canal->getId()]);
+
+        return $this->canalArray($canal, $yo);
     }
 
     public function canal(int $id, Usuario $yo): ChatCanal
@@ -409,6 +437,7 @@ final class Conversaciones
             "tipo" => $c->getTipo()->value,
             "nombre" => $directo ? ($otros[0]["nombre"] ?? "—") : $c->getNombre(),
             "contacto" => $directo ? ($otros[0] ?? null) : null,
+            "foto" => $directo ? null : $this->fotosGrupo->url($c),
             "miembros" => array_values($miembros),
             "noLeidos" => $noLeidos,
             "leidoHasta" => $c->miembro($yo)?->getUltimoLeido() ?? 0,

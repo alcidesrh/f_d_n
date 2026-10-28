@@ -4,7 +4,7 @@
       <div class="flex btn-siderbar-header">
         <button type="button" class="icon-btn" aria-label="Menú de navegación" :aria-expanded="ui.isMobile ? sidebarStore.drawer : sidebarStore.mode !== 'close'" @click="sidebarStore.toggle()">
           <!-- <icon name="menu" size="35px" :weight="300" color="text-surface-500" /> -->
-          <icon name="right_panel_close" size="25" :weight="100" color="text-surface-600" />
+          <icon name="menu" size="25" :weight="100" color="text-surface-600" />
         </button>
         <Divider layout="vertical" class="mx-[5px]!" />
       </div>

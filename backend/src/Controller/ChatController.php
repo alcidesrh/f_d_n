@@ -8,10 +8,12 @@ use App\Chat\Archivos;
 use App\Chat\AvisosChat;
 use App\Chat\ChatRechazado;
 use App\Chat\Conversaciones;
+use App\Chat\FotoGrupo;
 use App\Chat\Presencia;
 use App\Chat\Push\AvisosPush;
 use App\Chat\Tarjeta\Tarjetas;
 use App\Entity\ChatArchivo;
+use App\Entity\ChatCanal;
 use App\Entity\Usuario;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -41,6 +43,7 @@ final class ChatController extends AbstractController
         private readonly Tarjetas $tarjetas,
         private readonly Presencia $presencia,
         private readonly AvisosPush $push,
+        private readonly FotoGrupo $fotosGrupo,
     ) {}
 
     /**
@@ -159,6 +162,44 @@ final class ChatController extends AbstractController
         $datos = $request->toArray();
 
         return $this->responder(fn() => $this->chat->crearGrupo($yo, (string) ($datos["nombre"] ?? ""), self::usuarios($datos["miembros"] ?? [])));
+    }
+
+    /** Multipart, campo `foto`: la foto del grupo (cualquier miembro). */
+    #[Route("/canales/{id<\d+>}/foto", name: "grupo_foto", methods: ["POST"])]
+    public function fotoGrupo(int $id, Request $request, #[CurrentUser] Usuario $yo): JsonResponse
+    {
+        return $this->responder(fn() => $this->chat->cambiarFotoGrupo($yo, $this->chat->canal($id, $yo), $request->files->get("foto") ?? throw new ChatRechazado("Falta la imagen.")));
+    }
+
+    #[Route("/canales/{id<\d+>}/foto", name: "grupo_foto_quitar", methods: ["DELETE"])]
+    public function quitarFotoGrupo(int $id, #[CurrentUser] Usuario $yo): JsonResponse
+    {
+        return $this->responder(fn() => $this->chat->cambiarFotoGrupo($yo, $this->chat->canal($id, $yo), null));
+    }
+
+    /**
+     * La foto de un grupo, por URL firmada (pública: la usan las `<img>`, sin Bearer).
+     * Cambia al cambiar la foto, así que se cachea mucho.
+     */
+    #[Route("/canales/{id<\d+>}/foto/{firma<[0-9a-f]{32}>}", name: "grupo_foto_ver", methods: ["GET"])]
+    public function verFotoGrupo(int $id, string $firma): Response
+    {
+        $canal = $this->em->find(ChatCanal::class, $id);
+        if ($canal === null || !$this->fotosGrupo->firmaValida($canal, $firma)) {
+            return new Response("Imagen no disponible.", Response::HTTP_NOT_FOUND);
+        }
+        $ruta = $this->fotosGrupo->absoluta((string) $canal->getFoto());
+        if (!is_file($ruta)) {
+            return new Response("Imagen no disponible.", Response::HTTP_NOT_FOUND);
+        }
+
+        $respuesta = new BinaryFileResponse($ruta, headers: ["Content-Type" => $this->fotosGrupo->mime($ruta)]);
+        $respuesta->setPrivate();
+        $respuesta->setMaxAge(7 * 24 * 3600);
+        $respuesta->headers->set("X-Content-Type-Options", "nosniff");
+        $respuesta->headers->set("Content-Security-Policy", "sandbox; default-src 'none'; img-src 'self'");
+
+        return $respuesta;
     }
 
     /** `?antes=id` (anteriores) o `?despues=id` (nuevos). */

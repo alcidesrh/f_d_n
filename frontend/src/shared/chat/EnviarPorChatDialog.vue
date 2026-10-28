@@ -85,7 +85,7 @@ const etiqueta = (tipo: string) => (tipo === 'BoletoAsiento' ? 'Boleto' : tipo.r
 const destinos = computed<Destino[]>(() => {
   const grupos = chat.canales
     .filter((c) => c.tipo === 'grupo')
-    .map((c) => ({ clave: `c${c.id}`, id: c.id, nombre: c.nombre, detalle: `Grupo · ${c.miembros.length} miembros`, grupo: true, ambito: null, foto: null }))
+    .map((c) => ({ clave: `c${c.id}`, id: c.id, nombre: c.nombre, detalle: `Grupo · ${c.miembros.length} miembros`, grupo: true, ambito: null, foto: c.foto ?? null }))
   const recientes = chat.canales.filter((c) => c.tipo === 'directo' && c.contacto).map((c) => c.contacto!.id)
   const orden = new Map(recientes.map((id, i) => [id, i]))
   const personas = [...(chat.contactos ?? [])]

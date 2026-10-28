@@ -28,6 +28,27 @@ export function salirDeLinea(conexion: string) {
 export const abrirDirecto = (usuario: number) => http.post<Canal>(`${BASE}/canales/directo`, { usuario })
 export const crearGrupo = (nombre: string, miembros: number[]) => http.post<Canal>(`${BASE}/canales/grupo`, { nombre, miembros })
 
+/** Quita la foto del grupo. */
+export const quitarFotoGrupo = (canal: number) => http.delete<Canal>(`${BASE}/canales/${canal}/foto`, fondo)
+
+/** Sube la foto del grupo (multipart, campo `foto`). */
+export async function subirFotoGrupo(canal: number, imagen: Blob, nombre: string): Promise<Canal> {
+  const datos = new FormData()
+  datos.append('foto', imagen, nombre)
+  const token = useSessionStore().token
+  const respuesta = await fetch(`${config.restUrl}${BASE}/canales/${canal}/foto`, {
+    method: 'POST',
+    headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    body: datos,
+  })
+  const cuerpo = await respuesta.json().catch(() => null)
+  if (!respuesta.ok) {
+    const mensaje = (cuerpo as { error?: string } | null)?.error ?? (respuesta.status === 413 ? 'La imagen es demasiado grande.' : `HTTP ${respuesta.status}`)
+    throw new HttpError(respuesta.status, cuerpo, mensaje)
+  }
+  return cuerpo as Canal
+}
+
 /** Los últimos; con `antes` los anteriores a ese id; con `despues`, los nuevos. */
 export function fetchMensajes(canal: number, cursor: { antes?: number; despues?: number } = {}) {
   const q = new URLSearchParams()

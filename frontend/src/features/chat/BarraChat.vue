@@ -1,7 +1,7 @@
 <!--
   Barra de título del chat: a la izquierda el título, en vivo y sin leer; al
   centro el modo (ícono y nombre); a la derecha minimizar, maximizar y
-  cerrar (en modo centro solo maximizar). En el teléfono no hay modos ni
+  cerrar (en modo centro, cerrar vuelve a la página anterior). En el teléfono no hay modos ni
   controles: una flecha vuelve a la app. En la flotante es además el asa para arrastrarla. Cambiar de/a
   centro navega: el centro es la página `/chat`.
 -->
@@ -36,6 +36,7 @@
         </button>
       </template>
       <button v-if="ventana.esVentana" type="button" class="control" aria-label="Cerrar" v-tooltip.bottom="'Cerrar'" @click="ventana.cerrar()"><icon name="close" size="1.15rem" color="text-current" /></button>
+      <button v-else type="button" class="control" aria-label="Cerrar" v-tooltip.bottom="'Volver a la página anterior'" @click="volverALaApp"><icon name="close" size="1.15rem" color="text-current" /></button>
     </span>
 
     <Menu id="chat-modos" ref="menu" :model="opciones" popup>

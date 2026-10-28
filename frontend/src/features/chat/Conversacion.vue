@@ -15,13 +15,20 @@
         <icon name="arrow-back" color="text-current" />
       </button>
       <template v-if="canal">
-        <ChatAvatar :id="canal.id" :nombre="canal.nombre" :grupo="canal.tipo === 'grupo'" :sistema="esSistema" :ambito="canal.contacto?.ambito" :foto="canal.contacto?.foto" :en-linea="enLinea" />
+        <ChatAvatar :id="canal.id" :nombre="canal.nombre" :grupo="canal.tipo === 'grupo'" :sistema="esSistema" :ambito="canal.contacto?.ambito" :foto="canal.tipo === 'grupo' ? canal.foto : canal.contacto?.foto" :en-linea="enLinea" />
         <div class="min-w-0">
           <div class="conv__nombre">{{ canal.nombre }}</div>
           <div class="conv__sub" :title="miembros">
             <span v-if="enLinea" class="conv__en-linea">En línea</span><span v-if="enLinea && subtitulo"> · </span>{{ subtitulo }}
           </div>
         </div>
+        <template v-if="canal.tipo === 'grupo'">
+          <button type="button" class="conv__foto-grupo tap-target" aria-label="Foto del grupo" aria-haspopup="true" aria-controls="conv-foto-grupo" v-tooltip.bottom="'Foto del grupo'" @click="menuFoto?.toggle($event)">
+            <icon name="photo-camera" size="1.05rem" color="text-current" />
+          </button>
+          <Menu id="conv-foto-grupo" ref="menuFoto" :model="opcionesFoto" popup />
+          <input ref="selectorFoto" type="file" accept="image/*" class="hidden" @change="alElegirFoto" />
+        </template>
       </template>
     </header>
 
@@ -98,6 +105,8 @@
 </template>
 
 <script setup lang="ts">
+import type { MenuItem } from "primevue/menuitem";
+import type Menu from "primevue/menu";
 import type { Envio } from "@/core/chat/api";
 import { useChatStore } from "@/core/chat/store";
 import { agrupar, horaCorta, segmentos, tono, ultimo, vistoPor } from "@/core/chat/modelo";
@@ -107,6 +116,7 @@ import ChatAvatar from "@/shared/chat/ChatAvatar.vue";
 import ArchivosMensaje from "./ArchivosMensaje.vue";
 import { appInstalada, useGestosMensajes, useVolverDesdeElBorde } from "./gestosTactiles";
 import HojaAcciones, { type AccionHoja } from "./HojaAcciones.vue";
+import { prepararArchivo } from "./imagen";
 import Redactor from "./Redactor.vue";
 import TarjetasMensaje from "./tarjetas/TarjetasMensaje.vue";
 import { useVentanaChat } from "./ventana";
@@ -137,6 +147,35 @@ const arrastrando = ref(false);
 const visor = reactive<{ fotos: Archivo[]; inicio: number }>({ fotos: [], inicio: 0 });
 /** Mensaje mantenido pulsado: sus acciones en la hoja. */
 const menuDe = ref<Mensaje | null>(null);
+/** Foto del grupo: menú del botón de la cabecera y el selector de archivo que abre. */
+const menuFoto = ref<InstanceType<typeof Menu> | null>(null);
+const selectorFoto = ref<HTMLInputElement | null>(null);
+const opcionesFoto = computed<MenuItem[]>(() => [
+  { label: "Cambiar foto", command: () => selectorFoto.value?.click() },
+  ...(canal.value?.foto ? [{ label: "Quitar foto", command: () => cambiarFotoGrupo(null) }] : []),
+]);
+
+async function alElegirFoto(e: Event) {
+  const input = e.target as HTMLInputElement;
+  const archivo = input.files?.[0];
+  input.value = "";
+  if (archivo) await cambiarFotoGrupo(archivo);
+}
+
+async function cambiarFotoGrupo(archivo: File | null) {
+  try {
+    if (archivo) {
+      const { blob, nombre } = await prepararArchivo(archivo);
+      await chat.fotoGrupo(props.canalId, blob, nombre);
+      notify.success("Foto del grupo actualizada.");
+    } else {
+      await chat.fotoGrupo(props.canalId, null);
+      notify.success("Foto del grupo quitada.");
+    }
+  } catch (e) {
+    notify.error(e instanceof Error ? e.message : String(e));
+  }
+}
 
 const canal = computed(() => chat.canal(props.canalId));
 const esSistema = computed(() => canal.value?.tipo === "sistema");
@@ -359,6 +398,18 @@ watch(
 @container chat (min-width: 40rem) {
   .conv__volver {
     display: none;
+  }
+}
+.conv__foto-grupo {
+  display: grid;
+  place-items: center;
+  flex: none;
+  margin-left: auto;
+  border-radius: 50%;
+  color: var(--p-surface-500);
+  &:hover {
+    color: var(--p-surface-800);
+    background: var(--p-surface-100);
   }
 }
 .conv__nombre {

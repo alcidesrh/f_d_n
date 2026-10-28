@@ -260,6 +260,12 @@ export const useChatStore = defineStore('chat', () => {
     return nuevo.id
   }
 
+  /** Cambia la foto de un grupo, o la quita (`imagen` null). Solo se toca `foto`: lo demás del canal sigue. */
+  async function fotoGrupo(id: number, imagen: Blob | null, nombre = 'foto.jpg') {
+    const actualizado = imagen ? await api.subirFotoGrupo(id, imagen, nombre) : await api.quitarFotoGrupo(id)
+    canales.value = canales.value.map((c) => (c.id === id ? { ...c, foto: actualizado.foto } : c))
+  }
+
   async function compartir(destinos: Destinos, adjuntos: Referencia[], texto = '') {
     const r = await api.compartir(destinos, adjuntos, texto)
     await refrescar(true)
@@ -269,6 +275,6 @@ export const useChatStore = defineStore('chat', () => {
 
   return {
     yo, canales, mensajes, completos, contactos, recursos, activo, listo, enVivo, enLinea, entrante, noLeidos, estaEnLinea,
-    canal, iniciar, detener, salirDeLinea, refrescar, cargar, abrir, cerrar, cargarAnteriores, leer, enviar, cargarContactos, cargarRecursos, directo, grupo, compartir,
+    canal, iniciar, detener, salirDeLinea, refrescar, cargar, abrir, cerrar, cargarAnteriores, leer, enviar, cargarContactos, cargarRecursos, directo, grupo, fotoGrupo, compartir,
   }
 })

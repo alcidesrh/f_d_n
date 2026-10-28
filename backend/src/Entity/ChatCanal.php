@@ -39,6 +39,10 @@ class ChatCanal
     #[ORM\Column]
     private \DateTimeImmutable $creadoEn;
 
+    /** Solo los grupos: ruta relativa de la foto en disco (`App\Chat\FotoGrupo`). */
+    #[ORM\Column(length: 120, nullable: true)]
+    private ?string $foto = null;
+
     /** Ordena la bandeja: la conversación con el último mensaje va arriba. */
     #[ORM\Column]
     private \DateTimeImmutable $actividad;
@@ -136,6 +140,16 @@ class ChatCanal
     public function getNombre(): ?string
     {
         return $this->nombre;
+    }
+
+    public function getFoto(): ?string
+    {
+        return $this->foto;
+    }
+
+    public function setFoto(?string $foto): void
+    {
+        $this->foto = $foto;
     }
 
     public function getCreadoPor(): ?Usuario

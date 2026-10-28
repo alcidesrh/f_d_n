@@ -19,6 +19,8 @@ export interface Canal {
   nombre: string
   /** El otro miembro, en los directos. */
   contacto: Perfil | null
+  /** Solo los grupos: foto (ruta firmada de la API) o null. */
+  foto?: string | null
   miembros: Perfil[]
   noLeidos: number
   leidoHasta: number
