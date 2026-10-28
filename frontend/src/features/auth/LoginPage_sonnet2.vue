@@ -29,7 +29,7 @@
 
         <FormKit type="form" :actions="false" @submit-invalid="shake" @submit="handleSubmit">
           <div class="grid gap-5">
-            <FormKit type="InputText" name="username" validation="required" prepend="person" autocapitalize="none" autocomplete="username" autocorrect="off" spellcheck="false" :style="{ textTransform: 'none' }" placeholder="Usuario" fluid />
+            <FormKit type="InputText" name="username" validation="required" prepend="person" autocapitalize="none" autocorrect="off" spellcheck="false" :style="{ textTransform: 'none' }" placeholder="Usuario" fluid />
             <FormKit type="Password" name="password" validation="required" placeholder="Contraseña" fluid />
           </div>
           <Button type="submit" label="Continuar" icon="pi pi-arrow-right" icon-pos="right" :loading="loading" class="lg-submit" />
@@ -131,9 +131,7 @@ async function handleSubmit(credentials: { username: string; password: string },
   .lg-hero-shade {
     position: absolute;
     inset: 0;
-    background:
-      linear-gradient(180deg, rgb(8 14 32 / 0.65) 0%, rgb(8 14 32 / 0.35) 40%, rgb(8 14 32 / 0.92) 100%),
-      linear-gradient(90deg, rgb(12 30 90 / 0.55), transparent 70%);
+    background: linear-gradient(180deg, rgb(8 14 32 / 0.65) 0%, rgb(8 14 32 / 0.35) 40%, rgb(8 14 32 / 0.92) 100%), linear-gradient(90deg, rgb(12 30 90 / 0.55), transparent 70%);
   }
   & > :not(.lg-hero-shade) {
     position: relative;

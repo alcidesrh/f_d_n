@@ -21,7 +21,11 @@
       <icon name="keyboard-arrow-down" size="1rem" color="text-current" class="modo__flecha" />
     </button>
 
-    <span v-if="!ventana.movil" class="barra__controles">
+    <span v-if="ventana.movil" class="barra__controles">
+      <button type="button" class="control" aria-label="Cerrar" v-tooltip.bottom="'Cerrar'" @click="volverALaApp"><icon name="close" size="1.15rem" color="text-current" /></button>
+    </span>
+
+    <span v-else class="barra__controles">
       <template v-if="ventana.esVentana && ventana.minimizada">
         <button type="button" class="control" aria-label="Restaurar" v-tooltip.bottom="'Restaurar'" @click="ventana.restaurar()"><icon name="keyboard-arrow-up" size="1.2rem" color="text-current" /></button>
       </template>
