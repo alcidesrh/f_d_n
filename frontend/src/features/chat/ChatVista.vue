@@ -8,7 +8,7 @@
   <div class="vista">
     <div class="vista__rejilla" :class="{ 'vista--abierta': canal }">
       <Bandeja class="vista__bandeja" :activo="canal" @abrir="emit('abrir', $event)" />
-      <Conversacion v-if="canal" :key="canal" :canal-id="canal" :adjuntar="adjuntar" :activa="activa" class="vista__conversacion" @volver="emit('abrir', null)" @adjuntado="emit('adjuntado')" />
+      <Conversacion v-if="canal" :key="canal" :canal-id="canal" :adjuntar="adjuntar" :activa="activa" class="vista__conversacion" @volver="emit('abrir', null)" @abrir="emit('abrir', $event)" @adjuntado="emit('adjuntado')" />
       <div v-else class="vista__portada">
         <icon name="forum-outline" size="3rem" color="text-current" />
         <h2>Comunicación interna</h2>

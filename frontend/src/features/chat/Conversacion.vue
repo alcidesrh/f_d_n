@@ -5,9 +5,9 @@
   llega algo mientras se lee más arriba, ofrece bajar en lugar de saltar. Se
   pueden soltar archivos encima. Los avisos del sistema son de solo lectura,
   y en un grupo dirigido solo escriben el dueño y los que él elige. Cada
-  mensaje tiene sus acciones (responder, reenviar, editar el propio, copiar,
-  eliminar); editar carga el mensaje en el redactor y lo enviado sale como
-  respuesta al original, marcado "editado".
+  mensaje tiene sus acciones (responder, en un grupo responder en privado,
+  reenviar, editar el propio, copiar, eliminar); editar carga el mensaje en
+  el redactor y lo enviado sale como respuesta al original, marcado "editado".
   Con el dedo: deslizar un mensaje a la derecha lo responde, mantenerlo
   pulsado abre sus acciones y, con la app instalada en el teléfono, deslizar
   desde el borde izquierdo vuelve a la bandeja (`gestosTactiles.ts`).
@@ -59,31 +59,33 @@
             <div v-for="r in b.rachas" :key="r.mensajes[0]!.id" class="racha" :class="{ 'racha--mia': r.mio }">
               <ChatAvatar v-if="!r.mio && canal?.tipo === 'grupo'" :id="r.autor?.id ?? 0" :nombre="r.autor?.nombre ?? 'Sistema'" :foto="r.autor?.foto" tamano="sm" class="racha__avatar" />
               <div class="racha__mensajes">
-                <span v-if="!r.mio && canal?.tipo === 'grupo'" class="racha__autor" :style="{ '--tono': tono(r.autor?.id ?? 0) * 45 }">{{ r.autor?.nombre ?? "Sistema" }}<span v-if="r.via" class="racha__via" v-tooltip.top="`Escribe como miembro del grupo ${r.via.nombre}`"><icon name="groups-outline" size=".8rem" color="text-current" />{{ r.via.nombre }}</span></span>
+                <span v-if="!r.mio && canal?.tipo === 'grupo'" class="racha__autor" :style="{ '--tono': tono(r.autor?.id ?? 0) * 45 }"
+                  >{{ r.autor?.nombre ?? "Sistema" }}<span v-if="r.via" class="racha__via" v-tooltip.top="`Escribe como miembro del grupo ${r.via.nombre}`"><icon name="groups-outline" size=".8rem" color="text-current" />{{ r.via.nombre }}</span></span
+                >
                 <div v-for="m in r.mensajes" :key="m.id" class="mensaje" :data-id="m.id">
                   <span v-if="puedeEscribir" class="mensaje__deslizar" aria-hidden="true"><icon name="reply" size="1.1rem" color="text-current" /></span>
                   <div :id="`m-${m.id}`" class="burbuja" :class="{ 'burbuja--suelta': !m.texto && !m.respuesta && !m.reenviado && !m.eliminado, 'burbuja--eliminada': m.eliminado, 'burbuja--resaltada': resaltado === m.id }">
                     <p v-if="m.eliminado" class="burbuja__eliminado"><icon name="block" size=".95rem" color="text-current" />Se eliminó este mensaje</p>
                     <template v-else>
-                    <span v-if="m.reenviado" class="burbuja__marca"><icon name="forward" size=".85rem" color="text-current" />Reenviado</span>
-                    <button v-if="m.respuesta" type="button" class="burbuja__cita" @click="irA(m.respuesta.id)">
-                      <span class="burbuja__cita-autor">{{ m.respuesta.autor }}</span>
-                      <span class="burbuja__cita-texto">{{ m.respuesta.extracto }}</span>
-                    </button>
-                    <ArchivosMensaje v-if="m.archivos.length" :archivos="m.archivos" @ver="verFotos" />
-                    <p v-if="m.texto" class="burbuja__texto">
-                      <template v-for="(s, i) in segmentos(m.texto)" :key="i">
-                        <a v-if="'url' in s" :href="s.url" target="_blank" rel="noopener noreferrer">{{ s.url }}</a>
-                        <template v-else>{{ s.texto }}</template>
-                      </template>
-                    </p>
-                    <TarjetasMensaje v-if="m.adjuntos.length" :adjuntos="m.adjuntos" class="burbuja__tarjetas" />
+                      <span v-if="m.reenviado" class="burbuja__marca"><icon name="forward" size=".85rem" color="text-current" />Reenviado</span>
+                      <button v-if="m.respuesta" type="button" class="burbuja__cita" @click="irA(m.respuesta.id)">
+                        <span class="burbuja__cita-autor">{{ m.respuesta.autor }}</span>
+                        <span class="burbuja__cita-texto">{{ m.respuesta.extracto }}</span>
+                      </button>
+                      <ArchivosMensaje v-if="m.archivos.length" :archivos="m.archivos" @ver="verFotos" />
+                      <p v-if="m.texto" class="burbuja__texto">
+                        <template v-for="(s, i) in segmentos(m.texto)" :key="i">
+                          <a v-if="'url' in s" :href="s.url" target="_blank" rel="noopener noreferrer">{{ s.url }}</a>
+                          <template v-else>{{ s.texto }}</template>
+                        </template>
+                      </p>
+                      <TarjetasMensaje v-if="m.adjuntos.length" :adjuntos="m.adjuntos" class="burbuja__tarjetas" />
                     </template>
                     <span class="burbuja__pie">
                       <span v-if="m.editado" class="burbuja__editado">editado</span>
                       <time :datetime="m.fecha">{{ horaCorta(m.fecha) }}</time>
                       <span v-if="r.mio" v-tooltip.left="tituloVisto(m.id)" class="burbuja__visto" :class="{ 'burbuja__visto--si': visto(m.id).todos }" :aria-label="tituloVisto(m.id)">
-                        <icon :name="visto(m.id).todos ? 'done-all' : 'done'" size=".95rem" color="text-current" />
+                        <icon :name="visto(m.id).todos ? 'done-all' : 'done'" size=".95rem" color="text-current" :weight="500" />
                       </span>
                     </span>
                   </div>
@@ -155,7 +157,7 @@ import VisorImagen from "./VisorImagen.vue";
 
 /** `activa`: a la vista (minimizada o cerrada no marca leído lo que llega). */
 const props = withDefaults(defineProps<{ canalId: number; adjuntar?: Referencia | null; activa?: boolean }>(), { adjuntar: null, activa: true });
-const emit = defineEmits<{ volver: []; adjuntado: [] }>();
+const emit = defineEmits<{ volver: []; adjuntado: []; abrir: [canal: number] }>();
 
 const AMBITOS = { administracion: "Administración", estacion: "Estación", agencia: "Agencia" } as const;
 /** Distancia al final (px) para considerar que se está leyendo lo último. */
@@ -189,10 +191,7 @@ const menuDe = ref<Mensaje | null>(null);
 /** Foto del grupo: menú del botón de la cabecera y el selector de archivo que abre. */
 const menuFoto = ref<InstanceType<typeof Menu> | null>(null);
 const selectorFoto = ref<HTMLInputElement | null>(null);
-const opcionesFoto = computed<MenuItem[]>(() => [
-  { label: "Cambiar foto", command: () => selectorFoto.value?.click() },
-  ...(canal.value?.foto ? [{ label: "Quitar foto", command: () => cambiarFotoGrupo(null) }] : []),
-]);
+const opcionesFoto = computed<MenuItem[]>(() => [{ label: "Cambiar foto", command: () => selectorFoto.value?.click() }, ...(canal.value?.foto ? [{ label: "Quitar foto", command: () => cambiarFotoGrupo(null) }] : [])]);
 
 async function alElegirFoto(e: Event) {
   const input = e.target as HTMLInputElement;
@@ -307,6 +306,31 @@ function responder(m: Mensaje) {
   redactor.value?.enfocar();
 }
 
+/**
+ * Reenvía el mensaje a un directo con su autor (lo crea si no existe) y abre
+ * ese directo con el reenvío citado, para responderle en privado.
+ */
+async function responderEnPrivado(m: Mensaje) {
+  if (!m.autor) return;
+  try {
+    const [directo] = await chat.reenviar(m.id, { usuarios: [m.autor.id], canales: [] });
+    if (directo === undefined) return;
+    ventana.citarAlAbrir = directo;
+    emit("abrir", directo);
+  } catch (e) {
+    notify.error(e instanceof Error ? e.message : String(e));
+  }
+}
+
+/** Al abrir el directo de «Responder en privado», cita el reenvío recién hecho. */
+function citarReenvio() {
+  const citar = ventana.citarAlAbrir === props.canalId;
+  ventana.citarAlAbrir = null;
+  if (!citar) return;
+  const reenvio = [...lista.value].reverse().find((x) => x.reenviado && x.autor?.id === chat.yo?.id);
+  if (reenvio) responder(reenvio);
+}
+
 function editar(m: Mensaje) {
   respondiendo.value = null;
   editando.value = m;
@@ -334,14 +358,7 @@ function eliminar(m: Mensaje) {
 function acciones(m: Mensaje): AccionHoja[] {
   if (m.eliminado) return [];
   const mio = m.autor !== null && m.autor.id === chat.yo?.id;
-  return [
-    ...(puedeEscribir.value ? [{ etiqueta: "Responder", icono: "reply", accion: () => responder(m) }] : []),
-    ...(!esSistema.value ? [{ etiqueta: "Reenviar", icono: "forward", accion: () => (reenviando.value = m) }] : []),
-    ...(mio && puedeEscribir.value ? [{ etiqueta: "Editar", icono: "edit-outline", accion: () => editar(m) }] : []),
-    ...(m.texto ? [{ etiqueta: "Copiar texto", icono: "content-copy-outline", accion: () => void copiar(m.texto) }] : []),
-    ...(m.respuesta ? [{ etiqueta: m.editado ? "Ver el original" : "Ver el mensaje citado", icono: "format-quote-outline", accion: () => void irA(m.respuesta!.id) }] : []),
-    ...(m.autor && (mio || canal.value?.administro) ? [{ etiqueta: "Eliminar", icono: "delete-outline", peligro: true, accion: () => eliminar(m) }] : []),
-  ];
+  return [...(puedeEscribir.value ? [{ etiqueta: "Responder", icono: "reply", accion: () => responder(m) }] : []), ...(canal.value?.tipo === "grupo" && m.autor && !mio ? [{ etiqueta: "Responder en privado", icono: "lock-outline", accion: () => void responderEnPrivado(m) }] : []), ...(!esSistema.value ? [{ etiqueta: "Reenviar", icono: "forward", accion: () => (reenviando.value = m) }] : []), ...(mio && puedeEscribir.value ? [{ etiqueta: "Editar", icono: "edit-outline", accion: () => editar(m) }] : []), ...(m.texto ? [{ etiqueta: "Copiar texto", icono: "content-copy-outline", accion: () => void copiar(m.texto) }] : []), ...(m.respuesta ? [{ etiqueta: m.editado ? "Ver el original" : "Ver el mensaje citado", icono: "format-quote-outline", accion: () => void irA(m.respuesta!.id) }] : []), ...(m.autor && (mio || canal.value?.administro) ? [{ etiqueta: "Eliminar", icono: "delete-outline", peligro: true, accion: () => eliminar(m) }] : [])];
 }
 
 const opcionesMensaje = computed<MenuItem[]>(() => (accionesDe.value ? acciones(accionesDe.value) : []).map((a) => ({ label: a.etiqueta, icono: a.icono, peligro: a.peligro, command: a.accion })));
@@ -360,7 +377,11 @@ useGestosMensajes(lienzo, {
   },
   acciones: (id) => (menuDe.value = mensajePorId(id) ?? null),
 });
-useVolverDesdeElBorde(raiz, () => ventana.movil && appInstalada(), () => emit("volver"));
+useVolverDesdeElBorde(
+  raiz,
+  () => ventana.movil && appInstalada(),
+  () => emit("volver"),
+);
 
 const accionesMenu = computed<AccionHoja[]>(() => (menuDe.value ? acciones(menuDe.value) : []));
 
@@ -417,6 +438,7 @@ onMounted(async () => {
     return;
   }
   cargado.value = true;
+  citarReenvio();
   bajar();
   recibirAdjunto();
   if (props.activa) redactor.value?.enfocar();
@@ -455,7 +477,7 @@ watch(
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  background: var(--p-surface-100);
+  background: var(--p-gray-100);
 }
 .conv__cabeza {
   display: flex;
@@ -639,6 +661,9 @@ watch(
   max-width: 100%;
   min-width: 0;
 }
+.racha--mia .mensaje {
+  flex-direction: row-reverse;
+}
 /* Aparece a la izquierda mientras se desliza el mensaje para responderlo (`--arrastre` 0 → 1). */
 .mensaje__deslizar {
   position: absolute;
@@ -655,9 +680,6 @@ watch(
   opacity: var(--arrastre, 0);
   transform: translateY(-50%) scale(calc(0.6 + var(--arrastre, 0) * 0.4));
   pointer-events: none;
-}
-.racha--mia .mensaje {
-  flex-direction: row-reverse;
 }
 .mensaje__acciones {
   display: flex;
@@ -718,7 +740,7 @@ watch(
   padding: 0.5rem 0.8rem 0.35rem;
   border-radius: var(--radio);
   color: var(--p-surface-800);
-  background: var(--p-surface-50);
+  background: var(--p-surface-0);
   /*background: var(--p-content-background);*/
   box-shadow: 0 1px 1.5px rgb(0 0 0 / 0.06);
   animation: entra 0.18s var(--ease);
@@ -730,9 +752,10 @@ watch(
 .racha:not(.racha--mia) .mensaje + .mensaje .burbuja {
   border-top-left-radius: 0.35rem;
 }
+/* Mis mensajes: verde de WhatsApp, a la derecha; el texto oscuro se mantiene también en el tema oscuro. */
 .racha--mia .burbuja {
-  color: var(--p-primary-contrast-color);
-  background: var(--p-primary-color);
+  color: #111b21;
+  background: #d9fdd3;
 }
 .racha--mia .mensaje:not(:last-child) .burbuja {
   border-bottom-right-radius: 0.35rem;
@@ -798,7 +821,7 @@ watch(
   cursor: pointer;
 }
 .racha--mia .burbuja__cita {
-  background: rgb(255 255 255 / 0.16);
+  background: rgb(0 0 0 / 0.06);
 }
 .burbuja__cita-autor {
   font-size: 0.72rem;

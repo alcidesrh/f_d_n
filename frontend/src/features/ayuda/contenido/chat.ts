@@ -51,11 +51,12 @@ export const guiasChat: Guia[] = [
     pasos: [
       'En la computadora: pase el ratón sobre un mensaje y use ⋮ para ver sus acciones. En el teléfono: manténgalo pulsado.',
       'Al responder, el mensaje citado aparece encima de su respuesta.',
+      'En un grupo, «Responder en privado» reenvía el mensaje a un chat directo con su autor, ya citado en el redactor, para contestarle aparte.',
       '«Reenviar» lo manda tal cual (texto, fotos y registros) a otras personas o grupos, marcado «Reenviado».',
       '«Editar» (solo los suyos) lo carga en el redactor; al enviarlo, la versión corregida sale como respuesta al original, marcada «editado». El original no cambia.',
       '«Eliminar» lo borra para todos y deja «Se eliminó este mensaje». El dueño de un grupo puede eliminar los mensajes de cualquiera en su grupo.',
     ],
-    palabras: ['citar', 'responder', 'copiar', 'reply', 'reenviar', 'editar', 'eliminar', 'borrar mensaje'],
+    palabras: ['citar', 'responder', 'responder en privado', 'privado', 'copiar', 'reply', 'reenviar', 'editar', 'eliminar', 'borrar mensaje'],
   },
   {
     id: 'adjuntar-fotos-y-archivos',

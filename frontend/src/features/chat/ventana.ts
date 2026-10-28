@@ -35,6 +35,8 @@ export const useVentanaChat = defineStore(
     const adjuntar = ref<Referencia | null>(null)
     /** Última página fuera del chat: a ella se vuelve al pasar de centro a ventana. */
     const pagina = ref<string | null>(null)
+    /** Directo recién abierto por «Responder en privado»: su conversación cita el reenvío al montarse. No se persiste. */
+    const citarAlAbrir = ref<number | null>(null)
     /** Sube con cada `invocar()` estando ya a la vista: la ventana llama la atención. */
     const llamado = ref(0)
 
@@ -75,7 +77,7 @@ export const useVentanaChat = defineStore(
     }
     const cerrar = () => esVentana.value && (abierta.value = false)
 
-    return { modo, abierta, pagina, minimizada, maximizada, flotante, canal, adjuntar, llamado, movil, esVentana, aLaVista, abrir, invocar, cambiarModo, minimizar, restaurar, alternarMaximizada, cerrar }
+    return { modo, abierta, pagina, minimizada, maximizada, flotante, canal, adjuntar, citarAlAbrir, llamado, movil, esVentana, aLaVista, abrir, invocar, cambiarModo, minimizar, restaurar, alternarMaximizada, cerrar }
   },
   { persist: { pick: ['modo', 'abierta', 'minimizada', 'maximizada', 'flotante', 'canal'] } },
 )
