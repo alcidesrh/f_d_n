@@ -11,7 +11,7 @@ import { suscribir } from '@/core/realtime'
 import * as api from './api'
 import { revisarPush } from './push'
 import { aplicarAviso, aplicarPresencia, totalNoLeidos, ultimo, unir } from './modelo'
-import type { Aviso, Canal, Destinos, Mensaje, Perfil, Recurso, Referencia } from './types'
+import type { Aviso, Canal, Destinos, Mensaje, ModoGrupo, Perfil, Recurso, Referencia } from './types'
 
 
 const RESPALDO_MS = 30_000
@@ -169,6 +169,10 @@ export const useChatStore = defineStore('chat', () => {
     const despues = aplicarAviso(canales.value, aviso, yo.value?.id ?? null, leyendo())
     if (despues) canales.value = despues
     else await refrescar(true)
+    if (aviso.tipo === 'cambio') {
+      if (mensajes.value[aviso.canal]) await releer(aviso.canal, aviso.mensaje)
+      return
+    }
     if (aviso.tipo !== 'mensaje') return
     if (mensajes.value[aviso.canal]) await traerNuevos(aviso.canal)
     if (aviso.autor?.id === yo.value?.id) return
@@ -180,6 +184,13 @@ export const useChatStore = defineStore('chat', () => {
     const actuales = mensajes.value[id] ?? []
     const nuevos = await api.fetchMensajes(id, { despues: ultimo(actuales)?.id }).catch(() => [])
     if (nuevos.length) mensajes.value[id] = unir(mensajes.value[id] ?? [], nuevos)
+  }
+
+  /** Vuelve a traer un mensaje que cambió (eliminado), con la página que termina en él. */
+  async function releer(id: number, mensaje: number) {
+    const pagina = await api.fetchMensajes(id, { antes: mensaje + 1 }).catch(() => [])
+    const cambiados = pagina.filter((m) => mensajes.value[id]?.some((x) => x.id === m.id))
+    if (cambiados.length) mensajes.value[id] = unir(mensajes.value[id] ?? [], cambiados)
   }
 
   /** Trae los últimos mensajes del canal (o los nuevos, si ya los tenía) sin marcarlo leído. */
@@ -254,10 +265,40 @@ export const useChatStore = defineStore('chat', () => {
     return nuevo.id
   }
 
-  async function grupo(nombre: string, miembros: number[]) {
-    const nuevo = await api.crearGrupo(nombre, miembros)
+  async function grupo(nombre: string, miembros: number[], modo: ModoGrupo = 'abierto') {
+    const nuevo = await api.crearGrupo(nombre, miembros, modo)
     canales.value = [nuevo, ...canales.value]
     return nuevo.id
+  }
+
+  /** Guarda la edición del grupo; conserva lo que la bandeja sabe y el editor no trae (no leídos, último). */
+  async function editarGrupo(id: number, edicion: api.EdicionGrupo) {
+    const actualizado = await api.editarGrupo(id, edicion)
+    canales.value = canales.value.map((c) => (c.id === id ? { ...actualizado, noLeidos: c.noLeidos, ultimo: c.ultimo } : c))
+  }
+
+  /** Deja el grupo; si sigue en él por un grupo miembro, lo dice. */
+  async function salirDeGrupo(id: number) {
+    const { sigue } = await api.salirDeGrupo(id)
+    if (sigue) await refrescar(true)
+    else {
+      canales.value = canales.value.filter((c) => c.id !== id)
+      delete mensajes.value[id]
+    }
+    return sigue
+  }
+
+  async function reenviar(mensaje: number, destinos: Destinos) {
+    const r = await api.reenviar(mensaje, destinos)
+    await refrescar(true)
+    for (const id of r.canales) if (mensajes.value[id]) await traerNuevos(id)
+    return r.canales
+  }
+
+  async function eliminar(mensaje: Mensaje) {
+    const m = await api.eliminarMensaje(mensaje.id)
+    mensajes.value[m.canal] = unir(mensajes.value[m.canal] ?? [], [m])
+    if (canal(m.canal)?.ultimo?.id === m.id) await refrescar(true)
   }
 
   /** Cambia la foto de un grupo, o la quita (`imagen` null). Solo se toca `foto`: lo demás del canal sigue. */
@@ -275,6 +316,6 @@ export const useChatStore = defineStore('chat', () => {
 
   return {
     yo, canales, mensajes, completos, contactos, recursos, activo, listo, enVivo, enLinea, entrante, noLeidos, estaEnLinea,
-    canal, iniciar, detener, salirDeLinea, refrescar, cargar, abrir, cerrar, cargarAnteriores, leer, enviar, cargarContactos, cargarRecursos, directo, grupo, fotoGrupo, compartir,
+    canal, iniciar, detener, salirDeLinea, refrescar, cargar, abrir, cerrar, cargarAnteriores, leer, enviar, cargarContactos, cargarRecursos, directo, grupo, editarGrupo, salirDeGrupo, fotoGrupo, compartir, reenviar, eliminar,
   }
 })

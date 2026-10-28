@@ -319,7 +319,7 @@ Texto + ícono + destino: una ruta de vue-router (`VueRoute`), un **enlace** (`p
 _Avoid_: opción
 Modelo: nuevo
 **Conversación** (`ChatCanal`):
-Chat interno: `directo` (dos usuarios, una por par) o `grupo` (con nombre). Una agencia solo conversa con su gente y con la administración (`App\Chat\Directorio`, ADR-026).
+Chat interno: `directo` (dos usuarios, una por par) o `grupo` (con nombre). Una agencia solo conversa con su gente y con la administración (`App\Chat\Directorio`, ADR-026). Un grupo tiene **dueño** (quien lo creó, lo edita) y es **abierto** (todos escriben) o **dirigido** (todos reciben; escriben el dueño y los **emisores** que él elige). Un grupo abierto puede ser **grupo miembro** de otro (`ChatSubgrupo`): sus miembros llegan "por" él (`via`).
 _Avoid_: grupo de WhatsApp
 Modelo: nuevo
 **Tarjeta** (chat):

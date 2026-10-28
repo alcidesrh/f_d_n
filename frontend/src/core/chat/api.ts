@@ -1,8 +1,8 @@
 /** Transporte del chat interno (`/api/chat/*`, ADR-026). */
 import { config } from '@/core/config'
-import { HttpError, http } from '@/core/http'
+import { HttpError, http, request } from '@/core/http'
 import { useSessionStore } from '@/core/auth/session'
-import type { Archivo, Bandeja, Canal, Destinos, Mensaje, Perfil, Recurso, Referencia } from './types'
+import type { Archivo, Bandeja, Canal, Destinos, Mensaje, ModoGrupo, Perfil, Recurso, Referencia } from './types'
 
 const BASE = '/chat'
 const fondo = { silent: true } as const
@@ -26,7 +26,23 @@ export function salirDeLinea(conexion: string) {
 }
 
 export const abrirDirecto = (usuario: number) => http.post<Canal>(`${BASE}/canales/directo`, { usuario })
-export const crearGrupo = (nombre: string, miembros: number[]) => http.post<Canal>(`${BASE}/canales/grupo`, { nombre, miembros })
+export const crearGrupo = (nombre: string, miembros: number[], modo: ModoGrupo = 'abierto') => http.post<Canal>(`${BASE}/canales/grupo`, { nombre, miembros, modo })
+
+/** El estado completo del grupo tal como queda (solo su dueño). */
+export interface EdicionGrupo {
+  nombre: string
+  modo: ModoGrupo
+  /** Miembros por sí mismos. */
+  miembros: number[]
+  /** Los que escriben en un dirigido. */
+  emisores: number[]
+  subgrupos: { id: number; emisor: boolean }[]
+}
+
+export const editarGrupo = (canal: number, edicion: EdicionGrupo) => request<Canal>(`${BASE}/canales/${canal}`, { method: 'PUT', body: edicion })
+
+/** Dejar el grupo; `sigue`: sigue en él por un grupo miembro. */
+export const salirDeGrupo = (canal: number) => http.post<{ sigue: boolean }>(`${BASE}/canales/${canal}/salir`, {})
 
 /** Quita la foto del grupo. */
 export const quitarFotoGrupo = (canal: number) => http.delete<Canal>(`${BASE}/canales/${canal}/foto`, fondo)
@@ -64,6 +80,10 @@ export interface Envio {
   /** Ids de `subirArchivo`. */
   archivos?: number[]
   respuestaA?: number | null
+  /** Corrige este mensaje propio: el nuevo sale como respuesta a él, "editado". */
+  edita?: number | null
+  /** Archivos de `edita` que siguen en la versión editada. */
+  conservar?: number[]
 }
 
 export const escribir = (canal: number, envio: Envio) => http.post<Mensaje>(`${BASE}/canales/${canal}/mensajes`, envio, fondo)
@@ -100,6 +120,11 @@ export function subirArchivo(archivo: Blob, nombre: string, alAvanzar?: (fraccio
     xhr.send(datos)
   })
 }
+
+export const reenviar = (mensaje: number, destinos: Destinos) => http.post<{ canales: number[] }>(`${BASE}/mensajes/${mensaje}/reenviar`, destinos)
+
+/** Elimina el mensaje para todos (el propio, o cualquiera si administro el grupo). */
+export const eliminarMensaje = (mensaje: number) => http.delete<Mensaje>(`${BASE}/mensajes/${mensaje}`)
 
 export const marcarLeido = (canal: number, hasta: number) => http.post(`${BASE}/canales/${canal}/leido`, { hasta }, fondo)
 

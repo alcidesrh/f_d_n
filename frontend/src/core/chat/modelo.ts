@@ -14,6 +14,8 @@ const DIA_MS = 86_400_000
 
 export interface Racha {
   autor: Perfil | null
+  /** El grupo miembro por el que escribió (se muestra junto a su nombre). */
+  via: Mensaje['via']
   mio: boolean
   mensajes: Mensaje[]
 }
@@ -43,9 +45,10 @@ export function agrupar(mensajes: Mensaje[], yo: number | null, ahora = new Date
       previo = null
     }
     const racha = bloque.rachas[bloque.rachas.length - 1]
-    const sigue = racha && previo && (previo.autor?.id ?? null) === (m.autor?.id ?? null) && fecha.getTime() - new Date(previo.fecha).getTime() < RACHA_MS
+    const sigue =
+      racha && previo && (previo.autor?.id ?? null) === (m.autor?.id ?? null) && (previo.via?.id ?? null) === (m.via?.id ?? null) && fecha.getTime() - new Date(previo.fecha).getTime() < RACHA_MS
     if (sigue) racha.mensajes.push(m)
-    else bloque.rachas.push({ autor: m.autor, mio: m.autor !== null && m.autor.id === yo, mensajes: [m] })
+    else bloque.rachas.push({ autor: m.autor, via: m.via, mio: m.autor !== null && m.autor.id === yo, mensajes: [m] })
     previo = m
   }
   return bloques
@@ -94,14 +97,15 @@ export const ordenarCanales = (canales: Canal[]) => [...canales].sort((a, b) => 
 export const totalNoLeidos = (canales: Canal[]) => canales.reduce((n, c) => n + c.noLeidos, 0)
 
 /**
- * Bandeja tras un aviso. Devuelve null si el canal no está en la bandeja
- * (hay que recargarla). `leyendo`: el canal está abierto y visible, así que
+ * Bandeja tras un aviso. Devuelve null si hay que recargarla: el canal no
+ * está en la bandeja, o cambió (`canal`: nombre, miembros, modo…; `cambio`:
+ * puede haber cambiado el último mensaje). `leyendo`: el canal está abierto y visible, así que
  * el mensaje no cuenta como no leído.
  */
 export function aplicarAviso(canales: Canal[], aviso: Exclude<Aviso, { tipo: 'presencia' | 'acceso' | 'autorizacion' }>, yo: number | null, leyendo: number | null): Canal[] | null {
   const canal = canales.find((c) => c.id === aviso.canal)
   if (!canal) return aviso.tipo === 'leido' ? canales : null
-  if (aviso.tipo === 'canal') return canales
+  if (aviso.tipo === 'canal' || aviso.tipo === 'cambio') return null
   if (aviso.tipo === 'leido') {
     if (aviso.usuario === yo) {
       return canales.map((c) => (c.id === aviso.canal ? { ...c, noLeidos: 0, leidoHasta: Math.max(c.leidoHasta, aviso.hasta) } : c))
@@ -155,6 +159,14 @@ export function vistoPor(canal: Canal, id: number): { todos: boolean; quienes: P
   const otros = canal.miembros.filter((m) => hasta.has(m.id))
   const quienes = otros.filter((m) => (hasta.get(m.id) ?? 0) >= id)
   return { todos: otros.length > 0 && quienes.length === otros.length, quienes }
+}
+
+/** Vista previa de un mensaje (citas, hoja de acciones, reenviar). */
+export function extractoMensaje(m: Mensaje): string {
+  if (m.eliminado) return 'Se eliminó este mensaje'
+  if (m.texto) return m.texto
+  if (m.archivos.length) return m.archivos.every((a) => a.imagen) ? 'Foto' : m.archivos[0]!.nombre
+  return m.adjuntos.length ? `${m.adjuntos.length} registro(s)` : ''
 }
 
 /** `1536` → `1.5 KB`. */

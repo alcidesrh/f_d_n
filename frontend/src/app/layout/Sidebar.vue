@@ -15,7 +15,7 @@
         <icon name="left-panel-close" size="1.15rem" color="text-inherit" :class="{ '-scale-x-100': sidebarStore.side != 'left' }" />
       </button>
     </div>
-    <nav class="mt-2">
+    <nav class="mt-3">
       <slot name="menu-content"> </slot>
     </nav>
   </aside>

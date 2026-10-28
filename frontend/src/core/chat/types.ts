@@ -12,6 +12,26 @@ export interface Perfil {
   foto?: string | null
 }
 
+/** Miembro de un canal: en un grupo, por sí mismo o por un grupo miembro (`via`). */
+export interface Miembro extends Perfil {
+  /** Id del grupo miembro por el que está; null = por sí mismo. */
+  via: number | null
+  /** En un grupo dirigido: el dueño lo eligió para escribir. */
+  emisor: boolean
+}
+
+/** Grupo abierto que es miembro de otro grupo. */
+export interface Subgrupo {
+  id: number
+  nombre: string
+  foto: string | null
+  /** En un grupo dirigido: sus miembros escriben. */
+  emisor: boolean
+}
+
+/** Abierto: todos escriben. Dirigido: todos reciben; escriben el dueño y los emisores. */
+export type ModoGrupo = 'abierto' | 'dirigido'
+
 export interface Canal {
   id: number
   /** `sistema`: avisos automáticos del usuario, solo lectura. */
@@ -21,7 +41,19 @@ export interface Canal {
   contacto: Perfil | null
   /** Solo los grupos: foto (ruta firmada de la API) o null. */
   foto?: string | null
-  miembros: Perfil[]
+  miembros: Miembro[]
+  /** Solo los grupos. */
+  modo: ModoGrupo | null
+  /** Solo los grupos: quien lo creó y lo edita. */
+  dueno: number | null
+  /** Puedo editar el grupo (nombre, modo, miembros). */
+  administro: boolean
+  /** Puedo escribir (falso en los avisos del sistema y en un dirigido si no soy emisor). */
+  puedeEscribir: boolean
+  /** Grupos abiertos que son miembros de este. */
+  subgrupos: Subgrupo[]
+  /** Este grupo es miembro de otro (entonces solo puede ser abierto y no tiene grupos miembros). */
+  esSubgrupo: boolean
   noLeidos: number
   leidoHasta: number
   /** Hasta qué mensaje leyó cada uno de los demás miembros (el "visto"). */
@@ -79,8 +111,15 @@ export interface Mensaje {
   fecha: string
   adjuntos: Adjunto[]
   archivos: Archivo[]
-  /** El mensaje al que responde. */
+  /** El mensaje al que responde (si es una edición, el que corrige). */
   respuesta: { id: number; autor: string; extracto: string } | null
+  /** El grupo miembro por el que el autor estaba en el grupo al escribir. */
+  via: { id: number; nombre: string } | null
+  /** Corrige al mensaje de `respuesta`. */
+  editado: boolean
+  reenviado: boolean
+  /** Eliminado para todos: sin texto, registros ni archivos. */
+  eliminado: boolean
 }
 
 export interface Bandeja {
@@ -92,7 +131,10 @@ export interface Bandeja {
 export type Aviso =
   | { tipo: 'mensaje'; canal: number; mensaje: number; autor: Perfil | null; extracto: string }
   | { tipo: 'leido'; canal: number; usuario: number; hasta: number }
+  /** Un grupo cambió (nombre, foto, modo, miembros) o me agregaron o quitaron. */
   | { tipo: 'canal'; canal: number }
+  /** Se eliminó un mensaje. */
+  | { tipo: 'cambio'; canal: number; mensaje: number }
   | { tipo: 'presencia'; usuario: number; enLinea: boolean }
   /** Cambiaron sus roles, su alcance o su activación (ADR-039): el cliente vuelve a pedir lo que puede. */
   | { tipo: 'acceso' }

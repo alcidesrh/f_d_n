@@ -3,7 +3,11 @@
   fotos y documentos, lo compartido plegado por tipo, cita del mensaje al que
   responde y "visto" en los propios) y el redactor. Abre pegada al final; si
   llega algo mientras se lee más arriba, ofrece bajar en lugar de saltar. Se
-  pueden soltar archivos encima. Los avisos del sistema son de solo lectura.
+  pueden soltar archivos encima. Los avisos del sistema son de solo lectura,
+  y en un grupo dirigido solo escriben el dueño y los que él elige. Cada
+  mensaje tiene sus acciones (responder, reenviar, editar el propio, copiar,
+  eliminar); editar carga el mensaje en el redactor y lo enviado sale como
+  respuesta al original, marcado "editado".
   Con el dedo: deslizar un mensaje a la derecha lo responde, mantenerlo
   pulsado abre sus acciones y, con la app instalada en el teléfono, deslizar
   desde el borde izquierdo vuelve a la bandeja (`gestosTactiles.ts`).
@@ -19,11 +23,14 @@
         <div class="min-w-0">
           <div class="conv__nombre">{{ canal.nombre }}</div>
           <div class="conv__sub" :title="miembros">
-            <span v-if="enLinea" class="conv__en-linea">En línea</span><span v-if="enLinea && subtitulo"> · </span>{{ subtitulo }}
+            <span v-if="enLinea" class="conv__en-linea">En línea</span><span v-if="enLinea && subtitulo"> · </span><span v-if="canal.modo === 'dirigido'" class="conv__dirigido"><icon name="campaign-outline" size=".85rem" color="text-current" />Dirigido · </span>{{ subtitulo }}
           </div>
         </div>
         <template v-if="canal.tipo === 'grupo'">
-          <button type="button" class="conv__foto-grupo tap-target" aria-label="Foto del grupo" aria-haspopup="true" aria-controls="conv-foto-grupo" v-tooltip.bottom="'Foto del grupo'" @click="menuFoto?.toggle($event)">
+          <button type="button" class="conv__foto-grupo tap-target" :aria-label="canal.administro ? 'Editar grupo' : 'Información del grupo'" v-tooltip.bottom="canal.administro ? 'Editar grupo' : 'Información del grupo'" @click="editandoGrupo = true">
+            <icon :name="canal.administro ? 'edit-outline' : 'info-outline'" size="1.05rem" color="text-current" />
+          </button>
+          <button v-if="puedeCambiarFoto" type="button" class="conv__foto-grupo conv__foto-grupo--siguiente tap-target" aria-label="Foto del grupo" aria-haspopup="true" aria-controls="conv-foto-grupo" v-tooltip.bottom="'Foto del grupo'" @click="menuFoto?.toggle($event)">
             <icon name="photo-camera" size="1.05rem" color="text-current" />
           </button>
           <Menu id="conv-foto-grupo" ref="menuFoto" :model="opcionesFoto" popup />
@@ -52,10 +59,13 @@
             <div v-for="r in b.rachas" :key="r.mensajes[0]!.id" class="racha" :class="{ 'racha--mia': r.mio }">
               <ChatAvatar v-if="!r.mio && canal?.tipo === 'grupo'" :id="r.autor?.id ?? 0" :nombre="r.autor?.nombre ?? 'Sistema'" :foto="r.autor?.foto" tamano="sm" class="racha__avatar" />
               <div class="racha__mensajes">
-                <span v-if="!r.mio && canal?.tipo === 'grupo'" class="racha__autor" :style="{ '--tono': tono(r.autor?.id ?? 0) * 45 }">{{ r.autor?.nombre ?? "Sistema" }}</span>
+                <span v-if="!r.mio && canal?.tipo === 'grupo'" class="racha__autor" :style="{ '--tono': tono(r.autor?.id ?? 0) * 45 }">{{ r.autor?.nombre ?? "Sistema" }}<span v-if="r.via" class="racha__via" v-tooltip.top="`Escribe como miembro del grupo ${r.via.nombre}`"><icon name="groups-outline" size=".8rem" color="text-current" />{{ r.via.nombre }}</span></span>
                 <div v-for="m in r.mensajes" :key="m.id" class="mensaje" :data-id="m.id">
-                  <span v-if="!esSistema" class="mensaje__deslizar" aria-hidden="true"><icon name="reply" size="1.1rem" color="text-current" /></span>
-                  <div :id="`m-${m.id}`" class="burbuja" :class="{ 'burbuja--suelta': !m.texto && !m.respuesta, 'burbuja--resaltada': resaltado === m.id }">
+                  <span v-if="puedeEscribir" class="mensaje__deslizar" aria-hidden="true"><icon name="reply" size="1.1rem" color="text-current" /></span>
+                  <div :id="`m-${m.id}`" class="burbuja" :class="{ 'burbuja--suelta': !m.texto && !m.respuesta && !m.reenviado && !m.eliminado, 'burbuja--eliminada': m.eliminado, 'burbuja--resaltada': resaltado === m.id }">
+                    <p v-if="m.eliminado" class="burbuja__eliminado"><icon name="block" size=".95rem" color="text-current" />Se eliminó este mensaje</p>
+                    <template v-else>
+                    <span v-if="m.reenviado" class="burbuja__marca"><icon name="forward" size=".85rem" color="text-current" />Reenviado</span>
                     <button v-if="m.respuesta" type="button" class="burbuja__cita" @click="irA(m.respuesta.id)">
                       <span class="burbuja__cita-autor">{{ m.respuesta.autor }}</span>
                       <span class="burbuja__cita-texto">{{ m.respuesta.extracto }}</span>
@@ -68,16 +78,23 @@
                       </template>
                     </p>
                     <TarjetasMensaje v-if="m.adjuntos.length" :adjuntos="m.adjuntos" class="burbuja__tarjetas" />
+                    </template>
                     <span class="burbuja__pie">
+                      <span v-if="m.editado" class="burbuja__editado">editado</span>
                       <time :datetime="m.fecha">{{ horaCorta(m.fecha) }}</time>
                       <span v-if="r.mio" v-tooltip.left="tituloVisto(m.id)" class="burbuja__visto" :class="{ 'burbuja__visto--si': visto(m.id).todos }" :aria-label="tituloVisto(m.id)">
                         <icon :name="visto(m.id).todos ? 'done-all' : 'done'" size=".95rem" color="text-current" />
                       </span>
                     </span>
                   </div>
-                  <button v-if="!esSistema" type="button" class="mensaje__responder" :aria-label="`Responder: ${m.texto.slice(0, 40)}`" v-tooltip.top="'Responder'" @click="responder(m)">
-                    <icon name="reply" size="1.05rem" color="text-current" />
-                  </button>
+                  <span v-if="!m.eliminado" class="mensaje__acciones">
+                    <button v-if="puedeEscribir" type="button" class="mensaje__boton" :aria-label="`Responder: ${m.texto.slice(0, 40)}`" v-tooltip.top="'Responder'" @click="responder(m)">
+                      <icon name="reply" size="1.05rem" color="text-current" />
+                    </button>
+                    <button v-if="!esSistema" type="button" class="mensaje__boton" aria-label="Más acciones" aria-haspopup="true" aria-controls="conv-acciones" v-tooltip.top="'Más'" @click="abrirAcciones($event, m)">
+                      <icon name="more-vert" size="1.05rem" color="text-current" />
+                    </button>
+                  </span>
                 </div>
               </div>
             </div>
@@ -94,12 +111,23 @@
     </Transition>
 
     <p v-if="esSistema" class="conv__solo-lectura"><icon name="lock-outline" size="1rem" color="text-current" />Avisos automáticos: no se puede responder aquí.</p>
-    <Redactor v-else ref="redactor" :enviando="enviando" :respondiendo="respondiendo" @enviar="enviar" @cancelar-respuesta="respondiendo = null" />
+    <p v-else-if="canal && !canal.puedeEscribir" class="conv__solo-lectura"><icon name="campaign-outline" size="1rem" color="text-current" />Grupo dirigido: solo escriben el dueño y quienes él elija.</p>
+    <Redactor v-else ref="redactor" :enviando="enviando" :respondiendo="respondiendo" :editando="editando" @enviar="enviar" @cancelar-respuesta="respondiendo = null" @cancelar-edicion="editando = null" />
 
     <Transition name="fade">
       <div v-if="arrastrando" class="conv__soltar"><icon name="upload-file-outline" size="2.5rem" color="text-current" />Suelte aquí para adjuntar</div>
     </Transition>
-    <HojaAcciones :visible="menuDe !== null" :acciones="accionesMenu" :titulo="menuDe ? extracto(menuDe) : ''" @update:visible="!$event && (menuDe = null)" />
+    <HojaAcciones :visible="menuDe !== null" :acciones="accionesMenu" :titulo="menuDe ? extractoMensaje(menuDe) : ''" @update:visible="!$event && (menuDe = null)" />
+    <Menu id="conv-acciones" ref="menuAcciones" :model="opcionesMensaje" popup>
+      <template #item="{ item, props: p }">
+        <a v-bind="p.action" class="flex items-center gap-2.5" :style="item.peligro ? { color: 'var(--c-danger)' } : undefined">
+          <icon :name="String(item.icono)" size="1.1rem" color="text-current" />
+          <span class="text-sm">{{ item.label }}</span>
+        </a>
+      </template>
+    </Menu>
+    <EnviarPorChatDialog :visible="reenviando !== null" :mensaje="reenviando" @update:visible="!$event && (reenviando = null)" />
+    <GrupoDialog v-if="canal?.tipo === 'grupo'" v-model:visible="editandoGrupo" :canal-id="canalId" @salio="emit('volver')" />
     <VisorImagen :fotos="visor.fotos" :inicio="visor.inicio" @cerrar="visor.fotos = []" />
   </section>
 </template>
@@ -109,12 +137,15 @@ import type { MenuItem } from "primevue/menuitem";
 import type Menu from "primevue/menu";
 import type { Envio } from "@/core/chat/api";
 import { useChatStore } from "@/core/chat/store";
-import { agrupar, horaCorta, segmentos, tono, ultimo, vistoPor } from "@/core/chat/modelo";
+import { agrupar, extractoMensaje, horaCorta, segmentos, tono, ultimo, vistoPor } from "@/core/chat/modelo";
 import type { Archivo, Mensaje, Referencia } from "@/core/chat/types";
 import { notify } from "@/core/notify";
+import { useConfirm } from "primevue/useconfirm";
 import ChatAvatar from "@/shared/chat/ChatAvatar.vue";
+import EnviarPorChatDialog from "@/shared/chat/EnviarPorChatDialog.vue";
 import ArchivosMensaje from "./ArchivosMensaje.vue";
 import { appInstalada, useGestosMensajes, useVolverDesdeElBorde } from "./gestosTactiles";
+import GrupoDialog from "./GrupoDialog.vue";
 import HojaAcciones, { type AccionHoja } from "./HojaAcciones.vue";
 import { prepararArchivo } from "./imagen";
 import Redactor from "./Redactor.vue";
@@ -142,6 +173,14 @@ const cargandoPrevios = ref(false);
 const enviando = ref(false);
 const pendientes = ref(0);
 const respondiendo = ref<Mensaje | null>(null);
+/** Mensaje propio cargado en el redactor para editarlo. */
+const editando = ref<Mensaje | null>(null);
+const reenviando = ref<Mensaje | null>(null);
+const editandoGrupo = ref(false);
+const menuAcciones = ref<InstanceType<typeof Menu> | null>(null);
+/** Mensaje del menú de acciones abierto (escritorio). */
+const accionesDe = ref<Mensaje | null>(null);
+const confirm = useConfirm();
 const resaltado = ref<number | null>(null);
 const arrastrando = ref(false);
 const visor = reactive<{ fotos: Archivo[]; inicio: number }>({ fotos: [], inicio: 0 });
@@ -179,6 +218,9 @@ async function cambiarFotoGrupo(archivo: File | null) {
 
 const canal = computed(() => chat.canal(props.canalId));
 const esSistema = computed(() => canal.value?.tipo === "sistema");
+const puedeEscribir = computed(() => canal.value?.puedeEscribir ?? false);
+/** En un abierto la foto la cambia cualquiera; en un dirigido, el dueño. */
+const puedeCambiarFoto = computed(() => canal.value?.modo === "abierto" || !!canal.value?.administro);
 const lista = computed(() => chat.mensajes[props.canalId] ?? []);
 const bloques = computed(() => agrupar(lista.value, chat.yo?.id ?? null));
 const miembros = computed(() => canal.value?.miembros.map((m) => (m.id === chat.yo?.id ? "Tú" : m.nombre)).join(", ") ?? "");
@@ -259,14 +301,59 @@ async function irA(id: number) {
 }
 
 function responder(m: Mensaje) {
+  if (m.eliminado || !puedeEscribir.value) return;
+  editando.value = null;
   respondiendo.value = m;
   redactor.value?.enfocar();
+}
+
+function editar(m: Mensaje) {
+  respondiendo.value = null;
+  editando.value = m;
+}
+
+function eliminar(m: Mensaje) {
+  confirm.require({
+    header: "Eliminar mensaje",
+    message: m.autor?.id === chat.yo?.id ? "Se eliminará para todos los de la conversación." : `Se eliminará el mensaje de ${m.autor?.nombre ?? "otro miembro"} para todos los del grupo.`,
+    acceptProps: { label: "Eliminar", severity: "danger" },
+    rejectProps: { label: "Cancelar", severity: "secondary" },
+    accept: async () => {
+      try {
+        await chat.eliminar(m);
+        if (editando.value?.id === m.id) editando.value = null;
+        if (respondiendo.value?.id === m.id) respondiendo.value = null;
+      } catch (e) {
+        notify.error(e instanceof Error ? e.message : String(e));
+      }
+    },
+  });
+}
+
+/** Lo que se puede hacer con un mensaje: el menú (escritorio) y la hoja (teléfono). */
+function acciones(m: Mensaje): AccionHoja[] {
+  if (m.eliminado) return [];
+  const mio = m.autor !== null && m.autor.id === chat.yo?.id;
+  return [
+    ...(puedeEscribir.value ? [{ etiqueta: "Responder", icono: "reply", accion: () => responder(m) }] : []),
+    ...(!esSistema.value ? [{ etiqueta: "Reenviar", icono: "forward", accion: () => (reenviando.value = m) }] : []),
+    ...(mio && puedeEscribir.value ? [{ etiqueta: "Editar", icono: "edit-outline", accion: () => editar(m) }] : []),
+    ...(m.texto ? [{ etiqueta: "Copiar texto", icono: "content-copy-outline", accion: () => void copiar(m.texto) }] : []),
+    ...(m.respuesta ? [{ etiqueta: m.editado ? "Ver el original" : "Ver el mensaje citado", icono: "format-quote-outline", accion: () => void irA(m.respuesta!.id) }] : []),
+    ...(m.autor && (mio || canal.value?.administro) ? [{ etiqueta: "Eliminar", icono: "delete-outline", peligro: true, accion: () => eliminar(m) }] : []),
+  ];
+}
+
+const opcionesMensaje = computed<MenuItem[]>(() => (accionesDe.value ? acciones(accionesDe.value) : []).map((a) => ({ label: a.etiqueta, icono: a.icono, peligro: a.peligro, command: a.accion })));
+function abrirAcciones(e: Event, m: Mensaje) {
+  accionesDe.value = m;
+  menuAcciones.value?.toggle(e);
 }
 
 // Gestos táctiles ----------------------------------------------------------
 const mensajePorId = (id: number) => lista.value.find((m) => m.id === id);
 useGestosMensajes(lienzo, {
-  puedeResponder: () => !esSistema.value,
+  puedeResponder: () => puedeEscribir.value,
   responder: (id) => {
     const m = mensajePorId(id);
     if (m) responder(m);
@@ -275,17 +362,7 @@ useGestosMensajes(lienzo, {
 });
 useVolverDesdeElBorde(raiz, () => ventana.movil && appInstalada(), () => emit("volver"));
 
-const extracto = (m: Mensaje) => m.texto || (m.archivos.length ? (m.archivos.every((a) => a.imagen) ? "Foto" : m.archivos[0]!.nombre) : `${m.adjuntos.length} registro(s)`);
-
-const accionesMenu = computed<AccionHoja[]>(() => {
-  const m = menuDe.value;
-  if (!m) return [];
-  return [
-    ...(!esSistema.value ? [{ etiqueta: "Responder", icono: "reply", accion: () => responder(m) }] : []),
-    ...(m.texto ? [{ etiqueta: "Copiar texto", icono: "content-copy-outline", accion: () => void copiar(m.texto) }] : []),
-    ...(m.respuesta ? [{ etiqueta: "Ver el mensaje citado", icono: "format-quote-outline", accion: () => void irA(m.respuesta!.id) }] : []),
-  ];
-});
+const accionesMenu = computed<AccionHoja[]>(() => (menuDe.value ? acciones(menuDe.value) : []));
 
 async function copiar(texto: string) {
   try {
@@ -307,6 +384,7 @@ async function enviar(envio: Envio) {
     await chat.enviar(props.canalId, envio);
     redactor.value?.limpiar();
     respondiendo.value = null;
+    editando.value = null;
     bajar(true);
   } catch (e) {
     notify.error(e instanceof Error ? e.message : String(e));
@@ -405,12 +483,22 @@ watch(
   place-items: center;
   flex: none;
   margin-left: auto;
+  &.conv__foto-grupo--siguiente {
+    margin-left: 0;
+  }
   border-radius: 50%;
   color: var(--p-surface-500);
   &:hover {
     color: var(--p-surface-800);
     background: var(--p-surface-100);
   }
+}
+.conv__dirigido {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-weight: 500;
+  vertical-align: bottom;
 }
 .conv__nombre {
   font-weight: 600;
@@ -529,7 +617,20 @@ watch(
   font-weight: 600;
   color: light-dark(hsl(calc(var(--tono) * 1deg) 50% 40%), hsl(calc(var(--tono) * 1deg) 60% 72%));
 }
-/* Mensaje = burbuja + botón responder (al lado, aparece al pasar o enfocar). */
+.racha__via {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-left: 0.4rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--p-surface-500);
+  background: var(--p-surface-200);
+  vertical-align: 1px;
+}
+/* Mensaje = burbuja + acciones (al lado, aparecen al pasar o enfocar). */
 .mensaje {
   position: relative;
   display: flex;
@@ -558,7 +659,22 @@ watch(
 .racha--mia .mensaje {
   flex-direction: row-reverse;
 }
-.mensaje__responder {
+.mensaje__acciones {
+  display: flex;
+  flex: none;
+  opacity: 0;
+  transition: opacity 0.15s var(--ease);
+  &:focus-within {
+    opacity: 1;
+  }
+}
+.racha--mia .mensaje__acciones {
+  flex-direction: row-reverse;
+}
+.mensaje:hover .mensaje__acciones {
+  opacity: 1;
+}
+.mensaje__boton {
   display: grid;
   place-items: center;
   flex: none;
@@ -566,26 +682,17 @@ watch(
   height: 2rem;
   border-radius: 50%;
   color: var(--p-surface-500);
-  opacity: 0;
-  transition:
-    opacity 0.15s var(--ease),
-    background 0.15s var(--ease);
+  transition: background 0.15s var(--ease);
   &:hover {
     color: var(--p-primary-color);
     background: var(--p-surface-100);
   }
-  &:focus-visible {
-    opacity: 1;
-  }
-}
-.mensaje:hover .mensaje__responder {
-  opacity: 1;
 }
 /* En táctil se responde deslizando o manteniendo pulsado: sin botón, el
    desplazamiento vertical sigue siendo del navegador y el texto no se
    selecciona al mantener (para copiarlo está la hoja). */
 @media (pointer: coarse) {
-  .mensaje__responder {
+  .mensaje__acciones {
     display: none;
   }
   /* Lo horizontal es de los gestos (responder, volver desde el borde). */
@@ -649,6 +756,33 @@ watch(
 }
 .burbuja--suelta.burbuja--resaltada {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--p-amber-400) 80%, transparent);
+}
+.burbuja--eliminada,
+.racha--mia .burbuja--eliminada {
+  color: var(--p-surface-500);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--p-surface-300);
+}
+.burbuja__eliminado {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+.burbuja__marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  font-style: italic;
+  opacity: 0.75;
+}
+.burbuja__editado {
+  margin-right: 0.15rem;
+  font-style: italic;
+  opacity: 0.65;
 }
 .burbuja__cita {
   display: flex;

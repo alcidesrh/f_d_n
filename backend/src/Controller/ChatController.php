@@ -155,13 +155,44 @@ final class ChatController extends AbstractController
         return $this->responder(fn() => $this->chat->abrirDirecto($yo, (int) ($request->toArray()["usuario"] ?? 0)));
     }
 
-    /** `{ nombre, miembros: [ids] }` */
+    /** `{ nombre, miembros: [ids], modo?: "abierto" | "dirigido" }` */
     #[Route("/canales/grupo", name: "grupo", methods: ["POST"])]
     public function grupo(Request $request, #[CurrentUser] Usuario $yo): JsonResponse
     {
         $datos = $request->toArray();
 
-        return $this->responder(fn() => $this->chat->crearGrupo($yo, (string) ($datos["nombre"] ?? ""), self::usuarios($datos["miembros"] ?? [])));
+        return $this->responder(fn() => $this->chat->crearGrupo($yo, (string) ($datos["nombre"] ?? ""), self::usuarios($datos["miembros"] ?? []), (string) ($datos["modo"] ?? "abierto")));
+    }
+
+    /**
+     * Edita un grupo (su dueño): `{ nombre, modo, miembros: [ids], emisores: [ids],
+     * subgrupos: [{ id, emisor }] }`, el estado completo, no un cambio.
+     */
+    #[Route("/canales/{id<\d+>}", name: "grupo_editar", methods: ["PUT"])]
+    public function editarGrupo(int $id, Request $request, #[CurrentUser] Usuario $yo): JsonResponse
+    {
+        $datos = $request->toArray();
+        $subgrupos = array_values(array_filter(array_map(
+            static fn(mixed $s) => is_array($s) ? ["id" => (int) ($s["id"] ?? 0), "emisor" => (bool) ($s["emisor"] ?? false)] : null,
+            is_array($datos["subgrupos"] ?? null) ? $datos["subgrupos"] : [],
+        ), static fn(?array $s) => $s !== null && $s["id"] > 0));
+
+        return $this->responder(fn() => $this->chat->editarGrupo(
+            $yo,
+            $this->chat->canal($id, $yo),
+            (string) ($datos["nombre"] ?? ""),
+            (string) ($datos["modo"] ?? ""),
+            self::usuarios($datos["miembros"] ?? []),
+            self::usuarios($datos["emisores"] ?? []),
+            $subgrupos,
+        ));
+    }
+
+    /** `$yo` deja el grupo → `{ sigue }` (true si sigue por un grupo miembro). */
+    #[Route("/canales/{id<\d+>}/salir", name: "grupo_salir", methods: ["POST"])]
+    public function salirDeGrupo(int $id, #[CurrentUser] Usuario $yo): JsonResponse
+    {
+        return $this->responder(fn() => ["sigue" => $this->chat->salirDeGrupo($yo, $this->chat->canal($id, $yo))]);
     }
 
     /** Multipart, campo `foto`: la foto del grupo (cualquier miembro). */
@@ -213,7 +244,10 @@ final class ChatController extends AbstractController
         ));
     }
 
-    /** `{ texto, adjuntos?: [{ tipo, id }], archivos?: [ids], respuestaA?: idMensaje }` */
+    /**
+     * `{ texto, adjuntos?: [{ tipo, id }], archivos?: [ids], respuestaA?: idMensaje,
+     * edita?: idMensaje, conservar?: [ids de archivos de edita] }`
+     */
     #[Route("/canales/{id<\d+>}/mensajes", name: "escribir", methods: ["POST"])]
     public function escribir(int $id, Request $request, #[CurrentUser] Usuario $yo): JsonResponse
     {
@@ -226,7 +260,25 @@ final class ChatController extends AbstractController
             $datos["adjuntos"] ?? [],
             self::ids($datos["archivos"] ?? []),
             isset($datos["respuestaA"]) ? (int) $datos["respuestaA"] : null,
+            isset($datos["edita"]) ? (int) $datos["edita"] : null,
+            self::ids($datos["conservar"] ?? []),
         ));
+    }
+
+    /** `{ usuarios: [ids], canales: [ids] }` → `{ canales }` donde quedó. */
+    #[Route("/mensajes/{id<\d+>}/reenviar", name: "reenviar", methods: ["POST"])]
+    public function reenviar(int $id, Request $request, #[CurrentUser] Usuario $yo): JsonResponse
+    {
+        $datos = $request->toArray();
+
+        return $this->responder(fn() => ["canales" => $this->chat->reenviar($yo, $id, self::usuarios($datos["usuarios"] ?? []), self::ids($datos["canales"] ?? []))]);
+    }
+
+    /** Elimina el mensaje para todos (su autor, o quien administra el grupo). */
+    #[Route("/mensajes/{id<\d+>}", name: "eliminar", methods: ["DELETE"])]
+    public function eliminar(int $id, #[CurrentUser] Usuario $yo): JsonResponse
+    {
+        return $this->responder(fn() => $this->chat->eliminarMensaje($yo, $id));
     }
 
     /** Multipart, campo `archivo`. Queda suelto hasta que un mensaje lo use. */

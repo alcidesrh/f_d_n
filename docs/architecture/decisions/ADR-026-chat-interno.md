@@ -90,6 +90,12 @@ El chat no es una página más: es una capa sobre el trabajo, para hablar de lo 
 
 Para no romper ADR-017 (una feature no importa a otra), el listado genérico llega al chat por inyección: `AppShell` provee `LISTADO_DE_REGISTROS` con `ListPage`, que con `v-model:seleccion` funciona como selector.
 
+### Grupos dirigidos, grupos como miembros y mensajes editados (v4)
+
+- **Dueño y modo.** Quien crea un grupo es su dueño (`creadoPor`) y lo edita de una vez (`PUT /api/chat/canales/{id}`: nombre, modo, miembros, emisores, grupos miembros); si el dueño ya no existe, lo administra cualquier miembro por sí mismo. Un grupo es `abierto` (todos escriben) o `dirigido` (`ModoGrupoChat`: todos reciben; escriben el dueño y los emisores que él marca, personas o grupos miembros). La regla vive en `ChatCanal::puedeEscribir` y la aplica `Conversaciones::nuevo` a todo lo que escribe (mensajes, compartir, reenviar). Los demás pueden salir (`POST …/salir`); el dueño no. En un dirigido la foto la cambia el dueño.
+- **Grupos como miembros.** Un grupo abierto puede ser miembro de otro (`ChatSubgrupo`). Sus miembros se **materializan** como `ChatMiembro` del otro con `via` = ese grupo, así la bandeja, los no leídos, el "visto", el push y los avisos no cambian; `ChatCanal::sincronizar` los pone al día cada vez que cambia un grupo miembro (y `Conversaciones::propagar`, en los grupos que lo contienen). Quitar a alguien que también llega por un grupo lo deja por ese grupo. La regla del directorio se exige sobre el conjunto completo. Un solo nivel: un grupo miembro no tiene grupos miembros, un grupo con grupos miembros no es miembro de otro, y un grupo miembro no puede volverse dirigido. Cada mensaje guarda `via` al escribirse: junto al autor se ve el grupo por el que llegaba, aunque después salga de él. Quien entra a un grupo no hereda como no leído lo anterior.
+- **Mensajes inmutables.** Editar es escribir otro mensaje que responde al original (`editaA` + `respuestaA`), marcado "editado"; el original queda como estaba (rastro de lo dicho). Reenviar (`POST /api/chat/mensajes/{id}/reenviar`) copia texto, registros que quien reenvía puede ver y archivos, marcado "reenviado". Eliminar (`DELETE /api/chat/mensajes/{id}`, el autor o quien administra el grupo) vacía el mensaje y deja `eliminadoEn`: las respuestas y los ids siguen cuadrando; aviso Mercure `cambio`. Los archivos se copian como registro (`ChatArchivo::copiar`, misma `ruta`) y el contenido se borra del disco con el último que lo usa (`Archivos::borrar`).
+
 ## Consecuencias
 
 **Positivas:**
@@ -104,7 +110,8 @@ Para no romper ADR-017 (una feature no importa a otra), el listado genérico lle
 
 - Archivos en el disco del contenedor (volumen `caddy_data`): entran en el respaldo solo si se respalda ese volumen. Para varios servidores habrá que pasar a un almacenamiento compartido (S3 o similar) detrás de `Archivos`.
 - Una URL firmada copiada sirve hasta que vence (máximo 30 h).
-- Sin edición ni borrado de mensajes.
+- Editar no reemplaza el mensaje: la conversación muestra original y corrección (es lo que se quiso, pero ocupa más). Un mensaje eliminado no se recupera.
+- Grupos dentro de grupos, un solo nivel. Cambiar los miembros de un grupo miembro cambia también los de los grupos que lo contienen, sin que intervenga su dueño.
 - Avisos del sistema solo para saldo de agencias y salidas anuladas; "salida iniciada" e imprevistos esperan a que existan en el modelo nuevo (hoy el estado "iniciada" solo viene del legado).
 - El selector solo ofrece entidades con colección en GraphQL: `BoletoAsiento` no la tiene, así que los boletos sueltos se comparten desde su venta o desde `?adjuntar=`, hasta que se exponga.
 - La ventana queda por debajo de los overlays y diálogos de PrimeVue (z-index 990 < 1000), que el propio chat abre; un diálogo modal de otra pantalla la tapa mientras está abierto.

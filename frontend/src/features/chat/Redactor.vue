@@ -3,17 +3,27 @@
   documentos (clip, pegar o arrastrar; las fotos se reducen antes de subir),
   registros elegidos de sus listados con el selector (llegan como tarjetas),
   lo que la app tiene en pantalla bajo el chat (un clic lo adjunta) y, si se
-  está respondiendo, la cita del mensaje original. En el teléfono el clip
+  está respondiendo, la cita del mensaje original. Al editar un mensaje
+  propio se carga aquí tal como se envió (texto, registros y archivos) y lo
+  que se envíe sale como su versión editada. En el teléfono el clip
   abre una hoja (cámara, fotos y archivos, registros), como en una app de
   mensajería.
 -->
 <template>
   <form class="redactor" @submit.prevent="enviar" @paste="alPegar">
-    <div v-if="respondiendo" class="cita">
+    <div v-if="editando" class="cita">
+      <icon name="edit-outline" size="1.1rem" color="text-current" />
+      <span class="min-w-0 flex-1">
+        <span class="cita__autor">Editando mensaje</span>
+        <span class="cita__texto">{{ extractoMensaje(editando) }}</span>
+      </span>
+      <button type="button" class="tap-target" aria-label="Cancelar edición" @click="emit('cancelarEdicion')"><icon name="close" size="1rem" color="text-current" /></button>
+    </div>
+    <div v-else-if="respondiendo" class="cita">
       <icon name="reply" size="1.1rem" color="text-current" />
       <span class="min-w-0 flex-1">
         <span class="cita__autor">Respondiendo a {{ respondiendo.autor?.nombre ?? 'Sistema' }}</span>
-        <span class="cita__texto">{{ extractoDe(respondiendo) }}</span>
+        <span class="cita__texto">{{ extractoMensaje(respondiendo) }}</span>
       </span>
       <button type="button" class="tap-target" aria-label="Cancelar respuesta" @click="emit('cancelarRespuesta')"><icon name="close" size="1rem" color="text-current" /></button>
     </div>
@@ -62,7 +72,8 @@
 </template>
 
 <script setup lang="ts">
-import { subirArchivo, type Envio } from '@/core/chat/api'
+import { subirArchivo, urlArchivo, type Envio } from '@/core/chat/api'
+import { extractoMensaje } from '@/core/chat/modelo'
 import type { Archivo, Mensaje, Referencia, Registro } from '@/core/chat/types'
 import { notify } from '@/core/notify'
 import { enPantalla } from '@/shared/chat/integracion'
@@ -72,8 +83,8 @@ import SelectorRegistros from './SelectorRegistros.vue'
 import { tipoTarjeta } from './tarjetas/catalogo'
 import { useVentanaChat } from './ventana'
 
-const emit = defineEmits<{ enviar: [envio: Envio]; cancelarRespuesta: [] }>()
-const props = defineProps<{ enviando?: boolean; respondiendo?: Mensaje | null }>()
+const emit = defineEmits<{ enviar: [envio: Envio]; cancelarRespuesta: []; cancelarEdicion: [] }>()
+const props = defineProps<{ enviando?: boolean; respondiendo?: Mensaje | null; editando?: Mensaje | null }>()
 
 const MAX_ADJUNTOS = 20
 /** Sugerencias "en pantalla" a la vista, como mucho. */
@@ -88,6 +99,8 @@ interface Subida {
   progreso: number
   archivo: Archivo | null
   error: string | null
+  /** Del mensaje que se edita: ya está subido y sigue en la versión editada. */
+  conservado?: boolean
 }
 
 const texto = ref('')
@@ -115,10 +128,9 @@ const enfocar = () => campo.value?.focus({ preventScroll: true })
 /** Lo que la app muestra bajo el chat y aún no está adjunto. */
 const sugeridos = computed(() => enPantalla.value.filter((r) => !adjuntos.value.some((a) => a.tipo === r.tipo && a.id === r.id)).slice(0, MAX_SUGERIDOS))
 const subiendo = computed(() => subidas.value.some((s) => !s.archivo && !s.error))
-const listos = computed(() => subidas.value.filter((s) => s.archivo).map((s) => s.archivo!.id))
-const puedeEnviar = computed(() => !props.enviando && !subiendo.value && (texto.value.trim() !== '' || adjuntos.value.length > 0 || listos.value.length > 0))
-
-const extractoDe = (m: Mensaje) => m.texto || (m.archivos.length ? (m.archivos.every((a) => a.imagen) ? 'Foto' : m.archivos[0]!.nombre) : m.adjuntos.length ? `${m.adjuntos.length} registro(s)` : '')
+const listos = computed(() => subidas.value.filter((s) => s.archivo && !s.conservado).map((s) => s.archivo!.id))
+const conservados = computed(() => subidas.value.filter((s) => s.conservado).map((s) => s.archivo!.id))
+const puedeEnviar = computed(() => !props.enviando && !subiendo.value && (texto.value.trim() !== '' || adjuntos.value.length > 0 || listos.value.length > 0 || conservados.value.length > 0))
 
 function alElegirRegistros(registros: Registro[]) {
   adjuntos.value = registros
@@ -159,25 +171,49 @@ function alPegar(e: ClipboardEvent) {
   void agregarArchivos(archivos)
 }
 
+/** Las miniaturas locales (object URL); las de archivos ya enviados son de la API. */
+const soltarVista = (s: Subida) => s.vista && !s.conservado && URL.revokeObjectURL(s.vista)
+
 function quitar(s: Subida) {
-  if (s.vista) URL.revokeObjectURL(s.vista)
+  soltarVista(s)
   subidas.value = subidas.value.filter((x) => x.clave !== s.clave)
 }
 
 function enviar() {
   if (!puedeEnviar.value) return
-  emit('enviar', { texto: texto.value, adjuntos: adjuntos.value.map(({ tipo, id }) => ({ tipo, id })), archivos: listos.value, respuestaA: props.respondiendo?.id ?? null })
+  emit('enviar', {
+    texto: texto.value,
+    adjuntos: adjuntos.value.map(({ tipo, id }) => ({ tipo, id })),
+    archivos: listos.value,
+    ...(props.editando ? { edita: props.editando.id, conservar: conservados.value } : { respuestaA: props.respondiendo?.id ?? null }),
+  })
 }
 
 /** Lo llama la conversación cuando el mensaje quedó guardado. */
 function limpiar() {
   texto.value = ''
   adjuntos.value = []
-  subidas.value.forEach((s) => s.vista && URL.revokeObjectURL(s.vista))
+  subidas.value.forEach(soltarVista)
   subidas.value = []
   void nextTick(ajustar)
   enfocar()
 }
+
+/** Carga un mensaje propio para editarlo: como cuando se envió. */
+function cargar(m: Mensaje) {
+  limpiar()
+  texto.value = m.texto
+  adjuntos.value = m.adjuntos.map((a) => ({ tipo: a.tipo, id: a.id, etiqueta: a.datos?.titulo ?? `${tipoTarjeta(a.tipo).nombre} ${a.id}` }))
+  subidas.value = m.archivos.map((a) => ({ clave: ++claves, nombre: a.nombre, vista: a.imagen ? urlArchivo(a) : null, progreso: 1, archivo: a, error: null, conservado: true }))
+  void nextTick(ajustar)
+}
+watch(
+  () => props.editando,
+  (m, antes) => {
+    if (m) cargar(m)
+    else if (antes) limpiar()
+  },
+)
 
 function ajustar() {
   const el = campo.value
@@ -194,7 +230,7 @@ function adjuntar(r: Referencia | Registro) {
   enfocar()
 }
 
-onBeforeUnmount(() => subidas.value.forEach((s) => s.vista && URL.revokeObjectURL(s.vista)))
+onBeforeUnmount(() => subidas.value.forEach(soltarVista))
 
 defineExpose({ limpiar, adjuntar, enfocar, agregarArchivos })
 </script>

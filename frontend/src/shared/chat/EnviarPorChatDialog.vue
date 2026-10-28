@@ -2,11 +2,14 @@
   "Enviar por chat": manda registros (los seleccionados en un listado, una
   salida…) a una o varias personas o grupos, con una nota opcional. Cada
   destinatario los recibe como tarjetas vivas, vistas con sus permisos.
+  Con `mensaje`, reenvía ese mensaje del chat (sin nota). Solo ofrece los
+  grupos donde se puede escribir.
 -->
 <template>
   <Dialog :visible="visible" modal :header="titulo" class="w-[min(30rem,calc(100vw-1rem))]" :pt="{ content: { class: '!pb-2' } }" @update:visible="emit('update:visible', $event)" @show="preparar">
     <div class="flex flex-col gap-3">
-      <div class="flex flex-wrap gap-1.5">
+      <p v-if="mensaje" class="reenvio"><icon name="forward" size="1rem" color="text-current" />{{ extractoMensaje(mensaje) }}</p>
+      <div v-else class="flex flex-wrap gap-1.5">
         <span v-for="r in referencias.slice(0, 6)" :key="`${r.tipo}:${r.id}`" class="ref">{{ etiqueta(r.tipo) }} {{ r.id }}</span>
         <span v-if="referencias.length > 6" class="ref">+{{ referencias.length - 6 }}</span>
       </div>
@@ -36,12 +39,12 @@
         <p v-if="!cargando && !visibles.length" class="p-4 text-center text-sm text-muted-color">Sin resultados.</p>
       </div>
 
-      <Textarea v-model="nota" rows="2" auto-resize placeholder="Nota (opcional)" :maxlength="4000" />
+      <Textarea v-if="!mensaje" v-model="nota" rows="2" auto-resize placeholder="Nota (opcional)" :maxlength="4000" />
     </div>
 
     <template #footer>
       <Button label="Cancelar" severity="secondary" text @click="emit('update:visible', false)" />
-      <Button :label="elegidos.length > 1 ? `Enviar a ${elegidos.length}` : 'Enviar'" :loading="enviando" :disabled="!elegidos.length || !referencias.length" @click="enviar">
+      <Button :label="elegidos.length > 1 ? `Enviar a ${elegidos.length}` : 'Enviar'" :loading="enviando" :disabled="!elegidos.length || (!mensaje && !referencias.length)" @click="enviar">
         <template #icon><icon name="send" size="1rem" color="text-current" class="mr-1.5" /></template>
       </Button>
     </template>
@@ -50,12 +53,12 @@
 
 <script setup lang="ts">
 import { useChatStore } from '@/core/chat/store'
-import { coincide } from '@/core/chat/modelo'
-import type { Ambito, Referencia } from '@/core/chat/types'
+import { coincide, extractoMensaje } from '@/core/chat/modelo'
+import type { Ambito, Mensaje, Referencia } from '@/core/chat/types'
 import { notify } from '@/core/notify'
 import ChatAvatar from './ChatAvatar.vue'
 
-const props = defineProps<{ visible: boolean; referencias: Referencia[] }>()
+const props = withDefaults(defineProps<{ visible: boolean; referencias?: Referencia[]; mensaje?: Mensaje | null }>(), { referencias: () => [], mensaje: null })
 const emit = defineEmits<{ 'update:visible': [boolean]; enviado: [canales: number[]] }>()
 
 interface Destino {
@@ -78,13 +81,13 @@ const elegidos = ref<Destino[]>([])
 const cargando = ref(false)
 const enviando = ref(false)
 
-const titulo = computed(() => (props.referencias.length === 1 ? 'Enviar por chat' : `Enviar ${props.referencias.length} registros por chat`))
+const titulo = computed(() => (props.mensaje ? 'Reenviar mensaje' : props.referencias.length === 1 ? 'Enviar por chat' : `Enviar ${props.referencias.length} registros por chat`))
 const etiqueta = (tipo: string) => (tipo === 'BoletoAsiento' ? 'Boleto' : tipo.replace(/([a-z])([A-Z])/g, '$1 $2'))
 
 /** Grupos y conversaciones recientes primero; luego el resto del directorio. */
 const destinos = computed<Destino[]>(() => {
   const grupos = chat.canales
-    .filter((c) => c.tipo === 'grupo')
+    .filter((c) => c.tipo === 'grupo' && c.puedeEscribir)
     .map((c) => ({ clave: `c${c.id}`, id: c.id, nombre: c.nombre, detalle: `Grupo · ${c.miembros.length} miembros`, grupo: true, ambito: null, foto: c.foto ?? null }))
   const recientes = chat.canales.filter((c) => c.tipo === 'directo' && c.contacto).map((c) => c.contacto!.id)
   const orden = new Map(recientes.map((id, i) => [id, i]))
@@ -117,11 +120,8 @@ async function preparar() {
 async function enviar() {
   enviando.value = true
   try {
-    const canales = await chat.compartir(
-      { usuarios: elegidos.value.filter((d) => !d.grupo).map((d) => d.id), canales: elegidos.value.filter((d) => d.grupo).map((d) => d.id) },
-      props.referencias,
-      nota.value,
-    )
+    const destinos = { usuarios: elegidos.value.filter((d) => !d.grupo).map((d) => d.id), canales: elegidos.value.filter((d) => d.grupo).map((d) => d.id) }
+    const canales = props.mensaje ? await chat.reenviar(props.mensaje.id, destinos) : await chat.compartir(destinos, props.referencias, nota.value)
     notify.success(elegidos.value.length === 1 ? `Enviado a ${elegidos.value[0]!.nombre}` : `Enviado a ${elegidos.value.length} destinatarios`)
     emit('update:visible', false)
     emit('enviado', canales)
@@ -139,6 +139,21 @@ async function enviar() {
   border-radius: 0.4rem;
   font-size: 0.78rem;
   font-weight: 500;
+  color: var(--p-surface-700);
+  background: var(--p-surface-100);
+}
+.reenvio {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.45rem 0.7rem;
+  border-left: 3px solid var(--p-primary-color);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  font-size: 0.85rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--p-surface-700);
   background: var(--p-surface-100);
 }

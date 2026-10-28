@@ -10,7 +10,9 @@ use Doctrine\ORM\Mapping as ORM;
  * Archivo subido al chat (foto, PDF…). Se sube antes de enviar el mensaje y
  * queda suelto (`mensaje` nulo) hasta que un mensaje del mismo autor lo usa;
  * los sueltos viejos se purgan (`app:chat:purgar-archivos`). El contenido
- * vive en disco (`App\Chat\Archivos`), aquí solo los metadatos.
+ * vive en disco (`App\Chat\Archivos`), aquí solo los metadatos. Al reenviar
+ * o editar se copia el registro, no el contenido: varios pueden compartir
+ * `ruta`, y el archivo se borra con el último.
  */
 #[ORM\Entity]
 #[ORM\Index(columns: ["mensaje_id"], name: "idx_chat_archivo_mensaje")]
@@ -62,6 +64,12 @@ class ChatArchivo
         $this->ancho = $ancho;
         $this->alto = $alto;
         $this->creadoEn = new \DateTimeImmutable();
+    }
+
+    /** Otro registro del mismo contenido en disco (reenviar, editar): cada mensaje tiene los suyos. */
+    public function copiar(Usuario $autor): self
+    {
+        return new self($autor, $this->nombre, $this->tipo, $this->tamano, $this->ruta, $this->ancho, $this->alto);
     }
 
     public function adjuntarA(ChatMensaje $mensaje): void

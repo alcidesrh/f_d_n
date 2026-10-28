@@ -14,8 +14,10 @@ use Symfony\Component\Mercure\Update;
  * tarjetas: el cliente pide el mensaje y lo ve con sus propios permisos.
  *
  * Tipos: `mensaje` (nuevo en un canal), `leido` (el usuario leyó en otro
- * dispositivo), `canal` (lo agregaron a un grupo), `presencia` (un contacto se conectó o se
- * desconectó: `usuario`, `enLinea`).
+ * dispositivo), `canal` (un grupo cambió: nombre, foto, modo o miembros; lo
+ * agregaron o lo quitaron), `cambio` (se eliminó un mensaje: `canal`,
+ * `mensaje`), `presencia` (un contacto se conectó o se desconectó:
+ * `usuario`, `enLinea`).
  */
 final class AvisosChat
 {

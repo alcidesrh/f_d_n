@@ -112,6 +112,30 @@ final class Archivos
         return rtrim($this->directorio, "/") . "/" . $ruta;
     }
 
+    /**
+     * Quita los archivos de un mensaje eliminado. El contenido se borra del
+     * disco solo si ningún otro mensaje lo usa (reenviados y ediciones
+     * comparten la ruta). Sin flush.
+     *
+     * @param list<ChatArchivo> $archivos
+     */
+    public function borrar(array $archivos): void
+    {
+        if ($archivos === []) {
+            return;
+        }
+        $rutas = array_values(array_unique(array_map(static fn(ChatArchivo $a) => $a->getRuta(), $archivos)));
+        $usadas = array_column($this->em->createQuery(
+            "SELECT DISTINCT a.ruta FROM App\Entity\ChatArchivo a WHERE a.ruta IN (:rutas) AND a NOT IN (:archivos)",
+        )->setParameter("rutas", $rutas)->setParameter("archivos", $archivos)->getScalarResult(), "ruta");
+        foreach ($archivos as $a) {
+            $this->em->remove($a);
+        }
+        foreach (array_diff($rutas, $usadas) as $ruta) {
+            @unlink($this->absoluta($ruta));
+        }
+    }
+
     /** Borra los subidos que nunca se enviaron; devuelve cuántos. */
     public function purgarSueltos(\DateTimeImmutable $antesDe): int
     {

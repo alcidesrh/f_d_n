@@ -1,18 +1,24 @@
 import { describe, expect, it } from 'vitest'
-import { agrupar, aplicarAviso, aplicarPresencia, coincide, etiquetaDia, iniciales, medidasReducidas, segmentos, tamanoLegible, unir, vistoPor } from '../modelo'
+import { agrupar, aplicarAviso, aplicarPresencia, coincide, etiquetaDia, extractoMensaje, iniciales, medidasReducidas, segmentos, tamanoLegible, unir, vistoPor } from '../modelo'
 import type { Canal, Mensaje, Perfil } from '../types'
 
 const ana: Perfil = { id: 1, nombre: 'Ana López', ambito: 'administracion', lugar: null }
 const beto: Perfil = { id: 2, nombre: 'Beto', ambito: 'estacion', lugar: 'Flores' }
 
-const msg = (id: number, autor: Perfil | null, fecha: string, texto = 'x'): Mensaje => ({ id, canal: 9, autor, texto, fecha, adjuntos: [], archivos: [], respuesta: null })
+const msg = (id: number, autor: Perfil | null, fecha: string, texto = 'x'): Mensaje => ({ id, canal: 9, autor, texto, fecha, adjuntos: [], archivos: [], respuesta: null, via: null, editado: false, reenviado: false, eliminado: false })
 
 const canal = (id: number, extra: Partial<Canal> = {}): Canal => ({
   id,
   tipo: 'directo',
   nombre: 'Beto',
   contacto: beto,
-  miembros: [ana, beto],
+  miembros: [ana, beto].map((p) => ({ ...p, via: null, emisor: false })),
+  modo: null,
+  dueno: null,
+  administro: false,
+  puedeEscribir: true,
+  subgrupos: [],
+  esSubgrupo: false,
   noLeidos: 0,
   leidoHasta: 0,
   lecturas: [{ usuario: 2, hasta: 0 }],
@@ -103,7 +109,7 @@ describe('utilidades', () => {
 
 describe('visto', () => {
   const cami: Perfil = { id: 3, nombre: 'Cami', ambito: 'estacion', lugar: null }
-  const grupo = canal(1, { tipo: 'grupo', miembros: [ana, beto, cami], lecturas: [{ usuario: 2, hasta: 10 }, { usuario: 3, hasta: 4 }] })
+  const grupo = canal(1, { tipo: 'grupo', miembros: [ana, beto, cami].map((p) => ({ ...p, via: null, emisor: false })), lecturas: [{ usuario: 2, hasta: 10 }, { usuario: 3, hasta: 4 }] })
 
   it('dice quiénes vieron un mensaje y si ya lo vieron todos', () => {
     expect(vistoPor(grupo, 4)).toMatchObject({ todos: true })
@@ -141,5 +147,27 @@ describe('aplicarPresencia', () => {
     expect(aplicarPresencia([1, 2], 2, true)).toEqual([1, 2])
     expect(aplicarPresencia([1, 2], 1, false)).toEqual([2])
     expect(aplicarPresencia([], 5, false)).toEqual([])
+  })
+})
+
+describe('grupos y mensajes cambiados', () => {
+  it('separa la racha si el mismo autor escribe por otro grupo miembro', () => {
+    const hora = (min: number) => new Date(2026, 9, 8, 9, min).toISOString()
+    const porPeten = { ...msg(2, beto, hora(1)), via: { id: 7, nombre: 'Petén' } }
+    const [bloque] = agrupar([msg(1, beto, hora(0)), porPeten, { ...msg(3, beto, hora(2)), via: { id: 7, nombre: 'Petén' } }], 1, new Date(2026, 9, 8, 12))
+    expect(bloque!.rachas.map((r) => [r.via?.nombre ?? null, r.mensajes.length])).toEqual([
+      [null, 1],
+      ['Petén', 2],
+    ])
+  })
+
+  it('recarga la bandeja si el grupo cambió o se eliminó un mensaje', () => {
+    expect(aplicarAviso([canal(1)], { tipo: 'canal', canal: 1 }, 1, null)).toBeNull()
+    expect(aplicarAviso([canal(1)], { tipo: 'cambio', canal: 1, mensaje: 3 }, 1, null)).toBeNull()
+  })
+
+  it('el extracto de un eliminado no muestra lo que decía', () => {
+    expect(extractoMensaje({ ...msg(1, ana, ''), texto: '', eliminado: true })).toBe('Se eliminó este mensaje')
+    expect(extractoMensaje(msg(1, ana, '', 'Hola'))).toBe('Hola')
   })
 })
