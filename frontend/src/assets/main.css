@@ -48,7 +48,7 @@ html.dark {
 body {
   font-family: "Roboto Flex Variable", sans-serif;
   font-size: 1rem;
-  background: var(--p-surface-100);
+  background: var(--p-surface-0);
   /* var(--p-surface-50); */
   color: var(--text);
   -webkit-font-smoothing: antialiased;

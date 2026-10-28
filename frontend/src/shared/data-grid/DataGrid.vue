@@ -286,7 +286,9 @@ useColumnDrag({
 .dg {
   --dg-bg: var(--p-content-background);
   --dg-border: var(--p-content-border-color);
-  --dg-head-bg: var(--p-surface-100);
+  --dg-head-bg: var(--bg);
+  /*color-mix(in hsl, var(--p-surface-0) 0%, var(--p-surface-100) 50%);*/
+  /*var(--p-surface-100);*/
   /*--dg-head-bg: color-mix(in srgb, var(--p-surface-200) 50%, var(--dg-bg));*/
   --dg-hover: color-mix(in srgb, var(--p-surface-500) 7%, var(--dg-bg));
   --dg-selected: color-mix(in srgb, var(--p-primary-color) 11%, var(--dg-bg));
@@ -354,7 +356,7 @@ useColumnDrag({
   --dg-row-bg: var(--dg-head-bg);
 }
 .dg-head .dg-cell {
-  height: calc(var(--dg-row-h) + 0.25rem);
+  height: calc(var(--dg-row-h) + 0rem);
   color: var(--p-text-muted-color);
   font-size: 0.75rem;
   font-weight: 600;

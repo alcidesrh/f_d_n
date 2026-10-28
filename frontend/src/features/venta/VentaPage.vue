@@ -90,11 +90,14 @@
               <Button v-if="anteriores.length && !store.porRango" :label="verAnteriores ? 'Ocultar anteriores' : `Ver anteriores (${anteriores.length})`" size="small" rounded severity="secondary" class="anteriores shadow-md hover:bg-surface-50!" @click="verAnteriores = !verAnteriores" />
             </div>
             <div v-if="!store.porRango" class="flex items-center justify-between gap-2 mt-5">
-              <Button :label="etiquetaDia(-1)" severity="secondary" variant="outlined" size="small" class="dia-anterior" :disabled="store.cargandoSalidas" @click="moverDia(-1)">
-                <template #icon><icon name="chevron-left" class="mr-1" /></template>
+              <Button :label="etiquetaDia(-1)" severity="secondary" size="small" class="otro-dia" :disabled="store.cargandoSalidas" @click="moverDia(-1)">
+                <template #icon><icon name="chevron-left" /></template>
               </Button>
-              <Button :label="etiquetaDia(1)" size="small" icon-pos="right" class="dia-siguiente" :disabled="store.cargandoSalidas" @click="moverDia(1)">
-                <template #icon><icon name="chevron-right" class="ml-1" /></template>
+              <Button size="small" severity="secondary" class="otro-dia" :disabled="store.cargandoSalidas" @click="moverDia(1)">
+                <template #default>
+                  <span class="p-button-label" data-pc-section="label" data-p="small">{{ etiquetaDia(1) }}</span>
+                  <icon name="chevron-right"
+                /></template>
               </Button>
             </div>
           </section>
@@ -522,12 +525,10 @@ const nombreParada = (id: number | null) => store.detalle?.paradas.find((p) => p
   }
 }
 /* Día anterior y siguiente: contorno apagado a la izquierda, relleno primario a la derecha. */
-.dia-anterior {
+.otro-dia {
   color: var(--p-text-muted-color);
 }
-.dia-siguiente {
-  font-weight: 600;
-}
+
 /* Selector de presentación: dos botones unidos, el activo en relieve. */
 .vista {
   display: inline-flex;
