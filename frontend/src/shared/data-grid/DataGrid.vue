@@ -287,9 +287,9 @@ useColumnDrag({
   --dg-bg: var(--p-content-background);
   --dg-border: var(--p-content-border-color);
   --dg-head-bg: var(--bg);
-  /*color-mix(in hsl, var(--p-surface-0) 0%, var(--p-surface-100) 50%);*/
-  /*var(--p-surface-100);*/
-  /*--dg-head-bg: color-mix(in srgb, var(--p-surface-200) 50%, var(--dg-bg));*/
+  /*color-mix(in hsl, var(--p-surface-50) 100%, var(--p-surface-100) 80%);*/
+  /*var(--bg) */
+  /*color-mix(in hsl, var(--p-surface-0) 0%, var(--p-surface-100) 50%);*/ /*var(--p-surface-100);*/ /*--dg-head-bg: color-mix(in srgb, var(--p-surface-200) 50%, var(--dg-bg));*/
   --dg-hover: color-mix(in srgb, var(--p-surface-500) 7%, var(--dg-bg));
   --dg-selected: color-mix(in srgb, var(--p-primary-color) 11%, var(--dg-bg));
   --dg-pad-x: 0.75rem;
