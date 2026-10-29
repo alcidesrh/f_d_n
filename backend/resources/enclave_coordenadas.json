@@ -24,6 +24,11 @@
         "latitud": 15.473591,
         "longitud": -88.828462
     },
+    "6": {
+        "nombre": "Sayaxche",
+        "latitud": 16.5242969,
+        "longitud": -90.1884154
+    },
     "7": {
         "nombre": "Melchor de Mencos",
         "latitud": 17.058113,
@@ -59,6 +64,51 @@
         "latitud": 16.77305,
         "longitud": -89.66878
     },
+    "15": {
+        "nombre": "San Francisco",
+        "latitud": 16.7989153,
+        "longitud": -89.9342545
+    },
+    "16": {
+        "nombre": "Las Cruces",
+        "latitud": 16.6592232,
+        "longitud": -90.2913996
+    },
+    "17": {
+        "nombre": "La Libertad",
+        "latitud": 16.7873999,
+        "longitud": -90.1183212
+    },
+    "18": {
+        "nombre": "El Naranjo",
+        "latitud": 17.2299596,
+        "longitud": -90.8056636
+    },
+    "19": {
+        "nombre": "Palestina",
+        "latitud": 16.6807375,
+        "longitud": -90.4807257
+    },
+    "20": {
+        "nombre": "Fray Bartolome de las Casas",
+        "latitud": 15.8813518,
+        "longitud": -89.7281949
+    },
+    "21": {
+        "nombre": "Bethel",
+        "latitud": 16.8013374,
+        "longitud": -90.8158579
+    },
+    "22": {
+        "nombre": "Jutiapa",
+        "latitud": 14.2881737,
+        "longitud": -89.8935346
+    },
+    "23": {
+        "nombre": "Quetzaltenango, Xela",
+        "latitud": 14.8464612,
+        "longitud": -91.5194208
+    },
     "24": {
         "nombre": "Belice",
         "latitud": 17.494111,
@@ -91,8 +141,18 @@
     },
     "31": {
         "nombre": "Chal, Peten",
-        "latitud": 16.6424389,
-        "longitud": -89.651321
+        "latitud": 16.6427481,
+        "longitud": -89.6528958
+    },
+    "33": {
+        "nombre": "La Gloria, Peten",
+        "latitud": 16.938769,
+        "longitud": -90.372089
+    },
+    "34": {
+        "nombre": "Rancho",
+        "latitud": 14.915999,
+        "longitud": -90.0065329
     },
     "35": {
         "nombre": "Teculutan, Zacapa",
@@ -104,25 +164,170 @@
         "latitud": 14.795,
         "longitud": -90.192
     },
+    "37": {
+        "nombre": "Chisec, Alta Verapaz",
+        "latitud": 15.813015,
+        "longitud": -90.2896971
+    },
+    "39": {
+        "nombre": "Quirigua",
+        "latitud": 15.2724134,
+        "longitud": -89.0774369
+    },
+    "40": {
+        "nombre": "Los Encuentros Solola",
+        "latitud": 14.8546965,
+        "longitud": -91.1485326
+    },
+    "42": {
+        "nombre": "Chahal, Alta verapaz",
+        "latitud": 15.7899372,
+        "longitud": -89.6024016
+    },
+    "43": {
+        "nombre": "Chimaltenango",
+        "latitud": 14.6613043,
+        "longitud": -90.8193493
+    },
+    "44": {
+        "nombre": "San Salvador",
+        "latitud": 13.697629,
+        "longitud": -89.191156
+    },
+    "45": {
+        "nombre": "El Remate",
+        "latitud": 16.9931165,
+        "longitud": -89.690405
+    },
+    "46": {
+        "nombre": "San Pedro Sula",
+        "latitud": 15.5053546,
+        "longitud": -88.0250839
+    },
+    "49": {
+        "nombre": "Tegucigalpa, Honduras",
+        "latitud": 14.1058135,
+        "longitud": -87.2047053
+    },
     "50": {
         "nombre": "El Estor",
         "latitud": 15.53333,
         "longitud": -89.35
+    },
+    "51": {
+        "nombre": "Mazatenango",
+        "latitud": 14.533149,
+        "longitud": -91.5060031
+    },
+    "52": {
+        "nombre": "Tecun uman",
+        "latitud": 14.6978843,
+        "longitud": -92.1332863
+    },
+    "53": {
+        "nombre": "La Torre",
+        "latitud": 16.1414538,
+        "longitud": -90.1822244
     },
     "54": {
         "nombre": "Zacapa",
         "latitud": 14.97138,
         "longitud": -89.46475
     },
+    "55": {
+        "nombre": "Chiquimula",
+        "latitud": 14.8005709,
+        "longitud": -89.5459173
+    },
+    "56": {
+        "nombre": "Ipala",
+        "latitud": 14.5788174,
+        "longitud": -89.6150956
+    },
+    "57": {
+        "nombre": "Arenera",
+        "latitud": 14.37139,
+        "longitud": -89.737739
+    },
+    "58": {
+        "nombre": "Asunsión Mita",
+        "latitud": 14.3135847,
+        "longitud": -89.686002
+    },
+    "60": {
+        "nombre": "El Progreso, Jutiapa",
+        "latitud": 14.3859094,
+        "longitud": -89.8512941
+    },
+    "73": {
+        "nombre": "Flores",
+        "latitud": 16.9298524,
+        "longitud": -89.8914817
+    },
     "74": {
         "nombre": "Aguilar Batres",
         "latitud": 14.609202,
         "longitud": -90.540054
     },
+    "75": {
+        "nombre": "Retalhuleu",
+        "latitud": 14.5359621,
+        "longitud": -91.6780651
+    },
+    "76": {
+        "nombre": "Coatepeque",
+        "latitud": 14.7026327,
+        "longitud": -91.8656361
+    },
+    "77": {
+        "nombre": "Malacatan",
+        "latitud": 14.9106935,
+        "longitud": -92.0929143
+    },
+    "78": {
+        "nombre": "San Rafael Pie de la Cuesta",
+        "latitud": 14.9296303,
+        "longitud": -91.905476
+    },
+    "80": {
+        "nombre": "San Pablo",
+        "latitud": 15.0535011,
+        "longitud": -89.5053685
+    },
+    "81": {
+        "nombre": "Entrerios",
+        "latitud": 15.6362675,
+        "longitud": -88.5427317
+    },
+    "82": {
+        "nombre": "Entre Ríos 2",
+        "latitud": 15.6362675,
+        "longitud": -88.5427317
+    },
+    "83": {
+        "nombre": "Puerto Cortez",
+        "latitud": 15.851465,
+        "longitud": -87.9426681
+    },
     "84": {
         "nombre": "Turicentro Santa Isabel",
         "latitud": 16.6419726,
         "longitud": -89.6338564
+    },
+    "87": {
+        "nombre": "Colomba",
+        "latitud": 14.707588,
+        "longitud": -91.731941
+    },
+    "92": {
+        "nombre": "La Pólvora",
+        "latitud": 17.0093182,
+        "longitud": -89.3127949
+    },
+    "98": {
+        "nombre": "BORDER BELICE SAN IGNACIO",
+        "latitud": 17.0704214,
+        "longitud": -89.1369452
     },
     "103": {
         "nombre": "Cruce de San Juan",
@@ -133,6 +338,56 @@
         "nombre": "Chetumal",
         "latitud": 18.494553,
         "longitud": -88.295496
+    },
+    "111": {
+        "nombre": "Catarina",
+        "latitud": 14.8401471,
+        "longitud": -92.0711278
+    },
+    "112": {
+        "nombre": "Pajapita",
+        "latitud": 14.7168527,
+        "longitud": -92.0698805
+    },
+    "124": {
+        "nombre": "San Ignacio, Belize (Hode's Place Hotel)",
+        "latitud": 17.1527588,
+        "longitud": -89.0761718
+    },
+    "125": {
+        "nombre": "Belmopan",
+        "latitud": 17.250199,
+        "longitud": -88.770018
+    },
+    "127": {
+        "nombre": "Mariscos",
+        "latitud": 15.4244462,
+        "longitud": -89.0815508
+    },
+    "128": {
+        "nombre": "Trincheras",
+        "latitud": 15.4014983,
+        "longitud": -89.0533107
+    },
+    "132": {
+        "nombre": "Puerto Iztapa",
+        "latitud": 13.9270366,
+        "longitud": -90.8037011
+    },
+    "133": {
+        "nombre": "Puerto San José",
+        "latitud": 13.9246126,
+        "longitud": -90.8191844
+    },
+    "134": {
+        "nombre": "Escuintla",
+        "latitud": 14.3022857,
+        "longitud": -90.7866243
+    },
+    "137": {
+        "nombre": "San Diego",
+        "latitud": 16.9144362,
+        "longitud": -90.4206156
     },
     "140": {
         "nombre": "Guatemala Boletos a Melchor",
@@ -149,10 +404,95 @@
         "latitud": 16.920841,
         "longitud": -89.893606
     },
+    "147": {
+        "nombre": "Esquipulas",
+        "latitud": 14.6308869,
+        "longitud": -89.2552563
+    },
+    "149": {
+        "nombre": "San Marcos",
+        "latitud": 14.9643813,
+        "longitud": -91.7943267
+    },
+    "150": {
+        "nombre": "Quetzaltenango, Xela Starbus",
+        "latitud": 14.8639397,
+        "longitud": -91.5201947
+    },
+    "155": {
+        "nombre": "San Pablo, San Marcos",
+        "latitud": 14.9330496,
+        "longitud": -92.0039116
+    },
+    "157": {
+        "nombre": "El Porvenir",
+        "latitud": 14.9648698,
+        "longitud": -91.9386058
+    },
+    "160": {
+        "nombre": "Tecun Uman  2",
+        "latitud": 14.6778855,
+        "longitud": -92.1405697
+    },
+    "161": {
+        "nombre": "San José El Rodeo",
+        "latitud": 14.9144433,
+        "longitud": -91.9762158
+    },
+    "163": {
+        "nombre": "Agencia El Progreso",
+        "latitud": 14.854668,
+        "longitud": -90.068724
+    },
+    "164": {
+        "nombre": "Coatepeque 2",
+        "latitud": 14.7026327,
+        "longitud": -91.8656361
+    },
+    "168": {
+        "nombre": "Tocache",
+        "latitud": 14.9599012,
+        "longitud": -91.9600601
+    },
+    "170": {
+        "nombre": "Cruce Las Victorias",
+        "latitud": 14.6955982,
+        "longitud": -91.8046178
+    },
+    "171": {
+        "nombre": "Monterrico",
+        "latitud": 13.8910884,
+        "longitud": -90.4813711
+    },
     "172": {
         "nombre": "Aguilar Batres Web",
         "latitud": 14.609202,
         "longitud": -90.540054
+    },
+    "173": {
+        "nombre": "Antigua Guatemala",
+        "latitud": 14.5567814,
+        "longitud": -90.7337346
+    },
+    "183": {
+        "nombre": "Catarina 2",
+        "latitud": 14.8505155,
+        "longitud": -92.0776244
+    },
+    "184": {
+        "nombre": "Belice City",
+        "latitud": 17.5002768,
+        "longitud": -88.1988737
+    },
+    "185": {
+        "nombre": "Nuevo Progreso",
+        "latitud": 14.8137339,
+        "longitud": -91.8827478
+    },
+    "189": {
+        "nombre": "Morales Starbus",
+        "latitud": 15.4735463,
+        "longitud": -88.8296499
     },
     "190": {
         "nombre": "Los Amates Starbus",
@@ -164,14 +504,99 @@
         "latitud": 15.11952,
         "longitud": -89.35721
     },
+    "192": {
+        "nombre": "Tikal Parque Ida y Vuelta",
+        "latitud": 17.1910467,
+        "longitud": -89.6148911
+    },
+    "193": {
+        "nombre": "Plaza Israel StarBus Morales",
+        "latitud": 15.4690969,
+        "longitud": -88.839243
+    },
     "194": {
         "nombre": "El Estor StarBus",
         "latitud": 15.53333,
         "longitud": -89.35
     },
+    "199": {
+        "nombre": "Pto Barrios StarBus",
+        "latitud": 15.7275154,
+        "longitud": -88.5952506
+    },
+    "200": {
+        "nombre": "Coban Alta Verapaz",
+        "latitud": 15.4589242,
+        "longitud": -90.3648766
+    },
+    "201": {
+        "nombre": "La Cumbre",
+        "latitud": 15.0361393,
+        "longitud": -90.2159119
+    },
+    "202": {
+        "nombre": "Tactic",
+        "latitud": 15.3050879,
+        "longitud": -90.3445351
+    },
+    "203": {
+        "nombre": "Purulha",
+        "latitud": 15.2157773,
+        "longitud": -90.0208977
+    },
+    "204": {
+        "nombre": "Santa Cruz",
+        "latitud": 15.4596882,
+        "longitud": -90.1678634
+    },
+    "205": {
+        "nombre": "Frontera San Cristobal",
+        "latitud": 14.1863843,
+        "longitud": -89.6690582
+    },
+    "206": {
+        "nombre": "Tiucal",
+        "latitud": 14.2859684,
+        "longitud": -89.7249663
+    },
+    "207": {
+        "nombre": "Chiquimula StarBus",
+        "latitud": 14.785633,
+        "longitud": -89.5544372
+    },
+    "208": {
+        "nombre": "El Rancho StarBus",
+        "latitud": 14.915999,
+        "longitud": -90.0065329
+    },
+    "209": {
+        "nombre": "Mayuelas",
+        "latitud": 15.130193,
+        "longitud": -89.3549788
+    },
     "211": {
         "nombre": "El Chal",
         "latitud": 16.6424389,
         "longitud": -89.651321
+    },
+    "214": {
+        "nombre": "Zanjón San Lorenzo",
+        "latitud": 14.7771428,
+        "longitud": -92.102821
+    },
+    "217": {
+        "nombre": "El Xab",
+        "latitud": 14.5954333,
+        "longitud": -91.7272221
+    },
+    "221": {
+        "nombre": "Tajumulco",
+        "latitud": 15.0430989,
+        "longitud": -91.903608
+    },
+    "225": {
+        "nombre": "Tecun Uman 3",
+        "latitud": 14.6778855,
+        "longitud": -92.1405697
     }
 }
