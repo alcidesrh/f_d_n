@@ -848,7 +848,7 @@ watch(
   }
 }
 .burbuja__tarjetas {
-  width: min(22rem, 70cqi);
+  /*width: min(22rem, 70cqi);*/
   max-width: 100%;
 }
 .burbuja__pie {

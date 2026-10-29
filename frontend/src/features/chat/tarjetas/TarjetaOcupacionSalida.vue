@@ -6,9 +6,11 @@
 <template>
   <div class="flex flex-col gap-3 text-sm">
     <div>
-      <div class="font-semibold leading-snug">{{ d.titulo }}</div>
+      <div class="font-semibold leading-snug">{{ d.titulo }}ddd</div>
       <div class="text-xs text-muted-color first-letter:uppercase">
-        <template v-if="d.salida">{{ fecha(d.salida) }}</template><template v-if="d.bus"> · bus {{ d.bus }}</template><template v-if="d.empresa"> · {{ d.empresa }}</template>
+        <template v-if="d.salida">{{ fecha(d.salida) }}</template
+        ><template v-if="d.bus"> · bus {{ d.bus }}</template
+        ><template v-if="d.empresa"> · {{ d.empresa }}</template>
       </div>
     </div>
 
@@ -42,36 +44,36 @@
 
 <script setup lang="ts">
 interface Ocupacion {
-  titulo: string
-  salida: string | null
-  bus: string | null
-  empresa: string | null
-  asientos: number
-  ocupados: number
-  conIntermedias: number
-  libres: number
-  porCanal: Record<string, number>
-  columnas: Record<string, string>
-  filas: { usuario: string; cuenta: Record<string, number> }[]
-  totales: Record<string, number>
+  titulo: string;
+  salida: string | null;
+  bus: string | null;
+  empresa: string | null;
+  asientos: number;
+  ocupados: number;
+  conIntermedias: number;
+  libres: number;
+  porCanal: Record<string, number>;
+  columnas: Record<string, string>;
+  filas: { usuario: string; cuenta: Record<string, number> }[];
+  totales: Record<string, number>;
 }
 
-const props = defineProps<{ datos: unknown }>()
-const d = computed(() => props.datos as Ocupacion)
-const claves = computed(() => Object.keys(d.value.columnas))
+const props = defineProps<{ datos: unknown }>();
+const d = computed(() => props.datos as Ocupacion);
+const claves = computed(() => Object.keys(d.value.columnas));
 
 /** Encabezados cortos: la tabla cabe en la burbuja; el nombre completo va en el `title`. */
-const CORTAS: Record<string, string> = { reasignados: 'Reas.', anulados: 'Anul.', vouchers: 'Vouch.', cortesias: 'Cort.', intermedias: 'Interm.', claseA: 'A', claseB: 'B', total: 'Total' }
+const CORTAS: Record<string, string> = { reasignados: "Reas.", anulados: "Anul.", vouchers: "Vouch.", cortesias: "Cort.", intermedias: "Interm.", claseA: "A", claseB: "B", total: "Total" };
 
 const cifras = computed(() => [
-  { etiqueta: 'Ocupados', n: d.value.ocupados, clase: 'cifra--fuerte' },
-  { etiqueta: 'Libres', n: d.value.libres, clase: '' },
-  { etiqueta: 'Intermedios', n: d.value.conIntermedias, clase: '' },
-  { etiqueta: 'Estación', n: d.value.porCanal.estacion ?? 0, clase: 'cifra--estacion' },
-  { etiqueta: 'Agencia', n: d.value.porCanal.agencia ?? 0, clase: 'cifra--agencia' },
-  { etiqueta: 'Web', n: d.value.porCanal.web ?? 0, clase: 'cifra--web' },
-])
-const fecha = (iso: string) => new Intl.DateTimeFormat('es-GT', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date(iso))
+  { etiqueta: "Ocupados", n: d.value.ocupados, clase: "cifra--fuerte" },
+  { etiqueta: "Libres", n: d.value.libres, clase: "" },
+  { etiqueta: "Intermedios", n: d.value.conIntermedias, clase: "" },
+  { etiqueta: "Estación", n: d.value.porCanal.estacion ?? 0, clase: "cifra--estacion" },
+  { etiqueta: "Agencia", n: d.value.porCanal.agencia ?? 0, clase: "cifra--agencia" },
+  { etiqueta: "Web", n: d.value.porCanal.web ?? 0, clase: "cifra--web" },
+]);
+const fecha = (iso: string) => new Intl.DateTimeFormat("es-GT", { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }).format(new Date(iso));
 </script>
 
 <style scoped>

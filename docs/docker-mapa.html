@@ -1,0 +1,454 @@
+<title>Mapa Docker FDN</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400..700&family=Rajdhani:wght@600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a la izquierda el mapa de contenedores (clic = filtra), debajo el cheat sheet en columnas por contexto.
+   Paleta: la del design system Fuentes del Norte (slate + blue-700, tríos de estado). */
+:root {
+  --bg: #f1f5f9; --bg2: #ffffff; --surface: #ffffff; --line: #cbd5e1; --line-soft: #e2e8f0;
+  --ink: #0f172a; --muted: #475569; --faint: #94a3b8;
+  --primary: #1d4ed8; --primary-soft: #dbeafe; --on-primary: #ffffff;
+  --php: #1d4ed8; --php-soft: #dbeafe;
+  --front: #047857; --front-soft: #d1fae5;
+  --db: #7c3aed; --db-soft: #ede9fe;
+  --work: #b45309; --work-soft: #fef3c7;
+  --legacy: #64748b; --legacy-soft: #f1f5f9;
+  --mon: #be185d; --mon-soft: #fce7f3;
+  --warn-ink: #92400e; --warn-soft: #fef3c7;
+  --code-bg: #f8fafc;
+  --sans: "Roboto Flex", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --num: "Rajdhani", "Roboto Flex", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #020617; --bg2: #0b1222; --surface: #0f172a; --line: #334155; --line-soft: #1e293b;
+  --ink: #e2e8f0; --muted: #94a3b8; --faint: #64748b;
+  --primary: #60a5fa; --primary-soft: #1e3a8a; --on-primary: #0b1222;
+  --php: #60a5fa; --php-soft: #172554;
+  --front: #34d399; --front-soft: #064e3b;
+  --db: #a78bfa; --db-soft: #2e1065;
+  --work: #fbbf24; --work-soft: #451a03;
+  --legacy: #94a3b8; --legacy-soft: #1e293b;
+  --mon: #f472b6; --mon-soft: #500724;
+  --warn-ink: #fcd34d; --warn-soft: #451a03;
+  --code-bg: #020617; color-scheme: dark;
+} }
+:root[data-theme="dark"] {
+  --bg: #020617; --bg2: #0b1222; --surface: #0f172a; --line: #334155; --line-soft: #1e293b;
+  --ink: #e2e8f0; --muted: #94a3b8; --faint: #64748b;
+  --primary: #60a5fa; --primary-soft: #1e3a8a; --on-primary: #0b1222;
+  --php: #60a5fa; --php-soft: #172554;
+  --front: #34d399; --front-soft: #064e3b;
+  --db: #a78bfa; --db-soft: #2e1065;
+  --work: #fbbf24; --work-soft: #451a03;
+  --legacy: #94a3b8; --legacy-soft: #1e293b;
+  --mon: #f472b6; --mon-soft: #500724;
+  --warn-ink: #fcd34d; --warn-soft: #451a03;
+  --code-bg: #020617; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 14px; line-height: 1.5; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; }
+
+header.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; }
+.eyebrow { font: 700 12px/1 var(--num); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+h1 { font: 700 clamp(28px, 4vw, 40px)/1.05 var(--num); margin: 6px 0 0; text-wrap: balance; letter-spacing: .01em; }
+.lead { margin: 8px 0 0; color: var(--muted); max-width: 64ch; }
+.stack { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { font: 600 12px/1 var(--mono); padding: 6px 8px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); white-space: nowrap; }
+
+h2 { font: 700 20px/1.1 var(--num); letter-spacing: .04em; text-transform: uppercase; margin: 0; }
+.section-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; }
+.hint { color: var(--muted); font-size: 13px; }
+
+/* ——— mapa ——— */
+.map { background: var(--bg2); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+.svg-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.svg-scroll svg { display: block; min-width: 900px; width: 100%; height: auto; }
+svg text { font-family: var(--sans); fill: var(--ink); }
+svg .t-title { font: 700 15px var(--num); letter-spacing: .03em; }
+svg .t-sub { font-size: 11.5px; fill: var(--muted); }
+svg .t-mono { font-family: var(--mono); font-size: 11px; fill: var(--muted); }
+svg .t-port { font: 700 12px var(--mono); }
+svg .t-label { font-size: 10.5px; fill: var(--muted); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.svc { cursor: pointer; }
+.svc .box { stroke-width: 1.5; transition: stroke-width .15s, opacity .2s; }
+.svc:hover .box, .svc:focus-visible .box { stroke-width: 3; }
+.svc:focus { outline: none; }
+.svc:focus-visible .box { stroke-dasharray: 4 3; }
+svg.dim .svc:not(.on) { opacity: .35; }
+.wire { fill: none; stroke: var(--faint); stroke-width: 1.5; }
+.wire.dash { stroke-dasharray: 5 4; }
+.wlabel { font-size: 10.5px; fill: var(--muted); font-family: var(--mono); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 12.5px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+/* capas de compose */
+.layers { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.layer { border: 1px solid var(--line); border-radius: 8px; padding: 12px; background: var(--surface); display: grid; gap: 6px; align-content: start; min-width: 0; }
+.layer h3 { margin: 0; font: 700 14px/1.2 var(--mono); }
+.layer p { margin: 0; color: var(--muted); font-size: 13px; }
+.layer code { font-family: var(--mono); font-size: 12px; color: var(--ink); background: var(--code-bg); border: 1px solid var(--line-soft); border-radius: 4px; padding: 1px 5px; overflow-wrap: anywhere; }
+.layer .tag { justify-self: start; font: 700 10.5px/1 var(--num); letter-spacing: .1em; text-transform: uppercase; padding: 4px 6px; border-radius: 4px; background: var(--primary-soft); color: var(--primary); }
+
+/* ——— cheat sheet ——— */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.toolbar input { flex: 1 1 240px; min-width: 0; font: 14px var(--sans); padding: 9px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); }
+.toolbar input:focus-visible, .fbtn:focus-visible, .copy:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.fbtn { font: 600 12.5px/1 var(--sans); padding: 8px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.fbtn[aria-pressed="true"] { background: var(--ink); color: var(--bg2); border-color: var(--ink); }
+
+.sheet { columns: 3 340px; column-gap: 16px; }
+.group { break-inside: avoid; margin: 0 0 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.group > header { padding: 10px 14px; border-bottom: 1px solid var(--line-soft); display: flex; gap: 10px; align-items: baseline; justify-content: space-between; }
+.group h3 { margin: 0; font: 700 15px/1.2 var(--num); letter-spacing: .05em; text-transform: uppercase; }
+.group .where { font: 12px var(--mono); color: var(--faint); white-space: nowrap; }
+.cmds { list-style: none; margin: 0; padding: 0; }
+.cmd { padding: 9px 14px; border-top: 1px solid var(--line-soft); display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; align-items: start; }
+.cmd:first-child { border-top: 0; }
+.cmd code { font: 12.5px/1.45 var(--mono); color: var(--ink); background: var(--code-bg); border: 1px solid var(--line-soft); border-radius: 5px; padding: 3px 7px; display: block; min-width: 0; overflow-x: auto; white-space: pre; }
+.cmd p { grid-column: 1 / -1; margin: 0; color: var(--muted); font-size: 12.5px; }
+.cmd .svcs { display: inline-flex; gap: 4px; margin-right: 6px; vertical-align: 1px; }
+.cmd .svcs i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+.copy { font: 600 11px/1 var(--sans); padding: 6px 8px; border-radius: 5px; border: 1px solid var(--line); background: var(--bg2); color: var(--muted); cursor: pointer; align-self: center; }
+.copy.ok { color: var(--front); border-color: var(--front); }
+.warn { background: var(--warn-soft); color: var(--warn-ink); border-radius: 4px; padding: 0 5px; font-weight: 600; font-size: 11px; }
+.empty { color: var(--muted); padding: 24px; text-align: center; border: 1px dashed var(--line); border-radius: 10px; }
+
+footer { color: var(--faint); font-size: 12px; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Transportes Fuentes del Norte · f_d_n</div>
+      <h1>Mapa Docker y comandos</h1>
+      <p class="lead">Seis contenedores, una sola imagen de PHP para cuatro de ellos y PostgreSQL como base, cola y cerrojo. Toque un servicio en el mapa para ver solo sus comandos.</p>
+    </div>
+    <div class="stack" aria-label="Versiones">
+      <span class="chip">PHP 8.4</span><span class="chip">FrankenPHP 1</span><span class="chip">Symfony 8</span><span class="chip">PostgreSQL 16</span><span class="chip">Vue 3 · bun</span>
+    </div>
+  </header>
+
+  <section class="map" aria-labelledby="h-map">
+    <div class="section-head">
+      <h2 id="h-map">Arquitectura</h2>
+      <span class="hint">compose.yaml + compose.override.yaml (desarrollo)</span>
+    </div>
+    <div class="svg-scroll">
+      <svg id="diagram" viewBox="0 0 1000 560" role="img" aria-label="Diagrama de contenedores Docker del proyecto">
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="var(--faint)"/>
+          </marker>
+        </defs>
+
+        <!-- red de compose -->
+        <rect x="150" y="14" width="660" height="510" rx="14" fill="none" stroke="var(--line)" stroke-dasharray="2 4"/>
+        <text x="166" y="34" class="t-label">red default de compose</text>
+
+        <!-- cliente -->
+        <g>
+          <rect x="10" y="190" width="120" height="132" rx="10" fill="var(--surface)" stroke="var(--line)"/>
+          <text x="22" y="214" class="t-title">Navegador</text>
+          <text x="22" y="232" class="t-sub">staff app, página,</text>
+          <text x="22" y="247" class="t-sub">API, Mercure SSE</text>
+          <text x="22" y="276" class="t-port" style="fill:var(--php)">:80 / :443</text>
+          <text x="22" y="292" class="t-mono">443/udp HTTP/3</text>
+          <text x="22" y="310" class="t-mono">:5432 solo dev</text>
+        </g>
+
+        <!-- backend -->
+        <g class="svc" data-svc="backend" tabindex="0" role="button" aria-label="Filtrar comandos de backend">
+          <rect class="box" x="186" y="52" width="330" height="270" rx="12" fill="var(--php-soft)" stroke="var(--php)"/>
+          <text x="204" y="80" class="t-title">backend</text>
+          <text x="204" y="98" class="t-mono">app-php · frankenphp_dev / _prod</text>
+          <g>
+            <rect x="204" y="112" width="294" height="40" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+            <text x="216" y="130" style="font-weight:600;font-size:12.5px">Caddy</text>
+            <text x="216" y="145" class="t-sub">TLS, zstd/br/gzip, enruta por path</text>
+          </g>
+          <g>
+            <rect x="204" y="160" width="143" height="58" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+            <text x="216" y="179" style="font-weight:600;font-size:12.5px">php_server</text>
+            <text x="216" y="194" class="t-mono">/api /graphql</text>
+            <text x="216" y="208" class="t-mono">/login /pagina</text>
+          </g>
+          <g>
+            <rect x="355" y="160" width="143" height="58" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+            <text x="367" y="179" style="font-weight:600;font-size:12.5px">Mercure hub</text>
+            <text x="367" y="194" class="t-mono">/.well-known/</text>
+            <text x="367" y="208" class="t-mono">bolt: mercure.db</text>
+          </g>
+          <g>
+            <rect x="204" y="226" width="294" height="40" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+            <text x="216" y="244" style="font-weight:600;font-size:12.5px">Symfony worker</text>
+            <text x="216" y="259" class="t-sub">public/index.php · prod: var/ en tmpfs</text>
+          </g>
+          <text x="204" y="292" class="t-mono">monta ./backend:/app</text>
+          <text x="204" y="308" class="t-mono">healthcheck: curl /docs</text>
+        </g>
+
+        <!-- frontend -->
+        <g class="svc" data-svc="frontend" tabindex="0" role="button" aria-label="Filtrar comandos de frontend">
+          <rect class="box" x="600" y="52" width="196" height="120" rx="12" fill="var(--front-soft)" stroke="var(--front)"/>
+          <text x="616" y="80" class="t-title">frontend</text>
+          <text x="616" y="98" class="t-mono">app-frontend · bun</text>
+          <text x="616" y="122" class="t-port" style="fill:var(--front)">:9000</text>
+          <text x="616" y="142" class="t-sub">dev: Vite con HMR</text>
+          <text x="616" y="158" class="t-sub">prod: server.ts lee dist/</text>
+        </g>
+
+        <!-- database -->
+        <g class="svc" data-svc="database" tabindex="0" role="button" aria-label="Filtrar comandos de database">
+          <rect class="box" x="600" y="210" width="196" height="148" rx="12" fill="var(--db-soft)" stroke="var(--db)"/>
+          <text x="616" y="238" class="t-title">database</text>
+          <text x="616" y="256" class="t-mono">postgres:16-alpine</text>
+          <text x="616" y="280" class="t-port" style="fill:var(--db)">:5432</text>
+          <text x="616" y="300" class="t-sub">datos de la app</text>
+          <text x="616" y="316" class="t-sub">colas Messenger (doctrine://)</text>
+          <text x="616" y="332" class="t-sub">cerrojos advisory (LOCK_DSN)</text>
+          <text x="616" y="348" class="t-mono">vol: database_data</text>
+        </g>
+
+        <!-- workers -->
+        <g class="svc" data-svc="worker" tabindex="0" role="button" aria-label="Filtrar comandos de worker">
+          <rect class="box" x="186" y="392" width="196" height="112" rx="12" fill="var(--work-soft)" stroke="var(--work)"/>
+          <text x="202" y="418" class="t-title">worker</text>
+          <text x="202" y="436" class="t-mono">async · tareas</text>
+          <text x="202" y="458" class="t-sub">correos, push del chat,</text>
+          <text x="202" y="473" class="t-sub">tareas cortas, sincronización</text>
+          <text x="202" y="492" class="t-mono">256M · sale cada 1 h</text>
+        </g>
+        <g class="svc" data-svc="worker-pesadas" tabindex="0" role="button" aria-label="Filtrar comandos de worker-pesadas">
+          <rect class="box" x="398" y="392" width="196" height="112" rx="12" fill="var(--work-soft)" stroke="var(--work)"/>
+          <text x="414" y="418" class="t-title">worker-pesadas</text>
+          <text x="414" y="436" class="t-mono">pesadas</text>
+          <text x="414" y="458" class="t-sub">reportes PDF,</text>
+          <text x="414" y="473" class="t-sub">horizonte de salidas</text>
+          <text x="414" y="492" class="t-mono">768M php · 512M</text>
+        </g>
+        <g class="svc" data-svc="programador" tabindex="0" role="button" aria-label="Filtrar comandos de programador">
+          <rect class="box" x="610" y="392" width="186" height="112" rx="12" fill="var(--work-soft)" stroke="var(--work)"/>
+          <text x="626" y="418" class="t-title">programador</text>
+          <text x="626" y="436" class="t-mono">scheduler_fdn</text>
+          <text x="626" y="458" class="t-sub">el reloj: solo pone</text>
+          <text x="626" y="473" class="t-sub">tareas en la cola</text>
+          <text x="626" y="492" class="t-mono">uno solo (cerrojo)</text>
+        </g>
+        <text x="186" y="524" class="t-label">misma imagen app-php y mismo entorno que backend · ADR-044</text>
+
+        <!-- legado -->
+        <g class="svc" data-svc="legacy" tabindex="0" role="button" aria-label="Filtrar comandos del legado">
+          <rect class="box" x="836" y="300" width="150" height="104" rx="12" fill="var(--legacy-soft)" stroke="var(--legacy)" stroke-dasharray="5 4"/>
+          <text x="850" y="326" class="t-title">SQL Server</text>
+          <text x="850" y="344" class="t-sub">TerminalOmnibus</text>
+          <text x="850" y="364" class="t-mono">host.docker</text>
+          <text x="850" y="378" class="t-mono">.internal</text>
+          <text x="850" y="396" class="t-sub">fuera de compose</text>
+        </g>
+
+        <!-- monitoreo -->
+        <g class="svc" data-svc="monitoring" tabindex="0" role="button" aria-label="Filtrar comandos de monitoreo">
+          <rect class="box" x="836" y="52" width="150" height="160" rx="12" fill="var(--mon-soft)" stroke="var(--mon)" stroke-dasharray="5 4"/>
+          <text x="850" y="78" class="t-title">monitoreo</text>
+          <text x="850" y="94" class="t-sub">opcional · make mon-up</text>
+          <text x="850" y="122" class="t-port" style="fill:var(--mon)">:8080</text><text x="902" y="122" class="t-sub">cAdvisor</text>
+          <text x="850" y="146" class="t-port" style="fill:var(--mon)">:9090</text><text x="902" y="146" class="t-sub">Prometheus</text>
+          <text x="850" y="170" class="t-port" style="fill:var(--mon)">:3000</text><text x="902" y="170" class="t-sub">Grafana</text>
+          <text x="850" y="198" class="t-mono">compose.monitoring</text>
+        </g>
+
+        <!-- cables -->
+        <path class="wire" d="M130 256 H184" marker-end="url(#arr)"/>
+        <path class="wire" d="M498 132 C560 132 560 112 598 112" marker-end="url(#arr)"/>
+        <text x="512" y="152" class="wlabel">resto de rutas</text>
+        <path class="wire" d="M498 246 C560 246 560 284 598 284" marker-end="url(#arr)"/>
+        <text x="526" y="236" class="wlabel">Doctrine</text>
+        <path class="wire" d="M284 392 V324" marker-end="url(#arr)"/>
+        <text x="292" y="366" class="wlabel">Mercure / caddy_data</text>
+        <path class="wire" d="M496 392 C496 372 560 340 598 330" marker-end="url(#arr)"/>
+        <path class="wire" d="M703 392 V360" marker-end="url(#arr)"/>
+        <text x="710" y="380" class="wlabel">encola</text>
+        <path class="wire dash" d="M284 506 C 300 580 840 580 905 406" marker-end="url(#arr)"/>
+        <text x="914" y="428" class="wlabel">ADR-042</text>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--php)"></i>PHP / Caddy</span>
+      <span><i class="dot" style="background:var(--front)"></i>Frontend</span>
+      <span><i class="dot" style="background:var(--db)"></i>PostgreSQL</span>
+      <span><i class="dot" style="background:var(--work)"></i>Segundo plano</span>
+      <span><i class="dot" style="background:var(--legacy)"></i>Legado</span>
+      <span><i class="dot" style="background:var(--mon)"></i>Monitoreo</span>
+      <span>Borde punteado: fuera del stack base</span>
+    </div>
+
+    <div class="layers" aria-label="Capas de compose">
+      <div class="layer"><span class="tag">base</span><h3>compose.yaml</h3><p>Los 6 servicios, puertos, healthchecks y volúmenes <code>caddy_data</code>, <code>caddy_config</code>, <code>database_data</code>.</p></div>
+      <div class="layer"><span class="tag">dev · por defecto</span><h3>compose.override.yaml</h3><p>Build <code>frankenphp_dev</code> y <code>dev</code>, código montado, <code>Caddyfile.dev</code>, Xdebug por <code>XDEBUG_MODE</code>, Postgres en :5432.</p></div>
+      <div class="layer"><span class="tag">producción</span><h3>compose.prod.yaml</h3><p>Imagen sin código: monta el checkout de la VPS, <code>/app/var</code> en tmpfs, secretos de <code>.env.prod.local</code>.</p></div>
+      <div class="layer"><span class="tag">vps por IP</span><h3>compose.vps.yaml</h3><p>Dev accesible en la IP pública con <code>local_certs</code>; la base sin puerto público.</p></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-cmd" style="display:grid;gap:14px">
+    <div class="section-head">
+      <h2 id="h-cmd">Comandos útiles</h2>
+      <span class="hint" id="count"></span>
+    </div>
+    <div class="toolbar">
+      <label for="q" class="hint" style="position:absolute;left:-9999px">Buscar comando</label>
+      <input id="q" type="search" placeholder="Buscar: logs, migrar, token, failed…" autocomplete="off">
+      <div class="stack" id="filters" role="group" aria-label="Filtrar por servicio"></div>
+    </div>
+    <div class="sheet" id="sheet"></div>
+    <div class="empty" id="empty" hidden>Ningún comando coincide. Quite el filtro o cambie la búsqueda.</div>
+  </section>
+
+  <footer>Tomado de compose*.yaml, Makefile, backend/Dockerfile, frontend/Dockerfile y backend/frankenphp/Caddyfile. Los comandos <code>make</code> se corren desde la raíz del repo. Nunca pegue tokens ni contraseñas en la salida compartida.</footer>
+</div>
+
+<script>
+const SVC = {
+  backend: { name: 'backend', color: 'var(--php)' },
+  frontend: { name: 'frontend', color: 'var(--front)' },
+  database: { name: 'database', color: 'var(--db)' },
+  worker: { name: 'worker', color: 'var(--work)' },
+  'worker-pesadas': { name: 'worker-pesadas', color: 'var(--work)' },
+  programador: { name: 'programador', color: 'var(--work)' },
+  legacy: { name: 'legado', color: 'var(--legacy)' },
+  monitoring: { name: 'monitoreo', color: 'var(--mon)' },
+};
+const ALLPHP = ['backend', 'worker', 'worker-pesadas', 'programador'];
+const ALL = ['backend', 'frontend', 'database', 'worker', 'worker-pesadas', 'programador'];
+
+const GROUPS = [
+  { title: 'Levantar y parar', where: 'desarrollo', cmds: [
+    ['make dev', 'Levanta el stack de desarrollo en segundo plano.', ALL],
+    ['make dev-build', 'Igual, pero reconstruye las imágenes antes.', ALL],
+    ['make debug', 'Levanta con XDEBUG_MODE=debug.', ['backend']],
+    ['make d', 'Para y elimina los contenedores (down --remove-orphans). Los volúmenes quedan.', ALL],
+    ['make b', 'Reconstruye las imágenes sin caché (--pull --no-cache).', ALL],
+    ['docker compose ps', 'Estado y salud de cada contenedor.', ALL],
+    ['docker compose up -d --force-recreate backend', 'Recrea un servicio tras cambiar su entorno o un montaje.', ['backend']],
+  ]},
+  { title: 'Logs y entrar', where: 'cualquier entorno', cmds: [
+    ['make logs', 'Logs en vivo de todo el stack, desde ahora.', ALL],
+    ['docker compose logs -f --tail=200 worker', 'Logs de un servicio con algo de historia.', ['worker']],
+    ['make sh', 'Shell dentro de backend.', ['backend']],
+    ['docker compose exec database psql -U app app', 'Consola de PostgreSQL (usuario y base por defecto: app).', ['database']],
+    ['docker compose top', 'Procesos que corre cada contenedor.', ALL],
+    ['docker stats --no-stream', 'CPU y memoria de cada contenedor ahora mismo.', ALL],
+  ]},
+  { title: 'Symfony y base de datos', where: 'backend', cmds: [
+    ['make migrate', 'Corre las migraciones pendientes.', ['backend', 'database']],
+    ['make migration', 'Crea una migración desde el diff de entidades.', ['backend', 'database']],
+    ['make cc', 'Limpia la caché de Symfony.', ['backend']],
+    ['make entity-setup', 'Sincroniza la metadata de entidades dinámicas (app:config:sync-metadata).', ['backend']],
+    ['docker compose exec backend bin/console debug:router', 'Rutas registradas.', ['backend']],
+    ['make reset-db soft=1', 'Reinicia la base (sin soft= es --hard). <span class="warn">Borra datos</span>', ['backend', 'database']],
+  ]},
+  { title: 'Segundo plano', where: 'ADR-044', cmds: [
+    ['make tareas', 'Latido de cada tarea del programador.', ['programador']],
+    ['make tareas t=reportes_diarios', 'Pone una tarea en cola ya.', ['programador', 'worker-pesadas']],
+    ['docker compose restart worker worker-pesadas programador', 'Obligatorio tras cambiar un handler o una tarea en desarrollo.', ['worker', 'worker-pesadas', 'programador']],
+    ['docker compose exec backend bin/console messenger:stats', 'Mensajes en espera por cola.', ['worker', 'worker-pesadas', 'database']],
+    ['docker compose exec backend bin/console messenger:failed:show', 'Lo de async y pesadas que agotó sus reintentos.', ['worker', 'worker-pesadas']],
+    ['docker compose exec backend bin/console messenger:failed:retry', 'Reintenta los fallidos (pregunta uno por uno).', ['worker', 'worker-pesadas']],
+  ]},
+  { title: 'Pruebas', where: 'stack levantado', cmds: [
+    ['make test', 'PHPUnit completo dentro de backend.', ['backend']],
+    ['make testf F="VentaTest"', 'PHPUnit filtrado por nombre.', ['backend']],
+    ['make e2e-usuario', 'Crea o reinicia la cuenta de pruebas y escribe .env.e2e.local.', ['backend']],
+    ['curl -sk -H "Authorization: Bearer $(make -s e2e-token)" https://localhost/graphql', 'Llamada autenticada (REST además con Accept: application/ld+json).', ['backend']],
+    ['cd frontend && npm run test:e2e', 'Playwright contra el stack.', ['frontend', 'backend']],
+  ]},
+  { title: 'Legado y migración', where: 'SQL Server', cmds: [
+    ['make sincronizar', 'Un ciclo de sincronización a mano (el programador la corre cada minuto).', ['legacy', 'backend']],
+    ['make migrar-entities entities=\'Empresa Estacion Bus\'', 'Migra entidades estáticas del legado.', ['legacy', 'backend', 'database']],
+    ['make migrar-todo clean=1', 'Migración completa. <span class="warn">Toma horas</span>', ['legacy', 'backend', 'database']],
+  ]},
+  { title: 'Producción', where: 'VPS · .env.prod.local', cmds: [
+    ['make deploy', 'git pull y solo lo que cambió: vendor, front, página, imagen o reinicio.', ALLPHP.concat('frontend')],
+    ['make reiniciar', 'Recrea los 4 contenedores de PHP para tomar el código (segundos).', ALLPHP],
+    ['make front', 'vite build en el host; el contenedor sirve dist/ sin reiniciar.', ['frontend']],
+    ['make pagina', 'Compila la página pública en backend/public/pagina.', ['backend']],
+    ['make vendor', 'composer install tras cambiar composer.lock.', ['backend']],
+    ['make imagen', 'Reconstruye imágenes. Solo si cambia un Dockerfile o una extensión de PHP.', ALL],
+    ['make prod-logs s=backend', 'Sigue los logs de producción de un servicio.', ['backend']],
+  ]},
+  { title: 'Monitoreo', where: 'compose.monitoring.yaml', cmds: [
+    ['make mon-up', 'cAdvisor :8080, Prometheus :9090, Grafana :3000. Convive con make dev.', ['monitoring']],
+    ['make mon-down', 'Para solo el monitoreo; la app sigue arriba.', ['monitoring']],
+    ['make mon-logs', 'Logs del monitoreo.', ['monitoring']],
+  ]},
+  { title: 'Limpieza y rescate', where: 'host', cmds: [
+    ['rm -rf frontend/node_modules/.vite', 'Cuando .vite queda de root tras un build del contenedor.', ['frontend']],
+    ['docker image prune -f', 'Borra imágenes colgantes.', []],
+    ['docker system df', 'Cuánto disco usan imágenes, contenedores y volúmenes.', []],
+    ['docker compose down -v', 'Para y borra volúmenes. <span class="warn">Pierde la base</span>', ['database']],
+  ]},
+];
+
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const sheet = document.getElementById('sheet');
+const filters = document.getElementById('filters');
+const q = document.getElementById('q');
+const svg = document.getElementById('diagram');
+let active = null;
+
+sheet.innerHTML = GROUPS.map(g => `
+  <article class="group"><header><h3>${g.title}</h3><span class="where">${g.where}</span></header>
+  <ul class="cmds">${g.cmds.map(([c, d, s]) => `
+    <li class="cmd" data-svcs="${s.join(' ')}" data-text="${esc((c + ' ' + d.replace(/<[^>]+>/g, '')).toLowerCase())}">
+      <code>${esc(c)}</code>
+      <button class="copy" type="button" data-c="${esc(c)}" aria-label="Copiar ${esc(c)}">Copiar</button>
+      <p><span class="svcs">${s.map(k => `<i title="${SVC[k].name}" style="background:${SVC[k].color}"></i>`).join('')}</span>${d}</p>
+    </li>`).join('')}</ul></article>`).join('');
+
+filters.innerHTML = '<button class="fbtn" type="button" data-f="" aria-pressed="true">Todos</button>' +
+  Object.entries(SVC).map(([k, v]) => `<button class="fbtn" type="button" data-f="${k}" aria-pressed="false"><i class="dot" style="background:${v.color}"></i>${v.name}</button>`).join('');
+
+function apply() {
+  const term = q.value.trim().toLowerCase();
+  let shown = 0;
+  sheet.querySelectorAll('.group').forEach(g => {
+    let n = 0;
+    g.querySelectorAll('.cmd').forEach(li => {
+      const ok = (!active || li.dataset.svcs.split(' ').includes(active)) && (!term || li.dataset.text.includes(term));
+      li.hidden = !ok; if (ok) n++;
+    });
+    g.hidden = n === 0; shown += n;
+  });
+  document.getElementById('empty').hidden = shown > 0;
+  document.getElementById('count').textContent = `${shown} comando${shown === 1 ? '' : 's'}` + (active ? ` · ${SVC[active].name}` : '');
+  filters.querySelectorAll('.fbtn').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.f || null) === active)));
+  svg.classList.toggle('dim', !!active);
+  svg.querySelectorAll('.svc').forEach(n => n.classList.toggle('on', n.dataset.svc === active));
+}
+function setActive(k) { active = (k && k !== active) ? k : null; apply(); }
+
+filters.addEventListener('click', e => { const b = e.target.closest('.fbtn'); if (b) { active = null; setActive(b.dataset.f); } });
+svg.querySelectorAll('.svc').forEach(n => {
+  n.addEventListener('click', () => setActive(n.dataset.svc));
+  n.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActive(n.dataset.svc); } });
+});
+q.addEventListener('input', apply);
+sheet.addEventListener('click', async e => {
+  const b = e.target.closest('.copy'); if (!b) return;
+  const text = b.dataset.c;
+  try { await navigator.clipboard.writeText(text); b.textContent = 'Copiado'; b.classList.add('ok'); }
+  catch { const r = document.createRange(); r.selectNodeContents(b.previousElementSibling); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = 'Seleccionado'; }
+  setTimeout(() => { b.textContent = 'Copiar'; b.classList.remove('ok'); }, 1400);
+});
+apply();
+</script>
