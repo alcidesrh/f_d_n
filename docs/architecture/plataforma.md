@@ -20,7 +20,7 @@ Detalle de implementación de accesos, multi-tenancy, autorizaciones, listados, 
   - Catálogo cerrado `Tarea`, cada una con su `MensajeDeTarea`. El horario `Programa` (`fdn`, estado en `cache.programador`) lo consume el contenedor `programador`, que solo reenvía a la cola `tareas`.
   - El `worker` consume `async` y `tareas`; el `worker-pesadas`, `pesadas` (un mensaje por esquema o por destinatario).
   - `TareasMiddleware` pone un cerrojo por tarea (si la anterior sigue, se omite), escribe el latido en `estado_tarea` y no reintenta un fallo (lo intenta la próxima corrida).
-  - Consultas: `app:programador:tareas [--ejecutar=]` (`make tareas t=`), `GET /api/programador/tareas` y `POST …/{codigo}/ejecutar` (`config.editar`).
+  - Consultas: pantalla `/configuracion/programador` (`features/programador-tareas/`, `core/programador/`), `app:programador:tareas [--ejecutar=]` (`make tareas t=`), `GET /api/programador/tareas` y `POST …/{codigo}/ejecutar` (`config.editar`).
   - El tablero alerta `programador_detenido` y `mensajes_fallidos`.
   - Umbrales diarios (`App\Vigilancia`): los límites `aviso_*_por_dia` del rol no bloquean; la operación que los cruza avisa por el chat a los aprobadores más cercanos.
   - Reportes programados (`App\Reporte\Diario`): suscripción en Mi cuenta (`/api/me/reportes`), recorte por el alcance del destinatario (`Celdas`), chat y/o correo, una vez por día (`envio_reporte`). La vigilancia avisa las alertas nuevas del tablero cada 30 min (`aviso_operativo`).

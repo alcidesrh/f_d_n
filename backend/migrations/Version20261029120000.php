@@ -20,6 +20,9 @@ use Doctrine\Migrations\AbstractMigration;
  *   los reportes en los avisos del sistema).
  * - `esquema_salida`: modo automático con horizonte, ancla de la cadencia,
  *   frontera de lo ya desplegado y pausa.
+ * - Enlace a `/configuracion/programador` en la administración, detrás de
+ *   "Publicar configuración" (o de "Configuración de entidades"), en la caja
+ *   donde esté; si alguien los movió o borró, no se agrega.
  */
 final class Version20261029120000 extends AbstractMigration
 {
@@ -49,10 +52,19 @@ final class Version20261029120000 extends AbstractMigration
         $this->addSql('ALTER TABLE esquema_salida ADD programado_hasta DATE DEFAULT NULL');
         $this->addSql('ALTER TABLE esquema_salida ADD pausado_motivo VARCHAR(255) DEFAULT NULL');
         $this->addSql('ALTER TABLE esquema_salida ADD pausado_en TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL');
+
+        $previo = "(SELECT id FROM enlace_administracion WHERE ruta IN ('metadata-publicacion', 'entity-config') ORDER BY ruta = 'metadata-publicacion' DESC, id LIMIT 1)";
+        $this->addSql("UPDATE enlace_administracion SET posicion = posicion + 1 WHERE seccion_id = (SELECT seccion_id FROM enlace_administracion WHERE id = {$previo}) AND posicion > (SELECT posicion FROM enlace_administracion WHERE id = {$previo})");
+        $this->addSql(
+            "INSERT INTO enlace_administracion (seccion_id, etiqueta, icono, claves, ruta, parametros, posicion, activo)
+             SELECT seccion_id, ?, ?, ?, ?, ?, posicion + 1, true FROM enlace_administracion WHERE id = {$previo}",
+            ['Programador de tareas', 'schedule', json_encode(['Tareas programadas', 'Reportes diarios', 'Worker', 'Cron'], JSON_UNESCAPED_UNICODE), 'programador-tareas', '{}'],
+        );
     }
 
     public function down(Schema $schema): void
     {
+        $this->addSql("DELETE FROM enlace_administracion WHERE ruta = 'programador-tareas'");
         $this->addSql('ALTER TABLE envio_reporte DROP CONSTRAINT FK_71D545A6DB38439E');
         $this->addSql('ALTER TABLE suscripcion_reporte DROP CONSTRAINT FK_E9B9EF83DB38439E');
         $this->addSql('DROP TABLE aviso_operativo');

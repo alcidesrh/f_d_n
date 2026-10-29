@@ -79,6 +79,18 @@ enum Tarea: string
         };
     }
 
+    /** Cuándo corre, para la pantalla: «Cada 10 minutos», «Cada día a las 01:30». */
+    public function cuando(string $horaReportes): string
+    {
+        $hora = $this->hora($horaReportes);
+        if ($hora !== null) {
+            return "Cada día a las {$hora}";
+        }
+        [$n, $unidad] = explode(' ', $this->frecuencia());
+
+        return $n === '1' ? 'Cada minuto' : "Cada {$n} minutos";
+    }
+
     /** Sin una corrida buena en este lapso, el programador se da por detenido. */
     public function tolerancia(): string
     {

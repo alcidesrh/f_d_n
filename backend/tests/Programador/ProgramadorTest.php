@@ -38,6 +38,13 @@ final class ProgramadorTest extends TestCase
         self::assertNull(Tarea::PURGAR_VENTA->hora('06:00'));
     }
 
+    public function testCuandoCorre(): void
+    {
+        self::assertSame('Cada minuto', Tarea::PURGAR_VENTA->cuando('06:00'));
+        self::assertSame('Cada 10 minutos', Tarea::CERTIFICAR_PENDIENTES->cuando('06:00'));
+        self::assertSame('Cada día a las 06:30', Tarea::REPORTES_DIARIOS->cuando('06:30'));
+    }
+
     public function testHoraDeReportesInvalida(): void
     {
         $this->expectException(\InvalidArgumentException::class);
