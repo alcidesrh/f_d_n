@@ -24,6 +24,7 @@
 .github/
 docs/
 public/bundles/
+public/pagina/
 tests/
 var/
 vendor/

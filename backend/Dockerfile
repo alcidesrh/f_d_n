@@ -87,6 +87,20 @@ COPY --link frankenphp/conf.d/20-app.dev.ini $PHP_INI_DIR/app.conf.d/
 
 CMD [ "frankenphp", "run", "--config", "/etc/frankenphp/Caddyfile", "--watch" ]
 
+# Página web pública (ADR-021): se compila aquí, no en el host, para que un `git pull` baste.
+# Contextos `pagina` y `frontend` (compose.prod.yaml); solo se recompila si cambian.
+FROM node:24-alpine AS pagina_build
+
+WORKDIR /build/pagina
+
+COPY --from=pagina package.json package-lock.json ./
+RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund
+
+# La página reutiliza archivos del frontend por alias (../frontend/src).
+COPY --from=frontend src /build/frontend/src
+COPY --from=pagina . ./
+RUN npm run build
+
 FROM frankenphp_base AS frankenphp_prod_builder
 
 ENV APP_ENV=prod
@@ -94,22 +108,6 @@ ENV APP_ENV=prod
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 
 COPY --link frankenphp/conf.d/20-app.prod.ini $PHP_INI_DIR/app.conf.d/
-
-COPY --link composer.* symfony.* ./
-RUN composer install --no-cache --prefer-dist --no-dev --no-autoloader --no-scripts --no-progress
-
-# copy sources
-COPY --link --exclude=frankenphp/ . ./
-
-RUN <<-EOF
-	mkdir -p var/cache var/log var/share
-	composer dump-autoload --classmap-authoritative --no-dev
-	composer dump-env prod
-	composer run-script --no-dev post-install-cmd
-	chmod +x bin/console
-	chmod -R g=u var
-	sync
-EOF
 
 # Collect shared libraries needed by FrankenPHP and PHP extensions
 # hadolint ignore=DL3008,SC3054,DL4006
@@ -125,6 +123,25 @@ RUN <<-'EOF'
 		done
 	done
 	rm -rf /var/lib/apt/lists/*
+EOF
+
+COPY --link composer.* symfony.* ./
+# Caché de Composer entre builds: un composer.lock nuevo solo baja los paquetes que cambiaron.
+RUN --mount=type=cache,target=/root/.composer/cache \
+	composer install --prefer-dist --no-dev --no-autoloader --no-scripts --no-progress
+
+# copy sources
+COPY --link --exclude=frankenphp/ . ./
+COPY --link --from=pagina_build /build/backend/public/pagina public/pagina
+
+RUN <<-EOF
+	mkdir -p var/cache var/log var/share
+	composer dump-autoload --classmap-authoritative --no-dev
+	composer dump-env prod
+	composer run-script --no-dev post-install-cmd
+	chmod +x bin/console
+	chmod -R g=u var
+	sync
 EOF
 
 # Prod FrankenPHP image
@@ -175,7 +192,9 @@ EOF
 
 # Después de apt: el bundle del builder no trae la raíz de packages.microsoft.com y rompía la descarga del ODBC.
 COPY --from=frankenphp_prod_builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-COPY --link --exclude=var --from=frankenphp_prod_builder /app /app
+# vendor/ en su propia capa: un cambio de código no vuelve a copiar ni enviar las dependencias.
+COPY --link --from=frankenphp_prod_builder /app/vendor /app/vendor
+COPY --link --exclude=var --exclude=vendor --from=frankenphp_prod_builder /app /app
 # Group 0 + g=u for arbitrary-UID runtimes (e.g. OpenShift).
 COPY --chown=www-data:0 --from=frankenphp_prod_builder /app/var /app/var
 RUN chmod g=u /app/var

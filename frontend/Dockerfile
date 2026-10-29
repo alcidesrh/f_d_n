@@ -24,17 +24,18 @@ CMD ["sh", "-c", "bun install && bun run dev"]
 # Build stage
 FROM base AS builder
 
+# Node real: el `node` de la imagen de bun es un shim y vue-tsc no encuentra los .vue bajo él.
+# Antes del código para que un cambio de código no lo reinstale.
+RUN apk add --no-cache nodejs
+
 # Copiar lockfile y manifest antes que el código para cachear capas
 COPY bun.lock package.json ./
 
-# Instalar dependencias (incluye dev: vue-tsc, vite)
-RUN bun install --frozen-lockfile
+# Instalar dependencias (incluye dev: vue-tsc, vite); la caché de bun sobrevive entre builds
+RUN --mount=type=cache,target=/root/.bun/install/cache bun install --frozen-lockfile
 
 # Copiar el resto del proyecto
 COPY . .
-
-# Node real: el `node` de la imagen de bun es un shim y vue-tsc no encuentra los .vue bajo él
-RUN apk add --no-cache nodejs
 
 # Build (vue-tsc --noEmit && vite build) -> dist/
 RUN bun run build

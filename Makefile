@@ -167,6 +167,14 @@ prod: prod-env ## Levanta el stack de producción (dominio y secretos en .env.pr
 prod-build: prod-env ## Construye las imágenes de producción y levanta el stack
 	$(PROD_COMP) up -d --build
 
+# Sincronización con el legado (ADR-042) mientras dure la mudanza; `make deploy sync=0` la deja fuera.
+PROD_SYNC = -f compose.sincronizacion.yaml -f compose.sincronizacion.prod.yaml
+
+deploy: prod-env ## Actualiza producción: git pull, reconstruye solo lo que cambió y recrea solo los contenedores con imagen nueva
+	git pull --ff-only
+	$(PROD_COMP) $(if $(filter 0,$(sync)),,$(PROD_SYNC)) up -d --build
+	$(DOCKER) image prune -f
+
 vps: ## Levanta el stack de dev accesible por la IP pública de la VPS (secretos en .env.vps.local)
 	@test -f .env.vps.local || { echo "Falta .env.vps.local (secretos, ver compose.vps.yaml)" >&2; exit 1; }
 	APP_ENV=dev $(DOCKER_COMP) --env-file .env.vps.local -f compose.yaml -f compose.override.yaml -f compose.vps.yaml up -d --build

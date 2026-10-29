@@ -62,7 +62,7 @@ Despliegue
 | Comando             | Descripción |
 | ------------------- | ----------- |
 | `npm run dev`       | Dev server en 9100 bajo `/pagina/`, proxy de `/api` a `PAGINA_BACKEND` (por defecto `https://localhost`) |
-| `npm run build`     | type-check + build a `backend/public/pagina` + prerender por idioma y `sitemap.xml` (requerido antes de construir la imagen del backend) |
+| `npm run build`     | type-check + build a `backend/public/pagina` + prerender por idioma y `sitemap.xml` (la imagen de producción la compila sola: `make deploy`) |
 | `npm run test:unit` | Vitest |
 
 ### Frontend (en `frontend/`)
