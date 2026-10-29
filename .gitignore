@@ -12,3 +12,6 @@ legacy/
 
 # Producción en la VPS (secretos, make prod)
 .env.prod.local
+
+# Trabajo temporal local (dumps, certificados, logs de despliegue): no versionar
+scratchpad/
