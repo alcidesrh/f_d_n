@@ -10,7 +10,7 @@
       <div class="nav-row" :class="{ 'nav-row--mini': compact }">
         <template v-if="!compact">
           <button v-if="item.children.length" type="button" class="nav-toggle" :style="toggleIndent" :aria-expanded="expanded.has(item.id)" :title="expanded.has(item.id) ? 'Contraer' : 'Desplegar'" @click="toggle(item.id)">
-            <icon :name="expanded.has(item.id) ? 'remove' : 'add'" size="0.9rem" />
+            <icon class="submenu-toggle-icon" :name="expanded.has(item.id) ? 'remove' : 'add'" size="0.9rem" />
           </button>
           <span v-else class="nav-toggle nav-toggle--spacer" :style="toggleIndent" aria-hidden="true" />
         </template>
@@ -265,6 +265,10 @@ const toggle = (id: number) => props.sidebar.toggleItem(id);
 }
 .menu-link--flyout.is-open .menu-text {
   opacity: 0 !important;
+}
+.submenu-toggle-icon {
+  position: absolute;
+  left: 23px;
 }
 </style>
 
