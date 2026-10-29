@@ -21,11 +21,11 @@ use Gedmo\Mapping\Annotation as Gedmo;
 trait TimestampableEntityTrait {
     #[Gedmo\Timestampable(on: 'create')]
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    protected \DateTime $createdAt;
+    protected ?\DateTime $createdAt = null;
 
     #[Gedmo\Timestampable(on: 'update')]
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    protected \DateTime $updatedAt;
+    protected ?\DateTime $updatedAt = null;
 
     public function setCreatedAt(\DateTime $createdAt) {
         $this->createdAt = $createdAt;
