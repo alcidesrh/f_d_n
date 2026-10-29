@@ -29,6 +29,7 @@ La evaluación previa recomendó `symfony/scheduler` sobre el Messenger y el Pos
   - Un fallo no se reintenta ni va a `failed`: queda en el latido y lo intenta la próxima corrida.
 - **Salud**: `EstadoDeTarea::detenida()` dice si una tarea lleva más de su tolerancia sin una corrida buena. Una tarea que nunca corrió cuenta desde que el programador arrancó (`primer_inicio`). Si nada corrió nunca (una instalación nueva), no hay alarma.
   - El tablero suma las alertas `programador_detenido` (crítica) y `mensajes_fallidos`.
+  - Pantalla `/configuracion/programador` (enlace en la administración, `config.editar`): cada tarea con cuándo corre, la última corrida buena y el último intento, su resultado o error, y «Correr ahora». Se actualiza sola cada 30 s.
   - `app:programador:tareas [--ejecutar=<código>]` (`make tareas t=…`) y `GET /api/programador/tareas`, `POST …/{código}/ejecutar` (`config.editar`).
 
 ### Tareas del catálogo
