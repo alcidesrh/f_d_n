@@ -1,6 +1,10 @@
 # Production environment override (`make prod`). Variables y secretos en .env.prod.local (fuera de git):
 # compose los usa para interpolar (--env-file) y los contenedores de PHP los reciben con env_file,
 # porque la imagen de prod no lleva backend/.env.local.
+#
+# El código no va en la imagen: se monta desde el checkout de la VPS (`./backend`, `./frontend/dist`).
+# La imagen solo trae PHP, sus extensiones y Caddy (se reconstruye si cambia el Dockerfile).
+# Un cambio de código: `make reiniciar` (PHP) o `make front` (frontend, sin reiniciar). Ver `make deploy`.
 services:
   backend:
     build: &backend-build
@@ -16,9 +20,23 @@ services:
       APP_SECRET: ${APP_SECRET}
       MERCURE_PUBLISHER_JWT_KEY: ${CADDY_MERCURE_JWT_SECRET}
       MERCURE_SUBSCRIBER_JWT_KEY: ${CADDY_MERCURE_JWT_SECRET}
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+      - &codigo ./backend:/app
+      - ./backend/frankenphp/Caddyfile:/etc/frankenphp/Caddyfile:ro
+      - &ini ./backend/frankenphp/conf.d/20-app.prod.ini:/usr/local/etc/php/app.conf.d/20-app.prod.ini:ro
+    # La caché de Symfony nace con cada arranque: un reinicio siempre ve el código nuevo.
+    tmpfs: &var
+      - /app/var:uid=33,gid=0,mode=0775
 
   worker: &worker-prod
     build: *backend-build
+    volumes:
+      - caddy_data:/data
+      - *codigo
+      - *ini
+    tmpfs: *var
     env_file: .env.prod.local
     environment:
       APP_SECRET: ${APP_SECRET}
@@ -34,6 +52,9 @@ services:
       context: ./frontend
       target: prod
     restart: unless-stopped
+    # El build lo hace `make front` en el host; el servidor lee dist/ en cada petición.
+    volumes:
+      - ./frontend:/frontend:ro
 
   database:
     restart: unless-stopped

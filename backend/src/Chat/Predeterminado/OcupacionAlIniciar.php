@@ -105,15 +105,16 @@ final readonly class OcupacionAlIniciar
     }
 
     /**
-     * El mensaje del chat: el resumen y la tabla completa por vendedor.
+     * El texto del mensaje: el resumen. La tabla por vendedor va en la
+     * tarjeta (`TarjetaOcupacionSalida`, calculada al leer) y en el PDF.
      *
-     * @param string $inicio hora de inicio ya formateada
+     * @param array{ruta: string, inicio: string, bus: ?string, empresa: ?string} $ficha
      */
-    public function texto(string $ruta, string $inicio, ?string $bus): string
+    public function texto(array $ficha): string
     {
-        $lineas = [
-            sprintf("Salida iniciada: %s", $ruta),
-            sprintf("Inició: %s%s", $inicio, $bus !== null ? sprintf(" · Bus %s", $bus) : ""),
+        return implode("\n", [
+            "Salida iniciada: " . $ficha["ruta"],
+            sprintf("Inició: %s · Bus %s · %s", $ficha["inicio"], $ficha["bus"] ?? "—", $ficha["empresa"] ?? "—"),
             sprintf(
                 "Asientos: %d ocupados%s y %d libres de %d.",
                 $this->ocupados,
@@ -122,26 +123,6 @@ final readonly class OcupacionAlIniciar
                 $this->asientos,
             ),
             sprintf("Por canal: estación %d · agencia %d · web %d.", $this->porCanal["estacion"] ?? 0, $this->porCanal["agencia"] ?? 0, $this->porCanal["web"] ?? 0),
-        ];
-        if ($this->filas !== []) {
-            $lineas[] = "Por vendedor (cada cifra cuenta asientos ocupados; las categorías se solapan, el total es clase A + clase B):";
-            foreach ($this->filas as $f) {
-                $lineas[] = "• " . self::linea($f["usuario"], $f["cuenta"]);
-            }
-            $lineas[] = "• " . self::linea("Total", $this->totales);
-        }
-
-        return implode("\n", $lineas);
-    }
-
-    /** @param array<string, int> $c */
-    private static function linea(string $usuario, array $c): string
-    {
-        $partes = [];
-        foreach (self::COLUMNAS as $clave => $etiqueta) {
-            $partes[] = sprintf("%s %d", $etiqueta, $c[$clave]);
-        }
-
-        return sprintf("%s: %s", $usuario, implode(" · ", $partes));
+        ]);
     }
 }

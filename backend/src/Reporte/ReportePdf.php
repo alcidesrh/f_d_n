@@ -38,6 +38,16 @@ final class ReportePdf
     }
 
     /**
+     * La tabla de un mensaje "Salida iniciada" (ADR-045).
+     *
+     * @param array{ruta: string, inicio: string, bus: ?string, empresa: ?string} $ficha
+     */
+    public function salidaIniciada(OcupacionAlIniciar $o, array $ficha, string $usuario): string
+    {
+        return $this->pdf("reporte/salida_iniciada.html.twig", ["o" => $o, "ficha" => $ficha, "columnas" => OcupacionAlIniciar::COLUMNAS], $usuario, "portrait");
+    }
+
+    /**
      * Reportes de encomiendas (`templates/reporte/encomienda_*.html.twig`).
      *
      * @param array<string, mixed> $datos

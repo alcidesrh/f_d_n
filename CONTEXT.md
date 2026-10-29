@@ -329,6 +329,6 @@ Aviso que el chat manda solo a una audiencia (usuarios y grupos) elegida por un 
 _Avoid_: plantilla, difusión, mensaje automático
 Modelo: nuevo
 **Tarjeta** (chat):
-Registro compartido en un mensaje (`{tipo, id}`), mostrado con su estado actual y con los permisos de quien lee, no de quien envía. Tarjeta propia: boleto, salida (el reporte de salida, calculado) y bus (con su croquis); el resto, genérica.
+Registro compartido en un mensaje (`{tipo, id}`), mostrado con su estado actual y con los permisos de quien lee, no de quien envía. Tarjeta propia: boleto, salida (el reporte de salida, calculado), ocupación por vendedor de una salida (la de "Salida iniciada") y bus (con su croquis); el resto, genérica.
 _Avoid_: adjunto, captura
 Modelo: concepto

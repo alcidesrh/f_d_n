@@ -9,6 +9,7 @@ import type { Adjunto } from '@/core/chat/types'
 import { entitySlug } from '@/core/entities/slug'
 import TarjetaBoleto from './TarjetaBoleto.vue'
 import TarjetaBus from './TarjetaBus.vue'
+import TarjetaOcupacionSalida from './TarjetaOcupacionSalida.vue'
 import TarjetaSalida from './TarjetaSalida.vue'
 
 export interface TipoTarjeta {
@@ -17,6 +18,8 @@ export interface TipoTarjeta {
   componente?: Component
   /** A dónde lleva "Abrir". */
   destino?: (a: Adjunto) => RouteLocationRaw
+  /** Su grupo llega desplegado (los demás, plegados). */
+  abierta?: boolean
 }
 
 const formulario = (a: Adjunto): RouteLocationRaw => ({ name: 'entity-form', params: { entity: entitySlug(a.tipo), id: a.id } })
@@ -24,6 +27,8 @@ const formulario = (a: Adjunto): RouteLocationRaw => ({ name: 'entity-form', par
 export const TARJETAS: Record<string, TipoTarjeta> = {
   BoletoAsiento: { nombre: 'Boleto', icono: 'confirmation-number-outline', componente: TarjetaBoleto, destino: (a) => ({ name: 'boletos', query: { id: a.id } }) },
   Salida: { nombre: 'Salida', icono: 'directions-bus-outline', componente: TarjetaSalida, destino: (a) => ({ name: 'salidas', query: { ver: a.id } }) },
+  // Llega en "Salida iniciada" (ADR-045): la tabla por vendedor, calculada al leer; el id es el de la salida.
+  OcupacionSalida: { nombre: 'Ocupación por vendedor', icono: 'groups-outline', componente: TarjetaOcupacionSalida, destino: (a) => ({ name: 'salidas', query: { ver: a.id } }), abierta: true },
   Bus: { nombre: 'Bus', icono: 'airport-shuttle-outline', componente: TarjetaBus, destino: formulario },
   // Llega en los avisos del sistema (ADR-040): sin vista propia, «Abrir» lleva a la autorización.
   SolicitudAutorizacion: { nombre: 'Autorización', icono: 'verified-user-outline', destino: (a) => ({ name: 'autorizaciones', query: { id: a.id } }) },

@@ -66,7 +66,7 @@ Se acordó con negocio:
     - Desglose por canal (estación, agencia, web).
     - Una fila por quien vendió: el usuario de la venta, y el reasignado sigue en la misma venta. Aparece aunque solo tenga anulados.
     - Columnas: reasignados (llegaron por reasignación), anulados, vouchers, cortesías, intermedias, clase A, clase B y total (A + B, los vivos). Se solapan.
-    - El chat lleva el resumen y la tabla completa por vendedor en el texto (sin PDF), y la salida como tarjeta.
+    - El chat lleva el resumen en el texto (ruta, hora, bus, empresa, asientos y canales), la tarjeta `OcupacionSalida` con la tabla por vendedor (calculada al leer, como las demás tarjetas: muestra lo vendido hasta ahora, no una foto del inicio; llega desplegada), el PDF con la tabla al momento del envío (`templates/reporte/salida_iniciada.html.twig`) y la salida como tarjeta.
   - **Ventas del día**: total, anulados, cortesías, por canal y por estación (`Tablero::puntos(null)`).
   - **Desempeño del día**: `ResumenDiario::seccion` del mismo día.
   - **Anomalías**: una línea por anomalía, hasta 20 por mensaje, con su tarjeta. El texto dice "Anomalía en reasignación" o "Anomalía en tarifa" y la referencia a la bitácora del registro.

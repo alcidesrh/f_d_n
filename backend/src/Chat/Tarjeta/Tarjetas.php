@@ -17,7 +17,7 @@ final class Tarjetas
 {
     public const MAXIMO = 20;
     /** Tipos que llegan en los avisos del sistema pero no se comparten desde el selector (no tienen listado). */
-    public const SOLO_AVISOS = ["SolicitudAutorizacion"];
+    public const SOLO_AVISOS = ["SolicitudAutorizacion", TarjetaOcupacionSalida::TIPO];
 
     /** @var array<string, Tarjeta> */
     private array $propias = [];

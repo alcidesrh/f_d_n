@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Chat\Predeterminado;
 
 use App\Bitacora\TipoRegistro;
+use App\Chat\Tarjeta\TarjetaOcupacionSalida;
 use App\Entity\BoletoAsiento;
 use App\Entity\Enum\EstadoBoletoVenta;
 use App\Entity\Enum\EstadoSalida;
@@ -16,6 +17,7 @@ use App\Entity\Salida;
 use App\Reporte\Diario\ConsultaIncidencias;
 use App\Reporte\Diario\ResumenDiario;
 use App\Reporte\Dinero;
+use App\Reporte\ReportePdf;
 use App\Tablero\ConsultaTablero;
 use App\Tablero\Periodo;
 use Doctrine\DBAL\Connection;
@@ -30,6 +32,9 @@ use Doctrine\ORM\EntityManagerInterface;
  */
 final class Contenidos
 {
+    /** Quién figura como "generado por" en los PDF. */
+    public const AUTOR = "Mensajes predeterminados";
+
     /** Una salida cuya hora pasó hace más que esto ya no se avisa (el programador estuvo detenido). */
     public const VENTANA_SALIDA = "-6 hours";
 
@@ -39,6 +44,7 @@ final class Contenidos
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly Connection $db,
+        private readonly ReportePdf $pdf,
         private readonly ConsultaTablero $tablero,
         private readonly ConsultaIncidencias $incidencias,
     ) {}
@@ -82,7 +88,23 @@ final class Contenidos
         if ($salida?->getFecha() === null) {
             return null;
         }
-        $inicio = \DateTimeImmutable::createFromMutable($salida->getFecha());
+        $ocupacion = $this->ocupacion($salida);
+        $ficha = self::ficha($salida);
+
+        return new Pieza(
+            "salida:" . $salidaId,
+            $ocupacion->texto($ficha),
+            [["tipo" => TarjetaOcupacionSalida::TIPO, "id" => $salidaId], ["tipo" => "Salida", "id" => $salidaId]],
+            [[
+                "nombre" => sprintf("salida_iniciada_%d_%s.pdf", $salidaId, $salida->getFecha()->format("Ymd_Hi")),
+                "contenido" => $this->pdf->salidaIniciada($ocupacion, $ficha, self::AUTOR),
+            ]],
+        );
+    }
+
+    /** La ocupación de la salida con lo vendido hasta ahora (también la tarjeta, al leer). */
+    public function ocupacion(Salida $salida): OcupacionAlIniciar
+    {
         /** @var list<BoletoAsiento> $boletos */
         $boletos = $this->em->createQuery(
             "SELECT b, a, v, u FROM App\Entity\BoletoAsiento b JOIN b.asiento a JOIN b.boletoVenta v LEFT JOIN v.usuario u
@@ -108,15 +130,19 @@ final class Contenidos
         }, $boletos);
 
         $ultimaParada = max(0, ($salida->getRuta()?->getParadas()->count() ?? 1) - 1);
-        $ocupacion = OcupacionAlIniciar::de($filas, $salida->getBus()?->getAsientos()->count() ?? 0, $ultimaParada);
 
-        $hora = self::formato("EEE d 'de' MMM, h:mm a");
+        return OcupacionAlIniciar::de($filas, $salida->getBus()?->getAsientos()->count() ?? 0, $ultimaParada);
+    }
 
-        return new Pieza(
-            "salida:" . $salidaId,
-            $ocupacion->texto(self::ruta($salida), $hora->format($inicio), $salida->getBus()?->getCodigo()),
-            [["tipo" => "Salida", "id" => $salidaId]],
-        );
+    /** @return array{ruta: string, inicio: string, bus: ?string, empresa: ?string} */
+    public static function ficha(Salida $salida): array
+    {
+        return [
+            "ruta" => self::ruta($salida),
+            "inicio" => $salida->getFecha() === null ? "?" : self::formato("EEE d 'de' MMM, h:mm a")->format($salida->getFecha()),
+            "bus" => $salida->getBus()?->getCodigo(),
+            "empresa" => $salida->getEmpresa()?->getNombreCorto() ?: $salida->getEmpresa()?->getNombre(),
+        ];
     }
 
     /** Totales del día de la empresa y desglose por estación (y por canal). */

@@ -44,7 +44,7 @@ enum TipoMensajePredeterminado: string
     {
         return match ($this) {
             self::LIBRE => "El texto, la imagen o los archivos de la instancia, a su hora en los días elegidos.",
-            self::SALIDA_INICIADA => "Al pasar la hora de cada salida de la ruta: hora de inicio, asientos libres y ocupados por canal y la tabla por vendedor.",
+            self::SALIDA_INICIADA => "Al pasar la hora de cada salida de la ruta: hora de inicio, asientos libres y ocupados por canal y la tabla por vendedor (tarjeta y PDF).",
             self::ANOMALIA_REASIGNACION => "Cada madrugada: los boletos del día anterior reasignados más de dos veces, con su bitácora.",
             self::ANOMALIA_TARIFA => "Cada madrugada: las tarifas creadas, editadas o eliminadas el día anterior, con su bitácora.",
             self::VENTAS_DIA => "Al cierre: totales del día de la empresa y desglose por estación.",

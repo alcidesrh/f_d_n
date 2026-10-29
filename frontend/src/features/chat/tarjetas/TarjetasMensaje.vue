@@ -1,6 +1,6 @@
 <!--
   Registros compartidos en un mensaje, agrupados por tipo y plegados por
-  defecto (aunque sea uno): cada grupo dice cuántos son y adelanta sus
+  defecto (aunque sea uno; salvo los tipos `abierta` del catálogo): cada grupo dice cuántos son y adelanta sus
   títulos; al desplegarlo, las tarjetas vivas.
 -->
 <template>
@@ -37,7 +37,7 @@ const grupos = computed(() => {
   return [...porTipo].map(([tipo, adjuntos]) => ({ tipo, adjuntos }));
 });
 
-const abiertos = ref(new Set<string>());
+const abiertos = ref(new Set<string>(props.adjuntos.filter((a) => tipoTarjeta(a.tipo).abierta).map((a) => a.tipo)));
 function alternar(tipo: string) {
   const s = new Set(abiertos.value);
   if (!s.delete(tipo)) s.add(tipo);

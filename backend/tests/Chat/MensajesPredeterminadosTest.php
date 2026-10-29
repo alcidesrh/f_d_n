@@ -71,23 +71,20 @@ final class MensajesPredeterminadosTest extends TestCase
     public function testElTextoDeLaSalidaIniciada(): void
     {
         $o = OcupacionAlIniciar::de([self::boleto(1, "Ana", ["cortesia" => true]), self::boleto(2, "Ana", ["sube" => 1])], 10, 3);
-        $texto = $o->texto("Guatemala → Flores", "jue 29 de oct, 2:00 p. m.", "101");
+        $texto = $o->texto(["ruta" => "Guatemala → Flores", "inicio" => "jue 29 de oct, 2:00 p. m.", "bus" => "101", "empresa" => "FDN"]);
 
-        self::assertStringContainsString("Salida iniciada: Guatemala → Flores", $texto);
-        self::assertStringContainsString("Inició: jue 29 de oct, 2:00 p. m. · Bus 101", $texto);
-        self::assertStringContainsString("Asientos: 2 ocupados (1 con tramos intermedios) y 8 libres de 10.", $texto);
-        self::assertStringContainsString("Por canal: estación 2 · agencia 0 · web 0.", $texto);
-        self::assertStringContainsString("• Ana: Reasignados 0 · Anulados 0 · Vouchers 0 · Cortesías 1 · Intermedias 1 · Clase A 2 · Clase B 0 · Total 2", $texto);
-        self::assertStringContainsString("• Total: Reasignados 0 · Anulados 0 · Vouchers 0 · Cortesías 1 · Intermedias 1 · Clase A 2 · Clase B 0 · Total 2", $texto);
-        self::assertStringNotContainsString("PDF", $texto);
+        self::assertSame(
+            "Salida iniciada: Guatemala → Flores\nInició: jue 29 de oct, 2:00 p. m. · Bus 101 · FDN\nAsientos: 2 ocupados (1 con tramos intermedios) y 8 libres de 10.\nPor canal: estación 2 · agencia 0 · web 0.",
+            $texto,
+        );
     }
 
-    public function testUnaSalidaSinBoletosNoTieneTablaDeVendedores(): void
+    public function testUnaSalidaSinBoletos(): void
     {
-        $texto = OcupacionAlIniciar::de([], 50, 2)->texto("A → B", "hoy", null);
+        $texto = OcupacionAlIniciar::de([], 50, 2)->texto(["ruta" => "A → B", "inicio" => "hoy", "bus" => null, "empresa" => null]);
 
+        self::assertStringContainsString("Inició: hoy · Bus — · —", $texto);
         self::assertStringContainsString("Asientos: 0 ocupados y 50 libres de 50.", $texto);
-        self::assertStringNotContainsString("Por vendedor", $texto);
     }
 
     public function testCuandoLeTocaAUnMensajeConHora(): void

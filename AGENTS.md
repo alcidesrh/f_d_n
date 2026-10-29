@@ -62,7 +62,7 @@ Despliegue
 | Comando             | Descripción |
 | ------------------- | ----------- |
 | `npm run dev`       | Dev server en 9100 bajo `/pagina/`, proxy de `/api` a `PAGINA_BACKEND` (por defecto `https://localhost`) |
-| `npm run build`     | type-check + build a `backend/public/pagina` + prerender por idioma y `sitemap.xml` (la imagen de producción la compila sola: `make deploy`) |
+| `npm run build`     | type-check + build a `backend/public/pagina` + prerender por idioma y `sitemap.xml` (en producción: `make pagina`, o `make deploy` si cambió) |
 | `npm run test:unit` | Vitest |
 
 ### Frontend (en `frontend/`)
@@ -161,6 +161,7 @@ Para reglas detalladas de cada capa:
 ## Practical caveats
 
 - Los Makefiles (root + backend) incluyen targets legacy que pueden no estar disponibles.
+- **Producción (VPS, `compose.prod.yaml`)**: el código no va en la imagen; se monta desde el checkout `/root/f_d_n` (`./backend:/app`, `./frontend` con su `dist/`), y `/app/var` es tmpfs (la caché de Symfony nace en cada arranque). Cambio de PHP → `make reiniciar` (unos segundos); de frontend → `make front` (`vite build` en el host, sin reiniciar); de la página → `make pagina`; de `composer.lock` → `make vendor`. `make deploy` hace `git pull` y solo lo que cambió. Reconstruir imágenes (`make imagen`) solo si cambia un Dockerfile o una extensión de PHP.
 - Docker usa **npm**, no pnpm ni bun (aunque existan lockfiles de ambos).
 - Migración completa desde TerminalOmnibus toma horas (6679 salidas).
 - Debug: `make debug` usa Caddyfile.dev sin workers.

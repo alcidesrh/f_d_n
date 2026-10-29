@@ -164,15 +164,38 @@ prod-env:
 prod: prod-env ## Levanta el stack de producción (dominio y secretos en .env.prod.local)
 	$(PROD_COMP) up -d
 
-prod-build: prod-env ## Construye las imágenes de producción y levanta el stack
+prod-build: prod-env ## Construye las imágenes de producción y levanta el stack (el código va montado: ver `make deploy`)
 	$(PROD_COMP) up -d --build
 
-# Sincronización con el legado (ADR-042) mientras dure la mudanza; `make deploy sync=0` la deja fuera.
-PROD_SYNC = -f compose.sincronizacion.yaml -f compose.sincronizacion.prod.yaml
+# El código va montado desde este checkout (compose.prod.yaml), no dentro de la imagen:
+# un cambio de PHP es un reinicio y uno del frontend, un build en el host.
+.PHONY: deploy reiniciar front pagina vendor imagen
+PROD_PHP = backend worker worker-pesadas programador
 
-deploy: prod-env ## Actualiza producción: git pull, reconstruye solo lo que cambió y recrea solo los contenedores con imagen nueva
-	git pull --ff-only
-	$(PROD_COMP) $(if $(filter 0,$(sync)),,$(PROD_SYNC)) up -d --build
+deploy: prod-env ## Actualiza producción: git pull y, según lo que cambió, vendor, front, página, imagen y reinicio de PHP
+	@antes=$$(git rev-parse HEAD); git pull --ff-only; \
+	cambio() { git diff --quiet "$$antes" HEAD -- "$$@" || return 0; return 1; }; \
+	if cambio backend/composer.lock; then $(MAKE) -s vendor; fi; \
+	if cambio frontend; then $(MAKE) -s front; fi; \
+	if cambio pagina frontend/src; then $(MAKE) -s pagina; fi; \
+	if cambio backend/Dockerfile frontend/Dockerfile; then $(MAKE) -s imagen; else $(MAKE) -s reiniciar; fi
+
+reiniciar: prod-env ## Producción: reinicia los contenedores de PHP para que tomen el código (unos segundos)
+	$(PROD_COMP) up -d --no-build --force-recreate $(PROD_PHP)
+
+front: ## Compila el frontend en frontend/dist (lo sirve el contenedor sin reiniciar). Sin type-check: ese va en `npm run build`
+	cd frontend && npm run build-only
+
+pagina: ## Compila la página web pública en backend/public/pagina
+	cd pagina && npm run build
+
+vendor: prod-env ## Instala las dependencias de PHP en backend/vendor (tras cambiar composer.lock)
+	$(DOCKER) run --rm -v $(CURDIR)/backend:/app -w /app composer:2 install --no-interaction --no-progress --no-scripts --ignore-platform-reqs
+	$(PROD_COMP) exec -T backend php bin/console assets:install public
+	$(PROD_COMP) exec -T backend php bin/console importmap:install
+
+imagen: prod-env ## Reconstruye las imágenes (solo si cambia un Dockerfile o una extensión de PHP) y recrea el stack
+	$(PROD_COMP) up -d --build
 	$(DOCKER) image prune -f
 
 vps: ## Levanta el stack de dev accesible por la IP pública de la VPS (secretos en .env.vps.local)
