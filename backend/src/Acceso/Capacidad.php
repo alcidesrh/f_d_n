@@ -65,6 +65,8 @@ enum Capacidad: string
 
     case BITACORA_VER = 'bitacora.ver';
 
+    case CHAT_PREDETERMINADOS = 'chat.predeterminados';
+
     case MIGRACION_EJECUTAR = 'migracion.ejecutar';
 
     public function nombre(): string
@@ -105,6 +107,7 @@ enum Capacidad: string
             self::IAM_ROLES => 'Crear y editar roles',
             self::AUTORIZACION_APROBAR => 'Aprobar o rechazar autorizaciones (pases de un solo uso)',
             self::BITACORA_VER => 'Ver lo anulado y las bitácoras en el detalle de venta',
+            self::CHAT_PREDETERMINADOS => 'Configurar los mensajes predeterminados del chat',
             self::MIGRACION_EJECUTAR => 'Ejecutar la migración desde el sistema legado',
         };
     }
@@ -123,6 +126,7 @@ enum Capacidad: string
             'config' => 'Configuración',
             'iam', 'autorizacion' => 'Accesos',
             'bitacora' => 'Auditoría',
+            'chat' => 'Chat',
             default => 'Sistema',
         };
     }

@@ -138,6 +138,17 @@ export const router = createRouter({
       },
     },
     {
+      path: "/configuracion/mensajes-predeterminados",
+      name: "mensajes-predeterminados",
+      component: () => import("@/features/chat/predeterminados/MensajesPredeterminadosPage.vue"),
+      meta: {
+        capacidad: "chat.predeterminados",
+        title: "Mensajes predeterminados",
+        label: "Mensajes predeterminados",
+        icon: "campaign-outline",
+      },
+    },
+    {
       path: "/configuracion/usuarios/:id(-?\\d+)/accesos",
       name: "acceso-usuario",
       props: (r) => ({ id: Number(r.params.id) }),

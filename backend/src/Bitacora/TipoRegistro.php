@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Bitacora;
 
 use App\Entity\BoletoAsiento;
+use App\Entity\BoletoTarifa;
 use App\Entity\Encomienda;
 use App\Entity\Enum\OperacionAutorizacion;
 use App\Entity\Enum\OperacionBoleto;
 use App\Entity\Enum\OperacionEncomienda;
 use App\Entity\Enum\OperacionRol;
 use App\Entity\Enum\OperacionSalida;
+use App\Entity\Enum\OperacionTarifa;
 use App\Entity\Enum\OperacionUsuario;
 use App\Entity\Role;
 use App\Entity\Salida;
@@ -31,6 +33,8 @@ enum TipoRegistro: string
     case ROL = "rol";
     /** Autorizaciones (pases de un solo uso, ADR-040). */
     case AUTORIZACION = "autorizacion";
+    /** Tarifas de boletos: creadas, modificadas, eliminadas (ADR-045). */
+    case TARIFA = "tarifa";
 
     /** @return class-string */
     public function clase(): string
@@ -42,6 +46,7 @@ enum TipoRegistro: string
             self::USUARIO => Usuario::class,
             self::ROL => Role::class,
             self::AUTORIZACION => SolicitudAutorizacion::class,
+            self::TARIFA => BoletoTarifa::class,
         };
     }
 
@@ -55,6 +60,7 @@ enum TipoRegistro: string
             self::USUARIO => OperacionUsuario::class,
             self::ROL => OperacionRol::class,
             self::AUTORIZACION => OperacionAutorizacion::class,
+            self::TARIFA => OperacionTarifa::class,
         };
     }
 
@@ -64,6 +70,7 @@ enum TipoRegistro: string
             $entidad instanceof Salida => self::SALIDA,
             $entidad instanceof BoletoAsiento => self::BOLETO,
             $entidad instanceof Encomienda => self::ENCOMIENDA,
+            $entidad instanceof BoletoTarifa => self::TARIFA,
             default => null,
         };
     }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Reporte;
 
+use App\Chat\Predeterminado\OcupacionAlIniciar;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Psr\Clock\ClockInterface;
@@ -34,6 +35,16 @@ final class ReportePdf
     public function voucher(CuadreVoucher $c, string $usuario): string
     {
         return $this->pdf("reporte/cuadre_voucher.html.twig", ["c" => $c], $usuario, "portrait");
+    }
+
+    /**
+     * La tabla de un mensaje "Salida iniciada" (ADR-045).
+     *
+     * @param array{ruta: string, inicio: string, programada: ?string, bus: ?string, empresa: ?string} $ficha
+     */
+    public function salidaIniciada(OcupacionAlIniciar $o, array $ficha, string $usuario): string
+    {
+        return $this->pdf("reporte/salida_iniciada.html.twig", ["o" => $o, "ficha" => $ficha, "columnas" => OcupacionAlIniciar::COLUMNAS], $usuario, "portrait");
     }
 
     /**

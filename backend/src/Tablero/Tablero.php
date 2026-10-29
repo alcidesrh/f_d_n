@@ -394,13 +394,17 @@ final class Tablero
         return $r;
     }
 
-    /** @return list<array{tipo: string, nombre: string, ingresos: int, boletos: int, anterior: int}> */
-    public function puntos(): array
+    /**
+     * Puntos de venta por lo que ingresaron, los primeros `$tope` (null: todos).
+     *
+     * @return list<array{tipo: string, nombre: string, ingresos: int, boletos: int, anterior: int}>
+     */
+    public function puntos(?int $tope = 10): array
     {
         $r = $this->puntos;
         usort($r, static fn(array $a, array $b) => $b["ingresos"] <=> $a["ingresos"]);
 
-        return array_slice($r, 0, 10);
+        return array_slice($r, 0, $tope);
     }
 
     /**

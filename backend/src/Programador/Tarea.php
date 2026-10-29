@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Programador;
 
+use App\Chat\Predeterminado\Tarea\EnviarMensajesPredeterminados;
+use App\Chat\Predeterminado\Tarea\RevisarAnomalias;
 use App\Chat\Tarea\PurgarArchivosChat;
 use App\Reporte\Diario\EnviarReportesDiarios;
 use App\Salida\Horizonte\ExtenderHorizontes;
@@ -36,6 +38,8 @@ enum Tarea: string
     case HORIZONTE_SALIDAS = 'horizonte_salidas';
     case REPORTES_DIARIOS = 'reportes_diarios';
     case PURGAR_ARCHIVOS_CHAT = 'purgar_archivos_chat';
+    case MENSAJES_PREDETERMINADOS = 'mensajes_predeterminados';
+    case REVISAR_ANOMALIAS = 'revisar_anomalias';
 
     public const COLA_TAREAS = 'tareas';
     public const COLA_PESADAS = 'pesadas';
@@ -50,6 +54,8 @@ enum Tarea: string
             self::HORIZONTE_SALIDAS => 'Mantener programadas las salidas de los esquemas automáticos',
             self::REPORTES_DIARIOS => 'Enviar los reportes diarios',
             self::PURGAR_ARCHIVOS_CHAT => 'Borrar archivos del chat que no se enviaron',
+            self::MENSAJES_PREDETERMINADOS => 'Enviar los mensajes predeterminados de hora y de salidas iniciadas',
+            self::REVISAR_ANOMALIAS => 'Revisar las anomalías del día anterior (reasignaciones y tarifas)',
         };
     }
 
@@ -58,9 +64,10 @@ enum Tarea: string
     {
         return match ($this) {
             self::PURGAR_VENTA, self::SINCRONIZAR_LEGADO => '1 minute',
+            self::MENSAJES_PREDETERMINADOS => '5 minutes',
             self::CERTIFICAR_PENDIENTES => '10 minutes',
             self::VIGILAR_OPERACION => '30 minutes',
-            self::HORIZONTE_SALIDAS, self::REPORTES_DIARIOS, self::PURGAR_ARCHIVOS_CHAT => '1 day',
+            self::HORIZONTE_SALIDAS, self::REPORTES_DIARIOS, self::PURGAR_ARCHIVOS_CHAT, self::REVISAR_ANOMALIAS => '1 day',
         };
     }
 
@@ -74,6 +81,7 @@ enum Tarea: string
             // De madrugada: lejos de la venta y antes de que abran las taquillas.
             self::HORIZONTE_SALIDAS => '01:30',
             self::PURGAR_ARCHIVOS_CHAT => '03:15',
+            self::REVISAR_ANOMALIAS => '02:30',
             self::REPORTES_DIARIOS => $horaReportes,
             default => null,
         };
@@ -84,9 +92,9 @@ enum Tarea: string
     {
         return match ($this) {
             self::PURGAR_VENTA, self::SINCRONIZAR_LEGADO => '15 minutes',
-            self::CERTIFICAR_PENDIENTES => '1 hour',
+            self::CERTIFICAR_PENDIENTES, self::MENSAJES_PREDETERMINADOS => '1 hour',
             self::VIGILAR_OPERACION => '2 hours',
-            self::HORIZONTE_SALIDAS, self::REPORTES_DIARIOS, self::PURGAR_ARCHIVOS_CHAT => '26 hours',
+            self::HORIZONTE_SALIDAS, self::REPORTES_DIARIOS, self::PURGAR_ARCHIVOS_CHAT, self::REVISAR_ANOMALIAS => '26 hours',
         };
     }
 
@@ -100,6 +108,8 @@ enum Tarea: string
             self::HORIZONTE_SALIDAS => new ExtenderHorizontes(),
             self::REPORTES_DIARIOS => new EnviarReportesDiarios(),
             self::PURGAR_ARCHIVOS_CHAT => new PurgarArchivosChat(),
+            self::MENSAJES_PREDETERMINADOS => new EnviarMensajesPredeterminados(),
+            self::REVISAR_ANOMALIAS => new RevisarAnomalias(),
         };
     }
 }

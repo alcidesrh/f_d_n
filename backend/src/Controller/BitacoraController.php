@@ -14,6 +14,7 @@ use App\Entity\SolicitudAutorizacion;
 use App\Bitacora\ConsultaBitacora;
 use App\Bitacora\TipoRegistro;
 use App\Entity\BoletoAsiento;
+use App\Entity\BoletoTarifa;
 use App\Entity\Encomienda;
 use App\Entity\Salida;
 use App\Entity\Usuario;
@@ -27,17 +28,21 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 /**
  * Bitácora de salidas, boletos, encomiendas, usuarios, roles y autorizaciones:
- * `GET /api/bitacora/{salida|boleto|encomienda|usuario|rol|autorizacion}/{id}`. La de una
+ * `GET /api/bitacora/{salida|boleto|encomienda|usuario|rol|autorizacion|tarifa}/{id}`. La de una
  * salida la ve quien puede ver salidas de su empresa (`salida.ver`); la de un
  * boleto, quien puede ver su venta; la de una encomienda, quien ve
  * encomiendas de su empresa (`encomienda.ver`); las de usuarios y roles
  * (sus accesos), quien ve accesos (`iam.ver`), ADR-039; la de una
- * autorización, quien la pidió o quien aprueba donde cae (ADR-040).
+ * autorización, quien la pidió o quien aprueba donde cae (ADR-040); la de
+ * una tarifa, quien ve tarifas de su empresa (`tarifa.ver`, ADR-045).
  */
 #[AsController]
 #[Route("/api/bitacora", name: "api_bitacora_")]
 final class BitacoraController extends AbstractController
 {
+    /** Del `#[Recurso]` de `BoletoTarifa`. */
+    private const VER_TARIFA = "tarifa.ver";
+
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly ConsultaBitacora $consulta,
@@ -57,6 +62,7 @@ final class BitacoraController extends AbstractController
             TipoRegistro::USUARIO => $this->etiquetaUsuario($id),
             TipoRegistro::ROL => $this->etiquetaRol($id),
             TipoRegistro::AUTORIZACION => $this->etiquetaAutorizacion($id, $usuario),
+            TipoRegistro::TARIFA => $this->etiquetaTarifa($id),
         };
 
         return $this->json([
@@ -76,6 +82,26 @@ final class BitacoraController extends AbstractController
         }
 
         return sprintf("Autorización %d · %s", $id, VistaAutorizacion::titulo($s));
+    }
+
+    /** La de una tarifa: quien ve tarifas de su empresa (las eliminadas, quien ve tarifas). */
+    private function etiquetaTarifa(int $id): string
+    {
+        $this->denyAccessUnlessGranted(self::VER_TARIFA);
+        $t = $this->em->find(BoletoTarifa::class, $id);
+        if ($t === null) {
+            return sprintf("Tarifa %d", $id);
+        }
+        $this->denyAccessUnlessGranted(self::VER_TARIFA, Ubicacion::empresa($t->getEmpresa()?->getId()));
+
+        return sprintf(
+            "Tarifa %d · %s → %s · clase %s · %s",
+            $id,
+            $t->getTrayecto()?->getOrigen()?->getNombre(),
+            $t->getTrayecto()?->getDestino()?->getNombre(),
+            $t->getClase()->value,
+            $t->getImporte() ?? "sin precio",
+        );
     }
 
     private function etiquetaUsuario(int $id): string

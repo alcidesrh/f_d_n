@@ -168,16 +168,20 @@ final class Archivos
         }
     }
 
-    /** Borra los subidos que nunca se enviaron; devuelve cuántos. */
+    /**
+     * Borra los subidos que nunca se enviaron; devuelve cuántos. Los de un
+     * mensaje predeterminado (ADR-045) no son sueltos: se envían con él.
+     */
     public function purgarSueltos(\DateTimeImmutable $antesDe): int
     {
         /** @var list<ChatArchivo> $sueltos */
-        $sueltos = $this->em->createQuery("SELECT a FROM App\Entity\ChatArchivo a WHERE a.mensaje IS NULL AND a.creadoEn < :antes")
+        $sueltos = $this->em->createQuery(
+            "SELECT a FROM App\Entity\ChatArchivo a WHERE a.mensaje IS NULL AND a.creadoEn < :antes"
+            . " AND a.id NOT IN (SELECT x.id FROM App\Entity\MensajePredeterminado p JOIN p.archivos x)",
+        )
             ->setParameter("antes", $antesDe)->getResult();
-        foreach ($sueltos as $a) {
-            @unlink($this->absoluta($a->getRuta()));
-            $this->em->remove($a);
-        }
+        // El de un predeterminado que se quitó comparte la ruta con las copias ya enviadas.
+        $this->borrar($sueltos);
         $this->em->flush();
 
         return count($sueltos);

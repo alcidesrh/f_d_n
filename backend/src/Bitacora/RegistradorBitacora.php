@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Bitacora;
 
 use App\Entity\BoletoAsiento;
+use App\Entity\BoletoTarifa;
 use App\Entity\Bus;
 use App\Entity\Encomienda;
 use App\Entity\Enum\EstadoBoletoAsiento;
@@ -13,6 +14,7 @@ use App\Entity\Enum\EstadoSalida;
 use App\Entity\Enum\OperacionBoleto;
 use App\Entity\Enum\OperacionEncomienda;
 use App\Entity\Enum\OperacionSalida;
+use App\Entity\Enum\OperacionTarifa;
 use App\Entity\Enum\TransicionBoleto;
 use App\Entity\Enum\TransicionEncomienda;
 use App\Entity\Salida;
@@ -31,7 +33,7 @@ use Symfony\Component\Workflow\Event\TransitionEvent;
 use Symfony\Contracts\Service\ResetInterface;
 
 /**
- * Bitácora automática de `Salida`, `BoletoAsiento` y `Encomienda`: engancha los eventos de
+ * Bitácora automática de `Salida`, `BoletoAsiento`, `Encomienda` y `BoletoTarifa`: engancha los eventos de
  * Doctrine, así queda anotado cualquier cambio sin importar por dónde llegue
  * (venta, gestión de salidas, GraphQL, consola).
  *
@@ -43,7 +45,9 @@ use Symfony\Contracts\Service\ResetInterface;
  * (`CONTEXTO`) van al detalle solos.
  *
  * No anota lo que viene de la migración del legado (registro con
- * `legacyId` y sin usuario en sesión): son miles de filas sin autor.
+ * `legacyId` y sin usuario en sesión): son miles de filas sin autor. De
+ * las tarifas solo anota lo que hace un usuario (el sistema anterior y la
+ * sincronización no tienen quién; ADR-045).
  */
 #[AsDoctrineListener(event: Events::postPersist)]
 #[AsDoctrineListener(event: Events::preUpdate)]
@@ -57,7 +61,7 @@ final class RegistradorBitacora implements ResetInterface
     /** @var \WeakMap<object, array<string, mixed>> datos extra por registro (un objeto liberado no deja su nota a otro) */
     private \WeakMap $notas;
 
-    /** @var \WeakMap<object, array{id: int, detalle: array<string, mixed>}> salidas por eliminar */
+    /** @var \WeakMap<object, array{id: int, operacion: Operacion, detalle: array<string, mixed>}> salidas y tarifas por eliminar */
     private \WeakMap $porEliminar;
 
     public function __construct(
@@ -117,6 +121,8 @@ final class RegistradorBitacora implements ResetInterface
                 "venta" => $e->getBoletoVenta()?->getId(),
                 "salida" => $e->getSalida()?->getId(),
             ]);
+        } elseif ($e instanceof BoletoTarifa) {
+            $this->escribir($args->getObjectManager()->getConnection(), $e, (int) $e->getId(), OperacionTarifa::CREADA, self::tarifa($e));
         }
     }
 
@@ -152,6 +158,12 @@ final class RegistradorBitacora implements ResetInterface
             $this->escribir($conexion, $e, (int) $e->getId(), OperacionEncomienda::RUTA_CAMBIADA, [
                 "ruta" => $e->getRuta()?->getNombre(),
             ]);
+        } elseif ($e instanceof BoletoTarifa) {
+            $cambios = [];
+            foreach ($args->getEntityChangeSet() as $campo => [$antes, $despues]) {
+                $cambios[$campo] = ["de" => self::valor($antes), "a" => self::valor($despues)];
+            }
+            $this->escribir($conexion, $e, (int) $e->getId(), OperacionTarifa::MODIFICADA, [...self::tarifa($e), "cambios" => $cambios]);
         } elseif ($e instanceof BoletoAsiento && $args->hasChangedField("estado")) {
             $operacion = match (self::estado(EstadoBoletoAsiento::class, $args->getNewValue("estado"))) {
                 EstadoBoletoAsiento::ANULADO => OperacionBoleto::ANULADO,
@@ -180,11 +192,13 @@ final class RegistradorBitacora implements ResetInterface
     {
         foreach ($args->getObjectManager()->getUnitOfWork()->getScheduledEntityDeletions() as $e) {
             if ($e instanceof Salida) {
-                $this->porEliminar[$e] = ["id" => (int) $e->getId(), "detalle" => [
+                $this->porEliminar[$e] = ["id" => (int) $e->getId(), "operacion" => OperacionSalida::ELIMINADA, "detalle" => [
                     "fecha" => $e->getFecha()?->format(DATE_ATOM),
                     "bus" => $e->getBus()?->getCodigo(),
                     "ruta" => $e->getRuta()?->getNombre(),
                 ]];
+            } elseif ($e instanceof BoletoTarifa) {
+                $this->porEliminar[$e] = ["id" => (int) $e->getId(), "operacion" => OperacionTarifa::ELIMINADA, "detalle" => self::tarifa($e)];
             }
         }
     }
@@ -197,7 +211,7 @@ final class RegistradorBitacora implements ResetInterface
             return;
         }
         unset($this->porEliminar[$e]);
-        $this->escribir($args->getObjectManager()->getConnection(), $e, $pendiente["id"], OperacionSalida::ELIMINADA, $pendiente["detalle"]);
+        $this->escribir($args->getObjectManager()->getConnection(), $e, $pendiente["id"], $pendiente["operacion"], $pendiente["detalle"]);
     }
 
     public function reset(): void
@@ -218,7 +232,7 @@ final class RegistradorBitacora implements ResetInterface
         $usuario = $usuario instanceof Usuario ? $usuario : null;
 
         // Migrado del legado: sin usuario en sesión y con identificador del sistema anterior.
-        if ($tipo === null || ($usuario === null && $entidad->getLegacyId() !== null)) {
+        if ($tipo === null || ($usuario === null && ($tipo === TipoRegistro::TARIFA || $entidad->getLegacyId() !== null))) {
             return;
         }
 
@@ -263,6 +277,36 @@ final class RegistradorBitacora implements ResetInterface
             $s->getRuta()?->getDestino()?->getNombre(),
             $s->getBus() !== null ? sprintf(" (bus %s)", $s->getBus()->getCodigo()) : "",
         );
+    }
+
+    /**
+     * Lo que identifica una tarifa en su bitácora.
+     *
+     * @return array<string, mixed>
+     */
+    private static function tarifa(BoletoTarifa $t): array
+    {
+        return [
+            "trayecto" => self::viaje($t->getTrayecto()),
+            "clase" => $t->getClase()->value,
+            "precio" => $t->getImporte(),
+            "empresa" => $t->getEmpresa()?->getNombre(),
+            "vigenteDesde" => $t->getVigenteDesde()->format("Y-m-d H:i"),
+        ];
+    }
+
+    /** Un valor del conjunto de cambios, para el detalle (JSON). */
+    private static function valor(mixed $v): mixed
+    {
+        return match (true) {
+            $v === null, is_scalar($v) => $v,
+            $v instanceof \BackedEnum => $v->value,
+            $v instanceof \DateTimeInterface => $v->format("Y-m-d H:i"),
+            $v instanceof \Money\Money => $v->getAmount(),
+            is_object($v) && method_exists($v, "getLabel") => (string) $v->getLabel(),
+            is_object($v) && method_exists($v, "getId") => $v->getId(),
+            default => null,
+        };
     }
 
     private static function viaje(?\App\Entity\Trayecto $t): ?string

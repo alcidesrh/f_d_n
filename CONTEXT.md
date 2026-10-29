@@ -273,7 +273,7 @@ Modelo: nuevo
 Cuando se invalida la compra de un asiento asi como su registro en la oficina tributaria: el boleto pasa a `anulado` (asiento libre), la factura se anula en Forcon (cubre toda la venta; si era conjunta y quedan boletos, se certifica otra con ellos) y a una agencia se le devuelve el precio. Solo antes de la hora de salida, salvo con una autorización (`App\Venta\Anulacion`, ADR-028, ADR-040).
 Modelo: nuevo
 **Bitácora**:
-Traza de solo agregar de una `Salida` o un `BoletoAsiento`: operación (boleto: creado, anulado, reasignado, chequeado, tránsito, finalizado, cancelado, revertido; salida: creada, abordando, iniciada, finalizada, cancelada, cambio de bus, eliminada), usuario, fecha y detalle. La escribe un listener de Doctrine en la misma transacción (`App\Bitacora`, ADR-028).
+Traza de solo agregar de una `Salida`, un `BoletoAsiento` o una tarifa (`BoletoTarifa`: creada, modificada, eliminada; ADR-045): operación (boleto: creado, anulado, reasignado, chequeado, tránsito, finalizado, cancelado, revertido; salida: creada, abordando, iniciada, finalizada, cancelada, cambio de bus, eliminada), usuario, fecha y detalle. La escribe un listener de Doctrine en la misma transacción (`App\Bitacora`, ADR-028).
 _Avoid_: log, historial, auditoría
 Modelo: nuevo (`Bitacora`)
 **Manifiesto\<de pasajero, de venta, ...\>**:
@@ -323,6 +323,10 @@ Modelo: nuevo
 **Conversación** (`ChatCanal`):
 Chat interno: `directo` (dos usuarios, una por par) o `grupo` (con nombre). Una agencia solo conversa con su gente y con la administración (`App\Chat\Directorio`, ADR-026). Un grupo tiene **dueño** (quien lo creó, lo edita) y es **abierto** (todos escriben) o **dirigido** (todos reciben; escriben el dueño y los **emisores** que él elige). Un grupo abierto puede ser **grupo miembro** de otro (`ChatSubgrupo`): sus miembros llegan "por" él (`via`).
 _Avoid_: grupo de WhatsApp
+Modelo: nuevo
+**Mensaje predeterminado** (`MensajePredeterminado`):
+Aviso que el chat manda solo a una audiencia (usuarios y grupos) elegida por un administrador, en "Avisos del sistema": un mensaje propio con horario, la salida iniciada (ocupación y lo vendido por usuario), las anomalías de reasignación (boleto reasignado más de dos veces) y de tarifa (creada, modificada o eliminada), y las ventas y el desempeño del día al cierre. Cada uno es una **instancia** con nombre de un tipo del catálogo; puede haber varias del mismo tipo (ADR-045).
+_Avoid_: plantilla, difusión, mensaje automático
 Modelo: nuevo
 **Tarjeta** (chat):
 Registro compartido en un mensaje (`{tipo, id}`), mostrado con su estado actual y con los permisos de quien lee, no de quien envía. Tarjeta propia: boleto, salida (el reporte de salida, calculado) y bus (con su croquis); el resto, genérica.
