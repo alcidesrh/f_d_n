@@ -1,7 +1,8 @@
 <!--
   "Mi cuenta" (`/mi-cuenta`): lo que el usuario puede editar de su propio
-  perfil: foto, datos personales, contraseña (`MiCuentaController`) y las
-  notificaciones del chat en este dispositivo (`core/chat/push.ts`). El
+  perfil: foto, datos personales, contraseña (`MiCuentaController`), las
+  notificaciones del chat en este dispositivo (`core/chat/push.ts`) y los
+  reportes programados que recibe (`ReportesProgramados`, ADR-044). El
   usuario, los roles y los permisos los administra otra persona.
 -->
 <template>
@@ -141,6 +142,8 @@
             </div>
           </section>
 
+          <ReportesProgramados />
+
           <section class="card">
             <h2 class="mb-3 text-base font-semibold">Cambiar contraseña</h2>
             <FormKit
@@ -199,6 +202,7 @@ import { notify } from '@/core/notify'
 import ChatAvatar from '@/shared/chat/ChatAvatar.vue'
 import PageHead from '@/shared/ui/PageHead.vue'
 import { recortarCuadrada } from './foto'
+import ReportesProgramados from './ReportesProgramados.vue'
 
 const cuenta = useCuentaStore()
 const elegir = ref<HTMLInputElement | null>(null)

@@ -44,6 +44,7 @@ final class TableroTest extends TestCase
         array $flota = ["buses" => 0, "vencidas" => [], "porVencer" => []],
         ?array $incidencias = null,
         array $boletosHoy = [],
+        array $programador = ["detenidas" => [], "fallidos" => 0],
     ): Tablero {
         $vacio = ["anulados" => 0, "montoAnulado" => 0, "cortesias" => 0, "valorCortesias" => 0];
 
@@ -59,7 +60,19 @@ final class TableroTest extends TestCase
             ["pendientes" => 0, "importe" => 0],
             $flota,
             $boletosHoy,
+            $programador,
         );
+    }
+
+    public function testElProgramadorDetenidoYLosMensajesFallidosSonAlertas(): void
+    {
+        self::assertNotContains("programador_detenido", array_column(self::tablero()->alertas(), "codigo"));
+
+        $alertas = array_column(self::tablero(programador: ["detenidas" => ["Sincronizar con el sistema anterior"], "fallidos" => 2])->alertas(), null, "codigo");
+        self::assertSame("critico", $alertas["programador_detenido"]["nivel"]);
+        self::assertStringContainsString("Sincronizar con el sistema anterior", $alertas["programador_detenido"]["detalle"]);
+        self::assertSame("alerta", $alertas["mensajes_fallidos"]["nivel"]);
+        self::assertStringStartsWith("2 trabajos", $alertas["mensajes_fallidos"]["titulo"]);
     }
 
     public function testBoletosDeHoyCuentanPorEstadoYRankeanALosVendedores(): void

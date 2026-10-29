@@ -588,19 +588,29 @@ final class Conversaciones
      * usuario. Las tarjetas no se validan contra un autor: cada quien las ve
      * con sus permisos al leer.
      *
+     * Los archivos (generados, sin autor: `Archivos::guardarGenerado`) van
+     * en el mensaje del primero; a los demás, una copia del registro.
+     *
      * @param list<Usuario>                      $usuarios
      * @param list<array{tipo: string, id: int}> $adjuntos
+     * @param list<ChatArchivo>                  $archivos
      */
-    public function avisarSistema(array $usuarios, string $texto, array $adjuntos = []): void
+    public function avisarSistema(array $usuarios, string $texto, array $adjuntos = [], array $archivos = []): void
     {
         $mensajes = [];
-        foreach ($usuarios as $u) {
+        foreach (array_values($usuarios) as $i => $u) {
             $canal = $this->em->getRepository(ChatCanal::class)->findOneBy(["clave" => ChatCanal::claveSistema((int) $u->getId())]);
             if ($canal === null) {
                 $canal = ChatCanal::sistema($u);
                 $this->em->persist($canal);
             }
-            $m = new ChatMensaje($canal, null, $texto, $adjuntos);
+            $propios = $i === 0 ? $archivos : array_map(function (ChatArchivo $a): ChatArchivo {
+                $copia = $a->copiar(null);
+                $this->em->persist($copia);
+
+                return $copia;
+            }, $archivos);
+            $m = new ChatMensaje($canal, null, $texto, $adjuntos, $propios);
             $this->em->persist($m);
             $canal->huboActividad($m->getCreadoEn());
             $mensajes[] = $m;

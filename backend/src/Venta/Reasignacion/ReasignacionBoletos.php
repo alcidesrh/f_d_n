@@ -15,7 +15,6 @@ use App\Entity\BoletoAsiento;
 use App\Entity\BoletoVenta;
 use App\Entity\Enum\CanalVenta;
 use App\Entity\Enum\Dispensa;
-use App\Entity\Enum\OperacionBoleto;
 use App\Entity\Enum\TransicionBoleto;
 use App\Entity\PagoWeb;
 use App\Entity\Salida;
@@ -28,6 +27,8 @@ use App\Venta\PublicadorOcupacion;
 use App\Venta\ReglasBoletos;
 use App\Venta\ReglasVenta;
 use App\Venta\Transaccion;
+use App\Vigilancia\ConteoDiario;
+use App\Vigilancia\UmbralesDiarios;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
@@ -57,6 +58,8 @@ final class ReasignacionBoletos
         private readonly Autorizacion $autorizacion,
         private readonly Pases $pases,
         private readonly DispensasEnCurso $dispensas,
+        private readonly ConteoDiario $conteo,
+        private readonly UmbralesDiarios $umbrales,
     ) {}
 
     /**
@@ -176,6 +179,16 @@ final class ReasignacionBoletos
             $nuevos[] = $nuevo;
         }
         $this->em->flush();
+        // Límite de aviso del rol (ADR-044): se avisa tras el commit si con esta llegó al número del día.
+        $hechas = $this->conteo->reasignados($usuario);
+        $this->umbrales->trasOperar(
+            $usuario,
+            Limite::AVISO_REASIGNACIONES_POR_DIA,
+            $hechas - count($viejos),
+            $hechas,
+            Ubicador::venta($venta),
+            array_map(static fn(BoletoAsiento $n) => ["tipo" => "BoletoAsiento", "id" => (int) $n->getId()], $nuevos),
+        );
 
         return [
             "venta" => (int) $venta->getId(),
@@ -221,10 +234,7 @@ final class ReasignacionBoletos
         if ($limite === null) {
             return [];
         }
-        $hechas = (int) $this->em->getConnection()->fetchOne(
-            "SELECT COUNT(*) FROM bitacora WHERE entidad = 'boleto' AND operacion = :operacion AND usuario_id = :usuario AND fecha >= :hoy",
-            ["operacion" => OperacionBoleto::REASIGNADO->value, "usuario" => $usuario->getId(), "hoy" => (new \DateTimeImmutable("today"))->format("Y-m-d H:i:s")],
-        );
+        $hechas = $this->conteo->reasignados($usuario);
         if ($hechas + $cuantos <= $limite) {
             return [];
         }

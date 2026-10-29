@@ -1,0 +1,18 @@
+{# Correo del resumen diario (ADR-044). `secciones`: ResumenDiario::seccion por empresa. #}
+<h2 style="margin:0 0 12px">{{ titulo }}</h2>
+{% for s in secciones %}
+<h3 style="margin:16px 0 4px">{{ s.empresa }}</h3>
+<ul>
+  <li><strong>Ingresos:</strong> {{ s.ingresos }}{% if s.variacion %} ({{ s.variacion }} vs. el mismo día de la semana pasada){% endif %} · {{ s.boletos }} boletos</li>
+  <li><strong>Salidas:</strong> {{ s.salidas }}{% if s.ocupacion %}, ocupación {{ s.ocupacion }}{% endif %}{% if s.canceladas > 0 %} ({{ s.canceladas }} anuladas){% endif %}</li>
+  <li><strong>Anulados:</strong> {{ s.anulados }} ({{ s.montoAnulado }}) · <strong>Cortesías:</strong> {{ s.cortesias }}{% if s.noPresentados %} · <strong>No se presentaron:</strong> {{ s.noPresentados }}{% endif %}</li>
+  {% for que, nombres in s.quien %}<li><strong>{{ que }}:</strong> {{ nombres }}</li>{% endfor %}
+</ul>
+{% if s.alertas is not empty %}
+<p style="margin:8px 0 4px"><strong>Pide acción</strong></p>
+<ul>
+  {% for a in s.alertas %}<li><strong>[{{ a.nivel }}] {{ a.titulo }}.</strong> {{ a.detalle }}</li>{% endfor %}
+</ul>
+{% endif %}
+{% endfor %}
+<p style="color:#666;font-size:12px">Lo recibe porque se suscribió en Mi cuenta → Reportes y avisos. Ahí mismo puede dejar de recibirlo.</p>

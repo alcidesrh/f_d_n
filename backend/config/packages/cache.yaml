@@ -30,6 +30,11 @@ framework:
             # en dev (ahí `cache.system` es un array y la recalcularía en cada request).
             cache.metadata:
                 adapter: cache.adapter.system
+            # Estado del programador de tareas (ADR-044): última corrida de cada tarea,
+            # en PostgreSQL (tabla `cache_items`) para que sobreviva a recrear el contenedor.
+            cache.programador:
+                adapter: cache.adapter.doctrine_dbal
+                provider: doctrine.dbal.default_connection
 
 when@dev:
     framework:

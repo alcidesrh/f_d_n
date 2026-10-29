@@ -122,7 +122,7 @@ final class SujetosAutorizacion
                 : null,
             Dispensa::LIMITE => match (true) {
                 !$tiene => throw new AutorizacionRechazada(sprintf("No tiene permiso para %s ahí: pida la autorización por permiso.", $operacion), "sin_permiso"),
-                $a->capacidad->limites() === [] || $permisos->limite($a->capacidad->value, $a->capacidad->limites()[0], $donde) === null
+                ($limite = $a->capacidad->limiteQueBloquea()) === null || $permisos->limite($a->capacidad->value, $limite, $donde) === null
                     => throw new AutorizacionRechazada(sprintf("No tiene límite para %s: no hace falta autorización.", $operacion), "sin_bloqueo"),
                 default => null,
             },

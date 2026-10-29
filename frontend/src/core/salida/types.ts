@@ -146,6 +146,16 @@ export interface Esquema {
   ruta: RutaOpcion
   intervaloDias: number
   momentos: Array<{ hora: string; busId: number; bus: string }>
+  /** Lo despliega el programador de tareas hasta `horizonteDias` adelante (ADR-044). */
+  automatico: boolean
+  horizonteDias: number
+  /** `AAAA-MM-DD`: el día desde el que se cuenta el intervalo. */
+  ancla: string | null
+  /** `AAAA-MM-DD`: el último día ya desplegado; lo de antes no se vuelve a crear. */
+  programadoHasta: string | null
+  /** El programador se detuvo (ruta inactiva, un bus de otra empresa) hasta que se guarde de nuevo. */
+  pausadoMotivo: string | null
+  pausadoEn: string | null
   actualizadoEn: string
   actualizadoPor: string | null
 }
@@ -155,6 +165,10 @@ export interface EsquemaPayload {
   rutaId: number
   intervaloDias: number
   momentos: MomentoPayload[]
+  /** Sin estos, el esquema conserva los que tenía. */
+  automatico?: boolean
+  horizonteDias?: number
+  ancla?: string | null
 }
 
 export interface Propagacion {

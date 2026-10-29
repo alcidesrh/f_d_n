@@ -7,6 +7,7 @@ namespace App\Tablero;
 use App\Entity\Enum\EstadoBoletoAsiento;
 use App\Entity\Enum\EstadoDepositoAgencia;
 use App\Entity\Enum\EstadoSalida;
+use App\Programador\RegistroTareas;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 
@@ -30,7 +31,10 @@ final class ConsultaTablero
      */
     private const SIN_COBRO = "(v.cortesia OR (v.voucher AND v.canal <> 'agencia'))";
 
-    public function __construct(private readonly Connection $db) {}
+    public function __construct(
+        private readonly Connection $db,
+        private readonly RegistroTareas $tareas,
+    ) {}
 
     public function tablero(Periodo $p, ?int $empresa): Tablero
     {
@@ -48,6 +52,7 @@ final class ConsultaTablero
             $this->depositos($empresa),
             $this->flota($p, $empresa),
             $this->boletosHoy($p, $empresa),
+            $this->tareas->salud($p->ahora),
         );
     }
 

@@ -19,7 +19,6 @@ use App\Entity\Cliente;
 use App\Entity\Encomienda;
 use App\Entity\Enum\CanalVenta;
 use App\Entity\Enum\Dispensa;
-use App\Entity\Enum\EstadoBoletoAsiento;
 use App\Entity\Enum\EstadoBoletoVenta;
 use App\Entity\Enum\EstadoEncomienda;
 use App\Entity\Enum\EstadoFacturacion;
@@ -36,6 +35,8 @@ use App\Venta\Excepcion\VentaRechazada;
 use App\Venta\Facturacion\CertificacionFallida;
 use App\Venta\Facturacion\Facturador;
 use App\Venta\Mensaje\EnviarBoletoPorCorreo;
+use App\Vigilancia\ConteoDiario;
+use App\Vigilancia\UmbralesDiarios;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
@@ -76,6 +77,8 @@ final class RegistroVenta
         private readonly LoggerInterface $logger,
         private readonly Autorizacion $autorizacion,
         private readonly Pases $pases,
+        private readonly ConteoDiario $conteo,
+        private readonly UmbralesDiarios $umbrales,
     ) {}
 
     /**
@@ -113,6 +116,19 @@ final class RegistroVenta
 
         if ($venta->getEstado() === EstadoBoletoVenta::PENDIENTE) {
             $this->certificarOAnular($venta, $permiteSinFactura);
+        }
+        if ($venta->isCortesia()) {
+            // Límite de aviso del rol (ADR-044): avisa a quien aprueba si con esta llegó al número del día.
+            $hechas = $this->conteo->cortesias($usuario);
+            $boletos = $venta->getAsientos()->toArray();
+            $this->umbrales->trasOperar(
+                $usuario,
+                Limite::AVISO_CORTESIAS_POR_DIA,
+                $hechas - count($boletos),
+                $hechas,
+                Ubicador::venta($venta),
+                array_values(array_map(static fn(BoletoAsiento $b) => ["tipo" => "BoletoAsiento", "id" => (int) $b->getId()], $boletos)),
+            );
         }
 
         $this->publicador->cambio((int) $venta->getAsientos()->first()->getSalida()->getId());
@@ -309,7 +325,7 @@ final class RegistroVenta
             return;
         }
         $limite = $permisos->limite(Capacidad::VENTA_CORTESIA->value, Limite::CORTESIAS_POR_DIA, $donde);
-        if ($limite !== null && $this->cortesiasDeHoy($usuario) + $asientos > $limite) {
+        if ($limite !== null && $this->conteo->cortesias($usuario) + $asientos > $limite) {
             $this->pases->usar($this->pases->exigir(
                 $usuario,
                 Autorizable::salida(Capacidad::VENTA_CORTESIA, Dispensa::LIMITE, $s->salidaId, $asientos),
@@ -317,21 +333,6 @@ final class RegistroVenta
                 "limite",
             ), $usuario);
         }
-    }
-
-    /** Asientos de cortesía que emitió hoy (sin contar los anulados). */
-    private function cortesiasDeHoy(Usuario $usuario): int
-    {
-        return (int) $this->em->createQueryBuilder()
-            ->select("COUNT(b.id)")
-            ->from(BoletoAsiento::class, "b")
-            ->join("b.boletoVenta", "v")
-            ->where("v.usuario = :usuario AND v.cortesia = true AND v.createdAt >= :hoy AND b.estado <> :anulado")
-            ->setParameter("usuario", $usuario->getId())
-            ->setParameter("hoy", new \DateTime("today"))
-            ->setParameter("anulado", EstadoBoletoAsiento::ANULADO)
-            ->getQuery()
-            ->getSingleScalarResult();
     }
 
     private function estacion(SolicitudVenta $s, Usuario $usuario): ?Estacion

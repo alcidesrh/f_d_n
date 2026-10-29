@@ -65,6 +65,38 @@ final class Archivos
     }
 
     /**
+     * Guarda un archivo que generó el sistema (el PDF de un reporte
+     * programado, ADR-044): sin autor, con el tipo reconocido por su
+     * contenido como los subidos. Sin flush: va con su mensaje.
+     */
+    public function guardarGenerado(string $contenido, string $nombre): ChatArchivo
+    {
+        $tamano = strlen($contenido);
+        if ($tamano === 0 || $tamano > self::MAX_BYTES) {
+            throw new ChatRechazado(sprintf("El archivo generado «%s» supera los 10 MB.", $nombre));
+        }
+        $nombre = self::nombreSeguro($nombre);
+        $temporal = tempnam(sys_get_temp_dir(), "chat");
+        file_put_contents($temporal, $contenido);
+        try {
+            [$tipo, $extension, $ancho, $alto] = self::reconocer($temporal, strtolower(pathinfo($nombre, PATHINFO_EXTENSION)))
+                ?? throw new ChatRechazado("Tipo de archivo generado no permitido.");
+        } finally {
+            @unlink($temporal);
+        }
+        $ruta = sprintf("%s/%s.%s", date("Y/m"), bin2hex(random_bytes(16)), $extension);
+        $destino = $this->absoluta($ruta);
+        if (!is_dir(dirname($destino)) && !mkdir(dirname($destino), 0750, true) && !is_dir(dirname($destino))) {
+            throw new ChatRechazado("No se pudo guardar el archivo.", 500);
+        }
+        file_put_contents($destino, $contenido);
+        $registro = new ChatArchivo(null, $nombre, $tipo, $tamano, $ruta, $ancho, $alto);
+        $this->em->persist($registro);
+
+        return $registro;
+    }
+
+    /**
      * Los archivos subidos por `$autor` que aún no están en un mensaje.
      *
      * @param list<int> $ids

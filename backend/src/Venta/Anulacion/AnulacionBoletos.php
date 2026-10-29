@@ -17,7 +17,6 @@ use App\Entity\BoletoVenta;
 use App\Entity\Enum\Dispensa;
 use App\Entity\Enum\EstadoBoletoAsiento;
 use App\Entity\Enum\EstadoFacturacion;
-use App\Entity\Enum\OperacionBoleto;
 use App\Entity\Enum\TransicionBoleto;
 use App\Entity\Salida;
 use App\Entity\SolicitudAutorizacion;
@@ -30,6 +29,8 @@ use App\Venta\Facturacion\Facturador;
 use App\Venta\PublicadorOcupacion;
 use App\Venta\ReglasBoletos;
 use App\Venta\Transaccion;
+use App\Vigilancia\ConteoDiario;
+use App\Vigilancia\UmbralesDiarios;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
@@ -74,6 +75,8 @@ final class AnulacionBoletos
         private readonly Pases $pases,
         private readonly DispensasEnCurso $dispensas,
         private readonly ClockInterface $reloj,
+        private readonly ConteoDiario $conteo,
+        private readonly UmbralesDiarios $umbrales,
     ) {}
 
     /**
@@ -103,10 +106,13 @@ final class AnulacionBoletos
         $anulados = [];
         $fallidos = [];
         $refacturadas = [];
+        $donde = null;
         foreach ($porVenta as $ventaId => ["boletos" => $boletoIds, "pases" => $pases]) {
             try {
                 $refactura = $this->anularVenta($ventaId, $boletoIds, (int) $usuario->getId(), $motivo, $pases);
                 array_push($anulados, ...$boletoIds);
+                $venta = $this->em->find(BoletoVenta::class, $ventaId);
+                $donde ??= $venta === null ? null : Ubicador::venta($venta);
                 if ($refactura !== null) {
                     $refacturadas[] = $refactura;
                 }
@@ -121,6 +127,19 @@ final class AnulacionBoletos
                     "recuperable" => $e->recuperable,
                 ];
             }
+        }
+
+        if ($anulados !== [] && $donde !== null) {
+            // Límite de aviso del rol (ADR-044): avisa a quien aprueba si con esta llegó al número del día.
+            $hechas = $this->conteo->anulados($usuario);
+            $this->umbrales->trasOperar(
+                $usuario,
+                Limite::AVISO_ANULACIONES_POR_DIA,
+                $hechas - count($anulados),
+                $hechas,
+                $donde,
+                array_map(static fn(int $id) => ["tipo" => "BoletoAsiento", "id" => $id], $anulados),
+            );
         }
 
         return ["anulados" => $anulados, "fallidos" => $fallidos, "refacturadas" => $refacturadas];
@@ -162,7 +181,7 @@ final class AnulacionBoletos
             $pases = [...$pases, ...$this->exigirHora($seleccion, $usuario, $ahora)];
             $limite = $this->autorizacion->de($usuario)->limite(Capacidad::BOLETO_ANULAR->value, Limite::ANULACIONES_POR_DIA, Ubicador::venta($venta));
             if ($limite !== null) {
-                $hechas ??= $this->anuladosHoy($usuario);
+                $hechas ??= $this->conteo->anulados($usuario);
                 if ($hechas + count($boletoIds) > $limite) {
                     $pases[] = $this->pases->exigir($usuario, Autorizable::boletos(Capacidad::BOLETO_ANULAR, Dispensa::LIMITE, $boletoIds), sprintf("Llegó al límite de %d boletos anulados por día.", $limite), "limite");
                 }
@@ -211,14 +230,6 @@ final class AnulacionBoletos
     }
 
     /** Boletos que anuló hoy `$usuario` (bitácora), para su límite diario. */
-    private function anuladosHoy(Usuario $usuario): int
-    {
-        return (int) $this->em->getConnection()->fetchOne(
-            "SELECT COUNT(*) FROM bitacora WHERE entidad = 'boleto' AND operacion = :operacion AND usuario_id = :usuario AND fecha >= :hoy",
-            ["operacion" => OperacionBoleto::ANULADO->value, "usuario" => $usuario->getId(), "hoy" => (new \DateTimeImmutable("today"))->format("Y-m-d H:i:s")],
-        );
-    }
-
     /**
      * @param list<int> $boletoIds
      * @param list<int> $pases     autorizaciones a usar en la transacción

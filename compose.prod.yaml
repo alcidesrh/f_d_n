@@ -13,7 +13,7 @@ services:
       MERCURE_PUBLISHER_JWT_KEY: ${CADDY_MERCURE_JWT_SECRET}
       MERCURE_SUBSCRIBER_JWT_KEY: ${CADDY_MERCURE_JWT_SECRET}
 
-  worker:
+  worker: &worker-prod
     build:
       context: ./backend
       target: frankenphp_prod
@@ -22,6 +22,10 @@ services:
       APP_SECRET: ${APP_SECRET}
       MERCURE_PUBLISHER_JWT_KEY: ${CADDY_MERCURE_JWT_SECRET}
       MERCURE_SUBSCRIBER_JWT_KEY: ${CADDY_MERCURE_JWT_SECRET}
+
+  worker-pesadas: *worker-prod
+
+  programador: *worker-prod
 
   frontend:
     build:

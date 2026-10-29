@@ -1,0 +1,6 @@
+{# Correo de las alertas de la operación (ADR-044). #}
+<h2 style="margin:0 0 12px">{{ titulo }}</h2>
+<ul>
+  {% for a in alertas %}<li><strong>[{{ a.nivel }}] {{ a.titulo }}.</strong> {{ a.detalle }}</li>{% endfor %}
+</ul>
+<p style="color:#666;font-size:12px">Lo recibe porque se suscribió en Mi cuenta → Reportes y avisos. Ahí mismo puede dejar de recibirlo.</p>

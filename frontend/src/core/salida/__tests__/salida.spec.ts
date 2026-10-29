@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { aFechaHora, aQuery, filtroInicial, filtrosActivos } from '../filtro'
-import { aEsquema, aPayload, conEsquema, diasProgramados, difiereDeEsquema, errores, fechaHasta, formInicial, redondearHora, totalSalidas, type ProgramadorForm } from '../programacion'
+import { aEsquema, aPayload, automatizacion, conEsquema, diasProgramados, difiereDeEsquema, errores, fechaHasta, formInicial, redondearHora, totalSalidas, type ProgramadorForm } from '../programacion'
 import { agruparRutas } from '../rutas'
 import { omitidasPorMotivo, resumen } from '../resultado'
 import { busesPara, duracionConClase, etiquetaCroquis, sumarMinutos } from '../buses'
@@ -28,6 +28,12 @@ const esquema: Esquema = {
     { hora: '06:05', busId: 1, bus: '95' },
     { hora: '14:30', busId: 2, bus: '98' },
   ],
+  automatico: false,
+  horizonteDias: 90,
+  ancla: null,
+  programadoHasta: null,
+  pausadoMotivo: null,
+  pausadoEn: null,
   actualizadoEn: '2026-10-01T10:00:00-06:00',
   actualizadoPor: 'ana',
 }
@@ -97,6 +103,16 @@ describe('programador de salidas', () => {
     expect(difiereDeEsquema({ ...f, momentos: [{ hora: '06:05', croquisId: 4, busId: 3 }, { hora: '14:30', croquisId: 5, busId: 2 }] }, esquema)).toBe(true)
     expect(difiereDeEsquema({ ...f, momentos: [{ hora: '06:05', croquisId: 4, busId: 1 }] }, esquema)).toBe(true)
     expect(aEsquema(f, ' Nuevo ')).toEqual({ nombre: 'Nuevo', rutaId: 7, intervaloDias: 2, momentos: [{ hora: '06:05', busId: 1 }, { hora: '14:30', busId: 2 }] })
+    // El modo automático se cambia con el esquema guardado, no con lo que se edita en el formulario.
+    expect(automatizacion(esquema, true, 400, '2026-10-05')).toEqual({
+      nombre: 'Xela mañana',
+      rutaId: 7,
+      intervaloDias: 2,
+      momentos: [{ hora: '06:05', busId: 1 }, { hora: '14:30', busId: 2 }],
+      automatico: true,
+      horizonteDias: 180,
+      ancla: '2026-10-05',
+    })
   })
 })
 

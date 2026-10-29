@@ -8,7 +8,7 @@ use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * El PDO del legado (`$oldPdo`) para procesos que viven mucho: el worker de
- * FrankenPHP y `app:sincronizar --cada`.
+ * FrankenPHP y los workers de Messenger (la sincronización, ADR-044).
  *
  * Una conexión dblib que se cae (el servidor o la red la cortan tras un rato
  * sin uso, un timeout) queda «DBPROCESS is dead» para siempre, y el PDO es un

@@ -24,7 +24,7 @@ mientras las estaciones se mudan. Diseño y límites: [ADR-042](../../../docs/ar
 2. `bin/console doctrine:migrations:migrate` (tablas `sync_*` de aquí).
 3. `bin/console app:sincronizacion:instalar-legado`: tablas y triggers en el legado, y la URL y la clave en su `sync_config`. Los triggers solo anotan ids; no cambian nada de lo que hace el legado. Se puede repetir.
 4. En el legado: desplegar `src/Acme/SincronizacionFdnBundle` y su línea en `app/AppKernel.php`; limpiar la caché (`php app/console cache:clear --env=prod`). Con el interruptor apagado no hace nada.
-5. Levantar el ciclo: `docker compose -f compose.yaml -f compose.prod.yaml -f compose.sincronizacion.yaml up -d sincronizacion`.
+5. El ciclo lo corre cada minuto el programador de tareas (ADR-044): basta con que estén arriba `programador` y `worker` (`make tareas` muestra `sincronizar_legado`).
 6. Encender: desde el indicador de la cabecera (quien tiene `config.editar`) o `bin/console app:sincronizacion:interruptor encender`.
 7. Al día siguiente, y cuando haga falta: `bin/console app:sincronizacion:conciliar -v` (y `--reparar`).
 
@@ -38,7 +38,7 @@ Para ver en un FDN local lo que pasa en producción sin tocar sus ventas:
 1. En el `.env.local` de tu FDN: `systemfdn_*` del legado de producción y `SINCRONIZACION_SOLO_TRAER=1`. No hacen falta `SINCRONIZACION_CLAVE` ni `SINCRONIZACION_URL_FDN`.
 2. `bin/console doctrine:migrations:migrate` y, si tu base no la tiene, la migración inicial del legado.
 3. `bin/console app:sincronizacion:instalar-legado` contra producción, en horas de poca venta: crea las tablas `sync_*` y los triggers, que solo anotan ids. **No** se despliega el bundle en el legado.
-4. `bin/console app:sincronizar --cada=60` y encender (indicador o `interruptor encender`). El indicador dice «Sinc. (solo trae)».
+4. Con `programador` y `worker` arriba (el ciclo corre cada minuto), encender (indicador o `interruptor encender`). El indicador dice «Sinc. (solo trae)».
 
 En este modo FDN no escribe en el legado fuera de `sync_*` (`ConexionLegado` rechaza la sentencia), deja `sync_config.activo = 0` (el legado no llama aquí), no exporta y la conciliación solo trae. Lo que vendas aquí queda solo aquí: si el legado vende después el mismo asiento, la importación de esa salida falla y lo muestra el indicador. Mejor no vender en local en salidas de producción.
 

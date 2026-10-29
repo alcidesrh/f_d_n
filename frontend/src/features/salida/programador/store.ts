@@ -17,6 +17,7 @@ import { busesPara } from '@/core/salida/buses'
 import { aDia } from '@/core/salida/filtro'
 import {
   aEsquema,
+  automatizacion,
   aPayload,
   conEsquema,
   diasProgramados,
@@ -197,6 +198,30 @@ export const useProgramadorStore = defineStore('programador-salidas', () => {
     if (!errores.value.length) void cargarPrevia()
   }
 
+  /**
+   * Enciende, apaga o ajusta el modo automático del esquema cargado (ADR-044).
+   * Al encenderlo, la cadencia cuenta desde el primer día del formulario (o hoy).
+   */
+  async function automatizarEsquema(automatico: boolean, horizonteDias: number) {
+    const actual = esquema.value
+    if (!actual) return
+    guardandoEsquema.value = true
+    try {
+      const ancla = automatico && !actual.automatico ? (form.desde ?? null) : actual.ancla
+      const e = await guardarEsquema(actual.id, automatizacion(actual, automatico, horizonteDias, ancla))
+      esquemas.value = esquemas.value.map((x) => (x.id === e.id ? e : x))
+      notify.success(
+        e.automatico
+          ? `«${e.nombre}» se mantiene programado ${e.horizonteDias} días adelante; las salidas se crean en segundo plano.`
+          : `«${e.nombre}» ya no se programa solo. Las salidas creadas siguen.`,
+      )
+    } catch (e) {
+      notify.error(mensaje(e))
+    } finally {
+      guardandoEsquema.value = false
+    }
+  }
+
   async function actualizarEsquema() {
     const actual = esquema.value
     if (!actual) return
@@ -287,6 +312,7 @@ export const useProgramadorStore = defineStore('programador-salidas', () => {
     crear,
     seguirProgramando,
     actualizarEsquema,
+    automatizarEsquema,
     borrarEsquema,
     iniciar,
   }

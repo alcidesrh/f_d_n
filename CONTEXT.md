@@ -104,9 +104,11 @@ Evitar (modelo): servicio, recorrido, itinerario
 **Esquema de salidas**:
 Una configuración guardada con un nombre para programar salidas: una ruta, las horas del día
 con su bus y cada cuántos días se repite. Es una plantilla: cambiarla no toca las salidas ya creadas.
+Un esquema **automático** lo mantiene programado el sistema unos días hacia adelante (90 por defecto):
+cada madrugada crea las salidas que faltan. Lo ya programado no se vuelve a crear aunque se anule o borre.
 _Avoid_: plantilla, horario
 Término de la tabla: **Esquema de salidas** (`EsquemaSalida`)
-Modelo: nuevo. Detalle del modelo: Configuración guardada con un nombre desde el programador: ruta, horas del día con su bus y cada cuántos días se repite (sin fechas). Es una plantilla: cambiarla o borrarla no toca las salidas ya creadas (ADR-024).
+Modelo: nuevo. Detalle del modelo: Configuración guardada con un nombre desde el programador: ruta, horas del día con su bus y cada cuántos días se repite (sin fechas). Es una plantilla: cambiarla o borrarla no toca las salidas ya creadas (ADR-024). Automático (ADR-044): `automatico`, `horizonteDias`, `ancla` (día desde el que cuenta el intervalo), `programadoHasta` (frontera: lo de antes no se vuelve a desplegar) y pausa (`pausadoMotivo`) cuando la ruta se inactiva o un bus deja de ser de la empresa.
 Evitar (modelo): plantilla, horario
 
 **Horario de la salida** (`SalidaParada`):
