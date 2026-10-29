@@ -15,18 +15,14 @@
 }
 
 :root {
-  --bg: color-mix(in hsl, var(--p-surface-50) 0%, var(--p-surface-50) 70%);
+  /*--bg: var(--p-surface-50);*/
+  --bg: color-mix(in hsl, var(--p-surface-100) 80%, var(--p-surface-50) 70%);
 
-  /*var(--p-surface-100);*/
-
-  --bg2: color-mix(in hsl, var(--p-surface-50) 0%, var(--p-surface-50) 50%);
-  /*var(--p-surface-50);*/
+  /*--bg2: var(--p-surface-50);*/
   /*color-mix(in hsl, var(--p-surface-50) 100%, var(--p-surface-50) 35%);*/
   /*var(--p-surface-50);*/
-  --bg2: color-mix(in hsl, var(--p-surface-0) 30%, var(--p-surface-50) 70%);
-  /*var(--p-surface-50);*/
-  --bg: color-mix(in hsl, var(--p-surface-0) 30%, var(--p-surface-100) 70%);
-  /*var(--p-surface-100);*/
+  --bg2: color-mix(in hsl, var(--p-surface-100) 20%, var(--p-surface-50) 30%);
+  /*--bg: color-mix(in hsl, var(--p-surface-0) 30%, var(--p-surface-100) 70%);*/
 
   --text: var(--p-surface-600);
   --text-color: var(--p-text-color);

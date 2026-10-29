@@ -42,7 +42,8 @@ html.dark {
   /* Scrollbars, autocompletado y controles nativos oscuros. */
   color-scheme: dark;
   & > body {
-    background-color: var(--p-surface-0);
+    background-color: transparent;
+    /*var(--p-surface-0);*/
   }
 }
 body {
