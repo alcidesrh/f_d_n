@@ -1,0 +1,71 @@
+time="2026-10-28T07:50:44-06:00" level=warning msg="Docker Compose is configured to build using Bake, but buildx isn't installed"
+#0 building with "default" instance using docker driver
+
+#1 [frontend internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.31kB done
+#1 DONE 0.0s
+
+#2 [frontend] resolve image config for docker-image://docker.io/docker/dockerfile:1.4
+#2 DONE 0.4s
+
+#3 [frontend] docker-image://docker.io/docker/dockerfile:1.4@sha256:9ba7531bd80fb0a858632727cf7a112fbfd19b17e94c4e84ced81e24ef1a0dbc
+#3 resolve docker.io/docker/dockerfile:1.4@sha256:9ba7531bd80fb0a858632727cf7a112fbfd19b17e94c4e84ced81e24ef1a0dbc 0.1s done
+#3 CACHED
+
+#4 [frontend internal] load .dockerignore
+#4 transferring context: 405B done
+#4 DONE 0.0s
+
+#5 [frontend internal] load metadata for docker.io/oven/bun:1-alpine
+#5 DONE 0.0s
+
+#6 [frontend bun_upstream 1/1] FROM docker.io/oven/bun:1-alpine@sha256:4cf82f5686b196504fe119db3fcd9185b191f82ece82c40680e597228ec6070a
+#6 resolve docker.io/oven/bun:1-alpine@sha256:4cf82f5686b196504fe119db3fcd9185b191f82ece82c40680e597228ec6070a 0.1s done
+#6 DONE 0.1s
+
+#7 [frontend internal] load build context
+#7 transferring context: 44.48kB 0.1s done
+#7 DONE 0.1s
+
+#8 [frontend base 1/1] WORKDIR /frontend
+#8 CACHED
+
+#9 [frontend builder 2/5] RUN bun install --frozen-lockfile
+#9 CACHED
+
+#10 [frontend prod 2/4] COPY --from=builder /frontend/dist ./dist
+#10 CACHED
+
+#11 [frontend builder 5/5] RUN bun run build
+#11 CACHED
+
+#12 [frontend prod 3/4] COPY server.ts ./
+#12 CACHED
+
+#13 [frontend builder 1/5] COPY bun.lock package.json ./
+#13 CACHED
+
+#14 [frontend builder 3/5] COPY . .
+#14 CACHED
+
+#15 [frontend builder 4/5] RUN apk add --no-cache nodejs
+#15 CACHED
+
+#16 [frontend prod 4/4] RUN apk add --no-cache curl
+#16 CACHED
+
+#17 [frontend] exporting to image
+#17 exporting layers 0.0s done
+#17 exporting manifest sha256:7ef107638ea95b359bcbbe80746e7325f3af4096bf804849f95ad18b448ac2a8
+#17 exporting manifest sha256:7ef107638ea95b359bcbbe80746e7325f3af4096bf804849f95ad18b448ac2a8 0.0s done
+#17 exporting config sha256:3c845e48fc636091f5c7091dae41d810e42c2b303ad9a3bac2143ea4cae2b370 done
+#17 exporting attestation manifest sha256:0073e697d7004b01a18832b48630ae76c174753e96a4a62823a5b6aeeb99f096 0.0s done
+#17 exporting manifest list sha256:5eac5538f45b8e99c1e67a7998489eada6a7954dcfbe1e3630a2838304fe3673
+#17 exporting manifest list sha256:5eac5538f45b8e99c1e67a7998489eada6a7954dcfbe1e3630a2838304fe3673 0.0s done
+#17 naming to docker.io/library/app-frontend:latest done
+#17 unpacking to docker.io/library/app-frontend:latest 0.0s done
+#17 DONE 0.3s
+
+#18 [frontend] resolving provenance for metadata file
+#18 DONE 0.0s
+ frontend  Built

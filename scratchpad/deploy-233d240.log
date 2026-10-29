@@ -1,0 +1,324 @@
+time="2026-10-27T21:28:53-06:00" level=warning msg="Docker Compose is configured to build using Bake, but buildx isn't installed"
+#0 building with "default" instance using docker driver
+
+#1 [frontend internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.31kB 0.0s done
+#1 DONE 0.0s
+
+#2 [frontend] resolve image config for docker-image://docker.io/docker/dockerfile:1.4
+#2 DONE 0.3s
+
+#3 [frontend] docker-image://docker.io/docker/dockerfile:1.4@sha256:9ba7531bd80fb0a858632727cf7a112fbfd19b17e94c4e84ced81e24ef1a0dbc
+#3 resolve docker.io/docker/dockerfile:1.4@sha256:9ba7531bd80fb0a858632727cf7a112fbfd19b17e94c4e84ced81e24ef1a0dbc 0.0s done
+#3 CACHED
+
+#4 [frontend internal] load .dockerignore
+#4 transferring context: 405B done
+#4 DONE 0.0s
+
+#5 [frontend internal] load metadata for docker.io/oven/bun:1-alpine
+#5 DONE 0.0s
+
+#6 [frontend bun_upstream 1/1] FROM docker.io/oven/bun:1-alpine@sha256:4cf82f5686b196504fe119db3fcd9185b191f82ece82c40680e597228ec6070a
+#6 resolve docker.io/oven/bun:1-alpine@sha256:4cf82f5686b196504fe119db3fcd9185b191f82ece82c40680e597228ec6070a 0.0s done
+#6 DONE 0.0s
+
+#7 [frontend internal] load build context
+#7 transferring context: 48.75kB 0.1s done
+#7 DONE 0.1s
+
+#8 [frontend builder 1/5] COPY bun.lock package.json ./
+#8 CACHED
+
+#9 [frontend prod 1/4] WORKDIR /frontend
+#9 CACHED
+
+#10 [frontend builder 2/5] RUN bun install --frozen-lockfile
+#10 CACHED
+
+#11 [frontend builder 3/5] COPY . .
+#11 DONE 0.8s
+
+#12 [frontend builder 4/5] RUN apk add --no-cache nodejs
+#12 0.947 ( 1/12) Installing ca-certificates (20261020-r0)
+#12 0.970 ( 2/12) Installing ada-libs (4.0.0-r0)
+#12 0.987 ( 3/12) Installing brotli-libs (1.2.1-r0)
+#12 1.012 ( 4/12) Installing c-ares (1.34.9-r0)
+#12 1.025 ( 5/12) Installing icu-data-en (78.1-r0)
+#12 1.080   Executing icu-data-en-78.1-r0.post-install
+#12 1.089   * If you need ICU with non-English locales and legacy charset support, install
+#12 1.089   * package icu-data-full.
+#12 1.089 ( 6/12) Installing icu-libs (78.1-r0)
+#12 1.179 ( 7/12) Installing nghttp2-libs (1.70.0-r0)
+#12 1.190 ( 8/12) Installing simdjson (4.2.4-r0)
+#12 1.206 ( 9/12) Installing simdutf (9.0.0-r0)
+#12 1.227 (10/12) Installing sqlite-libs (3.53.4-r0)
+#12 1.271 (11/12) Installing zstd-libs (1.5.7-r2)
+#12 1.295 (12/12) Installing nodejs (24.22.1-r0)
+#12 2.046 Executing busybox-1.37.0-r31.trigger
+#12 2.055 Executing ca-certificates-20261020-r0.trigger
+#12 2.093 OK: 73.3 MiB in 30 packages
+#12 DONE 2.2s
+
+#13 [frontend builder 5/5] RUN bun run build
+#13 0.204 $ run-p type-check "build-only {@}" --
+#13 0.449 $ vue-tsc --build
+#13 0.450 $ vite build
+#13 2.180 vite v8.2.0 building client environment for production...
+#13 2.321 [2Ktransforming...
+#13 8.343 /fonts/Chakra_Petch/ChakraPetch-SemiBold.ttf referenced in /fonts/Chakra_Petch/ChakraPetch-SemiBold.ttf didn't resolve at build time, it will remain unchanged to be resolved at runtime
+#13 8.992 ✓ 1971 modules transformed.
+#13 9.667 rendering chunks...
+#13 10.03 computing gzip size...
+#13 10.17 dist/manifest.webmanifest                                                   0.66 kB
+#13 10.17 dist/index.html                                                             3.76 kB │ gzip:     1.29 kB
+#13 10.17 dist/assets/material-symbols-outlined-latin-fill-normal-B2uwGM3Y.woff2  1,137.51 kB
+#13 10.17 dist/assets/RegistrarDepositoPage-B16o-DrY.css                              0.12 kB │ gzip:     0.11 kB
+#13 10.17 dist/assets/EspecialesPage-4CoSl8uX.css                                     0.14 kB │ gzip:     0.12 kB
+#13 10.17 dist/assets/AnularBoletosDialog-y6lh-4J-.css                                0.18 kB │ gzip:     0.14 kB
+#13 10.17 dist/assets/ManifiestoSalidaPage-BD6sU0fo.css                               0.19 kB │ gzip:     0.14 kB
+#13 10.17 dist/assets/useResumen-JagtE53V.css                                         0.19 kB │ gzip:     0.14 kB
+#13 10.17 dist/assets/SortablePanelList-Di-_6s2h.css                                  0.21 kB │ gzip:     0.16 kB
+#13 10.17 dist/assets/MigracionPanel-DSd66NjK.css                                     0.29 kB │ gzip:     0.21 kB
+#13 10.17 dist/assets/AccesosPage-Bi_bMpne.css                                        0.29 kB │ gzip:     0.18 kB
+#13 10.17 dist/assets/BitacoraDialog-DgH52S3f.css                                     0.33 kB │ gzip:     0.21 kB
+#13 10.17 dist/assets/MigracionPage-Clnhbhmb.css                                      0.37 kB │ gzip:     0.25 kB
+#13 10.17 dist/assets/FormBuilderPanel-DoaLQrdI.css                                   0.41 kB │ gzip:     0.25 kB
+#13 10.17 dist/assets/ChatPage-l-HmtSWT.css                                           0.46 kB │ gzip:     0.29 kB
+#13 10.17 dist/assets/RegistrarEncomiendaPage-4gDD_2ey.css                            0.50 kB │ gzip:     0.26 kB
+#13 10.17 dist/assets/Icon-B_l0Oes6.css                                               0.56 kB │ gzip:     0.32 kB
+#13 10.17 dist/assets/FormBuilderPage-B9ZSIIWV.css                                    0.57 kB │ gzip:     0.30 kB
+#13 10.17 dist/assets/RegistrarDepositoForm-DuC-s1q8.css                              0.59 kB │ gzip:     0.28 kB
+#13 10.17 dist/assets/PublicacionPage-BXeE78IR.css                                    0.79 kB │ gzip:     0.35 kB
+#13 10.17 dist/assets/EnviarPorChatDialog-C6hAV-Fu.css                                0.82 kB │ gzip:     0.38 kB
+#13 10.17 dist/assets/AutorizacionesPage-2HVqlC8j.css                                 0.83 kB │ gzip:     0.37 kB
+#13 10.17 dist/assets/ChequeoPage-DJ7pgJpq.css                                        0.93 kB │ gzip:     0.37 kB
+#13 10.17 dist/assets/UsuarioAccesosPage-BoqcXQnv.css                                 0.96 kB │ gzip:     0.36 kB
+#13 10.17 dist/assets/PaginaWebPage-NFhjtiCF.css                                      0.97 kB │ gzip:     0.37 kB
+#13 10.17 dist/assets/SeguimientoPage-DeBcsKMa.css                                    1.02 kB │ gzip:     0.50 kB
+#13 10.17 dist/assets/TarifaFiltro-DOblUnKV.css                                       1.11 kB │ gzip:     0.45 kB
+#13 10.17 dist/assets/EntregarEncomiendasPage-ze4T-MvV.css                            1.14 kB │ gzip:     0.44 kB
+#13 10.17 dist/assets/SaldosAgenciaPage-M6O-_kq7.css                                  1.44 kB │ gzip:     0.48 kB
+#13 10.17 dist/assets/PendientesEnvioPage-C3FNOzth.css                                1.46 kB │ gzip:     0.50 kB
+#13 10.17 dist/assets/ArticulosEditor-hN4XjBSU.css                                    1.51 kB │ gzip:     0.56 kB
+#13 10.17 dist/assets/CroquisSelector-EGKEcPn9.css                                    1.57 kB │ gzip:     0.58 kB
+#13 10.17 dist/assets/ProcesarSalidaPage-3vqxc4hA.css                                 1.70 kB │ gzip:     0.61 kB
+#13 10.17 dist/assets/DepositosPage-EMS09NjA.css                                      1.70 kB │ gzip:     0.58 kB
+#13 10.17 dist/assets/TarifasMapaPage-BPXj21RY.css                                    1.72 kB │ gzip:     0.69 kB
+#13 10.17 dist/assets/BusMapLegend-8h5kJfx8.css                                       1.77 kB │ gzip:     0.60 kB
+#13 10.17 dist/assets/EntityConfigPage-DAKKRz0e.css                                   1.99 kB │ gzip:     0.64 kB
+#13 10.17 dist/assets/ProgramadorPage-DpCbSECs.css                                    2.16 kB │ gzip:     0.70 kB
+#13 10.17 dist/assets/AyudaPage-DU-LcbcF.css                                          2.26 kB │ gzip:     0.71 kB
+#13 10.17 dist/assets/NotFoundPage-CJL9QQxp.css                                       2.47 kB │ gzip:     0.97 kB
+#13 10.17 dist/assets/RutaEditorPage-2vfgZJRA.css                                     2.52 kB │ gzip:     0.76 kB
+#13 10.17 dist/assets/RolesPage-BT-z0h1S.css                                          2.55 kB │ gzip:     0.76 kB
+#13 10.17 dist/assets/LoginPage-DcyFeSrq.css                                          3.17 kB │ gzip:     1.12 kB
+#13 10.17 dist/assets/MenuBuilderPage-Cxc8xjYQ.css                                    3.17 kB │ gzip:     0.85 kB
+#13 10.17 dist/assets/EncomiendasPage-Bgnfm-2H.css                                    3.35 kB │ gzip:     0.94 kB
+#13 10.17 dist/assets/BoletosPage-CKwgKaPt.css                                        3.51 kB │ gzip:     0.92 kB
+#13 10.17 dist/assets/AdministracionPage-7NR3DyAs.css                                 4.50 kB │ gzip:     1.07 kB
+#13 10.17 dist/assets/ListPage-Bcomdr1x.css                                           5.01 kB │ gzip:     1.22 kB
+#13 10.17 dist/assets/DataGrid-BRFzqa9_.css                                           8.46 kB │ gzip:     2.11 kB
+#13 10.17 dist/assets/BusCroquisSection-0aRFzuH6.css                                  8.84 kB │ gzip:     1.96 kB
+#13 10.17 dist/assets/CalendarioPage-BrN3p949.css                                     9.78 kB │ gzip:     2.43 kB
+#13 10.17 dist/assets/DashboardPage-aeMAudoS.css                                     10.58 kB │ gzip:     2.45 kB
+#13 10.17 dist/assets/leaflet-vh-t_kPv.css                                           15.09 kB │ gzip:     6.36 kB
+#13 10.17 dist/assets/VentaPage-0pgtPUv-.css                                         15.33 kB │ gzip:     3.35 kB
+#13 10.17 dist/assets/index-QSHXYPeS.css                                            123.28 kB │ gzip:    23.37 kB
+#13 10.17 dist/assets/overlayeventbus-4J2uVpX2.js                                     0.06 kB │ gzip:     0.07 kB
+#13 10.17 dist/assets/_plugin-vue_export-helper-BDNMzG2s.js                           0.08 kB │ gzip:     0.09 kB
+#13 10.17 dist/assets/busquedaRemota-DScxzc24.js                                      0.14 kB │ gzip:     0.14 kB
+#13 10.17 dist/assets/reimprimir-DEiYPBXf.js                                          0.27 kB │ gzip:     0.20 kB
+#13 10.17 dist/assets/api-Ce55ckFI.js                                                 0.31 kB │ gzip:     0.20 kB
+#13 10.17 dist/assets/permisos-CfOlcbZV.js                                            0.41 kB │ gzip:     0.27 kB
+#13 10.17 dist/assets/zindex-cO8iUN-n.js                                              0.43 kB │ gzip:     0.28 kB
+#13 10.17 dist/assets/realtime-CcV6AqTy.js                                            0.45 kB │ gzip:     0.31 kB
+#13 10.17 dist/assets/api-CPhTrkrT.js                                                 0.46 kB │ gzip:     0.29 kB
+#13 10.17 dist/assets/AccesosAccion-ByHgCgtZ.js                                       0.48 kB │ gzip:     0.35 kB
+#13 10.17 dist/assets/baseinput-B5vEh7rM.js                                           0.49 kB │ gzip:     0.28 kB
+#13 10.17 dist/assets/BitacoraBoletoAccion--F_oBxeh.js                                0.50 kB │ gzip:     0.35 kB
+#13 10.17 dist/assets/BitacoraSalidaAccion-Cw0RN7W0.js                                0.50 kB │ gzip:     0.34 kB
+#13 10.17 dist/assets/PageHead-BDqOn1qb.js                                            0.51 kB │ gzip:     0.34 kB
+#13 10.17 dist/assets/portal-eSeiAneO.js                                              0.57 kB │ gzip:     0.36 kB
+#13 10.17 dist/assets/formExtension-CkJcA2D4.js                                       0.65 kB │ gzip:     0.40 kB
+#13 10.17 dist/assets/rolldown-runtime-hePW80VL.js                                    0.71 kB │ gzip:     0.42 kB
+#13 10.17 dist/assets/manifiesto-DOX6tCz_.js                                          0.74 kB │ gzip:     0.40 kB
+#13 10.17 dist/assets/api-B8PLuN8t.js                                                 0.75 kB │ gzip:     0.39 kB
+#13 10.17 dist/assets/useApi-CROJJdhE-Dbvcl2QP.js                                     0.83 kB │ gzip:     0.45 kB
+#13 10.17 dist/assets/api-BEatbNrU.js                                                 0.95 kB │ gzip:     0.50 kB
+#13 10.17 dist/assets/reasignacion-DwXYPEcP.js                                        1.04 kB │ gzip:     0.55 kB
+#13 10.17 dist/assets/Icon-CN4JD4S_.js                                                1.09 kB │ gzip:     0.65 kB
+#13 10.17 dist/assets/api-Dy-kmFGJ.js                                                 1.22 kB │ gzip:     0.53 kB
+#13 10.17 dist/assets/NotFoundPage-BYxbsPbK.js                                        1.30 kB │ gzip:     0.73 kB
+#13 10.17 dist/assets/layout-Oyhlg9up.js                                              1.32 kB │ gzip:     0.71 kB
+#13 10.17 dist/assets/toolbar-BNIuPk0l.js                                             1.41 kB │ gzip:     0.62 kB
+#13 10.17 dist/assets/FormBuilderPage-Bxfdr6v5.js                                     1.41 kB │ gzip:     0.86 kB
+#13 10.17 dist/assets/AccionesSelect-DyAxQ6Be.js                                      1.41 kB │ gzip:     0.80 kB
+#13 10.17 dist/assets/minus-DO-cUpLK.js                                               1.51 kB │ gzip:     0.88 kB
+#13 10.17 dist/assets/FacturacionFallidaDialog-BiBH1lU1.js                            1.53 kB │ gzip:     0.84 kB
+#13 10.17 dist/assets/ChatPage-BaTpiTBb.js                                            1.54 kB │ gzip:     0.88 kB
+#13 10.17 dist/assets/editor-CmdPERVP.js                                              1.64 kB │ gzip:     0.78 kB
+#13 10.17 dist/assets/api-iZubO9mn.js                                                 1.76 kB │ gzip:     0.82 kB
+#13 10.17 dist/assets/chevrondown-pQ8m0ieb.js                                         1.77 kB │ gzip:     1.07 kB
+#13 10.17 dist/assets/plus-Dxx4DBCd.js                                                1.90 kB │ gzip:     1.00 kB
+#13 10.17 dist/assets/filtro-B2aKnr2I.js                                              1.92 kB │ gzip:     0.77 kB
+#13 10.17 dist/assets/check-BYU8uokn.js                                               1.97 kB │ gzip:     1.17 kB
+#13 10.17 dist/assets/SalidaSelect-CVey9XOo.js                                        2.06 kB │ gzip:     1.14 kB
+#13 10.17 dist/assets/CambiarPasswordDialog-DGCRXcjk.js                               2.09 kB │ gzip:     1.13 kB
+#13 10.17 dist/assets/RegistrarDepositoPage-CBe30pj9.js                               2.31 kB │ gzip:     1.27 kB
+#13 10.17 dist/assets/depositos-B6HJ6hIA.js                                           2.35 kB │ gzip:     1.08 kB
+#13 10.17 dist/assets/SortablePanelList-Chhu8am0.js                                   2.58 kB │ gzip:     1.35 kB
+#13 10.17 dist/assets/baseeditableholder-CAnjRZ6A.js                                  2.63 kB │ gzip:     0.82 kB
+#13 10.17 dist/assets/ManifiestoSalidaPage-wkhncNHe.js                                2.70 kB │ gzip:     1.32 kB
+#13 10.17 dist/assets/store-B7Z0zA8Y.js                                               2.74 kB │ gzip:     1.35 kB
+#13 10.17 dist/assets/listado-CyBQqFnS.js                                             2.88 kB │ gzip:     1.17 kB
+#13 10.17 dist/assets/programacion-K7eDJSTt.js                                        3.13 kB │ gzip:     1.40 kB
+#13 10.17 dist/assets/ManifiestoEncomiendasPage-CJKUjqrH.js                           3.47 kB │ gzip:     1.70 kB
+#13 10.17 dist/assets/labels-fj4BXZgP.js                                              3.52 kB │ gzip:     1.66 kB
+#13 10.17 dist/assets/CuadreVoucherPage-Cgwud76F.js                                   3.77 kB │ gzip:     1.81 kB
+#13 10.17 dist/assets/AgenciaSaldoSection-DBdLfMP-.js                                 3.77 kB │ gzip:     1.75 kB
+#13 10.17 dist/assets/EliminarUsuariosDialog-8R6GtQ-J.js                              3.97 kB │ gzip:     1.84 kB
+#13 10.17 dist/assets/EstacionSelect-BOCgobJ7.js                                      4.01 kB │ gzip:     1.86 kB
+#13 10.17 dist/assets/useResumen-C2en6FY5.js                                          4.22 kB │ gzip:     2.01 kB
+#13 10.17 dist/assets/buses-8f64hQLN.js                                               4.36 kB │ gzip:     2.22 kB
+#13 10.17 dist/assets/CroquisSelector-Bjy6anSE.js                                     4.49 kB │ gzip:     2.09 kB
+#13 10.17 dist/assets/reglas-Dt39lL6_.js                                              4.50 kB │ gzip:     1.86 kB
+#13 10.17 dist/assets/utils-G2gTD1rS.js                                               4.76 kB │ gzip:     1.64 kB
+#13 10.17 dist/assets/listUtils-CvppUr14.js                                           4.79 kB │ gzip:     1.93 kB
+#13 10.17 dist/assets/CuadreVentaBoletosPage-CXF31rNx.js                              4.81 kB │ gzip:     2.13 kB
+#13 10.17 dist/assets/EnviarPorChatDialog-LZs9Hnev.js                                 4.91 kB │ gzip:     2.25 kB
+#13 10.17 dist/assets/RegistrarDepositoForm-D2rNk1Oc.js                               5.35 kB │ gzip:     2.26 kB
+#13 10.17 dist/assets/AccesosPage-JdpvCAG8.js                                         5.46 kB │ gzip:     2.22 kB
+#13 10.17 dist/assets/encomienda-BFHL2HfM.js                                          5.54 kB │ gzip:     1.91 kB
+#13 10.17 dist/assets/workbox-window.prod.es5-Bd17z0YL.js                             5.65 kB │ gzip:     2.20 kB
+#13 10.17 dist/assets/store-RlwDe_gI.js                                               5.75 kB │ gzip:     2.16 kB
+#13 10.17 dist/assets/DetalleFacturaBoletosPage-BkHI-2z3.js                           5.84 kB │ gzip:     2.36 kB
+#13 10.17 dist/assets/pinia-Bgm2Aii2.js                                               5.89 kB │ gzip:     2.80 kB
+#13 10.17 dist/assets/TarifaFiltro-D7JNwVzn.js                                        6.03 kB │ gzip:     2.27 kB
+#13 10.17 dist/assets/MigracionPage-DknqAlC3.js                                       6.07 kB │ gzip:     2.32 kB
+#13 10.17 dist/assets/ReporteEncomiendaPage-BJAHq58m.js                               6.37 kB │ gzip:     2.45 kB
+#13 10.17 dist/assets/ticket-DYXt0fUE.js                                              6.39 kB │ gzip:     2.84 kB
+#13 10.17 dist/assets/BitacoraDialog-DYTR5Mo-.js                                      6.49 kB │ gzip:     2.80 kB
+#13 10.17 dist/assets/inputicon-e0HqatAn.js                                           6.73 kB │ gzip:     1.95 kB
+#13 10.17 dist/assets/RutasPage--Xk-ofwr.js                                           6.83 kB │ gzip:     2.75 kB
+#13 10.17 dist/assets/SaldosAgenciaPage-Opyuz4cn.js                                   6.86 kB │ gzip:     2.82 kB
+#13 10.17 dist/assets/EspecialesPage-Rej-2BDc.js                                      6.88 kB │ gzip:     2.73 kB
+#13 10.17 dist/assets/MiCuentaPage-vUJWMpyW.js                                        7.19 kB │ gzip:     2.88 kB
+#13 10.17 dist/assets/fieldset-CdVkRX7Y.js                                            7.53 kB │ gzip:     2.36 kB
+#13 10.17 dist/assets/PublicacionPage-Bu6zuSEh.js                                     7.60 kB │ gzip:     2.98 kB
+#13 10.17 dist/assets/VerSalidaDialog-Bc0hr1a5.js                                     7.91 kB │ gzip:     3.03 kB
+#13 10.17 dist/assets/AnularBoletosDialog-DEJ_Zm_c.js                                 7.91 kB │ gzip:     3.13 kB
+#13 10.17 dist/assets/PendientesEnvioPage-zUDca9Sp.js                                 8.04 kB │ gzip:     3.26 kB
+#13 10.17 dist/assets/MigracionPanel-B9xqBOvd.js                                      9.10 kB │ gzip:     3.09 kB
+#13 10.17 dist/assets/BusMapLegend-CHZz3Wcm.js                                        9.61 kB │ gzip:     3.35 kB
+#13 10.17 dist/assets/ArticulosEditor-pHJtZeNr.js                                     9.99 kB │ gzip:     3.00 kB
+#13 10.17 dist/assets/AutorizacionesPage-CS2GS8bC.js                                 10.60 kB │ gzip:     4.22 kB
+#13 10.17 dist/assets/LoginPage-m0P4oVcv.js                                          11.62 kB │ gzip:     5.85 kB
+#13 10.17 dist/assets/RegistrarEncomiendaPage-DWumhTyZ.js                            11.74 kB │ gzip:     4.20 kB
+#13 10.17 dist/assets/RolesPage-CHgdT3oZ.js                                          12.06 kB │ gzip:     4.65 kB
+#13 10.17 dist/assets/ProcesarSalidaPage-CZi_Bqew.js                                 12.12 kB │ gzip:     4.38 kB
+#13 10.17 dist/assets/FormBuilderPanel-D1gPjH1d.js                                   12.17 kB │ gzip:     3.89 kB
+#13 10.17 dist/assets/EntregarEncomiendasPage-BcXYuk--.js                            12.48 kB │ gzip:     4.67 kB
+#13 10.17 dist/assets/RutaEditorPage-BlKoIHDf.js                                     14.39 kB │ gzip:     5.31 kB
+#13 10.17 dist/assets/ClienteBuscador-nGcfvHxI.js                                    14.45 kB │ gzip:     5.94 kB
+#13 10.17 dist/assets/DataGrid-CGi9xV69.js                                           14.63 kB │ gzip:     5.07 kB
+#13 10.17 dist/assets/UsuarioAccesosPage-C0RyGE6Q.js                                 15.24 kB │ gzip:     5.43 kB
+#13 10.17 dist/assets/DepositosPage-CMt27TDq.js                                      15.41 kB │ gzip:     5.60 kB
+#13 10.17 dist/assets/times-BB17citu.js                                              15.68 kB │ gzip:     7.03 kB
+#13 10.17 dist/assets/SeguimientoPage-B6MtorRh.js                                    15.88 kB │ gzip:     6.74 kB
+#13 10.17 dist/assets/tab-CZI1ea4B.js                                                16.70 kB │ gzip:     4.29 kB
+#13 10.17 dist/assets/TarifasMapaPage-CSup0ZCB.js                                    17.01 kB │ gzip:     5.99 kB
+#13 10.17 dist/assets/ChequeoPage-CwKI1SHD.js                                        18.20 kB │ gzip:     5.98 kB
+#13 10.17 dist/assets/FormPage-DvEeNmnI.js                                           21.01 kB │ gzip:     7.85 kB
+#13 10.17 dist/assets/CalendarioPage-C-rlCxUi.js                                     22.13 kB │ gzip:     8.19 kB
+#13 10.17 dist/assets/ProgramadorPage-CwUAkAFD.js                                    23.19 kB │ gzip:     8.12 kB
+#13 10.17 dist/assets/EntityConfigPage-DBiY2y3f.js                                   24.54 kB │ gzip:     7.67 kB
+#13 10.17 dist/assets/SalidasPage-Kp8x51_U.js                                        25.81 kB │ gzip:     8.07 kB
+#13 10.17 dist/assets/BusCroquisSection-B8XrWXPc.js                                  25.91 kB │ gzip:     9.29 kB
+#13 10.17 dist/assets/virtualscroller-CuYzugXd.js                                    26.71 kB │ gzip:     8.23 kB
+#13 10.17 dist/assets/paginator-CTGHmwoA.js                                          28.13 kB │ gzip:     7.66 kB
+#13 10.17 dist/assets/AdministracionPage-B2VpzFHK.js                                 29.86 kB │ gzip:     9.76 kB
+#13 10.17 dist/assets/EncomiendasPage-RBFlOVBM.js                                    31.50 kB │ gzip:     9.56 kB
+#13 10.17 dist/assets/DashboardPage-BylF5m5C.js                                      38.90 kB │ gzip:    12.84 kB
+#13 10.17 dist/assets/ListPage-yJXxTK_h.js                                           46.78 kB │ gzip:    14.92 kB
+#13 10.17 dist/assets/PaginaWebPage-BW5z_bgx.js                                      47.73 kB │ gzip:    14.04 kB
+#13 10.17 dist/assets/BoletosPage-BV2eO1Tq.js                                        49.25 kB │ gzip:    13.77 kB
+#13 10.17 dist/assets/VentaPage-DOg_fk8j.js                                          52.43 kB │ gzip:    17.94 kB
+#13 10.17 dist/assets/MenuBuilderPage-y7NyY_Xv.js                                    55.77 kB │ gzip:    16.48 kB
+#13 10.17 dist/assets/session-CMXAhF5w.js                                            58.13 kB │ gzip:    20.28 kB
+#13 10.17 dist/assets/runtime-core.esm-bundler-CtF3Gqgn.js                           67.30 kB │ gzip:    26.39 kB
+#13 10.17 dist/assets/ripple-H02m2a5B.js                                             75.93 kB │ gzip:    20.40 kB
+#13 10.17 dist/assets/AyudaPage-CSBjyJeE.js                                          87.74 kB │ gzip:    27.85 kB
+#13 10.17 dist/assets/leaflet-blrVLEi6.js                                           148.80 kB │ gzip:    43.39 kB
+#13 10.17 dist/assets/client-CfiAkwxa.js                                            196.11 kB │ gzip:    57.78 kB
+#13 10.17 dist/assets/column-ByZKqae5.js                                            217.01 kB │ gzip:    44.51 kB
+#13 10.17 dist/assets/iconMeta-CLV9jx5f.js                                          771.91 kB │ gzip:   203.52 kB
+#13 10.17 dist/assets/index-Yp-f9gL7.js                                           1,522.22 kB │ gzip:   341.86 kB
+#13 10.17 dist/assets/material-symbols-D_20Mn4g.js                                8,527.32 kB │ gzip: 1,301.01 kB
+#13 10.17 
+#13 10.17 [33m[PLUGIN_TIMINGS] [0mYour build spent significant time in plugins. Here is a breakdown:
+#13 10.17   - unplugin-icons (49%)
+#13 10.17   - unplugin-vue-components (27%)
+#13 10.17   - unplugin-auto-import (10%)
+#13 10.17   - vite:vue (6%)
+#13 10.17 See https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.
+#13 10.17 
+#13 10.17 [plugin builtin:vite-reporter] 
+#13 10.17 (!) Some chunks are larger than 500 kB after minification. Consider:
+#13 10.17 - Using dynamic import() to code-split the application
+#13 10.17 - Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+#13 10.17 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+#13 10.18 ✓ built in 8.00s
+#13 15.33 
+#13 15.33 PWA v2.0.0
+#13 15.33 mode      generateSW
+#13 15.33 precache  194 entries (6552.07 KiB)
+#13 15.33 files generated
+#13 15.33   dist/sw.js
+#13 15.33   dist/workbox-2fbc6a65.js
+#13 DONE 57.0s
+
+#9 [frontend prod 1/4] WORKDIR /frontend
+#9 CACHED
+
+#14 [frontend prod 2/4] COPY --from=builder /frontend/dist ./dist
+#14 DONE 0.1s
+
+#15 [frontend prod 3/4] COPY server.ts ./
+#15 DONE 0.0s
+
+#16 [frontend prod 4/4] RUN apk add --no-cache curl
+#16 0.700 (1/9) Installing brotli-libs (1.2.1-r0)
+#16 0.725 (2/9) Installing c-ares (1.34.9-r0)
+#16 0.739 (3/9) Installing libunistring (1.4.2-r0)
+#16 0.777 (4/9) Installing libidn2 (2.3.8-r0)
+#16 0.789 (5/9) Installing nghttp2-libs (1.70.0-r0)
+#16 0.801 (6/9) Installing libpsl (0.21.5-r3)
+#16 0.810 (7/9) Installing zstd-libs (1.5.7-r2)
+#16 0.834 (8/9) Installing libcurl (8.23.0-r0)
+#16 0.858 (9/9) Installing curl (8.23.0-r0)
+#16 0.872 Executing busybox-1.37.0-r31.trigger
+#16 0.884 OK: 15.9 MiB in 27 packages
+#16 DONE 1.0s
+
+#17 [frontend] exporting to image
+#17 exporting layers
+#17 exporting layers 3.1s done
+#17 exporting manifest sha256:906a38bec636c6cd83eda451448df4345ab853d1c636a27b80759efd71b68394
+#17 exporting manifest sha256:906a38bec636c6cd83eda451448df4345ab853d1c636a27b80759efd71b68394 0.0s done
+#17 exporting config sha256:388256e213edaf9319cdbc840737d2260ea1a0dc37256d9b417f5b873464da03 0.0s done
+#17 exporting attestation manifest sha256:320a0cd2fea6e6c3fcf48a8011a6d4470d72d8517fced327ffc1f53eb7b30c58 0.0s done
+#17 exporting manifest list sha256:ca8fea7f16a4fe034277dc10bad67099fcbc028e122dd3257cfdf46905ed8942
+#17 exporting manifest list sha256:ca8fea7f16a4fe034277dc10bad67099fcbc028e122dd3257cfdf46905ed8942 0.0s done
+#17 naming to docker.io/library/app-frontend:latest done
+#17 unpacking to docker.io/library/app-frontend:latest
+#17 unpacking to docker.io/library/app-frontend:latest 1.0s done
+#17 DONE 4.4s
+
+#18 [frontend] resolving provenance for metadata file
+#18 DONE 0.0s
+ frontend  Built
+ Container frontend  Recreate
+ Container frontend  Recreated
+ Container frontend  Starting
+ Container frontend  Started

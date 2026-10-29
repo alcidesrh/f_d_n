@@ -1,0 +1,1086 @@
+time="2026-10-26T21:47:05+01:00" level=warning msg="Docker Compose is configured to build using Bake, but buildx isn't installed"
+#0 building with "default" instance using docker driver
+
+#1 [backend internal] load build definition from Dockerfile
+#1 ...
+
+#2 [frontend internal] load build definition from Dockerfile
+#2 transferring dockerfile: 1.31kB done
+#2 DONE 0.2s
+
+#1 [backend internal] load build definition from Dockerfile
+#1 transferring dockerfile: 6.77kB done
+#1 DONE 0.2s
+
+#3 [backend] resolve image config for docker-image://docker.io/docker/dockerfile:1
+#3 DONE 0.6s
+
+#4 [frontend] resolve image config for docker-image://docker.io/docker/dockerfile:1.4
+#4 DONE 0.6s
+
+#5 [frontend] docker-image://docker.io/docker/dockerfile:1.4@sha256:9ba7531bd80fb0a858632727cf7a112fbfd19b17e94c4e84ced81e24ef1a0dbc
+#5 resolve docker.io/docker/dockerfile:1.4@sha256:9ba7531bd80fb0a858632727cf7a112fbfd19b17e94c4e84ced81e24ef1a0dbc
+#5 ...
+
+#6 [backend] docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#6 resolve docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e 0.4s done
+#6 DONE 0.4s
+
+#6 [backend] docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#6 CACHED
+
+#5 [frontend] docker-image://docker.io/docker/dockerfile:1.4@sha256:9ba7531bd80fb0a858632727cf7a112fbfd19b17e94c4e84ced81e24ef1a0dbc
+#5 resolve docker.io/docker/dockerfile:1.4@sha256:9ba7531bd80fb0a858632727cf7a112fbfd19b17e94c4e84ced81e24ef1a0dbc 0.4s done
+#5 CACHED
+
+#7 [frontend internal] load .dockerignore
+#7 transferring context: 405B done
+#7 DONE 0.2s
+
+#8 [backend internal] load metadata for docker.io/dunglas/frankenphp:1-php8.4
+#8 ...
+
+#9 [frontend internal] load metadata for docker.io/oven/bun:1-alpine
+#9 DONE 0.4s
+
+#10 [backend internal] load metadata for docker.io/library/debian:13-slim
+#10 DONE 0.7s
+
+#8 [backend internal] load metadata for docker.io/dunglas/frankenphp:1-php8.4
+#8 DONE 0.7s
+
+#11 [frontend internal] load build context
+#11 DONE 0.0s
+
+#12 [backend internal] load .dockerignore
+#12 transferring context: 498B done
+#12 DONE 0.1s
+
+#13 [frontend bun_upstream 1/1] FROM docker.io/oven/bun:1-alpine@sha256:4cf82f5686b196504fe119db3fcd9185b191f82ece82c40680e597228ec6070a
+#13 resolve docker.io/oven/bun:1-alpine@sha256:4cf82f5686b196504fe119db3fcd9185b191f82ece82c40680e597228ec6070a
+#13 resolve docker.io/oven/bun:1-alpine@sha256:4cf82f5686b196504fe119db3fcd9185b191f82ece82c40680e597228ec6070a 0.2s done
+#13 DONE 0.2s
+
+#14 [frontend base 1/1] WORKDIR /frontend
+#14 CACHED
+
+#11 [frontend internal] load build context
+#11 transferring context: 44.05kB 0.1s done
+#11 DONE 0.2s
+
+#15 [frontend builder 2/5] RUN bun install --frozen-lockfile
+#15 CACHED
+
+#16 [frontend builder 1/5] COPY bun.lock package.json ./
+#16 CACHED
+
+#17 [frontend builder 3/5] COPY . .
+#17 CACHED
+
+#18 [backend internal] load build context
+#18 transferring context: 52.05kB 0.1s done
+#18 DONE 0.3s
+
+#19 [backend frankenphp_upstream 1/1] FROM docker.io/dunglas/frankenphp:1-php8.4@sha256:8d5cfcc9ce4e6b4db887a04cce820801816d7f53e3a6234e98e0120415238a97
+#19 resolve docker.io/dunglas/frankenphp:1-php8.4@sha256:8d5cfcc9ce4e6b4db887a04cce820801816d7f53e3a6234e98e0120415238a97
+#19 resolve docker.io/dunglas/frankenphp:1-php8.4@sha256:8d5cfcc9ce4e6b4db887a04cce820801816d7f53e3a6234e98e0120415238a97 0.4s done
+#19 DONE 0.4s
+
+#20 [backend frankenphp_prod  1/21] FROM docker.io/library/debian:13-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad
+#20 resolve docker.io/library/debian:13-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad 0.4s done
+#20 DONE 0.4s
+
+#21 [backend frankenphp_base 3/6] RUN <<-EOF (# Register MS ODBC Driver 17 in system odbcinst.ini...)
+#21 CACHED
+
+#22 [backend frankenphp_base 1/6] WORKDIR /app
+#22 CACHED
+
+#23 [backend frankenphp_base 6/6] COPY --link frankenphp/Caddyfile /etc/frankenphp/Caddyfile
+#23 CACHED
+
+#24 [backend frankenphp_prod_builder 4/7] RUN composer install --no-cache --prefer-dist --no-dev --no-autoloader --no-scripts --no-progress
+#24 CACHED
+
+#25 [backend frankenphp_prod_builder 1/7] RUN mv "/usr/local/etc/php/php.ini-production" "/usr/local/etc/php/php.ini"
+#25 CACHED
+
+#26 [backend frankenphp_prod_builder 6/7] RUN <<-EOF (mkdir -p var/cache var/log var/share...)
+#26 CACHED
+
+#27 [backend frankenphp_prod_builder 2/7] COPY --link frankenphp/conf.d/20-app.prod.ini /usr/local/etc/php/app.conf.d/
+#27 CACHED
+
+#28 [backend frankenphp_prod_builder 5/7] COPY --link --exclude=frankenphp/ . ./
+#28 CACHED
+
+#29 [backend frankenphp_base 4/6] COPY --link frankenphp/conf.d/10-app.ini /usr/local/etc/php/app.conf.d/
+#29 CACHED
+
+#30 [backend frankenphp_base 2/6] RUN <<-EOF (apt-get update...)
+#30 CACHED
+
+#31 [backend frankenphp_prod_builder 3/7] COPY --link composer.* symfony.* ./
+#31 CACHED
+
+#32 [backend frankenphp_base 5/6] COPY --link --chmod=755 frankenphp/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
+#32 CACHED
+
+#33 [backend frankenphp_prod_builder 7/7] RUN <<-'EOF' (apt-get update...)
+#33 CACHED
+
+#34 [backend frankenphp_prod  5/21] COPY --from=frankenphp_prod_builder /usr/local/lib/php/extensions /usr/local/lib/php/extensions
+#34 CACHED
+
+#35 [backend frankenphp_prod  9/21] COPY --from=frankenphp_prod_builder /usr/local/etc/php/app.conf.d /usr/local/etc/php/app.conf.d
+#35 CACHED
+
+#36 [backend frankenphp_prod  8/21] COPY --from=frankenphp_prod_builder /usr/local/etc/php/php.ini /usr/local/etc/php/php.ini
+#36 CACHED
+
+#37 [backend frankenphp_prod  6/21] COPY --from=frankenphp_prod_builder /tmp/libs /usr/lib
+#37 CACHED
+
+#38 [backend frankenphp_prod  4/21] COPY --from=frankenphp_prod_builder /usr/local/bin/docker-php-entrypoint /usr/local/bin/docker-php-entrypoint
+#38 CACHED
+
+#39 [backend frankenphp_prod  7/21] COPY --from=frankenphp_prod_builder /usr/local/etc/php/conf.d /usr/local/etc/php/conf.d
+#39 CACHED
+
+#40 [backend frankenphp_prod  2/21] COPY --from=frankenphp_prod_builder /usr/local/bin/frankenphp /usr/local/bin/frankenphp
+#40 CACHED
+
+#41 [backend frankenphp_prod  3/21] COPY --from=frankenphp_prod_builder /usr/local/bin/php /usr/local/bin/php
+#41 CACHED
+
+#42 [backend frankenphp_prod 12/21] COPY --from=frankenphp_prod_builder /usr/bin/file /usr/bin/file
+#42 CACHED
+
+#43 [backend frankenphp_prod 10/21] COPY --from=frankenphp_prod_builder /etc/frankenphp/Caddyfile /etc/frankenphp/Caddyfile
+#43 CACHED
+
+#44 [backend frankenphp_prod 11/21] COPY --from=frankenphp_prod_builder /etc/ssl/openssl.cnf /etc/ssl/openssl.cnf
+#44 CACHED
+
+#45 [backend frankenphp_prod 13/21] COPY --from=frankenphp_prod_builder /usr/lib/file/magic.mgc /usr/lib/file/magic.mgc
+#45 CACHED
+
+#46 [backend frankenphp_prod 14/21] RUN <<-EOF (mkdir -p /data/caddy /config/caddy...)
+#46 CACHED
+
+#47 [backend frankenphp_prod 15/21] RUN <<-EOF (apt-get update...)
+#47 0.469 + apt-get update
+#47 0.527 Get:1 http://deb.debian.org/debian trixie InRelease [140 kB]
+#47 0.574 Get:2 http://deb.debian.org/debian trixie-updates InRelease [47.3 kB]
+#47 0.574 Get:3 http://deb.debian.org/debian-security trixie-security InRelease [43.4 kB]
+#47 0.613 Get:4 http://deb.debian.org/debian trixie/main amd64 Packages [9678 kB]
+#47 1.416 Get:5 http://deb.debian.org/debian trixie-updates/main amd64 Packages [720 B]
+#47 1.416 Get:6 http://deb.debian.org/debian-security trixie-security/main amd64 Packages [270 kB]
+#47 2.344 Fetched 10.2 MB in 2s (5579 kB/s)
+#47 2.344 Reading package lists...
+#47 3.396 + apt-get install -y --no-install-recommends ca-certificates curl gnupg
+#47 3.409 Reading package lists...
+#47 ...
+
+#48 [frontend builder 4/5] RUN apk add --no-cache nodejs
+#48 2.327 ( 1/12) Installing ca-certificates (20261020-r0)
+#48 2.357 ( 2/12) Installing ada-libs (4.0.0-r0)
+#48 2.376 ( 3/12) Installing brotli-libs (1.2.1-r0)
+#48 2.423 ( 4/12) Installing c-ares (1.34.9-r0)
+#48 2.450 ( 5/12) Installing icu-data-en (78.1-r0)
+#48 2.528   Executing icu-data-en-78.1-r0.post-install
+#48 2.536 ( 6/12) Installing icu-libs (78.1-r0)
+#48 2.537   * If you need ICU with non-English locales and legacy charset support, install
+#48 2.537   * package icu-data-full.
+#48 2.637 ( 7/12) Installing nghttp2-libs (1.70.0-r0)
+#48 2.648 ( 8/12) Installing simdjson (4.2.4-r0)
+#48 2.662 ( 9/12) Installing simdutf (9.0.0-r0)
+#48 2.703 (10/12) Installing sqlite-libs (3.53.4-r0)
+#48 2.755 (11/12) Installing zstd-libs (1.5.7-r2)
+#48 2.781 (12/12) Installing nodejs (24.22.1-r0)
+#48 3.642 Executing busybox-1.37.0-r31.trigger
+#48 3.655 Executing ca-certificates-20261020-r0.trigger
+#48 3.716 OK: 73.3 MiB in 30 packages
+#48 DONE 4.1s
+
+#49 [frontend builder 5/5] RUN bun run build
+#49 0.581 $ run-p type-check "build-only {@}" --
+#49 0.976 $ vue-tsc --build
+#49 0.978 $ vite build
+#49 2.746 vite v8.2.0 building client environment for production...
+#49 2.824 [2Ktransforming...
+#49 ...
+
+#47 [backend frankenphp_prod 15/21] RUN <<-EOF (apt-get update...)
+#47 3.409 Reading package lists...
+#47 4.392 Building dependency tree...
+#47 4.738 Reading state information...
+#47 5.245 The following additional packages will be installed:
+#47 5.245   adduser dirmngr gnupg-l10n gpg gpg-agent gpgconf gpgsm libassuan9 libbrotli1
+#47 5.246   libcom-err2 libcurl4t64 libffi8 libgcrypt20 libgnutls30t64 libgpg-error0
+#47 5.246   libgssapi-krb5-2 libidn2-0 libk5crypto3 libkeyutils1 libkrb5-3
+#47 5.246   libkrb5support0 libksba8 libldap2 libncursesw6 libnghttp2-14 libnghttp3-9
+#47 5.246   libnpth0t64 libp11-kit0 libpsl5t64 libreadline8t64 librtmp1 libsasl2-2
+#47 5.247   libsasl2-modules-db libssh2-1t64 libtasn1-6 libunistring5 openssl
+#47 5.248   pinentry-curses readline-common
+#47 5.251 Suggested packages:
+#47 5.251   liblocale-gettext-perl perl cron quota dbus-user-session libpam-systemd
+#47 5.251   pinentry-gnome3 tor gpg-wks-server parcimonie xloadimage scdaemon tpm2daemon
+#47 5.251   rng-tools gnutls-bin krb5-doc krb5-user pinentry-doc readline-doc
+#47 5.251 Recommended packages:
+#47 5.251   bash-completion gnupg-utils gpg-wks-client gpgv libgpg-error-l10n
+#47 5.251   krb5-locales libldap-common libgpm2 publicsuffix libsasl2-modules
+#47 5.516 The following NEW packages will be installed:
+#47 5.517   adduser ca-certificates curl dirmngr gnupg gnupg-l10n gpg gpg-agent gpgconf
+#47 5.517   gpgsm libassuan9 libbrotli1 libcom-err2 libcurl4t64 libffi8 libgcrypt20
+#47 5.517   libgnutls30t64 libgpg-error0 libgssapi-krb5-2 libidn2-0 libk5crypto3
+#47 5.517   libkeyutils1 libkrb5-3 libkrb5support0 libksba8 libldap2 libncursesw6
+#47 5.517   libnghttp2-14 libnghttp3-9 libnpth0t64 libp11-kit0 libpsl5t64
+#47 5.518   libreadline8t64 librtmp1 libsasl2-2 libsasl2-modules-db libssh2-1t64
+#47 5.519   libtasn1-6 libunistring5 openssl pinentry-curses readline-common
+#47 5.651 0 upgraded, 42 newly installed, 0 to remove and 1 not upgraded.
+#47 5.651 Need to get 11.2 MB of archives.
+#47 5.651 After this operation, 32.4 MB of additional disk space will be used.
+#47 5.651 Get:1 http://deb.debian.org/debian trixie/main amd64 adduser all 3.152 [191 kB]
+#47 5.855 Get:2 http://deb.debian.org/debian trixie/main amd64 readline-common all 8.2-6 [69.4 kB]
+#47 5.856 Get:3 http://deb.debian.org/debian-security trixie-security/main amd64 openssl amd64 3.5.7-1~deb13u3 [1508 kB]
+#47 6.509 Get:4 http://deb.debian.org/debian-security trixie-security/main amd64 ca-certificates all 20250419+deb13u1 [161 kB]
+#47 6.520 Get:5 http://deb.debian.org/debian-security trixie-security/main amd64 libbrotli1 amd64 1.1.0-2+deb13u1 [304 kB]
+#47 6.540 Get:6 http://deb.debian.org/debian trixie/main amd64 libkrb5support0 amd64 1.21.3-5+deb13u1 [33.1 kB]
+#47 6.541 Get:7 http://deb.debian.org/debian trixie/main amd64 libcom-err2 amd64 1.47.2-3+b12 [25.0 kB]
+#47 6.543 Get:8 http://deb.debian.org/debian trixie/main amd64 libk5crypto3 amd64 1.21.3-5+deb13u1 [81.2 kB]
+#47 6.544 Get:9 http://deb.debian.org/debian trixie/main amd64 libkeyutils1 amd64 1.6.3-6 [9456 B]
+#47 6.545 Get:10 http://deb.debian.org/debian trixie/main amd64 libkrb5-3 amd64 1.21.3-5+deb13u1 [326 kB]
+#47 6.558 Get:11 http://deb.debian.org/debian trixie/main amd64 libgssapi-krb5-2 amd64 1.21.3-5+deb13u1 [138 kB]
+#47 6.565 Get:12 http://deb.debian.org/debian trixie/main amd64 libunistring5 amd64 1.3-2 [477 kB]
+#47 6.603 Get:13 http://deb.debian.org/debian trixie/main amd64 libidn2-0 amd64 2.3.8-2 [109 kB]
+#47 6.605 Get:14 http://deb.debian.org/debian trixie/main amd64 libsasl2-modules-db amd64 2.1.28+dfsg1-9 [19.8 kB]
+#47 6.606 Get:15 http://deb.debian.org/debian trixie/main amd64 libsasl2-2 amd64 2.1.28+dfsg1-9 [57.5 kB]
+#47 6.606 Get:16 http://deb.debian.org/debian trixie/main amd64 libldap2 amd64 2.6.10+dfsg-1 [194 kB]
+#47 6.612 Get:17 http://deb.debian.org/debian trixie/main amd64 libnghttp2-14 amd64 1.64.0-1.1+deb13u1 [76.2 kB]
+#47 6.616 Get:18 http://deb.debian.org/debian trixie/main amd64 libnghttp3-9 amd64 1.8.0-1 [67.7 kB]
+#47 6.618 Get:19 http://deb.debian.org/debian trixie/main amd64 libpsl5t64 amd64 0.21.2-1.1+b1 [57.2 kB]
+#47 6.620 Get:20 http://deb.debian.org/debian trixie/main amd64 libffi8 amd64 3.4.8-2 [24.1 kB]
+#47 6.621 Get:21 http://deb.debian.org/debian trixie/main amd64 libp11-kit0 amd64 0.25.5-3 [425 kB]
+#47 6.638 Get:22 http://deb.debian.org/debian trixie/main amd64 libtasn1-6 amd64 4.20.0-2+deb13u1 [50.1 kB]
+#47 6.639 Get:23 http://deb.debian.org/debian trixie/main amd64 libgnutls30t64 amd64 3.8.9-3+deb13u4 [1469 kB]
+#47 6.702 Get:24 http://deb.debian.org/debian trixie/main amd64 librtmp1 amd64 2.4+20151223.gitfa8646d.1-2+b5 [58.8 kB]
+#47 6.704 Get:25 http://deb.debian.org/debian trixie/main amd64 libssh2-1t64 amd64 1.11.1-1+deb13u2 [245 kB]
+#47 6.710 Get:26 http://deb.debian.org/debian-security trixie-security/main amd64 libcurl4t64 amd64 8.14.1-2+deb13u7 [392 kB]
+#47 6.727 Get:27 http://deb.debian.org/debian-security trixie-security/main amd64 curl amd64 8.14.1-2+deb13u7 [270 kB]
+#47 6.739 Get:28 http://deb.debian.org/debian trixie/main amd64 libgpg-error0 amd64 1.51-4 [82.1 kB]
+#47 6.742 Get:29 http://deb.debian.org/debian trixie/main amd64 libassuan9 amd64 3.0.2-2 [61.5 kB]
+#47 6.748 Get:30 http://deb.debian.org/debian trixie/main amd64 libgcrypt20 amd64 1.11.0-7+deb13u1 [843 kB]
+#47 6.779 Get:31 http://deb.debian.org/debian trixie/main amd64 libreadline8t64 amd64 8.2-6 [169 kB]
+#47 6.784 Get:32 http://deb.debian.org/debian trixie/main amd64 gpgconf amd64 2.4.7-21+deb13u1+b5 [129 kB]
+#47 6.790 Get:33 http://deb.debian.org/debian trixie/main amd64 libksba8 amd64 1.6.7-2+b1 [136 kB]
+#47 6.799 Get:34 http://deb.debian.org/debian trixie/main amd64 libnpth0t64 amd64 1.8-3 [23.2 kB]
+#47 6.804 Get:35 http://deb.debian.org/debian trixie/main amd64 dirmngr amd64 2.4.7-21+deb13u1+b5 [384 kB]
+#47 6.812 Get:36 http://deb.debian.org/debian trixie/main amd64 gnupg-l10n all 2.4.7-21+deb13u1 [749 kB]
+#47 6.844 Get:37 http://deb.debian.org/debian trixie/main amd64 gpg amd64 2.4.7-21+deb13u1+b5 [636 kB]
+#47 6.900 Get:38 http://deb.debian.org/debian trixie/main amd64 libncursesw6 amd64 6.5+20250216-2 [135 kB]
+#47 6.915 Get:39 http://deb.debian.org/debian trixie/main amd64 pinentry-curses amd64 1.3.1-2 [86.4 kB]
+#47 6.920 Get:40 http://deb.debian.org/debian trixie/main amd64 gpg-agent amd64 2.4.7-21+deb13u1+b5 [271 kB]
+#47 6.937 Get:41 http://deb.debian.org/debian trixie/main amd64 gpgsm amd64 2.4.7-21+deb13u1+b5 [276 kB]
+#47 6.941 Get:42 http://deb.debian.org/debian trixie/main amd64 gnupg all 2.4.7-21+deb13u1 [417 kB]
+#47 7.339 debconf: unable to initialize frontend: Dialog
+#47 7.339 debconf: (TERM is not set, so the dialog frontend is not usable.)
+#47 7.339 debconf: falling back to frontend: Readline
+#47 7.342 debconf: unable to initialize frontend: Readline
+#47 7.342 debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC entries checked: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.40.1 /usr/local/share/perl/5.40.1 /usr/lib/x86_64-linux-gnu/perl5/5.40 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.40 /usr/share/perl/5.40 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 8, <STDIN> line 42.)
+#47 7.342 debconf: falling back to frontend: Teletype
+#47 7.351 debconf: unable to initialize frontend: Teletype
+#47 7.352 debconf: (This frontend requires a controlling tty.)
+#47 7.352 debconf: falling back to frontend: Noninteractive
+#47 9.077 Preconfiguring packages ...
+#47 9.254 Fetched 11.2 MB in 1s (8085 kB/s)
+#47 9.288 Selecting previously unselected package adduser.
+#47 9.288 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 4951 files and directories currently installed.)
+#47 9.296 Preparing to unpack .../archives/adduser_3.152_all.deb ...
+#47 9.315 Unpacking adduser (3.152) ...
+#47 9.393 Setting up adduser (3.152) ...
+#47 9.609 Selecting previously unselected package readline-common.
+#47 9.609 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 5036 files and directories currently installed.)
+#47 9.621 Preparing to unpack .../00-readline-common_8.2-6_all.deb ...
+#47 9.626 Unpacking readline-common (8.2-6) ...
+#47 9.705 Selecting previously unselected package openssl.
+#47 9.708 Preparing to unpack .../01-openssl_3.5.7-1~deb13u3_amd64.deb ...
+#47 9.722 Unpacking openssl (3.5.7-1~deb13u3) ...
+#47 10.01 Selecting previously unselected package ca-certificates.
+#47 10.02 Preparing to unpack .../02-ca-certificates_20250419+deb13u1_all.deb ...
+#47 10.03 Unpacking ca-certificates (20250419+deb13u1) ...
+#47 10.23 Selecting previously unselected package libbrotli1:amd64.
+#47 10.23 Preparing to unpack .../03-libbrotli1_1.1.0-2+deb13u1_amd64.deb ...
+#47 10.25 Unpacking libbrotli1:amd64 (1.1.0-2+deb13u1) ...
+#47 10.35 Selecting previously unselected package libkrb5support0:amd64.
+#47 10.35 Preparing to unpack .../04-libkrb5support0_1.21.3-5+deb13u1_amd64.deb ...
+#47 10.36 Unpacking libkrb5support0:amd64 (1.21.3-5+deb13u1) ...
+#47 10.54 Selecting previously unselected package libcom-err2:amd64.
+#47 10.55 Preparing to unpack .../05-libcom-err2_1.47.2-3+b12_amd64.deb ...
+#47 10.56 Unpacking libcom-err2:amd64 (1.47.2-3+b12) ...
+#47 10.92 Selecting previously unselected package libk5crypto3:amd64.
+#47 10.93 Preparing to unpack .../06-libk5crypto3_1.21.3-5+deb13u1_amd64.deb ...
+#47 10.96 Unpacking libk5crypto3:amd64 (1.21.3-5+deb13u1) ...
+#47 11.04 Selecting previously unselected package libkeyutils1:amd64.
+#47 11.04 Preparing to unpack .../07-libkeyutils1_1.6.3-6_amd64.deb ...
+#47 11.04 Unpacking libkeyutils1:amd64 (1.6.3-6) ...
+#47 11.10 Selecting previously unselected package libkrb5-3:amd64.
+#47 11.11 Preparing to unpack .../08-libkrb5-3_1.21.3-5+deb13u1_amd64.deb ...
+#47 11.11 Unpacking libkrb5-3:amd64 (1.21.3-5+deb13u1) ...
+#47 11.28 Selecting previously unselected package libgssapi-krb5-2:amd64.
+#47 11.29 Preparing to unpack .../09-libgssapi-krb5-2_1.21.3-5+deb13u1_amd64.deb ...
+#47 11.29 Unpacking libgssapi-krb5-2:amd64 (1.21.3-5+deb13u1) ...
+#47 11.37 Selecting previously unselected package libunistring5:amd64.
+#47 11.38 Preparing to unpack .../10-libunistring5_1.3-2_amd64.deb ...
+#47 11.39 Unpacking libunistring5:amd64 (1.3-2) ...
+#47 11.74 Selecting previously unselected package libidn2-0:amd64.
+#47 11.76 Preparing to unpack .../11-libidn2-0_2.3.8-2_amd64.deb ...
+#47 11.80 Unpacking libidn2-0:amd64 (2.3.8-2) ...
+#47 11.92 Selecting previously unselected package libsasl2-modules-db:amd64.
+#47 11.92 Preparing to unpack .../12-libsasl2-modules-db_2.1.28+dfsg1-9_amd64.deb ...
+#47 11.96 Unpacking libsasl2-modules-db:amd64 (2.1.28+dfsg1-9) ...
+#47 12.04 Selecting previously unselected package libsasl2-2:amd64.
+#47 12.04 Preparing to unpack .../13-libsasl2-2_2.1.28+dfsg1-9_amd64.deb ...
+#47 12.04 Unpacking libsasl2-2:amd64 (2.1.28+dfsg1-9) ...
+#47 12.10 Selecting previously unselected package libldap2:amd64.
+#47 12.10 Preparing to unpack .../14-libldap2_2.6.10+dfsg-1_amd64.deb ...
+#47 12.11 Unpacking libldap2:amd64 (2.6.10+dfsg-1) ...
+#47 12.18 Selecting previously unselected package libnghttp2-14:amd64.
+#47 12.18 Preparing to unpack .../15-libnghttp2-14_1.64.0-1.1+deb13u1_amd64.deb ...
+#47 12.19 Unpacking libnghttp2-14:amd64 (1.64.0-1.1+deb13u1) ...
+#47 12.30 Selecting previously unselected package libnghttp3-9:amd64.
+#47 12.31 Preparing to unpack .../16-libnghttp3-9_1.8.0-1_amd64.deb ...
+#47 12.32 Unpacking libnghttp3-9:amd64 (1.8.0-1) ...
+#47 12.50 Selecting previously unselected package libpsl5t64:amd64.
+#47 12.50 Preparing to unpack .../17-libpsl5t64_0.21.2-1.1+b1_amd64.deb ...
+#47 12.52 Unpacking libpsl5t64:amd64 (0.21.2-1.1+b1) ...
+#47 12.71 Selecting previously unselected package libffi8:amd64.
+#47 12.72 Preparing to unpack .../18-libffi8_3.4.8-2_amd64.deb ...
+#47 12.73 Unpacking libffi8:amd64 (3.4.8-2) ...
+#47 12.79 Selecting previously unselected package libp11-kit0:amd64.
+#47 12.79 Preparing to unpack .../19-libp11-kit0_0.25.5-3_amd64.deb ...
+#47 12.80 Unpacking libp11-kit0:amd64 (0.25.5-3) ...
+#47 12.88 Selecting previously unselected package libtasn1-6:amd64.
+#47 12.88 Preparing to unpack .../20-libtasn1-6_4.20.0-2+deb13u1_amd64.deb ...
+#47 12.90 Unpacking libtasn1-6:amd64 (4.20.0-2+deb13u1) ...
+#47 12.98 Selecting previously unselected package libgnutls30t64:amd64.
+#47 12.98 Preparing to unpack .../21-libgnutls30t64_3.8.9-3+deb13u4_amd64.deb ...
+#47 12.98 Unpacking libgnutls30t64:amd64 (3.8.9-3+deb13u4) ...
+#47 13.14 Selecting previously unselected package librtmp1:amd64.
+#47 13.14 Preparing to unpack .../22-librtmp1_2.4+20151223.gitfa8646d.1-2+b5_amd64.deb ...
+#47 13.15 Unpacking librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2+b5) ...
+#47 13.22 Selecting previously unselected package libssh2-1t64:amd64.
+#47 13.23 Preparing to unpack .../23-libssh2-1t64_1.11.1-1+deb13u2_amd64.deb ...
+#47 13.23 Unpacking libssh2-1t64:amd64 (1.11.1-1+deb13u2) ...
+#47 13.28 Selecting previously unselected package libcurl4t64:amd64.
+#47 13.28 Preparing to unpack .../24-libcurl4t64_8.14.1-2+deb13u7_amd64.deb ...
+#47 13.28 Unpacking libcurl4t64:amd64 (8.14.1-2+deb13u7) ...
+#47 13.37 Selecting previously unselected package curl.
+#47 13.37 Preparing to unpack .../25-curl_8.14.1-2+deb13u7_amd64.deb ...
+#47 13.38 Unpacking curl (8.14.1-2+deb13u7) ...
+#47 13.47 Selecting previously unselected package libgpg-error0:amd64.
+#47 13.48 Preparing to unpack .../26-libgpg-error0_1.51-4_amd64.deb ...
+#47 13.49 Unpacking libgpg-error0:amd64 (1.51-4) ...
+#47 13.59 Selecting previously unselected package libassuan9:amd64.
+#47 13.59 Preparing to unpack .../27-libassuan9_3.0.2-2_amd64.deb ...
+#47 13.60 Unpacking libassuan9:amd64 (3.0.2-2) ...
+#47 13.69 Selecting previously unselected package libgcrypt20:amd64.
+#47 13.70 Preparing to unpack .../28-libgcrypt20_1.11.0-7+deb13u1_amd64.deb ...
+#47 13.70 Unpacking libgcrypt20:amd64 (1.11.0-7+deb13u1) ...
+#47 13.81 Selecting previously unselected package libreadline8t64:amd64.
+#47 13.81 Preparing to unpack .../29-libreadline8t64_8.2-6_amd64.deb ...
+#47 13.87 Adding 'diversion of /lib/x86_64-linux-gnu/libhistory.so.8 to /lib/x86_64-linux-gnu/libhistory.so.8.usr-is-merged by libreadline8t64'
+#47 13.89 Adding 'diversion of /lib/x86_64-linux-gnu/libhistory.so.8.2 to /lib/x86_64-linux-gnu/libhistory.so.8.2.usr-is-merged by libreadline8t64'
+#47 13.90 Adding 'diversion of /lib/x86_64-linux-gnu/libreadline.so.8 to /lib/x86_64-linux-gnu/libreadline.so.8.usr-is-merged by libreadline8t64'
+#47 13.91 Adding 'diversion of /lib/x86_64-linux-gnu/libreadline.so.8.2 to /lib/x86_64-linux-gnu/libreadline.so.8.2.usr-is-merged by libreadline8t64'
+#47 13.91 Unpacking libreadline8t64:amd64 (8.2-6) ...
+#47 14.08 Selecting previously unselected package gpgconf.
+#47 14.09 Preparing to unpack .../30-gpgconf_2.4.7-21+deb13u1+b5_amd64.deb ...
+#47 14.10 Unpacking gpgconf (2.4.7-21+deb13u1+b5) ...
+#47 ...
+
+#49 [frontend builder 5/5] RUN bun run build
+#49 2.824 [2Ktransforming...
+#49 10.63 /fonts/Chakra_Petch/ChakraPetch-SemiBold.ttf referenced in /fonts/Chakra_Petch/ChakraPetch-SemiBold.ttf didn't resolve at build time, it will remain unchanged to be resolved at runtime
+#49 13.32 ✓ 1967 modules transformed.
+#49 14.13 rendering chunks...
+#49 14.72 computing gzip size...
+#49 14.84 dist/manifest.webmanifest                                                   0.66 kB
+#49 14.84 dist/index.html                                                             3.69 kB │ gzip:     1.28 kB
+#49 14.84 dist/assets/material-symbols-outlined-latin-fill-normal-B2uwGM3Y.woff2  1,137.51 kB
+#49 14.84 dist/assets/RegistrarDepositoPage-B16o-DrY.css                              0.12 kB │ gzip:     0.11 kB
+#49 14.84 dist/assets/EspecialesPage-BNOT9ihp.css                                     0.14 kB │ gzip:     0.12 kB
+#49 14.84 dist/assets/AnularBoletosDialog-y6lh-4J-.css                                0.18 kB │ gzip:     0.14 kB
+#49 14.84 dist/assets/ManifiestoSalidaPage-C6CKjKXf.css                               0.19 kB │ gzip:     0.14 kB
+#49 14.84 dist/assets/useResumen-CdMRDSZA.css                                         0.19 kB │ gzip:     0.14 kB
+#49 14.84 dist/assets/SortablePanelList-Di-_6s2h.css                                  0.21 kB │ gzip:     0.16 kB
+#49 14.84 dist/assets/MigracionPanel-DSd66NjK.css                                     0.29 kB │ gzip:     0.21 kB
+#49 14.84 dist/assets/AccesosPage-Bi_bMpne.css                                        0.29 kB │ gzip:     0.18 kB
+#49 14.84 dist/assets/BitacoraDialog-DgH52S3f.css                                     0.33 kB │ gzip:     0.21 kB
+#49 14.84 dist/assets/MigracionPage-Clnhbhmb.css                                      0.37 kB │ gzip:     0.25 kB
+#49 14.84 dist/assets/FormBuilderPanel-DoaLQrdI.css                                   0.41 kB │ gzip:     0.25 kB
+#49 14.84 dist/assets/ChatPage-l-HmtSWT.css                                           0.46 kB │ gzip:     0.29 kB
+#49 14.84 dist/assets/Icon-B_l0Oes6.css                                               0.56 kB │ gzip:     0.32 kB
+#49 14.84 dist/assets/FormBuilderPage-B9ZSIIWV.css                                    0.57 kB │ gzip:     0.30 kB
+#49 14.84 dist/assets/RegistrarDepositoForm-DuC-s1q8.css                              0.59 kB │ gzip:     0.28 kB
+#49 14.84 dist/assets/RegistrarEncomiendaPage-Fj9NqjXP.css                            0.77 kB │ gzip:     0.37 kB
+#49 14.84 dist/assets/PublicacionPage-BXeE78IR.css                                    0.79 kB │ gzip:     0.35 kB
+#49 14.84 dist/assets/EnviarPorChatDialog-C6hAV-Fu.css                                0.82 kB │ gzip:     0.38 kB
+#49 14.84 dist/assets/AutorizacionesPage-2HVqlC8j.css                                 0.83 kB │ gzip:     0.37 kB
+#49 14.84 dist/assets/ChequeoPage-7bFzBRVS.css                                        0.93 kB │ gzip:     0.37 kB
+#49 14.84 dist/assets/UsuarioAccesosPage-CVWAkAWT.css                                 0.96 kB │ gzip:     0.36 kB
+#49 14.84 dist/assets/PaginaWebPage-NFhjtiCF.css                                      0.97 kB │ gzip:     0.37 kB
+#49 14.84 dist/assets/SeguimientoPage-DeBcsKMa.css                                    1.02 kB │ gzip:     0.50 kB
+#49 14.84 dist/assets/TarifaFiltro-DOblUnKV.css                                       1.11 kB │ gzip:     0.45 kB
+#49 14.84 dist/assets/EntregarEncomiendasPage-CB4D1HXV.css                            1.22 kB │ gzip:     0.47 kB
+#49 14.84 dist/assets/SaldosAgenciaPage-M6O-_kq7.css                                  1.44 kB │ gzip:     0.48 kB
+#49 14.84 dist/assets/ArticulosEditor-hN4XjBSU.css                                    1.51 kB │ gzip:     0.56 kB
+#49 14.84 dist/assets/PendientesEnvioPage-Dp-2hgSs.css                                1.53 kB │ gzip:     0.52 kB
+#49 14.84 dist/assets/EntityConfigPage-CRYSlues.css                                   1.56 kB │ gzip:     0.57 kB
+#49 14.84 dist/assets/CroquisSelector-EGKEcPn9.css                                    1.57 kB │ gzip:     0.58 kB
+#49 14.84 dist/assets/DepositosPage-EMS09NjA.css                                      1.70 kB │ gzip:     0.58 kB
+#49 14.84 dist/assets/TarifasMapaPage-BPXj21RY.css                                    1.72 kB │ gzip:     0.69 kB
+#49 14.84 dist/assets/BusMapLegend-8h5kJfx8.css                                       1.77 kB │ gzip:     0.60 kB
+#49 14.84 dist/assets/ProcesarSalidaPage-B6S0dGUL.css                                 1.77 kB │ gzip:     0.63 kB
+#49 14.84 dist/assets/ProgramadorPage-CXUhYvbO.css                                    2.04 kB │ gzip:     0.67 kB
+#49 14.84 dist/assets/AyudaPage-DU-LcbcF.css                                          2.26 kB │ gzip:     0.71 kB
+#49 14.84 dist/assets/RutaEditorPage-2vfgZJRA.css                                     2.52 kB │ gzip:     0.76 kB
+#49 14.84 dist/assets/RolesPage-BT-z0h1S.css                                          2.55 kB │ gzip:     0.76 kB
+#49 14.84 dist/assets/MenuBuilderPage-Cxc8xjYQ.css                                    3.17 kB │ gzip:     0.85 kB
+#49 14.84 dist/assets/EncomiendasPage-Bd95fl13.css                                    3.28 kB │ gzip:     0.91 kB
+#49 14.84 dist/assets/BoletosPage-BWjlYjeu.css                                        3.32 kB │ gzip:     0.87 kB
+#49 14.84 dist/assets/AdministracionPage-7NR3DyAs.css                                 4.50 kB │ gzip:     1.07 kB
+#49 14.84 dist/assets/ListPage-C-NWvntU.css                                           5.01 kB │ gzip:     1.22 kB
+#49 14.84 dist/assets/LoginPage-C8pvK9M-.css                                          5.24 kB │ gzip:     1.49 kB
+#49 14.84 dist/assets/DataGrid-jlCogVT1.css                                           8.53 kB │ gzip:     2.12 kB
+#49 14.84 dist/assets/BusCroquisSection-0aRFzuH6.css                                  8.84 kB │ gzip:     1.96 kB
+#49 14.84 dist/assets/CalendarioPage-BrN3p949.css                                     9.78 kB │ gzip:     2.43 kB
+#49 14.84 dist/assets/DashboardPage-aeMAudoS.css                                     10.58 kB │ gzip:     2.45 kB
+#49 14.84 dist/assets/leaflet-vh-t_kPv.css                                           15.09 kB │ gzip:     6.36 kB
+#49 14.84 dist/assets/VentaPage-_MrZ7jfa.css                                         15.71 kB │ gzip:     3.42 kB
+#49 14.84 dist/assets/index-CcK9HvDo.css                                            123.52 kB │ gzip:    23.36 kB
+#49 14.84 dist/assets/overlayeventbus-4J2uVpX2.js                                     0.06 kB │ gzip:     0.07 kB
+#49 14.84 dist/assets/_plugin-vue_export-helper-BDNMzG2s.js                           0.08 kB │ gzip:     0.09 kB
+#49 14.84 dist/assets/busquedaRemota-DScxzc24.js                                      0.14 kB │ gzip:     0.14 kB
+#49 14.84 dist/assets/reimprimir-CTTNk0p2.js                                          0.27 kB │ gzip:     0.20 kB
+#49 14.84 dist/assets/api-CIFv6V2z.js                                                 0.31 kB │ gzip:     0.20 kB
+#49 14.84 dist/assets/permisos-DRDZsTaS.js                                            0.41 kB │ gzip:     0.27 kB
+#49 14.84 dist/assets/zindex-cO8iUN-n.js                                              0.43 kB │ gzip:     0.28 kB
+#49 14.84 dist/assets/realtime-CpiZZ8Az.js                                            0.45 kB │ gzip:     0.31 kB
+#49 14.84 dist/assets/api-CQU05S6U.js                                                 0.46 kB │ gzip:     0.29 kB
+#49 14.84 dist/assets/AccesosAccion-ByHgCgtZ.js                                       0.48 kB │ gzip:     0.35 kB
+#49 14.84 dist/assets/baseinput-B5vEh7rM.js                                           0.49 kB │ gzip:     0.28 kB
+#49 14.84 dist/assets/BitacoraBoletoAccion-CshQNXei.js                                0.50 kB │ gzip:     0.35 kB
+#49 14.84 dist/assets/BitacoraSalidaAccion-Jg9g2ay7.js                                0.50 kB │ gzip:     0.34 kB
+#49 14.84 dist/assets/PageHead-DPpgLs6o.js                                            0.51 kB │ gzip:     0.34 kB
+#49 14.84 dist/assets/portal-eSeiAneO.js                                              0.57 kB │ gzip:     0.36 kB
+#49 14.84 dist/assets/formExtension-CkJcA2D4.js                                       0.65 kB │ gzip:     0.40 kB
+#49 14.84 dist/assets/rolldown-runtime-hePW80VL.js                                    0.71 kB │ gzip:     0.42 kB
+#49 14.84 dist/assets/manifiesto-ZGX-e0hN.js                                          0.74 kB │ gzip:     0.40 kB
+#49 14.84 dist/assets/api-Br9KhwMI.js                                                 0.75 kB │ gzip:     0.38 kB
+#49 14.84 dist/assets/useApi-CROJJdhE-Dbvcl2QP.js                                     0.83 kB │ gzip:     0.45 kB
+#49 14.84 dist/assets/api-D-OCnv_t.js                                                 0.95 kB │ gzip:     0.50 kB
+#49 14.84 dist/assets/reasignacion-DwXYPEcP.js                                        1.04 kB │ gzip:     0.55 kB
+#49 14.84 dist/assets/Icon-CN4JD4S_.js                                                1.09 kB │ gzip:     0.65 kB
+#49 14.84 dist/assets/api-BAb4qMs-.js                                                 1.22 kB │ gzip:     0.52 kB
+#49 14.84 dist/assets/layout-Oyhlg9up.js                                              1.32 kB │ gzip:     0.71 kB
+#49 14.84 dist/assets/NotFoundPage-DqX8WfMW.js                                        1.34 kB │ gzip:     0.76 kB
+#49 14.84 dist/assets/toolbar-BNIuPk0l.js                                             1.41 kB │ gzip:     0.62 kB
+#49 14.84 dist/assets/FormBuilderPage-BMgWpX31.js                                     1.41 kB │ gzip:     0.85 kB
+#49 14.84 dist/assets/FacturacionFallidaDialog-zyGIUklJ.js                            1.53 kB │ gzip:     0.83 kB
+#49 14.84 dist/assets/ChatPage-C-vlyxMB.js                                            1.54 kB │ gzip:     0.88 kB
+#49 14.84 dist/assets/editor-CmdPERVP.js                                              1.64 kB │ gzip:     0.78 kB
+#49 14.84 dist/assets/api-DKOJsn7A.js                                                 1.76 kB │ gzip:     0.82 kB
+#49 14.84 dist/assets/chevrondown-pQ8m0ieb.js                                         1.77 kB │ gzip:     1.07 kB
+#49 14.84 dist/assets/filtro-B2aKnr2I.js                                              1.92 kB │ gzip:     0.77 kB
+#49 14.84 dist/assets/check-BYU8uokn.js                                               1.97 kB │ gzip:     1.17 kB
+#49 14.84 dist/assets/SalidaSelect-BOMw1uaL.js                                        2.06 kB │ gzip:     1.14 kB
+#49 14.84 dist/assets/CambiarPasswordDialog-BBIng2RV.js                               2.09 kB │ gzip:     1.13 kB
+#49 14.84 dist/assets/RegistrarDepositoPage-LCIE93rX.js                               2.31 kB │ gzip:     1.27 kB
+#49 14.84 dist/assets/depositos-DjKqNv0f.js                                           2.35 kB │ gzip:     1.08 kB
+#49 14.84 dist/assets/SortablePanelList-D2BoQ7ho.js                                   2.58 kB │ gzip:     1.35 kB
+#49 14.84 dist/assets/baseeditableholder-CAnjRZ6A.js                                  2.63 kB │ gzip:     0.82 kB
+#49 14.84 dist/assets/ManifiestoSalidaPage-D8WQGmiA.js                                2.69 kB │ gzip:     1.31 kB
+#49 14.84 dist/assets/store-C0rA7zB0.js                                               2.74 kB │ gzip:     1.35 kB
+#49 14.84 dist/assets/listado-CyBQqFnS.js                                             2.88 kB │ gzip:     1.17 kB
+#49 14.84 dist/assets/programacion-BSrW1vya.js                                        3.13 kB │ gzip:     1.40 kB
+#49 14.84 dist/assets/ManifiestoEncomiendasPage-DgEWt3GM.js                           3.47 kB │ gzip:     1.70 kB
+#49 14.84 dist/assets/labels-D4PyvTfy.js                                              3.52 kB │ gzip:     1.65 kB
+#49 14.84 dist/assets/CuadreVoucherPage-gXvCb9Wx.js                                   3.77 kB │ gzip:     1.81 kB
+#49 14.84 dist/assets/AgenciaSaldoSection-DDciWZ9H.js                                 3.77 kB │ gzip:     1.75 kB
+#49 14.84 dist/assets/EliminarUsuariosDialog-DStV59_5.js                              3.97 kB │ gzip:     1.84 kB
+#49 14.84 dist/assets/EstacionSelect-DveEDJ9G.js                                      4.01 kB │ gzip:     1.86 kB
+#49 14.84 dist/assets/useResumen-DU32G6nb.js                                          4.20 kB │ gzip:     2.00 kB
+#49 14.84 dist/assets/buses-CNfHowVp.js                                               4.36 kB │ gzip:     2.22 kB
+#49 14.84 dist/assets/CroquisSelector-HKDD7V6W.js                                     4.49 kB │ gzip:     2.09 kB
+#49 14.84 dist/assets/reglas-Dt39lL6_.js                                              4.50 kB │ gzip:     1.86 kB
+#49 14.84 dist/assets/utils-G2gTD1rS.js                                               4.76 kB │ gzip:     1.64 kB
+#49 14.84 dist/assets/listUtils-BL0bWJ4V.js                                           4.79 kB │ gzip:     1.93 kB
+#49 14.84 dist/assets/CuadreVentaBoletosPage-D26Efez9.js                              4.81 kB │ gzip:     2.13 kB
+#49 14.84 dist/assets/EnviarPorChatDialog-RZNO5jVQ.js                                 4.91 kB │ gzip:     2.25 kB
+#49 14.84 dist/assets/RegistrarDepositoForm-Ox8ObhKL.js                               5.35 kB │ gzip:     2.26 kB
+#49 14.84 dist/assets/AccesosPage-D2M-EN-O.js                                         5.46 kB │ gzip:     2.22 kB
+#49 14.84 dist/assets/encomienda-MDY1VchQ.js                                          5.54 kB │ gzip:     1.91 kB
+#49 14.84 dist/assets/workbox-window.prod.es5-Bd17z0YL.js                             5.65 kB │ gzip:     2.20 kB
+#49 14.84 dist/assets/store-RlwDe_gI.js                                               5.75 kB │ gzip:     2.16 kB
+#49 14.84 dist/assets/DetalleFacturaBoletosPage-D394uuZQ.js                           5.84 kB │ gzip:     2.36 kB
+#49 14.84 dist/assets/pinia-Bgm2Aii2.js                                               5.89 kB │ gzip:     2.80 kB
+#49 14.84 dist/assets/TarifaFiltro-DFVWpCXB.js                                        6.03 kB │ gzip:     2.27 kB
+#49 14.84 dist/assets/MigracionPage-lvDVBBHd.js                                       6.07 kB │ gzip:     2.32 kB
+#49 14.84 dist/assets/ReporteEncomiendaPage-CN-uwlBi.js                               6.37 kB │ gzip:     2.45 kB
+#49 14.84 dist/assets/ticket-DdwfXY6G.js                                              6.39 kB │ gzip:     2.84 kB
+#49 14.84 dist/assets/BitacoraDialog-1iFnMiEi.js                                      6.49 kB │ gzip:     2.80 kB
+#49 14.84 dist/assets/inputicon-e0HqatAn.js                                           6.73 kB │ gzip:     1.95 kB
+#49 14.84 dist/assets/EspecialesPage-rXQ30XhT.js                                      6.78 kB │ gzip:     2.70 kB
+#49 14.84 dist/assets/RutasPage-DP82mXsd.js                                           6.83 kB │ gzip:     2.75 kB
+#49 14.84 dist/assets/SaldosAgenciaPage-C66yHNcV.js                                   6.86 kB │ gzip:     2.83 kB
+#49 14.84 dist/assets/MiCuentaPage-CPFCV6gG.js                                        7.19 kB │ gzip:     2.88 kB
+#49 14.84 dist/assets/PublicacionPage-CIl8tR2T.js                                     7.60 kB │ gzip:     2.99 kB
+#49 14.84 dist/assets/VerSalidaDialog-DE5NuWgg.js                                     7.91 kB │ gzip:     3.03 kB
+#49 14.84 dist/assets/AnularBoletosDialog-CQ099ch0.js                                 7.91 kB │ gzip:     3.13 kB
+#49 14.84 dist/assets/PendientesEnvioPage-C8ayTrun.js                                 8.24 kB │ gzip:     3.28 kB
+#49 14.84 dist/assets/MigracionPanel-CdCpoAoq.js                                      9.10 kB │ gzip:     3.09 kB
+#49 14.84 dist/assets/BusMapLegend-DscsXZPz.js                                        9.61 kB │ gzip:     3.35 kB
+#49 14.84 dist/assets/ArticulosEditor-MSxfiCS5.js                                     9.99 kB │ gzip:     3.00 kB
+#49 14.84 dist/assets/AutorizacionesPage-DsRIt4jh.js                                 10.60 kB │ gzip:     4.22 kB
+#49 14.84 dist/assets/RegistrarEncomiendaPage-JTB3r48T.js                            11.97 kB │ gzip:     4.25 kB
+#49 14.84 dist/assets/RolesPage-BlfQqXaZ.js                                          12.06 kB │ gzip:     4.65 kB
+#49 14.84 dist/assets/FormBuilderPanel-BEDU51DX.js                                   12.17 kB │ gzip:     3.89 kB
+#49 14.84 dist/assets/ProcesarSalidaPage-CTfBhoWi.js                                 12.30 kB │ gzip:     4.43 kB
+#49 14.84 dist/assets/EntregarEncomiendasPage-CZlewesl.js                            12.56 kB │ gzip:     4.70 kB
+#49 14.84 dist/assets/UsuarioAccesosPage-BbgKKT4S.js                                 13.61 kB │ gzip:     5.01 kB
+#49 14.84 dist/assets/RutaEditorPage-Du6shVIp.js                                     14.39 kB │ gzip:     5.31 kB
+#49 14.84 dist/assets/ClienteBuscador-o8S9qkww.js                                    14.45 kB │ gzip:     5.94 kB
+#49 14.84 dist/assets/DataGrid-BGrFtZR_.js                                           14.63 kB │ gzip:     5.07 kB
+#49 14.84 dist/assets/DepositosPage-yVex-yKK.js                                      15.41 kB │ gzip:     5.60 kB
+#49 14.84 dist/assets/times-BB17citu.js                                              15.68 kB │ gzip:     7.03 kB
+#49 14.84 dist/assets/SeguimientoPage-BSyLeZ5l.js                                    15.88 kB │ gzip:     6.74 kB
+#49 14.84 dist/assets/EntityConfigPage-DWMvXGWR.js                                   16.63 kB │ gzip:     5.49 kB
+#49 14.84 dist/assets/tab-DPvjWxH3.js                                                16.70 kB │ gzip:     4.29 kB
+#49 14.84 dist/assets/TarifasMapaPage-AZcVprRR.js                                    17.01 kB │ gzip:     5.99 kB
+#49 14.84 dist/assets/ChequeoPage-EQ6ASaTp.js                                        18.05 kB │ gzip:     5.94 kB
+#49 14.84 dist/assets/LoginPage-v0EtD_b1.js                                          19.75 kB │ gzip:     8.86 kB
+#49 14.84 dist/assets/FormPage-Dc4H7jQH.js                                           20.95 kB │ gzip:     7.81 kB
+#49 14.84 dist/assets/CalendarioPage-WmbRbJsL.js                                     22.13 kB │ gzip:     8.18 kB
+#49 14.84 dist/assets/ProgramadorPage-D4IENtBo.js                                    23.19 kB │ gzip:     8.12 kB
+#49 14.84 dist/assets/SalidasPage-BvSXlTxp.js                                        25.81 kB │ gzip:     8.07 kB
+#49 14.84 dist/assets/BusCroquisSection-Dz-oVWMh.js                                  25.91 kB │ gzip:     9.28 kB
+#49 14.84 dist/assets/virtualscroller-CuYzugXd.js                                    26.71 kB │ gzip:     8.23 kB
+#49 14.84 dist/assets/paginator-B8ToclYU.js                                          28.13 kB │ gzip:     7.66 kB
+#49 14.84 dist/assets/AdministracionPage-CR6oryOf.js                                 29.86 kB │ gzip:     9.76 kB
+#49 14.84 dist/assets/EncomiendasPage-C0wZrLCc.js                                    30.44 kB │ gzip:     9.28 kB
+#49 14.84 dist/assets/DashboardPage-dS9_Zz7_.js                                      38.90 kB │ gzip:    12.84 kB
+#49 14.84 dist/assets/ListPage-EaYx8ZaY.js                                           46.56 kB │ gzip:    14.86 kB
+#49 14.84 dist/assets/PaginaWebPage-B-h0yrnL.js                                      47.73 kB │ gzip:    14.04 kB
+#49 14.84 dist/assets/BoletosPage-CURUayp5.js                                        48.78 kB │ gzip:    13.63 kB
+#49 14.84 dist/assets/VentaPage-ChnHwoCP.js                                          52.66 kB │ gzip:    18.03 kB
+#49 14.84 dist/assets/MenuBuilderPage-DMz61sSJ.js                                    55.77 kB │ gzip:    16.48 kB
+#49 14.84 dist/assets/session-CS-SaQYT.js                                            57.75 kB │ gzip:    20.22 kB
+#49 14.84 dist/assets/runtime-core.esm-bundler-CtF3Gqgn.js                           67.30 kB │ gzip:    26.39 kB
+#49 14.84 dist/assets/ripple-H02m2a5B.js                                             75.93 kB │ gzip:    20.40 kB
+#49 14.84 dist/assets/AyudaPage-VtNHwr_o.js                                          87.74 kB │ gzip:    27.85 kB
+#49 14.84 dist/assets/leaflet-blrVLEi6.js                                           148.80 kB │ gzip:    43.39 kB
+#49 14.84 dist/assets/client-DmyuAvY2.js                                            196.11 kB │ gzip:    57.78 kB
+#49 14.84 dist/assets/column-MkNVFto6.js                                            218.77 kB │ gzip:    44.84 kB
+#49 14.84 dist/assets/iconMeta-CLV9jx5f.js                                          771.91 kB │ gzip:   203.52 kB
+#49 14.84 dist/assets/index-D13Da3fB.js                                           1,522.18 kB │ gzip:   341.66 kB
+#49 14.84 dist/assets/material-symbols-D_20Mn4g.js                                8,527.32 kB │ gzip: 1,301.01 kB
+#49 14.84 
+#49 14.85 [33m[PLUGIN_TIMINGS] [0mYour build spent significant time in plugins. Here is a breakdown:
+#49 14.85   - unplugin-icons (52%)
+#49 14.85   - unplugin-vue-components (26%)
+#49 14.85   - unplugin-auto-import (11%)
+#49 14.85   - vite:vue (6%)
+#49 14.85 See https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.
+#49 14.85 
+#49 14.85 [plugin builtin:vite-reporter] 
+#49 14.85 (!) Some chunks are larger than 500 kB after minification. Consider:
+#49 14.85 - Using dynamic import() to code-split the application
+#49 14.85 - Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+#49 14.85 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+#49 14.85 ✓ built in 12.14s
+#49 ...
+
+#47 [backend frankenphp_prod 15/21] RUN <<-EOF (apt-get update...)
+#47 14.49 Selecting previously unselected package libksba8:amd64.
+#47 14.49 Preparing to unpack .../31-libksba8_1.6.7-2+b1_amd64.deb ...
+#47 14.50 Unpacking libksba8:amd64 (1.6.7-2+b1) ...
+#47 14.81 Selecting previously unselected package libnpth0t64:amd64.
+#47 14.81 Preparing to unpack .../32-libnpth0t64_1.8-3_amd64.deb ...
+#47 14.86 Unpacking libnpth0t64:amd64 (1.8-3) ...
+#47 15.20 Selecting previously unselected package dirmngr.
+#47 15.20 Preparing to unpack .../33-dirmngr_2.4.7-21+deb13u1+b5_amd64.deb ...
+#47 15.25 Unpacking dirmngr (2.4.7-21+deb13u1+b5) ...
+#47 15.37 Selecting previously unselected package gnupg-l10n.
+#47 15.37 Preparing to unpack .../34-gnupg-l10n_2.4.7-21+deb13u1_all.deb ...
+#47 15.37 Unpacking gnupg-l10n (2.4.7-21+deb13u1) ...
+#47 15.77 Selecting previously unselected package gpg.
+#47 15.77 Preparing to unpack .../35-gpg_2.4.7-21+deb13u1+b5_amd64.deb ...
+#47 15.82 Unpacking gpg (2.4.7-21+deb13u1+b5) ...
+#47 16.40 Selecting previously unselected package libncursesw6:amd64.
+#47 16.40 Preparing to unpack .../36-libncursesw6_6.5+20250216-2_amd64.deb ...
+#47 16.43 Unpacking libncursesw6:amd64 (6.5+20250216-2) ...
+#47 16.51 Selecting previously unselected package pinentry-curses.
+#47 16.51 Preparing to unpack .../37-pinentry-curses_1.3.1-2_amd64.deb ...
+#47 16.60 Unpacking pinentry-curses (1.3.1-2) ...
+#47 16.89 Selecting previously unselected package gpg-agent.
+#47 16.89 Preparing to unpack .../38-gpg-agent_2.4.7-21+deb13u1+b5_amd64.deb ...
+#47 16.89 Unpacking gpg-agent (2.4.7-21+deb13u1+b5) ...
+#47 16.99 Selecting previously unselected package gpgsm.
+#47 16.99 Preparing to unpack .../39-gpgsm_2.4.7-21+deb13u1+b5_amd64.deb ...
+#47 17.00 Unpacking gpgsm (2.4.7-21+deb13u1+b5) ...
+#47 17.09 Selecting previously unselected package gnupg.
+#47 17.09 Preparing to unpack .../40-gnupg_2.4.7-21+deb13u1_all.deb ...
+#47 17.11 Unpacking gnupg (2.4.7-21+deb13u1) ...
+#47 17.33 Setting up libnpth0t64:amd64 (1.8-3) ...
+#47 17.46 Setting up libkeyutils1:amd64 (1.6.3-6) ...
+#47 17.48 Setting up libgpg-error0:amd64 (1.51-4) ...
+#47 17.55 Setting up libbrotli1:amd64 (1.1.0-2+deb13u1) ...
+#47 17.65 Setting up libnghttp2-14:amd64 (1.64.0-1.1+deb13u1) ...
+#47 17.69 Setting up libgcrypt20:amd64 (1.11.0-7+deb13u1) ...
+#47 17.74 Setting up libcom-err2:amd64 (1.47.2-3+b12) ...
+#47 17.78 Setting up libkrb5support0:amd64 (1.21.3-5+deb13u1) ...
+#47 17.79 Setting up libsasl2-modules-db:amd64 (2.1.28+dfsg1-9) ...
+#47 17.80 Setting up gnupg-l10n (2.4.7-21+deb13u1) ...
+#47 17.82 Setting up libunistring5:amd64 (1.3-2) ...
+#47 17.88 Setting up libncursesw6:amd64 (6.5+20250216-2) ...
+#47 17.96 Setting up libk5crypto3:amd64 (1.21.3-5+deb13u1) ...
+#47 17.96 Setting up libsasl2-2:amd64 (2.1.28+dfsg1-9) ...
+#47 17.96 Setting up libnghttp3-9:amd64 (1.8.0-1) ...
+#47 17.98 Setting up libffi8:amd64 (3.4.8-2) ...
+#47 18.02 Setting up libassuan9:amd64 (3.0.2-2) ...
+#47 18.04 Setting up libtasn1-6:amd64 (4.20.0-2+deb13u1) ...
+#47 18.06 Setting up libkrb5-3:amd64 (1.21.3-5+deb13u1) ...
+#47 18.08 Setting up libssh2-1t64:amd64 (1.11.1-1+deb13u2) ...
+#47 18.10 Setting up openssl (3.5.7-1~deb13u3) ...
+#47 18.11 Setting up readline-common (8.2-6) ...
+#47 18.22 Setting up libldap2:amd64 (2.6.10+dfsg-1) ...
+#47 18.30 Setting up libksba8:amd64 (1.6.7-2+b1) ...
+#47 18.35 Setting up pinentry-curses (1.3.1-2) ...
+#47 18.44 Setting up libidn2-0:amd64 (2.3.8-2) ...
+#47 18.51 Setting up ca-certificates (20250419+deb13u1) ...
+#47 18.80 debconf: unable to initialize frontend: Dialog
+#47 18.80 debconf: (TERM is not set, so the dialog frontend is not usable.)
+#47 18.80 debconf: falling back to frontend: Readline
+#47 18.80 debconf: unable to initialize frontend: Readline
+#47 18.80 debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC entries checked: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.40.1 /usr/local/share/perl/5.40.1 /usr/lib/x86_64-linux-gnu/perl5/5.40 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.40 /usr/share/perl/5.40 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 8.)
+#47 18.80 debconf: falling back to frontend: Teletype
+#47 18.82 debconf: unable to initialize frontend: Teletype
+#47 18.82 debconf: (This frontend requires a controlling tty.)
+#47 18.82 debconf: falling back to frontend: Noninteractive
+#47 20.83 Updating certificates in /etc/ssl/certs...
+#47 23.41 148 added, 0 removed; done.
+#47 23.66 Setting up libp11-kit0:amd64 (0.25.5-3) ...
+#47 23.77 Setting up libgssapi-krb5-2:amd64 (1.21.3-5+deb13u1) ...
+#47 23.88 Setting up libreadline8t64:amd64 (8.2-6) ...
+#47 23.91 Setting up gpgconf (2.4.7-21+deb13u1+b5) ...
+#47 23.92 Setting up gpg (2.4.7-21+deb13u1+b5) ...
+#47 24.09 Setting up libgnutls30t64:amd64 (3.8.9-3+deb13u4) ...
+#47 24.12 Setting up gpg-agent (2.4.7-21+deb13u1+b5) ...
+#47 24.94 Setting up gpgsm (2.4.7-21+deb13u1+b5) ...
+#47 24.97 Setting up libpsl5t64:amd64 (0.21.2-1.1+b1) ...
+#47 24.99 Setting up dirmngr (2.4.7-21+deb13u1+b5) ...
+#47 25.38 Setting up librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2+b5) ...
+#47 25.57 Setting up gnupg (2.4.7-21+deb13u1) ...
+#47 25.60 Setting up libcurl4t64:amd64 (8.14.1-2+deb13u7) ...
+#47 25.62 Setting up curl (8.14.1-2+deb13u7) ...
+#47 25.64 Processing triggers for libc-bin (2.41-12+deb13u4) ...
+#47 25.76 Processing triggers for ca-certificates (20250419+deb13u1) ...
+#47 25.77 Updating certificates in /etc/ssl/certs...
+#47 27.49 0 added, 0 removed; done.
+#47 27.49 Running hooks in /etc/ca-certificates/update.d...
+#47 27.50 done.
+#47 27.60 + gpg --dearmor --yes --output /usr/share/keyrings/microsoft-prod.gpg
+#47 27.60 + curl -sSL https://packages.microsoft.com/keys/microsoft-2025.asc
+#47 27.84 + curl -sSL -o /etc/apt/sources.list.d/mssql-release.list https://packages.microsoft.com/config/debian/13/prod.list
+#47 27.98 + apt-get update
+#47 28.30 Hit:1 http://deb.debian.org/debian trixie InRelease
+#47 28.30 Hit:2 http://deb.debian.org/debian trixie-updates InRelease
+#47 28.30 Hit:3 http://deb.debian.org/debian-security trixie-security InRelease
+#47 28.78 Get:4 https://packages.microsoft.com/debian/13/prod trixie InRelease [3952 B]
+#47 29.10 Get:5 https://packages.microsoft.com/debian/13/prod trixie/main amd64 Packages [49.9 kB]
+#47 29.15 Get:6 https://packages.microsoft.com/debian/13/prod trixie/main armhf Packages [1299 B]
+#47 29.15 Get:7 https://packages.microsoft.com/debian/13/prod trixie/main all Packages [342 B]
+#47 29.16 Get:8 https://packages.microsoft.com/debian/13/prod trixie/main arm64 Packages [23.0 kB]
+#47 29.20 Fetched 78.5 kB in 1s (77.1 kB/s)
+#47 29.20 Reading package lists...
+#47 ...
+
+#49 [frontend builder 5/5] RUN bun run build
+#49 26.08 
+#49 26.08 PWA v2.0.0
+#49 26.08 mode      generateSW
+#49 26.08 precache  189 entries (6542.39 KiB)
+#49 26.08 files generated
+#49 26.08   dist/sw.js
+#49 26.08   dist/workbox-2fbc6a65.js
+#49 ...
+
+#47 [backend frankenphp_prod 15/21] RUN <<-EOF (apt-get update...)
+#47 29.20 Reading package lists...
+#47 30.11 + ACCEPT_EULA=Y
+#47 30.11 + apt-get install -y --no-install-recommends msodbcsql17
+#47 30.12 Reading package lists...
+#47 31.17 Building dependency tree...
+#47 31.52 Reading state information...
+#47 31.97 The following additional packages will be installed:
+#47 31.98   libltdl7 libodbc2 libodbcinst2 odbcinst unixodbc unixodbc-common
+#47 31.98 Suggested packages:
+#47 31.98   odbc-postgresql tdsodbc
+#47 31.98 Recommended packages:
+#47 31.98   libodbccr2
+#47 32.06 The following NEW packages will be installed:
+#47 32.06   libltdl7 libodbc2 libodbcinst2 msodbcsql17 odbcinst unixodbc unixodbc-common
+#47 32.25 0 upgraded, 7 newly installed, 0 to remove and 1 not upgraded.
+#47 32.25 Need to get 1429 kB of archives.
+#47 32.25 After this operation, 1209 kB of additional disk space will be used.
+#47 32.25 Get:1 http://deb.debian.org/debian trixie/main amd64 libltdl7 amd64 2.5.4-4 [416 kB]
+#47 32.31 Get:2 http://deb.debian.org/debian trixie/main amd64 libodbc2 amd64 2.3.12-2+deb13u1 [151 kB]
+#47 32.32 Get:3 http://deb.debian.org/debian trixie/main amd64 unixodbc-common all 2.3.12-2+deb13u1 [8732 B]
+#47 32.36 Get:4 https://packages.microsoft.com/debian/13/prod trixie/main amd64 msodbcsql17 amd64 17.11.1.1-1 [776 kB]
+#47 32.36 Get:5 http://deb.debian.org/debian trixie/main amd64 libodbcinst2 amd64 2.3.12-2+deb13u1 [35.3 kB]
+#47 32.36 Get:6 http://deb.debian.org/debian trixie/main amd64 odbcinst amd64 2.3.12-2+deb13u1 [12.8 kB]
+#47 32.36 Get:7 http://deb.debian.org/debian trixie/main amd64 unixodbc amd64 2.3.12-2+deb13u1 [29.2 kB]
+#47 32.79 debconf: unable to initialize frontend: Dialog
+#47 32.79 debconf: (TERM is not set, so the dialog frontend is not usable.)
+#47 32.79 debconf: falling back to frontend: Readline
+#47 32.79 debconf: unable to initialize frontend: Readline
+#47 32.79 debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC entries checked: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.40.1 /usr/local/share/perl/5.40.1 /usr/lib/x86_64-linux-gnu/perl5/5.40 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.40 /usr/share/perl/5.40 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 8, <STDIN> line 7.)
+#47 32.79 debconf: falling back to frontend: Teletype
+#47 32.80 debconf: unable to initialize frontend: Teletype
+#47 32.80 debconf: (This frontend requires a controlling tty.)
+#47 32.80 debconf: falling back to frontend: Noninteractive
+#47 33.67 Preconfiguring packages ...
+#47 33.81 Fetched 1429 kB in 0s (3718 kB/s)
+#47 33.85 Selecting previously unselected package libltdl7:amd64.
+#47 33.85 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 6105 files and directories currently installed.)
+#47 33.88 Preparing to unpack .../0-libltdl7_2.5.4-4_amd64.deb ...
+#47 33.91 Unpacking libltdl7:amd64 (2.5.4-4) ...
+#47 33.97 Selecting previously unselected package libodbc2:amd64.
+#47 33.97 Preparing to unpack .../1-libodbc2_2.3.12-2+deb13u1_amd64.deb ...
+#47 33.98 Unpacking libodbc2:amd64 (2.3.12-2+deb13u1) ...
+#47 34.06 Selecting previously unselected package unixodbc-common.
+#47 34.07 Preparing to unpack .../2-unixodbc-common_2.3.12-2+deb13u1_all.deb ...
+#47 34.07 Unpacking unixodbc-common (2.3.12-2+deb13u1) ...
+#47 34.16 Selecting previously unselected package libodbcinst2:amd64.
+#47 34.16 Preparing to unpack .../3-libodbcinst2_2.3.12-2+deb13u1_amd64.deb ...
+#47 34.17 Unpacking libodbcinst2:amd64 (2.3.12-2+deb13u1) ...
+#47 34.21 Selecting previously unselected package odbcinst.
+#47 34.21 Preparing to unpack .../4-odbcinst_2.3.12-2+deb13u1_amd64.deb ...
+#47 34.22 Unpacking odbcinst (2.3.12-2+deb13u1) ...
+#47 34.28 Selecting previously unselected package unixodbc.
+#47 34.28 Preparing to unpack .../5-unixodbc_2.3.12-2+deb13u1_amd64.deb ...
+#47 34.30 Unpacking unixodbc (2.3.12-2+deb13u1) ...
+#47 34.45 Selecting previously unselected package msodbcsql17.
+#47 34.45 Preparing to unpack .../6-msodbcsql17_17.11.1.1-1_amd64.deb ...
+#47 34.55 debconf: unable to initialize frontend: Dialog
+#47 34.55 debconf: (TERM is not set, so the dialog frontend is not usable.)
+#47 34.55 debconf: falling back to frontend: Readline
+#47 34.55 debconf: unable to initialize frontend: Readline
+#47 34.55 debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC entries checked: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.40.1 /usr/local/share/perl/5.40.1 /usr/lib/x86_64-linux-gnu/perl5/5.40 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.40 /usr/share/perl/5.40 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 8.)
+#47 34.55 debconf: falling back to frontend: Teletype
+#47 34.57 debconf: unable to initialize frontend: Teletype
+#47 34.57 debconf: (This frontend requires a controlling tty.)
+#47 34.57 debconf: falling back to frontend: Noninteractive
+#47 34.62 Unpacking msodbcsql17 (17.11.1.1-1) ...
+#47 34.92 Setting up unixodbc-common (2.3.12-2+deb13u1) ...
+#47 34.98 Setting up libltdl7:amd64 (2.5.4-4) ...
+#47 35.02 Setting up libodbc2:amd64 (2.3.12-2+deb13u1) ...
+#47 35.08 Setting up libodbcinst2:amd64 (2.3.12-2+deb13u1) ...
+#47 35.10 Setting up odbcinst (2.3.12-2+deb13u1) ...
+#47 35.14 Setting up unixodbc (2.3.12-2+deb13u1) ...
+#47 35.16 Setting up msodbcsql17 (17.11.1.1-1) ...
+#47 35.17 odbcinst: Driver installed. Usage count increased to 1. 
+#47 35.17     Target directory is /etc
+#47 35.18 Processing triggers for libc-bin (2.41-12+deb13u4) ...
+#47 35.27 + odbcinst -i -d -f /opt/microsoft/msodbcsql17/etc/odbcinst.ini
+#47 35.28 + rm -rf /var/lib/apt/lists/auxfiles /var/lib/apt/lists/deb.debian.org_debian-security_dists_trixie-security_InRelease /var/lib/apt/lists/deb.debian.org_debian-security_dists_trixie-security_main_binary-amd64_Packages.lz4 /var/lib/apt/lists/deb.debian.org_debian_dists_trixie-updates_InRelease /var/lib/apt/lists/deb.debian.org_debian_dists_trixie-updates_main_binary-amd64_Packages.lz4 /var/lib/apt/lists/deb.debian.org_debian_dists_trixie_InRelease /var/lib/apt/lists/deb.debian.org_debian_dists_trixie_main_binary-amd64_Packages.lz4 /var/lib/apt/lists/lock /var/lib/apt/lists/packages.microsoft.com_debian_13_prod_dists_trixie_InRelease /var/lib/apt/lists/packages.microsoft.com_debian_13_prod_dists_trixie_main_binary-all_Packages.lz4 /var/lib/apt/lists/packages.microsoft.com_debian_13_prod_dists_trixie_main_binary-amd64_Packages.lz4 /var/lib/apt/lists/packages.microsoft.com_debian_13_prod_dists_trixie_main_binary-arm64_Packages.lz4 /var/lib/apt/lists/packages.microsoft.com_debian_13_prod_dists_trixie_main_binary-armhf_Packages.lz4 /var/lib/apt/lists/partial
+#47 35.28 odbcinst: Driver installed. Usage count increased to 2. 
+#47 35.28     Target directory is /etc
+#47 DONE 35.4s
+
+#49 [frontend builder 5/5] RUN bun run build
+#49 ...
+
+#50 [backend frankenphp_prod 16/21] COPY --from=frankenphp_prod_builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+#50 DONE 0.1s
+
+#51 [backend frankenphp_prod 17/21] COPY --link --exclude=var --from=frankenphp_prod_builder /app /app
+#51 DONE 0.4s
+
+#49 [frontend builder 5/5] RUN bun run build
+#49 ...
+
+#51 [backend frankenphp_prod 17/21] COPY --link --exclude=var --from=frankenphp_prod_builder /app /app
+#51 merging
+#51 merging 1.4s done
+#51 DONE 1.8s
+
+#49 [frontend builder 5/5] RUN bun run build
+#49 ...
+
+#52 [backend frankenphp_prod 18/21] COPY --chown=www-data:0 --from=frankenphp_prod_builder /app/var /app/var
+#52 DONE 5.4s
+
+#49 [frontend builder 5/5] RUN bun run build
+#49 ...
+
+#53 [backend frankenphp_prod 19/21] RUN chmod g=u /app/var
+#53 0.332 + chmod g=u /app/var
+#53 DONE 0.4s
+
+#54 [backend frankenphp_prod 20/21] COPY --link --chmod=755 frankenphp/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
+#54 DONE 0.3s
+
+#49 [frontend builder 5/5] RUN bun run build
+#49 ...
+
+#55 [backend frankenphp_prod 21/21] WORKDIR /app
+#55 DONE 0.1s
+
+#56 [backend] exporting to image
+#56 exporting layers
+#56 exporting layers 10.0s done
+#56 exporting manifest sha256:882ad27308320015e37b704c5f03b62b5fcf9f70555f08c882ea8b7b505b1635
+#56 exporting manifest sha256:882ad27308320015e37b704c5f03b62b5fcf9f70555f08c882ea8b7b505b1635 0.2s done
+#56 exporting config sha256:8600529019d068b01442f4058719ac73008869b9f7a43b83598f5234610d4655
+#56 exporting config sha256:8600529019d068b01442f4058719ac73008869b9f7a43b83598f5234610d4655 0.2s done
+#56 exporting attestation manifest sha256:47de0daf7b7b88745f49a55e71817ef4724fb8e8a12d5a6a71c33a7d7f38d005
+#56 exporting attestation manifest sha256:47de0daf7b7b88745f49a55e71817ef4724fb8e8a12d5a6a71c33a7d7f38d005 0.2s done
+#56 exporting manifest list sha256:504e11385380e1bab2d2921a0946be08109cdb7fb1589b97d4bfccc78c5c40d8
+#56 exporting manifest list sha256:504e11385380e1bab2d2921a0946be08109cdb7fb1589b97d4bfccc78c5c40d8 0.1s done
+#56 naming to docker.io/library/app-php:latest 0.0s done
+#56 unpacking to docker.io/library/app-php:latest
+#56 unpacking to docker.io/library/app-php:latest 11.2s done
+#56 DONE 22.2s
+
+#49 [frontend builder 5/5] RUN bun run build
+#49 ...
+
+#57 [backend] resolving provenance for metadata file
+#57 DONE 0.0s
+
+#49 [frontend builder 5/5] RUN bun run build
+#49 ...
+
+#58 [worker internal] load build definition from Dockerfile
+#58 transferring dockerfile: 6.77kB 0.0s done
+#58 DONE 0.0s
+
+#3 [worker] resolve image config for docker-image://docker.io/docker/dockerfile:1
+#3 DONE 1.0s
+
+#49 [frontend builder 5/5] RUN bun run build
+#49 ...
+
+#6 [worker] docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#6 resolve docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e 0.0s done
+#6 CACHED
+
+#49 [frontend builder 5/5] RUN bun run build
+#49 ...
+
+#10 [worker internal] load metadata for docker.io/library/debian:13-slim
+#10 ...
+
+#8 [worker internal] load metadata for docker.io/dunglas/frankenphp:1-php8.4
+#8 DONE 0.9s
+
+#10 [worker internal] load metadata for docker.io/library/debian:13-slim
+#10 DONE 0.9s
+
+#59 [worker internal] load .dockerignore
+#59 transferring context: 498B done
+#59 DONE 0.0s
+
+#49 [frontend builder 5/5] RUN bun run build
+#49 ...
+
+#20 [worker frankenphp_prod  1/21] FROM docker.io/library/debian:13-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad
+#20 resolve docker.io/library/debian:13-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad 0.1s done
+#20 DONE 0.5s
+
+#19 [worker frankenphp_upstream 1/1] FROM docker.io/dunglas/frankenphp:1-php8.4@sha256:8d5cfcc9ce4e6b4db887a04cce820801816d7f53e3a6234e98e0120415238a97
+#19 resolve docker.io/dunglas/frankenphp:1-php8.4@sha256:8d5cfcc9ce4e6b4db887a04cce820801816d7f53e3a6234e98e0120415238a97 0.1s done
+#19 DONE 0.5s
+
+#60 [worker internal] load build context
+#60 transferring context: 52.05kB 0.1s done
+#60 DONE 0.1s
+
+#61 [worker frankenphp_base 6/6] COPY --link frankenphp/Caddyfile /etc/frankenphp/Caddyfile
+#61 CACHED
+
+#62 [worker frankenphp_prod  4/21] COPY --from=frankenphp_prod_builder /usr/local/bin/docker-php-entrypoint /usr/local/bin/docker-php-entrypoint
+#62 CACHED
+
+#63 [worker frankenphp_prod 20/21] COPY --link --chmod=755 frankenphp/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
+#63 CACHED
+
+#64 [worker frankenphp_prod 16/21] COPY --from=frankenphp_prod_builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+#64 CACHED
+
+#65 [worker frankenphp_prod 15/21] RUN <<-EOF (apt-get update...)
+#65 CACHED
+
+#66 [worker frankenphp_prod 14/21] RUN <<-EOF (mkdir -p /data/caddy /config/caddy...)
+#66 CACHED
+
+#67 [worker frankenphp_prod_builder 2/7] COPY --link frankenphp/conf.d/20-app.prod.ini /usr/local/etc/php/app.conf.d/
+#67 CACHED
+
+#30 [worker frankenphp_base 2/6] RUN <<-EOF (apt-get update...)
+#30 CACHED
+
+#21 [worker frankenphp_base 3/6] RUN <<-EOF (# Register MS ODBC Driver 17 in system odbcinst.ini...)
+#21 CACHED
+
+#68 [worker frankenphp_prod_builder 7/7] RUN <<-'EOF' (apt-get update...)
+#68 CACHED
+
+#69 [worker frankenphp_prod 18/21] COPY --chown=www-data:0 --from=frankenphp_prod_builder /app/var /app/var
+#69 CACHED
+
+#70 [worker frankenphp_prod  2/21] COPY --from=frankenphp_prod_builder /usr/local/bin/frankenphp /usr/local/bin/frankenphp
+#70 CACHED
+
+#71 [worker frankenphp_prod  5/21] COPY --from=frankenphp_prod_builder /usr/local/lib/php/extensions /usr/local/lib/php/extensions
+#71 CACHED
+
+#72 [worker frankenphp_prod 12/21] COPY --from=frankenphp_prod_builder /usr/bin/file /usr/bin/file
+#72 CACHED
+
+#73 [worker frankenphp_prod 10/21] COPY --from=frankenphp_prod_builder /etc/frankenphp/Caddyfile /etc/frankenphp/Caddyfile
+#73 CACHED
+
+#74 [worker frankenphp_prod  3/21] COPY --from=frankenphp_prod_builder /usr/local/bin/php /usr/local/bin/php
+#74 CACHED
+
+#75 [worker frankenphp_prod_builder 6/7] RUN <<-EOF (mkdir -p var/cache var/log var/share...)
+#75 CACHED
+
+#76 [worker frankenphp_prod 11/21] COPY --from=frankenphp_prod_builder /etc/ssl/openssl.cnf /etc/ssl/openssl.cnf
+#76 CACHED
+
+#77 [worker frankenphp_prod_builder 3/7] COPY --link composer.* symfony.* ./
+#77 CACHED
+
+#22 [worker frankenphp_base 1/6] WORKDIR /app
+#22 CACHED
+
+#78 [worker frankenphp_prod 19/21] RUN chmod g=u /app/var
+#78 CACHED
+
+#79 [worker frankenphp_prod  7/21] COPY --from=frankenphp_prod_builder /usr/local/etc/php/conf.d /usr/local/etc/php/conf.d
+#79 CACHED
+
+#80 [worker frankenphp_prod 13/21] COPY --from=frankenphp_prod_builder /usr/lib/file/magic.mgc /usr/lib/file/magic.mgc
+#80 CACHED
+
+#81 [worker frankenphp_prod  9/21] COPY --from=frankenphp_prod_builder /usr/local/etc/php/app.conf.d /usr/local/etc/php/app.conf.d
+#81 CACHED
+
+#82 [worker frankenphp_prod_builder 4/7] RUN composer install --no-cache --prefer-dist --no-dev --no-autoloader --no-scripts --no-progress
+#82 CACHED
+
+#83 [worker frankenphp_prod_builder 5/7] COPY --link --exclude=frankenphp/ . ./
+#83 CACHED
+
+#84 [worker frankenphp_base 4/6] COPY --link frankenphp/conf.d/10-app.ini /usr/local/etc/php/app.conf.d/
+#84 CACHED
+
+#85 [worker frankenphp_prod  6/21] COPY --from=frankenphp_prod_builder /tmp/libs /usr/lib
+#85 CACHED
+
+#86 [worker frankenphp_prod  8/21] COPY --from=frankenphp_prod_builder /usr/local/etc/php/php.ini /usr/local/etc/php/php.ini
+#86 CACHED
+
+#87 [worker frankenphp_prod_builder 1/7] RUN mv "/usr/local/etc/php/php.ini-production" "/usr/local/etc/php/php.ini"
+#87 CACHED
+
+#88 [worker frankenphp_base 5/6] COPY --link --chmod=755 frankenphp/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
+#88 CACHED
+
+#89 [worker frankenphp_prod 17/21] COPY --link --exclude=var --from=frankenphp_prod_builder /app /app
+#89 CACHED
+
+#90 [worker frankenphp_prod 21/21] WORKDIR /app
+#90 CACHED
+
+#91 [worker] exporting to image
+#91 exporting layers 0.0s done
+#91 exporting manifest sha256:c30e31fe2f4e263fa9300a8cb1989a06c422a511145a647cf74be6001b76e78d 0.0s done
+#91 exporting config sha256:6bd8889625127fa98091dbdd0afe3c7813fc6f64503b5a1b11e34e221eff2bed 0.0s done
+#91 exporting attestation manifest sha256:fbf64425a15a6f0ced527ac1a7c69d1980cf28219c0b60315ced15126e89d190 0.0s done
+#91 exporting manifest list sha256:fe81fc620740e76c04ac23e945d3bd86c576140291894ccaa57764ae575255e1
+#91 exporting manifest list sha256:fe81fc620740e76c04ac23e945d3bd86c576140291894ccaa57764ae575255e1 0.0s done
+#91 naming to docker.io/library/app-php:latest done
+#91 unpacking to docker.io/library/app-php:latest 0.0s done
+#91 DONE 0.2s
+
+#49 [frontend builder 5/5] RUN bun run build
+#49 ...
+
+#92 [worker] resolving provenance for metadata file
+#92 DONE 0.0s
+
+#49 [frontend builder 5/5] RUN bun run build
+#49 DONE 84.7s
+
+#93 [frontend prod 2/4] COPY --from=builder /frontend/dist ./dist
+#93 DONE 0.1s
+
+#94 [frontend prod 3/4] COPY server.ts ./
+#94 DONE 0.1s
+
+#95 [frontend prod 4/4] RUN apk add --no-cache curl
+#95 1.216 (1/9) Installing brotli-libs (1.2.1-r0)
+#95 1.239 (2/9) Installing c-ares (1.34.9-r0)
+#95 1.249 (3/9) Installing libunistring (1.4.2-r0)
+#95 1.283 (4/9) Installing libidn2 (2.3.8-r0)
+#95 1.292 (5/9) Installing nghttp2-libs (1.70.0-r0)
+#95 1.297 (6/9) Installing libpsl (0.21.5-r3)
+#95 1.302 (7/9) Installing zstd-libs (1.5.7-r2)
+#95 1.320 (8/9) Installing libcurl (8.23.0-r0)
+#95 1.339 (9/9) Installing curl (8.23.0-r0)
+#95 1.350 Executing busybox-1.37.0-r31.trigger
+#95 1.366 OK: 15.9 MiB in 27 packages
+#95 DONE 1.6s
+
+#96 [frontend] exporting to image
+#96 exporting layers
+#96 exporting layers 4.2s done
+#96 exporting manifest sha256:c29647887419a390ed70c3f9cfe6804f9d1bd53b7aa9f7350260e137a5ecefe3 0.0s done
+#96 exporting config sha256:35e40c161de91203b8c238681adb72ebe012348425a5dd512a55f168d5e8e55d 0.0s done
+#96 exporting attestation manifest sha256:f666b13ee31beb290013cb75769c6144eec6590f33e825636b5a28e457060b5d 0.0s done
+#96 exporting manifest list sha256:7b11640fe5154d41bb306481197c24b13894c4020f1233e2a6cea5deaa7f96aa 0.0s done
+#96 naming to docker.io/library/app-frontend:latest done
+#96 unpacking to docker.io/library/app-frontend:latest
+#96 unpacking to docker.io/library/app-frontend:latest 1.0s done
+#96 DONE 5.4s
+
+#97 [frontend] resolving provenance for metadata file
+#97 DONE 0.0s
+ backend  Built
+ frontend  Built
+ worker  Built
+ Network f_d_n_default  Creating
+ Network f_d_n_default  Created
+ Container database  Creating
+ Container frontend  Creating
+ Container frontend  Created
+ Container database  Created
+ Container backend  Creating
+ Container backend  Created
+ Container worker  Creating
+ Container worker  Created
+ Container database  Starting
+ Container frontend  Starting
+ Container frontend  Started
+ Container database  Started
+ Container database  Waiting
+ Container database  Healthy
+ Container backend  Starting
+ Container backend  Started
+ Container worker  Starting
+ Container worker  Started

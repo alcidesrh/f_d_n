@@ -8,8 +8,8 @@ use App\Acceso\Alcance;
 use App\Acceso\FiltroAlcance;
 use App\Entity\Asiento;
 use App\Entity\Enum\EstadoSalida;
-use App\Entity\Ruta;
 use App\Entity\Salida;
+use App\Ruta\ParadasDeRutas;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 
@@ -22,6 +22,7 @@ final class ConsultaSalidas
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly AsientosVendidos $vendidos,
+        private readonly ParadasDeRutas $paradas,
     ) {}
 
     /**
@@ -64,6 +65,7 @@ final class ConsultaSalidas
 
         $vendidos = $this->vendidos->porSalida(array_map(static fn(Salida $s) => (int) $s->getId(), $salidas));
         $capacidad = $this->capacidad(array_values(array_unique(array_filter(array_map(static fn(Salida $s) => $s->getBus()?->getId(), $salidas)))));
+        $this->paradas->cargar(array_values(array_unique(array_map(static fn(Salida $s) => (int) $s->getRuta()->getId(), $salidas))));
         $ahora = new \DateTimeImmutable();
 
         return [
@@ -108,7 +110,7 @@ final class ConsultaSalidas
 
         $vendidos = $this->vendidos->porSalida(array_map(static fn(Salida $s) => (int) $s->getId(), $salidas));
         $capacidad = $this->capacidad(array_values(array_unique(array_filter(array_map(static fn(Salida $s) => $s->getBus()?->getId(), $salidas)))));
-        $this->conParadas(array_values(array_unique(array_map(static fn(Salida $s) => (int) $s->getRuta()->getId(), $salidas))));
+        $this->paradas->cargar(array_values(array_unique(array_map(static fn(Salida $s) => (int) $s->getRuta()->getId(), $salidas))));
         $ahora = new \DateTimeImmutable();
 
         $items = [];
@@ -143,30 +145,6 @@ final class ConsultaSalidas
         usort($rutas, static fn(array $a, array $b) => strnatcasecmp($a["nombre"], $b["nombre"]));
 
         return ["items" => $items, "rutas" => $rutas, "porEstado" => $porEstado, "truncado" => $truncado];
-    }
-
-    /**
-     * Carga de una vez las paradas (con su enclave y tiempos por clase) de
-     * esas rutas: puntas y duración sin una consulta por ruta.
-     *
-     * @param list<int> $rutaIds
-     */
-    private function conParadas(array $rutaIds): void
-    {
-        if ($rutaIds === []) {
-            return;
-        }
-        $this->em->createQueryBuilder()
-            ->select("r", "p", "e", "t")
-            ->from(Ruta::class, "r")
-            ->leftJoin("r.paradas", "p")
-            ->leftJoin("p.enclave", "e")
-            ->leftJoin("p.tiempos", "t")
-            ->where("r.id IN (:ids)")
-            ->orderBy("p.orden", "ASC")
-            ->setParameter("ids", $rutaIds)
-            ->getQuery()
-            ->getResult();
     }
 
     /** Todo el filtro salvo el estado (el conteo por estado lo ignora). */

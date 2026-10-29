@@ -1,0 +1,2593 @@
+docker compose --env-file .env.prod.local -f compose.yaml -f compose.prod.yaml up -d --build
+time="2026-10-27T07:08:59-06:00" level=warning msg="Docker Compose is configured to build using Bake, but buildx isn't installed"
+#0 building with "default" instance using docker driver
+
+#1 [frontend internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.31kB done
+#1 DONE 0.0s
+
+#2 [backend internal] load build definition from Dockerfile
+#2 transferring dockerfile: 6.77kB 0.0s done
+#2 DONE 0.0s
+
+#3 [backend] resolve image config for docker-image://docker.io/docker/dockerfile:1
+#3 DONE 0.5s
+
+#4 [frontend] resolve image config for docker-image://docker.io/docker/dockerfile:1.4
+#4 DONE 0.5s
+
+#5 [backend] docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#5 resolve docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e 0.0s done
+#5 CACHED
+
+#6 [frontend] docker-image://docker.io/docker/dockerfile:1.4@sha256:9ba7531bd80fb0a858632727cf7a112fbfd19b17e94c4e84ced81e24ef1a0dbc
+#6 resolve docker.io/docker/dockerfile:1.4@sha256:9ba7531bd80fb0a858632727cf7a112fbfd19b17e94c4e84ced81e24ef1a0dbc 0.0s done
+#6 CACHED
+
+#7 [frontend internal] load .dockerignore
+#7 transferring context: 405B done
+#7 DONE 0.0s
+
+#8 [frontend internal] load metadata for docker.io/oven/bun:1-alpine
+#8 DONE 0.1s
+
+#9 [backend internal] load metadata for docker.io/dunglas/frankenphp:1-php8.4
+#9 ...
+
+#10 [frontend bun_upstream 1/1] FROM docker.io/oven/bun:1-alpine@sha256:4cf82f5686b196504fe119db3fcd9185b191f82ece82c40680e597228ec6070a
+#10 resolve docker.io/oven/bun:1-alpine@sha256:4cf82f5686b196504fe119db3fcd9185b191f82ece82c40680e597228ec6070a 0.0s done
+#10 DONE 0.0s
+
+#11 [backend internal] load metadata for docker.io/library/debian:13-slim
+#11 DONE 0.3s
+
+#12 [frontend internal] load build context
+#12 transferring context: 147.67kB 0.1s done
+#12 DONE 0.2s
+
+#13 [frontend base 1/1] WORKDIR /frontend
+#13 CACHED
+
+#14 [frontend builder 1/5] COPY bun.lock package.json ./
+#14 CACHED
+
+#15 [frontend builder 2/5] RUN bun install --frozen-lockfile
+#15 CACHED
+
+#9 [backend internal] load metadata for docker.io/dunglas/frankenphp:1-php8.4
+#9 DONE 0.3s
+
+#16 [backend internal] load .dockerignore
+#16 transferring context: 498B done
+#16 DONE 0.0s
+
+#17 [frontend builder 3/5] COPY . .
+#17 ...
+
+#18 [backend frankenphp_prod  1/21] FROM docker.io/library/debian:13-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad
+#18 resolve docker.io/library/debian:13-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad 0.1s done
+#18 DONE 0.1s
+
+#19 [backend frankenphp_upstream 1/1] FROM docker.io/dunglas/frankenphp:1-php8.4@sha256:8d5cfcc9ce4e6b4db887a04cce820801816d7f53e3a6234e98e0120415238a97
+#19 resolve docker.io/dunglas/frankenphp:1-php8.4@sha256:8d5cfcc9ce4e6b4db887a04cce820801816d7f53e3a6234e98e0120415238a97 0.1s done
+#19 DONE 0.1s
+
+#20 [backend internal] load build context
+#20 transferring context: 115.21kB 0.2s done
+#20 DONE 0.3s
+
+#21 [backend frankenphp_prod_builder 2/7] COPY --link frankenphp/conf.d/20-app.prod.ini /usr/local/etc/php/app.conf.d/
+#21 CACHED
+
+#22 [backend frankenphp_prod_builder 3/7] COPY --link composer.* symfony.* ./
+#22 CACHED
+
+#23 [backend frankenphp_base 2/6] RUN <<-EOF (apt-get update...)
+#23 CACHED
+
+#24 [backend frankenphp_base 3/6] RUN <<-EOF (# Register MS ODBC Driver 17 in system odbcinst.ini...)
+#24 CACHED
+
+#25 [backend frankenphp_base 5/6] COPY --link --chmod=755 frankenphp/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
+#25 CACHED
+
+#26 [backend frankenphp_prod_builder 1/7] RUN mv "/usr/local/etc/php/php.ini-production" "/usr/local/etc/php/php.ini"
+#26 CACHED
+
+#27 [backend frankenphp_base 4/6] COPY --link frankenphp/conf.d/10-app.ini /usr/local/etc/php/app.conf.d/
+#27 CACHED
+
+#28 [backend frankenphp_base 1/6] WORKDIR /app
+#28 CACHED
+
+#29 [backend frankenphp_base 6/6] COPY --link frankenphp/Caddyfile /etc/frankenphp/Caddyfile
+#29 CACHED
+
+#30 [backend frankenphp_prod_builder 4/7] RUN composer install --no-cache --prefer-dist --no-dev --no-autoloader --no-scripts --no-progress
+#30 CACHED
+
+#17 [frontend builder 3/5] COPY . .
+#17 DONE 1.2s
+
+#31 [backend frankenphp_prod_builder 5/7] COPY --link --exclude=frankenphp/ . ./
+#31 merging
+#31 ...
+
+#32 [frontend builder 4/5] RUN apk add --no-cache nodejs
+#32 0.930 ( 1/12) Installing ca-certificates (20261020-r0)
+#32 0.952 ( 2/12) Installing ada-libs (4.0.0-r0)
+#32 0.966 ( 3/12) Installing brotli-libs (1.2.1-r0)
+#32 0.998 ( 4/12) Installing c-ares (1.34.9-r0)
+#32 1.004 ( 5/12) Installing icu-data-en (78.1-r0)
+#32 1.053   Executing icu-data-en-78.1-r0.post-install
+#32 1.060   * If you need ICU with non-English locales and legacy charset support, install
+#32 1.060   * package icu-data-full.
+#32 1.061 ( 6/12) Installing icu-libs (78.1-r0)
+#32 1.147 ( 7/12) Installing nghttp2-libs (1.70.0-r0)
+#32 1.154 ( 8/12) Installing simdjson (4.2.4-r0)
+#32 1.168 ( 9/12) Installing simdutf (9.0.0-r0)
+#32 1.191 (10/12) Installing sqlite-libs (3.53.4-r0)
+#32 1.232 (11/12) Installing zstd-libs (1.5.7-r2)
+#32 1.251 (12/12) Installing nodejs (24.22.1-r0)
+#32 2.002 Executing busybox-1.37.0-r31.trigger
+#32 2.010 Executing ca-certificates-20261020-r0.trigger
+#32 2.061 OK: 73.3 MiB in 30 packages
+#32 DONE 2.2s
+
+#33 [frontend builder 5/5] RUN bun run build
+#33 0.582 $ run-p type-check "build-only {@}" --
+#33 ...
+
+#31 [backend frankenphp_prod_builder 5/7] COPY --link --exclude=frankenphp/ . ./
+#31 merging 3.0s done
+#31 DONE 3.8s
+
+#33 [frontend builder 5/5] RUN bun run build
+#33 0.897 $ vue-tsc --build
+#33 0.899 $ vite build
+#33 2.797 vite v8.2.0 building client environment for production...
+#33 2.933 [2Ktransforming...
+#33 6.817 /fonts/Chakra_Petch/ChakraPetch-SemiBold.ttf referenced in /fonts/Chakra_Petch/ChakraPetch-SemiBold.ttf didn't resolve at build time, it will remain unchanged to be resolved at runtime
+#33 ...
+
+#34 [backend frankenphp_prod_builder 6/7] RUN <<-EOF (mkdir -p var/cache var/log var/share...)
+#34 0.338 + mkdir -p var/cache var/log var/share
+#34 0.347 + composer dump-autoload --classmap-authoritative --no-dev
+#34 0.874 Generating optimized autoload files (authoritative)
+#34 6.514 Generated optimized autoload files (authoritative) containing 8162 classes
+#34 6.538 + composer dump-env prod
+#34 6.761 Successfully dumped .env files in .env.local.php
+#34 6.769 + composer run-script --no-dev post-install-cmd
+#34 6.999 
+#34 6.999 Run composer recipes at any time to see the status of your Symfony recipes.
+#34 6.999 
+#34 7.000 Executing script cache:clear
+#34 ...
+
+#33 [frontend builder 5/5] RUN bun run build
+#33 10.01 ✓ 1970 modules transformed.
+#33 10.95 rendering chunks...
+#33 11.40 computing gzip size...
+#33 11.57 dist/manifest.webmanifest                                                   0.66 kB
+#33 11.57 dist/index.html                                                             3.69 kB │ gzip:     1.28 kB
+#33 11.57 dist/assets/material-symbols-outlined-latin-fill-normal-B2uwGM3Y.woff2  1,137.51 kB
+#33 11.57 dist/assets/RegistrarDepositoPage-B16o-DrY.css                              0.12 kB │ gzip:     0.11 kB
+#33 11.57 dist/assets/EspecialesPage-BNOT9ihp.css                                     0.14 kB │ gzip:     0.12 kB
+#33 11.57 dist/assets/AnularBoletosDialog-y6lh-4J-.css                                0.18 kB │ gzip:     0.14 kB
+#33 11.57 dist/assets/ManifiestoSalidaPage-C6CKjKXf.css                               0.19 kB │ gzip:     0.14 kB
+#33 11.57 dist/assets/useResumen-CdMRDSZA.css                                         0.19 kB │ gzip:     0.14 kB
+#33 11.57 dist/assets/SortablePanelList-Di-_6s2h.css                                  0.21 kB │ gzip:     0.16 kB
+#33 11.57 dist/assets/MigracionPanel-DSd66NjK.css                                     0.29 kB │ gzip:     0.21 kB
+#33 11.57 dist/assets/AccesosPage-Bi_bMpne.css                                        0.29 kB │ gzip:     0.18 kB
+#33 11.57 dist/assets/BitacoraDialog-DgH52S3f.css                                     0.33 kB │ gzip:     0.21 kB
+#33 11.57 dist/assets/MigracionPage-Clnhbhmb.css                                      0.37 kB │ gzip:     0.25 kB
+#33 11.57 dist/assets/FormBuilderPanel-DoaLQrdI.css                                   0.41 kB │ gzip:     0.25 kB
+#33 11.57 dist/assets/ChatPage-l-HmtSWT.css                                           0.46 kB │ gzip:     0.29 kB
+#33 11.57 dist/assets/Icon-B_l0Oes6.css                                               0.56 kB │ gzip:     0.32 kB
+#33 11.57 dist/assets/FormBuilderPage-B9ZSIIWV.css                                    0.57 kB │ gzip:     0.30 kB
+#33 11.57 dist/assets/RegistrarDepositoForm-DuC-s1q8.css                              0.59 kB │ gzip:     0.28 kB
+#33 11.57 dist/assets/RegistrarEncomiendaPage-Fj9NqjXP.css                            0.77 kB │ gzip:     0.37 kB
+#33 11.57 dist/assets/PublicacionPage-BXeE78IR.css                                    0.79 kB │ gzip:     0.35 kB
+#33 11.57 dist/assets/EnviarPorChatDialog-C6hAV-Fu.css                                0.82 kB │ gzip:     0.38 kB
+#33 11.57 dist/assets/AutorizacionesPage-2HVqlC8j.css                                 0.83 kB │ gzip:     0.37 kB
+#33 11.57 dist/assets/ChequeoPage-7bFzBRVS.css                                        0.93 kB │ gzip:     0.37 kB
+#33 11.57 dist/assets/UsuarioAccesosPage-CVWAkAWT.css                                 0.96 kB │ gzip:     0.36 kB
+#33 11.57 dist/assets/PaginaWebPage-NFhjtiCF.css                                      0.97 kB │ gzip:     0.37 kB
+#33 11.57 dist/assets/SeguimientoPage-DeBcsKMa.css                                    1.02 kB │ gzip:     0.50 kB
+#33 11.57 dist/assets/TarifaFiltro-DOblUnKV.css                                       1.11 kB │ gzip:     0.45 kB
+#33 11.57 dist/assets/EntregarEncomiendasPage-CB4D1HXV.css                            1.22 kB │ gzip:     0.47 kB
+#33 11.57 dist/assets/SaldosAgenciaPage-M6O-_kq7.css                                  1.44 kB │ gzip:     0.48 kB
+#33 11.57 dist/assets/ArticulosEditor-hN4XjBSU.css                                    1.51 kB │ gzip:     0.56 kB
+#33 11.57 dist/assets/PendientesEnvioPage-Dp-2hgSs.css                                1.53 kB │ gzip:     0.52 kB
+#33 11.57 dist/assets/CroquisSelector-EGKEcPn9.css                                    1.57 kB │ gzip:     0.58 kB
+#33 11.57 dist/assets/DepositosPage-EMS09NjA.css                                      1.70 kB │ gzip:     0.58 kB
+#33 11.57 dist/assets/TarifasMapaPage-BPXj21RY.css                                    1.72 kB │ gzip:     0.69 kB
+#33 11.57 dist/assets/BusMapLegend-8h5kJfx8.css                                       1.77 kB │ gzip:     0.60 kB
+#33 11.57 dist/assets/ProcesarSalidaPage-B6S0dGUL.css                                 1.77 kB │ gzip:     0.63 kB
+#33 11.57 dist/assets/EntityConfigPage-DAKKRz0e.css                                   1.99 kB │ gzip:     0.64 kB
+#33 11.57 dist/assets/ProgramadorPage-CXUhYvbO.css                                    2.04 kB │ gzip:     0.67 kB
+#33 11.57 dist/assets/AyudaPage-DU-LcbcF.css                                          2.26 kB │ gzip:     0.71 kB
+#33 11.57 dist/assets/RutaEditorPage-2vfgZJRA.css                                     2.52 kB │ gzip:     0.76 kB
+#33 11.57 dist/assets/RolesPage-BT-z0h1S.css                                          2.55 kB │ gzip:     0.76 kB
+#33 11.57 dist/assets/MenuBuilderPage-Cxc8xjYQ.css                                    3.17 kB │ gzip:     0.85 kB
+#33 11.57 dist/assets/EncomiendasPage-Bd95fl13.css                                    3.28 kB │ gzip:     0.91 kB
+#33 11.57 dist/assets/BoletosPage-BWjlYjeu.css                                        3.32 kB │ gzip:     0.87 kB
+#33 11.57 dist/assets/AdministracionPage-7NR3DyAs.css                                 4.50 kB │ gzip:     1.07 kB
+#33 11.57 dist/assets/ListPage-Bcomdr1x.css                                           5.01 kB │ gzip:     1.22 kB
+#33 11.57 dist/assets/LoginPage-C8pvK9M-.css                                          5.24 kB │ gzip:     1.49 kB
+#33 11.57 dist/assets/DataGrid-DDw4txfV.css                                           8.48 kB │ gzip:     2.11 kB
+#33 11.57 dist/assets/BusCroquisSection-0aRFzuH6.css                                  8.84 kB │ gzip:     1.96 kB
+#33 11.57 dist/assets/CalendarioPage-BrN3p949.css                                     9.78 kB │ gzip:     2.43 kB
+#33 11.57 dist/assets/DashboardPage-aeMAudoS.css                                     10.58 kB │ gzip:     2.45 kB
+#33 11.57 dist/assets/leaflet-vh-t_kPv.css                                           15.09 kB │ gzip:     6.36 kB
+#33 11.57 dist/assets/VentaPage-DqnSyhFl.css                                         15.14 kB │ gzip:     3.33 kB
+#33 11.57 dist/assets/index-yJUhPLr_.css                                            123.69 kB │ gzip:    23.41 kB
+#33 11.57 dist/assets/overlayeventbus-4J2uVpX2.js                                     0.06 kB │ gzip:     0.07 kB
+#33 11.57 dist/assets/_plugin-vue_export-helper-BDNMzG2s.js                           0.08 kB │ gzip:     0.09 kB
+#33 11.57 dist/assets/busquedaRemota-DScxzc24.js                                      0.14 kB │ gzip:     0.14 kB
+#33 11.57 dist/assets/reimprimir-B5UB7Nrj.js                                          0.27 kB │ gzip:     0.20 kB
+#33 11.57 dist/assets/api-Op5gofiL.js                                                 0.31 kB │ gzip:     0.20 kB
+#33 11.57 dist/assets/permisos-UCQY6sYF.js                                            0.41 kB │ gzip:     0.27 kB
+#33 11.57 dist/assets/zindex-cO8iUN-n.js                                              0.43 kB │ gzip:     0.28 kB
+#33 11.57 dist/assets/realtime-D9rFRajp.js                                            0.45 kB │ gzip:     0.31 kB
+#33 11.57 dist/assets/api-DJldEnjt.js                                                 0.46 kB │ gzip:     0.29 kB
+#33 11.57 dist/assets/AccesosAccion-ByHgCgtZ.js                                       0.48 kB │ gzip:     0.35 kB
+#33 11.57 dist/assets/baseinput-B5vEh7rM.js                                           0.49 kB │ gzip:     0.28 kB
+#33 11.57 dist/assets/BitacoraBoletoAccion-26AtToRW.js                                0.50 kB │ gzip:     0.35 kB
+#33 11.57 dist/assets/BitacoraSalidaAccion-D611rFzU.js                                0.50 kB │ gzip:     0.34 kB
+#33 11.57 dist/assets/PageHead-BuTJoFuE.js                                            0.51 kB │ gzip:     0.34 kB
+#33 11.57 dist/assets/portal-eSeiAneO.js                                              0.57 kB │ gzip:     0.36 kB
+#33 11.57 dist/assets/formExtension-CkJcA2D4.js                                       0.65 kB │ gzip:     0.40 kB
+#33 11.57 dist/assets/rolldown-runtime-hePW80VL.js                                    0.71 kB │ gzip:     0.42 kB
+#33 11.57 dist/assets/manifiesto-Z1INJwdL.js                                          0.74 kB │ gzip:     0.40 kB
+#33 11.57 dist/assets/api-aOJQLgOw.js                                                 0.75 kB │ gzip:     0.38 kB
+#33 11.57 dist/assets/useApi-CROJJdhE-Dbvcl2QP.js                                     0.83 kB │ gzip:     0.45 kB
+#33 11.57 dist/assets/api-Dj-ithxF.js                                                 0.95 kB │ gzip:     0.50 kB
+#33 11.57 dist/assets/reasignacion-DwXYPEcP.js                                        1.04 kB │ gzip:     0.55 kB
+#33 11.57 dist/assets/Icon-CN4JD4S_.js                                                1.09 kB │ gzip:     0.65 kB
+#33 11.57 dist/assets/api-CAPpWVsl.js                                                 1.22 kB │ gzip:     0.52 kB
+#33 11.57 dist/assets/layout-Oyhlg9up.js                                              1.32 kB │ gzip:     0.71 kB
+#33 11.57 dist/assets/NotFoundPage-D3-85E3J.js                                        1.34 kB │ gzip:     0.76 kB
+#33 11.57 dist/assets/toolbar-BNIuPk0l.js                                             1.41 kB │ gzip:     0.62 kB
+#33 11.57 dist/assets/FormBuilderPage-CqRK3BQr.js                                     1.41 kB │ gzip:     0.86 kB
+#33 11.57 dist/assets/FacturacionFallidaDialog-BKftBvdt.js                            1.53 kB │ gzip:     0.84 kB
+#33 11.57 dist/assets/ChatPage-IMOr7nf0.js                                            1.54 kB │ gzip:     0.88 kB
+#33 11.57 dist/assets/editor-CmdPERVP.js                                              1.64 kB │ gzip:     0.78 kB
+#33 11.57 dist/assets/api-Bq1LVLe0.js                                                 1.76 kB │ gzip:     0.82 kB
+#33 11.57 dist/assets/chevrondown-pQ8m0ieb.js                                         1.77 kB │ gzip:     1.07 kB
+#33 11.57 dist/assets/filtro-B2aKnr2I.js                                              1.92 kB │ gzip:     0.77 kB
+#33 11.57 dist/assets/check-BYU8uokn.js                                               1.97 kB │ gzip:     1.17 kB
+#33 11.57 dist/assets/SalidaSelect-DHYsdA8F.js                                        2.06 kB │ gzip:     1.14 kB
+#33 11.57 dist/assets/CambiarPasswordDialog-DRMKidXz.js                               2.09 kB │ gzip:     1.13 kB
+#33 11.57 dist/assets/RegistrarDepositoPage-DLKb58tl.js                               2.31 kB │ gzip:     1.26 kB
+#33 11.57 dist/assets/depositos-BzYdlse9.js                                           2.35 kB │ gzip:     1.08 kB
+#33 11.57 dist/assets/SortablePanelList-a3BBz3af.js                                   2.58 kB │ gzip:     1.35 kB
+#33 11.57 dist/assets/baseeditableholder-CAnjRZ6A.js                                  2.63 kB │ gzip:     0.82 kB
+#33 11.57 dist/assets/ManifiestoSalidaPage-BVGfNQH5.js                                2.69 kB │ gzip:     1.31 kB
+#33 11.57 dist/assets/store-SnNAxDTP.js                                               2.74 kB │ gzip:     1.35 kB
+#33 11.57 dist/assets/listado-CyBQqFnS.js                                             2.88 kB │ gzip:     1.17 kB
+#33 11.57 dist/assets/programacion-St7IYdAE.js                                        3.13 kB │ gzip:     1.40 kB
+#33 11.57 dist/assets/ManifiestoEncomiendasPage-BoqQHEGH.js                           3.47 kB │ gzip:     1.70 kB
+#33 11.57 dist/assets/labels-C8jlr6iK.js                                              3.52 kB │ gzip:     1.65 kB
+#33 11.57 dist/assets/CuadreVoucherPage-LFuz4Ax9.js                                   3.77 kB │ gzip:     1.81 kB
+#33 11.57 dist/assets/AgenciaSaldoSection-Dfe8GS8-.js                                 3.77 kB │ gzip:     1.75 kB
+#33 11.57 dist/assets/EliminarUsuariosDialog-D-T6zjpj.js                              3.97 kB │ gzip:     1.84 kB
+#33 11.57 dist/assets/EstacionSelect--DsAJ4sJ.js                                      4.01 kB │ gzip:     1.86 kB
+#33 11.57 dist/assets/useResumen-ByC6z0Wy.js                                          4.20 kB │ gzip:     2.00 kB
+#33 11.57 dist/assets/buses-DxBgCCek.js                                               4.36 kB │ gzip:     2.22 kB
+#33 11.57 dist/assets/CroquisSelector-Ci4P-m2l.js                                     4.49 kB │ gzip:     2.09 kB
+#33 11.57 dist/assets/reglas-Dt39lL6_.js                                              4.50 kB │ gzip:     1.86 kB
+#33 11.57 dist/assets/utils-G2gTD1rS.js                                               4.76 kB │ gzip:     1.64 kB
+#33 11.57 dist/assets/listUtils-DKSsJ3-b.js                                           4.79 kB │ gzip:     1.93 kB
+#33 11.57 dist/assets/CuadreVentaBoletosPage-CFMnsVMV.js                              4.81 kB │ gzip:     2.13 kB
+#33 11.57 dist/assets/EnviarPorChatDialog-CUouHNFD.js                                 4.91 kB │ gzip:     2.25 kB
+#33 11.57 dist/assets/RegistrarDepositoForm-B85Rr8vf.js                               5.35 kB │ gzip:     2.26 kB
+#33 11.57 dist/assets/AccesosPage-CeBJNHU-.js                                         5.46 kB │ gzip:     2.22 kB
+#33 11.57 dist/assets/encomienda-DuotyKGz.js                                          5.54 kB │ gzip:     1.91 kB
+#33 11.57 dist/assets/workbox-window.prod.es5-Bd17z0YL.js                             5.65 kB │ gzip:     2.20 kB
+#33 11.57 dist/assets/store-RlwDe_gI.js                                               5.75 kB │ gzip:     2.16 kB
+#33 11.57 dist/assets/DetalleFacturaBoletosPage-BYDx3VrX.js                           5.84 kB │ gzip:     2.36 kB
+#33 11.57 dist/assets/pinia-Bgm2Aii2.js                                               5.89 kB │ gzip:     2.80 kB
+#33 11.57 dist/assets/TarifaFiltro-DgSZJ8H3.js                                        6.03 kB │ gzip:     2.27 kB
+#33 11.57 dist/assets/MigracionPage-C3s9wgw6.js                                       6.07 kB │ gzip:     2.32 kB
+#33 11.57 dist/assets/ReporteEncomiendaPage-aIjj-rIP.js                               6.37 kB │ gzip:     2.45 kB
+#33 11.57 dist/assets/ticket-Dmzmrwbh.js                                              6.39 kB │ gzip:     2.84 kB
+#33 11.57 dist/assets/BitacoraDialog-BZibYNY7.js                                      6.49 kB │ gzip:     2.80 kB
+#33 11.57 dist/assets/inputicon-e0HqatAn.js                                           6.73 kB │ gzip:     1.95 kB
+#33 11.57 dist/assets/EspecialesPage-Bp1JuA5U.js                                      6.78 kB │ gzip:     2.70 kB
+#33 11.57 dist/assets/RutasPage-CBuz6NQU.js                                           6.83 kB │ gzip:     2.75 kB
+#33 11.57 dist/assets/SaldosAgenciaPage-Df8W63r0.js                                   6.86 kB │ gzip:     2.83 kB
+#33 11.57 dist/assets/MiCuentaPage-CeAF3uc5.js                                        7.19 kB │ gzip:     2.88 kB
+#33 11.57 dist/assets/PublicacionPage-B_J-vlb5.js                                     7.60 kB │ gzip:     2.99 kB
+#33 11.57 dist/assets/VerSalidaDialog-CuI1VuMo.js                                     7.91 kB │ gzip:     3.03 kB
+#33 11.57 dist/assets/AnularBoletosDialog-CgC1uVpD.js                                 7.91 kB │ gzip:     3.13 kB
+#33 11.57 dist/assets/PendientesEnvioPage-CC7nK-FR.js                                 8.24 kB │ gzip:     3.28 kB
+#33 11.57 dist/assets/MigracionPanel-BK0uLgPN.js                                      9.10 kB │ gzip:     3.09 kB
+#33 11.57 dist/assets/BusMapLegend-BfEf-6_z.js                                        9.61 kB │ gzip:     3.35 kB
+#33 11.57 dist/assets/ArticulosEditor-B45EVTCh.js                                     9.99 kB │ gzip:     3.00 kB
+#33 11.57 dist/assets/AutorizacionesPage-CZSfsRpo.js                                 10.60 kB │ gzip:     4.22 kB
+#33 11.57 dist/assets/RegistrarEncomiendaPage-DeOGWSpH.js                            11.97 kB │ gzip:     4.25 kB
+#33 11.57 dist/assets/RolesPage-CNsSPT4z.js                                          12.06 kB │ gzip:     4.65 kB
+#33 11.57 dist/assets/FormBuilderPanel-Ds8bKdqF.js                                   12.17 kB │ gzip:     3.89 kB
+#33 11.57 dist/assets/ProcesarSalidaPage-DXI0dkTs.js                                 12.30 kB │ gzip:     4.43 kB
+#33 11.57 dist/assets/EntregarEncomiendasPage-CjdMIe7U.js                            12.56 kB │ gzip:     4.70 kB
+#33 11.57 dist/assets/UsuarioAccesosPage-CImY_nxE.js                                 13.61 kB │ gzip:     5.02 kB
+#33 11.57 dist/assets/RutaEditorPage-7mlukzLd.js                                     14.39 kB │ gzip:     5.31 kB
+#33 11.57 dist/assets/ClienteBuscador-zHjH8Opt.js                                    14.45 kB │ gzip:     5.94 kB
+#33 11.57 dist/assets/DataGrid-Bs5qKaSR.js                                           14.63 kB │ gzip:     5.07 kB
+#33 11.57 dist/assets/DepositosPage-DNpZoCkh.js                                      15.41 kB │ gzip:     5.60 kB
+#33 11.57 dist/assets/times-BB17citu.js                                              15.68 kB │ gzip:     7.03 kB
+#33 11.57 dist/assets/SeguimientoPage-CZDNrbYV.js                                    15.88 kB │ gzip:     6.74 kB
+#33 11.57 dist/assets/tab-Dg_5pLLZ.js                                                16.70 kB │ gzip:     4.29 kB
+#33 11.57 dist/assets/TarifasMapaPage-BB2LQ4A6.js                                    17.01 kB │ gzip:     5.99 kB
+#33 11.57 dist/assets/ChequeoPage-yWrCB1PJ.js                                        18.05 kB │ gzip:     5.94 kB
+#33 11.57 dist/assets/LoginPage-Cpjy3NqK.js                                          19.75 kB │ gzip:     8.87 kB
+#33 11.57 dist/assets/FormPage-oohTmL9w.js                                           20.95 kB │ gzip:     7.81 kB
+#33 11.57 dist/assets/CalendarioPage-BrgNV3Re.js                                     22.13 kB │ gzip:     8.18 kB
+#33 11.57 dist/assets/ProgramadorPage-wNi065hO.js                                    23.19 kB │ gzip:     8.11 kB
+#33 11.57 dist/assets/EntityConfigPage-C0lA05YL.js                                   24.54 kB │ gzip:     7.68 kB
+#33 11.57 dist/assets/SalidasPage-XOcyDqvl.js                                        25.81 kB │ gzip:     8.07 kB
+#33 11.57 dist/assets/BusCroquisSection-B9aCPohs.js                                  25.91 kB │ gzip:     9.29 kB
+#33 11.57 dist/assets/virtualscroller-CuYzugXd.js                                    26.71 kB │ gzip:     8.23 kB
+#33 11.57 dist/assets/paginator-C9nA83Z_.js                                          28.13 kB │ gzip:     7.66 kB
+#33 11.57 dist/assets/AdministracionPage-BKi_lRy1.js                                 29.86 kB │ gzip:     9.76 kB
+#33 11.57 dist/assets/EncomiendasPage-BD8LgjrP.js                                    30.44 kB │ gzip:     9.28 kB
+#33 11.57 dist/assets/DashboardPage-DoZmuMTo.js                                      38.90 kB │ gzip:    12.84 kB
+#33 11.57 dist/assets/ListPage-CK94DzYN.js                                           46.74 kB │ gzip:    14.91 kB
+#33 11.57 dist/assets/PaginaWebPage-CVFMSd9u.js                                      47.73 kB │ gzip:    14.04 kB
+#33 11.57 dist/assets/BoletosPage-Bqu881Cc.js                                        48.78 kB │ gzip:    13.63 kB
+#33 11.57 dist/assets/VentaPage-FQPKczLC.js                                          52.15 kB │ gzip:    17.87 kB
+#33 11.57 dist/assets/MenuBuilderPage-DmZrWKFD.js                                    55.77 kB │ gzip:    16.48 kB
+#33 11.57 dist/assets/session-9c_6gEdC.js                                            57.75 kB │ gzip:    20.20 kB
+#33 11.57 dist/assets/runtime-core.esm-bundler-CtF3Gqgn.js                           67.30 kB │ gzip:    26.39 kB
+#33 11.57 dist/assets/ripple-H02m2a5B.js                                             75.93 kB │ gzip:    20.40 kB
+#33 11.57 dist/assets/AyudaPage-BKcAjwYG.js                                          87.74 kB │ gzip:    27.85 kB
+#33 11.57 dist/assets/leaflet-blrVLEi6.js                                           148.80 kB │ gzip:    43.39 kB
+#33 11.57 dist/assets/client-CGNznziv.js                                            196.11 kB │ gzip:    57.78 kB
+#33 11.57 dist/assets/column-C6dKIGst.js                                            218.77 kB │ gzip:    44.84 kB
+#33 11.57 dist/assets/iconMeta-CLV9jx5f.js                                          771.91 kB │ gzip:   203.52 kB
+#33 11.57 dist/assets/index-DQAaz-xk.js                                           1,522.30 kB │ gzip:   341.84 kB
+#33 11.57 dist/assets/material-symbols-D_20Mn4g.js                                8,527.32 kB │ gzip: 1,301.01 kB
+#33 11.57 
+#33 11.58 [33m[PLUGIN_TIMINGS] [0mYour build spent significant time in plugins. Here is a breakdown:
+#33 11.58   - unplugin-icons (53%)
+#33 11.58   - unplugin-vue-components (26%)
+#33 11.58   - vite:vue (7%)
+#33 11.58   - unplugin-auto-import (6%)
+#33 11.58 See https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.
+#33 11.58 
+#33 11.58 [plugin builtin:vite-reporter] 
+#33 11.58 (!) Some chunks are larger than 500 kB after minification. Consider:
+#33 11.58 - Using dynamic import() to code-split the application
+#33 11.58 - Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+#33 11.58 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+#33 11.58 ✓ built in 8.78s
+#33 ...
+
+#34 [backend frankenphp_prod_builder 6/7] RUN <<-EOF (mkdir -p var/cache var/log var/share...)
+#34 7.000 Executing script cache:clear [OK]
+#34 12.79 Executing script assets:install public [OK]
+#34 13.07 Executing script importmap:install
+#34 13.26  [OK]
+#34 13.27 + chmod +x bin/console
+#34 13.29 + chmod -R g=u var
+#34 13.36 + sync
+#34 DONE 13.5s
+
+#35 [backend frankenphp_prod_builder 7/7] RUN <<-'EOF' (apt-get update...)
+#35 0.300 + apt-get update
+#35 0.487 Get:1 http://deb.debian.org/debian trixie InRelease [140 kB]
+#35 0.524 Get:2 http://deb.debian.org/debian trixie-updates InRelease [47.3 kB]
+#35 0.524 Get:3 http://deb.debian.org/debian-security trixie-security InRelease [43.4 kB]
+#35 0.582 Get:4 http://deb.debian.org/debian trixie/main amd64 Packages [9678 kB]
+#35 0.588 Get:5 https://packages.microsoft.com/debian/13/prod trixie InRelease [3952 B]
+#35 0.636 Get:6 https://packages.microsoft.com/debian/13/prod trixie/main armhf Packages [1299 B]
+#35 0.701 Get:7 https://packages.microsoft.com/debian/13/prod trixie/main all Packages [342 B]
+#35 0.719 Get:8 https://packages.microsoft.com/debian/13/prod trixie/main amd64 Packages [49.9 kB]
+#35 0.774 Get:9 https://packages.microsoft.com/debian/13/prod trixie/main arm64 Packages [23.0 kB]
+#35 0.986 Get:10 http://deb.debian.org/debian trixie-updates/main amd64 Packages [720 B]
+#35 0.986 Get:11 http://deb.debian.org/debian-security trixie-security/main amd64 Packages [270 kB]
+#35 1.895 Fetched 10.3 MB in 1s (7175 kB/s)
+#35 1.895 Reading package lists...
+#35 2.773 + apt-get install -y --no-install-recommends libtree
+#35 2.788 Reading package lists...
+#35 3.664 Building dependency tree...
+#35 3.917 Reading state information...
+#35 4.364 The following NEW packages will be installed:
+#35 4.365   libtree
+#35 4.427 0 upgraded, 1 newly installed, 0 to remove and 1 not upgraded.
+#35 4.427 Need to get 17.0 kB of archives.
+#35 4.427 After this operation, 51.2 kB of additional disk space will be used.
+#35 4.427 Get:1 http://deb.debian.org/debian trixie/main amd64 libtree amd64 3.1.1-3 [17.0 kB]
+#35 4.765 debconf: unable to initialize frontend: Dialog
+#35 4.765 debconf: (TERM is not set, so the dialog frontend is not usable.)
+#35 4.765 debconf: falling back to frontend: Readline
+#35 4.780 debconf: unable to initialize frontend: Readline
+#35 4.780 debconf: (This frontend requires a controlling tty.)
+#35 4.780 debconf: falling back to frontend: Teletype
+#35 4.789 debconf: unable to initialize frontend: Teletype
+#35 4.789 debconf: (This frontend requires a controlling tty.)
+#35 4.789 debconf: falling back to frontend: Noninteractive
+#35 5.683 Fetched 17.0 kB in 0s (525 kB/s)
+#35 5.729 Selecting previously unselected package libtree.
+#35 5.729 (Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 16271 files and directories currently installed.)
+#35 5.865 Preparing to unpack .../libtree_3.1.1-3_amd64.deb ...
+#35 5.871 Unpacking libtree (3.1.1-3) ...
+#35 5.925 Setting up libtree (3.1.1-3) ...
+#35 5.964 + mkdir -p /tmp/libs
+#35 5.966 + BINARIES=(frankenphp php file)
+#35 5.967 ++ xargs '-I{}' which '{}'
+#35 5.967 ++ printf '%s\n' frankenphp php file
+#35 5.978 +++ php -r 'echo ini_get("extension_dir");'
+#35 6.012 ++ find /usr/local/lib/php/extensions/no-debug-zts-20240924 -maxdepth 2 -name '*.so'
+#35 6.015 + for target in $(printf '%s\n' "${BINARIES[@]}" | xargs -I{} which {}) $(find "$(php -r 'echo ini_get("extension_dir");')" -maxdepth 2 -name "*.so")
+#35 6.016 + libtree -pv /usr/local/bin/frankenphp
+#35 6.019 + grep -oP '(?:── )\K/\S+(?= \[)'
+#35 6.019 + IFS=
+#35 6.019 + read -r lib
+#35 6.031 + '[' -f /usr/local/lib/libphp.so ']'
+#35 6.031 + cp -n /usr/local/lib/libphp.so /tmp/libs/
+#35 6.076 + IFS=
+#35 6.077 + read -r lib
+#35 6.077 + '[' -f /lib/x86_64-linux-gnu/libreadline.so.8 ']'
+#35 6.077 + cp -n /lib/x86_64-linux-gnu/libreadline.so.8 /tmp/libs/
+#35 6.083 + IFS=
+#35 6.083 + read -r lib
+#35 6.083 + '[' -f /lib/x86_64-linux-gnu/libtinfo.so.6 ']'
+#35 6.083 + cp -n /lib/x86_64-linux-gnu/libtinfo.so.6 /tmp/libs/
+#35 6.084 + IFS=
+#35 6.084 + read -r lib
+#35 6.084 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.084 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.095 + IFS=
+#35 6.095 + read -r lib
+#35 6.095 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.095 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.095 + IFS=
+#35 6.095 + read -r lib
+#35 6.095 + '[' -f /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 ']'
+#35 6.095 + cp -n /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /tmp/libs/
+#35 6.095 + IFS=
+#35 6.095 + read -r lib
+#35 6.095 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.095 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.097 + IFS=
+#35 6.097 + read -r lib
+#35 6.097 + '[' -f /lib/x86_64-linux-gnu/libargon2.so.1 ']'
+#35 6.097 + cp -n /lib/x86_64-linux-gnu/libargon2.so.1 /tmp/libs/
+#35 6.099 + IFS=
+#35 6.099 + read -r lib
+#35 6.099 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.099 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.101 + IFS=
+#35 6.101 + read -r lib
+#35 6.101 + '[' -f /lib/x86_64-linux-gnu/libonig.so.5 ']'
+#35 6.101 + cp -n /lib/x86_64-linux-gnu/libonig.so.5 /tmp/libs/
+#35 6.105 + IFS=
+#35 6.105 + read -r lib
+#35 6.105 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.105 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.108 + IFS=
+#35 6.108 + read -r lib
+#35 6.108 + '[' -f /lib/x86_64-linux-gnu/libcurl.so.4 ']'
+#35 6.108 + cp -n /lib/x86_64-linux-gnu/libcurl.so.4 /tmp/libs/
+#35 6.112 + IFS=
+#35 6.112 + read -r lib
+#35 6.112 + '[' -f /lib/x86_64-linux-gnu/libnghttp3.so.9 ']'
+#35 6.112 + cp -n /lib/x86_64-linux-gnu/libnghttp3.so.9 /tmp/libs/
+#35 6.114 + IFS=
+#35 6.115 + read -r lib
+#35 6.115 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.115 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.117 + IFS=
+#35 6.117 + read -r lib
+#35 6.117 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.117 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.119 + IFS=
+#35 6.119 + read -r lib
+#35 6.119 + '[' -f /lib/x86_64-linux-gnu/libz.so.1 ']'
+#35 6.119 + cp -n /lib/x86_64-linux-gnu/libz.so.1 /tmp/libs/
+#35 6.121 + IFS=
+#35 6.121 + read -r lib
+#35 6.121 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.121 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.122 + IFS=
+#35 6.123 + read -r lib
+#35 6.123 + '[' -f /lib/x86_64-linux-gnu/libbrotlidec.so.1 ']'
+#35 6.123 + cp -n /lib/x86_64-linux-gnu/libbrotlidec.so.1 /tmp/libs/
+#35 6.124 + IFS=
+#35 6.124 + read -r lib
+#35 6.124 + '[' -f /lib/x86_64-linux-gnu/libbrotlicommon.so.1 ']'
+#35 6.125 + cp -n /lib/x86_64-linux-gnu/libbrotlicommon.so.1 /tmp/libs/
+#35 6.126 + IFS=
+#35 6.126 + read -r lib
+#35 6.126 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.126 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.127 + IFS=
+#35 6.127 + read -r lib
+#35 6.128 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.128 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.128 + IFS=
+#35 6.128 + read -r lib
+#35 6.128 + '[' -f /lib/x86_64-linux-gnu/libzstd.so.1 ']'
+#35 6.128 + cp -n /lib/x86_64-linux-gnu/libzstd.so.1 /tmp/libs/
+#35 6.132 + IFS=
+#35 6.133 + read -r lib
+#35 6.133 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.133 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.135 + IFS=
+#35 6.135 + read -r lib
+#35 6.135 + '[' -f /lib/x86_64-linux-gnu/liblber.so.2 ']'
+#35 6.135 + cp -n /lib/x86_64-linux-gnu/liblber.so.2 /tmp/libs/
+#35 6.137 + IFS=
+#35 6.137 + read -r lib
+#35 6.137 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.137 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.139 + IFS=
+#35 6.139 + read -r lib
+#35 6.139 + '[' -f /lib/x86_64-linux-gnu/libldap.so.2 ']'
+#35 6.139 + cp -n /lib/x86_64-linux-gnu/libldap.so.2 /tmp/libs/
+#35 6.142 + IFS=
+#35 6.142 + read -r lib
+#35 6.142 + '[' -f /lib/x86_64-linux-gnu/liblber.so.2 ']'
+#35 6.142 + cp -n /lib/x86_64-linux-gnu/liblber.so.2 /tmp/libs/
+#35 6.144 + IFS=
+#35 6.144 + read -r lib
+#35 6.144 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.144 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.145 + IFS=
+#35 6.146 + read -r lib
+#35 6.146 + '[' -f /lib/x86_64-linux-gnu/libcrypto.so.3 ']'
+#35 6.147 + cp -n /lib/x86_64-linux-gnu/libcrypto.so.3 /tmp/libs/
+#35 6.158 + IFS=
+#35 6.158 + read -r lib
+#35 6.158 + '[' -f /lib/x86_64-linux-gnu/libz.so.1 ']'
+#35 6.158 + cp -n /lib/x86_64-linux-gnu/libz.so.1 /tmp/libs/
+#35 6.160 + IFS=
+#35 6.160 + read -r lib
+#35 6.160 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.160 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.162 + IFS=
+#35 6.162 + read -r lib
+#35 6.162 + '[' -f /lib/x86_64-linux-gnu/libzstd.so.1 ']'
+#35 6.162 + cp -n /lib/x86_64-linux-gnu/libzstd.so.1 /tmp/libs/
+#35 6.164 + IFS=
+#35 6.164 + read -r lib
+#35 6.164 + '[' -f /lib/x86_64-linux-gnu/libssl.so.3 ']'
+#35 6.164 + cp -n /lib/x86_64-linux-gnu/libssl.so.3 /tmp/libs/
+#35 6.169 + IFS=
+#35 6.169 + read -r lib
+#35 6.171 + '[' -f /lib/x86_64-linux-gnu/libcrypto.so.3 ']'
+#35 6.171 + cp -n /lib/x86_64-linux-gnu/libcrypto.so.3 /tmp/libs/
+#35 6.174 + IFS=
+#35 6.174 + read -r lib
+#35 6.174 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.174 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.181 + IFS=
+#35 6.181 + read -r lib
+#35 6.181 + '[' -f /lib/x86_64-linux-gnu/libsasl2.so.2 ']'
+#35 6.181 + cp -n /lib/x86_64-linux-gnu/libsasl2.so.2 /tmp/libs/
+#35 6.186 + IFS=
+#35 6.186 + read -r lib
+#35 6.186 + '[' -f /lib/x86_64-linux-gnu/libcrypto.so.3 ']'
+#35 6.186 + cp -n /lib/x86_64-linux-gnu/libcrypto.so.3 /tmp/libs/
+#35 6.188 + IFS=
+#35 6.188 + read -r lib
+#35 6.188 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.188 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.192 + IFS=
+#35 6.192 + read -r lib
+#35 6.192 + '[' -f /lib/x86_64-linux-gnu/libgssapi_krb5.so.2 ']'
+#35 6.192 + cp -n /lib/x86_64-linux-gnu/libgssapi_krb5.so.2 /tmp/libs/
+#35 6.199 + IFS=
+#35 6.199 + read -r lib
+#35 6.199 + '[' -f /lib/x86_64-linux-gnu/libkrb5.so.3 ']'
+#35 6.200 + cp -n /lib/x86_64-linux-gnu/libkrb5.so.3 /tmp/libs/
+#35 6.221 + IFS=
+#35 6.221 + read -r lib
+#35 6.221 + '[' -f /lib/x86_64-linux-gnu/libk5crypto.so.3 ']'
+#35 6.221 + cp -n /lib/x86_64-linux-gnu/libk5crypto.so.3 /tmp/libs/
+#35 6.224 + IFS=
+#35 6.224 + read -r lib
+#35 6.226 + '[' -f /lib/x86_64-linux-gnu/libkrb5support.so.0 ']'
+#35 6.226 + cp -n /lib/x86_64-linux-gnu/libkrb5support.so.0 /tmp/libs/
+#35 6.228 + IFS=
+#35 6.228 + read -r lib
+#35 6.228 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.228 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.237 + IFS=
+#35 6.237 + read -r lib
+#35 6.237 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.237 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.241 + IFS=
+#35 6.241 + read -r lib
+#35 6.241 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.241 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.242 + IFS=
+#35 6.243 + read -r lib
+#35 6.243 + '[' -f /lib/x86_64-linux-gnu/libresolv.so.2 ']'
+#35 6.244 + cp -n /lib/x86_64-linux-gnu/libresolv.so.2 /tmp/libs/
+#35 6.246 + IFS=
+#35 6.246 + read -r lib
+#35 6.246 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.246 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.248 + IFS=
+#35 6.248 + read -r lib
+#35 6.248 + '[' -f /lib/x86_64-linux-gnu/libkeyutils.so.1 ']'
+#35 6.249 + cp -n /lib/x86_64-linux-gnu/libkeyutils.so.1 /tmp/libs/
+#35 6.251 + IFS=
+#35 6.251 + read -r lib
+#35 6.251 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.251 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.252 + IFS=
+#35 6.252 + read -r lib
+#35 6.252 + '[' -f /lib/x86_64-linux-gnu/libkrb5support.so.0 ']'
+#35 6.253 + cp -n /lib/x86_64-linux-gnu/libkrb5support.so.0 /tmp/libs/
+#35 6.255 + IFS=
+#35 6.256 + read -r lib
+#35 6.256 + '[' -f /lib/x86_64-linux-gnu/libcom_err.so.2 ']'
+#35 6.256 + cp -n /lib/x86_64-linux-gnu/libcom_err.so.2 /tmp/libs/
+#35 6.261 + IFS=
+#35 6.261 + read -r lib
+#35 6.261 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.261 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.263 + IFS=
+#35 6.263 + read -r lib
+#35 6.263 + '[' -f /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 ']'
+#35 6.263 + cp -n /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /tmp/libs/
+#35 6.265 + IFS=
+#35 6.265 + read -r lib
+#35 6.266 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.266 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.268 + IFS=
+#35 6.269 + read -r lib
+#35 6.269 + '[' -f /lib/x86_64-linux-gnu/libkrb5support.so.0 ']'
+#35 6.269 + cp -n /lib/x86_64-linux-gnu/libkrb5support.so.0 /tmp/libs/
+#35 6.274 + IFS=
+#35 6.274 + read -r lib
+#35 6.274 + '[' -f /lib/x86_64-linux-gnu/libcom_err.so.2 ']'
+#35 6.274 + cp -n /lib/x86_64-linux-gnu/libcom_err.so.2 /tmp/libs/
+#35 6.277 + IFS=
+#35 6.277 + read -r lib
+#35 6.278 + '[' -f /lib/x86_64-linux-gnu/libk5crypto.so.3 ']'
+#35 6.278 + cp -n /lib/x86_64-linux-gnu/libk5crypto.so.3 /tmp/libs/
+#35 6.281 + IFS=
+#35 6.281 + read -r lib
+#35 6.281 + '[' -f /lib/x86_64-linux-gnu/libcrypto.so.3 ']'
+#35 6.281 + cp -n /lib/x86_64-linux-gnu/libcrypto.so.3 /tmp/libs/
+#35 6.283 + IFS=
+#35 6.283 + read -r lib
+#35 6.283 + '[' -f /lib/x86_64-linux-gnu/libssl.so.3 ']'
+#35 6.284 + cp -n /lib/x86_64-linux-gnu/libssl.so.3 /tmp/libs/
+#35 6.285 + IFS=
+#35 6.285 + read -r lib
+#35 6.286 + '[' -f /lib/x86_64-linux-gnu/libpsl.so.5 ']'
+#35 6.286 + cp -n /lib/x86_64-linux-gnu/libpsl.so.5 /tmp/libs/
+#35 6.288 + IFS=
+#35 6.288 + read -r lib
+#35 6.288 + '[' -f /lib/x86_64-linux-gnu/libunistring.so.5 ']'
+#35 6.289 + cp -n /lib/x86_64-linux-gnu/libunistring.so.5 /tmp/libs/
+#35 6.303 + IFS=
+#35 6.304 + read -r lib
+#35 6.304 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.304 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.308 + IFS=
+#35 6.309 + read -r lib
+#35 6.310 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.310 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.314 + IFS=
+#35 6.314 + read -r lib
+#35 6.314 + '[' -f /lib/x86_64-linux-gnu/libidn2.so.0 ']'
+#35 6.314 + cp -n /lib/x86_64-linux-gnu/libidn2.so.0 /tmp/libs/
+#35 6.317 + IFS=
+#35 6.317 + read -r lib
+#35 6.318 + '[' -f /lib/x86_64-linux-gnu/libunistring.so.5 ']'
+#35 6.319 + cp -n /lib/x86_64-linux-gnu/libunistring.so.5 /tmp/libs/
+#35 6.323 + IFS=
+#35 6.324 + read -r lib
+#35 6.324 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.324 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.328 + IFS=
+#35 6.328 + read -r lib
+#35 6.328 + '[' -f /lib/x86_64-linux-gnu/libssh2.so.1 ']'
+#35 6.328 + cp -n /lib/x86_64-linux-gnu/libssh2.so.1 /tmp/libs/
+#35 6.331 + IFS=
+#35 6.331 + read -r lib
+#35 6.331 + '[' -f /lib/x86_64-linux-gnu/libcrypto.so.3 ']'
+#35 6.331 + cp -n /lib/x86_64-linux-gnu/libcrypto.so.3 /tmp/libs/
+#35 6.333 + IFS=
+#35 6.333 + read -r lib
+#35 6.333 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.333 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.335 + IFS=
+#35 6.335 + read -r lib
+#35 6.335 + '[' -f /lib/x86_64-linux-gnu/libz.so.1 ']'
+#35 6.336 + cp -n /lib/x86_64-linux-gnu/libz.so.1 /tmp/libs/
+#35 6.338 + IFS=
+#35 6.338 + read -r lib
+#35 6.338 + '[' -f /lib/x86_64-linux-gnu/librtmp.so.1 ']'
+#35 6.338 + cp -n /lib/x86_64-linux-gnu/librtmp.so.1 /tmp/libs/
+#35 6.340 + IFS=
+#35 6.340 + read -r lib
+#35 6.340 + '[' -f /lib/x86_64-linux-gnu/libgnutls.so.30 ']'
+#35 6.340 + cp -n /lib/x86_64-linux-gnu/libgnutls.so.30 /tmp/libs/
+#35 6.362 + IFS=
+#35 6.362 + read -r lib
+#35 6.362 + '[' -f /lib/x86_64-linux-gnu/libp11-kit.so.0 ']'
+#35 6.362 + cp -n /lib/x86_64-linux-gnu/libp11-kit.so.0 /tmp/libs/
+#35 6.378 + IFS=
+#35 6.378 + read -r lib
+#35 6.378 + '[' -f /lib/x86_64-linux-gnu/libffi.so.8 ']'
+#35 6.378 + cp -n /lib/x86_64-linux-gnu/libffi.so.8 /tmp/libs/
+#35 6.381 + IFS=
+#35 6.381 + read -r lib
+#35 6.381 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.381 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.383 + IFS=
+#35 6.383 + read -r lib
+#35 6.383 + '[' -f /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 ']'
+#35 6.383 + cp -n /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /tmp/libs/
+#35 6.385 + IFS=
+#35 6.385 + read -r lib
+#35 6.385 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.385 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.387 + IFS=
+#35 6.387 + read -r lib
+#35 6.387 + '[' -f /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 ']'
+#35 6.387 + cp -n /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /tmp/libs/
+#35 6.390 + IFS=
+#35 6.390 + read -r lib
+#35 6.391 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.391 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.395 + IFS=
+#35 6.395 + read -r lib
+#35 6.395 + '[' -f /lib/x86_64-linux-gnu/libgmp.so.10 ']'
+#35 6.395 + cp -n /lib/x86_64-linux-gnu/libgmp.so.10 /tmp/libs/
+#35 6.407 + IFS=
+#35 6.407 + read -r lib
+#35 6.407 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.407 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.409 + IFS=
+#35 6.409 + read -r lib
+#35 6.409 + '[' -f /lib/x86_64-linux-gnu/libnettle.so.8 ']'
+#35 6.409 + cp -n /lib/x86_64-linux-gnu/libnettle.so.8 /tmp/libs/
+#35 6.423 + IFS=
+#35 6.423 + read -r lib
+#35 6.423 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.423 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.425 + IFS=
+#35 6.425 + read -r lib
+#35 6.425 + '[' -f /lib/x86_64-linux-gnu/libhogweed.so.6 ']'
+#35 6.425 + cp -n /lib/x86_64-linux-gnu/libhogweed.so.6 /tmp/libs/
+#35 6.431 + IFS=
+#35 6.431 + read -r lib
+#35 6.431 + '[' -f /lib/x86_64-linux-gnu/libnettle.so.8 ']'
+#35 6.431 + cp -n /lib/x86_64-linux-gnu/libnettle.so.8 /tmp/libs/
+#35 6.433 + IFS=
+#35 6.433 + read -r lib
+#35 6.433 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.434 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.436 + IFS=
+#35 6.436 + read -r lib
+#35 6.436 + '[' -f /lib/x86_64-linux-gnu/libgmp.so.10 ']'
+#35 6.436 + cp -n /lib/x86_64-linux-gnu/libgmp.so.10 /tmp/libs/
+#35 6.438 + IFS=
+#35 6.438 + read -r lib
+#35 6.438 + '[' -f /lib/x86_64-linux-gnu/libtasn1.so.6 ']'
+#35 6.438 + cp -n /lib/x86_64-linux-gnu/libtasn1.so.6 /tmp/libs/
+#35 6.441 + IFS=
+#35 6.444 + read -r lib
+#35 6.445 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.445 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.448 + IFS=
+#35 6.448 + read -r lib
+#35 6.448 + '[' -f /lib/x86_64-linux-gnu/libunistring.so.5 ']'
+#35 6.448 + cp -n /lib/x86_64-linux-gnu/libunistring.so.5 /tmp/libs/
+#35 6.451 + IFS=
+#35 6.451 + read -r lib
+#35 6.451 + '[' -f /lib/x86_64-linux-gnu/libidn2.so.0 ']'
+#35 6.451 + cp -n /lib/x86_64-linux-gnu/libidn2.so.0 /tmp/libs/
+#35 6.454 + IFS=
+#35 6.454 + read -r lib
+#35 6.454 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.454 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.459 + IFS=
+#35 6.459 + read -r lib
+#35 6.459 + '[' -f /lib/x86_64-linux-gnu/libz.so.1 ']'
+#35 6.459 + cp -n /lib/x86_64-linux-gnu/libz.so.1 /tmp/libs/
+#35 6.461 + IFS=
+#35 6.461 + read -r lib
+#35 6.461 + '[' -f /lib/x86_64-linux-gnu/libgmp.so.10 ']'
+#35 6.461 + cp -n /lib/x86_64-linux-gnu/libgmp.so.10 /tmp/libs/
+#35 6.462 + IFS=
+#35 6.463 + read -r lib
+#35 6.463 + '[' -f /lib/x86_64-linux-gnu/libnettle.so.8 ']'
+#35 6.463 + cp -n /lib/x86_64-linux-gnu/libnettle.so.8 /tmp/libs/
+#35 6.469 + IFS=
+#35 6.469 + read -r lib
+#35 6.469 + '[' -f /lib/x86_64-linux-gnu/libhogweed.so.6 ']'
+#35 6.469 + cp -n /lib/x86_64-linux-gnu/libhogweed.so.6 /tmp/libs/
+#35 6.471 + IFS=
+#35 6.471 + read -r lib
+#35 6.471 + '[' -f /lib/x86_64-linux-gnu/libidn2.so.0 ']'
+#35 6.471 + cp -n /lib/x86_64-linux-gnu/libidn2.so.0 /tmp/libs/
+#35 6.472 + IFS=
+#35 6.472 + read -r lib
+#35 6.473 + '[' -f /lib/x86_64-linux-gnu/libnghttp2.so.14 ']'
+#35 6.473 + cp -n /lib/x86_64-linux-gnu/libnghttp2.so.14 /tmp/libs/
+#35 6.474 + IFS=
+#35 6.474 + read -r lib
+#35 6.474 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.474 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.477 + IFS=
+#35 6.477 + read -r lib
+#35 6.477 + '[' -f /lib/x86_64-linux-gnu/libz.so.1 ']'
+#35 6.477 + cp -n /lib/x86_64-linux-gnu/libz.so.1 /tmp/libs/
+#35 6.478 + IFS=
+#35 6.478 + read -r lib
+#35 6.478 + '[' -f /lib/x86_64-linux-gnu/libsqlite3.so.0 ']'
+#35 6.478 + cp -n /lib/x86_64-linux-gnu/libsqlite3.so.0 /tmp/libs/
+#35 6.501 + IFS=
+#35 6.501 + read -r lib
+#35 6.501 + '[' -f /lib/x86_64-linux-gnu/libm.so.6 ']'
+#35 6.501 + cp -n /lib/x86_64-linux-gnu/libm.so.6 /tmp/libs/
+#35 6.512 + IFS=
+#35 6.512 + read -r lib
+#35 6.512 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.512 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.514 + IFS=
+#35 6.514 + read -r lib
+#35 6.514 + '[' -f /lib/x86_64-linux-gnu/libcrypto.so.3 ']'
+#35 6.514 + cp -n /lib/x86_64-linux-gnu/libcrypto.so.3 /tmp/libs/
+#35 6.516 + IFS=
+#35 6.516 + read -r lib
+#35 6.516 + '[' -f /lib/x86_64-linux-gnu/libssl.so.3 ']'
+#35 6.516 + cp -n /lib/x86_64-linux-gnu/libssl.so.3 /tmp/libs/
+#35 6.518 + IFS=
+#35 6.518 + read -r lib
+#35 6.518 + '[' -f /lib/x86_64-linux-gnu/libxml2.so.2 ']'
+#35 6.518 + cp -n /lib/x86_64-linux-gnu/libxml2.so.2 /tmp/libs/
+#35 6.522 + IFS=
+#35 6.522 + read -r lib
+#35 6.522 + '[' -f /lib/x86_64-linux-gnu/libz.so.1 ']'
+#35 6.522 + cp -n /lib/x86_64-linux-gnu/libz.so.1 /tmp/libs/
+#35 6.525 + IFS=
+#35 6.525 + read -r lib
+#35 6.525 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.525 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.528 + IFS=
+#35 6.528 + read -r lib
+#35 6.528 + '[' -f /lib/x86_64-linux-gnu/libm.so.6 ']'
+#35 6.528 + cp -n /lib/x86_64-linux-gnu/libm.so.6 /tmp/libs/
+#35 6.531 + IFS=
+#35 6.531 + read -r lib
+#35 6.532 + '[' -f /lib/x86_64-linux-gnu/liblzma.so.5 ']'
+#35 6.532 + cp -n /lib/x86_64-linux-gnu/liblzma.so.5 /tmp/libs/
+#35 6.534 + IFS=
+#35 6.534 + read -r lib
+#35 6.534 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.534 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.539 + IFS=
+#35 6.539 + read -r lib
+#35 6.539 + '[' -f /lib/x86_64-linux-gnu/libm.so.6 ']'
+#35 6.539 + cp -n /lib/x86_64-linux-gnu/libm.so.6 /tmp/libs/
+#35 6.539 + IFS=
+#35 6.539 + read -r lib
+#35 6.539 + '[' -f /usr/local/lib/libwatcher-c.so.0 ']'
+#35 6.539 + cp -n /usr/local/lib/libwatcher-c.so.0 /tmp/libs/
+#35 6.542 + IFS=
+#35 6.542 + read -r lib
+#35 6.542 + '[' -f /lib/x86_64-linux-gnu/libstdc++.so.6 ']'
+#35 6.542 + cp -n /lib/x86_64-linux-gnu/libstdc++.so.6 /tmp/libs/
+#35 6.552 + IFS=
+#35 6.552 + read -r lib
+#35 6.553 + '[' -f /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 ']'
+#35 6.553 + cp -n /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /tmp/libs/
+#35 6.554 + IFS=
+#35 6.554 + read -r lib
+#35 6.554 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.555 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.556 + IFS=
+#35 6.556 + read -r lib
+#35 6.556 + '[' -f /lib/x86_64-linux-gnu/libbrotlidec.so.1 ']'
+#35 6.556 + cp -n /lib/x86_64-linux-gnu/libbrotlidec.so.1 /tmp/libs/
+#35 6.558 + IFS=
+#35 6.558 + read -r lib
+#35 6.558 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.558 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.560 + IFS=
+#35 6.560 + read -r lib
+#35 6.561 + '[' -f /lib/x86_64-linux-gnu/libbrotlienc.so.1 ']'
+#35 6.561 + cp -n /lib/x86_64-linux-gnu/libbrotlienc.so.1 /tmp/libs/
+#35 6.565 + IFS=
+#35 6.565 + read -r lib
+#35 6.565 + '[' -f /lib/x86_64-linux-gnu/libm.so.6 ']'
+#35 6.565 + cp -n /lib/x86_64-linux-gnu/libm.so.6 /tmp/libs/
+#35 6.567 + IFS=
+#35 6.567 + read -r lib
+#35 6.567 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.567 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.569 + IFS=
+#35 6.569 + read -r lib
+#35 6.569 + '[' -f /lib/x86_64-linux-gnu/libbrotlicommon.so.1 ']'
+#35 6.569 + cp -n /lib/x86_64-linux-gnu/libbrotlicommon.so.1 /tmp/libs/
+#35 6.574 + IFS=
+#35 6.574 + read -r lib
+#35 6.575 + for target in $(printf '%s\n' "${BINARIES[@]}" | xargs -I{} which {}) $(find "$(php -r 'echo ini_get("extension_dir");')" -maxdepth 2 -name "*.so")
+#35 6.575 + libtree -pv /usr/local/bin/php
+#35 6.579 + grep -oP '(?:── )\K/\S+(?= \[)'
+#35 6.579 + IFS=
+#35 6.579 + read -r lib
+#35 6.580 + '[' -f /lib/x86_64-linux-gnu/libreadline.so.8 ']'
+#35 6.580 + cp -n /lib/x86_64-linux-gnu/libreadline.so.8 /tmp/libs/
+#35 6.583 + IFS=
+#35 6.583 + read -r lib
+#35 6.583 + '[' -f /lib/x86_64-linux-gnu/libtinfo.so.6 ']'
+#35 6.583 + cp -n /lib/x86_64-linux-gnu/libtinfo.so.6 /tmp/libs/
+#35 6.585 + IFS=
+#35 6.585 + read -r lib
+#35 6.585 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.585 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.589 + IFS=
+#35 6.589 + read -r lib
+#35 6.589 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.589 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.589 + IFS=
+#35 6.589 + read -r lib
+#35 6.590 + '[' -f /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 ']'
+#35 6.590 + cp -n /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /tmp/libs/
+#35 6.591 + IFS=
+#35 6.591 + read -r lib
+#35 6.591 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.591 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.594 + IFS=
+#35 6.594 + read -r lib
+#35 6.594 + '[' -f /lib/x86_64-linux-gnu/libargon2.so.1 ']'
+#35 6.594 + cp -n /lib/x86_64-linux-gnu/libargon2.so.1 /tmp/libs/
+#35 6.594 + IFS=
+#35 6.594 + read -r lib
+#35 6.594 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.594 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.596 + IFS=
+#35 6.596 + read -r lib
+#35 6.596 + '[' -f /lib/x86_64-linux-gnu/libonig.so.5 ']'
+#35 6.596 + cp -n /lib/x86_64-linux-gnu/libonig.so.5 /tmp/libs/
+#35 6.598 + IFS=
+#35 6.598 + read -r lib
+#35 6.598 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.598 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.600 + IFS=
+#35 6.600 + read -r lib
+#35 6.600 + '[' -f /lib/x86_64-linux-gnu/libcurl.so.4 ']'
+#35 6.600 + cp -n /lib/x86_64-linux-gnu/libcurl.so.4 /tmp/libs/
+#35 6.603 + IFS=
+#35 6.603 + read -r lib
+#35 6.603 + '[' -f /lib/x86_64-linux-gnu/libnghttp3.so.9 ']'
+#35 6.603 + cp -n /lib/x86_64-linux-gnu/libnghttp3.so.9 /tmp/libs/
+#35 6.606 + IFS=
+#35 6.606 + read -r lib
+#35 6.607 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.607 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.609 + IFS=
+#35 6.609 + read -r lib
+#35 6.609 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.609 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.610 + IFS=
+#35 6.610 + read -r lib
+#35 6.610 + '[' -f /lib/x86_64-linux-gnu/libz.so.1 ']'
+#35 6.610 + cp -n /lib/x86_64-linux-gnu/libz.so.1 /tmp/libs/
+#35 6.613 + IFS=
+#35 6.613 + read -r lib
+#35 6.613 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.613 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.613 + IFS=
+#35 6.613 + read -r lib
+#35 6.613 + '[' -f /lib/x86_64-linux-gnu/libbrotlidec.so.1 ']'
+#35 6.613 + cp -n /lib/x86_64-linux-gnu/libbrotlidec.so.1 /tmp/libs/
+#35 6.615 + IFS=
+#35 6.615 + read -r lib
+#35 6.615 + '[' -f /lib/x86_64-linux-gnu/libbrotlicommon.so.1 ']'
+#35 6.615 + cp -n /lib/x86_64-linux-gnu/libbrotlicommon.so.1 /tmp/libs/
+#35 6.616 + IFS=
+#35 6.616 + read -r lib
+#35 6.616 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.616 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.618 + IFS=
+#35 6.618 + read -r lib
+#35 6.618 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.618 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.619 + IFS=
+#35 6.619 + read -r lib
+#35 6.619 + '[' -f /lib/x86_64-linux-gnu/libzstd.so.1 ']'
+#35 6.619 + cp -n /lib/x86_64-linux-gnu/libzstd.so.1 /tmp/libs/
+#35 6.621 + IFS=
+#35 6.621 + read -r lib
+#35 6.621 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.621 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.623 + IFS=
+#35 6.623 + read -r lib
+#35 6.623 + '[' -f /lib/x86_64-linux-gnu/liblber.so.2 ']'
+#35 6.623 + cp -n /lib/x86_64-linux-gnu/liblber.so.2 /tmp/libs/
+#35 6.624 + IFS=
+#35 6.624 + read -r lib
+#35 6.624 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.624 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.626 + IFS=
+#35 6.626 + read -r lib
+#35 6.626 + '[' -f /lib/x86_64-linux-gnu/libldap.so.2 ']'
+#35 6.626 + cp -n /lib/x86_64-linux-gnu/libldap.so.2 /tmp/libs/
+#35 6.627 + IFS=
+#35 6.627 + read -r lib
+#35 6.628 + '[' -f /lib/x86_64-linux-gnu/liblber.so.2 ']'
+#35 6.628 + cp -n /lib/x86_64-linux-gnu/liblber.so.2 /tmp/libs/
+#35 6.632 + IFS=
+#35 6.632 + read -r lib
+#35 6.633 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.633 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.635 + IFS=
+#35 6.635 + read -r lib
+#35 6.635 + '[' -f /lib/x86_64-linux-gnu/libcrypto.so.3 ']'
+#35 6.635 + cp -n /lib/x86_64-linux-gnu/libcrypto.so.3 /tmp/libs/
+#35 6.637 + IFS=
+#35 6.637 + read -r lib
+#35 6.637 + '[' -f /lib/x86_64-linux-gnu/libz.so.1 ']'
+#35 6.637 + cp -n /lib/x86_64-linux-gnu/libz.so.1 /tmp/libs/
+#35 6.639 + IFS=
+#35 6.639 + read -r lib
+#35 6.639 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.639 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.641 + IFS=
+#35 6.641 + read -r lib
+#35 6.641 + '[' -f /lib/x86_64-linux-gnu/libzstd.so.1 ']'
+#35 6.641 + cp -n /lib/x86_64-linux-gnu/libzstd.so.1 /tmp/libs/
+#35 6.643 + IFS=
+#35 6.643 + read -r lib
+#35 6.643 + '[' -f /lib/x86_64-linux-gnu/libssl.so.3 ']'
+#35 6.643 + cp -n /lib/x86_64-linux-gnu/libssl.so.3 /tmp/libs/
+#35 6.648 + IFS=
+#35 6.648 + read -r lib
+#35 6.648 + '[' -f /lib/x86_64-linux-gnu/libcrypto.so.3 ']'
+#35 6.648 + cp -n /lib/x86_64-linux-gnu/libcrypto.so.3 /tmp/libs/
+#35 6.650 + IFS=
+#35 6.650 + read -r lib
+#35 6.650 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.650 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.653 + IFS=
+#35 6.653 + read -r lib
+#35 6.653 + '[' -f /lib/x86_64-linux-gnu/libsasl2.so.2 ']'
+#35 6.653 + cp -n /lib/x86_64-linux-gnu/libsasl2.so.2 /tmp/libs/
+#35 6.655 + IFS=
+#35 6.655 + read -r lib
+#35 6.655 + '[' -f /lib/x86_64-linux-gnu/libcrypto.so.3 ']'
+#35 6.655 + cp -n /lib/x86_64-linux-gnu/libcrypto.so.3 /tmp/libs/
+#35 6.657 + IFS=
+#35 6.657 + read -r lib
+#35 6.657 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.657 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.659 + IFS=
+#35 6.659 + read -r lib
+#35 6.659 + '[' -f /lib/x86_64-linux-gnu/libgssapi_krb5.so.2 ']'
+#35 6.659 + cp -n /lib/x86_64-linux-gnu/libgssapi_krb5.so.2 /tmp/libs/
+#35 6.663 + IFS=
+#35 6.663 + read -r lib
+#35 6.663 + '[' -f /lib/x86_64-linux-gnu/libkrb5.so.3 ']'
+#35 6.663 + cp -n /lib/x86_64-linux-gnu/libkrb5.so.3 /tmp/libs/
+#35 6.666 + IFS=
+#35 6.666 + read -r lib
+#35 6.666 + '[' -f /lib/x86_64-linux-gnu/libk5crypto.so.3 ']'
+#35 6.666 + cp -n /lib/x86_64-linux-gnu/libk5crypto.so.3 /tmp/libs/
+#35 6.667 + IFS=
+#35 6.667 + read -r lib
+#35 6.667 + '[' -f /lib/x86_64-linux-gnu/libkrb5support.so.0 ']'
+#35 6.667 + cp -n /lib/x86_64-linux-gnu/libkrb5support.so.0 /tmp/libs/
+#35 6.670 + IFS=
+#35 6.670 + read -r lib
+#35 6.670 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.670 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.678 + IFS=
+#35 6.678 + read -r lib
+#35 6.678 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.678 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.678 + IFS=
+#35 6.678 + read -r lib
+#35 6.678 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.678 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.683 + IFS=
+#35 6.683 + read -r lib
+#35 6.683 + '[' -f /lib/x86_64-linux-gnu/libresolv.so.2 ']'
+#35 6.683 + cp -n /lib/x86_64-linux-gnu/libresolv.so.2 /tmp/libs/
+#35 6.686 + IFS=
+#35 6.686 + read -r lib
+#35 6.686 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.686 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.689 + IFS=
+#35 6.689 + read -r lib
+#35 6.689 + '[' -f /lib/x86_64-linux-gnu/libkeyutils.so.1 ']'
+#35 6.689 + cp -n /lib/x86_64-linux-gnu/libkeyutils.so.1 /tmp/libs/
+#35 6.695 + IFS=
+#35 6.695 + read -r lib
+#35 6.695 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.695 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.697 + IFS=
+#35 6.697 + read -r lib
+#35 6.697 + '[' -f /lib/x86_64-linux-gnu/libkrb5support.so.0 ']'
+#35 6.697 + cp -n /lib/x86_64-linux-gnu/libkrb5support.so.0 /tmp/libs/
+#35 6.699 + IFS=
+#35 6.700 + read -r lib
+#35 6.701 + '[' -f /lib/x86_64-linux-gnu/libcom_err.so.2 ']'
+#35 6.701 + cp -n /lib/x86_64-linux-gnu/libcom_err.so.2 /tmp/libs/
+#35 6.706 + IFS=
+#35 6.706 + read -r lib
+#35 6.706 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.706 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.711 + IFS=
+#35 6.712 + read -r lib
+#35 6.712 + '[' -f /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 ']'
+#35 6.712 + cp -n /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /tmp/libs/
+#35 6.714 + IFS=
+#35 6.714 + read -r lib
+#35 6.714 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.714 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.716 + IFS=
+#35 6.716 + read -r lib
+#35 6.716 + '[' -f /lib/x86_64-linux-gnu/libkrb5support.so.0 ']'
+#35 6.716 + cp -n /lib/x86_64-linux-gnu/libkrb5support.so.0 /tmp/libs/
+#35 6.719 + IFS=
+#35 6.719 + read -r lib
+#35 6.719 + '[' -f /lib/x86_64-linux-gnu/libcom_err.so.2 ']'
+#35 6.719 + cp -n /lib/x86_64-linux-gnu/libcom_err.so.2 /tmp/libs/
+#35 6.722 + IFS=
+#35 6.722 + read -r lib
+#35 6.722 + '[' -f /lib/x86_64-linux-gnu/libk5crypto.so.3 ']'
+#35 6.722 + cp -n /lib/x86_64-linux-gnu/libk5crypto.so.3 /tmp/libs/
+#35 6.725 + IFS=
+#35 6.725 + read -r lib
+#35 6.725 + '[' -f /lib/x86_64-linux-gnu/libcrypto.so.3 ']'
+#35 6.725 + cp -n /lib/x86_64-linux-gnu/libcrypto.so.3 /tmp/libs/
+#35 6.727 + IFS=
+#35 6.727 + read -r lib
+#35 6.727 + '[' -f /lib/x86_64-linux-gnu/libssl.so.3 ']'
+#35 6.727 + cp -n /lib/x86_64-linux-gnu/libssl.so.3 /tmp/libs/
+#35 6.730 + IFS=
+#35 6.730 + read -r lib
+#35 6.730 + '[' -f /lib/x86_64-linux-gnu/libpsl.so.5 ']'
+#35 6.730 + cp -n /lib/x86_64-linux-gnu/libpsl.so.5 /tmp/libs/
+#35 6.732 + IFS=
+#35 6.733 + read -r lib
+#35 6.733 + '[' -f /lib/x86_64-linux-gnu/libunistring.so.5 ']'
+#35 6.736 + cp -n /lib/x86_64-linux-gnu/libunistring.so.5 /tmp/libs/
+#35 6.740 + IFS=
+#35 6.740 + read -r lib
+#35 6.740 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.740 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.741 + IFS=
+#35 6.741 + read -r lib
+#35 6.741 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.741 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.743 + IFS=
+#35 6.743 + read -r lib
+#35 6.743 + '[' -f /lib/x86_64-linux-gnu/libidn2.so.0 ']'
+#35 6.743 + cp -n /lib/x86_64-linux-gnu/libidn2.so.0 /tmp/libs/
+#35 6.746 + IFS=
+#35 6.746 + read -r lib
+#35 6.746 + '[' -f /lib/x86_64-linux-gnu/libunistring.so.5 ']'
+#35 6.746 + cp -n /lib/x86_64-linux-gnu/libunistring.so.5 /tmp/libs/
+#35 6.749 + IFS=
+#35 6.749 + read -r lib
+#35 6.749 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.749 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.751 + IFS=
+#35 6.751 + read -r lib
+#35 6.751 + '[' -f /lib/x86_64-linux-gnu/libssh2.so.1 ']'
+#35 6.751 + cp -n /lib/x86_64-linux-gnu/libssh2.so.1 /tmp/libs/
+#35 6.753 + IFS=
+#35 6.753 + read -r lib
+#35 6.754 + '[' -f /lib/x86_64-linux-gnu/libcrypto.so.3 ']'
+#35 6.754 + cp -n /lib/x86_64-linux-gnu/libcrypto.so.3 /tmp/libs/
+#35 6.755 + IFS=
+#35 6.755 + read -r lib
+#35 6.755 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.755 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.757 + IFS=
+#35 6.757 + read -r lib
+#35 6.757 + '[' -f /lib/x86_64-linux-gnu/libz.so.1 ']'
+#35 6.757 + cp -n /lib/x86_64-linux-gnu/libz.so.1 /tmp/libs/
+#35 6.758 + IFS=
+#35 6.758 + read -r lib
+#35 6.758 + '[' -f /lib/x86_64-linux-gnu/librtmp.so.1 ']'
+#35 6.758 + cp -n /lib/x86_64-linux-gnu/librtmp.so.1 /tmp/libs/
+#35 6.759 + IFS=
+#35 6.759 + read -r lib
+#35 6.759 + '[' -f /lib/x86_64-linux-gnu/libgnutls.so.30 ']'
+#35 6.759 + cp -n /lib/x86_64-linux-gnu/libgnutls.so.30 /tmp/libs/
+#35 6.760 + IFS=
+#35 6.760 + read -r lib
+#35 6.760 + '[' -f /lib/x86_64-linux-gnu/libp11-kit.so.0 ']'
+#35 6.760 + cp -n /lib/x86_64-linux-gnu/libp11-kit.so.0 /tmp/libs/
+#35 6.763 + IFS=
+#35 6.763 + read -r lib
+#35 6.763 + '[' -f /lib/x86_64-linux-gnu/libffi.so.8 ']'
+#35 6.764 + cp -n /lib/x86_64-linux-gnu/libffi.so.8 /tmp/libs/
+#35 6.765 + IFS=
+#35 6.765 + read -r lib
+#35 6.765 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.765 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.767 + IFS=
+#35 6.767 + read -r lib
+#35 6.767 + '[' -f /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 ']'
+#35 6.767 + cp -n /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /tmp/libs/
+#35 6.769 + IFS=
+#35 6.769 + read -r lib
+#35 6.769 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.769 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.773 + IFS=
+#35 6.773 + read -r lib
+#35 6.773 + '[' -f /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 ']'
+#35 6.773 + cp -n /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /tmp/libs/
+#35 6.773 + IFS=
+#35 6.773 + read -r lib
+#35 6.773 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.773 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.774 + IFS=
+#35 6.774 + read -r lib
+#35 6.774 + '[' -f /lib/x86_64-linux-gnu/libgmp.so.10 ']'
+#35 6.775 + cp -n /lib/x86_64-linux-gnu/libgmp.so.10 /tmp/libs/
+#35 6.777 + IFS=
+#35 6.777 + read -r lib
+#35 6.777 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.777 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.779 + IFS=
+#35 6.779 + read -r lib
+#35 6.779 + '[' -f /lib/x86_64-linux-gnu/libnettle.so.8 ']'
+#35 6.780 + cp -n /lib/x86_64-linux-gnu/libnettle.so.8 /tmp/libs/
+#35 6.781 + IFS=
+#35 6.781 + read -r lib
+#35 6.781 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.781 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.783 + IFS=
+#35 6.783 + read -r lib
+#35 6.783 + '[' -f /lib/x86_64-linux-gnu/libhogweed.so.6 ']'
+#35 6.783 + cp -n /lib/x86_64-linux-gnu/libhogweed.so.6 /tmp/libs/
+#35 6.785 + IFS=
+#35 6.785 + read -r lib
+#35 6.785 + '[' -f /lib/x86_64-linux-gnu/libnettle.so.8 ']'
+#35 6.785 + cp -n /lib/x86_64-linux-gnu/libnettle.so.8 /tmp/libs/
+#35 6.787 + IFS=
+#35 6.787 + read -r lib
+#35 6.787 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.787 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.789 + IFS=
+#35 6.789 + read -r lib
+#35 6.789 + '[' -f /lib/x86_64-linux-gnu/libgmp.so.10 ']'
+#35 6.789 + cp -n /lib/x86_64-linux-gnu/libgmp.so.10 /tmp/libs/
+#35 6.791 + IFS=
+#35 6.791 + read -r lib
+#35 6.792 + '[' -f /lib/x86_64-linux-gnu/libtasn1.so.6 ']'
+#35 6.792 + cp -n /lib/x86_64-linux-gnu/libtasn1.so.6 /tmp/libs/
+#35 6.793 + IFS=
+#35 6.793 + read -r lib
+#35 6.793 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.794 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.795 + IFS=
+#35 6.795 + read -r lib
+#35 6.795 + '[' -f /lib/x86_64-linux-gnu/libunistring.so.5 ']'
+#35 6.795 + cp -n /lib/x86_64-linux-gnu/libunistring.so.5 /tmp/libs/
+#35 6.797 + IFS=
+#35 6.797 + read -r lib
+#35 6.797 + '[' -f /lib/x86_64-linux-gnu/libidn2.so.0 ']'
+#35 6.797 + cp -n /lib/x86_64-linux-gnu/libidn2.so.0 /tmp/libs/
+#35 6.799 + IFS=
+#35 6.799 + read -r lib
+#35 6.799 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.799 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.800 + IFS=
+#35 6.800 + read -r lib
+#35 6.800 + '[' -f /lib/x86_64-linux-gnu/libz.so.1 ']'
+#35 6.800 + cp -n /lib/x86_64-linux-gnu/libz.so.1 /tmp/libs/
+#35 6.802 + IFS=
+#35 6.802 + read -r lib
+#35 6.802 + '[' -f /lib/x86_64-linux-gnu/libgmp.so.10 ']'
+#35 6.802 + cp -n /lib/x86_64-linux-gnu/libgmp.so.10 /tmp/libs/
+#35 6.803 + IFS=
+#35 6.803 + read -r lib
+#35 6.803 + '[' -f /lib/x86_64-linux-gnu/libnettle.so.8 ']'
+#35 6.803 + cp -n /lib/x86_64-linux-gnu/libnettle.so.8 /tmp/libs/
+#35 6.805 + IFS=
+#35 6.805 + read -r lib
+#35 6.805 + '[' -f /lib/x86_64-linux-gnu/libhogweed.so.6 ']'
+#35 6.805 + cp -n /lib/x86_64-linux-gnu/libhogweed.so.6 /tmp/libs/
+#35 6.807 + IFS=
+#35 6.807 + read -r lib
+#35 6.807 + '[' -f /lib/x86_64-linux-gnu/libidn2.so.0 ']'
+#35 6.807 + cp -n /lib/x86_64-linux-gnu/libidn2.so.0 /tmp/libs/
+#35 6.808 + IFS=
+#35 6.808 + read -r lib
+#35 6.808 + '[' -f /lib/x86_64-linux-gnu/libnghttp2.so.14 ']'
+#35 6.808 + cp -n /lib/x86_64-linux-gnu/libnghttp2.so.14 /tmp/libs/
+#35 6.810 + IFS=
+#35 6.810 + read -r lib
+#35 6.810 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.810 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.812 + IFS=
+#35 6.812 + read -r lib
+#35 6.813 + '[' -f /lib/x86_64-linux-gnu/libz.so.1 ']'
+#35 6.813 + cp -n /lib/x86_64-linux-gnu/libz.so.1 /tmp/libs/
+#35 6.815 + IFS=
+#35 6.815 + read -r lib
+#35 6.815 + '[' -f /lib/x86_64-linux-gnu/libsqlite3.so.0 ']'
+#35 6.815 + cp -n /lib/x86_64-linux-gnu/libsqlite3.so.0 /tmp/libs/
+#35 6.816 + IFS=
+#35 6.817 + read -r lib
+#35 6.817 + '[' -f /lib/x86_64-linux-gnu/libm.so.6 ']'
+#35 6.817 + cp -n /lib/x86_64-linux-gnu/libm.so.6 /tmp/libs/
+#35 6.819 + IFS=
+#35 6.819 + read -r lib
+#35 6.819 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.819 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.820 + IFS=
+#35 6.820 + read -r lib
+#35 6.820 + '[' -f /lib/x86_64-linux-gnu/libcrypto.so.3 ']'
+#35 6.820 + cp -n /lib/x86_64-linux-gnu/libcrypto.so.3 /tmp/libs/
+#35 6.824 + IFS=
+#35 6.824 + read -r lib
+#35 6.824 + '[' -f /lib/x86_64-linux-gnu/libssl.so.3 ']'
+#35 6.824 + cp -n /lib/x86_64-linux-gnu/libssl.so.3 /tmp/libs/
+#35 6.824 + IFS=
+#35 6.824 + read -r lib
+#35 6.824 + '[' -f /lib/x86_64-linux-gnu/libxml2.so.2 ']'
+#35 6.824 + cp -n /lib/x86_64-linux-gnu/libxml2.so.2 /tmp/libs/
+#35 6.827 + IFS=
+#35 6.827 + read -r lib
+#35 6.828 + '[' -f /lib/x86_64-linux-gnu/libz.so.1 ']'
+#35 6.828 + cp -n /lib/x86_64-linux-gnu/libz.so.1 /tmp/libs/
+#35 6.829 + IFS=
+#35 6.829 + read -r lib
+#35 6.829 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.829 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.831 + IFS=
+#35 6.831 + read -r lib
+#35 6.831 + '[' -f /lib/x86_64-linux-gnu/libm.so.6 ']'
+#35 6.831 + cp -n /lib/x86_64-linux-gnu/libm.so.6 /tmp/libs/
+#35 6.833 + IFS=
+#35 6.833 + read -r lib
+#35 6.833 + '[' -f /lib/x86_64-linux-gnu/liblzma.so.5 ']'
+#35 6.834 + cp -n /lib/x86_64-linux-gnu/liblzma.so.5 /tmp/libs/
+#35 6.837 + IFS=
+#35 6.837 + read -r lib
+#35 6.837 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.837 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.839 + IFS=
+#35 6.839 + read -r lib
+#35 6.839 + '[' -f /lib/x86_64-linux-gnu/libm.so.6 ']'
+#35 6.839 + cp -n /lib/x86_64-linux-gnu/libm.so.6 /tmp/libs/
+#35 6.841 + IFS=
+#35 6.841 + read -r lib
+#35 6.841 + for target in $(printf '%s\n' "${BINARIES[@]}" | xargs -I{} which {}) $(find "$(php -r 'echo ini_get("extension_dir");')" -maxdepth 2 -name "*.so")
+#35 6.843 + grep -oP '(?:── )\K/\S+(?= \[)'
+#35 6.843 + libtree -pv /usr/bin/file
+#35 6.843 + IFS=
+#35 6.845 + read -r lib
+#35 6.847 + '[' -f /lib/x86_64-linux-gnu/libmagic.so.1 ']'
+#35 6.847 + cp -n /lib/x86_64-linux-gnu/libmagic.so.1 /tmp/libs/
+#35 6.851 + IFS=
+#35 6.851 + read -r lib
+#35 6.851 + '[' -f /lib/x86_64-linux-gnu/liblzma.so.5 ']'
+#35 6.851 + cp -n /lib/x86_64-linux-gnu/liblzma.so.5 /tmp/libs/
+#35 6.855 + IFS=
+#35 6.855 + read -r lib
+#35 6.855 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.855 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.858 + IFS=
+#35 6.858 + read -r lib
+#35 6.858 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.859 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.861 + IFS=
+#35 6.861 + read -r lib
+#35 6.861 + '[' -f /lib/x86_64-linux-gnu/libz.so.1 ']'
+#35 6.861 + cp -n /lib/x86_64-linux-gnu/libz.so.1 /tmp/libs/
+#35 6.863 + IFS=
+#35 6.863 + read -r lib
+#35 6.863 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.863 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.865 + IFS=
+#35 6.865 + read -r lib
+#35 6.865 + '[' -f /lib/x86_64-linux-gnu/libbz2.so.1.0 ']'
+#35 6.869 + cp -n /lib/x86_64-linux-gnu/libbz2.so.1.0 /tmp/libs/
+#35 6.870 + IFS=
+#35 6.870 + read -r lib
+#35 6.870 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.870 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.872 + IFS=
+#35 6.872 + read -r lib
+#35 6.872 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.872 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.875 + IFS=
+#35 6.875 + read -r lib
+#35 6.876 + for target in $(printf '%s\n' "${BINARIES[@]}" | xargs -I{} which {}) $(find "$(php -r 'echo ini_get("extension_dir");')" -maxdepth 2 -name "*.so")
+#35 6.876 + grep -oP '(?:── )\K/\S+(?= \[)'
+#35 6.877 + libtree -pv /usr/local/lib/php/extensions/no-debug-zts-20240924/sodium.so
+#35 6.877 + IFS=
+#35 6.877 + read -r lib
+#35 6.879 + '[' -f /lib/x86_64-linux-gnu/libsodium.so.23 ']'
+#35 6.880 + cp -n /lib/x86_64-linux-gnu/libsodium.so.23 /tmp/libs/
+#35 6.882 + IFS=
+#35 6.883 + read -r lib
+#35 6.883 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.883 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.886 + IFS=
+#35 6.886 + read -r lib
+#35 6.886 + '[' -f /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 ']'
+#35 6.886 + cp -n /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /tmp/libs/
+#35 6.889 + IFS=
+#35 6.889 + read -r lib
+#35 6.889 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.889 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.891 + IFS=
+#35 6.891 + read -r lib
+#35 6.892 + for target in $(printf '%s\n' "${BINARIES[@]}" | xargs -I{} which {}) $(find "$(php -r 'echo ini_get("extension_dir");')" -maxdepth 2 -name "*.so")
+#35 6.893 + libtree -pv /usr/local/lib/php/extensions/no-debug-zts-20240924/opcache.so
+#35 6.893 + grep -oP '(?:── )\K/\S+(?= \[)'
+#35 6.894 + IFS=
+#35 6.894 + read -r lib
+#35 6.896 + '[' -f /lib/x86_64-linux-gnu/libgcc_s.so.1 ']'
+#35 6.896 + cp -n /lib/x86_64-linux-gnu/libgcc_s.so.1 /tmp/libs/
+#35 6.901 + IFS=
+#35 6.901 + read -r lib
+#35 6.901 + '[' -f /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 ']'
+#35 6.901 + cp -n /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /tmp/libs/
+#35 6.903 + IFS=
+#35 6.903 + read -r lib
+#35 6.903 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.904 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.907 + IFS=
+#35 6.907 + read -r lib
+#35 6.908 + for target in $(printf '%s\n' "${BINARIES[@]}" | xargs -I{} which {}) $(find "$(php -r 'echo ini_get("extension_dir");')" -maxdepth 2 -name "*.so")
+#35 6.908 + libtree -pv /usr/local/lib/php/extensions/no-debug-zts-20240924/pgsql.so
+#35 6.909 + grep -oP '(?:── )\K/\S+(?= \[)'
+#35 6.910 + IFS=
+#35 6.910 + read -r lib
+#35 6.912 + '[' -f /lib/x86_64-linux-gnu/libpq.so.5 ']'
+#35 6.912 + cp -n /lib/x86_64-linux-gnu/libpq.so.5 /tmp/libs/
+#35 6.918 + IFS=
+#35 6.918 + read -r lib
+#35 6.918 + '[' -f /lib/x86_64-linux-gnu/libssl.so.3 ']'
+#35 6.918 + cp -n /lib/x86_64-linux-gnu/libssl.so.3 /tmp/libs/
+#35 6.921 + IFS=
+#35 6.921 + read -r lib
+#35 6.921 + '[' -f /lib/x86_64-linux-gnu/libcrypto.so.3 ']'
+#35 6.921 + cp -n /lib/x86_64-linux-gnu/libcrypto.so.3 /tmp/libs/
+#35 6.922 + IFS=
+#35 6.922 + read -r lib
+#35 6.924 + '[' -f /lib/x86_64-linux-gnu/libz.so.1 ']'
+#35 6.924 + cp -n /lib/x86_64-linux-gnu/libz.so.1 /tmp/libs/
+#35 6.929 + IFS=
+#35 6.929 + read -r lib
+#35 6.929 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.929 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.933 + IFS=
+#35 6.933 + read -r lib
+#35 6.933 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.933 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.935 + IFS=
+#35 6.935 + read -r lib
+#35 6.935 + '[' -f /lib/x86_64-linux-gnu/libzstd.so.1 ']'
+#35 6.935 + cp -n /lib/x86_64-linux-gnu/libzstd.so.1 /tmp/libs/
+#35 6.939 + IFS=
+#35 6.939 + read -r lib
+#35 6.939 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.939 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.939 + IFS=
+#35 6.939 + read -r lib
+#35 6.939 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.940 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.941 + IFS=
+#35 6.941 + read -r lib
+#35 6.941 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.941 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.943 + IFS=
+#35 6.943 + read -r lib
+#35 6.943 + '[' -f /lib/x86_64-linux-gnu/libldap.so.2 ']'
+#35 6.943 + cp -n /lib/x86_64-linux-gnu/libldap.so.2 /tmp/libs/
+#35 6.946 + IFS=
+#35 6.946 + read -r lib
+#35 6.946 + '[' -f /lib/x86_64-linux-gnu/liblber.so.2 ']'
+#35 6.946 + cp -n /lib/x86_64-linux-gnu/liblber.so.2 /tmp/libs/
+#35 6.955 + IFS=
+#35 6.955 + read -r lib
+#35 6.955 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.955 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.955 + IFS=
+#35 6.955 + read -r lib
+#35 6.955 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.955 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.955 + IFS=
+#35 6.955 + read -r lib
+#35 6.955 + '[' -f /lib/x86_64-linux-gnu/libcrypto.so.3 ']'
+#35 6.955 + cp -n /lib/x86_64-linux-gnu/libcrypto.so.3 /tmp/libs/
+#35 6.955 + IFS=
+#35 6.955 + read -r lib
+#35 6.955 + '[' -f /lib/x86_64-linux-gnu/libssl.so.3 ']'
+#35 6.955 + cp -n /lib/x86_64-linux-gnu/libssl.so.3 /tmp/libs/
+#35 6.958 + IFS=
+#35 6.958 + read -r lib
+#35 6.958 + '[' -f /lib/x86_64-linux-gnu/libsasl2.so.2 ']'
+#35 6.958 + cp -n /lib/x86_64-linux-gnu/libsasl2.so.2 /tmp/libs/
+#35 6.959 + IFS=
+#35 6.959 + read -r lib
+#35 6.959 + '[' -f /lib/x86_64-linux-gnu/libcrypto.so.3 ']'
+#35 6.959 + cp -n /lib/x86_64-linux-gnu/libcrypto.so.3 /tmp/libs/
+#35 6.962 + IFS=
+#35 6.962 + read -r lib
+#35 6.962 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.962 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.963 + IFS=
+#35 6.963 + read -r lib
+#35 6.964 + '[' -f /lib/x86_64-linux-gnu/libm.so.6 ']'
+#35 6.964 + cp -n /lib/x86_64-linux-gnu/libm.so.6 /tmp/libs/
+#35 6.973 + IFS=
+#35 6.976 + read -r lib
+#35 6.976 + '[' -f /lib/x86_64-linux-gnu/libgssapi_krb5.so.2 ']'
+#35 6.977 + cp -n /lib/x86_64-linux-gnu/libgssapi_krb5.so.2 /tmp/libs/
+#35 6.981 + IFS=
+#35 6.981 + read -r lib
+#35 6.981 + '[' -f /lib/x86_64-linux-gnu/libkrb5.so.3 ']'
+#35 6.981 + cp -n /lib/x86_64-linux-gnu/libkrb5.so.3 /tmp/libs/
+#35 6.982 + IFS=
+#35 6.982 + read -r lib
+#35 6.983 + '[' -f /lib/x86_64-linux-gnu/libk5crypto.so.3 ']'
+#35 6.983 + cp -n /lib/x86_64-linux-gnu/libk5crypto.so.3 /tmp/libs/
+#35 6.986 + IFS=
+#35 6.986 + read -r lib
+#35 6.986 + '[' -f /lib/x86_64-linux-gnu/libkrb5support.so.0 ']'
+#35 6.986 + cp -n /lib/x86_64-linux-gnu/libkrb5support.so.0 /tmp/libs/
+#35 6.988 + IFS=
+#35 6.988 + read -r lib
+#35 6.988 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.988 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 6.990 + IFS=
+#35 6.990 + read -r lib
+#35 6.990 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 6.990 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.002 + IFS=
+#35 7.002 + read -r lib
+#35 7.002 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.002 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.004 + IFS=
+#35 7.004 + read -r lib
+#35 7.004 + '[' -f /lib/x86_64-linux-gnu/libresolv.so.2 ']'
+#35 7.004 + cp -n /lib/x86_64-linux-gnu/libresolv.so.2 /tmp/libs/
+#35 7.007 + IFS=
+#35 7.007 + read -r lib
+#35 7.007 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.007 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.010 + IFS=
+#35 7.010 + read -r lib
+#35 7.010 + '[' -f /lib/x86_64-linux-gnu/libkeyutils.so.1 ']'
+#35 7.010 + cp -n /lib/x86_64-linux-gnu/libkeyutils.so.1 /tmp/libs/
+#35 7.010 + IFS=
+#35 7.010 + read -r lib
+#35 7.010 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.010 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.014 + IFS=
+#35 7.014 + read -r lib
+#35 7.014 + '[' -f /lib/x86_64-linux-gnu/libkrb5support.so.0 ']'
+#35 7.014 + cp -n /lib/x86_64-linux-gnu/libkrb5support.so.0 /tmp/libs/
+#35 7.016 + IFS=
+#35 7.016 + read -r lib
+#35 7.016 + '[' -f /lib/x86_64-linux-gnu/libcom_err.so.2 ']'
+#35 7.016 + cp -n /lib/x86_64-linux-gnu/libcom_err.so.2 /tmp/libs/
+#35 7.019 + IFS=
+#35 7.019 + read -r lib
+#35 7.019 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.019 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.020 + IFS=
+#35 7.020 + read -r lib
+#35 7.020 + '[' -f /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 ']'
+#35 7.020 + cp -n /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /tmp/libs/
+#35 7.022 + IFS=
+#35 7.022 + read -r lib
+#35 7.023 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.023 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.024 + IFS=
+#35 7.024 + read -r lib
+#35 7.025 + '[' -f /lib/x86_64-linux-gnu/libkrb5support.so.0 ']'
+#35 7.025 + cp -n /lib/x86_64-linux-gnu/libkrb5support.so.0 /tmp/libs/
+#35 7.026 + IFS=
+#35 7.026 + read -r lib
+#35 7.026 + '[' -f /lib/x86_64-linux-gnu/libcom_err.so.2 ']'
+#35 7.026 + cp -n /lib/x86_64-linux-gnu/libcom_err.so.2 /tmp/libs/
+#35 7.028 + IFS=
+#35 7.028 + read -r lib
+#35 7.028 + '[' -f /lib/x86_64-linux-gnu/libk5crypto.so.3 ']'
+#35 7.028 + cp -n /lib/x86_64-linux-gnu/libk5crypto.so.3 /tmp/libs/
+#35 7.031 + IFS=
+#35 7.031 + read -r lib
+#35 7.031 + '[' -f /lib/x86_64-linux-gnu/libcrypto.so.3 ']'
+#35 7.031 + cp -n /lib/x86_64-linux-gnu/libcrypto.so.3 /tmp/libs/
+#35 7.033 + IFS=
+#35 7.033 + read -r lib
+#35 7.033 + '[' -f /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 ']'
+#35 7.033 + cp -n /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /tmp/libs/
+#35 7.035 + IFS=
+#35 7.035 + read -r lib
+#35 7.035 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.035 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.035 + IFS=
+#35 7.035 + read -r lib
+#35 7.035 + for target in $(printf '%s\n' "${BINARIES[@]}" | xargs -I{} which {}) $(find "$(php -r 'echo ini_get("extension_dir");')" -maxdepth 2 -name "*.so")
+#35 7.036 + libtree -pv /usr/local/lib/php/extensions/no-debug-zts-20240924/intl.so
+#35 7.036 + grep -oP '(?:── )\K/\S+(?= \[)'
+#35 7.036 + IFS=
+#35 7.036 + read -r lib
+#35 7.042 + '[' -f /lib/x86_64-linux-gnu/libicuio.so.76 ']'
+#35 7.042 + cp -n /lib/x86_64-linux-gnu/libicuio.so.76 /tmp/libs/
+#35 7.043 + IFS=
+#35 7.044 + read -r lib
+#35 7.044 + '[' -f /lib/x86_64-linux-gnu/libicuuc.so.76 ']'
+#35 7.044 + cp -n /lib/x86_64-linux-gnu/libicuuc.so.76 /tmp/libs/
+#35 7.057 + IFS=
+#35 7.058 + read -r lib
+#35 7.059 + '[' -f /lib/x86_64-linux-gnu/libicudata.so.76 ']'
+#35 7.059 + cp -n /lib/x86_64-linux-gnu/libicudata.so.76 /tmp/libs/
+#35 7.150 + IFS=
+#35 7.150 + read -r lib
+#35 7.150 + '[' -f /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 ']'
+#35 7.150 + cp -n /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /tmp/libs/
+#35 7.154 + IFS=
+#35 7.154 + read -r lib
+#35 7.154 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.154 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.157 + IFS=
+#35 7.158 + read -r lib
+#35 7.158 + '[' -f /lib/x86_64-linux-gnu/libgcc_s.so.1 ']'
+#35 7.158 + cp -n /lib/x86_64-linux-gnu/libgcc_s.so.1 /tmp/libs/
+#35 7.161 + IFS=
+#35 7.161 + read -r lib
+#35 7.161 + '[' -f /lib/x86_64-linux-gnu/libm.so.6 ']'
+#35 7.161 + cp -n /lib/x86_64-linux-gnu/libm.so.6 /tmp/libs/
+#35 7.162 + IFS=
+#35 7.162 + read -r lib
+#35 7.162 + '[' -f /lib/x86_64-linux-gnu/libstdc++.so.6 ']'
+#35 7.162 + cp -n /lib/x86_64-linux-gnu/libstdc++.so.6 /tmp/libs/
+#35 7.164 + IFS=
+#35 7.164 + read -r lib
+#35 7.164 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.164 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.169 + IFS=
+#35 7.169 + read -r lib
+#35 7.169 + '[' -f /lib/x86_64-linux-gnu/libgcc_s.so.1 ']'
+#35 7.169 + cp -n /lib/x86_64-linux-gnu/libgcc_s.so.1 /tmp/libs/
+#35 7.171 + IFS=
+#35 7.171 + read -r lib
+#35 7.171 + '[' -f /lib/x86_64-linux-gnu/libstdc++.so.6 ']'
+#35 7.171 + cp -n /lib/x86_64-linux-gnu/libstdc++.so.6 /tmp/libs/
+#35 7.173 + IFS=
+#35 7.173 + read -r lib
+#35 7.173 + '[' -f /lib/x86_64-linux-gnu/libicui18n.so.76 ']'
+#35 7.173 + cp -n /lib/x86_64-linux-gnu/libicui18n.so.76 /tmp/libs/
+#35 7.188 + IFS=
+#35 7.188 + read -r lib
+#35 7.188 + '[' -f /lib/x86_64-linux-gnu/libicuuc.so.76 ']'
+#35 7.188 + cp -n /lib/x86_64-linux-gnu/libicuuc.so.76 /tmp/libs/
+#35 7.195 + IFS=
+#35 7.195 + read -r lib
+#35 7.195 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.195 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.199 + IFS=
+#35 7.200 + read -r lib
+#35 7.200 + '[' -f /lib/x86_64-linux-gnu/libgcc_s.so.1 ']'
+#35 7.200 + cp -n /lib/x86_64-linux-gnu/libgcc_s.so.1 /tmp/libs/
+#35 7.208 + IFS=
+#35 7.208 + read -r lib
+#35 7.208 + '[' -f /lib/x86_64-linux-gnu/libm.so.6 ']'
+#35 7.208 + cp -n /lib/x86_64-linux-gnu/libm.so.6 /tmp/libs/
+#35 7.213 + IFS=
+#35 7.213 + read -r lib
+#35 7.213 + '[' -f /lib/x86_64-linux-gnu/libstdc++.so.6 ']'
+#35 7.213 + cp -n /lib/x86_64-linux-gnu/libstdc++.so.6 /tmp/libs/
+#35 7.217 + IFS=
+#35 7.217 + read -r lib
+#35 7.217 + '[' -f /lib/x86_64-linux-gnu/libgcc_s.so.1 ']'
+#35 7.217 + cp -n /lib/x86_64-linux-gnu/libgcc_s.so.1 /tmp/libs/
+#35 7.220 + IFS=
+#35 7.220 + read -r lib
+#35 7.220 + '[' -f /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 ']'
+#35 7.220 + cp -n /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /tmp/libs/
+#35 7.222 + IFS=
+#35 7.223 + read -r lib
+#35 7.223 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.223 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.226 + IFS=
+#35 7.226 + read -r lib
+#35 7.226 + '[' -f /lib/x86_64-linux-gnu/libstdc++.so.6 ']'
+#35 7.226 + cp -n /lib/x86_64-linux-gnu/libstdc++.so.6 /tmp/libs/
+#35 7.230 + IFS=
+#35 7.230 + read -r lib
+#35 7.230 + '[' -f /lib/x86_64-linux-gnu/libicuuc.so.76 ']'
+#35 7.230 + cp -n /lib/x86_64-linux-gnu/libicuuc.so.76 /tmp/libs/
+#35 7.234 + IFS=
+#35 7.234 + read -r lib
+#35 7.234 + '[' -f /lib/x86_64-linux-gnu/libicui18n.so.76 ']'
+#35 7.234 + cp -n /lib/x86_64-linux-gnu/libicui18n.so.76 /tmp/libs/
+#35 7.237 + IFS=
+#35 7.237 + read -r lib
+#35 7.238 + for target in $(printf '%s\n' "${BINARIES[@]}" | xargs -I{} which {}) $(find "$(php -r 'echo ini_get("extension_dir");')" -maxdepth 2 -name "*.so")
+#35 7.241 + libtree -pv /usr/local/lib/php/extensions/no-debug-zts-20240924/sqlsrv.so
+#35 7.241 + grep -oP '(?:── )\K/\S+(?= \[)'
+#35 7.241 + IFS=
+#35 7.241 + read -r lib
+#35 7.242 + '[' -f /lib/x86_64-linux-gnu/libstdc++.so.6 ']'
+#35 7.242 + cp -n /lib/x86_64-linux-gnu/libstdc++.so.6 /tmp/libs/
+#35 7.246 + IFS=
+#35 7.246 + read -r lib
+#35 7.246 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.246 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.248 + IFS=
+#35 7.248 + read -r lib
+#35 7.248 + '[' -f /lib/x86_64-linux-gnu/libgcc_s.so.1 ']'
+#35 7.249 + cp -n /lib/x86_64-linux-gnu/libgcc_s.so.1 /tmp/libs/
+#35 7.253 + IFS=
+#35 7.253 + read -r lib
+#35 7.253 + '[' -f /lib/x86_64-linux-gnu/libodbcinst.so.2 ']'
+#35 7.253 + cp -n /lib/x86_64-linux-gnu/libodbcinst.so.2 /tmp/libs/
+#35 7.257 + IFS=
+#35 7.257 + read -r lib
+#35 7.257 + '[' -f /lib/x86_64-linux-gnu/libltdl.so.7 ']'
+#35 7.257 + cp -n /lib/x86_64-linux-gnu/libltdl.so.7 /tmp/libs/
+#35 7.259 + IFS=
+#35 7.259 + read -r lib
+#35 7.259 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.259 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.261 + IFS=
+#35 7.261 + read -r lib
+#35 7.261 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.261 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.263 + IFS=
+#35 7.263 + read -r lib
+#35 7.263 + '[' -f /lib/x86_64-linux-gnu/libodbc.so.2 ']'
+#35 7.266 + cp -n /lib/x86_64-linux-gnu/libodbc.so.2 /tmp/libs/
+#35 7.269 + IFS=
+#35 7.269 + read -r lib
+#35 7.270 + '[' -f /lib/x86_64-linux-gnu/libltdl.so.7 ']'
+#35 7.270 + cp -n /lib/x86_64-linux-gnu/libltdl.so.7 /tmp/libs/
+#35 7.275 + IFS=
+#35 7.275 + read -r lib
+#35 7.275 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.275 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.277 + IFS=
+#35 7.277 + read -r lib
+#35 7.278 + for target in $(printf '%s\n' "${BINARIES[@]}" | xargs -I{} which {}) $(find "$(php -r 'echo ini_get("extension_dir");')" -maxdepth 2 -name "*.so")
+#35 7.279 + grep -oP '(?:── )\K/\S+(?= \[)'
+#35 7.279 + libtree -pv /usr/local/lib/php/extensions/no-debug-zts-20240924/pdo_sqlsrv.so
+#35 7.279 + IFS=
+#35 7.279 + read -r lib
+#35 7.280 + '[' -f /lib/x86_64-linux-gnu/libstdc++.so.6 ']'
+#35 7.280 + cp -n /lib/x86_64-linux-gnu/libstdc++.so.6 /tmp/libs/
+#35 7.284 + IFS=
+#35 7.284 + read -r lib
+#35 7.284 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.285 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.288 + IFS=
+#35 7.288 + read -r lib
+#35 7.288 + '[' -f /lib/x86_64-linux-gnu/libgcc_s.so.1 ']'
+#35 7.288 + cp -n /lib/x86_64-linux-gnu/libgcc_s.so.1 /tmp/libs/
+#35 7.290 + IFS=
+#35 7.290 + read -r lib
+#35 7.290 + '[' -f /lib/x86_64-linux-gnu/libodbcinst.so.2 ']'
+#35 7.290 + cp -n /lib/x86_64-linux-gnu/libodbcinst.so.2 /tmp/libs/
+#35 7.293 + IFS=
+#35 7.293 + read -r lib
+#35 7.293 + '[' -f /lib/x86_64-linux-gnu/libltdl.so.7 ']'
+#35 7.293 + cp -n /lib/x86_64-linux-gnu/libltdl.so.7 /tmp/libs/
+#35 7.295 + IFS=
+#35 7.295 + read -r lib
+#35 7.295 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.295 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.298 + IFS=
+#35 7.298 + read -r lib
+#35 7.298 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.298 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.299 + IFS=
+#35 7.299 + read -r lib
+#35 7.299 + '[' -f /lib/x86_64-linux-gnu/libodbc.so.2 ']'
+#35 7.299 + cp -n /lib/x86_64-linux-gnu/libodbc.so.2 /tmp/libs/
+#35 7.301 + IFS=
+#35 7.301 + read -r lib
+#35 7.301 + '[' -f /lib/x86_64-linux-gnu/libltdl.so.7 ']'
+#35 7.301 + cp -n /lib/x86_64-linux-gnu/libltdl.so.7 /tmp/libs/
+#35 7.303 + IFS=
+#35 7.303 + read -r lib
+#35 7.303 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.303 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.305 + IFS=
+#35 7.305 + read -r lib
+#35 7.306 + for target in $(printf '%s\n' "${BINARIES[@]}" | xargs -I{} which {}) $(find "$(php -r 'echo ini_get("extension_dir");')" -maxdepth 2 -name "*.so")
+#35 7.307 + libtree -pv /usr/local/lib/php/extensions/no-debug-zts-20240924/pdo_pgsql.so
+#35 7.307 + IFS=
+#35 7.308 + read -r lib
+#35 7.310 + grep -oP '(?:── )\K/\S+(?= \[)'
+#35 7.311 + '[' -f /lib/x86_64-linux-gnu/libpq.so.5 ']'
+#35 7.311 + cp -n /lib/x86_64-linux-gnu/libpq.so.5 /tmp/libs/
+#35 7.314 + IFS=
+#35 7.314 + read -r lib
+#35 7.314 + '[' -f /lib/x86_64-linux-gnu/libssl.so.3 ']'
+#35 7.314 + cp -n /lib/x86_64-linux-gnu/libssl.so.3 /tmp/libs/
+#35 7.318 + IFS=
+#35 7.318 + read -r lib
+#35 7.318 + '[' -f /lib/x86_64-linux-gnu/libcrypto.so.3 ']'
+#35 7.318 + cp -n /lib/x86_64-linux-gnu/libcrypto.so.3 /tmp/libs/
+#35 7.323 + IFS=
+#35 7.323 + read -r lib
+#35 7.323 + '[' -f /lib/x86_64-linux-gnu/libz.so.1 ']'
+#35 7.323 + cp -n /lib/x86_64-linux-gnu/libz.so.1 /tmp/libs/
+#35 7.327 + IFS=
+#35 7.327 + read -r lib
+#35 7.327 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.327 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.330 + IFS=
+#35 7.330 + read -r lib
+#35 7.330 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.330 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.333 + IFS=
+#35 7.333 + read -r lib
+#35 7.333 + '[' -f /lib/x86_64-linux-gnu/libzstd.so.1 ']'
+#35 7.333 + cp -n /lib/x86_64-linux-gnu/libzstd.so.1 /tmp/libs/
+#35 7.335 + IFS=
+#35 7.335 + read -r lib
+#35 7.335 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.335 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.338 + IFS=
+#35 7.338 + read -r lib
+#35 7.339 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.339 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.341 + IFS=
+#35 7.342 + read -r lib
+#35 7.342 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.342 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.344 + IFS=
+#35 7.345 + read -r lib
+#35 7.345 + '[' -f /lib/x86_64-linux-gnu/libldap.so.2 ']'
+#35 7.346 + cp -n /lib/x86_64-linux-gnu/libldap.so.2 /tmp/libs/
+#35 7.348 + IFS=
+#35 7.348 + read -r lib
+#35 7.348 + '[' -f /lib/x86_64-linux-gnu/liblber.so.2 ']'
+#35 7.348 + cp -n /lib/x86_64-linux-gnu/liblber.so.2 /tmp/libs/
+#35 7.349 + IFS=
+#35 7.349 + read -r lib
+#35 7.349 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.350 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.353 + IFS=
+#35 7.353 + read -r lib
+#35 7.353 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.353 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.356 + IFS=
+#35 7.356 + read -r lib
+#35 7.356 + '[' -f /lib/x86_64-linux-gnu/libcrypto.so.3 ']'
+#35 7.356 + cp -n /lib/x86_64-linux-gnu/libcrypto.so.3 /tmp/libs/
+#35 7.359 + IFS=
+#35 7.359 + read -r lib
+#35 7.359 + '[' -f /lib/x86_64-linux-gnu/libssl.so.3 ']'
+#35 7.359 + cp -n /lib/x86_64-linux-gnu/libssl.so.3 /tmp/libs/
+#35 7.362 + IFS=
+#35 7.362 + read -r lib
+#35 7.362 + '[' -f /lib/x86_64-linux-gnu/libsasl2.so.2 ']'
+#35 7.362 + cp -n /lib/x86_64-linux-gnu/libsasl2.so.2 /tmp/libs/
+#35 7.365 + IFS=
+#35 7.365 + read -r lib
+#35 7.365 + '[' -f /lib/x86_64-linux-gnu/libcrypto.so.3 ']'
+#35 7.365 + cp -n /lib/x86_64-linux-gnu/libcrypto.so.3 /tmp/libs/
+#35 7.368 + IFS=
+#35 7.369 + read -r lib
+#35 7.369 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.370 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.373 + IFS=
+#35 7.373 + read -r lib
+#35 7.374 + '[' -f /lib/x86_64-linux-gnu/libm.so.6 ']'
+#35 7.374 + cp -n /lib/x86_64-linux-gnu/libm.so.6 /tmp/libs/
+#35 7.379 + IFS=
+#35 7.379 + read -r lib
+#35 7.379 + '[' -f /lib/x86_64-linux-gnu/libgssapi_krb5.so.2 ']'
+#35 7.380 + cp -n /lib/x86_64-linux-gnu/libgssapi_krb5.so.2 /tmp/libs/
+#35 7.384 + IFS=
+#35 7.385 + read -r lib
+#35 7.385 + '[' -f /lib/x86_64-linux-gnu/libkrb5.so.3 ']'
+#35 7.385 + cp -n /lib/x86_64-linux-gnu/libkrb5.so.3 /tmp/libs/
+#35 7.387 + IFS=
+#35 7.387 + read -r lib
+#35 7.387 + '[' -f /lib/x86_64-linux-gnu/libk5crypto.so.3 ']'
+#35 7.387 + cp -n /lib/x86_64-linux-gnu/libk5crypto.so.3 /tmp/libs/
+#35 7.389 + IFS=
+#35 7.390 + read -r lib
+#35 7.391 + '[' -f /lib/x86_64-linux-gnu/libkrb5support.so.0 ']'
+#35 7.391 + cp -n /lib/x86_64-linux-gnu/libkrb5support.so.0 /tmp/libs/
+#35 7.394 + IFS=
+#35 7.394 + read -r lib
+#35 7.395 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.395 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.398 + IFS=
+#35 7.398 + read -r lib
+#35 7.398 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.399 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.402 + IFS=
+#35 7.403 + read -r lib
+#35 7.403 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.403 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.408 + IFS=
+#35 7.408 + read -r lib
+#35 7.410 + '[' -f /lib/x86_64-linux-gnu/libresolv.so.2 ']'
+#35 7.410 + cp -n /lib/x86_64-linux-gnu/libresolv.so.2 /tmp/libs/
+#35 7.417 + IFS=
+#35 7.418 + read -r lib
+#35 7.418 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.418 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.421 + IFS=
+#35 7.421 + read -r lib
+#35 7.421 + '[' -f /lib/x86_64-linux-gnu/libkeyutils.so.1 ']'
+#35 7.421 + cp -n /lib/x86_64-linux-gnu/libkeyutils.so.1 /tmp/libs/
+#35 7.425 + IFS=
+#35 7.425 + read -r lib
+#35 7.425 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.425 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.429 + IFS=
+#35 7.429 + read -r lib
+#35 7.429 + '[' -f /lib/x86_64-linux-gnu/libkrb5support.so.0 ']'
+#35 7.429 + cp -n /lib/x86_64-linux-gnu/libkrb5support.so.0 /tmp/libs/
+#35 7.432 + IFS=
+#35 7.432 + read -r lib
+#35 7.432 + '[' -f /lib/x86_64-linux-gnu/libcom_err.so.2 ']'
+#35 7.432 + cp -n /lib/x86_64-linux-gnu/libcom_err.so.2 /tmp/libs/
+#35 7.437 + IFS=
+#35 7.437 + read -r lib
+#35 7.437 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.438 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.445 + IFS=
+#35 7.445 + read -r lib
+#35 7.445 + '[' -f /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 ']'
+#35 7.445 + cp -n /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /tmp/libs/
+#35 7.447 + IFS=
+#35 7.447 + read -r lib
+#35 7.447 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.447 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.449 + IFS=
+#35 7.450 + read -r lib
+#35 7.450 + '[' -f /lib/x86_64-linux-gnu/libkrb5support.so.0 ']'
+#35 7.450 + cp -n /lib/x86_64-linux-gnu/libkrb5support.so.0 /tmp/libs/
+#35 7.453 + IFS=
+#35 7.453 + read -r lib
+#35 7.453 + '[' -f /lib/x86_64-linux-gnu/libcom_err.so.2 ']'
+#35 7.453 + cp -n /lib/x86_64-linux-gnu/libcom_err.so.2 /tmp/libs/
+#35 7.455 + IFS=
+#35 7.455 + read -r lib
+#35 7.455 + '[' -f /lib/x86_64-linux-gnu/libk5crypto.so.3 ']'
+#35 7.455 + cp -n /lib/x86_64-linux-gnu/libk5crypto.so.3 /tmp/libs/
+#35 7.456 + IFS=
+#35 7.456 + read -r lib
+#35 7.456 + '[' -f /lib/x86_64-linux-gnu/libcrypto.so.3 ']'
+#35 7.456 + cp -n /lib/x86_64-linux-gnu/libcrypto.so.3 /tmp/libs/
+#35 7.460 + IFS=
+#35 7.461 + read -r lib
+#35 7.461 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.461 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.463 + IFS=
+#35 7.464 + read -r lib
+#35 7.464 + for target in $(printf '%s\n' "${BINARIES[@]}" | xargs -I{} which {}) $(find "$(php -r 'echo ini_get("extension_dir");')" -maxdepth 2 -name "*.so")
+#35 7.465 + libtree -pv /usr/local/lib/php/extensions/no-debug-zts-20240924/zip.so
+#35 7.465 + IFS=
+#35 7.465 + read -r lib
+#35 7.466 + grep -oP '(?:── )\K/\S+(?= \[)'
+#35 7.467 + '[' -f /lib/x86_64-linux-gnu/libzip.so.5 ']'
+#35 7.467 + cp -n /lib/x86_64-linux-gnu/libzip.so.5 /tmp/libs/
+#35 7.474 + IFS=
+#35 7.474 + read -r lib
+#35 7.474 + '[' -f /lib/x86_64-linux-gnu/libbz2.so.1.0 ']'
+#35 7.474 + cp -n /lib/x86_64-linux-gnu/libbz2.so.1.0 /tmp/libs/
+#35 7.477 + IFS=
+#35 7.477 + read -r lib
+#35 7.477 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.478 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.480 + IFS=
+#35 7.480 + read -r lib
+#35 7.480 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.480 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.488 + IFS=
+#35 7.488 + read -r lib
+#35 7.488 + '[' -f /lib/x86_64-linux-gnu/libz.so.1 ']'
+#35 7.488 + cp -n /lib/x86_64-linux-gnu/libz.so.1 /tmp/libs/
+#35 7.491 + IFS=
+#35 7.491 + read -r lib
+#35 7.491 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.491 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.497 + IFS=
+#35 7.497 + read -r lib
+#35 7.497 + '[' -f /lib/x86_64-linux-gnu/libcrypto.so.3 ']'
+#35 7.497 + cp -n /lib/x86_64-linux-gnu/libcrypto.so.3 /tmp/libs/
+#35 7.503 + IFS=
+#35 7.503 + read -r lib
+#35 7.505 + '[' -f /lib/x86_64-linux-gnu/libz.so.1 ']'
+#35 7.505 + cp -n /lib/x86_64-linux-gnu/libz.so.1 /tmp/libs/
+#35 7.507 + IFS=
+#35 7.507 + read -r lib
+#35 7.507 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.507 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.516 + IFS=
+#35 7.516 + read -r lib
+#35 7.516 + '[' -f /lib/x86_64-linux-gnu/libzstd.so.1 ']'
+#35 7.516 + cp -n /lib/x86_64-linux-gnu/libzstd.so.1 /tmp/libs/
+#35 7.516 + IFS=
+#35 7.516 + read -r lib
+#35 7.516 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.516 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.520 + IFS=
+#35 7.520 + read -r lib
+#35 7.520 + '[' -f /lib/x86_64-linux-gnu/libzstd.so.1 ']'
+#35 7.520 + cp -n /lib/x86_64-linux-gnu/libzstd.so.1 /tmp/libs/
+#35 7.523 + IFS=
+#35 7.523 + read -r lib
+#35 7.523 + '[' -f /lib/x86_64-linux-gnu/liblzma.so.5 ']'
+#35 7.523 + cp -n /lib/x86_64-linux-gnu/liblzma.so.5 /tmp/libs/
+#35 7.525 + IFS=
+#35 7.525 + read -r lib
+#35 7.525 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.525 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.528 + IFS=
+#35 7.528 + read -r lib
+#35 7.528 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.528 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.530 + IFS=
+#35 7.530 + read -r lib
+#35 7.530 + for target in $(printf '%s\n' "${BINARIES[@]}" | xargs -I{} which {}) $(find "$(php -r 'echo ini_get("extension_dir");')" -maxdepth 2 -name "*.so")
+#35 7.531 + libtree -pv /usr/local/lib/php/extensions/no-debug-zts-20240924/bcmath.so
+#35 7.532 + grep -oP '(?:── )\K/\S+(?= \[)'
+#35 7.532 + IFS=
+#35 7.532 + read -r lib
+#35 7.535 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.535 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.538 + IFS=
+#35 7.538 + read -r lib
+#35 7.538 + '[' -f /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 ']'
+#35 7.538 + cp -n /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /tmp/libs/
+#35 7.539 + IFS=
+#35 7.539 + read -r lib
+#35 7.541 + for target in $(printf '%s\n' "${BINARIES[@]}" | xargs -I{} which {}) $(find "$(php -r 'echo ini_get("extension_dir");')" -maxdepth 2 -name "*.so")
+#35 7.543 + libtree -pv /usr/local/lib/php/extensions/no-debug-zts-20240924/pdo_dblib.so
+#35 7.543 + grep -oP '(?:── )\K/\S+(?= \[)'
+#35 7.543 + IFS=
+#35 7.543 + read -r lib
+#35 7.544 + '[' -f /lib/x86_64-linux-gnu/libsybdb.so.5 ']'
+#35 7.545 + cp -n /lib/x86_64-linux-gnu/libsybdb.so.5 /tmp/libs/
+#35 7.548 + IFS=
+#35 7.548 + read -r lib
+#35 7.548 + '[' -f /lib/x86_64-linux-gnu/libhogweed.so.6 ']'
+#35 7.548 + cp -n /lib/x86_64-linux-gnu/libhogweed.so.6 /tmp/libs/
+#35 7.553 + IFS=
+#35 7.553 + read -r lib
+#35 7.553 + '[' -f /lib/x86_64-linux-gnu/libnettle.so.8 ']'
+#35 7.553 + cp -n /lib/x86_64-linux-gnu/libnettle.so.8 /tmp/libs/
+#35 7.559 + IFS=
+#35 7.559 + read -r lib
+#35 7.559 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.559 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.560 + IFS=
+#35 7.560 + read -r lib
+#35 7.560 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.560 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.564 + IFS=
+#35 7.564 + read -r lib
+#35 7.564 + '[' -f /lib/x86_64-linux-gnu/libgmp.so.10 ']'
+#35 7.564 + cp -n /lib/x86_64-linux-gnu/libgmp.so.10 /tmp/libs/
+#35 7.564 + IFS=
+#35 7.564 + read -r lib
+#35 7.564 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.564 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.566 + IFS=
+#35 7.566 + read -r lib
+#35 7.566 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.566 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.568 + IFS=
+#35 7.568 + read -r lib
+#35 7.569 + '[' -f /lib/x86_64-linux-gnu/libgmp.so.10 ']'
+#35 7.569 + cp -n /lib/x86_64-linux-gnu/libgmp.so.10 /tmp/libs/
+#35 7.570 + IFS=
+#35 7.570 + read -r lib
+#35 7.570 + '[' -f /lib/x86_64-linux-gnu/libnettle.so.8 ']'
+#35 7.571 + cp -n /lib/x86_64-linux-gnu/libnettle.so.8 /tmp/libs/
+#35 7.572 + IFS=
+#35 7.572 + read -r lib
+#35 7.572 + '[' -f /lib/x86_64-linux-gnu/libgnutls.so.30 ']'
+#35 7.572 + cp -n /lib/x86_64-linux-gnu/libgnutls.so.30 /tmp/libs/
+#35 7.574 + IFS=
+#35 7.574 + read -r lib
+#35 7.574 + '[' -f /lib/x86_64-linux-gnu/libp11-kit.so.0 ']'
+#35 7.574 + cp -n /lib/x86_64-linux-gnu/libp11-kit.so.0 /tmp/libs/
+#35 7.576 + IFS=
+#35 7.576 + read -r lib
+#35 7.576 + '[' -f /lib/x86_64-linux-gnu/libffi.so.8 ']'
+#35 7.577 + cp -n /lib/x86_64-linux-gnu/libffi.so.8 /tmp/libs/
+#35 7.578 + IFS=
+#35 7.579 + read -r lib
+#35 7.579 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.579 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.583 + IFS=
+#35 7.583 + read -r lib
+#35 7.583 + '[' -f /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 ']'
+#35 7.583 + cp -n /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /tmp/libs/
+#35 7.583 + IFS=
+#35 7.583 + read -r lib
+#35 7.583 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.583 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.585 + IFS=
+#35 7.586 + read -r lib
+#35 7.586 + '[' -f /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 ']'
+#35 7.586 + cp -n /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /tmp/libs/
+#35 7.588 + IFS=
+#35 7.588 + read -r lib
+#35 7.588 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.588 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.591 + IFS=
+#35 7.591 + read -r lib
+#35 7.591 + '[' -f /lib/x86_64-linux-gnu/libgmp.so.10 ']'
+#35 7.591 + cp -n /lib/x86_64-linux-gnu/libgmp.so.10 /tmp/libs/
+#35 7.594 + IFS=
+#35 7.594 + read -r lib
+#35 7.594 + '[' -f /lib/x86_64-linux-gnu/libnettle.so.8 ']'
+#35 7.594 + cp -n /lib/x86_64-linux-gnu/libnettle.so.8 /tmp/libs/
+#35 7.596 + IFS=
+#35 7.596 + read -r lib
+#35 7.596 + '[' -f /lib/x86_64-linux-gnu/libhogweed.so.6 ']'
+#35 7.596 + cp -n /lib/x86_64-linux-gnu/libhogweed.so.6 /tmp/libs/
+#35 7.600 + IFS=
+#35 7.600 + read -r lib
+#35 7.600 + '[' -f /lib/x86_64-linux-gnu/libtasn1.so.6 ']'
+#35 7.600 + cp -n /lib/x86_64-linux-gnu/libtasn1.so.6 /tmp/libs/
+#35 7.602 + IFS=
+#35 7.602 + read -r lib
+#35 7.602 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.602 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.604 + IFS=
+#35 7.604 + read -r lib
+#35 7.604 + '[' -f /lib/x86_64-linux-gnu/libunistring.so.5 ']'
+#35 7.604 + cp -n /lib/x86_64-linux-gnu/libunistring.so.5 /tmp/libs/
+#35 7.606 + IFS=
+#35 7.606 + read -r lib
+#35 7.606 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.606 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.610 + IFS=
+#35 7.610 + read -r lib
+#35 7.610 + '[' -f /lib/x86_64-linux-gnu/libidn2.so.0 ']'
+#35 7.610 + cp -n /lib/x86_64-linux-gnu/libidn2.so.0 /tmp/libs/
+#35 7.612 + IFS=
+#35 7.612 + read -r lib
+#35 7.612 + '[' -f /lib/x86_64-linux-gnu/libunistring.so.5 ']'
+#35 7.612 + cp -n /lib/x86_64-linux-gnu/libunistring.so.5 /tmp/libs/
+#35 7.614 + IFS=
+#35 7.614 + read -r lib
+#35 7.614 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.614 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.616 + IFS=
+#35 7.616 + read -r lib
+#35 7.616 + '[' -f /lib/x86_64-linux-gnu/libgssapi_krb5.so.2 ']'
+#35 7.616 + cp -n /lib/x86_64-linux-gnu/libgssapi_krb5.so.2 /tmp/libs/
+#35 7.617 + IFS=
+#35 7.617 + read -r lib
+#35 7.617 + '[' -f /lib/x86_64-linux-gnu/libkrb5.so.3 ']'
+#35 7.617 + cp -n /lib/x86_64-linux-gnu/libkrb5.so.3 /tmp/libs/
+#35 7.620 + IFS=
+#35 7.620 + read -r lib
+#35 7.620 + '[' -f /lib/x86_64-linux-gnu/libk5crypto.so.3 ']'
+#35 7.620 + cp -n /lib/x86_64-linux-gnu/libk5crypto.so.3 /tmp/libs/
+#35 7.621 + IFS=
+#35 7.621 + read -r lib
+#35 7.621 + '[' -f /lib/x86_64-linux-gnu/libkrb5support.so.0 ']'
+#35 7.621 + cp -n /lib/x86_64-linux-gnu/libkrb5support.so.0 /tmp/libs/
+#35 7.623 + IFS=
+#35 7.623 + read -r lib
+#35 7.623 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.623 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.624 + IFS=
+#35 7.624 + read -r lib
+#35 7.624 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.624 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.626 + IFS=
+#35 7.626 + read -r lib
+#35 7.626 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.626 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.627 + IFS=
+#35 7.627 + read -r lib
+#35 7.627 + '[' -f /lib/x86_64-linux-gnu/libresolv.so.2 ']'
+#35 7.627 + cp -n /lib/x86_64-linux-gnu/libresolv.so.2 /tmp/libs/
+#35 7.629 + IFS=
+#35 7.629 + read -r lib
+#35 7.629 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.630 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.632 + IFS=
+#35 7.632 + read -r lib
+#35 7.632 + '[' -f /lib/x86_64-linux-gnu/libkeyutils.so.1 ']'
+#35 7.632 + cp -n /lib/x86_64-linux-gnu/libkeyutils.so.1 /tmp/libs/
+#35 7.634 + IFS=
+#35 7.634 + read -r lib
+#35 7.634 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.634 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.635 + IFS=
+#35 7.635 + read -r lib
+#35 7.636 + '[' -f /lib/x86_64-linux-gnu/libkrb5support.so.0 ']'
+#35 7.637 + cp -n /lib/x86_64-linux-gnu/libkrb5support.so.0 /tmp/libs/
+#35 7.640 + IFS=
+#35 7.640 + read -r lib
+#35 7.640 + '[' -f /lib/x86_64-linux-gnu/libcom_err.so.2 ']'
+#35 7.640 + cp -n /lib/x86_64-linux-gnu/libcom_err.so.2 /tmp/libs/
+#35 7.641 + IFS=
+#35 7.641 + read -r lib
+#35 7.641 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.641 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.644 + IFS=
+#35 7.644 + read -r lib
+#35 7.644 + '[' -f /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 ']'
+#35 7.644 + cp -n /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /tmp/libs/
+#35 7.646 + IFS=
+#35 7.646 + read -r lib
+#35 7.646 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.646 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.647 + IFS=
+#35 7.647 + read -r lib
+#35 7.647 + '[' -f /lib/x86_64-linux-gnu/libkrb5support.so.0 ']'
+#35 7.647 + cp -n /lib/x86_64-linux-gnu/libkrb5support.so.0 /tmp/libs/
+#35 7.649 + IFS=
+#35 7.649 + read -r lib
+#35 7.649 + '[' -f /lib/x86_64-linux-gnu/libcom_err.so.2 ']'
+#35 7.649 + cp -n /lib/x86_64-linux-gnu/libcom_err.so.2 /tmp/libs/
+#35 7.651 + IFS=
+#35 7.651 + read -r lib
+#35 7.651 + '[' -f /lib/x86_64-linux-gnu/libk5crypto.so.3 ']'
+#35 7.651 + cp -n /lib/x86_64-linux-gnu/libk5crypto.so.3 /tmp/libs/
+#35 7.653 + IFS=
+#35 7.653 + read -r lib
+#35 7.653 + '[' -f /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 ']'
+#35 7.653 + cp -n /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /tmp/libs/
+#35 7.655 + IFS=
+#35 7.656 + read -r lib
+#35 7.656 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.656 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.660 + IFS=
+#35 7.660 + read -r lib
+#35 7.661 + for target in $(printf '%s\n' "${BINARIES[@]}" | xargs -I{} which {}) $(find "$(php -r 'echo ini_get("extension_dir");')" -maxdepth 2 -name "*.so")
+#35 7.663 + libtree -pv /usr/local/lib/php/extensions/no-debug-zts-20240924/apcu.so
+#35 7.663 + grep -oP '(?:── )\K/\S+(?= \[)'
+#35 7.663 + IFS=
+#35 7.663 + read -r lib
+#35 7.664 + '[' -f /lib/x86_64-linux-gnu/libc.so.6 ']'
+#35 7.664 + cp -n /lib/x86_64-linux-gnu/libc.so.6 /tmp/libs/
+#35 7.669 + IFS=
+#35 7.669 + read -r lib
+#35 7.669 + '[' -f /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 ']'
+#35 7.669 + cp -n /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /tmp/libs/
+#35 7.670 + IFS=
+#35 7.670 + read -r lib
+#35 7.672 + rm -rf /var/lib/apt/lists/auxfiles /var/lib/apt/lists/deb.debian.org_debian-security_dists_trixie-security_InRelease /var/lib/apt/lists/deb.debian.org_debian-security_dists_trixie-security_main_binary-amd64_Packages.lz4 /var/lib/apt/lists/deb.debian.org_debian_dists_trixie-updates_InRelease /var/lib/apt/lists/deb.debian.org_debian_dists_trixie-updates_main_binary-amd64_Packages.lz4 /var/lib/apt/lists/deb.debian.org_debian_dists_trixie_InRelease /var/lib/apt/lists/deb.debian.org_debian_dists_trixie_main_binary-amd64_Packages.lz4 /var/lib/apt/lists/lock /var/lib/apt/lists/packages.microsoft.com_debian_13_prod_dists_trixie_InRelease /var/lib/apt/lists/packages.microsoft.com_debian_13_prod_dists_trixie_main_binary-all_Packages.lz4 /var/lib/apt/lists/packages.microsoft.com_debian_13_prod_dists_trixie_main_binary-amd64_Packages.lz4 /var/lib/apt/lists/packages.microsoft.com_debian_13_prod_dists_trixie_main_binary-arm64_Packages.lz4 /var/lib/apt/lists/packages.microsoft.com_debian_13_prod_dists_trixie_main_binary-armhf_Packages.lz4 /var/lib/apt/lists/partial
+#35 DONE 7.8s
+
+#33 [frontend builder 5/5] RUN bun run build
+#33 18.11 
+#33 18.11 PWA v2.0.0
+#33 18.11 mode      generateSW
+#33 18.11 precache  189 entries (6549.89 KiB)
+#33 18.11 files generated
+#33 18.11   dist/sw.js
+#33 18.11   dist/workbox-2fbc6a65.js
+#33 ...
+
+#36 [backend frankenphp_prod  5/21] COPY --from=frankenphp_prod_builder /usr/local/lib/php/extensions /usr/local/lib/php/extensions
+#36 CACHED
+
+#37 [backend frankenphp_prod 13/21] COPY --from=frankenphp_prod_builder /usr/lib/file/magic.mgc /usr/lib/file/magic.mgc
+#37 CACHED
+
+#38 [backend frankenphp_prod  3/21] COPY --from=frankenphp_prod_builder /usr/local/bin/php /usr/local/bin/php
+#38 CACHED
+
+#39 [backend frankenphp_prod  6/21] COPY --from=frankenphp_prod_builder /tmp/libs /usr/lib
+#39 CACHED
+
+#40 [backend frankenphp_prod 15/21] RUN <<-EOF (apt-get update...)
+#40 CACHED
+
+#41 [backend frankenphp_prod 10/21] COPY --from=frankenphp_prod_builder /etc/frankenphp/Caddyfile /etc/frankenphp/Caddyfile
+#41 CACHED
+
+#42 [backend frankenphp_prod  2/21] COPY --from=frankenphp_prod_builder /usr/local/bin/frankenphp /usr/local/bin/frankenphp
+#42 CACHED
+
+#43 [backend frankenphp_prod 14/21] RUN <<-EOF (mkdir -p /data/caddy /config/caddy...)
+#43 CACHED
+
+#44 [backend frankenphp_prod 12/21] COPY --from=frankenphp_prod_builder /usr/bin/file /usr/bin/file
+#44 CACHED
+
+#45 [backend frankenphp_prod  4/21] COPY --from=frankenphp_prod_builder /usr/local/bin/docker-php-entrypoint /usr/local/bin/docker-php-entrypoint
+#45 CACHED
+
+#46 [backend frankenphp_prod 11/21] COPY --from=frankenphp_prod_builder /etc/ssl/openssl.cnf /etc/ssl/openssl.cnf
+#46 CACHED
+
+#47 [backend frankenphp_prod  8/21] COPY --from=frankenphp_prod_builder /usr/local/etc/php/php.ini /usr/local/etc/php/php.ini
+#47 CACHED
+
+#48 [backend frankenphp_prod  9/21] COPY --from=frankenphp_prod_builder /usr/local/etc/php/app.conf.d /usr/local/etc/php/app.conf.d
+#48 CACHED
+
+#49 [backend frankenphp_prod  7/21] COPY --from=frankenphp_prod_builder /usr/local/etc/php/conf.d /usr/local/etc/php/conf.d
+#49 CACHED
+
+#50 [backend frankenphp_prod 16/21] COPY --from=frankenphp_prod_builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+#50 CACHED
+
+#33 [frontend builder 5/5] RUN bun run build
+#33 ...
+
+#51 [backend frankenphp_prod 17/21] COPY --link --exclude=var --from=frankenphp_prod_builder /app /app
+#51 DONE 1.5s
+
+#51 [backend frankenphp_prod 17/21] COPY --link --exclude=var --from=frankenphp_prod_builder /app /app
+#51 merging
+#51 merging 1.1s done
+#51 DONE 2.6s
+
+#33 [frontend builder 5/5] RUN bun run build
+#33 ...
+
+#52 [backend frankenphp_prod 18/21] COPY --chown=www-data:0 --from=frankenphp_prod_builder /app/var /app/var
+#52 DONE 1.4s
+
+#33 [frontend builder 5/5] RUN bun run build
+#33 ...
+
+#53 [backend frankenphp_prod 19/21] RUN chmod g=u /app/var
+#53 0.243 + chmod g=u /app/var
+#53 DONE 0.3s
+
+#54 [backend frankenphp_prod 20/21] COPY --link --chmod=755 frankenphp/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
+#54 DONE 0.1s
+
+#55 [backend frankenphp_prod 21/21] WORKDIR /app
+#55 DONE 0.0s
+
+#33 [frontend builder 5/5] RUN bun run build
+#33 ...
+
+#56 [backend] exporting to image
+#56 exporting layers
+#56 exporting layers 3.9s done
+#56 exporting manifest sha256:244cc00ff7244245a2b4fb1a5b0d4703c036d5edf517c9eb37b17bd5d2463317
+#56 exporting manifest sha256:244cc00ff7244245a2b4fb1a5b0d4703c036d5edf517c9eb37b17bd5d2463317 0.0s done
+#56 exporting config sha256:32506b1d18df089d764af36c8378de3c2299f765eb36548ced2df496754d7e18 0.0s done
+#56 exporting attestation manifest sha256:1b884b0fb89aaa212d866f7b1a7b1b1c455bb366639750b61400600043ee4204 0.1s done
+#56 exporting manifest list sha256:64ca34c0b9c0b0f08f6c85f507b156b7c2145186efa80e8d1f0421c79715d06d 0.0s done
+#56 naming to docker.io/library/app-php:latest 0.0s done
+#56 unpacking to docker.io/library/app-php:latest
+#56 unpacking to docker.io/library/app-php:latest 3.7s done
+#56 DONE 7.8s
+
+#33 [frontend builder 5/5] RUN bun run build
+#33 ...
+
+#57 [backend] resolving provenance for metadata file
+#57 DONE 0.0s
+
+#33 [frontend builder 5/5] RUN bun run build
+#33 ...
+
+#58 [worker internal] load build definition from Dockerfile
+#58 transferring dockerfile: 6.77kB done
+#58 DONE 0.0s
+
+#3 [worker] resolve image config for docker-image://docker.io/docker/dockerfile:1
+#3 DONE 0.6s
+
+#33 [frontend builder 5/5] RUN bun run build
+#33 ...
+
+#5 [worker] docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#5 resolve docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e 0.0s done
+#5 CACHED
+
+#11 [worker internal] load metadata for docker.io/library/debian:13-slim
+#11 ...
+
+#9 [worker internal] load metadata for docker.io/dunglas/frankenphp:1-php8.4
+#9 DONE 0.5s
+
+#11 [worker internal] load metadata for docker.io/library/debian:13-slim
+#11 DONE 0.5s
+
+#59 [worker internal] load .dockerignore
+#59 transferring context: 498B done
+#59 DONE 0.0s
+
+#33 [frontend builder 5/5] RUN bun run build
+#33 ...
+
+#18 [worker frankenphp_prod  1/21] FROM docker.io/library/debian:13-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad
+#18 resolve docker.io/library/debian:13-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad 0.1s done
+#18 DONE 0.2s
+
+#19 [worker frankenphp_upstream 1/1] FROM docker.io/dunglas/frankenphp:1-php8.4@sha256:8d5cfcc9ce4e6b4db887a04cce820801816d7f53e3a6234e98e0120415238a97
+#19 resolve docker.io/dunglas/frankenphp:1-php8.4@sha256:8d5cfcc9ce4e6b4db887a04cce820801816d7f53e3a6234e98e0120415238a97 0.1s done
+#19 DONE 0.2s
+
+#60 [worker internal] load build context
+#60 transferring context: 52.53kB 0.1s done
+#60 DONE 0.1s
+
+#61 [worker frankenphp_prod_builder 5/7] COPY --link --exclude=frankenphp/ . ./
+#61 CACHED
+
+#62 [worker frankenphp_prod_builder 6/7] RUN <<-EOF (mkdir -p var/cache var/log var/share...)
+#62 CACHED
+
+#63 [worker frankenphp_prod 17/21] COPY --link --exclude=var --from=frankenphp_prod_builder /app /app
+#63 CACHED
+
+#64 [worker frankenphp_prod  8/21] COPY --from=frankenphp_prod_builder /usr/local/etc/php/php.ini /usr/local/etc/php/php.ini
+#64 CACHED
+
+#65 [worker frankenphp_prod 18/21] COPY --chown=www-data:0 --from=frankenphp_prod_builder /app/var /app/var
+#65 CACHED
+
+#66 [worker frankenphp_prod 20/21] COPY --link --chmod=755 frankenphp/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
+#66 CACHED
+
+#67 [worker frankenphp_prod  4/21] COPY --from=frankenphp_prod_builder /usr/local/bin/docker-php-entrypoint /usr/local/bin/docker-php-entrypoint
+#67 CACHED
+
+#68 [worker frankenphp_prod  5/21] COPY --from=frankenphp_prod_builder /usr/local/lib/php/extensions /usr/local/lib/php/extensions
+#68 CACHED
+
+#69 [worker frankenphp_prod  6/21] COPY --from=frankenphp_prod_builder /tmp/libs /usr/lib
+#69 CACHED
+
+#70 [worker frankenphp_prod  9/21] COPY --from=frankenphp_prod_builder /usr/local/etc/php/app.conf.d /usr/local/etc/php/app.conf.d
+#70 CACHED
+
+#71 [worker frankenphp_prod_builder 4/7] RUN composer install --no-cache --prefer-dist --no-dev --no-autoloader --no-scripts --no-progress
+#71 CACHED
+
+#72 [worker frankenphp_prod_builder 1/7] RUN mv "/usr/local/etc/php/php.ini-production" "/usr/local/etc/php/php.ini"
+#72 CACHED
+
+#24 [worker frankenphp_base 3/6] RUN <<-EOF (# Register MS ODBC Driver 17 in system odbcinst.ini...)
+#24 CACHED
+
+#73 [worker frankenphp_base 5/6] COPY --link --chmod=755 frankenphp/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
+#73 CACHED
+
+#74 [worker frankenphp_prod  7/21] COPY --from=frankenphp_prod_builder /usr/local/etc/php/conf.d /usr/local/etc/php/conf.d
+#74 CACHED
+
+#23 [worker frankenphp_base 2/6] RUN <<-EOF (apt-get update...)
+#23 CACHED
+
+#75 [worker frankenphp_prod  3/21] COPY --from=frankenphp_prod_builder /usr/local/bin/php /usr/local/bin/php
+#75 CACHED
+
+#76 [worker frankenphp_prod  2/21] COPY --from=frankenphp_prod_builder /usr/local/bin/frankenphp /usr/local/bin/frankenphp
+#76 CACHED
+
+#77 [worker frankenphp_base 4/6] COPY --link frankenphp/conf.d/10-app.ini /usr/local/etc/php/app.conf.d/
+#77 CACHED
+
+#78 [worker frankenphp_prod 11/21] COPY --from=frankenphp_prod_builder /etc/ssl/openssl.cnf /etc/ssl/openssl.cnf
+#78 CACHED
+
+#79 [worker frankenphp_prod_builder 7/7] RUN <<-'EOF' (apt-get update...)
+#79 CACHED
+
+#80 [worker frankenphp_prod_builder 3/7] COPY --link composer.* symfony.* ./
+#80 CACHED
+
+#81 [worker frankenphp_prod 12/21] COPY --from=frankenphp_prod_builder /usr/bin/file /usr/bin/file
+#81 CACHED
+
+#82 [worker frankenphp_prod 19/21] RUN chmod g=u /app/var
+#82 CACHED
+
+#83 [worker frankenphp_base 6/6] COPY --link frankenphp/Caddyfile /etc/frankenphp/Caddyfile
+#83 CACHED
+
+#84 [worker frankenphp_prod 13/21] COPY --from=frankenphp_prod_builder /usr/lib/file/magic.mgc /usr/lib/file/magic.mgc
+#84 CACHED
+
+#85 [worker frankenphp_prod 15/21] RUN <<-EOF (apt-get update...)
+#85 CACHED
+
+#86 [worker frankenphp_prod 16/21] COPY --from=frankenphp_prod_builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+#86 CACHED
+
+#87 [worker frankenphp_prod 14/21] RUN <<-EOF (mkdir -p /data/caddy /config/caddy...)
+#87 CACHED
+
+#28 [worker frankenphp_base 1/6] WORKDIR /app
+#28 CACHED
+
+#88 [worker frankenphp_prod_builder 2/7] COPY --link frankenphp/conf.d/20-app.prod.ini /usr/local/etc/php/app.conf.d/
+#88 CACHED
+
+#89 [worker frankenphp_prod 10/21] COPY --from=frankenphp_prod_builder /etc/frankenphp/Caddyfile /etc/frankenphp/Caddyfile
+#89 CACHED
+
+#90 [worker frankenphp_prod 21/21] WORKDIR /app
+#90 CACHED
+
+#91 [worker] exporting to image
+#91 exporting layers 0.0s done
+#91 exporting manifest sha256:d24392027b5695d1431253661f6be33683b75c9864251e804bbf9fafc3c3e929 0.0s done
+#91 exporting config sha256:6aafb50603b337180c02e6202ef855cd9b3767478eb2964f2c28e2c75c8117c1 done
+#91 exporting attestation manifest sha256:dbf930a82a0349cfc2605c5b6e394d2f2e688c1574c7f7a0ad67a11e3e639f45 0.0s done
+#91 exporting manifest list sha256:413a2bda4815b26ad5befc31523fa9347789f2b5edd3d704792de24d0a1dfdcc 0.0s done
+#91 naming to docker.io/library/app-php:latest done
+#91 unpacking to docker.io/library/app-php:latest 0.0s done
+#91 DONE 0.2s
+
+#33 [frontend builder 5/5] RUN bun run build
+#33 ...
+
+#92 [worker] resolving provenance for metadata file
+#92 DONE 0.0s
+
+#33 [frontend builder 5/5] RUN bun run build
+#33 DONE 54.6s
+
+#13 [frontend base 1/1] WORKDIR /frontend
+#13 CACHED
+
+#93 [frontend prod 2/4] COPY --from=builder /frontend/dist ./dist
+#93 DONE 0.1s
+
+#94 [frontend prod 3/4] COPY server.ts ./
+#94 DONE 0.1s
+
+#95 [frontend prod 4/4] RUN apk add --no-cache curl
+#95 0.825 (1/9) Installing brotli-libs (1.2.1-r0)
+#95 0.847 (2/9) Installing c-ares (1.34.9-r0)
+#95 0.856 (3/9) Installing libunistring (1.4.2-r0)
+#95 0.890 (4/9) Installing libidn2 (2.3.8-r0)
+#95 0.898 (5/9) Installing nghttp2-libs (1.70.0-r0)
+#95 0.903 (6/9) Installing libpsl (0.21.5-r3)
+#95 0.910 (7/9) Installing zstd-libs (1.5.7-r2)
+#95 0.932 (8/9) Installing libcurl (8.23.0-r0)
+#95 0.954 (9/9) Installing curl (8.23.0-r0)
+#95 0.967 Executing busybox-1.37.0-r31.trigger
+#95 0.999 OK: 15.9 MiB in 27 packages
+#95 DONE 1.1s
+
+#96 [frontend] exporting to image
+#96 exporting layers
+#96 exporting layers 3.8s done
+#96 exporting manifest sha256:9fa72ae9124c33dd8d68e8f2db6c81c3c59617971a6ec0d4450fc62b8d3d6cce 0.0s done
+#96 exporting config sha256:63aba4cbfb66747794e42e982f8b44e0a694e4f16e00984e70e2f8dcf8aac329 0.0s done
+#96 exporting attestation manifest sha256:5ad41934ff353144a08fe41a0655a1bcc3113e4009e39a7056f33bab77e5a9c7 0.0s done
+#96 exporting manifest list sha256:b2a8b83aa5e3150b03ff73bddbe96e6d7867cabc316e0cdd5e3cad5022099d42 0.0s done
+#96 naming to docker.io/library/app-frontend:latest done
+#96 unpacking to docker.io/library/app-frontend:latest
+#96 unpacking to docker.io/library/app-frontend:latest 0.9s done
+#96 DONE 4.9s
+
+#97 [frontend] resolving provenance for metadata file
+#97 DONE 0.0s
+ backend  Built
+ frontend  Built
+ worker  Built
+time="2026-10-27T07:10:06-06:00" level=warning msg="Found orphan containers ([sincronizacion]) for this project. If you removed or renamed this service in your compose file, you can run this command with the --remove-orphans flag to clean it up."
+ Container database  Running
+ Container backend  Recreate
+ Container frontend  Recreate
+ Container backend  Recreated
+ Container worker  Recreate
+ Container frontend  Recreated
+ Container worker  Recreated
+ Container database  Waiting
+ Container frontend  Starting
+ Container frontend  Started
+ Container database  Healthy
+ Container backend  Starting
+ Container backend  Started
+ Container worker  Starting
+ Container worker  Started

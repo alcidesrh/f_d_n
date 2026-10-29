@@ -1,0 +1,330 @@
+/* BARRA DE NAVEGACIÓN LATERAL
+   Mobile-first: debajo de `lg` cada sidebar es un drawer sobre el contenido
+   (ancho abierto, sin `mini`), oculto hasta que su store abre `drawer`
+   (lo desliza `sidebarMotion.ts`).
+   Desde `lg` es fijo: su ancho es `--sb-<lado>-w` (lo anima el store) y el
+   contenido se corre ese ancho (`.main` en content.css). */
+.sidebar {
+  position: fixed;
+  top: var(--header-h);
+  bottom: 0;
+  background-color: var(--bg);
+  z-index: 100;
+  width: min(var(--sb-open), 85vw);
+  height: calc(100% - var(--header-h));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* Movimiento (desplazamiento del drawer, ancho, visibilidad): `sidebarMotion.ts`. */
+  &.left {
+    --sb-open: var(--sb-left-open);
+    left: 0;
+    border-right: var(--border);
+  }
+
+  &.right {
+    --sb-open: var(--sb-right-open);
+    border-left: var(--border);
+    right: 0;
+  }
+
+  @variant lg {
+    &.left {
+      width: var(--sb-left-w);
+    }
+    &.right {
+      width: var(--sb-right-w);
+    }
+    /* En `mini` el scroll del menú no muestra barra; el texto de cada enlace sale por
+       fuera del panel con `position: fixed` (ver `.sidebar.mini` abajo). */
+    &.mini > nav {
+      scrollbar-width: none;
+    }
+  }
+}
+
+/* Solo el menú hace scroll: la barra de modo/cerrar queda fija arriba. */
+.sidebar > nav {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  overscroll-behavior: contain;
+}
+
+/* Fondo detrás del drawer abierto (solo debajo de `lg`). */
+.shell-backdrop {
+  position: fixed;
+  inset: var(--header-h) 0 0;
+  z-index: 90;
+  background: rgb(0 0 0 / 0.3);
+  @variant lg {
+    display: none;
+  }
+}
+
+.sidebar-menu {
+  list-style: none;
+  padding: 0px 0;
+}
+.sidebar-control {
+  flex: none;
+  position: relative;
+  width: 100%;
+  margin-left: auto;
+  display: flex;
+  justify-content: end;
+  align-items: center;
+  min-height: 2rem;
+  padding: 6px 8px 0;
+  gap: 6px;
+
+  &.right {
+    justify-content: start;
+    flex-direction: row-reverse;
+    &.nomini {
+      flex-direction: row;
+    }
+  }
+}
+
+/* Cerrar: botón redondo que se tiñe de rojo suave al pasar el mouse. */
+.close-sidebar {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: var(--p-surface-500);
+  cursor: pointer;
+  transition:
+    background-color 0.15s,
+    color 0.15s,
+    transform 0.15s;
+  &:hover {
+    background-color: var(--p-red-50);
+    color: var(--p-red-600);
+  }
+  &:active {
+    transform: scale(0.92);
+  }
+}
+
+/* Selector de modo: dos opciones en una pastilla con un indicador que se desliza.
+   `mini` es solo de escritorio: debajo de `lg` (drawer) no se muestra. */
+.sb-modes {
+  --sb-opt: 26px;
+  position: relative;
+  display: none;
+  flex: none;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--p-surface-100);
+  box-shadow: inset 0 0 0 1px var(--p-surface-200);
+  @variant lg {
+    display: inline-flex;
+  }
+}
+.sb-modes__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: var(--sb-opt);
+  height: var(--sb-opt);
+  border-radius: 999px;
+  background: var(--p-surface-0);
+  box-shadow:
+    0 1px 3px rgb(0 0 0 / 0.18),
+    0 0 0 1px color-mix(in srgb, var(--p-primary-color) 35%, transparent);
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.sb-modes--mini .sb-modes__thumb {
+  transform: translateX(var(--sb-opt));
+}
+.sidebar-control.right .sb-modes {
+  flex-direction: row-reverse;
+  & .sb-modes__thumb {
+    left: auto;
+    right: 2px;
+  }
+  &.sb-modes--mini .sb-modes__thumb {
+    transform: translateX(calc(-1 * var(--sb-opt)));
+  }
+}
+.sb-modes__opt {
+  position: relative;
+  display: inline-flex;
+  width: var(--sb-opt);
+  height: var(--sb-opt);
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: var(--p-surface-500);
+  cursor: pointer;
+  transition: color 0.2s;
+  &:hover {
+    color: var(--p-surface-800);
+  }
+  &[aria-checked="true"] {
+    color: var(--p-primary-color);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--p-primary-color);
+    outline-offset: 1px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sb-modes__thumb {
+    transition: none;
+  }
+}
+
+.menu-item {
+  position: relative;
+  z-index: 9;
+}
+
+.menu-link {
+  min-width: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0.5rem calc((var(--sb-mini) - 24px) / 2);
+  color: var(--text-color);
+  text-decoration: none;
+  white-space: nowrap;
+  &:hover {
+    background-color: var(--p-content-hover-background);
+  }
+  /* Ítem cuya ruta es la actual (RouterLink pone la clase y aria-current="page"). */
+  &.router-link-exact-active {
+    background-color: color-mix(in srgb, var(--p-primary-color) 12%, transparent);
+    color: var(--p-primary-color);
+    font-weight: 600;
+    box-shadow: inset 3px 0 0 var(--p-primary-color);
+    & .menu-icon {
+      color: inherit;
+    }
+  }
+}
+
+.menu-icon {
+  font-size: 1.2rem;
+  min-width: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.menu-text {
+  margin-left: 15px;
+  opacity: 1;
+}
+.sidebar.mini {
+  /* Mismo alto que en `open` (padding, no margin): el menú no brinca al cambiar de modo.
+     Solo cabe el selector de modo (cerrar sigue en el botón de la cabecera). */
+  & .sidebar-control {
+    justify-content: center;
+    padding: 6px 0 0;
+    @variant lg {
+      & .close-sidebar {
+        display: none;
+      }
+    }
+  }
+  /* Solo íconos (la columna mide `--sb-mini`). Al pasar el mouse el texto aparece
+     flotando sobre el contenido. Es `position: fixed` para no ser recortado por el
+     scroll del panel: sin `top` conserva su posición vertical natural (centrado en el
+     enlace) y no altera el layout; `left`/`right` lo pegan al borde del panel. */
+  @variant lg {
+    & .menu-item .menu-link {
+      flex: none;
+      min-width: var(--sb-mini);
+      width: var(--sb-mini);
+      overflow: visible;
+    }
+    /* Sin el texto en el flujo el enlace mediría solo el ícono, menos que en `open`, y el
+       menú brincaría al cambiar de modo: una línea vacía le conserva el alto. */
+    & .menu-item .menu-link::before {
+      content: "";
+      height: 1lh;
+    }
+    & .menu-text {
+      position: fixed;
+      margin: 0;
+      padding: 14px 16px;
+      width: max-content;
+      max-width: calc(var(--sb-open) - var(--sb-mini));
+      overflow: hidden;
+      text-overflow: ellipsis;
+      background-color: var(--p-content-hover-background);
+      box-shadow: 0 2px 8px rgb(0 0 0 / 0.15);
+      /* Aparece al pasar el mouse o enfocar: lo anima GSAP (`sidebarMotion.ts`). */
+      opacity: 0;
+      pointer-events: none;
+    }
+    &.left .menu-text {
+      left: var(--sb-mini);
+      border-radius: 0 8px 8px 0;
+    }
+    &.right .menu-text {
+      right: var(--sb-mini);
+      border-radius: 8px 0 0 8px;
+    }
+  }
+}
+
+/* Pliegue `open ⇄ mini` (lo anima `sidebarMotion.ts`). Con `data-sb-morph` el menú
+   conserva la estructura de `open` y `--sb-c` (0 = open, 1 = mini) lo lleva al aspecto
+   exacto de `mini`: en 1 no se distingue de él y el cambio de estructura no se nota.
+   Todo sale de una sola variable que GSAP escribe en el panel; `--h` es el alto
+   natural de cada encabezado o submenú, medido al empezar. */
+.sidebar[data-sb-morph] {
+  --sb-k: calc(1 - var(--sb-c));
+  /* Lo que se desvanece en el primer 40 % del pliegue y vuelve en el último 40 %. */
+  --sb-fade: clamp(0, 1 - 2.5 * var(--sb-c), 1);
+  & > nav {
+    scrollbar-width: none;
+  }
+  /* Botones: de `padding 8px` alineados al borde a centrados en `--sb-mini`; cerrar se
+     desvanece en el primer 40 % del pliegue y cede su lugar (ancho y separación) poco a
+     poco: el selector de modo llega a donde lo dibuja `mini` sin salirse del panel. */
+  & .sidebar-control {
+    padding-inline: calc(8px * var(--sb-k));
+    gap: calc(6px * var(--sb-k));
+  }
+  & .close-sidebar {
+    width: calc(28px * var(--sb-k));
+    min-width: 0;
+    overflow: hidden;
+    opacity: var(--sb-fade);
+    /* Con dedo (`tap-target`) mide `--tap-min`. */
+    @media (pointer: coarse) {
+      min-width: calc(var(--tap-min) * var(--sb-k));
+    }
+  }
+  /* El texto se va en el primer 40 % del pliegue (y vuelve en el último 40 %). */
+  & .menu-text {
+    opacity: var(--sb-fade);
+  }
+  & .nav-row:not(.nav-row--mini) > .menu-link {
+    padding-inline-start: calc(0.5rem + ((var(--sb-mini) - 24px) / 2 - 0.5rem) * var(--sb-c));
+  }
+  & .nav-toggle {
+    width: calc(1.5rem * var(--sb-k));
+    margin-inline-start: calc((0.5rem + var(--depth, 0) * 0.9rem) * var(--sb-k));
+    opacity: var(--sb-k);
+  }
+  & .nav-section-title {
+    height: calc(var(--h) * var(--sb-k));
+    padding-block: calc(0.5rem * var(--sb-k));
+    overflow: hidden;
+    opacity: var(--sb-fade);
+  }
+  & .nav-tree--nested {
+    height: calc(var(--h) * var(--sb-k));
+    overflow: hidden;
+    opacity: var(--sb-k);
+  }
+}

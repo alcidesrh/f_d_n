@@ -42,6 +42,7 @@ La evaluación previa recomendó `symfony/scheduler` sobre el Messenger y el Pos
 | `horizonte_salidas` | 01:30 | Despliega los esquemas automáticos. |
 | `reportes_diarios` | `PROGRAMADOR_HORA_REPORTES` (06:00) | Reparte los reportes del día anterior. |
 | `purgar_archivos_chat` | 03:15 | Archivos del chat de más de 24 h sin mensaje. |
+| `refrescar_tablero` | 1 min | Rehace las copias del tablero que alguien miró en los últimos 10 minutos (`Tablero\TableroEnCache`, ADR-046). |
 
 Los comandos de antes siguen, pero corren una pasada: sirven para correr una tarea a mano. Ya no tienen `--cada` ni `--durante`.
 

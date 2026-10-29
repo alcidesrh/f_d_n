@@ -1,0 +1,11 @@
+docker compose --env-file .env.prod.local -f compose.yaml -f compose.prod.yaml -f compose.sincronizacion.yaml -f compose.sincronizacion.prod.yaml up -d
+ Container database  Running
+ Container backend  Running
+ Container frontend  Running
+ Container worker  Running
+ Container sincronizacion  Recreate
+ Container sincronizacion  Recreated
+ Container database  Waiting
+ Container database  Healthy
+ Container sincronizacion  Starting
+ Container sincronizacion  Started

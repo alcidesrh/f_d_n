@@ -25,6 +25,10 @@ security:
             security: true
         main:
             lazy: true
+            # Sin sesión: cada petición trae su Bearer. Con sesión, PHP bloquea el
+            # archivo de la sesión durante toda la petición y las que el navegador
+            # hace en paralelo (misma cookie) esperaban una detrás de otra.
+            stateless: true
             provider: app_user_provider
             # Un usuario desactivado no entra, ni con un token que ya tenía.
             user_checker: App\Acceso\UsuarioActivo

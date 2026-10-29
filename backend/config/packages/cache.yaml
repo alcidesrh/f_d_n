@@ -35,6 +35,11 @@ framework:
             cache.programador:
                 adapter: cache.adapter.doctrine_dbal
                 provider: doctrine.dbal.default_connection
+            # Copias del tablero de gestión (`App\Tablero\TableroEnCache`): las rehace
+            # el worker y las lee el backend, que no comparten disco.
+            cache.tablero:
+                adapter: cache.adapter.doctrine_dbal
+                provider: doctrine.dbal.default_connection
 
 when@dev:
     framework:

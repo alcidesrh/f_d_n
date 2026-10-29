@@ -1,0 +1,86 @@
+/*
+ * Tokens del mapa del bus. Derivan de los del tema de PrimeVue (en modo
+ * oscuro las rampas se invierten), así que el mapa sigue al tema elegido.
+ * Un uso concreto puede sobreescribirlos en su contenedor.
+ */
+:root {
+  --bm-seat-a: color-mix(in srgb, var(--p-slate-500, #64748b) 18%, var(--p-content-background));
+  --bm-seat-a-stroke: color-mix(in srgb, var(--p-slate-500, #64748b) 55%, var(--p-content-background));
+  --bm-seat-a-ink: var(--p-slate-700, #334155);
+
+  --bm-seat-b: color-mix(in srgb, var(--p-slate-500, #64748b) 18%, var(--p-content-background));
+  --bm-seat-b-stroke: color-mix(in srgb, var(--p-slate-500, #64748b) 55%, var(--p-content-background));
+  --bm-seat-b-ink: var(--p-slate-700, #334155);
+
+  /*
+   * Ocupados (venta, ADR-021/023): tonos claros que no chocan con los libres
+   * (A y B pizarra) ni entre sí. Estación = azul, página = ámbar,
+   * agencia = esmeralda, cortesía = lima, voucher = rosa; la
+   * preventa es un contorno naranja punteado (es temporal).
+   */
+  /*
+  --bm-sold-agency: color-mix(in srgb, var(--p-emerald-500, #10b981) 30%, var(--p-content-background));
+  --bm-sold-agency-stroke: color-mix(in srgb, var(--p-emerald-800, #059669) 80%, var(--p-content-background));
+  --bm-sold-agency-ink: var(--p-emerald-800, #065f46);
+
+  --bm-occupied: color-mix(in srgb, var(--p-blue-500, #14b8a6) 22%, var(--p-content-background));
+  --bm-occupied-stroke: color-mix(in srgb, var(--p-blue-800, #0d9488) 65%, var(--p-content-background));
+  --bm-occupied-ink: var(--p-blue-800, #115e59);*/
+
+  --bm-occupied: color-mix(in srgb, var(--p-emerald-500, #10b981) 30%, var(--p-content-background));
+  --bm-occupied-stroke: color-mix(in srgb, var(--p-emerald-600, #059669) 80%, var(--p-content-background));
+  --bm-occupied-ink: var(--p-emerald-800, #065f46);
+
+  --bm-sold-agency: color-mix(in srgb, var(--p-blue-500, #14b8a6) 22%, var(--p-content-background));
+  --bm-sold-agency-stroke: color-mix(in srgb, var(--p-blue-600, #0d9488) 65%, var(--p-content-background));
+  --bm-sold-agency-ink: var(--p-blue-800, #115e59);
+
+  --bm-sold-web: color-mix(in srgb, var(--p-amber-400, #fbbf24) 20%, var(--p-content-background));
+  --bm-sold-web-stroke: color-mix(in srgb, var(--p-amber-600, #d97706) 78%, var(--p-content-background));
+  --bm-sold-web-ink: var(--p-amber-800, #92400e);
+
+  --bm-courtesy: color-mix(in srgb, var(--p-lime-500, #84cc16) 26%, var(--p-content-background));
+  --bm-courtesy-stroke: color-mix(in srgb, var(--p-lime-600, #65a30d) 70%, var(--p-content-background));
+  --bm-courtesy-ink: var(--p-lime-800, #3f6212);
+
+  /*--bm-voucher: color-mix(in srgb, var(--p-rose-400, #fb7185) 22%, var(--p-content-background));
+  --bm-voucher-stroke: color-mix(in srgb, var(--p-rose-500, #f43f5e) 60%, var(--p-content-background));
+  --bm-voucher-ink: var(--p-rose-800, #9f1239);*/
+
+  --bm-voucher: color-mix(in srgb, var(--p-neutral-200, #fb7185) 22%, var(--p-content-background));
+  --bm-voucher-stroke: color-mix(in srgb, var(--p-neutral-800, #f43f5e) 60%, var(--p-content-background));
+  --bm-voucher-ink: var(--p-neutral-800, #9f1239);
+
+  --bm-reserved: var(--p-orange-500, #f97316);
+  --bm-reserved-soft: color-mix(in srgb, var(--p-orange-500, #f97316) 10%, var(--p-content-background));
+
+  --bm-driver: color-mix(in srgb, var(--p-surface-700) 70%, var(--p-content-background));
+  --bm-door: color-mix(in srgb, var(--p-surface-700) 70%, var(--p-content-background));
+  /*var(--p-amber-600, #0d9488);*/
+
+  --bm-hull: var(--p-content-background);
+  --bm-hull-border: color-mix(in srgb, var(--p-text-color) 16%, var(--p-content-background));
+  --bm-floor: color-mix(in srgb, var(--p-text-color) 3.5%, var(--p-content-background));
+  --bm-aisle: color-mix(in srgb, var(--p-text-color) 12%, transparent);
+  --bm-glass: color-mix(in srgb, var(--p-sky-400, #38bdf8) 28%, var(--p-content-background));
+}
+
+/*
+ * Colores del asiento registrados como <color> para poder animarlos: el
+ * recomendado (SeatGlyph.vue) pasa de la venta de su vecino a libre animando estas variables.
+ */
+@property --seat-fill {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+@property --seat-stroke {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+@property --seat-ink {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: black;
+}

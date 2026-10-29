@@ -1,0 +1,80 @@
+/**
+ * Croquis de un bus (ADR-019): una rejilla por planta (hasta dos) con
+ * coordenadas desde 1, donde cada celda tiene como mucho un elemento —un
+ * asiento vendible o una señal (chofer, puerta)—.
+ *
+ * Es el mismo dato para todos los usos del mapa del bus: edición del bus,
+ * ocupación de un salida, selección de asientos en taquilla o en la venta
+ * en línea. Lo que cambia entre usos es cómo se pinta cada asiento
+ * (`EstadoAsiento`), no el croquis.
+ */
+
+export type ClaseAsiento = 'A' | 'B'
+export type TipoSenal = 'chofer' | 'puerta'
+export type TipoElemento = 'asiento' | TipoSenal
+
+export interface Posicion {
+  /** 1 = planta baja (o única), 2 = planta alta. */
+  planta: number
+  fila: number
+  columna: number
+}
+
+export interface AsientoCroquis extends Posicion {
+  tipo: 'asiento'
+  /** Id del `Asiento`; null si aún no se guardó. */
+  id: number | null
+  numero: number
+  clase: ClaseAsiento
+  /** Tiene boletos vendidos: no se puede quitar del croquis (solo lectura). */
+  conBoletos?: boolean
+}
+
+export interface SenalCroquis extends Posicion {
+  tipo: TipoSenal
+  /** Id del `BusSenal`; null si aún no se guardó. */
+  id: number | null
+}
+
+export type ElementoCroquis = AsientoCroquis | SenalCroquis
+
+/** Dimensiones de la rejilla de una planta. */
+export interface Rejilla {
+  filas: number
+  columnas: number
+}
+
+/** Croquis distinto de la flota con los buses que lo usan (`GET /croquis/plantillas`). */
+export interface PlantillaCroquis {
+  firma: string
+  buses: Array<{ id: number; codigo: string }>
+  asientos: number
+  plantas: number
+  elementos: ElementoCroquis[]
+}
+
+/**
+ * Cómo se pinta un asiento en un uso concreto del mapa. El croquis no lo
+ * sabe: lo decide quien pinta (p. ej. la ocupación de un salida).
+ *
+ * En la venta, `ocupado` es vendido en taquilla; `ocupado-web` y
+ * `ocupado-agencia` distinguen los otros canales (ADR-021), `reservado` es
+ * la precompra de la página web, y `cortesia` / `voucher` son vendidos sin
+ * cobro (cortesía de taquilla, voucher del legado). `recomendado-<estado>` es un
+ * libre que conviene vender en taquilla para no fragmentar el bus (ADR-030): parpadea
+ * entre el estado de la venta del asiento vecino que lo recomienda y `seleccionado`.
+ */
+export type EstadoVenta = 'ocupado' | 'ocupado-web' | 'ocupado-agencia' | 'cortesia' | 'voucher' | 'reservado'
+
+export type EstadoAsiento = 'disponible' | 'seleccionado' | 'bloqueado' | EstadoVenta | `recomendado-${EstadoVenta}`
+
+/** Estados que no se pueden elegir en un mapa interactivo. */
+export const ESTADOS_NO_SELECCIONABLES: readonly EstadoAsiento[] = [
+  'ocupado',
+  'ocupado-web',
+  'ocupado-agencia',
+  'cortesia',
+  'voucher',
+  'reservado',
+  'bloqueado',
+]

@@ -1,0 +1,186 @@
+import { describe, expect, it } from 'vitest'
+import type { AsientoCroquis, ClaseAsiento } from '@/core/croquis/types'
+import {
+  alternar,
+  bajadaPorDefecto,
+  clasesDelTrayecto,
+  depurarSeleccion,
+  diaISO,
+  estadoEnMapa,
+  paradasDeBajada,
+  paradasDeSubida,
+  soloVendibles,
+  subidaPorDefecto,
+  trayectoEntre,
+} from '../modelo'
+import type { AsientoOcupado } from '../types'
+
+const asiento = (id: number, clase: ClaseAsiento = 'A'): AsientoCroquis => ({
+  tipo: 'asiento',
+  id,
+  numero: id,
+  clase,
+  planta: 1,
+  fila: 1,
+  columna: 1,
+})
+
+// Guatemala(1) → Santa Elena(2) → Melchor(3)
+const detalle = {
+  paradas: [
+    { id: 1, nombre: 'Guatemala', direccion: null, posicion: 0, hora: null },
+    { id: 2, nombre: 'Santa Elena', direccion: null, posicion: 1, hora: null },
+    { id: 3, nombre: 'Melchor', direccion: null, posicion: 2, hora: null },
+  ],
+  trayectos: [
+    { id: 10, origen: 1, destino: 3, completo: true, clases: ['A', 'B'] as ClaseAsiento[] },
+    { id: 11, origen: 1, destino: 2, completo: false, clases: ['A'] as ClaseAsiento[] },
+    { id: 12, origen: 2, destino: 3, completo: false, clases: ['B'] as ClaseAsiento[] },
+  ],
+}
+
+describe('estadoEnMapa', () => {
+  const ocupados: AsientoOcupado[] = [
+    { asiento: 1, estado: 'vendido', canal: 'estacion' },
+    { asiento: 2, estado: 'vendido', canal: 'web' },
+    { asiento: 3, estado: 'vendido', canal: 'agencia' },
+    { asiento: 4, estado: 'reservado', canal: null },
+    { asiento: 5, estado: 'propio', canal: null },
+  ]
+  const estado = estadoEnMapa(ocupados, [6])
+
+  it('lo vendido sin cobro se distingue antes que el canal', () => {
+    const e = estadoEnMapa(
+      [
+        { asiento: 1, estado: 'vendido', canal: 'estacion', sinCobro: 'cortesia' },
+        { asiento: 2, estado: 'vendido', canal: 'agencia', sinCobro: 'voucher' },
+        { asiento: 3, estado: 'vendido', canal: 'web', sinCobro: null },
+      ],
+      [],
+    )
+    expect([1, 2, 3].map((id) => e(asiento(id)))).toEqual(['cortesia', 'voucher', 'ocupado-web'])
+  })
+
+  it('un libre recomendado toma el estado de la venta que lo recomienda', () => {
+    const e = estadoEnMapa(
+      [{ asiento: 1, estado: 'vendido', canal: 'estacion' }],
+      [7],
+      undefined,
+      [
+        { asiento: 2, estado: 'vendido', canal: 'web' },
+        { asiento: 3, estado: 'reservado', canal: null },
+        { asiento: 4, estado: 'vendido', canal: 'agencia', sinCobro: 'cortesia' },
+      ],
+    )
+    expect([2, 3, 4, 5, 7, 1].map((id) => e(asiento(id)))).toEqual([
+      'recomendado-ocupado-web',
+      'recomendado-reservado',
+      'recomendado-cortesia',
+      'disponible',
+      'seleccionado',
+      'ocupado',
+    ])
+  })
+
+  it('distingue el canal de lo vendido', () => {
+    expect([1, 2, 3].map((id) => estado(asiento(id)))).toEqual([
+      'ocupado',
+      'ocupado-web',
+      'ocupado-agencia',
+    ])
+  })
+
+  it('reservado, propio, elegido y libre', () => {
+    expect([4, 5, 6, 7].map((id) => estado(asiento(id)))).toEqual([
+      'reservado',
+      'seleccionado',
+      'seleccionado',
+      'disponible',
+    ])
+  })
+})
+
+describe('selección', () => {
+  it('alterna y respeta el máximo', () => {
+    expect(alternar([1, 2], 2)).toEqual([1])
+    expect(alternar([1], 2)).toEqual([1, 2])
+    expect(alternar([1, 2], 3, 2)).toEqual([1, 2])
+  })
+
+  it('quita lo que otro ocupó, no lo propio', () => {
+    expect(
+      depurarSeleccion(
+        [1, 2, 3],
+        [
+          { asiento: 2, estado: 'vendido', canal: 'web' },
+          { asiento: 3, estado: 'propio', canal: null },
+        ],
+      ),
+    ).toEqual([1, 3])
+  })
+})
+
+describe('sube / baja', () => {
+  it('subidas: paradas que son origen de algún trayecto', () => {
+    expect(paradasDeSubida(detalle).map((p) => p.id)).toEqual([1, 2])
+  })
+
+  it('bajadas según la subida', () => {
+    expect(paradasDeBajada(detalle, 1).map((p) => p.id)).toEqual([2, 3])
+    expect(paradasDeBajada(detalle, 2).map((p) => p.id)).toEqual([3])
+    expect(paradasDeBajada(detalle, null)).toEqual([])
+  })
+
+  it('trayecto entre paradas', () => {
+    expect(trayectoEntre(detalle, 2, 3)).toBe(12)
+    expect(trayectoEntre(detalle, 3, 1)).toBeNull()
+  })
+
+  it('por defecto sube en la estación de venta y baja al final', () => {
+    expect(subidaPorDefecto(detalle, 2)).toBe(2)
+    expect(subidaPorDefecto(detalle, 99)).toBe(1)
+    expect(bajadaPorDefecto(detalle, 1)).toBe(3)
+  })
+})
+
+it('diaISO usa la fecha local', () => {
+  expect(diaISO(new Date(2026, 8, 7, 23, 30))).toBe('2026-09-07')
+})
+
+describe('tarifa por tramo', () => {
+  it('cada trayecto vendible dice qué clases tienen tarifa', () => {
+    expect(clasesDelTrayecto(detalle, 11)).toEqual(['A'])
+    expect(clasesDelTrayecto(detalle, 12)).toEqual(['B'])
+    expect(clasesDelTrayecto(detalle, null)).toEqual([])
+  })
+
+  it('un asiento libre de una clase sin tarifa en el tramo queda bloqueado', () => {
+    const e = estadoEnMapa([{ asiento: 1, estado: 'vendido', canal: 'estacion' }], [], ['A'])
+    expect(e(asiento(2, 'A'))).toBe('disponible')
+    expect(e(asiento(3, 'B'))).toBe('bloqueado')
+    expect(e(asiento(1, 'B')), 'lo vendido se sigue viendo vendido').toBe('ocupado')
+  })
+
+  it('al cambiar de tramo se sueltan los asientos que ya no tienen tarifa', () => {
+    const croquis = [asiento(1, 'A'), asiento(2, 'B'), asiento(3, 'A')]
+    expect(soloVendibles([1, 2, 3], croquis, ['A'])).toEqual([1, 3])
+    expect(soloVendibles([1, 2, 3], croquis, [])).toEqual([])
+  })
+})
+
+describe('viaje del cliente', async () => {
+  const { diasEntre, horaViaje } = await import('../modelo')
+
+  it('cuenta los días de calendario en Guatemala', () => {
+    expect(diasEntre('2026-10-10T23:30:00-06:00', '2026-10-11T05:20:00-06:00')).toBe(1)
+    expect(diasEntre('2026-10-11T00:50:00-06:00', '2026-10-11T05:20:00-06:00')).toBe(0)
+    // 23:00 en Guatemala ya es el día siguiente en UTC: no cuenta.
+    expect(diasEntre('2026-10-10T20:00:00-06:00', '2026-10-10T23:00:00-06:00')).toBe(0)
+  })
+
+  it('marca la hora estimada', () => {
+    expect(horaViaje({ hora: '2026-10-11T05:20:00-06:00', aprox: true })).toMatch(/^≈ 05:20/)
+    expect(horaViaje({ hora: '2026-10-11T05:20:00-06:00', aprox: false })).toMatch(/^05:20/)
+    expect(horaViaje({ hora: null, aprox: false })).toBe('—')
+  })
+})

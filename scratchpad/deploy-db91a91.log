@@ -1,0 +1,153 @@
+time="2026-10-28T00:06:47-06:00" level=warning msg="Docker Compose is configured to build using Bake, but buildx isn't installed"
+#0 building with "default" instance using docker driver
+
+#1 [frontend internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.31kB done
+#1 DONE 0.0s
+
+#2 [frontend] resolve image config for docker-image://docker.io/docker/dockerfile:1.4
+#2 DONE 0.3s
+
+#3 [frontend] docker-image://docker.io/docker/dockerfile:1.4@sha256:9ba7531bd80fb0a858632727cf7a112fbfd19b17e94c4e84ced81e24ef1a0dbc
+#3 resolve docker.io/docker/dockerfile:1.4@sha256:9ba7531bd80fb0a858632727cf7a112fbfd19b17e94c4e84ced81e24ef1a0dbc 0.0s done
+#3 CACHED
+
+#4 [frontend internal] load .dockerignore
+#4 transferring context: 405B done
+#4 DONE 0.0s
+
+#5 [frontend internal] load metadata for docker.io/oven/bun:1-alpine
+#5 DONE 0.0s
+
+#6 [frontend internal] load build context
+#6 DONE 0.0s
+
+#7 [frontend bun_upstream 1/1] FROM docker.io/oven/bun:1-alpine@sha256:4cf82f5686b196504fe119db3fcd9185b191f82ece82c40680e597228ec6070a
+#7 resolve docker.io/oven/bun:1-alpine@sha256:4cf82f5686b196504fe119db3fcd9185b191f82ece82c40680e597228ec6070a 0.0s done
+#7 DONE 0.0s
+
+#6 [frontend internal] load build context
+#6 transferring context: 60.62kB 0.1s done
+#6 DONE 0.1s
+
+#8 [frontend builder 1/5] COPY bun.lock package.json ./
+#8 CACHED
+
+#9 [frontend base 1/1] WORKDIR /frontend
+#9 CACHED
+
+#10 [frontend builder 2/5] RUN bun install --frozen-lockfile
+#10 CACHED
+
+#11 [frontend builder 3/5] COPY . .
+#11 DONE 0.7s
+
+#12 [frontend builder 4/5] RUN apk add --no-cache nodejs
+#12 1.122 ( 1/12) Installing ca-certificates (20261020-r0)
+#12 1.157 ( 2/12) Installing ada-libs (4.0.0-r0)
+#12 1.184 ( 3/12) Installing brotli-libs (1.2.1-r0)
+#12 1.217 ( 4/12) Installing c-ares (1.34.9-r0)
+#12 1.238 ( 5/12) Installing icu-data-en (78.1-r0)
+#12 1.292   Executing icu-data-en-78.1-r0.post-install
+#12 1.304   * If you need ICU with non-English locales and legacy charset support, install
+#12 1.304   * package icu-data-full.
+#12 1.304 ( 6/12) Installing icu-libs (78.1-r0)
+#12 1.403 ( 7/12) Installing nghttp2-libs (1.70.0-r0)
+#12 1.419 ( 8/12) Installing simdjson (4.2.4-r0)
+#12 1.436 ( 9/12) Installing simdutf (9.0.0-r0)
+#12 1.461 (10/12) Installing sqlite-libs (3.53.4-r0)
+#12 1.513 (11/12) Installing zstd-libs (1.5.7-r2)
+#12 1.544 (12/12) Installing nodejs (24.22.1-r0)
+#12 2.306 Executing busybox-1.37.0-r31.trigger
+#12 2.315 Executing ca-certificates-20261020-r0.trigger
+#12 2.363 OK: 73.3 MiB in 30 packages
+#12 DONE 2.5s
+
+#13 [frontend builder 5/5] RUN bun run build
+#13 0.209 $ run-p type-check "build-only {@}" --
+#13 0.468 $ vue-tsc --build
+#13 0.469 $ vite build
+#13 2.053 vite v8.2.0 building client environment for production...
+#13 2.205 [2Ktransforming...
+#13 8.631 /fonts/Chakra_Petch/ChakraPetch-SemiBold.ttf referenced in /fonts/Chakra_Petch/ChakraPetch-SemiBold.ttf didn't resolve at build time, it will remain unchanged to be resolved at runtime
+#13 9.540 ✗ Build failed in 7.48s
+#13 15.56 warnings
+#13 15.56   One of the glob patterns doesn't match any files. Please remove or fix the following: {
+#13 15.56   "globDirectory": "/frontend/dist",
+#13 15.56   "globPattern": "**/*.{js,css,woff2}",
+#13 15.56   "globIgnores": [
+#13 15.56     "**/material-symbols-*.js",
+#13 15.56     "sw.js",
+#13 15.56     "workbox-*.js"
+#13 15.56   ]
+#13 15.56 }
+#13 15.56   One of the glob patterns doesn't match any files. Please remove or fix the following: {
+#13 15.56   "globDirectory": "/frontend/dist",
+#13 15.56   "globPattern": "favicon.ico",
+#13 15.56   "globIgnores": [
+#13 15.56     "**/material-symbols-*.js",
+#13 15.56     "sw.js",
+#13 15.56     "workbox-*.js"
+#13 15.56   ]
+#13 15.56 }
+#13 15.56   One of the glob patterns doesn't match any files. Please remove or fix the following: {
+#13 15.56   "globDirectory": "/frontend/dist",
+#13 15.56   "globPattern": "pwa/*.png",
+#13 15.56   "globIgnores": [
+#13 15.56     "**/material-symbols-*.js",
+#13 15.56     "sw.js",
+#13 15.56     "workbox-*.js"
+#13 15.56   ]
+#13 15.56 }
+#13 15.56 
+#13 15.56 
+#13 15.56 PWA v2.0.0
+#13 15.56 mode      generateSW
+#13 15.56 precache  5 entries (0.00 KiB)
+#13 15.56 files generated
+#13 15.56   dist/sw.js
+#13 15.56   dist/workbox-2fbc6a65.js
+#13 15.57 error during build:
+#13 15.57 Build failed with 1 error:
+#13 15.57 
+#13 15.57 [plugin vite-plugin-pwa:build]
+#13 15.57 Error: Build failed with 1 error:
+#13 15.57 
+#13 15.57 [31m[UNLOADABLE_DEPENDENCY] [0mCould not load src/features/auth/LoginPage.vue
+#13 15.57     [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m src/app/router.ts:27:28 [38;5;246m][0m
+#13 15.57     [38;5;246m│[0m
+#13 15.57  [38;5;246m27 │[0m [38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249m [0m[38;5;249mc[0m[38;5;249mo[0m[38;5;249mm[0m[38;5;249mp[0m[38;5;249mo[0m[38;5;249mn[0m[38;5;249me[0m[38;5;249mn[0m[38;5;249mt[0m[38;5;249m:[0m[38;5;249m [0m[38;5;249m([0m[38;5;249m)[0m[38;5;249m [0m[38;5;249m=[0m[38;5;249m>[0m[38;5;249m [0m[38;5;249mi[0m[38;5;249mm[0m[38;5;249mp[0m[38;5;249mo[0m[38;5;249mr[0m[38;5;249mt[0m[38;5;249m([0m"@/features/auth/LoginPage.vue"[38;5;249m)[0m[38;5;249m,[0m
+#13 15.57  [38;5;240m   │[0m                                  ───────────────┬───────────────  
+#13 15.57  [38;5;240m   │[0m                                                 ╰───────────────── No such file or directory (os error 2)
+#13 15.57 [38;5;246m────╯[0m
+#13 15.57     at aggregateBindingErrorsIntoJsError (file:///frontend/node_modules/rolldown/dist/shared/error-BgfXq0Tb.mjs:48:18)
+#13 15.57     at plugin (file:///frontend/node_modules/rolldown/dist/shared/bindingify-input-options-EnUlEF0T.mjs:1449:60)
+#13 15.57     at plugin.<computed> (file:///frontend/node_modules/rolldown/dist/shared/bindingify-input-options-EnUlEF0T.mjs:1906:18)
+#13 15.57     at aggregateBindingErrorsIntoJsError (file:///frontend/node_modules/rolldown/dist/shared/error-BgfXq0Tb.mjs:48:18)
+#13 15.57     at unwrapBindingResult (file:///frontend/node_modules/rolldown/dist/shared/error-BgfXq0Tb.mjs:18:128)
+#13 15.57     at #build (file:///frontend/node_modules/rolldown/dist/shared/rolldown-DP_p9pd3.mjs:132:34)
+#13 15.57     at async buildEnvironment (file:///frontend/node_modules/vite/dist/node/chunks/node.js:33669:66)
+#13 15.57     at async Object.build (file:///frontend/node_modules/vite/dist/node/chunks/node.js:34091:19)
+#13 15.57     at async Object.buildApp (file:///frontend/node_modules/vite/dist/node/chunks/node.js:34088:153)
+#13 15.57     at async CAC.<anonymous> (file:///frontend/node_modules/vite/dist/node/cli.js:776:3) {
+#13 15.57   errors: [Getter/Setter]
+#13 15.57 }
+#13 15.65 error: script "build-only" exited with code 1
+#13 15.74 error: script "type-check" was terminated by signal SIGTERM (Polite quit request)
+#13 15.75 ERROR: "build-only" exited with 1.
+#13 15.75 error: script "build" exited with code 1
+#13 ERROR: process "/bin/sh -c bun run build" did not complete successfully: exit code: 1
+------
+ > [frontend builder 5/5] RUN bun run build:
+15.57     at async buildEnvironment (file:///frontend/node_modules/vite/dist/node/chunks/node.js:33669:66)
+15.57     at async Object.build (file:///frontend/node_modules/vite/dist/node/chunks/node.js:34091:19)
+15.57     at async Object.buildApp (file:///frontend/node_modules/vite/dist/node/chunks/node.js:34088:153)
+15.57     at async CAC.<anonymous> (file:///frontend/node_modules/vite/dist/node/cli.js:776:3) {
+15.57   errors: [Getter/Setter]
+15.57 }
+15.65 error: script "build-only" exited with code 1
+15.74 error: script "type-check" was terminated by signal SIGTERM (Polite quit request)
+15.75 ERROR: "build-only" exited with 1.
+15.75 error: script "build" exited with code 1
+------
+failed to solve: process "/bin/sh -c bun run build" did not complete successfully: exit code: 1

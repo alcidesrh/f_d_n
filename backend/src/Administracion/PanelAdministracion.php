@@ -38,7 +38,7 @@ final class PanelAdministracion
         $ve = static fn(SeccionAdministracion|EnlaceAdministracion $r) => Acceso::permite((int) $usuario->getId(), $roles, $sistema, $r->getRoles(), $r->getUsuarios());
 
         $resultado = [];
-        foreach ($this->secciones() as $seccion) {
+        foreach ($this->conAcceso($this->secciones()) as $seccion) {
             if (!$seccion->isActiva() || !$ve($seccion)) {
                 continue;
             }
@@ -54,7 +54,7 @@ final class PanelAdministracion
     /** @return list<array<string, mixed>> todo, con su acceso */
     public function configuracion(): array
     {
-        return array_map(static fn(SeccionAdministracion $s) => self::seccion($s, [...$s->getEnlaces()], true), $this->secciones());
+        return array_map(static fn(SeccionAdministracion $s) => self::seccion($s, [...$s->getEnlaces()], true), $this->conAcceso($this->secciones()));
     }
 
     public function crearSeccion(array $datos): array
@@ -168,6 +168,36 @@ final class PanelAdministracion
             ->addOrderBy("e.id")
             ->getQuery()
             ->getResult();
+    }
+
+    /**
+     * Roles y usuarios de las cajas y sus enlaces en cuatro consultas, no
+     * dos por cada caja y cada enlace.
+     *
+     * @param list<SeccionAdministracion> $secciones
+     *
+     * @return list<SeccionAdministracion>
+     */
+    private function conAcceso(array $secciones): array
+    {
+        $enlaces = array_merge([], ...array_map(static fn(SeccionAdministracion $s) => [...$s->getEnlaces()], $secciones));
+        foreach ([[SeccionAdministracion::class, $secciones], [EnlaceAdministracion::class, $enlaces]] as [$clase, $registros]) {
+            if ($registros === []) {
+                continue;
+            }
+            foreach (["roles", "usuarios"] as $campo) {
+                $this->em->createQueryBuilder()
+                    ->select("x", "y")
+                    ->from($clase, "x")
+                    ->leftJoin("x.{$campo}", "y")
+                    ->where("x IN (:registros)")
+                    ->setParameter("registros", $registros)
+                    ->getQuery()
+                    ->getResult();
+            }
+        }
+
+        return $secciones;
     }
 
     private function seccion_(int $id): SeccionAdministracion

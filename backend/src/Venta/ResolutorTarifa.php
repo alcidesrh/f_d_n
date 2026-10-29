@@ -109,6 +109,17 @@ final class ResolutorTarifa implements ResetInterface
         return $resultado;
     }
 
+    /**
+     * Trae de una vez las tarifas de muchos trayectos (los de todas las
+     * salidas de una lista), para que `porTrayectos` no consulte salida por salida.
+     *
+     * @param list<int> $trayectoIds
+     */
+    public function precargar(array $trayectoIds): void
+    {
+        $this->cargar(array_values(array_unique($trayectoIds)));
+    }
+
     public function reset(): void
     {
         $this->porTrayecto = [];

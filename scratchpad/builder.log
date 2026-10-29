@@ -1,0 +1,499 @@
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  1.034GB
+Step 1/14 : FROM oven/bun:1-alpine AS bun_upstream
+1-alpine: Pulling from oven/bun
+Digest: sha256:4cf82f5686b196504fe119db3fcd9185b191f82ece82c40680e597228ec6070a
+Status: Downloaded newer image for oven/bun:1-alpine
+ ---> 4cf82f5686b1
+Step 2/14 : FROM bun_upstream AS base
+ ---> 4cf82f5686b1
+Step 3/14 : WORKDIR /frontend
+ ---> Running in 9eab96b8d3a6
+ ---> Removed intermediate container 9eab96b8d3a6
+ ---> f4c73d021f72
+Step 4/14 : FROM base AS dev
+ ---> f4c73d021f72
+Step 5/14 : RUN apk add --no-cache curl
+ ---> Running in 7871876b3252
+(1/9) Installing brotli-libs (1.2.1-r0)
+(2/9) Installing c-ares (1.34.9-r0)
+(3/9) Installing libunistring (1.4.2-r0)
+(4/9) Installing libidn2 (2.3.8-r0)
+(5/9) Installing nghttp2-libs (1.70.0-r0)
+(6/9) Installing libpsl (0.21.5-r3)
+(7/9) Installing zstd-libs (1.5.7-r2)
+(8/9) Installing libcurl (8.23.0-r0)
+(9/9) Installing curl (8.23.0-r0)
+Executing busybox-1.37.0-r31.trigger
+OK: 15.9 MiB in 27 packages
+ ---> Removed intermediate container 7871876b3252
+ ---> d37c9f9f4d7d
+Step 6/14 : EXPOSE 9000
+ ---> Running in ddc77bdbcde0
+ ---> Removed intermediate container ddc77bdbcde0
+ ---> ad258ff59644
+Step 7/14 : ENV PORT 9000
+ ---> Running in a3e094cb0002
+ ---> Removed intermediate container a3e094cb0002
+ ---> b5f064f81e34
+Step 8/14 : ENV HOSTNAME 0.0.0.0
+ ---> Running in d130a59f0fc7
+ ---> Removed intermediate container d130a59f0fc7
+ ---> 83b1600a0ffa
+Step 9/14 : CMD ["sh", "-c", "bun install && bun run dev"]
+ ---> Running in bf694282be7b
+ ---> Removed intermediate container bf694282be7b
+ ---> 1907607b475c
+Step 10/14 : FROM base AS builder
+ ---> f4c73d021f72
+Step 11/14 : COPY bun.lock package.json ./
+ ---> ca6294202403
+Step 12/14 : RUN bun install --frozen-lockfile
+ ---> Running in d006cda095af
+bun install v1.4.4 (38afee6c8)
+
++ @iconify-json/lucide@1.2.125
++ @iconify-json/material-symbols@1.2.89
++ @iconify/json@2.2.519
++ @iconify/vue@5.0.1
++ @playwright/test@1.62.1
++ @primevue/auto-import-resolver@5.0.0
++ @tailwindcss/vite@4.3.3
++ @tsconfig/node24@24.0.4
++ @types/jsdom@28.0.3
++ @types/node@24.13.3
++ @vitejs/plugin-vue@6.0.8
++ @vitest/eslint-plugin@1.6.24
++ @vue/eslint-config-typescript@14.9.0
++ @vue/test-utils@2.4.11
++ @vue/tsconfig@0.9.1
++ eslint@10.8.0
++ eslint-config-prettier@10.1.8
++ eslint-plugin-oxlint@1.73.0
++ eslint-plugin-playwright@2.11.0
++ eslint-plugin-vue@10.9.2
++ jiti@2.7.0
++ jsdom@29.1.1
++ npm-run-all2@9.0.3
++ oxfmt@0.59.0
++ oxlint@1.74.0
++ tailwindcss@4.3.3
++ typescript@6.0.3
++ unplugin-auto-import@21.0.0
++ unplugin-icons@23.0.1
++ unplugin-vue-components@32.1.0
++ vite@8.2.0
++ vite-plugin-pwa@2.0.0
++ vite-plugin-vue-devtools@8.2.1
++ vitest@4.1.10
++ vue-eslint-parser@10.4.1
++ vue-tsc@3.3.9
++ @apollo/client@4.2.11
++ @fontsource-variable/material-symbols-outlined@5.3.8
++ @formkit/vue@2.1.2
++ @primevue/themes@4.5.4
++ @types/leaflet@1.9.22
++ @types/ramda@0.32.0
++ graphql@17.0.2
++ gsap@3.15.0
++ leaflet@1.9.4
++ pinia@4.0.2
++ pinia-plugin-persistedstate@4.7.1
++ primelocale@2.4.0
++ primevue@4.5.5
++ ramda@0.32.0
++ rxjs@7.8.2
++ tailwindcss-primeui@0.6.1
++ vue@3.5.40
++ vue-router@5.2.0
+
+734 packages installed [11.34s]
+ ---> Removed intermediate container d006cda095af
+ ---> 43d48df9ca55
+Step 13/14 : COPY . .
+ ---> b7f2fa21064d
+Step 14/14 : RUN bun run build
+ ---> Running in e3d412c7c2f5
+[91m$ run-p type-check "build-only {@}" --
+[0m[91m$ vue-tsc --build
+[0m[91m$ vite build
+[0mvite v8.2.0 building client environment for production...
+[2Ktransforming...[91m
+/fonts/Chakra_Petch/ChakraPetch-SemiBold.ttf referenced in /fonts/Chakra_Petch/ChakraPetch-SemiBold.ttf didn't resolve at build time, it will remain unchanged to be resolved at runtime
+[0m✓ 1967 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/manifest.webmanifest                                                   0.66 kB
+dist/index.html                                                             3.69 kB │ gzip:     1.28 kB
+dist/assets/material-symbols-outlined-latin-fill-normal-B2uwGM3Y.woff2  1,137.51 kB
+dist/assets/RegistrarDepositoPage-B16o-DrY.css                              0.12 kB │ gzip:     0.11 kB
+dist/assets/EspecialesPage-BNOT9ihp.css                                     0.14 kB │ gzip:     0.12 kB
+dist/assets/AnularBoletosDialog-y6lh-4J-.css                                0.18 kB │ gzip:     0.14 kB
+dist/assets/ManifiestoSalidaPage-C6CKjKXf.css                               0.19 kB │ gzip:     0.14 kB
+dist/assets/useResumen-CdMRDSZA.css                                         0.19 kB │ gzip:     0.14 kB
+dist/assets/SortablePanelList-Di-_6s2h.css                                  0.21 kB │ gzip:     0.16 kB
+dist/assets/MigracionPanel-DSd66NjK.css                                     0.29 kB │ gzip:     0.21 kB
+dist/assets/AccesosPage-Bi_bMpne.css                                        0.29 kB │ gzip:     0.18 kB
+dist/assets/BitacoraDialog-DgH52S3f.css                                     0.33 kB │ gzip:     0.21 kB
+dist/assets/MigracionPage-Clnhbhmb.css                                      0.37 kB │ gzip:     0.25 kB
+dist/assets/FormBuilderPanel-DoaLQrdI.css                                   0.41 kB │ gzip:     0.25 kB
+dist/assets/ChatPage-l-HmtSWT.css                                           0.46 kB │ gzip:     0.29 kB
+dist/assets/Icon-B_l0Oes6.css                                               0.56 kB │ gzip:     0.32 kB
+dist/assets/FormBuilderPage-B9ZSIIWV.css                                    0.57 kB │ gzip:     0.30 kB
+dist/assets/RegistrarDepositoForm-DuC-s1q8.css                              0.59 kB │ gzip:     0.28 kB
+dist/assets/RegistrarEncomiendaPage-Fj9NqjXP.css                            0.77 kB │ gzip:     0.37 kB
+dist/assets/PublicacionPage-BXeE78IR.css                                    0.79 kB │ gzip:     0.35 kB
+dist/assets/EnviarPorChatDialog-C6hAV-Fu.css                                0.82 kB │ gzip:     0.38 kB
+dist/assets/AutorizacionesPage-2HVqlC8j.css                                 0.83 kB │ gzip:     0.37 kB
+dist/assets/ChequeoPage-7bFzBRVS.css                                        0.93 kB │ gzip:     0.37 kB
+dist/assets/UsuarioAccesosPage-CVWAkAWT.css                                 0.96 kB │ gzip:     0.36 kB
+dist/assets/PaginaWebPage-NFhjtiCF.css                                      0.97 kB │ gzip:     0.37 kB
+dist/assets/SeguimientoPage-DeBcsKMa.css                                    1.02 kB │ gzip:     0.50 kB
+dist/assets/TarifaFiltro-DOblUnKV.css                                       1.11 kB │ gzip:     0.45 kB
+dist/assets/EntregarEncomiendasPage-CB4D1HXV.css                            1.22 kB │ gzip:     0.47 kB
+dist/assets/SaldosAgenciaPage-M6O-_kq7.css                                  1.44 kB │ gzip:     0.48 kB
+dist/assets/ArticulosEditor-hN4XjBSU.css                                    1.51 kB │ gzip:     0.56 kB
+dist/assets/PendientesEnvioPage-Dp-2hgSs.css                                1.53 kB │ gzip:     0.52 kB
+dist/assets/EntityConfigPage-CRYSlues.css                                   1.56 kB │ gzip:     0.57 kB
+dist/assets/CroquisSelector-EGKEcPn9.css                                    1.57 kB │ gzip:     0.58 kB
+dist/assets/DepositosPage-EMS09NjA.css                                      1.70 kB │ gzip:     0.58 kB
+dist/assets/TarifasMapaPage-BPXj21RY.css                                    1.72 kB │ gzip:     0.69 kB
+dist/assets/BusMapLegend-8h5kJfx8.css                                       1.77 kB │ gzip:     0.60 kB
+dist/assets/ProcesarSalidaPage-B6S0dGUL.css                                 1.77 kB │ gzip:     0.63 kB
+dist/assets/ProgramadorPage-CXUhYvbO.css                                    2.04 kB │ gzip:     0.67 kB
+dist/assets/AyudaPage-DU-LcbcF.css                                          2.26 kB │ gzip:     0.71 kB
+dist/assets/RutaEditorPage-2vfgZJRA.css                                     2.52 kB │ gzip:     0.76 kB
+dist/assets/RolesPage-BT-z0h1S.css                                          2.55 kB │ gzip:     0.76 kB
+dist/assets/MenuBuilderPage-Cxc8xjYQ.css                                    3.17 kB │ gzip:     0.85 kB
+dist/assets/EncomiendasPage-Bd95fl13.css                                    3.28 kB │ gzip:     0.91 kB
+dist/assets/BoletosPage-BWjlYjeu.css                                        3.32 kB │ gzip:     0.87 kB
+dist/assets/AdministracionPage-7NR3DyAs.css                                 4.50 kB │ gzip:     1.07 kB
+dist/assets/ListPage-C-NWvntU.css                                           5.01 kB │ gzip:     1.22 kB
+dist/assets/LoginPage-C8pvK9M-.css                                          5.24 kB │ gzip:     1.49 kB
+dist/assets/DataGrid-jlCogVT1.css                                           8.53 kB │ gzip:     2.12 kB
+dist/assets/BusCroquisSection-0aRFzuH6.css                                  8.84 kB │ gzip:     1.96 kB
+dist/assets/CalendarioPage-BrN3p949.css                                     9.78 kB │ gzip:     2.43 kB
+dist/assets/DashboardPage-aeMAudoS.css                                     10.58 kB │ gzip:     2.45 kB
+dist/assets/leaflet-vh-t_kPv.css                                           15.09 kB │ gzip:     6.36 kB
+dist/assets/VentaPage-_MrZ7jfa.css                                         15.71 kB │ gzip:     3.42 kB
+dist/assets/index-DIVfEgDS.css                                            123.53 kB │ gzip:    23.37 kB
+dist/assets/overlayeventbus-4J2uVpX2.js                                     0.06 kB │ gzip:     0.07 kB
+dist/assets/_plugin-vue_export-helper-BDNMzG2s.js                           0.08 kB │ gzip:     0.09 kB
+dist/assets/busquedaRemota-DScxzc24.js                                      0.14 kB │ gzip:     0.14 kB
+dist/assets/reimprimir-BUxqEX3U.js                                          0.27 kB │ gzip:     0.20 kB
+dist/assets/api-0oSzOLdT.js                                                 0.31 kB │ gzip:     0.20 kB
+dist/assets/permisos-D_3cxOa9.js                                            0.41 kB │ gzip:     0.27 kB
+dist/assets/zindex-cO8iUN-n.js                                              0.43 kB │ gzip:     0.28 kB
+dist/assets/realtime-CRK05_TT.js                                            0.45 kB │ gzip:     0.31 kB
+dist/assets/api-C8caHeQo.js                                                 0.46 kB │ gzip:     0.29 kB
+dist/assets/AccesosAccion-ByHgCgtZ.js                                       0.48 kB │ gzip:     0.35 kB
+dist/assets/baseinput-B5vEh7rM.js                                           0.49 kB │ gzip:     0.28 kB
+dist/assets/BitacoraBoletoAccion-D1cgVjCd.js                                0.50 kB │ gzip:     0.35 kB
+dist/assets/BitacoraSalidaAccion-sHmKQRXa.js                                0.50 kB │ gzip:     0.34 kB
+dist/assets/PageHead-BXdFaxBJ.js                                            0.51 kB │ gzip:     0.34 kB
+dist/assets/portal-eSeiAneO.js                                              0.57 kB │ gzip:     0.36 kB
+dist/assets/formExtension-CkJcA2D4.js                                       0.65 kB │ gzip:     0.40 kB
+dist/assets/rolldown-runtime-hePW80VL.js                                    0.71 kB │ gzip:     0.42 kB
+dist/assets/manifiesto-DvN0qUz4.js                                          0.74 kB │ gzip:     0.40 kB
+dist/assets/api-DDN6Z8CU.js                                                 0.75 kB │ gzip:     0.38 kB
+dist/assets/useApi-CROJJdhE-Dbvcl2QP.js                                     0.83 kB │ gzip:     0.45 kB
+dist/assets/api-BNMP3uZq.js                                                 0.95 kB │ gzip:     0.50 kB
+dist/assets/reasignacion-DwXYPEcP.js                                        1.04 kB │ gzip:     0.55 kB
+dist/assets/Icon-CN4JD4S_.js                                                1.09 kB │ gzip:     0.65 kB
+dist/assets/api-89AvjZV6.js                                                 1.22 kB │ gzip:     0.52 kB
+dist/assets/layout-Oyhlg9up.js                                              1.32 kB │ gzip:     0.71 kB
+dist/assets/NotFoundPage-QduaEpr8.js                                        1.34 kB │ gzip:     0.76 kB
+dist/assets/toolbar-BNIuPk0l.js                                             1.41 kB │ gzip:     0.62 kB
+dist/assets/FormBuilderPage-BzM6PQz2.js                                     1.41 kB │ gzip:     0.86 kB
+dist/assets/FacturacionFallidaDialog-D_CUzq6z.js                            1.53 kB │ gzip:     0.84 kB
+dist/assets/ChatPage-DJ7guon0.js                                            1.54 kB │ gzip:     0.88 kB
+dist/assets/editor-CmdPERVP.js                                              1.64 kB │ gzip:     0.78 kB
+dist/assets/api-CvHG5PX3.js                                                 1.76 kB │ gzip:     0.82 kB
+dist/assets/chevrondown-pQ8m0ieb.js                                         1.77 kB │ gzip:     1.07 kB
+dist/assets/filtro-B2aKnr2I.js                                              1.92 kB │ gzip:     0.77 kB
+dist/assets/check-BYU8uokn.js                                               1.97 kB │ gzip:     1.17 kB
+dist/assets/SalidaSelect-DydfrXOr.js                                        2.06 kB │ gzip:     1.15 kB
+dist/assets/CambiarPasswordDialog-CK6pruOd.js                               2.09 kB │ gzip:     1.13 kB
+dist/assets/RegistrarDepositoPage-B56UP4nx.js                               2.31 kB │ gzip:     1.27 kB
+dist/assets/depositos-Cn8EiBEh.js                                           2.35 kB │ gzip:     1.08 kB
+dist/assets/SortablePanelList-BII6W-Ja.js                                   2.58 kB │ gzip:     1.35 kB
+dist/assets/baseeditableholder-CAnjRZ6A.js                                  2.63 kB │ gzip:     0.82 kB
+dist/assets/ManifiestoSalidaPage-duzt8hOR.js                                2.69 kB │ gzip:     1.31 kB
+dist/assets/store-BtsquZ1x.js                                               2.74 kB │ gzip:     1.35 kB
+dist/assets/listado-CyBQqFnS.js                                             2.88 kB │ gzip:     1.17 kB
+dist/assets/programacion-Bf01VJFR.js                                        3.13 kB │ gzip:     1.40 kB
+dist/assets/ManifiestoEncomiendasPage-BdFRFw9v.js                           3.47 kB │ gzip:     1.70 kB
+dist/assets/labels-2elG4YTC.js                                              3.52 kB │ gzip:     1.65 kB
+dist/assets/CuadreVoucherPage-Dxv4c7MC.js                                   3.77 kB │ gzip:     1.81 kB
+dist/assets/AgenciaSaldoSection-CR6IUYqI.js                                 3.77 kB │ gzip:     1.75 kB
+dist/assets/EliminarUsuariosDialog-CIqRGPGl.js                              3.97 kB │ gzip:     1.84 kB
+dist/assets/EstacionSelect-B3fEhpML.js                                      4.01 kB │ gzip:     1.87 kB
+dist/assets/useResumen-6rwB4GrN.js                                          4.20 kB │ gzip:     2.00 kB
+dist/assets/buses-DROIdMlb.js                                               4.36 kB │ gzip:     2.22 kB
+dist/assets/CroquisSelector-JEIP-3LZ.js                                     4.49 kB │ gzip:     2.09 kB
+dist/assets/reglas-Dt39lL6_.js                                              4.50 kB │ gzip:     1.86 kB
+dist/assets/utils-G2gTD1rS.js                                               4.76 kB │ gzip:     1.64 kB
+dist/assets/listUtils-CbUpXq1B.js                                           4.79 kB │ gzip:     1.93 kB
+dist/assets/CuadreVentaBoletosPage-BhwD5vPs.js                              4.81 kB │ gzip:     2.13 kB
+dist/assets/EnviarPorChatDialog-BLrdRxE2.js                                 4.91 kB │ gzip:     2.25 kB
+dist/assets/RegistrarDepositoForm-Crg6TDiK.js                               5.35 kB │ gzip:     2.26 kB
+dist/assets/AccesosPage-BrcBjE1W.js                                         5.46 kB │ gzip:     2.23 kB
+dist/assets/encomienda-CPoMxIy6.js                                          5.54 kB │ gzip:     1.91 kB
+dist/assets/workbox-window.prod.es5-Bd17z0YL.js                             5.65 kB │ gzip:     2.20 kB
+dist/assets/store-RlwDe_gI.js                                               5.75 kB │ gzip:     2.16 kB
+dist/assets/DetalleFacturaBoletosPage-Du2Y3Zdc.js                           5.84 kB │ gzip:     2.36 kB
+dist/assets/pinia-Bgm2Aii2.js                                               5.89 kB │ gzip:     2.80 kB
+dist/assets/TarifaFiltro-DbYVdwN3.js                                        6.03 kB │ gzip:     2.27 kB
+dist/assets/MigracionPage-BEgqb2by.js                                       6.07 kB │ gzip:     2.32 kB
+dist/assets/ReporteEncomiendaPage-B-XvqUWd.js                               6.37 kB │ gzip:     2.45 kB
+dist/assets/ticket-CGoDQhtS.js                                              6.39 kB │ gzip:     2.84 kB
+dist/assets/BitacoraDialog-BZsg-VCN.js                                      6.49 kB │ gzip:     2.80 kB
+dist/assets/inputicon-e0HqatAn.js                                           6.73 kB │ gzip:     1.95 kB
+dist/assets/EspecialesPage-C6ZD4f-Y.js                                      6.78 kB │ gzip:     2.70 kB
+dist/assets/RutasPage-Lox-2P4S.js                                           6.83 kB │ gzip:     2.75 kB
+dist/assets/SaldosAgenciaPage-s0iiyJia.js                                   6.86 kB │ gzip:     2.82 kB
+dist/assets/MiCuentaPage-EuaUEzGW.js                                        7.19 kB │ gzip:     2.88 kB
+dist/assets/PublicacionPage-CUqSIl9k.js                                     7.60 kB │ gzip:     2.98 kB
+dist/assets/VerSalidaDialog-D3xaB3GX.js                                     7.91 kB │ gzip:     3.03 kB
+dist/assets/AnularBoletosDialog-CHuxsoA5.js                                 7.91 kB │ gzip:     3.14 kB
+dist/assets/PendientesEnvioPage-3dPn0_Fe.js                                 8.24 kB │ gzip:     3.28 kB
+dist/assets/MigracionPanel-DZUmoKXY.js                                      9.10 kB │ gzip:     3.09 kB
+dist/assets/BusMapLegend-BLywNIO4.js                                        9.61 kB │ gzip:     3.35 kB
+dist/assets/ArticulosEditor-CHSaOWsH.js                                     9.99 kB │ gzip:     3.00 kB
+dist/assets/AutorizacionesPage-Djv9GVND.js                                 10.60 kB │ gzip:     4.22 kB
+dist/assets/RegistrarEncomiendaPage-BjnSEWKD.js                            11.97 kB │ gzip:     4.25 kB
+dist/assets/RolesPage-C6sbW908.js                                          12.06 kB │ gzip:     4.65 kB
+dist/assets/FormBuilderPanel-D1R2NVop.js                                   12.17 kB │ gzip:     3.89 kB
+dist/assets/ProcesarSalidaPage-KqHKjXpP.js                                 12.30 kB │ gzip:     4.43 kB
+dist/assets/EntregarEncomiendasPage-E_MsplpL.js                            12.56 kB │ gzip:     4.70 kB
+dist/assets/UsuarioAccesosPage-WEwNSVhN.js                                 13.61 kB │ gzip:     5.02 kB
+dist/assets/RutaEditorPage-bqzhGzkt.js                                     14.39 kB │ gzip:     5.31 kB
+dist/assets/ClienteBuscador-Dr9Sg1n_.js                                    14.45 kB │ gzip:     5.94 kB
+dist/assets/DataGrid-BwtTl4VD.js                                           14.63 kB │ gzip:     5.08 kB
+dist/assets/DepositosPage-CDV5Kwvx.js                                      15.41 kB │ gzip:     5.60 kB
+dist/assets/times-BB17citu.js                                              15.68 kB │ gzip:     7.03 kB
+dist/assets/SeguimientoPage-C_a8ac5M.js                                    15.88 kB │ gzip:     6.74 kB
+dist/assets/EntityConfigPage-DYfZ6OeL.js                                   16.63 kB │ gzip:     5.49 kB
+dist/assets/tab-w4PLtWhx.js                                                16.70 kB │ gzip:     4.29 kB
+dist/assets/TarifasMapaPage-BOMZeTpB.js                                    17.01 kB │ gzip:     5.98 kB
+dist/assets/ChequeoPage-C5H9yYPz.js                                        18.05 kB │ gzip:     5.94 kB
+dist/assets/LoginPage--FCS9Imn.js                                          19.75 kB │ gzip:     8.86 kB
+dist/assets/FormPage-RUNV7-Rs.js                                           20.95 kB │ gzip:     7.82 kB
+dist/assets/CalendarioPage-CjF6xjt6.js                                     22.13 kB │ gzip:     8.19 kB
+dist/assets/ProgramadorPage-DUmvA4NQ.js                                    23.19 kB │ gzip:     8.12 kB
+dist/assets/SalidasPage-DaZgMJGi.js                                        25.81 kB │ gzip:     8.07 kB
+dist/assets/BusCroquisSection-D4XpA3yv.js                                  25.91 kB │ gzip:     9.28 kB
+dist/assets/virtualscroller-CuYzugXd.js                                    26.71 kB │ gzip:     8.23 kB
+dist/assets/paginator-B27FVDfz.js                                          28.13 kB │ gzip:     7.66 kB
+dist/assets/AdministracionPage-Bd22mZ9M.js                                 29.86 kB │ gzip:     9.76 kB
+dist/assets/EncomiendasPage-DBHI19cS.js                                    30.44 kB │ gzip:     9.28 kB
+dist/assets/DashboardPage-B7r3X4OB.js                                      38.90 kB │ gzip:    12.84 kB
+dist/assets/ListPage-BBukCADE.js                                           46.56 kB │ gzip:    14.85 kB
+dist/assets/PaginaWebPage-CyXAZehP.js                                      47.73 kB │ gzip:    14.04 kB
+dist/assets/BoletosPage-BCiYdaH4.js                                        48.78 kB │ gzip:    13.63 kB
+dist/assets/VentaPage-xfvHvFtG.js                                          52.66 kB │ gzip:    18.03 kB
+dist/assets/MenuBuilderPage-D8xpzmgp.js                                    55.77 kB │ gzip:    16.48 kB
+dist/assets/session-COo2NDNa.js                                            57.75 kB │ gzip:    20.21 kB
+dist/assets/runtime-core.esm-bundler-CtF3Gqgn.js                           67.30 kB │ gzip:    26.39 kB
+dist/assets/ripple-H02m2a5B.js                                             75.93 kB │ gzip:    20.40 kB
+dist/assets/AyudaPage-D9wiPfri.js                                          87.74 kB │ gzip:    27.85 kB
+dist/assets/leaflet-blrVLEi6.js                                           148.80 kB │ gzip:    43.39 kB
+dist/assets/client-DzOWUvY4.js                                            196.11 kB │ gzip:    57.78 kB
+dist/assets/column-DHvaZug8.js                                            218.77 kB │ gzip:    44.84 kB
+dist/assets/iconMeta-CLV9jx5f.js                                          771.91 kB │ gzip:   203.52 kB
+dist/assets/index-DAHxM3lA.js                                           1,522.18 kB │ gzip:   341.65 kB
+dist/assets/material-symbols-D_20Mn4g.js                                8,527.32 kB │ gzip: 1,301.01 kB
+
+[91m[33m[PLUGIN_TIMINGS] [0mYour build spent significant time in plugins. Here is a breakdown:
+  - unplugin-icons (68%)
+  - unplugin-vue-components (15%)
+  - vite:vue (6%)
+  - unplugin-auto-import (5%)
+See https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.
+
+[0m[91m[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+[0m✓ built in 12.62s
+src/app/router.ts(18,31): error TS2307: Cannot find module '@/features/dashboard/DashboardPage.vue' or its corresponding type declarations.
+src/app/router.ts(28,31): error TS2307: Cannot find module '@/features/auth/LoginPage.vue' or its corresponding type declarations.
+src/app/router.ts(40,31): error TS2307: Cannot find module '@/features/cuenta/MiCuentaPage.vue' or its corresponding type declarations.
+src/app/router.ts(50,31): error TS2307: Cannot find module '@/features/form-builder/FormBuilderPage.vue' or its corresponding type declarations.
+src/app/router.ts(57,35): error TS2307: Cannot find module '@/features/form-builder/FormBuilderPanel.vue' or its corresponding type declarations.
+src/app/router.ts(65,31): error TS2307: Cannot find module '@/features/migracion/MigracionPage.vue' or its corresponding type declarations.
+src/app/router.ts(71,42): error TS2307: Cannot find module '@/features/migracion/MigracionPanel.vue' or its corresponding type declarations.
+src/app/router.ts(77,31): error TS2307: Cannot find module '@/features/administracion/AdministracionPage.vue' or its corresponding type declarations.
+src/app/router.ts(88,31): error TS2307: Cannot find module '@/features/entity-config/EntityConfigPage.vue' or its corresponding type declarations.
+src/app/router.ts(99,31): error TS2307: Cannot find module '@/features/metadata-publicacion/PublicacionPage.vue' or its corresponding type declarations.
+src/app/router.ts(110,31): error TS2307: Cannot find module '@/features/menu-builder/MenuBuilderPage.vue' or its corresponding type declarations.
+src/app/router.ts(121,31): error TS2307: Cannot find module '@/features/acceso/RolesPage.vue' or its corresponding type declarations.
+src/app/router.ts(132,31): error TS2307: Cannot find module '@/features/acceso/AccesosPage.vue' or its corresponding type declarations.
+src/app/router.ts(144,31): error TS2307: Cannot find module '@/features/acceso/UsuarioAccesosPage.vue' or its corresponding type declarations.
+src/app/router.ts(155,31): error TS2307: Cannot find module '@/features/venta/VentaPage.vue' or its corresponding type declarations.
+src/app/router.ts(166,31): error TS2307: Cannot find module '@/features/boleto/BoletosPage.vue' or its corresponding type declarations.
+src/app/router.ts(177,31): error TS2307: Cannot find module '@/features/encomienda/EncomiendasPage.vue' or its corresponding type declarations.
+src/app/router.ts(188,31): error TS2307: Cannot find module '@/features/encomienda/RegistrarEncomiendaPage.vue' or its corresponding type declarations.
+src/app/router.ts(199,31): error TS2307: Cannot find module '@/features/encomienda/ProcesarSalidaPage.vue' or its corresponding type declarations.
+src/app/router.ts(210,31): error TS2307: Cannot find module '@/features/encomienda/EntregarEncomiendasPage.vue' or its corresponding type declarations.
+src/app/router.ts(221,31): error TS2307: Cannot find module '@/features/encomienda/PendientesEnvioPage.vue' or its corresponding type declarations.
+src/app/router.ts(232,31): error TS2307: Cannot find module '@/features/encomienda/EspecialesPage.vue' or its corresponding type declarations.
+src/app/router.ts(243,31): error TS2307: Cannot find module '@/features/salida/SalidasPage.vue' or its corresponding type declarations.
+src/app/router.ts(255,31): error TS2307: Cannot find module '@/features/ayuda/AyudaPage.vue' or its corresponding type declarations.
+src/app/router.ts(265,31): error TS2307: Cannot find module '@/features/autorizacion/AutorizacionesPage.vue' or its corresponding type declarations.
+src/app/router.ts(276,31): error TS2307: Cannot find module '@/features/salida/CalendarioPage.vue' or its corresponding type declarations.
+src/app/router.ts(287,31): error TS2307: Cannot find module '@/features/ruta/RutasPage.vue' or its corresponding type declarations.
+src/app/router.ts(298,31): error TS2307: Cannot find module '@/features/ruta/RutaEditorPage.vue' or its corresponding type declarations.
+src/app/router.ts(309,31): error TS2307: Cannot find module '@/features/tarifa/TarifasMapaPage.vue' or its corresponding type declarations.
+src/app/router.ts(320,31): error TS2307: Cannot find module '@/features/seguimiento/SeguimientoPage.vue' or its corresponding type declarations.
+src/app/router.ts(331,31): error TS2307: Cannot find module '@/features/salida/ProgramadorPage.vue' or its corresponding type declarations.
+src/app/router.ts(342,31): error TS2307: Cannot find module '@/features/salida/ChequeoPage.vue' or its corresponding type declarations.
+src/app/router.ts(353,31): error TS2307: Cannot find module '@/features/agencia/RegistrarDepositoPage.vue' or its corresponding type declarations.
+src/app/router.ts(364,31): error TS2307: Cannot find module '@/features/agencia/DepositosPage.vue' or its corresponding type declarations.
+src/app/router.ts(375,31): error TS2307: Cannot find module '@/features/agencia/SaldosAgenciaPage.vue' or its corresponding type declarations.
+src/app/router.ts(386,31): error TS2307: Cannot find module '@/features/reporte/CuadreVentaBoletosPage.vue' or its corresponding type declarations.
+src/app/router.ts(397,31): error TS2307: Cannot find module '@/features/reporte/DetalleFacturaBoletosPage.vue' or its corresponding type declarations.
+src/app/router.ts(408,31): error TS2307: Cannot find module '@/features/reporte/CuadreVoucherPage.vue' or its corresponding type declarations.
+src/app/router.ts(419,31): error TS2307: Cannot find module '@/features/reporte/ManifiestoSalidaPage.vue' or its corresponding type declarations.
+src/app/router.ts(431,31): error TS2307: Cannot find module '@/features/reporte/ManifiestoSalidaPage.vue' or its corresponding type declarations.
+src/app/router.ts(443,31): error TS2307: Cannot find module '@/features/reporte/ManifiestoSalidaPage.vue' or its corresponding type declarations.
+src/app/router.ts(455,31): error TS2307: Cannot find module '@/features/reporte/ManifiestoEncomiendasPage.vue' or its corresponding type declarations.
+src/app/router.ts(466,31): error TS2307: Cannot find module '@/features/reporte/ReporteEncomiendaPage.vue' or its corresponding type declarations.
+src/app/router.ts(478,31): error TS2307: Cannot find module '@/features/reporte/ReporteEncomiendaPage.vue' or its corresponding type declarations.
+src/app/router.ts(490,31): error TS2307: Cannot find module '@/features/reporte/ReporteEncomiendaPage.vue' or its corresponding type declarations.
+src/app/router.ts(502,31): error TS2307: Cannot find module '@/features/reporte/ReporteEncomiendaPage.vue' or its corresponding type declarations.
+src/app/router.ts(514,31): error TS2307: Cannot find module '@/features/reporte/ReporteEncomiendaPage.vue' or its corresponding type declarations.
+src/app/router.ts(527,31): error TS2307: Cannot find module '@/features/pagina-web/PaginaWebPage.vue' or its corresponding type declarations.
+src/app/router.ts(538,31): error TS2307: Cannot find module '@/features/chat/ChatPage.vue' or its corresponding type declarations.
+src/app/router.ts(550,31): error TS2307: Cannot find module '@/features/entity-crud/ListPage.vue' or its corresponding type declarations.
+src/app/router.ts(561,31): error TS2307: Cannot find module '@/features/entity-crud/FormPage.vue' or its corresponding type declarations.
+src/app/router.ts(571,31): error TS2307: Cannot find module './NotFoundPage.vue' or its corresponding type declarations.
+src/features/chat/tarjetas/catalogo.ts(10,27): error TS2307: Cannot find module './TarjetaBoleto.vue' or its corresponding type declarations.
+src/features/chat/tarjetas/catalogo.ts(11,24): error TS2307: Cannot find module './TarjetaBus.vue' or its corresponding type declarations.
+src/features/chat/tarjetas/catalogo.ts(12,27): error TS2307: Cannot find module './TarjetaSalida.vue' or its corresponding type declarations.
+src/features/entity-crud/form/formExtensions.ts(26,31): error TS2307: Cannot find module '@/features/agencia/AgenciaSaldoSection.vue' or its corresponding type declarations.
+src/features/entity-crud/form/formExtensions.ts(34,31): error TS2307: Cannot find module '@/features/bus/BusCroquisSection.vue' or its corresponding type declarations.
+src/features/entity-crud/list/listActions.ts(62,27): error TS2307: Cannot find module './BitacoraSalidaAccion.vue' or its corresponding type declarations.
+src/features/entity-crud/list/listActions.ts(69,27): error TS2307: Cannot find module './BitacoraBoletoAccion.vue' or its corresponding type declarations.
+src/features/entity-crud/list/listActions.ts(79,31): error TS2307: Cannot find module '@/features/usuario/AccesosAccion.vue' or its corresponding type declarations.
+src/features/entity-crud/list/listActions.ts(85,31): error TS2307: Cannot find module '@/features/usuario/CambiarPasswordDialog.vue' or its corresponding type declarations.
+src/features/entity-crud/list/listActions.ts(97,25): error TS2307: Cannot find module '@/features/usuario/EliminarUsuariosDialog.vue' or its corresponding type declarations.
+src/features/entity-crud/list/listActions.ts(123,31): error TS2307: Cannot find module '@/shared/boleto/AnularBoletosDialog.vue' or its corresponding type declarations.
+src/features/entity-crud/list/listCustomFilters.ts(22,29): error TS2307: Cannot find module '@/features/tarifa/TarifaFiltro.vue' or its corresponding type declarations.
+src/main.ts(13,17): error TS2307: Cannot find module './App.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(3,28): error TS2307: Cannot find module '@/shared/formkit/inputs/FkAutoComplete.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(4,22): error TS2307: Cannot find module '@/shared/formkit/inputs/FkButton.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(5,29): error TS2307: Cannot find module '@/shared/formkit/inputs/FkCascadeSelect.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(6,24): error TS2307: Cannot find module '@/shared/formkit/inputs/FkCheckbox.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(7,26): error TS2307: Cannot find module '@/shared/formkit/inputs/FkDatePicker.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(8,26): error TS2307: Cannot find module '@/shared/formkit/inputs/FkIconPicker.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(9,25): error TS2307: Cannot find module '@/shared/formkit/inputs/FkInputMask.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(10,27): error TS2307: Cannot find module '@/shared/formkit/inputs/FkInputNumber.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(11,25): error TS2307: Cannot find module '@/shared/formkit/inputs/FkInputText.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(12,27): error TS2307: Cannot find module '@/shared/formkit/inputs/FkMultiSelect.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(13,24): error TS2307: Cannot find module '@/shared/formkit/inputs/FkPassword.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(14,27): error TS2307: Cannot find module '@/shared/formkit/inputs/FkRadioButton.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(15,22): error TS2307: Cannot find module '@/shared/formkit/inputs/FkSelect.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(16,28): error TS2307: Cannot find module '@/shared/formkit/inputs/FkSelectButton.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(17,24): error TS2307: Cannot find module '@/shared/formkit/inputs/FkTextArea.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(18,28): error TS2307: Cannot find module '@/shared/formkit/inputs/FkToggleSwitch.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(19,28): error TS2307: Cannot find module '@/shared/formkit/inputs/FkTransferList.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(20,26): error TS2307: Cannot find module '@/shared/formkit/inputs/FkTreeSelect.vue' or its corresponding type declarations.
+src/app/router.ts(18,31): error TS2307: Cannot find module '@/features/dashboard/DashboardPage.vue' or its corresponding type declarations.
+src/app/router.ts(28,31): error TS2307: Cannot find module '@/features/auth/LoginPage.vue' or its corresponding type declarations.
+src/app/router.ts(40,31): error TS2307: Cannot find module '@/features/cuenta/MiCuentaPage.vue' or its corresponding type declarations.
+src/app/router.ts(50,31): error TS2307: Cannot find module '@/features/form-builder/FormBuilderPage.vue' or its corresponding type declarations.
+src/app/router.ts(57,35): error TS2307: Cannot find module '@/features/form-builder/FormBuilderPanel.vue' or its corresponding type declarations.
+src/app/router.ts(65,31): error TS2307: Cannot find module '@/features/migracion/MigracionPage.vue' or its corresponding type declarations.
+src/app/router.ts(71,42): error TS2307: Cannot find module '@/features/migracion/MigracionPanel.vue' or its corresponding type declarations.
+src/app/router.ts(77,31): error TS2307: Cannot find module '@/features/administracion/AdministracionPage.vue' or its corresponding type declarations.
+src/app/router.ts(88,31): error TS2307: Cannot find module '@/features/entity-config/EntityConfigPage.vue' or its corresponding type declarations.
+src/app/router.ts(99,31): error TS2307: Cannot find module '@/features/metadata-publicacion/PublicacionPage.vue' or its corresponding type declarations.
+src/app/router.ts(110,31): error TS2307: Cannot find module '@/features/menu-builder/MenuBuilderPage.vue' or its corresponding type declarations.
+src/app/router.ts(121,31): error TS2307: Cannot find module '@/features/acceso/RolesPage.vue' or its corresponding type declarations.
+src/app/router.ts(132,31): error TS2307: Cannot find module '@/features/acceso/AccesosPage.vue' or its corresponding type declarations.
+src/app/router.ts(144,31): error TS2307: Cannot find module '@/features/acceso/UsuarioAccesosPage.vue' or its corresponding type declarations.
+src/app/router.ts(155,31): error TS2307: Cannot find module '@/features/venta/VentaPage.vue' or its corresponding type declarations.
+src/app/router.ts(166,31): error TS2307: Cannot find module '@/features/boleto/BoletosPage.vue' or its corresponding type declarations.
+src/app/router.ts(177,31): error TS2307: Cannot find module '@/features/encomienda/EncomiendasPage.vue' or its corresponding type declarations.
+src/app/router.ts(188,31): error TS2307: Cannot find module '@/features/encomienda/RegistrarEncomiendaPage.vue' or its corresponding type declarations.
+src/app/router.ts(199,31): error TS2307: Cannot find module '@/features/encomienda/ProcesarSalidaPage.vue' or its corresponding type declarations.
+src/app/router.ts(210,31): error TS2307: Cannot find module '@/features/encomienda/EntregarEncomiendasPage.vue' or its corresponding type declarations.
+src/app/router.ts(221,31): error TS2307: Cannot find module '@/features/encomienda/PendientesEnvioPage.vue' or its corresponding type declarations.
+src/app/router.ts(232,31): error TS2307: Cannot find module '@/features/encomienda/EspecialesPage.vue' or its corresponding type declarations.
+src/app/router.ts(243,31): error TS2307: Cannot find module '@/features/salida/SalidasPage.vue' or its corresponding type declarations.
+src/app/router.ts(255,31): error TS2307: Cannot find module '@/features/ayuda/AyudaPage.vue' or its corresponding type declarations.
+src/app/router.ts(265,31): error TS2307: Cannot find module '@/features/autorizacion/AutorizacionesPage.vue' or its corresponding type declarations.
+src/app/router.ts(276,31): error TS2307: Cannot find module '@/features/salida/CalendarioPage.vue' or its corresponding type declarations.
+src/app/router.ts(287,31): error TS2307: Cannot find module '@/features/ruta/RutasPage.vue' or its corresponding type declarations.
+src/app/router.ts(298,31): error TS2307: Cannot find module '@/features/ruta/RutaEditorPage.vue' or its corresponding type declarations.
+src/app/router.ts(309,31): error TS2307: Cannot find module '@/features/tarifa/TarifasMapaPage.vue' or its corresponding type declarations.
+src/app/router.ts(320,31): error TS2307: Cannot find module '@/features/seguimiento/SeguimientoPage.vue' or its corresponding type declarations.
+src/app/router.ts(331,31): error TS2307: Cannot find module '@/features/salida/ProgramadorPage.vue' or its corresponding type declarations.
+src/app/router.ts(342,31): error TS2307: Cannot find module '@/features/salida/ChequeoPage.vue' or its corresponding type declarations.
+src/app/router.ts(353,31): error TS2307: Cannot find module '@/features/agencia/RegistrarDepositoPage.vue' or its corresponding type declarations.
+src/app/router.ts(364,31): error TS2307: Cannot find module '@/features/agencia/DepositosPage.vue' or its corresponding type declarations.
+src/app/router.ts(375,31): error TS2307: Cannot find module '@/features/agencia/SaldosAgenciaPage.vue' or its corresponding type declarations.
+src/app/router.ts(386,31): error TS2307: Cannot find module '@/features/reporte/CuadreVentaBoletosPage.vue' or its corresponding type declarations.
+src/app/router.ts(397,31): error TS2307: Cannot find module '@/features/reporte/DetalleFacturaBoletosPage.vue' or its corresponding type declarations.
+src/app/router.ts(408,31): error TS2307: Cannot find module '@/features/reporte/CuadreVoucherPage.vue' or its corresponding type declarations.
+src/app/router.ts(419,31): error TS2307: Cannot find module '@/features/reporte/ManifiestoSalidaPage.vue' or its corresponding type declarations.
+src/app/router.ts(431,31): error TS2307: Cannot find module '@/features/reporte/ManifiestoSalidaPage.vue' or its corresponding type declarations.
+src/app/router.ts(443,31): error TS2307: Cannot find module '@/features/reporte/ManifiestoSalidaPage.vue' or its corresponding type declarations.
+src/app/router.ts(455,31): error TS2307: Cannot find module '@/features/reporte/ManifiestoEncomiendasPage.vue' or its corresponding type declarations.
+src/app/router.ts(466,31): error TS2307: Cannot find module '@/features/reporte/ReporteEncomiendaPage.vue' or its corresponding type declarations.
+src/app/router.ts(478,31): error TS2307: Cannot find module '@/features/reporte/ReporteEncomiendaPage.vue' or its corresponding type declarations.
+src/app/router.ts(490,31): error TS2307: Cannot find module '@/features/reporte/ReporteEncomiendaPage.vue' or its corresponding type declarations.
+src/app/router.ts(502,31): error TS2307: Cannot find module '@/features/reporte/ReporteEncomiendaPage.vue' or its corresponding type declarations.
+src/app/router.ts(514,31): error TS2307: Cannot find module '@/features/reporte/ReporteEncomiendaPage.vue' or its corresponding type declarations.
+src/app/router.ts(527,31): error TS2307: Cannot find module '@/features/pagina-web/PaginaWebPage.vue' or its corresponding type declarations.
+src/app/router.ts(538,31): error TS2307: Cannot find module '@/features/chat/ChatPage.vue' or its corresponding type declarations.
+src/app/router.ts(550,31): error TS2307: Cannot find module '@/features/entity-crud/ListPage.vue' or its corresponding type declarations.
+src/app/router.ts(561,31): error TS2307: Cannot find module '@/features/entity-crud/FormPage.vue' or its corresponding type declarations.
+src/app/router.ts(571,31): error TS2307: Cannot find module './NotFoundPage.vue' or its corresponding type declarations.
+src/features/chat/tarjetas/__tests__/tarjetas.spec.ts(5,24): error TS2307: Cannot find module '../TarjetaBus.vue' or its corresponding type declarations.
+src/features/chat/tarjetas/__tests__/tarjetas.spec.ts(6,27): error TS2307: Cannot find module '../TarjetaSalida.vue' or its corresponding type declarations.
+src/features/chat/tarjetas/__tests__/tarjetas.spec.ts(7,27): error TS2307: Cannot find module '../TarjetaBoleto.vue' or its corresponding type declarations.
+src/features/chat/tarjetas/__tests__/tarjetas.spec.ts(8,21): error TS2307: Cannot find module '../Tarjeta.vue' or its corresponding type declarations.
+src/features/entity-crud/__tests__/ListPage.spec.ts(21,18): error TS2307: Cannot find module '@/features/entity-crud/ListPage.vue' or its corresponding type declarations.
+src/features/entity-crud/__tests__/ListPage.spec.ts(22,20): error TS2307: Cannot find module '@/app/layout/Toasts.vue' or its corresponding type declarations.
+src/features/entity-crud/__tests__/ListPage.spec.ts(23,22): error TS2307: Cannot find module '@/shared/data-grid/DataGrid.vue' or its corresponding type declarations.
+src/features/entity-crud/__tests__/ListPage.spec.ts(24,28): error TS2307: Cannot find module '@/features/entity-crud/list/ListCellEditor.vue' or its corresponding type declarations.
+src/features/entity-crud/__tests__/ListPage.spec.ts(25,33): error TS2307: Cannot find module '@/features/entity-crud/list/ListDateRangeFilter.vue' or its corresponding type declarations.
+src/features/form-builder/__tests__/FormBuilderPage.spec.ts(7,29): error TS2307: Cannot find module '@/features/form-builder/FormBuilderPage.vue' or its corresponding type declarations.
+src/features/venta/__tests__/SalidasLista.spec.ts(4,26): error TS2307: Cannot find module '@/features/venta/SalidasLista.vue' or its corresponding type declarations.
+src/shared/bus-map/__tests__/BusMap.spec.ts(4,20): error TS2307: Cannot find module '../BusMap.vue' or its corresponding type declarations.
+src/shared/data-grid/__tests__/useColumnDrag.spec.ts(5,22): error TS2307: Cannot find module '../DataGrid.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(3,28): error TS2307: Cannot find module '@/shared/formkit/inputs/FkAutoComplete.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(4,22): error TS2307: Cannot find module '@/shared/formkit/inputs/FkButton.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(5,29): error TS2307: Cannot find module '@/shared/formkit/inputs/FkCascadeSelect.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(6,24): error TS2307: Cannot find module '@/shared/formkit/inputs/FkCheckbox.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(7,26): error TS2307: Cannot find module '@/shared/formkit/inputs/FkDatePicker.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(8,26): error TS2307: Cannot find module '@/shared/formkit/inputs/FkIconPicker.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(9,25): error TS2307: Cannot find module '@/shared/formkit/inputs/FkInputMask.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(10,27): error TS2307: Cannot find module '@/shared/formkit/inputs/FkInputNumber.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(11,25): error TS2307: Cannot find module '@/shared/formkit/inputs/FkInputText.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(12,27): error TS2307: Cannot find module '@/shared/formkit/inputs/FkMultiSelect.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(13,24): error TS2307: Cannot find module '@/shared/formkit/inputs/FkPassword.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(14,27): error TS2307: Cannot find module '@/shared/formkit/inputs/FkRadioButton.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(15,22): error TS2307: Cannot find module '@/shared/formkit/inputs/FkSelect.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(16,28): error TS2307: Cannot find module '@/shared/formkit/inputs/FkSelectButton.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(17,24): error TS2307: Cannot find module '@/shared/formkit/inputs/FkTextArea.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(18,28): error TS2307: Cannot find module '@/shared/formkit/inputs/FkToggleSwitch.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(19,28): error TS2307: Cannot find module '@/shared/formkit/inputs/FkTransferList.vue' or its corresponding type declarations.
+src/shared/formkit/config.ts(20,26): error TS2307: Cannot find module '@/shared/formkit/inputs/FkTreeSelect.vue' or its corresponding type declarations.
+src/shared/ui/__tests__/EstacionSelect.spec.ts(5,28): error TS2307: Cannot find module '@/shared/ui/EstacionSelect.vue' or its corresponding type declarations.
+
+PWA v2.0.0
+mode      generateSW
+precache  189 entries (6542.40 KiB)
+files generated
+  dist/sw.js
+  dist/workbox-2fbc6a65.js
+[91mERROR: "type-check" exited with 2.
+[0m[91merror: script "build" exited with code 1
+[0mThe command '/bin/sh -c bun run build' returned a non-zero code: 1
