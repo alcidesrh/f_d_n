@@ -32,14 +32,14 @@
           <div class="truncate tabular-nums" :title="punta(s(row), column.key).nombre ?? ''">
             {{ punta(s(row), column.key).nombre ?? "—" }}
           </div>
-          <div class="truncate text-sm text-center text-muted-color font-[550]">{{ horaPunta(s(row), column.key) }}</div>
+          <div class="truncate text-sm text-center text-muted-color">{{ horaPunta(s(row), column.key) }}</div>
         </div>
         <div v-else-if="column.key === 'hora'" class="celda">
-          <div class="tracking-wide text-center tabular-nums whitespace-nowrap font-[500]">
+          <div class="tracking-wide text-center tabular-nums whitespace-nowrap">
             {{ hora(s(row).salida) }}
           </div>
           <div v-if="variosDias" class="dia" :class="{ 'dia--alterno': alterno(s(row)) }">{{ diaSemana(s(row).salida) }}</div>
-          <div v-else class="text-sm text-muted-color text-center tabular-nums whitespace-nowrap font-[550]">
+          <div v-else class="text-sm text-muted-color text-center tabular-nums whitespace-nowrap">
             {{ fecha(s(row).salida) }}
           </div>
         </div>
@@ -247,8 +247,6 @@ const precioCorto = (p: Importe | null) => (p ? p.texto.replace(/[.,]00$/, "") :
   padding: 0 0.4rem;
   border-radius: 9999px;
   font-size: 0.75rem;
-  font-weight: 500;
-  line-height: 1.25rem;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
   text-transform: capitalize;

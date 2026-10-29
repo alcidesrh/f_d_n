@@ -4,7 +4,7 @@
       <div class="flex btn-siderbar-header">
         <button type="button" class="icon-btn" aria-label="Menú de navegación" :aria-expanded="ui.isMobile ? sidebarStore.drawer : sidebarStore.mode !== 'close'" @click="sidebarStore.toggle()">
           <!-- <icon name="menu" size="35px" :weight="300" color="text-surface-500" /> -->
-          <icon name="menu" size="25" :weight="100" color="text-surface-600" />
+          <icon name="menu" size="30" :weight="300" color="text-surface-500" />
         </button>
         <Divider layout="vertical" class="mx-[5px]!" />
       </div>
@@ -106,7 +106,7 @@
       <div v-if="rightSidebar" class="flex btn-siderbar-header">
         <Divider layout="vertical" class="mx-[5px]!" />
         <button type="button" class="icon-btn right" title="Mostrar/ocultar menú" aria-label="Panel lateral derecho" :aria-expanded="ui.isMobile ? rightSidebar.drawer : rightSidebar.mode !== 'close'" @click="rightSidebar.toggle()">
-          <icon name="left_panel_close  " size="25px" :weight="100" color="text-surface-600" />
+          <icon name="menu" size="30" :weight="300" color="text-surface-500" />
         </button>
       </div>
     </div>
