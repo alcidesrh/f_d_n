@@ -16,8 +16,10 @@ import {
   gql,
   type DocumentNode,
 } from '@apollo/client'
+import { setContext } from '@apollo/client/link/context'
 import { RemoveTypenameFromVariablesLink } from '@apollo/client/link/remove-typename'
 import { getIntrospectionQuery, parse } from 'graphql'
+import { useSessionStore } from '@/core/auth/session'
 import { config } from '@/core/config'
 import { createErrorLink } from '@/core/graphql/links/errorLink'
 import { createLoadingLink } from '@/core/graphql/links/loadingLink'
@@ -37,6 +39,14 @@ import type {
   EntitySchema,
   MutationSchema,
 } from './types'
+
+/**
+ * El firewall del backend no guarda sesión: cada petición lleva su Bearer, también la de GraphQL.
+ */
+const conBearer = setContext((_, { headers }) => {
+  const token = useSessionStore().token
+  return { headers: { ...headers, ...(token ? { Authorization: `Bearer ${token}` } : {}) } }
+})
 
 /** Los builders de `documents.ts` emiten SDL en string; Apollo requiere DocumentNode. */
 function toDocument(source: string): DocumentNode {
@@ -107,6 +117,7 @@ export class ApiPlatformClient {
         new RemoveTypenameFromVariablesLink(),
         createErrorLink(),
         createLoadingLink(),
+        conBearer,
         new HttpLink({ uri: this.uri, fetch: options.fetch ?? fetchObservado }),
       ]),
       cache: new InMemoryCache(),
