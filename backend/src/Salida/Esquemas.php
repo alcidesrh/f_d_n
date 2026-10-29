@@ -14,9 +14,12 @@ use App\Entity\EsquemaSalida;
 use App\Entity\EsquemaSalidaMomento;
 use App\Entity\Ruta;
 use App\Entity\Usuario;
+use App\Salida\Horizonte\ExtenderHorizonte;
 use App\Salida\Programacion\Momento;
 use App\Salida\Programacion\Programacion;
+use App\Venta\Transaccion;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 /**
  * Esquemas de salidas guardados (ADR-024): se crean desde el programador
@@ -24,6 +27,12 @@ use Doctrine\ORM\EntityManagerInterface;
  * horas, quitar un momento) o borran. Aislados por empresa: cada uno es de
  * la empresa de sus buses, y solo se ven y tocan los de las empresas donde se
  * programa (`salida.crear`, ADR-039).
+ *
+ * Un esquema automático (ADR-044) lo despliega el programador de tareas
+ * hasta su horizonte. Al guardarlo se pide la extensión enseguida (tras el
+ * commit) y, si se agregaron horas, que esas se pongan desde hoy hasta la
+ * frontera. Quitar una hora o cambiar un bus no toca lo ya desplegado; el
+ * cambio rige desde la frontera.
  */
 final class Esquemas
 {
@@ -32,6 +41,8 @@ final class Esquemas
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly Autorizacion $autorizacion,
+        private readonly Transaccion $transaccion,
+        private readonly MessageBusInterface $bus,
     ) {}
 
     /** @return list<array<string, mixed>> */
@@ -55,7 +66,9 @@ final class Esquemas
 
     /**
      * Crea (`$id` nulo) o reemplaza un esquema.
-     * `$datos`: `{ nombre, rutaId, intervaloDias, momentos: [{ hora, busId }] }`.
+     * `$datos`: `{ nombre, rutaId, intervaloDias, momentos: [{ hora, busId }],
+     * automatico?, horizonteDias?, ancla?: AAAA-MM-DD }`. Sin `ancla`, la que
+     * tenía o, la primera vez, hoy.
      *
      * @param array<string, mixed> $datos
      *
@@ -75,6 +88,11 @@ final class Esquemas
         }
         $momentos = Momento::lista($datos["momentos"] ?? null, Programacion::MAX_MOMENTOS);
         $buses = $this->buses(array_map(static fn(Momento $m) => $m->busId, $momentos));
+        $horizonte = isset($datos["horizonteDias"]) ? (int) $datos["horizonteDias"] : null;
+        if ($horizonte !== null && ($horizonte < EsquemaSalida::HORIZONTE_MIN || $horizonte > EsquemaSalida::HORIZONTE_MAX)) {
+            throw new SalidaRechazada(sprintf("El horizonte debe estar entre %d y %d días.", EsquemaSalida::HORIZONTE_MIN, EsquemaSalida::HORIZONTE_MAX), "horizonte_invalido");
+        }
+        $ancla = self::ancla($datos["ancla"] ?? null);
 
         if ($id === null) {
             $empresa = $this->empresaDe($buses);
@@ -84,6 +102,11 @@ final class Esquemas
             $esquema = $this->buscar($id);
         }
         $this->exigirNombreLibre($nombre, $esquema);
+        // Lo que no viene se conserva (quien solo cambia horas no apaga el modo automático).
+        $automatico = array_key_exists("automatico", $datos) ? (bool) $datos["automatico"] : $esquema->isAutomatico();
+        $horizonte ??= $esquema->getHorizonteDias();
+        $cambioRuta = $esquema->getId() !== null && $esquema->getRuta()->getId() !== $ruta->getId();
+        $horasAntes = array_map(static fn(EsquemaSalidaMomento $m) => $m->getHora(), $esquema->getMomentos()->toArray());
 
         $esquema->reemplazar(
             $nombre,
@@ -92,9 +115,36 @@ final class Esquemas
             array_map(static fn(Momento $m) => ["hora" => $m->hora, "bus" => $buses[$m->busId]], $momentos),
             $usuario,
         );
+        $esquema->automatizar($automatico, $horizonte, $ancla ?? ($automatico && $esquema->getAncla() === null ? new \DateTimeImmutable("today") : null), $cambioRuta);
         $this->em->flush();
 
+        if ($esquema->isAutomatico()) {
+            $id = (int) $esquema->getId();
+            $nuevas = $cambioRuta || $esquema->getProgramadoHasta() === null
+                ? []
+                : array_values(array_diff(array_unique(array_map(static fn(Momento $m) => $m->hora, $momentos)), $horasAntes));
+            $this->transaccion->despuesDeConfirmar(function () use ($id, $nuevas): void {
+                if ($nuevas !== []) {
+                    $this->bus->dispatch(new ExtenderHorizonte($id, $nuevas));
+                }
+                $this->bus->dispatch(new ExtenderHorizonte($id));
+            });
+        }
+
         return self::vista($esquema);
+    }
+
+    private static function ancla(mixed $valor): ?\DateTimeImmutable
+    {
+        if ($valor === null || $valor === "") {
+            return null;
+        }
+        $d = is_string($valor) ? \DateTimeImmutable::createFromFormat("!Y-m-d", $valor) : false;
+        if ($d === false || $d->format("Y-m-d") !== $valor) {
+            throw new SalidaRechazada("Indique el primer día de la cadencia (AAAA-MM-DD).", "fecha_invalida");
+        }
+
+        return $d;
     }
 
     public function eliminar(int $id): void
@@ -191,6 +241,12 @@ final class Esquemas
                 "busId" => $m->getBus()->getId(),
                 "bus" => $m->getBus()->getCodigo(),
             ], array_values($e->getMomentos()->toArray())),
+            "automatico" => $e->isAutomatico(),
+            "horizonteDias" => $e->getHorizonteDias(),
+            "ancla" => $e->getAncla()?->format("Y-m-d"),
+            "programadoHasta" => $e->getProgramadoHasta()?->format("Y-m-d"),
+            "pausadoMotivo" => $e->getPausadoMotivo(),
+            "pausadoEn" => $e->getPausadoEn()?->format(DATE_ATOM),
             "actualizadoEn" => $e->getActualizadoEn()->format(DATE_ATOM),
             "actualizadoPor" => $e->getActualizadoPor()?->getUsername(),
         ];

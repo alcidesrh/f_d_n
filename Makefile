@@ -51,8 +51,11 @@ migrar-entities: ## make migrar-entities entities='Empresa Localidad Estacion Pi
 migrar-todo:
 	$(CONSOLE) $(if $(prod),--env=prod) app:migrar:todo $(if $(clean),--clean) $(if $(conservar),--conservar) $(if $(estaticos),--estaticos) $(if $(iam),--iam) $(if $(config),--config) $(if $(data),--data) $(if $(boletos),boletos=$(boletos)) $(foreach u,$(entities),--entities=$(u))
 
-sincronizar: ## Sincronización con el legado (ADR-042): un ciclo (con la sincronización encendida)
+sincronizar: ## Sincronización con el legado (ADR-042): un ciclo a mano (el programador la corre cada minuto)
 	@$(CONSOLE) app:sincronizar
+
+tareas: ## Programador de tareas (ADR-044): estado de cada tarea; `make tareas t=reportes_diarios` la pone en cola ya
+	@$(CONSOLE) app:programador:tareas $(if $(t),--ejecutar=$(t))
 
 reset-db: ## Reset database (drop, create, migrations, then migrate old data)
 	@$(CONSOLE) app:reset-db  $(if $(soft),--soft,--hard)
@@ -164,20 +167,12 @@ prod: prod-env ## Levanta el stack de producción (dominio y secretos en .env.pr
 prod-build: prod-env ## Construye las imágenes de producción y levanta el stack
 	$(PROD_COMP) up -d --build
 
-# Ciclo de sincronización con el legado (ADR-042): servicio aparte que sale cada hora y Docker relanza.
-# Mismo stack que `make dev` más el servicio sincronizacion (temporal, mientras dure la mudanza).
-dev-sync: ## Levanta el stack de dev y el ciclo de sincronización con el legado
-	SERVER_NAME=localhost MERCURE_PUBLIC_URL=https://localhost/.well-known/mercure APP_ENV=dev $(DOCKER_COMP) -f compose.yaml -f compose.override.yaml -f compose.sincronizacion.yaml -f compose.sincronizacion.dev.yaml up -d
-
 vps: ## Levanta el stack de dev accesible por la IP pública de la VPS (secretos en .env.vps.local)
 	@test -f .env.vps.local || { echo "Falta .env.vps.local (secretos, ver compose.vps.yaml)" >&2; exit 1; }
 	APP_ENV=dev $(DOCKER_COMP) --env-file .env.vps.local -f compose.yaml -f compose.override.yaml -f compose.vps.yaml up -d --build
 
-prod-sync: prod-env ## Levanta el stack de prod y el ciclo de sincronización con el legado
-	$(PROD_COMP) -f compose.sincronizacion.yaml -f compose.sincronizacion.prod.yaml up -d
-
 prod-logs: prod-env ## Sigue los logs de producción (uso: make prod-logs s=backend)
-	$(PROD_COMP) -f compose.sincronizacion.yaml -f compose.sincronizacion.prod.yaml logs -f --tail=200 $(s)
+	$(PROD_COMP) logs -f --tail=200 $(s)
 
 sf_sqlserver:
 	@$(DOCKER_COMP) exec sqlserver_php sh

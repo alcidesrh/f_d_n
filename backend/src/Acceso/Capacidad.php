@@ -165,9 +165,21 @@ enum Capacidad: string
         };
     }
 
-    /** @return list<Limite> los límites que un rol puede fijarle */
+    /** @return list<Limite> los límites que un rol puede fijarle (los que bloquean y los de aviso) */
     public function limites(): array
     {
         return array_values(array_filter(Limite::cases(), fn(Limite $l) => $l->capacidad() === $this));
+    }
+
+    /** El límite que la detiene (y del que dispensa una autorización), si tiene. */
+    public function limiteQueBloquea(): ?Limite
+    {
+        foreach ($this->limites() as $l) {
+            if ($l->bloquea()) {
+                return $l;
+            }
+        }
+
+        return null;
     }
 }

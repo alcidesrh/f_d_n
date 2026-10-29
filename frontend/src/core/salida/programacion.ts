@@ -158,6 +158,26 @@ export function aEsquema(f: ProgramadorForm, nombre: string): EsquemaPayload {
   return { nombre: nombre.trim(), rutaId: f.rutaId as number, intervaloDias: f.intervaloDias, momentos: momentosPayload(f) }
 }
 
+/** Rango del horizonte de un esquema automático, en días (igual que el servidor). */
+export const HORIZONTE_MIN = 7
+export const HORIZONTE_MAX = 180
+
+/**
+ * El esquema tal como está guardado, con el modo automático cambiado: así
+ * encenderlo o apagarlo no guarda de paso lo que se esté editando en el formulario.
+ */
+export function automatizacion(e: Esquema, automatico: boolean, horizonteDias: number, ancla: string | null): EsquemaPayload {
+  return {
+    nombre: e.nombre,
+    rutaId: e.ruta.id,
+    intervaloDias: e.intervaloDias,
+    momentos: e.momentos.map(({ hora, busId }) => ({ hora, busId })),
+    automatico,
+    horizonteDias: Math.min(HORIZONTE_MAX, Math.max(HORIZONTE_MIN, Math.round(horizonteDias))),
+    ancla,
+  }
+}
+
 /** ¿El formulario tiene cambios respecto del esquema cargado (ruta, intervalo u horas/buses)? */
 export function difiereDeEsquema(f: ProgramadorForm, e: Esquema): boolean {
   const firma = (ms: Array<Pick<Momento, 'hora' | 'busId'>>) => ms.map(claveMomento).sort().join(',')

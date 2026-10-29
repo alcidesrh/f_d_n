@@ -4,18 +4,38 @@ framework:
 
         transports:
             # https://symfony.com/doc/current/messenger.html#transport-configuration
+            # Lo que espera alguien: correos de boletos, push del chat. Lo consume
+            # el `worker` antes que `tareas`, así nunca queda detrás de una tarea.
             async:
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
                 retry_strategy:
                     max_retries: 3
                     multiplier: 2
+            # Tareas del programador (ADR-044) cortas: purgas, facturas pendientes,
+            # sincronización con el legado, vigilancia y el reparto de las pesadas.
+            tareas:
+                dsn: '%env(MESSENGER_TAREAS_DSN)%'
+                retry_strategy:
+                    max_retries: 2
+                    multiplier: 2
+            # Tareas largas o que gastan memoria (reportes en PDF, horizonte de
+            # salidas): su propio worker, para no retrasar a las de arriba.
+            pesadas:
+                dsn: '%env(MESSENGER_PESADAS_DSN)%'
+                retry_strategy:
+                    max_retries: 2
+                    delay: 60000
+                    multiplier: 5
             failed: 'doctrine://default?queue_name=failed'
             # sync: 'sync://'
 
         default_bus: messenger.bus.default
 
         buses:
-            messenger.bus.default: []
+            messenger.bus.default:
+                middleware:
+                    # Latido, cerrojo y resumen de cada tarea programada (`App\Programador`).
+                    - App\Programador\TareasMiddleware
 
         routing:
             Symfony\Component\Mailer\Messenger\SendEmailMessage: async
@@ -25,3 +45,15 @@ framework:
             # Route your messages to the transports
             'App\Venta\Mensaje\EnviarBoletoPorCorreo': async
             'App\Chat\Push\EnviarAvisoPush': async
+            # Las tareas programadas van a la cola que dice su `Tarea` (el
+            # programador las reenvía); estas son las que se despachan sueltas.
+            'App\Salida\Horizonte\ExtenderHorizonte': pesadas
+            'App\Reporte\Diario\EnviarReporteDiario': pesadas
+
+when@test:
+    framework:
+        messenger:
+            transports:
+                async: 'in-memory://'
+                tareas: 'in-memory://'
+                pesadas: 'in-memory://'

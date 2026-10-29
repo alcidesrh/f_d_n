@@ -2,6 +2,9 @@
   Esquema guardado del programador (ADR-024): cargar uno en el formulario,
   guardar los cambios que se le hicieron o borrarlo. Cambiar o borrar un
   esquema no toca las salidas ya creadas con él.
+
+  Modo automático (ADR-044): el programador de tareas lo mantiene desplegado
+  N días adelante. Se enciende con el esquema tal como está guardado.
 -->
 <template>
   <section class="flex flex-col gap-2" aria-labelledby="pg-esquema">
@@ -47,6 +50,51 @@
       Cambiar el esquema no toca las salidas ya creadas.
     </p>
 
+    <div v-if="store.esquema" class="flex flex-col gap-2 rounded-border border border-surface p-3">
+      <div class="flex flex-wrap items-center gap-3">
+        <label class="flex items-center gap-2 text-sm">
+          <ToggleSwitch
+            :model-value="store.esquema.automatico"
+            input-id="pg-automatico"
+            :disabled="store.guardandoEsquema"
+            @update:model-value="(v: boolean) => store.automatizarEsquema(v, horizonte)"
+          />
+          Mantener programado
+        </label>
+        <label class="flex items-center gap-2 text-sm">
+          <InputNumber
+            v-model="horizonte"
+            :min="HORIZONTE_MIN"
+            :max="HORIZONTE_MAX"
+            :disabled="store.guardandoEsquema"
+            input-class="w-16"
+            aria-label="Días hacia adelante"
+            size="small"
+          />
+          días adelante
+        </label>
+        <Button
+          v-if="store.esquema.automatico && horizonte !== store.esquema.horizonteDias"
+          label="Aplicar"
+          size="small"
+          text
+          :loading="store.guardandoEsquema"
+          @click="store.automatizarEsquema(true, horizonte)"
+        />
+      </div>
+      <Message v-if="store.esquema.pausadoMotivo" severity="warn" :closable="false" size="small">
+        En pausa desde {{ fechaHora(store.esquema.pausadoEn!) }}: {{ store.esquema.pausadoMotivo }} Corríjalo y guarde el esquema para que siga.
+      </Message>
+      <p class="m-0 text-xs text-muted-color">
+        <template v-if="store.esquema.automatico">
+          Cada madrugada se crean las salidas que falten hasta {{ horizonte }} días adelante<template v-if="store.esquema.ancla">, contando el intervalo desde el {{ diaCorto(store.esquema.ancla) }}</template>.
+          <template v-if="store.esquema.programadoHasta">Programado hasta el {{ diaLargo(store.esquema.programadoHasta) }}.</template>
+          Lo que se anule o borre antes de esa fecha no se vuelve a crear; si un bus está ocupado, se avisa por el chat.
+        </template>
+        <template v-else>Encendido, el sistema crea solo las salidas de este esquema, sin que nadie tenga que programarlas.</template>
+      </p>
+    </div>
+
     <Dialog v-model:visible="confirmar" modal header="Borrar esquema" class="w-[min(26rem,calc(100vw-1rem))]">
       <p class="m-0">¿Borrar el esquema «{{ store.esquema?.nombre }}»? Las salidas ya creadas con él no cambian.</p>
       <template #footer>
@@ -59,10 +107,17 @@
 
 <script setup lang="ts">
 import { useProgramadorStore } from './store'
-import { fechaHora } from './formato'
+import { HORIZONTE_MAX, HORIZONTE_MIN } from '@/core/salida/programacion'
+import { diaCorto, diaLargo, fechaHora } from './formato'
 
 const store = useProgramadorStore()
 const confirmar = ref(false)
+const horizonte = ref(90)
+watch(
+  () => store.esquema?.horizonteDias,
+  (h) => (horizonte.value = h ?? 90),
+  { immediate: true },
+)
 
 async function borrar() {
   if (await store.borrarEsquema()) confirmar.value = false

@@ -45,6 +45,7 @@ final class Tablero
      * @param array{pendientes: int, importe: int} $depositos
      * @param array{buses: int, vencidas: list<array{id: int, codigo: string, vence: string}>, porVencer: list<array{id: int, codigo: string, vence: string}>} $flota
      * @param list<array{usuarioId: ?int, nombre: ?string, usuario: ?string, estado: string, boletos: int}> $boletosHoy boletos de las salidas de hoy sin la web, por estado y vendedor
+     * @param array{detenidas: list<string>, fallidos: int} $programador tareas sin corrida buena en su tolerancia y mensajes que agotaron reintentos (ADR-044)
      */
     public function __construct(
         private readonly Periodo $periodo,
@@ -58,6 +59,7 @@ final class Tablero
         private readonly array $depositos,
         private readonly array $flota,
         private readonly array $boletosHoy = [],
+        private readonly array $programador = ["detenidas" => [], "fallidos" => 0],
     ) {}
 
     /** @return array<string, mixed> */
@@ -456,6 +458,26 @@ final class Tablero
         $p = $this->periodo;
         $a = [];
 
+        $detenidas = $this->programador["detenidas"];
+        if ($detenidas !== []) {
+            $a[] = self::alerta(
+                "critico",
+                "programador_detenido",
+                sprintf("%s del programador sin correr", self::plural(count($detenidas), "tarea", "tareas")),
+                self::lista($detenidas) . ". Sin el programador no se sincroniza, no se certifican facturas pendientes ni salen los reportes: revisar los contenedores programador y worker.",
+                null,
+            );
+        }
+        if ($this->programador["fallidos"] > 0) {
+            $a[] = self::alerta(
+                "alerta",
+                "mensajes_fallidos",
+                sprintf("%s en segundo plano agotaron sus reintentos", self::plural($this->programador["fallidos"], "trabajo", "trabajos")),
+                "Correos, reportes o despliegues de esquemas que no se completaron. Revisar con messenger:failed:show y reintentar.",
+                null,
+            );
+        }
+
         $f = $this->facturacion;
         if ($f["pendientes"] > 0) {
             $antigua = $f["masAntigua"] !== null ? new \DateTimeImmutable($f["masAntigua"]) : null;
@@ -466,7 +488,7 @@ final class Tablero
                 sprintf("%s sin factura electrónica", self::plural($f["pendientes"], "venta", "ventas")),
                 ($vieja ? sprintf("La más antigua es del %s. ", $antigua->format("d/m H:i")) : "")
                     . ($f["conError"] > 0 ? sprintf("%d con error del certificador. ", $f["conError"]) : "")
-                    . "Se certifican solas con el cron; si no bajan, revisar credenciales FEL.",
+                    . "El programador las reintenta cada 10 minutos; si no bajan, revisar credenciales FEL.",
                 "/reporte/detalle-factura-boletos",
             );
         }

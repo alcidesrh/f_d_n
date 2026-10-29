@@ -164,6 +164,12 @@ Para reglas detalladas de cada capa:
 - Docker usa **npm**, no pnpm ni bun (aunque existan lockfiles de ambos).
 - Migración completa desde TerminalOmnibus toma horas (6679 salidas).
 - Debug: `make debug` usa Caddyfile.dev sin workers.
-- La cola asíncrona de Messenger (correos de boletos, notificaciones push) la consume el servicio `worker` de Compose (misma imagen que el backend, `messenger:consume async`, se reinicia cada hora). En desarrollo, tras cambiar un handler: `docker compose restart worker`; lo que falla tres veces queda en el transporte `failed` (`messenger:failed:show`).
+- Segundo plano (ADR-044), tres servicios de Compose con la imagen del backend:
+  - `programador` (`messenger:consume scheduler_fdn`): el horario de las tareas. Solo reenvía.
+  - `worker` (`messenger:consume async tareas`, se reinicia cada hora): correos, push y las tareas del programador.
+  - `worker-pesadas` (`pesadas`): un mensaje por esquema automático o por destinatario de reporte.
+  - En desarrollo, tras cambiar un handler: `docker compose restart worker worker-pesadas programador`.
+  - `make tareas` muestra el latido de cada tarea; `make tareas t=<código>` corre una ya.
+  - Lo de `async` y `pesadas` que agota sus reintentos queda en `failed` (`messenger:failed:show`). Una tarea del programador que falla no se reintenta: lo intenta la próxima corrida.
 - `node_modules/.vite` puede quedar root-owned tras build del contenedor → `rm -rf node_modules/.vite`.
 - Auto-imports generan `auto-imports.d.ts` y `components.d.ts` — no editar a mano.

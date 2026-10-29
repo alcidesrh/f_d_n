@@ -27,9 +27,10 @@ class ChatArchivo
     #[ORM\JoinColumn(onDelete: "CASCADE")]
     private ?ChatMensaje $mensaje = null;
 
+    /** Null: lo generó el sistema (un reporte programado en los avisos del sistema, ADR-044). */
     #[ORM\ManyToOne]
-    #[ORM\JoinColumn(nullable: false, onDelete: "CASCADE")]
-    private Usuario $autor;
+    #[ORM\JoinColumn(nullable: true, onDelete: "CASCADE")]
+    private ?Usuario $autor;
 
     #[ORM\Column(length: 160)]
     private string $nombre;
@@ -54,7 +55,7 @@ class ChatArchivo
     #[ORM\Column]
     private \DateTimeImmutable $creadoEn;
 
-    public function __construct(Usuario $autor, string $nombre, string $tipo, int $tamano, string $ruta, ?int $ancho = null, ?int $alto = null)
+    public function __construct(?Usuario $autor, string $nombre, string $tipo, int $tamano, string $ruta, ?int $ancho = null, ?int $alto = null)
     {
         $this->autor = $autor;
         $this->nombre = $nombre;
@@ -67,7 +68,7 @@ class ChatArchivo
     }
 
     /** Otro registro del mismo contenido en disco (reenviar, editar): cada mensaje tiene los suyos. */
-    public function copiar(Usuario $autor): self
+    public function copiar(?Usuario $autor): self
     {
         return new self($autor, $this->nombre, $this->tipo, $this->tamano, $this->ruta, $this->ancho, $this->alto);
     }
@@ -92,7 +93,7 @@ class ChatArchivo
         return $this->mensaje;
     }
 
-    public function getAutor(): Usuario
+    public function getAutor(): ?Usuario
     {
         return $this->autor;
     }

@@ -23,8 +23,9 @@ services:
       - host.docker.internal:host-gateway
     tty: true
 
-  # Con el código montado; tras cambiar un handler: `docker compose restart worker`.
-  worker:
+  # Con el código montado; tras cambiar un handler o una tarea:
+  # `docker compose restart worker worker-pesadas programador`.
+  worker: &worker-dev
     build:
       context: ./backend
       target: frankenphp_dev
@@ -35,7 +36,12 @@ services:
     environment:
       XDEBUG_MODE: 'off'
     extra_hosts:
+      # La sincronización con el legado (ADR-042) corre aquí y lo alcanza en el host.
       - host.docker.internal:host-gateway
+
+  worker-pesadas: *worker-dev
+
+  programador: *worker-dev
 
   frontend:
     build:

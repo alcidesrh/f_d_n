@@ -28,7 +28,7 @@ Un módulo aparte, `backend/src/Sincronizacion/` (más un bundle en el legado), 
 ### 2. Del legado a aquí: triggers + ciclo cada minuto
 
 - Triggers `AFTER INSERT, UPDATE` en `boleto`, `salida`, `factura_generada`, `encomienda` y `encomienda_bitacora` anotan el id en `sync_cambio` del legado. No cambian nada de lo que hace el legado.
-- `app:sincronizar --cada=60` (servicio `sincronizacion` de `compose.sincronizacion.yaml`) corre `Ciclo`: `ImportadorLegado` agrupa los cambios por salida y vuelve a migrar cada salida con `Migrador::migrarSalida` (idempotente por `legacy_id`: crea lo que falta, completa lo que cambió) y las encomiendas con `EncomiendasLegado::migrarPorIds`. `ActualizadorBoletos` pone al día los boletos que ya estaban: estado (con su línea en la bitácora, `detalle.legado`), de qué boleto viene una reasignación y la factura certificada después.
+- La tarea `sincronizar_legado` del programador (ADR-044, cada minuto, con cerrojo: un ciclo largo hace que se omita el siguiente) corre `Ciclo` (`app:sincronizar` corre uno a mano): `ImportadorLegado` agrupa los cambios por salida y vuelve a migrar cada salida con `Migrador::migrarSalida` (idempotente por `legacy_id`: crea lo que falta, completa lo que cambió) y las encomiendas con `EncomiendasLegado::migrarPorIds`. `ActualizadorBoletos` pone al día los boletos que ya estaban: estado (con su línea en la bitácora, `detalle.legado`), de qué boleto viene una reasignación y la factura certificada después.
 - Escribe con DBAL: Doctrine no lo ve y no vuelve al legado.
 
 ### 3. De aquí al legado: primero allá
@@ -70,7 +70,7 @@ Con `SINCRONIZACION_SOLO_TRAER=1`, un FDN (de desarrollo) trae del legado de pro
 
 ## Cómo se quita
 
-1. Apagar la sincronización (indicador o `app:sincronizacion:interruptor apagar`) y detener el servicio `sincronizacion`.
+1. Apagar la sincronización (indicador o `app:sincronizacion:interruptor apagar`).
 2. `app:sincronizacion:instalar-legado --desinstalar` (triggers y tablas `sync_*` del legado).
 3. En el legado: quitar `SincronizacionFdnBundle` de `AppKernel` y su carpeta.
-4. Aquí: borrar `src/Sincronizacion/`, `config/packages/sincronizacion.yaml`, `config/routes/sincronizacion.yaml`, la línea de `security.yaml`, `compose.sincronizacion.yaml`, `IndicadorSincronizacion.vue` (y su línea en `AppHeader.vue`), `core/sincronizacion/` y los tests; una migración que borre las tablas `sync_*`. Los enganches que quedan en `App\Migration` (`excluirBoletos`, `equivalencias`, `excluir`, `migrarPorIds`, `fetchSalidasPorIds`) son opcionales y no estorban.
+4. Aquí: borrar `src/Sincronizacion/`, `config/packages/sincronizacion.yaml`, `config/routes/sincronizacion.yaml`, la línea de `security.yaml`, `Tarea::SINCRONIZAR_LEGADO` (y su `hora`/`frecuencia`/`mensaje` en `App\Programador\Tarea`), `IndicadorSincronizacion.vue` (y su línea en `AppHeader.vue`), `core/sincronizacion/` y los tests; una migración que borre las tablas `sync_*`. Los enganches que quedan en `App\Migration` (`excluirBoletos`, `equivalencias`, `excluir`, `migrarPorIds`, `fetchSalidasPorIds`) son opcionales y no estorban.

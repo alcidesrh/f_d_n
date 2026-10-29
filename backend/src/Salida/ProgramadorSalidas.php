@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Salida;
 
 use App\Entity\Bus;
+use App\Entity\EsquemaSalida;
 use App\Entity\Ruta;
 use App\Entity\Salida;
 use App\Entity\Usuario;
@@ -14,6 +15,7 @@ use App\Ruta\Horarios;
 use App\Venta\Transaccion;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
+use Psr\Clock\ClockInterface;
 
 /**
  * Programador de salidas (ADR-024): despliega una `Programacion` en salidas
@@ -29,6 +31,10 @@ use Doctrine\ORM\EntityManagerInterface;
  * dentro de la transacción y crea solo las nuevas. Su respuesta trae el plan
  * con el id de cada salida creada: lo que se omitió es lo que ya estaba
  * antes de crear, no lo recién creado.
+ *
+ * `desplegarEsquema` es el mismo plan para el programador de tareas
+ * (ADR-044): sin usuario ni alcance, con los buses del esquema, que deben
+ * seguir siendo de la empresa del esquema.
  */
 final class ProgramadorSalidas
 {
@@ -43,12 +49,13 @@ final class ProgramadorSalidas
         private readonly Esquemas $esquemas,
         private readonly Transaccion $transaccion,
         private readonly Horarios $horarios,
+        private readonly ClockInterface $reloj,
     ) {}
 
     /** @return array{items: list<array<string, mixed>>, resumen: array<string, int>} */
     public function vistaPrevia(Programacion $p): array
     {
-        $plan = $this->plan($p);
+        $plan = $this->plan($p, $this->esquemas->buses($p->busIds()));
 
         return ["items" => array_map(self::item(...), $plan["items"]), "resumen" => self::resumen($plan["items"])];
     }
@@ -63,24 +70,8 @@ final class ProgramadorSalidas
         return $this->transaccion->ejecutar(function () use ($p, $guardarComo, $usuario): array {
             // Serializa las programaciones de la misma ruta (dos usuarios a la vez no duplican).
             $this->em->find(Ruta::class, $p->rutaId, LockMode::PESSIMISTIC_WRITE);
-            $plan = $this->plan($p);
-
-            $creadas = [];
-            foreach ($plan["items"] as $n => $i) {
-                if ($i["estado"] !== self::NUEVA) {
-                    continue;
-                }
-                $salida = (new Salida())
-                    ->setRuta($plan["ruta"])
-                    ->setBus($i["bus"])
-                    ->setEmpresa($i["bus"]->getEmpresa())
-                    ->setCreatedBy($usuario)
-                    ->setFecha(\DateTime::createFromImmutable($i["fecha"]));
-                $this->em->persist($salida);
-                $creadas[$n] = $salida;
-            }
-            $this->em->flush();
-            $this->horarios->fijar(...array_map(static fn(Salida $s) => (int) $s->getId(), $creadas));
+            $plan = $this->plan($p, $this->esquemas->buses($p->busIds()));
+            $creadas = $this->crear($plan, $usuario);
 
             $esquema = null;
             if ($guardarComo !== null && trim($guardarComo) !== "") {
@@ -109,18 +100,76 @@ final class ProgramadorSalidas
     }
 
     /**
+     * Despliega un tramo de un esquema automático (ADR-044): crea las nuevas
+     * y devuelve los conflictos (el bus ocupado a esa hora) para avisar.
+     * Corre dentro de la transacción de quien llama (`HorizonteSalidas`).
+     *
+     * @return array{resumen: array<string, int>, conflictos: list<array<string, mixed>>}
+     */
+    public function desplegarEsquema(EsquemaSalida $esquema, Programacion $p): array
+    {
+        return $this->transaccion->ejecutar(function () use ($esquema, $p): array {
+            $this->em->find(Ruta::class, $p->rutaId, LockMode::PESSIMISTIC_WRITE);
+            $buses = [];
+            foreach ($esquema->getMomentos() as $m) {
+                $bus = $m->getBus();
+                $empresa = $esquema->getEmpresa()?->getId();
+                if ($empresa !== null && $bus->getEmpresa()?->getId() !== $empresa) {
+                    throw new SalidaRechazada(sprintf("El bus %s ya no es de la empresa del esquema.", $bus->getCodigo()), "bus_otra_empresa");
+                }
+                $buses[(int) $bus->getId()] = $bus;
+            }
+            $plan = $this->plan($p, $buses);
+            $this->crear($plan, null);
+
+            return [
+                "resumen" => self::resumen($plan["items"]),
+                "conflictos" => array_values(array_map(self::item(...), array_filter($plan["items"], static fn(array $i) => $i["estado"] === self::CONFLICTO))),
+            ];
+        });
+    }
+
+    /**
+     * @param array{ruta: Ruta, items: list<array{fecha: \DateTimeImmutable, bus: Bus, estado: string, choque: mixed}>} $plan
+     *
+     * @return array<int, Salida> las creadas, por su posición en el plan
+     */
+    private function crear(array $plan, ?Usuario $usuario): array
+    {
+        $creadas = [];
+        foreach ($plan["items"] as $n => $i) {
+            if ($i["estado"] !== self::NUEVA) {
+                continue;
+            }
+            $salida = (new Salida())
+                ->setRuta($plan["ruta"])
+                ->setBus($i["bus"])
+                ->setEmpresa($i["bus"]->getEmpresa())
+                ->setCreatedBy($usuario)
+                ->setFecha(\DateTime::createFromImmutable($i["fecha"]));
+            $this->em->persist($salida);
+            $creadas[$n] = $salida;
+        }
+        $this->em->flush();
+        $this->horarios->fijar(...array_map(static fn(Salida $s) => (int) $s->getId(), $creadas));
+
+        return $creadas;
+    }
+
+    /**
+     * @param array<int, Bus> $buses los de la programación, por id
+     *
      * @return array{ruta: Ruta, items: list<array{fecha: \DateTimeImmutable, bus: Bus, estado: string, choque: mixed}>}
      */
-    private function plan(Programacion $p): array
+    private function plan(Programacion $p, array $buses): array
     {
         $ruta = $this->em->find(Ruta::class, $p->rutaId)
             ?? throw new SalidaRechazada("La ruta no existe.", "ruta_inexistente", 404);
         if (!$ruta->isActivo()) {
             throw new SalidaRechazada("La ruta " . VistaSalida::ruta($ruta) . " está inactiva.", "ruta_inactiva");
         }
-        $buses = $this->esquemas->buses($p->busIds());
         $agenda = $this->agendas->de($p->busIds(), $p->desde, $p->hasta->modify("+3 days"));
-        $ahora = new \DateTimeImmutable();
+        $ahora = \DateTimeImmutable::createFromInterface($this->reloj->now());
 
         $items = [];
         foreach ($p->salidas() as ["fecha" => $fecha, "busId" => $busId]) {

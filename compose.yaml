@@ -21,6 +21,8 @@ services:
       MERCURE_URL: ${CADDY_MERCURE_URL:-http://backend/.well-known/mercure}
       MERCURE_PUBLIC_URL: ${CADDY_MERCURE_PUBLIC_URL:-https://${SERVER_NAME:-localhost}:${HTTPS_PORT:-443}/.well-known/mercure}
       MERCURE_JWT_SECRET: ${CADDY_MERCURE_JWT_SECRET:-!ChangeThisMercureHubJWTSecretKey!}
+      # Cerrojos del programador de tareas (ADR-044), compartidos por todos los contenedores.
+      LOCK_DSN: postgresql+advisory://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-!ChangeMe!}@database:5432/${POSTGRES_DB:-app}
     volumes:
       - caddy_data:/data
       - caddy_config:/config
@@ -43,9 +45,11 @@ services:
       retries: 5
       start_period: 60s
 
-  # Cola asíncrona de Messenger (transporte `async`): correos de boletos y
-  # notificaciones push del chat. Misma imagen y entorno que el backend; sale
-  # cada hora (o al pasar 256 MB) y Docker lo vuelve a levantar con el código al día.
+  # Colas de Messenger (ADR-044). `async` (correos de boletos, push del chat) va
+  # primero: nunca espera detrás de una tarea. `tareas`: las del programador que
+  # son cortas (purgas, facturas pendientes, sincronización, vigilancia). Misma
+  # imagen y entorno que el backend; sale cada hora (o al pasar 256 MB) y Docker
+  # lo vuelve a levantar con el código al día.
   worker:
     image: ${IMAGES_PREFIX:-}app-php
     container_name: worker
@@ -54,10 +58,40 @@ services:
       backend:
         condition: service_started
     environment: *backend-environment
-    command: ["php", "bin/console", "messenger:consume", "async", "--time-limit=3600", "--memory-limit=256M", "-v"]
+    command: ["php", "bin/console", "messenger:consume", "async", "tareas", "--time-limit=3600", "--memory-limit=256M", "-v"]
     volumes:
       - caddy_data:/data
     # El de la imagen mira Caddy, que aquí no corre.
+    healthcheck:
+      disable: true
+
+  # Tareas largas o con mucha memoria (reportes en PDF, horizonte de salidas):
+  # aparte, para que un reporte no retrase un correo ni una purga.
+  worker-pesadas:
+    image: ${IMAGES_PREFIX:-}app-php
+    container_name: worker-pesadas
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    environment: *backend-environment
+    command: ["php", "-d", "memory_limit=768M", "bin/console", "messenger:consume", "pesadas", "--time-limit=3600", "--memory-limit=512M", "-v"]
+    volumes:
+      - caddy_data:/data
+    healthcheck:
+      disable: true
+
+  # El reloj (ADR-044): no ejecuta nada, solo pone cada tarea en la cola `tareas`
+  # a su hora (`App\Programador\Programa`). Uno solo: un cerrojo impide dos.
+  programador:
+    image: ${IMAGES_PREFIX:-}app-php
+    container_name: programador
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+    environment: *backend-environment
+    command: ["php", "bin/console", "messenger:consume", "scheduler_fdn", "--time-limit=3600", "--memory-limit=128M", "-v"]
     healthcheck:
       disable: true
 

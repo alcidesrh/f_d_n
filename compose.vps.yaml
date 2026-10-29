@@ -11,6 +11,10 @@ services:
       CADDY_GLOBAL_OPTIONS: "default_sni 194.113.67.177\n\tlocal_certs"
   worker:
     environment: *vps-environment
+  worker-pesadas:
+    environment: *vps-environment
+  programador:
+    environment: *vps-environment
   database:
     # Sin puerto público: la base solo la usan los contenedores.
     ports: !reset []

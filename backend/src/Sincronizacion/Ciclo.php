@@ -11,8 +11,9 @@ use Doctrine\DBAL\Connection;
 
 /**
  * Una vuelta de la sincronización (ADR-042): trae lo que cambió en el legado,
- * lleva lo que quedó pendiente de aquí y limpia. Lo corre `app:sincronizar`
- * cada minuto. Con el interruptor apagado no hace nada.
+ * lleva lo que quedó pendiente de aquí y limpia. Lo corre cada minuto la
+ * tarea `sincronizar_legado` del programador (ADR-044); `app:sincronizar`, una
+ * vez a mano. Con el interruptor apagado no hace nada.
  */
 class Ciclo
 {

@@ -6,6 +6,8 @@
 parameters:
     # Remitente de los correos con el boleto (sobrescribible con VENTA_CORREO_REMITENTE).
     venta_correo_remitente_defecto: "boletos@transportesfuentedelnorte.com"
+    # Remitente de los reportes y avisos programados por correo (ADR-044; sobrescribible con PROGRAMADOR_CORREO_REMITENTE).
+    programador_correo_remitente_defecto: "reportes@transportesfuentedelnorte.com"
     # Buzón que recibe el formulario de contacto de la página (sobrescribible con PAGINA_CONTACTO_CORREO).
     pagina_contacto_correo_defecto: "contacto@transportesfuentedelnorte.com"
     # Contacto que se declara a los servicios de push (VAPID `subject`; sobrescribible con PUSH_VAPID_CONTACTO).

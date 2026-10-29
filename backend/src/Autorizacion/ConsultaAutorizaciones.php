@@ -7,6 +7,7 @@ namespace App\Autorizacion;
 use App\Acceso\Autorizacion;
 use App\Acceso\Capacidad;
 use App\Acceso\FiltroAlcance;
+use App\Acceso\Ubicacion;
 use App\Entity\Enum\EstadoAutorizacion;
 use App\Entity\SolicitudAutorizacion;
 use App\Entity\Usuario;
@@ -138,6 +139,30 @@ final class ConsultaAutorizaciones
     public function resolvedoresCercanos(SolicitudAutorizacion $s): array
     {
         $todos = $this->conCercania($s);
+        if ($todos === []) {
+            return [];
+        }
+        $minima = min(array_column($todos, "cercania"));
+
+        return array_values(array_column(array_filter($todos, static fn(array $r) => $r["cercania"] === $minima), "usuario"));
+    }
+
+    /**
+     * Quienes aprueban autorizaciones más cerca de una operación en `$donde`
+     * (misma regla que `resolvedoresCercanos`), sin `$excepto` (quien la
+     * hizo). Para los avisos de umbral diario (ADR-044).
+     *
+     * @return list<Usuario>
+     */
+    public function aprobadoresCercanos(Ubicacion $donde, ?int $excepto = null): array
+    {
+        $todos = [];
+        foreach ($this->autorizacion->deTodos() as $id => ["usuario" => $u, "permisos" => $p]) {
+            $cercania = $id === $excepto ? null : ReglasAutorizacion::cercaniaA($p, $donde);
+            if ($cercania !== null) {
+                $todos[] = ["usuario" => $u, "cercania" => $cercania];
+            }
+        }
         if ($todos === []) {
             return [];
         }

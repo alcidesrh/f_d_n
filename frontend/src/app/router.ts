@@ -105,6 +105,17 @@ export const router = createRouter({
       },
     },
     {
+      path: "/configuracion/programador",
+      name: "programador-tareas",
+      component: () => import("@/features/programador-tareas/ProgramadorTareasPage.vue"),
+      meta: {
+        capacidad: "config.editar",
+        title: "Programador de tareas",
+        label: "Programador de tareas",
+        icon: "schedule",
+      },
+    },
+    {
       path: "/configuracion/menus",
       name: "menu-builder",
       component: () => import("@/features/menu-builder/MenuBuilderPage.vue"),

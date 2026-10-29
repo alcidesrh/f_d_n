@@ -6,6 +6,7 @@ namespace App\Autorizacion;
 
 use App\Acceso\Capacidad;
 use App\Acceso\PermisosUsuario;
+use App\Acceso\Ubicacion;
 use App\Entity\Enum\Dispensa;
 use App\Entity\Enum\EstadoAutorizacion;
 use App\Entity\SolicitudAutorizacion;
@@ -60,7 +61,12 @@ final class ReglasAutorizacion
      */
     public static function cercania(PermisosUsuario $permisos, SolicitudAutorizacion $s): ?int
     {
-        $donde = $s->getUbicacion();
+        return self::cercaniaA($permisos, $s->getUbicacion());
+    }
+
+    /** Lo mismo para una operación cualquiera en `$donde` (los avisos de umbral, ADR-044). */
+    public static function cercaniaA(PermisosUsuario $permisos, Ubicacion $donde): ?int
+    {
         $mejor = null;
         foreach ($permisos->alcance(Capacidad::AUTORIZACION_APROBAR->value)->ambitos() as $ambito) {
             if ($ambito->contiene($donde)) {

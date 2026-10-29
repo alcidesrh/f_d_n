@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Chat;
 
+use App\Acceso\Limite;
+use App\Acceso\Ubicacion;
 use App\Autorizacion\AutorizacionResuelta;
 use App\Autorizacion\AutorizacionSolicitada;
 use App\Autorizacion\AutorizacionUsada;
@@ -17,6 +19,7 @@ use App\Salida\SalidasAnuladas;
 use App\Venta\Agencia\DepositoRechazado;
 use App\Venta\Agencia\SaldoAcreditado;
 use App\Venta\Boleto\DatosBoleto;
+use App\Vigilancia\UmbralDiarioAlcanzado;
 use Doctrine\ORM\EntityManagerInterface;
 use Money\Currency;
 use Money\Money;
@@ -200,6 +203,39 @@ final class AvisosDelSistema
         }
 
         return sprintf("Se anularon %d salidas desde %s:", count($salidas), $primera->getTrayecto()?->getOrigen()?->getNombre() ?? "su estación");
+    }
+
+    /**
+     * A quienes aprueban autorizaciones más cerca de donde operó (ADR-044):
+     * llegó al número de aviso de su rol, con los registros de la operación
+     * que lo cruzó como tarjetas.
+     */
+    #[AsEventListener]
+    public function umbralDiarioAlcanzado(UmbralDiarioAlcanzado $e): void
+    {
+        $this->seguro(function () use ($e) {
+            $usuario = $this->em->find(Usuario::class, $e->usuarioId);
+            $limite = Limite::tryFrom($e->limite);
+            if ($usuario === null || $limite === null) {
+                return;
+            }
+            $aprobadores = $this->autorizaciones->aprobadoresCercanos(Ubicacion::desdeArray($e->donde), $e->usuarioId);
+            if ($aprobadores !== []) {
+                $this->chat->avisarSistema($aprobadores, self::textoUmbral($usuario, $limite, $e->umbral, $e->hechas), $e->tarjetas);
+            }
+        });
+    }
+
+    public static function textoUmbral(Usuario $usuario, Limite $limite, int $umbral, int $hechas): string
+    {
+        return sprintf(
+            "%s (%s) lleva %d %s hoy: llegó al aviso de %d que fija su rol. Van adjuntos los de la operación que lo alcanzó.",
+            $usuario->getFullName() ?: $usuario->getUsername(),
+            $usuario->getUsername(),
+            $hechas,
+            $limite->cosa(),
+            $umbral,
+        );
     }
 
     private function seguro(callable $aviso): void

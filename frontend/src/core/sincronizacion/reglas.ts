@@ -57,8 +57,8 @@ export function avisos(estado: EstadoSincronizacion, ahora: Date): string[] {
   if (cicloDetenido(estado, ahora))
     lineas.push(
       estado.ultimoCicloEn
-        ? `El ciclo no corre desde hace más de ${MINUTOS_SIN_CICLO} minutos (¿está el proceso app:sincronizar?).`
-        : 'El ciclo aún no ha corrido (¿está el proceso app:sincronizar?).',
+        ? `El ciclo no corre desde hace más de ${MINUTOS_SIN_CICLO} minutos (¿están corriendo el programador de tareas y el worker?).`
+        : 'El ciclo aún no ha corrido (¿están corriendo el programador de tareas y el worker?).',
     )
   if (estado.pendientes > 0)
     lineas.push(
