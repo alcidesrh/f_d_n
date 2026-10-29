@@ -5,10 +5,9 @@
 {% block ficha %}
 <table class="ficha">
   <tr>
-    <td style="width:34%"><div class="lbl">Ruta</div><div class="val">{{ ficha.ruta }}</div></td>
-    <td style="width:22%"><div class="lbl">Inició</div><div class="val">{{ ficha.inicio }}</div></td>
-    <td style="width:22%"><div class="lbl">Programada</div><div class="val">{{ ficha.programada ?? '—' }}</div></td>
-    <td style="width:22%"><div class="lbl">Bus · Empresa</div><div class="val">{{ ficha.bus ?? '—' }} · {{ ficha.empresa ?? '—' }}</div></td>
+    <td style="width:40%"><div class="lbl">Ruta</div><div class="val">{{ ficha.ruta }}</div></td>
+    <td style="width:30%"><div class="lbl">Inició</div><div class="val">{{ ficha.inicio }}</div></td>
+    <td style="width:30%"><div class="lbl">Bus · Empresa</div><div class="val">{{ ficha.bus ?? '—' }} · {{ ficha.empresa ?? '—' }}</div></td>
   </tr>
 </table>
 <table class="cifras">

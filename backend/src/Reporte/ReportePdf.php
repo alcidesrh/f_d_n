@@ -40,7 +40,7 @@ final class ReportePdf
     /**
      * La tabla de un mensaje "Salida iniciada" (ADR-045).
      *
-     * @param array{ruta: string, inicio: string, programada: ?string, bus: ?string, empresa: ?string} $ficha
+     * @param array{ruta: string, inicio: string, bus: ?string, empresa: ?string} $ficha
      */
     public function salidaIniciada(OcupacionAlIniciar $o, array $ficha, string $usuario): string
     {

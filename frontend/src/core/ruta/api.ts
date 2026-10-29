@@ -5,11 +5,17 @@ import type { OpcionesRutas, RutaDetalle, RutaFila, RutaPayload } from './types'
 
 const BASE = '/gestion-rutas'
 
-/** Rutas que coinciden con `q`, buscadas en la base de datos (`truncado` si hay más del límite). */
-export const fetchRutas = (q: string, inactivas: boolean) =>
-  http.get<{ items: RutaFila[]; truncado: boolean; puedeEditar: boolean }>(
-    `${BASE}?${new URLSearchParams({ q, inactivas: inactivas ? '1' : '0' })}`,
-  )
+/**
+ * Rutas que coinciden con `q` y, si se dan, con su origen y su destino (ids de
+ * lugar), buscadas en la base de datos (`truncado` si hay más del límite).
+ */
+export const fetchRutas = (q: string, inactivas: boolean, origen: number | null, destino: number | null) => {
+  const params = new URLSearchParams({ q, inactivas: inactivas ? '1' : '0' })
+  if (origen) params.set('origen', String(origen))
+  if (destino) params.set('destino', String(destino))
+
+  return http.get<{ items: RutaFila[]; truncado: boolean; puedeEditar: boolean }>(`${BASE}?${params}`)
+}
 
 /** Opciones del programador: las que coinciden con `q` y las de `ids` (la ya elegida). */
 export const fetchBuscarRutas = (q: string, ids: number[] = []) =>

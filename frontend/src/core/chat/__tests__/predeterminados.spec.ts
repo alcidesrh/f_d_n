@@ -58,7 +58,7 @@ describe('textoDias', () => {
 describe('cuandoSale y textoAudiencia', () => {
   it('describe la programación de cada tipo', () => {
     expect(cuandoSale({ tipo: 'libre', hora: '07:00', dias: [1, 2, 3, 4, 5], ruta: null }, '22:00')).toBe('Lun a vie a las 07:00')
-    expect(cuandoSale({ tipo: 'salida_iniciada', hora: null, dias: [], ruta: { id: 1, nombre: 'Guatemala - Flores' } }, '22:00')).toBe('Al iniciar cada salida de Guatemala - Flores')
+    expect(cuandoSale({ tipo: 'salida_iniciada', hora: null, dias: [], ruta: { id: 1, nombre: 'Guatemala - Flores' } }, '22:00')).toBe('Al pasar la hora de cada salida de Guatemala - Flores')
     expect(cuandoSale({ tipo: 'ventas_dia', hora: null, dias: [], ruta: null }, '22:00')).toBe('Todos los días a las 22:00')
     expect(cuandoSale({ tipo: 'anomalia_tarifa', hora: null, dias: [], ruta: null }, '22:00')).toBe('Cada madrugada, si encuentra alguna')
   })

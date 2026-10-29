@@ -9,11 +9,11 @@
   Contenido angosto: tarjetas; desde 56rem de ancho del contenido: tabla.
 -->
 <template>
-  <div class="@container flex flex-col gap-4">
+  <div class="@container flex flex-col gap-4 mt-5 relative">
     <!-- <Toolbar> -->
     <!-- <template #start><PageHead /></template> -->
     <!-- <template #end> -->
-    <div class="ml-auto flex flex-wrap gap-2">
+    <div class="ml-auto flex flex-wrap gap-2 absolute right-0">
       <RouterLink :to="{ name: 'salidas-calendario' }" class="no-underline">
         <Button label="Calendario" size="small" severity="secondary" outlined
           ><template #icon><icon name="calendar-view-week" class="mr-1" /></template
@@ -83,14 +83,14 @@
             <template #icon><icon name="visibility-outline" /></template>
           </Button>
           <Button severity="secondary" text rounded size="small" class="tap-target" aria-label="Reportar por chat" v-tooltip.top="'Reportar por chat'" @click="reportar = s">
-                <template #icon><icon name="forum-outline" /></template>
-              </Button>
-              <Button severity="secondary" text rounded size="small" class="tap-target" aria-label="Bitácora" v-tooltip.top="'Bitácora'" @click="bitacora = s.id">
-                <template #icon><icon name="history" /></template>
-              </Button>
-              <Button v-if="chequeable(s)" severity="secondary" text rounded size="small" class="tap-target" aria-label="Chequear boletos" v-tooltip.top="'Chequear boletos'" @click="router.push({ name: 'salidas-chequeo', query: { salida: s.id } })">
-                <template #icon><icon name="how-to-reg-outline" /></template>
-              </Button>
+            <template #icon><icon name="forum-outline" /></template>
+          </Button>
+          <Button severity="secondary" text rounded size="small" class="tap-target" aria-label="Bitácora" v-tooltip.top="'Bitácora'" @click="bitacora = s.id">
+            <template #icon><icon name="history" /></template>
+          </Button>
+          <Button v-if="chequeable(s)" severity="secondary" text rounded size="small" class="tap-target" aria-label="Chequear boletos" v-tooltip.top="'Chequear boletos'" @click="router.push({ name: 'salidas-chequeo', query: { salida: s.id } })">
+            <template #icon><icon name="how-to-reg-outline" /></template>
+          </Button>
           <Button severity="secondary" text rounded size="small" class="tap-target" aria-label="Manifiestos" v-tooltip.top="'Manifiestos (PDF)'" aria-haspopup="menu" @click="abrirMenu($event, s)">
             <template #icon><icon name="picture-as-pdf-outline" /></template>
           </Button>
@@ -103,7 +103,7 @@
 
     <!-- Ancho: tabla -->
     <div class="hidden @4xl:block">
-      <DataTable :value="datos?.items ?? []" data-key="id" lazy paginator :rows="filtro.porPagina" :first="(filtro.pagina - 1) * filtro.porPagina" :total-records="datos?.total ?? 0" :rows-per-page-options="[25, 50, 100]" :loading="cargando" size="small" striped-rows @page="alPaginar">
+      <DataTable :value="datos?.items ?? []" data-key="id" lazy paginator :rows="filtro.porPagina" :first="(filtro.pagina - 1) * filtro.porPagina" :total-records="datos?.total ?? 0" :rows-per-page-options="[25, 50, 100]" size="small" striped-rows @page="alPaginar">
         <template #empty><p class="m-0 py-6 text-center text-sm text-muted-color">No hay salidas con estos filtros.</p></template>
         <Column header="Salida">
           <template #body="{ data }">

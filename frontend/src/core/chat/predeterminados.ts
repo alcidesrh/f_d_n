@@ -158,7 +158,7 @@ export function cuandoSale(m: Pick<MensajePredeterminado, 'tipo' | 'hora' | 'dia
     case 'libre':
       return `${textoDias(m.dias)} a las ${m.hora ?? '—'}`
     case 'salida_iniciada':
-      return `Al iniciar cada salida${m.ruta ? ` de ${m.ruta.nombre}` : ''}`
+      return `Al pasar la hora de cada salida${m.ruta ? ` de ${m.ruta.nombre}` : ''}`
     case 'anomalia_reasignacion':
     case 'anomalia_tarifa':
       return 'Cada madrugada, si encuentra alguna'

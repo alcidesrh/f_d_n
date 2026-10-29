@@ -13,7 +13,8 @@ use Psr\Log\LoggerInterface;
  * Las corridas de los mensajes predeterminados (ADR-045):
  *
  * - `pendientes()` (cada 5 minutos, `Tarea::MENSAJES_PREDETERMINADOS`): los
- *   de hora cuya hora de hoy ya pasó y las salidas iniciadas de cada ruta.
+ *   de hora cuya hora de hoy ya pasó y las salidas de cada ruta cuya hora
+ *   de salida ya pasó.
  * - `anomalias()` (de madrugada, `Tarea::REVISAR_ANOMALIAS`): lo del día
  *   anterior.
  *
@@ -64,7 +65,7 @@ final class Despacho
 
     /**
      * Lo que saldría ahora para probar la instancia: el contenido de hoy, la
-     * última salida iniciada de la ruta o las anomalías de ayer (sin ellas,
+     * última salida de la ruta cuya hora ya pasó o las anomalías de ayer (sin ellas,
      * un aviso de que no hubo).
      */
     public function muestra(MensajePredeterminado $m, \DateTimeImmutable $ahora): Pieza
@@ -76,11 +77,11 @@ final class Despacho
             TipoMensajePredeterminado::VENTAS_DIA => $this->contenidos->ventasDelDia($m, $ahora),
             TipoMensajePredeterminado::DESEMPENO_DIA => $this->contenidos->desempenoDelDia($m, $ahora),
             TipoMensajePredeterminado::SALIDA_INICIADA => (function () use ($m, $ahora, $sin): Pieza {
-                $salidas = $this->contenidos->salidasIniciadas($m, $ahora->modify("-30 days"));
+                $salidas = $this->contenidos->salidasIniciadas($m, $ahora->modify("-30 days"), $ahora);
                 $ultima = end($salidas);
 
-                return ($ultima === false ? null : $this->contenidos->salidaIniciada($ultima["id"], $ultima["inicio"]))
-                    ?? $sin("Salida iniciada: en los últimos 30 días no inició ninguna salida de esta ruta. Así llegará cuando inicie una.");
+                return ($ultima === false ? null : $this->contenidos->salidaIniciada($ultima))
+                    ?? $sin("Salida iniciada: en los últimos 30 días no salió ninguna salida de esta ruta. Así llegará cuando pase la hora de la próxima.");
             })(),
             TipoMensajePredeterminado::ANOMALIA_REASIGNACION, TipoMensajePredeterminado::ANOMALIA_TARIFA => $this->contenidos->anomalias($m, $ahora->modify("-1 day"))
                 ?? $sin(sprintf("%s: ayer no hubo ninguna. Cuando la revisión de la madrugada encuentre una, llegará así.", $m->getTipo()->nombre())),
@@ -116,8 +117,8 @@ final class Despacho
             $desde = max($ahora->modify(Contenidos::VENTANA_SALIDA), $m->getCreadoEn());
 
             return array_values(array_filter(array_map(
-                fn(array $s) => $this->contenidos->salidaIniciada($s["id"], $s["inicio"]),
-                $this->contenidos->salidasIniciadas($m, $desde, sinAvisar: true),
+                $this->contenidos->salidaIniciada(...),
+                $this->contenidos->salidasIniciadas($m, $desde, $ahora, sinAvisar: true),
             )));
         }
         if (!self::tocaHoy($m, $ahora) || $this->difusion->yaSalio($m, "dia:" . $ahora->format("Y-m-d"))) {

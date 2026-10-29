@@ -55,6 +55,7 @@ El cliente piensa en su viaje: en primer plano la hora en su origen, la llegada 
 ### Migración
 
 - `ruta` → `Ruta` 1:1 (`legacyId` = código); paradas: origen, `ruta_estacion_item` por `posicion`, destino. No se inventan rutas inversas: las que existen en el legado se migran como cualquier otra.
+- **Nombre**: `ruta.nombre` del legado, con las mayúsculas corregidas (`SANTA ELENA-GUATE,ZONA1` → `Santa Elena-Guate,Zona1`). `ruta.descripcion` solo si `nombre` está vacío. No se usa como nombre porque es texto libre que puede llevar reglas de negocio (RUT101: «solo aplica a Mayas de Oro»), y el sistema no las aplica. Antes se usaba `descripcion` primero (decisión de la fase 1, revertida).
 - `tiempo` → `Parada.minutos` (menor de las clases) y `ParadaTiempo` (las clases que difieren). Clase del legado = `BusClase` (mismo id).
 - Salida → `Ruta` por `itineario.ruta_codigo`. Boleto → `ordenSube`/`ordenBaja` por sus estaciones de subida y bajada; un boleto fuera de la ruta ocupa la salida completa y se cobra su trayecto suelto (como hoy).
 - Una **agencia** del legado (estación tipo 4) que es parada o punta de una ruta también es un **lugar**: se crea su `Enclave` (Belice City, Belice, Chetumal; rutas RUT201/202/212–215). La agencia como vendedora sigue siendo `Agencia`. Antes, esas rutas y sus salidas (unas 1 350 en el legado) no se migraban.

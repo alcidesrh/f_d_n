@@ -7,8 +7,8 @@ namespace App\Chat\Predeterminado;
 use App\Bitacora\TipoRegistro;
 use App\Entity\BoletoAsiento;
 use App\Entity\Enum\EstadoBoletoVenta;
+use App\Entity\Enum\EstadoSalida;
 use App\Entity\Enum\OperacionBoleto;
-use App\Entity\Enum\OperacionSalida;
 use App\Entity\Enum\OperacionTarifa;
 use App\Entity\Enum\TipoMensajePredeterminado;
 use App\Entity\MensajePredeterminado;
@@ -34,7 +34,7 @@ final class Contenidos
     /** Quién figura como "generado por" en los PDF. */
     public const AUTOR = "Mensajes predeterminados";
 
-    /** Una salida iniciada hace más que esto ya no se avisa (el programador estuvo detenido). */
+    /** Una salida cuya hora pasó hace más que esto ya no se avisa (el programador estuvo detenido). */
     public const VENTANA_SALIDA = "-6 hours";
 
     /** Tope de líneas (y tarjetas) de anomalías por mensaje. */
@@ -49,44 +49,45 @@ final class Contenidos
     ) {}
 
     /**
-     * Salidas de la ruta y empresa de la instancia iniciadas desde `$desde`
-     * (con `$sinAvisar`, las que esta instancia aún no avisó).
+     * Salidas de la ruta y empresa de la instancia cuya hora de salida cae
+     * entre `$desde` y `$hasta` (con `$sinAvisar`, las que esta instancia aún
+     * no avisó). Cuenta la hora programada, no el estado: casi nadie marca
+     * una salida como iniciada. Las canceladas no salen.
      *
-     * @return list<array{id: int, inicio: \DateTimeImmutable}>
+     * @return list<int>
      */
-    public function salidasIniciadas(MensajePredeterminado $m, \DateTimeImmutable $desde, bool $sinAvisar = false): array
+    public function salidasIniciadas(MensajePredeterminado $m, \DateTimeImmutable $desde, \DateTimeImmutable $hasta, bool $sinAvisar = false): array
     {
         if ($m->getRuta() === null || $m->getEmpresa() === null) {
             return [];
         }
-        $filas = $this->db->fetchAllAssociative(
-            "SELECT s.id, MIN(b.fecha) AS inicio
-               FROM bitacora b JOIN salida s ON s.id = b.registro_id
-              WHERE b.entidad = :entidad AND b.operacion = :operacion AND b.fecha >= :desde
-                AND s.ruta_id = :ruta AND s.empresa_id = :empresa
+
+        return array_map("intval", $this->db->fetchFirstColumn(
+            "SELECT s.id FROM salida s
+              WHERE s.ruta_id = :ruta AND s.empresa_id = :empresa AND s.estado <> :cancelada
+                AND s.fecha >= :desde AND s.fecha <= :hasta
                 AND (NOT CAST(:sinAvisar AS BOOLEAN) OR NOT EXISTS (
                     SELECT 1 FROM envio_mensaje_predeterminado e WHERE e.mensaje_id = :mensaje AND e.clave = 'salida:' || s.id))
-              GROUP BY s.id ORDER BY inicio",
+              ORDER BY s.fecha, s.id",
             [
-                "entidad" => TipoRegistro::SALIDA->value,
-                "operacion" => OperacionSalida::INICIADA->value,
-                "desde" => $desde->format("Y-m-d H:i:s"),
                 "ruta" => $m->getRuta()->getId(),
                 "empresa" => $m->getEmpresa()->getId(),
+                "cancelada" => EstadoSalida::CANCELADA->value,
+                "desde" => $desde->format("Y-m-d H:i:s"),
+                "hasta" => $hasta->format("Y-m-d H:i:s"),
                 "sinAvisar" => $sinAvisar ? "true" : "false",
                 "mensaje" => (int) $m->getId(),
             ],
-        );
-
-        return array_map(static fn(array $f) => ["id" => (int) $f["id"], "inicio" => new \DateTimeImmutable((string) $f["inicio"])], $filas);
+        ));
     }
 
-    public function salidaIniciada(int $salidaId, \DateTimeImmutable $inicio): ?Pieza
+    public function salidaIniciada(int $salidaId): ?Pieza
     {
         $salida = $this->em->find(Salida::class, $salidaId);
-        if ($salida === null) {
+        if ($salida?->getFecha() === null) {
             return null;
         }
+        $inicio = \DateTimeImmutable::createFromMutable($salida->getFecha());
         /** @var list<BoletoAsiento> $boletos */
         $boletos = $this->em->createQuery(
             "SELECT b, a, v, u FROM App\Entity\BoletoAsiento b JOIN b.asiento a JOIN b.boletoVenta v LEFT JOIN v.usuario u
@@ -119,15 +120,13 @@ final class Contenidos
         $ficha = [
             "ruta" => $ruta,
             "inicio" => $hora->format($inicio),
-            // La hora, o también el día si inició otro día (adelantada o muy tarde).
-            "programada" => $salida->getFecha() === null ? null : self::formato($salida->getFecha()->format("Y-m-d") === $inicio->format("Y-m-d") ? "h:mm a" : "EEE d 'de' MMM, h:mm a")->format($salida->getFecha()),
             "bus" => $salida->getBus()?->getCodigo(),
             "empresa" => $salida->getEmpresa()?->getNombreCorto() ?: $salida->getEmpresa()?->getNombre(),
         ];
 
         return new Pieza(
             "salida:" . $salidaId,
-            $ocupacion->texto($ruta, $ficha["inicio"], $ficha["programada"], $ficha["bus"]),
+            $ocupacion->texto($ruta, $ficha["inicio"], $ficha["bus"]),
             [["tipo" => "Salida", "id" => $salidaId]],
             [[
                 "nombre" => sprintf("salida_iniciada_%d_%s.pdf", $salidaId, $inicio->format("Ymd_Hi")),

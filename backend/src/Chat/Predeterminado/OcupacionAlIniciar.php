@@ -109,11 +109,11 @@ final readonly class OcupacionAlIniciar
      *
      * @param string $inicio hora de inicio ya formateada
      */
-    public function texto(string $ruta, string $inicio, ?string $programada, ?string $bus): string
+    public function texto(string $ruta, string $inicio, ?string $bus): string
     {
         $lineas = [
             sprintf("Salida iniciada: %s", $ruta),
-            sprintf("Inició: %s%s%s", $inicio, $programada !== null ? sprintf(" (programada %s)", $programada) : "", $bus !== null ? sprintf(" · Bus %s", $bus) : ""),
+            sprintf("Inició: %s%s", $inicio, $bus !== null ? sprintf(" · Bus %s", $bus) : ""),
             sprintf(
                 "Asientos: %d ocupados%s y %d libres de %d.",
                 $this->ocupados,

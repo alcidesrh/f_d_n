@@ -36,7 +36,7 @@ Se acordó con negocio:
   | Tipo | Exige | Cuándo sale |
   | --- | --- | --- |
   | `libre` | Contenido y hora | A su hora, en sus días |
-  | `salida_iniciada` | Empresa y ruta | Al iniciar cada salida de esa ruta y empresa |
+  | `salida_iniciada` | Empresa y ruta | Al pasar la hora de cada salida de esa ruta y empresa |
   | `anomalia_reasignacion` | Nada (empresa opcional, filtra) | De madrugada, con lo del día anterior |
   | `anomalia_tarifa` | Nada (empresa opcional, filtra) | De madrugada, con lo del día anterior |
   | `ventas_dia` | Empresa | A su hora (22:00 por defecto) |
@@ -49,10 +49,11 @@ Se acordó con negocio:
 ### Envío (`App\Chat\Predeterminado`)
 
 - **Dos tareas nuevas en el catálogo de ADR-044**:
-  - `mensajes_predeterminados`, cada 5 minutos: los de hora cuya hora de hoy ya pasó y las salidas iniciadas.
+  - `mensajes_predeterminados`, cada 5 minutos: los de hora cuya hora de hoy ya pasó y las salidas cuya hora ya pasó.
   - `revisar_anomalias`, a las 02:30: lo del día anterior.
 - **Salida iniciada**:
-  - Se toma de la bitácora de la salida (`iniciada`), no de un evento. Cubre también un worker caído hasta 6 horas.
+  - Una salida cuenta como iniciada cuando pasa su hora programada (`salida.fecha`), no por su estado: en la operación casi nadie la pasa a `iniciada`, y con el estado no salía ningún aviso. Las canceladas no se avisan.
+  - Cubre también un worker caído hasta 6 horas.
   - Lo que esta instancia ya avisó se descarta antes de armar el contenido.
   - Solo cuenta desde que la instancia existe: crearla no avisa lo de antes.
 - **Los de hora**:
@@ -85,16 +86,16 @@ Se acordó con negocio:
   - Listar con las opciones del formulario.
   - Crear, editar y eliminar.
   - `…/{id}/activo`: activar o desactivar.
-  - `…/{id}/probar`: lo que saldría ahora, solo a quien prueba y sin constancia. Para una salida, la última iniciada de la ruta; para una anomalía, la revisión de ayer.
+  - `…/{id}/probar`: lo que saldría ahora, solo a quien prueba y sin constancia. Para una salida, la última de la ruta cuya hora ya pasó; para una anomalía, la revisión de ayer.
 - **Frontend**: `/configuracion/mensajes-predeterminados`, con una tarjeta por instancia: cuándo sale, audiencia, último envío, activar, probar, editar y eliminar. El formulario sigue los tres pasos del requisito: nombre, audiencia y contenido. Reglas puras en `core/chat/predeterminados.ts`.
 
 ## Consecuencias
 
 - **No se recorta al alcance del destinatario** (a diferencia de ADR-044): la audiencia la eligió un administrador, como quien reenvía un reporte. Sí se recortan las tarjetas, que se resuelven con los permisos de quien lee.
 - **Latencia**:
-  - Salida iniciada: hasta 5 minutos ("poco después de iniciada").
+  - Salida iniciada: hasta 5 minutos después de su hora programada. Una salida que sale tarde se avisa igual a su hora, y una que se adelanta, al llegar su hora.
   - Los de hora: hasta 5 minutos después de su hora.
   - Anomalías: a la madrugada siguiente.
-- **Ventana de 6 horas**: una salida iniciada mientras el programador estuvo detenido más de 6 horas no se avisa.
-- **Lo iniciado en el legado** no deja bitácora: mientras dure la sincronización (ADR-042), esas salidas no se avisan. Tampoco las tarifas que cambian por la sincronización.
+- **Ventana de 6 horas**: una salida cuya hora pasó mientras el programador estuvo detenido más de 6 horas no se avisa.
+- **Las salidas del legado** se avisan igual: el criterio es la hora, no la bitácora. Las tarifas que cambian por la sincronización (ADR-042), no.
 - **Agregar un tipo es código**: un caso del enum, su contenido en `Contenidos` y su prueba. La configuración de cada instancia sí está en la base.

@@ -27,4 +27,21 @@ final class RutasLegadoNombreTest extends TestCase
     {
         self::assertSame($esperado, RutasLegado::sinMayusculas($entrada));
     }
+
+    public function testNombreSaleDeNombreNoDeDescripcion(): void
+    {
+        $ruta = [
+            "codigo" => "RUT101",
+            "nombre" => "SANTA ELENA-GUATE,ZONA1",
+            "descripcion" => "Ruta de Santa Elena Petén a Guatemala Zona 1, solo aplica a Mayas de Oro",
+        ];
+
+        self::assertSame("Santa Elena-Guate,Zona1", RutasLegado::nombre($ruta));
+    }
+
+    public function testSinNombreUsaDescripcionYSinAmbosElCodigo(): void
+    {
+        self::assertSame("Ruta de xela", RutasLegado::nombre(["codigo" => "R1", "nombre" => " ", "descripcion" => "Ruta de xela"]));
+        self::assertSame("R1", RutasLegado::nombre(["codigo" => "R1", "nombre" => null, "descripcion" => null]));
+    }
 }

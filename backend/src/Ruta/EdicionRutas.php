@@ -38,14 +38,20 @@ final class EdicionRutas
 
     /**
      * Rutas para el listado: las que coinciden con `$texto` (o las primeras por
-     * nombre si no hay texto), sin las inactivas salvo que se pidan. Filtra en
-     * la base de datos y trae hasta `$limite`; `truncado` si hay más.
+     * nombre si no hay texto), sin las inactivas salvo que se pidan, y con el
+     * `$origen` y `$destino` (enclaves, las puntas de la ruta) si se piden. Filtra
+     * en la base de datos y trae hasta `$limite`; `truncado` si hay más.
      *
      * @return array{items: list<array<string, mixed>>, truncado: bool}
      */
-    public function listar(string $texto = "", bool $inactivas = true, int $limite = self::LIMITE_LISTADO): array
-    {
-        $ids = $this->idsQueCoinciden($texto, $inactivas, $limite + 1);
+    public function listar(
+        string $texto = "",
+        bool $inactivas = true,
+        int $limite = self::LIMITE_LISTADO,
+        ?int $origen = null,
+        ?int $destino = null,
+    ): array {
+        $ids = $this->idsQueCoinciden($texto, $inactivas, $limite + 1, $origen, $destino);
         $truncado = count($ids) > $limite;
         $ids = array_slice($ids, 0, $limite);
         if ($ids === []) {
@@ -86,28 +92,40 @@ final class EdicionRutas
     }
 
     /**
-     * Ids de las rutas que coinciden con `$texto` (o las primeras por nombre
-     * sin texto), hasta `$limite`. Sin texto, la base ordena y corta.
+     * Ids de las rutas que cumplen los filtros (las primeras por nombre), hasta
+     * `$limite`. El texto lo busca `BuscadorOpciones` (con su tope propio) y la
+     * base cruza esos ids con el resto de filtros.
      *
      * @return list<int>
      */
-    private function idsQueCoinciden(string $texto, bool $inactivas, int $limite): array
+    private function idsQueCoinciden(string $texto, bool $inactivas, int $limite, ?int $origen, ?int $destino): array
     {
-        if (trim($texto) === "") {
-            $qb = $this->em->createQueryBuilder()->select("r.id")->from(Ruta::class, "r")->orderBy("r.nombre", "ASC")->setMaxResults($limite);
-            if (!$inactivas) {
-                $qb->where("r.activo = true");
+        $qb = $this->em->createQueryBuilder()->select("r.id")->from(Ruta::class, "r")->orderBy("r.nombre", "ASC")->setMaxResults($limite);
+        if (!$inactivas) {
+            $qb->andWhere("r.activo = true");
+        }
+        // Origen y destino: las puntas de la ruta, como en `ConsultaSalidas`.
+        if ($origen !== null) {
+            $qb->andWhere("EXISTS (SELECT 1 FROM App\Entity\Parada po WHERE po.ruta = r AND po.orden = 0 AND po.enclave = :origen)")
+                ->setParameter("origen", $origen);
+        }
+        if ($destino !== null) {
+            $qb->andWhere("EXISTS (SELECT 1 FROM App\Entity\Parada pd WHERE pd.ruta = r AND pd.enclave = :destino
+                AND pd.orden = (SELECT MAX(px.orden) FROM App\Entity\Parada px WHERE px.ruta = r))")
+                ->setParameter("destino", $destino);
+        }
+        if (trim($texto) !== "") {
+            $coinciden = array_map(
+                static fn(Ruta $r) => (int) $r->getId(),
+                $this->buscador->buscar(Ruta::class, $texto, BuscadorOpciones::LIMITE_MAXIMO),
+            );
+            if ($coinciden === []) {
+                return [];
             }
-
-            return array_map(intval(...), array_column($qb->getQuery()->getScalarResult(), "id"));
+            $qb->andWhere("r.id IN (:coinciden)")->setParameter("coinciden", $coinciden);
         }
 
-        $rutas = $this->buscador->buscar(Ruta::class, $texto, $limite);
-
-        return array_values(array_map(
-            static fn(Ruta $r) => (int) $r->getId(),
-            array_filter($rutas, static fn(Ruta $r) => $inactivas || $r->isActivo()),
-        ));
+        return array_map(intval(...), array_column($qb->getQuery()->getScalarResult(), "id"));
     }
 
     /**

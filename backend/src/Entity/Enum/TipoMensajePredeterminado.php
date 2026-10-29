@@ -11,7 +11,7 @@ namespace App\Entity\Enum;
  *
  * - `libre`: solo el contenido de la instancia (texto, imagen, archivos), a
  *   su hora en los días elegidos.
- * - `salida_iniciada`: al iniciar cada salida de la ruta y empresa elegidas.
+ * - `salida_iniciada`: al pasar la hora de cada salida de la ruta y empresa elegidas.
  * - `anomalia_*`: la revisión de cada madrugada, cuando encuentra algo.
  * - `ventas_dia`, `desempeno_dia`: a su hora (al cierre), lo del mismo día de
  *   la empresa elegida.
@@ -44,7 +44,7 @@ enum TipoMensajePredeterminado: string
     {
         return match ($this) {
             self::LIBRE => "El texto, la imagen o los archivos de la instancia, a su hora en los días elegidos.",
-            self::SALIDA_INICIADA => "Al iniciar cada salida de la ruta: hora de inicio, asientos libres y ocupados por canal y la tabla por vendedor (PDF).",
+            self::SALIDA_INICIADA => "Al pasar la hora de cada salida de la ruta: hora de inicio, asientos libres y ocupados por canal y la tabla por vendedor (PDF).",
             self::ANOMALIA_REASIGNACION => "Cada madrugada: los boletos del día anterior reasignados más de dos veces, con su bitácora.",
             self::ANOMALIA_TARIFA => "Cada madrugada: las tarifas creadas, editadas o eliminadas el día anterior, con su bitácora.",
             self::VENTAS_DIA => "Al cierre: totales del día de la empresa y desglose por estación.",

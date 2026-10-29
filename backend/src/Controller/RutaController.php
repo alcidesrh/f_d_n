@@ -23,11 +23,16 @@ final class RutaController extends AbstractController
     public function __construct(private readonly EdicionRutas $rutas) {}
 
     #[Route("", name: "listar", methods: ["GET"])]
-    /** `?q=texto&inactivas=1`: las que coinciden, hasta un límite (`truncado` si hay más). */
+    /** `?q=texto&inactivas=1&origen=id&destino=id`: las que coinciden, hasta un límite (`truncado` si hay más). */
     public function listar(Request $request): JsonResponse
     {
         $this->denyAccessUnlessGranted(SalidaController::VER);
-        $listado = $this->rutas->listar((string) $request->query->get("q", ""), $request->query->getBoolean("inactivas"));
+        $listado = $this->rutas->listar(
+            (string) $request->query->get("q", ""),
+            $request->query->getBoolean("inactivas"),
+            origen: $request->query->getInt("origen") ?: null,
+            destino: $request->query->getInt("destino") ?: null,
+        );
 
         return $this->json($listado + ["puedeEditar" => $this->isGranted(self::EDITAR)]);
     }

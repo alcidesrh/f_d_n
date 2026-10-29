@@ -189,10 +189,16 @@ class RutasLegado
         }
     }
 
-    /** @param array<string, mixed> $ruta */
-    private static function nombre(array $ruta): string
+    /**
+     * `ruta.nombre` del legado (`SANTA ELENA-GUATE,ZONA1` → `Santa Elena-Guate,Zona1`).
+     * `descripcion` solo si `nombre` está vacío: es texto libre y puede llevar
+     * reglas de negocio ("solo aplica a Mayas de Oro"), no el nombre de la ruta.
+     *
+     * @param array<string, mixed> $ruta
+     */
+    public static function nombre(array $ruta): string
     {
-        $nombre = trim((string) ($ruta["descripcion"] ?? "")) ?: trim((string) ($ruta["nombre"] ?? ""));
+        $nombre = trim((string) ($ruta["nombre"] ?? "")) ?: trim((string) ($ruta["descripcion"] ?? ""));
 
         return mb_substr($nombre !== "" ? self::sinMayusculas($nombre) : (string) $ruta["codigo"], 0, 255);
     }

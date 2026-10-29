@@ -71,10 +71,10 @@ final class MensajesPredeterminadosTest extends TestCase
     public function testElTextoDeLaSalidaIniciada(): void
     {
         $o = OcupacionAlIniciar::de([self::boleto(1, "Ana", ["cortesia" => true]), self::boleto(2, "Ana", ["sube" => 1])], 10, 3);
-        $texto = $o->texto("Guatemala → Flores", "jue 29 de oct, 2:05 p. m.", "2:00 p. m.", "101");
+        $texto = $o->texto("Guatemala → Flores", "jue 29 de oct, 2:00 p. m.", "101");
 
         self::assertStringContainsString("Salida iniciada: Guatemala → Flores", $texto);
-        self::assertStringContainsString("Inició: jue 29 de oct, 2:05 p. m. (programada 2:00 p. m.) · Bus 101", $texto);
+        self::assertStringContainsString("Inició: jue 29 de oct, 2:00 p. m. · Bus 101", $texto);
         self::assertStringContainsString("Asientos: 2 ocupados (1 con tramos intermedios) y 8 libres de 10.", $texto);
         self::assertStringContainsString("Por canal: estación 2 · agencia 0 · web 0.", $texto);
         self::assertStringContainsString("• Ana: 2 (A 2, B 0) · 1 cortesía · 1 intermedia", $texto);
@@ -82,7 +82,7 @@ final class MensajesPredeterminadosTest extends TestCase
 
     public function testUnaSalidaSinBoletosNoTieneTablaDeVendedores(): void
     {
-        $texto = OcupacionAlIniciar::de([], 50, 2)->texto("A → B", "hoy", null, null);
+        $texto = OcupacionAlIniciar::de([], 50, 2)->texto("A → B", "hoy", null);
 
         self::assertStringContainsString("Asientos: 0 ocupados y 50 libres de 50.", $texto);
         self::assertStringNotContainsString("Por vendedor", $texto);
