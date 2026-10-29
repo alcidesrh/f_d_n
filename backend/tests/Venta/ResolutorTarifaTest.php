@@ -114,4 +114,15 @@ final class ResolutorTarifaTest extends TestCase
         $r->reset();
         $r->porTrayectos($this->salida, [10], ["A"]);
     }
+
+    public function testPrecargarTraeLosTrayectosDeVariasSalidasEnUnaConsulta(): void
+    {
+        $r = $this->resolutor([self::fila(1, 10, "A", 15000), self::fila(2, 11, "A", 12000)]);
+
+        $r->precargar([10, 11, 10, 12]);
+
+        $this->assertSame(1, $r->porTrayectos($this->salida, [10], ["A"])[10]["A"]->id, "sin otra consulta");
+        $this->assertSame(2, $r->porTrayectos($this->salida, [11, 12], ["A"])[11]["A"]->id);
+        $this->assertSame([], $r->porTrayectos($this->salida, [12], ["A"])[12], "precargado aunque no tenga tarifa");
+    }
 }

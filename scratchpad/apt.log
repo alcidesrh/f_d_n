@@ -1,0 +1,114 @@
+Hit:1 http://archive.ubuntu.com/ubuntu resolute InRelease
+Get:2 http://archive.ubuntu.com/ubuntu resolute-updates InRelease [137 kB]
+Hit:3 https://cli.github.com/packages stable InRelease
+Hit:4 https://deb.nodesource.com/node_24.x nodistro InRelease
+Hit:5 http://archive.ubuntu.com/ubuntu resolute-backports InRelease
+Hit:6 http://security.ubuntu.com/ubuntu resolute-security InRelease
+Get:7 http://archive.ubuntu.com/ubuntu resolute-updates/main amd64 Packages [751 kB]
+Get:8 http://archive.ubuntu.com/ubuntu resolute-updates/main Translation-en [178 kB]
+Get:9 http://archive.ubuntu.com/ubuntu resolute-updates/universe amd64 Packages [334 kB]
+Get:10 http://archive.ubuntu.com/ubuntu resolute-updates/universe Translation-en [111 kB]
+Get:11 http://archive.ubuntu.com/ubuntu resolute-updates/restricted amd64 Packages [517 kB]
+Get:12 http://archive.ubuntu.com/ubuntu resolute-updates/restricted Translation-en [104 kB]
+Fetched 2132 kB in 2s (1304 kB/s)
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+Calculating upgrade...
+The following upgrades have been deferred due to phasing:
+  cloud-init cloud-init-base systemd-sysv udev
+The following packages have been kept back:
+  libpam-systemd libsystemd-shared libsystemd0 libudev1 systemd
+  systemd-cryptsetup systemd-resolved
+The following packages will be upgraded:
+  libbrotli1
+1 upgraded, 0 newly installed, 0 to remove and 11 not upgraded.
+Need to get 343 kB of archives.
+After this operation, 0 B of additional disk space will be used.
+Get:1 http://archive.ubuntu.com/ubuntu resolute-updates/main amd64 libbrotli1 amd64 1.2.0-3ubuntu0.1 [343 kB]
+Fetched 343 kB in 1s (423 kB/s)
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 98011 files and directories currently installed.)
+Preparing to unpack .../libbrotli1_1.2.0-3ubuntu0.1_amd64.deb ...
+Unpacking libbrotli1:amd64 (1.2.0-3ubuntu0.1) over (1.2.0-3build1) ...
+Setting up libbrotli1:amd64 (1.2.0-3ubuntu0.1) ...
+Processing triggers for libc-bin (2.43-2ubuntu2.4) ...
+
+Running kernel seems to be up-to-date.
+
+Restarting services...
+ systemctl restart fwupd.service packagekit.service
+
+Service restarts being deferred:
+ /etc/needrestart/restart.d/dbus.service
+ systemctl restart networkd-dispatcher.service
+ systemctl restart systemd-logind.service
+ systemctl restart unattended-upgrades.service
+
+No containers need to be restarted.
+
+No user sessions are running outdated binaries.
+
+No VM guests are running outdated hypervisor (qemu) binaries on this host.
+Reading package lists...
+Building dependency tree...
+Reading state information...
+ufw is already the newest version (0.36.2-9build1).
+ufw set to manually installed.
+unattended-upgrades is already the newest version (2.12ubuntu9).
+unattended-upgrades set to manually installed.
+netcat-openbsd is already the newest version (1.234-1).
+netcat-openbsd set to manually installed.
+bind9-dnsutils is already the newest version (1:9.20.24-1ubuntu0.4).
+bind9-dnsutils set to manually installed.
+Solving dependencies...
+The following additional packages will be installed:
+  python3-pyasyncore python3-pyinotify whois
+Suggested packages:
+  mailx monit sqlite3 python-pyinotify-doc
+The following NEW packages will be installed:
+  fail2ban python3-pyasyncore python3-pyinotify whois
+0 upgraded, 4 newly installed, 0 to remove and 11 not upgraded.
+Need to get 510 kB of archives.
+After this operation, 2620 kB of additional disk space will be used.
+Get:1 http://archive.ubuntu.com/ubuntu resolute/universe amd64 fail2ban all 1.1.0-9 [421 kB]
+Get:2 http://archive.ubuntu.com/ubuntu resolute/main amd64 python3-pyasyncore all 1.0.2-3build1 [10.4 kB]
+Get:3 http://archive.ubuntu.com/ubuntu resolute/main amd64 python3-pyinotify all 0.9.6-5build1 [25.5 kB]
+Get:4 http://archive.ubuntu.com/ubuntu resolute/main amd64 whois amd64 5.6.6 [52.5 kB]
+Fetched 510 kB in 1s (823 kB/s)
+Selecting previously unselected package fail2ban.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 98011 files and directories currently installed.)
+Preparing to unpack .../fail2ban_1.1.0-9_all.deb ...
+Unpacking fail2ban (1.1.0-9) ...
+Selecting previously unselected package python3-pyasyncore.
+Preparing to unpack .../python3-pyasyncore_1.0.2-3build1_all.deb ...
+Unpacking python3-pyasyncore (1.0.2-3build1) ...
+Selecting previously unselected package python3-pyinotify.
+Preparing to unpack .../python3-pyinotify_0.9.6-5build1_all.deb ...
+Unpacking python3-pyinotify (0.9.6-5build1) ...
+Selecting previously unselected package whois.
+Preparing to unpack .../archives/whois_5.6.6_amd64.deb ...
+Unpacking whois (5.6.6) ...
+Setting up whois (5.6.6) ...
+Setting up fail2ban (1.1.0-9) ...
+Created symlink '/etc/systemd/system/multi-user.target.wants/fail2ban.service' → '/usr/lib/systemd/system/fail2ban.service'.
+Setting up python3-pyasyncore (1.0.2-3build1) ...
+Setting up python3-pyinotify (0.9.6-5build1) ...
+Processing triggers for man-db (2.13.1-1build1) ...
+
+Running kernel seems to be up-to-date.
+
+Restarting services...
+
+Service restarts being deferred:
+ /etc/needrestart/restart.d/dbus.service
+ systemctl restart networkd-dispatcher.service
+ systemctl restart systemd-logind.service
+ systemctl restart unattended-upgrades.service
+
+No containers need to be restarted.
+
+No user sessions are running outdated binaries.
+
+No VM guests are running outdated hypervisor (qemu) binaries on this host.
+APT_DONE

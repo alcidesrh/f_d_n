@@ -1,0 +1,92 @@
+/* ============================= APP SHELL ============================= */
+/* Un solo scroll de página: `.main` (el body no scrollea; ver main.css).
+   `dvh`: en móvil la altura sigue a la barra del navegador. */
+#app {
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* El header es `fixed` (fuera del flujo): sin un contexto propio, el
+   `margin-top` de `.body-row` colapsa hasta `#app` y el documento mide
+   100dvh + header (enfocar un campo desplazaba todo el shell). */
+.shell {
+  display: flow-root;
+}
+
+/* ---- BODY ROW ---- */
+.body-row {
+  display: flex;
+  flex: 1;
+  margin-top: var(--header-h);
+  height: calc(100vh - var(--header-h));
+  height: calc(100dvh - var(--header-h));
+  position: relative;
+  /* Mientras un sidebar se mueve, `.main` va desplazado con `transform`
+     (`sidebarMotion.ts`): lo que sobresale se recorta sin crear scroll. */
+  overflow-x: clip;
+}
+
+/* ---- MAIN CONTENT ----
+   Contenedor de consultas `main`: los componentes se adaptan a su ancho
+   (`@container`, clases `@md:`…), que ya descuenta los sidebars. */
+.main {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  /*background: var(--p-content-background);*/
+  background: var(--bg2);
+  container-type: inline-size;
+  container-name: main;
+  /* Desde `lg` los sidebars fijos empujan el contenido; debajo son drawers. */
+  @variant lg {
+    margin-left: var(--sb-left-w);
+    margin-right: var(--sb-right-w);
+  }
+}
+
+/* Sin barra derecha (ni menús del usuario en ella ni panel de la ruta): sin su margen. */
+.shell--sin-derecha .main {
+  @variant lg {
+    margin-right: 0;
+  }
+}
+
+.main-inner {
+  padding: calc(var(--page-gutter) / 2);
+  padding-top: 1rem;
+  padding-bottom: max(calc(var(--page-gutter) / 2), 1.5rem);
+  /*max-width: var(--content-max);*/
+  /*margin: 0 auto;*/
+}
+.page-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  /* margin-bottom: 22px; */
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  min-width: 0;
+}
+.page-title {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.2rem;
+  color: var(--p-surface-700);
+  font-weight: 600;
+  display: flex;
+  flex-wrap: wrap;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-transform: capitalize;
+
+  gap: 0.5rem;
+  & > :nth-child(1) {
+    font-weight: 500;
+    color: var(--p-surface-500);
+  }
+}
+.page-sub {
+  color: var(--text-muted);
+  font-size: 13.5px;
+  margin-top: 3px;
+}

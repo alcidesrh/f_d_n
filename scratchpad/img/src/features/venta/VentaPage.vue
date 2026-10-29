@@ -1,0 +1,896 @@
+<!--
+  Venta de boletos en taquilla y agencias (ADR-021).
+
+  1. Cliente (buscar o registrar).  2. Fecha, "sube en" y "baja en" →
+  salidas (cada una con el tramo que hace el cliente).  3. Salida → croquis
+  con la ocupación en vivo de ese tramo (otros vendedores y la página web).  4. Asientos → "Facturar" (o
+  "Cortesía"): cobro, certificación de la factura y ticket.
+
+  Móvil: todo en una columna, el croquis después del viaje (al elegir una
+  salida se baja hasta él) y con menos aire vertical. Desde que el contenido
+  mide 48rem (container query), croquis fijo a la derecha.
+-->
+<template>
+  <div class="venta flex flex-col gap-2 md:gap-4">
+    <Message v-if="store.errorCarga" severity="error" :closable="false">
+      {{ store.errorCarga }}
+      <Button label="Reintentar" size="small" text @click="store.iniciar()" />
+    </Message>
+
+    <div class="@container">
+      <div
+        ref="grilla"
+        class="grid grid-cols-1 items-start gap-2 md:gap-4 @3xl:grid-cols-[minmax(0,1fr)_20rem]"
+      >
+        <!-- Columna principal -->
+        <div class="flex min-w-0 flex-col gap-1">
+          <section v-if="store.reasignacion" class="panel flex flex-col gap-3 reasignacion">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="font-semibold">
+                Reasignar
+                {{
+                  store.reasignacion.boletos.length === 1
+                    ? 'un boleto'
+                    : `${store.reasignacion.boletos.length} boletos`
+                }}
+              </div>
+              <Button
+                label="Cancelar reasignación"
+                severity="secondary"
+                size="small"
+                outlined
+                @click="store.cancelarReasignacion()"
+              />
+            </div>
+            <!-- <p class="m-0 text-sm text-muted-color">Elija la salida y el asiento nuevo de cada boleto, con el mismo precio. No se cobra ni se factura: el boleto original queda reasignado y su asiento libre.</p> -->
+            <ul class="m-0 flex list-none flex-col gap-1.5 p-0">
+              <li
+                v-for="p in store.parejas"
+                :key="p.boleto.id"
+                class="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3"
+              >
+                <span class="min-w-0">
+                  <!-- · {{ p.boleto.pasajero ?? "sin pasajero" }} -->
+                  <span class="block truncate text-muted-color"
+                    >{{ fechaHoraCorta(p.boleto.salida.fecha) }} ·
+                    {{ p.boleto.precio?.texto }}</span
+                  >
+                  <b>Asiento #{{ p.boleto.asiento.numero }}</b>
+                </span>
+                <span
+                  class="whitespace-nowrap tabular-nums"
+                  :class="{ 'text-green-700': p.igual === true, 'text-red-600': p.igual === false }"
+                >
+                  <template v-if="p.asiento !== null"
+                    >→ asiento {{ numeroDe(p.asiento) }} · {{ p.precio?.texto ?? '…' }}</template
+                  >
+                  <template v-else
+                    ><span class="text-muted-color">→ elija el asiento</span></template
+                  >
+                </span>
+              </li>
+            </ul>
+            <Message
+              v-if="store.parejas.some((p) => p.igual === false)"
+              severity="warn"
+              :closable="false"
+              >El precio del asiento elegido no coincide con el del boleto. Cambie de asiento, el
+              tramo o marque «cobrar el trayecto completo» si así se vendió.</Message
+            >
+          </section>
+
+          <section class="panel flex flex-col">
+            <div class="grid grid-cols-2 items-start gap-x-2 gap-y-1.5 md:gap-3 @xl:grid-cols-3">
+              <div class="campo col-span-2 @xl:col-span-1">
+                <span class="text-sm font-medium">{{
+                  store.porRango ? 'Rango de salida' : 'Fecha de salida'
+                }}</span>
+                <DatePicker
+                  size="small"
+                  v-if="!store.porRango"
+                  v-model="store.fecha"
+                  date-format="dd/mm/yy"
+                  show-icon
+                  fluid
+                  @update:model-value="store.cargarSalidas()"
+                />
+                <DatePicker
+                  size="small"
+                  v-else
+                  ref="selectorRango"
+                  v-model="borrador"
+                  selection-mode="range"
+                  :manual-input="false"
+                  date-format="dd/mm/yy"
+                  show-time
+                  hour-format="24"
+                  show-icon
+                  fluid
+                  placeholder="Desde – Hasta"
+                >
+                  <template #footer>
+                    <Button
+                      label="Aplicar"
+                      size="small"
+                      fluid
+                      :disabled="!borrador?.[0]"
+                      @click="aplicarRango"
+                    />
+                  </template>
+                </DatePicker>
+                <label
+                  class="flex cursor-pointer items-center gap-1 text-[0.65rem] leading-none text-muted-color absolute right-0 -mb-1 blottom-0"
+                >
+                  <ToggleSwitch
+                    v-model="store.porRango"
+                    class="scale-[0.8] origin-left -mr-3"
+                    @update:model-value="alCambiarModo"
+                  />
+                  Rango
+                </label>
+              </div>
+              <label class="campo col-span-1">
+                <span class="text-sm font-medium">Sube en</span>
+                <estacion-select
+                  size="small"
+                  v-model="store.estacionId"
+                  :estaciones="store.contexto?.estaciones ?? []"
+                  :propio="store.contexto?.estacion?.departamento"
+                  placeholder="Todas"
+                  @update:model-value="store.cambiarFiltroEstacion()"
+                />
+              </label>
+              <label class="campo col-span-1">
+                <span class="text-sm font-medium">Baja en</span>
+                <estacion-select
+                  size="small"
+                  v-model="store.destinoId"
+                  :estaciones="store.contexto?.estaciones ?? []"
+                  show-clear
+                  placeholder="Todas"
+                  @update:model-value="store.cambiarFiltroEstacion()"
+                />
+              </label>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-start gap-2 my-3">
+              <button
+                v-for="e in store.empresas.length > 1 ? store.empresas : []"
+                :key="e.id"
+                type="button"
+                class="rounded-full border px-2.5 py-1 text-xs font-semibold"
+                :class="
+                  store.empresaIds.includes(e.id)
+                    ? 'border-primary bg-primary text-primary-contrast'
+                    : 'border-surface-300 bg-transparent text-color'
+                "
+                :aria-pressed="store.empresaIds.includes(e.id)"
+                @click="alternarEmpresa(e.id)"
+              >
+                {{ e.nombre }}
+              </button>
+              <!-- Presentación de las salidas: lista o calendario. -->
+              <div class="vista ml-auto" role="group" aria-label="Presentación de las salidas">
+                <button
+                  v-for="v in VISTAS"
+                  :key="v.valor"
+                  type="button"
+                  class="vista__boton"
+                  :class="{ 'vista__boton--activa': vista === v.valor }"
+                  :aria-pressed="vista === v.valor"
+                  :title="v.titulo"
+                  @click="vista = v.valor"
+                >
+                  <icon :name="v.icono" size="1.1rem" />
+                  <span class="hidden @md:inline">{{ v.etiqueta }}</span>
+                </button>
+              </div>
+            </div>
+            <SalidasCalendario v-if="vista === 'dias'" @elegir="elegirSalida" @mover="moverDia" />
+            <div v-else class="relative">
+              <SalidasLista
+                :salidas="salidasMostradas"
+                :cargando="store.cargandoSalidas"
+                :salida-id="store.salidaId"
+                @elegir="elegirSalida"
+              />
+              <!-- Flota en el borde entre la cabecera de la tabla y las salidas. -->
+              <Button
+                v-if="anteriores.length && !store.porRango"
+                :label="
+                  verAnteriores ? 'Ocultar anteriores' : `Ver anteriores (${anteriores.length})`
+                "
+                size="small"
+                rounded
+                severity="secondary"
+                class="anteriores shadow-md hover:bg-surface-50!"
+                @click="verAnteriores = !verAnteriores"
+              />
+            </div>
+            <div v-if="!store.porRango" class="flex items-center justify-between gap-2 mt-2">
+              <Button
+                :label="etiquetaDia(-1)"
+                severity="secondary"
+                variant="outlined"
+                size="small"
+                class="dia-anterior"
+                :disabled="store.cargandoSalidas"
+                @click="moverDia(-1)"
+              >
+                <template #icon><icon name="chevron-left" class="mr-1" /></template>
+              </Button>
+              <Button
+                :label="etiquetaDia(1)"
+                size="small"
+                icon-pos="right"
+                class="dia-siguiente"
+                :disabled="store.cargandoSalidas"
+                @click="moverDia(1)"
+              >
+                <template #icon><icon name="chevron-right" class="ml-1" /></template>
+              </Button>
+            </div>
+          </section>
+          <section class="panel flex flex-col gap-2 max-w-[50%]">
+            <label class="font-medium" for="venta-cliente">{{
+              store.reasignacion ? 'Cliente de la venta' : 'Cliente (facturar a)'
+            }}</label>
+            <div v-if="store.reasignacion">
+              {{ store.cliente?.nombreCompleto ?? '—'
+              }}<span v-if="store.cliente" class="text-muted-color">
+                · NIT {{ store.cliente.nit }}</span
+              >
+            </div>
+            <ClienteBuscador v-else v-model="store.cliente" input-id="venta-cliente" />
+          </section>
+          <section v-if="store.detalle && store.puedeCobrarCompleto" class="panel flex flex-col gap-3">
+            <label v-if="store.puedeCobrarCompleto" class="flex items-center gap-2 text-sm">
+              <Checkbox
+                v-model="store.cobrarTrayectoCompleto"
+                binary
+                input-id="venta-completo"
+                @update:model-value="store.recotizar()"
+              />
+              <span>
+                Cobrar la tarifa del trayecto completo ({{ store.detalle.ruta.origen.nombre }} →
+                {{ store.detalle.ruta.destino.nombre }})
+              </span>
+            </label>
+          </section>
+
+          <section
+            v-if="store.seleccion.length && !store.reasignacion"
+            class="panel flex flex-col gap-2"
+          >
+            <div class="font-medium">Pasajeros</div>
+            <ul class="flex flex-col gap-2">
+              <li
+                v-for="(linea, i) in lineas"
+                :key="linea.asiento"
+                class="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-2 @xl:grid-cols-[3rem_minmax(0,1fr)_6rem]"
+              >
+                <span class="font-mono text-lg font-semibold">{{ linea.numero }}</span>
+                <ClienteBuscador
+                  compacto
+                  :model-value="store.pasajeros[linea.asiento] ?? (i === 0 ? store.cliente : null)"
+                  :placeholder="
+                    i === 0
+                      ? `Viaja: ${store.cliente?.nombreCompleto ?? 'el cliente'}`
+                      : 'Viaja: nombre del cliente o puede elegir otro cliente'
+                  "
+                  @update:model-value="store.pasajeros[linea.asiento] = $event"
+                />
+                <span class="col-start-2 text-right tabular-nums @xl:col-start-auto">{{
+                  linea.precio
+                }}</span>
+              </li>
+            </ul>
+          </section>
+          <section v-if="store.detalle && conObservacion" class="panel">
+            <label class="flex flex-col gap-1">
+              <span class="font-medium">Observación</span>
+              <InputText
+                v-model="store.observacion"
+                maxlength="255"
+                placeholder="P. ej. viaja con mascota, se baja en un punto intermedio…"
+                fluid
+              />
+            </label>
+          </section>
+          <section
+            v-if="
+              store.seleccion.length &&
+              !store.reasignacion &&
+              store.contexto?.encomiendas?.permitido
+            "
+            class="panel flex flex-col gap-2"
+            aria-labelledby="venta-encomienda"
+          >
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span id="venta-encomienda" class="font-medium"
+                >Encomienda
+                <span class="font-normal text-muted-color"
+                  >(en la bodega, de {{ nombreParada(store.sube) }} a
+                  {{ nombreParada(store.baja) }})</span
+                ></span
+              >
+              <span
+                v-if="store.cotizacionEncomienda && store.encomiendaArticulos.length"
+                class="tabular-nums"
+                >{{ store.cotizacionEncomienda.total.texto }}</span
+              >
+            </div>
+            <ArticulosEditor
+              v-model="store.encomiendaArticulos"
+              :especiales="store.contexto.encomiendas.especiales"
+              :cotizacion="store.cotizacionEncomienda"
+            />
+            <InputText
+              v-if="store.encomiendaArticulos.length"
+              v-model="store.encomiendaObservacion"
+              maxlength="255"
+              placeholder="Observación de la encomienda (frágil, contenido…)"
+              size="small"
+              fluid
+            />
+            <Message v-if="store.errorEncomienda" severity="warn" :closable="false">{{
+              store.errorEncomienda
+            }}</Message>
+          </section>
+        </div>
+
+        <!-- Croquis + cobro -->
+        <aside
+          ref="croquis"
+          class="panel flex min-w-0 flex-1 scroll-mt-20 flex-col gap-3 @3xl:sticky @3xl:top-4"
+        >
+          <Transition name="croquis" mode="out-in" @enter="alMostrarCroquis">
+            <!-- <div v-if="store.cargandoDetalle" key="cargando">
+              <Skeleton height="20rem" />
+            </div> -->
+            <div
+              v-if="store.detalle || store.cargandoDetalle"
+              :key="`salida-${store.salidaId}`"
+              class="flex flex-col gap-5 tex-sm"
+            >
+              <div class="flex items-start justify-center gap-3 overflow-x-auto">
+                <BusMap
+                  :elementos="store.detalle?.croquis ?? []"
+                  :estado="store.estadoAsiento"
+                  interactivo
+                  inspeccionable
+                  tamano="md"
+                  class="justify-center"
+                  @asiento="(a) => a.id != null && store.alternarAsiento(a.id)"
+                  @ocupado="verOcupado"
+                />
+                <AsientoOcupadoPopover
+                  ref="detalleAsiento"
+                  @anular="(b) => (anular = [b.id])"
+                  @reasignar="(b) => void store.iniciarReasignacion([b.id])"
+                />
+                <BusMapLegend :items="leyenda" :conteos="conteos" vertical />
+              </div>
+              <Divider align="center" class="my-0! before:border-surface-400!" type="dashed">
+                <span class="text-xs font-bold text-surface-500"
+                  >{{ store.ocupados.length }} / {{ store.asientosCroquis.length }}</span
+                >
+              </Divider>
+              <div class="flex items-center justify-between gap-3">
+                <span
+                  class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold tabular-nums"
+                  :class="
+                    store.seleccion.length
+                      ? 'bg-primary text-primary-contrast'
+                      : 'bg-surface-200 text-muted-color'
+                  "
+                  aria-live="polite"
+                >
+                  <span class="text-base leading-none">{{ store.seleccion.length }}</span>
+                  {{ store.seleccion.length === 1 ? 'asiento' : 'asientos' }}
+                </span>
+                <div class="flex items-baseline gap-2">
+                  <span class="text-muted-color">Total</span>
+                  <span class="text-xl font-semibold tabular-nums">{{
+                    store.total?.texto ?? '—'
+                  }}</span>
+                </div>
+              </div>
+              <Message v-if="store.errorCotizacion" severity="warn" :closable="false">
+                {{ store.errorCotizacion }}
+              </Message>
+              <Message
+                v-if="!store.cliente && store.seleccion.length"
+                severity="info"
+                :closable="false"
+              >
+                Elija el cliente para facturar.
+              </Message>
+              <div v-if="store.reasignacion" class="flex flex-wrap justify-end gap-2">
+                <Button
+                  label="Reasignar"
+                  :loading="store.vendiendo"
+                  :disabled="!store.puedeReasignar"
+                  @click="confirmarReasignacion"
+                />
+              </div>
+              <div v-else class="flex flex-wrap justify-end gap-2">
+                <!-- Sin el permiso, en taquilla también: la venta pide una autorización (ADR-040). -->
+                <Button
+                  v-if="store.contexto?.permisos.cortesia || store.contexto?.canal === 'estacion'"
+                  label="Cortesía"
+                  severity="secondary"
+                  outlined
+                  :disabled="!store.puedeVender || store.encomiendaArticulos.length > 0"
+                  v-tooltip.top="
+                    store.encomiendaArticulos.length
+                      ? 'Una cortesía no lleva encomienda'
+                      : !store.contexto?.permisos.cortesia
+                        ? 'Requiere una autorización'
+                        : undefined
+                  "
+                  @click="abrirCobro(true)"
+                >
+                  <template v-if="!store.contexto?.permisos.cortesia" #icon
+                    ><icon name="lock-outline" class="mr-1"
+                  /></template>
+                </Button>
+                <Button
+                  :label="store.contexto?.canal === 'agencia' ? 'Vender' : 'Facturar'"
+                  :disabled="!store.puedeVender || !store.cotizacion"
+                  @click="abrirCobro(false)"
+                />
+              </div>
+            </div>
+            <div v-else key="vacio" class="relative flex flex-col gap-5 tex-sm">
+              <div class="flex items-start justify-center gap-3">
+                <CroquisPlaceholder />
+                <BusMapLegend :items="leyenda" vertical class="opacity-40" />
+              </div>
+              <div class="absolute inset-0 grid place-items-center p-4">
+                <p
+                  class="m-0 flex items-center gap-2 rounded-full bg-surface-0 px-4 py-2 text-center text-sm text-muted-color shadow-md"
+                >
+                  <icon name="directions-bus-outline" />
+                  Elija una salida para ver sus asientos.
+                </p>
+              </div>
+            </div>
+          </Transition>
+        </aside>
+      </div>
+    </div>
+
+    <CobroDialog v-model:visible="cobro" :cortesia="cortesia" @confirmar="confirmar" />
+    <FacturacionFallidaDialog
+      :fallo="store.falloFacturacion"
+      :ocupado="store.vendiendo"
+      @cancelar="store.cancelarVenta()"
+      @reintentar="reintentar"
+    />
+    <VentaExitosaDialog
+      :comprobante="store.comprobante"
+      :reasignacion="store.comprobanteReasignado"
+      @cerrar="store.nuevaVenta()"
+    />
+    <AnularBoletosDialog
+      :visible="anular.length > 0"
+      :ids="anular"
+      @update:visible="(v) => !v && (anular = [])"
+      @listo="alAnular"
+    />
+  </div>
+</template>
+
+<script setup lang="ts">
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import BusMap from '@/shared/bus-map/BusMap.vue'
+import CroquisPlaceholder from '@/shared/bus-map/CroquisPlaceholder.vue'
+import type { AsientoCroquis } from '@/core/croquis/types'
+import AsientoOcupadoPopover from '@/shared/bus-map/AsientoOcupadoPopover.vue'
+import AnularBoletosDialog from '@/shared/boleto/AnularBoletosDialog.vue'
+import BusMapLegend, { type ItemLeyenda } from '@/shared/bus-map/BusMapLegend.vue'
+import { conteosPorEstado } from '@/core/venta/modelo'
+import type { SalidaResumen } from '@/core/venta/types'
+import ClienteBuscador from '@/shared/cliente/ClienteBuscador.vue'
+import CobroDialog from './CobroDialog.vue'
+import FacturacionFallidaDialog from '@/shared/facturacion/FacturacionFallidaDialog.vue'
+import SalidasLista from './SalidasLista.vue'
+import SalidasCalendario from './SalidasCalendario.vue'
+import { claveDeUsuario } from '@/core/auth/alcanceSesion'
+import VentaExitosaDialog from './VentaExitosaDialog.vue'
+import { type OpcionesCobro, useVentaStore } from './store'
+import { imprimirTicket } from '@/shared/boleto/ticket'
+import ArticulosEditor from '@/shared/encomienda/ArticulosEditor.vue'
+import { imprimirGuias } from '@/shared/encomienda/impresion'
+import type { Comprobante } from '@/core/venta/types'
+import { useConfirm } from 'primevue/useconfirm'
+import { notify } from '@/core/notify'
+
+const store = useVentaStore()
+const route = useRoute()
+const router = useRouter()
+const confirm = useConfirm()
+/** Boletos que se están anulando (desde el detalle del asiento). */
+const anular = ref<number[]>([])
+const detalleAsiento = ref<InstanceType<typeof AsientoOcupadoPopover> | null>(null)
+const verOcupado = (a: AsientoCroquis, e: MouseEvent) => {
+  if (store.salidaId && a.id != null) void detalleAsiento.value?.abrir(e, store.salidaId, a.id)
+}
+const cobro = ref(false)
+const cortesia = ref(false)
+let ultimasOpciones: OpcionesCobro | null = null
+
+/** Columnas de la página y croquis: si están apiladas (móvil), al elegir una salida se baja hasta el croquis. */
+const grilla = ref<HTMLElement | null>(null)
+const croquis = ref<HTMLElement | null>(null)
+const apilado = () =>
+  !!grilla.value &&
+  getComputedStyle(grilla.value).gridTemplateColumns.trim().split(/\s+/).length === 1
+let bajarAlCroquis = false
+function elegirSalida(id: number) {
+  bajarAlCroquis = apilado()
+  void store.elegirSalida(id)
+}
+/**
+ * Se baja cuando entra el croquis de la salida (no al terminar de cargar): con
+ * `out-in` el skeleton ya salió, el detalle del viaje ya está encima y la
+ * página tiene su alto final.
+ */
+function alMostrarCroquis() {
+  if (!bajarAlCroquis || !store.detalle) return
+  bajarAlCroquis = false
+  const suave = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  void nextTick(() =>
+    croquis.value?.scrollIntoView({ behavior: suave ? 'smooth' : 'auto', block: 'start' }),
+  )
+}
+
+/** Lista de la estación o calendario (por hora; con rango, un día por columna); se recuerda por usuario en este navegador. */
+type Vista = 'lista' | 'dias'
+const VISTAS: { valor: Vista; icono: string; etiqueta: string; titulo: string }[] = [
+  {
+    valor: 'lista',
+    icono: 'view-list-outline',
+    etiqueta: 'Lista',
+    titulo: 'Salidas del día en lista',
+  },
+  {
+    valor: 'dias',
+    icono: 'view-week-outline',
+    etiqueta: 'Calendario',
+    titulo: 'Salidas por hora; con rango, un día por columna',
+  },
+]
+const PREFERENCIA_VISTA = 'venta.vista-salidas'
+function leerVista(): Vista {
+  try {
+    return localStorage.getItem(claveDeUsuario(PREFERENCIA_VISTA)) === 'dias' ? 'dias' : 'lista'
+  } catch {
+    return 'lista'
+  }
+}
+const vista = ref<Vista>(leerVista())
+watch(vista, (v) => {
+  try {
+    localStorage.setItem(claveDeUsuario(PREFERENCIA_VISTA), v)
+  } catch {
+    // Sin almacenamiento: solo dura la visita.
+  }
+})
+
+function alternarEmpresa(id: number) {
+  store.empresaIds = store.empresaIds.includes(id)
+    ? store.empresaIds.filter((x) => x !== id)
+    : [...store.empresaIds, id]
+}
+
+/** Hoy solo se ven las salidas que aún no han salido; cualquier otro día (o un rango), todas. */
+const ahora = ref(Date.now())
+const reloj = window.setInterval(() => (ahora.value = Date.now()), 60_000)
+onBeforeUnmount(() => window.clearInterval(reloj))
+const verAnteriores = ref(false)
+/** La observación es de la venta: se pide cuando ya hay cliente (y no al reasignar). */
+const conObservacion = computed(() => !store.reasignacion && !!store.cliente)
+const esHoy = computed(
+  () => !store.porRango && store.fecha.toDateString() === new Date(ahora.value).toDateString(),
+)
+const horaInicio = (r: SalidaResumen) =>
+  new Date(r.viaje?.sube.hora ?? r.salidaEstacion ?? r.salida).getTime()
+const anteriores = computed(() =>
+  esHoy.value ? store.salidasVisibles.filter((r) => horaInicio(r) < ahora.value) : [],
+)
+const salidasMostradas = computed(() =>
+  esHoy.value && !verAnteriores.value
+    ? store.salidasVisibles.filter((r) => horaInicio(r) >= ahora.value)
+    : store.salidasVisibles,
+)
+watch(
+  () => store.fecha.toDateString(),
+  () => (verAnteriores.value = false),
+)
+
+/** Los recomendados no tienen renglón en la leyenda: cuentan como disponibles. */
+const conteos = computed(() => {
+  const n = conteosPorEstado(store.detalle?.croquis ?? [], store.estadoAsiento)
+  const recomendados = Object.entries(n).reduce(
+    (total, [estado, k]) => (estado.startsWith('recomendado-') ? total + (k ?? 0) : total),
+    0,
+  )
+  return { ...n, disponible: (n.disponible ?? 0) + recomendados }
+})
+
+/** Rango de fecha y hora: se elige en el selector y solo se busca al pulsar "Aplicar". */
+const borrador = ref<(Date | null)[] | null>(null)
+const selectorRango = ref<{ overlayVisible: boolean } | null>(null)
+function alCambiarModo(activo: boolean) {
+  if (activo) borrador.value = [store.desde, store.hasta]
+  void store.cargarSalidas()
+}
+function aplicarRango() {
+  const [d, h] = borrador.value ?? []
+  if (!d) return
+  // Sin fin, o con el fin a 00:00 sin hora elegida, el último día entra completo.
+  let fin = h ?? d
+  if (fin.getHours() === 0 && fin.getMinutes() === 0)
+    fin = new Date(fin.getFullYear(), fin.getMonth(), fin.getDate(), 23, 59)
+  const [desde, hasta] = fin < d ? [fin, d] : [d, fin]
+  store.desde = desde
+  store.hasta = hasta
+  borrador.value = [desde, hasta]
+  if (selectorRango.value) selectorRango.value.overlayVisible = false
+  void store.cargarSalidas()
+}
+
+/** Paginado por día: mueve la fecha y recarga las salidas. */
+function moverDia(delta: number) {
+  const d = new Date(store.fecha)
+  d.setDate(d.getDate() + delta)
+  store.fecha = d
+  void store.cargarSalidas()
+}
+/** "Ayer"/"Mañana" respecto de hoy; si ya se navegó, el día de la semana y la fecha. */
+function etiquetaDia(delta: number) {
+  const d = new Date(store.fecha)
+  d.setDate(d.getDate() + delta)
+  const dif = Math.round(
+    (new Date(d.toDateString()).getTime() - new Date(new Date().toDateString()).getTime()) /
+      86_400_000,
+  )
+  if (dif === -1) return 'Ayer'
+  if (dif === 0) return 'Hoy'
+  if (dif === 1) return 'Mañana'
+  return new Intl.DateTimeFormat('es-GT', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  }).format(d)
+}
+/** Sin los recomendados: en el croquis parpadean entre libre y el estado de su vecino, sin renglón propio. */
+const leyenda: ItemLeyenda[] = [
+  'disponible',
+  'ocupado',
+  'ocupado-web',
+  'ocupado-agencia',
+  'reservado',
+  'cortesia',
+  'voucher',
+]
+
+const lineas = computed(() => {
+  const precios = new Map(store.cotizacion?.asientos.map((a) => [a.asiento, a.precio.texto]))
+  const numeros = new Map(
+    store.asientosCroquis.map((a) => [a.id, a.tipo === 'asiento' ? a.numero : 0]),
+  )
+  return store.seleccion
+    .map((asiento) => ({
+      asiento,
+      numero: numeros.get(asiento) ?? 0,
+      precio: precios.get(asiento) ?? '—',
+    }))
+    .sort((a, b) => a.numero - b.numero)
+})
+
+onMounted(async () => {
+  // Llegó desde una salida del calendario: su día y la salida elegida.
+  const fechaPedida = String(route.query.fecha ?? '')
+  const salidaPedida = Number(route.query.salida ?? 0)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(fechaPedida)) {
+    const [y, m, d] = fechaPedida.split('-').map(Number)
+    store.fecha = new Date(y!, m! - 1, d!)
+  }
+  if (!store.contexto) await store.iniciar()
+  if (Number.isInteger(salidaPedida) && salidaPedida > 0) {
+    // Sin el filtro de taquilla ni de empresa, la salida aparece en la lista aunque no pase por esta estación.
+    store.estacionId = null
+    store.destinoId = null
+    store.empresaIds = []
+    await store.cargarSalidas()
+    await router.replace({ query: { ...route.query, salida: undefined, fecha: undefined } })
+    await store.elegirSalida(salidaPedida)
+  } else if (fechaPedida) await store.cargarSalidas()
+  // Llegó desde un listado de boletos con «Reasignar».
+  const ids = String(route.query.reasignar ?? '')
+    .split(',')
+    .map(Number)
+    .filter((id) => Number.isInteger(id) && id > 0)
+  if (ids.length) {
+    await router.replace({ query: { ...route.query, reasignar: undefined } })
+    await store.iniciarReasignacion(ids)
+  }
+})
+
+const numeroDe = (asiento: number) =>
+  store.asientosCroquis.find((a) => a.id === asiento)?.numero ?? asiento
+const fechaHoraCorta = (iso: string) =>
+  new Intl.DateTimeFormat('es-GT', {
+    day: 'numeric',
+    month: 'short',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(new Date(iso))
+
+/** Se anuló algo desde el detalle del asiento: el croquis y las salidas se vuelven a leer. */
+function alAnular() {
+  void store.cargarSalidas()
+  if (store.salidaId)
+    void store.elegirSalida(store.salidaId).then(() => notify.success('Croquis actualizado'))
+}
+
+function confirmarReasignacion() {
+  const n = store.reasignacion?.boletos.length ?? 0
+  confirm.require({
+    header: 'Confirmar reasignación',
+    message: `¿Reasignar ${n === 1 ? 'el boleto' : `los ${n} boletos`} a la salida elegida? El boleto original quedará reasignado y su asiento libre.`,
+    acceptProps: { label: 'Reasignar' },
+    rejectProps: { label: 'Cancelar', severity: 'secondary' },
+    accept: async () => {
+      const c = await store.reasignar()
+      if (c) void imprimirTicket(c)
+    },
+  })
+}
+
+function abrirCobro(esCortesia: boolean) {
+  cortesia.value = esCortesia
+  cobro.value = true
+}
+
+async function confirmar(opciones: OpcionesCobro) {
+  ultimasOpciones = opciones
+  const c = await store.vender(opciones)
+  cobro.value = false
+  if (c) void imprimir(c)
+}
+
+async function reintentar(sinFactura: boolean) {
+  if (!ultimasOpciones) return
+  const c = await store.vender({ ...ultimasOpciones, sinFacturaElectronica: sinFactura })
+  if (c) void imprimir(c)
+}
+
+/** El ticket y, si lleva encomiendas, una guía por bulto para pegar en cada uno. */
+async function imprimir(c: Comprobante) {
+  await imprimirTicket(c)
+  for (const e of c.encomiendas ?? []) await imprimirGuias(e)
+}
+
+const nombreParada = (id: number | null) =>
+  store.detalle?.paradas.find((p) => p.id === id)?.nombre ?? '—'
+</script>
+
+<style scoped>
+.croquis-enter-active,
+.croquis-leave-active {
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+.croquis-enter-from,
+.croquis-leave-to {
+  opacity: 0;
+  transform: translateY(0.5rem);
+}
+@media (prefers-reduced-motion: reduce) {
+  .croquis-enter-active,
+  .croquis-leave-active {
+    transition: none;
+  }
+}
+.panel {
+  /*background: var(--p-content-background);*/
+  /*border: 1px solid var(--p-content-border-color);*/
+  /*border-radius: var(--p-content-border-radius, 0.75rem);*/
+  padding: 1rem;
+}
+.anteriores {
+  position: absolute;
+  left: 50%;
+  top: 0.55rem;
+  z-index: 3;
+  transform: translateX(-50%);
+  background: var(--p-surface-0) !important;
+  padding: 1px 10px;
+
+  & > :deep(span) {
+    font-weight: 700 !important;
+    font-size: 10px !important;
+  }
+}
+@media (width >= 48rem) {
+  /* Justo bajo la cabecera de la tabla. */
+  .anteriores {
+    top: 2.5rem;
+  }
+}
+/* Día anterior y siguiente: contorno apagado a la izquierda, relleno primario a la derecha. */
+.dia-anterior {
+  color: var(--p-text-muted-color);
+}
+.dia-siguiente {
+  font-weight: 600;
+}
+/* Selector de presentación: dos botones unidos, el activo en relieve. */
+.vista {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--p-surface-500) 6%, transparent);
+}
+.vista__boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.65rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--p-text-muted-color);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.vista__boton:hover {
+  color: var(--p-text-color);
+}
+.vista__boton:focus-visible {
+  outline: 2px solid var(--p-primary-color);
+  outline-offset: 1px;
+}
+.vista__boton--activa {
+  background: var(--p-content-background);
+  color: var(--p-text-color);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--p-surface-900) 18%, transparent);
+}
+.campo {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.25rem;
+  position: relative;
+}
+/* Móvil: menos aire vertical (paneles, etiquetas e inputs) sin achicar la letra. */
+@media (width < 48rem) {
+  .panel {
+    padding: 0.375rem 0;
+  }
+  .campo {
+    gap: 0.125rem;
+  }
+  .campo > span {
+    font-size: 0.8125rem;
+    line-height: 1.2;
+  }
+  .venta {
+    --p-inputtext-padding-y: 0.375rem;
+    --p-select-padding-y: 0.375rem;
+    --p-multiselect-padding-y: 0.25rem;
+    --p-autocomplete-padding-y: 0.375rem;
+  }
+}
+</style>

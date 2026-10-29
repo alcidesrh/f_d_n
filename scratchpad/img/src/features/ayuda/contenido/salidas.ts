@@ -1,0 +1,177 @@
+/** Salidas: el listado, programarlas, editarlas, el calendario, manifiestos y el seguimiento de buses. */
+import type { Guia } from '@/core/ayuda/tipos'
+import {
+  ANULAR_SALIDA,
+  BITACORA,
+  EDITAR_SALIDA,
+  ELIMINAR_SALIDA,
+  PROGRAMAR,
+  SALIDAS,
+} from './audiencias'
+
+export const guiasSalidas: Guia[] = [
+  {
+    id: 'listado-de-salidas',
+    tema: 'salidas',
+    titulo: 'Buscar y revisar salidas',
+    resumen: 'Las próximas primero, con filtros y las acciones de cada una.',
+    para: [SALIDAS],
+    antes:
+      'Era la pantalla «Salidas» del sistema anterior: el mismo criterio, con las acciones en la fila.',
+    pasos: [
+      'Abra «Salidas» en el menú. Aparecen primero las próximas.',
+      'Filtre por rango de fechas, ruta, bus, empresa o palabras del origen o el destino.',
+      'Pulse «Ver» en una fila para el detalle: boletos vendidos, horario de cada parada y ocupación.',
+      'Desde la fila: «Manifiestos», «Reportar por chat», «Ver croquis» y, si tiene el permiso, «Editar», «Anular», «Eliminar» y «Bitácora».',
+    ],
+    ojo: ['Desde «Otras vistas de salidas» pasa al calendario o al programador.'],
+    abrir: { etiqueta: 'Abrir Salidas', destino: { name: 'salidas' } },
+    pantallas: ['salidas'],
+    palabras: ['buscar salida', 'lista de viajes', 'proximas salidas', 'horario'],
+  },
+  {
+    id: 'programar-salidas',
+    tema: 'salidas',
+    titulo: 'Programar salidas',
+    resumen: 'Crea las salidas de un día o de varios, con su ruta, sus horas y su bus.',
+    para: [PROGRAMAR],
+    antes:
+      'En el sistema anterior, cada salida se creaba a mano o desde un itinerario de horas fijas.',
+    pasos: [
+      'Abra «Programar salidas» desde el listado o el calendario.',
+      'Si ya tiene una combinación guardada, elíjala como esquema. Si no, complete la ruta.',
+      'Elija las horas de salida. Cada hora tiene su distribución de asientos y su bus.',
+      'Elija los días (una fecha, un rango o cada cuántos días se repite).',
+      'Revise la vista previa: cada salida dice si será nueva, si ya existe, si choca con otra del mismo bus o si ya pasó.',
+      'Pulse «Programar salidas». Al terminar, verá lo creado con su número y lo omitido, con el motivo.',
+    ],
+    ojo: [
+      'Un choque por bus depende de cuánto dura la ruta con la clase de ese bus.',
+      'Guardar un esquema no crea salidas: solo guarda la combinación para reusarla.',
+      'Cambiar o borrar un esquema no toca las salidas ya creadas.',
+    ],
+    abrir: { etiqueta: 'Abrir Programar salidas', destino: { name: 'salidas-programar' } },
+    pantallas: ['salidas-programar'],
+    palabras: [
+      'crear salidas',
+      'nueva salida',
+      'esquema',
+      'horario',
+      'calendario de salidas',
+      'repetir',
+    ],
+  },
+  {
+    id: 'editar-salida',
+    tema: 'salidas',
+    titulo: 'Editar una salida',
+    resumen: 'Cambiar la fecha, la hora o el bus de una salida, y las que son iguales a ella.',
+    para: [EDITAR_SALIDA],
+    pasos: [
+      'En «Salidas», pulse «Editar» en la fila.',
+      'Cambie la fecha, la hora o el bus y pulse «Guardar cambios».',
+      'Revise el aviso: las salidas futuras iguales (misma ruta, bus, empresa y hora) cambian también, y las que no se pudieron cambiar aparecen en la lista de omitidas.',
+    ],
+    ojo: [
+      'Si la salida ya tiene boletos vendidos, solo puede cambiarle el bus por otro del mismo molde de asientos: los boletos pasan con su número.',
+      'El horario de cada parada se fija al crear o mover la salida; los boletos vendidos lo conservan aunque después cambie la ruta.',
+    ],
+    palabras: ['cambiar hora', 'cambiar bus', 'mover salida', 'corregir salida'],
+  },
+  {
+    id: 'anular-salida',
+    tema: 'salidas',
+    titulo: 'Anular una salida',
+    resumen: 'Cancela un viaje que no se hará. Solo las programadas.',
+    para: [ANULAR_SALIDA],
+    pasos: [
+      'En «Salidas», pulse «Anular» en la fila de la salida.',
+      'Escriba el motivo y confirme.',
+      'Si hay salidas iguales futuras, el aviso dice cuántas se anulan también.',
+    ],
+    ojo: [
+      'Solo se anula una salida que todavía no se abordó. Una salida en abordaje o iniciada ya no se puede anular.',
+      'Los boletos vendidos de una salida anulada hay que anularlos o reasignarlos (vea «Anular un boleto» y «Reasignar un boleto»).',
+    ],
+    palabras: ['cancelar viaje', 'suspender salida', 'no sale el bus'],
+  },
+  {
+    id: 'eliminar-salida',
+    tema: 'salidas',
+    titulo: 'Eliminar una salida',
+    resumen: 'Borra una salida creada por error. Para lo que no se hará, anúlela.',
+    para: [ELIMINAR_SALIDA],
+    pasos: ['En «Salidas», pulse «Eliminar» en la fila y confirme.'],
+    ojo: [
+      'Eliminar no se deshace. Para un viaje que no se hará, use «Anular»: deja registro en la bitácora.',
+    ],
+    palabras: ['borrar salida', 'quitar salida'],
+  },
+  {
+    id: 'calendario-de-salidas',
+    tema: 'salidas',
+    titulo: 'Ver las salidas en el calendario',
+    resumen: 'Días en columnas, horas en filas: la operación de una semana de un vistazo.',
+    para: [SALIDAS],
+    pasos: [
+      'Abra «Calendario» desde «Salidas» o desde el menú.',
+      'Los días van en columnas y las horas en filas. «Hoy» vuelve al día actual; las flechas cambian de día.',
+      'En cada cruce aparecen las salidas de esa hora con el color de su ruta y lo ocupado en asientos o en porciento.',
+      'Pulse una salida para ver su detalle, o «Ver croquis».',
+      'La leyenda resalta y filtra por ruta. La línea horizontal marca la hora actual.',
+    ],
+    ojo: [
+      'El calendario se actualiza solo cada minuto, así que un cambio hecho por otra persona aparece en un minuto como máximo.',
+    ],
+    abrir: { etiqueta: 'Abrir Calendario', destino: { name: 'salidas-calendario' } },
+    pantallas: ['salidas-calendario'],
+    palabras: ['semana', 'dia', 'hora', 'ocupacion', 'planificar'],
+  },
+  {
+    id: 'manifiestos',
+    tema: 'salidas',
+    titulo: 'Manifiestos de una salida',
+    resumen: 'El papel que va con el bus: el interno (de caja) y el del piloto.',
+    para: [SALIDAS],
+    pasos: [
+      'En «Salidas», pulse «Manifiestos» en la fila.',
+      'Elija «Manif. interno» (por lugar de emisión, con importes) o «Manif. piloto» (por asiento, con nacionalidad y firmas).',
+      'Se abre el PDF para imprimir o guardar.',
+    ],
+    ojo: [
+      'El manifiesto refleja los boletos vigentes al momento de imprimirlo. Imprímalo de nuevo si la salida cambió.',
+    ],
+    palabras: ['pdf', 'imprimir manifiesto', 'pasajeros', 'lista de pasajeros', 'piloto'],
+  },
+  {
+    id: 'seguimiento-de-buses',
+    tema: 'salidas',
+    titulo: 'Seguir los buses en recorrido',
+    resumen: 'Un mapa con los buses que ya salieron y dónde van.',
+    para: [SALIDAS],
+    pasos: [
+      'Abra «Seguimiento» en el menú.',
+      'Cada bus aparece en el mapa con su ruta, su próxima estación y su llegada estimada.',
+      'Pulse un bus para ver su detalle: piloto, velocidad y estado. «Actualizar ahora» consulta de nuevo.',
+    ],
+    ojo: [
+      'La posición es estimada por el horario y la distancia de la ruta. Un bus sin posición real aparece en la ubicación calculada.',
+      'Las estaciones sin coordenadas se ubican aproximadamente.',
+    ],
+    abrir: { etiqueta: 'Abrir Seguimiento', destino: { name: 'seguimiento' } },
+    pantallas: ['seguimiento'],
+    palabras: ['gps', 'mapa', 'donde esta el bus', 'ubicacion del bus', 'en camino'],
+  },
+  {
+    id: 'bitacora-de-la-salida',
+    tema: 'salidas',
+    titulo: 'Ver el historial de una salida',
+    resumen: 'Quién creó, editó, abordó, inició o anuló la salida, y cuándo.',
+    para: [BITACORA],
+    pasos: [
+      'En «Salidas», pulse «Bitácora» en la fila.',
+      'La línea de tiempo muestra cada operación con su usuario y su fecha.',
+    ],
+    palabras: ['historial', 'auditoria', 'quien cambio la salida'],
+  },
+]

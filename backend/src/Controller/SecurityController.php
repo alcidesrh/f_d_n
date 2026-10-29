@@ -48,7 +48,7 @@ class SecurityController extends AbstractController
         ]);
     }
 
-    /** Token válido del usuario autenticado (por cookie de sesión o Bearer). */
+    /** Token válido del usuario autenticado (por Bearer: el firewall no guarda sesión). */
     #[Route('/auth', name: 'auth', methods: ['POST'])]
     public function auth(#[CurrentUser] ?Usuario $user = null): Response
     {

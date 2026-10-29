@@ -1,0 +1,117 @@
+/* Order */
+/* Define el orden de precedencia de las capas */
+
+/* Reset CSS */
+
+@import "tailwindcss";
+@import "tailwindcss-primeui";
+@import "./primevue/index.css";
+
+@import "./palette.css";
+@import "./tokens.css";
+@import "./fonts.css";
+@import "./header.css";
+@import "./sidebar.css";
+@import "./content.css";
+@import "./utilities.css";
+
+/* `dark:` de Tailwind sigue a la clase `.dark` de <html> (no al SO). Todas las
+   rampas de color (`surface-*`, `primary-*` y las fijas red-*, amber-*…, ver
+   palette.css) ya se invierten con el tema (app/theme.ts): `dark:` no se usa
+   para colores (se invertirían dos veces), solo para lo que no es una rampa
+   (invertir un logo, opacidad). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ============================= RESET ============================= */
+/* *,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+} */
+html,
+body {
+  height: 100%;
+  font-size: 15px;
+}
+html.light {
+  color-scheme: light;
+}
+html.dark {
+  /* Scrollbars, autocompletado y controles nativos oscuros. */
+  color-scheme: dark;
+  & > body {
+    background-color: var(--p-surface-0);
+  }
+}
+body {
+  font-family: "Roboto Flex Variable", sans-serif;
+  font-size: 1rem;
+  background: var(--p-surface-100);
+  /* var(--p-surface-50); */
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  /* El scroll es de `.main` (shell) o del layout en blanco, nunca del body. */
+  overflow: hidden;
+}
+
+input {
+  font-family: inherit;
+}
+ul {
+  list-style: none;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+svg[stroke-width] g,
+svg[stroke-width] path {
+  stroke-width: inherit !important;
+  color: inherit !important;
+}
+::-webkit-scrollbar {
+  width: 2px;
+  height: 3px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+:focus-visible {
+  outline: 2px solid var(--p-primary-color);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+/* Estilos para el efecto fade */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+button {
+  cursor: pointer;
+}
+
+/* ============================= RESPONSIVE =============================
+   Sin reglas por página aquí. Breakpoints en tokens.css, reglas y patrones
+   en docs/frontend/responsive.md; cada regla vive junto a lo que adapta
+   (shell en content/header/sidebar.css, PrimeVue en primevue/*.css). */
+
+/* Mapas (Leaflet + OpenStreetMap) en oscuro: se invierten solo los mosaicos
+   (el giro de tono devuelve agua azul y parques verdes); marcadores y trazos
+   están en otras capas y conservan sus colores. */
+html.dark .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9);
+}

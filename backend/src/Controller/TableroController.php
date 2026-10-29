@@ -9,6 +9,7 @@ use App\Acceso\Capacidad;
 use App\Entity\Usuario;
 use App\Tablero\ConsultaTablero;
 use App\Tablero\Periodo;
+use App\Tablero\TableroEnCache;
 use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -22,7 +23,8 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
  * operación del día y alertas. Mismo permiso que los reportes de venta
  * (`reporte.ventas`): son las mismas cifras, resumidas. Un usuario con
  * empresa asignada solo ve la suya; sin ella, puede elegir una
- * (`?empresa=`) o mirar todas. `?dias=` 1, 7 (por defecto), 30 o 90.
+ * (`?empresa=`) o mirar todas. `?dias=` 1, 7 (por defecto), 30 o 90. Las
+ * cifras salen de una copia que el worker rehace cada minuto (`TableroEnCache`).
  */
 #[AsController]
 #[Route("/api/tablero", name: "api_tablero")]
@@ -30,6 +32,7 @@ final class TableroController extends AbstractController
 {
     public function __construct(
         private readonly ConsultaTablero $consulta,
+        private readonly TableroEnCache $copias,
         private readonly ClockInterface $reloj,
         private readonly Autorizacion $autorizacion,
     ) {}
@@ -67,6 +70,6 @@ final class TableroController extends AbstractController
             "alcance" => ["empresa" => $empresa, "fija" => !$todas && count($empresas) === 1],
             "empresas" => $this->consulta->empresas($todas ? null : $empresas),
             "moneda" => ConsultaTablero::MONEDA,
-        ] + $this->consulta->tablero($periodo, $empresa)->toArray());
+        ] + $this->copias->leer($periodo->dias, $empresa));
     }
 }

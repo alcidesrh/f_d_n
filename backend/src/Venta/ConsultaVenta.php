@@ -11,6 +11,7 @@ use App\Entity\Enum\AsientoClase;
 use App\Entity\Enum\EstadoSalida;
 use App\Entity\Enum\PrecisionHora;
 use App\Entity\Salida;
+use App\Ruta\ParadasDeRutas;
 use App\Venta\Boleto\DatosBoleto;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\ORM\EntityManagerInterface;
@@ -33,6 +34,7 @@ final class ConsultaVenta
         private readonly ClockInterface $reloj,
         private readonly EnLinea\AjustesPagina $ajustes,
         private readonly BuscadorSalidas $buscador,
+        private readonly ParadasDeRutas $paradas,
     ) {}
 
     /**
@@ -62,10 +64,21 @@ final class ConsultaVenta
         );
         $itinerarios = $this->itinerarios->deSalidas($salidas);
         $asientos = $this->asientosPorBus(array_values($salidas));
+        // Solo cuentan los trayectos que salen de donde se sube: se tarifan esos
+        // (no todos los pares de la salida), con las tarifas de todas en una consulta.
+        $deSubida = [];
+        foreach ($pasan as $k => $p) {
+            if (isset($salidas[$p["salida"]])) {
+                $it = $itinerarios[$p["salida"]];
+                $subeEn = $it->paradas[$p["sube"]];
+                $deSubida[$k] = array_keys(array_filter($it->trayectos(), static fn(array $t) => $t["origen"] === $subeEn));
+            }
+        }
+        $this->tarifas->precargar(array_merge([], ...array_values($deSubida)));
 
         $filas = [];
         $tramos = [];
-        foreach ($pasan as $p) {
+        foreach ($pasan as $k => $p) {
             $r = $salidas[$p["salida"]] ?? null;
             if ($r === null) {
                 continue;
@@ -73,11 +86,7 @@ final class ConsultaVenta
             $it = $itinerarios[$r->getId()];
             $subeEn = $it->paradas[$p["sube"]];
             $clases = $r->getBus() !== null ? array_keys($asientos[$r->getBus()->getId()] ?? []) : self::todasLasClases();
-            $sube = array_filter(
-                $this->tarifados($r, $it, $clases),
-                static fn(int $id) => $it->trayectos()[$id]["origen"] === $subeEn,
-                ARRAY_FILTER_USE_KEY,
-            );
+            $sube = $this->tarifados($r, $it, $clases, $deSubida[$k]);
             if ($sube === []) {
                 continue;
             }
@@ -388,6 +397,7 @@ final class ConsultaVenta
             ->getResult() as $r) {
             $porId[$r->getId()] = $r;
         }
+        $this->paradas->cargar(array_values(array_unique(array_map(static fn(Salida $r) => (int) $r->getRuta()->getId(), $porId))));
 
         return $porId;
     }
@@ -490,17 +500,18 @@ final class ConsultaVenta
     }
 
     /**
-     * Trayectos de la salida (pares de sus paradas) con tarifa para
-     * alguna de las clases de asiento dadas, con esas clases.
+     * Trayectos de la salida (pares de sus paradas, o solo `$trayectoIds`)
+     * con tarifa para alguna de las clases de asiento dadas, con esas clases.
      *
-     * @param list<string> $clases
+     * @param list<string>   $clases
+     * @param list<int>|null $trayectoIds
      *
      * @return array<int, list<string>> por id de trayecto
      */
-    private function tarifados(Salida $salida, Itinerario $it, array $clases): array
+    private function tarifados(Salida $salida, Itinerario $it, array $clases, ?array $trayectoIds = null): array
     {
         $tarifados = [];
-        foreach ($this->tarifas->porTrayectos($salida, array_keys($it->trayectos()), $clases) as $id => $porClase) {
+        foreach ($this->tarifas->porTrayectos($salida, $trayectoIds ?? array_keys($it->trayectos()), $clases) as $id => $porClase) {
             if ($porClase !== []) {
                 $deTrayecto = array_keys($porClase);
                 sort($deTrayecto);

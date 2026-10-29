@@ -77,6 +77,13 @@ services:
         arguments:
             $interna: '@.inner'
 
+    # Por fuera de todo (la fábrica de Doctrine, -50, queda fuera de la caché).
+    App\Acceso\Api\MetadataEnMemoria:
+        decorates: api_platform.metadata.resource.metadata_collection_factory
+        decoration_priority: -100
+        arguments:
+            $interna: '@.inner'
+
     App\Acceso\Catalogo\CatalogoRecursos:
         arguments:
             $nombres: '@api_platform.metadata.resource.name_collection_factory'

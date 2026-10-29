@@ -1,0 +1,2 @@
+src/features/venta/SalidasCalendario.vue(264,53): error TS2550: Property 'at' does not exist on type 'Date[]'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2022' or later.
+src/features/venta/SalidasCalendario.vue(277,68): error TS2550: Property 'at' does not exist on type 'SalidaResumen[]'. Do you need to change your target library? Try changing the 'lib' compiler option to 'es2022' or later.

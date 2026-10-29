@@ -1,0 +1,405 @@
+docker compose --env-file .env.prod.local -f compose.yaml -f compose.prod.yaml up -d --build
+time="2026-10-26T17:44:13-06:00" level=warning msg="Docker Compose is configured to build using Bake, but buildx isn't installed"
+#0 building with "default" instance using docker driver
+
+#1 [frontend internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.31kB done
+#1 DONE 0.0s
+
+#2 [backend internal] load build definition from Dockerfile
+#2 transferring dockerfile: 6.77kB 0.0s done
+#2 DONE 0.0s
+
+#3 [backend] resolve image config for docker-image://docker.io/docker/dockerfile:1
+#3 DONE 0.4s
+
+#4 [frontend] resolve image config for docker-image://docker.io/docker/dockerfile:1.4
+#4 DONE 0.5s
+
+#5 [backend] docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#5 resolve docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e 0.1s done
+#5 DONE 0.1s
+
+#6 [frontend] docker-image://docker.io/docker/dockerfile:1.4@sha256:9ba7531bd80fb0a858632727cf7a112fbfd19b17e94c4e84ced81e24ef1a0dbc
+#6 resolve docker.io/docker/dockerfile:1.4@sha256:9ba7531bd80fb0a858632727cf7a112fbfd19b17e94c4e84ced81e24ef1a0dbc
+#6 resolve docker.io/docker/dockerfile:1.4@sha256:9ba7531bd80fb0a858632727cf7a112fbfd19b17e94c4e84ced81e24ef1a0dbc 0.1s done
+#6 CACHED
+
+#5 [backend] docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#5 CACHED
+
+#7 [frontend internal] load .dockerignore
+#7 transferring context: 405B done
+#7 DONE 0.0s
+
+#8 [frontend internal] load metadata for docker.io/oven/bun:1-alpine
+#8 DONE 0.1s
+
+#9 [frontend bun_upstream 1/1] FROM docker.io/oven/bun:1-alpine@sha256:4cf82f5686b196504fe119db3fcd9185b191f82ece82c40680e597228ec6070a
+#9 resolve docker.io/oven/bun:1-alpine@sha256:4cf82f5686b196504fe119db3fcd9185b191f82ece82c40680e597228ec6070a 0.1s done
+#9 DONE 0.1s
+
+#10 [frontend internal] load build context
+#10 transferring context: 44.05kB 0.1s done
+#10 DONE 0.1s
+
+#11 [frontend prod 2/4] COPY --from=builder /frontend/dist ./dist
+#11 CACHED
+
+#12 [frontend prod 3/4] COPY server.ts ./
+#12 CACHED
+
+#13 [frontend builder 4/5] RUN apk add --no-cache nodejs
+#13 CACHED
+
+#14 [frontend builder 1/5] COPY bun.lock package.json ./
+#14 CACHED
+
+#15 [frontend builder 3/5] COPY . .
+#15 CACHED
+
+#16 [frontend builder 5/5] RUN bun run build
+#16 CACHED
+
+#17 [frontend base 1/1] WORKDIR /frontend
+#17 CACHED
+
+#18 [frontend builder 2/5] RUN bun install --frozen-lockfile
+#18 CACHED
+
+#19 [frontend prod 4/4] RUN apk add --no-cache curl
+#19 CACHED
+
+#20 [backend internal] load metadata for docker.io/library/debian:13-slim
+#20 DONE 0.3s
+
+#21 [frontend] exporting to image
+#21 exporting layers 0.0s done
+#21 exporting manifest sha256:c29647887419a390ed70c3f9cfe6804f9d1bd53b7aa9f7350260e137a5ecefe3 done
+#21 exporting config sha256:35e40c161de91203b8c238681adb72ebe012348425a5dd512a55f168d5e8e55d done
+#21 ...
+
+#22 [backend internal] load metadata for docker.io/dunglas/frankenphp:1-php8.4
+#22 DONE 0.3s
+
+#21 [frontend] exporting to image
+#21 exporting attestation manifest sha256:1269d1c89fa2b9b29a614278219ac3eb63357df7ba2a1be944f6816365af22a2
+#21 ...
+
+#23 [backend internal] load .dockerignore
+#23 transferring context: 498B done
+#23 DONE 0.1s
+
+#21 [frontend] exporting to image
+#21 exporting attestation manifest sha256:1269d1c89fa2b9b29a614278219ac3eb63357df7ba2a1be944f6816365af22a2 0.3s done
+#21 exporting manifest list sha256:c537c97b95b87d3d937a82ab60154ab93f4dddfb14adbdf69c0144e5fdd4b333
+#21 exporting manifest list sha256:c537c97b95b87d3d937a82ab60154ab93f4dddfb14adbdf69c0144e5fdd4b333 0.1s done
+#21 naming to docker.io/library/app-frontend:latest done
+#21 unpacking to docker.io/library/app-frontend:latest
+#21 ...
+
+#24 [backend frankenphp_prod  1/21] FROM docker.io/library/debian:13-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad
+#24 resolve docker.io/library/debian:13-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad 0.1s done
+#24 DONE 0.1s
+
+#21 [frontend] exporting to image
+#21 unpacking to docker.io/library/app-frontend:latest 0.1s done
+#21 DONE 0.6s
+
+#25 [backend frankenphp_upstream 1/1] FROM docker.io/dunglas/frankenphp:1-php8.4@sha256:8d5cfcc9ce4e6b4db887a04cce820801816d7f53e3a6234e98e0120415238a97
+#25 resolve docker.io/dunglas/frankenphp:1-php8.4@sha256:8d5cfcc9ce4e6b4db887a04cce820801816d7f53e3a6234e98e0120415238a97 0.1s done
+#25 DONE 0.1s
+
+#26 [backend internal] load build context
+#26 transferring context: 57.54kB 0.2s done
+#26 DONE 0.2s
+
+#27 [backend frankenphp_prod  7/21] COPY --from=frankenphp_prod_builder /usr/local/etc/php/conf.d /usr/local/etc/php/conf.d
+#27 CACHED
+
+#28 [backend frankenphp_base 1/6] WORKDIR /app
+#28 CACHED
+
+#29 [backend frankenphp_prod 15/21] RUN <<-EOF (apt-get update...)
+#29 CACHED
+
+#30 [backend frankenphp_prod  6/21] COPY --from=frankenphp_prod_builder /tmp/libs /usr/lib
+#30 CACHED
+
+#31 [backend frankenphp_prod_builder 6/7] RUN <<-EOF (mkdir -p var/cache var/log var/share...)
+#31 CACHED
+
+#32 [backend frankenphp_prod 12/21] COPY --from=frankenphp_prod_builder /usr/bin/file /usr/bin/file
+#32 CACHED
+
+#33 [backend frankenphp_base 3/6] RUN <<-EOF (# Register MS ODBC Driver 17 in system odbcinst.ini...)
+#33 CACHED
+
+#34 [backend frankenphp_prod  5/21] COPY --from=frankenphp_prod_builder /usr/local/lib/php/extensions /usr/local/lib/php/extensions
+#34 CACHED
+
+#35 [backend frankenphp_prod 16/21] COPY --from=frankenphp_prod_builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+#35 CACHED
+
+#36 [backend frankenphp_prod_builder 5/7] COPY --link --exclude=frankenphp/ . ./
+#36 CACHED
+
+#37 [backend frankenphp_prod_builder 2/7] COPY --link frankenphp/conf.d/20-app.prod.ini /usr/local/etc/php/app.conf.d/
+#37 CACHED
+
+#38 [backend frankenphp_base 4/6] COPY --link frankenphp/conf.d/10-app.ini /usr/local/etc/php/app.conf.d/
+#38 CACHED
+
+#39 [backend frankenphp_prod  9/21] COPY --from=frankenphp_prod_builder /usr/local/etc/php/app.conf.d /usr/local/etc/php/app.conf.d
+#39 CACHED
+
+#40 [backend frankenphp_prod_builder 4/7] RUN composer install --no-cache --prefer-dist --no-dev --no-autoloader --no-scripts --no-progress
+#40 CACHED
+
+#41 [backend frankenphp_prod 10/21] COPY --from=frankenphp_prod_builder /etc/frankenphp/Caddyfile /etc/frankenphp/Caddyfile
+#41 CACHED
+
+#42 [backend frankenphp_prod 20/21] COPY --link --chmod=755 frankenphp/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
+#42 CACHED
+
+#43 [backend frankenphp_prod 18/21] COPY --chown=www-data:0 --from=frankenphp_prod_builder /app/var /app/var
+#43 CACHED
+
+#44 [backend frankenphp_base 2/6] RUN <<-EOF (apt-get update...)
+#44 CACHED
+
+#45 [backend frankenphp_prod 17/21] COPY --link --exclude=var --from=frankenphp_prod_builder /app /app
+#45 CACHED
+
+#46 [backend frankenphp_prod_builder 1/7] RUN mv "/usr/local/etc/php/php.ini-production" "/usr/local/etc/php/php.ini"
+#46 CACHED
+
+#47 [backend frankenphp_base 6/6] COPY --link frankenphp/Caddyfile /etc/frankenphp/Caddyfile
+#47 CACHED
+
+#48 [backend frankenphp_prod  3/21] COPY --from=frankenphp_prod_builder /usr/local/bin/php /usr/local/bin/php
+#48 CACHED
+
+#49 [backend frankenphp_prod  8/21] COPY --from=frankenphp_prod_builder /usr/local/etc/php/php.ini /usr/local/etc/php/php.ini
+#49 CACHED
+
+#50 [backend frankenphp_prod 11/21] COPY --from=frankenphp_prod_builder /etc/ssl/openssl.cnf /etc/ssl/openssl.cnf
+#50 CACHED
+
+#51 [backend frankenphp_prod_builder 7/7] RUN <<-'EOF' (apt-get update...)
+#51 CACHED
+
+#52 [backend frankenphp_prod  4/21] COPY --from=frankenphp_prod_builder /usr/local/bin/docker-php-entrypoint /usr/local/bin/docker-php-entrypoint
+#52 CACHED
+
+#53 [backend frankenphp_prod 13/21] COPY --from=frankenphp_prod_builder /usr/lib/file/magic.mgc /usr/lib/file/magic.mgc
+#53 CACHED
+
+#54 [backend frankenphp_prod 14/21] RUN <<-EOF (mkdir -p /data/caddy /config/caddy...)
+#54 CACHED
+
+#55 [backend frankenphp_prod 19/21] RUN chmod g=u /app/var
+#55 CACHED
+
+#56 [backend frankenphp_prod  2/21] COPY --from=frankenphp_prod_builder /usr/local/bin/frankenphp /usr/local/bin/frankenphp
+#56 CACHED
+
+#57 [backend frankenphp_prod_builder 3/7] COPY --link composer.* symfony.* ./
+#57 CACHED
+
+#58 [backend frankenphp_base 5/6] COPY --link --chmod=755 frankenphp/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
+#58 CACHED
+
+#59 [backend frankenphp_prod 21/21] WORKDIR /app
+#59 CACHED
+
+#60 [backend] exporting to image
+#60 exporting layers 0.0s done
+#60 exporting manifest sha256:882ad27308320015e37b704c5f03b62b5fcf9f70555f08c882ea8b7b505b1635 0.0s done
+#60 exporting config sha256:8600529019d068b01442f4058719ac73008869b9f7a43b83598f5234610d4655 done
+#60 exporting attestation manifest sha256:d399d17b6f15396d4dab2eb57118e5b5bf64d04f9afeb17572dfe909e354996c
+#60 ...
+
+#61 [frontend] resolving provenance for metadata file
+#61 DONE 0.0s
+
+#60 [backend] exporting to image
+#60 exporting attestation manifest sha256:d399d17b6f15396d4dab2eb57118e5b5bf64d04f9afeb17572dfe909e354996c 0.1s done
+#60 exporting manifest list sha256:78ab6b0ca165749066c0a42428dddae3949ec4f25fbf29fa11227159e04052f4 0.0s done
+#60 naming to docker.io/library/app-php:latest done
+#60 unpacking to docker.io/library/app-php:latest
+#60 unpacking to docker.io/library/app-php:latest 0.1s done
+#60 DONE 0.3s
+
+#62 [backend] resolving provenance for metadata file
+#62 DONE 0.0s
+
+#63 [worker internal] load build definition from Dockerfile
+#63 transferring dockerfile: 6.77kB done
+#63 DONE 0.0s
+
+#3 [worker] resolve image config for docker-image://docker.io/docker/dockerfile:1
+#3 DONE 0.5s
+
+#5 [worker] docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#5 resolve docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e 0.0s done
+#5 CACHED
+
+#20 [worker internal] load metadata for docker.io/library/debian:13-slim
+#20 DONE 0.4s
+
+#22 [worker internal] load metadata for docker.io/dunglas/frankenphp:1-php8.4
+#22 DONE 0.4s
+
+#64 [worker internal] load .dockerignore
+#64 transferring context: 498B done
+#64 DONE 0.0s
+
+#24 [worker frankenphp_prod  1/21] FROM docker.io/library/debian:13-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad
+#24 resolve docker.io/library/debian:13-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad 0.1s done
+#24 DONE 0.2s
+
+#25 [worker frankenphp_upstream 1/1] FROM docker.io/dunglas/frankenphp:1-php8.4@sha256:8d5cfcc9ce4e6b4db887a04cce820801816d7f53e3a6234e98e0120415238a97
+#25 resolve docker.io/dunglas/frankenphp:1-php8.4@sha256:8d5cfcc9ce4e6b4db887a04cce820801816d7f53e3a6234e98e0120415238a97 0.1s done
+#25 DONE 0.2s
+
+#65 [worker internal] load build context
+#65 transferring context: 52.05kB 0.1s done
+#65 DONE 0.1s
+
+#66 [worker frankenphp_prod 14/21] RUN <<-EOF (mkdir -p /data/caddy /config/caddy...)
+#66 CACHED
+
+#67 [worker frankenphp_prod  4/21] COPY --from=frankenphp_prod_builder /usr/local/bin/docker-php-entrypoint /usr/local/bin/docker-php-entrypoint
+#67 CACHED
+
+#44 [worker frankenphp_base 2/6] RUN <<-EOF (apt-get update...)
+#44 CACHED
+
+#68 [worker frankenphp_prod  5/21] COPY --from=frankenphp_prod_builder /usr/local/lib/php/extensions /usr/local/lib/php/extensions
+#68 CACHED
+
+#69 [worker frankenphp_prod_builder 6/7] RUN <<-EOF (mkdir -p var/cache var/log var/share...)
+#69 CACHED
+
+#70 [worker frankenphp_prod 15/21] RUN <<-EOF (apt-get update...)
+#70 CACHED
+
+#71 [worker frankenphp_prod_builder 2/7] COPY --link frankenphp/conf.d/20-app.prod.ini /usr/local/etc/php/app.conf.d/
+#71 CACHED
+
+#72 [worker frankenphp_prod 16/21] COPY --from=frankenphp_prod_builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+#72 CACHED
+
+#73 [worker frankenphp_prod_builder 7/7] RUN <<-'EOF' (apt-get update...)
+#73 CACHED
+
+#74 [worker frankenphp_prod  7/21] COPY --from=frankenphp_prod_builder /usr/local/etc/php/conf.d /usr/local/etc/php/conf.d
+#74 CACHED
+
+#75 [worker frankenphp_base 6/6] COPY --link frankenphp/Caddyfile /etc/frankenphp/Caddyfile
+#75 CACHED
+
+#76 [worker frankenphp_prod  8/21] COPY --from=frankenphp_prod_builder /usr/local/etc/php/php.ini /usr/local/etc/php/php.ini
+#76 CACHED
+
+#77 [worker frankenphp_prod  2/21] COPY --from=frankenphp_prod_builder /usr/local/bin/frankenphp /usr/local/bin/frankenphp
+#77 CACHED
+
+#78 [worker frankenphp_prod  3/21] COPY --from=frankenphp_prod_builder /usr/local/bin/php /usr/local/bin/php
+#78 CACHED
+
+#79 [worker frankenphp_prod_builder 5/7] COPY --link --exclude=frankenphp/ . ./
+#79 CACHED
+
+#80 [worker frankenphp_prod 18/21] COPY --chown=www-data:0 --from=frankenphp_prod_builder /app/var /app/var
+#80 CACHED
+
+#81 [worker frankenphp_prod  6/21] COPY --from=frankenphp_prod_builder /tmp/libs /usr/lib
+#81 CACHED
+
+#82 [worker frankenphp_base 4/6] COPY --link frankenphp/conf.d/10-app.ini /usr/local/etc/php/app.conf.d/
+#82 CACHED
+
+#83 [worker frankenphp_prod_builder 3/7] COPY --link composer.* symfony.* ./
+#83 CACHED
+
+#84 [worker frankenphp_prod_builder 1/7] RUN mv "/usr/local/etc/php/php.ini-production" "/usr/local/etc/php/php.ini"
+#84 CACHED
+
+#85 [worker frankenphp_prod_builder 4/7] RUN composer install --no-cache --prefer-dist --no-dev --no-autoloader --no-scripts --no-progress
+#85 CACHED
+
+#86 [worker frankenphp_prod  9/21] COPY --from=frankenphp_prod_builder /usr/local/etc/php/app.conf.d /usr/local/etc/php/app.conf.d
+#86 CACHED
+
+#87 [worker frankenphp_base 5/6] COPY --link --chmod=755 frankenphp/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
+#87 CACHED
+
+#28 [worker frankenphp_base 1/6] WORKDIR /app
+#28 CACHED
+
+#88 [worker frankenphp_prod 12/21] COPY --from=frankenphp_prod_builder /usr/bin/file /usr/bin/file
+#88 CACHED
+
+#89 [worker frankenphp_prod 19/21] RUN chmod g=u /app/var
+#89 CACHED
+
+#90 [worker frankenphp_prod 13/21] COPY --from=frankenphp_prod_builder /usr/lib/file/magic.mgc /usr/lib/file/magic.mgc
+#90 CACHED
+
+#91 [worker frankenphp_prod 10/21] COPY --from=frankenphp_prod_builder /etc/frankenphp/Caddyfile /etc/frankenphp/Caddyfile
+#91 CACHED
+
+#92 [worker frankenphp_prod 17/21] COPY --link --exclude=var --from=frankenphp_prod_builder /app /app
+#92 CACHED
+
+#93 [worker frankenphp_prod 20/21] COPY --link --chmod=755 frankenphp/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
+#93 CACHED
+
+#94 [worker frankenphp_prod 11/21] COPY --from=frankenphp_prod_builder /etc/ssl/openssl.cnf /etc/ssl/openssl.cnf
+#94 CACHED
+
+#33 [worker frankenphp_base 3/6] RUN <<-EOF (# Register MS ODBC Driver 17 in system odbcinst.ini...)
+#33 CACHED
+
+#95 [worker frankenphp_prod 21/21] WORKDIR /app
+#95 CACHED
+
+#96 [worker] exporting to image
+#96 exporting layers 0.0s done
+#96 exporting manifest sha256:c30e31fe2f4e263fa9300a8cb1989a06c422a511145a647cf74be6001b76e78d
+#96 exporting manifest sha256:c30e31fe2f4e263fa9300a8cb1989a06c422a511145a647cf74be6001b76e78d done
+#96 exporting config sha256:6bd8889625127fa98091dbdd0afe3c7813fc6f64503b5a1b11e34e221eff2bed done
+#96 exporting attestation manifest sha256:aa1b7ec2d2caad22a6f910ed33a88a296b6c9a503fb307aeae69a16d7b894c0e 0.1s done
+#96 exporting manifest list sha256:e94bca1aafbebd82ebd75b9b30ad544684e06d0c5c99fe4e3a0c8942661d82fe
+#96 exporting manifest list sha256:e94bca1aafbebd82ebd75b9b30ad544684e06d0c5c99fe4e3a0c8942661d82fe 0.0s done
+#96 naming to docker.io/library/app-php:latest 0.0s done
+#96 unpacking to docker.io/library/app-php:latest 0.1s done
+#96 DONE 0.4s
+
+#97 [worker] resolving provenance for metadata file
+#97 DONE 0.0s
+ backend  Built
+ frontend  Built
+ worker  Built
+ Network f_d_n_default  Creating
+ Network f_d_n_default  Created
+ Container frontend  Creating
+ Container database  Creating
+ Container frontend  Created
+ Container database  Created
+ Container backend  Creating
+ Container backend  Created
+ Container worker  Creating
+ Container worker  Created
+ Container database  Starting
+ Container frontend  Starting
+ Container frontend  Started
+ Container database  Started
+ Container database  Waiting
+ Container database  Healthy
+ Container backend  Starting
+ Container backend  Started
+ Container worker  Starting
+ Container worker  Started

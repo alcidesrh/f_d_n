@@ -1,0 +1,642 @@
+time="2026-10-27T14:29:41-06:00" level=warning msg="Docker Compose is configured to build using Bake, but buildx isn't installed"
+#0 building with "default" instance using docker driver
+
+#1 [backend internal] load build definition from Dockerfile
+#1 transferring dockerfile: 6.77kB done
+#1 DONE 0.0s
+
+#2 [frontend internal] load build definition from Dockerfile
+#2 transferring dockerfile: 1.31kB 0.0s done
+#2 DONE 0.0s
+
+#3 [frontend] resolve image config for docker-image://docker.io/docker/dockerfile:1.4
+#3 DONE 0.4s
+
+#4 [backend] resolve image config for docker-image://docker.io/docker/dockerfile:1
+#4 DONE 0.4s
+
+#5 [frontend] docker-image://docker.io/docker/dockerfile:1.4@sha256:9ba7531bd80fb0a858632727cf7a112fbfd19b17e94c4e84ced81e24ef1a0dbc
+#5 resolve docker.io/docker/dockerfile:1.4@sha256:9ba7531bd80fb0a858632727cf7a112fbfd19b17e94c4e84ced81e24ef1a0dbc 0.0s done
+#5 CACHED
+
+#6 [backend] docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#6 resolve docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e 0.0s done
+#6 CACHED
+
+#7 [frontend internal] load .dockerignore
+#7 transferring context: 405B 0.0s done
+#7 DONE 0.0s
+
+#8 [frontend internal] load metadata for docker.io/oven/bun:1-alpine
+#8 DONE 0.1s
+
+#9 [backend internal] load metadata for docker.io/library/debian:13-slim
+#9 ...
+
+#10 [frontend internal] load build context
+#10 DONE 0.0s
+
+#11 [frontend bun_upstream 1/1] FROM docker.io/oven/bun:1-alpine@sha256:4cf82f5686b196504fe119db3fcd9185b191f82ece82c40680e597228ec6070a
+#11 resolve docker.io/oven/bun:1-alpine@sha256:4cf82f5686b196504fe119db3fcd9185b191f82ece82c40680e597228ec6070a 0.1s done
+#11 DONE 0.1s
+
+#12 [backend internal] load metadata for docker.io/dunglas/frankenphp:1-php8.4
+#12 DONE 0.3s
+
+#10 [frontend internal] load build context
+#10 transferring context: 98.70kB 0.1s done
+#10 DONE 0.2s
+
+#9 [backend internal] load metadata for docker.io/library/debian:13-slim
+#9 DONE 0.3s
+
+#13 [backend internal] load .dockerignore
+#13 transferring context: 498B done
+#13 DONE 0.0s
+
+#14 [frontend base 1/1] WORKDIR /frontend
+#14 CACHED
+
+#15 [frontend builder 1/5] COPY bun.lock package.json ./
+#15 CACHED
+
+#16 [frontend builder 2/5] RUN bun install --frozen-lockfile
+#16 CACHED
+
+#17 [backend frankenphp_prod  1/21] FROM docker.io/library/debian:13-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad
+#17 resolve docker.io/library/debian:13-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad 0.1s done
+#17 DONE 0.1s
+
+#18 [backend internal] load build context
+#18 transferring context: 52.53kB 0.1s done
+#18 DONE 0.2s
+
+#19 [backend frankenphp_upstream 1/1] FROM docker.io/dunglas/frankenphp:1-php8.4@sha256:8d5cfcc9ce4e6b4db887a04cce820801816d7f53e3a6234e98e0120415238a97
+#19 resolve docker.io/dunglas/frankenphp:1-php8.4@sha256:8d5cfcc9ce4e6b4db887a04cce820801816d7f53e3a6234e98e0120415238a97 0.1s done
+#19 DONE 0.1s
+
+#20 [backend frankenphp_base 4/6] COPY --link frankenphp/conf.d/10-app.ini /usr/local/etc/php/app.conf.d/
+#20 CACHED
+
+#21 [backend frankenphp_prod 12/21] COPY --from=frankenphp_prod_builder /usr/bin/file /usr/bin/file
+#21 CACHED
+
+#22 [backend frankenphp_prod  6/21] COPY --from=frankenphp_prod_builder /tmp/libs /usr/lib
+#22 CACHED
+
+#23 [backend frankenphp_prod 16/21] COPY --from=frankenphp_prod_builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+#23 CACHED
+
+#24 [backend frankenphp_prod 11/21] COPY --from=frankenphp_prod_builder /etc/ssl/openssl.cnf /etc/ssl/openssl.cnf
+#24 CACHED
+
+#25 [backend frankenphp_prod_builder 5/7] COPY --link --exclude=frankenphp/ . ./
+#25 CACHED
+
+#26 [backend frankenphp_prod 13/21] COPY --from=frankenphp_prod_builder /usr/lib/file/magic.mgc /usr/lib/file/magic.mgc
+#26 CACHED
+
+#27 [backend frankenphp_prod_builder 1/7] RUN mv "/usr/local/etc/php/php.ini-production" "/usr/local/etc/php/php.ini"
+#27 CACHED
+
+#28 [backend frankenphp_prod 15/21] RUN <<-EOF (apt-get update...)
+#28 CACHED
+
+#29 [backend frankenphp_prod  4/21] COPY --from=frankenphp_prod_builder /usr/local/bin/docker-php-entrypoint /usr/local/bin/docker-php-entrypoint
+#29 CACHED
+
+#30 [backend frankenphp_prod 17/21] COPY --link --exclude=var --from=frankenphp_prod_builder /app /app
+#30 CACHED
+
+#31 [backend frankenphp_prod 19/21] RUN chmod g=u /app/var
+#31 CACHED
+
+#32 [backend frankenphp_base 2/6] RUN <<-EOF (apt-get update...)
+#32 CACHED
+
+#33 [backend frankenphp_prod 10/21] COPY --from=frankenphp_prod_builder /etc/frankenphp/Caddyfile /etc/frankenphp/Caddyfile
+#33 CACHED
+
+#34 [backend frankenphp_prod  2/21] COPY --from=frankenphp_prod_builder /usr/local/bin/frankenphp /usr/local/bin/frankenphp
+#34 CACHED
+
+#35 [backend frankenphp_prod 14/21] RUN <<-EOF (mkdir -p /data/caddy /config/caddy...)
+#35 CACHED
+
+#36 [backend frankenphp_prod_builder 7/7] RUN <<-'EOF' (apt-get update...)
+#36 CACHED
+
+#37 [backend frankenphp_base 1/6] WORKDIR /app
+#37 CACHED
+
+#38 [backend frankenphp_prod  9/21] COPY --from=frankenphp_prod_builder /usr/local/etc/php/app.conf.d /usr/local/etc/php/app.conf.d
+#38 CACHED
+
+#39 [backend frankenphp_base 5/6] COPY --link --chmod=755 frankenphp/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
+#39 CACHED
+
+#40 [backend frankenphp_prod_builder 6/7] RUN <<-EOF (mkdir -p var/cache var/log var/share...)
+#40 CACHED
+
+#41 [backend frankenphp_prod  3/21] COPY --from=frankenphp_prod_builder /usr/local/bin/php /usr/local/bin/php
+#41 CACHED
+
+#42 [backend frankenphp_prod 20/21] COPY --link --chmod=755 frankenphp/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
+#42 CACHED
+
+#43 [backend frankenphp_prod_builder 3/7] COPY --link composer.* symfony.* ./
+#43 CACHED
+
+#44 [backend frankenphp_base 3/6] RUN <<-EOF (# Register MS ODBC Driver 17 in system odbcinst.ini...)
+#44 CACHED
+
+#45 [backend frankenphp_prod_builder 4/7] RUN composer install --no-cache --prefer-dist --no-dev --no-autoloader --no-scripts --no-progress
+#45 CACHED
+
+#46 [backend frankenphp_prod  7/21] COPY --from=frankenphp_prod_builder /usr/local/etc/php/conf.d /usr/local/etc/php/conf.d
+#46 CACHED
+
+#47 [backend frankenphp_prod  8/21] COPY --from=frankenphp_prod_builder /usr/local/etc/php/php.ini /usr/local/etc/php/php.ini
+#47 CACHED
+
+#48 [backend frankenphp_base 6/6] COPY --link frankenphp/Caddyfile /etc/frankenphp/Caddyfile
+#48 CACHED
+
+#49 [backend frankenphp_prod 18/21] COPY --chown=www-data:0 --from=frankenphp_prod_builder /app/var /app/var
+#49 CACHED
+
+#50 [backend frankenphp_prod  5/21] COPY --from=frankenphp_prod_builder /usr/local/lib/php/extensions /usr/local/lib/php/extensions
+#50 CACHED
+
+#51 [backend frankenphp_prod_builder 2/7] COPY --link frankenphp/conf.d/20-app.prod.ini /usr/local/etc/php/app.conf.d/
+#51 CACHED
+
+#52 [backend frankenphp_prod 21/21] WORKDIR /app
+#52 CACHED
+
+#53 [backend] exporting to image
+#53 exporting layers 0.1s done
+#53 exporting manifest sha256:244cc00ff7244245a2b4fb1a5b0d4703c036d5edf517c9eb37b17bd5d2463317
+#53 exporting manifest sha256:244cc00ff7244245a2b4fb1a5b0d4703c036d5edf517c9eb37b17bd5d2463317 0.0s done
+#53 exporting config sha256:32506b1d18df089d764af36c8378de3c2299f765eb36548ced2df496754d7e18 0.0s done
+#53 exporting attestation manifest sha256:bdd2ef60fd02b21186c82c5016fab87fd8f1c007d9bc413381b2fd61a37af1c2 0.1s done
+#53 exporting manifest list sha256:0d869d7146468c4a410c7f0fbd38426b8aee5f9b75e4af3cb9f23fa209e9d0a0
+#53 exporting manifest list sha256:0d869d7146468c4a410c7f0fbd38426b8aee5f9b75e4af3cb9f23fa209e9d0a0 0.0s done
+#53 naming to docker.io/library/app-php:latest done
+#53 unpacking to docker.io/library/app-php:latest 0.1s done
+#53 DONE 0.4s
+
+#54 [frontend builder 3/5] COPY . .
+#54 ...
+
+#55 [backend] resolving provenance for metadata file
+#55 DONE 0.1s
+
+#56 [worker internal] load build definition from Dockerfile
+#56 transferring dockerfile: 6.77kB done
+#56 DONE 0.0s
+
+#54 [frontend builder 3/5] COPY . .
+#54 DONE 1.6s
+
+#57 [frontend builder 4/5] RUN apk add --no-cache nodejs
+#57 ...
+
+#4 [worker] resolve image config for docker-image://docker.io/docker/dockerfile:1
+#4 DONE 0.8s
+
+#6 [worker] docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#6 resolve docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e 0.1s done
+#6 CACHED
+
+#57 [frontend builder 4/5] RUN apk add --no-cache nodejs
+#57 ...
+
+#12 [worker internal] load metadata for docker.io/dunglas/frankenphp:1-php8.4
+#12 DONE 0.4s
+
+#9 [worker internal] load metadata for docker.io/library/debian:13-slim
+#9 DONE 0.4s
+
+#58 [worker internal] load .dockerignore
+#58 transferring context: 498B done
+#58 DONE 0.0s
+
+#17 [worker frankenphp_prod  1/21] FROM docker.io/library/debian:13-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad
+#17 resolve docker.io/library/debian:13-slim@sha256:62bd423aeee912639ca8ee681c2b762cb3e25137e0a92b20be455898a9f034ad 0.0s done
+#17 DONE 0.1s
+
+#59 [worker internal] load build context
+#59 transferring context: 52.53kB 0.1s done
+#59 DONE 0.1s
+
+#19 [worker frankenphp_upstream 1/1] FROM docker.io/dunglas/frankenphp:1-php8.4@sha256:8d5cfcc9ce4e6b4db887a04cce820801816d7f53e3a6234e98e0120415238a97
+#19 resolve docker.io/dunglas/frankenphp:1-php8.4@sha256:8d5cfcc9ce4e6b4db887a04cce820801816d7f53e3a6234e98e0120415238a97 0.1s done
+#19 DONE 0.2s
+
+#60 [worker frankenphp_prod_builder 1/7] RUN mv "/usr/local/etc/php/php.ini-production" "/usr/local/etc/php/php.ini"
+#60 CACHED
+
+#61 [worker frankenphp_prod 17/21] COPY --link --exclude=var --from=frankenphp_prod_builder /app /app
+#61 CACHED
+
+#62 [worker frankenphp_prod 13/21] COPY --from=frankenphp_prod_builder /usr/lib/file/magic.mgc /usr/lib/file/magic.mgc
+#62 CACHED
+
+#63 [worker frankenphp_prod_builder 6/7] RUN <<-EOF (mkdir -p var/cache var/log var/share...)
+#63 CACHED
+
+#64 [worker frankenphp_base 4/6] COPY --link frankenphp/conf.d/10-app.ini /usr/local/etc/php/app.conf.d/
+#64 CACHED
+
+#65 [worker frankenphp_prod 12/21] COPY --from=frankenphp_prod_builder /usr/bin/file /usr/bin/file
+#65 CACHED
+
+#66 [worker frankenphp_prod 15/21] RUN <<-EOF (apt-get update...)
+#66 CACHED
+
+#67 [worker frankenphp_prod_builder 3/7] COPY --link composer.* symfony.* ./
+#67 CACHED
+
+#68 [worker frankenphp_prod  7/21] COPY --from=frankenphp_prod_builder /usr/local/etc/php/conf.d /usr/local/etc/php/conf.d
+#68 CACHED
+
+#69 [worker frankenphp_prod  4/21] COPY --from=frankenphp_prod_builder /usr/local/bin/docker-php-entrypoint /usr/local/bin/docker-php-entrypoint
+#69 CACHED
+
+#70 [worker frankenphp_prod 16/21] COPY --from=frankenphp_prod_builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+#70 CACHED
+
+#71 [worker frankenphp_prod  8/21] COPY --from=frankenphp_prod_builder /usr/local/etc/php/php.ini /usr/local/etc/php/php.ini
+#71 CACHED
+
+#37 [worker frankenphp_base 1/6] WORKDIR /app
+#37 CACHED
+
+#72 [worker frankenphp_base 6/6] COPY --link frankenphp/Caddyfile /etc/frankenphp/Caddyfile
+#72 CACHED
+
+#73 [worker frankenphp_prod 14/21] RUN <<-EOF (mkdir -p /data/caddy /config/caddy...)
+#73 CACHED
+
+#74 [worker frankenphp_prod 19/21] RUN chmod g=u /app/var
+#74 CACHED
+
+#75 [worker frankenphp_prod 10/21] COPY --from=frankenphp_prod_builder /etc/frankenphp/Caddyfile /etc/frankenphp/Caddyfile
+#75 CACHED
+
+#76 [worker frankenphp_prod  2/21] COPY --from=frankenphp_prod_builder /usr/local/bin/frankenphp /usr/local/bin/frankenphp
+#76 CACHED
+
+#44 [worker frankenphp_base 3/6] RUN <<-EOF (# Register MS ODBC Driver 17 in system odbcinst.ini...)
+#44 CACHED
+
+#77 [worker frankenphp_prod 20/21] COPY --link --chmod=755 frankenphp/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
+#77 CACHED
+
+#78 [worker frankenphp_prod  3/21] COPY --from=frankenphp_prod_builder /usr/local/bin/php /usr/local/bin/php
+#78 CACHED
+
+#79 [worker frankenphp_prod  6/21] COPY --from=frankenphp_prod_builder /tmp/libs /usr/lib
+#79 CACHED
+
+#32 [worker frankenphp_base 2/6] RUN <<-EOF (apt-get update...)
+#32 CACHED
+
+#80 [worker frankenphp_prod  5/21] COPY --from=frankenphp_prod_builder /usr/local/lib/php/extensions /usr/local/lib/php/extensions
+#80 CACHED
+
+#81 [worker frankenphp_prod_builder 7/7] RUN <<-'EOF' (apt-get update...)
+#81 CACHED
+
+#82 [worker frankenphp_prod_builder 5/7] COPY --link --exclude=frankenphp/ . ./
+#82 CACHED
+
+#83 [worker frankenphp_prod  9/21] COPY --from=frankenphp_prod_builder /usr/local/etc/php/app.conf.d /usr/local/etc/php/app.conf.d
+#83 CACHED
+
+#84 [worker frankenphp_base 5/6] COPY --link --chmod=755 frankenphp/docker-entrypoint.sh /usr/local/bin/docker-entrypoint
+#84 CACHED
+
+#85 [worker frankenphp_prod_builder 4/7] RUN composer install --no-cache --prefer-dist --no-dev --no-autoloader --no-scripts --no-progress
+#85 CACHED
+
+#86 [worker frankenphp_prod 11/21] COPY --from=frankenphp_prod_builder /etc/ssl/openssl.cnf /etc/ssl/openssl.cnf
+#86 CACHED
+
+#87 [worker frankenphp_prod_builder 2/7] COPY --link frankenphp/conf.d/20-app.prod.ini /usr/local/etc/php/app.conf.d/
+#87 CACHED
+
+#88 [worker frankenphp_prod 18/21] COPY --chown=www-data:0 --from=frankenphp_prod_builder /app/var /app/var
+#88 CACHED
+
+#89 [worker frankenphp_prod 21/21] WORKDIR /app
+#89 CACHED
+
+#90 [worker] exporting to image
+#90 exporting layers 0.0s done
+#90 exporting manifest sha256:d24392027b5695d1431253661f6be33683b75c9864251e804bbf9fafc3c3e929 0.0s done
+#90 exporting config sha256:6aafb50603b337180c02e6202ef855cd9b3767478eb2964f2c28e2c75c8117c1 0.0s done
+#90 exporting attestation manifest sha256:e7c24330fb7147fe94e686067221ffe5a0ee40c0fd9586f6f88b14d378418726 0.1s done
+#90 exporting manifest list sha256:142c85d8069ca40a2b24afe0e2dbbca0b3505b2224492238a8b691f96a841ae8 0.0s done
+#90 naming to docker.io/library/app-php:latest done
+#90 unpacking to docker.io/library/app-php:latest 0.0s done
+#90 DONE 0.3s
+
+#57 [frontend builder 4/5] RUN apk add --no-cache nodejs
+#57 1.389 ( 1/12) Installing ca-certificates (20261020-r0)
+#57 1.416 ( 2/12) Installing ada-libs (4.0.0-r0)
+#57 1.447 ( 3/12) Installing brotli-libs (1.2.1-r0)
+#57 1.475 ( 4/12) Installing c-ares (1.34.9-r0)
+#57 1.489 ( 5/12) Installing icu-data-en (78.1-r0)
+#57 1.539   Executing icu-data-en-78.1-r0.post-install
+#57 1.550   * If you need ICU with non-English locales and legacy charset support, install
+#57 1.550   * package icu-data-full.
+#57 1.551 ( 6/12) Installing icu-libs (78.1-r0)
+#57 1.647 ( 7/12) Installing nghttp2-libs (1.70.0-r0)
+#57 1.661 ( 8/12) Installing simdjson (4.2.4-r0)
+#57 1.675 ( 9/12) Installing simdutf (9.0.0-r0)
+#57 1.702 (10/12) Installing sqlite-libs (3.53.4-r0)
+#57 1.768 (11/12) Installing zstd-libs (1.5.7-r2)
+#57 1.795 (12/12) Installing nodejs (24.22.1-r0)
+#57 ...
+
+#91 [worker] resolving provenance for metadata file
+#91 DONE 0.0s
+
+#57 [frontend builder 4/5] RUN apk add --no-cache nodejs
+#57 2.591 Executing busybox-1.37.0-r31.trigger
+#57 2.604 Executing ca-certificates-20261020-r0.trigger
+#57 2.653 OK: 73.3 MiB in 30 packages
+#57 DONE 2.9s
+
+#92 [frontend builder 5/5] RUN bun run build
+#92 0.770 $ run-p type-check "build-only {@}" --
+#92 1.099 $ vue-tsc --build
+#92 1.100 $ vite build
+#92 3.321 vite v8.2.0 building client environment for production...
+#92 3.461 [2Ktransforming...
+#92 8.782 /fonts/Chakra_Petch/ChakraPetch-SemiBold.ttf referenced in /fonts/Chakra_Petch/ChakraPetch-SemiBold.ttf didn't resolve at build time, it will remain unchanged to be resolved at runtime
+#92 11.31 ✓ 1969 modules transformed.
+#92 12.22 rendering chunks...
+#92 12.59 computing gzip size...
+#92 12.73 dist/manifest.webmanifest                                                   0.66 kB
+#92 12.73 dist/index.html                                                             3.76 kB │ gzip:     1.29 kB
+#92 12.73 dist/assets/material-symbols-outlined-latin-fill-normal-B2uwGM3Y.woff2  1,137.51 kB
+#92 12.73 dist/assets/RegistrarDepositoPage-B16o-DrY.css                              0.12 kB │ gzip:     0.11 kB
+#92 12.73 dist/assets/EspecialesPage-4CoSl8uX.css                                     0.14 kB │ gzip:     0.12 kB
+#92 12.73 dist/assets/AnularBoletosDialog-y6lh-4J-.css                                0.18 kB │ gzip:     0.14 kB
+#92 12.73 dist/assets/ManifiestoSalidaPage-BD6sU0fo.css                               0.19 kB │ gzip:     0.14 kB
+#92 12.73 dist/assets/useResumen-JagtE53V.css                                         0.19 kB │ gzip:     0.14 kB
+#92 12.73 dist/assets/SortablePanelList-Di-_6s2h.css                                  0.21 kB │ gzip:     0.16 kB
+#92 12.73 dist/assets/MigracionPanel-DSd66NjK.css                                     0.29 kB │ gzip:     0.21 kB
+#92 12.73 dist/assets/AccesosPage-Bi_bMpne.css                                        0.29 kB │ gzip:     0.18 kB
+#92 12.73 dist/assets/BitacoraDialog-DgH52S3f.css                                     0.33 kB │ gzip:     0.21 kB
+#92 12.73 dist/assets/MigracionPage-Clnhbhmb.css                                      0.37 kB │ gzip:     0.25 kB
+#92 12.73 dist/assets/FormBuilderPanel-DoaLQrdI.css                                   0.41 kB │ gzip:     0.25 kB
+#92 12.73 dist/assets/ChatPage-l-HmtSWT.css                                           0.46 kB │ gzip:     0.29 kB
+#92 12.73 dist/assets/RegistrarEncomiendaPage-4gDD_2ey.css                            0.50 kB │ gzip:     0.26 kB
+#92 12.73 dist/assets/Icon-B_l0Oes6.css                                               0.56 kB │ gzip:     0.32 kB
+#92 12.73 dist/assets/FormBuilderPage-B9ZSIIWV.css                                    0.57 kB │ gzip:     0.30 kB
+#92 12.73 dist/assets/RegistrarDepositoForm-DuC-s1q8.css                              0.59 kB │ gzip:     0.28 kB
+#92 12.73 dist/assets/PublicacionPage-BXeE78IR.css                                    0.79 kB │ gzip:     0.35 kB
+#92 12.73 dist/assets/EnviarPorChatDialog-C6hAV-Fu.css                                0.82 kB │ gzip:     0.38 kB
+#92 12.73 dist/assets/AutorizacionesPage-2HVqlC8j.css                                 0.83 kB │ gzip:     0.37 kB
+#92 12.73 dist/assets/ChequeoPage-DJ7pgJpq.css                                        0.93 kB │ gzip:     0.37 kB
+#92 12.73 dist/assets/UsuarioAccesosPage-CVWAkAWT.css                                 0.96 kB │ gzip:     0.36 kB
+#92 12.73 dist/assets/PaginaWebPage-NFhjtiCF.css                                      0.97 kB │ gzip:     0.37 kB
+#92 12.73 dist/assets/SeguimientoPage-DeBcsKMa.css                                    1.02 kB │ gzip:     0.50 kB
+#92 12.73 dist/assets/TarifaFiltro-DOblUnKV.css                                       1.11 kB │ gzip:     0.45 kB
+#92 12.73 dist/assets/EntregarEncomiendasPage-ze4T-MvV.css                            1.14 kB │ gzip:     0.44 kB
+#92 12.73 dist/assets/SaldosAgenciaPage-M6O-_kq7.css                                  1.44 kB │ gzip:     0.48 kB
+#92 12.73 dist/assets/PendientesEnvioPage-C3FNOzth.css                                1.46 kB │ gzip:     0.50 kB
+#92 12.73 dist/assets/ArticulosEditor-hN4XjBSU.css                                    1.51 kB │ gzip:     0.56 kB
+#92 12.73 dist/assets/CroquisSelector-EGKEcPn9.css                                    1.57 kB │ gzip:     0.58 kB
+#92 12.73 dist/assets/ProcesarSalidaPage-3vqxc4hA.css                                 1.70 kB │ gzip:     0.61 kB
+#92 12.73 dist/assets/DepositosPage-EMS09NjA.css                                      1.70 kB │ gzip:     0.58 kB
+#92 12.73 dist/assets/TarifasMapaPage-BPXj21RY.css                                    1.72 kB │ gzip:     0.69 kB
+#92 12.73 dist/assets/BusMapLegend-8h5kJfx8.css                                       1.77 kB │ gzip:     0.60 kB
+#92 12.73 dist/assets/EntityConfigPage-DAKKRz0e.css                                   1.99 kB │ gzip:     0.64 kB
+#92 12.73 dist/assets/ProgramadorPage-DpCbSECs.css                                    2.16 kB │ gzip:     0.70 kB
+#92 12.73 dist/assets/AyudaPage-DU-LcbcF.css                                          2.26 kB │ gzip:     0.71 kB
+#92 12.73 dist/assets/NotFoundPage-CJL9QQxp.css                                       2.47 kB │ gzip:     0.97 kB
+#92 12.73 dist/assets/RutaEditorPage-2vfgZJRA.css                                     2.52 kB │ gzip:     0.76 kB
+#92 12.73 dist/assets/RolesPage-BT-z0h1S.css                                          2.55 kB │ gzip:     0.76 kB
+#92 12.73 dist/assets/LoginPage-DcyFeSrq.css                                          3.17 kB │ gzip:     1.12 kB
+#92 12.73 dist/assets/MenuBuilderPage-Cxc8xjYQ.css                                    3.17 kB │ gzip:     0.85 kB
+#92 12.73 dist/assets/EncomiendasPage-Bgnfm-2H.css                                    3.35 kB │ gzip:     0.94 kB
+#92 12.73 dist/assets/BoletosPage-CKwgKaPt.css                                        3.51 kB │ gzip:     0.92 kB
+#92 12.73 dist/assets/AdministracionPage-7NR3DyAs.css                                 4.50 kB │ gzip:     1.07 kB
+#92 12.73 dist/assets/ListPage-Bcomdr1x.css                                           5.01 kB │ gzip:     1.22 kB
+#92 12.73 dist/assets/DataGrid-DDw4txfV.css                                           8.48 kB │ gzip:     2.11 kB
+#92 12.73 dist/assets/BusCroquisSection-0aRFzuH6.css                                  8.84 kB │ gzip:     1.96 kB
+#92 12.73 dist/assets/CalendarioPage-BrN3p949.css                                     9.78 kB │ gzip:     2.43 kB
+#92 12.73 dist/assets/DashboardPage-aeMAudoS.css                                     10.58 kB │ gzip:     2.45 kB
+#92 12.73 dist/assets/leaflet-vh-t_kPv.css                                           15.09 kB │ gzip:     6.36 kB
+#92 12.73 dist/assets/VentaPage-BdqZsaxi.css                                         15.38 kB │ gzip:     3.37 kB
+#92 12.73 dist/assets/index-CUf4tHTd.css                                            123.26 kB │ gzip:    23.37 kB
+#92 12.73 dist/assets/overlayeventbus-4J2uVpX2.js                                     0.06 kB │ gzip:     0.07 kB
+#92 12.73 dist/assets/_plugin-vue_export-helper-BDNMzG2s.js                           0.08 kB │ gzip:     0.09 kB
+#92 12.73 dist/assets/busquedaRemota-DScxzc24.js                                      0.14 kB │ gzip:     0.14 kB
+#92 12.73 dist/assets/reimprimir-CAJ9QnLu.js                                          0.27 kB │ gzip:     0.20 kB
+#92 12.73 dist/assets/api-CTwN2iBx.js                                                 0.31 kB │ gzip:     0.20 kB
+#92 12.73 dist/assets/permisos-DMz4832u.js                                            0.41 kB │ gzip:     0.27 kB
+#92 12.73 dist/assets/zindex-cO8iUN-n.js                                              0.43 kB │ gzip:     0.28 kB
+#92 12.73 dist/assets/realtime-C0h2lCgV.js                                            0.45 kB │ gzip:     0.31 kB
+#92 12.73 dist/assets/api-NQR0ipX0.js                                                 0.46 kB │ gzip:     0.29 kB
+#92 12.73 dist/assets/AccesosAccion-ByHgCgtZ.js                                       0.48 kB │ gzip:     0.35 kB
+#92 12.73 dist/assets/baseinput-B5vEh7rM.js                                           0.49 kB │ gzip:     0.28 kB
+#92 12.73 dist/assets/BitacoraBoletoAccion-DIKJBbWA.js                                0.50 kB │ gzip:     0.35 kB
+#92 12.73 dist/assets/BitacoraSalidaAccion--dPTstHO.js                                0.50 kB │ gzip:     0.34 kB
+#92 12.73 dist/assets/PageHead-DwYqI8hG.js                                            0.51 kB │ gzip:     0.34 kB
+#92 12.73 dist/assets/portal-eSeiAneO.js                                              0.57 kB │ gzip:     0.36 kB
+#92 12.73 dist/assets/formExtension-CkJcA2D4.js                                       0.65 kB │ gzip:     0.40 kB
+#92 12.73 dist/assets/rolldown-runtime-hePW80VL.js                                    0.71 kB │ gzip:     0.42 kB
+#92 12.73 dist/assets/manifiesto-Du0-q9i3.js                                          0.74 kB │ gzip:     0.40 kB
+#92 12.73 dist/assets/api-CJBM3Ccd.js                                                 0.75 kB │ gzip:     0.38 kB
+#92 12.73 dist/assets/useApi-CROJJdhE-Dbvcl2QP.js                                     0.83 kB │ gzip:     0.45 kB
+#92 12.73 dist/assets/api-DxURGSjD.js                                                 0.95 kB │ gzip:     0.49 kB
+#92 12.73 dist/assets/reasignacion-DwXYPEcP.js                                        1.04 kB │ gzip:     0.55 kB
+#92 12.73 dist/assets/Icon-CN4JD4S_.js                                                1.09 kB │ gzip:     0.65 kB
+#92 12.73 dist/assets/api-D2sjf--8.js                                                 1.22 kB │ gzip:     0.52 kB
+#92 12.73 dist/assets/NotFoundPage-BK77cWyJ.js                                        1.30 kB │ gzip:     0.73 kB
+#92 12.73 dist/assets/layout-Oyhlg9up.js                                              1.32 kB │ gzip:     0.71 kB
+#92 12.73 dist/assets/toolbar-BNIuPk0l.js                                             1.41 kB │ gzip:     0.62 kB
+#92 12.73 dist/assets/FormBuilderPage-C2x12G_q.js                                     1.41 kB │ gzip:     0.86 kB
+#92 12.73 dist/assets/AccionesSelect-wHHh57-_.js                                      1.41 kB │ gzip:     0.79 kB
+#92 12.73 dist/assets/minus-DO-cUpLK.js                                               1.51 kB │ gzip:     0.88 kB
+#92 12.73 dist/assets/FacturacionFallidaDialog-BSK5YQ0g.js                            1.53 kB │ gzip:     0.83 kB
+#92 12.73 dist/assets/ChatPage-CJ--9Sm_.js                                            1.54 kB │ gzip:     0.88 kB
+#92 12.73 dist/assets/editor-CmdPERVP.js                                              1.64 kB │ gzip:     0.78 kB
+#92 12.73 dist/assets/api-BXfNkj20.js                                                 1.76 kB │ gzip:     0.82 kB
+#92 12.73 dist/assets/chevrondown-pQ8m0ieb.js                                         1.77 kB │ gzip:     1.07 kB
+#92 12.73 dist/assets/plus-Dxx4DBCd.js                                                1.90 kB │ gzip:     1.00 kB
+#92 12.73 dist/assets/filtro-B2aKnr2I.js                                              1.92 kB │ gzip:     0.77 kB
+#92 12.73 dist/assets/check-BYU8uokn.js                                               1.97 kB │ gzip:     1.17 kB
+#92 12.73 dist/assets/SalidaSelect-DC4gR178.js                                        2.06 kB │ gzip:     1.14 kB
+#92 12.73 dist/assets/CambiarPasswordDialog-fIshwazo.js                               2.09 kB │ gzip:     1.13 kB
+#92 12.73 dist/assets/RegistrarDepositoPage-BINOhWeu.js                               2.31 kB │ gzip:     1.26 kB
+#92 12.73 dist/assets/depositos-DsF4emp7.js                                           2.35 kB │ gzip:     1.08 kB
+#92 12.73 dist/assets/SortablePanelList-CPBEucPY.js                                   2.58 kB │ gzip:     1.35 kB
+#92 12.73 dist/assets/baseeditableholder-CAnjRZ6A.js                                  2.63 kB │ gzip:     0.82 kB
+#92 12.73 dist/assets/ManifiestoSalidaPage-CT0q4i7h.js                                2.70 kB │ gzip:     1.32 kB
+#92 12.73 dist/assets/store-HxxBTnYm.js                                               2.74 kB │ gzip:     1.35 kB
+#92 12.73 dist/assets/listado-CyBQqFnS.js                                             2.88 kB │ gzip:     1.17 kB
+#92 12.73 dist/assets/programacion-CaDd0qyS.js                                        3.13 kB │ gzip:     1.40 kB
+#92 12.73 dist/assets/ManifiestoEncomiendasPage-D54yAInD.js                           3.47 kB │ gzip:     1.70 kB
+#92 12.73 dist/assets/labels-pf544HrL.js                                              3.52 kB │ gzip:     1.65 kB
+#92 12.73 dist/assets/CuadreVoucherPage-CaxjeoEs.js                                   3.77 kB │ gzip:     1.81 kB
+#92 12.73 dist/assets/AgenciaSaldoSection-Cn6RQrwa.js                                 3.77 kB │ gzip:     1.75 kB
+#92 12.73 dist/assets/EliminarUsuariosDialog-BTKdMOik.js                              3.97 kB │ gzip:     1.84 kB
+#92 12.73 dist/assets/EstacionSelect-D-96ZZgV.js                                      4.01 kB │ gzip:     1.86 kB
+#92 12.73 dist/assets/useResumen-jrYKs_YB.js                                          4.22 kB │ gzip:     2.00 kB
+#92 12.73 dist/assets/buses-CPSoHR3N.js                                               4.36 kB │ gzip:     2.22 kB
+#92 12.73 dist/assets/CroquisSelector-M-Qof-QY.js                                     4.49 kB │ gzip:     2.09 kB
+#92 12.73 dist/assets/reglas-Dt39lL6_.js                                              4.50 kB │ gzip:     1.86 kB
+#92 12.73 dist/assets/utils-G2gTD1rS.js                                               4.76 kB │ gzip:     1.64 kB
+#92 12.73 dist/assets/listUtils-D9D5goMy.js                                           4.79 kB │ gzip:     1.93 kB
+#92 12.73 dist/assets/CuadreVentaBoletosPage-CNAUyU1W.js                              4.81 kB │ gzip:     2.13 kB
+#92 12.73 dist/assets/EnviarPorChatDialog-6Jrn3LQE.js                                 4.91 kB │ gzip:     2.25 kB
+#92 12.73 dist/assets/RegistrarDepositoForm-8dO0Qi9u.js                               5.35 kB │ gzip:     2.25 kB
+#92 12.73 dist/assets/AccesosPage-C_4cTLNb.js                                         5.46 kB │ gzip:     2.22 kB
+#92 12.73 dist/assets/encomienda-ChC5ZIjY.js                                          5.54 kB │ gzip:     1.91 kB
+#92 12.73 dist/assets/workbox-window.prod.es5-Bd17z0YL.js                             5.65 kB │ gzip:     2.20 kB
+#92 12.73 dist/assets/store-RlwDe_gI.js                                               5.75 kB │ gzip:     2.16 kB
+#92 12.73 dist/assets/DetalleFacturaBoletosPage-BwS_4Ony.js                           5.84 kB │ gzip:     2.36 kB
+#92 12.73 dist/assets/pinia-Bgm2Aii2.js                                               5.89 kB │ gzip:     2.80 kB
+#92 12.73 dist/assets/TarifaFiltro-_omxB7n2.js                                        6.03 kB │ gzip:     2.27 kB
+#92 12.73 dist/assets/MigracionPage-aImp4rtT.js                                       6.07 kB │ gzip:     2.31 kB
+#92 12.73 dist/assets/ReporteEncomiendaPage-CCP8GtqR.js                               6.37 kB │ gzip:     2.45 kB
+#92 12.73 dist/assets/ticket-DCEY-xj4.js                                              6.39 kB │ gzip:     2.84 kB
+#92 12.73 dist/assets/BitacoraDialog-Cvhgpgxj.js                                      6.49 kB │ gzip:     2.80 kB
+#92 12.73 dist/assets/inputicon-e0HqatAn.js                                           6.73 kB │ gzip:     1.95 kB
+#92 12.73 dist/assets/RutasPage-DgnC8IWN.js                                           6.83 kB │ gzip:     2.75 kB
+#92 12.73 dist/assets/SaldosAgenciaPage-CArdt7_v.js                                   6.86 kB │ gzip:     2.82 kB
+#92 12.73 dist/assets/EspecialesPage-DP_fPTCJ.js                                      6.88 kB │ gzip:     2.73 kB
+#92 12.73 dist/assets/MiCuentaPage-CthYLHT9.js                                        7.19 kB │ gzip:     2.88 kB
+#92 12.73 dist/assets/fieldset-CdVkRX7Y.js                                            7.53 kB │ gzip:     2.36 kB
+#92 12.73 dist/assets/PublicacionPage-D2bil7M8.js                                     7.60 kB │ gzip:     2.98 kB
+#92 12.73 dist/assets/VerSalidaDialog-BZ1FIcGW.js                                     7.91 kB │ gzip:     3.03 kB
+#92 12.73 dist/assets/AnularBoletosDialog-C2eSRf4p.js                                 7.91 kB │ gzip:     3.13 kB
+#92 12.73 dist/assets/PendientesEnvioPage-CU7h539M.js                                 8.04 kB │ gzip:     3.26 kB
+#92 12.73 dist/assets/MigracionPanel-D6IGgoy9.js                                      9.10 kB │ gzip:     3.09 kB
+#92 12.73 dist/assets/BusMapLegend-DubW3GqU.js                                        9.61 kB │ gzip:     3.35 kB
+#92 12.73 dist/assets/ArticulosEditor-1HhtxH7G.js                                     9.99 kB │ gzip:     3.00 kB
+#92 12.73 dist/assets/AutorizacionesPage-DXTvfek8.js                                 10.60 kB │ gzip:     4.21 kB
+#92 12.73 dist/assets/LoginPage-j3voyY0L.js                                          11.62 kB │ gzip:     5.85 kB
+#92 12.73 dist/assets/RegistrarEncomiendaPage-DcqjYFaW.js                            11.74 kB │ gzip:     4.20 kB
+#92 12.73 dist/assets/RolesPage-xpT3r8MQ.js                                          12.06 kB │ gzip:     4.64 kB
+#92 12.73 dist/assets/ProcesarSalidaPage-BFdsn9Sl.js                                 12.12 kB │ gzip:     4.38 kB
+#92 12.73 dist/assets/FormBuilderPanel-BLKfehMP.js                                   12.17 kB │ gzip:     3.89 kB
+#92 12.73 dist/assets/EntregarEncomiendasPage-Ba_sL98D.js                            12.48 kB │ gzip:     4.66 kB
+#92 12.73 dist/assets/UsuarioAccesosPage-DeegU1ux.js                                 13.61 kB │ gzip:     5.01 kB
+#92 12.73 dist/assets/RutaEditorPage-BohR7vJ0.js                                     14.39 kB │ gzip:     5.31 kB
+#92 12.73 dist/assets/ClienteBuscador-BLoPXKtt.js                                    14.45 kB │ gzip:     5.94 kB
+#92 12.73 dist/assets/DataGrid-CKZXc4L6.js                                           14.63 kB │ gzip:     5.07 kB
+#92 12.73 dist/assets/DepositosPage-lonFTkLA.js                                      15.41 kB │ gzip:     5.60 kB
+#92 12.73 dist/assets/times-BB17citu.js                                              15.68 kB │ gzip:     7.03 kB
+#92 12.73 dist/assets/SeguimientoPage-DIy8mCiO.js                                    15.88 kB │ gzip:     6.74 kB
+#92 12.73 dist/assets/tab-BeoWJWGD.js                                                16.70 kB │ gzip:     4.29 kB
+#92 12.73 dist/assets/TarifasMapaPage-D7Y2R_Oq.js                                    17.01 kB │ gzip:     5.98 kB
+#92 12.73 dist/assets/ChequeoPage-C5KOroMM.js                                        18.20 kB │ gzip:     5.98 kB
+#92 12.73 dist/assets/FormPage-EmBXx3Au.js                                           21.01 kB │ gzip:     7.84 kB
+#92 12.73 dist/assets/CalendarioPage-C1zdmIts.js                                     22.13 kB │ gzip:     8.18 kB
+#92 12.73 dist/assets/ProgramadorPage-C_UFm-IA.js                                    23.19 kB │ gzip:     8.11 kB
+#92 12.73 dist/assets/EntityConfigPage-CpmhhEq6.js                                   24.54 kB │ gzip:     7.67 kB
+#92 12.73 dist/assets/SalidasPage-3szSjKaM.js                                        25.81 kB │ gzip:     8.07 kB
+#92 12.73 dist/assets/BusCroquisSection-BK0ltDzK.js                                  25.91 kB │ gzip:     9.28 kB
+#92 12.73 dist/assets/virtualscroller-CuYzugXd.js                                    26.71 kB │ gzip:     8.23 kB
+#92 12.73 dist/assets/paginator-jGFvtgjA.js                                          28.13 kB │ gzip:     7.66 kB
+#92 12.73 dist/assets/AdministracionPage-DAfUBB8o.js                                 29.86 kB │ gzip:     9.76 kB
+#92 12.73 dist/assets/EncomiendasPage-HGHU2jKx.js                                    31.50 kB │ gzip:     9.56 kB
+#92 12.73 dist/assets/DashboardPage-BkHVQ9gt.js                                      38.90 kB │ gzip:    12.83 kB
+#92 12.73 dist/assets/ListPage-Bxpd35tr.js                                           46.78 kB │ gzip:    14.91 kB
+#92 12.73 dist/assets/PaginaWebPage-0Q-5u8uj.js                                      47.73 kB │ gzip:    14.04 kB
+#92 12.73 dist/assets/BoletosPage-DV6SxQpk.js                                        49.25 kB │ gzip:    13.77 kB
+#92 12.73 dist/assets/VentaPage-DY88NgMu.js                                          52.40 kB │ gzip:    17.94 kB
+#92 12.73 dist/assets/MenuBuilderPage-CnYx2_sS.js                                    55.77 kB │ gzip:    16.48 kB
+#92 12.73 dist/assets/session-Ca01jlhi.js                                            58.13 kB │ gzip:    20.29 kB
+#92 12.73 dist/assets/runtime-core.esm-bundler-CtF3Gqgn.js                           67.30 kB │ gzip:    26.39 kB
+#92 12.73 dist/assets/ripple-H02m2a5B.js                                             75.93 kB │ gzip:    20.40 kB
+#92 12.73 dist/assets/AyudaPage-4_bQy9ds.js                                          87.74 kB │ gzip:    27.85 kB
+#92 12.73 dist/assets/leaflet-blrVLEi6.js                                           148.80 kB │ gzip:    43.39 kB
+#92 12.73 dist/assets/client-DQpKKONq.js                                            196.11 kB │ gzip:    57.78 kB
+#92 12.73 dist/assets/column-CT-Da-i5.js                                            217.01 kB │ gzip:    44.51 kB
+#92 12.73 dist/assets/iconMeta-CLV9jx5f.js                                          771.91 kB │ gzip:   203.52 kB
+#92 12.73 dist/assets/index-C1exYbcf.js                                           1,521.36 kB │ gzip:   341.68 kB
+#92 12.73 dist/assets/material-symbols-D_20Mn4g.js                                8,527.32 kB │ gzip: 1,301.01 kB
+#92 12.73 
+#92 12.73 [plugin builtin:vite-reporter] 
+#92 12.73 (!) Some chunks are larger than 500 kB after minification. Consider:
+#92 12.73 - Using dynamic import() to code-split the application
+#92 12.73 - Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+#92 12.73 - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+#92 12.73 ✓ built in 9.41s
+#92 21.58 
+#92 21.58 PWA v2.0.0
+#92 21.58 mode      generateSW
+#92 21.58 precache  194 entries (6549.66 KiB)
+#92 21.58 files generated
+#92 21.58   dist/sw.js
+#92 21.58   dist/workbox-2fbc6a65.js
+#92 DONE 75.0s
+
+#14 [frontend base 1/1] WORKDIR /frontend
+#14 CACHED
+
+#93 [frontend prod 2/4] COPY --from=builder /frontend/dist ./dist
+#93 DONE 0.1s
+
+#94 [frontend prod 3/4] COPY server.ts ./
+#94 DONE 0.1s
+
+#95 [frontend prod 4/4] RUN apk add --no-cache curl
+#95 1.376 (1/9) Installing brotli-libs (1.2.1-r0)
+#95 1.402 (2/9) Installing c-ares (1.34.9-r0)
+#95 1.415 (3/9) Installing libunistring (1.4.2-r0)
+#95 1.454 (4/9) Installing libidn2 (2.3.8-r0)
+#95 1.471 (5/9) Installing nghttp2-libs (1.70.0-r0)
+#95 1.482 (6/9) Installing libpsl (0.21.5-r3)
+#95 1.493 (7/9) Installing zstd-libs (1.5.7-r2)
+#95 1.517 (8/9) Installing libcurl (8.23.0-r0)
+#95 1.544 (9/9) Installing curl (8.23.0-r0)
+#95 1.563 Executing busybox-1.37.0-r31.trigger
+#95 1.576 OK: 15.9 MiB in 27 packages
+#95 DONE 1.7s
+
+#96 [frontend] exporting to image
+#96 exporting layers
+#96 exporting layers 4.2s done
+#96 exporting manifest sha256:e64e076e9052316337990f2e0726d5c43b9da36bb8de6f6affbed4909c5b9749 0.0s done
+#96 exporting config sha256:5f31531ea191be1cecc89558dd3a3a63c8c4dde45dfe4feccfd17b94764b0924 0.0s done
+#96 exporting attestation manifest sha256:278100dbfd59285db132058b9e187dc36ddf4c1e9baecb2d2e82a17b78ed5641 0.0s done
+#96 exporting manifest list sha256:f63f74474c7b14e1a2135f0c8bd2288adca28167772c60fe621d4aadabaa5b65 0.0s done
+#96 naming to docker.io/library/app-frontend:latest done
+#96 unpacking to docker.io/library/app-frontend:latest
+#96 unpacking to docker.io/library/app-frontend:latest 1.0s done
+#96 DONE 5.4s
+
+#97 [frontend] resolving provenance for metadata file
+#97 DONE 0.0s
+ backend  Built
+ frontend  Built
+ worker  Built
+ Container frontend  Recreate
+ Container database  Running
+ Container backend  Recreate
+ Container backend  Recreated
+ Container sincronizacion  Recreate
+ Container worker  Recreate
+ Container frontend  Recreated
+ Container worker  Recreated
+ Container sincronizacion  Recreated
+ Container database  Waiting
+ Container frontend  Starting
+ Container frontend  Started
+ Container database  Healthy
+ Container backend  Starting
+ Container backend  Started
+ Container worker  Starting
+ Container sincronizacion  Starting
+ Container sincronizacion  Started
+ Container worker  Started

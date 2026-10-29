@@ -1,0 +1,57 @@
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  51.01MB
+Step 1/6 : FROM oven/bun:1-alpine
+ ---> 4cf82f5686b1
+Step 2/6 : WORKDIR /frontend
+ ---> Using cache
+ ---> f4c73d021f72
+Step 3/6 : COPY bun.lock package.json ./
+ ---> Using cache
+ ---> ca6294202403
+Step 4/6 : RUN bun install --frozen-lockfile
+ ---> Using cache
+ ---> 43d48df9ca55
+Step 5/6 : COPY . .
+ ---> cd09c40a9302
+Step 6/6 : RUN echo "inputs=$(ls src/shared/formkit/inputs | wc -l)" && ls src/shared/formkit/inputs | head -3 && ls -la | head -40 && (bunx vue-tsc --build 2>&1 | grep -c "error TS" || true)
+ ---> Running in 6912206b6601
+inputs=18
+FkAutoComplete.vue
+FkButton.vue
+FkCascadeSelect.vue
+total 516
+drwxr-xr-x    1 root     root          4096 Oct 26 20:43 .
+drwxr-xr-x    1 root     root          4096 Oct 26 20:44 ..
+-rw-r--r--    1 root     root            93 Oct 26 17:53 .env
+-rw-r--r--    1 root     root           106 Oct 26 17:53 .oxfmtrc.json
+-rw-r--r--    1 root     root           227 Oct 26 17:53 .oxlintrc.json
+-rw-r--r--    1 root     root            25 Oct 26 17:53 .prettierrc
+drwxr-xr-x    2 root     root          4096 Oct 26 17:53 .vscode
+drwxr-xr-x    2 root     root          4096 Oct 26 17:53 agents
+-rw-r--r--    1 root     root        234623 Oct 26 17:53 bun.lock
+drwxr-xr-x    2 root     root          4096 Oct 26 17:53 e2e
+-rw-r--r--    1 root     root           131 Oct 26 17:53 env.d.ts
+-rw-r--r--    1 root     root          1303 Oct 26 17:53 eslint.config.ts
+-rw-r--r--    1 root     root          1681 Oct 26 17:53 index.html
+drwxr-xr-x  482 root     root         20480 Oct 26 20:25 node_modules
+-rw-r--r--    1 root     root        164808 Oct 26 17:53 package-lock.json
+-rw-r--r--    1 root     root          2408 Oct 26 17:53 package.json
+-rw-r--r--    1 root     root          1040 Oct 26 17:53 playwright.config.ts
+drwxr-xr-x    5 root     root          4096 Oct 26 17:53 public
+drwxr-xr-x    2 root     root          4096 Oct 26 17:53 scripts
+-rw-r--r--    1 root     root           742 Oct 26 20:01 server.ts
+drwxr-xr-x    8 root     root          4096 Oct 26 17:53 src
+-rw-r--r--    1 root     root           595 Oct 26 20:30 tsconfig.app.json
+-rw-r--r--    1 root     root           313 Oct 26 17:53 tsconfig.json
+-rw-r--r--    1 root     root           964 Oct 26 17:53 tsconfig.node.json
+-rw-r--r--    1 root     root           856 Oct 26 20:30 tsconfig.vitest.json
+-rw-r--r--    1 root     root          4942 Oct 26 17:53 vite.config.ts
+-rw-r--r--    1 root     root           382 Oct 26 17:53 vitest.config.ts
+167
+ ---> Removed intermediate container 6912206b6601
+ ---> 663ec1004e17
+Successfully built 663ec1004e17
+Successfully tagged fdn-dbg:latest

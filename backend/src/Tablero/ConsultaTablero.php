@@ -112,7 +112,8 @@ final class ConsultaTablero
     /**
      * Una sola pasada por los boletos vendidos de las dos ventanas, por cubo
      * (hora o día), canal y punto de venta; de ahí salen la serie, las
-     * incidencias y el ranking de puntos.
+     * incidencias y el ranking de puntos. Agrupa primero por ids y pone los
+     * nombres a los grupos (cientos), no a cada boleto (decenas de miles).
      *
      * @return array{ventas: list<array{actual: bool, t: string, canal: string, ingresos: int, boletos: int}>, incidencias: array{actual: array{anulados: int, montoAnulado: int, cortesias: int, valorCortesias: int}, anterior: array{anulados: int, montoAnulado: int, cortesias: int, valorCortesias: int}}, puntos: list<array{tipo: string, nombre: string, ingresos: int, boletos: int, anterior: int}>}
      */
@@ -123,24 +124,36 @@ final class ConsultaTablero
         $cobrado = "{$vivo} AND NOT " . self::SIN_COBRO;
         $filas = $this->db->fetchAllAssociative(
             sprintf(
-                "SELECT v.created_at >= :inicio AS actual,
-                        to_char(date_trunc(:unidad, v.created_at), 'YYYY-MM-DD HH24:00') AS t,
-                        v.canal,
-                        CASE WHEN v.canal = 'web' THEN 'web' WHEN v.agencia_id IS NOT NULL THEN 'agencia' ELSE 'estacion' END AS tipo,
-                        CASE WHEN v.canal = 'web' THEN 'Página web' ELSE COALESCE(ag.nombre, en.nombre, 'Sin estación') END AS nombre,
-                        COALESCE(SUM(b.precio_monto) FILTER (WHERE {$cobrado}), 0) AS ingresos,
-                        COUNT(*) FILTER (WHERE {$cobrado}) AS boletos,
-                        COUNT(*) FILTER (WHERE b.estado = 'anulado') AS anulados,
-                        COALESCE(SUM(b.precio_monto) FILTER (WHERE b.estado = 'anulado'), 0) AS monto_anulado,
-                        COUNT(*) FILTER (WHERE {$vivo} AND {$sinCobro}) AS cortesias,
-                        COALESCE(SUM(b.precio_monto) FILTER (WHERE {$vivo} AND {$sinCobro}), 0) AS valor_cortesias
-                   FROM boleto_asiento b
-                   JOIN boleto_venta v ON v.id = b.boleto_venta_id
-                   JOIN salida s ON s.id = b.salida_id
-                   LEFT JOIN agencia ag ON ag.id = v.agencia_id
-                   LEFT JOIN enclave en ON en.id = v.estacion_id
-                  WHERE v.estado = 'confirmada' AND b.precio_moneda = :moneda AND %s %s
+                "WITH m AS (
+                    SELECT v.created_at >= :inicio AS actual, date_trunc(:unidad, v.created_at) AS t,
+                           v.canal, v.agencia_id, v.estacion_id,
+                           SUM(b.precio_monto) FILTER (WHERE {$cobrado}) AS ingresos,
+                           COUNT(*) FILTER (WHERE {$cobrado}) AS boletos,
+                           COUNT(*) FILTER (WHERE b.estado = 'anulado') AS anulados,
+                           SUM(b.precio_monto) FILTER (WHERE b.estado = 'anulado') AS monto_anulado,
+                           COUNT(*) FILTER (WHERE {$vivo} AND {$sinCobro}) AS cortesias,
+                           SUM(b.precio_monto) FILTER (WHERE {$vivo} AND {$sinCobro}) AS valor_cortesias
+                      FROM boleto_asiento b
+                      JOIN boleto_venta v ON v.id = b.boleto_venta_id
+                      %s
+                     WHERE v.estado = 'confirmada' AND b.precio_moneda = :moneda AND %s %s
+                     GROUP BY 1, 2, 3, 4, 5
+                 )
+                 SELECT m.actual, to_char(m.t, 'YYYY-MM-DD HH24:00') AS t, m.canal,
+                        CASE WHEN m.canal = 'web' THEN 'web' WHEN m.agencia_id IS NOT NULL THEN 'agencia' ELSE 'estacion' END AS tipo,
+                        CASE WHEN m.canal = 'web' THEN 'Página web' ELSE COALESCE(ag.nombre, en.nombre, 'Sin estación') END AS nombre,
+                        COALESCE(SUM(m.ingresos), 0) AS ingresos,
+                        SUM(m.boletos) AS boletos,
+                        SUM(m.anulados) AS anulados,
+                        COALESCE(SUM(m.monto_anulado), 0) AS monto_anulado,
+                        SUM(m.cortesias) AS cortesias,
+                        COALESCE(SUM(m.valor_cortesias), 0) AS valor_cortesias
+                   FROM m
+                   LEFT JOIN agencia ag ON ag.id = m.agencia_id
+                   LEFT JOIN enclave en ON en.id = m.estacion_id
                   GROUP BY 1, 2, 3, 4, 5",
+                // La salida solo hace falta para acotar por empresa.
+                $empresa !== null ? "JOIN salida s ON s.id = b.salida_id" : "",
                 self::ventanas("v.created_at"),
                 self::deEmpresa($empresa),
             ),

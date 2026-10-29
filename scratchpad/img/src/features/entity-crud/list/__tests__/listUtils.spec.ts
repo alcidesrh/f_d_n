@@ -1,0 +1,345 @@
+import { describe, it, expect } from 'vitest'
+import {
+  cellDisplay,
+  cellLabel,
+  cellValue,
+  fieldKind,
+  fromServerFilters,
+  idDisplay,
+  isEmptyFilterValue,
+  hasServerFilter,
+  nextOrder,
+  noServerFilter,
+  rangeToIso,
+  dateRangeLabel,
+  fromIso,
+  withTime,
+  resolveFilterArgs,
+  sortDirection,
+  toEditedInput,
+  toServerFilters,
+  sameCellValue,
+  columnTitle,
+} from '@/features/entity-crud/list/listUtils'
+import type { EntityFieldSchema, EntitySchema, SchemaArg } from '@/core/graphql/types'
+
+function field(name: string, namedType: string, isRelation = false): EntityFieldSchema {
+  return {
+    name,
+    type: namedType,
+    namedType,
+    kind: 'SCALAR',
+    required: false,
+    isList: false,
+    isRelation,
+    isSubcollection: false,
+    enumValues: [],
+  }
+}
+
+function arg(name: string): SchemaArg {
+  return { name, type: 'String', namedType: 'String', required: false, isList: false }
+}
+
+const schema: EntitySchema = {
+  name: 'Icon',
+  slug: null,
+  queryItem: 'icon',
+  queryCollection: 'icons',
+  collectionKind: 'list',
+  collectionType: null,
+  paginationType: null,
+  orderInput: null,
+  orderFields: [],
+  itemArgs: [],
+  collectionArgs: [],
+  filterArgs: [arg('icon'), arg('name'), arg('createdAt_after'), arg('createdAt_before')],
+  fields: [
+    field('id', 'ID'),
+    field('icon', 'String'),
+    field('name', 'String'),
+    field('createdAt', 'Date'),
+    field('amount', 'Float'),
+    field('active', 'Boolean'),
+    field('category', 'Category', true),
+  ],
+  scalarFields: ['id', 'icon', 'name'],
+  relations: [field('category', 'Category', true)],
+  subcollections: [],
+  create: null,
+  update: null,
+  delete: null,
+}
+
+describe('cellLabel', () => {
+  it('passthrough de primitivos', () => {
+    expect(cellLabel('abc')).toBe('abc')
+    expect(cellLabel(42)).toBe('42')
+    expect(cellLabel(true)).toBe('true')
+    expect(cellLabel(null)).toBe('')
+    expect(cellLabel(undefined)).toBe('')
+  })
+
+  it('etiqueta objetos por name → label → id', () => {
+    expect(cellLabel({ name: 'A' })).toBe('A')
+    expect(cellLabel({ label: 'B' })).toBe('B')
+    expect(cellLabel({ id: '/api/buses/3' })).toBe('/api/buses/3')
+    expect(cellLabel({ name: 'A', id: 'x' })).toBe('A')
+    expect(cellLabel({ id: 'x', name: 'C', nombre: 'B', label: 'A' })).toBe('A')
+    expect(cellLabel({ id: 'x', name: 'C', nombre: 'B' })).toBe('B')
+    expect(cellLabel({})).toBe('')
+  })
+
+  it('une listas con comas y filtra vacíos', () => {
+    expect(cellLabel([{ name: 'A' }, { name: 'B' }])).toBe('A, B')
+    expect(cellLabel([{ id: 1 }, null, 'C'])).toBe('1, C')
+    expect(cellLabel([])).toBe('')
+  })
+})
+
+describe('cellValue', () => {
+  it('lee la propiedad del item', () => {
+    expect(cellValue({ name: 'home' }, 'name')).toBe('home')
+    expect(cellValue({ category: { label: 'Ventas' } }, 'category')).toBe('Ventas')
+    expect(cellValue({ missing: true }, 'otro')).toBe('')
+  })
+})
+
+describe('idDisplay', () => {
+  it('extrae el número de un IRI de resource', () => {
+    expect(idDisplay('/api/icons/1')).toBe('1')
+    expect(idDisplay('/api/buses/42')).toBe('42')
+    expect(idDisplay('/api/categories/1')).toBe('1')
+  })
+
+  it('deja valores que no son IRIs numéricos tal cual', () => {
+    expect(idDisplay(7)).toBe('7')
+    expect(idDisplay('abc')).toBe('abc')
+    expect(idDisplay('/api/entities/abc')).toBe('/api/entities/abc')
+    expect(idDisplay(null)).toBe('')
+    expect(idDisplay(undefined)).toBe('')
+  })
+})
+
+describe('cellDisplay', () => {
+  it('muestra el id como número, no como IRI', () => {
+    expect(cellDisplay({ id: '/api/icons/1' }, { field: 'id' })).toBe('1')
+    expect(cellDisplay({ _id: '/api/icons/2' }, { field: '_id' })).toBe('2')
+  })
+
+  it('delega en cellValue para el resto de campos', () => {
+    expect(cellDisplay({ name: 'home' }, { field: 'name' })).toBe('home')
+    expect(cellDisplay({ category: { label: 'Ventas' } }, { field: 'category' })).toBe('Ventas')
+  })
+})
+
+describe('cellDisplay con presentador', () => {
+  const row = { trayecto: { id: '/api/trayectos/1', origen: { label: 'Guatemala' }, destino: { label: 'Esquipulas' } } }
+
+  it('compone el texto con el presentador de Entidad.campo', () => {
+    expect(cellDisplay(row, { field: 'trayecto' }, 'BoletoTarifa')).toBe('Guatemala ➔ Esquipulas')
+  })
+
+  it('otra entidad o campo sin presentador usa el label', () => {
+    const labelled = { trayecto: { label: 'T1' } }
+    expect(cellDisplay(labelled, { field: 'trayecto' }, 'Salida')).toBe('T1')
+    expect(cellDisplay(labelled, { field: 'trayecto' })).toBe('T1')
+  })
+
+  it('relación vacía no rompe', () => {
+    expect(cellDisplay({ trayecto: null }, { field: 'trayecto' }, 'BoletoTarifa')).toBe('')
+  })
+})
+
+describe('fieldKind', () => {
+  it('detecta el tipo por namedType', () => {
+    expect(fieldKind(schema, 'createdAt')).toBe('date')
+    expect(fieldKind(schema, 'amount')).toBe('number')
+    expect(fieldKind(schema, 'active')).toBe('boolean')
+    expect(fieldKind(schema, 'name')).toBe('text')
+  })
+
+  it('detecta relaciones por delante de scalars', () => {
+    expect(fieldKind(schema, 'category')).toBe('relation')
+  })
+
+  it('cae a text para campos desconocidos', () => {
+    expect(fieldKind(schema, 'nope')).toBe('text')
+  })
+})
+
+describe('resolveFilterArgs', () => {
+  it('matchea el arg exacto por nombre de campo', () => {
+    const match = resolveFilterArgs(schema, 'name')
+    expect(match).toEqual({ single: 'name', after: null, before: null })
+    expect(noServerFilter(match)).toBe(false)
+  })
+
+  it('mapea fechas a _after/_before', () => {
+    expect(resolveFilterArgs(schema, 'createdAt')).toEqual({
+      single: null,
+      after: 'createdAt_after',
+      before: 'createdAt_before',
+    })
+  })
+
+  it('devuelve sin match para campos sin args', () => {
+    const match = resolveFilterArgs(schema, 'amount')
+    expect(match).toEqual({ single: null, after: null, before: null })
+    expect(noServerFilter(match)).toBe(true)
+  })
+
+  it('cae a {campo}_contains cuando existe', () => {
+    const withContains: EntitySchema = {
+      ...schema,
+      filterArgs: [arg('icon'), arg('nombre_contains')],
+    }
+    expect(resolveFilterArgs(withContains, 'nombre')).toEqual({
+      single: 'nombre_contains',
+      after: null,
+      before: null,
+    })
+  })
+})
+
+describe('rangeToIso', () => {
+  it('normaliza [Date, Date] a after/before con día y hora locales', () => {
+    expect(rangeToIso([new Date(2026, 0, 5, 10), new Date(2026, 0, 31, 23, 30)])).toEqual({
+      after: '2026-01-05T10:00',
+      before: '2026-01-31T23:30',
+    })
+  })
+
+  it('respeta strings con o sin hora', () => {
+    expect(rangeToIso(['2026-01-01T08:15:00', '2026-02-01'])).toEqual({ after: '2026-01-01T08:15', before: '2026-02-01' })
+  })
+
+  it('soporta { start, end } y descarta inválidos', () => {
+    expect(rangeToIso({ start: '2026-03-01', end: new Date(2026, 2, 15) })).toEqual({
+      after: '2026-03-01',
+      before: '2026-03-15T00:00',
+    })
+    expect(rangeToIso({ start: new Date('invalid') })).toEqual({})
+    expect(rangeToIso([])).toEqual({})
+    expect(rangeToIso(null)).toEqual({})
+  })
+
+  it('dateRangeLabel, fromIso y withTime', () => {
+    expect(dateRangeLabel([new Date(2026, 0, 5, 8, 5), new Date(2026, 0, 6, 23, 59)])).toBe('05/01/2026 08:05 – 06/01/2026 23:59')
+    expect(dateRangeLabel([new Date(2026, 0, 5), null])).toBe('05/01/2026 00:00 – …')
+    expect(fromIso('2026-01-05T08:30').getHours()).toBe(8)
+    expect(fromIso('2026-01-05').getDate()).toBe(5)
+    expect(withTime(new Date(2026, 0, 5), new Date(2000, 0, 1, 14, 45), [0, 0])).toEqual(new Date(2026, 0, 5, 14, 45))
+    expect(withTime(new Date(2026, 0, 5), null, [23, 59])).toEqual(new Date(2026, 0, 5, 23, 59))
+  })
+})
+
+describe('isEmptyFilterValue', () => {
+  it('considera vacío undefined/null/string vacía/array vacío', () => {
+    expect(isEmptyFilterValue(undefined)).toBe(true)
+    expect(isEmptyFilterValue(null)).toBe(true)
+    expect(isEmptyFilterValue('')).toBe(true)
+    expect(isEmptyFilterValue([])).toBe(true)
+  })
+
+  it('considera lleno 0, false y strings', () => {
+    expect(isEmptyFilterValue(0)).toBe(false)
+    expect(isEmptyFilterValue(false)).toBe(false)
+    expect(isEmptyFilterValue('0')).toBe(false)
+    expect(isEmptyFilterValue(['a'])).toBe(false)
+  })
+})
+
+describe('toServerFilters / fromServerFilters', () => {
+  it('traduce solo los campos con argumento en el backend y vuelve a los valores de la UI', () => {
+    const range = [new Date(2026, 0, 1, 6, 0), new Date(2026, 0, 31, 18, 30)]
+    const server = toServerFilters(schema, {
+      name: 'ho',
+      description: 'x',
+      createdAt: range,
+      icon: '',
+    })
+    expect(server).toEqual({
+      name: 'ho',
+      createdAt_after: '2026-01-01T06:00',
+      createdAt_before: '2026-01-31T18:30',
+    })
+    const back = fromServerFilters(schema, server)
+    expect(back.name).toBe('ho')
+    expect(back.createdAt).toEqual(range)
+  })
+
+  it('hasServerFilter distingue los campos sin argumento (no se filtran)', () => {
+    expect(hasServerFilter(schema, 'name')).toBe(true)
+    expect(hasServerFilter(schema, 'createdAt')).toBe(true)
+    expect(hasServerFilter(schema, 'amount')).toBe(false)
+  })
+})
+
+describe('relaciones a muchos y combinación OR', () => {
+  const tags = { ...field('tags', 'Tag', true), isList: true }
+  const withRelations: EntitySchema = {
+    ...schema,
+    fields: [...schema.fields, tags],
+    filterArgs: [...schema.filterArgs, arg('category'), arg('category_list'), arg('tags'), arg('tags_list'), arg('_combinar')],
+  }
+
+  it('a muchos filtra por la lista; a uno, por un valor', () => {
+    expect(resolveFilterArgs(withRelations, 'tags')).toEqual({ single: null, list: 'tags_list', after: null, before: null })
+    expect(resolveFilterArgs(withRelations, 'category').single).toBe('category')
+    expect(toServerFilters(withRelations, { tags: ['/api/tags/1', '/api/tags/2'], category: '/api/categories/3' })).toEqual({
+      tags_list: ['/api/tags/1', '/api/tags/2'],
+      category: '/api/categories/3',
+    })
+    expect(fromServerFilters(withRelations, { tags_list: ['/api/tags/1'] }).tags).toEqual(['/api/tags/1'])
+  })
+
+  it('con modo or y más de un filtro agrega _combinar; con uno solo, no', () => {
+    expect(toServerFilters(withRelations, { name: 'a', icon: 'b' }, 'or')).toEqual({ name: 'a', icon: 'b', _combinar: 'or' })
+    expect(toServerFilters(withRelations, { name: 'a', icon: '' }, 'or')).toEqual({ name: 'a' })
+    expect(toServerFilters(withRelations, { name: 'a', icon: 'b' }, 'and')).toEqual({ name: 'a', icon: 'b' })
+    // Una colección sin el argumento no lo recibe.
+    expect(toServerFilters(schema, { name: 'a', icon: 'b' }, 'or')).toEqual({ name: 'a', icon: 'b' })
+  })
+
+  it('un rango de fechas a medias filtra por el extremo elegido', () => {
+    expect(toServerFilters(schema, { createdAt: [new Date(2026, 0, 5), null] })).toEqual({ createdAt_after: '2026-01-05T00:00' })
+  })
+})
+
+describe('toEditedInput', () => {
+  it('fechas a YYYY-MM-DD y relaciones a su IRI', () => {
+    expect(toEditedInput(schema, 'createdAt', '2026-01-15T10:00:00-06:00')).toBe('2026-01-15')
+    expect(toEditedInput(schema, 'category', { value: '/api/categories/2', label: 'X' })).toBe(
+      '/api/categories/2',
+    )
+    expect(toEditedInput(schema, 'name', 'abc')).toBe('abc')
+  })
+})
+
+describe('orden', () => {
+  it('cicla sin orden → ASC → DESC → sin orden', () => {
+    expect(nextOrder([], 'name')).toEqual([{ name: 'ASC' }])
+    expect(nextOrder([{ name: 'ASC' }], 'name')).toEqual([{ name: 'DESC' }])
+    expect(nextOrder([{ name: 'DESC' }], 'name')).toEqual([])
+    expect(nextOrder([{ icon: 'ASC' }], 'name')).toEqual([{ name: 'ASC' }])
+    expect(sortDirection([{ name: 'DESC' }], 'name')).toBe('desc')
+    expect(sortDirection([{ name: 'DESC' }], 'icon')).toBeNull()
+  })
+})
+
+describe('sameCellValue y columnTitle', () => {
+  it('compara relaciones por id y fechas por día', () => {
+    expect(sameCellValue({ id: '/api/buses/3', label: 'A' }, { id: '/api/buses/3', label: 'B' })).toBe(true)
+    expect(sameCellValue({ id: '/api/buses/3' }, { id: '/api/buses/4' })).toBe(false)
+    expect(sameCellValue('2026-01-05T00:00:00-06:00', '2026-01-05T00:00:00-06:00')).toBe(true)
+    expect(sameCellValue(null, '')).toBe(true)
+    expect(sameCellValue('a', 'b')).toBe(false)
+  })
+
+  it('humaniza el nombre de la propiedad, respeta un label propio', () => {
+    expect(columnTitle({ field: 'fechaSalida', label: 'fechaSalida' })).toBe('Fecha salida')
+    expect(columnTitle({ field: 'id' })).toBe('Id')
+    expect(columnTitle({ field: 'x', label: 'Código' })).toBe('Código')
+  })
+})
