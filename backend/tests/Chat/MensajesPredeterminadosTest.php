@@ -77,7 +77,9 @@ final class MensajesPredeterminadosTest extends TestCase
         self::assertStringContainsString("Inició: jue 29 de oct, 2:00 p. m. · Bus 101", $texto);
         self::assertStringContainsString("Asientos: 2 ocupados (1 con tramos intermedios) y 8 libres de 10.", $texto);
         self::assertStringContainsString("Por canal: estación 2 · agencia 0 · web 0.", $texto);
-        self::assertStringContainsString("• Ana: 2 (A 2, B 0) · 1 cortesía · 1 intermedia", $texto);
+        self::assertStringContainsString("• Ana: Reasignados 0 · Anulados 0 · Vouchers 0 · Cortesías 1 · Intermedias 1 · Clase A 2 · Clase B 0 · Total 2", $texto);
+        self::assertStringContainsString("• Total: Reasignados 0 · Anulados 0 · Vouchers 0 · Cortesías 1 · Intermedias 1 · Clase A 2 · Clase B 0 · Total 2", $texto);
+        self::assertStringNotContainsString("PDF", $texto);
     }
 
     public function testUnaSalidaSinBoletosNoTieneTablaDeVendedores(): void

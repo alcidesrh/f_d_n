@@ -105,7 +105,7 @@ final readonly class OcupacionAlIniciar
     }
 
     /**
-     * El mensaje del chat: lo esencial en texto; la tabla completa va en el PDF.
+     * El mensaje del chat: el resumen y la tabla completa por vendedor.
      *
      * @param string $inicio hora de inicio ya formateada
      */
@@ -124,32 +124,24 @@ final readonly class OcupacionAlIniciar
             sprintf("Por canal: estación %d · agencia %d · web %d.", $this->porCanal["estacion"] ?? 0, $this->porCanal["agencia"] ?? 0, $this->porCanal["web"] ?? 0),
         ];
         if ($this->filas !== []) {
-            $lineas[] = "Por vendedor:";
+            $lineas[] = "Por vendedor (cada cifra cuenta asientos ocupados; las categorías se solapan, el total es clase A + clase B):";
             foreach ($this->filas as $f) {
-                $lineas[] = "• " . self::lineaVendedor($f["usuario"], $f["cuenta"]);
+                $lineas[] = "• " . self::linea($f["usuario"], $f["cuenta"]);
             }
-            $lineas[] = "La tabla completa va en el PDF.";
+            $lineas[] = "• " . self::linea("Total", $this->totales);
         }
 
         return implode("\n", $lineas);
     }
 
     /** @param array<string, int> $c */
-    private static function lineaVendedor(string $usuario, array $c): string
+    private static function linea(string $usuario, array $c): string
     {
-        $extra = array_filter([
-            $c["reasignados"] > 0 ? self::cuenta($c["reasignados"], "reasignado", "reasignados") : null,
-            $c["anulados"] > 0 ? self::cuenta($c["anulados"], "anulado", "anulados") : null,
-            $c["vouchers"] > 0 ? self::cuenta($c["vouchers"], "voucher", "vouchers") : null,
-            $c["cortesias"] > 0 ? self::cuenta($c["cortesias"], "cortesía", "cortesías") : null,
-            $c["intermedias"] > 0 ? self::cuenta($c["intermedias"], "intermedia", "intermedias") : null,
-        ]);
+        $partes = [];
+        foreach (self::COLUMNAS as $clave => $etiqueta) {
+            $partes[] = sprintf("%s %d", $etiqueta, $c[$clave]);
+        }
 
-        return sprintf("%s: %d (A %d, B %d)%s", $usuario, $c["total"], $c["claseA"], $c["claseB"], $extra === [] ? "" : " · " . implode(" · ", $extra));
-    }
-
-    private static function cuenta(int $n, string $uno, string $varios): string
-    {
-        return sprintf("%d %s", $n, $n === 1 ? $uno : $varios);
+        return sprintf("%s: %s", $usuario, implode(" · ", $partes));
     }
 }

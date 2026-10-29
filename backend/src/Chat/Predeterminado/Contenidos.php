@@ -16,7 +16,6 @@ use App\Entity\Salida;
 use App\Reporte\Diario\ConsultaIncidencias;
 use App\Reporte\Diario\ResumenDiario;
 use App\Reporte\Dinero;
-use App\Reporte\ReportePdf;
 use App\Tablero\ConsultaTablero;
 use App\Tablero\Periodo;
 use Doctrine\DBAL\Connection;
@@ -31,9 +30,6 @@ use Doctrine\ORM\EntityManagerInterface;
  */
 final class Contenidos
 {
-    /** Quién figura como "generado por" en los PDF. */
-    public const AUTOR = "Mensajes predeterminados";
-
     /** Una salida cuya hora pasó hace más que esto ya no se avisa (el programador estuvo detenido). */
     public const VENTANA_SALIDA = "-6 hours";
 
@@ -43,7 +39,6 @@ final class Contenidos
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly Connection $db,
-        private readonly ReportePdf $pdf,
         private readonly ConsultaTablero $tablero,
         private readonly ConsultaIncidencias $incidencias,
     ) {}
@@ -115,23 +110,12 @@ final class Contenidos
         $ultimaParada = max(0, ($salida->getRuta()?->getParadas()->count() ?? 1) - 1);
         $ocupacion = OcupacionAlIniciar::de($filas, $salida->getBus()?->getAsientos()->count() ?? 0, $ultimaParada);
 
-        $ruta = self::ruta($salida);
         $hora = self::formato("EEE d 'de' MMM, h:mm a");
-        $ficha = [
-            "ruta" => $ruta,
-            "inicio" => $hora->format($inicio),
-            "bus" => $salida->getBus()?->getCodigo(),
-            "empresa" => $salida->getEmpresa()?->getNombreCorto() ?: $salida->getEmpresa()?->getNombre(),
-        ];
 
         return new Pieza(
             "salida:" . $salidaId,
-            $ocupacion->texto($ruta, $ficha["inicio"], $ficha["bus"]),
+            $ocupacion->texto(self::ruta($salida), $hora->format($inicio), $salida->getBus()?->getCodigo()),
             [["tipo" => "Salida", "id" => $salidaId]],
-            [[
-                "nombre" => sprintf("salida_iniciada_%d_%s.pdf", $salidaId, $inicio->format("Ymd_Hi")),
-                "contenido" => $this->pdf->salidaIniciada($ocupacion, $ficha, self::AUTOR),
-            ]],
         );
     }
 
