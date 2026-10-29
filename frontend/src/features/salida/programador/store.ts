@@ -1,13 +1,11 @@
 /**
  * Estado del programador de salidas (ADR-024, ADR-031): opciones (empresas,
- * buses, distribuciones), esquemas guardados, el formulario, la vista previa
- * automática y el resultado de crear. La lógica pura está en
- * `core/salida/programacion` (formulario → payload) y `core/salida/plan`
- * (vista previa y resultado).
+ * buses, distribuciones), esquemas guardados, el formulario y la vista previa
+ * automática. La lógica pura está en `core/salida/programacion` (formulario →
+ * payload) y `core/salida/plan` (vista previa y aviso).
  *
- * Tras crear, el panel muestra el resultado (lo creado con su id y lo que se
- * omitió por qué) hasta que el formulario cambia; no se vuelve a pedir la
- * vista previa, que vería lo recién creado como «ya existe».
+ * Tras crear, el aviso dice lo creado y lo omitido, y el programador se limpia
+ * (formulario vacío, sin esquema cargado) para programar otra cosa.
  */
 import { defineStore } from 'pinia'
 import { computed, reactive, ref, shallowRef, watch } from 'vue'
@@ -29,8 +27,9 @@ import {
   normalizarHora,
   type ProgramadorForm,
 } from '@/core/salida/programacion'
-import type { Esquema, Momento, OpcionesSalidas, ResultadoProgramacion, RutaOpcion, VistaPrevia } from '@/core/salida/types'
+import type { Esquema, Momento, OpcionesSalidas, RutaOpcion, VistaPrevia } from '@/core/salida/types'
 import { HttpError } from '@/core/http'
+import { mensajeResultado } from '@/core/salida/plan'
 import { notify } from '@/core/notify'
 
 /** Espera antes de pedir la vista previa tras un cambio. */
@@ -57,8 +56,6 @@ export const useProgramadorStore = defineStore('programador-salidas', () => {
   const cargandoPrevia = ref(false)
   const errorPrevia = ref('')
   const creando = ref(false)
-  /** Lo que devolvió la última creación; mientras exista, el panel muestra el resultado y no la vista previa. */
-  const resultado = shallowRef<ResultadoProgramacion | null>(null)
 
   const esquema = computed(() => esquemas.value.find((e) => e.id === esquemaId.value) ?? null)
   const cambiosEsquema = computed(() => !!esquema.value && difiereDeEsquema(form, esquema.value))
@@ -145,7 +142,6 @@ export const useProgramadorStore = defineStore('programador-salidas', () => {
   const clavePrevia = computed(() => (errores.value.length ? null : JSON.stringify({ ...aPayload(form), guardarComo: undefined })))
   watch(clavePrevia, (clave) => {
     if (espera) clearTimeout(espera)
-    resultado.value = null
     if (clave) espera = setTimeout(cargarPrevia, ESPERA_PREVIA_MS)
   })
 
@@ -166,7 +162,20 @@ export const useProgramadorStore = defineStore('programador-salidas', () => {
     }
   }
 
-  /** Crea las nuevas de la vista previa; el panel pasa a mostrar el resultado. */
+  /** Vuelve el programador a su estado inicial: formulario vacío, sin esquema cargado y sin vista previa. */
+  function limpiar() {
+    if (espera) clearTimeout(espera)
+    pedidoPrevia++
+    cargandoPrevia.value = false
+    previa.value = null
+    errorPrevia.value = ''
+    esquemaId.value = null
+    guardar.value = false
+    nombreEsquema.value = ''
+    Object.assign(form, formInicial())
+  }
+
+  /** Crea las nuevas de la vista previa; con el resultado en el aviso, el programador queda limpio. */
   async function crear() {
     if (creando.value || errores.value.length) return
     creando.value = true
@@ -175,27 +184,15 @@ export const useProgramadorStore = defineStore('programador-salidas', () => {
     cargandoPrevia.value = false
     try {
       const r = await programar(aPayload(form))
-      resultado.value = r
-      notify[r.creadas ? 'success' : 'info'](r.creadas === 1 ? 'Se creó 1 salida.' : `Se crearon ${r.creadas} salidas.`)
-      if (r.esquema) {
-        esquemas.value = [...esquemas.value.filter((e) => e.id !== r.esquema!.id), r.esquema].sort((a, b) => a.nombre.localeCompare(b.nombre))
-        // El formulario ya es el esquema: solo se marca como cargado.
-        esquemaId.value = r.esquema.id
-        guardar.value = false
-        nombreEsquema.value = ''
-      }
+      const aviso = mensajeResultado(r)
+      notify[aviso.severidad === 'success' ? 'success' : 'info'](aviso.texto)
+      if (r.esquema) esquemas.value = [...esquemas.value.filter((e) => e.id !== r.esquema!.id), r.esquema].sort((a, b) => a.nombre.localeCompare(b.nombre))
+      limpiar()
     } catch (e) {
       notify.error(mensaje(e))
     } finally {
       creando.value = false
     }
-  }
-
-  /** Vuelve de un resultado a la vista previa (con lo recién creado como «ya existe»). */
-  function seguirProgramando() {
-    resultado.value = null
-    previa.value = null
-    if (!errores.value.length) void cargarPrevia()
   }
 
   /**
@@ -258,13 +255,11 @@ export const useProgramadorStore = defineStore('programador-salidas', () => {
 
   /**
    * Al entrar a la pantalla: opciones y esquemas frescos, el día no puede
-   * haber quedado en el pasado y un resultado de la visita anterior se
-   * cambia por la vista previa. `esquemaPedido` (`?esquema=`) se carga.
+   * haber quedado en el pasado. `esquemaPedido` (`?esquema=`) se carga.
    */
   async function iniciar(esquemaPedido: number | null) {
     const hoy = aDia(new Date())
     if (!form.desde || form.desde < hoy) form.desde = hoy
-    if (resultado.value) seguirProgramando()
     try {
       const [o, e] = await Promise.all([fetchOpciones(), fetchEsquemas()])
       opciones.value = o
@@ -293,7 +288,6 @@ export const useProgramadorStore = defineStore('programador-salidas', () => {
     cargandoPrevia,
     errorPrevia,
     creando,
-    resultado,
     dias,
     errores,
     pideEmpresa,
@@ -310,7 +304,6 @@ export const useProgramadorStore = defineStore('programador-salidas', () => {
     cargarEsquema,
     cargarPrevia,
     crear,
-    seguirProgramando,
     actualizarEsquema,
     automatizarEsquema,
     borrarEsquema,

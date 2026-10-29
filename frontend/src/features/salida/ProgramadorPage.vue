@@ -4,7 +4,7 @@
   N días o hasta una fecha, cada X días). Un usuario sin empresa puede
   elegirla para ver solo sus distribuciones y buses. La vista previa se pide
   sola y marca las que ya existen, chocan con otro viaje del bus o ya
-  pasaron; solo se crean las nuevas, y tras crear se ve lo creado.
+  pasaron; solo se crean las nuevas, y tras crear el aviso dice lo creado y el programador se limpia.
   Esquemas: la configuración se puede guardar con un nombre al crear, y un
   esquema guardado se carga, cambia (buses, horas, quitar horas) o borra aquí mismo.
 
