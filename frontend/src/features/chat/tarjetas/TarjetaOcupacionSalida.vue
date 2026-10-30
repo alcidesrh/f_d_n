@@ -6,7 +6,7 @@
 <template>
   <div class="flex flex-col gap-3 text-sm">
     <div>
-      <div class="font-semibold leading-snug">{{ d.titulo }}ddd</div>
+      <div class="font-semibold leading-snug">{{ d.titulo }}</div>
       <div class="text-xs text-muted-color first-letter:uppercase">
         <template v-if="d.salida">{{ fecha(d.salida) }}</template
         ><template v-if="d.bus"> · bus {{ d.bus }}</template
@@ -23,9 +23,9 @@
 
     <p v-if="!d.filas.length" class="m-0 text-muted-color">No se vendió ningún boleto en esta salida.</p>
     <div v-else class="tabla-envoltura">
-      <div class="tabla" role="table" :aria-label="`Asientos por vendedor de ${d.titulo}`" :style="{ gridTemplateColumns: `minmax(6.5rem, 1fr) repeat(${claves.length}, auto)` }">
+      <div class="tabla" role="table" :aria-label="`Asientos por vendedor de ${d.titulo}`" :style="{ gridTemplateColumns: `minmax(4.5rem, 1fr) repeat(${claves.length}, auto)` }">
         <div class="fila fila--cabeza" role="row">
-          <span class="celda celda--usuario" role="columnheader">Vendedor</span>
+          <span class="celda celda--usuario" role="columnheader">USER</span>
           <span v-for="k in claves" :key="k" class="celda" role="columnheader" :title="d.columnas[k]">{{ CORTAS[k] ?? d.columnas[k] }}</span>
         </div>
         <div v-for="f in d.filas" :key="f.usuario" class="fila" role="row">
@@ -124,7 +124,7 @@ const fecha = (iso: string) => new Intl.DateTimeFormat("es-GT", { weekday: "shor
 }
 .tabla {
   display: grid;
-  min-width: max-content;
+  font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
 }
 /* Cada fila aporta sus celdas a la grilla del padre: columnas alineadas sin <table>. */
@@ -132,14 +132,14 @@ const fecha = (iso: string) => new Intl.DateTimeFormat("es-GT", { weekday: "shor
   display: contents;
 }
 .celda {
-  padding: 0.3rem 0.45rem;
+  padding: 0.25rem 0.3rem;
   text-align: right;
   border-bottom: 1px solid var(--p-surface-100);
 }
 .celda--usuario {
   position: sticky;
   left: 0;
-  max-width: 10rem;
+  max-width: 7rem;
   overflow: hidden;
   text-align: left;
   text-overflow: ellipsis;
@@ -153,7 +153,7 @@ const fecha = (iso: string) => new Intl.DateTimeFormat("es-GT", { weekday: "shor
   font-weight: 600;
 }
 .fila--cabeza .celda {
-  font-size: 0.66rem;
+  font-size: 0.6rem;
   font-weight: 600;
   letter-spacing: 0.03em;
   text-transform: uppercase;

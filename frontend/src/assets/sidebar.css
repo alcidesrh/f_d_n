@@ -320,7 +320,7 @@
     margin-inline-start: calc((0.5rem + var(--depth, 0) * 0.9rem) * var(--sb-k));
     opacity: var(--sb-k);
   }
-  & .nav-section-title {
+  /*& .nav-section-title {
     height: calc(var(--h) * var(--sb-k));
     padding-block: calc(0.5rem * var(--sb-k));
     overflow: hidden;
@@ -330,5 +330,5 @@
     height: calc(var(--h) * var(--sb-k));
     overflow: hidden;
     opacity: var(--sb-k);
-  }
+  }*/
 }

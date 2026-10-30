@@ -103,26 +103,4 @@ final readonly class OcupacionAlIniciar
 
         return new self($asientosDelBus, count($ocupados), count($intermedios), $porCanal, $lista, $totales);
     }
-
-    /**
-     * El texto del mensaje: el resumen. La tabla por vendedor va en la
-     * tarjeta (`TarjetaOcupacionSalida`, calculada al leer) y en el PDF.
-     *
-     * @param array{ruta: string, inicio: string, bus: ?string, empresa: ?string} $ficha
-     */
-    public function texto(array $ficha): string
-    {
-        return implode("\n", [
-            "Salida iniciada: " . $ficha["ruta"],
-            sprintf("Inició: %s · Bus %s · %s", $ficha["inicio"], $ficha["bus"] ?? "—", $ficha["empresa"] ?? "—"),
-            sprintf(
-                "Asientos: %d ocupados%s y %d libres de %d.",
-                $this->ocupados,
-                $this->conIntermedias > 0 ? sprintf(" (%d con tramos intermedios)", $this->conIntermedias) : "",
-                $this->libres(),
-                $this->asientos,
-            ),
-            sprintf("Por canal: estación %d · agencia %d · web %d.", $this->porCanal["estacion"] ?? 0, $this->porCanal["agencia"] ?? 0, $this->porCanal["web"] ?? 0),
-        ]);
-    }
 }

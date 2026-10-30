@@ -68,25 +68,6 @@ final class MensajesPredeterminadosTest extends TestCase
         self::assertSame(1, $o->totales["anulados"]);
     }
 
-    public function testElTextoDeLaSalidaIniciada(): void
-    {
-        $o = OcupacionAlIniciar::de([self::boleto(1, "Ana", ["cortesia" => true]), self::boleto(2, "Ana", ["sube" => 1])], 10, 3);
-        $texto = $o->texto(["ruta" => "Guatemala → Flores", "inicio" => "jue 29 de oct, 2:00 p. m.", "bus" => "101", "empresa" => "FDN"]);
-
-        self::assertSame(
-            "Salida iniciada: Guatemala → Flores\nInició: jue 29 de oct, 2:00 p. m. · Bus 101 · FDN\nAsientos: 2 ocupados (1 con tramos intermedios) y 8 libres de 10.\nPor canal: estación 2 · agencia 0 · web 0.",
-            $texto,
-        );
-    }
-
-    public function testUnaSalidaSinBoletos(): void
-    {
-        $texto = OcupacionAlIniciar::de([], 50, 2)->texto(["ruta" => "A → B", "inicio" => "hoy", "bus" => null, "empresa" => null]);
-
-        self::assertStringContainsString("Inició: hoy · Bus — · —", $texto);
-        self::assertStringContainsString("Asientos: 0 ocupados y 50 libres de 50.", $texto);
-    }
-
     public function testCuandoLeTocaAUnMensajeConHora(): void
     {
         $m = new MensajePredeterminado("Buenos días", TipoMensajePredeterminado::LIBRE, null);

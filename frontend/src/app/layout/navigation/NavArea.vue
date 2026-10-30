@@ -8,7 +8,7 @@
   <template v-else>
     <section v-for="menu in menus" :key="menu.id" class="nav-section">
       <button v-if="menus.length > 1 && !sidebar?.compact" type="button" class="nav-section-title" :aria-expanded="!closed.has(menu.id)" :title="closed.has(menu.id) ? 'Desplegar' : 'Contraer'" @click="toggle(menu.id)">
-        <icon :name="closed.has(menu.id) ? 'add' : 'remove'" size="0.9rem" />
+        <icon :weight="200" :name="closed.has(menu.id) ? 'add' : 'remove'" size="1rem" />
         <span>{{ menu.nombre }}</span>
       </button>
       <Transition :css="false" @enter="onEnter" @leave="onLeave">
@@ -79,7 +79,7 @@ function onLeave(el: Element, done: () => void) {
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--p-surface-400);
+  color: var(--p-surface-500);
   /* Una sola línea: si se partiera al angostarse el panel, empujaría al menú a mitad de la animación. */
   white-space: nowrap;
 }
