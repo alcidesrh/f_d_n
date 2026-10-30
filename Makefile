@@ -198,9 +198,22 @@ imagen: prod-env ## Reconstruye las imágenes (solo si cambia un Dockerfile o un
 	$(PROD_COMP) up -d --build
 	$(DOCKER) image prune -f
 
-vps: ## Levanta el stack de dev accesible por la IP pública de la VPS (secretos en .env.vps.local)
+# Dev y prod se alternan en la VPS (mismos contenedores, misma base): `make vps` ↔ `make prod`.
+# Las imágenes de dev llevan el prefijo dev- para no pisar las de prod; cada cambio solo recrea contenedores.
+VPS_COMP = IMAGES_PREFIX=dev- APP_ENV=dev $(DOCKER_COMP) --env-file .env.vps.local -f compose.yaml -f compose.override.yaml -f compose.vps.yaml
+
+vps-env:
 	@test -f .env.vps.local || { echo "Falta .env.vps.local (secretos, ver compose.vps.yaml)" >&2; exit 1; }
-	APP_ENV=dev $(DOCKER_COMP) --env-file .env.vps.local -f compose.yaml -f compose.override.yaml -f compose.vps.yaml up -d --build
+
+vps: vps-env ## Pasa la VPS a dev, accesible por su IP pública (secretos en .env.vps.local; `make prod` vuelve)
+	$(VPS_COMP) up -d
+
+vps-build: vps-env ## Reconstruye las imágenes de dev (si cambia un Dockerfile) y levanta dev
+	$(VPS_COMP) up -d --build
+
+modo: ## Dice si la VPS está en dev o en prod
+	@i=$$($(DOCKER) inspect -f '{{.Config.Image}}' backend 2>/dev/null) || { echo apagado; exit 0; }; \
+	case "$$i" in dev-*) echo dev;; *) echo prod;; esac
 
 prod-logs: prod-env ## Sigue los logs de producción (uso: make prod-logs s=backend)
 	$(PROD_COMP) logs -f --tail=200 $(s)

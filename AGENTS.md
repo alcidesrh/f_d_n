@@ -162,6 +162,7 @@ Para reglas detalladas de cada capa:
 
 - Los Makefiles (root + backend) incluyen targets legacy que pueden no estar disponibles.
 - **Producción (VPS, `compose.prod.yaml`)**: el código no va en la imagen; se monta desde el checkout `/root/f_d_n` (`./backend:/app`, `./frontend` con su `dist/`), y `/app/var` es tmpfs (la caché de Symfony nace en cada arranque). Cambio de PHP → `make reiniciar` (unos segundos); de frontend → `make front` (`vite build` en el host, sin reiniciar); de la página → `make pagina`; de `composer.lock` → `make vendor`. `make deploy` hace `git pull` y solo lo que cambió. Reconstruir imágenes (`make imagen`) solo si cambia un Dockerfile o una extensión de PHP.
+- **Alternar dev/prod en la VPS**: mismos contenedores y misma base, uno u otro. `make vps` pasa a dev (por la IP, `https://194.113.67.177`, Vite con recarga en caliente) y `make prod` vuelve; `make modo` dice cuál corre. Las imágenes de dev llevan el prefijo `dev-` y no pisan las de prod (`make vps-build` si cambia un Dockerfile). Al volver a prod, `make front` / `make pagina` si cambiaste el frontend o la página.
 - Docker usa **npm**, no pnpm ni bun (aunque existan lockfiles de ambos).
 - Migración completa desde TerminalOmnibus toma horas (6679 salidas).
 - Debug: `make debug` usa Caddyfile.dev sin workers.
