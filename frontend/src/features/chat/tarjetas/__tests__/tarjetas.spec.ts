@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { mount, RouterLinkStub } from '@vue/test-utils'
 import type { AsientoCroquis, ElementoCroquis } from '@/core/croquis/types'
 import { plantasClaseBPrimero } from '../croquis'
+import { tipoTarjeta } from '../catalogo'
 import TarjetaBus from '../TarjetaBus.vue'
 import TarjetaSalida from '../TarjetaSalida.vue'
 import TarjetaBoleto from '../TarjetaBoleto.vue'
@@ -16,6 +17,13 @@ globalThis.ResizeObserver ??= class {
 } as unknown as typeof ResizeObserver
 
 const global = { stubs: { RouterLink: RouterLinkStub, Tag: { props: ['value'], template: '<span>{{ value }}</span>' }, Icon: true }, directives: { tooltip: {} } }
+
+describe('tipoTarjeta', () => {
+  it('la ocupación por vendedor va sin marco de grupo; el resto, con el suyo', () => {
+    expect(tipoTarjeta('OcupacionSalida').sinMarco).toBe(true)
+    expect(tipoTarjeta('Salida').sinMarco).toBeFalsy()
+  })
+})
 
 describe('plantasClaseBPrimero', () => {
   it('pone delante la planta con clase B', () => {

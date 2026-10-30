@@ -50,5 +50,5 @@ export const HABITUALES = ['BoletoAsiento', 'Salida', 'BoletoVenta', 'Bus', 'Cli
 
 export function tipoTarjeta(tipo: string): Required<Pick<TipoTarjeta, 'nombre' | 'icono' | 'destino'>> & TipoTarjeta {
   const propia = TARJETAS[tipo]
-  return { nombre: propia?.nombre ?? tipo.replace(/([a-z])([A-Z])/g, '$1 $2'), icono: propia?.icono ?? 'description-outline', destino: propia?.destino ?? formulario, componente: propia?.componente }
+  return { nombre: propia?.nombre ?? tipo.replace(/([a-z])([A-Z])/g, '$1 $2'), icono: propia?.icono ?? 'description-outline', destino: propia?.destino ?? formulario, componente: propia?.componente, sinMarco: propia?.sinMarco }
 }
