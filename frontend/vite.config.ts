@@ -109,6 +109,8 @@ export default defineConfig({
   server: {
     host: "0.0.0.0",
     port: 9000,
+    // Hosts por nombre (DNS) que Caddy reenvía al dev server; las IPs ya se permiten por defecto.
+    allowedHosts: ["fdn2.duckdns.org"],
     // open: false
     // Uncomment when the Symfony + API Platform backend is available locally.
     // proxy: {

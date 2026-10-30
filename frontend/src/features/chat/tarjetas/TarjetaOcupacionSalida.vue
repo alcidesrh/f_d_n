@@ -23,7 +23,7 @@
 
     <p v-if="!d.filas.length" class="m-0 text-muted-color">No se vendió ningún boleto en esta salida.</p>
     <div v-else class="tabla-envoltura">
-      <div class="tabla" role="table" :aria-label="`Asientos por vendedor de ${d.titulo}`" :style="{ gridTemplateColumns: `minmax(4.5rem, 1fr) repeat(${claves.length}, auto)` }">
+      <div class="tabla" role="table" :aria-label="`Asientos por vendedor de ${d.titulo}`" :style="{ gridTemplateColumns: `minmax(3.5rem, auto) ${pistas}` }">
         <div class="fila fila--cabeza" role="row">
           <span class="celda celda--usuario" role="columnheader">USER</span>
           <span v-for="k in claves" :key="k" class="celda" role="columnheader" :title="d.columnas[k]">{{ CORTAS[k] ?? d.columnas[k] }}</span>
@@ -61,6 +61,8 @@ interface Ocupacion {
 const props = defineProps<{ datos: unknown }>();
 const d = computed(() => props.datos as Ocupacion);
 const claves = computed(() => Object.keys(d.value.columnas));
+/** Desde la mitad de las columnas, el espacio sobrante se reparte entre ellas (la de USER queda angosta). */
+const pistas = computed(() => claves.value.map((_, i) => (i < claves.value.length / 2 ? "auto" : "minmax(2.5rem, 1fr)")).join(" "));
 
 /** Encabezados cortos: la tabla cabe en la burbuja; el nombre completo va en el `title`. */
 const CORTAS: Record<string, string> = { reasignados: "Reas.", anulados: "Anul.", vouchers: "Vouch.", cortesias: "Cort.", intermedias: "Interm.", claseA: "A", claseB: "B", total: "Total" };
@@ -156,7 +158,7 @@ const fecha = (iso: string) => new Intl.DateTimeFormat("es-GT", { weekday: "shor
 .celda--usuario {
   position: sticky;
   left: 0;
-  max-width: 7rem;
+  max-width: 6rem;
   overflow: hidden;
   text-align: left;
   text-overflow: ellipsis;
