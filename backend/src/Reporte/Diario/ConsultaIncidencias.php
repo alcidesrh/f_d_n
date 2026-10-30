@@ -21,9 +21,10 @@ final class ConsultaIncidencias
 
     /**
      * Cuántos boletos se anularon, reasignaron o no se presentaron en el día
-     * (la bitácora), y cuántas cortesías se emitieron (por fecha de venta).
+     * (la bitácora), y cuántas cortesías y vouchers se emitieron (por fecha de
+     * venta).
      *
-     * @return array{anulados: int, reasignados: int, cancelados: int, cortesias: int}
+     * @return array{anulados: int, reasignados: int, cancelados: int, cortesias: int, vouchers: int}
      */
     public function totales(\DateTimeImmutable $dia, ?int $empresa): array
     {
@@ -48,11 +49,21 @@ final class ConsultaIncidencias
             $parametros + ["anulado" => EstadoBoletoAsiento::ANULADO->value],
         );
 
+        $vouchers = (int) $this->db->fetchOne(
+            "SELECT COUNT(b.id)
+               FROM boleto_venta v
+               JOIN boleto_asiento b ON b.boleto_venta_id = v.id
+               JOIN salida s ON s.id = b.salida_id
+              WHERE v.voucher = true AND v.created_at >= :desde AND v.created_at < :hasta AND b.estado <> :anulado{$deEmpresa}",
+            $parametros + ["anulado" => EstadoBoletoAsiento::ANULADO->value],
+        );
+
         return [
             "anulados" => $deBitacora(OperacionBoleto::ANULADO),
             "reasignados" => $deBitacora(OperacionBoleto::REASIGNADO),
             "cancelados" => $deBitacora(OperacionBoleto::CANCELADO),
             "cortesias" => $cortesias,
+            "vouchers" => $vouchers,
         ];
     }
 

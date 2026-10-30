@@ -9,15 +9,42 @@ use App\Reporte\Dinero;
 use App\Tablero\ConsultaTablero;
 use PHPUnit\Framework\TestCase;
 
-/** El texto de "Desempeño del día" (ADR-045): ingresos, canales, operación y ranking. */
+/** Las cifras de "Desempeño del día" (ADR-045): ingresos, canales, operación y ranking. */
 final class DesempenoDelDiaTest extends TestCase
 {
-    private const SIN_OPERACION = ["anulados" => 0, "reasignados" => 0, "cancelados" => 0, "cortesias" => 0];
+    private const SIN_OPERACION = ["anulados" => 0, "reasignados" => 0, "cancelados" => 0, "cortesias" => 0, "vouchers" => 0];
+
+    private static function q(int $centavos): string
+    {
+        return Dinero::con($centavos, ConsultaTablero::MONEDA);
+    }
+
+    public function testLosDatosDelaTarjetaTraenPorcentajesYMontos(): void
+    {
+        $datos = DesempenoDelDia::datos(
+            "Desempeño",
+            "Empresa",
+            [
+                ["tipo" => "estacion", "nombre" => "Guatemala", "intermedia" => false, "boletos" => 3, "ingresos" => 30000],
+                ["tipo" => "estacion", "nombre" => "Zacapa", "intermedia" => true, "boletos" => 1, "ingresos" => 10000],
+            ],
+            [],
+            self::SIN_OPERACION,
+        );
+
+        self::assertFalse($datos["vacio"]);
+        self::assertSame(75.0, $datos["ruta"]["porcentaje"]);
+        self::assertSame(25.0, $datos["intermedia"]["porcentaje"]);
+        self::assertSame(100.0, $datos["ranking"][0]["porcentaje"], "la barra de la primera estación es el máximo");
+        self::assertSame(33.33, $datos["ranking"][1]["porcentaje"]);
+        self::assertSame(100.0, $datos["canales"][0]["porcentaje"], "estaciones: todo lo vendido en boletos");
+    }
 
     public function testSeparaRutaCompletaIntermediaYEncomiendas(): void
     {
-        $texto = DesempenoDelDia::texto(
-            "Desempeño del lunes · Empresa",
+        $datos = DesempenoDelDia::datos(
+            "Desempeño del lunes",
+            "Empresa",
             [
                 ["tipo" => "estacion", "nombre" => "Chiquimula", "intermedia" => false, "boletos" => 3, "ingresos" => 30000],
                 ["tipo" => "estacion", "nombre" => "Chiquimula", "intermedia" => true, "boletos" => 2, "ingresos" => 10000],
@@ -27,18 +54,23 @@ final class DesempenoDelDiaTest extends TestCase
             self::SIN_OPERACION,
         );
 
-        self::assertStringContainsString("Ingresos totales: " . Dinero::con(75000, ConsultaTablero::MONEDA), $texto);
-        self::assertStringContainsString("• Boletos: " . Dinero::con(55000, ConsultaTablero::MONEDA) . " · 6", $texto);
-        self::assertStringContainsString("• Encomiendas: " . Dinero::con(20000, ConsultaTablero::MONEDA) . " · 4", $texto);
-        self::assertStringContainsString("• Ruta completa: " . Dinero::con(45000, ConsultaTablero::MONEDA) . " · 4", $texto);
-        self::assertStringContainsString("• Intermedia: " . Dinero::con(10000, ConsultaTablero::MONEDA) . " · 2", $texto);
-        self::assertStringContainsString("• Página web: " . Dinero::con(15000, ConsultaTablero::MONEDA) . " · 1", $texto);
+        self::assertSame("Empresa", $datos["empresa"]);
+        self::assertSame(self::q(75000), $datos["total"]);
+        self::assertSame(["ingresos" => self::q(55000), "cantidad" => 6], $datos["boletos"]);
+        self::assertSame(["ingresos" => self::q(20000), "cantidad" => 4], $datos["encomiendas"]);
+        self::assertSame(self::q(45000), $datos["ruta"]["ingresos"]);
+        self::assertSame(4, $datos["ruta"]["cantidad"]);
+        self::assertSame(self::q(10000), $datos["intermedia"]["ingresos"]);
+        self::assertSame(2, $datos["intermedia"]["cantidad"]);
+        self::assertSame(self::q(15000), $datos["canales"][2]["ingresos"]);
+        self::assertSame(1, $datos["canales"][2]["boletos"]);
     }
 
     public function testElRankingSumaBoletosYEncomiendasPorEstacion(): void
     {
-        $texto = DesempenoDelDia::texto(
+        $datos = DesempenoDelDia::datos(
             "Desempeño",
+            "Empresa",
             [
                 ["tipo" => "estacion", "nombre" => "Guatemala", "intermedia" => false, "boletos" => 1, "ingresos" => 10000],
                 ["tipo" => "estacion", "nombre" => "Zacapa", "intermedia" => false, "boletos" => 1, "ingresos" => 25000],
@@ -48,27 +80,29 @@ final class DesempenoDelDiaTest extends TestCase
         );
 
         // Guatemala (30000) va antes que Zacapa (25000).
-        self::assertStringContainsString("1. Guatemala · " . Dinero::con(30000, ConsultaTablero::MONEDA) . " (boletos 1 · encomiendas 2)", $texto);
-        self::assertStringContainsString("2. Zacapa · " . Dinero::con(25000, ConsultaTablero::MONEDA) . " (boletos 1 · encomiendas 0)", $texto);
+        self::assertSame(["nombre" => "Guatemala", "ingresos" => self::q(30000), "boletos" => 1, "encomiendas" => 2, "porcentaje" => 100.0], $datos["ranking"][0]);
+        self::assertSame(["nombre" => "Zacapa", "ingresos" => self::q(25000), "boletos" => 1, "encomiendas" => 0, "porcentaje" => 83.33], $datos["ranking"][1]);
     }
 
-    public function testLaOperacionDelDia(): void
+    public function testLaOperacionDelDiaIncluyeVouchers(): void
     {
-        $texto = DesempenoDelDia::texto(
+        $datos = DesempenoDelDia::datos(
             "Desempeño",
+            "Empresa",
             [["tipo" => "agencia", "nombre" => "Agencia Norte", "intermedia" => false, "boletos" => 1, "ingresos" => 5000]],
             [],
-            ["anulados" => 2, "reasignados" => 3, "cancelados" => 1, "cortesias" => 4],
+            ["anulados" => 2, "reasignados" => 3, "cancelados" => 1, "cortesias" => 4, "vouchers" => 5],
         );
 
-        self::assertStringContainsString("• Reasignados: 3 · Anulados: 2 · Cancelados: 1 · Cortesías: 4", $texto);
-        self::assertStringNotContainsString("Estaciones con más ventas", $texto, "sin estaciones no hay ranking");
+        self::assertSame(["reasignados" => 3, "anulados" => 2, "cancelados" => 1, "cortesias" => 4, "vouchers" => 5], $datos["operacion"]);
+        self::assertSame([], $datos["ranking"], "sin estaciones no hay ranking");
     }
 
     public function testUnDiaSinVentas(): void
     {
-        $texto = DesempenoDelDia::texto("Desempeño del martes · Empresa", [], [], self::SIN_OPERACION);
+        $datos = DesempenoDelDia::datos("Desempeño del martes", "Empresa", [], [], self::SIN_OPERACION);
 
-        self::assertSame("Desempeño del martes · Empresa\nHoy no hubo ventas ni encomiendas.", $texto);
+        self::assertTrue($datos["vacio"]);
+        self::assertSame("Desempeño del martes", $datos["titulo"]);
     }
 }

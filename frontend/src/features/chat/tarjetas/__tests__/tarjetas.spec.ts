@@ -7,6 +7,7 @@ import TarjetaBus from '../TarjetaBus.vue'
 import TarjetaSalida from '../TarjetaSalida.vue'
 import TarjetaBoleto from '../TarjetaBoleto.vue'
 import TarjetaOcupacionSalida from '../TarjetaOcupacionSalida.vue'
+import TarjetaDesempenoDia from '../TarjetaDesempenoDia.vue'
 import Tarjeta from '../Tarjeta.vue'
 
 const asiento = (numero: number, planta: number, clase: 'A' | 'B'): AsientoCroquis => ({ tipo: 'asiento', id: numero, numero, clase, planta, fila: numero, columna: 1 })
@@ -22,6 +23,7 @@ describe('tipoTarjeta', () => {
   it('la ocupación por vendedor va sin marco de grupo; el resto, con el suyo', () => {
     expect(tipoTarjeta('OcupacionSalida').sinMarco).toBe(true)
     expect(tipoTarjeta('Salida').sinMarco).toBeFalsy()
+    expect(tipoTarjeta('DesempenoDia').sinMarco).toBe(true)
   })
 })
 
@@ -117,5 +119,41 @@ describe('tarjetas del chat', () => {
     const w = mount(Tarjeta, { props: { adjunto: { tipo: 'Bus', id: 2, estado: 'ok', datos: { titulo: 'Bus 82', codigo: '82', empresa: null, clase: null, asientos: 0, croquis: [] } } }, global })
     expect(w.find('.tarjeta__tipo').text()).toBe('ID 2')
     expect(w.find('.tarjeta__icono').exists()).toBe(false)
+  })
+})
+
+describe('desempeño del día', () => {
+  const datos = {
+    titulo: 'Desempeño del miércoles 30 de octubre',
+    empresa: 'Autobuses Maya De Oro, S.A.',
+    vacio: false,
+    total: 'GTQ 4,765.00',
+    boletos: { ingresos: 'GTQ 4,765.00', cantidad: 26 },
+    encomiendas: { ingresos: 'GTQ 0.00', cantidad: 0 },
+    ruta: { ingresos: 'GTQ 3,255.00', cantidad: 14, porcentaje: 68.31 },
+    intermedia: { ingresos: 'GTQ 1,510.00', cantidad: 12, porcentaje: 31.69 },
+    canales: [
+      { clave: 'estacion', nombre: 'Estaciones', ingresos: 'GTQ 4,450.00', boletos: 25, porcentaje: 93.39 },
+      { clave: 'agencia', nombre: 'Agencias', ingresos: 'GTQ 0.00', boletos: 0, porcentaje: 0 },
+      { clave: 'web', nombre: 'Página web', ingresos: 'GTQ 315.00', boletos: 1, porcentaje: 6.61 },
+    ],
+    operacion: { reasignados: 0, anulados: 0, cancelados: 4, cortesias: 9, vouchers: 2 },
+    ranking: [{ nombre: 'Guatemala', ingresos: 'GTQ 2,460.00', boletos: 11, encomiendas: 0, porcentaje: 100 }],
+  }
+
+  it('muestra el total, las barras por canal y la operación del día', () => {
+    const w = mount(TarjetaDesempenoDia, { props: { datos }, global })
+    expect(w.text()).toContain('GTQ 4,765.00')
+    expect(w.findAll('.barra')[0].findAll('span').map((s) => s.attributes('style'))).toEqual(['width: 93.39%;', 'width: 0%;', 'width: 6.61%;'])
+    expect(w.find('.chip.aviso').text()).toContain('Cancelados 4')
+    expect(w.find('li .detalle').text()).toBe('11 boletos · 0 encomiendas')
+    expect(w.find('.empresa').text()).toBe('Autobuses Maya De Oro, S.A.')
+    expect(w.findAll('.chip').map((c) => c.text())).toContain('Vouchers 2')
+  })
+
+  it('un día sin ventas no muestra cifras', () => {
+    const w = mount(TarjetaDesempenoDia, { props: { datos: { ...datos, vacio: true } }, global })
+    expect(w.text()).toContain('Hoy no hubo ventas ni encomiendas.')
+    expect(w.find('.total').exists()).toBe(false)
   })
 })

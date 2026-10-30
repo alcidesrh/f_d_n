@@ -9,6 +9,7 @@ import type { Adjunto } from '@/core/chat/types'
 import { entitySlug } from '@/core/entities/slug'
 import TarjetaBoleto from './TarjetaBoleto.vue'
 import TarjetaBus from './TarjetaBus.vue'
+import TarjetaDesempenoDia from './TarjetaDesempenoDia.vue'
 import TarjetaOcupacionSalida from './TarjetaOcupacionSalida.vue'
 import TarjetaSalida from './TarjetaSalida.vue'
 
@@ -27,6 +28,8 @@ const formulario = (a: Adjunto): RouteLocationRaw => ({ name: 'entity-form', par
 export const TARJETAS: Record<string, TipoTarjeta> = {
   BoletoAsiento: { nombre: 'Boleto', icono: 'confirmation-number-outline', componente: TarjetaBoleto, destino: (a) => ({ name: 'boletos', query: { id: a.id } }) },
   Salida: { nombre: 'Salida', icono: 'directions-bus-outline', componente: TarjetaSalida, destino: (a) => ({ name: 'salidas', query: { ver: a.id } }) },
+  // Llega en "Desempeño del día" (ADR-045): el resumen del día de la empresa, calculado al leer; el id codifica día y empresa.
+  DesempenoDia: { nombre: 'Desempeño del día', icono: 'insights-outline', componente: TarjetaDesempenoDia, destino: () => ({ name: 'dashboard' }), sinMarco: true },
   // Llega en "Salida iniciada" (ADR-045): la tabla por vendedor, calculada al leer; el id es el de la salida.
   OcupacionSalida: { nombre: 'Ocupación por vendedor', icono: 'groups-outline', componente: TarjetaOcupacionSalida, destino: (a) => ({ name: 'salidas', query: { ver: a.id } }), sinMarco: true },
   Bus: { nombre: 'Bus', icono: 'airport-shuttle-outline', componente: TarjetaBus, destino: formulario },

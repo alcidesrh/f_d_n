@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Chat\Predeterminado;
 
 use App\Bitacora\TipoRegistro;
+use App\Chat\Tarjeta\TarjetaDesempenoDia;
 use App\Chat\Tarjeta\TarjetaOcupacionSalida;
 use App\Entity\BoletoAsiento;
+use App\Entity\Empresa;
 use App\Entity\Enum\EstadoBoletoVenta;
 use App\Entity\Enum\EstadoSalida;
 use App\Entity\Enum\OperacionBoleto;
@@ -173,20 +175,35 @@ final class Contenidos
      */
     public function desempenoDelDia(MensajePredeterminado $m, \DateTimeImmutable $ahora): Pieza
     {
-        $empresa = $m->getEmpresa();
-        $empresaId = $empresa?->getId();
         $dia = $ahora->setTime(0, 0);
-        $hasta = $dia->modify("+1 day");
-        $titulo = sprintf("Desempeño del %s · %s", ResumenDiario::fechaLarga($dia), $empresa?->getNombre() ?? "Todas las empresas");
+        $empresa = $m->getEmpresa();
 
         return new Pieza(
             "dia:" . $dia->format("Y-m-d"),
-            DesempenoDelDia::texto(
-                $titulo,
-                $this->boletosDelDia($dia, $hasta, $empresaId),
-                $this->encomiendasDelDia($dia, $hasta, $empresaId),
-                $this->incidencias->totales($dia, $empresaId),
-            ),
+            "",
+            [["tipo" => TarjetaDesempenoDia::TIPO, "id" => TarjetaDesempenoDia::codigo($dia, $empresa?->getId())]],
+        );
+    }
+
+    /**
+     * El desempeño del día completo de una empresa (null = todas), el mismo
+     * para la tarjeta (`DesempenoDelDia::datos`).
+     *
+     * @return array<string, mixed>
+     */
+    public function desempeno(\DateTimeImmutable $dia, ?Empresa $empresa): array
+    {
+        $dia = $dia->setTime(0, 0);
+        $hasta = $dia->modify("+1 day");
+        $empresaId = $empresa?->getId();
+        $titulo = sprintf("Desempeño del %s", ResumenDiario::fechaLarga($dia));
+
+        return DesempenoDelDia::datos(
+            $titulo,
+            $empresa?->getNombre() ?? "Todas las empresas",
+            $this->boletosDelDia($dia, $hasta, $empresaId),
+            $this->encomiendasDelDia($dia, $hasta, $empresaId),
+            $this->incidencias->totales($dia, $empresaId),
         );
     }
 

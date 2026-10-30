@@ -8,10 +8,10 @@ use App\Reporte\Dinero;
 use App\Tablero\ConsultaTablero;
 
 /**
- * El texto de "Desempeño del día" (ADR-045): ingresos del día por boleto
- * (ruta completa e intermedia) y por encomienda, cómo se repartieron por
- * canal, la operación del día (reasignados, anulados, cancelados, cortesías)
- * y el ranking de estaciones. Puro: recibe las filas ya leídas.
+ * El desempeño del día (ADR-045): ingresos del día por boleto (ruta completa
+ * e intermedia) y por encomienda, cómo se repartieron por canal, la operación
+ * del día (reasignados, anulados, cancelados, cortesías) y el ranking de
+ * estaciones. Puro: recibe las filas ya leídas y arma las cifras de la tarjeta.
  */
 final class DesempenoDelDia
 {
@@ -21,11 +21,24 @@ final class DesempenoDelDia
     private const CANALES = ["estacion" => "Estaciones", "agencia" => "Agencias", "web" => "Página web"];
 
     /**
+     * Las cifras ya en texto de moneda, y los porcentajes para las barras.
+     *
      * @param list<array{tipo: string, nombre: string, intermedia: bool, boletos: int, ingresos: int}> $boletos
      * @param list<array{nombre: string, cantidad: int, ingresos: int}>                                 $encomiendas
-     * @param array{anulados: int, reasignados: int, cancelados: int, cortesias: int}                   $operacion
+     * @param array{anulados: int, reasignados: int, cancelados: int, cortesias: int, vouchers: int}   $operacion
+     *
+     * @return array{
+     *     titulo: string, empresa: string, vacio: bool, total: string,
+     *     boletos: array{ingresos: string, cantidad: int},
+     *     encomiendas: array{ingresos: string, cantidad: int},
+     *     ruta: array{ingresos: string, cantidad: int, porcentaje: float},
+     *     intermedia: array{ingresos: string, cantidad: int, porcentaje: float},
+     *     canales: list<array{clave: string, nombre: string, ingresos: string, boletos: int, porcentaje: float}>,
+     *     operacion: array{reasignados: int, anulados: int, cancelados: int, cortesias: int, vouchers: int},
+     *     ranking: list<array{nombre: string, ingresos: string, boletos: int, encomiendas: int, porcentaje: float}>
+     * }
      */
-    public static function texto(string $titulo, array $boletos, array $encomiendas, array $operacion): string
+    public static function datos(string $titulo, string $empresa, array $boletos, array $encomiendas, array $operacion): array
     {
         $q = static fn(int $c) => Dinero::con($c, ConsultaTablero::MONEDA);
 
@@ -35,56 +48,54 @@ final class DesempenoDelDia
         $enc = self::suma(array_map(static fn(array $e) => ["boletos" => $e["cantidad"], "ingresos" => $e["ingresos"]], $encomiendas));
         $total = $boletosTotal["ingresos"] + $enc["ingresos"];
 
-        if ($boletosTotal["boletos"] === 0 && $enc["boletos"] === 0) {
-            return $titulo . "\nHoy no hubo ventas ni encomiendas.";
-        }
-
-        $lineas = [
-            $titulo,
-            "",
-            "Ingresos totales: " . $q($total),
-            sprintf("• Boletos: %s · %d", $q($boletosTotal["ingresos"]), $boletosTotal["boletos"]),
-            sprintf("• Encomiendas: %s · %d", $q($enc["ingresos"]), $enc["boletos"]),
-            "",
-            "Boletos",
-            sprintf("• Ruta completa: %s · %d", $q($ruta["ingresos"]), $ruta["boletos"]),
-            sprintf("• Intermedia: %s · %d", $q($intermedia["ingresos"]), $intermedia["boletos"]),
-            "",
-            "Ingreso por canal",
-        ];
+        $canales = [];
         foreach (self::CANALES as $tipo => $nombre) {
             $canal = self::suma(array_filter($boletos, static fn(array $b) => $b["tipo"] === $tipo));
-            $lineas[] = sprintf("• %s: %s · %d", $nombre, $q($canal["ingresos"]), $canal["boletos"]);
+            $canales[] = [
+                "clave" => $tipo,
+                "nombre" => $nombre,
+                "ingresos" => $q($canal["ingresos"]),
+                "boletos" => $canal["boletos"],
+                "porcentaje" => self::porcentaje($canal["ingresos"], $boletosTotal["ingresos"]),
+            ];
         }
-
-        $lineas[] = "";
-        $lineas[] = "Operación";
-        $lineas[] = sprintf(
-            "• Reasignados: %d · Anulados: %d · Cancelados: %d · Cortesías: %d",
-            $operacion["reasignados"],
-            $operacion["anulados"],
-            $operacion["cancelados"],
-            $operacion["cortesias"],
-        );
 
         $ranking = self::ranking($boletos, $encomiendas);
-        if ($ranking !== []) {
-            $lineas[] = "";
-            $lineas[] = "Estaciones con más ventas";
-            $puesto = 0;
-            foreach ($ranking as $nombre => $r) {
-                $lineas[] = sprintf(
-                    "%d. %s · %s (boletos %d · encomiendas %d)",
-                    ++$puesto,
-                    $nombre,
-                    $q($r["ingresos"]),
-                    $r["boletos"],
-                    $r["encomiendas"],
-                );
-            }
-        }
+        $maximo = $ranking === [] ? 0 : max(array_column($ranking, "ingresos"));
 
-        return implode("\n", $lineas);
+        return [
+            "titulo" => $titulo,
+            "empresa" => $empresa,
+            "vacio" => $boletosTotal["boletos"] === 0 && $enc["boletos"] === 0,
+            "total" => $q($total),
+            "boletos" => ["ingresos" => $q($boletosTotal["ingresos"]), "cantidad" => $boletosTotal["boletos"]],
+            "encomiendas" => ["ingresos" => $q($enc["ingresos"]), "cantidad" => $enc["boletos"]],
+            "ruta" => [
+                "ingresos" => $q($ruta["ingresos"]),
+                "cantidad" => $ruta["boletos"],
+                "porcentaje" => self::porcentaje($ruta["ingresos"], $boletosTotal["ingresos"]),
+            ],
+            "intermedia" => [
+                "ingresos" => $q($intermedia["ingresos"]),
+                "cantidad" => $intermedia["boletos"],
+                "porcentaje" => self::porcentaje($intermedia["ingresos"], $boletosTotal["ingresos"]),
+            ],
+            "canales" => $canales,
+            "operacion" => [
+                "reasignados" => $operacion["reasignados"],
+                "anulados" => $operacion["anulados"],
+                "cancelados" => $operacion["cancelados"],
+                "cortesias" => $operacion["cortesias"],
+                "vouchers" => $operacion["vouchers"],
+            ],
+            "ranking" => array_map(static fn(string $nombre, array $r) => [
+                "nombre" => $nombre,
+                "ingresos" => $q($r["ingresos"]),
+                "boletos" => $r["boletos"],
+                "encomiendas" => $r["encomiendas"],
+                "porcentaje" => self::porcentaje($r["ingresos"], $maximo),
+            ], array_keys($ranking), array_values($ranking)),
+        ];
     }
 
     /**
@@ -114,6 +125,12 @@ final class DesempenoDelDia
         uasort($r, static fn(array $a, array $b) => $b["ingresos"] <=> $a["ingresos"]);
 
         return array_slice(array_filter($r, static fn(array $e) => $e["ingresos"] > 0), 0, self::TOP_ESTACIONES, true);
+    }
+
+    /** Porcentaje de `$parte` sobre `$todo`, con dos decimales; 0 si no hay base. */
+    private static function porcentaje(int $parte, int $todo): float
+    {
+        return $todo > 0 ? round(100 * $parte / $todo, 2) : 0.0;
     }
 
     /**
