@@ -569,64 +569,61 @@ onMounted(async () => {
   cursor: default;
 }
 .estado--emitido {
-  background: var(--p-blue-100);
-  color: var(--p-blue-700);
+  background: var(--p-surface-100);
+  color: var(--p-surface-700);
 }
 .estado--chequeado {
-  background: var(--p-emerald-100);
-  color: var(--p-emerald-700);
+  background: var(--p-surface-100);
+  color: var(--p-surface-700);
 }
 .estado--transito {
-  background: var(--p-amber-100);
-  color: var(--p-amber-700);
+  background: var(--p-surface-100);
+  color: var(--p-surface-700);
 }
 .estado--finalizado {
-  background: var(--p-slate-100);
-  color: var(--p-slate-700);
+  background: var(--p-surface-100);
+  color: var(--p-surface-700);
 }
 .estado--cancelado {
-  background: var(--p-orange-100);
-  color: var(--p-orange-700);
+  background: var(--p-surface-100);
+  color: var(--p-surface-700);
 }
 .estado--reasignado {
-  background: var(--p-neutral-200);
-  color: var(--p-neutral-700);
-  box-shadow: inset 0 0 0 1px var(--p-neutral-300);
+  background: var(--p-surface-100);
+  color: var(--p-surface-700);
 }
 .estado--pospuesto {
-  background: var(--p-violet-100);
-  color: var(--p-violet-700);
+  background: var(--p-surface-100);
+  color: var(--p-surface-700);
 }
 .estado--anulado {
-  background: var(--p-surface-200);
-  color: var(--p-surface-600);
-  box-shadow: inset 0 0 0 1px var(--p-surface-300);
-  text-decoration: line-through;
+  background: var(--p-surface-100);
+  color: var(--p-surface-700);
 }
 /* Tipo de documento: mismo círculo, un color por tipo. */
 .documento--factura {
-  background: var(--p-teal-100);
-  color: var(--p-teal-700);
+  background: var(--p-surface-200);
+  color: var(--p-surface-700);
 }
 .documento--pendiente {
-  background: var(--p-yellow-100);
-  color: var(--p-yellow-700);
+  background: var(--p-surface-100);
+  color: var(--p-surface-700);
 }
 .documento--sin_factura {
-  background: var(--p-slate-100);
-  color: var(--p-slate-700);
+  background: var(--p-surface-100);
+  color: var(--p-surface-700);
 }
 .documento--agencia {
-  background: var(--p-violet-100);
-  color: var(--p-violet-700);
+  background: var(--p-surface-100);
+  color: var(--p-surface-700);
 }
 .documento--cortesia {
-  background: var(--p-pink-100);
-  color: var(--p-pink-700);
+  background: var(--p-surface-100);
+  color: var(--p-surface-700);
 }
 .documento--voucher {
-  background: var(--p-red-100);
-  color: var(--p-red-700);
+  background: var(--p-surface-100);
+  color: var(--p-surface-700);
 }
 .tarjeta {
   display: flex;
