@@ -17,7 +17,6 @@ use App\Entity\Salida;
 use App\Reporte\Diario\ConsultaIncidencias;
 use App\Reporte\Diario\ResumenDiario;
 use App\Reporte\Dinero;
-use App\Reporte\ReportePdf;
 use App\Tablero\ConsultaTablero;
 use App\Tablero\Periodo;
 use Doctrine\DBAL\Connection;
@@ -32,9 +31,6 @@ use Doctrine\ORM\EntityManagerInterface;
  */
 final class Contenidos
 {
-    /** Quién figura como "generado por" en los PDF. */
-    public const AUTOR = "Mensajes predeterminados";
-
     /** Una salida cuya hora pasó hace más que esto ya no se avisa (el programador estuvo detenido). */
     public const VENTANA_SALIDA = "-6 hours";
 
@@ -44,7 +40,6 @@ final class Contenidos
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly Connection $db,
-        private readonly ReportePdf $pdf,
         private readonly ConsultaTablero $tablero,
         private readonly ConsultaIncidencias $incidencias,
     ) {}
@@ -88,19 +83,9 @@ final class Contenidos
         if ($salida?->getFecha() === null) {
             return null;
         }
-        $ocupacion = $this->ocupacion($salida);
-        $ficha = self::ficha($salida);
 
-        // Solo la tarjeta de ocupación por vendedor, sin texto.
-        return new Pieza(
-            "salida:" . $salidaId,
-            "",
-            [["tipo" => TarjetaOcupacionSalida::TIPO, "id" => $salidaId]],
-            [[
-                "nombre" => sprintf("salida_iniciada_%d_%s.pdf", $salidaId, $salida->getFecha()->format("Ymd_Hi")),
-                "contenido" => $this->pdf->salidaIniciada($ocupacion, $ficha, self::AUTOR),
-            ]],
-        );
+        // Solo la tarjeta de ocupación por vendedor, sin texto ni PDF.
+        return new Pieza("salida:" . $salidaId, "", [["tipo" => TarjetaOcupacionSalida::TIPO, "id" => $salidaId]]);
     }
 
     /** La ocupación de la salida con lo vendido hasta ahora (también la tarjeta, al leer). */

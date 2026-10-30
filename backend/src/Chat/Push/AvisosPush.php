@@ -108,7 +108,7 @@ final class AvisosPush
     {
         $fragmento = self::fragmento($texto);
         [$titulo, $cuerpo] = match (true) {
-            $tipo === TipoCanalChat::Sistema || $autor === null => ["Avisos del sistema", $fragmento],
+            $tipo === TipoCanalChat::Sistema || $autor === null => ["Bitácora del sistema", $fragmento],
             $tipo === TipoCanalChat::Grupo => [$grupo ?: "Grupo", sprintf("%s: %s", $autor, $fragmento)],
             default => [$autor, $fragmento],
         };

@@ -28,7 +28,7 @@ use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 
 /**
  * Traduce hechos de otros módulos en avisos del sistema del chat (canal
- * "Avisos del sistema" de cada destinatario). Los eventos llegan después del
+ * "Bitácora del sistema" de cada destinatario). Los eventos llegan después del
  * commit (`Transaccion::despuesDeConfirmar`): nunca se avisa algo revertido.
  * Un fallo aquí no rompe la operación que lo originó.
  */

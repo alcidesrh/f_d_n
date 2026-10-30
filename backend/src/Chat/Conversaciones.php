@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Chat;
 
+use App\Acceso\Autorizacion;
 use App\Chat\Push\AvisosPush;
 use App\Chat\Tarjeta\Tarjetas;
 use App\Cuenta\FotoPerfil;
@@ -38,6 +39,7 @@ final class Conversaciones
         private readonly FotoPerfil $fotos,
         private readonly FotoGrupo $fotosGrupo,
         private readonly AvisosPush $push,
+        private readonly Autorizacion $autorizacion,
     ) {}
 
     private function perfil(Usuario $u): Perfil
@@ -512,15 +514,18 @@ final class Conversaciones
 
     /**
      * Elimina un mensaje para todos: queda "Se eliminó este mensaje" (las
-     * respuestas siguen apuntando a él). Puede su autor y, en un grupo, quien
-     * lo administra. Avisa `cambio` a los miembros.
+     * respuestas siguen apuntando a él). Pueden su autor, quien administra el
+     * grupo y el SUPER_ADMIN (también en sus avisos del sistema). Avisa
+     * `cambio` a los miembros.
      *
      * @return array<string, mixed> el mensaje ya eliminado
      */
     public function eliminarMensaje(Usuario $yo, int $mensajeId): array
     {
         $mensaje = $this->mensajeVisible($yo, $mensajeId);
-        if ($mensaje->getAutor()?->getId() !== $yo->getId() && !$mensaje->getCanal()->administra($yo)) {
+        // El SUPER_ADMIN (sistema) quita cualquier mensaje de sus conversaciones, también sus avisos del sistema.
+        $puede = $this->autorizacion->de($yo)->sistema() || $mensaje->getAutor()?->getId() === $yo->getId() || $mensaje->getCanal()->administra($yo);
+        if (!$puede) {
             throw new ChatRechazado("Solo puede eliminar sus propios mensajes.", 403);
         }
         $this->archivos->borrar($mensaje->getArchivos()->toArray());
@@ -584,7 +589,7 @@ final class Conversaciones
     }
 
     /**
-     * Aviso automático (sin autor) en el canal "Avisos del sistema" de cada
+     * Aviso automático (sin autor) en el canal "Bitácora del sistema" de cada
      * usuario. Las tarjetas no se validan contra un autor: cada quien las ve
      * con sus permisos al leer.
      *

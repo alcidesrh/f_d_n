@@ -93,7 +93,7 @@
                     <button v-if="puedeEscribir" type="button" class="mensaje__boton" :aria-label="`Responder: ${m.texto.slice(0, 40)}`" v-tooltip.top="'Responder'" @click="responder(m)">
                       <icon name="reply" size="1.05rem" color="text-current" />
                     </button>
-                    <button v-if="!esSistema" type="button" class="mensaje__boton" aria-label="Más acciones" aria-haspopup="true" aria-controls="conv-acciones" v-tooltip.top="'Más'" @click="abrirAcciones($event, m)">
+                    <button v-if="!esSistema || acceso.sistema" type="button" class="mensaje__boton" aria-label="Más acciones" aria-haspopup="true" aria-controls="conv-acciones" v-tooltip.top="'Más'" @click="abrirAcciones($event, m)">
                       <icon name="more-vert" size="1.05rem" color="text-current" />
                     </button>
                   </span>
@@ -139,6 +139,7 @@ import type { MenuItem } from "primevue/menuitem";
 import type Menu from "primevue/menu";
 import type { Envio } from "@/core/chat/api";
 import { useChatStore } from "@/core/chat/store";
+import { useAccesoStore } from "@/core/acceso/store";
 import { agrupar, extractoMensaje, horaCorta, segmentos, tono, ultimo, vistoPor } from "@/core/chat/modelo";
 import type { Archivo, Mensaje, Referencia } from "@/core/chat/types";
 import { notify } from "@/core/notify";
@@ -166,6 +167,7 @@ const CERCA = 120;
 const MAX_PAGINAS_CITA = 10;
 
 const chat = useChatStore();
+const acceso = useAccesoStore();
 const ventana = useVentanaChat();
 const raiz = ref<HTMLElement | null>(null);
 const lienzo = ref<HTMLElement | null>(null);
@@ -339,7 +341,7 @@ function editar(m: Mensaje) {
 function eliminar(m: Mensaje) {
   confirm.require({
     header: "Eliminar mensaje",
-    message: m.autor?.id === chat.yo?.id ? "Se eliminará para todos los de la conversación." : `Se eliminará el mensaje de ${m.autor?.nombre ?? "otro miembro"} para todos los del grupo.`,
+    message: esSistema.value ? "Se eliminará este aviso." : m.autor?.id === chat.yo?.id ? "Se eliminará para todos los de la conversación." : `Se eliminará el mensaje de ${m.autor?.nombre ?? "otro miembro"} para todos los del grupo.`,
     acceptProps: { label: "Eliminar", severity: "danger" },
     rejectProps: { label: "Cancelar", severity: "secondary" },
     accept: async () => {
@@ -358,7 +360,7 @@ function eliminar(m: Mensaje) {
 function acciones(m: Mensaje): AccionHoja[] {
   if (m.eliminado) return [];
   const mio = m.autor !== null && m.autor.id === chat.yo?.id;
-  return [...(puedeEscribir.value ? [{ etiqueta: "Responder", icono: "reply", accion: () => responder(m) }] : []), ...(canal.value?.tipo === "grupo" && m.autor && !mio ? [{ etiqueta: "Responder en privado", icono: "lock-outline", accion: () => void responderEnPrivado(m) }] : []), ...(!esSistema.value ? [{ etiqueta: "Reenviar", icono: "forward", accion: () => (reenviando.value = m) }] : []), ...(mio && puedeEscribir.value ? [{ etiqueta: "Editar", icono: "edit-outline", accion: () => editar(m) }] : []), ...(m.texto ? [{ etiqueta: "Copiar texto", icono: "content-copy-outline", accion: () => void copiar(m.texto) }] : []), ...(m.respuesta ? [{ etiqueta: m.editado ? "Ver el original" : "Ver el mensaje citado", icono: "format-quote-outline", accion: () => void irA(m.respuesta!.id) }] : []), ...(m.autor && (mio || canal.value?.administro) ? [{ etiqueta: "Eliminar", icono: "delete-outline", peligro: true, accion: () => eliminar(m) }] : [])];
+  return [...(puedeEscribir.value ? [{ etiqueta: "Responder", icono: "reply", accion: () => responder(m) }] : []), ...(canal.value?.tipo === "grupo" && m.autor && !mio ? [{ etiqueta: "Responder en privado", icono: "lock-outline", accion: () => void responderEnPrivado(m) }] : []), ...(!esSistema.value ? [{ etiqueta: "Reenviar", icono: "forward", accion: () => (reenviando.value = m) }] : []), ...(mio && puedeEscribir.value ? [{ etiqueta: "Editar", icono: "edit-outline", accion: () => editar(m) }] : []), ...(m.texto ? [{ etiqueta: "Copiar texto", icono: "content-copy-outline", accion: () => void copiar(m.texto) }] : []), ...(m.respuesta ? [{ etiqueta: m.editado ? "Ver el original" : "Ver el mensaje citado", icono: "format-quote-outline", accion: () => void irA(m.respuesta!.id) }] : []), ...(acceso.sistema || (m.autor && (mio || canal.value?.administro)) ? [{ etiqueta: "Eliminar", icono: "delete-outline", peligro: true, accion: () => eliminar(m) }] : [])];
 }
 
 const opcionesMensaje = computed<MenuItem[]>(() => (accionesDe.value ? acciones(accionesDe.value) : []).map((a) => ({ label: a.etiqueta, icono: a.icono, peligro: a.peligro, command: a.accion })));

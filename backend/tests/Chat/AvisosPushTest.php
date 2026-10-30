@@ -28,7 +28,7 @@ final class AvisosPushTest extends TestCase
 
     public function testSistema(): void
     {
-        $this->assertSame("Avisos del sistema", AvisosPush::contenido(1, TipoCanalChat::Sistema, null, null, "Saldo acreditado")["titulo"]);
+        $this->assertSame("Bitácora del sistema", AvisosPush::contenido(1, TipoCanalChat::Sistema, null, null, "Saldo acreditado")["titulo"]);
     }
 
     public function testTruncaElFragmento(): void

@@ -86,7 +86,7 @@ class ChatCanal
     public static function sistema(Usuario $usuario): self
     {
         $canal = new self(TipoCanalChat::Sistema, null);
-        $canal->nombre = "Avisos del sistema";
+        $canal->nombre = "Bitácora del sistema";
         $canal->clave = self::claveSistema((int) $usuario->getId());
         $canal->agregar($usuario);
 

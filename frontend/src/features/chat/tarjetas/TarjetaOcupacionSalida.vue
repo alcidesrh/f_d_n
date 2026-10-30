@@ -4,7 +4,7 @@
   calculada al leer. Los ceros van apagados para que resalte lo que hay.
 -->
 <template>
-  <div class="flex flex-col gap-3 text-sm">
+  <div class="ocupacion flex flex-col gap-3 text-sm">
     <div>
       <div class="font-semibold leading-snug">{{ d.titulo }}</div>
       <div class="text-xs text-muted-color first-letter:uppercase">
@@ -77,6 +77,23 @@ const fecha = (iso: string) => new Intl.DateTimeFormat("es-GT", { weekday: "shor
 </script>
 
 <style scoped>
+/* Fondo blanco fijo (también en modo oscuro): los tokens de la tabla se fijan aquí para que se lea igual. */
+.ocupacion {
+  --p-text-color: #111827;
+  --p-text-muted-color: #6b7280;
+  --p-content-background: #ffffff;
+  --p-surface-50: #f8fafc;
+  --p-surface-100: #f1f5f9;
+  --p-surface-200: #e2e8f0;
+  --p-surface-300: #cbd5e1;
+  --p-surface-400: #94a3b8;
+  --p-surface-500: #64748b;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  color: #111827;
+  background: #ffffff;
+  box-shadow: var(--shadow-sm);
+}
 .cifras {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

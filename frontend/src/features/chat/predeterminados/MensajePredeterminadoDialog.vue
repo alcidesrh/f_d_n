@@ -33,7 +33,7 @@
           <span>Grupos del chat (llega a todos sus miembros)</span>
           <MultiSelect v-model="b.grupos" :options="opciones.grupos" option-label="nombre" option-value="id" :placeholder="opciones.grupos.length ? 'Elija grupos' : 'No hay grupos en el chat'" :disabled="!opciones.grupos.length" display="chip" filter :max-selected-labels="6" fluid />
         </label>
-        <small class="text-muted-color">Llega a «Avisos del sistema» de cada uno, una sola vez aunque esté en varios grupos.</small>
+        <small class="text-muted-color">Llega a «Bitácora del sistema» de cada uno, una sola vez aunque esté en varios grupos.</small>
       </fieldset>
 
       <fieldset class="paso">

@@ -123,7 +123,7 @@ export function subirArchivo(archivo: Blob, nombre: string, alAvanzar?: (fraccio
 
 export const reenviar = (mensaje: number, destinos: Destinos) => http.post<{ canales: number[] }>(`${BASE}/mensajes/${mensaje}/reenviar`, destinos)
 
-/** Elimina el mensaje para todos (el propio, o cualquiera si administro el grupo). */
+/** Elimina el mensaje para todos (el propio, cualquiera si administro el grupo o si soy SUPER_ADMIN). */
 export const eliminarMensaje = (mensaje: number) => http.delete<Mensaje>(`${BASE}/mensajes/${mensaje}`)
 
 export const marcarLeido = (canal: number, hasta: number) => http.post(`${BASE}/canales/${canal}/leido`, { hasta }, fondo)

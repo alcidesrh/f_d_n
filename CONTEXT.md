@@ -325,7 +325,7 @@ Chat interno: `directo` (dos usuarios, una por par) o `grupo` (con nombre). Una 
 _Avoid_: grupo de WhatsApp
 Modelo: nuevo
 **Mensaje predeterminado** (`MensajePredeterminado`):
-Aviso que el chat manda solo a una audiencia (usuarios y grupos) elegida por un administrador, en "Avisos del sistema": un mensaje propio con horario, la salida iniciada (ocupación y lo vendido por usuario), las anomalías de reasignación (boleto reasignado más de dos veces) y de tarifa (creada, modificada o eliminada), y las ventas y el desempeño del día al cierre. Cada uno es una **instancia** con nombre de un tipo del catálogo; puede haber varias del mismo tipo (ADR-045).
+Aviso que el chat manda solo a una audiencia (usuarios y grupos) elegida por un administrador, en "Bitácora del sistema": un mensaje propio con horario, la salida iniciada (ocupación y lo vendido por usuario), las anomalías de reasignación (boleto reasignado más de dos veces) y de tarifa (creada, modificada o eliminada), y las ventas y el desempeño del día al cierre. Cada uno es una **instancia** con nombre de un tipo del catálogo; puede haber varias del mismo tipo (ADR-045).
 _Avoid_: plantilla, difusión, mensaje automático
 Modelo: nuevo
 **Tarjeta** (chat):
