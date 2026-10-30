@@ -125,10 +125,10 @@ const fecha = (iso: string) => new Intl.DateTimeFormat("es-GT", { weekday: "shor
 }
 /* Mismos tonos que la tarjeta de la salida y el croquis. */
 .cifra--estacion {
-  border-color: var(--p-blue-500);
+  border-color: var(--p-emerald-500);
 }
 .cifra--agencia {
-  border-color: var(--p-orange-500);
+  border-color: var(--p-blue-500);
 }
 .cifra--web {
   border-color: var(--p-amber-500);

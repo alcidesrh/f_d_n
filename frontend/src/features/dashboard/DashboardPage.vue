@@ -230,8 +230,8 @@ onBeforeUnmount(() => {
  */
 
 .tablero {
-  --serie-estacion: var(--p-emerald-600);
-  --serie-agencia: var(--p-blue-600);
+  --serie-estacion: var(--p-emerald-500);
+  --serie-agencia: var(--p-blue-500);
   --serie-web: var(--p-amber-500);
   --linea-referencia: #8a8985;
   --secuencial-min: #e6f0fd;

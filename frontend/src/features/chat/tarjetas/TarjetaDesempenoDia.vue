@@ -215,24 +215,25 @@ const resumenCanales = computed(() => d.value.canales.map((c) => `${c.nombre} ${
   flex-shrink: 0;
   border-radius: 50%;
 }
-/* Mismos tonos del reporte de referencia: estación, página web, agencia, cortesía, ruta completa e intermedia. */
+/* Los canales, con los del croquis: estación emerald (ocupado), agencia azul, página ámbar. */
 .estacion {
-  background: #3b82f6;
+  background: #10b981;
 }
 .web {
   background: #f59e0b;
 }
 .agencia {
-  background: #f97316;
+  background: #3b82f6;
 }
 .cortesia {
   background: #84cc16;
 }
+/* Ruta completa e intermedia no son canales: tonos neutros para no confundirlos con la agencia. */
 .completa {
-  background: #3b82f6;
+  background: #334155;
 }
 .intermedia {
-  background: #93c5fd;
+  background: #cbd5e1;
 }
 ol {
   display: flex;
@@ -274,7 +275,7 @@ li .mini span {
   display: block;
   height: 100%;
   border-radius: 999px;
-  background: #3b82f6;
+  background: #10b981;
 }
 li .detalle {
   grid-column: 2 / 4;

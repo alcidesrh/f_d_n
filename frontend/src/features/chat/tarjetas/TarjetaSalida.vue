@@ -74,13 +74,13 @@ const fecha = (iso: string) => new Intl.DateTimeFormat('es-GT', { weekday: 'shor
   background: var(--p-surface-200);
 }
 .ocupacion__estacion {
-  background: var(--p-blue-500);
+  background: var(--p-emerald-500);
 }
 .ocupacion__web {
   background: var(--p-amber-500);
 }
 .ocupacion__agencia {
-  background: var(--p-orange-500);
+  background: var(--p-blue-500);
 }
 .ocupacion__cortesia {
   background: var(--p-lime-500);
