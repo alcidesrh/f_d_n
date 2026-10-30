@@ -166,19 +166,102 @@ final class Contenidos
         return new Pieza("dia:" . $ahora->format("Y-m-d"), implode("\n", $lineas));
     }
 
-    /** El resumen del día (como el reporte de cada mañana) del mismo día, al cierre. */
+    /**
+     * Ingresos del día (boletos de ruta completa e intermedia, y encomiendas),
+     * por canal y estación, con la operación del día. Del día completo, así
+     * que sale al cierre con lo de todo el día.
+     */
     public function desempenoDelDia(MensajePredeterminado $m, \DateTimeImmutable $ahora): Pieza
     {
         $empresa = $m->getEmpresa();
+        $empresaId = $empresa?->getId();
         $dia = $ahora->setTime(0, 0);
-        $t = $this->tablero->tablero(new Periodo(1, $ahora), $empresa?->getId());
-        $titulo = sprintf("Desempeño del %s", ResumenDiario::fechaLarga($dia));
-        $seccion = ResumenDiario::seccion($empresa?->getNombre() ?? "Todas las empresas", $t, $this->incidencias->porUsuario($dia, $empresa?->getId()));
+        $hasta = $dia->modify("+1 day");
+        $titulo = sprintf("Desempeño del %s · %s", ResumenDiario::fechaLarga($dia), $empresa?->getNombre() ?? "Todas las empresas");
 
         return new Pieza(
             "dia:" . $dia->format("Y-m-d"),
-            $seccion === null ? sprintf("%s\nHoy no hubo venta, ni salidas, ni nada que atender.", $titulo) : ResumenDiario::texto($titulo, [$seccion]),
+            DesempenoDelDia::texto(
+                $titulo,
+                $this->boletosDelDia($dia, $hasta, $empresaId),
+                $this->encomiendasDelDia($dia, $hasta, $empresaId),
+                $this->incidencias->totales($dia, $empresaId),
+            ),
         );
+    }
+
+    /**
+     * Boletos cobrados del día por canal y lugar, en ruta completa o
+     * intermedia (el mismo criterio que la ocupación). Sin anulados,
+     * reasignados ni cortesías (no cobran).
+     *
+     * @return list<array{tipo: string, nombre: string, intermedia: bool, boletos: int, ingresos: int}>
+     */
+    private function boletosDelDia(\DateTimeImmutable $desde, \DateTimeImmutable $hasta, ?int $empresa): array
+    {
+        $filas = $this->db->fetchAllAssociative(
+            "SELECT CASE WHEN v.canal = 'web' THEN 'web' WHEN v.agencia_id IS NOT NULL THEN 'agencia' ELSE 'estacion' END AS tipo,
+                    CASE WHEN v.canal = 'web' THEN 'Página web' ELSE COALESCE(ag.nombre, en.nombre, 'Sin estación') END AS nombre,
+                    (COALESCE(b.orden_sube, 0) > 0 OR COALESCE(b.orden_baja, 0) < (SELECT MAX(p.orden) FROM parada p WHERE p.ruta_id = s.ruta_id)) AS intermedia,
+                    COUNT(*) AS boletos,
+                    COALESCE(SUM(b.precio_monto), 0) AS ingresos
+               FROM boleto_asiento b
+               JOIN boleto_venta v ON v.id = b.boleto_venta_id
+               JOIN salida s ON s.id = b.salida_id
+               LEFT JOIN agencia ag ON ag.id = v.agencia_id
+               LEFT JOIN enclave en ON en.id = v.estacion_id
+              WHERE v.estado = 'confirmada' AND b.precio_moneda = :moneda
+                AND v.created_at >= :desde AND v.created_at < :hasta
+                AND b.estado NOT IN ('anulado', 'reasignado')
+                AND NOT (v.cortesia OR (v.voucher AND v.canal <> 'agencia'))
+                AND (CAST(:empresa AS INT) IS NULL OR s.empresa_id = CAST(:empresa AS INT))
+              GROUP BY 1, 2, 3",
+            [
+                "moneda" => ConsultaTablero::MONEDA,
+                "desde" => $desde->format("Y-m-d H:i:s"),
+                "hasta" => $hasta->format("Y-m-d H:i:s"),
+                "empresa" => $empresa,
+            ],
+        );
+
+        return array_map(static fn(array $f) => [
+            "tipo" => (string) $f["tipo"],
+            "nombre" => (string) $f["nombre"],
+            "intermedia" => (bool) $f["intermedia"],
+            "boletos" => (int) $f["boletos"],
+            "ingresos" => (int) $f["ingresos"],
+        ], $filas);
+    }
+
+    /**
+     * Encomiendas creadas en el día que se cobran al recibirlas (pagadas y
+     * con boleto), por estación.
+     *
+     * @return list<array{nombre: string, cantidad: int, ingresos: int}>
+     */
+    private function encomiendasDelDia(\DateTimeImmutable $desde, \DateTimeImmutable $hasta, ?int $empresa): array
+    {
+        $filas = $this->db->fetchAllAssociative(
+            "SELECT COALESCE(en.nombre, 'Sin estación') AS nombre, COUNT(*) AS cantidad, COALESCE(SUM(e.total_monto), 0) AS ingresos
+               FROM encomienda e
+               LEFT JOIN enclave en ON en.id = e.estacion_id
+              WHERE e.creada >= :desde AND e.creada < :hasta
+                AND e.estado <> 'anulada' AND e.modalidad IN ('pagada', 'con_boleto') AND e.total_moneda = :moneda
+                AND (CAST(:empresa AS INT) IS NULL OR e.empresa_id = CAST(:empresa AS INT))
+              GROUP BY 1",
+            [
+                "moneda" => ConsultaTablero::MONEDA,
+                "desde" => $desde->format("Y-m-d H:i:s"),
+                "hasta" => $hasta->format("Y-m-d H:i:s"),
+                "empresa" => $empresa,
+            ],
+        );
+
+        return array_map(static fn(array $f) => [
+            "nombre" => (string) $f["nombre"],
+            "cantidad" => (int) $f["cantidad"],
+            "ingresos" => (int) $f["ingresos"],
+        ], $filas);
     }
 
     /**

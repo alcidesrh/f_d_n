@@ -20,6 +20,43 @@ final class ConsultaIncidencias
     public function __construct(private readonly Connection $db) {}
 
     /**
+     * Cuántos boletos se anularon, reasignaron o no se presentaron en el día
+     * (la bitácora), y cuántas cortesías se emitieron (por fecha de venta).
+     *
+     * @return array{anulados: int, reasignados: int, cancelados: int, cortesias: int}
+     */
+    public function totales(\DateTimeImmutable $dia, ?int $empresa): array
+    {
+        $rango = ["desde" => $dia->setTime(0, 0)->format("Y-m-d H:i:s"), "hasta" => $dia->setTime(0, 0)->modify("+1 day")->format("Y-m-d H:i:s")];
+        $deEmpresa = $empresa === null ? "" : " AND s.empresa_id = :empresa";
+        $parametros = $rango + ($empresa === null ? [] : ["empresa" => $empresa]);
+
+        $deBitacora = fn(OperacionBoleto $op): int => (int) $this->db->fetchOne(
+            "SELECT COUNT(*)
+               FROM bitacora k
+               JOIN boleto_asiento b ON b.id = k.registro_id
+               JOIN salida s ON s.id = b.salida_id
+              WHERE k.entidad = 'boleto' AND k.operacion = :operacion AND k.fecha >= :desde AND k.fecha < :hasta{$deEmpresa}",
+            $parametros + ["operacion" => $op->value],
+        );
+        $cortesias = (int) $this->db->fetchOne(
+            "SELECT COUNT(b.id)
+               FROM boleto_venta v
+               JOIN boleto_asiento b ON b.boleto_venta_id = v.id
+               JOIN salida s ON s.id = b.salida_id
+              WHERE v.cortesia = true AND v.created_at >= :desde AND v.created_at < :hasta AND b.estado <> :anulado{$deEmpresa}",
+            $parametros + ["anulado" => EstadoBoletoAsiento::ANULADO->value],
+        );
+
+        return [
+            "anulados" => $deBitacora(OperacionBoleto::ANULADO),
+            "reasignados" => $deBitacora(OperacionBoleto::REASIGNADO),
+            "cancelados" => $deBitacora(OperacionBoleto::CANCELADO),
+            "cortesias" => $cortesias,
+        ];
+    }
+
+    /**
      * @return array{anulados: list<array{nombre: string, usuario: string, boletos: int}>, reasignados: list<array{nombre: string, usuario: string, boletos: int}>, cortesias: list<array{nombre: string, usuario: string, boletos: int}>}
      */
     public function porUsuario(\DateTimeImmutable $dia, ?int $empresa): array
