@@ -73,7 +73,7 @@ test.describe('mensajes predeterminados', () => {
 
     // Probar: le llega solo a quien prueba.
     await tarjeta.getByRole('button', { name: 'Probar' }).click()
-    await expect(page.getByText('Le llegó a «Avisos del sistema» en el chat.')).toBeVisible()
+    await expect(page.getByText('Le llegó a «Bitácora del sistema» en el chat.')).toBeVisible()
 
     // Desactivar.
     await tarjeta.getByRole('switch').click()

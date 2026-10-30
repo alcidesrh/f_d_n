@@ -6,7 +6,7 @@
 <template>
   <section v-if="datos && datos.reportes.some((r) => r.puede || r.suscrito)" class="card">
     <h2 class="mb-1 text-base font-semibold">Reportes y avisos</h2>
-    <p class="mb-3 text-sm text-muted-color">Llegan a «Avisos del sistema» en el chat o a su correo, con lo que su rol le deja ver.</p>
+    <p class="mb-3 text-sm text-muted-color">Llegan a «Bitácora del sistema» en el chat o a su correo, con lo que su rol le deja ver.</p>
     <ul class="m-0 flex list-none flex-col gap-3 p-0">
       <li v-for="r in datos.reportes" :key="r.codigo" class="flex flex-col gap-2 @xl:flex-row @xl:items-start @xl:justify-between">
         <div class="min-w-0">

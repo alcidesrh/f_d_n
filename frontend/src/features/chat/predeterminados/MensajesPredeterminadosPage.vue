@@ -1,6 +1,6 @@
 <!--
   Mensajes predeterminados (`/configuracion/mensajes-predeterminados`,
-  ADR-045): las instancias que mandan solas a «Avisos del sistema» de su
+  ADR-045): las instancias que mandan solas a «Bitácora del sistema» de su
   audiencia. Puede haber varias del mismo tipo (dos rutas con «Salida
   iniciada»). Activar o desactivar, probar (llega solo a quien prueba),
   editar y eliminar. Solo con `chat.predeterminados` (ROLE_SUPER_ADMIN y
@@ -19,7 +19,7 @@
       </template>
     </Toolbar>
 
-    <p class="m-0 px-2 text-sm text-muted-color">Llegan a «Avisos del sistema» en el chat de cada destinatario: al iniciar una salida, al cierre del día, a la hora que elija o cuando la revisión de la madrugada encuentra una anomalía.</p>
+    <p class="m-0 px-2 text-sm text-muted-color">Llegan a «Bitácora del sistema» en el chat de cada destinatario: al iniciar una salida, al cierre del día, a la hora que elija o cuando la revisión de la madrugada encuentra una anomalía.</p>
 
     <Message v-if="error" severity="warn" :closable="false" class="mx-2">{{ error }}</Message>
 
@@ -161,7 +161,7 @@ async function probar(m: MensajePredeterminado) {
   probando.value = m.id
   try {
     await probarPredeterminado(m.id)
-    notify.success('Le llegó a «Avisos del sistema» en el chat.')
+    notify.success('Le llegó a «Bitácora del sistema» en el chat.')
   } catch (e) {
     notify.error(e instanceof HttpError ? e.message : 'No se pudo enviar la prueba.')
   } finally {
