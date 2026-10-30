@@ -6,18 +6,21 @@
 <template>
   <NavMenuBar v-if="area === 'topbar_right'" :menus="menus" />
   <template v-else>
-    <section v-for="menu in menus" :key="menu.id" class="nav-section">
-      <button v-if="menus.length > 1 && !sidebar?.compact" type="button" class="nav-section-title" :aria-expanded="!closed.has(menu.id)" :title="closed.has(menu.id) ? 'Desplegar' : 'Contraer'" @click="toggle(menu.id)">
-        <icon :weight="200" :name="closed.has(menu.id) ? 'add' : 'remove'" size="1rem" />
-        <span>{{ menu.nombre }}</span>
-      </button>
-      <Transition :css="false" @enter="onEnter" @leave="onLeave">
-        <div v-if="sidebar && (sidebar.compact || menus.length < 2 || !closed.has(menu.id))">
-          <NavTree :items="menu.items" :sidebar="sidebar" />
-        </div>
-      </Transition>
-      <divider class="my-4!" />
-    </section>
+    <template v-for="menu in menus" :key="menu.id">
+      <section class="nav-section">
+        <button v-if="menus.length > 1 && !sidebar?.compact" type="button" class="nav-section-title py-5!" @click="toggle(menu.id)" :class="{ 'bg-susrface-100': opened.has(menu.id) }">
+          <icon :weight="200" :name="!opened.has(menu.id) ? 'add' : 'remove'" size="1rem" />
+          <span :class="{ 'text-surface-600': opened.has(menu.id) }">{{ menu.nombre }}</span>
+        </button>
+        <Transition :css="false" @enter="onEnter" @leave="onLeave">
+          <div v-if="sidebar && (sidebar.compact || menus.length < 2 || opened.has(menu.id))">
+            <NavTree :items="menu.items" :sidebar="sidebar" />
+          </div>
+        </Transition>
+      </section>
+      <divider class="my-0!"
+    /></template>
+
     <slot v-if="!menus.length" name="empty" />
   </template>
 </template>
@@ -35,7 +38,7 @@ const userMenus = useUserMenusStore();
 const menus = computed(() => userMenus.areas[props.area]);
 
 /** Menús contraídos: los guarda el store del panel (por usuario). */
-const closed = computed(() => new Set(props.sidebar?.collapsedMenus ?? []));
+const opened = computed(() => new Set(props.sidebar?.expandedMenus ?? []));
 const toggle = (id: number) => props.sidebar?.toggleMenu(id);
 
 function onEnter(el: Element, done: () => void) {
@@ -89,6 +92,6 @@ function onLeave(el: Element, done: () => void) {
   text-overflow: ellipsis;
 }
 .nav-section-title:hover {
-  background-color: var(--p-surface-50);
+  background-color: var(--p-surface-100);
 }
 </style>

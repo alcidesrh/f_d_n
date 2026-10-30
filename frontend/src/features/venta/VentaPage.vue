@@ -11,7 +11,7 @@
   mide 48rem (container query), croquis fijo a la derecha.
 -->
 <template>
-  <div class="venta flex flex-col gap-2 md:gap-4">
+  <div class="venta flex flex-col gap-2 pb-20 md:gap-4 md:pb-0">
     <Message v-if="store.errorCarga" severity="error" :closable="false">
       {{ store.errorCarga }}
       <Button label="Reintentar" size="small" text @click="store.iniciar()" />
@@ -132,10 +132,11 @@
                 {{ store.errorCotizacion }}
               </Message>
               <Message v-if="!store.cliente && store.seleccion.length" severity="info" :closable="false"> Elija el cliente para facturar. </Message>
-              <div v-if="store.reasignacion" class="flex flex-wrap justify-end gap-2">
+              <!-- En el teléfono, en la barra fija de abajo. -->
+              <div v-if="store.reasignacion" class="hidden flex-wrap justify-end gap-2 md:flex">
                 <Button label="Reasignar" :loading="store.vendiendo" :disabled="!store.puedeReasignar" @click="confirmarReasignacion" />
               </div>
-              <div v-else class="flex flex-wrap justify-end gap-2">
+              <div v-else class="hidden flex-wrap justify-end gap-2 md:flex">
                 <!-- Sin el permiso, en taquilla también: la venta pide una autorización (ADR-040). -->
                 <Button v-if="store.contexto?.permisos.cortesia || store.contexto?.canal === 'estacion'" label="Cortesía" severity="secondary" outlined :disabled="!store.puedeVender || store.encomiendaArticulos.length > 0" v-tooltip.top="store.encomiendaArticulos.length ? 'Una cortesía no lleva encomienda' : !store.contexto?.permisos.cortesia ? 'Requiere una autorización' : undefined" @click="abrirCobro(true)">
                   <template v-if="!store.contexto?.permisos.cortesia" #icon><icon name="lock-outline" class="mr-1" /></template>
@@ -204,6 +205,25 @@
         </div>
       </div>
     </div>
+
+    <!-- Teléfono: el total y el cobro siempre a mano, abajo (deshabilitados hasta poder vender). -->
+    <Teleport to="body">
+      <div class="barra-movil fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-surface-200 bg-surface-0 px-4 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-[0_-2px_8px_rgb(0_0_0/0.06)] md:hidden">
+        <div class="flex min-w-0 flex-col leading-tight" aria-live="polite">
+          <span class="text-xs text-muted-color">{{ store.seleccion.length }} {{ store.seleccion.length === 1 ? "asiento" : "asientos" }}</span>
+          <span class="truncate text-lg font-semibold tabular-nums">{{ store.total?.texto ?? "—" }}</span>
+        </div>
+        <div class="flex shrink-0 gap-2">
+          <Button v-if="store.reasignacion" label="Reasignar" :loading="store.vendiendo" :disabled="!store.puedeReasignar" @click="confirmarReasignacion" />
+          <template v-else>
+            <Button v-if="store.contexto?.permisos.cortesia || store.contexto?.canal === 'estacion'" label="Cortesía" severity="secondary" outlined :disabled="!store.puedeVender || store.encomiendaArticulos.length > 0" @click="abrirCobro(true)">
+              <template v-if="!store.contexto?.permisos.cortesia" #icon><icon name="lock-outline" class="mr-1" /></template>
+            </Button>
+            <Button :label="store.contexto?.canal === 'agencia' ? 'Vender' : 'Facturar'" :disabled="!store.puedeVender || !store.cotizacion" @click="abrirCobro(false)" />
+          </template>
+        </div>
+      </div>
+    </Teleport>
 
     <CobroDialog v-model:visible="cobro" :cortesia="cortesia" @confirmar="confirmar" />
     <FacturacionFallidaDialog :fallo="store.falloFacturacion" :ocupado="store.vendiendo" @cancelar="store.cancelarVenta()" @reintentar="reintentar" />

@@ -5,8 +5,8 @@
   ven las raíces (íconos).
 -->
 <template>
-  <ul class="sidebar-menu nav-tree" :class="{ 'nav-tree--nested': depth > 0 }">
-    <li v-for="item in items" :key="item.id" class="menu-item">
+  <ul class="sidebar-menu nav-tree @container" :class="{ 'nav-tree--nested': depth > 0 }">
+    <li v-for="item in items" :key="item.id" class="menu-item @max-[60px]:last:pb-0 last:pb-8 py-2">
       <div class="nav-row" :class="{ 'nav-row--mini': compact }">
         <template v-if="!compact">
           <button v-if="item.children.length" type="button" class="nav-toggle" :style="toggleIndent" :aria-expanded="expanded.has(item.id)" :title="expanded.has(item.id) ? 'Contraer' : 'Desplegar'" @click="toggle(item.id)">
@@ -193,6 +193,12 @@ const toggle = (id: number) => props.sidebar.toggleItem(id);
 </script>
 
 <style scoped>
+.sidebar-menu {
+  background-color: white;
+  & > * {
+    background-color: var(--bg2);
+  }
+}
 .nav-tree--nested {
   padding: 0;
 }

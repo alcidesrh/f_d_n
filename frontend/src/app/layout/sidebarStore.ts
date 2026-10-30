@@ -32,7 +32,7 @@ export interface SidebarStoreState {
   /** Drawer abierto (solo debajo de `lg`). */
   drawer: boolean;
   /** Secciones (menús) contraídas, por id de menú (persistido). */
-  collapsedMenus: number[];
+  expandedMenus: number[];
   /** Ítems desplegados del árbol, por id de ítem (persistido). */
   expandedItems: number[];
 }
@@ -40,7 +40,7 @@ export interface SidebarStoreState {
 function createDefinition(side: "left" | "right", name: string) {
   return defineStore(name, {
     // Solo el modo: los anchos son constantes (un valor viejo persistido pisaría el nuevo).
-    persist: { pick: ["mode", "prevMode", "collapsedMenus", "expandedItems"] },
+    persist: { pick: ["mode", "prevMode", "expandedMenus", "expandedItems"] },
     state: (): SidebarStoreState => ({
       side: side,
       mode: "open",
@@ -51,7 +51,7 @@ function createDefinition(side: "left" | "right", name: string) {
       mini: 60,
       close: 0,
       drawer: false,
-      collapsedMenus: [],
+      expandedMenus: [],
       expandedItems: [],
     }),
     getters: {
@@ -70,8 +70,10 @@ function createDefinition(side: "left" | "right", name: string) {
         if (useUiStore().isMobile) this.drawer = false;
         else this.setMode("close");
       },
+      /** En el teléfono (drawer) un solo menú abierto: abrir uno cierra los demás. */
       toggleMenu(id: number) {
-        this.collapsedMenus = this.collapsedMenus.includes(id) ? this.collapsedMenus.filter((x) => x !== id) : [...this.collapsedMenus, id];
+        if (this.expandedMenus.includes(id)) this.expandedMenus = this.expandedMenus.filter((x) => x !== id);
+        else this.expandedMenus = useUiStore().isMobile ? [id] : [...this.expandedMenus, id];
       },
       toggleItem(id: number) {
         this.expandedItems = this.expandedItems.includes(id) ? this.expandedItems.filter((x) => x !== id) : [...this.expandedItems, id];

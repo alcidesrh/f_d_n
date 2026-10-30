@@ -1,5 +1,5 @@
 <template>
-  <div class="shell" :class="{ 'shell--sin-derecha': !hasRightSidebar }">
+  <div class="shell" :class="{ 'shell--sin-derecha': !hasRightSidebar, 'shell--desplazado': desplazado }">
     <AppHeader :right-sidebar="hasRightSidebar ? rightSidebar : null">
       <template #menu-content>
         <NavArea area="topbar_right" />
@@ -11,7 +11,7 @@
         <div v-if="drawerOpen" class="shell-backdrop" aria-hidden="true" @click="closeDrawers" />
       </Transition>
       <SidebarLeft />
-      <main class="main">
+      <main ref="areaPrincipal" class="main" @scroll.passive="alDesplazar">
         <div class="main-inner">
           <slot />
         </div>
@@ -124,6 +124,13 @@ onBeforeUnmount(() => {
   dejarDeEscuchar()
   document.removeEventListener('visibilitychange', alVolver)
 })
+
+// La cabecera (fija) pone sombra cuando el contenido ya se metió por debajo.
+const areaPrincipal = ref<HTMLElement | null>(null)
+const desplazado = ref(false)
+function alDesplazar() {
+  desplazado.value = (areaPrincipal.value?.scrollTop ?? 0) > 0
+}
 
 /** Panel propio de la ruta (`meta.panel`), con su propio store de ancho/modo. */
 const panel = computed(() =>

@@ -33,7 +33,7 @@
   flex: 1;
   min-width: 0;
   overflow-y: auto;
-  /*background: var(--p-content-background);*/
+  /*background: color-mix(in hsl, var(--p-surface-50) 20%, var(--p-surface-50) 30%);*/
   background: var(--bg2);
   container-type: inline-size;
   container-name: main;

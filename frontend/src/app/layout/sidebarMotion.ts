@@ -609,7 +609,7 @@ export function useSidebarMotion(store: SidebarStore, panel: Ref<HTMLElement | n
     (open) => {
       if (!ui.isMobile) return;
       placeDrawer(true);
-      if (open) void nextTick(() => panel.value?.querySelector<HTMLElement>(".close-sidebar")?.focus());
+      if (open) void nextTick(() => panel.value?.querySelector<HTMLElement>(".sb-modes__opt--close")?.focus());
     },
   );
   watch(

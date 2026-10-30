@@ -13,7 +13,8 @@
     <!-- <Toolbar> -->
     <!-- <template #start><PageHead /></template> -->
     <!-- <template #end> -->
-    <div class="ml-auto flex flex-wrap gap-2 absolute right-0">
+    <!-- Contenido angosto: en su propia fila (flotando taparía los chips de estado). -->
+    <div class="flex flex-wrap justify-end gap-2 @3xl:absolute @3xl:right-0">
       <RouterLink :to="{ name: 'salidas-calendario' }" class="no-underline">
         <Button label="Calendario" size="small" severity="secondary" outlined
           ><template #icon><icon name="calendar-view-week" class="mr-1" /></template

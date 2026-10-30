@@ -211,6 +211,12 @@ onBeforeUnmount(() => {
 .ventana--esquina.ventana--minimizada .ventana__marco {
   border-radius: 0.9rem 0.9rem 0 0;
 }
+/* La esquina flota sobre la app: un borde del primario y más sombra la separan del contenido. */
+.ventana--esquina:not(.ventana--completa) .ventana__marco {
+  box-shadow:
+    0 28px 64px -12px rgb(15 23 42 / 0.45),
+    0 0 0 1.5px var(--p-primary-color);
+}
 .ventana--completa .ventana__marco {
   border-radius: 0;
 }

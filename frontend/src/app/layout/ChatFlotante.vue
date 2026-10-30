@@ -1,9 +1,9 @@
 <template>
-  <!-- Disparador del chat en el teléfono (el escritorio lo tiene en la cabecera). Discreto: no tapa la app. -->
+  <!-- Disparador del chat en el teléfono (el escritorio lo tiene en la cabecera). Relleno con el primario para destacar sobre la app. -->
   <button
     v-if="session.user && route.name !== 'chat'"
     type="button"
-    class="tap-target fixed right-4 bottom-4 z-40 flex size-11 items-center justify-center rounded-full border border-surface-200 bg-surface-0 text-surface-600 opacity-80 shadow-md md:hidden"
+    class="chat-flotante tap-target fixed right-4 bottom-4 z-40 flex size-11 items-center justify-center rounded-full md:hidden"
     :aria-label="chat.noLeidos ? `Mensajes, ${chat.noLeidos} sin leer` : 'Mensajes'"
     @click="invocarChat"
   >
@@ -31,3 +31,18 @@ function invocarChat() {
   void router.push({ name: 'chat', params: { canal: ventanaChat.canal ?? undefined } })
 }
 </script>
+
+<style>
+.chat-flotante {
+  background: var(--p-primary-color);
+  color: var(--p-primary-contrast-color);
+  box-shadow: 0 8px 20px -6px rgb(15 23 42 / 0.4);
+}
+
+/* Sobre la barra fija de abajo de una pantalla (p. ej. la venta), no encima de sus botones. */
+@media (width < 48rem) {
+  body:has(.barra-movil) .chat-flotante {
+    bottom: calc(5rem + env(safe-area-inset-bottom));
+  }
+}
+</style>

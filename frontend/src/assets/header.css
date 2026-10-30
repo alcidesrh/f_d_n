@@ -11,15 +11,21 @@
   right: 0;
   height: var(--header-h);
   z-index: 50;
-  background: var(--bg);
-  border-bottom: var(--border);
+  background: var(--bg2);
+  /*border-bottom: var(--border);*/
   display: flex;
   align-items: center;
   gap: 0.25rem;
   padding: 0 0.5rem;
+  transition: box-shadow 0.2s ease;
+
   @variant lg {
     gap: 16px;
   }
+}
+/* Sombra solo cuando el contenido ya se desplazó por debajo (`AppShell`, clase en `.shell`). */
+.shell--desplazado .app-header {
+  box-shadow: 0px 1px 11px var(--p-surface-300);
 }
 .right-header {
   display: flex;

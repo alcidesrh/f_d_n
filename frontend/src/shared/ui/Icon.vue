@@ -63,7 +63,7 @@ const style = computed(() => ({
   height: size_.value,
   minWidth: size_.value,
   minHeight: size_.value,
-  fontVariationSettings: `'FILL' ${parsed.value.fill}, 'wght' ${props.weight ?? "var(--icon-weight, 200)"}`,
+  fontVariationSettings: `'FILL' ${parsed.value.fill}, 'wght' ${props.weight ?? "var(--icon-weight, 230)"}`,
 }));
 
 /** Color por defecto solo si no llega ni `color` ni una `class` propia. */
