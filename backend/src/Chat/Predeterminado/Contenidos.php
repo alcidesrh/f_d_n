@@ -91,11 +91,11 @@ final class Contenidos
         $ocupacion = $this->ocupacion($salida);
         $ficha = self::ficha($salida);
 
-        // Solo las dos tarjetas, en este orden: la salida y su ocupación por vendedor.
+        // Solo la tarjeta de ocupación por vendedor, sin texto.
         return new Pieza(
             "salida:" . $salidaId,
             "",
-            [["tipo" => "Salida", "id" => $salidaId], ["tipo" => TarjetaOcupacionSalida::TIPO, "id" => $salidaId]],
+            [["tipo" => TarjetaOcupacionSalida::TIPO, "id" => $salidaId]],
             [[
                 "nombre" => sprintf("salida_iniciada_%d_%s.pdf", $salidaId, $salida->getFecha()->format("Ymd_Hi")),
                 "contenido" => $this->pdf->salidaIniciada($ocupacion, $ficha, self::AUTOR),

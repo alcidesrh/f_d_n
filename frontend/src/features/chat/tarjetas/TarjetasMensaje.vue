@@ -1,25 +1,33 @@
 <!--
   Registros compartidos en un mensaje, agrupados por tipo y plegados por
-  defecto (aunque sea uno; salvo los tipos `abierta` del catálogo): cada grupo dice cuántos son y adelanta sus
+  defecto (aunque sea uno; salvo los tipos `sinMarco` del catálogo, que van sin grupo): cada grupo dice cuántos son y adelanta sus
   títulos; al desplegarlo, las tarjetas vivas.
 -->
 <template>
   <div class="tarjetas">
-    <section v-for="g in grupos" :key="g.tipo" class="grupo" :class="{ 'grupo--abierto': abiertos.has(g.tipo) }">
-      <button type="button" class="grupo__cabeza" :aria-expanded="abiertos.has(g.tipo)" @click="alternar(g.tipo)">
-        <span class="grupo__icono"><icon :name="tipoTarjeta(g.tipo).icono" size="1.05rem" color="text-current" /></span>
-        <span class="min-w-0 flex-1">
-          <span class="grupo__tipo"
-            >{{ tipoTarjeta(g.tipo).nombre }}<span class="grupo__cuenta">{{ g.adjuntos.length }}</span></span
-          >
-          <span class="grupo__avance">{{ avance(g.adjuntos) }}</span>
-        </span>
-        <icon name="keyboard-arrow-down" size="1.2rem" color="text-current" class="grupo__flecha" />
-      </button>
-      <div v-if="abiertos.has(g.tipo)" class="grupo__cuerpo">
-        <Tarjeta v-for="a in g.adjuntos" :key="`${a.tipo}:${a.id}`" :adjunto="a" />
-      </div>
-    </section>
+    <template v-for="g in grupos" :key="g.tipo">
+      <template v-if="tipoTarjeta(g.tipo).sinMarco">
+        <template v-for="a in g.adjuntos" :key="`${a.tipo}:${a.id}`">
+          <component :is="tipoTarjeta(a.tipo).componente" v-if="a.estado === 'ok'" :datos="a.datos" :id="a.id" />
+          <Tarjeta v-else :adjunto="a" />
+        </template>
+      </template>
+      <section v-else class="grupo" :class="{ 'grupo--abierto': abiertos.has(g.tipo) }">
+        <button type="button" class="grupo__cabeza" :aria-expanded="abiertos.has(g.tipo)" @click="alternar(g.tipo)">
+          <span class="grupo__icono"><icon :name="tipoTarjeta(g.tipo).icono" size="1.05rem" color="text-current" /></span>
+          <span class="min-w-0 flex-1">
+            <span class="grupo__tipo"
+              >{{ tipoTarjeta(g.tipo).nombre }}<span class="grupo__cuenta">{{ g.adjuntos.length }}</span></span
+            >
+            <span class="grupo__avance">{{ avance(g.adjuntos) }}</span>
+          </span>
+          <icon name="keyboard-arrow-down" size="1.2rem" color="text-current" class="grupo__flecha" />
+        </button>
+        <div v-if="abiertos.has(g.tipo)" class="grupo__cuerpo">
+          <Tarjeta v-for="a in g.adjuntos" :key="`${a.tipo}:${a.id}`" :adjunto="a" />
+        </div>
+      </section>
+    </template>
   </div>
 </template>
 
@@ -37,7 +45,7 @@ const grupos = computed(() => {
   return [...porTipo].map(([tipo, adjuntos]) => ({ tipo, adjuntos }));
 });
 
-const abiertos = ref(new Set<string>(props.adjuntos.filter((a) => tipoTarjeta(a.tipo).abierta).map((a) => a.tipo)));
+const abiertos = ref(new Set<string>());
 function alternar(tipo: string) {
   const s = new Set(abiertos.value);
   if (!s.delete(tipo)) s.add(tipo);
