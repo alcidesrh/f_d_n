@@ -296,7 +296,7 @@ footer { color: var(--faint); font-size: 12px; }
       <div class="layer"><span class="tag">base</span><h3>compose.yaml</h3><p>Los 6 servicios, puertos, healthchecks y volúmenes <code>caddy_data</code>, <code>caddy_config</code>, <code>database_data</code>.</p></div>
       <div class="layer"><span class="tag">dev · por defecto</span><h3>compose.override.yaml</h3><p>Build <code>frankenphp_dev</code> y <code>dev</code>, código montado, <code>Caddyfile.dev</code>, Xdebug por <code>XDEBUG_MODE</code>, Postgres en :5432.</p></div>
       <div class="layer"><span class="tag">producción</span><h3>compose.prod.yaml</h3><p>Imagen sin código: monta el checkout de la VPS, <code>/app/var</code> en tmpfs, secretos de <code>.env.prod.local</code>.</p></div>
-      <div class="layer"><span class="tag">vps por IP</span><h3>compose.vps.yaml</h3><p>Dev accesible en la IP pública con <code>local_certs</code>; la base sin puerto público.</p></div>
+      <div class="layer"><span class="tag">vps · dev ↔ prod</span><h3>compose.vps.yaml</h3><p>Dev en la IP pública con <code>local_certs</code> y la base sin puerto público. Comparte contenedores y base con prod: <code>make vps</code> pasa a dev, <code>make prod</code> vuelve. Imágenes de dev con prefijo <code>dev-</code>.</p></div>
     </div>
   </section>
 
@@ -385,6 +385,13 @@ const GROUPS = [
     ['make vendor', 'composer install tras cambiar composer.lock.', ['backend']],
     ['make imagen', 'Reconstruye imágenes. Solo si cambia un Dockerfile o una extensión de PHP.', ALL],
     ['make prod-logs s=backend', 'Sigue los logs de producción de un servicio.', ['backend']],
+  ]},
+  { title: 'VPS: alternar dev y prod', where: 'mismos contenedores y base', cmds: [
+    ['make modo', 'Dice si la VPS corre dev, prod o está apagada (por el prefijo dev- de la imagen).', ALL],
+    ['make vps', 'Pasa la VPS a dev por su IP pública, con Vite y recarga en caliente.', ALL],
+    ['make prod', 'Vuelve a producción con las imágenes de prod.', ALL],
+    ['make vps-build', 'Reconstruye las imágenes dev- y levanta dev. Solo si cambia un Dockerfile.', ALL],
+    ['make front && make pagina', 'Al volver a prod, si cambió el frontend o la página.', ['frontend', 'backend']],
   ]},
   { title: 'Monitoreo', where: 'compose.monitoring.yaml', cmds: [
     ['make mon-up', 'cAdvisor :8080, Prometheus :9090, Grafana :3000. Convive con make dev.', ['monitoring']],
