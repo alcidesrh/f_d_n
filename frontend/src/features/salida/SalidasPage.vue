@@ -36,15 +36,30 @@
           {{ e.etiqueta }}<span v-if="datos?.porEstado[e.valor]" class="ml-1 opacity-75">{{ datos.porEstado[e.valor] }}</span>
         </button>
       </div>
-      <div class="grid grid-cols-2 gap-3 @3xl:grid-cols-[1fr_1fr_minmax(0,1.4fr)_auto] @3xl:items-end">
-        <label class="flex flex-col gap-1">
-          <span class="text-xs font-medium text-muted-color">Desde</span>
-          <DatePicker v-model="desde" date-format="dd/mm/yy" show-icon show-button-bar fluid />
-        </label>
-        <label class="flex flex-col gap-1">
-          <span class="text-xs font-medium text-muted-color">Hasta</span>
-          <DatePicker v-model="hasta" date-format="dd/mm/yy" show-icon show-button-bar fluid :min-date="desde ?? undefined" />
-        </label>
+      <div class="grid grid-cols-2 gap-3 @3xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1.4fr)_auto] @3xl:items-end">
+        <div class="relative col-span-2 flex flex-col gap-1 @3xl:col-span-1">
+          <span class="text-xs font-medium text-muted-color">{{ porRango ? "Rango de salida" : "Fecha de salida" }}</span>
+          <DatePicker v-if="!porRango" ref="selector" v-model="borradorDia" :manual-input="false" date-format="dd/mm/yy" show-time hour-format="24" :step-minute="5" show-icon fluid placeholder="Todas" @hide="descartar">
+            <template #footer>
+              <div class="flex gap-2">
+                <Button label="Quitar" size="small" severity="secondary" text class="flex-1" @click="quitarFecha" />
+                <Button label="Aplicar" size="small" class="flex-1" :disabled="!borradorDia" @click="aplicarDia" />
+              </div>
+            </template>
+          </DatePicker>
+          <DatePicker v-else ref="selector" v-model="borrador" selection-mode="range" :manual-input="false" date-format="dd/mm/yy" show-time hour-format="24" :step-minute="5" show-icon fluid placeholder="Desde – Hasta" @hide="descartar">
+            <template #footer>
+              <div class="flex gap-2">
+                <Button label="Quitar" size="small" severity="secondary" text class="flex-1" @click="quitarFecha" />
+                <Button label="Aplicar" size="small" class="flex-1" :disabled="!borrador?.[0]" @click="aplicarRango" />
+              </div>
+            </template>
+          </DatePicker>
+          <label class="absolute right-0 top-0 flex cursor-pointer items-center gap-1 text-[0.65rem] leading-none text-muted-color">
+            <ToggleSwitch v-model="porRango" class="scale-[0.8] origin-right" @update:model-value="alCambiarModo" />
+            Rango
+          </label>
+        </div>
         <label class="col-span-2 flex flex-col gap-1 @3xl:col-span-1">
           <span class="text-xs font-medium text-muted-color">Ruta</span>
           <RutaSelect v-model="filtro.ruta" show-clear placeholder="Todas" />
@@ -198,7 +213,7 @@
 
 <script setup lang="ts">
 import { fetchOpciones, fetchSalidas } from "@/core/salida/api";
-import { aDia, aQuery, deDia, ESTADOS, etiquetaEstado, filtroInicial, type FiltroSalidas } from "@/core/salida/filtro";
+import { aDia, aFechaHora, aQuery, deFechaHora, ESTADOS, redondearMinutos, etiquetaEstado, filtroInicial, type FiltroSalidas } from "@/core/salida/filtro";
 import { resumen, type Operacion } from "@/core/salida/resultado";
 import type { EstadoSalida, OpcionesSalidas, PaginaSalidas, ResultadoOperacion, SalidaFila } from "@/core/salida/types";
 import { HttpError } from "@/core/http";
@@ -259,9 +274,60 @@ const itemsManifiestos = ref<Array<{ label: string; icon?: string; command: () =
 const estaModificado = computed(() => aQuery({ ...filtro, pagina: 1 }) !== aQuery(filtroInicial()));
 const otrosActivos = computed(() => [filtro.empresa, filtro.bus, filtro.orden !== "proximas" ? 1 : null].filter((v) => v !== null).length);
 
-const comoFecha = (clave: "desde" | "hasta") => computed<Date | null>({ get: () => (filtro[clave] ? deDia(filtro[clave]) : null), set: (d) => (filtro[clave] = d ? aDia(d) : null) });
-const desde = comoFecha("desde");
-const hasta = comoFecha("hasta");
+/**
+ * Un día desde una hora (a las 00:00, todo el día) o, con «Rango», desde–hasta
+ * con hora. Se elige en el selector y solo se busca al pulsar «Aplicar».
+ */
+const porRango = ref(false);
+const borradorDia = ref<Date | null>(null);
+const borrador = ref<(Date | null)[] | null>(null);
+const selector = ref<{ overlayVisible: boolean } | null>(null);
+
+/** Los borradores vuelven a lo aplicado (al abrir otro modo, limpiar o cerrar sin aplicar). */
+function descartar() {
+  const d = filtro.desde ? deFechaHora(filtro.desde) : null;
+  const h = filtro.hasta ? deFechaHora(filtro.hasta) : null;
+  // Sin hora, el fin es todo el día.
+  if (h && !filtro.hasta!.includes("T")) h.setHours(23, 59);
+  borradorDia.value = d;
+  borrador.value = d ? [d, h] : null;
+}
+// Al elegir otro día, la hora empieza en 00:00 (todo el día), no en la de ahora.
+watch(borradorDia, (n, o) => {
+  if (n && aDia(n) !== (o ? aDia(o) : null) && (n.getHours() || n.getMinutes()) && aDia(n) !== filtro.desde?.slice(0, 10)) borradorDia.value = new Date(n.getFullYear(), n.getMonth(), n.getDate());
+});
+function cerrar() {
+  if (selector.value) selector.value.overlayVisible = false;
+}
+function alCambiarModo(activo: boolean) {
+  // Un día con hora pasa a rango hasta el final de ese día; un rango, a su primer día.
+  if (!activo && filtro.desde) filtro.hasta = filtro.desde.slice(0, 10);
+  descartar();
+}
+function aplicarDia() {
+  const d = borradorDia.value;
+  if (!d) return;
+  const r = redondearMinutos(d);
+  filtro.desde = r.getHours() || r.getMinutes() ? aFechaHora(r) : aDia(r);
+  filtro.hasta = aDia(r);
+  cerrar();
+}
+function aplicarRango() {
+  const [d, h] = borrador.value ?? [];
+  if (!d) return;
+  // Sin fin, o con el fin a 00:00, el último día entra completo.
+  let fin = h ?? d;
+  fin = fin.getHours() === 0 && fin.getMinutes() === 0 ? new Date(fin.getFullYear(), fin.getMonth(), fin.getDate(), 23, 59) : redondearMinutos(fin);
+  const ini = redondearMinutos(d);
+  const [desde, hasta] = fin < ini ? [fin, ini] : [ini, fin];
+  filtro.desde = aFechaHora(desde);
+  filtro.hasta = aFechaHora(hasta);
+  cerrar();
+}
+function quitarFecha() {
+  filtro.desde = filtro.hasta = null;
+  cerrar();
+}
 const orden = computed({
   get: () => (filtro.orden === "proximas" ? "proximas" : `fecha-${filtro.direccion}`),
   set: (v: string) => {
@@ -323,6 +389,7 @@ function limpiarAvanzados() {
 
 function limpiar() {
   Object.assign(filtro, filtroInicial());
+  descartar();
 }
 
 function alPaginar(e: { page: number; rows: number }) {

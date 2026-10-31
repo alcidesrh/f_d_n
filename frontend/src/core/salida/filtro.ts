@@ -11,7 +11,7 @@ export interface FiltroSalidas {
   empresa: number | null
   ruta: number | null
   bus: number | null
-  /** `AAAA-MM-DD`, inclusive */
+  /** `AAAA-MM-DD` (todo el día) o `AAAA-MM-DDTHH:MM` (hasta ese minuto), inclusive */
   desde: string | null
   hasta: string | null
   /** `proximas`: iniciadas, abordando y programadas de la más próxima a la más lejana. */
@@ -78,6 +78,22 @@ export const aDia = (d: Date) => `${d.getFullYear()}-${dos(d.getMonth() + 1)}-${
 export function deDia(s: string): Date {
   const [a, m, d] = s.split('-').map(Number)
   return new Date(a!, m! - 1, d)
+}
+
+/** `AAAA-MM-DD` o `AAAA-MM-DDTHH:MM` → `Date` local. */
+export function deFechaHora(s: string): Date {
+  const [dia, hora = '00:00'] = s.split('T')
+  const [h, m] = hora.split(':').map(Number)
+  const d = deDia(dia!)
+  d.setHours(h!, m!)
+  return d
+}
+
+/** Minutos hacia abajo al múltiplo de `paso`. */
+export function redondearMinutos(d: Date, paso = 5): Date {
+  const r = new Date(d)
+  r.setMinutes(r.getMinutes() - (r.getMinutes() % paso), 0, 0)
+  return r
 }
 
 /** `Date` local → `AAAA-MM-DDTHH:MM` (lo que espera la edición de una salida). */

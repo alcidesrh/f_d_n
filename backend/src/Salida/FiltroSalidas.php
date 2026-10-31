@@ -29,7 +29,7 @@ final class FiltroSalidas
         public readonly ?int $destino = null,
         public readonly ?int $bus = null,
         public readonly ?\DateTimeImmutable $desde = null,
-        /** inclusive (todo el día) */
+        /** inclusive: a las 00:00, todo el día; con hora, hasta ese minuto */
         public readonly ?\DateTimeImmutable $hasta = null,
         public readonly string $orden = self::PROXIMAS,
         public readonly string $direccion = "asc",
@@ -46,7 +46,7 @@ final class FiltroSalidas
     /**
      * `estado` (lista separada por comas; vacío = todos; ausente = por defecto),
      * `empresa`, `ruta`, `origen`, `destino` (puntas de la ruta), `bus`, `desde`/`hasta`
-     * (AAAA-MM-DD), `orden` (proximas|fecha), `direccion`, `pagina`, `porPagina`.
+     * (AAAA-MM-DD o AAAA-MM-DDTHH:MM), `orden` (proximas|fecha), `direccion`, `pagina`, `porPagina`.
      * Los valores inválidos se ignoran.
      *
      * @param array<string, mixed> $q
@@ -78,6 +78,12 @@ final class FiltroSalidas
         );
     }
 
+    /** Límite superior excluyente de `hasta`: el día siguiente si no trae hora, si no el minuto siguiente. */
+    public function finExclusivo(): ?\DateTimeImmutable
+    {
+        return $this->hasta?->modify($this->hasta->format("H:i") === "00:00" ? "+1 day" : "+1 minute");
+    }
+
     private static function id(mixed $v): ?int
     {
         return is_numeric($v) && (int) $v > 0 ? (int) $v : null;
@@ -88,8 +94,13 @@ final class FiltroSalidas
         if (!is_string($v)) {
             return null;
         }
-        $d = \DateTimeImmutable::createFromFormat("!Y-m-d", $v);
+        foreach (["Y-m-d", "Y-m-d\\TH:i"] as $formato) {
+            $d = \DateTimeImmutable::createFromFormat("!" . $formato, $v);
+            if ($d !== false && $d->format($formato) === $v) {
+                return $d;
+            }
+        }
 
-        return $d !== false && $d->format("Y-m-d") === $v ? $d : null;
+        return null;
     }
 }

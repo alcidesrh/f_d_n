@@ -176,7 +176,7 @@ final class ConsultaSalidas
             $qb->andWhere("s.fecha >= :desde")->setParameter("desde", $f->desde);
         }
         if ($f->hasta !== null) {
-            $qb->andWhere("s.fecha < :hasta")->setParameter("hasta", $f->hasta->modify("+1 day"));
+            $qb->andWhere("s.fecha < :hasta")->setParameter("hasta", $f->finExclusivo());
         }
 
         return $qb;

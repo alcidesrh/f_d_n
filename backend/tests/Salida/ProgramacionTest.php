@@ -165,4 +165,14 @@ final class ProgramacionTest extends TestCase
 
         $this->assertSame([], FiltroSalidas::desdeQuery(["estado" => ""])->estados, "vacío = todos");
     }
+
+    public function testFiltroConHoraLimitaHastaEseMinuto(): void
+    {
+        $f = FiltroSalidas::desdeQuery(["desde" => "2026-10-01T06:30", "hasta" => "2026-10-03T14:45"]);
+        $this->assertSame("2026-10-01 06:30", $f->desde?->format("Y-m-d H:i"));
+        $this->assertSame("2026-10-03 14:46", $f->finExclusivo()?->format("Y-m-d H:i"));
+
+        $this->assertSame("2026-10-04 00:00", FiltroSalidas::desdeQuery(["hasta" => "2026-10-03"])->finExclusivo()?->format("Y-m-d H:i"), "sin hora, todo el día");
+        $this->assertNull(FiltroSalidas::desdeQuery(["hasta" => "2026-10-03T25:00"])->hasta);
+    }
 }
