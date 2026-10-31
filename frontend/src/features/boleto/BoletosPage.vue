@@ -528,6 +528,12 @@ onMounted(async () => {
   min-width: 0;
   flex: 1 1 0;
 }
+/* Antes del @container: con la misma especificidad gana la regla posterior. */
+.acciones-botones {
+  display: none;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
 @container (width >= 36rem) {
   .acciones {
     flex-wrap: wrap;
@@ -545,11 +551,6 @@ onMounted(async () => {
   align-items: center;
   gap: 0.5rem;
   min-width: 0;
-}
-.acciones-botones {
-  display: none;
-  flex-wrap: wrap;
-  gap: 0.375rem;
 }
 .acciones-botones :deep(.p-button) {
   gap: 0.375rem;
