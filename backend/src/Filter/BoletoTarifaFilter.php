@@ -21,6 +21,8 @@ use Doctrine\ORM\QueryBuilder;
  *   ese lado abierto, como en `App\Venta\CandidatoTarifa::enHorario`. Las
  *   tarifas sin horario (comodín) no salen, igual que filtrar por empresa no
  *   trae las que no tienen empresa.
+ * - `importe`: el precio exacto (`100`, `Q 125.50`); `importe` es calculado
+ *   y el precio va embebido, así que `ColumnaFilter` no lo ve.
  *
  * Todos se cumplen a la vez (AND).
  */
@@ -30,6 +32,7 @@ final class BoletoTarifaFilter implements FilterInterface
     public const DESTINO = 'trayectoDestino';
     public const HORARIO_DESDE = 'horarioDesde';
     public const HORARIO_HASTA = 'horarioHasta';
+    public const IMPORTE = 'importe';
 
     public function getDescription(string $resourceClass): array
     {
@@ -38,6 +41,7 @@ final class BoletoTarifaFilter implements FilterInterface
             self::DESTINO => ['property' => 'trayecto', 'type' => 'string', 'required' => false, 'description' => 'Enclave de destino del trayecto (IRI o id).'],
             self::HORARIO_DESDE => ['property' => 'horaDesde', 'type' => 'string', 'required' => false, 'description' => 'HH:mm: tarifas que rigen desde esta hora.'],
             self::HORARIO_HASTA => ['property' => 'horaHasta', 'type' => 'string', 'required' => false, 'description' => 'HH:mm: tarifas que rigen hasta esta hora.'],
+            self::IMPORTE => ['property' => 'precio', 'type' => 'string', 'required' => false, 'description' => 'Precio exacto en unidades de su moneda (`100`, `Q 125.50`).'],
         ];
     }
 
@@ -69,6 +73,27 @@ final class BoletoTarifaFilter implements FilterInterface
         if ($desde !== null || $hasta !== null) {
             $this->horario($queryBuilder, $queryNameGenerator, $alias, $desde ?? $hasta, $hasta ?? $desde);
         }
+
+        $importe = self::centavos($filtros[self::IMPORTE] ?? null);
+        if ($importe !== false) {
+            if ($importe === null) {
+                $queryBuilder->andWhere('1 = 0');
+            } else {
+                $p = $queryNameGenerator->generateParameterName('importe');
+                $queryBuilder->andWhere("$alias.precio.monto = :$p")->setParameter($p, $importe);
+            }
+        }
+    }
+
+    /** `Q 1,125.50` o `125.5` en centavos; false si no viene, null si no es un monto. */
+    private static function centavos(mixed $valor): int|false|null
+    {
+        if ($valor === null || $valor === '') {
+            return false;
+        }
+        $limpio = str_replace(',', '', preg_replace('/^\s*[A-Za-z]{0,3}\s*/', '', (string) $valor));
+
+        return preg_match('/^\d+(?:\.\d{1,2})?$/', trim($limpio)) === 1 ? (int) round((float) $limpio * 100) : null;
     }
 
     /**

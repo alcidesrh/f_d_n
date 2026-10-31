@@ -23,9 +23,6 @@
           <span class="text-xs font-medium text-muted-color">Destino</span>
           <SelectorEntidad v-model="destinoId" entidad="Enclave" placeholder="Cualquiera" aria-label="Destino" />
         </label>
-        <p v-if="avisoTrayecto" class="m-0 w-full text-xs text-muted-color" aria-live="polite">
-          {{ avisoTrayecto }}
-        </p>
         <div class="flex items-center gap-2">
           <Button label="Nueva tarifa" size="small" severity="secondary" outlined @click="router.push('/form/BoletoTarifa')" />
           <Button size="small" text rounded class="tap-target" :aria-label="maximizado ? 'Salir de pantalla completa' : 'Maximizar mapa'" :title="maximizado ? 'Salir de pantalla completa (Esc)' : 'Maximizar'" :aria-pressed="maximizado" @click="alternarMaximizado">
@@ -33,8 +30,10 @@
           </Button>
         </div>
       </div>
+      <!-- Lo que hay sobre el mapa no cambia de alto al elegir: el mapa no salta en la página. -->
+      <p class="m-0 min-h-[1lh] truncate text-xs text-muted-color" :title="avisoTrayecto" aria-live="polite">{{ avisoTrayecto }}</p>
 
-      <div v-if="datos" class="grid grid-cols-2 gap-x-3 gap-y-2 @2xl:grid-cols-4">
+      <div class="grid grid-cols-2 gap-x-3 gap-y-2 @2xl:grid-cols-4" :class="{ 'opacity-50': !datos }" :inert="!datos">
         <label class="flex flex-col gap-1">
           <span class="text-xs font-medium text-muted-color">Empresa</span>
           <Select v-model="filtro.empresaId" :options="empresas" option-label="nombre" option-value="id" placeholder="Cualquiera" show-clear fluid size="small" />
@@ -69,7 +68,7 @@
         </div>
         <div class="flex items-end justify-between gap-2 @2xl:col-span-2">
           <span class="text-xs text-muted-color" aria-live="polite">
-            {{ cargandoRuta ? "Cargando tarifas…" : `${mostradas} de ${totalTarifas} ${totalTarifas === 1 ? "tarifa" : "tarifas"}` }}
+            {{ cargandoRuta ? "Cargando tarifas…" : !datos ? "Elija una ruta o un trayecto" : `${mostradas} de ${totalTarifas} ${totalTarifas === 1 ? "tarifa" : "tarifas"}` }}
           </span>
           <Button label="Limpiar filtros" size="small" text :disabled="!hayFiltro" @click="limpiarFiltros" />
         </div>
@@ -87,13 +86,14 @@
       </div>
     </section>
 
-    <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
-    <Message v-else-if="sinUbicar.length" severity="warn" :closable="false">Sin ubicación en el mapa: {{ sinUbicar.join(", ") }}.</Message>
-
     <!-- La clase va en el envoltorio: Vue reescribiría el class del mapa y le borraría las clases de Leaflet. -->
     <div :class="maximizado ? 'mapa-maximizado flex min-h-0 flex-1 flex-col' : ''">
       <div ref="mapaEl" class="mapa-tarifas rounded-border border border-surface-200" role="application" aria-label="Mapa de tarifas" />
     </div>
+
+    <!-- Debajo del mapa: al aparecer no lo desplazan. -->
+    <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
+    <Message v-else-if="sinUbicar.length" severity="warn" :closable="false">Sin ubicación en el mapa: {{ sinUbicar.join(", ") }}.</Message>
   </div>
 </template>
 

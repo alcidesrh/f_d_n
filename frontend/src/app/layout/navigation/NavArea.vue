@@ -18,7 +18,7 @@
           </div>
         </Transition>
       </section>
-      <divider class="my-0!"
+      <divider class="my-0! before:border-surface-300!"
     /></template>
 
     <slot v-if="!menus.length" name="empty" />
