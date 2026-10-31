@@ -9,7 +9,8 @@
   El viaje es el del cliente (ADR-030): "Sube en" y "Baja en" con la hora en
   cada parada ("≈" si es estimada, "+1" si llega otro día), con el nombre debajo.
   La ruta del bus, de origen a destino. Una salida sin
-  tarifa para ese viaje lo dice en el precio y no se puede elegir.
+  tarifa para ese viaje lo dice en el precio y no se puede elegir; con permiso
+  para crear tarifas, ofrece crearla (con el viaje, la empresa y la clase de bus).
 
   Si la lista junta salidas de más de un día (por la hora de salida), cada
   día se distingue: fondo celeste en el anterior (alternando hacia atrás
@@ -57,7 +58,10 @@
               ><b>{{ p.clase }}</b> {{ precioCorto(p.precio) }}</span
             >
           </span>
-          <span v-else class="sin-tarifa">Sin tarifa</span>
+          <span v-else class="sin-tarifa">
+            Sin tarifa
+            <button v-if="tarifable(s(row))" type="button" class="crear-tarifa" @click.stop="emit('crearTarifa', s(row))">Crear tarifa</button>
+          </span>
         </template>
         <span v-else-if="column.key === 'asientos' && s(row).capacidad" class="celda asientos asientos--valores">
           <span class="asientos__vendidos">{{ s(row).vendidos ?? 0 }}</span>
@@ -79,7 +83,10 @@
                 ><b>{{ p.clase }}</b> {{ precioCorto(p.precio) }}</span
               >
             </span>
-            <span v-else class="sin-tarifa">Sin tarifa</span>
+            <span v-else class="sin-tarifa">
+              Sin tarifa
+              <button v-if="tarifable(s(row))" type="button" class="crear-tarifa" @click.stop="emit('crearTarifa', s(row))">Crear tarifa</button>
+            </span>
             <span v-if="s(row).capacidad" class="asientos asientos--valores ml-auto" :aria-label="`${s(row).vendidos ?? 0} vendidos, ${libres(s(row))} libres`">
               <span class="asientos__vendidos">{{ s(row).vendidos ?? 0 }}</span>
               <span class="asientos__libres">{{ libres(s(row)) }}</span>
@@ -109,8 +116,10 @@ const props = defineProps<{
   salidas: SalidaResumen[];
   cargando: boolean;
   salidaId: number | null;
+  /** Quien puede crear tarifas: ofrece crear la del viaje en las salidas sin tarifa. */
+  puedeCrearTarifa?: boolean;
 }>();
-const emit = defineEmits<{ elegir: [id: number] }>();
+const emit = defineEmits<{ elegir: [id: number]; crearTarifa: [salida: SalidaResumen] }>();
 
 const columns: GridColumn[] = [
   { key: "hora", label: "Hora", width: "120px" },
@@ -165,6 +174,8 @@ const diaSemana = (iso: string) => {
 const vendible = (r: SalidaResumen) => ["programada", "abordando"].includes(r.estado) && !!r.bus;
 /** Hay tarifa para el viaje del cliente: sin ella no se vende, así que no se elige. */
 const conTarifa = (r: SalidaResumen) => !!r.precios?.length;
+/** Sin tarifa para el viaje, con su trayecto conocido: se puede crear desde aquí. */
+const tarifable = (r: SalidaResumen) => !!props.puedeCrearTarifa && r.viaje?.trayecto != null;
 const rowClass = (row: unknown) => {
   const r = s(row);
   return {
@@ -281,6 +292,20 @@ const precioCorto = (p: Importe | null) => (p ? p.texto.replace(/[.,]00$/, "") :
   font-size: 0.75rem;
   font-style: italic;
   white-space: nowrap;
+}
+
+/* Enlace para crear la tarifa del viaje; no selecciona la salida. */
+.crear-tarifa {
+  margin-left: 0.4rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--p-primary-color);
+  font: inherit;
+  font-style: normal;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 /* Fuera de móvil la tabla pasa a 1rem (los precios y la ruta conservan su tamaño). */

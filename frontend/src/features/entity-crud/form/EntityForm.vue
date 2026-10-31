@@ -119,7 +119,7 @@ import FormExtensionScope from './FormExtensionScope'
 import { entityFormExtensions } from './formExtensions'
 import { useEntityForm } from './useEntityForm'
 
-const props = defineProps<{ entity: string; id?: string | number | null }>()
+const props = defineProps<{ entity: string; id?: string | number | null; valores?: Record<string, unknown> }>()
 
 const emit = defineEmits<{
   submitted: [item: Record<string, unknown>]
@@ -130,7 +130,7 @@ const emit = defineEmits<{
 
 const { schema, loading, submitting, error, desactualizado, mode, submit, remove, reset } = useEntityForm(
   () => props.entity,
-  { id: () => props.id },
+  { id: () => props.id, valores: () => props.valores },
 )
 
 const formId = `entity-form-${useId()}`

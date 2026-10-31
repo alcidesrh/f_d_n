@@ -60,6 +60,8 @@ export interface ViajeCliente {
   /** Primera y última parada de la ruta del bus, con su hora. */
   inicio: ParadaViaje
   fin: ParadaViaje
+  /** El par comercial sube→baja (su tarifa se crea desde ahí); null si no existe. */
+  trayecto: number | null
 }
 
 export interface SalidaResumen {
@@ -70,7 +72,7 @@ export interface SalidaResumen {
   salidaEstacion: string | null
   estado: 'programada' | 'abordando' | 'iniciada' | 'finalizada' | 'cancelada'
   empresa: Opcion | null
-  bus: { id: number; codigo: string; gama: string | null } | null
+  bus: { id: number; codigo: string; gama: string | null; claseId: number | null } | null
   ruta: RutaVenta
   /** Asientos ocupados en el tramo que se ofrece (en la lista de la estación). */
   vendidos: number | null

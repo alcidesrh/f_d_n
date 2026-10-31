@@ -2,9 +2,10 @@
   <component
     :is="formComponent"
     v-if="entityName"
-    :key="`${entityName}:${recordId ?? 'new'}`"
+    :key="`${entityName}:${recordId ?? 'new'}:${JSON.stringify(valores ?? {})}`"
     :entity="entityName"
     :id="recordId"
+    :valores="valores"
     @submitted="onSubmitted"
     @deleted="onDeleted"
     @cancel="toList"
@@ -17,6 +18,7 @@
  * dedicado de la entidad si está registrado en `formOverrides`.
  */
 import { computed, defineAsyncComponent } from 'vue'
+import { useRoute } from 'vue-router'
 import { getEntity } from '@/core/entities/registry'
 import { useSchemaStore } from '@/core/entities/schema'
 import { router } from '@/app/router'
@@ -32,6 +34,9 @@ const props = defineProps<{ entity: string | string[]; id?: string | string[] }>
 const first = (value?: string | string[]) => (Array.isArray(value) ? value[0] : value) || null
 const entityName = computed(() => entityNameFromSlug(first(props.entity) ?? ''))
 const recordId = computed(() => first(props.id))
+// Alta con valores en la URL (`/form/BoletoTarifa?trayecto=3`): prellenan los campos que coinciden.
+const route = useRoute()
+const valores = computed(() => (recordId.value ? undefined : { ...route.query }))
 
 const formComponent = computed(() => {
   const override = entityFormOverrides[entityName.value]

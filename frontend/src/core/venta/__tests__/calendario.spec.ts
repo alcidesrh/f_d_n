@@ -17,7 +17,7 @@ const salida = (id: number, iso: string, extra: Partial<SalidaResumen> = {}): Sa
 
 describe('calendario', () => {
   it('sube a la hora de la parada del cliente, si no de la estación, si no del origen', () => {
-    const viaje = { sube: { id: 5, nombre: 'Sanarate', hora: '2026-10-22T07:40:00-06:00', aprox: true }, baja: { id: 2, nombre: 'Flores', hora: null, aprox: false }, intermedias: 0, inicio: { id: 1, nombre: 'Guatemala', hora: null, aprox: false }, fin: { id: 2, nombre: 'Flores', hora: null, aprox: false } }
+    const viaje = { sube: { id: 5, nombre: 'Sanarate', hora: '2026-10-22T07:40:00-06:00', aprox: true }, baja: { id: 2, nombre: 'Flores', hora: null, aprox: false }, intermedias: 0, inicio: { id: 1, nombre: 'Guatemala', hora: null, aprox: false }, fin: { id: 2, nombre: 'Flores', hora: null, aprox: false }, trayecto: null }
     expect(subidaDe(salida(1, '2026-10-22T06:00:00-06:00', { viaje }))).toBe('2026-10-22T07:40:00-06:00')
     expect(subidaDe(salida(1, '2026-10-22T06:00:00-06:00', { salidaEstacion: '2026-10-22T06:30:00-06:00' }))).toBe('2026-10-22T06:30:00-06:00')
     expect(reloj('2026-10-22T07:05:00-06:00')).toBe('07:05')

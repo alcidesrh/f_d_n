@@ -13,7 +13,7 @@ const salida = (id: number, extra: Partial<SalidaResumen> = {}): SalidaResumen =
   salidaEstacion: null,
   estado: 'programada',
   empresa: { id: 1, nombre: 'Fuente del Norte' },
-  bus: { id: 7, codigo: 'B-07', gama: 'Oro' },
+  bus: { id: 7, codigo: 'B-07', gama: 'Oro', claseId: null },
   ruta: { id: 3, nombre: 'Guatemala - Flores', origen: { id: 1, nombre: 'Guatemala', alias: 'GUA' }, destino: { id: 2, nombre: 'Flores', alias: 'FLO' } },
   vendidos: 12,
   capacidad: 40,
@@ -51,6 +51,7 @@ describe('SalidasLista', () => {
           intermedias: 7,
           inicio: { id: 1, nombre: 'Guatemala', hora: '2026-10-10T23:30:00-06:00', aprox: false },
           fin: { id: 2, nombre: 'Flores', hora: '2026-10-11T08:00:00-06:00', aprox: true },
+          trayecto: null,
         },
       }),
     ])

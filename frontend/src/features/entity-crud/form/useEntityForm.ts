@@ -61,12 +61,35 @@ function columnLabels(store: Pick<EntityStore, 'columns'>): Record<string, strin
   )
 }
 
+/**
+ * Valores de la URL para un alta (`?trayecto=3`): en una relación, el id pasa
+ * a su IRI, como el que da el selector; en los demás campos, tal cual. Solo
+ * cuenta lo que es campo del formulario: el resto de la URL no se usa.
+ */
+function valoresDeRuta(fields: FormFieldSource[], valores: Record<string, unknown>): Row {
+  const schemas = useSchemaStore()
+  const out: Row = {}
+  for (const field of fields) {
+    const raw = valores[field.name]
+    if (raw == null || raw === '' || field.isList) continue
+    out[field.name] = field.isRelation
+      ? itemIri(schemas.require(field.namedType), raw as string | number)
+      : raw
+  }
+  return out
+}
+
 export function useEntityForm(
   entityName: MaybeRefOrGetter<string>,
-  options: { id?: MaybeRefOrGetter<string | number | null | undefined> } = {},
+  options: {
+    id?: MaybeRefOrGetter<string | number | null | undefined>
+    /** Valores iniciales de un alta (la URL); no se aplican al editar. */
+    valores?: MaybeRefOrGetter<Record<string, unknown> | undefined>
+  } = {},
 ) {
   const name = toRef(entityName)
   const recordId = toRef(options.id ?? null)
+  const initial = toRef(options.valores ?? undefined)
   const mode = computed<EntityFormMode>(() =>
     recordId.value != null && recordId.value !== '' ? 'update' : 'create',
   )
@@ -120,6 +143,7 @@ export function useEntityForm(
 
       const relationOptions = await loadRelationOptions(selected)
       let values = hydrateInitialValues(selected, source, mode.value)
+      if (mode.value === 'create') values = { ...values, ...valoresDeRuta(selected, initial.value ?? {}) }
       if (selected.some(isIconRelation)) values = await icons.hydrate(selected, values)
 
       if (seq !== buildSeq) return

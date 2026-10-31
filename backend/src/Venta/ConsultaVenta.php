@@ -418,7 +418,7 @@ final class ConsultaVenta
             "salidaEstacion" => $estacionId !== null ? $this->horaEn($r, $it, $estacionId) : null,
             "estado" => $r->getEstado()->value,
             "empresa" => $r->getEmpresa() === null ? null : ["id" => $r->getEmpresa()->getId(), "nombre" => $r->getEmpresa()->getAlias() ?? $r->getEmpresa()->getNombre()],
-            "bus" => $r->getBus() === null ? null : ["id" => $busId, "codigo" => $r->getBus()->getCodigo(), "gama" => $r->getBus()->getGama()],
+            "bus" => $r->getBus() === null ? null : ["id" => $busId, "codigo" => $r->getBus()->getCodigo(), "gama" => $r->getBus()->getGama(), "claseId" => $r->getBus()->getClase()?->getId()],
             "ruta" => [
                 "id" => $r->getRuta()->getId(),
                 "nombre" => $r->getRuta()->getNombre(),
@@ -437,7 +437,9 @@ final class ConsultaVenta
      *
      * @param array<int, string> $nombres por id de enclave
      *
-     * @return array{sube: array<string, mixed>, baja: array<string, mixed>, intermedias: int, inicio: array<string, mixed>, fin: array<string, mixed>}
+     * `trayecto`: el par comercial del viaje (null si no existe), para crear su tarifa.
+     *
+     * @return array{sube: array<string, mixed>, baja: array<string, mixed>, intermedias: int, inicio: array<string, mixed>, fin: array<string, mixed>, trayecto: ?int}
      */
     private static function viaje(Itinerario $it, Tramo $tramo, array $nombres): array
     {
@@ -459,6 +461,7 @@ final class ConsultaVenta
             "intermedias" => $tramo->hasta - $tramo->desde - 1,
             "inicio" => $parada(0),
             "fin" => $parada(count($it->paradas) - 1),
+            "trayecto" => $it->trayectoEntre($it->paradas[$tramo->desde], $it->paradas[$tramo->hasta]),
         ];
     }
 

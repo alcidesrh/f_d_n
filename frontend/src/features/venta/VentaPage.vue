@@ -85,7 +85,7 @@
             </div>
             <SalidasCalendario v-if="vista === 'dias'" @elegir="elegirSalida" @mover="moverDia" />
             <div v-else class="relative">
-              <SalidasLista :salidas="salidasMostradas" :cargando="store.cargandoSalidas" :salida-id="store.salidaId" @elegir="elegirSalida" />
+              <SalidasLista :salidas="salidasMostradas" :cargando="store.cargandoSalidas" :salida-id="store.salidaId" :puede-crear-tarifa="puedeCrearTarifa" @elegir="elegirSalida" @crear-tarifa="crearTarifa" />
               <!-- Flota en el borde entre la cabecera de la tabla y las salidas. -->
               <Button v-if="anteriores.length && !store.porRango" :label="verAnteriores ? 'Ocultar anteriores' : `Ver anteriores (${anteriores.length})`" size="small" rounded severity="secondary" class="anteriores shadow-md hover:bg-surface-50!" @click="verAnteriores = !verAnteriores" />
             </div>
@@ -248,6 +248,7 @@ import FacturacionFallidaDialog from "@/shared/facturacion/FacturacionFallidaDia
 import SalidasLista from "./SalidasLista.vue";
 import SalidasCalendario from "./SalidasCalendario.vue";
 import { claveDeUsuario } from "@/core/auth/alcanceSesion";
+import { useAccesoStore } from "@/core/acceso/store";
 import VentaExitosaDialog from "./VentaExitosaDialog.vue";
 import { type OpcionesCobro, useVentaStore } from "./store";
 import { imprimirTicket } from "@/shared/boleto/ticket";
@@ -279,6 +280,22 @@ let bajarAlCroquis = false;
 function elegirSalida(id: number) {
   bajarAlCroquis = apilado();
   void store.elegirSalida(id);
+}
+/** Crear la tarifa del viaje sin tarifa: el formulario de tarifa llega con el viaje, la empresa y la clase de bus. */
+const acceso = useAccesoStore();
+const puedeCrearTarifa = computed(() => acceso.puedeRecurso("BoletoTarifa", "editar"));
+function crearTarifa(salida: SalidaResumen) {
+  const trayecto = salida.viaje?.trayecto;
+  if (trayecto == null) return;
+  void router.push({
+    name: "entity-form",
+    params: { entity: "BoletoTarifa" },
+    query: {
+      trayecto: String(trayecto),
+      ...(salida.empresa ? { empresa: String(salida.empresa.id) } : {}),
+      ...(salida.bus?.claseId != null ? { busClase: String(salida.bus.claseId) } : {}),
+    },
+  });
 }
 /**
  * Se baja cuando entra el croquis de la salida (no al terminar de cargar): con
