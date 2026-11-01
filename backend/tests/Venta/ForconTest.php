@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Tests\Venta;
 
+use App\Entity\ConfiguracionForcon;
 use App\Entity\Empresa;
 use App\Venta\CifradoCredenciales;
 use App\Venta\Facturacion\CertificacionFallida;
 use App\Venta\Facturacion\CredencialesFel;
+use App\Venta\Facturacion\FelActivo;
+use App\Venta\Facturacion\Forcon\AjustesForcon;
 use App\Venta\Facturacion\Forcon\DatosEmisorForcon;
 use App\Venta\Facturacion\Forcon\DteJsonForcon;
 use App\Venta\Facturacion\ItemDte;
@@ -227,8 +230,13 @@ final class ForconTest extends TestCase
 
             return new \Symfony\Component\HttpClient\Response\MockResponse(json_encode($cuerpo));
         });
-        $credenciales = new CredencialesFel($this->createStub(EntityManagerInterface::class), new CifradoCredenciales("s"), "usr", "pwd");
-        $cliente = new \App\Venta\Facturacion\Forcon\ClienteForcon($http, "https://pruebasfel.eforcon.com", $credenciales);
+        $cifrado = new CifradoCredenciales("s");
+        $config = (new ConfiguracionForcon())
+            ->setUrl("https://pruebasfel.eforcon.com")
+            ->setCredencialGlobal("usr", $cifrado->cifrar("fdn-credencial-fel", "pwd"));
+        $ajustes = AjustesForcon::fijos($config);
+        $credenciales = new CredencialesFel($this->createStub(EntityManagerInterface::class), $cifrado, $ajustes);
+        $cliente = new \App\Venta\Facturacion\Forcon\ClienteForcon($http, $ajustes, $credenciales);
         $certificador = new \App\Venta\Facturacion\Forcon\CertificadorForcon(
             $cliente,
             new DatosEmisorForcon($cliente, new \Symfony\Component\Cache\Adapter\ArrayAdapter()),
@@ -245,5 +253,35 @@ final class ForconTest extends TestCase
         $enviado = json_decode($opciones["body"], true);
         $this->assertSame("MAYA DE ORO", $enviado["DatosEmision"]["Emisor"]["NombreComercial"]);
         $this->assertStringContainsString("NIT=43977006", $pedidos[0][1]);
+    }
+
+    public function testElCertificadorActivoSaleDeLaConfiguracionSinReiniciar(): void
+    {
+        $config = new ConfiguracionForcon();
+        $ajustes = AjustesForcon::fijos($config);
+        $cliente = new \App\Venta\Facturacion\Forcon\ClienteForcon(
+            new \Symfony\Component\HttpClient\MockHttpClient(),
+            $ajustes,
+            new CredencialesFel($this->createStub(EntityManagerInterface::class), new CifradoCredenciales("s"), $ajustes),
+        );
+        $activo = new FelActivo(
+            $ajustes,
+            new \App\Venta\Facturacion\CertificadorSimulado(),
+            new \App\Venta\Facturacion\ConsultaContribuyenteSimulada(),
+            new \App\Venta\Facturacion\Forcon\CertificadorForcon($cliente, new DatosEmisorForcon($cliente, new \Symfony\Component\Cache\Adapter\ArrayAdapter())),
+            new \App\Venta\Facturacion\Forcon\ConsultaContribuyenteForcon($cliente),
+        );
+
+        $this->assertFalse($activo->esForcon());
+        $config->setActivo(true);
+        $this->assertTrue($activo->esForcon());
+    }
+
+    public function testSinCredencialDeEmpresaNiGlobalNoHayCertificacion(): void
+    {
+        $credenciales = new CredencialesFel($this->createStub(EntityManagerInterface::class), new CifradoCredenciales("s"), AjustesForcon::fijos(new ConfiguracionForcon()));
+
+        $this->expectException(CertificacionFallida::class);
+        $credenciales->para(null);
     }
 }

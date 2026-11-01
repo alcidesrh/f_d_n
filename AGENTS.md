@@ -17,7 +17,7 @@ Orquestación vía Docker Compose (`compose.yaml` + overrides).
 
 Las definiciones del dominio, los términos a evitar y el modelo de cada uno están en `CONTEXT.md`. Revísalo antes de nombrar algo nuevo.
 
-> **Estado del modelo (2026-10):** el modelo nuevo (`src/Entity/`, ~45 clases) cubre geografía, flota, la venta de asientos por taquilla, agencias y página web (ADR-021: `App\Venta`) y las encomiendas (ADR-035: `App\Encomienda`; las del legado se migran con la salida en que viajaron, conservando su id/código de barras; las que nunca se embarcaron, no). Los manifiestos de boletos distintos del interno y del piloto solo existen en el legacy (`src/EntitySistemaFdn/`, ~112 clases) — son el trabajo de dominio pendiente, no features ya resueltas. No asumas que existe un endpoint/servicio para ellas sin verificarlo primero. La factura electrónica usa **Forcon** (`App\Venta\Facturacion\Forcon`, `FEL_CERTIFICADOR=forcon`, credenciales por empresa con `app:fel:credencial`; docs en `docs/certificador_factura_electronica/`) o el simulado en desarrollo. El pago con tarjeta usa **Cybersource** con 3-D Secure (`App\Venta\Pago\Cybersource`, `PAGO_PASARELA=cybersource`, comercio por empresa con `app:pago:credencial`) o la pasarela simulada en desarrollo.
+> **Estado del modelo (2026-10):** el modelo nuevo (`src/Entity/`, ~45 clases) cubre geografía, flota, la venta de asientos por taquilla, agencias y página web (ADR-021: `App\Venta`) y las encomiendas (ADR-035: `App\Encomienda`; las del legado se migran con la salida en que viajaron, conservando su id/código de barras; las que nunca se embarcaron, no). Los manifiestos de boletos distintos del interno y del piloto solo existen en el legacy (`src/EntitySistemaFdn/`, ~112 clases) — son el trabajo de dominio pendiente, no features ya resueltas. No asumas que existe un endpoint/servicio para ellas sin verificarlo primero. La factura electrónica usa **Forcon** (`App\Venta\Facturacion\Forcon`, configuración en `ConfiguracionForcon` con `app:fel:configuracion` (ADR-047), credenciales por empresa con `app:fel:credencial`; docs en `docs/certificador_factura_electronica/`) o el simulado en desarrollo. El pago con tarjeta usa **Cybersource** con 3-D Secure (`App\Venta\Pago\Cybersource`, configuración en `ConfiguracionCybersource` con `app:pago:configuracion`, comercio por empresa con `app:pago:credencial`) o la pasarela simulada en desarrollo.
 
 ---
 
@@ -139,7 +139,7 @@ No existe un sitio MkDocs — se eliminó el 2026-09 por documentar un modelo de
 | Terminología + modelo de cada término | `CONTEXT.md` |
 | Referencia funcional (ventas y operación) | `docs/architecture/ventas-y-operacion.md` |
 | Referencia funcional (plataforma) | `docs/architecture/plataforma.md` |
-| ADRs (decisiones de arquitectura) | `docs/architecture/decisions/` (ADR-001 a ADR-046, ver `index.md`) |
+| ADRs (decisiones de arquitectura) | `docs/architecture/decisions/` (ADR-001 a ADR-047, ver `index.md`) |
 | Convención de exploración de dominio para skills | `docs/agents/domain.md` |
 | Convención de issue tracker | `docs/agents/issue-tracker.md` |
 | Backend (Symfony, Doctrine, GraphQL) | `backend/AGENTS.md` |

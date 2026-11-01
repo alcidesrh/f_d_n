@@ -12,19 +12,8 @@ parameters:
     pagina_contacto_correo_defecto: "contacto@transportesfuentedelnorte.com"
     # Contacto que se declara a los servicios de push (VAPID `subject`; sobrescribible con PUSH_VAPID_CONTACTO).
     push_vapid_contacto_defecto: "mailto:soporte@transportesfuentedelnorte.com"
-    # Certificador FEL: "simulado" (desarrollo) o "forcon" (sobrescribible con FEL_CERTIFICADOR).
-    fel_certificador_defecto: "simulado"
-    # API de Forcon: ambiente de pruebas; la URL de producción la entrega su soporte (FEL_FORCON_URL).
-    fel_forcon_url_defecto: "https://pruebasfel.eforcon.com"
-    # Temporal: las ventas en línea de estas empresas (NIT) se facturan a nombre de otra
-    # (NIT), como en el legado. Vaciar cuando cada empresa tenga su propia cuenta.
-    fel_emisor_en_linea:
-        "2033683-7": "6907303-1" # La Pionera → Transportes Rosita
-        "4397700-6": "6907303-1" # Maya de Oro → Transportes Rosita
-    # Pasarela de pago: "simulada" (desarrollo) o "cybersource" (sobrescribible con PAGO_PASARELA).
-    pago_pasarela_defecto: "simulada"
-    # API de Cybersource: pruebas; producción es https://api.cybersource.com (CYBERSOURCE_URL).
-    pago_cybersource_url_defecto: "https://apitest.cybersource.com"
+    # Certificador FEL (Forcon) y pasarela de pago (Cybersource): su configuración está en la
+    # base (ConfiguracionForcon, ConfiguracionCybersource; app:fel:configuracion, app:pago:configuracion).
     # Servicio de rutas OSRM para los km por carretera de las rutas (sobrescribible con OSRM_URL).
     ruta_osrm_url_defecto: "https://router.project-osrm.org"
     # Cuándo se enteran los navegadores de un cambio en la configuración de entidades (ADR-036):
@@ -107,8 +96,8 @@ services:
             - { name: api_platform.graphql.type }
 
     # Venta de asientos (ADR-021): adaptadores activos de los puertos externos.
-    # Certificador FEL: FelActivo elige Forcon o el simulado según FEL_CERTIFICADOR.
+    # Certificador FEL: FelActivo elige Forcon o el simulado según ConfiguracionForcon.
     App\Venta\Facturacion\CertificadorFel: '@App\Venta\Facturacion\FelActivo'
     App\Venta\Facturacion\ConsultaContribuyente: '@App\Venta\Facturacion\FelActivo'
-    # Pasarela de pago: PasarelaActiva elige Cybersource o la simulada según PAGO_PASARELA.
+    # Pasarela de pago: PasarelaActiva elige Cybersource o la simulada según ConfiguracionCybersource.
     App\Venta\Pago\PasarelaPago: '@App\Venta\Pago\PasarelaActiva'

@@ -5,22 +5,20 @@ declare(strict_types=1);
 namespace App\Venta\Pago\Cybersource;
 
 use Psr\Clock\ClockInterface;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * API REST de Cybersource con autenticación HTTP Signature (HMAC-SHA256
  * sobre host, fecha, método + ruta, digest del cuerpo y merchant id).
- * `CYBERSOURCE_URL`: https://apitest.cybersource.com (pruebas) o
- * https://api.cybersource.com (producción).
+ * La URL está en `ConfiguracionCybersource`: https://apitest.cybersource.com
+ * (pruebas) o https://api.cybersource.com (producción).
  */
 final class ClienteCybersource
 {
     public function __construct(
         private readonly HttpClientInterface $http,
         private readonly ClockInterface $reloj,
-        #[Autowire(env: "default:pago_cybersource_url_defecto:CYBERSOURCE_URL")]
-        private readonly string $url,
+        private readonly AjustesCybersource $ajustes,
     ) {}
 
     /**
@@ -32,11 +30,12 @@ final class ClienteCybersource
      */
     public function post(Comercio $comercio, string $ruta, array $cuerpo): array
     {
+        $url = $this->ajustes->actual()->getUrl();
         $json = json_encode($cuerpo, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        $host = (string) parse_url($this->url, PHP_URL_HOST);
+        $host = (string) parse_url($url, PHP_URL_HOST);
         $fecha = $this->reloj->now()->setTimezone(new \DateTimeZone("UTC"))->format("D, d M Y H:i:s") . " GMT";
 
-        $respuesta = $this->http->request("POST", rtrim($this->url, "/") . $ruta, [
+        $respuesta = $this->http->request("POST", rtrim($url, "/") . $ruta, [
             "headers" => [
                 "Accept" => "application/hal+json;charset=utf-8",
                 "Content-Type" => "application/json;charset=utf-8",

@@ -7,14 +7,14 @@ namespace App\Venta\Facturacion;
 use App\Entity\CredencialFel;
 use App\Entity\Empresa;
 use App\Venta\CifradoCredenciales;
+use App\Venta\Facturacion\Forcon\AjustesForcon;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Credenciales del certificador por NIT emisor. Primero las de la empresa
  * (`CredencialFel`, clave cifrada con una llave derivada de `APP_SECRET`:
  * si se cambia APP_SECRET hay que volver a cargarlas); si no tiene, las
- * globales `FEL_FORCON_USUARIO`/`FEL_FORCON_CLAVE` (una sola empresa).
+ * globales de `ConfiguracionForcon` (una sola empresa, misma cifra).
  */
 final class CredencialesFel
 {
@@ -23,10 +23,7 @@ final class CredencialesFel
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly CifradoCredenciales $cifrado,
-        #[Autowire(env: "default::FEL_FORCON_USUARIO")]
-        private readonly ?string $usuarioGlobal = null,
-        #[Autowire(env: "default::FEL_FORCON_CLAVE")]
-        private readonly ?string $claveGlobal = null,
+        private readonly AjustesForcon $ajustes = new AjustesForcon(),
     ) {}
 
     /**
@@ -40,8 +37,9 @@ final class CredencialesFel
         if ($credencial !== null) {
             return [$credencial->getUsuario(), $this->descifrar($credencial->getClaveCifrada())];
         }
-        if ($this->usuarioGlobal && $this->claveGlobal) {
-            return [$this->usuarioGlobal, $this->claveGlobal];
+        $global = $this->ajustes->actual();
+        if ($global->getUsuario() && $global->getClaveCifrada()) {
+            return [$global->getUsuario(), $this->descifrar($global->getClaveCifrada())];
         }
         // Servicios que no dependen del emisor (consulta de NIT): cualquier empresa.
         if ($nitEmisor === null && ($credencial = $this->cualquiera()) !== null) {

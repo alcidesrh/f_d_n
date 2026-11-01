@@ -6,7 +6,6 @@ namespace App\Venta\Facturacion\Forcon;
 
 use App\Venta\Facturacion\CertificacionFallida;
 use App\Venta\Facturacion\CredencialesFel;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -15,8 +14,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  * JSON y la misma forma de respuesta en todos los servicios:
  * `{ StatusCode, Resultado, Descripcion, ... }`.
  *
- * `FEL_FORCON_URL` (pruebas: `https://pruebasfel.eforcon.com`; la de
- * producción la entrega soporte). Las credenciales son por NIT emisor
+ * La URL está en `ConfiguracionForcon` (pruebas: `https://pruebasfel.eforcon.com`;
+ * la de producción la entrega soporte). Las credenciales son por NIT emisor
  * (`CredencialesFel`) y distintas en pruebas y producción. Ver
  * `docs/certificador_factura_electronica/`.
  */
@@ -29,8 +28,7 @@ final class ClienteForcon
 
     public function __construct(
         private readonly HttpClientInterface $http,
-        #[Autowire(env: "default:fel_forcon_url_defecto:FEL_FORCON_URL")]
-        private readonly string $url,
+        private readonly AjustesForcon $ajustes,
         private readonly CredencialesFel $credenciales,
         /** Segundos. La certificación en pruebas llega a tardar ~20 s. */
         private readonly float $timeout = 45.0,
@@ -68,7 +66,7 @@ final class ClienteForcon
         [$usuario, $clave] = $this->credenciales->para($nitEmisor);
 
         try {
-            $respuesta = $this->http->request($metodo, rtrim($this->url, "/") . $ruta, [
+            $respuesta = $this->http->request($metodo, rtrim($this->ajustes->actual()->getUrl(), "/") . $ruta, [
                 ...$opciones,
                 "auth_basic" => [$usuario, $clave],
                 "headers" => ["Accept" => "application/json", "Cache-Control" => "no-cache"],

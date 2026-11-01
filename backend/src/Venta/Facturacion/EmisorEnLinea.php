@@ -4,35 +4,35 @@ declare(strict_types=1);
 
 namespace App\Venta\Facturacion;
 
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use App\Venta\Facturacion\Forcon\AjustesForcon;
 
 /**
  * Regla temporal: las compras en la página de algunas empresas se facturan a
  * nombre de otra (hoy, La Pionera y Maya de Oro como Transportes Rosita), como
  * hace el legado con el emisor de su estación web. Cuando cada empresa tenga
- * su propia cuenta, se vacía `fel_emisor_en_linea` (`config/services.yaml`).
+ * su propia cuenta, se vacían los emisores en línea de `ConfiguracionForcon`
+ * (`app:fel:configuracion --sin-emisores-en-linea`).
  */
 final class EmisorEnLinea
 {
-    /** @var array<string, string> NIT normalizado de la empresa => NIT normalizado del emisor */
-    private readonly array $emisores;
-
-    /** @param array<string, string> $emisores NIT de la empresa => NIT de quien factura sus ventas en línea */
     public function __construct(
-        #[Autowire(param: "fel_emisor_en_linea")]
-        array $emisores = [],
-    ) {
-        $normalizados = [];
-        foreach ($emisores as $empresa => $emisor) {
-            $normalizados[self::normalizar((string) $empresa)] = self::normalizar((string) $emisor);
-        }
-        $this->emisores = $normalizados;
-    }
+        private readonly AjustesForcon $ajustes = new AjustesForcon(),
+    ) {}
 
     /** NIT (normalizado) de quien factura las ventas en línea de esa empresa, o null si las factura ella misma. */
     public function para(?string $nitEmpresa): ?string
     {
-        return $nitEmpresa === null ? null : $this->emisores[self::normalizar($nitEmpresa)] ?? null;
+        if ($nitEmpresa === null) {
+            return null;
+        }
+        $buscado = self::normalizar($nitEmpresa);
+        foreach ($this->ajustes->actual()->getEmisoresEnLinea() as $empresa => $emisor) {
+            if (self::normalizar((string) $empresa) === $buscado) {
+                return self::normalizar((string) $emisor);
+            }
+        }
+
+        return null;
     }
 
     public static function normalizar(string $nit): string

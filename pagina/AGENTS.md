@@ -43,7 +43,7 @@ Reutiliza del frontend por alias (ver `vite.config.ts` y `tsconfig.app.json`): `
 4. Pago: resumen con tiempo restante, datos del comprador, tarjeta, dirección de facturación (país → región → ciudad de listas, texto libre donde no hay datos) y factura (NIT, buscado en la SAT, y «A nombre de»; ADR-041). 3-D Secure como antes (`tresDs.ts`, `DesafioBanco.vue`); tras cada paso se reenvía el pago con `continuar`. "Volver a los asientos" o salir sin pagar suelta los asientos.
 5. Compra: se descarga el PDF (ida y regreso en el mismo archivo) una vez y queda el botón; el boleto también llega por correo.
 
-Con `CYBERSOURCE_ORG_ID`, la página carga el script de huella del dispositivo del banco (`/api/publico/carritos/{token}/huella`).
+Con el Org ID de `ConfiguracionCybersource` (`app:pago:configuracion --org-id`), la página carga el script de huella del dispositivo del banco (`/api/publico/carritos/{token}/huella`).
 
 Con la pasarela simulada: `4000 0000 0000 0002` rechaza, `4000 0000 0000 3220` pide 3-D Secure, otra Visa/Mastercard válida aprueba.
 

@@ -4,20 +4,19 @@ declare(strict_types=1);
 
 namespace App\Venta\Facturacion;
 
+use App\Venta\Facturacion\Forcon\AjustesForcon;
 use App\Venta\Facturacion\Forcon\CertificadorForcon;
 use App\Venta\Facturacion\Forcon\ConsultaContribuyenteForcon;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
- * Elige el certificador según `FEL_CERTIFICADOR`: `forcon` (real) o
- * `simulado` (por defecto; desarrollo y pruebas). Es el servicio que ven
+ * Elige el certificador según `ConfiguracionForcon::activo`: Forcon (real) o
+ * el simulado (por defecto; desarrollo y pruebas). Es el servicio que ven
  * `CertificadorFel` y `ConsultaContribuyente` (`config/services.yaml`).
  */
 final class FelActivo implements CertificadorFel, ConsultaContribuyente
 {
     public function __construct(
-        #[Autowire(env: "default:fel_certificador_defecto:FEL_CERTIFICADOR")]
-        private readonly string $certificador,
+        private readonly AjustesForcon $ajustes,
         private readonly CertificadorSimulado $simulado,
         private readonly ConsultaContribuyenteSimulada $consultaSimulada,
         private readonly CertificadorForcon $forcon,
@@ -41,6 +40,6 @@ final class FelActivo implements CertificadorFel, ConsultaContribuyente
 
     public function esForcon(): bool
     {
-        return strtolower(trim($this->certificador)) === "forcon";
+        return $this->ajustes->actual()->isActivo();
     }
 }
