@@ -55,7 +55,7 @@ final class MensajesPredeterminados
         $usuarios = $this->em->createQuery("SELECT u FROM App\Entity\Usuario u WHERE u.activo = true ORDER BY u.username")->getResult();
         $grupos = $this->em->createQuery("SELECT c FROM App\Entity\ChatCanal c WHERE c.tipo = :grupo ORDER BY c.nombre")
             ->setParameter("grupo", TipoCanalChat::Grupo)->getResult();
-        $empresas = $this->em->getRepository(Empresa::class)->findBy([], ["nombre" => "ASC"]);
+        $empresas = $this->em->getRepository(Empresa::class)->findBy(["activa" => true], ["nombre" => "ASC"]);
         $rutas = $this->em->getRepository(Ruta::class)->findBy(["activo" => true], ["nombre" => "ASC"]);
 
         return [

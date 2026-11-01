@@ -30,7 +30,7 @@
             <ToggleSwitch v-model="todasEmpresas" input-id="todas-empresas" />
             <label for="todas-empresas" class="text-sm">Todas (también las que se agreguen)</label>
           </div>
-          <MultiSelect v-if="!todasEmpresas" v-model="empresas" :options="catalogo.empresas" option-label="nombre" option-value="id" placeholder="Elija las empresas" display="chip" filter :max-selected-labels="3" fluid />
+          <MultiSelect v-if="!todasEmpresas" v-model="empresas" :options="empresasActivas" option-label="nombre" option-value="id" placeholder="Elija las empresas" display="chip" filter :max-selected-labels="3" fluid />
         </fieldset>
         <fieldset class="alcance min-w-0">
           <legend>Estaciones</legend>
@@ -101,6 +101,8 @@ const opcionesRoles = computed(() =>
 )
 const rolElegido = computed(() => props.roles.find((r) => r.id === rol.value) ?? null)
 const usaEstacion = computed(() => rolElegido.value?.sistema || (rolElegido.value?.capacidades ?? []).some((c) => porCodigo.value.get(c)?.dimensiones.includes('estacion')))
+/** Las activas y las ya asignadas (para poder quitarlas). */
+const empresasActivas = computed(() => props.catalogo.empresas.filter((e) => e.activo !== false || empresas.value.includes(e.id)))
 const estacionesActivas = computed(() => props.catalogo.estaciones.filter((e) => e.activo !== false || estaciones.value.includes(e.id)))
 
 function iniciar() {

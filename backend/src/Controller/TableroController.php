@@ -68,7 +68,7 @@ final class TableroController extends AbstractController
 
         return $this->json([
             "alcance" => ["empresa" => $empresa, "fija" => !$todas && count($empresas) === 1],
-            "empresas" => $this->consulta->empresas($todas ? null : $empresas),
+            "empresas" => $this->consulta->empresas($todas ? null : $empresas, soloActivas: true),
             "moneda" => ConsultaTablero::MONEDA,
         ] + $this->copias->leer($periodo->dias, $empresa));
     }

@@ -145,13 +145,15 @@ final class ConsultaReportes
     }
 
     /**
+     * Las activas, para los filtros.
+     *
      * @param list<int>|null $ids solo esas (el alcance); null = todas
      *
      * @return list<array{id: int, nombre: string}>
      */
     public function empresas(?array $ids = null): array
     {
-        $empresas = $this->em->getRepository(Empresa::class)->findBy($ids === null ? [] : ["id" => $ids], ["nombre" => "ASC"]);
+        $empresas = $this->em->getRepository(Empresa::class)->findBy(["activa" => true] + ($ids === null ? [] : ["id" => $ids]), ["nombre" => "ASC"]);
 
         return array_values(array_map(static fn(Empresa $e) => ["id" => (int) $e->getId(), "nombre" => $e->getNombreCorto()], $empresas));
     }

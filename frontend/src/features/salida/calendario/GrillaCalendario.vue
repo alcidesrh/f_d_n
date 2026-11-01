@@ -25,7 +25,7 @@
         </div>
         <div v-for="h in HORAS" :key="`${d}-${h}`" role="gridcell" class="cal__celda" :class="claseDia(d)" :data-dia="d" :data-hora="h">
           <span v-if="h === ahora.hora" class="cal__ahora" :class="{ 'cal__ahora--hoy': d === ahora.dia }" :style="{ left: `${ahora.fraccion * 100}%` }" aria-hidden="true" />
-          <button v-for="s in store.celdas.get(d)?.[h] ?? []" :key="s.id" type="button" class="chip" :class="claseChip(s)" :data-ruta="s.rutaId" :style="{ '--f': `${(fraccion(s) ?? 0) * 100}%` }" :aria-label="etiquetaChip(s)" :aria-pressed="store.seleccionando ? store.seleccion.has(s.id) : undefined" @click="pulsar($event, s)">
+          <button v-for="s in store.celdas.get(d)?.[h] ?? []" :key="s.id" type="button" class="chip" :class="claseChip(s)" :data-ruta="s.rutaId" :style="estiloChip(s)" :aria-label="etiquetaChip(s)" :aria-pressed="store.seleccionando ? store.seleccion.has(s.id) : undefined" @click="pulsar($event, s)">
             <span class="chip__hora tabular-nums">{{ minutos(s.fecha) }}</span>
             <span class="chip__valor tabular-nums">{{ textoOcupacion(s, store.modo) }}</span>
           </button>
@@ -37,7 +37,7 @@
 </template>
 
 <script setup lang="ts">
-import { detalleOcupacion, finDeSemana, fraccion, nivel, puntas, textoOcupacion, totales, ahoraEn } from "@/core/salida/calendario";
+import { detalleOcupacion, finDeSemana, fraccion, nivel, puntas, textoOcupacion, tonoEmpresa, totales, ahoraEn } from "@/core/salida/calendario";
 import { deDia, etiquetaEstado, horaDe } from "@/core/salida/filtro";
 import type { SalidaCalendario } from "@/core/salida/types";
 import { useCalendarioSalidasStore } from "./store";
@@ -95,6 +95,7 @@ function claseChip(s: SalidaCalendario) {
     n ? `chip--${n}` : "",
     {
       "chip--atrasada": s.atrasada,
+      "chip--empresa": s.empresaId !== null,
       "chip--atenuada": store.resaltadaEfectiva !== null && store.resaltadaEfectiva !== s.rutaId,
       "chip--activa": props.activa === s.id,
       "chip--seleccionada": store.seleccionando && store.seleccion.has(s.id),
@@ -102,9 +103,17 @@ function claseChip(s: SalidaCalendario) {
   ];
 }
 
+/** La ocupación (`--f`) y, si la salida tiene empresa, su tono (`--tono`) para el fondo tenue. */
+function estiloChip(s: SalidaCalendario): Record<string, string | number> {
+  const estilo: Record<string, string | number> = { "--f": `${(fraccion(s) ?? 0) * 100}%` };
+  if (s.empresaId !== null) estilo["--tono"] = tonoEmpresa(s.empresaId);
+  return estilo;
+}
+
 function etiquetaChip(s: SalidaCalendario): string {
   const r = store.rutaPorId.get(s.rutaId);
-  return [horaDe(s.fecha), r ? `${r.nombre} (${puntas(r)})` : null, etiquetaEstado(s.estado).etiqueta, s.atrasada ? "atrasada" : null, detalleOcupacion(s)].filter(Boolean).join(", ");
+  const empresa = s.empresaId !== null ? store.empresas.get(s.empresaId) : null;
+  return [horaDe(s.fecha), r ? `${r.nombre} (${puntas(r)})` : null, empresa, etiquetaEstado(s.estado).etiqueta, s.atrasada ? "atrasada" : null, detalleOcupacion(s)].filter(Boolean).join(", ");
 }
 
 /**
@@ -283,9 +292,10 @@ defineExpose({ centrar });
 }
 
 /*
- * Ficha de una salida: todas en la paleta `surface` (la de cada ruta se
- * distingue por su nombre, no por el color). La paleta se invierte sola en
- * modo oscuro. El fondo se llena de izquierda a derecha con la ocupación (`--f`).
+ * Ficha de una salida: en la paleta `surface` (la de cada ruta se distingue
+ * por su nombre, no por el color), con el fondo sin ocupar teñido tenue por
+ * su empresa (`chip--empresa`). La paleta se invierte sola en modo oscuro.
+ * El fondo se llena de izquierda a derecha con la ocupación (`--f`).
  */
 .chip {
   --borde: var(--p-surface-500);
@@ -313,6 +323,10 @@ defineExpose({ centrar });
     opacity 0.15s,
     transform 0.1s,
     box-shadow 0.15s;
+}
+/* El fondo sin ocupar, tenue con el tono de la empresa (generado: no es rampa, de ahí `light-dark()`). */
+.chip--empresa {
+  --vacio: light-dark(hsl(calc(var(--tono) * 1deg) 70% 94%), hsl(calc(var(--tono) * 1deg) 30% 20%));
 }
 .chip:hover,
 .chip:focus-visible {

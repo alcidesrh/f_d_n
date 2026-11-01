@@ -55,8 +55,8 @@ class Empresa extends Base
      * Solo las activas aparecen en filtros y selectores (`CollectionResolver`).
      * Una desactivada sigue visible en su pantalla, para activarla de nuevo.
      */
-    #[ORM\Column(nullable: true)]
-    private ?bool $activa = null;
+    #[ORM\Column(nullable: true, options: ["default" => true])]
+    private ?bool $activa = true;
 
     #[ORM\OneToMany(targetEntity: Bus::class, mappedBy: "empresa")]
     private Collection $buses;

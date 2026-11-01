@@ -94,14 +94,16 @@ final class ConsultaTablero
     }
 
     /**
-     * @param list<int>|null $ids solo esas (el alcance); null = todas
+     * @param list<int>|null $ids          solo esas (el alcance); null = todas
+     * @param bool           $soloActivas  para un filtro; los nombres de lo ya vendido incluyen las desactivadas
      *
      * @return list<array{id: int, nombre: string}>
      */
-    public function empresas(?array $ids): array
+    public function empresas(?array $ids, bool $soloActivas = false): array
     {
+        $donde = array_filter([$ids !== null ? "id IN (:ids)" : null, $soloActivas ? "activa = true" : null]);
         $filas = $this->db->fetchAllAssociative(
-            "SELECT id, COALESCE(NULLIF(alias, ''), nombre) AS nombre FROM empresa" . ($ids !== null ? " WHERE id IN (:ids)" : "") . " ORDER BY 2",
+            "SELECT id, COALESCE(NULLIF(alias, ''), nombre) AS nombre FROM empresa" . ($donde ? " WHERE " . implode(" AND ", $donde) : "") . " ORDER BY 2",
             $ids !== null ? ["ids" => $ids === [] ? [0] : $ids] : [],
             $ids !== null ? ["ids" => \Doctrine\DBAL\ArrayParameterType::INTEGER] : [],
         );

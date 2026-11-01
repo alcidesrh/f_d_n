@@ -50,6 +50,7 @@
 
     <div v-if="(store.opciones?.empresas.length ?? 0) > 1" class="flex flex-wrap items-center gap-1.5" role="group" aria-label="Empresas">
       <button v-for="e in store.opciones?.empresas ?? []" :key="e.id" type="button" class="estado" :class="{ 'estado--activo': store.empresa === e.id }" :aria-pressed="store.empresa === e.id" @click="store.empresa = store.empresa === e.id ? null : e.id">
+        <span class="estado__tono" :style="{ '--tono': tonoEmpresa(e.id) }" aria-hidden="true" />
         {{ e.nombre }}
       </button>
     </div>
@@ -57,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { horaMinuto } from "@/core/salida/calendario";
+import { horaMinuto, tonoEmpresa } from "@/core/salida/calendario";
 import { aDia, deDia } from "@/core/salida/filtro";
 import { useCalendarioSalidasStore } from "./store";
 
@@ -120,6 +121,15 @@ const puedeEliminar = computed(() => !!store.opciones?.puede.eliminar);
   font-size: 0.8rem;
   font-weight: 500;
   cursor: pointer;
+}
+/* El tono de la empresa, el mismo del fondo de sus fichas (algo más intenso para verse como muestra). */
+.estado__tono {
+  width: 0.75rem;
+  height: 0.75rem;
+  flex: none;
+  border: 1px solid light-dark(hsl(calc(var(--tono) * 1deg) 40% 70%), hsl(calc(var(--tono) * 1deg) 30% 40%));
+  border-radius: 0.2rem;
+  background: light-dark(hsl(calc(var(--tono) * 1deg) 70% 88%), hsl(calc(var(--tono) * 1deg) 30% 26%));
 }
 .estado--activo {
   border-color: var(--p-primary-color);

@@ -101,7 +101,7 @@ final class EncomiendaController extends AbstractController
             ],
             "empresas" => array_map(
                 static fn(Empresa $e) => ["id" => $e->getId(), "nombre" => $e->getNombre(), "alias" => $e->getAlias()],
-                $this->em->getRepository(Empresa::class)->findBy($empresas === null ? [] : ["id" => $empresas], ["nombre" => "ASC"]),
+                $this->em->getRepository(Empresa::class)->findBy(["activa" => true] + ($empresas === null ? [] : ["id" => $empresas]), ["nombre" => "ASC"]),
             ),
             "estaciones" => array_map(
                 static fn(Estacion $e) => ["id" => $e->getId(), "nombre" => $e->getNombre(), "direccion" => $e->getDireccion(), "departamento" => $e->getDepartamento()],

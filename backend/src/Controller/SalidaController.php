@@ -132,7 +132,7 @@ final class SalidaController extends AbstractController
         return $this->json([
             "empresas" => array_map(
                 static fn(Empresa $e) => ["id" => $e->getId(), "nombre" => $e->getNombreCorto()],
-                $this->em->getRepository(Empresa::class)->findBy($empresasVisibles === null ? [] : ["id" => $empresasVisibles], ["nombre" => "ASC"]),
+                $this->em->getRepository(Empresa::class)->findBy(["activa" => true] + ($empresasVisibles === null ? [] : ["id" => $empresasVisibles]), ["nombre" => "ASC"]),
             ),
             // Con una sola empresa donde programa, esa; si no, el programador ofrece elegirla para filtrar distribuciones y buses.
             "miEmpresaId" => $this->autorizacion->alcance(Capacidad::SALIDA_CREAR)->empresaUnica() ?? $ver->empresaUnica(),

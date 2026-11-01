@@ -29,7 +29,7 @@
             </label>
             <label class="campo">
               <span>Empresa (opcional)</span>
-              <Select v-model="empresa" :options="catalogo?.empresas ?? []" option-label="nombre" option-value="id" placeholder="En cualquiera" show-clear fluid />
+              <Select v-model="empresa" :options="(catalogo?.empresas ?? []).filter((e) => e.activo !== false)" option-label="nombre" option-value="id" placeholder="En cualquiera" show-clear fluid />
             </label>
             <label class="campo">
               <span>Estación (opcional)</span>

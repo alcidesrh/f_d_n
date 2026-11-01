@@ -97,7 +97,7 @@ final class PaginaAdminController extends AbstractController
         return $this->json([
             "empresas" => array_map(
                 static fn(Empresa $e) => ["id" => $e->getId(), "nombre" => $e->getNombreCorto()],
-                $this->em->getRepository(Empresa::class)->findBy([], ["nombre" => "ASC"]),
+                $this->em->getRepository(Empresa::class)->findBy(["activa" => true], ["nombre" => "ASC"]),
             ),
             "estaciones" => $consulta->estacionesEnLinea(),
             "departamento" => $usuario->getEstacion()?->getDepartamento(),

@@ -50,7 +50,7 @@ final class AccesoController extends AbstractController
             'capacidades' => array_values(array_map(static fn(DefinicionCapacidad $d) => $d->toArray(), $this->catalogo->definiciones())),
             'limites' => array_map(static fn(Limite $l) => ['codigo' => $l->value, 'nombre' => $l->nombre(), 'capacidad' => $l->capacidad()->value], Limite::cases()),
             'empresas' => array_map(
-                static fn(Empresa $e) => ['id' => (int) $e->getId(), 'nombre' => $e->getNombreCorto() ?? $e->getNombre()],
+                static fn(Empresa $e) => ['id' => (int) $e->getId(), 'nombre' => $e->getNombreCorto() ?? $e->getNombre(), 'activo' => $e->isActiva() === true],
                 $this->em->getRepository(Empresa::class)->findBy([], ['nombre' => 'ASC']),
             ),
             'estaciones' => array_map(
