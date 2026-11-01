@@ -68,6 +68,8 @@ class BoletoTarifa extends Base
     #[ORM\Column(type: "string", length: 1, enumType: AsientoClase::class)]
     private AsientoClase $clase;
 
+    /** Lo pone `EventListener\AsignarUsuarioTarifa` con la sesión: no es de entrada. */
+    #[ApiProperty(writable: false)]
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
     private ?Usuario $usuario = null;

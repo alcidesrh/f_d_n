@@ -26,12 +26,16 @@ final class DateType extends ScalarType implements TypeInterface
         return $value; //
     }
 
-    public function parseValue($value): \DateTimeImmutable
+    /**
+     * Devuelve la fecha como `Y-m-d` validado, no como objeto: el serializador de API Platform
+     * convierte strings a `DateTime`/`DateTimeImmutable`, pero rechaza un objeto ya creado.
+     */
+    public function parseValue($value): string
     {
         return $this->parse($value);
     }
 
-    public function parseLiteral($valueNode, ?array $variables = null): \DateTimeImmutable
+    public function parseLiteral($valueNode, ?array $variables = null): string
     {
         if (!$valueNode instanceof StringValueNode) {
             throw new Error('DateType must be string YYYY-MM-DD');
@@ -40,7 +44,7 @@ final class DateType extends ScalarType implements TypeInterface
         return $this->parse($valueNode->value);
     }
 
-    private function parse(string $value): \DateTimeImmutable
+    private function parse(string $value): string
     {
         $date = \DateTimeImmutable::createFromFormat('Y-m-d', $value);
 
@@ -48,6 +52,6 @@ final class DateType extends ScalarType implements TypeInterface
             throw new Error('Invalid DateType format, expected YYYY-MM-DD');
         }
 
-        return $date;
+        return $value;
     }
 }
