@@ -7,6 +7,8 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { useAccesoStore } from '@/core/acceso/store'
 import { useAutorizacionesStore } from '@/core/autorizacion/store'
+import { useCorreoStore } from '@/core/correo/store'
+import type { AvisoCorreo } from '@/core/correo/types'
 import { suscribir } from '@/core/realtime'
 import * as api from './api'
 import { revisarPush } from './push'
@@ -130,7 +132,7 @@ export const useChatStore = defineStore('chat', () => {
     desuscribir?.()
     try {
       const { token, topico } = await api.fetchToken()
-      desuscribir = suscribir(topico, (d) => void recibir(d as Aviso), {
+      desuscribir = suscribir(topico, (d) => void recibir(d as Aviso | AvisoCorreo), {
         token,
         alCerrarse: () => {
           enVivo.value = false
@@ -153,13 +155,18 @@ export const useChatStore = defineStore('chat', () => {
     listo.value = true
   }
 
-  async function recibir(aviso: Aviso) {
+  /** Por el mismo tópico llegan los avisos del correo (ADR-048): los atiende su store. */
+  async function recibir(aviso: Aviso | AvisoCorreo) {
     if (aviso.tipo === 'acceso') {
       void useAccesoStore().cargar()
       return
     }
     if (aviso.tipo === 'autorizacion') {
       useAutorizacionesStore().alAvisar()
+      return
+    }
+    if (aviso.tipo === 'correo') {
+      useCorreoStore().alAvisar(aviso)
       return
     }
     if (aviso.tipo === 'presencia') {

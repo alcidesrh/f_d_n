@@ -5,6 +5,7 @@
   de `App.vue` (out-in) necesita uno para animar la salida. En los modos
   esquina y flotante la ruta no llega aquí: el router abre la ventana
   (`ChatVentana`). `?adjuntar=Tipo:id` deja ese registro listo para enviar.
+  La ruta `/correo/:correo?` es la misma página con el correo (ADR-048).
   En el teléfono va siempre a pantalla completa, como una app de mensajería:
   con una conversación abierta solo se ve su cabecera (su flecha vuelve a la
   bandeja y la de la barra, a la app), y se ajusta al teclado (`altoVisible`).
@@ -13,8 +14,9 @@
   <div class="chat-pagina">
     <Teleport to="body" :disabled="!completa">
       <div class="chat" :class="{ 'chat--maximizada': completa }" :style="alto">
-        <BarraChat v-if="!(ventana.movil && destino.canal)" />
-        <ChatVista class="chat__vista" :canal="destino.canal" :adjuntar="destino.adjuntar" @abrir="ir" />
+        <BarraChat v-if="!(ventana.movil && (esCorreo ? correoId || ventana.redactando : destino.canal))" />
+        <CorreoVista v-if="esCorreo" class="chat__vista" :correo="correoId" @abrir="irCorreo" />
+        <ChatVista v-else class="chat__vista" :canal="destino.canal" :adjuntar="destino.adjuntar" @abrir="ir" />
       </div>
     </Teleport>
   </div>
@@ -24,7 +26,8 @@
 import { useAltoVisible } from "./altoVisible";
 import BarraChat from "./BarraChat.vue";
 import ChatVista from "./ChatVista.vue";
-import { destinoDeRuta, useVentanaChat } from "./ventana";
+import CorreoVista from "@/features/correo/CorreoVista.vue";
+import { correoDeRuta, destinoDeRuta, useVentanaChat } from "./ventana";
 
 const route = useRoute();
 const router = useRouter();
@@ -33,12 +36,22 @@ const ventana = useVentanaChat();
 const completa = computed(() => ventana.maximizada || ventana.movil);
 const alto = useAltoVisible(computed(() => ventana.movil));
 
+const esCorreo = computed(() => route.name === "correo");
+const correoId = computed(() => correoDeRuta(route.params));
 const destino = computed(() => destinoDeRuta(route.params, route.query));
 watch(
-  () => destino.value.canal,
-  (canal) => (ventana.canal = canal),
+  () => [esCorreo.value, destino.value.canal, correoId.value] as const,
+  ([correo, canal, id]) => {
+    ventana.seccion = correo ? "correo" : "chat";
+    if (correo) ventana.correo = id;
+    else ventana.canal = canal;
+  },
   { immediate: true },
 );
+
+function irCorreo(id: number | null) {
+  void router.push({ name: "correo", params: { correo: id ?? undefined } });
+}
 
 function ir(canal: number | null) {
   // Volver a la bandeja de la que se vino es "atrás": así el botón atrás del teléfono no reabre la conversación.

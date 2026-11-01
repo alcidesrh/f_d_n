@@ -12,7 +12,8 @@
     <section ref="raiz" class="ventana" :class="[`ventana--${ventana.modo}`, { 'ventana--minimizada': ventana.minimizada, 'ventana--completa': completa }]" role="dialog" aria-label="Mensajes" :aria-hidden="!ventana.abierta" :inert="!ventana.abierta">
       <div class="ventana__marco">
         <BarraChat ref="barra" :arrastrable="arrastrable" />
-        <ChatVista class="ventana__cuerpo" :inert="ventana.minimizada" :canal="ventana.canal" :adjuntar="ventana.adjuntar" :activa="ventana.aLaVista" @abrir="ventana.canal = $event" @adjuntado="ventana.adjuntar = null" />
+        <CorreoVista v-if="ventana.seccion === 'correo'" class="ventana__cuerpo" :inert="ventana.minimizada" :correo="ventana.correo" @abrir="ventana.correo = $event" />
+        <ChatVista v-show="ventana.seccion !== 'correo'" class="ventana__cuerpo" :inert="ventana.minimizada" :canal="ventana.canal" :adjuntar="ventana.adjuntar" :activa="ventana.aLaVista && ventana.seccion !== 'correo'" @abrir="ventana.canal = $event" @adjuntado="ventana.adjuntar = null" />
         <span ref="anillo" class="ventana__anillo" aria-hidden="true" />
       </div>
       <template v-if="redimensionable">
@@ -29,6 +30,7 @@ import { useChatStore } from "@/core/chat/store";
 import { BORDES, MOVIL, cajaDe, encajar, redimensionar, type Borde, type Caja } from "@/core/chat/ventana";
 import BarraChat from "./BarraChat.vue";
 import ChatVista from "./ChatVista.vue";
+import CorreoVista from "@/features/correo/CorreoVista.vue";
 import { useVentanaChat } from "./ventana";
 
 gsap.registerPlugin(Draggable);

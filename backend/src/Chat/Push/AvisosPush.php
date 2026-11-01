@@ -98,6 +98,20 @@ final class AvisosPush
     }
 
     /**
+     * Una notificación ya armada para `$usuarios` (p. ej. un correo nuevo).
+     *
+     * @param list<int>                                                           $usuarios
+     * @param array{titulo: string, cuerpo: string, url: string, etiqueta: string} $contenido
+     */
+    public function avisar(array $usuarios, array $contenido): void
+    {
+        if ($usuarios === [] || !$this->activo()) {
+            return;
+        }
+        $this->bus->dispatch(new EnviarAvisoPush(array_values(array_unique($usuarios)), ["titulo" => $contenido["titulo"], "cuerpo" => self::fragmento($contenido["cuerpo"]), "url" => $contenido["url"], "etiqueta" => $contenido["etiqueta"]]));
+    }
+
+    /**
      * Lo que muestra la notificación: en un directo, quien escribe y el
      * fragmento; en un grupo, el grupo y "Autor: fragmento". `etiqueta`
      * agrupa por conversación (la nueva reemplaza a la anterior).

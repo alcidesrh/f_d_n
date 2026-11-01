@@ -1,5 +1,6 @@
 <!--
-  Barra de título del chat: a la izquierda el título, en vivo y sin leer; al
+  Barra de título del chat: a la izquierda Mensajes | Correo (ADR-048: cohabitan
+  en la misma ventana), cada uno con sus sin leer, y si está en vivo; al
   centro el modo (ícono y nombre); a la derecha minimizar, maximizar y
   cerrar (en modo centro, cerrar vuelve a la página anterior). En el teléfono no hay modos ni
   controles: una flecha vuelve a la app. En la flotante es además el asa para arrastrarla. Cambiar de/a
@@ -9,10 +10,14 @@
   <header class="barra" :class="{ 'barra--minimizada': ventana.minimizada && ventana.esVentana }" @click="alTocar">
     <span class="barra__titulo">
       <button v-if="ventana.movil" type="button" class="control" aria-label="Volver a la app" @click="volverALaApp"><icon name="arrow-back" size="1.2rem" color="text-current" /></button>
-      <icon v-else name="forum-outline" size="1.15rem" color="text-current" />
-      <span>Mensajes</span>
+      <span class="secciones" role="tablist" aria-label="Mensajes o correo">
+        <button v-for="s in SECCIONES" :key="s.seccion" type="button" role="tab" class="seccion" :class="{ 'seccion--activa': ventana.seccion === s.seccion }" :aria-selected="ventana.seccion === s.seccion" v-tooltip.bottom="s.nombre" @click.stop="cambiarSeccion(s.seccion)">
+          <icon :name="s.icono" size="1.05rem" color="text-current" />
+          <span class="seccion__nombre">{{ s.nombre }}</span>
+          <span v-if="s.noLeidos()" class="barra__badge" :aria-label="`${s.noLeidos()} sin leer`">{{ s.noLeidos() > 99 ? "99+" : s.noLeidos() }}</span>
+        </button>
+      </span>
       <span class="vivo" :class="{ 'vivo--off': !chat.enVivo }" v-tooltip.bottom="chat.enVivo ? 'En vivo' : 'Sin conexión en vivo: se actualiza cada 30 s'" />
-      <span v-if="chat.noLeidos" class="barra__badge" :aria-label="`${chat.noLeidos} sin leer`">{{ chat.noLeidos > 99 ? "99+" : chat.noLeidos }}</span>
     </span>
 
     <button v-if="!ventana.movil && !(ventana.esVentana && ventana.minimizada)" type="button" class="modo" aria-haspopup="true" aria-controls="chat-modos" :aria-label="`Modo: ${MODOS[ventana.modo].nombre}`" v-tooltip.bottom="'Modo de la ventana'" @click="menu?.toggle($event)">
@@ -59,8 +64,9 @@
 import type { MenuItem } from "primevue/menuitem";
 import type Menu from "primevue/menu";
 import { useChatStore } from "@/core/chat/store";
+import { useCorreoStore } from "@/core/correo/store";
 import type { ModoVentana } from "@/core/chat/ventana";
-import { useVentanaChat } from "./ventana";
+import { useVentanaChat, type Seccion } from "./ventana";
 
 /** La flotante restaura con el clic de Draggable (distingue clic de arrastre). */
 const props = defineProps<{ arrastrable?: boolean }>();
@@ -72,16 +78,34 @@ const MODOS: Record<ModoVentana, { nombre: string; icono: string; detalle: strin
 };
 
 const chat = useChatStore();
+const correo = useCorreoStore();
 const ventana = useVentanaChat();
 const router = useRouter();
 const menu = ref<InstanceType<typeof Menu> | null>(null);
 
 const opciones = computed<MenuItem[]>(() => (Object.keys(MODOS) as ModoVentana[]).map((modo) => ({ label: MODOS[modo].nombre, detalle: MODOS[modo].detalle, icono: MODOS[modo].icono, modo, command: () => elegir(modo) })));
 
+const SECCIONES: { seccion: Seccion; nombre: string; icono: string; noLeidos: () => number }[] = [
+  { seccion: "chat", nombre: "Mensajes", icono: "forum-outline", noLeidos: () => chat.noLeidos },
+  { seccion: "correo", nombre: "Correo", icono: "mail-outline", noLeidos: () => correo.noLeidos },
+];
+
+/** En la ventana se cambia ahí mismo; en el centro es otra ruta (`/chat` o `/correo`). */
+function cambiarSeccion(seccion: Seccion) {
+  if (ventana.minimizada && ventana.esVentana) ventana.restaurar();
+  if (ventana.esVentana) {
+    ventana.seccion = seccion;
+    return;
+  }
+  if (seccion === "correo") void router.push({ name: "correo", params: { correo: ventana.correo ?? undefined } });
+  else void router.push({ name: "chat", params: { canal: ventana.canal ?? undefined } });
+}
+
 function elegir(modo: ModoVentana) {
   const antes = ventana.modo;
   ventana.cambiarModo(modo);
-  if (modo === "centro") void router.push({ name: "chat", params: { canal: ventana.canal ?? undefined } });
+  if (modo === "centro" && ventana.seccion === "correo") void router.push({ name: "correo", params: { correo: ventana.correo ?? undefined } });
+  else if (modo === "centro") void router.push({ name: "chat", params: { canal: ventana.canal ?? undefined } });
   else if (antes === "centro") void router.push(ventana.pagina ?? "/");
 }
 
@@ -123,6 +147,50 @@ function alTocar(e: MouseEvent) {
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--p-surface-800);
+}
+.secciones {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  min-width: 0;
+  padding: 0.15rem;
+  border-radius: 999px;
+  background: var(--p-surface-100);
+}
+.seccion {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+  height: 1.75rem;
+  padding: 0 0.65rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  color: var(--p-surface-500);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  &:hover {
+    color: var(--p-surface-800);
+  }
+}
+.seccion--activa {
+  color: var(--p-surface-900);
+  background: var(--p-content-background);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08), 0 0 0 1px var(--p-surface-200);
+}
+.seccion__nombre {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Barra angosta: solo los íconos (y los sin leer). */
+@container barra (max-width: 30rem) {
+  .seccion__nombre {
+    display: none;
+  }
+  .seccion {
+    padding: 0 0.5rem;
+  }
 }
 .vivo {
   width: 0.45rem;

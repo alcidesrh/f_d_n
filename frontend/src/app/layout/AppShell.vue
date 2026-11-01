@@ -41,6 +41,7 @@ import { useSessionStore } from '@/core/auth/session'
 import { useAccesoStore } from '@/core/acceso/store'
 import { filtrarMenusCon, useUserMenusStore } from '@/core/navigation/userMenus'
 import { useChatStore } from '@/core/chat/store'
+import { useCorreoStore } from '@/core/correo/store'
 import { useCuentaStore } from '@/core/cuenta/store'
 import { useAutorizacionesStore } from '@/core/autorizacion/store'
 import { useMetadataStore } from '@/core/metadata/sincronizacion'
@@ -63,6 +64,7 @@ const router = useRouter()
 const session = useSessionStore()
 const userMenus = useUserMenusStore()
 const chat = useChatStore()
+const correo = useCorreoStore()
 const cuenta = useCuentaStore()
 const metadata = useMetadataStore()
 const ventana = useVentanaChat()
@@ -104,6 +106,7 @@ watch(
   () => session.user,
   (user) => {
     chat.detener()
+    correo.detener()
     metadata.detener()
     if (!user) {
       cuenta.limpiar()
@@ -114,12 +117,14 @@ watch(
     void cuenta.cargar()
     void autorizaciones.cargarResumen()
     void chat.iniciar()
+    void correo.iniciar()
     metadata.iniciar()
   },
   { immediate: true },
 )
 onBeforeUnmount(() => {
   chat.detener()
+  correo.detener()
   metadata.detener()
   dejarDeEscuchar()
   document.removeEventListener('visibilitychange', alVolver)

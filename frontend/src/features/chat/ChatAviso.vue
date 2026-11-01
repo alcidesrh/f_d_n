@@ -1,16 +1,17 @@
 <!--
-  Aviso de mensaje nuevo fuera de la conversación en pantalla: tarjeta flotante
-  que lleva a la conversación. Con la pestaña oculta y permiso del navegador,
+  Aviso de mensaje nuevo fuera de la conversación en pantalla (o de un correo
+  nuevo, ADR-048): tarjeta flotante que lleva a la conversación o al correo. Con la pestaña oculta y permiso del navegador,
   además, notificación del sistema. Con la ventana del chat abierta (esquina o
   flotante, aunque esté minimizada) avisa ella: su barra cuenta y destella.
 -->
 <template>
   <Transition name="aviso">
-    <button v-if="visible && entrante" :key="entrante.n" type="button" class="aviso" @click="abrir">
-      <ChatAvatar :id="entrante.autor?.id ?? 0" :nombre="entrante.autor?.nombre ?? 'Sistema'" :sistema="!entrante.autor" :ambito="entrante.autor?.ambito" :foto="entrante.autor?.foto" />
+    <button v-if="visible && actual" :key="actual.clave" type="button" class="aviso" @click="abrir">
+      <span v-if="actual.tipo === 'correo'" class="aviso__correo" aria-hidden="true"><icon name="mail-outline" size="1.25rem" color="text-current" /></span>
+      <ChatAvatar v-else-if="entrante" :id="entrante.autor?.id ?? 0" :nombre="entrante.autor?.nombre ?? 'Sistema'" :sistema="!entrante.autor" :ambito="entrante.autor?.ambito" :foto="entrante.autor?.foto" />
       <span class="min-w-0 flex-1 text-left">
-        <span class="aviso__quien">{{ entrante.autor?.nombre ?? 'Aviso del sistema' }}<span v-if="grupo" class="aviso__grupo"> · {{ grupo }}</span></span>
-        <span class="aviso__texto">{{ entrante.extracto }}</span>
+        <span class="aviso__quien">{{ actual.titulo }}<span v-if="actual.detalle" class="aviso__grupo"> · {{ actual.detalle }}</span></span>
+        <span class="aviso__texto">{{ actual.texto }}</span>
       </span>
       <span class="aviso__cerrar tap-target" role="button" aria-label="Descartar" @click.stop="visible = false"><icon name="close" size="1rem" color="text-current" /></span>
     </button>
@@ -19,48 +20,70 @@
 
 <script setup lang="ts">
 import { useChatStore } from '@/core/chat/store'
+import { useCorreoStore } from '@/core/correo/store'
 import ChatAvatar from '@/shared/chat/ChatAvatar.vue'
 import { useVentanaChat } from './ventana'
 
 const DURACION_MS = 7000
 
 const chat = useChatStore()
+const correo = useCorreoStore()
 const ventana = useVentanaChat()
 const router = useRouter()
 const entrante = computed(() => chat.entrante)
 const visible = ref(false)
-const grupo = computed(() => {
-  const c = entrante.value ? chat.canal(entrante.value.canal) : null
-  return c?.tipo === 'grupo' ? c.nombre : null
-})
+/** Lo último que llegó, del chat o del correo. */
+const actual = ref<{ tipo: 'chat' | 'correo'; clave: string; titulo: string; detalle: string | null; texto: string } | null>(null)
 let temporizador: ReturnType<typeof setTimeout> | undefined
 
 watch(
   () => entrante.value?.n,
   (n) => {
-    if (!n || !entrante.value) return
-    notificarSistema()
-    if (ventana.esVentana && ventana.abierta) return
-    visible.value = true
-    clearTimeout(temporizador)
-    temporizador = setTimeout(() => (visible.value = false), DURACION_MS)
+    const e = entrante.value
+    if (!n || !e) return
+    const c = chat.canal(e.canal)
+    actual.value = { tipo: 'chat', clave: `chat-${n}`, titulo: e.autor?.nombre ?? 'Aviso del sistema', detalle: c?.tipo === 'grupo' ? c.nombre : null, texto: e.extracto }
+    mostrar(e.autor?.nombre ?? 'Mensaje nuevo', e.extracto, `chat-${e.canal}`)
   },
 )
 
-function notificarSistema() {
-  const e = entrante.value
-  if (!e || document.visibilityState === 'visible' || typeof Notification === 'undefined' || Notification.permission !== 'granted') return
-  const n = new Notification(e.autor?.nombre ?? 'Mensaje nuevo', { body: e.extracto, tag: `chat-${e.canal}` })
+watch(
+  () => correo.entrante?.n,
+  (n) => {
+    const e = correo.entrante
+    if (!n || !e) return
+    actual.value = { tipo: 'correo', clave: `correo-${n}`, titulo: e.de || 'Correo nuevo', detalle: 'Correo', texto: e.asunto || '(sin asunto)' }
+    mostrar(`Correo de ${e.de}`, e.asunto, `correo-${e.id}`)
+  },
+)
+
+function mostrar(titulo: string, cuerpo: string, etiqueta: string) {
+  notificarSistema(titulo, cuerpo, etiqueta)
+  if (ventana.esVentana && ventana.abierta) return
+  visible.value = true
+  clearTimeout(temporizador)
+  temporizador = setTimeout(() => (visible.value = false), DURACION_MS)
+}
+
+function notificarSistema(titulo: string, cuerpo: string, etiqueta: string) {
+  if (document.visibilityState === 'visible' || typeof Notification === 'undefined' || Notification.permission !== 'granted') return
+  const destino = actual.value?.tipo
+  const n = new Notification(titulo, { body: cuerpo, tag: etiqueta })
   n.onclick = () => {
     window.focus()
-    void router.push({ name: 'chat', params: { canal: e.canal } })
+    ir(destino)
     n.close()
   }
 }
 
+function ir(tipo = actual.value?.tipo) {
+  if (tipo === 'correo' && correo.entrante) void router.push({ name: 'correo', params: { correo: correo.entrante.id } })
+  else if (entrante.value) void router.push({ name: 'chat', params: { canal: entrante.value.canal } })
+}
+
 function abrir() {
   visible.value = false
-  if (entrante.value) void router.push({ name: 'chat', params: { canal: entrante.value.canal } })
+  ir()
 }
 onUnmounted(() => clearTimeout(temporizador))
 </script>
@@ -100,6 +123,16 @@ onUnmounted(() => clearTimeout(temporizador))
 .aviso__texto {
   font-size: 0.82rem;
   color: var(--p-surface-600);
+}
+.aviso__correo {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  color: var(--p-primary-700);
+  background: var(--p-primary-50);
 }
 .aviso__cerrar {
   display: grid;

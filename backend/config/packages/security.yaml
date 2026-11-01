@@ -81,6 +81,10 @@ security:
         - { path: '^/api/chat/canales/\d+/foto/[0-9a-f]{32}$', roles: PUBLIC_ACCESS }
         # Fotos de perfil: URL firmada y estable (App\Cuenta\FotoPerfil), sin Bearer.
         - { path: '^/api/usuarios/-?\d+/foto/[0-9a-f]{32}$', roles: PUBLIC_ACCESS }
+        # Adjuntos del correo: URL firmada que vence (App\Correo\Adjuntos), sin Bearer.
+        - { path: '^/api/correo/adjuntos/\d+/[0-9a-f]{32}$', roles: PUBLIC_ACCESS }
+        # Correo entrante de MailPace: firmado con Ed25519 (App\Correo\Entrante\Mailpace), sin Bearer.
+        - { path: '^/api/correo/entrante/', roles: PUBLIC_ACCESS }
         # Lo que llama el legado durante la sincronización (ADR-042): con clave compartida, sin Bearer.
         - { path: "^/api/sincronizacion/legado/", roles: PUBLIC_ACCESS }
         - { path: "^/", roles: ROLE_USER }

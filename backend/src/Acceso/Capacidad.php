@@ -68,6 +68,8 @@ enum Capacidad: string
 
     case CHAT_PREDETERMINADOS = 'chat.predeterminados';
 
+    case CORREO_EXTERNO = 'correo.externo';
+
     case MIGRACION_EJECUTAR = 'migracion.ejecutar';
 
     public function nombre(): string
@@ -110,6 +112,7 @@ enum Capacidad: string
             self::AUTORIZACION_APROBAR => 'Aprobar o rechazar autorizaciones (pases de un solo uso)',
             self::BITACORA_VER => 'Ver lo anulado y las bitácoras en el detalle de venta',
             self::CHAT_PREDETERMINADOS => 'Configurar los mensajes predeterminados del chat',
+            self::CORREO_EXTERNO => 'Enviar correos a direcciones de fuera de la empresa',
             self::MIGRACION_EJECUTAR => 'Ejecutar la migración desde el sistema legado',
         };
     }
@@ -129,6 +132,7 @@ enum Capacidad: string
             'iam', 'autorizacion' => 'Accesos',
             'bitacora' => 'Auditoría',
             'chat' => 'Chat',
+            'correo' => 'Correo',
             default => 'Sistema',
         };
     }

@@ -45,6 +45,7 @@ framework:
             # Route your messages to the transports
             'App\Venta\Mensaje\EnviarBoletoPorCorreo': async
             'App\Chat\Push\EnviarAvisoPush': async
+            'App\Correo\Envio\EnviarCorreo': async
             # Las tareas programadas van a la cola que dice su `Tarea` (el
             # programador las reenvía); estas son las que se despachan sueltas.
             'App\Salida\Horizonte\ExtenderHorizonte': pesadas

@@ -52,9 +52,9 @@
           <ThemeEditor @cerrar="temaPopover?.hide()" />
         </Popover>
 
-        <button type="button" class="icon-btn header-chat header-escritorio" :aria-label="chat.noLeidos ? `Mensajes, ${chat.noLeidos} sin leer` : 'Mensajes'" v-tooltip.bottom="'Mensajes'" @click="invocarChat">
+        <button type="button" class="icon-btn header-chat header-escritorio" :aria-label="sinLeer ? `Mensajes y correo, ${sinLeer} sin leer` : 'Mensajes y correo'" v-tooltip.bottom="'Mensajes y correo'" @click="invocarChat">
           <icon name="forum-outline" />
-          <span v-if="chat.noLeidos" class="header-chat__badge">{{ chat.noLeidos > 99 ? "99+" : chat.noLeidos }}</span>
+          <span v-if="sinLeer" class="header-chat__badge">{{ sinLeer > 99 ? "99+" : sinLeer }}</span>
         </button>
         <!-- Ayuda: abre las guías de la pantalla actual (o todas si no hay). -->
         <RouterLink :to="{ name: 'ayuda', query: ayudaPantalla ? { pantalla: ayudaPantalla } : {} }" class="icon-btn header-secundario header-escritorio" aria-label="Ayuda" v-tooltip.bottom="'Ayuda'">
@@ -124,6 +124,7 @@ import { useSessionStore } from "@/core/auth/session";
 import { useAccesoStore } from "@/core/acceso/store";
 import { desactivarPush } from "@/core/chat/push";
 import { useChatStore } from "@/core/chat/store";
+import { useCorreoStore } from "@/core/correo/store";
 import { useCuentaStore } from "@/core/cuenta/store";
 import { pendientesDe } from "@/core/autorizacion/reglas";
 import { clavesDeRuta } from "@/core/ayuda/reglas";
@@ -141,6 +142,9 @@ defineProps<{ rightSidebar: SidebarStore | null }>();
 const session = useSessionStore();
 const acceso = useAccesoStore();
 const chat = useChatStore();
+const correo = useCorreoStore();
+/** Lo sin leer del chat y del correo (ADR-048): cohabitan en la misma ventana. */
+const sinLeer = computed(() => chat.noLeidos + correo.noLeidos);
 const cuenta = useCuentaStore();
 const autorizaciones = useAutorizacionesStore();
 const autorizacionesPendientes = computed(() => pendientesDe(autorizaciones.resumen));
@@ -155,6 +159,7 @@ const ventanaChat = useVentanaChat();
 /** El chat tal como quedó: la página (centro) o la ventana con su modo y estado. */
 function invocarChat() {
   if (ventanaChat.esVentana) return ventanaChat.invocar();
+  if (ventanaChat.seccion === "correo") return void router.push({ name: "correo", params: { correo: ventanaChat.correo ?? undefined } });
   void router.push({ name: "chat", params: { canal: ventanaChat.canal ?? undefined } });
 }
 

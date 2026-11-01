@@ -10,6 +10,8 @@ import type { LocationQuery, RouteParams } from 'vue-router'
 import type { Referencia } from '@/core/chat/types'
 import { MOVIL, type Caja, type ModoVentana } from '@/core/chat/ventana'
 
+export type Seccion = 'chat' | 'correo'
+
 /**
  * Pantalla de teléfono (más angosta que `MOVIL`): el chat es siempre su
  * página, a pantalla completa, como una app de mensajería; el modo elegido
@@ -39,14 +41,30 @@ export const useVentanaChat = defineStore(
     const citarAlAbrir = ref<number | null>(null)
     /** Sube con cada `invocar()` estando ya a la vista: la ventana llama la atención. */
     const llamado = ref(0)
+    /** Lo que muestra: los mensajes del chat o el correo (ADR-048), que cohabitan en la misma ventana. */
+    const seccion = ref<Seccion>('chat')
+    /** Último correo en pantalla. */
+    const correo = ref<number | null>(null)
+    /** Borrador en el redactor (sigue abierto al recargar o navegar). */
+    const borrador = ref<number | null>(null)
+    /** El redactor está abierto (con o sin borrador creado: nace al escribir). */
+    const redactando = ref(false)
 
     const esVentana = computed(() => !movil.value && modo.value !== 'centro')
     /** La conversación se está leyendo (marca leído lo que llega). */
     const aLaVista = computed(() => !esVentana.value || (abierta.value && !minimizada.value))
 
     function abrir(id: number | null = canal.value, registro: Referencia | null = null) {
+      seccion.value = 'chat'
       canal.value = id
       adjuntar.value = registro
+      abierta.value = true
+      minimizada.value = false
+    }
+
+    function abrirCorreo(id: number | null = correo.value) {
+      seccion.value = 'correo'
+      correo.value = id
       abierta.value = true
       minimizada.value = false
     }
@@ -77,10 +95,16 @@ export const useVentanaChat = defineStore(
     }
     const cerrar = () => esVentana.value && (abierta.value = false)
 
-    return { modo, abierta, pagina, minimizada, maximizada, flotante, canal, adjuntar, citarAlAbrir, llamado, movil, esVentana, aLaVista, abrir, invocar, cambiarModo, minimizar, restaurar, alternarMaximizada, cerrar }
+    return { modo, abierta, pagina, minimizada, maximizada, flotante, canal, adjuntar, citarAlAbrir, llamado, seccion, correo, borrador, redactando, movil, esVentana, aLaVista, abrir, abrirCorreo, invocar, cambiarModo, minimizar, restaurar, alternarMaximizada, cerrar }
   },
-  { persist: { pick: ['modo', 'abierta', 'minimizada', 'maximizada', 'flotante', 'canal'] } },
+  { persist: { pick: ['modo', 'abierta', 'minimizada', 'maximizada', 'flotante', 'canal', 'seccion', 'correo', 'borrador', 'redactando'] } },
 )
+
+/** El correo de una ruta `/correo/:correo?`. */
+export function correoDeRuta(params: RouteParams): number | null {
+  const id = Number(params.correo)
+  return Number.isInteger(id) && id > 0 ? id : null
+}
 
 /** Conversación y registro por adjuntar de una ruta `/chat/:canal?adjuntar=Tipo:id`. */
 export function destinoDeRuta(params: RouteParams, query: LocationQuery): { canal: number | null; adjuntar: Referencia | null } {

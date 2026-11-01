@@ -4,7 +4,7 @@ import { useSessionStore } from "@/core/auth/session";
 import { useAccesoStore } from "@/core/acceso/store";
 import { notify } from "@/core/notify";
 import { useNavigationHistoryStore } from "@/app/layout/navigationHistory";
-import { destinoDeRuta, useVentanaChat } from "@/features/chat/ventana";
+import { correoDeRuta, destinoDeRuta, useVentanaChat } from "@/features/chat/ventana";
 
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -577,6 +577,18 @@ export const router = createRouter({
       },
     },
     {
+      // El correo de la empresa (ADR-048) cohabita con el chat: la misma página y la misma ventana.
+      path: "/correo/:correo(\\d+)?",
+      name: "correo",
+      component: () => import("@/features/chat/ChatPage.vue"),
+      meta: {
+        title: "Correo",
+        label: "Correo",
+        icon: "mail-outline",
+        conservar: true,
+      },
+    },
+    {
       path: "/lista/:entity?",
       name: "entity-list",
       props: true,
@@ -647,9 +659,13 @@ router.beforeEach(async (to, from) => {
     ventana.abrir(canal ?? ventana.canal, adjuntar);
     return from.matched.length ? false : { name: "dashboard" };
   }
+  if (to.name === "correo" && ventana.esVentana) {
+    ventana.abrirCorreo(correoDeRuta(to.params) ?? ventana.correo);
+    return from.matched.length ? false : { name: "dashboard" };
+  }
 });
 
 router.afterEach((to) => {
   useNavigationHistoryStore().push(to);
-  if (to.name !== "chat" && !to.meta.public) useVentanaChat().pagina = to.fullPath;
+  if (to.name !== "chat" && to.name !== "correo" && !to.meta.public) useVentanaChat().pagina = to.fullPath;
 });
