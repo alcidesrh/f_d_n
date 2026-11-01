@@ -116,10 +116,11 @@ export const guiasSalidas: Guia[] = [
     pasos: [
       'Abra «Calendario» desde «Salidas» o desde el menú.',
       'Cada día es una fila y las horas van en columnas. Al entrar se ve solo hoy, con la hora actual a la vista.',
-      'Elija la fecha y la hora en el calendario de arriba; el botón de al lado vuelve a ahora. En el menú elija cuántos días ver (1, 7, 15 o 30): con - y + pasa a los días anteriores o siguientes.',
+      'Elija la fecha de arriba; el botón de al lado vuelve a hoy. En el menú elija cuántos días ver (1, 7, 15 o 30): con - y + pasa a los días anteriores o siguientes.',
+      'Para ver solo una hora (por ejemplo 06:30) elíjala en «Todas las horas»: quedan solo las salidas a esa hora, en todos los días.',
       'En cada cruce aparecen las salidas de esa hora con el color de su ruta y lo ocupado en asientos o en porciento.',
       'Pulse una salida para ver su detalle, o «Ver croquis».',
-      'Para eliminar salidas: pulse «Seleccionar» y marque las que quiera, o «Todas» para todas las que se ven; luego «Eliminar». Las que tienen boletos o asientos apartados no se eliminan: se le avisa cuáles quedaron.',
+      'Para eliminar salidas: pulse «Seleccionar» y marque las que quiera, o «Todas» para todas las que se ven; luego «Eliminar». «Todas» respeta los filtros: si fijó una ruta en la leyenda o eligió una hora, marca solo esas. Las que tienen boletos o asientos apartados no se eliminan: se le avisa cuáles quedaron.',
       'La leyenda resalta y filtra por ruta. La línea vertical marca la hora actual.',
     ],
     ojo: [

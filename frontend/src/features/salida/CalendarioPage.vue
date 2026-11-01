@@ -3,7 +3,7 @@
   (por defecto solo hoy), y las horas del día en columnas; en cada cruce, las
   salidas de esa hora con el color de su ruta y lo ocupado (en asientos o,
   con el interruptor, en porciento). Al entrar, la hora actual queda a la
-  vista; una fecha elegida (`?fecha=AAAA-MM-DD` o con los controles) pasa a
+  vista; filtrar por una hora deja solo las salidas a esa hora. Una fecha elegida (`?fecha=AAAA-MM-DD` o con los controles) pasa a
   ser la primera fila. Pulsar una salida abre su detalle (su croquis y el
   chequeo) o, en modo selección, la marca: las marcadas se eliminan juntas
   (las que tienen boletos se avisan y quedan). Se refresca solo cada minuto.
@@ -81,7 +81,7 @@ function abrir(evento: MouseEvent, s: SalidaCalendario) {
   void popover.value?.abrir(evento, s)
 }
 
-/** Vuelve al momento actual: hoy (y los días elegidos) con la hora actual a la vista. */
+/** Vuelve a hoy (con los días elegidos) y a la hora actual a la vista. */
 function irAHoy() {
   const hoy = aDia(new Date())
   const mismoDia = store.fecha === hoy

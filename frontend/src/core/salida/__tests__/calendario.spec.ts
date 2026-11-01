@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { aQueryCalendario, ahoraEn, enVentana, filtroCalendarioInicial, leyenda, matriz, nivel, textoOcupacion, tonoRuta, totales, ventana } from '../calendario'
+import { aQueryCalendario, ahoraEn, horaMinuto, enVentana, filtroCalendarioInicial, leyenda, matriz, nivel, textoOcupacion, tonoRuta, totales, ventana } from '../calendario'
 import type { RutaCalendario, SalidaCalendario } from '../types'
 
 const salida = (id: number, fecha: string, extra: Partial<SalidaCalendario> = {}): SalidaCalendario => ({
@@ -84,6 +84,11 @@ describe('calendario de salidas', () => {
   it('el tono de una ruta es estable y separa ids vecinos', () => {
     expect(tonoRuta(5)).toBe(tonoRuta(5))
     expect(Math.abs(tonoRuta(1) - tonoRuta(2))).toBeGreaterThan(90)
+  })
+
+  it('lee la hora local de una salida como HH:MM', () => {
+    expect(horaMinuto(new Date(2026, 9, 22, 6, 30).toISOString())).toBe('06:30')
+    expect(horaMinuto(new Date(2026, 9, 22, 23, 5).toISOString())).toBe('23:05')
   })
 
   it('ubica el ahora y sabe si un día cae en la ventana', () => {

@@ -8,7 +8,7 @@
   Pulsar una ficha la abre (`abrir`) o, en modo selección, la marca o
   desmarca. Las rutas se resaltan desde la leyenda (al pasar sobre ellas, o
   fijas al pulsarlas): las demás fichas se atenúan. `centrar()` lleva a la
-  vista la columna de la hora elegida.
+  vista la columna de la hora filtrada o, sin filtro, la de la hora actual.
 -->
 <template>
   <div class="cal-marco" :class="{ 'cal-marco--cargando': store.cargando }">
@@ -51,7 +51,7 @@ const store = useCalendarioSalidasStore();
 const scroller = ref<HTMLElement | null>(null);
 
 const ahora = computed(() => ahoraEn(store.ahora));
-const horaElegida = computed(() => Number(store.hora.slice(0, 2)));
+const horaElegida = computed(() => (store.hora ? Number(store.hora.slice(0, 2)) : null));
 const totalesDia = computed(() => new Map(store.columnas.map((d) => [d, totales(store.celdas.get(d)?.flat() ?? [])])));
 const vacio = computed(() => !!store.datos && !store.cargando && !store.datos.items.length);
 
@@ -108,14 +108,14 @@ function etiquetaChip(s: SalidaCalendario): string {
 }
 
 /**
- * La columna de la hora elegida al centro del eje X (medida sobre las
- * celdas: las cabeceras son pegajosas) y el primer día arriba.
+ * La columna de la hora filtrada (o de la actual) al centro del eje X
+ * (medida sobre las celdas: las cabeceras son pegajosas) y el primer día arriba.
  */
 function centrar({ suave = false } = {}) {
   const el = scroller.value;
   if (!el) return;
   const anchoDia = el.querySelector<HTMLElement>(".cal__esquina")?.offsetWidth ?? 0;
-  const [h = 0, m = 0] = store.hora.split(":").map(Number);
+  const [h = 0, m = 0] = store.hora ? store.hora.split(":").map(Number) : [ahora.value.hora, ahora.value.fraccion * 60];
   const columna = el.querySelector<HTMLElement>(`.cal__celda[data-hora="${h}"]`);
   const destino: ScrollToOptions = { top: 0, behavior: suave ? "smooth" : "auto" };
   if (columna) destino.left = columna.offsetLeft + (columna.offsetWidth * m) / 60 - (anchoDia + (el.clientWidth - anchoDia) / 2);

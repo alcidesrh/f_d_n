@@ -1,16 +1,17 @@
 <!--
-  Panel de control del calendario de salidas: la fecha y hora (los días van
-  de esa fecha en adelante y la grilla se desplaza a esa hora; el botón de al
-  lado vuelve al momento actual), cuántos días se ven (con - y + se pasa a
-  los anteriores o siguientes), ocupación en asientos o en porciento, la
-  empresa y la selección de salidas para eliminarlas.
+  Panel de control del calendario de salidas: la fecha (los días van de esa
+  fecha en adelante; el botón de al lado vuelve a hoy), cuántos días se ven
+  (con - y + se pasa a los anteriores o siguientes), una hora exacta (solo
+  las salidas a esa hora, en todos los días), ocupación en asientos o en
+  porciento, la empresa y la selección de salidas para eliminarlas («Todas»
+  marca las que cumplen el filtro y la ruta fijada en la leyenda).
 -->
 <template>
   <section class="controles" aria-label="Controles del calendario">
     <div class="controles__nav">
       <div class="flex items-center gap-1">
-        <DatePicker v-model="fecha" date-format="dd/mm/yy" show-time hour-format="24" :step-minute="5" show-icon icon-display="input" class="w-[11.5rem]" input-class="tabular-nums" aria-label="Fecha y hora" />
-        <Button severity="secondary" text rounded class="tap-target" aria-label="Volver a ahora" v-tooltip.bottom="'Ahora'" @click="emit('hoy')">
+        <DatePicker v-model="fecha" date-format="dd/mm/yy" show-icon icon-display="input" class="w-[9.5rem]" input-class="tabular-nums" aria-label="Fecha" />
+        <Button severity="secondary" text rounded class="tap-target" aria-label="Volver a hoy" v-tooltip.bottom="'Hoy'" @click="emit('hoy')">
           <template #icon><icon name="refresh" /></template>
         </Button>
       </div>
@@ -25,6 +26,10 @@
         </Button>
       </div>
 
+      <Select v-model="store.hora" :options="horas" option-label="l" option-value="v" filter show-clear size="small" class="w-[9rem]" placeholder="Todas las horas" empty-message="Sin salidas" empty-filter-message="Ninguna" aria-label="Hora de salida">
+        <template #dropdownicon><icon name="schedule-outline" /></template>
+      </Select>
+
       <label class="flex items-center gap-2 text-sm">
         <ToggleSwitch v-model="porciento" input-id="cal-porciento" />
         <span>En porciento</span>
@@ -34,7 +39,7 @@
         <Button :label="store.seleccionando ? 'Terminar' : 'Seleccionar'" size="small" :severity="store.seleccionando ? 'primary' : 'secondary'" :outlined="!store.seleccionando" :aria-pressed="store.seleccionando" @click="store.seleccionando ? store.salirDeSeleccion() : (store.seleccionando = true)">
           <template #icon><icon :name="store.seleccionando ? 'close' : 'check-box-outline'" class="mr-1" /></template>
         </Button>
-        <Button :label="todasMarcadas ? 'Ninguna' : 'Todas'" size="small" severity="secondary" outlined :disabled="!store.visibles.length" v-tooltip.bottom="'Todas las salidas a la vista'" @click="store.seleccionarTodas()">
+        <Button :label="store.todasMarcadas ? 'Ninguna' : 'Todas'" size="small" severity="secondary" outlined :disabled="!store.seleccionables.length" v-tooltip.bottom="ayudaTodas" @click="store.seleccionarTodas()">
           <template #icon><icon name="select-all" class="mr-1" /></template>
         </Button>
         <Button v-if="store.seleccion.size" :label="`Eliminar (${store.seleccion.size})`" size="small" severity="danger" @click="emit('eliminar')">
@@ -52,6 +57,7 @@
 </template>
 
 <script setup lang="ts">
+import { horaMinuto } from "@/core/salida/calendario";
 import { aDia, deDia } from "@/core/salida/filtro";
 import { useCalendarioSalidasStore } from "./store";
 
@@ -66,23 +72,21 @@ const OPCIONES_DIAS = [
 
 const store = useCalendarioSalidasStore();
 
-const fecha = computed<Date | null>({
-  get: () => {
-    const d = deDia(store.fecha);
-    const [h = 0, m = 0] = store.hora.split(":").map(Number);
-    d.setHours(h, m);
-    return d;
-  },
-  set: (d) => {
-    if (!d) return;
-    store.hora = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-    store.irA(aDia(d));
-  },
+const fecha = computed<Date | null>({ get: () => deDia(store.fecha), set: (d) => d && store.irA(aDia(d)) });
+/** Las horas con salidas en los días cargados, con cuántas hay («06:30 · 4»). */
+const horas = computed(() => {
+  const n = new Map<string, number>();
+  for (const s of store.datos?.items ?? []) n.set(horaMinuto(s.fecha), (n.get(horaMinuto(s.fecha)) ?? 0) + 1);
+  if (store.hora && !n.has(store.hora)) n.set(store.hora, 0);
+  return [...n].sort(([a], [b]) => a.localeCompare(b)).map(([v, c]) => ({ v, l: `${v} · ${c}` }));
+});
+const ayudaTodas = computed(() => {
+  const ruta = store.fijada !== null ? store.rutaPorId.get(store.fijada)?.nombre : null;
+  return `Las ${store.seleccionables.length} salidas a la vista${ruta ? ` de ${ruta}` : ""}${store.hora ? ` a las ${store.hora}` : ""}`;
 });
 const etiquetaDias = computed(() => OPCIONES_DIAS.find((o) => o.v === store.dias)?.l ?? `${store.dias} días`);
 const porciento = computed({ get: () => store.modo === "porciento", set: (v: boolean) => (store.modo = v ? "porciento" : "asientos") });
 const puedeEliminar = computed(() => !!store.opciones?.puede.eliminar);
-const todasMarcadas = computed(() => store.seleccionando && store.visibles.length > 0 && store.visibles.every((s) => store.seleccion.has(s.id)));
 </script>
 
 <style scoped>

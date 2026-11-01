@@ -134,6 +134,12 @@ export function ahoraEn(ahora: Date): { dia: string; hora: number; fraccion: num
   return { dia: aDia(ahora), hora: ahora.getHours(), fraccion: (ahora.getMinutes() * 60 + ahora.getSeconds()) / 3600 }
 }
 
+/** Hora local de una fecha ISO, `HH:MM`. */
+export function horaMinuto(iso: string): string {
+  const d = new Date(iso)
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
 /** Mueve la fecha `n` días. */
 export const desplazar = (fecha: string, n: number) => sumarDias(fecha, n)
 
