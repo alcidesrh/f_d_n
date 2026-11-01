@@ -126,6 +126,8 @@ final class GestionForcon
         if (trim($nit) === "" || $establecimiento < 1) {
             throw new VentaRechazada("Elegí la empresa y el número de establecimiento.", "prueba_invalida");
         }
+        // ClienteForcon espera hasta 45 s (60 con max_duration): más que el límite de PHP de una petición web.
+        set_time_limit(90);
         try {
             $r = $this->cliente->get(ClienteForcon::DATOS_EMISOR, ["NIT" => DteJsonForcon::nit($nit), "Establecimiento" => $establecimiento], $nit);
         } catch (CertificacionFallida $e) {

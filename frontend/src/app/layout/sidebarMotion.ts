@@ -42,8 +42,8 @@ import type { SidebarStore } from "./sidebarStore";
 
 gsap.registerPlugin(Flip);
 
-const DURATION = 0.5;
-const EASE = "power3.out";
+const DURATION = 0.3;
+const EASE = "circ.out";
 /** Lo que se acomoda con el panel ya quieto (el menú al llegar a `mini`). */
 const SETTLE: Motion = { duration: DURATION, ease: "power3.out" };
 /**
@@ -76,7 +76,7 @@ const widths: Record<"left" | "right", { px: number; layout: number; ready: bool
 };
 
 /** Reacomodo del contenido en curso: uno solo, lo comparten los dos paneles (hay un solo `.main`). */
-let contentFlip: { tween: gsap.core.Tween; targets: HTMLElement[]; stop: () => void } | null = null;
+let contentFlip: { tween: gsap.core.Tween; stop: () => void } | null = null;
 
 /** Reproduce una animación pausada con el reloj de GSAP, sin saltos (ver `MAX_STEP_MS`). Devuelve cómo pararla. */
 function playSmooth(animation: gsap.core.Animation): () => void {
@@ -106,9 +106,9 @@ function flipPanel(state: Flip.FlipState, motion: Motion) {
 function stopContentFlip() {
   if (!contentFlip) return;
   contentFlip.stop();
+  const targets = contentFlip.tween.targets();
   contentFlip.tween.kill();
-  // Solo escrituras (no `clearProps`: GSAP relee el estilo de cada uno al quitárselo, un layout por elemento).
-  for (const el of contentFlip.targets) el.style.removeProperty("transform");
+  gsap.set(targets, { clearProps: "transform" });
   contentFlip = null;
 }
 
@@ -253,13 +253,6 @@ function moveContent(main: HTMLElement, layout: (final: boolean) => void, deferr
   // De cada uno, lo que se ve menos lo que dicta el margen: al empezar y al final.
   const own = new Map<Element, Offset>(rows.map(({ el, seen, now, end }) => [el, { from: [seen.left - now.left, seen.top - now.top], to: deferred ? [end.left - now.left - shift, end.top - now.top] : [0, 0] }]));
   const byEl = new Map(rows.map((row) => [row.el, row]));
-  /** `opaque` de cada uno, una sola vez: se pregunta por cada par de hermanos. */
-  const opaques = new Map<Element, boolean>();
-  const isOpaque = (el: Element): boolean => {
-    let o = opaques.get(el);
-    if (o === undefined) opaques.set(el, (o = opaque(el)));
-    return o;
-  };
   const inks = new Map<Element, Box[]>();
   /** El texto de `el` que va con él (sin lo que dentro se mueve aparte ni lo que se dibuja con sus propias reglas, como un mapa). */
   const ink = (el: Element, mine: Offset): Box[] => {
@@ -274,24 +267,6 @@ function moveContent(main: HTMLElement, layout: (final: boolean) => void, deferr
     return lines;
   };
   /**
-   * Los hijos de `parent` que se desplazan, respecto del ancestro que se mueve (`base`, el mismo para
-   * todos los hermanos): una sola vez por padre, no por cada hijo (cientos en una grilla).
-   */
-  const kin = new Map<Element, { el: Element; theirs: Offset; rel: Offset; reach: number }[]>();
-  const kinOf = (parent: Element, base: Offset | undefined) => {
-    let list = kin.get(parent);
-    if (!list) {
-      list = [...parent.children].flatMap((el) => {
-        const theirs = own.get(el);
-        if (!theirs) return [];
-        const rel = minus(theirs, base);
-        return [{ el, theirs, rel, reach: reach(rel) }];
-      });
-      kin.set(parent, list);
-    }
-    return list;
-  };
-  /**
    * Si algo sin fondo propio (texto, un enlace, un contenedor transparente) puede deslizarse sin
    * pisar en el camino el texto de un hermano ni salirse de la caja que lo contiene. Si no, se
    * reacomoda de una vez con ellos (el párrafo que baja porque el título de arriba ahora ocupa
@@ -304,8 +279,11 @@ function moveContent(main: HTMLElement, layout: (final: boolean) => void, deferr
     // Estorba un hermano que se mueve mucho menos (dos que se cruzan rápido en sentidos opuestos,
     // no), salvo si tiene fondo y se dibuja encima (viene después): lo tapa limpio al pasar.
     const far = reach(move) / 2;
-    const obstacles = (parent ? kinOf(parent, base) : []).flatMap(({ el: sibling, theirs, rel, reach: r }) => {
-      if (sibling === el || r >= far || (el.compareDocumentPosition(sibling) & Node.DOCUMENT_POSITION_FOLLOWING && isOpaque(sibling))) return [];
+    const obstacles = [...(parent?.children ?? [])].flatMap((sibling) => {
+      const theirs = sibling !== el ? own.get(sibling) : undefined;
+      if (!theirs) return [];
+      const rel = minus(theirs, base);
+      if (reach(rel) >= far || (el.compareDocumentPosition(sibling) & Node.DOCUMENT_POSITION_FOLLOWING && opaque(sibling))) return [];
       return [{ rel, lines: ink(sibling, theirs) }];
     });
     return ![0, 0.25, 0.5, 0.75, 1].some((t) => {
@@ -320,7 +298,7 @@ function moveContent(main: HTMLElement, layout: (final: boolean) => void, deferr
 
   // Cada uno se mueve respecto del ancestro más cercano que se mueve (`carried`: lo que hereda lo
   // de adentro). Dentro de lo que no se mueve (un contenedor transparente) cada uno va por su cuenta.
-  const moves = new Map<HTMLElement, Offset>();
+  const moves = new Map<Element, Offset>();
   const carried = new Map<Element, Offset | undefined>();
   for (const { el, seen, now, end } of rows) {
     const mine = own.get(el);
@@ -333,35 +311,28 @@ function moveContent(main: HTMLElement, layout: (final: boolean) => void, deferr
     }
     const move = minus(mine, base);
     // Lo que aparece o desaparece no tiene de dónde partir.
-    const moving = !still(move) && seen.shown && now.shown && end.shown && movable(el) && (isOpaque(el) || clear(el, now, move, base));
+    const moving = !still(move) && seen.shown && now.shown && end.shown && movable(el) && (opaque(el) || clear(el, now, move, base));
     if (moving) moves.set(el, move);
     carried.set(el, moving ? mine : base);
   }
   if (!moves.size) return;
-  // Un solo tween sobre la fracción `t` y el `transform` de cada uno escrito aquí, en 2D. Con un tween
-  // de GSAP por elemento, en una página con cientos (las celdas del calendario) mientras dura había
-  // una capa por elemento (GSAP pasa a 3D) y al terminar un layout por elemento (`clearProps`):
-  // casi un segundo con la página congelada.
-  const targets = [...moves];
-  const progress = { t: 0 };
-  const place = () => {
-    for (const [el, move] of targets) {
-      const [x, y] = along(move, progress.t);
-      el.style.transform = `translate(${x}px, ${y}px)`;
-    }
-  };
-  place();
-  const tween = gsap.to(progress, {
-    t: 1,
-    ...motion,
-    paused: true,
-    onUpdate: place,
-    // Al desplegarse termina junto con el panel, que en ese instante aplica el margen final.
-    onComplete: () => {
-      if (contentFlip?.tween === tween) stopContentFlip();
+  const moveOf = (el: Element) => moves.get(el) ?? { from: [0, 0], to: [0, 0] };
+  const tween = gsap.fromTo(
+    [...moves.keys()],
+    { x: (_: number, el: Element) => moveOf(el).from[0], y: (_: number, el: Element) => moveOf(el).from[1] },
+    {
+      x: (_: number, el: Element) => moveOf(el).to[0],
+      y: (_: number, el: Element) => moveOf(el).to[1],
+      ...motion,
+      paused: true,
+      // Al desplegarse termina junto con el panel, que en ese instante aplica el margen final.
+      clearProps: "transform",
+      onComplete: () => {
+        if (contentFlip?.tween === tween) contentFlip = null;
+      },
     },
-  });
-  contentFlip = { tween, targets: targets.map(([el]) => el), stop: playSmooth(tween) };
+  );
+  contentFlip = { tween, stop: playSmooth(tween) };
 }
 
 export function useSidebarMotion(store: SidebarStore, panel: Ref<HTMLElement | null>) {
