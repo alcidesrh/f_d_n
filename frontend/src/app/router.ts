@@ -138,6 +138,28 @@ export const router = createRouter({
       },
     },
     {
+      path: "/configuracion/forcon",
+      name: "configuracion-forcon",
+      component: () => import("@/features/proveedores/ForconPage.vue"),
+      meta: {
+        capacidad: "config.proveedores",
+        title: "Certificador FEL (Forcon)",
+        label: "Certificador FEL",
+        icon: "verified-outline",
+      },
+    },
+    {
+      path: "/configuracion/cybersource",
+      name: "configuracion-cybersource",
+      component: () => import("@/features/proveedores/CybersourcePage.vue"),
+      meta: {
+        capacidad: "config.proveedores",
+        title: "Pasarela de pago (Cybersource)",
+        label: "Pasarela de pago",
+        icon: "credit-card-outline",
+      },
+    },
+    {
       path: "/configuracion/mensajes-predeterminados",
       name: "mensajes-predeterminados",
       component: () => import("@/features/chat/predeterminados/MensajesPredeterminadosPage.vue"),

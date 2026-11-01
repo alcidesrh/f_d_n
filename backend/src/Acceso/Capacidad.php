@@ -56,6 +56,7 @@ enum Capacidad: string
     case PAGINA_ADMINISTRAR = 'pagina.administrar';
 
     case CONFIG_EDITAR = 'config.editar';
+    case CONFIG_PROVEEDORES = 'config.proveedores';
 
     case IAM_VER = 'iam.ver';
     case IAM_ASIGNAR = 'iam.asignar';
@@ -102,6 +103,7 @@ enum Capacidad: string
             self::REPORTE_ENCOMIENDAS => 'Reportes de caja de encomiendas',
             self::PAGINA_ADMINISTRAR => 'Compras en línea y configuración de la página web',
             self::CONFIG_EDITAR => 'Configurar la aplicación (entidades, menús, administración, publicación)',
+            self::CONFIG_PROVEEDORES => 'Configurar el certificador FEL (Forcon) y la pasarela de pago (Cybersource)',
             self::IAM_VER => 'Ver usuarios, roles y asignaciones',
             self::IAM_ASIGNAR => 'Otorgar y revocar asignaciones de roles',
             self::IAM_ROLES => 'Crear y editar roles',

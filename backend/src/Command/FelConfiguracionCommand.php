@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace App\Command;
 
-use App\Entity\ConfiguracionForcon;
-use App\Venta\Facturacion\CredencialesFel;
-use Doctrine\ORM\EntityManagerInterface;
-use Psr\Clock\ClockInterface;
+use App\Venta\Excepcion\VentaRechazada;
+use App\Venta\Facturacion\Forcon\GestionForcon;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * Muestra o cambia `ConfiguracionForcon` (ADR-047). Sin opciones, la muestra.
+ * Muestra o cambia `ConfiguracionForcon` (ADR-047), con la validación de
+ * `GestionForcon` (la misma de la administración). Sin opciones, la muestra.
  * La clave global se pide oculta (o `FEL_CLAVE` en el entorno, para scripts).
  *
  *   app:fel:configuracion --certificador=forcon --url=https://...
@@ -24,9 +23,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 final class FelConfiguracionCommand
 {
     public function __construct(
-        private readonly EntityManagerInterface $em,
-        private readonly CredencialesFel $credenciales,
-        private readonly ClockInterface $reloj,
+        private readonly GestionForcon $gestion,
     ) {}
 
     /**
@@ -41,13 +38,7 @@ final class FelConfiguracionCommand
         #[Option(description: "NIT_EMPRESA:NIT_EMISOR; reemplaza la lista (repetible)")] array $emisorEnLinea = [],
         #[Option(description: "Vaciar los emisores en línea")] bool $sinEmisoresEnLinea = false,
     ): int {
-        $config = $this->em->find(ConfiguracionForcon::class, ConfiguracionForcon::ID);
-        if ($config === null) {
-            $config = new ConfiguracionForcon();
-            $this->em->persist($config);
-        }
-        $cambios = false;
-
+        $datos = [];
         if ($certificador !== null) {
             $valor = strtolower(trim($certificador));
             if (!in_array($valor, ["forcon", "simulado"], true)) {
@@ -55,64 +46,47 @@ final class FelConfiguracionCommand
 
                 return 1;
             }
-            $config->setActivo($valor === "forcon");
-            $cambios = true;
+            $datos["activo"] = $valor === "forcon";
         }
         if ($url !== null) {
-            if (!filter_var($url, FILTER_VALIDATE_URL) || !str_starts_with($url, "https://")) {
-                $io->error("--url debe ser una URL https.");
-
-                return 1;
-            }
-            $config->setUrl(rtrim($url, "/"));
-            $cambios = true;
+            $datos["url"] = $url;
         }
         if ($sinUsuario) {
-            $config->setCredencialGlobal(null, null);
-            $cambios = true;
+            $datos["usuario"] = "";
         } elseif ($usuario !== null) {
-            $clave = getenv("FEL_CLAVE") ?: (string) $io->askHidden("Clave del certificador");
-            if (trim($usuario) === "" || $clave === "") {
-                $io->error("El usuario y la clave no pueden ser vacíos.");
+            $datos["usuario"] = $usuario;
+            $datos["clave"] = getenv("FEL_CLAVE") ?: (string) $io->askHidden("Clave del certificador (vacía: conservar la guardada)");
+        }
+        if ($sinEmisoresEnLinea) {
+            $datos["emisoresEnLinea"] = [];
+        } elseif ($emisorEnLinea !== []) {
+            $datos["emisoresEnLinea"] = array_map(static function (string $par): array {
+                [$empresa, $emisor] = array_map("trim", explode(":", $par, 2)) + [1 => ""];
+
+                return ["empresa" => $empresa, "emisor" => $emisor];
+            }, $emisorEnLinea);
+        }
+
+        if ($datos !== []) {
+            try {
+                $this->gestion->guardar($datos, null);
+            } catch (VentaRechazada $e) {
+                $io->error($e->getMessage());
 
                 return 1;
             }
-            $config->setCredencialGlobal(trim($usuario), $this->credenciales->cifrar($clave));
-            $cambios = true;
-        }
-        if ($sinEmisoresEnLinea) {
-            $config->setEmisoresEnLinea([]);
-            $cambios = true;
-        } elseif ($emisorEnLinea !== []) {
-            $mapa = [];
-            foreach ($emisorEnLinea as $par) {
-                $partes = array_map("trim", explode(":", $par));
-                if (count($partes) !== 2 || $partes[0] === "" || $partes[1] === "") {
-                    $io->error("--emisor-en-linea va como NIT_EMPRESA:NIT_EMISOR ({$par}).");
-
-                    return 1;
-                }
-                $mapa[$partes[0]] = $partes[1];
-            }
-            $config->setEmisoresEnLinea($mapa);
-            $cambios = true;
-        }
-
-        if ($cambios) {
-            $config->actualizada(null, $this->reloj->now());
-            $this->em->flush();
             $io->success("Configuración de Forcon guardada.");
         }
 
-        $emisores = $config->getEmisoresEnLinea();
+        $c = $this->gestion->datos();
         $io->definitionList(
-            ["Certificador" => $config->isActivo() ? "forcon" : "simulado"],
-            ["URL" => $config->getUrl()],
-            ["Usuario global" => $config->getUsuario() !== null ? $config->getUsuario() . " (con clave)" : "—"],
-            ["Emisores en línea" => $emisores === []
+            ["Certificador" => $c["activo"] ? "forcon" : "simulado"],
+            ["URL" => $c["url"]],
+            ["Usuario global" => $c["usuario"] !== null ? $c["usuario"] . ($c["conClave"] ? " (con clave)" : "") : "—"],
+            ["Emisores en línea" => $c["emisoresEnLinea"] === []
                 ? "—"
-                : implode(", ", array_map(static fn($e, $n) => "{$e} → {$n}", array_keys($emisores), $emisores))],
-            ["Actualizada" => $config->getActualizadaEn()?->format("Y-m-d H:i") ?? "—"],
+                : implode(", ", array_map(static fn(array $e) => "{$e["empresa"]} → {$e["emisor"]}", $c["emisoresEnLinea"]))],
+            ["Actualizada" => $c["actualizadaEn"] !== null ? str_replace("T", " ", substr($c["actualizadaEn"], 0, 16)) . ($c["actualizadaPor"] ? " por {$c["actualizadaPor"]}" : "") : "—"],
         );
 
         return 0;

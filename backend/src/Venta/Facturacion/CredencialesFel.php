@@ -18,7 +18,8 @@ use Doctrine\ORM\EntityManagerInterface;
  */
 final class CredencialesFel
 {
-    private const CONTEXTO = "fdn-credencial-fel";
+    /** Contexto de la cifra: el mismo para la clave de cada empresa y la global (`ConfiguracionForcon`). */
+    public const CONTEXTO = "fdn-credencial-fel";
 
     public function __construct(
         private readonly EntityManagerInterface $em,
