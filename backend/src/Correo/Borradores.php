@@ -144,7 +144,7 @@ final class Borradores
         $ahora = $this->reloj->now();
         $b->setHtml(Redaccion::html($b->getTexto()));
         $b->setResponderA($this->dominios->responderA($yo->getLocal()));
-        $b->enviar(sprintf("%s@%s", bin2hex(random_bytes(12)), $this->dominios->principal), $externos !== [], $ahora);
+        $b->enviar(sprintf("%s@%s", bin2hex(random_bytes(12)), $this->dominios->principal()), $externos !== [], $ahora);
 
         $entregas = [];
         foreach ($internas as $cuenta) {

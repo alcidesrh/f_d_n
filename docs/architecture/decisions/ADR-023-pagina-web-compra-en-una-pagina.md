@@ -45,7 +45,7 @@ La primera versión de `pagina/` (ADR-021) era un flujo de cuatro pantallas (bus
 
 ### Dashboard
 
-En la app del personal (`frontend/src/features/pagina-web`, ruta `/venta-en-linea`; no puede empezar con `/pagina` porque Caddy manda eso al backend), con el permiso `pagina.administrar` (permiso "Administracion Pagina Web"): compras con filtro (fechas de compra y de salida, estado, empresa, origen/destino, ida y vuelta, factura, tarjeta, monto, texto), calculadora sobre todo lo filtrado (lo cobrado, asientos, promedios y recargo cuentan solo las completadas) y suma de las filas marcadas; configuración; mensajes del formulario de contacto (`MensajeContacto`, también enviados a `PAGINA_CONTACTO_CORREO`).
+En la app del personal (`frontend/src/features/pagina-web`, ruta `/venta-en-linea`; no puede empezar con `/pagina` porque Caddy manda eso al backend), con el permiso `pagina.administrar` (permiso "Administracion Pagina Web"): compras con filtro (fechas de compra y de salida, estado, empresa, origen/destino, ida y vuelta, factura, tarjeta, monto, texto), calculadora sobre todo lo filtrado (lo cobrado, asientos, promedios y recargo cuentan solo las completadas) y suma de las filas marcadas; configuración; mensajes del formulario de contacto (`MensajeContacto`, también enviados al buzón de contacto de `ConfiguracionCorreo`, ADR-048).
 
 ## Consecuencias
 

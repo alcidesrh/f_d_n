@@ -9,7 +9,7 @@ use App\Entity\Usuario;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
- * La cuenta de correo de cada usuario: `{usuario}@{CORREO_DOMINIO}`. Se
+ * La cuenta de correo de cada usuario: `{usuario}@{dominio}` (`ConfiguracionCorreo`). Se
  * crea sola la primera vez que se necesita (abre el correo, le escriben o
  * le llega uno de fuera). Si dos usuarios dan la misma parte local, el
  * segundo lleva un número (`ana2@`).

@@ -7,7 +7,7 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * La dirección de la empresa de un usuario: `{local}@{CORREO_DOMINIO}`. Se
+ * La dirección de la empresa de un usuario: `{local}@{dominio}` (`ConfiguracionCorreo`). Se
  * guarda solo la parte local, así cambiar el dominio no toca los datos. Se
  * crea sola la primera vez que el usuario abre el correo o le llega uno
  * (`App\Correo\Cuentas`).

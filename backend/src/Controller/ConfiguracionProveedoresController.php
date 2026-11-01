@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Acceso\Capacidad;
+use App\Correo\Configuracion\GestionCorreo;
 use App\Entity\Usuario;
 use App\Venta\Excepcion\VentaRechazada;
 use App\Venta\Facturacion\Forcon\GestionForcon;
@@ -15,6 +16,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 /**
@@ -24,6 +26,8 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
  *
  * - `GET|PUT /api/configuracion-proveedores/forcon`, `POST …/forcon/probar` (`{ nit, establecimiento }`).
  * - `GET|PUT /api/configuracion-proveedores/cybersource`.
+ * - `GET|PUT /api/configuracion-proveedores/correo`, `POST …/correo/probar` (`{ dominio, para }`), ADR-048.
+ *   Los tokens de MailPace tampoco salen: solo si cada dominio tiene uno.
  */
 #[AsController]
 #[Route("/api/configuracion-proveedores", name: "api_configuracion_proveedores_")]
@@ -33,6 +37,7 @@ final class ConfiguracionProveedoresController extends AbstractController
         private readonly EntityManagerInterface $em,
         private readonly GestionForcon $forcon,
         private readonly GestionCybersource $cybersource,
+        private readonly GestionCorreo $correo,
     ) {}
 
     #[Route("/forcon", name: "forcon", methods: ["GET"])]
@@ -89,5 +94,47 @@ final class ConfiguracionProveedoresController extends AbstractController
         }
 
         return $this->json($this->cybersource->datos());
+    }
+
+    #[Route("/correo", name: "correo", methods: ["GET"])]
+    public function correo(): JsonResponse
+    {
+        $this->denyAccessUnlessGranted(Capacidad::CONFIG_PROVEEDORES->value);
+
+        return $this->json($this->correo->datos($this->webhook()));
+    }
+
+    /** `{ activo?, servidor?, puerto?, dominiosEnvio?: [{ dominio, token }], dominio?, dominioEntrada?, claveWebhook?, remitenteBoletos?, remitenteReportes?, buzonContacto? }` */
+    #[Route("/correo", name: "correo_guardar", methods: ["PUT"])]
+    public function guardarCorreo(Request $request, #[CurrentUser] Usuario $usuario): JsonResponse
+    {
+        $this->denyAccessUnlessGranted(Capacidad::CONFIG_PROVEEDORES->value);
+        try {
+            $this->correo->guardar($request->toArray(), $this->em->find(Usuario::class, $usuario->getId()));
+        } catch (VentaRechazada $e) {
+            return $this->json($e->toArray(), $e->estadoHttp);
+        }
+
+        return $this->json($this->correo->datos($this->webhook()));
+    }
+
+    #[Route("/correo/probar", name: "correo_probar", methods: ["POST"])]
+    public function probarCorreo(Request $request): JsonResponse
+    {
+        $this->denyAccessUnlessGranted(Capacidad::CONFIG_PROVEEDORES->value);
+        $datos = $request->toArray();
+        try {
+            $this->correo->probar((string) ($datos["dominio"] ?? ""), (string) ($datos["para"] ?? ""));
+        } catch (VentaRechazada $e) {
+            return $this->json($e->toArray(), $e->estadoHttp);
+        }
+
+        return $this->json(["ok" => true]);
+    }
+
+    /** La URL que se pega en MailPace (Domain → Inbound → Webhook). */
+    private function webhook(): string
+    {
+        return $this->generateUrl("api_correo_entrante_mailpace", [], UrlGeneratorInterface::ABSOLUTE_URL);
     }
 }

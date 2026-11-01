@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Venta\Mensaje;
 
+use App\Correo\Configuracion\AjustesCorreo;
 use App\Entity\BoletoVenta;
 use App\Venta\Boleto\BoletoPdf;
 use App\Venta\Boleto\Comprobantes;
@@ -11,7 +12,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
@@ -25,8 +25,7 @@ final class EnviarBoletoPorCorreoHandler
         private readonly MailerInterface $mailer,
         private readonly LoggerInterface $logger,
         private readonly ClockInterface $reloj,
-        #[Autowire(env: "default:venta_correo_remitente_defecto:VENTA_CORREO_REMITENTE")]
-        private readonly string $remitente,
+        private readonly AjustesCorreo $ajustesCorreo,
     ) {}
 
     public function __invoke(EnviarBoletoPorCorreo $mensaje): void
@@ -43,7 +42,7 @@ final class EnviarBoletoPorCorreoHandler
         $datos = $this->comprobantes->de($venta);
         $this->mailer->send(
             (new TemplatedEmail())
-                ->from($this->remitente)
+                ->from($this->ajustesCorreo->actual()->getRemitenteBoletos())
                 ->to($correo)
                 ->subject(sprintf(
                     "Su boleto %s – %s a %s%s",

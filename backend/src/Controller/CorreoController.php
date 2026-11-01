@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Correo\Configuracion\AjustesCorreo;
 use App\Acceso\Capacidad;
 use App\Chat\Conversaciones;
 use App\Correo\Adjuntos;
@@ -20,7 +21,6 @@ use App\Entity\Usuario;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -31,7 +31,7 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 /**
- * Correo de la empresa (`{usuario}@{CORREO_DOMINIO}`), al lado del chat.
+ * Correo de la empresa (`{usuario}@{dominio}`, `ConfiguracionCorreo`), al lado del chat.
  * Cualquier usuario con sesión tiene su buzón; escribir fuera de la empresa
  * pide `correo.externo`. El correo de fuera entra por el webhook de MailPace
  * (público, firmado).
@@ -222,11 +222,11 @@ final class CorreoController extends AbstractController
         Request $request,
         Recepcion $recepcion,
         LoggerInterface $logger,
-        #[Autowire(env: "default::CORREO_MAILPACE_CLAVE")] ?string $clave = null,
+        AjustesCorreo $ajustes,
     ): JsonResponse {
         $cuerpo = $request->getContent();
-        if (!Mailpace::firmaValida($cuerpo, $request->headers->get(Mailpace::CABECERA_FIRMA), (string) $clave)) {
-            $logger->warning("Webhook de MailPace con firma inválida o sin CORREO_MAILPACE_CLAVE.");
+        if (!Mailpace::firmaValida($cuerpo, $request->headers->get(Mailpace::CABECERA_FIRMA), (string) $ajustes->actual()->getClaveWebhook())) {
+            $logger->warning("Webhook de MailPace con firma inválida o sin clave pública en la configuración del correo.");
 
             return $this->json(["error" => "Firma inválida."], Response::HTTP_UNAUTHORIZED);
         }

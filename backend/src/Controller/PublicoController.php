@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Correo\Configuracion\AjustesCorreo;
 use App\Entity\BoletoVenta;
 use App\Entity\Enum\EstadoSalida;
 use App\Entity\MensajeContacto;
@@ -34,7 +35,6 @@ use App\Venta\Reservas;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -388,10 +388,9 @@ final class PublicoController extends AbstractController
         Request $request,
         MailerInterface $mailer,
         LoggerInterface $logger,
-        #[Autowire(env: "default:pagina_contacto_correo_defecto:PAGINA_CONTACTO_CORREO")] string $buzon,
-        #[Autowire(env: "default:venta_correo_remitente_defecto:VENTA_CORREO_REMITENTE")] string $remitente,
+        AjustesCorreo $ajustesCorreo,
     ): JsonResponse {
-        return $this->limitado($request, function () use ($request, $mailer, $logger, $buzon, $remitente) {
+        return $this->limitado($request, function () use ($request, $mailer, $logger, $ajustesCorreo) {
             $datos = $request->toArray();
             if (trim((string) ($datos["web"] ?? "")) !== "") {
                 return ["ok" => true];
@@ -408,9 +407,10 @@ final class PublicoController extends AbstractController
             $this->em->persist($m);
             $this->em->flush();
             try {
+                $correo = $ajustesCorreo->actual();
                 $mailer->send((new Email())
-                    ->from($remitente)
-                    ->to($buzon)
+                    ->from($correo->getRemitenteBoletos())
+                    ->to($correo->getBuzonContacto())
                     ->replyTo($email)
                     ->subject(sprintf("Contacto desde la página: %s", $nombre))
                     ->text(sprintf("De: %s <%s>\nTeléfono: %s\nIdioma: %s\n\n%s", $nombre, $email, $m->getTelefono() ?? "—", $idioma, $mensaje)));

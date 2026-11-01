@@ -44,12 +44,12 @@ final class DireccionesTest extends TestCase
 
     public function testDeLaCasaEsElDominioPrincipalOElDeEntrada(): void
     {
-        $d = new Dominios("SistemaFDN.com", "correo.sistemafdn.com");
+        $d = Dominios::fijos("SistemaFDN.com", "correo.sistemafdn.com");
         $this->assertSame("ana", $d->local("Ana@sistemafdn.com"));
         $this->assertSame("ana", $d->local("ana+reportes@correo.sistemafdn.com"));
         $this->assertNull($d->local("ana@gmail.com"));
         $this->assertSame("ana@sistemafdn.com", $d->direccion("ana"));
         $this->assertSame("ana@correo.sistemafdn.com", $d->responderA("ana"));
-        $this->assertNull((new Dominios("sistemafdn.com", ""))->responderA("ana"));
+        $this->assertNull(Dominios::fijos("sistemafdn.com", "")->responderA("ana"));
     }
 }

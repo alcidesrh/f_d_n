@@ -149,6 +149,17 @@ export const router = createRouter({
       },
     },
     {
+      path: "/configuracion/correo",
+      name: "configuracion-correo",
+      component: () => import("@/features/proveedores/CorreoPage.vue"),
+      meta: {
+        capacidad: "config.proveedores",
+        title: "Correo (MailPace)",
+        label: "Correo",
+        icon: "mail-outline",
+      },
+    },
+    {
       path: "/configuracion/cybersource",
       name: "configuracion-cybersource",
       component: () => import("@/features/proveedores/CybersourcePage.vue"),

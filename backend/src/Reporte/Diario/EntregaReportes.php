@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Reporte\Diario;
 
+use App\Correo\Configuracion\AjustesCorreo;
 use App\Chat\Archivos;
 use App\Chat\Conversaciones;
 use App\Entity\SuscripcionReporte;
 use App\Entity\Usuario;
 use Doctrine\DBAL\Connection;
 use Psr\Clock\ClockInterface;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 
@@ -29,8 +29,7 @@ final class EntregaReportes
         private readonly Archivos $archivos,
         private readonly MailerInterface $mailer,
         private readonly ClockInterface $reloj,
-        #[Autowire(env: "default:programador_correo_remitente_defecto:PROGRAMADOR_CORREO_REMITENTE")]
-        private readonly string $remitente,
+        private readonly AjustesCorreo $ajustesCorreo,
     ) {}
 
     /**
@@ -53,7 +52,7 @@ final class EntregaReportes
             $correo = false;
             if ($s->isPorCorreo() && $usuario->getEmail()) {
                 $email = (new Email())
-                    ->from($this->remitente)
+                    ->from($this->ajustesCorreo->actual()->getRemitenteReportes())
                     ->to((string) $usuario->getEmail())
                     ->subject($e->asunto)
                     ->html($e->html)

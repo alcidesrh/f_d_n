@@ -55,3 +55,41 @@ export interface CambiosCybersource {
   url: string
   orgId: string
 }
+
+/** Correo (ADR-048): MailPace, dominios, remitentes y webhook de entrada. */
+export interface DominioEnvio {
+  dominio: string
+  /** `guardado`, `ilegible` (cifrado con otro `APP_SECRET`: volver a cargarlo) o null (sin token). El token nunca viaja al navegador. */
+  token: 'guardado' | 'ilegible' | null
+}
+
+export interface ConfiguracionCorreo {
+  activo: boolean
+  servidor: string
+  puerto: number
+  dominiosEnvio: DominioEnvio[]
+  dominio: string
+  dominioEntrada: string | null
+  claveWebhook: string | null
+  /** URL que se pega en MailPace como webhook de entrada. */
+  webhook: string
+  remitenteBoletos: string
+  remitenteReportes: string
+  buzonContacto: string
+  actualizadaEn: string | null
+  actualizadaPor: string | null
+}
+
+/** Lo que se guarda: un `token` vacío conserva el guardado; un dominio que no viene se quita. */
+export interface CambiosCorreo {
+  activo: boolean
+  servidor: string
+  puerto: number
+  dominiosEnvio: Array<{ dominio: string; token: string }>
+  dominio: string
+  dominioEntrada: string
+  claveWebhook: string
+  remitenteBoletos: string
+  remitenteReportes: string
+  buzonContacto: string
+}

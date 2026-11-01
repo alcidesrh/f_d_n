@@ -12,13 +12,12 @@ use App\Entity\Enum\EnvioCorreo;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Mailer\Envelope;
-use Symfony\Component\Mailer\Transport\TransportInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
 
 /**
- * Entrega por el proveedor (MailPace, `MAILER_DSN`) a los destinatarios de
+ * Entrega por el proveedor (`TransporteCorreo`: MailPace o `MAILER_DSN`) a los destinatarios de
  * fuera. Los de la casa ya lo recibieron en su buzón al enviarse: el sobre
  * SMTP lleva solo a los externos, aunque las cabeceras muestran a todos.
  * Si el proveedor lo rechaza, el enviado queda "fallido" con el motivo y se
@@ -29,7 +28,7 @@ final class EnviarCorreoHandler
 {
     public function __construct(
         private readonly EntityManagerInterface $em,
-        private readonly TransportInterface $transporte,
+        private readonly TransporteCorreo $transporte,
         private readonly Adjuntos $adjuntos,
         private readonly Dominios $dominios,
         private readonly Buzon $buzon,
