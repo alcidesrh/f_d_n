@@ -70,10 +70,9 @@ function createDefinition(side: "left" | "right", name: string) {
         if (useUiStore().isMobile) this.drawer = false;
         else this.setMode("close");
       },
-      /** En el teléfono (drawer) un solo menú abierto: abrir uno cierra los demás. */
+      /** Como mucho un menú abierto: abrir uno cierra los demás; cerrar el abierto deja todos cerrados. */
       toggleMenu(id: number) {
-        if (this.expandedMenus.includes(id)) this.expandedMenus = this.expandedMenus.filter((x) => x !== id);
-        else this.expandedMenus = useUiStore().isMobile ? [id] : [...this.expandedMenus, id];
+        this.expandedMenus = this.expandedMenus.includes(id) ? [] : [id];
       },
       toggleItem(id: number) {
         this.expandedItems = this.expandedItems.includes(id) ? this.expandedItems.filter((x) => x !== id) : [...this.expandedItems, id];
