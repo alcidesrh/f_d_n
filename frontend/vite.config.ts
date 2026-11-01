@@ -17,8 +17,33 @@ const pwaEnDesarrollo = loadEnv("development", process.cwd(), "").VITE_PWA_DEV =
 // Revisión de la shell precacheada ("/"): cambia en cada build, así el service worker se actualiza.
 const BUILD_ID = Date.now().toString();
 
+// En `npm run dev` sin PWA, `/sw.js` sería el index.html: el service worker que dejó producción
+// en el navegador (mismo dominio con `make vps`) no podría actualizarse y seguiría sirviendo la
+// versión vieja. Este se instala en su lugar, borra sus cachés, se da de baja y recarga las pestañas.
+const SW_AUTODESTRUCTIVO = `self.addEventListener('install', () => self.skipWaiting())
+self.addEventListener('activate', (e) => e.waitUntil((async () => {
+  for (const clave of await caches.keys()) await caches.delete(clave)
+  await self.registration.unregister()
+  for (const c of await self.clients.matchAll({ type: 'window' })) c.navigate(c.url)
+})()))
+`;
+const retirarServiceWorker = {
+  name: "fdn-retirar-service-worker",
+  apply: "serve" as const,
+  configureServer(server: { middlewares: { use: (fn: (req: { url?: string }, res: any, next: () => void) => void) => void } }) {
+    if (pwaEnDesarrollo) return;
+    server.middlewares.use((req, res, next) => {
+      if (req.url?.split("?")[0] !== "/sw.js") return next();
+      res.setHeader("Content-Type", "application/javascript");
+      res.setHeader("Cache-Control", "no-cache");
+      res.end(SW_AUTODESTRUCTIVO);
+    });
+  },
+};
+
 export default defineConfig({
   plugins: [
+    retirarServiceWorker,
     vue(),
     // vueDevTools(),
     tailwindcss(),
