@@ -205,7 +205,7 @@ VPS_COMP = IMAGES_PREFIX=dev- APP_ENV=dev $(DOCKER_COMP) --env-file .env.vps.loc
 vps-env:
 	@test -f .env.vps.local || { echo "Falta .env.vps.local (secretos, ver compose.vps.yaml)" >&2; exit 1; }
 
-vps: vps-env ## Pasa la VPS a dev, accesible por su IP pública (secretos en .env.vps.local; `make prod` vuelve)
+vps: vps-env ## Pasa la VPS a dev, por el dominio de producción (secretos en .env.vps.local; `make prod` vuelve)
 	$(VPS_COMP) up -d
 
 vps-build: vps-env ## Reconstruye las imágenes de dev (si cambia un Dockerfile) y levanta dev

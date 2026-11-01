@@ -4,20 +4,19 @@ declare(strict_types=1);
 
 namespace App\Venta\Pago;
 
+use App\Venta\Pago\Cybersource\AjustesCybersource;
 use App\Venta\Pago\Cybersource\PasarelaCybersource;
 use Money\Money;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
- * Elige la pasarela según `PAGO_PASARELA`: `cybersource` (real) o `simulada`
- * (por defecto; desarrollo y pruebas). Es el servicio que ve `PasarelaPago`
+ * Elige la pasarela según `ConfiguracionCybersource::activo`: Cybersource
+ * (real) o la simulada (por defecto; desarrollo y pruebas). Es el servicio que ve `PasarelaPago`
  * (`config/services.yaml`).
  */
 final class PasarelaActiva implements PasarelaPago
 {
     public function __construct(
-        #[Autowire(env: "default:pago_pasarela_defecto:PAGO_PASARELA")]
-        private readonly string $pasarela,
+        private readonly AjustesCybersource $ajustes,
         private readonly PasarelaSimulada $simulada,
         private readonly PasarelaCybersource $cybersource,
     ) {}
@@ -44,6 +43,6 @@ final class PasarelaActiva implements PasarelaPago
 
     private function activa(): PasarelaPago
     {
-        return strtolower(trim($this->pasarela)) === "cybersource" ? $this->cybersource : $this->simulada;
+        return $this->ajustes->actual()->isActivo() ? $this->cybersource : $this->simulada;
     }
 }

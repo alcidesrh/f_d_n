@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Tests\Venta;
 
+use App\Entity\ConfiguracionCybersource;
 use App\Entity\CredencialPago;
 use App\Entity\Empresa;
 use App\Venta\CifradoCredenciales;
 use App\Venta\Excepcion\VentaRechazada;
 use App\Venta\Pago\Continuacion;
+use App\Venta\Pago\Cybersource\AjustesCybersource;
 use App\Venta\Pago\Cybersource\ClienteCybersource;
 use App\Venta\Pago\Cybersource\Comercio;
 use App\Venta\Pago\Cybersource\CredencialesCybersource;
@@ -34,6 +36,23 @@ final class CybersourceTest extends TestCase
 
     /** @var list<array{metodo: string, url: string, cuerpo: array<string, mixed>, encabezados: array<string, list<string>>}> */
     private array $peticiones = [];
+
+    public function testHuellaSoloConOrgIdYUrlDeLaConfiguracion(): void
+    {
+        $this->assertNull($this->pasarela([])->huella(1, "ref-1"));
+
+        $config = (new ConfiguracionCybersource())->setOrgId(" org-123 ")->setUrl("https://api.cybersource.com");
+        $pasarela = $this->pasarela([new MockResponse(json_encode(["status" => "COMPLETED"]), ["http_code" => 201])], $config);
+        $huella = $pasarela->huella(1, "ref-1");
+        $this->assertNotNull($huella);
+        $this->assertStringContainsString("org_id=org-123", $huella["script"]);
+
+        try {
+            $pasarela->cobrar($this->solicitud());
+        } catch (\Throwable) {
+        }
+        $this->assertStringStartsWith("https://api.cybersource.com/", $this->peticiones[0]["url"]);
+    }
 
     public function testFirmaHttpSignature(): void
     {
@@ -214,7 +233,7 @@ final class CybersourceTest extends TestCase
     /**
      * @param list<array{0: int, 1: array<string, mixed>}|MockResponse> $respuestas
      */
-    private function pasarela(array $respuestas): PasarelaCybersource
+    private function pasarela(array $respuestas, ?ConfiguracionCybersource $config = null): PasarelaCybersource
     {
         $this->peticiones = [];
         $cola = array_map(static fn($r) => $r instanceof MockResponse ? $r : new MockResponse((string) json_encode($r[1]), ["http_code" => $r[0]]), $respuestas);
@@ -242,9 +261,10 @@ final class CybersourceTest extends TestCase
         $em->method("getRepository")->willReturn($repo);
 
         return new PasarelaCybersource(
-            new ClienteCybersource($http, new MockClock("2026-09-30 18:00:00"), "https://apitest.cybersource.com"),
+            new ClienteCybersource($http, new MockClock("2026-09-30 18:00:00"), AjustesCybersource::fijos($config ?? new ConfiguracionCybersource())),
             new CredencialesCybersource($em, $cifrado),
             new NullLogger(),
+            AjustesCybersource::fijos($config ?? new ConfiguracionCybersource()),
         );
     }
 

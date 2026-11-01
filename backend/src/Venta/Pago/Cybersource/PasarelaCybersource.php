@@ -11,7 +11,6 @@ use App\Venta\Pago\ResultadoPago;
 use App\Venta\Pago\SolicitudPago;
 use Money\Money;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 
 /**
@@ -47,9 +46,8 @@ final class PasarelaCybersource implements PasarelaPago
         private readonly ClienteCybersource $cliente,
         private readonly CredencialesCybersource $credenciales,
         private readonly LoggerInterface $logger,
-        /** Org ID de ThreatMetrix (huella del dispositivo para Decision Manager); vacío = sin huella. */
-        #[Autowire(env: "default::CYBERSOURCE_ORG_ID")]
-        private readonly ?string $orgId = null,
+        /** Org ID de ThreatMetrix (huella del dispositivo para Decision Manager) en `ConfiguracionCybersource`. */
+        private readonly AjustesCybersource $ajustes = new AjustesCybersource(),
     ) {}
 
     public function cobrar(SolicitudPago $solicitud, ?Continuacion $continuacion = null): ResultadoPago
@@ -83,14 +81,15 @@ final class PasarelaCybersource implements PasarelaPago
 
     public function huella(int $empresaId, string $referencia): ?array
     {
-        if (!$this->orgId) {
+        $orgId = $this->orgId();
+        if ($orgId === null) {
             return null;
         }
         $sesion = $this->credenciales->de($empresaId)->id . self::sesion($referencia);
 
         return ["script" => sprintf(
             "https://h.online-metrix.net/fp/tags.js?org_id=%s&session_id=%s",
-            rawurlencode($this->orgId),
+            rawurlencode($orgId),
             rawurlencode($sesion),
         )];
     }
@@ -279,7 +278,7 @@ final class PasarelaCybersource implements PasarelaPago
 
         return array_filter([
             "ipAddress" => $n->ip,
-            "fingerprintSessionId" => $this->orgId ? self::sesion($s->referencia) : null,
+            "fingerprintSessionId" => $this->orgId() !== null ? self::sesion($s->referencia) : null,
             "userAgentBrowserValue" => $n->agente,
             "httpAcceptBrowserValue" => $n->accept,
             "httpBrowserLanguage" => $n->idioma,
@@ -411,5 +410,10 @@ final class PasarelaCybersource implements PasarelaPago
         }
 
         return mb_substr((string) json_encode($r, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), 0, 2000);
+    }
+
+    private function orgId(): ?string
+    {
+        return $this->ajustes->actual()->getOrgId();
     }
 }

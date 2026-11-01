@@ -8,7 +8,7 @@ use Money\Money;
 
 /**
  * Puerto hacia la pasarela de pago con tarjeta (Visa/Mastercard, 3-D Secure).
- * La implementación activa la elige `PasarelaActiva` según `PAGO_PASARELA`.
+ * La implementación activa la elige `PasarelaActiva` según `ConfiguracionCybersource`.
  *
  * Un cobro puede tener varios pasos: `cobrar()` sin continuación lo inicia; si
  * el resultado pide algo al navegador (`dispositivo` o `autenticacion`), la

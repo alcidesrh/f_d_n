@@ -24,7 +24,7 @@
 | [ADR-018](ADR-018-taxonomia-agnostica-y-menus.md) | Taxonomía agnóstica (referencia polimórfica) y menús de navegación sobre ella | Aceptada (visibilidad sin jerarquía de roles: ADR-039) |
 | [ADR-019](ADR-019-croquis-del-bus.md) | Croquis del bus (asientos, chofer y puertas por planta) y mapa reutilizable | Aceptada |
 | [ADR-020](ADR-020-frontend-mobile-first.md) | Frontend mobile-first con breakpoints centralizados | Aceptada |
-| [ADR-021](ADR-021-venta-de-asientos.md) | Venta de asientos por tres canales (taquilla, agencia, web) con factura electrónica | Aceptada (enmendada por ADR-030) |
+| [ADR-021](ADR-021-venta-de-asientos.md) | Venta de asientos por tres canales (taquilla, agencia, web) con factura electrónica | Aceptada (enmendada por ADR-030; configuración de Forcon y Cybersource por ADR-047) |
 | [ADR-022](ADR-022-rename-recorrido-a-salida.md) | Renombrar la entidad Recorrido a Salida (código y base de datos) | Aceptada |
 | [ADR-023](ADR-023-pagina-web-compra-en-una-pagina.md) | Página web: compra en una sola página, ida y vuelta, recargo, idiomas y SEO | Aceptada |
 | [ADR-024](ADR-024-gestion-de-salidas.md) | Gestión de salidas: programador, esquemas guardados y editar/anular/eliminar con propagación | Aceptada |
@@ -50,3 +50,4 @@
 | [ADR-044](ADR-044-programador-de-tareas.md) | Programador de tareas a la medida: catálogo cerrado sobre `symfony/scheduler`, colas `tareas` y `pesadas`, latido y alerta en el tablero, umbrales diarios, reportes por suscripción y esquemas de salidas automáticos | Aceptada |
 | [ADR-045](ADR-045-mensajes-predeterminados-del-chat.md) | Mensajes predeterminados del chat: instancias con audiencia y contenido (con horario, salida iniciada, anomalías de reasignación y tarifa, ventas y desempeño del día) a los avisos del sistema; bitácora de tarifas | Aceptada |
 | [ADR-046](ADR-046-latencia-de-la-api.md) | Latencia de la API: firewall sin sesión, cargas por lotes (paradas con su enclave, tarifas, accesos de la administración), tablero precalculado por el programador, metadata de API Platform en memoria y caché de estáticos | Aceptada |
+| [ADR-047](ADR-047-configuracion-de-forcon-y-cybersource-en-la-base.md) | Configuración de Forcon y Cybersource en la base: una fila por proveedor, leída en cada uso, poblada por la migración desde el entorno y `services.yaml`, editable con `app:fel:configuracion` / `app:pago:configuracion` | Aceptada |
