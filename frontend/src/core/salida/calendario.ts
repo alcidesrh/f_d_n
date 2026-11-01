@@ -1,7 +1,7 @@
 /**
- * Calendario de salidas: días en el eje X (la fecha elegida en el centro),
- * horas del día en el Y y en cada cruce las salidas de esa hora, con el color
- * de su ruta y lo ocupado (asientos o porciento). Filtro → query de
+ * Calendario de salidas: un día por fila (de la fecha elegida en adelante),
+ * las horas del día en columnas y en cada cruce las salidas de esa hora, con
+ * el color de su ruta y lo ocupado (asientos o porciento). Filtro → query de
  * `/api/gestion-salidas/calendario`, la ventana de días, la matriz día × hora,
  * la leyenda de rutas y los totales. Puro.
  */
@@ -9,15 +9,15 @@ import { aDia, deDia } from './filtro'
 import { sumarDias } from './programacion'
 import type { EstadoSalida, RutaCalendario, SalidaCalendario } from './types'
 
-/** Días visibles (impar: la fecha elegida queda en el centro). */
-export const VENTANAS = [7, 15, 31] as const
+/** Días visibles, contados desde la fecha elegida. */
+export const VENTANAS = [1, 7, 15, 30] as const
 export type Ventana = (typeof VENTANAS)[number]
 
 /** Lo que muestra cada salida: asientos comprometidos o porciento de la capacidad. */
 export type ModoOcupacion = 'asientos' | 'porciento'
 
 export interface FiltroCalendario {
-  /** Centro del eje X, `AAAA-MM-DD`. */
+  /** Primer día, `AAAA-MM-DD`. */
   fecha: string
   dias: Ventana
   /** Vacío = todos. */
@@ -30,14 +30,13 @@ export interface FiltroCalendario {
 /** Por defecto todo menos las anuladas. */
 export const ESTADOS_CALENDARIO: EstadoSalida[] = ['programada', 'abordando', 'iniciada', 'finalizada']
 
-export function filtroCalendarioInicial(hoy = new Date(), dias: Ventana = 7): FiltroCalendario {
+export function filtroCalendarioInicial(hoy = new Date(), dias: Ventana = 1): FiltroCalendario {
   return { fecha: aDia(hoy), dias, estados: [...ESTADOS_CALENDARIO], empresa: null, ruta: null, bus: null }
 }
 
-/** Días del eje X (`AAAA-MM-DD`) con `fecha` en el centro. */
+/** Días de las filas (`AAAA-MM-DD`): `dias` desde `fecha`, en orden. */
 export function ventana(fecha: string, dias: number): string[] {
-  const antes = Math.floor((dias - 1) / 2)
-  return Array.from({ length: dias }, (_, i) => sumarDias(fecha, i - antes))
+  return Array.from({ length: dias }, (_, i) => sumarDias(fecha, i))
 }
 
 /** Query de `/gestion-salidas/calendario`: el rango de la ventana y el resto del filtro (estado vacío = todos). */
@@ -135,7 +134,7 @@ export function ahoraEn(ahora: Date): { dia: string; hora: number; fraccion: num
   return { dia: aDia(ahora), hora: ahora.getHours(), fraccion: (ahora.getMinutes() * 60 + ahora.getSeconds()) / 3600 }
 }
 
-/** Mueve el centro `n` días. */
+/** Mueve la fecha `n` días. */
 export const desplazar = (fecha: string, n: number) => sumarDias(fecha, n)
 
 /** ¿`dia` cae en la ventana de `f`? */

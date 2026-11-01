@@ -17,6 +17,8 @@ export const MOTIVOS: Record<MotivoOmision, string> = {
   otro_croquis: 'Tiene asientos vendidos o apartados y el bus nuevo tiene otra distribución: elija uno con la misma (los boletos pasan al mismo número) o reasígnelos en la venta.',
   conflicto: 'El bus está en otro viaje a esa hora.',
   historial: 'Tiene boletos en su historial: no se borra, anúlela.',
+  estado: 'Está abordando, en ruta o finalizada: no se borra.',
+  alcance: 'Es de una empresa en la que no puede eliminar salidas.',
 }
 
 /** Resumen de una línea para el toast. */
@@ -30,9 +32,15 @@ export function resumen(r: ResultadoOperacion, op: Operacion): { texto: string; 
   return { texto, severidad: n === 0 ? 'error' : 'warning' }
 }
 
+/** Al eliminar, con asientos no hay alternativa de cambiar el bus: solo se avisa. */
+const MOTIVOS_ELIMINAR: Partial<Record<MotivoOmision, string>> = {
+  asientos: 'Tiene boletos vendidos o asientos apartados: no se eliminó. Reasígnelos o anúlelos en la venta, o anule la salida.',
+}
+
 /** Omitidas agrupadas por motivo, para listarlas al usuario. */
-export function omitidasPorMotivo(r: ResultadoOperacion): Array<{ motivo: MotivoOmision; texto: string; salidas: ResultadoOperacion['omitidas'] }> {
+export function omitidasPorMotivo(r: ResultadoOperacion, op?: Operacion): Array<{ motivo: MotivoOmision; texto: string; salidas: ResultadoOperacion['omitidas'] }> {
   const grupos = new Map<MotivoOmision, ResultadoOperacion['omitidas']>()
   for (const o of r.omitidas) grupos.set(o.motivo, [...(grupos.get(o.motivo) ?? []), o])
-  return [...grupos].map(([motivo, salidas]) => ({ motivo, texto: MOTIVOS[motivo] ?? motivo, salidas }))
+  const textos = op === 'eliminar' ? { ...MOTIVOS, ...MOTIVOS_ELIMINAR } : MOTIVOS
+  return [...grupos].map(([motivo, salidas]) => ({ motivo, texto: textos[motivo] ?? motivo, salidas }))
 }

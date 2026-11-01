@@ -1,31 +1,31 @@
 <!--
-  La grilla del calendario de salidas: días en columnas (la fecha elegida en
-  el centro, hoy resaltado) y horas en filas; en cada cruce, las salidas de
-  esa hora como fichas con el color de su ruta, lo ocupado (asientos o
-  porciento) y una barra de fondo que se llena con la ocupación. Una línea
-  marca el ahora. Las horas con muchas salidas crecen; las vacías quedan bajas.
+  La grilla del calendario de salidas: un día por fila (de la fecha elegida
+  en adelante, hoy resaltado) y las horas en columnas; en cada cruce, las
+  salidas de esa hora como fichas con el color de su ruta, lo ocupado
+  (asientos o porciento) y una barra de fondo que se llena con la ocupación.
+  Una línea marca el ahora. Los días con muchas salidas a una hora crecen.
 
-  Pulsar una ficha la abre (`abrir`). Las rutas se resaltan desde la leyenda
-  (al pasar sobre ellas, o fijas al pulsarlas): las demás fichas se atenúan. La cabecera de cada día (con sus salidas y su ocupación) lo
-  lleva al centro. `centrar()` ubica la fecha elegida en el centro del eje X
-  y, si se pide, el ahora en el centro del eje Y.
+  Pulsar una ficha la abre (`abrir`) o, en modo selección, la marca o
+  desmarca. Las rutas se resaltan desde la leyenda (al pasar sobre ellas, o
+  fijas al pulsarlas): las demás fichas se atenúan. `centrar()` lleva a la
+  vista la columna de la hora elegida.
 -->
 <template>
   <div class="cal-marco" :class="{ 'cal-marco--cargando': store.cargando }">
-    <div ref="scroller" class="cal" :style="{ '--dias': store.columnas.length }" role="grid" :aria-rowcount="HORAS.length + 1" :aria-colcount="store.columnas.length + 1" aria-label="Calendario de salidas: días en columnas, horas en filas">
-      <div class="cal__esquina" role="columnheader" aria-label="Hora"><icon name="schedule-outline" /></div>
-      <button v-for="d in store.columnas" :key="d" type="button" role="columnheader" class="cal__dia" :class="claseDia(d)" :aria-current="d === ahora.dia ? 'date' : undefined" :aria-label="`${diaLargo(d)}: ${resumenDia(d)}`" @click="store.irA(d)">
-        <span class="cal__dia-nombre">{{ semana(d) }}</span>
-        <span class="cal__dia-num">{{ numero(d) }}</span>
-        <span class="cal__dia-resumen tabular-nums">{{ resumenDia(d) }}</span>
-        <span class="cal__dia-barra" aria-hidden="true"><span :style="{ width: `${porcientoDia(d)}%` }" /></span>
-      </button>
+    <div ref="scroller" class="cal" :class="{ 'cal--seleccion': store.seleccionando }" role="grid" :aria-rowcount="store.columnas.length + 1" :aria-colcount="HORAS.length + 1" :aria-multiselectable="store.seleccionando || undefined" aria-label="Calendario de salidas: días en filas, horas en columnas">
+      <div class="cal__esquina" role="columnheader" aria-label="Día"><icon name="calendar-month-outline" /></div>
+      <div v-for="h in HORAS" :key="h" role="columnheader" class="cal__hora" :class="{ 'cal__hora--ahora': h === ahora.hora, 'cal__hora--elegida': h === horaElegida }">{{ etiquetaHora(h) }}</div>
 
-      <template v-for="h in HORAS" :key="h">
-        <div class="cal__hora" role="rowheader" :class="{ 'cal__hora--ahora': h === ahora.hora }">{{ etiquetaHora(h) }}</div>
-        <div v-for="d in store.columnas" :key="`${d}-${h}`" role="gridcell" class="cal__celda" :class="claseDia(d)" :data-dia="d" :data-hora="h">
-          <span v-if="h === ahora.hora" class="cal__ahora" :class="{ 'cal__ahora--hoy': d === ahora.dia }" :style="{ top: `${ahora.fraccion * 100}%` }" aria-hidden="true" />
-          <button v-for="s in store.celdas.get(d)?.[h] ?? []" :key="s.id" type="button" class="chip" :class="claseChip(s)" :data-ruta="s.rutaId" :style="{ '--f': `${(fraccion(s) ?? 0) * 100}%` }" :aria-label="etiquetaChip(s)" @click="emit('abrir', $event, s)">
+      <template v-for="d in store.columnas" :key="d">
+        <div role="rowheader" class="cal__dia" :class="claseDia(d)" :aria-current="d === ahora.dia ? 'date' : undefined" :aria-label="`${diaLargo(d)}: ${resumenDia(d)}`">
+          <span class="cal__dia-nombre">{{ semana(d) }}</span>
+          <span class="cal__dia-num">{{ numero(d) }}</span>
+          <span class="cal__dia-resumen tabular-nums">{{ resumenDia(d) }}</span>
+          <span class="cal__dia-barra" aria-hidden="true"><span :style="{ width: `${porcientoDia(d)}%` }" /></span>
+        </div>
+        <div v-for="h in HORAS" :key="`${d}-${h}`" role="gridcell" class="cal__celda" :class="claseDia(d)" :data-dia="d" :data-hora="h">
+          <span v-if="h === ahora.hora" class="cal__ahora" :class="{ 'cal__ahora--hoy': d === ahora.dia }" :style="{ left: `${ahora.fraccion * 100}%` }" aria-hidden="true" />
+          <button v-for="s in store.celdas.get(d)?.[h] ?? []" :key="s.id" type="button" class="chip" :class="claseChip(s)" :data-ruta="s.rutaId" :style="{ '--f': `${(fraccion(s) ?? 0) * 100}%` }" :aria-label="etiquetaChip(s)" :aria-pressed="store.seleccionando ? store.seleccion.has(s.id) : undefined" @click="pulsar($event, s)">
             <span class="chip__hora tabular-nums">{{ minutos(s.fecha) }}</span>
             <span class="chip__valor tabular-nums">{{ textoOcupacion(s, store.modo) }}</span>
           </button>
@@ -51,6 +51,7 @@ const store = useCalendarioSalidasStore();
 const scroller = ref<HTMLElement | null>(null);
 
 const ahora = computed(() => ahoraEn(store.ahora));
+const horaElegida = computed(() => Number(store.hora.slice(0, 2)));
 const totalesDia = computed(() => new Map(store.columnas.map((d) => [d, totales(store.celdas.get(d)?.flat() ?? [])])));
 const vacio = computed(() => !!store.datos && !store.cargando && !store.datos.items.length);
 
@@ -58,8 +59,13 @@ const semana = (d: string) => new Intl.DateTimeFormat("es-GT", { weekday: "short
 const numero = (d: string) => new Intl.DateTimeFormat("es-GT", { day: "numeric", month: "short" }).format(deDia(d)).replace(".", "");
 const diaLargo = (d: string) => new Intl.DateTimeFormat("es-GT", { weekday: "long", day: "numeric", month: "long" }).format(deDia(d));
 const etiquetaHora = (h: number) => `${String(h).padStart(2, "0")}:00`;
-/** La fila ya dice la hora: la ficha muestra los minutos («:30»). */
+/** La columna ya dice la hora: la ficha muestra los minutos («:30»). */
 const minutos = (iso: string) => `:${String(new Date(iso).getMinutes()).padStart(2, "0")}`;
+
+function pulsar(evento: MouseEvent, s: SalidaCalendario) {
+  if (store.seleccionando) store.alternarSeleccion(s.id);
+  else emit("abrir", evento, s);
+}
 
 function porcientoDia(d: string): number {
   const t = totalesDia.value.get(d);
@@ -77,7 +83,6 @@ function resumenDia(d: string): string {
 function claseDia(d: string) {
   return {
     "cal--hoy": d === ahora.value.dia,
-    "cal--centro": d === store.fecha && d !== ahora.value.dia,
     "cal--finde": finDeSemana(d),
     "cal--pasado": d < ahora.value.dia,
   };
@@ -92,6 +97,7 @@ function claseChip(s: SalidaCalendario) {
       "chip--atrasada": s.atrasada,
       "chip--atenuada": store.resaltadaEfectiva !== null && store.resaltadaEfectiva !== s.rutaId,
       "chip--activa": props.activa === s.id,
+      "chip--seleccionada": store.seleccionando && store.seleccion.has(s.id),
     },
   ];
 }
@@ -102,23 +108,17 @@ function etiquetaChip(s: SalidaCalendario): string {
 }
 
 /**
- * La fecha elegida al centro del eje X; con `vertical`, el ahora (la hora
- * del día) al centro del eje Y. Se mide sobre las celdas (no las cabeceras,
- * que son pegajosas).
+ * La columna de la hora elegida al centro del eje X (medida sobre las
+ * celdas: las cabeceras son pegajosas) y el primer día arriba.
  */
-function centrar({ vertical = false, suave = false } = {}) {
+function centrar({ suave = false } = {}) {
   const el = scroller.value;
   if (!el) return;
-  const esquina = el.querySelector<HTMLElement>(".cal__esquina");
-  const anchoHora = esquina?.offsetWidth ?? 0;
-  const altoCabecera = esquina?.offsetHeight ?? 0;
-  const columna = el.querySelector<HTMLElement>(`.cal__celda[data-dia="${store.fecha}"]`);
-  const destino: ScrollToOptions = { behavior: suave ? "smooth" : "auto" };
-  if (columna) destino.left = columna.offsetLeft + columna.offsetWidth / 2 - (anchoHora + (el.clientWidth - anchoHora) / 2);
-  if (vertical) {
-    const fila = el.querySelector<HTMLElement>(`.cal__celda[data-hora="${ahora.value.hora}"]`);
-    if (fila) destino.top = fila.offsetTop + fila.offsetHeight * ahora.value.fraccion - (altoCabecera + (el.clientHeight - altoCabecera) / 2);
-  }
+  const anchoDia = el.querySelector<HTMLElement>(".cal__esquina")?.offsetWidth ?? 0;
+  const [h = 0, m = 0] = store.hora.split(":").map(Number);
+  const columna = el.querySelector<HTMLElement>(`.cal__celda[data-hora="${h}"]`);
+  const destino: ScrollToOptions = { top: 0, behavior: suave ? "smooth" : "auto" };
+  if (columna) destino.left = columna.offsetLeft + (columna.offsetWidth * m) / 60 - (anchoDia + (el.clientWidth - anchoDia) / 2);
   el.scrollTo(destino);
 }
 
@@ -135,32 +135,25 @@ defineExpose({ centrar });
   opacity: 0.65;
 }
 .cal {
-  --col: 8rem;
-  --hora: 3.25rem;
+  --col: 7.25rem;
+  --dia: 8.5rem;
   --linea: var(--p-content-border-color);
   position: relative;
   display: grid;
-  grid-template-columns: var(--hora) repeat(var(--dias), minmax(var(--col), 1fr));
-  /* A su contenido (no `minmax(…, auto)`: con alto fijo no hay espacio libre y las filas no crecerían). */
+  grid-template-columns: var(--dia) repeat(24, minmax(var(--col), 1fr));
   grid-auto-rows: max-content;
-  height: clamp(24rem, calc(100dvh - var(--cal-arriba, 16rem) - 1rem), 200rem);
+  max-height: clamp(16rem, calc(100dvh - var(--cal-arriba, 16rem) - 1rem), 200rem);
   overflow: auto;
   overscroll-behavior: contain;
   border: 1px solid var(--linea);
   border-radius: var(--p-content-border-radius, 0.75rem);
   background: var(--p-content-background);
-  scrollbar-gutter: stable;
-}
-@container (min-width: 64rem) {
-  .cal {
-    --col: 9rem;
-  }
 }
 
-/* Cabeceras pegajosas: los días arriba, las horas a la izquierda. */
-/* Capas: fichas (1–2) < horas (4) < días (5) < esquina (6). */
+/* Cabeceras pegajosas: las horas arriba, los días a la izquierda. */
+/* Capas: fichas (1–2) < días (4) < horas (5) < esquina (6). */
 .cal__esquina,
-.cal__dia {
+.cal__hora {
   position: sticky;
   top: 0;
   z-index: 5;
@@ -172,25 +165,40 @@ defineExpose({ centrar });
   z-index: 6;
   display: grid;
   place-items: center;
+  padding: 0.35rem 0;
   border-right: 1px solid var(--linea);
   color: var(--p-text-muted-color);
 }
+.cal__hora {
+  padding: 0.4rem 0.45rem;
+  border-left: 1px solid var(--linea);
+  color: var(--p-text-muted-color);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+.cal__hora--elegida {
+  box-shadow: inset 0 -2px 0 var(--p-primary-color);
+  color: var(--p-text-color);
+}
+.cal__hora--ahora {
+  color: var(--p-red-500);
+  font-weight: 700;
+}
+
 .cal__dia {
+  position: sticky;
+  left: 0;
+  z-index: 4;
   display: grid;
   grid-template-columns: auto 1fr;
+  align-content: start;
   align-items: baseline;
   gap: 0 0.35rem;
   padding: 0.45rem 0.55rem 0.4rem;
-  border: 0;
+  border-right: 1px solid var(--linea);
   border-bottom: 1px solid var(--linea);
-  border-left: 1px solid var(--linea);
+  background: var(--p-content-background);
   color: var(--p-text-color);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.cal__dia:hover {
-  background: color-mix(in srgb, var(--p-primary-color) 6%, var(--p-content-background));
 }
 .cal__dia-nombre {
   color: var(--p-text-muted-color);
@@ -231,31 +239,10 @@ defineExpose({ centrar });
 .cal__dia.cal--hoy .cal__dia-num {
   color: var(--p-primary-color);
 }
-.cal__dia.cal--centro {
-  box-shadow: inset 0 -2px 0 var(--p-primary-color);
-}
-
-.cal__hora {
-  position: sticky;
-  left: 0;
-  z-index: 4;
-  padding: 0.3rem 0.4rem 0 0;
-  border-right: 1px solid var(--linea);
-  border-bottom: 1px solid var(--linea);
-  background: var(--p-content-background);
-  color: var(--p-text-muted-color);
-  font-size: 0.7rem;
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-}
-.cal__hora--ahora {
-  color: var(--p-red-500);
-  font-weight: 700;
-}
 
 .cal__celda {
   position: relative;
-  min-height: 2.4rem;
+  min-height: 3.6rem;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(3.3rem, 1fr));
   align-content: start;
@@ -270,27 +257,24 @@ defineExpose({ centrar });
 .cal__celda.cal--hoy {
   background: color-mix(in srgb, var(--p-primary-color) 5%, transparent);
 }
-.cal__celda.cal--centro {
-  background: color-mix(in srgb, var(--p-primary-color) 3%, transparent);
-}
 
-/* El ahora: una línea fina en toda la fila y marcada en la columna de hoy. */
+/* El ahora: una línea fina en toda la columna y marcada en la fila de hoy. */
 .cal__ahora {
   position: absolute;
   z-index: 0;
-  right: 0;
-  left: 0;
-  height: 0;
-  border-top: 1px dashed color-mix(in srgb, var(--p-red-500) 45%, transparent);
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 1px dashed color-mix(in srgb, var(--p-red-500) 45%, transparent);
   pointer-events: none;
 }
 .cal__ahora--hoy {
-  border-top: 2px solid var(--p-red-500);
+  border-left: 2px solid var(--p-red-500);
 }
 .cal__ahora--hoy::before {
   position: absolute;
-  top: -5px;
-  left: -4px;
+  top: -4px;
+  left: -5px;
   width: 8px;
   height: 8px;
   border-radius: 999px;
@@ -355,6 +339,16 @@ defineExpose({ centrar });
 }
 .chip--atenuada {
   opacity: 0.18;
+}
+/* Modo selección: las marcadas, con el color primario. */
+.cal--seleccion .chip {
+  cursor: copy;
+}
+.chip--seleccionada {
+  --borde: var(--p-primary-color);
+  outline: 2px solid var(--p-primary-color);
+  outline-offset: 1px;
+  opacity: 1;
 }
 /* Llena: el número en negrita sobre el borde completo. */
 .chip--llena {

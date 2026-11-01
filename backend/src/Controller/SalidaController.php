@@ -51,6 +51,8 @@ final class SalidaController extends AbstractController
     public const ANULAR = "salida.cancelar";
     public const ELIMINAR = "salida.eliminar";
     public const MAX_DIAS_CALENDARIO = 62;
+    /** Lo que puede mostrar el calendario: «seleccionar todas» cabe en una sola petición. */
+    public const MAX_ELIMINAR = ConsultaSalidas::MAX_CALENDARIO;
 
     public function __construct(
         private readonly EntityManagerInterface $em,
@@ -284,6 +286,37 @@ final class SalidaController extends AbstractController
             $this->salida($id, Capacidad::SALIDA_ELIMINAR);
 
             return $this->gestion->eliminar($id, $request->query->getBoolean("propagar"));
+        });
+    }
+
+    /**
+     * Borra varias salidas (`{ ids }`, a lo sumo `MAX_ELIMINAR`). Las que no
+     * se pueden borrar se omiten con su motivo: con asientos o historial de
+     * boletos, en camino o terminadas, o de una empresa fuera del alcance.
+     */
+    #[Route("/eliminar", name: "eliminar_varias", methods: ["POST"])]
+    public function eliminarVarias(Request $request): JsonResponse
+    {
+        $this->denyAccessUnlessGranted(self::ELIMINAR);
+        $ids = $request->toArray()["ids"] ?? null;
+        if (!is_array($ids) || $ids === [] || count($ids) > self::MAX_ELIMINAR) {
+            return $this->json(["error" => sprintf("Indique entre 1 y %d salidas.", self::MAX_ELIMINAR), "codigo" => "ids"], 400);
+        }
+        $ids = array_values(array_unique(array_map(intval(...), array_filter($ids, is_int(...)))));
+
+        return $this->responder(function () use ($ids) {
+            $permitidas = $fuera = [];
+            foreach ($this->em->getRepository(Salida::class)->findBy(["id" => $ids]) as $s) {
+                if ($this->autorizacion->puede(Capacidad::SALIDA_ELIMINAR, Ubicador::salida($s))) {
+                    $permitidas[] = (int) $s->getId();
+                } else {
+                    $fuera[] = VistaSalida::referencia($s) + ["motivo" => "alcance"];
+                }
+            }
+            $resultado = $permitidas === [] ? ["aplicadas" => [], "omitidas" => []] : $this->gestion->eliminarVarias($permitidas);
+            $resultado["omitidas"] = [...$resultado["omitidas"], ...$fuera];
+
+            return $resultado;
         });
     }
 

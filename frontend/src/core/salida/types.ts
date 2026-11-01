@@ -179,7 +179,7 @@ export interface Propagacion {
   ultima: string | null
 }
 
-export type MotivoOmision = 'asientos' | 'conflicto' | 'historial' | 'otro_croquis'
+export type MotivoOmision = 'asientos' | 'conflicto' | 'historial' | 'otro_croquis' | 'estado' | 'alcance'
 
 export interface ResultadoOperacion {
   aplicadas: SalidaRef[]

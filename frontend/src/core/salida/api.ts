@@ -46,6 +46,9 @@ export const anularSalida = (id: number, propagar: boolean) => http.post<Resulta
 
 export const eliminarSalida = (id: number, propagar: boolean) => http.delete<ResultadoOperacion>(`${BASE}/${id}${propagar ? '?propagar=1' : ''}`)
 
+/** Borra varias; las que tienen asientos, historial de boletos o ya salieron vuelven en `omitidas`. */
+export const eliminarSalidas = (ids: number[]) => http.post<ResultadoOperacion>(`${BASE}/eliminar`, { ids })
+
 export const fetchDetalle = (id: number) => http.get<DetalleSalida>(`${BASE}/${id}/detalle`)
 
 /** PDF del manifiesto como `Blob` (lleva el Bearer, por eso no es un enlace). */

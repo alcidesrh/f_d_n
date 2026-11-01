@@ -19,19 +19,20 @@ const salida = (id: number, fecha: string, extra: Partial<SalidaCalendario> = {}
 const ruta = (id: number, nombre: string): RutaCalendario => ({ id, nombre, origen: 'Guatemala', destino: 'Flores', origenAlias: 'GUA', destinoAlias: 'FLO', paradas: 2 })
 
 describe('calendario de salidas', () => {
-  it('la fecha elegida queda en el centro de la ventana', () => {
-    expect(ventana('2026-10-22', 7)).toEqual(['2026-10-19', '2026-10-20', '2026-10-21', '2026-10-22', '2026-10-23', '2026-10-24', '2026-10-25'])
+  it('la ventana empieza en la fecha elegida', () => {
+    expect(ventana('2026-10-22', 1)).toEqual(['2026-10-22'])
+    expect(ventana('2026-10-22', 7)).toEqual(['2026-10-22', '2026-10-23', '2026-10-24', '2026-10-25', '2026-10-26', '2026-10-27', '2026-10-28'])
     const quince = ventana('2026-10-31', 15)
     expect(quince).toHaveLength(15)
-    expect(quince[7]).toBe('2026-10-31')
-    expect(quince[14]).toBe('2026-11-07')
+    expect(quince[0]).toBe('2026-10-31')
+    expect(quince[14]).toBe('2026-11-14')
   })
 
   it('arma la query con el rango de la ventana; sin estados pide todos', () => {
-    const f = { ...filtroCalendarioInicial(new Date(2026, 9, 22)), empresa: 2 }
+    const f = { ...filtroCalendarioInicial(new Date(2026, 9, 22), 7), empresa: 2 }
     const q = new URLSearchParams(aQueryCalendario(f))
-    expect(q.get('desde')).toBe('2026-10-19')
-    expect(q.get('hasta')).toBe('2026-10-25')
+    expect(q.get('desde')).toBe('2026-10-22')
+    expect(q.get('hasta')).toBe('2026-10-28')
     expect(q.get('empresa')).toBe('2')
     expect(q.get('estado')).toBe('programada,abordando,iniciada,finalizada')
     expect(new URLSearchParams(aQueryCalendario({ ...f, estados: [] })).get('estado')).toBe('')
@@ -87,7 +88,8 @@ describe('calendario de salidas', () => {
 
   it('ubica el ahora y sabe si un día cae en la ventana', () => {
     expect(ahoraEn(new Date(2026, 9, 22, 14, 30))).toEqual({ dia: '2026-10-22', hora: 14, fraccion: 0.5 })
-    expect(enVentana({ fecha: '2026-10-22', dias: 7 }, '2026-10-25')).toBe(true)
-    expect(enVentana({ fecha: '2026-10-22', dias: 7 }, '2026-10-26')).toBe(false)
+    expect(enVentana({ fecha: '2026-10-22', dias: 7 }, '2026-10-28')).toBe(true)
+    expect(enVentana({ fecha: '2026-10-22', dias: 7 }, '2026-10-21')).toBe(false)
+    expect(enVentana({ fecha: '2026-10-22', dias: 7 }, '2026-10-29')).toBe(false)
   })
 })

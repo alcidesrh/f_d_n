@@ -1,11 +1,13 @@
 <!--
-  Calendario de salidas: días en el eje X y horas del día en el Y; en cada
-  cruce, las salidas de esa hora con el color de su ruta y lo ocupado (en
-  asientos o, con el interruptor, en porciento). Al entrar, el momento actual
-  queda en el centro; una fecha elegida (`?fecha=AAAA-MM-DD` o con los
-  controles) pasa a ser el centro del eje X. Pulsar una salida abre su
-  detalle; desde ahí, su croquis («Ver») y el chequeo. Se refresca solo cada
-  minuto. Estado en `calendario/store.ts`; reglas en `core/salida/calendario`.
+  Calendario de salidas: un día por fila, de la fecha elegida en adelante
+  (por defecto solo hoy), y las horas del día en columnas; en cada cruce, las
+  salidas de esa hora con el color de su ruta y lo ocupado (en asientos o,
+  con el interruptor, en porciento). Al entrar, la hora actual queda a la
+  vista; una fecha elegida (`?fecha=AAAA-MM-DD` o con los controles) pasa a
+  ser la primera fila. Pulsar una salida abre su detalle (su croquis y el
+  chequeo) o, en modo selección, la marca: las marcadas se eliminan juntas
+  (las que tienen boletos se avisan y quedan). Se refresca solo cada minuto.
+  Estado en `calendario/store.ts`; reglas en `core/salida/calendario`.
 -->
 <template>
   <div ref="raiz" class="@container flex flex-col gap-3">
@@ -23,7 +25,7 @@
     </nav>
 
     <div ref="cabecera" class="flex flex-col gap-3">
-      <ControlesCalendario @hoy="irAHoy" />
+      <ControlesCalendario @hoy="irAHoy" @eliminar="confirmarEliminar" />
       <LeyendaRutas />
       <Message v-if="store.error" severity="error" :closable="false">{{ store.error }}</Message>
       <Message v-if="store.datos?.truncado" severity="warn" :closable="false">Hay más salidas de las que se pueden mostrar: acote el filtro o elija menos días.</Message>
@@ -33,24 +35,31 @@
 
     <SalidaPopover ref="popover" @ver="(s) => (verSalida = s)" @cerrado="activa = null" />
     <VerSalidaDialog :salida="verSalida" @cerrar="verSalida = null" />
+    <ResultadoOperacionDialog :resultado="resultado" operacion="eliminar" @cerrar="resultado = null" />
   </div>
 </template>
 
 <script setup lang="ts">
+import { useConfirm } from 'primevue/useconfirm'
 import { useAccesoStore } from '@/core/acceso/store'
+import { notify } from '@/core/notify'
+import { eliminarSalidas } from '@/core/salida/api'
 import { aDia } from '@/core/salida/filtro'
-import type { SalidaCalendario } from '@/core/salida/types'
+import { resumen } from '@/core/salida/resultado'
+import type { ResultadoOperacion, SalidaCalendario } from '@/core/salida/types'
 import ControlesCalendario from './calendario/ControlesCalendario.vue'
 import GrillaCalendario from './calendario/GrillaCalendario.vue'
 import LeyendaRutas from './calendario/LeyendaRutas.vue'
 import SalidaPopover from './calendario/SalidaPopover.vue'
 import { useCalendarioSalidasStore } from './calendario/store'
+import ResultadoOperacionDialog from './ResultadoOperacionDialog.vue'
 import VerSalidaDialog from './VerSalidaDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
 const store = useCalendarioSalidasStore()
 const acceso = useAccesoStore()
+const confirm = useConfirm()
 
 const grilla = ref<InstanceType<typeof GrillaCalendario> | null>(null)
 const popover = ref<InstanceType<typeof SalidaPopover> | null>(null)
@@ -58,6 +67,7 @@ const raiz = ref<HTMLElement | null>(null)
 const cabecera = ref<HTMLElement | null>(null)
 const activa = shallowRef<SalidaCalendario | null>(null)
 const verSalida = shallowRef<SalidaCalendario | null>(null)
+const resultado = shallowRef<ResultadoOperacion | null>(null)
 
 /** Distancia de la grilla al borde de arriba de la ventana: la grilla ocupa el resto del alto. */
 const arriba = ref(240)
@@ -71,47 +81,70 @@ function abrir(evento: MouseEvent, s: SalidaCalendario) {
   void popover.value?.abrir(evento, s)
 }
 
-/** Vuelve al momento actual: hoy al centro del eje X y la hora al centro del Y. */
+/** Vuelve al momento actual: hoy (y los días elegidos) con la hora actual a la vista. */
 function irAHoy() {
   const hoy = aDia(new Date())
-  if (store.fecha === hoy) grilla.value?.centrar({ vertical: true, suave: true })
-  else {
-    centrarVertical = true
-    store.irA(hoy)
-  }
+  const mismoDia = store.fecha === hoy
+  store.hoy()
+  if (mismoDia) grilla.value?.centrar({ suave: true })
 }
 
-async function cargarYCentrar(vertical: boolean) {
+async function cargarYCentrar() {
   await store.cargar()
   // Con los datos pintados (la leyenda cambia el alto de arriba) se mide, y con el alto nuevo aplicado se centra.
   await nextTick()
   medir()
   await nextTick()
-  grilla.value?.centrar({ vertical })
+  grilla.value?.centrar()
+}
+
+/** Pide confirmación y elimina las seleccionadas; las que no se pudieron (con boletos, ya salieron) se listan. */
+function confirmarEliminar() {
+  const ids = [...store.seleccion]
+  if (!ids.length) return
+  confirm.require({
+    header: 'Eliminar salidas',
+    message: `${ids.length === 1 ? 'Se eliminará 1 salida' : `Se eliminarán ${ids.length} salidas`}. Las que tengan boletos o asientos apartados no se eliminan. No se puede deshacer. ¿Continuar?`,
+    acceptProps: { label: 'Eliminar', severity: 'danger' },
+    rejectProps: { label: 'Volver', severity: 'secondary', outlined: true },
+    accept: () => void eliminar(ids),
+  })
+}
+
+async function eliminar(ids: number[]) {
+  try {
+    const r = await eliminarSalidas(ids)
+    const { texto, severidad } = resumen(r, 'eliminar')
+    notify[severidad](texto)
+    if (r.omitidas.length) resultado.value = r
+    store.salirDeSeleccion()
+  } catch (e) {
+    notify.error(e instanceof Error ? e.message : 'No se pudieron eliminar las salidas.')
+  }
+  await store.cargar()
 }
 
 /** Hasta la primera carga los cambios del filtro no piden nada (la hace `onMounted`). */
 let listo = false
-/** El próximo cambio de fecha centra también el ahora en el eje Y («Hoy»). */
-let centrarVertical = false
 
-// Cualquier cambio del filtro vuelve a pedir; uno de fecha o de días, además, lleva la fecha al centro.
+// Cualquier cambio del filtro vuelve a pedir; uno de fecha o de días, además, lleva la hora a la vista.
 watch(
   () => JSON.stringify({ ...store.filtro, fecha: undefined, dias: undefined }),
   () => listo && void store.cargar(),
 )
 watch(
   () => store.dias,
-  () => listo && void cargarYCentrar(false),
+  () => listo && void cargarYCentrar(),
+)
+watch(
+  () => store.hora,
+  () => listo && void nextTick(() => grilla.value?.centrar({ suave: true })),
 )
 watch(
   () => store.fecha,
   async (fecha) => {
     void router.replace({ query: { ...route.query, fecha: fecha === aDia(new Date()) ? undefined : fecha } })
-    if (!listo) return
-    const vertical = centrarVertical
-    centrarVertical = false
-    await cargarYCentrar(vertical)
+    if (listo) await cargarYCentrar()
   },
 )
 
@@ -131,15 +164,18 @@ onMounted(async () => {
   // Las opciones (empresas) cambian el alto de los controles: antes de centrar.
   await store.cargarOpciones()
   const pedida = fechaPedida()
-  // Sin `?fecha=`, el momento actual al centro (aunque la última visita haya quedado en otra fecha).
-  store.irA(pedida ?? aDia(new Date()))
-  await cargarYCentrar(true)
+  // Sin `?fecha=`, hoy y la hora actual (aunque la última visita haya quedado en otra fecha).
+  store.hoy()
+  store.dias = 1
+  if (pedida) store.irA(pedida)
+  await cargarYCentrar()
   listo = true
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', medir)
   observador?.disconnect()
+  store.salirDeSeleccion()
   store.desactivar()
 })
 </script>

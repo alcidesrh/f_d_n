@@ -7,7 +7,7 @@
   <Dialog :visible="!!resultado" modal header="Salidas sin cambios" class="w-[min(34rem,calc(100vw-1rem))]" @update:visible="(v: boolean) => !v && emit('cerrar')">
     <div v-if="resultado" class="flex flex-col gap-4">
       <p class="m-0">{{ resumen(resultado, operacion).texto }}</p>
-      <section v-for="g in omitidasPorMotivo(resultado)" :key="g.motivo" class="flex flex-col gap-2">
+      <section v-for="g in omitidasPorMotivo(resultado, operacion)" :key="g.motivo" class="flex flex-col gap-2">
         <Message :severity="g.motivo === 'asientos' ? 'warn' : 'secondary'" :closable="false" class="!text-sm">{{ g.texto }}</Message>
         <ul class="m-0 flex list-none flex-col gap-1 p-0 text-sm">
           <li v-for="s in g.salidas" :key="s.id ?? s.fecha" class="flex flex-wrap gap-x-2">

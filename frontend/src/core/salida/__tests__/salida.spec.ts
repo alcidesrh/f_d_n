@@ -164,6 +164,15 @@ describe('resultado de una operación', () => {
     ])
   })
 
+  it('al eliminar, con asientos solo avisa que no se eliminó', () => {
+    const r: ResultadoOperacion = { aplicadas: [], omitidas: [{ ...ref(2), motivo: 'asientos', asientos: 3 }, { ...ref(3), motivo: 'estado' }] }
+    const [asientos, estado] = omitidasPorMotivo(r, 'eliminar')
+    expect(asientos!.texto).toMatch(/no se eliminó/)
+    expect(asientos!.texto).not.toMatch(/cambiar el bus/)
+    expect(estado!.motivo).toBe('estado')
+    expect(omitidasPorMotivo(r)[0]!.texto).toMatch(/cambiar el bus/)
+  })
+
   it('nada aplicado es error', () => {
     expect(resumen({ aplicadas: [], omitidas: [{ ...ref(2), motivo: 'historial' }] }, 'eliminar').severidad).toBe('error')
   })

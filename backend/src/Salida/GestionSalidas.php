@@ -35,6 +35,8 @@ final class GestionSalidas
     public const ASIENTOS = "asientos";
     public const CONFLICTO = "conflicto";
     public const HISTORIAL = "historial";
+    /** En camino o terminada: no se borra. */
+    public const ESTADO = "estado";
     /** Con asientos vendidos, el bus nuevo no tiene la misma distribución. */
     public const OTRO_CROQUIS = "otro_croquis";
 
@@ -211,6 +213,51 @@ final class GestionSalidas
 
                 return null;
             });
+        });
+    }
+
+    /**
+     * Borra varias salidas a la vez (la selección del calendario). Las que no
+     * se pueden borrar no frenan a las demás: se omiten con su motivo
+     * (`estado` si no está programada ni anulada, y las de `aplicar`).
+     *
+     * @param list<int> $ids
+     *
+     * @return array{aplicadas: list<array<string, mixed>>, omitidas: list<array<string, mixed>>}
+     */
+    public function eliminarVarias(array $ids): array
+    {
+        return $this->transaccion->ejecutar(function () use ($ids): array {
+            $salidas = $this->em->createQueryBuilder()
+                ->select("s")
+                ->from(Salida::class, "s")
+                ->where("s.id IN (:ids)")
+                ->orderBy("s.fecha", "ASC")
+                ->addOrderBy("s.id", "ASC")
+                ->setParameter("ids", $ids)
+                ->getQuery()
+                ->setLockMode(LockMode::PESSIMISTIC_WRITE)
+                ->getResult();
+            $omitidas = $objetivos = [];
+            foreach ($salidas as $s) {
+                if (in_array($s->getEstado(), [EstadoSalida::PROGRAMADA, EstadoSalida::CANCELADA], true)) {
+                    $objetivos[] = $s;
+                } else {
+                    $omitidas[] = VistaSalida::referencia($s) + ["motivo" => self::ESTADO, "estado" => $s->getEstado()->value];
+                }
+            }
+            $historial = $this->vendidos->conHistorial(array_map(static fn(Salida $s) => (int) $s->getId(), $objetivos));
+            $resultado = $this->aplicar($objetivos, function (Salida $s) use ($historial): ?array {
+                if (isset($historial[$s->getId()])) {
+                    return ["motivo" => self::HISTORIAL];
+                }
+                $this->em->remove($s);
+
+                return null;
+            });
+            $resultado["omitidas"] = [...$resultado["omitidas"], ...$omitidas];
+
+            return $resultado;
         });
     }
 

@@ -1,16 +1,17 @@
 /**
- * Estado del calendario de salidas: el filtro (la fecha del centro, cuántos
- * días, estados, empresa, ruta y bus), cómo se muestra lo ocupado, las
- * salidas de la ventana, la ruta resaltada y el reloj del «ahora». Se
- * recuerdan por usuario los días visibles, los estados y el modo de
- * ocupación. La lógica pura está en `core/salida/calendario`.
+ * Estado del calendario de salidas: el filtro (el primer día y la hora a la
+ * vista, cuántos días y la empresa), cómo se muestra lo ocupado, las salidas
+ * de la ventana, la ruta resaltada, las salidas seleccionadas (para
+ * eliminarlas) y el reloj del «ahora». Se recuerda por usuario el modo de
+ * ocupación; los días vuelven a uno (hoy) en cada visita. La lógica pura está
+ * en `core/salida/calendario`.
  */
 import { defineStore } from 'pinia'
 import { computed, ref, shallowRef } from 'vue'
 import { fetchCalendario, fetchOpciones } from '@/core/salida/api'
 import { aQueryCalendario, ESTADOS_CALENDARIO, desplazar, leyenda, matriz, type ModoOcupacion, type Ventana, ventana } from '@/core/salida/calendario'
 import { aDia } from '@/core/salida/filtro'
-import type { Calendario, EstadoSalida, OpcionesSalidas } from '@/core/salida/types'
+import type { Calendario, OpcionesSalidas } from '@/core/salida/types'
 
 /** Cada cuánto se refrescan las salidas (ocupación, estados) mientras la pantalla está abierta. */
 const REFRESCO_MS = 60_000
@@ -21,11 +22,10 @@ export const useCalendarioSalidasStore = defineStore(
   'calendario-salidas',
   () => {
     const fecha = ref(aDia(new Date()))
-    const dias = ref<Ventana>(7)
-    const estados = ref<EstadoSalida[]>([...ESTADOS_CALENDARIO])
+    /** Hora a la vista (`HH:MM`): la grilla se desplaza hasta su columna. */
+    const hora = ref(horaActual())
+    const dias = ref<Ventana>(1)
     const empresa = ref<number | null>(null)
-    const ruta = ref<number | null>(null)
-    const bus = ref<number | null>(null)
     const modo = ref<ModoOcupacion>('asientos')
 
     const opciones = shallowRef<OpcionesSalidas | null>(null)
@@ -40,7 +40,11 @@ export const useCalendarioSalidasStore = defineStore(
     const resaltadaEfectiva = computed(() => fijada.value ?? resaltada.value)
     const ahora = ref(new Date())
 
-    const filtro = computed(() => ({ fecha: fecha.value, dias: dias.value, estados: estados.value, empresa: empresa.value, ruta: ruta.value, bus: bus.value }))
+    /** Modo selección: pulsar una ficha la marca en vez de abrir su detalle. */
+    const seleccionando = ref(false)
+    const seleccion = ref<ReadonlySet<number>>(new Set())
+
+    const filtro = computed(() => ({ fecha: fecha.value, dias: dias.value, estados: ESTADOS_CALENDARIO, empresa: empresa.value, ruta: null, bus: null }))
     const columnas = computed(() => ventana(fecha.value, dias.value))
     /** Las salidas recibidas son de la ventana pedida; si se cambió el filtro y aún no llega lo nuevo, se muestran igual. */
     const celdas = computed(() => matriz(datos.value?.items ?? [], columnas.value))
@@ -50,10 +54,8 @@ export const useCalendarioSalidasStore = defineStore(
     const clases = computed(() => new Map((opciones.value?.clases ?? []).map((c) => [c.id, c.nombre])))
     const busPorId = computed(() => new Map((opciones.value?.buses ?? []).map((b) => [b.id, b])))
     const croquisPorId = computed(() => new Map((opciones.value?.croquis ?? []).map((c) => [c.id, c])))
-    /** Filtros que no son la fecha ni los días: para «Limpiar». */
-    const filtrosActivos = computed(
-      () => [empresa.value, ruta.value, bus.value].filter((v) => v !== null).length + (sonPorDefecto(estados.value) ? 0 : 1),
-    )
+    /** Las salidas que se ven en la grilla (las de los días de la ventana). */
+    const visibles = computed(() => [...celdas.value.values()].flat(2))
 
     let pedido = 0
     async function cargar(silencioso = false) {
@@ -62,7 +64,12 @@ export const useCalendarioSalidasStore = defineStore(
       error.value = ''
       try {
         const d = await fetchCalendario(aQueryCalendario(filtro.value), silencioso)
-        if (n === pedido) datos.value = d
+        if (n === pedido) {
+          datos.value = d
+          // Lo seleccionado que ya no se ve (otra ventana, eliminado) deja de estarlo.
+          const ids = new Set(visibles.value.map((s) => s.id))
+          if ([...seleccion.value].some((id) => !ids.has(id))) seleccion.value = new Set([...seleccion.value].filter((id) => ids.has(id)))
+        }
       } catch (e) {
         if (n === pedido && !silencioso) error.value = mensaje(e)
       } finally {
@@ -82,19 +89,28 @@ export const useCalendarioSalidasStore = defineStore(
     function irA(dia: string) {
       fecha.value = dia
     }
-    const hoy = () => irA(aDia(new Date()))
-    /** Mueve el centro media ventana hacia atrás (-1) o adelante (1). */
-    const mover = (sentido: -1 | 1) => irA(desplazar(fecha.value, sentido * Math.ceil(dias.value / 2)))
-
-    function alternarEstado(e: EstadoSalida) {
-      estados.value = estados.value.includes(e) ? estados.value.filter((x) => x !== e) : [...estados.value, e]
+    /** Vuelve al día y la hora actuales. */
+    function hoy() {
+      hora.value = horaActual()
+      irA(aDia(new Date()))
     }
+    /** Pasa a los `dias` anteriores (-1) o siguientes (1): la fecha se mueve otro tanto. */
+    const mover = (sentido: -1 | 1) => irA(desplazar(fecha.value, sentido * dias.value))
 
-    function limpiar() {
-      empresa.value = null
-      ruta.value = null
-      bus.value = null
-      estados.value = [...ESTADOS_CALENDARIO]
+    function alternarSeleccion(id: number) {
+      const s = new Set(seleccion.value)
+      if (!s.delete(id)) s.add(id)
+      seleccion.value = s
+    }
+    /** Todas las salidas a la vista, o ninguna si ya lo estaban. */
+    function seleccionarTodas() {
+      seleccionando.value = true
+      const ids = visibles.value.map((s) => s.id)
+      seleccion.value = ids.length && ids.every((id) => seleccion.value.has(id)) ? new Set() : new Set(ids)
+    }
+    function salirDeSeleccion() {
+      seleccionando.value = false
+      seleccion.value = new Set()
     }
 
     let reloj: ReturnType<typeof setInterval> | null = null
@@ -114,12 +130,12 @@ export const useCalendarioSalidasStore = defineStore(
 
     return {
       fecha,
+      hora,
       dias,
-      estados,
       empresa,
-      ruta,
-      bus,
       modo,
+      seleccionando,
+      seleccion,
       opciones,
       datos,
       cargando,
@@ -137,19 +153,22 @@ export const useCalendarioSalidasStore = defineStore(
       clases,
       busPorId,
       croquisPorId,
-      filtrosActivos,
+      visibles,
       cargar,
       cargarOpciones,
       irA,
       hoy,
       mover,
-      alternarEstado,
-      limpiar,
+      alternarSeleccion,
+      seleccionarTodas,
+      salirDeSeleccion,
       activar,
       desactivar,
     }
   },
-  { persist: { pick: ['dias', 'estados', 'modo'] } },
+  { persist: { pick: ['modo'] } },
 )
 
-const sonPorDefecto = (e: EstadoSalida[]) => e.length === ESTADOS_CALENDARIO.length && ESTADOS_CALENDARIO.every((x) => e.includes(x))
+function horaActual(d = new Date()): string {
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
