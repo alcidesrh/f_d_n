@@ -33,7 +33,7 @@ const props = withDefaults(
     lg?: boolean;
     xl?: boolean;
   }>(),
-  { size: "1.5rem", weight: undefined, color: "" },
+  { size: "1.2rem", weight: undefined, color: "" },
 );
 
 const attrs = useAttrs();
