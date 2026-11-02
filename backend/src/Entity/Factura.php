@@ -38,8 +38,8 @@ class Factura {
     private ?int $id = null;
 
     /** Número del DTE (hasta 10 dígitos). */
-    #[ORM\Column(type: 'bigint')]
-    private int|string|null $dte = null;
+    #[ORM\Column(type: 'bigint_texto')]
+    private ?string $dte = null;
 
     #[ORM\Column(type: 'uuid')]
     private ?Uuid $uuid = null;
@@ -105,11 +105,21 @@ class Factura {
         return $this->id;
     }
 
-    public function getDte(): ?int {
+    /**
+     * Número del DTE como texto: la API lo expone como String porque GraphQL `Int`
+     * es de 32 bits y el DTE puede tener hasta 10 dígitos. Para salidas y cálculos
+     * numéricos internos, usar numeroDte().
+     */
+    public function getDte(): ?string {
+        return $this->dte;
+    }
+
+    /** El número del DTE como entero (para PDF, Excel y JSON que lo muestran como número). */
+    public function numeroDte(): ?int {
         return $this->dte !== null ? (int) $this->dte : null;
     }
 
-    public function setDte(int $dte): static {
+    public function setDte(string $dte): static {
         $this->dte = $dte;
 
         return $this;

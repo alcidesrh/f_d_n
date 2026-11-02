@@ -24,7 +24,7 @@
     left: 0;
     /*border-right: var(--border);*/
     border-top-right-radius: 6px;
-    /*box-shadow: var(--shadow);*/
+    box-shadow: var(--shadow);
   }
 
   &.right {
@@ -32,7 +32,7 @@
     /*border-left: var(--border);*/
     border-top-left-radius: 6px;
     right: 0;
-    /*box-shadow: var(--shadow-r);*/
+    box-shadow: var(--shadow-r);
   }
 
   @variant lg {
@@ -168,6 +168,9 @@
 .menu-item {
   position: relative;
   z-index: 9;
+  &:hover {
+    background-color: var(--p-surface-50);
+  }
 }
 
 .menu-link {
@@ -179,9 +182,7 @@
   color: var(--text-color);
   text-decoration: none;
   white-space: nowrap;
-  &:hover {
-    background-color: var(--p-surface-100);
-  }
+
   /* Ítem cuya ruta es la actual (RouterLink pone la clase y aria-current="page"). */
   &.router-link-exact-active {
     background-color: color-mix(in srgb, var(--p-primary-color) 12%, transparent);

@@ -142,7 +142,7 @@ final class ListadoBoletos
             ],
             "factura" => $factura === null ? null : [
                 "serie" => $factura->getSerie(),
-                "numero" => $factura->getDte(),
+                "numero" => $factura->numeroDte(),
                 "uuid" => $factura->getUuid()?->toRfc4122(),
                 "certificada" => $factura->getFechaCertificacion()?->format(DATE_ATOM),
                 "receptorNit" => $factura->getReceptopNit(),
@@ -168,7 +168,7 @@ final class ListadoBoletos
         return match (true) {
             $v->isVoucher() => "voucher",
             $v->isCortesia() => "cortesia",
-            $v->getFactura()?->getDte() !== null => "factura",
+            $v->getFactura()?->numeroDte() !== null => "factura",
             $v->getEstadoFacturacion() === EstadoFacturacion::PENDIENTE => "pendiente",
             $v->getAgencia() !== null => "agencia",
             default => "sin_factura",
@@ -351,7 +351,7 @@ final class ListadoBoletos
             "documento" => [
                 "tipo" => self::documento($venta),
                 "serie" => $factura?->getSerie(),
-                "numero" => $factura?->getDte(),
+                "numero" => $factura?->numeroDte(),
             ],
             "ruta" => trim(sprintf("%s - %s", $ruta->getLegacyId() ?? "", $ruta->getNombre()), " -"),
             "sube" => $b->getTrayecto()->getOrigen()?->getNombre(),

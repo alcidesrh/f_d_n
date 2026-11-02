@@ -478,7 +478,7 @@ final class Abordaje
             "documento" => match (true) {
                 $venta->isVoucher() => "Voucher",
                 $venta->isCortesia() => "Cortesía",
-                $factura !== null => trim(sprintf("%s %s", $factura->getSerie(), $factura->getDte())),
+                $factura !== null => trim(sprintf("%s %s", $factura->getSerie(), $factura->numeroDte())),
                 $venta->getAgencia() !== null => sprintf("Agencia %s", $venta->getAgencia()->getNombre()),
                 $venta->getCanal() === CanalVenta::WEB => "Página web",
                 default => null,

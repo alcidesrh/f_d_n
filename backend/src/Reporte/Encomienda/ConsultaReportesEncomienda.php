@@ -278,7 +278,7 @@ final class ConsultaReportesEncomienda
                 $e->getTotal()->getCurrency()->getCode(),
                 $e->getBoletoVenta()?->getId(),
                 $f?->getSerie(),
-                $f?->getDte(),
+                $f?->numeroDte(),
                 $f?->isAnulada() ?? false,
                 $e->getNumeroAcceso(),
                 $e->getEstadoFacturacion()->value,

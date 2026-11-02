@@ -4,3 +4,14 @@
 @import "datatable.css";
 @import "toolbar.css";
 @import "select.css";
+
+/*.panel,
+fieldset {
+  background-color: white;
+  padding: 15px;
+}
+.panel {
+  border: var(--border);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+}*/

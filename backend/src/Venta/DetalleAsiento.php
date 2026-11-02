@@ -124,7 +124,7 @@ final class DetalleAsiento
                 "estadoFacturacion" => $venta->getEstadoFacturacion()->value,
                 "factura" => $factura === null ? null : [
                     "serie" => $factura->getSerie(),
-                    "numero" => $factura->getDte(),
+                    "numero" => $factura->numeroDte(),
                     "nit" => $factura->getReceptopNit(),
                     "nombre" => $factura->getReceptorNombre(),
                     "urlPdf" => $factura->getUrlPdf(),

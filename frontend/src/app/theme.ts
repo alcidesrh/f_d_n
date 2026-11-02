@@ -191,7 +191,7 @@ export const themeColors = (primaryName: PrimaryColor, surfaceName: SurfacePalet
         },
         content: {
           background: "{surface.0}",
-          hoverBackground: "{surface.200}",
+          hoverBackground: "{surface.100}",
           borderColor: "{surface.300}",
           color: "{text.color}",
           hoverColor: "{text.hover.color}",
@@ -564,6 +564,13 @@ export const componentsPreset = (): Tokens => {
         borderRadius: "{overlay.select.border.radius}",
         color: "{overlay.select.color}",
         shadow: "{overlay.select.shadow}",
+      },
+    },
+    fieldset: {
+      legend: {
+        font: {
+          weight: 400,
+        },
       },
     },
   };

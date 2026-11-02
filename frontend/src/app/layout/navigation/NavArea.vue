@@ -7,10 +7,10 @@
   <NavMenuBar v-if="area === 'topbar_right'" :menus="menus" />
   <template v-else>
     <template v-for="menu in menus" :key="menu.id">
-      <section class="nav-section">
-        <button v-if="menus.length > 1 && !sidebar?.compact" type="button" class="nav-section-title py-5!" @click="toggle(menu.id)" :class="{ 'bg-susrface-100': opened.has(menu.id) }">
+      <section class="nav-section" :class="{ open: opened.has(menu.id) }">
+        <button v-if="menus.length > 1 && !sidebar?.compact" type="button" class="nav-section-title py-2!" @click="toggle(menu.id)">
           <icon :weight="200" :name="!opened.has(menu.id) ? 'add' : 'remove'" size="1rem" />
-          <span :class="{ 'text-surface-600': opened.has(menu.id) }">{{ menu.nombre }}</span>
+          <span>{{ menu.nombre }}</span>
         </button>
         <Transition :css="false" @enter="onEnter" @leave="onLeave">
           <div v-if="sidebar && (sidebar.compact || menus.length < 2 || opened.has(menu.id))">
@@ -18,7 +18,7 @@
           </div>
         </Transition>
       </section>
-      <divider class="my-0! before:border-surface-300!"
+      <divider class="my-4! before:border-surface-300!"
     /></template>
 
     <slot v-if="!menus.length" name="empty" />
@@ -49,7 +49,7 @@ function onEnter(el: Element, done: () => void) {
       height: "auto",
       opacity: 1,
       duration: 0.3,
-      ease: "power2.out",
+      ease: "sine.out",
       clearProps: "height,overflow,opacity",
       onComplete: done,
     },
@@ -60,8 +60,8 @@ function onLeave(el: Element, done: () => void) {
     height: 0,
     opacity: 0,
     overflow: "hidden",
-    duration: 0.22,
-    ease: "power2.in",
+    duration: 0.25,
+    ease: "sine.out",
     onComplete: done,
   });
 }
@@ -82,16 +82,20 @@ function onLeave(el: Element, done: () => void) {
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--p-surface-500);
+  color: var(--p-surface-600);
   /* Una sola línea: si se partiera al angostarse el panel, empujaría al menú a mitad de la animación. */
   white-space: nowrap;
+}
+
+.nav-section.open > .nav-section-title {
+  color: var(--p-surface-400);
+  box-shadow: 0px 4.5px 6px var(--p-surface-200);
+  position: relative;
+  z-index: 90;
 }
 .nav-section-title > span {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-.nav-section-title:hover {
-  background-color: var(--p-surface-100);
 }
 </style>

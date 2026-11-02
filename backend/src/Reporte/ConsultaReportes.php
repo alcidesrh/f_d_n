@@ -244,7 +244,7 @@ final class ConsultaReportes
                 (int) $b->getAsiento()->getNumero(),
                 $factura?->getId(),
                 $factura?->getSerie(),
-                $factura?->getDte(),
+                $factura?->numeroDte(),
                 $venta->getEstadoFacturacion()->value,
                 $venta->getCanal() === CanalVenta::WEB || stripos((string) $venta->getTipoPago()?->getNombre(), "tarjeta") !== false,
                 $autorizacion !== null && $autorizacion !== "" ? $autorizacion : null,

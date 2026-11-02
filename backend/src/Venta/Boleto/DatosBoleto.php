@@ -91,7 +91,7 @@ final class DatosBoleto
             "agencia" => $venta->getAgencia()?->getNombre(),
             "vendedor" => $venta->getUsuario()?->getUsername(),
             "factura" => $factura === null ? null : [
-                "numero" => $factura->getDte(),
+                "numero" => $factura->numeroDte(),
                 "serie" => $factura->getSerie(),
                 "uuid" => strtoupper((string) $factura->getUuid()?->toRfc4122()),
                 "fechaCertificacion" => ($factura->getFechaCertificacion() ?? $factura->getFecha())?->format(DATE_ATOM),

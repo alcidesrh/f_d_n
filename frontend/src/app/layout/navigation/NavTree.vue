@@ -6,11 +6,11 @@
 -->
 <template>
   <ul class="sidebar-menu nav-tree @container" :class="{ 'nav-tree--nested': depth > 0 }">
-    <li v-for="item in items" :key="item.id" class="menu-item @max-[60px]:last:pb-0 last:pb-8 py-2">
+    <li v-for="(item, i) in items" :key="item.id" class="menu-item py-2" :class="{ s: i == items.length - 1 }">
       <div class="nav-row" :class="{ 'nav-row--mini': compact }">
         <template v-if="!compact">
-          <button v-if="item.children.length" type="button" class="nav-toggle" :style="toggleIndent" :aria-expanded="expanded.has(item.id)" :title="expanded.has(item.id) ? 'Contraer' : 'Desplegar'" @click="toggle(item.id)">
-            <icon class="submenu-toggle-icon" :name="expanded.has(item.id) ? 'remove' : 'add'" size="0.9rem" />
+          <button v-if="item.children.length" type="button" class="nav-toggle" :style="toggleIndent" :aria-expanded="expanded.has(item.id)">
+            <icon class="submenu-toggle-icon" :name="expanded.has(item.id) ? 'remove' : 'add'" size="0.93rem" :weight="300" />
           </button>
           <span v-else class="nav-toggle nav-toggle--spacer" :style="toggleIndent" aria-hidden="true" />
         </template>
@@ -240,9 +240,7 @@ const toggle = (id: number) => props.sidebar.toggleItem(id);
 .nav-toggle--spacer:hover {
   background: none;
 }
-.nav-toggle:not(.nav-toggle--spacer):hover {
-  background-color: var(--p-surface-100);
-}
+
 .nav-disabled {
   opacity: 0.5;
   cursor: not-allowed;

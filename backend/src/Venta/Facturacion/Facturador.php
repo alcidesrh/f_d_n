@@ -64,7 +64,7 @@ final class Facturador
     private function factura(SolicitudDte $solicitud, DteCertificado $dte): Factura
     {
         return (new Factura())
-            ->setDte($dte->numero)
+            ->setDte((string) $dte->numero)
             ->setUuid(Uuid::fromString($dte->uuid))
             ->setSerie($dte->serie)
             ->setFecha(\DateTime::createFromImmutable($solicitud->fechaEmision))

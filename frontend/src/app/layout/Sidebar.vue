@@ -14,7 +14,7 @@
         </button>
       </div>
     </div>
-    <nav class="mt-3">
+    <nav class="mt-5">
       <slot name="menu-content"> </slot>
     </nav>
   </aside>

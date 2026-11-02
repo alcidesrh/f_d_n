@@ -126,7 +126,7 @@ final class DatosEncomienda
     public static function factura(?Factura $f): ?array
     {
         return $f === null ? null : [
-            "numero" => $f->getDte(),
+            "numero" => $f->numeroDte(),
             "serie" => $f->getSerie(),
             "uuid" => strtoupper((string) $f->getUuid()?->toRfc4122()),
             "fechaCertificacion" => ($f->getFechaCertificacion() ?? $f->getFecha())?->format(DATE_ATOM),

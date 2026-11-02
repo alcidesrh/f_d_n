@@ -1,6 +1,8 @@
 doctrine:
     dbal:
         default_connection: default
+        types:
+            bigint_texto: App\Doctrine\Type\BigintTextoType
         connections:
             default:
                 # configure these for your database server

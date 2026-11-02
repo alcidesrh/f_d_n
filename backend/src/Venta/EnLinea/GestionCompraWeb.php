@@ -202,7 +202,7 @@ final class GestionCompraWeb
                 }
                 $factura = $this->facturador->certificar($v, reemision: true);
                 $this->em->flush();
-                $resultado[] = ["venta" => (int) $v->getId(), "factura" => ["serie" => $factura->getSerie(), "numero" => $factura->getDte()], "error" => null];
+                $resultado[] = ["venta" => (int) $v->getId(), "factura" => ["serie" => $factura->getSerie(), "numero" => $factura->numeroDte()], "error" => null];
             } catch (CertificacionFallida $e) {
                 if ($v->getFactura()?->isAnulada()) {
                     // La anterior ya no vale y la nueva no salió: queda por certificar (la reintenta el cron).

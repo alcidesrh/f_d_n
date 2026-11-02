@@ -16,8 +16,8 @@
 
         <div class="lp-story">
           <p class="lp-eyebrow">Plataforma de operación</p>
-          <h2 class="lp-headline">Cada salida, cada asiento,<br />cada encomienda.</h2>
-          <p class="lp-lead">Venta en taquilla y en línea, salidas, encomiendas y seguimiento de la flota, en un mismo lugar para todas las empresas del grupo.</p>
+          <h2 class="lp-headline">Más de 50 años,<br />abriendo caminos.</h2>
+          <p class="lp-lead">Sistema de gestión administrativa, logística y operativa para Transportes Fuentes del Norte. Acceso restringido para personal ajeno a la empresa.</p>
 
           <div class="lp-progreso">
             <span v-for="(foto, i) in FOTOS" :key="foto" class="lp-barra" :class="{ activa: i === actual }" />
@@ -189,10 +189,7 @@ async function handleSubmit(credentials: { username: string; password: string },
   position: absolute;
   inset: 0;
   z-index: -1;
-  background:
-    linear-gradient(180deg, rgb(6 10 20 / 0.55) 0%, rgb(6 10 20 / 0.1) 35%, rgb(6 10 20 / 0.9) 100%),
-    linear-gradient(90deg, rgb(6 10 20 / 0.5) 0%, transparent 70%),
-    radial-gradient(120% 80% at 0% 100%, color-mix(in srgb, var(--p-primary-500) 35%, transparent), transparent 60%);
+  background: linear-gradient(180deg, rgb(6 10 20 / 0.55) 0%, rgb(6 10 20 / 0.1) 35%, rgb(6 10 20 / 0.9) 100%), linear-gradient(90deg, rgb(6 10 20 / 0.5) 0%, transparent 70%), radial-gradient(120% 80% at 0% 100%, color-mix(in srgb, var(--p-primary-500) 35%, transparent), transparent 60%);
 }
 .lp-visual-inner {
   display: flex;
@@ -247,6 +244,18 @@ async function handleSubmit(credentials: { username: string; password: string },
   @media (min-width: 64rem) {
     display: block;
   }
+  & > li > img {
+    width: 100px;
+    height: 100%;
+  }
+}
+.lp-logos {
+  display: flex;
+  justify-content: space-around;
+  & > li > img {
+    width: 100px;
+    height: 100%;
+  }
 }
 .lp-story {
   max-width: 32rem;
@@ -268,13 +277,14 @@ async function handleSubmit(credentials: { username: string; password: string },
   line-height: 1.08;
   letter-spacing: -0.025em;
   text-wrap: balance;
+  /*opacity: 0.78;*/
 }
 .lp-lead {
   margin: 1.1rem 0 0;
   max-width: 28rem;
-  font-size: 0.98rem;
+  font-size: 1rem;
   line-height: 1.65;
-  opacity: 0.78;
+  opacity: 0.88;
 }
 .lp-progreso {
   display: flex;
@@ -315,7 +325,7 @@ async function handleSubmit(credentials: { username: string; password: string },
     height: 1.6rem;
     width: auto;
     filter: brightness(0) invert(1);
-    opacity: 0.7;
+    /*opacity: 0.7;*/
     transition: opacity 0.2s;
     &:hover {
       opacity: 1;
@@ -334,9 +344,7 @@ async function handleSubmit(credentials: { username: string; password: string },
   margin-top: -1.5rem;
   padding: 2.25rem 1rem 1.5rem;
   border-radius: 1.5rem 1.5rem 0 0;
-  background:
-    radial-gradient(60% 40% at 100% 0%, color-mix(in srgb, var(--p-primary-color) 7%, transparent), transparent),
-    var(--p-surface-0);
+  background: radial-gradient(60% 40% at 100% 0%, color-mix(in srgb, var(--p-primary-color) 7%, transparent), transparent), var(--p-surface-0);
   @media (min-width: 64rem) {
     justify-content: center;
     margin-top: 0;

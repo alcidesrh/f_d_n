@@ -274,7 +274,7 @@ final class AnulacionBoletos
             $factura = $this->facturador->certificar($venta);
             $this->em->flush();
 
-            return ["venta" => $ventaId, "factura" => ["serie" => $factura->getSerie(), "numero" => $factura->getDte()], "error" => null];
+            return ["venta" => $ventaId, "factura" => ["serie" => $factura->getSerie(), "numero" => $factura->numeroDte()], "error" => null];
         } catch (CertificacionFallida $e) {
             $venta->setErrorFacturacion($e->getMessage());
             $this->em->flush();

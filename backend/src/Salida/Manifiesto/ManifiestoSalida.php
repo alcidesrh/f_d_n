@@ -73,7 +73,7 @@ final class ManifiestoSalida
             match (true) {
                 $venta->isVoucher() => "Voucher",
                 $venta->isCortesia() => "Cortesía",
-                $factura !== null => trim(sprintf("%s %s", $factura->getSerie(), $factura->getDte())),
+                $factura !== null => trim(sprintf("%s %s", $factura->getSerie(), $factura->numeroDte())),
                 default => null,
             },
             $b->getAsiento()->getNumero(),
