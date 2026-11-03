@@ -22,3 +22,10 @@ export const ORIGEN_COORDENADA: Record<string, string> = {
   catalogo: 'Ubicación aproximada (por nombre)',
   departamento: 'Ubicación aproximada (centro del departamento)',
 }
+
+const horaSegundos = new Intl.DateTimeFormat('es-GT', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
+const diaCorto = new Intl.DateTimeFormat('es-GT', { weekday: 'short', day: 'numeric', month: 'short' })
+
+export const horaSegundosDe = (epochSeg: number): string => horaSegundos.format(new Date(epochSeg * 1000))
+
+export const diaDe = (epochSeg: number): string => diaCorto.format(new Date(epochSeg * 1000))

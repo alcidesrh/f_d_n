@@ -370,6 +370,17 @@ export const router = createRouter({
       },
     },
     {
+      path: "/seguimiento/reproducir",
+      name: "seguimiento-reproducir",
+      component: () => import("@/features/seguimiento/ReproduccionPage.vue"),
+      meta: {
+        capacidad: "salida.ver",
+        title: "Reproducir trayectorias GPS",
+        label: "Trayectorias GPS",
+        icon: "replay",
+      },
+    },
+    {
       path: "/salidas/programar",
       name: "salidas-programar",
       component: () => import("@/features/salida/ProgramadorPage.vue"),

@@ -93,3 +93,45 @@ export interface FiltroSeguimiento {
   /** Solo los buses con lectura GPS vigente (si no, también los simulados). */
   soloGps: boolean
 }
+
+/** Lectura GPS guardada (ADR-050): `[instante, lat, lng, velocidadKmh, rumbo]`. */
+export type PuntoGps = [number, number, number, number, number]
+
+/** Salida con lecturas GPS guardadas (`GET /api/seguimiento/trayectorias`). */
+export interface SalidaConTrayectoria {
+  salidaId: number
+  estadoSistema: string
+  empresaId: number
+  empresa: string
+  bus: string
+  placa: string | null
+  ruta: string
+  rutaNombre: string
+  origen: string
+  destino: string
+  partida: number
+  /** Hora programada en la última parada. */
+  llegadaProgramada: number | null
+  lecturas: number
+  primera: number | null
+  ultima: number | null
+}
+
+export interface RespuestaTrayectorias {
+  fecha: string
+  salidas: SalidaConTrayectoria[]
+  /** Salidas del día sin lecturas GPS. */
+  sinGps: number
+}
+
+/** Trayectoria de una salida para reproducirla (`GET /api/seguimiento/salidas/{id}/trayectoria`). */
+export interface Trayectoria extends SalidaConTrayectoria {
+  piloto: string | null
+  /** Lapso del que se tomaron las lecturas del bus (epoch). */
+  desde: number
+  hasta: number
+  /** Ruta planificada; vacía si sus estaciones no se pudieron ubicar. */
+  trazado: [number, number][]
+  estaciones: EstacionMapa[]
+  puntos: PuntoGps[]
+}

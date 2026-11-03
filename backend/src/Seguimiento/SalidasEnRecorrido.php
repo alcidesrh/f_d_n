@@ -62,6 +62,24 @@ class SalidasEnRecorrido
             ->orderBy('s.fecha')
             ->getQuery()
             ->getResult();
+        $paradas = $this->paradas($salidas);
+
+        $out = [];
+        foreach ($salidas as $s) {
+            $out[] = ['salida' => $s, 'kilometros' => (float) $s->getRuta()->getKilometros(), 'paradas' => $paradas[$s->getId()] ?? []];
+        }
+
+        return $out;
+    }
+
+    /**
+     * Paradas de cada salida (enclaves en el orden de su horario), en el formato de `TrazadoDeRuta::trazar()`.
+     *
+     * @param list<Salida> $salidas
+     * @return array<int, list<array{id: int, nombre: string, latitude: mixed, longitude: mixed, departamento: ?string}>> por id de salida
+     */
+    public function paradas(array $salidas): array
+    {
         if ([] === $salidas) {
             return [];
         }
@@ -90,7 +108,7 @@ class SalidasEnRecorrido
                     $paradas[] = $enclaves[$id];
                 }
             }
-            $out[] = ['salida' => $s, 'kilometros' => (float) $s->getRuta()->getKilometros(), 'paradas' => $paradas];
+            $out[(int) $s->getId()] = $paradas;
         }
 
         return $out;

@@ -9,6 +9,7 @@ use App\Chat\Predeterminado\Tarea\RevisarAnomalias;
 use App\Chat\Tarea\PurgarArchivosChat;
 use App\Reporte\Diario\EnviarReportesDiarios;
 use App\Salida\Horizonte\ExtenderHorizontes;
+use App\Seguimiento\Tarea\PurgarLecturasGps;
 use App\Sincronizacion\SincronizarLegado;
 use App\Tablero\Tarea\RefrescarTablero;
 use App\Venta\Facturacion\CertificarPendientes;
@@ -42,6 +43,7 @@ enum Tarea: string
     case MENSAJES_PREDETERMINADOS = 'mensajes_predeterminados';
     case REVISAR_ANOMALIAS = 'revisar_anomalias';
     case REFRESCAR_TABLERO = 'refrescar_tablero';
+    case PURGAR_LECTURAS_GPS = 'purgar_lecturas_gps';
 
     public const COLA_TAREAS = 'tareas';
     public const COLA_PESADAS = 'pesadas';
@@ -59,6 +61,7 @@ enum Tarea: string
             self::MENSAJES_PREDETERMINADOS => 'Enviar los mensajes predeterminados de hora y de salidas iniciadas',
             self::REVISAR_ANOMALIAS => 'Revisar las anomalías del día anterior (reasignaciones y tarifas)',
             self::REFRESCAR_TABLERO => 'Rehacer el tablero de gestión que alguien está mirando',
+            self::PURGAR_LECTURAS_GPS => 'Borrar las lecturas GPS de más de 90 días',
         };
     }
 
@@ -70,7 +73,7 @@ enum Tarea: string
             self::MENSAJES_PREDETERMINADOS => '5 minutes',
             self::CERTIFICAR_PENDIENTES => '10 minutes',
             self::VIGILAR_OPERACION => '30 minutes',
-            self::HORIZONTE_SALIDAS, self::REPORTES_DIARIOS, self::PURGAR_ARCHIVOS_CHAT, self::REVISAR_ANOMALIAS => '1 day',
+            self::HORIZONTE_SALIDAS, self::REPORTES_DIARIOS, self::PURGAR_ARCHIVOS_CHAT, self::REVISAR_ANOMALIAS, self::PURGAR_LECTURAS_GPS => '1 day',
         };
     }
 
@@ -84,6 +87,7 @@ enum Tarea: string
             // De madrugada: lejos de la venta y antes de que abran las taquillas.
             self::HORIZONTE_SALIDAS => '01:30',
             self::PURGAR_ARCHIVOS_CHAT => '03:15',
+            self::PURGAR_LECTURAS_GPS => '03:45',
             self::REVISAR_ANOMALIAS => '02:30',
             self::REPORTES_DIARIOS => $horaReportes,
             default => null,
@@ -97,7 +101,7 @@ enum Tarea: string
             self::PURGAR_VENTA, self::SINCRONIZAR_LEGADO, self::REFRESCAR_TABLERO => '15 minutes',
             self::CERTIFICAR_PENDIENTES, self::MENSAJES_PREDETERMINADOS => '1 hour',
             self::VIGILAR_OPERACION => '2 hours',
-            self::HORIZONTE_SALIDAS, self::REPORTES_DIARIOS, self::PURGAR_ARCHIVOS_CHAT, self::REVISAR_ANOMALIAS => '26 hours',
+            self::HORIZONTE_SALIDAS, self::REPORTES_DIARIOS, self::PURGAR_ARCHIVOS_CHAT, self::REVISAR_ANOMALIAS, self::PURGAR_LECTURAS_GPS => '26 hours',
         };
     }
 
@@ -114,6 +118,7 @@ enum Tarea: string
             self::MENSAJES_PREDETERMINADOS => new EnviarMensajesPredeterminados(),
             self::REVISAR_ANOMALIAS => new RevisarAnomalias(),
             self::REFRESCAR_TABLERO => new RefrescarTablero(),
+            self::PURGAR_LECTURAS_GPS => new PurgarLecturasGps(),
         };
     }
 }

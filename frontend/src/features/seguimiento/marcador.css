@@ -1,0 +1,19 @@
+.bus-marker-body {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--c);
+  border: 2px solid #fff;
+  box-shadow: 0 1px 6px rgb(0 0 0 / 0.45);
+}
+.bus-marker-body.is-still {
+  opacity: 0.8;
+}
+.bus-marker-body.is-active {
+  width: 40px;
+  height: 40px;
+  margin: -3px;
+  outline: 3px solid color-mix(in srgb, var(--c) 45%, transparent);
+}

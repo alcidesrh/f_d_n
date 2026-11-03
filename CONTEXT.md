@@ -280,6 +280,14 @@ Modelo: nuevo (`Bitacora`)
 son reportes que se generan en formato pdf. Ya existen el **interno** (por lugar de emisión, con importes) y el **del piloto** (por asiento, con nacionalidad y firmas), desde "Ver/PDF" en `/salidas` (`GET /api/gestion-salidas/{id}/manifiesto/{interno|piloto}`, permiso `salida.ver`); los demás siguen en el legado.
 Modelo: nuevo (interno, piloto) / legacy (resto)
 
+## Seguimiento
+
+**Trayectoria** (GPS):
+Por dónde fue un bus en una salida según las lecturas que envió su GPS, para reproducirla en el mapa. Cada **lectura GPS** (instante, posición, velocidad y rumbo) se guarda por bus, y la salida se reconoce por su horario: de media hora antes de su hora a tres horas después de su llegada programada, sin entrar en la siguiente salida del bus. Se conserva 90 días.
+_Avoid_: recorrido, rastro, ruta
+Modelo: nuevo (`LecturaGps`; la trayectoria es concepto, `App\Seguimiento\Trayectorias`, ADR-050)
+Evitar (modelo): recorrido, ruta
+
 ## Usuarios y accesos
 
 **Usuario**:

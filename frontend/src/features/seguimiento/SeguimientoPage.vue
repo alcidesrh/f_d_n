@@ -11,6 +11,7 @@
   y vuelve a empezar desde la lectura siguiente).
   Interruptor "Nombres de enclaves": chip con el nombre junto a cada punto (si no, solo al pasar el cursor).
   Maximizar (o Esc para salir): filtros, mapa y lista cubren toda la pantalla.
+  Un bus con GPS ofrece «Reproducir lo recorrido»: su trayectoria guardada en `/seguimiento/reproducir` (ADR-050).
 -->
 <template>
   <div class="@container flex flex-col gap-4" :class="maximizado ? 'fixed inset-0 z-[900] overflow-auto bg-surface-0 p-3' : ''">
@@ -99,6 +100,10 @@
             <dt class="text-muted-color">Ruta</dt>
             <dd class="m-0">{{ seleccionado.rutaNombre }}</dd>
           </dl>
+          <RouterLink v-if="seleccionado.posicion.fuente === 'gps'" :to="{ name: 'seguimiento-reproducir', query: { salida: seleccionado.salidaId } }" class="flex items-center gap-1 self-start text-xs font-medium text-primary">
+            <icon name="replay" sm />
+            Reproducir lo recorrido
+          </RouterLink>
         </article>
 
         <ul class="m-0 flex list-none flex-col gap-1.5 p-0" :class="maximizado ? '' : 'max-h-[28rem] overflow-y-auto'" aria-label="Buses en recorrido">
@@ -129,6 +134,7 @@ import { posicionEn, proximaParada } from "@/core/seguimiento/posicion";
 import type { BusEnRecorrido, FiltroSeguimiento, PosicionEstimada, RespuestaSeguimiento } from "@/core/seguimiento/types";
 import { HttpError } from "@/core/http";
 import { colorEmpresa } from "./colores";
+import { iconoBus } from "./marcador";
 import { ETIQUETA_ESTADO, ORIGEN_COORDENADA, duracion, horaDe } from "./formato";
 
 const REFRESCO_MS = 30_000;
@@ -174,16 +180,7 @@ const seleccionado = computed<BusEnRecorrido | null>(() => visibles.value.find((
 const seleccionadoPos = computed(() => (seleccionado.value ? (estimadas.value.get(seleccionado.value.salidaId) ?? null) : null));
 const seleccionadoProxima = computed(() => (seleccionado.value ? proximaParada(seleccionado.value, ahora.value) : null));
 
-function iconoBus(b: BusEnRecorrido, p: PosicionEstimada, activo: boolean): L.DivIcon {
-  const color = colorEmpresa(b.empresaId, b.empresa);
-  const quieto = p.estado !== "en_ruta";
-  return L.divIcon({
-    className: "bus-marker",
-    iconSize: [34, 34],
-    iconAnchor: [17, 17],
-    html: `<div class="bus-marker-body${activo ? " is-active" : ""}${quieto ? " is-still" : ""}" style="--c:${color}"><svg viewBox="0 0 24 24" width="22" height="22" style="transform:rotate(${p.rumbo.toFixed(0)}deg)" aria-hidden="true"><path d="M12 2 19 21 12 17 5 21Z" fill="#fff"/></svg></div>`,
-  });
-}
+const iconoDe = (b: BusEnRecorrido, p: PosicionEstimada, activo: boolean): L.DivIcon => iconoBus(colorEmpresa(b.empresaId, b.empresa), p.rumbo, { activo, quieto: p.estado !== "en_ruta" });
 
 const escapar = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
@@ -267,7 +264,7 @@ function sincronizarBuses() {
   for (const b of visibles.value) {
     if (marcadores.has(b.salidaId)) continue;
     const p = estimadas.value.get(b.salidaId) ?? posicionEn(b, ahora.value);
-    const m = L.marker(posicionEnArco(b, p, arcoDe(b)), { icon: iconoBus(b, p, false), keyboard: true, title: `${b.origen} → ${b.destino} (${b.empresa})`, zIndexOffset: 100 });
+    const m = L.marker(posicionEnArco(b, p, arcoDe(b)), { icon: iconoDe(b, p, false), keyboard: true, title: `${b.origen} → ${b.destino} (${b.empresa})`, zIndexOffset: 100 });
     m.on("click", () => elegir(b.salidaId, false));
     m.addTo(capaBuses);
     marcadores.set(b.salidaId, m);
@@ -284,7 +281,7 @@ function animar() {
     const m = marcadores.get(b.salidaId);
     if (m) {
       m.setLatLng(posicionEnArco(b, p, arcoDe(b)));
-      m.setIcon(iconoBus(b, p, b.salidaId === seleccionadoId.value));
+      m.setIcon(iconoDe(b, p, b.salidaId === seleccionadoId.value));
     }
   }
   estimadas.value = nuevas;
@@ -439,24 +436,5 @@ onBeforeUnmount(() => {
 .mapa-maximizado .mapa-buses {
   height: 100%;
   min-height: 18rem;
-}
-.bus-marker-body {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: var(--c);
-  border: 2px solid #fff;
-  box-shadow: 0 1px 6px rgb(0 0 0 / 0.45);
-}
-.bus-marker-body.is-still {
-  opacity: 0.8;
-}
-.bus-marker-body.is-active {
-  width: 40px;
-  height: 40px;
-  margin: -3px;
-  outline: 3px solid color-mix(in srgb, var(--c) 45%, transparent);
 }
 </style>
