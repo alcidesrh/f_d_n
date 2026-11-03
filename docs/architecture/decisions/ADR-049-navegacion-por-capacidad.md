@@ -33,7 +33,7 @@ La ruta del frontend lo declara en `meta`:
 
 El frontend (`puedeEntrar`, guard del router) y el backend (`App\Navigation\Pantalla`) interpretan esos mismos datos, sin nombres de ruta fijos.
 
-La sincronización de rutas (`POST /api/vue-routes/sync`, `config.editar`) los guarda en `VueRoute.capacidades` y `VueRoute.recurso`. Responde las capacidades que no están en el catálogo (`capacidadesDesconocidas`; esas pantallas no las abre nadie) y el navegador las avisa en consola. La dispara el shell al entrar quien tiene `config.editar`, ya con sesión. Antes la disparaba `main.ts` en el arranque, a menudo sin sesión, y fallaba en silencio.
+La sincronización de rutas (`POST /api/vue-routes/sync`, `config.editar`) los guarda en `VueRoute.capacidades` y `VueRoute.recurso`. Responde las capacidades que no están en el catálogo (`capacidadesDesconocidas`; esas pantallas no las abre nadie) y el navegador las avisa en consola. La dispara el shell al entrar quien tiene `config.editar`, ya con sesión. Antes la disparaba `main.ts` en el arranque, a menudo sin sesión, y fallaba en silencio. Un lote en el que ninguna ruta trae `capacidad` ni `recurso` viene de un navegador con la versión anterior (la PWA espera a que acepten la nueva): se actualizan nombres, paths y parámetros, pero se conserva lo que exige cada pantalla. Las sincronizaciones van de una en una (cerrojo de PostgreSQL). Antes, dos simultáneas creaban dos veces la misma ruta nueva, y solo una recibía lo que exige la pantalla. Si quedó alguna repetida bajo el mismo padre, la sincronización la junta con la más antigua: le pasa sus ítems de menú y sus hijas, y la borra.
 
 ### Poda en el backend
 

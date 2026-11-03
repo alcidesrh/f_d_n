@@ -139,6 +139,16 @@ final class PantallaTest extends TestCase
         $this->assertNull(VueRouteSynchronizer::recurso('entity'));
     }
 
+    public function testUnLoteSinExigenciasEsDeLaVersionAnteriorYNoLasBorra(): void
+    {
+        $viejo = [['name' => 'inicio', 'path' => '/'], ['name' => 'config', 'path' => '/configuracion', 'children' => [['name' => 'menus', 'path' => 'menus']]]];
+        $this->assertFalse(VueRouteSynchronizer::declaraExigencias($viejo));
+        $this->assertFalse(VueRouteSynchronizer::declaraExigencias([]));
+
+        $this->assertTrue(VueRouteSynchronizer::declaraExigencias([...$viejo, ['name' => 'venta', 'path' => '/venta', 'capacidad' => ['venta.vender']]]));
+        $this->assertTrue(VueRouteSynchronizer::declaraExigencias([['name' => 'config', 'path' => '/configuracion', 'children' => [['name' => 'lista', 'path' => 'lista/:entity?', 'recurso' => ['parametro' => 'entity', 'operacion' => 'ver']]]]]));
+    }
+
     public function testLaAudienciaSoloAcota(): void
     {
         $rol = (new Role())->setNombre('ROLE_GERENTE')->setId(2);

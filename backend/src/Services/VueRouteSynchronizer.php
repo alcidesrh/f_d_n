@@ -6,7 +6,9 @@ namespace App\Services;
 
 use App\Acceso\Catalogo\Catalogo;
 use App\Acceso\Catalogo\DefinicionRecurso;
+use App\Entity\MenuItem;
 use App\Entity\VueRoute;
+use App\Venta\Transaccion;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
@@ -14,15 +16,22 @@ use Doctrine\ORM\EntityManagerInterface;
  * path, parámetros obligatorios y lo que exige cada pantalla (`capacidad`,
  * `recurso`; ADR-049). Las que ya no están se borran (y con ellas los ítems
  * de menú que llevaban a ellas).
+ *
+ * Una sincronización a la vez (cerrojo de PostgreSQL): dos simultáneas (dos
+ * pestañas, el shell al entrar) creaban la misma ruta nueva dos veces.
  */
 final class VueRouteSynchronizer
 {
     /** @var list<string> códigos que el router exige y no están en el catálogo */
     private array $desconocidas = [];
 
+    /** El lote trae lo que exige cada pantalla; si no, se conserva lo guardado. */
+    private bool $conExigencias = true;
+
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly Catalogo $catalogo,
+        private readonly Transaccion $transaccion,
     ) {}
 
     /**
@@ -36,11 +45,26 @@ final class VueRouteSynchronizer
         return $this->desconocidas;
     }
 
-    public function sync(array $routes, ?VueRoute $parent = null): array
+    /** @return list<string> nombres de las rutas de primer nivel */
+    public function sync(array $routes): array
     {
-        if ($parent === null) {
-            $this->desconocidas = [];
-        }
+        $this->desconocidas = [];
+        $this->conExigencias = self::declaraExigencias($routes);
+
+        $nombres = $this->transaccion->ejecutar(function () use ($routes): array {
+            $this->entityManager->getConnection()->executeQuery("SELECT pg_advisory_xact_lock(hashtext('vue_route'))");
+
+            return $this->sincronizar($routes, null);
+        });
+        $this->desconocidas = array_values(array_unique($this->desconocidas));
+        sort($this->desconocidas);
+
+        return $nombres;
+    }
+
+    /** @return list<string> */
+    private function sincronizar(array $routes, ?VueRoute $parent): array
+    {
         $existingByParent = $this->getExistingByParent($parent);
         $handledNames = [];
 
@@ -62,17 +86,13 @@ final class VueRouteSynchronizer
                     $this->entityManager->flush();
                 }
 
-                $this->sync($route['children'], $entity);
+                $this->sincronizar($route['children'], $entity);
             }
         }
 
         $this->deleteRemoved($existingByParent, $handledNames);
 
         $this->entityManager->flush();
-        if ($parent === null) {
-            $this->desconocidas = array_values(array_unique($this->desconocidas));
-            sort($this->desconocidas);
-        }
 
         return $handledNames;
     }
@@ -103,6 +123,9 @@ final class VueRouteSynchronizer
     private function aplicarExigencias(VueRoute $entity, array $route): void
     {
         $entity->setParams(self::extractParams($route['path'] ?? ''));
+        if (!$this->conExigencias) {
+            return;
+        }
         $capacidades = self::capacidades($route['capacidad'] ?? null);
         $recurso = self::recurso($route['recurso'] ?? null);
         $entity->setCapacidades($capacidades);
@@ -112,6 +135,20 @@ final class VueRouteSynchronizer
                 $this->desconocidas[] = $codigo;
             }
         }
+    }
+
+    /**
+     * Si alguna ruta del árbol trae `capacidad` o `recurso`. Un navegador con la
+     * versión anterior del frontend (la PWA no se actualiza sola) manda las
+     * rutas sin ellas: aplicarlas dejaría todas las pantallas sin exigencias
+     * hasta la próxima sincronización. El router actual siempre declara alguna.
+     */
+    public static function declaraExigencias(array $routes): bool
+    {
+        return array_any($routes, static fn(mixed $ruta) => is_array($ruta) && (
+            isset($ruta['capacidad']) || isset($ruta['recurso'])
+            || (is_array($ruta['children'] ?? null) && self::declaraExigencias($ruta['children']))
+        ));
     }
 
     /**
@@ -184,19 +221,37 @@ final class VueRouteSynchronizer
      */
     private function getExistingByParent(?VueRoute $parent): array
     {
-        $repository = $this->entityManager->getRepository(VueRoute::class);
-
-        $routes = $repository->findBy(['vueRoute' => $parent]);
-
         $result = [];
-        foreach ($routes as $route) {
+        foreach ($this->entityManager->getRepository(VueRoute::class)->findBy(['vueRoute' => $parent], ['id' => 'ASC']) as $route) {
             $name = $route->getVueRouteName();
-            if ($name !== null) {
-                $result[$name] = $route;
+            if ($name === null) {
+                continue;
             }
+            if (isset($result[$name])) {
+                $this->fusionar($route, $result[$name]);
+                continue;
+            }
+            $result[$name] = $route;
         }
 
         return $result;
+    }
+
+    /**
+     * Una ruta repetida bajo el mismo padre (de sincronizaciones simultáneas,
+     * antes del cerrojo): solo una recibía lo que exige la pantalla y los
+     * ítems de menú de la otra se veían sin exigir nada. Sus ítems y sus hijas
+     * pasan a la que se conserva (la más antigua) y se borra.
+     */
+    private function fusionar(VueRoute $repetida, VueRoute $conservada): void
+    {
+        $this->entityManager->createQuery('UPDATE ' . MenuItem::class . ' i SET i.route = :conservada WHERE i.route = :repetida')
+            ->execute(['conservada' => $conservada, 'repetida' => $repetida]);
+        foreach ($repetida->getHijos() as $hija) {
+            $hija->setVueRoute($conservada);
+        }
+        $this->entityManager->remove($repetida);
+        $this->entityManager->flush();
     }
 
     /**
