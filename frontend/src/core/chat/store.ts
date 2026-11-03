@@ -283,6 +283,20 @@ export const useChatStore = defineStore('chat', () => {
     }
   }
 
+  /** Fija (o quita) un grupo para mí. Igual que `fijar`: se muestra al instante y vuelve atrás si falla. */
+  async function fijarGrupo(id: number, fijado: boolean) {
+    const anterior = canales.value
+    const marcar = (valor: boolean) => (canales.value = canales.value.map((c) => (c.id === id ? { ...c, fijado: valor } : c)))
+    marcar(fijado)
+    try {
+      const r = fijado ? await api.fijarGrupo(id) : await api.desfijarGrupo(id)
+      marcar(r.fijado)
+    } catch (e) {
+      canales.value = anterior
+      throw e
+    }
+  }
+
   /** Conversación directa con un usuario (la crea si no existe); devuelve su id. */
   async function directo(usuario: number) {
     const existente = canales.value.find((c) => c.tipo === 'directo' && c.contacto?.id === usuario)
@@ -343,6 +357,6 @@ export const useChatStore = defineStore('chat', () => {
 
   return {
     yo, canales, mensajes, completos, contactos, contactosOrdenados, recursos, activo, listo, enVivo, enLinea, fijados, entrante, noLeidos, estaEnLinea,
-    canal, iniciar, detener, salirDeLinea, refrescar, cargar, abrir, cerrar, cargarAnteriores, leer, enviar, cargarContactos, fijar, cargarRecursos, directo, grupo, editarGrupo, salirDeGrupo, fotoGrupo, compartir, reenviar, eliminar,
+    canal, iniciar, detener, salirDeLinea, refrescar, cargar, abrir, cerrar, cargarAnteriores, leer, enviar, cargarContactos, fijar, fijarGrupo, cargarRecursos, directo, grupo, editarGrupo, salirDeGrupo, fotoGrupo, compartir, reenviar, eliminar,
   }
 })

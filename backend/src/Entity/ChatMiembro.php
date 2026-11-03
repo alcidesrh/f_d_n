@@ -41,6 +41,10 @@ class ChatMiembro
     #[ORM\Column(options: ["default" => false])]
     private bool $emisor = false;
 
+    /** Quien es miembro fijó este grupo: va primero en su bandeja. Personal; al salir del grupo se pierde. */
+    #[ORM\Column(options: ["default" => false])]
+    private bool $fijado = false;
+
     public function __construct(ChatCanal $canal, Usuario $usuario, ?ChatCanal $via = null)
     {
         $this->canal = $canal;
@@ -96,6 +100,16 @@ class ChatMiembro
     public function esEmisor(): bool
     {
         return $this->emisor;
+    }
+
+    public function esFijado(): bool
+    {
+        return $this->fijado;
+    }
+
+    public function setFijado(bool $fijado): void
+    {
+        $this->fijado = $fijado;
     }
 
     public function setEmisor(bool $emisor): void

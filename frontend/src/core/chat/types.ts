@@ -46,6 +46,8 @@ export interface Canal {
   modo: ModoGrupo | null
   /** Solo los grupos: quien lo creó y lo edita. */
   dueno: number | null
+  /** Solo los grupos: lo fijé yo (va primero en mi bandeja). Los directos se fijan por persona, en `Bandeja.fijados`. */
+  fijado: boolean
   /** Puedo editar el grupo (nombre, modo, miembros). */
   administro: boolean
   /** Puedo escribir (falso en los avisos del sistema y en un dirigido si no soy emisor). */

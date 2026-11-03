@@ -325,7 +325,7 @@ Chat interno: `directo` (dos usuarios, una por par) o `grupo` (con nombre). Una 
 _Avoid_: grupo de WhatsApp
 Modelo: nuevo
 **Contacto fijado** (`ChatContactoFijado`):
-Persona que un usuario fija en el chat: va primero en su bandeja y en sus listas de personas, antes que las que están en línea y que el resto. Es personal (nadie más lo ve) y no exige una conversación.
+Persona que un usuario fija en el chat: va primero en su bandeja y en sus listas de personas, antes que las que están en línea y que el resto. Es personal (nadie más lo ve) y no exige una conversación. Un **grupo** también se fija, por cada miembro (`ChatMiembro.fijado`): va primero en la bandeja de quien lo fijó, con los contactos fijados, y al salir del grupo el fijado se pierde.
 _Avoid_: favorito, anclado
 Modelo: nuevo
 **Mensaje predeterminado** (`MensajePredeterminado`):

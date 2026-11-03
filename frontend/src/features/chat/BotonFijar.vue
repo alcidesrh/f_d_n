@@ -1,5 +1,5 @@
 <!--
-  Fija o quita a una persona en los primeros lugares del chat (bandeja y listas).
+  Fija o quita a una persona o a un grupo en los primeros lugares del chat.
   Junto a la fila, oculto hasta que se pasa el puntero (siempre visible si está
   fijada o con dedo, que no tiene puntero): el contenedor de la fila lo muestra.
 -->
@@ -9,7 +9,7 @@
     class="fijar"
     :class="{ 'fijar--on': fijado }"
     :aria-pressed="fijado"
-    :aria-label="`${fijado ? 'Quitar de fijados a' : 'Fijar a'} ${nombre}`"
+    :aria-label="`${fijado ? 'Quitar de fijados:' : 'Fijar:'} ${nombre}`"
     v-tooltip.left="fijado ? 'Quitar de fijados' : 'Fijar arriba'"
     @click="emit('alternar')"
   >

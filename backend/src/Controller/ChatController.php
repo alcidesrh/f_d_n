@@ -209,6 +209,20 @@ final class ChatController extends AbstractController
         return $this->responder(fn() => ["sigue" => $this->chat->salirDeGrupo($yo, $this->chat->canal($id, $yo))]);
     }
 
+    /** Fija un grupo para `$yo` → `{ fijado: true }`. */
+    #[Route("/canales/{id<\d+>}/fijar", name: "grupo_fijar", methods: ["POST"])]
+    public function fijarGrupo(int $id, #[CurrentUser] Usuario $yo): JsonResponse
+    {
+        return $this->responder(fn() => ["fijado" => $this->chat->fijarGrupo($yo, $this->chat->canal($id, $yo), true)]);
+    }
+
+    /** Quita el fijado de un grupo → `{ fijado: false }`. */
+    #[Route("/canales/{id<\d+>}/fijar", name: "grupo_desfijar", methods: ["DELETE"])]
+    public function desfijarGrupo(int $id, #[CurrentUser] Usuario $yo): JsonResponse
+    {
+        return $this->responder(fn() => ["fijado" => $this->chat->fijarGrupo($yo, $this->chat->canal($id, $yo), false)]);
+    }
+
     /** Multipart, campo `foto`: la foto del grupo (cualquier miembro). */
     #[Route("/canales/{id<\d+>}/foto", name: "grupo_foto", methods: ["POST"])]
     public function fotoGrupo(int $id, Request $request, #[CurrentUser] Usuario $yo): JsonResponse

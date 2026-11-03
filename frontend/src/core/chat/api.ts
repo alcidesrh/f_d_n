@@ -13,6 +13,10 @@ export const fetchContactos = () => http.get<Perfil[]>(`${BASE}/contactos`, fond
 /** Fija o quita a una persona; devuelve los ids fijados tras el cambio. */
 export const fijarContacto = (usuario: number) => http.post<{ fijados: number[] }>(`${BASE}/contactos/${usuario}/fijar`, {})
 export const desfijarContacto = (usuario: number) => http.delete<{ fijados: number[] }>(`${BASE}/contactos/${usuario}/fijar`)
+
+/** Fija o quita un grupo para mí; devuelve si quedó fijado. */
+export const fijarGrupo = (canal: number) => http.post<{ fijado: boolean }>(`${BASE}/canales/${canal}/fijar`, {})
+export const desfijarGrupo = (canal: number) => http.delete<{ fijado: boolean }>(`${BASE}/canales/${canal}/fijar`)
 export const fetchRecursos = () => http.get<Recurso[]>(`${BASE}/recursos`, fondo)
 export const fetchToken = () => http.get<{ token: string; topico: string }>(`${BASE}/token`, fondo)
 

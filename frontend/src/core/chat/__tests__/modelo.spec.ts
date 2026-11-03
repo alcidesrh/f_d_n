@@ -15,6 +15,7 @@ const canal = (id: number, extra: Partial<Canal> = {}): Canal => ({
   miembros: [ana, beto].map((p) => ({ ...p, via: null, emisor: false })),
   modo: null,
   dueno: null,
+  fijado: false,
   administro: false,
   puedeEscribir: true,
   subgrupos: [],
@@ -201,5 +202,13 @@ describe('ordenarBandeja', () => {
   it('sin fijados ni presencia, conserva el orden de actividad', () => {
     const bandeja = [canal(3, { tipo: 'grupo', contacto: null }), canal(1), canal(2, { contacto: ana })]
     expect(ordenarBandeja(bandeja, [], []).map((c) => c.id)).toEqual([3, 1, 2])
+  })
+
+  it('un grupo fijado va antes que quien está en línea; entre fijados manda la actividad', () => {
+    const grupoFijado = canal(5, { tipo: 'grupo', nombre: 'Petén', contacto: null, fijado: true })
+    const otroFijado = canal(6, { tipo: 'grupo', nombre: 'Flores', contacto: null, fijado: true })
+    const bandeja = [canal(1), canal(7, { tipo: 'grupo', nombre: 'Otro', contacto: null }), grupoFijado, otroFijado]
+    // Beto (1) está en línea; los dos grupos fijados (5, 6) van antes, por su orden de actividad.
+    expect(ordenarBandeja(bandeja, [], [2]).map((c) => c.id)).toEqual([5, 6, 1, 7])
   })
 })

@@ -47,7 +47,8 @@
               </span>
             </span>
           </button>
-          <BotonFijar v-if="c.contacto" :fijado="chat.fijados.includes(c.contacto.id)" :nombre="c.contacto.nombre" @alternar="alternarFijado(c.contacto.id)" />
+          <BotonFijar v-if="c.tipo === 'grupo'" :fijado="c.fijado" :nombre="c.nombre" @alternar="alternarFijadoGrupo(c.id, !c.fijado)" />
+          <BotonFijar v-else-if="c.contacto" :fijado="chat.fijados.includes(c.contacto.id)" :nombre="c.contacto.nombre" @alternar="alternarFijado(c.contacto.id)" />
         </div>
 
         <template v-if="busqueda">
@@ -116,6 +117,14 @@ async function abrirCon(usuario: number) {
 async function alternarFijado(usuario: number) {
   try {
     await chat.fijar(usuario, !chat.fijados.includes(usuario));
+  } catch (e) {
+    notify.error(e instanceof Error ? e.message : String(e));
+  }
+}
+
+async function alternarFijadoGrupo(canal: number, fijado: boolean) {
+  try {
+    await chat.fijarGrupo(canal, fijado);
   } catch (e) {
     notify.error(e instanceof Error ? e.message : String(e));
   }

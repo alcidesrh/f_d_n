@@ -120,6 +120,24 @@ final class Conversaciones
         return $this->fijados($yo);
     }
 
+    /**
+     * Fija (o quita) un grupo para `$yo`: va primero en su bandeja. Es personal
+     * (en `ChatMiembro`), así que dejar el grupo también quita el fijado.
+     *
+     * @return bool el grupo queda fijado
+     */
+    public function fijarGrupo(Usuario $yo, ChatCanal $canal, bool $fijar): bool
+    {
+        if ($canal->getTipo() !== TipoCanalChat::Grupo) {
+            throw new ChatRechazado("Solo los grupos se fijan por conversación; a una persona se la fija desde su nombre.");
+        }
+        $miembro = $canal->miembro($yo) ?? throw new ChatRechazado("Conversación no encontrada.", 404);
+        $miembro->setFijado($fijar);
+        $this->em->flush();
+
+        return $miembro->esFijado();
+    }
+
     /** @return array<string, mixed> `{ yo, canales, fijados }`, el de actividad más reciente primero */
     public function bandeja(Usuario $yo): array
     {
@@ -799,6 +817,8 @@ final class Conversaciones
             "miembros" => array_values($miembros),
             "modo" => $c->getModo()?->value,
             "dueno" => $grupo ? $c->getCreadoPor()?->getId() : null,
+            // Solo los grupos: lo fijó `$yo` (los directos se fijan por persona, ver `fijados`).
+            "fijado" => $grupo && ($c->miembro($yo)?->esFijado() ?? false),
             "administro" => $c->administra($yo),
             "puedeEscribir" => $c->puedeEscribir($yo),
             "subgrupos" => array_values(array_map(fn(ChatSubgrupo $s) => [

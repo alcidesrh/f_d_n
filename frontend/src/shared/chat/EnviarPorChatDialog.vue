@@ -85,12 +85,13 @@ const titulo = computed(() => (props.mensaje ? 'Reenviar mensaje' : props.refere
 const etiqueta = (tipo: string) => (tipo === 'BoletoAsiento' ? 'Boleto' : tipo.replace(/([a-z])([A-Z])/g, '$1 $2'))
 
 /**
- * Grupos y conversaciones recientes primero; luego el resto del directorio.
- * Entre las personas, las fijadas y las que están en línea van antes (`ordenarContactos`).
+ * Grupos (los fijados primero) y conversaciones recientes; luego el resto del
+ * directorio. Entre las personas, las fijadas y las que están en línea van antes (`ordenarContactos`).
  */
 const destinos = computed<Destino[]>(() => {
   const grupos = chat.canales
     .filter((c) => c.tipo === 'grupo' && c.puedeEscribir)
+    .sort((a, b) => Number(b.fijado) - Number(a.fijado))
     .map((c) => ({ clave: `c${c.id}`, id: c.id, nombre: c.nombre, detalle: `Grupo · ${c.miembros.length} miembros`, grupo: true, ambito: null, foto: c.foto ?? null }))
   const recientes = chat.canales.filter((c) => c.tipo === 'directo' && c.contacto).map((c) => c.contacto!.id)
   const orden = new Map(recientes.map((id, i) => [id, i]))

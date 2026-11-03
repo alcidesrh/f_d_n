@@ -12,7 +12,7 @@ export const guiasChat: Guia[] = [
     pasos: [
       'Abra «Mensajes» (el icono de la cabecera o el menú).',
       'Busque a una persona o a una conversación en el buscador de arriba.',
-      'Para tener a alguien siempre primero, fíjelo con el pin a la derecha de su fila. Las personas en línea van antes que las demás.',
+      'Para tener a una persona o a un grupo siempre primero, fíjelo con el pin a la derecha de su fila. Las personas en línea van antes que las demás.',
       'Escriba en el campo de abajo y envíe con Enter (o con el botón de enviar).',
       'Para hablar con varias personas a la vez, cree una conversación de grupo desde la bandeja y elija a sus miembros. Después, el botón de la cabecera del grupo pone o quita su foto.',
     ],

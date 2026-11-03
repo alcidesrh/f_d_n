@@ -200,11 +200,16 @@ export function ordenarContactos<T extends { id: number }>(contactos: readonly T
 }
 
 /**
- * Bandeja: primero las conversaciones directas con alguien fijado, después
- * con alguien en línea y luego el resto, en el orden de actividad que trae.
- * Los grupos no son contactos: van con el resto.
+ * Bandeja: primero lo fijado (personas y grupos), después las conversaciones
+ * directas con alguien en línea y luego el resto. Dentro de cada lugar manda
+ * el orden de actividad que trae. Los grupos no son contactos: sin fijar,
+ * van con el resto.
  */
 export function ordenarBandeja(canales: readonly Canal[], fijados: readonly number[], enLinea: readonly number[]): Canal[] {
-  const lugar = (c: Canal) => (c.tipo === 'directo' && c.contacto ? prioridad(c.contacto.id, fijados, enLinea) : 0)
+  const lugar = (c: Canal) => {
+    if (c.tipo === 'grupo') return c.fijado ? 2 : 0
+    if (c.tipo === 'directo' && c.contacto) return prioridad(c.contacto.id, fijados, enLinea)
+    return 0
+  }
   return [...canales].sort((a, b) => lugar(b) - lugar(a))
 }
