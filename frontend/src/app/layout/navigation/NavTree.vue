@@ -195,9 +195,9 @@ const toggle = (id: number) => props.sidebar.toggleItem(id);
 <style scoped>
 .sidebar-menu {
   background-color: white;
-  & > * {
+  /*& > * {
     background-color: var(--bg2);
-  }
+  }*/
 }
 .nav-tree--nested {
   padding: 0;

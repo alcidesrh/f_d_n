@@ -6,9 +6,9 @@
 <template>
   <NavMenuBar v-if="area === 'topbar_right'" :menus="menus" />
   <template v-else>
-    <template v-for="menu in menus" :key="menu.id">
+    <div class="border-b border-b-surface-300" v-for="menu in menus" :key="menu.id">
       <section class="nav-section" :class="{ open: opened.has(menu.id) }">
-        <button v-if="menus.length > 1 && !sidebar?.compact" type="button" class="nav-section-title py-2!" @click="toggle(menu.id)">
+        <button v-if="menus.length > 1 && !sidebar?.compact" type="button" class="nav-section-title py-6!" @click="toggle(menu.id)">
           <icon :weight="200" :name="!opened.has(menu.id) ? 'add' : 'remove'" size="1rem" />
           <span>{{ menu.nombre }}</span>
         </button>
@@ -18,8 +18,8 @@
           </div>
         </Transition>
       </section>
-      <divider class="my-4! before:border-surface-300!"
-    /></template>
+      <!-- <divider class="my-4! before:border-surface-300!"/> -->
+    </div>
 
     <slot v-if="!menus.length" name="empty" />
   </template>
@@ -86,12 +86,17 @@ function onLeave(el: Element, done: () => void) {
   /* Una sola línea: si se partiera al angostarse el panel, empujaría al menú a mitad de la animación. */
   white-space: nowrap;
 }
-
+.nav-section.open > div > .sidebar-menu.nav-tree {
+  /*box-shadow: 0px 0px 8px 0px var(--p-surface-700) inset;*/
+}
 .nav-section.open > .nav-section-title {
   color: var(--p-surface-400);
-  box-shadow: 0px 4.5px 6px var(--p-surface-200);
+  box-shadow: 0px 6.5px 14px var(--p-surface-300);
   position: relative;
   z-index: 90;
+}
+.nav-section.open > div {
+  padding-top: 0.5rem;
 }
 .nav-section-title > span {
   min-width: 0;
