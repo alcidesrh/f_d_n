@@ -86,7 +86,7 @@ function onLeave(el: Element, done: () => void) {
   white-space: nowrap;
 }
 .nav-section.open {
-  background-color: color-mix(in hsl, var(--p-surface-200) 20%, var(--p-surface-100) 50%);
+  background-color: color-mix(in hsl, var(--p-surface-200) 20%, var(--p-surface-100) 70%);
 }
 .nav-section.open > .nav-section-title {
   position: relative;

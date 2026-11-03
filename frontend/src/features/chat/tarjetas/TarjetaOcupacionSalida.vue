@@ -38,7 +38,6 @@
         </div>
       </div>
     </div>
-    <p v-if="d.filas.length" class="m-0 text-xs text-muted-color">Asientos ocupados por categoría; Anulados, los boletos que se anularon. Se solapan: el total es A + B.</p>
   </div>
 </template>
 

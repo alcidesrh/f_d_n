@@ -27,16 +27,16 @@
   --bm-occupied-stroke: color-mix(in srgb, var(--p-blue-800, #0d9488) 65%, var(--p-content-background));
   --bm-occupied-ink: var(--p-blue-800, #115e59);*/
 
-  --bm-occupied: color-mix(in srgb, var(--p-emerald-400, #10b981) 30%, var(--p-content-background));
-  --bm-occupied-stroke: color-mix(in srgb, var(--p-emerald-700, #059669) 80%, var(--p-content-background));
+  --bm-occupied: color-mix(in srgb, var(--p-emerald-500, #10b981) 30%, var(--p-content-background));
+  --bm-occupied-stroke: color-mix(in srgb, var(--p-emerald-6s00, #059669) 80%, var(--p-content-background));
   --bm-occupied-ink: var(--p-emerald-800, #065f46);
 
-  --bm-sold-agency: color-mix(in srgb, var(--p-blue-400, #14b8a6) 22%, var(--p-content-background));
-  --bm-sold-agency-stroke: color-mix(in srgb, var(--p-blue-700, #0d9488) 65%, var(--p-content-background));
+  --bm-sold-agency: color-mix(in srgb, var(--p-blue-500, #14b8a6) 22%, var(--p-content-background));
+  --bm-sold-agency-stroke: color-mix(in srgb, var(--p-blue-600, #0d9488) 65%, var(--p-content-background));
   --bm-sold-agency-ink: var(--p-blue-800, #115e59);
 
-  --bm-sold-web: color-mix(in srgb, var(--p-amber-400, #fbbf24) 20%, var(--p-content-background));
-  --bm-sold-web-stroke: color-mix(in srgb, var(--p-amber-700, #d97706) 78%, var(--p-content-background));
+  --bm-sold-web: color-mix(in srgb, var(--p-amber-500, #fbbf24) 20%, var(--p-content-background));
+  --bm-sold-web-stroke: color-mix(in srgb, var(--p-amber-600, #d97706) 78%, var(--p-content-background));
   --bm-sold-web-ink: var(--p-amber-800, #92400e);
 
   --bm-courtesy: color-mix(in srgb, var(--p-lime-500, #84cc16) 26%, var(--p-content-background));
@@ -62,7 +62,7 @@
   --bm-hull-border: color-mix(in srgb, var(--p-text-color) 16%, var(--p-content-background));
   --bm-floor: color-mix(in srgb, var(--p-text-color) 3.5%, var(--p-content-background));
   --bm-aisle: color-mix(in srgb, var(--p-text-color) 12%, transparent);
-  --bm-glass: color-mix(in srgb, var(--p-sky-400, #38bdf8) 28%, var(--p-content-background));
+  --bm-glass: color-mix(in srgb, var(--p-sky-500, #38bdf8) 28%, var(--p-content-background));
 }
 
 /*
