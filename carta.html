@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Carta de Libramiento de Fondos</title>
+    <style>
+      @page {
+        size: letter;
+        margin: 25mm 20mm 25mm 20mm;
+      }
+
+      body {
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        color: #2b2b2b;
+        line-height: 1.6;
+        font-size: 11pt;
+        background-color: #f9f9f9;
+        margin: 0;
+        padding: 20px;
+      }
+
+      .paper {
+        background: #ffffff;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 50px 60px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+        box-sizing: border-box;
+      }
+
+      .header {
+        border-bottom: 2px solid #1e3a8a;
+        padding-bottom: 15px;
+        margin-bottom: 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+      }
+
+      .company-name {
+        font-size: 18pt;
+        font-weight: bold;
+        color: #1e3a8a;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .company-sub {
+        font-size: 9pt;
+        color: #64748b;
+      }
+
+      .meta-date {
+        text-align: right;
+        font-size: 10pt;
+        color: #475569;
+        margin-bottom: 25px;
+      }
+
+      .recipient {
+        margin-bottom: 25px;
+      }
+
+      .recipient-title {
+        font-weight: bold;
+        color: #0f172a;
+      }
+
+      .subject {
+        background-color: #f1f5f9;
+        border-left: 4px solid #1e3a8a;
+        padding: 10px 15px;
+        font-weight: bold;
+        margin-bottom: 25px;
+        color: #0f172a;
+      }
+
+      p {
+        margin-bottom: 15px;
+        text-align: justify;
+      }
+
+      .details-box {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        font-size: 10pt;
+      }
+
+      .details-box th {
+        background-color: #f8fafc;
+        color: #334155;
+        text-align: left;
+        padding: 8px 12px;
+        border: 1px solid #cbd5e1;
+        width: 35%;
+      }
+
+      .details-box td {
+        padding: 8px 12px;
+        border: 1px solid #cbd5e1;
+        color: #0f172a;
+      }
+
+      .statement {
+        font-weight: bold;
+        color: #0f172a;
+      }
+
+      .signature-area {
+        margin-top: 60px;
+        page-break-inside: avoid;
+      }
+
+      .signature-line {
+        width: 250px;
+        border-top: 1px solid #475569;
+        margin-bottom: 8px;
+      }
+
+      .signer-title {
+        font-weight: bold;
+        color: #0f172a;
+      }
+
+      .signer-info {
+        font-size: 9.5pt;
+        color: #475569;
+      }
+
+      @media print {
+        body {
+          background: none;
+          padding: 0;
+        }
+        .paper {
+          box-shadow: none;
+          border: none;
+          padding: 0;
+          max-width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="paper">
+      <div class="header">
+        <div>
+          <div class="company-name">Transportes Rosita,Sociedad Anónima</div>
+          <div class="company-sub">Servicio al Cliente y Gestión de Pagos</div>
+        </div>
+      </div>
+
+      <div class="meta-date">Guatemala, 2 de noviembre de 2026</div>
+
+      <div class="recipient">
+        <div class="recipient-title">Señores</div>
+        <div>de Coopealianza</div>
+        <div>Departamento de Autorizaciones / Tarjetas de Crédito y Débito</div>
+      </div>
+
+      <div class="subject">
+        ASUNTO: Constancia de No Reclamación de Fondos y Solicitud de Desbloqueo
+        de Autorización
+      </div>
+
+      <p>Estimados Señores:</p>
+
+      <p>
+        Por medio de la presente, nos dirigimos a ustedes en representación de
+        <strong>Transportes Rosita, S.A.</strong> para certificar que el cliente
+        <strong>Maria Rocio</strong>, titular de la tarjeta terminada en los
+        últimos cuatro dígitos <strong>3522</strong>, intentó realizar un pago
+        en línea en nuestra plataforma, el cual
+        <strong>NO fue completado exitosamente</strong> y concluyó en estado
+        <strong>RECHAZADO</strong>.
+      </p>
+
+      <p>
+        A continuación, detallamos la información del intento de transacción
+        registrado en nuestra pasarela de pagos (Cybersource):
+      </p>
+
+      <table class="details-box">
+        <tr>
+          <th>Nombre del Tarjetahabiente:</th>
+          <td>Maria Rocio</td>
+        </tr>
+        <tr>
+          <th>Tarjeta:</th>
+          <td>**** **** **** 3522</td>
+        </tr>
+        <tr>
+          <th>Fecha y Hora del Intento:</th>
+          <td>Nov 01 2026 01:42:23 PM CST</td>
+        </tr>
+        <tr>
+          <th>Monto de la Transacción:</th>
+          <td>450 USD</td>
+        </tr>
+        <tr>
+          <th>Estado / Respuesta Pasarela:</th>
+          <td>
+            Código 203: Rechazo. La tarjeta fue rechazada de manera general. El
+            banco emisor no proporcionó ninguna otra información. Solicite una
+            tarjeta diferente u otra forma de pago.
+          </td>
+        </tr>
+        <tr>
+          <th>ID de Transacción / Request ID:</th>
+          <td>7935621430136594303858</td>
+        </tr>
+      </table>
+      <p class="statement">
+        <mark
+          >Anexamos documentos emitidos por Cybersource con esta información o
+          otros detalles.</mark
+        >
+      </p>
+
+      <p class="statement">
+        Hacemos constar de manera explícita que Transportes Rosita, S.A. no ha
+        capturado, no ha abonado a sus cuentas ni reclamará en el presente o en
+        el futuro importe alguno derivado de esta transacción fallida.
+      </p>
+
+      <p>
+        Por tal motivo, solicitamos atentamente al banco emisor proceder con el
+        <strong
+          >desbloqueo o liberación inmediata de la retención de fondos</strong
+        >
+        que pueda estar afectando el saldo disponible del tarjetahabiente.
+      </p>
+
+      <p>
+        Agradeciendo de antemano su atención a la presente, quedamos a su
+        disposición para cualquier verificación adicional.
+      </p>
+
+      <div class="signature-area">
+        <div class="signature-line"></div>
+        <div class="signer-title">Carlos Humberto Loyo Ramirez</div>
+        <div class="signer-info">Gerente</div>
+        <div class="signer-info">Transportes Rosita, S.A.</div>
+        <div class="signer-info">Teléfono: +502 4739 7438</div>
+        <div class="signer-info">
+          Correo:contacto@transportesfuentedelnorte.com
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

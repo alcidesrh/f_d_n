@@ -91,6 +91,34 @@ final class PlanDeViaje
         return new Posicion($destino->lat, $destino->lng, 0.0, 0.0, $destino->km, Posicion::LLEGO, $instante);
     }
 
+    /**
+     * Km del recorrido en el punto del trazado más cercano a (lat, lng): para
+     * ubicar en la ruta una lectura GPS. Proyección plana por tramo, que a
+     * estas distancias basta.
+     */
+    public function kmMasCercano(float $lat, float $lng): float
+    {
+        $mejorKm = 0.0;
+        $mejorDistancia = INF;
+        $coseno = cos(deg2rad($lat));
+        for ($i = 1, $n = count($this->paradas); $i < $n; $i++) {
+            $a = $this->paradas[$i - 1];
+            $b = $this->paradas[$i];
+            $dx = ($b->lng - $a->lng) * $coseno;
+            $dy = $b->lat - $a->lat;
+            $largo = $dx * $dx + $dy * $dy;
+            $f = $largo > 0 ? max(0.0, min(1.0, ((($lng - $a->lng) * $coseno) * $dx + ($lat - $a->lat) * $dy) / $largo)) : 0.0;
+            [$pLat, $pLng] = Geo::interpolar($a->lat, $a->lng, $b->lat, $b->lng, $f);
+            $distancia = Geo::distanciaKm($lat, $lng, $pLat, $pLng);
+            if ($distancia < $mejorDistancia) {
+                $mejorDistancia = $distancia;
+                $mejorKm = $a->km + ($b->km - $a->km) * $f;
+            }
+        }
+
+        return $mejorKm;
+    }
+
     /** Estación hacia la que va (o en la que está) el bus; null si ya llegó o no salió. */
     public function proximaParada(int $instante): ?Parada
     {

@@ -40,6 +40,11 @@ framework:
             cache.tablero:
                 adapter: cache.adapter.doctrine_dbal
                 provider: doctrine.dbal.default_connection
+            # Última lectura GPS de cada bus (`App\Seguimiento\GpsReciente`): la escribe
+            # la petición del teléfono y la lee la del mapa, en otro proceso.
+            cache.gps:
+                adapter: cache.adapter.doctrine_dbal
+                provider: doctrine.dbal.default_connection
 
 when@dev:
     framework:

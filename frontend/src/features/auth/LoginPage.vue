@@ -2,7 +2,7 @@
   <div class="lp">
     <!-- Panel visual: banda de cabecera en el teléfono, mitad izquierda desde `lg`. -->
     <aside class="lp-visual" aria-hidden="true">
-      <div v-for="(foto, i) in FOTOS" :key="foto" class="lp-foto" :class="{ activa: i === actual }" :style="{ backgroundImage: `url('images/login${foto}.png')` }" />
+      <div v-for="(foto, i) in FOTOS" :key="foto" class="lp-foto" :style="{ backgroundImage: `url('images/login${foto}.png')`, transform: `translateX(${desplazamiento(i)}%)` }" />
       <div class="lp-scrim" />
 
       <div class="lp-visual-inner">
@@ -107,11 +107,17 @@ const loading = computed(() => loadingStore.isLoading("login"));
 const error = ref(false);
 const actual = ref(Math.floor(Math.random() * FOTOS.length));
 
+/** Posición horizontal de cada foto en el carrusel: la activa al centro, la siguiente entra por la derecha, las demás esperan a la izquierda. */
+function desplazamiento(i: number): number {
+  const distancia = (i - actual.value + FOTOS.length) % FOTOS.length;
+  if (distancia === 0) return 0;
+  return distancia === 1 ? 100 : -100;
+}
+
 let timer: ReturnType<typeof setInterval> | undefined;
 
 onMounted(() => {
   FOTOS.forEach((n) => (new Image().src = `images/login${n}.png`));
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   timer = setInterval(() => (actual.value = (actual.value + 1) % FOTOS.length), FOTO_MS);
 });
 onBeforeUnmount(() => clearInterval(timer));
@@ -175,15 +181,7 @@ async function handleSubmit(credentials: { username: string; password: string },
   z-index: -2;
   background-size: cover;
   background-position: center;
-  opacity: 0;
-  transform: scale(1.08);
-  transition:
-    opacity 1.6s ease,
-    transform 9s ease-out;
-  &.activa {
-    opacity: 1;
-    transform: scale(1);
-  }
+  transition: transform 1.1s cubic-bezier(0.65, 0, 0.35, 1);
 }
 .lp-scrim {
   position: absolute;
@@ -500,7 +498,6 @@ async function handleSubmit(credentials: { username: string; password: string },
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .lp-foto,
   .lp-story,
   .lp-form {
     animation: none;

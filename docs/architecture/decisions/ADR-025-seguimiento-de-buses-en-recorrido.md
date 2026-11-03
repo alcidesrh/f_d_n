@@ -20,9 +20,13 @@ Dada la hora de salida, los km de la ruta y una velocidad media (68 km/h en marc
 
 Pocos enclaves tienen coordenadas, y algunas vienen con latitud y longitud intercambiadas. Se resuelve cada estación por GPS → catálogo por nombre (`Gazetario`) → centro del departamento. Como el legado no garantiza que las intermedias sean un recorrido ordenado ni estén bien ubicadas: las intermedias solo ubicadas por departamento se descartan, las consecutivas a menos de 2 km se funden y las que obligan a un desvío mayor que el trayecto directo (y 30 km) se descartan. Origen y destino son obligatorios; si no se ubican, la salida no se muestra y la pantalla avisa cuántas quedaron fuera. Los km se reparten según la distancia en línea recta pero suman los `kilometros` de la ruta. El mapa une las estaciones en línea recta (sin geometría de carretera); para que las rutas que comparten tramo no se tapen, cada ruta se dibuja arqueada con una curvatura propia y estable según su código (`core/seguimiento/arco.ts`), y el bus se mueve por el mismo arco.
 
-### GPS real: punto de enchufe
+### GPS real
 
-`App\Seguimiento\FuenteGps::ultima(busCodigo): ?Posicion` (hoy `SinGps`). Con una lectura de menos de 5 min, `SeguimientoBuses` la usa en lugar de la simulación (`fuente: 'gps'`, sin cronograma) y el frontend la pinta tal cual. Para pasar a datos reales basta implementar la interfaz.
+`App\Seguimiento\FuenteGps::ultima(busCodigo): ?Posicion`, hoy `GpsReciente`. Con una lectura de menos de 5 min, `SeguimientoBuses` la usa en lugar de la simulación (`fuente: 'gps'`, sin cronograma; los km salen de proyectar el punto sobre el trazado, `PlanDeViaje::kmMasCercano`) y el frontend la pinta tal cual, refrescando cada 30 s.
+
+Las lecturas llegan a `GET|POST /api/seguimiento/gps` con el protocolo OsmAnd, el de Traccar Client (Android/iOS) y muchos rastreadores de hardware: parámetros `id`, `lat`, `lon`, `timestamp`, `speed` (nudos), `bearing`, o el JSON de Traccar Client 9+ (`device_id`, `location.coords`; `LecturaOsmAnd`). El identificador del dispositivo es el **código del bus**. Sin Bearer: clave compartida en `?clave=` (env `SEGUIMIENTO_GPS_CLAVE`; vacía, responde 503). Solo se guarda la última lectura por bus, en `cache.gps` (PostgreSQL, tabla `cache_items`); una atrasada (Traccar reenvía lo que tenía en cola) no pisa a una más nueva.
+
+Para probar con un teléfono: Traccar Client, *Identificador del dispositivo* = código de un bus con una salida en recorrido, *URL del servidor* = `https://<dominio>/api/seguimiento/gps?clave=<clave>`, frecuencia de 10–30 s.
 
 ### API y permisos
 

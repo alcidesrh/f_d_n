@@ -87,6 +87,8 @@ security:
         - { path: '^/api/correo/entrante/', roles: PUBLIC_ACCESS }
         # Lo que llama el legado durante la sincronización (ADR-042): con clave compartida, sin Bearer.
         - { path: "^/api/sincronizacion/legado/", roles: PUBLIC_ACCESS }
+        # Posiciones de los GPS (Traccar Client, protocolo OsmAnd): con clave compartida, sin Bearer.
+        - { path: "^/api/seguimiento/gps$", roles: PUBLIC_ACCESS }
         - { path: "^/", roles: ROLE_USER }
 
 when@test:

@@ -65,7 +65,9 @@ final class SeguimientoBuses
             $bus = $salida->getBus();
             $real = $this->gps->ultima((string) $bus->getCodigo());
             $vigente = null !== $real && $t - $real->instante <= self::GPS_VIGENCIA_SEGUNDOS;
-            $pos = $vigente ? $real : $plan->posicionEn($t);
+            $pos = $vigente
+                ? new Posicion($real->lat, $real->lng, $real->rumbo, $real->velocidadKmh, $plan->kmMasCercano($real->lat, $real->lng), $real->estado, $real->instante, $real->fuente)
+                : $plan->posicionEn($t);
             $proxima = $plan->proximaParada($t);
 
             $empresa = $salida->getEmpresa();
