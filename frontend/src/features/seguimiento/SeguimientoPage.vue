@@ -5,6 +5,7 @@
   vigente se pinta tal cual la entrega el servidor. Filtros por empresa y
   salida (que enfoca el bus y su ruta).
   Contenido angosto: mapa y lista apilados; desde 56rem de ancho: lado a lado.
+  Por defecto solo los buses que envían GPS; el interruptor "Solo con GPS" apagado muestra también los simulados.
   Interruptor "Nombres de enclaves": chip con el nombre junto a cada punto (si no, solo al pasar el cursor).
   Maximizar (o Esc para salir): filtros, mapa y lista cubren toda la pantalla.
 -->
@@ -40,12 +41,16 @@
       </div>
       <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-color">
         <label class="flex cursor-pointer items-center gap-2">
+          <ToggleSwitch v-model="filtro.soloGps" input-id="solo-gps" @update:model-value="alCambiarFuente" />
+          <span>Solo con GPS</span>
+        </label>
+        <label class="flex cursor-pointer items-center gap-2">
           <ToggleSwitch v-model="mostrarNombres" input-id="nombres-enclaves" />
           <span>Nombres de enclaves</span>
         </label>
         <span class="flex items-center gap-2">
           <icon name="directions-bus-outline" />
-          {{ visibles.length }} {{ visibles.length === 1 ? "bus en recorrido" : "buses en recorrido" }}
+          {{ visibles.length }} {{ visibles.length === 1 ? "bus" : "buses" }} {{ filtro.soloGps ? "con GPS" : "en recorrido" }}<template v-if="filtro.soloGps && simulados > 0"> · {{ simulados }} sin GPS</template>
         </span>
       </div>
     </section>
@@ -57,7 +62,7 @@
       <!-- La clase dinámica va en el padre: Vue reescribiría el class del contenedor de Leaflet y le borraría las clases que él añade. -->
       <div class="relative min-h-0" :class="{ 'mapa-maximizado': maximizado }">
         <div ref="mapaEl" class="mapa-buses rounded-border border border-surface-200" role="application" aria-label="Mapa de buses en recorrido" />
-        <p v-if="datos && !cargando && visibles.length === 0" class="pointer-events-none absolute inset-x-0 top-1/2 z-[500] mx-auto w-fit -translate-y-1/2 rounded-border bg-surface-0/90 px-3 py-2 text-sm shadow">No hay buses en recorrido{{ hayFiltro ? " con este filtro" : " en este momento" }}.</p>
+        <p v-if="datos && !cargando && visibles.length === 0" class="pointer-events-none absolute inset-x-0 top-1/2 z-[500] mx-auto w-fit -translate-y-1/2 rounded-border bg-surface-0/90 px-3 py-2 text-sm shadow">{{ filtro.soloGps ? "Ningún bus está enviando GPS" : "No hay buses en recorrido" }}{{ hayFiltro ? " con este filtro" : " en este momento" }}.<template v-if="filtro.soloGps && simulados > 0"> Apague «Solo con GPS» para ver los {{ simulados }} simulados.</template></p>
       </div>
 
       <aside class="flex min-h-0 flex-col gap-3" :class="maximizado ? 'overflow-y-auto' : ''">
@@ -105,7 +110,7 @@
             </button>
           </li>
         </ul>
-        <p class="m-0 text-xs text-muted-color">Las posiciones son una simulación a partir de la hora de salida, la distancia de la ruta y una velocidad media. Se reemplazan por la lectura del GPS cuando el bus la envíe.</p>
+        <p v-if="!filtro.soloGps" class="m-0 text-xs text-muted-color">Las posiciones sin GPS son una simulación a partir de la hora de salida, la distancia de la ruta y una velocidad media. Se reemplazan por la lectura del GPS cuando el bus la envíe.</p>
       </aside>
     </div>
   </div>
@@ -156,7 +161,9 @@ const estilos = computed(() => estilosPorRuta((datos.value?.buses ?? []).map((b)
 const arcoDe = (b: BusEnRecorrido) => estilos.value.get(b.ruta)?.k ?? 0;
 const visibles = computed(() => filtrarBuses(datos.value?.buses ?? [], filtro));
 const hayFiltro = computed(() => filtro.empresaId !== null || filtro.salidaId !== null);
-const opcionesSalida = computed(() => salidasDisponibles(datos.value?.buses ?? [], filtro.empresaId).map((b) => ({ id: b.salidaId, etiqueta: `${horaDe(b.partida)} · ${b.origen} → ${b.destino} · bus ${b.bus}` })));
+/** Buses en recorrido que el filtro "Solo con GPS" deja fuera. */
+const simulados = computed(() => filtrarBuses(datos.value?.buses ?? [], { ...filtro, salidaId: null, soloGps: false }).length - filtrarBuses(datos.value?.buses ?? [], { ...filtro, salidaId: null }).length);
+const opcionesSalida = computed(() => salidasDisponibles(datos.value?.buses ?? [], filtro.empresaId, filtro.soloGps).map((b) => ({ id: b.salidaId, etiqueta: `${horaDe(b.partida)} · ${b.origen} → ${b.destino} · bus ${b.bus}` })));
 const seleccionado = computed<BusEnRecorrido | null>(() => visibles.value.find((b) => b.salidaId === seleccionadoId.value) ?? null);
 const seleccionadoPos = computed(() => (seleccionado.value ? (estimadas.value.get(seleccionado.value.salidaId) ?? null) : null));
 const seleccionadoProxima = computed(() => (seleccionado.value ? proximaParada(seleccionado.value, ahora.value) : null));
@@ -279,6 +286,13 @@ function alternarEmpresa(id: number) {
 function alCambiarEmpresa() {
   filtro.salidaId = null;
   seleccionadoId.value = null;
+  refrescarVista();
+  enfocar(visibles.value);
+}
+
+function alCambiarFuente() {
+  Object.assign(filtro, filtroVigente(datos.value?.buses ?? [], filtro));
+  if (!visibles.value.some((b) => b.salidaId === seleccionadoId.value)) seleccionadoId.value = null;
   refrescarVista();
   enfocar(visibles.value);
 }

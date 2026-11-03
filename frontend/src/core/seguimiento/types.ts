@@ -90,4 +90,6 @@ export interface PosicionEstimada {
 export interface FiltroSeguimiento {
   empresaId: number | null
   salidaId: number | null
+  /** Solo los buses con lectura GPS vigente (si no, también los simulados). */
+  soloGps: boolean
 }
