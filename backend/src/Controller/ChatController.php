@@ -135,6 +135,20 @@ final class ChatController extends AbstractController
         return $this->json($this->chat->contactos($yo));
     }
 
+    /** Fija a un contacto → `{ fijados }`: los ids fijados, después del cambio. */
+    #[Route("/contactos/{id<-?\d+>}/fijar", name: "contacto_fijar", methods: ["POST"])]
+    public function fijarContacto(int $id, #[CurrentUser] Usuario $yo): JsonResponse
+    {
+        return $this->responder(fn() => ["fijados" => $this->chat->fijar($yo, $id, true)]);
+    }
+
+    /** Quita el fijado de un contacto → `{ fijados }`. */
+    #[Route("/contactos/{id<-?\d+>}/fijar", name: "contacto_desfijar", methods: ["DELETE"])]
+    public function desfijarContacto(int $id, #[CurrentUser] Usuario $yo): JsonResponse
+    {
+        return $this->responder(fn() => ["fijados" => $this->chat->fijar($yo, $id, false)]);
+    }
+
     /** Tipos de registro que el usuario puede adjuntar (selector de registros). */
     #[Route("/recursos", name: "recursos", methods: ["GET"])]
     public function recursos(): JsonResponse

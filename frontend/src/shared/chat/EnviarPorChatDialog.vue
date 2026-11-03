@@ -53,7 +53,7 @@
 
 <script setup lang="ts">
 import { useChatStore } from '@/core/chat/store'
-import { coincide, extractoMensaje } from '@/core/chat/modelo'
+import { coincide, extractoMensaje, ordenarContactos } from '@/core/chat/modelo'
 import type { Ambito, Mensaje, Referencia } from '@/core/chat/types'
 import { notify } from '@/core/notify'
 import ChatAvatar from './ChatAvatar.vue'
@@ -84,15 +84,18 @@ const enviando = ref(false)
 const titulo = computed(() => (props.mensaje ? 'Reenviar mensaje' : props.referencias.length === 1 ? 'Enviar por chat' : `Enviar ${props.referencias.length} registros por chat`))
 const etiqueta = (tipo: string) => (tipo === 'BoletoAsiento' ? 'Boleto' : tipo.replace(/([a-z])([A-Z])/g, '$1 $2'))
 
-/** Grupos y conversaciones recientes primero; luego el resto del directorio. */
+/**
+ * Grupos y conversaciones recientes primero; luego el resto del directorio.
+ * Entre las personas, las fijadas y las que están en línea van antes (`ordenarContactos`).
+ */
 const destinos = computed<Destino[]>(() => {
   const grupos = chat.canales
     .filter((c) => c.tipo === 'grupo' && c.puedeEscribir)
     .map((c) => ({ clave: `c${c.id}`, id: c.id, nombre: c.nombre, detalle: `Grupo · ${c.miembros.length} miembros`, grupo: true, ambito: null, foto: c.foto ?? null }))
   const recientes = chat.canales.filter((c) => c.tipo === 'directo' && c.contacto).map((c) => c.contacto!.id)
   const orden = new Map(recientes.map((id, i) => [id, i]))
-  const personas = [...(chat.contactos ?? [])]
-    .sort((a, b) => (orden.get(a.id) ?? Infinity) - (orden.get(b.id) ?? Infinity))
+  const porReciente = [...(chat.contactos ?? [])].sort((a, b) => (orden.get(a.id) ?? Infinity) - (orden.get(b.id) ?? Infinity))
+  const personas = ordenarContactos(porReciente, chat.fijados, chat.enLinea)
     .map((p) => ({ clave: `u${p.id}`, id: p.id, nombre: p.nombre, detalle: p.lugar ?? AMBITOS[p.ambito], grupo: false, ambito: p.ambito, foto: p.foto }))
   return [...grupos, ...personas]
 })

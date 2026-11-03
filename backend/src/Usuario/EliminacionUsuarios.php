@@ -27,6 +27,7 @@ final class EliminacionUsuarios
     private const ACCESOS = [
         'api_token',
         'asignacion',
+        'chat_contacto_fijado',
         'chat_miembro',
     ];
 

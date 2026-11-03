@@ -9,6 +9,10 @@ const fondo = { silent: true } as const
 
 export const fetchBandeja = (silencioso = false) => http.get<Bandeja>(`${BASE}/canales`, silencioso ? fondo : undefined)
 export const fetchContactos = () => http.get<Perfil[]>(`${BASE}/contactos`, fondo)
+
+/** Fija o quita a una persona; devuelve los ids fijados tras el cambio. */
+export const fijarContacto = (usuario: number) => http.post<{ fijados: number[] }>(`${BASE}/contactos/${usuario}/fijar`, {})
+export const desfijarContacto = (usuario: number) => http.delete<{ fijados: number[] }>(`${BASE}/contactos/${usuario}/fijar`)
 export const fetchRecursos = () => http.get<Recurso[]>(`${BASE}/recursos`, fondo)
 export const fetchToken = () => http.get<{ token: string; topico: string }>(`${BASE}/token`, fondo)
 

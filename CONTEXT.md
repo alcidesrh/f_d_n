@@ -324,6 +324,10 @@ Modelo: nuevo
 Chat interno: `directo` (dos usuarios, una por par) o `grupo` (con nombre). Una agencia solo conversa con su gente y con la administración (`App\Chat\Directorio`, ADR-026). Un grupo tiene **dueño** (quien lo creó, lo edita) y es **abierto** (todos escriben) o **dirigido** (todos reciben; escriben el dueño y los **emisores** que él elige). Un grupo abierto puede ser **grupo miembro** de otro (`ChatSubgrupo`): sus miembros llegan "por" él (`via`).
 _Avoid_: grupo de WhatsApp
 Modelo: nuevo
+**Contacto fijado** (`ChatContactoFijado`):
+Persona que un usuario fija en el chat: va primero en su bandeja y en sus listas de personas, antes que las que están en línea y que el resto. Es personal (nadie más lo ve) y no exige una conversación.
+_Avoid_: favorito, anclado
+Modelo: nuevo
 **Mensaje predeterminado** (`MensajePredeterminado`):
 Aviso que el chat manda solo a una audiencia (usuarios y grupos) elegida por un administrador, en "Bitácora del sistema": un mensaje propio con horario, la salida iniciada (ocupación y lo vendido por usuario), las anomalías de reasignación (boleto reasignado más de dos veces) y de tarifa (creada, modificada o eliminada), y las ventas y el desempeño del día al cierre. Cada uno es una **instancia** con nombre de un tipo del catálogo; puede haber varias del mismo tipo (ADR-045).
 _Avoid_: plantilla, difusión, mensaje automático

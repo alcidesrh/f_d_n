@@ -123,7 +123,7 @@ watch(nuevas, (ids) => {
   directos.value = [...directos.value, ...elegidas.map((p) => reactive<Miembro>({ ...p, via: null, emisor: false }))]
   nuevas.value = []
 })
-const disponibles = computed(() => (chat.contactos ?? []).filter((p) => !directos.value.some((d) => d.id === p.id)))
+const disponibles = computed(() => (chat.contactosOrdenados ?? []).filter((p) => !directos.value.some((d) => d.id === p.id)))
 
 /** Grupos abiertos míos que pueden ser miembros: sin grupos miembros propios y que no sean este. */
 const gruposDisponibles = computed(() =>

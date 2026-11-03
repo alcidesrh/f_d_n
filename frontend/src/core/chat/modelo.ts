@@ -187,3 +187,24 @@ export function aplicarPresencia(enLinea: number[], usuario: number, conectado: 
   const sin = enLinea.filter((id) => id !== usuario)
   return conectado ? [...sin, usuario] : sin
 }
+
+/** Lugar de una persona en las listas: fijada (2), en línea (1) o el resto (0). */
+const prioridad = (id: number, fijados: readonly number[], enLinea: readonly number[]) => (fijados.includes(id) ? 2 : enLinea.includes(id) ? 1 : 0)
+
+/**
+ * Contactos: los fijados primero, luego los que están en línea y luego el
+ * resto. Dentro de cada grupo se mantiene el orden que traían (por nombre).
+ */
+export function ordenarContactos<T extends { id: number }>(contactos: readonly T[], fijados: readonly number[], enLinea: readonly number[]): T[] {
+  return [...contactos].sort((a, b) => prioridad(b.id, fijados, enLinea) - prioridad(a.id, fijados, enLinea))
+}
+
+/**
+ * Bandeja: primero las conversaciones directas con alguien fijado, después
+ * con alguien en línea y luego el resto, en el orden de actividad que trae.
+ * Los grupos no son contactos: van con el resto.
+ */
+export function ordenarBandeja(canales: readonly Canal[], fijados: readonly number[], enLinea: readonly number[]): Canal[] {
+  const lugar = (c: Canal) => (c.tipo === 'directo' && c.contacto ? prioridad(c.contacto.id, fijados, enLinea) : 0)
+  return [...canales].sort((a, b) => lugar(b) - lugar(a))
+}

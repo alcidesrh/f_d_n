@@ -10,6 +10,7 @@ use App\Chat\Tarjeta\Tarjetas;
 use App\Cuenta\FotoPerfil;
 use App\Entity\ChatArchivo;
 use App\Entity\ChatCanal;
+use App\Entity\ChatContactoFijado;
 use App\Entity\ChatMensaje;
 use App\Entity\ChatMiembro;
 use App\Entity\ChatSubgrupo;
@@ -86,7 +87,40 @@ final class Conversaciones
         return array_map(static fn(Perfil $p) => $p->aArray(), $perfiles);
     }
 
-    /** @return array<string, mixed> `{ yo, canales }`, el de actividad más reciente primero */
+    /**
+     * Los contactos que `$yo` fijó, en el orden en que los fijó.
+     *
+     * @return list<int>
+     */
+    public function fijados(Usuario $yo): array
+    {
+        return array_map("intval", array_column($this->em->createQuery(
+            "SELECT IDENTITY(f.contacto) AS contacto FROM App\Entity\ChatContactoFijado f WHERE f.usuario = :yo ORDER BY f.id",
+        )->setParameter("yo", $yo->getId())->getScalarResult(), "contacto"));
+    }
+
+    /**
+     * Fija (o quita) a alguien con quien `$yo` puede conversar: queda al
+     * principio de su bandeja y de sus listas de personas.
+     *
+     * @return list<int> los fijados, después del cambio
+     */
+    public function fijar(Usuario $yo, int $contactoId, bool $fijar): array
+    {
+        $contacto = $this->em->find(Usuario::class, $contactoId);
+        $this->exigirDirectorio($yo, $contacto);
+        $existente = $this->em->getRepository(ChatContactoFijado::class)->findOneBy(["usuario" => $yo, "contacto" => $contacto]);
+        if ($fijar && $existente === null) {
+            $this->em->persist(new ChatContactoFijado($yo, $contacto));
+        } elseif (!$fijar && $existente !== null) {
+            $this->em->remove($existente);
+        }
+        $this->em->flush();
+
+        return $this->fijados($yo);
+    }
+
+    /** @return array<string, mixed> `{ yo, canales, fijados }`, el de actividad más reciente primero */
     public function bandeja(Usuario $yo): array
     {
         /** @var list<ChatCanal> $canales */
@@ -94,7 +128,7 @@ final class Conversaciones
             "SELECT c, m, u FROM App\Entity\ChatCanal c JOIN c.miembros yo WITH yo.usuario = :yo JOIN c.miembros m JOIN m.usuario u ORDER BY c.actividad DESC",
         )->setParameter("yo", $yo->getId())->getResult();
         if ($canales === []) {
-            return ["yo" => $this->perfil($yo)->aArray(), "canales" => []];
+            return ["yo" => $this->perfil($yo)->aArray(), "canales" => [], "fijados" => $this->fijados($yo)];
         }
 
         $noLeidos = [];
@@ -131,6 +165,7 @@ final class Conversaciones
                 $ultimos[$c->getId()] ?? null,
                 isset($contenidos[$c->getId()]),
             ), $canales),
+            "fijados" => $this->fijados($yo),
         ];
     }
 

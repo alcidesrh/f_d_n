@@ -13,7 +13,7 @@
       </div>
       <label class="flex flex-col gap-1.5">
         <span class="text-sm font-medium">Miembros</span>
-        <MultiSelect v-model="miembros" :options="chat.contactos ?? []" option-label="nombre" option-value="id" filter :filter-fields="['nombre', 'lugar']" display="chip" placeholder="Elegir personas" :loading="!chat.contactos" :max-selected-labels="8" class="w-full">
+        <MultiSelect v-model="miembros" :options="chat.contactosOrdenados ?? []" option-label="nombre" option-value="id" filter :filter-fields="['nombre', 'lugar']" display="chip" placeholder="Elegir personas" :loading="!chat.contactos" :max-selected-labels="8" class="w-full">
           <template #option="{ option }">
             <span class="flex min-w-0 flex-col">
               <span class="truncate">{{ option.nombre }}</span>

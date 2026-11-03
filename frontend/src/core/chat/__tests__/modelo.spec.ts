@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { agrupar, aplicarAviso, aplicarPresencia, coincide, etiquetaDia, extractoMensaje, iniciales, medidasReducidas, segmentos, tamanoLegible, unir, vistoPor } from '../modelo'
+import { agrupar, aplicarAviso, aplicarPresencia, coincide, etiquetaDia, extractoMensaje, iniciales, medidasReducidas, ordenarBandeja, ordenarContactos, segmentos, tamanoLegible, unir, vistoPor } from '../modelo'
 import type { Canal, Mensaje, Perfil } from '../types'
 
 const ana: Perfil = { id: 1, nombre: 'Ana López', ambito: 'administracion', lugar: null }
@@ -169,5 +169,37 @@ describe('grupos y mensajes cambiados', () => {
   it('el extracto de un eliminado no muestra lo que decía', () => {
     expect(extractoMensaje({ ...msg(1, ana, ''), texto: '', eliminado: true })).toBe('Se eliminó este mensaje')
     expect(extractoMensaje(msg(1, ana, '', 'Hola'))).toBe('Hola')
+  })
+})
+
+describe('ordenarContactos', () => {
+  const lista = [1, 2, 3, 4].map((id) => ({ id, nombre: `P${id}` }))
+  const ids = (l: { id: number }[]) => l.map((p) => p.id)
+
+  it('fijados primero, luego en línea y el resto; cada grupo conserva su orden', () => {
+    expect(ids(ordenarContactos(lista, [4], [2, 3]))).toEqual([4, 2, 3, 1])
+  })
+
+  it('un fijado va antes que quien está en línea, aunque esté desconectado', () => {
+    expect(ids(ordenarContactos(lista, [1], [2, 4]))).toEqual([1, 2, 4, 3])
+  })
+
+  it('sin fijados ni presencia, no cambia el orden', () => {
+    expect(ids(ordenarContactos(lista, [], []))).toEqual([1, 2, 3, 4])
+  })
+})
+
+describe('ordenarBandeja', () => {
+  it('fijados primero, luego en línea; los grupos y los directos sin contacto van con el resto', () => {
+    const grupo = canal(3, { tipo: 'grupo', nombre: 'Coordinación', contacto: null })
+    const sinContacto = canal(4, { nombre: '—', contacto: null })
+    const bandeja = [canal(1), canal(2, { nombre: 'Ana', contacto: ana }), grupo, sinContacto]
+    // Ana (2) está fijada; Beto (1) está en línea; el grupo y el directo sin contacto siguen por actividad.
+    expect(ordenarBandeja(bandeja, [1], [2]).map((c) => c.id)).toEqual([2, 1, 3, 4])
+  })
+
+  it('sin fijados ni presencia, conserva el orden de actividad', () => {
+    const bandeja = [canal(3, { tipo: 'grupo', contacto: null }), canal(1), canal(2, { contacto: ana })]
+    expect(ordenarBandeja(bandeja, [], []).map((c) => c.id)).toEqual([3, 1, 2])
   })
 })

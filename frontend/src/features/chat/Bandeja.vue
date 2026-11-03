@@ -30,32 +30,38 @@
 
       <template v-else>
         <p v-if="busqueda && conversaciones.length" class="seccion">Conversaciones</p>
-        <button v-for="c in conversaciones" :key="c.id" type="button" class="fila" :class="{ 'fila--activa': c.id === activo, 'fila--nueva': c.noLeidos > 0 }" @click="emit('abrir', c.id)">
-          <ChatAvatar :id="c.id" :nombre="c.nombre" :grupo="c.tipo === 'grupo'" :sistema="c.tipo === 'sistema'" :ambito="c.contacto?.ambito" :foto="c.tipo === 'grupo' ? c.foto : c.contacto?.foto" :en-linea="c.tipo === 'directo' && c.contacto ? chat.estaEnLinea(c.contacto.id) : null" />
-          <span class="fila__texto">
-            <span class="fila__linea">
-              <span class="fila__nombre">{{ c.nombre }}</span>
-              <span v-if="c.ultimo" class="fila__hora">{{ fechaBandeja(c.ultimo.fecha) }}</span>
-            </span>
-            <span class="fila__linea">
-              <span class="fila__extracto">
-                <template v-if="c.ultimo"><template v-if="c.ultimo.autor === chat.yo?.id">Tú: </template>{{ c.ultimo.extracto }}</template>
-                <template v-else>{{ c.tipo === "grupo" ? `${c.miembros.length} miembros` : (c.contacto?.lugar ?? "Nueva conversación") }}</template>
+        <div v-for="c in conversaciones" :key="c.id" class="fila-caja">
+          <button type="button" class="fila" :class="{ 'fila--activa': c.id === activo, 'fila--nueva': c.noLeidos > 0 }" @click="emit('abrir', c.id)">
+            <ChatAvatar :id="c.id" :nombre="c.nombre" :grupo="c.tipo === 'grupo'" :sistema="c.tipo === 'sistema'" :ambito="c.contacto?.ambito" :foto="c.tipo === 'grupo' ? c.foto : c.contacto?.foto" :en-linea="c.tipo === 'directo' && c.contacto ? chat.estaEnLinea(c.contacto.id) : null" />
+            <span class="fila__texto">
+              <span class="fila__linea">
+                <span class="fila__nombre">{{ c.nombre }}</span>
+                <span v-if="c.ultimo" class="fila__hora">{{ fechaBandeja(c.ultimo.fecha) }}</span>
               </span>
-              <span v-if="c.noLeidos" class="fila__badge">{{ c.noLeidos > 99 ? "99+" : c.noLeidos }}</span>
+              <span class="fila__linea">
+                <span class="fila__extracto">
+                  <template v-if="c.ultimo"><template v-if="c.ultimo.autor === chat.yo?.id">Tú: </template>{{ c.ultimo.extracto }}</template>
+                  <template v-else>{{ c.tipo === "grupo" ? `${c.miembros.length} miembros` : (c.contacto?.lugar ?? "Nueva conversación") }}</template>
+                </span>
+                <span v-if="c.noLeidos" class="fila__badge">{{ c.noLeidos > 99 ? "99+" : c.noLeidos }}</span>
+              </span>
             </span>
-          </span>
-        </button>
+          </button>
+          <BotonFijar v-if="c.contacto" :fijado="chat.fijados.includes(c.contacto.id)" :nombre="c.contacto.nombre" @alternar="alternarFijado(c.contacto.id)" />
+        </div>
 
         <template v-if="busqueda">
           <p v-if="personas.length" class="seccion">Personas</p>
-          <button v-for="p in personas" :key="`p${p.id}`" type="button" class="fila" @click="abrirCon(p.id)">
-            <ChatAvatar :id="p.id" :nombre="p.nombre" :ambito="p.ambito" :foto="p.foto" :en-linea="chat.estaEnLinea(p.id)" />
-            <span class="fila__texto">
-              <span class="fila__nombre">{{ p.nombre }}</span>
-              <span class="fila__extracto">{{ p.lugar ?? AMBITOS[p.ambito] }}</span>
-            </span>
-          </button>
+          <div v-for="p in personas" :key="`p${p.id}`" class="fila-caja">
+            <button type="button" class="fila" @click="abrirCon(p.id)">
+              <ChatAvatar :id="p.id" :nombre="p.nombre" :ambito="p.ambito" :foto="p.foto" :en-linea="chat.estaEnLinea(p.id)" />
+              <span class="fila__texto">
+                <span class="fila__nombre">{{ p.nombre }}</span>
+                <span class="fila__extracto">{{ p.lugar ?? AMBITOS[p.ambito] }}</span>
+              </span>
+            </button>
+            <BotonFijar :fijado="chat.fijados.includes(p.id)" :nombre="p.nombre" @alternar="alternarFijado(p.id)" />
+          </div>
           <p v-if="!conversaciones.length && !personas.length" class="vacio">{{ chat.contactos ? "Sin resultados." : "Buscando…" }}</p>
         </template>
 
@@ -72,9 +78,10 @@
 
 <script setup lang="ts">
 import { useChatStore } from "@/core/chat/store";
-import { coincide, fechaBandeja } from "@/core/chat/modelo";
+import { coincide, fechaBandeja, ordenarBandeja } from "@/core/chat/modelo";
 import { notify } from "@/core/notify";
 import ChatAvatar from "@/shared/chat/ChatAvatar.vue";
+import BotonFijar from "./BotonFijar.vue";
 import NuevoGrupoDialog from "./NuevoGrupoDialog.vue";
 
 defineProps<{ activo: number | null }>();
@@ -87,11 +94,13 @@ const chat = useChatStore();
 const busqueda = ref("");
 const grupo = ref(false);
 
-const conversaciones = computed(() => (busqueda.value ? chat.canales.filter((c) => coincide([c.nombre, c.contacto?.lugar ?? "", ...c.miembros.map((m) => m.nombre)].join(" "), busqueda.value)) : chat.canales));
-/** Personas que coinciden y con las que todavía no hay directo en la lista. */
+/** Fijados y en línea primero; el resto, por actividad (ver `ordenarBandeja`). */
+const ordenadas = computed(() => ordenarBandeja(chat.canales, chat.fijados, chat.enLinea));
+const conversaciones = computed(() => (busqueda.value ? ordenadas.value.filter((c) => coincide([c.nombre, c.contacto?.lugar ?? "", ...c.miembros.map((m) => m.nombre)].join(" "), busqueda.value)) : ordenadas.value));
+/** Personas que coinciden y con las que todavía no hay directo en la lista (fijadas y en línea primero). */
 const personas = computed(() => {
   const conDirecto = new Set(conversaciones.value.filter((c) => c.tipo === "directo").map((c) => c.contacto?.id));
-  return (chat.contactos ?? []).filter((p) => !conDirecto.has(p.id) && coincide(`${p.nombre} ${p.lugar ?? ""} ${AMBITOS[p.ambito]}`, busqueda.value)).slice(0, MAX_PERSONAS);
+  return (chat.contactosOrdenados ?? []).filter((p) => !conDirecto.has(p.id) && coincide(`${p.nombre} ${p.lugar ?? ""} ${AMBITOS[p.ambito]}`, busqueda.value)).slice(0, MAX_PERSONAS);
 });
 
 async function abrirCon(usuario: number) {
@@ -99,6 +108,14 @@ async function abrirCon(usuario: number) {
     const id = await chat.directo(usuario);
     busqueda.value = "";
     emit("abrir", id);
+  } catch (e) {
+    notify.error(e instanceof Error ? e.message : String(e));
+  }
+}
+
+async function alternarFijado(usuario: number) {
+  try {
+    await chat.fijar(usuario, !chat.fijados.includes(usuario));
   } catch (e) {
     notify.error(e instanceof Error ? e.message : String(e));
   }
@@ -174,6 +191,16 @@ async function pedirAvisos() {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--p-surface-500);
+}
+/* Cada fila va con su botón de fijar al lado (`BotonFijar`), que aparece al pasar el puntero. */
+.fila-caja {
+  position: relative;
+  &:hover :deep(.fijar) {
+    opacity: 1;
+  }
+}
+.fila-caja > .fila {
+  padding-right: 2.75rem;
 }
 .fila {
   display: flex;

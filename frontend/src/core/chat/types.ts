@@ -125,6 +125,8 @@ export interface Mensaje {
 export interface Bandeja {
   yo: Perfil
   canales: Canal[]
+  /** Ids de las personas que fijó `yo` (van primero en la bandeja y en las listas). */
+  fijados: number[]
 }
 
 /** Lo que llega por Mercure en `/chat/usuarios/{id}`. */

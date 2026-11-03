@@ -12,7 +12,7 @@ import type { AvisoCorreo } from '@/core/correo/types'
 import { suscribir } from '@/core/realtime'
 import * as api from './api'
 import { revisarPush } from './push'
-import { aplicarAviso, aplicarPresencia, totalNoLeidos, ultimo, unir } from './modelo'
+import { aplicarAviso, aplicarPresencia, ordenarContactos, totalNoLeidos, ultimo, unir } from './modelo'
 import type { Aviso, Canal, Destinos, Mensaje, ModoGrupo, Perfil, Recurso, Referencia } from './types'
 
 
@@ -35,6 +35,8 @@ export const useChatStore = defineStore('chat', () => {
   const enVivo = ref(false)
   /** Usuarios con la aplicación abierta, de los que conozco (se actualiza con cada latido). */
   const enLinea = ref<number[]>([])
+  /** Personas que fijó `yo` (ids): van primero en la bandeja y en las listas. */
+  const fijados = ref<number[]>([])
   /** Último mensaje ajeno fuera de la conversación en pantalla (lo muestra el shell). */
   const entrante = ref<{ canal: number; autor: Perfil | null; extracto: string; n: number } | null>(null)
 
@@ -42,6 +44,8 @@ export const useChatStore = defineStore('chat', () => {
   const canal = (id: number) => canales.value.find((c) => c.id === id) ?? null
 
   const estaEnLinea = (usuario: number) => enLinea.value.includes(usuario)
+  /** Los contactos en el orden de las listas: fijados, en línea y el resto. `null` mientras no se cargan. */
+  const contactosOrdenados = computed(() => (contactos.value ? ordenarContactos(contactos.value, fijados.value, enLinea.value) : null))
   /** Los usuarios cuya presencia se muestra: contactos, miembros de mis canales y la lista de contactos si ya se cargó. */
   const conocidos = () => {
     const ids = new Set<number>(contactos.value?.map((p) => p.id))
@@ -125,6 +129,7 @@ export const useChatStore = defineStore('chat', () => {
     activo.value = null
     entrante.value = null
     enLinea.value = []
+    fijados.value = []
     listo.value = enVivo.value = false
   }
 
@@ -152,6 +157,7 @@ export const useChatStore = defineStore('chat', () => {
     if (!bandeja) return
     yo.value = bandeja.yo
     canales.value = bandeja.canales
+    fijados.value = bandeja.fijados
     listo.value = true
   }
 
@@ -263,6 +269,20 @@ export const useChatStore = defineStore('chat', () => {
     return contactos.value
   }
 
+  /** Fija (o quita) a una persona. Se muestra al instante y, si el servidor lo rechaza, vuelve atrás. */
+  async function fijar(usuario: number, fijado: boolean) {
+    const anterior = fijados.value
+    const sin = anterior.filter((id) => id !== usuario)
+    fijados.value = fijado ? [...sin, usuario] : sin
+    try {
+      const r = fijado ? await api.fijarContacto(usuario) : await api.desfijarContacto(usuario)
+      fijados.value = r.fijados
+    } catch (e) {
+      fijados.value = anterior
+      throw e
+    }
+  }
+
   /** Conversación directa con un usuario (la crea si no existe); devuelve su id. */
   async function directo(usuario: number) {
     const existente = canales.value.find((c) => c.tipo === 'directo' && c.contacto?.id === usuario)
@@ -322,7 +342,7 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   return {
-    yo, canales, mensajes, completos, contactos, recursos, activo, listo, enVivo, enLinea, entrante, noLeidos, estaEnLinea,
-    canal, iniciar, detener, salirDeLinea, refrescar, cargar, abrir, cerrar, cargarAnteriores, leer, enviar, cargarContactos, cargarRecursos, directo, grupo, editarGrupo, salirDeGrupo, fotoGrupo, compartir, reenviar, eliminar,
+    yo, canales, mensajes, completos, contactos, contactosOrdenados, recursos, activo, listo, enVivo, enLinea, fijados, entrante, noLeidos, estaEnLinea,
+    canal, iniciar, detener, salirDeLinea, refrescar, cargar, abrir, cerrar, cargarAnteriores, leer, enviar, cargarContactos, fijar, cargarRecursos, directo, grupo, editarGrupo, salirDeGrupo, fotoGrupo, compartir, reenviar, eliminar,
   }
 })
