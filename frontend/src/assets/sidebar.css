@@ -24,7 +24,7 @@
     left: 0;
     /*border-right: var(--border);*/
     border-top-right-radius: 6px;
-    box-shadow: var(--shadow);
+    /*box-shadow: var(--shadow);*/
   }
 
   &.right {
@@ -32,7 +32,7 @@
     /*border-left: var(--border);*/
     border-top-left-radius: 6px;
     right: 0;
-    box-shadow: var(--shadow-r);
+    /*box-shadow: var(--shadow-r);*/
   }
 
   @variant lg {
@@ -104,11 +104,12 @@
 }
 
 /* Una vista por glifo, sin pastilla ni sombras: la actual va teñida como el ítem activo del
-   menú. En el panel derecho, todo en espejo. */
+   menú. «Ocultar» queda junto al borde de la pantalla y «Con textos» hacia el contenido, en
+   ambos paneles: en el izquierdo el orden va invertido; en el derecho, el del DOM. */
 .sb-modes {
   display: inline-flex;
   gap: 2px;
-  .sidebar-control.right & {
+  .sidebar-control.left & {
     flex-direction: row-reverse;
   }
 }

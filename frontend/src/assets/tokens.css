@@ -23,19 +23,14 @@
   --text: var(--p-surface-600);
   --text-color: var(--p-text-color);
   --text-muted: var(--p-surface-600);
-  --border: 1px solid var(--p-surface-200);
-  /*color-mix(in hsl, var(--p-neutral-600) 40%, var(--p-neutral-50) 90%);*/
+  --border: 1px solid var(--p-surface-300);
   --border-200: 0.1px solid var(--p-surface-200);
   --border-400: 0.1px solid var(--p-surface-400);
-  /*--shadow: 2px 0 8px 0 rgba(0, 0, 0, 0.03), 1px 0 3px 0 rgba(0, 0, 0, 0.02);*/
-  --shadow: 2px 4px 10px rgba(0, 0, 0, 0.07);
-  /*--shadow: 4px -1px 10px 0px var(--p-surface-200);*/
-  --shadow-r: -2px 4px 10px rgba(0, 0, 0, 0.07);
-  /*--shadow-r: -3px 1px 11px var(--p-surface-300);*/
+  --shadow: 4px 0px 10px rgba(0, 0, 0, 0.19);
+  --shadow-r: -4px 0px 10px rgba(0, 0, 0, 0.19);
 
   --shadow-sm: 0px 0.5px 3px 0px var(--p-surface-300);
   --shadow-inset: 0 3px 12px 0px var(--p-surface-300);
-  /* , 0 1px 10px -6px var(--p-surface-400) inset; */
 
   /* Estados. Salen de las rampas del tema, que se invierten en oscuro: el
      tono medio (500) se queda, el texto (`-ink`, 700) pasa a claro y el fondo

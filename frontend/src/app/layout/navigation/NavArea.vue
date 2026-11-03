@@ -6,7 +6,7 @@
 <template>
   <NavMenuBar v-if="area === 'topbar_right'" :menus="menus" />
   <template v-else>
-    <div class="border-b border-b-surface-300" v-for="menu in menus" :key="menu.id">
+    <div class="border-t border-t-surface-300" v-for="menu in menus" :key="menu.id">
       <section class="nav-section" :class="{ open: opened.has(menu.id) }">
         <button v-if="menus.length > 1 && !sidebar?.compact" type="button" class="nav-section-title py-6!" @click="toggle(menu.id)">
           <icon :weight="200" :name="!opened.has(menu.id) ? 'add' : 'remove'" size="1rem" />
@@ -83,21 +83,16 @@ function onLeave(el: Element, done: () => void) {
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--p-surface-600);
-  /* Una sola línea: si se partiera al angostarse el panel, empujaría al menú a mitad de la animación. */
   white-space: nowrap;
 }
-.nav-section.open > div > .sidebar-menu.nav-tree {
-  /*box-shadow: 0px 0px 8px 0px var(--p-surface-700) inset;*/
+.nav-section.open {
+  background-color: color-mix(in hsl, var(--p-surface-200) 20%, var(--p-surface-100) 50%);
 }
 .nav-section.open > .nav-section-title {
-  color: var(--p-surface-400);
-  box-shadow: 0px 6.5px 14px var(--p-surface-300);
   position: relative;
   z-index: 90;
 }
-.nav-section.open > div {
-  padding-top: 0.5rem;
-}
+
 .nav-section-title > span {
   min-width: 0;
   overflow: hidden;
