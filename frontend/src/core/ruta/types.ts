@@ -52,6 +52,8 @@ export interface Lugar {
   departamento: string | null
   latitud: number | null
   longitud: number | null
+  /** Inactivo: no se ofrece para paradas nuevas; las rutas que ya lo tienen lo conservan. */
+  activo: boolean
 }
 
 export interface OpcionesRutas {

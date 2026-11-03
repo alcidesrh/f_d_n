@@ -162,8 +162,9 @@ final class EdicionRutas
                 "departamento" => $f["departamento"],
                 "latitud" => $f["latitud"] !== null ? (float) $f["latitud"] : null,
                 "longitud" => $f["longitud"] !== null ? (float) $f["longitud"] : null,
+                "activo" => (bool) $f["activo"],
             ], $this->em->getConnection()->fetchAllAssociative(
-                "SELECT id, nombre, departamento, latitud, longitud FROM enclave ORDER BY nombre",
+                "SELECT id, nombre, departamento, latitud, longitud, activo FROM enclave ORDER BY nombre",
             )),
             "clases" => array_map(
                 static fn(BusClase $c) => ["id" => (int) $c->getId(), "nombre" => $c->getNombre()],

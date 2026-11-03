@@ -17,6 +17,7 @@ import type { FormKitSchemaNode } from '@formkit/core'
 import { getEntity } from '@/core/entities/registry'
 import { useSchemaStore } from '@/core/entities/schema'
 import type { EntityStore } from '@/core/entities/types'
+import { graphql } from '@/core/graphql/client'
 import { itemIri } from '@/core/graphql/documents'
 import type { AgnosticOption } from '@/core/graphql/types'
 import { useMetadataStore } from '@/core/metadata/sincronizacion'
@@ -52,6 +53,38 @@ async function loadRelationOptions(
   )
   const byTarget = Object.fromEntries(lists)
   return Object.fromEntries(relations.map((field) => [field.name, byTarget[field.namedType] ?? []]))
+}
+
+/**
+ * Lo ya guardado que no está entre las opciones (una estación inactiva, una
+ * empresa desactivada) se suma con su etiqueta: si no, el select lo mostraría
+ * vacío y se perdería al guardar.
+ */
+async function conLoGuardado(
+  fields: FormFieldSource[],
+  options: Record<string, AgnosticOption[]>,
+  values: Row,
+): Promise<Record<string, AgnosticOption[]>> {
+  const out = { ...options }
+  await Promise.all(
+    fields
+      .filter((field) => field.isRelation && !isIconRelation(field) && out[field.name])
+      .map(async (field) => {
+        const raw = values[field.name]
+        const guardados = (Array.isArray(raw) ? raw : [raw]).filter(
+          (v): v is string => typeof v === 'string' && v !== '',
+        )
+        const presentes = new Set(out[field.name]!.map((o) => o.value ?? o.id))
+        const faltan = guardados.filter((iri) => !presentes.has(iri))
+        if (faltan.length === 0) return
+        try {
+          out[field.name] = [...out[field.name]!, ...(await graphql.agnosticSearch(field.namedType, { ids: faltan }))]
+        } catch (cause) {
+          console.warn(`[useEntityForm] sin la etiqueta de lo guardado en "${field.name}":`, cause)
+        }
+      }),
+  )
+  return out
 }
 
 /** Labels de las columnas del listado como respaldo de los del formulario. */
@@ -141,9 +174,9 @@ export function useEntityForm(
         recordIri = typeof item.id === 'string' ? item.id : itemIri(entity, id)
       }
 
-      const relationOptions = await loadRelationOptions(selected)
       let values = hydrateInitialValues(selected, source, mode.value)
       if (mode.value === 'create') values = { ...values, ...valoresDeRuta(selected, initial.value ?? {}) }
+      const relationOptions = await conLoGuardado(selected, await loadRelationOptions(selected), values)
       if (selected.some(isIconRelation)) values = await icons.hydrate(selected, values)
 
       if (seq !== buildSeq) return

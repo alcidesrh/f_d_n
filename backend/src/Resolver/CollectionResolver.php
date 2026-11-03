@@ -7,6 +7,7 @@ use ApiPlatform\Metadata\IriConverterInterface;
 use App\ApiResource\Agnostic;
 use App\Acceso\Catalogo\CatalogoRecursos;
 use App\Entity\Empresa;
+use App\Entity\Enclave;
 use App\Services\BuscadorOpciones;
 use App\Useful\Doctrine;
 use Doctrine\ORM\EntityManagerInterface;
@@ -69,11 +70,16 @@ final class CollectionResolver implements QueryItemResolverInterface {
 
   /**
    * Qué registros cuentan como opción (filtros y selectores). Una empresa
-   * desactivada no aparece; `ids` no filtra, porque es la etiqueta de lo ya guardado.
+   * desactivada o un enclave inactivo no aparecen; `ids` no filtra, porque es
+   * la etiqueta de lo ya guardado.
    *
    * @return array<string, mixed>
    */
   private function filtrosDeOpciones(string $class): array {
-    return $class === Empresa::class ? ['activa' => true] : [];
+    return match (true) {
+      $class === Empresa::class => ['activa' => true],
+      is_a($class, Enclave::class, true) => ['activo' => true],
+      default => [],
+    };
   }
 }

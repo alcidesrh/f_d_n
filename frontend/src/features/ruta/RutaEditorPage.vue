@@ -60,7 +60,7 @@
                 <div class="parada" :class="[`parada--${modo}`, { 'parada--aviso': avisosForm[index] }]">
                   <button type="button" data-drag-handle class="tirador" :aria-label="`Arrastrar la parada ${index + 1}`" :disabled="!puedeEditar"><icon name="drag-indicator" /></button>
                   <span class="numero tabular-nums" :title="index === 0 ? 'Origen' : index === form.paradas.length - 1 ? 'Destino' : `Parada ${index + 1}`">{{ index + 1 }}</span>
-                  <Select v-model="row.enclaveId" :options="opciones?.lugares ?? []" option-label="nombre" option-value="id" filter :filter-fields="['nombre', 'departamento']" :virtual-scroller-options="{ itemSize: 38 }" placeholder="Lugar" :disabled="!puedeEditar" class="lugar" :aria-label="`Lugar de la parada ${index + 1}`" />
+                  <Select v-model="row.enclaveId" :options="lugaresElegibles" option-label="nombre" option-value="id" filter :filter-fields="['nombre', 'departamento']" :virtual-scroller-options="{ itemSize: 38 }" placeholder="Lugar" :disabled="!puedeEditar" class="lugar" :aria-label="`Lugar de la parada ${index + 1}`" />
                   <InputNumber v-model="row.minutos" :min="0" :use-grouping="false" :disabled="!puedeEditar || index === 0" :placeholder="index === 0 ? 'origen' : 'min'" suffix=" min" class="num num1" :aria-label="`Minutos hasta la parada ${index + 1}`" />
                   <InputNumber v-model="row.km" :min="0" :use-grouping="false" :disabled="!puedeEditar" placeholder="km" suffix=" km" class="num num2" :aria-label="`Km hasta la parada ${index + 1}`" />
                   <div class="flags">
@@ -160,6 +160,11 @@ const alto = computed(() => ALTO[modo.value]);
 const erroresForm = computed(() => (form.value ? errores(form.value) : []));
 const avisosForm = computed(() => (form.value ? avisos(form.value.paradas) : {}));
 const lugares = computed(() => new Map((opciones.value?.lugares ?? []).map((l) => [l.id, l])));
+/** Los activos, más los inactivos que esta ruta ya usa (para no perderlos). */
+const lugaresElegibles = computed(() => {
+  const usados = new Set((form.value?.paradas ?? []).map((p) => p.enclaveId));
+  return (opciones.value?.lugares ?? []).filter((l) => l.activo || usados.has(l.id));
+});
 const lugar = (id: number | null) => (id ? (lugares.value.get(id)?.nombre ?? "?") : "Parada sin lugar");
 const enMapa = computed(() =>
   (form.value?.paradas ?? [])
