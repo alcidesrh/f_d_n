@@ -6,6 +6,9 @@
   salida (que enfoca el bus y su ruta).
   Contenido angosto: mapa y lista apilados; desde 56rem de ancho: lado a lado.
   Por defecto solo los buses que envían GPS; el interruptor "Solo con GPS" apagado muestra también los simulados.
+  Con "Solo con GPS" no se dibujan las rutas ni sus enclaves: solo los buses y, en raya discontinua, la trayectoria
+  que cada uno va dejando con sus lecturas (se guarda en el navegador mientras la página está abierta; "Actualizar" la borra
+  y vuelve a empezar desde la lectura siguiente).
   Interruptor "Nombres de enclaves": chip con el nombre junto a cada punto (si no, solo al pasar el cursor).
   Maximizar (o Esc para salir): filtros, mapa y lista cubren toda la pantalla.
 -->
@@ -18,7 +21,7 @@
       <span class="inline-block size-2 rounded-full" :class="error ? 'bg-red-500' : 'bg-green-500'" />
       <template v-if="actualizado">Actualizado {{ horaDe(actualizado) }}</template>
       <template v-else>Cargando…</template>
-      <Button size="small" text rounded class="tap-target" aria-label="Actualizar ahora" :loading="cargando" @click="cargar(false)"><icon name="refresh" /></Button>
+      <Button size="small" text rounded class="tap-target" aria-label="Actualizar ahora" :loading="cargando" @click="reiniciarTrayectorias"><icon name="refresh" /></Button>
       <Button size="small" text rounded class="tap-target" :aria-label="maximizado ? 'Salir de pantalla completa' : 'Maximizar mapa'" :title="maximizado ? 'Salir de pantalla completa (Esc)' : 'Maximizar'" :aria-pressed="maximizado" @click="alternarMaximizado">
         <icon :name="maximizado ? 'fullscreen-exit' : 'fullscreen'" />
       </Button>
@@ -147,6 +150,7 @@ const estimadas = ref(new Map<number, PosicionEstimada>());
 let mapa: L.Map | null = null;
 let capaRutas: L.LayerGroup | null = null;
 let capaBuses: L.LayerGroup | null = null;
+let capaTrayectorias: L.LayerGroup | null = null;
 let desfaseMs = 0;
 let temporizador: ReturnType<typeof setInterval> | undefined;
 let animacion: ReturnType<typeof setInterval> | undefined;
@@ -155,6 +159,8 @@ let observador: ResizeObserver | undefined;
 const maximizado = ref(false);
 const mostrarNombres = ref(false);
 const marcadores = new Map<number, L.Marker>();
+/** Lecturas GPS recibidas de cada salida desde que se abrió la página (o desde el último "Actualizar"). */
+const trayectorias = new Map<number, { instante: number; puntos: [number, number][] }>();
 
 /** Curvatura y fase de guiones de cada ruta, fijas aunque el filtro cambie. */
 const estilos = computed(() => estilosPorRuta((datos.value?.buses ?? []).map((b) => b.ruta)));
@@ -181,9 +187,46 @@ function iconoBus(b: BusEnRecorrido, p: PosicionEstimada, activo: boolean): L.Di
 
 const escapar = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
+/** Suma la lectura GPS de cada bus a su trayectoria (una sola vez por lectura). */
+function registrarTrayectorias(buses: BusEnRecorrido[]) {
+  const vigentes = new Set<number>();
+  for (const b of buses) {
+    if (b.posicion.fuente !== "gps") continue;
+    vigentes.add(b.salidaId);
+    const t = trayectorias.get(b.salidaId) ?? { instante: -1, puntos: [] };
+    trayectorias.set(b.salidaId, t);
+    if (b.posicion.instante === t.instante) continue;
+    t.instante = b.posicion.instante;
+    const ultimo = t.puntos[t.puntos.length - 1];
+    if (!ultimo || ultimo[0] !== b.posicion.lat || ultimo[1] !== b.posicion.lng) t.puntos.push([b.posicion.lat, b.posicion.lng]);
+  }
+  // La salida que ya no está en recorrido (o dejó de enviar GPS) pierde su trayectoria.
+  for (const id of trayectorias.keys()) if (!vigentes.has(id)) trayectorias.delete(id);
+}
+
+function dibujarTrayectorias() {
+  if (!capaTrayectorias) return;
+  capaTrayectorias.clearLayers();
+  if (!filtro.soloGps) return;
+  for (const b of visibles.value) {
+    const t = trayectorias.get(b.salidaId);
+    if (!t || t.puntos.length < 2) continue;
+    L.polyline(t.puntos, { color: colorEmpresa(b.empresaId, b.empresa), weight: 3, opacity: 0.9, dashArray: "6 6", interactive: false }).addTo(capaTrayectorias);
+  }
+}
+
+/** "Actualizar": borra lo dibujado y la trayectoria vuelve a empezar desde la lectura que llega. */
+function reiniciarTrayectorias() {
+  trayectorias.clear();
+  dibujarTrayectorias();
+  void cargar(false);
+}
+
 function dibujarRutas() {
   if (!capaRutas) return;
   capaRutas.clearLayers();
+  // Solo con GPS: el mapa muestra los buses y su trayectoria, no la ruta planificada.
+  if (filtro.soloGps) return;
   const vistas = new Set<string>();
   const estaciones = new Set<string>();
   // Con un bus elegido solo se dibuja su ruta; si no, la de cada ruta una vez.
@@ -249,7 +292,7 @@ function animar() {
 
 function enfocar(buses: BusEnRecorrido[]) {
   if (!mapa || buses.length === 0) return;
-  const puntos = buses.flatMap((b) => b.trazado);
+  const puntos = filtro.soloGps ? buses.map((b) => [b.posicion.lat, b.posicion.lng] as [number, number]).concat(buses.flatMap((b) => trayectorias.get(b.salidaId)?.puntos ?? [])) : buses.flatMap((b) => b.trazado);
   if (puntos.length) mapa.fitBounds(L.latLngBounds(puntos), { padding: [40, 40], maxZoom: 11 });
 }
 
@@ -266,6 +309,7 @@ const alTeclear = (ev: KeyboardEvent) => {
 
 function refrescarVista() {
   dibujarRutas();
+  dibujarTrayectorias();
   sincronizarBuses();
   animar();
 }
@@ -311,6 +355,7 @@ async function cargar(silencioso: boolean) {
     if (mia !== carga) return;
     const primera = datos.value === null;
     datos.value = r;
+    registrarTrayectorias(r.buses);
     desfaseMs = r.generado * 1000 - Date.now();
     actualizado.value = r.generado;
     error.value = "";
@@ -331,6 +376,7 @@ onMounted(() => {
   mapa = L.map(mapaEl.value, { center: CENTRO, zoom: 7, zoomControl: true });
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(mapa);
   capaRutas = L.layerGroup().addTo(mapa);
+  capaTrayectorias = L.layerGroup().addTo(mapa);
   capaBuses = L.layerGroup().addTo(mapa);
   // El contenedor cambia de ancho al abrir/cerrar sidebars o al cambiar de breakpoint.
   observador = new ResizeObserver(() => mapa?.invalidateSize());
@@ -350,6 +396,7 @@ onBeforeUnmount(() => {
   mapa?.remove();
   mapa = null;
   marcadores.clear();
+  trayectorias.clear();
 });
 </script>
 
