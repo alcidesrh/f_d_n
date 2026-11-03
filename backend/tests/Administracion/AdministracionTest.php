@@ -4,47 +4,14 @@ declare(strict_types=1);
 
 namespace App\Tests\Administracion;
 
-use App\Administracion\Acceso;
 use App\Administracion\AdministracionRechazada;
 use App\Administracion\Datos;
 use App\Administracion\Destino;
-use App\Entity\Role;
-use App\Entity\Usuario;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 final class AdministracionTest extends TestCase
 {
-    private static function rol(int $id, ?string $nombre = null): Role
-    {
-        return (new Role())->setNombre($nombre ?? "ROLE_$id")->setId($id);
-    }
-
-    private static function usuario(int $id): Usuario
-    {
-        return (new Usuario())->setId($id);
-    }
-
-    public function testSinRestriccionesLoVeCualquiera(): void
-    {
-        $this->assertTrue(Acceso::permite(5, [], false, [], []));
-    }
-
-    public function testElUsuarioNombradoLoVeAunqueNoTengaElRol(): void
-    {
-        $this->assertTrue(Acceso::permite(5, [], false, [self::rol(1)], [self::usuario(5)]));
-        $this->assertFalse(Acceso::permite(6, [], false, [self::rol(1)], [self::usuario(5)]));
-    }
-
-    public function testElRolAsignadoLoDejaVerSinJerarquia(): void
-    {
-        $this->assertTrue(Acceso::permite(5, [2], false, [self::rol(2)], []));
-        $this->assertFalse(Acceso::permite(5, [1], false, [self::rol(2)], []), 'otro rol no hereda');
-        $this->assertFalse(Acceso::permite(5, [], false, [self::rol(2)], []));
-        $this->assertTrue(Acceso::permite(5, [], true, [self::rol(2)], []), 'el de sistema ve todo');
-        $this->assertTrue(Acceso::permite(5, [], false, [self::rol(9, Role::user)], []), 'el rol base lo ven todos');
-    }
-
     public function testDestinoPorRutaConParametros(): void
     {
         $d = Destino::desde(['ruta' => 'entity-list', 'parametros' => ['entity' => ' bus ']]);
@@ -88,8 +55,9 @@ final class AdministracionTest extends TestCase
         $this->assertSame('Buses de la flota', Datos::texto(['t' => "  Buses   de la\nflota "], 't', 'el texto'));
         $this->assertSame(['Unidad', 'Carro'], Datos::claves(['claves' => ['Unidad', ' unidad ', '', 'Carro', 5]]));
         $this->assertSame('directions-bus-outline', Datos::icono(['icono' => 'directions-bus-outline']));
-        $this->assertSame(['roles' => [1, 2], 'usuarios' => [-1]], Datos::acceso(['acceso' => ['roles' => [1, '2', 1, 'x'], 'usuarios' => ['-1']]]));
-        $this->assertNull(Datos::acceso([]));
+        $this->assertSame([1, 2], Datos::audiencia(['audiencia' => [1, '2', 1, 'x']]));
+        $this->assertSame([], Datos::audiencia(['audiencia' => []]), 'vacía: a todos');
+        $this->assertNull(Datos::audiencia([]), 'sin la clave no se toca');
         $this->expectException(AdministracionRechazada::class);
         Datos::icono(['icono' => 'Bus Grande']);
     }

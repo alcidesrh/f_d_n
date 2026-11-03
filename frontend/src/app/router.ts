@@ -605,6 +605,8 @@ export const router = createRouter({
       props: true,
       component: () => import("@/features/entity-crud/ListPage.vue"),
       meta: {
+        // Ver la entidad; sin ella es el selector de entidades: configurar la aplicación.
+        recurso: { parametro: "entity", operacion: "ver", selector: "config.editar" },
         title: "Lista de entidad",
         label: "Entidades",
         icon: "table-rows-outline",
@@ -616,6 +618,8 @@ export const router = createRouter({
       props: true,
       component: () => import("@/features/entity-crud/FormPage.vue"),
       meta: {
+        // Crear exige editar la entidad; abrir uno que ya existe, verla (guardar lo exige la API).
+        recurso: { parametro: "entity", operacion: "editar", registro: "id" },
         title: "Formulario de entidad",
         label: "Formulario",
         icon: "edit-document",

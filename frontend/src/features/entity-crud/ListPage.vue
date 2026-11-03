@@ -1,7 +1,7 @@
 <template>
   <div>
-    <!-- Super admin: elige la entidad cuya lista se carga (también en `/lista`, sin entidad). -->
-    <div v-if="esSuperAdmin" class="mb-3 max-w-sm">
+    <!-- Quien puede abrir el selector (`/lista` sin entidad, ADR-049) elige la entidad cuya lista se carga. -->
+    <div v-if="puedeElegirEntidad" class="mb-3 max-w-sm">
       <Select :model-value="entityName ? entitySlug(entityName) : null" :options="entidadesOpciones" option-label="label" option-value="value" filter placeholder="Elegir entidad" size="small" fluid aria-label="Entidad" @update:model-value="elegirEntidad" />
     </div>
 
@@ -79,7 +79,7 @@
 
     <div v-else class="card flex items-center justify-center py-12">
       <ProgressSpinner v-if="loading.loading" style="width: 2rem; height: 2rem" />
-      <span v-else class="text-surface-500">{{ esSuperAdmin ? "Elige una entidad para cargar su lista" : "Sin entidad" }}</span>
+      <span v-else class="text-surface-500">{{ puedeElegirEntidad ? "Elige una entidad para cargar su lista" : "Sin entidad" }}</span>
     </div>
   </div>
 </template>
@@ -107,7 +107,6 @@ import { DEFAULT_PAGE_SIZE, DEFAULT_PAGE_SIZES, defaultView } from "@/core/entit
 import { getEntity } from "@/core/entities/registry";
 import { useSchemaStore } from "@/core/entities/schema";
 import { entityNameFromSlug, entitySlug } from "@/core/entities/slug";
-import { useCuentaStore } from "@/core/cuenta/store";
 import { customFilterOrNull, type CustomListFilterState } from "@/core/entities/listCustomFilter";
 import type { CollectionFieldConfig, EntityStore, FilterMode } from "@/core/entities/types";
 import { useLoadingStore } from "@/core/loading";
@@ -161,13 +160,12 @@ const entityName = computed(() => entityNameFromSlug((Array.isArray(props.entity
 const store = computed<EntityStore | null>(() => (schema.find(entityName.value) ? getEntity(entityName.value) : null));
 const enSelector = computed(() => props.seleccion !== undefined);
 
-// Selector de entidad (solo super admin) ----------------------------------
-const cuenta = useCuentaStore();
-const esSuperAdmin = computed(() => cuenta.cuenta?.roles.includes("ROLE_SUPER_ADMIN") ?? false);
-/** Entidades con colección consultable, por nombre. */
+// Selector de entidad: lo que exige `/lista` sin entidad (`meta.recurso.selector`) ---------
+const puedeElegirEntidad = computed(() => !enSelector.value && acceso.puedeEntrar(router.resolve({ name: "entity-list" })));
+/** Entidades con colección consultable que puede ver, por nombre. */
 const entidadesOpciones = computed(() =>
   Object.values(schema.entities)
-    .filter((entity) => entity.queryCollection)
+    .filter((entity) => entity.queryCollection && acceso.puedeRecurso(entity.name, "ver"))
     .map((entity) => ({ label: entity.name, value: entitySlug(entity.name) }))
     .sort((a, b) => a.label.localeCompare(b.label)),
 );

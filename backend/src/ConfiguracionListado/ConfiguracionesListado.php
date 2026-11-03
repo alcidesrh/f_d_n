@@ -237,7 +237,7 @@ final class ConfiguracionesListado
     /** @return array{configuraciones: list<array<string, mixed>>, roles: list<array{id: int, nombre: string}>} */
     private function respuesta(EntityConfiguration $config): array
     {
-        $roles = array_values(array_filter($this->em->getRepository(Role::class)->findBy([], ["nombre" => "ASC"]), static fn(Role $r) => !$r->esBase()));
+        $roles = $this->em->getRepository(Role::class)->findBy([], ["nombre" => "ASC"]);
 
         return [
             "configuraciones" => array_map(fn(ListConfiguration $l) => [

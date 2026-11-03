@@ -73,17 +73,17 @@ final class Datos
     }
 
     /**
-     * `acceso: { roles: [id], usuarios: [id] }`; `null` si no vino (no se toca).
+     * `audiencia: [id de rol]` (vacía: a todos); `null` si no vino (no se toca).
      *
-     * @return array{roles: list<int>, usuarios: list<int>}|null
+     * @return list<int>|null
      */
-    public static function acceso(array $datos): ?array
+    public static function audiencia(array $datos): ?array
     {
-        if (!array_key_exists("acceso", $datos) || !is_array($datos["acceso"])) {
+        if (!array_key_exists("audiencia", $datos) || !is_array($datos["audiencia"])) {
             return null;
         }
 
-        return ["roles" => self::ids($datos["acceso"]["roles"] ?? []), "usuarios" => self::ids($datos["acceso"]["usuarios"] ?? [])];
+        return self::ids($datos["audiencia"]);
     }
 
     /** @return list<int> */

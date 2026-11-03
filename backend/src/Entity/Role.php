@@ -5,7 +5,6 @@ namespace App\Entity;
 use App\Acceso\Recurso;
 use App\Attribute\ApiResourceNoPagination;
 use App\Entity\Base\Base;
-use App\Entity\Base\Constants\RolesTrait;
 use App\Repository\RoleRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -18,9 +17,10 @@ use Doctrine\ORM\Mapping as ORM;
  *
  * - El de sistema (`sistema`) tiene todas las capacidades, también las que se
  *   agreguen al catálogo después; no se edita.
- * - `ROLE_USER` es el rol base: lo tiene todo usuario sin asignárselo y solo
- *   sirve para mostrar menús y cajas de administración a todos; no lleva
- *   capacidades.
+ *
+ * Además nombra la audiencia de menús y cajas de la administración (a quién
+ * se le muestran, ADR-049) y la configuración del listado que le toca a cada
+ * uno (ADR-043). No hay rol base: «a todos» es no nombrar ninguno.
  *
  * Se escribe por `/api/acceso/roles` (`App\Acceso\Administracion\AdministracionAccesos`),
  * que impide la escalada de privilegios; por la API genérica solo se lee.
@@ -30,8 +30,6 @@ use Doctrine\ORM\Mapping as ORM;
 #[Recurso(nombre: 'Roles', area: 'Accesos', lecturaLibre: true, soloLectura: true)]
 class Role extends Base
 {
-    use RolesTrait;
-
     #[ORM\Column(length: 255, unique: true)]
     private ?string $nombre = null;
 
@@ -119,12 +117,6 @@ class Role extends Base
         $this->sistema = $sistema;
 
         return $this;
-    }
-
-    /** El rol base (`ROLE_USER`): lo tiene todo usuario, sin capacidades. */
-    public function esBase(): bool
-    {
-        return $this->nombre === self::user;
     }
 
     public function __toString(): string

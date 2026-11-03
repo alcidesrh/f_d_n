@@ -15,11 +15,12 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Menú de navegación: una `Taxonomy` de `MenuItem` (su árbol, con una o más
- * raíces) más los roles que pueden verlo.
+ * raíces) más los roles de su audiencia.
  *
- * Visibilidad (`App\Navigation\MenuVisibility`): el usuario ve el menú si
- * alguno de sus roles está en `roles` o es ascendiente (`Role.parents`) de
- * alguno de ellos, y el menú está colocado en un área (`MenuPlacement`).
+ * Visibilidad (`App\Navigation\UserMenus`, ADR-049): el usuario ve el menú
+ * si está colocado en un área (`MenuPlacement`), si su audiencia lo incluye
+ * (`App\Navigation\Audiencia`: sin roles, todos) y si le queda algún ítem
+ * que puede abrir (`App\Navigation\Pantallas`).
  */
 #[ORM\Entity]
 #[ApiResourceNoPagination]
@@ -33,6 +34,8 @@ class Menu extends Base
     private ?string $nombre = null;
 
     /**
+     * Audiencia: a quién se le muestra (curaduría, no seguridad); vacía, a todos.
+     *
      * @var Collection<int, Role>
      */
     #[ORM\ManyToMany(targetEntity: Role::class)]

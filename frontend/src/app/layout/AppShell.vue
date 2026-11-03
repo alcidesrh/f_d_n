@@ -39,7 +39,8 @@ import { defineAsyncComponent, provide } from 'vue'
 import { useUiStore } from '@/app/ui'
 import { useSessionStore } from '@/core/auth/session'
 import { useAccesoStore } from '@/core/acceso/store'
-import { filtrarMenusCon, useUserMenusStore } from '@/core/navigation/userMenus'
+import { useUserMenusStore } from '@/core/navigation/userMenus'
+import { syncVueRoutes } from '@/app/routeSync'
 import { useChatStore } from '@/core/chat/store'
 import { useCorreoStore } from '@/core/correo/store'
 import { useCuentaStore } from '@/core/cuenta/store'
@@ -60,7 +61,6 @@ import SidebarRight from './SidebarRight.vue'
 import { defineSidebarStore } from './sidebarStore'
 
 const route = useRoute()
-const router = useRouter()
 const session = useSessionStore()
 const userMenus = useUserMenusStore()
 const chat = useChatStore()
@@ -79,18 +79,18 @@ provide(REPORTES_ADJUNTABLES, [
   { id: 'cuadre-voucher', nombre: 'Cuadre de voucher', icono: 'confirmation-number-outline', componente: defineAsyncComponent(() => import('@/features/reporte/CuadreVoucherPage.vue')) },
 ])
 
-// Los menús solo muestran las pantallas que el usuario puede abrir (ADR-039).
+// Los menús llegan podados del backend: solo lo que el usuario puede abrir (ADR-049).
 const acceso = useAccesoStore()
-filtrarMenusCon((destino) => {
-  try {
-    // Ruta por nombre o enlace por path: en ambos casos, lo que el router dice de esa pantalla.
-    const r = router.resolve(destino)
-    return acceso.puedeEntrar({ name: r.name, params: r.params, meta: r.meta })
-  } catch {
-    // Una ruta con parámetros obligatorios: el ítem se pinta deshabilitado de todos modos.
-    return true
-  }
-})
+/**
+ * Quien configura la aplicación publica al entrar las rutas con lo que exige
+ * cada pantalla: con eso el backend poda menús y administración (ADR-049).
+ */
+async function sincronizarRutas() {
+  if (!acceso.puede('config.editar')) return
+  const resultado = await syncVueRoutes()
+  if (!resultado.ok) console.warn('[vueRoutes] no se pudieron sincronizar las rutas:', resultado.error)
+  else if (resultado.desconocidas.length) console.warn('[vueRoutes] capacidades que no están en el catálogo (esas pantallas no las abre nadie):', resultado.desconocidas)
+}
 // Con otros roles le puede tocar otra configuración de cada listado (ADR-043).
 const dejarDeEscuchar = acceso.suscribir(() => {
   void userMenus.load()
@@ -113,7 +113,10 @@ watch(
       acceso.limpiar()
       return userMenus.clear()
     }
-    void acceso.cargar().then(() => userMenus.load())
+    void acceso.cargar().then(async () => {
+      await sincronizarRutas()
+      await userMenus.load()
+    })
     void cuenta.cargar()
     void autorizaciones.cargarResumen()
     void chat.iniciar()

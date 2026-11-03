@@ -35,9 +35,10 @@ class SyncVueRoutesController extends AbstractController
 
         $this->synchronizer->sync($payload['routes']);
 
-        $routes = $this->entityManager->getRepository(VueRoute::class)
-            ->findBy(['vueRoute' => null]);
-
-        return $this->json($routes);
+        return $this->json([
+            'total' => $this->entityManager->getRepository(VueRoute::class)->count([]),
+            // Una pantalla que exige un código que no existe no la abre nadie: el frontend lo avisa en consola.
+            'capacidadesDesconocidas' => $this->synchronizer->desconocidas(),
+        ]);
     }
 }

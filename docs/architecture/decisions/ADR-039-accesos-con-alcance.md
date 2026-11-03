@@ -1,6 +1,6 @@
 # ADR-039: Accesos con alcance — capacidades en el código, roles planos y asignaciones por empresa y estación
 
-**Estado:** Aceptada (reemplaza ADR-003; modifica ADR-015 y la visibilidad por jerarquía de roles de ADR-018)
+**Estado:** Aceptada (reemplaza ADR-003; modifica ADR-015 y la visibilidad por jerarquía de roles de ADR-018). La navegación (menús y administración) y el rol base cambiaron con [ADR-049](ADR-049-navegacion-por-capacidad.md).
 
 ## Contexto
 

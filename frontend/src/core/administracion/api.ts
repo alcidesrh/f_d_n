@@ -1,7 +1,8 @@
 /**
  * Cajas de `/administracion` (`/api/administracion/*`). Verlas, cualquiera
- * con sesión; configurarlas, `config.editar`. Todo lo que escribe responde
- * la configuración completa.
+ * con sesión: el backend manda solo las de su audiencia con los enlaces que
+ * puede abrir (ADR-049); configurarlas, `config.editar`. Todo lo que escribe
+ * responde la configuración completa.
  */
 import { http, request } from '@/core/http'
 
@@ -17,11 +18,6 @@ export interface Persona {
   label: string
 }
 
-/** Quién ve una caja o un enlace; vacío = cualquiera con sesión. */
-export interface Acceso {
-  roles: Persona[]
-  usuarios: Persona[]
-}
 
 export interface Enlace {
   id: number
@@ -32,8 +28,8 @@ export interface Enlace {
   abrir: Destino
   agregar: Destino | null
   activo: boolean
-  /** Solo al configurar. */
-  acceso?: Acceso
+  /** Solo al configurar: los roles a los que se muestra; vacía, a todos. */
+  audiencia?: Persona[]
 }
 
 export interface Seccion {
@@ -44,7 +40,8 @@ export interface Seccion {
   color: string
   activa: boolean
   enlaces: Enlace[]
-  acceso?: Acceso
+  /** Solo al configurar: los roles a los que se muestra; vacía, a todos. */
+  audiencia?: Persona[]
 }
 
 export interface Administracion {
@@ -52,17 +49,13 @@ export interface Administracion {
   secciones: Seccion[]
 }
 
-export interface AccesoPayload {
-  roles: number[]
-  usuarios: number[]
-}
-
 export interface SeccionPayload {
   titulo: string
   icono: string
   color: string
   activa?: boolean
-  acceso?: AccesoPayload
+  /** Ids de rol; vacía, a todos. */
+  audiencia?: number[]
 }
 
 export interface EnlacePayload {
@@ -72,7 +65,8 @@ export interface EnlacePayload {
   abrir: Destino
   agregar: Destino | null
   activo?: boolean
-  acceso?: AccesoPayload
+  /** Ids de rol; vacía, a todos. */
+  audiencia?: number[]
 }
 
 const BASE = '/administracion'

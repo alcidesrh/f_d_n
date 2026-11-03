@@ -48,11 +48,7 @@ final class MiAccesoController extends AbstractController
             if ($r->oculto) {
                 continue;
             }
-            $recursos[$r->nombreCorto] = [
-                'ver' => $r->lecturaLibre || ($r->ver !== null && $permisos->tiene($r->ver)),
-                'editar' => $r->editar !== null && $permisos->tiene($r->editar),
-                'eliminar' => $r->eliminar !== null && $permisos->tiene($r->eliminar),
-            ];
+            $recursos[$r->nombreCorto] = $r->permisosDe($permisos);
         }
         $this->estacionTrabajo->asegurar($usuario);
         $estacion = $this->estacionTrabajo->actual($usuario);

@@ -71,12 +71,6 @@ final class ReglasTest extends TestCase
         $this->assertNull(Reglas::rechazoRoles($todas, $this->porDefecto, []));
     }
 
-    public function testElRolBaseNoSeAsocia(): void
-    {
-        $base = self::rol(5, Role::user);
-        $this->assertStringContainsString("lo tienen todos", (string) Reglas::rechazoRoles($this->agencia->getListConfigurations(), $this->taquilla, [$base]));
-    }
-
     public function testLaPorDefectoNoSeElimina(): void
     {
         $this->assertNotNull(Reglas::rechazoEliminar($this->porDefecto));

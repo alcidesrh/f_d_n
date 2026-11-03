@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use App\Administracion\Destino;
-use App\Entity\Base\Traits\AccesoPorUsuarioTrait;
+use App\Entity\Base\Traits\AudienciaTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -15,13 +15,15 @@ use Doctrine\ORM\Mapping as ORM;
  * (`abrir`: ruta del frontend con parámetros o un path a mano) y, si tiene,
  * su "Agregar nuevo" (`agregar`). `claves` son otros nombres por los que se
  * busca (los del legado). `activo` en falso lo oculta (solo se ve al
- * configurar); quién lo ve, por roles y usuarios, además de la caja.
+ * configurar). Se muestra a quien puede abrir su destino (y, si tiene
+ * roles, a su audiencia: `AudienciaTrait`), dentro de una caja que también
+ * vea; su "Agregar nuevo", a quien puede abrir ese otro destino (ADR-049).
  */
 #[ORM\Entity]
 #[ORM\Index(columns: ["seccion_id", "posicion"], name: "idx_enlace_administracion_seccion")]
 class EnlaceAdministracion
 {
-    use AccesoPorUsuarioTrait;
+    use AudienciaTrait;
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -75,7 +77,6 @@ class EnlaceAdministracion
         $this->icono = $icono;
         $this->setAbrir($abrir);
         $this->roles = new ArrayCollection();
-        $this->usuarios = new ArrayCollection();
     }
 
     public function getId(): ?int

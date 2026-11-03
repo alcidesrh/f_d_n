@@ -1,5 +1,6 @@
 import 'vue-router'
 import type { Component } from 'vue'
+import type { RecursoDeRuta } from '@/core/acceso/tipos'
 
 declare module 'vue-router' {
   interface RouteMeta {
@@ -16,9 +17,12 @@ declare module 'vue-router' {
     conservar?: boolean
     /**
      * Capacidad que exige la pantalla (o cualquiera de varias), ADR-039: el
-     * router no la abre y los menús la esconden a quien no la tiene. Quien
-     * autoriza de verdad es la API.
+     * router no la abre a quien no la tiene y, con la sincronización de
+     * rutas, el backend no le manda menús ni enlaces de la administración
+     * que lleven a ella (ADR-049). Quien autoriza de verdad es la API.
      */
     capacidad?: string | readonly string[]
+    /** Pantalla del CRUD genérico: qué exige sobre la entidad de su parámetro (ADR-049). */
+    recurso?: RecursoDeRuta
   }
 }

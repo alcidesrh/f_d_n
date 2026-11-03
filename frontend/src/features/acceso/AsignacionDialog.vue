@@ -96,7 +96,6 @@ const guardando = ref(false)
 const porCodigo = computed(() => new Map(props.catalogo.capacidades.map((c) => [c.codigo, c])))
 const opcionesRoles = computed(() =>
   props.roles
-    .filter((r) => !r.base)
     .map((r) => ({ id: r.id, nombre: r.nombre, etiqueta: r.descripcion || r.nombre, resumen: r.sistema ? 'todas las capacidades' : `${r.capacidades.length} capacidades` })),
 )
 const rolElegido = computed(() => props.roles.find((r) => r.id === rol.value) ?? null)

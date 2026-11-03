@@ -56,6 +56,10 @@ class VueRoutesSyncCommand extends Command
             ->getRepository(VueRoute::class)
             ->count([]);
 
+        $desconocidas = $this->synchronizer->desconocidas();
+        if ($desconocidas !== []) {
+            $io->warning(sprintf('Capacidades que no están en el catálogo (esas pantallas no las abre nadie): %s', implode(', ', $desconocidas)));
+        }
         $io->success(sprintf('Rutas sincronizadas. Total de registros VueRoute: %d', $total));
 
         return Command::SUCCESS;

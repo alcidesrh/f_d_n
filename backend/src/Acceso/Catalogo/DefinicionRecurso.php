@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Acceso\Catalogo;
 
+use App\Acceso\PermisosUsuario;
 use App\Acceso\Recurso;
 
 /** Una entidad publicada en la API genérica y las capacidades que la protegen (puro). */
@@ -63,6 +64,34 @@ final class DefinicionRecurso
     public function capacidades(): array
     {
         return array_filter([self::VER => $this->ver, self::EDITAR => $this->editar, self::ELIMINAR => $this->eliminar]);
+    }
+
+    /**
+     * Puede hacer la operación con la entidad en algún ámbito: leer la de
+     * lectura libre cualquiera; lo oculto, nadie. Las filas las acota cada
+     * consulta.
+     */
+    public function permite(PermisosUsuario $permisos, string $operacion): bool
+    {
+        if ($this->oculto) {
+            return false;
+        }
+        if ($operacion === self::VER && $this->lecturaLibre) {
+            return true;
+        }
+        $capacidad = $this->capacidades()[$operacion] ?? null;
+
+        return $capacidad !== null && $permisos->tiene($capacidad);
+    }
+
+    /** `{ ver, editar, eliminar }` de un usuario (lo que lee el frontend en `/api/me/acceso`). */
+    public function permisosDe(PermisosUsuario $permisos): array
+    {
+        return [
+            self::VER => $this->permite($permisos, self::VER),
+            self::EDITAR => $this->permite($permisos, self::EDITAR),
+            self::ELIMINAR => $this->permite($permisos, self::ELIMINAR),
+        ];
     }
 
     public static function snake(string $nombre): string

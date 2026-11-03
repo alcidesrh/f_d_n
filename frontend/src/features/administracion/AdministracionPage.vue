@@ -45,7 +45,7 @@
             <span class="caja-icono"><icon :name="s.icono" sm color="text-inherit" /></span>
             <h2 :id="`caja-${s.id}`" class="min-w-0 flex-1 truncate">{{ s.titulo }}</h2>
             <template v-if="store.configurando">
-              <icon v-if="restringido(s.acceso)" name="lock-outline" sm class="caja-marca" v-tooltip.top="quienVe(s.acceso)" />
+              <icon v-if="restringido(s.audiencia)" name="lock-outline" sm class="caja-marca" v-tooltip.top="quienVe(s.audiencia)" />
               <Button text rounded size="small" severity="secondary" class="tap-target" :aria-label="s.activa ? `Ocultar la caja ${s.titulo}` : `Mostrar la caja ${s.titulo}`" v-tooltip.top="s.activa ? 'Ocultar caja' : 'Mostrar caja'" @click="alternarSeccion(s)">
                 <template #icon><icon :name="s.activa ? 'visibility-outline' : 'visibility-off-outline'" sm /></template>
               </Button>
@@ -67,7 +67,7 @@
                   <icon :name="enlacePorId(row.key)!.icono" sm class="fila-icono" />
                   <span class="min-w-0 flex-1 truncate" v-tooltip.top="describirDestino(enlacePorId(row.key)!.abrir)">{{ enlacePorId(row.key)!.etiqueta }}</span>
                   <icon v-if="!ubicacion(enlacePorId(row.key)!.abrir, existeRuta)" name="link-off" sm class="text-red-600" v-tooltip.top="'Su destino ya no existe'" />
-                  <icon v-if="restringido(enlacePorId(row.key)!.acceso)" name="lock-outline" sm class="text-muted-color" v-tooltip.top="quienVe(enlacePorId(row.key)!.acceso)" />
+                  <icon v-if="restringido(enlacePorId(row.key)!.audiencia)" name="lock-outline" sm class="text-muted-color" v-tooltip.top="quienVe(enlacePorId(row.key)!.audiencia)" />
                   <Button text rounded size="small" severity="secondary" class="tap-target" :aria-label="enlacePorId(row.key)!.activo ? `Ocultar ${enlacePorId(row.key)!.etiqueta}` : `Mostrar ${enlacePorId(row.key)!.etiqueta}`" @click="alternarEnlace(enlacePorId(row.key)!)">
                     <template #icon><icon :name="enlacePorId(row.key)!.activo ? 'visibility-outline' : 'visibility-off-outline'" sm /></template>
                   </Button>
@@ -122,8 +122,7 @@
 <script setup lang="ts">
 import { useConfirm } from "primevue/useconfirm";
 import { RouterLink } from "vue-router";
-import type { Acceso, Destino, Enlace, EnlacePayload, Seccion, SeccionPayload } from "@/core/administracion/api";
-import { useAccesoStore } from "@/core/acceso/store";
+import type { Destino, Enlace, EnlacePayload, Persona, Seccion, SeccionPayload } from "@/core/administracion/api";
 import { describirDestino, enlacePayload, moverEnlace, moverSeccion, ordenarEnlaces, repartirEnColumnas, restringido, seccionesVisibles, seccionPayload, ubicacion } from "@/core/administracion/disposicion";
 import SortablePanelList from "@/shared/ui/SortablePanelList.vue";
 import EnlaceDialog from "./EnlaceDialog.vue";
@@ -140,7 +139,6 @@ const SEPARACION = 16;
 const MAX_COLUMNAS = 5;
 
 const store = useAdministracionStore();
-const acceso = useAccesoStore();
 const router = useRouter();
 const confirm = useConfirm();
 
@@ -148,29 +146,10 @@ const busqueda = ref("");
 onMounted(() => void store.cargar());
 
 /**
- * Configurando, todas tal cual; si no, las visibles que coinciden con la
- * búsqueda, sin los enlaces a pantallas que el usuario no puede abrir
- * (ADR-039) ni las cajas que se quedan vacías.
+ * Configurando, todas tal cual; si no, las que coinciden con la búsqueda. El
+ * backend ya manda solo lo que el usuario puede abrir (ADR-049).
  */
-const secciones = computed<Seccion[]>(() =>
-  store.configurando
-    ? store.secciones
-    : seccionesVisibles(store.secciones, busqueda.value)
-        .map((s) => ({ ...s, enlaces: s.enlaces.filter((e) => puedeAbrir(e.abrir)) }))
-        .filter((s) => s.enlaces.length > 0),
-);
-
-/** Lleva a una pantalla del frontend que el usuario puede abrir (un path o una URL externa, siempre). */
-function puedeAbrir(d: Destino | null): boolean {
-  const u = ubicacion(d, existeRuta);
-  if (u?.tipo !== "ruta") return true;
-  try {
-    const r = router.resolve(u.to);
-    return acceso.puedeEntrar({ name: r.name, params: r.params, meta: r.meta });
-  } catch {
-    return true;
-  }
-}
+const secciones = computed<Seccion[]>(() => (store.configurando ? store.secciones : seccionesVisibles(store.secciones, busqueda.value)));
 
 const resumen = computed(() => {
   const n = secciones.value.reduce((t, s) => t + s.enlaces.length, 0);
@@ -182,7 +161,7 @@ function personalizar() {
   void store.configurar(true);
 }
 
-const quienVe = (a: Acceso | undefined) => (a ? ["Solo:", ...a.roles.map((r) => r.label), ...a.usuarios.map((u) => u.label)].join(" ") : "");
+const quienVe = (audiencia: Persona[] | undefined) => ["Solo:", ...(audiencia ?? []).map((r) => r.label)].join(" ");
 
 // ── Enlaces: destinos ─────────────────────────────────────────────────────────
 

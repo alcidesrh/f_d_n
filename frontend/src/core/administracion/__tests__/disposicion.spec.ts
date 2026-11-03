@@ -12,6 +12,7 @@ import {
   parametrosDeRuta,
   repartirEnColumnas,
   restringido,
+  audienciaPayload,
   seccionesVisibles,
   ubicacion,
 } from '../disposicion'
@@ -124,15 +125,17 @@ describe('destinos', () => {
 })
 
 describe('payloads', () => {
-  it('reenvía el enlace con los cambios y sin acceso si no se pide', () => {
-    const p = enlacePayload(enlace(1, 'Buses', { acceso: { roles: [{ id: 1, label: 'R' }], usuarios: [] } }), { activo: false })
+  it('reenvía el enlace con los cambios y sin audiencia si no se pide', () => {
+    const p = enlacePayload(enlace(1, 'Buses', { audiencia: [{ id: 1, label: 'R' }] }), { activo: false })
     expect(p.activo).toBe(false)
-    expect(p).not.toHaveProperty('acceso')
+    expect(p).not.toHaveProperty('audiencia')
   })
 
-  it('restringido si nombra roles o usuarios', () => {
+  it('restringido si nombra roles; la audiencia viaja como ids', () => {
     expect(restringido(undefined)).toBe(false)
-    expect(restringido({ roles: [], usuarios: [] })).toBe(false)
-    expect(restringido({ roles: [], usuarios: [{ id: 5, label: 'Ana' }] })).toBe(true)
+    expect(restringido([])).toBe(false)
+    expect(restringido([{ id: 5, label: 'ROLE_GERENTE' }])).toBe(true)
+    expect(audienciaPayload([{ id: 5, label: 'ROLE_GERENTE' }])).toEqual([5])
+    expect(audienciaPayload(undefined)).toBeUndefined()
   })
 })

@@ -9,7 +9,7 @@ use App\Entity\Role;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
 
-/** Roles de ejemplo del modelo de ADR-039: el de sistema, el base y dos puestos. */
+/** Roles de ejemplo del modelo de ADR-039: el de sistema y dos puestos. */
 class RoleFixtures extends Fixture
 {
     public const REF_PREFIX = 'role-';
@@ -22,7 +22,6 @@ class RoleFixtures extends Fixture
     {
         $roles = [
             self::SISTEMA => (new Role())->setNombre(self::SISTEMA)->setDescripcion('Administración total del sistema')->setSistema(true),
-            Role::user => (new Role())->setNombre(Role::user)->setDescripcion('Todos los usuarios (menús y administración)'),
             self::VENDEDOR => (new Role())->setNombre(self::VENDEDOR)->setDescripcion('Vende boletos en las estaciones')
                 ->setCapacidades([Capacidad::VENTA_VENDER->value, Capacidad::BOLETO_VER->value]),
             self::SUPERVISOR => (new Role())->setNombre(self::SUPERVISOR)->setDescripcion('Responsable de la venta de boletos en las estaciones')

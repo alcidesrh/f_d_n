@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
-use App\Entity\Base\Traits\AccesoPorUsuarioTrait;
+use App\Entity\Base\Traits\AudienciaTrait;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -12,14 +12,16 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Caja de la pantalla de administración (`/administracion`): título, ícono,
  * color y sus enlaces en orden. `activa` en falso la oculta (solo se ve al
- * configurar); quién la ve, por roles y usuarios (`AccesoPorUsuarioTrait`).
+ * configurar); a quién se le muestra, por roles (`AudienciaTrait`; sin
+ * roles, a todos), y nunca vacía: sin enlaces que el usuario pueda abrir no
+ * se le manda (ADR-049).
  * Solo se usa por `App\Administracion` y `/api/administracion`; no se publica
  * en GraphQL.
  */
 #[ORM\Entity]
 class SeccionAdministracion
 {
-    use AccesoPorUsuarioTrait;
+    use AudienciaTrait;
 
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -55,7 +57,6 @@ class SeccionAdministracion
         $this->color = $color;
         $this->enlaces = new ArrayCollection();
         $this->roles = new ArrayCollection();
-        $this->usuarios = new ArrayCollection();
     }
 
     public function getId(): ?int

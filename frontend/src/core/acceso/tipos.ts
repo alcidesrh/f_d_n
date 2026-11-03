@@ -40,6 +40,20 @@ export interface MiAcceso {
 /** Una capacidad, o cualquiera de varias. */
 export type Exige = string | readonly string[]
 
+/**
+ * `meta.recurso` de una pantalla del CRUD genérico (ADR-049): la entidad sale
+ * del parámetro `parametro` (`bus-clase` → `BusClase`) y exige `operacion`
+ * sobre ella; con el parámetro `registro` presente abre uno que ya existe y
+ * basta con verla. Sin la entidad es el selector y exige `selector`. El
+ * backend aplica la misma regla (`App\Navigation\Pantalla`).
+ */
+export interface RecursoDeRuta {
+  parametro: string
+  operacion: 'ver' | 'editar'
+  registro?: string
+  selector?: string
+}
+
 // ---- Administración ------------------------------------------------------
 
 export interface DefinicionCapacidad {
@@ -79,7 +93,6 @@ export interface Rol {
   nombre: string
   descripcion: string | null
   sistema: boolean
-  base: boolean
   capacidades: string[]
   limites: Record<string, number>
   /** Usuarios con una asignación vigente del rol. */

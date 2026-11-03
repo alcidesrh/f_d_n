@@ -143,8 +143,8 @@ final class AdministracionAccesos
     {
         $this->exigir(Capacidad::IAM_ROLES);
         $rol = $this->rol($id);
-        if ($rol->isSistema() || $rol->esBase()) {
-            throw new AccesoRechazado('El rol de sistema y el rol base no se eliminan.', 'rol_protegido');
+        if ($rol->isSistema()) {
+            throw new AccesoRechazado('El rol de sistema no se elimina.', 'rol_protegido');
         }
         $asignaciones = $this->em->getRepository(Asignacion::class)->count(['rol' => $rol]);
         if ($asignaciones > 0) {
@@ -445,9 +445,6 @@ final class AdministracionAccesos
         if ($desconocidas !== []) {
             throw new AccesoRechazado(sprintf('Capacidades que no existen: %s.', implode(', ', $desconocidas)), 'capacidad_inexistente');
         }
-        if ($rol?->esBase() && $capacidades !== []) {
-            throw new AccesoRechazado('El rol base lo tienen todos: no lleva capacidades (sirve para menús y administración).', 'rol_base');
-        }
         $limites = [];
         foreach ((array) ($datos['limites'] ?? $rol?->getLimites() ?? []) as $codigo => $valor) {
             $limite = Limite::tryFrom((string) $codigo) ?? throw new AccesoRechazado("El límite «{$codigo}» no existe.", 'limite_inexistente');
@@ -529,10 +526,6 @@ final class AdministracionAccesos
         if ($rol === null) {
             throw new AccesoRechazado('Elija un rol que exista.', 'rol_inexistente');
         }
-        if ($rol->esBase()) {
-            throw new AccesoRechazado('El rol base lo tienen todos: no se asigna.', 'rol_base');
-        }
-
         return $rol;
     }
 
@@ -623,7 +616,6 @@ final class AdministracionAccesos
             'nombre' => $r->getNombre(),
             'descripcion' => $r->getDescripcion(),
             'sistema' => $r->isSistema(),
-            'base' => $r->esBase(),
             // Las que ya no están en el catálogo no se muestran (no conceden nada).
             'capacidades' => array_values(array_filter($r->getCapacidades(), static fn(string $c) => isset($definiciones[$c]))),
             'limites' => (object) $r->getLimites(),

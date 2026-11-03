@@ -1,10 +1,9 @@
 /**
  * Reglas puras de accesos en el cliente (ADR-039). Solo deciden qué se
- * muestra: quien autoriza es siempre el backend.
+ * muestra: quien autoriza es siempre el backend. Los menús y la
+ * administración ya llegan podados del backend (ADR-049).
  */
-import type { RouteLocationRaw } from 'vue-router'
-import type { NavItem } from '@/core/navigation/userMenus'
-import type { Ambito, DefinicionCapacidad, Exige, MiAcceso } from './tipos'
+import type { Ambito, DefinicionCapacidad, Exige, MiAcceso, RecursoDeRuta } from './tipos'
 
 /** Tiene la capacidad (o alguna de ellas) en algún ámbito. Sin `exige`, sí. */
 export function tiene(acceso: MiAcceso | null, exige: Exige | undefined): boolean {
@@ -28,9 +27,8 @@ export function puedeRecurso(acceso: MiAcceso | null, entidad: string, operacion
 }
 
 interface RutaDestino {
-  name?: string | symbol | null
   params?: Record<string, unknown>
-  /** `RouteMeta`: su `capacidad` es la que exige la pantalla. */
+  /** `RouteMeta`: lo que exige la pantalla (`capacidad`, `recurso`). */
   meta?: Record<PropertyKey, unknown>
 }
 
@@ -40,38 +38,22 @@ function exigeDe(meta: Record<PropertyKey, unknown> | undefined): Exige | undefi
   return typeof c === 'string' || (Array.isArray(c) && c.every((x) => typeof x === 'string')) ? (c as Exige) : undefined
 }
 
+const parametro = (params: Record<string, unknown> | undefined, nombre: string | undefined): string =>
+  nombre && typeof params?.[nombre] === 'string' ? (params[nombre] as string).trim() : ''
+
 /**
- * Puede abrir la pantalla: la capacidad de `meta.capacidad` y, en el listado
- * y el formulario genéricos, lo que le permite su entidad (ver; crear exige
- * editar).
+ * Puede abrir la pantalla (ADR-049; la misma regla que `App\Navigation\Pantalla`
+ * en el backend): alguna capacidad de `meta.capacidad` y, en una pantalla
+ * del CRUD genérico (`meta.recurso`), lo que pide sobre su entidad; sin la
+ * entidad, lo que pide el selector.
  */
 export function puedeEntrar(acceso: MiAcceso | null, ruta: RutaDestino): boolean {
   if (!tiene(acceso, exigeDe(ruta.meta))) return false
-  const entidad = typeof ruta.params?.entity === 'string' ? ruta.params.entity : null
-  if (!entidad) return true
-  if (ruta.name === 'entity-list') return puedeRecurso(acceso, entidad, 'ver')
-  if (ruta.name === 'entity-form') return puedeRecurso(acceso, entidad, ruta.params?.id ? 'ver' : 'editar')
-  return true
-}
-
-/**
- * Los ítems que puede abrir: sin los de pantallas que no le corresponden, y
- * sin los grupos que se quedan vacíos. Un ítem sin ruta conocida se deja
- * (se pinta deshabilitado, como siempre).
- */
-export function podarMenu(items: NavItem[], permitido: (destino: RouteLocationRaw) => boolean): NavItem[] {
-  const resultado: NavItem[] = []
-  for (const item of items) {
-    if (item.path || item.route) {
-      // Un enlace se pide por su path; una ruta sin nombre se deja (se pinta deshabilitada).
-      const destino = item.path ?? (item.route?.name ? { name: item.route.name } : null)
-      if (!destino || permitido(destino)) resultado.push({ ...item, children: podarMenu(item.children, permitido) })
-      continue
-    }
-    const hijos = podarMenu(item.children, permitido)
-    if (hijos.length > 0) resultado.push({ ...item, children: hijos })
-  }
-  return resultado
+  const recurso = ruta.meta?.recurso as RecursoDeRuta | undefined
+  if (!recurso) return true
+  const entidad = parametro(ruta.params, recurso.parametro)
+  if (!entidad) return tiene(acceso, recurso.selector)
+  return puedeRecurso(acceso, entidad, parametro(ruta.params, recurso.registro) ? 'ver' : recurso.operacion)
 }
 
 /**

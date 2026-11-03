@@ -4,7 +4,7 @@
  * Las cajas y su configuración viven en el servidor (`./api`); aquí solo se
  * calcula sobre ellas, sin mutarlas.
  */
-import type { AccesoPayload, Acceso, Destino, Enlace, EnlacePayload, Seccion, SeccionPayload } from './api'
+import type { Destino, Enlace, EnlacePayload, Persona, Seccion, SeccionPayload } from './api'
 
 /** Rampas de la paleta (`assets/palette.css`) que puede llevar una caja; espejo de `App\Administracion\Datos::COLORES`. */
 export const COLORES = ['blue', 'sky', 'cyan', 'teal', 'emerald', 'green', 'lime', 'yellow', 'amber', 'orange', 'red', 'rose', 'pink', 'fuchsia', 'purple', 'violet', 'indigo', 'slate', 'stone'] as const
@@ -110,11 +110,12 @@ export function describirDestino(d: Destino | null): string {
 
 // ── Payloads ────────────────────────────────────────────────────────────────
 
-export const restringido = (a: Acceso | undefined) => !!a && (a.roles.length > 0 || a.usuarios.length > 0)
+/** Se muestra solo a algunos roles (curaduría: cada uno ve igual solo lo que puede abrir). */
+export const restringido = (audiencia: Persona[] | undefined) => (audiencia?.length ?? 0) > 0
 
-export const accesoPayload = (a: Acceso | undefined): AccesoPayload | undefined => (a ? { roles: a.roles.map((r) => r.id), usuarios: a.usuarios.map((u) => u.id) } : undefined)
+export const audienciaPayload = (audiencia: Persona[] | undefined): number[] | undefined => audiencia?.map((r) => r.id)
 
-/** Lo que se reenvía al cambiar algo de una caja (el acceso, solo si se pasa). */
+/** Lo que se reenvía al cambiar algo de una caja (la audiencia, solo si se pasa). */
 export const seccionPayload = (s: Seccion, cambios: Partial<SeccionPayload> = {}): SeccionPayload => ({
   titulo: s.titulo,
   icono: s.icono,

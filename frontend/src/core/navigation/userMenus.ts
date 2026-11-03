@@ -1,12 +1,11 @@
 /**
  * Menús de navegación del usuario actual (`GET /api/me/menus`): por área del
- * shell, los menús que sus roles pueden ver, en orden, con su árbol de ítems.
- * Vive en `core/` porque lo leen el shell (`app/layout`) y lo recarga el
- * editor de menús (`features/menu-builder`) tras guardar.
+ * shell, los menús de su audiencia, en orden, con los ítems que puede abrir
+ * (el backend ya los poda, ADR-049). Vive en `core/` porque lo leen el shell
+ * (`app/layout`) y lo recarga el editor de menús (`features/menu-builder`)
+ * tras guardar.
  */
 import { defineStore } from 'pinia'
-import type { RouteLocationRaw } from 'vue-router'
-import { podarMenu } from '@/core/acceso/reglas'
 import { http } from '@/core/http'
 
 /** Áreas del shell (`LayoutArea` del backend), una por slot `menu-content`. */
@@ -49,13 +48,6 @@ export type MenusByArea = Record<LayoutArea, NavMenu[]>
 
 const emptyAreas = (): MenusByArea => ({ sidebar_left: [], topbar_right: [], sidebar_right: [] })
 
-/** Qué pantallas puede abrir el usuario (lo fija el shell con `core/acceso`). */
-let filtro: ((destino: RouteLocationRaw) => boolean) | undefined
-
-export function filtrarMenusCon(permitido: ((destino: RouteLocationRaw) => boolean) | undefined): void {
-  filtro = permitido
-}
-
 export const useUserMenusStore = defineStore('userMenus', {
   state: () => ({
     areas: emptyAreas(),
@@ -63,20 +55,10 @@ export const useUserMenusStore = defineStore('userMenus', {
   }),
 
   actions: {
-    /**
-     * Carga (o recarga) los menús; un fallo deja las áreas vacías sin romper
-     * el shell. Con `permitido`, sin los ítems de pantallas que el usuario no
-     * puede abrir (ADR-039) ni los menús que se quedan vacíos.
-     */
-    async load(permitido: ((destino: RouteLocationRaw) => boolean) | undefined = filtro): Promise<void> {
+    /** Carga (o recarga) los menús; un fallo deja las áreas vacías sin romper el shell. */
+    async load(): Promise<void> {
       try {
-        const data = { ...emptyAreas(), ...(await http.get<Partial<MenusByArea>>('/me/menus', { silent: true })) }
-        if (permitido) {
-          for (const area of LAYOUT_AREAS) {
-            data[area] = data[area].map((m) => ({ ...m, items: podarMenu(m.items, permitido) })).filter((m) => m.items.length > 0)
-          }
-        }
-        this.areas = data
+        this.areas = { ...emptyAreas(), ...(await http.get<Partial<MenusByArea>>('/me/menus', { silent: true })) }
       } catch (error) {
         this.areas = emptyAreas()
         console.warn('[menus] no se pudieron cargar los menús del usuario:', error)

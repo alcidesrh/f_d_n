@@ -2,7 +2,7 @@
   Crear o editar un enlace de una caja: texto, a dónde lleva (una pantalla
   de la aplicación con sus parámetros o un path escrito a mano), su
   "Agregar nuevo" opcional, otros nombres para la búsqueda, ícono, si se
-  muestra y quién lo ve. Emite `guardar` con el payload completo.
+  muestra y a qué roles. Emite `guardar` con el payload completo.
 -->
 <template>
   <Dialog :visible="visible" modal :header="inicial ? 'Editar enlace' : `Nuevo enlace en «${caja}»`" class="w-[min(46rem,calc(100vw-1rem))]" @update:visible="emit('update:visible', $event)">
@@ -11,7 +11,7 @@
         <TabList>
           <Tab value="datos">Enlace</Tab>
           <Tab value="icono">Ícono</Tab>
-          <Tab value="acceso">Quién lo ve<span v-if="borrador.acceso.roles.length || borrador.acceso.usuarios.length" class="ml-1 text-primary">●</span></Tab>
+          <Tab value="audiencia">Mostrar a<span v-if="borrador.audiencia.length" class="ml-1 text-primary">●</span></Tab>
         </TabList>
         <TabPanels class="!px-0">
           <TabPanel value="datos" class="flex flex-col gap-4">
@@ -48,9 +48,9 @@
           <TabPanel value="icono">
             <IconPicker v-model="borrador.icono" height="18rem" @select="pestana = 'datos'" />
           </TabPanel>
-          <TabPanel value="acceso">
-            <AccesoEditor v-model="borrador.acceso" sujeto="lo ve" />
-            <p class="mt-3 text-xs text-muted-color">Además, solo lo ve quien ve su caja.</p>
+          <TabPanel value="audiencia">
+            <AudienciaEditor v-model="borrador.audiencia" sujeto="lo ven" />
+            <p class="mt-3 text-xs text-muted-color">Además, solo lo ve quien ve su caja; su «Agregar nuevo», solo quien puede abrirlo.</p>
           </TabPanel>
         </TabPanels>
       </Tabs>
@@ -65,9 +65,9 @@
 </template>
 
 <script setup lang="ts">
-import type { Acceso, Destino, Enlace, EnlacePayload } from "@/core/administracion/api";
-import { accesoPayload } from "@/core/administracion/disposicion";
-import AccesoEditor from "./AccesoEditor.vue";
+import type { Destino, Enlace, EnlacePayload, Persona } from "@/core/administracion/api";
+import { audienciaPayload } from "@/core/administracion/disposicion";
+import AudienciaEditor from "./AudienciaEditor.vue";
 import DestinoEditor from "./DestinoEditor.vue";
 import { useRutasApp } from "./rutasApp";
 
@@ -81,10 +81,10 @@ interface Borrador {
   abrir: Destino | null;
   agregar: Destino | null;
   activo: boolean;
-  acceso: Acceso;
+  audiencia: Persona[];
 }
 
-const nuevo = (): Borrador => ({ etiqueta: "", icono: "link", claves: [], abrir: { ruta: "", parametros: {}, path: null }, agregar: null, activo: true, acceso: { roles: [], usuarios: [] } });
+const nuevo = (): Borrador => ({ etiqueta: "", icono: "link", claves: [], abrir: { ruta: "", parametros: {}, path: null }, agregar: null, activo: true, audiencia: [] });
 const borrador = ref<Borrador>(nuevo());
 const pestana = ref("datos");
 const { valido: destinoValido } = useRutasApp();
@@ -95,7 +95,7 @@ watch(
     if (!visible) return;
     const e = props.inicial;
     borrador.value = e
-      ? { etiqueta: e.etiqueta, icono: e.icono, claves: [...e.claves], abrir: { ...e.abrir }, agregar: e.agregar ? { ...e.agregar } : null, activo: e.activo, acceso: e.acceso ?? { roles: [], usuarios: [] } }
+      ? { etiqueta: e.etiqueta, icono: e.icono, claves: [...e.claves], abrir: { ...e.abrir }, agregar: e.agregar ? { ...e.agregar } : null, activo: e.activo, audiencia: [...(e.audiencia ?? [])] }
       : nuevo();
     pestana.value = "datos";
   },
@@ -117,7 +117,7 @@ function guardar() {
     abrir: b.abrir!,
     agregar: b.agregar,
     activo: b.activo,
-    acceso: accesoPayload(b.acceso),
+    audiencia: audienciaPayload(b.audiencia),
   });
 }
 </script>

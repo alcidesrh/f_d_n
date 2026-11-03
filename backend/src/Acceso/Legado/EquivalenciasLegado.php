@@ -12,13 +12,15 @@ namespace App\Acceso\Legado;
  *
  * Es una decisión de negocio: revisarla con quien opera cada puesto.
  * `ROLE_SUPER_ADMIN` es el rol de sistema; `ROLE_ADMIN`, todo menos la
- * migración; aprueban autorizaciones (ADR-040) los que lo hacían en el legado; `ROLE_USER`, el rol base; `ROLE_NO_VENDER_VOUCHER` no concede
- * nada (era una negación: el modelo nuevo no las tiene).
+ * migración; aprueban autorizaciones (ADR-040) los que lo hacían en el legado; `ROLE_USER` (el que el
+ * legado daba a todos) no se migra: en el modelo nuevo no hay rol base; `ROLE_NO_VENDER_VOUCHER` no
+ * concede nada (era una negación: el modelo nuevo no las tiene).
  */
 final class EquivalenciasLegado
 {
     public const SISTEMA = 'ROLE_SUPER_ADMIN';
     public const ADMIN = 'ROLE_ADMIN';
+    /** El que el legado daba a todos: no se migra (ADR-049). */
     public const BASE = 'ROLE_USER';
     /** Lo que `ROLE_ADMIN` no tiene del catálogo. */
     public const ADMIN_EXCLUYE = ['migracion.ejecutar'];

@@ -1,7 +1,7 @@
 /**
  * Cajas de `/administracion` desde el servidor (`core/administracion/api`).
- * Fuera de la configuración, las que ve el usuario; al configurar, todas
- * (ocultas y restringidas incluidas) con su acceso. Cada operación aplica la
+ * Fuera de la configuración, las que ve el usuario (ya podadas: lo que puede
+ * abrir, ADR-049); al configurar, todas (ocultas incluidas) con su audiencia. Cada operación aplica la
  * configuración que responde el servidor; ordenar se muestra al instante y
  * se deshace si el servidor lo rechaza.
  */

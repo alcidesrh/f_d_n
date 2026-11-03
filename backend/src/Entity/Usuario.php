@@ -213,7 +213,7 @@ class Usuario extends PersonaBase implements
     #[Ignore]
     public function getRoles(): array
     {
-        return [Role::user];
+        return ['ROLE_USER'];
     }
 
     /** @return Collection<int, Asignacion> */

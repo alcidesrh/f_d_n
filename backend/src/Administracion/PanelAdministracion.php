@@ -5,47 +5,61 @@ declare(strict_types=1);
 namespace App\Administracion;
 
 use App\Acceso\Autorizacion;
+use App\Acceso\PermisosUsuario;
 use App\Entity\EnlaceAdministracion;
 use App\Entity\Role;
 use App\Entity\SeccionAdministracion;
 use App\Entity\Usuario;
+use App\Navigation\Audiencia;
+use App\Navigation\Pantallas;
 use Doctrine\ORM\EntityManagerInterface;
 
 /**
  * Cajas y enlaces de `/administracion`: lo que ve cada usuario y su
- * configuración (crear, editar, ocultar, ordenar, mover, eliminar y quién
- * ve cada cosa). Cada operación de configuración responde la configuración
- * completa: el frontend reemplaza su copia y nunca queda desfasado.
+ * configuración (crear, editar, ocultar, ordenar, mover, eliminar y a qué
+ * roles se le muestra cada cosa). Cada operación de configuración responde
+ * la configuración completa: el frontend reemplaza su copia y nunca queda
+ * desfasado.
  */
 final class PanelAdministracion
 {
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly Autorizacion $autorizacion,
+        private readonly Pantallas $pantallas,
     ) {}
 
     /**
-     * Lo que ve el usuario: cajas activas que puede ver con sus enlaces
-     * activos que puede ver; una caja sin enlaces a la vista no se envía.
+     * Lo que ve el usuario (ADR-049): las cajas activas de su audiencia con
+     * sus enlaces activos de su audiencia que llevan a algo que puede abrir;
+     * el "Agregar nuevo", solo si también puede abrirlo. Una caja sin
+     * enlaces a la vista no se envía.
      *
      * @return list<array<string, mixed>>
      */
     public function paraUsuario(Usuario $usuario): array
     {
         $permisos = $this->autorizacion->de($usuario);
-        $roles = $permisos->roles();
-        $sistema = $permisos->sistema();
-        $ve = static fn(SeccionAdministracion|EnlaceAdministracion $r) => Acceso::permite((int) $usuario->getId(), $roles, $sistema, $r->getRoles(), $r->getUsuarios());
 
         $resultado = [];
-        foreach ($this->conAcceso($this->secciones()) as $seccion) {
-            if (!$seccion->isActiva() || !$ve($seccion)) {
+        foreach ($this->conAudiencia($this->secciones()) as $seccion) {
+            if (!$seccion->isActiva() || !Audiencia::incluye($permisos, $seccion->getRoles())) {
                 continue;
             }
-            $enlaces = array_values(array_filter([...$seccion->getEnlaces()], static fn(EnlaceAdministracion $e) => $e->isActivo() && $ve($e)));
-            if ($enlaces !== []) {
-                $resultado[] = self::seccion($seccion, $enlaces, false);
+            $enlaces = array_values(array_filter(
+                [...$seccion->getEnlaces()],
+                fn(EnlaceAdministracion $e) => $e->isActivo() && Audiencia::incluye($permisos, $e->getRoles()) && $this->abre($permisos, $e->getAbrir()),
+            ));
+            if ($enlaces === []) {
+                continue;
             }
+            $vista = self::seccion($seccion, $enlaces, false);
+            foreach ($enlaces as $i => $enlace) {
+                if ($enlace->getAgregar() !== null && !$this->abre($permisos, $enlace->getAgregar())) {
+                    $vista["enlaces"][$i]["agregar"] = null;
+                }
+            }
+            $resultado[] = $vista;
         }
 
         return $resultado;
@@ -54,7 +68,7 @@ final class PanelAdministracion
     /** @return list<array<string, mixed>> todo, con su acceso */
     public function configuracion(): array
     {
-        return array_map(static fn(SeccionAdministracion $s) => self::seccion($s, [...$s->getEnlaces()], true), $this->conAcceso($this->secciones()));
+        return array_map(static fn(SeccionAdministracion $s) => self::seccion($s, [...$s->getEnlaces()], true), $this->conAudiencia($this->secciones()));
     }
 
     public function crearSeccion(array $datos): array
@@ -171,33 +185,39 @@ final class PanelAdministracion
     }
 
     /**
-     * Roles y usuarios de las cajas y sus enlaces en cuatro consultas, no
-     * dos por cada caja y cada enlace.
+     * Los roles de las cajas y sus enlaces en dos consultas, no una por cada
+     * caja y cada enlace.
      *
      * @param list<SeccionAdministracion> $secciones
      *
      * @return list<SeccionAdministracion>
      */
-    private function conAcceso(array $secciones): array
+    private function conAudiencia(array $secciones): array
     {
         $enlaces = array_merge([], ...array_map(static fn(SeccionAdministracion $s) => [...$s->getEnlaces()], $secciones));
         foreach ([[SeccionAdministracion::class, $secciones], [EnlaceAdministracion::class, $enlaces]] as [$clase, $registros]) {
             if ($registros === []) {
                 continue;
             }
-            foreach (["roles", "usuarios"] as $campo) {
-                $this->em->createQueryBuilder()
-                    ->select("x", "y")
-                    ->from($clase, "x")
-                    ->leftJoin("x.{$campo}", "y")
-                    ->where("x IN (:registros)")
-                    ->setParameter("registros", $registros)
-                    ->getQuery()
-                    ->getResult();
-            }
+            $this->em->createQueryBuilder()
+                ->select("x", "y")
+                ->from($clase, "x")
+                ->leftJoin("x.roles", "y")
+                ->where("x IN (:registros)")
+                ->setParameter("registros", $registros)
+                ->getQuery()
+                ->getResult();
         }
 
         return $secciones;
+    }
+
+    /** Lleva a algo que el usuario puede abrir (ADR-049). */
+    private function abre(PermisosUsuario $permisos, Destino $destino): bool
+    {
+        return $destino->ruta !== null
+            ? $this->pantallas->abreRuta($permisos, $destino->ruta, $destino->parametros)
+            : $this->pantallas->abrePath($permisos, (string) $destino->path);
     }
 
     private function seccion_(int $id): SeccionAdministracion
@@ -218,7 +238,7 @@ final class PanelAdministracion
     private function aplicarSeccion(SeccionAdministracion $seccion, array $datos): void
     {
         $seccion->setActiva(Datos::booleano($datos, "activa", $seccion->isActiva()));
-        $this->aplicarAcceso($seccion, $datos);
+        $this->aplicarAudiencia($seccion, $datos);
     }
 
     private function aplicarEnlace(EnlaceAdministracion $enlace, array $datos): void
@@ -226,21 +246,20 @@ final class PanelAdministracion
         $enlace->describir(Datos::texto($datos, "etiqueta", "el texto"), Datos::icono($datos), Datos::claves($datos));
         $enlace->setAgregar(Destino::desde($datos["agregar"] ?? null));
         $enlace->setActivo(Datos::booleano($datos, "activo", $enlace->isActivo()));
-        $this->aplicarAcceso($enlace, $datos);
+        $this->aplicarAudiencia($enlace, $datos);
     }
 
-    private function aplicarAcceso(SeccionAdministracion|EnlaceAdministracion $registro, array $datos): void
+    private function aplicarAudiencia(SeccionAdministracion|EnlaceAdministracion $registro, array $datos): void
     {
-        $acceso = Datos::acceso($datos);
-        if ($acceso === null) {
+        $ids = Datos::audiencia($datos);
+        if ($ids === null) {
             return;
         }
-        $roles = $acceso["roles"] ? $this->em->getRepository(Role::class)->findBy(["id" => $acceso["roles"]]) : [];
-        $usuarios = $acceso["usuarios"] ? $this->em->getRepository(Usuario::class)->findBy(["id" => $acceso["usuarios"]]) : [];
-        if (count($roles) !== count($acceso["roles"]) || count($usuarios) !== count($acceso["usuarios"])) {
-            throw new AdministracionRechazada("Alguno de los roles o usuarios elegidos ya no existe.", "acceso_invalido");
+        $roles = $ids ? $this->em->getRepository(Role::class)->findBy(["id" => $ids]) : [];
+        if (count($roles) !== count($ids)) {
+            throw new AdministracionRechazada("Alguno de los roles elegidos ya no existe.", "audiencia_invalida");
         }
-        $registro->restringirA($roles, $usuarios);
+        $registro->mostrarA($roles);
     }
 
     /** Posiciones seguidas (0, 1, 2…) tras eliminar. */
@@ -259,7 +278,7 @@ final class PanelAdministracion
      * @param list<EnlaceAdministracion> $enlaces
      * @return array<string, mixed>
      */
-    private static function seccion(SeccionAdministracion $s, array $enlaces, bool $conAcceso): array
+    private static function seccion(SeccionAdministracion $s, array $enlaces, bool $conAudiencia): array
     {
         return [
             "id" => $s->getId(),
@@ -267,7 +286,7 @@ final class PanelAdministracion
             "icono" => $s->getIcono(),
             "color" => $s->getColor(),
             "activa" => $s->isActiva(),
-        ] + ($conAcceso ? ["acceso" => self::acceso($s)] : []) + [
+        ] + ($conAudiencia ? ["audiencia" => self::audiencia($s)] : []) + [
             "enlaces" => array_map(static fn(EnlaceAdministracion $e) => [
                 "id" => $e->getId(),
                 "etiqueta" => $e->getEtiqueta(),
@@ -276,16 +295,13 @@ final class PanelAdministracion
                 "abrir" => $e->getAbrir()->toArray(),
                 "agregar" => $e->getAgregar()?->toArray(),
                 "activo" => $e->isActivo(),
-            ] + ($conAcceso ? ["acceso" => self::acceso($e)] : []), $enlaces),
+            ] + ($conAudiencia ? ["audiencia" => self::audiencia($e)] : []), $enlaces),
         ];
     }
 
-    /** @return array{roles: list<array{id: int, label: string}>, usuarios: list<array{id: int, label: string}>} */
-    private static function acceso(SeccionAdministracion|EnlaceAdministracion $r): array
+    /** @return list<array{id: int, label: string}> los roles a los que se muestra; vacía, a todos */
+    private static function audiencia(SeccionAdministracion|EnlaceAdministracion $r): array
     {
-        return [
-            "roles" => array_values(array_map(static fn(Role $x) => ["id" => (int) $x->getId(), "label" => (string) $x->getNombre()], [...$r->getRoles()])),
-            "usuarios" => array_values(array_map(static fn(Usuario $x) => ["id" => (int) $x->getId(), "label" => $x->getLabel()], [...$r->getUsuarios()])),
-        ];
+        return array_values(array_map(static fn(Role $x) => ["id" => (int) $x->getId(), "label" => (string) $x->getNombre()], [...$r->getRoles()]));
     }
 }

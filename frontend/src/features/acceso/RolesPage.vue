@@ -6,8 +6,8 @@
 
   Ver con `iam.ver`; crear, editar y eliminar con `iam.roles`. El backend
   impide agregar lo que quien edita no tiene, o donde el rol ya está asignado
-  y él no lo tiene (`App\Acceso\Delegacion`). El de sistema no se edita; el
-  base (`ROLE_USER`) lo tienen todos y no lleva capacidades.
+  y él no lo tiene (`App\Acceso\Delegacion`). El de sistema no se edita. No
+  hay rol base: lo que se muestra «a todos» no nombra roles (ADR-049).
 -->
 <template>
   <div class="@container flex flex-col gap-3">
@@ -38,7 +38,7 @@
         <ul v-else class="roles-lista" role="listbox" aria-label="Roles">
           <li v-for="r in rolesVisibles" :key="r.id">
             <button type="button" role="option" class="rol tap-target" :class="{ 'rol--activo': r.id === seleccion?.id }" :aria-selected="r.id === seleccion?.id" @click="elegir(r)">
-              <icon :name="r.sistema ? 'shield-lock-outline' : r.base ? 'groups-outline' : 'badge-outline'" class="text-primary" />
+              <icon :name="r.sistema ? 'shield-lock-outline' : 'badge-outline'" class="text-primary" />
               <span class="min-w-0 flex-1 text-left">
                 <span class="block truncate text-sm font-medium">{{ r.nombre }}</span>
                 <span v-if="r.descripcion" class="block text-sm leading-snug text-muted-color">{{ r.descripcion }}</span>
@@ -70,15 +70,13 @@
             </div>
             <div class="flex items-center gap-2 pt-5">
               <Tag v-if="actual?.sistema" severity="contrast" value="Sistema: todo" />
-              <Tag v-else-if="actual?.base" severity="secondary" value="Base: lo tienen todos" />
               <Tag v-else severity="info" :value="`${elegidas.length} capacidades`" />
             </div>
           </header>
 
           <Message v-if="actual?.sistema" severity="secondary" :closable="false"> El rol de sistema tiene todas las capacidades, también las que se agreguen después, y no se edita. Se otorga con cuidado: quien lo tiene puede todo. </Message>
-          <Message v-else-if="actual?.base" severity="secondary" :closable="false"> Lo tienen todos los usuarios sin asignárselo. Solo sirve para mostrar menús y cajas de administración a todos: no lleva capacidades. </Message>
 
-          <template v-if="!actual?.sistema && !actual?.base">
+          <template v-if="!actual?.sistema">
             <div v-for="g in grupos" :key="g.area" class="area">
               <div class="area-titulo">
                 <Checkbox :model-value="estadoArea(g) === true" :indeterminate="estadoArea(g) === null" binary :disabled="soloLectura" :input-id="`area-${g.area}`" @update:model-value="marcarArea(g, $event)" />
@@ -123,7 +121,7 @@
 
           <footer v-if="!soloLectura" class="sticky bottom-0 -mx-3 flex flex-wrap items-center justify-end gap-2 border-t border-surface-200 bg-surface-0 px-3 pt-3 md:-mx-4 md:px-4">
             <span v-if="cambios" class="mr-auto text-sm text-amber-600">{{ cambios }}</span>
-            <Button v-if="actual && !actual.base" label="Eliminar" severity="danger" text size="small" :disabled="guardando" @click="eliminar" />
+            <Button v-if="actual && !actual.sistema" label="Eliminar" severity="danger" text size="small" :disabled="guardando" @click="eliminar" />
             <Button label="Descartar" severity="secondary" text size="small" :disabled="!cambios || guardando" @click="descartar" />
             <Button :label="actual ? 'Guardar rol' : 'Crear rol'" size="small" :loading="guardando" :disabled="!cambios && !!actual" @click="guardar" />
           </footer>

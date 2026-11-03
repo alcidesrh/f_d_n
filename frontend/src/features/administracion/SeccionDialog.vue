@@ -1,7 +1,7 @@
 <!--
   Crear o editar una caja de la administración: título, ícono, si se
-  muestra y quién la ve. Emite `guardar` con el payload completo (acceso
-  incluido); la página decide si crea o guarda.
+  muestra y a qué roles. Emite `guardar` con el payload completo (audiencia
+  incluida); la página decide si crea o guarda.
 -->
 <template>
   <Dialog :visible="visible" modal :header="inicial ? 'Editar caja' : 'Nueva caja'" class="w-[min(44rem,calc(100vw-1rem))]" @update:visible="emit('update:visible', $event)">
@@ -15,7 +15,7 @@
         <TabList>
           <Tab value="datos">Caja</Tab>
           <Tab value="icono">Ícono</Tab>
-          <Tab value="acceso">Quién la ve<span v-if="borrador.acceso.roles.length || borrador.acceso.usuarios.length" class="ml-1 text-primary">●</span></Tab>
+          <Tab value="audiencia">Mostrar a<span v-if="borrador.audiencia.length" class="ml-1 text-primary">●</span></Tab>
         </TabList>
         <TabPanels class="!px-0">
           <TabPanel value="datos" class="flex flex-col gap-4">
@@ -31,8 +31,8 @@
           <TabPanel value="icono">
             <IconPicker v-model="borrador.icono" height="18rem" />
           </TabPanel>
-          <TabPanel value="acceso">
-            <AccesoEditor v-model="borrador.acceso" />
+          <TabPanel value="audiencia">
+            <AudienciaEditor v-model="borrador.audiencia" />
           </TabPanel>
         </TabPanels>
       </Tabs>
@@ -46,9 +46,9 @@
 </template>
 
 <script setup lang="ts">
-import type { Acceso, Seccion, SeccionPayload } from "@/core/administracion/api";
-import { accesoPayload } from "@/core/administracion/disposicion";
-import AccesoEditor from "./AccesoEditor.vue";
+import type { Persona, Seccion, SeccionPayload } from "@/core/administracion/api";
+import { audienciaPayload } from "@/core/administracion/disposicion";
+import AudienciaEditor from "./AudienciaEditor.vue";
 
 const props = defineProps<{ visible: boolean; inicial: Seccion | null; guardando?: boolean }>();
 const emit = defineEmits<{ "update:visible": [visible: boolean]; guardar: [payload: SeccionPayload] }>();
@@ -58,10 +58,10 @@ interface Borrador {
   icono: string;
   color: string;
   activa: boolean;
-  acceso: Acceso;
+  audiencia: Persona[];
 }
 
-const nuevo = (): Borrador => ({ titulo: "", icono: "folder-outline", color: "blue", activa: true, acceso: { roles: [], usuarios: [] } });
+const nuevo = (): Borrador => ({ titulo: "", icono: "folder-outline", color: "blue", activa: true, audiencia: [] });
 const borrador = ref<Borrador>(nuevo());
 const pestana = ref("datos");
 
@@ -70,7 +70,7 @@ watch(
   (visible) => {
     if (!visible) return;
     const s = props.inicial;
-    borrador.value = s ? { titulo: s.titulo, icono: s.icono, color: s.color, activa: s.activa, acceso: s.acceso ?? { roles: [], usuarios: [] } } : nuevo();
+    borrador.value = s ? { titulo: s.titulo, icono: s.icono, color: s.color, activa: s.activa, audiencia: [...(s.audiencia ?? [])] } : nuevo();
     pestana.value = "datos";
   },
   { immediate: true },
@@ -81,7 +81,7 @@ const valido = computed(() => borrador.value.titulo.trim() !== "" && !!borrador.
 function guardar() {
   if (!valido.value) return;
   const b = borrador.value;
-  emit("guardar", { titulo: b.titulo.trim(), icono: b.icono, color: b.color, activa: b.activa, acceso: accesoPayload(b.acceso) });
+  emit("guardar", { titulo: b.titulo.trim(), icono: b.icono, color: b.color, activa: b.activa, audiencia: audienciaPayload(b.audiencia) });
 }
 </script>
 

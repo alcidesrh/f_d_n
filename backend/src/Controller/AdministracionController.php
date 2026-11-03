@@ -15,7 +15,8 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 /**
  * Cajas de `/administracion`. Cualquier usuario con sesión ve las suyas
- * (`GET`); configurarlas (`?configurar=1` y todo lo que escribe) pide
+ * (`GET`: las de su audiencia, con lo que puede abrir, ADR-049);
+ * configurarlas (`?configurar=1` y todo lo que escribe) pide
  * `config.editar`. Lo que escribe responde la configuración completa.
  */
 #[Route("/api/administracion", name: "api_administracion_")]
@@ -28,7 +29,7 @@ final class AdministracionController extends AbstractController
 
     public function __construct(private readonly PanelAdministracion $panel) {}
 
-    /** `{ puedeConfigurar, secciones }`; con `?configurar=1`, todas (ocultas incluidas) con su acceso. */
+    /** `{ puedeConfigurar, secciones }`; con `?configurar=1`, todas (ocultas incluidas) con su audiencia. */
     #[Route("", name: "leer", methods: ["GET"])]
     public function leer(Request $request, #[CurrentUser] Usuario $usuario): JsonResponse
     {
@@ -42,7 +43,7 @@ final class AdministracionController extends AbstractController
         return $this->json(["puedeConfigurar" => $puede, "secciones" => $this->panel->paraUsuario($usuario)], 200, [], self::JSON);
     }
 
-    /** `{ titulo, icono, color, activa?, acceso?: { roles: [id], usuarios: [id] } }` */
+    /** `{ titulo, icono, color, activa?, audiencia?: [id de rol] }` */
     #[Route("/secciones", name: "crear_seccion", methods: ["POST"])]
     public function crearSeccion(Request $request): JsonResponse
     {
@@ -62,7 +63,7 @@ final class AdministracionController extends AbstractController
         return $this->configurar(fn() => $this->panel->eliminarSeccion($id));
     }
 
-    /** `{ etiqueta, icono, claves?, abrir: { ruta, parametros? } | { path }, agregar?: …, activo?, acceso? }` */
+    /** `{ etiqueta, icono, claves?, abrir: { ruta, parametros? } | { path }, agregar?: …, activo?, audiencia? }` */
     #[Route("/secciones/{id<\d+>}/enlaces", name: "crear_enlace", methods: ["POST"])]
     public function crearEnlace(int $id, Request $request): JsonResponse
     {

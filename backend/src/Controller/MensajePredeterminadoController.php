@@ -23,7 +23,7 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
 /**
  * Mensajes predeterminados del chat (ADR-045): las instancias que mandan
  * solas a los avisos del sistema de su audiencia. Solo con
- * `chat.predeterminados` (los roles `ROLE_SUPER_ADMIN` y `ROLE_ADMIN`).
+ * `chat.predeterminados`.
  *
  * - `GET /api/chat/predeterminados` → `{ mensajes, opciones }`.
  * - `POST …`, `PUT …/{id}`, `DELETE …/{id}`: crear, editar, eliminar.

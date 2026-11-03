@@ -290,7 +290,7 @@ Algo que el código permite hacer y exige con `isGranted()` (`venta.vender`, `bo
 _Avoid_: permiso, acción
 Modelo: nuevo (código)
 **Rol** (`Role`):
-Puesto con nombre: el conjunto de capacidades que concede y sus límites. Plano (no hereda). El de sistema (`sistema`) tiene todas; `ROLE_USER` es el rol base, lo tienen todos sin asignárselo y solo sirve para menús y administración (ADR-039).
+Puesto con nombre: el conjunto de capacidades que concede y sus límites. Plano (no hereda). El de sistema (`sistema`) tiene todas (ADR-039). También nombra la audiencia de menús y cajas de administración y la configuración del listado que le toca a cada uno; no hay rol base: «a todos» es no nombrar ninguno (ADR-049).
 _Avoid_: perfil, grupo
 Modelo: nuevo
 **Asignación** (`Asignacion`):
@@ -313,7 +313,7 @@ Jerarquía ordenada (árbol, una o más raíces) sobre registros de cualquier en
 _Avoid_: categoría, árbol
 Modelo: nuevo
 **Menú**:
-Taxonomía de ítems navegables visible para quien tiene asignado alguno de sus roles (el rol base lo ven todos, el de sistema ve todo; sin jerarquía, ADR-039) y colocada en una o más áreas de la UI (`MenuPlacement`, `LayoutArea`). Cada ítem se muestra solo si el usuario puede abrir su pantalla.
+Taxonomía de ítems navegables colocada en una o más áreas de la UI (`MenuPlacement`, `LayoutArea`). Cada ítem se muestra solo si el usuario puede abrir su pantalla (lo decide el backend, ADR-049); el menú, si le queda alguno y su **audiencia** lo incluye: sus roles, o todos si no tiene (el de sistema, siempre; sin jerarquía). La audiencia es curaduría: acota, nunca amplía.
 _Avoid_: navegación
 Modelo: nuevo
 **Ítem navegable** (`MenuItem`):

@@ -1,9 +1,10 @@
 <!--
-  Constructor de menús de navegación (ADR-018).
+  Constructor de menús de navegación (ADR-018, ADR-049).
 
   Pestaña "Menús": a la izquierda los menús; en el centro el menú abierto
-  (nombre, roles que lo ven y su árbol, editado con drag & drop); a la
-  derecha la paleta de ítems navegables que aún no están en el menú.
+  (nombre, su audiencia por roles y su árbol, editado con drag & drop); a la
+  derecha la paleta de ítems navegables que aún no están en el menú. Cada
+  usuario ve solo los ítems que puede abrir: la audiencia solo acota.
   Pestaña "Áreas de la UI": qué menús se despliegan en cada área del shell
   y en qué orden.
 -->
@@ -87,8 +88,8 @@
                 </label>
                 <label class="flex flex-col gap-1">
                   <span class="text-sm font-medium">
-                    Roles que lo ven
-                    <span class="font-normal text-muted-color">(y sus ascendientes)</span>
+                    Mostrar solo a
+                    <span class="font-normal text-muted-color">(cada uno ve los ítems que puede abrir)</span>
                   </span>
                   <MultiSelect
                     v-model="menuDraft.roles"
@@ -98,7 +99,7 @@
                     filter
                     display="chip"
                     size="small"
-                    placeholder="Ningún rol: no lo ve nadie"
+                    placeholder="Todos los roles"
                   />
                 </label>
                 <div class="flex gap-1">

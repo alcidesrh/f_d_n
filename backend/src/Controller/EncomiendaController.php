@@ -51,7 +51,7 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
  * (sin cobro), `encomienda.embarcar` (embarcar y desembarcar),
  * `encomienda.entregar`, `encomienda.anular`, `encomienda.especiales`
  * (catálogo de especiales); `venta.sin_factura` para la contingencia de la
- * factura. `ROLE_ADMIN` los tiene todos.
+ * factura.
  */
 #[AsController]
 #[Route("/api/encomiendas", name: "api_encomiendas_")]

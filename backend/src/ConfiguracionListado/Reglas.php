@@ -13,8 +13,6 @@ use App\Entity\Role;
  * - Hay exactamente una por defecto: la que no tiene roles. No se elimina ni
  *   se le asocian roles mientras sea la única.
  * - Un rol está a lo sumo en una configuración por entidad.
- * - El rol base (`ROLE_USER`) no se asocia: lo tienen todos, para eso está
- *   la por defecto.
  * - A un usuario le toca la primera (por `position`) con alguno de sus
  *   roles; si ninguna, la por defecto.
  */
@@ -50,11 +48,6 @@ final class Reglas
      */
     public static function rechazoRoles(iterable $configuraciones, ?ListConfiguration $editada, array $roles): ?string
     {
-        foreach ($roles as $rol) {
-            if ($rol->esBase()) {
-                return sprintf("El rol «%s» lo tienen todos: para ellos está la configuración por defecto.", $rol->getNombre());
-            }
-        }
         $otras = array_values(array_filter(self::ordenadas($configuraciones), static fn(ListConfiguration $c) => $c !== $editada));
         foreach ($roles as $rol) {
             foreach ($otras as $otra) {

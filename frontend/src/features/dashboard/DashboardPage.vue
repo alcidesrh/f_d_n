@@ -141,10 +141,7 @@ const ACCESOS = [
 const acceso = useAccesoStore();
 const router = useRouter();
 const accesos = computed(() =>
-  ACCESOS.filter((a) => {
-    const r = router.resolve(a.ruta);
-    return acceso.puedeEntrar({ name: r.name, params: r.params, meta: r.meta });
-  }),
+  ACCESOS.filter((a) => acceso.puedeEntrar(router.resolve(a.ruta))),
 );
 const ACTUALIZAR_MS = 5 * 60_000;
 const PREFERENCIAS = "tablero.preferencias";

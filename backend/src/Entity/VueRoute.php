@@ -13,8 +13,11 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * Ruta del frontend, sincronizada desde su router (`SyncVueRoutesController`).
- * No decide accesos: cada pantalla exige su capacidad en el backend (ADR-039).
+ * Ruta del frontend, sincronizada desde su router (`SyncVueRoutesController`)
+ * con lo que exige su pantalla (`meta.capacidad` y `meta.recurso`): con eso
+ * el backend poda los menús y la administración de cada usuario
+ * (`App\Navigation\Pantallas`, ADR-049). No autoriza nada: lo que la
+ * pantalla hace, la API lo exige igual (ADR-039).
  */
 #[ORM\Entity(repositoryClass: VueRouteRepository::class)]
 #[ApiResourceNoPagination]
@@ -32,6 +35,19 @@ class VueRoute extends Base
 
     #[ORM\Column(type: Types::SIMPLE_ARRAY, nullable: true)]
     private ?array $params = null;
+
+    /** @var list<string> alguna de estas capacidades (`meta.capacidad`); vacía, cualquiera con sesión */
+    #[ORM\Column(type: Types::JSON, options: ['default' => '[]'])]
+    private array $capacidades = [];
+
+    /**
+     * Pantalla del CRUD genérico (`meta.recurso`): de qué parámetro sale la
+     * entidad y qué exige sobre ella (`App\Navigation\Pantalla`).
+     *
+     * @var array{parametro: string, operacion: string, registro?: string, selector?: string}|null
+     */
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $recurso = null;
 
     #[ORM\ManyToOne]
     private ?Icon $icon = null;
@@ -94,6 +110,34 @@ class VueRoute extends Base
     public function setParams(?array $params): static
     {
         $this->params = $params;
+
+        return $this;
+    }
+
+    /** @return list<string> */
+    public function getCapacidades(): array
+    {
+        return $this->capacidades;
+    }
+
+    /** @param list<string> $capacidades */
+    public function setCapacidades(array $capacidades): static
+    {
+        $this->capacidades = array_values(array_unique($capacidades));
+
+        return $this;
+    }
+
+    /** @return array{parametro: string, operacion: string, registro?: string, selector?: string}|null */
+    public function getRecurso(): ?array
+    {
+        return $this->recurso;
+    }
+
+    /** @param array{parametro: string, operacion: string, registro?: string, selector?: string}|null $recurso */
+    public function setRecurso(?array $recurso): static
+    {
+        $this->recurso = $recurso;
 
         return $this;
     }

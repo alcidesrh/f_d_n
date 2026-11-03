@@ -3,8 +3,7 @@
   ADR-045): las instancias que mandan solas a «Bitácora del sistema» de su
   audiencia. Puede haber varias del mismo tipo (dos rutas con «Salida
   iniciada»). Activar o desactivar, probar (llega solo a quien prueba),
-  editar y eliminar. Solo con `chat.predeterminados` (ROLE_SUPER_ADMIN y
-  ROLE_ADMIN).
+  editar y eliminar. Solo con `chat.predeterminados`.
 -->
 <template>
   <div class="@container flex flex-col gap-3">

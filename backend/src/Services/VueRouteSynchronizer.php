@@ -4,17 +4,43 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Acceso\Catalogo\Catalogo;
+use App\Acceso\Catalogo\DefinicionRecurso;
 use App\Entity\VueRoute;
 use Doctrine\ORM\EntityManagerInterface;
 
+/**
+ * Refleja en `VueRoute` el árbol de rutas del router del frontend: nombre,
+ * path, parámetros obligatorios y lo que exige cada pantalla (`capacidad`,
+ * `recurso`; ADR-049). Las que ya no están se borran (y con ellas los ítems
+ * de menú que llevaban a ellas).
+ */
 final class VueRouteSynchronizer
 {
+    /** @var list<string> códigos que el router exige y no están en el catálogo */
+    private array $desconocidas = [];
+
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
+        private readonly Catalogo $catalogo,
     ) {}
+
+    /**
+     * Las capacidades que el router exige y no existen (una pantalla así no
+     * la abre nadie): para avisar a quien sincroniza.
+     *
+     * @return list<string>
+     */
+    public function desconocidas(): array
+    {
+        return $this->desconocidas;
+    }
 
     public function sync(array $routes, ?VueRoute $parent = null): array
     {
+        if ($parent === null) {
+            $this->desconocidas = [];
+        }
         $existingByParent = $this->getExistingByParent($parent);
         $handledNames = [];
 
@@ -43,6 +69,10 @@ final class VueRouteSynchronizer
         $this->deleteRemoved($existingByParent, $handledNames);
 
         $this->entityManager->flush();
+        if ($parent === null) {
+            $this->desconocidas = array_values(array_unique($this->desconocidas));
+            sort($this->desconocidas);
+        }
 
         return $handledNames;
     }
@@ -53,8 +83,8 @@ final class VueRouteSynchronizer
         $entity->setVueRouteName($route['name'] ?? '');
         $entity->setNombre($route['name'] ?? '');
         $entity->setPath($route['path'] ?? null);
-        $entity->setParams(self::extractParams($route['path'] ?? ''));
         $entity->setVueRoute($parent);
+        $this->aplicarExigencias($entity, $route);
 
         $this->entityManager->persist($entity);
 
@@ -66,7 +96,64 @@ final class VueRouteSynchronizer
         $entity->setVueRouteName($route['name'] ?? $entity->getVueRouteName());
         $entity->setNombre($route['name'] ?? $entity->getNombre());
         $entity->setPath($route['path'] ?? $entity->getPath());
+        $this->aplicarExigencias($entity, $route);
+    }
+
+    /** Parámetros obligatorios, capacidades y regla del CRUD genérico de la pantalla. */
+    private function aplicarExigencias(VueRoute $entity, array $route): void
+    {
         $entity->setParams(self::extractParams($route['path'] ?? ''));
+        $capacidades = self::capacidades($route['capacidad'] ?? null);
+        $recurso = self::recurso($route['recurso'] ?? null);
+        $entity->setCapacidades($capacidades);
+        $entity->setRecurso($recurso);
+        foreach ([...$capacidades, ...(isset($recurso['selector']) ? [$recurso['selector']] : [])] as $codigo) {
+            if (!$this->catalogo->existe($codigo)) {
+                $this->desconocidas[] = $codigo;
+            }
+        }
+    }
+
+    /**
+     * `meta.capacidad`: un código o una lista; cualquier otra cosa, ninguna.
+     *
+     * @return list<string>
+     */
+    public static function capacidades(mixed $capacidad): array
+    {
+        $codigos = is_string($capacidad) ? [$capacidad] : (is_array($capacidad) ? $capacidad : []);
+
+        return array_values(array_unique(array_filter(array_map(
+            static fn(mixed $c) => is_string($c) ? trim($c) : '',
+            $codigos,
+        ), static fn(string $c) => $c !== '')));
+    }
+
+    /**
+     * `meta.recurso`: `{ parametro, operacion: 'ver'|'editar', registro?, selector? }`;
+     * si no tiene esa forma, la pantalla no es del CRUD genérico.
+     *
+     * @return array{parametro: string, operacion: string, registro?: string, selector?: string}|null
+     */
+    public static function recurso(mixed $recurso): ?array
+    {
+        if (!is_array($recurso)) {
+            return null;
+        }
+        $parametro = $recurso['parametro'] ?? null;
+        $operacion = $recurso['operacion'] ?? null;
+        if (!is_string($parametro) || !preg_match('/^\w+$/', $parametro) || !in_array($operacion, [DefinicionRecurso::VER, DefinicionRecurso::EDITAR], true)) {
+            return null;
+        }
+        $limpio = ['parametro' => $parametro, 'operacion' => $operacion];
+        if (is_string($recurso['registro'] ?? null) && preg_match('/^\w+$/', $recurso['registro'])) {
+            $limpio['registro'] = $recurso['registro'];
+        }
+        if (is_string($recurso['selector'] ?? null) && trim($recurso['selector']) !== '') {
+            $limpio['selector'] = trim($recurso['selector']);
+        }
+
+        return $limpio;
     }
 
     private function deleteRemoved(array $existingByParent, array $handledNames): void

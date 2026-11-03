@@ -18,6 +18,17 @@ describe('toVueRouteDTO', () => {
     expect(result).toEqual({ name: 'menu-edit', path: '/menu/:id/editar' })
   })
 
+  it('lleva lo que exige la pantalla: la capacidad (siempre como lista) y la regla del CRUD genérico', () => {
+    const recurso = { parametro: 'entity', operacion: 'ver', selector: 'config.editar' } as const
+    expect(toVueRouteDTO({ path: '/venta', name: 'venta', component: {}, meta: { capacidad: 'venta.vender' } } as RouteRecordRaw)).toEqual({
+      name: 'venta',
+      path: '/venta',
+      capacidad: ['venta.vender'],
+    })
+    expect(toVueRouteDTO({ path: '/chequeo', name: 'chequeo', component: {}, meta: { capacidad: ['boleto.chequear', 'salida.abordar'] } } as RouteRecordRaw)?.capacidad).toEqual(['boleto.chequear', 'salida.abordar'])
+    expect(toVueRouteDTO({ path: '/lista/:entity?', name: 'entity-list', component: {}, meta: { recurso } } as RouteRecordRaw)?.recurso).toEqual(recurso)
+  })
+
   it('incluye los hijos recursivamente y omite hijos sin nombre', () => {
     const result = toVueRouteDTO({
       path: '/padre',
@@ -76,15 +87,15 @@ describe('syncVueRoutes', () => {
     vi.stubGlobal('fetch', vi.fn())
   })
 
-  const response = (status: number) =>
-    ({ ok: status < 400, status, text: async () => '' }) as unknown as Response
+  const response = (status: number, body = '') =>
+    ({ ok: status < 400, status, text: async () => body }) as unknown as Response
 
   it('devuelve ok=false sin lanzar cuando el backend responde error', async () => {
     vi.mocked(fetch).mockResolvedValue(response(500))
 
     const result = await syncVueRoutes([])
 
-    expect(result).toEqual({ ok: false, count: 0, error: 'HTTP 500' })
+    expect(result).toEqual({ ok: false, count: 0, desconocidas: [], error: 'HTTP 500' })
   })
 
   it('publica el árbol de rutas y devuelve ok', async () => {
@@ -94,7 +105,7 @@ describe('syncVueRoutes', () => {
     const routes: VueRouteDTO[] = [{ name: 'dashboard', path: '/' }]
     const result = await syncVueRoutes(routes)
 
-    expect(result).toEqual({ ok: true, count: 1 })
+    expect(result).toEqual({ ok: true, count: 1, desconocidas: [] })
 
     const [url, init] = fetchMock.mock.calls[0]!
     expect(String(url)).toMatch(/\/vue-routes\/sync$/)
@@ -102,5 +113,11 @@ describe('syncVueRoutes', () => {
     expect(body.routes).toEqual(routes)
     expect(init!.method).toBe('POST')
     expect((init!.headers as Record<string, string>)['Content-Type']).toBe('application/json')
+  })
+
+  it('devuelve las capacidades que el backend no conoce', async () => {
+    vi.mocked(fetch).mockResolvedValue(response(200, JSON.stringify({ total: 1, capacidadesDesconocidas: ['venta.vendr'] })))
+
+    expect((await syncVueRoutes([])).desconocidas).toEqual(['venta.vendr'])
   })
 })

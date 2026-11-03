@@ -149,8 +149,7 @@ final class Autorizacion implements ResetInterface
     }
 
     /**
-     * Las vigentes hoy, resueltas a su ámbito (sin el rol base, que no
-     * concede nada).
+     * Las vigentes hoy, resueltas a su ámbito.
      *
      * @param list<Asignacion> $asignaciones
      */
@@ -161,7 +160,7 @@ final class Autorizacion implements ResetInterface
         $concesiones = [];
         foreach ($asignaciones as $a) {
             $rol = $a->getRol();
-            if (!$a->vigente($hoy) || $rol->esBase()) {
+            if (!$a->vigente($hoy)) {
                 continue;
             }
             $concesiones[] = new Concesion(
