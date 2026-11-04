@@ -297,7 +297,7 @@ useColumnDrag({
   display: flex;
   min-height: 0;
   flex-direction: column;
-  color: var(--p-text-color);
+  /*color: var(--p-text-color);*/
   font-size: 0.875rem;
 }
 .dg--compact {
