@@ -20,7 +20,7 @@ final class SeguimientoBuses
     /** Un bus que llegó se sigue mostrando este rato. */
     private const GRACIA_LLEGADA_MINUTOS = 10;
     /** Una lectura GPS más vieja que esto se ignora a favor de la simulación. */
-    private const GPS_VIGENCIA_SEGUNDOS = 300;
+    public const GPS_VIGENCIA_SEGUNDOS = 300;
 
     public function __construct(
         private readonly SalidasEnRecorrido $salidas,

@@ -13,6 +13,7 @@ use App\Seguimiento\GpsReciente;
 use App\Seguimiento\HistorialGps;
 use App\Seguimiento\LecturaOsmAnd;
 use App\Seguimiento\SeguimientoBuses;
+use App\Seguimiento\TelefonosDePrueba;
 use App\Seguimiento\Trayectorias;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -34,7 +35,9 @@ use Symfony\Component\Routing\Attribute\Route;
  * en la app. El identificador del dispositivo es el código del bus. Cada
  * lectura queda además en el historial, con el que se reproduce la
  * trayectoria de una salida (`/trayectorias`, `/salidas/{id}/trayectoria`,
- * ADR-050).
+ * ADR-050). Temporal: los teléfonos de prueba (`TelefonosDePrueba`, nombre
+ * acordado en vez de código de bus) van en las mismas respuestas, solo para
+ * quien ve todas las empresas, y su trayectoria en `/telefonos/trayectoria`.
  */
 #[AsController]
 #[Route("/api/seguimiento", name: "api_seguimiento_")]
@@ -48,6 +51,7 @@ final class SeguimientoController extends AbstractController
         private readonly GpsReciente $gps,
         private readonly HistorialGps $historial,
         private readonly Trayectorias $trayectorias,
+        private readonly TelefonosDePrueba $telefonos,
         private readonly EntityManagerInterface $em,
         private readonly LoggerInterface $logger,
         #[Autowire(env: "SEGUIMIENTO_GPS_CLAVE")] private readonly string $claveGps,
@@ -64,6 +68,7 @@ final class SeguimientoController extends AbstractController
         $ve = static fn(int $empresa) => $alcance->contiene(Ubicacion::empresa($empresa ?: null));
         $datos['buses'] = array_values(array_filter($datos['buses'], static fn(array $b) => $ve((int) $b['empresaId'])));
         $datos['empresas'] = array_values(array_filter($datos['empresas'], static fn(array $e) => $ve((int) $e['id'])));
+        $datos['telefonos'] = $alcance->sinRestriccion() ? $this->telefonos->enVivo($datos['generado']) : [];
 
         return $this->json($datos);
     }
@@ -93,7 +98,9 @@ final class SeguimientoController extends AbstractController
         }
         $this->gps->guardar($lectura->busCodigo, $lectura->posicion);
         try {
-            $this->historial->registrar($lectura->busCodigo, $lectura->posicion);
+            $this->telefonos->es($lectura->busCodigo)
+                ? $this->telefonos->registrar($lectura->busCodigo, $lectura->posicion)
+                : $this->historial->registrar($lectura->busCodigo, $lectura->posicion);
         } catch (\Throwable $e) {
             // El mapa en vivo no depende del historial: con un error, Traccar reenviaría y se atrasaría.
             $this->logger->error("No se guardó la lectura GPS en el historial: {mensaje}", ["mensaje" => $e->getMessage(), "bus" => $lectura->busCodigo]);
@@ -117,7 +124,10 @@ final class SeguimientoController extends AbstractController
 
         $alcance = $this->autorizacion->alcance(Capacidad::SALIDA_VER);
 
-        return $this->json($this->trayectorias->delDia($dia, static fn(int $empresa) => $alcance->contiene(Ubicacion::empresa($empresa ?: null))));
+        return $this->json([
+            ...$this->trayectorias->delDia($dia, static fn(int $empresa) => $alcance->contiene(Ubicacion::empresa($empresa ?: null))),
+            'telefonos' => $alcance->sinRestriccion() ? $this->telefonos->delDia($dia) : [],
+        ]);
     }
 
     /** Trayectoria GPS de una salida para reproducirla: lecturas, ruta y estaciones. */
@@ -135,5 +145,26 @@ final class SeguimientoController extends AbstractController
         }
 
         return $this->json($this->trayectorias->deSalida($salida));
+    }
+
+    /** Trayectoria de un teléfono de prueba que empieza en `?desde=` (epoch), para reproducirla. */
+    #[Route("/telefonos/trayectoria", name: "telefono_trayectoria", methods: ["GET"])]
+    public function trayectoriaDeTelefono(Request $request): JsonResponse
+    {
+        $this->denyAccessUnlessGranted(self::VER);
+        if (!$this->autorizacion->alcance(Capacidad::SALIDA_VER)->sinRestriccion()) {
+            return $this->json(["error" => "Los teléfonos de prueba solo los ve quien ve las salidas de todas las empresas."], 403);
+        }
+
+        $dispositivo = (string) $request->query->get("dispositivo", "");
+        $desde = (string) $request->query->get("desde", "");
+        if (!$this->telefonos->es($dispositivo)) {
+            return $this->json(["error" => "No es un teléfono de prueba."], 404);
+        }
+        if (!ctype_digit($desde)) {
+            return $this->json(["error" => "Falta el inicio (?desde=, epoch en segundos)."], 400);
+        }
+
+        return $this->json($this->telefonos->trayectoria($dispositivo, (int) $desde));
     }
 }

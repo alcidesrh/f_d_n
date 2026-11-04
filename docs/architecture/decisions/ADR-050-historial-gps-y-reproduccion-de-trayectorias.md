@@ -35,6 +35,17 @@ Tarea `purgar_lecturas_gps` (ADR-044), diaria a las 03:45: borra las lecturas de
 
 Ruta `/seguimiento/reproducir` (`features/seguimiento/ReproduccionPage.vue`, `?salida=` abre una; con `meta.label`/`icon` para el sidebar): día, salida con GPS, mapa (Leaflet) con lo recorrido tenue, la ruta planificada en raya y sus estaciones; el bus avanza con el reloj a ×10–×300, la barra lleva a cualquier momento y «Seguir al bus» mueve el mapa. Un hueco de más de 5 min sin lecturas se dibuja en raya gris, no se interpola y se salta al reproducir. Lógica pura con tests en `core/seguimiento/reproduccion.ts` (interpolación, km recorridos, huecos). En el mapa en vivo, un bus con GPS ofrece «Reproducir lo recorrido». El marcador del bus es común a ambas pantallas (`features/seguimiento/marcador.ts`).
 
+### Teléfonos de prueba (temporal)
+
+Para probar sin ponerle a un teléfono el código de un bus: los identificadores de `SEGUIMIENTO_GPS_PRUEBAS` (separados por coma, sin distinguir mayúsculas; no deben ser códigos de bus) se siguen como un bus pero sin salida (`App\Seguimiento\TelefonosDePrueba`):
+
+- Sus lecturas van a `lectura_gps_prueba` (entidad `LecturaGpsPrueba`, clave `(dispositivo, instante)`), con el mismo raleo del quieto y la misma purga.
+- **Trayectoria de un teléfono**: lecturas seguidas; más de 30 min entre dos (`TelefonosDePrueba::HUECO_SEGUNDOS`) cierra una en la primera y empieza otra en la segunda. Se reconocen al leer (`TelefonosDePrueba::partir`, puro), con un tope de 48 h.
+- API: `telefonos` en `/buses` (los de lectura vigente, con el inicio de la trayectoria en curso) y en `/trayectorias` (las que empiezan ese día); `GET /api/seguimiento/telefonos/trayectoria?dispositivo=&desde=` las lecturas de una. Solo para quien ve las salidas de todas las empresas (`Alcance::sinRestriccion`): no son de ninguna.
+- Frontend: en el mapa en vivo, en gris oscuro (`COLOR_TELEFONO`), sin filtros, con su estela y «Reproducir»; en la reproducción, en la misma lista que las salidas (`?dispositivo=&desde=`), sin ruta ni estaciones.
+
+Para quitarlo: vaciar la variable; borrar la clase, la entidad (con una migración que borre la tabla) y lo marcado «Temporal» en el controlador y las dos pantallas.
+
 ## Consecuencias
 
 - Volumen: ~100 B por lectura con sus índices. Con 100 buses enviando cada 10 s unas 12 h al día en marcha, ~500 mil lecturas por día y ~45 millones en los 90 días (~4–5 GB). La frecuencia de Traccar Client y `ANTIGUEDAD` son las palancas.

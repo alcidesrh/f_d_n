@@ -21,11 +21,11 @@ class HistorialGps
     /** Con el bus detenido en el mismo sitio, una lectura cada tanto. */
     public const QUIETO_SEGUNDOS = 120;
     /** Por debajo de esto el bus está detenido (como `LecturaOsmAnd`). */
-    private const DETENIDO_KMH = 3;
+    public const DETENIDO_KMH = 3;
     /** "El mismo sitio": a menos de esto, en grados (~55 m), de la última guardada. */
-    private const MISMO_SITIO_GRADOS = 0.0005;
+    public const MISMO_SITIO_GRADOS = 0.0005;
     /** Tope de lecturas por trayectoria (una cada 3 s durante 40 h). */
-    private const MAXIMO_LECTURAS = 50_000;
+    public const MAXIMO_LECTURAS = 50_000;
 
     public function __construct(private readonly Connection $db) {}
 

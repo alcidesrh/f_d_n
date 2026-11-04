@@ -12,6 +12,8 @@
   Interruptor "Nombres de enclaves": chip con el nombre junto a cada punto (si no, solo al pasar el cursor).
   Maximizar (o Esc para salir): filtros, mapa y lista cubren toda la pantalla.
   Un bus con GPS ofrece «Reproducir lo recorrido»: su trayectoria guardada en `/seguimiento/reproducir` (ADR-050).
+  Temporal: los teléfonos de prueba (nombre acordado en vez de código de bus; solo para quien ve todas las empresas) se
+  pintan aparte, en gris oscuro y sin filtros, con su estela y «Reproducir» de la trayectoria en curso.
 -->
 <template>
   <div class="@container flex flex-col gap-4" :class="maximizado ? 'fixed inset-0 z-[900] overflow-auto bg-surface-0 p-3' : ''">
@@ -66,7 +68,7 @@
       <!-- La clase dinámica va en el padre: Vue reescribiría el class del contenedor de Leaflet y le borraría las clases que él añade. -->
       <div class="relative min-h-0" :class="{ 'mapa-maximizado': maximizado }">
         <div ref="mapaEl" class="mapa-buses rounded-border border border-surface-200" role="application" aria-label="Mapa de buses en recorrido" />
-        <p v-if="datos && !cargando && visibles.length === 0" class="pointer-events-none absolute inset-x-0 top-1/2 z-[500] mx-auto w-fit -translate-y-1/2 rounded-border bg-surface-0/90 px-3 py-2 text-sm shadow">{{ filtro.soloGps ? "Ningún bus está enviando GPS" : "No hay buses en recorrido" }}{{ hayFiltro ? " con este filtro" : " en este momento" }}.<template v-if="filtro.soloGps && simulados > 0"> Apague «Solo con GPS» para ver los {{ simulados }} simulados.</template></p>
+        <p v-if="datos && !cargando && visibles.length === 0 && telefonos.length === 0" class="pointer-events-none absolute inset-x-0 top-1/2 z-[500] mx-auto w-fit -translate-y-1/2 rounded-border bg-surface-0/90 px-3 py-2 text-sm shadow">{{ filtro.soloGps ? "Ningún bus está enviando GPS" : "No hay buses en recorrido" }}{{ hayFiltro ? " con este filtro" : " en este momento" }}.<template v-if="filtro.soloGps && simulados > 0"> Apague «Solo con GPS» para ver los {{ simulados }} simulados.</template></p>
       </div>
 
       <aside class="flex min-h-0 flex-col gap-3" :class="maximizado ? 'overflow-y-auto' : ''">
@@ -106,6 +108,21 @@
           </RouterLink>
         </article>
 
+        <ul v-if="telefonos.length" class="m-0 flex list-none flex-col gap-1.5 p-0" aria-label="Teléfonos de prueba">
+          <li v-for="x in telefonos" :key="x.dispositivo" class="flex items-center gap-2 rounded-border border border-dashed border-surface-300 p-2 text-sm">
+            <button type="button" class="flex min-w-0 flex-1 items-center gap-2 bg-transparent p-0 text-left" @click="enfocarTelefono(x)">
+              <span class="inline-block size-3 shrink-0 rounded-full" :style="{ background: COLOR_TELEFONO }" />
+              <span class="min-w-0 flex-1">
+                <span class="block truncate font-medium">Teléfono de prueba {{ x.dispositivo }}</span>
+                <span class="block truncate text-xs text-muted-color">{{ x.posicion.velocidadKmh.toFixed(0) }} km/h · lectura {{ horaDe(x.posicion.instante) }} · desde {{ horaDe(x.desde) }}</span>
+              </span>
+            </button>
+            <RouterLink :to="{ name: 'seguimiento-reproducir', query: { dispositivo: x.dispositivo, desde: x.desde } }" class="tap-target flex shrink-0 items-center justify-center text-primary" aria-label="Reproducir lo recorrido" title="Reproducir lo recorrido">
+              <icon name="replay" />
+            </RouterLink>
+          </li>
+        </ul>
+
         <ul class="m-0 flex list-none flex-col gap-1.5 p-0" :class="maximizado ? '' : 'max-h-[28rem] overflow-y-auto'" aria-label="Buses en recorrido">
           <li v-for="b in visibles" :key="b.salidaId">
             <button type="button" class="flex w-full items-center gap-2 rounded-border border bg-transparent p-2 text-left text-sm" :class="b.salidaId === seleccionadoId ? 'border-primary' : 'border-surface-200'" :aria-pressed="b.salidaId === seleccionadoId" @click="elegir(b.salidaId, true)">
@@ -131,9 +148,9 @@ import { fetchBusesEnRecorrido } from "@/core/seguimiento/api";
 import { FILTRO_VACIO, filtrarBuses, filtroVigente, salidasDisponibles } from "@/core/seguimiento/filtro";
 import { estilosPorRuta, posicionEnArco, trazadoArqueado } from "@/core/seguimiento/arco";
 import { posicionEn, proximaParada } from "@/core/seguimiento/posicion";
-import type { BusEnRecorrido, FiltroSeguimiento, PosicionEstimada, RespuestaSeguimiento } from "@/core/seguimiento/types";
+import type { BusEnRecorrido, FiltroSeguimiento, PosicionEstimada, RespuestaSeguimiento, TelefonoEnVivo } from "@/core/seguimiento/types";
 import { HttpError } from "@/core/http";
-import { colorEmpresa } from "./colores";
+import { COLOR_TELEFONO, colorEmpresa } from "./colores";
 import { iconoBus } from "./marcador";
 import { ETIQUETA_ESTADO, ORIGEN_COORDENADA, duracion, horaDe } from "./formato";
 
@@ -157,6 +174,7 @@ let mapa: L.Map | null = null;
 let capaRutas: L.LayerGroup | null = null;
 let capaBuses: L.LayerGroup | null = null;
 let capaTrayectorias: L.LayerGroup | null = null;
+let capaTelefonos: L.LayerGroup | null = null;
 let desfaseMs = 0;
 let temporizador: ReturnType<typeof setInterval> | undefined;
 let animacion: ReturnType<typeof setInterval> | undefined;
@@ -167,11 +185,14 @@ const mostrarNombres = ref(false);
 const marcadores = new Map<number, L.Marker>();
 /** Lecturas GPS recibidas de cada salida desde que se abrió la página (o desde el último "Actualizar"). */
 const trayectorias = new Map<number, { instante: number; puntos: [number, number][] }>();
+/** Lo mismo de cada teléfono de prueba, en su trayectoria en curso. */
+const estelas = new Map<string, { desde: number; instante: number; puntos: [number, number][] }>();
 
 /** Curvatura y fase de guiones de cada ruta, fijas aunque el filtro cambie. */
 const estilos = computed(() => estilosPorRuta((datos.value?.buses ?? []).map((b) => b.ruta)));
 const arcoDe = (b: BusEnRecorrido) => estilos.value.get(b.ruta)?.k ?? 0;
 const visibles = computed(() => filtrarBuses(datos.value?.buses ?? [], filtro));
+const telefonos = computed<TelefonoEnVivo[]>(() => datos.value?.telefonos ?? []);
 const hayFiltro = computed(() => filtro.empresaId !== null || filtro.salidaId !== null);
 /** Buses en recorrido que el filtro "Solo con GPS" deja fuera. */
 const simulados = computed(() => filtrarBuses(datos.value?.buses ?? [], { ...filtro, salidaId: null, soloGps: false }).length - filtrarBuses(datos.value?.buses ?? [], { ...filtro, salidaId: null }).length);
@@ -212,10 +233,46 @@ function dibujarTrayectorias() {
   }
 }
 
+/** Suma la lectura de cada teléfono de prueba a su estela; si empezó otra trayectoria, la estela vuelve a empezar. */
+function registrarTelefonos(lista: TelefonoEnVivo[]) {
+  const vigentes = new Set(lista.map((x) => x.dispositivo));
+  for (const x of lista) {
+    let e = estelas.get(x.dispositivo);
+    if (!e || e.desde !== x.desde) {
+      e = { desde: x.desde, instante: -1, puntos: [] };
+      estelas.set(x.dispositivo, e);
+    }
+    if (x.posicion.instante === e.instante) continue;
+    e.instante = x.posicion.instante;
+    const ultimo = e.puntos[e.puntos.length - 1];
+    if (!ultimo || ultimo[0] !== x.posicion.lat || ultimo[1] !== x.posicion.lng) e.puntos.push([x.posicion.lat, x.posicion.lng]);
+  }
+  for (const d of estelas.keys()) if (!vigentes.has(d)) estelas.delete(d);
+}
+
+/** Los teléfonos de prueba con su estela. Van aparte de los buses: sin empresa, no los afectan los filtros. */
+function dibujarTelefonos() {
+  if (!capaTelefonos) return;
+  capaTelefonos.clearLayers();
+  for (const x of telefonos.value) {
+    const e = estelas.get(x.dispositivo);
+    if (e && e.puntos.length > 1) L.polyline(e.puntos, { color: COLOR_TELEFONO, weight: 3, opacity: 0.9, dashArray: "6 6", interactive: false }).addTo(capaTelefonos);
+    L.marker([x.posicion.lat, x.posicion.lng], { icon: iconoBus(COLOR_TELEFONO, x.posicion.rumbo, { quieto: x.posicion.estado !== "en_ruta" }), keyboard: true, title: `Teléfono de prueba ${x.dispositivo}`, zIndexOffset: 200 })
+      .on("click", () => enfocarTelefono(x))
+      .addTo(capaTelefonos);
+  }
+}
+
+function enfocarTelefono(x: TelefonoEnVivo) {
+  if (mapa) mapa.flyTo([x.posicion.lat, x.posicion.lng], Math.max(mapa.getZoom(), 15), { duration: 0.6 });
+}
+
 /** "Actualizar": borra lo dibujado y la trayectoria vuelve a empezar desde la lectura que llega. */
 function reiniciarTrayectorias() {
   trayectorias.clear();
+  estelas.clear();
   dibujarTrayectorias();
+  dibujarTelefonos();
   void cargar(false);
 }
 
@@ -288,7 +345,13 @@ function animar() {
 }
 
 function enfocar(buses: BusEnRecorrido[]) {
-  if (!mapa || buses.length === 0) return;
+  if (!mapa) return;
+  if (buses.length === 0) {
+    // Sin buses, los teléfonos de prueba (si hay).
+    const tel = telefonos.value.flatMap((x) => [[x.posicion.lat, x.posicion.lng] as [number, number], ...(estelas.get(x.dispositivo)?.puntos ?? [])]);
+    if (tel.length) mapa.fitBounds(L.latLngBounds(tel), { padding: [40, 40], maxZoom: 15 });
+    return;
+  }
   const puntos = filtro.soloGps ? buses.map((b) => [b.posicion.lat, b.posicion.lng] as [number, number]).concat(buses.flatMap((b) => trayectorias.get(b.salidaId)?.puntos ?? [])) : buses.flatMap((b) => b.trazado);
   if (puntos.length) mapa.fitBounds(L.latLngBounds(puntos), { padding: [40, 40], maxZoom: 11 });
 }
@@ -353,12 +416,14 @@ async function cargar(silencioso: boolean) {
     const primera = datos.value === null;
     datos.value = r;
     registrarTrayectorias(r.buses);
+    registrarTelefonos(r.telefonos ?? []);
     desfaseMs = r.generado * 1000 - Date.now();
     actualizado.value = r.generado;
     error.value = "";
     Object.assign(filtro, filtroVigente(r.buses, filtro));
     if (seleccionadoId.value !== null && !r.buses.some((b) => b.salidaId === seleccionadoId.value)) seleccionadoId.value = null;
     refrescarVista();
+    dibujarTelefonos();
     if (primera) enfocar(visibles.value);
   } catch (e) {
     if (mia !== carga) return;
@@ -375,6 +440,7 @@ onMounted(() => {
   capaRutas = L.layerGroup().addTo(mapa);
   capaTrayectorias = L.layerGroup().addTo(mapa);
   capaBuses = L.layerGroup().addTo(mapa);
+  capaTelefonos = L.layerGroup().addTo(mapa);
   // El contenedor cambia de ancho al abrir/cerrar sidebars o al cambiar de breakpoint.
   observador = new ResizeObserver(() => mapa?.invalidateSize());
   observador.observe(mapaEl.value);
@@ -394,6 +460,7 @@ onBeforeUnmount(() => {
   mapa = null;
   marcadores.clear();
   trayectorias.clear();
+  estelas.clear();
 });
 </script>
 

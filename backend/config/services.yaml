@@ -17,6 +17,9 @@ parameters:
     metadata_publicacion_defecto: "automatica"
     # Clave de los GPS que envían su posición a /api/seguimiento/gps (vacía: no se acepta ninguna).
     env(SEGUIMIENTO_GPS_CLAVE): ""
+    # Temporal: identificadores de Traccar Client que se siguen como teléfonos de prueba en vez de
+    # como bus (separados por coma, sin distinguir mayúsculas; no deben ser códigos de bus). ADR-050.
+    env(SEGUIMIENTO_GPS_PRUEBAS): ""
 
 services:
     # default configuration for services in *this* file

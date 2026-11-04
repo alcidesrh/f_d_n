@@ -6,3 +6,6 @@ const POR_NOMBRE: Record<string, string> = { 'maya de oro': '#ea580c' }
 
 export const colorEmpresa = (empresaId: number, nombre?: string): string =>
   POR_NOMBRE[nombre?.trim().toLowerCase() ?? ''] ?? PALETA[Math.abs(empresaId) % PALETA.length]!
+
+/** Los teléfonos de prueba (temporal, ADR-050): fuera de la paleta de las empresas. */
+export const COLOR_TELEFONO = '#1e293b'

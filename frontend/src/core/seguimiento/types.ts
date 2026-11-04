@@ -71,6 +71,19 @@ export interface RespuestaSeguimiento {
   empresas: Empresa[]
   /** Salidas cuya ruta no se pudo ubicar en el mapa. */
   sinTrazado: number
+  /** Teléfonos de prueba con lectura vigente (solo para quien ve todas las empresas). */
+  telefonos?: TelefonoEnVivo[]
+}
+
+/**
+ * Teléfono de prueba (temporal, ADR-050): un Traccar Client con un nombre acordado en vez del código
+ * de un bus. Se sigue como un bus pero sin salida: más de 30 min sin lecturas cierra su trayectoria.
+ */
+export interface TelefonoEnVivo {
+  dispositivo: string
+  /** Primera lectura de la trayectoria en curso (epoch). */
+  desde: number
+  posicion: PosicionServidor
 }
 
 export interface PosicionEstimada {
@@ -122,6 +135,22 @@ export interface RespuestaTrayectorias {
   salidas: SalidaConTrayectoria[]
   /** Salidas del día sin lecturas GPS. */
   sinGps: number
+  /** Trayectorias de los teléfonos de prueba que empiezan ese día. */
+  telefonos?: TelefonoConTrayectoria[]
+}
+
+/** Trayectoria de un teléfono de prueba: lecturas seguidas, sin más de 30 min entre dos. */
+export interface TelefonoConTrayectoria {
+  dispositivo: string
+  /** Primera y última lectura (epoch). */
+  desde: number
+  hasta: number
+  lecturas: number
+}
+
+/** Trayectoria de un teléfono de prueba para reproducirla (`GET /api/seguimiento/telefonos/trayectoria`). */
+export interface TrayectoriaDeTelefono extends TelefonoConTrayectoria {
+  puntos: PuntoGps[]
 }
 
 /** Trayectoria de una salida para reproducirla (`GET /api/seguimiento/salidas/{id}/trayectoria`). */
