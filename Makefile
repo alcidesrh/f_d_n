@@ -169,16 +169,35 @@ prod-build: prod-env ## Construye las imágenes de producción y levanta el stac
 
 # El código va montado desde este checkout (compose.prod.yaml), no dentro de la imagen:
 # un cambio de PHP es un reinicio y uno del frontend, un build en el host.
-.PHONY: deploy reiniciar front pagina vendor imagen
+.PHONY: deploy reiniciar front pagina vendor imagen migraciones
 PROD_PHP = backend worker worker-pesadas programador
 
-deploy: prod-env ## Actualiza producción: git pull y, según lo que cambió, vendor, front, página, imagen y reinicio de PHP
-	@antes=$$(git rev-parse HEAD); git pull --ff-only; \
+deploy: prod-env ## Actualiza producción: git pull y, según lo que cambió, vendor, migraciones, front, página, imagen y reinicio de PHP (`desde=<commit>` retoma uno detenido)
+	@antes=$(or $(desde),$$(git rev-parse HEAD)); git pull --ff-only; \
 	cambio() { git diff --quiet "$$antes" HEAD -- "$$@" || return 0; return 1; }; \
 	if cambio backend/composer.lock; then $(MAKE) -s vendor; fi; \
+	if cambio backend/migrations; then $(MAKE) -s migraciones desde=$$antes || { echo "Deploy detenido antes de compilar y reiniciar. Resuelto, retoma con: make deploy desde=$$antes" >&2; exit 1; }; fi; \
 	if cambio frontend; then $(MAKE) -s front; fi; \
 	if cambio pagina frontend/src; then $(MAKE) -s pagina; fi; \
 	if cambio backend/Dockerfile frontend/Dockerfile; then $(MAKE) -s imagen; else $(MAKE) -s reiniciar; fi
+
+# Corren antes de reiniciar PHP y solo si todas las pendientes llegaron después de `desde`: una base
+# rehecha con SchemaTool (app:reset-db --hard) no tiene las versiones anotadas y migrate intentaría
+# todas desde la primera. --all-or-nothing: en PostgreSQL, si una falla no queda ninguna aplicada.
+migraciones: prod-env ## Producción: aplica las migraciones pendientes que llegaron después de `desde=<commit>` (lo llama `make deploy`)
+	@test -n "$(desde)" || { echo "Uso: make migraciones desde=<commit>" >&2; exit 1; }
+	@nuevas=" $$(git diff --name-only --diff-filter=A $(desde) HEAD -- backend/migrations | sed -n 's/.*\(Version[0-9]\{14\}\)\.php$$/\1/p' | tr '\n' ' ')"; \
+	estado=$$($(PROD_COMP) exec -T backend bin/console doctrine:migrations:up-to-date --list-migrations --no-ansi 2>&1); \
+	case "$$estado" in \
+		*Out-of-date!*) ;; \
+		*Up-to-date!*|*"previously executed"*) echo "Sin migraciones pendientes."; exit 0;; \
+		*) echo "$$estado" >&2; exit 1;; \
+	esac; \
+	pendientes=$$(echo "$$estado" | sed -n 's/.*\(Version[0-9]\{14\}\).*not migrated.*/\1/p'); \
+	ajenas=; for v in $$pendientes; do case "$$nuevas" in *" $$v "*) ;; *) ajenas="$$ajenas $$v";; esac; done; \
+	if [ -n "$$ajenas" ]; then echo "No migro: hay pendientes que no llegaron después de $(desde):$$ajenas. Revisa doctrine:migrations:status (¿base rehecha sin anotar las versiones?)." >&2; exit 1; fi; \
+	echo "Migraciones:" $$pendientes; \
+	$(PROD_COMP) exec -T backend bin/console doctrine:migrations:migrate --no-interaction --all-or-nothing
 
 reiniciar: prod-env ## Producción: reinicia los contenedores de PHP para que tomen el código (unos segundos)
 	$(PROD_COMP) up -d --no-build --force-recreate $(PROD_PHP)
