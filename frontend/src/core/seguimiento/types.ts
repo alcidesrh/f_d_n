@@ -77,11 +77,11 @@ export interface RespuestaSeguimiento {
 
 /**
  * Teléfono de prueba (temporal, ADR-050): un Traccar Client con un nombre acordado en vez del código
- * de un bus. Se sigue como un bus pero sin salida: más de 5 min sin lecturas cierra su trayectoria.
+ * de un bus. Se sigue como un bus pero sin salida: más de 5 min sin lecturas o detenido cierra su trayectoria.
  */
 export interface TelefonoEnVivo {
   dispositivo: string
-  /** Primera lectura de la trayectoria en curso (epoch). */
+  /** Primera lectura de la última trayectoria: la en curso o la que terminó al detenerse (epoch). */
   desde: number
   posicion: PosicionServidor
 }
@@ -139,7 +139,7 @@ export interface RespuestaTrayectorias {
   telefonos?: TelefonoConTrayectoria[]
 }
 
-/** Trayectoria de un teléfono de prueba: lecturas seguidas, sin más de 5 min entre dos. */
+/** Trayectoria de un teléfono de prueba: lecturas seguidas, sin más de 5 min entre dos ni detenido. */
 export interface TelefonoConTrayectoria {
   dispositivo: string
   /** Primera y última lectura (epoch). */

@@ -13,8 +13,9 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  * acordado (env `SEGUIMIENTO_GPS_PRUEBAS`, separados por coma; no debe ser el
  * código de un bus) en vez del código de un bus. Se sigue como un bus —mapa en
  * vivo, historial y reproducción— pero sin salida: sus trayectorias las marcan
- * los huecos. Más de 5 min entre dos lecturas cierra una trayectoria en la
- * primera y empieza otra en la segunda.
+ * los huecos y las paradas. Más de 5 min entre dos lecturas cierra una
+ * trayectoria en la primera y empieza otra en la segunda; más de 5 min
+ * detenido la cierra al detenerse y empieza otra al arrancar.
  *
  * Lo ve solo quien ve las salidas de todas las empresas (no es de ninguna).
  */
@@ -22,8 +23,12 @@ final class TelefonosDePrueba
 {
     /** Más que esto entre dos lecturas separa dos trayectorias (por encima de `HistorialGps::QUIETO_SEGUNDOS`: el raleo del quieto no corta). */
     public const HUECO_SEGUNDOS = 300;
+    /** Detenido (`HistorialGps::DETENIDO_KMH`) más que esto, hasta la lectura que arranca, también separa dos trayectorias. */
+    public const PARADA_SEGUNDOS = 300;
     /** Tope de una trayectoria: lo que se lee después de su primera lectura. */
     private const MAXIMO_HORAS = 48;
+    /** En el mapa en vivo, «Reproducir» ofrece la última trayectoria de estas horas. */
+    private const EN_VIVO_HORAS = 12;
 
     /** @var list<string> */
     private readonly array $nombres;
@@ -48,31 +53,51 @@ final class TelefonosDePrueba
     }
 
     /**
-     * Parte lecturas en orden en trayectorias: una nueva tras más de `HUECO_SEGUNDOS` sin lecturas.
+     * Dónde empieza y termina cada trayectoria, como índices `[primera, última]` de las lecturas.
      *
-     * @param list<int> $instantes epoch (s), en orden
-     * @return list<array{desde: int, hasta: int, lecturas: int}>
+     * - Un hueco de más de `HUECO_SEGUNDOS`: termina en la lectura de antes y la de después empieza otra.
+     * - Una parada de más de `PARADA_SEGUNDOS` (de la primera lectura detenida a la que arranca):
+     *   termina al detenerse y la siguiente empieza en la última lectura detenida. Las de en medio no son de ninguna.
+     * - Lo que nunca se movió (el teléfono quieto en la mesa) no es una trayectoria.
+     *
+     * @param list<array{int, int}> $lecturas `[instante, velocidadKmh]`, en orden
+     * @return list<array{int, int}>
      */
-    public static function partir(array $instantes): array
+    public static function partir(array $lecturas): array
     {
-        $out = [];
-        $actual = null;
-        foreach ($instantes as $t) {
-            if (null !== $actual && $t - $actual['hasta'] <= self::HUECO_SEGUNDOS) {
-                $actual['hasta'] = $t;
-                ++$actual['lecturas'];
-                continue;
+        $tramos = [];
+        $desde = 0;
+        $parada = null;
+        foreach ($lecturas as $k => [$t, $velocidad]) {
+            $siguiente = $lecturas[$k + 1] ?? null;
+            $hueco = null === $siguiente || $siguiente[0] - $t > self::HUECO_SEGUNDOS;
+            if ($velocidad < HistorialGps::DETENIDO_KMH) {
+                $parada ??= $k;
+                // La parada acaba en su última lectura: la siguiente arranca o no hay siguiente.
+                if ($hueco || $siguiente[1] >= HistorialGps::DETENIDO_KMH) {
+                    $arranca = $hueco ? $t : $siguiente[0];
+                    if ($arranca - $lecturas[$parada][0] > self::PARADA_SEGUNDOS) {
+                        $tramos[] = [$desde, $parada];
+                        $desde = $k;
+                    }
+                    $parada = null;
+                }
             }
-            if (null !== $actual) {
-                $out[] = $actual;
+            if ($hueco) {
+                $tramos[] = [$desde, $k];
+                $desde = $k + 1;
             }
-            $actual = ['desde' => $t, 'hasta' => $t, 'lecturas' => 1];
-        }
-        if (null !== $actual) {
-            $out[] = $actual;
         }
 
-        return $out;
+        return array_values(array_filter($tramos, static function (array $tramo) use ($lecturas): bool {
+            for ($i = $tramo[0]; $i <= $tramo[1]; ++$i) {
+                if ($lecturas[$i][1] >= HistorialGps::DETENIDO_KMH) {
+                    return true;
+                }
+            }
+
+            return false;
+        }));
     }
 
     /** Guarda la lectura como `HistorialGps::registrar` (sin repetir, y quieto, una cada tanto). */
@@ -121,10 +146,12 @@ final class TelefonosDePrueba
         $fin = $dia->setTime(0, 0)->modify('+1 day')->getTimestamp();
         $out = [];
         foreach ($this->nombres as $nombre) {
-            // Desde un hueco antes del día: así se sabe si su primera lectura sigue una trayectoria de la víspera.
-            foreach (self::partir($this->instantes($nombre, $inicio - self::HUECO_SEGUNDOS, $fin + self::MAXIMO_HORAS * 3600)) as $t) {
-                if ($t['desde'] >= $inicio && $t['desde'] < $fin) {
-                    $out[] = ['dispositivo' => $nombre, ...$t];
+            // Desde una hora antes del día: así se sabe si su primera lectura sigue una trayectoria de la víspera
+            // (o cierra una parada larga que empezó antes).
+            $lecturas = $this->lecturas($nombre, $inicio - 3600, $fin + self::MAXIMO_HORAS * 3600);
+            foreach (self::partir($lecturas) as [$i, $j]) {
+                if ($lecturas[$i][0] >= $inicio && $lecturas[$i][0] < $fin) {
+                    $out[] = ['dispositivo' => $nombre, 'desde' => $lecturas[$i][0], 'hasta' => $lecturas[$j][0], 'lecturas' => $j - $i + 1];
                 }
             }
         }
@@ -134,7 +161,7 @@ final class TelefonosDePrueba
     }
 
     /**
-     * La trayectoria que empieza en `$desde`: sus lecturas hasta el primer hueco (o el tope).
+     * La trayectoria que empieza en `$desde`: sus lecturas hasta el primer hueco o parada larga (o el tope).
      *
      * @return array{dispositivo: string, desde: int, hasta: int, lecturas: int, puntos: list<array{int, float, float, int, int}>}
      */
@@ -152,14 +179,9 @@ final class TelefonosDePrueba
             ['desde' => ParameterType::INTEGER, 'hasta' => ParameterType::INTEGER, 'tope' => ParameterType::INTEGER],
         );
 
-        $puntos = [];
-        foreach ($filas as $f) {
-            $t = (int) $f[0];
-            if ([] !== $puntos && $t - $puntos[count($puntos) - 1][0] > self::HUECO_SEGUNDOS) {
-                break;
-            }
-            $puntos[] = [$t, round((float) $f[1], 6), round((float) $f[2], 6), (int) $f[3], (int) $f[4]];
-        }
+        $todas = array_map(static fn(array $f) => [(int) $f[0], round((float) $f[1], 6), round((float) $f[2], 6), (int) $f[3], (int) $f[4]], $filas);
+        $primera = self::partir(array_map(static fn(array $p) => [$p[0], $p[3]], $todas))[0] ?? null;
+        $puntos = null === $primera ? [] : array_slice($todas, $primera[0], $primera[1] - $primera[0] + 1);
 
         return [
             'dispositivo' => $nombre,
@@ -171,7 +193,7 @@ final class TelefonosDePrueba
     }
 
     /**
-     * Los teléfonos con lectura vigente, para el mapa en vivo, con el inicio de su trayectoria en curso.
+     * Los teléfonos con lectura vigente, para el mapa en vivo, con el inicio de su última trayectoria.
      *
      * @return list<array{dispositivo: string, desde: int, posicion: array<string, mixed>}>
      */
@@ -183,12 +205,13 @@ final class TelefonosDePrueba
             if (null === $p || $ahora - $p->instante > SeguimientoBuses::GPS_VIGENCIA_SEGUNDOS) {
                 continue;
             }
-            $trayectorias = self::partir($this->instantes($nombre, $ahora - self::MAXIMO_HORAS * 3600, $ahora + 60));
-            $ultima = $trayectorias[count($trayectorias) - 1] ?? null;
+            $lecturas = $this->lecturas($nombre, $ahora - self::EN_VIVO_HORAS * 3600, $ahora + 60);
+            $tramos = self::partir($lecturas);
+            $ultima = $tramos[count($tramos) - 1] ?? null;
             $out[] = [
                 'dispositivo' => $nombre,
-                // Sin la lectura en el historial (aún no o falló al guardarla), empieza en esta.
-                'desde' => null !== $ultima && $p->instante - $ultima['hasta'] <= self::HUECO_SEGUNDOS ? $ultima['desde'] : $p->instante,
+                // La en curso o la que terminó al detenerse; sin ninguna (aún no se movió), esta lectura.
+                'desde' => null !== $ultima ? $lecturas[$ultima[0]][0] : $p->instante,
                 'posicion' => [
                     'lat' => round($p->lat, 6),
                     'lng' => round($p->lng, 6),
@@ -211,11 +234,11 @@ final class TelefonosDePrueba
         return (int) $this->db->executeStatement('DELETE FROM lectura_gps_prueba WHERE instante < to_timestamp(:antes)', ['antes' => $antesDe->getTimestamp()], ['antes' => ParameterType::INTEGER]);
     }
 
-    /** @return list<int> instantes (epoch) de un teléfono en `[desde, hasta)`, en orden */
-    private function instantes(string $nombre, int $desde, int $hasta): array
+    /** @return list<array{int, int}> `[instante, velocidadKmh]` de un teléfono en `[desde, hasta)`, en orden */
+    private function lecturas(string $nombre, int $desde, int $hasta): array
     {
-        return array_map(intval(...), $this->db->fetchFirstColumn(
-            'SELECT CAST(EXTRACT(EPOCH FROM instante) AS BIGINT) FROM lectura_gps_prueba WHERE dispositivo = :dispositivo AND instante >= to_timestamp(:desde) AND instante < to_timestamp(:hasta) ORDER BY instante',
+        return array_map(static fn(array $f) => [(int) $f[0], (int) $f[1]], $this->db->fetchAllNumeric(
+            'SELECT CAST(EXTRACT(EPOCH FROM instante) AS BIGINT), velocidad_kmh FROM lectura_gps_prueba WHERE dispositivo = :dispositivo AND instante >= to_timestamp(:desde) AND instante < to_timestamp(:hasta) ORDER BY instante',
             ['dispositivo' => $nombre, 'desde' => $desde, 'hasta' => $hasta],
             ['desde' => ParameterType::INTEGER, 'hasta' => ParameterType::INTEGER],
         ));

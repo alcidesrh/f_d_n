@@ -40,8 +40,12 @@ Ruta `/seguimiento/reproducir` (`features/seguimiento/ReproduccionPage.vue`, `?s
 Para probar sin ponerle a un teléfono el código de un bus: los identificadores de `SEGUIMIENTO_GPS_PRUEBAS` (separados por coma, sin distinguir mayúsculas; no deben ser códigos de bus) se siguen como un bus pero sin salida (`App\Seguimiento\TelefonosDePrueba`):
 
 - Sus lecturas van a `lectura_gps_prueba` (entidad `LecturaGpsPrueba`, clave `(dispositivo, instante)`), con el mismo raleo del quieto y la misma purga.
-- **Trayectoria de un teléfono**: lecturas seguidas; más de 5 min entre dos (`TelefonosDePrueba::HUECO_SEGUNDOS`) cierra una en la primera y empieza otra en la segunda (el raleo del quieto, una cada 2 min, no corta). Así dentro de una trayectoria no hay huecos sin señal que saltar. Se reconocen al leer (`TelefonosDePrueba::partir`, puro), con un tope de 48 h.
-- API: `telefonos` en `/buses` (los de lectura vigente, con el inicio de la trayectoria en curso) y en `/trayectorias` (las que empiezan ese día); `GET /api/seguimiento/telefonos/trayectoria?dispositivo=&desde=` las lecturas de una. Solo para quien ve las salidas de todas las empresas (`Alcance::sinRestriccion`): no son de ninguna.
+- **Trayectoria de un teléfono**: lecturas seguidas. Se cortan con:
+  - **Un hueco**: más de 5 min entre dos lecturas (`TelefonosDePrueba::HUECO_SEGUNDOS`) cierra una en la primera y empieza otra en la segunda. El raleo del quieto (una cada 2 min) no corta, y así dentro de una trayectoria no hay huecos sin señal que saltar.
+  - **Una parada larga**: más de 5 min detenido (`PARADA_SEGUNDOS`, < 3 km/h como el bus detenido, medido de la primera lectura detenida a la que arranca) la cierra al detenerse, y la siguiente empieza en la última lectura detenida. Las de en medio no son de ninguna, y lo que nunca se movió no es trayectoria.
+
+  Se reconocen al leer (`TelefonosDePrueba::partir`, puro), con un tope de 48 h.
+- API: `telefonos` en `/buses` (los de lectura vigente, con el inicio de su última trayectoria de las 12 h, la en curso o la que terminó al detenerse) y en `/trayectorias` (las que empiezan ese día); `GET /api/seguimiento/telefonos/trayectoria?dispositivo=&desde=` las lecturas de una. Solo para quien ve las salidas de todas las empresas (`Alcance::sinRestriccion`): no son de ninguna.
 - Frontend: en el mapa en vivo, en gris oscuro (`COLOR_TELEFONO`), sin filtros, con su estela y «Reproducir»; en la reproducción, en la misma lista que las salidas (`?dispositivo=&desde=`), sin ruta ni estaciones.
 
 Para quitarlo: vaciar la variable; borrar la clase, la entidad (con una migración que borre la tabla) y lo marcado «Temporal» en el controlador y las dos pantallas.

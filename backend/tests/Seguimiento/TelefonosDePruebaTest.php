@@ -13,27 +13,65 @@ final class TelefonosDePruebaTest extends TestCase
 {
     private const MIN = 60;
 
+    /** En marcha cada `$cada` s de `$desde` a `$hasta` (incluido), a `$kmh`. @return list<array{int, int}> */
+    private static function lecturas(int $desde, int $hasta, int $kmh, int $cada = 30): array
+    {
+        return array_map(static fn(int $t) => [$t, $kmh], range($desde, $hasta, $cada));
+    }
+
     public function testMasDeCincoMinutosSinLecturasEmpiezaOtraTrayectoria(): void
     {
-        $t = TelefonosDePrueba::partir([1000, 1010, 1020, 1021 + 5 * self::MIN, 1031 + 5 * self::MIN]);
+        $l = [...self::lecturas(0, 600, 20), ...self::lecturas(901, 1200, 20)];
 
-        self::assertSame([
-            ['desde' => 1000, 'hasta' => 1020, 'lecturas' => 3],
-            ['desde' => 1021 + 5 * self::MIN, 'hasta' => 1031 + 5 * self::MIN, 'lecturas' => 2],
-        ], $t);
+        self::assertSame([[0, 20], [21, count($l) - 1]], TelefonosDePrueba::partir($l));
     }
 
     public function testCincoMinutosJustosSigueLaMisma(): void
     {
-        $t = TelefonosDePrueba::partir([0, 5 * self::MIN, 10 * self::MIN]);
+        $l = [[0, 20], [5 * self::MIN, 20], [10 * self::MIN, 20]];
 
-        self::assertSame([['desde' => 0, 'hasta' => 10 * self::MIN, 'lecturas' => 3]], $t, 'cuenta el hueco entre lecturas seguidas, no desde la primera');
+        self::assertSame([[0, 2]], TelefonosDePrueba::partir($l), 'cuenta el hueco entre lecturas seguidas, no desde la primera');
     }
 
-    public function testSinLecturasNoHayTrayectorias(): void
+    public function testUnaParadaLargaTerminaAlDetenerseYLaSiguienteEmpiezaAlArrancar(): void
+    {
+        // En marcha 0–10 min, detenido 10:30–20 min (cada 30 s), en marcha desde 20:30.
+        $l = [...self::lecturas(0, 600, 20), ...self::lecturas(630, 1200, 0), ...self::lecturas(1230, 1800, 20)];
+
+        // 0..20 en marcha, 21 la primera detenida, 40 la última detenida, 41.. en marcha.
+        self::assertSame([[0, 21], [40, 60]], TelefonosDePrueba::partir($l));
+    }
+
+    public function testUnaParadaCortaQuedaDentro(): void
+    {
+        // Detenido de 10:30 a 15 min: arranca a los 15:30, 5 min después de detenerse.
+        $l = [...self::lecturas(0, 600, 20), ...self::lecturas(630, 900, 0), ...self::lecturas(930, 1200, 20)];
+
+        self::assertSame([[0, count($l) - 1]], TelefonosDePrueba::partir($l));
+    }
+
+    public function testLaParadaSeMideHastaLaLecturaQueArrancaAunqueLasQuietasVenganRaleadas(): void
+    {
+        // Quieto se guarda una cada 2 min: 10, 12 y 14 min; arranca a los 16 (6 min detenido).
+        $l = [[0, 20], [300, 20], [600, 0], [720, 0], [840, 0], [960, 20], [1000, 20]];
+
+        self::assertSame([[0, 2], [4, 6]], TelefonosDePrueba::partir($l));
+    }
+
+    public function testLaEsperaAntesDeArrancarNoEsDeLaTrayectoria(): void
+    {
+        // Encendido y quieto 20 min, luego en marcha.
+        $l = [...self::lecturas(0, 1200, 0, 120), ...self::lecturas(1230, 1500, 20)];
+
+        self::assertSame([[10, count($l) - 1]], TelefonosDePrueba::partir($l), 'empieza en la última lectura detenida');
+    }
+
+    public function testLoQueNuncaSeMovioNoEsTrayectoria(): void
     {
         self::assertSame([], TelefonosDePrueba::partir([]));
-        self::assertSame([['desde' => 5, 'hasta' => 5, 'lecturas' => 1]], TelefonosDePrueba::partir([5]));
+        self::assertSame([], TelefonosDePrueba::partir(self::lecturas(0, 3600, 0, 120)), 'quieto una hora');
+        self::assertSame([], TelefonosDePrueba::partir([[0, 1], [60, 2]]), 'quieto un minuto');
+        self::assertSame([[0, 0]], TelefonosDePrueba::partir([[5, 20]]));
     }
 
     public function testReconoceLosNombresSinDistinguirMayusculasNiEspacios(): void

@@ -13,7 +13,7 @@
   Maximizar (o Esc para salir): filtros, mapa y lista cubren toda la pantalla.
   Un bus con GPS ofrece «Reproducir lo recorrido»: su trayectoria guardada en `/seguimiento/reproducir` (ADR-050).
   Temporal: los teléfonos de prueba (nombre acordado en vez de código de bus; solo para quien ve todas las empresas) se
-  pintan aparte, en gris oscuro y sin filtros, con su estela y «Reproducir» de la trayectoria en curso.
+  pintan aparte, en gris oscuro y sin filtros, con su estela y «Reproducir» de su última trayectoria (la en curso o la que terminó al detenerse).
 -->
 <template>
   <div class="@container flex flex-col gap-4" :class="maximizado ? 'fixed inset-0 z-[900] overflow-auto bg-surface-0 p-3' : ''">
