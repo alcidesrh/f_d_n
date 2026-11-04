@@ -5,7 +5,7 @@
 -->
 <template>
   <div class="mx-auto flex w-full max-w-5xl flex-col gap-3">
-    <section class="panel flex flex-col gap-4">
+    <section class="superficie flex flex-col gap-4">
       <Message severity="info" :closable="false" class="!text-sm">
         El depósito queda <strong>registrado</strong>; el saldo de la agencia cambia cuando se acredita desde «Buscar depósito».
       </Message>
@@ -14,7 +14,7 @@
       <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
     </section>
 
-    <section v-if="recientes.length" class="panel flex flex-col gap-2">
+    <section v-if="recientes.length" class="superficie flex flex-col gap-2">
       <h2 class="text-sm font-semibold">Registrados en esta visita</h2>
       <ul class="flex flex-col divide-y divide-surface-200">
         <li v-for="d in recientes" :key="d.id" class="flex flex-wrap items-center justify-between gap-2 py-2">
@@ -58,11 +58,3 @@ onMounted(async () => {
   }
 })
 </script>
-
-<style scoped>
-.panel {
-  background: var(--p-content-background);
-  border-radius: var(--p-content-border-radius, 0.75rem);
-  padding: 1rem;
-}
-</style>

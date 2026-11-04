@@ -24,3 +24,19 @@
     max-width: none;
   }
 }
+
+/* Bloque de contenido sobre el fondo de la página: el fondo y el radio de
+   las tarjetas de PrimeVue (parámetros y resumen de reportes, saldos…). */
+@utility superficie {
+  padding: 1rem;
+  border-radius: var(--p-content-border-radius, 0.75rem);
+  background: var(--p-content-background);
+}
+
+/* `superficie` con borde y más compacta: filtros y listas de encomiendas. */
+@utility superficie-borde {
+  padding: 0.75rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: var(--p-content-border-radius, 0.75rem);
+  background: var(--p-content-background);
+}

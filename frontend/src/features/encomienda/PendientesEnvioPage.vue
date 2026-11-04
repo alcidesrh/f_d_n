@@ -7,7 +7,7 @@
 -->
 <template>
   <div class="@container flex flex-col gap-3">
-    <section class="panel flex flex-wrap items-end gap-3" aria-label="Estación">
+    <section class="superficie-borde flex flex-wrap items-end gap-3" aria-label="Estación">
       <label v-if="!contexto?.estacion" class="campo min-w-56 flex-1 @3xl:max-w-xs">
         <span>Estación</span>
         <estacion-select v-model="estacion" :estaciones="contexto?.estaciones ?? []" :show-clear="false" placeholder="Elija la estación" @update:model-value="cargar()" />
@@ -30,7 +30,7 @@
       </div>
     </section>
 
-    <section v-if="filas.length" class="totales panel" aria-label="Totales">
+    <section v-if="filas.length" class="totales superficie-borde" aria-label="Totales">
       <div><span>Encomiendas</span><strong>{{ filas.length }}</strong></div>
       <div><span>Bultos</span><strong>{{ totalBultos }}</strong></div>
       <div><span>Destinos</span><strong>{{ grupos.length }}</strong></div>
@@ -187,12 +187,6 @@ async function guardarRuta() {
 </script>
 
 <style scoped>
-.panel {
-  padding: 0.75rem;
-  border: 1px solid var(--p-content-border-color);
-  border-radius: var(--p-content-border-radius, 0.75rem);
-  background: var(--p-content-background);
-}
 .campo {
   display: flex;
   flex-direction: column;

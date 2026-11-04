@@ -21,7 +21,7 @@
       <p class="text-sm text-muted-color">{{ explicacion }}</p>
 
       <div class="columnas">
-        <section class="panel flex flex-col gap-3" aria-labelledby="publicacion-pendiente">
+        <section class="superficie flex flex-col gap-3" aria-labelledby="publicacion-pendiente">
           <h2 id="publicacion-pendiente" class="titulo">Pendiente de publicar</h2>
           <ul v-if="pendiente.length" class="flex flex-col gap-1.5 text-sm">
             <li v-for="linea in pendiente" :key="linea.texto" class="flex items-start gap-2">
@@ -57,7 +57,7 @@
           </div>
         </section>
 
-        <section class="panel flex min-w-0 flex-col gap-2" aria-labelledby="publicacion-historial">
+        <section class="superficie flex min-w-0 flex-col gap-2" aria-labelledby="publicacion-historial">
           <h2 id="publicacion-historial" class="titulo">Últimas revisiones</h2>
           <p v-if="!resumen.historial.length" class="text-sm text-muted-color">Todavía no hay revisiones.</p>
           <ol class="flex flex-col">
@@ -164,11 +164,6 @@ onMounted(cargar)
 </script>
 
 <style scoped>
-.panel {
-  background: var(--p-content-background);
-  border-radius: var(--p-content-border-radius, 0.75rem);
-  padding: 1rem;
-}
 .titulo {
   font-size: 1rem;
   font-weight: 600;

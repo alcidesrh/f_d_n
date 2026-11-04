@@ -45,6 +45,15 @@ export function normalizeOptions(options: unknown): NormalizedOption[] {
 }
 
 /**
+ * El campo `key` (`attrs.optionLabel`/`optionValue`) de una opción objeto; una
+ * opción escalar, o sin clave, es su propio label y valor.
+ */
+export function optionField(option: unknown, key: unknown): unknown {
+  if (typeof option !== 'object' || option === null) return option
+  return typeof key === 'string' ? (option as Record<string, unknown>)[key] : option
+}
+
+/**
  * Resuelve las options de un input pudiendo ser un array o una función getter.
  * Si es función se invoca (registrando sus dependencias reactivas), de modo
  * que los cambios en los refs que la función lee se reflejan al re-evaluarse el

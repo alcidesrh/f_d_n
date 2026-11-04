@@ -20,7 +20,7 @@
       </Button>
     </div>
 
-    <section v-if="filas.length > 1" class="totales panel" aria-label="Totales">
+    <section v-if="filas.length > 1" class="totales superficie" aria-label="Totales">
       <div><span>Agencias</span><strong>{{ visibles.length }}</strong></div>
       <div><span>Saldo disponible</span><strong>{{ suma('saldo') }}</strong></div>
       <div><span>Total depositado</span><strong>{{ suma('totalDepositado') }}</strong></div>
@@ -31,7 +31,7 @@
     <Skeleton v-if="cargando && !filas.length" height="10rem" />
 
     <div class="tarjetas">
-      <button v-for="a in visibles" :key="a.id" type="button" class="tarjeta panel" :class="{ inactiva: !a.activo }" @click="detalle = a">
+      <button v-for="a in visibles" :key="a.id" type="button" class="tarjeta superficie" :class="{ inactiva: !a.activo }" @click="detalle = a">
         <div class="flex items-center justify-between gap-2">
           <span class="truncate font-semibold">{{ a.nombre }}</span>
           <Tag :value="a.activo ? 'Activa' : 'Bloqueada'" :severity="a.activo ? 'success' : 'secondary'" class="!text-xs" />
@@ -171,11 +171,6 @@ onMounted(cargar)
 </script>
 
 <style scoped>
-.panel {
-  background: var(--p-content-background);
-  border-radius: var(--p-content-border-radius, 0.75rem);
-  padding: 1rem;
-}
 .totales {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

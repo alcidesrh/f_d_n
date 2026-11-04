@@ -31,6 +31,8 @@ export interface RequestOptions {
   /** Petición de fondo (polling): no enciende la barra de carga. */
   silent?: boolean
   skipUnauthorized?: boolean
+  /** Sale aunque la página se esté cerrando (`fetch` con `keepalive`). */
+  keepalive?: boolean
 }
 
 function parse(text: string): unknown {
@@ -65,6 +67,7 @@ export async function request<T = unknown>(path: string, options: RequestOptions
         ...options.headers,
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
+      keepalive: options.keepalive,
     })
     const data = parse(await response.text())
     if (response.status === 401 && !options.skipUnauthorized) handleUnauthorized()
@@ -74,6 +77,33 @@ export async function request<T = unknown>(path: string, options: RequestOptions
   } finally {
     loading?.stop(loadingKey)
   }
+}
+
+/**
+ * Sube un archivo (multipart, en `campo`) con progreso 0–1. Por XHR:
+ * `fetch` no informa el avance de la subida. Un 401 cierra la sesión, como
+ * en `request`.
+ */
+export function subir<T>(path: string, archivo: Blob, nombre: string, alAvanzar?: (fraccion: number) => void, campo = 'archivo'): Promise<T> {
+  return new Promise((resolver, rechazar) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', `${config.restUrl}${path}`)
+    xhr.setRequestHeader('Accept', 'application/json')
+    const token = useSessionStore().token
+    if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+    xhr.upload.onprogress = (e) => e.lengthComputable && alAvanzar?.(e.loaded / e.total)
+    xhr.onload = () => {
+      const cuerpo = parse(xhr.responseText)
+      if (xhr.status >= 200 && xhr.status < 300) return resolver(cuerpo as T)
+      if (xhr.status === 401) handleUnauthorized()
+      const mensaje = (cuerpo as { error?: string } | null)?.error ?? (xhr.status === 413 ? 'El archivo es demasiado grande.' : `HTTP ${xhr.status}`)
+      rechazar(new HttpError(xhr.status, cuerpo, mensaje))
+    }
+    xhr.onerror = () => rechazar(new Error('No se pudo subir el archivo (sin conexión).'))
+    const datos = new FormData()
+    datos.append(campo, archivo, nombre)
+    xhr.send(datos)
+  })
 }
 
 type Options = Omit<RequestOptions, 'method' | 'body'>

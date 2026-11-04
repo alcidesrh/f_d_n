@@ -1,7 +1,6 @@
 /** Transporte del correo de la empresa (`/api/correo/*`, ADR-048). */
 import { config } from '@/core/config'
-import { HttpError, http, request } from '@/core/http'
-import { useSessionStore } from '@/core/auth/session'
+import { http, request, subir } from '@/core/http'
 import { consulta } from './modelo'
 import type { Accion, Adjunto, Contacto, Correo, Estado, Filtros, ModoRespuesta, Redaccion, Resumen, Vista } from './types'
 
@@ -33,15 +32,8 @@ export const quitarAdjunto = (borrador: number, adjunto: number) => http.delete(
  * Guarda lo último aunque la página se esté cerrando (`keepalive`): lo que
  * se escribió no se pierde al cerrar la pestaña.
  */
-export function guardarAlSalir(id: number, datos: Partial<Redaccion>) {
-  const token = useSessionStore().token
-  return fetch(`${config.restUrl}${BASE}/borradores/${id}`, {
-    method: 'PUT',
-    keepalive: true,
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-    body: JSON.stringify(datos),
-  }).catch(() => undefined)
-}
+export const guardarAlSalir = (id: number, datos: Partial<Redaccion>) =>
+  request(`${BASE}/borradores/${id}`, { method: 'PUT', body: datos, keepalive: true, silent: true, skipUnauthorized: true }).catch(() => undefined)
 
 /** URL absoluta de un adjunto (las de la API son relativas y firmadas). */
 export const urlAdjunto = (a: Adjunto, descargar = false) => `${config.restUrl}${a.url}${descargar ? '&descargar=1' : ''}`
@@ -50,28 +42,5 @@ export const urlAdjunto = (a: Adjunto, descargar = false) => `${config.restUrl}$
 export const htmlConBase = (html: string) => html.replaceAll('{api}', config.restUrl)
 
 /** Sube un archivo al borrador (multipart) con progreso 0–1, por XHR (fetch no informa el avance). */
-export function subirAdjunto(borrador: number, archivo: File, alAvanzar?: (fraccion: number) => void): Promise<Adjunto> {
-  return new Promise((resolver, rechazar) => {
-    const xhr = new XMLHttpRequest()
-    xhr.open('POST', `${config.restUrl}${BASE}/borradores/${borrador}/adjuntos`)
-    xhr.setRequestHeader('Accept', 'application/json')
-    const token = useSessionStore().token
-    if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`)
-    xhr.upload.onprogress = (e) => e.lengthComputable && alAvanzar?.(e.loaded / e.total)
-    xhr.onload = () => {
-      let cuerpo: unknown = null
-      try {
-        cuerpo = JSON.parse(xhr.responseText)
-      } catch {
-        cuerpo = xhr.responseText
-      }
-      if (xhr.status >= 200 && xhr.status < 300) return resolver(cuerpo as Adjunto)
-      const mensaje = (cuerpo as { error?: string } | null)?.error ?? (xhr.status === 413 ? 'El archivo es demasiado grande.' : `HTTP ${xhr.status}`)
-      rechazar(new HttpError(xhr.status, cuerpo, mensaje))
-    }
-    xhr.onerror = () => rechazar(new Error('No se pudo subir el archivo (sin conexión).'))
-    const datos = new FormData()
-    datos.append('archivo', archivo, archivo.name)
-    xhr.send(datos)
-  })
-}
+export const subirAdjunto = (borrador: number, archivo: File, alAvanzar?: (fraccion: number) => void) =>
+  subir<Adjunto>(`${BASE}/borradores/${borrador}/adjuntos`, archivo, archivo.name, alAvanzar)

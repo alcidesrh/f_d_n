@@ -12,7 +12,7 @@
 -->
 <template>
   <div class="@container flex flex-col gap-3">
-    <section class="panel flex flex-wrap items-end gap-3" aria-label="Estación y búsqueda">
+    <section class="superficie-borde flex flex-wrap items-end gap-3" aria-label="Estación y búsqueda">
       <label v-if="!contexto?.estacion" class="campo min-w-56 flex-1 @3xl:max-w-xs">
         <span>Estación</span>
         <estacion-select v-model="estacion" :estaciones="contexto?.estaciones ?? []" :show-clear="false" placeholder="Elija la estación" @update:model-value="cargar()" />
@@ -295,12 +295,6 @@ async function entregar(ids: number[], sinFactura: boolean) {
 </script>
 
 <style scoped>
-.panel {
-  padding: 0.75rem;
-  border: 1px solid var(--p-content-border-color);
-  border-radius: var(--p-content-border-radius, 0.75rem);
-  background: var(--p-content-background);
-}
 .campo {
   display: flex;
   flex-direction: column;

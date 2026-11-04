@@ -7,7 +7,7 @@
 -->
 <template>
   <div class="@container flex flex-col gap-3">
-    <section class="panel grid grid-cols-2 items-end gap-x-3 gap-y-2 @2xl:grid-cols-4 @5xl:grid-cols-6" aria-label="Filtros">
+    <section class="superficie-borde grid grid-cols-2 items-end gap-x-3 gap-y-2 @2xl:grid-cols-4 @5xl:grid-cols-6" aria-label="Filtros">
       <label class="campo col-span-2">
         <span>Código o cliente</span>
         <IconField>
@@ -348,12 +348,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.panel {
-  padding: 0.75rem;
-  border: 1px solid var(--p-content-border-color);
-  border-radius: var(--p-content-border-radius, 0.75rem);
-  background: var(--p-content-background);
-}
 .campo {
   display: flex;
   flex-direction: column;

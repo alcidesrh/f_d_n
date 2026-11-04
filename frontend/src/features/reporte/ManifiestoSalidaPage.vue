@@ -5,7 +5,7 @@
 -->
 <template>
   <div class="@container flex flex-col gap-4">
-    <section class="panel mx-auto flex w-full max-w-2xl flex-col gap-5">
+    <section class="superficie md:p-5 mx-auto flex w-full max-w-2xl flex-col gap-5">
       <header class="flex items-start gap-3">
         <span class="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"><icon :name="info.icono" lg color="text-primary" /></span>
         <div>
@@ -65,16 +65,3 @@ async function descargar() {
   }
 }
 </script>
-
-<style scoped>
-.panel {
-  background: var(--p-content-background);
-  border-radius: var(--p-content-border-radius, 0.75rem);
-  padding: 1rem;
-}
-@media (min-width: 48rem) {
-  .panel {
-    padding: 1.25rem;
-  }
-}
-</style>

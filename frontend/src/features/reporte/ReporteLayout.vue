@@ -11,7 +11,7 @@
     </Toolbar> -->
 
     <div class="grid gap-4 @4xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] @4xl:items-start">
-      <section class="panel flex flex-col gap-5" aria-labelledby="reporte-parametros">
+      <section class="superficie md:p-5 flex flex-col gap-5" aria-labelledby="reporte-parametros">
         <header class="flex items-start gap-3">
           <span class="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"><icon :name="icono" lg color="text-primary" /></span>
           <div>
@@ -31,7 +31,7 @@
       <div class="flex flsex-col gap-4">
         <divider layout="vertical" />
 
-        <aside class="panel flex flex-col gap-4" aria-live="polite" aria-labelledby="reporte-resumen">
+        <aside class="superficie md:p-5 flex flex-col gap-4" aria-live="polite" aria-labelledby="reporte-resumen">
           <h2 id="reporte-resumen" class="m-0 flex items-center gap-2 text-base font-semibold">
             <icon name="bar-chart" color="text-primary" />Vista previa
             <ProgressSpinner v-if="cargando" class="!size-4" stroke-width="6" aria-label="Consultando" />
@@ -57,17 +57,3 @@ defineProps<{
   listo: boolean;
 }>();
 </script>
-
-<style scoped>
-.panel {
-  background: var(--p-content-background);
-  /*border: 1px solid var(--p-content-border-color);*/
-  border-radius: var(--p-content-border-radius, 0.75rem);
-  padding: 1rem;
-}
-@media (min-width: 48rem) {
-  .panel {
-    padding: 1.25rem;
-  }
-}
-</style>

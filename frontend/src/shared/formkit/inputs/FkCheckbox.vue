@@ -30,7 +30,7 @@
 </template>
 <script setup lang="ts">
 import type { FormKitFrameworkContext } from '@formkit/core'
-import { useFormKitInput } from '@/shared/formkit/useFormKitInput'
+import { optionField, useFormKitInput } from '@/shared/formkit/useFormKitInput'
 
 defineOptions({ name: 'FkCheckbox' })
 
@@ -43,15 +43,6 @@ const options = computed(() => {
 })
 const multiple = computed(() => options.value.length > 0)
 
-function labelOf(option: unknown): unknown {
-  if (typeof option !== 'object' || option === null) return option
-  const key = props.context.attrs.optionLabel
-  return typeof key === 'string' ? (option as Record<string, unknown>)[key] : option
-}
-
-function valueOf(option: unknown): unknown {
-  if (typeof option !== 'object' || option === null) return option
-  const key = props.context.attrs.optionValue
-  return typeof key === 'string' ? (option as Record<string, unknown>)[key] : option
-}
+const labelOf = (option: unknown) => optionField(option, props.context.attrs.optionLabel)
+const valueOf = (option: unknown) => optionField(option, props.context.attrs.optionValue)
 </script>
