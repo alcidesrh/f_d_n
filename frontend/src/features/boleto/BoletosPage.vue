@@ -19,7 +19,7 @@
         <AccordionContent>
           <section class="panel grid grid-cols-2 items-end gap-x-3 gap-y-2 !p-3 @2xl:grid-cols-4 @5xl:grid-cols-6" aria-label="Filtros">
             <label class="campo col-span-2">
-              <span>Rango de fechas <span class="font-normal">(salida o venta)</span></span>
+              <span>Rango de fechas <span class="font-normal">(salida y venta)</span></span>
               <DatePicker v-model="rango" selection-mode="range" :manual-input="false" date-format="dd/mm/yy" show-icon show-button-bar size="small" :placeholder="`${rangoPorDefecto}`" fluid @hide="completarRango" />
             </label>
             <label class="campo col-span-2">
@@ -306,10 +306,6 @@ const rango = computed<Array<Date | null> | null>({
 });
 const corta = (dia: string) => dia.split("-").reverse().join("/");
 const rangoPorDefecto = computed(() => (opciones.value ? `${corta(opciones.value.desde)} – ${corta(opciones.value.hasta)}` : "±30 días"));
-const rangoTexto = computed(() => {
-  if (aplicado.value.id !== null) return `Boleto ${aplicado.value.id}`;
-  return datos.value ? `${corta(datos.value.desde)} – ${corta(datos.value.hasta)}` : "";
-});
 const borradorModificado = computed(() => JSON.stringify(borrador) !== JSON.stringify(filtroInicial()));
 
 /** Pasa el borrador a filtro aplicado (si cambió algo) y vuelve a la primera página. */

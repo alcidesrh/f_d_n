@@ -269,8 +269,9 @@ final class ListadoBoletos
     private function filtrar(QueryBuilder $qb, FiltroBoletos $f): void
     {
         // Un id exacto o una salida concreta se buscan en cualquier fecha (enlaces del chat, "Consultar" de otro boleto).
+        // La salida y la venta, ambas en el rango: así entra por los índices de fecha (con OR leía las tablas enteras).
         if ($f->id === null && $f->salida === null) {
-            $qb->andWhere("(s.fecha >= :desde AND s.fecha < :fin) OR (v.createdAt >= :desde AND v.createdAt < :fin)")
+            $qb->andWhere("s.fecha >= :desde AND s.fecha < :fin AND v.createdAt >= :desde AND v.createdAt < :fin")
                 ->setParameter("desde", $f->desde)
                 ->setParameter("fin", $f->finExclusivo());
         }

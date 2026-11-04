@@ -12,7 +12,7 @@ En el sistema nuevo había piezas sueltas (anular, reasignar, reimprimir y bitá
 
 ### Pantalla `/boletos` (`features/boleto/BoletosPage.vue`)
 
-- Filtros arriba (se aplican con «Filtrar» o Enter; abiertos desde `lg`), los mismos del legado. El rango cuenta la fecha de la salida **o** la de la venta; un id exacto se busca en cualquier fecha (enlaces del chat).
+- Filtros arriba (se aplican con «Filtrar» o Enter; abiertos desde `lg`), los mismos del legado. El rango pide la fecha de la salida **y** la de la venta (hasta 2026-11 era una u otra, como el legado; con "o" la consulta leía las tablas enteras); un id exacto se busca en cualquier fecha (enlaces del chat).
 - Panel de acciones sobre el boleto elegido (clic o Enter en la fila): Consultar, Cancelar, Revertir, Anular, Chequear, Reasignar, Correo, Imp. factura, Bitácora y Chat. Las que exigen un permiso que el usuario no tiene no se muestran; las demás se deshabilitan con el motivo (`core/boleto/listado.ts::disponibilidad`, con tests). El backend vuelve a validar todo.
 - Tabla sobre `DataGrid` (ADR-029) con las columnas del legado, ordenables donde el backend lo permite, redimensionables y ocultables (se recuerdan en el navegador); tarjetas en angosto.
 - Cada acción reutiliza lo que ya existía: Anular → `AnularBoletosDialog` (ADR-028), Reasignar → `/venta?reasignar=id`, Chequear → `POST /api/abordaje/salidas/{id}/chequeo { si: [id] }` (ADR-032), Imp. factura → reimprimir el ticket de 80 mm (lleva los datos de la factura), Bitácora y Chat como en `/salidas`. La tarjeta de boleto del chat abre `/boletos?id=`.

@@ -36,7 +36,7 @@ export function documentoTexto(d: BoletoFila['documento']): string {
 }
 
 export interface FiltroBoletos {
-  /** `AAAA-MM-DD`, ambos incluidos; entra el boleto cuya salida o venta cae en el rango. */
+  /** `AAAA-MM-DD`, ambos incluidos; entra el boleto cuya salida y cuya venta caen en el rango. */
   desde: string | null
   hasta: string | null
   id: number | null
