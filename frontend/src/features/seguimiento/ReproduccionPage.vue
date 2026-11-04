@@ -7,28 +7,35 @@
   Temporal: también las trayectorias de los teléfonos de prueba (`?dispositivo=&desde=`), sin salida: más de 5 min
   sin lecturas o detenido cierra una y empieza otra.
   Contenido angosto: mapa, controles y detalle apilados; desde 56rem de ancho: el detalle a la derecha.
+  Maximizar (o Esc para salir), como en el mapa en vivo: día y salida, mapa, controles y detalle cubren toda la pantalla.
 -->
 <template>
-  <div class="@container flex flex-col gap-4">
-    <section class="panel grid grid-cols-1 gap-3 @xl:grid-cols-[12rem_minmax(0,28rem)] @xl:items-end">
+  <div class="@container flex flex-col gap-4" :class="maximizado ? 'fixed inset-0 z-[900] overflow-auto bg-surface-0 p-3' : ''">
+    <!-- Angosto: el botón de maximizar va junto al día y la salida debajo; ancho: los tres en una fila. -->
+    <section class="panel grid grid-cols-[minmax(0,1fr)_auto] gap-3 @xl:grid-cols-[12rem_minmax(0,28rem)_minmax(0,1fr)] @xl:items-end">
       <label class="flex flex-col gap-1">
         <span class="text-xs font-medium text-muted-color">Día</span>
         <DatePicker v-model="dia" date-format="dd/mm/yy" show-icon :max-date="hoy" :manual-input="false" fluid input-id="dia-trayectorias" @update:model-value="cargarDia" />
       </label>
-      <label class="flex flex-col gap-1">
+      <label class="col-span-2 flex flex-col gap-1 @xl:col-span-1">
         <span class="text-xs font-medium text-muted-color">{{ telefonosDelDia.length ? "Salida o teléfono con GPS" : "Salida con GPS" }}</span>
         <Select v-model="elegida" :options="opciones" option-label="etiqueta" option-value="id" filter :loading="cargandoDia" :placeholder="cargandoDia ? 'Cargando…' : opciones.length ? 'Elija una' : 'Ninguna salida con GPS este día'" :disabled="!cargandoDia && opciones.length === 0" fluid @change="alElegir" />
       </label>
-      <p v-if="delDia" class="m-0 text-xs text-muted-color @xl:col-span-2">
+      <Button size="small" text rounded class="tap-target col-start-2 row-start-1 self-end justify-self-end @xl:col-start-3" :aria-label="maximizado ? 'Salir de pantalla completa' : 'Maximizar mapa'" :title="maximizado ? 'Salir de pantalla completa (Esc)' : 'Maximizar'" :aria-pressed="maximizado" @click="alternarMaximizado">
+        <icon :name="maximizado ? 'fullscreen-exit' : 'fullscreen'" />
+      </Button>
+      <p v-if="delDia" class="col-span-2 m-0 text-xs text-muted-color @xl:col-span-3">
         {{ delDia.salidas.length }} {{ delDia.salidas.length === 1 ? "salida" : "salidas" }} con GPS<template v-if="delDia.sinGps > 0"> · {{ delDia.sinGps }} sin lecturas</template><template v-if="telefonosDelDia.length"> · {{ telefonosDelDia.length }} {{ telefonosDelDia.length === 1 ? "trayectoria" : "trayectorias" }} de teléfonos de prueba</template>. Las lecturas se guardan {{ DIAS_GUARDADAS }} días.
       </p>
     </section>
 
     <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
 
-    <div class="grid grid-cols-1 gap-4 @4xl:grid-cols-[minmax(0,1fr)_22rem]">
+    <!-- Maximizado: el mapa crece hasta llenar lo que dejan los controles (nunca menos de 18rem). -->
+    <div class="grid grid-cols-1 gap-4 @4xl:grid-cols-[minmax(0,1fr)_22rem]" :class="maximizado ? 'min-h-0 flex-1 grid-rows-[1fr_auto] @4xl:grid-rows-[1fr]' : ''">
       <div class="flex min-w-0 flex-col gap-3">
-        <div class="relative">
+        <!-- La clase dinámica va en el padre: Vue reescribiría el class del contenedor de Leaflet y le borraría las clases que él añade. -->
+        <div class="relative" :class="{ 'mapa-maximizado min-h-[18rem] flex-1': maximizado }">
           <div ref="mapaEl" class="mapa-reproduccion rounded-border border border-surface-200" role="application" aria-label="Mapa de la trayectoria" />
           <p v-if="(!trayectoria && !telefono) || puntos.length === 0" class="pointer-events-none absolute inset-x-0 top-1/2 z-[500] mx-auto w-fit max-w-[90%] -translate-y-1/2 rounded-border bg-surface-0/90 px-3 py-2 text-center text-sm shadow">
             <template v-if="cargando">Cargando la trayectoria…</template>
@@ -57,7 +64,7 @@
         </div>
       </div>
 
-      <aside class="flex min-h-0 flex-col gap-3">
+      <aside class="flex min-h-0 flex-col gap-3" :class="maximizado ? 'overflow-y-auto' : ''">
         <article v-if="trayectoria || telefono" class="panel flex flex-col gap-2" :aria-label="trayectoria ? 'Detalle de la salida' : 'Detalle del teléfono'">
           <header class="flex items-start justify-between gap-2">
             <div v-if="trayectoria" class="min-w-0">
@@ -143,6 +150,7 @@ const t = ref(0);
 const reproduciendo = ref(false);
 const velocidad = ref(60);
 const seguir = ref(true);
+const maximizado = ref(false);
 
 let mapa: L.Map | null = null;
 let capaFija: L.LayerGroup | null = null;
@@ -311,8 +319,17 @@ function alInicio() {
 watch(t, () => dibujarMovil(!reproduciendo.value));
 watch(reproduciendo, () => dibujarMovil(true));
 
-/** Espacio reproduce o pausa, salvo sobre un control (un botón enfocado ya lo hace con su propio clic). */
+function alternarMaximizado() {
+  maximizado.value = !maximizado.value;
+  document.body.style.overflow = maximizado.value ? "hidden" : "";
+}
+
+/** Espacio reproduce o pausa, salvo sobre un control (un botón enfocado ya lo hace con su propio clic). Esc sale de pantalla completa. */
 const alTeclear = (ev: KeyboardEvent) => {
+  if (ev.key === "Escape" && maximizado.value) {
+    alternarMaximizado();
+    return;
+  }
   const libre = ev.target === document.body || (ev.target instanceof Node && !!mapaEl.value?.contains(ev.target));
   if (ev.key === " " && libre && puntos.value.length > 0) {
     ev.preventDefault();
@@ -344,6 +361,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   cancelAnimationFrame(cuadro);
   window.removeEventListener("keydown", alTeclear);
+  document.body.style.overflow = "";
   observador?.disconnect();
   mapa?.remove();
   mapa = capaFija = linea = marcador = null;
@@ -355,5 +373,8 @@ onBeforeUnmount(() => {
   height: clamp(22rem, 60dvh, 44rem);
   width: 100%;
   z-index: 0;
+}
+.mapa-maximizado .mapa-reproduccion {
+  height: 100%;
 }
 </style>
