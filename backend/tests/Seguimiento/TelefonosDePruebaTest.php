@@ -13,21 +13,21 @@ final class TelefonosDePruebaTest extends TestCase
 {
     private const MIN = 60;
 
-    public function testMasDeMediaHoraSinLecturasEmpiezaOtraTrayectoria(): void
+    public function testMasDeCincoMinutosSinLecturasEmpiezaOtraTrayectoria(): void
     {
-        $t = TelefonosDePrueba::partir([1000, 1010, 1020, 1020 + 31 * self::MIN, 1030 + 31 * self::MIN]);
+        $t = TelefonosDePrueba::partir([1000, 1010, 1020, 1021 + 5 * self::MIN, 1031 + 5 * self::MIN]);
 
         self::assertSame([
             ['desde' => 1000, 'hasta' => 1020, 'lecturas' => 3],
-            ['desde' => 1020 + 31 * self::MIN, 'hasta' => 1030 + 31 * self::MIN, 'lecturas' => 2],
+            ['desde' => 1021 + 5 * self::MIN, 'hasta' => 1031 + 5 * self::MIN, 'lecturas' => 2],
         ], $t);
     }
 
-    public function testMediaHoraJustaSigueLaMisma(): void
+    public function testCincoMinutosJustosSigueLaMisma(): void
     {
-        $t = TelefonosDePrueba::partir([0, 30 * self::MIN, 60 * self::MIN]);
+        $t = TelefonosDePrueba::partir([0, 5 * self::MIN, 10 * self::MIN]);
 
-        self::assertSame([['desde' => 0, 'hasta' => 60 * self::MIN, 'lecturas' => 3]], $t, 'cuenta el hueco entre lecturas seguidas, no desde la primera');
+        self::assertSame([['desde' => 0, 'hasta' => 10 * self::MIN, 'lecturas' => 3]], $t, 'cuenta el hueco entre lecturas seguidas, no desde la primera');
     }
 
     public function testSinLecturasNoHayTrayectorias(): void

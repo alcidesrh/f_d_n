@@ -13,15 +13,15 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  * acordado (env `SEGUIMIENTO_GPS_PRUEBAS`, separados por coma; no debe ser el
  * código de un bus) en vez del código de un bus. Se sigue como un bus —mapa en
  * vivo, historial y reproducción— pero sin salida: sus trayectorias las marcan
- * los huecos. Más de 30 min entre dos lecturas cierra una trayectoria en la
+ * los huecos. Más de 5 min entre dos lecturas cierra una trayectoria en la
  * primera y empieza otra en la segunda.
  *
  * Lo ve solo quien ve las salidas de todas las empresas (no es de ninguna).
  */
 final class TelefonosDePrueba
 {
-    /** Más que esto entre dos lecturas separa dos trayectorias. */
-    public const HUECO_SEGUNDOS = 1800;
+    /** Más que esto entre dos lecturas separa dos trayectorias (por encima de `HistorialGps::QUIETO_SEGUNDOS`: el raleo del quieto no corta). */
+    public const HUECO_SEGUNDOS = 300;
     /** Tope de una trayectoria: lo que se lee después de su primera lectura. */
     private const MAXIMO_HORAS = 48;
 

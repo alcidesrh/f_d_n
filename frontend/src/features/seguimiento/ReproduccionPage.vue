@@ -4,7 +4,7 @@
   planificada con sus estaciones, y el bus avanza con el reloj a la velocidad elegida (×10 a ×300). La barra
   lleva a cualquier momento. Un hueco de más de 5 min sin lecturas se dibuja en raya gris y se salta al reproducir.
   «Seguir al bus» mueve el mapa cuando el bus se sale de la vista.
-  Temporal: también las trayectorias de los teléfonos de prueba (`?dispositivo=&desde=`), sin salida: más de 30 min
+  Temporal: también las trayectorias de los teléfonos de prueba (`?dispositivo=&desde=`), sin salida: más de 5 min
   sin lecturas cierra una y empieza otra.
   Contenido angosto: mapa, controles y detalle apilados; desde 56rem de ancho: el detalle a la derecha.
 -->
@@ -97,7 +97,7 @@
             </template>
           </dl>
         </article>
-        <p v-if="telefono" class="m-0 text-xs text-muted-color">Lo recorrido sale de las lecturas que envió el teléfono de prueba: más de 30 min sin lecturas cierra una trayectoria y la lectura siguiente empieza otra. La raya gris marca un tramo sin señal de más de 5 min.</p>
+        <p v-if="telefono" class="m-0 text-xs text-muted-color">Lo recorrido sale de las lecturas que envió el teléfono de prueba: más de 5 min sin lecturas cierra una trayectoria y la lectura siguiente empieza otra.</p>
         <p v-else class="m-0 text-xs text-muted-color">Lo recorrido sale de las lecturas que envió el GPS del bus, desde media hora antes de su salida hasta unas horas después de su llegada programada (sin entrar en su siguiente salida). La raya gris marca un tramo sin señal de más de 5 min; la discontinua de color, la ruta planificada.</p>
       </aside>
     </div>

@@ -40,7 +40,7 @@ Ruta `/seguimiento/reproducir` (`features/seguimiento/ReproduccionPage.vue`, `?s
 Para probar sin ponerle a un teléfono el código de un bus: los identificadores de `SEGUIMIENTO_GPS_PRUEBAS` (separados por coma, sin distinguir mayúsculas; no deben ser códigos de bus) se siguen como un bus pero sin salida (`App\Seguimiento\TelefonosDePrueba`):
 
 - Sus lecturas van a `lectura_gps_prueba` (entidad `LecturaGpsPrueba`, clave `(dispositivo, instante)`), con el mismo raleo del quieto y la misma purga.
-- **Trayectoria de un teléfono**: lecturas seguidas; más de 30 min entre dos (`TelefonosDePrueba::HUECO_SEGUNDOS`) cierra una en la primera y empieza otra en la segunda. Se reconocen al leer (`TelefonosDePrueba::partir`, puro), con un tope de 48 h.
+- **Trayectoria de un teléfono**: lecturas seguidas; más de 5 min entre dos (`TelefonosDePrueba::HUECO_SEGUNDOS`) cierra una en la primera y empieza otra en la segunda (el raleo del quieto, una cada 2 min, no corta). Así dentro de una trayectoria no hay huecos sin señal que saltar. Se reconocen al leer (`TelefonosDePrueba::partir`, puro), con un tope de 48 h.
 - API: `telefonos` en `/buses` (los de lectura vigente, con el inicio de la trayectoria en curso) y en `/trayectorias` (las que empiezan ese día); `GET /api/seguimiento/telefonos/trayectoria?dispositivo=&desde=` las lecturas de una. Solo para quien ve las salidas de todas las empresas (`Alcance::sinRestriccion`): no son de ninguna.
 - Frontend: en el mapa en vivo, en gris oscuro (`COLOR_TELEFONO`), sin filtros, con su estela y «Reproducir»; en la reproducción, en la misma lista que las salidas (`?dispositivo=&desde=`), sin ruta ni estaciones.
 
