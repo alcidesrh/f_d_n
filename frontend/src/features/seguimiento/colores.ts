@@ -7,5 +7,16 @@ const POR_NOMBRE: Record<string, string> = { 'maya de oro': '#ea580c' }
 export const colorEmpresa = (empresaId: number, nombre?: string): string =>
   POR_NOMBRE[nombre?.trim().toLowerCase() ?? ''] ?? PALETA[Math.abs(empresaId) % PALETA.length]!
 
+/** `#rrggbb` mezclado con negro (`cuanto` de 0 a 1): la raya fina de una trayectoria resalta más sobre el mapa. */
+export const oscurecer = (hex: string, cuanto: number): string =>
+  '#' +
+  [1, 3, 5]
+    .map((i) =>
+      Math.round(parseInt(hex.slice(i, i + 2), 16) * (1 - cuanto))
+        .toString(16)
+        .padStart(2, '0'),
+    )
+    .join('')
+
 /** Los teléfonos de prueba (temporal, ADR-050): fuera de la paleta de las empresas. */
 export const COLOR_TELEFONO = '#1e293b'

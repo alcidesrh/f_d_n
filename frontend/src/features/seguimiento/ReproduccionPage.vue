@@ -1,7 +1,7 @@
 <!--
   Reproducción de la trayectoria GPS de una salida (ADR-050), ruta `/seguimiento/reproducir` (`?salida=` abre una).
-  Se elige el día y una de sus salidas con lecturas guardadas; el mapa dibuja lo recorrido (tenue) y la ruta
-  planificada con sus estaciones, y el bus avanza con el reloj a la velocidad elegida (×10 a ×300). La barra
+  Se elige el día y una de sus salidas con lecturas guardadas; el mapa dibuja lo recorrido (tenue), lo ya reproducido
+  en raya de color (como la estela del mapa en vivo) y la ruta planificada en línea fina con sus estaciones, y el bus avanza con el reloj a la velocidad elegida (×10 a ×300). La barra
   lleva a cualquier momento. Un hueco de más de 5 min sin lecturas se dibuja en raya gris y se salta al reproducir.
   «Seguir al bus» mueve el mapa cuando el bus se sale de la vista.
   Temporal: también las trayectorias de los teléfonos de prueba (`?dispositivo=&desde=`), sin salida: más de 5 min
@@ -105,7 +105,7 @@
           </dl>
         </article>
         <p v-if="telefono" class="m-0 text-xs text-muted-color">Lo recorrido sale de las lecturas que envió el teléfono de prueba. Más de 5 min sin lecturas cierra una trayectoria y la lectura siguiente empieza otra; más de 5 min detenido la cierra al detenerse y la siguiente empieza al arrancar.</p>
-        <p v-else class="m-0 text-xs text-muted-color">Lo recorrido sale de las lecturas que envió el GPS del bus, desde media hora antes de su salida hasta unas horas después de su llegada programada (sin entrar en su siguiente salida). La raya gris marca un tramo sin señal de más de 5 min; la discontinua de color, la ruta planificada.</p>
+        <p v-else class="m-0 text-xs text-muted-color">Lo recorrido sale de las lecturas que envió el GPS del bus, desde media hora antes de su salida hasta unas horas después de su llegada programada (sin entrar en su siguiente salida). La raya de color es lo ya reproducido; la gris, un tramo sin señal de más de 5 min; la línea fina de color, la ruta planificada.</p>
       </aside>
     </div>
   </div>
@@ -120,7 +120,7 @@ import { avanzar, kmAcumulados, partirPorHuecos, posicionEn, recorridoHasta } fr
 import type { PuntoGps, RespuestaTrayectorias, Trayectoria, TrayectoriaDeTelefono } from "@/core/seguimiento/types";
 import { aDia } from "@/core/salida/filtro";
 import { HttpError } from "@/core/http";
-import { COLOR_TELEFONO, colorEmpresa } from "./colores";
+import { COLOR_TELEFONO, colorEmpresa, oscurecer } from "./colores";
 import { ORIGEN_COORDENADA, diaDe, horaDe, horaSegundosDe } from "./formato";
 import { iconoBus } from "./marcador";
 
@@ -171,6 +171,7 @@ const fin = computed(() => puntos.value[puntos.value.length - 1]?.[0] ?? 0);
 const posicion = computed(() => posicionEn(puntos.value, km.value, t.value));
 const progreso = computed(() => (fin.value > inicio.value ? (t.value - inicio.value) / (fin.value - inicio.value) : 0));
 const color = computed(() => (trayectoria.value ? colorEmpresa(trayectoria.value.empresaId, trayectoria.value.empresa) : telefono.value ? COLOR_TELEFONO : "#115e59"));
+const colorRaya = computed(() => oscurecer(color.value, 0.4));
 const telefonosDelDia = computed(() => delDia.value?.telefonos ?? []);
 const claveSalida = (id: number) => `s:${id}`;
 const claveTelefono = (dispositivo: string, desde: number) => `t:${desde}:${dispositivo}`;
@@ -244,7 +245,8 @@ function dibujarFijo() {
   if (!capaFija || (!trayectoria.value && !telefono.value)) return;
   capaFija.clearLayers();
   const tr = trayectoria.value;
-  if (tr && tr.trazado.length > 1) L.polyline(tr.trazado, { color: color.value, weight: 2, opacity: 0.5, dashArray: "6 6", interactive: false }).addTo(capaFija);
+  // Continua y fina: la raya es de la trayectoria.
+  if (tr && tr.trazado.length > 1) L.polyline(tr.trazado, { color: color.value, weight: 2, opacity: 0.45, interactive: false }).addTo(capaFija);
   for (const e of tr?.estaciones ?? []) {
     const exacta = e.origen === "gps";
     L.circleMarker([e.lat, e.lng], { radius: 4, color: color.value, weight: 2, fillColor: exacta ? color.value : "#fff", fillOpacity: 1 })
@@ -271,8 +273,9 @@ function dibujarMovil(forzar = false) {
   ultimoDibujo = ahora;
 
   const recorrido = recorridoHasta(puntos.value, p);
-  if (!linea) linea = L.polyline(recorrido, { color: color.value, weight: 4, opacity: 0.95, interactive: false }).addTo(mapa);
-  else linea.setStyle({ color: color.value }).setLatLngs(recorrido);
+  // En raya, como la estela del mapa en vivo, y más oscura que el color; entre raya y raya se ve lo recorrido tenue.
+  if (!linea) linea = L.polyline(recorrido, { color: colorRaya.value, weight: 3, opacity: 1, dashArray: "6 6", interactive: false }).addTo(mapa);
+  else linea.setStyle({ color: colorRaya.value }).setLatLngs(recorrido);
 
   const icono = iconoBus(color.value, p.rumbo, { activo: true, quieto: p.sinSenal || p.velocidadKmh < 3 });
   if (!marcador) marcador = L.marker([p.lat, p.lng], { icon: icono, keyboard: false, zIndexOffset: 100 }).addTo(mapa);

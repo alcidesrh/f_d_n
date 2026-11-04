@@ -33,7 +33,7 @@ Tarea `purgar_lecturas_gps` (ADR-044), diaria a las 03:45: borra las lecturas de
 
 ### Frontend
 
-Ruta `/seguimiento/reproducir` (`features/seguimiento/ReproduccionPage.vue`, `?salida=` abre una; con `meta.label`/`icon` para el sidebar): día, salida con GPS, mapa (Leaflet) con lo recorrido tenue, la ruta planificada en raya y sus estaciones; el bus avanza con el reloj a ×10–×300, la barra lleva a cualquier momento y «Seguir al bus» mueve el mapa. Un hueco de más de 5 min sin lecturas se dibuja en raya gris, no se interpola y se salta al reproducir. Lógica pura con tests en `core/seguimiento/reproduccion.ts` (interpolación, km recorridos, huecos). En el mapa en vivo, un bus con GPS ofrece «Reproducir lo recorrido». El marcador del bus es común a ambas pantallas (`features/seguimiento/marcador.ts`).
+Ruta `/seguimiento/reproducir` (`features/seguimiento/ReproduccionPage.vue`, `?salida=` abre una; con `meta.label`/`icon` para el sidebar): día, salida con GPS, mapa (Leaflet) con lo recorrido tenue, lo ya reproducido en raya de color (como la estela del mapa en vivo), la ruta planificada en línea fina y sus estaciones; el bus avanza con el reloj a ×10–×300, la barra lleva a cualquier momento y «Seguir al bus» mueve el mapa. Un hueco de más de 5 min sin lecturas se dibuja en raya gris, no se interpola y se salta al reproducir. Lógica pura con tests en `core/seguimiento/reproduccion.ts` (interpolación, km recorridos, huecos). En el mapa en vivo, un bus con GPS ofrece «Reproducir lo recorrido». El marcador del bus es común a ambas pantallas (`features/seguimiento/marcador.ts`).
 
 ### Teléfonos de prueba (temporal)
 
