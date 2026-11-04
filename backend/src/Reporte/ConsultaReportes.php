@@ -15,6 +15,7 @@ use App\Entity\Enum\EstadoBoletoVenta;
 use App\Entity\Estacion;
 use App\Entity\Moneda;
 use App\Entity\PagoWeb;
+use App\Entity\Parada;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
@@ -167,11 +168,43 @@ final class ConsultaReportes
         );
     }
 
-    /** Boletos de ventas confirmadas, sin reasignados, con todo lo que el reporte necesita ya cargado. */
+    /**
+     * Boletos de ventas confirmadas, sin reasignados: solo las columnas que
+     * lleva cada `LineaBoleto`. Sin hidratar entidades: un mes son decenas de
+     * miles de boletos con sus 13 relaciones (y el XML de cada factura).
+     */
     private function base(?int $empresaId, ?Alcance $alcance = null): QueryBuilder
     {
         $qb = $this->em->createQueryBuilder()
-            ->select("b", "a", "v", "u", "f", "tp", "s", "bus", "pil", "t", "o", "d", "sr")
+            ->select(
+                "b.id AS boletoId",
+                "b.estado AS estado",
+                "b.precio.monto AS centavos",
+                "b.precio.moneda AS moneda",
+                "a.numero AS asiento",
+                "v.id AS ventaId",
+                "v.createdAt AS vendida",
+                "v.voucher AS voucher",
+                "v.cortesia AS cortesia",
+                "v.canal AS canal",
+                "v.estadoFacturacion AS estadoFacturacion",
+                "v.referenciaPago AS autorizacion",
+                "u.username AS usuario",
+                "u.nombre AS usuarioNombre",
+                "u.apellido AS usuarioApellido",
+                "f.id AS facturaId",
+                "f.serie AS serie",
+                "f.dte AS dte",
+                "tp.nombre AS tipoPago",
+                "est.nombre AS estacionVenta",
+                "s.id AS salidaId",
+                "s.fecha AS salida",
+                "IDENTITY(s.ruta) AS rutaId",
+                "bus.codigo AS busCodigo",
+                "pil.codigo AS pilotoCodigo",
+                "o.nombre AS origen",
+                "d.nombre AS destino",
+            )
             ->from(BoletoAsiento::class, "b")
             ->join("b.asiento", "a")
             ->join("b.boletoVenta", "v")
@@ -185,6 +218,7 @@ final class ConsultaReportes
             ->leftJoin("v.usuario", "u")
             ->leftJoin("v.factura", "f")
             ->leftJoin("v.tipoPago", "tp")
+            ->leftJoin("v.estacion", "est")
             ->where("v.estado = :confirmada")
             ->andWhere("b.estado <> :reasignado")
             ->setParameter("confirmada", EstadoBoletoVenta::CONFIRMADA->value)
@@ -211,59 +245,91 @@ final class ConsultaReportes
     /** @return list<LineaBoleto> */
     private function lineas(QueryBuilder $qb): array
     {
-        /** @var list<BoletoAsiento> $boletos */
-        $boletos = $qb->getQuery()->getResult();
-        $referencias = $this->referencias($boletos);
+        /** @var list<array<string, mixed>> $filas */
+        $filas = $qb->getQuery()->getArrayResult();
+        $ventaIds = array_values(array_unique(array_map(static fn(array $f) => (int) $f["ventaId"], $filas)));
+        $referencias = $this->referencias($ventaIds);
+        $puntas = $this->puntas(array_values(array_unique(array_map(static fn(array $f) => (int) $f["rutaId"], $filas))));
 
-        return array_map(function (BoletoAsiento $b) use ($referencias): LineaBoleto {
-            $venta = $b->getBoletoVenta();
-            $salida = $b->getSalida();
-            $ruta = $salida->getRuta();
-            $factura = $venta->getFactura();
-            $usuario = $venta->getUsuario();
-            $precio = $b->getPrecio();
-            $autorizacion = $venta->getReferenciaPago();
+        return array_map(static function (array $f) use ($referencias, $puntas): LineaBoleto {
+            $estado = self::valor($f["estado"]);
+            $autorizacion = $f["autorizacion"];
 
             return new LineaBoleto(
-                (int) $b->getId(),
-                (int) $venta->getId(),
-                \DateTimeImmutable::createFromInterface($venta->getCreada() ?? new \DateTime()),
-                $usuario?->getUsername() ?? "—",
-                $usuario === null ? "" : trim((string) $usuario->getFullName()),
-                $b->getEstado() === EstadoBoletoAsiento::ANULADO,
-                $precio === null ? 0 : (int) $precio->getAmount(),
-                $precio?->getCurrency()->getCode() ?? "GTQ",
-                $venta->isVoucher() || $venta->isCortesia(),
-                (int) $salida->getId(),
-                \DateTimeImmutable::createFromInterface($salida->getFecha()),
-                $salida->getBus()?->getCodigo(),
-                $salida->getBus()?->getPiloto()?->getCodigo(),
-                sprintf("%s - %s", $ruta->getOrigen()?->getNombre() ?? "?", $ruta->getDestino()?->getNombre() ?? "?"),
-                (string) $b->getTrayecto()->getOrigen()?->getNombre(),
-                (string) $b->getTrayecto()->getDestino()?->getNombre(),
-                (int) $b->getAsiento()->getNumero(),
-                $factura?->getId(),
-                $factura?->getSerie(),
-                $factura?->numeroDte(),
-                $venta->getEstadoFacturacion()->value,
-                $venta->getCanal() === CanalVenta::WEB || stripos((string) $venta->getTipoPago()?->getNombre(), "tarjeta") !== false,
+                (int) $f["boletoId"],
+                (int) $f["ventaId"],
+                \DateTimeImmutable::createFromInterface($f["vendida"] ?? new \DateTime()),
+                $f["usuario"] ?? "—",
+                $f["usuario"] === null ? "" : trim($f["usuarioNombre"] . " " . $f["usuarioApellido"]),
+                $estado === EstadoBoletoAsiento::ANULADO->value,
+                (int) $f["centavos"],
+                (string) $f["moneda"],
+                $f["voucher"] || $f["cortesia"],
+                (int) $f["salidaId"],
+                \DateTimeImmutable::createFromInterface($f["salida"]),
+                $f["busCodigo"],
+                $f["pilotoCodigo"],
+                $puntas[(int) $f["rutaId"]] ?? "? - ?",
+                (string) $f["origen"],
+                (string) $f["destino"],
+                (int) $f["asiento"],
+                $f["facturaId"] === null ? null : (int) $f["facturaId"],
+                $f["serie"],
+                $f["dte"] === null ? null : (int) $f["dte"],
+                self::valor($f["estadoFacturacion"]),
+                self::valor($f["canal"]) === CanalVenta::WEB->value || stripos((string) $f["tipoPago"], "tarjeta") !== false,
                 $autorizacion !== null && $autorizacion !== "" ? $autorizacion : null,
-                $referencias[(int) $venta->getId()] ?? null,
-                $b->getEstado()->value,
-                (string) $venta->getEstacion()?->getNombre(),
+                $referencias[(int) $f["ventaId"]] ?? null,
+                $estado,
+                (string) $f["estacionVenta"],
             );
-        }, $boletos);
+        }, $filas);
+    }
+
+    /**
+     * "Origen - Destino" de cada ruta (su primera y su última parada), en una consulta.
+     *
+     * @param list<int> $rutaIds
+     * @return array<int, string>
+     */
+    private function puntas(array $rutaIds): array
+    {
+        if ($rutaIds === []) {
+            return [];
+        }
+        $filas = $this->em->createQueryBuilder()
+            ->select("IDENTITY(p.ruta) AS ruta", "e.nombre AS nombre")
+            ->from(Parada::class, "p")
+            ->join("p.enclave", "e")
+            ->where("p.ruta IN (:rutas)")
+            ->setParameter("rutas", $rutaIds, ArrayParameterType::INTEGER)
+            ->orderBy("p.orden")
+            ->getQuery()
+            ->getArrayResult();
+        $extremos = [];
+        foreach ($filas as $fila) {
+            $ruta = (int) $fila["ruta"];
+            $extremos[$ruta] ??= [$fila["nombre"], null];
+            $extremos[$ruta][1] = $fila["nombre"];
+        }
+
+        return array_map(static fn(array $e) => sprintf("%s - %s", $e[0] ?? "?", $e[1] ?? "?"), $extremos);
+    }
+
+    /** Un enum de Doctrine llega como enum o como su valor, según la versión del hidratador. */
+    private static function valor(mixed $valor): string
+    {
+        return $valor instanceof \BackedEnum ? (string) $valor->value : (string) $valor;
     }
 
     /**
      * Referencia de la pasarela por id de venta (ida y regreso del pago web).
      *
-     * @param list<BoletoAsiento> $boletos
+     * @param list<int> $ids
      * @return array<int, string>
      */
-    private function referencias(array $boletos): array
+    private function referencias(array $ids): array
     {
-        $ids = array_values(array_unique(array_map(static fn(BoletoAsiento $b) => (int) $b->getBoletoVenta()->getId(), $boletos)));
         $mapa = [];
         foreach (array_chunk($ids, 1000) as $lote) {
             $filas = $this->em->createQueryBuilder()

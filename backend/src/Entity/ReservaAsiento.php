@@ -21,7 +21,6 @@ use Symfony\Component\Uid\Uuid;
  */
 #[ORM\Entity]
 #[ORM\Index(columns: ["salida_id", "expira_en"], name: "idx_reserva_asiento_salida_expira")]
-#[ORM\Index(columns: ["token"], name: "idx_reserva_asiento_token")]
 #[ORM\UniqueConstraint(name: "uq_reserva_asiento_token_asiento", columns: ["token", "asiento_id"])]
 class ReservaAsiento
 {

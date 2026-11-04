@@ -36,9 +36,9 @@ class ApiToken extends Base {
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $expira = null;
 
-    /** Secreto del Bearer: nunca se expone por la API (solo lo devuelve el login). */
+    /** Secreto del Bearer: nunca se expone por la API (solo lo devuelve el login). Único: se busca en cada petición. */
     #[ApiProperty(readable: false, writable: false)]
-    #[ORM\Column(length: 68)]
+    #[ORM\Column(length: 68, unique: true)]
     private string $token;
 
     #[ORM\Column(nullable: true)]
