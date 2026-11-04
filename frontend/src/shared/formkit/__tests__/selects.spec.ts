@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest'
+import { beforeAll, describe, it, expect } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { defaultConfig, plugin as formkitPlugin } from '@formkit/vue'
 import PrimeVue from 'primevue/config'
-import formkitConfig from '@/shared/formkit/config'
+import formkitConfig, { precargarInputs } from '@/shared/formkit/config'
 import type { FormKitSchemaNode } from '@formkit/core'
 import { normalizeOptions, toScalarArray, toScalarValue } from '@/shared/formkit/useFormKitInput'
 import { computed, ref } from 'vue'
@@ -104,6 +104,8 @@ async function mountForm(schema: FormKitSchemaNode[]) {
 }
 
 describe('FkSelect / FkMultiSelect: normalizacion de options y valores', () => {
+  beforeAll(() => precargarInputs())
+
   describe('helpers de normalizacion', () => {
     it('normalizeOptions: acepta {label, value} y {id, label}', () => {
       expect(normalizeOptions([{ label: 'A', value: '/api/a/1' }])).toEqual([

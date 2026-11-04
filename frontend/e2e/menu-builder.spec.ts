@@ -97,7 +97,7 @@ test.describe('constructor de menús', () => {
     await page.goto('/login')
     await page.getByPlaceholder('Usuario').fill(USER)
     await page.getByPlaceholder('Contraseña').fill(PASSWORD!)
-    await page.getByRole('button', { name: 'Aceptar' }).click()
+    await page.getByRole('button', { name: 'Iniciar sesión' }).click()
     await expect(page).not.toHaveURL(/\/login$/)
   })
 

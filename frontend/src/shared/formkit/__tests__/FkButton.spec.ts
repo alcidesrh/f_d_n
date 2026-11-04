@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest'
+import { beforeAll, describe, it, expect } from 'vitest'
 import { ref } from 'vue'
 import { flushPromises, mount } from '@vue/test-utils'
 import { defaultConfig, plugin as formkitPlugin } from '@formkit/vue'
 import PrimeVue from 'primevue/config'
-import formkitConfig from '@/shared/formkit/config'
+import formkitConfig, { precargarInputs } from '@/shared/formkit/config'
 import type { FormKitSchemaNode } from '@formkit/core'
 
 function mountForm(schema: FormKitSchemaNode[]) {
@@ -22,6 +22,8 @@ function mountForm(schema: FormKitSchemaNode[]) {
 }
 
 describe('FkButton', () => {
+  beforeAll(() => precargarInputs())
+
   it('pinta el label SOLO en el botón (sin sección label de FormKit)', async () => {
     const wrapper = mountForm([
       { key: 'b1', $formkit: 'Button', name: 'guardar', label: 'Guardar todo' },

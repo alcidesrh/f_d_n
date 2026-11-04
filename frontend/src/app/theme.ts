@@ -1,7 +1,3 @@
-import Aura from "@primeuix/themes/aura";
-import Lara from "@primeuix/themes/lara";
-import Material from "@primeuix/themes/material";
-import Nora from "@primeuix/themes/nora";
 import type { Preset } from "@primeuix/themes/types";
 import type { PrimaryColor, SurfacePalette, ThemeMode, ThemePreset } from "./themeTypes";
 import colors from "tailwindcss/colors";
@@ -42,15 +38,16 @@ export interface SurfaceOption {
 export interface PresetOption {
   key: ThemePreset;
   label: string;
-  value: Preset;
+  /** Cada preset pesa ~140 KB: se baja solo el que se usa (y los demás al elegirlos). */
+  cargar: () => Promise<{ default: Preset }>;
 }
 
 /** PrimeVue theme presets selectable in the customizer, as in Sakai. */
 export const PRESET_OPTIONS = [
-  { key: "material", label: "Material", value: Material },
-  { key: "aura", label: "Aura", value: Aura },
-  { key: "lara", label: "Lara", value: Lara },
-  { key: "nora", label: "Nora", value: Nora },
+  { key: "material", label: "Material", cargar: () => import("@primeuix/themes/material") },
+  { key: "aura", label: "Aura", cargar: () => import("@primeuix/themes/aura") },
+  { key: "lara", label: "Lara", cargar: () => import("@primeuix/themes/lara") },
+  { key: "nora", label: "Nora", cargar: () => import("@primeuix/themes/nora") },
 ] as const satisfies readonly PresetOption[];
 
 /** Options shown in the header's appearance / theme customizer. */
@@ -112,8 +109,8 @@ export function completarConBase(base: Tokens, modificaciones: Tokens): Tokens {
 }
 
 /** Preset base de PrimeVue (Aura, Lara…); si la clave no existe, el primero. */
-function presetOf(key: ThemePreset): Tokens {
-  return (PRESET_OPTIONS.find((o) => o.key === key) ?? PRESET_OPTIONS[0]).value as Tokens;
+async function presetOf(key: ThemePreset): Promise<Tokens> {
+  return (await (PRESET_OPTIONS.find((o) => o.key === key) ?? PRESET_OPTIONS[0]).cargar()).default as Tokens;
 }
 
 /**
@@ -121,8 +118,8 @@ function presetOf(key: ThemePreset): Tokens {
  * Como antes, el `colorScheme` del base entra en su nivel de primer nivel (el
  * claro) y no se toma su versión oscura: el modo oscuro sale de invertir rampas.
  */
-export const presetCompleto = (theme: ThemePreset, primaryName: PrimaryColor, surfaceName: SurfacePalette, mode: ThemeMode): Tokens => {
-  const base = presetOf(theme);
+export const presetCompleto = async (theme: ThemePreset, primaryName: PrimaryColor, surfaceName: SurfacePalette, mode: ThemeMode): Promise<Tokens> => {
+  const base = await presetOf(theme);
   const baseClaro = { ...base, semantic: { ...base.semantic, colorScheme: base.semantic.colorScheme.light } };
   return completarConBase(baseClaro, themeColors(primaryName, surfaceName, mode));
 };

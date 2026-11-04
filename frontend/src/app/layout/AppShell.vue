@@ -48,7 +48,6 @@ import { useAutorizacionesStore } from '@/core/autorizacion/store'
 import { useMetadataStore } from '@/core/metadata/sincronizacion'
 import EstacionTrabajoDialog from '@/features/acceso/EstacionTrabajoDialog.vue'
 import ChatAviso from '@/features/chat/ChatAviso.vue'
-import ChatVentana from '@/features/chat/ChatVentana.vue'
 import { useVentanaChat } from '@/features/chat/ventana'
 import SolicitarAutorizacionDialog from '@/shared/autorizacion/SolicitarAutorizacionDialog.vue'
 import { LISTADO_DE_REGISTROS, REPORTES_ADJUNTABLES } from '@/shared/chat/integracion'
@@ -69,6 +68,9 @@ const cuenta = useCuentaStore()
 const metadata = useMetadataStore()
 const ventana = useVentanaChat()
 const autorizaciones = useAutorizacionesStore()
+
+// La ventana del chat (conversación, redactor, correo…) se baja al abrirla.
+const ChatVentana = defineAsyncComponent(() => import('@/features/chat/ChatVentana.vue'))
 
 // El selector de registros del chat usa el listado genérico (una feature no importa a otra).
 provide(LISTADO_DE_REGISTROS, defineAsyncComponent(() => import('@/features/entity-crud/ListPage.vue')))

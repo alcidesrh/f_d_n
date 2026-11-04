@@ -14,7 +14,7 @@ import App from "./App.vue";
 import "@/assets/main.css";
 import { pinia } from "@/app/pinia";
 import { router } from "@/app/router";
-import formkitConfig from "@/shared/formkit/config";
+import formkitConfig, { precargarInputs } from "@/shared/formkit/config";
 import { useUiStore } from "@/app/ui";
 import { useMetadataStore } from "@/core/metadata/sincronizacion";
 import { escucharInstalacion } from "@/app/pwa";
@@ -39,6 +39,8 @@ async function bootstrap() {
   // Sin esto se monta con la ruta inicial sin resolver (sin `meta.layout`) y parpadea el layout de la app antes del de /login.
   await router.isReady();
   app.mount("#app");
+  // Los inputs de los formularios no están en el arranque: se bajan en el primer rato libre.
+  (globalThis.requestIdleCallback ?? setTimeout)(() => void precargarInputs());
 }
 
 void bootstrap();

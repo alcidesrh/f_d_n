@@ -27,6 +27,8 @@ export interface UiState {
   isMobile: boolean;
 }
 
+let turnoTema = 0;
+
 /** Tema de fábrica (sin el modo: ese lo toma del sistema operativo). */
 const TEMA_POR_DEFECTO = { primary: "blue", surface: "slate", preset: "lara" } as const satisfies Omit<UiState, "mode" | "isMobile">;
 
@@ -37,7 +39,7 @@ const TEMA_POR_DEFECTO = { primary: "blue", surface: "slate", preset: "lara" } a
  */
 export const useUiStore = defineStore("ui", {
   // App.vue la usa siempre: al entrar otro usuario se recarga con su tema.
-  permanente: { alRecargar: (): void => useUiStore().applyTheme() },
+  permanente: { alRecargar: (): void => void useUiStore().applyTheme() },
   persist: { omit: ["isMobile"] },
   state: (): UiState => ({
     mode: systemMode(),
@@ -48,32 +50,35 @@ export const useUiStore = defineStore("ui", {
   actions: {
     setMode(mode: ThemeMode) {
       this.mode = mode;
-      this.applyTheme();
+      void this.applyTheme();
     },
     toggleMode() {
       this.setMode(this.mode === "dark" ? "light" : "dark");
     },
     setPrimary(primary: PrimaryColor) {
       this.primary = primary;
-      this.applyTheme();
+      void this.applyTheme();
     },
     setSurface(surface: SurfacePalette) {
       this.surface = surface;
-      this.applyTheme();
+      void this.applyTheme();
     },
     setPreset(preset: ThemePreset) {
       this.preset = preset;
-      this.applyTheme();
+      void this.applyTheme();
     },
     /** Vuelve a color, superficie y preset de fábrica; el modo claro/oscuro se conserva. */
     restablecerTema() {
       this.primary = TEMA_POR_DEFECTO.primary;
       this.surface = TEMA_POR_DEFECTO.surface;
       this.preset = TEMA_POR_DEFECTO.preset;
-      this.applyTheme();
+      void this.applyTheme();
     },
-    applyTheme() {
-      usePreset(presetCompleto(this.preset, this.primary, this.surface, this.mode));
+    /** El preset base se baja al pedirlo: si llegan dos cambios seguidos, se aplica solo el último. */
+    async applyTheme() {
+      const turno = ++turnoTema;
+      const preset = await presetCompleto(this.preset, this.primary, this.surface, this.mode);
+      if (turno === turnoTema) usePreset(preset);
     },
     syncViewport() {
       this.isMobile = isBelowDesktop();

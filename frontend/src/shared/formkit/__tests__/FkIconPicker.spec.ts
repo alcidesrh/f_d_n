@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { flushPromises, mount } from '@vue/test-utils'
 import { defaultConfig, plugin as formkitPlugin } from '@formkit/vue'
 import PrimeVue from 'primevue/config'
-import formkitConfig from '@/shared/formkit/config'
+import formkitConfig, { precargarInputs } from '@/shared/formkit/config'
 import type { FormKitSchemaNode } from '@formkit/core'
 import { loadIconCatalog } from '@/shared/icons/iconCatalog'
 
@@ -56,7 +56,7 @@ async function adelantar(ms: number) {
 
 describe('FkIconPicker', () => {
   // Transformar el set de íconos (~8 MB de JSON) es lento con la suite en paralelo.
-  beforeAll(() => loadIconCatalog(), 30_000)
+  beforeAll(() => Promise.all([loadIconCatalog(), precargarInputs()]), 30_000)
   afterEach(() => {
     vi.useRealTimers()
   })

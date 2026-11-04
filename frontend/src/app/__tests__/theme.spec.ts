@@ -31,8 +31,8 @@ describe('completarConBase', () => {
 })
 
 describe('presetCompleto', () => {
-  it('conserva del base las partes que las modificaciones no tocan', () => {
-    const preset = presetCompleto('lara', 'blue', 'slate', 'light')
+  it('conserva del base las partes que las modificaciones no tocan', async () => {
+    const preset = await presetCompleto('lara', 'blue', 'slate', 'light')
     expect(preset.components.button.root).toBeDefined()
     expect(preset.semantic.colorScheme.light).toBeUndefined()
     expect(preset.semantic.colorScheme.surface[0]).toBe('#ffffff')
