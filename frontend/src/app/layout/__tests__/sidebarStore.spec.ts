@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useUiStore } from '@/app/ui'
-import { defineSidebarStore } from './sidebarStore'
+import { defineSidebarStore } from '../sidebarStore'
 
 describe('defineSidebarStore', () => {
   beforeEach(() => setActivePinia(createPinia()))
