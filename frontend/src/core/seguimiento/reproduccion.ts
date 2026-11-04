@@ -1,6 +1,7 @@
 /**
  * Reproducción de una trayectoria GPS guardada (ADR-050): dónde iba el bus en
- * cada instante, interpolando entre lecturas. Un hueco largo sin lecturas
+ * cada instante, interpolando entre lecturas, y su velocidad promedio hasta
+ * ahí (desde que arrancó y en marcha). Un hueco largo sin lecturas
  * (teléfono apagado o sin señal) no se interpola: el bus espera en la última
  * lectura y, al reproducir, el hueco se salta.
  */
@@ -12,6 +13,9 @@ export const SIN_SENAL_SEGUNDOS = 300
 
 /** Por debajo de esto (km) entre dos lecturas el rumbo es ruido: se usa el que dio el GPS. */
 const QUIETO_KM = 0.005
+
+/** Por debajo de esto (km/h) el bus está detenido (como `HistorialGps::DETENIDO_KMH`). */
+export const DETENIDO_KMH = 3
 
 export interface PosicionReproducida {
   lat: number
@@ -81,6 +85,77 @@ export function posicionEn(puntos: PuntoGps[], km: number[], t: number): Posicio
     km: (km[i] ?? 0) + ((km[i + 1] ?? 0) - (km[i] ?? 0)) * f,
     indice: i,
     sinSenal: false,
+  }
+}
+
+/** Lo recorrido en marcha hasta cada lectura, para los promedios (`promediosEn`). */
+export interface EnMarcha {
+  km: number[]
+  segundos: number[]
+  /** La lectura en que arranca: la primera de un tramo en marcha; null si nunca se movió. */
+  arranque: number | null
+}
+
+/**
+ * Un tramo entre dos lecturas va en marcha si no es un hueco sin señal y lo
+ * dice la velocidad con que empieza o la distancia (hay rastreadores que no
+ * mandan la velocidad). La de la lectura que lo cierra no cuenta: detenido,
+ * el historial guarda una lectura cada 2 min y el tramo de la última detenida
+ * a la que arranca es casi todo parada. El ruido del GPS parado, en 2 min, da
+ * menos que `DETENIDO_KMH`.
+ */
+function tramoEnMarcha(a: PuntoGps, b: PuntoGps, km: number): boolean {
+  const dt = b[0] - a[0]
+  if (dt <= 0 || esHueco(a, b)) return false
+  return a[3] >= DETENIDO_KMH || (km / dt) * 3600 >= DETENIDO_KMH
+}
+
+/** Km y segundos acumulados en marcha en cada lectura: sin los tramos detenidos ni los huecos sin señal. */
+export function enMarchaAcumulado(puntos: PuntoGps[]): EnMarcha {
+  const km: number[] = []
+  const segundos: number[] = []
+  let arranque: number | null = null
+  puntos.forEach((p, i) => {
+    const a = puntos[i - 1]
+    const d = a ? distanciaKm(a[1], a[2], p[1], p[2]) : 0
+    const cuenta = !!a && tramoEnMarcha(a, p, d)
+    if (cuenta && arranque === null) arranque = i - 1
+    km.push(a ? km[i - 1]! + (cuenta ? d : 0) : 0)
+    segundos.push(a ? segundos[i - 1]! + (cuenta ? p[0] - a[0] : 0) : 0)
+  })
+  return { km, segundos, arranque }
+}
+
+/** Velocidades promedio en un instante, en km/h; null mientras no hay de qué sacarla. */
+export interface Promedios {
+  /** Lo recorrido desde que arrancó entre el tiempo transcurrido: cuenta las paradas y los huecos sin señal. */
+  desdeArranqueKmh: number | null
+  /** Lo recorrido en marcha entre el tiempo en marcha. */
+  enMarchaKmh: number | null
+}
+
+/**
+ * Promedios en `t`, interpolando dentro del tramo como `posicionEn`. En un
+ * hueco sin señal no se interpola: lo recorrido en él llega con la lectura
+ * que lo cierra (la distancia en línea recta, en el promedio desde que
+ * arrancó; en el de en marcha, nada).
+ */
+export function promediosEn(puntos: PuntoGps[], km: number[], enMarcha: EnMarcha, t: number): Promedios {
+  const ultima = puntos[puntos.length - 1]
+  if (!ultima || enMarcha.arranque === null) return { desdeArranqueKmh: null, enMarchaKmh: null }
+  const enT = Math.min(t, ultima[0])
+  const i = Math.max(0, indiceEn(puntos, enT))
+  const a = puntos[i]!
+  const b = puntos[i + 1]
+  const f = b && enT > a[0] && !esHueco(a, b) ? (enT - a[0]) / (b[0] - a[0]) : 0
+  const en = (serie: number[]) => (serie[i] ?? 0) + ((serie[i + 1] ?? 0) - (serie[i] ?? 0)) * f
+
+  const desde = puntos[enMarcha.arranque]!
+  const transcurrido = enT - desde[0]
+  const segundosEnMarcha = en(enMarcha.segundos)
+  return {
+    desdeArranqueKmh: transcurrido > 0 ? ((en(km) - (km[enMarcha.arranque] ?? 0)) / transcurrido) * 3600 : null,
+    enMarchaKmh: segundosEnMarcha > 0 ? (en(enMarcha.km) / segundosEnMarcha) * 3600 : null,
   }
 }
 

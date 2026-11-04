@@ -96,6 +96,8 @@
               <dd class="m-0 tabular-nums">{{ horaSegundosDe(t) }}</dd>
               <dt class="text-muted-color">Velocidad</dt>
               <dd class="m-0">{{ posicion.velocidadKmh.toFixed(0) }} km/h</dd>
+              <dt class="text-muted-color">Promedio</dt>
+              <dd class="m-0">{{ kmhDe(promedios.desdeArranqueKmh) }} · en marcha {{ kmhDe(promedios.enMarchaKmh) }}</dd>
               <dt class="text-muted-color">Recorrido</dt>
               <dd class="m-0">{{ posicion.km.toFixed(1) }} de {{ kmTotal.toFixed(1) }} km (GPS)</dd>
             </template>
@@ -117,6 +119,7 @@
         </article>
         <p v-if="telefono" class="m-0 text-xs text-muted-color">Lo recorrido sale de las lecturas que envió el teléfono de prueba. Más de 5 min sin lecturas cierra una trayectoria y la lectura siguiente empieza otra; más de 5 min detenido la cierra al detenerse y la siguiente empieza al arrancar.</p>
         <p v-else class="m-0 text-xs text-muted-color">Lo recorrido sale de las lecturas que envió el GPS del bus, desde media hora antes de su salida hasta unas horas después de su llegada programada (sin entrar en su siguiente salida). La raya de color es lo ya reproducido; la gris, un tramo sin señal de más de 5 min; la línea fina de color, la ruta planificada.</p>
+        <p v-if="puntos.length > 0" class="m-0 text-xs text-muted-color">El promedio divide lo recorrido desde que arrancó entre el tiempo transcurrido, con las paradas; el de en marcha no cuenta lo detenido (menos de {{ DETENIDO_KMH }} km/h) ni los tramos sin señal.</p>
       </aside>
     </div>
   </div>
@@ -130,7 +133,7 @@ import { useConfirm } from "primevue/useconfirm";
 import { borrarTrayectoria, borrarTrayectoriaDeTelefono, fetchTrayectoria, fetchTrayectoriaDeTelefono, fetchTrayectorias } from "@/core/seguimiento/api";
 import { useAccesoStore } from "@/core/acceso/store";
 import { notify } from "@/core/notify";
-import { avanzar, kmAcumulados, partirPorHuecos, posicionEn, recorridoHasta } from "@/core/seguimiento/reproduccion";
+import { DETENIDO_KMH, avanzar, enMarchaAcumulado, kmAcumulados, partirPorHuecos, posicionEn, promediosEn, recorridoHasta } from "@/core/seguimiento/reproduccion";
 import type { PuntoGps, RespuestaTrayectorias, Trayectoria, TrayectoriaDeTelefono } from "@/core/seguimiento/types";
 import { aDia } from "@/core/salida/filtro";
 import { HttpError } from "@/core/http";
@@ -185,6 +188,9 @@ const kmTotal = computed(() => km.value[km.value.length - 1] ?? 0);
 const inicio = computed(() => puntos.value[0]?.[0] ?? 0);
 const fin = computed(() => puntos.value[puntos.value.length - 1]?.[0] ?? 0);
 const posicion = computed(() => posicionEn(puntos.value, km.value, t.value));
+const enMarcha = computed(() => enMarchaAcumulado(puntos.value));
+const promedios = computed(() => promediosEn(puntos.value, km.value, enMarcha.value, t.value));
+const kmhDe = (v: number | null) => (v === null ? "—" : `${v.toFixed(0)} km/h`);
 const progreso = computed(() => (fin.value > inicio.value ? (t.value - inicio.value) / (fin.value - inicio.value) : 0));
 const color = computed(() => (trayectoria.value ? colorEmpresa(trayectoria.value.empresaId, trayectoria.value.empresa) : telefono.value ? COLOR_TELEFONO : "#115e59"));
 const colorRaya = computed(() => oscurecer(color.value, 0.4));
@@ -340,7 +346,7 @@ function dibujarMovil(forzar = false) {
   if (!linea) linea = L.polyline(recorrido, { color: colorRaya.value, weight: 3, opacity: 1, dashArray: "6 6", interactive: false }).addTo(mapa);
   else linea.setStyle({ color: colorRaya.value }).setLatLngs(recorrido);
 
-  const icono = iconoBus(color.value, p.rumbo, { activo: true, quieto: p.sinSenal || p.velocidadKmh < 3 });
+  const icono = iconoBus(color.value, p.rumbo, { activo: true, quieto: p.sinSenal || p.velocidadKmh < DETENIDO_KMH });
   if (!marcador) marcador = L.marker([p.lat, p.lng], { icon: icono, keyboard: false, zIndexOffset: 100 }).addTo(mapa);
   else marcador.setLatLng([p.lat, p.lng]).setIcon(icono);
 
