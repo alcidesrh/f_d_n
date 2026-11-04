@@ -193,6 +193,24 @@ final class TelefonosDePrueba
     }
 
     /**
+     * Borra la trayectoria que empieza en `$desde`: sus lecturas, de la primera a la última. Devuelve cuántas.
+     * Las de una parada larga que no son de ninguna trayectoria se quedan.
+     */
+    public function borrarTrayectoria(string $dispositivo, int $desde): int
+    {
+        $t = $this->trayectoria($dispositivo, $desde);
+        if (0 === $t['lecturas']) {
+            return 0;
+        }
+
+        return (int) $this->db->executeStatement(
+            'DELETE FROM lectura_gps_prueba WHERE dispositivo = :dispositivo AND instante BETWEEN to_timestamp(:desde) AND to_timestamp(:hasta)',
+            ['dispositivo' => $t['dispositivo'], 'desde' => $t['desde'], 'hasta' => $t['hasta']],
+            ['desde' => ParameterType::INTEGER, 'hasta' => ParameterType::INTEGER],
+        );
+    }
+
+    /**
      * Los teléfonos con lectura vigente, para el mapa en vivo, con el inicio de su última trayectoria.
      *
      * @return list<array{dispositivo: string, desde: int, posicion: array<string, mixed>}>

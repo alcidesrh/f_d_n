@@ -86,6 +86,22 @@ final class Trayectorias
     }
 
     /**
+     * Borra la trayectoria de una salida: las lecturas de su bus en su ventana. Devuelve cuántas.
+     * Con un horario apretado la ventana puede alcanzar el inicio de la siguiente salida del bus.
+     * Quien llama ya comprobó que el usuario puede.
+     */
+    public function borrarDeSalida(Salida $salida): int
+    {
+        $fila = $this->filas('s.id = :id', ['id' => (int) $salida->getId()])[0] ?? null;
+        if (null === $fila) {
+            return 0;
+        }
+        $ventana = $this->ventana($fila);
+
+        return $this->historial->borrar((int) $fila['bus_id'], $ventana->desde, $ventana->hasta);
+    }
+
+    /**
      * Salidas no canceladas con bus, con lo necesario para su ventana: llegada programada (la hora
      * de la última parada) y la hora de la siguiente salida del mismo bus.
      *

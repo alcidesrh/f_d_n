@@ -8,6 +8,7 @@
   sin lecturas o detenido cierra una y empieza otra.
   Contenido angosto: mapa, controles y detalle apilados; desde 56rem de ancho: el detalle a la derecha.
   Maximizar (o Esc para salir), como en el mapa en vivo: día y salida, mapa, controles y detalle cubren toda la pantalla.
+  Con `salida.eliminar`, la ✕ de cada opción borra su trayectoria de la base (las lecturas GPS, tras confirmar) y la quita de la lista.
 -->
 <template>
   <div class="@container flex flex-col gap-4" :class="maximizado ? 'fixed inset-0 z-[900] overflow-auto bg-surface-0 p-3' : ''">
@@ -19,7 +20,17 @@
       </label>
       <label class="col-span-2 flex flex-col gap-1 @xl:col-span-1">
         <span class="text-xs font-medium text-muted-color">{{ telefonosDelDia.length ? "Salida o teléfono con GPS" : "Salida con GPS" }}</span>
-        <Select v-model="elegida" :options="opciones" option-label="etiqueta" option-value="id" filter :loading="cargandoDia" :placeholder="cargandoDia ? 'Cargando…' : opciones.length ? 'Elija una' : 'Ninguna salida con GPS este día'" :disabled="!cargandoDia && opciones.length === 0" fluid @change="alElegir" />
+        <Select v-model="elegida" :options="opciones" option-label="etiqueta" option-value="id" filter :loading="cargandoDia" :placeholder="cargandoDia ? 'Cargando…' : opciones.length ? 'Elija una' : 'Ninguna salida con GPS este día'" :disabled="!cargandoDia && opciones.length === 0" fluid @change="alElegir">
+          <!-- La ✕ borra la trayectoria de la base. El Select elige en mousedown: la ✕ lo detiene. -->
+          <template #option="{ option }">
+            <div class="flex w-full min-w-0 items-center gap-2">
+              <span class="min-w-0 flex-1 truncate" :title="option.etiqueta">{{ option.etiqueta }}</span>
+              <Button v-if="puedeBorrar" text rounded size="small" severity="danger" class="tap-target -my-1 shrink-0" aria-label="Borrar esta trayectoria" title="Borrar esta trayectoria" @mousedown.stop.prevent @click.stop="borrar(option)">
+                <icon name="close" />
+              </Button>
+            </div>
+          </template>
+        </Select>
       </label>
       <Button size="small" text rounded class="tap-target col-start-2 row-start-1 self-end justify-self-end @xl:col-start-3" :aria-label="maximizado ? 'Salir de pantalla completa' : 'Maximizar mapa'" :title="maximizado ? 'Salir de pantalla completa (Esc)' : 'Maximizar'" :aria-pressed="maximizado" @click="alternarMaximizado">
         <icon :name="maximizado ? 'fullscreen-exit' : 'fullscreen'" />
@@ -115,7 +126,10 @@
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useRoute, useRouter } from "vue-router";
-import { fetchTrayectoria, fetchTrayectoriaDeTelefono, fetchTrayectorias } from "@/core/seguimiento/api";
+import { useConfirm } from "primevue/useconfirm";
+import { borrarTrayectoria, borrarTrayectoriaDeTelefono, fetchTrayectoria, fetchTrayectoriaDeTelefono, fetchTrayectorias } from "@/core/seguimiento/api";
+import { useAccesoStore } from "@/core/acceso/store";
+import { notify } from "@/core/notify";
 import { avanzar, kmAcumulados, partirPorHuecos, posicionEn, recorridoHasta } from "@/core/seguimiento/reproduccion";
 import type { PuntoGps, RespuestaTrayectorias, Trayectoria, TrayectoriaDeTelefono } from "@/core/seguimiento/types";
 import { aDia } from "@/core/salida/filtro";
@@ -134,6 +148,8 @@ const REDIBUJO_MS = 50;
 
 const route = useRoute();
 const router = useRouter();
+const confirm = useConfirm();
+const acceso = useAccesoStore();
 const mapaEl = ref<HTMLElement | null>(null);
 const hoy = new Date();
 const dia = ref<Date>(new Date());
@@ -173,8 +189,15 @@ const progreso = computed(() => (fin.value > inicio.value ? (t.value - inicio.va
 const color = computed(() => (trayectoria.value ? colorEmpresa(trayectoria.value.empresaId, trayectoria.value.empresa) : telefono.value ? COLOR_TELEFONO : "#115e59"));
 const colorRaya = computed(() => oscurecer(color.value, 0.4));
 const telefonosDelDia = computed(() => delDia.value?.telefonos ?? []);
+/** La ✕ de cada opción: borrar exige `salida.eliminar` (las de teléfonos, en todas las empresas; lo decide el backend). */
+const puedeBorrar = computed(() => acceso.puede("salida.eliminar"));
 const claveSalida = (id: number) => `s:${id}`;
 const claveTelefono = (dispositivo: string, desde: number) => `t:${desde}:${dispositivo}`;
+const deClave = (clave: string): { salida: number } | { dispositivo: string; desde: number } => {
+  if (clave.startsWith("s:")) return { salida: Number(clave.slice(2)) };
+  const [, desde = "", ...nombre] = clave.split(":");
+  return { dispositivo: nombre.join(":"), desde: Number(desde) };
+};
 const opciones = computed(() =>
   [
     ...(delDia.value?.salidas ?? []).map((s) => ({ id: claveSalida(s.salidaId), t: s.partida, etiqueta: `${horaDe(s.partida)} · ${s.origen} → ${s.destino} · bus ${s.bus} · ${s.lecturas} lecturas` })),
@@ -228,16 +251,56 @@ async function abrir(pedido: Promise<{ salida: Trayectoria } | { telefono: Traye
 function alElegir() {
   const clave = elegida.value;
   if (!clave) return;
-  if (clave.startsWith("s:")) {
-    const id = Number(clave.slice(2));
-    void router.replace({ query: { salida: String(id) } });
-    void abrirSalida(id);
+  const o = deClave(clave);
+  if ("salida" in o) {
+    void router.replace({ query: { salida: String(o.salida) } });
+    void abrirSalida(o.salida);
     return;
   }
-  const [, desde = "", ...nombre] = clave.split(":");
-  const dispositivo = nombre.join(":");
-  void router.replace({ query: { dispositivo, desde } });
-  void abrirTelefono(dispositivo, Number(desde));
+  void router.replace({ query: { dispositivo: o.dispositivo, desde: String(o.desde) } });
+  void abrirTelefono(o.dispositivo, o.desde);
+}
+
+/** Borra de la base la trayectoria de una opción (las lecturas GPS; la salida se queda) y la quita de la lista. */
+function borrar(op: { id: string; etiqueta: string }) {
+  const o = deClave(op.id);
+  confirm.require({
+    header: "Borrar trayectoria",
+    message: `Se borrarán de la base de datos las lecturas GPS de «${op.etiqueta}»${"salida" in o ? " (la salida se queda)" : ""}. No se puede deshacer.`,
+    acceptProps: { label: "Borrar", severity: "danger" },
+    rejectProps: { label: "Cancelar", severity: "secondary" },
+    accept: async () => {
+      try {
+        const r = await ("salida" in o ? borrarTrayectoria(o.salida) : borrarTrayectoriaDeTelefono(o.dispositivo, o.desde));
+        quitar(op.id);
+        notify.success(`Trayectoria borrada (${r.borradas} ${r.borradas === 1 ? "lectura" : "lecturas"}).`);
+      } catch (e) {
+        notify.error(e instanceof Error ? e.message : String(e));
+      }
+    },
+  });
+}
+
+/** Quita la opción de la lista del día; si era la abierta, la cierra. */
+function quitar(clave: string) {
+  const d = delDia.value;
+  const o = deClave(clave);
+  if (d && "salida" in o && d.salidas.some((s) => s.salidaId === o.salida)) delDia.value = { ...d, salidas: d.salidas.filter((s) => s.salidaId !== o.salida), sinGps: d.sinGps + 1 };
+  else if (d && !("salida" in o)) delDia.value = { ...d, telefonos: (d.telefonos ?? []).filter((x) => claveTelefono(x.dispositivo, x.desde) !== clave) };
+  if (elegida.value === clave) cerrar();
+}
+
+/** Deja el mapa sin trayectoria, como al entrar. */
+function cerrar() {
+  ++cargaSalida;
+  pausar();
+  cargando.value = false;
+  trayectoria.value = null;
+  telefono.value = null;
+  elegida.value = null;
+  capaFija?.clearLayers();
+  dibujarMovil(true);
+  void router.replace({ query: {} });
 }
 
 /** Ruta planificada, estaciones y todo lo recorrido (tenue, con los huecos sin señal en gris). Un teléfono no tiene ruta. */

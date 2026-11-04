@@ -116,6 +116,16 @@ class HistorialGps
         return $out;
     }
 
+    /** Borra las lecturas de un bus entre dos instantes (epoch en s, incluidos), como las lee `lecturas()`. Devuelve cuántas. */
+    public function borrar(int $busId, int $desde, int $hasta): int
+    {
+        return (int) $this->db->executeStatement(
+            'DELETE FROM lectura_gps WHERE bus_id = :bus AND instante BETWEEN to_timestamp(:desde) AND to_timestamp(:hasta)',
+            ['bus' => $busId, 'desde' => $desde, 'hasta' => $hasta],
+            ['bus' => ParameterType::INTEGER, 'desde' => ParameterType::INTEGER, 'hasta' => ParameterType::INTEGER],
+        );
+    }
+
     /** Borra las lecturas de antes de `$antesDe`, bus por bus (cada borrado usa la clave). Devuelve cuántas. */
     public function purgar(\DateTimeImmutable $antesDe): int
     {

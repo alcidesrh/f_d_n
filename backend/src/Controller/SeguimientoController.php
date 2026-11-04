@@ -44,6 +44,8 @@ use Symfony\Component\Routing\Attribute\Route;
 final class SeguimientoController extends AbstractController
 {
     public const VER = "salida.ver";
+    /** Borrar la trayectoria GPS de una salida o de un teléfono de prueba. */
+    public const ELIMINAR = "salida.eliminar";
 
     public function __construct(
         private readonly SeguimientoBuses $seguimiento,
@@ -147,6 +149,26 @@ final class SeguimientoController extends AbstractController
         return $this->json($this->trayectorias->deSalida($salida));
     }
 
+    /** Borra la trayectoria GPS de una salida (las lecturas de su bus en su ventana). La salida se queda. */
+    #[Route("/salidas/{id<\d+>}/trayectoria", name: "trayectoria_borrar", methods: ["DELETE"])]
+    public function borrarTrayectoria(int $id): JsonResponse
+    {
+        $this->denyAccessUnlessGranted(self::ELIMINAR);
+
+        $salida = $this->em->find(Salida::class, $id);
+        if (null === $salida || null === $salida->getBus()) {
+            return $this->json(["error" => "La salida no existe."], 404);
+        }
+        if (!$this->autorizacion->puede(Capacidad::SALIDA_ELIMINAR, Ubicador::salida($salida))) {
+            return $this->json(["error" => Autorizacion::mensaje(Capacidad::SALIDA_ELIMINAR, Ubicador::salida($salida))], 403);
+        }
+
+        $borradas = $this->trayectorias->borrarDeSalida($salida);
+        $this->logger->info("Trayectoria GPS borrada: salida {salida}, {borradas} lecturas.", ["salida" => $id, "borradas" => $borradas, "usuario" => $this->getUser()?->getUserIdentifier()]);
+
+        return $this->json(["borradas" => $borradas]);
+    }
+
     /** Trayectoria de un teléfono de prueba que empieza en `?desde=` (epoch), para reproducirla. */
     #[Route("/telefonos/trayectoria", name: "telefono_trayectoria", methods: ["GET"])]
     public function trayectoriaDeTelefono(Request $request): JsonResponse
@@ -166,5 +188,29 @@ final class SeguimientoController extends AbstractController
         }
 
         return $this->json($this->telefonos->trayectoria($dispositivo, (int) $desde));
+    }
+
+    /** Borra la trayectoria de un teléfono de prueba que empieza en `?desde=` (epoch). */
+    #[Route("/telefonos/trayectoria", name: "telefono_trayectoria_borrar", methods: ["DELETE"])]
+    public function borrarTrayectoriaDeTelefono(Request $request): JsonResponse
+    {
+        $this->denyAccessUnlessGranted(self::ELIMINAR);
+        if (!$this->autorizacion->alcance(Capacidad::SALIDA_ELIMINAR)->sinRestriccion()) {
+            return $this->json(["error" => "Las trayectorias de los teléfonos de prueba solo las borra quien elimina salidas de todas las empresas."], 403);
+        }
+
+        $dispositivo = (string) $request->query->get("dispositivo", "");
+        $desde = (string) $request->query->get("desde", "");
+        if (!$this->telefonos->es($dispositivo)) {
+            return $this->json(["error" => "No es un teléfono de prueba."], 404);
+        }
+        if (!ctype_digit($desde)) {
+            return $this->json(["error" => "Falta el inicio (?desde=, epoch en segundos)."], 400);
+        }
+
+        $borradas = $this->telefonos->borrarTrayectoria($dispositivo, (int) $desde);
+        $this->logger->info("Trayectoria GPS borrada: teléfono {dispositivo} desde {desde}, {borradas} lecturas.", ["dispositivo" => $dispositivo, "desde" => (int) $desde, "borradas" => $borradas, "usuario" => $this->getUser()?->getUserIdentifier()]);
+
+        return $this->json(["borradas" => $borradas]);
     }
 }

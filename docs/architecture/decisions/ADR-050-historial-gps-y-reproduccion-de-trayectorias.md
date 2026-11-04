@@ -26,6 +26,7 @@ Desde 30 min antes de la hora de salida (espera y abordaje en el origen) hasta 3
 
 - `GET /api/seguimiento/trayectorias?fecha=AAAA-MM-DD` (hoy si falta): las salidas que salen ese día con lecturas en su ventana (hora, ruta, bus, cuántas lecturas, primera y última) y cuántas no tienen. Una consulta para las salidas del día y otra (`unnest` de las ventanas) para contar.
 - `GET /api/seguimiento/salidas/{id}/trayectoria`: datos de la salida, la ventana, las lecturas compactas `[instante, lat, lng, km/h, rumbo]` y la ruta planificada con sus estaciones (`TrazadoDeRuta`, como el mapa en vivo; vacía si no se pueden ubicar). 404 si no existe, 403 si es de una empresa que el usuario no ve.
+- `DELETE /api/seguimiento/salidas/{id}/trayectoria` (permiso `salida.eliminar` sobre la salida): borra las lecturas de su bus en su ventana (`HistorialGps::borrar`); la salida se queda. Con un horario apretado la ventana puede alcanzar el inicio de la siguiente salida del bus. Responde `{ borradas }`.
 
 ### Purga
 
@@ -33,7 +34,7 @@ Tarea `purgar_lecturas_gps` (ADR-044), diaria a las 03:45: borra las lecturas de
 
 ### Frontend
 
-Ruta `/seguimiento/reproducir` (`features/seguimiento/ReproduccionPage.vue`, `?salida=` abre una; con `meta.label`/`icon` para el sidebar): día, salida con GPS, mapa (Leaflet) con lo recorrido tenue, lo ya reproducido en raya de color (como la estela del mapa en vivo), la ruta planificada en línea fina y sus estaciones; el bus avanza con el reloj a ×10–×300, la barra lleva a cualquier momento y «Seguir al bus» mueve el mapa. Un hueco de más de 5 min sin lecturas se dibuja en raya gris, no se interpola y se salta al reproducir. Lógica pura con tests en `core/seguimiento/reproduccion.ts` (interpolación, km recorridos, huecos). En el mapa en vivo, un bus con GPS ofrece «Reproducir lo recorrido». El marcador del bus es común a ambas pantallas (`features/seguimiento/marcador.ts`).
+Ruta `/seguimiento/reproducir` (`features/seguimiento/ReproduccionPage.vue`, `?salida=` abre una; con `meta.label`/`icon` para el sidebar): día, salida con GPS, mapa (Leaflet) con lo recorrido tenue, lo ya reproducido en raya de color (como la estela del mapa en vivo), la ruta planificada en línea fina y sus estaciones; el bus avanza con el reloj a ×10–×300, la barra lleva a cualquier momento y «Seguir al bus» mueve el mapa. Con `salida.eliminar`, cada opción de la lista lleva una ✕ que, tras confirmar, borra su trayectoria de la base y la quita (si era la abierta, el mapa queda vacío). Un hueco de más de 5 min sin lecturas se dibuja en raya gris, no se interpola y se salta al reproducir. Lógica pura con tests en `core/seguimiento/reproduccion.ts` (interpolación, km recorridos, huecos). En el mapa en vivo, un bus con GPS ofrece «Reproducir lo recorrido». El marcador del bus es común a ambas pantallas (`features/seguimiento/marcador.ts`).
 
 ### Teléfonos de prueba (temporal)
 
@@ -45,7 +46,7 @@ Para probar sin ponerle a un teléfono el código de un bus: los identificadores
   - **Una parada larga**: más de 5 min detenido (`PARADA_SEGUNDOS`, < 3 km/h como el bus detenido, medido de la primera lectura detenida a la que arranca) la cierra al detenerse, y la siguiente empieza en la última lectura detenida. Las de en medio no son de ninguna, y lo que nunca se movió no es trayectoria.
 
   Se reconocen al leer (`TelefonosDePrueba::partir`, puro), con un tope de 48 h.
-- API: `telefonos` en `/buses` (los de lectura vigente, con el inicio de su última trayectoria de las 12 h, la en curso o la que terminó al detenerse) y en `/trayectorias` (las que empiezan ese día); `GET /api/seguimiento/telefonos/trayectoria?dispositivo=&desde=` las lecturas de una. Solo para quien ve las salidas de todas las empresas (`Alcance::sinRestriccion`): no son de ninguna.
+- API: `telefonos` en `/buses` (los de lectura vigente, con el inicio de su última trayectoria de las 12 h, la en curso o la que terminó al detenerse) y en `/trayectorias` (las que empiezan ese día); `GET /api/seguimiento/telefonos/trayectoria?dispositivo=&desde=` las lecturas de una y `DELETE` (mismos parámetros, `salida.eliminar` en todas las empresas) las borra, de la primera a la última. Solo para quien ve las salidas de todas las empresas (`Alcance::sinRestriccion`): no son de ninguna.
 - Frontend: en el mapa en vivo, en gris oscuro (`COLOR_TELEFONO`), sin filtros, con su estela y «Reproducir»; en la reproducción, en la misma lista que las salidas (`?dispositivo=&desde=`), sin ruta ni estaciones.
 
 Para quitarlo: vaciar la variable; borrar la clase, la entidad (con una migración que borre la tabla) y lo marcado «Temporal» en el controlador y las dos pantallas.
