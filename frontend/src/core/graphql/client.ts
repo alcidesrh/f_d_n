@@ -220,12 +220,13 @@ export class ApiPlatformClient {
     return Array.isArray(data) ? (data as AgnosticOption[]) : []
   }
 
-  async create<T>(entity: EntitySchema, input: Record<string, unknown>): Promise<T> {
-    return this.runMutation<T>(entity, entity.create, input)
+  /** `fields`: los campos del input; el retorno trae solo esos (ver `buildMutation`). */
+  async create<T>(entity: EntitySchema, input: Record<string, unknown>, fields?: string[]): Promise<T> {
+    return this.runMutation<T>(entity, entity.create, input, fields)
   }
 
-  async update<T>(entity: EntitySchema, input: Record<string, unknown>): Promise<T> {
-    return this.runMutation<T>(entity, entity.update, input)
+  async update<T>(entity: EntitySchema, input: Record<string, unknown>, fields?: string[]): Promise<T> {
+    return this.runMutation<T>(entity, entity.update, input, fields)
   }
 
   async delete<T>(entity: EntitySchema, id: string | number): Promise<T> {
@@ -236,9 +237,10 @@ export class ApiPlatformClient {
     entity: EntitySchema,
     mutation: MutationSchema | null,
     input: Record<string, unknown>,
+    fields?: string[],
   ): Promise<T> {
     if (!mutation) throw new Error(`[graphql] "${entity.name}" no expone mutación`)
-    const { query } = buildMutation(entity, mutation)
+    const { query } = buildMutation(entity, mutation, fields)
     const result = await this.client.mutate<Record<string, Record<string, T>>>({
       mutation: toDocument(query),
       variables: { input },

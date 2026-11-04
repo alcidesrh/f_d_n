@@ -429,4 +429,14 @@ describe('serializeSubmitValue', () => {
     expect(out.boletas).toEqual(['/api/boletas/1', '/api/boletas/2', '/api/boletas/3'])
     expect(out.fecha).toBe('2024-01-15')
   })
+
+  it('solo envía los campos del formulario visible, no todo lo que venga en los datos', () => {
+    const out = serializeSubmitValue(fields, { fecha: '2024-02-20', total: 3, oculto: 'x', id: '/api/x/1' })
+    expect(out).toEqual({ fecha: '2024-02-20', total: 3 })
+  })
+
+  it('omite un campo visible que no está en los datos', () => {
+    const out = serializeSubmitValue(fields, { total: 3 })
+    expect(out).toEqual({ total: 3 })
+  })
 })

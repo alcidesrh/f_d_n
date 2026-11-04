@@ -342,15 +342,16 @@ describe('useSchemaStore', () => {
     expect(entityStore.item).toEqual({ id: 3, numero: 'CD' })
   })
 
-  it('crea, antepone el item y refresca el item seleccionado', async () => {
+  it('crea, pide el retorno con los campos enviados y vuelve a leer el listado cargado', async () => {
     apolloMock.create.mockResolvedValue({ id: 9, numero: 'EF' })
+    apolloMock.collection.mockResolvedValue({ items: [{ id: 9, numero: 'EF' }, { id: 1, numero: 'AB' }] })
     const store = useSchemaStore()
     await store.init()
     const entityStore = makeStore()
     entityStore.items = [{ id: 1, numero: 'AB' }]
     await repository.create(entityStore, { numero: 'EF' })
-    expect(apolloMock.create).toHaveBeenCalledWith(boletoSchema, { numero: 'EF' })
-    expect(entityStore.items.map((i) => i.id)).toEqual([9, 1])
+    expect(apolloMock.create).toHaveBeenCalledWith(boletoSchema, { numero: 'EF' }, ['numero'])
+    await vi.waitFor(() => expect(entityStore.items.map((i) => i.id)).toEqual([9, 1]))
     expect(entityStore.item).toEqual({ id: 9, numero: 'EF' })
   })
 

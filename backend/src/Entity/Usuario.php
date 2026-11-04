@@ -261,6 +261,8 @@ class Usuario extends PersonaBase implements
         return $this;
     }
 
+    // Marcado para que el formulario lo incluya (EntityConfigSynchronizer); el listado no lo muestra.
+    #[ApiProperty]
     public function getPlainPassword(): ?string
     {
         return $this->plainPassword;

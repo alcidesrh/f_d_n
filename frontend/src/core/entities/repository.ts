@@ -66,22 +66,29 @@ export const repository = {
     return result
   },
 
+  /**
+   * El retorno trae solo los campos enviados: el listado ya cargado se vuelve a
+   * leer (un registro nuevo no tiene las demás columnas).
+   */
   async create<T>(store: EntityStore<T>, data: Record<string, unknown>): Promise<T> {
     const entity = useSchemaStore().require(store.name)
-    const created = await graphql.create<T>(entity, toInput(entity, 'create', data))
+    const input = toInput(entity, 'create', data)
+    const created = await graphql.create<T>(entity, input, Object.keys(input))
     store.item = created
-    store.items = [created, ...store.items]
+    if (store.items.length) void repository.collection(store)
     if (store.fullList.length) void repository.fullList(store, { force: true })
     return created
   },
 
+  /** El retorno trae solo los campos enviados: se fusiona con el registro que ya hay. */
   async update<T>(store: EntityStore<T>, data: Record<string, unknown>): Promise<T> {
     const entity = useSchemaStore().require(store.name)
-    const updated = await graphql.update<T>(entity, toInput(entity, 'update', data))
-    store.item = updated
+    const input = toInput(entity, 'update', data)
+    const updated = await graphql.update<T>(entity, input, Object.keys(input))
     const id = idOf(updated)
-    if (id !== undefined)
-      store.items = store.items.map((item) => (idOf(item) === id ? updated : item))
+    const fusionar = <X>(item: X): X => (id !== undefined && idOf(item) === id ? { ...item, ...updated } : item)
+    store.item = id !== undefined && idOf(store.item) === id ? fusionar(store.item) : updated
+    store.items = store.items.map(fusionar)
     return updated
   },
 

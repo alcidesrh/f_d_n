@@ -441,6 +441,14 @@ describe('buildMutation', () => {
     expect(query).toContain('numero')
   })
 
+  it('con fields, el retorno pide solo esos campos más id y label', () => {
+    const { query } = buildMutation(boletoSchema, boletoSchema.create!, ['numero'])
+    expect(query).toContain('boleto {')
+    expect(query).toContain('numero')
+    expect(query).toContain('label')
+    expect(query).not.toContain('total')
+  })
+
   it('selecciona solo id para delete', () => {
     const { query } = buildMutation(boletoSchema, boletoSchema.delete!)
     expect(query).toContain('mutation Delete($input: deleteBoletoInput!)')

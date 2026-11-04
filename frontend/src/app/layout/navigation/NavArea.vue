@@ -9,7 +9,7 @@
     <div class="border-t border-t-surface-300" v-for="menu in menus" :key="menu.id">
       <section class="nav-section" :class="{ open: opened.has(menu.id) }">
         <button v-if="menus.length > 1 && !sidebar?.compact" type="button" class="nav-section-title py-6!" @click="toggle(menu.id)">
-          <icon :weight="200" :name="!opened.has(menu.id) ? 'add' : 'remove'" size="1rem" />
+          <icon :weight="200" class="text-surface-800" :name="!opened.has(menu.id) ? 'add' : 'remove'" size="1rem" />
           <span>{{ menu.nombre }}</span>
         </button>
         <Transition :css="false" @enter="onEnter" @leave="onLeave">

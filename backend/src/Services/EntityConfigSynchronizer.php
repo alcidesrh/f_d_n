@@ -22,6 +22,9 @@ final class EntityConfigSynchronizer
     /** No se configuran: son la configuración misma y sus revisiones. */
     private const EXCLUIDAS = [EntityConfiguration::class, ListConfiguration::class, CollectionFieldConfig::class, FormFieldConfig::class, RevisionMetadata::class];
 
+    /** Se edita en el formulario pero no se lista: la contraseña en claro solo existe al escribirla. */
+    private const SOLO_FORMULARIO = ['plainPassword'];
+
     /** Nombre de la configuración del listado que se crea con la entidad (la por defecto, sin roles). */
     public const POR_DEFECTO = 'Por defecto';
 
@@ -64,8 +67,9 @@ final class EntityConfigSynchronizer
             $this->entityManager->persist(new ListConfiguration($config, self::POR_DEFECTO));
         }
         // Cada configuración del listado (ADR-043) tiene todas las columnas.
+        $camposListado = array_values(array_filter($currentFields, fn (array $campo) => !in_array($campo[0], self::SOLO_FORMULARIO, true)));
         foreach ($config->getListConfigurations() as $listado) {
-            $this->syncCollectionFieldConfig($listado, $currentFields);
+            $this->syncCollectionFieldConfig($listado, $camposListado);
         }
         $this->syncFormFields($config, $currentFields);
 

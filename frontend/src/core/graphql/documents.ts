@@ -146,13 +146,25 @@ export function buildCollectionQuery(
   }
 }
 
-export function buildMutation(entity: EntitySchema, mutation: MutationSchema): BuiltDocument {
+/**
+ * Mutación relay. Con `fields` (los campos enviados), el retorno pide solo
+ * esos más `id` y `label`; sin ellos, todos los campos de la entidad.
+ */
+export function buildMutation(
+  entity: EntitySchema,
+  mutation: MutationSchema,
+  fields?: string[],
+): BuiltDocument {
   if (!mutation.returnsField) {
     throw new Error(`[documents] no se pudo inferir el campo de retorno de "${mutation.field}"`)
   }
   const operation = mutation.kind[0]!.toUpperCase() + mutation.kind.slice(1)
   const selection =
-    mutation.kind === 'delete' ? 'id' : buildSelection(entity, { includeRelations: true })
+    mutation.kind === 'delete'
+      ? 'id'
+      : fields
+        ? buildSelection(entity, { fields: ['id', 'label', ...fields] })
+        : buildSelection(entity, { includeRelations: true })
   return {
     query: `mutation ${operation}($input: ${mutation.inputType}!) {\n  ${mutation.field}(input: $input) {\n    ${mutation.returnsField} {\n${indent(selection, 4)}\n    }\n  }\n}`,
     variables: {},

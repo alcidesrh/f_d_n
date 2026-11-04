@@ -144,7 +144,7 @@ describe('desempeño del día', () => {
   it('muestra el total, las barras por canal y la operación del día', () => {
     const w = mount(TarjetaDesempenoDia, { props: { datos }, global })
     expect(w.text()).toContain('GTQ 4,765.00')
-    expect(w.findAll('.barra')[0].findAll('span').map((s) => s.attributes('style'))).toEqual(['width: 93.39%;', 'width: 0%;', 'width: 6.61%;'])
+    expect(w.find('.barra').findAll('span').map((s) => s.attributes('style'))).toEqual(['width: 93.39%;', 'width: 0%;', 'width: 6.61%;'])
     expect(w.find('.chip.aviso').text()).toContain('Cancelados 4')
     expect(w.find('li .detalle').text()).toBe('11 boletos · 0 encomiendas')
     expect(w.find('.empresa').text()).toBe('Autobuses Maya De Oro, S.A.')

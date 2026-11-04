@@ -130,32 +130,30 @@ export function hydrateInitialValues(
   return out
 }
 
+/**
+ * Payload de guardado: solo los campos del formulario visible (`fields`). Los
+ * valores vienen de `data` (todo el formulario de FormKit); lo que no es campo
+ * del formulario no se envía.
+ */
 export function serializeSubmitValue(
   fields: FormFieldSource[],
   data: Record<string, unknown>,
 ): Record<string, unknown> {
-  const byName = new Map(fields.map((field) => [field.name, field]))
   const out: Record<string, unknown> = {}
-  for (const [key, value] of Object.entries(data)) {
-    const field = byName.get(key)
-    if (field?.isRelation) {
-      out[key] = relationValue(value, field.isList)
-      continue
-    }
-    if (field && /date/i.test(field.namedType)) {
-      if (value instanceof Date && !Number.isNaN(value.getTime())) {
-        out[key] = toDateOnly(value)
-      } else if (typeof value === 'string') {
-        // Un campo vacío (p. ej. una hora opcional) va como null: "" no es una fecha válida para el backend.
-        out[key] = value.trim() === '' ? null : value.slice(0, 10)
-      } else {
-        out[key] = value
-      }
-      continue
-    }
-    out[key] = value
+  for (const field of fields) {
+    if (!(field.name in data)) continue
+    out[field.name] = serializeFieldValue(field, data[field.name])
   }
   return out
+}
+
+function serializeFieldValue(field: FormFieldSource, value: unknown): unknown {
+  if (field.isRelation) return relationValue(value, field.isList)
+  if (!/date/i.test(field.namedType)) return value
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return toDateOnly(value)
+  // Un campo vacío (p. ej. una hora opcional) va como null: "" no es una fecha válida para el backend.
+  if (typeof value === 'string') return value.trim() === '' ? null : value.slice(0, 10)
+  return value
 }
 
 export function serializeEntityForm(
