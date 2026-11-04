@@ -35,6 +35,12 @@ class PersonaBase extends Base
     #[ORM\ManyToOne]
     protected ?Localidad $localidad = null;
 
+    /** Nombre y apellido, sin el "S/N" del legado; también para consultas que no cargan la entidad. */
+    public static function nombreCompletoDe(?string $nombre, ?string $apellido): string
+    {
+        return trim(implode(" ", array_filter([$nombre, $apellido !== "S/N" ? $apellido : null])));
+    }
+
     public function getNombre(): ?string
     {
         return $this->nombre;

@@ -62,9 +62,6 @@ class Cliente extends PersonaBase {
     /** Nombre completo como se imprime en boletos y facturas. */
     public function getNombreCompleto(): string
     {
-        return trim(implode(" ", array_filter([
-            $this->nombre,
-            $this->apellido !== "S/N" ? $this->apellido : null,
-        ])));
+        return self::nombreCompletoDe($this->nombre, $this->apellido);
     }
 }

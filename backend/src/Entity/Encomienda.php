@@ -174,7 +174,13 @@ class Encomienda
     /** Lo que va en el código de barras (8 dígitos, como los boletos). */
     public function getCodigo(): string
     {
-        return sprintf("%08d", $this->id);
+        return self::codigoDe($this->id);
+    }
+
+    /** El código de barras: el id con ceros a la izquierda. */
+    public static function codigoDe(int $id): string
+    {
+        return sprintf("%08d", $id);
     }
 
     public function getToken(): ?Uuid

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Reporte\Encomienda;
 
 use App\Bitacora\TipoRegistro;
+use App\Entity\Base\PersonaBase;
 use App\Entity\Bitacora;
 use App\Entity\Empresa;
 use App\Entity\Encomienda;
@@ -50,7 +51,7 @@ final class ConsultaReportesEncomienda
             (string) $salida->getRuta()?->getNombre(),
             (string) $salida->getEmpresa()?->getNombre(),
             $bus?->getCodigo(),
-            [self::piloto($bus?->getPiloto()), self::piloto($bus?->getCopiloto())],
+            [self::pilotoDe($bus?->getPiloto()), self::pilotoDe($bus?->getCopiloto())],
             $this->nombreEnclave($f->destinoId),
             $this->lineas($qb),
         );
@@ -191,11 +192,56 @@ final class ConsultaReportesEncomienda
         );
     }
 
-    /** Encomiendas con todo lo que los reportes leen ya cargado, de la más antigua a la más nueva. */
+    /**
+     * Encomiendas de la más antigua a la más nueva, con solo las columnas de
+     * cada `LineaEncomienda` (sin hidratar sus 20 relaciones ni el XML de la
+     * factura). Los artículos van aparte (`articulos()`): unirlos repetía la fila.
+     */
     private function base(): QueryBuilder
     {
         return $this->em->createQueryBuilder()
-            ->select("e", "o", "d", "rem", "des", "em", "s", "bus", "pil", "cop", "sr", "a", "esp", "usr", "est", "f", "r", "rec", "cf", "bv")
+            ->select(
+                "e.id AS id",
+                "e.creada AS creada",
+                "e.estado AS estado",
+                "e.modalidad AS modalidad",
+                "e.total.monto AS total",
+                "e.total.moneda AS moneda",
+                "IDENTITY(e.boletoVenta) AS ventaId",
+                "e.numeroAcceso AS numeroAcceso",
+                "e.estadoFacturacion AS estadoFacturacion",
+                "e.entregadaEn AS entregadaEn",
+                "e.motivoAnulacion AS motivoAnulacion",
+                "e.observacion AS observacion",
+                "em.nombre AS empresa",
+                "o.nombre AS origen",
+                "d.nombre AS destino",
+                "d.alias AS destinoAlias",
+                "f.serie AS serie",
+                "f.dte AS dte",
+                "f.anuladaEn AS facturaAnuladaEn",
+                "usr.username AS usuario",
+                "est.nombre AS estacion",
+                "rem.nombre AS remitenteNombre",
+                "rem.apellido AS remitenteApellido",
+                "des.nombre AS destinatarioNombre",
+                "des.apellido AS destinatarioApellido",
+                "rec.nombre AS receptorNombre",
+                "rec.apellido AS receptorApellido",
+                "cf.nombre AS clienteFacturaNombre",
+                "cf.apellido AS clienteFacturaApellido",
+                "s.id AS salidaId",
+                "s.fecha AS salidaFecha",
+                "bus.codigo AS busCodigo",
+                "pil.nombre AS pilotoNombre",
+                "pil.apellido AS pilotoApellido",
+                "pil.codigo AS pilotoCodigo",
+                "cop.nombre AS copilotoNombre",
+                "cop.apellido AS copilotoApellido",
+                "cop.codigo AS copilotoCodigo",
+                "r.nombre AS ruta",
+                "sr.nombre AS rutaSalida",
+            )
             ->from(Encomienda::class, "e")
             ->join("e.origen", "o")
             ->join("e.destino", "d")
@@ -207,15 +253,12 @@ final class ConsultaReportesEncomienda
             ->leftJoin("bus.piloto", "pil")
             ->leftJoin("bus.copiloto", "cop")
             ->leftJoin("s.ruta", "sr")
-            ->leftJoin("e.articulos", "a")
-            ->leftJoin("a.especial", "esp")
             ->leftJoin("e.usuario", "usr")
             ->leftJoin("e.estacion", "est")
             ->leftJoin("e.factura", "f")
             ->leftJoin("e.ruta", "r")
             ->leftJoin("e.receptor", "rec")
             ->leftJoin("e.clienteFactura", "cf")
-            ->leftJoin("e.boletoVenta", "bv")
             ->where("1 = 1")
             ->orderBy("e.creada")
             ->addOrderBy("e.id");
@@ -250,65 +293,102 @@ final class ConsultaReportesEncomienda
     /** @return list<LineaEncomienda> */
     private function lineas(QueryBuilder $qb): array
     {
-        /** @var list<Encomienda> $encomiendas */
-        $encomiendas = $qb->getQuery()->getResult();
-        $eventos = $this->eventos(array_map(static fn(Encomienda $e) => (int) $e->getId(), $encomiendas));
+        /** @var list<array<string, mixed>> $filas */
+        $filas = $qb->getQuery()->getArrayResult();
+        $ids = array_map(static fn(array $f) => (int) $f["id"], $filas);
+        $eventos = $this->eventos($ids);
+        $articulos = $this->articulos($ids);
 
-        return array_map(static function (Encomienda $e) use ($eventos): LineaEncomienda {
-            $id = (int) $e->getId();
-            $s = $e->getSalida();
-            $bus = $s?->getBus();
-            $f = $e->getFactura();
-            $articulos = $e->getArticulos()->toArray();
-            $tipos = array_unique(array_map(static fn(EncomiendaArticulo $a) => $a->getTipo()->value, $articulos));
+        return array_map(static function (array $f) use ($eventos, $articulos): LineaEncomienda {
+            $id = (int) $f["id"];
+            $suyos = $articulos[$id] ?? [];
+            $tipos = array_values(array_unique(array_map(static fn(EncomiendaArticulo $a) => $a->getTipo()->value, $suyos)));
             $entrega = $eventos[$id][OperacionEncomienda::ENTREGADA->value] ?? null;
             $anulacion = $eventos[$id][OperacionEncomienda::ANULADA->value] ?? null;
+            $cliente = static fn(string $quien): ?string => $f["{$quien}Nombre"] === null && $f["{$quien}Apellido"] === null
+                ? null
+                : PersonaBase::nombreCompletoDe($f["{$quien}Nombre"], $f["{$quien}Apellido"]);
 
             return new LineaEncomienda(
                 $id,
-                $e->getCodigo(),
-                $e->getCreada(),
-                (string) $e->getEmpresa()?->getNombre(),
-                (string) $e->getOrigen()?->getNombre(),
-                (string) $e->getDestino()?->getNombre(),
-                $e->getDestino()?->getAlias(),
-                $e->getEstado()->value,
-                $e->getModalidad()->value,
-                (int) $e->getTotal()->getAmount(),
-                $e->getTotal()->getCurrency()->getCode(),
-                $e->getBoletoVenta()?->getId(),
-                $f?->getSerie(),
-                $f?->numeroDte(),
-                $f?->isAnulada() ?? false,
-                $e->getNumeroAcceso(),
-                $e->getEstadoFacturacion()->value,
-                $e->getUsuario()?->getUsername() ?? "—",
-                (string) $e->getEstacion()?->getNombre(),
-                (string) $e->getRemitente()?->getNombreCompleto(),
-                (string) $e->getDestinatario()?->getNombreCompleto(),
-                $e->getReceptor()?->getNombreCompleto(),
-                $e->getClienteFactura()?->getNombreCompleto(),
-                implode("; ", array_map(static fn(EncomiendaArticulo $a) => $a->getResumen(), $articulos)),
-                $e->getBultos(),
+                Encomienda::codigoDe($id),
+                $f["creada"],
+                (string) $f["empresa"],
+                (string) $f["origen"],
+                (string) $f["destino"],
+                $f["destinoAlias"],
+                self::valor($f["estado"]),
+                self::valor($f["modalidad"]),
+                (int) $f["total"],
+                (string) $f["moneda"],
+                $f["ventaId"] === null ? null : (int) $f["ventaId"],
+                $f["serie"],
+                $f["dte"] === null ? null : (int) $f["dte"],
+                $f["facturaAnuladaEn"] !== null,
+                $f["numeroAcceso"],
+                self::valor($f["estadoFacturacion"]),
+                $f["usuario"] ?? "—",
+                (string) $f["estacion"],
+                (string) $cliente("remitente"),
+                (string) $cliente("destinatario"),
+                $cliente("receptor"),
+                $cliente("clienteFactura"),
+                implode("; ", array_map(static fn(EncomiendaArticulo $a) => $a->getResumen(), $suyos)),
+                array_sum(array_map(static fn(EncomiendaArticulo $a) => $a->getCantidad(), $suyos)),
                 match (true) {
                     $tipos === [TipoArticuloEncomienda::ESPECIAL->value] => "Especial",
                     $tipos === [TipoArticuloEncomienda::PAQUETE->value] => "Paquete",
                     default => "Mixto",
                 },
-                $s?->getId(),
-                $s === null ? null : \DateTimeImmutable::createFromInterface($s->getFecha()),
-                $bus?->getCodigo(),
-                [self::piloto($bus?->getPiloto()), self::piloto($bus?->getCopiloto())],
-                $e->getRuta()?->getNombre(),
-                $s?->getRuta()?->getNombre(),
-                $e->getEntregadaEn(),
+                $f["salidaId"] === null ? null : (int) $f["salidaId"],
+                $f["salidaFecha"] === null ? null : \DateTimeImmutable::createFromInterface($f["salidaFecha"]),
+                $f["busCodigo"],
+                [self::piloto($f["pilotoNombre"], $f["pilotoApellido"], $f["pilotoCodigo"]), self::piloto($f["copilotoNombre"], $f["copilotoApellido"], $f["copilotoCodigo"])],
+                $f["ruta"],
+                $f["rutaSalida"],
+                $f["entregadaEn"],
                 $entrega["usuario"] ?? null,
                 $anulacion["fecha"] ?? null,
                 $anulacion["usuario"] ?? null,
-                $e->getMotivoAnulacion(),
-                $e->getObservacion(),
+                $f["motivoAnulacion"],
+                $f["observacion"],
             );
-        }, $encomiendas);
+        }, $filas);
+    }
+
+    /**
+     * Los artículos de las encomiendas, por id, en el orden de la colección
+     * (`Encomienda::articulos`): entidades, para su `getResumen()`.
+     *
+     * @param list<int> $ids
+     *
+     * @return array<int, list<EncomiendaArticulo>>
+     */
+    private function articulos(array $ids): array
+    {
+        $mapa = [];
+        foreach (array_chunk($ids, 1000) as $lote) {
+            $filas = $this->em->createQueryBuilder()
+                ->select("a", "esp", "IDENTITY(a.encomienda) AS encomienda")
+                ->from(EncomiendaArticulo::class, "a")
+                ->leftJoin("a.especial", "esp")
+                ->where("a.encomienda IN (:ids)")
+                ->setParameter("ids", $lote, ArrayParameterType::INTEGER)
+                ->orderBy("a.id")
+                ->getQuery()
+                ->getResult();
+            foreach ($filas as $fila) {
+                $mapa[(int) $fila["encomienda"]][] = $fila[0];
+            }
+        }
+
+        return $mapa;
+    }
+
+    /** Un enum de Doctrine llega como enum o como su valor, según la versión del hidratador. */
+    private static function valor(mixed $valor): string
+    {
+        return $valor instanceof \BackedEnum ? (string) $valor->value : (string) $valor;
     }
 
     /**
@@ -362,15 +442,20 @@ final class ConsultaReportesEncomienda
         return $mapa;
     }
 
-    private static function piloto(?Piloto $p): string
+    private static function pilotoDe(?Piloto $p): string
     {
-        if ($p === null) {
+        return self::piloto($p?->getNombre(), $p?->getApellido(), $p?->getCodigo());
+    }
+
+    /** Nombre en mayúsculas del piloto (su código si no tiene); sin piloto (`$codigo` null), "N/D". */
+    private static function piloto(?string $nombre, ?string $apellido, ?string $codigo): string
+    {
+        if ($codigo === null) {
             return "N/D";
         }
-        $apellido = $p->getApellido() !== "S/N" ? $p->getApellido() : null;
-        $nombre = mb_strtoupper(trim(implode(" ", array_filter([$p->getNombre(), $apellido]))));
+        $completo = mb_strtoupper(PersonaBase::nombreCompletoDe($nombre, $apellido));
 
-        return $nombre === "" ? $p->getCodigo() : $nombre;
+        return $completo === "" ? $codigo : $completo;
     }
 
     private function nombreEnclave(?int $id): ?string
