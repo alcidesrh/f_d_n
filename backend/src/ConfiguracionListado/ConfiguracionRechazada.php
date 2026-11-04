@@ -4,24 +4,17 @@ declare(strict_types=1);
 
 namespace App\ConfiguracionListado;
 
+use App\Excepcion\Rechazo;
+
 /**
  * Motivo por el que no se pudo crear, guardar o eliminar una configuración
- * del listado, con un mensaje apto para el usuario. El controlador la
- * traduce a `{ error, codigo }`.
+ * del listado, con un mensaje apto para el usuario. Sin atrapar, se
+ * responde como `{ error, codigo }`.
  */
-final class ConfiguracionRechazada extends \RuntimeException
+final class ConfiguracionRechazada extends Rechazo
 {
-    public function __construct(
-        string $mensaje,
-        public readonly string $codigo = "configuracion_invalida",
-        public readonly int $estadoHttp = 422,
-    ) {
-        parent::__construct($mensaje);
-    }
-
-    /** @return array{error: string, codigo: string} */
-    public function toArray(): array
+    public function __construct(string $mensaje, string $codigo = "configuracion_invalida", int $estadoHttp = 422)
     {
-        return ["error" => $this->getMessage(), "codigo" => $this->codigo];
+        parent::__construct($mensaje, $codigo, $estadoHttp);
     }
 }

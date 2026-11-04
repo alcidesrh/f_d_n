@@ -165,18 +165,8 @@ final class RegistradorBitacora implements ResetInterface
             }
             $this->escribir($conexion, $e, (int) $e->getId(), OperacionTarifa::MODIFICADA, [...self::tarifa($e), "cambios" => $cambios]);
         } elseif ($e instanceof BoletoAsiento && $args->hasChangedField("estado")) {
-            $operacion = match (self::estado(EstadoBoletoAsiento::class, $args->getNewValue("estado"))) {
-                EstadoBoletoAsiento::ANULADO => OperacionBoleto::ANULADO,
-                EstadoBoletoAsiento::REASIGNADO => OperacionBoleto::REASIGNADO,
-                EstadoBoletoAsiento::CHEQUEADO => OperacionBoleto::CHEQUEADO,
-                EstadoBoletoAsiento::TRANSITO => OperacionBoleto::TRANSITO,
-                EstadoBoletoAsiento::CANCELADO => OperacionBoleto::CANCELADO,
-                EstadoBoletoAsiento::FINALIZADO => OperacionBoleto::FINALIZADO,
-                EstadoBoletoAsiento::POSPUESTO => OperacionBoleto::POSPUESTO,
-                // Solo se vuelve a emitido revirtiendo un cancelado (`TransicionBoleto::REVERTIR`).
-                EstadoBoletoAsiento::EMITIDO => OperacionBoleto::REVERTIDO,
-                default => null,
-            };
+            $estado = self::estado(EstadoBoletoAsiento::class, $args->getNewValue("estado"));
+            $operacion = $estado instanceof EstadoBoletoAsiento ? OperacionBoleto::alPasarA($estado) : null;
             if ($operacion !== null) {
                 $this->escribir($conexion, $e, (int) $e->getId(), $operacion, [
                     "venta" => $e->getBoletoVenta()?->getId(),

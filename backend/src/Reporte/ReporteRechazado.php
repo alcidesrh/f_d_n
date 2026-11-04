@@ -4,20 +4,13 @@ declare(strict_types=1);
 
 namespace App\Reporte;
 
-/** Parámetros de un reporte inválidos; el controlador la traduce a `{ error, codigo }`. */
-final class ReporteRechazado extends \RuntimeException
-{
-    public function __construct(
-        string $mensaje,
-        public readonly string $codigo = "reporte_invalido",
-        public readonly int $estadoHttp = 422,
-    ) {
-        parent::__construct($mensaje);
-    }
+use App\Excepcion\Rechazo;
 
-    /** @return array<string, mixed> */
-    public function toArray(): array
+/** Parámetros de un reporte inválidos; se responde como `{ error, codigo }`. */
+final class ReporteRechazado extends Rechazo
+{
+    public function __construct(string $mensaje, string $codigo = "reporte_invalido", int $estadoHttp = 422)
     {
-        return ["error" => $this->getMessage(), "codigo" => $this->codigo];
+        parent::__construct($mensaje, $codigo, $estadoHttp);
     }
 }

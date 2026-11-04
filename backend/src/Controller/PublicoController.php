@@ -550,10 +550,6 @@ final class PublicoController extends AbstractController
                 ["Retry-After" => max(1, $limite->getRetryAfter()->getTimestamp() - time())],
             );
         }
-        try {
-            return $this->json($operacion());
-        } catch (VentaRechazada $e) {
-            return $this->json($e->toArray(), $e->estadoHttp);
-        }
+        return $this->json($operacion());
     }
 }

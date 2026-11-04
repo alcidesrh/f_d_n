@@ -223,11 +223,7 @@ final class SalidaController extends AbstractController
     {
         $this->denyAccessUnlessGranted(self::VER);
 
-        try {
-            $manifiesto = $manifiestos->de($this->salida($id, Capacidad::SALIDA_VER));
-        } catch (SalidaRechazada $e) {
-            return $this->json($e->toArray(), $e->estadoHttp);
-        }
+        $manifiesto = $manifiestos->de($this->salida($id, Capacidad::SALIDA_VER));
 
         return new Response($pdf->generar($tipo, $manifiesto, $usuario->getUsername()), 200, [
             "Content-Type" => "application/pdf",
@@ -335,10 +331,6 @@ final class SalidaController extends AbstractController
     /** @param callable(): mixed $operacion */
     private function responder(callable $operacion, int $estado = 200): JsonResponse
     {
-        try {
-            return $this->json($operacion(), $estado);
-        } catch (SalidaRechazada $e) {
-            return $this->json($e->toArray(), $e->estadoHttp);
-        }
+        return $this->json($operacion(), $estado);
     }
 }

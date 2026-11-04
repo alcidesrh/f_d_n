@@ -10,7 +10,6 @@ use App\Entity\BoletoVenta;
 use App\Entity\Estacion;
 use App\Entity\Usuario;
 use App\Salida\Abordaje\Abordaje;
-use App\Salida\SalidaRechazada;
 use App\Venta\Acceso\AccesoVentas;
 use App\Venta\Boleto\Listado\FiltroBoletos;
 use App\Venta\Boleto\Listado\ListadoBoletos;
@@ -155,10 +154,6 @@ final class BoletoController extends AbstractController
     /** @param callable(): mixed $operacion */
     private function responder(callable $operacion, int $estado = Response::HTTP_OK): JsonResponse
     {
-        try {
-            return $this->json($operacion(), $estado);
-        } catch (VentaRechazada|SalidaRechazada $e) {
-            return $this->json($e->toArray(), $e->estadoHttp);
-        }
+        return $this->json($operacion(), $estado);
     }
 }

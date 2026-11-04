@@ -6,7 +6,6 @@ namespace App\Controller;
 
 use App\Entity\Usuario;
 use App\Metadata\PublicacionMetadata;
-use App\Metadata\PublicacionRechazada;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -58,16 +57,12 @@ final class MetadataController extends AbstractController
     {
         $this->denyAccessUnlessGranted(self::PUBLICAR);
         $datos = $request->toArray();
-        try {
-            $this->publicacion->publicar(
-                $usuario,
-                is_string($datos["nota"] ?? null) ? $datos["nota"] : null,
-                ($datos["aviso"] ?? false) === true,
-                ($datos["completa"] ?? false) === true,
-            );
-        } catch (PublicacionRechazada $e) {
-            return $this->json($e->toArray(), $e->estadoHttp);
-        }
+        $this->publicacion->publicar(
+            $usuario,
+            is_string($datos["nota"] ?? null) ? $datos["nota"] : null,
+            ($datos["aviso"] ?? false) === true,
+            ($datos["completa"] ?? false) === true,
+        );
 
         return $this->json($this->publicacion->resumen(), 201);
     }

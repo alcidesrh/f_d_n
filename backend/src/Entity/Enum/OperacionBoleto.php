@@ -23,6 +23,22 @@ enum OperacionBoleto: string implements Operacion
     case AUTORIZACION_APROBADA = "autorizacion_aprobada";
     case AUTORIZACION_RECHAZADA = "autorizacion_rechazada";
 
+    /** La que se anota cuando el boleto pasa a `$estado` (lo usan la bitácora y la sincronización con el legado). */
+    public static function alPasarA(EstadoBoletoAsiento $estado): self
+    {
+        return match ($estado) {
+            EstadoBoletoAsiento::ANULADO => self::ANULADO,
+            EstadoBoletoAsiento::REASIGNADO => self::REASIGNADO,
+            EstadoBoletoAsiento::CHEQUEADO => self::CHEQUEADO,
+            EstadoBoletoAsiento::TRANSITO => self::TRANSITO,
+            EstadoBoletoAsiento::CANCELADO => self::CANCELADO,
+            EstadoBoletoAsiento::FINALIZADO => self::FINALIZADO,
+            EstadoBoletoAsiento::POSPUESTO => self::POSPUESTO,
+            // Solo se vuelve a emitido revirtiendo un cancelado (`TransicionBoleto::REVERTIR`).
+            EstadoBoletoAsiento::EMITIDO => self::REVERTIDO,
+        };
+    }
+
     public function etiqueta(): string
     {
         return match ($this) {

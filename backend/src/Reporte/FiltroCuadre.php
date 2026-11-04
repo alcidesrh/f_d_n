@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Reporte;
 
+use App\Http\Parametros;
+
 /** Parámetros del "Cuadre de venta de boletos": un día, una estación, una empresa y una moneda. */
 final readonly class FiltroCuadre
 {
@@ -23,7 +25,7 @@ final readonly class FiltroCuadre
         }
 
         return new self(
-            Parametros::dia($q["fecha"] ?? null, "la fecha"),
+            Parametros::diaExigido($q["fecha"] ?? null, "la fecha"),
             Parametros::entero($q["estacion"] ?? null, "la estación"),
             Parametros::entero($q["empresa"] ?? null, "la empresa"),
             $moneda,

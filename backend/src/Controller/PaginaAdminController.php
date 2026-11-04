@@ -15,7 +15,6 @@ use App\Venta\EnLinea\ConsultaComprasWeb;
 use App\Venta\EnLinea\FiltroComprasWeb;
 use App\Venta\EnLinea\GestionCompraWeb;
 use App\Venta\EnLinea\Recargo;
-use App\Venta\Excepcion\VentaRechazada;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -118,16 +117,12 @@ final class PaginaAdminController extends AbstractController
     {
         $this->denyAccessUnlessGranted(self::ADMINISTRAR);
         $datos = $request->toArray();
-        try {
-            $config = $this->ajustes->guardar(
-                $datos["recargoPorciento"] ?? "0",
-                (bool) ($datos["ventaEnLinea"] ?? true),
-                (int) ($datos["cierreMinutos"] ?? 60),
-                $this->em->find(Usuario::class, $usuario->getId()),
-            );
-        } catch (VentaRechazada $e) {
-            return $this->json($e->toArray(), $e->estadoHttp);
-        }
+        $config = $this->ajustes->guardar(
+            $datos["recargoPorciento"] ?? "0",
+            (bool) ($datos["ventaEnLinea"] ?? true),
+            (int) ($datos["cierreMinutos"] ?? 60),
+            $this->em->find(Usuario::class, $usuario->getId()),
+        );
 
         return $this->json($this->configuracionArray($config));
     }
@@ -176,11 +171,7 @@ final class PaginaAdminController extends AbstractController
     private function accion(int $id, ConsultaComprasWeb $consulta, callable $accion): JsonResponse
     {
         $pago = $this->em->find(PagoWeb::class, $id) ?? throw $this->createNotFoundException();
-        try {
-            $resultado = $accion($pago);
-        } catch (VentaRechazada $e) {
-            return $this->json($e->toArray(), $e->estadoHttp);
-        }
+        $resultado = $accion($pago);
 
         return $this->json([
             "resultado" => $resultado instanceof PagoWeb ? null : $resultado,

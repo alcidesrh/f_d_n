@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Tests\Venta;
 
+use App\Excepcion\Rechazo;
 use App\Entity\BoletoVenta;
 use App\Entity\Enum\AsientoClase;
 use App\Entity\Enum\EstadoBoletoAsiento;
 use App\Entity\Enum\EstadoFacturacion;
 use App\Venta\Boleto\Listado\FiltroBoletos;
 use App\Venta\Boleto\Listado\ListadoBoletos;
-use App\Venta\Excepcion\VentaRechazada;
 use PHPUnit\Framework\TestCase;
 
 /** Filtros del listado de boletos y el tipo de documento de cada venta. */
@@ -100,7 +100,7 @@ final class FiltroBoletosTest extends TestCase
     {
         try {
             FiltroBoletos::desdeQuery($q, self::hoy());
-        } catch (VentaRechazada $e) {
+        } catch (Rechazo $e) {
             return $e->codigo;
         }
 

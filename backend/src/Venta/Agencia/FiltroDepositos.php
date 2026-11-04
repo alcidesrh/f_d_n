@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Venta\Agencia;
 
+use App\Http\Parametros;
 use App\Entity\Enum\EstadoDepositoAgencia;
 use App\Venta\Excepcion\VentaRechazada;
 
@@ -43,53 +44,20 @@ final readonly class FiltroDepositos
     {
         $hoy = $hoy->setTime(0, 0);
         $estados = [];
-        foreach (array_filter(explode(",", (string) self::texto($q["estado"] ?? null))) as $e) {
+        foreach (array_filter(explode(",", (string) Parametros::texto($q["estado"] ?? null, 50))) as $e) {
             $estados[] = EstadoDepositoAgencia::tryFrom(trim($e)) ?? throw new VentaRechazada("El estado no es válido.", "parametro_invalido", 400);
         }
-        $porPagina = self::entero($q["porPagina"] ?? null, "el tamaño de página") ?? 15;
+        $porPagina = Parametros::entero($q["porPagina"] ?? null, "el tamaño de página") ?? 15;
 
         return new self(
-            self::dia($q["desde"] ?? null, "la fecha inicial") ?? $hoy->modify("-1 month"),
-            self::dia($q["hasta"] ?? null, "la fecha final") ?? $hoy->modify("+1 month"),
-            id: self::entero($q["id"] ?? null, "el id"),
-            agencia: self::entero($q["agencia"] ?? null, "la agencia"),
-            boleta: self::texto($q["boleta"] ?? null),
+            Parametros::dia($q["desde"] ?? null, "la fecha inicial") ?? $hoy->modify("-1 month"),
+            Parametros::dia($q["hasta"] ?? null, "la fecha final") ?? $hoy->modify("+1 month"),
+            id: Parametros::entero($q["id"] ?? null, "el id"),
+            agencia: Parametros::entero($q["agencia"] ?? null, "la agencia"),
+            boleta: Parametros::texto($q["boleta"] ?? null, 50),
             estados: array_values(array_unique($estados, SORT_REGULAR)),
-            pagina: max(1, self::entero($q["pagina"] ?? null, "la página") ?? 1),
+            pagina: max(1, Parametros::entero($q["pagina"] ?? null, "la página") ?? 1),
             porPagina: in_array($porPagina, self::POR_PAGINA, true) ? $porPagina : 15,
         );
-    }
-
-    private static function dia(mixed $v, string $campo): ?\DateTimeImmutable
-    {
-        if ($v === null || $v === "") {
-            return null;
-        }
-        $d = is_string($v) ? \DateTimeImmutable::createFromFormat("!Y-m-d", $v) : false;
-        if ($d === false || $d->format("Y-m-d") !== $v) {
-            throw new VentaRechazada(sprintf("Indica %s con el formato AAAA-MM-DD.", $campo), "fecha_invalida", 400);
-        }
-
-        return $d;
-    }
-
-    private static function entero(mixed $v, string $campo): ?int
-    {
-        if ($v === null || $v === "") {
-            return null;
-        }
-        $t = is_scalar($v) ? trim((string) $v) : "";
-        if (!ctype_digit($t) || strlen($t) > 9) {
-            throw new VentaRechazada(sprintf("%s no es válido.", ucfirst($campo)), "parametro_invalido", 400);
-        }
-
-        return (int) $t;
-    }
-
-    private static function texto(mixed $v): ?string
-    {
-        $t = is_string($v) ? trim($v) : "";
-
-        return $t === "" ? null : mb_substr($t, 0, 50);
     }
 }

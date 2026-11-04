@@ -6,7 +6,6 @@ namespace App\Controller;
 
 use App\Entity\Usuario;
 use App\Salida\Abordaje\Abordaje;
-use App\Salida\SalidaRechazada;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -113,10 +112,6 @@ final class AbordajeController extends AbstractController
     /** @param callable(): mixed $operacion */
     private function responder(callable $operacion): JsonResponse
     {
-        try {
-            return $this->json($operacion());
-        } catch (SalidaRechazada $e) {
-            return $this->json($e->toArray(), $e->estadoHttp);
-        }
+        return $this->json($operacion());
     }
 }

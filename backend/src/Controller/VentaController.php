@@ -440,11 +440,7 @@ final class VentaController extends AbstractController
      */
     private function responder(callable $operacion, int $estado = Response::HTTP_OK): JsonResponse
     {
-        try {
-            return $this->json($operacion(), $estado);
-        } catch (VentaRechazada $e) {
-            return $this->json($e->toArray(), $e->estadoHttp);
-        }
+        return $this->json($operacion(), $estado);
     }
 
     /** Buscar y registrar clientes: quien vende boletos o atiende encomiendas (remitente, destinatario, quien retira). */

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Venta;
 
+use App\Excepcion\Rechazo;
 use App\Chat\AvisosDelSistema;
 use App\Entity\Agencia;
 use App\Entity\AgenciaDeposito;
@@ -12,7 +13,6 @@ use App\Migration\Mapeador;
 use App\Venta\Agencia\DepositoRechazado;
 use App\Venta\Agencia\DepositosAgencia;
 use App\Venta\Agencia\FiltroDepositos;
-use App\Venta\Excepcion\VentaRechazada;
 use PHPUnit\Framework\TestCase;
 
 /** Depósitos de agencia (ADR-034): estados, filtros y migración del legado. */
@@ -32,10 +32,10 @@ final class DepositoAgenciaTest extends TestCase
     {
         try {
             $f();
-        } catch (VentaRechazada $e) {
+        } catch (Rechazo $e) {
             return $e->codigo;
         }
-        self::fail("Se esperaba VentaRechazada");
+        self::fail("Se esperaba un rechazo");
     }
 
     public function testNaceRegistradoConLaMonedaDeLaAgenciaYSinHora(): void

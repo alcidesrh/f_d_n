@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Reporte;
 
+use App\Http\Parametros;
+
 /** Parámetros del "Detalle de factura de boletos": rango de días (ambos incluidos) y filtros opcionales. */
 final readonly class FiltroDetalle
 {
@@ -31,11 +33,11 @@ final readonly class FiltroDetalle
     /** @param array<string, mixed> $q */
     public static function desdeQuery(array $q): self
     {
-        $desde = Parametros::dia($q["desde"] ?? null, "la fecha inicial");
+        $desde = Parametros::diaExigido($q["desde"] ?? null, "la fecha inicial");
 
         return new self(
             $desde,
-            isset($q["hasta"]) && $q["hasta"] !== "" ? Parametros::dia($q["hasta"], "la fecha final") : $desde,
+            isset($q["hasta"]) && $q["hasta"] !== "" ? Parametros::diaExigido($q["hasta"], "la fecha final") : $desde,
             Parametros::entero($q["estacion"] ?? null, "la estación"),
             Parametros::entero($q["empresa"] ?? null, "la empresa"),
             Parametros::texto($q["autorizacion"] ?? null),

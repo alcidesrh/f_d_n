@@ -6,7 +6,6 @@ namespace App\Controller;
 
 use App\Acceso\Autorizacion;
 use App\ConfiguracionListado\ConfiguracionesListado;
-use App\ConfiguracionListado\ConfiguracionRechazada;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -70,10 +69,6 @@ final class ConfiguracionListadoController extends AbstractController
     private function configurar(callable $operacion, int $estado = 200): JsonResponse
     {
         $this->denyAccessUnlessGranted(self::CONFIGURAR);
-        try {
-            return $this->json($operacion(), $estado, [], self::JSON);
-        } catch (ConfiguracionRechazada $e) {
-            return $this->json($e->toArray(), $e->estadoHttp);
-        }
+        return $this->json($operacion(), $estado, [], self::JSON);
     }
 }

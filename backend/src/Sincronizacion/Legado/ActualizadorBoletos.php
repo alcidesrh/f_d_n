@@ -116,7 +116,7 @@ class ActualizadorBoletos
         $this->db->insert("bitacora", [
             "entidad" => "boleto",
             "registro_id" => $b["id"],
-            "operacion" => self::operacion($nuevo)->value,
+            "operacion" => OperacionBoleto::alPasarA($nuevo)->value,
             "usuario_id" => null,
             "usuario_nombre" => mb_substr((string) ($old["usuario_nombre"] ?? "Sistema anterior"), 0, 100),
             "fecha" => (string) ($old["fecha_actualizacion"] ?? $old["fecha_creacion"]),
@@ -205,17 +205,4 @@ class ActualizadorBoletos
         );
     }
 
-    private static function operacion(EstadoBoletoAsiento $e): OperacionBoleto
-    {
-        return match ($e) {
-            EstadoBoletoAsiento::ANULADO => OperacionBoleto::ANULADO,
-            EstadoBoletoAsiento::REASIGNADO => OperacionBoleto::REASIGNADO,
-            EstadoBoletoAsiento::CHEQUEADO => OperacionBoleto::CHEQUEADO,
-            EstadoBoletoAsiento::TRANSITO => OperacionBoleto::TRANSITO,
-            EstadoBoletoAsiento::CANCELADO => OperacionBoleto::CANCELADO,
-            EstadoBoletoAsiento::FINALIZADO => OperacionBoleto::FINALIZADO,
-            EstadoBoletoAsiento::POSPUESTO => OperacionBoleto::POSPUESTO,
-            EstadoBoletoAsiento::EMITIDO => OperacionBoleto::REVERTIDO,
-        };
-    }
 }

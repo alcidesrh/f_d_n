@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Venta\Boleto\Listado;
 
+use App\Http\Parametros;
 use App\Entity\Enum\AsientoClase;
 use App\Entity\Enum\EstadoBoletoAsiento;
 use App\Venta\Excepcion\VentaRechazada;
@@ -69,20 +70,20 @@ final readonly class FiltroBoletos
     public static function desdeQuery(array $q, \DateTimeImmutable $hoy): self
     {
         $hoy = $hoy->setTime(0, 0);
-        $desde = self::dia($q["desde"] ?? null, "la fecha inicial") ?? $hoy->modify("-30 days");
-        $hasta = self::dia($q["hasta"] ?? null, "la fecha final") ?? $hoy->modify("+30 days");
+        $desde = Parametros::dia($q["desde"] ?? null, "la fecha inicial") ?? $hoy->modify("-30 days");
+        $hasta = Parametros::dia($q["hasta"] ?? null, "la fecha final") ?? $hoy->modify("+30 days");
 
-        $documento = self::texto($q["documento"] ?? null);
+        $documento = Parametros::texto($q["documento"] ?? null);
         if ($documento !== null && !in_array($documento, self::DOCUMENTOS, true)) {
             throw new VentaRechazada("El tipo de documento no es válido.", "parametro_invalido", 400);
         }
         $estados = [];
-        foreach (array_filter(explode(",", (string) self::texto($q["estado"] ?? null))) as $e) {
+        foreach (array_filter(explode(",", (string) Parametros::texto($q["estado"] ?? null))) as $e) {
             $estados[] = EstadoBoletoAsiento::tryFrom(trim($e)) ?? throw new VentaRechazada("El estado no es válido.", "parametro_invalido", 400);
         }
-        $clase = self::texto($q["clase"] ?? null);
-        $porPagina = self::entero($q["porPagina"] ?? null, "el tamaño de página") ?? 15;
-        $orden = self::texto($q["orden"] ?? null) ?? "id";
+        $clase = Parametros::texto($q["clase"] ?? null);
+        $porPagina = Parametros::entero($q["porPagina"] ?? null, "el tamaño de página") ?? 15;
+        $orden = Parametros::texto($q["orden"] ?? null) ?? "id";
         if (!in_array($orden, self::ORDENES, true)) {
             throw new VentaRechazada("No se puede ordenar por esa columna.", "parametro_invalido", 400);
         }
@@ -90,22 +91,22 @@ final readonly class FiltroBoletos
         return new self(
             $desde,
             $hasta,
-            id: self::entero($q["id"] ?? null, "el id"),
-            reasignadoDe: self::entero($q["reasignado"] ?? null, "el boleto reasignado"),
-            salida: self::entero($q["salida"] ?? null, "la salida"),
+            id: Parametros::entero($q["id"] ?? null, "el id"),
+            reasignadoDe: Parametros::entero($q["reasignado"] ?? null, "el boleto reasignado"),
+            salida: Parametros::entero($q["salida"] ?? null, "la salida"),
             documento: $documento,
             estados: array_values(array_unique($estados, SORT_REGULAR)),
-            numeroAsiento: self::entero($q["asiento"] ?? null, "el número de asiento"),
+            numeroAsiento: Parametros::entero($q["asiento"] ?? null, "el número de asiento"),
             clase: $clase === null ? null : (AsientoClase::tryFrom(strtoupper($clase)) ?? throw new VentaRechazada("La clase de asiento no es válida.", "parametro_invalido", 400)),
-            serieFactura: self::texto($q["serie"] ?? null),
-            numeroFactura: self::entero($q["factura"] ?? null, "el número de factura"),
-            origen: self::entero($q["origen"] ?? null, "el origen"),
-            destino: self::entero($q["destino"] ?? null, "el destino"),
-            referenciaExterna: self::texto($q["referencia"] ?? null),
-            autorizacion: self::texto($q["autorizacion"] ?? null),
-            clienteDocumento: self::entero($q["clienteDocumento"] ?? null, "el cliente del documento"),
-            clienteBoleto: self::entero($q["clienteBoleto"] ?? null, "el cliente del boleto"),
-            pagina: max(1, self::entero($q["pagina"] ?? null, "la página") ?? 1),
+            serieFactura: Parametros::texto($q["serie"] ?? null),
+            numeroFactura: Parametros::entero($q["factura"] ?? null, "el número de factura"),
+            origen: Parametros::entero($q["origen"] ?? null, "el origen"),
+            destino: Parametros::entero($q["destino"] ?? null, "el destino"),
+            referenciaExterna: Parametros::texto($q["referencia"] ?? null),
+            autorizacion: Parametros::texto($q["autorizacion"] ?? null),
+            clienteDocumento: Parametros::entero($q["clienteDocumento"] ?? null, "el cliente del documento"),
+            clienteBoleto: Parametros::entero($q["clienteBoleto"] ?? null, "el cliente del boleto"),
+            pagina: max(1, Parametros::entero($q["pagina"] ?? null, "la página") ?? 1),
             porPagina: in_array($porPagina, self::POR_PAGINA, true) ? $porPagina : 15,
             orden: $orden,
             descendente: ($q["dir"] ?? "desc") !== "asc",
@@ -116,38 +117,5 @@ final readonly class FiltroBoletos
     public function finExclusivo(): \DateTimeImmutable
     {
         return $this->hasta->modify("+1 day");
-    }
-
-    private static function dia(mixed $v, string $campo): ?\DateTimeImmutable
-    {
-        if ($v === null || $v === "") {
-            return null;
-        }
-        $d = is_string($v) ? \DateTimeImmutable::createFromFormat("!Y-m-d", $v) : false;
-        if ($d === false || $d->format("Y-m-d") !== $v) {
-            throw new VentaRechazada(sprintf("Indica %s con el formato AAAA-MM-DD.", $campo), "fecha_invalida", 400);
-        }
-
-        return $d;
-    }
-
-    private static function entero(mixed $v, string $campo): ?int
-    {
-        if ($v === null || $v === "") {
-            return null;
-        }
-        $t = is_scalar($v) ? trim((string) $v) : "";
-        if (!ctype_digit($t) || strlen($t) > 9) {
-            throw new VentaRechazada(sprintf("%s no es válido.", ucfirst($campo)), "parametro_invalido", 400);
-        }
-
-        return (int) $t;
-    }
-
-    private static function texto(mixed $v): ?string
-    {
-        $t = is_string($v) ? trim($v) : "";
-
-        return $t === "" ? null : mb_substr($t, 0, 100);
     }
 }

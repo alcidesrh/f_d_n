@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Reporte;
 
+use App\Http\Parametros;
+
 /** Parámetros del "Cuadre de voucher": rango de días de venta (ambos incluidos), estación y empresa. */
 final readonly class FiltroVoucher
 {
@@ -27,11 +29,11 @@ final readonly class FiltroVoucher
     /** @param array<string, mixed> $q */
     public static function desdeQuery(array $q): self
     {
-        $desde = Parametros::dia($q["desde"] ?? null, "la fecha inicial");
+        $desde = Parametros::diaExigido($q["desde"] ?? null, "la fecha inicial");
 
         return new self(
             $desde,
-            isset($q["hasta"]) && $q["hasta"] !== "" ? Parametros::dia($q["hasta"], "la fecha final") : $desde,
+            isset($q["hasta"]) && $q["hasta"] !== "" ? Parametros::diaExigido($q["hasta"], "la fecha final") : $desde,
             Parametros::entero($q["estacion"] ?? null, "la estación"),
             Parametros::entero($q["empresa"] ?? null, "la empresa"),
         );

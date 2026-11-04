@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Reporte\Encomienda;
 
-use App\Reporte\Parametros;
+use App\Http\Parametros;
 use App\Reporte\ReporteRechazado;
 
 /**
@@ -44,11 +44,11 @@ final readonly class FiltroEncomiendas
      */
     public static function desdeQuery(array $q, bool $conFechas = true): self
     {
-        $desde = $conFechas ? Parametros::dia($q["desde"] ?? null, "la fecha") : null;
+        $desde = $conFechas ? Parametros::diaExigido($q["desde"] ?? null, "la fecha") : null;
 
         return new self(
             $desde,
-            $desde === null ? null : (isset($q["hasta"]) && $q["hasta"] !== "" ? Parametros::dia($q["hasta"], "la fecha final") : $desde),
+            $desde === null ? null : (isset($q["hasta"]) && $q["hasta"] !== "" ? Parametros::diaExigido($q["hasta"], "la fecha final") : $desde),
             Parametros::entero($q["estacion"] ?? null, "la estación"),
             Parametros::entero($q["empresa"] ?? null, "la empresa"),
             Parametros::entero($q["origen"] ?? null, "el origen"),

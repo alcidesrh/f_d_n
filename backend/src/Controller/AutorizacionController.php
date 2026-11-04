@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Autorizacion\Autorizable;
-use App\Autorizacion\AutorizacionRechazada;
 use App\Autorizacion\Autorizaciones;
 use App\Autorizacion\ConsultaAutorizaciones;
 use App\Entity\Enum\EstadoAutorizacion;
@@ -117,10 +116,6 @@ final class AutorizacionController extends AbstractController
     /** @param callable(): mixed $operacion */
     private function responder(callable $operacion, int $estado = Response::HTTP_OK): JsonResponse
     {
-        try {
-            return $this->json($operacion(), $estado);
-        } catch (AutorizacionRechazada $e) {
-            return $this->json($e->toArray(), $e->estadoHttp);
-        }
+        return $this->json($operacion(), $estado);
     }
 }

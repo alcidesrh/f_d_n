@@ -31,7 +31,6 @@ use App\Entity\Salida;
 use App\Entity\TipoPago;
 use App\Entity\Usuario;
 use App\Venta\Boleto\DatosBoleto;
-use App\Venta\Excepcion\VentaRechazada;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -489,10 +488,6 @@ final class EncomiendaController extends AbstractController
      */
     private function responder(callable $operacion, int $estado = Response::HTTP_OK): JsonResponse
     {
-        try {
-            return $this->json($operacion(), $estado);
-        } catch (VentaRechazada $e) {
-            return $this->json($e->toArray(), $e->estadoHttp);
-        }
+        return $this->json($operacion(), $estado);
     }
 }

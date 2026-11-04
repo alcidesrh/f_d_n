@@ -4,23 +4,16 @@ declare(strict_types=1);
 
 namespace App\Metadata;
 
+use App\Excepcion\Rechazo;
+
 /**
  * Motivo por el que no se publicó a mano, con un mensaje apto para el
- * usuario. El controlador la traduce a `{ error, codigo }`.
+ * usuario. Sin atrapar, se responde como `{ error, codigo }`.
  */
-final class PublicacionRechazada extends \RuntimeException
+final class PublicacionRechazada extends Rechazo
 {
-    public function __construct(
-        string $mensaje,
-        public readonly string $codigo = "publicacion_invalida",
-        public readonly int $estadoHttp = 422,
-    ) {
-        parent::__construct($mensaje);
-    }
-
-    /** @return array{error: string, codigo: string} */
-    public function toArray(): array
+    public function __construct(string $mensaje, string $codigo = "publicacion_invalida", int $estadoHttp = 422)
     {
-        return ["error" => $this->getMessage(), "codigo" => $this->codigo];
+        parent::__construct($mensaje, $codigo, $estadoHttp);
     }
 }

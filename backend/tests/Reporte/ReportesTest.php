@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Reporte;
 
+use App\Excepcion\Rechazo;
 use App\Reporte\CuadreVentaBoletos;
 use App\Reporte\DetalleFacturaBoletos;
 use App\Reporte\CuadreVoucher;
@@ -11,7 +12,6 @@ use App\Reporte\Dinero;
 use App\Reporte\FiltroCuadre;
 use App\Reporte\FiltroDetalle;
 use App\Reporte\LineaBoleto;
-use App\Reporte\ReporteRechazado;
 use App\Reporte\Xlsx\LibroXlsx;
 use PHPUnit\Framework\TestCase;
 
@@ -127,14 +127,14 @@ final class ReportesTest extends TestCase
             try {
                 FiltroDetalle::desdeQuery($q);
                 $this->fail("debió rechazar " . json_encode($q));
-            } catch (ReporteRechazado $e) {
+            } catch (Rechazo $e) {
                 $this->assertSame(400, $e->estadoHttp);
             }
         }
 
         $c = FiltroCuadre::desdeQuery(["fecha" => "2026-10-03", "moneda" => "gtq", "estacion" => "1"])->conAlcance(7, null);
         $this->assertSame([7, null, "GTQ"], [$c->estacionId, $c->empresaId, $c->moneda], "la estación del usuario manda");
-        $this->expectException(ReporteRechazado::class);
+        $this->expectException(Rechazo::class);
         FiltroCuadre::desdeQuery(["fecha" => "2026-10-03"]);
     }
 

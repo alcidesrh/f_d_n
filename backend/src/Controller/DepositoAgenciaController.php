@@ -146,8 +146,6 @@ final class DepositoAgenciaController extends AbstractController
     {
         try {
             return $this->json($operacion(), $estado);
-        } catch (VentaRechazada $e) {
-            return $this->json($e->toArray(), $e->estadoHttp);
         } catch (\DomainException $e) {
             return $this->json(["error" => $e->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
         }

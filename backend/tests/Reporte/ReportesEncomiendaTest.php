@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Reporte;
 
+use App\Excepcion\Rechazo;
 use App\Reporte\Encomienda\CuadreEncomiendas;
 use App\Reporte\Encomienda\DetalleFacturaEncomiendas;
 use App\Reporte\Encomienda\DetalleGeneralEncomiendas;
@@ -11,7 +12,6 @@ use App\Reporte\Encomienda\FiltroEncomiendas;
 use App\Reporte\Encomienda\LineaEncomienda;
 use App\Reporte\Encomienda\ManifiestoEncomiendas;
 use App\Reporte\Encomienda\PendientesEntregaEncomiendas;
-use App\Reporte\ReporteRechazado;
 use PHPUnit\Framework\TestCase;
 
 /** Cálculo puro de los reportes de encomiendas (ADR-035). */
@@ -114,7 +114,7 @@ final class ReportesEncomiendaTest extends TestCase
         $this->assertTrue($f->soloPorCobrar);
         $this->assertSame(9, $f->conAlcance(9, null)->estacionId);
 
-        $this->expectException(ReporteRechazado::class);
+        $this->expectException(Rechazo::class);
         FiltroEncomiendas::desdeQuery(["desde" => "2026-01-01", "hasta" => "2026-10-01"]);
     }
 }

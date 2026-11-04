@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Administracion\AdministracionRechazada;
 use App\Administracion\PanelAdministracion;
 use App\Entity\Usuario;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -92,10 +91,6 @@ final class AdministracionController extends AbstractController
     private function configurar(callable $operacion, int $estado = 200): JsonResponse
     {
         $this->denyAccessUnlessGranted(self::CONFIGURAR);
-        try {
-            return $this->json(["puedeConfigurar" => true, "secciones" => $operacion()], $estado, [], self::JSON);
-        } catch (AdministracionRechazada $e) {
-            return $this->json($e->toArray(), $e->estadoHttp);
-        }
+        return $this->json(["puedeConfigurar" => true, "secciones" => $operacion()], $estado, [], self::JSON);
     }
 }

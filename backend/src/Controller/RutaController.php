@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Ruta\EdicionRutas;
-use App\Ruta\RutaRechazada;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -105,10 +104,6 @@ final class RutaController extends AbstractController
 
     private function responder(callable $operacion, int $estado = 200): JsonResponse
     {
-        try {
-            return $this->json($operacion(), $estado);
-        } catch (RutaRechazada $e) {
-            return $this->json($e->toArray(), $e->estadoHttp);
-        }
+        return $this->json($operacion(), $estado);
     }
 }

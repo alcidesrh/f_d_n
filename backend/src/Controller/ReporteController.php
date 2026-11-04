@@ -70,15 +70,11 @@ final class ReporteController extends AbstractController
     {
         $this->denyAccessUnlessGranted(self::VER);
 
-        try {
-            $alcance = $this->alcance();
-            $filtro = FiltroCuadre::desdeQuery($request->query->all())->conAlcance($alcance->estacionUnica(), $alcance->empresaUnica());
-            $this->exigirDentro($alcance, $filtro->estacionId, $filtro->empresaId);
-            $formato = $this->formato($request, ["pdf", "resumen"]);
-            $cuadre = $this->consulta->cuadre($filtro, $alcance);
-        } catch (ReporteRechazado $e) {
-            return $this->json($e->toArray(), $e->estadoHttp);
-        }
+        $alcance = $this->alcance();
+        $filtro = FiltroCuadre::desdeQuery($request->query->all())->conAlcance($alcance->estacionUnica(), $alcance->empresaUnica());
+        $this->exigirDentro($alcance, $filtro->estacionId, $filtro->empresaId);
+        $formato = $this->formato($request, ["pdf", "resumen"]);
+        $cuadre = $this->consulta->cuadre($filtro, $alcance);
 
         if ($formato === "resumen") {
             return $this->json($cuadre->resumen());
@@ -96,15 +92,11 @@ final class ReporteController extends AbstractController
     {
         $this->denyAccessUnlessGranted(self::VER);
 
-        try {
-            $alcance = $this->alcance();
-            $filtro = FiltroDetalle::desdeQuery($request->query->all())->conAlcance($alcance->estacionUnica(), $alcance->empresaUnica());
-            $this->exigirDentro($alcance, $filtro->estacionId, $filtro->empresaId);
-            $formato = $this->formato($request, ["pdf", "xlsx", "resumen"]);
-            $detalle = $this->consulta->detalle($filtro, $alcance);
-        } catch (ReporteRechazado $e) {
-            return $this->json($e->toArray(), $e->estadoHttp);
-        }
+        $alcance = $this->alcance();
+        $filtro = FiltroDetalle::desdeQuery($request->query->all())->conAlcance($alcance->estacionUnica(), $alcance->empresaUnica());
+        $this->exigirDentro($alcance, $filtro->estacionId, $filtro->empresaId);
+        $formato = $this->formato($request, ["pdf", "xlsx", "resumen"]);
+        $detalle = $this->consulta->detalle($filtro, $alcance);
 
         $nombre = sprintf("detalle_factura_boletos_%s_%s", $filtro->desde->format("Ymd"), $filtro->hasta->format("Ymd"));
 
@@ -120,15 +112,11 @@ final class ReporteController extends AbstractController
     {
         $this->denyAccessUnlessGranted(self::VER);
 
-        try {
-            $alcance = $this->alcance();
-            $filtro = FiltroVoucher::desdeQuery($request->query->all())->conAlcance($alcance->estacionUnica(), $alcance->empresaUnica());
-            $this->exigirDentro($alcance, $filtro->estacionId, $filtro->empresaId);
-            $formato = $this->formato($request, ["pdf", "resumen"]);
-            $cuadre = $this->consulta->voucher($filtro, $alcance);
-        } catch (ReporteRechazado $e) {
-            return $this->json($e->toArray(), $e->estadoHttp);
-        }
+        $alcance = $this->alcance();
+        $filtro = FiltroVoucher::desdeQuery($request->query->all())->conAlcance($alcance->estacionUnica(), $alcance->empresaUnica());
+        $this->exigirDentro($alcance, $filtro->estacionId, $filtro->empresaId);
+        $formato = $this->formato($request, ["pdf", "resumen"]);
+        $cuadre = $this->consulta->voucher($filtro, $alcance);
 
         if ($formato === "resumen") {
             return $this->json($cuadre->resumen());

@@ -171,19 +171,15 @@ final class ReporteEncomiendaController extends AbstractController
      */
     private function generar(Request $request, Usuario $usuario, bool $conFechas, array $formatos, callable $reporte, bool $conEstacion = true, bool $caja = false): Response
     {
-        try {
-            $formato = (string) $request->query->get("formato", "pdf");
-            if (!in_array($formato, $formatos, true)) {
-                throw new ReporteRechazado(sprintf("Formato no disponible; usa %s.", implode(", ", $formatos)), "formato_invalido", 400);
-            }
-            $alcance = $this->alcance($caja);
-            $filtro = FiltroEncomiendas::desdeQuery($request->query->all(), $conFechas)
-                ->conAlcance($conEstacion ? $alcance->estacionUnica() : null, $alcance->empresaUnica());
-            $this->exigirDentro($alcance, $conEstacion ? $filtro->estacionId : null, $filtro->empresaId, $conEstacion);
-            $resultado = $reporte($filtro, $formato, (string) $usuario->getUsername());
-        } catch (ReporteRechazado $e) {
-            return $this->json($e->toArray(), $e->estadoHttp);
+        $formato = (string) $request->query->get("formato", "pdf");
+        if (!in_array($formato, $formatos, true)) {
+            throw new ReporteRechazado(sprintf("Formato no disponible; usa %s.", implode(", ", $formatos)), "formato_invalido", 400);
         }
+        $alcance = $this->alcance($caja);
+        $filtro = FiltroEncomiendas::desdeQuery($request->query->all(), $conFechas)
+            ->conAlcance($conEstacion ? $alcance->estacionUnica() : null, $alcance->empresaUnica());
+        $this->exigirDentro($alcance, $conEstacion ? $filtro->estacionId : null, $filtro->empresaId, $conEstacion);
+        $resultado = $reporte($filtro, $formato, (string) $usuario->getUsername());
 
         if ($formato === "resumen") {
             return $this->json($resultado);

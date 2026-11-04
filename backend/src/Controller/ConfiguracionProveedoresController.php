@@ -7,7 +7,6 @@ namespace App\Controller;
 use App\Acceso\Capacidad;
 use App\Correo\Configuracion\GestionCorreo;
 use App\Entity\Usuario;
-use App\Venta\Excepcion\VentaRechazada;
 use App\Venta\Facturacion\Forcon\GestionForcon;
 use App\Venta\Pago\Cybersource\GestionCybersource;
 use Doctrine\ORM\EntityManagerInterface;
@@ -53,11 +52,7 @@ final class ConfiguracionProveedoresController extends AbstractController
     public function guardarForcon(Request $request, #[CurrentUser] Usuario $usuario): JsonResponse
     {
         $this->denyAccessUnlessGranted(Capacidad::CONFIG_PROVEEDORES->value);
-        try {
-            $this->forcon->guardar($request->toArray(), $this->em->find(Usuario::class, $usuario->getId()));
-        } catch (VentaRechazada $e) {
-            return $this->json($e->toArray(), $e->estadoHttp);
-        }
+        $this->forcon->guardar($request->toArray(), $this->em->find(Usuario::class, $usuario->getId()));
 
         return $this->json($this->forcon->datos());
     }
@@ -67,11 +62,7 @@ final class ConfiguracionProveedoresController extends AbstractController
     {
         $this->denyAccessUnlessGranted(Capacidad::CONFIG_PROVEEDORES->value);
         $datos = $request->toArray();
-        try {
-            return $this->json($this->forcon->probar((string) ($datos["nit"] ?? ""), (int) ($datos["establecimiento"] ?? 0)));
-        } catch (VentaRechazada $e) {
-            return $this->json($e->toArray(), $e->estadoHttp);
-        }
+        return $this->json($this->forcon->probar((string) ($datos["nit"] ?? ""), (int) ($datos["establecimiento"] ?? 0)));
     }
 
     #[Route("/cybersource", name: "cybersource", methods: ["GET"])]
@@ -87,11 +78,7 @@ final class ConfiguracionProveedoresController extends AbstractController
     public function guardarCybersource(Request $request, #[CurrentUser] Usuario $usuario): JsonResponse
     {
         $this->denyAccessUnlessGranted(Capacidad::CONFIG_PROVEEDORES->value);
-        try {
-            $this->cybersource->guardar($request->toArray(), $this->em->find(Usuario::class, $usuario->getId()));
-        } catch (VentaRechazada $e) {
-            return $this->json($e->toArray(), $e->estadoHttp);
-        }
+        $this->cybersource->guardar($request->toArray(), $this->em->find(Usuario::class, $usuario->getId()));
 
         return $this->json($this->cybersource->datos());
     }
@@ -109,11 +96,7 @@ final class ConfiguracionProveedoresController extends AbstractController
     public function guardarCorreo(Request $request, #[CurrentUser] Usuario $usuario): JsonResponse
     {
         $this->denyAccessUnlessGranted(Capacidad::CONFIG_PROVEEDORES->value);
-        try {
-            $this->correo->guardar($request->toArray(), $this->em->find(Usuario::class, $usuario->getId()));
-        } catch (VentaRechazada $e) {
-            return $this->json($e->toArray(), $e->estadoHttp);
-        }
+        $this->correo->guardar($request->toArray(), $this->em->find(Usuario::class, $usuario->getId()));
 
         return $this->json($this->correo->datos($this->webhook()));
     }
@@ -123,11 +106,7 @@ final class ConfiguracionProveedoresController extends AbstractController
     {
         $this->denyAccessUnlessGranted(Capacidad::CONFIG_PROVEEDORES->value);
         $datos = $request->toArray();
-        try {
-            $this->correo->probar((string) ($datos["dominio"] ?? ""), (string) ($datos["para"] ?? ""));
-        } catch (VentaRechazada $e) {
-            return $this->json($e->toArray(), $e->estadoHttp);
-        }
+        $this->correo->probar((string) ($datos["dominio"] ?? ""), (string) ($datos["para"] ?? ""));
 
         return $this->json(["ok" => true]);
     }
