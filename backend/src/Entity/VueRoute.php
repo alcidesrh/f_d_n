@@ -6,7 +6,6 @@ use ApiPlatform\Metadata\ApiResource;
 use App\Acceso\Recurso;
 use App\Attribute\ApiResourceNoPagination;
 use App\Entity\Base\Base;
-use App\Repository\VueRouteRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -19,7 +18,7 @@ use Doctrine\ORM\Mapping as ORM;
  * (`App\Navigation\Pantallas`, ADR-049). No autoriza nada: lo que la
  * pantalla hace, la API lo exige igual (ADR-039).
  */
-#[ORM\Entity(repositoryClass: VueRouteRepository::class)]
+#[ORM\Entity]
 #[ApiResourceNoPagination]
 #[Recurso(nombre: "Rutas del frontend", area: "Configuración", lecturaLibre: true, soloLectura: true)]
 class VueRoute extends Base

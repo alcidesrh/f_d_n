@@ -9,7 +9,7 @@ use App\Entity\CollectionFieldConfig;
 use App\Entity\EntityConfiguration;
 use App\Entity\ListConfiguration;
 use App\Entity\Role;
-use App\Services\EntityConfigSynchronizer;
+use App\Metadata\EntityConfigSynchronizer;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;

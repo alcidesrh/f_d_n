@@ -80,7 +80,7 @@ services:
     App\Security\GraphiQLRequestMatcher:
         tags: ["security.request_matcher"]
 
-    App\Services\UsuarioPasswordHasher:
+    App\Usuario\UsuarioPasswordHasher:
         bind:
             $processor: "@api_platform.doctrine.orm.state.persist_processor"
 

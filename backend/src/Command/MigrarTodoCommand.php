@@ -7,7 +7,7 @@ use App\Migration\MigradorEstaticos;
 use App\Migration\MigradorIAM;
 use App\Migration;
 use App\Migration\Reseteador;
-use App\Services\EntityConfigSynchronizer;
+use App\Metadata\EntityConfigSynchronizer;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Attribute\AsCommand;

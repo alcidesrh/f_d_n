@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Metadata;
 
 use ApiPlatform\Metadata\ApiProperty;
 use App\Entity\CollectionFieldConfig;

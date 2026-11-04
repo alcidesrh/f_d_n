@@ -8,10 +8,9 @@ use ApiPlatform\Metadata\ApiFilter;
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
 use App\Entity\Base\Traits\LegacyTrait;
-use App\Repository\LocalidadRepository;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: LocalidadRepository::class)]
+#[ORM\Entity]
 #[ApiResourcePaginationPage]
 #[ApiFilter(OrderFilter::class, alias: 'order.filter', properties: ['id'], arguments: ['orderParameterName' => 'order'])]
 #[Recurso(nombre: "Localidades", area: "Geografía", lecturaLibre: true)]

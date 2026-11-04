@@ -11,7 +11,6 @@ use ApiPlatform\Metadata\GraphQl\QueryCollection;
 use App\Filter\ColumnaFilter;
 use App\Entity\Embeddable\Precio;
 use App\Entity\Base\Traits\TimestampableEntityTrait;
-use App\Repository\FacturaRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Money\Money;
 use Symfony\Component\Uid\Uuid;
@@ -21,7 +20,7 @@ use Symfony\Component\Uid\Uuid;
  * emisor, receptor y datos del certificador. Lo crea `App\Venta` con la
  * respuesta del certificador; la API solo lo lee.
  */
-#[ORM\Entity(repositoryClass: FacturaRepository::class)]
+#[ORM\Entity]
 #[
     ApiResource(
         operations: [new Get(), new GetCollection()],

@@ -6,10 +6,9 @@ use App\Acceso\Recurso;
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
 use App\Entity\Base\Traits\LegacyTrait;
-use App\Repository\NacionRepository;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: NacionRepository::class)]
+#[ORM\Entity]
 #[ORM\Table(name: 'pais')]
 
 #[ApiResourcePaginationPage]

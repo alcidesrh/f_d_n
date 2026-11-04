@@ -12,7 +12,7 @@ use App\Migration\Job\AlmacenDeJobs;
 use App\Migration\Job\Progreso;
 use App\Migration\Job\SalidaJobOutput;
 use App\Migration\Reseteador;
-use App\Services\VueRouteSynchronizer;
+use App\Navigation\VueRouteSynchronizer;
 use Symfony\Bundle\FrameworkBundle\Console\Application;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;

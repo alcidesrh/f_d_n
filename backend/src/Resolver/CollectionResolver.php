@@ -8,8 +8,8 @@ use App\ApiResource\Agnostic;
 use App\Acceso\Catalogo\CatalogoRecursos;
 use App\Entity\Empresa;
 use App\Entity\Enclave;
-use App\Services\BuscadorOpciones;
-use App\Useful\Doctrine;
+use App\ApiResource\BuscadorOpciones;
+use function Symfony\Component\String\u;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
@@ -38,11 +38,11 @@ final class CollectionResolver implements QueryItemResolverInterface {
    */
   public function __invoke(?object $item, array $context): object {
     $args = $context['args'];
-    $class = Doctrine::entityNamespace($args['resource']);
-    $recurso = $this->recursos->de($class);
+    $recurso = $this->recursos->de(u($args['resource'])->camel()->title()->toString());
     if ($recurso === null || $recurso->oculto || (!$recurso->lecturaLibre && ($recurso->ver === null || !$this->auth->isGranted($recurso->ver)))) {
       throw new AccessDeniedException('No tiene permiso para ver estos registros.');
     }
+    $class = $recurso->clase;
 
     $filtros = $this->filtrosDeOpciones($class);
     if (isset($args['ids'])) {

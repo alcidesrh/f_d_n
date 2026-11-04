@@ -15,7 +15,7 @@ use App\Entity\Role;
 use App\Navigation\Audiencia;
 use App\Navigation\Pantalla;
 use App\Navigation\PatronRuta;
-use App\Services\VueRouteSynchronizer;
+use App\Navigation\VueRouteSynchronizer;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 

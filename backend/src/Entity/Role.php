@@ -5,7 +5,6 @@ namespace App\Entity;
 use App\Acceso\Recurso;
 use App\Attribute\ApiResourceNoPagination;
 use App\Entity\Base\Base;
-use App\Repository\RoleRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -25,7 +24,7 @@ use Doctrine\ORM\Mapping as ORM;
  * Se escribe por `/api/acceso/roles` (`App\Acceso\Administracion\AdministracionAccesos`),
  * que impide la escalada de privilegios; por la API genérica solo se lee.
  */
-#[ORM\Entity(repositoryClass: RoleRepository::class)]
+#[ORM\Entity]
 #[ApiResourceNoPagination]
 #[Recurso(nombre: 'Roles', area: 'Accesos', lecturaLibre: true, soloLectura: true)]
 class Role extends Base

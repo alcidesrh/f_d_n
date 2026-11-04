@@ -54,10 +54,7 @@ class Agnostic
         return new \DateTime()->format("Ymdms");
     }
 
-    public function __construct(public array $data = [])
-    {
-        $id = new \DateTime();
-    }
+    public function __construct(public array $data = []) {}
 
     public function getData(): array
     {

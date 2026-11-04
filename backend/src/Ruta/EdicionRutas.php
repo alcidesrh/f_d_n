@@ -11,7 +11,7 @@ use App\Entity\Parada;
 use App\Entity\ParadaTiempo;
 use App\Entity\Ruta;
 use App\Salida\VistaSalida;
-use App\Services\BuscadorOpciones;
+use App\ApiResource\BuscadorOpciones;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
 

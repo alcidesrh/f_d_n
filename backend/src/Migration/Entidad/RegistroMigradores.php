@@ -8,7 +8,7 @@ use App\Migration\IndicadoresMigracion;
 use App\Migration\Migrador;
 use App\Migration\MigradorEstaticos;
 use App\Migration\MigradorIAM;
-use App\Services\EntityConfigSynchronizer;
+use App\Metadata\EntityConfigSynchronizer;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Lazy;
 use Symfony\Component\DependencyInjection\Attribute\Target;

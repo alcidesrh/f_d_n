@@ -28,11 +28,11 @@ final class DeleteMultipleMutationResolver implements MutationResolverInterface
     {
         if (isset(($args = $context['args'])['input']) && isset(($input = $args['input'])['ids']) && $ids = $input['ids']) {
 
-            $class = !empty($input['resource']) ? 'App\\Entity\\' . $input['resource']  : $context['root_class'];
-            $recurso = $this->recursos->de($class);
+            $recurso = $this->recursos->de(!empty($input['resource']) ? $input['resource'] : $context['root_class']);
             if ($recurso === null || $recurso->eliminar === null || !$recurso->borrable || !$this->auth->isGranted($recurso->eliminar)) {
                 throw new AccessDeniedException('No tiene permiso para eliminar estos registros.');
             }
+            $class = $recurso->clase;
             foreach ($this->entityManagerInterface->getRepository($class)->findBy(['id' => $ids]) as $registro) {
                 if (!$this->auth->isGranted($recurso->eliminar, $registro)) {
                     throw new AccessDeniedException('Fuera de su alcance: algún registro es de una empresa donde no puede eliminar.');

@@ -11,7 +11,6 @@ use App\Filter\ColumnaFilter;
 use App\Entity\Base\Base;
 use App\Entity\Embeddable\Precio;
 use App\Entity\Enum\EstadoBoletoAsiento;
-use App\Repository\BoletoAsientoRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Money\Money;
 
@@ -24,7 +23,7 @@ use Money\Money;
  * `ex_boleto_asiento_tramo` (solo en migraciones, ADR-030). Un asiento
  * anulado o reasignado se puede volver a vender.
  */
-#[ORM\Entity(repositoryClass: BoletoAsientoRepository::class)]
+#[ORM\Entity]
 #[
     ApiResource(
         operations: [],

@@ -14,10 +14,6 @@ class Precio {
   #[ORM\Column(type: 'string', length: 3)]
   private string $moneda;
 
-  public function asMoney(): Money {
-    return new Money($this->monto, new Currency($this->moneda));
-  }
-
   public function __construct(
     int $monto = 0,
     string $moneda = 'GTQ'

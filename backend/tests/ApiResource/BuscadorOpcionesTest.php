@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Services;
+namespace App\Tests\ApiResource;
 
-use App\Services\BuscadorOpciones;
+use App\ApiResource\BuscadorOpciones;
 use Doctrine\ORM\Mapping\ClassMetadata;
 use PHPUnit\Framework\TestCase;
 

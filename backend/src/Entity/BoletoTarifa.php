@@ -10,7 +10,6 @@ use App\Entity\Base\Base;
 use App\Entity\Embeddable\Precio;
 use App\Entity\Enum\AsientoClase;
 use App\Filter\BoletoTarifaFilter;
-use App\Repository\BoletoTarifaRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Money\Currency;
@@ -27,7 +26,7 @@ use Symfony\Component\Validator\Constraints as Assert;
  * (`BoletoTarifaFilter`). `Money` no tiene tipo en GraphQL: la API lee el
  * precio como `importe` (formateado) y lo escribe como `precioMonto`.
  */
-#[ORM\Entity(repositoryClass: BoletoTarifaRepository::class)]
+#[ORM\Entity]
 #[ApiResourcePaginationPage]
 #[ApiFilter(BoletoTarifaFilter::class)]
 #[Recurso(nombre: "Tarifas de boletos", area: "Rutas y tarifas", codigo: "tarifa", empresa: "empresa")]

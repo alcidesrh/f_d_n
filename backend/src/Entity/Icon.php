@@ -12,12 +12,11 @@ use App\Filter\ColumnaFilter;
 use ApiPlatform\Metadata\QueryParameter;
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
-use App\Repository\IconRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 // paginationEnabled: false,
-#[ORM\Entity(repositoryClass: IconRepository::class)]
+#[ORM\Entity]
 #[
     ApiResourcePaginationPage(
         graphQlOperations: [

@@ -24,8 +24,7 @@ use App\Entity\Base\PersonaBase;
 use App\Filter\ColumnaFilter;
 use App\Filter\IdPartialSearchFilter;
 use App\Repository\UsuarioRepository;
-use App\Resolver\UserByUsernameResolver;
-use App\Services\UsuarioPasswordHasher;
+use App\Usuario\UsuarioPasswordHasher;
 use Symfony\Component\Serializer\Attribute\Ignore;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -74,11 +73,6 @@ use Symfony\Component\Validator\Constraints as Assert;
                         property: "email",
                     ),
                 ],
-            ),
-            new Query(
-                name: "getByUsername",
-                resolver: UserByUsernameResolver::class,
-                args: ["username" => ["type" => "String"]],
             ),
         ],
     ),

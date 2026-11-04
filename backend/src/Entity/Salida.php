@@ -8,12 +8,11 @@ use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
 use App\Entity\Base\Traits\TimestampableEntityTrait;
 use App\Entity\Enum\EstadoSalida;
-use App\Repository\SalidaRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: SalidaRepository::class)]
+#[ORM\Entity]
 #[ORM\Index(columns: ["fecha", "empresa_id", "ruta_id"], name: "idx_salida_fecha_empresa_ruta")]
 #[ApiResourcePaginationPage]
 #[Recurso(nombre: "Salidas", area: "Salidas", soloLectura: true, ver: "salida.ver", empresa: "empresa")]

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Services;
+namespace App\Navigation;
 
 use App\Acceso\Catalogo\Catalogo;
 use App\Acceso\Catalogo\DefinicionRecurso;
