@@ -363,6 +363,7 @@ export interface BoletoOperable {
 export interface PermisosBoleto {
   anular: boolean
   reasignar: boolean
+  cancelar: boolean
 }
 
 /** Resultado de anular: por venta, lo que se anuló y lo que no. */

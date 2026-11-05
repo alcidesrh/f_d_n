@@ -295,7 +295,11 @@ final class VentaController extends AbstractController
     #[Route("/boletos/permisos", name: "boletos_permisos", methods: ["GET"])]
     public function permisosBoletos(): JsonResponse
     {
-        return $this->json(["anular" => $this->isGranted(self::ANULAR), "reasignar" => $this->isGranted(self::REASIGNAR)]);
+        return $this->json([
+            "anular" => $this->isGranted(self::ANULAR),
+            "reasignar" => $this->isGranted(self::REASIGNAR),
+            "cancelar" => $this->isGranted(BoletoController::CANCELAR),
+        ]);
     }
 
     /**

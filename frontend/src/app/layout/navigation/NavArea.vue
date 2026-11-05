@@ -8,7 +8,7 @@
   <template v-else>
     <div class="border-t border-t-surface-300" v-for="menu in menus" :key="menu.id">
       <section class="nav-section" :class="{ open: opened.has(menu.id) }">
-        <button v-if="menus.length > 1 && !sidebar?.compact" type="button" class="nav-section-title py-6!" @click="toggle(menu.id)">
+        <button v-if="menus.length > 1 && !sidebar?.compact" type="button" class="nav-section-title" @click="toggle(menu.id)">
           <icon :weight="200" class="text-surface-800" :name="!opened.has(menu.id) ? 'add' : 'remove'" size="1rem" />
           <span>{{ menu.nombre }}</span>
         </button>
@@ -72,7 +72,7 @@ function onLeave(el: Element, done: () => void) {
   width: 100%;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1.25rem;
+  padding: 1.5rem;
   cursor: pointer;
   text-align: start;
   font-size: 0.8rem;

@@ -6,7 +6,7 @@
 -->
 <template>
   <ul class="sidebar-menu nav-tree @container" :class="{ 'nav-tree--nested': depth > 0 }">
-    <li v-for="(item, i) in items" :key="item.id" class="menu-item py-2" :class="{ s: i == items.length - 1 }">
+    <li v-for="(item, i) in items" :key="item.id" class="menu-item py-1" :class="{ s: i == items.length - 1 }">
       <div class="nav-row" :class="{ 'nav-row--mini': compact }">
         <template v-if="!compact">
           <button v-if="item.children.length" type="button" class="nav-toggle" :style="toggleIndent" :aria-expanded="expanded.has(item.id)">
@@ -15,7 +15,7 @@
           <span v-else class="nav-toggle nav-toggle--spacer" :style="toggleIndent" aria-hidden="true" />
         </template>
         <component :is="linkTag(item)" :to="hasFlyout(item) ? undefined : (navTarget(item, router) ?? undefined)" :type="linkTag(item) === 'button' ? 'button' : undefined" class="menu-link" :class="{ 'nav-disabled': !navTarget(item, router) && !isGroup(item) && !hasFlyout(item), 'menu-link--flyout': hasFlyout(item), 'is-open': abierto?.id === item.id, 'contiene-ruta': hasFlyout(item) && contieneRuta(item, route.name) }" :title="titleOf(item)" :aria-expanded="isGroup(item) || hasFlyout(item) ? (hasFlyout(item) ? abierto?.id === item.id : expanded.has(item.id)) : undefined" :aria-haspopup="hasFlyout(item) ? 'menu' : undefined" @click="onClick($event, item)">
-          <span class="menu-icon"><icon :name="item.icon ?? 'fiber-manual-record'" size="1.3rem" /></span>
+          <span class="menu-icon"><icon size="1.3rem" :weight="200" class="text-surface-600" :name="item.icon ?? 'fiber-manual-record'" /></span>
           <span class="menu-text">{{ item.label }}</span>
           <span v-if="hasFlyout(item)" class="menu-flyout-mark" aria-hidden="true" />
         </component>

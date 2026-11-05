@@ -16,12 +16,13 @@ export const usePermisosBoleto = defineStore('permisos-boleto', () => {
   function cargar(): Promise<void> {
     pedido ??= fetchPermisosBoleto()
       .then((p) => void (permisos.value = p))
-      .catch(() => void (permisos.value = { anular: false, reasignar: false }))
+      .catch(() => void (permisos.value = { anular: false, reasignar: false, cancelar: false }))
     return pedido
   }
 
   const anular = computed(() => permisos.value?.anular ?? false)
   const reasignar = computed(() => permisos.value?.reasignar ?? false)
+  const cancelar = computed(() => permisos.value?.cancelar ?? false)
 
-  return { permisos, anular, reasignar, cargar }
+  return { permisos, anular, reasignar, cancelar, cargar }
 })

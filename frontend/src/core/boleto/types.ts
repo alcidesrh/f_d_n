@@ -110,3 +110,15 @@ export interface OpcionesBoletos {
   empresas: Array<{ id: number; nombre: string }>
   puede: PuedeBoleto
 }
+
+/** Lo que el diálogo de cancelar muestra del boleto: lo que tienen el listado y el croquis. */
+export interface BoletoACancelar {
+  id: number
+  asiento: number
+  precio?: { texto: string } | null
+  sube?: string | null
+  baja?: string | null
+  /** Hora de salida (ISO), si se conoce. */
+  fecha?: string | null
+  clienteBoleto?: { nombre: string } | null
+}

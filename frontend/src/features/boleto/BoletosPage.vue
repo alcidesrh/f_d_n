@@ -175,7 +175,7 @@ import { anunciarEnPantalla } from "@/shared/chat/integracion";
 import DataGrid from "@/shared/data-grid/DataGrid.vue";
 import GridText from "@/shared/data-grid/GridText.vue";
 import type { GridColumn } from "@/shared/data-grid/types";
-import CancelarBoletoDialog from "./CancelarBoletoDialog.vue";
+import CancelarBoletoDialog from "@/shared/boleto/CancelarBoletoDialog.vue";
 import RevertirBoletoDialog from "./RevertirBoletoDialog.vue";
 import ChequearBoletoDialog from "./ChequearBoletoDialog.vue";
 import ConsultarBoletoDialog from "./ConsultarBoletoDialog.vue";

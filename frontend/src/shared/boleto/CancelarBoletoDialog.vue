@@ -11,7 +11,7 @@
           <span class="font-semibold">Boleto {{ boleto.id }} · asiento {{ boleto.asiento }}</span>
           <span class="tabular-nums">{{ boleto.precio?.texto ?? '—' }}</span>
         </div>
-        <div class="text-xs text-muted-color">{{ boleto.sube }} → {{ boleto.baja }} · {{ fecha(boleto.fecha) }} {{ hora(boleto.fecha) }} · {{ boleto.clienteBoleto?.nombre ?? 'sin pasajero' }}</div>
+        <div class="text-xs text-muted-color">{{ [boleto.sube && boleto.baja ? `${boleto.sube} → ${boleto.baja}` : null, boleto.fecha ? `${fecha(boleto.fecha)} ${hora(boleto.fecha)}` : null, boleto.clienteBoleto?.nombre ?? 'sin pasajero'].filter(Boolean).join(' · ') }}</div>
       </div>
       <Message severity="info" :closable="false">El asiento queda libre para venderse otra vez. La venta, su factura y su importe se conservan: no es una anulación y no se devuelve dinero.</Message>
       <label class="flex flex-col gap-1">
@@ -30,12 +30,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { cancelarBoleto } from '@/core/boleto/api'
-import type { BoletoFila } from '@/core/boleto/types'
+import type { BoletoACancelar } from '@/core/boleto/types'
 import { HttpError } from '@/core/http'
 import { notify } from '@/core/notify'
 import { fecha, hora } from '@/core/venta/modelo'
 
-const props = defineProps<{ visible: boolean; boleto: BoletoFila | null }>()
+const props = defineProps<{ visible: boolean; boleto: BoletoACancelar | null }>()
 const emit = defineEmits<{ 'update:visible': [visible: boolean]; listo: [] }>()
 
 const motivo = ref('')
