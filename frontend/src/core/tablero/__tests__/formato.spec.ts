@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cuentaRegresiva, dinero, escala, etiquetaCubo, nivelOcupacion, porciento, rango, variacion } from '../formato'
+import { dinero, escala, etiquetaCubo, nivelOcupacion, porciento, rango, variacion } from '../formato'
 
 describe('formato del tablero', () => {
   it('formatea dinero completo y compacto', () => {
@@ -51,12 +51,5 @@ describe('formato del tablero', () => {
     expect(nivelOcupacion(0.5)).toBe('media')
     expect(nivelOcupacion(0.2)).toBe('baja')
     expect(nivelOcupacion(null)).toBeNull()
-  })
-
-  it('cuenta regresiva', () => {
-    const ahora = new Date(2026, 9, 12, 14, 0)
-    expect(cuentaRegresiva('2026-10-12T14:25', ahora)).toBe('en 25 min')
-    expect(cuentaRegresiva('2026-10-12T13:50', ahora)).toBe('hace 10 min')
-    expect(cuentaRegresiva('2026-10-12T16:05', ahora)).toBe('en 2 h 05')
   })
 })

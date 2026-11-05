@@ -275,7 +275,6 @@ async function handleSubmit(credentials: { username: string; password: string },
   line-height: 1.08;
   letter-spacing: -0.025em;
   text-wrap: balance;
-  /*opacity: 0.78;*/
 }
 .lp-lead {
   margin: 1.1rem 0 0;
@@ -323,7 +322,6 @@ async function handleSubmit(credentials: { username: string; password: string },
     height: 1.6rem;
     width: auto;
     filter: brightness(0) invert(1);
-    /*opacity: 0.7;*/
     transition: opacity 0.2s;
     &:hover {
       opacity: 1;

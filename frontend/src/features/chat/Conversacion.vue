@@ -743,7 +743,6 @@ watch(
   border-radius: var(--radio);
   color: var(--p-surface-800);
   background: var(--p-surface-0);
-  /*background: var(--p-content-background);*/
   box-shadow: 0 1px 1.5px rgb(0 0 0 / 0.06);
   animation: entra 0.18s var(--ease);
   transition: box-shadow 0.3s var(--ease);
@@ -850,7 +849,6 @@ watch(
   }
 }
 .burbuja__tarjetas {
-  /*width: min(22rem, 70cqi);*/
   max-width: 100%;
 }
 .burbuja__pie {

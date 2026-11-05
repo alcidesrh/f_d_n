@@ -2,13 +2,10 @@ import { fileURLToPath, URL } from "node:url";
 
 import { defineConfig, loadEnv } from "vite";
 import vue from "@vitejs/plugin-vue";
-import vueDevTools from "vite-plugin-vue-devtools";
 import tailwindcss from "@tailwindcss/vite";
 import AutoImport from "unplugin-auto-import/vite";
 import Components from "unplugin-vue-components/vite";
 import { PrimeVueResolver } from "@primevue/auto-import-resolver";
-import Icons from "unplugin-icons/vite";
-import IconsResolver from "unplugin-icons/resolver";
 import { VitePWA } from "vite-plugin-pwa";
 
 // https://vite.dev/config/
@@ -45,13 +42,14 @@ export default defineConfig({
   plugins: [
     retirarServiceWorker,
     vue(),
-    // vueDevTools(),
     tailwindcss(),
     AutoImport({
       // Solo las APIs de Vue/Router/Pinia: el código del proyecto se importa
       // explícitamente para que cada archivo declare de qué depende.
       imports: ["vue", "vue-router", "pinia"],
       dts: "src/auto-imports.d.ts",
+      // Sin esto el archivo acumula lo que ya no existe.
+      dtsMode: "overwrite",
       vueTemplate: true,
     }),
     Components({
@@ -59,17 +57,7 @@ export default defineConfig({
       // los componentes de features se importan explícitamente.
       dirs: ["src/shared/ui", "src/shared/icons"],
       dts: "src/components.d.ts",
-      resolvers: [
-        PrimeVueResolver(),
-        IconsResolver({
-          prefix: "icon", // Prefix for your components (e.g., <icon-lucide-home />)
-          enabledCollections: ["lucide", "material-symbols"],
-        }),
-      ],
-    }),
-    Icons({
-      compiler: "vue3",
-      autoInstall: true,
+      resolvers: [PrimeVueResolver()],
     }),
     // App instalable (PWA): toda la app del personal; se abre en el chat.
     VitePWA({
@@ -136,13 +124,5 @@ export default defineConfig({
     port: 9000,
     // Hosts por nombre (DNS) que Caddy reenvía al dev server; las IPs ya se permiten por defecto.
     allowedHosts: ["fdn2.duckdns.org"],
-    // open: false
-    // Uncomment when the Symfony + API Platform backend is available locally.
-    // proxy: {
-    //   '/api': {
-    //     target: 'http://localhost:8000',
-    //     changeOrigin: true
-    //   }
-    // }
   },
 });

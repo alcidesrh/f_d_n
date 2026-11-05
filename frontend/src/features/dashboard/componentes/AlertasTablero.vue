@@ -68,8 +68,6 @@ const NIVELES: Record<NivelAlerta, { etiqueta: string; icono: string }> = {
   border: 1px solid var(--p-content-border-color);
   border-left: 4px solid var(--tono);
   background: var(--p-surface-0);
-  /*var(--p-content-background);*/
-  /*font-size: 0.875rem;*/
 }
 .aviso-item.critico {
   --tono: var(--estado-critico);

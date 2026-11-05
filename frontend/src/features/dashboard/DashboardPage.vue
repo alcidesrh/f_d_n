@@ -11,7 +11,6 @@
   <div class="tablero @container flex flex-col gap-4">
     <header class="flex flex-wrap items-end gap-3">
       <div class="min-w-0 flex-1">
-        <!-- <p v-if="datos" class="text-sm md:text- lg lg:text-xl font-medium">{{ rango(datos.periodo.desde, datos.periodo.hasta) }} · comparado con {{ datos.periodo.rotuloAnterior }} a la misma hora · actualizado {{ hora(datos.generado.slice(0, 16)) }}</p> -->
       </div>
       <template v-if="!sinPermiso">
         <Select v-if="datos && !datos.alcance.fija && datos.empresas.length > 1" v-model="empresa" :options="datos.empresas" option-label="nombre" option-value="id" show-clear placeholder="Todas las empresas" size="small" class="w-full @md:w-52" aria-label="Empresa" />
@@ -44,9 +43,7 @@
         <!-- <div class="section-header text-sm mt-[0.5rem] mb-[0.3rem] md:text-[1.5rem] lg:mt-[1.5rem] pb-[5px] lg:mb-[1rem]">Alerta</div>
         <AlertasTablero :alertas="datos.alertas" /> -->
 
-        <!-- <div class="section-header text-sm mt-[0.5rem] mb-[0.3rem] md:text-[1.5rem] lg:mt-[1.5rem] pb-[5px] lg:mb-[1rem">Venta</div> -->
 
-        <!-- <div class="section-header text-sm mt-[0.5rem] mb-[0.3rem] md:text-[1.5rem] lg:mt-[1.5rem] pb-[5px] lg:mb-[1rem">Cananles de Ventas por estación, agencia y página.</div> -->
         <div class="fila-2-1 mt-[0.5rem] mb-[0.3rem] md:text-[1.5rem] lg:mt-[1.5rem] pb-[5px]">
           <TableroPanel titulo="Ingresos diario por canales de venta" icono="show-chart">
             <TendenciaVentas :serie="datos.serie" :por-hora="datos.periodo.porHora" :rotulo-anterior="datos.periodo.rotuloAnterior" />
@@ -261,9 +258,6 @@ onBeforeUnmount(() => {
   padding: 1.5rem;
   background-color: var(--p-surface-50);
   margin-top: 2rem;
-  /*border: none;*/
-  /*var(--border);*/
-  /*box-shadow: var(--shadow);  */
   /*border-0! shadow-md mt-10!*/
 }
 /*.shadow-md {
@@ -317,10 +311,7 @@ onBeforeUnmount(() => {
   border-bottom: var(--border);
   border-color: var(--p-surface-300);
   display: flex;
-  /*font-weight: 400px;*/
   width: 40%;
   color: var(--p-surface-500);
-  /*justify-content: end;*/
-  /*margin-left: auto;*/
 }
 </style>

@@ -12,15 +12,6 @@
       <span v-else>{{ ph }}</span>
     </template>
 
-    <!-- <template #header>
-      <div v-if="!filtro && grupos.length > 1" class="flex justify-end border-b border-surface-200 px-2 py-1">
-        <button type="button" class="inline-flex cursor-pointer items-center gap-1 border-0 bg-transparent px-1 py-0.5 text-xs font-medium text-primary" @click="alternarTodos">
-          <icon :name="todosAbiertos ? 'keyboard-double-arrow-up' : 'keyboard-double-arrow-down'" size="0.95rem" />
-          {{ todosAbiertos ? "Contraer todo" : "Expandir todo" }}
-        </button>
-      </div>
-    </template> -->
-
     <template #optiongroup="{ option }">
       <button v-if="!filtro" type="button" class="flex w-full cursor-pointer items-center gap-1.5 border-0 bg-transparent p-0 text-left tracking-wide" :aria-expanded="abiertos.has(option.departamento)" @click.stop="alternar(option.departamento)">
         <icon :name="abiertos.has(option.departamento) ? 'keyboard-arrow-down' : 'chevron-right'" size="0.9rem" />
@@ -70,7 +61,6 @@ const nombrePorId = computed(() => new Map(props.estaciones.map((e) => [e.id, e.
  */
 const estiloEtiqueta = computed(() => (props.modelValue != null && nombrePorId.value.has(props.modelValue) ? { color: "var(--p-text-color)" } : undefined));
 const totales = computed(() => new Map(grupos.value.map((g) => [g.departamento, g.estaciones.length] as const)));
-const todosAbiertos = computed(() => grupos.value.every((g) => abiertos.value.has(g.departamento)));
 /** Sin búsqueda: solo las estaciones de los departamentos abiertos. Buscando: todas. */
 const visibles = computed(() => (filtro.value ? grupos.value : grupos.value.map((g) => (abiertos.value.has(g.departamento) ? g : { ...g, estaciones: [] }))));
 
@@ -96,9 +86,5 @@ function alternar(departamento: string) {
   const s = new Set(abiertos.value);
   if (!s.delete(departamento)) s.add(departamento);
   abiertos.value = s;
-}
-
-function alternarTodos() {
-  abiertos.value = todosAbiertos.value ? new Set() : new Set(grupos.value.map((g) => g.departamento));
 }
 </script>

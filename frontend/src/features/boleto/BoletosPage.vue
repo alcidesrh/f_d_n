@@ -490,7 +490,6 @@ onMounted(async () => {
 }
 .campo > span:first-child,
 .campo > label:first-child {
-  /*font-size: 0.85rem;*/
   font-weight: 500;
   color: var(--p-text-muted-color);
 }

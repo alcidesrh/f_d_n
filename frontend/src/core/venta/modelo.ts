@@ -62,12 +62,6 @@ export function clasesDelTrayecto(detalle: Pick<SalidaDetalle, "trayectos">, tra
   return detalle.trayectos.find((t) => t.id === trayectoId)?.clases ?? [];
 }
 
-/** Quita de la selección los asientos de clases sin tarifa en el tramo. */
-export function soloVendibles(seleccion: readonly number[], asientos: readonly AsientoCroquis[], clases: readonly ClaseAsiento[]): number[] {
-  const vendibles = new Set(asientos.filter((a) => clases.includes(a.clase)).map((a) => a.id));
-  return seleccion.filter((id) => vendibles.has(id));
-}
-
 /** Agrega o quita un asiento de la selección (respetando un máximo). */
 export function alternar(seleccion: readonly number[], id: number, maximo = Infinity): number[] {
   if (seleccion.includes(id)) return seleccion.filter((x) => x !== id);

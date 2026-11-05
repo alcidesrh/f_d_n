@@ -2,8 +2,6 @@
 import { http, HttpError, request } from '@/core/http'
 import type { CambiosBitacora, ConfiguracionBitacora, DiaBitacora, DiaDeUsuario, UsuarioBuscado } from './types'
 
-export const CAPACIDAD_CONSULTA = 'bitacora.usuarios'
-export const CAPACIDAD_CONFIGURACION = 'bitacora.configurar'
 const BASE = '/bitacora-diaria'
 
 export const fetchDia = (fecha: string) => http.get<DiaBitacora>(`${BASE}/dia?fecha=${encodeURIComponent(fecha)}`)

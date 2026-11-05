@@ -33,7 +33,6 @@
   flex: 1;
   min-width: 0;
   overflow-y: auto;
-  /*background: color-mix(in hsl, var(--p-surface-50) 20%, var(--p-surface-50) 30%);*/
   background: var(--bg2);
   container-type: inline-size;
   container-name: main;
@@ -58,15 +57,12 @@
   padding-inline: max(1rem, calc(var(--page-gutter)));
   padding-top: 1rem;
   padding-bottom: max(calc(var(--page-gutter)), 1.5rem);
-  /*max-width: var(--content-max);*/
-  /*margin: 0 auto;*/
 }
 .page-head {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
-  /* margin-bottom: 22px; */
   flex-wrap: wrap;
   margin-bottom: 1rem;
   min-width: 0;

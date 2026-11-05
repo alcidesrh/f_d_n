@@ -32,8 +32,6 @@ export const programar = (p: ProgramacionPayload) => http.post<ResultadoPrograma
 
 export const fetchEsquemas = () => http.get<{ items: Esquema[] }>(`${BASE}/esquemas`)
 
-export const crearEsquema = (e: EsquemaPayload) => http.post<Esquema>(`${BASE}/esquemas`, e)
-
 export const guardarEsquema = (id: number, e: EsquemaPayload) => request<Esquema>(`${BASE}/esquemas/${id}`, { method: 'PUT', body: e })
 
 export const eliminarEsquema = (id: number) => http.delete<{ id: number }>(`${BASE}/esquemas/${id}`)

@@ -6,10 +6,6 @@
 -->
 <template>
   <div class="@container flex flex-col gap-4">
-    <!-- <Toolbar>
-      <template #start><PageHead /></template>
-    </Toolbar> -->
-
     <div class="grid gap-4 @4xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] @4xl:items-start">
       <section class="superficie md:p-5 flex flex-col gap-5" aria-labelledby="reporte-parametros">
         <header class="flex items-start gap-3">

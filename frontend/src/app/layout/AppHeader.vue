@@ -3,22 +3,18 @@
     <div class="left-header">
       <div class="flex btn-siderbar-header">
         <button type="button" class="icon-btn" aria-label="Menú de navegación" :aria-expanded="ui.isMobile ? sidebarStore.drawer : sidebarStore.mode !== 'close'" @click="sidebarStore.toggle()">
-          <!-- <icon name="menu" size="35px" :weight="300" color="text-surface-500" /> -->
           <icon name="menu" size="30" :weight="300" color="text-surface-500" />
         </button>
         <Divider layout="vertical" class="mx-[5px]!" />
       </div>
       <div class="brand">
-        <!-- <div style="min-width: 0; position: relative"> -->
         <div class="header-clock" v-html="currentTime"></div>
         <div class="brand-name">FDN</div>
-        <!-- </div> -->
       </div>
     </div>
 
     <div class="header-crumbs">
       <nav class="crumbs" aria-label="Breadcrumb">
-        <!-- <icon v-if="i > 0" name="chevron-right" size=".8rem"></icon> -->
         <router-link :to="'/'" class="crumb-link"> Inicio </router-link>
         <icon name="chevron-right" size=".8rem"></icon>
         <template v-for="(crumb, i) in navigationHistory.entries" :key="crumb.path + i">

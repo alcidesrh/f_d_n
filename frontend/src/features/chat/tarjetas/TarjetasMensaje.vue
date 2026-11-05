@@ -66,8 +66,6 @@ const avance = (adjuntos: Adjunto[]) => adjuntos.map((a) => (a.estado === "ok" ?
   border-radius: 0.75rem;
   color: var(--p-surface-800);
   background: var(--p-surface-50);
-  /*background: var(--p-content-background);*/
-  /*border: 1px solid var(--p-surface-300); */
   box-shadow: var(--shadow-sm);
 }
 .grupo__cabeza {
@@ -78,7 +76,6 @@ const avance = (adjuntos: Adjunto[]) => adjuntos.map((a) => (a.estado === "ok" ?
   padding: 0.55rem 0.6rem 0.55rem 0.65rem;
   text-align: left;
   cursor: pointer;
-  /*border-bottom: 1px solid var(--p-surface-300);*/
   &:hover {
     background: var(--p-surface-50);
   }
@@ -139,6 +136,5 @@ const avance = (adjuntos: Adjunto[]) => adjuntos.map((a) => (a.estado === "ok" ?
 .grupo__cuerpo :deep(.tarjeta) {
   border-color: var(--p-surface-100);
   background: var(--p-surface-0);
-  /*var(--p-surface-50);*/
 }
 </style>

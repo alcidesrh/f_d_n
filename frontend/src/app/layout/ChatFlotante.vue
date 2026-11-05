@@ -32,7 +32,6 @@ function invocarChat() {
 <style>
 .chat-flotante {
   background: var(--p-surface-0);
-  /*border: 1px solid var(--p-surface-300);*/
   color: var(--p-primary-contrast-color);
   box-shadow: 1px 1px 7px 1px var(--p-surface-500);
 }

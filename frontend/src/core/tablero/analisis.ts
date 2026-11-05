@@ -1,5 +1,4 @@
 /** Lecturas derivadas del tablero (lo que el gerente debería notar). Puro (con tests). */
-import { OCUPACION_BAJA, OCUPACION_SATURADA } from './formato'
 import type { CeldaDemanda, DiaAnticipado, RutaTablero } from './types'
 
 /** Franja más llena y más vacía del mapa de demanda, con al menos `minSalidas` salidas para no juzgar por una. */
@@ -61,6 +60,3 @@ export function ritmoAnticipada(dias: DiaAnticipado[]): { vendida: number; seman
     dias: comparables.length,
   }
 }
-
-export const esSaturada = (o: number | null) => o !== null && o >= OCUPACION_SATURADA
-export const esBaja = (o: number | null) => o !== null && o < OCUPACION_BAJA

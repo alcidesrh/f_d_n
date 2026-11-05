@@ -8,7 +8,6 @@ import type {
   ElementoCroquis,
   Posicion,
   Rejilla,
-  SenalCroquis,
 } from './types'
 
 export const PLANTAS_MAX = 2
@@ -20,9 +19,6 @@ export const COLUMNAS_POR_DEFECTO = 5
 
 export const esAsiento = (elemento: ElementoCroquis): elemento is AsientoCroquis =>
   elemento.tipo === 'asiento'
-
-export const esSenal = (elemento: ElementoCroquis): elemento is SenalCroquis =>
-  elemento.tipo !== 'asiento'
 
 /** Clave de una celda dentro del bus: `planta:fila:columna`. */
 export const celda = (p: Posicion) => `${p.planta}:${p.fila}:${p.columna}`
@@ -188,20 +184,3 @@ export function validar(elementos: readonly ElementoCroquis[]): Problema[] {
 
 export const tieneErrores = (problemas: readonly Problema[]) =>
   problemas.some((p) => p.nivel === 'error')
-
-/** El mismo croquis sin ids (plantilla o copia para otro bus). */
-export function sinIds(elementos: readonly ElementoCroquis[]): ElementoCroquis[] {
-  return elementos.map((e) =>
-    esAsiento(e)
-      ? {
-          tipo: 'asiento',
-          id: null,
-          numero: e.numero,
-          clase: e.clase,
-          planta: e.planta,
-          fila: e.fila,
-          columna: e.columna,
-        }
-      : { tipo: e.tipo, id: null, planta: e.planta, fila: e.fila, columna: e.columna },
-  )
-}

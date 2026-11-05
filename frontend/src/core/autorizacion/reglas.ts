@@ -37,21 +37,6 @@ function esAutorizable(a: unknown): a is Autorizable {
   return typeof x.capacidad === 'string' && typeof x.dispensa === 'string' && (x.sujeto === 'boletos' || x.sujeto === 'salida') && Array.isArray(x.ids) && x.ids.length > 0
 }
 
-const OPERACIONES: Record<string, string> = {
-  'boleto.anular': 'anular boletos',
-  'boleto.reasignar': 'reasignar boletos',
-  'venta.cortesia': 'emitir cortesías',
-}
-
-/**
- * Lo que se pide sobre boletos sin haber intentado la operación (p. ej. sin
- * el permiso el botón ofrece pedirla directo).
- */
-export function autorizableBoletos(capacidad: 'boleto.anular' | 'boleto.reasignar', dispensa: Dispensa, ids: number[]): Autorizable {
-  const unicos = [...new Set(ids)].sort((a, b) => a - b)
-  return { capacidad, operacion: OPERACIONES[capacidad] ?? capacidad, dispensa, dispensaNombre: DISPENSAS[dispensa].etiqueta, sujeto: 'boletos', ids: unicos, cantidad: unicos.length }
-}
-
 /** «Anular 2 boletos», «Emitir 1 cortesía en la salida 1230». */
 export function queSePide(a: Pick<Autorizable, 'capacidad' | 'operacion' | 'sujeto' | 'ids' | 'cantidad'>): string {
   const n = a.cantidad
@@ -72,9 +57,4 @@ export function vigencia(a: Pick<Autorizacion, 'estado' | 'venceEn'>, ahora = ne
   const min = Math.round((new Date(a.venceEn).getTime() - ahora.getTime()) / 60_000)
   if (min <= 0) return 'venció'
   return min >= 60 ? `vence en ${Math.round(min / 60)} h` : `vence en ${min} min`
-}
-
-/** ¿Este pase aprobado sirve para operar esos boletos? (para avisar que ya puede repetir la operación) */
-export function cubreBoletos(a: Pick<Autorizacion, 'estado' | 'capacidad' | 'sujeto' | 'ids'>, capacidad: string, ids: number[]): boolean {
-  return a.estado === 'aprobada' && a.capacidad === capacidad && a.sujeto === 'boletos' && ids.every((id) => a.ids.includes(id))
 }

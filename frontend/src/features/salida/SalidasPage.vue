@@ -10,9 +10,6 @@
 -->
 <template>
   <div class="@container flex flex-col gap-4 mt-5 relative">
-    <!-- <Toolbar> -->
-    <!-- <template #start><PageHead /></template> -->
-    <!-- <template #end> -->
     <!-- Contenido angosto: en su propia fila (flotando taparía los chips de estado). -->
     <div class="flex flex-wrap justify-end gap-2 @3xl:absolute @3xl:right-0">
       <RouterLink :to="{ name: 'salidas-calendario' }" class="no-underline">
@@ -26,8 +23,6 @@
         ></Button>
       </RouterLink>
     </div>
-    <!-- </template> -->
-    <!-- </Toolbar> -->
 
     <section class="panel flex flex-col gap-3">
       <div class="flex flex-wrap items-center gap-2">

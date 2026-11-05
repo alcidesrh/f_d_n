@@ -18,7 +18,6 @@
           </div>
         </Transition>
       </section>
-      <!-- <divider class="my-4! before:border-surface-300!"/> -->
     </div>
 
     <slot v-if="!menus.length" name="empty" />
@@ -74,8 +73,6 @@ function onLeave(el: Element, done: () => void) {
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1.25rem;
-  /*background-color: white;*/
-  /*var(--p-surface-50);*/
   cursor: pointer;
   text-align: start;
   font-size: 0.8rem;

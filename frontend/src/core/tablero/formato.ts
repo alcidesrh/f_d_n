@@ -128,12 +128,3 @@ export function nivelOcupacion(o: number | null | undefined): NivelOcupacion | n
   if (o === null || o === undefined) return null
   return o >= OCUPACION_SATURADA ? 'alta' : o < OCUPACION_BAJA ? 'baja' : 'media'
 }
-
-/** Minutos que faltan (negativo si ya pasó) para una salida, legible: `en 25 min`, `hace 10 min`, `en 2 h 05`. */
-export function cuentaRegresiva(fecha: string, ahora: Date): string {
-  const min = Math.round((fechaLocal(fecha).getTime() - ahora.getTime()) / 60000)
-  const abs = Math.abs(min)
-  const t = abs < 60 ? `${abs} min` : `${Math.floor(abs / 60)} h ${String(abs % 60).padStart(2, '0')}`
-  if (abs === 0) return 'ahora'
-  return min > 0 ? `en ${t}` : `hace ${t}`
-}

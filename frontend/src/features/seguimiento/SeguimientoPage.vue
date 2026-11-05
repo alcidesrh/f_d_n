@@ -17,9 +17,6 @@
 -->
 <template>
   <div class="@container flex flex-col gap-4" :class="maximizado ? 'fixed inset-0 z-[900] overflow-auto bg-surface-0 p-3' : ''">
-    <!-- <Toolbar>
-      <template #start><PageHead /></template>
-      <template #end> -->
     <span class="flex items-center gap-2 text-xs text-muted-color ml-auto" aria-live="polite">
       <span class="inline-block size-2 rounded-full" :class="error ? 'bg-red-500' : 'bg-green-500'" />
       <template v-if="actualizado">Actualizado {{ horaDe(actualizado) }}</template>
@@ -29,8 +26,6 @@
         <icon :name="maximizado ? 'fullscreen-exit' : 'fullscreen'" />
       </Button>
     </span>
-    <!-- </template>
-    </Toolbar> -->
 
     <!-- Mismas columnas que mapa + lista: el borde derecho de las empresas es el del mapa. -->
     <section class="panel grid grid-cols-1 gap-3 @4xl:grid-cols-[minmax(0,1fr)_22rem] @4xl:items-end">

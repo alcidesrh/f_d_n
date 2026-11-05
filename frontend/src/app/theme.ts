@@ -161,11 +161,6 @@ export const themeColors = (primaryName: PrimaryColor, surfaceName: SurfacePalet
       colorScheme: {
         surface: surface,
         primary: {
-          // color: "{primary.500}",
-          // colorAccent: "{primary.700}",
-          // contrastColor: "#ffffff",
-          // hoverColor: "{primary.50}",
-          // activeColor: "{primary.700}",
           highlight: "{primary.50}",
           color: "{primary.700}",
           contrastColor: "{primary.50}",
@@ -267,22 +262,7 @@ export const componentsPreset = (): Tokens => {
           },
         },
       },
-      // body: {
-      //   cell: {
-      //     padding: "0 10px",
-      //     sm: {
-      //       padding: "0 10px",
-      //     },
-      //   },
-      // },
       colorScheme: {
-        // body: {
-        //   cell: {
-        //     sm: {
-        //       padding: "10px 0",
-        //     },
-        //   },
-        // },
         row: {
           background: "{surface.0}",
         },

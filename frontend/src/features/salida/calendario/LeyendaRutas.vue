@@ -65,7 +65,6 @@ const visibles = computed(() => (todas.value ? store.rutas : store.rutas.slice(0
 }
 .leyenda__item--activa {
   background: var(--p-surface-100);
-  /*border-color: var(--p-primary-400);*/
   border: 3px dashed var(--p-primary-500);
 }
 .leyenda__color {

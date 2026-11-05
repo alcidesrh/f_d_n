@@ -21,8 +21,6 @@
 
       <div class="bm-bus">
         <span class="bm-bus__glass" aria-hidden="true" />
-        <!-- <span class="bm-bus__mirror bm-bus__mirror--a" aria-hidden="true" />  -->
-        <!-- <span class="bm-bus__mirror bm-bus__mirror--b" aria-hidden="true" /> -->
         <div class="bm-grid" :style="estiloRejilla(planta)">
           <span v-for="columna in pasillos[planta]" :key="`pasillo-${columna}`" class="bm-aisle" :style="estiloPasillo(planta, columna)" aria-hidden="true" />
           <component :is="esBoton(celda.elemento) ? 'button' : 'div'" v-for="celda in celdasDe(planta)" :key="celda.clave" class="bm-cell" :class="claseCelda(celda.elemento)" :style="estiloCelda(planta, celda)" :data-celda="celda.clave" :data-planta="celda.planta" :data-fila="celda.fila" :data-columna="celda.columna" v-bind="atributosCelda(celda.elemento)" @click="onClick(celda, $event)">
@@ -305,34 +303,6 @@ function onClick(celda: CeldaMapa, evento: MouseEvent) {
   height: auto;
   border-radius: calc(var(--bm-cell) * 0.5) calc(var(--bm-cell) * 0.12) calc(var(--bm-cell) * 0.12) calc(var(--bm-cell) * 0.5);
   background: linear-gradient(90deg, var(--bm-glass), transparent 140%);
-}
-.bm-bus__mirror {
-  position: absolute;
-  top: calc(var(--bm-cell) * 0.38);
-  width: calc(var(--bm-cell) * 0.16);
-  height: calc(var(--bm-cell) * 0.46);
-  border-radius: 999px;
-  background: var(--bm-hull-border);
-}
-.bm-bus__mirror--a {
-  left: calc(var(--bm-cell) * -0.2);
-}
-.bm-bus__mirror--b {
-  right: calc(var(--bm-cell) * -0.2);
-}
-.bm--horizontal .bm-bus__mirror {
-  top: auto;
-  left: calc(var(--bm-cell) * 0.38);
-  width: calc(var(--bm-cell) * 0.46);
-  height: calc(var(--bm-cell) * 0.16);
-}
-.bm--horizontal .bm-bus__mirror--a {
-  top: calc(var(--bm-cell) * -0.2);
-  right: auto;
-}
-.bm--horizontal .bm-bus__mirror--b {
-  bottom: calc(var(--bm-cell) * -0.2);
-  right: auto;
 }
 
 /* Rejilla ------------------------------------------------------------------ */

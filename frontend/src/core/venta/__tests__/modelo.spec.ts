@@ -9,7 +9,6 @@ import {
   estadoEnMapa,
   paradasDeBajada,
   paradasDeSubida,
-  soloVendibles,
   subidaPorDefecto,
   trayectoEntre,
 } from '../modelo'
@@ -159,12 +158,6 @@ describe('tarifa por tramo', () => {
     expect(e(asiento(2, 'A'))).toBe('disponible')
     expect(e(asiento(3, 'B'))).toBe('bloqueado')
     expect(e(asiento(1, 'B')), 'lo vendido se sigue viendo vendido').toBe('ocupado')
-  })
-
-  it('al cambiar de tramo se sueltan los asientos que ya no tienen tarifa', () => {
-    const croquis = [asiento(1, 'A'), asiento(2, 'B'), asiento(3, 'A')]
-    expect(soloVendibles([1, 2, 3], croquis, ['A'])).toEqual([1, 3])
-    expect(soloVendibles([1, 2, 3], croquis, [])).toEqual([])
   })
 })
 

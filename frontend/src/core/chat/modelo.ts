@@ -92,8 +92,6 @@ export function coincide(texto: string, busqueda: string): boolean {
   return normalizar(busqueda).split(/\s+/).filter(Boolean).every((p) => t.includes(p))
 }
 
-export const ordenarCanales = (canales: Canal[]) => [...canales].sort((a, b) => b.actividad.localeCompare(a.actividad))
-
 export const totalNoLeidos = (canales: Canal[]) => canales.reduce((n, c) => n + c.noLeidos, 0)
 
 /**

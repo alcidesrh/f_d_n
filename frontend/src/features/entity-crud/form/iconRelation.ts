@@ -91,5 +91,3 @@ export function createIconRelationResolver(gateway: IconGateway) {
     },
   }
 }
-
-export type IconRelationResolver = ReturnType<typeof createIconRelationResolver>

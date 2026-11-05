@@ -18,7 +18,6 @@
     <!-- Sin cobro: una letra además del color (no depender solo del color). -->
     <g v-if="estado === 'cortesia' || estado === 'voucher'" class="seat__marca" :class="[estado]">
       <circle cx="33" cy="9" r="4" class="opascity-70" />
-      <!-- <text x="33" y="7.3">{{ estado === "cortesia" ? "C" : "V" }}</text> -->
     </g>
     <g v-if="estado === 'seleccionado'" class="seat__check">
       <circle cx="33" cy="7" r="6" />
@@ -138,17 +137,6 @@ watch(
   --seat-stroke: var(--bm-sold-agency-stroke);
   --seat-ink: var(--bm-sold-agency-ink);
 }
-.seat--cortesia,
-.seat--voucher {
-  /*--seat-fill: var(--p-surface-100);
-  --seat-stroke: var(--p-surface-400);
-  --seat-ink: var(--p-surface-500);*/
-  /*&:first-child {*/
-  /*& > *:not(.seat__marca) {
-    opacity: 0.7;
-  }*/
-  /*}*/
-}
 .seat__marca {
   & circle {
     fill: var(--p-red-400);
@@ -241,7 +229,6 @@ watch(
 .seat--cortesia,
 .seat--voucher,
 .seat--bloqueado {
-  /*opacity: 0.38;*/
   & > *:not(.seat__marca) {
     opacity: 0.38;
   }

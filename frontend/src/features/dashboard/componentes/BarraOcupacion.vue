@@ -34,7 +34,6 @@ const nivel = computed(() => nivelOcupacion(props.valor));
 .relleno {
   height: 100%;
   border-radius: 999px;
-  /*background: var(--serie-estacion);*/
   background: var(--estado-generico);
 }
 .relleno.baja {

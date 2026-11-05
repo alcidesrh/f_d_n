@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { aQueryCalendario, ahoraEn, horaMinuto, enVentana, filtroCalendarioInicial, leyenda, matriz, nivel, textoOcupacion, tonoRuta, totales, ventana } from '../calendario'
+import { ESTADOS_CALENDARIO, aQueryCalendario, ahoraEn, horaMinuto, leyenda, matriz, nivel, textoOcupacion, tonoRuta, totales, ventana } from '../calendario'
 import type { RutaCalendario, SalidaCalendario } from '../types'
 
 const salida = (id: number, fecha: string, extra: Partial<SalidaCalendario> = {}): SalidaCalendario => ({
@@ -29,7 +29,7 @@ describe('calendario de salidas', () => {
   })
 
   it('arma la query con el rango de la ventana; sin estados pide todos', () => {
-    const f = { ...filtroCalendarioInicial(new Date(2026, 9, 22), 7), empresa: 2 }
+    const f = { fecha: '2026-10-22', dias: 7 as const, estados: [...ESTADOS_CALENDARIO], empresa: 2, ruta: null, bus: null }
     const q = new URLSearchParams(aQueryCalendario(f))
     expect(q.get('desde')).toBe('2026-10-22')
     expect(q.get('hasta')).toBe('2026-10-28')
@@ -39,7 +39,7 @@ describe('calendario de salidas', () => {
   })
 
   it('por defecto deja fuera las anuladas', () => {
-    expect(filtroCalendarioInicial().estados).not.toContain('cancelada')
+    expect(ESTADOS_CALENDARIO).not.toContain('cancelada')
   })
 
   it('muestra asientos o porciento; sin capacidad, los asientos', () => {
@@ -91,10 +91,7 @@ describe('calendario de salidas', () => {
     expect(horaMinuto(new Date(2026, 9, 22, 23, 5).toISOString())).toBe('23:05')
   })
 
-  it('ubica el ahora y sabe si un día cae en la ventana', () => {
+  it('ubica el ahora', () => {
     expect(ahoraEn(new Date(2026, 9, 22, 14, 30))).toEqual({ dia: '2026-10-22', hora: 14, fraccion: 0.5 })
-    expect(enVentana({ fecha: '2026-10-22', dias: 7 }, '2026-10-28')).toBe(true)
-    expect(enVentana({ fecha: '2026-10-22', dias: 7 }, '2026-10-21')).toBe(false)
-    expect(enVentana({ fecha: '2026-10-22', dias: 7 }, '2026-10-29')).toBe(false)
   })
 })

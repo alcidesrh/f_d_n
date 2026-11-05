@@ -11,8 +11,6 @@
 
 export type ClaseAsiento = 'A' | 'B'
 export type TipoSenal = 'chofer' | 'puerta'
-export type TipoElemento = 'asiento' | TipoSenal
-
 export interface Posicion {
   /** 1 = planta baja (o única), 2 = planta alta. */
   planta: number

@@ -5,7 +5,6 @@ import {
   rejillas,
   resumen,
   siguienteNumero,
-  sinIds,
   tieneErrores,
   validar,
 } from '../model'
@@ -112,13 +111,4 @@ describe('validar', () => {
     expect(tieneErrores(validar([asiento(1, 1, 7)]))).toBe(true)
     expect(tieneErrores(validar([asiento(1, 1, 1, { planta: 3 })]))).toBe(true)
   })
-})
-
-it('sinIds quita ids y marcas de venta', () => {
-  const copia = sinIds([
-    asiento(1, 1, 1, { conBoletos: true } as Partial<ElementoCroquis>),
-    bus[0]!,
-  ])
-  expect(copia.every((e) => e.id === null)).toBe(true)
-  expect(copia[0]).not.toHaveProperty('conBoletos')
 })

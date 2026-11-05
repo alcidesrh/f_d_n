@@ -30,10 +30,6 @@ export interface FiltroCalendario {
 /** Por defecto todo menos las anuladas. */
 export const ESTADOS_CALENDARIO: EstadoSalida[] = ["programada", "abordando", "iniciada", "finalizada"];
 
-export function filtroCalendarioInicial(hoy = new Date(), dias: Ventana = 1): FiltroCalendario {
-  return { fecha: aDia(hoy), dias, estados: [...ESTADOS_CALENDARIO], empresa: null, ruta: null, bus: null };
-}
-
 /** Días de las filas (`AAAA-MM-DD`): `dias` desde `fecha`, en orden. */
 export function ventana(fecha: string, dias: number): string[] {
   return Array.from({ length: dias }, (_, i) => sumarDias(fecha, i));
@@ -145,10 +141,5 @@ export function horaMinuto(iso: string): string {
 export const desplazar = (fecha: string, n: number) => sumarDias(fecha, n);
 
 /** ¿`dia` cae en la ventana de `f`? */
-export function enVentana(f: Pick<FiltroCalendario, "fecha" | "dias">, dia: string): boolean {
-  const d = ventana(f.fecha, f.dias);
-  return dia >= d[0]! && dia <= d[d.length - 1]!;
-}
-
 /** Fin de semana (sáb o dom), para atenuar la columna. */
 export const finDeSemana = (dia: string) => [0, 6].includes(deDia(dia).getDay());

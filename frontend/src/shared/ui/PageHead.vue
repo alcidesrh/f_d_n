@@ -1,9 +1,7 @@
 <template>
   <div class="page-head">
     <div class="page-title" v-html="computedTitle"></div>
-    <!-- <p v-if="subtitle" class="page-sub">{{ subtitle }}</p> -->
     <div class="page-actions">
-      <!-- <slot /> -->
     </div>
   </div>
 </template>

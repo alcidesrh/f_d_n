@@ -15,7 +15,6 @@
 }
 
 :root {
-  /*--bg: var(--p-surface-100);*/
   /*--bg2: color-mix(in hsl, var(--p-surface-100) 50%, var(--p-surface-50) 50%);*/
   --bg: var(--p-surface-50);
   --bg2: color-mix(in hsl, var(--p-surface-50) 20%, var(--p-surface-50) 40%);
@@ -74,7 +73,6 @@
 
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
   --transition: 0.3s;
-  /*var(--ease);*/
 }
 
 /* Ancho actual (animado) de cada sidebar. Registradas y SIN herencia a

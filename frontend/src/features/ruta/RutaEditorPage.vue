@@ -233,7 +233,6 @@ onBeforeUnmount(() => observador?.disconnect());
   padding: 0 0.5rem;
   border: 1px solid var(--p-content-border-color);
   border-radius: var(--p-content-border-radius);
-  /*background: var(--p-content-background);*/
 
   background-color: var(--p-surface-100);
 }

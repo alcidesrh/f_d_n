@@ -29,11 +29,9 @@
               </div>
               <Button label="Cancelar reasignación" severity="secondary" size="small" outlined @click="store.cancelarReasignacion()" />
             </div>
-            <!-- <p class="m-0 text-sm text-muted-color">Elija la salida y el asiento nuevo de cada boleto, con el mismo precio. No se cobra ni se factura: el boleto original queda reasignado y su asiento libre.</p> -->
             <ul class="m-0 flex list-none flex-col gap-1.5 p-0">
               <li v-for="p in store.parejas" :key="p.boleto.id" class="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3">
                 <span class="min-w-0">
-                  <!-- · {{ p.boleto.pasajero ?? "sin pasajero" }} -->
                   <span class="block truncate text-muted-color">{{ fechaHoraCorta(p.boleto.salida.fecha) }} · {{ p.boleto.precio?.texto }}</span>
                   <b>Asiento #{{ p.boleto.asiento.numero }}</b>
                 </span>
@@ -106,9 +104,6 @@
         <!-- Croquis + cobro (en móvil, entre el viaje y el cliente) -->
         <aside ref="croquis" class="panel flex min-w-0 flex-1 scroll-mt-20 flex-col gap-3 @3xl:sticky @3xl:top-4 @3xl:col-start-2 @3xl:row-span-2 @3xl:row-start-1">
           <Transition name="croquis" mode="out-in" @enter="alMostrarCroquis">
-            <!-- <div v-if="store.cargandoDetalle" key="cargando">
-              <Skeleton height="20rem" />
-            </div> -->
             <div v-if="store.detalle || store.cargandoDetalle" :key="`salida-${store.salidaId}`" class="flex flex-col gap-5 tex-sm">
               <div class="flex items-start justify-center gap-3 overflow-x-auto">
                 <BusMap :elementos="store.detalle?.croquis ?? []" :estado="store.estadoAsiento" interactivo inspeccionable tamano="md" class="justify-center" @asiento="(a) => a.id != null && store.alternarAsiento(a.id)" @ocupado="verOcupado" />
@@ -530,9 +525,6 @@ const nombreParada = (id: number | null) => store.detalle?.paradas.find((p) => p
   }
 }
 .panel {
-  /*background: var(--p-content-background);*/
-  /*border: 1px solid var(--p-content-border-color);*/
-  /*border-radius: var(--p-content-border-radius, 0.75rem);*/
   padding: 1rem;
 }
 /* Cliente: se distingue del resto con un acento del color primario. */

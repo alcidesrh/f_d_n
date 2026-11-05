@@ -339,10 +339,8 @@ defineExpose({ centrar });
   outline-offset: 1px;
 }
 .chip__hora {
-  /*font-size: 0.62rem;*/
   font-weight: 600;
 
-  /*opacity: 0.7;*/
 }
 .chip__valor {
   font-weight: 600;

@@ -22,17 +22,13 @@
   &.left {
     --sb-open: var(--sb-left-open);
     left: 0;
-    /*border-right: var(--border);*/
     border-top-right-radius: 6px;
-    /*box-shadow: var(--shadow);*/
   }
 
   &.right {
     --sb-open: var(--sb-right-open);
-    /*border-left: var(--border);*/
     border-top-left-radius: 6px;
     right: 0;
-    /*box-shadow: var(--shadow-r);*/
   }
 
   @variant lg {

@@ -12,7 +12,6 @@
   height: var(--header-h);
   z-index: 50;
   background: var(--bg2);
-  /*border-bottom: var(--border);*/
   display: flex;
   align-items: center;
   gap: 0.25rem;
@@ -25,7 +24,6 @@
 }
 /* Sombra solo cuando el contenido ya se desplazó por debajo (`AppShell`, clase en `.shell`). */
 .shell--desplazado .app-header {
-  /*border-bottom: var(--border);*/
   box-shadow: 4px 0px 10px rgba(0, 0, 0, 0.19);
 }
 .right-header {
@@ -34,8 +32,6 @@
   flex: 0 1 auto;
   min-width: 0;
   margin-left: auto;
-  /*justify-content: center;*/
-  /*justify-items: center;*/
 }
 .left-header {
   display: flex;
@@ -61,17 +57,6 @@
   @variant md {
     display: grid;
   }
-}
-.brand-mark {
-  width: 36px;
-  height: 36px;
-  flex: 0 0 auto;
-  border-radius: 10px;
-  background: var(--p-primary-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--on-primary);
 }
 /* Reloj: solo con espacio (md+); en el teléfono la cabecera va a las acciones. */
 .header-clock {
@@ -103,7 +88,6 @@
 
   letter-spacing: 1.8rem;
   transform: scaleY(2.3);
-  /*transform: matrix(0, 1, 1, 0, 0, 0);*/
 }
 
 .btn-siderbar-header {
@@ -317,50 +301,6 @@
   padding: 0.75rem;
   border-bottom: 1px solid var(--p-content-border-color);
 }
-.header-search {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--bg-alt);
-  border: var(--border);
-  border-radius: 10px;
-  padding: 0 10px;
-  height: 38px;
-  width: 200px;
-  color: var(--text-muted);
-  transition: width 0.2s var(--ease);
-}
-.header-search input {
-  background: transparent;
-  border: none;
-  outline: none;
-  color: var(--text);
-  font-size: 13px;
-  width: 100%;
-}
-.badge-dot {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--c-danger);
-  border: 2px solid var(--card);
-}
-.avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: var(--p-primary-color-soft);
-  color: var(--p-primary-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 13px;
-  font-family: "Space Grotesk", sans-serif;
-}
 .header-user {
   display: flex;
   align-items: center;
@@ -371,19 +311,6 @@
 }
 .header-user:hover {
   background: var(--hover);
-}
-.header-user .who {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.2;
-  text-align: left;
-}
-.header-user .who b {
-  font-size: 13px;
-}
-.header-user .who span {
-  font-size: 11px;
-  color: var(--text-muted);
 }
 
 /* Mensajes: contador de no leídos sobre el ícono del chat. */

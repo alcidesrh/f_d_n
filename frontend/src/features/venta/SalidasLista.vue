@@ -221,7 +221,6 @@ const precioCorto = (p: Importe | null) => (p ? p.texto.replace(/[.,]00$/, "") :
   text-align: center;
   font-size: 0.9125rem;
   color: var(--p-text-muted-color);
-  /*font-weight: 500;*/
   font-variant-numeric: tabular-nums;
   position: absolute;
   left: 50%;

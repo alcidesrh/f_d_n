@@ -14,7 +14,6 @@ import {
   useFormKitInput,
   normalizeOptions,
   resolveOptions,
-  toScalarArray,
 } from '@/shared/formkit/useFormKitInput'
 
 defineOptions({ name: 'FkTransferList' })
