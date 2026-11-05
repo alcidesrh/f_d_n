@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { extremosDemanda, horasDemanda, resumenRutas, ritmoAnticipada } from '../analisis'
+import { extremosDemanda, horasDemanda, resumenRutas } from '../analisis'
 import type { CeldaDemanda, RutaTablero } from '../types'
 
 const celda = (dia: number, hora: number, ocupacion: number | null, salidas = 3): CeldaDemanda => ({ dia, hora, salidas, ocupacion, boletos: 0 })
@@ -23,16 +23,5 @@ describe('análisis del tablero', () => {
   it('resumen de rutas: señales y concentración', () => {
     const r = resumenRutas([ruta(1, 700), ruta(2, 200, 'saturada'), ruta(3, 60, 'baja'), ruta(4, 40, 'baja')])
     expect(r).toEqual({ saturadas: 1, bajas: 2, ingresoBajas: 0.1, rutas80: 2 })
-  })
-
-  it('ritmo de venta anticipada', () => {
-    const r = ritmoAnticipada([
-      { dia: '2026-10-13', salidas: 2, asientos: 80, boletos: 20, ocupacion: 0.2, semanaAnterior: 0.6 },
-      { dia: '2026-10-14', salidas: 2, asientos: 80, boletos: 10, ocupacion: 0.1, semanaAnterior: 0.4 },
-      { dia: '2026-10-15', salidas: 0, asientos: 0, boletos: 0, ocupacion: null, semanaAnterior: 0.5 },
-    ])
-    expect(r?.vendida).toBeCloseTo(0.15)
-    expect(r).toMatchObject({ semanaAnterior: 0.5, dias: 2 })
-    expect(ritmoAnticipada([])).toBeNull()
   })
 })

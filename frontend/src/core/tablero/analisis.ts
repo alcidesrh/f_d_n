@@ -1,5 +1,5 @@
 /** Lecturas derivadas del tablero (lo que el gerente debería notar). Puro (con tests). */
-import type { CeldaDemanda, DiaAnticipado, RutaTablero } from './types'
+import type { CeldaDemanda, RutaTablero } from './types'
 
 /** Franja más llena y más vacía del mapa de demanda, con al menos `minSalidas` salidas para no juzgar por una. */
 export function extremosDemanda(celdas: CeldaDemanda[], minSalidas = 2): { llena: CeldaDemanda | null; vacia: CeldaDemanda | null } {
@@ -42,21 +42,5 @@ export function resumenRutas(rutas: RutaTablero[]): ResumenRutas {
     bajas: bajas.length,
     ingresoBajas: total > 0 ? bajas.reduce((s, r) => s + r.ingresos, 0) / total : 0,
     rutas80,
-  }
-}
-
-/**
- * Cómo va la venta de los próximos días contra cómo terminó la semana
- * anterior: la ocupación ya vendida de los días con salidas y su promedio
- * final. Solo compara días que tienen ambos datos.
- */
-export function ritmoAnticipada(dias: DiaAnticipado[]): { vendida: number; semanaAnterior: number; dias: number } | null {
-  const comparables = dias.filter((d) => d.ocupacion !== null && d.semanaAnterior !== null)
-  if (!comparables.length) return null
-  const prom = (xs: number[]) => xs.reduce((s, x) => s + x, 0) / xs.length
-  return {
-    vendida: prom(comparables.map((d) => d.ocupacion!)),
-    semanaAnterior: prom(comparables.map((d) => d.semanaAnterior!)),
-    dias: comparables.length,
   }
 }
