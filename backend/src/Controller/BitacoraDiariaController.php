@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Acceso\Capacidad;
 use App\Actividad\ConsultaBitacoraDiaria;
 use App\Actividad\GestionBitacora;
+use App\Entity\Base\PersonaBase;
 use App\Entity\Usuario;
 use App\Http\Parametros;
 use Doctrine\ORM\EntityManagerInterface;
@@ -79,17 +80,21 @@ final class BitacoraDiariaController extends AbstractController
         $this->denyAccessUnlessGranted(Capacidad::BITACORA_CONFIGURAR->value);
         $q = Parametros::texto($request->query->get("q"), 60) ?? "";
         $filas = $this->em->getConnection()->fetchAllAssociative(
-            "SELECT id, username, full_name FROM usuario
-              WHERE activo = true AND (:q = '' OR username ILIKE :patron OR full_name ILIKE :patron)
-              ORDER BY coalesce(full_name, username) LIMIT 20",
+            "SELECT id, username, nombre, apellido FROM usuario
+              WHERE activo = true AND (:q = '' OR username ILIKE :patron OR nombre ILIKE :patron OR apellido ILIKE :patron)
+              ORDER BY nombre, username LIMIT 20",
             ["q" => $q, "patron" => "%" . addcslashes($q, "%_\\") . "%"],
         );
 
-        return $this->json(array_map(static fn(array $f) => [
-            "id" => (int) $f["id"],
-            "nombre" => (string) ($f["full_name"] ?: $f["username"]),
-            "username" => (string) $f["username"],
-        ], $filas));
+        return $this->json(array_map(static function (array $f): array {
+            $completo = PersonaBase::nombreCompletoDe($f["nombre"], $f["apellido"]);
+
+            return [
+                "id" => (int) $f["id"],
+                "nombre" => $completo !== "" ? $completo : (string) $f["username"],
+                "username" => (string) $f["username"],
+            ];
+        }, $filas));
     }
 
     private function fecha(Request $request): \DateTimeImmutable

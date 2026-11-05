@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actividad;
 
 use App\Bitacora\TipoRegistro;
+use App\Entity\Base\PersonaBase;
 use Doctrine\DBAL\Connection;
 use Psr\Clock\ClockInterface;
 
@@ -197,13 +198,14 @@ final class ConsultaBitacoraDiaria
             return [];
         }
         $filas = $this->db->fetchAllAssociative(
-            "SELECT id, username, full_name FROM usuario WHERE id IN (?)",
+            "SELECT id, username, nombre, apellido FROM usuario WHERE id IN (?)",
             [array_values(array_unique($ids))],
             [\Doctrine\DBAL\ArrayParameterType::INTEGER],
         );
         $nombres = [];
         foreach ($filas as $f) {
-            $nombres[(int) $f["id"]] = ["username" => $f["username"], "nombre" => $f["full_name"] ?: $f["username"]];
+            $completo = PersonaBase::nombreCompletoDe($f["nombre"], $f["apellido"]);
+            $nombres[(int) $f["id"]] = ["username" => $f["username"], "nombre" => $completo !== "" ? $completo : $f["username"]];
         }
 
         return $nombres;
