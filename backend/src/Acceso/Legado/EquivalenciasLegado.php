@@ -15,6 +15,10 @@ namespace App\Acceso\Legado;
  * migración; aprueban autorizaciones (ADR-040) los que lo hacían en el legado; `ROLE_USER` (el que el
  * legado daba a todos) no se migra: en el modelo nuevo no hay rol base; `ROLE_NO_VENDER_VOUCHER` no
  * concede nada (era una negación: el modelo nuevo no las tiene).
+ *
+ * El legado apilaba un rol por privilegio; aquí un rol es un puesto (ADR-052):
+ * los que son el mismo puesto se fusionan (`FUSIONES`) y los que solo repetían
+ * parte de otro se quitan a quien ya tiene ese otro (`ABSORBIDOS`).
  */
 final class EquivalenciasLegado
 {
@@ -24,6 +28,18 @@ final class EquivalenciasLegado
     public const BASE = 'ROLE_USER';
     /** Lo que `ROLE_ADMIN` no tiene del catálogo. */
     public const ADMIN_EXCLUYE = ['migracion.ejecutar'];
+    /** Era una negación: no concede nada y no se migra. */
+    public const SIN_EFECTO = 'ROLE_NO_VENDER_VOUCHER';
+
+    /** @var array<string, string> rol del legado => el puesto en que quedó (mismas capacidades) */
+    public const FUSIONES = [
+        'ROLE_CHECK_BOLETO_WEB' => 'ROLE_CHECK_BOLETO',
+        'ROLE_CHECK_BOLETO_MOVIL' => 'ROLE_CHECK_BOLETO',
+        'ROLE_ENTREGA_MULTIPLE_ENCOMIENDA' => 'ROLE_RECEPTOR_ENCOMIENDAS',
+    ];
+
+    /** Sin puesto propio: lo que dan ya viene en otros. El rol sigue solo si a alguien no se lo cubre otro. */
+    public const ABSORBIDOS = ['ROLE_ADMIN_REIMPRIMIR_FACTURA', 'ROLE_EMISOR_CORTESIA', 'ROLE_SUPERVISOR_BOLETO_VOUCHER'];
 
     /** @var array<string, array{0: bool, 1: list<string>}> rol => [por estación, capacidades] */
     public const ROLES = [
@@ -57,15 +73,12 @@ final class EquivalenciasLegado
         'ROLE_ALQUILER' => [false, ['bus.ver', 'salida.ver']],
         'ROLE_ASIGNADOR_BUSES_PILOTOS' => [false, ['salida.ver', 'salida.crear', 'salida.editar', 'bus.ver', 'bus.editar', 'piloto.ver']],
         'ROLE_AUTORIZADOR' => [true, ['venta.cortesia', 'boleto.ver', 'autorizacion.aprobar']],
-        'ROLE_CHECK_BOLETO_MOVIL' => [true, ['boleto.chequear', 'salida.ver']],
-        'ROLE_CHECK_BOLETO_WEB' => [true, ['boleto.chequear', 'salida.ver']],
+        'ROLE_CHECK_BOLETO' => [true, ['boleto.chequear', 'salida.ver']],
         'ROLE_EMISOR_CORTESIA' => [true, ['venta.vender', 'venta.cortesia']],
         'ROLE_ENCOMIENDA_REGISTRAR_ESPECIAL' => [true, ['encomienda.ver', 'encomienda.registrar', 'encomienda.embarcar', 'encomienda.entregar', 'encomienda.especiales']],
-        'ROLE_ENTREGA_MULTIPLE_ENCOMIENDA' => [true, ['encomienda.ver', 'encomienda.registrar', 'encomienda.embarcar', 'encomienda.entregar']],
         'ROLE_INSPECTOR_BOLETO' => [false, ['boleto.ver', 'salida.ver']],
         'ROLE_INSPECTOR_ENCOMIENDA' => [false, ['encomienda.ver']],
         'ROLE_MANIFIESTO_ESPECIAL' => [false, ['salida.ver']],
-        'ROLE_NO_VENDER_VOUCHER' => [false, []],
         'ROLE_PROPIETARIO' => [false, ['reporte.ventas', 'reporte.encomiendas', 'agencia.depositar', 'agencia.acreditar', 'salida.ver', 'boleto.ver', 'encomienda.ver', 'bitacora.ver', 'autorizacion.aprobar']],
         'ROLE_REASIGNACION' => [true, ['boleto.ver', 'boleto.reasignar']],
         'ROLE_RECEPTOR_ENCOMIENDAS' => [true, ['encomienda.ver', 'encomienda.registrar', 'encomienda.embarcar', 'encomienda.entregar']],
@@ -84,6 +97,12 @@ final class EquivalenciasLegado
         'ROLE_SUPERVISOR_PORTAL' => [false, ['pagina.administrar', 'boleto.ver']],
         'ROLE_VENDEDOR_BOLETOS' => [true, ['venta.vender', 'boleto.ver']],
     ];
+
+    /** El rol del modelo nuevo para uno del legado; null si no se migra. */
+    public static function puesto(string $rol): ?string
+    {
+        return $rol === self::BASE || $rol === self::SIN_EFECTO ? null : (self::FUSIONES[$rol] ?? $rol);
+    }
 
     /**
      * Capacidades del rol (con el catálogo para `ROLE_ADMIN`); null si es el

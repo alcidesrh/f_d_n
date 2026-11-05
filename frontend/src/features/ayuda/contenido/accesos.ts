@@ -257,7 +257,7 @@ export const guiasAccesos: Guia[] = [
       },
       {
         antes: 'Los mismos roles (ROLE_VENDEDOR_BOLETOS, ROLE_SUPERVISOR_BOLETO…)',
-        ahora: 'Se conservan con su nombre; lo que concede cada uno se ve en la pantalla Roles',
+        ahora: 'Se conservan, salvo los que repetían a otro, que se unieron; lo que concede cada uno se ve en la pantalla Roles',
       },
       {
         antes: 'La estación fija del usuario',

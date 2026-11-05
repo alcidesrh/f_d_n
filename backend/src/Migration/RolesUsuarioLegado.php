@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Migration;
 
+use App\Acceso\Ambito;
 use App\Acceso\Catalogo\Catalogo;
+use App\Acceso\Concesion;
+use App\Acceso\Legado\ConsolidacionRoles;
 use App\Acceso\Legado\EquivalenciasLegado;
 use Doctrine\DBAL\Connection;
 
@@ -16,7 +19,8 @@ use Doctrine\DBAL\Connection;
  * estación (`EquivalenciasLegado::porEstacion`), sus estaciones
  * (`custom_user.estacion_id` y `custom_user_estacion`)—, y si sigue activo.
  * `ROLE_USER` es implícito. A un usuario de agencia el alcance se lo da su
- * agencia.
+ * agencia. Los roles se traducen a puestos: sin los fusionados ni los que ya
+ * le cubre otro de los suyos (ADR-052).
  *
  * Se aplica al crear el usuario (paso «usuario» o bajo demanda al migrar una
  * salida, `DependenciasLegado::usuario`) y en el paso «iam». Rehace solo las
@@ -62,20 +66,34 @@ final class RolesUsuarioLegado
             ['motivos' => \Doctrine\DBAL\ArrayParameterType::STRING],
         );
 
+        $concesiones = [];
+        foreach (array_values(array_unique(array_filter(array_map(EquivalenciasLegado::puesto(...), self::nombres($rolesLegado))))) as $i => $nombre) {
+            $libre = EquivalenciasLegado::total($nombre) || ($agencia !== null && $agencia !== false);
+            $concesiones[$nombre] = new Concesion(
+                $i,
+                0,
+                $nombre,
+                $nombre === EquivalenciasLegado::SISTEMA,
+                $this->capacidades($nombre),
+                [],
+                new Ambito($libre ? null : $empresas, $libre || !EquivalenciasLegado::porEstacion($nombre) ? null : $estaciones),
+            );
+        }
+        $sobran = ConsolidacionRoles::sobrantes(array_values($concesiones), array_column($concesiones, 'asignacion'));
+
         $count = 0;
-        foreach (array_unique(self::nombres($rolesLegado)) as $nombre) {
-            if ($nombre === EquivalenciasLegado::BASE) {
+        foreach ($concesiones as $nombre => $c) {
+            if (in_array($c->asignacion, $sobran, true)) {
                 continue;
             }
-            $libre = EquivalenciasLegado::total($nombre) || ($agencia !== null && $agencia !== false);
             $count += $this->db->executeStatement(
                 'INSERT INTO asignacion (usuario_id, rol_id, empresas, estaciones, motivo, creada, modificada)
                  VALUES (:usuario, :rol, CAST(:empresas AS json), CAST(:estaciones AS json), :motivo, NOW(), NOW())',
                 [
                     'usuario' => $usuarioId,
                     'rol' => $this->rol($nombre),
-                    'empresas' => $libre ? null : json_encode($empresas, JSON_THROW_ON_ERROR),
-                    'estaciones' => $libre || !EquivalenciasLegado::porEstacion($nombre) ? null : json_encode($estaciones, JSON_THROW_ON_ERROR),
+                    'empresas' => $c->ambito->empresas === null ? null : json_encode($c->ambito->empresas, JSON_THROW_ON_ERROR),
+                    'estaciones' => $c->ambito->estaciones === null ? null : json_encode($c->ambito->estaciones, JSON_THROW_ON_ERROR),
                     'motivo' => self::MOTIVO,
                 ],
             );
@@ -110,6 +128,20 @@ final class RolesUsuarioLegado
             array_map(static fn($r) => is_string($r) ? trim($r) : '', $roles),
             static fn(string $r) => str_starts_with($r, 'ROLE_'),
         ));
+    }
+
+    /**
+     * Las que tiene hoy el rol, que pueden haberse editado; si aún no existe, las del legado.
+     *
+     * @return list<string>
+     */
+    private function capacidades(string $nombre): array
+    {
+        $json = $this->db->fetchOne('SELECT capacidades FROM role WHERE nombre = :nombre', ['nombre' => $nombre]);
+
+        return $json === false
+            ? (EquivalenciasLegado::capacidades($nombre, $this->catalogo->codigos()) ?? [])
+            : json_decode((string) $json, true, flags: JSON_THROW_ON_ERROR);
     }
 
     /** El rol por nombre; si no existe, se crea con sus capacidades del legado. */

@@ -2,6 +2,7 @@
 
 namespace App\Migration;
 
+use App\Acceso\Legado\ConsolidadorRoles;
 use App\Acceso\Legado\EquivalenciasLegado;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -19,12 +20,14 @@ use Symfony\Component\DependencyInjection\Attribute\Target;
  *    `expired`) y una asignación por rol con el alcance del legado
  *    (`custom_user_empresa`, `custom_user.estacion_id`, `custom_user_estacion`).
  *    Rehace solo las asignaciones de la migración (`RolesUsuarioLegado`).
+ * 3. Consolida los roles (ADR-052): deja el catálogo en puestos.
  */
 class MigradorIAM {
     public function __construct(
         private Connection $newConn,
         #[Target('oldPdo')] private \PDO $oldPdo,
         private RolesUsuarioLegado $rolesUsuario,
+        private ConsolidadorRoles $consolidador,
     ) {
         $this->oldPdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         $this->oldPdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
@@ -38,6 +41,9 @@ class MigradorIAM {
         try {
             if ($output) $output->write('<info>Roles...</info>');
             foreach ($this->fetchOld('SELECT nombre, descripcion FROM custom_rol') as $row) {
+                if (EquivalenciasLegado::puesto((string) $row['nombre']) !== $row['nombre'] || in_array($row['nombre'], EquivalenciasLegado::ABSORBIDOS, true)) {
+                    continue;
+                }
                 $existia = $this->newConn->fetchOne('SELECT 1 FROM role WHERE nombre = :nombre', ['nombre' => $row['nombre']]) !== false;
                 $this->rolesUsuario->rol((string) $row['nombre'], $row['descripcion'] !== null ? (string) $row['descripcion'] : null);
                 $contadores['roles'] += $existia ? 0 : 1;
@@ -65,6 +71,8 @@ class MigradorIAM {
                 );
             }
             if ($output) $output->writeln(" <info>{$contadores['usuarios']} usuarios, {$contadores['asignaciones']} asignaciones, {$contadores['desactivados']} desactivados</info>");
+
+            $this->consolidador->consolidar();
 
             $this->newConn->commit();
         } catch (\Throwable $e) {
