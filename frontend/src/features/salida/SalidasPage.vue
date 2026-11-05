@@ -50,7 +50,7 @@
               </div>
             </template>
           </DatePicker>
-          <label class="absolute right-0 top-0 flex cursor-pointer items-center gap-1 text-[0.65rem] leading-none text-muted-color">
+          <label class="absolute right-0 top-0 flex cursor-pointer items-center gap-1 text-[0.75rem] leading-none text-muted-color">
             <ToggleSwitch v-model="porRango" class="scale-[0.8] origin-right" @update:model-value="alCambiarModo" />
             Rango
           </label>

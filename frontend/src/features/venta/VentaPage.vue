@@ -54,7 +54,7 @@
                     <Button label="Aplicar" size="small" fluid :disabled="!borrador?.[0]" @click="aplicarRango" />
                   </template>
                 </DatePicker>
-                <label class="flex cursor-pointer items-center gap-1 text-[0.65rem] leading-none text-muted-color absolute right-0 -mb-1 blottom-0">
+                <label class="flex cursor-pointer items-center gap-1 text-[0.75rem] leading-none text-muted-color absolute right-0 -mb-1 blottom-0">
                   <ToggleSwitch v-model="store.porRango" class="scale-[0.8] origin-left -mr-3" @update:model-value="alCambiarModo" />
                   Rango
                 </label>

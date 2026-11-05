@@ -195,7 +195,7 @@ async function pedirAvisos() {
 }
 .seccion {
   margin: 0.75rem 0.75rem 0.25rem;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -259,7 +259,7 @@ async function pedirAvisos() {
 }
 .fila__hora {
   flex: none;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--p-surface-500);
 }
 .fila--nueva .fila__nombre {

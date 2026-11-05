@@ -252,7 +252,7 @@ function alEnviar(enviado: Correo) {
   margin: auto 0 0;
   padding: 0.75rem 0.5rem 0;
   overflow: hidden;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--p-surface-500);
   text-overflow: ellipsis;
   white-space: nowrap;

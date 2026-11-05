@@ -388,7 +388,7 @@ function alDesplazar() {
 }
 .fila__fecha {
   flex: none;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--p-surface-500);
 }
 .fila__asunto {
@@ -421,7 +421,7 @@ function alDesplazar() {
 .externo {
   padding: 0 0.35rem;
   border-radius: 0.3rem;
-  font-size: 0.62rem;
+  font-size: 0.75rem;
   font-weight: 600;
   line-height: 1.1rem;
   letter-spacing: 0.02em;

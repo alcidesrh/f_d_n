@@ -33,6 +33,10 @@
   flex: 1;
   min-width: 0;
   overflow-y: auto;
+  /* Con puntero fino la barra ocupa sitio: reservarlo evita que el contenido salte entre páginas. */
+  @media (pointer: fine) {
+    scrollbar-gutter: stable;
+  }
   background: var(--bg2);
   container-type: inline-size;
   container-name: main;
@@ -50,42 +54,19 @@
   }
 }
 
-/* Al menos 1rem a los lados: en el teléfono la mitad del gutter (0.5rem)
-   deja el contenido pegado a los bordes; desde ~700px ya es 1rem o más. */
 .main-inner {
-  padding: calc(var(--page-gutter));
-  padding-inline: max(1rem, calc(var(--page-gutter)));
-  padding-top: 1rem;
-  padding-bottom: max(calc(var(--page-gutter)), 1.5rem);
+  padding: var(--page-top) var(--page-gutter) var(--page-bottom);
 }
-.page-head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-bottom: 1rem;
-  min-width: 0;
-}
+/* Título de la página. Debajo de `lg` no se dibuja: ya lo dice la cabecera. */
 .page-title {
-  font-family: "Space Grotesk", sans-serif;
-  font-size: 1.2rem;
-  color: var(--p-surface-700);
-  font-weight: 600;
-  display: flex;
-  flex-wrap: wrap;
+  display: none;
   min-width: 0;
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
   overflow-wrap: anywhere;
-  text-transform: capitalize;
-
-  gap: 0.5rem;
-  & > :nth-child(1) {
-    font-weight: 500;
-    color: var(--p-surface-500);
+  color: var(--p-surface-700);
+  @variant lg {
+    display: block;
   }
-}
-.page-sub {
-  color: var(--text-muted);
-  font-size: 13.5px;
-  margin-top: 3px;
 }

@@ -431,7 +431,7 @@ function aceptar() {
 }
 .sel__seccion {
   margin: 0.75rem 0.5rem 0.25rem;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -474,7 +474,7 @@ function aceptar() {
   min-width: 1.25rem;
   padding: 0 0.35rem;
   border-radius: 999px;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 600;
   line-height: 1.25rem;
   text-align: center;
@@ -616,7 +616,7 @@ function aceptar() {
   color: var(--p-surface-800);
 }
 .item__id {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: var(--p-surface-400);
 }
 .item__quitar {

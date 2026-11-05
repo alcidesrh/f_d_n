@@ -97,7 +97,7 @@ const fecha = (iso: string) => new Intl.DateTimeFormat('es-GT', { weekday: 'shor
   gap: 0.3rem;
   padding: 0.1rem 0.5rem;
   border-radius: 999px;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   background: var(--p-surface-100);
 }
 .punto {

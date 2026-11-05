@@ -53,7 +53,7 @@ const tipo = computed(() => tipoTarjeta(props.adjunto.tipo))
 }
 .tarjeta__tipo {
   display: block;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;

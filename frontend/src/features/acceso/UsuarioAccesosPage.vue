@@ -8,7 +8,7 @@
 -->
 <template>
   <div class="@container flex flex-col gap-3">
-    <Toolbar class="rounded-none border-none! bg-transparent px-2">
+    <Toolbar>
       <template #start>
         <div class="flex min-w-0 items-center gap-2">
           <Button text rounded aria-label="Volver" class="tap-target" @click="volver"><icon name="arrow-back" /></Button>

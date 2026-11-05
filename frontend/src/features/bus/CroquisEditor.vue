@@ -668,7 +668,7 @@ defineExpose({
   font-size: 0.85rem;
 }
 .ed-pila__detail {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--p-text-muted-color);
 }
 

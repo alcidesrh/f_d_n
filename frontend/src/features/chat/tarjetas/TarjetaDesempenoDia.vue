@@ -122,7 +122,7 @@ const resumenCanales = computed(() => d.value.canales.map((c) => `${c.nombre} ${
   gap: 0.5rem;
 }
 .empresa {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -137,7 +137,7 @@ const resumenCanales = computed(() => d.value.canales.map((c) => `${c.nombre} ${
   flex-shrink: 0;
   padding: 0.15rem 0.5rem;
   border-radius: 0.4rem;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: #15803d;
   background: #dcfce7;
@@ -164,7 +164,7 @@ const resumenCanales = computed(() => d.value.canales.map((c) => `${c.nombre} ${
   gap: 0.3rem;
 }
 .rotulo {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -198,7 +198,7 @@ const resumenCanales = computed(() => d.value.canales.map((c) => `${c.nombre} ${
   gap: 0.3rem;
   padding: 0.1rem 0.5rem;
   border-radius: 999px;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   background: #f1f5f9;
 }
 .chip.vacio {
@@ -252,7 +252,7 @@ li {
   font-size: 0.8rem;
 }
 li .n {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: #64748b;
 }
 li .nombre {
@@ -279,7 +279,7 @@ li .mini span {
 }
 li .detalle {
   grid-column: 2 / 4;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: #64748b;
 }
 </style>

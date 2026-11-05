@@ -90,7 +90,7 @@
             @click="pick(variantName(item))"
           >
             <icon :name="variantName(item)" lg color="text-color" />
-            <span class="w-full truncate text-center text-[0.7rem] leading-tight text-muted-color">
+            <span class="w-full truncate text-center text-[0.75rem] leading-tight text-muted-color">
               {{ item.name }}
             </span>
           </button>

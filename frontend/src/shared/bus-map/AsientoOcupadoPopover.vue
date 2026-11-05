@@ -192,7 +192,7 @@ const fechaHora = (iso: string) =>
 }
 .aop-grupo h4 {
   margin: 0;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;

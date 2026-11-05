@@ -29,7 +29,7 @@
       <div v-for="r in pagina" :key="r.id" class="fila" role="row">
         <div class="celda nombre" role="cell">
           <span class="truncate" :title="r.nombre">{{ r.nombre }}</span>
-          <Tag v-if="r.senal" :severity="r.senal === 'saturada' ? 'success' : 'warn'" :value="r.senal === 'saturada' ? 'Saturada' : 'Baja'" class="!px-1.5 !py-0 !text-[0.65rem]" />
+          <Tag v-if="r.senal" :severity="r.senal === 'saturada' ? 'success' : 'warn'" :value="r.senal === 'saturada' ? 'Saturada' : 'Baja'" class="!px-1.5 !py-0 !text-[0.75rem]" />
         </div>
         <div class="celda num" role="cell" data-etiqueta="Salidas">{{ numero(r.salidas) }}</div>
         <div class="celda ocup" role="cell" data-etiqueta="Ocupación">
@@ -123,7 +123,7 @@ function ordenar(campo: Campo) {
 }
 .celda[data-etiqueta]::before {
   content: attr(data-etiqueta);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: var(--p-text-muted-color);
   margin-right: auto;
 }
@@ -134,7 +134,7 @@ function ordenar(campo: Campo) {
   font-variant-numeric: tabular-nums;
 }
 .delta {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 600;
   white-space: nowrap;
   min-width: 3.25rem;
@@ -158,7 +158,7 @@ function ordenar(campo: Campo) {
     display: grid;
     border-top: 0;
     padding-top: 0;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.04em;

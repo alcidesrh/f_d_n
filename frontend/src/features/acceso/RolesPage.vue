@@ -11,7 +11,7 @@
 -->
 <template>
   <div class="@container flex flex-col gap-3">
-    <Toolbar class="rounded-none border-none! bg-transparent px-2">
+    <Toolbar>
       <template #start>
         <PageHead title="" />
       </template>
@@ -511,7 +511,7 @@ function eliminar() {
     cursor: pointer;
   }
   code {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
   }
 }
 .dim {

@@ -6,11 +6,20 @@
  * (no persistido, siempre empieza cerrado). El modo de escritorio no se toca
  * desde el móvil y viceversa. También se persiste (por usuario, como toda
  * store) qué menús están contraídos y qué ítems del árbol desplegados.
+ *
+ * El panel derecho de menús arranca cerrado si no hay sitio para los dos: en
+ * una laptop dejaría al contenido sin ancho. Los paneles de una ruta sí
+ * arrancan abiertos: son sus controles.
  */
 import { defineStore } from "pinia";
 import { useUiStore } from "@/app/ui";
 
 export type SidebarMode = "open" | "mini" | "close";
+
+/** Desde aquí los dos paneles abiertos le dejan al contenido al menos 1036px. */
+const CABEN_LOS_DOS = "(width >= 96rem)";
+
+const cabenLosDos = () => typeof window === "undefined" || typeof window.matchMedia !== "function" || window.matchMedia(CABEN_LOS_DOS).matches;
 
 export interface SidebarStoreState {
   side: "left" | "right";
@@ -40,11 +49,12 @@ export interface SidebarStoreState {
 function createDefinition(side: "left" | "right", name: string) {
   return defineStore(name, {
     // Solo el modo: los anchos son constantes (un valor viejo persistido pisaría el nuevo).
-    persist: { pick: ["mode", "prevMode", "expandedMenus", "expandedItems"] },
+    // El panel derecho estrena clave: lo guardado es de cuando siempre arrancaba abierto.
+    persist: { key: name === "right" ? "panel-derecho" : name, pick: ["mode", "prevMode", "expandedMenus", "expandedItems"] },
     state: (): SidebarStoreState => ({
       side: side,
-      mode: "open",
-      prevMode: "mini",
+      mode: name === "right" && !cabenLosDos() ? "close" : "open",
+      prevMode: name === "right" && !cabenLosDos() ? "open" : "mini",
       shown: "open",
       morphing: false,
       open: 250,

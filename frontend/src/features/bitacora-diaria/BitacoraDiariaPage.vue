@@ -8,7 +8,7 @@
 -->
 <template>
   <div class="@container flex flex-col gap-3">
-    <Toolbar class="rounded-none border-none! bg-transparent px-2">
+    <Toolbar>
       <template #start>
         <PageHead title="" />
       </template>
@@ -82,7 +82,7 @@
               <time class="bitacora-entrada__hora" :datetime="g.principal.fecha">{{ hora(g.principal.fecha) }}</time>
               <div class="min-w-0">
                 <div class="flex flex-wrap items-center gap-2">
-                  <Tag :value="etiquetaTipo(g.principal)" :severity="severidad(g.principal)" class="text-[0.65rem]" />
+                  <Tag :value="etiquetaTipo(g.principal)" :severity="severidad(g.principal)" class="text-[0.75rem]" />
                   <span class="font-medium">{{ titulo(g.principal) }}</span>
                   <span v-if="g.principal.origen === 'actividad' && g.principal.estado" class="text-xs" :class="g.principal.estado >= 400 ? 'text-red-500' : 'text-muted-color'">{{ g.principal.estado }}</span>
                   <span v-if="g.principal.origen === 'actividad' && g.principal.duracionMs !== null && g.principal.tipo === 'peticion'" class="text-xs text-muted-color">{{ milisegundos(g.principal.duracionMs) }}</span>

@@ -94,7 +94,7 @@ const avance = (adjuntos: Adjunto[]) => adjuntos.map((a) => (a.estado === "ok" ?
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -104,7 +104,7 @@ const avance = (adjuntos: Adjunto[]) => adjuntos.map((a) => (a.estado === "ok" ?
   min-width: 1.15rem;
   padding: 0 0.3rem;
   border-radius: 999px;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   line-height: 1.15rem;
   text-align: center;
   letter-spacing: 0;

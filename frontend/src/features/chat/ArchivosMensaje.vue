@@ -137,7 +137,7 @@ const icono = (tipo: string) => (tipo === 'application/pdf' ? 'picture-as-pdf-ou
   font-weight: 500;
 }
 .doc__tamano {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--p-surface-500);
 }
 </style>

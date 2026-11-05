@@ -417,7 +417,7 @@ const etiqueta = (r: SalidaResumen) =>
 }
 .td__dia-semana {
   color: var(--p-text-muted-color);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -445,7 +445,7 @@ const etiqueta = (r: SalidaResumen) =>
   margin-top: 0.15rem;
   overflow: hidden;
   color: var(--p-text-muted-color);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -502,7 +502,7 @@ const etiqueta = (r: SalidaResumen) =>
   overflow: hidden;
   padding: 0.3rem 0.75rem 0;
   color: var(--p-text-muted-color);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -521,7 +521,7 @@ const etiqueta = (r: SalidaResumen) =>
   text-align: right;
 }
 .td__hora small {
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 400;
   opacity: 0.7;
 }
@@ -691,7 +691,7 @@ const etiqueta = (r: SalidaResumen) =>
   margin-left: 0.5rem;
   padding: 0 0.4rem;
   border-radius: 999px;
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 650;
   letter-spacing: 0.03em;
   line-height: 1.5;
@@ -722,7 +722,7 @@ const etiqueta = (r: SalidaResumen) =>
 .ficha__precios b {
   margin-right: 0.2rem;
   color: var(--p-text-muted-color);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 .ficha__precios > span + span {
@@ -736,7 +736,7 @@ const etiqueta = (r: SalidaResumen) =>
 }
 .ficha__libres {
   color: var(--p-text-muted-color);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   white-space: nowrap;
 }
 .ficha__libres b {

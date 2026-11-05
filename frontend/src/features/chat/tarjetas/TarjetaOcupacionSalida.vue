@@ -115,7 +115,7 @@ const fecha = (iso: string) => new Intl.DateTimeFormat("es-GT", { weekday: "shor
   font-variant-numeric: tabular-nums;
 }
 .cifra__lbl {
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   letter-spacing: 0.03em;
   text-transform: uppercase;
   color: var(--p-surface-500);
@@ -171,7 +171,7 @@ const fecha = (iso: string) => new Intl.DateTimeFormat("es-GT", { weekday: "shor
   font-weight: 600;
 }
 .fila--cabeza .celda {
-  font-size: 0.6rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.03em;
   text-transform: uppercase;

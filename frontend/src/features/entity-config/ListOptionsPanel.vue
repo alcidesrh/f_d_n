@@ -104,7 +104,7 @@ function onPageSizes(value: string | undefined) {
   gap: 0.2rem;
 }
 .cell__label {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   letter-spacing: 0.02em;
   color: var(--p-text-muted-color);
   white-space: nowrap;

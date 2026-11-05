@@ -80,7 +80,7 @@ function texto(d: number, h: number): string {
 }
 .hora,
 .dia {
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   color: var(--p-text-muted-color);
   font-variant-numeric: tabular-nums;
 }

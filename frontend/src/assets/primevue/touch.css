@@ -1,0 +1,40 @@
+/* Con el dedo: controles de PrimeVue con el área táctil mínima (`--tap-min`) y
+   campos de 16 px, por debajo de eso Safari acerca la página al enfocarlos.
+   `:root` para ganarle a los estilos de PrimeVue, que se inyectan después. */
+@media (pointer: coarse) {
+  :root {
+    & .p-button,
+    & .p-togglebutton,
+    & .p-tab,
+    & .p-inputtext,
+    & .p-select,
+    & .p-multiselect,
+    & .p-datepicker-dropdown,
+    & .p-autocomplete-dropdown {
+      min-height: var(--tap-min);
+    }
+    & .p-button-icon-only,
+    & .p-datepicker-dropdown,
+    & .p-autocomplete-dropdown,
+    & .p-paginator-page,
+    & .p-paginator-first,
+    & .p-paginator-prev,
+    & .p-paginator-next,
+    & .p-paginator-last {
+      min-width: var(--tap-min);
+    }
+    & .p-paginator-page,
+    & .p-paginator-first,
+    & .p-paginator-prev,
+    & .p-paginator-next,
+    & .p-paginator-last {
+      height: var(--tap-min);
+    }
+    & .p-inputtext,
+    & .p-select-label,
+    & .p-multiselect-label,
+    & textarea {
+      font-size: max(1rem, 16px);
+    }
+  }
+}

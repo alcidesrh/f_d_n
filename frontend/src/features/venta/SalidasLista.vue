@@ -334,7 +334,7 @@ const precioCorto = (p: Importe | null) => (p ? p.texto.replace(/[.,]00$/, "") :
 }
 .precios b {
   color: var(--p-text-muted-color);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 500;
 }
 .tarjeta .precios {

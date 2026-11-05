@@ -106,7 +106,7 @@ function elegir(m: CroquisMolde) {
   margin-top: 0.15rem;
 }
 .tpl__chip {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
   padding: 0.05rem 0.4rem;
   border-radius: 999px;

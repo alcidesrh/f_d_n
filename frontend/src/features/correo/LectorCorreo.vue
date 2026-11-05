@@ -305,7 +305,7 @@ function tono(direccion: string): number {
   padding: 0 0.4rem;
   border-radius: 0.35rem;
   font-family: system-ui, sans-serif;
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 600;
   line-height: 1.25rem;
   letter-spacing: 0.02em;
@@ -494,7 +494,7 @@ function tono(direccion: string): number {
   white-space: nowrap;
 }
 .adjunto__tamano {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: var(--p-surface-500);
 }
 .adjunto__bajar {

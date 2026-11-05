@@ -12,10 +12,14 @@
   --breakpoint-md: 48rem;
   --breakpoint-lg: 64rem;
   --breakpoint-xl: 80rem;
+
+  /* Letra secundaria (fechas, rótulos, ayudas): 12 px con la raíz de 15 px,
+     lo mínimo legible en un teléfono. */
+  --text-xs: 0.8rem;
+  --text-xs--line-height: 1.3;
 }
 
 :root {
-  /*--bg2: color-mix(in hsl, var(--p-surface-100) 50%, var(--p-surface-50) 50%);*/
   --bg: var(--p-surface-50);
   --bg2: color-mix(in hsl, var(--p-surface-50) 20%, var(--p-surface-50) 40%);
 
@@ -23,13 +27,8 @@
   --text-color: var(--p-text-color);
   --text-muted: var(--p-surface-600);
   --border: 1px solid var(--p-surface-300);
-  --border-200: 0.1px solid var(--p-surface-200);
-  --border-400: 0.1px solid var(--p-surface-400);
   --shadow: 4px 0px 10px rgba(0, 0, 0, 0.19);
-  --shadow-r: -4px 0px 10px rgba(0, 0, 0, 0.19);
-
   --shadow-sm: 0px 0.5px 3px 0px var(--p-surface-300);
-  --shadow-inset: 0 3px 12px 0px var(--p-surface-300);
 
   /* Estados. Salen de las rampas del tema, que se invierten en oscuro: el
      tono medio (500) se queda, el texto (`-ink`, 700) pasa a claro y el fondo
@@ -50,24 +49,28 @@
   /* ---- Layout ----
      Espaciado: la escala de Tailwind (`--spacing` = 0.25rem; p-2, gap-4…).
      Estos tokens son los semánticos del layout; no inventar valores sueltos. */
-  --header-h: 70px;
+  --header-h: 3.5rem;
+  @variant lg {
+    --header-h: 4rem;
+  }
   --sidebar-width: 250px;
   --sb-mini: 60px;
-  --sb-close: 0px;
   /* Ancho abierto de cada sidebar (lo escribe `sidebarMotion.ts`
      sobre su panel). El ancho animado (`--sb-<lado>-w`) está abajo. */
   --sb-left-open: var(--sidebar-width);
   --sb-right-open: var(--sidebar-width);
-  /* Margen interior de página y de superficies grandes (formularios),
-     continuo según el ancho W de `.main` (container query units, 1cqi = W/100):
-       W ≤ 350px  → 1rem
-       350–700px  → 4 % de W (1rem → 2rem)
-       700–900px  → rampa de 2rem a 4rem (14 % de W - 5rem)
-       W ≥ 900px  → 4rem
-     Sin saltos: al abrir/cerrar un sidebar el contenido se acomoda de a poco. */
-  --page-gutter: clamp(1rem, max(min(4cqi, 2rem), 14cqi - 5rem), 4rem);
-  /* Ancho máximo del contenido en pantallas muy anchas. */
-  --content-max: 120rem;
+  /* Margen lateral de página y de superficies grandes (formularios), continuo
+     según el ancho de `.main` (1cqi = 1 % de ese ancho): 1rem hasta 500px y
+     2.5rem desde 1250px. Sin saltos: al abrir o cerrar un sidebar el contenido
+     se acomoda de a poco. */
+  --page-gutter: clamp(1rem, 3cqi, 2.5rem);
+  /* Margen arriba y abajo de la página. Debajo de `md` el de abajo deja libre
+     el disparador del chat (fijo en la esquina). */
+  --page-top: 1rem;
+  --page-bottom: 4.5rem;
+  @variant md {
+    --page-bottom: max(var(--page-gutter), 1.5rem);
+  }
   /* Área táctil mínima de un control (ver utilidad `tap-target`). */
   --tap-min: 2.75rem;
 
@@ -91,6 +94,3 @@
   initial-value: 250px;
 }
 
-/* NOTA: el bloque anterior `prefers-reduced-motion: reduce` con
-   `transition-duration: 0.001ms !important` sobre `*` anulaba todas las
-   transiciones (incluida la navegación fade). Eliminado a propósito. */

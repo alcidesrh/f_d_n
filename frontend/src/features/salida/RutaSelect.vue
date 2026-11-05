@@ -7,7 +7,6 @@
 -->
 <template>
   <Select
-    ref="selectRef"
     v-model="modelo"
     :options="visibles"
     option-label="nombre"
@@ -73,7 +72,6 @@ const modelo = defineModel<number | null>({ required: true })
 const busqueda = ref('')
 const rutas = ref<RutaOpcion[]>([])
 const cargando = ref(false)
-const selectRef = ref<any>(null)
 const abiertos = ref(new Set<string>())
 
 /** Pide al servidor las coincidencias y la ruta elegida (para que su etiqueta aparezca). */

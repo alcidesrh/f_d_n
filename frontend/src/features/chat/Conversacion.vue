@@ -558,7 +558,7 @@ watch(
 .conv__dia {
   margin: 0.75rem 0 0.25rem;
   text-align: center;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--p-surface-500);
 }
 .conv__dia span {
@@ -648,7 +648,7 @@ watch(
   margin-left: 0.4rem;
   padding: 0 0.4rem;
   border-radius: 999px;
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--p-surface-500);
   background: var(--p-surface-200);
@@ -799,7 +799,7 @@ watch(
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-style: italic;
   opacity: 0.75;
 }
@@ -825,7 +825,7 @@ watch(
   background: rgb(0 0 0 / 0.06);
 }
 .burbuja__cita-autor {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 .burbuja__cita-texto {
@@ -856,7 +856,7 @@ watch(
   align-items: center;
   align-self: flex-end;
   gap: 0.2rem;
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   line-height: 1;
   font-variant-numeric: tabular-nums;
   time {

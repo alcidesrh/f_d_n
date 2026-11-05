@@ -262,7 +262,7 @@ defineExpose({ enfocar: () => entrada.value?.focus(), confirmar });
   flex: none;
   padding: 0 0.35rem;
   border-radius: 0.3rem;
-  font-size: 0.62rem;
+  font-size: 0.75rem;
   font-weight: 600;
   line-height: 1.1rem;
   text-transform: uppercase;

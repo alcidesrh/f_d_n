@@ -66,13 +66,17 @@
     </div>
     <table class="sr-only">
       <caption>Ingresos por {{ porHora ? 'hora' : 'día' }}</caption>
-      <tr><th>Fecha</th><th v-for="c in CANALES" :key="c.id">{{ c.nombre }}</th><th>Total</th><th>{{ rotuloAnterior }}</th></tr>
-      <tr v-for="c in serie" :key="c.t">
-        <td>{{ tituloCubo(c.t) }}</td>
-        <td v-for="k in CANALES" :key="k.id">{{ c.actual ? dinero(c.actual[k.id]) : '—' }}</td>
-        <td>{{ c.actual ? dinero(c.actual.total) : '—' }}</td>
-        <td>{{ dinero(c.anterior.total) }}</td>
-      </tr>
+      <thead>
+        <tr><th>Fecha</th><th v-for="c in CANALES" :key="c.id">{{ c.nombre }}</th><th>Total</th><th>{{ rotuloAnterior }}</th></tr>
+      </thead>
+      <tbody>
+        <tr v-for="c in serie" :key="c.t">
+          <td>{{ tituloCubo(c.t) }}</td>
+          <td v-for="k in CANALES" :key="k.id">{{ c.actual ? dinero(c.actual[k.id]) : '—' }}</td>
+          <td>{{ c.actual ? dinero(c.actual.total) : '—' }}</td>
+          <td>{{ dinero(c.anterior.total) }}</td>
+        </tr>
+      </tbody>
     </table>
   </div>
 </template>

@@ -260,7 +260,7 @@ onBeforeUnmount(() => {
   padding-bottom: 0.4rem;
 }
 .cell__label {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   letter-spacing: 0.02em;
   color: var(--p-text-muted-color);
   white-space: nowrap;

@@ -310,7 +310,7 @@ defineExpose({ limpiar, adjuntar, enfocar, agregarArchivos })
 .subida__nombre {
   padding: 0.15rem 0.3rem 0.25rem;
   overflow: hidden;
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--p-surface-600);

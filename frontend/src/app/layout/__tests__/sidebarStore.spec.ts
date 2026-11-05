@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useUiStore } from '@/app/ui'
 import { defineSidebarStore } from '../sidebarStore'
@@ -14,6 +14,17 @@ describe('defineSidebarStore', () => {
     expect(left.width).toBe(60)
     left.setMode('close')
     expect(left.width).toBe(0)
+  })
+
+  it('el panel derecho de menús arranca cerrado si no caben los dos', () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: false }))
+    const derecho = defineSidebarStore('right', 'right')()
+    expect(derecho.mode).toBe('close')
+    derecho.setMode()
+    expect(derecho.mode, 'el botón lo abre con textos').toBe('open')
+    expect(defineSidebarStore('left')().mode).toBe('open')
+    expect(defineSidebarStore('right', 'panel:migracion')().mode, 'el panel de una ruta son sus controles').toBe('open')
+    vi.unstubAllGlobals()
   })
 
   it('sin argumento alterna con el modo anterior', () => {

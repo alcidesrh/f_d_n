@@ -1,30 +1,15 @@
 <template>
-  <div class="page-head">
-    <div class="page-title" v-html="computedTitle"></div>
-    <div class="page-actions">
-    </div>
-  </div>
+  <h1 class="page-title">{{ titulo }}</h1>
 </template>
+
 <script setup lang="ts">
 import { router } from '@/app/router'
 
-const props = withDefaults(defineProps<{ title?: string; subtitle?: string }>(), { subtitle: '' })
+/** Título de la ruta, con la entidad en las pantallas genéricas y `title` si la página suma algo. */
+const props = defineProps<{ title?: string }>()
 
-const computedTitle = computed(() => {
-  const route = router.currentRoute.value
-
-  return `${route.meta?.title || ''} ${router.currentRoute.value.params?.entity || ''}${props.title || ''}`
-
-  // let t = "";
-  // if (route.meta.title) {
-  //   t = route.meta.title;
-  // }
-  // if (router.currentRoute.value.params?.entity) {
-  //   t += " " + router.currentRoute.value.params?.entity;
-  // }
-  // if(props.title){
-  //   t = `${t} ${props.title}`
-  // }
-  // return t;
+const titulo = computed(() => {
+  const { meta, params } = router.currentRoute.value
+  return [meta.title, params.entity, props.title].filter(Boolean).join(' ')
 })
 </script>

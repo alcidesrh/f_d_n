@@ -478,7 +478,7 @@ function descartar() {
   border-top: 1px solid var(--p-surface-200);
 }
 .atajo {
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: var(--p-surface-400);
 }
 @media (pointer: coarse) {

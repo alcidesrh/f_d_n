@@ -192,7 +192,7 @@ const otroDia = (a: string, b: string) => new Date(a).toDateString() !== new Dat
 .sp-grupo h4 {
   margin: 0;
   color: var(--p-text-muted-color);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;

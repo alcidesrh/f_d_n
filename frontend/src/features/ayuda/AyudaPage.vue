@@ -1,6 +1,6 @@
 <template>
   <div class="@container flex flex-col gap-3">
-    <Toolbar class="rounded-none border-none! bg-transparent px-2">
+    <Toolbar>
       <template #start>
         <PageHead title="" />
       </template>

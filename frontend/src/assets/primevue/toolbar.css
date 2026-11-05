@@ -1,8 +1,21 @@
-/* Toolbar de página (título a la izquierda, acciones a la derecha): el
-   `Toolbar` ya envuelve start/end; también sus contenidos, para que las
-   acciones bajen de línea en móvil en lugar de desbordar. */
+/* Cabecera de página (título a la izquierda, acciones a la derecha): sin caja,
+   parte del fondo. Start y end también envuelven: las acciones bajan de línea
+   en móvil en lugar de desbordar. `:root`: los estilos de PrimeVue se inyectan después. */
+:root .p-toolbar {
+  padding-inline: 0.5rem;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
 .p-toolbar-start,
 .p-toolbar-end {
   flex-wrap: wrap;
   min-width: 0;
+}
+/* Solo con el título, debajo de `lg` queda vacía: el título ya está en la cabecera. */
+.p-toolbar:not(:has(.p-toolbar-end > *)):has(.page-title) {
+  display: none;
+  @variant lg {
+    display: flex;
+  }
 }

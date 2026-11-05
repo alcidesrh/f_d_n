@@ -2,7 +2,6 @@
   <div class="border border-surface-300 bg-surface-0 px-[min(2rem,var(--page-gutter))] py-[var(--page-gutter)]">
     <PageHead
       title="Form Builder"
-      subtitle="Grids responsivos + custom inputs → JSON FormKitSchema"
     />
 
     <div class="card">

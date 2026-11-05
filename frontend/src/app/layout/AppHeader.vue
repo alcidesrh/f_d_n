@@ -3,15 +3,18 @@
     <div class="left-header">
       <div class="flex btn-siderbar-header">
         <button type="button" class="icon-btn" aria-label="Menú de navegación" :aria-expanded="ui.isMobile ? sidebarStore.drawer : sidebarStore.mode !== 'close'" @click="sidebarStore.toggle()">
-          <icon name="menu" size="30" :weight="300" color="text-surface-500" />
+          <icon name="menu" size="26" :weight="300" color="text-surface-500" />
         </button>
-        <Divider layout="vertical" class="mx-[5px]!" />
+        <Divider layout="vertical" class="mx-[5px]! hidden! lg:flex!" />
       </div>
       <div class="brand">
         <div class="header-clock" v-html="currentTime"></div>
         <div class="brand-name">FDN</div>
       </div>
     </div>
+
+    <!-- Debajo de `lg` no hay migas: el título dice en qué pantalla se está. -->
+    <h1 class="header-title">{{ tituloPantalla }}</h1>
 
     <div class="header-crumbs">
       <nav class="crumbs" aria-label="Breadcrumb">
@@ -37,10 +40,6 @@
       <div class="header-actions">
         <slot name="menu-content"></slot>
 
-        <!-- <button class="icon-btn header-secundario cursor-pointer" :title="ui.mode === 'dark' ? 'Modo claro' : 'Modo oscuro'" :aria-label="ui.mode === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'" @click="ui.toggleMode()">
-          <icon :name="ui.mode === 'dark' ? 'light-mode-outline' : 'dark-mode-outline'" />
-        </button> -->
-
         <button class="icon-btn header-secundario header-escritorio cursor-pointer" title="Personalizar apariencia" aria-label="Personalizar apariencia" aria-haspopup="dialog" :class="{ 'active-state': temaAbierto }" @click="temaPopover?.toggle($event)">
           <icon name="palette-outline" />
         </button>
@@ -53,7 +52,7 @@
           <span v-if="sinLeer" class="header-chat__badge">{{ sinLeer > 99 ? "99+" : sinLeer }}</span>
         </button>
         <!-- Ayuda: abre las guías de la pantalla actual (o todas si no hay). -->
-        <RouterLink :to="{ name: 'ayuda', query: ayudaPantalla ? { pantalla: ayudaPantalla } : {} }" class="icon-btn header-secundario header-escritorio" aria-label="Ayuda" v-tooltip.bottom="'Ayuda'">
+        <RouterLink :to="destinoAyuda" class="icon-btn header-secundario header-escritorio" aria-label="Ayuda" v-tooltip.bottom="'Ayuda'">
           <icon name="help-outline" />
         </RouterLink>
         <!-- Autorizaciones (ADR-040): las que espera resolver y sus pases aprobados sin usar. -->
@@ -61,8 +60,8 @@
           <icon name="notifications-outline" />
           <span v-if="autorizacionesPendientes" class="header-chat__badge">{{ autorizacionesPendientes > 99 ? "99+" : autorizacionesPendientes }}</span>
         </RouterLink>
-        <button class="icon-btn header-fullscreen" title="Pantalla completa" aria-label="Pantalla completa" @click="toggleFullscreen" :class="{ 'active-state': openPopover === 'fullscreen' }">
-          <icon name="fullscreen" />
+        <button class="icon-btn header-fullscreen" title="Pantalla completa" aria-label="Pantalla completa" :aria-pressed="pantallaCompleta" :class="{ 'active-state': pantallaCompleta }" @click="alternarPantallaCompleta">
+          <icon :name="pantallaCompleta ? 'fullscreen-exit' : 'fullscreen'" />
         </button>
       </div>
       <!-- Se corre con las acciones cuando se cierra el sidebar derecho (ver header.css). -->
@@ -76,10 +75,10 @@
       </button>
       <!-- Fuera de la franja que scrollea: Mi cuenta, Instalar app y Cerrar sesión siempre a la vista. -->
       <div class="header-user-wrap">
-        <button type="button" class="header-user" :title="session.user ?? ''" aria-haspopup="true" aria-controls="menu-usuario" @click="menuUsuario?.toggle($event)">
+        <button ref="botonUsuario" type="button" class="header-user" :title="session.user ?? ''" aria-haspopup="true" aria-controls="menu-usuario" @click="menuUsuario?.toggle($event)">
           <ChatAvatar :id="cuenta.cuenta?.id ?? 0" :nombre="cuenta.nombre" :foto="cuenta.foto" tamano="sm" />
           <span class="header-user__name">{{ session.user }}</span>
-          <icon name="keyboard-arrow-down" size=".9rem" />
+          <icon name="keyboard-arrow-down" size=".9rem" class="hidden! md:inline-block!" />
         </button>
         <Menu id="menu-usuario" ref="menuUsuario" :model="opcionesUsuario" popup>
           <template #start>
@@ -101,8 +100,8 @@
       </div>
       <div v-if="rightSidebar" class="flex btn-siderbar-header">
         <Divider layout="vertical" class="mx-[5px]!" />
-        <button type="button" class="icon-btn right" title="Mostrar/ocultar menú" aria-label="Panel lateral derecho" :aria-expanded="ui.isMobile ? rightSidebar.drawer : rightSidebar.mode !== 'close'" @click="rightSidebar.toggle()">
-          <icon name="menu" size="30" :weight="300" color="text-surface-500" />
+        <button type="button" class="icon-btn right" title="Mostrar/ocultar panel" aria-label="Panel lateral derecho" :aria-expanded="ui.isMobile ? rightSidebar.drawer : rightSidebar.mode !== 'close'" @click="rightSidebar.toggle()">
+          <icon :name="pantalla.meta.panel ? 'tune' : 'apps'" size="24" :weight="300" color="text-surface-500" />
         </button>
       </div>
     </div>
@@ -144,10 +143,17 @@ const sinLeer = computed(() => chat.noLeidos + correo.noLeidos);
 const cuenta = useCuentaStore();
 const autorizaciones = useAutorizacionesStore();
 const autorizacionesPendientes = computed(() => pendientesDe(autorizaciones.resumen));
-/** Pantalla actual para la ayuda contextual (la clave más específica); en la ayuda misma, ninguna. */
-const ayudaPantalla = computed(() => {
-  const r = router.currentRoute.value;
-  return r.name === "ayuda" ? null : (clavesDeRuta(r.name, r.params)[0] ?? null);
+const pantalla = router.currentRoute;
+/** La entidad en las pantallas genéricas; si no, el nombre corto de la ruta. */
+const tituloPantalla = computed(() => {
+  const { meta, params } = pantalla.value;
+  return typeof params.entity === "string" && params.entity ? params.entity.replace(/-/g, " ") : (meta.label ?? meta.title ?? "");
+});
+/** Ayuda de la pantalla actual (la clave más específica); desde la ayuda misma, todas las guías. */
+const destinoAyuda = computed(() => {
+  const { name, params } = pantalla.value;
+  const clave = name === "ayuda" ? null : clavesDeRuta(name, params)[0];
+  return { name: "ayuda", query: clave ? { pantalla: clave } : {} };
 });
 const ui = useUiStore();
 const ventanaChat = useVentanaChat();
@@ -163,8 +169,6 @@ const temaPopover = ref<InstanceType<typeof Popover> | null>(null);
 const temaAbierto = ref(false);
 
 const sidebarStore = defineSidebarStore("left")();
-type PopoverName = "notif" | "customizer" | "user" | "fullscreen" | null;
-const openPopover = ref<PopoverName>(null);
 const navigationHistory = useNavigationHistoryStore();
 
 function formatClock(date: Date) {
@@ -176,27 +180,37 @@ function formatClock(date: Date) {
 }
 const currentTime = ref(formatClock(new Date()));
 let clockTimer: ReturnType<typeof setInterval>;
+
+const pantallaCompleta = ref(false);
+const alCambiarPantalla = () => (pantallaCompleta.value = Boolean(document.fullscreenElement));
+function alternarPantallaCompleta() {
+  if (document.fullscreenElement) void document.exitFullscreen?.();
+  else void document.documentElement.requestFullscreen?.();
+}
+
 onMounted(() => {
   clockTimer = setInterval(() => {
     currentTime.value = formatClock(new Date());
   }, 1000);
+  document.addEventListener("fullscreenchange", alCambiarPantalla);
 });
-onUnmounted(() => clearInterval(clockTimer));
-
-function toggleFullscreen() {
-  if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen?.();
-  } else {
-    document.exitFullscreen?.();
-  }
-  toggle("fullscreen");
-}
-function toggle(name: Exclude<PopoverName, null>) {
-  openPopover.value = openPopover.value === name ? null : name;
-}
+onUnmounted(() => {
+  clearInterval(clockTimer);
+  document.removeEventListener("fullscreenchange", alCambiarPantalla);
+});
 
 const menuUsuario = ref<InstanceType<typeof Menu> | null>(null);
-const opcionesUsuario = computed<MenuItem[]>(() => [{ label: "Mi cuenta", iconName: "manage-accounts-outline", command: () => void router.push({ name: "mi-cuenta" }) }, ...(acceso.estaciones.length > 1 ? [{ label: "Estación de trabajo", iconName: "location-on-outline", command: () => (acceso.eligiendoEstacion = true) }] : []), ...(puedeInstalar.value ? [{ label: "Instalar app", iconName: "install-mobile", command: () => void instalar() }] : []), { separator: true }, { label: "Cerrar sesión", iconName: "logout", command: () => void logout() }]);
+const botonUsuario = useTemplateRef<HTMLElement>("botonUsuario");
+const opcionesUsuario = computed<MenuItem[]>(() => [
+  { label: "Mi cuenta", iconName: "manage-accounts-outline", command: () => void router.push({ name: "mi-cuenta" }) },
+  ...(acceso.estaciones.length > 1 ? [{ label: "Estación de trabajo", iconName: "location-on-outline", command: () => (acceso.eligiendoEstacion = true) }] : []),
+  // En el teléfono no están en la cabecera.
+  { label: "Apariencia", iconName: "palette-outline", class: "md:hidden", command: ({ originalEvent }) => temaPopover.value?.show(originalEvent, botonUsuario.value) },
+  { label: "Ayuda", iconName: "help-outline", class: "md:hidden", command: () => void router.push(destinoAyuda.value) },
+  ...(puedeInstalar.value ? [{ label: "Instalar app", iconName: "install-mobile", command: () => void instalar() }] : []),
+  { separator: true },
+  { label: "Cerrar sesión", iconName: "logout", command: () => void logout() },
+]);
 
 async function logout() {
   // Antes del logout (después el token ya no vale): en una taquilla compartida el siguiente no debe recibirlas.

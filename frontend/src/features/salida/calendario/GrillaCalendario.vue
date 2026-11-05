@@ -211,7 +211,7 @@ defineExpose({ centrar });
 }
 .cal__dia-nombre {
   color: var(--p-text-muted-color);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -224,7 +224,7 @@ defineExpose({ centrar });
   grid-column: 1 / -1;
   overflow: hidden;
   color: var(--p-text-muted-color);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -316,7 +316,7 @@ defineExpose({ centrar });
   background: linear-gradient(to right, var(--lleno) var(--f), var(--vacio) var(--f));
   color: var(--tinta);
   font: inherit;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   line-height: 1.35;
   cursor: pointer;
   transition:
