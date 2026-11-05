@@ -2,6 +2,7 @@
 import { http, request } from '@/core/http'
 import type {
   AccesosUsuario,
+  AsignacionDeRol,
   AsignacionPayload,
   CatalogoAcceso,
   FilaQuienPuede,
@@ -21,6 +22,8 @@ export const crearRol = (r: RolPayload) => http.post<Rol>(`${BASE}/roles`, r)
 export const guardarRol = (id: number, r: RolPayload) => request<Rol>(`${BASE}/roles/${id}`, { method: 'PUT', body: r })
 
 export const eliminarRol = (id: number) => http.delete<{ id: number }>(`${BASE}/roles/${id}`)
+
+export const fetchUsuariosRol = (rolId: number) => http.get<AsignacionDeRol[]>(`${BASE}/roles/${rolId}/usuarios`)
 
 export const fetchAccesos = (usuarioId: number) => http.get<AccesosUsuario>(`${BASE}/usuarios/${usuarioId}`)
 

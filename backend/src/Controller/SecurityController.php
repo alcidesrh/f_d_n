@@ -5,6 +5,7 @@ namespace App\Controller;
 use ApiPlatform\Metadata\IriConverterInterface;
 use App\Entity\ApiToken;
 use App\Entity\Usuario;
+use App\Repository\UsuarioRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -21,6 +22,7 @@ class SecurityController extends AbstractController
 {
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
+        private readonly UsuarioRepository $usuarios,
     ) {
     }
 
@@ -40,6 +42,7 @@ class SecurityController extends AbstractController
         }
         $token->setActivo(true);
         $this->entityManager->flush();
+        $this->usuarios->registrarInicioSesion($user, new \DateTimeImmutable());
 
         return $this->json([
             'token' => $token->getToken(),

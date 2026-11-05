@@ -3,6 +3,8 @@
 namespace App\Repository;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\DBAL\ParameterType;
+use Doctrine\DBAL\Types\Types;
 use App\Entity\Usuario;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
@@ -35,5 +37,19 @@ class UsuarioRepository extends ServiceEntityRepository implements PasswordUpgra
         $Usuario->setPassword($newHashedPassword);
         $this->getEntityManager()->persist($Usuario);
         $this->getEntityManager()->flush();
+    }
+
+    /**
+     * Anota el inicio de sesión. Un UPDATE directo: no pasa por el ciclo de vida
+     * de Doctrine, así que no mueve `updatedAt` ni genera una fila de bitácora
+     * por cada login.
+     */
+    public function registrarInicioSesion(Usuario $usuario, \DateTimeImmutable $momento): void {
+        $this->getEntityManager()->getConnection()->executeStatement(
+            'UPDATE usuario SET last_login = ? WHERE id = ?',
+            [$momento, $usuario->getId()],
+            [Types::DATETIME_IMMUTABLE, ParameterType::INTEGER],
+        );
+        $usuario->setLastLogin($momento);
     }
 }

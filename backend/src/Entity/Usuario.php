@@ -149,6 +149,11 @@ class Usuario extends PersonaBase implements
     #[ApiProperty(writable: false)]
     private bool $activo = true;
 
+    /** Último inicio de sesión (`POST /api/login`). Solo lectura por la API: lo fija `UsuarioRepository::registrarInicioSesion()`. */
+    #[ApiProperty(writable: false)]
+    #[ORM\Column(nullable: true)]
+    private ?\DateTimeImmutable $lastLogin = null;
+
     /** Si es usuario de una agencia: vende con el saldo de esta (ADR-021). */
     #[ORM\ManyToOne]
     private ?Agencia $agencia = null;
@@ -216,6 +221,26 @@ class Usuario extends PersonaBase implements
         return $this->asignaciones;
     }
 
+    /**
+     * Roles con una asignación vigente hoy: lo que muestra el listado de
+     * usuarios. Solo lectura; se conceden por `/api/acceso`.
+     *
+     * @return list<Role>
+     */
+    #[ApiProperty(writable: false)]
+    public function getRolesVigentes(): array
+    {
+        $hoy = new \DateTimeImmutable('today');
+        $roles = [];
+        foreach ($this->asignaciones as $asignacion) {
+            if ($asignacion->vigente($hoy)) {
+                $roles[(int) $asignacion->getRol()->getId()] = $asignacion->getRol();
+            }
+        }
+
+        return array_values($roles);
+    }
+
     public function isActivo(): bool
     {
         return $this->activo;
@@ -224,6 +249,18 @@ class Usuario extends PersonaBase implements
     public function setActivo(bool $activo): static
     {
         $this->activo = $activo;
+
+        return $this;
+    }
+
+    public function getLastLogin(): ?\DateTimeImmutable
+    {
+        return $this->lastLogin;
+    }
+
+    public function setLastLogin(?\DateTimeImmutable $lastLogin): static
+    {
+        $this->lastLogin = $lastLogin;
 
         return $this;
     }

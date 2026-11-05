@@ -164,6 +164,38 @@ final class AdministracionAccesos
     // ---- Usuarios y asignaciones -----------------------------------------
 
     /**
+     * Quiénes tienen el rol, con el alcance de cada asignación (vigente o no),
+     * por usuario. Es la pestaña «Usuarios» del rol, desde donde se llega a
+     * editar sus accesos.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function usuariosDelRol(int $rolId): array
+    {
+        $this->exigir(Capacidad::IAM_VER);
+        $rol = $this->rol($rolId);
+        $actor = $this->actor();
+        $actorId = (int) $this->usuarioActual()?->getId();
+        $hoy = new \DateTimeImmutable('today');
+        $nombres = $this->nombresLugares();
+
+        $filas = array_map(
+            function (Asignacion $a) use ($hoy, $nombres, $actor, $actorId): array {
+                $u = $a->getUsuario();
+
+                return [
+                    'usuario' => ['id' => (int) $u->getId(), 'username' => $u->getUsername(), 'nombre' => $u->getFullName(), 'activo' => $u->isActivo()],
+                    ...$this->vistaAsignacion($a, $hoy, $nombres, $actor, $actorId),
+                ];
+            },
+            $this->em->getRepository(Asignacion::class)->findBy(['rol' => $rol]),
+        );
+        usort($filas, static fn(array $x, array $y) => strcmp($x['usuario']['username'], $y['usuario']['username']));
+
+        return $filas;
+    }
+
+    /**
      * Lo que tiene un usuario: sus asignaciones (vigentes o no), lo que puede
      * hacer en efecto (con el rol que se lo da) y qué puede cambiar quien mira.
      *

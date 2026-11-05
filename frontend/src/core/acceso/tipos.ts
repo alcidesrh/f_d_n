@@ -123,6 +123,11 @@ export interface Asignacion {
   puedeEditar: boolean
 }
 
+/** Una asignación de un rol, con su usuario (`GET /api/acceso/roles/{id}/usuarios`). */
+export interface AsignacionDeRol extends Asignacion {
+  usuario: { id: number; username: string; nombre: string; activo: boolean }
+}
+
 export interface AsignacionPayload {
   rol: number
   empresas: number[] | null

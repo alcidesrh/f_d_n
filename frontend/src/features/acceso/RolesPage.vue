@@ -74,6 +74,13 @@
             </div>
           </header>
 
+          <Tabs v-model:value="pestana">
+            <TabList>
+              <Tab value="capacidades">Capacidades</Tab>
+              <Tab v-if="actual" value="usuarios">Usuarios <Badge v-if="usuariosRol" :value="usuariosRol.length" severity="secondary" class="ml-1" /></Tab>
+            </TabList>
+            <TabPanels class="!px-0">
+              <TabPanel value="capacidades" class="flex flex-col gap-4 !px-0">
           <Message v-if="actual?.sistema" severity="secondary" :closable="false"> El rol de sistema tiene todas las capacidades, también las que se agreguen después, y no se edita. Se otorga con cuidado: quien lo tiene puede todo. </Message>
 
           <template v-if="!actual?.sistema">
@@ -118,6 +125,36 @@
               </div>
             </div>
           </template>
+              </TabPanel>
+
+              <TabPanel v-if="actual" value="usuarios" class="!px-0">
+                <div v-if="cargandoUsuarios" class="flex justify-center py-6"><ProgressSpinner style="width: 1.5rem; height: 1.5rem" /></div>
+                <p v-else-if="usuariosRol && !usuariosRol.length" class="py-4 text-center text-sm text-muted-color">Ningún usuario tiene este rol.</p>
+                <DataTable v-else-if="usuariosRol" :value="usuariosRol" data-key="id" size="small" striped-rows paginator :rows="25" :rows-per-page-options="[25, 50, 100]">
+                  <Column header="Usuario">
+                    <template #body="{ data }">
+                      <span class="block text-sm font-medium">{{ data.usuario.username }}</span>
+                      <span class="block text-xs text-muted-color">{{ data.usuario.nombre }}</span>
+                      <Tag v-if="!data.usuario.activo" severity="secondary" value="Inactivo" class="mt-1" />
+                    </template>
+                  </Column>
+                  <Column header="Alcance">
+                    <template #body="{ data }"><span class="text-sm">{{ alcance(data) }}</span></template>
+                  </Column>
+                  <Column header="Vigencia">
+                    <template #body="{ data }">
+                      <Tag :severity="data.vigente ? 'success' : 'secondary'" :value="data.vigente ? vigencia(data) : `Fuera de vigencia · ${vigencia(data)}`" />
+                    </template>
+                  </Column>
+                  <Column>
+                    <template #body="{ data }">
+                      <Button label="Editar" size="small" severity="secondary" outlined :disabled="!data.puedeEditar" v-tooltip.left="data.puedeEditar ? 'Abre sus accesos: rol, alcance y vigencia' : 'No puede cambiar esta asignación'" @click="editarUsuario(data)" />
+                    </template>
+                  </Column>
+                </DataTable>
+              </TabPanel>
+            </TabPanels>
+          </Tabs>
 
           <footer v-if="!soloLectura" class="sticky bottom-0 -mx-3 flex flex-wrap items-center justify-end gap-2 border-t border-surface-200 bg-surface-0 px-3 pt-3 md:-mx-4 md:px-4">
             <span v-if="cambios" class="mr-auto text-sm text-amber-600">{{ cambios }}</span>
@@ -132,11 +169,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from "vue";
+import { computed, reactive, ref, watch } from "vue";
+import { useRouter } from "vue-router";
 import { useConfirm } from "primevue/useconfirm";
 import * as api from "@/core/acceso/api";
 import { agruparCatalogo, cambiosDeCapacidades, type GrupoCapacidades } from "@/core/acceso/reglas";
-import type { CatalogoAcceso, DefinicionCapacidad, Rol, RolPayload } from "@/core/acceso/tipos";
+import type { AsignacionDeRol, CatalogoAcceso, DefinicionCapacidad, OpcionLugar, Rol, RolPayload } from "@/core/acceso/tipos";
 import { notify } from "@/core/notify";
 
 defineOptions({ name: "RolesPage" });
@@ -144,6 +182,7 @@ defineOptions({ name: "RolesPage" });
 const OPERACIONES = ["ver", "editar", "eliminar"] as const;
 
 const confirm = useConfirm();
+const router = useRouter();
 const catalogo = ref<CatalogoAcceso | null>(null);
 const roles = ref<Rol[]>([]);
 const cargando = ref(true);
@@ -151,6 +190,10 @@ const guardando = ref(false);
 const error = ref<string | null>(null);
 const busqueda = ref("");
 const seleccion = ref<Rol | null>(null);
+const pestana = ref("capacidades");
+/** Quiénes tienen el rol elegido; null hasta abrir la pestaña «Usuarios». */
+const usuariosRol = ref<AsignacionDeRol[] | null>(null);
+const cargandoUsuarios = ref(false);
 
 interface Borrador {
   nombre: string;
@@ -263,6 +306,53 @@ function cuantasDe(g: GrupoCapacidades): string {
 function descartar() {
   if (actual.value) elegir(actual.value);
   else borrador.value = null;
+}
+
+/** Otro rol (o ninguno): se vuelve a Capacidades y se olvida la lista de usuarios. */
+watch(
+  () => seleccion.value?.id,
+  (id, anterior) => {
+    if (id === anterior) return;
+    pestana.value = "capacidades";
+    usuariosRol.value = null;
+  },
+);
+
+watch(pestana, (p) => {
+  if (p === "usuarios") void cargarUsuarios();
+});
+
+async function cargarUsuarios() {
+  const id = seleccion.value?.id;
+  if (id === undefined) return;
+  cargandoUsuarios.value = true;
+  try {
+    const filas = await api.fetchUsuariosRol(id);
+    if (seleccion.value?.id === id) usuariosRol.value = filas;
+  } catch (e) {
+    notify.error(e instanceof Error ? e.message : "No se pudieron cargar los usuarios del rol.");
+  } finally {
+    cargandoUsuarios.value = false;
+  }
+}
+
+/** Sus accesos están en la página del usuario: ahí se cambian rol, alcance y vigencia. */
+function editarUsuario(a: AsignacionDeRol) {
+  void router.push({ name: "acceso-usuario", params: { id: a.usuario.id } });
+}
+
+function alcance(a: AsignacionDeRol): string {
+  if (a.agencia) return `Agencia ${a.agencia}`;
+  const lista = (items: OpcionLugar[] | null, todos: string) => (items === null ? todos : items.length ? items.map((i) => i.nombre).join(", ") : "ninguno");
+  return `Empresas: ${lista(a.empresas, "todas")} · Estaciones: ${lista(a.estaciones, "todas")}`;
+}
+
+function vigencia(a: AsignacionDeRol): string {
+  const fecha = (iso: string) => iso.split("-").reverse().join("/");
+  if (a.desde && a.hasta) return `${fecha(a.desde)} – ${fecha(a.hasta)}`;
+  if (a.desde) return `desde ${fecha(a.desde)}`;
+  if (a.hasta) return `hasta ${fecha(a.hasta)}`;
+  return "Siempre";
 }
 
 function payload(): RolPayload {

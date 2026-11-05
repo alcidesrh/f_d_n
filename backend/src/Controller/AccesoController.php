@@ -93,6 +93,13 @@ final class AccesoController extends AbstractController
         });
     }
 
+    /** Quiénes tienen el rol y con qué alcance (la pestaña «Usuarios» del rol). */
+    #[Route('/roles/{id<\d+>}/usuarios', name: 'rol_usuarios', methods: ['GET'])]
+    public function usuariosDelRol(int $id): JsonResponse
+    {
+        return $this->responder(fn() => $this->accesos->usuariosDelRol($id));
+    }
+
     /** Asignaciones, permisos efectivos y qué puede cambiar quien mira. */
     #[Route('/usuarios/{id<-?\d+>}', name: 'usuario', methods: ['GET'])]
     public function usuario(int $id): JsonResponse
