@@ -1,8 +1,0 @@
-/* Toolbar de página (título a la izquierda, acciones a la derecha): el
-   `Toolbar` ya envuelve start/end; también sus contenidos, para que las
-   acciones bajen de línea en móvil en lugar de desbordar. */
-.p-toolbar-start,
-.p-toolbar-end {
-  flex-wrap: wrap;
-  min-width: 0;
-}
