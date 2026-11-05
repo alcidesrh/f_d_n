@@ -41,7 +41,6 @@ export interface FiltroBoletos {
   hasta: string | null
   id: number | null
   salida: number | null
-  documento: TipoDocumento | null
   /** Vacío = todos. */
   estados: EstadoBoleto[]
   asiento: number | null
@@ -52,6 +51,10 @@ export interface FiltroBoletos {
   origen: number | null
   /** Id de la estación donde baja. */
   destino: number | null
+  /** Id de la empresa de la salida. */
+  empresa: number | null
+  /** Solo las ventas creadas por el usuario de la sesión. */
+  mios: boolean
 }
 
 export interface Pagina {
@@ -68,7 +71,6 @@ export function filtroInicial(desde: string | null = null, hasta: string | null 
     hasta,
     id: null,
     salida: null,
-    documento: null,
     estados: [],
     asiento: null,
     clase: null,
@@ -76,6 +78,8 @@ export function filtroInicial(desde: string | null = null, hasta: string | null 
     factura: null,
     origen: null,
     destino: null,
+    empresa: null,
+    mios: false,
   }
 }
 
@@ -92,7 +96,6 @@ export function aQuery(f: FiltroBoletos, p: Pagina): string {
   poner('hasta', f.hasta)
   poner('id', f.id)
   poner('salida', f.salida)
-  poner('documento', f.documento)
   poner('estado', f.estados.join(','))
   poner('asiento', f.asiento)
   poner('clase', f.clase)
@@ -100,6 +103,8 @@ export function aQuery(f: FiltroBoletos, p: Pagina): string {
   poner('factura', f.factura)
   poner('origen', f.origen)
   poner('destino', f.destino)
+  poner('empresa', f.empresa)
+  poner('mios', f.mios ? 1 : null)
   q.set('pagina', String(p.pagina))
   q.set('porPagina', String(p.porPagina))
   q.set('orden', p.orden)
@@ -109,8 +114,8 @@ export function aQuery(f: FiltroBoletos, p: Pagina): string {
 
 /** Cuántos filtros (además del rango de fechas) hay aplicados. */
 export function filtrosActivos(f: FiltroBoletos): number {
-  const { desde: _d, hasta: _h, estados, ...resto } = f
-  return Object.values(resto).filter((v) => v !== null && v !== '').length + (estados.length ? 1 : 0)
+  const { desde: _d, hasta: _h, estados, mios, ...resto } = f
+  return Object.values(resto).filter((v) => v !== null && v !== '').length + (estados.length ? 1 : 0) + (mios ? 1 : 0)
 }
 
 /** Clic en una columna ordenable: la misma alterna la dirección; otra empieza descendente. */

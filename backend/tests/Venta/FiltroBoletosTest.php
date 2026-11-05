@@ -62,6 +62,17 @@ final class FiltroBoletosTest extends TestCase
         $this->assertSame(15, $f->porPagina);
         $this->assertSame("fecha", $f->orden);
         $this->assertFalse($f->descendente);
+        $this->assertNull($f->empresa);
+        $this->assertFalse($f->mios);
+    }
+
+    public function testEmpresaYSoloMisBoletos(): void
+    {
+        $f = FiltroBoletos::desdeQuery(["empresa" => " 3 ", "mios" => "1"], self::hoy());
+
+        $this->assertSame(3, $f->empresa);
+        $this->assertTrue($f->mios);
+        $this->assertFalse(FiltroBoletos::desdeQuery(["mios" => "0"], self::hoy())->mios);
     }
 
     public function testRechazaLoInvalido(): void

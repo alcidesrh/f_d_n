@@ -73,7 +73,7 @@ final class ListadoBoletos
     public function buscar(FiltroBoletos $f, Usuario $usuario): array
     {
         $qb = $this->base($usuario);
-        $this->filtrar($qb, $f);
+        $this->filtrar($qb, $f, $usuario);
 
         $total = (int) (clone $qb)->select("COUNT(b.id)")->getQuery()->getSingleScalarResult();
 
@@ -266,8 +266,12 @@ final class ListadoBoletos
         return $boletos;
     }
 
-    private function filtrar(QueryBuilder $qb, FiltroBoletos $f): void
+    private function filtrar(QueryBuilder $qb, FiltroBoletos $f, Usuario $usuario): void
     {
+        if ($f->mios) {
+            $qb->andWhere("IDENTITY(v.usuario) = :usuarioMio")->setParameter("usuarioMio", $usuario->getId());
+        }
+
         // Un id exacto o una salida concreta se buscan en cualquier fecha (enlaces del chat, "Consultar" de otro boleto).
         // La salida y la venta, ambas en el rango: así entra por los índices de fecha (con OR leía las tablas enteras).
         if ($f->id === null && $f->salida === null) {
@@ -280,6 +284,7 @@ final class ListadoBoletos
             "b.id" => $f->id,
             "IDENTITY(b.reasignadoDe)" => $f->reasignadoDe,
             "s.id" => $f->salida,
+            "IDENTITY(s.empresa)" => $f->empresa,
             "t.origen" => $f->origen,
             "t.destino" => $f->destino,
             "a.numero" => $f->numeroAsiento,

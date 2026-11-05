@@ -52,6 +52,10 @@ final readonly class FiltroBoletos
         public int $porPagina = 15,
         public string $orden = "id",
         public bool $descendente = true,
+        /** Id de la empresa de la salida. */
+        public ?int $empresa = null,
+        /** Solo los boletos de las ventas que creó el usuario de la sesión. */
+        public bool $mios = false,
     ) {
         if ($hasta < $desde) {
             throw new VentaRechazada("La fecha final no puede ser anterior a la inicial.", "rango_invalido", 400);
@@ -110,6 +114,8 @@ final readonly class FiltroBoletos
             porPagina: in_array($porPagina, self::POR_PAGINA, true) ? $porPagina : 15,
             orden: $orden,
             descendente: ($q["dir"] ?? "desc") !== "asc",
+            empresa: Parametros::entero($q["empresa"] ?? null, "la empresa"),
+            mios: Parametros::bandera($q["mios"] ?? null),
         );
     }
 

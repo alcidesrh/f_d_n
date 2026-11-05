@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Acceso\Capacidad;
 use App\Entity\BoletoAsiento;
 use App\Entity\BoletoVenta;
+use App\Entity\Empresa;
 use App\Entity\Estacion;
 use App\Entity\Usuario;
 use App\Salida\Abordaje\Abordaje;
@@ -65,6 +66,10 @@ final class BoletoController extends AbstractController
                 static fn(Estacion $e) => ["id" => $e->getId(), "nombre" => $e->getNombre(), "departamento" => $e->getDepartamento()],
                 $this->em->getRepository(Estacion::class)->findBy(["activo" => true], ["nombre" => "ASC"]),
             ),
+            "empresas" => array_map(
+                static fn(Empresa $e) => ["id" => $e->getId(), "nombre" => $e->getNombreCorto() ?? $e->getNombre()],
+                $this->em->getRepository(Empresa::class)->findBy(["activa" => true], ["nombre" => "ASC"]),
+            ),
             "puede" => [
                 "cancelar" => $this->isGranted(self::CANCELAR),
                 "anular" => $this->isGranted(VentaController::ANULAR),
@@ -78,7 +83,8 @@ final class BoletoController extends AbstractController
      * `?desde&hasta` (AAAA-MM-DD; por defecto ±30 días), `id`, `reasignado`,
      * `salida`, `documento`, `estado` (separados por coma), `asiento`,
      * `clase`, `serie`, `factura`, `origen`, `destino`, `referencia`,
-     * `autorizacion`, `clienteDocumento`, `clienteBoleto`, `pagina`,
+     * `autorizacion`, `clienteDocumento`, `clienteBoleto`, `empresa`, `mios=1`
+     * (solo las ventas del usuario), `pagina`,
      * `porPagina`, `orden`, `dir`.
      */
     #[Route("", name: "listar", methods: ["GET"])]

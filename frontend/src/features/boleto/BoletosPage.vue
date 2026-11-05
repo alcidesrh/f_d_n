@@ -59,11 +59,17 @@
               </div>
             </div>
             <div class="campo col-span-2 @2xl:col-span-3 @5xl:col-span-5">
-              <span>Tipo de documento</span>
-              <div class="chips" role="group" aria-label="Tipo de documento">
-                <button v-for="d in DOCUMENTOS" :key="d.valor" type="button" class="chip" :class="{ 'chip-on': borrador.documento === d.valor }" :aria-pressed="borrador.documento === d.valor" @click="borrador.documento = borrador.documento === d.valor ? null : d.valor">
-                  {{ d.etiqueta }} <span class="opacity-70">({{ inicialDocumento(d.valor) }})</span>
+              <span>Empresa</span>
+              <div class="chips" role="group" aria-label="Empresa">
+                <button v-for="e in opciones?.empresas ?? []" :key="e.id" type="button" class="chip" :class="{ 'chip-on': borrador.empresa === e.id }" :aria-pressed="borrador.empresa === e.id" @click="borrador.empresa = borrador.empresa === e.id ? null : e.id">
+                  {{ e.nombre }}
                 </button>
+              </div>
+            </div>
+            <div class="campo col-span-2 @2xl:col-span-1 @5xl:col-span-1">
+              <span>Creados por</span>
+              <div class="chips" role="group" aria-label="Creados por">
+                <button type="button" class="chip" :class="{ 'chip-on': borrador.mios }" :aria-pressed="borrador.mios" @click="borrador.mios = !borrador.mios">Solo mis boletos</button>
               </div>
             </div>
             <div class="col-span-2 flex justify-end @2xl:col-span-1">
@@ -154,7 +160,7 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref, shallowRef, toRaw,
 import { useRoute, useRouter } from "vue-router";
 import { claveDeUsuario } from "@/core/auth/alcanceSesion";
 import { fetchBoletosListado, fetchOpcionesBoletos } from "@/core/boleto/api";
-import { aQuery, alternarOrden, disponibilidad, DOCUMENTOS, documentoTexto, ESTADOS, etiquetaEstado, filtroInicial, paginaInicial, type AccionBoleto, type FiltroBoletos, type Pagina } from "@/core/boleto/listado";
+import { aQuery, alternarOrden, disponibilidad, documentoTexto, ESTADOS, etiquetaEstado, filtroInicial, paginaInicial, type AccionBoleto, type FiltroBoletos, type Pagina } from "@/core/boleto/listado";
 import type { EstadoBoleto, TipoDocumento } from "@/core/boleto/types";
 import SalidaSelect from "@/shared/ui/SalidaSelect.vue";
 import type { BoletoFila, OpcionesBoletos, OrdenBoletos, PaginaBoletos } from "@/core/boleto/types";
@@ -345,7 +351,7 @@ function limpiar() {
 const ESPERA_TEXTO = 500;
 let espera: ReturnType<typeof setTimeout> | undefined;
 watch(
-  () => [borrador.desde, borrador.hasta, borrador.salida, borrador.origen, borrador.destino, borrador.clase, borrador.documento, borrador.estados.join(",")],
+  () => [borrador.desde, borrador.hasta, borrador.salida, borrador.origen, borrador.destino, borrador.clase, borrador.empresa, borrador.mios, borrador.estados.join(",")],
   () => {
     if (borrador.desde && !borrador.hasta) return;
     clearTimeout(espera);

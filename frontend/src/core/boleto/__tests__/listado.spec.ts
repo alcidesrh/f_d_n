@@ -45,9 +45,15 @@ describe('listado de boletos', () => {
     expect(aQuery({ ...f, estados: [...f.estados] }, paginaInicial())).toBe('desde=2026-10-01&hasta=2026-10-31&id=7&estado=emitido%2Cchequeado&origen=7&destino=9&pagina=1&porPagina=15&orden=id&dir=desc')
   })
 
+  it('manda la empresa y solo los boletos propios cuando se eligen', () => {
+    expect(aQuery({ ...filtroInicial(), empresa: 3, mios: true }, paginaInicial())).toContain('empresa=3&mios=1&')
+    expect(aQuery({ ...filtroInicial(), mios: false }, paginaInicial())).not.toContain('mios')
+  })
+
   it('cuenta los filtros aplicados sin el rango', () => {
     expect(filtrosActivos(filtroInicial('2026-10-01', '2026-10-31'))).toBe(0)
     expect(filtrosActivos({ ...filtroInicial(), estados: ['anulado'], asiento: 0, origen: 4 })).toBe(3)
+    expect(filtrosActivos({ ...filtroInicial(), mios: true, empresa: 2 })).toBe(2)
   })
 
   it('alterna el orden de una columna y vuelve a la primera página', () => {
