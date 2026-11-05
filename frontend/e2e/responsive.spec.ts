@@ -108,6 +108,20 @@ async function pantallasQueDesbordan(page: Page) {
   return fallas
 }
 
+test('la barra del listado guarda lo secundario en «Más» solo si no cabe', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 })
+  await entrar(page)
+  await abrir(page, '/lista/bus')
+  const barra = page.getByRole('toolbar', { name: 'Controles del listado' })
+  await expect(barra.getByRole('button', { name: 'Columnas' })).toBeVisible()
+  await expect(barra.getByRole('button', { name: 'Más opciones' })).toBeHidden()
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  await expect(barra.getByRole('button', { name: 'Más opciones' })).toBeVisible()
+  await expect(barra.getByRole('button', { name: 'Columnas' })).toBeHidden()
+  await expect(barra.getByRole('button', { name: 'Nuevo' })).toBeVisible()
+})
+
 for (const ancho of ANCHOS) {
   test(`sin desborde horizontal en ${ancho.nombre} (${ancho.width}px)`, async ({ page }) => {
     test.setTimeout(240_000)

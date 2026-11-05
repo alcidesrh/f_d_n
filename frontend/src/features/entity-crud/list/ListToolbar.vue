@@ -238,14 +238,15 @@ const opcionesMas = computed<MenuItem[]>(() => [
 .list-toolbar__controls {
   margin-inline-start: auto;
 }
-.list-toolbar__mas {
+/* Con `__btn` delante: su `display`, declarado más abajo, ganaría a una clase sola. */
+.list-toolbar__btn.list-toolbar__mas {
   display: none;
 }
 @container (width < 33rem) {
   .list-toolbar__extra {
     display: none;
   }
-  .list-toolbar__mas {
+  .list-toolbar__btn.list-toolbar__mas {
     display: inline-grid;
   }
 }
