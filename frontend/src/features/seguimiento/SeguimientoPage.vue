@@ -35,7 +35,7 @@
           <Select v-model="filtro.salidaId" :options="opcionesSalida" option-label="etiqueta" option-value="id" show-clear filter placeholder="Todas" fluid :disabled="opcionesSalida.length === 0" @change="alCambiarSalida" />
         </label>
         <div v-if="(datos?.empresas.length ?? 0) > 1" class="flex flex-wrap items-center justify-end gap-2">
-          <button v-for="e in datos?.empresas" :key="e.id" type="button" class="rounded-full border px-2.5 py-1 text-xs font-semibold" :class="filtro.empresaId === e.id ? 'border-primary bg-primary text-primary-contrast' : 'border-surface-300 bg-transparent text-color'" :aria-pressed="filtro.empresaId === e.id" @click="alternarEmpresa(e.id)">
+          <button v-for="e in datos?.empresas" :key="e.id" type="button" class="rounded-full border px-2.5 py-1 text-xs pointer-coarse:py-2 font-semibold" :class="filtro.empresaId === e.id ? 'border-primary bg-primary text-primary-contrast' : 'border-surface-300 bg-transparent text-color'" :aria-pressed="filtro.empresaId === e.id" @click="alternarEmpresa(e.id)">
             {{ e.nombre }}
           </button>
         </div>

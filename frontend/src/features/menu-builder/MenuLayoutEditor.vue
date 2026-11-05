@@ -6,7 +6,7 @@
 <template>
   <div class="@container">
     <div class="grid grid-cols-1 gap-3 @4xl:grid-cols-3">
-      <div v-for="area in LAYOUT_AREAS" :key="area" class="card flex flex-col gap-3 p-3">
+      <div v-for="area in LAYOUT_AREAS" :key="area" :data-area="area" class="flex flex-col gap-3 p-3">
         <div class="flex items-center gap-2">
           <icon :name="AREA_ICONS[area]" lg />
           <h3 class="font-semibold">{{ AREA_LABELS[area] }}</h3>

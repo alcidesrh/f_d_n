@@ -4,7 +4,7 @@
       title="Form Builder"
     />
 
-    <div class="card">
+    <div>
       <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
         <span class="text-xs text-surface-500">
           Click en una celda para seleccionarla · los bordes punteados son solo de esta vista previa

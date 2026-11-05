@@ -324,7 +324,6 @@ function descartar() {
 .redactor__titulo {
   flex: 1;
   margin: 0;
-  font-family: "Space Grotesk", sans-serif;
   font-size: 1rem;
   font-weight: 600;
   color: var(--p-surface-800);

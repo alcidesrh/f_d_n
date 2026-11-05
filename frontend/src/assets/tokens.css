@@ -67,7 +67,7 @@
   /* Margen arriba y abajo de la página. Debajo de `md` el de abajo deja libre
      el disparador del chat (fijo en la esquina). */
   --page-top: 1rem;
-  --page-bottom: 4.5rem;
+  --page-bottom: calc(4.5rem + env(safe-area-inset-bottom));
   @variant md {
     --page-bottom: max(var(--page-gutter), 1.5rem);
   }

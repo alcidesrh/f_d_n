@@ -4,7 +4,7 @@
   quiere el usuario. Cada uno llega recortado a lo que su rol le deja ver.
 -->
 <template>
-  <section v-if="datos && datos.reportes.some((r) => r.puede || r.suscrito)" class="card">
+  <section v-if="datos && datos.reportes.some((r) => r.puede || r.suscrito)">
     <h2 class="mb-1 text-base font-semibold">Reportes y avisos</h2>
     <p class="mb-3 text-sm text-muted-color">Llegan a «Bitácora del sistema» en el chat o a su correo, con lo que su rol le deja ver.</p>
     <ul class="m-0 flex list-none flex-col gap-3 p-0">

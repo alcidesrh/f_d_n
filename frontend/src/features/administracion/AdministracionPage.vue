@@ -427,6 +427,9 @@ onBeforeUnmount(() => window.removeEventListener("keydown", atajo));
   align-items: center;
   gap: 0.625rem;
   padding: 0.5rem;
+  @media (pointer: coarse) {
+    min-height: var(--tap-min);
+  }
   border-radius: 0.5rem;
   font-size: 0.875rem;
   color: inherit;

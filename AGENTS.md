@@ -139,7 +139,7 @@ No existe un sitio MkDocs — se eliminó el 2026-09 por documentar un modelo de
 | Terminología + modelo de cada término | `CONTEXT.md` |
 | Referencia funcional (ventas y operación) | `docs/architecture/ventas-y-operacion.md` |
 | Referencia funcional (plataforma) | `docs/architecture/plataforma.md` |
-| ADRs (decisiones de arquitectura) | `docs/architecture/decisions/` (ADR-001 a ADR-052, ver `index.md`) |
+| ADRs (decisiones de arquitectura) | `docs/architecture/decisions/` (ADR-001 a ADR-053, ver `index.md`) |
 | Convención de exploración de dominio para skills | `docs/agents/domain.md` |
 | Convención de issue tracker | `docs/agents/issue-tracker.md` |
 | Backend (Symfony, Doctrine, GraphQL) | `backend/AGENTS.md` |
@@ -163,7 +163,7 @@ Para reglas detalladas de cada capa:
 - Los Makefiles (root + backend) incluyen targets legacy que pueden no estar disponibles.
 - **Producción (VPS, `compose.prod.yaml`)**: el código no va en la imagen; se monta desde el checkout `/root/f_d_n` (`./backend:/app`, `./frontend` con su `dist/`), y `/app/var` es tmpfs (la caché de Symfony nace en cada arranque). Cambio de PHP → `make reiniciar` (unos segundos); de frontend → `make front` (`vite build` en el host, sin reiniciar); de la página → `make pagina`; de `composer.lock` → `make vendor`. `make deploy` hace `git pull` y solo lo que cambió, migraciones incluidas, antes de reiniciar (`make migraciones`: se niega si hay pendientes que no llegaron en ese pull; si se detiene, `make deploy desde=<commit>` retoma). Reconstruir imágenes (`make imagen`) solo si cambia un Dockerfile o una extensión de PHP.
 - **Alternar dev/prod en la VPS**: mismos contenedores y misma base, uno u otro. `make vps` pasa a dev (por el mismo dominio que prod, `https://fdn2.duckdns.org`, con su certificado; Vite con recarga en caliente) y `make prod` vuelve; `make modo` dice cuál corre. Las imágenes de dev llevan el prefijo `dev-` y no pisan las de prod (`make vps-build` si cambia un Dockerfile). Al volver a prod, `make front` / `make pagina` si cambiaste el frontend o la página.
-- Docker usa **npm**, no pnpm ni bun (aunque existan lockfiles de ambos).
+- El frontend instala con **bun** (`bun.lock`, también en su Dockerfile); `npm run` solo corre sus scripts.
 - Migración completa desde TerminalOmnibus toma horas (6679 salidas).
 - Debug: `make debug` usa Caddyfile.dev sin workers.
 - Segundo plano (ADR-044), tres servicios de Compose con la imagen del backend:

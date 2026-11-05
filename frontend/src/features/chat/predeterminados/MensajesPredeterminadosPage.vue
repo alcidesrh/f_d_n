@@ -24,14 +24,14 @@
 
     <div v-if="cargando" class="flex justify-center py-10"><ProgressSpinner style="width: 2rem; height: 2rem" /></div>
 
-    <div v-else-if="!mensajes.length && !error" class="card mx-2 flex flex-col items-center gap-2 py-10 text-center text-muted-color">
+    <div v-else-if="!mensajes.length && !error" class="mx-2 flex flex-col items-center gap-2 py-10 text-center text-muted-color">
       <icon name="campaign-outline" size="2rem" />
       <p class="m-0">Todavía no hay mensajes predeterminados.</p>
       <Button label="Crear el primero" size="small" text :disabled="!opciones" @click="abrir(null)" />
     </div>
 
     <ul v-else class="lista">
-      <li v-for="m in mensajes" :key="m.id" class="card tarjeta" :class="{ 'tarjeta--inactiva': !m.activo }">
+      <li v-for="m in mensajes" :key="m.id" class="tarjeta" :class="{ 'tarjeta--inactiva': !m.activo }">
         <header class="flex min-w-0 items-start gap-3">
           <icon :name="icono(m.tipo)" class="mt-0.5 text-xl text-primary" />
           <div class="min-w-0 flex-1">

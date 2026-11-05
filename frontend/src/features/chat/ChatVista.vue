@@ -100,7 +100,6 @@ const emit = defineEmits<{ abrir: [canal: number | null]; adjuntado: [] }>();
   background: var(--p-surface-50);
   h2 {
     margin: 0;
-    font-family: "Space Grotesk", sans-serif;
     font-size: 1.25rem;
     color: var(--p-surface-700);
   }

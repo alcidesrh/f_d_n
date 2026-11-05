@@ -11,7 +11,7 @@
 <template>
   <div class="@container flex flex-col gap-3">
     <!-- Filtros: siempre visibles; se aplican al cambiar (los de texto, con retardo) -->
-    <Accordion class="mb-6">
+    <Accordion>
       <AccordionPanel value="0">
         <AccordionHeader>
           <div class="flex items-center gap-1 font-medium text-lg text-surface-500"><icon name="manage_search" :weight="300" color="text-surface-500" />Filtros</div>

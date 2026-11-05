@@ -29,7 +29,7 @@
 
     <div class="roles-layout">
       <!-- Lista de roles -->
-      <aside class="card flex flex-col gap-2 p-3">
+      <aside class="flex flex-col gap-2 p-3">
         <IconField>
           <InputIcon><icon name="search" /></InputIcon>
           <InputText v-model="busqueda" placeholder="Buscar rol o capacidad" fluid />
@@ -51,7 +51,7 @@
       </aside>
 
       <!-- Editor -->
-      <section ref="editor" class="card flex min-w-0 flex-col gap-4 p-3 md:p-4">
+      <section ref="editor" class="flex min-w-0 flex-col gap-4 p-3 md:p-4">
         <div v-if="!borrador" class="hidden flex-1 flex-col items-center justify-center gap-2 py-10 text-center text-muted-color @[52rem]:flex">
           <icon name="badge-outline" size="2rem" />
           <p>Elija un rol para ver qué concede{{ puedeEditar ? ", o cree uno" : "" }}.</p>

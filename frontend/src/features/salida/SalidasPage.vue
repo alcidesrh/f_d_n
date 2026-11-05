@@ -9,7 +9,7 @@
   Contenido angosto: tarjetas; desde 56rem de ancho del contenido: tabla.
 -->
 <template>
-  <div class="@container flex flex-col gap-4 mt-5 relative">
+  <div class="@container relative flex flex-col gap-4">
     <!-- Contenido angosto: en su propia fila (flotando taparía los chips de estado). -->
     <div class="flex flex-wrap justify-end gap-2 @3xl:absolute @3xl:right-0">
       <RouterLink :to="{ name: 'salidas-calendario' }" class="no-underline">
@@ -27,7 +27,7 @@
     <section class="flex flex-col gap-3">
       <div class="flex flex-wrap items-center gap-2">
         <span class="text-xs font-medium text-muted-color">Estado:</span>
-        <button v-for="e in ESTADOS" :key="e.valor" type="button" class="rounded-full border px-2.5 py-1 text-xs font-medium" :class="filtro.estados.includes(e.valor) ? 'border-primary bg-primary text-primary-contrast' : 'border-surface-300 bg-transparent text-color'" :aria-pressed="filtro.estados.includes(e.valor)" @click="alternarEstado(e.valor)">
+        <button v-for="e in ESTADOS" :key="e.valor" type="button" class="rounded-full border px-2.5 py-1 text-xs pointer-coarse:py-2 font-medium" :class="filtro.estados.includes(e.valor) ? 'border-primary bg-primary text-primary-contrast' : 'border-surface-300 bg-transparent text-color'" :aria-pressed="filtro.estados.includes(e.valor)" @click="alternarEstado(e.valor)">
           {{ e.etiqueta }}<span v-if="datos?.porEstado[e.valor]" class="ml-1 opacity-75">{{ datos.porEstado[e.valor] }}</span>
         </button>
       </div>

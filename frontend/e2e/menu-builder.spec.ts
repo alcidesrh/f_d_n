@@ -20,7 +20,7 @@ const PADDING = 8
 
 const ITEMS = [
   { nombre: 'E2E Inicio', route: 'dashboard', icon: 'home' },
-  { nombre: 'E2E Config', route: 'entity-config', icon: 'settings' },
+  { nombre: 'E2E Config', route: 'administracion', icon: 'settings' },
   { nombre: 'E2E Migración', route: 'migracion', icon: 'database' },
 ]
 const MENU = 'E2E Menú'
@@ -119,7 +119,7 @@ test.describe('constructor de menús', () => {
         await dialog.locator('label', { hasText: 'Ruta' }).locator('.p-select').click()
         await page.getByRole('option', { name: new RegExp(`^${item.route} —`) }).click()
         await dialog.getByPlaceholder('Buscar por nombre, tag o categoría…').fill(item.icon)
-        await dialog.locator(`[data-icon="${item.icon}"]`).click()
+        await dialog.locator(`[data-icon="${item.icon}-outline"]`).click()
         await dialog.getByRole('button', { name: 'Guardar' }).click()
         await expect(dialog).toBeHidden()
         await expect(page.locator('.palette-item', { hasText: item.nombre })).toBeVisible()
@@ -167,7 +167,7 @@ test.describe('constructor de menús', () => {
 
       // 8. Colocar el menú en la barra lateral izquierda.
       await page.getByRole('tab', { name: 'Áreas de la UI' }).click()
-      const area = page.locator('.card', { hasText: 'Barra lateral izquierda' })
+      const area = page.locator('[data-area="sidebar_left"]')
       await area.locator('.p-select').click()
       await page.getByRole('option', { name: MENU }).click()
       const layout = page.waitForResponse(
@@ -178,6 +178,7 @@ test.describe('constructor de menús', () => {
 
       // 9. El shell muestra el menú en la barra izquierda y navega.
       const sidebar = page.locator('aside.sidebar.left')
+      await sidebar.getByRole('button', { name: MENU }).click()
       await expect(sidebar.getByText('E2E Config')).toBeVisible()
       await expect(sidebar.getByText('E2E Migración')).toBeVisible()
       await sidebar
@@ -198,22 +199,16 @@ test.describe('constructor de menús', () => {
         .click()
       await expect(sidebar.getByText('E2E Inicio')).toBeHidden()
 
-      // 11. Modo mini: al pasar el mouse el enlace se despliega al ancho abierto con su
-      // texto en la misma posición que en modo abierto, se mantiene y revierte al salir.
+      // 11. Modo mini: al pasar el mouse el texto aparece flotando y se va al salir.
       const link = sidebar.locator('.menu-link', { hasText: 'E2E Config' })
       const text = link.locator('.menu-text')
-      const width = async () => Math.round((await box(link)).width)
-      const openX = Math.round((await box(text)).x)
-      await sidebar.locator('.toggle-sidebar').click()
+      await sidebar.locator('.sb-modes__opt--mini').click()
       await expect(text).toHaveCSS('opacity', '0')
       await link.hover()
-      await expect.poll(width).toBe(250)
       await expect(text).toHaveCSS('opacity', '1')
-      expect(Math.round((await box(text)).x)).toBe(openX)
       await page.mouse.move(640, 400)
-      await expect.poll(width).toBe(70)
       await expect(text).toHaveCSS('opacity', '0')
-      await sidebar.locator('.toggle-sidebar').click()
+      await sidebar.locator('.sb-modes__opt--open').click()
 
       expect(errors).toEqual([])
     } finally {

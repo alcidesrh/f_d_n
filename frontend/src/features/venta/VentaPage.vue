@@ -70,7 +70,7 @@
             </div>
 
             <div class="flex flex-wrap items-center justify-start gap-2 my-3">
-              <button v-for="e in store.empresas.length > 1 ? store.empresas : []" :key="e.id" type="button" class="rounded-full border px-2.5 py-1 text-xs font-semibold" :class="store.empresaIds.includes(e.id) ? 'border-primary bg-primary text-primary-contrast' : 'border-surface-300 bg-transparent text-color'" :aria-pressed="store.empresaIds.includes(e.id)" @click="alternarEmpresa(e.id)">
+              <button v-for="e in store.empresas.length > 1 ? store.empresas : []" :key="e.id" type="button" class="rounded-full border px-2.5 py-1 text-xs pointer-coarse:py-2 font-semibold" :class="store.empresaIds.includes(e.id) ? 'border-primary bg-primary text-primary-contrast' : 'border-surface-300 bg-transparent text-color'" :aria-pressed="store.empresaIds.includes(e.id)" @click="alternarEmpresa(e.id)">
                 {{ e.nombre }}
               </button>
               <!-- Presentación de las salidas: lista o calendario. -->

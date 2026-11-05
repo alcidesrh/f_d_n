@@ -143,7 +143,6 @@ function alTocar(e: MouseEvent) {
   align-items: center;
   gap: 0.5rem;
   min-width: 0;
-  font-family: "Space Grotesk", sans-serif;
   font-size: 0.95rem;
   font-weight: 600;
   color: var(--p-surface-800);

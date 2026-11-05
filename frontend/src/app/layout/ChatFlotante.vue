@@ -1,6 +1,6 @@
 <template>
   <!-- Disparador del chat en el teléfono (el escritorio lo tiene en la cabecera). Relleno con el primario para destacar sobre la app. -->
-  <button v-if="session.user && route.name !== 'chat' && route.name !== 'correo'" type="button" class="chat-flotante tap-target fixed right-4 bottom-4 z-40 flex size-11 items-center justify-center rounded-full md:hidden" :aria-label="sinLeer ? `Mensajes y correo, ${sinLeer} sin leer` : 'Mensajes y correo'" @click="invocarChat">
+  <button v-if="session.user && route.name !== 'chat' && route.name !== 'correo'" type="button" class="chat-flotante tap-target fixed right-4 z-40 flex size-11 items-center justify-center rounded-full md:hidden" :aria-label="sinLeer ? `Mensajes y correo, ${sinLeer} sin leer` : 'Mensajes y correo'" @click="invocarChat">
     <icon name="forum-outline" size="1.25rem" />
     <span v-if="sinLeer" class="header-chat__badge">{{ sinLeer > 99 ? "99+" : sinLeer }}</span>
   </button>
@@ -31,6 +31,7 @@ function invocarChat() {
 
 <style>
 .chat-flotante {
+  bottom: calc(1rem + env(safe-area-inset-bottom));
   background: var(--p-surface-0);
   color: var(--p-primary-contrast-color);
   box-shadow: 1px 1px 7px 1px var(--p-surface-500);

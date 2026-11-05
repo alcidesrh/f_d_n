@@ -10,7 +10,7 @@
     <PageHead />
     <div v-if="cuenta.cuenta" class="form-fluid @container">
       <div class="grid grid-cols-1 items-start gap-4 @4xl:grid-cols-[18rem_minmax(0,1fr)]">
-        <section class="card flex flex-col items-center gap-4 text-center">
+        <section class="flex flex-col items-center gap-4 text-center">
           <ChatAvatar
             :id="cuenta.cuenta.id"
             :nombre="cuenta.nombre"
@@ -64,7 +64,7 @@
         </section>
 
         <div class="flex min-w-0 flex-col gap-4">
-          <section class="card">
+          <section>
             <h2 class="mb-3 text-base font-semibold">Datos personales</h2>
             <FormKit
               :key="`datos-${cuenta.cuenta.id}-${version}`"
@@ -120,7 +120,7 @@
             </FormKit>
           </section>
 
-          <section v-if="estadoPush !== 'no-disponible'" class="card">
+          <section v-if="estadoPush !== 'no-disponible'">
             <h2 class="mb-3 text-base font-semibold">Notificaciones</h2>
             <div class="flex items-start justify-between gap-4">
               <label for="notificaciones-chat" class="min-w-0">
@@ -144,7 +144,7 @@
 
           <ReportesProgramados />
 
-          <section class="card">
+          <section>
             <h2 class="mb-3 text-base font-semibold">Cambiar contraseña</h2>
             <FormKit
               :key="`clave-${claveForm}`"
@@ -187,7 +187,7 @@
         </div>
       </div>
     </div>
-    <div v-else class="card flex justify-center py-12">
+    <div v-else class="flex justify-center py-12">
       <ProgressSpinner style="width: 2rem; height: 2rem" />
     </div>
   </div>

@@ -11,7 +11,7 @@
       </Message>
 
       <!-- Indicadores por entidad -->
-      <div class="card">
+      <div>
         <div class="flex items-center justify-between mb-3">
           <div class="text-base font-semibold">Indicadores nuevo vs legado</div>
           <Tag :value="`Nuevo ${formatearNumero(store.indicadores.total?.nuevo ?? 0)} / Legado ${formatearNumero(store.indicadores.total?.legado ?? 0)}`" severity="info" />
@@ -32,7 +32,7 @@
       </div>
 
       <!-- Proceso actual -->
-      <div class="card">
+      <div>
         <div class="flex items-center justify-between mb-3">
           <div class="text-base font-semibold">Proceso en curso</div>
           <Tag v-if="store.estado.actual" :severity="severidadEstado(store.estado.actual.estado)" :value="etiquetaEstado(store.estado.actual.estado)" />
@@ -67,7 +67,7 @@
       </div>
 
       <!-- Consola -->
-      <div class="card">
+      <div>
         <div class="flex items-center justify-between mb-3">
           <div class="text-base font-semibold">Consola</div>
           <Tag v-if="store.logJobId && !store.logFin && store.estado.ejecutando" value="En vivo" severity="info" size="small" />
@@ -76,7 +76,7 @@
       </div>
 
       <!-- Historial -->
-      <div class="card">
+      <div>
         <div class="text-base font-semibold mb-3">Historial reciente</div>
         <div v-if="store.estado.recientes.length === 0" class="text-sm text-muted-color">Sin ejecuciones registradas.</div>
         <DataTable v-else :value="store.estado.recientes" size="small" striped-rows class="w-full">

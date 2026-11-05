@@ -60,7 +60,7 @@
             class="grid grid-cols-1 gap-3 @2xl:grid-cols-[minmax(0,1fr)_16rem] @6xl:grid-cols-[13rem_minmax(0,1fr)_19rem]"
           >
             <!-- Menús -->
-            <div class="card flex flex-col gap-2 p-2 @2xl:col-span-2 @6xl:col-span-1">
+            <div class="flex flex-col gap-2 p-2 @2xl:col-span-2 @6xl:col-span-1">
               <Button label="Nuevo menú" size="small" text @click="newMenu">
                 <template #icon><icon name="add" class="mr-1" /></template>
               </Button>
@@ -76,7 +76,7 @@
             </div>
 
             <!-- Menú abierto -->
-            <div class="@container card flex min-h-[24rem] flex-col gap-3 p-3">
+            <div class="@container flex min-h-[24rem] flex-col gap-3 p-3">
               <form
                 v-if="menuDraft"
                 class="grid grid-cols-1 items-end gap-3 @xl:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_auto]"
@@ -164,7 +164,7 @@
             </div>
 
             <!-- Paleta -->
-            <div class="card flex flex-col gap-2 p-3">
+            <div class="flex flex-col gap-2 p-3">
               <div class="flex flex-col items-start gap-1">
                 <h3 class="font-semibold">Ítems navegables</h3>
                 <Button

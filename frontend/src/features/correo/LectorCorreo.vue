@@ -294,7 +294,6 @@ function tono(direccion: string): number {
   align-items: center;
   gap: 0.6rem;
   margin: 0 0 1rem;
-  font-family: "Space Grotesk", sans-serif;
   font-size: 1.3rem;
   font-weight: 600;
   line-height: 1.3;

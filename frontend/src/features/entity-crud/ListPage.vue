@@ -6,7 +6,7 @@
     </div>
 
     <Teleport v-if="store" to="body" :disabled="!maximized">
-      <div class="list-page card" :class="{ 'is-maximized': maximized, 'is-fill': fill }" :aria-modal="maximized || undefined" :role="maximized ? 'dialog' : undefined">
+      <div class="list-page" :class="{ 'is-maximized': maximized, 'is-fill': fill }" :aria-modal="maximized || undefined" :role="maximized ? 'dialog' : undefined">
         <ListToolbar v-if="features.toolbar" :features="features" :columns="store.columns" :view="store.view" :active-filters="filters.active.value.length" :filter-panel="cardsMode" :selection-mode="modoSeleccion" :selected-count="selectedRows.length" :acciones="enSelector ? [] : accionesDisponibles" :enlaces="enSelector ? [] : (entityListLinks[entityName] ?? [])" :maximized="maximized" :configurable="!enSelector" :custom-filter="customFilterButton" @toggle-custom-filter="store.view.customFilterOpen = !store.view.customFilterOpen" @toggle-selection="toggleSelectionMode" @clear-selection="setSelection([])" @share="compartir = true" @accion="ejecutarAccion" @column-visible="setColumnVisible" @show-all-columns="showAllColumns" @toggle-filters="store.view.filtersOpen = !store.view.filtersOpen" @density="store.view.density = $event" @layout="store.view.layout = $event" @maximize="maximized = !maximized" @reset="resetView" @create="onCreate" @configure="onConfigure">
           <template #start>
             <div v-if="store.customFilter" class="list-chips" :aria-label="`${customFilter?.label ?? 'Filtro'} aplicado`">
@@ -77,7 +77,7 @@
       </div>
     </Teleport>
 
-    <div v-else class="card flex items-center justify-center py-12">
+    <div v-else class="flex items-center justify-center py-12">
       <ProgressSpinner v-if="loading.loading" style="width: 2rem; height: 2rem" />
       <span v-else class="text-surface-500">{{ puedeElegirEntidad ? "Elige una entidad para cargar su lista" : "Sin entidad" }}</span>
     </div>

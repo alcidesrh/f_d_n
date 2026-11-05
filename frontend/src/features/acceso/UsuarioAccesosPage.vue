@@ -37,7 +37,7 @@
     <div v-if="cargando && !datos" class="flex justify-center py-10"><ProgressSpinner style="width: 2rem; height: 2rem" /></div>
 
     <template v-if="datos && catalogo">
-      <section class="card flex flex-col gap-3 p-3 md:p-4">
+      <section class="flex flex-col gap-3 p-3 md:p-4">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <h2 class="font-semibold">Asignaciones</h2>
           <div class="flex flex-wrap items-center gap-2">
@@ -76,7 +76,7 @@
         </ul>
       </section>
 
-      <section class="card flex flex-col gap-3 p-3 md:p-4">
+      <section class="flex flex-col gap-3 p-3 md:p-4">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <h2 class="font-semibold">Lo que puede hacer</h2>
           <span class="text-xs text-muted-color">{{ datos.efectivo.length }} capacidades vigentes</span>

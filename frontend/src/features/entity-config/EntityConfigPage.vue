@@ -10,7 +10,7 @@
 -->
 <template>
   <div class="flex flex-col gap-3">
-    <div class="card flex min-h-[24rem] flex-col p-3">
+    <div class="flex min-h-[24rem] flex-col p-3">
       <Message v-if="store.error" severity="warn" class="mb-3">{{ store.error }}</Message>
 
       <div v-if="store.loading" class="flex flex-1 items-center justify-center gap-2">

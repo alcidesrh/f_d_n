@@ -53,7 +53,7 @@
           v-for="e in ESTADOS"
           :key="e.valor"
           type="button"
-          class="rounded-full border px-2.5 py-1 text-xs font-medium"
+          class="rounded-full border px-2.5 py-1 text-xs pointer-coarse:py-2 font-medium"
           :class="filtro.estados.includes(e.valor) ? 'border-primary bg-primary text-primary-contrast' : 'border-surface-300 bg-transparent text-color'"
           :aria-pressed="filtro.estados.includes(e.valor)"
           @click="alternarEstado(e.valor)"
