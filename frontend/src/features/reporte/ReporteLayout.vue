@@ -24,10 +24,10 @@
           <slot name="acciones" />
         </div>
       </section>
-      <div class="flex flsex-col gap-4">
-        <divider layout="vertical" />
+      <div class="flex gap-4">
+        <Divider layout="vertical" class="hidden! @4xl:flex!" />
 
-        <aside class="superficie md:p-5 flex flex-col gap-4" aria-live="polite" aria-labelledby="reporte-resumen">
+        <aside class="superficie flex min-w-0 flex-1 flex-col gap-4 md:p-5" aria-live="polite" aria-labelledby="reporte-resumen">
           <h2 id="reporte-resumen" class="m-0 flex items-center gap-2 text-base font-semibold">
             <icon name="bar-chart" color="text-primary" />Vista previa
             <ProgressSpinner v-if="cargando" class="!size-4" stroke-width="6" aria-label="Consultando" />

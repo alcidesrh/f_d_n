@@ -543,10 +543,21 @@ export const componentsPreset = (): Tokens => {
         shadow: "{overlay.select.shadow}",
       },
     },
+    // Leyenda como rótulo sobre el borde, no como una caja encima de otra caja.
     fieldset: {
       legend: {
         font: {
-          weight: 400,
+          weight: 500,
+        },
+        borderWidth: "0",
+        padding: "0 0.5rem",
+      },
+      colorScheme: {
+        light: {
+          legend: {
+            background: "transparent",
+            hoverBackground: "transparent",
+          },
         },
       },
     },

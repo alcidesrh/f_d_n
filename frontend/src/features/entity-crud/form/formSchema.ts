@@ -171,7 +171,7 @@ export function serializeEntityForm(
     if (isFullWidth(entry)) {
       nodes.push({
         $el: 'div',
-        attrs: { class: 'md:col-span-2' },
+        attrs: { class: 'form-fluid w-full @xl:col-span-2' },
         children: [node],
       } as FormKitSchemaNode)
     } else {

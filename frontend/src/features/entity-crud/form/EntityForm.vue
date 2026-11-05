@@ -22,18 +22,21 @@
           <Button label="Recargar" size="small" :disabled="submitting" @click="reset" />
         </div>
       </Message>
-      <SplitButton
-        class="absolute! right-0 z-10"
-        label="Guardar"
-        :model="actions"
-        :disabled="submitting || savingExtensions"
-        outlined
-        severity="secondary"
-        @click="submitForm(formId)"
-      >
-        <template #dropdownicon><icon name="keyboard-arrow-down" /></template>
-        <template #menuitemicon="{ item }"><icon :name="String(item.icon)" /></template>
-      </SplitButton>
+      <!-- Alto 0 y pegado arriba: no ocupa lugar en el formulario y sigue a la vista al desplazarse. -->
+      <div class="sticky top-2 z-10 flex h-0 justify-end">
+        <SplitButton
+          class="h-fit rounded-md bg-surface-0"
+          label="Guardar"
+          :model="actions"
+          :disabled="submitting || savingExtensions"
+          outlined
+          severity="secondary"
+          @click="submitForm(formId)"
+        >
+          <template #dropdownicon><icon name="keyboard-arrow-down" /></template>
+          <template #menuitemicon="{ item }"><icon :name="String(item.icon)" /></template>
+        </SplitButton>
+      </div>
       <!-- Con secciones extra (p. ej. el croquis del bus): una pestaña por sección.
            Las pestañas no son lazy: todo queda montado y se guarda junto. -->
       <Tabs v-if="extensions.length" v-model:value="tab" class="entity-form-tabs">

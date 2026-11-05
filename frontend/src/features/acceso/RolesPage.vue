@@ -51,8 +51,8 @@
       </aside>
 
       <!-- Editor -->
-      <section class="card flex min-w-0 flex-col gap-4 p-3 md:p-4">
-        <div v-if="!borrador" class="flex flex-1 flex-col items-center justify-center gap-2 py-10 text-center text-muted-color">
+      <section ref="editor" class="card flex min-w-0 flex-col gap-4 p-3 md:p-4">
+        <div v-if="!borrador" class="hidden flex-1 flex-col items-center justify-center gap-2 py-10 text-center text-muted-color @[52rem]:flex">
           <icon name="badge-outline" size="2rem" />
           <p>Elija un rol para ver qué concede{{ puedeEditar ? ", o cree uno" : "" }}.</p>
         </div>
@@ -169,7 +169,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from "vue";
+import { computed, nextTick, reactive, ref, useTemplateRef, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useConfirm } from "primevue/useconfirm";
 import * as api from "@/core/acceso/api";
@@ -246,12 +246,22 @@ function elegir(r: Rol) {
   seleccion.value = r;
   borrador.value = { nombre: r.nombre, descripcion: r.descripcion ?? "", limites: { ...r.limites } };
   llenar(r.capacidades);
+  void mostrarEditor();
 }
 
 function nuevo() {
   seleccion.value = null;
   borrador.value = { nombre: "", descripcion: "", limites: {} };
   llenar([]);
+  void mostrarEditor();
+}
+
+/** En una columna el editor queda debajo de la lista: que se vea lo que se acaba de elegir. */
+const editor = useTemplateRef<HTMLElement>("editor");
+async function mostrarEditor() {
+  await nextTick();
+  const el = editor.value;
+  if (el && el.getBoundingClientRect().top > window.innerHeight / 2) el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 const elegidas = computed(() =>

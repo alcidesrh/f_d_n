@@ -54,7 +54,7 @@
                     <Button label="Aplicar" size="small" fluid :disabled="!borrador?.[0]" @click="aplicarRango" />
                   </template>
                 </DatePicker>
-                <label class="flex cursor-pointer items-center gap-1 text-[0.75rem] leading-none text-muted-color absolute right-0 -mb-1 blottom-0">
+                <label class="flex cursor-pointer items-center gap-1 text-[0.75rem] leading-none text-muted-color absolute right-0 -mb-1">
                   <ToggleSwitch v-model="store.porRango" class="scale-[0.8] origin-left -mr-3" @update:model-value="alCambiarModo" />
                   Rango
                 </label>
@@ -104,7 +104,7 @@
         <!-- Croquis + cobro (en móvil, entre el viaje y el cliente) -->
         <aside ref="croquis" class="panel flex min-w-0 flex-1 scroll-mt-20 flex-col gap-3 @3xl:sticky @3xl:top-4 @3xl:col-start-2 @3xl:row-span-2 @3xl:row-start-1">
           <Transition name="croquis" mode="out-in" @enter="alMostrarCroquis">
-            <div v-if="store.detalle || store.cargandoDetalle" :key="`salida-${store.salidaId}`" class="flex flex-col gap-5 tex-sm">
+            <div v-if="store.detalle || store.cargandoDetalle" :key="`salida-${store.salidaId}`" class="flex flex-col gap-5 text-sm">
               <div class="flex items-start justify-center gap-3 overflow-x-auto">
                 <BusMap :elementos="store.detalle?.croquis ?? []" :estado="store.estadoAsiento" interactivo inspeccionable tamano="md" class="justify-center" @asiento="(a) => a.id != null && store.alternarAsiento(a.id)" @ocupado="verOcupado" />
                 <AsientoOcupadoPopover ref="detalleAsiento" @anular="(b) => (anular = [b.id])" @reasignar="(b) => void store.iniciarReasignacion([b.id])" />
