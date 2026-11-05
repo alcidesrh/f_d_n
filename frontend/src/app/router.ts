@@ -171,6 +171,28 @@ export const router = createRouter({
       },
     },
     {
+      path: "/configuracion/bitacora-diaria",
+      name: "configuracion-bitacora-diaria",
+      component: () => import("@/features/bitacora-diaria/ConfiguracionBitacoraPage.vue"),
+      meta: {
+        capacidad: "bitacora.configurar",
+        title: "Configuración de la bitácora diaria",
+        label: "Bitácora diaria",
+        icon: "manage-history-outline",
+      },
+    },
+    {
+      path: "/auditoria/bitacora-diaria",
+      name: "bitacora-diaria",
+      component: () => import("@/features/bitacora-diaria/BitacoraDiariaPage.vue"),
+      meta: {
+        capacidad: "bitacora.usuarios",
+        title: "Bitácora diaria de usuarios",
+        label: "Bitácora diaria",
+        icon: "history",
+      },
+    },
+    {
       path: "/configuracion/mensajes-predeterminados",
       name: "mensajes-predeterminados",
       component: () => import("@/features/chat/predeterminados/MensajesPredeterminadosPage.vue"),

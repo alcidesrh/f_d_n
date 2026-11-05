@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Acceso\Administracion;
 
+use App\Actividad\RegistroActividad;
 use App\Bitacora\Operacion;
 use App\Bitacora\TipoRegistro;
 use App\Entity\Usuario;
@@ -19,6 +20,7 @@ final class BitacoraAcceso
 {
     public function __construct(
         private readonly EntityManagerInterface $em,
+        private readonly RegistroActividad $actividad,
     ) {}
 
     /** @param array<string, mixed> $detalle */
@@ -35,6 +37,7 @@ final class BitacoraAcceso
                 'usuario_nombre' => $quien === null ? null : mb_substr((string) ($quien->getFullName() ?: $quien->getUsername()), 0, 100),
                 'fecha' => new \DateTimeImmutable(),
                 'detalle' => $detalle === [] ? null : json_encode($detalle, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+                'request_id' => $this->actividad->requestId(),
             ],
             ['fecha' => Types::DATETIME_IMMUTABLE],
         );

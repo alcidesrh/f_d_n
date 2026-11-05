@@ -17,4 +17,6 @@ doctrine:
         connections:
             default:
                 # Las tablas `sync_*` no son del modelo: que los diff de migraciones no las borren.
-                schema_filter: ~^(?!sync_)~
+                # Tampoco las de la bitácora de actividad (`actividad*`): particionadas, solo DBAL.
+                # Al quitar este archivo, el filtro `~^(?!actividad)~` pasa a doctrine.yaml.
+                schema_filter: ~^(?!sync_|actividad)~

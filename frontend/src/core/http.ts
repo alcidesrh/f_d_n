@@ -28,7 +28,7 @@ export interface RequestOptions {
   headers?: Record<string, string>
   /** Clave para `useLoadingStore().isLoading(key)`; por defecto el path. */
   loadingKey?: string
-  /** Petición de fondo (polling): no enciende la barra de carga. */
+  /** Petición de fondo (polling): no enciende la barra de carga y la bitácora la cuenta como sondeo. */
   silent?: boolean
   skipUnauthorized?: boolean
   /** Sale aunque la página se esté cerrando (`fetch` con `keepalive`). */
@@ -64,6 +64,8 @@ export async function request<T = unknown>(path: string, options: RequestOptions
         Accept: 'application/ld+json',
         ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        // La bitácora de actividad cuenta el polling aparte, sin una fila por petición.
+        ...(options.silent ? { 'X-Actividad': 'sondeo' } : {}),
         ...options.headers,
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,

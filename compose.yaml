@@ -23,6 +23,8 @@ services:
       MERCURE_JWT_SECRET: ${CADDY_MERCURE_JWT_SECRET:-!ChangeThisMercureHubJWTSecretKey!}
       # Cerrojos del programador de tareas (ADR-044), compartidos por todos los contenedores.
       LOCK_DSN: postgresql+advisory://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-!ChangeMe!}@database:5432/${POSTGRES_DB:-app}
+      # Bitácora diaria: meses de actividad exportados antes de borrarlos (volumen compartido).
+      BITACORA_EXPORTACION_DIR: /data/bitacora
     volumes:
       - caddy_data:/data
       - caddy_config:/config

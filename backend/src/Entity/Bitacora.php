@@ -11,11 +11,12 @@ use Doctrine\ORM\Mapping as ORM;
  * Solo se agrega, nunca se edita ni se borra, y no depende del registro por
  * clave foránea: sobrevive a que el registro se elimine. El usuario se guarda
  * también por nombre, por si luego se borra. Lo escribe
- * `App\Bitacora\BitacoraListener`; se lee por `GET /api/bitacora/{tipo}/{id}`.
+ * `App\Bitacora\RegistradorBitacora` (y `RegistradorCambios`); se lee por `GET /api/bitacora/{tipo}/{id}`.
  */
 #[ORM\Entity(readOnly: true)]
 #[ORM\Table(name: "bitacora")]
 #[ORM\Index(columns: ["entidad", "registro_id", "fecha"], name: "idx_bitacora_registro")]
+#[ORM\Index(columns: ["usuario_id", "fecha"], name: "idx_bitacora_usuario_fecha")]
 class Bitacora
 {
     #[ORM\Id]
@@ -52,6 +53,10 @@ class Bitacora
      */
     #[ORM\Column(type: "json", nullable: true)]
     private ?array $detalle = null;
+
+    /** La petición que hizo el cambio: la une con su fila de `actividad` (bitácora diaria). */
+    #[ORM\Column(type: "guid", nullable: true)]
+    private ?string $requestId = null;
 
     private function __construct() {}
 
@@ -94,5 +99,10 @@ class Bitacora
     public function getDetalle(): ?array
     {
         return $this->detalle;
+    }
+
+    public function getRequestId(): ?string
+    {
+        return $this->requestId;
     }
 }

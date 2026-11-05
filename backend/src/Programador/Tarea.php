@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Programador;
 
+use App\Actividad\Tarea\MantenerBitacora;
 use App\Chat\Predeterminado\Tarea\EnviarMensajesPredeterminados;
 use App\Chat\Predeterminado\Tarea\RevisarAnomalias;
 use App\Chat\Tarea\PurgarArchivosChat;
@@ -44,6 +45,7 @@ enum Tarea: string
     case REVISAR_ANOMALIAS = 'revisar_anomalias';
     case REFRESCAR_TABLERO = 'refrescar_tablero';
     case PURGAR_LECTURAS_GPS = 'purgar_lecturas_gps';
+    case BITACORA_DIARIA = 'bitacora_diaria';
 
     public const COLA_TAREAS = 'tareas';
     public const COLA_PESADAS = 'pesadas';
@@ -62,6 +64,7 @@ enum Tarea: string
             self::REVISAR_ANOMALIAS => 'Revisar las anomalías del día anterior (reasignaciones y tarifas)',
             self::REFRESCAR_TABLERO => 'Rehacer el tablero de gestión que alguien está mirando',
             self::PURGAR_LECTURAS_GPS => 'Borrar las lecturas GPS de más de 90 días',
+            self::BITACORA_DIARIA => 'Bitácora diaria: particiones, resumen del día anterior y retención',
         };
     }
 
@@ -71,6 +74,8 @@ enum Tarea: string
         return match ($this) {
             self::PURGAR_VENTA, self::SINCRONIZAR_LEGADO, self::REFRESCAR_TABLERO => '1 minute',
             self::MENSAJES_PREDETERMINADOS => '5 minutes',
+            // Cada hora: la hora del resumen es configurable (`ConfiguracionBitacora::horaResumen`).
+            self::BITACORA_DIARIA => '1 hour',
             self::CERTIFICAR_PENDIENTES => '10 minutes',
             self::VIGILAR_OPERACION => '30 minutes',
             self::HORIZONTE_SALIDAS, self::REPORTES_DIARIOS, self::PURGAR_ARCHIVOS_CHAT, self::REVISAR_ANOMALIAS, self::PURGAR_LECTURAS_GPS => '1 day',
@@ -101,6 +106,7 @@ enum Tarea: string
             self::PURGAR_VENTA, self::SINCRONIZAR_LEGADO, self::REFRESCAR_TABLERO => '15 minutes',
             self::CERTIFICAR_PENDIENTES, self::MENSAJES_PREDETERMINADOS => '1 hour',
             self::VIGILAR_OPERACION => '2 hours',
+            self::BITACORA_DIARIA => '3 hours',
             self::HORIZONTE_SALIDAS, self::REPORTES_DIARIOS, self::PURGAR_ARCHIVOS_CHAT, self::REVISAR_ANOMALIAS, self::PURGAR_LECTURAS_GPS => '26 hours',
         };
     }
@@ -119,6 +125,7 @@ enum Tarea: string
             self::REVISAR_ANOMALIAS => new RevisarAnomalias(),
             self::REFRESCAR_TABLERO => new RefrescarTablero(),
             self::PURGAR_LECTURAS_GPS => new PurgarLecturasGps(),
+            self::BITACORA_DIARIA => new MantenerBitacora(),
         };
     }
 }

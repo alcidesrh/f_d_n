@@ -20,6 +20,9 @@ parameters:
     # Temporal: identificadores de Traccar Client que se siguen como teléfonos de prueba en vez de
     # como bus (separados por coma, sin distinguir mayúsculas; no deben ser códigos de bus). ADR-050.
     env(SEGUIMIENTO_GPS_PRUEBAS): ""
+    # Bitácora diaria: dónde quedan los meses de `actividad` exportados (CSV comprimido) antes
+    # de borrarlos. En Docker, el volumen /data que comparten el backend y los workers.
+    env(BITACORA_EXPORTACION_DIR): "%kernel.project_dir%/var/bitacora"
 
 services:
     # default configuration for services in *this* file

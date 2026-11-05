@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Bitacora;
 
+use App\Actividad\RegistroActividad;
 use App\Entity\BoletoAsiento;
 use App\Entity\BoletoTarifa;
 use App\Entity\Bus;
@@ -66,6 +67,7 @@ final class RegistradorBitacora implements ResetInterface
 
     public function __construct(
         private readonly Security $security,
+        private readonly RegistroActividad $actividad,
     ) {
         $this->reset();
     }
@@ -237,6 +239,8 @@ final class RegistradorBitacora implements ResetInterface
                 "usuario_nombre" => $usuario === null ? null : mb_substr((string) ($usuario->getFullName() ?: $usuario->getUsername()), 0, 100),
                 "fecha" => new \DateTimeImmutable(),
                 "detalle" => $detalle === [] ? null : json_encode($detalle, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+                // Une el cambio con la petición que lo hizo (bitácora de actividad).
+                "request_id" => $this->actividad->requestId(),
             ],
             ["fecha" => Types::DATETIME_IMMUTABLE],
         );

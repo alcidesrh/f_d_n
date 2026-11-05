@@ -63,6 +63,8 @@ final class BitacoraController extends AbstractController
             TipoRegistro::ROL => $this->etiquetaRol($id),
             TipoRegistro::AUTORIZACION => $this->etiquetaAutorizacion($id, $usuario),
             TipoRegistro::TARIFA => $this->etiquetaTarifa($id),
+            // Sin bitácora por registro: se ve en la bitácora diaria del usuario.
+            TipoRegistro::CAMBIO => throw $this->createNotFoundException(),
         };
 
         return $this->json([

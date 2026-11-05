@@ -9,6 +9,7 @@ use App\Entity\BoletoTarifa;
 use App\Entity\Encomienda;
 use App\Entity\Enum\OperacionAutorizacion;
 use App\Entity\Enum\OperacionBoleto;
+use App\Entity\Enum\OperacionCambio;
 use App\Entity\Enum\OperacionEncomienda;
 use App\Entity\Enum\OperacionRol;
 use App\Entity\Enum\OperacionSalida;
@@ -35,6 +36,12 @@ enum TipoRegistro: string
     case AUTORIZACION = "autorizacion";
     /** Tarifas de boletos: creadas, modificadas, eliminadas (ADR-045). */
     case TARIFA = "tarifa";
+    /**
+     * Cualquier otra entidad, campo a campo (`RegistradorCambios`): la clase
+     * va en el detalle. No tiene bitácora por registro: se ve en la bitácora
+     * diaria del usuario.
+     */
+    case CAMBIO = "cambio";
 
     /** @return class-string */
     public function clase(): string
@@ -47,6 +54,7 @@ enum TipoRegistro: string
             self::ROL => Role::class,
             self::AUTORIZACION => SolicitudAutorizacion::class,
             self::TARIFA => BoletoTarifa::class,
+            self::CAMBIO => \stdClass::class,
         };
     }
 
@@ -61,6 +69,7 @@ enum TipoRegistro: string
             self::ROL => OperacionRol::class,
             self::AUTORIZACION => OperacionAutorizacion::class,
             self::TARIFA => OperacionTarifa::class,
+            self::CAMBIO => OperacionCambio::class,
         };
     }
 

@@ -8,6 +8,15 @@ import { computed, ref } from 'vue'
 import { request } from '@/core/http'
 import { entrarComo } from './alcanceSesion'
 
+/** Lo que debe salir antes de perder el token (p. ej. la bitácora de actividad pendiente). */
+const antesDeSalir = new Set<() => Promise<unknown> | void>()
+
+/** Registra una tarea que corre antes del logout; devuelve cómo quitarla. */
+export function antesDeCerrarSesion(tarea: () => Promise<unknown> | void): () => void {
+  antesDeSalir.add(tarea)
+  return () => antesDeSalir.delete(tarea)
+}
+
 interface LoginResponse {
   username: string
   token: string
@@ -34,6 +43,7 @@ export const useSessionStore = defineStore(
     }
 
     async function logout() {
+      await Promise.allSettled([...antesDeSalir].map((tarea) => tarea()))
       try {
         await request('/logout', { method: 'POST', skipUnauthorized: true })
       } finally {

@@ -46,6 +46,7 @@ import { useCorreoStore } from '@/core/correo/store'
 import { useCuentaStore } from '@/core/cuenta/store'
 import { useAutorizacionesStore } from '@/core/autorizacion/store'
 import { useMetadataStore } from '@/core/metadata/sincronizacion'
+import { detenerActividad, iniciarActividad } from '@/core/actividad/captura'
 import EstacionTrabajoDialog from '@/features/acceso/EstacionTrabajoDialog.vue'
 import ChatAviso from '@/features/chat/ChatAviso.vue'
 import { useVentanaChat } from '@/features/chat/ventana'
@@ -60,6 +61,7 @@ import SidebarRight from './SidebarRight.vue'
 import { defineSidebarStore } from './sidebarStore'
 
 const route = useRoute()
+const router = useRouter()
 const session = useSessionStore()
 const userMenus = useUserMenusStore()
 const chat = useChatStore()
@@ -110,6 +112,7 @@ watch(
     chat.detener()
     correo.detener()
     metadata.detener()
+    detenerActividad()
     if (!user) {
       cuenta.limpiar()
       acceso.limpiar()
@@ -124,6 +127,7 @@ watch(
     void chat.iniciar()
     void correo.iniciar()
     metadata.iniciar()
+    void iniciarActividad(router)
   },
   { immediate: true },
 )
@@ -131,6 +135,7 @@ onBeforeUnmount(() => {
   chat.detener()
   correo.detener()
   metadata.detener()
+  detenerActividad()
   dejarDeEscuchar()
   document.removeEventListener('visibilitychange', alVolver)
 })

@@ -65,6 +65,8 @@ enum Capacidad: string
     case AUTORIZACION_APROBAR = 'autorizacion.aprobar';
 
     case BITACORA_VER = 'bitacora.ver';
+    case BITACORA_USUARIOS = 'bitacora.usuarios';
+    case BITACORA_CONFIGURAR = 'bitacora.configurar';
 
     case CHAT_PREDETERMINADOS = 'chat.predeterminados';
 
@@ -111,6 +113,8 @@ enum Capacidad: string
             self::IAM_ROLES => 'Crear y editar roles',
             self::AUTORIZACION_APROBAR => 'Aprobar o rechazar autorizaciones (pases de un solo uso)',
             self::BITACORA_VER => 'Ver lo anulado y las bitácoras en el detalle de venta',
+            self::BITACORA_USUARIOS => 'Ver la bitácora diaria de los usuarios (todo lo que hizo cada uno en el día)',
+            self::BITACORA_CONFIGURAR => 'Configurar la bitácora diaria (nivel, retención y usuarios seguidos)',
             self::CHAT_PREDETERMINADOS => 'Configurar los mensajes predeterminados del chat',
             self::CORREO_EXTERNO => 'Enviar correos a direcciones de fuera de la empresa',
             self::MIGRACION_EJECUTAR => 'Ejecutar la migración desde el sistema legado',
