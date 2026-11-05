@@ -15,8 +15,8 @@
     </Toolbar>
 
     <Skeleton v-if="!config" height="24rem" class="mx-2" />
-    <div v-else class="grid gap-4 px-2 @5xl:grid-cols-2">
-      <section class="panel flex flex-col gap-5" aria-label="Qué se registra">
+    <div v-else class="grid grid-cols-1 gap-4 px-2 @5xl:grid-cols-2">
+      <section class="flex flex-col gap-5" aria-label="Qué se registra">
         <div class="flex items-center justify-between gap-3">
           <div>
             <label for="bitacora-activa" class="font-medium">Registrar la actividad de los usuarios</label>
@@ -57,14 +57,14 @@
         </label>
       </section>
 
-      <section class="panel flex flex-col gap-5" aria-label="A quién se le sigue">
+      <section class="flex flex-col gap-5" aria-label="A quién se le sigue">
         <div class="flex flex-col gap-1.5">
           <span class="font-medium">A quién se le sigue</span>
           <SelectButton v-model="form.alcance" :options="alcances" option-label="label" option-value="value" :allow-empty="false" :disabled="!form.activa" />
         </div>
 
         <template v-if="form.alcance === 'seleccionados'">
-          <div class="grid grid-cols-2 items-end gap-2 @2xl:grid-cols-[8rem_1fr_9rem_9rem_auto]">
+          <div class="grid grid-cols-2 items-end gap-2 @2xl:grid-cols-[8rem_minmax(0,1fr)_9rem_9rem_auto]">
             <label class="flex flex-col gap-1">
               <span class="text-xs">Tipo</span>
               <Select v-model="nueva.tipo" :options="tiposSeleccion" option-label="label" option-value="value" size="small" fluid />
@@ -102,8 +102,8 @@
         <p v-else class="m-0 text-sm text-muted-color">Se registra la actividad de todos los usuarios.</p>
       </section>
 
-      <section class="panel flex flex-col gap-5" aria-label="Retención y tiempos">
-        <div class="grid gap-4 @2xl:grid-cols-2">
+      <section class="flex flex-col gap-5" aria-label="Retención y tiempos">
+        <div class="grid grid-cols-1 gap-4 @2xl:grid-cols-2">
           <label class="flex flex-col gap-1.5">
             <span class="font-medium">Meses que se guarda el detalle</span>
             <InputNumber v-model="form.retencionMeses" :min="1" :max="60" show-buttons fluid />
@@ -119,7 +119,7 @@
           <Checkbox v-model="form.exportarAntesDeBorrar" binary input-id="bitacora-exportar" />
           Antes de borrar un mes, guardarlo en un archivo CSV comprimido en el servidor
         </label>
-        <div class="grid gap-4 @2xl:grid-cols-3">
+        <div class="grid grid-cols-1 gap-4 @2xl:grid-cols-3">
           <label class="flex flex-col gap-1.5">
             <span class="font-medium">Hora del resumen</span>
             <InputMask v-model="form.horaResumen" mask="99:99" placeholder="00:15" :invalid="!horaOk" fluid />
@@ -138,7 +138,7 @@
         </div>
       </section>
 
-      <section class="panel flex flex-col gap-3 self-start">
+      <section class="flex flex-col gap-3 self-start">
         <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
         <Message v-if="form.activa && form.alcance === 'seleccionados' && !form.seleccion.length" severity="warn" :closable="false">Con «solo seleccionados» hay que elegir al menos un usuario, rol, empresa o estación.</Message>
         <div class="flex flex-wrap items-center justify-between gap-2">

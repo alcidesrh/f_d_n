@@ -17,7 +17,7 @@
           <div class="flex items-center gap-1 font-medium text-lg text-surface-500"><icon name="manage_search" :weight="300" color="text-surface-500" />Filtros</div>
         </AccordionHeader>
         <AccordionContent>
-          <section class="panel grid grid-cols-2 items-end gap-x-3 gap-y-2 !p-3 @2xl:grid-cols-4 @5xl:grid-cols-6" aria-label="Filtros">
+          <section class="grid grid-cols-2 items-end gap-x-3 gap-y-2 !p-3 @2xl:grid-cols-4 @5xl:grid-cols-6" aria-label="Filtros">
             <label class="campo col-span-2">
               <span>Rango de fechas <span class="font-normal">(salida y venta)</span></span>
               <DatePicker v-model="rango" selection-mode="range" :manual-input="false" date-format="dd/mm/yy" show-icon show-button-bar size="small" :placeholder="`${rangoPorDefecto}`" fluid @hide="completarRango" />
@@ -482,17 +482,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.campo {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  min-width: 0;
-}
-.campo > span:first-child,
-.campo > label:first-child {
-  font-weight: 500;
-  color: var(--p-text-muted-color);
-}
 .chips {
   display: flex;
   flex-wrap: wrap;

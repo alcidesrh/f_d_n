@@ -6,7 +6,7 @@
 -->
 <template>
   <ReporteLayout icono="request-quote-outline" descripcion="Cierre de caja del día: qué vendió cada usuario y cuánto se recibió, anuló y facturó." :problema="problema" :cargando="cargando" :error="error" :listo="!!resumen">
-    <div class="grid gap-4 @lg:grid-cols-2">
+    <div class="grid grid-cols-1 gap-4 @lg:grid-cols-2">
       <label class="flex flex-col gap-1.5">
         <span class="text-sm font-medium">Fecha de venta</span>
         <DatePicker v-model="filtro.fecha" date-format="dd/mm/yy" show-icon icon-display="input" fluid :manual-input="false" input-id="cuadre-fecha" />

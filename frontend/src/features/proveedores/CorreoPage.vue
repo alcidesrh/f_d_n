@@ -14,8 +14,8 @@
       </template>
     </Toolbar>
 
-    <div class="grid grid-cols-[minmax(0,1fr)] gap-4 px-2 lg:grid-cols-[minmax(0,40rem)_minmax(0,1fr)]">
-      <section class="panel flex flex-col gap-5">
+    <div class="grid grid-cols-[minmax(0,1fr)] gap-4 px-2 @4xl:grid-cols-[minmax(0,40rem)_minmax(0,1fr)]">
+      <section class="flex flex-col gap-5">
         <Skeleton v-if="!config" height="24rem" />
         <template v-else>
           <div class="flex items-center justify-between gap-3">
@@ -65,7 +65,7 @@
 
           <fieldset class="flex flex-col gap-3 rounded-border border border-surface p-3">
             <legend class="px-1 font-medium">Correo de los usuarios</legend>
-            <div class="grid gap-3 sm:grid-cols-2">
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <label class="flex flex-col gap-1.5">
                 <span class="text-sm">Dominio de las direcciones</span>
                 <InputText v-model.trim="form.dominio" :invalid="!dominioValido(form.dominio)" fluid />
@@ -105,7 +105,7 @@
       </section>
 
       <aside class="flex flex-col gap-4">
-        <section v-if="config" class="panel flex flex-col gap-2 text-sm">
+        <section v-if="config" class="flex flex-col gap-2 text-sm">
           <h3 class="m-0 text-sm font-semibold">Webhook de entrada</h3>
           <p class="m-0 text-muted-color">Pegue esta URL en MailPace (Domain → Inbound) para que lo que llega al dominio de entrada aparezca en el correo de cada usuario.</p>
           <div class="flex items-center gap-1.5">
@@ -115,7 +115,7 @@
           <Tag :value="config.claveWebhook ? 'Firma verificada' : 'Sin clave: se rechaza'" :severity="config.claveWebhook ? 'success' : 'warn'" class="self-start" />
         </section>
 
-        <section class="panel flex flex-col gap-3 text-sm">
+        <section class="flex flex-col gap-3 text-sm">
           <h3 class="m-0 text-sm font-semibold">Enviar una prueba</h3>
           <p class="m-0 text-muted-color">Manda un correo desde <code>no-responder@</code> el dominio elegido con el token <b>guardado</b>. Funciona aunque MailPace esté apagado.</p>
           <div class="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">

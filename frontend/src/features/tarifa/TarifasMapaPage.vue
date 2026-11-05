@@ -9,7 +9,7 @@
 -->
 <template>
   <div class="@container flex flex-col gap-4" :class="maximizado ? 'fixed inset-0 z-[900] overflow-auto bg-surface-0 p-3' : ''">
-    <section class="panel flex flex-col gap-3">
+    <section class="flex flex-col gap-3">
       <div class="flex flex-wrap items-end justify-between gap-3">
         <label class="flex w-full flex-col gap-1 @xl:w-[28rem]">
           <span class="text-xs font-medium text-muted-color">Ruta</span>

@@ -19,7 +19,7 @@
       </label>
       <div v-else class="campo">
         <span>Estación</span>
-        <span class="font-semibold">{{ contexto.estacion.nombre }}</span>
+        <span class="text-base font-semibold text-color">{{ contexto.estacion.nombre }}</span>
       </div>
       <div class="campo min-w-64 flex-[2]">
         <span>Código, cliente o NIT</span>
@@ -295,17 +295,6 @@ async function entregar(ids: number[], sinFactura: boolean) {
 </script>
 
 <style scoped>
-.campo {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  min-width: 0;
-}
-.campo > span:first-child {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--p-text-muted-color);
-}
 .fila {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;

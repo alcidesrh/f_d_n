@@ -13,7 +13,7 @@
 <template>
   <div class="@container flex flex-col gap-4">
     <!-- Filtros rápidos -->
-    <section class="panel flex flex-col gap-3">
+    <section class="flex flex-col gap-3">
       <div class="flex flex-wrap gap-1.5">
         <Button
           v-for="r in RANGOS"
@@ -26,7 +26,7 @@
           @click="ponerRango(r.valor)"
         />
       </div>
-      <div class="grid grid-cols-2 gap-3 @3xl:grid-cols-[1fr_1fr_minmax(0,1.4fr)_auto] @3xl:items-end">
+      <div class="grid grid-cols-2 gap-3 @3xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.4fr)_auto] @3xl:items-end">
         <label class="flex flex-col gap-1">
           <span class="text-xs font-medium text-muted-color">Compradas desde</span>
           <DatePicker v-model="creadoDesde" date-format="dd/mm/yy" show-icon show-button-bar fluid :max-date="hoy" />
@@ -66,20 +66,20 @@
 
     <!-- Calculadora -->
     <section v-if="datos" class="grid grid-cols-2 gap-3 @2xl:grid-cols-3 @5xl:grid-cols-6" aria-label="Totales de lo filtrado">
-      <div v-for="k in kpis" :key="k.etiqueta" class="panel !p-3">
+      <div v-for="k in kpis" :key="k.etiqueta" class="!p-3">
         <div class="text-xs text-muted-color">{{ k.etiqueta }}</div>
         <div class="text-lg font-bold tabular-nums">{{ k.valor }}</div>
         <div v-if="k.nota" class="text-xs text-muted-color">{{ k.nota }}</div>
       </div>
     </section>
-    <section v-if="datos && (datos.resumen.porEmpresa.length > 1 || datos.resumen.porEstado.length > 1)" class="grid gap-3 @2xl:grid-cols-2">
-      <div v-if="datos.resumen.porEmpresa.length" class="panel !p-3">
+    <section v-if="datos && (datos.resumen.porEmpresa.length > 1 || datos.resumen.porEstado.length > 1)" class="grid grid-cols-1 gap-3 @2xl:grid-cols-2">
+      <div v-if="datos.resumen.porEmpresa.length" class="!p-3">
         <h3 class="m-0 mb-2 text-sm font-semibold">Cobrado por empresa (comercio)</h3>
         <ul class="m-0 flex list-none flex-col gap-1 p-0 text-sm">
           <li v-for="r in datos.resumen.porEmpresa" :key="r.empresa" class="flex justify-between gap-2"><span>{{ r.empresa }} <span class="text-muted-color">· {{ r.compras }}</span></span><span class="tabular-nums">{{ r.monto.texto }}</span></li>
         </ul>
       </div>
-      <div v-if="datos.resumen.porEstado.length > 1" class="panel !p-3">
+      <div v-if="datos.resumen.porEstado.length > 1" class="!p-3">
         <h3 class="m-0 mb-2 text-sm font-semibold">Por estado</h3>
         <ul class="m-0 flex list-none flex-col gap-1 p-0 text-sm">
           <li v-for="r in datos.resumen.porEstado" :key="r.estado" class="flex items-center justify-between gap-2">
@@ -101,8 +101,8 @@
     <!-- Angosto: tarjetas -->
     <div class="flex flex-col gap-3 @4xl:hidden">
       <Skeleton v-if="cargando && !datos" height="8rem" />
-      <p v-else-if="datos && !datos.items.length" class="panel m-0 text-center text-sm text-muted-color">No hay compras con estos filtros.</p>
-      <article v-for="c in datos?.items ?? []" :key="c.id" class="panel !p-3 flex flex-col gap-2">
+      <p v-else-if="datos && !datos.items.length" class="m-0 text-center text-sm text-muted-color">No hay compras con estos filtros.</p>
+      <article v-for="c in datos?.items ?? []" :key="c.id" class="!p-3 flex flex-col gap-2">
         <div class="flex items-start justify-between gap-2">
           <div class="flex items-start gap-2">
             <Checkbox v-model="seleccion" :value="c" :input-id="`sel-m-${c.id}`" />

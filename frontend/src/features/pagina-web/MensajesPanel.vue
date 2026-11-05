@@ -5,8 +5,8 @@
       <SelectButton v-model="ver" :options="[{ v: 'todos', l: 'Todos' }, { v: 'sinLeer', l: 'Sin leer' }]" option-label="l" option-value="v" :allow-empty="false" />
     </div>
     <Skeleton v-if="!mensajes" height="8rem" />
-    <p v-else-if="!visibles.length" class="panel m-0 text-center text-sm text-muted-color">No hay mensajes.</p>
-    <article v-for="m in visibles" :key="m.id" class="panel !p-3 flex flex-col gap-2" :class="{ 'border-l-4 !border-l-primary': !m.leido }">
+    <p v-else-if="!visibles.length" class="m-0 text-center text-sm text-muted-color">No hay mensajes.</p>
+    <article v-for="m in visibles" :key="m.id" class="!p-3 flex flex-col gap-2" :class="{ 'border-l-4 !border-l-primary': !m.leido }">
       <div class="flex flex-wrap items-start justify-between gap-2">
         <div>
           <div class="font-semibold">{{ m.nombre }} <span class="text-xs font-normal uppercase text-muted-color">{{ m.idioma }}</span></div>

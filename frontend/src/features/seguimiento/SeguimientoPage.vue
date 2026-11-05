@@ -28,7 +28,7 @@
     </span>
 
     <!-- Mismas columnas que mapa + lista: el borde derecho de las empresas es el del mapa. -->
-    <section class="panel grid grid-cols-1 gap-3 @4xl:grid-cols-[minmax(0,1fr)_22rem] @4xl:items-end">
+    <section class="grid grid-cols-1 gap-3 @4xl:grid-cols-[minmax(0,1fr)_22rem] @4xl:items-end">
       <div class="flex flex-wrap items-end justify-between gap-3">
         <label class="flex w-full flex-col gap-1 @xl:w-[28rem]">
           <span class="text-xs font-medium text-muted-color">Salida</span>
@@ -67,7 +67,7 @@
       </div>
 
       <aside class="flex min-h-0 flex-col gap-3" :class="maximizado ? 'overflow-y-auto' : ''">
-        <article v-if="seleccionado" class="panel flex flex-col gap-2" aria-label="Detalle del bus">
+        <article v-if="seleccionado" class="flex flex-col gap-2" aria-label="Detalle del bus">
           <header class="flex items-start justify-between gap-2">
             <div class="min-w-0">
               <p class="m-0 truncate text-sm font-semibold">{{ seleccionado.origen }} → {{ seleccionado.destino }}</p>

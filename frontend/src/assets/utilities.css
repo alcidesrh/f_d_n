@@ -25,6 +25,19 @@
   }
 }
 
+/* Campo de formulario: rótulo pequeño sobre su control. Como utilidad, una
+   `min-w-*` al lado manda: una fila con `flex-wrap` baja de línea antes de
+   aplastar el control. El texto que no es rótulo lleva su color (`text-color`). */
+@utility campo {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--p-text-muted-color);
+}
+
 /* Bloque de contenido sobre el fondo de la página: el fondo y el radio de
    las tarjetas de PrimeVue (parámetros y resumen de reportes, saldos…). */
 @utility superficie {

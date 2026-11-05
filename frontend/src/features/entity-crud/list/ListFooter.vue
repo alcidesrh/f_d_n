@@ -1,9 +1,8 @@
 <template>
-  <div class="list-footer flex flex-wrap items-center justify-between gap-3 px-1 pt-2">
-    <span v-if="!pagination" class="text-xs text-surface-500">{{ count }} registros</span>
-    <span v-else />
+  <div class="list-footer flex flex-wrap items-center justify-end gap-3 px-1 pt-2">
+    <span v-if="!pagination" class="mr-auto text-xs text-surface-500">{{ count }} registros</span>
     <Paginator
-      v-if="pagination"
+      v-else-if="pagination.totalCount"
       :rows="pagination.itemsPerPage"
       :first="(pagination.currentPage - 1) * pagination.itemsPerPage"
       :total-records="pagination.totalCount"

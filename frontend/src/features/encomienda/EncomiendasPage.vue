@@ -348,16 +348,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.campo {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  min-width: 0;
-}
-.campo > span:first-child {
-  font-weight: 500;
-  color: var(--p-text-muted-color);
-}
 /* Teléfono: estado y modalidad van en desplegables; los chips, desde 42rem (@2xl). */
 .chips {
   display: none;

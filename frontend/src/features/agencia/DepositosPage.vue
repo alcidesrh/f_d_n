@@ -7,7 +7,7 @@
 -->
 <template>
   <div class="@container flex flex-col gap-3">
-    <section class="panel !p-0">
+    <section class="!p-0">
       <button type="button" class="filtros-head" :aria-expanded="filtrosAbiertos" aria-controls="filtros-depositos" @click="filtrosAbiertos = !filtrosAbiertos">
         <icon name="filter-alt-outline" />
         <span class="font-medium">Filtrar resultados</span>
@@ -43,7 +43,7 @@
       </form>
     </section>
 
-    <div class="acciones panel" role="toolbar" aria-label="Acciones del depósito elegido">
+    <div class="acciones" role="toolbar" aria-label="Acciones del depósito elegido">
       <div class="acciones-elegido">
         <template v-if="elegido">
           <span class="font-semibold">#{{ elegido.id }}</span>
@@ -332,17 +332,6 @@ onMounted(async () => {
   .filtros {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
-}
-.campo {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  min-width: 0;
-}
-.campo > span:first-child {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--p-text-muted-color);
 }
 .filtros-botones {
   display: flex;

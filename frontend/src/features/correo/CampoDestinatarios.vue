@@ -5,8 +5,8 @@
   Retroceso en el campo vacío quita la última. Pegar una lista también vale.
 -->
 <template>
-  <div class="campo" :class="{ 'campo--foco': foco }" @click="entrada?.focus()">
-    <span class="campo__etiqueta">{{ etiquetaCampo }}</span>
+  <div class="linea" :class="{ 'linea--foco': foco }" @click="entrada?.focus()">
+    <span class="linea__etiqueta">{{ etiquetaCampo }}</span>
     <span class="fichas">
       <span v-for="d in modelValue" :key="d.direccion" class="ficha" :class="{ 'ficha--fuera': !esDeLaCasa(d.direccion) }" :title="d.direccion">
         <span class="ficha__texto">{{ etiqueta(d) }}</span>
@@ -16,7 +16,7 @@
         ref="entrada"
         v-model="texto"
         type="text"
-        class="campo__entrada"
+        class="linea__entrada"
         :aria-label="etiquetaCampo"
         autocomplete="off"
         spellcheck="false"
@@ -143,7 +143,7 @@ defineExpose({ enfocar: () => entrada.value?.focus(), confirmar });
 </script>
 
 <style scoped>
-.campo {
+.linea {
   position: relative;
   display: flex;
   align-items: flex-start;
@@ -153,10 +153,10 @@ defineExpose({ enfocar: () => entrada.value?.focus(), confirmar });
   border-bottom: 1px solid var(--p-surface-200);
   cursor: text;
 }
-.campo--foco {
+.linea--foco {
   border-bottom-color: color-mix(in srgb, var(--p-primary-color) 60%, transparent);
 }
-.campo__etiqueta {
+.linea__etiqueta {
   flex: none;
   width: 2.6rem;
   padding-top: 0.4rem;
@@ -207,7 +207,7 @@ defineExpose({ enfocar: () => entrada.value?.focus(), confirmar });
     background: var(--p-surface-200);
   }
 }
-.campo__entrada {
+.linea__entrada {
   flex: 1;
   min-width: 8rem;
   height: 1.8rem;

@@ -8,7 +8,7 @@
 -->
 <template>
   <ReporteLayout :icono="cfg.icono" :descripcion="cfg.descripcion" :problema="sinPermiso ?? problema" :cargando="cargando" :error="error" :listo="!!resumen">
-    <div class="grid gap-4 @lg:grid-cols-2">
+    <div class="grid grid-cols-1 gap-4 @lg:grid-cols-2">
       <label v-if="cfg.fechas" class="flex flex-col gap-1.5" :class="{ '@lg:col-span-2': cfg.fechas === 'rango' }">
         <span class="text-sm font-medium">{{ cfg.etiquetaFecha }}</span>
         <DatePicker v-if="cfg.fechas === 'rango'" v-model="filtro.rango" selection-mode="range" date-format="dd/mm/yy" show-icon icon-display="input" show-button-bar fluid :manual-input="false" :number-of-months="2" :input-id="`enc-${tipo}-rango`" placeholder="Elige un día o un rango de fechas" />

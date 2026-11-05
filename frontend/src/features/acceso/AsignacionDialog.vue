@@ -44,7 +44,7 @@
         </fieldset>
       </template>
 
-      <div class="grid gap-3 @container sm:grid-cols-2">
+      <div class="grid grid-cols-1 gap-3 @container sm:grid-cols-2">
         <label class="campo">
           <span>Desde (opcional)</span>
           <InputText v-model="desde" type="date" fluid />
@@ -145,12 +145,6 @@ async function guardar() {
 </script>
 
 <style scoped>
-.campo {
-  display: grid;
-  gap: 0.3rem;
-  font-size: 0.8rem;
-  color: var(--p-surface-600);
-}
 .alcance {
   display: grid;
   gap: 0.5rem;

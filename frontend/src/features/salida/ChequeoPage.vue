@@ -12,7 +12,7 @@
 -->
 <template>
   <div class="@container flex flex-col gap-4">
-    <section class="panel flex flex-col gap-3">
+    <section class="flex flex-col gap-3">
       <div class="flex items-end gap-2">
         <label class="flex min-w-0 flex-1 flex-col gap-1">
           <span class="text-xs font-medium text-muted-color">Salida</span>
@@ -48,7 +48,7 @@
     <Skeleton v-if="cargando && !detalle" height="10rem" />
 
     <template v-if="detalle">
-      <section class="panel flex flex-col gap-3">
+      <section class="flex flex-col gap-3">
         <div class="flex flex-wrap items-start justify-between gap-3">
           <div class="min-w-0">
             <div class="flex flex-wrap items-center gap-2">
@@ -102,11 +102,11 @@
           </div>
         </div>
 
-        <p v-if="!detalle.boletos.length" class="panel m-0 text-center text-sm text-muted-color">La salida no tiene boletos por chequear.</p>
+        <p v-if="!detalle.boletos.length" class="m-0 text-center text-sm text-muted-color">La salida no tiene boletos por chequear.</p>
 
         <!-- Angosto: tarjetas -->
         <div v-else class="flex flex-col gap-2 @4xl:hidden">
-          <article v-for="b in detalle.boletos" :key="b.id" class="panel !p-3 flex flex-col gap-2" :class="claseFila(b)">
+          <article v-for="b in detalle.boletos" :key="b.id" class="!p-3 flex flex-col gap-2" :class="claseFila(b)">
             <div class="flex items-start gap-3">
               <div class="flex size-10 shrink-0 items-center justify-center rounded-md bg-surface-100 text-lg font-semibold tabular-nums" :aria-label="`Asiento ${b.asiento}`">{{ b.asiento }}</div>
               <div class="min-w-0 flex-1">
@@ -173,7 +173,7 @@
       </section>
     </template>
 
-    <p v-else-if="!cargando && !salidaId && !cargandoSalidas" class="panel m-0 text-center text-sm text-muted-color">Elija una salida para ver sus boletos.</p>
+    <p v-else-if="!cargando && !salidaId && !cargandoSalidas" class="m-0 text-center text-sm text-muted-color">Elija una salida para ver sus boletos.</p>
 
     <!-- Barra para guardar el chequeo -->
     <div v-if="detalle && hayMarcas" class="sticky bottom-0 z-10 rounded-lg border border-surface-200 bg-surface-0 px-4 py-3 shadow-lg">

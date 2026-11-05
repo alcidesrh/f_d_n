@@ -152,17 +152,6 @@ async function enviar() {
     grid-column: auto;
   }
 }
-.campo {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  min-width: 0;
-}
-.campo > label:first-child {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--p-text-muted-color);
-}
 .error {
   color: var(--p-red-500);
 }

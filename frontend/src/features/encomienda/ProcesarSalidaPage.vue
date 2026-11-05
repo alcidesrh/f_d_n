@@ -20,7 +20,7 @@
       </label>
       <div v-else class="campo">
         <span>Estación</span>
-        <span class="font-semibold">{{ contexto.estacion.nombre }}</span>
+        <span class="text-base font-semibold text-color">{{ contexto.estacion.nombre }}</span>
       </div>
       <div class="campo">
         <span>Día</span>
@@ -273,17 +273,6 @@ async function refrescarConteos() {
 </script>
 
 <style scoped>
-.campo {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  min-width: 0;
-}
-.campo > span:first-child {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--p-text-muted-color);
-}
 .salidas {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));

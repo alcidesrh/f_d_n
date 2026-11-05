@@ -13,7 +13,7 @@
 <template>
   <div class="@container flex flex-col gap-4" :class="maximizado ? 'fixed inset-0 z-[900] overflow-auto bg-surface-0 p-3' : ''">
     <!-- Angosto: el botón de maximizar va junto al día y la salida debajo; ancho: los tres en una fila. -->
-    <section class="panel grid grid-cols-[minmax(0,1fr)_auto] gap-3 @xl:grid-cols-[12rem_minmax(0,28rem)_minmax(0,1fr)] @xl:items-end">
+    <section class="grid grid-cols-[minmax(0,1fr)_auto] gap-3 @xl:grid-cols-[12rem_minmax(0,28rem)_minmax(0,1fr)] @xl:items-end">
       <label class="flex flex-col gap-1">
         <span class="text-xs font-medium text-muted-color">Día</span>
         <DatePicker v-model="dia" date-format="dd/mm/yy" show-icon :max-date="hoy" :manual-input="false" fluid input-id="dia-trayectorias" @update:model-value="cargarDia" />
@@ -56,7 +56,7 @@
           </p>
         </div>
 
-        <div v-if="puntos.length > 0" class="panel flex flex-col gap-3" aria-label="Controles de reproducción">
+        <div v-if="puntos.length > 0" class="flex flex-col gap-3" aria-label="Controles de reproducción">
           <div class="flex items-center gap-2">
             <Button rounded class="tap-target shrink-0" :aria-label="reproduciendo ? 'Pausar' : 'Reproducir'" @click="alternar">
               <icon :name="reproduciendo ? 'pause' : 'play-arrow'" class="text-inherit" />
@@ -76,7 +76,7 @@
       </div>
 
       <aside class="flex min-h-0 flex-col gap-3" :class="maximizado ? 'overflow-y-auto' : ''">
-        <article v-if="trayectoria || telefono" class="panel flex flex-col gap-2" :aria-label="trayectoria ? 'Detalle de la salida' : 'Detalle del teléfono'">
+        <article v-if="trayectoria || telefono" class="flex flex-col gap-2" :aria-label="trayectoria ? 'Detalle de la salida' : 'Detalle del teléfono'">
           <header class="flex items-start justify-between gap-2">
             <div v-if="trayectoria" class="min-w-0">
               <p class="m-0 truncate text-sm font-semibold">{{ trayectoria.origen }} → {{ trayectoria.destino }}</p>

@@ -9,7 +9,7 @@
   >
     <div v-if="comprobante" class="flex flex-col gap-3">
       <Message :severity="severidad" :closable="false">{{ mensaje }}</Message>
-      <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+      <dl class="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1 text-sm">
         <dt class="text-muted-color">Venta</dt>
         <dd class="font-mono">{{ comprobante.codigoBarras }}</dd>
         <template v-if="comprobante.factura">

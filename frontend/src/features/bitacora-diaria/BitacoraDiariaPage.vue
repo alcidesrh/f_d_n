@@ -22,8 +22,8 @@
 
     <Message v-if="error" severity="error" :closable="false" class="mx-2">{{ error }}</Message>
 
-    <div class="grid gap-4 px-2 @5xl:grid-cols-[minmax(0,26rem)_1fr]">
-      <section class="panel flex flex-col gap-3 !p-3" aria-label="Usuarios con actividad">
+    <div class="grid grid-cols-1 gap-4 px-2 @5xl:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
+      <section class="flex flex-col gap-3 !p-3" aria-label="Usuarios con actividad">
         <div class="flex items-center justify-between gap-2">
           <h3 class="m-0 text-sm font-semibold">Usuarios con actividad</h3>
           <Tag v-if="dia" :value="dia.guardado ? 'Día cerrado' : 'En curso'" :severity="dia.guardado ? 'secondary' : 'info'" />
@@ -50,7 +50,7 @@
         </ul>
       </section>
 
-      <section class="panel flex min-w-0 flex-col gap-3 !p-3" aria-label="Línea de tiempo">
+      <section class="flex min-w-0 flex-col gap-3 !p-3" aria-label="Línea de tiempo">
         <p v-if="!usuarioId" class="m-0 text-sm text-muted-color">Elegí un usuario para ver todo lo que hizo ese día.</p>
         <Skeleton v-else-if="cargandoUsuario && !detalle" height="20rem" />
         <template v-else-if="detalle">

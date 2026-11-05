@@ -6,7 +6,7 @@
 -->
 <template>
   <ReporteLayout icono="receipt-long-outline" descripcion="Facturas de los boletos vendidos, para conciliar con tarjetas y con el certificador." :problema="problema" :cargando="cargando" :error="error" :listo="!!resumen">
-    <div class="grid gap-4 @lg:grid-cols-2">
+    <div class="grid grid-cols-1 gap-4 @lg:grid-cols-2">
       <label class="flex flex-col gap-1.5 @lg:col-span-2">
         <span class="text-sm font-medium">Fecha de venta (un día o un rango)</span>
         <DatePicker v-model="filtro.rango" selection-mode="range" date-format="dd/mm/yy" show-icon icon-display="input" show-button-bar fluid :manual-input="false" :number-of-months="2" input-id="detalle-rango" placeholder="Elige un día o un rango de fechas" />

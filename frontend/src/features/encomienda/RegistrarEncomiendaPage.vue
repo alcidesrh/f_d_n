@@ -324,18 +324,6 @@ function nueva() {
 </script>
 
 <style scoped>
-.campo {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-.campo > span:first-child,
-.campo > label:first-child,
-.campo > div:first-child > label {
-  font-size: 0.875rem;
-  font-weight: 500;
-}
 .resumen {
   display: grid;
   grid-template-columns: 1fr auto;

@@ -5,7 +5,7 @@
 <template>
   <section class="flex flex-col gap-3" aria-labelledby="pg-dias">
     <h2 id="pg-dias" class="pg-titulo"><span class="pg-paso">3</span>Días</h2>
-    <div class="grid gap-3 @xl:grid-cols-[minmax(0,1fr)_auto] @xl:items-end">
+    <div class="grid grid-cols-1 gap-3 @xl:grid-cols-[minmax(0,1fr)_auto] @xl:items-end">
       <label class="flex flex-col gap-1">
         <span class="text-xs font-medium text-muted-color">Primer día</span>
         <DatePicker v-model="desde" date-format="dd/mm/yy" show-icon fluid :min-date="hoy" />

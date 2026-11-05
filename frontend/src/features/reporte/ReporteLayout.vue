@@ -6,7 +6,7 @@
 -->
 <template>
   <div class="@container flex flex-col gap-4">
-    <div class="grid gap-4 @4xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] @4xl:items-start">
+    <div class="grid grid-cols-1 gap-4 @4xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] @4xl:items-start">
       <section class="superficie md:p-5 flex flex-col gap-5" aria-labelledby="reporte-parametros">
         <header class="flex items-start gap-3">
           <span class="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"><icon :name="icono" lg color="text-primary" /></span>

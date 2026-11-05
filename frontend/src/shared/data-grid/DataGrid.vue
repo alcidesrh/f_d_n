@@ -138,7 +138,10 @@
           </template>
         </article>
       </div>
-      <div v-else-if="!loading" class="dg-empty">
+      <div v-else-if="loading" class="dg-cards" aria-hidden="true">
+        <div v-for="n in skeletonRows" :key="`sk-${n}`" class="dg-card dg-card--bones"><span v-for="l in 3" :key="l" class="dg-bone" /></div>
+      </div>
+      <div v-else class="dg-empty">
         <slot name="empty">
           <icon name="inbox-outline" size="2rem" />
           <span>Sin registros</span>
@@ -603,12 +606,13 @@ useColumnDrag({
 }
 
 /* ---------- Tarjetas ---------- */
+/* Sin tope de alto: las tarjetas siguen el scroll de la página. Dentro de un
+   contenedor acotado (listado maximizado, selector) scrollean por dentro. */
 .dg-cards-wrap {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   min-height: 0;
-  max-height: var(--dg-max-h, none);
   overflow: auto;
 }
 .dg-cards-head {
@@ -653,6 +657,12 @@ useColumnDrag({
 .dg-card--custom {
   display: block;
   height: auto;
+}
+.dg-card--bones {
+  align-content: start;
+  grid-template-rows: none;
+  gap: 1rem;
+  padding-top: 1.25rem;
 }
 .dg-card-head {
   display: flex;

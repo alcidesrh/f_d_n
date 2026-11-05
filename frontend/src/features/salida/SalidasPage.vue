@@ -24,7 +24,7 @@
       </RouterLink>
     </div>
 
-    <section class="panel flex flex-col gap-3">
+    <section class="flex flex-col gap-3">
       <div class="flex flex-wrap items-center gap-2">
         <span class="text-xs font-medium text-muted-color">Estado:</span>
         <button v-for="e in ESTADOS" :key="e.valor" type="button" class="rounded-full border px-2.5 py-1 text-xs font-medium" :class="filtro.estados.includes(e.valor) ? 'border-primary bg-primary text-primary-contrast' : 'border-surface-300 bg-transparent text-color'" :aria-pressed="filtro.estados.includes(e.valor)" @click="alternarEstado(e.valor)">
@@ -72,8 +72,8 @@
     <!-- Angosto: tarjetas -->
     <div class="flex flex-col gap-3 @4xl:hidden">
       <Skeleton v-if="cargando && !datos" height="8rem" />
-      <p v-else-if="datos && !datos.items.length" class="panel m-0 text-center text-sm text-muted-color">No hay salidas con estos filtros.</p>
-      <article v-for="s in datos?.items ?? []" :key="s.id" class="panel !p-3 flex flex-col gap-2">
+      <p v-else-if="datos && !datos.items.length" class="m-0 text-center text-sm text-muted-color">No hay salidas con estos filtros.</p>
+      <article v-for="s in datos?.items ?? []" :key="s.id" class="!p-3 flex flex-col gap-2">
         <div class="flex items-start justify-between gap-2">
           <div>
             <div class="font-semibold">{{ fechaHora(s.fecha) }}</div>
@@ -89,24 +89,12 @@
             <span class="text-xs tabular-nums text-muted-color">{{ ocupacion(s) }}</span>
           </div>
         </div>
-        <div class="flex justify-end gap-1">
-          <Button severity="secondary" text rounded size="small" class="tap-target" aria-label="Ver" v-tooltip.top="'Ver croquis y resumen'" @click="verSalida = s">
-            <template #icon><icon name="visibility-outline" /></template>
+        <div class="flex items-center justify-end gap-1">
+          <Button label="Ver" severity="secondary" text size="small" @click="verSalida = s">
+            <template #icon><icon name="visibility-outline" class="mr-1" /></template>
           </Button>
-          <Button severity="secondary" text rounded size="small" class="tap-target" aria-label="Reportar por chat" v-tooltip.top="'Reportar por chat'" @click="reportar = s">
-            <template #icon><icon name="forum-outline" /></template>
-          </Button>
-          <Button severity="secondary" text rounded size="small" class="tap-target" aria-label="Bitácora" v-tooltip.top="'Bitácora'" @click="bitacora = s.id">
-            <template #icon><icon name="history" /></template>
-          </Button>
-          <Button v-if="chequeable(s)" severity="secondary" text rounded size="small" class="tap-target" aria-label="Chequear boletos" v-tooltip.top="'Chequear boletos'" @click="router.push({ name: 'salidas-chequeo', query: { salida: s.id } })">
-            <template #icon><icon name="how-to-reg-outline" /></template>
-          </Button>
-          <Button severity="secondary" text rounded size="small" class="tap-target" aria-label="Manifiestos" v-tooltip.top="'Manifiestos (PDF)'" aria-haspopup="menu" @click="abrirMenu($event, s)">
-            <template #icon><icon name="picture-as-pdf-outline" /></template>
-          </Button>
-          <Button v-for="a in acciones(s)" :key="a.op" :severity="a.severidad" text rounded size="small" class="tap-target" :disabled="!a.habilitada" :aria-label="a.etiqueta" v-tooltip.top="a.ayuda" @click="abrir(a.op, s)">
-            <template #icon><icon :name="a.icono" /></template>
+          <Button severity="secondary" text rounded size="small" class="tap-target" aria-label="Más acciones" aria-haspopup="menu" @click="abrirAcciones($event, s)">
+            <template #icon><icon name="more-vert" /></template>
           </Button>
         </div>
       </article>
@@ -158,20 +146,8 @@
               <Button severity="secondary" text rounded size="small" aria-label="Ver" v-tooltip.top="'Ver croquis y resumen'" @click="verSalida = data">
                 <template #icon><icon name="visibility-outline" /></template>
               </Button>
-              <Button severity="secondary" text rounded size="small" aria-label="Reportar por chat" v-tooltip.top="'Reportar por chat'" @click="reportar = data">
-                <template #icon><icon name="forum-outline" /></template>
-              </Button>
-              <Button severity="secondary" text rounded size="small" aria-label="Bitácora" v-tooltip.top="'Bitácora'" @click="bitacora = data.id">
-                <template #icon><icon name="history" /></template>
-              </Button>
-              <Button v-if="chequeable(data)" severity="secondary" text rounded size="small" aria-label="Chequear boletos" v-tooltip.top="'Chequear boletos'" @click="router.push({ name: 'salidas-chequeo', query: { salida: data.id } })">
-                <template #icon><icon name="how-to-reg-outline" /></template>
-              </Button>
-              <Button severity="secondary" text rounded size="small" aria-label="Manifiestos" v-tooltip.top="'Manifiestos (PDF)'" aria-haspopup="menu" @click="abrirMenu($event, data)">
-                <template #icon><icon name="picture-as-pdf-outline" /></template>
-              </Button>
-              <Button v-for="a in acciones(data)" :key="a.op" :severity="a.severidad" text rounded size="small" :disabled="!a.habilitada" :aria-label="a.etiqueta" v-tooltip.top="a.ayuda" @click="abrir(a.op, data)">
-                <template #icon><icon :name="a.icono" /></template>
+              <Button severity="secondary" text rounded size="small" aria-label="Más acciones" aria-haspopup="menu" @click="abrirAcciones($event, data)">
+                <template #icon><icon name="more-vert" /></template>
               </Button>
             </div>
           </template>
@@ -196,7 +172,14 @@
       </div>
     </Drawer>
 
-    <Menu ref="menuManifiestos" :model="itemsManifiestos" popup />
+    <Menu ref="menuAcciones" :model="itemsAcciones" popup>
+      <template #item="{ item, props: enlace }">
+        <a v-bind="enlace.action" class="flex items-center gap-2" :class="item.clase">
+          <icon :name="String(item.iconName)" size="1.1rem" class="text-inherit" />
+          <span>{{ item.label }}</span>
+        </a>
+      </template>
+    </Menu>
     <VerSalidaDialog :salida="verSalida" @cerrar="cerrarVer" />
     <BitacoraDialog v-if="bitacora !== null" :visible="true" tipo="salida" :id="bitacora" @update:visible="(v: boolean) => !v && (bitacora = null)" />
     <EnviarPorChatDialog :visible="!!reportar" :referencias="reportar ? [{ tipo: 'Salida', id: reportar.id }] : []" @update:visible="(v: boolean) => !v && (reportar = null)" />
@@ -210,6 +193,7 @@
 import { fetchOpciones, fetchSalidas } from "@/core/salida/api";
 import { aDia, aFechaHora, aQuery, deFechaHora, ESTADOS, redondearMinutos, etiquetaEstado, filtroInicial, type FiltroSalidas } from "@/core/salida/filtro";
 import { resumen, type Operacion } from "@/core/salida/resultado";
+import type { MenuItem } from "primevue/menuitem";
 import type { EstadoSalida, OpcionesSalidas, PaginaSalidas, ResultadoOperacion, SalidaFila } from "@/core/salida/types";
 import { HttpError } from "@/core/http";
 import { notify } from "@/core/notify";
@@ -263,8 +247,8 @@ function cerrarVer() {
   verSalida.value = null;
   if (route.query.ver) void router.replace({ query: { ...route.query, ver: undefined } });
 }
-const menuManifiestos = ref<{ toggle: (e: Event) => void } | null>(null);
-const itemsManifiestos = ref<Array<{ label: string; icon?: string; command: () => void }>>([]);
+const menuAcciones = ref<{ toggle: (e: Event) => void } | null>(null);
+const itemsAcciones = ref<MenuItem[]>([]);
 
 const estaModificado = computed(() => aQuery({ ...filtro, pagina: 1 }) !== aQuery(filtroInicial()));
 const otrosActivos = computed(() => [filtro.empresa, filtro.bus, filtro.orden !== "proximas" ? 1 : null].filter((v) => v !== null).length);
@@ -339,26 +323,27 @@ function acciones(s: SalidaFila) {
   const p = opciones.value?.puede;
   const programada = s.estado === "programada";
   return [
-    { op: "editar" as const, icono: "edit-outline", etiqueta: "Editar", severidad: "secondary" as const, habilitada: !!p?.editar && programada, ayuda: programada ? "Editar" : "Solo se editan salidas programadas" },
-    { op: "anular" as const, icono: "block", etiqueta: "Anular", severidad: "warn" as const, habilitada: !!p?.anular && programada, ayuda: programada ? "Anular (se conserva como cancelada)" : "Solo se anulan salidas programadas" },
-    {
-      op: "eliminar" as const,
-      icono: "delete-outline",
-      etiqueta: "Eliminar",
-      severidad: "danger" as const,
-      habilitada: !!p?.eliminar && (programada || s.estado === "cancelada"),
-      ayuda: programada || s.estado === "cancelada" ? "Eliminar" : "Una salida en curso o finalizada no se elimina",
-    },
+    { op: "editar" as const, icono: "edit-outline", etiqueta: "Editar", severidad: "secondary" as const, habilitada: !!p?.editar && programada },
+    { op: "anular" as const, icono: "block", etiqueta: "Anular", severidad: "warn" as const, habilitada: !!p?.anular && programada },
+    { op: "eliminar" as const, icono: "delete-outline", etiqueta: "Eliminar", severidad: "danger" as const, habilitada: !!p?.eliminar && (programada || s.estado === "cancelada") },
   ];
 }
 
 /** Se chequean boletos (ADR-032) mientras la salida no ha terminado. */
 const chequeable = (s: SalidaFila) => ["programada", "abordando", "iniciada"].includes(s.estado);
 
-/** Menú de los dos manifiestos (PDF) de la fila. */
-function abrirMenu(e: Event, s: SalidaFila) {
-  itemsManifiestos.value = MANIFIESTOS.map((m) => ({ label: m.etiqueta, command: () => void abrirManifiesto(s.id, m.tipo) }));
-  menuManifiestos.value?.toggle(e);
+/** Lo que se le puede hacer a la salida, con su nombre: «Ver» queda a la vista en la fila. */
+function abrirAcciones(e: Event, s: SalidaFila) {
+  const operaciones = acciones(s).filter((a) => a.habilitada);
+  itemsAcciones.value = [
+    { label: "Reportar por chat", iconName: "forum-outline", command: () => (reportar.value = s) },
+    { label: "Bitácora", iconName: "history", command: () => (bitacora.value = s.id) },
+    ...(chequeable(s) ? [{ label: "Chequear boletos", iconName: "how-to-reg-outline", command: () => void router.push({ name: "salidas-chequeo", query: { salida: s.id } }) }] : []),
+    ...MANIFIESTOS.map((m) => ({ label: m.etiqueta, iconName: "picture-as-pdf-outline", command: () => void abrirManifiesto(s.id, m.tipo) })),
+    ...(operaciones.length ? [{ separator: true }] : []),
+    ...operaciones.map((a) => ({ label: a.etiqueta, iconName: a.icono, clase: a.severidad === "danger" ? "text-red-600" : "", command: () => abrir(a.op, s) })),
+  ];
+  menuAcciones.value?.toggle(e);
 }
 
 function abrir(op: Operacion, s: SalidaFila) {

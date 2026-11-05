@@ -14,8 +14,8 @@
       </template>
     </Toolbar>
 
-    <div class="grid gap-4 px-2 lg:grid-cols-[minmax(0,36rem)_1fr]">
-      <section class="panel flex flex-col gap-5">
+    <div class="grid grid-cols-1 gap-4 px-2 @4xl:grid-cols-[minmax(0,36rem)_minmax(0,1fr)]">
+      <section class="flex flex-col gap-5">
         <Skeleton v-if="!config" height="20rem" />
         <template v-else>
           <div class="flex items-center justify-between gap-3">
@@ -40,7 +40,7 @@
           <fieldset class="flex flex-col gap-3 rounded-border border border-surface p-3">
             <legend class="px-1 font-medium">Usuario global</legend>
             <p class="m-0 text-xs text-muted-color">Solo para las empresas sin credenciales propias (se cargan con <code>app:fel:credencial</code>). Déjelo vacío si cada empresa tiene las suyas.</p>
-            <div class="grid gap-3 sm:grid-cols-2">
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <label class="flex flex-col gap-1.5">
                 <span class="text-sm">Usuario</span>
                 <InputText v-model.trim="form.usuario" autocomplete="off" fluid />
@@ -64,7 +64,7 @@
           <fieldset class="flex flex-col gap-3 rounded-border border border-surface p-3">
             <legend class="px-1 font-medium">Emisores en línea</legend>
             <p class="m-0 text-xs text-muted-color">Temporal: las compras en la página de una empresa se facturan a nombre de otra, como en el legado. Vacíelo cuando cada empresa tenga su cuenta.</p>
-            <div v-for="(par, i) in form.emisores" :key="i" class="grid grid-cols-[1fr_auto_1fr_auto] items-center gap-2">
+            <div v-for="(par, i) in form.emisores" :key="i" class="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto] items-center gap-2">
               <Select v-model="par.empresa" :options="config.empresas" option-label="nombre" option-value="nit" placeholder="Empresa" fluid />
               <icon name="arrow-forward" class="text-muted-color" />
               <Select v-model="par.emisor" :options="config.empresas" option-label="nombre" option-value="nit" placeholder="Factura como" fluid />
@@ -85,10 +85,10 @@
       </section>
 
       <aside class="flex flex-col gap-4">
-        <section class="panel flex flex-col gap-3 text-sm">
+        <section class="flex flex-col gap-3 text-sm">
           <h3 class="m-0 text-sm font-semibold">Probar la conexión</h3>
           <p class="m-0 text-muted-color">Consulta en Forcon los datos de un establecimiento con la URL y las credenciales <b>guardadas</b>. Funciona aunque Forcon esté apagado.</p>
-          <div class="grid grid-cols-[1fr_7rem] gap-2">
+          <div class="grid grid-cols-[minmax(0,1fr)_7rem] gap-2">
             <Select v-model="prueba.nit" :options="config?.empresas ?? []" option-label="nombre" option-value="nit" placeholder="Empresa" fluid />
             <InputNumber v-model="prueba.establecimiento" :min="1" :use-grouping="false" placeholder="Estab." fluid />
           </div>
@@ -104,7 +104,7 @@
           <Message v-if="errorPrueba" severity="error" :closable="false">{{ errorPrueba }}</Message>
         </section>
 
-        <section v-if="config" class="panel text-sm">
+        <section v-if="config" class="text-sm">
           <h3 class="m-0 mb-2 text-sm font-semibold">Credenciales por empresa</h3>
           <ul class="m-0 flex flex-col gap-1.5 p-0">
             <li v-for="e in config.empresas" :key="e.nit" class="flex items-center justify-between gap-2">

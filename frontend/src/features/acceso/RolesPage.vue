@@ -58,7 +58,7 @@
         </div>
         <template v-else>
           <header class="flex flex-wrap items-start gap-3">
-            <div class="grid min-w-0 flex-1 gap-2 @xl:grid-cols-2">
+            <div class="grid grid-cols-1 min-w-0 flex-1 gap-2 @xl:grid-cols-2">
               <label class="campo">
                 <span>Nombre</span>
                 <InputText v-model="borrador.nombre" :disabled="soloLectura" placeholder="ROLE_VENDEDOR o «Vendedor de taquilla»" fluid />
@@ -473,12 +473,6 @@ function eliminar() {
   gap: 0.15rem;
   font-size: 0.75rem;
   color: var(--p-surface-500);
-}
-.campo {
-  display: grid;
-  gap: 0.25rem;
-  font-size: 0.8rem;
-  color: var(--p-surface-600);
 }
 .area {
   display: grid;

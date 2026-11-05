@@ -17,7 +17,7 @@
           <div class="text-lg font-semibold">{{ detalle.ruta.nombre }}</div>
           <Tag :value="etiquetaEstado(detalle.estado).etiqueta" :severity="etiquetaEstado(detalle.estado).severidad" />
         </div>
-        <dl class="panel !p-3 m-0 grid grid-cols-2 gap-x-4 gap-y-2 text-sm @2xl:grid-cols-4">
+        <dl class="!p-3 m-0 grid grid-cols-2 gap-x-4 gap-y-2 text-sm @2xl:grid-cols-4">
           <div class="col-span-2"><dt class="text-xs text-muted-color">Salida</dt><dd class="m-0 first-letter:uppercase">{{ fechaHora(detalle.salida) }}</dd></div>
           <div><dt class="text-xs text-muted-color">Empresa</dt><dd class="m-0">{{ detalle.empresa?.nombre ?? '—' }}</dd></div>
           <div><dt class="text-xs text-muted-color">Bus</dt><dd class="m-0">{{ detalle.bus ? detalle.bus.codigo : 'Sin bus' }}<span v-if="detalle.bus?.gama" class="text-muted-color"> · {{ detalle.bus.gama }}</span></dd></div>
@@ -29,7 +29,7 @@
 
       <div class="grid grid-cols-1 items-start gap-4 @2xl:grid-cols-[minmax(0,19rem)_minmax(0,1fr)]">
         <section class="flex min-w-0 flex-col gap-3">
-          <div v-if="!detalle.croquis.length" class="panel text-center text-sm text-muted-color">La salida no tiene bus con croquis.</div>
+          <div v-if="!detalle.croquis.length" class="text-center text-sm text-muted-color">La salida no tiene bus con croquis.</div>
           <template v-else>
             <div class="overflow-x-auto">
               <BusMap :elementos="detalle.croquis" :estado="estado" inspeccionable tamano="md" class="justify-center" @ocupado="verOcupado" />
@@ -50,8 +50,8 @@
           </div>
 
           <div class="grid grid-cols-2 gap-2">
-            <div class="panel !p-3"><div class="text-xs text-muted-color">Cobrado</div><div class="text-lg font-semibold tabular-nums">{{ resumen.ingresos?.texto ?? 'Q 0.00' }}</div></div>
-            <div class="panel !p-3"><div class="text-xs text-muted-color">Boletos vigentes</div><div class="text-lg font-semibold tabular-nums">{{ totalBoletos }}</div></div>
+            <div class="!p-3"><div class="text-xs text-muted-color">Cobrado</div><div class="text-lg font-semibold tabular-nums">{{ resumen.ingresos?.texto ?? 'Q 0.00' }}</div></div>
+            <div class="!p-3"><div class="text-xs text-muted-color">Boletos vigentes</div><div class="text-lg font-semibold tabular-nums">{{ totalBoletos }}</div></div>
           </div>
 
           <div class="flex flex-col gap-1">

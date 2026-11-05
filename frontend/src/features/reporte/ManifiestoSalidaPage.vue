@@ -14,7 +14,7 @@
         </div>
       </header>
 
-      <div class="grid gap-4 @lg:grid-cols-[11rem_minmax(0,1fr)]">
+      <div class="grid grid-cols-1 gap-4 @lg:grid-cols-[11rem_minmax(0,1fr)]">
         <label class="flex flex-col gap-1.5">
           <span class="text-sm font-medium">Fecha de salida</span>
           <DatePicker v-model="fecha" date-format="dd/mm/yy" show-icon icon-display="input" :manual-input="false" fluid input-id="manifiesto-fecha" @update:model-value="salidaId = null" />

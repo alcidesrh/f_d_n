@@ -14,7 +14,7 @@
         <span class="ml-auto text-lg font-semibold tabular-nums">{{ b.precio?.texto ?? '—' }}<span v-if="b.sinCobro" class="ml-1 text-xs font-normal text-muted-color">(sin cobro)</span></span>
       </div>
 
-      <section class="grid gap-x-6 gap-y-3 md:grid-cols-2">
+      <section class="grid grid-cols-1 gap-x-6 gap-y-3 md:grid-cols-2">
         <Dato titulo="Viaje">
           <div class="font-medium">{{ b.sube }} → {{ b.baja }}</div>
           <div class="text-xs text-muted-color">{{ b.ruta }}</div>

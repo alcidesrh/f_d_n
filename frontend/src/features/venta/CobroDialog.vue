@@ -12,7 +12,7 @@
     @update:visible="emit('update:visible', $event)"
   >
     <FormKit v-model="datos" type="form" :actions="false" @submit="confirmar">
-      <dl class="mb-4 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+      <dl class="mb-4 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1 text-sm">
         <dt class="text-muted-color">Cliente</dt>
         <dd>{{ store.cliente?.label }}</dd>
         <dt class="text-muted-color">Viaje</dt>

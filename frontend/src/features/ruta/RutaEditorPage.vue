@@ -21,11 +21,11 @@
     <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
     <Skeleton v-if="!form" height="20rem" />
 
-    <div v-else class="grid gap-4 @5xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+    <div v-else class="grid grid-cols-1 gap-4 @5xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
       <div class="flex flex-col gap-4 min-w-0">
-        <section class="panel flex flex-col gap-3" aria-labelledby="ruta-datos">
+        <section class="flex flex-col gap-3" aria-labelledby="ruta-datos">
           <h2 id="ruta-datos" class="m-0 flex items-center gap-2 text-base font-semibold"><icon name="route" />Ruta</h2>
-          <div class="grid gap-3 @xl:grid-cols-[minmax(0,1fr)_8rem_auto] @xl:items-end">
+          <div class="grid grid-cols-1 gap-3 @xl:grid-cols-[minmax(0,1fr)_8rem_auto] @xl:items-end">
             <label class="flex flex-col gap-1">
               <span class="text-xs font-medium text-muted-color">Nombre</span>
               <InputText v-model="form.nombre" maxlength="255" :disabled="!puedeEditar" placeholder="P. ej. Guatemala - Santa Elena por Río Dulce" fluid />
@@ -46,7 +46,7 @@
           </p>
         </section>
 
-        <section class="panel flex flex-col gap-3" aria-labelledby="ruta-paradas">
+        <section class="flex flex-col gap-3" aria-labelledby="ruta-paradas">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <h2 id="ruta-paradas" class="m-0 flex items-center gap-2 text-base font-semibold">
               <icon name="pin-drop" />Paradas <span class="text-sm font-normal text-muted-color">({{ form.paradas.length }})</span>
@@ -103,7 +103,7 @@
         </div>
       </div>
 
-      <section class="panel flex flex-col gap-2 min-w-0 @5xl:sticky @5xl:top-4 @5xl:self-start" aria-labelledby="ruta-mapa">
+      <section class="flex flex-col gap-2 min-w-0 @5xl:sticky @5xl:top-4 @5xl:self-start" aria-labelledby="ruta-mapa">
         <h2 id="ruta-mapa" class="m-0 flex items-center gap-2 text-base font-semibold"><icon name="map-outline" />Mapa</h2>
         <MapaRuta :paradas="enMapa" :enclaves="opciones?.lugares ?? []" />
         <p class="m-0 text-xs text-muted-color">Duración hasta el destino: {{ duracion(form.paradas[form.paradas.length - 1]?.minutos ?? null) }}</p>

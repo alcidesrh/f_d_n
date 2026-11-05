@@ -5,8 +5,8 @@
   iniciado se cobra con el recargo que tenía.
 -->
 <template>
-  <div class="grid gap-4 lg:grid-cols-[minmax(0,32rem)_1fr]">
-    <section class="panel flex flex-col gap-5">
+  <div class="grid grid-cols-1 gap-4 @4xl:grid-cols-[minmax(0,32rem)_minmax(0,1fr)]">
+    <section class="flex flex-col gap-5">
       <Skeleton v-if="!config" height="16rem" />
       <template v-else>
         <div class="flex items-center justify-between gap-3">
@@ -36,7 +36,7 @@
         </div>
       </template>
     </section>
-    <aside class="panel text-sm text-muted-color">
+    <aside class="text-sm text-muted-color">
       <h3 class="m-0 mb-2 text-sm font-semibold text-color">Cómo funciona</h3>
       <ul class="m-0 flex flex-col gap-1.5 pl-4">
         <li>El cliente elige asientos; al pulsar «Pagar asientos» se apartan (en taquilla se ven ocupados) por 15 minutos, extensibles mientras paga.</li>

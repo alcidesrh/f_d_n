@@ -596,10 +596,6 @@ const nombreParada = (id: number | null) => store.detalle?.paradas.find((p) => p
   box-shadow: 0 1px 3px color-mix(in srgb, var(--p-surface-900) 18%, transparent);
 }
 .campo {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  gap: 0.25rem;
   position: relative;
 }
 /* Móvil: menos aire vertical (paneles, etiquetas e inputs) sin achicar la letra. */

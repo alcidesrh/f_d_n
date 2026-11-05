@@ -16,7 +16,7 @@
       ></Button>
     </RouterLink>
 
-    <section class="panel flex flex-col gap-3 @3xl:flex-row @3xl:items-end">
+    <section class="flex flex-col gap-3 @3xl:flex-row @3xl:items-end">
       <label class="flex flex-1 flex-col gap-1">
         <span class="text-xs font-medium text-muted-color">Buscar</span>
         <IconField>
@@ -44,8 +44,8 @@
     <div v-if="angosto" class="flex flex-col gap-3">
       <p v-if="truncado" class="m-0 text-xs text-muted-color">Hay más rutas que coinciden: afine la búsqueda para verlas.</p>
       <Skeleton v-if="!rutas" height="8rem" />
-      <p v-else-if="!visibles.length" class="panel m-0 text-center text-sm text-muted-color">No hay rutas con esta búsqueda.</p>
-      <article v-for="r in visibles" :key="r.id" class="panel !p-3 flex flex-col gap-2">
+      <p v-else-if="!visibles.length" class="m-0 text-center text-sm text-muted-color">No hay rutas con esta búsqueda.</p>
+      <article v-for="r in visibles" :key="r.id" class="!p-3 flex flex-col gap-2">
         <div class="flex items-start justify-between gap-2">
           <div>
             <RouterLink :to="{ name: 'ruta', params: { id: r.id } }" class="font-semibold">{{ r.nombre }}</RouterLink>

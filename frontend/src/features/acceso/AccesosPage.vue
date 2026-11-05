@@ -148,10 +148,4 @@ async function buscar() {
     grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto;
   }
 }
-.campo {
-  display: grid;
-  gap: 0.3rem;
-  font-size: 0.8rem;
-  color: var(--p-surface-600);
-}
 </style>

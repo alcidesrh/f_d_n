@@ -14,7 +14,7 @@
       </label>
       <div v-else class="campo">
         <span>Estación</span>
-        <span class="font-semibold">{{ contexto.estacion.nombre }}</span>
+        <span class="text-base font-semibold text-color">{{ contexto.estacion.nombre }}</span>
       </div>
       <IconField v-if="filas.length > 5" class="min-w-56 flex-1 @3xl:max-w-sm">
         <InputIcon><icon name="search" /></InputIcon>
@@ -187,17 +187,6 @@ async function guardarRuta() {
 </script>
 
 <style scoped>
-.campo {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  min-width: 0;
-}
-.campo > span:first-child {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--p-text-muted-color);
-}
 .totales {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));

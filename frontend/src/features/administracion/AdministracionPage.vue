@@ -34,7 +34,7 @@
     </div>
 
     <Message v-if="store.error" severity="error" :closable="false">{{ store.error }}</Message>
-    <div v-if="store.cargando && !store.secciones.length" class="grid gap-4 @2xl:grid-cols-3">
+    <div v-if="store.cargando && !store.secciones.length" class="grid grid-cols-1 gap-4 @2xl:grid-cols-3">
       <Skeleton v-for="i in 3" :key="i" height="12rem" />
     </div>
 

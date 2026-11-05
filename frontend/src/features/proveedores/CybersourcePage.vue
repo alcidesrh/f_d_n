@@ -12,8 +12,8 @@
       </template>
     </Toolbar>
 
-    <div class="grid gap-4 px-2 lg:grid-cols-[minmax(0,36rem)_1fr]">
-      <section class="panel flex flex-col gap-5">
+    <div class="grid grid-cols-1 gap-4 px-2 @4xl:grid-cols-[minmax(0,36rem)_minmax(0,1fr)]">
+      <section class="flex flex-col gap-5">
         <Skeleton v-if="!config" height="16rem" />
         <template v-else>
           <div class="flex items-center justify-between gap-3">
@@ -49,7 +49,7 @@
         </template>
       </section>
 
-      <aside v-if="config" class="panel text-sm">
+      <aside v-if="config" class="text-sm">
         <h3 class="m-0 mb-2 text-sm font-semibold">Comercio por empresa</h3>
         <ul class="m-0 flex flex-col gap-1.5 p-0">
           <li v-for="e in config.empresas" :key="e.nombre" class="flex items-center justify-between gap-2">

@@ -52,7 +52,7 @@
           <small v-if="tipo" class="text-muted-color">{{ tipo.descripcion }}</small>
         </label>
 
-        <div v-if="tipo && (tipo.exigeEmpresa || tipo.esAnomalia || tipo.exigeRuta)" class="grid min-w-0 gap-3 sm:grid-cols-2">
+        <div v-if="tipo && (tipo.exigeEmpresa || tipo.esAnomalia || tipo.exigeRuta)" class="grid grid-cols-1 min-w-0 gap-3 sm:grid-cols-2">
           <label class="campo min-w-0">
             <span>{{ tipo.exigeEmpresa ? 'Empresa' : 'Empresa (opcional)' }}</span>
             <Select v-model="b.empresa" :options="opciones.empresas" option-label="nombre" option-value="id" :placeholder="tipo.exigeEmpresa ? 'Elija la empresa' : 'Todas las empresas'" :show-clear="!tipo.exigeEmpresa" filter fluid />
@@ -63,7 +63,7 @@
           </label>
         </div>
 
-        <div v-if="tipo?.conHora" class="grid min-w-0 gap-3 sm:grid-cols-[10rem_minmax(0,1fr)]">
+        <div v-if="tipo?.conHora" class="grid grid-cols-1 min-w-0 gap-3 sm:grid-cols-[10rem_minmax(0,1fr)]">
           <label class="campo">
             <span>Hora</span>
             <InputText v-model="b.hora" type="time" :placeholder="tipo.codigo === 'libre' ? '' : opciones.horaCierre" fluid />
@@ -184,13 +184,6 @@ async function guardar() {
 </script>
 
 <style scoped>
-.campo {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 0.3rem;
-  font-size: 0.8rem;
-  color: var(--p-surface-600);
-}
 .paso {
   display: grid;
   /* Sin esto, el texto largo de un Select ensancha la columna en el teléfono. */
