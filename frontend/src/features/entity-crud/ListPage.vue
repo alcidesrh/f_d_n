@@ -72,7 +72,7 @@
 
         <ListFooter v-if="features.pagination" :pagination="store.pagination" :count="store.items.length" :page-sizes="pageSizes" @page="onPage" />
         <EnviarPorChatDialog v-if="!enSelector" v-model:visible="compartir" :referencias="referencias" @enviado="toggleSelectionMode" />
-        <component :is="activeAction.component" v-if="activeAction" v-model:visible="actionVisible" :item="activeAction.item" @after-hide="activeAction = null" />
+        <component :is="activeAction.component" v-if="activeAction" v-bind="activeAction.props" v-model:visible="actionVisible" :item="activeAction.item" @after-hide="activeAction = null" />
         <component :is="activeBulk.component" v-if="activeBulk" v-model:visible="bulkVisible" :ids="activeBulk.ids" @listo="alTerminarAccion" @after-hide="activeBulk = null" />
       </div>
     </Teleport>
@@ -371,11 +371,11 @@ const actionsWidth = computed(() => {
   return count ? `${count * 2 + 1}rem` : null;
 });
 
-const activeAction = shallowRef<{ component: Component; item: unknown } | null>(null);
+const activeAction = shallowRef<{ component: Component; item: unknown; props?: Record<string, unknown> } | null>(null);
 const actionVisible = ref(false);
 
 function openAction(action: EntityListAction, item: unknown) {
-  activeAction.value = { component: defineAsyncComponent(action.component), item };
+  activeAction.value = { component: defineAsyncComponent(action.component), item, props: action.props };
   actionVisible.value = true;
 }
 

@@ -43,7 +43,7 @@ function dibujar() {
   const trayecto = conCoordenadas.value.map((p) => [p.latitud!, p.longitud!] as PuntoGeo);
   for (const e of sobreElTrayecto(props.enclaves ?? [], trayecto)) {
     L.circleMarker([e.latitud!, e.longitud!], { radius: 4, color: "#64748b", weight: 2, fillColor: "#fff", fillOpacity: 1 })
-      .bindTooltip(escapar(e.nombre), { permanent: true, direction: "right", offset: [8, 0], className: "parada-chip", interactive: false })
+      .bindTooltip(escapar(e.nombre), { permanent: true, direction: "right", offset: [8, 0], className: "mapa-chip", interactive: false })
       .addTo(capa);
   }
   if (puntos.length > 1) L.polyline(puntos, { color, weight: 3, opacity: 0.85 }).addTo(capa);
@@ -77,35 +77,5 @@ onBeforeUnmount(() => {
 .mapa-ruta {
   height: clamp(16rem, 45vh, 32rem);
   border: 1px solid var(--p-content-border-color);
-}
-</style>
-
-<style>
-/* Mismo chip que los nombres de enclaves del seguimiento. */
-.leaflet-tooltip.parada-chip {
-  padding: 1px 6px;
-  font-size: 10px;
-  line-height: 1.4;
-  font-weight: 700;
-  color: var(--p-slate-50);
-  background: var(--p-slate-800);
-  border: 1px solid var(--p-slate-800);
-  border-radius: 4px;
-  box-shadow: none;
-  white-space: nowrap;
-}
-.leaflet-tooltip.parada-chip.leaflet-tooltip-right::before {
-  border-right-color: var(--p-slate-800);
-}
-.leaflet-tooltip.parada-chip.leaflet-tooltip-right::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 0;
-  margin-top: -5px;
-  margin-left: -9px;
-  border: 5px solid transparent;
-  border-right-color: var(--p-slate-800);
-  pointer-events: none;
 }
 </style>

@@ -294,7 +294,7 @@ function dibujarRutas() {
         const clave = `${e.nombre}|${e.lat}|${e.lng}`;
         if (!estaciones.has(clave)) {
           estaciones.add(clave);
-          punto.bindTooltip(escapar(e.nombre), { permanent: true, direction: "right", offset: [8, 0], className: "enclave-chip", interactive: false });
+          punto.bindTooltip(escapar(e.nombre), { permanent: true, direction: "right", offset: [8, 0], className: "mapa-chip", interactive: false });
         }
       } else {
         punto.bindTooltip(`${escapar(e.nombre)}${exacta ? "" : `<br><small>${escapar(ORIGEN_COORDENADA[e.origen] ?? "")}</small>`}`, { className: "enclave-tip" });
@@ -467,33 +467,6 @@ onBeforeUnmount(() => {
 }
 .enclave-tip {
   font-weight: 500;
-}
-.leaflet-tooltip.enclave-chip {
-  padding: 1px 6px;
-  font-size: 10px;
-  line-height: 1.4;
-  font-weight: 700;
-  color: var(--p-slate-50);
-  background: var(--p-slate-800);
-  border: 1px solid var(--p-slate-800);
-  border-radius: 4px;
-  box-shadow: none;
-  white-space: nowrap;
-}
-/* Saeta hacia el punto: ::before es el borde y ::after el relleno, ambos del mismo slate. */
-.leaflet-tooltip.enclave-chip.leaflet-tooltip-right::before {
-  border-right-color: var(--p-slate-800);
-}
-.leaflet-tooltip.enclave-chip.leaflet-tooltip-right::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 0;
-  margin-top: -5px;
-  margin-left: -9px;
-  border: 5px solid transparent;
-  border-right-color: var(--p-slate-800);
-  pointer-events: none;
 }
 .mapa-maximizado .mapa-buses {
   height: 100%;

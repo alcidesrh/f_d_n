@@ -213,7 +213,7 @@ function chip(punto: L.CircleMarker, nombre: string) {
     permanent: true,
     direction: "right",
     offset: [8, 0],
-    className: "tarifa-chip",
+    className: "mapa-chip",
     interactive: false,
   });
 }
@@ -486,32 +486,6 @@ onBeforeUnmount(() => {
 }
 .tarifa-tip {
   font-weight: 500;
-}
-.leaflet-tooltip.tarifa-chip {
-  padding: 1px 6px;
-  font-size: 10px;
-  line-height: 1.4;
-  font-weight: 700;
-  color: var(--p-slate-50);
-  background: var(--p-slate-800);
-  border: 1px solid var(--p-slate-800);
-  border-radius: 4px;
-  box-shadow: none;
-  white-space: nowrap;
-}
-.leaflet-tooltip.tarifa-chip.leaflet-tooltip-right::before {
-  border-right-color: var(--p-slate-800);
-}
-.leaflet-tooltip.tarifa-chip.leaflet-tooltip-right::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 0;
-  margin-top: -5px;
-  margin-left: -9px;
-  border: 5px solid transparent;
-  border-right-color: var(--p-slate-800);
-  pointer-events: none;
 }
 .tarifa-indicador__boton {
   display: grid;

@@ -17,6 +17,8 @@ export interface EntityListAction {
   label: string
   icon: string
   component: EntityFormLoader
+  /** Props fijas del componente, además de `item` y `visible`. */
+  props?: Record<string, unknown>
 }
 
 /** Permiso de boletos que exige una acción sobre la selección (lo decide el backend). */
@@ -55,19 +57,13 @@ export const entityListLinks: Record<string, EntityListLink[]> = {
 /** Entidades cuyo listado no ofrece editar ni eliminar (solo sus acciones propias). */
 export const entityReadOnly: ReadonlySet<string> = new Set(['BoletoAsiento'])
 
-const bitacoraSalida: EntityListAction = {
+const bitacora = (tipo: 'boleto' | 'salida'): EntityListAction => ({
   key: 'bitacora',
   label: 'Bitácora',
   icon: 'history',
-  component: () => import('./BitacoraSalidaAccion.vue'),
-}
-
-const bitacoraBoleto: EntityListAction = {
-  key: 'bitacora',
-  label: 'Bitácora',
-  icon: 'history',
-  component: () => import('./BitacoraBoletoAccion.vue'),
-}
+  component: () => import('./BitacoraAccion.vue'),
+  props: { tipo },
+})
 
 /** Clave = nombre de la entidad en PascalCase. */
 export const entityListActions: Record<string, EntityListAction[]> = {
@@ -85,8 +81,8 @@ export const entityListActions: Record<string, EntityListAction[]> = {
       component: () => import('@/features/usuario/CambiarPasswordDialog.vue'),
     },
   ],
-  Salida: [bitacoraSalida],
-  BoletoAsiento: [bitacoraBoleto],
+  Salida: [bitacora('salida')],
+  BoletoAsiento: [bitacora('boleto')],
 }
 
 /**
