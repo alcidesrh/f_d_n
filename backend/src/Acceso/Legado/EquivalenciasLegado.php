@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Acceso\Legado;
 
 /**
- * Qué capacidades concede cada rol del legado (`custom_rol`) en el modelo
- * nuevo (ADR-039), y si su alcance es por estación (lo ejerce en las
+ * Qué podía hacer cada rol del legado (`custom_rol`), en capacidades del
+ * modelo nuevo (ADR-039), y si su alcance es por estación (lo ejerce en las
  * estaciones del usuario) o sobre todas (oficinas). La empresa siempre sale
- * de las del usuario en el legado (`custom_user_empresa`).
+ * de las del usuario en el legado (`custom_user_empresa`). La migración ya no
+ * crea estos roles tal cual: los consolida en puestos (`ConsolidacionRoles`,
+ * ADR-052).
  *
  * Es una decisión de negocio: revisarla con quien opera cada puesto.
  * `ROLE_SUPER_ADMIN` es el rol de sistema; `ROLE_ADMIN`, todo menos la

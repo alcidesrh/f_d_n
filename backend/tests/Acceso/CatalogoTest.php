@@ -8,6 +8,7 @@ use ApiPlatform\Metadata\ApiResource;
 use App\Acceso\Capacidad;
 use App\Acceso\Catalogo\Catalogo;
 use App\Acceso\Catalogo\CatalogoRecursos;
+use App\Acceso\Legado\ConsolidacionRoles;
 use App\Acceso\Legado\EquivalenciasLegado;
 use App\Acceso\Limite;
 use App\Acceso\Recurso;
@@ -74,7 +75,7 @@ final class CatalogoTest extends TestCase
     public function testLasEquivalenciasDelLegadoSonDelCatalogo(): void
     {
         $catalogo = self::catalogo();
-        foreach (EquivalenciasLegado::ROLES as $rol => [, $capacidades]) {
+        foreach ([...EquivalenciasLegado::ROLES, ...ConsolidacionRoles::PUESTOS] as $rol => [, $capacidades]) {
             foreach ($capacidades as $c) {
                 self::assertTrue($catalogo->existe($c), "$rol: «$c» no existe");
             }

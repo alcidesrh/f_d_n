@@ -2,6 +2,7 @@
 
 namespace App\Migration;
 
+use App\Acceso\Legado\ConsolidacionRoles;
 use App\Acceso\Legado\EquivalenciasLegado;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -11,12 +12,13 @@ use Symfony\Component\DependencyInjection\Attribute\Target;
  * Accesos del legado en el modelo nuevo (ADR-039), paso «iam» de la
  * migración y `app:acceso:alcance-legado`. Idempotente.
  *
- * 1. Roles: uno por `custom_rol` (con su descripción); al crearse lleva las
- *    capacidades de `EquivalenciasLegado` —los que ya existen conservan las
- *    suyas, que pueden haberse editado en el sistema nuevo—. ROLE_SUPER_ADMIN
- *    es el de sistema.
+ * 1. Roles: los puestos del modelo nuevo (`ConsolidacionRoles::PUESTOS`, ADR-052)
+ *    más el de sistema (ROLE_SUPER_ADMIN) y ROLE_ADMIN, con la descripción
+ *    del legado si no traen una; al crearse llevan sus capacidades —los que ya
+ *    existen conservan las suyas, que pueden haberse editado en el sistema
+ *    nuevo—. Los roles del legado que no son puestos no se crean.
  * 2. Usuarios ya migrados: si siguen activos (`enabled`, sin `locked` ni
- *    `expired`) y una asignación por rol con el alcance del legado
+ *    `expired`) y sus roles consolidados en puestos con el alcance del legado
  *    (`custom_user_empresa`, `custom_user.estacion_id`, `custom_user_estacion`).
  *    Rehace solo las asignaciones de la migración (`RolesUsuarioLegado`).
  */
@@ -37,9 +39,13 @@ class MigradorIAM {
         $this->newConn->beginTransaction();
         try {
             if ($output) $output->write('<info>Roles...</info>');
+            $descripciones = [];
             foreach ($this->fetchOld('SELECT nombre, descripcion FROM custom_rol') as $row) {
-                $existia = $this->newConn->fetchOne('SELECT 1 FROM role WHERE nombre = :nombre', ['nombre' => $row['nombre']]) !== false;
-                $this->rolesUsuario->rol((string) $row['nombre'], $row['descripcion'] !== null ? (string) $row['descripcion'] : null);
+                $descripciones[(string) $row['nombre']] = $row['descripcion'] !== null ? (string) $row['descripcion'] : null;
+            }
+            foreach ([EquivalenciasLegado::SISTEMA, EquivalenciasLegado::ADMIN, ...array_keys(ConsolidacionRoles::PUESTOS)] as $nombre) {
+                $existia = $this->newConn->fetchOne('SELECT 1 FROM role WHERE nombre = :nombre', ['nombre' => $nombre]) !== false;
+                $this->rolesUsuario->rol($nombre, $descripciones[$nombre] ?? null);
                 $contadores['roles'] += $existia ? 0 : 1;
             }
             $this->newConn->executeStatement('UPDATE role SET sistema = true WHERE nombre = :nombre', ['nombre' => EquivalenciasLegado::SISTEMA]);

@@ -5,23 +5,25 @@ declare(strict_types=1);
 namespace App\Migration;
 
 use App\Acceso\Catalogo\Catalogo;
+use App\Acceso\Legado\ConsolidacionRoles;
 use App\Acceso\Legado\EquivalenciasLegado;
 use Doctrine\DBAL\Connection;
 
 /**
- * Accesos de un usuario del legado en el modelo nuevo (ADR-039): una
- * asignación por cada rol de `custom_user.roles` (array PHP serializado con
- * los nombres: `a:2:{i:0;s:10:"ROLE_ADMIN";…}`), con el alcance que le daba
- * el legado —sus empresas (`custom_user_empresa`) y, en los puestos de
- * estación (`EquivalenciasLegado::porEstacion`), sus estaciones
- * (`custom_user.estacion_id` y `custom_user_estacion`)—, y si sigue activo.
- * `ROLE_USER` es implícito. A un usuario de agencia el alcance se lo da su
- * agencia.
+ * Accesos de un usuario del legado en el modelo nuevo (ADR-039, ADR-052): sus
+ * roles de `custom_user.roles` (array PHP serializado con los nombres:
+ * `a:2:{i:0;s:10:"ROLE_ADMIN";…}`) se consolidan en puestos
+ * (`ConsolidacionRoles`): los de oficina sobre sus empresas
+ * (`custom_user_empresa`) y los de estación sobre esas empresas y sus
+ * estaciones (`custom_user.estacion_id` y `custom_user_estacion`); y si sigue
+ * activo. `ROLE_USER` es implícito; `ROLE_NO_VENDER_VOUCHER` quita la
+ * cortesía. Con un rol total (sistema o administración), solo ese. A un
+ * usuario de agencia el alcance se lo da su agencia.
  *
  * Se aplica al crear el usuario (paso «usuario» o bajo demanda al migrar una
  * salida, `DependenciasLegado::usuario`) y en el paso «iam». Rehace solo las
  * asignaciones que puso la migración: las otorgadas a mano se respetan. El
- * rol que aún no exista se crea con las capacidades de `EquivalenciasLegado`.
+ * puesto que aún no exista se crea con sus capacidades (`ConsolidacionRoles::PUESTOS`).
  */
 final class RolesUsuarioLegado
 {
@@ -62,23 +64,38 @@ final class RolesUsuarioLegado
             ['motivos' => \Doctrine\DBAL\ArrayParameterType::STRING],
         );
 
+        $nombres = array_values(array_diff(array_unique(self::nombres($rolesLegado)), [EquivalenciasLegado::BASE]));
+        $totales = array_values(array_filter($nombres, EquivalenciasLegado::total(...)));
+        $deAgencia = $agencia !== null && $agencia !== false;
+
+        // [puestos, empresas, estaciones] por alcance; null = todas.
+        $asignaciones = [];
+        if ($totales !== []) {
+            $asignaciones[] = [ConsolidacionRoles::consolidar($totales, $nombres)['puestos'], null, null];
+        } elseif ($deAgencia) {
+            $asignaciones[] = [ConsolidacionRoles::consolidar($nombres, $nombres, null)['puestos'], null, null];
+        } else {
+            $oficina = ConsolidacionRoles::consolidar($nombres, $nombres, false)['puestos'];
+            $yaTiene = array_merge([], ...array_map(static fn(string $p) => ConsolidacionRoles::capacidades($p) ?? [], $oficina));
+            $asignaciones[] = [$oficina, $empresas, null];
+            $asignaciones[] = [ConsolidacionRoles::consolidar($nombres, $nombres, true, $yaTiene)['puestos'], $empresas, $estaciones];
+        }
+
         $count = 0;
-        foreach (array_unique(self::nombres($rolesLegado)) as $nombre) {
-            if ($nombre === EquivalenciasLegado::BASE) {
-                continue;
+        foreach ($asignaciones as [$puestos, $empresasAsignacion, $estacionesAsignacion]) {
+            foreach ($puestos as $puesto) {
+                $count += $this->db->executeStatement(
+                    'INSERT INTO asignacion (usuario_id, rol_id, empresas, estaciones, motivo, creada, modificada)
+                     VALUES (:usuario, :rol, CAST(:empresas AS json), CAST(:estaciones AS json), :motivo, NOW(), NOW())',
+                    [
+                        'usuario' => $usuarioId,
+                        'rol' => $this->rol($puesto),
+                        'empresas' => $empresasAsignacion === null ? null : json_encode($empresasAsignacion, JSON_THROW_ON_ERROR),
+                        'estaciones' => $estacionesAsignacion === null ? null : json_encode($estacionesAsignacion, JSON_THROW_ON_ERROR),
+                        'motivo' => self::MOTIVO,
+                    ],
+                );
             }
-            $libre = EquivalenciasLegado::total($nombre) || ($agencia !== null && $agencia !== false);
-            $count += $this->db->executeStatement(
-                'INSERT INTO asignacion (usuario_id, rol_id, empresas, estaciones, motivo, creada, modificada)
-                 VALUES (:usuario, :rol, CAST(:empresas AS json), CAST(:estaciones AS json), :motivo, NOW(), NOW())',
-                [
-                    'usuario' => $usuarioId,
-                    'rol' => $this->rol($nombre),
-                    'empresas' => $libre ? null : json_encode($empresas, JSON_THROW_ON_ERROR),
-                    'estaciones' => $libre || !EquivalenciasLegado::porEstacion($nombre) ? null : json_encode($estaciones, JSON_THROW_ON_ERROR),
-                    'motivo' => self::MOTIVO,
-                ],
-            );
         }
 
         return $count;
@@ -112,7 +129,7 @@ final class RolesUsuarioLegado
         ));
     }
 
-    /** El rol por nombre; si no existe, se crea con sus capacidades del legado. */
+    /** El puesto por nombre; si no existe, se crea con sus capacidades (`ConsolidacionRoles::PUESTOS`). */
     public function rol(string $nombre, ?string $descripcion = null): int
     {
         if (isset($this->roles[$nombre])) {
@@ -124,8 +141,8 @@ final class RolesUsuarioLegado
                 'INSERT INTO role (nombre, descripcion, capacidades, limites, sistema) VALUES (:nombre, :descripcion, CAST(:capacidades AS json), CAST(:limites AS json), :sistema) RETURNING id',
                 [
                     'nombre' => $nombre,
-                    'descripcion' => $descripcion !== null && $descripcion !== $nombre ? mb_substr($descripcion, 0, 255) : null,
-                    'capacidades' => json_encode(EquivalenciasLegado::capacidades($nombre, $this->catalogo->codigos()) ?? [], JSON_THROW_ON_ERROR),
+                    'descripcion' => mb_substr(ConsolidacionRoles::PUESTOS[$nombre][2] ?? ($descripcion !== null && $descripcion !== $nombre ? $descripcion : ''), 0, 255) ?: null,
+                    'capacidades' => json_encode(ConsolidacionRoles::capacidades($nombre) ?? EquivalenciasLegado::capacidades($nombre, $this->catalogo->codigos()) ?? [], JSON_THROW_ON_ERROR),
                     'limites' => '{}',
                     'sistema' => $nombre === EquivalenciasLegado::SISTEMA ? 'true' : 'false',
                 ],

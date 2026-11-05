@@ -9,8 +9,8 @@ use App\Migration\MigradorIAM;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
- * Migrador del bloque IAM (ADR-039): roles del legado con sus capacidades y
- * asignaciones con el alcance del legado. Idempotente; no aplica rango de
+ * Migrador del bloque IAM (ADR-039, ADR-052): los roles del legado
+ * consolidados en puestos y asignados con el alcance del legado. Idempotente; no aplica rango de
  * fechas ni cantidad.
  */
 final class MigradorEntidadIam implements MigradorEntidadInterface
