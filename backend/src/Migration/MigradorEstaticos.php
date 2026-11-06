@@ -251,23 +251,6 @@ class MigradorEstaticos
 
     // ─── Estacion → Enclave ────────────────────────────────────────
 
-    /**
-     * Copia el departamento del legado a los enclaves ya migrados (mismo id
-     * que `estacion.id`), sin migrar de nuevo. Devuelve los actualizados.
-     */
-    public function actualizarDepartamentos(): int
-    {
-        $count = 0;
-        foreach ($this->fetchOld("SELECT e.id, d.nombre AS departamento_nombre FROM estacion e JOIN departamento d ON d.id = e.departamento_id") as $row) {
-            $count += $this->newConn->executeStatement(
-                "UPDATE enclave SET departamento = :departamento WHERE id = :id AND departamento IS DISTINCT FROM :departamento",
-                ["id" => (int) $row["id"], "departamento" => mb_substr(trim((string) $row["departamento_nombre"]), 0, 60)],
-            );
-        }
-
-        return $count;
-    }
-
     private function migrarEstacions(?OutputInterface $output = null): int
     {
         if ($output) {

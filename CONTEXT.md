@@ -259,7 +259,7 @@ Boleta de depósito bancario de una agencia: se registra sin tocar el saldo y un
 _Avoid_: depósito, recarga
 Modelo: nuevo
 **Voucher**:
-Es un boleto o encomienda que no se cobra. La razon puede ser desde desicion administrativa hasta restitucion de un por un viaje cancelado. Para boletos del legado se migra como `BoletoVenta.voucher` (`app:venta:vouchers-legado` en bases ya migradas); los nuevos se emiten como Cortesía.
+Es un boleto o encomienda que no se cobra. La razon puede ser desde desicion administrativa hasta restitucion de un por un viaje cancelado. Para boletos del legado se migra como `BoletoVenta.voucher`; los nuevos se emiten como Cortesía.
 Modelo: nuevo (`BoletoVenta.voucher`, solo legado; para boletos nuevos: ver Cortesía)
 **Pospuesto**:
 Boleto de una compra web pospuesta desde el dashboard ("Posponer"): libera el asiento, conserva la venta, su factura y su importe. Se reanuda reasignándolo a otra salida de la misma empresa (o se anula), aunque su salida original ya haya pasado (`EstadoBoletoAsiento::POSPUESTO`, `App\Venta\EnLinea\GestionCompraWeb`).

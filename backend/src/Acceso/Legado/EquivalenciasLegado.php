@@ -104,12 +104,6 @@ final class EquivalenciasLegado
         };
     }
 
-    /** Se ejerce en las estaciones del usuario (no en todas). */
-    public static function porEstacion(string $rol): bool
-    {
-        return self::ROLES[$rol][0] ?? false;
-    }
-
     /** Sobre todas las empresas y estaciones, sin mirar las del usuario. */
     public static function total(string $rol): bool
     {

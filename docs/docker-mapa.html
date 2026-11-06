@@ -355,7 +355,6 @@ const GROUPS = [
     ['make cc', 'Limpia la caché de Symfony.', ['backend']],
     ['make entity-setup', 'Sincroniza la metadata de entidades dinámicas (app:config:sync-metadata).', ['backend']],
     ['docker compose exec backend bin/console debug:router', 'Rutas registradas.', ['backend']],
-    ['make reset-db soft=1', 'Reinicia la base (sin soft= es --hard). <span class="warn">Borra datos</span>', ['backend', 'database']],
   ]},
   { title: 'Segundo plano', where: 'ADR-044', cmds: [
     ['make tareas', 'Latido de cada tarea del programador.', ['programador']],
@@ -374,7 +373,6 @@ const GROUPS = [
   ]},
   { title: 'Legado y migración', where: 'SQL Server', cmds: [
     ['make sincronizar', 'Un ciclo de sincronización a mano (el programador la corre cada minuto).', ['legacy', 'backend']],
-    ['make migrar-entities entities=\'Empresa Estacion Bus\'', 'Migra entidades estáticas del legado.', ['legacy', 'backend', 'database']],
     ['make migrar-todo clean=1', 'Migración completa. <span class="warn">Toma horas</span>', ['legacy', 'backend', 'database']],
   ]},
   { title: 'Producción', where: 'VPS · .env.prod.local', cmds: [

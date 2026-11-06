@@ -95,7 +95,7 @@ Detalle por tema (mismo texto, en `docs/architecture/`):
 
 Hay una cuenta solo para pruebas en desarrollo (`pruebas`, rol de sistema sobre todo; no es `admin`). Sus credenciales viven en `.env.e2e.local` en la raíz (fuera de git; plantilla en `.env.e2e.example`): `E2E_BASE_URL`, `E2E_ADMIN_USER`, `E2E_ADMIN_PASSWORD`.
 
-- **Si falta el archivo** o el login falla (p. ej. tras `make reset-db`): `make e2e-usuario` la crea o le pone otra contraseña. El comando (`app:usuario:pruebas`) no hace nada en producción.
+- **Si falta el archivo** o el login falla (p. ej. tras rehacer la base): `make e2e-usuario` la crea o le pone otra contraseña. El comando (`app:usuario:pruebas`) no hace nada en producción.
 - **Navegador** (panel de Claude Desktop, Chrome): entrar en `E2E_BASE_URL/login` con esas credenciales.
 - **Consola**: `curl -H "Authorization: Bearer $(make -s e2e-token)" http://localhost/graphql …` (REST además con `Accept: application/ld+json`).
 - **Playwright** (`npm run test:e2e` en `frontend/`) lee el archivo solo; lo que venga en el entorno tiene prioridad.
@@ -160,7 +160,6 @@ Para reglas detalladas de cada capa:
 
 ## Practical caveats
 
-- Los Makefiles (root + backend) incluyen targets legacy que pueden no estar disponibles.
 - **Producción (VPS, `compose.prod.yaml`)**: el código no va en la imagen; se monta desde el checkout `/root/f_d_n` (`./backend:/app`, `./frontend` con su `dist/`), y `/app/var` es tmpfs (la caché de Symfony nace en cada arranque). Cambio de PHP → `make reiniciar` (unos segundos); de frontend → `make front` (`vite build` en el host, sin reiniciar); de la página → `make pagina`; de `composer.lock` → `make vendor`. `make deploy` hace `git pull` y solo lo que cambió, migraciones incluidas, antes de reiniciar (`make migraciones`: se niega si hay pendientes que no llegaron en ese pull; si se detiene, `make deploy desde=<commit>` retoma). Reconstruir imágenes (`make imagen`) solo si cambia un Dockerfile o una extensión de PHP.
 - **Alternar dev/prod en la VPS**: mismos contenedores y misma base, uno u otro. `make vps` pasa a dev (por el mismo dominio que prod, `https://fdn2.duckdns.org`, con su certificado; Vite con recarga en caliente) y `make prod` vuelve; `make modo` dice cuál corre. Las imágenes de dev llevan el prefijo `dev-` y no pisan las de prod (`make vps-build` si cambia un Dockerfile). Al volver a prod, `make front` / `make pagina` si cambiaste el frontend o la página.
 - El frontend instala con **bun** (`bun.lock`, también en su Dockerfile); `npm run` solo corre sus scripts.
