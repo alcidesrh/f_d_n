@@ -60,6 +60,10 @@ Un módulo aparte, `backend/src/Sincronizacion/` (más un bundle en el legado), 
 
 `app:sincronizacion:conciliar [día] [--reparar]` compara boletos de las salidas del día y encomiendas creadas ese día. Repara solo lo que no necesita decisión: trae lo que falta aquí, anula los `FDN:` huérfanos (más de 10 minutos) y encola las encomiendas de aquí que no llegaron. Los estados distintos y los boletos de aquí que faltan allá solo se informan.
 
+La tarea `barrer_salidas_legado` (cada 30 minutos) cubre lo que los triggers no avisan: una salida que no cambió nunca llega, y una omitida por no tener bus que inferir (ADR-027) no se reintenta, porque su cambio queda procesado. Busca las salidas no canceladas que faltan aquí, futuras o de los últimos dos días con boletos, e intenta hasta 50, primero las que tienen boletos. Las que quedan con boletos se anotan en `sync_estado.salidas_sin_traer` y ponen el indicador en atención.
+
+El panel de migración no toma el cerrojo del ciclo ni deja fuera lo escrito por FDN: con la sincronización encendida rechaza los jobs que migran salidas. `salida.legacy_id` es único, así que una carrera falla en vez de duplicar.
+
 ### 7. Modo «solo traer»
 
 Con `SINCRONIZACION_SOLO_TRAER=1`, un FDN (de desarrollo) trae del legado de producción y nunca escribe allá: `ConexionLegado` rechaza toda escritura fuera de las tablas `sync_*` y del esquema, el interruptor deja `sync_config.activo = 0`, no se vigila el flush ni se exporta, y los endpoints del legado responden 503. Solo hacen falta los triggers en el legado, no el bundle.

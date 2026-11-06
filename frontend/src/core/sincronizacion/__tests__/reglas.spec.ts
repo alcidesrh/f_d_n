@@ -41,6 +41,29 @@ describe('indicador de sincronización', () => {
   })
 })
 
+describe('salidas sin traer', () => {
+  const sinTraer = {
+    faltan: 3,
+    conBoletos: [
+      { id: 8620178, fecha: '2026-11-06 07:00:00', boletos: 21, motivo: 'salida_sin_bus_inferible' },
+      { id: 8620182, fecha: '2026-11-06 10:30:00', boletos: 10, motivo: null },
+    ],
+  }
+
+  it('las que tienen boletos piden atención y dicen la próxima', () => {
+    expect(nivel({ ...base, salidasSinTraer: sinTraer }, ahora)).toBe('atencion')
+    expect(avisos({ ...base, salidasSinTraer: sinTraer }, ahora)).toEqual([
+      '2 salidas con boletos del sistema anterior sin traer; la próxima es 8620178, del 2026-11-06 07:00:00.',
+    ])
+  })
+
+  it('las que no tienen boletos no avisan', () => {
+    const sinBoletos = { faltan: 3, conBoletos: [] }
+    expect(nivel({ ...base, salidasSinTraer: sinBoletos }, ahora)).toBe('bien')
+    expect(avisos({ ...base, salidasSinTraer: null }, ahora)).toEqual([])
+  })
+})
+
 describe('solo trae', () => {
   it('lo avisa en el detalle', () => {
     expect(avisos({ ...base, soloTraer: true }, ahora)).toEqual([

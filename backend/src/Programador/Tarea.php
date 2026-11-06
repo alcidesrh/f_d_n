@@ -11,6 +11,7 @@ use App\Chat\Tarea\PurgarArchivosChat;
 use App\Reporte\Diario\EnviarReportesDiarios;
 use App\Salida\Horizonte\ExtenderHorizontes;
 use App\Seguimiento\Tarea\PurgarLecturasGps;
+use App\Sincronizacion\BarrerSalidasLegado;
 use App\Sincronizacion\SincronizarLegado;
 use App\Tablero\Tarea\RefrescarTablero;
 use App\Venta\Facturacion\CertificarPendientes;
@@ -37,6 +38,7 @@ enum Tarea: string
     case PURGAR_VENTA = 'purgar_venta';
     case CERTIFICAR_PENDIENTES = 'certificar_pendientes';
     case SINCRONIZAR_LEGADO = 'sincronizar_legado';
+    case BARRER_SALIDAS_LEGADO = 'barrer_salidas_legado';
     case VIGILAR_OPERACION = 'vigilar_operacion';
     case HORIZONTE_SALIDAS = 'horizonte_salidas';
     case REPORTES_DIARIOS = 'reportes_diarios';
@@ -56,6 +58,7 @@ enum Tarea: string
             self::PURGAR_VENTA => 'Borrar reservas web vencidas y ventas abandonadas',
             self::CERTIFICAR_PENDIENTES => 'Certificar las facturas pendientes (contingencia)',
             self::SINCRONIZAR_LEGADO => 'Sincronizar con el sistema anterior',
+            self::BARRER_SALIDAS_LEGADO => 'Traer las salidas del sistema anterior que faltan aquí',
             self::VIGILAR_OPERACION => 'Vigilar la operación y avisar lo que pide acción',
             self::HORIZONTE_SALIDAS => 'Mantener programadas las salidas de los esquemas automáticos',
             self::REPORTES_DIARIOS => 'Enviar los reportes diarios',
@@ -77,7 +80,7 @@ enum Tarea: string
             // Cada hora: la hora del resumen es configurable (`ConfiguracionBitacora::horaResumen`).
             self::BITACORA_DIARIA => '1 hour',
             self::CERTIFICAR_PENDIENTES => '10 minutes',
-            self::VIGILAR_OPERACION => '30 minutes',
+            self::VIGILAR_OPERACION, self::BARRER_SALIDAS_LEGADO => '30 minutes',
             self::HORIZONTE_SALIDAS, self::REPORTES_DIARIOS, self::PURGAR_ARCHIVOS_CHAT, self::REVISAR_ANOMALIAS, self::PURGAR_LECTURAS_GPS => '1 day',
         };
     }
@@ -117,7 +120,7 @@ enum Tarea: string
         return match ($this) {
             self::PURGAR_VENTA, self::SINCRONIZAR_LEGADO, self::REFRESCAR_TABLERO => '15 minutes',
             self::CERTIFICAR_PENDIENTES, self::MENSAJES_PREDETERMINADOS => '1 hour',
-            self::VIGILAR_OPERACION => '2 hours',
+            self::VIGILAR_OPERACION, self::BARRER_SALIDAS_LEGADO => '2 hours',
             self::BITACORA_DIARIA => '3 hours',
             self::HORIZONTE_SALIDAS, self::REPORTES_DIARIOS, self::PURGAR_ARCHIVOS_CHAT, self::REVISAR_ANOMALIAS, self::PURGAR_LECTURAS_GPS => '26 hours',
         };
@@ -129,6 +132,7 @@ enum Tarea: string
             self::PURGAR_VENTA => new PurgarVenta(),
             self::CERTIFICAR_PENDIENTES => new CertificarPendientes(),
             self::SINCRONIZAR_LEGADO => new SincronizarLegado(),
+            self::BARRER_SALIDAS_LEGADO => new BarrerSalidasLegado(),
             self::VIGILAR_OPERACION => new VigilarOperacion(),
             self::HORIZONTE_SALIDAS => new ExtenderHorizontes(),
             self::REPORTES_DIARIOS => new EnviarReportesDiarios(),

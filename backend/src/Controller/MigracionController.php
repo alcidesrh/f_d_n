@@ -9,6 +9,7 @@ use App\Migration\Entidad\RegistroMigradores;
 use App\Migration\IndicadoresMigracion;
 use App\Migration\Job\AlmacenDeJobs;
 use App\Migration\Job\EjecutorDeJobs;
+use App\Sincronizacion\Interruptor;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -54,7 +55,17 @@ class MigracionController extends AbstractController
         private readonly AlmacenDeJobs $almacen,
         private readonly EjecutorDeJobs $ejecutorDeJobs,
         private readonly IndicadoresMigracion $indicadores,
+        private readonly Interruptor $interruptor,
     ) {}
+
+    /**
+     * ¿El job migra salidas? Con la sincronización encendida no se puede: el
+     * panel no toma su cerrojo ni deja fuera lo escrito por FDN (ADR-042).
+     */
+    public static function migraSalidas(string $tipo, string $entidad): bool
+    {
+        return in_array($tipo, ["salidas", "todo"], true) || ("entidad" === $tipo && "salida" === $entidad);
+    }
 
     #[Route("/entidades", name: "api_migracion_entidades", methods: ["GET"])]
     public function entidades(): JsonResponse
@@ -153,6 +164,13 @@ class MigracionController extends AbstractController
         }
 
         $entidad = trim((string) ($data["entidad"] ?? ""));
+        if (self::migraSalidas($tipo, $entidad) && $this->interruptor->activo()) {
+            return $this->json(
+                ["error" => "Apagá la sincronización antes de migrar salidas desde el panel."],
+                409,
+            );
+        }
+
         if ("entidad" === $tipo) {
             try {
                 if ("" === $entidad || !$this->registro->tiene($entidad)) {

@@ -3,6 +3,14 @@
  * (ADR-042): qué se muestra en la cabecera y con qué tono.
  */
 
+/** Una salida con boletos del sistema anterior que no se pudo traer. */
+export interface SalidaSinTraer {
+  id: number
+  fecha: string
+  boletos: number
+  motivo: string | null
+}
+
 export interface EstadoSincronizacion {
   activo: boolean
   cambiadoEn: string | null
@@ -14,6 +22,8 @@ export interface EstadoSincronizacion {
   pendientes: number
   /** Solo trae del sistema anterior; nada de aquí se escribe allá (desarrollo). */
   soloTraer?: boolean
+  /** Lo que dejó el último barrido de salidas que faltan aquí. */
+  salidasSinTraer?: { faltan: number; conBoletos: SalidaSinTraer[] } | null
 }
 
 export type Nivel = 'apagada' | 'bien' | 'atencion' | 'error'
@@ -31,10 +41,15 @@ export function cicloDetenido(estado: EstadoSincronizacion, ahora: Date): boolea
   return ahora.getTime() - new Date(estado.ultimoCicloEn).getTime() > MINUTOS_SIN_CICLO * 60_000
 }
 
+function conBoletosSinTraer(estado: EstadoSincronizacion): SalidaSinTraer[] {
+  return estado.salidasSinTraer?.conBoletos ?? []
+}
+
 export function nivel(estado: EstadoSincronizacion, ahora: Date): Nivel {
   if (!estado.activo) return 'apagada'
   if (estado.ultimoError) return 'error'
-  if (estado.pendientes > 0 || cicloDetenido(estado, ahora)) return 'atencion'
+  if (estado.pendientes > 0 || conBoletosSinTraer(estado).length > 0 || cicloDetenido(estado, ahora))
+    return 'atencion'
   return 'bien'
 }
 
@@ -63,6 +78,12 @@ export function avisos(estado: EstadoSincronizacion, ahora: Date): string[] {
   if (estado.pendientes > 0)
     lineas.push(
       `${estado.pendientes} ${estado.pendientes === 1 ? 'cambio espera' : 'cambios esperan'} llegar al sistema anterior.`,
+    )
+  const sinTraer = conBoletosSinTraer(estado)
+  const primera = sinTraer[0]
+  if (primera)
+    lineas.push(
+      `${sinTraer.length} ${sinTraer.length === 1 ? 'salida' : 'salidas'} con boletos del sistema anterior sin traer; la próxima es ${primera.id}, del ${primera.fecha}.`,
     )
   return lineas
 }

@@ -10,6 +10,7 @@ use App\Migration\Salida\DependenciasLegado;
 use App\Migration\Salida\EncomiendasLegado;
 use App\Sincronizacion\Nuevo\ClientesLocales;
 use App\Sincronizacion\Nuevo\Traduccion;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Output\BufferedOutput;
@@ -31,6 +32,15 @@ class ImportadorLegado
 
     /** Tras tantos intentos fallidos, el cambio se deja de reintentar. */
     public const MAX_INTENTOS = 20;
+
+    /** Salidas que intenta cada barrido: retiene el cerrojo del ciclo mientras corre. */
+    public const MAX_BARRIDO = 50;
+
+    /** Una salida ya pasada se sigue buscando estos días si tiene boletos. */
+    private const DIAS_BARRIDO = 2;
+
+    /** `salida.estado_id` cancelada en el legado. */
+    private const SALIDA_CANCELADA = 4;
 
     public function __construct(
         private readonly Connection $db,
@@ -70,6 +80,118 @@ class ImportadorLegado
         }
 
         return $resumen;
+    }
+
+    /**
+     * Busca las salidas del legado que deberían estar aquí y no están, e
+     * intenta traerlas. Los triggers solo avisan de lo que cambia: una salida
+     * que no cambió nunca llega, y una omitida (sin bus que inferir) no se
+     * reintenta porque su cambio ya quedó procesado.
+     *
+     * Primero las que tienen boletos, y de esas las más próximas.
+     *
+     * @return array{faltan: int, traidas: int, fallidas: int, conBoletos: list<array{id: int, fecha: string, boletos: int, motivo: ?string}>}|null
+     *         null si el ciclo tiene el cerrojo: el barrido se deja para la próxima
+     */
+    public function barrerSalidas(int $limite = self::MAX_BARRIDO): ?array
+    {
+        if (!$this->db->fetchOne("SELECT pg_try_advisory_lock(:k)", ["k" => self::BLOQUEO])) {
+            return null;
+        }
+        try {
+            $ocupan = implode(",", Traduccion::OCUPAN_LEGADO);
+            $candidatas = $this->legado->filas(
+                "SELECT x.id, x.fecha, x.boletos FROM (
+                    SELECT s.id, s.fecha AS momento, CONVERT(varchar(19), s.fecha, 120) AS fecha,
+                           (SELECT COUNT(*) FROM boleto b WHERE b.salida_id = s.id AND b.estado_id IN ({$ocupan})) AS boletos
+                      FROM salida s
+                     WHERE s.fecha >= DATEADD(day, -" . self::DIAS_BARRIDO . ", GETDATE())
+                       AND COALESCE(s.estado_id, 0) <> " . self::SALIDA_CANCELADA . "
+                 ) x
+                 WHERE x.momento >= GETDATE() OR x.boletos > 0",
+            );
+            $faltan = self::faltantes($candidatas, $this->conocidas($candidatas));
+            $motivos = [];
+            $fallidas = 0;
+            $this->conEnganches(function () use ($faltan, $limite, &$motivos, &$fallidas) {
+                foreach (array_slice($faltan, 0, max(1, $limite)) as $f) {
+                    $id = (int) $f["id"];
+                    try {
+                        $motivos[$id] = self::motivoOmision($this->salida($id));
+                    } catch (\Throwable $e) {
+                        // Una que falla no detiene a las demás.
+                        $this->logger->warning("Sincronización: el barrido no trajo una salida del legado: {error}", ["error" => $e->getMessage(), "exception" => $e]);
+                        $this->soltarConexiones();
+                        $motivos[$id] = "error";
+                        $fallidas++;
+                    }
+                }
+            });
+            $quedan = self::faltantes($faltan, $this->conocidas($faltan));
+        } finally {
+            $this->db->executeStatement("SELECT pg_advisory_unlock(:k)", ["k" => self::BLOQUEO]);
+        }
+
+        $conBoletos = [];
+        foreach ($quedan as $f) {
+            if ((int) $f["boletos"] > 0) {
+                $id = (int) $f["id"];
+                $conBoletos[] = ["id" => $id, "fecha" => (string) $f["fecha"], "boletos" => (int) $f["boletos"], "motivo" => $motivos[$id] ?? null];
+            }
+        }
+
+        return ["faltan" => count($quedan), "traidas" => count($faltan) - count($quedan), "fallidas" => $fallidas, "conBoletos" => $conBoletos];
+    }
+
+    /**
+     * Las candidatas que no están aquí, en el orden en que conviene traerlas.
+     *
+     * @param list<array<string, mixed>> $candidatas filas con `id`, `fecha` y `boletos`
+     * @param list<int|string>           $conocidas  `legacy_id` de las que ya están
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function faltantes(array $candidatas, array $conocidas): array
+    {
+        $aqui = array_flip(array_map("strval", $conocidas));
+        $faltan = array_values(array_filter($candidatas, static fn(array $c) => !isset($aqui[(string) $c["id"]])));
+        usort($faltan, static fn(array $a, array $b) => [(int) $b["boletos"] > 0, $a["fecha"]] <=> [(int) $a["boletos"] > 0, $b["fecha"]]);
+
+        return $faltan;
+    }
+
+    /**
+     * Por qué la migración dejó fuera la salida, si la dejó.
+     *
+     * @param array<string, int> $contadores
+     */
+    public static function motivoOmision(array $contadores): ?string
+    {
+        foreach (array_keys($contadores) as $clave) {
+            if (str_starts_with($clave, "omitido_salida_")) {
+                return substr($clave, strlen("omitido_"));
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $filas salidas del legado
+     *
+     * @return list<string> los `legacy_id` de las que ya están aquí
+     */
+    private function conocidas(array $filas): array
+    {
+        if ($filas === []) {
+            return [];
+        }
+
+        return $this->db->fetchFirstColumn(
+            "SELECT legacy_id FROM salida WHERE legacy_id IN (:ids)",
+            ["ids" => array_map(static fn(array $f) => (string) $f["id"], $filas)],
+            ["ids" => ArrayParameterType::STRING],
+        );
     }
 
     /**

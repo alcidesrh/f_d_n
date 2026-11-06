@@ -14,6 +14,7 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
 #[ORM\Index(columns: ["fecha", "empresa_id", "ruta_id"], name: "idx_salida_fecha_empresa_ruta")]
+#[ORM\UniqueConstraint(name: "uniq_salida_legacy_id", columns: ["legacy_id"])]
 #[ApiResourcePaginationPage]
 #[Recurso(nombre: "Salidas", area: "Salidas", soloLectura: true, ver: "salida.ver", empresa: "empresa")]
 class Salida extends Base

@@ -14,6 +14,7 @@ mientras las estaciones se mudan. Diseño y límites: [ADR-042](../../../docs/ar
 | `Legado/ImportadorLegado`, `Legado/ActualizadorBoletos` | Trae lo que anotaron los triggers del legado, con el código de la migración. |
 | `Legado/ApartadosLegado` | Aparta aquí lo que el legado está por vender (`/api/sincronizacion/legado/*`). |
 | `Ciclo`, `Conciliador` | La vuelta de cada minuto y la comparación de un día. |
+| `BarrerSalidasLegado` | Cada 30 minutos, las salidas del legado que faltan aquí: las trae y deja anotadas las que no pudo. |
 | `Legado/sql/*.sql` | Tablas `sync_*` y triggers del legado. |
 
 ## Puesta en marcha (por primera vez)
@@ -60,6 +61,7 @@ Solo un FDN puede leer el `sync_cambio` del legado (lo marca como procesado). An
 - **El legado no responde**: aquí no se venden asientos de salidas que existen en los dos sistemas (error «No se pudo confirmar el asiento en el sistema anterior») ni se crean clientes. Lo demás queda en `sync_cambio` y se reintenta. Apagar la sincronización deja vender aquí sin comprobar y crear clientes, que pasan al legado al encender.
 - **«Hay N clientes de aquí sin llevar al legado»**: el ciclo no trae nada hasta llevarlos. `SELECT * FROM sync_cliente_local` los muestra; se reintenta en cada ciclo.
 - **FDN no responde**: el legado vende igual (`si_falla = permitir`, el defecto) y FDN lo trae al volver; correr luego `app:sincronizacion:conciliar`. Para que el legado no venda sin comprobar: `bin/console app:sincronizacion:instalar-legado --si-falla=bloquear`.
+- **«N salidas con boletos del sistema anterior sin traer»**: el barrido no pudo traerlas, casi siempre porque no hay bus que inferir (ADR-027). Se reintentan solas cada 30 minutos; asignarles un bus en el legado las trae en el siguiente ciclo. `app:sincronizacion:interruptor` las lista en `salidasSinTraer`, con su motivo; `make tareas t=barrer_salidas_legado` corre un barrido ya.
 - **Indicador ámbar o rojo**: `bin/console app:sincronizacion:interruptor` muestra el último ciclo, su error y lo pendiente; `SELECT * FROM sync_cambio WHERE procesado_en IS NULL` (aquí) y `SELECT * FROM sync_cambio WHERE procesado IS NULL` (legado) muestran cada cambio con su error.
 
 ## Cómo se quita

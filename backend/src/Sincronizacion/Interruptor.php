@@ -60,7 +60,7 @@ class Interruptor
     }
 
     /**
-     * @return array{activo: bool, soloTraer: bool, cambiadoEn: ?string, cambiadoPor: ?string, ultimoCicloEn: ?string, ultimoCiclo: ?array<string, mixed>, ultimoError: ?string, pendientes: int}
+     * @return array{activo: bool, soloTraer: bool, cambiadoEn: ?string, cambiadoPor: ?string, ultimoCicloEn: ?string, ultimoCiclo: ?array<string, mixed>, ultimoError: ?string, pendientes: int, barridoEn: ?string, salidasSinTraer: ?array<string, mixed>}
      */
     public function estado(): array
     {
@@ -75,6 +75,8 @@ class Interruptor
             "ultimoCiclo" => isset($fila["ultimo_ciclo"]) ? json_decode((string) $fila["ultimo_ciclo"], true) : null,
             "ultimoError" => $fila["ultimo_error"] ?? null,
             "pendientes" => (int) $this->db->fetchOne("SELECT COUNT(*) FROM sync_cambio WHERE procesado_en IS NULL"),
+            "barridoEn" => self::iso($fila["barrido_en"] ?? null),
+            "salidasSinTraer" => isset($fila["salidas_sin_traer"]) ? json_decode((string) $fila["salidas_sin_traer"], true) : null,
         ];
     }
 
@@ -132,6 +134,15 @@ class Interruptor
         $this->db->executeStatement(
             "UPDATE sync_estado SET ultimo_ciclo_en = NOW(), ultimo_ciclo = :resumen, ultimo_error = :error WHERE id = 1",
             ["resumen" => json_encode($resumen, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR), "error" => $error],
+        );
+    }
+
+    /** @param array<string, mixed> $resumen lo que devolvió `ImportadorLegado::barrerSalidas` */
+    public function anotarBarrido(array $resumen): void
+    {
+        $this->db->executeStatement(
+            "UPDATE sync_estado SET barrido_en = NOW(), salidas_sin_traer = :resumen WHERE id = 1",
+            ["resumen" => json_encode($resumen, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)],
         );
     }
 

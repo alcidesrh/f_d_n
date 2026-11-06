@@ -39,6 +39,7 @@ La evaluación previa recomendó `symfony/scheduler` sobre el Messenger y el Pos
 | `purgar_venta` | 1 min | Reservas web vencidas y ventas pendientes abandonadas (`Venta\Tarea\PurgaVenta`). |
 | `certificar_pendientes` | 10 min | Facturas pendientes, de a 100 (`Venta\Facturacion\CertificacionPendientes`). |
 | `sincronizar_legado` | 1 min | Un ciclo de la sincronización (ADR-042). Apagada, no hace nada. |
+| `barrer_salidas_legado` | 30 min | Trae las salidas del legado que faltan aquí y anota las que no pudo (ADR-042). Apagada, no hace nada. |
 | `vigilar_operacion` | 30 min | Alertas críticas y de atención del tablero nuevas, a quien se suscribió. |
 | `horizonte_salidas` | 01:30 | Despliega los esquemas automáticos. |
 | `reportes_diarios` | `PROGRAMADOR_HORA_REPORTES` (06:00) | Reparte los reportes del día anterior. |
