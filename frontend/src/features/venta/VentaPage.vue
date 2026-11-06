@@ -529,9 +529,9 @@ const nombreParada = (id: number | null) => store.detalle?.paradas.find((p) => p
 }
 /* Cliente: se distingue del resto con un acento del color primario. */
 .cliente {
-  border-left: 3px solid var(--p-primary-color);
+  border-left: 3px solid var(--p-surface-600);
   border-radius: var(--p-content-border-radius, 0.5rem);
-  background: color-mix(in srgb, var(--p-primary-500) 7%, transparent);
+  background: color-mix(in srgb, var(--p-surface-300) 7%, transparent);
 }
 .anteriores {
   position: absolute;

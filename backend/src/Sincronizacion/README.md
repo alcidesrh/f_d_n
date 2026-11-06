@@ -18,13 +18,13 @@ mientras las estaciones se mudan. Diseño y límites: [ADR-042](../../../docs/ar
 
 ## Puesta en marcha (por primera vez)
 
-1. Variables en el `.env.local` del servidor de FDN:
+1. Variables de FDN: en producción en `.env.prod.local`, en la raíz del repo (plantilla en `.env.prod.dist`; se aplican con `make prod`, porque `make reiniciar` no vuelve a leer el archivo); en desarrollo y con `make vps`, en `backend/.env.local`.
    - `SINCRONIZACION_CLAVE`: una clave larga al azar (`openssl rand -hex 32`).
    - `SINCRONIZACION_URL_FDN`: la URL de FDN vista **desde el servidor del legado** (p. ej. `https://fdn.ejemplo.com`).
    - Opcional: `SINCRONIZACION_USUARIO_LEGADO`, id de `custom_user` del legado que firma lo que hagan aquí usuarios sin par allá.
    - La conexión al legado es la de siempre (`systemfdn_*`).
 2. `bin/console doctrine:migrations:migrate` (tablas `sync_*` de aquí).
-3. `bin/console app:sincronizacion:instalar-legado`: tablas y triggers en el legado, y la URL y la clave en su `sync_config`. Los triggers solo anotan ids; no cambian nada de lo que hace el legado. Se puede repetir.
+3. `bin/console app:sincronizacion:instalar-legado`: tablas y triggers en el legado, y la URL y la clave en su `sync_config`. Los triggers solo anotan ids; no cambian nada de lo que hace el legado. Se puede repetir, en horas de poca venta: recrea los triggers y lo que pase en ese instante no se anota. **Copia las dos variables tal como estén: si una está vacía, borra la que haya en `sync_config`.**
 4. En el legado: desplegar `src/Acme/SincronizacionFdnBundle` y su línea en `app/AppKernel.php`; limpiar la caché (`php app/console cache:clear --env=prod`). Con el interruptor apagado no hace nada.
 5. El ciclo lo corre cada minuto el programador de tareas (ADR-044): basta con que estén arriba `programador` y `worker` (`make tareas` muestra `sincronizar_legado`).
 6. Encender: desde el indicador de la cabecera (quien tiene `config.editar`) o `bin/console app:sincronizacion:interruptor encender`.
@@ -46,7 +46,7 @@ Las versiones anteriores daban ids desde 1.000.000.000 a lo creado aquí. Para p
 
 Para ver en un FDN local lo que pasa en producción sin tocar sus ventas:
 
-1. En el `.env.local` de tu FDN: `systemfdn_*` del legado de producción y `SINCRONIZACION_SOLO_TRAER=1`. No hacen falta `SINCRONIZACION_CLAVE` ni `SINCRONIZACION_URL_FDN`.
+1. En el `.env.local` de tu FDN: `systemfdn_*` del legado de producción y `SINCRONIZACION_SOLO_TRAER=1`. `SINCRONIZACION_CLAVE` y `SINCRONIZACION_URL_FDN` no se usan en este modo, pero instalar las copia a `sync_config`: si el legado ya las tiene porque lo usa otro FDN, no instales desde aquí sin ponerles los mismos valores.
 2. `bin/console doctrine:migrations:migrate` y, si tu base no la tiene, la migración inicial del legado.
 3. `bin/console app:sincronizacion:instalar-legado` contra producción, en horas de poca venta: crea las tablas `sync_*` y los triggers, que solo anotan ids. **No** se despliega el bundle en el legado.
 4. Con `programador` y `worker` arriba (el ciclo corre cada minuto), encender (indicador o `interruptor encender`). El indicador dice «Sinc. (solo trae)».

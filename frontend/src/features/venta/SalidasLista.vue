@@ -35,14 +35,14 @@
           </div>
           <div class="truncate text-xs tracking-wide">{{ horaPunta(s(row), column.key) }}</div>
         </div>
-        <div v-else-if="column.key === 'hora'" class="celda">
+        <div v-else-if="column.key === 'hora'" class="celda font-medium">
           <div class="tracking-wide tabular-nums whitespace-nowrap">
             {{ hora(s(row).salida) }}
           </div>
           <div v-if="variosDias" class="dia" :class="{ 'dia--alterno': alterno(s(row)) }">{{ diaSemana(s(row).salida) }}</div>
-          <div v-else class="text-xs tabular-nums whitespace-nowrap tracking-wider">
+          <!-- <div v-else class="text-xs tabular-nums whitespace-nowrap tracking-wider">
             {{ fecha(s(row).salida) }}
-          </div>
+          </div> -->
         </div>
         <div v-else-if="column.key === 'ruta'" class="celda ruta min-w-0">
           <div class="truncate" :title="ruta(s(row))">{{ ruta(s(row)) }}</div>
