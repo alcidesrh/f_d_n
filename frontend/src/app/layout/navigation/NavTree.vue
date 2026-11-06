@@ -9,7 +9,7 @@
     <li v-for="(item, i) in items" :key="item.id" class="menu-item py-1" :class="{ s: i == items.length - 1 }">
       <div class="nav-row" :class="{ 'nav-row--mini': compact }">
         <template v-if="!compact">
-          <button v-if="item.children.length" type="button" class="nav-toggle" :style="toggleIndent" :aria-expanded="expanded.has(item.id)">
+          <button v-if="item.children.length" type="button" class="nav-toggle" :style="toggleIndent" :aria-expanded="expanded.has(item.id)" :aria-label="`${expanded.has(item.id) ? 'Plegar' : 'Desplegar'} ${item.label}`" @click="toggle(item.id)">
             <icon class="submenu-toggle-icon" :name="expanded.has(item.id) ? 'remove' : 'add'" size="0.93rem" :weight="300" />
           </button>
           <span v-else class="nav-toggle nav-toggle--spacer" :style="toggleIndent" aria-hidden="true" />

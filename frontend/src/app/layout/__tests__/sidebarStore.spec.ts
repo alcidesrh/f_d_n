@@ -63,6 +63,13 @@ describe('defineSidebarStore', () => {
     expect(left.expandedMenus).toEqual([])
   })
 
+  it('pliega los ítems dados y deja abiertos los demás', () => {
+    const left = defineSidebarStore('left')()
+    left.expandItems([1, 2, 3])
+    left.collapseItems([2, 9])
+    expect(left.expandedItems).toEqual([1, 3])
+  })
+
   it('debajo de `lg` abre y cierra el drawer sin tocar el modo de escritorio', () => {
     useUiStore().isMobile = true
     const left = defineSidebarStore('left')()

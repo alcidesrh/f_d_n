@@ -91,6 +91,11 @@ function createDefinition(side: "left" | "right", name: string) {
         const nuevos = ids.filter((id) => !this.expandedItems.includes(id));
         if (nuevos.length) this.expandedItems = [...this.expandedItems, ...nuevos];
       },
+      /** Pliega los ítems dados; los demás quedan como estaban. */
+      collapseItems(ids: number[]) {
+        const abiertos = this.expandedItems.filter((id) => !ids.includes(id));
+        if (abiertos.length !== this.expandedItems.length) this.expandedItems = abiertos;
+      },
       setMode(mode?: SidebarMode) {
         if (mode && mode != this.mode) {
           this.prevMode = this.mode;
