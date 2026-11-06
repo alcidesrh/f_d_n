@@ -21,7 +21,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
  * sus hijos en el menú, no navega.
  *
  * El texto es `nombre`; `label` es derivado de solo lectura, como en todas
- * las entidades.
+ * las entidades. El ícono es opcional.
  */
 #[ORM\Entity]
 #[ApiResourceNoPagination]
@@ -32,9 +32,9 @@ class MenuItem extends Base
     #[ORM\Column(length: 255)]
     private ?string $nombre = null;
 
-    #[Assert\NotNull]
+    /** Opcional: sin ícono, el menú muestra el ícono por defecto. */
     #[ORM\ManyToOne]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: true)]
     private ?Icon $icon = null;
 
     /**

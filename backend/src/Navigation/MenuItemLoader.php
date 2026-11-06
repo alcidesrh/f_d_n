@@ -32,7 +32,7 @@ final class MenuItemLoader
         $items = $this->entityManager->createQueryBuilder()
             ->select('i', 'icon', 'route')
             ->from(MenuItem::class, 'i')
-            ->join('i.icon', 'icon')
+            ->leftJoin('i.icon', 'icon')
             ->leftJoin('i.route', 'route')
             ->where('i.id IN (:ids)')
             ->setParameter('ids', array_values(array_unique($ids)))

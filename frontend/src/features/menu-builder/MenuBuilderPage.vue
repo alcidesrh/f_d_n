@@ -145,7 +145,7 @@
                 >
                   <template #row="{ id }">
                     <icon
-                      :name="store.itemsById.get(id)?.icon.icon ?? 'fiber-manual-record'"
+                      :name="store.itemsById.get(id)?.icon?.icon ?? 'fiber-manual-record'"
                       class="text-primary"
                     />
                     <div class="outline-text">
@@ -186,7 +186,7 @@
                 empty-text="Todos los ítems están en el menú"
               >
                 <template #item="{ item }">
-                  <icon :name="item.icon.icon" class="text-primary" />
+                  <icon :name="item.icon?.icon ?? 'fiber-manual-record'" class="text-primary" />
                   <div class="flex min-w-0 flex-1 flex-col leading-tight">
                     <span class="truncate text-sm font-medium">{{ item.nombre }}</span>
                     <span class="truncate text-xs text-muted-color">{{ destinoDe(item) }}</span>
@@ -338,15 +338,15 @@ async function removeMenu() {
 
 const itemDialog = ref(false)
 const itemSaving = ref(false)
-const itemDraft = ref<MenuItemDraft>({ nombre: '', icon: '', route: null, path: null })
+const itemDraft = ref<MenuItemDraft>({ nombre: '', icon: null, route: null, path: null })
 
 /** Lo que el ítem muestra en las listas: su ruta, su enlace o «Grupo». */
 const destinoDe = (item: MenuItemDto | undefined) => item?.route?.path ?? item?.path ?? 'Grupo'
 
 function editItem(item: MenuItemDto | null) {
   itemDraft.value = item
-    ? { id: item.id, nombre: item.nombre, icon: item.icon.icon, route: item.route?.id ?? null, path: item.path }
-    : { nombre: '', icon: '', route: null, path: null }
+    ? { id: item.id, nombre: item.nombre, icon: item.icon?.icon ?? null, route: item.route?.id ?? null, path: item.path }
+    : { nombre: '', icon: null, route: null, path: null }
   itemDialog.value = true
 }
 

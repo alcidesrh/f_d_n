@@ -32,8 +32,8 @@ import { flatten, liftRow, toTree, type OutlineRow } from '@/core/outline/outlin
 export interface MenuItemDraft {
   id?: string
   nombre: string
-  /** Nombre de ícono Material Symbols (el `Icon` se busca o se crea al guardar). */
-  icon: string
+  /** Nombre de ícono Material Symbols (el `Icon` se busca o se crea al guardar); nulo si no tiene. */
+  icon: string | null
   /** IRI de la `VueRoute`; nulo si es un enlace o un grupo. */
   route: string | null
   /** Enlace escrito a mano; nulo si navega por ruta o es un grupo. */
@@ -175,7 +175,7 @@ export const useMenuBuilderStore = defineStore('menuBuilder', {
     },
 
     async saveItem(draft: MenuItemDraft): Promise<MenuItemDto> {
-      const icon = await ensureIcon(draft.icon)
+      const icon = draft.icon ? await ensureIcon(draft.icon) : null
       const saved = await saveMenuItem({ ...draft, icon })
       const index = this.items.findIndex((item) => item.id === saved.id)
       if (index >= 0) this.items.splice(index, 1, saved)

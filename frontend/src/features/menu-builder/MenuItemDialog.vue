@@ -62,15 +62,26 @@
         </p>
       </div>
       <div class="flex flex-col gap-1" :class="{ 'min-h-0 flex-1': maximized }">
-        <span class="text-sm font-medium">
-          Ícono
-          <span
-            v-if="draft.icon"
-            class="ml-2 inline-flex items-center gap-1 font-normal text-muted-color"
-          >
-            <icon :name="draft.icon" /> {{ draft.icon }}
+        <div class="flex items-center justify-between gap-2">
+          <span class="text-sm font-medium">
+            Ícono <span class="font-normal text-muted-color">(opcional)</span>
+            <span
+              v-if="draft.icon"
+              class="ml-2 inline-flex items-center gap-1 font-normal text-muted-color"
+            >
+              <icon :name="draft.icon" /> {{ draft.icon }}
+            </span>
           </span>
-        </span>
+          <Button
+            v-if="draft.icon"
+            type="button"
+            label="Quitar ícono"
+            severity="secondary"
+            text
+            size="small"
+            @click="draft.icon = null"
+          />
+        </div>
         <IconPicker
           v-model="draft.icon"
           :height="maximized ? 'fill' : '16rem'"
@@ -136,7 +147,7 @@ const routeOptions = computed(() =>
 const enlaceValido = computed(() => ENLACE.test((draft.value.path ?? '').trim()))
 
 const valid = computed(() => {
-  if (!draft.value.nombre.trim() || !draft.value.icon) return false
+  if (!draft.value.nombre.trim()) return false
   if (tipo.value === 'ruta') return Boolean(draft.value.route)
   if (tipo.value === 'enlace') return enlaceValido.value
   return true

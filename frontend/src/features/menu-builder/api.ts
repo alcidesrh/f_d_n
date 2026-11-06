@@ -30,7 +30,8 @@ export interface VueRouteDto {
 export interface MenuItemDto {
   id: string
   nombre: string
-  icon: { id: string; icon: string }
+  /** Nulo si el ítem no tiene ícono (se muestra el de por defecto). */
+  icon: { id: string; icon: string } | null
   /** Nulo en un enlace o un grupo. */
   route: VueRouteDto | null
   /** Enlace escrito a mano; nulo si navega por `route` o es un grupo. */
@@ -111,7 +112,7 @@ export const deleteMenu = (id: string) => mutate<{ id: string }>('deleteMenu', '
 export const saveMenuItem = (input: {
   id?: string
   nombre: string
-  icon: string
+  icon: string | null
   route: string | null
   path: string | null
 }) =>
