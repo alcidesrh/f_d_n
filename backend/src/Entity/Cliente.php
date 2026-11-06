@@ -9,9 +9,12 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity]
 #[ORM\Index(columns: ["nit"], name: "idx_cliente_nit")]
+#[ORM\Index(columns: ["comodin"], name: "idx_cliente_comodin", options: ["where" => "comodin"])]
 #[ApiResourcePaginationPage()]
 #[Recurso(nombre: "Clientes", area: "Venta")]
 class Cliente extends PersonaBase {
+
+    public const NOMBRE_COMODIN = "CONSUMIDOR FINAL";
 
     /** Documento de identificación (opcional): tipo + número. */
     #[ORM\ManyToOne]
@@ -22,6 +25,23 @@ class Cliente extends PersonaBase {
 
     #[ORM\ManyToOne]
     private ?Nacion $nacionalidad = null;
+
+    /** El cliente de quien no da sus datos: uno solo, lo crea `Clientes::comodin`. */
+    #[ORM\Column(options: ["default" => false])]
+    private bool $comodin = false;
+
+    public static function comodin(): self
+    {
+        $cliente = new self();
+        $cliente->comodin = true;
+
+        return $cliente->setNombre(self::NOMBRE_COMODIN)->setNit("CF");
+    }
+
+    public function isComodin(): bool
+    {
+        return $this->comodin;
+    }
 
     public function getTipoDocumento(): ?TipoDocumento
     {

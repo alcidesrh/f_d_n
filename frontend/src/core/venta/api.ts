@@ -90,6 +90,8 @@ export const consultarNit = (nit: string) =>
 
 export const crearCliente = (datos: ClienteDatos) => http.post<Cliente>('/venta/clientes', datos)
 
+export const clienteComodin = () => http.post<Cliente>('/venta/clientes/comodin')
+
 export const editarCliente = (id: number, datos: ClienteDatos) =>
   request<Cliente>(`/venta/clientes/${id}`, { method: 'PUT', body: datos })
 

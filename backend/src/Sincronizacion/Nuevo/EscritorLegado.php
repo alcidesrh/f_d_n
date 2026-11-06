@@ -6,7 +6,6 @@ namespace App\Sincronizacion\Nuevo;
 
 use App\Entity\Enum\EstadoEncomienda;
 use App\Entity\Enum\ModalidadEncomienda;
-use App\Sincronizacion\Identidades;
 use App\Sincronizacion\Legado\ConexionLegado;
 use App\Venta\Excepcion\AsientosNoDisponibles;
 use App\Venta\Facturacion\CertificadorSimulado;
@@ -373,37 +372,47 @@ class EscritorLegado
     // ─── Clientes y usuarios ───────────────────────────────────────
 
     /**
-     * Id en el legado de un cliente de aquí. Los migrados tienen el mismo;
-     * los creados aquí se buscan en `sync_vinculo` o por NIT, nombre y
-     * documento (único en el legado) y, si no están, se crean.
+     * Id en el legado de un cliente de aquí: es el mismo (ADR-042). Uno creado
+     * con la sincronización apagada aún no tiene el suyo: su id puede ser
+     * allá el de otra persona.
      */
     public function cliente(int $id): int
     {
-        if (!Identidades::esNuevo($id) && $this->legado->valor("SELECT 1 FROM cliente WHERE id = :id", ["id" => $id]) !== null) {
-            return $id;
+        if ($this->db->fetchOne("SELECT 1 FROM sync_cliente_local WHERE cliente_id = :id", ["id" => $id]) !== false) {
+            throw new \RuntimeException("El cliente {$id} todavía no se ha llevado al legado.");
         }
-        $vinculo = $this->db->fetchOne("SELECT id_legado FROM sync_vinculo WHERE entidad = 'cliente' AND id_nuevo = :id", ["id" => $id]);
-        if ($vinculo !== false && $this->legado->valor("SELECT 1 FROM cliente WHERE id = :id", ["id" => $vinculo]) !== null) {
-            return (int) $vinculo;
+        if ($this->legado->valor("SELECT 1 FROM cliente WHERE id = :id", ["id" => $id]) === null) {
+            throw new \RuntimeException("El cliente {$id} no existe en el legado.");
         }
-        $datos = $this->datosCliente($id);
-        $legado = $this->legado->valor(
-            "SELECT TOP 1 id FROM cliente WHERE nit = :nit AND nombre = :nombre AND ((dpi IS NULL AND :sin = 1) OR dpi = :dpi)",
-            ["nit" => $datos["nit"], "nombre" => $datos["nombre"], "sin" => $datos["dpi"] === null ? 1 : 0, "dpi" => $datos["dpi"] ?? ""],
-        );
-        $legado = $legado !== null ? (int) $legado : $this->legado->insertar("cliente", $datos + [
+
+        return $id;
+    }
+
+    /**
+     * Crea el cliente en el legado y devuelve su id, que es el que tendrá
+     * aquí. Si el índice único del legado (NIT, nombre y documento, los tres
+     * con valor) ya tiene esa persona, devuelve la que está.
+     *
+     * @param array<string, mixed> $datos columnas de `cliente` del legado (`datosDeFila`)
+     */
+    public function altaCliente(array $datos): int
+    {
+        if ($datos["dpi"] !== null) {
+            $existente = $this->legado->valor(
+                "SELECT TOP 1 id FROM cliente WHERE nit = :nit AND nombre = :nombre AND dpi = :dpi",
+                ["nit" => $datos["nit"], "nombre" => $datos["nombre"], "dpi" => $datos["dpi"]],
+            );
+            if ($existente !== null) {
+                return (int) $existente;
+            }
+        }
+
+        return $this->legado->insertar("cliente", $datos + [
             "detallado" => true,
             "fecha_creacion" => new \DateTimeImmutable(),
             "nitCreacionCopia" => $datos["nit"],
             "nombreCreacionCopia" => $datos["nombre"],
         ]);
-        $this->db->executeStatement(
-            "INSERT INTO sync_vinculo (entidad, id_nuevo, id_legado) VALUES ('cliente', :nuevo, :legado)
-             ON CONFLICT (entidad, id_nuevo) DO UPDATE SET id_legado = EXCLUDED.id_legado",
-            ["nuevo" => $id, "legado" => $legado],
-        );
-
-        return $legado;
     }
 
     /** Lleva al legado los datos de un cliente que se editó aquí. */
@@ -418,10 +427,19 @@ class EscritorLegado
     /** @return array<string, mixed> columnas de `cliente` del legado */
     private function datosCliente(int $id): array
     {
-        $c = $this->db->fetchAssociative(
+        return self::datosDeFila($this->db->fetchAssociative(
             "SELECT nombre, apellido, nit, email, telefono, direccion, numero_documento, tipo_documento_id, nacionalidad_id FROM cliente WHERE id = :id",
             ["id" => $id],
-        ) ?: throw new \RuntimeException("El cliente {$id} no existe.");
+        ) ?: throw new \RuntimeException("El cliente {$id} no existe."));
+    }
+
+    /**
+     * @param array<string, mixed> $c columnas de `cliente` de aquí
+     *
+     * @return array<string, mixed> columnas de `cliente` del legado
+     */
+    public static function datosDeFila(array $c): array
+    {
         $dpi = trim((string) $c["numero_documento"]);
 
         return Traduccion::nombreCliente($c["nombre"], $c["apellido"]) + [

@@ -219,6 +219,12 @@ _Avoid_: pasajero, comprador
 Modelo: nuevo. Detalle del modelo: Persona que compra un boleto. Son los pasajeros.
 Evitar (modelo): pasajero, comprador
 
+**Cliente comodín**:
+El cliente de quien no da sus datos en taquilla: «CONSUMIDOR FINAL», sin NIT ni documento. Uno solo para todas las empresas; no se edita desde la venta.
+_Avoid_: cliente genérico, cliente de mostrador
+Modelo: nuevo. Detalle del modelo: `Cliente.comodin`; lo crea `Clientes::comodin` la primera vez que se pide, con el mismo id en el legado.
+Evitar (modelo): cliente genérico, cliente de mostrador
+
 **Empresa**:
 La línea transportista dueña de la operación: buses, pilotos, salidas y tarifas.
 _Avoid_: compañía, operador

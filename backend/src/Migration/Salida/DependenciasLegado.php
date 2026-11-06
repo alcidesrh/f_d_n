@@ -31,6 +31,9 @@ class DependenciasLegado
         "bus_marca", "bus_clase", "tipo_pago", "moneda", "tipo_documento", "pais",
     ];
 
+    /** Tablas de aquí con ids que el legado sigue teniendo sin traer → su tabla allá. */
+    private const IDENTIDAD_LEGADO = ["cliente" => "cliente", "usuario" => "custom_user"];
+
     /** @var array<string, array<int|string, int|null>> tabla → id legado → id nuevo */
     private array $ids = [];
 
@@ -42,9 +45,6 @@ class DependenciasLegado
 
     /** @var array<int, array<string, mixed>|null> clientes del legado leídos por adelantado */
     private array $clientesLegado = [];
-
-    /** @var (\Closure(string, int): ?int)|null id de aquí de un registro del legado que no conserva su id (`equivalencias`) */
-    private ?\Closure $equivalente = null;
 
     public function __construct(
         private readonly Connection $db,
@@ -439,17 +439,6 @@ class DependenciasLegado
         });
     }
 
-    /**
-     * Registros del legado que aquí tienen otro id: los clientes que el
-     * sistema nuevo creó y llevó al legado durante la sincronización (ADR-042).
-     *
-     * @param (\Closure(string, int): ?int)|null $equivalente tabla, id del legado → id de aquí (o null)
-     */
-    public function equivalencias(?\Closure $equivalente): void
-    {
-        $this->equivalente = $equivalente;
-    }
-
     // ─── Transacción, contadores e identidades ─────────────────────
 
     /** @return array<string, int> */
@@ -473,12 +462,18 @@ class DependenciasLegado
         $this->clientesLegado = [];
     }
 
-    /** Tras insertar ids explícitos, la identidad sigue desde el mayor. */
+    /**
+     * Tras insertar ids explícitos, la identidad sigue desde el mayor. Clientes
+     * y usuarios se migran a medias: también desde el mayor del legado, para
+     * no dar aquí un id que allá es de otro.
+     */
     public function reiniciarIdentidades(): void
     {
         foreach (self::TABLAS_ID_EXPLICITO as $tabla) {
+            $legado = self::IDENTIDAD_LEGADO[$tabla] ?? null;
             $this->db->executeStatement(
-                "SELECT setval(pg_get_serial_sequence('{$tabla}', 'id'), GREATEST(COALESCE((SELECT MAX(id) FROM {$tabla}), 0) + 1, 1), false)",
+                "SELECT setval(pg_get_serial_sequence('{$tabla}', 'id'), GREATEST(COALESCE((SELECT MAX(id) FROM {$tabla}), 0), :legado) + 1, false)",
+                ["legado" => $legado === null ? 0 : (int) ($this->legado->fila("SELECT IDENT_CURRENT('{$legado}') AS id")["id"] ?? 0)],
             );
         }
     }
@@ -499,9 +494,6 @@ class DependenciasLegado
         $id = (int) $legacyId;
         if (array_key_exists($id, $this->ids[$tabla] ?? [])) {
             return $this->ids[$tabla][$id];
-        }
-        if ($this->equivalente !== null && ($equivalente = ($this->equivalente)($tabla, $id)) !== null) {
-            return $this->ids[$tabla][$id] = $equivalente;
         }
         $existe = $this->db->fetchOne("SELECT 1 FROM {$tabla} WHERE id = :id", ["id" => $id]) !== false;
 

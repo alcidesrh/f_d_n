@@ -1,6 +1,6 @@
 # Sincronización temporal con el legado (ADR-042). Se quita con el módulo
 # `src/Sincronizacion`, este archivo, `config/routes/sincronizacion.yaml`, la
-# línea de `security.yaml` y la migración Version20261025090000.
+# línea de `security.yaml` y las migraciones Version20261025090000 y Version20261105160000.
 parameters:
     # Clave compartida con el legado para `/api/sincronizacion/legado/*`
     # (cabecera `X-Sincronizacion-Clave`). Vacía: el legado no puede llamar.

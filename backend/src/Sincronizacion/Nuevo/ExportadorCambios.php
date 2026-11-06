@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Sincronizacion\Nuevo;
 
 use App\Entity\Enum\EstadoBoletoAsiento;
-use App\Sincronizacion\Identidades;
 use App\Sincronizacion\Legado\ConexionLegado;
 use Doctrine\DBAL\Connection;
 use Psr\Log\LoggerInterface;
@@ -79,7 +78,7 @@ class ExportadorCambios
             "boleto_anular" => $this->escritor->cambiarEstado((string) $id, Traduccion::estadoBoleto(EstadoBoletoAsiento::ANULADO), null, "Venta no confirmada en FDN."),
             "venta" => $this->escritor->facturaDeVenta($id),
             "encomienda" => $this->escritor->encomienda($id),
-            "cliente" => $this->cliente($id),
+            "cliente" => $this->escritor->actualizarCliente($id),
             default => throw new \LogicException("Cambio desconocido: {$entidad}"),
         };
     }
@@ -97,15 +96,5 @@ class ExportadorCambios
         $estado = EstadoBoletoAsiento::from((string) $b["estado"]);
         $this->escritor->cambiarEstado((string) $b["legacy_id"], Traduccion::estadoBoleto($estado), null, "Cambio en FDN: " . $estado->etiqueta() . ".");
         $this->escritor->pasajero((string) $b["legacy_id"], (int) $b["cliente_id"]);
-    }
-
-    /** Solo los que el legado conoce: los migrados y los que ya se llevaron allá. */
-    private function cliente(int $id): void
-    {
-        $vinculado = $this->db->fetchOne("SELECT 1 FROM sync_vinculo WHERE entidad = 'cliente' AND id_nuevo = :id", ["id" => $id]) !== false;
-        if (Identidades::esNuevo($id) && !$vinculado) {
-            return;
-        }
-        $this->escritor->actualizarCliente($id);
     }
 }

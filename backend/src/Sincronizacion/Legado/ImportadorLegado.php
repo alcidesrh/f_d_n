@@ -8,7 +8,7 @@ use App\Migration\Migrador;
 use App\Migration\PdoLegado;
 use App\Migration\Salida\DependenciasLegado;
 use App\Migration\Salida\EncomiendasLegado;
-use App\Sincronizacion\Identidades;
+use App\Sincronizacion\Nuevo\ClientesLocales;
 use App\Sincronizacion\Nuevo\Traduccion;
 use Doctrine\DBAL\Connection;
 use Psr\Log\LoggerInterface;
@@ -20,7 +20,7 @@ use Symfony\Component\DependencyInjection\Attribute\Target;
  * `sync_cambio` del legado qué boleto, salida, factura o encomienda cambió;
  * aquí se vuelve a migrar su salida con el código de la migración (que no
  * duplica: busca por `legacy_id`) y se ponen al día los boletos que ya
- * estaban.
+ * estaban. Los clientes nuevos del legado se crean aquí con su id.
  *
  * Lo que escribió este sistema allá (`identificador_web` con `FDN:`) no se
  * trae: ya está aquí. Un solo proceso a la vez (bloqueo consultivo).
@@ -39,7 +39,7 @@ class ImportadorLegado
         private readonly DependenciasLegado $dependencias,
         private readonly EncomiendasLegado $encomiendas,
         private readonly ActualizadorBoletos $actualizador,
-        private readonly Identidades $identidades,
+        private readonly ClientesLocales $locales,
         private readonly LoggerInterface $logger,
         #[Target("oldPdo")] private readonly \PDO $lectura,
     ) {}
@@ -121,6 +121,7 @@ class ImportadorLegado
         // Qué hay que traer, y qué cambios del legado lo pidieron.
         $porSalida = [];
         $porEncomienda = [];
+        $porCliente = [];
         $boletos = [];
         foreach ($this->agrupar($cambios) as [$tipo, $id, $cambio, $boleto]) {
             if ($tipo === "salida") {
@@ -128,13 +129,18 @@ class ImportadorLegado
                 if ($boleto !== null) {
                     $boletos[$id][] = $boleto;
                 }
+            } elseif ($tipo === "cliente") {
+                $porCliente[$id][] = $cambio;
             } else {
                 $porEncomienda[$id][] = $cambio;
             }
         }
 
         $resumen = ["importados" => 0, "fallidos" => 0];
-        $this->conEnganches(function () use ($porSalida, $porEncomienda, $boletos, &$resumen) {
+        $this->conEnganches(function () use ($porSalida, $porEncomienda, $porCliente, $boletos, &$resumen) {
+            foreach ($porCliente as $cliente => $ids) {
+                $this->intentar($ids, fn() => $this->dependencias->cliente($cliente), $resumen);
+            }
             foreach ($porSalida as $salida => $ids) {
                 $this->intentar($ids, function () use ($salida, $boletos, &$resumen) {
                     $this->sumar($resumen, $this->salida($salida));
@@ -154,7 +160,7 @@ class ImportadorLegado
 
     /**
      * Cada cambio, como lo que hay que traer: una salida (por un boleto, una
-     * factura o la salida misma) o una encomienda.
+     * factura o la salida misma), una encomienda o un cliente.
      *
      * @param list<array<string, mixed>> $cambios
      *
@@ -187,6 +193,17 @@ class ImportadorLegado
         foreach ($por["encomienda"] ?? [] as $encomienda => $ids) {
             foreach ($ids as $cambio) {
                 $resultado[] = ["encomienda", $encomienda, $cambio, null];
+            }
+        }
+        $clientes = $this->mapa("SELECT id, id AS valor FROM cliente WHERE id IN (%s)", array_keys($por["cliente"] ?? []));
+        foreach ($por["cliente"] ?? [] as $cliente => $ids) {
+            if (!isset($clientes[$cliente])) {
+                // Un cliente que ya no existe en el legado no tiene nada que traer.
+                $this->marcar($ids);
+                continue;
+            }
+            foreach ($ids as $cambio) {
+                $resultado[] = ["cliente", $cliente, $cambio, null];
             }
         }
         // Una factura: los boletos y encomiendas que factura.
@@ -266,30 +283,23 @@ class ImportadorLegado
 
     /**
      * Con los enganches de la sincronización puestos en la migración (y
-     * quitados al terminar): lo de FDN no se trae y los clientes creados
-     * aquí se reconocen.
+     * quitados al terminar): lo de FDN no se trae. Nada se trae mientras haya
+     * clientes sin llevar al legado: el id de uno de ellos puede ser allá el
+     * de otra persona, y la migración los confundiría.
      */
     private function conEnganches(\Closure $trabajo): void
     {
+        if (!$this->legado->soloTraer && ($pendientes = $this->locales->pendientes()) > 0) {
+            throw new \RuntimeException("Hay {$pendientes} clientes de aquí sin llevar al legado: no se trae nada hasta que pasen.");
+        }
         $deFdn = static fn(array $fila): bool => str_starts_with((string) ($fila["identificador_web"] ?? ""), Traduccion::PREFIJO);
         $this->migrador->excluirBoletos($deFdn);
         $this->encomiendas->excluir($deFdn);
-        $this->dependencias->equivalencias(function (string $tabla, int $id): ?int {
-            if ($tabla !== "cliente") {
-                return null;
-            }
-            $nuevo = $this->db->fetchOne("SELECT id_nuevo FROM sync_vinculo WHERE entidad = 'cliente' AND id_legado = :id", ["id" => $id]);
-
-            return $nuevo === false ? null : (int) $nuevo;
-        });
         try {
             $trabajo();
         } finally {
             $this->migrador->excluirBoletos(null);
             $this->encomiendas->excluir(null);
-            $this->dependencias->equivalencias(null);
-            // La migración deja las identidades en el mayor id + 1.
-            $this->identidades->apartarRango();
         }
     }
 

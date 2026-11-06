@@ -207,9 +207,11 @@ export interface Cliente {
   numeroDocumento: string | null
   nacionalidad: number | null
   label: string
+  /** El consumidor final de quien no da sus datos: no se edita. */
+  comodin: boolean
 }
 
-export type ClienteDatos = Partial<Omit<Cliente, 'id' | 'nombreCompleto' | 'label'>> & {
+export type ClienteDatos = Partial<Omit<Cliente, 'id' | 'nombreCompleto' | 'label' | 'comodin'>> & {
   nombre: string
 }
 

@@ -6,6 +6,7 @@ namespace App\Sincronizacion;
 
 use App\Sincronizacion\Legado\ApartadosLegado;
 use App\Sincronizacion\Legado\ImportadorLegado;
+use App\Sincronizacion\Nuevo\ClientesLocales;
 use App\Sincronizacion\Nuevo\ExportadorCambios;
 use Doctrine\DBAL\Connection;
 
@@ -19,6 +20,7 @@ class Ciclo
 {
     public function __construct(
         private readonly Interruptor $interruptor,
+        private readonly ClientesLocales $locales,
         private readonly ImportadorLegado $importador,
         private readonly ExportadorCambios $exportador,
         private readonly ApartadosLegado $apartados,
@@ -34,6 +36,7 @@ class Ciclo
         $resumen = [];
         $error = null;
         try {
+            $this->locales->realinear();
             $resumen["legado"] = $this->importador->procesar();
             $resumen["nuevo"] = $this->exportador->procesar();
             $this->apartados->limpiar();

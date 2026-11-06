@@ -23,6 +23,9 @@ use Doctrine\DBAL\Connection;
  *   que no se confirmó (el proceso murió entre los dos commits).
  * Los estados distintos y los boletos de aquí que faltan allá solo se
  * informan: decidir cuál vale es de una persona.
+ *
+ * Los usuarios no se sincronizan: se migraron y el legado no crea más. Si
+ * crea uno, puede tomar un id que aquí es de otra persona: también se informa.
  */
 class Conciliador
 {
@@ -40,7 +43,8 @@ class Conciliador
      * @return array{
      *     boletosFaltanAqui: list<int>, boletosHuerfanosAlla: list<int>, boletosFaltanAlla: list<int>,
      *     estadosDistintos: list<array{legado: int, aqui: int, estadoLegado: int, estadoAqui: string}>,
-     *     encomiendasFaltanAqui: list<int>, encomiendasFaltanAlla: list<int>
+     *     encomiendasFaltanAqui: list<int>, encomiendasFaltanAlla: list<int>,
+     *     usuariosChocan: list<int>
      * }
      */
     public function comparar(\DateTimeImmutable $dia): array
@@ -113,7 +117,27 @@ class Conciliador
             "estadosDistintos" => $estados,
             "encomiendasFaltanAqui" => array_values(array_diff($encomiendasAlla, $conocidas)),
             "encomiendasFaltanAlla" => array_map("intval", array_column(array_filter($encomiendasAqui, static fn(array $e) => $e["legacy_id"] === null), "id")),
+            "usuariosChocan" => self::usuariosQueChocan(
+                $this->legado->filas("SELECT id, username FROM custom_user"),
+                $this->db->fetchAllAssociative("SELECT id, username FROM usuario"),
+            ),
         ];
+    }
+
+    /**
+     * Ids que aquí y en el legado son de usuarios distintos.
+     *
+     * @param list<array<string, mixed>> $alla
+     * @param list<array<string, mixed>> $aqui
+     *
+     * @return list<int>
+     */
+    public static function usuariosQueChocan(array $alla, array $aqui): array
+    {
+        $nombres = array_column($aqui, "username", "id");
+        $chocan = array_filter($alla, static fn(array $u) => isset($nombres[$u["id"]]) && mb_strtolower((string) $nombres[$u["id"]]) !== mb_strtolower((string) $u["username"]));
+
+        return array_map("intval", array_column($chocan, "id"));
     }
 
     /**

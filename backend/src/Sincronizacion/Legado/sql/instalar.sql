@@ -3,7 +3,8 @@
 --
 -- * sync_config: el interruptor (lo escribe FDN; el bundle del legado lo lee).
 -- * sync_cambio: qué filas de boleto, encomienda, salida y factura_generada
---   cambiaron, para que FDN las traiga. Lo llenan los triggers.
+--   cambiaron y qué clientes se crearon, para que FDN los traiga. Lo llenan
+--   los triggers.
 -- * Los triggers no tocan la lógica del legado: solo anotan el id. Ignoran lo
 --   que escribe FDN (su sesión lleva CONTEXT_INFO 'FDNSYNC'), para que un
 --   cambio no vuelva al sistema de donde salió.
@@ -73,6 +74,16 @@ BEGIN
     SET NOCOUNT ON;
     IF SUBSTRING(CONTEXT_INFO(), 1, 7) = 0x46444E53594E43 RETURN;
     INSERT INTO dbo.sync_cambio (tabla, registro_id) SELECT 'boleto', id FROM inserted;
+END
+GO
+
+IF OBJECT_ID('dbo.trg_sync_cliente', 'TR') IS NOT NULL DROP TRIGGER dbo.trg_sync_cliente;
+GO
+CREATE TRIGGER dbo.trg_sync_cliente ON dbo.cliente AFTER INSERT AS
+BEGIN
+    SET NOCOUNT ON;
+    IF SUBSTRING(CONTEXT_INFO(), 1, 7) = 0x46444E53594E43 RETURN;
+    INSERT INTO dbo.sync_cambio (tabla, registro_id) SELECT 'cliente', id FROM inserted;
 END
 GO
 

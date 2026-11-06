@@ -8,6 +8,8 @@ mientras las estaciones se mudan. Diseño y límites: [ADR-042](../../../docs/ar
 | `Interruptor` | Encender / apagar (`sync_estado`, copiado a `sync_config` del legado) y el estado del indicador. |
 | `Nuevo/VigilanteCambios` | Listener del flush: lleva al legado lo que cambia aquí (el asiento, antes del commit). |
 | `Nuevo/EscritorLegado` | Escribe en SQL Server: boletos, estados, clientes, facturas, encomiendas. |
+| `Nuevo/AltaCliente`, `Nuevo/IdCliente` | Un cliente nuevo se crea primero en el legado y toma su id. |
+| `Nuevo/ClientesLocales` | Los clientes creados con la sincronización apagada: al encender se llevan allá y pasan a su id. |
 | `Nuevo/ExportadorCambios`, `Nuevo/AlTerminar` | Lo que quedó en `sync_cambio` de aquí, al terminar la petición o en el ciclo. |
 | `Legado/ImportadorLegado`, `Legado/ActualizadorBoletos` | Trae lo que anotaron los triggers del legado, con el código de la migración. |
 | `Legado/ApartadosLegado` | Aparta aquí lo que el legado está por vender (`/api/sincronizacion/legado/*`). |
@@ -31,6 +33,15 @@ mientras las estaciones se mudan. Diseño y límites: [ADR-042](../../../docs/ar
 Para un piloto con una estación basta con encenderla: los dos sistemas venden
 todo; lo que cambia es dónde trabaja cada estación.
 
+## Actualizar una instalación con el rango de ids
+
+Las versiones anteriores daban ids desde 1.000.000.000 a lo creado aquí. Para pasar a esta:
+
+1. Apagar la sincronización.
+2. Desplegar con la migración `Version20261105160000`: los clientes con par en `sync_vinculo` pasan al id del legado y los demás del rango quedan en `sync_cliente_local`. Los usuarios del rango conservan su id.
+3. `bin/console app:sincronizacion:instalar-legado`, para el trigger de `cliente`.
+4. Encender: los clientes pendientes se llevan al legado. Si no pasan todos, lo dice el aviso y sigue el ciclo.
+
 ## FDN de desarrollo contra el legado de producción («solo traer»)
 
 Para ver en un FDN local lo que pasa en producción sin tocar sus ventas:
@@ -40,13 +51,14 @@ Para ver en un FDN local lo que pasa en producción sin tocar sus ventas:
 3. `bin/console app:sincronizacion:instalar-legado` contra producción, en horas de poca venta: crea las tablas `sync_*` y los triggers, que solo anotan ids. **No** se despliega el bundle en el legado.
 4. Con `programador` y `worker` arriba (el ciclo corre cada minuto), encender (indicador o `interruptor encender`). El indicador dice «Sinc. (solo trae)».
 
-En este modo FDN no escribe en el legado fuera de `sync_*` (`ConexionLegado` rechaza la sentencia), deja `sync_config.activo = 0` (el legado no llama aquí), no exporta y la conciliación solo trae. Lo que vendas aquí queda solo aquí: si el legado vende después el mismo asiento, la importación de esa salida falla y lo muestra el indicador. Mejor no vender en local en salidas de producción.
+En este modo FDN no escribe en el legado fuera de `sync_*` (`ConexionLegado` rechaza la sentencia), deja `sync_config.activo = 0` (el legado no llama aquí), no exporta y la conciliación solo trae. Encendida no se crean clientes aquí; los que se crearon apagada no se llevan allá y su id puede coincidir con el de otra persona al importar (el interruptor avisa cuántos hay). Lo que vendas aquí queda solo aquí: si el legado vende después el mismo asiento, la importación de esa salida falla y lo muestra el indicador. Mejor no vender en local en salidas de producción.
 
 Solo un FDN puede leer el `sync_cambio` del legado (lo marca como procesado). Antes de conectar el FDN de producción, desinstalar (`--desinstalar`) y volver a instalar desde él. Mientras tu FDN está apagado, el legado sigue anotando; al volver se pone al día.
 
 ## Si algo falla
 
-- **El legado no responde**: aquí no se venden asientos de salidas que existen en los dos sistemas (error «No se pudo confirmar el asiento en el sistema anterior»). Lo demás queda en `sync_cambio` y se reintenta. Apagar la sincronización deja vender aquí sin comprobar.
+- **El legado no responde**: aquí no se venden asientos de salidas que existen en los dos sistemas (error «No se pudo confirmar el asiento en el sistema anterior») ni se crean clientes. Lo demás queda en `sync_cambio` y se reintenta. Apagar la sincronización deja vender aquí sin comprobar y crear clientes, que pasan al legado al encender.
+- **«Hay N clientes de aquí sin llevar al legado»**: el ciclo no trae nada hasta llevarlos. `SELECT * FROM sync_cliente_local` los muestra; se reintenta en cada ciclo.
 - **FDN no responde**: el legado vende igual (`si_falla = permitir`, el defecto) y FDN lo trae al volver; correr luego `app:sincronizacion:conciliar`. Para que el legado no venda sin comprobar: `bin/console app:sincronizacion:instalar-legado --si-falla=bloquear`.
 - **Indicador ámbar o rojo**: `bin/console app:sincronizacion:interruptor` muestra el último ciclo, su error y lo pendiente; `SELECT * FROM sync_cambio WHERE procesado_en IS NULL` (aquí) y `SELECT * FROM sync_cambio WHERE procesado IS NULL` (legado) muestran cada cambio con su error.
 

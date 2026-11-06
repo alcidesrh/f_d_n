@@ -14,7 +14,7 @@ export const guiasVenta: Guia[] = [
     pasos: [
       'Abra «Venta» en el menú. Arriba aparecen las salidas de tres días: la elegida queda al centro, el día anterior y el siguiente a los lados.',
       'Elija la salida. El croquis del bus muestra los asientos libres, vendidos y apartados.',
-      'Indique el cliente: busque por documento, NIT o nombre, o registre uno nuevo.',
+      'Indique el cliente: busque por documento, NIT o nombre, o registre uno nuevo. Si no quiere dar sus datos, pulse «CF»: el boleto sale a nombre de consumidor final.',
       'Elija en qué parada sube y en cuál baja. El precio sale de la tarifa del tramo.',
       'Seleccione el asiento en el croquis. Puede elegir varios para el mismo cliente.',
       'Elija el tipo de pago y la moneda, y pulse «Facturar». El sistema emite la factura y guarda los boletos.',

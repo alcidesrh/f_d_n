@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Sincronizacion;
 
 use App\Sincronizacion\Legado\ConexionLegado;
+use App\Sincronizacion\Nuevo\ClientesLocales;
 use Doctrine\DBAL\Connection;
 
 /**
@@ -18,6 +19,9 @@ use Doctrine\DBAL\Connection;
  *
  * En modo «solo traer» (`SINCRONIZACION_SOLO_TRAER`) el legado queda siempre
  * apagado: su bundle no llama aquí y aquí nada se escribe allá.
+ *
+ * Apagada, el legado no da los ids de los clientes de aquí: al encender se
+ * llevan allá y toman el suyo (`ClientesLocales`).
  */
 class Interruptor
 {
@@ -27,7 +31,7 @@ class Interruptor
     public function __construct(
         private readonly Connection $db,
         private readonly ConexionLegado $legado,
-        private readonly Identidades $identidades,
+        private readonly ClientesLocales $locales,
     ) {}
 
     /** Sin la tabla (base sin la migración, como la de las pruebas), apagada. */
@@ -42,6 +46,12 @@ class Interruptor
         }
 
         return (bool) $this->db->fetchOne("SELECT activo FROM sync_estado WHERE id = 1");
+    }
+
+    /** ¿Están las tablas de la sincronización? Las pruebas corren sin ellas. */
+    public function instalada(): bool
+    {
+        return (bool) $this->db->fetchOne("SELECT to_regclass('sync_estado') IS NOT NULL");
     }
 
     public function soloTraer(): bool
@@ -69,7 +79,8 @@ class Interruptor
     }
 
     /**
-     * @return ?string aviso para quien lo cambió (el legado no respondió al apagar)
+     * @return ?string aviso para quien lo cambió (el legado no respondió al apagar,
+     *                 o quedaron clientes de aquí sin llevar allá al encender)
      *
      * @throws \RuntimeException al encender si el legado no responde
      */
@@ -88,15 +99,31 @@ class Interruptor
             }
             $aviso = "Apagada aquí, pero el legado no respondió: sigue encendida allá hasta que responda (" . $e->getMessage() . ").";
         }
-        if ($activo) {
-            $this->identidades->apartarRango();
-        }
         $this->db->executeStatement(
             "UPDATE sync_estado SET activo = :activo, cambiado_en = NOW(), cambiado_por = :quien WHERE id = 1",
             ["activo" => $activo ? "true" : "false", "quien" => mb_substr($quien, 0, 180)],
         );
+        if (!$activo) {
+            $this->locales->alinearSecuencia();
 
-        return $aviso;
+            return $aviso;
+        }
+
+        return $this->llevarClientes();
+    }
+
+    /** Los que queden los lleva el ciclo, que no trae nada hasta entonces. */
+    private function llevarClientes(): ?string
+    {
+        try {
+            $quedan = $this->locales->realinear();
+        } catch (\Throwable $e) {
+            $this->legado->cerrar();
+
+            return "Encendida, pero faltan clientes de aquí por llevar al legado: " . $e->getMessage();
+        }
+
+        return $quedan > 0 ? "Encendida, con {$quedan} clientes de aquí sin llevar al legado." : null;
     }
 
     /** @param array<string, mixed> $resumen */

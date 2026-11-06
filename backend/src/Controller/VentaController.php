@@ -431,6 +431,15 @@ final class VentaController extends AbstractController
     }
 
     /** Edición rápida de cliente desde la venta. */
+    /** El cliente comodín: POST porque la primera vez lo crea. */
+    #[Route("/clientes/comodin", name: "cliente_comodin", methods: ["POST"])]
+    public function clienteComodin(): JsonResponse
+    {
+        $this->denyUnlessClientes();
+
+        return $this->responder(fn() => Clientes::fila($this->clientes->comodin()));
+    }
+
     #[Route("/clientes/{id<\d+>}", name: "cliente_editar", methods: ["PUT"])]
     public function editarCliente(Cliente $cliente, Request $request): JsonResponse
     {

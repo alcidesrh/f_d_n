@@ -1,6 +1,8 @@
 -- Quita del SQL Server del legado todo lo que instaló `instalar.sql` (ADR-042).
 IF OBJECT_ID('dbo.trg_sync_boleto', 'TR') IS NOT NULL DROP TRIGGER dbo.trg_sync_boleto;
 GO
+IF OBJECT_ID('dbo.trg_sync_cliente', 'TR') IS NOT NULL DROP TRIGGER dbo.trg_sync_cliente;
+GO
 IF OBJECT_ID('dbo.trg_sync_encomienda', 'TR') IS NOT NULL DROP TRIGGER dbo.trg_sync_encomienda;
 GO
 IF OBJECT_ID('dbo.trg_sync_encomienda_bitacora', 'TR') IS NOT NULL DROP TRIGGER dbo.trg_sync_encomienda_bitacora;

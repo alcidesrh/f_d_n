@@ -34,7 +34,8 @@ use Symfony\Contracts\Service\ResetInterface;
  * - Lo que libera un asiento o solo cambia el estado de un boleto, después
  *   del commit (si aquí se revierte, allá no pasó). Si el legado no
  *   responde, queda en `sync_cambio` y lo reintenta el ciclo.
- * - Encomiendas, clientes y facturas van a `sync_cambio`: los lleva el ciclo.
+ * - Encomiendas, clientes editados y facturas van a `sync_cambio`: los lleva
+ *   el ciclo. Un cliente nuevo ya se creó allá (`AltaCliente`).
  *
  * Solo ve lo que pasa por Doctrine: lo que trae la importación del legado
  * (DBAL) no vuelve allá.

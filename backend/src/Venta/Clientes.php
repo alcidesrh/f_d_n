@@ -18,13 +18,15 @@ final class Clientes
 {
     public const MIN_BUSQUEDA = 3;
 
+    private const BLOQUEO_COMODIN = 4204204;
+
     public function __construct(
         private readonly EntityManagerInterface $em,
     ) {}
 
     /**
      * Clientes cuyo NIT, documento, nombre o apellido contiene el término.
-     * Con "CF" devuelve los consumidores finales más recientes.
+     * Con "CF" devuelve los consumidores finales más recientes. El comodín va primero.
      *
      * @return list<array<string, mixed>>
      */
@@ -37,7 +39,8 @@ final class Clientes
         $qb = $this->em->getRepository(Cliente::class)->createQueryBuilder("c")
             ->leftJoin("c.tipoDocumento", "td")->addSelect("td")
             ->leftJoin("c.nacionalidad", "n")->addSelect("n")
-            ->orderBy("c.id", "DESC")
+            ->orderBy("c.comodin", "DESC")
+            ->addOrderBy("c.id", "DESC")
             ->setMaxResults(20);
 
         $nit = Facturador::normalizarNit($termino);
@@ -55,6 +58,25 @@ final class Clientes
         }
 
         return array_map(self::fila(...), $qb->getQuery()->getResult());
+    }
+
+    /**
+     * El cliente comodín. Se crea la primera vez que se pide, como cualquier
+     * cliente: así tiene el mismo id en el legado (ADR-042).
+     */
+    public function comodin(): Cliente
+    {
+        return $this->clienteComodin() ?? $this->em->wrapInTransaction(function (): Cliente {
+            $this->em->getConnection()->fetchOne("SELECT pg_advisory_xact_lock(:k)", ["k" => self::BLOQUEO_COMODIN]);
+            $cliente = $this->clienteComodin();
+            if ($cliente === null) {
+                $cliente = Cliente::comodin();
+                $cliente->setCreatedAt(new \DateTime());
+                $this->em->persist($cliente);
+            }
+
+            return $cliente;
+        });
     }
 
     /**
@@ -76,6 +98,9 @@ final class Clientes
      */
     public function actualizar(Cliente $cliente, array $datos): Cliente
     {
+        if ($cliente->isComodin()) {
+            throw new VentaRechazada("El consumidor final no se edita: si el cliente da sus datos, regístrelo.", "cliente_comodin");
+        }
         $this->aplicar($cliente, $datos);
         $this->em->flush();
 
@@ -97,7 +122,13 @@ final class Clientes
             "numeroDocumento" => $c->getNumeroDocumento(),
             "nacionalidad" => $c->getNacionalidad()?->getId(),
             "label" => sprintf("%s / %s", $c->getNit() ?: "CF", $c->getNombreCompleto()),
+            "comodin" => $c->isComodin(),
         ];
+    }
+
+    private function clienteComodin(): ?Cliente
+    {
+        return $this->em->getRepository(Cliente::class)->findOneBy(["comodin" => true]);
     }
 
     /**

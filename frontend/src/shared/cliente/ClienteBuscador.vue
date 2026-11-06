@@ -1,7 +1,7 @@
 <!--
   Buscador de clientes: NIT, documento o nombre (3+ caracteres; la consulta
   sale al dejar de escribir). Si no existe, "+" lo da de alta; con uno
-  elegido, el lápiz lo edita.
+  elegido, el lápiz lo edita. En taquilla, «CF» elige al consumidor final.
 -->
 <template>
   <div class="flex items-stretch gap-2">
@@ -36,6 +36,16 @@
       </template>
     </AutoComplete>
     <Button
+      v-if="conComodin"
+      label="CF"
+      title="Consumidor final: el cliente no da sus datos"
+      aria-label="Consumidor final"
+      severity="secondary"
+      outlined
+      :loading="eligiendoComodin"
+      @click="elegirComodin"
+    />
+    <Button
       title="Nuevo cliente"
       aria-label="Nuevo cliente"
       severity="secondary"
@@ -50,7 +60,7 @@
       aria-label="Editar cliente"
       severity="secondary"
       outlined
-      :disabled="!modelValue"
+      :disabled="!modelValue || modelValue.comodin"
       @click="abrir(modelValue)"
     >
       <icon name="edit-outline" />
@@ -66,7 +76,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { buscarClientes } from '@/core/venta/api'
+import { buscarClientes, clienteComodin } from '@/core/venta/api'
 import type { Cliente } from '@/core/venta/types'
 import ClienteDialog from './ClienteDialog.vue'
 
@@ -77,8 +87,10 @@ withDefaults(
     inputId?: string
     /** Sin botón de editar (filas de pasajeros). */
     compacto?: boolean
+    /** Con botón para elegir al consumidor final. */
+    conComodin?: boolean
   }>(),
-  { placeholder: 'NIT, documento o nombre', inputId: undefined, compacto: false },
+  { placeholder: 'NIT, documento o nombre', inputId: undefined, compacto: false, conComodin: false },
 )
 const emit = defineEmits<{ 'update:modelValue': [cliente: Cliente | null] }>()
 
@@ -87,6 +99,7 @@ const buscando = ref(false)
 const ultimaBusqueda = ref('')
 const dialogo = ref(false)
 const editando = ref<Cliente | null>(null)
+const eligiendoComodin = ref(false)
 
 let consulta = 0
 async function buscar(q: string) {
@@ -105,6 +118,17 @@ async function buscar(q: string) {
 
 function elegir(valor: Cliente | string | null) {
   emit('update:modelValue', valor && typeof valor === 'object' ? valor : null)
+}
+
+async function elegirComodin() {
+  eligiendoComodin.value = true
+  try {
+    elegir(await clienteComodin())
+  } catch {
+    // El aviso lo da `http`.
+  } finally {
+    eligiendoComodin.value = false
+  }
 }
 
 function abrir(cliente: Cliente | null) {

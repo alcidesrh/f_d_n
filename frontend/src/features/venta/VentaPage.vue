@@ -161,7 +161,7 @@
             <div v-if="store.reasignacion">
               {{ store.cliente?.nombreCompleto ?? "—" }}<span v-if="store.cliente" class="text-muted-color"> · NIT {{ store.cliente.nit }}</span>
             </div>
-            <ClienteBuscador v-else v-model="store.cliente" input-id="venta-cliente" />
+            <ClienteBuscador v-else v-model="store.cliente" input-id="venta-cliente" :con-comodin="store.contexto?.canal === 'estacion'" />
           </section>
           <section v-if="store.detalle && store.puedeCobrarCompleto" class="panel flex flex-col gap-3">
             <label v-if="store.puedeCobrarCompleto" class="flex items-center gap-2 text-sm">

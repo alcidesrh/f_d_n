@@ -27,8 +27,8 @@ Un módulo aparte, `backend/src/Sincronizacion/` (más un bundle en el legado), 
 
 ### 2. Del legado a aquí: triggers + ciclo cada minuto
 
-- Triggers `AFTER INSERT, UPDATE` en `boleto`, `salida`, `factura_generada`, `encomienda` y `encomienda_bitacora` anotan el id en `sync_cambio` del legado. No cambian nada de lo que hace el legado.
-- La tarea `sincronizar_legado` del programador (ADR-044, cada minuto, con cerrojo: un ciclo largo hace que se omita el siguiente) corre `Ciclo` (`app:sincronizar` corre uno a mano): `ImportadorLegado` agrupa los cambios por salida y vuelve a migrar cada salida con `Migrador::migrarSalida` (idempotente por `legacy_id`: crea lo que falta, completa lo que cambió) y las encomiendas con `EncomiendasLegado::migrarPorIds`. `ActualizadorBoletos` pone al día los boletos que ya estaban: estado (con su línea en la bitácora, `detalle.legado`), de qué boleto viene una reasignación y la factura certificada después.
+- Triggers `AFTER INSERT, UPDATE` en `boleto`, `salida`, `factura_generada`, `encomienda` y `encomienda_bitacora`, y `AFTER INSERT` en `cliente`, anotan el id en `sync_cambio` del legado. No cambian nada de lo que hace el legado.
+- La tarea `sincronizar_legado` del programador (ADR-044, cada minuto, con cerrojo: un ciclo largo hace que se omita el siguiente) corre `Ciclo` (`app:sincronizar` corre uno a mano): `ImportadorLegado` agrupa los cambios por salida y vuelve a migrar cada salida con `Migrador::migrarSalida` (idempotente por `legacy_id`: crea lo que falta, completa lo que cambió), las encomiendas con `EncomiendasLegado::migrarPorIds` y los clientes nuevos con `DependenciasLegado::cliente`. `ActualizadorBoletos` pone al día los boletos que ya estaban: estado (con su línea en la bitácora, `detalle.legado`), de qué boleto viene una reasignación y la factura certificada después.
 - Escribe con DBAL: Doctrine no lo ve y no vuelve al legado.
 
 ### 3. De aquí al legado: primero allá
@@ -36,7 +36,7 @@ Un módulo aparte, `backend/src/Sincronizacion/` (más un bundle en el legado), 
 - `Nuevo\VigilanteCambios` escucha el flush de Doctrine, así que no importa por dónde llegue el cambio (taquilla, agencia, página web, reasignación, abordaje).
   - Lo que **ocupa un asiento** (boleto nuevo, revertir una cancelación) se escribe en el legado **dentro de la transacción de aquí**, antes del commit: `EscritorLegado::ocupar` bloquea la salida en SQL Server (`UPDLOCK`), comprueba boletos y reservaciones vigentes del asiento y, si está libre, inserta el boleto (`identificador_web = 'FDN:<uuid>'`, más su línea de bitácora). Si allá está ocupado, la venta de aquí se rechaza con «vendido en el sistema anterior»; si el legado no responde, también (503): mejor no vender que vender dos veces.
   - Lo que **libera** o solo cambia el estado se lleva **después del commit** (`Transaccion::despuesDeConfirmar`); si el legado no responde queda en `sync_cambio` (PostgreSQL) y lo reintenta el ciclo (`ExportadorCambios`, hasta 20 intentos).
-  - Encomiendas, clientes y facturas van a `sync_cambio` y se llevan al terminar la petición (`AlTerminar`) o en el ciclo.
+  - Encomiendas, ediciones de clientes y facturas van a `sync_cambio` y se llevan al terminar la petición (`AlTerminar`) o en el ciclo. Un cliente nuevo se crea allá antes que aquí (punto 5).
 - Lo que escribe FDN en SQL Server lleva `CONTEXT_INFO 'FDNSYNC'`: los triggers lo ignoran (no hay eco). La importación además omite lo marcado `FDN:` que aquí no está.
 - Si el proceso muere entre el commit del legado y el de aquí, queda allá un boleto `FDN:` huérfano: la conciliación lo anula.
 
@@ -49,7 +49,11 @@ Un módulo aparte, `backend/src/Sincronizacion/` (más un bundle en el legado), 
 
 ### 5. Identidades
 
-- Clientes y usuarios conservan el id del legado al migrarse. Los que se crean aquí durante la sincronización toman ids desde 1.000.000.000 (`Identidades::apartarRango`, se vuelve a aplicar tras cada importación porque la migración reinicia la identidad); su id en el legado se guarda en `sync_vinculo` y la importación lo resuelve (`DependenciasLegado::equivalencias`).
+- **Clientes: el legado da el id.** Un cliente tiene el mismo id en los dos sistemas; crearlo en los dos con secuencias propias no bastaría, porque dos altas del mismo minuto recibirían el mismo id.
+  - Alta aquí con la sincronización encendida: `Nuevo\AltaCliente` (`prePersist`, cualquier camino: venta, página web, GraphQL) lo crea primero en el legado y usa ese id (`IdCliente`, el generador de `Cliente` mientras exista el módulo; la columna sigue siendo identidad). Sin legado, 503. Si el índice único del legado (NIT, nombre y documento, los tres con valor) ya tiene esa persona: se usa su id, o se rechaza si aquí también está. Sin documento siempre es una persona nueva. En modo «solo traer» no se crean clientes.
+  - Alta en el legado: `trg_sync_cliente` y el ciclo la traen con su id. Si antes llega un boleto suyo, la migración lo crea igual.
+  - Apagada: el id sale de la secuencia de aquí, que al apagar queda después del mayor conocido, y el cliente se anota en `sync_cliente_local`: allá ese id puede ser de otra persona. Al encender, y en cada ciclo, `Nuevo\ClientesLocales` lo crea en el legado y lo pasa a su id con sus boletos, ventas y encomiendas (las referencias sin clave foránea, como una tarjeta del chat, conservan el id viejo). Mientras quede alguno sin llevar no se importa nada y `EscritorLegado::cliente` no lo usa.
+- **Usuarios: el legado no crea más.** Se migraron con su id y los de aquí siguen desde el mayor de los dos sistemas (`DependenciasLegado::reiniciarIdentidades`, igual para clientes). `EscritorLegado::usuario` usa el mismo id si existe allá. La conciliación avisa si un id es de usuarios distintos.
 - Boletos, salidas y encomiendas se emparejan por `legacy_id`. Las encomiendas importadas conservan el id del legado (≈ 10 millones); las de aquí empiezan en 1: no chocan mientras FDN no registre 10 millones.
 
 ### 6. Conciliación
@@ -63,9 +67,9 @@ Con `SINCRONIZACION_SOLO_TRAER=1`, un FDN (de desarrollo) trae del legado de pro
 ## Consecuencias
 
 - Una venta aquí espera además al SQL Server del legado (una transacción corta por venta); una venta en el legado espera a FDN (unos milisegundos; tope de 8 s).
-- Con el legado caído no se vende aquí en salidas que existen en los dos; con FDN caído el legado sigue vendiendo (`si_falla = 'permitir'`) y el mismo asiento podría venderse en los dos hasta que FDN lo traiga; con `'bloquear'`, el legado no vende.
+- Con el legado caído no se vende aquí en salidas que existen en los dos ni se crean clientes, aunque sea para una salida solo de aquí; con FDN caído el legado sigue vendiendo (`si_falla = 'permitir'`) y el mismo asiento podría venderse en los dos hasta que FDN lo traiga; con `'bloquear'`, el legado no vende.
 - El croquis de un sistema refleja lo vendido en el otro en menos de un minuto (al instante si es apartado o venta propia).
-- Límites conocidos, que se informan y no se sincronizan: la caja del legado (`caja_operacion`), las salidas creadas solo aquí (sin `legacy_id`, el legado no puede venderlas), las reservaciones del legado (allá bloquean la venta de aquí, pero aquí no se ven) y una encomienda con varios artículos llega al legado como una sola fila. La factura en el legado (`factura_generada`) es de cortesía: si falta la serie o el tipo de cambio, sus datos van en la observación.
+- Límites conocidos, que se informan y no se sincronizan: la caja del legado (`caja_operacion`), las ediciones de un cliente en el legado (aquí solo llega su alta) y los clientes antiguos que ningún boleto ha traído (no aparecen en la búsqueda de la taquilla), las salidas creadas solo aquí (sin `legacy_id`, el legado no puede venderlas), las reservaciones del legado (allá bloquean la venta de aquí, pero aquí no se ven) y una encomienda con varios artículos llega al legado como una sola fila. La factura en el legado (`factura_generada`) es de cortesía: si falta la serie o el tipo de cambio, sus datos van en la observación.
 - Si el legado tiene el índice único `CUSTOM_IDX_BOLETO_SALIDA_ASIENTO_ESTADO` sin filtro, un segundo boleto anulado del mismo asiento chocaría al llevarlo; queda en `sync_cambio` con su error y lo muestra el indicador.
 
 ## Cómo se quita
@@ -73,4 +77,4 @@ Con `SINCRONIZACION_SOLO_TRAER=1`, un FDN (de desarrollo) trae del legado de pro
 1. Apagar la sincronización (indicador o `app:sincronizacion:interruptor apagar`).
 2. `app:sincronizacion:instalar-legado --desinstalar` (triggers y tablas `sync_*` del legado).
 3. En el legado: quitar `SincronizacionFdnBundle` de `AppKernel` y su carpeta.
-4. Aquí: borrar `src/Sincronizacion/`, `config/packages/sincronizacion.yaml`, `config/routes/sincronizacion.yaml`, la línea de `security.yaml`, `Tarea::SINCRONIZAR_LEGADO` (y su `hora`/`frecuencia`/`mensaje` en `App\Programador\Tarea`), `IndicadorSincronizacion.vue` (y su línea en `AppHeader.vue`), `core/sincronizacion/` y los tests; una migración que borre las tablas `sync_*`. Los enganches que quedan en `App\Migration` (`excluirBoletos`, `equivalencias`, `excluir`, `migrarPorIds`, `fetchSalidasPorIds`) son opcionales y no estorban.
+4. Aquí: borrar `src/Sincronizacion/`, `config/packages/sincronizacion.yaml`, `config/routes/sincronizacion.yaml`, la línea de `security.yaml`, `Tarea::SINCRONIZAR_LEGADO` (y su `hora`/`frecuencia`/`mensaje` en `App\Programador\Tarea`), `IndicadorSincronizacion.vue` (y su línea en `AppHeader.vue`), `core/sincronizacion/` y los tests; una migración que borre las tablas `sync_*`. Los enganches que quedan en `App\Migration` (`excluirBoletos`, `excluir`, `migrarPorIds`, `fetchSalidasPorIds`) son opcionales y no estorban.

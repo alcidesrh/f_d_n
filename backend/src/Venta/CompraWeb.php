@@ -412,12 +412,13 @@ final class CompraWeb
         if ($cliente === null) {
             $cliente = (new Cliente())->setNombre($c->nombre)->setApellido($c->apellido)->setNit($c->nit);
             $cliente->setCreatedAt(new \DateTime());
-            $this->em->persist($cliente);
         }
         $cliente->setEmail($c->email);
         if ($c->telefono) {
             $cliente->setTelefono($c->telefono);
         }
+        // Al final: la sincronización lleva el cliente nuevo al legado con estos datos.
+        $this->em->persist($cliente);
 
         return $cliente;
     }
