@@ -16,6 +16,8 @@ enum OperacionUsuario: string implements Operacion
     case DESACTIVADO = "desactivado";
     case CONTRASENA = "contrasena";
     case ESTACION_TRABAJO = "estacion_trabajo";
+    case SUPLANTACION_INICIO = "suplantacion_inicio";
+    case SUPLANTACION_FIN = "suplantacion_fin";
 
     public function etiqueta(): string
     {
@@ -27,6 +29,8 @@ enum OperacionUsuario: string implements Operacion
             self::DESACTIVADO => "Usuario desactivado",
             self::CONTRASENA => "Contraseña cambiada por un administrador",
             self::ESTACION_TRABAJO => "Cambio de estación de trabajo",
+            self::SUPLANTACION_INICIO => "Un administrador del sistema entró a la cuenta",
+            self::SUPLANTACION_FIN => "El administrador del sistema salió de la cuenta",
         };
     }
 }

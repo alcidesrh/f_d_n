@@ -19,6 +19,10 @@ export interface EntityListAction {
   component: EntityFormLoader
   /** Props fijas del componente, además de `item` y `visible`. */
   props?: Record<string, unknown>
+  /** Capacidad que exige (se oculta a quien no la tiene; autoriza el backend). */
+  capacidad?: string
+  /** Solo para el administrador del sistema. */
+  sistema?: boolean
 }
 
 /** Permiso de boletos que exige una acción sobre la selección (lo decide el backend). */
@@ -79,6 +83,14 @@ export const entityListActions: Record<string, EntityListAction[]> = {
       label: 'Cambiar contraseña',
       icon: 'password',
       component: () => import('@/features/usuario/CambiarPasswordDialog.vue'),
+    },
+    {
+      key: 'suplantar',
+      label: 'Entrar como este usuario',
+      icon: 'switch-account',
+      component: () => import('@/features/usuario/SuplantarDialog.vue'),
+      capacidad: 'iam.suplantar',
+      sistema: true,
     },
   ],
   Salida: [bitacora('salida')],

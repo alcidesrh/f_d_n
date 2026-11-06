@@ -1,4 +1,5 @@
 /** Accesos (ADR-039): lo que puede hacer el usuario con sesión y la administración de roles y asignaciones. */
+import type { SuplantacionEnCurso } from '@/core/suplantacion/tipos'
 
 /** Sobre qué rige una asignación: `null` = todas (también las que se den de alta después). */
 export interface Ambito {
@@ -33,6 +34,8 @@ export interface MiAcceso {
   estacionTrabajo: OpcionEstacion | null
   /** Las estaciones de trabajo que puede elegir. */
   estaciones: OpcionEstacion[]
+  /** Un administrador del sistema está usando esta cuenta (suplantación); null si no. */
+  suplantacion?: SuplantacionEnCurso | null
   /** Cambia con cualquier cambio de lo que puede (para refrescar sin recargar). */
   huella: string
 }

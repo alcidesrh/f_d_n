@@ -48,6 +48,8 @@ export interface EntradaActividad extends EntradaBase {
   duracionMs: number | null
   ip: string | null
   agente: string | null
+  /** Hecho por un administrador del sistema que usaba la cuenta (suplantación). */
+  suplantadoPor?: { id: number; username: string | null; nombre: string | null } | null
 }
 
 export interface EntradaNegocio extends EntradaBase {

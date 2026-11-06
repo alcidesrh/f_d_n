@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Actividad;
 
 use App\Acceso\Autorizacion;
+use App\Acceso\Suplantacion\SuplantacionActual;
 use App\Entity\Usuario;
 use Doctrine\DBAL\Connection;
 use Psr\Clock\ClockInterface;
@@ -22,6 +23,10 @@ use Symfony\Component\HttpKernel\KernelEvents;
  * `request_id`, al responder lo devuelve en `X-Request-Id` y mide, y al
  * terminar (ya enviada la respuesta) anota la petición si la política lo
  * pide y vuelca el búfer en un solo `INSERT` (`RegistroActividad`).
+ *
+ * Mientras un administrador suplanta al usuario, cada petición (menos los
+ * sondeos) se anota siempre, con `suplantado_por_id`, aunque la política no
+ * siga a ese usuario o la bitácora esté apagada.
  *
  * Nunca rompe una petición: un error de la bitácora queda en el log.
  */
@@ -46,6 +51,7 @@ final class CapturaPeticion
         private readonly Connection $conexion,
         private readonly ClockInterface $reloj,
         private readonly LoggerInterface $logger,
+        private readonly SuplantacionActual $suplantacion,
     ) {}
 
     #[AsEventListener(KernelEvents::REQUEST, priority: 512)]
@@ -97,7 +103,8 @@ final class CapturaPeticion
             return;
         }
         $politica = $this->ajustes->politica();
-        if (!$politica->activa) {
+        $actor = $this->suplantacion->actor();
+        if (!$politica->activa && $actor === null) {
             return;
         }
         $sondeo = $request->headers->get(self::CABECERA_SONDEO) === "sondeo";
@@ -105,12 +112,14 @@ final class CapturaPeticion
         $graphql = str_starts_with($request->getPathInfo(), "/api/graphql") && $cuerpo !== null ? OperacionGraphql::nombre($cuerpo) : null;
         // Una consulta GraphQL va por POST pero solo lee.
         $metodo = $graphql !== null && str_starts_with($graphql, "query ") ? "GET" : $request->getMethod();
-        $tipo = $politica->tipoDePeticion($metodo, $sondeo);
-        if ($tipo === null) {
-            return;
+        $tipo = $politica->activa ? $politica->tipoDePeticion($metodo, $sondeo) : null;
+        $contexto = $tipo === null ? null : $this->contexto($usuario, $politica);
+        if ($actor !== null && !$sondeo && ($tipo === null || $contexto === null)) {
+            // Suplantando: se anota aunque la política no lo pida.
+            $tipo = TipoActividad::PETICION;
+            $contexto = ["empresa" => $this->autorizacion->de($usuario)->general()->empresaUnica(), "estacion" => $usuario->getEstacion()?->getId()];
         }
-        $contexto = $this->contexto($usuario, $politica);
-        if ($contexto === null) {
+        if ($tipo === null || $contexto === null) {
             return;
         }
 
@@ -125,7 +134,7 @@ final class CapturaPeticion
         if ($request->query->count() > 0) {
             $detalle["consulta"] = Detalle::filtrar($request->query->all(), $politica->camposPermitidos());
         }
-        if ($politica->cuerpos() && $cuerpo !== null) {
+        if (($politica->cuerpos() || $actor !== null) && $cuerpo !== null) {
             $detalle["cuerpo"] = Detalle::filtrar($cuerpo, $politica->camposPermitidos());
         }
 
@@ -143,6 +152,7 @@ final class CapturaPeticion
             "entidad" => $ruta->entidad,
             "registro_id" => $ruta->registroId,
             "detalle" => Detalle::json($detalle, $politica->maxDetalleBytes),
+            "suplantado_por_id" => $actor?->getId(),
         ]);
     }
 

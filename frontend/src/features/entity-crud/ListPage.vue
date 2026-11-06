@@ -360,7 +360,9 @@ function applyCustomFilter(state: CustomListFilterState | null) {
 }
 
 // Acciones por fila -------------------------------------------------------
-const extraActions = computed<EntityListAction[]>(() => (features.value.rowActions ? (entityListActions[entityName.value] ?? []) : []));
+const extraActions = computed<EntityListAction[]>(() =>
+  features.value.rowActions ? (entityListActions[entityName.value] ?? []).filter((a) => (!a.capacidad || acceso.puede(a.capacidad)) && (!a.sistema || acceso.sistema)) : [],
+);
 // La configuración del listado puede ocultar editar y eliminar (`features.edit`/`delete`, ADR-043).
 const canEditRow = computed(() => features.value.rowActions && features.value.edit && !soloLectura.value && acceso.puedeRecurso(entityName.value, "editar"));
 const canDeleteRow = computed(() => features.value.rowActions && features.value.delete && !soloLectura.value && Boolean(store.value?.metadata.delete) && acceso.puedeRecurso(entityName.value, "eliminar"));

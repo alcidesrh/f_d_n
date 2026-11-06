@@ -61,6 +61,7 @@ enum Capacidad: string
     case IAM_VER = 'iam.ver';
     case IAM_ASIGNAR = 'iam.asignar';
     case IAM_ROLES = 'iam.roles';
+    case IAM_SUPLANTAR = 'iam.suplantar';
 
     case AUTORIZACION_APROBAR = 'autorizacion.aprobar';
 
@@ -111,6 +112,7 @@ enum Capacidad: string
             self::IAM_VER => 'Ver usuarios, roles y asignaciones',
             self::IAM_ASIGNAR => 'Otorgar y revocar asignaciones de roles',
             self::IAM_ROLES => 'Crear y editar roles',
+            self::IAM_SUPLANTAR => 'Entrar como otro usuario y configurar la suplantación (solo administradores del sistema)',
             self::AUTORIZACION_APROBAR => 'Aprobar o rechazar autorizaciones (pases de un solo uso)',
             self::BITACORA_VER => 'Ver lo anulado y las bitácoras en el detalle de venta',
             self::BITACORA_USUARIOS => 'Ver la bitácora diaria de los usuarios (todo lo que hizo cada uno en el día)',

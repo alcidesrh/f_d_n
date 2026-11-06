@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Acceso\Suplantacion\SuplantacionActual;
 use App\Actividad\AjustesBitacora;
 use App\Actividad\BitacoraRechazada;
 use App\Actividad\CapturaPeticion;
@@ -41,6 +42,7 @@ final class ActividadController extends AbstractController
         private readonly CapturaPeticion $captura,
         private readonly RegistroActividad $registro,
         private readonly ClockInterface $reloj,
+        private readonly SuplantacionActual $suplantacion,
     ) {}
 
     #[Route("/ajustes", name: "ajustes", methods: ["GET"])]
@@ -86,6 +88,7 @@ final class ActividadController extends AbstractController
                 "duracion_ms" => is_int($e["duracionMs"] ?? null) && $e["duracionMs"] >= 0 ? min($e["duracionMs"], 86_400_000) : null,
                 "ip" => $request->getClientIp(),
                 "detalle" => is_array($e["detalle"] ?? null) ? Detalle::json(Detalle::sinSecretos($e["detalle"]), $politica->maxDetalleBytes) : null,
+                "suplantado_por_id" => $this->suplantacion->actor()?->getId(),
             ]);
         }
 

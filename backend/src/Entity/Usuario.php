@@ -358,10 +358,9 @@ class Usuario extends PersonaBase implements
 
     public function getToken(): ?ApiToken
     {
+        // Los de suplantación son de quien suplanta: el login del usuario nunca los recibe.
         return $this->getApiTokens()
-            // ->filter(
-            //     fn(ApiToken $apiToken) => $apiToken->isActivo()
-            // )
+            ->filter(fn(ApiToken $apiToken) => !$apiToken->esSuplantacion())
             ->first() ?:
             null;
     }
@@ -370,7 +369,7 @@ class Usuario extends PersonaBase implements
     public function getValidTokenStrings(): ?string
     {
         return $this->getApiTokens()
-            ->filter(fn(ApiToken $token) => $token->isValid())
+            ->filter(fn(ApiToken $token) => $token->isValid() && !$token->esSuplantacion())
             ->map(fn(ApiToken $token) => $token->getToken())
             ->first();
     }

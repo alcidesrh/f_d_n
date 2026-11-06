@@ -34,6 +34,21 @@ class ApiToken extends Base {
     #[ORM\Column(nullable: true)]
     private ?bool $activo = null;
 
+    /**
+     * Token de suplantación: el administrador del sistema que lo emitió para
+     * entrar como `usuario` (`App\Acceso\Suplantacion\Suplantador`). Nunca lo
+     * reutiliza el login normal del usuario.
+     */
+    #[ApiProperty(readable: false, writable: false)]
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(onDelete: 'CASCADE')]
+    private ?Usuario $suplantadoPor = null;
+
+    /** Por qué se suplanta (si la configuración lo exige). */
+    #[ApiProperty(readable: false, writable: false)]
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $motivo = null;
+
     public function __construct(string $tokenType = self::PERSONAL_ACCESS_TOKEN_PREFIX) {
         $this->token = $tokenType . bin2hex(random_bytes(32));
     }
@@ -83,6 +98,26 @@ class ApiToken extends Base {
 
         return $this;
     }
+    public function getSuplantadoPor(): ?Usuario {
+        return $this->suplantadoPor;
+    }
+
+    public function esSuplantacion(): bool {
+        return $this->suplantadoPor !== null;
+    }
+
+    public function getMotivo(): ?string {
+        return $this->motivo;
+    }
+
+    /** Lo marca como token de suplantación emitido por `$actor`. */
+    public function suplantacion(Usuario $actor, ?string $motivo): self {
+        $this->suplantadoPor = $actor;
+        $this->motivo = $motivo;
+
+        return $this;
+    }
+
     public function __toString(): string {
         return $this->token;
     }

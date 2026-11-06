@@ -9,7 +9,13 @@ import type { EntradaActividad, EntradaDiaria, EntradaNegocio } from './types'
 
 const TIPOS_BITACORA: readonly string[] = ['salida', 'boleto', 'encomienda', 'usuario', 'rol', 'autorizacion']
 
-const SESION: Record<string, string> = { inicio: 'Inició sesión', cierre: 'Cerró sesión', fallo: 'Intento de inicio fallido' }
+const SESION: Record<string, string> = {
+  inicio: 'Inició sesión',
+  cierre: 'Cerró sesión',
+  fallo: 'Intento de inicio fallido',
+  suplantacion_inicio: 'Entró como otro usuario',
+  suplantacion_fin: 'Volvió a su cuenta',
+}
 
 const OPERACIONES_CAMBIO: Record<string, string> = { creado: 'Creó', modificado: 'Modificó', eliminado: 'Eliminó' }
 
@@ -93,7 +99,10 @@ export function lineas(e: EntradaDiaria): string[] {
     salida.push(e.ruta)
   } else if (e.tipo === 'sesion' && e.accion === 'fallo') {
     salida.push(texto(d.usuario) ? `Usuario: ${texto(d.usuario)}` : null, texto(d.motivo))
+  } else if (e.tipo === 'sesion' && e.accion?.startsWith('suplantacion_')) {
+    salida.push(texto(d.usuario) ? `Cuenta de ${texto(d.usuario)}` : null, texto(d.motivo) ? `Motivo: ${texto(d.motivo)}` : null)
   }
+  if (e.suplantadoPor) salida.push(`Hecho por ${e.suplantadoPor.nombre ?? e.suplantadoPor.username ?? `#${e.suplantadoPor.id}`} usando esta cuenta`)
   if (d.recortado) salida.push(`Detalle recortado (${texto(d.bytes) ?? '?'} bytes)`)
   return salida.filter((l): l is string => l !== null && l !== '')
 }

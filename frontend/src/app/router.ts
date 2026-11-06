@@ -193,6 +193,17 @@ export const router = createRouter({
       },
     },
     {
+      path: "/configuracion/suplantacion",
+      name: "configuracion-suplantacion",
+      component: () => import("@/features/suplantacion/ConfiguracionSuplantacionPage.vue"),
+      meta: {
+        capacidad: "iam.suplantar",
+        title: "Suplantación de usuarios",
+        label: "Suplantación de usuarios",
+        icon: "switch-account",
+      },
+    },
+    {
       path: "/auditoria/bitacora-diaria",
       name: "bitacora-diaria",
       component: () => import("@/features/bitacora-diaria/BitacoraDiariaPage.vue"),

@@ -66,7 +66,7 @@ final class ConsultaBitacoraDiaria
         $resumen = $this->resumen->calcular($inicio, $usuario)[0] ?? null;
 
         $actividad = $this->db->fetchAllAssociative(
-            "SELECT fecha, tipo, accion, metodo, ruta, estado, duracion_ms, host(ip) AS ip, agente, request_id, entidad, registro_id, detalle
+            "SELECT fecha, tipo, accion, metodo, ruta, estado, duracion_ms, host(ip) AS ip, agente, request_id, entidad, registro_id, detalle, suplantado_por_id
                FROM actividad
               WHERE usuario_id = :usuario AND fecha >= :desde AND fecha < :hasta
               ORDER BY fecha, id
@@ -82,6 +82,10 @@ final class ConsultaBitacoraDiaria
             ["usuario" => $usuario, "desde" => $inicio->format("Y-m-d H:i:s"), "hasta" => $fin->format("Y-m-d H:i:s")],
         );
         $cortada = count($actividad) > self::LIMITE || count($negocio) > self::LIMITE;
+
+        // Quién hizo de verdad lo que se hizo como este usuario (suplantación).
+        $actores = $this->nombres(array_values(array_filter(array_map(static fn(array $f) => $f["suplantado_por_id"] !== null ? (int) $f["suplantado_por_id"] : null, $actividad))));
+        $actividad = array_map(static fn(array $f) => [...$f, "suplantado_por" => $f["suplantado_por_id"] !== null ? ["id" => (int) $f["suplantado_por_id"], ...($actores[(int) $f["suplantado_por_id"]] ?? ["username" => null, "nombre" => null])] : null], $actividad);
 
         $entradas = [
             ...array_map(self::deActividad(...), array_slice($actividad, 0, self::LIMITE)),
@@ -148,6 +152,7 @@ final class ConsultaBitacoraDiaria
             "registroId" => $f["registro_id"] !== null ? (int) $f["registro_id"] : null,
             "detalle" => $f["detalle"] !== null ? json_decode((string) $f["detalle"], true) : null,
             "requestId" => $f["request_id"],
+            "suplantadoPor" => $f["suplantado_por"] ?? null,
         ];
     }
 

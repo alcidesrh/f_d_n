@@ -7,6 +7,9 @@ namespace App\Controller;
 use App\Acceso\Autorizacion;
 use App\Acceso\Catalogo\CatalogoRecursos;
 use App\Acceso\EstacionTrabajo;
+use App\Acceso\Suplantacion\AjustesSuplantacion;
+use App\Acceso\Suplantacion\SuplantacionActual;
+use App\Acceso\Suplantacion\Suplantador;
 use App\Bitacora\TipoRegistro;
 use App\Acceso\Administracion\BitacoraAcceso;
 use App\Entity\Enum\OperacionUsuario;
@@ -32,12 +35,16 @@ final class MiAccesoController extends AbstractController
         private readonly Autorizacion $autorizacion,
         private readonly CatalogoRecursos $recursos,
         private readonly EstacionTrabajo $estacionTrabajo,
+        private readonly SuplantacionActual $suplantacion,
+        private readonly AjustesSuplantacion $ajustesSuplantacion,
     ) {}
 
     /**
      * `capacidades` (código → ámbitos), `recursos` (entidad de la API
      * genérica → ver/editar/eliminar), `sistema`, la estación de trabajo, las
-     * que puede elegir y una `huella` que cambia con cualquier cambio.
+     * que puede elegir, la `suplantacion` en curso (quién entró como este
+     * usuario, hasta cuándo y qué puede en el chat; null si no la hay) y una
+     * `huella` que cambia con cualquier cambio.
      */
     #[Route('/acceso', name: 'acceso', methods: ['GET'])]
     public function acceso(#[CurrentUser] Usuario $usuario): JsonResponse
@@ -62,6 +69,7 @@ final class MiAccesoController extends AbstractController
             'agencia' => $agencia === null ? null : ['id' => (int) $agencia->getId(), 'nombre' => $agencia->getNombre()],
             'estacionTrabajo' => $estacion === null ? null : ['id' => (int) $estacion->getId(), 'nombre' => $estacion->getNombre(), 'alias' => $estacion->getAlias(), 'departamento' => $estacion->getDepartamento()],
             'estaciones' => $this->estacionTrabajo->opciones($usuario),
+            'suplantacion' => Suplantador::estado($this->suplantacion, $this->ajustesSuplantacion),
             'huella' => $permisos->huella() . ':' . ($estacion?->getId() ?? '-'),
         ]);
     }

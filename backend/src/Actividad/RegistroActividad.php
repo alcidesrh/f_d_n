@@ -30,6 +30,7 @@ final class RegistroActividad implements ResetInterface
     private const COLUMNAS = [
         "fecha", "usuario_id", "empresa_id", "estacion_id", "tipo", "accion", "metodo", "ruta",
         "estado", "duracion_ms", "ip", "agente", "request_id", "entidad", "registro_id", "detalle",
+        "suplantado_por_id",
     ];
 
     /** @var list<array<string, mixed>> */

@@ -30,6 +30,7 @@
 
     <EstacionTrabajoDialog v-if="session.user" />
     <SolicitarAutorizacionDialog v-if="session.user" />
+    <SuplantacionAviso />
   </div>
 </template>
 
@@ -58,6 +59,7 @@ import NavArea from './navigation/NavArea.vue'
 import Sidebar from './Sidebar.vue'
 import SidebarLeft from './SidebarLeft.vue'
 import SidebarRight from './SidebarRight.vue'
+import SuplantacionAviso from './SuplantacionAviso.vue'
 import { defineSidebarStore } from './sidebarStore'
 
 const route = useRoute()
@@ -124,8 +126,12 @@ watch(
     })
     void cuenta.cargar()
     void autorizaciones.cargarResumen()
-    void chat.iniciar()
-    void correo.iniciar()
+    // Suplantando con el chat bloqueado, ni el chat ni el correo del usuario se abren.
+    void (session.suplantando ? acceso.asegurar() : Promise.resolve(null)).then((a) => {
+      if (a?.suplantacion?.chat === 'bloquear') return
+      void chat.iniciar()
+      void correo.iniciar()
+    })
     metadata.iniciar()
     void iniciarActividad(router)
   },
