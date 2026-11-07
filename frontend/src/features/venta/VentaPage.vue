@@ -20,7 +20,7 @@
     <div class="@container">
       <div ref="grilla" class="grid grid-cols-1 items-start gap-2 md:gap-4 @3xl:grid-cols-[minmax(0,1fr)_20rem] @3xl:grid-rows-[auto_1fr]">
         <!-- Columna principal -->
-        <div class="flex min-w-0 flex-col gap-1">
+        <div class="flex min-w-0 flex-col">
           <section v-if="store.reasignacion" class="panel flex flex-col gap-3 reasignacion">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div class="font-semibold">
@@ -44,7 +44,7 @@
             <Message v-if="store.parejas.some((p) => p.igual === false)" severity="warn" :closable="false">El precio del asiento elegido no coincide con el del boleto. Cambie de asiento, el tramo o marque «cobrar el trayecto completo» si así se vendió.</Message>
           </section>
 
-          <section class="panel flex flex-col">
+          <section class="panel flex flex-col gap-3">
             <div class="grid grid-cols-2 items-start gap-x-2 gap-y-1.5 md:gap-3 @xl:grid-cols-3">
               <div class="campo col-span-2 @xl:col-span-1">
                 <span class="text-sm font-medium">{{ store.porRango ? "Rango de salida" : "Fecha de salida" }}</span>
