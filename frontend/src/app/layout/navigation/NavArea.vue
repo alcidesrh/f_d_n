@@ -28,7 +28,6 @@
 import { gsap } from "gsap";
 import { useUserMenusStore, type LayoutArea } from "@/core/navigation/userMenus";
 import type { SidebarStore } from "../sidebarStore";
-import { idsDelArbol } from "./arbol";
 import NavMenuBar from "./NavMenuBar.vue";
 import NavTree from "./NavTree.vue";
 
@@ -39,13 +38,7 @@ const menus = computed(() => userMenus.areas[props.area]);
 
 /** Menús contraídos: los guarda el store del panel (por usuario). */
 const opened = computed(() => new Set(props.sidebar?.expandedMenus ?? []));
-/** Cerrar un menú (o abrir otro, que cierra el anterior) pliega sus grupos: al volver a abrirlo, arranca como la primera vez. */
-function toggle(id: number) {
-  const antes = opened.value;
-  props.sidebar?.toggleMenu(id);
-  const cerrados = menus.value.filter((m) => antes.has(m.id) && !opened.value.has(m.id));
-  if (cerrados.length) props.sidebar?.collapseItems(cerrados.flatMap((m) => idsDelArbol(m.items)));
-}
+const toggle = (id: number) => props.sidebar?.toggleMenu(id);
 
 function onEnter(el: Element, done: () => void) {
   gsap.fromTo(
