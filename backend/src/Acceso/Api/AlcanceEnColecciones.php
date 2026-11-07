@@ -43,6 +43,12 @@ final class AlcanceEnColecciones implements QueryCollectionExtensionInterface
         if ($condicion === '1 = 1') {
             return;
         }
+        // Por una relación, la empresa viene de la fila relacionada. Si el LEFT JOIN no la encuentra
+        // (el filtro de tenant la oculta, ADR-015), el campo queda a null y la rama "compartido"
+        // (`IS NULL`) la dejaría pasar: se exige que la fila exista. Sin relación, un null es compartido.
+        if ($partes !== []) {
+            $queryBuilder->andWhere("$alias.id IS NOT NULL");
+        }
         $queryBuilder->andWhere($condicion);
         foreach ($parametros as $nombre => $valor) {
             $queryBuilder->setParameter($nombre, $valor);

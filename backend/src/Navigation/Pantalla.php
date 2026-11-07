@@ -43,6 +43,25 @@ final class Pantalla
     /** @param array<string, string> $parametros */
     public function admite(PermisosUsuario $permisos, CatalogoRecursos $recursos, array $parametros = []): bool
     {
+        return $this->decidir($permisos, $recursos, $parametros, false);
+    }
+
+    /**
+     * Se le muestra en la navegación (menús y administración): la puede
+     * abrir y, si es el listado de una entidad de lectura libre, puede
+     * mantenerla (`DefinicionRecurso::seMuestra`). Solo acota a `admite`:
+     * el router deja abrir por la dirección lo que aquí no se muestra.
+     *
+     * @param array<string, string> $parametros
+     */
+    public function muestra(PermisosUsuario $permisos, CatalogoRecursos $recursos, array $parametros = []): bool
+    {
+        return $this->decidir($permisos, $recursos, $parametros, true);
+    }
+
+    /** @param array<string, string> $parametros */
+    private function decidir(PermisosUsuario $permisos, CatalogoRecursos $recursos, array $parametros, bool $navegacion): bool
+    {
         if ($this->capacidades !== [] && !array_any($this->capacidades, static fn(string $c) => $permisos->tiene($c))) {
             return false;
         }
@@ -62,7 +81,7 @@ final class Pantalla
         $registro = $this->recurso['registro'] ?? null;
         $operacion = $registro !== null && trim((string) ($parametros[$registro] ?? '')) !== '' ? DefinicionRecurso::VER : $this->recurso['operacion'];
 
-        return $definicion->permite($permisos, $operacion);
+        return $navegacion ? $definicion->seMuestra($permisos, $operacion) : $definicion->permite($permisos, $operacion);
     }
 
     /** `bus-clase` (parámetro de `/lista/:entity`) → `BusClase` (la entidad), como `recursoDeRuta` del frontend. */

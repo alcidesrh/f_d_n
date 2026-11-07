@@ -16,7 +16,9 @@ use Symfony\Contracts\Service\ResetInterface;
  * o por path. Lo usan los menús (`UserMenus`) y la administración
  * (`App\Administracion\PanelAdministracion`) para no mandar lo que el
  * usuario no puede abrir. Es presentación: lo que la pantalla hace, la API
- * lo exige igual.
+ * lo exige igual. Por eso acota un poco más que el router: el listado de
+ * una entidad de lectura libre solo se muestra a quien puede mantenerla
+ * (`Pantalla::muestra`); los demás la leen donde la usan.
  *
  * Lo que no se conoce no se esconde (el frontend lo pinta inerte o lo
  * abre, y su router decide): una ruta que no está en el catálogo, un path
@@ -88,10 +90,15 @@ final class Pantallas implements ResetInterface
         $this->patrones = null;
     }
 
-    /** @param array<string, string> $parametros */
+    /**
+     * Es navegación: el listado de lo que se lee libre, solo a quien puede
+     * mantenerlo (`Pantalla::muestra`).
+     *
+     * @param array<string, string> $parametros
+     */
     private function admite(PermisosUsuario $permisos, Pantalla $pantalla, array $parametros): bool
     {
-        return $pantalla->admite($permisos, $this->recursos, $parametros);
+        return $pantalla->muestra($permisos, $this->recursos, $parametros);
     }
 
     /** @return array<string, Pantalla> */

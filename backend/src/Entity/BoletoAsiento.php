@@ -9,6 +9,7 @@ use ApiPlatform\Metadata\GraphQl\Query;
 use ApiPlatform\Metadata\GraphQl\QueryCollection;
 use App\Filter\ColumnaFilter;
 use App\Entity\Base\Base;
+use App\Entity\Base\Traits\TimestampableEntityTrait;
 use App\Entity\Embeddable\Precio;
 use App\Entity\Enum\EstadoBoletoAsiento;
 use Doctrine\ORM\Mapping as ORM;
@@ -38,6 +39,8 @@ use Money\Money;
 #[Recurso(nombre: "Boletos", area: "Venta", soloLectura: true, ver: "boleto.ver", empresa: "salida.empresa")]
 class BoletoAsiento extends Base
 {
+    use TimestampableEntityTrait;
+
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
     private ?Asiento $asiento = null;

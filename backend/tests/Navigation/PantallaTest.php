@@ -9,6 +9,7 @@ use App\Acceso\Catalogo\CatalogoRecursos;
 use App\Acceso\Concesion;
 use App\Acceso\PermisosUsuario;
 use App\Entity\ApiToken;
+use App\Entity\Asiento;
 use App\Entity\Bus;
 use App\Entity\BusClase;
 use App\Entity\Role;
@@ -26,7 +27,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class PantallaTest extends TestCase
 {
-    private const CATALOGO = ['venta.vender', 'boleto.ver', 'config.editar', 'bus.ver', 'bus.editar', 'bus.eliminar'];
+    private const CATALOGO = ['venta.vender', 'boleto.ver', 'config.editar', 'bus.ver', 'bus.editar', 'bus.eliminar', 'bus_clase.editar'];
 
     private static function permisos(array $capacidades, bool $sistema = false, int $rol = 7): PermisosUsuario
     {
@@ -35,7 +36,7 @@ final class PantallaTest extends TestCase
 
     private static function recursos(): CatalogoRecursos
     {
-        return CatalogoRecursos::desdeClases([Bus::class, BusClase::class, ApiToken::class]);
+        return CatalogoRecursos::desdeClases([Bus::class, BusClase::class, ApiToken::class, Asiento::class]);
     }
 
     private static function lista(): Pantalla
@@ -73,6 +74,21 @@ final class PantallaTest extends TestCase
         $this->assertTrue(self::lista()->admite(self::permisos([]), self::recursos(), ['entity' => 'bus-clase']), 'de lectura libre');
         $this->assertFalse(self::lista()->admite(self::permisos([], sistema: true), self::recursos(), ['entity' => 'api-token']), 'lo oculto no lo abre nadie');
         $this->assertFalse(self::lista()->admite(self::permisos([], sistema: true), self::recursos(), ['entity' => 'no-existe']));
+    }
+
+    public function testLaNavegacionMuestraElListadoDeLecturaLibreSoloAQuienPuedeMantenerlo(): void
+    {
+        $vendedor = self::permisos(['venta.vender', 'boleto.ver']);
+        $this->assertTrue(self::lista()->admite($vendedor, self::recursos(), ['entity' => 'bus-clase']), 'el router lo deja abrir');
+        $this->assertFalse(self::lista()->muestra($vendedor, self::recursos(), ['entity' => 'bus-clase']), 'pero no se le muestra');
+        $this->assertFalse(self::formulario()->muestra($vendedor, self::recursos(), ['entity' => 'bus-clase', 'id' => '3']));
+        $this->assertTrue(self::lista()->muestra(self::permisos(['bus_clase.editar']), self::recursos(), ['entity' => 'bus-clase']));
+        $this->assertTrue(self::lista()->muestra(self::permisos([], sistema: true), self::recursos(), ['entity' => 'bus-clase']));
+
+        $this->assertTrue(self::lista()->muestra(self::permisos(['bus.ver']), self::recursos(), ['entity' => 'bus']), 'con su capacidad de ver, como siempre');
+        $this->assertFalse(self::lista()->muestra($vendedor, self::recursos(), ['entity' => 'bus']));
+        $this->assertTrue(self::lista()->muestra($vendedor, self::recursos(), ['entity' => 'asiento']), 'solo lectura: no hay quién la mantenga, a todos');
+        $this->assertTrue((new Pantalla('venta', '/venta', ['venta.vender']))->muestra($vendedor, self::recursos()), 'fuera del CRUD genérico, igual que admite');
     }
 
     public function testSinEntidadEsElSelectorYExigeSuCapacidad(): void

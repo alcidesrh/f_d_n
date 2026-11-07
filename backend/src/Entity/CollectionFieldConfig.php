@@ -11,19 +11,23 @@ use Symfony\Component\Serializer\Attribute\Groups;
  * Platform: se edita con su configuración (`ConfiguracionListadoController`).
  */
 #[ORM\Entity]
-class CollectionFieldConfig extends FieldConfig implements ConfiguracionDelCliente
+class CollectionFieldConfig extends FieldConfig implements
+    ConfiguracionDelCliente
 {
-
-    #[ORM\ManyToOne(inversedBy: 'collectionFieldConfig')]
-    #[ORM\JoinColumn(name: 'list_config_id', nullable: false, onDelete: 'CASCADE')]
+    #[ORM\ManyToOne(inversedBy: "collectionFieldConfig")]
+    #[ORM\JoinColumn(
+        name: "list_config_id",
+        nullable: false,
+        onDelete: "CASCADE",
+    )]
     public ListConfiguration $listConfig;
 
     #[ORM\Column(nullable: true)]
-    #[Groups(['read:dto'])]
+    #[Groups(["read:dto"])]
     private ?bool $sortable = null;
 
     #[ORM\Column(nullable: true)]
-    #[Groups(['read:dto'])]
+    #[Groups(["read:dto"])]
     private ?bool $filterable = null;
 
     /**
@@ -31,7 +35,7 @@ class CollectionFieldConfig extends FieldConfig implements ConfiguracionDelClien
      * o un preset (`xs`, `sm`, `md`, `lg`, `xl`). Null: el listado lo decide.
      */
     #[ORM\Column(length: 20, nullable: true)]
-    #[Groups(['read:dto'])]
+    #[Groups(["read:dto"])]
     private ?string $width = null;
 
     /**
@@ -41,7 +45,7 @@ class CollectionFieldConfig extends FieldConfig implements ConfiguracionDelClien
      * Solo tiene efecto en columnas de relación filtrables.
      */
     #[ORM\Column(nullable: true)]
-    #[Groups(['read:dto'])]
+    #[Groups(["read:dto"])]
     private ?bool $autocomplete = null;
 
     /**
@@ -49,7 +53,7 @@ class CollectionFieldConfig extends FieldConfig implements ConfiguracionDelClien
      * las columnas con `true` se editan ahí (null y false significan lo mismo).
      */
     #[ORM\Column(nullable: true)]
-    #[Groups(['read:dto'])]
+    #[Groups(["read:dto"])]
     private ?bool $editable = null;
 
     /**
@@ -59,9 +63,12 @@ class CollectionFieldConfig extends FieldConfig implements ConfiguracionDelClien
     public function __construct(array $data)
     {
         $this->setSortable(false)->setFilterable(false);
-        $this->setField($data[0])->setVisible(true)->setLabel($data[0])->setAttrs(null);
+        $this->setField($data[0])
+            ->setVisible(true)
+            ->setLabel($data[0])
+            ->setAttrs(null);
         $this->setData($data);
-        if (\in_array($data[0], ['legacyId', 'apiTokens'])) {
+        if (\in_array($data[0], ["legacyId", "apiTokens"])) {
             $this->visible = false;
         }
     }
@@ -73,12 +80,11 @@ class CollectionFieldConfig extends FieldConfig implements ConfiguracionDelClien
     public function setData(array $data)
     {
         $this->kind = match ($data[1]) {
-            'select', 'multiple', 'simple_array' => 'list',
-            'datetime', 'date' => 'date',
-            default => 'scalar'
+            "select", "multiple", "simple_array" => "list",
+            "datetime", "date" => "date",
+            default => "scalar",
         };
     }
-
 
     public function getListConfig(): ListConfiguration
     {
@@ -94,7 +100,9 @@ class CollectionFieldConfig extends FieldConfig implements ConfiguracionDelClien
 
     public function entidadConfigurada(): ?string
     {
-        return isset($this->listConfig) ? $this->listConfig->entidadConfigurada() : null;
+        return isset($this->listConfig)
+            ? $this->listConfig->entidadConfigurada()
+            : null;
     }
 
     /** La misma columna, sin configuración (para otra `ListConfiguration`). */
@@ -139,7 +147,7 @@ class CollectionFieldConfig extends FieldConfig implements ConfiguracionDelClien
     public function setWidth(?string $width): static
     {
         $width = $width === null ? null : trim($width);
-        $this->width = $width === '' ? null : $width;
+        $this->width = $width === "" ? null : $width;
 
         return $this;
     }

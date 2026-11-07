@@ -1,6 +1,6 @@
 <!--
   Reproducción de la trayectoria GPS de una salida (ADR-050), ruta `/seguimiento/reproducir` (`?salida=` abre una).
-  Se elige el día y una de sus salidas con lecturas guardadas; el mapa dibuja lo recorrido (tenue), lo ya reproducido
+  Se elige el día y una de sus salidas con lecturas guardadas; el mapa dibuja lo ya reproducido
   en raya de color (como la estela del mapa en vivo) y la ruta planificada en línea fina con sus estaciones, y el bus avanza con el reloj a la velocidad elegida (×10 a ×300). La barra
   lleva a cualquier momento. Un hueco de más de 5 min sin lecturas se dibuja en raya gris y se salta al reproducir.
   «Seguir al bus» mueve el mapa cuando el bus se sale de la vista.
@@ -309,7 +309,7 @@ function cerrar() {
   void router.replace({ query: {} });
 }
 
-/** Ruta planificada, estaciones y todo lo recorrido (tenue, con los huecos sin señal en gris). Un teléfono no tiene ruta. */
+/** Ruta planificada, estaciones y los huecos sin señal (en gris). Lo recorrido se dibuja al reproducir, no antes. Un teléfono no tiene ruta. */
 function dibujarFijo() {
   if (!capaFija || (!trayectoria.value && !telefono.value)) return;
   capaFija.clearLayers();
@@ -322,8 +322,7 @@ function dibujarFijo() {
       .bindTooltip(`${escapar(e.nombre)}${exacta ? "" : `<br><small>${escapar(ORIGEN_COORDENADA[e.origen] ?? "")}</small>`}`)
       .addTo(capaFija);
   }
-  const { tramos, huecos } = partirPorHuecos(puntos.value);
-  for (const tramo of tramos) L.polyline(tramo, { color: color.value, weight: 4, opacity: 0.25, interactive: false }).addTo(capaFija);
+  const { huecos } = partirPorHuecos(puntos.value);
   for (const h of huecos) L.polyline(h, { color: "#64748b", weight: 2, opacity: 0.8, dashArray: "2 6", interactive: false }).addTo(capaFija);
 }
 
@@ -342,7 +341,7 @@ function dibujarMovil(forzar = false) {
   ultimoDibujo = ahora;
 
   const recorrido = recorridoHasta(puntos.value, p);
-  // En raya, como la estela del mapa en vivo, y más oscura que el color; entre raya y raya se ve lo recorrido tenue.
+  // En raya, como la estela del mapa en vivo, y más oscura que el color.
   if (!linea) linea = L.polyline(recorrido, { color: colorRaya.value, weight: 3, opacity: 1, dashArray: "6 6", interactive: false }).addTo(mapa);
   else linea.setStyle({ color: colorRaya.value }).setLatLngs(recorrido);
 

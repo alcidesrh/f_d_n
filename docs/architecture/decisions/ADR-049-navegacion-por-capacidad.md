@@ -81,6 +81,23 @@ Agrega las columnas de `vue_route` y deja la navegación como estaba:
 **Negativas / pendientes:**
 
 - El backend conoce las rutas por la sincronización. Tras cambiar una ruta, hasta que entra alguien con `config.editar`, rige la versión anterior: se puede ver algo que el router después no deja abrir, o al revés. No es un riesgo de seguridad, porque la API exige lo suyo.
-- Las listas de lectura libre (rutas, íconos, ítems de menú, roles) las abre cualquiera. Sus enlaces en la caja «Sistema» se ven si la caja no tiene audiencia: es un caso para curar con roles.
+- Las listas de lectura libre (rutas, íconos, ítems de menú, roles) las abre cualquiera. ~~Sus enlaces en la caja «Sistema» se ven si la caja no tiene audiencia: es un caso para curar con roles.~~ Resuelto en la enmienda 2026-11.
 - Las audiencias que hoy repiten capacidades (p. ej. los ocho roles de «Encomienda») se dejan como están: son curaduría y cambiarlas es decisión de negocio. Sobran cuando nombran todos los roles que pueden abrir algún ítem del menú.
 - `/administracion`, `/ayuda`, `/chat` y `/autorizaciones` no exigen capacidad: su ítem lo ve cualquiera que vea su menú.
+
+## Enmienda 2026-11: la lectura libre no lleva a la navegación
+
+Con la regla de arriba, el listado del CRUD genérico de una entidad de lectura libre (estaciones, enclaves, localidades, naciones, trayectos, clases y marcas de bus, empresas, agencias, monedas, tipos de pago y de documento, tarifas de encomienda…) lo «podía abrir» cualquiera con sesión. Un usuario con solo `ROLE_BOLETO` veía en `/administracion` siete cajas: cinco de ellas solo por esos catálogos. Curarlo con audiencia era volver a las listas a mano que esta decisión quitó.
+
+La lectura libre es una decisión de la API: que cualquiera lea el catálogo donde lo usa (un selector, la venta). No dice que el listado sea una pantalla de su puesto. Por eso, **en la navegación** (menús y administración, `App\Navigation\Pantallas`):
+
+```
+listado de una entidad de lectura libre visible ⇔ puede editarla (su capacidad `editar`)
+```
+
+- `DefinicionRecurso::seMuestra` es `permite` sin contar la lectura libre; `Pantalla::muestra` es `admite` con esa regla. Vale también para abrir un registro existente (`entity-form` con `id`).
+- Lo de lectura libre que no se escribe por la API genérica (solo lectura: asientos, roles, rutas del frontend) sigue a la vista de todos: no hay a quién reservarlo. Se cura con audiencia.
+- El router no cambia: quien tiene la dirección la abre (la API la deja leer igual). La navegación muestra menos de lo que el router deja abrir, nunca más.
+- El de sistema lo ve todo, como antes.
+
+**Pendiente:** un puesto que debe ver el listado de un catálogo de lectura libre sin poder editarlo no tiene cómo tenerlo en la navegación (la audiencia no amplía). Si aparece el caso, la salida es que `#[Recurso]` admita una capacidad `ver` además de la lectura libre, solo para la navegación.

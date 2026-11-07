@@ -7,7 +7,7 @@
 
     <Teleport v-if="store" to="body" :disabled="!maximized">
       <div class="list-page" :class="{ 'is-maximized': maximized, 'is-fill': fill }" :aria-modal="maximized || undefined" :role="maximized ? 'dialog' : undefined">
-        <ListToolbar v-if="features.toolbar" :features="features" :columns="store.columns" :view="store.view" :active-filters="filters.active.value.length" :filter-panel="cardsMode" :selection-mode="modoSeleccion" :selected-count="selectedRows.length" :acciones="enSelector ? [] : accionesDisponibles" :enlaces="enSelector ? [] : (entityListLinks[entityName] ?? [])" :maximized="maximized" :configurable="!enSelector" :custom-filter="customFilterButton" @toggle-custom-filter="store.view.customFilterOpen = !store.view.customFilterOpen" @toggle-selection="toggleSelectionMode" @clear-selection="setSelection([])" @share="compartir = true" @accion="ejecutarAccion" @column-visible="setColumnVisible" @show-all-columns="showAllColumns" @toggle-filters="store.view.filtersOpen = !store.view.filtersOpen" @density="store.view.density = $event" @layout="store.view.layout = $event" @maximize="maximized = !maximized" @reset="resetView" @create="onCreate" @configure="onConfigure">
+        <ListToolbar v-if="features.toolbar" :features="features" :columns="store.columns" :view="store.view" :active-filters="filters.active.value.length" :filter-panel="cardsMode" :selection-mode="modoSeleccion" :selected-count="selectedRows.length" :acciones="enSelector ? [] : accionesDisponibles" :enlaces="enSelector ? [] : (entityListLinks[entityName] ?? [])" :maximized="maximized" :configurable="puedeConfigurar" :custom-filter="customFilterButton" @toggle-custom-filter="store.view.customFilterOpen = !store.view.customFilterOpen" @toggle-selection="toggleSelectionMode" @clear-selection="setSelection([])" @share="compartir = true" @accion="ejecutarAccion" @column-visible="setColumnVisible" @show-all-columns="showAllColumns" @toggle-filters="store.view.filtersOpen = !store.view.filtersOpen" @density="store.view.density = $event" @layout="store.view.layout = $event" @maximize="maximized = !maximized" @reset="resetView" @create="onCreate" @configure="onConfigure">
           <template #start>
             <div v-if="store.customFilter" class="list-chips" :aria-label="`${customFilter?.label ?? 'Filtro'} aplicado`">
               <span v-for="chip in store.customFilter.chips" :key="chip.label" class="list-chip list-chip--custom">
@@ -180,6 +180,8 @@ function elegirEntidad(slug: string | null) {
 /** Boletos, ventas…: se operan con acciones propias, no se editan ni se eliminan a mano. */
 const soloLectura = computed(() => entityReadOnly.has(entityName.value));
 const acceso = useAccesoStore();
+/** «Configurar entidad» solo si puede abrir su pantalla (`meta.capacidad` de `entity-config`, ADR-049). */
+const puedeConfigurar = computed(() => !enSelector.value && acceso.puedeEntrar(router.resolve({ name: "entity-config", params: { entidad: entitySlug(entityName.value) } })));
 const features = computed(() =>
   resolveListFeatures({
     selector: enSelector.value,

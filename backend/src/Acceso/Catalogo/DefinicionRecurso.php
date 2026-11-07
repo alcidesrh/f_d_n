@@ -84,6 +84,23 @@ final class DefinicionRecurso
         return $capacidad !== null && $permisos->tiene($capacidad);
     }
 
+    /**
+     * Lleva a la navegación (menús y `/administracion`, enmienda 2026-11 de
+     * ADR-049): como `permite`, pero leer libre no cuenta. La lectura libre
+     * es para que cualquiera lea el catálogo donde lo usa (un selector, la
+     * venta); su listado se le muestra a quien puede mantenerlo. Lo que no se
+     * escribe por la API genérica (solo lectura) sigue a la vista de todos:
+     * no hay a quién reservarlo, se cura con audiencia.
+     */
+    public function seMuestra(PermisosUsuario $permisos, string $operacion): bool
+    {
+        if ($operacion === self::VER && $this->lecturaLibre && $this->editar !== null) {
+            return $this->permite($permisos, self::EDITAR);
+        }
+
+        return $this->permite($permisos, $operacion);
+    }
+
     /** `{ ver, editar, eliminar }` de un usuario (lo que lee el frontend en `/api/me/acceso`). */
     public function permisosDe(PermisosUsuario $permisos): array
     {

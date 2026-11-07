@@ -27,29 +27,20 @@
         <button v-if="features.view" type="button" class="list-toolbar__btn tap-target" aria-label="Vista" v-tooltip.bottom="'Vista'" @click="viewPopover?.toggle($event)">
           <icon :name="DENSITY_ICON[view.density]" size="1rem" :weight="500" />
         </button>
+
+        <button v-if="features.columns" type="button" class="list-toolbar__btn tap-target" aria-label="Columnas" v-tooltip.bottom="'Columnas'" @click="columnsPopover?.toggle($event)">
+          <OverlayBadge v-if="hiddenCount > 0" :value="String(hiddenCount)" severity="secondary" size="small" class="flex">
+            <icon name="table_edit-outline" size="1.25rem" />
+          </OverlayBadge>
+          <icon v-else name="table_edit-outline" size="1.25rem" />
+        </button>
+
         <button v-if="features.maximize" type="button" class="list-toolbar__btn tap-target" :aria-label="maximized ? 'Restaurar tamaño' : 'Maximizar'" v-tooltip.bottom="maximized ? 'Restaurar (Esc)' : 'Maximizar'" @click="emit('maximize')">
           <icon :name="maximized ? 'fullscreen-exit' : 'fullscreen'" size="1.3rem" />
         </button>
         <span v-if="features.view || features.columns" class="list-toolbar__sep" aria-hidden="true" />
-        <button v-if="features.columns" type="button" class="list-toolbar__btn tap-target" aria-label="Columnas" v-tooltip.bottom="'Columnas'" @click="columnsPopover?.toggle($event)">
-          <OverlayBadge v-if="hiddenCount > 0" :value="String(hiddenCount)" severity="secondary" size="small">
-            <icon name="view-column-outline" size="1.25rem" />
-          </OverlayBadge>
-          <icon v-else name="view-column-outline" size="1.25rem" />
-        </button>
       </div>
-      <Popover ref="viewPopover">
-        <div class="flex flex-col gap-3 p-1">
-          <div class="flex flex-col gap-1.5">
-            <span class="text-xs font-semibold uppercase tracking-wide text-surface-500">Densidad</span>
-            <SelectButton :model-value="view.density" :options="DENSITIES" option-label="label" option-value="value" :allow-empty="false" size="small" @update:model-value="emit('density', $event)" />
-          </div>
-          <div class="flex flex-col gap-1.5">
-            <span class="text-xs font-semibold uppercase tracking-wide text-surface-500">Disposición</span>
-            <SelectButton :model-value="view.layout" :options="LAYOUTS" option-label="label" option-value="value" :allow-empty="false" size="small" @update:model-value="emit('layout', $event)" />
-          </div>
-        </div>
-      </Popover>
+
       <Popover ref="columnsPopover">
         <div class="flex w-64 max-w-[80vw] flex-col gap-1">
           <div class="flex items-center justify-between px-1 pb-1">
@@ -83,25 +74,21 @@
         <icon :name="selectionMode ? 'check-box' : 'check-box-outline'" size="1.25rem" />
       </button>
 
-      <button v-if="features.create" type="button" class="list-toolbar__btn list-toolbar__btn--crear tap-target" aria-label="Nuevo" v-tooltip.bottom="'Nuevo'" @click="emit('create')">
+      <button v-if="features.create" type="button" class="list-toolbar__btn tap-target" aria-label="Nuevo" v-tooltip.bottom="'Nuevo'" @click="emit('create')">
         <icon name="add" size="1.55rem" class="text-inherit" />
       </button>
 
-      <div class="list-toolbar__extra">
-        <span v-if="features.maximize || configurable || features.reset" class="list-toolbar__sep" aria-hidden="true" />
+      <!-- <div class="list-toolbar__extra">
+        <span v-if="features.maximize || configurable || features.reset" class="list-toolbar__sep" aria-hidden="true" /> -->
 
-        <RouterLink v-for="enlace in enlaces" :key="enlace.key" :to="enlace.to" class="list-toolbar__btn tap-target" :aria-label="enlace.label" v-tooltip.bottom="enlace.label">
-          <icon :name="enlace.icon" size="1.25rem" />
-        </RouterLink>
+      <button v-if="configurable" type="button" class="list-toolbar__btn tap-target" aria-label="Configurar entidad" v-tooltip.bottom="'Configurar entidad'" @click="emit('configure')">
+        <icon name="settings-outline" size="1.25rem" />
+      </button>
 
-        <button v-if="configurable" type="button" class="list-toolbar__btn tap-target" aria-label="Configurar entidad" v-tooltip.bottom="'Configurar entidad'" @click="emit('configure')">
-          <icon name="settings-outline" size="1.25rem" />
-        </button>
-
-        <button v-if="features.reset" type="button" class="list-toolbar__btn tap-target" aria-label="Restablecer vista" v-tooltip.bottom="'Restablecer vista'" @click="emit('reset')">
-          <icon name="refresh" size="1.25rem" />
-        </button>
-      </div>
+      <button v-if="features.reset" type="button" class="list-toolbar__btn tap-target" aria-label="Restablecer vista" v-tooltip.bottom="'Restablecer vista'" @click="emit('reset')">
+        <icon name="refresh" size="1.25rem" />
+      </button>
+      <!-- </div> -->
 
       <button v-if="opcionesMas.length" ref="botonMas" type="button" class="list-toolbar__btn list-toolbar__mas tap-target" aria-label="Más opciones" aria-haspopup="true" @click="menuMas?.toggle($event)">
         <icon name="more-vert" size="1.25rem" />
@@ -193,14 +180,7 @@ const hiddenCount = computed(() => props.columns.filter((c) => c.visible === fal
 const visibleCount = computed(() => props.columns.length - hiddenCount.value);
 
 /** Lo de `__extra` cuando no cabe. Vista y Columnas abren su panel desde este botón. */
-const opcionesMas = computed<MenuItem[]>(() => [
-  ...(props.features.view ? [{ label: "Vista", iconName: DENSITY_ICON[props.view.density], command: ({ originalEvent }: { originalEvent: Event }) => viewPopover.value?.show(originalEvent, botonMas.value) }] : []),
-  ...(props.features.maximize ? [{ label: props.maximized ? "Restaurar tamaño" : "Maximizar", iconName: props.maximized ? "fullscreen-exit" : "fullscreen", command: () => emit("maximize") }] : []),
-  ...(props.features.columns ? [{ label: "Columnas", iconName: "view-column-outline", command: ({ originalEvent }: { originalEvent: Event }) => columnsPopover.value?.show(originalEvent, botonMas.value) }] : []),
-  ...props.enlaces.map((enlace) => ({ label: enlace.label, iconName: enlace.icon, command: () => void router.push(enlace.to) })),
-  ...(props.configurable ? [{ label: "Configurar entidad", iconName: "settings-outline", command: () => emit("configure") }] : []),
-  ...(props.features.reset ? [{ label: "Restablecer vista", iconName: "refresh", command: () => emit("reset") }] : []),
-]);
+const opcionesMas = computed<MenuItem[]>(() => [...(props.features.view ? [{ label: "Vista", iconName: DENSITY_ICON[props.view.density], command: ({ originalEvent }: { originalEvent: Event }) => viewPopover.value?.show(originalEvent, botonMas.value) }] : []), ...(props.features.maximize ? [{ label: props.maximized ? "Restaurar tamaño" : "Maximizar", iconName: props.maximized ? "fullscreen-exit" : "fullscreen", command: () => emit("maximize") }] : []), ...(props.features.columns ? [{ label: "Columnas", iconName: "view-column-outline", command: ({ originalEvent }: { originalEvent: Event }) => columnsPopover.value?.show(originalEvent, botonMas.value) }] : []), ...props.enlaces.map((enlace) => ({ label: enlace.label, iconName: enlace.icon, command: () => void router.push(enlace.to) })), ...(props.configurable ? [{ label: "Configurar entidad", iconName: "settings-outline", command: () => emit("configure") }] : []), ...(props.features.reset ? [{ label: "Restablecer vista", iconName: "refresh", command: () => emit("reset") }] : [])]);
 </script>
 
 <style scoped>
@@ -266,11 +246,7 @@ const opcionesMas = computed<MenuItem[]>(() => [
   background: color-mix(in srgb, var(--p-surface-500) 12%, transparent);
   color: var(--p-text-color);
 }
-.list-toolbar__btn--crear,
-.list-toolbar__btn--crear:hover {
-  background: var(--p-primary-color);
-  color: var(--p-primary-contrast-color);
-}
+
 .list-toolbar__btn.is-on {
   background: color-mix(in srgb, var(--p-primary-color) 12%, transparent);
   color: var(--p-primary-color);
