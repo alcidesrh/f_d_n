@@ -111,9 +111,35 @@ export class Etiquetas {
   }
 }
 
-/** Color primario del tema en el elemento: las capas de MapLibre no leen `var()`. */
+const PRIMARIO_POR_DEFECTO = '#3b82f6'
+const colores = new Map<string, string>()
+
+/**
+ * Un color CSS cualquiera como `rgba()`: MapLibre no entiende `oklch()` ni
+ * `color-mix()`, que es como llegan los del tema. Lo pinta el navegador en un
+ * lienzo de un píxel y se lee el resultado. Nulo si el navegador no lo reconoce.
+ */
+export function colorParaMapa(valor: string): string | null {
+  const conocido = colores.get(valor)
+  if (conocido) return conocido
+  const ctx = document.createElement('canvas').getContext('2d', { willReadFrequently: true })
+  if (!ctx) return null
+  // Un color que no es válido deja el anterior: así se nota.
+  const centinela = '#010203'
+  ctx.fillStyle = centinela
+  ctx.fillStyle = valor
+  if (ctx.fillStyle === centinela && valor.trim().toLowerCase() !== centinela) return null
+  ctx.fillRect(0, 0, 1, 1)
+  const [r = 0, g = 0, b = 0, a = 255] = ctx.getImageData(0, 0, 1, 1).data
+  const rgba = `rgba(${r}, ${g}, ${b}, ${Math.round((a / 255) * 1000) / 1000})`
+  colores.set(valor, rgba)
+  return rgba
+}
+
+/** Color primario del tema en el elemento, en un formato que MapLibre entiende. */
 export function colorPrimario(el: Element | null): string {
-  return (el ? getComputedStyle(el).getPropertyValue('--p-primary-color').trim() : '') || '#3b82f6'
+  const valor = el ? getComputedStyle(el).getPropertyValue('--p-primary-color').trim() : ''
+  return (valor && colorParaMapa(valor)) || PRIMARIO_POR_DEFECTO
 }
 
 /** Gris del borde de un lugar que no es parada, y el relleno blanco de los puntos (en ambos temas). */

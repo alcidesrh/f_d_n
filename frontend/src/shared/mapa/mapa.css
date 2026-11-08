@@ -26,6 +26,10 @@
 }
 
 /* Globos y popups con los colores de la app (superficie y texto se invierten en oscuro). */
+.maplibregl-popup {
+  /* Encima de los marcadores (chips, buses, indicadores), que también son DOM sobre el mapa. */
+  z-index: 5;
+}
 .maplibregl-popup-content {
   padding: 6px 10px;
   color: var(--p-text-color);

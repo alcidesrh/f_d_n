@@ -330,6 +330,8 @@ function dibujarTarifas() {
     boton.textContent = String(t.tarifas.length);
     boton.title = etiqueta;
     boton.setAttribute("aria-label", etiqueta);
+    // Encima de los chips con nombres.
+    boton.style.zIndex = "3";
     // Al pulsar, el foco haría que el navegador desplace la página (y el clic se pierde): el ratón no enfoca el botón.
     boton.addEventListener("mousedown", (e) => e.preventDefault());
     boton.addEventListener("click", (e) => {

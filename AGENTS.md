@@ -56,6 +56,7 @@ Despliegue
 | `make testf F="name"` | Test por filtro                 |
 | `make e2e-usuario`    | Crea o reinicia la cuenta de pruebas y escribe `.env.e2e.local` (solo desarrollo) |
 | `make -s e2e-token`   | Token Bearer de la cuenta de pruebas para `curl` |
+| `make mapas`          | Prepara el mapa base y el grafo de Valhalla (ADR-055; la primera vez y cada mes) |
 
 ### Página web (en `pagina/`)
 
@@ -172,5 +173,6 @@ Para reglas detalladas de cada capa:
   - En desarrollo, tras cambiar un handler: `docker compose restart worker worker-pesadas programador`.
   - `make tareas` muestra el latido de cada tarea; `make tareas t=<código>` corre una ya.
   - Lo de `async` y `pesadas` que agota sus reintentos queda en `failed` (`messenger:failed:show`). Una tarea del programador que falla no se reintenta: lo intenta la próxima corrida.
+- Mapas (ADR-055): `mapas` (herramienta de una pasada) y `valhalla` (rutas por carretera) van en el perfil `mapas` de Compose, fuera de `make up`/`make prod`. `make mapas` deja las teselas, fuentes y sprites en el volumen `mapas_data` (Caddy los sirve en `/mapas/`) y el recorte de OpenStreetMap en `valhalla_data`, y recrea Valhalla, que reconstruye su grafo (minutos). Sin `make mapas` el mapa sale con fondo liso y los km por carretera no se calculan; `make valhalla` lo vuelve a levantar tras un `make down`.
 - `node_modules/.vite` puede quedar root-owned tras build del contenedor → `rm -rf node_modules/.vite`.
 - Auto-imports generan `auto-imports.d.ts` y `components.d.ts` — no editar a mano.

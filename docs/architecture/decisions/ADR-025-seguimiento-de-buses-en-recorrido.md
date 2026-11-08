@@ -34,11 +34,11 @@ Para probar con un teléfono: Traccar Client, *Identificador del dispositivo* = 
 
 ### Frontend
 
-Ruta `/seguimiento` (`features/seguimiento/`, Leaflet con teselas de OpenStreetMap), con `meta.label`/`icon` para aparecer en el sidebar derecho (en la lista de respaldo de rutas; si el usuario tiene menús configurados hay que añadir el ítem en `/configuracion/menus`). Filtros por empresa y salida (reglas puras en `core/seguimiento/filtro.ts`); elegir una salida enfoca el bus y su ruta.
+Ruta `/seguimiento` (`features/seguimiento/`, MapLibre con el mapa base propio desde ADR-055; antes Leaflet con teselas de OpenStreetMap), con `meta.label`/`icon` para aparecer en el sidebar derecho (en la lista de respaldo de rutas; si el usuario tiene menús configurados hay que añadir el ítem en `/configuracion/menus`). Filtros por empresa y salida (reglas puras en `core/seguimiento/filtro.ts`); elegir una salida enfoca el bus y su ruta.
 
 ## Consecuencias
 
-- Dependencia nueva: `leaflet` (+ `@types/leaflet`), sin alternativa ya presente para mapas.
+- Dependencia nueva: `leaflet` (+ `@types/leaflet`), sin alternativa ya presente para mapas. Reemplazada por `maplibre-gl` en ADR-055.
 - Mientras las estaciones no tengan coordenadas reales, los trazos y estaciones intermedias son aproximados (el mapa marca con círculo vacío las ubicadas por nombre). Registrar el GPS de las estaciones mejora el trazado sin cambiar código.
 
 ## Coordenadas de los enclaves

@@ -28,7 +28,7 @@
 | [ADR-022](ADR-022-rename-recorrido-a-salida.md) | Renombrar la entidad Recorrido a Salida (código y base de datos) | Aceptada |
 | [ADR-023](ADR-023-pagina-web-compra-en-una-pagina.md) | Página web: compra en una sola página, ida y vuelta, recargo, idiomas y SEO | Aceptada |
 | [ADR-024](ADR-024-gestion-de-salidas.md) | Gestión de salidas: programador, esquemas guardados y editar/anular/eliminar con propagación | Aceptada |
-| [ADR-025](ADR-025-seguimiento-de-buses-en-recorrido.md) | Seguimiento de buses en recorrido: mapa en tiempo real con GPS simulado | Aceptada |
+| [ADR-025](ADR-025-seguimiento-de-buses-en-recorrido.md) | Seguimiento de buses en recorrido: mapa en tiempo real con GPS simulado | Aceptada (el mapa, reemplazado por ADR-055) |
 | [ADR-026](ADR-026-chat-interno.md) | Chat interno: conversaciones, registros compartidos como tarjetas vivas y avisos privados por Mercure | Aceptada |
 | [ADR-027](ADR-027-croquis-molde-y-bus-inferido.md) | Croquis como molde para elegir el bus y bus inferido en la migración | Aceptada |
 | [ADR-028](ADR-028-anulacion-reasignacion-y-bitacora.md) | Anulación y reasignación de boletos (con anulación de la factura en Forcon) y bitácora de boletos y salidas | Aceptada |
@@ -58,3 +58,4 @@
 | [ADR-052](ADR-052-consolidacion-de-roles-del-legado.md) | Consolidación de los roles del legado en puestos: lo que el usuario podía hacer se cubre con la menor cantidad de puestos sin dar nada que escriba, `ROLE_ENCARGADO_TAQUILLA` para la estación, la cortesía como puesto aparte (reemplaza la negación `ROLE_NO_VENDER_VOUCHER`), roles idénticos o de solo lectura unidos, y `app:acceso:consolidar-roles` (simula sin `--aplicar`) para la base ya migrada | Propuesta |
 | [ADR-053](ADR-053-espacio-util-y-contexto.md) | Espacio útil y contexto en la presentación: panel derecho cerrado en laptops, título en la cabecera móvil, barra del listado con menú «Más», reglas de rejilla, piso de legibilidad y guardia e2e de desbordes | Aceptada |
 | [ADR-054](ADR-054-suplantacion-de-usuarios.md) | Suplantación de usuarios: el administrador del sistema entra como otro usuario con un token aparte, corto y marcado, nunca como otro administrador del sistema, sin tocar credenciales ni accesos, cada petición en la bitácora con quién la hizo y la configuración (duración, chat, aviso, motivo) en la administración | Aceptada |
+| [ADR-055](ADR-055-mapas-propios.md) | Mapas propios: MapLibre GL en `shared/mapa`, mapa base de Protomaps como un archivo PMTiles servido por Caddy en `/mapas/`, rutas por carretera con un Valhalla propio (perfil bus) en lugar de las teselas de OpenStreetMap y el OSRM públicos, y `make mapas` para preparar los datos | Aceptada |
