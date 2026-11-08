@@ -104,7 +104,8 @@
         <!-- Croquis + cobro (en móvil, entre el viaje y el cliente) -->
         <aside ref="croquis" class="panel flex min-w-0 flex-1 scroll-mt-20 flex-col gap-3 @3xl:sticky @3xl:top-4 @3xl:col-start-2 @3xl:row-span-2 @3xl:row-start-1">
           <Transition name="croquis" mode="out-in" @enter="alMostrarCroquis">
-            <div v-if="store.detalle || store.cargandoDetalle" :key="`salida-${store.salidaId}`" class="flex flex-col gap-5 text-sm">
+            <!-- Hasta tener la salida y su ocupación, el esqueleto: ni carrocería vacía ni asientos que se ocupan de golpe. -->
+            <div v-if="store.detalle && !store.cargandoDetalle" :key="`salida-${store.salidaId}`" class="flex flex-col gap-5 text-sm">
               <div class="flex items-start justify-center gap-3 overflow-x-auto">
                 <BusMap :elementos="store.detalle?.croquis ?? []" :estado="store.estadoAsiento" interactivo inspeccionable tamano="md" class="justify-center" @asiento="(a) => a.id != null && store.alternarAsiento(a.id)" @ocupado="verOcupado" />
                 <AsientoOcupadoPopover ref="detalleAsiento" @anular="(b) => (anular = [b.id])" @reasignar="(b) => void store.iniciarReasignacion([b.id])" />
@@ -144,7 +145,7 @@
                 <CroquisPlaceholder />
                 <BusMapLegend :items="leyenda" vertical class="opacity-40" />
               </div>
-              <div class="absolute inset-0 grid place-items-center p-4">
+              <div v-if="!store.cargandoDetalle" class="absolute inset-0 grid place-items-center p-4">
                 <p class="m-0 flex items-center gap-2 rounded-full bg-surface-0 px-4 py-2 text-center text-sm text-muted-color shadow-md">
                   <icon name="directions-bus-outline" />
                   Elija una salida para ver sus asientos.

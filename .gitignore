@@ -15,3 +15,7 @@ legacy/
 
 # Trabajo temporal local (dumps, certificados, logs de despliegue): no versionar
 scratchpad/
+
+# scripts/db-remota.sh (generados al conectar a la base remota)
+/.env
+/compose.db-remota.yaml
