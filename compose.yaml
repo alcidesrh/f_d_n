@@ -28,6 +28,8 @@ services:
     volumes:
       - caddy_data:/data
       - caddy_config:/config
+      # Teselas, fuentes y sprites del mapa base: Caddy los sirve en /mapas/ (ADR-055).
+      - mapas_data:/srv/mapas:ro
     ports:
       # HTTP
       - target: 80
@@ -108,6 +110,45 @@ services:
       retries: 5
       start_period: 60s
 
+  # Mapas (ADR-055), sin servicios externos. Los dos van en el perfil `mapas`: `make up` no los levanta
+  # porque sin datos no tienen qué servir. `make mapas` prepara los datos (la primera vez y cada mes)
+  # y levanta Valhalla; mientras no estén, el mapa sale sin fondo y los km por carretera no se calculan.
+  #
+  # Herramienta de una sola pasada: recorta las teselas del mapa base y el OpenStreetMap de la región.
+  mapas:
+    build: ./mapas
+    image: ${IMAGES_PREFIX:-}app-mapas
+    profiles: [mapas]
+    restart: "no"
+    environment:
+      MAPAS_BBOX: ${MAPAS_BBOX:-}
+      MAPAS_EXTRACTOS: ${MAPAS_EXTRACTOS:-}
+      MAPAS_MAXZOOM: ${MAPAS_MAXZOOM:-}
+    volumes:
+      - mapas_data:/srv/mapas
+      - valhalla_data:/valhalla
+
+  # Rutas por carretera (km, tiempo, trazado) para el backend. No se publica: solo lo llama PHP.
+  # Al arrancar construye su grafo desde /custom_files/region.osm.pbf si ese archivo cambió.
+  valhalla:
+    image: ghcr.io/valhalla/valhalla-scripted:latest
+    container_name: valhalla
+    profiles: [mapas]
+    restart: unless-stopped
+    environment:
+      TZ: America/Guatemala
+      # Reconstruye el grafo cuando `make mapas` deja un .pbf nuevo (compara su md5).
+      use_tiles_ignore_pbf: "False"
+      # Fronteras (cruces entre países); sin elevación, zonas horarias ni transporte público.
+      build_admins: "True"
+      build_time_zones: "False"
+      build_elevation: "False"
+      build_transit: "False"
+      serve_tiles: "True"
+      server_threads: "2"
+    volumes:
+      - valhalla_data:/custom_files
+
   ###> doctrine/doctrine-bundle ###
   database:
     image: postgres:${POSTGRES_VERSION:-16}-alpine
@@ -136,6 +177,8 @@ services:
 volumes:
   caddy_data:
   caddy_config:
+  mapas_data:
+  valhalla_data:
   ###> doctrine/doctrine-bundle ###
   database_data:
 ###< doctrine/doctrine-bundle ###

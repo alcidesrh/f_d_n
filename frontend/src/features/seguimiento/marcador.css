@@ -1,3 +1,9 @@
+.bus-marker {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+}
 .bus-marker-body {
   display: grid;
   place-items: center;

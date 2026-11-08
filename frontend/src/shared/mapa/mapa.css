@@ -1,0 +1,108 @@
+/* Mapas (MapLibre, ADR-055). El mapa base tiene su propio tema claro y oscuro:
+   aquí solo lo que se dibuja encima con HTML. Los colores de rampa ya se invierten
+   en oscuro (AGENTS.md): el chip slate-800 queda claro sobre el mapa oscuro. */
+
+/* Etiqueta fija de un punto (`Etiquetas`): a la derecha, con su saeta hacia él. */
+.mapa-chip {
+  padding: 1px 6px;
+  font-size: 10px;
+  line-height: 1.4;
+  font-weight: 700;
+  color: var(--p-slate-50);
+  background: var(--p-slate-800);
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.mapa-chip::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -5px;
+  margin-top: -5px;
+  border: 5px solid transparent;
+  border-left-width: 0;
+  border-right-color: var(--p-slate-800);
+}
+
+/* Globos y popups con los colores de la app (superficie y texto se invierten en oscuro). */
+.maplibregl-popup {
+  /* Encima de los marcadores (chips, buses, indicadores), que también son DOM sobre el mapa. */
+  z-index: 5;
+}
+.maplibregl-popup-content {
+  padding: 6px 10px;
+  color: var(--p-text-color);
+  background: var(--p-surface-0);
+  border-radius: 6px;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.25);
+  font: inherit;
+  font-size: 12px;
+}
+.maplibregl-popup-anchor-top .maplibregl-popup-tip,
+.maplibregl-popup-anchor-top-left .maplibregl-popup-tip,
+.maplibregl-popup-anchor-top-right .maplibregl-popup-tip {
+  border-bottom-color: var(--p-surface-0);
+}
+.maplibregl-popup-anchor-bottom .maplibregl-popup-tip,
+.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip,
+.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip {
+  border-top-color: var(--p-surface-0);
+}
+.maplibregl-popup-anchor-left .maplibregl-popup-tip {
+  border-right-color: var(--p-surface-0);
+}
+.maplibregl-popup-anchor-right .maplibregl-popup-tip {
+  border-left-color: var(--p-surface-0);
+}
+.maplibregl-popup-close-button {
+  width: 24px;
+  height: 24px;
+  font-size: 18px;
+  color: var(--p-text-muted-color);
+}
+
+/* Globo al pasar el cursor: no tapa el puntero ni recibe clics. */
+.mapa-globo {
+  pointer-events: none;
+}
+.mapa-globo .maplibregl-popup-content {
+  font-weight: 500;
+}
+.mapa-globo small {
+  font-weight: 400;
+  color: var(--p-text-muted-color);
+}
+
+/* Sin `make mapas`: el mapa tiene fondo liso y lo avisa en una esquina. */
+.mapa-aviso {
+  margin: 0 0 6px 6px;
+  padding: 2px 8px;
+  font-size: 11px;
+  color: var(--c-warning-ink);
+  background: color-mix(in srgb, var(--p-surface-0) 90%, transparent);
+  border: 1px solid var(--c-warning-ink);
+  border-radius: 4px;
+}
+
+/* Sin WebGL 2 no hay mapa: el aviso ocupa su lugar. */
+.mapa-sin-webgl {
+  margin: 0;
+  padding: 1rem;
+  font-size: 13px;
+  color: var(--p-text-muted-color);
+}
+
+/* Un marcador que es un botón (bus, indicador de tarifas): sin el estilo del navegador. */
+.mapa-boton {
+  padding: 0;
+  font: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.mapa-boton:focus-visible {
+  outline: 2px solid var(--p-primary-color);
+  outline-offset: 2px;
+  border-radius: 999px;
+}

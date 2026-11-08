@@ -108,7 +108,7 @@ export default defineConfig({
         navigateFallback: "/",
         directoryIndex: "",
         // Lo que sirve el backend (Caddy) y no la SPA.
-        navigateFallbackDenylist: [/^\/(api|graphql|pagina|docs|bundles|contexts|_profiler|_wdt|\.well-known|auth|logout|index)/],
+        navigateFallbackDenylist: [/^\/(api|graphql|pagina|mapas|docs|bundles|contexts|_profiler|_wdt|\.well-known|auth|logout|index)/],
         // Notificaciones del chat con la app cerrada (Web Push).
         importScripts: ["/push-sw.js"],
       },

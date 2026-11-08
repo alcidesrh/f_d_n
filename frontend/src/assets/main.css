@@ -89,38 +89,4 @@ button {
    en docs/frontend/responsive.md; cada regla vive junto a lo que adapta
    (shell en content/header/sidebar.css, PrimeVue en primevue/*.css). */
 
-/* Mapas (Leaflet + OpenStreetMap) en oscuro: se invierten solo los mosaicos
-   (el giro de tono devuelve agua azul y parques verdes); marcadores y trazos
-   están en otras capas y conservan sus colores. */
-html.dark .leaflet-tile-pane {
-  filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9);
-}
-
-/* Etiqueta permanente de un punto (`className` del tooltip). Saeta hacia el
-   punto: ::before es el borde y ::after el relleno, ambos del mismo slate. */
-.leaflet-tooltip.mapa-chip {
-  padding: 1px 6px;
-  font-size: 10px;
-  line-height: 1.4;
-  font-weight: 700;
-  color: var(--p-slate-50);
-  background: var(--p-slate-800);
-  border: 1px solid var(--p-slate-800);
-  border-radius: 4px;
-  box-shadow: none;
-  white-space: nowrap;
-}
-.leaflet-tooltip.mapa-chip.leaflet-tooltip-right::before {
-  border-right-color: var(--p-slate-800);
-}
-.leaflet-tooltip.mapa-chip.leaflet-tooltip-right::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 0;
-  margin-top: -5px;
-  margin-left: -9px;
-  border: 5px solid transparent;
-  border-right-color: var(--p-slate-800);
-  pointer-events: none;
-}
+/* Mapas (MapLibre, ADR-055): sus estilos van con el componente, en `shared/mapa/mapa.css`. */

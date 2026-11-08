@@ -60,7 +60,7 @@
     <Message v-else-if="datos && datos.sinTrazado > 0" severity="warn" :closable="false"> {{ datos.sinTrazado }} {{ datos.sinTrazado === 1 ? "salida no se muestra" : "salidas no se muestran" }} porque las estaciones de su ruta no tienen ubicación. </Message>
 
     <div class="grid grid-cols-1 gap-4 @4xl:grid-cols-[minmax(0,1fr)_22rem]" :class="maximizado ? 'min-h-0 flex-1 grid-rows-[minmax(18rem,1fr)_auto] @4xl:grid-rows-1' : ''">
-      <!-- La clase dinámica va en el padre: Vue reescribiría el class del contenedor de Leaflet y le borraría las clases que él añade. -->
+      <!-- La clase dinámica va en el padre: Vue reescribiría el class del contenedor de MapLibre y le borraría las clases que él añade. -->
       <div class="relative min-h-0" :class="{ 'mapa-maximizado': maximizado }">
         <div ref="mapaEl" class="mapa-buses rounded-border border border-surface-200" role="application" aria-label="Mapa de buses en recorrido" />
         <p v-if="datos && !cargando && visibles.length === 0 && telefonos.length === 0" class="pointer-events-none absolute inset-x-0 top-1/2 z-[500] mx-auto w-fit -translate-y-1/2 rounded-border bg-surface-0/90 px-3 py-2 text-sm shadow">{{ filtro.soloGps ? "Ningún bus está enviando GPS" : "No hay buses en recorrido" }}{{ hayFiltro ? " con este filtro" : " en este momento" }}.<template v-if="filtro.soloGps && simulados > 0"> Apague «Solo con GPS» para ver los {{ simulados }} simulados.</template></p>
@@ -137,22 +137,27 @@
 </template>
 
 <script setup lang="ts">
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import type { LineLayerSpecification, Map as MapaLibre, Marker } from "maplibre-gl";
 import { fetchBusesEnRecorrido } from "@/core/seguimiento/api";
 import { FILTRO_VACIO, filtrarBuses, filtroVigente, salidasDisponibles } from "@/core/seguimiento/filtro";
 import { estilosPorRuta, posicionEnArco, trazadoArqueado } from "@/core/seguimiento/arco";
 import { posicionEn, proximaParada } from "@/core/seguimiento/posicion";
 import type { BusEnRecorrido, FiltroSeguimiento, PosicionEstimada, RespuestaSeguimiento, TelefonoEnVivo } from "@/core/seguimiento/types";
 import { HttpError } from "@/core/http";
+import { BLANCO, Etiquetas, asegurarCapas, encuadrar, fijarDatos, globoAlPasar } from "@/shared/mapa/capas";
+import { aLngLat, coleccion, linea, lineas, punto, type LatLng } from "@/shared/mapa/geo";
+import { maplibregl } from "@/shared/mapa/maplibre";
+import { useMapa } from "@/shared/mapa/useMapa";
 import { COLOR_TELEFONO, colorEmpresa } from "./colores";
-import { iconoBus } from "./marcador";
+import { elementoBus, pintarBus } from "./marcador";
 import { ETIQUETA_ESTADO, ORIGEN_COORDENADA, duracion, horaDe } from "./formato";
 
 const REFRESCO_MS = 30_000;
 const ANIMACION_MS = 1_000;
-/** Centro aproximado de Guatemala. */
-const CENTRO: L.LatLngTuple = [15.4, -90.2];
+/** Raya de las rutas y estelas: 6 px de trazo y 6 de hueco con línea de 3 px (MapLibre mide en anchos de línea). */
+const RAYA = [2, 2];
+/** La misma raya corrida 6 px: dos rutas que comparten tramo alternan sus guiones. */
+const RAYA_CORRIDA = [0, 2, 2, 0];
 
 const mapaEl = ref<HTMLElement | null>(null);
 const datos = ref<RespuestaSeguimiento | null>(null);
@@ -165,23 +170,29 @@ const seleccionadoId = ref<number | null>(null);
 const ahora = ref(Math.floor(Date.now() / 1000));
 const estimadas = ref(new Map<number, PosicionEstimada>());
 
-let mapa: L.Map | null = null;
-let capaRutas: L.LayerGroup | null = null;
-let capaBuses: L.LayerGroup | null = null;
-let capaTrayectorias: L.LayerGroup | null = null;
-let capaTelefonos: L.LayerGroup | null = null;
 let desfaseMs = 0;
 let temporizador: ReturnType<typeof setInterval> | undefined;
 let animacion: ReturnType<typeof setInterval> | undefined;
 let carga = 0;
-let observador: ResizeObserver | undefined;
+let etiquetas: Etiquetas | null = null;
 const maximizado = ref(false);
 const mostrarNombres = ref(false);
-const marcadores = new Map<number, L.Marker>();
+const marcadores = new Map<number, Marker>();
+const marcadoresTelefono = new Map<string, Marker>();
 /** Lecturas GPS recibidas de cada salida desde que se abrió la página (o desde el último "Actualizar"). */
 const trayectorias = new Map<number, { instante: number; puntos: [number, number][] }>();
 /** Lo mismo de cada teléfono de prueba, en su trayectoria en curso. */
 const estelas = new Map<string, { desde: number; instante: number; puntos: [number, number][] }>();
+
+const { mapa, listo } = useMapa(mapaEl, (m) => {
+  etiquetas = new Etiquetas(m);
+  prepararCapas(m);
+  // Sin los chips, el nombre de la estación (y de dónde sale su ubicación) al pasar el cursor.
+  globoAlPasar(m, "seg-estaciones", (p) => (mostrarNombres.value ? null : `${escapar(String(p.nombre ?? ""))}${p.exacta ? "" : `<br><small>${escapar(String(p.nota ?? ""))}</small>`}`));
+  refrescarVista();
+  dibujarTelefonos();
+  if (datos.value) enfocar(visibles.value, false);
+});
 
 /** Curvatura y fase de guiones de cada ruta, fijas aunque el filtro cambie. */
 const estilos = computed(() => estilosPorRuta((datos.value?.buses ?? []).map((b) => b.ruta)));
@@ -196,9 +207,23 @@ const seleccionado = computed<BusEnRecorrido | null>(() => visibles.value.find((
 const seleccionadoPos = computed(() => (seleccionado.value ? (estimadas.value.get(seleccionado.value.salidaId) ?? null) : null));
 const seleccionadoProxima = computed(() => (seleccionado.value ? proximaParada(seleccionado.value, ahora.value) : null));
 
-const iconoDe = (b: BusEnRecorrido, p: PosicionEstimada, activo: boolean): L.DivIcon => iconoBus(colorEmpresa(b.empresaId, b.empresa), p.rumbo, { activo, quieto: p.estado !== "en_ruta" });
+const pintar = (el: HTMLElement, b: BusEnRecorrido, p: PosicionEstimada, activo: boolean) => pintarBus(el, { color: colorEmpresa(b.empresaId, b.empresa), rumbo: p.rumbo, activo, quieto: p.estado !== "en_ruta" });
 
 const escapar = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+
+/** Fuentes vacías y capas, de abajo arriba: rutas planificadas, sus estaciones y las estelas GPS. Los buses van encima, en el DOM. */
+function prepararCapas(m: MapaLibre) {
+  for (const id of ["seg-rutas", "seg-estaciones", "seg-trayectorias", "seg-telefonos"]) fijarDatos(m, id, coleccion([]));
+  const raya: LineLayerSpecification["paint"] = { "line-color": ["get", "color"], "line-width": 3, "line-opacity": 0.9, "line-dasharray": RAYA };
+  asegurarCapas(m, [
+    // Una capa por fase de guiones: la raya de MapLibre no cambia por elemento.
+    { id: "seg-rutas", type: "line", source: "seg-rutas", filter: ["==", ["get", "fase"], 0], paint: { ...raya, "line-opacity": 0.85 } },
+    { id: "seg-rutas-corridas", type: "line", source: "seg-rutas", filter: ["!=", ["get", "fase"], 0], paint: { ...raya, "line-opacity": 0.85, "line-dasharray": RAYA_CORRIDA } },
+    { id: "seg-estaciones", type: "circle", source: "seg-estaciones", paint: { "circle-radius": 3, "circle-color": ["case", ["get", "exacta"], ["get", "color"], BLANCO], "circle-stroke-color": ["get", "color"], "circle-stroke-width": 2 } },
+    { id: "seg-trayectorias", type: "line", source: "seg-trayectorias", paint: raya },
+    { id: "seg-telefonos", type: "line", source: "seg-telefonos", paint: raya },
+  ]);
+}
 
 /** Suma la lectura GPS de cada bus a su trayectoria (una sola vez por lectura). */
 function registrarTrayectorias(buses: BusEnRecorrido[]) {
@@ -218,14 +243,10 @@ function registrarTrayectorias(buses: BusEnRecorrido[]) {
 }
 
 function dibujarTrayectorias() {
-  if (!capaTrayectorias) return;
-  capaTrayectorias.clearLayers();
-  if (!filtro.soloGps) return;
-  for (const b of visibles.value) {
-    const t = trayectorias.get(b.salidaId);
-    if (!t || t.puntos.length < 2) continue;
-    L.polyline(t.puntos, { color: colorEmpresa(b.empresaId, b.empresa), weight: 3, opacity: 0.9, dashArray: "6 6", interactive: false }).addTo(capaTrayectorias);
-  }
+  const m = mapa.value;
+  if (!m || !listo.value) return;
+  const lista = filtro.soloGps ? visibles.value.map((b) => linea(trayectorias.get(b.salidaId)?.puntos ?? [], { color: colorEmpresa(b.empresaId, b.empresa) })) : [];
+  fijarDatos(m, "seg-trayectorias", lineas(lista));
 }
 
 /** Suma la lectura de cada teléfono de prueba a su estela; si empezó otra trayectoria, la estela vuelve a empezar. */
@@ -247,19 +268,37 @@ function registrarTelefonos(lista: TelefonoEnVivo[]) {
 
 /** Los teléfonos de prueba con su estela. Van aparte de los buses: sin empresa, no los afectan los filtros. */
 function dibujarTelefonos() {
-  if (!capaTelefonos) return;
-  capaTelefonos.clearLayers();
+  const m = mapa.value;
+  if (!m || !listo.value) return;
+  fijarDatos(m, "seg-telefonos", lineas(telefonos.value.map((x) => linea(estelas.get(x.dispositivo)?.puntos ?? [], { color: COLOR_TELEFONO }))));
+  const vigentes = new Set(telefonos.value.map((x) => x.dispositivo));
+  for (const [d, marca] of marcadoresTelefono) {
+    if (vigentes.has(d)) continue;
+    marca.remove();
+    marcadoresTelefono.delete(d);
+  }
   for (const x of telefonos.value) {
-    const e = estelas.get(x.dispositivo);
-    if (e && e.puntos.length > 1) L.polyline(e.puntos, { color: COLOR_TELEFONO, weight: 3, opacity: 0.9, dashArray: "6 6", interactive: false }).addTo(capaTelefonos);
-    L.marker([x.posicion.lat, x.posicion.lng], { icon: iconoBus(COLOR_TELEFONO, x.posicion.rumbo, { quieto: x.posicion.estado !== "en_ruta" }), keyboard: true, title: `Teléfono de prueba ${x.dispositivo}`, zIndexOffset: 200 })
-      .on("click", () => enfocarTelefono(x))
-      .addTo(capaTelefonos);
+    let marca = marcadoresTelefono.get(x.dispositivo);
+    if (!marca) {
+      const el = elementoBus(`Teléfono de prueba ${x.dispositivo}`);
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const actual = telefonos.value.find((t) => t.dispositivo === x.dispositivo);
+        if (actual) enfocarTelefono(actual);
+      });
+      marca = new maplibregl.Marker({ element: el }).setLngLat(aLngLat([x.posicion.lat, x.posicion.lng])).addTo(m);
+      marcadoresTelefono.set(x.dispositivo, marca);
+    } else marca.setLngLat(aLngLat([x.posicion.lat, x.posicion.lng]));
+    const el = marca.getElement();
+    pintarBus(el, { color: COLOR_TELEFONO, rumbo: x.posicion.rumbo, quieto: x.posicion.estado !== "en_ruta" });
+    // Encima de los buses.
+    el.style.zIndex = "3";
   }
 }
 
 function enfocarTelefono(x: TelefonoEnVivo) {
-  if (mapa) mapa.flyTo([x.posicion.lat, x.posicion.lng], Math.max(mapa.getZoom(), 15), { duration: 0.6 });
+  const m = mapa.value;
+  if (m) m.flyTo({ center: aLngLat([x.posicion.lat, x.posicion.lng]), zoom: Math.max(m.getZoom(), 14), duration: 600 });
 }
 
 /** "Actualizar": borra lo dibujado y la trayectoria vuelve a empezar desde la lectura que llega. */
@@ -272,54 +311,53 @@ function reiniciarTrayectorias() {
 }
 
 function dibujarRutas() {
-  if (!capaRutas) return;
-  capaRutas.clearLayers();
-  // Solo con GPS: el mapa muestra los buses y su trayectoria, no la ruta planificada.
-  if (filtro.soloGps) return;
+  const m = mapa.value;
+  if (!m || !listo.value) return;
   const vistas = new Set<string>();
-  const estaciones = new Set<string>();
+  const rutas: Array<ReturnType<typeof linea>> = [];
+  const estaciones: Array<ReturnType<typeof punto>> = [];
+  const chips = new Map<string, { clave: string; en: LatLng; texto: string }>();
+  // Solo con GPS: el mapa muestra los buses y su trayectoria, no la ruta planificada.
   // Con un bus elegido solo se dibuja su ruta; si no, la de cada ruta una vez.
-  const buses = seleccionado.value ? [seleccionado.value] : visibles.value;
+  const buses = filtro.soloGps ? [] : seleccionado.value ? [seleccionado.value] : visibles.value;
   for (const b of buses) {
     if (vistas.has(b.ruta)) continue;
     vistas.add(b.ruta);
     const color = colorEmpresa(b.empresaId, b.empresa);
     const estilo = estilos.value.get(b.ruta);
-    L.polyline(trazadoArqueado(b.trazado, estilo?.k ?? 0), { color, weight: 3, opacity: 0.85, dashArray: "6 6", dashOffset: String(estilo?.fase ?? 0) }).addTo(capaRutas);
+    rutas.push(linea(trazadoArqueado(b.trazado, estilo?.k ?? 0), { color, fase: estilo?.fase ?? 0 }));
     for (const e of b.estaciones) {
       const exacta = e.origen === "gps";
-      const punto = L.circleMarker([e.lat, e.lng], { radius: 4, color, weight: 2, fillColor: exacta ? color : "#fff", fillOpacity: 1 });
-      if (mostrarNombres.value) {
-        // Una etiqueta por lugar, aunque lo compartan varias rutas.
-        const clave = `${e.nombre}|${e.lat}|${e.lng}`;
-        if (!estaciones.has(clave)) {
-          estaciones.add(clave);
-          punto.bindTooltip(escapar(e.nombre), { permanent: true, direction: "right", offset: [8, 0], className: "mapa-chip", interactive: false });
-        }
-      } else {
-        punto.bindTooltip(`${escapar(e.nombre)}${exacta ? "" : `<br><small>${escapar(ORIGEN_COORDENADA[e.origen] ?? "")}</small>`}`, { className: "enclave-tip" });
-      }
-      punto.addTo(capaRutas);
+      estaciones.push(punto([e.lat, e.lng], { color, exacta, nombre: e.nombre, nota: ORIGEN_COORDENADA[e.origen] ?? "" }));
+      // Una etiqueta por lugar, aunque lo compartan varias rutas.
+      const clave = `${e.nombre}|${e.lat}|${e.lng}`;
+      if (mostrarNombres.value && !chips.has(clave)) chips.set(clave, { clave, en: [e.lat, e.lng], texto: e.nombre });
     }
   }
+  fijarDatos(m, "seg-rutas", lineas(rutas));
+  fijarDatos(m, "seg-estaciones", coleccion(estaciones));
+  etiquetas?.fijar([...chips.values()]);
 }
 
 function sincronizarBuses() {
-  if (!capaBuses) return;
+  const m = mapa.value;
+  if (!m || !listo.value) return;
   const ids = new Set(visibles.value.map((b) => b.salidaId));
-  for (const [id, m] of marcadores) {
-    if (!ids.has(id)) {
-      capaBuses.removeLayer(m);
-      marcadores.delete(id);
-    }
+  for (const [id, marca] of marcadores) {
+    if (ids.has(id)) continue;
+    marca.remove();
+    marcadores.delete(id);
   }
   for (const b of visibles.value) {
     if (marcadores.has(b.salidaId)) continue;
     const p = estimadas.value.get(b.salidaId) ?? posicionEn(b, ahora.value);
-    const m = L.marker(posicionEnArco(b, p, arcoDe(b)), { icon: iconoDe(b, p, false), keyboard: true, title: `${b.origen} → ${b.destino} (${b.empresa})`, zIndexOffset: 100 });
-    m.on("click", () => elegir(b.salidaId, false));
-    m.addTo(capaBuses);
-    marcadores.set(b.salidaId, m);
+    const el = elementoBus(`${b.origen} → ${b.destino} (${b.empresa})`);
+    el.addEventListener("click", (e) => {
+      e.stopPropagation();
+      elegir(b.salidaId, false);
+    });
+    pintar(el, b, p, false);
+    marcadores.set(b.salidaId, new maplibregl.Marker({ element: el }).setLngLat(aLngLat(posicionEnArco(b, p, arcoDe(b)))).addTo(m));
   }
 }
 
@@ -330,25 +368,26 @@ function animar() {
   for (const b of visibles.value) {
     const p = posicionEn(b, ahora.value);
     nuevas.set(b.salidaId, p);
-    const m = marcadores.get(b.salidaId);
-    if (m) {
-      m.setLatLng(posicionEnArco(b, p, arcoDe(b)));
-      m.setIcon(iconoDe(b, p, b.salidaId === seleccionadoId.value));
+    const marca = marcadores.get(b.salidaId);
+    if (marca) {
+      marca.setLngLat(aLngLat(posicionEnArco(b, p, arcoDe(b))));
+      pintar(marca.getElement(), b, p, b.salidaId === seleccionadoId.value);
     }
   }
   estimadas.value = nuevas;
 }
 
-function enfocar(buses: BusEnRecorrido[]) {
-  if (!mapa) return;
+function enfocar(buses: BusEnRecorrido[], animar = true) {
+  const m = mapa.value;
+  if (!m || !listo.value) return;
   if (buses.length === 0) {
     // Sin buses, los teléfonos de prueba (si hay).
-    const tel = telefonos.value.flatMap((x) => [[x.posicion.lat, x.posicion.lng] as [number, number], ...(estelas.get(x.dispositivo)?.puntos ?? [])]);
-    if (tel.length) mapa.fitBounds(L.latLngBounds(tel), { padding: [40, 40], maxZoom: 15 });
+    const tel = telefonos.value.flatMap((x) => [[x.posicion.lat, x.posicion.lng] as LatLng, ...(estelas.get(x.dispositivo)?.puntos ?? [])]);
+    encuadrar(m, tel, { margen: 40, maxZoom: 14, animar });
     return;
   }
-  const puntos = filtro.soloGps ? buses.map((b) => [b.posicion.lat, b.posicion.lng] as [number, number]).concat(buses.flatMap((b) => trayectorias.get(b.salidaId)?.puntos ?? [])) : buses.flatMap((b) => b.trazado);
-  if (puntos.length) mapa.fitBounds(L.latLngBounds(puntos), { padding: [40, 40], maxZoom: 11 });
+  const puntos = filtro.soloGps ? buses.map((b) => [b.posicion.lat, b.posicion.lng] as LatLng).concat(buses.flatMap((b) => trayectorias.get(b.salidaId)?.puntos ?? [])) : buses.flatMap((b) => b.trazado);
+  encuadrar(m, puntos, { margen: 40, maxZoom: 10, animar });
 }
 
 watch(mostrarNombres, dibujarRutas);
@@ -374,7 +413,8 @@ function elegir(id: number | null, centrar: boolean) {
   refrescarVista();
   const b = seleccionado.value;
   const p = b ? estimadas.value.get(b.salidaId) : null;
-  if (centrar && b && p && mapa) mapa.flyTo(posicionEnArco(b, p, arcoDe(b)), Math.max(mapa.getZoom(), 9), { duration: 0.6 });
+  const m = mapa.value;
+  if (centrar && b && p && m) m.flyTo({ center: aLngLat(posicionEnArco(b, p, arcoDe(b))), zoom: Math.max(m.getZoom(), 8), duration: 600 });
 }
 
 function alternarEmpresa(id: number) {
@@ -419,7 +459,7 @@ async function cargar(silencioso: boolean) {
     if (seleccionadoId.value !== null && !r.buses.some((b) => b.salidaId === seleccionadoId.value)) seleccionadoId.value = null;
     refrescarVista();
     dibujarTelefonos();
-    if (primera) enfocar(visibles.value);
+    if (primera) enfocar(visibles.value, false);
   } catch (e) {
     if (mia !== carga) return;
     error.value = e instanceof HttpError && e.status === 403 ? "No tiene permiso para ver las salidas (salida.ver)." : e instanceof Error ? e.message : String(e);
@@ -429,16 +469,6 @@ async function cargar(silencioso: boolean) {
 }
 
 onMounted(() => {
-  if (!mapaEl.value) return;
-  mapa = L.map(mapaEl.value, { center: CENTRO, zoom: 7, zoomControl: true });
-  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(mapa);
-  capaRutas = L.layerGroup().addTo(mapa);
-  capaTrayectorias = L.layerGroup().addTo(mapa);
-  capaBuses = L.layerGroup().addTo(mapa);
-  capaTelefonos = L.layerGroup().addTo(mapa);
-  // El contenedor cambia de ancho al abrir/cerrar sidebars o al cambiar de breakpoint.
-  observador = new ResizeObserver(() => mapa?.invalidateSize());
-  observador.observe(mapaEl.value);
   window.addEventListener("keydown", alTeclear);
   void cargar(false);
   temporizador = setInterval(() => void cargar(true), REFRESCO_MS);
@@ -450,10 +480,9 @@ onBeforeUnmount(() => {
   clearInterval(animacion);
   window.removeEventListener("keydown", alTeclear);
   document.body.style.overflow = "";
-  observador?.disconnect();
-  mapa?.remove();
-  mapa = null;
+  for (const marca of [...marcadores.values(), ...marcadoresTelefono.values()]) marca.remove();
   marcadores.clear();
+  marcadoresTelefono.clear();
   trayectorias.clear();
   estelas.clear();
 });
@@ -464,9 +493,6 @@ onBeforeUnmount(() => {
   height: clamp(22rem, 60dvh, 44rem);
   width: 100%;
   z-index: 0;
-}
-.enclave-tip {
-  font-weight: 500;
 }
 .mapa-maximizado .mapa-buses {
   height: 100%;
