@@ -244,10 +244,10 @@ const precioCorto = (p: Importe | null) => (p ? p.texto.replace(/[.,]00$/, "") :
 /* Varios días: bandas alternas y una línea donde empieza otro día. */
 .salidas :deep(.dg-brow.is-dia-alterno:not(:hover, .is-selected)),
 .salidas :deep(.dg-card.is-dia-alterno:not(.is-selected)) {
-  --dg-row-bg: color-mix(in srgb, var(--p-sky-500) 7%, var(--dg-bg));
+  --dg-row-bg: color-mix(in srgb, var(--p-primary-400) 7%, var(--dg-bg));
 }
 .salidas :deep(.dg-brow.is-nuevo-dia) {
-  box-shadow: inset 0 2px 0 var(--p-sky-500);
+  box-shadow: inset 0 2px 0 var(--p-primary-400);
 }
 .salidas :deep(.dg-card.is-nuevo-dia) {
   margin-top: 0.5rem;
@@ -264,8 +264,8 @@ const precioCorto = (p: Importe | null) => (p ? p.texto.replace(/[.,]00$/, "") :
   color: var(--p-surface-700);
 }
 .dia--alterno {
-  background: var(--p-sky-100);
-  color: var(--p-sky-800);
+  background: var(--p-primary-100);
+  color: var(--p-primary-800);
 }
 .celda .dia {
   font-size: 0.75rem;
