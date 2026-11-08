@@ -18,6 +18,7 @@
     <Tabs v-model:value="pestana">
       <TabList>
         <Tab value="quien">¿Quién puede?</Tab>
+        <Tab value="rol">Por rol</Tab>
         <Tab value="sin">Sin alcance <Badge v-if="sinAlcance.length" :value="sinAlcance.length" severity="warn" class="ml-1" /></Tab>
       </TabList>
       <TabPanels>
@@ -55,6 +56,36 @@
           </DataTable>
         </TabPanel>
 
+        <TabPanel value="rol">
+          <form class="filtros filtros-rol" @submit.prevent="buscarRol">
+            <label class="campo">
+              <span>Rol</span>
+              <Select v-model="rolId" :options="roles" option-label="nombre" option-value="id" placeholder="Elija el rol" filter :filter-fields="['nombre', 'descripcion']" fluid />
+            </label>
+            <Button type="submit" label="Buscar" :loading="buscandoRol" :disabled="rolId === null" class="self-end" />
+          </form>
+
+          <Message v-if="resultadoRol && !resultadoRol.length" severity="secondary" :closable="false" class="mt-3">Ningún usuario tiene este rol.</Message>
+          <DataTable v-if="resultadoRol?.length" :value="resultadoRol" size="small" striped-rows class="mt-3" data-key="id" paginator :rows="25" :rows-per-page-options="[25, 50, 100]">
+            <Column header="Usuario">
+              <template #body="{ data }">
+                <RouterLink :to="{ name: 'acceso-usuario', params: { id: data.usuario.id } }" class="text-primary">{{ data.usuario.username }}</RouterLink>
+                <div class="text-xs text-muted-color">{{ data.usuario.nombre }}</div>
+              </template>
+            </Column>
+            <Column header="Alcance">
+              <template #body="{ data }">
+                <span class="text-sm">{{ alcanceDeAsignacion(data) }}</span>
+              </template>
+            </Column>
+            <Column header="Vigencia">
+              <template #body="{ data }">
+                <Tag :severity="data.vigente ? 'success' : 'secondary'" :value="data.vigente ? textoVigencia(data) : `Fuera de vigencia · ${textoVigencia(data)}`" />
+              </template>
+            </Column>
+          </DataTable>
+        </TabPanel>
+
         <TabPanel value="sin">
           <p class="mb-3 text-sm text-muted-color">Usuarios activos sin ninguna asignación vigente que les conceda algo: sin roles, o con un alcance vacío (la migración no encontró sus empresas o estaciones). Entran, pero no pueden operar.</p>
           <DataTable :value="sinAlcance" size="small" striped-rows :loading="cargandoSin" paginator :rows="25">
@@ -80,7 +111,7 @@
 import { computed, ref, watch } from 'vue'
 import * as api from '@/core/acceso/api'
 import { describirAmbito } from '@/core/acceso/reglas'
-import type { Ambito, CatalogoAcceso, FilaQuienPuede, FilaSinAlcance } from '@/core/acceso/tipos'
+import type { AsignacionDeRol, Ambito, CatalogoAcceso, FilaQuienPuede, FilaSinAlcance, Rol } from '@/core/acceso/tipos'
 import { notify } from '@/core/notify'
 
 defineOptions({ name: 'AccesosPage' })
@@ -94,6 +125,10 @@ const resultado = ref<FilaQuienPuede[] | null>(null)
 const buscando = ref(false)
 const sinAlcance = ref<FilaSinAlcance[]>([])
 const cargandoSin = ref(false)
+const roles = ref<Rol[]>([])
+const rolId = ref<number | null>(null)
+const resultadoRol = ref<AsignacionDeRol[] | null>(null)
+const buscandoRol = ref(false)
 
 const opcionesCapacidad = computed(() => {
   const grupos = new Map<string, { area: string; items: Array<{ codigo: string; nombre: string }> }>()
@@ -124,7 +159,34 @@ async function cargarSinAlcance() {
 
 void api.fetchCatalogo().then((c) => (catalogo.value = c)).catch((e) => notify.error(e instanceof Error ? e.message : 'No se pudo cargar el catálogo.'))
 void cargarSinAlcance()
+void api.fetchRoles().then((r) => (roles.value = r)).catch((e) => notify.error(e instanceof Error ? e.message : 'No se pudieron cargar los roles.'))
 watch(pestana, (p) => p === 'sin' && void cargarSinAlcance())
+
+/** Lo que cubre la asignación: su agencia, o sus empresas y estaciones («todas» si es null). */
+function alcanceDeAsignacion(a: AsignacionDeRol): string {
+  if (a.agencia) return `Agencia ${a.agencia}`
+  const lista = (items: { nombre: string }[] | null, todas: string) => (items === null ? todas : items.map((i) => i.nombre).join(', '))
+  return `Empresas: ${lista(a.empresas, 'todas')} · Estaciones: ${lista(a.estaciones, 'todas')}`
+}
+
+function textoVigencia(a: AsignacionDeRol): string {
+  if (a.desde && a.hasta) return `${a.desde} al ${a.hasta}`
+  if (a.desde) return `desde ${a.desde}`
+  if (a.hasta) return `hasta ${a.hasta}`
+  return 'Sin vencimiento'
+}
+
+async function buscarRol() {
+  if (rolId.value === null) return
+  buscandoRol.value = true
+  try {
+    resultadoRol.value = await api.fetchUsuariosRol(rolId.value)
+  } catch (e) {
+    notify.error(e instanceof Error ? e.message : 'No se pudo consultar.')
+  } finally {
+    buscandoRol.value = false
+  }
+}
 
 async function buscar() {
   if (!capacidad.value) return
@@ -146,6 +208,11 @@ async function buscar() {
   grid-template-columns: minmax(0, 1fr);
   @container (min-width: 48rem) {
     grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+  }
+}
+.filtros-rol {
+  @container (min-width: 48rem) {
+    grid-template-columns: minmax(0, 1fr) auto;
   }
 }
 </style>
