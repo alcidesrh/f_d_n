@@ -43,7 +43,7 @@ Tegucigalpa y Puerto Cortés.
 ### Frontend: MapLibre GL en `shared/mapa`
 
 - MapLibre GL JS (WebGL 2) en lugar de Leaflet. `useMapa(elemento, alListo, opciones)` arma el mapa con lo
-  común: el estilo base (`estilo.ts`, capas de `@protomaps/basemaps` en español con prefijo `base-`), el
+  común: el estilo base (`estilo.ts`, capas de `@protomaps/basemaps` en español con prefijo `base-`, con la apariencia de `sabor.ts`), el
   tema claro u oscuro de la app (un `MutationObserver` sobre la clase de `<html>`; el cambio de tema
   reemplaza solo las capas `base-` y conserva lo dibujado, `combinarEstilo`), controles en español,
   sin rotar ni inclinar y `resize()` cuando cambia el contenedor.
@@ -52,6 +52,11 @@ Tegucigalpa y Puerto Cortés.
   HTML va como marcador del DOM: los chips con el nombre (`Etiquetas`, sin depender de las fuentes del
   mapa base ni esconderse al tocarse), los buses (`marcador.ts`, un botón que se repinta sin rehacerse)
   y los indicadores de tarifas.
+- Apariencia (`sabor.ts`): la del mapa estándar de OpenStreetMap que se veía con Leaflet. Los colores de
+  OpenStreetMap Carto sobre las capas de Protomaps, las carreteras principales por categoría (`kind_detail`:
+  autopista, troncal, primaria, secundaria, terciaria) con su ancho, y el tema oscuro calculado con el mismo
+  filtro que antes se aplicaba a los mosaicos (`invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9)`)
+  sobre cada color del estilo.
 - Los colores del tema llegan como `oklch()`; `colorParaMapa` los pasa a `rgba()`, que es lo que entiende
   MapLibre.
 - Sin manifiesto (los mapas no se prepararon) el mapa sale con fondo liso y un aviso en la esquina; todo

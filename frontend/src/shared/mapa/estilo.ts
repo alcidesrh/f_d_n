@@ -1,12 +1,14 @@
 /**
- * Estilo del mapa base (ADR-055), puro: las capas de Protomaps sobre las teselas
- * que sirve Caddy en `/mapas/` y, si todavía no se prepararon (`make mapas`), un
+ * Estilo del mapa base (ADR-055), puro: las capas de Protomaps con la apariencia
+ * del mapa estándar de OpenStreetMap (`sabor.ts`) sobre las teselas que sirve
+ * Caddy en `/mapas/` y, si todavía no se prepararon (`make mapas`), un
  * fondo liso. Las capas del mapa base llevan el prefijo `base-` y la fuente se
  * llama `base`: así un cambio de tema reemplaza solo el mapa base y deja encima
  * lo que dibujó cada pantalla (`combinarEstilo`).
  */
-import { layers, namedFlavor } from '@protomaps/basemaps'
-import type { StyleSpecification } from 'maplibre-gl'
+import { layers } from '@protomaps/basemaps'
+import type { LayerSpecification, StyleSpecification } from 'maplibre-gl'
+import { SABOR_OSM, colorearVias, oscurecer } from './sabor'
 
 /** `/mapas/mapa.json`: qué archivo de teselas pedir y de cuándo son los datos (lo escribe `mapas/preparar.sh`). */
 export interface ManifiestoMapa {
@@ -34,9 +36,9 @@ export function esManifiesto(x: unknown): x is ManifiestoMapa {
 
 /** Estilo del mapa base en el tema dado; `origen` es el del sitio (las URLs del estilo deben ser absolutas). */
 export function estiloBase(manifiesto: ManifiestoMapa | null, tema: TemaMapa, origen: string): StyleSpecification {
-  const sabor = namedFlavor(tema)
+  const enTema = (capas: LayerSpecification[]) => (tema === 'dark' ? oscurecer(capas) : capas)
   if (!manifiesto) {
-    return { version: 8, sources: {}, layers: [{ id: `${PREFIJO_BASE}fondo`, type: 'background', paint: { 'background-color': sabor.earth } }] }
+    return { version: 8, sources: {}, layers: enTema([{ id: `${PREFIJO_BASE}fondo`, type: 'background', paint: { 'background-color': SABOR_OSM.earth } }]) }
   }
   return {
     version: 8,
@@ -45,7 +47,7 @@ export function estiloBase(manifiesto: ManifiestoMapa | null, tema: TemaMapa, or
     sources: {
       [FUENTE_BASE]: { type: 'vector', url: `pmtiles://${origen}/mapas/${manifiesto.teselas}`, attribution: ATRIBUCION },
     },
-    layers: layers(FUENTE_BASE, sabor, { lang: 'es' }).map((capa) => ({ ...capa, id: PREFIJO_BASE + capa.id })),
+    layers: enTema(colorearVias(layers(FUENTE_BASE, SABOR_OSM, { lang: 'es' }))).map((capa) => ({ ...capa, id: PREFIJO_BASE + capa.id })),
   }
 }
 
