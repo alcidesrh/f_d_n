@@ -128,8 +128,8 @@ migraciones: prod-env ## Producción: aplica las migraciones pendientes que lleg
 reiniciar: prod-env ## Producción: reinicia los contenedores de PHP para que tomen el código (unos segundos)
 	$(PROD_COMP) up -d --no-build --force-recreate $(PROD_PHP)
 
-front: ## Compila el frontend en frontend/dist (lo sirve el contenedor sin reiniciar). Sin type-check: ese va en `npm run build`
-	cd frontend && npm run build-only
+front: ## Instala las dependencias del frontend (bun.lock, sin cambiarlo) y compila frontend/dist (lo sirve el contenedor sin reiniciar). Sin type-check: ese va en `npm run build`
+	cd frontend && $(if $(shell command -v bun),bun,npx --yes bun@1) install --frozen-lockfile && npm run build-only
 
 # El prerender le pide al backend el directorio de estaciones. En la VPS el certificado es solo del
 # dominio (SERVER_NAME de .env.prod.local): por localhost falla el TLS y la página sale sin él.
