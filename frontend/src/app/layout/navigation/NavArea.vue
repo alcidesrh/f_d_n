@@ -93,7 +93,7 @@ function onLeave(el: Element, done: () => void) {
   color: var(--p-surface-600);
   white-space: nowrap;
 }
-.nav-section.open {
+.nav-section.open > button {
   background-color: color-mix(in hsl, var(--p-surface-200) 20%, var(--p-surface-100) 70%);
 }
 .nav-section.open > .nav-section-title {
