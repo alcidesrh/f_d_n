@@ -9,8 +9,8 @@ parameters:
     # Certificador FEL (Forcon) y pasarela de pago (Cybersource): su configuración está en la
     # base (ConfiguracionForcon, ConfiguracionCybersource; app:fel:configuracion, app:pago:configuracion).
     # El correo (MailPace, dominios, remitentes y buzón de contacto) también: ConfiguracionCorreo (ADR-048).
-    # Servicio de rutas OSRM para los km por carretera de las rutas (sobrescribible con OSRM_URL).
-    ruta_osrm_url_defecto: "https://router.project-osrm.org"
+    # Valhalla propio (ADR-055): km por carretera de las rutas (sobrescribible con VALHALLA_URL).
+    mapa_valhalla_url_defecto: "http://valhalla:8002"
     # Cuándo se enteran los navegadores de un cambio en la configuración de entidades (ADR-036):
     # "automatica" (al guardar) o "manual" (al publicar en /configuracion/publicacion);
     # sobrescribible con METADATA_PUBLICACION.

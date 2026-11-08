@@ -168,6 +168,23 @@ modo: ## Dice si la VPS está en dev o en prod
 prod-logs: prod-env ## Sigue los logs de producción (uso: make prod-logs s=backend)
 	$(PROD_COMP) logs -f --tail=200 $(s)
 
+## —— Mapas 🗺️ (ADR-055) ————————————————————————————————————————————————
+# Mapa base y rutas por carretera sin servicios externos. Los datos se bajan una vez y luego cada mes
+# (Protomaps publica un build diario del planeta; Geofabrik, extractos diarios de OpenStreetMap).
+# Corre igual en dev y en prod: los volúmenes y el contenedor de Valhalla son los mismos.
+.PHONY: mapas valhalla valhalla-logs
+mapas: ## Prepara el mapa base y el recorte de OpenStreetMap, y reinicia Valhalla para que reconstruya su grafo (MAPAS_BBOX, MAPAS_EXTRACTOS, MAPAS_MAXZOOM)
+	$(DOCKER_COMP) --profile mapas build mapas
+	$(DOCKER_COMP) --profile mapas run --rm mapas
+	$(DOCKER_COMP) --profile mapas up -d --force-recreate valhalla
+	@echo "Valhalla está construyendo su grafo (varios minutos): make valhalla-logs"
+
+valhalla: ## Levanta Valhalla con el grafo que ya tiene (tras un `make down`)
+	$(DOCKER_COMP) --profile mapas up -d valhalla
+
+valhalla-logs: ## Sigue los logs de Valhalla (la construcción del grafo, al arrancar con un .pbf nuevo)
+	$(DOCKER_COMP) --profile mapas logs -f --tail=100 valhalla
+
 ## —— Monitorización 📊 ——————————————————————————————————————————————————
 MON_M=compose.monitoring.yaml
 MON_UP     = $(DOCKER_COMP) -f $(MON_M)

@@ -4,28 +4,28 @@ declare(strict_types=1);
 
 namespace App\Tests\Ruta;
 
+use App\Mapa\Valhalla;
 use App\Ruta\KilometrosCarretera;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 
-/** Km por carretera desde OSRM. */
+/** Km por carretera desde el Valhalla propio. */
 final class KilometrosCarreteraTest extends TestCase
 {
-    public function testConvierteLaDistanciaDeOsrmADeKilometrosYPideLongitudPrimero(): void
+    public function testDevuelveLosKmDeValhallaEntreLosDosPuntos(): void
     {
-        $pedido = null;
-        $http = new MockHttpClient(function (string $metodo, string $url) use (&$pedido): MockResponse {
-            $pedido = [$metodo, $url];
+        $lugares = null;
+        $http = new MockHttpClient(function (string $metodo, string $url, array $opciones) use (&$lugares): MockResponse {
+            $lugares = json_decode($opciones["body"], true)["locations"];
 
-            return new MockResponse(json_encode(["code" => "Ok", "routes" => [["distance" => 153250.4]]]));
+            return new MockResponse(json_encode(["trip" => ["status" => 0, "summary" => ["length" => 153.2504, "time" => 9000], "legs" => []]]));
         });
 
-        $km = (new KilometrosCarretera($http, "https://osrm.test/"))->entre(14.6, -90.5, 14.9, -91.1);
+        $km = (new KilometrosCarretera(new Valhalla($http, "http://valhalla.test")))->entre(14.6, -90.5, 14.9, -91.1);
 
         $this->assertEqualsWithDelta(153.2504, $km, 0.0001);
-        $this->assertSame("GET", $pedido[0]);
-        $this->assertStringStartsWith("https://osrm.test/route/v1/driving/-90.500000,14.600000;-91.100000,14.900000", $pedido[1]);
+        $this->assertSame([["lat" => 14.6, "lon" => -90.5], ["lat" => 14.9, "lon" => -91.1]], $lugares);
     }
 
     public function testSinCoordenadasNoConsultaYDevuelveNulo(): void
@@ -37,22 +37,15 @@ final class KilometrosCarreteraTest extends TestCase
             return new MockResponse("{}");
         });
 
-        $this->assertNull((new KilometrosCarretera($http, "https://osrm.test"))->entre(14.6, null, 14.9, -91.1));
+        $this->assertNull((new KilometrosCarretera(new Valhalla($http, "http://valhalla.test")))->entre(14.6, null, 14.9, -91.1));
         $this->assertSame(0, $llamadas);
     }
 
-    public function testRespuestaNoOkODeErrorDevuelveNulo(): void
+    public function testSinRutaDevuelveNulo(): void
     {
-        $http = new MockHttpClient([
-            new MockResponse(json_encode(["code" => "NoRoute", "routes" => []])),
-            new MockResponse("", ["http_code" => 503]),
-            new MockResponse("<html>caído</html>"),
-        ]);
-        $servicio = new KilometrosCarretera($http, "https://osrm.test");
+        $http = new MockHttpClient(new MockResponse(json_encode(["error_code" => 442]), ["http_code" => 400]));
 
-        $this->assertNull($servicio->entre(14.6, -90.5, 14.9, -91.1), "sin ruta");
-        $this->assertNull($servicio->entre(14.6, -90.5, 14.9, -91.1), "error HTTP");
-        $this->assertNull($servicio->entre(14.6, -90.5, 14.9, -91.1), "cuerpo que no es JSON");
+        $this->assertNull((new KilometrosCarretera(new Valhalla($http, "http://valhalla.test")))->entre(14.6, -90.5, 14.9, -91.1));
     }
 
     public function testAcumulaDesdeElOrigenYNoAcumulaSiFaltaUnTramo(): void

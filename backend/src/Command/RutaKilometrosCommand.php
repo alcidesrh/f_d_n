@@ -12,13 +12,13 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
- * Calcula los km por carretera de cada ruta (OSRM, entre enclaves consecutivos)
+ * Calcula los km por carretera de cada ruta (Valhalla, entre enclaves consecutivos)
  * y los guarda en `parada.km` y `ruta.kilometros`. Una ruta cuyo tramo no se
  * puede calcular (falta coordenada o el servicio no responde) no se toca.
  * Los tramos repetidos entre rutas (ida y regreso, rutas que comparten tramo)
  * se consultan una sola vez.
  */
-#[AsCommand(name: "app:ruta:kilometros", description: "Calcula los km por carretera de las rutas (OSRM) y los guarda en parada.km y ruta.kilometros")]
+#[AsCommand(name: "app:ruta:kilometros", description: "Calcula los km por carretera de las rutas (Valhalla) y los guarda en parada.km y ruta.kilometros")]
 final class RutaKilometrosCommand
 {
     public function __construct(

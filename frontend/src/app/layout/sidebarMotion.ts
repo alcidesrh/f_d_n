@@ -60,7 +60,7 @@ const FOLDING = ".nav-section-title, .nav-tree--nested";
 /** Lo que se ve tanto en `open` como en `mini`: Flip lo lleva de una estructura a la otra. */
 const FLIPPED = ".sb-modes, nav .menu-item:not(.nav-tree--nested .menu-item), nav .p-divider";
 /** En el contenido no se entra aquí: se dibuja con sus propias transformaciones. */
-const OPAQUE = "canvas, iframe, video, .leaflet-container";
+const OPAQUE = "canvas, iframe, video, .maplibregl-map";
 /** Tope de elementos medidos del contenido: en una página enorme el resto se reacomoda sin animar. */
 const MAX_MEASURED = 2500;
 

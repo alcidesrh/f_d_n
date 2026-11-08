@@ -1,5 +1,5 @@
 <!--
-  Tarifas sobre el mapa (como el seguimiento de buses). Sin ruta: los enclaves,
+  Tarifas sobre el mapa (MapLibre, `shared/mapa`, ADR-055). Sin ruta: los enclaves,
   solo con su nombre; clic en uno y luego en otro los elige como origen y destino.
   Con una ruta: su trazo con las paradas, los enclaves que
   no están en ella se ocultan y, a medio camino de cada trayecto con tarifas,
@@ -86,7 +86,7 @@
       </div>
     </section>
 
-    <!-- La clase va en el envoltorio: Vue reescribiría el class del mapa y le borraría las clases de Leaflet. -->
+    <!-- La clase va en el envoltorio: Vue reescribiría el class del mapa y le borraría las clases de MapLibre. -->
     <div :class="maximizado ? 'mapa-maximizado flex min-h-0 flex-1 flex-col' : ''">
       <div ref="mapaEl" class="mapa-tarifas rounded-border border border-surface-200" role="application" aria-label="Mapa de tarifas" />
     </div>
@@ -98,8 +98,7 @@
 </template>
 
 <script setup lang="ts">
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+import type { Map as MapaLibre, Marker, Popup } from "maplibre-gl";
 import { fetchOpcionesRutas } from "@/core/ruta/api";
 import type { Lugar } from "@/core/ruta/types";
 import SelectorEntidad from "@/shared/entidad/SelectorEntidad.vue";
@@ -107,9 +106,11 @@ import { fetchTarifasDeRuta, fetchTarifasDeTrayecto } from "@/core/tarifa/api";
 import { FILTRO_MAPA_VACIO, filtrarTarifas, puntoMedio, type FiltroMapaTarifa, type RutaTarifasMapa, type TarifaMapa, type TrayectoMapa } from "@/core/tarifa/mapa";
 import { diaISO } from "@/core/venta/modelo";
 import { HttpError } from "@/core/http";
+import { BLANCO, Etiquetas, GRIS_LUGAR, alPulsar, asegurarCapas, colorPrimario, encuadrar, fijarDatos, globoAlPasar } from "@/shared/mapa/capas";
+import { aLngLat, coleccion, linea, lineas, punto, type LatLng } from "@/shared/mapa/geo";
+import { maplibregl } from "@/shared/mapa/maplibre";
+import { useMapa } from "@/shared/mapa/useMapa";
 
-/** Centro aproximado de Guatemala. */
-const CENTRO: L.LatLngTuple = [15.4, -90.2];
 /** Relleno del enclave elegido como origen; el mismo ámbar del trayecto en la ruta. */
 const COLOR_ORIGEN = "#f59e0b";
 const CLASES = [
@@ -119,12 +120,26 @@ const CLASES = [
 
 const router = useRouter();
 const mapaEl = ref<HTMLElement | null>(null);
-let mapa: L.Map | null = null;
-let capaEnclaves: L.LayerGroup | null = null;
-let capaRuta: L.LayerGroup | null = null;
-let capaTarifas: L.LayerGroup | null = null;
-let observador: ResizeObserver | undefined;
+let etiquetas: Etiquetas | null = null;
+let indicadores: Marker[] = [];
+let popup: Popup | null = null;
 let carga = 0;
+// Sin teclado: pulsar el mapa no le da el foco (el navegador desplazaría la página y se perdería el clic en un indicador).
+const { mapa, listo } = useMapa(
+  mapaEl,
+  (m) => {
+    etiquetas = new Etiquetas(m);
+    prepararCapas(m);
+    // Clic en un enclave o en una parada: lo elige como origen o destino.
+    alPulsar(m, "tarifas-lugares", (p) => elegirEnclave(Number(p.id)));
+    alPulsar(m, "tarifas-paradas", (p) => elegirEnclave(Number(p.enclaveId)));
+    // Sin los chips, el nombre del enclave al pasar el cursor.
+    globoAlPasar(m, "tarifas-lugares", (p) => (mostrarNombres.value ? null : escapar(String(p.nombre ?? ""))));
+    dibujarTodo();
+    enfocar(false);
+  },
+  { teclado: false },
+);
 
 const lugares = ref<Lugar[]>([]);
 const rutaId = ref<number | null>(null);
@@ -208,36 +223,56 @@ function limpiarFiltros() {
 
 const escapar = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
-function chip(punto: L.CircleMarker, nombre: string) {
-  punto.bindTooltip(escapar(nombre), {
-    permanent: true,
-    direction: "right",
-    offset: [8, 0],
-    className: "mapa-chip",
-    interactive: false,
-  });
+/** Fuentes vacías y capas: enclaves abajo, encima la ruta, el trayecto elegido y las paradas. */
+function prepararCapas(m: MapaLibre) {
+  for (const id of ["tarifas-lugares", "tarifas-linea", "tarifas-tramo", "tarifas-paradas"]) fijarDatos(m, id, coleccion([]));
+  // El círculo crece con el zoom, de 5 px a 16 px (las puntas de la ruta, 2 px más); el borde de 2 px va por fuera.
+  asegurarCapas(m, [
+    {
+      id: "tarifas-lugares",
+      type: "circle",
+      source: "tarifas-lugares",
+      paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 5, 4, 16, 15], "circle-color": ["case", ["get", "origen"], COLOR_ORIGEN, BLANCO], "circle-stroke-color": GRIS_LUGAR, "circle-stroke-width": 2 },
+    },
+    { id: "tarifas-linea", type: "line", source: "tarifas-linea", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": ["get", "color"], "line-width": 3, "line-opacity": 0.85 } },
+    { id: "tarifas-tramo", type: "line", source: "tarifas-tramo", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": COLOR_ORIGEN, "line-width": 6, "line-opacity": 0.95 } },
+    {
+      id: "tarifas-paradas",
+      type: "circle",
+      source: "tarifas-paradas",
+      paint: {
+        "circle-radius": ["interpolate", ["linear"], ["zoom"], 5, ["case", ["get", "punta"], 6, 4], 16, ["case", ["get", "punta"], 17, 15]],
+        "circle-color": ["case", ["get", "origen"], COLOR_ORIGEN, ["get", "punta"], ["get", "color"], BLANCO],
+        "circle-stroke-color": ["get", "color"],
+        "circle-stroke-width": 2,
+      },
+    },
+  ]);
+}
+
+function dibujarTodo() {
+  dibujarEnclaves();
+  dibujarRuta();
+  dibujarTarifas();
 }
 
 /** Sin ruta: todos los enclaves con ubicación. Con ruta: se ocultan. */
 function dibujarEnclaves() {
-  if (!capaEnclaves) return;
-  capaEnclaves.clearLayers();
+  const m = mapa.value;
+  if (!m || !listo.value) return;
   // Con una ruta se ocultan; con un trayecto siguen, para elegir otro destino (u origen) con clics.
-  if (rutaId.value !== null) return;
-  for (const lugar of lugares.value) {
-    if (lugar.latitud === null || lugar.longitud === null) continue;
-    const punto = L.circleMarker([lugar.latitud, lugar.longitud], {
-      radius: radioEnclave(),
-      color: "#64748b",
-      weight: 2,
-      fillColor: lugar.id === origenId.value ? COLOR_ORIGEN : "#fff",
-      fillOpacity: 1,
-    });
-    if (mostrarNombres.value) chip(punto, lugar.nombre);
-    else punto.bindTooltip(escapar(lugar.nombre), { className: "tarifa-tip" });
-    punto.on("click", () => elegirEnclave(lugar.id));
-    punto.addTo(capaEnclaves);
-  }
+  const ubicados = rutaId.value !== null ? [] : lugares.value.filter((l) => l.latitud !== null && l.longitud !== null);
+  fijarDatos(m, "tarifas-lugares", coleccion(ubicados.map((l) => punto([l.latitud!, l.longitud!], { id: l.id, nombre: l.nombre, origen: l.id === origenId.value }))));
+  etiquetarse();
+}
+
+/** Los chips con el nombre: de los enclaves sin ruta o de las paradas con ella. */
+function etiquetarse() {
+  if (!etiquetas) return;
+  if (!mostrarNombres.value) return etiquetas.limpiar();
+  const conUbicacion = <T extends { latitud: number | null; longitud: number | null }>(x: T[]) => x.filter((l) => l.latitud !== null && l.longitud !== null);
+  const lista = rutaId.value !== null ? conUbicacion(datos.value?.ruta.paradas ?? []).map((p) => ({ clave: `p${p.enclaveId}`, en: [p.latitud!, p.longitud!] as LatLng, texto: p.nombre })) : conUbicacion(lugares.value).map((l) => ({ clave: `l${l.id}`, en: [l.latitud!, l.longitud!] as LatLng, texto: l.nombre }));
+  etiquetas.fijar(lista);
 }
 
 /**
@@ -255,81 +290,67 @@ function elegirEnclave(id: number) {
   } else destinoId.value = id;
 }
 
-/** El círculo de cada enclave crece un poco con el zoom. */
-function radioEnclave(): number {
-  return Math.min(16, Math.max(5, 6 + ((mapa?.getZoom() ?? 7) - 7)));
-}
-
 /** Trazo de la ruta con sus paradas (solo las que tienen ubicación). */
 function dibujarRuta() {
-  if (!capaRuta) return;
-  capaRuta.clearLayers();
-  if (!datos.value) return;
-  const color = getComputedStyle(mapaEl.value!).getPropertyValue("--p-primary-color").trim() || "#3b82f6";
-  const paradas = datos.value.ruta.paradas.filter((p) => p.latitud !== null && p.longitud !== null);
-  const puntos = paradas.map((p) => [p.latitud!, p.longitud!] as L.LatLngTuple);
-  if (puntos.length > 1) L.polyline(puntos, { color, weight: 3, opacity: 0.85, interactive: false }).addTo(capaRuta);
+  const m = mapa.value;
+  if (!m || !listo.value) return;
+  const paradas = (datos.value?.ruta.paradas ?? []).filter((p) => p.latitud !== null && p.longitud !== null);
+  const color = colorPrimario(mapaEl.value);
+  fijarDatos(m, "tarifas-linea", lineas([linea(paradas.map((p) => [p.latitud!, p.longitud!]), { color })]));
   // Con una ruta, el trayecto origen→destino va por su mismo trazo, en otro color.
   const io = indiceParada(origenId.value ?? -1);
   const id = indiceParada(destinoId.value ?? -1);
-  if (rutaId.value !== null && io !== -1 && id !== -1 && io < id) {
-    const tramo = datos.value.ruta.paradas
-      .slice(io, id + 1)
-      .filter((p) => p.latitud !== null && p.longitud !== null)
-      .map((p) => [p.latitud!, p.longitud!] as L.LatLngTuple);
-    if (tramo.length > 1) L.polyline(tramo, { color: "#f59e0b", weight: 6, opacity: 0.95, interactive: false }).addTo(capaRuta);
-  }
-  paradas.forEach((p, i) => {
-    const punta = i === 0 || i === paradas.length - 1;
-    const punto = L.circleMarker([p.latitud!, p.longitud!], {
-      radius: punta ? radioEnclave() + 2 : radioEnclave(),
-      color,
-      weight: 2,
-      fillColor: p.enclaveId === origenId.value ? COLOR_ORIGEN : punta ? color : "#fff",
-      fillOpacity: 1,
-    });
-    punto.on("click", () => elegirEnclave(p.enclaveId));
-    if (mostrarNombres.value) chip(punto, p.nombre);
-    punto.addTo(capaRuta!);
-  });
+  const tramo =
+    datos.value && rutaId.value !== null && io !== -1 && id !== -1 && io < id
+      ? datos.value.ruta.paradas
+          .slice(io, id + 1)
+          .filter((p) => p.latitud !== null && p.longitud !== null)
+          .map((p) => [p.latitud!, p.longitud!] as LatLng)
+      : [];
+  fijarDatos(m, "tarifas-tramo", lineas([linea(tramo)]));
+  fijarDatos(m, "tarifas-paradas", coleccion(paradas.map((p, i) => punto([p.latitud!, p.longitud!], { enclaveId: p.enclaveId, nombre: p.nombre, color, punta: i === 0 || i === paradas.length - 1, origen: p.enclaveId === origenId.value }))));
+  etiquetarse();
 }
 
 /** Un indicador por trayecto con tarifas, a medio camino de su tramo de la ruta. */
 function dibujarTarifas() {
-  if (!capaTarifas) return;
-  capaTarifas.clearLayers();
-  mapa?.closePopup();
-  if (!mostrarTarifas.value || !datos.value) return;
+  for (const i of indicadores) i.remove();
+  indicadores = [];
+  cerrarPopup();
+  const m = mapa.value;
+  if (!m || !listo.value || !mostrarTarifas.value || !datos.value) return;
   const paradas = datos.value.ruta.paradas;
   for (const t of trayectos.value) {
-    const punto = puntoMedio(paradas, t.desde, t.hasta);
-    if (!punto) continue;
-    // Un botón nativo (no el icono enfocable de Leaflet): al enfocar el icono, Leaflet centra el mapa y pierde el clic.
+    const en = puntoMedio(paradas, t.desde, t.hasta);
+    if (!en) continue;
     const etiqueta = `${t.origen} → ${t.destino}: ${t.tarifas.length} ${t.tarifas.length === 1 ? "tarifa" : "tarifas"}`;
-    const indicador = L.marker(punto, {
-      icon: L.divIcon({
-        className: "tarifa-indicador",
-        html: `<button type="button" class="tarifa-indicador__boton" aria-label="${escapar(etiqueta)}">${t.tarifas.length}</button>`,
-        iconSize: [26, 26],
-        iconAnchor: [13, 13],
-      }),
-      keyboard: false,
-      title: etiqueta,
-      zIndexOffset: 200,
-    });
-    indicador.on("click", () => abrirPopup(t, punto));
-    indicador.addTo(capaTarifas);
+    const boton = document.createElement("button");
+    boton.type = "button";
+    boton.className = "mapa-boton tarifa-indicador__boton";
+    boton.textContent = String(t.tarifas.length);
+    boton.title = etiqueta;
+    boton.setAttribute("aria-label", etiqueta);
     // Al pulsar, el foco haría que el navegador desplace la página (y el clic se pierde): el ratón no enfoca el botón.
-    indicador
-      .getElement()
-      ?.querySelector("button")
-      ?.addEventListener("mousedown", (e) => e.preventDefault());
+    boton.addEventListener("mousedown", (e) => e.preventDefault());
+    boton.addEventListener("click", (e) => {
+      // El clic no sigue al mapa: elegiría la parada que quede debajo.
+      e.stopPropagation();
+      abrirPopup(t, en);
+    });
+    indicadores.push(new maplibregl.Marker({ element: boton }).setLngLat(aLngLat(en)).addTo(m));
   }
 }
 
-function abrirPopup(t: TrayectoMapa, punto: [number, number]) {
-  if (!mapa) return;
-  L.popup({ maxWidth: 360, minWidth: 280, className: "tarifa-popup" }).setLatLng(punto).setContent(contenidoPopup(t)).openOn(mapa);
+function cerrarPopup() {
+  popup?.remove();
+  popup = null;
+}
+
+function abrirPopup(t: TrayectoMapa, en: [number, number]) {
+  const m = mapa.value;
+  if (!m) return;
+  cerrarPopup();
+  popup = new maplibregl.Popup({ maxWidth: "360px", className: "tarifa-popup", focusAfterOpen: false, offset: 14 }).setLngLat(aLngLat(en)).setDOMContent(contenidoPopup(t)).addTo(m);
 }
 
 /** Acordeón con las tarifas del trayecto; se arma con DOM para no interpolar texto sin escapar. */
@@ -357,7 +378,7 @@ function itemTarifa(tarifa: TarifaMapa): HTMLElement {
   editar.className = "tarifa-item__editar";
   editar.textContent = "Editar";
   editar.addEventListener("click", () => {
-    mapa?.closePopup();
+    cerrarPopup();
     void router.push(`/form/BoletoTarifa/${tarifa.id}`);
   });
   item.append(resumen, detalle, editar);
@@ -374,10 +395,11 @@ function fila(etiqueta: string, valor: string): DocumentFragment {
   return f;
 }
 
-function enfocar() {
-  if (!mapa) return;
-  const puntos: L.LatLngTuple[] = datos.value ? datos.value.ruta.paradas.filter((p) => p.latitud !== null && p.longitud !== null).map((p) => [p.latitud!, p.longitud!]) : lugares.value.filter((l) => l.latitud !== null && l.longitud !== null).map((l) => [l.latitud!, l.longitud!]);
-  if (puntos.length) mapa.fitBounds(L.latLngBounds(puntos), { padding: [40, 40], maxZoom: 11 });
+function enfocar(animar = true) {
+  const m = mapa.value;
+  if (!m || !listo.value) return;
+  const puntos: LatLng[] = datos.value ? datos.value.ruta.paradas.filter((p) => p.latitud !== null && p.longitud !== null).map((p) => [p.latitud!, p.longitud!]) : lugares.value.filter((l) => l.latitud !== null && l.longitud !== null).map((l) => [l.latitud!, l.longitud!]);
+  encuadrar(m, puntos, { margen: 40, maxZoom: 10, animar });
 }
 
 /** Lo que se ve: una ruta, un trayecto origen→destino o los enclaves. Cada cambio reinicia los filtros. */
@@ -408,9 +430,7 @@ async function cargarVista() {
       if (mia === carga) cargandoRuta.value = false;
     }
   }
-  dibujarEnclaves();
-  dibujarRuta();
-  dibujarTarifas();
+  dibujarTodo();
 }
 
 /** Elegir una ruta quita origen y destino; elegir origen o destino quita la ruta. */
@@ -430,47 +450,26 @@ watch([origenId, destinoId], () => {
 });
 watch(trayectos, dibujarTarifas);
 watch(mostrarTarifas, dibujarTarifas);
-watch(mostrarNombres, () => {
-  dibujarEnclaves();
-  dibujarRuta();
-  dibujarTarifas();
-});
+watch(mostrarNombres, dibujarTodo);
 
 onMounted(async () => {
-  if (!mapaEl.value) return;
-  // Sin `keyboard`: Leaflet enfoca el mapa al pulsarlo y el navegador desplaza la página para mostrarlo, con lo que se pierde el clic en un indicador.
-  mapa = L.map(mapaEl.value, { center: CENTRO, zoom: 7, keyboard: false });
-  // Al cambiar el zoom se redibujan los círculos con su nuevo tamaño.
-  mapa.on("zoomend", () => {
-    dibujarEnclaves();
-    dibujarRuta();
-  });
-  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 18,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-  }).addTo(mapa);
-  capaEnclaves = L.layerGroup().addTo(mapa);
-  capaRuta = L.layerGroup().addTo(mapa);
-  capaTarifas = L.layerGroup().addTo(mapa);
-  observador = new ResizeObserver(() => mapa?.invalidateSize());
-  observador.observe(mapaEl.value);
   window.addEventListener("keydown", alTeclear);
   try {
     // Todos los enclaves con coordenadas: se dibujan en el mapa (no son un filtro).
     lugares.value = (await fetchOpcionesRutas()).lugares;
     dibujarEnclaves();
-    enfocar();
+    enfocar(false);
   } catch (e) {
     error.value = e instanceof HttpError && e.status === 403 ? "No tiene permiso para ver las tarifas (salida.ver)." : e instanceof Error ? e.message : String(e);
   }
 });
 
 onBeforeUnmount(() => {
-  observador?.disconnect();
   window.removeEventListener("keydown", alTeclear);
   document.body.style.overflow = "";
-  mapa?.remove();
-  mapa = null;
+  cerrarPopup();
+  for (const i of indicadores) i.remove();
+  indicadores = [];
 });
 </script>
 
@@ -503,8 +502,9 @@ onBeforeUnmount(() => {
   font-variant-numeric: tabular-nums;
   cursor: pointer;
 }
-.tarifa-popup .leaflet-popup-content {
-  margin: 10px 12px;
+.tarifa-popup .maplibregl-popup-content {
+  min-width: min(280px, 80vw);
+  padding: 10px 12px;
   font-size: 13px;
 }
 .tarifa-popup__titulo {

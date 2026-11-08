@@ -61,6 +61,18 @@
 	# Disable Topics tracking if not enabled explicitly: https://github.com/jkarlin/topics
 	header ?Permissions-Policy "browsing-topics=()"
 
+	# Mapa base (ADR-055): teselas, fuentes y sprites que deja `make mapas` en el volumen mapas_data.
+	# El manifiesto se revalida siempre; las teselas llevan su fecha en el nombre y no cambian nunca.
+	handle_path /mapas/* {
+		root * /srv/mapas
+		@manifiesto path /mapa.json
+		header @manifiesto Cache-Control "no-cache"
+		@teselas path *.pmtiles
+		header @teselas Cache-Control "public, max-age=31536000, immutable"
+		header ?Cache-Control "public, max-age=604800"
+		file_server
+	}
+
 	  #----------------------------- FDN Reverse Proxies -------------------------------
     # /login
     # @login expression path('/login') && !header({'Accept': '*text/html*'})
@@ -71,7 +83,7 @@
     # except for known API paths and paths with extensions handled by API Platform
     @frontend expression `(
     !path(
-        '/index*','/logout', '/pagina*', '/docs*', '/borrar*', '/api*', '/graphql*', '/schema.graphql', '/bundles*', '/contexts*', '/_profiler*', '/_wdt*', '/test_event', '/assets*', '*.json*', '*.html', '*.csv', '*.yml', '*.yaml', '*.xml', '/auth*', '/login', '/user-invalid'
+        '/index*','/logout', '/pagina*', '/mapas*', '/docs*', '/borrar*', '/api*', '/graphql*', '/schema.graphql', '/bundles*', '/contexts*', '/_profiler*', '/_wdt*', '/test_event', '/assets*', '*.json*', '*.html', '*.csv', '*.yml', '*.yaml', '*.xml', '/auth*', '/login', '/user-invalid'
     )
     || ({method} == 'GET' && path('/login'))
 )`
