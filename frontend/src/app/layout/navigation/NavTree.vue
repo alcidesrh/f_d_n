@@ -198,9 +198,9 @@ const toggle = (id: number) => props.sidebar.toggleItem(id);
   /*background-color: #fbfcfd;*/
   /*background-color: var(--bg2);*/
 
-  /*& > * {
+  & > * {
     background-color: var(--bg2);
-  }*/
+  }
 }
 .nav-tree--nested {
   padding: 0;

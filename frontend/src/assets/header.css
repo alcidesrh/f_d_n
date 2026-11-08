@@ -17,6 +17,7 @@
   gap: 0.25rem;
   padding-inline: max(0.25rem, env(safe-area-inset-left)) max(0.25rem, env(safe-area-inset-right));
   transition: box-shadow 0.2s ease;
+  /*background-color: var(--bg);*/
 
   @variant lg {
     gap: 16px;
