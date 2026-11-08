@@ -58,6 +58,7 @@
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="font-medium">{{ a.rol.descripcion || a.rol.nombre }}</span>
+                <span v-if="a.rol.descripcion" class="font-mono text-xs text-muted-color">{{ a.rol.nombre }}</span>
                 <Tag v-if="a.rol.sistema" severity="contrast" value="Sistema" />
                 <Tag v-if="!a.vigente" severity="secondary" value="No vigente" />
               </div>

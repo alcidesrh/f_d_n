@@ -8,7 +8,7 @@
   <template v-else>
     <div class="border-t border-t-surface-300" v-for="menu in menus" :key="menu.id">
       <section class="nav-section" :class="{ open: opened.has(menu.id) }">
-        <button v-if="menus.length > 1 && !sidebar?.compact" type="button" class="nav-section-title" @click="toggle(menu.id)">
+        <button v-if="menus.length > 1 && !sidebar?.compact" type="button" class="nav-section-title" @click="toggle(menu)">
           <icon :weight="200" class="text-surface-800" :name="!opened.has(menu.id) ? 'add' : 'remove'" size="1rem" />
           <span>{{ menu.nombre }}</span>
         </button>
@@ -26,8 +26,9 @@
 
 <script setup lang="ts">
 import { gsap } from "gsap";
-import { useUserMenusStore, type LayoutArea } from "@/core/navigation/userMenus";
+import { useUserMenusStore, type LayoutArea, type NavMenu } from "@/core/navigation/userMenus";
 import type { SidebarStore } from "../sidebarStore";
+import { idsDelArbol } from "./arbol";
 import NavMenuBar from "./NavMenuBar.vue";
 import NavTree from "./NavTree.vue";
 
@@ -38,7 +39,17 @@ const menus = computed(() => userMenus.areas[props.area]);
 
 /** Menús contraídos: los guarda el store del panel (por usuario). */
 const opened = computed(() => new Set(props.sidebar?.expandedMenus ?? []));
-const toggle = (id: number) => props.sidebar?.toggleMenu(id);
+/**
+ * Un menú cerrado no deja grupos desplegados: al cerrarlo pliega los suyos; al
+ * abrir uno (y cerrarse el anterior) pliega los de todos, así cada menú entra
+ * con sus grupos recogidos.
+ */
+function toggle(menu: NavMenu) {
+  if (!props.sidebar) return;
+  const plegar = opened.value.has(menu.id) ? menu.items : menus.value.flatMap((m) => m.items);
+  props.sidebar.collapseItems(idsDelArbol(plegar));
+  props.sidebar.toggleMenu(menu.id);
+}
 
 function onEnter(el: Element, done: () => void) {
   gsap.fromTo(
