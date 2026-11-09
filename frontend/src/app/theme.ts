@@ -176,7 +176,7 @@ export const themeColors = (primaryName: PrimaryColor, surfaceName: SurfacePalet
           focusColor: "{surface.300}",
         },
         text: {
-          color: "{surface.700}",
+          color: "{surface.800}",
           hoverColor: "{surface.800}",
           mutedColor: "{surface.500}",
           hoverMutedColor: "{surface.600}",

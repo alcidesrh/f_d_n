@@ -122,7 +122,7 @@ const props = defineProps<{
 const emit = defineEmits<{ elegir: [id: number]; crearTarifa: [salida: SalidaResumen] }>();
 
 const columns: GridColumn[] = [
-  { key: "hora", label: "Hora", width: "120px" },
+  { key: "hora", label: "Salida", width: "120px" },
   { key: "ruta", label: "Ruta", minWidth: "9rem", width: "1.5fr" },
   { key: "sube", label: "Sube en", minWidth: "7rem" },
   { key: "baja", label: "Baja en", minWidth: "7rem" },

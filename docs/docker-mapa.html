@@ -15,6 +15,7 @@
   --work: #b45309; --work-soft: #fef3c7;
   --legacy: #64748b; --legacy-soft: #f1f5f9;
   --mon: #be185d; --mon-soft: #fce7f3;
+  --map: #0e7490; --map-soft: #cffafe;
   --warn-ink: #92400e; --warn-soft: #fef3c7;
   --code-bg: #f8fafc;
   --sans: "Roboto Flex", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -31,6 +32,7 @@
   --work: #fbbf24; --work-soft: #451a03;
   --legacy: #94a3b8; --legacy-soft: #1e293b;
   --mon: #f472b6; --mon-soft: #500724;
+  --map: #22d3ee; --map-soft: #164e63;
   --warn-ink: #fcd34d; --warn-soft: #451a03;
   --code-bg: #020617; color-scheme: dark;
 } }
@@ -44,6 +46,7 @@
   --work: #fbbf24; --work-soft: #451a03;
   --legacy: #94a3b8; --legacy-soft: #1e293b;
   --mon: #f472b6; --mon-soft: #500724;
+  --map: #22d3ee; --map-soft: #164e63;
   --warn-ink: #fcd34d; --warn-soft: #451a03;
   --code-bg: #020617; color-scheme: dark;
 }
@@ -131,7 +134,7 @@ footer { color: var(--faint); font-size: 12px; }
     <div>
       <div class="eyebrow">Transportes Fuentes del Norte · f_d_n</div>
       <h1>Mapa Docker y comandos</h1>
-      <p class="lead">Seis contenedores, una sola imagen de PHP para cuatro de ellos y PostgreSQL como base, cola y cerrojo. Toque un servicio en el mapa para ver solo sus comandos.</p>
+      <p class="lead">Seis contenedores de base, una sola imagen de PHP para cuatro de ellos y PostgreSQL como base, cola y cerrojo. Los mapas y las rutas por carretera van aparte, en el perfil <code>mapas</code>. Toque un servicio en el mapa para ver solo sus comandos.</p>
     </div>
     <div class="stack" aria-label="Versiones">
       <span class="chip">PHP 8.4</span><span class="chip">FrankenPHP 1</span><span class="chip">Symfony 8</span><span class="chip">PostgreSQL 16</span><span class="chip">Vue 3 · bun</span>
@@ -144,7 +147,7 @@ footer { color: var(--faint); font-size: 12px; }
       <span class="hint">compose.yaml + compose.override.yaml (desarrollo)</span>
     </div>
     <div class="svg-scroll">
-      <svg id="diagram" viewBox="0 0 1000 560" role="img" aria-label="Diagrama de contenedores Docker del proyecto">
+      <svg id="diagram" viewBox="0 0 1000 710" role="img" aria-label="Diagrama de contenedores Docker del proyecto">
         <defs>
           <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M0,0 L10,5 L0,10 z" fill="var(--faint)"/>
@@ -152,7 +155,7 @@ footer { color: var(--faint); font-size: 12px; }
         </defs>
 
         <!-- red de compose -->
-        <rect x="150" y="14" width="660" height="510" rx="14" fill="none" stroke="var(--line)" stroke-dasharray="2 4"/>
+        <rect x="150" y="14" width="660" height="682" rx="14" fill="none" stroke="var(--line)" stroke-dasharray="2 4"/>
         <text x="166" y="34" class="t-label">red default de compose</text>
 
         <!-- cliente -->
@@ -174,7 +177,7 @@ footer { color: var(--faint); font-size: 12px; }
           <g>
             <rect x="204" y="112" width="294" height="40" rx="6" fill="var(--surface)" stroke="var(--line)"/>
             <text x="216" y="130" style="font-weight:600;font-size:12.5px">Caddy</text>
-            <text x="216" y="145" class="t-sub">TLS, zstd/br/gzip, enruta por path</text>
+            <text x="216" y="145" class="t-sub">TLS, compresión, rutas, /mapas/ (estático)</text>
           </g>
           <g>
             <rect x="204" y="160" width="143" height="58" rx="6" fill="var(--surface)" stroke="var(--line)"/>
@@ -244,7 +247,35 @@ footer { color: var(--faint); font-size: 12px; }
           <text x="626" y="473" class="t-sub">tareas en la cola</text>
           <text x="626" y="492" class="t-mono">uno solo (cerrojo)</text>
         </g>
-        <text x="186" y="524" class="t-label">misma imagen app-php y mismo entorno que backend · ADR-044</text>
+        <text x="400" y="524" class="t-label">misma imagen app-php y entorno que backend · ADR-044</text>
+
+        <!-- mapas (ADR-055) -->
+        <text x="186" y="556" class="t-label">perfil mapas · fuera de make up y make prod · ADR-055</text>
+        <g class="svc" data-svc="mapas" tabindex="0" role="button" aria-label="Filtrar comandos de mapas">
+          <rect class="box" x="186" y="566" width="196" height="112" rx="12" fill="var(--map-soft)" stroke="var(--map)"/>
+          <text x="202" y="592" class="t-title">valhalla</text>
+          <text x="202" y="610" class="t-mono">valhalla-scripted</text>
+          <text x="202" y="630" class="t-port" style="fill:var(--map)">:8002</text>
+          <text x="256" y="630" class="t-sub">sin publicar</text>
+          <text x="202" y="650" class="t-sub">km, tiempo y trazado por</text>
+          <text x="202" y="665" class="t-sub">carretera; solo lo llama PHP</text>
+        </g>
+        <g class="svc" data-svc="mapas" tabindex="0" role="button" aria-label="Filtrar comandos de mapas">
+          <rect class="box" x="398" y="566" width="196" height="112" rx="12" fill="var(--map-soft)" stroke="var(--map)" stroke-dasharray="5 4"/>
+          <text x="414" y="592" class="t-title">mapas</text>
+          <text x="414" y="610" class="t-mono">app-mapas · una pasada</text>
+          <text x="414" y="632" class="t-sub">recorta teselas PMTiles y</text>
+          <text x="414" y="647" class="t-sub">OpenStreetMap de la región</text>
+          <text x="414" y="665" class="t-mono">make mapas · cada mes</text>
+        </g>
+        <g>
+          <rect x="610" y="566" width="186" height="112" rx="12" fill="var(--surface)" stroke="var(--line)"/>
+          <text x="626" y="592" class="t-title">volúmenes</text>
+          <text x="626" y="614" class="t-mono">mapas_data</text>
+          <text x="626" y="630" class="t-sub">Caddy lo sirve en /mapas/</text>
+          <text x="626" y="650" class="t-mono">valhalla_data</text>
+          <text x="626" y="666" class="t-sub">recorte .pbf y grafo</text>
+        </g>
 
         <!-- legado -->
         <g class="svc" data-svc="legacy" tabindex="0" role="button" aria-label="Filtrar comandos del legado">
@@ -278,7 +309,10 @@ footer { color: var(--faint); font-size: 12px; }
         <path class="wire" d="M496 392 C496 372 560 340 598 330" marker-end="url(#arr)"/>
         <path class="wire" d="M703 392 V360" marker-end="url(#arr)"/>
         <text x="710" y="380" class="wlabel">encola</text>
-        <path class="wire dash" d="M284 506 C 300 580 840 580 905 406" marker-end="url(#arr)"/>
+        <path class="wire dash" d="M284 504 V536 H905 V406" marker-end="url(#arr)"/>
+        <path class="wire" d="M186 300 H168 V617 H184" marker-end="url(#arr)"/>
+        <path class="wire" d="M398 617 H384" marker-end="url(#arr)"/>
+        <path class="wire" d="M594 617 H608" marker-end="url(#arr)"/>
         <text x="914" y="428" class="wlabel">ADR-042</text>
       </svg>
     </div>
@@ -288,15 +322,17 @@ footer { color: var(--faint); font-size: 12px; }
       <span><i class="dot" style="background:var(--db)"></i>PostgreSQL</span>
       <span><i class="dot" style="background:var(--work)"></i>Segundo plano</span>
       <span><i class="dot" style="background:var(--legacy)"></i>Legado</span>
+      <span><i class="dot" style="background:var(--map)"></i>Mapas</span>
       <span><i class="dot" style="background:var(--mon)"></i>Monitoreo</span>
-      <span>Borde punteado: fuera del stack base</span>
+      <span>Borde punteado: externo, opcional o de una pasada</span>
     </div>
 
     <div class="layers" aria-label="Capas de compose">
-      <div class="layer"><span class="tag">base</span><h3>compose.yaml</h3><p>Los 6 servicios, puertos, healthchecks y volúmenes <code>caddy_data</code>, <code>caddy_config</code>, <code>database_data</code>.</p></div>
+      <div class="layer"><span class="tag">base</span><h3>compose.yaml</h3><p>Los 6 servicios, más <code>valhalla</code> y <code>mapas</code> en su perfil. Volúmenes <code>caddy_data</code>, <code>caddy_config</code>, <code>database_data</code>, <code>mapas_data</code>, <code>valhalla_data</code>.</p></div>
       <div class="layer"><span class="tag">dev · por defecto</span><h3>compose.override.yaml</h3><p>Build <code>frankenphp_dev</code> y <code>dev</code>, código montado, <code>Caddyfile.dev</code>, Xdebug por <code>XDEBUG_MODE</code>, Postgres en :5432.</p></div>
       <div class="layer"><span class="tag">producción</span><h3>compose.prod.yaml</h3><p>Imagen sin código: monta el checkout de la VPS, <code>/app/var</code> en tmpfs, secretos de <code>.env.prod.local</code>.</p></div>
       <div class="layer"><span class="tag">vps · dev ↔ prod</span><h3>compose.vps.yaml</h3><p>Dev por el dominio de prod (mismo certificado, en <code>caddy_data</code>) y la base sin puerto público. Comparte contenedores y base con prod: <code>make vps</code> pasa a dev, <code>make prod</code> vuelve. Imágenes de dev con prefijo <code>dev-</code>.</p></div>
+      <div class="layer"><span class="tag">generado · fuera de git</span><h3>compose.db-remota.yaml</h3><p>Lo crea <code>scripts/db-remota.sh on</code>: apunta el stack local a la base de producción por túnel SSH. <code>off</code> lo borra.</p></div>
     </div>
   </section>
 
@@ -314,7 +350,7 @@ footer { color: var(--faint); font-size: 12px; }
     <div class="empty" id="empty" hidden>Ningún comando coincide. Quite el filtro o cambie la búsqueda.</div>
   </section>
 
-  <footer>Tomado de compose*.yaml, Makefile, backend/Dockerfile, frontend/Dockerfile y backend/frankenphp/Caddyfile. Los comandos <code>make</code> se corren desde la raíz del repo. Nunca pegue tokens ni contraseñas en la salida compartida.</footer>
+  <footer>Tomado de compose*.yaml, Makefile, los Dockerfile de backend, frontend y mapas, backend/frankenphp/Caddyfile y scripts/db-remota.sh. Los comandos <code>make</code> se corren desde la raíz del repo. Nunca pegue tokens ni contraseñas en la salida compartida.</footer>
 </div>
 
 <script>
@@ -326,6 +362,7 @@ const SVC = {
   'worker-pesadas': { name: 'worker-pesadas', color: 'var(--work)' },
   programador: { name: 'programador', color: 'var(--work)' },
   legacy: { name: 'legado', color: 'var(--legacy)' },
+  mapas: { name: 'mapas', color: 'var(--map)' },
   monitoring: { name: 'monitoreo', color: 'var(--mon)' },
 };
 const ALLPHP = ['backend', 'worker', 'worker-pesadas', 'programador'];
@@ -355,6 +392,8 @@ const GROUPS = [
     ['make cc', 'Limpia la caché de Symfony.', ['backend']],
     ['make entity-setup', 'Sincroniza la metadata de entidades dinámicas (app:config:sync-metadata).', ['backend']],
     ['docker compose exec backend bin/console debug:router', 'Rutas registradas.', ['backend']],
+    ['scripts/db-remota.sh on', 'Conecta el stack local a la base de producción. <span class="warn">Lo que escriba va a producción</span>', ALLPHP.concat('database')],
+    ['scripts/db-remota.sh off', 'Cierra el túnel y vuelve a la base local. Sin argumento, muestra el estado.', ALLPHP.concat('database')],
   ]},
   { title: 'Segundo plano', where: 'ADR-044', cmds: [
     ['make tareas', 'Latido de cada tarea del programador.', ['programador']],
@@ -376,9 +415,11 @@ const GROUPS = [
     ['make migrar-todo clean=1', 'Migración completa. <span class="warn">Toma horas</span>', ['legacy', 'backend', 'database']],
   ]},
   { title: 'Producción', where: 'VPS · .env.prod.local', cmds: [
-    ['make deploy', 'git pull y solo lo que cambió: vendor, front, página, imagen o reinicio.', ALLPHP.concat('frontend')],
+    ['make deploy', 'git pull y solo lo que cambió: vendor, migraciones, front, página, imagen o reinicio.', ALLPHP.concat('frontend', 'database')],
+    ['make deploy desde=<commit>', 'Retoma un deploy que se detuvo en las migraciones.', ALLPHP.concat('frontend', 'database')],
+    ['make migraciones desde=<commit>', 'Aplica solo si todas las pendientes llegaron después de ese commit. Lo llama make deploy.', ['backend', 'database']],
     ['make reiniciar', 'Recrea los 4 contenedores de PHP para tomar el código (segundos).', ALLPHP],
-    ['make front', 'vite build en el host; el contenedor sirve dist/ sin reiniciar.', ['frontend']],
+    ['make front', 'bun install y vite build en el host; el contenedor sirve dist/ sin reiniciar.', ['frontend']],
     ['make pagina', 'Compila la página pública en backend/public/pagina.', ['backend']],
     ['make vendor', 'composer install tras cambiar composer.lock.', ['backend']],
     ['make imagen', 'Reconstruye imágenes. Solo si cambia un Dockerfile o una extensión de PHP.', ALL],
@@ -390,6 +431,12 @@ const GROUPS = [
     ['make prod', 'Vuelve a producción con las imágenes de prod.', ALL],
     ['make vps-build', 'Reconstruye las imágenes dev- y levanta dev. Solo si cambia un Dockerfile.', ALL],
     ['make front && make pagina', 'Al volver a prod, si cambió el frontend o la página.', ['frontend', 'backend']],
+  ]},
+  { title: 'Mapas y rutas', where: 'perfil mapas · ADR-055', cmds: [
+    ['make mapas', 'Prepara teselas y recorte de OpenStreetMap y recrea Valhalla. La primera vez y cada mes.', ['mapas', 'backend']],
+    ['make valhalla', 'Levanta Valhalla con el grafo que ya tiene, tras un make down.', ['mapas']],
+    ['make valhalla-logs', 'Sigue la construcción del grafo (varios minutos).', ['mapas']],
+    ['docker compose --profile mapas ps', 'Estado incluyendo los servicios del perfil.', ['mapas']],
   ]},
   { title: 'Monitoreo', where: 'compose.monitoring.yaml', cmds: [
     ['make mon-up', 'cAdvisor :8080, Prometheus :9090, Grafana :3000. Convive con make dev.', ['monitoring']],
