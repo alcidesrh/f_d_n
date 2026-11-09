@@ -4,8 +4,7 @@
   Con una ruta: su trazo con las paradas, los enclaves que
   no están en ella se ocultan y, a medio camino de cada trayecto con tarifas,
   un indicador con su número. Clic en el indicador: popup con un acordeón de
-  las tarifas (detalle y «Editar»). Los filtros aplican al cambiar cada uno;
-  cambiar de ruta los reinicia. Reglas puras en `core/tarifa/mapa.ts`.
+  las tarifas (detalle y «Editar»). Reglas puras en `core/tarifa/mapa.ts`.
 -->
 <template>
   <div class="@container flex flex-col gap-4" :class="maximizado ? 'fixed inset-0 z-[900] overflow-auto bg-surface-0 p-3' : ''">
@@ -32,47 +31,6 @@
       </div>
       <!-- Lo que hay sobre el mapa no cambia de alto al elegir: el mapa no salta en la página. -->
       <p class="m-0 min-h-[1lh] truncate text-xs text-muted-color" :title="avisoTrayecto" aria-live="polite">{{ avisoTrayecto }}</p>
-
-      <div class="grid grid-cols-2 gap-x-3 gap-y-2 @2xl:grid-cols-4" :class="{ 'opacity-50': !datos }" :inert="!datos">
-        <label class="flex flex-col gap-1">
-          <span class="text-xs font-medium text-muted-color">Empresa</span>
-          <Select v-model="filtro.empresaId" :options="empresas" option-label="nombre" option-value="id" placeholder="Cualquiera" show-clear fluid size="small" />
-        </label>
-        <label class="flex flex-col gap-1">
-          <span class="text-xs font-medium text-muted-color">Clase de asiento</span>
-          <Select v-model="filtro.clase" :options="CLASES" option-label="etiqueta" option-value="valor" placeholder="Cualquiera" show-clear fluid size="small" />
-        </label>
-        <label class="flex flex-col gap-1">
-          <span class="text-xs font-medium text-muted-color">Clase de bus</span>
-          <Select v-model="filtro.busClaseId" :options="clasesBus" option-label="nombre" option-value="id" placeholder="Cualquiera" show-clear filter fluid size="small" />
-        </label>
-        <label class="flex flex-col gap-1">
-          <span class="text-xs font-medium text-muted-color">Bus</span>
-          <Select v-model="filtro.busId" :options="buses" option-label="nombre" option-value="id" placeholder="Cualquiera" show-clear filter fluid size="small" />
-        </label>
-        <div class="flex flex-col gap-1">
-          <span class="text-xs font-medium text-muted-color">Precio (desde – hasta)</span>
-          <div class="flex items-center gap-1.5">
-            <InputNumber :model-value="filtro.precioMin" :min-fraction-digits="0" :max-fraction-digits="2" placeholder="Mín." size="small" fluid aria-label="Precio mínimo" @update:model-value="(v) => (filtro.precioMin = v ?? null)" />
-            <span aria-hidden="true">–</span>
-            <InputNumber :model-value="filtro.precioMax" :min-fraction-digits="0" :max-fraction-digits="2" placeholder="Máx." size="small" fluid aria-label="Precio máximo" @update:model-value="(v) => (filtro.precioMax = v ?? null)" />
-          </div>
-        </div>
-        <div class="flex flex-col gap-1">
-          <span class="text-xs font-medium text-muted-color">Vigente desde</span>
-          <DatePicker :model-value="aFecha(filtro.vigenteDesde)" date-format="dd/mm/yy" show-icon fluid size="small" placeholder="Cualquiera" aria-label="Vigente desde" @update:model-value="(v) => (filtro.vigenteDesde = aDia(v))" />
-        </div>
-        <div class="flex flex-col gap-1">
-          <span class="text-xs font-medium text-muted-color">Vigente hasta</span>
-          <DatePicker :model-value="aFecha(filtro.vigenteHasta)" date-format="dd/mm/yy" show-icon fluid size="small" placeholder="Cualquiera" aria-label="Vigente hasta" @update:model-value="(v) => (filtro.vigenteHasta = aDia(v))" />
-        </div>
-        <div class="flex items-end justify-between gap-2 @2xl:col-span-2">
-          <span class="text-xs text-muted-color" aria-live="polite">
-            {{ cargandoRuta ? "Cargando tarifas…" : !datos ? "Elija una ruta o un trayecto" : `${mostradas} de ${totalTarifas} ${totalTarifas === 1 ? "tarifa" : "tarifas"}` }}
-          </span>
-          <Button label="Limpiar filtros" size="small" text :disabled="!hayFiltro" @click="limpiarFiltros" />
-        </div>
-      </div>
 
       <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-color">
         <label class="flex cursor-pointer items-center gap-2">
@@ -103,8 +61,7 @@ import { fetchOpcionesRutas } from "@/core/ruta/api";
 import type { Lugar } from "@/core/ruta/types";
 import SelectorEntidad from "@/shared/entidad/SelectorEntidad.vue";
 import { fetchTarifasDeRuta, fetchTarifasDeTrayecto } from "@/core/tarifa/api";
-import { FILTRO_MAPA_VACIO, filtrarTarifas, puntoMedio, type FiltroMapaTarifa, type RutaTarifasMapa, type TarifaMapa, type TrayectoMapa } from "@/core/tarifa/mapa";
-import { diaISO } from "@/core/venta/modelo";
+import { puntoMedio, type RutaTarifasMapa, type TarifaMapa, type TrayectoMapa } from "@/core/tarifa/mapa";
 import { HttpError } from "@/core/http";
 import { BLANCO, Etiquetas, GRIS_LUGAR, alPulsar, asegurarCapas, colorPrimario, encuadrar, fijarDatos, globoAlPasar } from "@/shared/mapa/capas";
 import { aLngLat, coleccion, linea, lineas, punto, type LatLng } from "@/shared/mapa/geo";
@@ -113,10 +70,6 @@ import { useMapa } from "@/shared/mapa/useMapa";
 
 /** Relleno del enclave elegido como origen; el mismo ámbar del trayecto en la ruta. */
 const COLOR_ORIGEN = "#f59e0b";
-const CLASES = [
-  { valor: "A", etiqueta: "A" },
-  { valor: "B", etiqueta: "B (confort)" },
-];
 
 const router = useRouter();
 const mapaEl = ref<HTMLElement | null>(null);
@@ -156,7 +109,6 @@ const avisoTrayecto = computed(() => {
   if ((origenId.value === null) !== (destinoId.value === null)) return "Elija también el otro extremo para ver el trayecto.";
   return "";
 });
-const cargandoRuta = ref(false);
 const error = ref("");
 const mostrarNombres = ref(false);
 const mostrarTarifas = ref(false);
@@ -171,9 +123,7 @@ function alternarMaximizado() {
 const alTeclear = (ev: KeyboardEvent) => {
   if (ev.key === "Escape" && maximizado.value) alternarMaximizado();
 };
-const filtro = reactive<FiltroMapaTarifa>({ ...FILTRO_MAPA_VACIO });
 
-/** Trayectos con las tarifas que cumplen el filtro; solo los que tienen alguna. */
 /** Con una ruta y origen + destino elegidos, solo el trayecto entre ellos (en el orden de la ruta). */
 const trayectosVista = computed(() => {
   const todos = datos.value?.trayectos ?? [];
@@ -182,44 +132,12 @@ const trayectosVista = computed(() => {
   const hasta = indiceParada(destinoId.value);
   return todos.filter((t) => t.desde === desde && t.hasta === hasta);
 });
-const trayectos = computed<TrayectoMapa[]>(() => trayectosVista.value.map((t) => ({ ...t, tarifas: filtrarTarifas(t.tarifas, filtro) })).filter((t) => t.tarifas.length > 0));
-const totalTarifas = computed(() => trayectosVista.value.reduce((n, t) => n + t.tarifas.length, 0));
 
 /** Posición del enclave en la ruta cargada; -1 si no está. */
 function indiceParada(enclaveId: number): number {
   return datos.value?.ruta.paradas.findIndex((p) => p.enclaveId === enclaveId) ?? -1;
 }
-const mostradas = computed(() => trayectos.value.reduce((n, t) => n + t.tarifas.length, 0));
-const hayFiltro = computed(() => Object.values(filtro).some((v) => v !== null));
 const sinUbicar = computed(() => (datos.value?.ruta.paradas ?? []).filter((p) => p.latitud === null || p.longitud === null).map((p) => p.nombre));
-
-/** Opciones de los filtros: solo lo que hay en esta ruta. */
-const empresas = computed(() => {
-  const porId = new Map<number, string>();
-  for (const t of allTarifas()) if (t.empresaId !== null) porId.set(t.empresaId, t.empresa ?? `Empresa ${t.empresaId}`);
-  return [...porId].map(([id, nombre]) => ({ id, nombre })).sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
-});
-const clasesBus = computed(() => {
-  const porId = new Map<number, string>();
-  for (const t of allTarifas()) if (t.busClaseId !== null) porId.set(t.busClaseId, t.busClase ?? `Clase ${t.busClaseId}`);
-  return [...porId].map(([id, nombre]) => ({ id, nombre })).sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
-});
-const buses = computed(() => {
-  const porId = new Map<number, string>();
-  for (const t of allTarifas()) if (t.busId !== null) porId.set(t.busId, t.bus ?? `Bus ${t.busId}`);
-  return [...porId].map(([id, nombre]) => ({ id, nombre })).sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
-});
-function allTarifas(): TarifaMapa[] {
-  return (datos.value?.trayectos ?? []).flatMap((t) => t.tarifas);
-}
-
-const aFecha = (dia: string | null) => (dia ? new Date(`${dia}T00:00`) : null);
-/** El selector emite un `Date` (o una lista, según el modo): solo un día suelto cuenta. */
-const aDia = (fecha: unknown) => (fecha instanceof Date ? diaISO(fecha) : null);
-
-function limpiarFiltros() {
-  Object.assign(filtro, FILTRO_MAPA_VACIO);
-}
 
 const escapar = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
@@ -320,7 +238,7 @@ function dibujarTarifas() {
   const m = mapa.value;
   if (!m || !listo.value || !mostrarTarifas.value || !datos.value) return;
   const paradas = datos.value.ruta.paradas;
-  for (const t of trayectos.value) {
+  for (const t of trayectosVista.value) {
     const en = puntoMedio(paradas, t.desde, t.hasta);
     if (!en) continue;
     const etiqueta = `${t.origen} → ${t.destino}: ${t.tarifas.length} ${t.tarifas.length === 1 ? "tarifa" : "tarifas"}`;
@@ -404,7 +322,7 @@ function enfocar(animar = true) {
   encuadrar(m, puntos, { margen: 40, maxZoom: 10, animar });
 }
 
-/** Lo que se ve: una ruta, un trayecto origen→destino o los enclaves. Cada cambio reinicia los filtros. */
+/** Lo que se ve: una ruta, un trayecto origen→destino o los enclaves. */
 let vistaActual = "";
 async function cargarVista() {
   const origen = origenId.value;
@@ -416,10 +334,8 @@ async function cargarVista() {
   vistaActual = clave;
 
   const mia = ++carga;
-  Object.assign(filtro, FILTRO_MAPA_VACIO);
   error.value = "";
   datos.value = null;
-  cargandoRuta.value = clave !== "enclaves";
   if (clave !== "enclaves") {
     try {
       const r = rutaId.value !== null ? await fetchTarifasDeRuta(rutaId.value) : await fetchTarifasDeTrayecto(origen!, destino!);
@@ -428,8 +344,6 @@ async function cargarVista() {
     } catch (e) {
       if (mia !== carga) return;
       error.value = e instanceof HttpError && e.status === 403 ? "No tiene permiso para ver las tarifas (salida.ver)." : e instanceof Error ? e.message : String(e);
-    } finally {
-      if (mia === carga) cargandoRuta.value = false;
     }
   }
   dibujarTodo();
@@ -450,7 +364,7 @@ watch([origenId, destinoId], () => {
   // Con una ruta, el trayecto sale de sus paradas: no hay nada que pedir al servidor.
   if (rutaId.value === null) void cargarVista();
 });
-watch(trayectos, dibujarTarifas);
+watch(trayectosVista, dibujarTarifas);
 watch(mostrarTarifas, dibujarTarifas);
 watch(mostrarNombres, dibujarTodo);
 
