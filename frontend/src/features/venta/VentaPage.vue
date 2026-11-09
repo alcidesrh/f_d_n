@@ -47,17 +47,8 @@
           <section class="panel flex flex-col gap-3">
             <div class="grid grid-cols-2 items-start gap-x-2 gap-y-1.5 md:gap-3 @xl:grid-cols-3">
               <div class="campo col-span-2 @xl:col-span-1">
-                <span class="text-sm font-medium">{{ store.porRango ? "Rango de salida" : "Fecha de salida" }}</span>
-                <DatePicker size="small" v-if="!store.porRango" v-model="store.fecha" date-format="dd/mm/yy" show-icon fluid @update:model-value="store.cargarSalidas()" />
-                <DatePicker size="small" v-else ref="selectorRango" v-model="borrador" selection-mode="range" :manual-input="false" date-format="dd/mm/yy" show-time hour-format="24" show-icon fluid placeholder="Desde – Hasta">
-                  <template #footer>
-                    <Button label="Aplicar" size="small" fluid :disabled="!borrador?.[0]" @click="aplicarRango" />
-                  </template>
-                </DatePicker>
-                <label class="flex cursor-pointer items-center gap-1 text-[0.75rem] leading-none text-muted-color absolute right-0 -mb-1">
-                  <ToggleSwitch v-model="store.porRango" class="scale-[0.8] origin-left -mr-3" @update:model-value="alCambiarModo" />
-                  Rango
-                </label>
+                <span class="text-sm font-medium">Fecha de salida</span>
+                <DatePicker size="small" v-model="store.fecha" date-format="dd/mm/yy" show-icon fluid @update:model-value="store.cargarSalidas()" />
               </div>
               <label class="campo col-span-1">
                 <span class="text-sm font-medium">Sube en</span>
@@ -85,9 +76,9 @@
             <div v-else class="relative">
               <SalidasLista :salidas="salidasMostradas" :cargando="store.cargandoSalidas" :salida-id="store.salidaId" :puede-crear-tarifa="puedeCrearTarifa" @elegir="elegirSalida" @crear-tarifa="crearTarifa" />
               <!-- Flota en el borde entre la cabecera de la tabla y las salidas. -->
-              <Button v-if="anteriores.length && !store.porRango" :label="verAnteriores ? 'Ocultar anteriores' : `Ver anteriores (${anteriores.length})`" size="small" rounded severity="secondary" class="anteriores shadow-md hover:bg-surface-50!" @click="verAnteriores = !verAnteriores" />
+              <Button v-if="anteriores.length" :label="verAnteriores ? 'Ocultar anteriores' : `Ver anteriores (${anteriores.length})`" size="small" rounded severity="secondary" class="anteriores shadow-md hover:bg-surface-50!" @click="verAnteriores = !verAnteriores" />
             </div>
-            <div v-if="!store.porRango" class="flex items-center justify-between gap-2 mt-5">
+            <div class="flex items-center justify-between gap-2 mt-5">
               <Button :label="etiquetaDia(-1)" severity="secondary" size="small" class="otro-dia" :disabled="store.cargandoSalidas" @click="moverDia(-1)">
                 <template #icon><icon name="chevron-left" /></template>
               </Button>
@@ -349,7 +340,7 @@ onBeforeUnmount(() => window.clearInterval(reloj));
 const verAnteriores = ref(false);
 /** La observación es de la venta: se pide cuando ya hay cliente (y no al reasignar). */
 const conObservacion = computed(() => !store.reasignacion && !!store.cliente);
-const esHoy = computed(() => !store.porRango && store.fecha.toDateString() === new Date(ahora.value).toDateString());
+const esHoy = computed(() => store.fecha.toDateString() === new Date(ahora.value).toDateString());
 const horaInicio = (r: SalidaResumen) => new Date(r.viaje?.sube.hora ?? r.salidaEstacion ?? r.salida).getTime();
 const anteriores = computed(() => (esHoy.value ? store.salidasVisibles.filter((r) => horaInicio(r) < ahora.value) : []));
 const salidasMostradas = computed(() => (esHoy.value && !verAnteriores.value ? store.salidasVisibles.filter((r) => horaInicio(r) >= ahora.value) : store.salidasVisibles));
@@ -364,27 +355,6 @@ const conteos = computed(() => {
   const recomendados = Object.entries(n).reduce((total, [estado, k]) => (estado.startsWith("recomendado-") ? total + (k ?? 0) : total), 0);
   return { ...n, disponible: (n.disponible ?? 0) + recomendados };
 });
-
-/** Rango de fecha y hora: se elige en el selector y solo se busca al pulsar "Aplicar". */
-const borrador = ref<(Date | null)[] | null>(null);
-const selectorRango = ref<{ overlayVisible: boolean } | null>(null);
-function alCambiarModo(activo: boolean) {
-  if (activo) borrador.value = [store.desde, store.hasta];
-  void store.cargarSalidas();
-}
-function aplicarRango() {
-  const [d, h] = borrador.value ?? [];
-  if (!d) return;
-  // Sin fin, o con el fin a 00:00 sin hora elegida, el último día entra completo.
-  let fin = h ?? d;
-  if (fin.getHours() === 0 && fin.getMinutes() === 0) fin = new Date(fin.getFullYear(), fin.getMonth(), fin.getDate(), 23, 59);
-  const [desde, hasta] = fin < d ? [fin, d] : [d, fin];
-  store.desde = desde;
-  store.hasta = hasta;
-  borrador.value = [desde, hasta];
-  if (selectorRango.value) selectorRango.value.overlayVisible = false;
-  void store.cargarSalidas();
-}
 
 /** Paginado por día: mueve la fecha y recarga las salidas. */
 function moverDia(delta: number) {

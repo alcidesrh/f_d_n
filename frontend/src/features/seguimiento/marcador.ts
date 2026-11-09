@@ -21,7 +21,7 @@ export function elementoBus(titulo: string): HTMLButtonElement {
   boton.title = titulo;
   boton.setAttribute("aria-label", titulo);
   // El bus (Material Icons, «directions_bus») queda derecho; lo que gira es la punta del rumbo.
-  boton.innerHTML = '<span class="bus-marker-body"><span class="bus-marker-rumbo" aria-hidden="true"></span>' + '<svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path fill="#fff" d="M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17m9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5m1.5-6H6V6h12z"/></svg></span>';
+  boton.innerHTML = '<span class="bus-marker-body"><span class="bus-marker-rumbo" aria-hidden="true"></span>' + '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="#fff" d="M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17m9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5m1.5-6H6V6h12z"/></svg></span>';
   // El ratón no le da el foco: el navegador desplazaría la página para mostrarlo y el clic se perdería.
   boton.addEventListener("mousedown", (e) => e.preventDefault());
   return boton;
@@ -38,3 +38,4 @@ export function pintarBus(boton: HTMLElement, { color, rumbo, activo = false, qu
   // El elegido, encima de los demás.
   boton.style.zIndex = activo ? "2" : "1";
 }
+bus - marker - rumbo;

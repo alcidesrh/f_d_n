@@ -1,8 +1,10 @@
 <!--
-  Accesos (`/configuracion/accesos`, ADR-039): «¿Quién puede…?» —una
-  capacidad, y si se quiere en una empresa y una estación: quién la tiene y
-  por qué asignación— y los usuarios activos que no pueden hacer nada (los
-  que la migración no pudo ubicar, para revisarlos). Con `iam.ver`.
+  Accesos (`/configuracion/accesos`, ADR-039): los usuarios de un rol, con
+  modificar y revocar cada asignación (con `iam.asignar`, sin escalar
+  privilegios: lo dice `puedeEditar`); «¿Quién puede…?» —una capacidad, y si
+  se quiere en una empresa y una estación: quién la tiene y por qué
+  asignación— y los usuarios activos que no pueden hacer nada (los que la
+  migración no pudo ubicar, para revisarlos). Con `iam.ver`.
 -->
 <template>
   <div class="@container flex flex-col gap-3">
@@ -17,8 +19,8 @@
 
     <Tabs v-model:value="pestana">
       <TabList>
-        <Tab value="quien">¿Quién puede?</Tab>
         <Tab value="rol">Por rol</Tab>
+        <Tab value="quien">¿Quién puede?</Tab>
         <Tab value="sin">Sin alcance <Badge v-if="sinAlcance.length" :value="sinAlcance.length" severity="warn" class="ml-1" /></Tab>
       </TabList>
       <TabPanels>
@@ -83,6 +85,14 @@
                 <Tag :severity="data.vigente ? 'success' : 'secondary'" :value="data.vigente ? textoVigencia(data) : `Fuera de vigencia · ${textoVigencia(data)}`" />
               </template>
             </Column>
+            <Column header="Acciones">
+              <template #body="{ data }">
+                <div v-if="data.puedeEditar" class="flex gap-1">
+                  <Button text rounded size="small" class="tap-target" aria-label="Modificar" v-tooltip.top="'Modificar'" @click="modificarAsignacion(data)"><icon name="edit-outline" /></Button>
+                  <Button text rounded size="small" severity="danger" class="tap-target" aria-label="Revocar" v-tooltip.top="'Revocar'" @click="revocarAsignacion(data)"><icon name="remove-moderator-outline" /></Button>
+                </div>
+              </template>
+            </Column>
           </DataTable>
         </TabPanel>
 
@@ -104,19 +114,24 @@
         </TabPanel>
       </TabPanels>
     </Tabs>
+
+    <AsignacionDialog v-if="catalogo" v-model:visible="dialogo" :usuario-id="editando?.usuario.id ?? 0" :agencia="editando?.agencia ?? null" :roles="roles" :catalogo="catalogo" :asignacion="editando" @guardado="recargarRol" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useConfirm } from 'primevue/useconfirm'
 import * as api from '@/core/acceso/api'
 import { describirAmbito } from '@/core/acceso/reglas'
 import type { AsignacionDeRol, Ambito, CatalogoAcceso, FilaQuienPuede, FilaSinAlcance, Rol } from '@/core/acceso/tipos'
 import { notify } from '@/core/notify'
+import AsignacionDialog from './AsignacionDialog.vue'
 
 defineOptions({ name: 'AccesosPage' })
 
-const pestana = ref('quien')
+const confirm = useConfirm()
+const pestana = ref('rol')
 const catalogo = ref<CatalogoAcceso | null>(null)
 const capacidad = ref<string | null>(null)
 const empresa = ref<number | null>(null)
@@ -129,6 +144,10 @@ const roles = ref<Rol[]>([])
 const rolId = ref<number | null>(null)
 const resultadoRol = ref<AsignacionDeRol[] | null>(null)
 const buscandoRol = ref(false)
+/** El rol de las filas a la vista: el Select puede haber cambiado sin buscar. */
+const rolConsultado = ref<number | null>(null)
+const dialogo = ref(false)
+const editando = ref<AsignacionDeRol | null>(null)
 
 const opcionesCapacidad = computed(() => {
   const grupos = new Map<string, { area: string; items: Array<{ codigo: string; nombre: string }> }>()
@@ -176,16 +195,49 @@ function textoVigencia(a: AsignacionDeRol): string {
   return 'Sin vencimiento'
 }
 
-async function buscarRol() {
-  if (rolId.value === null) return
+async function consultarRol(id: number) {
   buscandoRol.value = true
   try {
-    resultadoRol.value = await api.fetchUsuariosRol(rolId.value)
+    resultadoRol.value = await api.fetchUsuariosRol(id)
+    rolConsultado.value = id
   } catch (e) {
     notify.error(e instanceof Error ? e.message : 'No se pudo consultar.')
   } finally {
     buscandoRol.value = false
   }
+}
+
+function buscarRol() {
+  if (rolId.value !== null) void consultarRol(rolId.value)
+}
+
+/** Tras modificar o revocar: la fila puede cambiar de datos o dejar de ser de este rol. */
+function recargarRol() {
+  if (rolConsultado.value !== null) void consultarRol(rolConsultado.value)
+}
+
+function modificarAsignacion(a: AsignacionDeRol) {
+  editando.value = a
+  dialogo.value = true
+}
+
+function revocarAsignacion(a: AsignacionDeRol) {
+  confirm.require({
+    header: 'Revocar rol',
+    message: `¿Quitarle a ${a.usuario.username} «${a.rol.descripcion || a.rol.nombre}» (${alcanceDeAsignacion(a)})? Deja de poder hacerlo desde ya.`,
+    acceptLabel: 'Revocar',
+    rejectLabel: 'Cancelar',
+    acceptProps: { severity: 'danger' },
+    accept: async () => {
+      try {
+        await api.revocar(a.id)
+        notify.success('Rol revocado.')
+        recargarRol()
+      } catch (e) {
+        notify.error(e instanceof Error ? e.message : 'No se pudo revocar.')
+      }
+    },
+  })
 }
 
 async function buscar() {
