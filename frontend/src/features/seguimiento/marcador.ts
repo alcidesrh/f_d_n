@@ -1,6 +1,7 @@
 /**
  * Marcador del bus en los mapas de seguimiento (en vivo y reproducción): un botón
- * redondo del color de la empresa con una flecha según el rumbo. Se crea una vez
+ * redondo del color de la empresa con un bus al centro y, en el borde, una punta
+ * que señala el rumbo. Se crea una vez
  * (`elementoBus`, el elemento de un `Marker` de MapLibre) y se repinta en cada
  * cuadro (`pintarBus`) sin rehacer el DOM.
  */
@@ -19,7 +20,10 @@ export function elementoBus(titulo: string): HTMLButtonElement {
   boton.className = 'mapa-boton bus-marker'
   boton.title = titulo
   boton.setAttribute('aria-label', titulo)
-  boton.innerHTML = '<span class="bus-marker-body"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M12 2 19 21 12 17 5 21Z" fill="#fff"/></svg></span>'
+  // El bus (Material Icons, «directions_bus») queda derecho; lo que gira es la punta del rumbo.
+  boton.innerHTML =
+    '<span class="bus-marker-body"><span class="bus-marker-rumbo" aria-hidden="true"></span>' +
+    '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="#fff" d="M4 16c0 .88.39 1.67 1 2.22V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.78c.61-.55 1-1.34 1-2.22V6c0-3.5-3.58-4-8-4s-8 .5-8 4zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17m9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5m1.5-6H6V6h12z"/></svg></span>'
   // El ratón no le da el foco: el navegador desplazaría la página para mostrarlo y el clic se perdería.
   boton.addEventListener('mousedown', (e) => e.preventDefault())
   return boton
@@ -27,7 +31,7 @@ export function elementoBus(titulo: string): HTMLButtonElement {
 
 export function pintarBus(boton: HTMLElement, { color, rumbo, activo = false, quieto = false }: AspectoBus): void {
   const cuerpo = boton.firstElementChild as HTMLElement | null
-  const flecha = cuerpo?.firstElementChild as SVGElement | null
+  const flecha = cuerpo?.querySelector<HTMLElement>('.bus-marker-rumbo')
   if (!cuerpo || !flecha) return
   cuerpo.style.setProperty('--c', color)
   cuerpo.classList.toggle('is-active', activo)

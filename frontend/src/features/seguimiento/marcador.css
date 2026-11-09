@@ -1,25 +1,44 @@
 .bus-marker {
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
 }
 .bus-marker-body {
+  position: relative;
+  box-sizing: border-box;
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   background: var(--c);
   border: 2px solid #fff;
-  box-shadow: 0 1px 6px rgb(0 0 0 / 0.45);
+  box-shadow: 0 1px 5px rgb(0 0 0 / 0.45);
+}
+/* La punta del rumbo: un triángulo del color de la empresa sobre el borde, que gira alrededor del centro. */
+.bus-marker-rumbo {
+  position: absolute;
+  inset: -9px;
+  pointer-events: none;
+}
+.bus-marker-rumbo::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  margin-left: -5px;
+  border: 5px solid transparent;
+  border-top: 0;
+  border-bottom: 7px solid var(--c);
+  filter: drop-shadow(0 -1px 0 #fff);
 }
 .bus-marker-body.is-still {
   opacity: 0.8;
 }
 .bus-marker-body.is-active {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   margin: -3px;
   outline: 3px solid color-mix(in srgb, var(--c) 45%, transparent);
 }
