@@ -13,6 +13,7 @@ import { alternar, bajadaPorDefecto, clasesDelTrayecto, depurarSeleccion, diaISO
 import { suscribir } from "@/core/realtime";
 import { notify } from "@/core/notify";
 import { useAutorizacionesStore } from "@/core/autorizacion/store";
+import { useAccesoStore } from "@/core/acceso/store";
 import type { AsientoCroquis } from "@/core/croquis/types";
 import { emparejar, listaParaReasignar, motivoNoOperable, salidasReasignables, tramoDelBoleto } from "@/core/venta/reasignacion";
 import type { AsientoOcupado, BoletoOperable, Cliente, Comprobante, ContextoVenta, Cotizacion, ErrorVenta, Importe, SalidaDetalle, SalidaResumen } from "@/core/venta/types";
@@ -199,6 +200,30 @@ export const useVentaStore = defineStore("venta", () => {
     cerrarSalida();
     await cargarSalidas();
   }
+
+  /**
+   * Cambio de estación de trabajo (cabecera): «Sube en» toma la nueva, como al
+   * entrar a la pantalla, y «Baja en» vuelve a Todas. Reasignando, los filtros del
+   * viaje del boleto se quedan; lo nuevo es lo que se repone al terminar.
+   */
+  async function alCambiarEstacion() {
+    // La estación de trabajo (lugar de emisión) viene del contexto: se relee antes de usarla.
+    await refrescarContexto();
+    const estacion = contexto.value?.estacion?.id ?? null;
+    if (reasignacion.value) {
+      reasignacion.value = { ...reasignacion.value, filtros: { estacionId: estacion, destinoId: null } };
+      return;
+    }
+    estacionId.value = estacion;
+    destinoId.value = null;
+    await cambiarFiltroEstacion();
+  }
+  // Se cambia desde la cabecera, también con otra pantalla abierta: al volver a la venta ya está.
+  const acceso = useAccesoStore();
+  watch(
+    () => acceso.estacionTrabajo?.id,
+    () => void alCambiarEstacion(),
+  );
 
   async function elegirSalida(id: number) {
     if (id === salidaId.value && detalle.value) return;
