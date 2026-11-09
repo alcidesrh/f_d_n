@@ -12,6 +12,7 @@ use App\Entity\Estacion;
 use App\Entity\Usuario;
 use App\Salida\Abordaje\Abordaje;
 use App\Venta\Acceso\AccesoVentas;
+use App\Venta\Boleto\BoletoPdf;
 use App\Venta\Boleto\Listado\FiltroBoletos;
 use App\Venta\Boleto\Listado\ListadoBoletos;
 use App\Venta\Clientes;
@@ -32,8 +33,9 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
  * Listado de boletos (el "Boletos" del legado, permiso `boleto.ver`, sobre
  * las ventas de su alcance, ADR-039):
  * filtros, una fila por asiento vendido, "Consultar", cancelar (no se
- * presentó, `boleto.cancelar`), revertir un cancelado y reenviar por correo. Anular y reasignar
- * siguen en `/api/venta/boletos/*`, chequear en `/api/abordaje/*`.
+ * presentó, `boleto.cancelar`), revertir un cancelado, reenviar por correo y
+ * descargar el PDF del boleto. Anular y reasignar siguen en
+ * `/api/venta/boletos/*`, chequear en `/api/abordaje/*`.
  * Errores como `{ error, codigo }`.
  */
 #[AsController]
@@ -155,6 +157,22 @@ final class BoletoController extends AbstractController
 
             return ["correo" => $correo];
         }, Response::HTTP_ACCEPTED);
+    }
+
+    /** El boleto en PDF (la página de su venta con ese asiento, como la reimpresión). Permiso `boleto.ver` sobre su venta. */
+    #[Route("/{id<\d+>}/pdf", name: "pdf", methods: ["GET"])]
+    public function pdf(int $id, #[CurrentUser] Usuario $usuario, BoletoPdf $pdf): Response
+    {
+        $this->denyAccessUnlessGranted(self::VER);
+        $boleto = $this->em->find(BoletoAsiento::class, $id) ?? throw new VentaRechazada("El boleto no existe.", "no_encontrado", 404);
+        if (!$this->acceso->puedeVer($boleto->getBoletoVenta(), $usuario)) {
+            throw new VentaRechazada("Fuera de su alcance: no puede ver los boletos de esta venta.", "permiso", 403);
+        }
+
+        return new Response($pdf->generarBoleto($boleto), Response::HTTP_OK, [
+            "Content-Type" => "application/pdf",
+            "Content-Disposition" => sprintf('attachment; filename="%s"', BoletoPdf::nombreArchivoBoleto($boleto)),
+        ]);
     }
 
     /** @param callable(): mixed $operacion */

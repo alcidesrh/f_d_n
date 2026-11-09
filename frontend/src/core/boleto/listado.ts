@@ -123,7 +123,7 @@ export function alternarOrden(p: Pagina, orden: OrdenBoletos): Pagina {
   return { ...p, pagina: 1, orden, dir: p.orden === orden && p.dir === 'desc' ? 'asc' : 'desc' }
 }
 
-export type AccionBoleto = 'consultar' | 'bitacora' | 'cancelar' | 'revertir' | 'anular' | 'chequear' | 'reasignar' | 'correo' | 'factura' | 'chat'
+export type AccionBoleto = 'consultar' | 'bitacora' | 'cancelar' | 'revertir' | 'anular' | 'chequear' | 'reasignar' | 'correo' | 'factura' | 'pdf' | 'chat'
 
 export interface EstadoAccion {
   /** Se muestra (las que exigen un permiso que no tiene, no). */
@@ -167,6 +167,7 @@ export function disponibilidad(b: BoletoFila | null, puede: PuedeBoleto): Record
       reasignar: sin(elija),
       correo: sin(elija),
       factura: sin(elija),
+      pdf: sin(elija),
       chat: sin(elija),
     }
   }
@@ -186,6 +187,7 @@ export function disponibilidad(b: BoletoFila | null, puede: PuedeBoleto): Record
     chequear: con(puede.chequear, b.acciones.chequear),
     correo: sin(enProceso ?? sinValor),
     factura: sin(enProceso ?? sinValor),
+    pdf: sin(enProceso ?? sinValor),
     chat: sin(null),
   }
 }

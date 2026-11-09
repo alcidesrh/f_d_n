@@ -170,6 +170,7 @@ import { deDia } from "@/core/salida/filtro";
 import { diaISO, fecha, hora } from "@/core/venta/modelo";
 import BitacoraDialog from "@/shared/bitacora/BitacoraDialog.vue";
 import AnularBoletosDialog from "@/shared/boleto/AnularBoletosDialog.vue";
+import { descargarBoletoPdf } from "@/shared/boleto/pdf";
 import EnviarPorChatDialog from "@/shared/chat/EnviarPorChatDialog.vue";
 import { anunciarEnPantalla } from "@/shared/chat/integracion";
 import DataGrid from "@/shared/data-grid/DataGrid.vue";
@@ -221,6 +222,7 @@ const BOTONES: Array<{ accion: AccionBoleto; etiqueta: string; icono: string; ay
   { accion: "reasignar", etiqueta: "Reasignar", icono: "swap-horiz", ayuda: "Cambiar de asiento o de salida" },
   { accion: "correo", etiqueta: "Correo", icono: "mail-outline", ayuda: "Enviar el boleto por correo" },
   { accion: "factura", etiqueta: "Imp. factura", icono: "print-outline", ayuda: "Reimprimir el ticket con la factura" },
+  { accion: "pdf", etiqueta: "PDF", icono: "picture-as-pdf-outline", ayuda: "Descargar el boleto en PDF" },
   { accion: "bitacora", etiqueta: "Bitácora", icono: "history", ayuda: "Historial del boleto" },
   { accion: "chat", etiqueta: "Chat", icono: "forum-outline", ayuda: "Enviar el boleto por el chat" },
 ];
@@ -425,6 +427,11 @@ async function ejecutar(accion: AccionBoleto) {
       } finally {
         ocupado.value = null;
       }
+      break;
+    case "pdf":
+      ocupado.value = "pdf";
+      await descargarBoletoPdf(b.id);
+      ocupado.value = null;
       break;
     default:
       dialogo.value = accion;

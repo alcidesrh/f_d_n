@@ -109,12 +109,25 @@ describe('acciones del panel', () => {
     expect(anulado.anular).toEqual({ visible: true, habilitada: false, motivo: 'El boleto está anulado' })
   })
 
-  it('un anulado no se reenvía ni se reimprime; una venta en proceso tampoco', () => {
+  it('un anulado no se reenvía, reimprime ni descarga en PDF; una venta en proceso tampoco', () => {
     const anulado = disponibilidad(boleto({ estado: 'anulado' }), TODO)
     expect(anulado.correo).toMatchObject({ habilitada: false, motivo: 'El boleto está anulado' })
+    expect(anulado.pdf).toMatchObject({ habilitada: false, motivo: 'El boleto está anulado' })
     expect(anulado.consultar.habilitada).toBe(true)
 
     const enProceso = disponibilidad(boleto({ ventaConfirmada: false }), TODO)
     expect(enProceso.factura.motivo).toBe('La venta todavía se está procesando')
+    expect(enProceso.pdf.motivo).toBe('La venta todavía se está procesando')
+  })
+
+  it('el PDF se descarga con el permiso de ver: no pide permiso de operar, y sin boleto elegido no se ofrece', () => {
+    const a = disponibilidad(boleto(), { ...TODO, anular: false, cancelar: false, reasignar: false, chequear: false })
+    expect(a.pdf).toEqual({ visible: true, habilitada: true, motivo: null })
+
+    const sinElegir = disponibilidad(null, TODO)
+    expect(sinElegir.pdf).toMatchObject({
+      habilitada: false,
+      motivo: 'Elija un boleto de la lista',
+    })
   })
 })
