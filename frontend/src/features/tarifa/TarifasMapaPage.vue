@@ -1,6 +1,6 @@
 <!--
-  Tarifas sobre el mapa (MapLibre, `shared/mapa`, ADR-055). Sin ruta: los enclaves,
-  solo con su nombre; clic en uno y luego en otro los elige como origen y destino.
+  Tarifas sobre el mapa (MapLibre, `shared/mapa`, ADR-055). Solo se muestran los enclaves activos
+  (la ruta sí pasa por sus paradas inactivas). Sin ruta: los enclaves, solo con su nombre; clic en uno y luego en otro los elige como origen y destino.
   Con una ruta: su trazo con las paradas, los enclaves que
   no están en ella se ocultan y, a medio camino de cada trayecto con tarifas,
   un indicador con su número. Clic en el indicador: popup con un acordeón de
@@ -137,7 +137,10 @@ const trayectosVista = computed(() => {
 function indiceParada(enclaveId: number): number {
   return datos.value?.ruta.paradas.findIndex((p) => p.enclaveId === enclaveId) ?? -1;
 }
-const sinUbicar = computed(() => (datos.value?.ruta.paradas ?? []).filter((p) => p.latitud === null || p.longitud === null).map((p) => p.nombre));
+const sinUbicar = computed(() => (datos.value?.ruta.paradas ?? []).filter((p) => p.activo && (p.latitud === null || p.longitud === null)).map((p) => p.nombre));
+
+/** Lo que se dibuja como punto: enclaves activos con ubicación. */
+const enMapa = <T extends { latitud: number | null; longitud: number | null; activo: boolean }>(x: T[]) => x.filter((l) => l.activo && l.latitud !== null && l.longitud !== null);
 
 const escapar = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
@@ -174,12 +177,12 @@ function dibujarTodo() {
   dibujarTarifas();
 }
 
-/** Sin ruta: todos los enclaves con ubicación. Con ruta: se ocultan. */
+/** Sin ruta: los enclaves activos con ubicación. Con ruta: se ocultan. */
 function dibujarEnclaves() {
   const m = mapa.value;
   if (!m || !listo.value) return;
   // Con una ruta se ocultan; con un trayecto siguen, para elegir otro destino (u origen) con clics.
-  const ubicados = rutaId.value !== null ? [] : lugares.value.filter((l) => l.latitud !== null && l.longitud !== null);
+  const ubicados = rutaId.value !== null ? [] : enMapa(lugares.value);
   fijarDatos(m, "tarifas-lugares", coleccion(ubicados.map((l) => punto([l.latitud!, l.longitud!], { id: l.id, nombre: l.nombre, origen: l.id === origenId.value }))));
   etiquetarse();
 }
@@ -188,8 +191,7 @@ function dibujarEnclaves() {
 function etiquetarse() {
   if (!etiquetas) return;
   if (!mostrarNombres.value) return etiquetas.limpiar();
-  const conUbicacion = <T extends { latitud: number | null; longitud: number | null }>(x: T[]) => x.filter((l) => l.latitud !== null && l.longitud !== null);
-  const lista = rutaId.value !== null ? conUbicacion(datos.value?.ruta.paradas ?? []).map((p) => ({ clave: `p${p.enclaveId}`, en: [p.latitud!, p.longitud!] as LatLng, texto: p.nombre })) : conUbicacion(lugares.value).map((l) => ({ clave: `l${l.id}`, en: [l.latitud!, l.longitud!] as LatLng, texto: l.nombre }));
+  const lista = rutaId.value !== null ? enMapa(datos.value?.ruta.paradas ?? []).map((p) => ({ clave: `p${p.enclaveId}`, en: [p.latitud!, p.longitud!] as LatLng, texto: p.nombre })) : enMapa(lugares.value).map((l) => ({ clave: `l${l.id}`, en: [l.latitud!, l.longitud!] as LatLng, texto: l.nombre }));
   etiquetas.fijar(lista);
 }
 
@@ -208,7 +210,7 @@ function elegirEnclave(id: number) {
   } else destinoId.value = id;
 }
 
-/** Trazo de la ruta con sus paradas (solo las que tienen ubicación). */
+/** Trazo de la ruta con sus paradas (las que tienen ubicación; el punto, solo de las activas). */
 function dibujarRuta() {
   const m = mapa.value;
   if (!m || !listo.value) return;
@@ -226,7 +228,7 @@ function dibujarRuta() {
           .map((p) => [p.latitud!, p.longitud!] as LatLng)
       : [];
   fijarDatos(m, "tarifas-tramo", lineas([linea(tramo)]));
-  fijarDatos(m, "tarifas-paradas", coleccion(paradas.map((p, i) => punto([p.latitud!, p.longitud!], { enclaveId: p.enclaveId, nombre: p.nombre, color, punta: i === 0 || i === paradas.length - 1, origen: p.enclaveId === origenId.value }))));
+  fijarDatos(m, "tarifas-paradas", coleccion(paradas.flatMap((p, i) => (p.activo ? [punto([p.latitud!, p.longitud!], { enclaveId: p.enclaveId, nombre: p.nombre, color, punta: i === 0 || i === paradas.length - 1, origen: p.enclaveId === origenId.value })] : []))));
   etiquetarse();
 }
 
@@ -318,7 +320,7 @@ function fila(etiqueta: string, valor: string): DocumentFragment {
 function enfocar(animar = true) {
   const m = mapa.value;
   if (!m || !listo.value) return;
-  const puntos: LatLng[] = datos.value ? datos.value.ruta.paradas.filter((p) => p.latitud !== null && p.longitud !== null).map((p) => [p.latitud!, p.longitud!]) : lugares.value.filter((l) => l.latitud !== null && l.longitud !== null).map((l) => [l.latitud!, l.longitud!]);
+  const puntos: LatLng[] = datos.value ? datos.value.ruta.paradas.filter((p) => p.latitud !== null && p.longitud !== null).map((p) => [p.latitud!, p.longitud!]) : enMapa(lugares.value).map((l) => [l.latitud!, l.longitud!]);
   encuadrar(m, puntos, { margen: 40, maxZoom: 10, animar });
 }
 
@@ -371,7 +373,7 @@ watch(mostrarNombres, dibujarTodo);
 onMounted(async () => {
   window.addEventListener("keydown", alTeclear);
   try {
-    // Todos los enclaves con coordenadas: se dibujan en el mapa (no son un filtro).
+    // Los enclaves activos con coordenadas se dibujan en el mapa (no son un filtro).
     lugares.value = (await fetchOpcionesRutas()).lugares;
     dibujarEnclaves();
     enfocar(false);

@@ -422,6 +422,8 @@ export const router = createRouter({
         title: "Reproducir trayectorias GPS",
         label: "Trayectorias GPS",
         icon: "replay",
+        // Elegir otra salida cambia `?salida=`: el mapa se queda (sin pestañear ni volver a pedir el día).
+        conservar: true,
       },
     },
     {

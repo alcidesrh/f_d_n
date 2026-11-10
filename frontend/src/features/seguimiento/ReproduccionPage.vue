@@ -209,6 +209,14 @@ const deClave = (clave: string): { salida: number } | { dispositivo: string; des
   const [, desde = "", ...nombre] = clave.split(":");
   return { dispositivo: nombre.join(":"), desde: Number(desde) };
 };
+/** Lo que pide la URL (`?salida=` o `?dispositivo=&desde=`); null si nada. */
+const claveDeRuta = computed<string | null>(() => {
+  const id = Number(route.query.salida);
+  if (Number.isInteger(id) && id > 0) return claveSalida(id);
+  const dispositivo = typeof route.query.dispositivo === "string" ? route.query.dispositivo : "";
+  const desde = Number(route.query.desde);
+  return dispositivo && Number.isInteger(desde) && desde > 0 ? claveTelefono(dispositivo, desde) : null;
+});
 const opciones = computed(() =>
   [
     ...(delDia.value?.salidas ?? []).map((s) => ({ id: claveSalida(s.salidaId), t: s.partida, etiqueta: `${horaDe(s.partida)} · ${s.origen} → ${s.destino} · bus ${s.bus} · ${s.lecturas} lecturas` })),
@@ -421,18 +429,31 @@ const alTeclear = (ev: KeyboardEvent) => {
   }
 };
 
+/** Abre lo que pide la URL y pone la lista en su día; true si el día cambió. */
+async function abrirDeRuta(clave: string): Promise<boolean> {
+  const o = deClave(clave);
+  await ("salida" in o ? abrirSalida(o.salida) : abrirTelefono(o.dispositivo, o.desde));
+  const empieza = trayectoria.value?.partida ?? telefono.value?.desde;
+  if (!empieza || aDia(new Date(empieza * 1000)) === aDia(dia.value)) return false;
+  dia.value = new Date(empieza * 1000);
+  return true;
+}
+
+// La página se conserva al cambiar la URL (`meta.conservar`). Lo elegido aquí ya la escribe; lo que llega
+// de fuera (menú, historial) se abre. Al irse a otra ruta, la URL cambia antes de desmontarla: se ignora.
+const nombreRuta = route.name;
+watch(claveDeRuta, async (clave) => {
+  if (route.name !== nombreRuta || clave === elegida.value) return;
+  if (!clave) cerrar();
+  else if (await abrirDeRuta(clave)) void cargarDia();
+});
+
 onMounted(async () => {
   window.addEventListener("keydown", alTeclear);
   cuadro = requestAnimationFrame(cuadroSiguiente);
 
-  const id = Number(route.query.salida);
-  const dispositivo = typeof route.query.dispositivo === "string" ? route.query.dispositivo : "";
-  const desde = Number(route.query.desde);
-  if (Number.isInteger(id) && id > 0) await abrirSalida(id);
-  else if (dispositivo && Number.isInteger(desde) && desde > 0) await abrirTelefono(dispositivo, desde);
-  // El día de la lista es el de lo abierto.
-  const empieza = trayectoria.value?.partida ?? telefono.value?.desde;
-  if (empieza) dia.value = new Date(empieza * 1000);
+  const clave = claveDeRuta.value;
+  if (clave) await abrirDeRuta(clave);
   void cargarDia();
 });
 

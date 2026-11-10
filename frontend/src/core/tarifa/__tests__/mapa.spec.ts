@@ -94,6 +94,7 @@ describe('puntoMedio', () => {
       nombre: `P${i}`,
       latitud: c ? c[0] : null,
       longitud: c ? c[1] : null,
+      activo: true,
     }))
 
   it('en una recta, a la mitad exacta', () => {

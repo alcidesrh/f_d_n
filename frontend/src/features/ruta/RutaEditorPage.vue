@@ -171,7 +171,7 @@ const enMapa = computed(() =>
     .filter((p) => p.enclaveId)
     .map((p) => {
       const l = lugares.value.get(p.enclaveId!);
-      return { nombre: l?.nombre ?? "?", latitud: l?.latitud ?? null, longitud: l?.longitud ?? null };
+      return { nombre: l?.nombre ?? "?", latitud: l?.latitud ?? null, longitud: l?.longitud ?? null, activo: l?.activo ?? true };
     }),
 );
 

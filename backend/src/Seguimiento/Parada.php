@@ -17,5 +17,7 @@ final readonly class Parada
         public int $salida,
         /** `gps` (coordenada de la estación), `catalogo` o `departamento`. */
         public string $origenCoordenada = 'gps',
+        /** Enclave activo: los mapas no muestran los inactivos (el trazado sí pasa por ellos). */
+        public bool $activo = true,
     ) {}
 }

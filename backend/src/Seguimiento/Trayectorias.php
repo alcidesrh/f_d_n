@@ -80,7 +80,8 @@ final class Trayectorias
             'ultima' => [] === $puntos ? null : $puntos[count($puntos) - 1][0],
             // Sin estaciones ubicables solo se dibujan las lecturas.
             'trazado' => array_map(static fn(array $p) => [round($p['lat'], 6), round($p['lng'], 6)], $trazado),
-            'estaciones' => array_map(static fn(array $p) => ['nombre' => $p['nombre'], 'lat' => round($p['lat'], 6), 'lng' => round($p['lng'], 6), 'origen' => $p['origen']], $trazado),
+            // Los puntos del mapa: solo los enclaves activos.
+            'estaciones' => array_map(static fn(array $p) => ['nombre' => $p['nombre'], 'lat' => round($p['lat'], 6), 'lng' => round($p['lng'], 6), 'origen' => $p['origen']], array_values(array_filter($trazado, static fn(array $p) => $p['activo']))),
             'puntos' => array_map(static fn(array $p) => [$p[0], round($p[1], 6), round($p[2], 6), $p[3], $p[4]], $puntos),
         ];
     }

@@ -76,7 +76,7 @@ class SalidasEnRecorrido
      * Paradas de cada salida (enclaves en el orden de su horario), en el formato de `TrazadoDeRuta::trazar()`.
      *
      * @param list<Salida> $salidas
-     * @return array<int, list<array{id: int, nombre: string, latitude: mixed, longitude: mixed, departamento: ?string}>> por id de salida
+     * @return array<int, list<array{id: int, nombre: string, latitude: mixed, longitude: mixed, departamento: ?string, activo: bool}>> por id de salida
      */
     public function paradas(array $salidas): array
     {
@@ -97,6 +97,7 @@ class SalidasEnRecorrido
                 'latitude' => $enclave->getLatitud(),
                 'longitude' => $enclave->getLongitud(),
                 'departamento' => $enclave->getDepartamento(),
+                'activo' => $enclave->isActivo(),
             ];
         }
 

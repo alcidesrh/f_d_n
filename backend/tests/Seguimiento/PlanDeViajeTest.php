@@ -147,6 +147,23 @@ final class PlanDeViajeTest extends TestCase
         self::assertSame(['Guatemala', 'Tecun Uman 3'], array_column($p, 'nombre'));
     }
 
+    public function testMarcaLasInactivasYAlFundirPrefiereLaActiva(): void
+    {
+        $p = TrazadoDeRuta::trazar([
+            self::est(1, 'Guatemala', '14.63', '-90.51'),
+            [...self::est(2, 'Vieja', '15.30', '-89.90'), 'activo' => false],
+            self::est(3, 'Nueva', '15.305', '-89.905'),
+            [...self::est(4, 'Cerrada', '15.70', '-89.40'), 'activo' => false],
+            self::est(5, 'Santa Elena', '16.92', '-89.89'),
+        ], 0.0);
+        // La inactiva del mismo sitio cede a la activa; la otra inactiva sigue en el trazado, marcada.
+        self::assertSame(['Guatemala', 'Nueva', 'Cerrada', 'Santa Elena'], array_column($p, 'nombre'));
+        self::assertSame([true, true, false, true], array_column($p, 'activo'));
+
+        $plan = PlanDeViaje::construir($p, new \DateTimeImmutable(self::PARTIDA), 1);
+        self::assertSame([true, true, false, true], array_map(static fn($x) => $x->activo, $plan->paradas));
+    }
+
     public function testDescartaIntermediasQueObliganAUnDesvioEnorme(): void
     {
         $p = TrazadoDeRuta::trazar([

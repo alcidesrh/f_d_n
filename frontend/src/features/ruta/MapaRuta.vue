@@ -2,8 +2,9 @@
   Vista previa de una ruta en el mapa (MapLibre, `shared/mapa`, ADR-055): las
   paradas con coordenadas unidas en orden. Las que no tienen coordenadas se
   cuentan debajo; el trazo salta de la anterior a la siguiente que sí tiene.
-  De `enclaves` (todos los lugares) solo se muestran, con su nombre, los que
-  quedan sobre el trayecto (`core/ruta/trayecto.ts`).
+  De `enclaves` (todos los lugares) solo se muestran, con su nombre, los activos que
+  quedan sobre el trayecto (`core/ruta/trayecto.ts`). Una parada en un enclave inactivo
+  no lleva punto, pero el trazo pasa por ella.
 -->
 <template>
   <div class="flex flex-col gap-2">
@@ -20,8 +21,8 @@ import { coleccion, linea, lineas, punto, type LatLng } from "@/shared/mapa/geo"
 import { useMapa } from "@/shared/mapa/useMapa";
 
 const props = defineProps<{
-  paradas: Array<{ nombre: string; latitud: number | null; longitud: number | null }>;
-  enclaves?: Array<{ nombre: string; latitud: number | null; longitud: number | null }>;
+  paradas: Array<{ nombre: string; latitud: number | null; longitud: number | null; activo: boolean }>;
+  enclaves?: Array<{ nombre: string; latitud: number | null; longitud: number | null; activo: boolean }>;
 }>();
 
 const mapaEl = ref<HTMLElement | null>(null);
@@ -32,7 +33,7 @@ const { mapa, listo } = useMapa(mapaEl, (m) => {
 });
 
 const conCoordenadas = computed(() => props.paradas.map((p, i) => ({ ...p, n: i + 1 })).filter((p) => p.latitud !== null && p.longitud !== null));
-const sinCoordenadas = computed(() => props.paradas.filter((p) => p.latitud === null || p.longitud === null).map((p) => p.nombre));
+const sinCoordenadas = computed(() => props.paradas.filter((p) => p.activo && (p.latitud === null || p.longitud === null)).map((p) => p.nombre));
 
 /** Capas (sus fuentes ya tienen datos): los lugares abajo, la ruta encima y sus paradas arriba. */
 function capas(m: MapaLibre) {
@@ -59,11 +60,11 @@ function dibujar() {
   const color = colorPrimario(mapaEl.value);
   const puntos = conCoordenadas.value.map((p) => [p.latitud!, p.longitud!] as LatLng);
   // Solo los lugares sobre el trayecto, con su nombre; la ruta se dibuja encima.
-  const lugares = sobreElTrayecto(props.enclaves ?? [], puntos as PuntoGeo[]);
+  const lugares = sobreElTrayecto((props.enclaves ?? []).filter((e) => e.activo), puntos as PuntoGeo[]);
   fijarDatos(m, "ruta-lugares", coleccion(lugares.map((e) => punto([e.latitud!, e.longitud!]))));
   etiquetas?.fijar(lugares.map((e, i) => ({ clave: `${i}|${e.nombre}`, en: [e.latitud!, e.longitud!], texto: e.nombre })));
   fijarDatos(m, "ruta-linea", lineas([linea(puntos, { color })]));
-  fijarDatos(m, "ruta-paradas", coleccion(puntos.map((p, i) => punto(p, { color, punta: i === 0 || i === puntos.length - 1 }))));
+  fijarDatos(m, "ruta-paradas", coleccion(puntos.flatMap((p, i) => (conCoordenadas.value[i]!.activo ? [punto(p, { color, punta: i === 0 || i === puntos.length - 1 })] : []))));
   capas(m);
   encuadrar(m, puntos, { margen: 24, maxZoom: 10, animar: false });
 }

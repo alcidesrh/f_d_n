@@ -116,7 +116,8 @@ final class SeguimientoBuses
                     'origen' => $p->origenCoordenada,
                 ], $plan->paradas),
                 'trazado' => array_map(static fn(Parada $p) => [round($p->lat, 6), round($p->lng, 6)], $plan->paradas),
-                'estaciones' => array_map(static fn(Parada $p) => ['nombre' => $p->nombre, 'lat' => round($p->lat, 6), 'lng' => round($p->lng, 6), 'origen' => $p->origenCoordenada], $plan->paradas),
+                // Los puntos del mapa: solo los enclaves activos (el trazado pasa también por los inactivos).
+                'estaciones' => array_map(static fn(Parada $p) => ['nombre' => $p->nombre, 'lat' => round($p->lat, 6), 'lng' => round($p->lng, 6), 'origen' => $p->origenCoordenada], array_values(array_filter($plan->paradas, static fn(Parada $p) => $p->activo))),
             ];
         }
 

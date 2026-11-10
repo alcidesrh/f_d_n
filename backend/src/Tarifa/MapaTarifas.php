@@ -82,6 +82,8 @@ final class MapaTarifas
             "nombre" => $e->getNombre(),
             "latitud" => self::coordenada($e->getLatitud()),
             "longitud" => self::coordenada($e->getLongitud()),
+            // Inactivo: el mapa no muestra la parada (la ruta sí pasa por ella).
+            "activo" => $e->isActivo(),
         ], $enclaves, array_keys($enclaves));
     }
 

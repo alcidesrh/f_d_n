@@ -17,6 +17,8 @@ namespace App\Seguimiento;
  *  - estaciones consecutivas casi en el mismo sitio se funden en una parada;
  *  - una intermedia que obliga a un desvío enorme respecto a sus vecinas se descarta.
  * Origen y destino siempre se conservan; si alguno no se puede ubicar, no hay trazado.
+ * Cada punto dice si su enclave está activo (los mapas no muestran los inactivos); el
+ * trazado sí pasa por ellos.
  *
  * Los km acumulados se reparten según la distancia en línea recta pero suman
  * los `kilometros` de la ruta (la carretera es más larga que la recta).
@@ -31,8 +33,8 @@ final class TrazadoDeRuta
     private const DESVIO_MINIMO_KM = 30.0;
 
     /**
-     * @param list<array{id: int, nombre: string, latitude: mixed, longitude: mixed, departamento: ?string}> $estaciones origen → destino
-     * @return list<array{nombre: string, lat: float, lng: float, km: float, origen: string}>|null
+     * @param list<array{id: int, nombre: string, latitude: mixed, longitude: mixed, departamento: ?string, activo?: bool}> $estaciones origen → destino (sin `activo`, activa)
+     * @return list<array{nombre: string, lat: float, lng: float, km: float, origen: string, activo: bool}>|null
      */
     public static function trazar(array $estaciones, float $kilometros): ?array
     {
@@ -52,7 +54,7 @@ final class TrazadoDeRuta
             if (null === $coord || ('departamento' === $origen && !$extremo)) {
                 continue;
             }
-            $puntos[] = ['nombre' => $e['nombre'], 'lat' => $coord[0], 'lng' => $coord[1], 'origen' => $origen, 'extremo' => $extremo];
+            $puntos[] = ['nombre' => $e['nombre'], 'lat' => $coord[0], 'lng' => $coord[1], 'origen' => $origen, 'extremo' => $extremo, 'activo' => (bool) ($e['activo'] ?? true)];
         }
 
         $puntos = self::fundirCercanas($puntos);
@@ -75,7 +77,7 @@ final class TrazadoDeRuta
             if ($i > 0) {
                 $km += $tramos[$i - 1] * $escala;
             }
-            $out[] = ['nombre' => $p['nombre'], 'lat' => $p['lat'], 'lng' => $p['lng'], 'km' => $km, 'origen' => $p['origen']];
+            $out[] = ['nombre' => $p['nombre'], 'lat' => $p['lat'], 'lng' => $p['lng'], 'km' => $km, 'origen' => $p['origen'], 'activo' => $p['activo']];
         }
 
         return $out;
@@ -115,7 +117,8 @@ final class TrazadoDeRuta
 
     /**
      * Funde en una parada las consecutivas casi coincidentes. Si la repetida es
-     * el destino gana el destino; el origen nunca se pierde.
+     * el destino gana el destino; el origen nunca se pierde. Entre dos
+     * intermedias gana la activa: la inactiva no se muestra y se perdería la otra.
      *
      * @param list<array<string, mixed>> $p
      * @return list<array<string, mixed>>
@@ -126,7 +129,7 @@ final class TrazadoDeRuta
         foreach ($p as $punto) {
             $previo = $out[count($out) - 1] ?? null;
             if (null !== $previo && self::distancia($previo, $punto) < self::MISMO_SITIO_KM) {
-                if ($punto['extremo'] && !$previo['extremo']) {
+                if (!$previo['extremo'] && ($punto['extremo'] || ($punto['activo'] && !$previo['activo']))) {
                     $out[count($out) - 1] = $punto;
                 }
                 continue;

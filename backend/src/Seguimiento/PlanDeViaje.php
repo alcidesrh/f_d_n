@@ -19,7 +19,7 @@ final class PlanDeViaje
     ) {}
 
     /**
-     * @param list<array{nombre: string, lat: float, lng: float, km: float, origen?: string}> $puntos origen → destino, con km acumulados
+     * @param list<array{nombre: string, lat: float, lng: float, km: float, origen?: string, activo?: bool}> $puntos origen → destino, con km acumulados
      * @param int $semilla estabiliza la variación de velocidad (p. ej. el id de la salida)
      */
     public static function construir(array $puntos, \DateTimeInterface $partida, int $semilla, ParametrosSimulacion $p = new ParametrosSimulacion()): self
@@ -42,7 +42,7 @@ final class PlanDeViaje
             if ($i > 0 && $i < count($puntos) - 1) {
                 $t += $p->paradaMinutos * 60 + ($i === $descanso ? $p->descansoMinutos * 60 : 0);
             }
-            $paradas[] = new Parada($punto['nombre'], $punto['lat'], $punto['lng'], $punto['km'], $llegada, $t, $punto['origen'] ?? 'gps');
+            $paradas[] = new Parada($punto['nombre'], $punto['lat'], $punto['lng'], $punto['km'], $llegada, $t, $punto['origen'] ?? 'gps', $punto['activo'] ?? true);
         }
 
         return new self($paradas, $velocidad);

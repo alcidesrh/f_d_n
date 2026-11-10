@@ -32,6 +32,8 @@ export interface ParadaMapa {
   nombre: string
   latitud: number | null
   longitud: number | null
+  /** Enclave inactivo: el mapa no muestra la parada (la ruta sí pasa por ella). */
+  activo: boolean
 }
 
 /** Par de paradas en orden de la ruta (`desde` < `hasta`, índices en `paradas`) con sus tarifas. */
