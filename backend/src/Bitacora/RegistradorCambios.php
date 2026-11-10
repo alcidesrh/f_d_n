@@ -68,7 +68,7 @@ final class RegistradorCambios implements ResetInterface
 
     private const SECRETO = '/pass|clave|token|secret|cifrad|credencial/i';
 
-    /** @var \WeakMap<object, array{id: int|string|null, detalle: array<string, mixed>}> */
+    /** @var \WeakMap<object, array{id: int|string|null, etiqueta: ?string}> */
     private \WeakMap $porEliminar;
 
     public function __construct(
@@ -85,7 +85,7 @@ final class RegistradorCambios implements ResetInterface
         if (!$this->anota($e)) {
             return;
         }
-        $this->escribir($args->getObjectManager()->getConnection(), $e, self::id($e), OperacionCambio::CREADO, []);
+        $this->escribir($args->getObjectManager()->getConnection(), $e, self::id($e), self::etiqueta($e), OperacionCambio::CREADO, []);
     }
 
     public function preUpdate(PreUpdateEventArgs $args): void
@@ -96,16 +96,19 @@ final class RegistradorCambios implements ResetInterface
         }
         $cambios = self::cambios($args->getEntityChangeSet());
         if ($cambios !== []) {
-            $this->escribir($args->getObjectManager()->getConnection(), $e, self::id($e), OperacionCambio::MODIFICADO, ["cambios" => $cambios]);
+            $this->escribir($args->getObjectManager()->getConnection(), $e, self::id($e), self::etiqueta($e), OperacionCambio::MODIFICADO, ["cambios" => $cambios]);
         }
     }
 
-    /** El id de una entidad borrada ya no está en `postRemove`: se toma antes. */
+    /**
+     * El id de una entidad borrada ya no está en `postRemove` (Doctrine lo
+     * quita): se toman antes el id y la etiqueta, que sin `nombre` es el id.
+     */
     public function onFlush(OnFlushEventArgs $args): void
     {
         foreach ($args->getObjectManager()->getUnitOfWork()->getScheduledEntityDeletions() as $e) {
             if ($this->anota($e)) {
-                $this->porEliminar[$e] = ["id" => self::id($e), "detalle" => []];
+                $this->porEliminar[$e] = ["id" => self::id($e), "etiqueta" => self::etiqueta($e)];
             }
         }
     }
@@ -118,7 +121,7 @@ final class RegistradorCambios implements ResetInterface
             return;
         }
         unset($this->porEliminar[$e]);
-        $this->escribir($args->getObjectManager()->getConnection(), $e, $pendiente["id"], OperacionCambio::ELIMINADO, $pendiente["detalle"]);
+        $this->escribir($args->getObjectManager()->getConnection(), $e, $pendiente["id"], $pendiente["etiqueta"], OperacionCambio::ELIMINADO, []);
     }
 
     public function reset(): void
@@ -198,8 +201,13 @@ final class RegistradorCambios implements ResetInterface
         return method_exists($e, "getId") ? $e->getId() : null;
     }
 
+    private static function etiqueta(object $e): ?string
+    {
+        return method_exists($e, "getLabel") ? mb_substr((string) $e->getLabel(), 0, 120) : null;
+    }
+
     /** @param array<string, mixed> $detalle */
-    private function escribir(Connection $conexion, object $e, int|string|null $id, OperacionCambio $operacion, array $detalle): void
+    private function escribir(Connection $conexion, object $e, int|string|null $id, ?string $etiqueta, OperacionCambio $operacion, array $detalle): void
     {
         $usuario = $this->security->getUser();
         if (!$usuario instanceof Usuario) {
@@ -208,7 +216,7 @@ final class RegistradorCambios implements ResetInterface
         $detalle = [
             "clase" => self::clase($e),
             "id" => $id,
-            "etiqueta" => method_exists($e, "getLabel") ? mb_substr((string) $e->getLabel(), 0, 120) : null,
+            "etiqueta" => $etiqueta,
             ...$detalle,
         ];
         $conexion->insert(

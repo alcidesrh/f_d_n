@@ -38,4 +38,3 @@ export function pintarBus(boton: HTMLElement, { color, rumbo, activo = false, qu
   // El elegido, encima de los demás.
   boton.style.zIndex = activo ? "2" : "1";
 }
-bus - marker - rumbo;
