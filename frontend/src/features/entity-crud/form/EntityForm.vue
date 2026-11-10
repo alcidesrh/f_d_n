@@ -8,31 +8,19 @@
       <Skeleton v-for="i in 6" :key="i" height="3.5rem" />
     </div>
 
-    <Message v-else-if="error && schema.length === 0" severity="error" :closable="false">{{
-      error
-    }}</Message>
+    <Message v-else-if="error && schema.length === 0" severity="error" :closable="false">{{ error }}</Message>
 
     <template v-else-if="schema.length > 0">
       <Message v-if="error" severity="error" :closable="false" class="mb-4">{{ error }}</Message>
       <Message v-if="desactualizado" severity="info" :closable="false" class="mb-4">
         <div class="flex flex-wrap items-center gap-2">
-          <span class="min-w-0 flex-1">
-            La configuración de este formulario cambió. Recárgalo para verla; lo que no hayas guardado se pierde.
-          </span>
+          <span class="min-w-0 flex-1"> La configuración de este formulario cambió. Recárgalo para verla; lo que no hayas guardado se pierde. </span>
           <Button label="Recargar" size="small" :disabled="submitting" @click="reset" />
         </div>
       </Message>
       <!-- Alto 0 y pegado arriba: no ocupa lugar en el formulario y sigue a la vista al desplazarse. -->
       <div class="sticky top-2 z-10 flex h-0 justify-end">
-        <SplitButton
-          class="h-fit rounded-md bg-surface-0"
-          label="Guardar"
-          :model="actions"
-          :disabled="submitting || savingExtensions"
-          outlined
-          severity="secondary"
-          @click="submitForm(formId)"
-        >
+        <SplitButton class="h-fit rounded-md bg-surface-0" label="Guardar" :model="actions" :disabled="submitting || savingExtensions" outlined severity="secondary" @click="submitForm(formId)">
           <template #dropdownicon><icon name="keyboard-arrow-down" /></template>
           <template #menuitemicon="{ item }"><icon :name="String(item.icon)" /></template>
         </SplitButton>
@@ -53,14 +41,7 @@
         </TabList>
         <TabPanels class="px-0! pb-0!">
           <TabPanel :value="DATOS">
-            <FormKit
-              :id="formId"
-              type="form"
-              :disabled="submitting"
-              :actions="false"
-              @submit="onSubmit"
-              @submit-invalid="tab = DATOS"
-            >
+            <FormKit :id="formId" type="form" :disabled="submitting" :actions="false" @submit="onSubmit" @submit-invalid="tab = DATOS">
               <Fluid>
                 <FormKitSchema :schema="schema" />
               </Fluid>
@@ -73,34 +54,17 @@
           </TabPanel>
         </TabPanels>
       </Tabs>
-      <FormKit
-        formClass="mt-[3rem]"
-        v-else
-        :id="formId"
-        type="form"
-        :disabled="submitting"
-        :actions="false"
-        @submit="onSubmit"
-      >
+      <FormKit formClass="mt-[3rem]" v-else :id="formId" type="form" :disabled="submitting" :actions="false" @submit="onSubmit">
         <Fluid>
           <FormKitSchema :schema="schema" />
         </Fluid>
       </FormKit>
       <div class="mt-4 flex justify-end">
-        <Button
-          label="Restablecer"
-          severity="secondary"
-          variant="text"
-          size="small"
-          :disabled="submitting"
-          @click="reset"
-        />
+        <Button label="Restablecer" severity="secondary" variant="text" size="small" :disabled="submitting" @click="reset" />
       </div>
     </template>
 
-    <Message v-else severity="warn" :closable="false"
-      >Sin campos serializables para {{ entity }}</Message
-    >
+    <Message v-else severity="warn" :closable="false">Sin campos serializables para {{ entity }}</Message>
   </div>
 </template>
 
@@ -109,101 +73,91 @@
  * Formulario genérico de una entidad (alta sin `id`, edición con `id`). Emite
  * los resultados; la navegación la decide quien lo usa (`FormPage`).
  */
-import { computed, defineAsyncComponent, provide, ref, useId } from 'vue'
-import { submitForm } from '@formkit/core'
-import { useConfirm } from 'primevue/useconfirm'
-import {
-  createEntityFormExtensionHost,
-  ENTITY_FORM_EXTENSION,
-  EntityFormExtensionError,
-} from '@/core/entities/formExtension'
-import { notify } from '@/core/notify'
-import FormExtensionScope from './FormExtensionScope'
-import { entityFormExtensions } from './formExtensions'
-import { useEntityForm } from './useEntityForm'
+import { computed, defineAsyncComponent, provide, ref, useId } from "vue";
+import { submitForm } from "@formkit/core";
+import { useConfirm } from "primevue/useconfirm";
+import { createEntityFormExtensionHost, ENTITY_FORM_EXTENSION, EntityFormExtensionError } from "@/core/entities/formExtension";
+import { notify } from "@/core/notify";
+import FormExtensionScope from "./FormExtensionScope";
+import { entityFormExtensions } from "./formExtensions";
+import { useEntityForm } from "./useEntityForm";
 
-const props = defineProps<{ entity: string; id?: string | number | null; valores?: Record<string, unknown> }>()
+const props = defineProps<{ entity: string; id?: string | number | null; valores?: Record<string, unknown> }>();
 
 const emit = defineEmits<{
-  submitted: [item: Record<string, unknown>]
-  deleted: []
-  cancel: []
-  error: [message: string]
-}>()
+  submitted: [item: Record<string, unknown>];
+  deleted: [];
+  cancel: [];
+  error: [message: string];
+}>();
 
-const { schema, loading, submitting, error, desactualizado, mode, submit, remove, reset } = useEntityForm(
-  () => props.entity,
-  { id: () => props.id, valores: () => props.valores },
-)
+const { schema, loading, submitting, error, desactualizado, mode, submit, remove, reset } = useEntityForm(() => props.entity, { id: () => props.id, valores: () => props.valores });
 
-const formId = `entity-form-${useId()}`
-const confirm = useConfirm()
-const message = (cause: unknown) => (cause instanceof Error ? cause.message : String(cause))
+const formId = `entity-form-${useId()}`;
+const confirm = useConfirm();
+const message = (cause: unknown) => (cause instanceof Error ? cause.message : String(cause));
 
 // Secciones extra de la entidad (p. ej. el croquis del bus), guardadas con el formulario.
-const extensionHost = createEntityFormExtensionHost()
-const savingExtensions = ref(false)
-const DATOS = 'datos'
+const extensionHost = createEntityFormExtensionHost();
+const savingExtensions = ref(false);
+const DATOS = "datos";
 /** Pestaña visible: los datos de la entidad o la clave de una sección extra. */
-const tab = ref<string>(DATOS)
-provide(ENTITY_FORM_EXTENSION, extensionHost)
+const tab = ref<string>(DATOS);
+provide(ENTITY_FORM_EXTENSION, extensionHost);
 const extensions = computed(() =>
   (entityFormExtensions[props.entity] ?? []).map((extension) => ({
     ...extension,
     component: defineAsyncComponent(extension.component),
   })),
-)
+);
 
 async function onSubmit(data: Record<string, unknown>) {
-  const blocked = extensionHost.validate()
+  const blocked = extensionHost.validate();
   if (blocked) {
-    if (blocked.key) tab.value = blocked.key
-    notify.error(blocked.message)
-    emit('error', blocked.message)
-    return
+    if (blocked.key) tab.value = blocked.key;
+    notify.error(blocked.message);
+    emit("error", blocked.message);
+    return;
   }
-  let item: Record<string, unknown>
+  let item: Record<string, unknown>;
   try {
-    item = await submit(data)
+    item = await submit(data);
   } catch (cause) {
-    emit('error', message(cause))
-    return
+    emit("error", message(cause));
+    return;
   }
-  savingExtensions.value = true
+  savingExtensions.value = true;
   try {
-    await extensionHost.afterSave(item)
+    await extensionHost.afterSave(item);
   } catch (cause) {
-    if (cause instanceof EntityFormExtensionError && cause.key) tab.value = cause.key
-    notify.error(message(cause))
-    emit('error', message(cause))
+    if (cause instanceof EntityFormExtensionError && cause.key) tab.value = cause.key;
+    notify.error(message(cause));
+    emit("error", message(cause));
     // Al crear, el registro ya existe: se pasa igual a su edición.
-    if (mode.value === 'create') emit('submitted', item)
-    return
+    if (mode.value === "create") emit("submitted", item);
+    return;
   } finally {
-    savingExtensions.value = false
+    savingExtensions.value = false;
   }
-  emit('submitted', item)
+  emit("submitted", item);
 }
 
 function askDelete() {
   confirm.require({
-    header: 'Eliminar registro',
+    header: "Eliminar registro",
     message: `¿Eliminar este registro de ${props.entity}? No se puede deshacer.`,
-    acceptProps: { label: 'Eliminar', severity: 'danger' },
-    rejectProps: { label: 'Cancelar', severity: 'secondary', outlined: true },
+    acceptProps: { label: "Eliminar", severity: "danger" },
+    rejectProps: { label: "Cancelar", severity: "secondary", outlined: true },
     accept: async () => {
       try {
-        await remove()
-        emit('deleted')
+        await remove();
+        emit("deleted");
       } catch (cause) {
-        emit('error', message(cause))
+        emit("error", message(cause));
       }
     },
-  })
+  });
 }
 
-const actions = computed(() => [
-  { label: 'Cancelar', icon: 'undo', command: () => emit('cancel') },
-  ...(mode.value === 'update' ? [{ label: 'Eliminar', icon: 'delete-outline', command: askDelete }] : []),
-])
+const actions = computed(() => [{ label: "Listado", icon: "undo", command: () => reset() }, ...(mode.value === "update" ? [{ label: "Eliminar", icon: "delete-outline", command: askDelete }] : [])]);
 </script>
