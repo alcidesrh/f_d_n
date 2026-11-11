@@ -2,9 +2,12 @@
 
 namespace App\Migration;
 
+use App\Sincronizacion\Legado\Importacion\Mapeador;
+use App\Sincronizacion\Legado\Importacion\RolesUsuarioLegado;
+
 use App\Croquis\Moldes;
 use App\Migration\Job\Progreso;
-use App\Migration\Salida\RutasLegado;
+use App\Sincronizacion\Legado\Importacion\RutasLegado;
 use App\Ruta\Trayectos;
 use App\Venta\Facturacion\CredencialesFel;
 use DateTime;

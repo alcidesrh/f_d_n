@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Migration\Salida;
+namespace App\Sincronizacion\Legado\Importacion;
 
 use Symfony\Component\DependencyInjection\Attribute\Target;
 
@@ -12,11 +12,7 @@ use Symfony\Component\DependencyInjection\Attribute\Target;
  */
 class LectorLegado
 {
-    public function __construct(#[Target("oldPdo")] private readonly \PDO $pdo)
-    {
-        $this->pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-        $this->pdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
-    }
+    public function __construct(#[Target("oldPdo")] private readonly \PDO $pdo) {}
 
     /**
      * @param array<string, mixed> $params

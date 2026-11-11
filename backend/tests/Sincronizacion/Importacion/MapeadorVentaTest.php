@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Migration;
+namespace App\Tests\Sincronizacion\Importacion;
 
-use App\Migration\Mapeador;
+use App\Sincronizacion\Legado\Importacion\Mapeador;
 use PHPUnit\Framework\TestCase;
 
 final class MapeadorVentaTest extends TestCase
@@ -52,9 +52,9 @@ final class MapeadorVentaTest extends TestCase
 
     public function testBoletoConVoucherDelLegado(): void
     {
-        $this->assertTrue(\App\Migration\Mapeador::esVoucher(["voucher_estacion_id" => "15"]));
-        $this->assertTrue(\App\Migration\Mapeador::esVoucher(["voucher_internet_id" => 3, "voucher_agencia_id" => null]));
-        $this->assertFalse(\App\Migration\Mapeador::esVoucher(["voucher_estacion_id" => null, "voucher_agencia_id" => null, "voucher_internet_id" => null]));
-        $this->assertFalse(\App\Migration\Mapeador::esVoucher([]));
+        $this->assertTrue(\App\Sincronizacion\Legado\Importacion\Mapeador::esVoucher(["voucher_estacion_id" => "15"]));
+        $this->assertTrue(\App\Sincronizacion\Legado\Importacion\Mapeador::esVoucher(["voucher_internet_id" => 3, "voucher_agencia_id" => null]));
+        $this->assertFalse(\App\Sincronizacion\Legado\Importacion\Mapeador::esVoucher(["voucher_estacion_id" => null, "voucher_agencia_id" => null, "voucher_internet_id" => null]));
+        $this->assertFalse(\App\Sincronizacion\Legado\Importacion\Mapeador::esVoucher([]));
     }
 }

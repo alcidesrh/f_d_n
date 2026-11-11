@@ -3,7 +3,6 @@
 namespace App\Tests\Entity;
 
 use App\Entity\Icon;
-use App\Entity\Status;
 use PHPUnit\Framework\TestCase;
 
 final class BaseLabelTest extends TestCase
@@ -20,6 +19,6 @@ final class BaseLabelTest extends TestCase
 
     public function testLabelNoEsEscribible(): void
     {
-        $this->assertFalse(property_exists(Status::class, 'label'), 'label es derivado: no debe existir como propiedad');
+        $this->assertFalse(property_exists(Icon::class, 'label'), 'label es derivado: no debe existir como propiedad');
     }
 }

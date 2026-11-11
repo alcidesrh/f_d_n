@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Migration;
+namespace App\Tests\Sincronizacion\Importacion;
 
 use App\Entity\Enum\CanalVenta;
 use App\Entity\Enum\EstadoSalida;
-use App\Migration\Mapeador;
+use App\Sincronizacion\Legado\Importacion\Mapeador;
 use PHPUnit\Framework\TestCase;
 
 final class MapeadorSalidaTest extends TestCase

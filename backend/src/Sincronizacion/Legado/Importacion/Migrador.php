@@ -1,13 +1,8 @@
 <?php
 
-namespace App\Migration;
+namespace App\Sincronizacion\Legado\Importacion;
 
 use App\Entity\Enum\EstadoBoletoAsiento;
-use App\Migration\Salida\DependenciasLegado;
-use App\Migration\Salida\EncomiendasLegado;
-use App\Migration\Salida\InferenciaBus;
-use App\Migration\Salida\RutaLegada;
-use App\Migration\Salida\RutasLegado;
 use App\Ruta\Horarios;
 use App\Ruta\Trayectos;
 use Doctrine\DBAL\ArrayParameterType;
@@ -82,16 +77,7 @@ class Migrador
         private Horarios $horarios,
         private Trayectos $trayectos,
         private EncomiendasLegado $encomiendas,
-    ) {
-        $this->oldPdo->setAttribute(
-            \PDO::ATTR_ERRMODE,
-            \PDO::ERRMODE_EXCEPTION,
-        );
-        $this->oldPdo->setAttribute(
-            \PDO::ATTR_DEFAULT_FETCH_MODE,
-            \PDO::FETCH_ASSOC,
-        );
-    }
+    ) {}
 
     /**
      * @param \Closure|null $onProgress Optional callback invoked every N iterations: fn(int $done, int $total) => void

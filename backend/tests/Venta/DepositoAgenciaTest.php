@@ -9,7 +9,7 @@ use App\Chat\AvisosDelSistema;
 use App\Entity\Agencia;
 use App\Entity\AgenciaDeposito;
 use App\Entity\Enum\EstadoDepositoAgencia;
-use App\Migration\Mapeador;
+use App\Sincronizacion\Legado\Importacion\Mapeador;
 use App\Venta\Agencia\DepositoRechazado;
 use App\Venta\Agencia\DepositosAgencia;
 use App\Venta\Agencia\FiltroDepositos;

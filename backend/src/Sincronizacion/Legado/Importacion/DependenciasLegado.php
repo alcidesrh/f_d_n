@@ -2,11 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Migration\Salida;
+namespace App\Sincronizacion\Legado\Importacion;
 
 use App\Croquis\Moldes;
-use App\Migration\Mapeador;
-use App\Migration\RolesUsuarioLegado;
 use Doctrine\DBAL\Connection;
 
 /**

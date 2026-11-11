@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Migration\Entidad;
 
 use App\Migration\IndicadoresMigracion;
-use App\Migration\Migrador;
+use App\Sincronizacion\Legado\Importacion\Migrador;
 use App\Migration\MigradorEstaticos;
-use App\Migration\MigradorIAM;
+use App\Sincronizacion\Legado\Importacion\MigradorIAM;
 use App\Metadata\EntityConfigSynchronizer;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Lazy;

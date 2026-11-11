@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Migration;
+namespace App\Tests\Sincronizacion\Importacion;
 
-use App\Migration\Salida\RutasLegado;
+use App\Sincronizacion\Legado\Importacion\RutasLegado;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Sincronizacion;
 
-use App\Migration\SondaLegado;
+use App\Sincronizacion\Legado\Importacion\SondaLegado;
 use App\Sincronizacion\Conciliador;
 use App\Sincronizacion\Legado\ConexionLegado;
 use App\Sincronizacion\Nuevo\ClientesLocales;

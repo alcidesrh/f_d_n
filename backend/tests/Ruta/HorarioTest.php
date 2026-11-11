@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Ruta;
 
 use App\Entity\Enum\PrecisionHora;
-use App\Migration\Salida\RutaLegada;
+use App\Sincronizacion\Legado\Importacion\RutaLegada;
 use App\Ruta\Horario;
 use PHPUnit\Framework\TestCase;
 

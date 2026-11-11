@@ -2,12 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Migration\Salida;
+namespace App\Sincronizacion\Legado\Importacion;
 
 use App\Entity\Enum\EstadoEncomienda;
 use App\Entity\Enum\ModalidadEncomienda;
 use App\Entity\Enum\OperacionEncomienda;
-use App\Migration\Mapeador;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 

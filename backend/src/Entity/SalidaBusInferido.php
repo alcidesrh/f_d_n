@@ -26,7 +26,7 @@ class SalidaBusInferido
     #[ORM\JoinColumn(nullable: false, onDelete: "CASCADE")]
     private Bus $bus;
 
-    /** Cómo se eligió: `hora`, `franja` o `flota` (ver `App\Migration\Salida\InferenciaBus`). */
+    /** Cómo se eligió: `hora`, `franja` o `flota` (ver `App\Sincronizacion\Legado\Importacion\InferenciaBus`). */
     #[ORM\Column(length: 10)]
     private string $criterio;
 

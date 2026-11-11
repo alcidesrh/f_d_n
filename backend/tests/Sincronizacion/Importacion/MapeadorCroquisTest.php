@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Migration;
+namespace App\Tests\Sincronizacion\Importacion;
 
 use App\Entity\Enum\TipoBusSenal;
-use App\Migration\Mapeador;
+use App\Sincronizacion\Legado\Importacion\Mapeador;
 use PHPUnit\Framework\TestCase;
 
 final class MapeadorCroquisTest extends TestCase

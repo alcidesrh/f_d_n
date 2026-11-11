@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Migration;
+namespace App\Sincronizacion\Legado\Importacion;
 
 use App\Croquis\Croquis;
 use App\Entity\Enum\CanalVenta;
@@ -347,7 +347,6 @@ class Mapeador
                 ? (int) $old["empresa_id"]
                 : null,
             "nit" => $this->truncate($old["nit"] ?? null, 15),
-            "status_id" => null,
         ];
     }
 

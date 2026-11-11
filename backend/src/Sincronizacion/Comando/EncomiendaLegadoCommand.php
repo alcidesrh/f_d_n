@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Command;
+namespace App\Sincronizacion\Comando;
 
 use Doctrine\DBAL\Connection;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -26,10 +26,7 @@ final class EncomiendaLegadoCommand
     public function __construct(
         private readonly Connection $conexion,
         #[Target("oldPdo")] private readonly \PDO $legado,
-    ) {
-        $this->legado->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-        $this->legado->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
-    }
+    ) {}
 
     public function __invoke(
         SymfonyStyle $io,

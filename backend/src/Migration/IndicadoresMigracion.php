@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Migration;
 
+use App\Sincronizacion\Legado\Importacion\SondaLegado;
+
 use Doctrine\DBAL\Connection;
 use Symfony\Contracts\Cache\CacheInterface;
 use Symfony\Contracts\Cache\ItemInterface;

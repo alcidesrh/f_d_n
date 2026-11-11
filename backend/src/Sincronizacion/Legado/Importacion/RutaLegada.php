@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Migration\Salida;
+namespace App\Sincronizacion\Legado\Importacion;
 
 /** Ruta del legado ya migrada (ADR-030): su id y el orden de cada parada. */
 final readonly class RutaLegada

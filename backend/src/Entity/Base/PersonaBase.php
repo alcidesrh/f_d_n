@@ -2,7 +2,6 @@
 
 namespace App\Entity\Base;
 
-use App\Entity\Base\Traits\StatusTrait;
 use App\Entity\Base\Traits\TimestampableEntityTrait;
 use App\Entity\Localidad;
 use Doctrine\ORM\Mapping as ORM;
@@ -11,7 +10,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\MappedSuperclass]
 class PersonaBase extends Base
 {
-    use TimestampableEntityTrait, StatusTrait;
+    use TimestampableEntityTrait;
 
     #[ORM\Column(length: 255)]
     protected ?string $nombre = null;

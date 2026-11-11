@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Migration\Salida;
+namespace App\Sincronizacion\Legado\Importacion;
 
 use App\Ruta\Trayectos;
 use Doctrine\DBAL\Connection;

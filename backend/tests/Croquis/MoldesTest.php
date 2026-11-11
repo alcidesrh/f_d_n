@@ -8,10 +8,10 @@ use App\Croquis\Croquis;
 use App\Croquis\ElementoCroquis;
 use App\Croquis\Moldes;
 use App\Entity\Enum\AsientoClase;
-use App\Migration\Mapeador;
-use App\Migration\Salida\DependenciasLegado;
-use App\Migration\Salida\InferenciaBus;
-use App\Migration\Salida\LectorLegado;
+use App\Sincronizacion\Legado\Importacion\Mapeador;
+use App\Sincronizacion\Legado\Importacion\DependenciasLegado;
+use App\Sincronizacion\Legado\Importacion\InferenciaBus;
+use App\Sincronizacion\Legado\Importacion\LectorLegado;
 use Doctrine\DBAL\Connection;
 use PHPUnit\Framework\TestCase;
 

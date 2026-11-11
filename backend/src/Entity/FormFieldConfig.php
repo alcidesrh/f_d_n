@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Acceso\Recurso;
+use ApiPlatform\Metadata\ApiProperty;
 use App\Attribute\ApiResourceNoPagination;
 use App\Metadata\ConfiguracionDelCliente;
 use Doctrine\ORM\Mapping as ORM;

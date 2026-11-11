@@ -49,10 +49,10 @@ services:
     # Se abre al primer uso y se rehace si se cayó (PdoLegado): el worker y el
     # ciclo de la sincronización viven horas.
     PDO $oldPdo:
-        class: App\Migration\PdoLegado
-        factory: ['@App\Migration\SondaLegado', "crearPdoReconectable"]
+        class: App\Sincronizacion\Legado\Importacion\PdoLegado
+        factory: ['@App\Sincronizacion\Legado\Importacion\SondaLegado', "crearPdoReconectable"]
 
-    App\Migration\SondaLegado:
+    App\Sincronizacion\Legado\Importacion\SondaLegado:
         arguments:
             $host: "%env(systemfdn_host)%"
             $port: "%env(systemfdn_port)%"

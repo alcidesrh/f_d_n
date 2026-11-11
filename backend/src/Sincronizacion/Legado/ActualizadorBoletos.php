@@ -6,8 +6,8 @@ namespace App\Sincronizacion\Legado;
 
 use App\Entity\Enum\EstadoBoletoAsiento;
 use App\Entity\Enum\OperacionBoleto;
-use App\Migration\Mapeador;
-use App\Migration\Salida\DependenciasLegado;
+use App\Sincronizacion\Legado\Importacion\Mapeador;
+use App\Sincronizacion\Legado\Importacion\DependenciasLegado;
 use App\Sincronizacion\Nuevo\Traduccion;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;

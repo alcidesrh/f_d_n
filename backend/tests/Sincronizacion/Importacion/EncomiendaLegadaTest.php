@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Migration;
+namespace App\Tests\Sincronizacion\Importacion;
 
 use App\Entity\Enum\EstadoEncomienda;
 use App\Entity\Enum\ModalidadEncomienda;
 use App\Entity\Enum\TipoArticuloEncomienda;
-use App\Migration\Salida\EncomiendaLegada;
+use App\Sincronizacion\Legado\Importacion\EncomiendaLegada;
 use PHPUnit\Framework\TestCase;
 
 final class EncomiendaLegadaTest extends TestCase

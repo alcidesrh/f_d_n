@@ -2,12 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Migration\Salida;
+namespace App\Sincronizacion\Legado\Importacion;
 
 use App\Croquis\ElementoCroquis;
 use App\Croquis\Moldes;
 use App\Entity\Enum\AsientoClase;
-use App\Migration\Mapeador;
 use App\Salida\AgendaBus;
 use Doctrine\DBAL\Connection;
 

@@ -2,9 +2,9 @@
 
 namespace App\Command;
 
-use App\Migration\Migrador;
+use App\Sincronizacion\Legado\Importacion\Migrador;
 use App\Migration\MigradorEstaticos;
-use App\Migration\MigradorIAM;
+use App\Sincronizacion\Legado\Importacion\MigradorIAM;
 use App\Migration;
 use App\Migration\Reseteador;
 use App\Metadata\EntityConfigSynchronizer;

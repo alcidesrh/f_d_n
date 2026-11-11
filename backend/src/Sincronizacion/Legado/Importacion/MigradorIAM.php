@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Migration;
+namespace App\Sincronizacion\Legado\Importacion;
 
 use App\Acceso\Legado\ConsolidacionRoles;
 use App\Acceso\Legado\EquivalenciasLegado;
@@ -27,10 +27,7 @@ class MigradorIAM {
         private Connection $newConn,
         #[Target('oldPdo')] private \PDO $oldPdo,
         private RolesUsuarioLegado $rolesUsuario,
-    ) {
-        $this->oldPdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-        $this->oldPdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC);
-    }
+    ) {}
 
     /** @return array{roles: int, usuarios: int, asignaciones: int, desactivados: int} */
     public function migrar(?OutputInterface $output = null): array {

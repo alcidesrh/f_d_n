@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Migration;
+namespace App\Sincronizacion\Legado\Importacion;
 
 use Symfony\Contracts\Service\ResetInterface;
 

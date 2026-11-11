@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Migration;
+namespace App\Sincronizacion\Legado\Importacion;
 
 /**
  * Preflight TCP no bloqueante hacia el SQL Server legacy.
@@ -62,10 +62,9 @@ final class SondaLegado
     }
 
     /**
-     * Factory del servicio PDO $oldPdo: falla rápido si el legado no responde,
-     * evitando el cuelgue de ~130s del connect dblib con el host caído.
-     */
-    /**
+     * Abre la conexión; falla rápido si el legado no responde, evitando el
+     * cuelgue de ~130s del connect dblib con el host caído.
+     *
      * @param array<int, mixed> $opciones opciones del PDO (p. ej. \PDO::DBLIB_ATTR_QUERY_TIMEOUT)
      */
     public function crearPdo(array $opciones = []): \PDO
@@ -85,9 +84,17 @@ final class SondaLegado
         );
     }
 
-    /** El PDO que se abre al primer uso y se rehace si la conexión se cayó. */
+    /**
+     * El PDO que se abre al primer uso y se rehace si la conexión se cayó.
+     * Cada conexión nace ya configurada (excepciones y filas asociativas): los
+     * consumidores no la tocan en su constructor —eso abría la conexión al
+     * armar el servicio— y una conexión rehecha no pierde la configuración.
+     */
     public function crearPdoReconectable(): PdoLegado
     {
-        return new PdoLegado(fn() => $this->crearPdo());
+        return new PdoLegado(fn() => $this->crearPdo([
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        ]));
     }
 }

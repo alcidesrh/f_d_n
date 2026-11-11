@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Tests\Migration;
+namespace App\Tests\Sincronizacion\Importacion;
 
-use App\Migration\PdoLegado;
+use App\Sincronizacion\Legado\Importacion\PdoLegado;
 use PHPUnit\Framework\TestCase;
 
 final class PdoLegadoTest extends TestCase

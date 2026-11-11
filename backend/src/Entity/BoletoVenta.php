@@ -10,7 +10,8 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\GraphQl\Query;
 use ApiPlatform\Metadata\GraphQl\QueryCollection;
 use App\Filter\ColumnaFilter;
-use App\Entity\Base\TimeLegacyStatusBase;
+use App\Entity\Base\Base;
+use App\Entity\Base\Traits\TimestampableEntityTrait;
 use App\Entity\Embeddable\Precio;
 use App\Entity\Enum\CanalVenta;
 use App\Entity\Enum\EstadoBoletoVenta;
@@ -36,8 +37,10 @@ use Symfony\Component\Uid\Uuid;
     ),
 ]
 #[Recurso(nombre: "Ventas de boletos", area: "Venta", soloLectura: true)]
-class BoletoVenta extends TimeLegacyStatusBase
+class BoletoVenta extends Base
 {
+    use TimestampableEntityTrait;
+
     /** Quien vendió (taquilla o agencia); null en las ventas de la página web. */
     #[ORM\ManyToOne]
     private ?Usuario $usuario = null;

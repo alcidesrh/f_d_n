@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Sincronizacion\Legado;
 
-use App\Migration\SondaLegado;
+use App\Sincronizacion\Legado\Importacion\SondaLegado;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\Service\ResetInterface;
 

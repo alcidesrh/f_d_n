@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Sincronizacion\Legado;
 
-use App\Migration\Migrador;
-use App\Migration\PdoLegado;
-use App\Migration\Salida\DependenciasLegado;
-use App\Migration\Salida\EncomiendasLegado;
+use App\Sincronizacion\Legado\Importacion\Migrador;
+use App\Sincronizacion\Legado\Importacion\PdoLegado;
+use App\Sincronizacion\Legado\Importacion\DependenciasLegado;
+use App\Sincronizacion\Legado\Importacion\EncomiendasLegado;
 use App\Sincronizacion\Nuevo\ClientesLocales;
 use App\Sincronizacion\Nuevo\Traduccion;
 use Doctrine\DBAL\ArrayParameterType;

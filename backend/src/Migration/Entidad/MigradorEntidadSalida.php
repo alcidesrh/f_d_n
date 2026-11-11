@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Migration\Entidad;
 
 use App\Migration\Job\Progreso;
-use App\Migration\Migrador;
+use App\Sincronizacion\Legado\Importacion\Migrador;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**

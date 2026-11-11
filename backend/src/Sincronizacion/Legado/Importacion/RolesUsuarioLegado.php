@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Migration;
+namespace App\Sincronizacion\Legado\Importacion;
 
 use App\Acceso\Catalogo\Catalogo;
 use App\Acceso\Legado\ConsolidacionRoles;
