@@ -45,11 +45,15 @@ final class Clientes
 
         $nit = Facturador::normalizarNit($termino);
         if (ctype_digit(str_replace("K", "", $nit)) && strlen($nit) >= self::MIN_BUSQUEDA) {
-            // NIT o documento: prefijo (usa el índice) o igualdad del documento.
+            // NIT o documento: prefijo o igualdad del documento, cada uno por su índice
+            // (`nat_cliente_nit_prefijo`, `idx_cliente_documento`).
             $qb->where("c.nit LIKE :prefijo OR c.numeroDocumento = :exacto")
                 ->setParameter("prefijo", $nit . "%")
                 ->setParameter("exacto", $termino);
         } else {
+            // La expresión es la del índice de trigramas `nat_cliente_busqueda`
+            // (migración Version20261111110000): si cambia aquí, cambia allá, o
+            // cada búsqueda vuelve a leer la tabla entera.
             $palabras = array_slice(preg_split('/\s+/', mb_strtolower($termino)) ?: [], 0, 4);
             foreach ($palabras as $i => $p) {
                 $qb->andWhere("LOWER(CONCAT(c.nombre, ' ', COALESCE(c.apellido, ''), ' ', COALESCE(c.nit, ''))) LIKE :p{$i}")

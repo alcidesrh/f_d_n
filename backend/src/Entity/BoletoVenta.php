@@ -27,9 +27,18 @@ use Symfony\Component\Uid\Uuid;
  * `App\Venta\RegistroVenta` (taquilla/agencia) o `App\Venta\CompraWeb`
  * (página): ahí se validan disponibilidad, tarifa, saldo y factura. Por eso
  * la API la expone solo para lectura.
+ *
+ * Índices: por estado y fecha (purga de pendientes, tablero), por fecha sola
+ * (listado de boletos y reportes, que no filtran por estado) y el parcial de
+ * las que esperan factura, que son unas pocas entre todas (la tarea que las
+ * certifica y el tablero las leían recorriendo la tabla). La condición va
+ * escrita como la devuelve PostgreSQL para que el diff del esquema no la vea
+ * distinta.
  */
 #[ORM\Entity]
 #[ORM\Index(columns: ["estado", "created_at"], name: "idx_boleto_venta_estado_creada")]
+#[ORM\Index(columns: ["created_at"], name: "idx_boleto_venta_creada")]
+#[ORM\Index(columns: ["created_at"], name: "idx_boleto_venta_fel_pendiente", options: ["where" => "((estado_facturacion)::text = 'pendiente'::text)"])]
 #[
     ApiResource(
         operations: [new Get(), new GetCollection()],

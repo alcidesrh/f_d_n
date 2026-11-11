@@ -17,6 +17,7 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Table(name: "bitacora")]
 #[ORM\Index(columns: ["entidad", "registro_id", "fecha"], name: "idx_bitacora_registro")]
 #[ORM\Index(columns: ["usuario_id", "fecha"], name: "idx_bitacora_usuario_fecha")]
+#[ORM\Index(columns: ["fecha"], name: "idx_bitacora_fecha")]
 class Bitacora
 {
     #[ORM\Id]

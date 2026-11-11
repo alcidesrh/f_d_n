@@ -23,8 +23,12 @@ use Money\Money;
  * se solapen: lo garantiza la restricción de exclusión
  * `ex_boleto_asiento_tramo` (solo en migraciones, ADR-030). Un asiento
  * anulado o reasignado se puede volver a vender.
+ *
+ * `legacy_id` solo lo tienen los boletos que vinieron del legado y por él los
+ * busca la sincronización en cada ciclo (ADR-042): índice parcial.
  */
 #[ORM\Entity]
+#[ORM\Index(columns: ["legacy_id"], name: "idx_boleto_asiento_legacy", options: ["where" => "(legacy_id IS NOT NULL)"])]
 #[
     ApiResource(
         operations: [],

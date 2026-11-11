@@ -7,8 +7,14 @@ use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\PersonaBase;
 use Doctrine\ORM\Mapping as ORM;
 
+/**
+ * La búsqueda de la pantalla de venta (`App\Venta\Clientes::buscar`) se apoya
+ * además en dos índices que Doctrine no sabe expresar y viven solo en
+ * migraciones (`nat_cliente_nit_prefijo`, `nat_cliente_busqueda`; ADR-056).
+ */
 #[ORM\Entity]
 #[ORM\Index(columns: ["nit"], name: "idx_cliente_nit")]
+#[ORM\Index(columns: ["numero_documento"], name: "idx_cliente_documento")]
 #[ORM\Index(columns: ["comodin"], name: "idx_cliente_comodin", options: ["where" => "comodin"])]
 #[ApiResourcePaginationPage()]
 #[Recurso(nombre: "Clientes", area: "Venta")]

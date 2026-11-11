@@ -19,8 +19,12 @@ use Symfony\Component\Uid\Uuid;
  * DTE (factura electrónica) certificado de una venta: snapshot inmutable de
  * emisor, receptor y datos del certificador. Lo crea `App\Venta` con la
  * respuesta del certificador; la API solo lo lee.
+ *
+ * Por `uuid` la busca la sincronización (ADR-042) para no duplicar la factura
+ * de un boleto que ya vino del legado.
  */
 #[ORM\Entity]
+#[ORM\Index(columns: ["uuid"], name: "idx_factura_uuid")]
 #[
     ApiResource(
         operations: [new Get(), new GetCollection()],
