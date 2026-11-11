@@ -9,13 +9,12 @@ use App\Chat\AvisosDelSistema;
 use App\Entity\Agencia;
 use App\Entity\AgenciaDeposito;
 use App\Entity\Enum\EstadoDepositoAgencia;
-use App\Sincronizacion\Legado\Importacion\Mapeador;
 use App\Venta\Agencia\DepositoRechazado;
 use App\Venta\Agencia\DepositosAgencia;
 use App\Venta\Agencia\FiltroDepositos;
 use PHPUnit\Framework\TestCase;
 
-/** Depósitos de agencia (ADR-034): estados, filtros y migración del legado. */
+/** Depósitos de agencia (ADR-034): estados y filtros. */
 final class DepositoAgenciaTest extends TestCase
 {
     private static function agencia(?string $porcentaje = "10.00"): Agencia
@@ -133,69 +132,6 @@ final class DepositoAgenciaTest extends TestCase
         $this->assertSame("rango_invalido", self::codigo(fn() => FiltroDepositos::desdeQuery(["desde" => "2026-10-12", "hasta" => "2026-10-01"], $hoy)));
         $this->assertSame("parametro_invalido", self::codigo(fn() => FiltroDepositos::desdeQuery(["agencia" => "x"], $hoy)));
         $this->assertSame(15, FiltroDepositos::desdeQuery(["porPagina" => "7"], $hoy)->porPagina);
-    }
-
-    public function testEstadosDelLegado(): void
-    {
-        $this->assertSame(EstadoDepositoAgencia::REGISTRADO, EstadoDepositoAgencia::deLegado(1));
-        $this->assertSame(EstadoDepositoAgencia::ACREDITADO, EstadoDepositoAgencia::deLegado(2));
-        $this->assertSame(EstadoDepositoAgencia::RECHAZADO, EstadoDepositoAgencia::deLegado(3));
-    }
-
-    public function testMapeaDepositoDelLegado(): void
-    {
-        $fila = (new Mapeador())->depositoAgencia([
-            "id" => 901,
-            "estacion_id" => 55,
-            "fecha" => "2026-09-30 00:00:00.000",
-            "importe" => "1500.50",
-            "moneda_sigla" => "gtq",
-            "numero_boleta" => " 778899 ",
-            "aplica_bono" => "1",
-            "bono" => "150.05",
-            "observacion" => null,
-            "estado_id" => 2,
-            "motivo_rechazo" => null,
-            "usuario_creacion_id" => "31",
-            "fecha_creacion" => "2026-09-30 11:22:33.000",
-        ]);
-
-        $this->assertSame(55, $fila["agencia"]);
-        $this->assertSame("2026-09-30", $fila["fecha"]);
-        $this->assertSame(150050, $fila["importe"]);
-        $this->assertSame("GTQ", $fila["moneda"]);
-        $this->assertSame("778899", $fila["numero_boleta"]);
-        $this->assertSame("true", $fila["aplica_bono"]);
-        $this->assertSame(15005, $fila["bono"]);
-        $this->assertSame("acreditado", $fila["estado"]);
-        $this->assertSame(31, $fila["usuario"]);
-        $this->assertSame("2026-09-30 11:22:33", $fila["creado_en"]);
-        $this->assertSame("agencia_deposito-901", $fila["legacy_id"]);
-    }
-
-    public function testDepositoPendienteDelLegadoNoTraeBono(): void
-    {
-        $fila = (new Mapeador())->depositoAgencia([
-            "id" => 902, "estacion_id" => 55, "fecha" => "2026-10-01", "importe" => "100", "numero_boleta" => "",
-            "aplica_bono" => "0", "bono" => "10", "estado_id" => 1, "usuario_creacion_id" => null, "fecha_creacion" => "2026-10-01 08:00:00",
-        ]);
-
-        $this->assertSame(0, $fila["bono"]);
-        $this->assertSame("false", $fila["aplica_bono"]);
-        $this->assertSame("registrado", $fila["estado"]);
-        $this->assertSame("s/n", $fila["numero_boleta"]);
-        $this->assertNull($fila["usuario"]);
-    }
-
-    public function testFechasConElFormatoDelDriverDelLegado(): void
-    {
-        $fila = (new Mapeador())->depositoAgencia([
-            "id" => 903, "estacion_id" => 55, "fecha" => "Jul 31 2014 12:00:00:AM", "importe" => "100", "numero_boleta" => "1",
-            "aplica_bono" => "0", "bono" => "0", "estado_id" => 1, "usuario_creacion_id" => null, "fecha_creacion" => "Jul 31 2014 03:04:05:123PM",
-        ]);
-
-        $this->assertSame("2014-07-31", $fila["fecha"]);
-        $this->assertSame("2014-07-31 15:04:05", $fila["creado_en"]);
     }
 
     public function testAvisoDeRechazo(): void

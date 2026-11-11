@@ -12,7 +12,7 @@ use Doctrine\Persistence\ObjectManager;
 
 /**
  * Catálogos mínimos de la venta para desarrollo. En producción vienen del
- * legado (`app:migrar`: tipo_pago, moneda, tipo_documento).
+ * legado (se importaron una vez: tipo_pago, moneda, tipo_documento).
  */
 class VentaCatalogoFixtures extends Fixture
 {

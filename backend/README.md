@@ -30,16 +30,15 @@ No hay sitio MkDocs. La documentación vigente del backend vive en:
 - `AGENTS.md` (este directorio) — reglas Symfony/Doctrine/GraphQL/testing.
 - `../AGENTS.md` (raíz) — terminología de dominio y estado actual del modelo de datos.
 - `../CONTEXT.md` — glosario de dominio.
-- `../docs/architecture/decisions/` — ADRs (incluye Dual Entity Manager, Flat Permission Set, estrategia de migración legacy).
+- `../docs/architecture/decisions/` — ADRs (accesos con alcance, sincronización con el legado, latencia e índices).
 
 ## Estructura
 
 | Directorio | Propósito |
 |---|---|
-| `src/Entity/` | Entidades del dominio (30) |
-| `src/EntitySistemaFdn/` | Entidades legacy SQL Server (112) |
-| `src/Security/` | IAM: Voters, PermissionManager |
-| `src/Migration/` | Migración de datos desde TerminalOmnibus |
+| `src/Entity/` | Entidades del dominio |
+| `src/Acceso/`, `src/Security/` | Accesos con alcance (ADR-039) y autenticación por Bearer |
+| `src/Sincronizacion/` | Sincronización temporal con el legado (ADR-042) y su motor de importación |
 | `src/Command/` | Comandos Symfony |
 | `config/packages/` | Configuración Symfony |
 | `migrations/` | Migraciones Doctrine |

@@ -80,40 +80,19 @@ class Migrador
     ) {}
 
     /**
-     * @param \Closure|null $onProgress Optional callback invoked every N iterations: fn(int $done, int $total) => void
-     * @param \Closure|null $debeCancelar Optional callback consulted at the top of each iteration: fn() => bool
-     * @param array|null    $salidasPrefetchadas Filas ya obtenidas (fetchSalidasPendientes / fetchSalidasRango): evita un segundo fetch
+     * Cada salida en su transacción: si una falla se revierte entera, se
+     * cuenta en `errores` y se dice en `$output`.
+     *
+     * @param list<array<string, mixed>> $salidas filas del legado (`fetchSalidasPorIds`)
      *
      * @return array<string, int> contadores (`errores` = salidas revertidas)
      */
-    public function migrarSalida(
-        $salidas = 100,
-        ?OutputInterface $output = null,
-        ?\Closure $onProgress = null,
-        ?\Closure $debeCancelar = null,
-        ?array $salidasPrefetchadas = null,
-    ): array {
+    public function migrarSalidas(array $salidas, ?OutputInterface $output = null): array
+    {
         $contadores = $this->contadoresIniciales();
         $this->ejemplos = [];
 
-        $salidas = $salidasPrefetchadas ?? $this->fetchSalidas($salidas);
-        if ($output) {
-            $output->writeln(
-                sprintf("<info>Salidas a migrar: %d</info>", count($salidas)),
-            );
-        }
-
-        $total = count($salidas);
-        foreach ($salidas as $i => $salida) {
-            if ($debeCancelar && $debeCancelar()) {
-                if ($output) {
-                    $output->writeln(
-                        "<comment>Migración cancelada por el usuario.</comment>",
-                    );
-                }
-                break;
-            }
-
+        foreach ($salidas as $salida) {
             $legacyId = (string) $salida["id"];
             $antes = $contadores;
             $marca = $this->dependencias->marcar();
@@ -142,25 +121,6 @@ class Migrador
                     );
                 }
             }
-
-            if (($i + 1) % 25 === 0) {
-                if ($onProgress) {
-                    $onProgress(min($i + 1, $total), $total);
-                }
-            }
-            if ($output && ($i + 1) % 10 === 0) {
-                $output->write(
-                    sprintf(
-                        "\r<info>Salidas... %d/%d</info>",
-                        min($i + 1, $total),
-                        $total,
-                    ),
-                );
-            }
-        }
-
-        if ($output) {
-            $output->writeln("");
         }
 
         $this->dependencias->reiniciarIdentidades();
@@ -624,25 +584,6 @@ class Migrador
         }
     }
 
-    // ─── Existence checks ──────────────────────────────────────────
-
-    /**
-     * Check if a record exists by legacy_id (or by id for tables that keep the legacy PK).
-     */
-    public function yaMigrado(string $tabla, string $legacyId): bool
-    {
-        $sql = match ($tabla) {
-            "estacion" => "SELECT 1 FROM enclave WHERE id = :lid",
-            "empresa", "cliente", "usuario"
-                => "SELECT 1 FROM {$tabla} WHERE id = :lid",
-            "bus" => "SELECT 1 FROM {$tabla} WHERE codigo = :lid",
-            default => "SELECT 1 FROM {$tabla} WHERE legacy_id = :lid",
-        };
-        $result = $this->newConn->fetchOne($sql, ["lid" => $legacyId]);
-
-        return $result !== false;
-    }
-
     // ─── Fetch helpers ─────────────────────────────────────────────
 
     private function sanitizeUtf8(array $row): array
@@ -673,55 +614,6 @@ class Migrador
              WHERE 1 = 1";
 
     /**
-     * Filtro de fechas (Y-m-d) con `hasta` inclusive: `fecha` es fecha y hora,
-     * así que una salida del día `hasta` a las 20:00 también entra.
-     *
-     * @param array<string, string> $params
-     */
-    private static function filtroFechas(?string $desde, ?string $hasta, array &$params): string
-    {
-        $sql = "";
-        if ($desde) {
-            $sql .= " AND s.fecha >= CAST(:desde AS date)";
-            $params["desde"] = $desde;
-        }
-        if ($hasta) {
-            $sql .= " AND s.fecha < DATEADD(day, 1, CAST(:hasta AS date))";
-            $params["hasta"] = $hasta;
-        }
-
-        return $sql;
-    }
-
-    private function fetchSalidas(
-        int $salidas,
-        ?string $desde = null,
-        ?string $hasta = null,
-    ): array {
-        $params = [];
-        $sql = str_replace("SELECT s.*", "SELECT TOP {$salidas} s.*", self::SELECT_SALIDA)
-            . self::filtroFechas($desde, $hasta, $params)
-            . " ORDER BY s.fecha DESC";
-
-        return $this->fetchOld($sql, $params);
-    }
-
-    /**
-     * Todas las salidas del legado con fecha en [desde, hasta] (cualquier
-     * estado: programadas, canceladas, finalizadas…), migradas o no: migrar un
-     * rango completa también las que ya estaban.
-     */
-    public function fetchSalidasRango(string $desde, string $hasta): array
-    {
-        $params = [];
-
-        return $this->fetchOld(
-            self::SELECT_SALIDA . self::filtroFechas($desde, $hasta, $params) . " ORDER BY s.fecha ASC, s.id ASC",
-            $params,
-        );
-    }
-
-    /**
      * Salidas del legado por id (las que cambiaron, para la sincronización).
      *
      * @param list<int> $ids
@@ -735,90 +627,6 @@ class Migrador
         return $this->fetchOld(
             self::SELECT_SALIDA . " AND s.id IN (" . implode(",", array_map("intval", $ids)) . ") ORDER BY s.fecha ASC, s.id ASC",
         );
-    }
-
-    private function fetchSalidasVentana(
-        int $cantidad,
-        int $offset,
-        ?string $desde = null,
-        ?string $hasta = null,
-    ): array {
-        $params = [];
-        $sql = self::SELECT_SALIDA
-            . self::filtroFechas($desde, $hasta, $params)
-            . " ORDER BY s.fecha DESC OFFSET {$offset} ROWS FETCH NEXT {$cantidad} ROWS ONLY";
-
-        return $this->fetchOld($sql, $params);
-    }
-
-    /**
-     * Salidas del legado aún no migradas (fecha DESC), para que la operación
-     * "migrar N más" avance entre ejecuciones sucesivas sin depender de un TOP fijo.
-     */
-    public function fetchSalidasPendientes(
-        int $cantidad,
-        ?string $desde = null,
-        ?string $hasta = null,
-    ): array {
-        // Set de legacy_id ya migrados en el nuevo salida (evita N+1).
-        $migradas = [];
-        $rows = $this->newConn
-            ->executeQuery(
-                "SELECT legacy_id FROM salida WHERE legacy_id IS NOT NULL",
-            )
-            ->fetchFirstColumn();
-        foreach ($rows as $legacyId) {
-            $migradas[(string) $legacyId] = true;
-        }
-
-        $pendientes = [];
-        $ventana = max(100, min($cantidad * 2, 500));
-        $offset = 0;
-        // Techo de seguridad: nunca escanear más de 20× la cantidad pedida.
-        $maxEscaneadas = max(2000, $cantidad * 20);
-
-        while (count($pendientes) < $cantidad && $maxEscaneadas > 0) {
-            $rows = $this->fetchSalidasVentana(
-                $ventana,
-                $offset,
-                $desde,
-                $hasta,
-            );
-            if ([] === $rows) {
-                break;
-            }
-            foreach ($rows as $row) {
-                $maxEscaneadas--;
-                if (!isset($migradas[(string) $row["id"]])) {
-                    $pendientes[] = $row;
-                    if (count($pendientes) >= $cantidad) {
-                        break 2;
-                    }
-                }
-            }
-            if (count($rows) < $ventana) {
-                break; // última página
-            }
-            $offset += $ventana;
-        }
-
-        return $pendientes;
-    }
-
-    /**
-     * Total de salidas fuente (legado) con los mismos filtros que fetchSalidas.
-     */
-    public function contarSalidas(
-        ?string $desde = null,
-        ?string $hasta = null,
-    ): int {
-        $params = [];
-        $stmt = $this->oldPdo->prepare(
-            "SELECT COUNT(*) FROM salida s WHERE 1 = 1" . self::filtroFechas($desde, $hasta, $params),
-        );
-        $stmt->execute($params);
-
-        return (int) $stmt->fetchColumn();
     }
 
     /**

@@ -8,7 +8,6 @@ import {
   ACCESOS_ASIGNAR,
   ACCESOS_ROLES,
   ACCESOS_VER,
-  MIGRACION,
   USUARIOS_EDITAR,
   USUARIOS_VER,
 } from './audiencias'
@@ -283,24 +282,5 @@ export const guiasAccesos: Guia[] = [
     abrir: { etiqueta: 'Ver roles', destino: { name: 'acceso-roles' } },
     pantallas: ['acceso-roles', 'acceso-usuario', 'accesos', 'entity-list:usuario'],
     palabras: ['migracion', 'legado', 'sistema viejo', 'terminal omnibus'],
-  },
-  {
-    id: 'migracion-del-sistema-anterior',
-    tema: 'accesos',
-    titulo: 'Pasar los datos del sistema anterior',
-    resumen: 'La pantalla de migración: los pasos para traer lo que falta del sistema anterior.',
-    para: [MIGRACION],
-    pasos: [
-      'Abra «Migración» desde el menú.',
-      'Ejecute los pasos en el orden que indica la pantalla y espere a que cada uno termine antes del siguiente.',
-      'Revise el resultado de cada paso antes de seguir.',
-    ],
-    ojo: [
-      'Antes de cualquier paso que modifique datos, haga un respaldo de la base.',
-      'La mayoría de los pasos no se deshacen: consulte con quien administra el sistema si tiene dudas.',
-    ],
-    abrir: { etiqueta: 'Abrir Migración', destino: { name: 'migracion' } },
-    pantallas: ['migracion'],
-    palabras: ['importar', 'legado', 'traspaso', 'sistema anterior'],
   },
 ]

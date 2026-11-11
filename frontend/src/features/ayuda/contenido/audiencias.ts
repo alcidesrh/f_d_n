@@ -79,7 +79,6 @@ export const BITACORA: Audiencia = { etiqueta: 'Bitácoras', exige: 'bitacora.ve
 // Configuración, accesos y usuarios
 export const CONFIG: Audiencia = { etiqueta: 'Configuración', exige: 'config.editar' }
 export const MENUS: Audiencia = { etiqueta: 'Menús', exige: 'menu.editar' }
-export const MIGRACION: Audiencia = { etiqueta: 'Migración', exige: 'migracion.ejecutar' }
 export const ACCESOS_VER: Audiencia = { etiqueta: 'Accesos', exige: 'iam.ver' }
 export const ACCESOS_ASIGNAR: Audiencia = { etiqueta: 'Asignar accesos', exige: 'iam.asignar' }
 export const ACCESOS_ROLES: Audiencia = { etiqueta: 'Definir roles', exige: 'iam.roles' }

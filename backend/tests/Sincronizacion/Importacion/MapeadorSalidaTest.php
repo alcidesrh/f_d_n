@@ -92,4 +92,11 @@ final class MapeadorSalidaTest extends TestCase
         $this->assertNull($b["numeroSeguro"]);
     }
 
+    /** El driver del legado entrega las fechas como `Jul 31 2014 03:04:05:123PM`. */
+    public function testFechasConElFormatoDelDriverDelLegado(): void
+    {
+        $b = (new Mapeador())->bus(["codigo" => "95", "placa" => "P-1", "fechaVencimientoTarjetaOperaciones" => "Jul 31 2014 03:04:05:123PM"], 1);
+
+        $this->assertSame("2014-07-31", $b["fechaVencimientoTarjetaOperaciones"]);
+    }
 }

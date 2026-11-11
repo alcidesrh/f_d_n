@@ -19,10 +19,6 @@ migrate: ## Run pending migrations
 entity-setup: ## Sync dynamic entity config metadata
 	@$(CONSOLE) app:config:sync-metadata
 
-.PHONY: migrar-todo
-migrar-todo:
-	$(CONSOLE) $(if $(prod),--env=prod) app:migrar:todo $(if $(clean),--clean) $(if $(conservar),--conservar) $(if $(estaticos),--estaticos) $(if $(iam),--iam) $(if $(config),--config) $(if $(data),--data) $(if $(boletos),boletos=$(boletos)) $(foreach u,$(entities),--entities=$(u))
-
 sincronizar: ## Sincronización con el legado (ADR-042): un ciclo a mano (el programador la corre cada minuto)
 	@$(CONSOLE) app:sincronizar
 
@@ -108,7 +104,7 @@ deploy: prod-env ## Actualiza producción: git pull y, según lo que cambió, ve
 	if cambio backend/Dockerfile frontend/Dockerfile; then $(MAKE) -s imagen; else $(MAKE) -s reiniciar; fi
 
 # Corren antes de reiniciar PHP y solo si todas las pendientes llegaron después de `desde`: una base
-# rehecha con SchemaTool (app:reset-db --hard) no tiene las versiones anotadas y migrate intentaría
+# rehecha con SchemaTool (`doctrine:schema:create`) no tiene las versiones anotadas y migrate intentaría
 # todas desde la primera. --all-or-nothing: en PostgreSQL, si una falla no queda ninguna aplicada.
 migraciones: prod-env ## Producción: aplica las migraciones pendientes que llegaron después de `desde=<commit>` (lo llama `make deploy`)
 	@test -n "$(desde)" || { echo "Uso: make migraciones desde=<commit>" >&2; exit 1; }

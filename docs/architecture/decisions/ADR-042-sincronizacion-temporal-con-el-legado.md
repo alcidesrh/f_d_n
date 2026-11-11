@@ -17,7 +17,7 @@ Condiciones:
 
 ## Decisión
 
-Un módulo aparte, `backend/src/Sincronizacion/` (más un bundle en el legado), que se apoya en el código de la migración (`App\Migration`) para traer y en un listener de Doctrine para llevar.
+Un módulo aparte, `backend/src/Sincronizacion/` (más un bundle en el legado), que trae con el motor de importación por salida (`App\Sincronizacion\Legado\Importacion`; era `App\Migration` hasta que la migración masiva se quitó, [ADR-056](ADR-056-refactorizacion-arquitectura-rendimiento-y-limpieza.md)) y en un listener de Doctrine para llevar.
 
 ### 1. Interruptor e indicador
 
@@ -28,7 +28,7 @@ Un módulo aparte, `backend/src/Sincronizacion/` (más un bundle en el legado), 
 ### 2. Del legado a aquí: triggers + ciclo cada minuto
 
 - Triggers `AFTER INSERT, UPDATE` en `boleto`, `salida`, `factura_generada`, `encomienda` y `encomienda_bitacora`, y `AFTER INSERT` en `cliente`, anotan el id en `sync_cambio` del legado. No cambian nada de lo que hace el legado.
-- La tarea `sincronizar_legado` del programador (ADR-044, cada minuto, con cerrojo: un ciclo largo hace que se omita el siguiente) corre `Ciclo` (`app:sincronizar` corre uno a mano): `ImportadorLegado` agrupa los cambios por salida y vuelve a migrar cada salida con `Migrador::migrarSalida` (idempotente por `legacy_id`: crea lo que falta, completa lo que cambió), las encomiendas con `EncomiendasLegado::migrarPorIds` y los clientes nuevos con `DependenciasLegado::cliente`. `ActualizadorBoletos` pone al día los boletos que ya estaban: estado (con su línea en la bitácora, `detalle.legado`), de qué boleto viene una reasignación y la factura certificada después.
+- La tarea `sincronizar_legado` del programador (ADR-044, cada minuto, con cerrojo: un ciclo largo hace que se omita el siguiente) corre `Ciclo` (`app:sincronizar` corre uno a mano): `ImportadorLegado` agrupa los cambios por salida y vuelve a migrar cada salida con `Migrador::migrarSalidas` (idempotente por `legacy_id`: crea lo que falta, completa lo que cambió), las encomiendas con `EncomiendasLegado::migrarPorIds` y los clientes nuevos con `DependenciasLegado::cliente`. `ActualizadorBoletos` pone al día los boletos que ya estaban: estado (con su línea en la bitácora, `detalle.legado`), de qué boleto viene una reasignación y la factura certificada después.
 - Escribe con DBAL: Doctrine no lo ve y no vuelve al legado.
 
 ### 3. De aquí al legado: primero allá
@@ -62,7 +62,7 @@ Un módulo aparte, `backend/src/Sincronizacion/` (más un bundle en el legado), 
 
 La tarea `barrer_salidas_legado` (cada 30 minutos) cubre lo que los triggers no avisan: una salida que no cambió nunca llega, y una omitida por no tener bus que inferir (ADR-027) no se reintenta, porque su cambio queda procesado. Busca las salidas no canceladas que faltan aquí, futuras o de los últimos dos días con boletos, e intenta hasta 50, primero las que tienen boletos. Las que quedan con boletos se anotan en `sync_estado.salidas_sin_traer` y ponen el indicador en atención.
 
-El panel de migración no toma el cerrojo del ciclo ni deja fuera lo escrito por FDN: con la sincronización encendida rechaza los jobs que migran salidas. `salida.legacy_id` es único, así que una carrera falla en vez de duplicar.
+El panel de migración, que no tomaba el cerrojo del ciclo, ya no existe (ADR-056): solo la sincronización escribe salidas del legado. `salida.legacy_id` es único, así que una carrera falla en vez de duplicar.
 
 ### 7. Modo «solo traer»
 
@@ -81,4 +81,4 @@ Con `SINCRONIZACION_SOLO_TRAER=1`, un FDN (de desarrollo) trae del legado de pro
 1. Apagar la sincronización (indicador o `app:sincronizacion:interruptor apagar`).
 2. `app:sincronizacion:instalar-legado --desinstalar` (triggers y tablas `sync_*` del legado).
 3. En el legado: quitar `SincronizacionFdnBundle` de `AppKernel` y su carpeta.
-4. Aquí: borrar `src/Sincronizacion/`, `config/packages/sincronizacion.yaml`, `config/routes/sincronizacion.yaml`, la línea de `security.yaml`, `Tarea::SINCRONIZAR_LEGADO` (y su `hora`/`frecuencia`/`mensaje` en `App\Programador\Tarea`), `IndicadorSincronizacion.vue` (y su línea en `AppHeader.vue`), `core/sincronizacion/` y los tests; una migración que borre las tablas `sync_*`. Los enganches que quedan en `App\Migration` (`excluirBoletos`, `excluir`, `migrarPorIds`, `fetchSalidasPorIds`) son opcionales y no estorban.
+4. Aquí: borrar `src/Sincronizacion/`, `config/packages/sincronizacion.yaml`, `config/routes/sincronizacion.yaml`, la línea de `security.yaml`, `Tarea::SINCRONIZAR_LEGADO` (y su `hora`/`frecuencia`/`mensaje` en `App\Programador\Tarea`), `IndicadorSincronizacion.vue` (y su línea en `AppHeader.vue`), `core/sincronizacion/` y los tests; una migración que borre las tablas `sync_*`. Con `src/Sincronizacion/` se va también el motor de importación (`Legado/Importacion`, ADR-056) y con él lo último que habla con el legado: los servicios `PDO $oldPdo` y `SondaLegado` de `config/services.yaml`, las variables `systemfdn_*`, la extensión `pdo_dblib` del `Dockerfile` y `App\Acceso\Legado`.

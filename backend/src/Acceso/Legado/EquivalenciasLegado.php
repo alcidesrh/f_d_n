@@ -13,8 +13,8 @@ namespace App\Acceso\Legado;
  * ADR-052).
  *
  * Es una decisión de negocio: revisarla con quien opera cada puesto.
- * `ROLE_SUPER_ADMIN` es el rol de sistema; `ROLE_ADMIN`, todo menos la
- * migración; aprueban autorizaciones (ADR-040) los que lo hacían en el legado; `ROLE_USER` (el que el
+ * `ROLE_SUPER_ADMIN` es el rol de sistema; `ROLE_ADMIN`, todo el
+ * catálogo; aprueban autorizaciones (ADR-040) los que lo hacían en el legado; `ROLE_USER` (el que el
  * legado daba a todos) no se migra: en el modelo nuevo no hay rol base; `ROLE_NO_VENDER_VOUCHER` no
  * concede nada (era una negación: el modelo nuevo no las tiene).
  */
@@ -24,9 +24,6 @@ final class EquivalenciasLegado
     public const ADMIN = 'ROLE_ADMIN';
     /** El que el legado daba a todos: no se migra (ADR-049). */
     public const BASE = 'ROLE_USER';
-    /** Lo que `ROLE_ADMIN` no tiene del catálogo. */
-    public const ADMIN_EXCLUYE = ['migracion.ejecutar'];
-
     /** @var array<string, array{0: bool, 1: list<string>}> rol => [por estación, capacidades] */
     public const ROLES = [
         'ROLE_ADMIN_EMPRESA' => [false, [
@@ -99,7 +96,7 @@ final class EquivalenciasLegado
     {
         return match ($rol) {
             self::SISTEMA, self::BASE => null,
-            self::ADMIN => array_values(array_diff($catalogo, self::ADMIN_EXCLUYE)),
+            self::ADMIN => $catalogo,
             default => self::ROLES[$rol][1] ?? [],
         };
     }

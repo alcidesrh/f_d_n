@@ -17,7 +17,7 @@ Orquestación vía Docker Compose (`compose.yaml` + overrides).
 
 Las definiciones del dominio, los términos a evitar y el modelo de cada uno están en `CONTEXT.md`. Revísalo antes de nombrar algo nuevo.
 
-> **Estado del modelo (2026-10):** el modelo nuevo (`src/Entity/`, ~45 clases) cubre geografía, flota, la venta de asientos por taquilla, agencias y página web (ADR-021: `App\Venta`) y las encomiendas (ADR-035: `App\Encomienda`; las del legado se migran con la salida en que viajaron, conservando su id/código de barras; las que nunca se embarcaron, no). Los manifiestos de boletos distintos del interno y del piloto solo existen en el legacy (`src/EntitySistemaFdn/`, ~112 clases) — son el trabajo de dominio pendiente, no features ya resueltas. No asumas que existe un endpoint/servicio para ellas sin verificarlo primero. La factura electrónica usa **Forcon** (`App\Venta\Facturacion\Forcon`, configuración en `ConfiguracionForcon`, en la administración o con `app:fel:configuracion` (ADR-047, capacidad `config.proveedores`), credenciales por empresa con `app:fel:credencial`; docs en `docs/certificador_factura_electronica/`) o el simulado en desarrollo. El pago con tarjeta usa **Cybersource** con 3-D Secure (`App\Venta\Pago\Cybersource`, configuración en `ConfiguracionCybersource`, en la administración o con `app:pago:configuracion`, comercio por empresa con `app:pago:credencial`) o la pasarela simulada en desarrollo.
+> **Estado del modelo (2026-10):** el modelo nuevo (`src/Entity/`, ~45 clases) cubre geografía, flota, la venta de asientos por taquilla, agencias y página web (ADR-021: `App\Venta`) y las encomiendas (ADR-035: `App\Encomienda`; las del legado se migran con la salida en que viajaron, conservando su id/código de barras; las que nunca se embarcaron, no). Los manifiestos de boletos distintos del interno y del piloto solo existen en el legado (TerminalOmnibus; este repositorio ya no guarda copia de sus entidades, ADR-056) — son el trabajo de dominio pendiente, no features ya resueltas. No asumas que existe un endpoint/servicio para ellas sin verificarlo primero. La factura electrónica usa **Forcon** (`App\Venta\Facturacion\Forcon`, configuración en `ConfiguracionForcon`, en la administración o con `app:fel:configuracion` (ADR-047, capacidad `config.proveedores`), credenciales por empresa con `app:fel:credencial`; docs en `docs/certificador_factura_electronica/`) o el simulado en desarrollo. El pago con tarjeta usa **Cybersource** con 3-D Secure (`App\Venta\Pago\Cybersource`, configuración en `ConfiguracionCybersource`, en la administración o con `app:pago:configuracion`, comercio por empresa con `app:pago:credencial`) o la pasarela simulada en desarrollo.
 
 ---
 
@@ -30,7 +30,7 @@ Despliegue
 | `pagina/` (no es servicio) | Vue 3, PrimeVue 4, FormKit 2, Tailwind 4; se compila en `backend/public/pagina` y la sirve el backend en `/pagina` | (dev 9100) |
 | `database` | PostgreSQL 16                                                       | 5432   |
 
-- Dos entity managers: PostgreSQL (principal) + SQL Server (legacy).
+- Un solo entity manager (PostgreSQL). El SQL Server del legado solo lo lee y escribe la sincronización (`App\Sincronizacion`, ADR-042), con PDO (ADR-056).
 - Accesos (ADR-039): capacidades en el código, roles planos en la base y asignaciones con alcance por empresa y estación; `App\Acceso\CapacidadVoter` + `Autorizacion`; denegar por defecto en la API genérica.
 - Mercure integrado en Caddy para real-time.
 
@@ -140,7 +140,7 @@ No existe un sitio MkDocs — se eliminó el 2026-09 por documentar un modelo de
 | Terminología + modelo de cada término | `CONTEXT.md` |
 | Referencia funcional (ventas y operación) | `docs/architecture/ventas-y-operacion.md` |
 | Referencia funcional (plataforma) | `docs/architecture/plataforma.md` |
-| ADRs (decisiones de arquitectura) | `docs/architecture/decisions/` (ADR-001 a ADR-053, ver `index.md`) |
+| ADRs (decisiones de arquitectura) | `docs/architecture/decisions/` (ADR-001 a ADR-056, ver `index.md`) |
 | Convención de exploración de dominio para skills | `docs/agents/domain.md` |
 | Convención de issue tracker | `docs/agents/issue-tracker.md` |
 | Backend (Symfony, Doctrine, GraphQL) | `backend/AGENTS.md` |
@@ -164,7 +164,8 @@ Para reglas detalladas de cada capa:
 - **Producción (VPS, `compose.prod.yaml`)**: el código no va en la imagen; se monta desde el checkout `/root/f_d_n` (`./backend:/app`, `./frontend` con su `dist/`), y `/app/var` es tmpfs (la caché de Symfony nace en cada arranque). Cambio de PHP → `make reiniciar` (unos segundos); de frontend → `make front` (`vite build` en el host, sin reiniciar); de la página → `make pagina`; de `composer.lock` → `make vendor`. `make deploy` hace `git pull` y solo lo que cambió, migraciones incluidas, antes de reiniciar (`make migraciones`: se niega si hay pendientes que no llegaron en ese pull; si se detiene, `make deploy desde=<commit>` retoma). Reconstruir imágenes (`make imagen`) solo si cambia un Dockerfile o una extensión de PHP.
 - **Alternar dev/prod en la VPS**: mismos contenedores y misma base, uno u otro. `make vps` pasa a dev (por el mismo dominio que prod, `https://fdn2.duckdns.org`, con su certificado; Vite con recarga en caliente) y `make prod` vuelve; `make modo` dice cuál corre. Las imágenes de dev llevan el prefijo `dev-` y no pisan las de prod (`make vps-build` si cambia un Dockerfile). Al volver a prod, `make front` / `make pagina` si cambiaste el frontend o la página.
 - El frontend instala con **bun** (`bun.lock`, también en su Dockerfile); `npm run` solo corre sus scripts.
-- Migración completa desde TerminalOmnibus toma horas (6679 salidas).
+- La migración masiva desde TerminalOmnibus ya se hizo y su código se quitó (ADR-056). Lo que cambia en el legado lo trae la sincronización (ADR-042), que apunta a la base de **producción** del legado: no correr contra ella nada que no sea la sincronización.
+- Base de desarrollo desde cero: `bin/console doctrine:schema:create` y luego `make e2e-usuario` (o `doctrine:fixtures:load`). Los índices `ex_*` y `nat_*` solo los crean las migraciones.
 - Debug: `make debug` usa Caddyfile.dev sin workers.
 - Segundo plano (ADR-044), tres servicios de Compose con la imagen del backend:
   - `programador` (`messenger:consume scheduler_fdn`): el horario de las tareas. Solo reenvía.

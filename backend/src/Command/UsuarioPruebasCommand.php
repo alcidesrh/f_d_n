@@ -23,8 +23,7 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
  * al azar y escribe en la salida `E2E_ADMIN_USER=…` y `E2E_ADMIN_PASSWORD=…`.
  * `make e2e-usuario` guarda eso en `.env.e2e.local` (raíz, fuera de git).
  *
- * Solo en desarrollo y pruebas: en producción no hace nada. No es la cuenta
- * `admin` de respaldo (`App\Migration\AsegurarUsuarioAdmin`).
+ * Solo en desarrollo y pruebas: en producción no hace nada.
  */
 #[AsCommand(
     name: 'app:usuario:pruebas',

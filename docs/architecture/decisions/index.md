@@ -5,19 +5,19 @@
 | ADR | Título | Estado |
 |-----|--------|--------|
 | [ADR-001](ADR-001-api-platform-graphql.md) | API Platform + GraphQL como capa primaria de datos | Aceptada |
-| [ADR-002](ADR-002-dual-entity-manager.md) | Dual Entity Manager (PostgreSQL + SQL Server legacy) | Aceptada |
+| [ADR-002](ADR-002-dual-entity-manager.md) | Dual Entity Manager (PostgreSQL + SQL Server legacy) | Reemplazada por ADR-056 |
 | [ADR-003](ADR-003-flat-permission-set.md) | Flat Permission Set vs RBAC tradicional | Reemplazada por ADR-039 |
 | [ADR-004](ADR-004-dynamic-crud-store-factory.md) | Dynamic CRUD via runtime store factory | Aceptada |
 | [ADR-005](ADR-005-frankenphp-mercure.md) | FrankenPHP + Caddy + Mercure integrado | Aceptada |
 | [ADR-006](ADR-006-subdomains-bounded-contexts.md) | Subdominios como bounded contexts | Aceptada |
 | [ADR-007](ADR-007-formkit-custom-theme.md) | FormKit con tema personalizado + JSON schemas | Aceptada |
-| [ADR-008](ADR-008-legacy-migration-strategy.md) | Estrategia de migración desde TerminalOmnibus | Aceptada |
+| [ADR-008](ADR-008-legacy-migration-strategy.md) | Estrategia de migración desde TerminalOmnibus | Cumplida (código quitado: ADR-056) |
 | [ADR-009](ADR-009-autoimport-system.md) | Sistema de auto-import mediante unplugin | Reemplazada por ADR-017 |
 | [ADR-010](ADR-010-dynamic-entity-config.md) | Configuración dinámica de entidades vía metadatos | Aceptada (enmendada por ADR-036) |
 | [ADR-011](ADR-011-recorrido-lleva-trayecto.md) | Recorrido lleva el trayecto directamente (sin plantilla intermedia) | Aceptada |
 | [ADR-012](ADR-012-trayecto-canonico-por-enclaves.md) | Trayecto canónico por par de enclaves (origen, destino) | Aceptada (en parte reemplazada por ADR-030) |
 | [ADR-013](ADR-013-rename-servicio-a-recorrido.md) | Renombrar la entidad Servicio a Recorrido | Aceptada |
-| [ADR-014](ADR-014-estados-tipados-por-entidad.md) | Estados tipados por entidad (enum) en vez de catálogo Status genérico | Aceptada (para `BoletoAsiento`, en parte reemplazada por ADR-037) |
+| [ADR-014](ADR-014-estados-tipados-por-entidad.md) | Estados tipados por entidad (enum) en vez de catálogo Status genérico | Aceptada (para `BoletoAsiento`, en parte reemplazada por ADR-037; `Status` eliminado: ADR-056) |
 | [ADR-015](ADR-015-tenant-filter.md) | TenantFilter: aislamiento por empresa vía Doctrine SQLFilter | Aceptada (filtro por las empresas de las asignaciones: ADR-039) |
 | [ADR-016](ADR-016-piloto-vuelve-a-bus.md) | La asignación de Piloto vuelve a Bus (no Recorrido); pilotoAux → copiloto | Aceptada |
 | [ADR-017](ADR-017-frontend-por-capas.md) | Frontend por capas (core / shared / features) con imports explícitos | Aceptada |
@@ -59,3 +59,4 @@
 | [ADR-053](ADR-053-espacio-util-y-contexto.md) | Espacio útil y contexto en la presentación: panel derecho cerrado en laptops, título en la cabecera móvil, barra del listado con menú «Más», reglas de rejilla, piso de legibilidad y guardia e2e de desbordes | Aceptada |
 | [ADR-054](ADR-054-suplantacion-de-usuarios.md) | Suplantación de usuarios: el administrador del sistema entra como otro usuario con un token aparte, corto y marcado, nunca como otro administrador del sistema, sin tocar credenciales ni accesos, cada petición en la bitácora con quién la hizo y la configuración (duración, chat, aviso, motivo) en la administración | Aceptada |
 | [ADR-055](ADR-055-mapas-propios.md) | Mapas propios: MapLibre GL en `shared/mapa`, mapa base de Protomaps como un archivo PMTiles servido por Caddy en `/mapas/`, rutas por carretera con un Valhalla propio (perfil bus) en lugar de las teselas de OpenStreetMap y el OSRM públicos, y `make mapas` para preparar los datos | Aceptada |
+| [ADR-056](ADR-056-refactorizacion-arquitectura-rendimiento-y-limpieza.md) | Refactorización general: el motor de importación por salida pasa a la sincronización y la conexión al legado se abre al usarla, un solo entity manager (fuera `EntitySistemaFdn` y `Status`), índices para la sincronización, las ventas por fecha, la bitácora y la búsqueda de clientes (`nat_*` solo en migraciones), arranque del frontend en capas (`base`, `nucleo`, entrada) y fuera la migración masiva con su pantalla y su capacidad | Aceptada |

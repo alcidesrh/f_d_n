@@ -56,7 +56,7 @@ final class CatalogoTest extends TestCase
         $usados = [];
         $fuentes = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(dirname(__DIR__, 2) . '/src'));
         foreach ($fuentes as $archivo) {
-            if ($archivo->getExtension() !== 'php' || str_contains($archivo->getPathname(), '/EntitySistemaFdn/') || str_contains($archivo->getPathname(), '/Legado/')) {
+            if ($archivo->getExtension() !== 'php' || str_contains($archivo->getPathname(), '/Legado/')) {
                 continue;
             }
             $codigo = (string) file_get_contents($archivo->getPathname());
@@ -82,7 +82,6 @@ final class CatalogoTest extends TestCase
         }
         $admin = EquivalenciasLegado::capacidades(EquivalenciasLegado::ADMIN, $catalogo->codigos());
         self::assertContains('config.editar', $admin);
-        self::assertNotContains('migracion.ejecutar', $admin);
         self::assertNull(EquivalenciasLegado::capacidades(EquivalenciasLegado::SISTEMA, $catalogo->codigos()));
     }
 

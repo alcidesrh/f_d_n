@@ -24,7 +24,7 @@ Se organiza el backend en **subdominios como bounded contexts** siguiendo los pr
 
 Cada subdominio agrupa sus entidades, servicios, repositorios y resolutores GraphQL. Las entidades de configuración dinámica (`EntityConfiguration`, `FieldConfig`) se mantienen como un contexto técnico transversal.
 
-> **Nota (2026):** `Agencia`, `Voucher`, `Encomienda`, `Reasignación`, `Anulación` y `Manifiesto` son conceptos vigentes del glosario de negocio (ver `CONTEXT.md` / `AGENTS.md`) que hoy **solo existen en el sistema legado** (`src/EntitySistemaFdn/`). Todavía no tienen entidad ni servicio equivalente en el modelo nuevo (`src/Entity/`) — son el trabajo de dominio pendiente más importante, no un subdominio ya resuelto.
+> **Nota (2026):** `Agencia`, `Voucher`, `Encomienda`, `Reasignación`, `Anulación` y `Manifiesto` son conceptos vigentes del glosario de negocio (ver `CONTEXT.md` / `AGENTS.md`) que hoy **solo existen en el sistema legado** (TerminalOmnibus; la copia de sus entidades, `src/EntitySistemaFdn/`, se quitó en ADR-056). Todavía no tienen entidad ni servicio equivalente en el modelo nuevo (`src/Entity/`) — son el trabajo de dominio pendiente más importante, no un subdominio ya resuelto.
 
 ## Consecuencias
 

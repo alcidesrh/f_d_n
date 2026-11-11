@@ -7,19 +7,10 @@ doctrine:
             default:
                 # configure these for your database server
                 url: "%env(DATABASE_URL)%"
-                # Ignora los índices de restricciones de exclusión (`ex_*`, ADR-030).
+                # Ignora los índices que solo existen en migraciones (`ex_*`, ADR-030; `nat_*`, ADR-056).
                 schema_manager_factory: App\Doctrine\Schema\ExclusionConstraintsSchemaManagerFactory
                 logging: true
                 profiling_collect_backtrace: "%kernel.debug%"
-
-            systemfdn:
-                driver_class: App\Doctrine\Driver\PDODblib\Driver
-                host: "%env(systemfdn_host)%"
-                port: "%env(systemfdn_port)%"
-                charset: UTF-8
-                dbname: "%env(systemfdn_dbname)%"
-                user: "%env(systemfdn_user)%"
-                password: "%env(systemfdn_password)%"
 
     orm:
         default_entity_manager: "default"
@@ -43,20 +34,6 @@ doctrine:
                         dir: "%kernel.project_dir%/src/Entity"
                         prefix: 'App\Entity'
                         alias: App
-
-            systemfdn:
-                naming_strategy: doctrine.orm.naming_strategy.underscore
-                connection: systemfdn
-                dql:
-                    string_functions:
-                        CAST: App\Doctrine\CastFunction
-                mappings:
-                    systemfdn:
-                        is_bundle: false
-                        # type: annotation
-                        dir: "%kernel.project_dir%/src/EntitySistemaFdn"
-                        prefix: 'App\EntitySistemaFdn'
-                        alias: systemfdns
 
 when@test:
     doctrine:

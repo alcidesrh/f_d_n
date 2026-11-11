@@ -21,7 +21,7 @@ const PADDING = 8
 const ITEMS = [
   { nombre: 'E2E Inicio', route: 'dashboard', icon: 'home' },
   { nombre: 'E2E Config', route: 'administracion', icon: 'settings' },
-  { nombre: 'E2E Migración', route: 'migracion', icon: 'database' },
+  { nombre: 'E2E Boletos', route: 'boletos', icon: 'database' },
 ]
 const MENU = 'E2E Menú'
 
@@ -135,27 +135,27 @@ test.describe('constructor de menús', () => {
       await page.getByRole('button', { name: 'Crear' }).click()
       await expect(page.locator('.mo')).toBeVisible()
 
-      // 3. Desde la paleta: Inicio, Config y Migración como hija de Config.
+      // 3. Desde la paleta: Inicio, Config y Boletos como hija de Config.
       await dropFromPalette(page, 'E2E Inicio', 0, 0)
       await dropFromPalette(page, 'E2E Config', 1, 0)
-      await dropFromPalette(page, 'E2E Migración', 2, 1)
+      await dropFromPalette(page, 'E2E Boletos', 2, 1)
       await page.screenshot({ path: '/tmp/e2e-menu-1-paleta.png', fullPage: true })
       expect(shape(await saveTree(page))).toEqual([
         'E2E Inicio',
-        { 'E2E Config': ['E2E Migración'] },
+        { 'E2E Config': ['E2E Boletos'] },
       ])
 
       // 4. Reordenar: el bloque Config (con su hija) sube por encima de Inicio.
       await dragBy(page, outlineRow(page, 'E2E Config'), 0, -ROW_H)
-      // 5. Cambiar de nivel: Migración pasa a raíz (arrastre a la izquierda).
-      await dragBy(page, outlineRow(page, 'E2E Migración'), -INDENT, 0)
-      // 6. Anidar Inicio bajo Migración (arrastre a la derecha).
+      // 5. Cambiar de nivel: Boletos pasa a raíz (arrastre a la izquierda).
+      await dragBy(page, outlineRow(page, 'E2E Boletos'), -INDENT, 0)
+      // 6. Anidar Inicio bajo Boletos (arrastre a la derecha).
       await dragBy(page, outlineRow(page, 'E2E Inicio'), INDENT, 0)
       await page.screenshot({ path: '/tmp/e2e-menu-2-reordenado.png', fullPage: true })
-      // Config, Migración (raíz), Inicio (hijo de Migración)
+      // Config, Boletos (raíz), Inicio (hijo de Boletos)
       expect(shape(await saveTree(page))).toEqual([
         'E2E Config',
-        { 'E2E Migración': ['E2E Inicio'] },
+        { 'E2E Boletos': ['E2E Inicio'] },
       ])
 
       // 7. Soltar fuera quita el bloque; se descarta sin guardar recargando el menú.
@@ -180,20 +180,20 @@ test.describe('constructor de menús', () => {
       const sidebar = page.locator('aside.sidebar.left')
       await sidebar.getByRole('button', { name: MENU }).click()
       await expect(sidebar.getByText('E2E Config')).toBeVisible()
-      await expect(sidebar.getByText('E2E Migración')).toBeVisible()
+      await expect(sidebar.getByText('E2E Boletos')).toBeVisible()
       await sidebar
-        .locator('.menu-item', { hasText: 'E2E Migración' })
+        .locator('.menu-item', { hasText: 'E2E Boletos' })
         .locator('.nav-toggle')
         .first()
         .click()
       await expect(sidebar.getByText('E2E Inicio')).toBeVisible()
       await page.screenshot({ path: '/tmp/e2e-menu-3-shell.png', fullPage: true })
-      await sidebar.getByRole('link', { name: 'E2E Migración' }).click()
-      await expect(page).toHaveURL(/\/migracion$/)
+      await sidebar.getByRole('link', { name: 'E2E Boletos' }).click()
+      await expect(page).toHaveURL(/\/boletos$/)
 
       // 10. Submenú: se pliega con transición (desaparece al terminar).
       await sidebar
-        .locator('.menu-item', { hasText: 'E2E Migración' })
+        .locator('.menu-item', { hasText: 'E2E Boletos' })
         .locator('.nav-toggle')
         .first()
         .click()

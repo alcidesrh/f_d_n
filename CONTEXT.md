@@ -4,7 +4,7 @@ Contexto que modela la operación de salidas de buses y la venta de pasajes:
 geografía (enclaves, rutas y trayectos), flota (buses y asientos) y ventas (salidas y boletos).
 IAM/seguridad, menús y chat tienen sus propias secciones al final.
 
-Cada término indica su modelo: `nuevo` = entidad viva en `backend/src/Entity/`; `legacy` = solo existe en `backend/src/EntitySistemaFdn/` (sistema TerminalOmnibus), sin equivalente todavía en el modelo nuevo; `concepto` = término de negocio vigente sin entidad dedicada (absorbido por otra entidad o pendiente de modelar).
+Cada término indica su modelo: `nuevo` = entidad viva en `backend/src/Entity/`; `legacy` = solo existe en el sistema TerminalOmnibus, sin equivalente todavía en el modelo nuevo (la copia de sus entidades se quitó del repositorio, ADR-056); `concepto` = término de negocio vigente sin entidad dedicada (absorbido por otra entidad o pendiente de modelar).
 
 ## Geografía
 

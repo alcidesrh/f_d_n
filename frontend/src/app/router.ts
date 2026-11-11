@@ -61,18 +61,6 @@ export const router = createRouter({
       },
     },
     {
-      path: "/migracion",
-      name: "migracion",
-      component: () => import("@/features/migracion/MigracionPage.vue"),
-      meta: {
-        capacidad: "migracion.ejecutar",
-        title: "Migración legado → nuevo",
-        label: "Migración",
-        icon: "swap-horiz",
-        panel: { component: () => import("@/features/migracion/MigracionPanel.vue"), width: 340 },
-      },
-    },
-    {
       path: "/administracion",
       name: "administracion",
       component: () => import("@/features/administracion/AdministracionPage.vue"),

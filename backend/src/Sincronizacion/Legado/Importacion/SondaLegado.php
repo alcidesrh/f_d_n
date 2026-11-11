@@ -11,11 +11,11 @@ namespace App\Sincronizacion\Legado\Importacion;
  * esta imagen y, cuando el host está caído, cuelga ~130s (timeout TCP del
  * kernel) — más que el max_execution_time de un request. SondaLegado abre un
  * socket TCP con timeout corto ANTES de construir el PDO: si el host no
- * responde, lanza PDOException en ~timeout segundos y toda la cadena (catálogo
- * de entidades, indicadores, jobs) degrada rápido y limpio.
+ * responde, lanza PDOException en ~timeout segundos y la sincronización
+ * (ADR-042) degrada rápido y limpio.
  *
- * El resultado se memoiza con TTL corto para que /indicadores (que consulta el
- * legado por entidad) no pague el timeout por cada entidad; el TTL evita que el
+ * El resultado se memoiza con TTL corto para que un ciclo que consulta el
+ * legado varias veces no pague el timeout en cada una; el TTL evita que el
  * memo se quede obsoleto si el legado vuelve.
  */
 final class SondaLegado

@@ -73,8 +73,6 @@ enum Capacidad: string
 
     case CORREO_EXTERNO = 'correo.externo';
 
-    case MIGRACION_EJECUTAR = 'migracion.ejecutar';
-
     public function nombre(): string
     {
         return match ($this) {
@@ -119,7 +117,6 @@ enum Capacidad: string
             self::BITACORA_CONFIGURAR => 'Configurar la bitácora diaria (nivel, retención y usuarios seguidos)',
             self::CHAT_PREDETERMINADOS => 'Configurar los mensajes predeterminados del chat',
             self::CORREO_EXTERNO => 'Enviar correos a direcciones de fuera de la empresa',
-            self::MIGRACION_EJECUTAR => 'Ejecutar la migración desde el sistema legado',
         };
     }
 

@@ -23,7 +23,7 @@ describe('defineSidebarStore', () => {
     derecho.setMode()
     expect(derecho.mode, 'el botón lo abre con textos').toBe('open')
     expect(defineSidebarStore('left')().mode).toBe('open')
-    expect(defineSidebarStore('right', 'panel:migracion')().mode, 'el panel de una ruta son sus controles').toBe('open')
+    expect(defineSidebarStore('right', 'panel:form_build')().mode, 'el panel de una ruta son sus controles').toBe('open')
     vi.unstubAllGlobals()
   })
 
@@ -38,7 +38,7 @@ describe('defineSidebarStore', () => {
 
   it('cachea una definición por nombre de panel', () => {
     expect(defineSidebarStore('right')).toBe(defineSidebarStore('right'))
-    expect(defineSidebarStore('right', 'panel:migracion')).not.toBe(defineSidebarStore('right'))
+    expect(defineSidebarStore('right', 'panel:form_build')).not.toBe(defineSidebarStore('right'))
   })
 
   it('en escritorio el botón de menú alterna el modo y cerrar lo pasa a `close`', () => {

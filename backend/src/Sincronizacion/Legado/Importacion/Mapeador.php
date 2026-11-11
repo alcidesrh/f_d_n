@@ -4,7 +4,6 @@ namespace App\Sincronizacion\Legado\Importacion;
 
 use App\Croquis\Croquis;
 use App\Entity\Enum\CanalVenta;
-use App\Entity\Enum\EstadoDepositoAgencia;
 use App\Entity\Enum\EstadoFacturacion;
 use App\Entity\Enum\EstadoSalida;
 use App\Entity\Enum\TipoBusSenal;
@@ -247,52 +246,6 @@ class Mapeador
         ];
     }
 
-    /**
-     * `agencia_deposito` del legado → `agencia_deposito` (ADR-034). La agencia
-     * y el usuario conservan su id; el estado 1/2/3 pasa al enum.
-     *
-     * @param array<string, mixed> $old fila de `agencia_deposito` (+ `moneda_sigla`)
-     */
-    public function depositoAgencia(array $old): array
-    {
-        $centavos = static fn(mixed $v) => (int) round(((float) ($v ?? 0)) * 100);
-        $creado = $this->formatDatetime($old["fecha_creacion"] ?? null) ?? (new \DateTimeImmutable())->format("Y-m-d H:i:s");
-        $estado = EstadoDepositoAgencia::deLegado((int) ($old["estado_id"] ?? 1));
-
-        return [
-            "agencia" => (int) $old["estacion_id"],
-            "fecha" => $this->formatDate($old["fecha"]) ?? $this->formatDate($creado),
-            "importe" => $centavos($old["importe"]),
-            "moneda" => strtoupper($this->truncate($old["moneda_sigla"] ?? null, 3) ?: "GTQ"),
-            "numero_boleta" => $this->truncate(trim((string) ($old["numero_boleta"] ?? "")), 30) ?: "s/n",
-            "aplica_bono" => filter_var($old["aplica_bono"] ?? true, FILTER_VALIDATE_BOOL) ? "true" : "false",
-            "bono" => $estado === EstadoDepositoAgencia::ACREDITADO ? $centavos($old["bono"]) : 0,
-            "observacion" => $this->truncate($old["observacion"] ?? null, 200),
-            "estado" => $estado->value,
-            "motivo_rechazo" => $this->truncate($old["motivo_rechazo"] ?? null, 200),
-            "usuario" => $old["usuario_creacion_id"] !== null ? (int) $old["usuario_creacion_id"] : null,
-            "creado_en" => $creado,
-            "legacy_id" => "agencia_deposito-" . (int) $old["id"],
-        ];
-    }
-
-    /**
-     * `factura_emisor` del legado: afiliación al IVA y credenciales del
-     * certificador (Forcon) de la empresa.
-     *
-     * @return array{afiliacion_iva: ?string, usuario: ?string, clave: ?string}
-     */
-    public function emisorFel(array $old): array
-    {
-        $texto = static fn(mixed $v) => ($v = trim((string) $v)) !== "" ? $v : null;
-
-        return [
-            "afiliacion_iva" => ($a = $texto($old["afiliacion_iva"] ?? null)) !== null ? strtoupper(mb_substr($a, 0, 5)) : null,
-            "usuario" => $texto($old["user_forcon"] ?? $old["userForcon"] ?? null),
-            "clave" => $texto($old["password_forcon"] ?? $old["passwordForcon"] ?? null),
-        ];
-    }
-
     private static function idONulo(mixed $v): ?int
     {
         return is_numeric($v) && (int) $v > 0 ? (int) $v : null;
@@ -527,41 +480,6 @@ class Mapeador
         return false;
     }
 
-    /**
-     * BoletoTarifa old PK is numeric → use as new PK, no legacy_id.
-     * La tarifa del legado no tiene empresa: aplica a cualquiera (comodín).
-     * Las horas llegan como `HH:MM` y la vigencia como `AAAA-MM-DD HH:MM:SS`
-     * (convertidas en el SELECT); `tarifaValor` son quetzales → centavos.
-     */
-    public function boletoTarifa(
-        array $old,
-        string $clase,
-        int $usuarioId,
-        int $trayectoId,
-        int $busClaseId,
-    ): array {
-        return [
-            "id" => (int) $old["id"],
-            "nombre" => sprintf(
-                "Tarifa-%s-%s-%s",
-                $old["estacion_origen_id"] ?? "?",
-                $old["estacion_destino_id"] ?? "?",
-                $old["id"],
-            ),
-            "precio_monto" => (int) round(((float) ($old["tarifaValor"] ?? 0)) * 100),
-            "precio_moneda" => "GTQ",
-            "clase" => $clase,
-            "empresa_id" => null,
-            "bus_id" => null,
-            "bus_clase_id" => $busClaseId,
-            "trayecto_id" => $trayectoId,
-            "hora_desde" => $old["hora_desde"] ?: null,
-            "hora_hasta" => $old["hora_hasta"] ?: null,
-            "vigente_desde" => $old["vigente_desde"],
-            "usuario_id" => $usuarioId,
-        ];
-    }
-
     private function vacioANulo(?string $value): ?string
     {
         return $value === null || trim($value) === "" ? null : $value;
@@ -575,11 +493,6 @@ class Mapeador
         return mb_strlen($value) > $maxLength
             ? mb_substr($value, 0, $maxLength)
             : $value;
-    }
-
-    private function toBool(bool $value): string
-    {
-        return $value ? "1" : "0";
     }
 
     private function formatDatetime(mixed $value): ?string

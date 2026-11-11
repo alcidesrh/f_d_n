@@ -47,19 +47,6 @@ class RutasLegado
         return $this->rutas[$codigo] = $ruta === null ? null : $this->migrar($ruta);
     }
 
-    /** Todas las rutas del legado. @return int cuántas quedaron migradas */
-    public function migrarTodas(): int
-    {
-        $n = 0;
-        foreach ($this->legado->filas("SELECT codigo FROM ruta ORDER BY codigo") as $r) {
-            if ($this->deCodigo((string) $r["codigo"]) !== null) {
-                $n++;
-            }
-        }
-
-        return $n;
-    }
-
     /** Tras revertir una transacción: lo escrito en ella ya no existe. */
     public function olvidar(): void
     {

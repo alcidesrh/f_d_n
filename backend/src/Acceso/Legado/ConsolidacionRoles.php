@@ -120,12 +120,6 @@ final class ConsolidacionRoles
         'ROLE_NO_VENDER_VOUCHER' => ['venta.cortesia'],
     ];
 
-    /** Es un puesto que crea la migración (o el de sistema / administración). */
-    public static function esPuesto(string $rol): bool
-    {
-        return isset(self::PUESTOS[$rol]) || $rol === EquivalenciasLegado::SISTEMA || $rol === EquivalenciasLegado::ADMIN;
-    }
-
     /** @return list<string>|null las capacidades del puesto (null si no es uno con lista) */
     public static function capacidades(string $puesto): ?array
     {

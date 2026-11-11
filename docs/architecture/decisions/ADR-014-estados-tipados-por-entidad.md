@@ -1,6 +1,6 @@
 # ADR-014: Estados tipados por entidad (enum) en vez de catálogo Status genérico
 
-**Estado:** Aceptada — para `BoletoAsiento`, reemplazada en parte por [ADR-037](ADR-037-flujo-del-boleto-con-symfony-workflow.md) (`symfony/workflow`)
+**Estado:** Aceptada — para `BoletoAsiento`, reemplazada en parte por [ADR-037](ADR-037-flujo-del-boleto-con-symfony-workflow.md) (`symfony/workflow`). El catálogo `Status` y los `status_id` que quedaban sin uso se quitaron en [ADR-056](ADR-056-refactorizacion-arquitectura-rendimiento-y-limpieza.md)
 
 ## Contexto
 

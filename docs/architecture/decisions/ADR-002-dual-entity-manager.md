@@ -1,6 +1,6 @@
 # ADR-002: Dual Entity Manager (PostgreSQL + SQL Server legacy)
 
-**Estado:** Aceptada
+**Estado:** Reemplazada por [ADR-056](ADR-056-refactorizacion-arquitectura-rendimiento-y-limpieza.md): queda un solo entity manager (PostgreSQL). Al legado solo le habla la sincronización (ADR-042), con PDO; las entidades `EntitySistemaFdn` y la conexión `systemfdn` de Doctrine se quitaron
 
 ## Contexto
 

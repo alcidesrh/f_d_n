@@ -1,6 +1,6 @@
 # ADR-008: Estrategia de migración desde TerminalOmnibus
 
-**Estado:** Aceptada
+**Estado:** Cumplida — la migración masiva se hizo y su código se quitó ([ADR-056](ADR-056-refactorizacion-arquitectura-rendimiento-y-limpieza.md)); el motor por salida sigue vivo dentro de la sincronización (ADR-042)
 
 ## Contexto
 

@@ -362,7 +362,7 @@ class ImportadorLegado
         }
         // La migración escribe el error de la salida en su salida de consola: se guarda para decirlo.
         $consola = new BufferedOutput();
-        $contadores = $this->migrador->migrarSalida(output: $consola, salidasPrefetchadas: $filas);
+        $contadores = $this->migrador->migrarSalidas($filas, $consola);
         if (($contadores["errores"] ?? 0) > 0) {
             $error = preg_match("/Error salida \\d+: (.+)/", $consola->fetch(), $m) ? $m[1] : "sin detalle";
 

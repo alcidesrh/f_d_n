@@ -39,11 +39,6 @@ services:
             - "../src/Entity/"
             - "../src/Kernel.php"
 
-    # Explicit connection bindings for migration services
-    App\Migration\Limpiador:
-        arguments:
-            $newConn: "@doctrine.dbal.default_connection"
-
     # Conexión al SQL Server legacy con preflight TCP no bloqueante (SondaLegado):
     # si el host no responde, el PDO falla en ~1.5s en vez de colgar ~130s (kernel TCP).
     # Se abre al primer uso y se rehace si se cayó (PdoLegado): el worker y el

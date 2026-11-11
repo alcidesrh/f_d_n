@@ -11,7 +11,8 @@ mientras las estaciones se mudan. Diseño y límites: [ADR-042](../../../docs/ar
 | `Nuevo/AltaCliente`, `Nuevo/IdCliente` | Un cliente nuevo se crea primero en el legado y toma su id. |
 | `Nuevo/ClientesLocales` | Los clientes creados con la sincronización apagada: al encender se llevan allá y pasan a su id. |
 | `Nuevo/ExportadorCambios`, `Nuevo/AlTerminar` | Lo que quedó en `sync_cambio` de aquí, al terminar la petición o en el ciclo. |
-| `Legado/ImportadorLegado`, `Legado/ActualizadorBoletos` | Trae lo que anotaron los triggers del legado, con el código de la migración. |
+| `Legado/ImportadorLegado`, `Legado/ActualizadorBoletos` | Trae lo que anotaron los triggers del legado. |
+| `Legado/Importacion/` | El motor que escribe aquí una salida del legado con su árbol (bus, ruta, boletos, ventas, facturas, encomiendas) y los puestos y alcances de sus usuarios. Era `App\Migration`; la migración masiva ya se hizo y se quitó (ADR-056). |
 | `Legado/ApartadosLegado` | Aparta aquí lo que el legado está por vender (`/api/sincronizacion/legado/*`). |
 | `Ciclo`, `Conciliador` | La vuelta de cada minuto y la comparación de un día. |
 | `BarrerSalidasLegado` | Cada 30 minutos, las salidas del legado que faltan aquí: las trae y deja anotadas las que no pudo. |
@@ -48,7 +49,7 @@ Las versiones anteriores daban ids desde 1.000.000.000 a lo creado aquí. Para p
 Para ver en un FDN local lo que pasa en producción sin tocar sus ventas:
 
 1. En el `.env.local` de tu FDN: `systemfdn_*` del legado de producción y `SINCRONIZACION_SOLO_TRAER=1`. `SINCRONIZACION_CLAVE` y `SINCRONIZACION_URL_FDN` no se usan en este modo, pero instalar las copia a `sync_config`: si el legado ya las tiene porque lo usa otro FDN, no instales desde aquí sin ponerles los mismos valores.
-2. `bin/console doctrine:migrations:migrate` y, si tu base no la tiene, la migración inicial del legado.
+2. `bin/console doctrine:migrations:migrate`. La base tiene que venir de un respaldo de una ya migrada: la migración inicial del legado ya no existe (ADR-056) y la sincronización solo trae lo que cambia.
 3. `bin/console app:sincronizacion:instalar-legado` contra producción, en horas de poca venta: crea las tablas `sync_*` y los triggers, que solo anotan ids. **No** se despliega el bundle en el legado.
 4. Con `programador` y `worker` arriba (el ciclo corre cada minuto), encender (indicador o `interruptor encender`). El indicador dice «Sinc. (solo trae)».
 
