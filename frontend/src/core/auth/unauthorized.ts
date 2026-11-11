@@ -1,8 +1,20 @@
-import { router } from '@/app/router'
+import type { Router } from 'vue-router'
 import { loginHacia } from './redirect'
 import { useSessionStore } from './session'
 
 let redirecting = false
+
+/**
+ * El router lo entrega `app/router` al crearse: `core` no importa de `app`
+ * (ADR-017). Además así el router, que nombra el archivo de cada pantalla,
+ * queda en el archivo de entrada y no arrastrado a uno que importan las demás
+ * (cambiaría de nombre, y con él todos, en cada despliegue).
+ */
+let router: Router
+
+export function usarRouter(r: Router): void {
+  router = r
+}
 
 /** Al recargar, la app avisa que la suplantación terminó (venció o la cerraron). */
 export const AVISO_SUPLANTACION_VENCIDA = 'suplantacion:vencida'

@@ -13,6 +13,7 @@ import PrimeVue from 'primevue/config'
 import ConfirmationService from 'primevue/confirmationservice'
 import ConfirmDialog from 'primevue/confirmdialog'
 import { reactive } from 'vue'
+import { routeLocationKey, routerKey } from 'vue-router'
 import { Draggable } from 'gsap/Draggable'
 import formkitConfig from '@/shared/formkit/config'
 import { dismissAll } from '@/core/notify'
@@ -20,6 +21,7 @@ import type { AgnosticOption, EntitySchema } from '@/core/graphql/types'
 import type { CollectionFieldConfig, EntityStore } from '@/core/entities/types'
 import List from '@/features/entity-crud/ListPage.vue'
 import Toasts from '@/app/layout/Toasts.vue'
+import { router } from '@/app/router'
 import DataGrid from '@/shared/data-grid/DataGrid.vue'
 import ListCellEditor from '@/features/entity-crud/list/ListCellEditor.vue'
 import ListDateRangeFilter from '@/features/entity-crud/list/ListDateRangeFilter.vue'
@@ -313,6 +315,8 @@ const pluginMount = (): ComponentMountingOptions<typeof List> => ({
       ConfirmationService,
       [formkitPlugin, defaultConfig(formkitConfig())],
     ],
+    // El router de la app, sin instalarlo (no navega): el listado lo pide con `useRouter()`.
+    provide: { [routerKey as symbol]: router, [routeLocationKey as symbol]: router.currentRoute.value },
   },
 })
 

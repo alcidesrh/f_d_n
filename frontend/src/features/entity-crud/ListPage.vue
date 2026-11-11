@@ -101,7 +101,6 @@
  */
 import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, ref, shallowRef, useId, watch, type Component } from "vue";
 import { useConfirm } from "primevue/useconfirm";
-import { router } from "@/app/router";
 import { useAccesoStore } from "@/core/acceso/store";
 import { DEFAULT_PAGE_SIZE, DEFAULT_PAGE_SIZES, defaultView } from "@/core/entities/listView";
 import { getEntity } from "@/core/entities/registry";
@@ -155,6 +154,7 @@ const uid = useId();
 const schema = useSchemaStore();
 const loading = useLoadingStore();
 const confirm = useConfirm();
+const router = useRouter();
 
 const entityName = computed(() => entityNameFromSlug((Array.isArray(props.entity) ? props.entity[0] : props.entity) ?? ""));
 const store = computed<EntityStore | null>(() => (schema.find(entityName.value) ? getEntity(entityName.value) : null));

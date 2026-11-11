@@ -73,9 +73,7 @@ import { FormKitMessages } from "@formkit/vue";
 import { gsap } from "gsap";
 import { CustomEase } from "gsap/CustomEase";
 import { CustomWiggle } from "gsap/CustomWiggle";
-import { useRoute } from "vue-router";
-import { router } from "@/app/router";
-import { syncVueRoutes } from "@/app/routeSync";
+import { useRoute, useRouter } from "vue-router";
 import { destinoSeguro, REDIRECT_QUERY } from "@/core/auth/redirect";
 import { useSessionStore } from "@/core/auth/session";
 import { HttpError } from "@/core/http";
@@ -100,6 +98,7 @@ const FOTO_MS = 7000;
 const YEAR = new Date().getFullYear();
 
 const route = useRoute();
+const router = useRouter();
 const card = useTemplateRef<HTMLElement>("card");
 const session = useSessionStore();
 const loadingStore = useLoadingStore();
@@ -138,7 +137,6 @@ async function handleSubmit(credentials: { username: string; password: string },
     await session.login(credentials);
     // El arranque no tenía sesión: sin manifiesto (y sin schema si no estaba guardado, 401). Ya autenticado se repite.
     await useMetadataStore().arrancar();
-    void syncVueRoutes();
     await router.push(destinoSeguro(route.query[REDIRECT_QUERY]) ?? { name: "dashboard" });
   } catch (cause) {
     error.value = true;

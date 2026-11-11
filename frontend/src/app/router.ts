@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { loginHacia } from "@/core/auth/redirect";
+import { usarRouter } from "@/core/auth/unauthorized";
 import { useSessionStore } from "@/core/auth/session";
 import { useAccesoStore } from "@/core/acceso/store";
 import { notify } from "@/core/notify";
@@ -695,6 +696,9 @@ export const router = createRouter({
     },
   ],
 });
+
+// `core` no importa de `app`: el manejo del 401 recibe aquí el router (ADR-017).
+usarRouter(router);
 
 router.beforeEach(async (to, from) => {
   const session = useSessionStore();

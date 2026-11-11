@@ -101,8 +101,9 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,woff2}", "favicon.ico", "pwa/*.png"],
         // La shell se pide a "/", que Caddy sirve desde el frontend (`frontend/server.ts`).
         additionalManifestEntries: [{ url: "/", revision: BUILD_ID }],
-        // El catálogo de íconos (8 MB) solo lo usa el selector de íconos: se baja cuando se abre.
-        globIgnores: ["**/material-symbols-*.js"],
+        // El catálogo de íconos (8 MB) y sus etiquetas de búsqueda (0,8 MB) solo los usa el
+        // selector de íconos: se bajan cuando se abre.
+        globIgnores: ["**/material-symbols-*.js", "**/iconMeta-*.js"],
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         cleanupOutdatedCaches: true,
         navigateFallback: "/",
@@ -114,6 +115,32 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    rolldownOptions: {
+      output: {
+        // El arranque en tres archivos, de lo que menos cambia a lo que más, para que un despliegue
+        // no obligue a cada navegador (y al service worker) a bajar de nuevo lo que no cambió:
+        // `base` (bibliotecas: solo cambia al actualizar dependencias), `nucleo` (core y shared)
+        // y la entrada (app: layout y router). Antes iba todo en la entrada, que nombra el archivo
+        // de cada pantalla (el router) y de la que importaban casi todas: tocar una sola pantalla
+        // cambiaba el nombre de más de la mitad de los archivos (ADR-056).
+        // `$initial`: solo lo que ya cargaba el arranque; lo de una pantalla sigue bajando con ella.
+        codeSplitting: {
+          groups: [
+            { name: "base", test: /[\\/]node_modules[\\/]/, tags: ["$initial"], priority: 2 },
+            {
+              name: "nucleo",
+              // La configuración de FormKit nombra los archivos de sus inputs (se bajan aparte):
+              // se queda en la entrada, o `nucleo` cambiaría de nombre con cada uno de ellos.
+              test: (id: string) => /[\\/]src[\\/](core|shared)[\\/]/.test(id) && !/[\\/]shared[\\/]formkit[\\/]config\.ts$/.test(id),
+              tags: ["$initial"],
+              priority: 1,
+            },
+          ],
+        },
+      },
+    },
+  },
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),

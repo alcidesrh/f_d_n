@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { createPersistedState } from 'pinia-plugin-persistedstate'
 import { createApp } from 'vue'
+import type { Router } from 'vue-router'
 
 const llamadas: Array<{ path: string; method?: string; body?: unknown }> = []
 let respuesta: unknown = null
@@ -14,17 +15,16 @@ vi.mock('@/core/http', () => ({
     return respuesta
   },
 }))
-vi.mock('@/app/router', () => ({
-  router: {
-    currentRoute: { value: { name: 'inicio', matched: [], fullPath: '/' } },
-    options: { history: { location: '/' } },
-    push: async () => undefined,
-  },
-}))
 
 const { alcanceSesion, almacenPorUsuario } = await import('../alcanceSesion')
 const { cambiarRecarga, useSessionStore } = await import('../session')
-const { cambiarRecargaAlVencer, handleUnauthorized } = await import('../unauthorized')
+const { cambiarRecargaAlVencer, handleUnauthorized, usarRouter } = await import('../unauthorized')
+
+usarRouter({
+  currentRoute: { value: { name: 'inicio', matched: [], fullPath: '/' } },
+  options: { history: { location: '/' } },
+  push: async () => undefined,
+} as unknown as Router)
 
 const recargas: string[] = []
 

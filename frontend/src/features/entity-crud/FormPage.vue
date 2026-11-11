@@ -21,7 +21,6 @@ import { computed, defineAsyncComponent } from 'vue'
 import { useRoute } from 'vue-router'
 import { getEntity } from '@/core/entities/registry'
 import { useSchemaStore } from '@/core/entities/schema'
-import { router } from '@/app/router'
 import { entityNameFromSlug } from '@/core/entities/slug'
 import { notify } from '@/core/notify'
 import { anunciarEnPantalla, etiquetaDeFila } from '@/shared/chat/integracion'
@@ -36,6 +35,7 @@ const entityName = computed(() => entityNameFromSlug(first(props.entity) ?? ''))
 const recordId = computed(() => first(props.id))
 // Alta con valores en la URL (`/form/BoletoTarifa?trayecto=3`): prellenan los campos que coinciden.
 const route = useRoute()
+const router = useRouter()
 const valores = computed(() => (recordId.value ? undefined : { ...route.query }))
 
 const formComponent = computed(() => {

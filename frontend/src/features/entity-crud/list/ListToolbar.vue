@@ -109,7 +109,6 @@
 import { computed, ref, useTemplateRef } from "vue";
 import type { Menu as MenuType, Popover as PopoverType } from "primevue";
 import type { MenuItem } from "primevue/menuitem";
-import { router } from "@/app/router";
 import type { CollectionFieldConfig, ListDensity, ListLayout, ListViewState } from "@/core/entities/types";
 import type { EntityBulkAction, EntityListLink } from "./listActions";
 import type { ListFeatures } from "./listFeatures";
@@ -125,6 +124,8 @@ const LAYOUTS: Array<{ label: string; value: ListLayout }> = [
   { label: "Tarjetas", value: "cards" },
 ];
 const DENSITY_ICON: Record<ListDensity, string> = { compact: "density-small", normal: "density-medium", comfortable: "density-large" };
+
+const router = useRouter();
 
 const props = withDefaults(
   defineProps<{

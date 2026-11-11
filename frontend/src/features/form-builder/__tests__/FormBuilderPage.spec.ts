@@ -3,6 +3,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia, type Pinia } from 'pinia'
 import { defaultConfig, plugin as formkitPlugin } from '@formkit/vue'
 import PrimeVue from 'primevue/config'
+import { routeLocationKey } from 'vue-router'
 import formkitConfig from '@/shared/formkit/config'
 import FormBuilderPage from '@/features/form-builder/FormBuilderPage.vue'
 import { useFormBuilderStore } from '@/features/form-builder/store'
@@ -25,6 +26,8 @@ describe('FormBuilder page (preview)', () => {
     return mount(FormBuilderPage, {
       global: {
         plugins: [pinia, PrimeVue, [formkitPlugin, defaultConfig(formkitConfig())]],
+        // `PageHead` lee el título de la ruta actual.
+        provide: { [routeLocationKey as symbol]: { meta: {}, params: {} } },
       },
     })
   }
