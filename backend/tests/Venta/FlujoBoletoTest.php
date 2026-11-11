@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Venta;
 
+use App\Acceso\Ambito;
+use App\Acceso\Autorizacion;
+use App\Acceso\Concesion;
+use App\Acceso\PermisosUsuario;
 use App\Entity\Agencia;
 use App\Entity\Asiento;
 use App\Entity\BoletoAsiento;
@@ -13,11 +17,13 @@ use App\Entity\Enum\EstadoBoletoVenta;
 use App\Entity\Enum\EstadoSalida;
 use App\Entity\Enum\TransicionBoleto;
 use App\Entity\Salida;
+use App\Entity\Usuario;
 use App\Salida\SalidaRechazada;
 use App\Venta\Boleto\Flujo\FlujoBoleto;
 use App\Venta\Excepcion\VentaRechazada;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\Clock\Test\ClockSensitiveTrait;
+use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 use Symfony\Component\Workflow\WorkflowInterface;
 
 /**
@@ -178,6 +184,56 @@ final class FlujoBoletoTest extends KernelTestCase
         $this->assertNull($acciones["reasignar"]);
         $this->assertSame("La salida está programada: los boletos se chequean cuando la salida está abordando o iniciada.", $acciones["chequear"]);
         $this->assertSame("El boleto 7 (asiento 12) está emitido: solo se revierte un boleto cancelado.", $acciones["revertir"]);
+    }
+
+    public function testElRolDeSistemaAnulaReasignaYCancelaEnCualquierEstadoConValor(): void
+    {
+        $finalizado = self::boleto(EstadoSalida::FINALIZADA, "-2 days", EstadoBoletoAsiento::FINALIZADO);
+        $transito = self::boleto(EstadoSalida::INICIADA, "-1 hour", EstadoBoletoAsiento::TRANSITO);
+        $cancelado = self::boleto(EstadoSalida::FINALIZADA, "-2 days", EstadoBoletoAsiento::CANCELADO);
+        $anulado = self::boleto(EstadoSalida::PROGRAMADA, "+1 hour", EstadoBoletoAsiento::ANULADO);
+
+        // Sin el rol de sistema, como siempre: el mismo mensaje y código que daba la máquina.
+        $this->assertSame("boleto_no_emitido", $this->flujo->rechazo($finalizado, TransicionBoleto::ANULAR)?->codigo);
+        $this->assertSame("boleto_no_emitido", $this->flujo->rechazo($cancelado, TransicionBoleto::REASIGNAR)?->codigo);
+        $this->assertSame("El boleto 7 (asiento 12) está en tránsito: solo se cancela un boleto emitido o chequeado.", $this->flujo->rechazo($transito, TransicionBoleto::CANCELAR)?->getMessage());
+
+        self::comoSistema();
+        foreach ([TransicionBoleto::ANULAR, TransicionBoleto::REASIGNAR, TransicionBoleto::CANCELAR] as $t) {
+            $this->assertNull($this->flujo->rechazo($finalizado, $t), $t->value);
+            $this->assertNull($this->flujo->rechazo($transito, $t), $t->value);
+        }
+        $this->assertNull($this->flujo->rechazo($cancelado, TransicionBoleto::ANULAR));
+        $this->assertNull($this->flujo->rechazo($cancelado, TransicionBoleto::REASIGNAR));
+        // Emitido con la salida ya pasada de hora: sin autorización.
+        $this->assertNull($this->flujo->rechazo(self::boleto(EstadoSalida::ABORDANDO, "-5 minutes"), TransicionBoleto::ANULAR));
+
+        // Lo que ya no tiene valor no se opera, ni con el rol de sistema.
+        $this->assertSame("boleto_no_emitido", $this->flujo->rechazo($anulado, TransicionBoleto::ANULAR)?->codigo);
+        $this->assertNotNull($this->flujo->rechazo(self::boleto(EstadoSalida::PROGRAMADA, "+1 hour", EstadoBoletoAsiento::REASIGNADO), TransicionBoleto::REASIGNAR));
+        // Ni una venta que todavía se está procesando.
+        $pendiente = self::boleto(EstadoSalida::FINALIZADA, "-2 days", EstadoBoletoAsiento::FINALIZADO);
+        $pendiente->getBoletoVenta()->setEstado(EstadoBoletoVenta::PENDIENTE);
+        $this->assertSame("venta_en_proceso", $this->flujo->rechazo($pendiente, TransicionBoleto::ANULAR)?->codigo);
+        // Lo que causa la salida sigue sus reglas.
+        $this->assertSame("salida_no_finalizada", $this->flujo->rechazo($transito, TransicionBoleto::LLEGAR)?->codigo);
+
+        $this->flujo->aplicar($finalizado, TransicionBoleto::ANULAR, ["motivo" => "Prueba"]);
+        $this->assertSame(EstadoBoletoAsiento::ANULADO, $finalizado->getEstado());
+        $this->flujo->aplicar($transito, TransicionBoleto::CANCELAR, ["motivo" => "Prueba"]);
+        $this->assertSame(EstadoBoletoAsiento::CANCELADO, $transito->getEstado());
+    }
+
+    /** Sesión de un usuario con el rol de sistema (sin base: sus permisos ya cargados). */
+    private static function comoSistema(): void
+    {
+        $usuario = (new Usuario())->setUsername("sistema");
+        $usuario->setId(99);
+        self::getContainer()->get("security.token_storage")->setToken(new UsernamePasswordToken($usuario, "api"));
+        (new \ReflectionProperty(Autorizacion::class, "cache"))->setValue(
+            self::getContainer()->get(Autorizacion::class),
+            [99 => new PermisosUsuario([new Concesion(1, 1, "Sistema", true, [], [], Ambito::total())], [])],
+        );
     }
 
     private static function boleto(EstadoSalida $estadoSalida, string $hora, EstadoBoletoAsiento $estado = EstadoBoletoAsiento::EMITIDO): BoletoAsiento

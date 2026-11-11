@@ -39,10 +39,10 @@ final class ReglasTransicion
      * autorización fuera de hora (ADR-040) anular o reasignar no mira la hora
      * de la salida, solo que no esté finalizada ni anulada.
      */
-    public static function rechazo(TransicionBoleto $t, BoletoAsiento $b, \DateTimeImmutable $ahora, bool $fueraDeHora = false): SalidaRechazada|VentaRechazada|null
+    public static function rechazo(TransicionBoleto $t, BoletoAsiento $b, \DateTimeImmutable $ahora, bool $fueraDeHora = false, bool $sistema = false): SalidaRechazada|VentaRechazada|null
     {
         try {
-            self::exigir($t, $b, $ahora, $fueraDeHora);
+            self::exigir($t, $b, $ahora, $fueraDeHora, $sistema);
         } catch (SalidaRechazada|VentaRechazada $e) {
             return $e;
         }
@@ -51,12 +51,19 @@ final class ReglasTransicion
     }
 
     /** @throws SalidaRechazada|VentaRechazada */
-    public static function exigir(TransicionBoleto $t, BoletoAsiento $b, \DateTimeImmutable $ahora, bool $fueraDeHora = false): void
+    public static function exigir(TransicionBoleto $t, BoletoAsiento $b, \DateTimeImmutable $ahora, bool $fueraDeHora = false, bool $sistema = false): void
     {
         $salida = $b->getSalida();
         $venta = $b->getBoletoVenta();
         if (in_array($t, self::CON_VENTA_CONFIRMADA, true) && $venta->getEstado() !== EstadoBoletoVenta::CONFIRMADA) {
             throw self::rechazar($t, sprintf("La venta del boleto %d todavía se está procesando.", $b->getId()), "venta_en_proceso", 409);
+        }
+        // El rol de sistema anula, reasigna y cancela en cualquier estado con valor, sin mirar la salida ni la hora.
+        if ($sistema && $t->delSistema()) {
+            return;
+        }
+        if (in_array($b->getEstado(), $t->desdeSoloSistema(), true)) {
+            throw self::porEstado($t, $b);
         }
 
         $estado = $salida->getEstado();
@@ -73,6 +80,17 @@ final class ReglasTransicion
             TransicionBoleto::REASIGNAR => $fueraDeHora ? ReglasBoletos::exigirOperableFueraDeHora($b, "reasignar el boleto") : ReglasBoletos::exigirOperable($b, $ahora, "reasignar el boleto"),
             TransicionBoleto::POSPONER => ReglasBoletos::exigirOperable($b, $ahora, "posponer el viaje"),
         };
+    }
+
+    /** El estado del boleto no la admite (para quien no es el rol de sistema). */
+    public static function porEstado(TransicionBoleto $t, BoletoAsiento $b): SalidaRechazada|VentaRechazada
+    {
+        return self::rechazar(
+            $t,
+            sprintf("El boleto %d (asiento %s) está %s: %s.", $b->getId(), $b->getAsiento()?->getNumero(), mb_strtolower($b->getEstado()->etiqueta()), $t->requisito()),
+            $t->codigoEstado(),
+            $t->deLaVenta() ? 422 : 409,
+        );
     }
 
     /** La excepción del lado que opera la transición (`TransicionBoleto::deLaVenta`). */

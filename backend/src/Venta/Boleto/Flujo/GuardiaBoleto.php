@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Venta\Boleto\Flujo;
 
+use App\Acceso\Autorizacion;
 use App\Autorizacion\DispensasEnCurso;
 use App\Entity\BoletoAsiento;
 use App\Entity\Enum\TransicionBoleto;
@@ -27,13 +28,17 @@ final class GuardiaBoleto
     public function __construct(
         private readonly ClockInterface $reloj,
         private readonly DispensasEnCurso $dispensas,
+        private readonly Autorizacion $autorizacion,
     ) {}
 
     public function __invoke(GuardEvent $event): void
     {
         /** @var BoletoAsiento $boleto */
         $boleto = $event->getSubject();
-        $rechazo = ReglasTransicion::rechazo(TransicionBoleto::from($event->getTransition()->getName()), $boleto, $this->reloj->now(), $this->dispensas->fueraDeHora($boleto));
+        $t = TransicionBoleto::from($event->getTransition()->getName());
+        // El rol de sistema de quien opera (sin sesión, como en el worker, no lo es).
+        $sistema = $t->delSistema() && $this->autorizacion->permisos()->sistema();
+        $rechazo = ReglasTransicion::rechazo($t, $boleto, $this->reloj->now(), $this->dispensas->fueraDeHora($boleto), $sistema);
         if ($rechazo !== null) {
             $event->addTransitionBlocker(new TransitionBlocker($rechazo->getMessage(), $rechazo->codigo, [self::RECHAZO => $rechazo]));
         }

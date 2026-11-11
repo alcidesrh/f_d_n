@@ -31,8 +31,38 @@ enum TransicionEncomienda: string
     /** Nombre del workflow (`workflow:dump encomienda`). */
     public const WORKFLOW = "encomienda";
 
-    /** @return list<EstadoEncomienda> */
+    /**
+     * Todos los estados desde los que la máquina la admite: los de siempre
+     * y los que solo usa el rol de sistema (el guard los cierra a los demás).
+     *
+     * @return list<EstadoEncomienda>
+     */
     public function desde(): array
+    {
+        return [...$this->desdeHabitual(), ...$this->desdeSoloSistema()];
+    }
+
+    /** Las que el rol de sistema aplica en cualquier estado de la encomienda (no anulada). */
+    public function delSistema(): bool
+    {
+        return $this === self::ANULAR || $this === self::ANULAR_CON_BOLETO;
+    }
+
+    /** @return list<EstadoEncomienda> desde dónde solo la aplica el rol de sistema */
+    public function desdeSoloSistema(): array
+    {
+        if (!$this->delSistema()) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            EstadoEncomienda::cases(),
+            fn(EstadoEncomienda $e) => !in_array($e, [EstadoEncomienda::ANULADA, ...$this->desdeHabitual()], true),
+        ));
+    }
+
+    /** @return list<EstadoEncomienda> desde dónde la aplica cualquiera con el permiso */
+    public function desdeHabitual(): array
     {
         return match ($this) {
             self::EMBARCAR, self::EMBARCAR_EN_RUTA, self::ANULAR => [EstadoEncomienda::RECIBIDA, EstadoEncomienda::DESEMBARCADA],

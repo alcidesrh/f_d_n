@@ -76,7 +76,9 @@ final class ReglasEncomiendaTest extends TestCase
         $this->assertTrue(EstadoEncomienda::DESEMBARCADA->puedeTransicionarA(EstadoEncomienda::EMBARCADA));
         $this->assertTrue(EstadoEncomienda::DESEMBARCADA->puedeTransicionarA(EstadoEncomienda::ENTREGADA));
         $this->assertFalse(EstadoEncomienda::RECIBIDA->puedeTransicionarA(EstadoEncomienda::ENTREGADA));
-        $this->assertFalse(EstadoEncomienda::TRANSITO->puedeTransicionarA(EstadoEncomienda::ANULADA));
-        $this->assertSame([], EstadoEncomienda::ENTREGADA->transicionesPermitidas());
+        // En tránsito o entregada solo la anula el rol de sistema (lo cierra el guard a los demás).
+        $this->assertTrue(EstadoEncomienda::TRANSITO->puedeTransicionarA(EstadoEncomienda::ANULADA));
+        $this->assertSame([EstadoEncomienda::ANULADA], EstadoEncomienda::ENTREGADA->transicionesPermitidas());
+        $this->assertSame([], EstadoEncomienda::ANULADA->transicionesPermitidas());
     }
 }

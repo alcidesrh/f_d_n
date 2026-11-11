@@ -9,6 +9,7 @@ use App\Entity\BoletoVenta;
 use App\Entity\Enum\EstadoBoletoAsiento;
 use App\Entity\Enum\EstadoFacturacion;
 use App\Entity\Enum\EstadoSalida;
+use App\Entity\Enum\TransicionBoleto;
 use App\Entity\Salida;
 use App\Venta\Boleto\DatosBoleto;
 use App\Venta\Excepcion\VentaRechazada;
@@ -86,6 +87,23 @@ final class ReglasBoletos
             throw new VentaRechazada(
                 sprintf("La salida está %s: ya no se puede %s, ni con autorización.", $salida->getEstado()->value, $operacion),
                 "salida_no_operable",
+            );
+        }
+    }
+
+    /**
+     * Lo que anula o reasigna el rol de sistema: un boleto en cualquier estado
+     * que todavía tenga valor (no anulado ni reasignado), sin mirar su salida
+     * ni la hora (`TransicionBoleto::delSistema`).
+     *
+     * @throws VentaRechazada
+     */
+    public static function exigirOperablePorSistema(BoletoAsiento $boleto): void
+    {
+        if (!in_array($boleto->getEstado(), TransicionBoleto::ANULAR->desde(), true)) {
+            throw new VentaRechazada(
+                sprintf("El boleto del asiento %s está %s: ya no se opera sobre él.", $boleto->getAsiento()?->getNumero(), $boleto->getEstado()->value),
+                "boleto_no_emitido",
             );
         }
     }

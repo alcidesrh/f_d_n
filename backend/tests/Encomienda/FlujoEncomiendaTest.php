@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Encomienda;
 
+use App\Acceso\Ambito;
+use App\Acceso\Autorizacion;
+use App\Acceso\Concesion;
+use App\Acceso\PermisosUsuario;
 use App\Encomienda\EncomiendaRechazada;
 use App\Encomienda\FlujoEncomienda;
 use App\Entity\Encomienda;
@@ -15,7 +19,9 @@ use App\Entity\Enum\TransicionEncomienda;
 use App\Entity\Parada;
 use App\Entity\Ruta;
 use App\Entity\Salida;
+use App\Entity\Usuario;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
+use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 use Symfony\Component\Workflow\WorkflowInterface;
 
 /**
@@ -148,6 +154,43 @@ final class FlujoEncomiendaTest extends KernelTestCase
         $this->assertNull($acciones["anular"]);
         $this->assertSame("La encomienda está recibida: solo se desembarca una encomienda embarcada o en tránsito.", $acciones["desembarcar"]);
         $this->assertSame("La encomienda está recibida: solo se entrega una encomienda desembarcada en su destino o en tránsito hacia él.", $acciones["entregar"]);
+    }
+
+    public function testElRolDeSistemaLaAnulaEnCualquierEstado(): void
+    {
+        $entregada = $this->encomienda(EstadoEncomienda::ENTREGADA, null);
+        $transito = $this->encomienda(EstadoEncomienda::TRANSITO, null, $this->salida(EstadoSalida::INICIADA));
+        $transbordo = $this->encomienda(EstadoEncomienda::DESEMBARCADA, self::RIO_DULCE);
+        $conBoleto = $this->encomienda(EstadoEncomienda::ENTREGADA, null, null, ModalidadEncomienda::CON_BOLETO);
+
+        // Sin el rol de sistema, como siempre.
+        $this->assertSame(
+            "La encomienda está entregada: solo se anula una encomienda que no ha viajado (en la bodega de su origen).",
+            $this->flujo->rechazo($entregada, TransicionEncomienda::ANULAR)?->getMessage(),
+        );
+        $this->assertSame("estado", $this->flujo->rechazo($transbordo, TransicionEncomienda::ANULAR)?->codigo);
+        $this->assertFalse($this->flujo->puede($conBoleto, TransicionEncomienda::ANULAR_CON_BOLETO));
+
+        $usuario = (new Usuario())->setUsername("sistema");
+        $usuario->setId(99);
+        self::getContainer()->get("security.token_storage")->setToken(new UsernamePasswordToken($usuario, "api"));
+        (new \ReflectionProperty(Autorizacion::class, "cache"))->setValue(
+            self::getContainer()->get(Autorizacion::class),
+            [99 => new PermisosUsuario([new Concesion(1, 1, "Sistema", true, [], [], Ambito::total())], [])],
+        );
+
+        $this->assertNull($this->flujo->rechazo($transito, TransicionEncomienda::ANULAR));
+        $this->assertNull($this->flujo->rechazo($transbordo, TransicionEncomienda::ANULAR));
+        $this->assertNull($this->flujo->acciones($entregada)["anular"]);
+        // La que va con un boleto, solo con su venta (que ahora la anula aunque ya se haya entregado).
+        $this->assertSame("con_boleto", $this->flujo->rechazo($conBoleto, TransicionEncomienda::ANULAR)?->codigo);
+        $this->assertTrue($this->flujo->puede($conBoleto, TransicionEncomienda::ANULAR_CON_BOLETO));
+        // Lo demás sigue sus reglas.
+        $this->assertSame("estado", $this->flujo->rechazo($entregada, TransicionEncomienda::EMBARCAR)?->codigo);
+
+        $this->flujo->aplicar($entregada, TransicionEncomienda::ANULAR, ["motivo" => "Prueba"]);
+        $this->assertSame(EstadoEncomienda::ANULADA, $entregada->getEstado());
+        $this->assertSame("estado", $this->flujo->rechazo($entregada, TransicionEncomienda::ANULAR)?->codigo);
     }
 
     /** @param list<int> $paradas */

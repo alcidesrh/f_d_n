@@ -104,7 +104,9 @@ final class AbordajeTest extends TestCase
         $this->assertTrue(EstadoBoletoAsiento::EMITIDO->puedeTransicionarA(EstadoBoletoAsiento::CANCELADO));
         // Chequeado que al final no viaja: se cancela desde el listado de boletos.
         $this->assertTrue(EstadoBoletoAsiento::CHEQUEADO->puedeTransicionarA(EstadoBoletoAsiento::CANCELADO));
-        $this->assertFalse(EstadoBoletoAsiento::TRANSITO->puedeTransicionarA(EstadoBoletoAsiento::CANCELADO));
+        // En tránsito solo lo cancela el rol de sistema (lo cierra el guard a los demás).
+        $this->assertTrue(EstadoBoletoAsiento::TRANSITO->puedeTransicionarA(EstadoBoletoAsiento::CANCELADO));
+        $this->assertFalse(EstadoBoletoAsiento::ANULADO->puedeTransicionarA(EstadoBoletoAsiento::CANCELADO));
     }
 
     public function testCancelarDesdeElListado(): void

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Venta\Boleto;
 
+use App\Acceso\Autorizacion;
 use App\Entity\BoletoAsiento;
 use App\Entity\BoletoVenta;
 use App\Entity\Enum\Dispensa;
@@ -24,6 +25,7 @@ final class ConsultaBoletos
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly ClockInterface $reloj,
+        private readonly Autorizacion $autorizacion,
     ) {}
 
     /**
@@ -53,7 +55,10 @@ final class ConsultaBoletos
             }
         }
 
-        return array_map(fn(int $id) => $this->fila($porId[$id], $puedeOperar), $ids);
+        // El rol de sistema los anula y reasigna en cualquier estado con valor, sin mirar la salida ni la hora.
+        $sistema = $this->autorizacion->permisos()->sistema();
+
+        return array_map(fn(int $id) => $this->fila($porId[$id], $puedeOperar, $sistema), $ids);
     }
 
     /**
@@ -61,7 +66,7 @@ final class ConsultaBoletos
      *
      * @return array<string, mixed>
      */
-    private function fila(BoletoAsiento $b, callable $puedeOperar): array
+    private function fila(BoletoAsiento $b, callable $puedeOperar, bool $sistema): array
     {
         $venta = $b->getBoletoVenta();
         $salida = $b->getSalida();
@@ -79,10 +84,12 @@ final class ConsultaBoletos
             if ($venta->getEstado() !== EstadoBoletoVenta::CONFIRMADA) {
                 throw new VentaRechazada("La venta todavía se está procesando.");
             }
-            ReglasBoletos::exigirOperable($b, $this->reloj->now(), "operar sobre el boleto");
+            $sistema
+                ? ReglasBoletos::exigirOperablePorSistema($b)
+                : ReglasBoletos::exigirOperable($b, $this->reloj->now(), "operar sobre el boleto");
         } catch (VentaRechazada $e) {
             $motivo = $e->getMessage();
-            if ($conAutorizacion === null && $venta->getEstado() === EstadoBoletoVenta::CONFIRMADA && ReglasBoletos::soloPorHora($b, $this->reloj->now())) {
+            if (!$sistema && $conAutorizacion === null && $venta->getEstado() === EstadoBoletoVenta::CONFIRMADA && ReglasBoletos::soloPorHora($b, $this->reloj->now())) {
                 $conAutorizacion = Dispensa::HORA->value;
             }
         }

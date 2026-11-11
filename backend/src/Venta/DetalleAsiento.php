@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Venta;
 
+use App\Acceso\Autorizacion;
 use App\Entity\Asiento;
 use App\Entity\BoletoAsiento;
 use App\Entity\BoletoVenta;
@@ -28,6 +29,7 @@ final class DetalleAsiento
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly ClockInterface $reloj,
+        private readonly Autorizacion $autorizacion,
     ) {}
 
     /**
@@ -133,12 +135,20 @@ final class DetalleAsiento
         ];
     }
 
-    /** Si todavía se puede anular o reasignar (emitido y antes de la hora de salida); el permiso se comprueba aparte. */
+    /**
+     * Si todavía se puede anular o reasignar (emitido y antes de la hora de
+     * salida; el rol de sistema, en cualquier estado con valor); el permiso
+     * se comprueba aparte.
+     */
     private function operable(BoletoAsiento $b): bool
     {
         try {
-            ReglasBoletos::exigirEmitido($b);
-            ReglasBoletos::exigirAntesDeSalir($b->getSalida(), $this->reloj->now(), "operar");
+            if ($this->autorizacion->permisos()->sistema()) {
+                ReglasBoletos::exigirOperablePorSistema($b);
+            } else {
+                ReglasBoletos::exigirEmitido($b);
+                ReglasBoletos::exigirAntesDeSalir($b->getSalida(), $this->reloj->now(), "operar");
+            }
         } catch (VentaRechazada) {
             return false;
         }

@@ -37,8 +37,48 @@ enum TransicionBoleto: string
     /** Nombre del workflow (`workflow:dump boleto_asiento`). */
     public const WORKFLOW = "boleto_asiento";
 
-    /** @return list<EstadoBoletoAsiento> */
+    /**
+     * Todos los estados desde los que la máquina la admite: los de siempre
+     * y los que solo usa el rol de sistema (el guard los cierra a los demás).
+     *
+     * @return list<EstadoBoletoAsiento>
+     */
     public function desde(): array
+    {
+        return [...$this->desdeHabitual(), ...$this->desdeSoloSistema()];
+    }
+
+    /** Las que el rol de sistema aplica en cualquier estado del boleto que todavía tenga valor, sin mirar la salida ni la hora. */
+    public function delSistema(): bool
+    {
+        return in_array($this, [self::ANULAR, self::REASIGNAR, self::CANCELAR], true);
+    }
+
+    /**
+     * Desde dónde solo la aplica el rol de sistema: el resto de los estados,
+     * salvo anulado y reasignado (su importe ya se devolvió o pasó al boleto
+     * nuevo) y el que ya produce.
+     *
+     * @return list<EstadoBoletoAsiento>
+     */
+    public function desdeSoloSistema(): array
+    {
+        if (!$this->delSistema()) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            EstadoBoletoAsiento::cases(),
+            fn(EstadoBoletoAsiento $e) => !in_array($e, [EstadoBoletoAsiento::ANULADO, EstadoBoletoAsiento::REASIGNADO, $this->hacia(), ...$this->desdeHabitual()], true),
+        ));
+    }
+
+    /**
+     * Desde dónde la aplica cualquiera con el permiso.
+     *
+     * @return list<EstadoBoletoAsiento>
+     */
+    public function desdeHabitual(): array
     {
         return match ($this) {
             self::CHEQUEAR, self::CHEQUEAR_EN_RUTA, self::NO_PRESENTARSE, self::POSPONER => [EstadoBoletoAsiento::EMITIDO],

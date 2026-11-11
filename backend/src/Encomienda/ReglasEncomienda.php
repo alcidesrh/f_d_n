@@ -26,9 +26,18 @@ final class ReglasEncomienda
      * Por qué la encomienda no admite la transición (además de su estado, que
      * lo decide la máquina), o null si la admite.
      */
-    public static function rechazo(TransicionEncomienda $t, Encomienda $e): ?EncomiendaRechazada
+    public static function rechazo(TransicionEncomienda $t, Encomienda $e, bool $sistema = false): ?EncomiendaRechazada
     {
         $ubicacion = $e->getUbicacion()?->getId();
+        if (!$sistema && in_array($e->getEstado(), $t->desdeSoloSistema(), true)) {
+            return new EncomiendaRechazada(sprintf("La encomienda está %s: %s.", mb_strtolower($e->getEstado()->etiqueta()), $t->requisito()), "estado");
+        }
+        // El rol de sistema la anula en cualquier estado; la que va con un boleto, igual, solo con su venta.
+        if ($sistema && $t === TransicionEncomienda::ANULAR) {
+            return $e->getModalidad() === ModalidadEncomienda::CON_BOLETO
+                ? new EncomiendaRechazada("La encomienda va con un boleto: se anula al anular el boleto.", "con_boleto")
+                : null;
+        }
 
         return match ($t) {
             TransicionEncomienda::EMBARCAR, TransicionEncomienda::EMBARCAR_EN_RUTA => match (true) {

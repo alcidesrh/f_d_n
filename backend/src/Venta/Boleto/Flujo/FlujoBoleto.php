@@ -120,11 +120,6 @@ final class FlujoBoleto
             }
         }
 
-        return ReglasTransicion::rechazar(
-            $t,
-            sprintf("El boleto %d (asiento %s) está %s: %s.", $b->getId(), $b->getAsiento()?->getNumero(), mb_strtolower($b->getEstado()->etiqueta()), $t->requisito()),
-            $t->codigoEstado(),
-            $t->deLaVenta() ? 422 : 409,
-        );
+        return ReglasTransicion::porEstado($t, $b);
     }
 }

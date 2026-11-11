@@ -130,9 +130,9 @@ Un asiento vendido dentro de una salida, para un cliente y un tramo de su ruta,
 con el trayecto que se le cobró, precio y estado propios.
 El mismo asiento se vende varias veces en la misma salida solo para tramos que no se solapan.
 Estado (`EstadoBoletoAsiento`): `emitido → chequeado → transito → finalizado` en ese orden;
-`anulado` y `reasignado` solo son alcanzables desde `emitido`.
+`anulado` y `reasignado` solo son alcanzables desde `emitido`, salvo para el rol de sistema, que anula, reasigna y cancela en cualquier estado que todavía tenga valor (ADR-057).
 _Avoid_: boleto, ticket
-Modelo: nuevo. Detalle del modelo: Asiento vendido dentro de una salida para un trayecto (el par que viaja, que puede ser un tramo intermedio de la ruta) y su tramo `[ordenSube, ordenBaja)` por orden de las paradas (ADR-030). Dos boletos vivos del mismo asiento y salida no se solapan: restricción de exclusión `ex_boleto_asiento_tramo` (solo en migraciones; Doctrine la ignora). Estado tipado con enum `EstadoBoletoAsiento`: `emitido → chequeado → transito → finalizado` (lineal; `emitido → transito` si se chequea con la salida ya iniciada); `anulado`/`reasignado`/`cancelado`/`pospuesto` solo alcanzables desde `emitido` (`cancelado` también desde `chequeado`, y vuelve a `emitido` al revertirlo; `pospuesto` solo pasa a `reasignado` o `anulado`; ver ADR-014, ADR-032, ADR-033). Los que liberan el asiento: `EstadoBoletoAsiento::liberanAsiento()`. El estado solo cambia por una transición con nombre del workflow `boleto_asiento` (`TransicionBoleto`, `FlujoBoleto`, ADR-037).
+Modelo: nuevo. Detalle del modelo: Asiento vendido dentro de una salida para un trayecto (el par que viaja, que puede ser un tramo intermedio de la ruta) y su tramo `[ordenSube, ordenBaja)` por orden de las paradas (ADR-030). Dos boletos vivos del mismo asiento y salida no se solapan: restricción de exclusión `ex_boleto_asiento_tramo` (solo en migraciones; Doctrine la ignora). Estado tipado con enum `EstadoBoletoAsiento`: `emitido → chequeado → transito → finalizado` (lineal; `emitido → transito` si se chequea con la salida ya iniciada); `anulado`/`reasignado`/`cancelado`/`pospuesto` solo alcanzables desde `emitido` (`cancelado` también desde `chequeado`, y vuelve a `emitido` al revertirlo; `pospuesto` solo pasa a `reasignado` o `anulado`; ver ADR-014, ADR-032, ADR-033). El rol de sistema anula, reasigna y cancela desde cualquier estado salvo `anulado` y `reasignado`, sin mirar la salida ni la hora (`TransicionBoleto::desdeSoloSistema()`, ADR-057). Los que liberan el asiento: `EstadoBoletoAsiento::liberanAsiento()`. El estado solo cambia por una transición con nombre del workflow `boleto_asiento` (`TransicionBoleto`, `FlujoBoleto`, ADR-037).
 Evitar (modelo): boleto, ticket
 
 **BoletoVenta**:
@@ -234,7 +234,7 @@ Evitar (modelo): compañía, operador
 ## Encomiendas
 
 **Encomienda**:
-Envío de paquetería en la bodega de los buses: remitente → destinatario, de un enclave a otro, con uno o más artículos (`EncomiendaArticulo`: paquete por peso o especial del catálogo). Modalidad `pagada` (factura al recibir), `por_cobrar` (factura al entregar), `interna` (sin cobro) o `con_boleto` (la lleva un pasajero y va en la factura de su venta). Estado `recibida → embarcada → transito → desembarcada → entregada` (transbordo: desembarcada → embarcada), `anulada` si no ha viajado. Cambia solo por una transición con nombre del workflow `encomienda` (`TransicionEncomienda`, `FlujoEncomienda`, ADR-038). Ver ADR-035.
+Envío de paquetería en la bodega de los buses: remitente → destinatario, de un enclave a otro, con uno o más artículos (`EncomiendaArticulo`: paquete por peso o especial del catálogo). Modalidad `pagada` (factura al recibir), `por_cobrar` (factura al entregar), `interna` (sin cobro) o `con_boleto` (la lleva un pasajero y va en la factura de su venta). Estado `recibida → embarcada → transito → desembarcada → entregada` (transbordo: desembarcada → embarcada), `anulada` si no ha viajado (el rol de sistema, en cualquier estado, ADR-057). Cambia solo por una transición con nombre del workflow `encomienda` (`TransicionEncomienda`, `FlujoEncomienda`, ADR-038). Ver ADR-035.
 _Avoid_: paquete, envio
 Modelo: nuevo
 **Bulto** / **Guía**:
@@ -265,7 +265,7 @@ Modelo: nuevo (`BoletoVenta.voucher`, solo legado; para boletos nuevos: ver Cort
 Boleto de una compra web pospuesta desde el dashboard ("Posponer"): libera el asiento, conserva la venta, su factura y su importe. Se reanuda reasignándolo a otra salida de la misma empresa (o se anula), aunque su salida original ya haya pasado (`EstadoBoletoAsiento::POSPUESTO`, `App\Venta\EnLinea\GestionCompraWeb`).
 Modelo: nuevo
 **Cancelado** (no se presentó):
-Boleto cuyo pasajero no se presentó a abordar (NO en el chequeo, emitido en el origen al iniciar la salida, o emitido sin chequear al finalizarla). Libera el asiento pero conserva la venta, su factura y su importe: no es una anulación. Es el "Cancelado" (6) del legado (ADR-032). También se cancela desde el listado de boletos un emitido o chequeado ("Cancelar", ADR-033), y desde ahí se revierte a emitido si el asiento sigue libre ("Revertir").
+Boleto cuyo pasajero no se presentó a abordar (NO en el chequeo, emitido en el origen al iniciar la salida, o emitido sin chequear al finalizarla). Libera el asiento pero conserva la venta, su factura y su importe: no es una anulación. Es el "Cancelado" (6) del legado (ADR-032). También se cancela desde el listado de boletos un emitido o chequeado ("Cancelar", ADR-033), y desde ahí se revierte a emitido si el asiento sigue libre ("Revertir"). El rol de sistema cancela también uno en tránsito, finalizado o pospuesto, con la salida en cualquier estado (ADR-057).
 _Avoid_: anulado
 Modelo: nuevo (`EstadoBoletoAsiento::CANCELADO`)
 **Chequeo** (abordaje):
@@ -273,10 +273,10 @@ Marcar al abordar cada boleto de una salida como presente (`chequeado`, o `trans
 _Avoid_: check-in
 Modelo: concepto
 **Reasignacion**:
-Cambio de asiento (de la misma salida o de otra) de boletos emitidos, antes de la hora de salida (después, con una autorización fuera de hora, ADR-040) y al mismo precio. El boleto original pasa a `reasignado` y el nuevo queda en la misma venta con `reasignadoDe`. Solo entre salidas de la misma empresa, también lo vendido en la página (`App\Venta\Reasignacion`, ADR-028). Un boleto pospuesto se reasigna aunque su salida ya haya pasado: así se reanuda.
+Cambio de asiento (de la misma salida o de otra) de boletos emitidos, antes de la hora de salida (después, con una autorización fuera de hora, ADR-040) y al mismo precio. El boleto original pasa a `reasignado` y el nuevo queda en la misma venta con `reasignadoDe`. Solo entre salidas de la misma empresa, también lo vendido en la página (`App\Venta\Reasignacion`, ADR-028). Un boleto pospuesto se reasigna aunque su salida ya haya pasado: así se reanuda. El rol de sistema reasigna un boleto en cualquier estado salvo anulado o reasignado; la salida destino sigue sus reglas (ADR-057).
 Modelo: nuevo
 **Anulacion**:
-Cuando se invalida la compra de un asiento asi como su registro en la oficina tributaria: el boleto pasa a `anulado` (asiento libre), la factura se anula en Forcon (cubre toda la venta; si era conjunta y quedan boletos, se certifica otra con ellos) y a una agencia se le devuelve el precio. Solo antes de la hora de salida, salvo con una autorización (`App\Venta\Anulacion`, ADR-028, ADR-040).
+Cuando se invalida la compra de un asiento asi como su registro en la oficina tributaria: el boleto pasa a `anulado` (asiento libre), la factura se anula en Forcon (cubre toda la venta; si era conjunta y quedan boletos, se certifica otra con ellos) y a una agencia se le devuelve el precio. Solo antes de la hora de salida, salvo con una autorización (`App\Venta\Anulacion`, ADR-028, ADR-040) o para el rol de sistema, que anula en cualquier estado salvo anulado o reasignado (ADR-057).
 Modelo: nuevo
 **Bitácora**:
 Traza de solo agregar de una `Salida`, un `BoletoAsiento` o una tarifa (`BoletoTarifa`: creada, modificada, eliminada; ADR-045): operación (boleto: creado, anulado, reasignado, chequeado, tránsito, finalizado, cancelado, revertido; salida: creada, abordando, iniciada, finalizada, cancelada, cambio de bus, eliminada), usuario, fecha y detalle. La escribe un listener de Doctrine en la misma transacción (`App\Bitacora`, ADR-028).
