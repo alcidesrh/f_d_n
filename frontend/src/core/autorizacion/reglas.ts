@@ -21,6 +21,7 @@ export const DISPENSAS: Record<Dispensa, { etiqueta: string; icono: string; expl
   permiso: { etiqueta: 'Sin permiso', icono: 'lock-outline', explicacion: 'No tiene el permiso para esto en esta empresa o estación.' },
   limite: { etiqueta: 'Límite diario superado', icono: 'data-usage', explicacion: 'Llegó al máximo que su rol permite por día.' },
   hora: { etiqueta: 'Fuera de hora', icono: 'schedule-outline', explicacion: 'La salida ya pasó su hora: el pasajero perdió el bus.' },
+  estado: { etiqueta: 'Fuera de estado', icono: 'history', explicacion: 'Ya no está en un estado que lo permita (ya viajó, se chequeó o se entregó): es una corrección.' },
 }
 
 /** El bloqueo de una operación, si se puede hacer con una autorización: lo que hay que pedir y el mensaje del bloqueo. */
@@ -34,10 +35,16 @@ export function bloqueoAutorizable(error: unknown): { autorizable: Autorizable; 
 function esAutorizable(a: unknown): a is Autorizable {
   if (typeof a !== 'object' || a === null) return false
   const x = a as Record<string, unknown>
-  return typeof x.capacidad === 'string' && typeof x.dispensa === 'string' && (x.sujeto === 'boletos' || x.sujeto === 'salida') && Array.isArray(x.ids) && x.ids.length > 0
+  return (
+    typeof x.capacidad === 'string' &&
+    typeof x.dispensa === 'string' &&
+    (x.sujeto === 'boletos' || x.sujeto === 'salida' || x.sujeto === 'encomiendas') &&
+    Array.isArray(x.ids) &&
+    x.ids.length > 0
+  )
 }
 
-/** «Anular 2 boletos», «Emitir 1 cortesía en la salida 1230». */
+/** «Anular 2 boletos», «Emitir 1 cortesía en la salida 1230», «Anular 1 encomienda». */
 export function queSePide(a: Pick<Autorizable, 'capacidad' | 'operacion' | 'sujeto' | 'ids' | 'cantidad'>): string {
   const n = a.cantidad
   if (a.sujeto === 'salida') {
@@ -45,7 +52,8 @@ export function queSePide(a: Pick<Autorizable, 'capacidad' | 'operacion' | 'suje
     return `Emitir ${que} en la salida ${a.ids[0]}`
   }
   const verbo = a.operacion.split(' ')[0] ?? a.operacion
-  return `${verbo.charAt(0).toUpperCase()}${verbo.slice(1)} ${n === 1 ? '1 boleto' : `${n} boletos`}`
+  const que = a.sujeto === 'encomiendas' ? (n === 1 ? '1 encomienda' : `${n} encomiendas`) : n === 1 ? '1 boleto' : `${n} boletos`
+  return `${verbo.charAt(0).toUpperCase()}${verbo.slice(1)} ${que}`
 }
 
 /** Lo que muestra la campana de la cabecera: lo que espera al usuario (por resolver y pases listos para usar). */

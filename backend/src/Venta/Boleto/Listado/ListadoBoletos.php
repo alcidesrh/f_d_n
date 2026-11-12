@@ -380,6 +380,8 @@ final class ListadoBoletos
             "acciones" => $this->flujo->acciones($b),
             // Solo la hora impide anularlo o reasignarlo: se puede con una autorización fuera de hora (ADR-040).
             "fueraDeHora" => ReglasBoletos::soloPorHora($b, new \DateTimeImmutable()),
+            // Lo impide su estado o el de su salida: se puede con una autorización fuera de estado (ADR-058).
+            "fueraDeEstado" => ReglasBoletos::soloPorEstado($b, new \DateTimeImmutable()),
         ];
     }
 

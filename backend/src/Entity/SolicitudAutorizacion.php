@@ -13,8 +13,8 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * Autorización (ADR-040, la «solicitud de autorización» del legado): un pase
  * de un solo uso para que `solicitante` haga una operación que una regla le
- * impide —sin el permiso, pasado su límite diario o fuera de hora
- * (`Dispensa`)— sobre registros concretos (`sujeto` + `sujetoIds`). La pide
+ * impide —sin el permiso, pasado su límite diario, fuera de hora o fuera de
+ * estado (`Dispensa`)— sobre registros concretos (`sujeto` + `sujetoIds`). La pide
  * quien quedó bloqueado, la aprueba o rechaza quien tiene
  * `autorizacion.aprobar` donde cae la operación (`ubicacion`), y se usa sola
  * al repetir la operación, dentro de su transacción. Vence a las
@@ -33,9 +33,10 @@ class SolicitudAutorizacion
     public const MAX_MOTIVO = 500;
     public const MAX_RESPUESTA = 500;
 
-    /** Sobre qué registros: boletos (anular, reasignar) o una salida (cortesía). */
+    /** Sobre qué registros: boletos (anular, reasignar), una salida (cortesía) o encomiendas (anular, ADR-058). */
     public const SUJETO_BOLETOS = "boletos";
     public const SUJETO_SALIDA = "salida";
+    public const SUJETO_ENCOMIENDAS = "encomiendas";
 
     #[ORM\Id]
     #[ORM\GeneratedValue]

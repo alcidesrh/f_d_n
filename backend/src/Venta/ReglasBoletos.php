@@ -127,6 +127,32 @@ final class ReglasBoletos
     }
 
     /**
+     * ¿Lo impide su estado o el de su salida, y no basta una autorización
+     * fuera de hora? Si el rol de sistema sí lo anula y lo reasigna (un
+     * boleto con valor, ADR-057), se puede con una autorización fuera de
+     * estado (ADR-058).
+     */
+    public static function soloPorEstado(BoletoAsiento $boleto, \DateTimeInterface $ahora): bool
+    {
+        try {
+            self::exigirOperable($boleto, $ahora, "operarlo");
+
+            return false;
+        } catch (VentaRechazada) {
+        }
+        if (self::soloPorHora($boleto, $ahora)) {
+            return false;
+        }
+        try {
+            self::exigirOperablePorSistema($boleto);
+
+            return true;
+        } catch (VentaRechazada) {
+            return false;
+        }
+    }
+
+    /**
      * Boletos vivos que cubre la factura de la venta (certificada o por
      * certificar); vacío si no tiene. Con más de uno es una factura conjunta:
      * anular parte de ellos anula la factura y certifica otra con los que

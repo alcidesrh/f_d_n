@@ -9,7 +9,6 @@ use App\Acceso\Capacidad;
 use App\Acceso\Limite;
 use App\Acceso\Ubicador;
 use App\Autorizacion\Autorizable;
-use App\Autorizacion\DispensasEnCurso;
 use App\Autorizacion\Pases;
 use App\Entity\BoletoAsiento;
 use App\Entity\BoletoVenta;
@@ -21,6 +20,7 @@ use App\Entity\Salida;
 use App\Entity\SolicitudAutorizacion;
 use App\Entity\Usuario;
 use App\Venta\Boleto\Flujo\FlujoBoleto;
+use App\Venta\Boleto\Flujo\PasesDelFlujo;
 use App\Venta\EnLinea\Recargo;
 use App\Venta\Excepcion\VentaRechazada;
 use App\Venta\PublicadorOcupacion;
@@ -45,6 +45,9 @@ use Psr\Clock\ClockInterface;
  * respeta el límite diario de su rol (ADR-039). Sin el permiso sobre la
  * venta, pasado el límite o con la salida ya pasada de hora, se puede con
  * una autorización aprobada (ADR-040), que se usa en la misma transacción.
+ * Con una fuera de estado (ADR-058), se reasigna como lo haría el rol de
+ * sistema: un boleto en cualquier estado con valor, sin mirar su salida (la
+ * salida destino sigue sus reglas).
  */
 final class ReasignacionBoletos
 {
@@ -57,7 +60,7 @@ final class ReasignacionBoletos
         private readonly ClockInterface $reloj,
         private readonly Autorizacion $autorizacion,
         private readonly Pases $pases,
-        private readonly DispensasEnCurso $dispensas,
+        private readonly PasesDelFlujo $pasesDelFlujo,
         private readonly ConteoDiario $conteo,
         private readonly UmbralesDiarios $umbrales,
     ) {}
@@ -127,7 +130,7 @@ final class ReasignacionBoletos
         foreach ($viejos as $b) {
             $this->em->refresh($b);
         }
-        $pases = [...$pases, ...$this->exigirHora($viejos, $usuario, $ahora)];
+        $pases = [...$pases, ...$this->pasesDelFlujo->exigir($viejos, TransicionBoleto::REASIGNAR, Capacidad::BOLETO_REASIGNAR, $usuario)["pases"]];
         foreach ($viejos as $b) {
             ReglasBoletos::exigirEmpresaCompatible($b->getSalida(), $destino);
         }
@@ -240,44 +243,6 @@ final class ReasignacionBoletos
         }
 
         return [$this->pases->exigir($usuario, Autorizable::boletos(Capacidad::BOLETO_REASIGNAR, Dispensa::LIMITE, $boletos), sprintf("Llegó al límite de %d boletos reasignados por día.", $limite), "limite")];
-    }
-
-    /**
-     * Lo que el flujo exige a cada boleto; si a alguno solo lo detiene la hora
-     * de su salida, la autorización fuera de hora que lo cubre (y la dispensa
-     * para el guard del flujo).
-     *
-     * @param list<BoletoAsiento> $viejos
-     *
-     * @return list<SolicitudAutorizacion>
-     *
-     * @throws VentaRechazada|\App\Salida\SalidaRechazada
-     */
-    private function exigirHora(array $viejos, Usuario $usuario, \DateTimeImmutable $ahora): array
-    {
-        $fueraDeHora = [];
-        $rechazoHora = null;
-        foreach ($viejos as $b) {
-            $rechazo = $this->flujo->rechazo($b, TransicionBoleto::REASIGNAR);
-            if ($rechazo === null) {
-                continue;
-            }
-            if (!ReglasBoletos::soloPorHora($b, $ahora)) {
-                throw $rechazo;
-            }
-            $fueraDeHora[] = (int) $b->getId();
-            $rechazoHora ??= $rechazo;
-        }
-        if ($rechazoHora === null) {
-            return [];
-        }
-        // Con la dispensa, que no lo detenga otra cosa (antes de pedir la autorización).
-        $this->dispensas->permitirFueraDeHora(...$fueraDeHora);
-        foreach ($viejos as $b) {
-            $this->flujo->exigir($b, TransicionBoleto::REASIGNAR);
-        }
-
-        return [$this->pases->exigir($usuario, Autorizable::boletos(Capacidad::BOLETO_REASIGNAR, Dispensa::HORA, $fueraDeHora), $rechazoHora->getMessage(), $rechazoHora->codigo, 409)];
     }
 
     /** @throws VentaRechazada */

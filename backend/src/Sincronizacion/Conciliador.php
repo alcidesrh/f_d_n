@@ -20,7 +20,9 @@ use Doctrine\DBAL\Connection;
  * - trae del legado lo que falta aquí (la importación no duplica);
  * - lleva allá las encomiendas de aquí que no llegaron (por `sync_cambio`);
  * - anula allá los boletos `FDN:` huérfanos: los escribió una venta de aquí
- *   que no se confirmó (el proceso murió entre los dos commits).
+ *   que no se confirmó (el proceso murió entre los dos commits);
+ * - vuelve a llevar la factura de las ventas de aquí que allá no cuadra
+ *   (`FacturaParaLegado`: filas que faltan, total repetido, ticket).
  * Los estados distintos y los boletos de aquí que faltan allá solo se
  * informan: decidir cuál vale es de una persona.
  *
@@ -44,7 +46,7 @@ class Conciliador
      *     boletosFaltanAqui: list<int>, boletosHuerfanosAlla: list<int>, boletosFaltanAlla: list<int>,
      *     estadosDistintos: list<array{legado: int, aqui: int, estadoLegado: int, estadoAqui: string}>,
      *     encomiendasFaltanAqui: list<int>, encomiendasFaltanAlla: list<int>,
-     *     usuariosChocan: list<int>
+     *     facturasPorCuadrar: list<int>, usuariosChocan: list<int>
      * }
      */
     public function comparar(\DateTimeImmutable $dia): array
@@ -64,7 +66,7 @@ class Conciliador
         $aqui = [];
         $sinLegado = [];
         foreach ($this->db->fetchAllAssociative(
-            "SELECT b.id, b.legacy_id, b.estado FROM boleto_asiento b JOIN salida s ON s.id = b.salida_id
+            "SELECT b.id, b.legacy_id, b.estado, b.boleto_venta_id FROM boleto_asiento b JOIN salida s ON s.id = b.salida_id
               WHERE s.fecha >= :desde AND s.fecha < :hasta AND s.legacy_id IS NOT NULL",
             ["desde" => $desde->format("Y-m-d H:i:s"), "hasta" => $hasta->format("Y-m-d H:i:s")],
         ) as $b) {
@@ -80,8 +82,12 @@ class Conciliador
         $faltanAqui = [];
         $huerfanos = [];
         $estados = [];
+        $ventasDeAqui = [];
         $limite = (new \DateTimeImmutable(sprintf("-%d minutes", self::MINUTOS_HUERFANO)))->format("Y-m-d H:i:s");
         foreach ($alla as $id => $b) {
+            if (isset($aqui[$id]) && str_starts_with((string) $b["identificador_web"], Traduccion::PREFIJO) && $aqui[$id]["boleto_venta_id"] !== null) {
+                $ventasDeAqui[(int) $aqui[$id]["boleto_venta_id"]] = true;
+            }
             if (isset($aqui[$id])) {
                 $estadoAqui = EstadoBoletoAsiento::from((string) $aqui[$id]["estado"]);
                 if (Traduccion::estadoBoleto($estadoAqui) !== (int) $b["estado_id"]) {
@@ -117,6 +123,7 @@ class Conciliador
             "estadosDistintos" => $estados,
             "encomiendasFaltanAqui" => array_values(array_diff($encomiendasAlla, $conocidas)),
             "encomiendasFaltanAlla" => array_map("intval", array_column(array_filter($encomiendasAqui, static fn(array $e) => $e["legacy_id"] === null), "id")),
+            "facturasPorCuadrar" => array_values(array_filter(array_keys($ventasDeAqui), fn(int $venta) => $this->escritor->facturaPorCuadrar($venta))),
             "usuariosChocan" => self::usuariosQueChocan(
                 $this->legado->filas("SELECT id, username FROM custom_user"),
                 $this->db->fetchAllAssociative("SELECT id, username FROM usuario"),
@@ -147,7 +154,7 @@ class Conciliador
      */
     public function reparar(array $diferencias): array
     {
-        $hecho = ["boletos_traidos" => 0, "huerfanos_anulados" => 0, "encomiendas_traidas" => 0, "encomiendas_encoladas" => 0];
+        $hecho = ["boletos_traidos" => 0, "huerfanos_anulados" => 0, "encomiendas_traidas" => 0, "encomiendas_encoladas" => 0, "facturas_cuadradas" => 0, "facturas_fallidas" => 0];
         if ($diferencias["boletosFaltanAqui"] !== []) {
             $salidas = array_map("intval", array_column($this->legado->filas(
                 "SELECT DISTINCT salida_id FROM boleto WHERE id IN (" . implode(",", array_map("intval", $diferencias["boletosFaltanAqui"])) . ")",
@@ -167,6 +174,16 @@ class Conciliador
         foreach ($this->legado->soloTraer ? [] : $diferencias["encomiendasFaltanAlla"] as $id) {
             $this->db->executeStatement("INSERT INTO sync_cambio (entidad, registro_id) VALUES ('encomienda', :id)", ["id" => $id]);
             $hecho["encomiendas_encoladas"]++;
+        }
+        // Una que falla (sin serie en el legado, conexión caída) no detiene a las demás: queda para la próxima conciliación.
+        foreach ($this->legado->soloTraer ? [] : $diferencias["facturasPorCuadrar"] as $venta) {
+            try {
+                $this->escritor->facturaDeVenta($venta);
+                $hecho["facturas_cuadradas"]++;
+            } catch (\Throwable) {
+                $this->escritor->cerrarConexion();
+                $hecho["facturas_fallidas"]++;
+            }
         }
 
         return $hecho;

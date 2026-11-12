@@ -175,13 +175,15 @@ Evitar (modelo): voucher
 
 **Autorización** (`SolicitudAutorizacion`):
 Un pase de un solo uso para que un usuario haga, sobre registros concretos, lo que una regla le impide: anular o
-reasignar boletos sin el permiso, pasado su límite diario o con la salida ya pasada de hora; emitir cortesías sin
-el permiso o pasado su límite. La pide quien quedó bloqueado, con un motivo; la aprueba o la rechaza quien aprueba
-autorizaciones donde cae la operación; se usa sola al repetir la operación y vence a las 24 horas.
+reasignar boletos sin el permiso, pasado su límite diario, con la salida ya pasada de hora o en un estado que ya no
+lo permite (chequeado, en tránsito, finalizado, cancelado, o con la salida finalizada); emitir cortesías sin el
+permiso o pasado su límite; anular una encomienda que ya viajó. La pide quien quedó bloqueado, con un motivo; la
+aprueba o la rechaza quien aprueba autorizaciones donde cae la operación (sin permiso o fuera de estado, además
+tiene que poder hacerla ahí); se usa sola al repetir la operación y vence a las 24 horas.
 Estado: `pendiente → aprobada → usada`, o `rechazada`, `retirada`, `vencida`.
 _Avoid_: pase, permiso temporal, excepción
 Término de la tabla: **Autorización** (`SolicitudAutorizacion`)
-Modelo: nuevo. Detalle del modelo: Pase de un solo uso para lo que una regla le impide a un usuario: hacerlo sin el permiso, pasado su límite diario o fuera de hora (`Dispensa`), sobre registros concretos (boletos de una venta o una salida). La pide quien quedó bloqueado, la aprueba o rechaza quien tiene `autorizacion.aprobar` donde cae la operación, y se usa sola al repetir la operación. Vence a las 24 h. Ver ADR-040.
+Modelo: nuevo. Detalle del modelo: Pase de un solo uso para lo que una regla le impide a un usuario: hacerlo sin el permiso, pasado su límite diario, fuera de hora o fuera de estado (`Dispensa`), sobre registros concretos (boletos de una venta, una salida o encomiendas). La pide quien quedó bloqueado, la aprueba o rechaza quien tiene `autorizacion.aprobar` donde cae la operación (sin permiso o fuera de estado, además la capacidad de la operación ahí), y se usa sola al repetir la operación. Fuera de estado es, una vez, lo que el rol de sistema hace siempre (ADR-057). Vence a las 24 h. Ver ADR-040 y ADR-058.
 Evitar (modelo): pase, permiso temporal
 
 **Agencia**:
@@ -234,7 +236,7 @@ Evitar (modelo): compañía, operador
 ## Encomiendas
 
 **Encomienda**:
-Envío de paquetería en la bodega de los buses: remitente → destinatario, de un enclave a otro, con uno o más artículos (`EncomiendaArticulo`: paquete por peso o especial del catálogo). Modalidad `pagada` (factura al recibir), `por_cobrar` (factura al entregar), `interna` (sin cobro) o `con_boleto` (la lleva un pasajero y va en la factura de su venta). Estado `recibida → embarcada → transito → desembarcada → entregada` (transbordo: desembarcada → embarcada), `anulada` si no ha viajado (el rol de sistema, en cualquier estado, ADR-057). Cambia solo por una transición con nombre del workflow `encomienda` (`TransicionEncomienda`, `FlujoEncomienda`, ADR-038). Ver ADR-035.
+Envío de paquetería en la bodega de los buses: remitente → destinatario, de un enclave a otro, con uno o más artículos (`EncomiendaArticulo`: paquete por peso o especial del catálogo). Modalidad `pagada` (factura al recibir), `por_cobrar` (factura al entregar), `interna` (sin cobro) o `con_boleto` (la lleva un pasajero y va en la factura de su venta). Estado `recibida → embarcada → transito → desembarcada → entregada` (transbordo: desembarcada → embarcada), `anulada` si no ha viajado (el rol de sistema, en cualquier estado, ADR-057; los demás, con una autorización fuera de estado, ADR-058). Cambia solo por una transición con nombre del workflow `encomienda` (`TransicionEncomienda`, `FlujoEncomienda`, ADR-038). Ver ADR-035.
 _Avoid_: paquete, envio
 Modelo: nuevo
 **Bulto** / **Guía**:
@@ -273,10 +275,10 @@ Marcar al abordar cada boleto de una salida como presente (`chequeado`, o `trans
 _Avoid_: check-in
 Modelo: concepto
 **Reasignacion**:
-Cambio de asiento (de la misma salida o de otra) de boletos emitidos, antes de la hora de salida (después, con una autorización fuera de hora, ADR-040) y al mismo precio. El boleto original pasa a `reasignado` y el nuevo queda en la misma venta con `reasignadoDe`. Solo entre salidas de la misma empresa, también lo vendido en la página (`App\Venta\Reasignacion`, ADR-028). Un boleto pospuesto se reasigna aunque su salida ya haya pasado: así se reanuda. El rol de sistema reasigna un boleto en cualquier estado salvo anulado o reasignado; la salida destino sigue sus reglas (ADR-057).
+Cambio de asiento (de la misma salida o de otra) de boletos emitidos, antes de la hora de salida (después, con una autorización fuera de hora, ADR-040) y al mismo precio. El boleto original pasa a `reasignado` y el nuevo queda en la misma venta con `reasignadoDe`. Solo entre salidas de la misma empresa, también lo vendido en la página (`App\Venta\Reasignacion`, ADR-028). Un boleto pospuesto se reasigna aunque su salida ya haya pasado: así se reanuda. El rol de sistema reasigna un boleto en cualquier estado salvo anulado o reasignado; la salida destino sigue sus reglas (ADR-057). Los demás, una vez, con una autorización fuera de estado (ADR-058).
 Modelo: nuevo
 **Anulacion**:
-Cuando se invalida la compra de un asiento asi como su registro en la oficina tributaria: el boleto pasa a `anulado` (asiento libre), la factura se anula en Forcon (cubre toda la venta; si era conjunta y quedan boletos, se certifica otra con ellos) y a una agencia se le devuelve el precio. Solo antes de la hora de salida, salvo con una autorización (`App\Venta\Anulacion`, ADR-028, ADR-040) o para el rol de sistema, que anula en cualquier estado salvo anulado o reasignado (ADR-057).
+Cuando se invalida la compra de un asiento asi como su registro en la oficina tributaria: el boleto pasa a `anulado` (asiento libre), la factura se anula en Forcon (cubre toda la venta; si era conjunta y quedan boletos, se certifica otra con ellos) y a una agencia se le devuelve el precio. Solo antes de la hora de salida, salvo con una autorización (`App\Venta\Anulacion`, ADR-028, ADR-040) o para el rol de sistema, que anula en cualquier estado salvo anulado o reasignado (ADR-057); los demás, una vez, con una autorización fuera de estado (ADR-058).
 Modelo: nuevo
 **Bitácora**:
 Traza de solo agregar de una `Salida`, un `BoletoAsiento` o una tarifa (`BoletoTarifa`: creada, modificada, eliminada; ADR-045): operación (boleto: creado, anulado, reasignado, chequeado, tránsito, finalizado, cancelado, revertido; salida: creada, abordando, iniciada, finalizada, cancelada, cambio de bus, eliminada), usuario, fecha y detalle. La escribe un listener de Doctrine en la misma transacción (`App\Bitacora`, ADR-028).

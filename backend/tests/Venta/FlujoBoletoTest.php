@@ -8,6 +8,7 @@ use App\Acceso\Ambito;
 use App\Acceso\Autorizacion;
 use App\Acceso\Concesion;
 use App\Acceso\PermisosUsuario;
+use App\Autorizacion\DispensasEnCurso;
 use App\Entity\Agencia;
 use App\Entity\Asiento;
 use App\Entity\BoletoAsiento;
@@ -222,6 +223,31 @@ final class FlujoBoletoTest extends KernelTestCase
         $this->assertSame(EstadoBoletoAsiento::ANULADO, $finalizado->getEstado());
         $this->flujo->aplicar($transito, TransicionBoleto::CANCELAR, ["motivo" => "Prueba"]);
         $this->assertSame(EstadoBoletoAsiento::CANCELADO, $transito->getEstado());
+    }
+
+    public function testConAutorizacionFueraDeEstadoSeAnulaYReasignaComoConElRolDeSistema(): void
+    {
+        $finalizado = self::boleto(EstadoSalida::FINALIZADA, "-2 days", EstadoBoletoAsiento::FINALIZADO);
+        $chequeado = self::boleto(EstadoSalida::ABORDANDO, "-5 minutes", EstadoBoletoAsiento::CHEQUEADO);
+        $this->assertSame("boleto_no_emitido", $this->flujo->rechazo($finalizado, TransicionBoleto::ANULAR)?->codigo);
+
+        // Todos los boletos de prueba son el 7: la dispensa los cubre a todos (ADR-058).
+        self::getContainer()->get(DispensasEnCurso::class)->permitirFueraDeEstado(7);
+        foreach ([TransicionBoleto::ANULAR, TransicionBoleto::REASIGNAR] as $t) {
+            $this->assertNull($this->flujo->rechazo($finalizado, $t), $t->value);
+            $this->assertNull($this->flujo->rechazo($chequeado, $t), $t->value);
+        }
+        // Solo anular y reasignar: cancelar sigue sus reglas.
+        $this->assertSame("boleto_no_cancelable", $this->flujo->rechazo($finalizado, TransicionBoleto::CANCELAR)?->codigo);
+        // Lo que ya no tiene valor, tampoco.
+        $this->assertSame("boleto_no_emitido", $this->flujo->rechazo(self::boleto(EstadoSalida::PROGRAMADA, "+1 hour", EstadoBoletoAsiento::ANULADO), TransicionBoleto::ANULAR)?->codigo);
+        // Ni una venta que todavía se está procesando.
+        $pendiente = self::boleto(EstadoSalida::FINALIZADA, "-2 days", EstadoBoletoAsiento::FINALIZADO);
+        $pendiente->getBoletoVenta()->setEstado(EstadoBoletoVenta::PENDIENTE);
+        $this->assertSame("venta_en_proceso", $this->flujo->rechazo($pendiente, TransicionBoleto::ANULAR)?->codigo);
+
+        $this->flujo->aplicar($finalizado, TransicionBoleto::ANULAR, ["motivo" => "Prueba"]);
+        $this->assertSame(EstadoBoletoAsiento::ANULADO, $finalizado->getEstado());
     }
 
     /** Sesión de un usuario con el rol de sistema (sin base: sus permisos ya cargados). */

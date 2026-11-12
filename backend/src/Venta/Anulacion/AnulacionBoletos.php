@@ -14,6 +14,7 @@ use App\Autorizacion\Pases;
 use App\Encomienda\MovimientosEncomienda;
 use App\Entity\BoletoAsiento;
 use App\Entity\BoletoVenta;
+use App\Entity\Encomienda;
 use App\Entity\Enum\Dispensa;
 use App\Entity\Enum\EstadoBoletoAsiento;
 use App\Entity\Enum\EstadoFacturacion;
@@ -23,17 +24,16 @@ use App\Entity\SolicitudAutorizacion;
 use App\Entity\Usuario;
 use App\Venta\Agencia\SaldoAgencia;
 use App\Venta\Boleto\Flujo\FlujoBoleto;
+use App\Venta\Boleto\Flujo\PasesDelFlujo;
 use App\Venta\Excepcion\VentaRechazada;
 use App\Venta\Facturacion\CertificacionFallida;
 use App\Venta\Facturacion\Facturador;
 use App\Venta\PublicadorOcupacion;
-use App\Venta\ReglasBoletos;
 use App\Venta\Transaccion;
 use App\Vigilancia\ConteoDiario;
 use App\Vigilancia\UmbralesDiarios;
 use Doctrine\DBAL\LockMode;
 use Doctrine\ORM\EntityManagerInterface;
-use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -58,7 +58,9 @@ use Psr\Log\LoggerInterface;
  *
  * Sin el permiso sobre la venta, pasado el límite diario de anulaciones del
  * rol o con la salida ya pasada de hora, se anula con una autorización
- * aprobada (ADR-040), que se usa en la transacción de su venta.
+ * aprobada (ADR-040), que se usa en la transacción de su venta. Con una
+ * fuera de estado (ADR-058), como lo haría el rol de sistema: en cualquier
+ * estado con valor y sin mirar la salida, y sus encomiendas con ella.
  */
 final class AnulacionBoletos
 {
@@ -74,7 +76,7 @@ final class AnulacionBoletos
         private readonly Autorizacion $autorizacion,
         private readonly Pases $pases,
         private readonly DispensasEnCurso $dispensas,
-        private readonly ClockInterface $reloj,
+        private readonly PasesDelFlujo $pasesDelFlujo,
         private readonly ConteoDiario $conteo,
         private readonly UmbralesDiarios $umbrales,
     ) {}
@@ -168,7 +170,6 @@ final class AnulacionBoletos
             $grupos[(int) $b->getBoletoVenta()->getId()][] = $b;
         }
 
-        $ahora = $this->reloj->now();
         $hechas = null;
         $porVenta = [];
         foreach ($grupos as $ventaId => $seleccion) {
@@ -178,7 +179,12 @@ final class AnulacionBoletos
             if (!$puedeOperar($venta)) {
                 $pases[] = $this->pases->exigir($usuario, Autorizable::boletos(Capacidad::BOLETO_ANULAR, Dispensa::PERMISO, $boletoIds), "No puede anular boletos de esta venta.", "permiso");
             }
-            $pases = [...$pases, ...$this->exigirHora($seleccion, $usuario, $ahora)];
+            ["pases" => $porRegla, "fueraDeEstado" => $fueraDeEstado] = $this->pasesDelFlujo->exigir($seleccion, TransicionBoleto::ANULAR, Capacidad::BOLETO_ANULAR, $usuario);
+            $pases = [...$pases, ...$porRegla];
+            if ($fueraDeEstado !== []) {
+                // Sus encomiendas van con los boletos: se anulan con la venta en cualquier estado, como con el rol de sistema (ADR-058).
+                $this->dispensas->permitirEncomiendaFueraDeEstado(...array_map(static fn(Encomienda $e) => (int) $e->getId(), $venta->getEncomiendas()->toArray()));
+            }
             $limite = $this->autorizacion->de($usuario)->limite(Capacidad::BOLETO_ANULAR->value, Limite::ANULACIONES_POR_DIA, Ubicador::venta($venta));
             if ($limite !== null) {
                 $hechas ??= $this->conteo->anulados($usuario);
@@ -191,42 +197,6 @@ final class AnulacionBoletos
         }
 
         return $porVenta;
-    }
-
-    /**
-     * Lo que el flujo exige a cada boleto; si a alguno solo lo detiene la hora
-     * de su salida, la autorización fuera de hora que lo cubre (y la dispensa
-     * para el guard del flujo, que vale toda la petición).
-     *
-     * @param list<BoletoAsiento> $seleccion
-     *
-     * @return list<SolicitudAutorizacion>
-     */
-    private function exigirHora(array $seleccion, Usuario $usuario, \DateTimeImmutable $ahora): array
-    {
-        $fueraDeHora = [];
-        $rechazoHora = null;
-        foreach ($seleccion as $b) {
-            $rechazo = $this->flujo->rechazo($b, TransicionBoleto::ANULAR);
-            if ($rechazo === null) {
-                continue;
-            }
-            if (!ReglasBoletos::soloPorHora($b, $ahora)) {
-                throw $rechazo;
-            }
-            $fueraDeHora[] = (int) $b->getId();
-            $rechazoHora ??= $rechazo;
-        }
-        if ($rechazoHora === null) {
-            return [];
-        }
-        // Con la dispensa, que no lo detenga otra cosa (antes de pedir la autorización).
-        $this->dispensas->permitirFueraDeHora(...$fueraDeHora);
-        foreach ($seleccion as $b) {
-            $this->flujo->exigir($b, TransicionBoleto::ANULAR);
-        }
-
-        return [$this->pases->exigir($usuario, Autorizable::boletos(Capacidad::BOLETO_ANULAR, Dispensa::HORA, $fueraDeHora), $rechazoHora->getMessage(), $rechazoHora->codigo, 409)];
     }
 
     /** Boletos que anuló hoy `$usuario` (bitácora), para su límite diario. */

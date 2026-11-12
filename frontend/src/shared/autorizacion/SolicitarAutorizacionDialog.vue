@@ -25,6 +25,10 @@
           <dt>Boletos</dt>
           <dd class="tabular-nums">{{ a!.ids.join(', ') }}</dd>
         </template>
+        <template v-else-if="a!.sujeto === 'encomiendas'">
+          <dt>{{ a!.ids.length === 1 ? 'Encomienda' : 'Encomiendas' }}</dt>
+          <dd class="tabular-nums">{{ a!.ids.join(', ') }}</dd>
+        </template>
       </dl>
 
       <Message v-if="a!.pendiente" severity="info" :closable="false">

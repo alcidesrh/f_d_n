@@ -405,7 +405,8 @@ class ImportadorLegado
 
     /**
      * Con los enganches de la sincronización puestos en la migración (y
-     * quitados al terminar): lo de FDN no se trae. Nada se trae mientras haya
+     * quitados al terminar): lo de FDN no se trae (de sus encomiendas, solo
+     * los movimientos que el legado les hace). Nada se trae mientras haya
      * clientes sin llevar al legado: el id de uno de ellos puede ser allá el
      * de otra persona, y la migración los confundiría.
      */
@@ -416,12 +417,12 @@ class ImportadorLegado
         }
         $deFdn = static fn(array $fila): bool => str_starts_with((string) ($fila["identificador_web"] ?? ""), Traduccion::PREFIJO);
         $this->migrador->excluirBoletos($deFdn);
-        $this->encomiendas->excluir($deFdn);
+        $this->encomiendas->deAqui($deFdn);
         try {
             $trabajo();
         } finally {
             $this->migrador->excluirBoletos(null);
-            $this->encomiendas->excluir(null);
+            $this->encomiendas->deAqui(null);
         }
     }
 

@@ -141,18 +141,19 @@ export interface EstadoAccion {
  * ADR-037); aquí solo se suman el permiso de quien mira y las que no son
  * transiciones (correo, factura). Al operar, el backend vuelve a validar
  * lo que depende de quién y de la base (estación, asiento libre, venta
- * completa). Anular y reasignar sin el permiso, o con la salida ya pasada de
- * hora, se ofrecen con autorización (ADR-040).
+ * completa). Anular y reasignar sin el permiso, con la salida ya pasada de
+ * hora (ADR-040) o con el boleto o su salida en un estado que ya no lo
+ * permite (ADR-058) se ofrecen con autorización.
  */
 export function disponibilidad(b: BoletoFila | null, puede: PuedeBoleto): Record<AccionBoleto, EstadoAccion> {
   const sin = (motivo: string | null, visible = true): EstadoAccion => ({ visible, habilitada: motivo === null, motivo })
   const con = (permiso: boolean, motivo: string | null) => sin(permiso ? motivo : 'Sin permiso', permiso)
-  /** Anular o reasignar: lo que impide la falta de permiso o la hora se salva con una autorización. */
+  /** Anular o reasignar: lo que impide la falta de permiso, la hora o el estado se salva con una autorización. */
   const autorizable = (permiso: boolean, motivo: string | null): EstadoAccion => {
-    const porHora = motivo !== null && !!b?.fueraDeHora
-    if (permiso && !porHora) return sin(motivo)
-    if (motivo !== null && !porHora) return sin(motivo)
-    return { visible: true, habilitada: true, motivo: [permiso ? null : 'Sin permiso', porHora ? motivo : null, 'Requiere una autorización.'].filter(Boolean).join(' · '), conAutorizacion: true }
+    const porRegla = motivo !== null && (!!b?.fueraDeHora || !!b?.fueraDeEstado)
+    if (permiso && !porRegla) return sin(motivo)
+    if (motivo !== null && !porRegla) return sin(motivo)
+    return { visible: true, habilitada: true, motivo: [permiso ? null : 'Sin permiso', porRegla ? motivo : null, 'Requiere una autorización.'].filter(Boolean).join(' · '), conAutorizacion: true }
   }
 
   if (!b) {

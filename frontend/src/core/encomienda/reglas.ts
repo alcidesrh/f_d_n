@@ -32,6 +32,8 @@ export interface EstadoAccion {
   habilitada: boolean
   /** Por qué no se puede (tooltip). */
   motivo: string | null
+  /** Se puede solo con una autorización (ADR-058): se intenta y el backend la usa o dice qué pedir. */
+  conAutorizacion?: boolean
 }
 
 const si: EstadoAccion = { visible: true, habilitada: true, motivo: null }
@@ -68,6 +70,11 @@ export function disponibilidad(
   /** Con el permiso: primero lo que dice el backend, luego la estación. */
   const accion = (permiso: boolean, motivo: string | null, deOtra: string | null = null): EstadoAccion =>
     !permiso ? oculta : motivo !== null ? no(motivo) : deOtra !== null ? no(deOtra) : si
+  /** Anular la que ya viajó: lo impide solo su estado, se salva con una autorización fuera de estado (ADR-058). */
+  const anular = (deOtra: string | null): EstadoAccion =>
+    puede.anular && f.acciones.anular !== null && f.fueraDeEstado && deOtra === null
+      ? { visible: true, habilitada: true, motivo: `${f.acciones.anular} · Requiere una autorización.`, conAutorizacion: true }
+      : accion(puede.anular, f.acciones.anular, deOtra)
 
   return {
     consultar: si,
@@ -75,7 +82,7 @@ export function disponibilidad(
     // La estación donde se baja la comprueba el backend (una parada de su salida).
     desembarcar: accion(puede.embarcar, f.acciones.desembarcar),
     entregar: accion(puede.entregar, f.acciones.entregar, otra(f.destino.id, `La entrega la estación ${f.destino.nombre}`)),
-    anular: accion(puede.anular, f.acciones.anular, otra(f.origen.id, `La anula la estación ${f.origen.nombre}`)),
+    anular: anular(otra(f.origen.id, `La anula la estación ${f.origen.nombre}`)),
     recibo: si,
     guias: f.estado === 'anulada' ? no('Está anulada') : si,
     bitacora: si,

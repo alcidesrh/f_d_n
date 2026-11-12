@@ -1,6 +1,6 @@
 # ADR-040: Autorizaciones — pases de un solo uso para lo que una regla impide
 
-**Estado:** Aceptada (completa ADR-039; modifica la regla de hora de ADR-028 y ADR-037 con la dispensa «fuera de hora»)
+**Estado:** Aceptada (completa ADR-039; modifica la regla de hora de ADR-028 y ADR-037 con la dispensa «fuera de hora»). Ampliada por ADR-058: la dispensa «fuera de estado» y las encomiendas.
 
 ## Contexto
 

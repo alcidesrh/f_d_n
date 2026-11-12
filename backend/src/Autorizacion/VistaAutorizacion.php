@@ -48,9 +48,13 @@ final class VistaAutorizacion
     /** «Anular boletos (fuera de hora): 2 boletos de la venta 123». */
     public static function titulo(SolicitudAutorizacion $s): string
     {
-        $que = $s->getSujeto() === SolicitudAutorizacion::SUJETO_SALIDA
-            ? sprintf("%d asiento(s) de la salida %d", $s->getCantidad(), $s->getSujetoIds()[0] ?? 0)
-            : sprintf("%d boleto(s)%s", $s->getCantidad(), isset($s->getDetalle()["venta"]) ? sprintf(" de la venta %d", $s->getDetalle()["venta"]) : "");
+        $que = match ($s->getSujeto()) {
+            SolicitudAutorizacion::SUJETO_SALIDA => sprintf("%d asiento(s) de la salida %d", $s->getCantidad(), $s->getSujetoIds()[0] ?? 0),
+            SolicitudAutorizacion::SUJETO_ENCOMIENDAS => $s->getCantidad() === 1
+                ? sprintf("la encomienda %s", $s->getDetalle()["encomiendas"][0]["codigo"] ?? $s->getSujetoIds()[0] ?? "")
+                : sprintf("%d encomiendas", $s->getCantidad()),
+            default => sprintf("%d boleto(s)%s", $s->getCantidad(), isset($s->getDetalle()["venta"]) ? sprintf(" de la venta %d", $s->getDetalle()["venta"]) : ""),
+        };
 
         return sprintf("%s (%s): %s", ucfirst(ReglasAutorizacion::operacion($s->getCapacidad())), mb_strtolower($s->getDispensa()->etiqueta()), $que);
     }

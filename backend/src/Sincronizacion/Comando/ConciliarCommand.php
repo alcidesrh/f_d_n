@@ -24,6 +24,7 @@ final class ConciliarCommand
         "estadosDistintos" => "Boletos con estado distinto",
         "encomiendasFaltanAqui" => "Encomiendas del legado que faltan aquí",
         "encomiendasFaltanAlla" => "Encomiendas de aquí que faltan allá",
+        "facturasPorCuadrar" => "Ventas de aquí con su factura sin cuadrar allá (total repetido, filas o ticket que faltan)",
         "usuariosChocan" => "Usuarios con el mismo id y distinto nombre de usuario",
     ];
 

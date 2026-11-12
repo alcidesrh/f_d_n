@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace App\Autorizacion;
 
 use App\Acceso\Autorizacion;
+use App\Acceso\Capacidad;
 use App\Acceso\Ubicacion;
 use App\Acceso\Ubicador;
+use App\Encomienda\ReglasEncomienda;
 use App\Entity\BoletoAsiento;
 use App\Entity\Empresa;
+use App\Entity\Encomienda;
 use App\Entity\Enum\Dispensa;
 use App\Entity\Estacion;
 use App\Entity\Salida;
@@ -39,9 +42,22 @@ final class SujetosAutorizacion
      */
     public function de(Usuario $usuario, Autorizable $a): array
     {
-        $sujeto = $a->sujeto === SolicitudAutorizacion::SUJETO_SALIDA ? $this->salida($usuario, $a) : $this->boletos($a);
-        $this->exigirBloqueo($usuario, $a, $sujeto["ubicacion"], $sujeto["boletos"] ?? []);
-        unset($sujeto["boletos"]);
+        // Cada operación se pide sobre sus registros: las cortesías sobre una salida, anular encomiendas sobre encomiendas, lo demás sobre boletos.
+        $esperado = match ($a->capacidad) {
+            Capacidad::VENTA_CORTESIA => SolicitudAutorizacion::SUJETO_SALIDA,
+            Capacidad::ENCOMIENDA_ANULAR => SolicitudAutorizacion::SUJETO_ENCOMIENDAS,
+            default => SolicitudAutorizacion::SUJETO_BOLETOS,
+        };
+        if ($a->sujeto !== $esperado) {
+            throw new AutorizacionRechazada("Esa operación no se autoriza sobre esos registros.", "sujeto_invalido");
+        }
+        $sujeto = match ($a->sujeto) {
+            SolicitudAutorizacion::SUJETO_SALIDA => $this->salida($usuario, $a),
+            SolicitudAutorizacion::SUJETO_ENCOMIENDAS => $this->encomiendas($usuario, $a),
+            default => $this->boletos($a),
+        };
+        $this->exigirBloqueo($usuario, $a, $sujeto["ubicacion"], $sujeto["boletos"] ?? [], $sujeto["encomiendas"] ?? []);
+        unset($sujeto["boletos"], $sujeto["encomiendas"]);
 
         return $sujeto;
     }
@@ -105,13 +121,53 @@ final class SujetosAutorizacion
     }
 
     /**
+     * Encomiendas de una empresa (ADR-058). Cae donde el usuario opera sobre
+     * esa empresa, como al anularla (`EncomiendaController::puedeOperar`).
+     *
+     * @return array{ubicacion: Ubicacion, empresa: ?Empresa, estacion: ?Estacion, detalle: array<string, mixed>, encomiendas: list<Encomienda>}
+     */
+    private function encomiendas(Usuario $usuario, Autorizable $a): array
+    {
+        /** @var list<Encomienda> $encomiendas */
+        $encomiendas = $this->em->getRepository(Encomienda::class)->findBy(["id" => $a->ids], ["id" => "ASC"]);
+        if (count($encomiendas) !== count($a->ids)) {
+            throw new AutorizacionRechazada("Alguna encomienda no existe.", "no_encontrado", 404);
+        }
+        $empresa = $encomiendas[0]->getEmpresa();
+        foreach ($encomiendas as $e) {
+            if ($e->getEmpresa()?->getId() !== $empresa?->getId()) {
+                throw new AutorizacionRechazada("Pida una autorización por empresa: las encomiendas son de empresas distintas.", "empresas_distintas");
+            }
+        }
+
+        return [
+            "ubicacion" => Ubicador::operacion($empresa?->getId(), $usuario),
+            "empresa" => $empresa,
+            "estacion" => $usuario->getAgencia() === null ? $usuario->getEstacion() : null,
+            "detalle" => [
+                "encomiendas" => array_map(static fn(Encomienda $e) => [
+                    "id" => $e->getId(),
+                    "codigo" => $e->getCodigo(),
+                    "estado" => $e->getEstado()->value,
+                    "origen" => $e->getOrigen()?->getNombre(),
+                    "destino" => $e->getDestino()?->getNombre(),
+                    "salida" => $e->getSalida()?->getId(),
+                    "fecha" => $e->getSalida()?->getFecha()?->format(DATE_ATOM),
+                ], $encomiendas),
+            ],
+            "encomiendas" => $encomiendas,
+        ];
+    }
+
+    /**
      * Que la regla de la que se pide dispensa de verdad bloquee a `$usuario`.
      *
      * @param list<BoletoAsiento> $boletos
+     * @param list<Encomienda>    $encomiendas
      *
      * @throws AutorizacionRechazada
      */
-    private function exigirBloqueo(Usuario $usuario, Autorizable $a, Ubicacion $donde, array $boletos): void
+    private function exigirBloqueo(Usuario $usuario, Autorizable $a, Ubicacion $donde, array $boletos, array $encomiendas): void
     {
         $permisos = $this->autorizacion->de($usuario);
         $operacion = ReglasAutorizacion::operacion($a->capacidad);
@@ -127,7 +183,35 @@ final class SujetosAutorizacion
                 default => null,
             },
             Dispensa::HORA => $this->exigirSoloPorHora($boletos),
+            Dispensa::ESTADO => $this->exigirSoloPorEstado($boletos, $encomiendas),
         };
+    }
+
+    /**
+     * @param list<BoletoAsiento> $boletos
+     * @param list<Encomienda>    $encomiendas
+     *
+     * @throws AutorizacionRechazada
+     */
+    private function exigirSoloPorEstado(array $boletos, array $encomiendas): void
+    {
+        $ahora = $this->reloj->now();
+        foreach ($boletos as $b) {
+            if (!ReglasBoletos::soloPorEstado($b, $ahora)) {
+                throw new AutorizacionRechazada(
+                    sprintf("El boleto del asiento %s no necesita autorización fuera de estado: o ya se puede, o basta la de fuera de hora, o ni con ella se puede (está %s).", $b->getAsiento()?->getNumero(), $b->getEstado()->value),
+                    "sin_bloqueo",
+                );
+            }
+        }
+        foreach ($encomiendas as $e) {
+            if (!ReglasEncomienda::soloPorEstado($e)) {
+                throw new AutorizacionRechazada(
+                    sprintf("La encomienda %s no necesita autorización fuera de estado: o ya se puede anular, o ni con ella se puede (está %s).", $e->getCodigo(), mb_strtolower($e->getEstado()->etiqueta())),
+                    "sin_bloqueo",
+                );
+            }
+        }
     }
 
     /**

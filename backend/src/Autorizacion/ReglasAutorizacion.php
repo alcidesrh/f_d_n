@@ -19,7 +19,8 @@ use App\Entity\SolicitudAutorizacion;
  * - Quién resuelve una solicitud: quien tiene `autorizacion.aprobar` donde
  *   cae la operación y no la pidió él. Si dispensa del permiso, además tiene
  *   que tener esa capacidad ahí (dos personas no hacen juntas lo que ninguna
- *   puede); para el límite o la hora basta con aprobar.
+ *   puede); fuera de estado, también (ADR-058); para el límite o la hora
+ *   basta con aprobar.
  * - Qué cubre un pase: el mismo solicitante, operación, regla y tipo de
  *   registro, todos los registros pedidos y no más unidades.
  */
@@ -46,8 +47,12 @@ final class ReglasAutorizacion
         if (!$permisos->puede(Capacidad::AUTORIZACION_APROBAR->value, $donde)) {
             return "No aprueba autorizaciones de esa empresa o estación.";
         }
-        if ($s->getDispensa() === Dispensa::PERMISO && !$permisos->puede($s->getCapacidad(), $donde)) {
-            return sprintf("Para autorizar «%s» sin permiso tiene que poder hacerlo usted ahí.", self::operacion($s->getCapacidad()));
+        if (in_array($s->getDispensa(), [Dispensa::PERMISO, Dispensa::ESTADO], true) && !$permisos->puede($s->getCapacidad(), $donde)) {
+            return sprintf(
+                "Para autorizar «%s» %s tiene que poder hacerlo usted ahí.",
+                self::operacion($s->getCapacidad()),
+                $s->getDispensa() === Dispensa::PERMISO ? "sin permiso" : "fuera de estado",
+            );
         }
 
         return null;

@@ -1,8 +1,8 @@
 /** Contratos de las autorizaciones, pases de un solo uso (`/api/autorizaciones`, ADR-040). */
 
-export type Dispensa = 'permiso' | 'limite' | 'hora'
+export type Dispensa = 'permiso' | 'limite' | 'hora' | 'estado'
 export type EstadoAutorizacion = 'pendiente' | 'aprobada' | 'rechazada' | 'usada' | 'retirada' | 'vencida'
-export type SujetoAutorizacion = 'boletos' | 'salida'
+export type SujetoAutorizacion = 'boletos' | 'salida' | 'encomiendas'
 export type VistaAutorizaciones = 'por-resolver' | 'mias' | 'todas'
 
 /**
@@ -33,6 +33,16 @@ export interface BoletoAutorizacion {
   pasajero: string | null
 }
 
+export interface EncomiendaAutorizacion {
+  id: number
+  codigo: string
+  estado: string
+  origen: string | null
+  destino: string | null
+  salida: number | null
+  fecha: string | null
+}
+
 export interface Autorizacion {
   id: number
   capacidad: string
@@ -45,6 +55,7 @@ export interface Autorizacion {
   detalle: {
     venta?: number
     boletos?: BoletoAutorizacion[]
+    encomiendas?: EncomiendaAutorizacion[]
     salida?: { id: number; fecha: string | null; ruta: string | null; bus: string | null }
     asientos?: number
   }

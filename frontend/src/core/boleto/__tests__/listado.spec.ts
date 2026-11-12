@@ -104,6 +104,12 @@ describe('acciones del panel', () => {
     expect(tarde.anular).toMatchObject({ habilitada: true, conAutorizacion: true })
     expect(tarde.anular.motivo).toContain('Requiere una autorización')
 
+    // Chequeado, en tránsito, finalizado o con la salida finalizada: fuera de estado (ADR-058).
+    const porEstado = 'El boleto 7 (asiento 12) está finalizado: solo se opera sobre boletos emitidos o pospuestos.'
+    const finalizado = disponibilidad(boleto({ estado: 'finalizado', fueraDeEstado: true, acciones: { ...LIBRES, anular: porEstado, reasignar: porEstado } }), TODO)
+    expect(finalizado.anular).toMatchObject({ habilitada: true, conAutorizacion: true, motivo: `${porEstado} · Requiere una autorización.` })
+    expect(finalizado.reasignar).toMatchObject({ habilitada: true, conAutorizacion: true })
+
     // Lo que ni con autorización se puede (un anulado) sigue deshabilitado, con su motivo.
     const anulado = disponibilidad(boleto({ estado: 'anulado', acciones: { ...LIBRES, anular: 'El boleto está anulado' } }), { ...TODO, anular: false })
     expect(anulado.anular).toEqual({ visible: true, habilitada: false, motivo: 'El boleto está anulado' })

@@ -70,6 +70,13 @@ final class AutorizacionTest extends TestCase
         // Una cortesía no tiene hora que dispensar, y programar salidas no se autoriza por excepción.
         $this->assertSame('no_autorizable', $this->codigo(fn() => ReglasAutorizacion::exigirAutorizable(Capacidad::VENTA_CORTESIA, Dispensa::HORA)));
         $this->assertSame('no_autorizable', $this->codigo(fn() => ReglasAutorizacion::exigirAutorizable(Capacidad::SALIDA_CREAR, Dispensa::PERMISO)));
+        // Fuera de estado (ADR-058): anular y reasignar boletos, anular encomiendas; nada más de las encomiendas.
+        $this->assertNull($this->codigo(fn() => ReglasAutorizacion::exigirAutorizable(Capacidad::BOLETO_ANULAR, Dispensa::ESTADO)));
+        $this->assertNull($this->codigo(fn() => ReglasAutorizacion::exigirAutorizable(Capacidad::BOLETO_REASIGNAR, Dispensa::ESTADO)));
+        $this->assertNull($this->codigo(fn() => ReglasAutorizacion::exigirAutorizable(Capacidad::ENCOMIENDA_ANULAR, Dispensa::ESTADO)));
+        $this->assertSame('no_autorizable', $this->codigo(fn() => ReglasAutorizacion::exigirAutorizable(Capacidad::BOLETO_CANCELAR, Dispensa::ESTADO)));
+        $this->assertSame('no_autorizable', $this->codigo(fn() => ReglasAutorizacion::exigirAutorizable(Capacidad::VENTA_CORTESIA, Dispensa::ESTADO)));
+        $this->assertSame('no_autorizable', $this->codigo(fn() => ReglasAutorizacion::exigirAutorizable(Capacidad::ENCOMIENDA_ANULAR, Dispensa::PERMISO)));
         // Cada límite que se puede pasar con una autorización es de una capacidad que lo admite.
         foreach (Capacidad::cases() as $c) {
             if (in_array(Dispensa::LIMITE, $c->dispensas(), true)) {
@@ -148,6 +155,13 @@ final class AutorizacionTest extends TestCase
         $this->assertNull(ReglasAutorizacion::rechazoParaResolver($aprueba, 2, $hora), 'fuera de hora basta con aprobar');
         $this->assertNotNull(ReglasAutorizacion::rechazoParaResolver($aprueba, 2, $permiso), 'sin permiso: tiene que poder hacerlo');
         $this->assertNull(ReglasAutorizacion::rechazoParaResolver(self::permisos(['autorizacion.aprobar', 'boleto.anular'], new Ambito([1], [10])), 2, $permiso));
+        // Fuera de estado, como sin permiso: quien aprueba tiene que poder hacerlo ahí (ADR-058).
+        $estado = self::solicitud(Autorizable::boletos(Capacidad::BOLETO_ANULAR, Dispensa::ESTADO, [3]), $donde);
+        $this->assertSame('Para autorizar «anular boletos» fuera de estado tiene que poder hacerlo usted ahí.', ReglasAutorizacion::rechazoParaResolver($aprueba, 2, $estado));
+        $this->assertNull(ReglasAutorizacion::rechazoParaResolver(self::permisos(['autorizacion.aprobar', 'boleto.anular'], new Ambito([1], [10])), 2, $estado));
+        $encomienda = self::solicitud(Autorizable::encomiendas(Capacidad::ENCOMIENDA_ANULAR, Dispensa::ESTADO, [8]), $donde);
+        $this->assertNotNull(ReglasAutorizacion::rechazoParaResolver(self::permisos(['autorizacion.aprobar', 'boleto.anular'], new Ambito([1], [10])), 2, $encomienda));
+        $this->assertNull(ReglasAutorizacion::rechazoParaResolver(self::permisos(['autorizacion.aprobar', 'encomienda.anular'], new Ambito([1], [10])), 2, $encomienda));
 
         $this->assertNotNull(ReglasAutorizacion::rechazoParaResolver($aprueba, 1, $hora), 'no resuelve la suya');
         $this->assertNotNull(ReglasAutorizacion::rechazoParaResolver(self::permisos(['autorizacion.aprobar'], new Ambito([2], null)), 2, $hora), 'otra empresa');
@@ -172,6 +186,11 @@ final class AutorizacionTest extends TestCase
         $this->assertSame('anular boletos', $a->toArray()['operacion']);
         $this->assertSame('dispensa_invalida', $this->codigo(fn() => Autorizable::desdeArray(['capacidad' => 'boleto.anular', 'dispensa' => 'magia', 'sujeto' => 'boletos', 'ids' => [1]])));
         $this->assertSame('sin_registros', $this->codigo(fn() => Autorizable::desdeArray(['capacidad' => 'boleto.anular', 'dispensa' => 'hora', 'sujeto' => 'boletos', 'ids' => []])));
+        $e = Autorizable::desdeArray(['capacidad' => 'encomienda.anular', 'dispensa' => 'estado', 'sujeto' => 'encomiendas', 'ids' => [8]]);
+        $this->assertSame(SolicitudAutorizacion::SUJETO_ENCOMIENDAS, $e->sujeto);
+        $this->assertSame(Dispensa::ESTADO, $e->dispensa);
+        $this->assertSame('Fuera de estado', $e->toArray()['dispensaNombre']);
+        $this->assertSame('anular encomiendas', $e->toArray()['operacion']);
 
         $donde = Ubicacion::empresa(null)->conEstacion(10)->conAgencia(null);
         $this->assertSame($donde->toArray(), Ubicacion::desdeArray($donde->toArray())->toArray());

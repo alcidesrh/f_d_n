@@ -485,12 +485,18 @@ class Migrador
         $facturaId = null;
         if (Mapeador::facturaCertificada($old)) {
             $uuid = strtolower(trim((string) $old["fg_uuid"]));
-            $ventaExistente = $this->newConn->fetchOne(
-                "SELECT v.id FROM boleto_venta v JOIN factura f ON f.id = v.factura_id WHERE f.uuid = :uuid",
+            $existente = $this->newConn->fetchAssociative(
+                "SELECT v.id, v.factura_id FROM boleto_venta v JOIN factura f ON f.id = v.factura_id WHERE f.uuid = :uuid",
                 ["uuid" => $uuid],
             );
-            if ($ventaExistente !== false) {
-                return $this->ventasPorFactura[$fg] = (int) $ventaExistente;
+            if ($existente !== false) {
+                // Otra fila del mismo DTE (venta de varios boletos): el total es el mayor (`Mapeador::totalFactura`).
+                $this->newConn->executeStatement(
+                    "UPDATE factura SET total_monto = :total WHERE id = :id AND total_monto < :total",
+                    ["total" => Mapeador::totalFactura($old), "id" => $existente["factura_id"]],
+                );
+
+                return $this->ventasPorFactura[$fg] = (int) $existente["id"];
             }
             $facturaId = $this->crearFactura($old, $comprador, $empresaSalida, $contadores);
         }

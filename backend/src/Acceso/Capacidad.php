@@ -165,15 +165,16 @@ enum Capacidad: string
 
     /**
      * De qué reglas puede dispensar una autorización al operar con esta
-     * capacidad (ADR-040). Vacío: no se autoriza por excepción.
+     * capacidad (ADR-040, ADR-058). Vacío: no se autoriza por excepción.
      *
      * @return list<Dispensa>
      */
     public function dispensas(): array
     {
         return match ($this) {
-            self::BOLETO_ANULAR, self::BOLETO_REASIGNAR => [Dispensa::PERMISO, Dispensa::LIMITE, Dispensa::HORA],
+            self::BOLETO_ANULAR, self::BOLETO_REASIGNAR => [Dispensa::PERMISO, Dispensa::LIMITE, Dispensa::HORA, Dispensa::ESTADO],
             self::VENTA_CORTESIA => [Dispensa::PERMISO, Dispensa::LIMITE],
+            self::ENCOMIENDA_ANULAR => [Dispensa::ESTADO],
             default => [],
         };
     }

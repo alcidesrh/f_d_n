@@ -74,7 +74,7 @@ final class ConsultaBoletos
         $cliente = $b->getCliente();
 
         $motivo = null;
-        // Lo que lo impide pero se puede salvar con una autorización (ADR-040): sin el permiso o fuera de hora.
+        // Lo que lo impide pero se puede salvar con una autorización (ADR-040, ADR-058): sin el permiso, fuera de hora o fuera de estado.
         $conAutorizacion = null;
         try {
             if (!$puedeOperar($venta)) {
@@ -89,8 +89,12 @@ final class ConsultaBoletos
                 : ReglasBoletos::exigirOperable($b, $this->reloj->now(), "operar sobre el boleto");
         } catch (VentaRechazada $e) {
             $motivo = $e->getMessage();
-            if (!$sistema && $conAutorizacion === null && $venta->getEstado() === EstadoBoletoVenta::CONFIRMADA && ReglasBoletos::soloPorHora($b, $this->reloj->now())) {
-                $conAutorizacion = Dispensa::HORA->value;
+            if (!$sistema && $conAutorizacion === null && $venta->getEstado() === EstadoBoletoVenta::CONFIRMADA) {
+                $conAutorizacion = match (true) {
+                    ReglasBoletos::soloPorHora($b, $this->reloj->now()) => Dispensa::HORA->value,
+                    ReglasBoletos::soloPorEstado($b, $this->reloj->now()) => Dispensa::ESTADO->value,
+                    default => null,
+                };
             }
         }
 

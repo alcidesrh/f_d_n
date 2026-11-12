@@ -463,9 +463,21 @@ class Mapeador
             "emisor_nombre_comercial" => $this->truncate($emisor["nombre_comercial"], 255),
             "receptop_nit" => $this->truncate($nit, 25),
             "receptor_nombre" => $this->truncate(trim((string) ($receptor["nombre"] ?? "")) ?: ($nit === "CF" ? "Consumidor final" : "Sin nombre"), 255),
-            "total_monto" => max(0, (int) round(((float) ($old["fg_total"] ?? 0)) * 100)),
+            "total_monto" => self::totalFactura($old),
             "total_moneda" => "GTQ",
         ];
+    }
+
+    /**
+     * Importe (centavos) de la `factura_generada` del boleto. En una venta de
+     * varios boletos el legado deja una por boleto con el mismo DTE: el total
+     * en una y 0 en las demás (`boletos_ticket`). El total del DTE es el
+     * mayor de sus filas: quien crea o encuentra la factura de aquí por su
+     * UUID la sube a este si es menor.
+     */
+    public static function totalFactura(array $old): int
+    {
+        return max(0, (int) round(((float) ($old["fg_total"] ?? 0)) * 100));
     }
 
     /** El boleto del legado se emitió con voucher (no se cobró). */

@@ -85,6 +85,18 @@ describe('disponibilidad de acciones', () => {
     expect(a.embarcar.visible).toBe(false)
     expect(a.consultar.visible).toBe(true)
   })
+
+  it('la que ya viajó se anula con una autorización fuera de estado (ADR-058)', () => {
+    const entregada = fila({ estado: 'entregada', ubicacion: null, acciones: { ...EN_DESTINO, entregar: 'Ya se entregó.' }, fueraDeEstado: true })
+    const a = disponibilidad(entregada, TODO, GUATE.id)
+    expect(a.anular).toMatchObject({ visible: true, habilitada: true, conAutorizacion: true })
+    expect(a.anular.motivo).toBe(`${EN_DESTINO.anular} · Requiere una autorización.`)
+    // La estación de origen se sigue exigiendo; sin el permiso, ni se ofrece.
+    expect(disponibilidad(entregada, TODO, FLORES.id).anular).toEqual({ visible: true, habilitada: false, motivo: EN_DESTINO.anular })
+    expect(disponibilidad(entregada, { ...TODO, anular: false }, null).anular.visible).toBe(false)
+    // Sin `fueraDeEstado` (p. ej. la que va con un boleto), como siempre.
+    expect(disponibilidad({ ...entregada, fueraDeEstado: false }, TODO, null).anular).toEqual({ visible: true, habilitada: false, motivo: EN_DESTINO.anular })
+  })
 })
 
 describe('artículos', () => {

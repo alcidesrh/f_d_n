@@ -18,6 +18,12 @@ use Doctrine\DBAL\Connection;
  * estaban: estado (anulado, chequeado, reasignado…), de qué boleto viene una
  * reasignación y la factura que se certificó después de vender.
  *
+ * Un boleto que se vendió aquí (`FDN:`) es de aquí: el legado no deja
+ * anularlo ni reasignarlo, y su venta y su factura las lleva este sistema.
+ * De él solo se trae lo que el legado todavía le hace (chequearlo, ponerlo
+ * en tránsito, cancelarlo o revertirlo); si llegara otra cosa, no se aplica
+ * y la conciliación la muestra como estado distinto.
+ *
  * Escribe con DBAL (no vuelve al legado) y anota cada cambio en la bitácora
  * del boleto con `detalle.legado`.
  */
@@ -35,6 +41,9 @@ class ActualizadorBoletos
 
     /** Estados que no cuentan en el total de la venta (como en la migración). */
     private const SIN_COBRO = ["anulado", "reasignado"];
+
+    /** Lo que el legado no le hace a un boleto vendido aquí. */
+    private const NO_DESDE_EL_LEGADO = [EstadoBoletoAsiento::ANULADO, EstadoBoletoAsiento::REASIGNADO];
 
     public function __construct(
         private readonly Connection $db,
@@ -71,6 +80,13 @@ class ActualizadorBoletos
         $ventas = [];
         foreach ($this->filasLegado(array_keys($aqui)) as $old) {
             $b = $aqui[(string) $old["id"]];
+            if (str_starts_with((string) ($old["identificador_web"] ?? ""), Traduccion::PREFIJO)) {
+                // Vendido aquí: su venta, su factura y su reasignación no vienen del legado.
+                if ($this->db->transactional(fn(): bool => $this->estado($old, $b, self::NO_DESDE_EL_LEGADO))) {
+                    $contadores["boleto_actualizado"]++;
+                }
+                continue;
+            }
             $this->db->transactional(function () use ($old, $b, &$contadores, &$ventas) {
                 if ($this->estado($old, $b)) {
                     $contadores["boleto_actualizado"]++;
@@ -102,14 +118,15 @@ class ActualizadorBoletos
      * El estado del legado, si es otro. Lo que allá no se distingue no se
      * pisa: finalizado aquí es tránsito allá y pospuesto es cancelado.
      *
-     * @param array<string, mixed> $old
-     * @param array<string, mixed> $b
+     * @param array<string, mixed>       $old
+     * @param array<string, mixed>       $b
+     * @param list<EstadoBoletoAsiento> $excepto estados que no se traen
      */
-    private function estado(array $old, array $b): bool
+    private function estado(array $old, array $b, array $excepto = []): bool
     {
         $nuevo = self::ESTADOS[(int) $old["estado_id"]] ?? null;
         $actual = EstadoBoletoAsiento::from((string) $b["estado"]);
-        if ($nuevo === null || Traduccion::estadoBoleto($actual) === (int) $old["estado_id"]) {
+        if ($nuevo === null || in_array($nuevo, $excepto, true) || Traduccion::estadoBoleto($actual) === (int) $old["estado_id"]) {
             return false;
         }
         $this->db->executeStatement("UPDATE boleto_asiento SET estado = :e WHERE id = :id", ["e" => $nuevo->value, "id" => $b["id"]]);
@@ -146,7 +163,8 @@ class ActualizadorBoletos
     /**
      * La factura del legado se certificó después de que el boleto llegó
      * aquí: se crea y se le pone a la venta (o se toma la que ya existe con
-     * ese UUID).
+     * ese UUID, con el mayor importe de sus filas: en una venta de varios
+     * boletos el legado pone el total en una y 0 en las demás).
      *
      * @param array<string, mixed> $old
      */
@@ -172,6 +190,11 @@ class ActualizadorBoletos
             $campos = implode(", ", array_keys($datos));
             $args = implode(", ", array_map(static fn($k) => ":{$k}", array_keys($datos)));
             $factura = $this->db->fetchOne("INSERT INTO factura ({$campos}) VALUES ({$args}) RETURNING id", $datos);
+        } else {
+            $this->db->executeStatement(
+                "UPDATE factura SET total_monto = :total WHERE id = :id AND total_monto < :total",
+                ["total" => Mapeador::totalFactura($old), "id" => $factura],
+            );
         }
         $this->db->executeStatement(
             "UPDATE boleto_venta SET factura_id = :f, estado_facturacion = 'certificada' WHERE id = :id AND factura_id IS NULL",
@@ -189,7 +212,7 @@ class ActualizadorBoletos
     private function filasLegado(array $ids): array
     {
         return $this->legado->filas(
-            "SELECT b.id, b.estado_id, b.reasignado_id,
+            "SELECT b.id, b.estado_id, b.reasignado_id, b.identificador_web,
                     CONVERT(varchar(19), b.fecha_creacion, 120) AS fecha_creacion,
                     CONVERT(varchar(19), b.fecha_actualizacion, 120) AS fecha_actualizacion,
                     LEFT(LTRIM(RTRIM(CONCAT(u.names, ' ', u.surnames))), 100) AS usuario_nombre,

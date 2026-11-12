@@ -1,6 +1,6 @@
 <!--
   Una autorización (ADR-040): qué se pide y por qué regla, quién y por qué
-  la pidió, sobre qué boletos o salida, y en qué quedó (quién la resolvió,
+  la pidió, sobre qué boletos, salida o encomiendas, y en qué quedó (quién la resolvió,
   su nota o motivo, cuándo vence o cuándo se usó). Las acciones las decide
   el backend (`acciones`): aprobar/rechazar quien puede resolverla,
   retirar quien la pidió.
@@ -39,6 +39,13 @@
           >{{ b.ruta }}<template v-if="b.fecha"> · {{ fecha(b.fecha) }}</template> · salida {{ b.salida }}</span
         >
         <span v-if="b.pasajero" class="text-muted-color">{{ b.pasajero }}</span>
+      </li>
+    </ul>
+    <ul v-else-if="a.detalle.encomiendas?.length" class="aut__registros">
+      <li v-for="e in a.detalle.encomiendas" :key="e.id">
+        <span class="font-medium tabular-nums">Encomienda {{ e.codigo }}</span>
+        <span>{{ e.origen }} → {{ e.destino }} · {{ e.estado }}</span>
+        <span v-if="e.salida" class="text-muted-color">salida {{ e.salida }}<template v-if="e.fecha"> · {{ fecha(e.fecha) }}</template></span>
       </li>
     </ul>
     <p v-else-if="a.detalle.salida" class="m-0 text-sm">

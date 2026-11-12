@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Encomienda;
 
 use App\Entity\Encomienda;
+use App\Entity\Enum\EstadoEncomienda;
 use App\Entity\Enum\EstadoSalida;
 use App\Entity\Enum\ModalidadEncomienda;
 use App\Entity\Enum\TransicionEncomienda;
@@ -61,6 +62,19 @@ final class ReglasEncomienda
                 ? null
                 : new EncomiendaRechazada("Solo la encomienda que va con un boleto se anula con su venta.", "sin_boleto"),
         };
+    }
+
+    /**
+     * ¿Solo su estado impide anularla? (ya viajó, va a bordo o se entregó).
+     * Si el rol de sistema sí la anula (ADR-057), se puede con una
+     * autorización fuera de estado (ADR-058). La anulada no: eso lo cierra la
+     * máquina, no el guard.
+     */
+    public static function soloPorEstado(Encomienda $e): bool
+    {
+        return $e->getEstado() !== EstadoEncomienda::ANULADA
+            && self::rechazo(TransicionEncomienda::ANULAR, $e) !== null
+            && self::rechazo(TransicionEncomienda::ANULAR, $e, true) === null;
     }
 
     /**

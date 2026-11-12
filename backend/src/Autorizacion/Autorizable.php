@@ -36,6 +36,15 @@ final class Autorizable
         return new self($capacidad, $dispensa, SolicitudAutorizacion::SUJETO_BOLETOS, $ids, count($ids));
     }
 
+    /** Sobre encomiendas: cubre esas encomiendas (una por unidad). @param list<int> $encomiendas */
+    public static function encomiendas(Capacidad $capacidad, Dispensa $dispensa, array $encomiendas): self
+    {
+        $ids = array_values(array_unique(array_map("intval", $encomiendas)));
+        sort($ids);
+
+        return new self($capacidad, $dispensa, SolicitudAutorizacion::SUJETO_ENCOMIENDAS, $ids, count($ids));
+    }
+
     /** Sobre una salida: `$cantidad` asientos (cortesías). */
     public static function salida(Capacidad $capacidad, Dispensa $dispensa, int $salidaId, int $cantidad): self
     {
@@ -62,6 +71,7 @@ final class Autorizable
 
         return match ((string) ($datos["sujeto"] ?? "")) {
             SolicitudAutorizacion::SUJETO_BOLETOS => self::boletos($capacidad, $dispensa, $ids),
+            SolicitudAutorizacion::SUJETO_ENCOMIENDAS => self::encomiendas($capacidad, $dispensa, $ids),
             SolicitudAutorizacion::SUJETO_SALIDA => self::salida($capacidad, $dispensa, $ids[0], (int) ($datos["cantidad"] ?? 1)),
             default => throw new AutorizacionRechazada("Indique sobre qué registros pide la autorización.", "sujeto_invalido"),
         };

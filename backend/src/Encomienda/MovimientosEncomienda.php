@@ -4,10 +4,15 @@ declare(strict_types=1);
 
 namespace App\Encomienda;
 
+use App\Acceso\Capacidad;
+use App\Autorizacion\Autorizable;
+use App\Autorizacion\DispensasEnCurso;
+use App\Autorizacion\Pases;
 use App\Bitacora\RegistradorBitacora;
 use App\Entity\BoletoVenta;
 use App\Entity\Cliente;
 use App\Entity\Encomienda;
+use App\Entity\Enum\Dispensa;
 use App\Entity\Enum\EstadoEncomienda;
 use App\Entity\Enum\EstadoFacturacion;
 use App\Entity\Enum\ModalidadEncomienda;
@@ -15,9 +20,11 @@ use App\Entity\Enum\TransicionEncomienda;
 use App\Entity\Estacion;
 use App\Entity\Moneda;
 use App\Entity\Salida;
+use App\Entity\SolicitudAutorizacion;
 use App\Entity\TipoPago;
 use App\Entity\Usuario;
 use App\Venta\Excepcion\FacturacionFallida;
+use App\Venta\Excepcion\VentaRechazada;
 use App\Venta\Facturacion\CertificacionFallida;
 use App\Venta\Facturacion\Facturador;
 use App\Venta\ReglasVenta;
@@ -43,6 +50,8 @@ final class MovimientosEncomienda
         private readonly Facturador $facturador,
         private readonly ReglasVenta $reglasVenta,
         private readonly ClockInterface $reloj,
+        private readonly Pases $pases,
+        private readonly DispensasEnCurso $dispensas,
     ) {}
 
     /**
@@ -249,9 +258,12 @@ final class MovimientosEncomienda
 
     /**
      * Anula una encomienda que no ha viajado. La pagada anula antes su factura
-     * en el certificador (si falla, no cambia nada).
+     * en el certificador (si falla, no cambia nada). La que ya viajó (a bordo,
+     * en otra bodega o entregada) se anula con una autorización fuera de
+     * estado (ADR-058), como lo haría el rol de sistema; se usa en la
+     * transacción de la anulación.
      *
-     * @throws EncomiendaRechazada
+     * @throws EncomiendaRechazada|VentaRechazada con `autorizable` si hace falta la autorización
      */
     public function anular(int $id, string $motivo, Usuario $usuario): Encomienda
     {
@@ -260,7 +272,7 @@ final class MovimientosEncomienda
             throw new EncomiendaRechazada("Indique el motivo de la anulación.");
         }
         $encomienda = $this->em->find(Encomienda::class, $id) ?? throw new EncomiendaRechazada("La encomienda no existe.", "no_encontrado", 404);
-        $this->flujo->exigir($encomienda, TransicionEncomienda::ANULAR);
+        $pase = $this->exigirAnulable($encomienda, $usuario);
         ReglasEncomienda::exigirEstacion($usuario->getEstacion()?->getId(), $encomienda->getOrigen()?->getId(), "La anula un usuario de la estación de origen.");
 
         if ($encomienda->getFactura() !== null && !$encomienda->getFactura()->isAnulada()) {
@@ -273,12 +285,38 @@ final class MovimientosEncomienda
             $this->em->flush();
         }
 
-        $this->transaccion->ejecutar(function () use ($encomienda, $motivo) {
+        $this->transaccion->ejecutar(function () use ($encomienda, $motivo, $pase, $usuario) {
             $this->em->lock($encomienda, LockMode::PESSIMISTIC_WRITE);
-            $this->anularEnTransaccion($encomienda, TransicionEncomienda::ANULAR, $motivo);
+            if ($pase !== null) {
+                $this->pases->usar($pase, $usuario);
+            }
+            $this->anularEnTransaccion($encomienda, TransicionEncomienda::ANULAR, $motivo, $pase === null ? [] : ["autorizaciones" => [(int) $pase->getId()]]);
         });
 
         return $encomienda;
+    }
+
+    /**
+     * Lo que el flujo exige para anularla; si solo la detiene su estado (ya
+     * viajó), la autorización fuera de estado que la cubre, y la dispensa
+     * para el guard del flujo (vale toda la petición).
+     *
+     * @throws EncomiendaRechazada|VentaRechazada
+     */
+    private function exigirAnulable(Encomienda $e, Usuario $usuario): ?SolicitudAutorizacion
+    {
+        $rechazo = $this->flujo->rechazo($e, TransicionEncomienda::ANULAR);
+        if ($rechazo === null) {
+            return null;
+        }
+        if (!ReglasEncomienda::soloPorEstado($e)) {
+            throw $rechazo;
+        }
+        // Con la dispensa, que no la detenga otra cosa (antes de pedir la autorización).
+        $this->dispensas->permitirEncomiendaFueraDeEstado((int) $e->getId());
+        $this->flujo->exigir($e, TransicionEncomienda::ANULAR);
+
+        return $this->pases->exigir($usuario, Autorizable::encomiendas(Capacidad::ENCOMIENDA_ANULAR, Dispensa::ESTADO, [(int) $e->getId()]), $rechazo->getMessage(), $rechazo->codigo, 409);
     }
 
     /**
@@ -311,9 +349,10 @@ final class MovimientosEncomienda
         }
     }
 
-    private function anularEnTransaccion(Encomienda $e, TransicionEncomienda $transicion, string $motivo): void
+    /** @param array<string, mixed> $bitacora lo que se suma al contexto de la transición (las autorizaciones usadas) */
+    private function anularEnTransaccion(Encomienda $e, TransicionEncomienda $transicion, string $motivo, array $bitacora = []): void
     {
-        $this->flujo->aplicar($e, $transicion, ["motivo" => $motivo]);
+        $this->flujo->aplicar($e, $transicion, ["motivo" => $motivo, ...$bitacora]);
         $e->setUbicacion(null)
             ->setMotivoAnulacion($motivo);
         if ($e->getEstadoFacturacion() !== EstadoFacturacion::NO_APLICA) {

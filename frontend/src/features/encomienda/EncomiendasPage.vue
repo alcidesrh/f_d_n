@@ -69,6 +69,8 @@
             <Button :severity="b.severidad ?? 'secondary'" :outlined="!b.severidad" size="small" :disabled="!acciones[b.accion].habilitada" :aria-label="b.etiqueta" @click="ejecutar(b.accion)">
               <icon :name="b.icono" />
               <span class="hidden @xl:inline">{{ b.etiqueta }}</span>
+              <!-- Se intenta y, sin una autorización aprobada, se ofrece pedirla (ADR-058). -->
+              <icon v-if="acciones[b.accion].conAutorizacion" name="lock-outline" size=".85rem" class="opacity-70" />
             </Button>
           </span>
         </template>

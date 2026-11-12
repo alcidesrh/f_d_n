@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace App\Sincronizacion\Nuevo;
 
+use App\Entity\Enum\EstadoBoletoAsiento;
 use App\Entity\Enum\EstadoEncomienda;
 use App\Entity\Enum\ModalidadEncomienda;
+use App\Entity\Enum\OperacionEncomienda;
 use App\Sincronizacion\Legado\ConexionLegado;
 use App\Venta\Excepcion\AsientosNoDisponibles;
 use App\Venta\Facturacion\CertificadorSimulado;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
@@ -262,21 +265,47 @@ class EscritorLegado
     // ─── Factura de una venta ──────────────────────────────────────
 
     /**
-     * La factura electrónica de una venta, en el legado: una
-     * `factura_generada` por boleto (allá es una por boleto) con el UUID,
-     * la serie y el número del DTE. Con la serie de la estación y la empresa;
-     * sin ella, se anota en la observación del boleto. Si la factura se anuló
-     * aquí, también allá. Las del certificador simulado no se llevan.
+     * Lleva al legado la factura electrónica de una venta como él arma la
+     * suya (`FacturaParaLegado`): una `factura_generada` por boleto con el
+     * UUID, la serie y el número del DTE, el total solo en la del portador y
+     * `boletos_ticket` si son varios; las de un DTE anulado aquí, anuladas.
+     * Con la serie de la estación y la empresa; sin ella, los datos del DTE
+     * van en la observación del boleto. Las del certificador simulado no se
+     * llevan. En una transacción, con los boletos bloqueados allá.
      *
-     * @return int boletos tocados
+     * @return int filas del legado escritas
      */
     public function facturaDeVenta(int $ventaId): int
+    {
+        $datos = $this->datosFactura($ventaId);
+        if ($datos === null) {
+            return 0;
+        }
+
+        return $this->legado->transaccion(fn(): int => $this->aplicarFactura($this->planFactura($datos, true), $datos["venta"]));
+    }
+
+    /** Si a la factura de la venta le falta algo en el legado (la conciliación); no escribe. */
+    public function facturaPorCuadrar(int $ventaId): bool
+    {
+        $datos = $this->datosFactura($ventaId);
+
+        return $datos !== null && !$this->planFactura($datos, false)->vacio();
+    }
+
+    /**
+     * La venta, su factura vigente y sus boletos que están en el legado
+     * (id allá → si la factura los cubre: ni anulados ni reasignados).
+     *
+     * @return ?array{venta: array<string, mixed>, boletos: array<int, bool>}
+     */
+    private function datosFactura(int $ventaId): ?array
     {
         $venta = $this->db->fetchAssociative(
             "SELECT v.id, v.estacion_id, v.agencia_id, v.usuario_id, v.moneda_id, v.referencia_pago,
                     f.uuid, f.serie, f.dte, f.fecha_certificacion, f.total_monto, f.anulada_en, f.certificador_nit, s.empresa_id
                FROM boleto_venta v
-               JOIN factura f ON f.id = v.factura_id
+               LEFT JOIN factura f ON f.id = v.factura_id
                LEFT JOIN LATERAL (SELECT salida_id FROM boleto_asiento WHERE boleto_venta_id = v.id LIMIT 1) b ON true
                LEFT JOIN salida s ON s.id = b.salida_id
               WHERE v.id = :id",
@@ -284,58 +313,122 @@ class EscritorLegado
         );
         // Un DTE del certificador simulado (desarrollo) no es una factura: al legado no va.
         if ($venta === false || $venta["certificador_nit"] === CertificadorSimulado::NIT) {
-            return 0;
+            return null;
         }
-        $boletos = $this->db->fetchFirstColumn(
-            "SELECT legacy_id FROM boleto_asiento WHERE boleto_venta_id = :id AND legacy_id IS NOT NULL",
+        $sinCobro = [EstadoBoletoAsiento::ANULADO->value, EstadoBoletoAsiento::REASIGNADO->value];
+        $boletos = [];
+        foreach ($this->db->fetchAllKeyValue(
+            "SELECT legacy_id, estado FROM boleto_asiento WHERE boleto_venta_id = :id AND legacy_id IS NOT NULL",
             ["id" => $ventaId],
-        );
+        ) as $legado => $estado) {
+            $boletos[(int) $legado] = !in_array($estado, $sinCobro, true);
+        }
 
-        return $this->facturar($boletos, "boleto", $venta, Traduccion::SERVICIO_BOLETO);
+        return $boletos === [] ? null : ["venta" => $venta, "boletos" => $boletos];
     }
 
-    /**
-     * @param list<string>          $legados ids en el legado
-     * @param array<string, mixed>  $f       datos de la venta y su factura
-     */
-    private function facturar(array $legados, string $tabla, array $f, int $servicio): int
+    /** @param array{venta: array<string, mixed>, boletos: array<int, bool>} $datos */
+    private function planFactura(array $datos, bool $bloquear): FacturaParaLegado
+    {
+        $ids = implode(",", array_map("intval", array_keys($datos["boletos"])));
+        $alla = [];
+        foreach ($this->legado->filas(
+            "SELECT b.id, b.factura_generada_id AS fg_id, fg.sAutorizacionUUIDsat AS uuid, fg.importeTotal AS importe,
+                    CASE WHEN fg.fecha_anulacion IS NULL THEN 0 ELSE 1 END AS anulada
+               FROM boleto b" . ($bloquear ? " WITH (UPDLOCK)" : "") . "
+               LEFT JOIN factura_generada fg ON fg.id = b.factura_generada_id
+              WHERE b.id IN ({$ids})",
+        ) as $f) {
+            $alla[(int) $f["id"]] = [
+                "fg" => $f["fg_id"] === null ? null : (int) $f["fg_id"],
+                "uuid" => FacturaParaLegado::uuid($f["uuid"]),
+                "importe" => (int) round(((float) $f["importe"]) * 100),
+                "anulada" => (bool) $f["anulada"],
+            ];
+        }
+
+        $venta = $datos["venta"];
+        $uuids = array_values(array_unique(array_filter([...array_column($alla, "uuid"), FacturaParaLegado::uuid($venta["uuid"])])));
+        $anuladas = $uuids === [] ? [] : $this->db->fetchAllKeyValue(
+            "SELECT uuid, anulada_en FROM factura WHERE uuid IN (:uuids) AND anulada_en IS NOT NULL",
+            ["uuids" => $uuids],
+            ["uuids" => ArrayParameterType::STRING],
+        );
+        // El ticket se busca por su portador, que puede ser cualquiera de los boletos de la venta.
+        $ticket = null;
+        if (count($datos["boletos"]) > 1) {
+            $fila = $this->legado->fila("SELECT TOP 1 id, identificador_ticket, boletos FROM boletos_ticket WHERE identificador_ticket IN ({$ids}) ORDER BY id DESC");
+            if ($fila !== null) {
+                $ticket = ["id" => (int) $fila["id"], "identificador" => (int) $fila["identificador_ticket"], "boletos" => FacturaParaLegado::boletosDeTicket($fila["boletos"])];
+            }
+        }
+
+        return FacturaParaLegado::calcular(
+            array_keys(array_filter($datos["boletos"])),
+            $alla,
+            $venta["uuid"] !== null && $venta["anulada_en"] === null ? ["uuid" => (string) $venta["uuid"], "total" => (int) $venta["total_monto"]] : null,
+            array_combine(array_map(static fn($u) => (string) FacturaParaLegado::uuid($u), array_keys($anuladas)), array_map("strval", $anuladas)),
+            $ticket,
+        );
+    }
+
+    /** @param array<string, mixed> $venta datos de la venta y su factura vigente */
+    private function aplicarFactura(FacturaParaLegado $plan, array $venta): int
     {
         $n = 0;
-        foreach ($legados as $legado) {
-            $this->legado->transaccion(function () use ($legado, $tabla, $f, $servicio, &$n) {
-                $actual = $this->legado->fila("SELECT factura_generada_id FROM {$tabla} WITH (UPDLOCK) WHERE id = :id", ["id" => $legado]);
-                if ($actual === null) {
-                    return;
-                }
-                $fg = $actual["factura_generada_id"];
-                if ($fg === null) {
-                    $fg = $this->facturaGenerada($f, $servicio);
-                    if ($fg === null) {
-                        $this->legado->ejecutar(
-                            "UPDATE {$tabla} SET observacion = LEFT(CONCAT(observacion, :nota), 4000) WHERE id = :id",
-                            ["nota" => sprintf(" Factura FEL %s serie %s número %s.", $f["uuid"], $f["serie"], $f["dte"]), "id" => $legado],
-                        );
-                        $n++;
-
-                        return;
-                    }
-                    $this->legado->ejecutar("UPDATE {$tabla} SET factura_generada_id = :fg WHERE id = :id", ["fg" => $fg, "id" => $legado]);
-                    $n++;
-                }
-                if ($f["anulada_en"] !== null) {
-                    $this->legado->ejecutar(
-                        "UPDATE factura_generada SET fecha_anulacion = COALESCE(fecha_anulacion, :en), usuario_anulacion_id = COALESCE(usuario_anulacion_id, :usuario) WHERE id = :id",
-                        ["en" => new \DateTimeImmutable((string) $f["anulada_en"]), "usuario" => $this->usuario($f["usuario_id"] === null ? null : (int) $f["usuario_id"]), "id" => $fg],
-                    );
-                }
-            });
+        $usuario = $this->usuario($venta["usuario_id"] === null ? null : (int) $venta["usuario_id"]);
+        foreach ($plan->anular as $fg => $en) {
+            $this->legado->ejecutar(
+                "UPDATE factura_generada SET fecha_anulacion = COALESCE(fecha_anulacion, :en), usuario_anulacion_id = COALESCE(usuario_anulacion_id, :usuario) WHERE id = :id",
+                ["en" => new \DateTimeImmutable($en), "usuario" => $usuario, "id" => $fg],
+            );
+            $n++;
+        }
+        foreach ($plan->crear as $boleto => $importe) {
+            $fg = $this->facturaGenerada($venta, Traduccion::SERVICIO_BOLETO, $importe);
+            if ($fg === null) {
+                $uuid = strtoupper((string) $venta["uuid"]);
+                $this->legado->ejecutar(
+                    "UPDATE boleto SET observacion = LEFT(CONCAT(observacion, :nota), 255) WHERE id = :id AND CHARINDEX(:uuid, COALESCE(observacion, '')) = 0",
+                    ["nota" => sprintf(" Factura FEL %s serie %s número %s.", $uuid, $venta["serie"], $venta["dte"]), "uuid" => $uuid, "id" => $boleto],
+                );
+            } else {
+                $this->legado->ejecutar("UPDATE boleto SET factura_generada_id = :fg WHERE id = :id", ["fg" => $fg, "id" => $boleto]);
+            }
+            $n++;
+        }
+        foreach ($plan->importes as $fg => $importe) {
+            $this->legado->ejecutar("UPDATE factura_generada SET importeTotal = :importe WHERE id = :id", ["importe" => Traduccion::quetzales($importe), "id" => $fg]);
+            $n++;
+        }
+        if ($plan->ticket !== null) {
+            $boletos = FacturaParaLegado::serializarBoletos($plan->ticket["boletos"]);
+            if ($plan->ticket["id"] === null) {
+                $this->legado->insertar("boletos_ticket", [
+                    "identificador_ticket" => $plan->ticket["identificador"],
+                    "boletos" => $boletos,
+                    "fecha_creacion" => new \DateTimeImmutable(),
+                ]);
+            } else {
+                $this->legado->ejecutar(
+                    "UPDATE boletos_ticket SET identificador_ticket = :portador, boletos = :boletos WHERE id = :id",
+                    ["portador" => $plan->ticket["identificador"], "boletos" => $boletos, "id" => $plan->ticket["id"]],
+                );
+            }
+            $n++;
         }
 
         return $n;
     }
 
-    /** @param array<string, mixed> $f */
-    private function facturaGenerada(array $f, int $servicio): ?int
+    /**
+     * Una fila de `factura_generada` del DTE de la venta, por `$importe`
+     * (centavos). Null si el legado no tiene con qué: serie de la empresa,
+     * tipo de cambio o usuario.
+     *
+     * @param array<string, mixed> $f datos de la venta y su factura
+     */
+    private function facturaGenerada(array $f, int $servicio, int $importe): ?int
     {
         $estacion = $f["estacion_id"] ?? $f["agencia_id"] ?? null;
         $serie = $this->legado->valor(
@@ -355,7 +448,7 @@ class EscritorLegado
             "servicio_estacion_id" => $servicio,
             "moneda_id" => $f["moneda_id"] ?? Traduccion::GTQ,
             "tipo_cambio_id" => $tipoCambio,
-            "importeTotal" => Traduccion::quetzales($f["total_monto"]),
+            "importeTotal" => Traduccion::quetzales($importe),
             "fecha" => new \DateTimeImmutable((string) ($f["fecha_certificacion"] ?? "now")),
             "autorizacionTarjeta" => $f["referencia_pago"] === null ? null : mb_substr((string) $f["referencia_pago"], 0, 20),
             "usuario_id" => $usuario,
@@ -561,7 +654,8 @@ class EscritorLegado
             "estacion" => $e["destino_id"],
         ]);
         // La bitácora del legado empieza siempre en recibida.
-        $this->eventoEncomienda($legado, 1, (int) ($e["estacion_id"] ?? $e["origen_id"]), $usuario, null, null);
+        $evento = $this->eventoEncomienda($legado, 1, (int) ($e["estacion_id"] ?? $e["origen_id"]), $usuario, null, null);
+        $this->marcarEvento((int) $e["id"], EstadoEncomienda::RECIBIDA, $evento);
 
         return $legado;
     }
@@ -586,7 +680,7 @@ class EscritorLegado
         $estacion = $e["ubicacion_id"] ?? ($estado === EstadoEncomienda::ENTREGADA ? $e["destino_id"] : null) ?? $e["estacion_id"] ?? $e["origen_id"];
         $usuario = $this->usuario($e["usuario_id"] === null ? null : (int) $e["usuario_id"])
             ?? throw new \RuntimeException("El legado exige un usuario: configure SINCRONIZACION_USUARIO_LEGADO.");
-        $this->eventoEncomienda(
+        $evento = $this->eventoEncomienda(
             $legado,
             $codigo,
             (int) $estacion,
@@ -594,6 +688,7 @@ class EscritorLegado
             $estado->aBordo() || $estado === EstadoEncomienda::DESEMBARCADA ? $e["salida_legado"] : null,
             $estado === EstadoEncomienda::ENTREGADA && $e["receptor_id"] !== null ? $this->cliente((int) $e["receptor_id"]) : null,
         );
+        $this->marcarEvento((int) $e["id"], $estado, $evento);
         $this->legado->ejecutar(
             "UPDATE encomienda SET primera_salida_id = COALESCE(primera_salida_id, :salida), transito = :transito,
                     observacion = CASE WHEN :anulada = 1 THEN LEFT(CONCAT(observacion, ' Anulada en FDN: ', :motivo), 4000) ELSE observacion END
@@ -608,7 +703,7 @@ class EscritorLegado
         );
     }
 
-    private function eventoEncomienda(int $encomienda, int $estado, int $estacion, int $usuario, mixed $salida, ?int $cliente): void
+    private function eventoEncomienda(int $encomienda, int $estado, int $estacion, int $usuario, mixed $salida, ?int $cliente): int
     {
         $evento = $this->legado->insertar("encomienda_bitacora", [
             "encomienda_id" => $encomienda,
@@ -620,5 +715,23 @@ class EscritorLegado
             "cliente_id" => $cliente,
         ]);
         $this->legado->ejecutar("UPDATE encomienda SET ultima_bitacora_id = :ev WHERE id = :id", ["ev" => $evento, "id" => $encomienda]);
+
+        return $evento;
+    }
+
+    /**
+     * Anota en la bitácora de aquí qué evento del legado es el suyo
+     * (`detalle.legado`, como lo traído): cuando el legado mueva la
+     * encomienda, la importación no lo trae de vuelta como otro.
+     */
+    private function marcarEvento(int $encomienda, EstadoEncomienda $estado, int $evento): void
+    {
+        $this->db->executeStatement(
+            "UPDATE bitacora SET detalle = (COALESCE(detalle::jsonb, '{}'::jsonb) || jsonb_build_object('legado', CAST(:evento AS text)))::json
+              WHERE id = (SELECT id FROM bitacora
+                           WHERE entidad = 'encomienda' AND registro_id = :id AND operacion = :operacion AND detalle->>'legado' IS NULL
+                           ORDER BY id DESC LIMIT 1)",
+            ["evento" => (string) $evento, "id" => $encomienda, "operacion" => OperacionEncomienda::deEstado($estado)->value],
+        );
     }
 }

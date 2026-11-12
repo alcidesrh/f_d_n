@@ -283,6 +283,8 @@ final class ConsultaEncomiendas
                 "usuario" => $e->getUsuario()?->getUsername(),
                 // Qué transiciones admite y, si no, por qué (ADR-038): el panel solo suma el permiso y la estación.
                 "acciones" => $this->flujo->acciones($e),
+                // Solo su estado impide anularla (ya viajó): se puede con una autorización fuera de estado (ADR-058).
+                "fueraDeEstado" => ReglasEncomienda::soloPorEstado($e),
             ];
         }, array_filter($ids, static fn(int $id) => isset($porId[$id]))));
     }

@@ -12,12 +12,16 @@ namespace App\Entity\Enum;
  * - `limite`: pasar el límite diario que el rol le fija (`Limite`).
  * - `hora`: anular o reasignar un boleto cuya salida ya pasó su hora (sin
  *   finalizar ni anular): el pasajero que perdió el bus.
+ * - `estado`: lo que solo hace el rol de sistema (ADR-057), una vez
+ *   (ADR-058): anular o reasignar un boleto en cualquier estado con valor
+ *   sin mirar su salida, o anular una encomienda que ya viajó.
  */
 enum Dispensa: string
 {
     case PERMISO = "permiso";
     case LIMITE = "limite";
     case HORA = "hora";
+    case ESTADO = "estado";
 
     public function etiqueta(): string
     {
@@ -25,6 +29,7 @@ enum Dispensa: string
             self::PERMISO => "Sin permiso",
             self::LIMITE => "Límite diario superado",
             self::HORA => "Fuera de hora",
+            self::ESTADO => "Fuera de estado",
         };
     }
 }

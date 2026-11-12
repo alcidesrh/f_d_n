@@ -25,6 +25,11 @@ use Doctrine\DBAL\Connection;
  * Es idempotente: una ya migrada se completa (estado, bodega, salida,
  * entrega, factura del cobro, eventos de la bitácora que falten). Una que
  * viajó en varias salidas (transbordo) queda con la última ya migrada.
+ *
+ * Una que se recibió en el sistema nuevo (`deAqui`) es de él: el legado no
+ * deja anularla, y sus datos y su factura los lleva ese sistema. De ella
+ * solo se traen los movimientos que el legado todavía le hace (embarcar,
+ * desembarcar, entregar), con sus eventos.
  */
 class EncomiendasLegado
 {
@@ -37,8 +42,11 @@ class EncomiendasLegado
     /** @var array<int, ?string> salida → texto de la bitácora */
     private array $salidasTexto = [];
 
-    /** @var (\Closure(array<string, mixed>): bool)|null encomiendas del legado que no se traen (`excluir`) */
-    private ?\Closure $excluir = null;
+    /** @var (\Closure(array<string, mixed>): bool)|null las que escribió en el legado el sistema nuevo (`deAqui`) */
+    private ?\Closure $deAqui = null;
+
+    /** Lo que el legado todavía le hace a una encomienda recibida en el sistema nuevo. */
+    private const MOVIMIENTOS = [EstadoEncomienda::EMBARCADA, EstadoEncomienda::TRANSITO, EstadoEncomienda::DESEMBARCADA, EstadoEncomienda::ENTREGADA];
 
     /** Columnas de una encomienda del legado con su factura y la de su boleto. */
     private const SELECT = "SELECT e.*, b.factura_generada_id AS boleto_fg,
@@ -96,14 +104,14 @@ class EncomiendasLegado
     }
 
     /**
-     * Encomiendas del legado que no se traen (la sincronización excluye las
-     * que escribió el sistema nuevo y aquí no están, ADR-042).
+     * Las encomiendas del legado que escribió el sistema nuevo (ADR-042): si
+     * aquí no están, no se traen; si están, solo sus movimientos.
      *
-     * @param (\Closure(array<string, mixed>): bool)|null $filtro fila de `encomienda` → true si se omite
+     * @param (\Closure(array<string, mixed>): bool)|null $filtro fila de `encomienda` → true si es de aquí
      */
-    public function excluir(?\Closure $filtro): void
+    public function deAqui(?\Closure $filtro): void
     {
-        $this->excluir = $filtro;
+        $this->deAqui = $filtro;
     }
 
     /**
@@ -122,7 +130,7 @@ class EncomiendasLegado
         $eventos = $this->eventos($ids);
         $existentes = [];
         foreach ($this->db->fetchAllAssociative(
-            "SELECT id, legacy_id, estado, salida_id, factura_id FROM encomienda WHERE legacy_id IN (:ids)",
+            "SELECT id, legacy_id, estado, modalidad, origen_id, destino_id, salida_id, factura_id FROM encomienda WHERE legacy_id IN (:ids)",
             ["ids" => array_map("strval", $ids)],
             ["ids" => ArrayParameterType::STRING],
         ) as $fila) {
@@ -142,11 +150,65 @@ class EncomiendasLegado
 
         foreach ($filas as $old) {
             $lid = (string) $old["id"];
-            if (!isset($existentes[$lid]) && $this->excluir !== null && ($this->excluir)($old)) {
+            if ($this->deAqui !== null && ($this->deAqui)($old)) {
+                if (isset($existentes[$lid])) {
+                    $this->movimientos($existentes[$lid], $old, EncomiendaLegada::ordenar($eventos[(int) $lid] ?? []), $salidas, $contadores);
+                }
                 continue;
             }
             $this->migrarUna($old, EncomiendaLegada::ordenar($eventos[(int) $lid] ?? []), $existentes[$lid] ?? null, $salidas, $empresaSalida, $contadores, $omitir);
         }
+    }
+
+    /**
+     * Una encomienda recibida en el sistema nuevo: su estado, bodega, salida y
+     * entrega si el legado la movió, y los eventos que no escribió aquel (los
+     * suyos llevan `detalle.legado` desde `EscritorLegado`). Ni anulación, ni
+     * factura, ni sus datos.
+     *
+     * @param array<string, mixed>       $existente
+     * @param list<array<string, mixed>> $eventos ordenados
+     * @param array<int, int>            $salidas salida del legado → id
+     * @param array<string, int>         $contadores
+     */
+    private function movimientos(array $existente, array $old, array $eventos, array $salidas, array &$contadores): void
+    {
+        $id = (int) $existente["id"];
+        $estado = EncomiendaLegada::estado($old, $eventos);
+        if (in_array($estado, self::MOVIMIENTOS, true)) {
+            $salidaId = null;
+            foreach (array_reverse(EncomiendaLegada::salidas($old, $eventos)) as $s) {
+                if (isset($salidas[$s])) {
+                    $salidaId = $salidas[$s];
+                    break;
+                }
+            }
+            $entrega = $estado === EstadoEncomienda::ENTREGADA ? EncomiendaLegada::ultimo($eventos, 5) : null;
+            $this->db->executeStatement(
+                "UPDATE encomienda SET estado = :estado, ubicacion_id = :ubicacion, salida_id = COALESCE(:salida, salida_id),
+                        receptor_id = :receptor, entregada_en = :entregada WHERE id = :id",
+                [
+                    "estado" => $estado->value,
+                    "ubicacion" => $this->dependencias->lugar(EncomiendaLegada::ubicacion($estado, $old, $eventos)),
+                    "salida" => $salidaId,
+                    "receptor" => $this->dependencias->cliente($entrega["cliente_id"] ?? null),
+                    "entregada" => $entrega["fecha"] ?? null,
+                    "id" => $id,
+                ],
+            );
+            if ($existente["estado"] !== $estado->value || ($salidaId !== null && (int) $existente["salida_id"] !== $salidaId)) {
+                $contadores["encomienda_actualizada"] = ($contadores["encomienda_actualizada"] ?? 0) + 1;
+            }
+        }
+        $this->bitacora(
+            $id,
+            $old,
+            array_values(array_filter($eventos, static fn(array $e) => in_array(EncomiendaLegada::estadoDe($e["estado_id"]), self::MOVIMIENTOS, true))),
+            ModalidadEncomienda::from((string) $existente["modalidad"]),
+            (int) $existente["origen_id"],
+            (int) $existente["destino_id"],
+            $contadores,
+        );
     }
 
     /** Tras revertir la transacción de una salida. */

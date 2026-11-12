@@ -8,10 +8,11 @@ mientras las estaciones se mudan. Diseño y límites: [ADR-042](../../../docs/ar
 | `Interruptor` | Encender / apagar (`sync_estado`, copiado a `sync_config` del legado) y el estado del indicador. |
 | `Nuevo/VigilanteCambios` | Listener del flush: lleva al legado lo que cambia aquí (el asiento, antes del commit). |
 | `Nuevo/EscritorLegado` | Escribe en SQL Server: boletos, estados, clientes, facturas, encomiendas. |
+| `Nuevo/FacturaParaLegado` | Cómo queda allá la factura de una venta de varios boletos: una `factura_generada` por boleto, el total solo en la del de menor id, `boletos_ticket`; anulaciones y reasignaciones. |
 | `Nuevo/AltaCliente`, `Nuevo/IdCliente` | Un cliente nuevo se crea primero en el legado y toma su id. |
 | `Nuevo/ClientesLocales` | Los clientes creados con la sincronización apagada: al encender se llevan allá y pasan a su id. |
 | `Nuevo/ExportadorCambios`, `Nuevo/AlTerminar` | Lo que quedó en `sync_cambio` de aquí, al terminar la petición o en el ciclo. |
-| `Legado/ImportadorLegado`, `Legado/ActualizadorBoletos` | Trae lo que anotaron los triggers del legado. |
+| `Legado/ImportadorLegado`, `Legado/ActualizadorBoletos` | Trae lo que anotaron los triggers del legado. De lo que nació aquí, solo lo que el legado todavía le hace (chequeo, tránsito; movimientos de encomienda): no deja anularlo ni reasignarlo. |
 | `Legado/Importacion/` | El motor que escribe aquí una salida del legado con su árbol (bus, ruta, boletos, ventas, facturas, encomiendas) y los puestos y alcances de sus usuarios. Era `App\Migration`; la migración masiva ya se hizo y se quitó (ADR-056). |
 | `Legado/ApartadosLegado` | Aparta aquí lo que el legado está por vender (`/api/sincronizacion/legado/*`). |
 | `Ciclo`, `Conciliador` | La vuelta de cada minuto y la comparación de un día. |
@@ -63,6 +64,7 @@ Solo un FDN puede leer el `sync_cambio` del legado (lo marca como procesado). An
 - **«Hay N clientes de aquí sin llevar al legado»**: el ciclo no trae nada hasta llevarlos. `SELECT * FROM sync_cliente_local` los muestra; se reintenta en cada ciclo.
 - **FDN no responde**: el legado vende igual (`si_falla = permitir`, el defecto) y FDN lo trae al volver; correr luego `app:sincronizacion:conciliar`. Para que el legado no venda sin comprobar: `bin/console app:sincronizacion:instalar-legado --si-falla=bloquear`.
 - **«N salidas con boletos del sistema anterior sin traer»**: el barrido no pudo traerlas, casi siempre porque no hay bus que inferir (ADR-027). Se reintentan solas cada 30 minutos; asignarles un bus en el legado las trae en el siguiente ciclo. `app:sincronizacion:interruptor` las lista en `salidasSinTraer`, con su motivo; `make tareas t=barrer_salidas_legado` corre un barrido ya.
+- **«Ventas de aquí con su factura sin cuadrar allá»** (conciliación): filas de `factura_generada` que faltan, el total repetido en varias o el `boletos_ticket` que falta. `--reparar` las vuelve a llevar; una que no tiene serie del legado para su empresa queda con los datos del DTE en la observación del boleto y se sigue mostrando.
 - **Indicador ámbar o rojo**: `bin/console app:sincronizacion:interruptor` muestra el último ciclo, su error y lo pendiente; `SELECT * FROM sync_cambio WHERE procesado_en IS NULL` (aquí) y `SELECT * FROM sync_cambio WHERE procesado IS NULL` (legado) muestran cada cambio con su error.
 
 ## Cómo se quita

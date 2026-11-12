@@ -8,8 +8,10 @@ use App\Acceso\Ambito;
 use App\Acceso\Autorizacion;
 use App\Acceso\Concesion;
 use App\Acceso\PermisosUsuario;
+use App\Autorizacion\DispensasEnCurso;
 use App\Encomienda\EncomiendaRechazada;
 use App\Encomienda\FlujoEncomienda;
+use App\Encomienda\ReglasEncomienda;
 use App\Entity\Encomienda;
 use App\Entity\Enclave;
 use App\Entity\Enum\EstadoEncomienda;
@@ -191,6 +193,36 @@ final class FlujoEncomiendaTest extends KernelTestCase
         $this->flujo->aplicar($entregada, TransicionEncomienda::ANULAR, ["motivo" => "Prueba"]);
         $this->assertSame(EstadoEncomienda::ANULADA, $entregada->getEstado());
         $this->assertSame("estado", $this->flujo->rechazo($entregada, TransicionEncomienda::ANULAR)?->codigo);
+    }
+
+    public function testConAutorizacionFueraDeEstadoSeAnulaComoConElRolDeSistema(): void
+    {
+        $entregada = $this->encomienda(EstadoEncomienda::ENTREGADA, null);
+        $transito = $this->encomienda(EstadoEncomienda::TRANSITO, null, $this->salida(EstadoSalida::INICIADA));
+        $transbordo = $this->encomienda(EstadoEncomienda::DESEMBARCADA, self::RIO_DULCE);
+        $conBoleto = $this->encomienda(EstadoEncomienda::ENTREGADA, null, null, ModalidadEncomienda::CON_BOLETO);
+        $anulada = $this->encomienda(EstadoEncomienda::ANULADA, null);
+
+        // Solo su estado la detiene: se pide una autorización fuera de estado (ADR-058).
+        $this->assertTrue(ReglasEncomienda::soloPorEstado($entregada));
+        $this->assertTrue(ReglasEncomienda::soloPorEstado($transito));
+        $this->assertTrue(ReglasEncomienda::soloPorEstado($transbordo));
+        // En la bodega de su origen no hace falta; la del boleto se anula con su venta; la anulada, nunca.
+        $this->assertFalse(ReglasEncomienda::soloPorEstado($this->encomienda()));
+        $this->assertFalse(ReglasEncomienda::soloPorEstado($conBoleto));
+        $this->assertFalse(ReglasEncomienda::soloPorEstado($anulada));
+
+        // Todas las de prueba son la 123: la dispensa las cubre a todas.
+        self::getContainer()->get(DispensasEnCurso::class)->permitirEncomiendaFueraDeEstado(123);
+        $this->assertNull($this->flujo->rechazo($entregada, TransicionEncomienda::ANULAR));
+        $this->assertNull($this->flujo->rechazo($transito, TransicionEncomienda::ANULAR));
+        $this->assertNull($this->flujo->rechazo($transbordo, TransicionEncomienda::ANULAR));
+        // La del boleto, solo con su venta (también ya entregada, si se anula con la autorización de sus boletos).
+        $this->assertSame("con_boleto", $this->flujo->rechazo($conBoleto, TransicionEncomienda::ANULAR)?->codigo);
+        $this->assertTrue($this->flujo->puede($conBoleto, TransicionEncomienda::ANULAR_CON_BOLETO));
+        $this->assertSame("estado", $this->flujo->rechazo($anulada, TransicionEncomienda::ANULAR)?->codigo);
+        // Lo demás sigue sus reglas.
+        $this->assertSame("estado", $this->flujo->rechazo($entregada, TransicionEncomienda::EMBARCAR)?->codigo);
     }
 
     /** @param list<int> $paradas */

@@ -198,6 +198,8 @@ export interface FilaEncomienda {
    * motivo. El permiso y la estación de quien mira van aparte.
    */
   acciones: Record<AccionTransicionEncomienda, string | null>
+  /** Solo su estado impide anularla (ya viajó): se puede con una autorización fuera de estado (ADR-058). */
+  fueraDeEstado?: boolean
 }
 
 /** Las acciones del listado que cambian el estado de la encomienda (transiciones del workflow `encomienda`). */

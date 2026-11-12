@@ -355,10 +355,11 @@ export interface BoletoOperable {
   motivo: string | null
   /**
    * No es operable pero se puede con una autorización (ADR-040): sin el
-   * permiso sobre su venta o con la salida ya pasada de hora. La operación se
+   * permiso sobre su venta, con la salida ya pasada de hora, o con el boleto
+   * o su salida en un estado que ya no lo permite (ADR-058). La operación se
    * intenta y el backend la usa (o responde qué pedir).
    */
-  conAutorizacion?: 'permiso' | 'hora' | null
+  conAutorizacion?: 'permiso' | 'hora' | 'estado' | null
 }
 
 /** Qué puede hacer el usuario con los boletos (`GET /venta/boletos/permisos`). */

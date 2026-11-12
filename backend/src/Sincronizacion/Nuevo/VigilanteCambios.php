@@ -35,7 +35,8 @@ use Symfony\Contracts\Service\ResetInterface;
  *   del commit (si aquí se revierte, allá no pasó). Si el legado no
  *   responde, queda en `sync_cambio` y lo reintenta el ciclo.
  * - Encomiendas, clientes editados y facturas van a `sync_cambio`: los lleva
- *   el ciclo. Un cliente nuevo ya se creó allá (`AltaCliente`).
+ *   el ciclo. Un cliente nuevo ya se creó allá (`AltaCliente`). Un boleto
+ *   reasignado entra en la factura de su venta: la venta vuelve a llevarse.
  *
  * Solo ve lo que pasa por Doctrine: lo que trae la importación del legado
  * (DBAL) no vuelve allá.
@@ -103,6 +104,10 @@ class VigilanteCambios implements ResetInterface
                 continue;
             }
             $nuevos[] = [$e, $dto];
+            // Queda en la misma venta y su factura: allá también tiene que cubrirlo (`FacturaParaLegado`).
+            if ($de !== null && ($venta = $e->getBoletoVenta()?->getId()) !== null) {
+                $this->encolar($db, "venta", (int) $venta);
+            }
         }
         if ($nuevos !== []) {
             $ids = $this->ocupar(array_column($nuevos, 1), $liberados);

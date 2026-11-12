@@ -52,6 +52,8 @@ export interface BoletoFila {
   acciones: Record<AccionTransicion, string | null>
   /** Solo la hora de su salida impide anularlo o reasignarlo: se puede con una autorización (ADR-040). */
   fueraDeHora?: boolean
+  /** Lo impide su estado o el de su salida: se puede con una autorización fuera de estado (ADR-058). */
+  fueraDeEstado?: boolean
 }
 
 /** Las acciones del panel que cambian el estado del boleto (transiciones del workflow `boleto_asiento`). */

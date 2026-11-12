@@ -191,4 +191,36 @@ final class ReglasBoletosTest extends TestCase
         $chequeado->setEstado(EstadoBoletoAsiento::CHEQUEADO);
         $this->assertFalse(ReglasBoletos::soloPorHora($chequeado, $ahora));
     }
+
+    public function testFueraDeEstadoLoQueSoloHaceElRolDeSistema(): void
+    {
+        $ahora = new \DateTimeImmutable("2026-10-10 12:00");
+        $boleto = function (EstadoSalida $salida, EstadoBoletoAsiento $estado = EstadoBoletoAsiento::EMITIDO, string $fecha = "2026-10-10 08:00"): BoletoAsiento {
+            $b = self::boleto(1, self::venta(EstadoFacturacion::CERTIFICADA));
+            $b->setSalida(self::salida(1, $fecha, 1, $salida === EstadoSalida::FINALIZADA ? EstadoSalida::INICIADA : $salida));
+            if ($salida === EstadoSalida::FINALIZADA) {
+                $b->getSalida()->setEstado(EstadoSalida::FINALIZADA);
+            }
+            (new \ReflectionProperty(BoletoAsiento::class, "estado"))->setValue($b, $estado);
+
+            return $b;
+        };
+
+        // Su estado o el de su salida lo impide, y el rol de sistema sí lo operaría (ADR-058).
+        $this->assertTrue(ReglasBoletos::soloPorEstado($boleto(EstadoSalida::ABORDANDO, EstadoBoletoAsiento::CHEQUEADO), $ahora));
+        $this->assertTrue(ReglasBoletos::soloPorEstado($boleto(EstadoSalida::INICIADA, EstadoBoletoAsiento::TRANSITO), $ahora));
+        $this->assertTrue(ReglasBoletos::soloPorEstado($boleto(EstadoSalida::FINALIZADA, EstadoBoletoAsiento::FINALIZADO), $ahora));
+        $this->assertTrue(ReglasBoletos::soloPorEstado($boleto(EstadoSalida::FINALIZADA, EstadoBoletoAsiento::CANCELADO), $ahora));
+        $this->assertTrue(ReglasBoletos::soloPorEstado($boleto(EstadoSalida::FINALIZADA), $ahora), "emitido con la salida finalizada");
+        // Chequeado aunque todavía sea a tiempo: la hora no es lo que lo impide.
+        $this->assertTrue(ReglasBoletos::soloPorEstado($boleto(EstadoSalida::ABORDANDO, EstadoBoletoAsiento::CHEQUEADO, "2026-10-10 18:00"), $ahora));
+
+        // Basta la de hora, o ni hace falta.
+        $this->assertFalse(ReglasBoletos::soloPorEstado($boleto(EstadoSalida::INICIADA), $ahora), "emitido pasada la hora: fuera de hora");
+        $this->assertFalse(ReglasBoletos::soloPorEstado($boleto(EstadoSalida::PROGRAMADA, fecha: "2026-10-10 18:00"), $ahora), "a tiempo");
+        $this->assertFalse(ReglasBoletos::soloPorEstado($boleto(EstadoSalida::FINALIZADA, EstadoBoletoAsiento::POSPUESTO), $ahora), "pospuesto");
+        // Lo que ya no tiene valor, ni con autorización.
+        $this->assertFalse(ReglasBoletos::soloPorEstado($boleto(EstadoSalida::PROGRAMADA, EstadoBoletoAsiento::ANULADO), $ahora));
+        $this->assertFalse(ReglasBoletos::soloPorEstado($boleto(EstadoSalida::PROGRAMADA, EstadoBoletoAsiento::REASIGNADO), $ahora));
+    }
 }
