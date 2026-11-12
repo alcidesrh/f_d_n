@@ -19,8 +19,8 @@
         </div>
       </Message>
       <!-- Alto 0 y pegado arriba: no ocupa lugar en el formulario y sigue a la vista al desplazarse. -->
-      <div class="sticky top-2 z-10 flex h-0 justify-end">
-        <SplitButton class="h-fit rounded-md bg-surface-0" label="Guardar" :model="actions" :disabled="submitting || savingExtensions" outlined severity="secondary" @click="submitForm(formId)">
+      <div class="sticky top-10 z-10 flex justify-end">
+        <SplitButton class="rounded-md bg-surface-50" label="Guardar" :model="actions" :disabled="submitting || savingExtensions" outlined severity="secondary" @click="submitForm(formId)">
           <template #dropdownicon><icon name="keyboard-arrow-down" /></template>
           <template #menuitemicon="{ item }"><icon :name="String(item.icon)" /></template>
         </SplitButton>
@@ -59,9 +59,9 @@
           <FormKitSchema :schema="schema" />
         </Fluid>
       </FormKit>
-      <div class="mt-4 flex justify-end">
+      <!-- <div class="mt-4 flex justify-end">
         <Button label="Restablecer" severity="secondary" variant="text" size="small" :disabled="submitting" @click="reset" />
-      </div>
+      </div> -->
     </template>
 
     <Message v-else severity="warn" :closable="false">Sin campos serializables para {{ entity }}</Message>
@@ -159,5 +159,5 @@ function askDelete() {
   });
 }
 
-const actions = computed(() => [{ label: "Listado", icon: "undo", command: () => emit("cancel") }, ...(mode.value === "update" ? [{ label: "Eliminar", icon: "delete-outline", command: askDelete }] : [])]);
+const actions = computed(() => [{ label: "Listado", icon: "list", command: () => emit("cancel") }, { label: "Restablecer", icon: "undo", command: () => reset() }, ...(mode.value === "update" ? [{ label: "Eliminar", icon: "delete-outline", command: askDelete }] : [])]);
 </script>
