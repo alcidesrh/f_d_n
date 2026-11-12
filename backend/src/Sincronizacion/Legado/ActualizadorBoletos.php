@@ -19,7 +19,8 @@ use Doctrine\DBAL\Connection;
  * reasignación y la factura que se certificó después de vender.
  *
  * Un boleto que se vendió aquí (`FDN:`) es de aquí: el legado no deja
- * anularlo ni reasignarlo, y su venta y su factura las lleva este sistema.
+ * anularlo ni reasignarlo (`trg_sync_proteger_boleto`), y su venta y su
+ * factura las lleva este sistema.
  * De él solo se trae lo que el legado todavía le hace (chequearlo, ponerlo
  * en tránsito, cancelarlo o revertirlo); si llegara otra cosa, no se aplica
  * y la conciliación la muestra como estado distinto.

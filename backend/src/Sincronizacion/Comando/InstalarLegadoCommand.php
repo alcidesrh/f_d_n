@@ -11,8 +11,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 /**
  * Instala (o quita) en el SQL Server del legado las tablas `sync_*` y los
- * triggers que anotan sus cambios (ADR-042). Se puede repetir. Solo anotan:
- * no cambian nada de lo que hace el legado.
+ * triggers que anotan sus cambios y que no le dejan anular ni reasignar lo
+ * que nació aquí (ADR-042). Se puede repetir.
  */
 #[AsCommand(name: "app:sincronizacion:instalar-legado", description: "Instala o quita en el legado las tablas y triggers de la sincronización")]
 final class InstalarLegadoCommand

@@ -11,6 +11,12 @@ IF OBJECT_ID('dbo.trg_sync_salida', 'TR') IS NOT NULL DROP TRIGGER dbo.trg_sync_
 GO
 IF OBJECT_ID('dbo.trg_sync_factura_generada', 'TR') IS NOT NULL DROP TRIGGER dbo.trg_sync_factura_generada;
 GO
+IF OBJECT_ID('dbo.trg_sync_proteger_boleto', 'TR') IS NOT NULL DROP TRIGGER dbo.trg_sync_proteger_boleto;
+GO
+IF OBJECT_ID('dbo.trg_sync_proteger_factura_generada', 'TR') IS NOT NULL DROP TRIGGER dbo.trg_sync_proteger_factura_generada;
+GO
+IF OBJECT_ID('dbo.trg_sync_proteger_encomienda', 'TR') IS NOT NULL DROP TRIGGER dbo.trg_sync_proteger_encomienda;
+GO
 IF OBJECT_ID('dbo.sync_cambio', 'U') IS NOT NULL DROP TABLE dbo.sync_cambio;
 GO
 IF OBJECT_ID('dbo.sync_config', 'U') IS NOT NULL DROP TABLE dbo.sync_config;

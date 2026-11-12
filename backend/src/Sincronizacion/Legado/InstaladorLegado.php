@@ -8,7 +8,8 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Instala o quita en el SQL Server del legado las tablas `sync_*` y los
- * triggers que anotan sus cambios (`sql/instalar.sql`, `sql/desinstalar.sql`).
+ * triggers que anotan sus cambios y protegen lo que nació aquí
+ * (`sql/instalar.sql`, `sql/desinstalar.sql`).
  * Al instalar deja en `sync_config` cómo llamar a FDN (URL y clave): el
  * bundle del legado lo lee de ahí, sin tocar su configuración.
  */

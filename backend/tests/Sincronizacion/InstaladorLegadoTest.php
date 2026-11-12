@@ -22,7 +22,7 @@ final class InstaladorLegadoTest extends TestCase
         $dir = dirname(__DIR__, 2) . "/src/Sincronizacion/Legado/sql";
         $instalar = InstaladorLegado::lotes((string) file_get_contents("{$dir}/instalar.sql"));
         $desinstalar = InstaladorLegado::lotes((string) file_get_contents("{$dir}/desinstalar.sql"));
-        foreach (["trg_sync_boleto", "trg_sync_cliente", "trg_sync_encomienda", "trg_sync_encomienda_bitacora", "trg_sync_salida", "trg_sync_factura_generada"] as $trigger) {
+        foreach (["trg_sync_boleto", "trg_sync_cliente", "trg_sync_encomienda", "trg_sync_encomienda_bitacora", "trg_sync_salida", "trg_sync_factura_generada", "trg_sync_proteger_boleto", "trg_sync_proteger_factura_generada", "trg_sync_proteger_encomienda"] as $trigger) {
             $this->assertNotEmpty(array_filter($instalar, static fn(string $l) => str_contains($l, "CREATE TRIGGER dbo.{$trigger}")), "instala {$trigger}");
             $this->assertNotEmpty(array_filter($desinstalar, static fn(string $l) => str_contains($l, "DROP TRIGGER dbo.{$trigger}")), "desinstala {$trigger}");
         }
