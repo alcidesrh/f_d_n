@@ -30,14 +30,14 @@
           <FormKit type="Select" name="tipoPago" label="Tipo de pago" :options="tiposPago" fluid />
           <FormKit type="Select" name="moneda" label="Moneda de pago" :options="monedas" fluid />
         </div>
-        <FormKit
+        <label
           v-if="facturaElectronica"
-          type="Checkbox"
-          name="enviarCorreo"
-          :label="correo ? `Enviar factura a ${correo}` : 'Enviar factura al correo del cliente'"
-          :disabled="!correo"
-          binary
-        />
+          class="mb-4 flex items-center gap-2 text-sm"
+          :class="correo ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'"
+        >
+          <Checkbox v-model="datos.enviarCorreo" binary :disabled="!correo" />
+          <span>{{ correo ? `Enviar factura a ${correo}` : 'Enviar factura al correo del cliente' }}</span>
+        </label>
       </template>
       <Message v-else severity="info" :closable="false" class="mb-3">
         Los asientos se emiten sin cobro y sin factura.
