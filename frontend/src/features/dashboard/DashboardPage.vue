@@ -3,7 +3,8 @@
   puntos de venta, operación de hoy, cobertura de agencias y rendimiento por
   ruta. Datos de `GET /api/tablero` (permiso `reporte.ventas`; un usuario con
   empresa solo ve la suya). Se actualiza solo cada 5 minutos mientras la
-  pestaña está visible. Sin el permiso, muestra accesos directos.
+  pestaña está visible. Sin el permiso, muestra accesos directos. Arriba, los
+  videos sobre el nuevo sistema para todos menos los administradores del sistema.
 -->
 <template>
   <div class="tablero @container flex flex-col gap-4">
@@ -15,8 +16,9 @@
       </Button>
     </header>
 
+    <VideosTutoriales v-if="!acceso.sistema" />
+
     <div v-if="sinPermiso" class="flex flex-col gap-3">
-      <Message severity="secondary" :closable="false">El tablero de gestión necesita el permiso de reportes de venta de toda una empresa. Estos son sus accesos más usados:</Message>
       <div class="accesos">
         <RouterLink v-for="a in accesos" :key="a.ruta" :to="a.ruta" class="acceso">
           <icon :name="a.icono" lg class="text-primary" />
@@ -85,6 +87,7 @@ import PuntosVenta from "./componentes/PuntosVenta.vue";
 import RendimientoRutas from "./componentes/RendimientoRutas.vue";
 import TableroPanel from "./componentes/TableroPanel.vue";
 import TendenciaVentas from "./componentes/TendenciaVentas.vue";
+import VideosTutoriales from "./componentes/VideosTutoriales.vue";
 
 
 const PERIODOS: { dias: DiasTablero; etiqueta: string }[] = [
