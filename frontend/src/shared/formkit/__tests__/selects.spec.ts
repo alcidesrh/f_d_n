@@ -239,6 +239,34 @@ describe('FkSelect / FkMultiSelect: normalizacion de options y valores', () => {
     })
   })
 
+  describe('SelectButton', () => {
+    it('con options {label, value}: pinta el label (no el objeto) y emite el value (regresion)', async () => {
+      const wrapper = await mountForm([
+        {
+          $formkit: 'SelectButton',
+          name: 'tipo',
+          label: 'Movimiento',
+          options: [
+            { label: 'Depósito', value: 'deposito' },
+            { label: 'Ajuste', value: 'ajuste' },
+          ],
+          value: 'deposito',
+        },
+      ])
+      const botones = wrapper.findAll('.p-togglebutton')
+      expect(botones.map((b) => b.text())).toEqual(['Depósito', 'Ajuste'])
+      expect(botones[0]!.classes()).toContain('p-togglebutton-checked')
+
+      await botones[1]!.trigger('click')
+      await new Promise((r) => setTimeout(r, 50)) // FormKit aplica el input tras su `delay` (20 ms)
+      await flushPromises()
+      expect(
+        (wrapper.vm as unknown as { formData: Record<string, unknown> }).formData.tipo,
+      ).toBe('ajuste')
+      wrapper.unmount()
+    })
+  })
+
   describe('exclusión mutua (parents/children) ocultando opciones', () => {
     const ALL = ['/api/menus/1', '/api/menus/2', '/api/menus/3', '/api/menus/4']
     const allOpts = () => ALL.map((v) => ({ label: `Menu ${v.slice(-1)}`, value: v }))
