@@ -17,7 +17,8 @@ interface CertificadorFel
     public function certificar(SolicitudDte $solicitud): DteCertificado;
 
     /**
-     * Anula un DTE certificado.
+     * Anula un DTE certificado. Si ya estaba anulado (p. ej. desde el portal
+     * del certificador) no es un error: el DTE ya no está vigente.
      *
      * @throws CertificacionFallida si no se anuló (el DTE sigue vigente)
      */

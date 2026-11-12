@@ -267,7 +267,7 @@ final class MovimientosEncomienda
             try {
                 $this->facturador->anularFactura($encomienda->getFactura(), $motivo);
             } catch (CertificacionFallida $e) {
-                throw new EncomiendaRechazada("El certificador no anuló la factura: " . $e->getMessage(), "facturacion", 502);
+                throw new EncomiendaRechazada($e->getMessage(), "facturacion", 502);
             }
             // Ya anulada en el certificador: se guarda enseguida, así un reintento no vuelve a llamarlo.
             $this->em->flush();

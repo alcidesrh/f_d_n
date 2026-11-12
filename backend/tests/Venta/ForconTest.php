@@ -180,20 +180,53 @@ final class ForconTest extends TestCase
 
     public function testRespuestaDeAnulacion(): void
     {
-        DteJsonForcon::respuestaAnulacion(["StatusCode" => "OK", "Resultado" => true, "Descripcion" => "Documento anulado"]);
-        $this->addToAssertionCount(1);
+        $this->assertTrue(DteJsonForcon::respuestaAnulacion(["StatusCode" => "OK", "Resultado" => true, "Descripcion" => "Documento anulado"]));
 
         try {
-            DteJsonForcon::respuestaAnulacion(["StatusCode" => "BadRequest", "Resultado" => false, "Descripcion" => "ERROR EVI-100: El documento ya fue anulado"]);
+            DteJsonForcon::respuestaAnulacion(["StatusCode" => "BadRequest", "Resultado" => false, "Descripcion" => "ERROR EVI-021: El NIT, CUI O EXT del Receptor, no coincide con el consignado en el DTE original"]);
             $this->fail("debía fallar");
         } catch (CertificacionFallida $e) {
             $this->assertFalse($e->recuperable);
-            $this->assertSame("EVI-100", $e->codigo);
+            $this->assertSame("EVI-021", $e->codigo);
             $this->assertStringContainsString("no anuló", $e->getMessage());
         }
 
         $this->expectException(CertificacionFallida::class);
         DteJsonForcon::respuestaAnulacion(["Resultado" => false, "Descripcion" => "Servicio no disponible"]);
+    }
+
+    /** Anulado antes desde el portal del certificador: la anulación se cumple igual. */
+    public function testElDteYaAnuladoEnElCertificadorNoEsUnError(): void
+    {
+        $this->assertFalse(DteJsonForcon::respuestaAnulacion(["StatusCode" => "BadRequest", "Resultado" => false, "Descripcion" => "ERROR EVI-018: El DTE solicitado, ya fue anulado y no es posible anularlo 2 veces"]));
+        $this->assertFalse(DteJsonForcon::respuestaAnulacion(["Resultado" => false, "Descripcion" => "El DTE solicitado, ya fue anulado y no es posible anularlo 2 veces"]));
+
+        $http = new \Symfony\Component\HttpClient\MockHttpClient(new \Symfony\Component\HttpClient\Response\MockResponse(json_encode([
+            "StatusCode" => "BadRequest",
+            "Resultado" => false,
+            "Descripcion" => "ERROR EVI-018: El DTE solicitado, ya fue anulado y no es posible anularlo 2 veces",
+        ])));
+        $cifrado = new CifradoCredenciales("s");
+        $config = (new ConfiguracionForcon())
+            ->setUrl("https://pruebasfel.eforcon.com")
+            ->setCredencialGlobal("usr", $cifrado->cifrar("fdn-credencial-fel", "pwd"));
+        $ajustes = AjustesForcon::fijos($config);
+        $cliente = new \App\Venta\Facturacion\Forcon\ClienteForcon($http, $ajustes, new CredencialesFel($this->createStub(EntityManagerInterface::class), $cifrado, $ajustes));
+        $facturador = new \App\Venta\Facturacion\Facturador(
+            new \App\Venta\Facturacion\Forcon\CertificadorForcon($cliente, new DatosEmisorForcon($cliente, new \Symfony\Component\Cache\Adapter\ArrayAdapter())),
+            $this->createStub(EntityManagerInterface::class),
+            new \Symfony\Component\Clock\MockClock("2026-11-11 10:00:00"),
+        );
+        $factura = (new \App\Entity\Factura())
+            ->setUuid(\Symfony\Component\Uid\Uuid::fromString("62de80b1-3834-42f0-a591-341fc382d884"))
+            ->setEmisorNit("43977006")
+            ->setReceptopNit("CF")
+            ->setFecha(new \DateTime("2026-11-10 08:00:00"));
+
+        $facturador->anularFactura($factura, "Anulada también en el portal");
+
+        $this->assertTrue($factura->isAnulada());
+        $this->assertSame(1, $http->getRequestsCount());
     }
 
     public function testCredencialesCifradasIdaYVuelta(): void

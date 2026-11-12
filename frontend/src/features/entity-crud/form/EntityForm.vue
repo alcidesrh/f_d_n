@@ -159,5 +159,5 @@ function askDelete() {
   });
 }
 
-const actions = computed(() => [{ label: "Listado", icon: "undo", command: () => reset() }, ...(mode.value === "update" ? [{ label: "Eliminar", icon: "delete-outline", command: askDelete }] : [])]);
+const actions = computed(() => [{ label: "Listado", icon: "undo", command: () => emit("cancel") }, ...(mode.value === "update" ? [{ label: "Eliminar", icon: "delete-outline", command: askDelete }] : [])]);
 </script>

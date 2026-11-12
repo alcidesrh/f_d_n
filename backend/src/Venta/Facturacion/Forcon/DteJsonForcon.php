@@ -30,6 +30,9 @@ final class DteJsonForcon
     private const ADENDA_ASIENTO = "129";
     private const ADENDA_PASAJERO = "132";
 
+    /** «El DTE solicitado, ya fue anulado y no es posible anularlo 2 veces» (`Catalogo_de_Errores.xls`). */
+    private const YA_ANULADO = "EVI-018";
+
     /** Datos del certificador que se imprimen en el boleto. */
     public const CERTIFICADOR_NIT = "4150686";
     public const CERTIFICADOR_NOMBRE = "Formularios Continuos de Centro America, S.A.";
@@ -183,16 +186,23 @@ final class DteJsonForcon
     /**
      * @param array<string, mixed> $r respuesta de `AnularDteJson`
      *
+     * @return bool true si lo anuló ahora; false si ya estaba anulado (p. ej.
+     *              desde el portal del certificador, `EVI-018`): para el
+     *              sistema la anulación igual se cumplió
+     *
      * @throws CertificacionFallida si no se anuló
      */
-    public static function respuestaAnulacion(array $r): void
+    public static function respuestaAnulacion(array $r): bool
     {
         if (($r["Resultado"] ?? false) === true) {
-            return;
+            return true;
         }
         $descripcion = (string) ($r["Descripcion"] ?? "");
         $texto = trim(preg_replace('/^\s*ERROR\s+[A-Z]{3}-\d{3}\s*:\s*/', "", $descripcion) ?? $descripcion);
         $codigo = preg_match('/\b([A-Z]{3}-\d{3})\b/', $descripcion, $m) ? $m[1] : null;
+        if ($codigo === self::YA_ANULADO || preg_match('/ya fue anulado y no es posible anularlo/iu', $descripcion)) {
+            return false;
+        }
 
         throw new CertificacionFallida(
             $texto !== "" ? "El certificador no anuló la factura: {$texto}" : "El certificador no anuló la factura.",

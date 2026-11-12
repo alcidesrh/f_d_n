@@ -8,6 +8,8 @@ use App\Venta\Facturacion\CertificadorFel;
 use App\Venta\Facturacion\DteCertificado;
 use App\Venta\Facturacion\SolicitudAnulacion;
 use App\Venta\Facturacion\SolicitudDte;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 /** Certificación de facturas con Forcon (`EmitirDteJson`, firma del emisor en Forcon). */
 final class CertificadorForcon implements CertificadorFel
@@ -15,6 +17,7 @@ final class CertificadorForcon implements CertificadorFel
     public function __construct(
         private readonly ClienteForcon $cliente,
         private readonly DatosEmisorForcon $emisores,
+        private readonly LoggerInterface $logger = new NullLogger(),
     ) {}
 
     public function certificar(SolicitudDte $solicitud): DteCertificado
@@ -28,8 +31,11 @@ final class CertificadorForcon implements CertificadorFel
 
     public function anular(SolicitudAnulacion $solicitud): void
     {
-        DteJsonForcon::respuestaAnulacion(
+        $anuladoAhora = DteJsonForcon::respuestaAnulacion(
             $this->cliente->post(ClienteForcon::ANULAR_JSON, DteJsonForcon::construirAnulacion($solicitud), $solicitud->emisorNit),
         );
+        if (!$anuladoAhora) {
+            $this->logger->warning("El DTE {uuid} ya estaba anulado en el certificador (anulado fuera del sistema).", ["uuid" => $solicitud->uuid]);
+        }
     }
 }
