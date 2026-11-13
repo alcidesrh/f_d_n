@@ -22,15 +22,16 @@
 
     <ul v-if="estado" class="m-0 flex list-none flex-col gap-2 p-0">
       <li v-for="t in estado.tareas" :key="t.codigo" class="tarea">
-        <div class="flex flex-wrap items-start gap-x-3 gap-y-1">
-          <div class="min-w-0 flex-1">
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-2 @md:items-start @md:gap-y-1">
+          <!-- En el teléfono el nombre ocupa su renglón; el estado y «Correr ahora» van debajo. -->
+          <div class="min-w-0 basis-full @md:flex-1 @md:basis-0">
             <span class="block font-medium">{{ t.nombre }}</span>
             <span class="block text-xs text-muted-color"
               >{{ t.cuando }} · <code>{{ t.codigo }}</code></span
             >
           </div>
           <Tag :value="SALUD[salud(t)].etiqueta" :severity="SALUD[salud(t)].severidad" class="!text-xs" />
-          <Button label="Correr ahora" size="small" severity="secondary" outlined :loading="encolando === t.codigo" :disabled="encolando !== null" @click="correr(t)">
+          <Button class="ml-auto @md:ml-0" label="Correr ahora" size="small" severity="secondary" outlined :loading="encolando === t.codigo" :disabled="encolando !== null" @click="correr(t)">
             <template #icon><icon name="play-arrow" class="mr-1" /></template>
           </Button>
         </div>

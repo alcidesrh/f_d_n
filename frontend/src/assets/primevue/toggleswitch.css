@@ -1,0 +1,5 @@
+/* El interruptor nunca se encoge: junto a un texto largo en una fila flex (teléfono),
+   quedaba aplastado y la perilla se salía de su pista. */
+.p-toggleswitch {
+  flex-shrink: 0;
+}
