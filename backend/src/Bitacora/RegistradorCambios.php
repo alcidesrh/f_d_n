@@ -15,6 +15,7 @@ use App\Entity\ChatMensaje;
 use App\Entity\ChatMiembro;
 use App\Entity\CorreoAdjunto;
 use App\Entity\CorreoMensaje;
+use App\Entity\DispositivoPush;
 use App\Entity\EnvioMensajePredeterminado;
 use App\Entity\EnvioReporte;
 use App\Entity\EstadoTarea;
@@ -60,7 +61,7 @@ final class RegistradorCambios implements ResetInterface
         Bitacora::class, ApiToken::class, LecturaGps::class, LecturaGpsPrueba::class, RevisionMetadata::class,
         ChatMensaje::class, ChatMiembro::class, ChatArchivo::class, ChatContactoFijado::class,
         CorreoMensaje::class, CorreoAdjunto::class, EstadoTarea::class, AvisoOperativo::class,
-        EnvioReporte::class, EnvioMensajePredeterminado::class, ReservaAsiento::class, SuscripcionPush::class,
+        EnvioReporte::class, EnvioMensajePredeterminado::class, ReservaAsiento::class, SuscripcionPush::class, DispositivoPush::class,
     ];
 
     /** Campos que nunca se anotan (cambian solos). */

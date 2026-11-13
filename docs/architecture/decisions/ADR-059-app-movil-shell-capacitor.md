@@ -44,8 +44,7 @@ origen de la tabla.
 
 ## Consecuencias
 
-- Web Push no existe en el WebView de Android: en la app, «Mi cuenta» muestra las notificaciones como no
-  disponibles hasta que lleguen por FCM (siguiente paso del plan).
+- Web Push no existe en el WebView de Android: en la app las notificaciones llegan por FCM (ADR-060).
 - `window.print()` no funciona en el WebView: tickets, recibos y guías no se imprimen desde la app hasta
   que haya un plugin de impresión.
 - Los plugins nativos solo existen dentro de la app: el código web que los use pregunta antes

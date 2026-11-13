@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Chat\Push;
 
 use App\Chat\ChatRechazado;
+use App\Entity\DispositivoPush;
 use App\Entity\Enum\TipoCanalChat;
 use App\Entity\SuscripcionPush;
 use App\Entity\Usuario;
@@ -13,20 +14,23 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\MessageBusInterface;
 
 /**
- * Notificaciones del chat con la aplicación cerrada (Web Push): quién envía
- * y un fragmento del mensaje. Cada navegador se suscribe desde "Mi cuenta";
- * el envío es asíncrono (`EnviarAvisoPush`). Sin claves VAPID configuradas
- * (`PUSH_VAPID_*`, `app:push:claves`) no hay notificaciones y la app no
- * ofrece activarlas.
+ * Notificaciones del chat con la aplicación cerrada: quién envía y un
+ * fragmento del mensaje. Cada navegador (Web Push) y cada teléfono con la app
+ * móvil (FCM, ADR-060) se suscribe desde "Mi cuenta"; el envío es asíncrono
+ * (`EnviarAvisoPush`). Sin claves VAPID configuradas (`PUSH_VAPID_*`,
+ * `app:push:claves`) no las hay en el navegador, y sin `PUSH_FCM_CREDENCIAL`
+ * no las hay en la app móvil: donde faltan, no se ofrece activarlas.
  */
 final class AvisosPush
 {
     public const MAX_FRAGMENTO = 100;
+    public const PLATAFORMAS = ["android", "ios"];
     private const SERVICIOS = ["fcm.googleapis.com", "push.services.mozilla.com", "notify.windows.com", "push.apple.com"];
 
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly MessageBusInterface $bus,
+        private readonly Fcm $fcm,
         #[Autowire(env: "default::PUSH_VAPID_PUBLICA")] private readonly ?string $clavePublica,
         #[Autowire(env: "default::PUSH_VAPID_PRIVADA")] private readonly ?string $clavePrivada,
     ) {}
@@ -85,13 +89,56 @@ final class AvisosPush
     }
 
     /**
+     * Estado para la app móvil que pregunta: si hay notificaciones para ella
+     * y si su `$token` de FCM está registrado a nombre de `$yo`.
+     *
+     * @return array{disponible: bool, mio: bool}
+     */
+    public function estadoDispositivo(Usuario $yo, ?string $token): array
+    {
+        $d = $token ? $this->buscarDispositivo($token) : null;
+
+        return ["disponible" => $this->fcm->activo(), "mio" => $d !== null && $d->getUsuario()->getId() === $yo->getId()];
+    }
+
+    /** @param array<string, mixed> $datos `{ token, plataforma }` de la app móvil */
+    public function registrarDispositivo(Usuario $yo, array $datos): void
+    {
+        if (!$this->fcm->activo()) {
+            throw new ChatRechazado("Las notificaciones no están configuradas.", 503);
+        }
+        $token = $datos["token"] ?? null;
+        $plataforma = $datos["plataforma"] ?? null;
+        if (!is_string($token) || !self::tokenValido($token) || !in_array($plataforma, self::PLATAFORMAS, true)) {
+            throw new ChatRechazado("Dispositivo inválido.");
+        }
+        $d = $this->buscarDispositivo($token);
+        if ($d === null) {
+            $this->em->persist(new DispositivoPush($yo, $token, $plataforma));
+        } else {
+            $d->renovar($yo, $plataforma);
+        }
+        $this->em->flush();
+    }
+
+    /** Quita ese teléfono, sea de quien sea: solo la app conoce su token (como `desuscribir`). */
+    public function quitarDispositivo(string $token): void
+    {
+        $d = $this->buscarDispositivo($token);
+        if ($d !== null) {
+            $this->em->remove($d);
+            $this->em->flush();
+        }
+    }
+
+    /**
      * Nuevo mensaje para `$usuarios` (sin el autor).
      *
      * @param list<int> $usuarios
      */
     public function avisarMensaje(array $usuarios, int $canal, TipoCanalChat $tipo, ?string $grupo, ?string $autor, string $texto): void
     {
-        if ($usuarios === [] || !$this->activo()) {
+        if ($usuarios === [] || !$this->algunCanal()) {
             return;
         }
         $this->bus->dispatch(new EnviarAvisoPush(array_values(array_unique($usuarios)), self::contenido($canal, $tipo, $grupo, $autor, $texto)));
@@ -105,7 +152,7 @@ final class AvisosPush
      */
     public function avisar(array $usuarios, array $contenido): void
     {
-        if ($usuarios === [] || !$this->activo()) {
+        if ($usuarios === [] || !$this->algunCanal()) {
             return;
         }
         $this->bus->dispatch(new EnviarAvisoPush(array_values(array_unique($usuarios)), ["titulo" => $contenido["titulo"], "cuerpo" => self::fragmento($contenido["cuerpo"]), "url" => $contenido["url"], "etiqueta" => $contenido["etiqueta"]]));
@@ -158,9 +205,26 @@ final class AvisosPush
         return false;
     }
 
+    /** Un token de registro de FCM: letras, dígitos, `-`, `_` y `:`. */
+    public static function tokenValido(string $token): bool
+    {
+        return preg_match('/^[A-Za-z0-9_:-]{20,500}$/', $token) === 1;
+    }
+
     private static function base64url(mixed $valor, int $max): bool
     {
         return is_string($valor) && strlen($valor) <= $max && preg_match('/^[A-Za-z0-9_-]+=*$/', $valor) === 1;
+    }
+
+    /** Hay a dónde enviar: navegadores (VAPID) o teléfonos (FCM). */
+    private function algunCanal(): bool
+    {
+        return $this->activo() || $this->fcm->activo();
+    }
+
+    private function buscarDispositivo(string $token): ?DispositivoPush
+    {
+        return $this->em->getRepository(DispositivoPush::class)->findOneBy(["token" => $token]);
     }
 
     private function buscar(string $endpoint): ?SuscripcionPush

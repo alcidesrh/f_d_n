@@ -41,6 +41,16 @@ jobs:
         run: |
           if [ -z "$FDN_APP_URL" ]; then unset FDN_APP_URL; fi
           npx cap sync android
+      # Notificaciones (ADR-060): sin `google-services.json` el APK compila igual, sin ellas.
+      # Puede estar en git (movil/android/app/) o venir del secreto GOOGLE_SERVICES_JSON.
+      - name: Configuración de Firebase
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ ! -f android/app/google-services.json ] && [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+          fi
+          if [ -f android/app/google-services.json ]; then echo "Con notificaciones"; else echo "::warning::Sin google-services.json: APK sin notificaciones"; fi
       - name: Compilar
         working-directory: movil/android
         run: ./gradlew assembleDebug --no-daemon

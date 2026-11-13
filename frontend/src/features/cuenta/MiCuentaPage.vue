@@ -128,7 +128,9 @@
                 <span class="block text-sm text-muted-color">
                   {{
                     estadoPush === 'bloqueadas'
-                      ? 'El navegador las tiene bloqueadas para este sitio: permítalas en su configuración.'
+                      ? esAppNativa()
+                        ? 'Están bloqueadas para esta app: permítalas en los ajustes del teléfono.'
+                        : 'El navegador las tiene bloqueadas para este sitio: permítalas en su configuración.'
                       : 'Avisa quién escribe y el inicio del mensaje aunque la app esté cerrada. Se desactivan al cerrar sesión.'
                   }}
                 </span>
@@ -196,6 +198,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { activarPush, desactivarPush, estadoPush, revisarPush } from '@/core/chat/push'
+import { esAppNativa } from '@/core/chat/pushNativo'
 import { cambiarPassword } from '@/core/cuenta/api'
 import { useCuentaStore } from '@/core/cuenta/store'
 import { notify } from '@/core/notify'

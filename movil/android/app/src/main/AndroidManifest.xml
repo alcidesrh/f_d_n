@@ -24,6 +24,17 @@
 
         </activity>
 
+        <!-- Notificaciones del chat (FCM, ADR-060): ícono, color y canal cuando el mensaje no los trae. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_notificacion" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/notificacion" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="chat" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -38,4 +49,6 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Android 13+: mostrar notificaciones se pide al activarlas en «Mi cuenta». -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 </manifest>

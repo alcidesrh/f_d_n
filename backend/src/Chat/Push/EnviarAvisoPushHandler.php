@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Chat\Push;
 
+use App\Entity\DispositivoPush;
 use App\Entity\SuscripcionPush;
 use Doctrine\ORM\EntityManagerInterface;
 use Minishlink\WebPush\Subscription;
@@ -14,9 +15,10 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 /**
- * Envía la notificación a cada navegador suscrito. El contenido va cifrado
- * para el navegador (el servicio de push no lo lee). Las suscripciones que
- * el servicio da por vencidas (404/410) se borran.
+ * Envía la notificación a cada navegador suscrito (Web Push) y a cada
+ * teléfono con la app móvil (FCM, ADR-060). En Web Push el contenido va
+ * cifrado para el navegador (el servicio de push no lo lee). Las
+ * suscripciones y los teléfonos que el servicio da por vencidos se borran.
  */
 #[AsMessageHandler]
 final class EnviarAvisoPushHandler
@@ -28,6 +30,7 @@ final class EnviarAvisoPushHandler
         private readonly EntityManagerInterface $em,
         private readonly LoggerInterface $logger,
         private readonly ClientInterface $http,
+        private readonly Fcm $fcm,
         #[Autowire(env: "default::PUSH_VAPID_PUBLICA")] private readonly ?string $clavePublica,
         #[Autowire(env: "default::PUSH_VAPID_PRIVADA")] private readonly ?string $clavePrivada,
         #[Autowire(env: "default:push_vapid_contacto_defecto:PUSH_VAPID_CONTACTO")] private readonly string $contacto,
@@ -35,13 +38,25 @@ final class EnviarAvisoPushHandler
 
     public function __invoke(EnviarAvisoPush $mensaje): void
     {
-        if (!$this->clavePublica || !$this->clavePrivada || $mensaje->usuarios === []) {
+        if ($mensaje->usuarios === []) {
             return;
+        }
+        $vencidas = $this->aNavegadores($mensaje) + $this->aTelefonos($mensaje);
+        if ($vencidas > 0) {
+            $this->em->flush();
+        }
+    }
+
+    /** @return int cuántas suscripciones vencidas se quitaron (falta el flush) */
+    private function aNavegadores(EnviarAvisoPush $mensaje): int
+    {
+        if (!$this->clavePublica || !$this->clavePrivada) {
+            return 0;
         }
         /** @var list<SuscripcionPush> $suscripciones */
         $suscripciones = $this->em->getRepository(SuscripcionPush::class)->findBy(["usuario" => $mensaje->usuarios]);
         if ($suscripciones === []) {
-            return;
+            return 0;
         }
 
         $push = new WebPush(
@@ -69,8 +84,26 @@ final class EnviarAvisoPushHandler
                 $this->logger->warning("Notificación push no enviada: {motivo}", ["motivo" => $reporte->getReason()]);
             }
         }
-        if ($vencidas > 0) {
-            $this->em->flush();
+
+        return $vencidas;
+    }
+
+    /** @return int cuántos teléfonos vencidos se quitaron (falta el flush) */
+    private function aTelefonos(EnviarAvisoPush $mensaje): int
+    {
+        if (!$this->fcm->activo()) {
+            return 0;
         }
+        /** @var list<DispositivoPush> $dispositivos */
+        $dispositivos = $this->em->getRepository(DispositivoPush::class)->findBy(["usuario" => $mensaje->usuarios]);
+        $vencidos = 0;
+        foreach ($dispositivos as $d) {
+            if ($this->fcm->enviar($d->getToken(), $mensaje->contenido) === EntregaFcm::Vencida) {
+                $this->em->remove($d);
+                ++$vencidos;
+            }
+        }
+
+        return $vencidos;
     }
 }

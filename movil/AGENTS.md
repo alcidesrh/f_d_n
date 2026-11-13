@@ -26,11 +26,28 @@ cambio de `movil/` (artefacto `fdn-movil-debug`) y a mano con otra URL.
 | `android/` | Proyecto nativo generado por Capacitor, en git. `app/src/main/assets/` es generado por `sync` (fuera de git) |
 | `recursos/iconos.py` | Ícono adaptable, redondo y arranque desde los íconos de la PWA |
 
+## Notificaciones (FCM, ADR-060)
+
+Hacen falta dos archivos de un proyecto de Firebase; sin ellos todo compila y funciona, sin notificaciones:
+
+1. En la [consola de Firebase](https://console.firebase.google.com): crear el proyecto y sumarle una app
+   Android con el paquete `gt.fuentesdelnorte.personal`.
+2. **`google-services.json`** (de esa app Android) → `movil/android/app/google-services.json`. Son
+   identificadores, no secretos: puede ir en git, o como secreto `GOOGLE_SERVICES_JSON` de GitHub Actions.
+3. **Cuenta de servicio** (Configuración del proyecto → Cuentas de servicio → Generar nueva clave privada):
+   ese JSON sí es secreto. Va en el servidor, fuera de git, y `PUSH_FCM_CREDENCIAL` (en `.env.local` o
+   `.env.prod.local`) lleva su ruta dentro del contenedor del backend. Lo leen `backend` y `worker`.
+4. Recompilar el APK. En la app: Mi cuenta → Notificaciones.
+
+El ícono de la barra de estado es `res/drawable/ic_notificacion.xml`; el canal `chat` lo crea la app al
+activarlas (`frontend/src/core/chat/pushNativo.ts`).
+
 ## Reglas
 
 - Un APK apunta a un solo servidor, siempre por HTTPS. Para probar contra `make dev` en la red local, el
   teléfono tiene que confiar en el certificado de Caddy (o usar `make vps`, que tiene uno público).
 - Un plugin nativo se suma aquí (`npm install @capacitor/…` + `npm run sync`) y se usa desde `frontend/`
   preguntando antes `window.Capacitor?.isNativePlatform()`: el mismo código corre en el navegador.
-- No hay Web Push ni `window.print()` dentro del WebView (ADR-059, consecuencias).
+- No hay Web Push ni `window.print()` dentro del WebView (ADR-059, consecuencias). Las notificaciones del
+  chat llegan por FCM (ADR-060).
 - La firma de publicación (keystore) no va en git.

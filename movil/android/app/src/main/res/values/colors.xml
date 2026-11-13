@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Acento de las notificaciones: el dorado de la marca, oscurecido para que se lea sobre blanco. -->
+    <color name="notificacion">#8A6A1C</color>
+</resources>
