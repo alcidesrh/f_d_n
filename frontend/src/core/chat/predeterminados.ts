@@ -11,7 +11,7 @@ const BASE = '/chat/predeterminados'
 
 export const CAPACIDAD = 'chat.predeterminados'
 
-export type CodigoTipo = 'libre' | 'salida_iniciada' | 'anomalia_reasignacion' | 'anomalia_tarifa' | 'ventas_dia' | 'desempeno_dia'
+export type CodigoTipo = 'libre' | 'salida_iniciada' | 'anomalia_reasignacion' | 'anomalia_tarifa' | 'anomalia_gps' | 'ventas_dia' | 'desempeno_dia'
 
 export interface TipoMensaje {
   codigo: CodigoTipo
@@ -162,6 +162,8 @@ export function cuandoSale(m: Pick<MensajePredeterminado, 'tipo' | 'hora' | 'dia
     case 'anomalia_reasignacion':
     case 'anomalia_tarifa':
       return 'Cada madrugada, si encuentra alguna'
+    case 'anomalia_gps':
+      return 'Con los buses en recorrido, en cuanto ocurre'
     default:
       return `Todos los días a las ${m.hora ?? horaCierre}`
   }

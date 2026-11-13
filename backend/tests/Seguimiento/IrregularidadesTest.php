@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Seguimiento;
 
+use App\Chat\Predeterminado\Contenidos;
 use App\Seguimiento\Irregularidad;
 use App\Seguimiento\Irregularidades;
+use App\Seguimiento\IrregularidadesEnCurso;
 use App\Seguimiento\UmbralesIrregularidad;
 use PHPUnit\Framework\TestCase;
 
@@ -83,6 +85,49 @@ final class IrregularidadesTest extends TestCase
         $lecturas = [...self::lecturas([95, 96, 97]), ...self::lecturas([95, 96, 97], self::CARRETERA, 60, self::T0 + 720)];
 
         self::assertSame([], Irregularidades::detectar($lecturas, []));
+    }
+
+    public function testSoloSeAvisaLoDeAhora(): void
+    {
+        $ahora = self::T0 + 3600;
+        $vieja = new Irregularidad(Irregularidad::EXCESO_VELOCIDAD, self::T0, self::T0 + 300, 14.7, -90.5, 110);
+        $deAhora = new Irregularidad(Irregularidad::EXCESO_VELOCIDAD, $ahora - 400, $ahora - 60, 14.7, -90.5, 110);
+        $parada = new Irregularidad(Irregularidad::PARADA_LARGA, $ahora - 1500, $ahora - 30, 14.7, -90.5, 0);
+
+        self::assertSame([$deAhora, $parada], IrregularidadesEnCurso::filtrar([$vieja, $deAhora, $parada], self::T0, false, true, $ahora));
+        // Sin ninguna parada ubicada, toda parada parecería fuera de lugar.
+        self::assertSame([$deAhora], IrregularidadesEnCurso::filtrar([$deAhora, $parada], self::T0, false, false, $ahora));
+        // Empieza donde se empezó a mirar: venía de antes y ya se avisó.
+        self::assertSame([$deAhora], IrregularidadesEnCurso::filtrar([$deAhora, $parada], $parada->desde, true, true, $ahora));
+        self::assertSame([$deAhora, $parada], IrregularidadesEnCurso::filtrar([$deAhora, $parada], $parada->desde, false, true, $ahora));
+    }
+
+    public function testUmbralesDelEntorno(): void
+    {
+        $u = IrregularidadesEnCurso::umbralesDe("80", " 5 ", "30");
+        self::assertSame([80, 300, 1800], [$u->velocidadMaximaKmh, $u->segundosExceso, $u->segundosDetenido]);
+
+        // Vacío, mal escrito o absurdo: el de siempre.
+        $d = new UmbralesIrregularidad();
+        $u = IrregularidadesEnCurso::umbralesDe(null, "", "muchos");
+        self::assertSame([$d->velocidadMaximaKmh, $d->segundosExceso, $d->segundosDetenido], [$u->velocidadMaximaKmh, $u->segundosExceso, $u->segundosDetenido]);
+        self::assertSame($d->velocidadMaximaKmh, IrregularidadesEnCurso::umbralesDe("5", null, null)->velocidadMaximaKmh);
+    }
+
+    public function testElAvisoDiceQueBusQuePasoYDonde(): void
+    {
+        $salida = ["bus" => "214", "empresa" => "FDN", "rutaNombre" => "Guatemala → Flores"];
+        // 2026-10-29 15:42 en Guatemala (UTC-6).
+        $desde = (new \DateTimeImmutable("2026-10-29 15:42", new \DateTimeZone("America/Guatemala")))->getTimestamp();
+
+        $exceso = Contenidos::textoIrregularidad($salida, new Irregularidad(Irregularidad::EXCESO_VELOCIDAD, $desde, $desde + 290, 15.12345, -90.54321, 104), 90);
+        self::assertStringStartsWith("Bus 214 · FDN · Guatemala → Flores\nExceso de velocidad desde las 3:42", $exceso);
+        self::assertStringContainsString(": hasta 104 km/h (límite 90) durante 5 min.\n", $exceso);
+        self::assertStringEndsWith("Ubicación: 15.12345, -90.54321", $exceso);
+
+        $parada = Contenidos::textoIrregularidad($salida, new Irregularidad(Irregularidad::PARADA_LARGA, $desde, $desde + 1500, 15.1, -90.5, 0), 90);
+        self::assertStringContainsString("Parada larga desde las 3:42", $parada);
+        self::assertStringContainsString(": detenido 25 min fuera de las paradas de la ruta.\n", $parada);
     }
 
     public function testUmbralesPropios(): void

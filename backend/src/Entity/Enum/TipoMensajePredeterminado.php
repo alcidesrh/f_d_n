@@ -12,7 +12,11 @@ namespace App\Entity\Enum;
  * - `libre`: solo el contenido de la instancia (texto, imagen, archivos), a
  *   su hora en los días elegidos.
  * - `salida_iniciada`: al pasar la hora de cada salida de la ruta y empresa elegidas.
- * - `anomalia_*`: la revisión de cada madrugada, cuando encuentra algo.
+ * - `anomalia_reasignacion`, `anomalia_tarifa`: la revisión de cada
+ *   madrugada, cuando encuentra algo.
+ * - `anomalia_gps`: mientras los buses están en recorrido, en cuanto el GPS
+ *   muestra un exceso de velocidad sostenido o una parada larga fuera de
+ *   las paradas de la ruta (`App\Seguimiento\Irregularidades`).
  * - `ventas_dia`, `desempeno_dia`: a su hora (al cierre), lo del mismo día de
  *   la empresa elegida.
  */
@@ -22,6 +26,7 @@ enum TipoMensajePredeterminado: string
     case SALIDA_INICIADA = "salida_iniciada";
     case ANOMALIA_REASIGNACION = "anomalia_reasignacion";
     case ANOMALIA_TARIFA = "anomalia_tarifa";
+    case ANOMALIA_GPS = "anomalia_gps";
     case VENTAS_DIA = "ventas_dia";
     case DESEMPENO_DIA = "desempeno_dia";
 
@@ -35,6 +40,7 @@ enum TipoMensajePredeterminado: string
             self::SALIDA_INICIADA => "Salida iniciada",
             self::ANOMALIA_REASIGNACION => "Anomalía en reasignación",
             self::ANOMALIA_TARIFA => "Anomalía en tarifa",
+            self::ANOMALIA_GPS => "Irregularidad en la trayectoria (GPS)",
             self::VENTAS_DIA => "Ventas del día",
             self::DESEMPENO_DIA => "Desempeño general del día",
         };
@@ -47,6 +53,7 @@ enum TipoMensajePredeterminado: string
             self::SALIDA_INICIADA => "Al pasar la hora de cada salida de la ruta: hora de inicio, asientos libres y ocupados por canal y la tabla por vendedor (tarjeta y PDF).",
             self::ANOMALIA_REASIGNACION => "Cada madrugada: los boletos del día anterior reasignados más de dos veces, con su bitácora.",
             self::ANOMALIA_TARIFA => "Cada madrugada: las tarifas creadas, editadas o eliminadas el día anterior, con su bitácora.",
+            self::ANOMALIA_GPS => "Con los buses en recorrido: exceso de velocidad sostenido y paradas largas fuera de las paradas de la ruta, según el GPS del bus.",
             self::VENTAS_DIA => "Al cierre: totales del día de la empresa y desglose por estación.",
             self::DESEMPENO_DIA => "Al cierre: ingresos, boletos, ocupación, anulaciones, cortesías y lo que pide acción, del mismo día.",
         };
@@ -82,6 +89,12 @@ enum TipoMensajePredeterminado: string
 
     public function esAnomalia(): bool
     {
-        return $this === self::ANOMALIA_REASIGNACION || $this === self::ANOMALIA_TARIFA;
+        return $this === self::ANOMALIA_REASIGNACION || $this === self::ANOMALIA_TARIFA || $this === self::ANOMALIA_GPS;
+    }
+
+    /** Anomalía que se avisa en cuanto ocurre (con los envíos de cada 5 minutos), no en la revisión de la madrugada. */
+    public function enVivo(): bool
+    {
+        return $this === self::ANOMALIA_GPS;
     }
 }

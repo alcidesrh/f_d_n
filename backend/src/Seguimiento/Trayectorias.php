@@ -87,6 +87,37 @@ final class Trayectorias
     }
 
     /**
+     * Las salidas cuya ventana de trayectoria incluye `$ahora` (en recorrido, por salir o recién
+     * llegadas), de una empresa o de todas, con su bus y su ventana.
+     *
+     * @return list<array{salidaId: int, busId: int, bus: string, empresa: string, rutaNombre: string, desde: int, hasta: int}>
+     */
+    public function enCurso(\DateTimeImmutable $ahora, ?int $empresa = null): array
+    {
+        $local = $ahora->setTimezone(new \DateTimeZone(self::ZONA));
+        // La ventana más larga: sin llegada programada, 12 h de viaje y 3 más.
+        $condicion = 's.fecha >= :desde AND s.fecha <= :hasta';
+        $parametros = ['desde' => $local->modify('-15 hours')->format('Y-m-d H:i:s'), 'hasta' => $local->modify('+' . VentanaTrayectoria::ANTES_MINUTOS . ' minutes')->format('Y-m-d H:i:s')];
+        if (null !== $empresa) {
+            $condicion .= ' AND s.empresa_id = :empresa';
+            $parametros['empresa'] = $empresa;
+        }
+
+        $enCurso = [];
+        $instante = $ahora->getTimestamp();
+        foreach ($this->filas($condicion, $parametros) as $f) {
+            $v = $this->ventana($f);
+            if ($instante < $v->desde || $instante > $v->hasta) {
+                continue;
+            }
+            $datos = $this->datos($f);
+            $enCurso[] = ['salidaId' => $datos['salidaId'], 'busId' => (int) $f['bus_id'], 'bus' => $datos['bus'], 'empresa' => $datos['empresa'], 'rutaNombre' => $datos['rutaNombre'], 'desde' => $v->desde, 'hasta' => $v->hasta];
+        }
+
+        return $enCurso;
+    }
+
+    /**
      * Borra la trayectoria de una salida: las lecturas de su bus en su ventana. Devuelve cuántas.
      * Con un horario apretado la ventana puede alcanzar el inicio de la siguiente salida del bus.
      * Quien llama ya comprobó que el usuario puede.
