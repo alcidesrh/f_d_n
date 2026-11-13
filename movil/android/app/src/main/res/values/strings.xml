@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Fuentes del Norte</string>
+    <string name="title_activity_main">Fuentes del Norte</string>
+    <string name="package_name">gt.fuentesdelnorte.personal</string>
+    <string name="custom_url_scheme">gt.fuentesdelnorte.personal</string>
+</resources>
