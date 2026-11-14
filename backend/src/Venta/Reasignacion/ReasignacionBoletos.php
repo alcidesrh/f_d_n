@@ -176,6 +176,7 @@ final class ReasignacionBoletos
                 ->setCliente($b->getCliente())
                 ->setPrecio($b->getPrecio())
                 ->setObservacion($b->getObservacion())
+                ->setModificaciones($b->getModificaciones())
                 ->setReasignadoDe($b);
             $venta->addAsiento($nuevo);
             $this->em->persist($nuevo);

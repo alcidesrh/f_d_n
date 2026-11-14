@@ -18,7 +18,7 @@ export const fetchOpciones = () =>
 
 export const fetchConfiguracion = () => http.get<ConfiguracionPagina>('/pagina/configuracion')
 
-export const guardarConfiguracion = (datos: Pick<ConfiguracionPagina, 'recargoPorciento' | 'ventaEnLinea' | 'cierreMinutos'>) =>
+export const guardarConfiguracion = (datos: Pick<ConfiguracionPagina, 'recargoPorciento' | 'ventaEnLinea' | 'cierreMinutos' | 'modificaciones'>) =>
   request<ConfiguracionPagina>('/pagina/configuracion', { method: 'PUT', body: datos })
 
 export const fetchMensajes = () => http.get<{ items: MensajeContacto[]; sinLeer: number }>('/pagina/mensajes')

@@ -114,9 +114,29 @@ export interface ConfiguracionPagina {
   recargoPorciento: string
   ventaEnLinea: boolean
   cierreMinutos: number
+  /** Lo que el cliente puede cambiar de su compra desde «Mis compras» de la página. */
+  modificaciones: ModificacionesPagina
   actualizadaEn: string | null
   actualizadaPor: string | null
-  limites: { recargoMaximo: number; cierreMinimo: number; cierreMaximo: number }
+  limites: {
+    recargoMaximo: number
+    cierreMinimo: number
+    cierreMaximo: number
+    modificacionesMaximo: number
+    modificacionMinutosMaximo: number
+    penalizacionMaxima: number
+  }
+}
+
+export interface ModificacionesPagina {
+  /** Veces que se puede cambiar un mismo asiento; 0 = el cliente no modifica. */
+  porAsiento: number
+  /** Minutos antes de la salida hasta los que se puede modificar. */
+  minutos: number
+  /** Quetzales, con dos decimales; "0.00" = sin penalización. */
+  penalizacion: string
+  /** Por cada asiento cambiado (si no, una vez por modificación). */
+  penalizacionPorAsiento: boolean
 }
 
 export interface MensajeContacto {

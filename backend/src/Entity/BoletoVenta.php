@@ -153,6 +153,15 @@ class BoletoVenta extends Base
     private ?string $nombreFactura = null;
 
     /**
+     * Penalizaciones cobradas por modificar la compra desde «Mis compras»
+     * (centavos, en la moneda del total). Ya están sumadas a `total` y la
+     * factura las lleva en su propio renglón.
+     */
+    #[ApiProperty(readable: false, writable: false)]
+    #[ORM\Column(options: ["default" => 0])]
+    private int $cargoModificacion = 0;
+
+    /**
      * Identificador público de la venta (web): con él el cliente descarga su
      * boleto sin iniciar sesión. Es el token del carrito de reservas.
      */
@@ -479,6 +488,23 @@ class BoletoVenta extends Base
     public function setTokenPublico(?Uuid $tokenPublico): static
     {
         $this->tokenPublico = $tokenPublico;
+
+        return $this;
+    }
+
+    public function getCargoModificacion(): Money
+    {
+        return new Money($this->cargoModificacion, $this->getTotal()->getCurrency());
+    }
+
+    /** Suma una penalización por modificar la compra (también al total). */
+    public function sumarCargoModificacion(Money $cargo): static
+    {
+        if ($cargo->isZero()) {
+            return $this;
+        }
+        $this->cargoModificacion += (int) $cargo->getAmount();
+        $this->setTotal($this->getTotal()->add($cargo));
 
         return $this;
     }

@@ -167,6 +167,11 @@ final class Facturador
                 $items[] = self::itemEncomienda($e);
             }
         }
+        // Penalizaciones por modificar la compra en la página: ya están en el total.
+        $cargo = $venta->getCargoModificacion();
+        if ($cargo->isPositive()) {
+            $items[] = new ItemDte("Cargo por modificación de la compra", 1, $cargo, $cargo);
+        }
         $trayecto = $boletos[0]->getTrayecto();
 
         $cliente = $venta->getCliente();
@@ -198,6 +203,32 @@ final class Facturador
             numeroAcceso: $reemision ? null : $venta->getNumeroAcceso(),
             ruta: sprintf("%s - %s", $trayecto->getOrigen()->getNombre(), $trayecto->getDestino()->getNombre()),
         );
+    }
+
+    /**
+     * Huella de lo que se enviaría hoy al certificador por la venta (emisor,
+     * receptor, renglones y total; sin la fecha de emisión): si cambia tras
+     * modificar la compra, la factura vigente ya no la describe y se
+     * reemite. Null si la venta no se puede facturar.
+     */
+    public function huella(BoletoVenta $venta): ?string
+    {
+        try {
+            $s = $this->solicitud($venta);
+        } catch (CertificacionFallida|\LogicException) {
+            return null;
+        }
+
+        return hash("sha256", json_encode([
+            $s->emisorNit,
+            $s->establecimientoCodigo,
+            $s->receptorNit,
+            $s->receptorNombre,
+            $s->receptorCorreo,
+            $s->total->getAmount(),
+            $s->total->getCurrency()->getCode(),
+            array_map(static fn(ItemDte $i) => [$i->descripcion, $i->cantidad, $i->precioUnitario->getAmount(), $i->total->getAmount(), $i->asiento, $i->pasajero], $s->items),
+        ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE));
     }
 
     /**

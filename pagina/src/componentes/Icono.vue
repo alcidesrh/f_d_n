@@ -56,6 +56,8 @@ import DeleteOutline from '~icons/material-symbols/delete-outline'
 import GroupOutline from '~icons/material-symbols/group-outline'
 import Language from '~icons/material-symbols/language'
 import Close from '~icons/material-symbols/close'
+import EditOutline from '~icons/material-symbols/edit-outline'
+import Add from '~icons/material-symbols/add'
 
 const ICONOS = {
   alert: WarningOutline,
@@ -82,6 +84,7 @@ const ICONOS = {
   crown: WorkspacePremiumOutline,
   'credit-card': CreditCardOutline,
   download: Download,
+  edit: EditOutline,
   'external-link': OpenInNew,
   eye: VisibilityOutline,
   info: InfoOutline,
@@ -91,6 +94,7 @@ const ICONOS = {
   menu: Menu,
   package: Package2Outline,
   phone: CallOutline,
+  plus: Add,
   punto: FiberManualRecord,
   receipt: ReceiptLongOutline,
   reiniciar: RestartAlt,
