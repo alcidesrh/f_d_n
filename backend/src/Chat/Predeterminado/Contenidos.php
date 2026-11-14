@@ -19,6 +19,8 @@ use App\Entity\Salida;
 use App\Reporte\Diario\ConsultaIncidencias;
 use App\Reporte\Diario\ResumenDiario;
 use App\Reporte\Dinero;
+use App\Seguimiento\Irregularidad;
+use App\Seguimiento\IrregularidadesEnCurso;
 use App\Tablero\ConsultaTablero;
 use App\Tablero\Periodo;
 use Doctrine\DBAL\Connection;
@@ -44,7 +46,48 @@ final class Contenidos
         private readonly Connection $db,
         private readonly ConsultaTablero $tablero,
         private readonly ConsultaIncidencias $incidencias,
+        private readonly IrregularidadesEnCurso $gps,
     ) {}
+
+    /**
+     * Las irregularidades del GPS de los buses en recorrido (de la empresa de
+     * la instancia, si eligió una), una pieza por cada una. Solo las de ahora
+     * (`IrregularidadesEnCurso::RECIENTE_SEGUNDOS`) y posteriores a la
+     * instancia: crearla no avisa lo que ya pasó. Con `$avisadas`, también
+     * las que la instancia ya avisó (para la prueba).
+     *
+     * @return list<Pieza>
+     */
+    public function irregularidadesGps(MensajePredeterminado $m, \DateTimeImmutable $ahora, bool $avisadas = false): array
+    {
+        $piezas = [];
+        foreach ($this->gps->deAhora($ahora, $m->getEmpresa()?->getId()) as ["salida" => $s, "irregularidad" => $i]) {
+            if (!$avisadas && $i->desde < $m->getCreadoEn()->getTimestamp()) {
+                continue;
+            }
+            $piezas[] = new Pieza(sprintf("gps:%d:%s", $s["salidaId"], $i->clave()), self::textoIrregularidad($s, $i, $this->gps->umbrales()->velocidadMaximaKmh));
+        }
+
+        return $piezas;
+    }
+
+    /**
+     * @param array{bus: string, empresa: string, rutaNombre: string} $s
+     */
+    public static function textoIrregularidad(array $s, Irregularidad $i, int $limiteKmh): string
+    {
+        $hora = self::formato("h:mm a")->format($i->desde);
+        $minutos = max(1, (int) round($i->segundos() / 60));
+        $que = $i->tipo === Irregularidad::EXCESO_VELOCIDAD
+            ? sprintf("Exceso de velocidad desde las %s: hasta %d km/h (límite %d) durante %d min.", $hora, $i->maximaKmh, $limiteKmh, $minutos)
+            : sprintf("Parada larga desde las %s: detenido %d min fuera de las paradas de la ruta.", $hora, $minutos);
+
+        return implode("\n", [
+            sprintf("Bus %s · %s · %s", $s["bus"], $s["empresa"], $s["rutaNombre"]),
+            $que,
+            sprintf("Ubicación: %.5f, %.5f", $i->lat, $i->lng),
+        ]);
+    }
 
     /**
      * Salidas de la ruta y empresa de la instancia cuya hora de salida cae

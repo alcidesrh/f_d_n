@@ -4,9 +4,13 @@
  * muestra el service worker (`public/push-sw.js`), que las calla si la app
  * está a la vista. Una taquilla es de varios usuarios: al cerrar sesión se
  * quitan, y al entrar otro usuario se quita la del anterior.
+ *
+ * Dentro de la app móvil no hay Web Push: lo mismo se hace con Firebase
+ * (`pushNativo.ts`, ADR-061) y aquí solo se elige el camino.
  */
 import { ref } from 'vue'
 import { http, request } from '@/core/http'
+import { activarNativo, desactivarNativo, esAppNativa, revisarNativo } from './pushNativo'
 
 const BASE = '/chat/push'
 const fondo = { silent: true } as const
@@ -39,6 +43,7 @@ const quitar = (endpoint: string) => request(BASE, { method: 'DELETE', body: { e
  * navegador quedó suscrito por otro usuario, lo da de baja.
  */
 export async function revisarPush(): Promise<EstadoPush> {
+  if (esAppNativa()) return (estadoPush.value = await revisarNativo())
   const reg = await registro()
   if (!reg) return (estadoPush.value = 'no-disponible')
   const actual = await reg.pushManager.getSubscription()
@@ -56,6 +61,7 @@ export async function revisarPush(): Promise<EstadoPush> {
 }
 
 export async function activarPush(): Promise<EstadoPush> {
+  if (esAppNativa()) return (estadoPush.value = await activarNativo())
   const reg = await registro()
   if (!reg) return (estadoPush.value = 'no-disponible')
   if ((await Notification.requestPermission()) !== 'granted') {
@@ -84,6 +90,11 @@ function mismaClave(s: PushSubscription, clave: string): boolean {
 
 /** Desactivar en este navegador; también al cerrar sesión (antes del logout: después ya no hay token). */
 export async function desactivarPush(): Promise<void> {
+  if (esAppNativa()) {
+    await desactivarNativo()
+    if (estadoPush.value === 'activas') estadoPush.value = 'apagadas'
+    return
+  }
   const actual = await (await registro())?.pushManager.getSubscription()
   if (actual) {
     await quitar(actual.endpoint)

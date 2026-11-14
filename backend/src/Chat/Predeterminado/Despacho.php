@@ -13,8 +13,8 @@ use Psr\Log\LoggerInterface;
  * Las corridas de los mensajes predeterminados (ADR-045):
  *
  * - `pendientes()` (cada 5 minutos, `Tarea::MENSAJES_PREDETERMINADOS`): los
- *   de hora cuya hora de hoy ya pasó y las salidas de cada ruta cuya hora
- *   de salida ya pasó.
+ *   de hora cuya hora de hoy ya pasó, las salidas de cada ruta cuya hora
+ *   de salida ya pasó y las irregularidades del GPS de los buses en recorrido.
  * - `anomalias()` (de madrugada, `Tarea::REVISAR_ANOMALIAS`): lo del día
  *   anterior.
  *
@@ -34,7 +34,7 @@ final class Despacho
     {
         $r = ["envios" => 0, "destinatarios" => 0, "fallidos" => 0];
         foreach ($this->activas() as $m) {
-            if ($m->getTipo()->esAnomalia()) {
+            if ($m->getTipo()->esAnomalia() && !$m->getTipo()->enVivo()) {
                 continue;
             }
             $this->seguro($m, $r, function () use ($m, $ahora): array {
@@ -50,7 +50,7 @@ final class Despacho
     {
         $r = ["envios" => 0, "destinatarios" => 0, "fallidos" => 0];
         foreach ($this->activas() as $m) {
-            if (!$m->getTipo()->esAnomalia()) {
+            if (!$m->getTipo()->esAnomalia() || $m->getTipo()->enVivo()) {
                 continue;
             }
             $this->seguro($m, $r, function () use ($m, $dia): array {
@@ -85,6 +85,8 @@ final class Despacho
             })(),
             TipoMensajePredeterminado::ANOMALIA_REASIGNACION, TipoMensajePredeterminado::ANOMALIA_TARIFA => $this->contenidos->anomalias($m, $ahora->modify("-1 day"))
                 ?? $sin(sprintf("%s: ayer no hubo ninguna. Cuando la revisión de la madrugada encuentre una, llegará así.", $m->getTipo()->nombre())),
+            TipoMensajePredeterminado::ANOMALIA_GPS => $this->contenidos->irregularidadesGps($m, $ahora, avisadas: true)[0]
+                ?? $sin("Irregularidad en la trayectoria: ahora ningún bus en recorrido tiene una. Cuando el GPS muestre un exceso de velocidad sostenido o una parada larga, llegará un aviso por cada una."),
         };
     }
 
@@ -120,6 +122,9 @@ final class Despacho
                 $this->contenidos->salidaIniciada(...),
                 $this->contenidos->salidasIniciadas($m, $desde, $ahora, sinAvisar: true),
             )));
+        }
+        if ($tipo === TipoMensajePredeterminado::ANOMALIA_GPS) {
+            return $this->contenidos->irregularidadesGps($m, $ahora);
         }
         if (!self::tocaHoy($m, $ahora) || $this->difusion->yaSalio($m, "dia:" . $ahora->format("Y-m-d"))) {
             return [];

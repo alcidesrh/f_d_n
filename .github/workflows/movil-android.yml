@@ -1,0 +1,61 @@
+name: App móvil (Android)
+
+on:
+  push:
+    paths:
+      - 'movil/**'
+      - '.github/workflows/movil-android.yml'
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'Servidor que carga la app (vacío: producción)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  apk:
+    name: APK de pruebas
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: movil
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: movil/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      - run: npm ci
+      - name: Sincronizar el proyecto Android
+        env:
+          FDN_APP_URL: ${{ inputs.url }}
+        run: |
+          if [ -z "$FDN_APP_URL" ]; then unset FDN_APP_URL; fi
+          npx cap sync android
+      # Notificaciones (ADR-061): sin `google-services.json` el APK compila igual, sin ellas.
+      # Puede estar en git (movil/android/app/) o venir del secreto GOOGLE_SERVICES_JSON.
+      - name: Configuración de Firebase
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ ! -f android/app/google-services.json ] && [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+          fi
+          if [ -f android/app/google-services.json ]; then echo "Con notificaciones"; else echo "::warning::Sin google-services.json: APK sin notificaciones"; fi
+      - name: Compilar
+        working-directory: movil/android
+        run: ./gradlew assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fdn-movil-debug
+          path: movil/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error

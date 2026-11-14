@@ -118,7 +118,7 @@ final class MensajesPredeterminadosTest extends TestCase
     {
         // Se guardan tal cual en `mensaje_predeterminado.tipo`.
         self::assertSame(
-            ["libre", "salida_iniciada", "anomalia_reasignacion", "anomalia_tarifa", "ventas_dia", "desempeno_dia"],
+            ["libre", "salida_iniciada", "anomalia_reasignacion", "anomalia_tarifa", "anomalia_gps", "ventas_dia", "desempeno_dia"],
             array_column(TipoMensajePredeterminado::cases(), "value"),
         );
         foreach (TipoMensajePredeterminado::cases() as $t) {
@@ -132,6 +132,9 @@ final class MensajesPredeterminadosTest extends TestCase
         self::assertTrue(TipoMensajePredeterminado::VENTAS_DIA->exigeEmpresa());
         self::assertFalse(TipoMensajePredeterminado::ANOMALIA_TARIFA->exigeEmpresa());
         self::assertTrue(TipoMensajePredeterminado::LIBRE->exigeContenido());
+        // La del GPS es la única anomalía que no espera a la madrugada.
+        self::assertSame([TipoMensajePredeterminado::ANOMALIA_GPS], array_values(array_filter(TipoMensajePredeterminado::cases(), static fn (TipoMensajePredeterminado $t) => $t->enVivo())));
+        self::assertTrue(TipoMensajePredeterminado::ANOMALIA_GPS->esAnomalia());
     }
 
     public function testLaBitacoraDeTarifas(): void

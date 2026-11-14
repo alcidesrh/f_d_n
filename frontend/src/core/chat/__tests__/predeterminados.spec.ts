@@ -61,6 +61,7 @@ describe('cuandoSale y textoAudiencia', () => {
     expect(cuandoSale({ tipo: 'salida_iniciada', hora: null, dias: [], ruta: { id: 1, nombre: 'Guatemala - Flores' } }, '22:00')).toBe('Al pasar la hora de cada salida de Guatemala - Flores')
     expect(cuandoSale({ tipo: 'ventas_dia', hora: null, dias: [], ruta: null }, '22:00')).toBe('Todos los días a las 22:00')
     expect(cuandoSale({ tipo: 'anomalia_tarifa', hora: null, dias: [], ruta: null }, '22:00')).toBe('Cada madrugada, si encuentra alguna')
+    expect(cuandoSale({ tipo: 'anomalia_gps', hora: null, dias: [], ruta: null }, '22:00')).toBe('Con los buses en recorrido, en cuanto ocurre')
   })
 
   it('cuenta usuarios, grupos y destinatarios', () => {

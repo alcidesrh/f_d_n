@@ -106,6 +106,7 @@ const ICONOS: Record<CodigoTipo, string> = {
   salida_iniciada: 'departure-board',
   anomalia_reasignacion: 'swap-horiz',
   anomalia_tarifa: 'sell-outline',
+  anomalia_gps: 'speed-outline',
   ventas_dia: 'point-of-sale',
   desempeno_dia: 'monitoring',
 }

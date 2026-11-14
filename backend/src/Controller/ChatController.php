@@ -81,6 +81,38 @@ final class ChatController extends AbstractController
         return $this->json(null, Response::HTTP_NO_CONTENT);
     }
 
+    /** App móvil (ADR-061): `?token=` (el de FCM de este teléfono) → `{ disponible, mio }`. */
+    #[Route("/push/dispositivo", name: "push_dispositivo", methods: ["GET"])]
+    public function dispositivoPush(Request $request, #[CurrentUser] Usuario $yo): JsonResponse
+    {
+        $token = $request->query->get("token");
+
+        return $this->json($this->push->estadoDispositivo($yo, is_string($token) ? $token : null));
+    }
+
+    /** `{ token, plataforma }`: este teléfono recibe las notificaciones de `$yo`. */
+    #[Route("/push/dispositivo", name: "push_dispositivo_registrar", methods: ["POST"])]
+    public function registrarDispositivoPush(Request $request, #[CurrentUser] Usuario $yo): JsonResponse
+    {
+        return $this->responder(function () use ($request, $yo) {
+            $this->push->registrarDispositivo($yo, $request->toArray());
+
+            return null;
+        });
+    }
+
+    /** `{ token }`: este teléfono deja de recibirlas (desactivar, cerrar sesión). */
+    #[Route("/push/dispositivo", name: "push_dispositivo_quitar", methods: ["DELETE"])]
+    public function quitarDispositivoPush(Request $request): JsonResponse
+    {
+        $token = $request->toArray()["token"] ?? null;
+        if (is_string($token)) {
+            $this->push->quitarDispositivo($token);
+        }
+
+        return $this->json(null, Response::HTTP_NO_CONTENT);
+    }
+
     /** Token de suscripción a los avisos privados del usuario (Mercure). */
     #[Route("/token", name: "token", methods: ["GET"])]
     public function token(#[CurrentUser] Usuario $yo): JsonResponse
