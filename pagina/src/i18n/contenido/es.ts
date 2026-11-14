@@ -132,7 +132,17 @@ const es: Contenido = {
           'La venta en línea cierra antes de cada salida (el horario se muestra en cada salida). Después, compre en la estación.',
           'Al pulsar «Pagar asientos» sus asientos quedan apartados unos minutos mientras paga. Si no termina la compra, se liberan solos.',
           'Su boleto en PDF se descarga al pagar y llega a su correo con los datos de la factura electrónica.',
-          'Los boletos comprados en línea no se reembolsan ni se modifican en línea.',
+          'Los boletos comprados en línea no se reembolsan, no se anulan ni se cancelan.',
+        ],
+      },
+      {
+        titulo: 'Modificación de compras en línea',
+        items: [
+          'En «Mis compras» puede cambiar la hora, la ruta, el asiento o la clase de cada asiento de un viaje que aún no ha salido, y agregar asientos, siempre con la misma empresa y mientras haya disponibilidad.',
+          'Las modificaciones pueden estar sujetas a una penalización, que se muestra antes de confirmar el cambio.',
+          'Si el cambio cuesta más (asientos de mayor precio o asientos agregados), la diferencia se paga con tarjeta. Si cuesta menos, la diferencia no se reembolsa.',
+          'Cada asiento se puede modificar un número limitado de veces y solo hasta cierto tiempo antes de la salida; ambos límites se muestran en «Mis compras».',
+          'Si la modificación cambia los datos de la factura electrónica, la factura original se anula y se emite una nueva.',
         ],
       },
       {

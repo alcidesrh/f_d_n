@@ -19,6 +19,7 @@ use Symfony\Component\Uid\Uuid;
  */
 #[ORM\Entity]
 #[ORM\Index(columns: ["token"], name: "idx_pago_web_token")]
+#[ORM\Index(columns: ["correo"], name: "idx_pago_web_correo")]
 #[ORM\UniqueConstraint(name: "uq_pago_web_referencia", columns: ["referencia_pasarela"])]
 class PagoWeb
 {
@@ -50,6 +51,13 @@ class PagoWeb
      */
     #[ORM\Column(type: "json")]
     private array $comprador;
+
+    /**
+     * Correo del comprador en minúsculas: con él el cliente entra a «Mis
+     * compras» sin contraseña (`LlaveCliente`).
+     */
+    #[ORM\Column(length: 180, nullable: true)]
+    private ?string $correo = null;
 
     #[ORM\Column(length: 12, nullable: true)]
     private ?string $marca = null;
@@ -109,6 +117,7 @@ class PagoWeb
         $this->empresa = $empresa;
         $this->monto = Precio::fromMoney($monto);
         $this->comprador = $comprador;
+        $this->correo = self::normalizarCorreo($comprador["email"] ?? null);
         $this->marca = $marca;
         $this->ultimos4 = $ultimos4;
         $this->estado = EstadoPagoWeb::AUTENTICACION;
@@ -213,7 +222,20 @@ class PagoWeb
     public function cambiarComprador(array $comprador): void
     {
         $this->comprador = $comprador;
+        $this->correo = self::normalizarCorreo($comprador["email"] ?? null);
         $this->actualizado = new \DateTimeImmutable();
+    }
+
+    public function getCorreo(): ?string
+    {
+        return $this->correo;
+    }
+
+    public static function normalizarCorreo(mixed $correo): ?string
+    {
+        $correo = mb_strtolower(trim((string) $correo));
+
+        return $correo !== "" ? mb_substr($correo, 0, 180) : null;
     }
 
     public function completar(BoletoVenta $venta, ?BoletoVenta $regreso = null): void

@@ -41,6 +41,15 @@ const hijas: RouteRecordRaw[] = [
     meta: { seo: nombre, indexable: true },
   })),
   { path: 'pago', name: 'pago', component: () => import('./paginas/PagoPagina.vue'), meta: { seo: 'pago', indexable: false } },
+  // «Mis compras»: con `?llave=` (enlace del correo) guarda la llave y la quita de la URL.
+  { path: 'mis-compras', name: 'misCompras', component: () => import('./paginas/MisComprasPagina.vue'), meta: { seo: 'misCompras', indexable: false } },
+  {
+    path: 'mis-compras/:viaje(\\d+)/modificar',
+    name: 'modificarViaje',
+    component: () => import('./paginas/ModificarViajePagina.vue'),
+    props: (r) => ({ viaje: Number(r.params.viaje) }),
+    meta: { seo: 'misCompras', indexable: false },
+  },
   {
     path: 'compra/:token',
     name: 'compra',

@@ -86,6 +86,15 @@ class BoletoAsiento extends Base
     #[ORM\JoinColumn(onDelete: "SET NULL")]
     private ?BoletoAsiento $reasignadoDe = null;
 
+    /**
+     * Veces que el cliente cambió este asiento desde «Mis compras» en la
+     * página (el boleto que nace de un cambio hereda la cuenta + 1; una
+     * reasignación de taquilla la conserva). Tope en `ConfiguracionPagina`.
+     */
+    #[ApiProperty(readable: false, writable: false)]
+    #[ORM\Column(type: "smallint", options: ["default" => 0])]
+    private int $modificaciones = 0;
+
     /** Nota de taquilla (p. ej. "viaja con mascota", "se baja en el km 120"). */
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $observacion = null;
@@ -267,6 +276,18 @@ class BoletoAsiento extends Base
     public function setLegacyId(?string $legacyId): static
     {
         $this->legacyId = $legacyId;
+        return $this;
+    }
+
+    public function getModificaciones(): int
+    {
+        return $this->modificaciones;
+    }
+
+    public function setModificaciones(int $modificaciones): static
+    {
+        $this->modificaciones = $modificaciones;
+
         return $this;
     }
 }

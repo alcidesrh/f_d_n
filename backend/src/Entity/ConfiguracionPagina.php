@@ -32,6 +32,28 @@ class ConfiguracionPagina
     #[ORM\Column(options: ["default" => 60])]
     private int $cierreMinutos = 60;
 
+    /**
+     * Veces que el cliente puede cambiar un mismo asiento desde «Mis compras»
+     * (hora, ruta, asiento o clase). 0 = el cliente no modifica sus compras.
+     */
+    #[ORM\Column(type: "smallint", options: ["default" => 2])]
+    private int $modificacionesPorAsiento = 2;
+
+    /**
+     * El cliente modifica un viaje hasta este tiempo antes de su salida (la
+     * hora en la parada donde sube). Ej.: 30 y sale a las 8:30 → hasta las 8:00.
+     */
+    #[ORM\Column(options: ["default" => 60])]
+    private int $modificacionMinutos = 60;
+
+    /** Penalización por modificar (en quetzales); 0 = sin penalización. */
+    #[ORM\Column(type: "decimal", precision: 10, scale: 2, options: ["default" => "0.00"])]
+    private string $penalizacion = "0.00";
+
+    /** La penalización se cobra por cada asiento cambiado (si no, una vez por modificación). */
+    #[ORM\Column(options: ["default" => false])]
+    private bool $penalizacionPorAsiento = false;
+
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $actualizadaEn = null;
 
@@ -67,6 +89,35 @@ class ConfiguracionPagina
     public function getActualizadaPor(): ?Usuario
     {
         return $this->actualizadaPor;
+    }
+
+    public function getModificacionesPorAsiento(): int
+    {
+        return $this->modificacionesPorAsiento;
+    }
+
+    public function getModificacionMinutos(): int
+    {
+        return $this->modificacionMinutos;
+    }
+
+    public function getPenalizacion(): string
+    {
+        return $this->penalizacion;
+    }
+
+    public function isPenalizacionPorAsiento(): bool
+    {
+        return $this->penalizacionPorAsiento;
+    }
+
+    /** Reglas de las modificaciones del cliente (sin validar: lo hace `AjustesPagina`). */
+    public function actualizarModificaciones(int $porAsiento, int $minutos, string $penalizacion, bool $penalizacionPorAsiento): void
+    {
+        $this->modificacionesPorAsiento = $porAsiento;
+        $this->modificacionMinutos = $minutos;
+        $this->penalizacion = $penalizacion;
+        $this->penalizacionPorAsiento = $penalizacionPorAsiento;
     }
 
     public function actualizar(string $recargoPorciento, bool $ventaEnLinea, int $cierreMinutos, ?Usuario $por, \DateTimeImmutable $en): void

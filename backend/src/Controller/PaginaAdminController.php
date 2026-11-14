@@ -14,6 +14,7 @@ use App\Venta\EnLinea\AjustesPagina;
 use App\Venta\EnLinea\ConsultaComprasWeb;
 use App\Venta\EnLinea\FiltroComprasWeb;
 use App\Venta\EnLinea\GestionCompraWeb;
+use App\Venta\EnLinea\Modificacion\Penalizacion;
 use App\Venta\EnLinea\Recargo;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -111,7 +112,7 @@ final class PaginaAdminController extends AbstractController
         return $this->json($this->configuracionArray($this->ajustes->actual()));
     }
 
-    /** `{ recargoPorciento, ventaEnLinea, cierreMinutos }` */
+    /** `{ recargoPorciento, ventaEnLinea, cierreMinutos, modificaciones?: { porAsiento, minutos, penalizacion, penalizacionPorAsiento } }` */
     #[Route("/configuracion", name: "configuracion_guardar", methods: ["PUT"])]
     public function guardar(Request $request, #[CurrentUser] Usuario $usuario): JsonResponse
     {
@@ -122,6 +123,7 @@ final class PaginaAdminController extends AbstractController
             (bool) ($datos["ventaEnLinea"] ?? true),
             (int) ($datos["cierreMinutos"] ?? 60),
             $this->em->find(Usuario::class, $usuario->getId()),
+            is_array($datos["modificaciones"] ?? null) ? $datos["modificaciones"] : null,
         );
 
         return $this->json($this->configuracionArray($config));
@@ -186,12 +188,22 @@ final class PaginaAdminController extends AbstractController
             "recargoPorciento" => $c->getRecargoPorciento(),
             "ventaEnLinea" => $c->getVentaEnLinea(),
             "cierreMinutos" => $c->getCierreMinutos(),
+            // Lo que el cliente puede cambiar de su compra desde «Mis compras».
+            "modificaciones" => [
+                "porAsiento" => $c->getModificacionesPorAsiento(),
+                "minutos" => $c->getModificacionMinutos(),
+                "penalizacion" => $c->getPenalizacion(),
+                "penalizacionPorAsiento" => $c->isPenalizacionPorAsiento(),
+            ],
             "actualizadaEn" => $c->getActualizadaEn()?->format(DATE_ATOM),
             "actualizadaPor" => $c->getActualizadaPor()?->getUsername(),
             "limites" => [
                 "recargoMaximo" => Recargo::MAXIMO,
                 "cierreMinimo" => AjustesPagina::CIERRE_MINIMO_MINUTOS,
                 "cierreMaximo" => AjustesPagina::CIERRE_MAXIMO_MINUTOS,
+                "modificacionesMaximo" => AjustesPagina::MODIFICACIONES_MAXIMO,
+                "modificacionMinutosMaximo" => AjustesPagina::MODIFICACION_MAXIMO_MINUTOS,
+                "penalizacionMaxima" => Penalizacion::MAXIMO_QUETZALES,
             ],
         ];
     }

@@ -132,7 +132,17 @@ const fr: Contenido = {
           'La vente en ligne ferme avant chaque départ (l’heure est indiquée pour chaque départ). Ensuite, achetez en gare.',
           'Lorsque vous appuyez sur « Payer les sièges », vos sièges sont réservés quelques minutes pendant le paiement. Si vous ne terminez pas, ils sont libérés automatiquement.',
           'Votre billet PDF se télécharge au paiement et vous est envoyé par e-mail avec les données de la facture électronique.',
-          'Les billets achetés en ligne ne sont ni remboursables ni modifiables en ligne.',
+          'Les billets achetés en ligne ne sont ni remboursables ni annulables.',
+        ],
+      },
+      {
+        titulo: 'Modification des achats en ligne',
+        items: [
+          'Dans « Mes achats », vous pouvez changer l’heure, l’itinéraire, le siège ou la classe de chaque siège d’un voyage qui n’est pas encore parti, et ajouter des sièges, toujours avec la même compagnie et selon les disponibilités.',
+          'Les modifications peuvent être soumises à une pénalité, affichée avant de confirmer le changement.',
+          'Si le changement coûte plus cher (sièges plus chers ou sièges ajoutés), la différence se paie par carte. S’il coûte moins cher, la différence n’est pas remboursée.',
+          'Chaque siège peut être modifié un nombre limité de fois et seulement jusqu’à un certain délai avant le départ ; ces deux limites sont affichées dans « Mes achats ».',
+          'Si la modification change les données de la facture électronique, la facture d’origine est annulée et une nouvelle est émise.',
         ],
       },
       {

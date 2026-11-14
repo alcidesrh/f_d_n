@@ -55,9 +55,14 @@
         </article>
 
         <p class="m-0 text-xs text-muted-color">{{ t('compra.sinReembolso') }}</p>
-        <RouterLink :to="{ name: 'inicio', params: { idioma: locale } }" class="no-underline">
-          <Button :label="t('compra.otra')" severity="secondary" text><template #icon><icon name="ticket" size="1.1rem" class="mr-1" /></template></Button>
-        </RouterLink>
+        <div class="flex flex-col gap-1 sm:flex-row">
+          <RouterLink :to="{ name: 'misCompras', params: { idioma: locale } }" class="no-underline">
+            <Button :label="t('nav.misCompras')" severity="secondary" text><template #icon><icon name="receipt" size="1.1rem" class="mr-1" /></template></Button>
+          </RouterLink>
+          <RouterLink :to="{ name: 'inicio', params: { idioma: locale } }" class="no-underline">
+            <Button :label="t('compra.otra')" severity="secondary" text><template #icon><icon name="ticket" size="1.1rem" class="mr-1" /></template></Button>
+          </RouterLink>
+        </div>
       </section>
     </template>
 
@@ -84,6 +89,7 @@ import HoraSubida from '@/componentes/HoraSubida.vue'
 import * as api from '@/api'
 import { useCarrito } from '@/carrito'
 import { mensajeDeError } from '@/errores'
+import { guardarLlave } from '@/llave'
 
 import type { Compra } from '@/tipos'
 
@@ -100,6 +106,8 @@ onMounted(async () => {
     const r = await api.compra(props.token)
     if (r.estado === 'completado' && r.compras?.length) {
       compras.value = r.compras
+      // Este navegador entra a «Mis compras» sin hacer nada más.
+      if (r.llave) guardarLlave(r.llave)
       if (carrito.token === props.token) carrito.olvidar()
       descargarUnaVez()
     } else {
