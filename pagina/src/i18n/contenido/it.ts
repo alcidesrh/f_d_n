@@ -132,7 +132,17 @@ const it: Contenido = {
           'La vendita online chiude prima di ogni partenza (l’orario è indicato per ogni corsa). Dopo, acquista in stazione.',
           'Quando premi «Paga i posti», i posti restano riservati per alcuni minuti mentre paghi. Se non completi l’acquisto, si liberano da soli.',
           'Il biglietto in PDF si scarica al pagamento e arriva via e-mail con i dati della fattura elettronica.',
-          'I biglietti acquistati online non sono rimborsabili né modificabili online.',
+          'I biglietti acquistati online non sono rimborsabili né annullabili.',
+        ],
+      },
+      {
+        titulo: 'Modifica degli acquisti online',
+        items: [
+          'In «I miei acquisti» può cambiare l’orario, il percorso, il posto o la classe di ogni posto di un viaggio non ancora partito, e aggiungere posti, sempre con la stessa compagnia e secondo disponibilità.',
+          'Le modifiche possono essere soggette a una penale, mostrata prima di confermare il cambio.',
+          'Se il cambio costa di più (posti più cari o posti aggiunti), la differenza si paga con carta. Se costa di meno, la differenza non viene rimborsata.',
+          'Ogni posto può essere modificato un numero limitato di volte e solo fino a un certo tempo prima della partenza; entrambi i limiti sono mostrati in «I miei acquisti».',
+          'Se la modifica cambia i dati della fattura elettronica, la fattura originale viene annullata e ne viene emessa una nuova.',
         ],
       },
       {

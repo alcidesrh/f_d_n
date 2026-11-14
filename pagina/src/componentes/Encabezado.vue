@@ -27,13 +27,13 @@
 
       <nav
         :aria-label="t('nav.menu')"
-        class="hidden items-center gap-1 lg:flex"
+        class="hidden items-center gap-1 xl:flex"
       >
         <RouterLink
           v-for="e in enlaces"
           :key="e.nombre"
           :to="{ name: e.nombre, params: { idioma } }"
-          class="rounded-full px-3 py-2 text-sm font-medium text-color no-underline hover:bg-surface-100"
+          class="rounded-full whitespace-nowrap px-3 py-2 text-sm font-medium text-color no-underline hover:bg-surface-100"
           active-class="!text-primary"
           exact-active-class="!bg-marca-50"
         >
@@ -54,7 +54,7 @@
         <SelectorIdioma class="hidden md:block" />
         <button
           type="button"
-          class="grid size-10 place-items-center rounded-full text-color hover:bg-surface-100 lg:hidden"
+          class="grid size-10 place-items-center rounded-full text-color hover:bg-surface-100 xl:hidden"
           :aria-label="t('nav.menu')"
           :aria-expanded="menu"
           @click="menu = true"
@@ -110,6 +110,7 @@ const idioma = computed(() => locale.value);
 
 const enlaces = [
   { nombre: "inicio", texto: "nav.comprar", icono: "ticket" },
+  { nombre: "misCompras", texto: "nav.misCompras", icono: "receipt" },
   { nombre: "servicios", texto: "nav.servicios", icono: "star" },
   { nombre: "estaciones", texto: "nav.estaciones", icono: "map-pin" },
   { nombre: "nosotros", texto: "nav.nosotros", icono: "users" },

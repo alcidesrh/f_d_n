@@ -132,7 +132,17 @@ const en: Contenido = {
           'Online sales close before each departure (the time is shown for every departure). After that, buy at the station.',
           'When you press “Pay for seats”, your seats are held for a few minutes while you pay. If you do not finish, they are released automatically.',
           'Your PDF ticket downloads when you pay and is emailed to you with the electronic invoice details.',
-          'Tickets bought online cannot be refunded or changed online.',
+          'Tickets bought online cannot be refunded, voided or cancelled.',
+        ],
+      },
+      {
+        titulo: 'Changes to online purchases',
+        items: [
+          'In “My purchases” you can change the time, route, seat or class of each seat of a trip that has not departed yet, and add seats, always with the same company and subject to availability.',
+          'Changes may be subject to a penalty, which is shown before you confirm the change.',
+          'If the change costs more (more expensive seats or added seats), you pay the difference by card. If it costs less, the difference is not refunded.',
+          'Each seat can be changed a limited number of times and only up to a certain time before departure; both limits are shown in “My purchases”.',
+          'If the change affects the data on the electronic invoice, the original invoice is voided and a new one is issued.',
         ],
       },
       {

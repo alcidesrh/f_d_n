@@ -16,7 +16,7 @@ use Symfony\Component\Messenger\MessageBusInterface;
 /**
  * Notificaciones del chat con la aplicación cerrada: quién envía y un
  * fragmento del mensaje. Cada navegador (Web Push) y cada teléfono con la app
- * móvil (FCM, ADR-060) se suscribe desde "Mi cuenta"; el envío es asíncrono
+ * móvil (FCM, ADR-061) se suscribe desde "Mi cuenta"; el envío es asíncrono
  * (`EnviarAvisoPush`). Sin claves VAPID configuradas (`PUSH_VAPID_*`,
  * `app:push:claves`) no las hay en el navegador, y sin `PUSH_FCM_CREDENCIAL`
  * no las hay en la app móvil: donde faltan, no se ofrece activarlas.

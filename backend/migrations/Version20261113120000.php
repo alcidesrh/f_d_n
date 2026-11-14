@@ -7,7 +7,7 @@ namespace DoctrineMigrations;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
-/** Teléfonos con la app móvil que reciben las notificaciones del chat por FCM (ADR-060). */
+/** Teléfonos con la app móvil que reciben las notificaciones del chat por FCM (ADR-061). */
 final class Version20261113120000 extends AbstractMigration
 {
     public function getDescription(): string

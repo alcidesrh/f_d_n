@@ -185,3 +185,106 @@ export interface ErrorApi {
   error: string
   codigo: string
 }
+
+/** «Mis compras»: reglas con las que el cliente modifica (`ConfiguracionPagina`). */
+export interface PoliticaModificacion {
+  modificacionesPorAsiento: number
+  minutosAntes: number
+  penalizacion: Importe | null
+  penalizacionPorAsiento: boolean
+}
+
+export interface BoletoViaje {
+  id: number
+  asiento: number
+  asientoId: number
+  clase: 'A' | 'B'
+  precio: Importe | null
+  estado: string
+  salida: { id: number; llegada: string | null } & HoraSubida
+  trayecto: { id: number; origen: Opcion; destino: Opcion }
+  /** Veces que el cliente ya cambió este asiento. */
+  modificaciones: number
+  modificable: boolean
+  motivo: string | null
+}
+
+/** Un viaje comprado en línea (una venta: la ida o el regreso). */
+export interface ViajeComprado {
+  id: number
+  compra: number
+  sentido: 'ida' | 'regreso' | null
+  comprada: string
+  /** Salida donde sube el pasajero (la del primer asiento). */
+  fecha: string
+  futuro: boolean
+  anulado: boolean
+  empresa: string | null
+  origen: string
+  destino: string
+  codigoBarras: string
+  boletos: BoletoViaje[]
+  total: Importe
+  cargoModificacion: Importe | null
+  estadoFacturacion: string
+  factura: { serie: string | null; numero: number | null; uuid: string; anulada: boolean; urlPdf: string | null } | null
+  descargarFactura: boolean
+  editable: boolean
+  limiteModificacion: string | null
+  motivo: string | null
+}
+
+export interface MisCompras {
+  correo: string
+  futuros: ViajeComprado[]
+  pasados: ViajeComprado[]
+  politica: PoliticaModificacion
+  /** Llave renovada: reemplaza a la guardada. */
+  llave: string
+}
+
+/** A dónde pasa un asiento (o dónde se agrega uno). */
+export interface DestinoAsiento {
+  salida: number
+  trayecto: number
+  asiento: number
+}
+
+export interface PedidoModificacion {
+  cambios: Array<DestinoAsiento & { boleto: number }>
+  nuevos: DestinoAsiento[]
+}
+
+export interface LugarCotizado extends HoraSubida {
+  salida: number
+  trayecto: number
+  origen: string
+  destino: string
+  asiento: number
+  asientoId: number
+  clase: 'A' | 'B'
+}
+
+export interface CotizacionModificacion {
+  cambios: Array<{ boleto: number; desde: LugarCotizado; hacia: LugarCotizado; pagado: Importe; nuevo: Importe; diferencia: Importe; sinReembolso: Importe | null }>
+  nuevos: Array<LugarCotizado & { precio: Importe }>
+  diferencias: Importe
+  asientosNuevos: Importe
+  sinReembolso: Importe
+  penalizacion: Importe
+  total: Importe
+  requierePago: boolean
+}
+
+export type ResultadoModificacion =
+  | { estado: 'completado'; viaje: number; cobrado: Importe; refacturada: boolean; errorFactura: string | null }
+  | { estado: 'dispositivo'; token: string; url: string; campos: Record<string, string>; origenes: string[] }
+  | { estado: 'autenticacion'; token: string; url: string; campos: Record<string, string>; ancho: string; alto: string }
+
+export interface CobroModificacion {
+  token?: string
+  tarjeta: DatosTarjeta
+  facturacion: DatosFacturacion
+  navegador: DatosNavegador
+  continuar?: Record<string, string>
+}

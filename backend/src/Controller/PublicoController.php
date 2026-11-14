@@ -19,6 +19,7 @@ use App\Venta\Comprador;
 use App\Venta\ConsultaVenta;
 use App\Venta\HorasSalida;
 use App\Venta\EnLinea\AjustesPagina;
+use App\Venta\EnLinea\Modificacion\LlaveCliente;
 use App\Venta\EnLinea\SolicitudCarrito;
 use App\Venta\Excepcion\VentaRechazada;
 use App\Venta\Facturacion\CertificacionFallida;
@@ -74,6 +75,7 @@ final class PublicoController extends AbstractController
         private readonly RateLimiterFactoryInterface $publicoContactoLimiter,
         private readonly RateLimiterFactoryInterface $publicoNitLimiter,
         private readonly AjustesPagina $ajustes,
+        private readonly LlaveCliente $llaves,
     ) {}
 
     #[Route("/estaciones", name: "estaciones", methods: ["GET"])]
@@ -278,7 +280,7 @@ final class PublicoController extends AbstractController
 
             $resultado = $this->compras->pagar($uuid, $comprador, $tarjeta, $direccion, $retorno, $navegador, $continuar);
             if ($resultado["estado"] === "completado") {
-                return ["estado" => "completado", "compras" => $this->comprobantes($resultado["ventas"])];
+                return ["estado" => "completado", "compras" => $this->comprobantes($resultado["ventas"]), "llave" => $this->llave($uuid)];
             }
 
             return $resultado;
@@ -355,7 +357,7 @@ final class PublicoController extends AbstractController
             $uuid = $this->tokenObligatorio($token);
             $ventas = $this->compras->ventas($uuid);
             if ($ventas !== []) {
-                return ["estado" => "completado", "compras" => $this->comprobantes($ventas)];
+                return ["estado" => "completado", "compras" => $this->comprobantes($ventas), "llave" => $this->llave($uuid)];
             }
             $pago = $this->compras->ultimoPago($uuid);
 
@@ -449,6 +451,17 @@ final class PublicoController extends AbstractController
     private function comprobantes(array $ventas): array
     {
         return array_map(fn(BoletoVenta $v) => $this->comprobantes->de($v), $ventas);
+    }
+
+    /**
+     * Llave de «Mis compras» del comprador del carrito pagado: el navegador
+     * que compró entra a sus compras sin hacer nada (`LlaveCliente`).
+     */
+    private function llave(Uuid $token): ?string
+    {
+        $correo = $this->compras->ultimoPago($token)?->getCorreo();
+
+        return $correo !== null ? $this->llaves->emitir($correo) : null;
     }
 
     /**

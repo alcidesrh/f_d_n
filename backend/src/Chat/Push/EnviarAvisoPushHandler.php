@@ -16,7 +16,7 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 
 /**
  * Envía la notificación a cada navegador suscrito (Web Push) y a cada
- * teléfono con la app móvil (FCM, ADR-060). En Web Push el contenido va
+ * teléfono con la app móvil (FCM, ADR-061). En Web Push el contenido va
  * cifrado para el navegador (el servicio de push no lo lee). Las
  * suscripciones y los teléfonos que el servicio da por vencidos se borran.
  */

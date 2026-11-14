@@ -299,7 +299,7 @@ Evitar (modelo): recorrido, ruta
 **Irregularidad** (GPS):
 Algo en la trayectoria de un bus en recorrido que hay que avisar: un **exceso de velocidad** sostenido unos minutos (no un pico suelto) o una **parada larga**, detenido fuera de las paradas de su ruta. Se avisa por el chat una vez, cuando ocurre, a la audiencia que elige un administrador.
 _Avoid_: alerta (es del tablero), anomalía a secas (las de reasignación y tarifa son de la madrugada), infracción
-Modelo: concepto (`App\Seguimiento\Irregularidades`, `IrregularidadesEnCurso`; mensaje predeterminado `anomalia_gps`, ADR-061)
+Modelo: concepto (`App\Seguimiento\Irregularidades`, `IrregularidadesEnCurso`; mensaje predeterminado `anomalia_gps`, ADR-062)
 
 ## Usuarios y accesos
 

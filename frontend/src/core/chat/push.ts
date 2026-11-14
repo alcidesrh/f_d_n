@@ -6,7 +6,7 @@
  * quitan, y al entrar otro usuario se quita la del anterior.
  *
  * Dentro de la app móvil no hay Web Push: lo mismo se hace con Firebase
- * (`pushNativo.ts`, ADR-060) y aquí solo se elige el camino.
+ * (`pushNativo.ts`, ADR-061) y aquí solo se elige el camino.
  */
 import { ref } from 'vue'
 import { http, request } from '@/core/http'

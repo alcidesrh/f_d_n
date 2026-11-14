@@ -132,7 +132,17 @@ const de: Contenido = {
           'Der Online-Verkauf endet vor jeder Abfahrt (die Uhrzeit steht bei jeder Fahrt). Danach kaufen Sie an der Station.',
           'Wenn Sie auf „Sitze bezahlen“ tippen, werden Ihre Sitze einige Minuten für die Zahlung reserviert. Schließen Sie nicht ab, werden sie automatisch freigegeben.',
           'Ihr PDF-Ticket wird beim Bezahlen heruntergeladen und mit den Daten der elektronischen Rechnung per E-Mail gesendet.',
-          'Online gekaufte Tickets können online weder erstattet noch geändert werden.',
+          'Online gekaufte Tickets können weder erstattet noch storniert werden.',
+        ],
+      },
+      {
+        titulo: 'Änderung von Online-Käufen',
+        items: [
+          'Unter „Meine Käufe“ können Sie Uhrzeit, Strecke, Sitzplatz oder Klasse jedes Sitzplatzes einer noch nicht abgefahrenen Reise ändern und Sitzplätze hinzufügen, immer beim selben Unternehmen und je nach Verfügbarkeit.',
+          'Änderungen können mit einer Gebühr verbunden sein, die vor der Bestätigung der Änderung angezeigt wird.',
+          'Kostet die Änderung mehr (teurere oder zusätzliche Sitzplätze), wird die Differenz mit Karte bezahlt. Kostet sie weniger, wird die Differenz nicht erstattet.',
+          'Jeder Sitzplatz kann nur begrenzt oft und nur bis zu einer bestimmten Zeit vor der Abfahrt geändert werden; beide Grenzen werden unter „Meine Käufe“ angezeigt.',
+          'Ändert die Änderung die Daten der elektronischen Rechnung, wird die ursprüngliche Rechnung storniert und eine neue ausgestellt.',
         ],
       },
       {

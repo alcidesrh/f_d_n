@@ -1,11 +1,11 @@
-# ADR-060: Notificaciones del chat en la app móvil (Firebase Cloud Messaging)
+# ADR-061: Notificaciones del chat en la app móvil (Firebase Cloud Messaging)
 
 **Estado:** Aceptada.
 
 ## Contexto
 
 El chat avisa con la app cerrada por Web Push (`App\Chat\Push`, ADR-026). Dentro del shell de la app
-móvil (ADR-059) no existe: el WebView de Android no tiene `PushManager`. En Android, que llegue una
+móvil (ADR-060) no existe: el WebView de Android no tiene `PushManager`. En Android, que llegue una
 notificación con la app cerrada pasa por Firebase Cloud Messaging; lo demás (una conexión propia
 siempre abierta) gasta batería y el sistema la corta.
 

@@ -5,7 +5,7 @@
  */
 import { IDIOMAS, IDIOMA_DEFECTO, type Idioma } from './i18n'
 
-export type PaginaSeo = 'inicio' | 'servicios' | 'estaciones' | 'nosotros' | 'politicas' | 'contacto' | 'pago' | 'compra'
+export type PaginaSeo = 'inicio' | 'servicios' | 'estaciones' | 'nosotros' | 'politicas' | 'contacto' | 'pago' | 'compra' | 'misCompras'
 
 export interface Head {
   idioma: Idioma

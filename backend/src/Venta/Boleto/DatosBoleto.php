@@ -136,7 +136,11 @@ final class DatosBoleto
             ], $boletos),
             // Encomiendas que lleva el pasajero (ADR-035): van en el ticket de la venta y cada bulto con su guía.
             "encomiendas" => array_map(static fn(Encomienda $e) => DatosEncomienda::de($e), $encomiendas),
-            "total" => self::importe(count($boletos) === $todos ? $venta->getTotal() : self::suma($boletos, $venta->getTotal(), $encomiendas)),
+            // La penalización por modificar la compra (web) va en el comprobante de la venta, no en el de un boleto suelto.
+            "cargoModificacion" => $soloIds === null && $venta->getCargoModificacion()->isPositive() ? self::importe($venta->getCargoModificacion()) : null,
+            "total" => self::importe(count($boletos) === $todos
+                ? $venta->getTotal()
+                : self::suma($boletos, $venta->getTotal(), $encomiendas)->add($soloIds === null ? $venta->getCargoModificacion() : new Money(0, $venta->getTotal()->getCurrency()))),
             "tipoPago" => $venta->getTipoPago()?->getNombre(),
         ];
     }

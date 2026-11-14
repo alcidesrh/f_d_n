@@ -1,4 +1,4 @@
-# ADR-059: App móvil del personal: shell nativo con Capacitor sobre la app web
+# ADR-060: App móvil del personal: shell nativo con Capacitor sobre la app web
 
 **Estado:** Aceptada (prototipo; primero Android).
 
@@ -44,7 +44,7 @@ origen de la tabla.
 
 ## Consecuencias
 
-- Web Push no existe en el WebView de Android: en la app las notificaciones llegan por FCM (ADR-060).
+- Web Push no existe en el WebView de Android: en la app las notificaciones llegan por FCM (ADR-061).
 - `window.print()` no funciona en el WebView: tickets, recibos y guías no se imprimen desde la app hasta
   que haya un plugin de impresión.
 - Los plugins nativos solo existen dentro de la app: el código web que los use pregunta antes

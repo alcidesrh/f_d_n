@@ -10,7 +10,7 @@ Guía para asistentes IA que trabajan en este repo.
 
 **Descripcion**: Un grupo de empresas brindan un servicio de buses para el transporte de pasajeros en trayectos largos, medianos y cortos. También proveen un servicio secundario de envío de paquetes o encomiendas que son recibidas y entregadas siempre en las estaciones de los trayectos. Los trayectos pueden ser itinerarios exclusivos de una empresa o pueden estar compartido en cuyo caso las empresas involucradas se alternan los días para dar el servicio. Cada empresa gestiona un flujo de datos independiente propio de la empresa como las finanzas, su inventario de buses, estaciones y empleados. Sin embargo todas operan y gestionan el negocio de la misma manera y no hay procesos personalizados.
 
-Monorepo con `backend/` (Symfony 8 + API Platform), `frontend/` (Vue 3 + Vite), `pagina/` (página web pública de venta de boletos, Vue 3; se sirve desde el backend en `/pagina`) y `movil/` (app móvil del personal: shell de Capacitor que carga el frontend desplegado, ADR-059).
+Monorepo con `backend/` (Symfony 8 + API Platform), `frontend/` (Vue 3 + Vite), `pagina/` (página web pública de venta de boletos, Vue 3; se sirve desde el backend en `/pagina`) y `movil/` (app móvil del personal: shell de Capacitor que carga el frontend desplegado, ADR-060).
 Orquestación vía Docker Compose (`compose.yaml` + overrides).
 
 ### Domain terminology
@@ -140,7 +140,7 @@ No existe un sitio MkDocs — se eliminó el 2026-09 por documentar un modelo de
 | Terminología + modelo de cada término | `CONTEXT.md` |
 | Referencia funcional (ventas y operación) | `docs/architecture/ventas-y-operacion.md` |
 | Referencia funcional (plataforma) | `docs/architecture/plataforma.md` |
-| ADRs (decisiones de arquitectura) | `docs/architecture/decisions/` (ADR-001 a ADR-061, ver `index.md`) |
+| ADRs (decisiones de arquitectura) | `docs/architecture/decisions/` (ADR-001 a ADR-062, ver `index.md`) |
 | Convención de exploración de dominio para skills | `docs/agents/domain.md` |
 | Convención de issue tracker | `docs/agents/issue-tracker.md` |
 | Backend (Symfony, Doctrine, GraphQL) | `backend/AGENTS.md` |

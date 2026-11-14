@@ -12,7 +12,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * Firebase Cloud Messaging (API HTTP v1): las notificaciones del chat en la
- * app móvil (ADR-060). `PUSH_FCM_CREDENCIAL` es la ruta del JSON de la cuenta
+ * app móvil (ADR-061). `PUSH_FCM_CREDENCIAL` es la ruta del JSON de la cuenta
  * de servicio de Firebase (secreto, fuera de git); vacía = sin notificaciones
  * en la app. El token de acceso de Google se pide con un JWT firmado con la
  * clave de esa cuenta y se guarda mientras vale.

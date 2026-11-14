@@ -41,7 +41,7 @@ jobs:
         run: |
           if [ -z "$FDN_APP_URL" ]; then unset FDN_APP_URL; fi
           npx cap sync android
-      # Notificaciones (ADR-060): sin `google-services.json` el APK compila igual, sin ellas.
+      # Notificaciones (ADR-061): sin `google-services.json` el APK compila igual, sin ellas.
       # Puede estar en git (movil/android/app/) o venir del secreto GOOGLE_SERVICES_JSON.
       - name: Configuración de Firebase
         env:

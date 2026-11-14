@@ -81,7 +81,7 @@ final class ChatController extends AbstractController
         return $this->json(null, Response::HTTP_NO_CONTENT);
     }
 
-    /** App móvil (ADR-060): `?token=` (el de FCM de este teléfono) → `{ disponible, mio }`. */
+    /** App móvil (ADR-061): `?token=` (el de FCM de este teléfono) → `{ disponible, mio }`. */
     #[Route("/push/dispositivo", name: "push_dispositivo", methods: ["GET"])]
     public function dispositivoPush(Request $request, #[CurrentUser] Usuario $yo): JsonResponse
     {

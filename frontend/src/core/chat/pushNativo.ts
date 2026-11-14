@@ -1,5 +1,5 @@
 /**
- * Notificaciones del chat en la app móvil (ADR-060): dentro del shell de
+ * Notificaciones del chat en la app móvil (ADR-061): dentro del shell de
  * Capacitor no hay Web Push, así que el teléfono se registra en Firebase
  * (FCM) y le da su token al backend (`/chat/push/dispositivo`). Android
  * muestra la notificación con la app cerrada o en segundo plano; con la app

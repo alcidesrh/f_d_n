@@ -43,7 +43,7 @@ export function escucharInstalacion(): void {
   navigator.serviceWorker?.addEventListener('message', (e: MessageEvent<{ tipo?: string; url?: string }>) => {
     if (e.data?.tipo === 'abrir' && e.data.url?.startsWith('/')) void router.push(e.data.url)
   })
-  // Lo mismo en la app móvil (ADR-060): la notificación la mostró Android.
+  // Lo mismo en la app móvil (ADR-061): la notificación la mostró Android.
   void alTocarAviso((ruta) => void router.push(ruta)).catch(() => undefined)
 }
 

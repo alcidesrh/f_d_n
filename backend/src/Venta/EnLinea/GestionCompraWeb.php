@@ -192,29 +192,38 @@ final class GestionCompraWeb
             $this->reglas->exigirReceptorFacturable($v->getCliente()?->getNit(), $v->getTotal());
         }
 
-        $resultado = [];
-        foreach ($ventas as $v) {
-            try {
-                if ($v->getFactura() !== null) {
-                    // Primero se anula la anterior; si falla, la venta sigue con ella.
-                    $this->facturador->anular($v, "Reemisión con los datos corregidos del cliente");
-                    $this->em->flush();
-                }
-                $factura = $this->facturador->certificar($v, reemision: true);
-                $this->em->flush();
-                $resultado[] = ["venta" => (int) $v->getId(), "factura" => ["serie" => $factura->getSerie(), "numero" => $factura->numeroDte()], "error" => null];
-            } catch (CertificacionFallida $e) {
-                if ($v->getFactura()?->isAnulada()) {
-                    // La anterior ya no vale y la nueva no salió: queda por certificar (la reintenta el cron).
-                    $v->setFactura(null)->setEstadoFacturacion(EstadoFacturacion::PENDIENTE)->setErrorFacturacion($e->getMessage());
-                    $this->em->flush();
-                }
-                $this->logger->warning("Reemisión de la factura de la venta web {id}: {error}", ["id" => $v->getId(), "error" => $e->getMessage()]);
-                $resultado[] = ["venta" => (int) $v->getId(), "factura" => null, "error" => $e->getMessage()];
-            }
-        }
+        return array_map(fn(BoletoVenta $v) => $this->reemitirVenta($v, "Reemisión con los datos corregidos del cliente"), $ventas);
+    }
 
-        return $resultado;
+    /**
+     * Anula la factura de un viaje (si la tiene) y certifica una nueva con
+     * los datos actuales de la venta. Si la anulación sale y la nueva no, la
+     * venta queda pendiente y la certifica `app:venta:certificar-pendientes`.
+     *
+     * @return array{venta: int, factura: ?array{serie: ?string, numero: ?int}, error: ?string}
+     */
+    public function reemitirVenta(BoletoVenta $v, string $motivo): array
+    {
+        try {
+            if ($v->getFactura() !== null) {
+                // Primero se anula la anterior; si falla, la venta sigue con ella.
+                $this->facturador->anular($v, $motivo);
+                $this->em->flush();
+            }
+            $factura = $this->facturador->certificar($v, reemision: true);
+            $this->em->flush();
+
+            return ["venta" => (int) $v->getId(), "factura" => ["serie" => $factura->getSerie(), "numero" => $factura->numeroDte()], "error" => null];
+        } catch (CertificacionFallida $e) {
+            if ($v->getFactura()?->isAnulada()) {
+                // La anterior ya no vale y la nueva no salió: queda por certificar (la reintenta el cron).
+                $v->setFactura(null)->setEstadoFacturacion(EstadoFacturacion::PENDIENTE)->setErrorFacturacion($e->getMessage());
+                $this->em->flush();
+            }
+            $this->logger->warning("Reemisión de la factura de la venta web {id}: {error}", ["id" => $v->getId(), "error" => $e->getMessage()]);
+
+            return ["venta" => (int) $v->getId(), "factura" => null, "error" => $e->getMessage()];
+        }
     }
 
     /**

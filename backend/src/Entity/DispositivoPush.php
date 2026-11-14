@@ -7,7 +7,7 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * Un teléfono con la app móvil (ADR-060) que recibe las notificaciones del
+ * Un teléfono con la app móvil (ADR-061) que recibe las notificaciones del
  * chat con la app cerrada, por Firebase Cloud Messaging. El `token` lo da
  * Firebase a esa instalación: si otro usuario entra en el mismo teléfono,
  * pasa a ser suyo. El navegador y la PWA usan `SuscripcionPush`.

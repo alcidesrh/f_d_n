@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli'
 
 /**
- * Shell nativo del personal (ADR-059): un WebView que carga la app web desplegada,
+ * Shell nativo del personal (ADR-060): un WebView que carga la app web desplegada,
  * no una copia empaquetada. Así el teléfono corre siempre la misma versión que el
  * backend y un despliegue no obliga a reinstalar la app.
  *

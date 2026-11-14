@@ -11,3 +11,7 @@
 </ul>
 {% endfor %}
 <p>Preséntelo (impreso o en su teléfono) a la hora de abordar.</p>
+{% if misCompras ?? null %}
+<p>¿Necesita cambiar la hora, la ruta o el asiento, o descargar su factura? Hágalo en <a href="{{ misCompras }}">Mis compras</a>, sin contraseña.
+No comparta este enlace: quien lo tenga puede modificar sus compras.</p>
+{% endif %}

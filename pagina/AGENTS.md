@@ -32,6 +32,8 @@ Reutiliza del frontend por alias (ver `vite.config.ts` y `tsconfig.app.json`): `
 | `src/paginas/` | `InicioPagina` (toda la compra), `PagoPagina`, `CompraPagina`; informativas: `Servicios`, `Estaciones`, `Nosotros`, `Politicas`, `Contacto` |
 | `src/componentes/compra/` | `BuscadorViaje`, `ListaSalidas` (acordeón), `TarjetaSalida` (horas del viaje del cliente: "aprox." fuera del origen del bus, "+1 día", la ruta del bus aparte; ADR-030), `CroquisSalida` (mapa en vivo), `BarraCompra` (total + "Pagar asientos") |
 | `src/componentes/` | Encabezado (menú en cajón en móvil), pie, selector de idioma, resumen del carrito, desafío del banco, íconos |
+| `src/llave.ts`, `src/modificacion.ts` | «Mis compras» (ADR-059): la llave del cliente en `localStorage` y las reglas puras del pedido de modificación (con tests) |
+| `src/paginas/MisComprasPagina.vue`, `ModificarViajePagina.vue`, `src/componentes/modificar/` | Viajes comprados (próximos y pasados con su factura) y la modificación de un viaje: elegir otra salida/asiento (`SelectorAsientoViaje`), cotizar, pagar la diferencia con 3-D Secure |
 | `src/tresDs.ts` | Pasos del navegador en 3-D Secure (formularios a iframes, datos del navegador, huella) |
 | `scripts/prerender.mjs` | HTML por idioma, `sitemap.xml`, `robots.txt` |
 
@@ -42,6 +44,8 @@ Reutiliza del frontend por alias (ver `vite.config.ts` y `tsconfig.app.json`): `
 3. "Pagar asientos": `POST /api/publico/carritos` aparta ida y regreso juntos o nada; si otro tomó alguno (409), se quitan de la elección y se avisa sin pasar al pago.
 4. Pago: resumen con tiempo restante, datos del comprador, tarjeta, dirección de facturación (país → región → ciudad de listas, texto libre donde no hay datos) y factura (NIT, buscado en la SAT, y «A nombre de»; ADR-041). 3-D Secure como antes (`tresDs.ts`, `DesafioBanco.vue`); tras cada paso se reenvía el pago con `continuar`. "Volver a los asientos" o salir sin pagar suelta los asientos.
 5. Compra: se descarga el PDF (ida y regreso en el mismo archivo) una vez y queda el botón; el boleto también llega por correo.
+
+6. «Mis compras» (ADR-059): al pagar queda en el navegador la llave del cliente (también llega en el correo del boleto, o se pide con el correo). Los viajes próximos se modifican (hora, ruta, asiento, clase, agregar asientos; sin anular ni cancelar): se cotiza y, si cuesta más o hay penalización, se paga con tarjeta; si cuesta menos no hay reembolso. Los pasados descargan su factura.
 
 Con el Org ID de `ConfiguracionCybersource` (`app:pago:configuracion --org-id`), la página carga el script de huella del dispositivo del banco (`/api/publico/carritos/{token}/huella`).
 

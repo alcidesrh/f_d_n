@@ -24,7 +24,7 @@
 
         </activity>
 
-        <!-- Notificaciones del chat (FCM, ADR-060): ícono, color y canal cuando el mensaje no los trae. -->
+        <!-- Notificaciones del chat (FCM, ADR-061): ícono, color y canal cuando el mensaje no los trae. -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@drawable/ic_notificacion" />

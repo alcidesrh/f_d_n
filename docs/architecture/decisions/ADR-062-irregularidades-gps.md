@@ -1,4 +1,4 @@
-# ADR-061: Irregularidades del GPS avisadas por el chat
+# ADR-062: Irregularidades del GPS avisadas por el chat
 
 **Estado:** Aceptada.
 
@@ -30,7 +30,7 @@ por ahora: en carretera sin cobertura y con trazados aproximados darían avisos 
   (GPS)»: un administrador crea la instancia, elige la audiencia y, si quiere, la empresa. Sale con los
   envíos de cada 5 minutos (no en la revisión de la madrugada: `enVivo()`), un mensaje por irregularidad y
   una sola vez por instancia (`gps:{salida}:{tipo}:{instante}`). Crear la instancia no avisa lo anterior.
-  Con las notificaciones activas (Web Push, ADR-060) llega también con la app cerrada.
+  Con las notificaciones activas (Web Push, ADR-061) llega también con la app cerrada.
 
 ## Consecuencias
 
