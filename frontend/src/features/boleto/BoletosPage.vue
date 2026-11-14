@@ -31,7 +31,10 @@
     <!-- La salida elegida en el calendario: sus boletos, en cualquier fecha de venta. -->
     <div v-if="borrador.salida" class="salida-elegida">
       <icon name="directions-bus-outline" />
-      <span class="truncate">Boletos de la salida <b>#{{ borrador.salida }}</b><template v-if="salidaElegida"> · {{ salidaElegida }}</template></span>
+      <span class="truncate"
+        >Boletos de la salida <b>#{{ borrador.salida }}</b
+        ><template v-if="salidaElegida"> · {{ salidaElegida }}</template></span
+      >
       <Button text rounded size="small" severity="secondary" class="tap-target" aria-label="Ver todas las salidas" v-tooltip.top="'Ver los de todas las salidas'" @click="borrador.salida = null"
         ><template #icon><icon name="close" /></template
       ></Button>
@@ -165,7 +168,7 @@ const COLUMNAS: Columna[] = [
   { key: "autorizacion", label: "Autorización tarjeta", width: "9rem", oculta: true },
   { key: "clienteDocumento", label: "Cliente documento", width: "14rem", orden: "clienteDocumento", oculta: true },
   { key: "clienteBoleto", label: "Cliente boleto", width: "14rem", orden: "clienteBoleto" },
-  { key: "ruta", label: "Ruta", width: "2fr", minWidth: "12rem", orden: "ruta" },
+  { key: "ruta", label: "Ruta", width: "2fr", minWidth: "10rem", orden: "ruta" },
   { key: "tipoPago", label: "Tipo pago", width: "7rem", oculta: true },
   { key: "precio", label: "Precio", width: "7rem", align: "end" },
   { key: "reasignadoDe", label: "Reasignado de", width: "7rem", align: "end", oculta: true },
