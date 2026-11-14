@@ -15,7 +15,9 @@ use App\Entity\Empresa;
 use App\Entity\Estacion;
 use App\Entity\Factura;
 use App\Entity\Enum\EstadoFacturacion;
+use App\Entity\Enclave;
 use App\Entity\PagoWeb;
+use App\Entity\Ruta;
 use App\Entity\TipoPago;
 use App\Entity\Usuario;
 use App\Venta\Boleto\DatosBoleto;
@@ -259,6 +261,20 @@ final class ListadoBoletos
                 $this->em->getRepository($clase)->findBy(["id" => $idsRel]);
             }
         }
+        // Las paradas de las rutas (con su estación): las puntas de la ruta van con alias.
+        $rutas = array_values(array_unique(array_map(static fn(BoletoAsiento $b) => (int) $b->getSalida()->getRuta()->getId(), $boletos)));
+        if ($rutas !== []) {
+            $this->em->createQueryBuilder()
+                ->select("r", "p", "e")
+                ->from(Ruta::class, "r")
+                ->leftJoin("r.paradas", "p")
+                ->leftJoin("p.enclave", "e")
+                ->where("r.id IN (:rutas)")
+                ->setParameter("rutas", $rutas, ArrayParameterType::INTEGER)
+                ->orderBy("p.orden")
+                ->getQuery()
+                ->getResult();
+        }
 
         $posicion = array_flip($ids);
         usort($boletos, static fn(BoletoAsiento $x, BoletoAsiento $y) => $posicion[$x->getId()] <=> $posicion[$y->getId()]);
@@ -360,8 +376,12 @@ final class ListadoBoletos
                 "numero" => $factura?->numeroDte(),
             ],
             "ruta" => trim(sprintf("%s - %s", $ruta->getLegacyId() ?? "", $ruta->getNombre()), " -"),
+            // Las puntas con el alias de cada estación («GUA → SEP»); el nombre completo queda en `ruta`.
+            "rutaCorta" => trim(sprintf("%s - %s → %s", $ruta->getLegacyId() ?? "", self::alias($ruta->getOrigen()), self::alias($ruta->getDestino())), " -"),
             "sube" => $b->getTrayecto()->getOrigen()?->getNombre(),
             "baja" => $b->getTrayecto()->getDestino()?->getNombre(),
+            "subeAlias" => self::alias($b->getTrayecto()->getOrigen()),
+            "bajaAlias" => self::alias($b->getTrayecto()->getDestino()),
             "clienteDocumento" => self::cliente($venta->getCliente(), true),
             "clienteBoleto" => self::cliente($b->getCliente(), false),
             "tipoPago" => $venta->getTipoPago()?->getNombre(),
@@ -375,7 +395,9 @@ final class ListadoBoletos
             "autorizacion" => $venta->getReferenciaPago() ?: null,
             "creada" => $venta->getCreada()?->format(DATE_ATOM),
             "usuario" => $usuario === null ? null : (trim((string) $usuario->getFullName()) ?: $usuario->getUsername()),
+            "username" => $usuario?->getUsername(),
             "estacion" => $venta->getEstacion()?->getNombre() ?? $venta->getAgencia()?->getNombre(),
+            "estacionAlias" => $venta->getEstacion() !== null ? self::alias($venta->getEstacion()) : $venta->getAgencia()?->getNombre(),
             // Lo que el boleto admite ahora (null) o por qué no, para el panel de acciones (ADR-037).
             "acciones" => $this->flujo->acciones($b),
             // Solo la hora impide anularlo o reasignarlo: se puede con una autorización fuera de hora (ADR-040).
@@ -383,6 +405,12 @@ final class ListadoBoletos
             // Lo impide su estado o el de su salida: se puede con una autorización fuera de estado (ADR-058).
             "fueraDeEstado" => ReglasBoletos::soloPorEstado($b, new \DateTimeImmutable()),
         ];
+    }
+
+    /** El alias de la estación («GUA»), o su nombre si no tiene; «?» sin estación. */
+    private static function alias(?Enclave $e): string
+    {
+        return $e === null ? "?" : (trim((string) $e->getAlias()) ?: (string) $e->getNombre());
     }
 
     /** @return array{id: int, nombre: string, documento: ?string, email: ?string}|null */

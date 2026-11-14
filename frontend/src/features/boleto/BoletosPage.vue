@@ -14,7 +14,7 @@
 <template>
   <div class="@container flex flex-col gap-3">
     <!-- Filtro: el calendario de salidas (pulsar una salida deja solo sus boletos), la empresa, el id y la clase. -->
-    <CalendarioSalidas :activa="borrador.salida" max-alto="18rem" @abrir="(_, s) => elegirSalida(s)">
+    <CalendarioSalidas :activa="borrador.salida" :ocupacion="false" max-alto="18rem" @abrir="(_, s) => elegirSalida(s)">
       <label class="filtro-id">
         <span class="text-sm font-medium">Id</span>
         <InputText :model-value="String(borrador.id ?? '')" inputmode="numeric" size="small" class="w-24" aria-label="Id del boleto" @input="borrador.id = soloNumero($event)" />
@@ -73,6 +73,7 @@
       <template #cell="{ row, column }">
         <span v-if="column.key === 'estado'" class="estado" :class="`estado--${f(row).estado}`" :title="etiquetaEstado(f(row).estado).etiqueta">{{ inicialEstado(f(row).estado) }}</span>
         <span v-else-if="column.key === 'documento'" class="estado" :class="`documento--${f(row).documento.tipo}`" :title="texto(f(row), 'documento')">{{ inicialDocumento(f(row).documento.tipo) }}</span>
+        <span v-else-if="corta(f(row), column.key) !== null" class="block truncate" v-tooltip.top="texto(f(row), column.key)">{{ corta(f(row), column.key) }}</span>
         <GridText v-else :text="texto(f(row), column.key)" />
       </template>
       <template #card="{ row }">
@@ -146,28 +147,32 @@ interface Columna extends GridColumn {
   oculta?: boolean;
 }
 
-/** Las del legado, en su orden. */
+/**
+ * Las del legado: quién y dónde se vendió junto al asiento, la ruta tras el
+ * cliente, y estado y documento al final. Estaciones con alias y usuario con
+ * su username (el nombre completo, en el tooltip).
+ */
 const COLUMNAS: Columna[] = [
   { key: "id", label: "ID", width: "5.5rem", orden: "id", align: "end" },
   { key: "fecha", label: "Fecha salida", width: "10rem", orden: "fecha" },
-  { key: "asiento", label: "Número", width: "5.5rem", orden: "numero", align: "end" },
-  { key: "estado", label: "Estado", width: "5.5rem", align: "center" },
-  { key: "documento", label: "Documento", width: "6.5rem", align: "center" },
-  { key: "ruta", label: "Ruta", width: "2fr", minWidth: "14rem", orden: "ruta" },
-  { key: "sube", label: "Sube en", width: "10rem" },
-  { key: "baja", label: "Baja en", width: "10rem" },
+  { key: "asiento", label: "Asiento", width: "5.5rem", orden: "numero", align: "end" },
+  { key: "usuario", label: "User", width: "8rem" },
+  { key: "estacion", label: "Estación", width: "6.5rem" },
+  { key: "sube", label: "Sube en", width: "6.5rem" },
+  { key: "baja", label: "Baja en", width: "6.5rem" },
   { key: "clase", label: "Clase", width: "4.5rem", align: "center", oculta: true },
   { key: "referenciaExterna", label: "Ref. externa", width: "9rem", oculta: true },
   { key: "autorizacion", label: "Autorización tarjeta", width: "9rem", oculta: true },
-  { key: "clienteDocumento", label: "Cliente documento", width: "14rem", orden: "clienteDocumento" },
+  { key: "clienteDocumento", label: "Cliente documento", width: "14rem", orden: "clienteDocumento", oculta: true },
   { key: "clienteBoleto", label: "Cliente boleto", width: "14rem", orden: "clienteBoleto" },
-  { key: "tipoPago", label: "Tipo pago", width: "7rem" },
+  { key: "ruta", label: "Ruta", width: "2fr", minWidth: "12rem", orden: "ruta" },
+  { key: "tipoPago", label: "Tipo pago", width: "7rem", oculta: true },
   { key: "precio", label: "Precio", width: "7rem", align: "end" },
   { key: "reasignadoDe", label: "Reasignado de", width: "7rem", align: "end", oculta: true },
   { key: "empresa", label: "Empresa", width: "8rem", oculta: true },
-  { key: "creada", label: "Fecha creación", width: "10rem", orden: "creada" },
-  { key: "usuario", label: "Usuario creación", width: "10rem" },
-  { key: "estacion", label: "Estación creación", width: "10rem" },
+  { key: "creada", label: "Fecha creación", width: "10rem", orden: "creada", oculta: true },
+  { key: "estado", label: "Estado", width: "5.5rem", align: "center" },
+  { key: "documento", label: "Documento", width: "6.5rem", align: "center" },
 ];
 
 const BOTONES: Array<{ accion: AccionBoleto; etiqueta: string; icono: string; ayuda: string; severidad?: "warn" | "danger" }> = [
@@ -197,7 +202,8 @@ const accionesMenu = computed(() =>
   })),
 );
 
-const PREFERENCIAS = "boletos.columnas";
+/** `.v2`: columnas renombradas y otras ocultas por defecto; lo guardado antes no aplica. */
+const PREFERENCIAS = "boletos.columnas.v2";
 type Dialogo = "consultar" | "cancelar" | "revertir" | "chequear" | "correo" | "anular" | "chat";
 
 const route = useRoute();
@@ -405,6 +411,23 @@ function cerrar(visible: boolean) {
 anunciarEnPantalla(() => (elegido.value ? [{ tipo: "BoletoAsiento", id: elegido.value.id, etiqueta: `Boleto ${elegido.value.id} · asiento ${elegido.value.asiento} · ${elegido.value.sube} → ${elegido.value.baja}` }] : []));
 
 // —— Celdas ——
+/** Columnas con valor corto (alias, username) y el completo en el tooltip; null = se muestra `texto`. */
+function corta(b: BoletoFila, key: string): string | null {
+  switch (key) {
+    case "usuario":
+      return b.username ?? null;
+    case "estacion":
+      return b.estacionAlias ?? null;
+    case "sube":
+      return b.subeAlias ?? null;
+    case "baja":
+      return b.bajaAlias ?? null;
+    case "ruta":
+      return b.rutaCorta ?? null;
+    default:
+      return null;
+  }
+}
 const f = (r: unknown) => r as BoletoFila;
 const cuando = (iso: string | null) => (iso ? `${fecha(iso)} ${hora(iso)}` : "—");
 function texto(b: BoletoFila, key: string): string {

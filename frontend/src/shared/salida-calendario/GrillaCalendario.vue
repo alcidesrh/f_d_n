@@ -27,7 +27,7 @@
           <span v-if="h === ahora.hora" class="cal__ahora" :class="{ 'cal__ahora--hoy': d === ahora.dia }" :style="{ left: `${ahora.fraccion * 100}%` }" aria-hidden="true" />
           <button v-for="s in store.celdas.get(d)?.[h] ?? []" :key="s.id" type="button" class="chip" :class="claseChip(s)" :data-ruta="s.rutaId" :style="estiloChip(s)" :aria-label="etiquetaChip(s)" :aria-pressed="store.seleccionando ? store.seleccion.has(s.id) : undefined" @click="pulsar($event, s)">
             <span class="chip__hora tabular-nums">{{ minutos(s.fecha) }}</span>
-            <span class="chip__valor tabular-nums">{{ textoOcupacion(s, store.modo) }}</span>
+            <span class="chip__valor tabular-nums">{{ textoOcupacion(s, modo) }}</span>
           </button>
         </div>
       </template>
@@ -37,12 +37,13 @@
 </template>
 
 <script setup lang="ts">
-import { detalleOcupacion, finDeSemana, fraccion, nivel, puntas, textoOcupacion, tonoEmpresa, totales, ahoraEn } from "@/core/salida/calendario";
+import { detalleOcupacion, finDeSemana, fraccion, nivel, puntas, textoOcupacion, tonoEmpresa, totales, ahoraEn, type ModoOcupacion } from "@/core/salida/calendario";
 import { deDia, etiquetaEstado, horaDe } from "@/core/salida/filtro";
 import type { SalidaCalendario } from "@/core/salida/types";
 import { useCalendarioSalidasStore } from "./store";
 
-const props = defineProps<{ activa?: number | null }>();
+/** `modo` fija cómo se muestra lo ocupado; sin él, el elegido en los controles. */
+const props = defineProps<{ activa?: number | null; modo?: ModoOcupacion }>();
 const emit = defineEmits<{ abrir: [evento: MouseEvent, salida: SalidaCalendario] }>();
 
 const HORAS = Array.from({ length: 24 }, (_, h) => h);
@@ -51,6 +52,7 @@ const store = useCalendarioSalidasStore();
 const scroller = ref<HTMLElement | null>(null);
 
 const ahora = computed(() => ahoraEn(store.ahora));
+const modo = computed(() => props.modo ?? store.modo);
 const horaElegida = computed(() => (store.hora ? Number(store.hora.slice(0, 2)) : null));
 const totalesDia = computed(() => new Map(store.columnas.map((d) => [d, totales(store.celdas.get(d)?.flat() ?? [])])));
 const vacio = computed(() => !!store.datos && !store.cargando && !store.datos.items.length);
@@ -76,7 +78,7 @@ function porcientoDia(d: string): number {
 function resumenDia(d: string): string {
   const t = totalesDia.value.get(d);
   if (!t?.salidas) return "Sin salidas";
-  const ocupado = store.modo === "porciento" ? `${porcientoDia(d)} %` : `${t.vendidos} ocup.`;
+  const ocupado = modo.value === "porciento" ? `${porcientoDia(d)} %` : `${t.vendidos} ocup.`;
   return `${t.salidas} ${t.salidas === 1 ? "salida" : "salidas"} · ${ocupado}`;
 }
 

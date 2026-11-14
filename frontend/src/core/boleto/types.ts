@@ -27,9 +27,15 @@ export interface BoletoFila {
   asiento: number
   clase: 'A' | 'B'
   documento: { tipo: TipoDocumento; serie: string | null; numero: number | null }
+  /** `legado - nombre` de la ruta. */
   ruta: string
+  /** Las puntas de la ruta con el alias de cada estación (`12 - GUA → SEP`). */
+  rutaCorta?: string
   sube: string | null
   baja: string | null
+  /** Alias de las estaciones (el nombre si no tiene). */
+  subeAlias?: string
+  bajaAlias?: string
   clienteDocumento: ClienteBoleto | null
   clienteBoleto: ClienteBoleto | null
   tipoPago: string | null
@@ -42,8 +48,12 @@ export interface BoletoFila {
   referenciaExterna: string | null
   autorizacion: string | null
   creada: string | null
+  /** Nombre completo de quien vendió (o su usuario). */
   usuario: string | null
+  username?: string | null
   estacion: string | null
+  /** Alias de la estación de venta (o el nombre de la agencia). */
+  estacionAlias?: string | null
   /**
    * Lo que el boleto admite ahora según el flujo del backend
    * (`FlujoBoleto::acciones`, ADR-037): null = se puede; si no, el motivo.

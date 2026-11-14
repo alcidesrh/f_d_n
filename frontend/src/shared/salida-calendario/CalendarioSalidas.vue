@@ -9,20 +9,21 @@
   actual a la vista; cualquier cambio del filtro vuelve a pedir y la fecha
   elegida queda en la URL. Se refresca solo cada minuto. Pulsar una salida
   emite `abrir` (en modo selección, la marca); `eliminar` pide borrar las
-  marcadas. El slot va al final de la fila de controles. `maxAlto` acota la
+  marcadas. Sin `ocupacion` no se ofrece verla en porciento (siempre en
+  asientos). El slot va al final de la fila de controles. `maxAlto` acota la
   grilla cuando hay algo debajo (si no, ocupa el resto de la ventana).
   Estado en `store.ts`; reglas en `core/salida/calendario`.
 -->
 <template>
   <div ref="raiz" class="flex flex-col gap-3">
     <div ref="cabecera" class="flex flex-col gap-3">
-      <ControlesCalendario :ocupacion="grilla" :seleccion="grilla && seleccion" @hoy="irAHoy" @eliminar="emit('eliminar')"><slot /></ControlesCalendario>
+      <ControlesCalendario :ocupacion="grilla && ocupacion" :seleccion="grilla && seleccion" @hoy="irAHoy" @eliminar="emit('eliminar')"><slot /></ControlesCalendario>
       <LeyendaRutas />
       <Message v-if="store.error" severity="error" :closable="false">{{ store.error }}</Message>
       <Message v-if="grilla && store.datos?.truncado" severity="warn" :closable="false">Hay más salidas de las que se pueden mostrar: acote el filtro o elija menos días.</Message>
     </div>
 
-    <GrillaCalendario v-if="grilla" ref="grillaRef" :activa="activa ?? null" :style="{ '--cal-arriba': `${arriba}px`, '--cal-max': maxAlto }" @abrir="(e, s) => emit('abrir', e, s)" />
+    <GrillaCalendario v-if="grilla" ref="grillaRef" :activa="activa ?? null" :modo="ocupacion ? undefined : 'asientos'" :style="{ '--cal-arriba': `${arriba}px`, '--cal-max': maxAlto }" @abrir="(e, s) => emit('abrir', e, s)" />
   </div>
 </template>
 
@@ -34,7 +35,7 @@ import GrillaCalendario from './GrillaCalendario.vue'
 import LeyendaRutas from './LeyendaRutas.vue'
 import { useCalendarioSalidasStore } from './store'
 
-const props = withDefaults(defineProps<{ grilla?: boolean; seleccion?: boolean; activa?: number | null; maxAlto?: string }>(), { grilla: true, seleccion: false, activa: null, maxAlto: undefined })
+const props = withDefaults(defineProps<{ grilla?: boolean; seleccion?: boolean; ocupacion?: boolean; activa?: number | null; maxAlto?: string }>(), { grilla: true, seleccion: false, ocupacion: true, activa: null, maxAlto: undefined })
 const emit = defineEmits<{ abrir: [evento: MouseEvent, salida: SalidaCalendario]; eliminar: [] }>()
 
 const route = useRoute()
