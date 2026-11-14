@@ -414,7 +414,11 @@
       class="w-[min(22rem,calc(100vw-2rem))]"
     >
       <div class="flex flex-col items-center gap-3 pt-6 text-center">
-        <ProgressSpinner style="width: 3rem; height: 3rem" stroke-width="4" />
+        <span
+          class="block size-12 animate-spin rounded-full border-4 border-marca-700 border-t-transparent"
+          role="status"
+          :aria-label="t('pago.pagando')"
+        />
         <p class="m-0 font-semibold">{{ t("pago.pagando") }}</p>
         <p class="m-0 text-sm text-muted-color">{{ t("pago.noCierre") }}</p>
       </div>

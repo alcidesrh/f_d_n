@@ -48,6 +48,8 @@
       </Message>
     </section>
 
+    <ProximosViajes v-if="!viaje.completa" class="relative" />
+
     <section
       v-if="viaje.completa"
       id="salidas"
@@ -147,6 +149,7 @@ import { ErrorPublico } from "@/api";
 import { useCarrito } from "@/carrito";
 import BarraCompra from "@/componentes/compra/BarraCompra.vue";
 import BuscadorViaje from "@/componentes/compra/BuscadorViaje.vue";
+import ProximosViajes from "@/componentes/compra/ProximosViajes.vue";
 import ListaSalidas from "@/componentes/compra/ListaSalidas.vue";
 import { mensajeDeError, type MensajeError } from "@/errores";
 import type { Idioma } from "@/i18n";
