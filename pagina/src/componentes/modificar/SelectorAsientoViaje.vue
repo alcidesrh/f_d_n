@@ -26,7 +26,7 @@
     <p v-else-if="origen && destino && !salidas.length && !error" class="m-0 rounded-xl bg-surface-50 p-4 text-sm text-muted-color">{{ t('modificar.sinSalidas') }}</p>
 
     <ul v-if="salidas.length" class="m-0 flex list-none flex-col gap-2 p-0" :aria-label="t('modificar.elijaSalida')">
-      <li v-for="s in salidas" :key="s.id">
+      <li v-for="s in salidas" :key="s.id" class="flex flex-col gap-2">
         <button
           type="button"
           class="flex w-full cursor-pointer flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-xl border bg-white px-4 py-3 text-left"
@@ -44,20 +44,21 @@
             <span class="text-xs" :class="s.disponibles ? 'text-muted-color' : 'text-red-700'">{{ t('modificar.libres', s.disponibles) }}</span>
           </span>
         </button>
+
+        <!-- El croquis se abre debajo de la salida elegida (como en la compra). -->
+        <div v-if="elegida?.id === s.id" class="flex flex-col gap-3 rounded-2xl border border-marca-700 bg-white p-3 shadow-tarjeta md:p-4">
+          <Skeleton v-if="!detalle && !errorCroquis" height="18rem" border-radius="1rem" />
+          <Message v-if="errorCroquis" severity="error" :closable="false">{{ errorCroquis }}</Message>
+          <div v-if="detalle" class="flex flex-col gap-2">
+            <p class="m-0 text-sm font-medium">{{ t('modificar.elijaAsiento') }}</p>
+            <div class="overflow-x-auto">
+              <BusMap :elementos="detalle.croquis" :estado="estado" interactivo class="mx-auto justify-center" @asiento="tocar" />
+            </div>
+            <p class="m-0 text-xs text-muted-color">{{ detalle.precios.map((p) => `${t('modificar.clase', { clase: p.clase })}: ${p.precio.texto}`).join(' · ') }}</p>
+          </div>
+        </div>
       </li>
     </ul>
-
-    <template v-if="elegida">
-      <Skeleton v-if="!detalle && !errorCroquis" height="18rem" border-radius="1rem" />
-      <Message v-if="errorCroquis" severity="error" :closable="false">{{ errorCroquis }}</Message>
-      <div v-if="detalle" class="flex flex-col gap-2">
-        <p class="m-0 text-sm font-medium">{{ t('modificar.elijaAsiento') }}</p>
-        <div class="overflow-x-auto">
-          <BusMap :elementos="detalle.croquis" :estado="estado" interactivo class="mx-auto justify-center" @asiento="tocar" />
-        </div>
-        <p class="m-0 text-xs text-muted-color">{{ detalle.precios.map((p) => `${t('modificar.clase', { clase: p.clase })}: ${p.precio.texto}`).join(' · ') }}</p>
-      </div>
-    </template>
   </div>
 </template>
 
