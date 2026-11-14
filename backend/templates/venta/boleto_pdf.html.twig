@@ -1,4 +1,4 @@
-{# PDF del boleto (venta web y copia por correo): una página por venta (ida y regreso). Datos: `boletos` = lista de { b: App\Venta\Boleto\DatosBoleto, codigoBarras }. #}
+{# PDF del boleto (venta web y copia por correo): una página por venta (ida y regreso) y, en ella, cada viaje (salida y trayecto: una compra modificada puede tener asientos en otras salidas). Datos: `boletos` = lista de { b: App\Venta\Boleto\DatosBoleto, codigoBarras }. #}
 <!doctype html>
 <html lang="es">
 <head>
@@ -16,6 +16,7 @@
   table.boletos { width: 100%; border-collapse: collapse; margin-top: 6px; }
   table.boletos th { text-align: left; font-size: 9px; text-transform: uppercase; color: #6b7280; border-bottom: 1px solid #d1d5db; padding: 3px 0; }
   table.boletos td { padding: 3px 0; border-bottom: 1px solid #f3f4f6; }
+  .viaje { font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: .04em; color: #374151; margin-top: 8px; }
   .total { text-align: right; font-size: 14px; font-weight: bold; margin-top: 6px; }
   .aviso { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 8px 10px; margin-top: 10px; }
   .terminos { margin-top: 12px; font-size: 9px; color: #374151; }
@@ -39,24 +40,30 @@
   </tr></table>
 
   <div class="caja">
-    <table class="grid"><tr>
-      <td><div class="lbl">Cliente</div><div class="val">{{ b.cliente.nombre ?? '—' }}</div></td>
-      <td><div class="lbl">NIT</div><div class="val">{{ b.cliente.nit ?? 'CF' }}</div></td>
-      <td><div class="lbl">Compra</div><div class="val">{{ b.creada ? b.creada|date('d/m/Y H:i') : '—' }}</div></td>
-    </tr><tr>
-      <td><div class="lbl">Salida</div>{% include 'venta/_hora_salida.html.twig' with { s: b.salida } %}</td>
-      <td colspan="2"><div class="lbl">Asiento(s)</div><div class="val">{{ b.boletos|map(x => x.asiento)|join(', ') }}</div></td>
-    </tr><tr>
-      <td colspan="2"><div class="lbl">Estación de salida</div><div class="val">{{ b.origen.nombre }}</div><div class="muted">{{ b.origen.direccion }}</div></td>
-      <td><div class="lbl">Estación de llegada</div><div class="val">{{ b.destino.nombre }}</div><div class="muted">{{ b.destino.direccion }}</div></td>
-    </tr></table>
+    {% for v in b.viajes %}
+    <table class="grid">
+      {% if loop.first %}<tr>
+        <td><div class="lbl">Cliente</div><div class="val">{{ b.cliente.nombre ?? '—' }}</div></td>
+        <td><div class="lbl">NIT</div><div class="val">{{ b.cliente.nit ?? 'CF' }}</div></td>
+        <td><div class="lbl">Compra</div><div class="val">{{ b.creada ? b.creada|date('d/m/Y H:i') : '—' }}</div></td>
+      </tr>{% endif %}
+      {% if b.viajes|length > 1 %}<tr><td colspan="3"><div class="viaje">Viaje {{ loop.index }} de {{ b.viajes|length }}</div></td></tr>{% endif %}
+      <tr>
+        <td><div class="lbl">Salida</div>{% include 'venta/_hora_salida.html.twig' with { s: v.salida } %}</td>
+        <td colspan="2"><div class="lbl">Asiento(s)</div><div class="val">{{ v.boletos|map(x => x.asiento)|join(', ') }}</div></td>
+      </tr><tr>
+        <td colspan="2"><div class="lbl">Estación de salida</div><div class="val">{{ v.origen.nombre }}</div><div class="muted">{{ v.origen.direccion }}</div></td>
+        <td><div class="lbl">Estación de llegada</div><div class="val">{{ v.destino.nombre }}</div><div class="muted">{{ v.destino.direccion }}</div></td>
+      </tr>
+    </table>
 
     <table class="boletos">
       <tr><th>Asiento</th><th>Clase</th><th>Pasajero</th><th style="text-align:right">Precio</th></tr>
-      {% for x in b.boletos %}
+      {% for x in v.boletos %}
         <tr><td>{{ x.asiento }}</td><td>{{ x.clase }}</td><td>{{ x.pasajero }}</td><td style="text-align:right">{{ x.precio.texto }}</td></tr>
       {% endfor %}
     </table>
+    {% endfor %}
     <div class="total">Total: {{ b.total.texto }}</div>
   </div>
 

@@ -436,8 +436,10 @@ final class ModificacionCompras
         if ($vigente !== null && !$vigente->isAnulada() && $this->facturador->huella($venta) !== $r["huella"]) {
             // Cambió lo que se envía al certificador: se anula la factura original y se emite otra.
             $factura = $this->gestion->reemitirVenta($venta, self::MOTIVO);
-            $registro->marcarRefacturada();
-            $this->em->flush();
+            if ($factura["error"] === null) {
+                $registro->marcarRefacturada();
+                $this->em->flush();
+            }
         }
         // Sin factura certificada (pendiente o en contingencia), la tarea de pendientes la certifica con los datos nuevos.
 

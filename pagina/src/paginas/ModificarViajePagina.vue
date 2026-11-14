@@ -95,9 +95,13 @@
         <section class="panel flex flex-col gap-3">
           <h2 class="m-0 text-lg font-semibold">{{ t('modificar.resumen') }}</h2>
           <ul class="m-0 flex list-none flex-col gap-2 p-0 text-sm">
-            <li v-for="c in cotizacion.cambios" :key="c.boleto" class="flex flex-wrap items-baseline justify-between gap-x-4">
-              <span>{{ t('modificar.lineaCambio', { de: c.desde.asiento, a: c.hacia.asiento }) }} <span class="text-muted-color">({{ c.pagado.texto }} → {{ c.nuevo.texto }})</span></span>
-              <span class="font-medium">{{ c.sinReembolso ? t('modificar.sinDevolucion') : c.diferencia.texto }}</span>
+            <li v-for="c in cotizacion.cambios" :key="c.boleto" class="flex flex-col gap-0.5">
+              <div class="flex flex-wrap items-baseline justify-between gap-x-4">
+                <span>{{ t('modificar.lineaCambio', { de: c.desde.asiento, a: c.hacia.asiento }) }} <span class="text-muted-color">({{ c.pagado.texto }} → {{ c.nuevo.texto }})</span></span>
+                <span class="font-medium">{{ c.sinReembolso ? t('modificar.sinDevolucion') : c.diferencia.texto }}</span>
+              </div>
+              <span v-if="c.sinReembolso" class="text-xs text-orange-700">{{ t('modificar.avisoMenorPrecio', { monto: c.sinReembolso.texto }) }}</span>
+              <span v-else-if="c.diferencia.centavos > 0" class="text-xs text-muted-color">{{ t('modificar.avisoMayorPrecio', { monto: c.diferencia.texto }) }}</span>
             </li>
             <li v-for="n in cotizacion.nuevos" :key="`${n.salida}-${n.asientoId}`" class="flex flex-wrap items-baseline justify-between gap-x-4">
               <span>{{ t('modificar.lineaNuevo', { numero: n.asiento }) }}</span><span class="font-medium">{{ n.precio.texto }}</span>
@@ -109,7 +113,6 @@
               <span>{{ t('modificar.total') }}</span><span>{{ cotizacion.total.texto }}</span>
             </li>
           </ul>
-          <Message v-if="cotizacion.sinReembolso.centavos > 0" severity="warn" :closable="false">{{ t('modificar.avisoSinReembolso', { monto: cotizacion.sinReembolso.texto }) }}</Message>
           <p class="m-0 text-xs text-muted-color">{{ t('modificar.avisoFactura') }}</p>
         </section>
 
@@ -127,8 +130,11 @@
             <p class="m-0 text-sm text-muted-color">{{ t('pago.direccionAyuda') }}</p>
             <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
               <label class="flex flex-col gap-1.5"><span class="text-sm font-medium">{{ t('pago.pais') }}</span><Select v-model="direccion.pais" :options="listaPaises" option-label="label" option-value="value" filter fluid /></label>
-              <label class="flex flex-col gap-1.5"><span class="text-sm font-medium">{{ usaCodigoPostal ? t('pago.regionCodigo') : t('pago.region') }}</span><InputText v-model="direccion.region" :required="usaCodigoPostal" autocomplete="address-level1" maxlength="50" fluid /></label>
-              <label class="flex flex-col gap-1.5"><span class="text-sm font-medium">{{ t('pago.ciudad') }}</span><InputText v-model="direccion.ciudad" required autocomplete="address-level2" maxlength="50" fluid /></label>
+              <!-- Departamento y ciudad de una lista, como en la compra (ADR-041); texto libre donde no hay datos. -->
+              <label v-if="regiones.length" class="flex flex-col gap-1.5"><span class="text-sm font-medium">{{ t('pago.region') }}</span><Select v-model="direccion.regionId" :options="opcionesRegion" option-label="label" option-value="value" filter :invalid="revisar && direccion.regionId === null" fluid /></label>
+              <label v-else class="flex flex-col gap-1.5"><span class="text-sm font-medium">{{ usaCodigoPostal ? t('pago.regionCodigo') : t('pago.region') }}</span><InputText v-model="direccion.region" :required="usaCodigoPostal" autocomplete="address-level1" maxlength="50" fluid /></label>
+              <label v-if="ciudades.length" class="flex flex-col gap-1.5"><span class="text-sm font-medium">{{ t('pago.ciudad') }}</span><Select v-model="direccion.ciudad" :options="ciudades" option-label="label" option-value="value" filter :invalid="revisar && !direccion.ciudad" fluid /></label>
+              <label v-else class="flex flex-col gap-1.5"><span class="text-sm font-medium">{{ t('pago.ciudad') }}</span><InputText v-model="direccion.ciudad" required autocomplete="address-level2" maxlength="50" fluid /></label>
               <label class="flex flex-col gap-1.5"><span class="text-sm font-medium">{{ t('pago.calle') }}</span><InputText v-model="direccion.direccion" required autocomplete="address-line1" maxlength="60" fluid /></label>
               <label v-if="usaCodigoPostal" class="flex flex-col gap-1.5"><span class="text-sm font-medium">{{ t('pago.codigoPostal') }}</span><InputText v-model="direccion.codigoPostal" required autocomplete="postal-code" maxlength="10" fluid /></label>
             </div>
@@ -170,7 +176,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { onBeforeRouteLeave } from 'vue-router'
 import * as api from '@/api'
@@ -179,10 +185,10 @@ import SelectorAsientoViaje from '@/componentes/modificar/SelectorAsientoViaje.v
 import { mensajeDeError } from '@/errores'
 import { REGION, type Idioma } from '@/i18n'
 import { guardarLlave, leerLlave } from '@/llave'
-import { diaISO, exigeCodigoPostal, expiraValida, fechaCorta, hora, luhn, marca, paises, quetzales } from '@/modelo'
+import { diaISO, exigeCodigoPostal, expiraValida, fechaCorta, hora, luhn, marca, paises, quetzales, regionParaBanco } from '@/modelo'
 import { pedidoDeModificacion, tomadosEnModificacion, type AsientoDestino } from '@/modificacion'
 import { cargarHuella, datosNavegador, recolectarDispositivo } from '@/tresDs'
-import type { BoletoViaje, CobroModificacion, CotizacionModificacion, PoliticaModificacion, ResultadoModificacion, ViajeComprado } from '@/tipos'
+import type { BoletoViaje, CobroModificacion, CotizacionModificacion, PoliticaModificacion, Region, ResultadoModificacion, ViajeComprado } from '@/tipos'
 
 const props = defineProps<{ viaje: number }>()
 const { t, te, locale } = useI18n()
@@ -208,11 +214,55 @@ const ocupado = computed(() => cotizando.value || confirmando.value)
 const resultado = ref<Extract<ResultadoModificacion, { estado: 'completado' }> | null>(null)
 
 const tarjeta = reactive({ titular: '', numero: '', expira: '', cvv: '' })
-const direccion = reactive({ pais: 'GT', region: '', ciudad: '', direccion: '', codigoPostal: '' })
+const direccion = reactive({ pais: 'GT', regionId: null as number | null, region: '', ciudad: '', direccion: '', codigoPostal: '' })
 const listaPaises = computed(() => paises(locale.value))
 const usaCodigoPostal = computed(() => exigeCodigoPostal(direccion.pais))
 const numeroValido = computed(() => luhn(tarjeta.numero) && marca(tarjeta.numero) !== null)
 const expiraOk = computed(() => expiraValida(tarjeta.expira))
+/** Se intentó pagar con campos sin llenar: los selects vacíos se marcan. */
+const revisar = ref(false)
+
+// Departamento → ciudad, como en la compra (ADR-041): vacías = el país o el departamento no tiene datos y se escribe a mano.
+const regiones = ref<Region[]>([])
+const ciudades = ref<Array<{ label: string; value: string }>>([])
+const opcionesRegion = computed(() => regiones.value.map((r) => ({ label: r.nombre, value: r.id })))
+let pedidoRegiones = 0
+let pedidoCiudades = 0
+
+watch(
+  () => direccion.pais,
+  async (pais) => {
+    const pedido = ++pedidoRegiones
+    regiones.value = []
+    ciudades.value = []
+    direccion.regionId = null
+    direccion.region = ''
+    direccion.ciudad = ''
+    if (!pais) return
+    const lista = await api.regiones(pais).catch(() => [])
+    if (pedido === pedidoRegiones) regiones.value = lista
+  },
+  { immediate: true },
+)
+
+watch(
+  () => direccion.regionId,
+  async (id) => {
+    const pedido = ++pedidoCiudades
+    ciudades.value = []
+    direccion.ciudad = ''
+    if (id === null) return
+    const lista = await api.ciudades(id).catch(() => [])
+    if (pedido === pedidoCiudades) ciudades.value = lista.map((c) => ({ label: c, value: c }))
+  },
+)
+
+/** Región para el banco: la de la lista (código en EE. UU. y Canadá) o la escrita a mano. */
+function regionElegida(): string | undefined {
+  const r = regiones.value.find((x) => x.id === direccion.regionId)
+  if (r) return regionParaBanco(direccion.pais, r)
+  return direccion.region.trim() || undefined
+}
 
 const restantes = (b: BoletoViaje) => Math.max(0, (politica.value?.modificacionesPorAsiento ?? 0) - b.modificaciones)
 
@@ -313,7 +363,9 @@ async function confirmar() {
   const llave = leerLlave()
   const c = cotizacion.value
   if (!llave || !viaje.value || !c) return
-  if (c.requierePago && (!numeroValido.value || !expiraOk.value || !/^\d{3,4}$/.test(tarjeta.cvv.trim()))) {
+  const faltaDireccion = (regiones.value.length > 0 && direccion.regionId === null) || !direccion.ciudad.trim()
+  if (c.requierePago && (!numeroValido.value || !expiraOk.value || !/^\d{3,4}$/.test(tarjeta.cvv.trim()) || faltaDireccion)) {
+    revisar.value = true
     error.value = t('pago.revise')
     return
   }
@@ -334,7 +386,7 @@ async function confirmar() {
         tarjeta: { ...tarjeta },
         facturacion: {
           pais: direccion.pais,
-          region: direccion.region.trim() || undefined,
+          region: regionElegida(),
           ciudad: direccion.ciudad,
           direccion: direccion.direccion,
           codigoPostal: usaCodigoPostal.value && direccion.codigoPostal ? direccion.codigoPostal : undefined,

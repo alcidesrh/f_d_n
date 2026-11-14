@@ -45,21 +45,43 @@ final class DatosBoleto
     }
 
     /**
+     * Los boletos del comprobante agrupados por viaje (salida y trayecto):
+     * una venta web modificada (ADR-059) puede tener asientos en otras
+     * salidas o rutas. Por fecha de salida; dentro, por número de asiento.
+     *
+     * @param list<BoletoAsiento> $boletos
+     *
+     * @return list<non-empty-list<BoletoAsiento>>
+     */
+    public static function viajes(array $boletos): array
+    {
+        $grupos = [];
+        foreach ($boletos as $b) {
+            $grupos[sprintf("%d-%d", $b->getSalida()->getId(), $b->getTrayecto()->getId())][] = $b;
+        }
+        $grupos = array_values($grupos);
+        usort($grupos, static fn(array $a, array $b) => [$a[0]->getSalida()->getFecha(), $a[0]->getSalida()->getId(), $a[0]->getTrayecto()->getId()]
+            <=> [$b[0]->getSalida()->getFecha(), $b[0]->getSalida()->getId(), $b[0]->getTrayecto()->getId()]);
+
+        return $grupos;
+    }
+
+    /**
+     * `salida`, `origen` y `destino` son los del primer viaje (o el único);
+     * `boletos`, todos; `viajes`, cada viaje con los suyos.
+     *
+     * @param (\Closure(BoletoAsiento): array{hora: \DateTimeImmutable, precision: PrecisionHora})|null $subida hora donde sube el pasajero de un viaje (`HorasSalida::subida`)
      * @param list<int>|null $soloIds boletos que se imprimen (por defecto, los vivos de la venta)
      *
      * @return array<string, mixed>
      */
-    /**
-     * @param array{hora: \DateTimeImmutable, precision: PrecisionHora}|null $subida hora donde sube el pasajero (`HorasSalida::subida`)
-     */
-    public static function de(BoletoVenta $venta, ?array $subida = null, ?array $soloIds = null): array
+    public static function de(BoletoVenta $venta, ?\Closure $subida = null, ?array $soloIds = null): array
     {
         $boletos = self::boletos($venta, $soloIds);
         $todos = $venta->getAsientos()->count();
-        $primero = $boletos[0] ?? null;
-        $salida = $primero?->getSalida();
-        $trayecto = $primero?->getTrayecto();
-        $empresa = $salida?->getEmpresa();
+        $viajes = array_map(static fn(array $grupo) => self::viaje($grupo, $subida), self::viajes($boletos));
+        $primero = $viajes[0] ?? null;
+        $empresa = ($boletos[0] ?? null)?->getSalida()->getEmpresa();
         $factura = $venta->getFactura();
         $cliente = $venta->getCliente();
         /** @var list<Encomienda> $encomiendas */
@@ -106,34 +128,11 @@ final class DatosBoleto
                 "nit" => $cliente->getNit() ?: "CF",
                 "email" => $cliente->getEmail(),
             ],
-            "salida" => $salida === null ? null : [
-                "id" => $salida->getId(),
-                // Salida del inicio de la ruta y hora donde sube el pasajero, con su
-                // precisión (`estimada` se imprime "aprox."; `desconocida` es la del
-                // origen del bus y se imprime como tal, ADR-030).
-                "salida" => $salida->getFecha()->format(DATE_ATOM),
-                "salidaOrigen" => ($subida["hora"] ?? \DateTimeImmutable::createFromMutable($salida->getFecha()))->format(DATE_ATOM),
-                "salidaPrecision" => ($subida["precision"] ?? PrecisionHora::EXACTA)->value,
-                "rutaOrigen" => $salida->getRuta()?->getOrigen()?->getNombre(),
-                "bus" => $salida->getBus()?->getCodigo(),
-            ],
-            "origen" => $trayecto === null ? null : [
-                "nombre" => $trayecto->getOrigen()->getNombre(),
-                "direccion" => $trayecto->getOrigen()->getDireccion(),
-            ],
-            "destino" => $trayecto === null ? null : [
-                "nombre" => $trayecto->getDestino()->getNombre(),
-                "direccion" => $trayecto->getDestino()->getDireccion(),
-            ],
-            "boletos" => array_map(static fn(BoletoAsiento $b) => [
-                "id" => $b->getId(),
-                "asiento" => $b->getAsiento()->getNumero(),
-                "clase" => $b->getAsiento()->getClase()->value,
-                "pasajero" => $b->getCliente()?->getNombreCompleto(),
-                "precio" => self::importe($b->getPrecio()),
-                "observacion" => $b->getObservacion(),
-                "estado" => $b->getEstado()->value,
-            ], $boletos),
+            "salida" => $primero["salida"] ?? null,
+            "origen" => $primero["origen"] ?? null,
+            "destino" => $primero["destino"] ?? null,
+            "boletos" => array_map(self::boleto(...), $boletos),
+            "viajes" => $viajes,
             // Encomiendas que lleva el pasajero (ADR-035): van en el ticket de la venta y cada bulto con su guía.
             "encomiendas" => array_map(static fn(Encomienda $e) => DatosEncomienda::de($e), $encomiendas),
             // La penalización por modificar la compra (web) va en el comprobante de la venta, no en el de un boleto suelto.
@@ -142,6 +141,58 @@ final class DatosBoleto
                 ? $venta->getTotal()
                 : self::suma($boletos, $venta->getTotal(), $encomiendas)->add($soloIds === null ? $venta->getCargoModificacion() : new Money(0, $venta->getTotal()->getCurrency()))),
             "tipoPago" => $venta->getTipoPago()?->getNombre(),
+        ];
+    }
+
+    /**
+     * Un viaje del comprobante: la salida, de dónde a dónde y sus boletos.
+     *
+     * @param non-empty-list<BoletoAsiento> $boletos de la misma salida y trayecto
+     * @param (\Closure(BoletoAsiento): array{hora: \DateTimeImmutable, precision: PrecisionHora})|null $subida
+     *
+     * @return array{salida: array<string, mixed>, origen: array<string, ?string>, destino: array<string, ?string>, boletos: list<array<string, mixed>>}
+     */
+    private static function viaje(array $boletos, ?\Closure $subida): array
+    {
+        $salida = $boletos[0]->getSalida();
+        $trayecto = $boletos[0]->getTrayecto();
+        $hora = $subida === null ? null : $subida($boletos[0]);
+
+        return [
+            "salida" => [
+                "id" => $salida->getId(),
+                // Salida del inicio de la ruta y hora donde sube el pasajero, con su
+                // precisión (`estimada` se imprime "aprox."; `desconocida` es la del
+                // origen del bus y se imprime como tal, ADR-030).
+                "salida" => $salida->getFecha()->format(DATE_ATOM),
+                "salidaOrigen" => ($hora["hora"] ?? \DateTimeImmutable::createFromMutable($salida->getFecha()))->format(DATE_ATOM),
+                "salidaPrecision" => ($hora["precision"] ?? PrecisionHora::EXACTA)->value,
+                "rutaOrigen" => $salida->getRuta()?->getOrigen()?->getNombre(),
+                "bus" => $salida->getBus()?->getCodigo(),
+            ],
+            "origen" => [
+                "nombre" => $trayecto->getOrigen()->getNombre(),
+                "direccion" => $trayecto->getOrigen()->getDireccion(),
+            ],
+            "destino" => [
+                "nombre" => $trayecto->getDestino()->getNombre(),
+                "direccion" => $trayecto->getDestino()->getDireccion(),
+            ],
+            "boletos" => array_map(self::boleto(...), $boletos),
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private static function boleto(BoletoAsiento $b): array
+    {
+        return [
+            "id" => $b->getId(),
+            "asiento" => $b->getAsiento()->getNumero(),
+            "clase" => $b->getAsiento()->getClase()->value,
+            "pasajero" => $b->getCliente()?->getNombreCompleto(),
+            "precio" => self::importe($b->getPrecio()),
+            "observacion" => $b->getObservacion(),
+            "estado" => $b->getEstado()->value,
         ];
     }
 

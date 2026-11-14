@@ -4,9 +4,12 @@
 {% for v in [b]|merge(otros ?? []) %}
 {% if otros ?? [] is not empty %}<p><strong>{{ loop.first ? 'Ida' : 'Regreso' }}{% if not loop.first and v.factura %} · DTE {{ v.factura.numero }}, serie {{ v.factura.serie }}{% endif %}</strong></p>{% endif %}
 <ul>
-  <li><strong>Salida:</strong> {% include 'venta/_hora_salida.html.twig' with { s: v.salida } %}</li>
-  <li><strong>De:</strong> {{ v.origen.nombre }} <strong>a</strong> {{ v.destino.nombre }}</li>
-  <li><strong>Asiento(s):</strong> {{ v.boletos|map(x => x.asiento)|join(', ') }}</li>
+  {#- Una compra modificada puede tener asientos en otras salidas: cada viaje con los suyos. -#}
+  {% for x in v.viajes %}
+  <li><strong>Salida:</strong> {% include 'venta/_hora_salida.html.twig' with { s: x.salida } %}</li>
+  <li><strong>De:</strong> {{ x.origen.nombre }} <strong>a</strong> {{ x.destino.nombre }}</li>
+  <li><strong>Asiento(s):</strong> {{ x.boletos|map(y => y.asiento)|join(', ') }}</li>
+  {% endfor %}
   <li><strong>Total:</strong> {{ v.total.texto }}</li>
 </ul>
 {% endfor %}

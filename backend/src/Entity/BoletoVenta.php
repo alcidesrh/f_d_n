@@ -162,6 +162,16 @@ class BoletoVenta extends Base
     private int $cargoModificacion = 0;
 
     /**
+     * Facturas de la venta que se anularon en el certificador. Cada factura
+     * lleva un código interno distinto (el certificador rechaza uno ya
+     * usado, ESW-025): la primera `FDN-VENTA-{id}`, las siguientes con
+     * `-R{n}` (`Facturador::referencia`).
+     */
+    #[ApiProperty(readable: false, writable: false)]
+    #[ORM\Column(options: ["default" => 0])]
+    private int $facturasAnuladas = 0;
+
+    /**
      * Identificador público de la venta (web): con él el cliente descarga su
      * boleto sin iniciar sesión. Es el token del carrito de reservas.
      */
@@ -505,6 +515,19 @@ class BoletoVenta extends Base
         }
         $this->cargoModificacion += (int) $cargo->getAmount();
         $this->setTotal($this->getTotal()->add($cargo));
+
+        return $this;
+    }
+
+    public function getFacturasAnuladas(): int
+    {
+        return $this->facturasAnuladas;
+    }
+
+    /** La factura vigente se anuló: su código interno ya no se puede usar. */
+    public function contarFacturaAnulada(): static
+    {
+        $this->facturasAnuladas++;
 
         return $this;
     }

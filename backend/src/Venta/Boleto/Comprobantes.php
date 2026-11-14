@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace App\Venta\Boleto;
 
+use App\Entity\BoletoAsiento;
 use App\Entity\BoletoVenta;
 use App\Venta\HorasSalida;
 
 /**
  * `DatosBoleto` con la hora de salida estimada en la parada donde sube el
- * pasajero (`salida.salidaOrigen`).
+ * pasajero (`salida.salidaOrigen`), en cada viaje del comprobante.
  */
 final class Comprobantes
 {
@@ -24,11 +25,10 @@ final class Comprobantes
      */
     public function de(BoletoVenta $venta, ?array $soloIds = null): array
     {
-        $boleto = DatosBoleto::boletos($venta, $soloIds)[0] ?? null;
-        $subida = $boleto === null
-            ? null
-            : $this->horas->subida($boleto->getSalida(), (int) $boleto->getTrayecto()->getOrigen()->getId());
-
-        return DatosBoleto::de($venta, $subida, $soloIds);
+        return DatosBoleto::de(
+            $venta,
+            fn(BoletoAsiento $b) => $this->horas->subida($b->getSalida(), (int) $b->getTrayecto()->getOrigen()->getId()),
+            $soloIds,
+        );
     }
 }

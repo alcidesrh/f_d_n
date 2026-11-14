@@ -85,13 +85,36 @@ final class Facturador
     /**
      * Anula la factura certificada de la venta en el certificador y la marca
      * anulada (sin hacer flush). Si ya estaba anulada no vuelve a llamarlo:
-     * sirve para reintentar una anulación que se quedó a medias.
+     * sirve para reintentar una anulación que se quedó a medias. La venta
+     * cuenta la anulación: su próxima factura lleva otro código interno.
      *
      * @throws CertificacionFallida si el certificador no la anuló
      */
     public function anular(BoletoVenta $venta, string $motivo): ?Factura
     {
-        return $this->anularFactura($venta->getFactura(), $motivo);
+        $factura = $venta->getFactura();
+        if ($factura === null || $factura->isAnulada()) {
+            return $factura;
+        }
+        $this->anularFactura($factura, $motivo);
+        $venta->contarFacturaAnulada();
+
+        return $factura;
+    }
+
+    /**
+     * Código interno de la próxima factura de la venta: `FDN-VENTA-{id}` y,
+     * tras anular `n` facturas, `FDN-VENTA-{id}-R{n}`. El certificador
+     * rechaza un código ya certificado (ESW-025): un reintento de la misma
+     * factura no la duplica, y la de una reemisión no choca con la anulada.
+     */
+    public static function referencia(BoletoVenta $venta): string
+    {
+        $anuladas = $venta->getFacturasAnuladas();
+
+        return $anuladas === 0
+            ? sprintf("FDN-VENTA-%d", $venta->getId())
+            : sprintf("FDN-VENTA-%d-R%d", $venta->getId(), $anuladas);
     }
 
     /**
@@ -177,11 +200,13 @@ final class Facturador
         $cliente = $venta->getCliente();
         $nit = self::normalizarNit($cliente?->getNit());
 
-        // En contingencia el documento se emitió al vender (con su número de acceso); una reemisión es un documento nuevo.
+        // En contingencia el documento se emitió al vender (con su número de acceso); una reemisión es un documento nuevo,
+        // también la que reintenta la tarea de pendientes cuando la anterior se anuló y la nueva no salió.
+        $reemision = $reemision || $venta->getFacturasAnuladas() > 0;
         $contingencia = !$reemision && $venta->getNumeroAcceso() !== null && $venta->getCreada() !== null;
 
         return new SolicitudDte(
-            referenciaInterna: sprintf("FDN-VENTA-%d", $venta->getId()),
+            referenciaInterna: self::referencia($venta),
             fechaEmision: $contingencia
                 ? \DateTimeImmutable::createFromMutable($venta->getCreada())
                 : $this->reloj->now(),
