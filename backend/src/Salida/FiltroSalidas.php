@@ -17,6 +17,8 @@ final class FiltroSalidas
     public const PROXIMAS = "proximas";
     public const FECHA = "fecha";
     public const POR_PAGINA = [10, 25, 50, 100];
+    /** A lo sumo tantos días con `hora`: más que eso, la hora se ignora. */
+    public const MAX_DIAS_HORA = 62;
 
     /**
      * @param list<EstadoSalida> $estados vacío = todos
@@ -31,6 +33,8 @@ final class FiltroSalidas
         public readonly ?\DateTimeImmutable $desde = null,
         /** inclusive: a las 00:00, todo el día; con hora, hasta ese minuto */
         public readonly ?\DateTimeImmutable $hasta = null,
+        /** `HH:MM`: solo las salidas a esa hora exacta, en cada día de `desde`–`hasta` */
+        public readonly ?string $hora = null,
         public readonly string $orden = self::PROXIMAS,
         public readonly string $direccion = "asc",
         public readonly int $pagina = 1,
@@ -46,7 +50,7 @@ final class FiltroSalidas
     /**
      * `estado` (lista separada por comas; vacío = todos; ausente = por defecto),
      * `empresa`, `ruta`, `origen`, `destino` (puntas de la ruta), `bus`, `desde`/`hasta`
-     * (AAAA-MM-DD o AAAA-MM-DDTHH:MM), `orden` (proximas|fecha), `direccion`, `pagina`, `porPagina`.
+     * (AAAA-MM-DD o AAAA-MM-DDTHH:MM), `hora` (HH:MM), `orden` (proximas|fecha), `direccion`, `pagina`, `porPagina`.
      * Los valores inválidos se ignoran.
      *
      * @param array<string, mixed> $q
@@ -71,6 +75,7 @@ final class FiltroSalidas
             bus: self::id($q["bus"] ?? null),
             desde: self::dia($q["desde"] ?? null),
             hasta: self::dia($q["hasta"] ?? null),
+            hora: is_string($q["hora"] ?? null) && preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $q["hora"]) === 1 ? $q["hora"] : null,
             orden: ($q["orden"] ?? null) === self::FECHA ? self::FECHA : self::PROXIMAS,
             direccion: ($q["direccion"] ?? null) === "desc" ? "desc" : "asc",
             pagina: max(1, (int) ($q["pagina"] ?? 1)),
@@ -82,6 +87,31 @@ final class FiltroSalidas
     public function finExclusivo(): ?\DateTimeImmutable
     {
         return $this->hasta?->modify($this->hasta->format("H:i") === "00:00" ? "+1 day" : "+1 minute");
+    }
+
+    /**
+     * Con `hora`, `desde` y `hasta`: el minuto de esa hora en cada día del rango,
+     * como [inicio, fin exclusivo). Sin alguno de los tres (o con un rango de
+     * más de `MAX_DIAS_HORA` días), ninguno: la hora no filtra.
+     *
+     * @return list<array{\DateTimeImmutable, \DateTimeImmutable}>
+     */
+    public function franjasDeHora(): array
+    {
+        if ($this->hora === null || $this->desde === null || $this->hasta === null) {
+            return [];
+        }
+        [$h, $m] = array_map(intval(...), explode(":", $this->hora));
+        $dia = $this->desde->setTime(0, 0);
+        $ultimo = $this->hasta->setTime(0, 0);
+        $franjas = [];
+        while ($dia <= $ultimo && count($franjas) < self::MAX_DIAS_HORA) {
+            $inicio = $dia->setTime($h, $m);
+            $franjas[] = [$inicio, $inicio->modify("+1 minute")];
+            $dia = $dia->modify("+1 day");
+        }
+
+        return $dia <= $ultimo ? [] : $franjas;
     }
 
     private static function id(mixed $v): ?int

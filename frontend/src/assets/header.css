@@ -11,7 +11,7 @@
   right: 0;
   height: var(--header-h);
   z-index: 50;
-  background: var(--bg2);
+  background: var(--bg3);
   display: flex;
   align-items: center;
   gap: 0.25rem;

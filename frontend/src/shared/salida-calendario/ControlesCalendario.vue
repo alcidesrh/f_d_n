@@ -5,6 +5,8 @@
   las salidas a esa hora, en todos los días), ocupación en asientos o en
   porciento, la empresa y la selección de salidas para eliminarlas («Todas»
   marca las que cumplen el filtro y la ruta fijada en la leyenda).
+  `ocupacion` y `seleccion` muestran esos controles (solo tienen sentido con
+  la grilla a la vista); el slot va al final de la fila, a la derecha.
 -->
 <template>
   <section class="controles" aria-label="Controles del calendario">
@@ -30,7 +32,7 @@
         <template #dropdownicon><icon name="schedule-outline" /></template>
       </Select>
 
-      <label class="flex items-center gap-2 text-sm">
+      <label v-if="ocupacion" class="flex items-center gap-2 text-sm">
         <ToggleSwitch v-model="porciento" input-id="cal-porciento" />
         <span>En porciento</span>
       </label>
@@ -46,6 +48,8 @@
           <template #icon><icon name="delete-outline" class="mr-1" /></template>
         </Button>
       </div>
+
+      <div v-if="$slots.default" class="controles__extra"><slot /></div>
     </div>
 
     <div v-if="(store.opciones?.empresas.length ?? 0) > 1" class="flex flex-wrap items-center gap-1.5" role="group" aria-label="Empresas">
@@ -62,6 +66,7 @@ import { horaMinuto, tonoEmpresa } from "@/core/salida/calendario";
 import { aDia, deDia } from "@/core/salida/filtro";
 import { useCalendarioSalidasStore } from "./store";
 
+const props = withDefaults(defineProps<{ ocupacion?: boolean; seleccion?: boolean }>(), { ocupacion: true, seleccion: false });
 const emit = defineEmits<{ hoy: []; eliminar: [] }>();
 
 const OPCIONES_DIAS = [
@@ -87,7 +92,7 @@ const ayudaTodas = computed(() => {
 });
 const etiquetaDias = computed(() => OPCIONES_DIAS.find((o) => o.v === store.dias)?.l ?? `${store.dias} días`);
 const porciento = computed({ get: () => store.modo === "porciento", set: (v: boolean) => (store.modo = v ? "porciento" : "asientos") });
-const puedeEliminar = computed(() => !!store.opciones?.puede.eliminar);
+const puedeEliminar = computed(() => props.seleccion && !!store.opciones?.puede.eliminar);
 </script>
 
 <style scoped>
@@ -108,6 +113,17 @@ const puedeEliminar = computed(() => !!store.opciones?.puede.eliminar);
   align-items: center;
   gap: 0.35rem;
   margin-left: auto;
+}
+.controles__extra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+/* Con la selección a la vista, ella empuja a la derecha; lo extra la sigue. */
+.controles__seleccion + .controles__extra {
+  margin-left: 0;
 }
 .estado {
   display: inline-flex;

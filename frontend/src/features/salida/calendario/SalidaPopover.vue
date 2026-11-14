@@ -86,7 +86,7 @@ import { aDia } from '@/core/salida/filtro'
 import { fetchDetalle } from '@/core/salida/api'
 import { etiquetaEstado } from '@/core/salida/filtro'
 import type { ResumenSalida, SalidaCalendario } from '@/core/salida/types'
-import { useCalendarioSalidasStore } from './store'
+import { useCalendarioSalidasStore } from '@/shared/salida-calendario/store'
 
 const emit = defineEmits<{
   /** Ver el croquis con la ocupación (el diálogo «Ver» de las salidas). */

@@ -348,9 +348,10 @@ export const router = createRouter({
       },
     },
     {
+      // El calendario es una vista de «Salidas»: esta ruta queda para los menús y enlaces que la nombran.
       path: "/salidas/calendario",
       name: "salidas-calendario",
-      component: () => import("@/features/salida/CalendarioPage.vue"),
+      redirect: (to) => ({ name: "salidas", query: { ...to.query, vista: "calendario" } }),
       meta: {
         capacidad: "salida.ver",
         title: "Calendario de salidas",

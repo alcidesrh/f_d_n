@@ -199,7 +199,7 @@ const toggle = (id: number) => props.sidebar.toggleItem(id);
   /*background-color: var(--bg2);*/
 
   & > * {
-    background-color: var(--bg2);
+    background-color: var(--bg3);
   }
 }
 .nav-tree--nested {

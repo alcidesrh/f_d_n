@@ -17,19 +17,20 @@ export const guiasBoletos: Guia[] = [
     id: 'buscar-boletos',
     tema: 'boletos',
     titulo: 'Buscar boletos',
-    resumen: 'El listado de todos los boletos, con filtros y las acciones sobre el elegido.',
+    resumen: 'El listado de los boletos, filtrado desde el calendario de salidas, con las acciones sobre el elegido.',
     para: [BOLETOS],
     antes:
       'Era la pantalla «Boletos» del sistema anterior: mismos filtros, ahora con las acciones junto a la lista.',
     pasos: [
       'Abra «Boletos» en el menú.',
-      'Filtre por rango de fechas (de la salida o de la venta), estado, cliente, documento o salida. Por defecto muestra 30 días antes y después de hoy; el rango máximo es de 6 meses.',
+      'Arriba está el calendario de salidas: elija la fecha y los días, y pulse una salida para ver solo sus boletos (vuelva a pulsarla, o la ✕ del aviso, para soltarla). Sin salida elegida muestra los de 30 días antes y después de hoy.',
+      'Filtre además por empresa (debajo de los controles del calendario), por el id del boleto o por la clase de asiento (A o B). El id busca en cualquier fecha.',
       'Elija un boleto de la lista. El panel de acciones se activa con el boleto elegido: Consultar, Cancelar, Revertir, Anular, Chequear, Reasignar, Correo, Imp. factura, Bitácora y Chat.',
       'Las columnas se ocultan o reordenan desde «Columnas»; el sistema recuerda su elección.',
     ],
     ojo: [
       'Cada boleto solo ofrece las acciones que puede hacer en ese momento; si una falta, la fila dice por qué.',
-      'Las listas son paginadas: si busca un boleto antiguo, cambie el rango antes de buscar.',
+      'Las listas son paginadas: si busca un boleto antiguo, búsquelo por su id o por su salida en el calendario.',
     ],
     abrir: { etiqueta: 'Abrir Boletos', destino: { name: 'boletos' } },
     pantallas: ['boletos'],

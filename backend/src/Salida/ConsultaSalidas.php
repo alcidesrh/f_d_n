@@ -178,6 +178,16 @@ final class ConsultaSalidas
         if ($f->hasta !== null) {
             $qb->andWhere("s.fecha < :hasta")->setParameter("hasta", $f->finExclusivo());
         }
+        // Una hora exacta: ese minuto en cada día del rango.
+        $franjas = $f->franjasDeHora();
+        if ($franjas !== []) {
+            $o = $qb->expr()->orX();
+            foreach ($franjas as $i => [$inicio, $fin]) {
+                $o->add("s.fecha >= :horaDesde{$i} AND s.fecha < :horaHasta{$i}");
+                $qb->setParameter("horaDesde{$i}", $inicio)->setParameter("horaHasta{$i}", $fin);
+            }
+            $qb->andWhere($o);
+        }
 
         return $qb;
     }

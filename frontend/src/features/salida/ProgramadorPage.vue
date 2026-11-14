@@ -14,7 +14,7 @@
 <template>
   <div class="@container flex flex-col gap-4">
     <nav class="flex flex-wrap justify-end gap-1" aria-label="Otras vistas de salidas">
-      <RouterLink :to="{ name: 'salidas-calendario' }" class="no-underline">
+      <RouterLink :to="{ name: 'salidas', query: { vista: 'calendario' } }" class="no-underline">
         <Button label="Calendario" severity="secondary" text size="small">
           <template #icon><icon name="calendar-view-week" class="mr-1" /></template>
         </Button>

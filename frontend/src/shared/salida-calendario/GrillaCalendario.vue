@@ -151,7 +151,8 @@ defineExpose({ centrar });
   display: grid;
   grid-template-columns: var(--dia) repeat(24, minmax(var(--col), 1fr));
   grid-auto-rows: max-content;
-  max-height: clamp(16rem, calc(100dvh - var(--cal-arriba, 16rem) - 1rem), 200rem);
+  /* El resto del alto de la ventana; `--cal-max` lo acota (cuando hay algo debajo). */
+  max-height: min(var(--cal-max, 200rem), clamp(16rem, calc(100dvh - var(--cal-arriba, 16rem) - 1rem), 200rem));
   overflow: auto;
   overscroll-behavior: contain;
   border: 1px solid var(--linea);

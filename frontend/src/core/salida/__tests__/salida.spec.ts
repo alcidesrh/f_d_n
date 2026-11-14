@@ -135,6 +135,12 @@ describe('filtro de salidas', () => {
     expect(filtrosActivos(f)).toBe(2)
   })
 
+  it('la hora exacta va con el rango de días', () => {
+    const q = new URLSearchParams(aQuery({ ...filtroInicial(), desde: '2026-11-14', hasta: '2026-11-20', hora: '06:30' }))
+    expect(q.get('hora')).toBe('06:30')
+    expect(new URLSearchParams(aQuery(filtroInicial())).has('hora')).toBe(false)
+  })
+
   it('fecha y hora local para la edición', () => {
     expect(aFechaHora(new Date(2026, 11, 20, 9, 5))).toBe('2026-12-20T09:05')
   })

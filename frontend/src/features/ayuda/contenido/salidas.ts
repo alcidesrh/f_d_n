@@ -14,17 +14,18 @@ export const guiasSalidas: Guia[] = [
     id: 'listado-de-salidas',
     tema: 'salidas',
     titulo: 'Buscar y revisar salidas',
-    resumen: 'Las próximas primero, con filtros y las acciones de cada una.',
+    resumen: 'Las del día (o de los días elegidos) en lista o en calendario, con las acciones de cada una.',
     para: [SALIDAS],
     antes:
       'Era la pantalla «Salidas» del sistema anterior: el mismo criterio, con las acciones en la fila.',
     pasos: [
-      'Abra «Salidas» en el menú. Aparecen primero las próximas.',
-      'Filtre por rango de fechas, ruta, bus, empresa o palabras del origen o el destino.',
+      'Abra «Salidas» en el menú. Aparecen las de hoy, de la más temprana a la más tardía (sin las anuladas).',
+      'Filtre con los controles de arriba: la fecha, cuántos días (1, 7, 15 o 30), una hora exacta y la empresa. Para una sola ruta, púlsela en la leyenda (otra vez para soltarla).',
+      'Con el interruptor «Lista / Calendario» pasa de la lista al calendario con los mismos filtros.',
       'Pulse «Ver» en una fila para el detalle: boletos vendidos, horario de cada parada y ocupación.',
       'Desde la fila: «Manifiestos», «Reportar por chat», «Ver croquis» y, si tiene el permiso, «Editar», «Anular», «Eliminar» y «Bitácora».',
     ],
-    ojo: ['Desde «Otras vistas de salidas» pasa al calendario o al programador.'],
+    ojo: ['«Programar salidas», arriba a la derecha, abre el programador.'],
     abrir: { etiqueta: 'Abrir Salidas', destino: { name: 'salidas' } },
     pantallas: ['salidas'],
     palabras: ['buscar salida', 'lista de viajes', 'proximas salidas', 'horario'],
@@ -114,7 +115,7 @@ export const guiasSalidas: Guia[] = [
     resumen: 'Un día por fila y las horas en columnas: la operación del día (o de varios) de un vistazo.',
     para: [SALIDAS],
     pasos: [
-      'Abra «Calendario» desde «Salidas» o desde el menú.',
+      'En «Salidas», pulse «Calendario» en el interruptor «Lista / Calendario» de arriba a la derecha (o ábralo desde el menú). Los mismos controles filtran la lista: fecha, días, hora, empresa y la ruta fijada en la leyenda.',
       'Cada día es una fila y las horas van en columnas. Al entrar se ve solo hoy, con la hora actual a la vista.',
       'Elija la fecha de arriba; el botón de al lado vuelve a hoy. En el menú elija cuántos días ver (1, 7, 15 o 30): con - y + pasa a los días anteriores o siguientes.',
       'Para ver solo una hora (por ejemplo 06:30) elíjala en «Todas las horas»: quedan solo las salidas a esa hora, en todos los días.',
@@ -126,8 +127,8 @@ export const guiasSalidas: Guia[] = [
     ojo: [
       'El calendario se actualiza solo cada minuto, así que un cambio hecho por otra persona aparece en un minuto como máximo.',
     ],
-    abrir: { etiqueta: 'Abrir Calendario', destino: { name: 'salidas-calendario' } },
-    pantallas: ['salidas-calendario'],
+    abrir: { etiqueta: 'Abrir Calendario', destino: { name: 'salidas', query: { vista: 'calendario' } } },
+    pantallas: ['salidas'],
     palabras: ['semana', 'dia', 'hora', 'ocupacion', 'planificar'],
   },
   {

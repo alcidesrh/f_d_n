@@ -1,72 +1,37 @@
 <!--
-  Salidas (ADR-024): por defecto sin finalizadas ni anuladas, primero las
-  que están en ruta, luego las que abordan y después las programadas de la
-  más próxima a la más lejana. Filtros por estado (con conteo), fechas,
-  empresa, ruta y bus. Por fila: editar, anular (queda como cancelada)
-  y eliminar, con la opción de propagarlo a las futuras idénticas. Ver abre el
-  croquis con la ocupación y el resumen de venta; el menú PDF genera el
-  manifiesto interno y el del piloto.
+  Salidas (ADR-024): arriba, los controles del calendario (fecha, días, hora,
+  empresa y la ruta fijada en la leyenda) filtran las salidas, que se ven en
+  lista o en el calendario (un día por fila, las horas en columnas) según el
+  interruptor «Lista / Calendario» (recordado por usuario; `?vista=` lo
+  fuerza). En la lista, de la más temprana a la más tardía, sin anuladas; por
+  fila: editar, anular (queda como cancelada) y eliminar, con la opción de
+  propagarlo a las futuras idénticas. Ver abre el croquis con la ocupación y
+  el resumen de venta; el menú PDF genera el manifiesto interno y el del
+  piloto. En el calendario, pulsar una salida abre su detalle y «Seleccionar»
+  marca varias para eliminarlas juntas.
   Contenido angosto: tarjetas; desde 56rem de ancho del contenido: tabla.
 -->
 <template>
-  <div class="@container relative flex flex-col gap-4">
-    <!-- Contenido angosto: en su propia fila (flotando taparía los chips de estado). -->
-    <div class="flex flex-wrap justify-end gap-2 @3xl:absolute @3xl:right-0">
-      <RouterLink :to="{ name: 'salidas-calendario' }" class="no-underline">
-        <Button label="Calendario" size="small" severity="secondary" outlined
-          ><template #icon><icon name="calendar-view-week" class="mr-1" /></template
-        ></Button>
-      </RouterLink>
-      <RouterLink v-if="opciones?.puede.crear" :to="{ name: 'salidas-programar' }" class="no-underline">
+  <div class="@container flex flex-col gap-3">
+    <nav v-if="opciones?.puede.crear" class="flex flex-wrap justify-end gap-1" aria-label="Otras vistas de salidas">
+      <RouterLink :to="{ name: 'salidas-programar' }" class="no-underline">
         <Button label="Programar salidas" size="small"
           ><template #icon><icon name="calendar-add-on-outline" class="mr-1" /></template
         ></Button>
       </RouterLink>
-    </div>
+    </nav>
 
-    <section class="flex flex-col gap-3">
-      <div class="flex flex-wrap items-center gap-2">
-        <span class="text-xs font-medium text-muted-color">Estado:</span>
-        <button v-for="e in ESTADOS" :key="e.valor" type="button" class="rounded-full border px-2.5 py-1 text-xs pointer-coarse:py-2 font-medium" :class="filtro.estados.includes(e.valor) ? 'border-primary bg-primary text-primary-contrast' : 'border-surface-300 bg-transparent text-color'" :aria-pressed="filtro.estados.includes(e.valor)" @click="alternarEstado(e.valor)">
-          {{ e.etiqueta }}<span v-if="datos?.porEstado[e.valor]" class="ml-1 opacity-75">{{ datos.porEstado[e.valor] }}</span>
+    <CalendarioSalidas :grilla="vista === 'calendario'" seleccion :activa="activa?.id ?? null" @abrir="abrirDetalle" @eliminar="confirmarEliminar">
+      <!-- Presentación de las salidas: lista o calendario. -->
+      <div class="vista" role="group" aria-label="Presentación de las salidas">
+        <button v-for="v in VISTAS" :key="v.valor" type="button" class="vista__boton" :class="{ 'vista__boton--activa': vista === v.valor }" :aria-pressed="vista === v.valor" :title="v.titulo" @click="elegirVista(v.valor)">
+          <icon :name="v.icono" size="1.1rem" />
+          <span class="hidden @md:inline">{{ v.etiqueta }}</span>
         </button>
       </div>
-      <div class="grid grid-cols-2 gap-3 @3xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1.4fr)_auto] @3xl:items-end">
-        <div class="relative col-span-2 flex flex-col gap-1 @3xl:col-span-1">
-          <span class="text-xs font-medium text-muted-color">{{ porRango ? "Rango de salida" : "Fecha de salida" }}</span>
-          <DatePicker v-if="!porRango" ref="selector" v-model="borradorDia" :manual-input="false" date-format="dd/mm/yy" show-time hour-format="24" :step-minute="5" show-icon fluid placeholder="Todas" @hide="descartar">
-            <template #footer>
-              <div class="flex gap-2">
-                <Button label="Quitar" size="small" severity="secondary" text class="flex-1" @click="quitarFecha" />
-                <Button label="Aplicar" size="small" class="flex-1" :disabled="!borradorDia" @click="aplicarDia" />
-              </div>
-            </template>
-          </DatePicker>
-          <DatePicker v-else ref="selector" v-model="borrador" selection-mode="range" :manual-input="false" date-format="dd/mm/yy" show-time hour-format="24" :step-minute="5" show-icon fluid placeholder="Desde – Hasta" @hide="descartar">
-            <template #footer>
-              <div class="flex gap-2">
-                <Button label="Quitar" size="small" severity="secondary" text class="flex-1" @click="quitarFecha" />
-                <Button label="Aplicar" size="small" class="flex-1" :disabled="!borrador?.[0]" @click="aplicarRango" />
-              </div>
-            </template>
-          </DatePicker>
-          <label class="absolute right-0 top-0 flex cursor-pointer items-center gap-1 text-[0.75rem] leading-none text-muted-color">
-            <ToggleSwitch v-model="porRango" class="scale-[0.8] origin-right" @update:model-value="alCambiarModo" />
-            Rango
-          </label>
-        </div>
-        <label class="col-span-2 flex flex-col gap-1 @3xl:col-span-1">
-          <span class="text-xs font-medium text-muted-color">Ruta</span>
-          <RutaSelect v-model="filtro.ruta" show-clear placeholder="Todas" />
-        </label>
-        <Button severity="secondary" outlined class="col-span-2 @3xl:col-span-1" @click="masFiltros = true">
-          <icon name="filter-alt-outline" class="mr-1" />Más filtros
-          <Badge v-if="otrosActivos" :value="otrosActivos" class="ml-1.5" />
-        </Button>
-      </div>
-      <div v-if="estaModificado" class="flex justify-end"><Button label="Limpiar filtros" size="small" text @click="limpiar" /></div>
-    </section>
+    </CalendarioSalidas>
 
+    <template v-if="vista === 'lista'">
     <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
 
     <!-- Angosto: tarjetas -->
@@ -102,7 +67,7 @@
 
     <!-- Ancho: tabla -->
     <div class="hidden @4xl:block">
-      <DataTable :value="datos?.items ?? []" data-key="id" lazy paginator :rows="filtro.porPagina" :first="(filtro.pagina - 1) * filtro.porPagina" :total-records="datos?.total ?? 0" :rows-per-page-options="[25, 50, 100]" size="small" striped-rows @page="alPaginar">
+      <DataTable :value="datos?.items ?? []" data-key="id" lazy paginator :rows="porPagina" :first="(pagina - 1) * porPagina" :total-records="datos?.total ?? 0" :rows-per-page-options="[25, 50, 100]" size="small" striped-rows @page="alPaginar">
         <template #empty><p class="m-0 py-6 text-center text-sm text-muted-color">No hay salidas con estos filtros.</p></template>
         <Column header="Salida">
           <template #body="{ data }">
@@ -155,22 +120,9 @@
       </DataTable>
     </div>
 
-    <Paginator v-if="datos && datos.total > filtro.porPagina" class="@4xl:hidden" :rows="filtro.porPagina" :first="(filtro.pagina - 1) * filtro.porPagina" :total-records="datos.total" template="PrevPageLink CurrentPageReport NextPageLink" current-page-report-template="{currentPage} / {totalPages}" @page="alPaginar" />
+    <Paginator v-if="datos && datos.total > porPagina" class="@4xl:hidden" :rows="porPagina" :first="(pagina - 1) * porPagina" :total-records="datos.total" template="PrevPageLink CurrentPageReport NextPageLink" current-page-report-template="{currentPage} / {totalPages}" @page="alPaginar" />
+    </template>
 
-    <Drawer v-model:visible="masFiltros" position="right" header="Más filtros" class="!w-[min(26rem,100vw)]">
-      <div class="flex flex-col gap-4">
-        <label class="flex flex-col gap-1"><span class="text-xs font-medium">Empresa</span><Select v-model="filtro.empresa" :options="opciones?.empresas ?? []" option-label="nombre" option-value="id" show-clear filter fluid placeholder="Todas" /></label>
-        <label class="flex flex-col gap-1"><span class="text-xs font-medium">Bus</span><Select v-model="filtro.bus" :options="opciones?.buses ?? []" option-label="codigo" option-value="id" :filter-fields="['codigo', 'matricula']" show-clear filter fluid placeholder="Todos" /></label>
-        <div class="flex flex-col gap-1">
-          <span class="text-xs font-medium">Orden</span>
-          <SelectButton v-model="orden" :options="ORDENES" option-label="l" option-value="v" :allow-empty="false" class="flex-wrap" />
-        </div>
-        <div class="flex gap-2">
-          <Button label="Limpiar" severity="secondary" outlined class="flex-1" @click="limpiarAvanzados" />
-          <Button label="Ver resultados" class="flex-1" @click="masFiltros = false" />
-        </div>
-      </div>
-    </Drawer>
 
     <Menu ref="menuAcciones" :model="itemsAcciones" popup>
       <template #item="{ item, props: enlace }">
@@ -186,20 +138,26 @@
     <EditarSalidaDialog v-if="opciones" :salida="operacion === 'editar' ? seleccion : null" :opciones="opciones" @cerrar="seleccion = null" @hecho="alTerminar" />
     <ConfirmarOperacionDialog :salida="operacion !== 'editar' ? seleccion : null" :operacion="operacion === 'eliminar' ? 'eliminar' : 'anular'" @cerrar="seleccion = null" @hecho="alTerminar" />
     <ResultadoOperacionDialog :resultado="resultado" :operacion="operacion" @cerrar="resultado = null" />
+    <SalidaPopover ref="popover" @ver="(s) => (verSalida = s)" @cerrado="activa = null" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { fetchOpciones, fetchSalidas } from "@/core/salida/api";
-import { aDia, aFechaHora, aQuery, deFechaHora, ESTADOS, redondearMinutos, etiquetaEstado, filtroInicial, type FiltroSalidas } from "@/core/salida/filtro";
+import { useConfirm } from "primevue/useconfirm";
+import { claveDeUsuario } from "@/core/auth/alcanceSesion";
+import { eliminarSalidas, fetchOpciones, fetchSalidas } from "@/core/salida/api";
+import { ESTADOS_CALENDARIO } from "@/core/salida/calendario";
+import { aQuery, etiquetaEstado, filtroInicial, type FiltroSalidas } from "@/core/salida/filtro";
 import { resumen, type Operacion } from "@/core/salida/resultado";
 import type { MenuItem } from "primevue/menuitem";
-import type { EstadoSalida, OpcionesSalidas, PaginaSalidas, ResultadoOperacion, SalidaFila } from "@/core/salida/types";
+import type { OpcionesSalidas, PaginaSalidas, ResultadoOperacion, SalidaCalendario, SalidaFila } from "@/core/salida/types";
 import { HttpError } from "@/core/http";
 import { notify } from "@/core/notify";
+import CalendarioSalidas from "@/shared/salida-calendario/CalendarioSalidas.vue";
+import { useCalendarioSalidasStore } from "@/shared/salida-calendario/store";
+import SalidaPopover from "./calendario/SalidaPopover.vue";
 import ConfirmarOperacionDialog from "./ConfirmarOperacionDialog.vue";
 import EditarSalidaDialog from "./EditarSalidaDialog.vue";
-import RutaSelect from "./RutaSelect.vue";
 import ResultadoOperacionDialog from "./ResultadoOperacionDialog.vue";
 import VerSalidaDialog from "./VerSalidaDialog.vue";
 import BitacoraDialog from "@/shared/bitacora/BitacoraDialog.vue";
@@ -207,18 +165,61 @@ import EnviarPorChatDialog from "@/shared/chat/EnviarPorChatDialog.vue";
 import { anunciarEnPantalla } from "@/shared/chat/integracion";
 import { abrirManifiesto, MANIFIESTOS } from "./manifiesto";
 
-const ORDENES = [
-  { v: "proximas", l: "Próximas primero" },
-  { v: "fecha-asc", l: "Fecha ↑" },
-  { v: "fecha-desc", l: "Fecha ↓" },
-];
+const route = useRoute();
+const router = useRouter();
+const confirm = useConfirm();
+const calendario = useCalendarioSalidasStore();
 
-const filtro = reactive<FiltroSalidas>(filtroInicial());
+/** Lista o calendario; se recuerda por usuario en este navegador y `?vista=` lo fuerza (enlaces al calendario). */
+type Vista = "lista" | "calendario";
+const VISTAS: { valor: Vista; icono: string; etiqueta: string; titulo: string }[] = [
+  { valor: "lista", icono: "view-list-outline", etiqueta: "Lista", titulo: "Salidas en lista, de la más temprana a la más tardía" },
+  { valor: "calendario", icono: "view-week-outline", etiqueta: "Calendario", titulo: "Un día por fila y las horas en columnas" },
+];
+const PREFERENCIA_VISTA = "salidas.vista";
+function leerVista(): Vista {
+  if (route.query.vista === "calendario" || route.query.vista === "lista") return route.query.vista;
+  try {
+    return localStorage.getItem(claveDeUsuario(PREFERENCIA_VISTA)) === "calendario" ? "calendario" : "lista";
+  } catch {
+    return "lista";
+  }
+}
+const vista = ref<Vista>(leerVista());
+function elegirVista(v: Vista) {
+  vista.value = v;
+  try {
+    localStorage.setItem(claveDeUsuario(PREFERENCIA_VISTA), v);
+  } catch {
+    // Sin almacenamiento: solo dura la visita.
+  }
+  if (route.query.vista) void router.replace({ query: { ...route.query, vista: undefined } });
+}
+
+/** Página de la lista; lo demás del filtro sale de los controles del calendario. */
+const pagina = ref(1);
+const porPagina = ref(25);
+/** Lo mismo que muestra el calendario: sus días, empresa, hora y la ruta fijada en la leyenda, sin anuladas. */
+const filtro = computed<FiltroSalidas>(() => {
+  const dias = calendario.columnas;
+  return {
+    ...filtroInicial(),
+    estados: [...ESTADOS_CALENDARIO],
+    empresa: calendario.empresa,
+    ruta: calendario.fijada,
+    desde: dias[0] ?? null,
+    hasta: dias[dias.length - 1] ?? null,
+    hora: calendario.hora,
+    orden: "fecha",
+    direccion: "asc",
+    pagina: pagina.value,
+    porPagina: porPagina.value,
+  };
+});
 const datos = shallowRef<PaginaSalidas | null>(null);
 const opciones = shallowRef<OpcionesSalidas | null>(null);
 const cargando = ref(false);
 const error = ref("");
-const masFiltros = ref(false);
 const seleccion = ref<SalidaFila | null>(null);
 const operacion = ref<Operacion>("editar");
 const resultado = shallowRef<ResultadoOperacion | null>(null);
@@ -227,8 +228,6 @@ const verSalida = ref<Pick<SalidaFila, "id"> | null>(null);
 const reportar = ref<SalidaFila | null>(null);
 /** Salida cuya bitácora se está viendo. */
 const bitacora = ref<number | null>(null);
-const route = useRoute();
-const router = useRouter();
 watch(
   () => Number(route.query.ver),
   (id) => {
@@ -249,71 +248,6 @@ function cerrarVer() {
 }
 const menuAcciones = ref<{ toggle: (e: Event) => void } | null>(null);
 const itemsAcciones = ref<MenuItem[]>([]);
-
-const estaModificado = computed(() => aQuery({ ...filtro, pagina: 1 }) !== aQuery(filtroInicial()));
-const otrosActivos = computed(() => [filtro.empresa, filtro.bus, filtro.orden !== "proximas" ? 1 : null].filter((v) => v !== null).length);
-
-/**
- * Un día desde una hora (a las 00:00, todo el día) o, con «Rango», desde–hasta
- * con hora. Se elige en el selector y solo se busca al pulsar «Aplicar».
- */
-const porRango = ref(false);
-const borradorDia = ref<Date | null>(null);
-const borrador = ref<(Date | null)[] | null>(null);
-const selector = ref<{ overlayVisible: boolean } | null>(null);
-
-/** Los borradores vuelven a lo aplicado (al abrir otro modo, limpiar o cerrar sin aplicar). */
-function descartar() {
-  const d = filtro.desde ? deFechaHora(filtro.desde) : null;
-  const h = filtro.hasta ? deFechaHora(filtro.hasta) : null;
-  // Sin hora, el fin es todo el día.
-  if (h && !filtro.hasta!.includes("T")) h.setHours(23, 59);
-  borradorDia.value = d;
-  borrador.value = d ? [d, h] : null;
-}
-// Al elegir otro día, la hora empieza en 00:00 (todo el día), no en la de ahora.
-watch(borradorDia, (n, o) => {
-  if (n && aDia(n) !== (o ? aDia(o) : null) && (n.getHours() || n.getMinutes()) && aDia(n) !== filtro.desde?.slice(0, 10)) borradorDia.value = new Date(n.getFullYear(), n.getMonth(), n.getDate());
-});
-function cerrar() {
-  if (selector.value) selector.value.overlayVisible = false;
-}
-function alCambiarModo(activo: boolean) {
-  // Un día con hora pasa a rango hasta el final de ese día; un rango, a su primer día.
-  if (!activo && filtro.desde) filtro.hasta = filtro.desde.slice(0, 10);
-  descartar();
-}
-function aplicarDia() {
-  const d = borradorDia.value;
-  if (!d) return;
-  const r = redondearMinutos(d);
-  filtro.desde = r.getHours() || r.getMinutes() ? aFechaHora(r) : aDia(r);
-  filtro.hasta = aDia(r);
-  cerrar();
-}
-function aplicarRango() {
-  const [d, h] = borrador.value ?? [];
-  if (!d) return;
-  // Sin fin, o con el fin a 00:00, el último día entra completo.
-  let fin = h ?? d;
-  fin = fin.getHours() === 0 && fin.getMinutes() === 0 ? new Date(fin.getFullYear(), fin.getMonth(), fin.getDate(), 23, 59) : redondearMinutos(fin);
-  const ini = redondearMinutos(d);
-  const [desde, hasta] = fin < ini ? [fin, ini] : [ini, fin];
-  filtro.desde = aFechaHora(desde);
-  filtro.hasta = aFechaHora(hasta);
-  cerrar();
-}
-function quitarFecha() {
-  filtro.desde = filtro.hasta = null;
-  cerrar();
-}
-const orden = computed({
-  get: () => (filtro.orden === "proximas" ? "proximas" : `fecha-${filtro.direccion}`),
-  set: (v: string) => {
-    filtro.orden = v === "proximas" ? "proximas" : "fecha";
-    filtro.direccion = v === "fecha-desc" ? "desc" : "asc";
-  },
-});
 
 const fechaHora = (iso: string) => new Intl.DateTimeFormat("es-GT", { weekday: "short", day: "2-digit", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(iso));
 const ocupacion = (s: SalidaFila) => (s.capacidad ? `${s.vendidos} / ${s.capacidad}` : String(s.vendidos));
@@ -357,31 +291,55 @@ function alTerminar(r: ResultadoOperacion) {
   notify[severidad](texto);
   if (r.omitidas.length) resultado.value = r;
   void cargar();
-}
-
-function alternarEstado(e: EstadoSalida) {
-  filtro.estados = filtro.estados.includes(e) ? filtro.estados.filter((x) => x !== e) : [...filtro.estados, e];
-}
-
-function limpiarAvanzados() {
-  Object.assign(filtro, { empresa: null, bus: null, orden: "proximas", direccion: "asc" });
-}
-
-function limpiar() {
-  Object.assign(filtro, filtroInicial());
-  descartar();
+  void calendario.cargar();
 }
 
 function alPaginar(e: { page: number; rows: number }) {
-  filtro.pagina = e.page + 1;
-  filtro.porPagina = e.rows;
+  pagina.value = e.rows === porPagina.value ? e.page + 1 : 1;
+  porPagina.value = e.rows;
 }
 
 // Cualquier cambio de filtro (salvo la página) vuelve a la primera página.
 watch(
-  () => aQuery({ ...filtro, pagina: 1 }),
-  () => (filtro.pagina = 1),
+  () => aQuery({ ...filtro.value, pagina: 1 }),
+  () => (pagina.value = 1),
 );
+
+// —— Calendario: el detalle de una salida y eliminar varias ——
+const popover = ref<InstanceType<typeof SalidaPopover> | null>(null);
+const activa = shallowRef<SalidaCalendario | null>(null);
+
+function abrirDetalle(evento: MouseEvent, s: SalidaCalendario) {
+  activa.value = s;
+  void popover.value?.abrir(evento, s);
+}
+
+/** Pide confirmación y elimina las seleccionadas; las que no se pudieron (con boletos, ya salieron) se listan. */
+function confirmarEliminar() {
+  const ids = [...calendario.seleccion];
+  if (!ids.length) return;
+  confirm.require({
+    header: "Eliminar salidas",
+    message: `${ids.length === 1 ? "Se eliminará 1 salida" : `Se eliminarán ${ids.length} salidas`}. Las que tengan boletos o asientos apartados no se eliminan. No se puede deshacer. ¿Continuar?`,
+    acceptProps: { label: "Eliminar", severity: "danger" },
+    rejectProps: { label: "Volver", severity: "secondary", outlined: true },
+    accept: () => void eliminar(ids),
+  });
+}
+
+async function eliminar(ids: number[]) {
+  try {
+    const r = await eliminarSalidas(ids);
+    const { texto, severidad } = resumen(r, "eliminar");
+    notify[severidad](texto);
+    operacion.value = "eliminar";
+    if (r.omitidas.length) resultado.value = r;
+    calendario.salirDeSeleccion();
+  } catch (e) {
+    notify.error(e instanceof Error ? e.message : "No se pudieron eliminar las salidas.");
+  }
+  await calendario.cargar();
+}
 
 let pedido = 0;
 async function cargar() {
@@ -389,7 +347,7 @@ async function cargar() {
   cargando.value = true;
   error.value = "";
   try {
-    const r = await fetchSalidas(aQuery(filtro));
+    const r = await fetchSalidas(aQuery(filtro.value));
     if (n === pedido) datos.value = r;
   } catch (e) {
     if (n === pedido) error.value = e instanceof HttpError && e.status === 403 ? "No tiene permiso para ver las salidas (salida.ver)." : e instanceof Error ? e.message : String(e);
@@ -397,9 +355,54 @@ async function cargar() {
     if (n === pedido) cargando.value = false;
   }
 }
-watch(() => aQuery(filtro), cargar, { immediate: true });
+// La lista se pide mientras se ve (y al volver a ella); los días los pone el calendario al montarse.
+watch(
+  () => (vista.value === "lista" && filtro.value.desde ? aQuery(filtro.value) : null),
+  (q) => q && void cargar(),
+  { immediate: true },
+);
 
 onMounted(async () => {
   opciones.value = await fetchOpciones().catch(() => null);
 });
 </script>
+
+<style scoped>
+/* Selector de presentación (como en la venta): dos botones unidos, el activo en relieve. */
+.vista {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--p-surface-500) 6%, transparent);
+}
+.vista__boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.65rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--p-text-muted-color);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+.vista__boton:hover {
+  color: var(--p-text-color);
+}
+.vista__boton:focus-visible {
+  outline: 2px solid var(--p-primary-color);
+  outline-offset: 1px;
+}
+.vista__boton--activa {
+  background: var(--p-content-background);
+  color: var(--p-text-color);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--p-surface-900) 18%, transparent);
+}
+</style>

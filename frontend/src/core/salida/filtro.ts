@@ -14,6 +14,8 @@ export interface FiltroSalidas {
   /** `AAAA-MM-DD` (todo el día) o `AAAA-MM-DDTHH:MM` (hasta ese minuto), inclusive */
   desde: string | null
   hasta: string | null
+  /** `HH:MM`: solo las salidas a esa hora exacta, en cada día de `desde`–`hasta` (con ambos). */
+  hora: string | null
   /** `proximas`: iniciadas, abordando y programadas de la más próxima a la más lejana. */
   orden: 'proximas' | 'fecha'
   direccion: 'asc' | 'desc'
@@ -42,6 +44,7 @@ export function filtroInicial(): FiltroSalidas {
     bus: null,
     desde: null,
     hasta: null,
+    hora: null,
     orden: 'proximas',
     direccion: 'asc',
     pagina: 1,
@@ -53,7 +56,7 @@ export function filtroInicial(): FiltroSalidas {
 export function aQuery(f: FiltroSalidas): string {
   const p = new URLSearchParams()
   p.set('estado', f.estados.join(','))
-  for (const k of ['empresa', 'ruta', 'bus', 'desde', 'hasta'] as const) {
+  for (const k of ['empresa', 'ruta', 'bus', 'desde', 'hasta', 'hora'] as const) {
     const v = f[k]
     if (v !== null && v !== '') p.set(k, String(v))
   }
