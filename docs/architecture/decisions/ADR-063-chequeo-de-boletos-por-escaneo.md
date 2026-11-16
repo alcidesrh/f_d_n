@@ -16,11 +16,14 @@ Cada boleto (`BoletoAsiento`) tiene un código `FDN1.<id>.<firma>`: la firma son
 HMAC-SHA256 del id con `kernel.secret`. No se guarda ni caduca: lo que decide si el boleto se chequea
 es su estado y su salida. Un boleto reasignado es otro boleto, con otro código.
 
-### QR en el PDF (`App\Venta\Boleto\CodigoQr`)
+### QR en el PDF y en el ticket (`App\Venta\Boleto\CodigoQr`)
 
-El PDF del boleto (web, correo y reimpresión) lleva un QR por asiento con ese código. El generador es
-propio, sin dependencias, como `Code128`: modo byte, nivel M, versiones 1 a 6. Las medidas del SVG van
-en píxeles porque Dompdf no escala bien con `viewBox`.
+El PDF del boleto (web, correo y reimpresión) y el ticket de taquilla llevan un QR por asiento con ese
+código. `Comprobantes::de` lo entrega en cada boleto (`codigoAbordaje`). El generador es propio, sin
+dependencias, como `Code128`: modo byte, nivel M, versiones 1 a 6; su espejo para el ticket está en
+`frontend/src/shared/barcode/qr.ts` y un test en cada lado compara la misma matriz de referencia. Las
+medidas del SVG van en píxeles porque Dompdf no escala bien con `viewBox`. El ticket conserva además
+el código de barras de la venta.
 
 ### Escaneo (`Abordaje::escanear`, `POST /api/abordaje/salidas/{id}/escaneo` `{ codigo }`)
 
@@ -41,8 +44,7 @@ La app móvil declara el permiso `CAMERA`.
 
 ## Consecuencias
 
-- El código de barras de la venta se puede adivinar (es un número); el QR, no. Los boletos de taquilla
-  siguen con código de barras hasta que el ticket impreso lleve el QR (pendiente: espejo del generador
-  en `frontend/src/shared`).
+- El código de barras de la venta se puede adivinar (es un número); el QR, no. El escaneo sigue
+  aceptando el código de barras por los boletos impresos antes de este cambio.
 - Donde el navegador no tiene `BarcodeDetector` (Safari, Firefox) queda el campo de texto.
 - Si cambia `APP_SECRET`, los QR ya emitidos dejan de valer; esos boletos se chequean a mano.

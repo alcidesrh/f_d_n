@@ -283,6 +283,8 @@ export interface Comprobante {
     precio: Importe | null
     observacion: string | null
     estado: string
+    /** Lo que lleva el QR del boleto para chequearlo por escaneo (ADR-063). */
+    codigoAbordaje?: string
   }>
   /** Encomiendas que lleva el pasajero (cada bulto con su guía). */
   encomiendas?: DatosEncomienda[]

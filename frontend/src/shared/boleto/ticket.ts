@@ -1,9 +1,11 @@
 /**
  * Ticket de taquilla (80 mm), como el del sistema anterior: datos de la
- * factura electrónica + boletos + código de barras. HTML autónomo (estilos
+ * factura electrónica + boletos + código de barras, y un QR de abordaje por
+ * asiento (ADR-063). HTML autónomo (estilos
  * en línea) para imprimir en un iframe sin arrastrar los de la aplicación.
  */
 import { svg } from '@/shared/barcode/code128'
+import { svg as qr } from '@/shared/barcode/qr'
 import { fecha, hora } from '@/core/venta/modelo'
 import type { Comprobante } from '@/core/venta/types'
 
@@ -30,6 +32,15 @@ function encomiendas(c: Comprobante): string {
     .map((e) => `<tr><td>ID: ${esc(e.codigo)}. ${esc(e.articulos.map((a) => a.resumen).join('; '))}</td><td class="r">${e.bultos}</td><td class="r">${esc(e.total.texto)}</td></tr>`)
     .join('')
   return `<table><tr><td><span class="lbl">Encomiendas:</span></td><td class="r"><span class="lbl">Cant</span></td><td class="r"><span class="lbl">Precio</span></td></tr>${filas}</table>`
+}
+
+/** Un QR por asiento vivo, para chequearlo por escaneo (ADR-063); el anulado no aborda. */
+function codigosAbordaje(c: Comprobante): string {
+  const qrs = c.boletos
+    .filter((b) => b.codigoAbordaje && b.estado !== 'anulado')
+    .map((b) => `<div class="qr">${qr(b.codigoAbordaje!, 3)}<div>Asiento ${b.asiento}</div></div>`)
+    .join('')
+  return qrs ? `<div class="qrs">${qrs}</div><p class="c small">Al abordar, muestre el código QR de cada asiento.</p>` : ''
 }
 
 export function ticketHtml(c: Comprobante): string {
@@ -62,6 +73,8 @@ export function ticketHtml(c: Comprobante): string {
   table { width: 100%; border-collapse: collapse; } td { padding: 1px 0; vertical-align: top; }
   .total { text-align: right; font-size: 14px; margin-top: 4px; }
   .bar { text-align: center; margin-top: 8px; } .bar svg { width: 60mm; height: 18mm; }
+  .qrs { display: flex; flex-wrap: wrap; justify-content: center; gap: 2mm 4mm; margin-top: 6px; }
+  .qr { text-align: center; font-size: 10px; break-inside: avoid; } .qr svg { width: 30mm; height: 30mm; display: block; }
 </style></head><body>
 ${c.boletos.length > 0 && c.boletos.every((b) => b.estado === 'anulado') ? '<h1>*** ANULADO ***</h1>' : ''}
 <h1>${esc(c.empresa?.nombre)}</h1>
@@ -90,6 +103,7 @@ ${f?.certificador ? `<p class="c">Datos del certificador: ${esc(f.certificador)}
 <p>Fecha: ${esc(fecha(c.salida?.salidaOrigen))} ${esc(hora(c.salida?.salidaOrigen))}</p>
 <p>Asientos: ${esc(c.boletos.map((b) => b.asiento).join(', '))}</p>
 ${c.boletos.some((b) => b.observacion) ? `<p class="small">Obs.: ${esc(c.boletos.find((b) => b.observacion)?.observacion)}</p>` : ''}
+${codigosAbordaje(c)}
 <div class="bar">${svg(c.codigoBarras)}<div>${esc(c.codigoBarras)}</div></div>
 <div class="sep">------------------------------</div>
 </body></html>`

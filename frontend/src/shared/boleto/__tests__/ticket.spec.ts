@@ -91,4 +91,12 @@ describe('ticketHtml', () => {
     expect(contingencia).toContain('CONTINGENCIA')
     expect(contingencia).toContain('Número de acceso: 290524861')
   })
+
+  it('lleva un QR de abordaje por asiento vivo (ADR-063)', () => {
+    const boletos = base.boletos.map((b, i) => ({ ...b, codigoAbordaje: `FDN1.${b.id}.abcdefABCDEF`, estado: i === 0 ? b.estado : 'anulado' }))
+    const html = ticketHtml({ ...base, boletos })
+    expect(html.split('class="qr"').length - 1).toBe(1)
+    expect(html).toContain('Al abordar, muestre el código QR de cada asiento.')
+    expect(ticketHtml(base)).not.toContain('class="qr"')
+  })
 })

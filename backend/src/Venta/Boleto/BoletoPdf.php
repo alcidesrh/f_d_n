@@ -20,7 +20,6 @@ final class BoletoPdf
     public function __construct(
         private readonly Environment $twig,
         private readonly Comprobantes $comprobantes,
-        private readonly LlaveBoleto $llaves,
     ) {}
 
     /** Un PDF con una página por venta (ida y regreso de una compra web). */
@@ -57,9 +56,9 @@ final class BoletoPdf
                     "b" => $b,
                     "codigoBarras" => base64_encode(Code128::svg(sprintf("%08d", $p[0]->getId()))),
                     // Un QR de abordaje por asiento (ADR-063), por id de boleto.
-                    "qr" => array_column(array_map(fn(array $x) => [
+                    "qr" => array_column(array_map(static fn(array $x) => [
                         "id" => (int) $x["id"],
-                        "svg" => base64_encode(CodigoQr::svg($this->llaves->codigo((int) $x["id"]))),
+                        "svg" => base64_encode(CodigoQr::svg($x["codigoAbordaje"])),
                     ], $b["boletos"]), "svg", "id"),
                 ];
             }, $paginas),
