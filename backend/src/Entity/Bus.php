@@ -10,6 +10,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Override;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity]
 #[ApiResourcePaginationPage]
@@ -125,6 +126,20 @@ class Bus extends Base
 
     #[ORM\Column(type: "text", nullable: true)]
     private ?string $descripcion = null;
+
+    /**
+     * Kilómetros recorridos (ADR-065). Se escribe a mano para ponerlo al día
+     * con el tablero del bus y `App\Mantenimiento\Odometros` le suma cada
+     * madrugada lo que recorrió según el GPS.
+     */
+    #[Assert\PositiveOrZero]
+    #[ORM\Column(options: ["default" => 0])]
+    private int $odometroKm = 0;
+
+    /** Hasta qué lectura GPS ya se sumó al odómetro. Solo `Odometros`. */
+    #[ApiProperty(readable: false, writable: false)]
+    #[ORM\Column(type: "datetimetz_immutable", nullable: true)]
+    private ?\DateTimeImmutable $odometroAl = null;
 
     public function __construct()
     {
@@ -359,6 +374,18 @@ class Bus extends Base
         ?string $numeroTarjetaOperaciones,
     ): static {
         $this->numeroTarjetaOperaciones = $numeroTarjetaOperaciones;
+
+        return $this;
+    }
+
+    public function getOdometroKm(): int
+    {
+        return $this->odometroKm;
+    }
+
+    public function setOdometroKm(int $odometroKm): static
+    {
+        $this->odometroKm = $odometroKm;
 
         return $this;
     }

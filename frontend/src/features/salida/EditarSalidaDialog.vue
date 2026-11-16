@@ -23,6 +23,7 @@
         <Select :model-value="busId" :options="busesPara(opciones.buses, { croquisId }, busId)" :option-label="etiquetaBus" option-value="id" filter :filter-fields="['codigo', 'matricula']" fluid placeholder="Bus" :empty-message="croquisId ? 'Ningún bus con esta distribución' : 'Sin buses'" @update:model-value="elegirBus">
           <template #option="{ option }"><BusOpcionItem :bus="option" :empresas="empresas" :clases="clases" /></template>
         </Select>
+        <span v-if="opciones.buses.find((b) => b.id === busId)?.mantenimiento === 'vencido'" class="flex items-center gap-1 text-xs text-amber-700 dark:text-amber-400" role="status"><icon name="build-outline" />Este bus tiene el mantenimiento vencido. Puede asignarlo igual.</span>
         <span class="text-xs text-muted-color">{{ salida.vendidos ? `Tiene ${salida.vendidos} asiento(s) vendidos o apartados: elija un bus con la misma distribución y pasarán al mismo número.` : 'Sin asientos vendidos, el bus se cambia libremente.' }}</span>
       </label>
       <label class="flex flex-col gap-1">

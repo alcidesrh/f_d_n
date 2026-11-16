@@ -55,7 +55,10 @@
         >
           <template #icon><icon name="close" /></template>
         </Button>
-        <p v-if="llegada(m)" class="momento__detalle m-0 text-xs text-muted-color">{{ llegada(m) }}</p>
+        <div v-if="llegada(m) || vencido(m)" class="momento__detalle flex flex-col gap-1 text-xs">
+          <p v-if="llegada(m)" class="m-0 text-muted-color">{{ llegada(m) }}</p>
+          <p v-if="vencido(m)" class="m-0 flex items-center gap-1 text-amber-700 dark:text-amber-400" role="status"><icon name="build-outline" />Este bus tiene el mantenimiento vencido. Puede programarlo igual.</p>
+        </div>
       </li>
     </ol>
     <div class="flex flex-wrap gap-2">
@@ -80,6 +83,9 @@ import { useProgramadorStore } from './store'
 const store = useProgramadorStore()
 
 const etiquetaBus = (b: BusOpcion) => [b.codigo, b.matricula, b.empresaId ? store.empresas.get(b.empresaId) : null].filter(Boolean).join(' · ')
+
+/** El bus elegido tiene un plan de mantenimiento vencido (ADR-065): se advierte, no se impide. */
+const vencido = (m: Momento) => store.busDe(m.busId)?.mantenimiento === 'vencido'
 
 /** «Llega a Flores a las 16:30, en Platino.» */
 function llegada(m: Momento): string | null {

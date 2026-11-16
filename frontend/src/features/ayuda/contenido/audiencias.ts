@@ -28,6 +28,8 @@ export const EDITAR_RUTA: Audiencia = { etiqueta: 'Rutas', exige: 'ruta.editar' 
 export const TARIFAS: Audiencia = { etiqueta: 'Tarifas', exige: 'tarifa.ver' }
 export const EDITAR_TARIFA: Audiencia = { etiqueta: 'Tarifas', exige: 'tarifa.editar' }
 
+export const MANTENIMIENTO: Audiencia = { etiqueta: 'Mantenimiento de flota', exige: 'orden_mantenimiento.ver' }
+
 // Encomiendas
 export const ENCOMIENDAS: Audiencia = { etiqueta: 'Encomiendas', exige: 'encomienda.ver' }
 export const REGISTRAR_ENCOMIENDA: Audiencia = {

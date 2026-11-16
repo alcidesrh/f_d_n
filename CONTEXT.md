@@ -91,6 +91,21 @@ _Avoid_: conductor, chofer
 Modelo: nuevo. Detalle del modelo: Conductor (o copiloto) asignado a un bus. No tiene relación con `Salida` (ver ADR-016).
 Evitar (modelo): conductor, chofer
 
+**Odómetro**:
+Los kilómetros que lleva recorridos un bus. Se escribe a mano en el bus para igualarlo con el del tablero y cada madrugada se le suma lo que hizo según su GPS.
+_Avoid_: kilometraje del bus (el **kilometraje** es lo que se suma en un lapso), contador
+Modelo: nuevo (`Bus.odometroKm`; `App\Mantenimiento\Odometros`, `Kilometraje`, ADR-065)
+
+**Plan de mantenimiento** (`PlanMantenimiento`):
+Un servicio que se le hace a cada bus cada tanto (cambio de aceite, frenos): vence por kilómetros, por días o por lo que llegue primero, contando desde la última orden del bus con ese plan. En cada bus está **vencido**, **por vencer** (le falta el 10 % o menos), **al día** o **sin registro** (nunca se le hizo; no cuenta como vencido).
+_Avoid_: rutina, servicio programado, preventivo
+Modelo: nuevo (`App\Mantenimiento\ReglasMantenimiento`, `EstadoFlota`, ADR-065)
+
+**Orden de mantenimiento** (`OrdenMantenimiento`):
+Un trabajo de taller hecho a un bus: fecha, odómetro, costo y taller. Con plan, es el servicio de ese plan; sin plan, una reparación suelta.
+_Avoid_: orden de trabajo, ticket, servicio
+Modelo: nuevo (ADR-065)
+
 ## Ventas
 
 **Salida**:

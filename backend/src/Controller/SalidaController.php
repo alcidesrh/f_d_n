@@ -14,6 +14,8 @@ use App\Entity\Empresa;
 use App\Entity\Ruta;
 use App\Entity\Usuario;
 use App\Entity\Salida;
+use App\Mantenimiento\EstadoFlota;
+use App\Mantenimiento\ReglasMantenimiento;
 use App\Salida\ConsultaSalidas;
 use App\Salida\DetalleSalida;
 use App\Salida\Esquemas;
@@ -60,6 +62,7 @@ final class SalidaController extends AbstractController
         private readonly ProgramadorSalidas $programador,
         private readonly Esquemas $esquemas,
         private readonly Autorizacion $autorizacion,
+        private readonly EstadoFlota $mantenimiento,
     ) {}
 
     /** Ver `FiltroSalidas::desdeQuery` para los parámetros. */
@@ -114,6 +117,7 @@ final class SalidaController extends AbstractController
         /** @var list<Bus> $buses */
         $buses = FiltroAlcance::aplicar($qb, $ver, "b.empresa", compartidos: true)->getQuery()->getResult();
         $empresasVisibles = $ver->empresas();
+        $vencidos = $this->mantenimiento->vencidos(new \DateTimeImmutable("now", new \DateTimeZone("America/Guatemala")));
         // Filtros del bus al programar (ADR-027): solo los moldes y clases que tiene la flota visible.
         $moldes = [];
         $clases = [];
@@ -136,7 +140,8 @@ final class SalidaController extends AbstractController
             ),
             // Con una sola empresa donde programa, esa; si no, el programador ofrece elegirla para filtrar distribuciones y buses.
             "miEmpresaId" => $this->autorizacion->alcance(Capacidad::SALIDA_CREAR)->empresaUnica() ?? $ver->empresaUnica(),
-            "buses" => array_map(VistaSalida::bus(...), $buses),
+            // `mantenimiento`: con un plan vencido, el programador advierte al elegirlo; no lo impide (ADR-065).
+            "buses" => array_map(static fn(Bus $b) => VistaSalida::bus($b) + ["mantenimiento" => isset($vencidos[(int) $b->getId()]) ? ReglasMantenimiento::VENCIDO : null], $buses),
             "croquis" => $moldes,
             "clases" => $clases,
             "puede" => [

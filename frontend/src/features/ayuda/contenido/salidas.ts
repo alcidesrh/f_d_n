@@ -5,6 +5,7 @@ import {
   BITACORA,
   EDITAR_SALIDA,
   ELIMINAR_SALIDA,
+  MANTENIMIENTO,
   PROGRAMAR,
   SALIDAS,
 } from './audiencias'
@@ -165,6 +166,28 @@ export const guiasSalidas: Guia[] = [
     abrir: { etiqueta: 'Abrir Seguimiento', destino: { name: 'seguimiento' } },
     pantallas: ['seguimiento'],
     palabras: ['gps', 'mapa', 'donde esta el bus', 'ubicacion del bus', 'en camino'],
+  },
+  {
+    id: 'mantenimiento-de-flota',
+    tema: 'salidas',
+    titulo: 'Llevar el mantenimiento de los buses',
+    resumen: 'Qué buses deben un servicio, cuáles están por vencer y cómo registrar lo que se les hizo.',
+    para: [MANTENIMIENTO],
+    pasos: [
+      'En «Planes» cree cada servicio con su intervalo: por ejemplo «Cambio de aceite», cada 10,000 km, o «Revisión de frenos», cada 180 días.',
+      'Abra «Mantenimiento». Cada bus muestra su odómetro y cómo va con cada plan: vencido, por vencer, al día o sin registro.',
+      'Cuando el taller termine un trabajo, pulse «Registrar» junto al plan: la orden se abre con el bus y el plan puestos. Anote la fecha, el costo y el taller.',
+      'Para una reparación que no es de ningún plan, cree la orden desde «Órdenes» y deje el plan vacío.',
+    ],
+    ojo: [
+      'El odómetro suma solo cada madrugada lo que el bus recorrió según su GPS. Si no coincide con el tablero del bus, pulse «Corregir» y escriba el valor real.',
+      '«Sin registro» quiere decir que a ese bus nunca se le anotó ese servicio: registre el último que se le hizo para que empiece a contar.',
+      'Al programar una salida con un bus vencido aparece una advertencia, pero se puede programar igual.',
+      'Cuando un servicio entra en «por vencer» o «vencido» llega un aviso por los mensajes, una sola vez.',
+    ],
+    abrir: { etiqueta: 'Abrir Mantenimiento', destino: { name: 'flota-mantenimiento' } },
+    pantallas: ['flota-mantenimiento'],
+    palabras: ['taller', 'aceite', 'frenos', 'odometro', 'kilometraje', 'servicio', 'orden de trabajo', 'reparacion'],
   },
   {
     id: 'bitacora-de-la-salida',

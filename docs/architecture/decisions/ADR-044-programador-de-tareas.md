@@ -44,6 +44,7 @@ La evaluación previa recomendó `symfony/scheduler` sobre el Messenger y el Pos
 | `horizonte_salidas` | 01:30 | Despliega los esquemas automáticos. |
 | `reportes_diarios` | `PROGRAMADOR_HORA_REPORTES` (06:00) | Reparte los reportes del día anterior. |
 | `purgar_archivos_chat` | 03:15 | Archivos del chat de más de 24 h sin mensaje. |
+| `mantenimiento_flota` | 03:30 | Suma al odómetro de cada bus lo recorrido por GPS y avisa el mantenimiento que vence (ADR-065). |
 | `purgar_lecturas_gps` | 03:45 | Lecturas GPS de más de 90 días (ADR-050). |
 | `refrescar_tablero` | 1 min | Rehace las copias del tablero que alguien miró en los últimos 10 minutos (`Tablero\TableroEnCache`, ADR-046). |
 

@@ -1,7 +1,7 @@
 <!--
   Un bus en la lista para elegir: código y matrícula; debajo su empresa y su
   clase, con ícono para no confundirlas (hay clases con nombre de empresa,
-  "Clase Oro / Maya de Oro").
+  "Clase Oro / Maya de Oro"). Con el mantenimiento vencido lo dice (ADR-065).
 -->
 <template>
   <div class="flex min-w-0 flex-col">
@@ -9,6 +9,7 @@
     <span class="flex flex-wrap gap-x-3 text-xs text-muted-color">
       <span v-if="empresa" class="inline-flex items-center gap-1"><icon name="apartment" />{{ empresa }}</span>
       <span v-if="clase" class="inline-flex items-center gap-1"><icon name="airline-seat-recline-extra" />{{ clase }}</span>
+      <span v-if="bus.mantenimiento === 'vencido'" class="inline-flex items-center gap-1 text-amber-700 dark:text-amber-400"><icon name="build-outline" />Mantenimiento vencido</span>
     </span>
   </div>
 </template>

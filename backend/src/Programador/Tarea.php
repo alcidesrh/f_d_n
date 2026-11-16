@@ -8,6 +8,7 @@ use App\Actividad\Tarea\MantenerBitacora;
 use App\Chat\Predeterminado\Tarea\EnviarMensajesPredeterminados;
 use App\Chat\Predeterminado\Tarea\RevisarAnomalias;
 use App\Chat\Tarea\PurgarArchivosChat;
+use App\Mantenimiento\Tarea\RevisarMantenimiento;
 use App\Reporte\Diario\EnviarReportesDiarios;
 use App\Salida\Horizonte\ExtenderHorizontes;
 use App\Seguimiento\Tarea\PurgarLecturasGps;
@@ -48,6 +49,7 @@ enum Tarea: string
     case REFRESCAR_TABLERO = 'refrescar_tablero';
     case PURGAR_LECTURAS_GPS = 'purgar_lecturas_gps';
     case BITACORA_DIARIA = 'bitacora_diaria';
+    case MANTENIMIENTO_FLOTA = 'mantenimiento_flota';
 
     public const COLA_TAREAS = 'tareas';
     public const COLA_PESADAS = 'pesadas';
@@ -68,6 +70,7 @@ enum Tarea: string
             self::REFRESCAR_TABLERO => 'Rehacer el tablero de gestión que alguien está mirando',
             self::PURGAR_LECTURAS_GPS => 'Borrar las lecturas GPS de más de 90 días',
             self::BITACORA_DIARIA => 'Bitácora diaria: particiones, resumen del día anterior y retención',
+            self::MANTENIMIENTO_FLOTA => 'Sumar al odómetro lo recorrido por GPS y avisar el mantenimiento que vence',
         };
     }
 
@@ -81,7 +84,7 @@ enum Tarea: string
             self::BITACORA_DIARIA => '1 hour',
             self::CERTIFICAR_PENDIENTES => '10 minutes',
             self::VIGILAR_OPERACION, self::BARRER_SALIDAS_LEGADO => '30 minutes',
-            self::HORIZONTE_SALIDAS, self::REPORTES_DIARIOS, self::PURGAR_ARCHIVOS_CHAT, self::REVISAR_ANOMALIAS, self::PURGAR_LECTURAS_GPS => '1 day',
+            self::HORIZONTE_SALIDAS, self::REPORTES_DIARIOS, self::PURGAR_ARCHIVOS_CHAT, self::REVISAR_ANOMALIAS, self::PURGAR_LECTURAS_GPS, self::MANTENIMIENTO_FLOTA => '1 day',
         };
     }
 
@@ -96,6 +99,8 @@ enum Tarea: string
             self::HORIZONTE_SALIDAS => '01:30',
             self::PURGAR_ARCHIVOS_CHAT => '03:15',
             self::PURGAR_LECTURAS_GPS => '03:45',
+            // Antes de la purga de lecturas y de que salgan los primeros buses.
+            self::MANTENIMIENTO_FLOTA => '03:30',
             self::REVISAR_ANOMALIAS => '02:30',
             self::REPORTES_DIARIOS => $horaReportes,
             default => null,
@@ -122,7 +127,7 @@ enum Tarea: string
             self::CERTIFICAR_PENDIENTES, self::MENSAJES_PREDETERMINADOS => '1 hour',
             self::VIGILAR_OPERACION, self::BARRER_SALIDAS_LEGADO => '2 hours',
             self::BITACORA_DIARIA => '3 hours',
-            self::HORIZONTE_SALIDAS, self::REPORTES_DIARIOS, self::PURGAR_ARCHIVOS_CHAT, self::REVISAR_ANOMALIAS, self::PURGAR_LECTURAS_GPS => '26 hours',
+            self::HORIZONTE_SALIDAS, self::REPORTES_DIARIOS, self::PURGAR_ARCHIVOS_CHAT, self::REVISAR_ANOMALIAS, self::PURGAR_LECTURAS_GPS, self::MANTENIMIENTO_FLOTA => '26 hours',
         };
     }
 
@@ -142,6 +147,7 @@ enum Tarea: string
             self::REFRESCAR_TABLERO => new RefrescarTablero(),
             self::PURGAR_LECTURAS_GPS => new PurgarLecturasGps(),
             self::BITACORA_DIARIA => new MantenerBitacora(),
+            self::MANTENIMIENTO_FLOTA => new RevisarMantenimiento(),
         };
     }
 }

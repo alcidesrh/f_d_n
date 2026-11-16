@@ -404,6 +404,17 @@ export const router = createRouter({
       },
     },
     {
+      path: "/flota/mantenimiento",
+      name: "flota-mantenimiento",
+      component: () => import("@/features/mantenimiento/MantenimientoPage.vue"),
+      meta: {
+        capacidad: "orden_mantenimiento.ver",
+        title: "Mantenimiento de flota",
+        label: "Mantenimiento",
+        icon: "build-outline",
+      },
+    },
+    {
       path: "/seguimiento/reproducir",
       name: "seguimiento-reproducir",
       component: () => import("@/features/seguimiento/ReproduccionPage.vue"),

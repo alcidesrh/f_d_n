@@ -30,6 +30,8 @@ export interface BusOpcion {
   croquisId: number | null
   /** Clase de bus (Económica, Platino…). */
   claseId: number | null
+  /** `vencido`: tiene un plan de mantenimiento vencido (ADR-065). Solo en las opciones para programar. */
+  mantenimiento?: string | null
 }
 
 /** Molde de croquis (ADR-027): la distribución que comparten varios buses. */
