@@ -25,7 +25,7 @@
 }
 /* Sombra solo cuando el contenido ya se desplazó por debajo (`AppShell`, clase en `.shell`). */
 .shell--desplazado .app-header {
-  box-shadow: 4px 0px 10px rgba(0, 0, 0, 0.19);
+  box-shadow: 0px 0px 8px var(--p-surface-400);
 }
 .right-header {
   display: flex;
