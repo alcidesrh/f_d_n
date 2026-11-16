@@ -25,7 +25,7 @@ class HorasEstimadas
     ) {}
 
     /**
-     * @return array{fuente: 'gps'|'horario', atrasoMinutos: ?int, lectura: ?int, posicion: ?array{lat: float, lng: float}, paradas: list<array{enclave: int, nombre: string, programada: ?int, estimada: ?int, paso: bool}>}
+     * @return array{fuente: 'gps'|'horario', atrasoMinutos: ?int, lectura: ?int, paradas: list<array{enclave: int, nombre: string, programada: ?int, estimada: ?int, paso: bool}>}
      */
     public function deSalida(Salida $salida, \DateTimeImmutable $ahora): array
     {
@@ -48,13 +48,7 @@ class HorasEstimadas
         $lectura = $this->lectura($salida, $horario, $t);
         $estimacion = HoraEstimada::calcular($horario, $lectura, $t);
 
-        $conGps = $estimacion["fuente"] === "gps" && $lectura !== null;
-
-        return [
-            ...$estimacion,
-            "lectura" => $conGps ? $lectura["instante"] : null,
-            "posicion" => $conGps ? ["lat" => round($lectura["lat"], 6), "lng" => round($lectura["lng"], 6)] : null,
-        ];
+        return [...$estimacion, "lectura" => $estimacion["fuente"] === "gps" && $lectura !== null ? $lectura["instante"] : null];
     }
 
     /**

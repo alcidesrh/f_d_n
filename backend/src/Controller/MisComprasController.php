@@ -8,7 +8,6 @@ use App\Correo\Configuracion\AjustesCorreo;
 use App\Entity\BoletoVenta;
 use App\Entity\PagoWeb;
 use App\Venta\Boleto\BoletoPdf;
-use App\Venta\EnLinea\SeguimientoViaje;
 use App\Venta\EnLinea\GestionCompraWeb;
 use App\Venta\EnLinea\Modificacion\CobroModificacion;
 use App\Venta\EnLinea\Modificacion\LlaveCliente;
@@ -119,16 +118,6 @@ final class MisComprasController extends AbstractController
             "Content-Disposition" => sprintf('%s; filename="%s"', $request->query->getBoolean("ver") ? "inline" : "attachment", BoletoPdf::nombreArchivo($venta)),
             "Cache-Control" => "private, no-store",
         ]);
-    }
-
-    /** «¿Dónde va mi bus?» (ADR-065): hora estimada en donde sube y baja, atraso y posición del bus. */
-    #[Route("/viajes/{id<\d+>}/seguimiento", name: "seguimiento", methods: ["GET"])]
-    public function seguimiento(int $id, Request $request, SeguimientoViaje $seguimiento): JsonResponse
-    {
-        return $this->limitado($request, fn() => $seguimiento->deVenta(
-            $this->compras->venta($this->correo($request), $id)["venta"],
-            new \DateTimeImmutable("now", new \DateTimeZone("America/Guatemala")),
-        ));
     }
 
     /** `{ cambios: [{ boleto, salida, trayecto?, asiento }], nuevos: [{ salida, trayecto?, asiento }] }` → lo que costaría. */

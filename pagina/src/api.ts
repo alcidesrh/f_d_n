@@ -3,7 +3,6 @@
  * negocio llegan como `ErrorPublico` con el mensaje del backend, el código
  * (para traducirlo, ver `mensajeDeError`) y los datos extra del error.
  */
-import type { SeguimientoViaje } from './seguimiento'
 import type {
   Carrito,
   Catalogos,
@@ -138,9 +137,6 @@ export const pedirAcceso = (correo: string, idioma: string) =>
   pedir<{ ok: true }>('/mis-compras/acceso', { method: 'POST', body: { correo, idioma } })
 
 export const misCompras = (llave: string) => pedir<MisCompras>('/mis-compras', { llave })
-
-/** «¿Dónde va mi bus?» (ADR-065): hora estimada, atraso y posición del bus de un viaje. */
-export const seguimientoViaje = (llave: string, viaje: number) => pedir<SeguimientoViaje>(`/mis-compras/viajes/${viaje}/seguimiento`, { llave })
 
 export const cotizarModificacion = (llave: string, viaje: number, pedido: PedidoModificacion) =>
   pedir<CotizacionModificacion>(`/mis-compras/viajes/${viaje}/cotizar`, { method: 'POST', body: pedido, llave })

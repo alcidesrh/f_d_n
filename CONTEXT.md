@@ -309,7 +309,7 @@ Modelo: concepto (`App\Seguimiento\Irregularidades`, `IrregularidadesEnCurso`; m
 **Hora estimada** (de llegada):
 A qué hora se espera que el bus de una salida pase por cada parada que le falta: su hora del horario más el **atraso** que lleva (la hora de su última lectura GPS frente a la hora a la que el horario lo ponía en ese punto). Sin lectura reciente, es la del horario.
 _Avoid_: ETA, hora real
-Modelo: concepto (`App\Seguimiento\HoraEstimada`, `HorasEstimadas`, ADR-064). El cliente la ve en «Mis compras» para su tramo (`App\Venta\EnLinea\SeguimientoViaje`, ADR-065).
+Modelo: concepto (`App\Seguimiento\HoraEstimada`, `HorasEstimadas`, ADR-064).
 
 ## Usuarios y accesos
 

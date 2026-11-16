@@ -25,7 +25,7 @@ podía decir con cuánto atraso llegaba un bus a una parada.
 hora de salida y si la salida no está cancelada ni finalizada (el mismo bus hace otras salidas).
 
 API: `GET /api/seguimiento/salidas/{id}/llegadas` (permiso `salida.ver`) →
-`{ fuente, atrasoMinutos, lectura, posicion, paradas: [{ enclave, nombre, programada, estimada, paso }] }`.
+`{ fuente, atrasoMinutos, lectura, paradas: [{ enclave, nombre, programada, estimada, paso }] }`.
 El panel del bus en `/seguimiento` muestra la lista de paradas con su hora y el atraso.
 
 ## Consecuencias
