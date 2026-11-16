@@ -81,6 +81,8 @@
             </div>
           </dl>
 
+          <SeguimientoViaje v-if="!v.anulado && consultable(v.fecha, ahora)" :llave="datos.llave" :viaje="v.id" />
+
           <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
             <!-- Próximos: editar. -->
             <template v-if="v.futuro">
@@ -118,6 +120,8 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import * as api from '@/api'
 import HoraSubida from '@/componentes/HoraSubida.vue'
+import SeguimientoViaje from '@/componentes/SeguimientoViaje.vue'
+import { consultable } from '@/seguimiento'
 import { mensajeDeError } from '@/errores'
 import { REGION, type Idioma } from '@/i18n'
 import { guardarLlave, leerLlave } from '@/llave'
@@ -136,6 +140,8 @@ const correo = ref('')
 const enviando = ref(false)
 const enviado = ref(false)
 const bajando = ref<number | null>(null)
+/** Fijo al abrir la página: decide qué viajes consultan su seguimiento (ADR-065). */
+const ahora = Date.now()
 
 const region = computed(() => REGION[locale.value as Idioma])
 const fechaHora = (iso: string) => `${fechaCorta(iso, region.value)}, ${hora(iso, region.value)}`

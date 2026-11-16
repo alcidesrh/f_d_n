@@ -11,6 +11,7 @@ use App\Acceso\Ubicador;
 use App\Entity\Salida;
 use App\Seguimiento\GpsReciente;
 use App\Seguimiento\HistorialGps;
+use App\Seguimiento\HorasEstimadas;
 use App\Seguimiento\LecturaOsmAnd;
 use App\Seguimiento\SeguimientoBuses;
 use App\Seguimiento\TelefonosDePrueba;
@@ -53,6 +54,7 @@ final class SeguimientoController extends AbstractController
         private readonly GpsReciente $gps,
         private readonly HistorialGps $historial,
         private readonly Trayectorias $trayectorias,
+        private readonly HorasEstimadas $llegadas,
         private readonly TelefonosDePrueba $telefonos,
         private readonly EntityManagerInterface $em,
         private readonly LoggerInterface $logger,
@@ -147,6 +149,23 @@ final class SeguimientoController extends AbstractController
         }
 
         return $this->json($this->trayectorias->deSalida($salida));
+    }
+
+    /** Hora estimada de llegada de una salida a cada parada, con el atraso que lleva su bus (ADR-064). */
+    #[Route("/salidas/{id<\d+>}/llegadas", name: "llegadas", methods: ["GET"])]
+    public function llegadas(int $id): JsonResponse
+    {
+        $this->denyAccessUnlessGranted(self::VER);
+
+        $salida = $this->em->find(Salida::class, $id);
+        if (null === $salida) {
+            return $this->json(["error" => "La salida no existe."], 404);
+        }
+        if (!$this->autorizacion->puede(Capacidad::SALIDA_VER, Ubicador::salida($salida))) {
+            return $this->json(["error" => Autorizacion::mensaje(Capacidad::SALIDA_VER, Ubicador::salida($salida))], 403);
+        }
+
+        return $this->json($this->llegadas->deSalida($salida, new \DateTimeImmutable("now", new \DateTimeZone("America/Guatemala"))));
     }
 
     /** Borra la trayectoria GPS de una salida (las lecturas de su bus en su ventana). La salida se queda. */

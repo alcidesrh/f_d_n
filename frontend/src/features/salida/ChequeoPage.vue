@@ -3,6 +3,7 @@
   legado. Se elige una salida (las que este usuario puede atender: desde 24 h
   atrás hasta 6 h adelante), se pone a abordar, se marca cada boleto como
   presente (SI) o no presentado (NO: queda cancelado y libera el asiento) y
+  (o se escanea su código con la cámara o un lector: `EscanerDialog`, ADR-063) y
   se inicia (los chequeados pasan a tránsito; los no chequeados que subían en
   el origen quedan cancelados). Al llegar, el destino la finaliza (tránsito →
   finalizado; los que nadie chequeó, cancelados). Los manifiestos y la
@@ -94,7 +95,10 @@
       <section class="flex flex-col gap-3">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <h2 class="m-0 text-sm font-semibold uppercase tracking-wide text-muted-color">Boletos</h2>
-          <div v-if="chequeables > 0 && puede?.chequear" class="flex gap-1">
+          <div v-if="chequeables > 0 && puede?.chequear" class="flex flex-wrap gap-1">
+            <Button label="Escanear" size="small" :disabled="hayMarcas" v-tooltip.top="hayMarcas ? 'Guarde o descarte el chequeo antes de escanear' : null" @click="escaner = true">
+              <template #icon><icon name="qr-code-scanner" class="mr-1" /></template>
+            </Button>
             <Button label="Todos presentes" size="small" severity="secondary" text @click="marcas = marcarTodos(marcas, detalle.boletos, 'si')">
               <template #icon><icon name="done-all" class="mr-1" /></template>
             </Button>
@@ -190,6 +194,7 @@
       </div>
     </div>
 
+    <EscanerDialog v-if="escaner && detalle" :salida-id="detalle.salida.id" @chequeado="cargarDetalle(true)" @cerrar="escaner = false" />
     <BitacoraDialog v-if="bitacora && detalle" :visible="true" tipo="salida" :id="detalle.salida.id" @update:visible="(v: boolean) => !v && (bitacora = false)" />
   </div>
 </template>
@@ -205,6 +210,7 @@ import { notify } from "@/core/notify";
 import { suscribir } from "@/core/realtime";
 import BitacoraDialog from "@/shared/bitacora/BitacoraDialog.vue";
 import { useConfirm } from "primevue/useconfirm";
+import EscanerDialog from "./EscanerDialog.vue";
 import { abrirManifiesto, MANIFIESTOS } from "./manifiesto";
 
 const ESTADO_BOLETO: Record<string, string> = { chequeado: "Chequeado", transito: "En tránsito", finalizado: "Finalizado" };
@@ -222,6 +228,7 @@ const cargando = ref(false);
 const marcas = ref<Marcas>({});
 const operando = ref<"abordar" | "chequear" | "iniciar" | "finalizar" | null>(null);
 const bitacora = ref(false);
+const escaner = ref(false);
 
 const salidaId = computed<number | null>({
   get: () => (Number(route.query.salida) > 0 ? Number(route.query.salida) : null),

@@ -22,7 +22,9 @@ use App\Entity\Usuario;
 use App\Salida\SalidaRechazada;
 use App\Salida\VistaSalida;
 use App\Venta\Boleto\Flujo\FlujoBoleto;
+use App\Venta\Boleto\LlaveBoleto;
 use App\Venta\Disponibilidad;
+use App\Venta\Excepcion\VentaRechazada;
 use App\Venta\Ocupacion;
 use App\Venta\PublicadorOcupacion;
 use App\Venta\Tramo;
@@ -51,6 +53,7 @@ final class Abordaje
         private readonly Disponibilidad $disponibilidad,
         private readonly MovimientosEncomienda $encomiendas,
         private readonly Autorizacion $autorizacion,
+        private readonly LlaveBoleto $llaves,
     ) {}
 
     /**
@@ -207,6 +210,77 @@ final class Abordaje
         }
 
         return $resultado;
+    }
+
+    /**
+     * Chequea como presente lo que dice un código escaneado (ADR-063): el QR
+     * de un boleto (`LlaveBoleto`, un asiento) o el código de barras de un
+     * boleto impreso (el id de la venta: todos sus asientos de esta salida
+     * que se puedan chequear aquí). Mismas reglas que `chequear`; el rechazo
+     * dice qué pasa con el boleto (de otra salida, ya chequeado, anulado…).
+     *
+     * @return array{chequeados: int, boletos: list<array<string, mixed>>}
+     *
+     * @throws SalidaRechazada
+     */
+    public function escanear(int $salidaId, string $codigo, Usuario $usuario): array
+    {
+        $boletoId = $this->llaves->boleto($codigo);
+        $ventaId = $boletoId === null ? LlaveBoleto::venta($codigo) : null;
+        if ($boletoId === null && $ventaId === null) {
+            throw new SalidaRechazada("El código no es de un boleto.", "codigo_invalido");
+        }
+
+        return $this->transaccion->ejecutar(function () use ($salidaId, $boletoId, $ventaId, $usuario) {
+            $salida = $this->bloquear($salidaId);
+            $this->exigirAlcance(Capacidad::BOLETO_CHEQUEAR, $salida, $usuario);
+            ReglasAbordaje::exigirChequeable($salida->getEstado(), $salida->getFecha(), $this->reloj->now());
+            $estacion = $this->estacionDe($usuario);
+
+            /** @var list<BoletoAsiento> $todos */
+            $todos = $this->em->getRepository(BoletoAsiento::class)->findBy($boletoId !== null ? ["id" => $boletoId] : ["boletoVenta" => $ventaId]);
+            if ($todos === []) {
+                throw new SalidaRechazada("No hay un boleto con ese código.", "boleto_inexistente", 404);
+            }
+            $boletos = array_values(array_filter($todos, static fn(BoletoAsiento $b) => $b->getSalida()->getId() === $salida->getId()));
+            if ($boletos === []) {
+                $otra = $todos[0]->getSalida();
+                throw new SalidaRechazada(
+                    sprintf("El boleto es de otra salida: %s, %s.", VistaSalida::ruta($otra->getRuta()), $otra->getFecha()?->format("d/m/Y H:i") ?? "sin fecha"),
+                    "otra_salida",
+                    409,
+                    ["salida" => (int) $otra->getId()],
+                );
+            }
+
+            $alChequear = TransicionBoleto::alChequear($salida->getEstado());
+            $chequeados = [];
+            $rechazo = null;
+            foreach ($boletos as $b) {
+                $this->em->refresh($b);
+                try {
+                    if (ReglasAbordaje::yaAbordo($b->getEstado())) {
+                        throw new SalidaRechazada(sprintf("El boleto %d (asiento %d) ya fue chequeado.", $b->getId(), $b->getAsiento()->getNumero()), "ya_chequeado", 409);
+                    }
+                    $this->flujo->exigir($b, $alChequear);
+                    $this->exigirEstacion($b, $estacion);
+                } catch (SalidaRechazada|VentaRechazada $e) {
+                    $rechazo ??= $e;
+                    continue;
+                }
+                $this->flujo->aplicar($b, $alChequear);
+                $chequeados[] = $b;
+            }
+            // Un código de venta chequea los que se pueda; si no se pudo ninguno, el primer motivo.
+            if ($chequeados === [] && $rechazo !== null) {
+                throw $rechazo;
+            }
+
+            return [
+                "chequeados" => count($chequeados),
+                "boletos" => array_map(fn(BoletoAsiento $b) => $this->vistaBoleto($b, $estacion), $chequeados),
+            ];
+        });
     }
 
     /**

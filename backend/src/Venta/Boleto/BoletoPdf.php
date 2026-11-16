@@ -20,6 +20,7 @@ final class BoletoPdf
     public function __construct(
         private readonly Environment $twig,
         private readonly Comprobantes $comprobantes,
+        private readonly LlaveBoleto $llaves,
     ) {}
 
     /** Un PDF con una página por venta (ida y regreso de una compra web). */
@@ -49,10 +50,19 @@ final class BoletoPdf
     private function renderizar(array $paginas): string
     {
         $html = $this->twig->render("venta/boleto_pdf.html.twig", [
-            "boletos" => array_map(fn(array $p) => [
-                "b" => $this->comprobantes->de($p[0], $p[1]),
-                "codigoBarras" => base64_encode(Code128::svg(sprintf("%08d", $p[0]->getId()))),
-            ], $paginas),
+            "boletos" => array_map(function (array $p) {
+                $b = $this->comprobantes->de($p[0], $p[1]);
+
+                return [
+                    "b" => $b,
+                    "codigoBarras" => base64_encode(Code128::svg(sprintf("%08d", $p[0]->getId()))),
+                    // Un QR de abordaje por asiento (ADR-063), por id de boleto.
+                    "qr" => array_column(array_map(fn(array $x) => [
+                        "id" => (int) $x["id"],
+                        "svg" => base64_encode(CodigoQr::svg($this->llaves->codigo((int) $x["id"]))),
+                    ], $b["boletos"]), "svg", "id"),
+                ];
+            }, $paginas),
         ]);
 
         $opciones = new Options();

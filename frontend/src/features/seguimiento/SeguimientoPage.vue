@@ -97,6 +97,25 @@
             <dt class="text-muted-color">Ruta</dt>
             <dd class="m-0">{{ seleccionado.rutaNombre }}</dd>
           </dl>
+          <!-- Hora estimada por parada (ADR-064): el horario de la salida corregido con el atraso del bus. -->
+          <section v-if="llegadas" class="flex flex-col gap-1" aria-label="Llegada a cada parada">
+            <div class="flex items-center justify-between gap-2">
+              <h3 class="m-0 text-xs font-semibold uppercase tracking-wide text-muted-color">Paradas</h3>
+              <Tag :value="etiquetaAtraso(llegadas.atrasoMinutos)" :severity="SEVERIDAD_ATRASO[puntualidad(llegadas.atrasoMinutos)]" class="!text-xs" />
+            </div>
+            <ol class="m-0 flex list-none flex-col gap-0.5 p-0 text-xs">
+              <li v-for="p in llegadas.paradas" :key="p.enclave" class="flex items-baseline justify-between gap-2" :class="p.paso ? 'text-muted-color' : ''">
+                <span class="min-w-0 truncate">{{ p.nombre }}</span>
+                <span class="shrink-0 tabular-nums">
+                  <template v-if="p.paso">ya pasó</template>
+                  <template v-else-if="p.estimada !== null">
+                    <s v-if="p.programada !== null && Math.abs(p.estimada - p.programada) >= 300" class="mr-1 text-muted-color">{{ horaDe(p.programada) }}</s>{{ horaDe(p.estimada) }}
+                  </template>
+                  <template v-else>—</template>
+                </span>
+              </li>
+            </ol>
+          </section>
           <RouterLink v-if="seleccionado.posicion.fuente === 'gps'" :to="{ name: 'seguimiento-reproducir', query: { salida: seleccionado.salidaId } }" class="flex items-center gap-1 self-start text-xs font-medium text-primary">
             <icon name="replay" sm />
             Reproducir lo recorrido
@@ -138,7 +157,8 @@
 
 <script setup lang="ts">
 import type { LineLayerSpecification, Map as MapaLibre, Marker } from "maplibre-gl";
-import { fetchBusesEnRecorrido } from "@/core/seguimiento/api";
+import { fetchBusesEnRecorrido, fetchLlegadas } from "@/core/seguimiento/api";
+import { etiquetaAtraso, puntualidad, type Llegadas, type Puntualidad } from "@/core/seguimiento/llegadas";
 import { FILTRO_VACIO, filtrarBuses, filtroVigente, salidasDisponibles } from "@/core/seguimiento/filtro";
 import { estilosPorRuta, posicionEnArco, trazadoArqueado } from "@/core/seguimiento/arco";
 import { posicionEn, proximaParada } from "@/core/seguimiento/posicion";
@@ -206,6 +226,28 @@ const opcionesSalida = computed(() => salidasDisponibles(datos.value?.buses ?? [
 const seleccionado = computed<BusEnRecorrido | null>(() => visibles.value.find((b) => b.salidaId === seleccionadoId.value) ?? null);
 const seleccionadoPos = computed(() => (seleccionado.value ? (estimadas.value.get(seleccionado.value.salidaId) ?? null) : null));
 const seleccionadoProxima = computed(() => (seleccionado.value ? proximaParada(seleccionado.value, ahora.value) : null));
+
+/** Llegadas del bus elegido: se piden al elegirlo y con cada actualización del mapa. */
+const SEVERIDAD_ATRASO: Record<Puntualidad, string> = { a_tiempo: "success", atrasado: "warn", adelantado: "info", sin_dato: "secondary" };
+const llegadas = shallowRef<Llegadas | null>(null);
+async function cargarLlegadas() {
+  const id = seleccionadoId.value;
+  if (id === null) {
+    llegadas.value = null;
+    return;
+  }
+  try {
+    const r = await fetchLlegadas(id, true);
+    if (id === seleccionadoId.value) llegadas.value = r;
+  } catch {
+    // El detalle del bus sigue sin la lista de paradas.
+    if (id === seleccionadoId.value) llegadas.value = null;
+  }
+}
+watch(seleccionadoId, () => {
+  llegadas.value = null;
+  void cargarLlegadas();
+});
 
 const pintar = (el: HTMLElement, b: BusEnRecorrido, p: PosicionEstimada, activo: boolean) => pintarBus(el, { color: colorEmpresa(b.empresaId, b.empresa), rumbo: p.rumbo, activo, quieto: p.estado !== "en_ruta" });
 
@@ -460,6 +502,7 @@ async function cargar(silencioso: boolean) {
     refrescarVista();
     dibujarTelefonos();
     if (primera) enfocar(visibles.value, false);
+    void cargarLlegadas();
   } catch (e) {
     if (mia !== carga) return;
     error.value = e instanceof HttpError && e.status === 403 ? "No tiene permiso para ver las salidas (salida.ver)." : e instanceof Error ? e.message : String(e);

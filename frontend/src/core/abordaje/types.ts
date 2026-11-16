@@ -53,6 +53,12 @@ export interface ResultadoChequeo {
   cancelados: number
 }
 
+/** Lo que chequeó una lectura (ADR-063): un boleto por QR, o los de la venta por código de barras. */
+export interface ResultadoEscaneo {
+  chequeados: number
+  boletos: BoletoAbordaje[]
+}
+
 export interface ResultadoFinal {
   salida: SalidaAbordaje
   finalizados: number

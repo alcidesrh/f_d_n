@@ -1,5 +1,6 @@
 /** Transporte del seguimiento de buses (`/api/seguimiento/*`, permiso `salida.ver`). */
 import { http } from '@/core/http'
+import type { Llegadas } from './llegadas'
 import type { RespuestaSeguimiento, RespuestaTrayectorias, Trayectoria, TrayectoriaDeTelefono } from './types'
 
 export const fetchBusesEnRecorrido = (silent = false) => http.get<RespuestaSeguimiento>('/seguimiento/buses', { silent })
@@ -9,6 +10,9 @@ export const fetchTrayectorias = (fecha: string) => http.get<RespuestaTrayectori
 
 /** Trayectoria GPS de una salida, para reproducirla. */
 export const fetchTrayectoria = (salidaId: number) => http.get<Trayectoria>(`/seguimiento/salidas/${salidaId}/trayectoria`)
+
+/** Hora estimada de llegada de una salida a cada parada (ADR-064). */
+export const fetchLlegadas = (salidaId: number, silent = false) => http.get<Llegadas>(`/seguimiento/salidas/${salidaId}/llegadas`, { silent })
 
 /** Trayectoria de un teléfono de prueba que empieza en `desde` (epoch), para reproducirla. */
 export const fetchTrayectoriaDeTelefono = (dispositivo: string, desde: number) =>

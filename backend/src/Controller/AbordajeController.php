@@ -74,6 +74,16 @@ final class AbordajeController extends AbstractController
         ));
     }
 
+    /** `{ codigo }`: lo que leyó la cámara o el lector (QR del boleto o código de barras de la venta). */
+    #[Route("/salidas/{id<\d+>}/escaneo", name: "escanear", methods: ["POST"])]
+    public function escanear(int $id, Request $request, #[CurrentUser] Usuario $usuario): JsonResponse
+    {
+        $this->denyAccessUnlessGranted(self::CHEQUEAR);
+        $codigo = $request->toArray()["codigo"] ?? null;
+
+        return $this->responder(fn() => $this->abordaje->escanear($id, is_string($codigo) ? $codigo : "", $usuario));
+    }
+
     #[Route("/salidas/{id<\d+>}/iniciar", name: "iniciar", methods: ["POST"])]
     public function iniciar(int $id, #[CurrentUser] Usuario $usuario): JsonResponse
     {

@@ -181,6 +181,12 @@ final class ReglasAbordaje
         return $estacionUsuario === null || $estacionUsuario === $sube;
     }
 
+    /** Si el boleto ya pasó el chequeo: escanearlo otra vez avisa, no lo cambia (ADR-063). */
+    public static function yaAbordo(EstadoBoletoAsiento $estado): bool
+    {
+        return in_array($estado, [EstadoBoletoAsiento::CHEQUEADO, EstadoBoletoAsiento::TRANSITO, EstadoBoletoAsiento::FINALIZADO], true);
+    }
+
     /**
      * Al iniciar la salida: el chequeado parte (tránsito); el emitido que
      * subía en el origen no se presentó (cancelado); los demás (suben más

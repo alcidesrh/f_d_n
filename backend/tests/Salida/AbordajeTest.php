@@ -44,6 +44,17 @@ final class AbordajeTest extends TestCase
         $this->assertFalse($visible(EstadoSalida::INICIADA, 99));
     }
 
+    public function testEscanearUnBoletoQueYaAbordoAvisa(): void
+    {
+        $this->assertFalse(ReglasAbordaje::yaAbordo(EstadoBoletoAsiento::EMITIDO));
+        $this->assertTrue(ReglasAbordaje::yaAbordo(EstadoBoletoAsiento::CHEQUEADO));
+        $this->assertTrue(ReglasAbordaje::yaAbordo(EstadoBoletoAsiento::TRANSITO));
+        $this->assertTrue(ReglasAbordaje::yaAbordo(EstadoBoletoAsiento::FINALIZADO));
+        // Anulado, reasignado y cancelado los rechaza el flujo, con su motivo.
+        $this->assertFalse(ReglasAbordaje::yaAbordo(EstadoBoletoAsiento::ANULADO));
+        $this->assertFalse(ReglasAbordaje::yaAbordo(EstadoBoletoAsiento::CANCELADO));
+    }
+
     public function testVentanaDelSelector(): void
     {
         [$desde, $hasta] = ReglasAbordaje::ventanaSelector(self::salida());

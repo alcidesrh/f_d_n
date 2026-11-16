@@ -1,4 +1,4 @@
-{# PDF del boleto (venta web y copia por correo): una página por venta (ida y regreso) y, en ella, cada viaje (salida y trayecto: una compra modificada puede tener asientos en otras salidas). Datos: `boletos` = lista de { b: App\Venta\Boleto\DatosBoleto, codigoBarras }. #}
+{# PDF del boleto (venta web y copia por correo): una página por venta (ida y regreso) y, en ella, cada viaje (salida y trayecto: una compra modificada puede tener asientos en otras salidas). Datos: `boletos` = lista de { b: App\Venta\Boleto\DatosBoleto, codigoBarras, qr: id de boleto → SVG en base64 del código de abordaje (ADR-063) }. #}
 <!doctype html>
 <html lang="es">
 <head>
@@ -16,6 +16,8 @@
   table.boletos { width: 100%; border-collapse: collapse; margin-top: 6px; }
   table.boletos th { text-align: left; font-size: 9px; text-transform: uppercase; color: #6b7280; border-bottom: 1px solid #d1d5db; padding: 3px 0; }
   table.boletos td { padding: 3px 0; border-bottom: 1px solid #f3f4f6; }
+  table.qr { margin-top: 8px; }
+  table.qr td { text-align: center; font-size: 9px; font-weight: bold; padding: 0 8px 4px 0; }
   .viaje { font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: .04em; color: #374151; margin-top: 8px; }
   .total { text-align: right; font-size: 14px; font-weight: bold; margin-top: 6px; }
   .aviso { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 8px 10px; margin-top: 10px; }
@@ -63,7 +65,14 @@
         <tr><td>{{ x.asiento }}</td><td>{{ x.clase }}</td><td>{{ x.pasajero }}</td><td style="text-align:right">{{ x.precio.texto }}</td></tr>
       {% endfor %}
     </table>
+    <table class="qr"><tr>
+      {% for x in v.boletos %}
+        {% if item.qr[x.id] is defined %}<td><img src="data:image/svg+xml;base64,{{ item.qr[x.id] }}" width="88" height="88"><br>Asiento {{ x.asiento }}</td>{% endif %}
+        {% if loop.index % 6 == 0 and not loop.last %}</tr><tr>{% endif %}
+      {% endfor %}
+    </tr></table>
     {% endfor %}
+    <div class="muted">Al abordar, muestre el código QR de cada asiento.</div>
     <div class="total">Total: {{ b.total.texto }}</div>
   </div>
 

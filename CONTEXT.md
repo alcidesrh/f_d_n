@@ -274,6 +274,11 @@ Modelo: nuevo (`EstadoBoletoAsiento::CANCELADO`)
 Marcar al abordar cada boleto de una salida como presente (`chequeado`, o `transito` si la salida ya inició) o no presentado (`cancelado`). Lo hace la estación donde sube el pasajero, con la salida abordando o iniciada (ADR-032).
 _Avoid_: check-in
 Modelo: concepto
+**Código de abordaje**:
+Lo que lleva el QR de un boleto para chequearlo por escaneo: `FDN1.<id del boleto>.<firma>`. Uno por asiento. No es el código de barras del boleto impreso, que es el id de la venta.
+_Avoid_: token, llave del boleto
+Modelo: concepto (`App\Venta\Boleto\LlaveBoleto`, `CodigoQr`, `Abordaje::escanear`, ADR-063)
+
 **Reasignacion**:
 Cambio de asiento (de la misma salida o de otra) de boletos emitidos, antes de la hora de salida (después, con una autorización fuera de hora, ADR-040) y al mismo precio. El boleto original pasa a `reasignado` y el nuevo queda en la misma venta con `reasignadoDe`. Solo entre salidas de la misma empresa, también lo vendido en la página (`App\Venta\Reasignacion`, ADR-028). Un boleto pospuesto se reasigna aunque su salida ya haya pasado: así se reanuda. El rol de sistema reasigna un boleto en cualquier estado salvo anulado o reasignado; la salida destino sigue sus reglas (ADR-057). Los demás, una vez, con una autorización fuera de estado (ADR-058).
 Modelo: nuevo
@@ -300,6 +305,11 @@ Evitar (modelo): recorrido, ruta
 Algo en la trayectoria de un bus en recorrido que hay que avisar: un **exceso de velocidad** sostenido unos minutos (no un pico suelto) o una **parada larga**, detenido fuera de las paradas de su ruta. Se avisa por el chat una vez, cuando ocurre, a la audiencia que elige un administrador.
 _Avoid_: alerta (es del tablero), anomalía a secas (las de reasignación y tarifa son de la madrugada), infracción
 Modelo: concepto (`App\Seguimiento\Irregularidades`, `IrregularidadesEnCurso`; mensaje predeterminado `anomalia_gps`, ADR-062)
+
+**Hora estimada** (de llegada):
+A qué hora se espera que el bus de una salida pase por cada parada que le falta: su hora del horario más el **atraso** que lleva (la hora de su última lectura GPS frente a la hora a la que el horario lo ponía en ese punto). Sin lectura reciente, es la del horario.
+_Avoid_: ETA, hora real
+Modelo: concepto (`App\Seguimiento\HoraEstimada`, `HorasEstimadas`, ADR-064). El cliente la ve en «Mis compras» para su tramo (`App\Venta\EnLinea\SeguimientoViaje`, ADR-065).
 
 ## Usuarios y accesos
 
