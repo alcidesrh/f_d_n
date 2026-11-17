@@ -79,6 +79,10 @@ export const useVentaStore = defineStore("venta", () => {
   const cliente = ref<Cliente | null>(null);
   /** Pasajero por asiento (si no, viaja el cliente de la venta). */
   const pasajeros = ref<Record<number, Cliente | null>>({});
+  /** Tipo de pasajero por asiento (ADR-066); sin tipo, la tarifa completa. */
+  const tiposPasajero = ref<Record<number, number | null>>({});
+  /** Código promocional de la venta (ADR-066); vacío = solo las promociones que se aplican solas. */
+  const codigoPromocion = ref("");
   const observacion = ref("");
   const cobrarTrayectoCompleto = ref(false);
   const cotizacion = shallowRef<Cotizacion | null>(null);
@@ -259,6 +263,8 @@ export const useVentaStore = defineStore("venta", () => {
     recomendados.value = [];
     seleccion.value = [];
     pasajeros.value = {};
+    tiposPasajero.value = {};
+    codigoPromocion.value = "";
     cotizacion.value = null;
     cobrarTrayectoCompleto.value = false;
   }
@@ -301,7 +307,10 @@ export const useVentaStore = defineStore("venta", () => {
       return;
     }
     seleccion.value = alternar(seleccion.value, id);
-    if (!seleccion.value.includes(id)) delete pasajeros.value[id];
+    if (!seleccion.value.includes(id)) {
+      delete pasajeros.value[id];
+      delete tiposPasajero.value[id];
+    }
     void recotizar();
   }
 
@@ -321,6 +330,7 @@ export const useVentaStore = defineStore("venta", () => {
         cobrarTrayectoCompleto: cobrarTrayectoCompleto.value,
         cortesia,
         venta: reasignacion.value?.ventaId,
+        ...(reasignacion.value ? {} : { tiposPasajero: tiposPasajero.value, codigoPromocion: codigoPromocion.value.trim() || null }),
       });
       if (n === cotizacionEnCurso) cotizacion.value = c;
     } catch (e) {
@@ -347,7 +357,9 @@ export const useVentaStore = defineStore("venta", () => {
         asientos: seleccion.value.map((asiento) => ({
           asiento,
           cliente: pasajeros.value[asiento]?.id ?? null,
+          tipoPasajero: opciones.cortesia ? null : (tiposPasajero.value[asiento] ?? null),
         })),
+        codigoPromocion: opciones.cortesia ? null : codigoPromocion.value.trim() || null,
         cliente: cliente.value.id,
         // Lugar de emisión: la estación del usuario, no el filtro "Sube en" (que es dónde sube el pasajero).
         estacion: contexto.value?.canal === "estacion" ? (contexto.value.estacion?.id ?? null) : null,
@@ -390,6 +402,8 @@ export const useVentaStore = defineStore("venta", () => {
     token.value = nuevoToken();
     seleccion.value = [];
     pasajeros.value = {};
+    tiposPasajero.value = {};
+    codigoPromocion.value = "";
     observacion.value = "";
     cotizacion.value = null;
     falloFacturacion.value = null;
@@ -534,6 +548,8 @@ export const useVentaStore = defineStore("venta", () => {
     seleccion,
     cliente,
     pasajeros,
+    tiposPasajero,
+    codigoPromocion,
     observacion,
     cobrarTrayectoCompleto,
     cotizacion,

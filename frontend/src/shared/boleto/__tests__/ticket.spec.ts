@@ -99,4 +99,11 @@ describe('ticketHtml', () => {
     expect(html).toContain('Al abordar, muestre el código QR de cada asiento.')
     expect(ticketHtml(base)).not.toContain('class="qr"')
   })
+
+  it('dice el descuento de cada asiento (ADR-066)', () => {
+    const [primero, ...resto] = base.boletos
+    const boletos = [{ ...primero!, descuento: { importe: { centavos: 4250, moneda: 'GTQ', texto: 'Q 42.50' }, motivo: 'Niño 50 %' } }, ...resto]
+    expect(ticketHtml({ ...base, boletos })).toContain('Niño 50 %: −Q 42.50')
+    expect(ticketHtml(base)).not.toContain('−Q')
+  })
 })

@@ -58,6 +58,9 @@ export const cotizar = (body: {
   cortesia?: boolean
   /** Al reasignar: cotiza como esa venta (su cortesía y su recargo). */
   venta?: number
+  /** Tipo de pasajero por id de asiento y código promocional (ADR-066). */
+  tiposPasajero?: Record<number, number | null>
+  codigoPromocion?: string | null
 }) => http.post<Cotizacion>('/venta/cotizacion', body, { silent: true })
 
 export const vender = (pedido: PedidoVenta) =>

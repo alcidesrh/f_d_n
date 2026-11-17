@@ -30,7 +30,7 @@
       <td class="centro"><b>{{ l.asiento }}</b></td>
       <td>{{ l.origen }}</td>
       <td>{{ l.destino }}</td>
-      <td>{% if l.autorizacion %}Aut. {{ l.autorizacion }}{% endif %}{% if l.referenciaExterna %}{% if l.autorizacion %}<br>{% endif %}Ref. {{ l.referenciaExterna }}{% endif %}</td>
+      <td>{% if l.autorizacion %}Aut. {{ l.autorizacion }}{% endif %}{% if l.referenciaExterna %}{% if l.autorizacion %}<br>{% endif %}Ref. {{ l.referenciaExterna }}{% endif %}{% if l.descuento > 0 %}{% if l.autorizacion or l.referenciaExterna %}<br>{% endif %}Desc. {{ l.motivoDescuento }}: {{ dinero.num(l.descuento) }}{% endif %}</td>
       <td>{{ l.usuario }}</td>
       <td class="der num">{{ l.moneda }} {{ dinero.num(l.cobrado) }}</td>
     </tr>

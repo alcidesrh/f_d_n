@@ -122,8 +122,23 @@ final class ValidacionesVentaTest extends TestCase
         $this->assertSame("1b4e28ba-2fa1-41d2-883f-0016d3cca427", $s->token);
         $this->assertSame(5, $s->salidaId);
         $this->assertNull($s->trayectoId);
-        $this->assertSame([["asiento" => 3, "cliente" => null], ["asiento" => 4, "cliente" => 9]], $s->asientos);
+        $this->assertSame([["asiento" => 3, "cliente" => null, "tipoPasajero" => null], ["asiento" => 4, "cliente" => 9, "tipoPasajero" => null]], $s->asientos);
         $this->assertSame("viaja con mascota", $s->observacion);
+        $this->assertNull($s->codigoPromocion);
+    }
+
+    public function testSolicitudConTipoDePasajeroYCodigoPromocional(): void
+    {
+        $s = SolicitudVenta::desdeArray([
+            "token" => "1b4e28ba-2fa1-41d2-883f-0016d3cca427",
+            "salida" => 5,
+            "asientos" => [["asiento" => 3, "tipoPasajero" => 2], ["asiento" => 4]],
+            "cliente" => 7,
+            "codigoPromocion" => " navidad ",
+        ]);
+
+        $this->assertSame([3 => 2, 4 => null], $s->tiposPasajero());
+        $this->assertSame("NAVIDAD", $s->codigoPromocion);
     }
 
     public function testSolicitudSinAsientos(): void

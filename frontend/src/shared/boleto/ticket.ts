@@ -48,7 +48,9 @@ export function ticketHtml(c: Comprobante): string {
   const pasajeros = c.boletos
     .map(
       (b) =>
-        `<tr><td>${esc(b.pasajero ?? c.cliente?.nombre)}</td><td class="r">${b.asiento}</td><td class="r">${esc(b.precio?.texto)}</td></tr>`,
+        `<tr><td>${esc(b.pasajero ?? c.cliente?.nombre)}</td><td class="r">${b.asiento}</td><td class="r">${esc(b.precio?.texto)}</td></tr>` +
+        // Tipo de pasajero o promoción (ADR-066).
+        (b.descuento ? `<tr><td colspan="3" class="small">${esc(b.descuento.motivo)}: −${esc(b.descuento.importe.texto)}</td></tr>` : ''),
     )
     .join('')
   const factura = f

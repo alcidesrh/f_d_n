@@ -104,6 +104,8 @@ final class ConsultaBoletos
             "asiento" => ["id" => $b->getAsiento()->getId(), "numero" => $b->getAsiento()->getNumero(), "clase" => $b->getAsiento()->getClase()->value],
             "pasajero" => $cliente?->getNombreCompleto(),
             "precio" => DatosBoleto::importe($b->getPrecio()),
+            // La tarifa antes del descuento: con ella se compara el asiento nuevo al reasignar (ADR-066).
+            "precioLista" => DatosBoleto::importe($b->getPrecioLista()),
             "observacion" => $b->getObservacion(),
             "trayecto" => [
                 "id" => $t->getId(),

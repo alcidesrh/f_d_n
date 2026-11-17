@@ -62,7 +62,7 @@
     <table class="boletos">
       <tr><th>Asiento</th><th>Clase</th><th>Pasajero</th><th style="text-align:right">Precio</th></tr>
       {% for x in v.boletos %}
-        <tr><td>{{ x.asiento }}</td><td>{{ x.clase }}</td><td>{{ x.pasajero }}</td><td style="text-align:right">{{ x.precio.texto }}</td></tr>
+        <tr><td>{{ x.asiento }}</td><td>{{ x.clase }}</td><td>{{ x.pasajero }}{% if x.descuento %}<div class="muted">{{ x.descuento.motivo }}: −{{ x.descuento.importe.texto }}</div>{% endif %}</td><td style="text-align:right">{{ x.precio.texto }}</td></tr>
       {% endfor %}
     </table>
     <table class="qr"><tr>

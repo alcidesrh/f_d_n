@@ -217,6 +217,21 @@ _Avoid_: tarifa, precio
 Modelo: nuevo. Detalle del modelo: Precio de referencia de un BoletoAsiento. Se aplica la más reciente (`vigenteDesde`, ya vigente) del trayecto y la clase de asiento cuyos demás campos coinciden o están vacíos; por prioridad: empresa > clase de bus > horario (`horaDesde`–`horaHasta`, puede cruzar la medianoche) > bus. Si ninguna cumple se deja de exigir el de menor prioridad, y así sucesivamente (trayecto y clase de asiento nunca). Resolver: `App\Venta\EspecificidadTarifa`, ADR-021. Las del legado no tienen empresa.
 Evitar (modelo): tarifa, precio
 
+**Tipo de pasajero** (`TipoPasajero`):
+Quién viaja a efectos del precio: niño, tercera edad, estudiante… Se elige por asiento al vender y descuenta su porcentaje de la tarifa. Sin tipo, paga la tarifa completa.
+_Avoid_: categoría, tarifa especial (es el resultado, no el tipo)
+Modelo: nuevo (ADR-066)
+
+**Promoción** (`Promocion`):
+Un descuento por un tiempo para las salidas de unas fechas de viaje y, si se fijan, de una empresa, ruta o clase de bus. Sin código se aplica sola; con **código promocional**, solo a la venta que lo escribe. No se suma al tipo de pasajero: el asiento lleva el mayor de los dos.
+_Avoid_: oferta, cupón
+Modelo: nuevo (`App\Venta\Descuento\ReglasDescuento`, `Descuentos`, ADR-066)
+
+**Descuento** (del boleto):
+Lo que se le rebajó a la tarifa de un boleto por su tipo de pasajero o una promoción, con su motivo («Niño 50 %»). El precio del boleto es lo cobrado; precio + descuento es la tarifa.
+_Avoid_: rebaja, cortesía (la cortesía no se cobra)
+Modelo: `BoletoAsiento.descuento`, `motivoDescuento` (ADR-066)
+
 **Factura**:
 El documento fiscal (DTE) de una venta, certificado por el certificador FEL, con un snapshot inmutable
 de emisor, receptor y certificador.

@@ -97,6 +97,16 @@ final class ReportesTest extends TestCase
         $this->assertSame(1, $d->resumen()["sinFactura"]);
     }
 
+    public function testElDetalleDiceElDescuento(): void
+    {
+        $base = self::linea(1, 1, tarjeta: true);
+        $nino = new LineaBoleto(...[...(array) $base, "descuento" => 4250, "motivoDescuento" => "Niño 50 %"]);
+        $d = new DetalleFacturaBoletos("03/10/2026", null, null, [$base, $nino]);
+
+        $this->assertSame("Aut. 012384 · Desc. Niño 50 %: Q 42.50", DetalleFacturaBoletos::descripcion($nino));
+        $this->assertSame(1, $d->resumen()["conDescuento"]);
+    }
+
     public function testCuadreVoucherAgrupaPorEstacionYDiaYSumaElPrecio(): void
     {
         $l = static fn(int $id, string $vendida, string $estado = "transito", string $estacion = "Guatemala") => new LineaBoleto(
