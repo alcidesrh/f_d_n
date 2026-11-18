@@ -99,74 +99,10 @@ class BoletoAsiento extends Base
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $observacion = null;
 
-    /** Tipo de pasajero con el que se vendió (ADR-066), si se eligió uno. */
-    #[ORM\ManyToOne]
-    #[ORM\JoinColumn(onDelete: "SET NULL")]
-    private ?TipoPasajero $tipoPasajero = null;
-
-    /** Promoción que se le aplicó (ADR-066). */
-    #[ORM\ManyToOne]
-    #[ORM\JoinColumn(onDelete: "SET NULL")]
-    private ?Promocion $promocion = null;
-
-    /**
-     * Lo que se le descontó a la tarifa, en centavos de la moneda del precio:
-     * `precio` es lo cobrado y `precio + descuento`, la tarifa (ADR-066).
-     */
-    #[ApiProperty(writable: false)]
-    #[ORM\Column(options: ["default" => 0])]
-    private int $descuento = 0;
-
-    /** Por qué («Niño 50 %», «Diciembre 20 %»): queda aunque cambie o se borre el tipo o la promoción. */
-    #[ApiProperty(writable: false)]
-    #[ORM\Column(length: 100, nullable: true)]
-    private ?string $motivoDescuento = null;
-
     /** "Boleto 15 · asiento 12": el texto que muestran los listados y el chat. */
     public function getLabel(): string
     {
         return sprintf("Boleto %d · asiento %s", $this->id ?? 0, $this->asiento?->getNumero() ?? "?");
-    }
-
-    public function getTipoPasajero(): ?TipoPasajero
-    {
-        return $this->tipoPasajero;
-    }
-
-    public function getPromocion(): ?Promocion
-    {
-        return $this->promocion;
-    }
-
-    public function getDescuento(): ?Money
-    {
-        $precio = $this->getPrecio();
-
-        return $precio === null ? null : new Money($this->descuento, $precio->getCurrency());
-    }
-
-    public function getMotivoDescuento(): ?string
-    {
-        return $this->motivoDescuento;
-    }
-
-    /** La tarifa antes del descuento: lo que cobra un pasajero sin tipo ni promoción. */
-    public function getPrecioLista(): ?Money
-    {
-        $precio = $this->getPrecio();
-
-        return $precio?->add(new Money($this->descuento, $precio->getCurrency()));
-    }
-
-    /** El descuento con el que se vendió (o el que hereda de otro boleto). Se fija junto con el precio. */
-    public function setDescuento(?Money $descuento, ?string $motivo, ?TipoPasajero $tipo = null, ?Promocion $promocion = null): static
-    {
-        $this->descuento = $descuento === null ? 0 : (int) $descuento->getAmount();
-        $this->motivoDescuento = $this->descuento > 0 ? $motivo : null;
-        $this->tipoPasajero = $this->descuento > 0 ? $tipo : null;
-        $this->promocion = $this->descuento > 0 ? $promocion : null;
-
-        return $this;
     }
 
     public function getAsiento(): ?Asiento

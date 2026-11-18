@@ -191,8 +191,6 @@ final class DatosBoleto
             "clase" => $b->getAsiento()->getClase()->value,
             "pasajero" => $b->getCliente()?->getNombreCompleto(),
             "precio" => self::importe($b->getPrecio()),
-            // Tipo de pasajero o promoción (ADR-066): cuánto y por qué; null sin descuento.
-            "descuento" => $b->getDescuento()?->isPositive() ? ["importe" => self::importe($b->getDescuento()), "motivo" => $b->getMotivoDescuento()] : null,
             "observacion" => $b->getObservacion(),
             "estado" => $b->getEstado()->value,
         ];

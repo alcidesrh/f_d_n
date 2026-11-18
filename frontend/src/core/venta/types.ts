@@ -32,17 +32,6 @@ export interface ContextoVenta {
   naciones: Opcion[]
   /** Encomiendas que lleva el pasajero (ADR-035): taquilla con `encomienda.registrar`. */
   encomiendas: { permitido: boolean; especiales: EspecialOpcion[] }
-  /** Tipos de pasajero activos, con lo que descuentan (ADR-066). */
-  tiposPasajero: TipoPasajero[]
-}
-
-/** Niño, tercera edad… (ADR-066): se elige por asiento y descuenta su porcentaje de la tarifa. */
-export interface TipoPasajero {
-  id: number
-  nombre: string
-  porciento: number
-  /** Lo que la taquilla debe pedir (carné, DPI). */
-  requisito: string | null
 }
 
 /** Ruta que recorre el bus de una salida (ADR-030). */
@@ -197,14 +186,8 @@ export interface LineaCotizacion {
   asiento: number
   numero: number
   clase: 'A' | 'B'
-  /** Lo que se cobra (con el descuento, si lleva). */
   precio: Importe
   tarifa: number | null
-  /** La tarifa antes del descuento (ADR-066). */
-  lista?: Importe
-  /** Lo descontado y por qué («Niño 50 %»); null sin descuento. */
-  descuento?: Importe | null
-  motivo?: string | null
 }
 
 export interface Cotizacion {
@@ -236,9 +219,7 @@ export interface PedidoVenta {
   token: string
   salida: number
   trayecto: number | null
-  asientos: Array<{ asiento: number; cliente?: number | null; tipoPasajero?: number | null }>
-  /** Código promocional que escribió la taquilla (ADR-066). */
-  codigoPromocion?: string | null
+  asientos: Array<{ asiento: number; cliente?: number | null }>
   cliente: number
   estacion?: number | null
   observacion?: string | null
@@ -300,8 +281,6 @@ export interface Comprobante {
     clase: 'A' | 'B'
     pasajero: string | null
     precio: Importe | null
-    /** Tipo de pasajero o promoción (ADR-066): cuánto se descontó y por qué. */
-    descuento?: { importe: Importe; motivo: string | null } | null
     observacion: string | null
     estado: string
     /** Lo que lleva el QR del boleto para chequearlo por escaneo (ADR-063). */
@@ -354,8 +333,6 @@ export interface BoletoOperable {
   asiento: { id: number; numero: number; clase: 'A' | 'B' }
   pasajero: string | null
   precio: Importe | null
-  /** La tarifa antes del descuento (ADR-066): con ella se compara el asiento nuevo al reasignar. */
-  precioLista?: Importe | null
   observacion: string | null
   trayecto: { id: number; origenId: number; destinoId: number; origen: string; destino: string }
   salida: {

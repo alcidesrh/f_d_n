@@ -67,12 +67,6 @@ describe('parejas boleto → asiento', () => {
     expect(listaParaReasignar([])).toBe(false)
   })
 
-  it('con descuento se compara la tarifa, no lo cobrado (ADR-066)', () => {
-    const nino = boleto(1, { precio: q(5000), precioLista: q(10000) })
-    expect(emparejar([nino], [31], new Map([[31, q(10000)]]))[0]?.igual).toBe(true)
-    expect(emparejar([nino], [31], new Map([[31, q(5000)]]))[0]?.igual).toBe(false)
-  })
-
   it('otra moneda no es el mismo precio', () => {
     const p = emparejar([boleto(1)], [31], new Map([[31, { ...q(10000), moneda: 'USD' }]]))
     expect(p[0]?.igual).toBe(false)

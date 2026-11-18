@@ -204,8 +204,7 @@ final class ReglasBoletos
     /** @throws VentaRechazada */
     public static function exigirMismoPrecio(BoletoAsiento $boleto, Money $nuevo, int|string $asiento): void
     {
-        // Contra la tarifa, no contra lo cobrado: el boleto con descuento lo conserva al reasignarse (ADR-066).
-        $anterior = $boleto->getPrecioLista();
+        $anterior = $boleto->getPrecio();
         if ($anterior === null || !$anterior->equals($nuevo)) {
             throw new VentaRechazada(
                 sprintf(

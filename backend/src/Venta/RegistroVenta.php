@@ -25,14 +25,11 @@ use App\Entity\Enum\EstadoFacturacion;
 use App\Entity\Enum\ModalidadEncomienda;
 use App\Entity\Estacion;
 use App\Entity\Moneda;
-use App\Entity\Promocion;
 use App\Entity\Salida;
 use App\Entity\TipoPago;
-use App\Entity\TipoPasajero;
 use App\Entity\Trayecto;
 use App\Entity\Usuario;
 use App\Venta\Agencia\SaldoAgencia;
-use App\Venta\Descuento\Descuentos;
 use App\Venta\Excepcion\FacturacionFallida;
 use App\Venta\Excepcion\VentaRechazada;
 use App\Venta\Facturacion\CertificacionFallida;
@@ -82,7 +79,6 @@ final class RegistroVenta
         private readonly Pases $pases,
         private readonly ConteoDiario $conteo,
         private readonly UmbralesDiarios $umbrales,
-        private readonly Descuentos $descuentos,
     ) {}
 
     /**
@@ -163,10 +159,6 @@ final class RegistroVenta
         $asientos = $this->reglas->asientos($salida, array_column($s->asientos, "asiento"));
         $this->reglas->exigirDisponibles($salida, $tramo, $asientos);
         $cotizacion = $this->reglas->cotizar($salida, $trayecto, $asientos, $s->cobrarTrayectoCompleto, $s->cortesia);
-        // Tipos de pasajero y promociones (ADR-066); la cortesía no se cobra: no lleva descuento.
-        if (!$s->cortesia) {
-            $cotizacion = $this->descuentos->aplicar($cotizacion, $salida, $s->tiposPasajero(), $s->codigoPromocion);
-        }
 
         $cliente = $this->em->find(Cliente::class, $s->clienteId)
             ?? throw new VentaRechazada("El cliente no existe.");
@@ -208,15 +200,6 @@ final class RegistroVenta
                 ->setCliente($pasajeros[$s->asientos[$i]["cliente"] ?? $cliente->getId()])
                 ->setPrecio($cotizacion->precioDe($asiento))
                 ->setObservacion($s->observacion);
-            $d = $cotizacion->descuentoDe($asiento);
-            if ($d !== null) {
-                $boleto->setDescuento(
-                    $cotizacion->rebajaDe($asiento),
-                    $d->motivo,
-                    $d->tipoPasajeroId === null ? null : $this->em->getReference(TipoPasajero::class, $d->tipoPasajeroId),
-                    $d->promocionId === null ? null : $this->em->getReference(Promocion::class, $d->promocionId),
-                );
-            }
             $venta->addAsiento($boleto);
             $this->em->persist($boleto);
         }

@@ -43,9 +43,6 @@ final readonly class LineaBoleto
         public string $estado = "emitido",
         /** Estación donde se emitió la venta (vacío si no tiene). */
         public string $estacionVenta = "",
-        /** Lo descontado a la tarifa, en centavos (ADR-066); `centavos` ya lo trae restado. */
-        public int $descuento = 0,
-        public ?string $motivoDescuento = null,
     ) {}
 
     public function cobrado(): int

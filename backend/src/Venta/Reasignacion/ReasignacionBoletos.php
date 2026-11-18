@@ -175,7 +175,6 @@ final class ReasignacionBoletos
                 ->setSalida($destino)
                 ->setCliente($b->getCliente())
                 ->setPrecio($b->getPrecio())
-                ->setDescuento($b->getDescuento(), $b->getMotivoDescuento(), $b->getTipoPasajero(), $b->getPromocion())
                 ->setObservacion($b->getObservacion())
                 ->setModificaciones($b->getModificaciones())
                 ->setReasignadoDe($b);

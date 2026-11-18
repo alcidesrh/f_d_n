@@ -27,7 +27,6 @@ use App\Venta\Boleto\ConsultaBoletos;
 use App\Venta\Boleto\DatosBoleto;
 use App\Venta\Clientes;
 use App\Venta\ConsultaVenta;
-use App\Venta\Descuento\Descuentos;
 use App\Venta\DetalleAsiento;
 use App\Venta\Comprador;
 use App\Venta\Excepcion\VentaRechazada;
@@ -81,7 +80,6 @@ final class VentaController extends AbstractController
         private readonly AccesoVentas $acceso,
         private readonly Autorizacion $autorizacion,
         private readonly EstacionTrabajo $estacionTrabajo,
-        private readonly Descuentos $descuentos,
     ) {}
 
     /** Quién vende y con qué: canal, estación/agencia, permisos y catálogos del formulario. */
@@ -117,8 +115,6 @@ final class VentaController extends AbstractController
             "tiposPago" => $catalogo(TipoPago::class, static fn(TipoPago $t) => ["id" => $t->getId(), "nombre" => $t->getNombre()]),
             "monedas" => $catalogo(Moneda::class, static fn(Moneda $m) => ["id" => $m->getId(), "sigla" => $m->getSigla(), "nombre" => $m->getNombre()]),
             "tiposDocumento" => $catalogo(TipoDocumento::class, static fn(TipoDocumento $t) => ["id" => $t->getId(), "nombre" => $t->getNombre()]),
-            // Se elige por asiento; cada uno descuenta su porcentaje de la tarifa (ADR-066).
-            "tiposPasajero" => $this->descuentos->tipos(),
             "naciones" => $catalogo(Nacion::class, static fn(Nacion $n) => ["id" => $n->getId(), "nombre" => $n->getNombre()]),
             // Encomiendas que lleva el pasajero (ADR-035): solo en taquilla, con permiso.
             "encomiendas" => $agencia === null && $this->isGranted(EncomiendaController::REGISTRAR)
@@ -250,20 +246,7 @@ final class VentaController extends AbstractController
                 $venta?->isCortesia() ?? (bool) ($datos["cortesia"] ?? false),
             );
 
-            if ($venta !== null) {
-                return $cotizacion->conRecargo($reasignacion->recargoDe($venta))->toArray();
-            }
-            // Venta nueva: con los tipos de pasajero y las promociones (ADR-066), como la cobrará `RegistroVenta`.
-            if (!($datos["cortesia"] ?? false)) {
-                $tipos = [];
-                foreach ((array) ($datos["tiposPasajero"] ?? []) as $asiento => $tipo) {
-                    $tipos[(int) $asiento] = is_numeric($tipo) && (int) $tipo > 0 ? (int) $tipo : null;
-                }
-                $codigo = is_string($datos["codigoPromocion"] ?? null) ? mb_substr($datos["codigoPromocion"], 0, 20) : null;
-                $cotizacion = $this->descuentos->aplicar($cotizacion, $salida, $tipos, $codigo);
-            }
-
-            return $cotizacion->toArray();
+            return ($venta === null ? $cotizacion : $cotizacion->conRecargo($reasignacion->recargoDe($venta)))->toArray();
         });
     }
 

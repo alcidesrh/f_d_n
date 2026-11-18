@@ -110,12 +110,9 @@
                   <span class="text-base leading-none">{{ store.seleccion.length }}</span>
                   {{ store.seleccion.length === 1 ? "asiento" : "asientos" }}
                 </span>
-                <div class="flex flex-col items-end">
-                  <div class="flex items-baseline gap-2">
-                    <span class="text-muted-color">Total</span>
-                    <span class="text-xl font-semibold tabular-nums">{{ store.total?.texto ?? "—" }}</span>
-                  </div>
-                  <span v-if="descontado" class="text-xs text-green-700 dark:text-green-400">Con {{ descontado }} de descuento</span>
+                <div class="flex items-baseline gap-2">
+                  <span class="text-muted-color">Total</span>
+                  <span class="text-xl font-semibold tabular-nums">{{ store.total?.texto ?? "—" }}</span>
                 </div>
               </div>
               <Message v-if="store.errorCotizacion" severity="warn" :closable="false">
@@ -168,24 +165,12 @@
           <section v-if="store.seleccion.length && !store.reasignacion" class="panel flex flex-col gap-2">
             <div class="font-medium">Pasajeros</div>
             <ul class="flex flex-col gap-2">
-              <li v-for="(linea, i) in lineas" :key="linea.asiento" class="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-2" :class="tipos.length ? '@xl:grid-cols-[3rem_minmax(0,1fr)_10rem_7rem]' : '@xl:grid-cols-[3rem_minmax(0,1fr)_7rem]'">
+              <li v-for="(linea, i) in lineas" :key="linea.asiento" class="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-2 @xl:grid-cols-[3rem_minmax(0,1fr)_6rem]">
                 <span class="font-mono text-lg font-semibold">{{ linea.numero }}</span>
                 <ClienteBuscador compacto :model-value="store.pasajeros[linea.asiento] ?? (i === 0 ? store.cliente : null)" :placeholder="i === 0 ? `Viaja: ${store.cliente?.nombreCompleto ?? 'el cliente'}` : 'Viaja: nombre del cliente o puede elegir otro cliente'" @update:model-value="store.pasajeros[linea.asiento] = $event" />
-                <!-- Tipo de pasajero (ADR-066): sin tipo, la tarifa completa. -->
-                <Select v-if="tipos.length" class="col-start-2 @xl:col-start-auto" :model-value="store.tiposPasajero[linea.asiento] ?? null" :options="tipos" option-label="etiqueta" option-value="id" show-clear placeholder="Tarifa completa" size="small" fluid :aria-label="`Tipo de pasajero del asiento ${linea.numero}`" @update:model-value="(id: number | null) => cambiarTipo(linea.asiento, id)" />
-                <span class="col-start-2 text-right tabular-nums @xl:col-start-auto">
-                  <s v-if="linea.lista" class="mr-1 text-xs text-muted-color">{{ linea.lista }}</s>{{ linea.precio }}
-                  <span v-if="linea.motivo" class="block text-xs text-green-700 dark:text-green-400">{{ linea.motivo }}</span>
-                </span>
-                <span v-if="linea.requisito" class="col-start-2 flex items-center gap-1 text-xs text-muted-color @xl:col-span-3"><icon name="badge-outline" />Pida: {{ linea.requisito }}</span>
+                <span class="col-start-2 text-right tabular-nums @xl:col-start-auto">{{ linea.precio }}</span>
               </li>
             </ul>
-            <!-- Código promocional (ADR-066): las promociones sin código se aplican solas. -->
-            <form class="flex items-center gap-2" @submit.prevent="store.recotizar()">
-              <label for="venta-codigo" class="shrink-0 text-sm text-muted-color">Código promocional</label>
-              <InputText id="venta-codigo" v-model="store.codigoPromocion" maxlength="20" autocomplete="off" autocapitalize="characters" spellcheck="false" size="small" class="min-w-0 flex-1 uppercase" @blur="aplicarCodigo" />
-              <Button type="submit" label="Aplicar" size="small" severity="secondary" outlined :disabled="!store.codigoPromocion.trim()" />
-            </form>
           </section>
           <section v-if="store.detalle && conObservacion" class="panel">
             <label class="flex flex-col gap-1">
@@ -395,51 +380,17 @@ function etiquetaDia(delta: number) {
 /** Sin los recomendados: en el croquis parpadean entre libre y el estado de su vecino, sin renglón propio. */
 const leyenda: ItemLeyenda[] = ["disponible", "ocupado", "ocupado-web", "ocupado-agencia", "reservado", "cortesia", "voucher"];
 
-/** Tipos de pasajero para elegir (ADR-066): «Niño (−50 %)». */
-const tipos = computed(() => (store.contexto?.tiposPasajero ?? []).map((t) => ({ ...t, etiqueta: `${t.nombre} (−${t.porciento} %)` })));
-
 const lineas = computed(() => {
-  const cotizadas = new Map(store.cotizacion?.asientos.map((a) => [a.asiento, a]));
+  const precios = new Map(store.cotizacion?.asientos.map((a) => [a.asiento, a.precio.texto]));
   const numeros = new Map(store.asientosCroquis.map((a) => [a.id, a.tipo === "asiento" ? a.numero : 0]));
-  const porTipo = new Map(tipos.value.map((t) => [t.id, t]));
   return store.seleccion
-    .map((asiento) => {
-      const c = cotizadas.get(asiento);
-      return {
-        asiento,
-        numero: numeros.get(asiento) ?? 0,
-        precio: c?.precio.texto ?? "—",
-        // Con descuento: la tarifa tachada y por qué.
-        lista: c?.descuento ? (c.lista?.texto ?? null) : null,
-        motivo: c?.descuento ? (c.motivo ?? null) : null,
-        requisito: porTipo.get(store.tiposPasajero[asiento] ?? -1)?.requisito ?? null,
-      };
-    })
+    .map((asiento) => ({
+      asiento,
+      numero: numeros.get(asiento) ?? 0,
+      precio: precios.get(asiento) ?? "—",
+    }))
     .sort((a, b) => a.numero - b.numero);
 });
-
-/** Lo que se descuenta en total, en texto («Q 25.00»); null sin descuento. */
-const descontado = computed(() => {
-  const lineasCotizadas = store.cotizacion?.asientos ?? [];
-  const centavos = lineasCotizadas.reduce((t, a) => t + (a.descuento?.centavos ?? 0), 0);
-  const moneda = lineasCotizadas[0]?.precio.moneda ?? "GTQ";
-  return centavos > 0 ? `${moneda === "GTQ" ? "Q" : moneda} ${(centavos / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : null;
-});
-
-function cambiarTipo(asiento: number, id: number | null) {
-  store.tiposPasajero[asiento] = id;
-  void store.recotizar();
-}
-
-/** Al salir del campo, con el código cambiado: se vuelve a cotizar (un código que no vale lo dice ahí). */
-let codigoCotizado = "";
-function aplicarCodigo() {
-  const codigo = store.codigoPromocion.trim().toUpperCase();
-  store.codigoPromocion = codigo;
-  if (codigo === codigoCotizado) return;
-  codigoCotizado = codigo;
-  void store.recotizar();
-}
 
 onMounted(async () => {
   // Llegó desde una salida del calendario: su día y la salida elegida.

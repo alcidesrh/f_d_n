@@ -30,20 +30,16 @@ export interface Pareja {
   igual: boolean | null
 }
 
-/** La tarifa del boleto (antes del descuento, ADR-066): es lo que debe costar el asiento nuevo. */
-const tarifa = (b: BoletoOperable): Importe | null => b.precioLista ?? b.precio
-
 /** Empareja cada boleto con el asiento elegido en su posición y compara precios. */
 export function emparejar(boletos: BoletoOperable[], seleccion: number[], precios: Map<number, Importe>): Pareja[] {
   return boletos.map((boleto, i) => {
     const asiento = seleccion[i] ?? null
     const precio = asiento === null ? null : (precios.get(asiento) ?? null)
-    const actual = tarifa(boleto)
     return {
       boleto,
       asiento,
       precio,
-      igual: precio === null || actual === null ? null : precio.centavos === actual.centavos && precio.moneda === actual.moneda,
+      igual: precio === null || boleto.precio === null ? null : precio.centavos === boleto.precio.centavos && precio.moneda === boleto.precio.moneda,
     }
   })
 }

@@ -46,13 +46,12 @@ final readonly class DetalleFacturaBoletos
         };
     }
 
-    /** Autorización de tarjeta, referencia externa y descuento (ADR-066), para la columna "Descripción". */
+    /** Autorización de tarjeta y/o referencia externa, para la columna "Descripción". */
     public static function descripcion(LineaBoleto $l): string
     {
         return implode(" · ", array_filter([
             $l->autorizacion !== null ? sprintf("Aut. %s", $l->autorizacion) : null,
             $l->referenciaExterna !== null ? sprintf("Ref. %s", $l->referenciaExterna) : null,
-            $l->descuento > 0 ? sprintf("Desc. %s: %s %s", $l->motivoDescuento ?? "", $l->moneda === "GTQ" ? "Q" : $l->moneda, number_format($l->descuento / 100, 2)) : null,
         ]));
     }
 
@@ -64,7 +63,6 @@ final readonly class DetalleFacturaBoletos
             "totales" => array_map(static fn(string $m, array $t) => ["moneda" => $m, ...$t], array_keys($this->totales), array_values($this->totales)),
             "conTarjeta" => count(array_filter($this->filas, static fn(LineaBoleto $l) => $l->autorizacion !== null)),
             "sinFactura" => count(array_filter($this->filas, static fn(LineaBoleto $l) => $l->dte === null)),
-            "conDescuento" => count(array_filter($this->filas, static fn(LineaBoleto $l) => $l->descuento > 0)),
         ];
     }
 }

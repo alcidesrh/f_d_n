@@ -197,8 +197,6 @@ final class ConsultaReportes
                 "f.dte AS dte",
                 "tp.nombre AS tipoPago",
                 "est.nombre AS estacionVenta",
-                "b.descuento AS descuento",
-                "b.motivoDescuento AS motivoDescuento",
                 "s.id AS salidaId",
                 "s.fecha AS salida",
                 "IDENTITY(s.ruta) AS rutaId",
@@ -284,8 +282,6 @@ final class ConsultaReportes
                 $referencias[(int) $f["ventaId"]] ?? null,
                 $estado,
                 (string) $f["estacionVenta"],
-                (int) $f["descuento"],
-                $f["motivoDescuento"],
             );
         }, $filas);
     }

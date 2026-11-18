@@ -13,7 +13,7 @@ use App\Venta\Excepcion\VentaRechazada;
 final readonly class SolicitudVenta
 {
     /**
-     * @param list<array{asiento: int, cliente: ?int, tipoPasajero?: ?int}> $asientos asiento y, opcionales, su pasajero (si no, el cliente de la venta) y su tipo de pasajero (ADR-066)
+     * @param list<array{asiento: int, cliente: ?int}> $asientos asiento y, opcional, su pasajero (si no, el cliente de la venta)
      */
     public function __construct(
         /** Clave de idempotencia (UUID) generada por el cliente para esta venta. */
@@ -42,15 +42,7 @@ final readonly class SolicitudVenta
          * @var list<array{articulos: list<ArticuloSolicitado>, observacion: ?string}>
          */
         public array $encomiendas = [],
-        /** Código promocional que escribió la taquilla (ADR-066). */
-        public ?string $codigoPromocion = null,
     ) {}
-
-    /** @return array<int, ?int> tipo de pasajero por id de asiento */
-    public function tiposPasajero(): array
-    {
-        return array_column(array_map(static fn(array $a) => ["asiento" => $a["asiento"], "tipo" => $a["tipoPasajero"] ?? null], $this->asientos), "tipo", "asiento");
-    }
 
     /**
      * @param array<string, mixed> $datos
@@ -86,7 +78,6 @@ final readonly class SolicitudVenta
             $asientos[] = [
                 "asiento" => $entero($a["asiento"] ?? null, "asientos[{$i}].asiento"),
                 "cliente" => $entero($a["cliente"] ?? null, "asientos[{$i}].cliente", false),
-                "tipoPasajero" => $entero($a["tipoPasajero"] ?? null, "asientos[{$i}].tipoPasajero", false),
             ];
         }
         if ($asientos === []) {
@@ -126,20 +117,6 @@ final readonly class SolicitudVenta
             cortesia: (bool) ($datos["cortesia"] ?? false),
             sinFacturaElectronica: (bool) ($datos["sinFacturaElectronica"] ?? false),
             encomiendas: $encomiendas,
-            codigoPromocion: self::codigo($datos["codigoPromocion"] ?? null),
         );
-    }
-
-    private static function codigo(mixed $codigo): ?string
-    {
-        $codigo = is_string($codigo) ? mb_strtoupper(trim($codigo)) : "";
-        if ($codigo === "") {
-            return null;
-        }
-        if (mb_strlen($codigo) > 20) {
-            throw new VentaRechazada("El código promocional no es válido.", "codigo_promocion");
-        }
-
-        return $codigo;
     }
 }
