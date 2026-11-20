@@ -35,6 +35,12 @@ export function documentoTexto(d: BoletoFila['documento']): string {
   return d.tipo === 'factura' && d.numero !== null ? `${etiqueta} - ${[d.serie, d.numero].filter(Boolean).join(' ')}` : etiqueta
 }
 
+/** Un cliente elegido en el filtro «Comprado por»: su id va a la query. */
+export interface ClienteFiltro {
+  id: number
+  label: string
+}
+
 export interface FiltroBoletos {
   /** `AAAA-MM-DD`, ambos incluidos; entra el boleto cuya salida y cuya venta caen en el rango. */
   desde: string | null
@@ -53,6 +59,8 @@ export interface FiltroBoletos {
   destino: number | null
   /** Id de la empresa de la salida. */
   empresa: number | null
+  /** Comprado por: el cliente de la venta (quien compra y a quien se factura). */
+  clienteDocumento: ClienteFiltro | null
   /** Solo las ventas creadas por el usuario de la sesión. */
   mios: boolean
 }
@@ -79,6 +87,7 @@ export function filtroInicial(desde: string | null = null, hasta: string | null 
     origen: null,
     destino: null,
     empresa: null,
+    clienteDocumento: null,
     mios: false,
   }
 }
@@ -104,6 +113,7 @@ export function aQuery(f: FiltroBoletos, p: Pagina): string {
   poner('origen', f.origen)
   poner('destino', f.destino)
   poner('empresa', f.empresa)
+  poner('clienteDocumento', f.clienteDocumento?.id)
   poner('mios', f.mios ? 1 : null)
   q.set('pagina', String(p.pagina))
   q.set('porPagina', String(p.porPagina))

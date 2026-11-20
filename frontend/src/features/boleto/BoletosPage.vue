@@ -1,9 +1,9 @@
 <!--
   Boletos (el "Boletos" del legado): arriba, el calendario de salidas como
   filtro (pulsar una salida deja solo sus boletos; otra vez, o la ✕, la
-  suelta), con la empresa, el id y la clase de asiento (se aplican al
-  cambiar; el id, con retardo). Sin salida elegida, los de 30 días antes y
-  después de hoy. Debajo, el panel de acciones sobre el boleto elegido y la
+  suelta), con la empresa, el id, el asiento, la clase y el comprador (se
+  aplican al cambiar; el id y el asiento, con retardo). Sin salida elegida,
+  los de 30 días antes y después de hoy. Debajo, el panel de acciones sobre el boleto elegido y la
   lista paginada en el servidor. Se elige un boleto con un clic (o Enter) y el panel
   ofrece Consultar, Cancelar, Revertir, Anular, Chequear, Reasignar, Correo, Imp.
   factura, Bitácora y Chat; cada acción explica por qué no se puede si no se
@@ -13,12 +13,20 @@
 -->
 <template>
   <div class="@container flex flex-col gap-3">
-    <!-- Filtro: el calendario de salidas (pulsar una salida deja solo sus boletos), la empresa, el id y la clase. -->
+    <!-- Filtro: el calendario de salidas (pulsar una salida deja solo sus boletos), la empresa, el id, el asiento, la clase y el comprador. -->
     <CalendarioSalidas :activa="borrador.salida" :ocupacion="false" max-alto="18rem" @abrir="(_, s) => elegirSalida(s)">
-      <label class="filtro-id">
+      <label class="filtro-campo">
         <span class="text-sm font-medium">Id</span>
         <InputText :model-value="String(borrador.id ?? '')" inputmode="numeric" size="small" class="w-24" aria-label="Id del boleto" @input="borrador.id = soloNumero($event)" />
       </label>
+      <label class="filtro-campo">
+        <span class="text-sm font-medium">Asiento</span>
+        <InputText :model-value="String(borrador.asiento ?? '')" inputmode="numeric" size="small" class="w-20" aria-label="Número de asiento" @input="borrador.asiento = soloNumero($event)" />
+      </label>
+      <div class="filtro-campo">
+        <label for="boletos-comprador" class="text-sm font-medium">Comprado por</label>
+        <ClienteFiltro v-model="borrador.clienteDocumento" input-id="boletos-comprador" placeholder="NIT o nombre" class="min-w-0 w-56" />
+      </div>
       <div class="chips" role="group" aria-label="Clase de asiento">
         <span class="text-sm font-medium">Clase</span>
         <button v-for="c in CLASES" :key="c" type="button" class="chip" :class="{ 'chip-on': borrador.clase === c }" :aria-pressed="borrador.clase === c" @click="borrador.clase = borrador.clase === c ? null : c">{{ c }}</button>
@@ -142,6 +150,7 @@ import RevertirBoletoDialog from "./RevertirBoletoDialog.vue";
 import ChequearBoletoDialog from "./ChequearBoletoDialog.vue";
 import ConsultarBoletoDialog from "./ConsultarBoletoDialog.vue";
 import CorreoBoletoDialog from "./CorreoBoletoDialog.vue";
+import ClienteFiltro from "./ClienteFiltro.vue";
 
 interface Columna extends GridColumn {
   /** Orden del backend al hacer clic en el título. */
@@ -271,7 +280,7 @@ function ocultar(key: string) {
 
 // —— Filtros ——
 const calendario = useCalendarioSalidasStore();
-const borradorModificado = computed(() => borrador.id !== null || borrador.clase !== null || borrador.salida !== null);
+const borradorModificado = computed(() => borrador.id !== null || borrador.asiento !== null || borrador.clase !== null || borrador.salida !== null || borrador.clienteDocumento !== null);
 
 /** Pulsar una salida filtra sus boletos; pulsarla otra vez la suelta. */
 function elegirSalida(s: SalidaCalendario) {
@@ -313,21 +322,21 @@ const INICIAL_DOCUMENTO: Record<TipoDocumento, string> = { factura: "F", pendien
 const inicialDocumento = (d: TipoDocumento) => INICIAL_DOCUMENTO[d] ?? d.charAt(0).toUpperCase();
 
 function limpiar() {
-  Object.assign(borrador, { id: null, clase: null, salida: null });
+  Object.assign(borrador, { id: null, asiento: null, clase: null, salida: null, clienteDocumento: null });
 }
 
-// Los filtros se aplican al cambiar; el id espera a que se deje de escribir.
+// Los filtros se aplican al cambiar; el id y el asiento esperan a que se deje de escribir.
 const ESPERA_TEXTO = 500;
 let espera: ReturnType<typeof setTimeout> | undefined;
 watch(
-  () => [borrador.salida, borrador.clase, borrador.empresa],
+  () => [borrador.salida, borrador.clase, borrador.empresa, borrador.clienteDocumento?.id],
   () => {
     clearTimeout(espera);
     aplicar();
   },
 );
 watch(
-  () => borrador.id,
+  () => [borrador.id, borrador.asiento],
   () => {
     clearTimeout(espera);
     espera = setTimeout(aplicar, ESPERA_TEXTO);
@@ -609,10 +618,13 @@ onMounted(async () => {
 .chips {
   align-items: center;
 }
-.filtro-id {
+.filtro-campo {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
+  min-width: 0;
+  max-width: 100%;
 }
 .salida-elegida {
   display: flex;

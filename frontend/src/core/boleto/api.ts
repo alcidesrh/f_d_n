@@ -2,6 +2,7 @@
 import { config } from '@/core/config'
 import { HttpError, http } from '@/core/http'
 import { useSessionStore } from '@/core/auth/session'
+import type { Cliente } from '@/core/venta/types'
 import type { DetalleBoleto, OpcionesBoletos, PaginaBoletos } from './types'
 
 const BASE = '/boletos'
@@ -9,6 +10,9 @@ const BASE = '/boletos'
 export const fetchOpcionesBoletos = () => http.get<OpcionesBoletos>(`${BASE}/opciones`)
 
 export const fetchBoletosListado = (query: string) => http.get<PaginaBoletos>(`${BASE}?${query}`)
+
+/** Clientes para el filtro «Comprado por» (NIT, documento o nombre; `GET /api/boletos/clientes`). */
+export const buscarClientesBoleto = (q: string) => http.get<Cliente[]>(`${BASE}/clientes?q=${encodeURIComponent(q)}`, { silent: true })
 
 export const fetchDetalleBoleto = (id: number) => http.get<DetalleBoleto>(`${BASE}/${id}`)
 
