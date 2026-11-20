@@ -1,7 +1,7 @@
 <!--
   Boletos (el "Boletos" del legado): arriba, el calendario de salidas como
   filtro (pulsar una salida deja solo sus boletos; otra vez, o la ✕, la
-  suelta), con la empresa, el id, el asiento, la clase y el comprador (se
+  suelta), con la empresa, el id, el asiento, la clase y el canal (se
   aplican al cambiar; el id y el asiento, con retardo). Sin salida elegida,
   los de 30 días antes y después de hoy. Debajo, el panel de acciones sobre el boleto elegido y la
   lista paginada en el servidor. Se elige un boleto con un clic (o Enter) y el panel
@@ -13,7 +13,7 @@
 -->
 <template>
   <div class="@container flex flex-col gap-3">
-    <!-- Filtro: el calendario de salidas (pulsar una salida deja solo sus boletos), la empresa, el id, el asiento, la clase y el comprador. -->
+    <!-- Filtro: el calendario de salidas (pulsar una salida deja solo sus boletos), la empresa, el id, el asiento, la clase y el canal. -->
     <CalendarioSalidas :activa="borrador.salida" :ocupacion="false" max-alto="18rem" @abrir="(_, s) => elegirSalida(s)">
       <label class="filtro-campo">
         <span class="text-sm font-medium">Id</span>
@@ -23,13 +23,13 @@
         <span class="text-sm font-medium">Asiento</span>
         <InputText :model-value="String(borrador.asiento ?? '')" inputmode="numeric" size="small" class="w-20" aria-label="Número de asiento" @input="borrador.asiento = soloNumero($event)" />
       </label>
-      <div class="filtro-campo">
-        <label for="boletos-comprador" class="text-sm font-medium">Comprado por</label>
-        <ClienteFiltro v-model="borrador.clienteDocumento" input-id="boletos-comprador" placeholder="NIT o nombre" class="min-w-0 w-56" />
-      </div>
       <div class="chips" role="group" aria-label="Clase de asiento">
         <span class="text-sm font-medium">Clase</span>
         <button v-for="c in CLASES" :key="c" type="button" class="chip" :class="{ 'chip-on': borrador.clase === c }" :aria-pressed="borrador.clase === c" @click="borrador.clase = borrador.clase === c ? null : c">{{ c }}</button>
+      </div>
+      <div class="chips" role="group" aria-label="Canal de venta">
+        <span class="text-sm font-medium">Canal</span>
+        <button v-for="c in CANALES" :key="c.valor" type="button" class="chip" :class="{ 'chip-on': borrador.canales.includes(c.valor) }" :aria-pressed="borrador.canales.includes(c.valor)" @click="alternarCanal(c.valor)">{{ c.etiqueta }}</button>
       </div>
       <Button type="button" label="Limpiar" severity="secondary" text size="small" :disabled="!borradorModificado" @click="limpiar"
         ><template #icon><icon name="filter-alt-off-outline" class="mr-1" /></template
@@ -127,8 +127,8 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref, shallowRef, toRaw,
 import { useRoute, useRouter } from "vue-router";
 import { claveDeUsuario } from "@/core/auth/alcanceSesion";
 import { fetchBoletosListado, fetchOpcionesBoletos } from "@/core/boleto/api";
-import { aQuery, alternarOrden, disponibilidad, documentoTexto, etiquetaEstado, filtroInicial, paginaInicial, type AccionBoleto, type FiltroBoletos, type Pagina } from "@/core/boleto/listado";
-import type { EstadoBoleto, TipoDocumento } from "@/core/boleto/types";
+import { CANALES, aQuery, alternarOrden, disponibilidad, documentoTexto, etiquetaEstado, filtroInicial, paginaInicial, type AccionBoleto, type FiltroBoletos, type Pagina } from "@/core/boleto/listado";
+import type { CanalVenta, EstadoBoleto, TipoDocumento } from "@/core/boleto/types";
 import type { BoletoFila, OpcionesBoletos, OrdenBoletos, PaginaBoletos } from "@/core/boleto/types";
 import { HttpError } from "@/core/http";
 import { notify } from "@/core/notify";
@@ -150,7 +150,6 @@ import RevertirBoletoDialog from "./RevertirBoletoDialog.vue";
 import ChequearBoletoDialog from "./ChequearBoletoDialog.vue";
 import ConsultarBoletoDialog from "./ConsultarBoletoDialog.vue";
 import CorreoBoletoDialog from "./CorreoBoletoDialog.vue";
-import ClienteFiltro from "./ClienteFiltro.vue";
 
 interface Columna extends GridColumn {
   /** Orden del backend al hacer clic en el título. */
@@ -280,7 +279,7 @@ function ocultar(key: string) {
 
 // —— Filtros ——
 const calendario = useCalendarioSalidasStore();
-const borradorModificado = computed(() => borrador.id !== null || borrador.asiento !== null || borrador.clase !== null || borrador.salida !== null || borrador.clienteDocumento !== null);
+const borradorModificado = computed(() => borrador.id !== null || borrador.asiento !== null || borrador.clase !== null || borrador.salida !== null || borrador.canales.length > 0);
 
 /** Pulsar una salida filtra sus boletos; pulsarla otra vez la suelta. */
 function elegirSalida(s: SalidaCalendario) {
@@ -313,6 +312,11 @@ function soloNumero(e: Event): number | null {
   return t ? Number(t) : null;
 }
 const CLASES = ["A", "B"] as const;
+/** Pulsar un canal lo suma o lo quita (ninguno = todos), siempre en el orden de `CANALES`. */
+function alternarCanal(c: CanalVenta) {
+  const elegidos = borrador.canales.includes(c) ? borrador.canales.filter((x) => x !== c) : [...borrador.canales, c];
+  borrador.canales = CANALES.map((x) => x.valor).filter((v) => elegidos.includes(v));
+}
 
 /** La columna Estado muestra solo esta inicial (como el estado de las salidas en la venta). */
 const INICIAL_ESTADO: Record<EstadoBoleto, string> = { emitido: "E", chequeado: "Ch", transito: "T", finalizado: "F", cancelado: "Ca", anulado: "A", reasignado: "R", pospuesto: "P" };
@@ -322,14 +326,14 @@ const INICIAL_DOCUMENTO: Record<TipoDocumento, string> = { factura: "F", pendien
 const inicialDocumento = (d: TipoDocumento) => INICIAL_DOCUMENTO[d] ?? d.charAt(0).toUpperCase();
 
 function limpiar() {
-  Object.assign(borrador, { id: null, asiento: null, clase: null, salida: null, clienteDocumento: null });
+  Object.assign(borrador, { id: null, asiento: null, clase: null, salida: null, canales: [] });
 }
 
 // Los filtros se aplican al cambiar; el id y el asiento esperan a que se deje de escribir.
 const ESPERA_TEXTO = 500;
 let espera: ReturnType<typeof setTimeout> | undefined;
 watch(
-  () => [borrador.salida, borrador.clase, borrador.empresa, borrador.clienteDocumento?.id],
+  () => [borrador.salida, borrador.clase, borrador.empresa, borrador.canales.join(",")],
   () => {
     clearTimeout(espera);
     aplicar();
@@ -620,11 +624,8 @@ onMounted(async () => {
 }
 .filtro-campo {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
-  min-width: 0;
-  max-width: 100%;
 }
 .salida-elegida {
   display: flex;

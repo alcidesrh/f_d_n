@@ -6,6 +6,9 @@ export type EstadoBoleto = 'emitido' | 'chequeado' | 'transito' | 'finalizado' |
 /** Documento de la venta (`ListadoBoletos::documento`). */
 export type TipoDocumento = 'factura' | 'pendiente' | 'sin_factura' | 'agencia' | 'cortesia' | 'voucher'
 
+/** Por dónde entró la venta (`CanalVenta`): taquilla, agencia o la página web. */
+export type CanalVenta = 'estacion' | 'agencia' | 'web'
+
 export type OrdenBoletos = 'id' | 'fecha' | 'numero' | 'ruta' | 'clienteDocumento' | 'clienteBoleto' | 'creada'
 
 export interface ClienteBoleto {
@@ -41,7 +44,7 @@ export interface BoletoFila {
   tipoPago: string | null
   precio: Importe | null
   sinCobro: boolean
-  canal: 'estacion' | 'agencia' | 'web'
+  canal: CanalVenta
   ventaId: number
   ventaConfirmada: boolean
   reasignadoDe: number | null

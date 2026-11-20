@@ -50,18 +50,18 @@ describe('listado de boletos', () => {
     expect(aQuery({ ...filtroInicial(), mios: false }, paginaInicial())).not.toContain('mios')
   })
 
-  it('manda el asiento y el comprador cuando se eligen', () => {
-    const q = aQuery({ ...filtroInicial(), asiento: 12, clienteDocumento: { id: 44, label: '123456 / Ana' } }, paginaInicial())
+  it('manda el asiento y los canales cuando se eligen', () => {
+    const q = aQuery({ ...filtroInicial(), asiento: 12, canales: ['estacion', 'web'] }, paginaInicial())
     expect(q).toContain('asiento=12&')
-    expect(q).toContain('clienteDocumento=44&')
-    expect(aQuery(filtroInicial(), paginaInicial())).not.toMatch(/asiento|clienteDocumento/)
+    expect(q).toContain('canal=estacion%2Cweb&')
+    expect(aQuery(filtroInicial(), paginaInicial())).not.toMatch(/asiento|canal/)
   })
 
   it('cuenta los filtros aplicados sin el rango', () => {
     expect(filtrosActivos(filtroInicial('2026-10-01', '2026-10-31'))).toBe(0)
     expect(filtrosActivos({ ...filtroInicial(), estados: ['anulado'], asiento: 0, origen: 4 })).toBe(3)
     expect(filtrosActivos({ ...filtroInicial(), mios: true, empresa: 2 })).toBe(2)
-    expect(filtrosActivos({ ...filtroInicial(), asiento: 3, clienteDocumento: { id: 1, label: 'FDN / Ana' } })).toBe(2)
+    expect(filtrosActivos({ ...filtroInicial(), asiento: 3, canales: ['agencia', 'web'] })).toBe(2)
   })
 
   it('alterna el orden de una columna y vuelve a la primera página', () => {

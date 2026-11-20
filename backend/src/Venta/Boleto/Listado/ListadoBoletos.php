@@ -331,6 +331,9 @@ final class ListadoBoletos
         if ($f->estados !== []) {
             $qb->andWhere("b.estado IN (:estados)")->setParameter("estados", array_map(static fn($e) => $e->value, $f->estados));
         }
+        if ($f->canales !== []) {
+            $qb->andWhere("v.canal IN (:canales)")->setParameter("canales", array_map(static fn($c) => $c->value, $f->canales));
+        }
         if ($f->referenciaExterna !== null) {
             $qb->andWhere(sprintf("EXISTS (SELECT 1 FROM %s pr WHERE (pr.boletoVenta = v OR pr.boletoVentaRegreso = v) AND LOWER(pr.referenciaPasarela) LIKE :referencia)", PagoWeb::class))
                 ->setParameter("referencia", self::patron($f->referenciaExterna));

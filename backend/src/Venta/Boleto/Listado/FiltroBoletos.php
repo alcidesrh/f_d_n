@@ -6,6 +6,7 @@ namespace App\Venta\Boleto\Listado;
 
 use App\Http\Parametros;
 use App\Entity\Enum\AsientoClase;
+use App\Entity\Enum\CanalVenta;
 use App\Entity\Enum\EstadoBoletoAsiento;
 use App\Venta\Excepcion\VentaRechazada;
 
@@ -27,6 +28,7 @@ final readonly class FiltroBoletos
 
     /**
      * @param list<EstadoBoletoAsiento> $estados
+     * @param list<CanalVenta> $canales
      */
     public function __construct(
         public \DateTimeImmutable $desde,
@@ -56,6 +58,8 @@ final readonly class FiltroBoletos
         public ?int $empresa = null,
         /** Solo los boletos de las ventas que creó el usuario de la sesión. */
         public bool $mios = false,
+        /** Canales de la venta (estación, agencia, página web); vacío = todos. */
+        public array $canales = [],
     ) {
         if ($hasta < $desde) {
             throw new VentaRechazada("La fecha final no puede ser anterior a la inicial.", "rango_invalido", 400);
@@ -84,6 +88,10 @@ final readonly class FiltroBoletos
         $estados = [];
         foreach (array_filter(explode(",", (string) Parametros::texto($q["estado"] ?? null))) as $e) {
             $estados[] = EstadoBoletoAsiento::tryFrom(trim($e)) ?? throw new VentaRechazada("El estado no es válido.", "parametro_invalido", 400);
+        }
+        $canales = [];
+        foreach (array_filter(explode(",", (string) Parametros::texto($q["canal"] ?? null))) as $c) {
+            $canales[] = CanalVenta::tryFrom(trim($c)) ?? throw new VentaRechazada("El canal de venta no es válido.", "parametro_invalido", 400);
         }
         $clase = Parametros::texto($q["clase"] ?? null);
         $porPagina = Parametros::entero($q["porPagina"] ?? null, "el tamaño de página") ?? 15;
@@ -116,6 +124,7 @@ final readonly class FiltroBoletos
             descendente: ($q["dir"] ?? "desc") !== "asc",
             empresa: Parametros::entero($q["empresa"] ?? null, "la empresa"),
             mios: Parametros::bandera($q["mios"] ?? null),
+            canales: array_values(array_unique($canales, SORT_REGULAR)),
         );
     }
 

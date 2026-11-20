@@ -7,6 +7,7 @@ namespace App\Tests\Venta;
 use App\Excepcion\Rechazo;
 use App\Entity\BoletoVenta;
 use App\Entity\Enum\AsientoClase;
+use App\Entity\Enum\CanalVenta;
 use App\Entity\Enum\EstadoBoletoAsiento;
 use App\Entity\Enum\EstadoFacturacion;
 use App\Venta\Boleto\Listado\FiltroBoletos;
@@ -75,6 +76,14 @@ final class FiltroBoletosTest extends TestCase
         $this->assertFalse(FiltroBoletos::desdeQuery(["mios" => "0"], self::hoy())->mios);
     }
 
+    public function testCanalesDeVenta(): void
+    {
+        $f = FiltroBoletos::desdeQuery(["canal" => "web, estacion,web"], self::hoy());
+
+        $this->assertSame([CanalVenta::WEB, CanalVenta::ESTACION], $f->canales);
+        $this->assertSame([], FiltroBoletos::desdeQuery([], self::hoy())->canales);
+    }
+
     public function testRechazaLoInvalido(): void
     {
         $casos = [
@@ -85,7 +94,7 @@ final class FiltroBoletosTest extends TestCase
         foreach ($casos as $codigo => $q) {
             $this->assertSame($codigo, $this->codigo($q), json_encode($q));
         }
-        foreach ([["estado" => "perdido"], ["clase" => "C"], ["documento" => "recibo"], ["orden" => "precio"]] as $q) {
+        foreach ([["estado" => "perdido"], ["clase" => "C"], ["documento" => "recibo"], ["orden" => "precio"], ["canal" => "telefono"]] as $q) {
             $this->assertSame("parametro_invalido", $this->codigo($q), json_encode($q));
         }
         // Seis meses como mucho.

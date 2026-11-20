@@ -3,7 +3,7 @@
  * filtros del formulario → query string, etiquetas de estado y documento, y
  * qué acciones del panel admite el boleto elegido. Funciones puras.
  */
-import type { BoletoFila, EstadoBoleto, OrdenBoletos, PuedeBoleto, TipoDocumento } from './types'
+import type { BoletoFila, CanalVenta, EstadoBoleto, OrdenBoletos, PuedeBoleto, TipoDocumento } from './types'
 
 type Severidad = 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast'
 
@@ -29,16 +29,17 @@ export const DOCUMENTOS: Array<{ valor: TipoDocumento; etiqueta: string }> = [
   { valor: 'voucher', etiqueta: 'Voucher' },
 ]
 
+/** Canales de venta del filtro; «Página» es la página web. */
+export const CANALES: Array<{ valor: CanalVenta; etiqueta: string }> = [
+  { valor: 'estacion', etiqueta: 'Estación' },
+  { valor: 'agencia', etiqueta: 'Agencia' },
+  { valor: 'web', etiqueta: 'Página' },
+]
+
 /** "Factura - SERIE 123", "Voucher", … (la columna "Documento" del legado). */
 export function documentoTexto(d: BoletoFila['documento']): string {
   const etiqueta = DOCUMENTOS.find((x) => x.valor === d.tipo)?.etiqueta ?? d.tipo
   return d.tipo === 'factura' && d.numero !== null ? `${etiqueta} - ${[d.serie, d.numero].filter(Boolean).join(' ')}` : etiqueta
-}
-
-/** Un cliente elegido en el filtro «Comprado por»: su id va a la query. */
-export interface ClienteFiltro {
-  id: number
-  label: string
 }
 
 export interface FiltroBoletos {
@@ -59,8 +60,8 @@ export interface FiltroBoletos {
   destino: number | null
   /** Id de la empresa de la salida. */
   empresa: number | null
-  /** Comprado por: el cliente de la venta (quien compra y a quien se factura). */
-  clienteDocumento: ClienteFiltro | null
+  /** Canales de la venta; vacío = todos. */
+  canales: CanalVenta[]
   /** Solo las ventas creadas por el usuario de la sesión. */
   mios: boolean
 }
@@ -87,7 +88,7 @@ export function filtroInicial(desde: string | null = null, hasta: string | null 
     origen: null,
     destino: null,
     empresa: null,
-    clienteDocumento: null,
+    canales: [],
     mios: false,
   }
 }
@@ -113,7 +114,7 @@ export function aQuery(f: FiltroBoletos, p: Pagina): string {
   poner('origen', f.origen)
   poner('destino', f.destino)
   poner('empresa', f.empresa)
-  poner('clienteDocumento', f.clienteDocumento?.id)
+  poner('canal', f.canales.join(','))
   poner('mios', f.mios ? 1 : null)
   q.set('pagina', String(p.pagina))
   q.set('porPagina', String(p.porPagina))
@@ -124,8 +125,8 @@ export function aQuery(f: FiltroBoletos, p: Pagina): string {
 
 /** Cuántos filtros (además del rango de fechas) hay aplicados. */
 export function filtrosActivos(f: FiltroBoletos): number {
-  const { desde: _d, hasta: _h, estados, mios, ...resto } = f
-  return Object.values(resto).filter((v) => v !== null && v !== '').length + (estados.length ? 1 : 0) + (mios ? 1 : 0)
+  const { desde: _d, hasta: _h, estados, canales, mios, ...resto } = f
+  return Object.values(resto).filter((v) => v !== null && v !== '').length + (estados.length ? 1 : 0) + (canales.length ? 1 : 0) + (mios ? 1 : 0)
 }
 
 /** Clic en una columna ordenable: la misma alterna la dirección; otra empieza descendente. */
