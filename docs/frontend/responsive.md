@@ -16,7 +16,7 @@ Son los de Tailwind y se declaran en `src/assets/tokens.css` (`@theme`). En JS e
 | Nombre | Desde | Escenario | Qué cambia en el shell |
 |---|---|---|---|
 | (base) | 0 | Mobile | Sidebars como drawers, cabecera de 3.5rem con el título de la pantalla |
-| `md` | 48rem (768px) | Tablet | Nombre de usuario y texto de los menús de la cabecera, reloj y marca de agua "FDN", pantalla completa |
+| `md` | 48rem (768px) | Tablet | Nombre de usuario y texto de los menús de la cabecera, reloj y marca de agua "FDN" |
 | `lg` | 64rem (1024px) | Desktop | Sidebars fijos (`open`/`mini`/`close`) que empujan el contenido, cabecera de 4rem con el historial de navegación; el título pasa a la página |
 | `xl` | 80rem (1280px) | Wide | Sin cambios en el shell; se usa para layouts de página |
 
@@ -41,7 +41,7 @@ Son los de Tailwind y se declaran en `src/assets/tokens.css` (`@theme`). En JS e
 |---|---|
 | Escala de Tailwind (`p-2`, `gap-4`…, `--spacing` = 0.25rem) | Espaciado. No uses px sueltos (`13px`, `17px`) |
 | `--page-gutter` | Margen lateral de página y de superficies grandes. Continuo según el ancho de `.main`: 1rem hasta 500px y 2.5rem desde 1250px, sin saltos |
-| `--page-top`, `--page-bottom` | Margen arriba y abajo de la página. Debajo de `md` el de abajo deja libre el disparador del chat. Una pantalla de alto fijo los resta (`ChatPage`) |
+| `--page-top`, `--page-bottom` | Margen arriba y abajo de la página. El de arriba es 3/4 del lateral (mínimo 1rem). Debajo de `md` el de abajo deja libre el disparador del chat. Una pantalla de alto fijo los resta (`ChatPage`) |
 | `--tap-min` (2.75rem) | Área táctil mínima |
 | `--header-h`, `--sb-<lado>-w`, `--sb-<lado>-open` | Shell. `sidebarStore` escribe los anchos |
 

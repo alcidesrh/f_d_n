@@ -7,33 +7,34 @@
         </button>
         <Divider layout="vertical" class="mx-[5px]! hidden! lg:flex!" />
       </div>
-      <div class="brand">
-        <div class="header-clock" v-html="currentTime"></div>
-        <div class="brand-name">FDN</div>
+
+      <!-- Debajo de `lg` no hay migas: el título dice en qué pantalla se está. -->
+      <h1 class="header-title">{{ tituloPantalla }}</h1>
+
+      <div class="header-crumbs">
+        <nav class="crumbs" aria-label="Breadcrumb">
+          <router-link :to="'/'" class="crumb-link"> Inicio </router-link>
+          <icon name="chevron-right" size=".8rem"></icon>
+          <template v-for="(crumb, i) in navigationHistory.entries" :key="crumb.path + i">
+            <icon v-if="i > 0" name="chevron-right" size=".8rem"></icon>
+            <icon v-if="crumb.icon" :name="crumb.icon" size=".8rem"></icon>
+            <router-link
+              :to="crumb.name ? { name: crumb.name, params: crumb.params } : crumb.path"
+              class="crumb-link"
+              :class="{
+                'crumb-current': i === navigationHistory.entries.length - 1,
+              }"
+            >
+              {{ crumb.label }}
+            </router-link>
+          </template>
+        </nav>
       </div>
     </div>
 
-    <!-- Debajo de `lg` no hay migas: el título dice en qué pantalla se está. -->
-    <h1 class="header-title">{{ tituloPantalla }}</h1>
-
-    <div class="header-crumbs">
-      <nav class="crumbs" aria-label="Breadcrumb">
-        <router-link :to="'/'" class="crumb-link"> Inicio </router-link>
-        <icon name="chevron-right" size=".8rem"></icon>
-        <template v-for="(crumb, i) in navigationHistory.entries" :key="crumb.path + i">
-          <icon v-if="i > 0" name="chevron-right" size=".8rem"></icon>
-          <icon v-if="crumb.icon" :name="crumb.icon" size=".8rem"></icon>
-          <router-link
-            :to="crumb.name ? { name: crumb.name, params: crumb.params } : crumb.path"
-            class="crumb-link"
-            :class="{
-              'crumb-current': i === navigationHistory.entries.length - 1,
-            }"
-          >
-            {{ crumb.label }}
-          </router-link>
-        </template>
-      </nav>
+    <div class="brand">
+      <div class="header-clock" v-html="currentTime"></div>
+      <div class="brand-name">FDN</div>
     </div>
 
     <div class="right-header">
@@ -60,9 +61,6 @@
           <icon name="notifications-outline" />
           <span v-if="autorizacionesPendientes" class="header-chat__badge">{{ autorizacionesPendientes > 99 ? "99+" : autorizacionesPendientes }}</span>
         </RouterLink>
-        <button class="icon-btn header-fullscreen" title="Pantalla completa" aria-label="Pantalla completa" :aria-pressed="pantallaCompleta" :class="{ 'active-state': pantallaCompleta }" @click="alternarPantallaCompleta">
-          <icon :name="pantallaCompleta ? 'fullscreen-exit' : 'fullscreen'" />
-        </button>
       </div>
       <!-- Se corre con las acciones cuando se cierra el sidebar derecho (ver header.css). -->
       <div class="header-sinc">
@@ -181,23 +179,12 @@ function formatClock(date: Date) {
 const currentTime = ref(formatClock(new Date()));
 let clockTimer: ReturnType<typeof setInterval>;
 
-const pantallaCompleta = ref(false);
-const alCambiarPantalla = () => (pantallaCompleta.value = Boolean(document.fullscreenElement));
-function alternarPantallaCompleta() {
-  if (document.fullscreenElement) void document.exitFullscreen?.();
-  else void document.documentElement.requestFullscreen?.();
-}
-
 onMounted(() => {
   clockTimer = setInterval(() => {
     currentTime.value = formatClock(new Date());
   }, 1000);
-  document.addEventListener("fullscreenchange", alCambiarPantalla);
 });
-onUnmounted(() => {
-  clearInterval(clockTimer);
-  document.removeEventListener("fullscreenchange", alCambiarPantalla);
-});
+onUnmounted(() => clearInterval(clockTimer));
 
 const menuUsuario = ref<InstanceType<typeof Menu> | null>(null);
 const botonUsuario = useTemplateRef<HTMLElement>("botonUsuario");

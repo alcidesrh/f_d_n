@@ -66,9 +66,11 @@
      2.5rem desde 1250px. Sin saltos: al abrir o cerrar un sidebar el contenido
      se acomoda de a poco. */
   --page-gutter: clamp(1rem, 3cqi, 2.5rem);
-  /* Margen arriba y abajo de la página. Debajo de `md` el de abajo deja libre
-     el disparador del chat (fijo en la esquina). */
-  --page-top: 1rem;
+  /* Margen arriba y abajo de la página. El de arriba crece con el lateral
+     (3/4 de él: 1rem en el teléfono, ~1.9rem en pantalla ancha) para separar
+     el contenido de la cabecera. Debajo de `md` el de abajo deja libre el
+     disparador del chat (fijo en la esquina). */
+  --page-top: max(1rem, var(--page-gutter) * 0.75);
   --page-bottom: calc(4.5rem + env(safe-area-inset-bottom));
   @variant md {
     --page-bottom: max(var(--page-gutter), 1.5rem);

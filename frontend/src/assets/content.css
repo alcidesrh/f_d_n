@@ -54,8 +54,9 @@
   }
 }
 
+/* Teléfono en horizontal (`viewport-fit=cover`): los laterales no quedan bajo el notch. */
 .main-inner {
-  padding: var(--page-top) var(--page-gutter) var(--page-bottom);
+  padding: var(--page-top) max(var(--page-gutter), env(safe-area-inset-right)) var(--page-bottom) max(var(--page-gutter), env(safe-area-inset-left));
 }
 /* Título de la página. Debajo de `lg` no se dibuja: ya lo dice la cabecera. */
 .page-title {

@@ -97,3 +97,7 @@
 
 	php_server
 }
+
+ganaderia.duckdns.org {
+	reverse_proxy ganaderia-web:80
+}

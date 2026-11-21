@@ -1,9 +1,11 @@
 /* ---- HEADER ----
-   Mobile-first: [menú][título] … [acciones][panel derecho]. Desde `lg` los
-   botones de menú se deslizan fuera cuando su sidebar está visible (el
-   sidebar tiene su propio botón cerrar) y la marca se alinea con el sidebar.
-   El desplazamiento sale de `--sb-<lado>-h` (0 = sidebar visible, 1 = cerrado),
-   que anima `sidebarMotion.ts` en el mismo tween que el sidebar. */
+   Mobile-first: [menú][título] … [acciones][panel derecho]; desde `md`, la
+   marca (reloj) entre ambos, y desde `lg` las migas en lugar del título y la
+   marca al centro. Desde `lg` los botones de menú se deslizan fuera cuando su
+   sidebar está visible (el sidebar tiene su propio botón cerrar) y las migas
+   ocupan su lugar. El desplazamiento sale de `--sb-<lado>-h` (0 = sidebar
+   visible, 1 = cerrado), que anima `sidebarMotion.ts` en el mismo tween que
+   el sidebar. */
 .app-header {
   position: fixed;
   top: 0;
@@ -16,44 +18,53 @@
   align-items: center;
   gap: 0.25rem;
   padding-inline: max(0.25rem, env(safe-area-inset-left)) max(0.25rem, env(safe-area-inset-right));
+  /* Mismo fondo que el contenido: la separa una línea (el borde de los sidebars, que se
+     invierte en oscuro) y una sombra suave hacia abajo, que en oscuro casi no se ve. */
+  box-shadow:
+    0 1px 0 var(--p-content-border-color),
+    0 2px 8px -2px rgb(0 0 0 / 0.08);
   transition: box-shadow 0.2s ease;
-  /*background-color: var(--bg);*/
 
   @variant lg {
     gap: 16px;
   }
 }
-/* Sombra solo cuando el contenido ya se desplazó por debajo (`AppShell`, clase en `.shell`). */
+/* Con el contenido ya desplazado por debajo (`AppShell`, clase en `.shell`), la sombra crece. */
 .shell--desplazado .app-header {
-  box-shadow: 0px 0px 8px var(--p-surface-400);
+  box-shadow:
+    0 1px 0 var(--p-content-border-color),
+    0 4px 14px -4px rgb(0 0 0 / 0.16);
 }
+/* Desde `lg` los dos lados reparten por igual lo que deja la marca, que así
+   queda al centro de la cabecera; si las acciones no caben en su mitad, se
+   quedan con lo que miden y la marca se corre hacia las migas. */
 .right-header {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   flex: 0 1 auto;
   min-width: 0;
   margin-left: auto;
+  @variant lg {
+    flex: 1 1 0;
+    min-width: max-content;
+  }
 }
 .left-header {
   display: flex;
   align-items: center;
-  flex: 0 0 auto;
-  @variant lg {
-    width: calc(var(--sidebar-width) - 0.5rem);
-  }
+  flex: 1 1 0;
+  min-width: 0;
 }
 /* Reloj sobre la marca de agua "FDN": ambos en la misma celda de grid, así
    la marca mide lo que su contenido más ancho. */
 .brand {
   display: none;
+  flex: 0 0 auto;
   place-items: center;
   position: relative;
   & > * {
     grid-area: 1 / 1;
-  }
-  @variant lg {
-    width: 230px;
-    transform: translateX(calc(-40px * (1 - var(--sb-left-h, 0))));
   }
   @variant md {
     display: grid;
@@ -150,20 +161,25 @@
   }
 }
 /* Historial de navegación: secundario (la página ya muestra su título y el
-   navegador tiene "atrás"); hasta `lg` no cabe junto a las acciones. */
+   navegador tiene "atrás"); hasta `lg` no cabe junto a las acciones. Junto
+   al botón del menú, y en su lugar cuando el sidebar izquierdo está visible. */
 .header-crumbs {
   flex: 1;
   display: none;
   @variant lg {
     display: flex;
+    transform: translateX(calc(-50px * (1 - var(--sb-left-h, 0))));
   }
   align-items: center;
-  justify-content: center;
   min-width: 0;
+  padding-left: 0.5rem;
 }
+/* Si no caben, se recortan por el principio: lo último visitado queda a la vista. */
 .crumbs {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
   gap: 8px;
   color: var(--text-muted);
   font-size: 12px;
@@ -210,13 +226,6 @@
   order: 1;
   @variant lg {
     order: 0;
-  }
-}
-/* Pantalla completa: sin utilidad en teléfonos (iOS no la soporta). */
-.header-fullscreen {
-  display: none;
-  @variant md {
-    display: flex;
   }
 }
 /* Acciones solo de escritorio: en el teléfono no se muestran (el chat tiene su disparador flotante). */
