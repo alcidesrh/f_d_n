@@ -7,9 +7,11 @@ import {
   depurarSeleccion,
   diaISO,
   estadoEnMapa,
+  formatoImporte,
   paradasDeBajada,
   paradasDeSubida,
   subidaPorDefecto,
+  sumarImportes,
   trayectoEntre,
 } from '../modelo'
 import type { AsientoOcupado } from '../types'
@@ -175,5 +177,22 @@ describe('viaje del cliente', async () => {
     expect(horaViaje({ hora: '2026-10-11T05:20:00-06:00', aprox: true })).toMatch(/^≈ 05:20/)
     expect(horaViaje({ hora: '2026-10-11T05:20:00-06:00', aprox: false })).toMatch(/^05:20/)
     expect(horaViaje({ hora: null, aprox: false })).toBe('—')
+  })
+})
+
+describe('sumarImportes', () => {
+  const q = (centavos: number) => formatoImporte(centavos, 'GTQ')
+
+  it('suma las ventas de varias salidas en la misma moneda', () => {
+    expect(sumarImportes([q(15000), q(12550)])).toEqual({ centavos: 27550, moneda: 'GTQ', texto: 'Q 275.50' })
+  })
+
+  it('sin cotizar alguna, aún no hay total', () => {
+    expect(sumarImportes([q(15000), null])).toBeNull()
+    expect(sumarImportes([])).toBeNull()
+  })
+
+  it('en monedas distintas no las suma: las junta', () => {
+    expect(sumarImportes([q(10000), formatoImporte(2000, 'USD')])?.texto).toBe('Q 100.00 + USD 20.00')
   })
 })

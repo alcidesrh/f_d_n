@@ -3,7 +3,7 @@
  * paradas donde se puede subir/bajar y selección de asientos.
  */
 import type { AsientoCroquis, ClaseAsiento, EstadoAsiento, EstadoVenta } from "@/core/croquis/types";
-import type { AsientoOcupado, Parada, SalidaDetalle } from "./types";
+import type { AsientoOcupado, Importe, Parada, SalidaDetalle } from "./types";
 
 /** Cómo se ve una venta o una reserva en el mapa. */
 export function estadoDeVenta(o: AsientoOcupado): EstadoVenta {
@@ -129,6 +129,27 @@ export const fecha = (iso: string | null | undefined) =>
 export function diaISO(d: Date): string {
   const dos = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${dos(d.getMonth() + 1)}-${dos(d.getDate())}`;
+}
+
+/** Importe como lo formatea el backend (`Q 1,250.00`). */
+export function formatoImporte(centavos: number, moneda: string): Importe {
+  const numero = (centavos / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return { centavos, moneda, texto: `${moneda === "GTQ" ? "Q" : moneda} ${numero}` };
+}
+
+/**
+ * Suma de los totales de varias ventas; null si no hay ninguno o falta alguno
+ * (aún sin cotizar). En monedas distintas no se suman: el texto los junta.
+ */
+export function sumarImportes(importes: readonly (Importe | null)[]): Importe | null {
+  if (!importes.length || importes.some((i) => i === null)) return null;
+  const lista = importes as Importe[];
+  const moneda = lista[0]!.moneda;
+  if (lista.some((i) => i.moneda !== moneda)) return { centavos: 0, moneda, texto: lista.map((i) => i.texto).join(" + ") };
+  return formatoImporte(
+    lista.reduce((t, i) => t + i.centavos, 0),
+    moneda,
+  );
 }
 
 /** Clave de idempotencia de una venta. */

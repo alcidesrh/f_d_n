@@ -251,7 +251,7 @@ Evitar (modelo): compañía, operador
 ## Encomiendas
 
 **Encomienda**:
-Envío de paquetería en la bodega de los buses: remitente → destinatario, de un enclave a otro, con uno o más artículos (`EncomiendaArticulo`: paquete por peso o especial del catálogo). Modalidad `pagada` (factura al recibir), `por_cobrar` (factura al entregar), `interna` (sin cobro) o `con_boleto` (la lleva un pasajero y va en la factura de su venta). Estado `recibida → embarcada → transito → desembarcada → entregada` (transbordo: desembarcada → embarcada), `anulada` si no ha viajado (el rol de sistema, en cualquier estado, ADR-057; los demás, con una autorización fuera de estado, ADR-058). Cambia solo por una transición con nombre del workflow `encomienda` (`TransicionEncomienda`, `FlujoEncomienda`, ADR-038). Ver ADR-035.
+Envío de paquetería en la bodega de los buses: remitente → destinatario, de un enclave a otro, con uno o más artículos (`EncomiendaArticulo`: paquete por peso o especial del catálogo). Modalidad `pagada` (factura al recibir), `por_cobrar` (factura al entregar), `interna` (sin cobro) o `con_boleto` (la lleva un pasajero y va en la factura de su venta; ya no se registra en la venta, ADR-067). Estado `recibida → embarcada → transito → desembarcada → entregada` (transbordo: desembarcada → embarcada), `anulada` si no ha viajado (el rol de sistema, en cualquier estado, ADR-057; los demás, con una autorización fuera de estado, ADR-058). Cambia solo por una transición con nombre del workflow `encomienda` (`TransicionEncomienda`, `FlujoEncomienda`, ADR-038). Ver ADR-035.
 _Avoid_: paquete, envio
 Modelo: nuevo
 **Bulto** / **Guía**:

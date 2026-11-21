@@ -1,7 +1,8 @@
 <!--
   Cobro de la venta: resumen, total según tarifa, forma y moneda de pago y
   envío de la factura por correo. El cobro con tarjeta se hace en el POS
-  (fuera del sistema); aquí solo se registra la forma de pago.
+  (fuera del sistema); aquí solo se registra la forma de pago. Con asientos
+  de varias salidas, una venta (y una factura) por cada una.
 -->
 <template>
   <Dialog
@@ -15,15 +16,22 @@
       <dl class="mb-4 grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1 text-sm">
         <dt class="text-muted-color">Cliente</dt>
         <dd>{{ store.cliente?.label }}</dd>
-        <dt class="text-muted-color">Viaje</dt>
-        <dd>{{ viaje }}</dd>
-        <dt class="text-muted-color">Asientos</dt>
-        <dd>{{ numeros }}</dd>
-        <template v-if="!cortesia && store.cotizacionEncomienda && store.encomiendaArticulos.length">
-          <dt class="text-muted-color">Encomienda</dt>
-          <dd>{{ store.cotizacionEncomienda.bultos }} {{ store.cotizacionEncomienda.bultos === 1 ? 'bulto' : 'bultos' }} · {{ store.cotizacionEncomienda.total.texto }}</dd>
+        <template v-for="v in ventas" :key="v.clave">
+          <dt class="text-muted-color">Viaje</dt>
+          <dd>
+            {{ v.ruta }}
+            <span v-if="store.variasSalidas" class="text-muted-color">· {{ v.fecha }}</span>
+          </dd>
+          <dt class="text-muted-color">Asientos</dt>
+          <dd class="flex justify-between gap-2">
+            <span>{{ v.numeros }}</span>
+            <span v-if="store.variasSalidas" class="tabular-nums">{{ v.total }}</span>
+          </dd>
         </template>
       </dl>
+      <Message v-if="store.variasSalidas" severity="info" :closable="false" class="mb-3">
+        {{ cortesia ? `Se emiten ${ventas.length} cortesías` : `Se registran ${ventas.length} ventas` }}, una por salida{{ !cortesia && facturaElectronica ? ', cada una con su factura' : '' }}, y se imprime un ticket por cada una.
+      </Message>
 
       <template v-if="!cortesia">
         <div class="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
@@ -57,7 +65,7 @@
           type="submit"
           :label="cortesia ? 'Emitir' : 'Aceptar'"
           :loading="store.vendiendo"
-          :disabled="!store.cotizacion"
+          :disabled="!store.puedeVender"
         />
       </div>
     </FormKit>
@@ -67,7 +75,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import type { OpcionesCobro } from './store'
-import { useVentaStore } from './store'
+import { fechaCorta, useVentaStore } from './store'
 
 const props = defineProps<{ visible: boolean; cortesia: boolean }>()
 const emit = defineEmits<{
@@ -91,22 +99,28 @@ const monedas = computed(() =>
 const correo = computed(() => store.cliente?.email ?? null)
 const facturaElectronica = computed(() => store.contexto?.canal === 'estacion')
 const total = computed(() => store.total?.texto ?? '—')
-const numeros = computed(() =>
-  (store.cotizacion?.asientos ?? [])
-    .map((a) => a.numero)
-    .sort((a, b) => a - b)
-    .join(', '),
+/** Lo que se cobra en cada salida (una venta por cada una). */
+const ventas = computed(() =>
+  store.grupos.map((g) => ({
+    clave: g.clave,
+    ruta: g.ruta,
+    fecha: fechaCorta(g.fecha),
+    numeros: g.asientos
+      .map((a) => g.numeros[a] ?? a)
+      .sort((a, b) => a - b)
+      .join(', '),
+    total: g.cotizacion?.total.texto ?? '…',
+  })),
 )
-const viaje = computed(() => {
-  const nombre = (id: number | null) =>
-    store.detalle?.paradas.find((p) => p.id === id)?.nombre ?? '—'
-  return `${nombre(store.sube)} → ${nombre(store.baja)}`
-})
 
 watch(
   () => props.visible,
   (visible) => {
-    if (!visible) return
+    // Al cerrar una cortesía sin emitirla, los precios vuelven a los de la tarifa.
+    if (!visible) {
+      if (props.cortesia) void store.recotizar()
+      return
+    }
     void store.recotizar(props.cortesia)
     const efectivo = store.contexto?.tiposPago.find((t) => /efectivo/i.test(t.nombre))
     const gtq = store.contexto?.monedas.find((m) => m.sigla === 'GTQ')

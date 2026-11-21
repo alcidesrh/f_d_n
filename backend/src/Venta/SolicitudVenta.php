@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Venta;
 
-use App\Encomienda\ArticuloSolicitado;
 use App\Venta\Excepcion\VentaRechazada;
 
 /**
@@ -35,13 +34,6 @@ final readonly class SolicitudVenta
         public bool $cortesia = false,
         /** Contingencia: registrar la venta sin certificar la factura (queda pendiente). */
         public bool $sinFacturaElectronica = false,
-        /**
-         * Encomiendas que lleva el cliente en la bodega (ADR-035): se suman al
-         * total y van en la misma factura.
-         *
-         * @var list<array{articulos: list<ArticuloSolicitado>, observacion: ?string}>
-         */
-        public array $encomiendas = [],
     ) {}
 
     /**
@@ -89,19 +81,6 @@ final readonly class SolicitudVenta
 
         $observacion = trim((string) ($datos["observacion"] ?? ""));
 
-        $encomiendas = [];
-        foreach (array_values((array) ($datos["encomiendas"] ?? [])) as $e) {
-            $e = is_array($e) ? $e : [];
-            $obs = trim((string) ($e["observacion"] ?? ""));
-            $encomiendas[] = [
-                "articulos" => ArticuloSolicitado::lista($e["articulos"] ?? null),
-                "observacion" => $obs !== "" ? mb_substr($obs, 0, 255) : null,
-            ];
-        }
-        if (count($encomiendas) > 5) {
-            throw new VentaRechazada("Demasiadas encomiendas en una sola venta.");
-        }
-
         return new self(
             token: strtolower($token),
             salidaId: $entero($datos["salida"] ?? null, "salida"),
@@ -116,7 +95,6 @@ final readonly class SolicitudVenta
             enviarCorreo: (bool) ($datos["enviarCorreo"] ?? false),
             cortesia: (bool) ($datos["cortesia"] ?? false),
             sinFacturaElectronica: (bool) ($datos["sinFacturaElectronica"] ?? false),
-            encomiendas: $encomiendas,
         );
     }
 }
