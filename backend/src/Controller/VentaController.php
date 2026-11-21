@@ -11,7 +11,6 @@ use App\Acceso\Ubicador;
 use App\Entity\Asiento;
 use App\Entity\BoletoVenta;
 use App\Entity\Cliente;
-use App\Entity\EncomiendaEspecial;
 use App\Entity\Estacion;
 use App\Entity\Moneda;
 use App\Entity\Nacion;
@@ -116,13 +115,6 @@ final class VentaController extends AbstractController
             "monedas" => $catalogo(Moneda::class, static fn(Moneda $m) => ["id" => $m->getId(), "sigla" => $m->getSigla(), "nombre" => $m->getNombre()]),
             "tiposDocumento" => $catalogo(TipoDocumento::class, static fn(TipoDocumento $t) => ["id" => $t->getId(), "nombre" => $t->getNombre()]),
             "naciones" => $catalogo(Nacion::class, static fn(Nacion $n) => ["id" => $n->getId(), "nombre" => $n->getNombre()]),
-            // Encomiendas que lleva el pasajero (ADR-035): solo en taquilla, con permiso.
-            "encomiendas" => $agencia === null && $this->isGranted(EncomiendaController::REGISTRAR)
-                ? ["permitido" => true, "especiales" => array_map(
-                    static fn(EncomiendaEspecial $e) => ["id" => $e->getId(), "nombre" => $e->getNombre(), "descripcion" => $e->getDescripcion(), "precio" => DatosBoleto::importe($e->getPrecio()), "permitePorCobrar" => $e->isPermitePorCobrar()],
-                    $this->em->getRepository(EncomiendaEspecial::class)->findBy(["activo" => true], ["nombre" => "ASC"]),
-                )]
-                : ["permitido" => false, "especiales" => []],
         ]);
     }
 

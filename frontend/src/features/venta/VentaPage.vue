@@ -6,6 +6,10 @@
   con la ocupación en vivo de ese tramo (otros vendedores y la página web).  4. Asientos → "Facturar" (o
   "Cortesía"): cobro, certificación de la factura y ticket.
 
+  Lo elegido se conserva al cambiar de salida, fecha o estaciones: se pueden
+  sumar asientos de varias salidas. Al cobrar sale una venta por salida, cada
+  una con su factura y su ticket.
+
   Móvil: todo en una columna, el croquis después del viaje (al elegir una
   salida se baja hasta él) y antes del cliente, y con menos aire vertical. Desde que el contenido
   mide 48rem (container query), croquis fijo a la derecha.
@@ -106,9 +110,9 @@
                 <span class="text-xs font-bold text-surface-500">{{ store.ocupados.length }} / {{ store.asientosCroquis.length }}</span>
               </Divider>
               <div class="flex items-center justify-between gap-3">
-                <span class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold tabular-nums" :class="store.seleccion.length ? 'bg-primary text-primary-contrast' : 'bg-surface-200 text-muted-color'" aria-live="polite">
-                  <span class="text-base leading-none">{{ store.seleccion.length }}</span>
-                  {{ store.seleccion.length === 1 ? "asiento" : "asientos" }}
+                <span class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold tabular-nums" :class="store.totalAsientos ? 'bg-primary text-primary-contrast' : 'bg-surface-200 text-muted-color'" aria-live="polite">
+                  <span class="text-base leading-none">{{ store.totalAsientos }}</span>
+                  {{ store.totalAsientos === 1 ? "asiento" : "asientos" }}
                 </span>
                 <div class="flex items-baseline gap-2">
                   <span class="text-muted-color">Total</span>
@@ -118,18 +122,21 @@
               <Message v-if="store.errorCotizacion" severity="warn" :closable="false">
                 {{ store.errorCotizacion }}
               </Message>
-              <Message v-if="!store.cliente && store.seleccion.length" severity="info" :closable="false"> Elija el cliente para facturar. </Message>
+              <Message v-if="!store.cliente && store.totalAsientos" severity="info" :closable="false"> Elija el cliente para facturar. </Message>
               <!-- En el teléfono, en la barra fija de abajo. -->
               <div v-if="store.reasignacion" class="hidden flex-wrap justify-end gap-2 md:flex">
                 <Button label="Reasignar" :loading="store.vendiendo" :disabled="!store.puedeReasignar" @click="confirmarReasignacion" />
               </div>
-              <div v-else class="hidden flex-wrap justify-end gap-2 md:flex">
-                <!-- Sin el permiso, en taquilla también: la venta pide una autorización (ADR-040). -->
-                <Button v-if="store.contexto?.permisos.cortesia || store.contexto?.canal === 'estacion'" label="Cortesía" severity="secondary" outlined :disabled="!store.puedeVender || store.encomiendaArticulos.length > 0" v-tooltip.top="store.encomiendaArticulos.length ? 'Una cortesía no lleva encomienda' : !store.contexto?.permisos.cortesia ? 'Requiere una autorización' : undefined" @click="abrirCobro(true)">
-                  <template v-if="!store.contexto?.permisos.cortesia" #icon><icon name="lock-outline" class="mr-1" /></template>
-                </Button>
-                <Button :label="store.contexto?.canal === 'agencia' ? 'Vender' : 'Facturar'" :disabled="!store.puedeVender || !store.cotizacion" @click="abrirCobro(false)" />
-              </div>
+              <template v-else>
+                <AsientosElegidos />
+                <div class="hidden flex-wrap justify-end gap-2 md:flex">
+                  <!-- Sin el permiso, en taquilla también: la venta pide una autorización (ADR-040). -->
+                  <Button v-if="store.contexto?.permisos.cortesia || store.contexto?.canal === 'estacion'" label="Cortesía" severity="secondary" outlined :disabled="!store.puedeVender" v-tooltip.top="!store.contexto?.permisos.cortesia ? 'Requiere una autorización' : undefined" @click="abrirCobro(true)">
+                    <template v-if="!store.contexto?.permisos.cortesia" #icon><icon name="lock-outline" class="mr-1" /></template>
+                  </Button>
+                  <Button :label="store.contexto?.canal === 'agencia' ? 'Vender' : 'Facturar'" :disabled="!store.puedeVender" @click="abrirCobro(false)" />
+                </div>
+              </template>
             </div>
             <div v-else key="vacio" class="relative flex flex-col gap-5 tex-sm">
               <div class="flex items-start justify-center gap-3">
@@ -144,9 +151,23 @@
               </div>
             </div>
           </Transition>
+          <!-- Sin salida abierta, lo elegido en otras sigue a la vista y se puede cobrar. -->
+          <div v-if="!store.detalle && !store.cargandoDetalle && store.totalAsientos && !store.reasignacion" class="flex flex-col gap-3 text-sm">
+            <div class="flex items-baseline justify-end gap-2">
+              <span class="text-muted-color">Total</span>
+              <span class="text-xl font-semibold tabular-nums">{{ store.total?.texto ?? "—" }}</span>
+            </div>
+            <AsientosElegidos />
+            <div class="hidden flex-wrap justify-end gap-2 md:flex">
+              <Button v-if="store.contexto?.permisos.cortesia || store.contexto?.canal === 'estacion'" label="Cortesía" severity="secondary" outlined :disabled="!store.puedeVender" @click="abrirCobro(true)">
+                <template v-if="!store.contexto?.permisos.cortesia" #icon><icon name="lock-outline" class="mr-1" /></template>
+              </Button>
+              <Button :label="store.contexto?.canal === 'agencia' ? 'Vender' : 'Facturar'" :disabled="!store.puedeVender" @click="abrirCobro(false)" />
+            </div>
+          </div>
         </aside>
 
-        <!-- Cliente, pasajeros, observación y encomienda -->
+        <!-- Cliente, pasajeros y observación -->
         <div class="flex min-w-0 flex-col gap-1 @3xl:col-start-1">
           <section class="panel cliente flex flex-col gap-2 @5xl:max-w-[50%]">
             <label class="flex items-center gap-1.5 font-semibold" for="venta-cliente"><icon name="person-search-outline" color="text-primary" />{{ store.reasignacion ? "Cliente de la venta" : "Cliente (facturar a)" }}</label>
@@ -162,32 +183,26 @@
             </label>
           </section>
 
-          <section v-if="store.seleccion.length && !store.reasignacion" class="panel flex flex-col gap-2">
+          <section v-if="store.totalAsientos && !store.reasignacion" class="panel flex flex-col gap-2">
             <div class="font-medium">Pasajeros</div>
-            <ul class="flex flex-col gap-2">
-              <li v-for="(linea, i) in lineas" :key="linea.asiento" class="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-2 @xl:grid-cols-[3rem_minmax(0,1fr)_6rem]">
-                <span class="font-mono text-lg font-semibold">{{ linea.numero }}</span>
-                <ClienteBuscador compacto :model-value="store.pasajeros[linea.asiento] ?? (i === 0 ? store.cliente : null)" :placeholder="i === 0 ? `Viaja: ${store.cliente?.nombreCompleto ?? 'el cliente'}` : 'Viaja: nombre del cliente o puede elegir otro cliente'" @update:model-value="store.pasajeros[linea.asiento] = $event" />
-                <span class="col-start-2 text-right tabular-nums @xl:col-start-auto">{{ linea.precio }}</span>
-              </li>
-            </ul>
+            <div v-for="g in pasajerosPorSalida" :key="g.clave" class="flex flex-col gap-2">
+              <div v-if="store.variasSalidas" class="text-xs text-muted-color">
+                <span class="font-semibold text-color">{{ g.ruta }}</span> · {{ g.fecha }}<template v-if="g.empresa"> · {{ g.empresa }}</template>
+              </div>
+              <ul class="m-0 flex list-none flex-col gap-2 p-0">
+                <li v-for="(linea, i) in g.lineas" :key="linea.asiento" class="grid grid-cols-[3rem_minmax(0,1fr)] items-center gap-2 @xl:grid-cols-[3rem_minmax(0,1fr)_6rem]">
+                  <span class="font-mono text-lg font-semibold">{{ linea.numero }}</span>
+                  <ClienteBuscador compacto :model-value="linea.pasajero ?? (i === 0 ? store.cliente : null)" :placeholder="i === 0 ? `Viaja: ${store.cliente?.nombreCompleto ?? 'el cliente'}` : 'Viaja: nombre del cliente o puede elegir otro cliente'" @update:model-value="store.fijarPasajero(g.clave, linea.asiento, $event)" />
+                  <span class="col-start-2 text-right tabular-nums @xl:col-start-auto">{{ linea.precio }}</span>
+                </li>
+              </ul>
+            </div>
           </section>
           <section v-if="store.detalle && conObservacion" class="panel">
             <label class="flex flex-col gap-1">
               <span class="font-medium">Observación</span>
               <InputText v-model="store.observacion" maxlength="255" placeholder="P. ej. viaja con mascota, se baja en un punto intermedio…" fluid />
             </label>
-          </section>
-          <section v-if="store.seleccion.length && !store.reasignacion && store.contexto?.encomiendas?.permitido" class="panel flex flex-col gap-2" aria-labelledby="venta-encomienda">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <span id="venta-encomienda" class="font-medium"
-                >Encomienda <span class="font-normal text-muted-color">(en la bodega, de {{ nombreParada(store.sube) }} a {{ nombreParada(store.baja) }})</span></span
-              >
-              <span v-if="store.cotizacionEncomienda && store.encomiendaArticulos.length" class="tabular-nums">{{ store.cotizacionEncomienda.total.texto }}</span>
-            </div>
-            <ArticulosEditor v-model="store.encomiendaArticulos" :especiales="store.contexto.encomiendas.especiales" :cotizacion="store.cotizacionEncomienda" />
-            <InputText v-if="store.encomiendaArticulos.length" v-model="store.encomiendaObservacion" maxlength="255" placeholder="Observación de la encomienda (frágil, contenido…)" size="small" fluid />
-            <Message v-if="store.errorEncomienda" severity="warn" :closable="false">{{ store.errorEncomienda }}</Message>
           </section>
         </div>
       </div>
@@ -197,24 +212,24 @@
     <Teleport to="body">
       <div class="barra-movil fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-surface-200 bg-surface-0 px-4 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-[0_-2px_8px_rgb(0_0_0/0.06)] md:hidden">
         <div class="flex min-w-0 flex-col leading-tight" aria-live="polite">
-          <span class="text-xs text-muted-color">{{ store.seleccion.length }} {{ store.seleccion.length === 1 ? "asiento" : "asientos" }}</span>
+          <span class="text-xs text-muted-color">{{ store.totalAsientos }} {{ store.totalAsientos === 1 ? "asiento" : "asientos" }}<template v-if="store.variasSalidas"> · {{ store.grupos.length }} salidas</template></span>
           <span class="truncate text-lg font-semibold tabular-nums">{{ store.total?.texto ?? "—" }}</span>
         </div>
         <div class="flex shrink-0 gap-2">
           <Button v-if="store.reasignacion" label="Reasignar" :loading="store.vendiendo" :disabled="!store.puedeReasignar" @click="confirmarReasignacion" />
           <template v-else>
-            <Button v-if="store.contexto?.permisos.cortesia || store.contexto?.canal === 'estacion'" label="Cortesía" severity="secondary" outlined :disabled="!store.puedeVender || store.encomiendaArticulos.length > 0" @click="abrirCobro(true)">
+            <Button v-if="store.contexto?.permisos.cortesia || store.contexto?.canal === 'estacion'" label="Cortesía" severity="secondary" outlined :disabled="!store.puedeVender" @click="abrirCobro(true)">
               <template v-if="!store.contexto?.permisos.cortesia" #icon><icon name="lock-outline" class="mr-1" /></template>
             </Button>
-            <Button :label="store.contexto?.canal === 'agencia' ? 'Vender' : 'Facturar'" :disabled="!store.puedeVender || !store.cotizacion" @click="abrirCobro(false)" />
+            <Button :label="store.contexto?.canal === 'agencia' ? 'Vender' : 'Facturar'" :disabled="!store.puedeVender" @click="abrirCobro(false)" />
           </template>
         </div>
       </div>
     </Teleport>
 
     <CobroDialog v-model:visible="cobro" :cortesia="cortesia" @confirmar="confirmar" />
-    <FacturacionFallidaDialog :fallo="store.falloFacturacion" :ocupado="store.vendiendo" @cancelar="store.cancelarVenta()" @reintentar="reintentar" />
-    <VentaExitosaDialog :comprobante="store.comprobante" :reasignacion="store.comprobanteReasignado" @cerrar="store.nuevaVenta()" />
+    <FacturacionFallidaDialog :fallo="store.falloFacturacion" :ocupado="store.vendiendo" :consecuencia="consecuenciaFallo" @cancelar="store.cancelarVenta()" @reintentar="reintentar" />
+    <VentaExitosaDialog :comprobantes="store.falloFacturacion ? [] : store.comprobantes" :reasignacion="store.comprobanteReasignado" @cerrar="store.nuevaVenta()" />
     <AnularBoletosDialog :visible="anular.length > 0" :ids="anular" @update:visible="(v) => !v && (anular = [])" @listo="alAnular" />
   </div>
 </template>
@@ -237,10 +252,9 @@ import SalidasCalendario from "./SalidasCalendario.vue";
 import { claveDeUsuario } from "@/core/auth/alcanceSesion";
 import { useAccesoStore } from "@/core/acceso/store";
 import VentaExitosaDialog from "./VentaExitosaDialog.vue";
-import { type OpcionesCobro, useVentaStore } from "./store";
+import AsientosElegidos from "./AsientosElegidos.vue";
+import { fechaCorta, type OpcionesCobro, useVentaStore } from "./store";
 import { imprimirTicket } from "@/shared/boleto/ticket";
-import ArticulosEditor from "@/shared/encomienda/ArticulosEditor.vue";
-import { imprimirGuias } from "@/shared/encomienda/impresion";
 import type { Comprobante } from "@/core/venta/types";
 import { useConfirm } from "primevue/useconfirm";
 import { notify } from "@/core/notify";
@@ -381,17 +395,21 @@ function etiquetaDia(delta: number) {
 /** Sin los recomendados: en el croquis parpadean entre libre y el estado de su vecino, sin renglón propio. */
 const leyenda: ItemLeyenda[] = ["disponible", "ocupado", "ocupado-web", "ocupado-agencia", "reservado", "cortesia", "voucher"];
 
-const lineas = computed(() => {
-  const precios = new Map(store.cotizacion?.asientos.map((a) => [a.asiento, a.precio.texto]));
-  const numeros = new Map(store.asientosCroquis.map((a) => [a.id, a.tipo === "asiento" ? a.numero : 0]));
-  return store.seleccion
-    .map((asiento) => ({
-      asiento,
-      numero: numeros.get(asiento) ?? 0,
-      precio: precios.get(asiento) ?? "—",
-    }))
-    .sort((a, b) => a.numero - b.numero);
-});
+/** Los pasajeros de cada salida elegida, sus asientos por número. */
+const pasajerosPorSalida = computed(() =>
+  store.grupos.map((g) => {
+    const precios = new Map(g.cotizacion?.asientos.map((a) => [a.asiento, a.precio.texto]));
+    return {
+      clave: g.clave,
+      ruta: g.ruta,
+      fecha: fechaCorta(g.fecha),
+      empresa: g.empresa,
+      lineas: g.asientos
+        .map((asiento) => ({ asiento, numero: g.numeros[asiento] ?? asiento, precio: precios.get(asiento) ?? "—", pasajero: g.pasajeros[asiento] ?? null }))
+        .sort((a, b) => a.numero - b.numero),
+    };
+  }),
+);
 
 /** Llegó desde un asiento relacionado (`?asiento=`): se abre su detalle en el croquis que acaba de entrar. */
 function abrirAsientoPedido() {
@@ -498,24 +516,28 @@ function abrirCobro(esCortesia: boolean) {
 
 async function confirmar(opciones: OpcionesCobro) {
   ultimasOpciones = opciones;
-  const c = await store.vender(opciones);
+  const hechos = await store.vender(opciones);
   cobro.value = false;
-  if (c) void imprimir(c);
+  void imprimir(hechos);
 }
 
 async function reintentar(sinFactura: boolean) {
   if (!ultimasOpciones) return;
-  const c = await store.vender({ ...ultimasOpciones, sinFacturaElectronica: sinFactura });
-  if (c) void imprimir(c);
+  void imprimir(await store.vender({ ...ultimasOpciones, sinFacturaElectronica: sinFactura }));
 }
 
-/** El ticket y, si lleva encomiendas, una guía por bulto para pegar en cada uno. */
-async function imprimir(c: Comprobante) {
-  await imprimirTicket(c);
-  for (const e of c.encomiendas ?? []) await imprimirGuias(e);
+/** Un ticket por venta (por salida), uno tras otro. */
+async function imprimir(comprobantes: Comprobante[]) {
+  for (const c of comprobantes) await imprimirTicket(c);
 }
 
-const nombreParada = (id: number | null) => store.detalle?.paradas.find((p) => p.id === id)?.nombre ?? "—";
+/** Qué quedó sin hacer cuando el certificador falla a mitad de una venta en varias salidas. */
+const consecuenciaFallo = computed(() => {
+  const vendidas = store.comprobantes.length;
+  if (!vendidas) return undefined;
+  return `${vendidas === 1 ? "La venta anterior sí quedó registrada" : `Las ${vendidas} ventas anteriores sí quedaron registradas`}; esta no, y sus asientos siguen libres.`;
+});
+
 </script>
 
 <style scoped>

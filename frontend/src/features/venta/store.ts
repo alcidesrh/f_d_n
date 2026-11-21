@@ -2,14 +2,16 @@
  * Estado de la pantalla de venta (taquilla y agencias, ADR-021): filtros,
  * salida elegido, tramo, ocupación en vivo (Mercure), selección de
  * asientos, cliente y cotización. La lógica pura está en `core/venta/modelo`.
+ *
+ * La selección se arma en varias salidas: cada salida y tramo con asientos
+ * elegidos es un grupo, que se conserva al cambiar de salida, fecha o
+ * estaciones. Al cobrar, cada grupo es una venta (`BoletoVenta`) con su
+ * factura y su ticket: compras separadas del mismo cliente.
  */
 import { defineStore } from "pinia";
 import { computed, onScopeDispose, ref, shallowRef, watch } from "vue";
-import { cotizarEncomienda } from "@/core/encomienda/api";
-import { errorArticulos, limpiarArticulos } from "@/core/encomienda/reglas";
-import type { ArticuloPedido, CotizacionEncomienda } from "@/core/encomienda/types";
 import * as api from "@/core/venta/api";
-import { alternar, bajadaPorDefecto, clasesDelTrayecto, depurarSeleccion, diaISO, estadoEnMapa, nuevoToken, subidaPorDefecto, trayectoEntre } from "@/core/venta/modelo";
+import { alternar, bajadaPorDefecto, clasesDelTrayecto, depurarSeleccion, diaISO, estadoEnMapa, fecha as fechaDe, hora as horaDe, nuevoToken, subidaPorDefecto, sumarImportes, trayectoEntre } from "@/core/venta/modelo";
 import { suscribir } from "@/core/realtime";
 import { notify } from "@/core/notify";
 import { useAutorizacionesStore } from "@/core/autorizacion/store";
@@ -26,11 +28,37 @@ export interface OpcionesCobro {
   sinFacturaElectronica?: boolean;
 }
 
+/** Asientos elegidos de una salida en un tramo: al cobrar, una venta. */
+export interface GrupoVenta {
+  /** `salida/trayecto`. */
+  clave: string;
+  salidaId: number;
+  trayectoId: number;
+  /** Clave de idempotencia de su venta: la misma en los reintentos. */
+  token: string;
+  asientos: number[];
+  /** Número en el croquis de cada asiento elegido. */
+  numeros: Record<number, number>;
+  /** Pasajero por asiento (si no, viaja el cliente de la venta). */
+  pasajeros: Record<number, Cliente | null>;
+  cobrarTrayectoCompleto: boolean;
+  cotizacion: Cotizacion | null;
+  errorCotizacion: string;
+  /** Para la lista de lo elegido: hora donde sube, «Sube → Baja» y empresa. */
+  fecha: string;
+  ruta: string;
+  empresa: string | null;
+  /** Tópico Mercure de su ocupación. */
+  topico: string;
+}
+
 const dos = (n: number) => String(n).padStart(2, "0");
 const inicioDeDia = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0);
 const finDeDia = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59);
 /** "AAAA-MM-DDTHH:MM" en hora local, como lo espera `/venta/salidas`. */
 const localISO = (d: Date) => `${diaISO(d)}T${dos(d.getHours())}:${dos(d.getMinutes())}`;
+/** `27/09/2026 08:00 p. m.`: cuándo sale el viaje de un grupo. */
+export const fechaCorta = (iso: string) => `${fechaDe(iso)} ${horaDe(iso)}`;
 
 export const useVentaStore = defineStore("venta", () => {
   const contexto = shallowRef<ContextoVenta | null>(null);
@@ -80,26 +108,50 @@ export const useVentaStore = defineStore("venta", () => {
    */
   const asientoPorAbrir = ref<number | null>(null);
 
-  const seleccion = ref<number[]>([]);
+  /** Lo elegido, en el orden en que se eligió: un grupo por salida y tramo. */
+  const grupos = ref<GrupoVenta[]>([]);
   const cliente = ref<Cliente | null>(null);
-  /** Pasajero por asiento (si no, viaja el cliente de la venta). */
-  const pasajeros = ref<Record<number, Cliente | null>>({});
   const observacion = ref("");
-  const cobrarTrayectoCompleto = ref(false);
-  const cotizacion = shallowRef<Cotizacion | null>(null);
-  const errorCotizacion = ref("");
 
   const vendiendo = ref(false);
-  /** Clave de idempotencia de la venta en curso (se renueva al terminarla). */
-  const token = ref(nuevoToken());
   const falloFacturacion = ref<ErrorVenta | null>(null);
-  const comprobante = shallowRef<Comprobante | null>(null);
+  /** Comprobantes de la venta (uno por salida) o el de una reasignación. */
+  const comprobantes = shallowRef<Comprobante[]>([]);
 
   let desuscribir: (() => void) | null = null;
   // Al descartar la store (cambio de usuario) deja de oír la ocupación.
   onScopeDispose(() => desuscribir?.());
 
   const trayectoId = computed(() => (detalle.value ? trayectoEntre(detalle.value, sube.value, baja.value) : null));
+  const claveActual = computed(() => (salidaId.value && trayectoId.value != null ? `${salidaId.value}/${trayectoId.value}` : null));
+  /** El grupo de la salida y el tramo abiertos (null si aún no tiene asientos). */
+  const grupoActual = computed(() => grupos.value.find((g) => g.clave === claveActual.value) ?? null);
+  const grupo = (clave: string) => grupos.value.find((g) => g.clave === clave) ?? null;
+  /** Asientos elegidos en la salida abierta (los del croquis). */
+  const seleccion = computed<number[]>({
+    get: () => grupoActual.value?.asientos ?? [],
+    set: (asientos) => fijarAsientos(asientos),
+  });
+  const pasajeros = computed(() => grupoActual.value?.pasajeros ?? {});
+  const cotizacion = computed(() => grupoActual.value?.cotizacion ?? null);
+  /** «Cobrar el trayecto completo» de la salida abierta; sin asientos aún, lo que tendrá su grupo. */
+  const cobrarCompletoSinGrupo = ref(false);
+  const cobrarTrayectoCompleto = computed<boolean>({
+    get: () => grupoActual.value?.cobrarTrayectoCompleto ?? cobrarCompletoSinGrupo.value,
+    set: (v) => {
+      if (grupoActual.value) grupoActual.value.cobrarTrayectoCompleto = v;
+      else cobrarCompletoSinGrupo.value = v;
+    },
+  });
+  /** El primer error de tarifa; de otra salida, con su viaje delante. */
+  const errorCotizacion = computed(() => {
+    const g = grupos.value.find((x) => x.errorCotizacion);
+    if (!g) return "";
+    return g.clave === claveActual.value || grupos.value.length === 1 ? g.errorCotizacion : `${g.ruta}: ${g.errorCotizacion}`;
+  });
+  const totalAsientos = computed(() => grupos.value.reduce((n, g) => n + g.asientos.length, 0));
+  /** Hay asientos elegidos en más de una salida (o tramo). */
+  const variasSalidas = computed(() => grupos.value.length > 1);
   /** Se viaja un tramo intermedio de la ruta (no de la primera a la última parada). */
   const esTramoIntermedio = computed(() => !!detalle.value && !detalle.value.trayectos.find((t) => t.id === trayectoId.value)?.completo);
   /** Cobrar el trayecto completo solo si se viaja un tramo intermedio y el completo tiene tarifa. */
@@ -117,49 +169,10 @@ export const useVentaStore = defineStore("venta", () => {
   /** Reasignando: cada boleto con el asiento que se le eligió y si cuesta lo mismo. */
   const parejas = computed(() => (reasignacion.value ? emparejar(reasignacion.value.boletos, seleccion.value, preciosCotizados.value) : []));
   const puedeReasignar = computed(() => !!reasignacion.value && !!detalle.value && !noVendible.value && trayectoId.value != null && listaParaReasignar(parejas.value) && !vendiendo.value);
-  // —— Encomienda del pasajero (ADR-035): de donde sube a donde baja, en la misma factura ——
-  const encomiendaArticulos = ref<ArticuloPedido[]>([]);
-  const encomiendaObservacion = ref("");
-  const cotizacionEncomienda = shallowRef<CotizacionEncomienda | null>(null);
-  const errorEncomienda = ref("");
-  /** Sin encomienda, o con sus artículos completos y cotizados. */
-  const encomiendaLista = computed(() => !encomiendaArticulos.value.length || (!errorArticulos(encomiendaArticulos.value) && !!cotizacionEncomienda.value && !errorEncomienda.value));
-  let encomiendaEnCurso = 0;
-  let esperaEncomienda: ReturnType<typeof setTimeout> | undefined;
-  watch(
-    [encomiendaArticulos, sube, baja],
-    () => {
-      clearTimeout(esperaEncomienda);
-      errorEncomienda.value = "";
-      if (!encomiendaArticulos.value.length || errorArticulos(encomiendaArticulos.value) || !sube.value || !baja.value) {
-        cotizacionEncomienda.value = null;
-        return;
-      }
-      esperaEncomienda = setTimeout(async () => {
-        const n = ++encomiendaEnCurso;
-        try {
-          const c = await cotizarEncomienda({ origen: sube.value, destino: baja.value!, articulos: limpiarArticulos(encomiendaArticulos.value) });
-          if (n === encomiendaEnCurso) cotizacionEncomienda.value = c;
-        } catch (e) {
-          if (n !== encomiendaEnCurso) return;
-          cotizacionEncomienda.value = null;
-          errorEncomienda.value = api.errorVenta(e)?.error ?? "No se pudo cotizar la encomienda.";
-        }
-      }, 350);
-    },
-    { deep: true },
-  );
-  onScopeDispose(() => clearTimeout(esperaEncomienda));
-  /** Lo que se cobra: los asientos más la encomienda. */
-  const total = computed<Importe | null>(() => {
-    const asientos = cotizacion.value?.total ?? null;
-    const encomienda = cotizacionEncomienda.value?.total ?? null;
-    if (!asientos || !encomiendaArticulos.value.length || !encomienda) return asientos;
-    const centavos = asientos.centavos + encomienda.centavos;
-    return { centavos, moneda: asientos.moneda, texto: `${asientos.moneda === "GTQ" ? "Q" : asientos.moneda} ${(centavos / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` };
-  });
+  /** Lo que se cobra: la suma de las ventas de todas las salidas. */
+  const total = computed<Importe | null>(() => sumarImportes(grupos.value.map((g) => g.cotizacion?.total ?? null)));
 
-  const puedeVender = computed(() => !!cliente.value && !!detalle.value && !noVendible.value && trayectoId.value != null && seleccion.value.length > 0 && !vendiendo.value && encomiendaLista.value);
+  const puedeVender = computed(() => !!cliente.value && grupos.value.length > 0 && grupos.value.every((g) => !!g.cotizacion && !g.errorCotizacion) && !vendiendo.value);
 
   async function iniciar() {
     errorCarga.value = "";
@@ -262,10 +275,9 @@ export const useVentaStore = defineStore("venta", () => {
     detalle.value = null;
     ocupados.value = [];
     recomendados.value = [];
-    seleccion.value = [];
-    pasajeros.value = {};
-    cotizacion.value = null;
-    cobrarTrayectoCompleto.value = false;
+    cobrarCompletoSinGrupo.value = false;
+    // Lo elegido se conserva al pasar a otra salida; reasignando, solo cuenta la salida abierta.
+    if (reasignacion.value) grupos.value = [];
   }
 
   async function cargarOcupacion(silenciosa = false) {
@@ -295,8 +307,109 @@ export const useVentaStore = defineStore("venta", () => {
     if (depurada.length !== seleccion.value.length) {
       notify.warning("Otro vendedor tomó un asiento que tenía elegido: se quitó de la selección.");
       seleccion.value = depurada;
-      void recotizar();
     }
+  }
+
+  /**
+   * Las otras salidas con asientos elegidos también se oyen: si otro vendedor
+   * toma uno, se quita de su grupo (la salida abierta la oye `refrescarOcupacion`).
+   */
+  const vigiladas = new Map<number, () => void>();
+  watch(
+    () => [...new Map(grupos.value.filter((g) => g.salidaId !== salidaId.value).map((g) => [g.salidaId, g.topico]))],
+    (otras) => {
+      const ids = new Set(otras.map(([id]) => id));
+      for (const [id, dejar] of vigiladas) {
+        if (ids.has(id)) continue;
+        dejar();
+        vigiladas.delete(id);
+      }
+      for (const [id, topico] of otras) {
+        if (!vigiladas.has(id)) vigiladas.set(id, suscribir(topico, () => void depurarOtrasSalidas(id)));
+      }
+    },
+  );
+  onScopeDispose(() => {
+    for (const dejar of vigiladas.values()) dejar();
+    vigiladas.clear();
+  });
+
+  async function depurarOtrasSalidas(salida: number) {
+    for (const g of grupos.value.filter((x) => x.salidaId === salida && x.clave !== claveActual.value)) {
+      if (enviando) return;
+      let ocupadosDelGrupo: AsientoOcupado[];
+      try {
+        ocupadosDelGrupo = (await api.fetchOcupacion(g.salidaId, g.trayectoId, true)).asientos;
+      } catch {
+        continue;
+      }
+      if (enviando) return;
+      const vigente = grupo(g.clave);
+      if (!vigente) continue;
+      const depurada = depurarSeleccion(vigente.asientos, ocupadosDelGrupo);
+      if (depurada.length === vigente.asientos.length) continue;
+      notify.warning(`Otro vendedor tomó un asiento que tenía elegido en ${vigente.ruta}: se quitó de la selección.`);
+      fijarAsientosDe(vigente.clave, depurada);
+    }
+  }
+
+  /** Cambia los asientos de la salida abierta: crea su grupo con el primero y lo quita sin ninguno. */
+  function fijarAsientos(asientos: number[]) {
+    const clave = claveActual.value;
+    if (!clave || !detalle.value || !salidaId.value || trayectoId.value == null) return;
+    if (!grupo(clave)) {
+      if (!asientos.length) return;
+      const d = detalle.value;
+      const nombre = (id: number | null) => d.paradas.find((p) => p.id === id)?.nombre ?? "—";
+      grupos.value.push({
+        clave,
+        salidaId: salidaId.value,
+        trayectoId: trayectoId.value,
+        token: nuevoToken(),
+        asientos: [],
+        numeros: {},
+        pasajeros: {},
+        cobrarTrayectoCompleto: cobrarCompletoSinGrupo.value,
+        cotizacion: null,
+        errorCotizacion: "",
+        fecha: d.paradas.find((p) => p.id === sube.value)?.hora ?? salidas.value.find((r) => r.id === d.id)?.viaje?.sube.hora ?? d.salida,
+        ruta: `${nombre(sube.value)} → ${nombre(baja.value)}`,
+        empresa: d.empresa?.nombre ?? null,
+        topico: d.topico,
+      });
+    }
+    const g = grupo(clave)!;
+    for (const id of asientos) {
+      g.numeros[id] ??= asientosCroquis.value.find((a) => a.id === id)?.numero ?? id;
+    }
+    fijarAsientosDe(clave, asientos);
+  }
+
+  /** Cambia los asientos de un grupo, sin pasajeros de los que se quitaron; sin ninguno, el grupo sale. */
+  function fijarAsientosDe(clave: string, asientos: number[]) {
+    const g = grupo(clave);
+    if (!g) return;
+    if (!asientos.length) {
+      grupos.value = grupos.value.filter((x) => x.clave !== clave);
+      cotizando.delete(clave);
+      return;
+    }
+    for (const id of g.asientos) {
+      if (!asientos.includes(id)) delete g.pasajeros[id];
+    }
+    g.asientos = asientos;
+    void cotizarGrupo(clave);
+  }
+
+  /** Quita un asiento de lo elegido (de la lista de abajo del total). */
+  function quitarAsiento(clave: string, asiento: number) {
+    const g = grupo(clave);
+    if (g) fijarAsientosDe(clave, g.asientos.filter((id) => id !== asiento));
+  }
+
+  function fijarPasajero(clave: string, asiento: number, pasajero: Cliente | null) {
+    const g = grupo(clave);
+    if (g) g.pasajeros[asiento] = pasajero;
   }
 
   function alternarAsiento(id: number) {
@@ -306,115 +419,143 @@ export const useVentaStore = defineStore("venta", () => {
       return;
     }
     seleccion.value = alternar(seleccion.value, id);
-    if (!seleccion.value.includes(id)) delete pasajeros.value[id];
-    void recotizar();
   }
 
-  let cotizacionEnCurso = 0;
-  async function recotizar(cortesia = false) {
-    const n = ++cotizacionEnCurso;
-    errorCotizacion.value = "";
-    if (!salidaId.value || !seleccion.value.length) {
-      cotizacion.value = null;
-      return;
-    }
+  /** Última cotización pedida por grupo: la respuesta de una anterior se descarta. */
+  const cotizando = new Map<string, number>();
+  async function cotizarGrupo(clave: string, cortesia = false) {
+    const g = grupo(clave);
+    if (!g) return;
+    const n = (cotizando.get(clave) ?? 0) + 1;
+    cotizando.set(clave, n);
+    const vigente = () => (cotizando.get(clave) === n ? grupo(clave) : null);
+    g.errorCotizacion = "";
     try {
       const c = await api.cotizar({
-        salida: salidaId.value,
-        trayecto: trayectoId.value,
-        asientos: seleccion.value,
-        cobrarTrayectoCompleto: cobrarTrayectoCompleto.value,
+        salida: g.salidaId,
+        trayecto: g.trayectoId,
+        asientos: [...g.asientos],
+        cobrarTrayectoCompleto: g.cobrarTrayectoCompleto,
         cortesia,
         venta: reasignacion.value?.ventaId,
       });
-      if (n === cotizacionEnCurso) cotizacion.value = c;
+      const actual = vigente();
+      if (actual) actual.cotizacion = c;
     } catch (e) {
-      if (n !== cotizacionEnCurso) return;
-      cotizacion.value = null;
-      errorCotizacion.value = api.errorVenta(e)?.error ?? "No se pudo calcular la tarifa.";
+      const actual = vigente();
+      if (!actual) return;
+      actual.cotizacion = null;
+      actual.errorCotizacion = api.errorVenta(e)?.error ?? "No se pudo calcular la tarifa.";
     }
   }
 
+  /** Vuelve a cotizar todo lo elegido (como cortesía, al emitirla). */
+  async function recotizar(cortesia = false) {
+    await Promise.all(grupos.value.map((g) => cotizarGrupo(g.clave, cortesia)));
+  }
+
   /**
-   * Registra la venta. Devuelve el comprobante; si el certificador falló,
-   * deja el motivo en `falloFacturacion` (la venta no quedó registrada).
+   * Registra una venta por grupo, uno tras otro: cada una con su factura
+   * (la de la empresa de su salida) y su ticket. Devuelve los comprobantes de
+   * las que se registraron. Si una falla, se detiene ahí: las anteriores
+   * quedan vendidas y esa y las siguientes siguen elegidas; si fue el
+   * certificador, el motivo queda en `falloFacturacion` (reintentar sigue
+   * desde esa). Sin factura electrónica solo va la primera (la que falló).
    */
-  async function vender(opciones: OpcionesCobro): Promise<Comprobante | null> {
-    if (!puedeVender.value || !salidaId.value || !cliente.value) return null;
+  async function vender(opciones: OpcionesCobro): Promise<Comprobante[]> {
+    if (!puedeVender.value || !cliente.value) return [];
     vendiendo.value = true;
     falloFacturacion.value = null;
+    const hechos: Comprobante[] = [];
+    let sinFactura = opciones.sinFacturaElectronica ?? false;
+    enviando = true;
     try {
-      enviando = true;
-      const c = await api.vender({
-        token: token.value,
-        salida: salidaId.value,
-        trayecto: trayectoId.value,
-        asientos: seleccion.value.map((asiento) => ({
-          asiento,
-          cliente: pasajeros.value[asiento]?.id ?? null,
-        })),
-        cliente: cliente.value.id,
-        // Lugar de emisión: la estación del usuario, no el filtro "Sube en" (que es dónde sube el pasajero).
-        estacion: contexto.value?.canal === "estacion" ? (contexto.value.estacion?.id ?? null) : null,
-        observacion: observacion.value.trim() || null,
-        cobrarTrayectoCompleto: cobrarTrayectoCompleto.value,
-        tipoPago: opciones.tipoPago,
-        moneda: opciones.moneda,
-        enviarCorreo: opciones.enviarCorreo,
-        cortesia: opciones.cortesia,
-        sinFacturaElectronica: opciones.sinFacturaElectronica ?? false,
-        encomiendas: encomiendaArticulos.value.length && !opciones.cortesia ? [{ articulos: limpiarArticulos(encomiendaArticulos.value), observacion: encomiendaObservacion.value.trim() || null }] : [],
-      });
+      // `grupos` se reemplaza al vender cada una: se recorre la lista de antes.
+      for (const g of grupos.value) {
+        try {
+          hechos.push(
+            await api.vender({
+              token: g.token,
+              salida: g.salidaId,
+              trayecto: g.trayectoId,
+              asientos: g.asientos.map((asiento) => ({ asiento, cliente: g.pasajeros[asiento]?.id ?? null })),
+              cliente: cliente.value.id,
+              // Lugar de emisión: la estación del usuario, no el filtro "Sube en" (que es dónde sube el pasajero).
+              estacion: contexto.value?.canal === "estacion" ? (contexto.value.estacion?.id ?? null) : null,
+              observacion: observacion.value.trim() || null,
+              cobrarTrayectoCompleto: g.cobrarTrayectoCompleto,
+              tipoPago: opciones.tipoPago,
+              moneda: opciones.moneda,
+              enviarCorreo: opciones.enviarCorreo,
+              cortesia: opciones.cortesia,
+              sinFacturaElectronica: sinFactura,
+            }),
+          );
+          grupos.value = grupos.value.filter((x) => x.clave !== g.clave);
+          sinFactura = false;
+        } catch (e) {
+          await rechazada(e, g, hechos.length > 0 || grupos.value.length > 1);
+          break;
+        }
+      }
+    } finally {
       enviando = false;
-      comprobante.value = c;
+      vendiendo.value = false;
+    }
+    if (hechos.length) {
+      comprobantes.value = [...comprobantes.value, ...hechos];
       comprobanteReasignado.value = false;
-      terminarVenta();
+      if (!grupos.value.length) terminarVenta();
       if (contexto.value?.canal === "agencia") void refrescarContexto();
       void refrescarOcupacion();
       void cargarSalidas();
-      return c;
-    } catch (e) {
-      enviando = false;
-      const err = api.errorVenta(e);
-      if (err?.codigo === "facturacion") {
-        falloFacturacion.value = err;
-      } else if (!useAutorizacionesStore().ofrecer(e)) {
-        // Sin el permiso de cortesía o pasado su límite se ofrece pedir una autorización (ADR-040).
-        notify.error(err?.error ?? "No se pudo registrar la venta.");
-        if (err?.codigo === "asientos_no_disponibles") await refrescarOcupacion();
-        if (err?.codigo === "saldo_insuficiente") void refrescarContexto();
-      }
-      return null;
-    } finally {
-      vendiendo.value = false;
     }
+    return hechos;
+  }
+
+  /** La venta de un grupo no se registró: el motivo, con su viaje delante si hay más de una. */
+  async function rechazada(e: unknown, g: GrupoVenta, conViaje: boolean) {
+    const err = api.errorVenta(e);
+    const motivo = (texto: string) => (conViaje ? `${g.ruta} (${fechaCorta(g.fecha)}): ${texto}` : texto);
+    if (err?.codigo === "facturacion") {
+      falloFacturacion.value = { ...err, error: motivo(err.error) };
+      return;
+    }
+    // Sin el permiso de cortesía o pasado su límite se ofrece pedir una autorización (ADR-040).
+    if (useAutorizacionesStore().ofrecer(e)) return;
+    notify.error(motivo(err?.error ?? "No se pudo registrar la venta."));
+    if (err?.codigo === "asientos_no_disponibles") {
+      if (g.salidaId === salidaId.value) await refrescarOcupacion();
+      else await depurarOtrasSalidas(g.salidaId);
+    }
+    if (err?.codigo === "saldo_insuficiente") void refrescarContexto();
   }
 
   /** Deja lista la pantalla para la siguiente venta (mismo salida y cliente). */
   function terminarVenta() {
-    token.value = nuevoToken();
-    seleccion.value = [];
-    pasajeros.value = {};
+    grupos.value = [];
+    cotizando.clear();
     observacion.value = "";
-    cotizacion.value = null;
     falloFacturacion.value = null;
-    encomiendaArticulos.value = [];
-    encomiendaObservacion.value = "";
-    cotizacionEncomienda.value = null;
   }
 
-  /** «Nueva venta»: cierra el comprobante y limpia cliente y salida; conserva fecha, estación y filtros. */
+  /**
+   * «Nueva venta»: cierra los comprobantes y limpia cliente y salida; conserva
+   * fecha, estación y filtros. Si una venta quedó sin registrar, sus asientos
+   * siguen elegidos.
+   */
   function nuevaVenta() {
-    comprobante.value = null;
+    comprobantes.value = [];
+    if (grupos.value.length) return;
     cliente.value = null;
     observacion.value = "";
     cerrarSalida();
-    token.value = nuevoToken();
   }
 
+  /** No se reintenta la que falló: lo que no se vendió sigue elegido, con claves nuevas. */
   function cancelarVenta() {
     falloFacturacion.value = null;
-    token.value = nuevoToken();
+    for (const g of grupos.value) g.token = nuevoToken();
   }
 
   /**
@@ -441,6 +582,7 @@ export const useVentaStore = defineStore("venta", () => {
       return false;
     }
     cerrarSalida();
+    grupos.value = [];
     const filtros = reasignacion.value?.filtros ?? { estacionId: estacionId.value, destinoId: destinoId.value };
     reasignacion.value = { boletos, ventaId: boletos[0]!.venta.id, filtros };
     cliente.value = boletos[0]!.venta.cliente;
@@ -459,7 +601,7 @@ export const useVentaStore = defineStore("venta", () => {
     terminarReasignacion();
     cliente.value = null;
     cerrarSalida();
-    token.value = nuevoToken();
+    terminarVenta();
     void cargarSalidas();
   }
 
@@ -486,7 +628,7 @@ export const useVentaStore = defineStore("venta", () => {
         cobrarTrayectoCompleto: cobrarTrayectoCompleto.value,
       });
       enviando = false;
-      comprobante.value = c;
+      comprobantes.value = [c];
       comprobanteReasignado.value = true;
       terminarReasignacion();
       cliente.value = null;
@@ -546,7 +688,14 @@ export const useVentaStore = defineStore("venta", () => {
     errorCotizacion,
     vendiendo,
     falloFacturacion,
-    comprobante,
+    comprobantes,
+    grupos,
+    grupoActual,
+    claveActual,
+    totalAsientos,
+    variasSalidas,
+    quitarAsiento,
+    fijarPasajero,
     trayectoId,
     esTramoIntermedio,
     puedeCobrarCompleto,
@@ -556,10 +705,6 @@ export const useVentaStore = defineStore("venta", () => {
     asientosCroquis,
     libres,
     puedeVender,
-    encomiendaArticulos,
-    encomiendaObservacion,
-    cotizacionEncomienda,
-    errorEncomienda,
     total,
     iniciar,
     cargarSalidas,
