@@ -5,11 +5,9 @@
         <button type="button" class="icon-btn" aria-label="Menú de navegación" :aria-expanded="ui.isMobile ? sidebarStore.drawer : sidebarStore.mode !== 'close'" @click="sidebarStore.toggle()">
           <icon name="menu" size="26" :weight="300" color="text-surface-500" />
         </button>
-        <Divider layout="vertical" class="mx-[5px]! hidden! lg:flex!" />
       </div>
 
-      <!-- Debajo de `lg` no hay migas: el título dice en qué pantalla se está. -->
-      <h1 class="header-title">{{ tituloPantalla }}</h1>
+      <Divider v-if="sidebarStore.mode == 'close'" layout="vertical" class="mx-[0px]! hidden! lg:flex!" />
 
       <div class="header-crumbs">
         <nav class="crumbs" aria-label="Breadcrumb">

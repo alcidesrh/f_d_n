@@ -115,8 +115,6 @@
   }
 }
 .icon-btn {
-  width: 2.5rem;
-  height: 2.5rem;
   @media (pointer: coarse) {
     width: var(--tap-min);
     height: var(--tap-min);
@@ -132,6 +130,7 @@
     color var(--transition);
   position: relative;
   flex: 0 0 auto;
+  margin: 0 1rem;
 }
 .icon-btn:hover {
   background: var(--p-content-hover-background);
@@ -172,7 +171,7 @@
   }
   align-items: center;
   min-width: 0;
-  padding-left: 0.5rem;
+  margin-left: 1rem;
 }
 /* Si no caben, se recortan por el principio: lo último visitado queda a la vista. */
 .crumbs {
@@ -180,9 +179,10 @@
   align-items: center;
   justify-content: flex-end;
   min-width: 0;
-  gap: 8px;
+  gap: 4px;
   color: var(--text-muted);
-  font-size: 12px;
+  font-weight: 500;
+  font-size: 0.85rem;
   overflow: hidden;
   white-space: nowrap;
 }
