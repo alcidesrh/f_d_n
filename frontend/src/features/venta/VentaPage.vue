@@ -290,6 +290,7 @@ function crearTarifa(salida: SalidaResumen) {
  * página tiene su alto final.
  */
 function alMostrarCroquis() {
+  abrirAsientoPedido();
   if (!bajarAlCroquis || !store.detalle) return;
   bajarAlCroquis = false;
   const suave = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -392,11 +393,26 @@ const lineas = computed(() => {
     .sort((a, b) => a.numero - b.numero);
 });
 
+/** Llegó desde un asiento relacionado (`?asiento=`): se abre su detalle en el croquis que acaba de entrar. */
+function abrirAsientoPedido() {
+  const asiento = store.asientoPorAbrir;
+  if (asiento === null) return;
+  store.asientoPorAbrir = null;
+  const boton = croquis.value?.querySelector<HTMLButtonElement>(`[data-asiento="${asiento}"]:not(:disabled)`);
+  if (!boton) return;
+  // Fuera de la vista (teléfono: el croquis va debajo de las salidas) primero se baja: el popover
+  // se cierra con el scroll. Se abre después (terminado el scroll y con el popover del croquis ya montado).
+  const r = boton.getBoundingClientRect();
+  const visible = r.top >= 0 && r.bottom <= window.innerHeight;
+  if (!visible) boton.scrollIntoView({ block: "center" });
+  window.setTimeout(() => boton.click(), visible ? 0 : 150);
+}
+
 /**
  * Llegó con una salida pedida: desde el calendario (`fecha`, `salida`) o desde un
  * asiento relacionado de otra salida (además `sube`, `baja` y `asiento`: ese tramo
- * en los filtros y el detalle del asiento abierto). También con la pantalla ya
- * abierta (el enlace del detalle de un asiento lleva a esta misma ruta).
+ * en los filtros y el detalle del asiento abierto). El enlace desde esta misma
+ * pantalla también pasa por aquí: la URL nueva vuelve a montarla.
  */
 async function abrirPedido() {
   const fechaPedida = String(route.query.fecha ?? "");
@@ -419,19 +435,17 @@ async function abrirPedido() {
     store.destinoId = baja;
     store.empresaIds = [];
     await store.cargarSalidas();
+    // El tramo del boleto no siempre es uno que la salida ofrece (datos del legado): sin filtros, sí aparece.
+    if ((sube !== null || baja !== null) && !store.salidas.some((r) => r.id === salidaPedida)) {
+      store.estacionId = null;
+      store.destinoId = null;
+      await store.cargarSalidas();
+    }
+    // El detalle del asiento lo abre el croquis al entrar (`alMostrarCroquis`): esta llamada
+    // puede seguir con la pantalla ya desmontada, porque cambiar la URL la vuelve a montar.
+    store.asientoPorAbrir = asiento;
     await router.replace({ query: { ...route.query, salida: undefined, fecha: undefined, sube: undefined, baja: undefined, asiento: undefined } });
     await store.elegirSalida(salidaPedida);
-    if (asiento !== null && store.salidaId === salidaPedida) {
-      // El croquis entra con una transición: se espera a que el botón del asiento esté en la página.
-      for (let i = 0; i < 20; i++) {
-        const boton = croquis.value?.querySelector<HTMLButtonElement>(`[data-asiento="${asiento}"]:not(:disabled)`);
-        if (boton) {
-          boton.click();
-          break;
-        }
-        await new Promise((r) => window.setTimeout(r, 100));
-      }
-    }
   } else if (fechaPedida) await store.cargarSalidas();
 }
 
@@ -447,10 +461,6 @@ onMounted(async () => {
     await store.iniciarReasignacion(ids);
   }
 });
-watch(
-  () => route.query.salida,
-  (salida) => salida && void abrirPedido(),
-);
 
 const numeroDe = (asiento: number) => store.asientosCroquis.find((a) => a.id === asiento)?.numero ?? asiento;
 const fechaHoraCorta = (iso: string) =>

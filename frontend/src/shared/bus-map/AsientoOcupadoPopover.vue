@@ -5,8 +5,8 @@
   y venta (uno por tramo vendido, con los otros asientos de la misma compra;
   los de otra salida enlazan a la venta con ese boleto abierto), o la reserva
   web vigente.
-  Al SUPER_ADMIN no se le muestra el pasajero; solo él ve la venta (con la
-  estación) y la bitácora del boleto.
+  Al SUPER_ADMIN no se le muestra el pasajero (sí el cliente); solo él ve los
+  datos de quién vendió (fecha, vendedor, estación) y la bitácora del boleto.
 -->
 <template>
   <Popover ref="popover" class="aop" @hide="detalle = null">
@@ -64,7 +64,7 @@
           </section>
 
           <template v-if="b.completo">
-            <section v-if="b.cliente && !detalle.auditoria" class="aop-grupo">
+            <section v-if="b.cliente" class="aop-grupo">
               <h4>Cliente</h4>
               <dl>
                 <dt>Nombre</dt>
@@ -368,18 +368,29 @@ const fechaHora = (iso: string) =>
 .aop-grupo dl {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: 0.15rem 0.75rem;
-  margin: 0;
+  margin: 0 -0.35rem;
   font-size: 0.85rem;
 }
+/* Cada fila es un par dt/dd: se cuentan por tipo, así que el par n tiene el mismo índice en ambos. */
+.aop-grupo dt,
+.aop-grupo dd {
+  padding: 0.15rem 0.35rem;
+}
 .aop-grupo dt {
+  padding-right: 0.75rem;
+  border-radius: 0.25rem 0 0 0.25rem;
   color: var(--p-text-muted-color);
 }
 .aop-grupo dd {
   min-width: 0;
   margin: 0;
+  border-radius: 0 0.25rem 0.25rem 0;
   text-align: right;
   overflow-wrap: anywhere;
+}
+.aop-grupo dt:nth-of-type(even),
+.aop-grupo dd:nth-of-type(even) {
+  background: color-mix(in srgb, var(--p-surface-400) 10%, transparent);
 }
 .aop-relacionados {
   display: flex;

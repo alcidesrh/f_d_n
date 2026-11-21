@@ -74,6 +74,11 @@ export const useVentaStore = defineStore("venta", () => {
   const sube = ref<number | null>(null);
   const baja = ref<number | null>(null);
   const ocupados = ref<AsientoOcupado[]>([]);
+  /**
+   * Asiento cuyo detalle se abre cuando entre el croquis (se llegó desde un asiento
+   * relacionado de otra salida). Vive aquí y no en la pantalla: cambiar la URL la vuelve a montar.
+   */
+  const asientoPorAbrir = ref<number | null>(null);
 
   const seleccion = ref<number[]>([]);
   const cliente = ref<Cliente | null>(null);
@@ -531,6 +536,7 @@ export const useVentaStore = defineStore("venta", () => {
     sube,
     baja,
     ocupados,
+    asientoPorAbrir,
     seleccion,
     cliente,
     pasajeros,
