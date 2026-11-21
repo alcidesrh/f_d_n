@@ -19,7 +19,7 @@ export const guiasEncomiendas: Guia[] = [
     resumen: 'Un paquete o un especial, de una estación a otra, con su recibo y sus guías.',
     para: [REGISTRAR_ENCOMIENDA],
     antes:
-      'Se registraba en el sistema anterior con el número de la guía impreso a mano. Ahora cada bulto sale con su guía de código de barras.',
+      'Se registraba en el sistema anterior con el número de la guía impreso a mano. Ahora cada bulto sale con su guía con código QR.',
     pasos: [
       'Abra «Registrar encomienda» en el menú.',
       'Elija el viaje: origen, destino y salida (o la próxima).',
@@ -75,7 +75,7 @@ export const guiasEncomiendas: Guia[] = [
     ],
     abrir: { etiqueta: 'Abrir Encomiendas', destino: { name: 'encomiendas' } },
     pantallas: ['encomiendas'],
-    palabras: ['buscar encomienda', 'codigo de barras', 'rastrear', 'donde esta el paquete'],
+    palabras: ['buscar encomienda', 'codigo de barras', 'qr', 'rastrear', 'donde esta el paquete'],
   },
   {
     id: 'procesar-por-salida',
@@ -86,7 +86,7 @@ export const guiasEncomiendas: Guia[] = [
     pasos: [
       'Abra «Procesar por salida» en el menú y elija la salida.',
       'Dos columnas: «En bodega» (en su estación, por embarcar) y «A bordo».',
-      'Escanee el código de barras de cada guía, o escriba el código y pulse Enter. Se marca sola.',
+      'Escanee el QR de cada guía (o el código de barras de las viejas), o escriba el código y pulse Enter. Se marca sola.',
       'Pulse «Embarcar» para pasar las marcadas a bordo, o «Desembarcar» para bajarlas.',
       '«Manifiesto» imprime la lista de carga de la salida.',
     ],

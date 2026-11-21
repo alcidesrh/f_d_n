@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Venta\Boleto;
 
 /**
- * Código QR en SVG (sin dependencias, como `Code128`): modo byte, nivel de
+ * Código QR en SVG (sin dependencias): modo byte, nivel de
  * corrección M y versiones 1 a 6 (hasta 106 bytes), de sobra para el código
  * de abordaje de un boleto (`LlaveBoleto`). ISO/IEC 18004.
  */

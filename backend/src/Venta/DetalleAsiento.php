@@ -19,8 +19,8 @@ use Psr\Clock\ClockInterface;
 
 /**
  * Qué hay detrás de un asiento ocupado del croquis (solo personal): los
- * boletos vivos del asiento (uno por tramo vendido) con pasajero, venta,
- * cobro y factura agrupados, o la reserva web vigente. `completo = false`
+ * boletos vivos del asiento (uno por tramo vendido) con pasajero, cliente de
+ * la venta, cobro, factura y los otros asientos de la misma venta, o la reserva web vigente. `completo = false`
  * (venta de otro vendedor a quien no puede verla) deja solo lo operativo:
  * tramo, estado y canal; sin datos del pasajero, importes ni factura.
  */
@@ -111,8 +111,14 @@ final class DetalleAsiento
                 "telefono" => $cliente->getTelefono(),
                 "email" => $cliente->getEmail(),
             ],
+            "cliente" => $venta->getCliente() === null ? null : [
+                "nombre" => $venta->getCliente()->getNombreCompleto(),
+                "email" => $venta->getCliente()->getEmail(),
+                "nit" => $venta->getCliente()->getNit(),
+            ],
             "observacion" => $b->getObservacion(),
             "precio" => DatosBoleto::importe($b->getPrecio()),
+            "relacionados" => $this->relacionados($b),
             "venta" => [
                 ...$base["venta"],
                 "creada" => $venta->getCreada()?->format(DATE_ATOM),
@@ -133,6 +139,37 @@ final class DetalleAsiento
                 ],
             ],
         ];
+    }
+
+    /**
+     * Los otros asientos vivos de la misma venta, con lo necesario para abrirlos
+     * en la venta (fecha, salida, tramo y asiento) si son de otra salida.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function relacionados(BoletoAsiento $b): array
+    {
+        $libres = EstadoBoletoAsiento::liberanAsiento();
+        $otros = [];
+        foreach ($b->getBoletoVenta()->getAsientos() as $o) {
+            if ($o === $b || in_array($o->getEstado()->value, $libres, true)) {
+                continue;
+            }
+            $salida = $o->getSalida();
+            $otros[] = [
+                "id" => $o->getId(),
+                "numero" => $o->getAsiento()?->getNumero(),
+                "asiento" => $o->getAsiento()?->getId(),
+                "salida" => $salida?->getId(),
+                "otraSalida" => $salida !== $b->getSalida(),
+                "fecha" => $salida?->getFecha()?->format("Y-m-d"),
+                "sube" => $o->getTrayecto()->getOrigen()?->getId(),
+                "baja" => $o->getTrayecto()->getDestino()?->getId(),
+            ];
+        }
+        usort($otros, static fn(array $x, array $y) => [$x["otraSalida"], $x["numero"]] <=> [$y["otraSalida"], $y["numero"]]);
+
+        return $otros;
     }
 
     /**

@@ -1,6 +1,6 @@
 # ADR-063: Chequeo de boletos por escaneo (QR del boleto y código de barras)
 
-**Estado:** Aceptada (amplía [ADR-032](ADR-032-abordaje-y-chequeo-de-boletos.md))
+**Estado:** Aceptada (amplía [ADR-032](ADR-032-abordaje-y-chequeo-de-boletos.md); [ADR-066](ADR-066-qr-en-lugar-de-codigo-de-barras.md) quita el código de barras del ticket y del PDF)
 
 ## Contexto
 

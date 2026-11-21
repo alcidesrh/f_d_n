@@ -1,4 +1,4 @@
-{# PDF del boleto (venta web y copia por correo): una página por venta (ida y regreso) y, en ella, cada viaje (salida y trayecto: una compra modificada puede tener asientos en otras salidas). Datos: `boletos` = lista de { b: App\Venta\Boleto\DatosBoleto, codigoBarras, qr: id de boleto → SVG en base64 del código de abordaje (ADR-063) }. #}
+{# PDF del boleto (venta web y copia por correo): una página por venta (ida y regreso) y, en ella, cada viaje (salida y trayecto: una compra modificada puede tener asientos en otras salidas). Datos: `boletos` = lista de { b: App\Venta\Boleto\DatosBoleto, qr: id de boleto → SVG en base64 del código de abordaje (ADR-063) }. #}
 <!doctype html>
 <html lang="es">
 <head>
@@ -29,14 +29,12 @@
 <body>
 {% for item in boletos %}
   {% set b = item.b %}
-  {% set codigoBarras = item.codigoBarras %}
   <table width="100%"><tr>
     <td>
       <h1>Boleto {{ b.empresa.nombre ?? 'Fuente del Norte' }}</h1>
       <div class="muted">Guarde y muestre este boleto a la hora de abordar. ¡Feliz viaje!</div>
     </td>
     <td align="right">
-      <img src="data:image/svg+xml;base64,{{ codigoBarras }}" height="46"><br>
       <span class="muted">ID {{ b.codigoBarras }}</span>
     </td>
   </tr></table>

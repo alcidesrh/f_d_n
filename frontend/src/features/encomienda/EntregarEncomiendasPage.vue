@@ -2,7 +2,7 @@
   Entregar encomiendas (la «Entrega múltiple» y «Pendientes de entrega» del
   legado, ADR-035): lo que se puede entregar en la estación —desembarcado
   aquí o en tránsito en un bus que llega aquí— con buscador por código o
-  cliente y lector de código de barras (marca la escaneada). Se marcan las
+  cliente y lector (QR de la guía o el código de barras de las viejas; marca la escaneada). Se marcan las
   que retira una misma persona y se entregan juntas: quien retira y, si hay
   por cobrar, a quién se factura (cada una con su factura). Al terminar
   imprime los comprobantes de lo cobrado.

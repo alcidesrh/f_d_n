@@ -132,6 +132,18 @@ export interface TrayectoAsiento {
   destino: string
 }
 
+export interface AsientoRelacionado {
+  id: number
+  numero: number | null
+  asiento: number | null
+  salida: number | null
+  otraSalida: boolean
+  /** Día de la salida (YYYY-MM-DD). */
+  fecha: string | null
+  sube: number | null
+  baja: number | null
+}
+
 export interface BoletoDeAsiento {
   id: number
   /** Emitido y antes de la hora de salida: se puede anular o reasignar (si el usuario tiene permiso). */
@@ -148,8 +160,12 @@ export interface BoletoDeAsiento {
     telefono: string | null
     email: string | null
   } | null
+  /** Quien compró (el cliente de la venta). */
+  cliente?: { nombre: string; email: string | null; nit: string | null } | null
   observacion?: string | null
   precio?: Importe | null
+  /** Los otros asientos de la misma venta; los de otra salida, con lo necesario para abrirlos en la venta. */
+  relacionados?: AsientoRelacionado[]
   venta: {
     id: number
     canal: CanalVenta

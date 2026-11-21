@@ -60,14 +60,14 @@
               </label>
             </div>
 
-            <div class="flex flex-wrap items-center justify-start gap-2 my-3">
+            <div class="-my-1 flex flex-wrap items-center justify-start gap-2">
               <button v-for="e in store.empresas.length > 1 ? store.empresas : []" :key="e.id" type="button" class="rounded-full border px-2.5 py-1 text-xs pointer-coarse:py-2 font-semibold" :class="store.empresaIds.includes(e.id) ? 'border-primary bg-primary text-primary-contrast' : 'border-surface-300 bg-transparent text-color'" :aria-pressed="store.empresaIds.includes(e.id)" @click="alternarEmpresa(e.id)">
                 {{ e.nombre }}
               </button>
               <!-- Presentación de las salidas: lista o calendario. -->
               <div class="vista ml-auto" role="group" aria-label="Presentación de las salidas">
                 <button v-for="v in VISTAS" :key="v.valor" type="button" class="vista__boton" :class="{ 'vista__boton--activa': vista === v.valor }" :aria-pressed="vista === v.valor" :title="v.titulo" @click="vista = v.valor">
-                  <icon :name="v.icono" size="1.1rem" />
+                  <icon :name="v.icono" size="0.9rem" />
                   <span class="hidden @md:inline">{{ v.etiqueta }}</span>
                 </button>
               </div>
@@ -392,24 +392,51 @@ const lineas = computed(() => {
     .sort((a, b) => a.numero - b.numero);
 });
 
-onMounted(async () => {
-  // Llegó desde una salida del calendario: su día y la salida elegida.
+/**
+ * Llegó con una salida pedida: desde el calendario (`fecha`, `salida`) o desde un
+ * asiento relacionado de otra salida (además `sube`, `baja` y `asiento`: ese tramo
+ * en los filtros y el detalle del asiento abierto). También con la pantalla ya
+ * abierta (el enlace del detalle de un asiento lleva a esta misma ruta).
+ */
+async function abrirPedido() {
   const fechaPedida = String(route.query.fecha ?? "");
   const salidaPedida = Number(route.query.salida ?? 0);
+  const entero = (v: unknown) => {
+    const n = Number(v ?? 0);
+    return Number.isInteger(n) && n > 0 ? n : null;
+  };
+  const sube = entero(route.query.sube);
+  const baja = entero(route.query.baja);
+  const asiento = entero(route.query.asiento);
   if (/^\d{4}-\d{2}-\d{2}$/.test(fechaPedida)) {
     const [y, m, d] = fechaPedida.split("-").map(Number);
     store.fecha = new Date(y!, m! - 1, d!);
   }
   if (!store.contexto) await store.iniciar();
   if (Number.isInteger(salidaPedida) && salidaPedida > 0) {
-    // Sin el filtro de taquilla ni de empresa, la salida aparece en la lista aunque no pase por esta estación.
-    store.estacionId = null;
-    store.destinoId = null;
+    // Sin el filtro de empresa (ni el de taquilla, salvo el tramo pedido), la salida aparece en la lista aunque no pase por esta estación.
+    store.estacionId = sube;
+    store.destinoId = baja;
     store.empresaIds = [];
     await store.cargarSalidas();
-    await router.replace({ query: { ...route.query, salida: undefined, fecha: undefined } });
+    await router.replace({ query: { ...route.query, salida: undefined, fecha: undefined, sube: undefined, baja: undefined, asiento: undefined } });
     await store.elegirSalida(salidaPedida);
+    if (asiento !== null && store.salidaId === salidaPedida) {
+      // El croquis entra con una transición: se espera a que el botón del asiento esté en la página.
+      for (let i = 0; i < 20; i++) {
+        const boton = croquis.value?.querySelector<HTMLButtonElement>(`[data-asiento="${asiento}"]:not(:disabled)`);
+        if (boton) {
+          boton.click();
+          break;
+        }
+        await new Promise((r) => window.setTimeout(r, 100));
+      }
+    }
   } else if (fechaPedida) await store.cargarSalidas();
+}
+
+onMounted(async () => {
+  await abrirPedido();
   // Llegó desde un listado de boletos con «Reasignar».
   const ids = String(route.query.reasignar ?? "")
     .split(",")
@@ -420,6 +447,10 @@ onMounted(async () => {
     await store.iniciarReasignacion(ids);
   }
 });
+watch(
+  () => route.query.salida,
+  (salida) => salida && void abrirPedido(),
+);
 
 const numeroDe = (asiento: number) => store.asientosCroquis.find((a) => a.id === asiento)?.numero ?? asiento;
 const fechaHoraCorta = (iso: string) =>
@@ -532,7 +563,7 @@ const nombreParada = (id: number | null) => store.detalle?.paradas.find((p) => p
 /* Selector de presentación: dos botones unidos, el activo en relieve. */
 .vista {
   display: inline-flex;
-  padding: 2px;
+  padding: 1px;
   border: 1px solid var(--p-content-border-color);
   border-radius: 999px;
   background: color-mix(in srgb, var(--p-surface-500) 6%, transparent);
@@ -541,13 +572,13 @@ const nombreParada = (id: number | null) => store.detalle?.paradas.find((p) => p
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  padding: 0.2rem 0.65rem;
+  padding: 0.1rem 0.5rem;
   border: 0;
   border-radius: 999px;
   background: transparent;
   color: var(--p-text-muted-color);
   font: inherit;
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 600;
   cursor: pointer;
   transition:

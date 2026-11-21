@@ -2,3 +2,13 @@
 .p-icon.p-select-clear-icon {
   width: 10px;
 }
+
+/*
+  Select agrupado (estaciones por departamento, rutas por origen…): las opciones
+  llevan un fondo apenas distinto del de los grupos para separarlas a la vista.
+  Sin efecto en la opción elegida ni en la que tiene el foco o el puntero.
+*/
+.p-select-list:has(> .p-select-option-group)
+  > .p-select-option:not(.p-select-option-selected, .p-focus, :hover) {
+  background: color-mix(in srgb, var(--p-surface-400) 12%, transparent);
+}

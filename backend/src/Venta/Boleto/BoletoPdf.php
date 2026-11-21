@@ -54,7 +54,6 @@ final class BoletoPdf
 
                 return [
                     "b" => $b,
-                    "codigoBarras" => base64_encode(Code128::svg(sprintf("%08d", $p[0]->getId()))),
                     // Un QR de abordaje por asiento (ADR-063), por id de boleto.
                     "qr" => array_column(array_map(static fn(array $x) => [
                         "id" => (int) $x["id"],

@@ -1,8 +1,10 @@
 <!--
   Detalle de un asiento ocupado del croquis, solo para el personal (taquilla
   y "Ver salida"; la página pública no lo usa). Se abre con `abrir(evento,
-  salida, asiento)` y agrupa lo que hay detrás del asiento: pasajero, viaje,
-  venta, cobro y factura (uno por tramo vendido), o la reserva web vigente.
+  salida, asiento)` y agrupa lo que hay detrás del asiento: pasajero, cliente
+  y venta (uno por tramo vendido, con los otros asientos de la misma compra;
+  los de otra salida enlazan a la venta con ese boleto abierto), o la reserva
+  web vigente.
   Al SUPER_ADMIN no se le muestra el pasajero; solo él ve la venta (con la
   estación) y la bitácora del boleto.
 -->
@@ -62,84 +64,76 @@
           </section>
 
           <template v-if="b.completo">
-            <section v-if="detalle.auditoria" class="aop-grupo">
-              <h4>Venta #{{ b.venta.id }}</h4>
+            <section v-if="b.cliente && !detalle.auditoria" class="aop-grupo">
+              <h4>Cliente</h4>
               <dl>
-                <template v-if="b.venta.creada"
-                  ><dt>Fecha</dt>
-                  <dd>{{ fechaHora(b.venta.creada) }}</dd></template
+                <dt>Nombre</dt>
+                <dd>{{ b.cliente.nombre }}</dd>
+                <template v-if="b.cliente.email"
+                  ><dt>Correo</dt>
+                  <dd class="break-all">{{ b.cliente.email }}</dd></template
                 >
-                <template v-if="b.venta.vendedor"
-                  ><dt>Vendedor</dt>
-                  <dd>{{ b.venta.vendedor }}</dd></template
-                >
-                <dt>Estación</dt>
-                <dd>{{ b.venta.estacion ?? '—' }}</dd>
-                <template v-if="b.venta.agencia"
-                  ><dt>Agencia</dt>
-                  <dd>{{ b.venta.agencia }}</dd></template
-                >
-                <template v-if="b.venta.comprador && b.venta.comprador !== b.pasajero?.nombre"
-                  ><dt>Comprador</dt>
-                  <dd>{{ b.venta.comprador }}</dd></template
-                >
-              </dl>
-            </section>
-
-            <section v-if="!sinCobro(b)" class="aop-grupo">
-              <h4>Cobro</h4>
-              <dl>
-                <dt>Boleto</dt>
-                <dd class="tabular-nums">{{ b.precio?.texto ?? '—' }}</dd>
-                <template v-if="b.venta.total && b.venta.total.centavos !== b.precio?.centavos"
-                  ><dt>Total de la venta</dt>
-                  <dd class="tabular-nums">{{ b.venta.total.texto }}</dd></template
-                >
-                <template v-if="b.venta.tipoPago"
-                  ><dt>Forma de pago</dt>
-                  <dd>{{ b.venta.tipoPago }}</dd></template
-                >
-                <template v-if="b.venta.referenciaPago"
-                  ><dt>Autorización</dt>
-                  <dd>{{ b.venta.referenciaPago }}</dd></template
-                >
-              </dl>
-            </section>
-
-            <section v-if="b.venta.factura" class="aop-grupo">
-              <h4>Factura</h4>
-              <dl>
-                <dt>Número</dt>
-                <dd>
-                  {{
-                    [b.venta.factura.serie, b.venta.factura.numero].filter(Boolean).join(' – ') ||
-                    '—'
-                  }}
-                </dd>
-                <template v-if="b.venta.factura.nombre"
-                  ><dt>A nombre de</dt>
-                  <dd>{{ b.venta.factura.nombre }}</dd></template
-                >
-                <template v-if="b.venta.factura.nit"
+                <template v-if="b.cliente.nit"
                   ><dt>NIT</dt>
-                  <dd>{{ b.venta.factura.nit }}</dd></template
+                  <dd>{{ b.cliente.nit }}</dd></template
+                >
+                <template v-if="b.observacion"
+                  ><dt>Observación</dt>
+                  <dd>{{ b.observacion }}</dd></template
                 >
               </dl>
-              <a
-                v-if="b.venta.factura.urlPdf"
-                :href="b.venta.factura.urlPdf"
-                target="_blank"
-                rel="noopener"
-                class="text-sm underline"
-                >Ver factura</a
-              >
             </section>
-            <p
-              v-else-if="b.venta.estadoFacturacion === 'pendiente'"
-              class="m-0 text-sm text-muted-color"
-            >
-              Factura pendiente de certificar.
-            </p>
+
+            <section class="aop-grupo">
+              <h4>Venta<template v-if="detalle.auditoria"> #{{ b.venta.id }}</template></h4>
+              <dl>
+                <template v-if="detalle.auditoria">
+                  <template v-if="b.venta.creada"
+                    ><dt>Fecha</dt>
+                    <dd>{{ fechaHora(b.venta.creada) }}</dd></template
+                  >
+                  <template v-if="b.venta.vendedor"
+                    ><dt>Vendedor</dt>
+                    <dd>{{ b.venta.vendedor }}</dd></template
+                  >
+                  <dt>Estación</dt>
+                  <dd>{{ b.venta.estacion ?? '—' }}</dd>
+                  <template v-if="b.venta.agencia"
+                    ><dt>Agencia</dt>
+                    <dd>{{ b.venta.agencia }}</dd></template
+                  >
+                  <template v-if="b.venta.comprador && b.venta.comprador !== b.pasajero?.nombre"
+                    ><dt>Comprador</dt>
+                    <dd>{{ b.venta.comprador }}</dd></template
+                  >
+                </template>
+                <dt>Sube</dt>
+                <dd>{{ b.trayecto.origen }}</dd>
+                <dt>Baja</dt>
+                <dd>{{ b.trayecto.destino }}</dd>
+                <dt>Precio</dt>
+                <dd class="tabular-nums">
+                  {{ sinCobro(b) ? etiquetaCanal(b) : (b.precio?.texto ?? '—') }}
+                </dd>
+                <template v-if="b.relacionados?.length"
+                  ><dt>Asientos relacionados</dt>
+                  <dd class="aop-relacionados">
+                    <span v-for="r in b.relacionados" :key="r.id" class="aop-relacionado">
+                      <span class="font-mono font-semibold">{{ r.numero ?? '—' }}</span>
+                      <RouterLink
+                        v-if="r.otraSalida && enlaceDe(r)"
+                        :to="enlaceDe(r)!"
+                        class="aop-enlace"
+                        :aria-label="`Ver el asiento ${r.numero} en su salida (${r.fecha})`"
+                        v-tooltip.top="`Otra salida (${r.fecha}): ver el boleto`"
+                        @click="popover?.hide()"
+                        ><icon name="link" size="0.9rem"
+                      /></RouterLink>
+                    </span>
+                  </dd></template
+                >
+              </dl>
+            </section>
           </template>
           <p v-else class="m-0 text-sm text-muted-color">
             Vendido por otro usuario: no tiene acceso al detalle de esa venta.
@@ -201,7 +195,13 @@ import CancelarBoletoDialog from '@/shared/boleto/CancelarBoletoDialog.vue'
 import { reimprimirBoletos } from '@/shared/boleto/reimprimir'
 import EnviarPorChatDialog from '@/shared/chat/EnviarPorChatDialog.vue'
 import type { BoletoACancelar } from '@/core/boleto/types'
-import type { BoletoDeAsiento, DetalleAsiento, TrayectoAsiento } from '@/core/venta/types'
+import type { RouteLocationRaw } from 'vue-router'
+import type {
+  AsientoRelacionado,
+  BoletoDeAsiento,
+  DetalleAsiento,
+  TrayectoAsiento,
+} from '@/core/venta/types'
 
 const emit = defineEmits<{
   /** Anular este boleto (el que muestra el detalle). */
@@ -275,6 +275,21 @@ function abrirCancelar(b: BoletoDeAsiento) {
     sube: b.trayecto.origen,
     baja: b.trayecto.destino,
     clienteBoleto: b.pasajero ? { nombre: b.pasajero.nombre } : null,
+  }
+}
+
+/** La venta con el boleto relacionado abierto: su día, su tramo, su salida y el detalle del asiento. */
+function enlaceDe(r: AsientoRelacionado): RouteLocationRaw | null {
+  if (r.salida == null || r.asiento == null || !r.fecha) return null
+  return {
+    name: 'venta',
+    query: {
+      fecha: r.fecha,
+      salida: String(r.salida),
+      asiento: String(r.asiento),
+      ...(r.sube != null ? { sube: String(r.sube) } : {}),
+      ...(r.baja != null ? { baja: String(r.baja) } : {}),
+    },
   }
 }
 
@@ -365,6 +380,24 @@ const fechaHora = (iso: string) =>
   margin: 0;
   text-align: right;
   overflow-wrap: anywhere;
+}
+.aop-relacionados {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.15rem 0.5rem;
+}
+.aop-relacionado {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+.aop-enlace {
+  display: inline-flex;
+  color: var(--p-primary-color);
+}
+.aop-enlace:hover {
+  color: var(--p-primary-hover-color, var(--p-primary-color));
 }
 .aop-tramo + .aop-tramo {
   padding-top: 0.75rem;

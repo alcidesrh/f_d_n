@@ -57,13 +57,14 @@ const base: Comprobante = {
 }
 
 describe('ticketHtml', () => {
-  it('lleva los datos del DTE, del viaje y el código de barras', () => {
+  it('lleva los datos del DTE, del viaje y el número de la venta', () => {
     const html = ticketHtml(base)
     expect(html).toContain('Número DTE: 935022181 | Serie DTE: 6BF69EA1')
     expect(html).toContain('6BF69EA1-37BB-4E65-B134-DD64F114EAD7')
     expect(html).toContain('10:45')
     expect(html).toContain('San Marcos')
-    expect(html).toContain('<svg')
+    expect(html).toContain('ID 00000007')
+    expect(html).not.toContain('<svg')
     expect(html).toContain('Formularios Continuos de Centro America')
   })
 

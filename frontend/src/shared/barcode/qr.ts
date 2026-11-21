@@ -1,7 +1,8 @@
 /**
  * Código QR (espejo de `App\Venta\Boleto\CodigoQr`): modo byte, nivel de
  * corrección M y versiones 1 a 6 (hasta 106 bytes), para el código de
- * abordaje del boleto en el ticket de taquilla (ADR-063). Solo ASCII.
+ * abordaje del boleto en el ticket de taquilla (ADR-063) y el de las
+ * encomiendas en su recibo y sus guías (ADR-066). Solo ASCII.
  */
 
 /** Por versión: [bloques, codewords de datos por bloque, de corrección por bloque] (nivel M). */

@@ -98,7 +98,7 @@ export const guiasConceptos: Guia[] = [
     para: [ENCOMIENDAS, REGISTRAR_ENCOMIENDA, EMBARCAR, ENTREGAR, ANULAR_ENCOMIENDA, ESPECIALES],
     pasos: [
       'Encomienda: un envío con remitente, destinatario, origen, destino y uno o más artículos.',
-      'Bulto: cada unidad física. Cada bulto lleva su guía («Nro k de N») con el código de barras de la encomienda.',
+      'Bulto: cada unidad física. Cada bulto lleva su guía («Nro k de N») con el QR del código de la encomienda (las guías viejas traen código de barras; las dos se leen igual).',
       'Especial: un tipo de encomienda con precio fijo por unidad (sobre, llanta, bicicleta…).',
       'Modalidad: pagada (factura al recibir), por cobrar (factura al entregar), interna (sin cobro) o con boleto (viaja con el pasajero y va en su factura).',
       'Estados: recibida, embarcada, en tránsito, desembarcada, entregada; anulada si no viajó.',
@@ -108,6 +108,7 @@ export const guiasConceptos: Guia[] = [
       'bulto',
       'guia',
       'codigo de barras',
+      'qr',
       'especial',
       'modalidad',
       'estado de la encomienda',

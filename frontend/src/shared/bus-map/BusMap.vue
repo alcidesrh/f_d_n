@@ -198,6 +198,8 @@ function atributosCelda(e: ElementoCroquis | null) {
       "aria-pressed": estadoDe(e) === "seleccionado",
       "aria-label": etiqueta(e),
       title: etiqueta(e),
+      // Para abrir un asiento desde fuera (el detalle de un boleto enlazado).
+      "data-asiento": e.tipo === "asiento" ? (e.id ?? undefined) : undefined,
     };
   }
   return { role: "img", "aria-label": etiqueta(e), title: etiqueta(e) };

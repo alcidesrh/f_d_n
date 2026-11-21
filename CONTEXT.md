@@ -255,7 +255,7 @@ Envío de paquetería en la bodega de los buses: remitente → destinatario, de 
 _Avoid_: paquete, envio
 Modelo: nuevo
 **Bulto** / **Guía**:
-Cada unidad física de una encomienda lleva una guía impresa («Nro k de N») con el código de barras de la encomienda (su id, 8 dígitos) y la sigla del destino (`Enclave.alias`, GUA, SEP).
+Cada unidad física de una encomienda lleva una guía impresa («Nro k de N») con un QR del código de la encomienda (su id, 8 dígitos) y la sigla del destino (`Enclave.alias`, GUA, SEP). Las guías impresas antes de ADR-066 traen el mismo código en barras (Code 128).
 _Avoid_: etiqueta
 Modelo: concepto
 **Especial** (`EncomiendaEspecial`):
@@ -290,7 +290,7 @@ Marcar al abordar cada boleto de una salida como presente (`chequeado`, o `trans
 _Avoid_: check-in
 Modelo: concepto
 **Código de abordaje**:
-Lo que lleva el QR de un boleto para chequearlo por escaneo: `FDN1.<id del boleto>.<firma>`. Uno por asiento. No es el código de barras del boleto impreso, que es el id de la venta.
+Lo que lleva el QR de un boleto para chequearlo por escaneo: `FDN1.<id del boleto>.<firma>`. Uno por asiento. No es el número de la venta («ID» en el boleto), que los boletos impresos antes de ADR-066 traen también en código de barras.
 _Avoid_: token, llave del boleto
 Modelo: concepto (`App\Venta\Boleto\LlaveBoleto`, `CodigoQr`, `Abordaje::escanear`, ADR-063)
 

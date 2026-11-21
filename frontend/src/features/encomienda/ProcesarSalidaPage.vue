@@ -8,7 +8,7 @@
   - A bordo: lo que lleva; lo que baja aquí, resaltado y ya marcado para
     desembarcar.
 
-  El lector de código de barras (o escribir el código + Enter) marca la
+  El lector (QR de la guía o código de barras de las viejas; o escribir el código + Enter) marca la
   encomienda en la lista donde esté. Angosto: una lista debajo de la otra.
 -->
 <template>

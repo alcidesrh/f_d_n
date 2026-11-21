@@ -1,10 +1,9 @@
 /**
  * Ticket de taquilla (80 mm), como el del sistema anterior: datos de la
- * factura electrónica + boletos + código de barras, y un QR de abordaje por
- * asiento (ADR-063). HTML autónomo (estilos
+ * factura electrónica + boletos, un QR de abordaje por asiento (ADR-063) y el
+ * número de la venta. HTML autónomo (estilos
  * en línea) para imprimir en un iframe sin arrastrar los de la aplicación.
  */
-import { svg } from '@/shared/barcode/code128'
 import { svg as qr } from '@/shared/barcode/qr'
 import { fecha, hora } from '@/core/venta/modelo'
 import type { Comprobante } from '@/core/venta/types'
@@ -72,7 +71,6 @@ export function ticketHtml(c: Comprobante): string {
   .lbl { font-size: 10px; border-bottom: 1px dotted #000; display: inline-block; }
   table { width: 100%; border-collapse: collapse; } td { padding: 1px 0; vertical-align: top; }
   .total { text-align: right; font-size: 14px; margin-top: 4px; }
-  .bar { text-align: center; margin-top: 8px; } .bar svg { width: 60mm; height: 18mm; }
   .qrs { display: flex; flex-wrap: wrap; justify-content: center; gap: 2mm 4mm; margin-top: 6px; }
   .qr { text-align: center; font-size: 10px; break-inside: avoid; } .qr svg { width: 30mm; height: 30mm; display: block; }
 </style></head><body>
@@ -104,7 +102,7 @@ ${f?.certificador ? `<p class="c">Datos del certificador: ${esc(f.certificador)}
 <p>Asientos: ${esc(c.boletos.map((b) => b.asiento).join(', '))}</p>
 ${c.boletos.some((b) => b.observacion) ? `<p class="small">Obs.: ${esc(c.boletos.find((b) => b.observacion)?.observacion)}</p>` : ''}
 ${codigosAbordaje(c)}
-<div class="bar">${svg(c.codigoBarras)}<div>${esc(c.codigoBarras)}</div></div>
+<p class="c">ID ${esc(c.codigoBarras)}</p>
 <div class="sep">------------------------------</div>
 </body></html>`
 }

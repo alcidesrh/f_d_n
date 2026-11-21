@@ -1,10 +1,10 @@
 /**
  * Impresión de encomiendas en la térmica de 80 mm (ADR-035), como el legado:
  * el recibo (factura o «Por cobrar», con el contrato que firma el remitente)
- * y una guía por bulto para pegar en el paquete (rotada, con el código de
- * barras). HTML autónomo, igual que el ticket de boletos.
+ * y una guía por bulto para pegar en el paquete (rotada, con el QR del
+ * código). HTML autónomo, igual que el ticket de boletos.
  */
-import { svg } from '@/shared/barcode/code128'
+import { svg } from '@/shared/barcode/qr'
 import { imprimirHtml } from '@/shared/boleto/ticket'
 import { terminos } from '@/core/encomienda/contrato'
 import { abreviar, guias } from '@/core/encomienda/reglas'
@@ -31,7 +31,7 @@ const ESTILOS = `
   table { width: 100%; border-collapse: collapse; } td { padding: 1px 0; vertical-align: top; overflow-wrap: anywhere; }
   td.r { white-space: nowrap; padding-left: 6px; }
   .total { text-align: right; font-size: 14px; margin-top: 4px; }
-  .bar { text-align: center; margin-top: 8px; } .bar svg { width: 50mm; height: 16mm; }
+  .bar { text-align: center; margin-top: 8px; } .bar svg { width: 30mm; height: 30mm; display: block; margin: 0 auto; }
   .firma { margin: 40px 0 0 auto; width: 40mm; border-top: 1px solid #000; text-align: center; font-weight: bold; }
   ol { margin: 4px 0; padding-left: 16px; font-size: 11px; } li { margin-bottom: 3px; }
   .guia { page-break-after: always; break-after: page; }
@@ -39,7 +39,7 @@ const ESTILOS = `
   .vertical { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 11px; font-weight: bold; line-height: 1.35; height: 105mm; margin: 2mm auto 0; overflow-wrap: anywhere; }
   .lado { display: flex; flex-direction: column; align-items: center; gap: 3mm; margin-top: 4mm; }
   .lado .destino { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 34px; font-weight: bold; letter-spacing: 2px; }
-  .lado svg { width: 50mm; height: 16mm; }
+  .lado svg { width: 30mm; height: 30mm; display: block; margin: 0 auto; }
 `
 
 function encabezado(e: DatosEncomienda): string {
@@ -119,7 +119,7 @@ ${e.descuento.centavos > 0 && e.modalidad !== 'interna' ? `<p class="r">Descuent
 <div class="sep">------------------------------</div>
 <p class="total"><span class="lbl">${esc(totalTexto(e))}</span></p>
 ${e.observacion ? `<p class="small">Obs.: ${esc(e.observacion)}</p>` : ''}
-<div class="bar">${svg(e.codigo)}<div>${esc(e.codigo)}</div></div>
+<div class="bar">${svg(e.codigo, 3)}<div>${esc(e.codigo)}</div></div>
 ${certificador}
 ${firma}
 ${SEP}
@@ -146,7 +146,7 @@ ${SEP}
 </div>
 <div class="lado">
   <div class="destino">${esc(e.destino.alias ?? abreviar(e.destino.nombre))}</div>
-  <div class="c">${svg(e.codigo)}<div>${esc(e.codigo)}</div></div>
+  <div class="c">${svg(e.codigo, 3)}<div>${esc(e.codigo)}</div></div>
 </div>
 <div class="sep">------------------------------</div>
 </section>`,
