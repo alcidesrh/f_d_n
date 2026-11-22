@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Comprobante } from '@/core/venta/types'
-import { ticketHtml } from '../ticket'
+import { ticketHtml, ticketsPorAsiento } from '../ticket'
 
 const base: Comprobante = {
   id: 7,
@@ -99,5 +99,20 @@ describe('ticketHtml', () => {
     expect(html.split('class="qr"').length - 1).toBe(1)
     expect(html).toContain('Al abordar, muestre el código QR de cada asiento.')
     expect(ticketHtml(base)).not.toContain('class="qr"')
+  })
+})
+
+describe('ticketsPorAsiento', () => {
+  it('parte la venta en un comprobante por asiento, con su precio como total', () => {
+    const segundo = { ...base.boletos[0]!, id: 2, asiento: 32, precio: { centavos: 8000, moneda: 'GTQ', texto: 'Q 80.00' } }
+    const venta = { ...base, boletos: [base.boletos[0]!, segundo], total: { centavos: 18000, moneda: 'GTQ', texto: 'Q 180.00' } }
+    const tickets = ticketsPorAsiento(venta)
+    expect(tickets.map((t) => t.boletos.map((b) => b.asiento))).toEqual([[31], [32]])
+    expect(tickets.map((t) => t.total.texto)).toEqual(['Q 100.00', 'Q 80.00'])
+    expect(tickets[1]!.factura).toEqual(base.factura)
+  })
+
+  it('con un solo asiento, la venta tal cual', () => {
+    expect(ticketsPorAsiento(base)).toEqual([base])
   })
 })

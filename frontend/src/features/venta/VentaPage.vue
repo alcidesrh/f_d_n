@@ -254,7 +254,7 @@ import { useAccesoStore } from "@/core/acceso/store";
 import VentaExitosaDialog from "./VentaExitosaDialog.vue";
 import AsientosElegidos from "./AsientosElegidos.vue";
 import { fechaCorta, type OpcionesCobro, useVentaStore } from "./store";
-import { imprimirTicket } from "@/shared/boleto/ticket";
+import { imprimirTicket, ticketsPorAsiento } from "@/shared/boleto/ticket";
 import type { Comprobante } from "@/core/venta/types";
 import { useConfirm } from "primevue/useconfirm";
 import { notify } from "@/core/notify";
@@ -518,17 +518,17 @@ async function confirmar(opciones: OpcionesCobro) {
   ultimasOpciones = opciones;
   const hechos = await store.vender(opciones);
   cobro.value = false;
-  void imprimir(hechos);
+  void imprimir(hechos, opciones.imprimirPorSeparado);
 }
 
 async function reintentar(sinFactura: boolean) {
   if (!ultimasOpciones) return;
-  void imprimir(await store.vender({ ...ultimasOpciones, sinFacturaElectronica: sinFactura }));
+  void imprimir(await store.vender({ ...ultimasOpciones, sinFacturaElectronica: sinFactura }), ultimasOpciones.imprimirPorSeparado);
 }
 
-/** Un ticket por venta (por salida), uno tras otro. */
-async function imprimir(comprobantes: Comprobante[]) {
-  for (const c of comprobantes) await imprimirTicket(c);
+/** Un ticket por venta (por salida) o, por separado, uno por asiento; uno tras otro. */
+async function imprimir(comprobantes: Comprobante[], porSeparado = false) {
+  for (const c of comprobantes) for (const t of porSeparado ? ticketsPorAsiento(c) : [c]) await imprimirTicket(t);
 }
 
 /** Qué quedó sin hacer cuando el certificador falla a mitad de una venta en varias salidas. */

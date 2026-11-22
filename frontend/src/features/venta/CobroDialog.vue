@@ -51,6 +51,11 @@
         Los asientos se emiten sin cobro y sin factura.
       </Message>
 
+      <label v-if="store.totalAsientos > 1" class="mb-4 flex cursor-pointer items-center gap-2 text-sm">
+        <Checkbox v-model="datos.imprimirPorSeparado" binary />
+        <span>Imprimir por separado (un ticket por asiento)</span>
+      </label>
+
       <div class="my-4 flex items-baseline justify-between rounded-lg bg-emphasis p-3">
         <span class="text-muted-color">Total</span>
         <span class="text-2xl font-semibold tabular-nums">{{ total }}</span>
@@ -84,10 +89,16 @@ const emit = defineEmits<{
 }>()
 
 const store = useVentaStore()
-const datos = ref<{ tipoPago: number | null; moneda: number | null; enviarCorreo: boolean }>({
+const datos = ref<{
+  tipoPago: number | null
+  moneda: number | null
+  enviarCorreo: boolean
+  imprimirPorSeparado: boolean
+}>({
   tipoPago: null,
   moneda: null,
   enviarCorreo: false,
+  imprimirPorSeparado: false,
 })
 
 const tiposPago = computed(() =>
@@ -128,6 +139,7 @@ watch(
       tipoPago: datos.value.tipoPago ?? efectivo?.id ?? store.contexto?.tiposPago[0]?.id ?? null,
       moneda: datos.value.moneda ?? gtq?.id ?? store.contexto?.monedas[0]?.id ?? null,
       enviarCorreo: !!correo.value,
+      imprimirPorSeparado: false,
     }
   },
 )
@@ -139,6 +151,7 @@ function confirmar() {
     enviarCorreo:
       !props.cortesia && facturaElectronica.value && datos.value.enviarCorreo && !!correo.value,
     cortesia: props.cortesia,
+    imprimirPorSeparado: store.totalAsientos > 1 && datos.value.imprimirPorSeparado,
   })
 }
 </script>

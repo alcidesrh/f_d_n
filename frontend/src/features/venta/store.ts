@@ -26,6 +26,8 @@ export interface OpcionesCobro {
   enviarCorreo: boolean;
   cortesia: boolean;
   sinFacturaElectronica?: boolean;
+  /** Un ticket por asiento en vez de uno por venta (solo la impresión). */
+  imprimirPorSeparado?: boolean;
 }
 
 /** Asientos elegidos de una salida en un tramo: al cobrar, una venta. */

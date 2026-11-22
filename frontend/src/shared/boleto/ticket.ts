@@ -108,6 +108,20 @@ ${codigosAbordaje(c)}
 }
 
 /**
+ * La venta partida en un comprobante por asiento (imprimir por separado): cada
+ * uno con su boleto y su precio como total; las encomiendas, en el primero.
+ */
+export function ticketsPorAsiento(c: Comprobante): Comprobante[] {
+  if (c.boletos.length < 2) return [c]
+  return c.boletos.map((b, i) => ({
+    ...c,
+    boletos: [b],
+    total: b.precio ?? c.total,
+    encomiendas: i === 0 ? c.encomiendas : [],
+  }))
+}
+
+/**
  * Imprime el ticket en un iframe oculto (sin ventanas emergentes). Resuelve
  * cuando se lanzó la impresión, para imprimir varios tickets uno tras otro.
  */
