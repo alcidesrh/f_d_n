@@ -227,6 +227,15 @@ class ChatCanal
         return null;
     }
 
+    /**
+     * Un directo al que le falta la otra persona: se borró su usuario (su
+     * membresía se va con él). No vuelve a aparecer en la bandeja.
+     */
+    public function sinContraparte(): bool
+    {
+        return $this->tipo === TipoCanalChat::Directo && $this->miembros->count() < 2;
+    }
+
     /** Edita el grupo: el dueño o, si ya no existe, cualquiera de sus miembros por sí mismos. */
     public function administra(Usuario $usuario): bool
     {

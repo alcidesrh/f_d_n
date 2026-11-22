@@ -126,4 +126,16 @@ final class GruposChatTest extends TestCase
         $this->assertSame("", $original->getTexto());
         $this->assertSame([], $original->getAdjuntos());
     }
+
+    public function testUnDirectoSinLaOtraPersonaQuedaSinContraparte(): void
+    {
+        [$ana, $beto] = [self::usuario(1), self::usuario(2)];
+        $d = ChatCanal::directo($ana, $beto);
+        $this->assertFalse($d->sinContraparte());
+
+        // Así queda en memoria cuando se borra el usuario de Beto (en la base, ON DELETE CASCADE).
+        $d->quitar($beto);
+        $this->assertTrue($d->sinContraparte());
+        $this->assertFalse(ChatCanal::grupo("Solo", $ana, [])->sinContraparte(), "un grupo no es un directo");
+    }
 }

@@ -145,6 +145,7 @@ final class Conversaciones
         $canales = $this->em->createQuery(
             "SELECT c, m, u FROM App\Entity\ChatCanal c JOIN c.miembros yo WITH yo.usuario = :yo JOIN c.miembros m JOIN m.usuario u ORDER BY c.actividad DESC",
         )->setParameter("yo", $yo->getId())->getResult();
+        $canales = array_values(array_filter($canales, static fn(ChatCanal $c) => !$c->sinContraparte()));
         if ($canales === []) {
             return ["yo" => $this->perfil($yo)->aArray(), "canales" => [], "fijados" => $this->fijados($yo)];
         }

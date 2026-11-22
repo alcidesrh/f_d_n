@@ -32,15 +32,10 @@
         ><template #icon><icon name="filter-alt-off-outline" class="mr-1" /></template
       ></Button>
       <!-- Segunda línea: el canal, los del usuario y los reasignados. -->
-      <div class="filtro-linea">
-        <div class="chips" role="group" aria-label="Canal de venta">
-          <span class="text-sm font-medium">Canal</span>
-          <button v-for="c in CANALES" :key="c.valor" type="button" class="chip" :class="{ 'chip-on': borrador.canales.includes(c.valor) }" :aria-pressed="borrador.canales.includes(c.valor)" @click="alternarCanal(c.valor)">{{ c.etiqueta }}</button>
-        </div>
-        <div class="chips" role="group" aria-label="Más filtros">
-          <button type="button" class="chip" :class="{ 'chip-on': borrador.mios }" :aria-pressed="borrador.mios" v-tooltip.top="'Solo los que vendió usted'" @click="borrador.mios = !borrador.mios">Mis boletos</button>
-          <button type="button" class="chip" :class="{ 'chip-on': soloReasignados }" :aria-pressed="soloReasignados" v-tooltip.top="'Solo los reasignados'" @click="borrador.estados = soloReasignados ? [] : ['reasignado']">Reasignado</button>
-        </div>
+      <div class="filtro-linea chips" role="group" aria-label="Canal de venta y más filtros">
+        <button v-for="c in CANALES" :key="c.valor" type="button" class="chip" :class="{ 'chip-on': borrador.canales.includes(c.valor) }" :aria-pressed="borrador.canales.includes(c.valor)" @click="alternarCanal(c.valor)">{{ c.etiqueta }}</button>
+        <button type="button" class="chip" :class="{ 'chip-on': borrador.mios }" :aria-pressed="borrador.mios" v-tooltip.top="'Solo los que vendió usted'" @click="borrador.mios = !borrador.mios">Mis boletos</button>
+        <button type="button" class="chip" :class="{ 'chip-on': soloReasignados }" :aria-pressed="soloReasignados" v-tooltip.top="'Solo los reasignados'" @click="borrador.estados = soloReasignados ? [] : ['reasignado']">Reasignado</button>
       </div>
     </CalendarioSalidas>
 
@@ -633,11 +628,7 @@ onMounted(async () => {
 }
 /* Ocupa todo el ancho de los controles: baja a su propia línea. */
 .filtro-linea {
-  display: flex;
   flex-basis: 100%;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 1rem;
 }
 .filtro-campo {
   display: flex;
