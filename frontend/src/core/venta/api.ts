@@ -10,6 +10,7 @@ import type {
   BoletoOperable,
   Cliente,
   ClienteDatos,
+  ClienteParecido,
   Comprobante,
   ContextoVenta,
   Cotizacion,
@@ -89,6 +90,10 @@ export const consultarNit = (nit: string) =>
   })
 
 export const crearCliente = (datos: ClienteDatos) => http.post<Cliente>('/venta/clientes', datos)
+
+/** Clientes ya registrados que se parecen a los datos del formulario (ADR-068). */
+export const clientesParecidos = (datos: Partial<ClienteDatos>, excepto?: number) =>
+  http.post<ClienteParecido[]>('/venta/clientes/parecidos', { ...datos, excepto }, { silent: true })
 
 export const clienteComodin = () => http.post<Cliente>('/venta/clientes/comodin')
 

@@ -223,10 +223,22 @@ export interface Cliente {
   label: string
   /** El consumidor final de quien no da sus datos: no se edita. */
   comodin: boolean
+  /** En la búsqueda: no contiene lo escrito, pero el nombre se parece (ADR-068). */
+  parecido?: boolean
 }
 
-export type ClienteDatos = Partial<Omit<Cliente, 'id' | 'nombreCompleto' | 'label' | 'comodin'>> & {
+export type ClienteDatos = Partial<Omit<Cliente, 'id' | 'nombreCompleto' | 'label' | 'comodin' | 'parecido'>> & {
   nombre: string
+  /** Alta aunque haya uno con el mismo NIT, documento o teléfono (ADR-068). */
+  registrarAunqueExista?: boolean
+}
+
+/** Cliente ya registrado que podría ser el que se da de alta (ADR-068). */
+export interface ClienteParecido {
+  cliente: Cliente
+  motivo: string
+  /** Mismo NIT, documento, o teléfono y nombre parecido: casi seguro es la misma persona. */
+  fuerte: boolean
 }
 
 export interface PedidoVenta {
@@ -314,6 +326,8 @@ export interface ErrorVenta {
   permiteSinFactura?: boolean
   asientos?: number[]
   venta?: number
+  /** `cliente_duplicado`: los que ya existen con esos datos. */
+  parecidos?: ClienteParecido[]
   boletos?: number[]
 }
 

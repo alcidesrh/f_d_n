@@ -6,7 +6,7 @@ import { shallowRef } from 'vue'
 import { http } from '@/core/http'
 
 export interface CatalogosCliente {
-  tiposDocumento: Array<{ id: number; nombre: string }>
+  tiposDocumento: Array<{ id: number; nombre: string; sigla: string | null }>
   naciones: Array<{ id: number; nombre: string }>
 }
 

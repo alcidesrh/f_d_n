@@ -1,6 +1,7 @@
 <!--
-  Buscador de clientes: NIT, documento o nombre (3+ caracteres; la consulta
-  sale al dejar de escribir). Si no existe, "+" lo da de alta; con uno
+  Buscador de clientes: NIT, documento, teléfono o nombre (3+ caracteres; la
+  consulta sale al dejar de escribir). Sin acentos ni signos y, si salen
+  pocos, con los de nombre parecido (ADR-068). Si no existe, "+" lo da de alta; con uno
   elegido, el lápiz lo edita. En taquilla, «CF» elige al consumidor final.
 -->
 <template>
@@ -22,12 +23,17 @@
     >
       <template #option="{ option }">
         <div class="flex flex-col">
-          <span class="font-medium">{{ option.nombreCompleto }}</span>
+          <span class="font-medium">
+            {{ option.nombreCompleto }}
+            <span v-if="option.parecido" class="text-xs font-normal text-muted-color">
+              (parecido)</span
+            >
+          </span>
           <span class="text-xs text-muted-color">
             NIT {{ option.nit
             }}<template v-if="option.numeroDocumento">
               · Doc. {{ option.numeroDocumento }}</template
-            >
+            ><template v-if="option.telefono"> · Tel. {{ option.telefono }}</template>
           </span>
         </div>
       </template>
@@ -90,7 +96,7 @@ withDefaults(
     /** Con botón para elegir al consumidor final. */
     conComodin?: boolean
   }>(),
-  { placeholder: 'NIT, documento o nombre', inputId: undefined, compacto: false, conComodin: false },
+  { placeholder: 'NIT, documento, teléfono o nombre', inputId: undefined, compacto: false, conComodin: false },
 )
 const emit = defineEmits<{ 'update:modelValue': [cliente: Cliente | null] }>()
 

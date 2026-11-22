@@ -113,7 +113,7 @@ final class VentaController extends AbstractController
             ),
             "tiposPago" => $catalogo(TipoPago::class, static fn(TipoPago $t) => ["id" => $t->getId(), "nombre" => $t->getNombre()]),
             "monedas" => $catalogo(Moneda::class, static fn(Moneda $m) => ["id" => $m->getId(), "sigla" => $m->getSigla(), "nombre" => $m->getNombre()]),
-            "tiposDocumento" => $catalogo(TipoDocumento::class, static fn(TipoDocumento $t) => ["id" => $t->getId(), "nombre" => $t->getNombre()]),
+            "tiposDocumento" => $catalogo(TipoDocumento::class, static fn(TipoDocumento $t) => ["id" => $t->getId(), "nombre" => $t->getNombre(), "sigla" => $t->getSigla()]),
             "naciones" => $catalogo(Nacion::class, static fn(Nacion $n) => ["id" => $n->getId(), "nombre" => $n->getNombre()]),
         ]);
     }
@@ -368,7 +368,7 @@ final class VentaController extends AbstractController
         ]);
     }
 
-    /** `?q=` (NIT, nombre o documento; 3+ caracteres): hasta 20 clientes. */
+    /** `?q=` (NIT, nombre, documento o teléfono; 3+ caracteres): hasta 20 clientes. */
     #[Route("/clientes", name: "clientes", methods: ["GET"])]
     public function clientes(Request $request): JsonResponse
     {
@@ -408,12 +408,26 @@ final class VentaController extends AbstractController
         ));
 
         return $this->json([
-            "tiposDocumento" => $catalogo(TipoDocumento::class, static fn(TipoDocumento $t) => ["id" => $t->getId(), "nombre" => $t->getNombre()]),
+            "tiposDocumento" => $catalogo(TipoDocumento::class, static fn(TipoDocumento $t) => ["id" => $t->getId(), "nombre" => $t->getNombre(), "sigla" => $t->getSigla()]),
             "naciones" => $catalogo(Nacion::class, static fn(Nacion $n) => ["id" => $n->getId(), "nombre" => $n->getNombre()]),
         ]);
     }
 
-    /** Alta rápida de cliente desde la venta. */
+    /**
+     * Clientes ya registrados que podrían ser el que se está dando de alta
+     * (ADR-068). Cuerpo: los datos del formulario y, al editar, `excepto`.
+     */
+    #[Route("/clientes/parecidos", name: "clientes_parecidos", methods: ["POST"])]
+    public function clientesParecidos(Request $request): JsonResponse
+    {
+        $this->denyUnlessClientes();
+        $datos = $request->toArray();
+        $excepto = is_numeric($datos["excepto"] ?? null) ? (int) $datos["excepto"] : null;
+
+        return $this->json($this->clientes->parecidos($datos, $excepto));
+    }
+
+    /** Alta rápida de cliente desde la venta (`registrarAunqueExista` si ya hay uno con esos datos, ADR-068). */
     #[Route("/clientes", name: "cliente_crear", methods: ["POST"])]
     public function crearCliente(Request $request): JsonResponse
     {
