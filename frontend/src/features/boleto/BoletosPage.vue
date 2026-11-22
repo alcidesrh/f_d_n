@@ -3,7 +3,8 @@
   filtro (pulsar una salida deja solo sus boletos; otra vez, o la ✕, la
   suelta), con la empresa, el id, el asiento, la clase y el canal (se
   aplican al cambiar; el id y el asiento, con retardo). Sin salida elegida,
-  los de 30 días antes y después de hoy. Debajo, el panel de acciones sobre el boleto elegido y la
+  los de 30 días antes y después de hoy. En otra línea, el canal, «Mis boletos»
+  (los que vendió el usuario) y «Reasignado». Debajo, el panel de acciones sobre el boleto elegido y la
   lista paginada en el servidor. Se elige un boleto con un clic (o Enter) y el panel
   ofrece Consultar, Cancelar, Revertir, Anular, Chequear, Reasignar, Correo, Imp.
   factura, Bitácora y Chat; cada acción explica por qué no se puede si no se
@@ -27,13 +28,20 @@
         <span class="text-sm font-medium">Clase</span>
         <button v-for="c in CLASES" :key="c" type="button" class="chip" :class="{ 'chip-on': borrador.clase === c }" :aria-pressed="borrador.clase === c" @click="borrador.clase = borrador.clase === c ? null : c">{{ c }}</button>
       </div>
-      <div class="chips" role="group" aria-label="Canal de venta">
-        <span class="text-sm font-medium">Canal</span>
-        <button v-for="c in CANALES" :key="c.valor" type="button" class="chip" :class="{ 'chip-on': borrador.canales.includes(c.valor) }" :aria-pressed="borrador.canales.includes(c.valor)" @click="alternarCanal(c.valor)">{{ c.etiqueta }}</button>
-      </div>
       <Button type="button" label="Limpiar" severity="secondary" text size="small" :disabled="!borradorModificado" @click="limpiar"
         ><template #icon><icon name="filter-alt-off-outline" class="mr-1" /></template
       ></Button>
+      <!-- Segunda línea: el canal, los del usuario y los reasignados. -->
+      <div class="filtro-linea">
+        <div class="chips" role="group" aria-label="Canal de venta">
+          <span class="text-sm font-medium">Canal</span>
+          <button v-for="c in CANALES" :key="c.valor" type="button" class="chip" :class="{ 'chip-on': borrador.canales.includes(c.valor) }" :aria-pressed="borrador.canales.includes(c.valor)" @click="alternarCanal(c.valor)">{{ c.etiqueta }}</button>
+        </div>
+        <div class="chips" role="group" aria-label="Más filtros">
+          <button type="button" class="chip" :class="{ 'chip-on': borrador.mios }" :aria-pressed="borrador.mios" v-tooltip.top="'Solo los que vendió usted'" @click="borrador.mios = !borrador.mios">Mis boletos</button>
+          <button type="button" class="chip" :class="{ 'chip-on': soloReasignados }" :aria-pressed="soloReasignados" v-tooltip.top="'Solo los reasignados'" @click="borrador.estados = soloReasignados ? [] : ['reasignado']">Reasignado</button>
+        </div>
+      </div>
     </CalendarioSalidas>
 
     <!-- La salida elegida en el calendario: sus boletos, en cualquier fecha de venta. -->
@@ -279,7 +287,8 @@ function ocultar(key: string) {
 
 // —— Filtros ——
 const calendario = useCalendarioSalidasStore();
-const borradorModificado = computed(() => borrador.id !== null || borrador.asiento !== null || borrador.clase !== null || borrador.salida !== null || borrador.canales.length > 0);
+const borradorModificado = computed(() => borrador.id !== null || borrador.asiento !== null || borrador.clase !== null || borrador.salida !== null || borrador.canales.length > 0 || borrador.mios || borrador.estados.length > 0);
+const soloReasignados = computed(() => borrador.estados.length === 1 && borrador.estados[0] === "reasignado");
 
 /** Pulsar una salida filtra sus boletos; pulsarla otra vez la suelta. */
 function elegirSalida(s: SalidaCalendario) {
@@ -326,14 +335,14 @@ const INICIAL_DOCUMENTO: Record<TipoDocumento, string> = { factura: "F", pendien
 const inicialDocumento = (d: TipoDocumento) => INICIAL_DOCUMENTO[d] ?? d.charAt(0).toUpperCase();
 
 function limpiar() {
-  Object.assign(borrador, { id: null, asiento: null, clase: null, salida: null, canales: [] });
+  Object.assign(borrador, { id: null, asiento: null, clase: null, salida: null, canales: [], mios: false, estados: [] });
 }
 
 // Los filtros se aplican al cambiar; el id y el asiento esperan a que se deje de escribir.
 const ESPERA_TEXTO = 500;
 let espera: ReturnType<typeof setTimeout> | undefined;
 watch(
-  () => [borrador.salida, borrador.clase, borrador.empresa, borrador.canales.join(",")],
+  () => [borrador.salida, borrador.clase, borrador.empresa, borrador.canales.join(","), borrador.mios, borrador.estados.join(",")],
   () => {
     clearTimeout(espera);
     aplicar();
@@ -621,6 +630,14 @@ onMounted(async () => {
 }
 .chips {
   align-items: center;
+}
+/* Ocupa todo el ancho de los controles: baja a su propia línea. */
+.filtro-linea {
+  display: flex;
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
 }
 .filtro-campo {
   display: flex;

@@ -349,10 +349,12 @@
 .header-chat {
   position: relative;
 }
+/* En la esquina, crece hacia la derecha: sin ancho propio (escritorio) el botón mide lo que el ícono y lo taparía.
+   `top` no pasa de -4px: debajo de `lg` la franja scrollea y recorta lo que sale de su `padding-block`. */
 .header-chat__badge {
   position: absolute;
-  top: 2px;
-  right: 0;
+  top: -4px;
+  left: calc(100% - 0.3rem);
   min-width: 1.05rem;
   height: 1.05rem;
   padding: 0 0.25rem;

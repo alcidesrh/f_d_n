@@ -206,7 +206,7 @@ export const useVentaStore = defineStore("venta", () => {
       }
     } catch (e) {
       salidas.value = [];
-      notify.error(api.errorVenta(e)?.error ?? "No se pudieron cargar los salidas.");
+      notify.error(api.errorVenta(e)?.error ?? "No se pudieron cargar las salidas.");
     } finally {
       cargandoSalidas.value = false;
     }
@@ -239,10 +239,13 @@ export const useVentaStore = defineStore("venta", () => {
     await cambiarFiltroEstacion();
   }
   // Se cambia desde la cabecera, también con otra pantalla abierta: al volver a la venta ya está.
+  // Al cerrar sesión el acceso se limpia (la estación queda vacía): no hay nada que recargar.
   const acceso = useAccesoStore();
   watch(
     () => acceso.estacionTrabajo?.id,
-    () => void alCambiarEstacion(),
+    () => {
+      if (acceso.cargado) void alCambiarEstacion();
+    },
   );
 
   async function elegirSalida(id: number) {

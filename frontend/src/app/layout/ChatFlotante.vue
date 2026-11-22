@@ -36,6 +36,12 @@ function invocarChat() {
   color: var(--p-primary-contrast-color);
   box-shadow: 1px 1px 7px 1px var(--p-surface-500);
 }
+/* El ícono va centrado en el círculo: el contador cabe dentro, sin salirse por la orilla de la pantalla. */
+.chat-flotante .header-chat__badge {
+  top: 2px;
+  left: auto;
+  right: 0;
+}
 
 /* Sobre la barra fija de abajo de una pantalla (p. ej. la venta), no encima de sus botones. */
 @media (width < 48rem) {
