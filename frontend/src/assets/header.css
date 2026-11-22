@@ -20,9 +20,9 @@
   padding-inline: max(0.25rem, env(safe-area-inset-left)) max(0.25rem, env(safe-area-inset-right));
   /* Mismo fondo que el contenido: la separa una línea (el borde de los sidebars, que se
      invierte en oscuro) y una sombra suave hacia abajo, que en oscuro casi no se ve. */
-  box-shadow:
+  /*box-shadow:
     0 1px 0 var(--p-content-border-color),
-    0 2px 8px -2px rgb(0 0 0 / 0.08);
+    0 2px 8px -2px rgb(0 0 0 / 0.08);*/
   transition: box-shadow 0.2s ease;
 
   @variant lg {
@@ -33,7 +33,10 @@
 .shell--desplazado .app-header {
   box-shadow:
     0 1px 0 var(--p-content-border-color),
-    0 4px 14px -4px rgb(0 0 0 / 0.16);
+    0 2px 8px -2px rgb(0 0 0 / 0.08);
+  /*box-shadow:
+    0 1px 0 var(--p-content-border-color),
+    0 4px 14px -4px rgb(0 0 0 / 0.16);*/
 }
 /* Desde `lg` los dos lados reparten por igual lo que deja la marca, que así
    queda al centro de la cabecera; si las acciones no caben en su mitad, se
