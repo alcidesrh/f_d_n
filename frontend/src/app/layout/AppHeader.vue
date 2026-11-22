@@ -11,7 +11,7 @@
 
       <div class="header-crumbs">
         <nav class="crumbs" aria-label="Breadcrumb">
-          <router-link :to="'/'" class="crumb-link"> Inicio </router-link>
+          <router-link :to="'/'" class="crumb-link inline-flex items-center gap-1"> <icon name="home" size=".8rem"></icon> Inicio </router-link>
           <icon name="chevron-right" size=".8rem"></icon>
           <template v-for="(crumb, i) in navigationHistory.entries" :key="crumb.path + i">
             <icon v-if="i > 0" name="chevron-right" size=".8rem"></icon>

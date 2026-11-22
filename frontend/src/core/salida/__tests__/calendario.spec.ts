@@ -81,6 +81,20 @@ describe('calendario de salidas', () => {
     ])
   })
 
+  it('la leyenda agrupa las rutas por origen: Guatemala, Aguilar Batres y Santa Elena primero; los demás después', () => {
+    const rutas = [
+      { ...ruta(1, 'Flores - Guate'), origen: 'Flores' },
+      { ...ruta(2, 'Santa Elena - Guate'), origen: 'Santa Elena, Flores' },
+      { ...ruta(3, 'Guate - Flores'), origen: 'Guatemala' },
+      { ...ruta(4, 'Aguilar - Flores'), origen: 'Aguilar Batres' },
+      { ...ruta(5, 'Guate - Peten'), origen: 'Guatemala' },
+      { ...ruta(6, 'Flores - Peten'), origen: 'Flores' },
+    ];
+    const cuantas = { 1: 3, 2: 1, 3: 1, 4: 2, 5: 1, 6: 3 } as const;
+    const items = Object.entries(cuantas).flatMap(([id, n]) => Array.from({ length: n }, (_, i) => salida(Number(id) * 10 + i, 'x', { rutaId: Number(id) })));
+    expect(leyenda(items, rutas).map((e) => e.ruta.id)).toEqual([3, 5, 4, 2, 1, 6]);
+  });
+
   it('el tono de una ruta es estable y separa ids vecinos', () => {
     expect(tonoRuta(5)).toBe(tonoRuta(5))
     expect(Math.abs(tonoRuta(1) - tonoRuta(2))).toBeGreaterThan(90)

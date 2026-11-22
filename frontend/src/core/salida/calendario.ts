@@ -113,14 +113,41 @@ export interface EntradaLeyenda {
   salidas: number;
 }
 
-/** Las rutas con salidas en la ventana, de la que más tiene a la que menos. */
+/** Orígenes que van primero en la leyenda, en este orden. Sin acentos ni mayúsculas; «Santa Elena, Flores» vale por «Santa Elena». */
+const ORIGENES_PRIMERO = ["guatemala", "aguilar batres", "santa elena"];
+
+const claveOrigen = (origen: string | null) => (origen ?? "").normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().trim();
+
+/** Lugar del origen entre `ORIGENES_PRIMERO`; los demás, después. */
+function posicionOrigen(origen: string | null): number {
+  const n = claveOrigen(origen);
+  const i = ORIGENES_PRIMERO.findIndex((p) => n === p || n.startsWith(`${p} `) || n.startsWith(`${p},`));
+  return i < 0 ? ORIGENES_PRIMERO.length : i;
+}
+
+/**
+ * Las rutas con salidas en la ventana, agrupadas por origen (las rutas de un
+ * mismo origen quedan seguidas): primero los de `ORIGENES_PRIMERO`, luego los
+ * demás por sus salidas totales, de más a menos. Dentro de cada origen, de la
+ * ruta que más salidas tiene a la que menos.
+ */
 export function leyenda(items: readonly SalidaCalendario[], rutas: readonly RutaCalendario[]): EntradaLeyenda[] {
   const n = new Map<number, number>();
   for (const s of items) n.set(s.rutaId, (n.get(s.rutaId) ?? 0) + 1);
-  return rutas
-    .filter((r) => n.has(r.id))
-    .map((r) => ({ ruta: r, tono: tonoRuta(r.id), salidas: n.get(r.id)! }))
-    .sort((a, b) => b.salidas - a.salidas || a.ruta.nombre.localeCompare(b.ruta.nombre));
+  const entradas = rutas.filter((r) => n.has(r.id)).map((r) => ({ ruta: r, tono: tonoRuta(r.id), salidas: n.get(r.id)! }));
+  const totalPorOrigen = new Map<string, number>();
+  for (const e of entradas) {
+    const o = claveOrigen(e.ruta.origen);
+    totalPorOrigen.set(o, (totalPorOrigen.get(o) ?? 0) + e.salidas);
+  }
+  return entradas.sort(
+    (a, b) =>
+      posicionOrigen(a.ruta.origen) - posicionOrigen(b.ruta.origen) ||
+      totalPorOrigen.get(claveOrigen(b.ruta.origen))! - totalPorOrigen.get(claveOrigen(a.ruta.origen))! ||
+      claveOrigen(a.ruta.origen).localeCompare(claveOrigen(b.ruta.origen)) ||
+      b.salidas - a.salidas ||
+      a.ruta.nombre.localeCompare(b.ruta.nombre),
+  );
 }
 
 /** «GUA → SEP» con las siglas; si faltan, los nombres. */
