@@ -3,7 +3,7 @@
   filtro (pulsar una salida deja solo sus boletos; otra vez, o la ✕, la
   suelta), con la empresa, el id, el asiento, la clase y el canal (se
   aplican al cambiar; el id y el asiento, con retardo). Sin salida elegida,
-  los de 30 días antes y después de hoy. En otra línea, el canal, «Mis boletos»
+  los de 30 días antes y después de hoy. En la fila de abajo, el canal, «Mis boletos»
   (los que vendió el usuario) y «Reasignado». Debajo, el panel de acciones sobre el boleto elegido y la
   lista paginada en el servidor. Se elige un boleto con un clic (o Enter) y el panel
   ofrece Consultar, Cancelar, Revertir, Anular, Chequear, Reasignar, Correo, Imp.
@@ -31,12 +31,14 @@
       <Button type="button" label="Limpiar" severity="secondary" text size="small" :disabled="!borradorModificado" @click="limpiar"
         ><template #icon><icon name="filter-alt-off-outline" class="mr-1" /></template
       ></Button>
-      <!-- Segunda línea: el canal, los del usuario y los reasignados. -->
-      <div class="filtro-linea chips" role="group" aria-label="Canal de venta y más filtros">
-        <button v-for="c in CANALES" :key="c.valor" type="button" class="chip" :class="{ 'chip-on': borrador.canales.includes(c.valor) }" :aria-pressed="borrador.canales.includes(c.valor)" @click="alternarCanal(c.valor)">{{ c.etiqueta }}</button>
-        <button type="button" class="chip" :class="{ 'chip-on': borrador.mios }" :aria-pressed="borrador.mios" v-tooltip.top="'Solo los que vendió usted'" @click="borrador.mios = !borrador.mios">Mis boletos</button>
-        <button type="button" class="chip" :class="{ 'chip-on': soloReasignados }" :aria-pressed="soloReasignados" v-tooltip.top="'Solo los reasignados'" @click="borrador.estados = soloReasignados ? [] : ['reasignado']">Reasignado</button>
-      </div>
+      <!-- Fila de abajo: el canal, los del usuario y los reasignados. -->
+      <template #abajo>
+        <div class="chips" role="group" aria-label="Canal de venta y más filtros">
+          <button v-for="c in CANALES" :key="c.valor" type="button" class="chip" :class="{ 'chip-on': borrador.canales.includes(c.valor) }" :aria-pressed="borrador.canales.includes(c.valor)" @click="alternarCanal(c.valor)">{{ c.etiqueta }}</button>
+          <button type="button" class="chip" :class="{ 'chip-on': borrador.mios }" :aria-pressed="borrador.mios" v-tooltip.top="'Solo los que vendió usted'" @click="borrador.mios = !borrador.mios">Mis boletos</button>
+          <button type="button" class="chip" :class="{ 'chip-on': soloReasignados }" :aria-pressed="soloReasignados" v-tooltip.top="'Solo los reasignados'" @click="borrador.estados = soloReasignados ? [] : ['reasignado']">Reasignado</button>
+        </div>
+      </template>
     </CalendarioSalidas>
 
     <!-- La salida elegida en el calendario: sus boletos, en cualquier fecha de venta. -->
@@ -627,9 +629,6 @@ onMounted(async () => {
   align-items: center;
 }
 /* Ocupa todo el ancho de los controles: baja a su propia línea. */
-.filtro-linea {
-  flex-basis: 100%;
-}
 .filtro-campo {
   display: flex;
   align-items: center;

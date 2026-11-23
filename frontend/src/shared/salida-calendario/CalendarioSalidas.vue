@@ -17,7 +17,9 @@
 <template>
   <div ref="raiz" class="flex flex-col gap-3">
     <div ref="cabecera" class="flex flex-col gap-3">
-      <ControlesCalendario :ocupacion="grilla && ocupacion" :seleccion="grilla && seleccion" @hoy="irAHoy" @eliminar="emit('eliminar')"><slot /></ControlesCalendario>
+      <ControlesCalendario :ocupacion="grilla && ocupacion" :seleccion="grilla && seleccion" @hoy="irAHoy" @eliminar="emit('eliminar')"
+        ><slot /><template v-if="$slots.abajo" #abajo><slot name="abajo" /></template
+      ></ControlesCalendario>
       <LeyendaRutas />
       <Message v-if="store.error" severity="error" :closable="false">{{ store.error }}</Message>
       <Message v-if="grilla && store.datos?.truncado" severity="warn" :closable="false">Hay más salidas de las que se pueden mostrar: acote el filtro o elija menos días.</Message>

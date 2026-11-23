@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { agrupar, aplicarAviso, aplicarPresencia, coincide, etiquetaDia, extractoMensaje, iniciales, medidasReducidas, ordenarBandeja, ordenarContactos, segmentos, tamanoLegible, unir, vistoPor } from '../modelo'
+import { agrupar, aplicarAviso, aplicarPresencia, coincide, etiquetaDia, extractoMensaje, iniciales, medidasReducidas, noLeidosAvisos, ordenarBandeja, ordenarContactos, segmentos, tamanoLegible, unir, vistoPor } from '../modelo'
 import type { Canal, Mensaje, Perfil } from '../types'
 
 const ana: Perfil = { id: 1, nombre: 'Ana López', ambito: 'administracion', lugar: null }
@@ -210,5 +210,13 @@ describe('ordenarBandeja', () => {
     const bandeja = [canal(1), canal(7, { tipo: 'grupo', nombre: 'Otro', contacto: null }), grupoFijado, otroFijado]
     // Beto (1) está en línea; los dos grupos fijados (5, 6) van antes, por su orden de actividad.
     expect(ordenarBandeja(bandeja, [], [2]).map((c) => c.id)).toEqual([5, 6, 1, 7])
+  })
+})
+
+describe('noLeidosAvisos', () => {
+  it('cuenta solo los del canal de avisos del sistema', () => {
+    const canales = [canal(1, { noLeidos: 3 }), canal(2, { tipo: 'grupo', noLeidos: 2 }), canal(3, { tipo: 'sistema', noLeidos: 5 })]
+    expect(noLeidosAvisos(canales)).toBe(5)
+    expect(noLeidosAvisos(canales.slice(0, 2))).toBe(0)
   })
 })

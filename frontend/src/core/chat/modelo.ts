@@ -94,6 +94,9 @@ export function coincide(texto: string, busqueda: string): boolean {
 
 export const totalNoLeidos = (canales: Canal[]) => canales.reduce((n, c) => n + c.noLeidos, 0)
 
+/** Lo sin leer de los avisos automáticos (canal `sistema`): van en la campana, no con las conversaciones. */
+export const noLeidosAvisos = (canales: Canal[]) => totalNoLeidos(canales.filter((c) => c.tipo === 'sistema'))
+
 /**
  * Bandeja tras un aviso. Devuelve null si hay que recargarla: el canal no
  * está en la bandeja, o cambió (`canal`: nombre, miembros, modo…; `cambio`:

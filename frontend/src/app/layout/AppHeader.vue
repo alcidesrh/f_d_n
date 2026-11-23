@@ -54,11 +54,20 @@
         <RouterLink :to="destinoAyuda" class="icon-btn header-secundario header-escritorio" aria-label="Ayuda" v-tooltip.bottom="'Ayuda'">
           <icon name="help-outline" />
         </RouterLink>
-        <!-- Autorizaciones (ADR-040): las que espera resolver y sus pases aprobados sin usar. -->
-        <RouterLink :to="{ name: 'autorizaciones', query: autorizacionesPendientes && autorizaciones.resumen?.porResolver ? { vista: 'por-resolver' } : {} }" class="icon-btn header-chat" :aria-label="autorizacionesPendientes ? `Autorizaciones, ${autorizacionesPendientes} por atender` : 'Autorizaciones'" v-tooltip.bottom="'Autorizaciones'">
+        <!-- Campana: autorizaciones (ADR-040) y los avisos automáticos del chat (salidas, etc.), aparte de las conversaciones. -->
+        <button type="button" class="icon-btn header-chat" :aria-label="pendientesCampana ? `Notificaciones, ${pendientesCampana} por atender` : 'Notificaciones'" aria-haspopup="true" aria-controls="menu-campana" v-tooltip.bottom="'Notificaciones'" @click="abrirCampana">
           <icon name="notifications-outline" />
-          <span v-if="autorizacionesPendientes" class="header-chat__badge">{{ autorizacionesPendientes > 99 ? "99+" : autorizacionesPendientes }}</span>
-        </RouterLink>
+          <span v-if="pendientesCampana" class="header-chat__badge">{{ pendientesCampana > 99 ? "99+" : pendientesCampana }}</span>
+        </button>
+        <Menu id="menu-campana" ref="menuCampana" :model="opcionesCampana" popup>
+          <template #item="{ item, props }">
+            <a v-bind="props.action" class="flex items-center gap-2">
+              <icon :name="String(item.iconName)" size="1.1rem" />
+              <span class="flex-1">{{ item.label }}</span>
+              <span v-if="item.pendientes" class="header-chat__badge static!">{{ item.pendientes > 99 ? "99+" : item.pendientes }}</span>
+            </a>
+          </template>
+        </Menu>
       </div>
       <!-- Se corre con las acciones cuando se cierra el sidebar derecho (ver header.css). -->
       <div class="header-sinc">
@@ -134,11 +143,31 @@ const session = useSessionStore();
 const acceso = useAccesoStore();
 const chat = useChatStore();
 const correo = useCorreoStore();
-/** Lo sin leer del chat y del correo (ADR-048): cohabitan en la misma ventana. */
-const sinLeer = computed(() => chat.noLeidos + correo.noLeidos);
+/** Lo sin leer del chat y del correo (ADR-048): cohabitan en la misma ventana. Los avisos automáticos van en la campana. */
+const sinLeer = computed(() => chat.noLeidosConversaciones + correo.noLeidos);
 const cuenta = useCuentaStore();
 const autorizaciones = useAutorizacionesStore();
 const autorizacionesPendientes = computed(() => pendientesDe(autorizaciones.resumen));
+const pendientesCampana = computed(() => autorizacionesPendientes.value + chat.noLeidosAvisosSistema);
+
+const menuCampana = ref<InstanceType<typeof Menu> | null>(null);
+function verAutorizaciones() {
+  void router.push({ name: "autorizaciones", query: autorizacionesPendientes.value && autorizaciones.resumen?.porResolver ? { vista: "por-resolver" } : {} });
+}
+function verAvisos() {
+  void router.push({ name: "chat", params: { canal: chat.canalAvisos ?? undefined } });
+}
+const opcionesCampana = computed<MenuItem[]>(() => [
+  { label: "Avisos del sistema", iconName: "campaign-outline", pendientes: chat.noLeidosAvisosSistema, visible: chat.canalAvisos !== null, command: verAvisos },
+  { label: "Autorizaciones", iconName: "verified-user-outline", pendientes: autorizacionesPendientes.value, command: verAutorizaciones },
+]);
+/** Directo a lo único pendiente; con avisos y autorizaciones a la vez, se elige. */
+function abrirCampana(evento: Event) {
+  const avisos = chat.noLeidosAvisosSistema;
+  if (avisos && autorizacionesPendientes.value) return menuCampana.value?.toggle(evento);
+  if (avisos) return verAvisos();
+  verAutorizaciones();
+}
 const pantalla = router.currentRoute;
 /** La entidad en las pantallas genéricas; si no, el nombre corto de la ruta. */
 const tituloPantalla = computed(() => {

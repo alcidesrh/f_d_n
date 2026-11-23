@@ -6,7 +6,8 @@
   porciento, la empresa y la selección de salidas para eliminarlas («Todas»
   marca las que cumplen el filtro y la ruta fijada en la leyenda).
   `ocupacion` y `seleccion` muestran esos controles (solo tienen sentido con
-  la grilla a la vista); el slot va al final de la fila, a la derecha.
+  la grilla a la vista); el slot va al final de la fila, a la derecha, y
+  `abajo`, en una fila propia debajo.
 -->
 <template>
   <section class="controles" aria-label="Controles del calendario">
@@ -51,6 +52,8 @@
 
       <div v-if="$slots.default" class="controles__extra"><slot /></div>
     </div>
+
+    <div v-if="$slots.abajo" class="controles__abajo"><slot name="abajo" /></div>
 
     <div v-if="(store.opciones?.empresas.length ?? 0) > 1" class="flex flex-wrap items-center gap-1.5" role="group" aria-label="Empresas">
       <button v-for="e in store.opciones?.empresas ?? []" :key="e.id" type="button" class="estado" :class="{ 'estado--activo': store.empresa === e.id }" :aria-pressed="store.empresa === e.id" @click="store.empresa = store.empresa === e.id ? null : e.id">
@@ -120,6 +123,12 @@ const puedeEliminar = computed(() => props.seleccion && !!store.opciones?.puede.
   align-items: center;
   gap: 0.5rem;
   margin-left: auto;
+}
+.controles__abajo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
 }
 /* Con la selección a la vista, ella empuja a la derecha; lo extra la sigue. */
 .controles__seleccion + .controles__extra {

@@ -12,7 +12,7 @@ import type { AvisoCorreo } from '@/core/correo/types'
 import { suscribir } from '@/core/realtime'
 import * as api from './api'
 import { revisarPush } from './push'
-import { aplicarAviso, aplicarPresencia, ordenarContactos, totalNoLeidos, ultimo, unir } from './modelo'
+import { aplicarAviso, aplicarPresencia, noLeidosAvisos, ordenarContactos, totalNoLeidos, ultimo, unir } from './modelo'
 import type { Aviso, Canal, Destinos, Mensaje, ModoGrupo, Perfil, Recurso, Referencia } from './types'
 
 
@@ -41,6 +41,11 @@ export const useChatStore = defineStore('chat', () => {
   const entrante = ref<{ canal: number; autor: Perfil | null; extracto: string; n: number } | null>(null)
 
   const noLeidos = computed(() => totalNoLeidos(canales.value))
+  /** Avisos automáticos sin leer (salidas, etc.) y su canal: la campana de la cabecera. */
+  const noLeidosAvisosSistema = computed(() => noLeidosAvisos(canales.value))
+  const canalAvisos = computed(() => canales.value.find((c) => c.tipo === 'sistema')?.id ?? null)
+  /** Lo sin leer entre personas y grupos: el ícono del chat. */
+  const noLeidosConversaciones = computed(() => noLeidos.value - noLeidosAvisosSistema.value)
   const canal = (id: number) => canales.value.find((c) => c.id === id) ?? null
 
   const estaEnLinea = (usuario: number) => enLinea.value.includes(usuario)
@@ -356,7 +361,7 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   return {
-    yo, canales, mensajes, completos, contactos, contactosOrdenados, recursos, activo, listo, enVivo, enLinea, fijados, entrante, noLeidos, estaEnLinea,
+    yo, canales, mensajes, completos, contactos, contactosOrdenados, recursos, activo, listo, enVivo, enLinea, fijados, entrante, noLeidos, noLeidosConversaciones, noLeidosAvisosSistema, canalAvisos, estaEnLinea,
     canal, iniciar, detener, salirDeLinea, refrescar, cargar, abrir, cerrar, cargarAnteriores, leer, enviar, cargarContactos, fijar, fijarGrupo, cargarRecursos, directo, grupo, editarGrupo, salirDeGrupo, fotoGrupo, compartir, reenviar, eliminar,
   }
 })

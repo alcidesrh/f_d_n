@@ -17,8 +17,8 @@ const route = useRoute();
 const session = useSessionStore();
 const chat = useChatStore();
 const correo = useCorreoStore();
-/** Lo sin leer del chat y del correo (ADR-048): cohabitan en la misma ventana. */
-const sinLeer = computed(() => chat.noLeidos + correo.noLeidos);
+/** Lo sin leer del chat y del correo (ADR-048): cohabitan en la misma ventana. Los avisos automáticos van en la campana. */
+const sinLeer = computed(() => chat.noLeidosConversaciones + correo.noLeidos);
 const ventanaChat = useVentanaChat();
 
 /** Mismo criterio que la cabecera: la ventana si la hay, si no la página del chat. */
