@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tablero;
 
+use App\Acceso\Alcance;
 use App\Entity\Enum\EstadoBoletoAsiento;
 use App\Entity\Enum\EstadoDepositoAgencia;
 use App\Entity\Enum\EstadoSalida;
@@ -109,6 +110,63 @@ final class ConsultaTablero
         );
 
         return array_map(static fn(array $f) => ["id" => (int) $f["id"], "nombre" => (string) $f["nombre"]], $filas);
+    }
+
+    /**
+     * Boletos de las ventas confirmadas de los días del filtro, agrupados por
+     * punto de venta, usuario y lo que define su tipo
+     * (`DistribucionVentas::tipo()`). Solo lo de las empresas y estaciones del
+     * alcance (ADR-039); la empresa es la de la salida.
+     */
+    public function distribucion(FiltroDistribucion $f, Alcance $alcance): DistribucionVentas
+    {
+        [$condicion, $ambitos] = $alcance->condicion("s.empresa_id", "v.estacion_id");
+        $filas = $this->db->fetchAllAssociative(
+            sprintf(
+                "WITH g AS (
+                    SELECT CASE WHEN v.canal = 'web' THEN 'web' WHEN v.agencia_id IS NOT NULL THEN 'agencia' ELSE 'estacion' END AS canal,
+                           v.estacion_id, v.usuario_id, b.estado, v.cortesia, v.voucher,
+                           COUNT(*) AS boletos, COALESCE(SUM(b.precio_monto), 0) AS monto
+                      FROM boleto_asiento b
+                      JOIN boleto_venta v ON v.id = b.boleto_venta_id
+                      %s
+                     WHERE v.estado = 'confirmada' AND b.precio_moneda = :moneda
+                       AND v.created_at >= :desde AND v.created_at < :hasta AND %s %s
+                     GROUP BY 1, 2, 3, 4, 5, 6
+                 )
+                 SELECT g.*, en.alias AS sigla, en.nombre AS estacion, u.username AS usuario,
+                        COALESCE(NULLIF(TRIM(CONCAT(u.nombre, ' ', u.apellido)), ''), u.username) AS nombre
+                   FROM g
+                   LEFT JOIN enclave en ON en.id = g.estacion_id
+                   LEFT JOIN usuario u ON u.id = g.usuario_id",
+                // La salida solo hace falta para acotar por empresa.
+                $f->empresaId !== null || str_contains($condicion, "s.empresa_id") ? "JOIN salida s ON s.id = b.salida_id" : "",
+                $condicion,
+                self::deEmpresa($f->empresaId),
+            ),
+            [
+                "moneda" => self::MONEDA,
+                "desde" => $f->desde->format("Y-m-d H:i:s"),
+                "hasta" => $f->fin()->format("Y-m-d H:i:s"),
+                ...$ambitos,
+            ] + ($f->empresaId !== null ? ["empresa" => $f->empresaId] : []),
+            array_map(static fn() => ArrayParameterType::INTEGER, $ambitos),
+        );
+
+        return new DistribucionVentas($f, array_map(static fn(array $r) => [
+            "canal" => (string) $r["canal"],
+            "estacionId" => $r["estacion_id"] !== null ? (int) $r["estacion_id"] : null,
+            "sigla" => $r["sigla"] !== null && $r["sigla"] !== "" ? (string) $r["sigla"] : null,
+            "estacion" => $r["estacion"] !== null ? (string) $r["estacion"] : null,
+            "usuarioId" => $r["usuario_id"] !== null ? (int) $r["usuario_id"] : null,
+            "usuario" => $r["usuario"] !== null ? (string) $r["usuario"] : null,
+            "nombre" => $r["nombre"] !== null ? (string) $r["nombre"] : null,
+            "estado" => (string) $r["estado"],
+            "cortesia" => (bool) $r["cortesia"],
+            "voucher" => (bool) $r["voucher"],
+            "boletos" => (int) $r["boletos"],
+            "monto" => (int) $r["monto"],
+        ], $filas));
     }
 
     /**

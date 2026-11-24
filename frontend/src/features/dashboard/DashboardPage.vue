@@ -1,5 +1,6 @@
 <!--
-  Tablero de gestión (portada): tendencia y mezcla de canales, mapa de demanda,
+  Tablero de gestión (portada): primero, cómo se reparte lo vendido (con su
+  propio día o rango, `DistribucionVentas`); luego tendencia y mezcla de canales, mapa de demanda,
   puntos de venta, operación de hoy, cobertura de agencias y rendimiento por
   ruta. Datos de `GET /api/tablero` (permiso `reporte.ventas`; un usuario con
   empresa solo ve la suya). Se actualiza solo cada 5 minutos mientras la
@@ -28,6 +29,7 @@
     </div>
 
     <template v-else>
+      <DistribucionVentas />
       <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
       <template v-if="!datos && cargando">
         <div v-for="i in 2" :key="i" class="fila-2-1"><Skeleton height="18rem" /><Skeleton height="18rem" /></div>
@@ -80,6 +82,7 @@ import { OCUPACION_BAJA, OCUPACION_SATURADA, porciento } from "@/core/tablero/fo
 import type { DiasTablero, Tablero } from "@/core/tablero/types";
 import CanalesVenta from "./componentes/CanalesVenta.vue";
 import CoberturaAgencias from "./componentes/CoberturaAgencias.vue";
+import DistribucionVentas from "./componentes/DistribucionVentas.vue";
 import { useAccesoStore } from "@/core/acceso/store";
 import MapaDemanda from "./componentes/MapaDemanda.vue";
 import OperacionHoy from "./componentes/OperacionHoy.vue";
@@ -194,6 +197,18 @@ onBeforeUnmount(() => {
   --estado-critico: #d03b3b;
   --estado-info: #2a78d6;
   --estado-generico: var(--p-emerald-500);
+  /* Distribución de la venta: las porciones sin identidad propia (puntos de
+     venta, usuarios) toman la paleta categórica por puesto, en su orden fijo;
+     la cola agrupada ("Otros") va en gris. Los tipos de boleto tienen cada uno
+     su tono fijo de esta paleta (`DistribucionVentas`). */
+  --cat-1: #2a78d6;
+  --cat-2: #eb6834;
+  --cat-3: #1baf7a;
+  --cat-4: #eda100;
+  --cat-5: #e87ba4;
+  --cat-6: #008300;
+  --cat-7: #6250d6;
+  --dona-otros: var(--p-surface-300);
 }
 /* Las series no cambian: cada canal tiene un solo tono, el mismo en ambos
    modos, como en el croquis. */
@@ -202,6 +217,12 @@ onBeforeUnmount(() => {
   --secuencial-min: #1b2636;
   --secuencial-max: #9ec5f4;
   --estado-info: #3987e5;
+  --cat-1: #3987e5;
+  --cat-2: #d95926;
+  --cat-3: #199e70;
+  --cat-4: #c98500;
+  --cat-5: #d55181;
+  --cat-7: #9085e9;
 }
 .fila-2-1,
 .fila-1-1 {

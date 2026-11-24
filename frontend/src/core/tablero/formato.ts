@@ -28,6 +28,12 @@ export function porciento(f: number | null | undefined, decimales = 0): string {
   return `${(f * 100).toFixed(decimales)}%`
 }
 
+/** Parte de un total: `17%`, con un decimal bajo 10% (`6.5%`) y `<0.1%` si hay algo pero no llega (nunca `0.0%`). */
+export function parte(f: number): string {
+  if (f > 0 && f < 0.001) return '<0.1%'
+  return porciento(f, f < 0.1 ? 1 : 0)
+}
+
 function decimal(n: number): string {
   const r = Math.round(n * 10) / 10
   return Number.isInteger(r) ? String(r) : r.toFixed(1)

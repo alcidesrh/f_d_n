@@ -8,6 +8,7 @@ use App\Acceso\Autorizacion;
 use App\Acceso\Capacidad;
 use App\Entity\Usuario;
 use App\Tablero\ConsultaTablero;
+use App\Tablero\FiltroDistribucion;
 use App\Tablero\Periodo;
 use App\Tablero\TableroEnCache;
 use Psr\Clock\ClockInterface;
@@ -25,6 +26,7 @@ use Symfony\Component\Security\Http\Attribute\CurrentUser;
  * empresa asignada solo ve la suya; sin ella, puede elegir una
  * (`?empresa=`) o mirar todas. `?dias=` 1, 7 (por defecto), 30 o 90. Las
  * cifras salen de una copia que el worker rehace cada minuto (`TableroEnCache`).
+ * Aparte, `/distribucion`: cómo se reparte lo vendido en un día o un rango.
  */
 #[AsController]
 #[Route("/api/tablero", name: "api_tablero")]
@@ -71,5 +73,28 @@ final class TableroController extends AbstractController
             "empresas" => $this->consulta->empresas($todas ? null : $empresas, soloActivas: true),
             "moneda" => ConsultaTablero::MONEDA,
         ] + $this->copias->leer($periodo->dias, $empresa));
+    }
+
+    /**
+     * Cómo se reparte lo vendido en un día o un rango (`?desde=&hasta=`,
+     * `AAAA-MM-DD`; por defecto hoy): por canal, punto de venta, usuario y
+     * tipo de boleto. Con `?empresa=`, solo esa; sin ella, todas las de su
+     * alcance. Se calcula en la petición: el rango es libre y no hay copia.
+     */
+    #[Route("/distribucion", name: "_distribucion", methods: ["GET"])]
+    public function distribucion(Request $request): JsonResponse
+    {
+        $this->denyAccessUnlessGranted(ReporteController::VER);
+
+        $alcance = $this->autorizacion->alcance(Capacidad::REPORTE_VENTAS);
+        $ahora = \DateTimeImmutable::createFromInterface($this->reloj->now());
+        $filtro = FiltroDistribucion::desdeQuery($request->query->all(), $ahora);
+
+        return $this->json([
+            "empresa" => $filtro->empresaId,
+            "empresas" => $this->consulta->empresas($alcance->empresas(), soloActivas: true),
+            "moneda" => ConsultaTablero::MONEDA,
+            "generado" => $ahora->format(DATE_ATOM),
+        ] + $this->consulta->distribucion($filtro, $alcance)->toArray());
     }
 }

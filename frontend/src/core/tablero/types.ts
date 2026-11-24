@@ -164,3 +164,31 @@ export interface Tablero {
   flota: Flota
   alertas: Alerta[]
 }
+
+/** Reparto de lo vendido de la portada (`GET /api/tablero/distribucion`). Importes en centavos. */
+export type TipoBoleto = 'cobrado' | 'anulado' | 'reasignado' | 'cortesia' | 'cancelado' | 'voucher'
+
+export interface Vendido {
+  monto: number
+  boletos: number
+}
+
+export interface DistribucionVentas {
+  /** La pedida; null = todas las del alcance. */
+  empresa: number | null
+  empresas: { id: number; nombre: string }[]
+  moneda: string
+  generado: string
+  desde: string
+  hasta: string
+  /** Lo vendido: cobrados y no presentados (ni anulados, ni reasignados, ni cortesías, ni vouchers). */
+  total: Vendido
+  /** En orden fijo: estación, agencia, web. */
+  canales: (Vendido & { canal: Canal })[]
+  /** Cada estación por su sigla, y la página y las agencias como dos puntos más; de mayor a menor. */
+  estaciones: (Vendido & { clave: string; canal: Canal; sigla: string; nombre: string })[]
+  /** De mayor a menor. */
+  usuarios: (Vendido & { clave: string; usuario: string; nombre: string })[]
+  /** Cada boleto en un solo tipo (`DistribucionVentas::tipo()`); `monto` es su precio, se cobre o no. */
+  tipos: (Vendido & { tipo: TipoBoleto })[]
+}

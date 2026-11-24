@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dinero, escala, etiquetaCubo, nivelOcupacion, porciento, rango, variacion } from '../formato'
+import { dinero, escala, etiquetaCubo, nivelOcupacion, parte, porciento, rango, variacion } from '../formato'
 
 describe('formato del tablero', () => {
   it('formatea dinero completo y compacto', () => {
@@ -8,6 +8,13 @@ describe('formato del tablero', () => {
     expect(dinero(84512300, true)).toBe('Q 845 mil')
     expect(dinero(98000, true)).toBe('Q 980')
     expect(dinero(null)).toBe('—')
+  })
+
+  it('parte', () => {
+    expect(parte(0.1718)).toBe('17%')
+    expect(parte(0.0652)).toBe('6.5%')
+    expect(parte(0.00038)).toBe('<0.1%')
+    expect(parte(0)).toBe('0.0%')
   })
 
   it('porciento', () => {
