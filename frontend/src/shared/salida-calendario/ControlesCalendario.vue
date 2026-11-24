@@ -8,7 +8,8 @@
   `ocupacion` y `seleccion` muestran esos controles (solo tienen sentido con
   la grilla a la vista); sin `empresas`, la pantalla pone el filtro de empresa
   a su manera. El slot va al final de la fila, a la derecha, y `abajo`, en
-  una fila propia debajo.
+  una fila propia debajo. Con `extraEnLinea`, lo del slot sigue a los
+  controles como uno más (llena la fila y baja desde la izquierda).
 -->
 <template>
   <section class="controles" aria-label="Controles del calendario">
@@ -51,7 +52,7 @@
         </Button>
       </div>
 
-      <div v-if="$slots.default" class="controles__extra"><slot /></div>
+      <div v-if="$slots.default" class="controles__extra" :class="{ 'controles__extra--en-linea': extraEnLinea }"><slot /></div>
     </div>
 
     <div v-if="$slots.abajo" class="controles__abajo"><slot name="abajo" /></div>
@@ -70,7 +71,7 @@ import { horaMinuto, tonoEmpresa } from "@/core/salida/calendario";
 import { aDia, deDia } from "@/core/salida/filtro";
 import { useCalendarioSalidasStore } from "./store";
 
-const props = withDefaults(defineProps<{ ocupacion?: boolean; seleccion?: boolean; empresas?: boolean }>(), { ocupacion: true, seleccion: false, empresas: true });
+const props = withDefaults(defineProps<{ ocupacion?: boolean; seleccion?: boolean; empresas?: boolean; extraEnLinea?: boolean }>(), { ocupacion: true, seleccion: false, empresas: true, extraEnLinea: false });
 const emit = defineEmits<{ hoy: []; eliminar: [] }>();
 
 const OPCIONES_DIAS = [
@@ -130,6 +131,10 @@ const puedeEliminar = computed(() => props.seleccion && !!store.opciones?.puede.
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem 1rem;
+}
+/* Cada pieza del slot, un control más de la fila. */
+.controles__extra--en-linea {
+  display: contents;
 }
 /* Con la selección a la vista, ella empuja a la derecha; lo extra la sigue. */
 .controles__seleccion + .controles__extra {

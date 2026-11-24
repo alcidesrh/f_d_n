@@ -15,7 +15,7 @@
 <template>
   <div class="@container flex flex-col gap-3">
     <!-- Filtros: los controles del calendario (fecha, días, hora, rutas en la leyenda) acotan las salidas del buscador; además, el id, el asiento y la clase. -->
-    <CalendarioSalidas :grilla="false" :empresas="false">
+    <CalendarioSalidas :grilla="false" :empresas="false" extra-en-linea>
       <SalidaBuscador v-model="salidaElegida" />
       <label class="filtro-campo">
         <span class="text-sm font-medium">Id</span>
