@@ -16,7 +16,7 @@
     <div class="controles__nav">
       <div class="flex items-center gap-1">
         <DatePicker v-model="fecha" date-format="dd/mm/yy" show-icon icon-display="input" class="w-[9.5rem]" input-class="tabular-nums" aria-label="Fecha" />
-        <Button severity="secondary" text rounded class="tap-target" aria-label="Volver a hoy" v-tooltip.bottom="'Hoy'" @click="emit('hoy')">
+        <Button severity="secondary" outlined size="small" class="tap-target" aria-label="Volver a hoy" v-tooltip.bottom="'Hoy'" @click="emit('hoy')">
           <template #icon><icon name="refresh" /></template>
         </Button>
       </div>
