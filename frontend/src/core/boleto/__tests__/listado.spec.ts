@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { aQuery, alternarOrden, consultaSalidas, disponibilidad, documentoTexto, filtroInicial, filtrosActivos, paginaInicial, porCercania } from '../listado'
+import { aQuery, alternarOrden, buscarSalidas, disponibilidad, documentoTexto, filtroInicial, filtrosActivos, paginaInicial, porCercania } from '../listado'
 import type { BoletoFila, PuedeBoleto } from '../types'
 
 const TODO: PuedeBoleto = { cancelar: true, anular: true, reasignar: true, chequear: true }
@@ -146,22 +146,22 @@ describe('acciones del panel', () => {
   })
 })
 
-describe('consultaSalidas', () => {
-  const rango = { desde: '2026-10-25', hasta: '2026-12-24' }
-  const de = (q: string) => Object.fromEntries(new URLSearchParams(q))
+describe('buscarSalidas', () => {
+  const salidas = [
+    { id: 1, rutaId: 10, d: 'Santa Elena → Guatemala bus 30 #1' },
+    { id: 2, rutaId: 11, d: 'Guatemala → Petén bus 12 #2' },
+    { id: 3, rutaId: 10, d: 'Santa Elena → Guatemala bus 12 #3' },
+  ]
+  const ids = (texto: string, ruta: number | null = null) => buscarSalidas(salidas, texto, (s) => s.d, ruta).map((s) => s.id)
 
-  it('sin texto, las de hoy en cualquier estado', () => {
-    expect(de(consultaSalidas('  ', 2, '2026-11-24', rango))).toEqual({ estado: '', orden: 'fecha', porPagina: '100', empresa: '2', desde: '2026-11-24', hasta: '2026-11-24' })
+  it('todas las palabras, sin acentos ni mayúsculas', () => {
+    expect(ids('peten')).toEqual([2])
+    expect(ids('guate 12')).toEqual([2, 3])
+    expect(ids('')).toEqual([1, 2, 3])
   })
 
-  it('con texto, en el rango del listado', () => {
-    expect(de(consultaSalidas('flores', null, '2026-11-24', rango))).toMatchObject({ q: 'flores', desde: '2026-10-25', hasta: '2026-12-24' })
-  })
-
-  it('un número (id o bus), en cualquier fecha', () => {
-    const q = de(consultaSalidas('3149', null, '2026-11-24', rango))
-    expect(q.q).toBe('3149')
-    expect(q.desde).toBeUndefined()
+  it('solo las de la ruta fijada', () => {
+    expect(ids('12', 10)).toEqual([3])
   })
 })
 

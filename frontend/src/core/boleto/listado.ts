@@ -3,6 +3,7 @@
  * filtros del formulario → query string, etiquetas de estado y documento, y
  * qué acciones del panel admite el boleto elegido. Funciones puras.
  */
+import { normalizar, palabras } from '../salida/rutas'
 import type { BoletoFila, CanalVenta, EstadoBoleto, OrdenBoletos, PuedeBoleto, TipoDocumento } from './types'
 
 type Severidad = 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast'
@@ -205,24 +206,13 @@ export function disponibilidad(b: BoletoFila | null, puede: PuedeBoleto): Record
 }
 
 /**
- * Query de `/api/gestion-salidas` para el buscador de salidas del filtro: en
- * cualquier estado y la empresa elegida. Sin texto, las de hoy; un número (id
- * de salida o código de bus), en cualquier fecha; otro texto, en el rango
- * `desde`–`hasta` del listado.
+ * Las salidas del calendario que ofrece el buscador del filtro: las de la
+ * ruta fijada en la leyenda (si hay) y con todas las palabras del texto en su
+ * descripción (ruta, paradas, bus, id), sin acentos ni mayúsculas.
  */
-export function consultaSalidas(texto: string, empresa: number | null, hoy: string, rango: { desde: string; hasta: string } | null): string {
-  const q = new URLSearchParams({ estado: '', orden: 'fecha', porPagina: '100' })
-  const t = texto.trim()
-  if (t) q.set('q', t)
-  if (empresa !== null) q.set('empresa', String(empresa))
-  if (!t) {
-    q.set('desde', hoy)
-    q.set('hasta', hoy)
-  } else if (!/^\d+$/.test(t) && rango) {
-    q.set('desde', rango.desde)
-    q.set('hasta', rango.hasta)
-  }
-  return q.toString()
+export function buscarSalidas<T extends { rutaId: number }>(salidas: readonly T[], texto: string, describir: (s: T) => string, ruta: number | null): T[] {
+  const terminos = palabras(texto)
+  return salidas.filter((s) => (ruta === null || s.rutaId === ruta) && terminos.every((t) => normalizar(describir(s)).includes(t)))
 }
 
 /** Las más cercanas a `ahora` primero (a igual distancia, la que viene). */

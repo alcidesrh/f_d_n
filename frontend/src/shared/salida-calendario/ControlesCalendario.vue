@@ -6,8 +6,9 @@
   porciento, la empresa y la selección de salidas para eliminarlas («Todas»
   marca las que cumplen el filtro y la ruta fijada en la leyenda).
   `ocupacion` y `seleccion` muestran esos controles (solo tienen sentido con
-  la grilla a la vista); el slot va al final de la fila, a la derecha, y
-  `abajo`, en una fila propia debajo.
+  la grilla a la vista); sin `empresas`, la pantalla pone el filtro de empresa
+  a su manera. El slot va al final de la fila, a la derecha, y `abajo`, en
+  una fila propia debajo.
 -->
 <template>
   <section class="controles" aria-label="Controles del calendario">
@@ -55,7 +56,7 @@
 
     <div v-if="$slots.abajo" class="controles__abajo"><slot name="abajo" /></div>
 
-    <div v-if="(store.opciones?.empresas.length ?? 0) > 1" class="flex flex-wrap items-center gap-1.5" role="group" aria-label="Empresas">
+    <div v-if="empresas && (store.opciones?.empresas.length ?? 0) > 1" class="flex flex-wrap items-center gap-1.5" role="group" aria-label="Empresas">
       <button v-for="e in store.opciones?.empresas ?? []" :key="e.id" type="button" class="estado" :class="{ 'estado--activo': store.empresa === e.id }" :aria-pressed="store.empresa === e.id" @click="store.empresa = store.empresa === e.id ? null : e.id">
         <span class="estado__tono" :style="{ '--tono': tonoEmpresa(e.id) }" aria-hidden="true" />
         {{ e.nombre }}
@@ -69,7 +70,7 @@ import { horaMinuto, tonoEmpresa } from "@/core/salida/calendario";
 import { aDia, deDia } from "@/core/salida/filtro";
 import { useCalendarioSalidasStore } from "./store";
 
-const props = withDefaults(defineProps<{ ocupacion?: boolean; seleccion?: boolean }>(), { ocupacion: true, seleccion: false });
+const props = withDefaults(defineProps<{ ocupacion?: boolean; seleccion?: boolean; empresas?: boolean }>(), { ocupacion: true, seleccion: false, empresas: true });
 const emit = defineEmits<{ hoy: []; eliminar: [] }>();
 
 const OPCIONES_DIAS = [

@@ -10,14 +10,14 @@
   elegida queda en la URL. Se refresca solo cada minuto. Pulsar una salida
   emite `abrir` (en modo selección, la marca); `eliminar` pide borrar las
   marcadas. Sin `ocupacion` no se ofrece verla en porciento (siempre en
-  asientos). El slot va al final de la fila de controles. `maxAlto` acota la
+  asientos). Sin `empresas`, el filtro de empresa lo pone la pantalla. El slot va al final de la fila de controles. `maxAlto` acota la
   grilla cuando hay algo debajo (si no, ocupa el resto de la ventana).
   Estado en `store.ts`; reglas en `core/salida/calendario`.
 -->
 <template>
   <div ref="raiz" class="flex flex-col gap-3">
     <div ref="cabecera" class="flex flex-col gap-3">
-      <ControlesCalendario :ocupacion="grilla && ocupacion" :seleccion="grilla && seleccion" @hoy="irAHoy" @eliminar="emit('eliminar')"
+      <ControlesCalendario :ocupacion="grilla && ocupacion" :seleccion="grilla && seleccion" :empresas="empresas" @hoy="irAHoy" @eliminar="emit('eliminar')"
         ><slot /><template v-if="$slots.abajo" #abajo><slot name="abajo" /></template
       ></ControlesCalendario>
       <LeyendaRutas />
@@ -37,7 +37,7 @@ import GrillaCalendario from './GrillaCalendario.vue'
 import LeyendaRutas from './LeyendaRutas.vue'
 import { useCalendarioSalidasStore } from './store'
 
-const props = withDefaults(defineProps<{ grilla?: boolean; seleccion?: boolean; ocupacion?: boolean; activa?: number | null; maxAlto?: string }>(), { grilla: true, seleccion: false, ocupacion: true, activa: null, maxAlto: undefined })
+const props = withDefaults(defineProps<{ grilla?: boolean; seleccion?: boolean; ocupacion?: boolean; empresas?: boolean; activa?: number | null; maxAlto?: string }>(), { grilla: true, seleccion: false, ocupacion: true, empresas: true, activa: null, maxAlto: undefined })
 const emit = defineEmits<{ abrir: [evento: MouseEvent, salida: SalidaCalendario]; eliminar: [] }>()
 
 const route = useRoute()
