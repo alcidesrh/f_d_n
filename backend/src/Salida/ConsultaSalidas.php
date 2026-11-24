@@ -178,6 +178,20 @@ final class ConsultaSalidas
         if ($f->hasta !== null) {
             $qb->andWhere("s.fecha < :hasta")->setParameter("hasta", $f->finExclusivo());
         }
+        // Texto: un número es el id o parte del código del bus; si no, cada palabra en el nombre de la ruta, una parada o el bus.
+        foreach ($f->palabras() as $i => $palabra) {
+            $patron = "%" . addcslashes($palabra, "%_\\") . "%";
+            $o = $qb->expr()->orX(
+                "LOWER(r.nombre) LIKE :q{$i}",
+                "LOWER(b.codigo) LIKE :q{$i}",
+                "EXISTS (SELECT 1 FROM App\Entity\Parada pq{$i} JOIN pq{$i}.enclave eq{$i} WHERE pq{$i}.ruta = s.ruta AND (LOWER(eq{$i}.nombre) LIKE :q{$i} OR LOWER(eq{$i}.alias) LIKE :q{$i}))",
+            );
+            if (ctype_digit($palabra)) {
+                $o->add("s.id = :qid{$i}");
+                $qb->setParameter("qid{$i}", (int) $palabra);
+            }
+            $qb->andWhere($o)->setParameter("q{$i}", $patron);
+        }
         // Una hora exacta: ese minuto en cada día del rango.
         $franjas = $f->franjasDeHora();
         if ($franjas !== []) {

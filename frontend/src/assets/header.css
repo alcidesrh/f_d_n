@@ -368,3 +368,10 @@
   box-shadow: 0 0 0 2px var(--p-content-background);
   pointer-events: none;
 }
+/* Con el dedo el botón crece al área táctil: el contador se ancla al ícono (centrado), no al borde del botón. */
+@media (pointer: coarse) {
+  .icon-btn .header-chat__badge {
+    top: calc(50% - 1.05rem);
+    left: calc(50% + 0.35rem);
+  }
+}

@@ -35,4 +35,11 @@ final class FiltroSalidasTest extends TestCase
         self::assertSame([], FiltroSalidas::desdeQuery(['desde' => '2026-11-14', 'hora' => '06:30'])->franjasDeHora());
         self::assertSame([], FiltroSalidas::desdeQuery(['desde' => '2026-01-01', 'hasta' => '2026-12-31', 'hora' => '06:30'])->franjasDeHora());
     }
+
+    public function testElTextoSeParteEnPalabrasEnMinusculas(): void
+    {
+        self::assertSame(['guate', 'petén'], FiltroSalidas::desdeQuery(['q' => '  Guate   PETÉN '])->palabras());
+        self::assertSame([], FiltroSalidas::desdeQuery([])->palabras());
+        self::assertSame([], FiltroSalidas::desdeQuery(['q' => ['x']])->palabras());
+    }
 }

@@ -1,10 +1,9 @@
 <!--
-  Boletos (el "Boletos" del legado): arriba, el calendario de salidas como
-  filtro (pulsar una salida deja solo sus boletos; otra vez, o la ✕, la
-  suelta), con la empresa, el id, el asiento, la clase y el canal (se
-  aplican al cambiar; el id y el asiento, con retardo). Sin salida elegida,
-  los de 30 días antes y después de hoy. En la fila de abajo, el canal, «Mis boletos»
-  (los que vendió el usuario) y «Reasignado». Debajo, el panel de acciones sobre el boleto elegido y la
+  Boletos (el "Boletos" del legado): arriba, los filtros (se aplican al
+  cambiar; el id y el asiento, con retardo): la salida (buscador por ruta,
+  parada, bus o id; borrarla la suelta), el id, el asiento y la clase; debajo,
+  el canal, «Mis boletos» (los que vendió el usuario), «Reasignado» y la
+  empresa. Sin salida elegida, los de 30 días antes y después de hoy. Debajo, el panel de acciones sobre el boleto elegido y la
   lista paginada en el servidor. Se elige un boleto con un clic (o Enter) y el panel
   ofrece Consultar, Cancelar, Revertir, Anular, Chequear, Reasignar, Correo, Imp.
   factura, Bitácora y Chat; cada acción explica por qué no se puede si no se
@@ -14,44 +13,37 @@
 -->
 <template>
   <div class="@container flex flex-col gap-3">
-    <!-- Filtro: el calendario de salidas (pulsar una salida deja solo sus boletos), la empresa, el id, el asiento, la clase y el canal. -->
-    <CalendarioSalidas :activa="borrador.salida" :ocupacion="false" max-alto="18rem" @abrir="(_, s) => elegirSalida(s)">
-      <label class="filtro-campo">
-        <span class="text-sm font-medium">Id</span>
-        <InputText :model-value="String(borrador.id ?? '')" inputmode="numeric" size="small" class="w-24" aria-label="Id del boleto" @input="borrador.id = soloNumero($event)" />
-      </label>
-      <label class="filtro-campo">
-        <span class="text-sm font-medium">Asiento</span>
-        <InputText :model-value="String(borrador.asiento ?? '')" inputmode="numeric" size="small" class="w-20" aria-label="Número de asiento" @input="borrador.asiento = soloNumero($event)" />
-      </label>
-      <div class="chips" role="group" aria-label="Clase de asiento">
-        <span class="text-sm font-medium">Clase</span>
-        <button v-for="c in CLASES" :key="c" type="button" class="chip" :class="{ 'chip-on': borrador.clase === c }" :aria-pressed="borrador.clase === c" @click="borrador.clase = borrador.clase === c ? null : c">{{ c }}</button>
+    <!-- Filtros: la salida (buscador), el id, el asiento y la clase; debajo, el canal, la empresa y más. -->
+    <section class="filtros" aria-label="Filtros de boletos">
+      <div class="filtros__fila">
+        <SalidaBuscador v-model="salidaElegida" :empresa="borrador.empresa" :rango="opciones ? { desde: opciones.desde, hasta: opciones.hasta } : null" />
+        <label class="filtro-campo">
+          <span class="text-sm font-medium">Id</span>
+          <InputText :model-value="String(borrador.id ?? '')" inputmode="numeric" size="small" class="w-24" aria-label="Id del boleto" @input="borrador.id = soloNumero($event)" />
+        </label>
+        <label class="filtro-campo">
+          <span class="text-sm font-medium">Asiento</span>
+          <InputText :model-value="String(borrador.asiento ?? '')" inputmode="numeric" size="small" class="w-20" aria-label="Número de asiento" @input="borrador.asiento = soloNumero($event)" />
+        </label>
+        <div class="chips" role="group" aria-label="Clase de asiento">
+          <span class="text-sm font-medium">Clase</span>
+          <button v-for="c in CLASES" :key="c" type="button" class="chip" :class="{ 'chip-on': borrador.clase === c }" :aria-pressed="borrador.clase === c" @click="borrador.clase = borrador.clase === c ? null : c">{{ c }}</button>
+        </div>
+        <Button type="button" label="Limpiar" severity="secondary" text size="small" :disabled="!borradorModificado" @click="limpiar"
+          ><template #icon><icon name="filter-alt-off-outline" class="mr-1" /></template
+        ></Button>
       </div>
-      <Button type="button" label="Limpiar" severity="secondary" text size="small" :disabled="!borradorModificado" @click="limpiar"
-        ><template #icon><icon name="filter-alt-off-outline" class="mr-1" /></template
-      ></Button>
-      <!-- Fila de abajo: el canal, los del usuario y los reasignados. -->
-      <template #abajo>
+      <div class="filtros__fila">
         <div class="chips" role="group" aria-label="Canal de venta y más filtros">
           <button v-for="c in CANALES" :key="c.valor" type="button" class="chip" :class="{ 'chip-on': borrador.canales.includes(c.valor) }" :aria-pressed="borrador.canales.includes(c.valor)" @click="alternarCanal(c.valor)">{{ c.etiqueta }}</button>
           <button type="button" class="chip" :class="{ 'chip-on': borrador.mios }" :aria-pressed="borrador.mios" v-tooltip.top="'Solo los que vendió usted'" @click="borrador.mios = !borrador.mios">Mis boletos</button>
           <button type="button" class="chip" :class="{ 'chip-on': soloReasignados }" :aria-pressed="soloReasignados" v-tooltip.top="'Solo los reasignados'" @click="borrador.estados = soloReasignados ? [] : ['reasignado']">Reasignado</button>
         </div>
-      </template>
-    </CalendarioSalidas>
-
-    <!-- La salida elegida en el calendario: sus boletos, en cualquier fecha de venta. -->
-    <div v-if="borrador.salida" class="salida-elegida">
-      <icon name="directions-bus-outline" />
-      <span class="truncate"
-        >Boletos de la salida <b>#{{ borrador.salida }}</b
-        ><template v-if="salidaElegida"> · {{ salidaElegida }}</template></span
-      >
-      <Button text rounded size="small" severity="secondary" class="tap-target" aria-label="Ver todas las salidas" v-tooltip.top="'Ver los de todas las salidas'" @click="borrador.salida = null"
-        ><template #icon><icon name="close" /></template
-      ></Button>
-    </div>
+        <div v-if="(opciones?.empresas.length ?? 0) > 1" class="chips" role="group" aria-label="Empresa">
+          <button v-for="e in opciones?.empresas ?? []" :key="e.id" type="button" class="chip" :class="{ 'chip-on': borrador.empresa === e.id }" :aria-pressed="borrador.empresa === e.id" @click="borrador.empresa = borrador.empresa === e.id ? null : e.id">{{ e.nombre }}</button>
+        </div>
+      </div>
+    </section>
 
     <!-- Acciones sobre el boleto elegido (izquierda) y columnas (derecha) -->
     <div class="acciones" role="toolbar" aria-label="Acciones del boleto elegido">
@@ -137,8 +129,7 @@ import type { CanalVenta, EstadoBoleto, TipoDocumento } from "@/core/boleto/type
 import type { BoletoFila, OpcionesBoletos, OrdenBoletos, PaginaBoletos } from "@/core/boleto/types";
 import { HttpError } from "@/core/http";
 import { notify } from "@/core/notify";
-import { puntas } from "@/core/salida/calendario";
-import type { SalidaCalendario } from "@/core/salida/types";
+import type { SalidaFila } from "@/core/salida/types";
 import { fecha, hora } from "@/core/venta/modelo";
 import BitacoraDialog from "@/shared/bitacora/BitacoraDialog.vue";
 import AnularBoletosDialog from "@/shared/boleto/AnularBoletosDialog.vue";
@@ -148,13 +139,12 @@ import { anunciarEnPantalla } from "@/shared/chat/integracion";
 import DataGrid from "@/shared/data-grid/DataGrid.vue";
 import GridText from "@/shared/data-grid/GridText.vue";
 import type { GridColumn } from "@/shared/data-grid/types";
-import CalendarioSalidas from "@/shared/salida-calendario/CalendarioSalidas.vue";
-import { useCalendarioSalidasStore } from "@/shared/salida-calendario/store";
 import CancelarBoletoDialog from "@/shared/boleto/CancelarBoletoDialog.vue";
 import RevertirBoletoDialog from "./RevertirBoletoDialog.vue";
 import ChequearBoletoDialog from "./ChequearBoletoDialog.vue";
 import ConsultarBoletoDialog from "./ConsultarBoletoDialog.vue";
 import CorreoBoletoDialog from "./CorreoBoletoDialog.vue";
+import SalidaBuscador from "./SalidaBuscador.vue";
 
 interface Columna extends GridColumn {
   /** Orden del backend al hacer clic en el título. */
@@ -283,27 +273,12 @@ function ocultar(key: string) {
 }
 
 // —— Filtros ——
-const calendario = useCalendarioSalidasStore();
 const borradorModificado = computed(() => borrador.id !== null || borrador.asiento !== null || borrador.clase !== null || borrador.salida !== null || borrador.canales.length > 0 || borrador.mios || borrador.estados.length > 0);
 const soloReasignados = computed(() => borrador.estados.length === 1 && borrador.estados[0] === "reasignado");
 
-/** Pulsar una salida filtra sus boletos; pulsarla otra vez la suelta. */
-function elegirSalida(s: SalidaCalendario) {
-  borrador.salida = borrador.salida === s.id ? null : s.id;
-}
-/** «06:30 · Guatemala → Petén» de la salida elegida, si está en el calendario. */
-const salidaElegida = computed(() => {
-  const s = calendario.datos?.items.find((x) => x.id === borrador.salida);
-  if (!s) return "";
-  const r = calendario.rutaPorId.get(s.rutaId);
-  return [`${fecha(s.fecha)} ${hora(s.fecha)}`, r ? `${r.nombre} (${puntas(r)})` : null].filter(Boolean).join(" · ");
-});
-// La empresa sale de los controles del calendario.
-watch(
-  () => calendario.empresa,
-  (e) => (borrador.empresa = e),
-  { immediate: true },
-);
+/** La salida elegida en el buscador: sus boletos, en cualquier fecha de venta. */
+const salidaElegida = ref<SalidaFila | null>(null);
+watch(salidaElegida, (s) => (borrador.salida = s?.id ?? null));
 
 /** Pasa el borrador a filtro aplicado (si cambió algo) y vuelve a la primera página. */
 function aplicar() {
@@ -332,6 +307,7 @@ const INICIAL_DOCUMENTO: Record<TipoDocumento, string> = { factura: "F", pendien
 const inicialDocumento = (d: TipoDocumento) => INICIAL_DOCUMENTO[d] ?? d.charAt(0).toUpperCase();
 
 function limpiar() {
+  salidaElegida.value = null;
   Object.assign(borrador, { id: null, asiento: null, clase: null, salida: null, canales: [], mios: false, estados: [] });
 }
 
@@ -476,7 +452,8 @@ function texto(b: BoletoFila, key: string): string {
 function desdeRuta() {
   const id = Number(route.query.id);
   if (!Number.isInteger(id) || id <= 0) return false;
-  Object.assign(borrador, { ...filtroInicial(), empresa: calendario.empresa, id });
+  Object.assign(borrador, { ...filtroInicial(), empresa: borrador.empresa, id });
+  salidaElegida.value = null;
   aplicado.value = structuredClone(toRaw(borrador));
   consultarId.value = id;
   dialogo.value = "consultar";
@@ -628,22 +605,21 @@ onMounted(async () => {
 .chips {
   align-items: center;
 }
-/* Ocupa todo el ancho de los controles: baja a su propia línea. */
 .filtro-campo {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
-.salida-elegida {
+.filtros {
   display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.filtros__fila {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
-  padding: 0.25rem 0.25rem 0.25rem 0.75rem;
-  border: 1px solid var(--p-primary-color);
-  border-radius: var(--p-content-border-radius, 0.5rem);
-  background: color-mix(in srgb, var(--p-primary-color) 8%, transparent);
-  font-size: 0.875rem;
+  gap: 0.5rem 1rem;
 }
 .tarjeta {
   display: flex;

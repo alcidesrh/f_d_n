@@ -39,6 +39,8 @@ final class FiltroSalidas
         public readonly string $direccion = "asc",
         public readonly int $pagina = 1,
         public readonly int $porPagina = 25,
+        /** Texto libre: un número es el id de la salida o parte del código del bus; si no, cada palabra en la ruta, sus paradas o el bus. */
+        public readonly string $q = "",
     ) {}
 
     /** @return list<EstadoSalida> */
@@ -50,7 +52,7 @@ final class FiltroSalidas
     /**
      * `estado` (lista separada por comas; vacío = todos; ausente = por defecto),
      * `empresa`, `ruta`, `origen`, `destino` (puntas de la ruta), `bus`, `desde`/`hasta`
-     * (AAAA-MM-DD o AAAA-MM-DDTHH:MM), `hora` (HH:MM), `orden` (proximas|fecha), `direccion`, `pagina`, `porPagina`.
+     * (AAAA-MM-DD o AAAA-MM-DDTHH:MM), `hora` (HH:MM), `q` (texto), `orden` (proximas|fecha), `direccion`, `pagina`, `porPagina`.
      * Los valores inválidos se ignoran.
      *
      * @param array<string, mixed> $q
@@ -80,7 +82,14 @@ final class FiltroSalidas
             direccion: ($q["direccion"] ?? null) === "desc" ? "desc" : "asc",
             pagina: max(1, (int) ($q["pagina"] ?? 1)),
             porPagina: in_array($porPagina, self::POR_PAGINA, true) ? $porPagina : 25,
+            q: is_string($q["q"] ?? null) ? mb_substr(trim($q["q"]), 0, 100) : "",
         );
+    }
+
+    /** @return list<string> las palabras de `q`, en minúsculas */
+    public function palabras(): array
+    {
+        return array_values(array_filter(preg_split('/\s+/u', mb_strtolower($this->q)) ?: [], static fn(string $p) => $p !== ""));
     }
 
     /** Límite superior excluyente de `hasta`: el día siguiente si no trae hora, si no el minuto siguiente. */

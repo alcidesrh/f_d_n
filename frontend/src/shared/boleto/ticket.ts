@@ -129,6 +129,49 @@ export function imprimirTicket(c: Comprobante): Promise<void> {
   return imprimirHtml(ticketHtml(c))
 }
 
+/** Margen de `@page` de los documentos de 80 mm (mismo valor que su CSS). */
+const MARGEN_MM = 3
+
+/**
+ * Alto de la página en mm para un contenido de `px` píxeles CSS (96 por
+ * pulgada) más los márgenes, redondeado hacia arriba. Chromium no entiende
+ * `size: 80mm auto`: sin un alto fijo usa la hoja de la impresora y el
+ * ticket sale centrado en ella, con papel en blanco antes y después.
+ */
+export function altoPaginaMm(px: number): number {
+  return Math.ceil((px * 25.4) / 96 + 2 * MARGEN_MM + 1)
+}
+
+/**
+ * Alto del contenido más largo entre saltos de página forzados (las guías
+ * llevan una por página); un documento sin saltos es una sola página.
+ */
+function altoContenidoPx(doc: Document): number {
+  const hijos = Array.from(doc.body.children)
+  let inicio: number | null = null
+  let maximo = 0
+  hijos.forEach((h, i) => {
+    const r = h.getBoundingClientRect()
+    const estilo = doc.defaultView!.getComputedStyle(h)
+    inicio ??= r.top - parseFloat(estilo.marginTop || '0')
+    const salto = estilo.breakAfter === 'page' || estilo.pageBreakAfter === 'always'
+    if (salto || i === hijos.length - 1) {
+      maximo = Math.max(maximo, r.bottom + parseFloat(estilo.marginBottom || '0') - inicio)
+      inicio = null
+    }
+  })
+  return maximo
+}
+
+/** Fija el alto de la página al del contenido (ver `altoPaginaMm`). */
+function ajustarPagina(doc: Document): void {
+  const px = altoContenidoPx(doc)
+  if (px <= 0) return
+  const estilo = doc.createElement('style')
+  estilo.textContent = `@page { size: 80mm ${altoPaginaMm(px)}mm; margin: ${MARGEN_MM}mm; }`
+  doc.head.appendChild(estilo)
+}
+
 /** Imprime un documento HTML autónomo en un iframe oculto (tickets, recibos, guías). */
 export function imprimirHtml(html: string): Promise<void> {
   return new Promise((resolver) => lanzar(html, resolver))
@@ -151,6 +194,7 @@ function lanzar(html: string, listo: () => void): void {
   doc.write(html)
   doc.close()
   const imprimir = () => {
+    ajustarPagina(doc)
     iframe.contentWindow?.focus()
     iframe.contentWindow?.print()
     setTimeout(() => {

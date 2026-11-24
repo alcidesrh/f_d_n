@@ -203,3 +203,31 @@ export function disponibilidad(b: BoletoFila | null, puede: PuedeBoleto): Record
     chat: sin(null),
   }
 }
+
+/**
+ * Query de `/api/gestion-salidas` para el buscador de salidas del filtro: en
+ * cualquier estado y la empresa elegida. Sin texto, las de hoy; un número (id
+ * de salida o código de bus), en cualquier fecha; otro texto, en el rango
+ * `desde`–`hasta` del listado.
+ */
+export function consultaSalidas(texto: string, empresa: number | null, hoy: string, rango: { desde: string; hasta: string } | null): string {
+  const q = new URLSearchParams({ estado: '', orden: 'fecha', porPagina: '100' })
+  const t = texto.trim()
+  if (t) q.set('q', t)
+  if (empresa !== null) q.set('empresa', String(empresa))
+  if (!t) {
+    q.set('desde', hoy)
+    q.set('hasta', hoy)
+  } else if (!/^\d+$/.test(t) && rango) {
+    q.set('desde', rango.desde)
+    q.set('hasta', rango.hasta)
+  }
+  return q.toString()
+}
+
+/** Las más cercanas a `ahora` primero (a igual distancia, la que viene). */
+export function porCercania<T extends { fecha: string }>(salidas: T[], ahora: Date): T[] {
+  const t = ahora.getTime()
+  const distancia = (s: T) => Math.abs(new Date(s.fecha).getTime() - t)
+  return [...salidas].sort((a, b) => distancia(a) - distancia(b) || new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { aQuery, alternarOrden, disponibilidad, documentoTexto, filtroInicial, filtrosActivos, paginaInicial } from '../listado'
+import { aQuery, alternarOrden, consultaSalidas, disponibilidad, documentoTexto, filtroInicial, filtrosActivos, paginaInicial, porCercania } from '../listado'
 import type { BoletoFila, PuedeBoleto } from '../types'
 
 const TODO: PuedeBoleto = { cancelar: true, anular: true, reasignar: true, chequear: true }
@@ -143,5 +143,33 @@ describe('acciones del panel', () => {
       habilitada: false,
       motivo: 'Elija un boleto de la lista',
     })
+  })
+})
+
+describe('consultaSalidas', () => {
+  const rango = { desde: '2026-10-25', hasta: '2026-12-24' }
+  const de = (q: string) => Object.fromEntries(new URLSearchParams(q))
+
+  it('sin texto, las de hoy en cualquier estado', () => {
+    expect(de(consultaSalidas('  ', 2, '2026-11-24', rango))).toEqual({ estado: '', orden: 'fecha', porPagina: '100', empresa: '2', desde: '2026-11-24', hasta: '2026-11-24' })
+  })
+
+  it('con texto, en el rango del listado', () => {
+    expect(de(consultaSalidas('flores', null, '2026-11-24', rango))).toMatchObject({ q: 'flores', desde: '2026-10-25', hasta: '2026-12-24' })
+  })
+
+  it('un número (id o bus), en cualquier fecha', () => {
+    const q = de(consultaSalidas('3149', null, '2026-11-24', rango))
+    expect(q.q).toBe('3149')
+    expect(q.desde).toBeUndefined()
+  })
+})
+
+describe('porCercania', () => {
+  it('ordena por distancia a ahora; a igual distancia, la que viene', () => {
+    const ahora = new Date('2026-11-24T12:00:00Z')
+    const s = (id: number, fecha: string) => ({ id, fecha })
+    const r = porCercania([s(1, '2026-11-20T12:00:00Z'), s(2, '2026-11-24T10:00:00Z'), s(3, '2026-11-24T14:00:00Z'), s(4, '2026-11-25T12:00:00Z')], ahora)
+    expect(r.map((x) => x.id)).toEqual([3, 2, 4, 1])
   })
 })
