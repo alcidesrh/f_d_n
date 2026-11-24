@@ -29,9 +29,6 @@
         <span class="text-sm font-medium">Clase</span>
         <button v-for="c in CLASES" :key="c" type="button" class="chip" :class="{ 'chip-on': borrador.clase === c }" :aria-pressed="borrador.clase === c" @click="borrador.clase = borrador.clase === c ? null : c">{{ c }}</button>
       </div>
-      <Button type="button" label="Limpiar" severity="secondary" text size="small" :disabled="!borradorModificado" @click="limpiar"
-        ><template #icon><icon name="filter-alt-off-outline" class="mr-1" /></template
-      ></Button>
       <!-- Fila de abajo: el canal, los del usuario, los reasignados y la empresa (como los demás chips, sin colores). -->
       <template #abajo>
         <div class="chips" role="group" aria-label="Canal de venta y más filtros">
@@ -44,6 +41,12 @@
         </div>
       </template>
     </CalendarioSalidas>
+    <!-- Limpiar cierra el conjunto de filtros: debajo de las rutas, a la derecha. -->
+    <div class="-mt-2 flex justify-end">
+      <Button type="button" label="Limpiar" severity="secondary" text size="small" :disabled="!borradorModificado" @click="limpiar"
+        ><template #icon><icon name="filter-alt-off-outline" class="mr-1" /></template
+      ></Button>
+    </div>
 
     <!-- Acciones sobre el boleto elegido (izquierda) y columnas (derecha) -->
     <div class="acciones" role="toolbar" aria-label="Acciones del boleto elegido">
