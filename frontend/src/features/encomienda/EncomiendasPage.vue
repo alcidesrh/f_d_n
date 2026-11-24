@@ -7,7 +7,7 @@
 -->
 <template>
   <div class="@container flex flex-col gap-3">
-    <section class="superficie-borde grid grid-cols-2 items-end gap-x-3 gap-y-2 @2xl:grid-cols-4 @5xl:grid-cols-6" aria-label="Filtros">
+    <section class="grid grid-cols-2 items-end gap-x-3 gap-y-2 @2xl:grid-cols-4 @5xl:grid-cols-6" aria-label="Filtros">
       <label class="campo col-span-2">
         <span>Código o cliente</span>
         <IconField>
@@ -48,10 +48,16 @@
       </div>
       <div class="col-span-2 flex flex-wrap justify-end gap-1 @2xl:col-span-4 @5xl:col-span-6">
         <template v-if="contexto?.estacion">
-          <Button label="En bodega aquí" size="small" text @click="atajo('bodega')"><template #icon><icon name="warehouse-outline" class="mr-1" /></template></Button>
-          <Button label="Por entregar aquí" size="small" text @click="atajo('entregar')"><template #icon><icon name="move-to-inbox-outline" class="mr-1" /></template></Button>
+          <Button label="En bodega aquí" size="small" text @click="atajo('bodega')"
+            ><template #icon><icon name="warehouse-outline" class="mr-1" /></template
+          ></Button>
+          <Button label="Por entregar aquí" size="small" text @click="atajo('entregar')"
+            ><template #icon><icon name="move-to-inbox-outline" class="mr-1" /></template
+          ></Button>
         </template>
-        <Button label="Limpiar" severity="secondary" text size="small" :disabled="!modificado" @click="limpiar"><template #icon><icon name="filter-alt-off-outline" class="mr-1" /></template></Button>
+        <Button label="Limpiar" severity="secondary" text size="small" :disabled="!modificado" @click="limpiar"
+          ><template #icon><icon name="filter-alt-off-outline" class="mr-1" /></template
+        ></Button>
       </div>
     </section>
 
@@ -59,7 +65,9 @@
       <div v-if="elegida" class="flex min-w-0 items-center gap-2">
         <span class="font-mono font-semibold">{{ elegida.codigo }}</span>
         <span class="truncate text-sm text-muted-color">{{ elegida.origen.nombre }} → {{ elegida.destino.nombre }} · {{ elegida.destinatario.nombre }}</span>
-        <Button text rounded size="small" severity="secondary" aria-label="Quitar selección" @click="elegida = null"><template #icon><icon name="close" /></template></Button>
+        <Button text rounded size="small" severity="secondary" aria-label="Quitar selección" @click="elegida = null"
+          ><template #icon><icon name="close" /></template
+        ></Button>
       </div>
       <div class="flex flex-wrap gap-1.5">
         <!-- Teléfono: las acciones en un desplegable; desde 36rem, botones. -->
