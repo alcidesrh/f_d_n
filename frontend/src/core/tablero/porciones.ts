@@ -6,9 +6,9 @@
 
 export interface Porcion {
   clave: string
-  /** Lo que se lee en la cuña y en la lista (sigla, usuario, tipo). */
+  /** Lo que se lee en la lista y en el centro (nombre de la estación, usuario, tipo). */
   etiqueta: string
-  /** El nombre completo (tooltip). */
+  /** Lo que la acompaña en la lista (sigla de la estación, nombre del usuario); igual a `etiqueta` si no hay nada más que decir. */
   nombre: string
   valor: number
   /** Dato secundario de la lista y el tooltip (p. ej. "87 boletos"). */
@@ -155,38 +155,3 @@ export function cunaEn(lista: Cuna[], angulo: number, minimo = 0): Cuna | null {
 
 /** Ángulo desde las 12, en el sentido del reloj, de un punto relativo al centro. */
 export const anguloDe = (x: number, y: number) => (Math.atan2(x, -y) + 2 * Math.PI) % (2 * Math.PI)
-
-/**
- * ¿Cabe un rótulo horizontal de `ancho` × `alto` centrado en (x, y) dentro de
- * la cuña? Sus cuatro esquinas tienen que caer en el anillo y entre los
- * ángulos de la cuña: un rótulo que no cabe no se pone (ni se recorta).
- */
-export function cabeRotulo(c: Cuna, x: number, y: number, ancho: number, alto: number, interior: number, exterior: number): boolean {
-  if (c.fin - c.inicio >= 2 * Math.PI - 1e-9) return true
-  return [-1, 1].every((dx) =>
-    [-1, 1].every((dy) => {
-      const px = x + (dx * ancho) / 2
-      const py = y + (dy * alto) / 2
-      const r = Math.hypot(px, py)
-      const a = anguloDe(px, py)
-      return r >= interior && r <= exterior && a >= c.inicio && a <= c.fin
-    }),
-  )
-}
-
-/**
- * Dónde poner el rótulo de una cuña, a media altura del anillo: en su mitad
- * si cabe; si no, donde el anillo corre en horizontal (arriba o abajo), o a
- * un cuarto de cada punta. Null si no cabe en ningún lado.
- */
-export function lugarRotulo(c: Cuna, ancho: number, alto: number, interior: number, exterior: number): { x: number; y: number } | null {
-  const r = (interior + exterior) / 2
-  const largo = c.fin - c.inicio
-  const candidatos = [c.inicio + largo / 2, ...[0, Math.PI, 2 * Math.PI].filter((t) => t > c.inicio && t < c.fin), c.inicio + largo / 4, c.inicio + (3 * largo) / 4]
-  for (const t of candidatos) {
-    const x = r * Math.sin(t)
-    const y = -r * Math.cos(t)
-    if (cabeRotulo(c, x, y, ancho, alto, interior, exterior)) return { x, y }
-  }
-  return null
-}

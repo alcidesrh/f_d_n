@@ -5,7 +5,7 @@
 ## Contexto
 
 La primera gráfica de la portada reparte lo vendido de un día (hoy por defecto) o un rango, de todas
-las empresas del alcance o de una, en cuatro vistas: por canal, por estación (la página y las agencias
+las empresas del alcance o de las que se marquen, en cuatro vistas: por canal, por estación (la página y las agencias
 como dos estaciones más), por usuario y, en boletos, por tipo. Con datos reales el reparto tiene una
 cola larga: en octubre vendieron 38 estaciones, las 3 primeras hacen 55% y 30 quedan bajo 2% (la menor,
 0.03%: 0.2 px de arco en una dona de 240 px); un día venden unos 65 usuarios. Una cuña así no se lee ni
@@ -16,10 +16,11 @@ los datos en varias gráficas ordenadas de mayor a menor.
 
 ## Decisión
 
-### Datos (`GET /api/tablero/distribucion?desde=&hasta=&empresa=`)
+### Datos (`GET /api/tablero/distribucion?desde=&hasta=&empresas=`)
 
 - Permiso `reporte.ventas`, con el alcance de empresas y estaciones (ADR-039) en la consulta; sin
-  `empresa`, todas las del alcance. Un día o un rango de hasta 366 días (`FiltroDistribucion`), por
+  `empresas` (ids separados por coma; en pantalla, casillas con «Todas» por defecto), todas las del
+  alcance. Un día o un rango de hasta 366 días (`FiltroDistribucion`), por
   fecha de venta. Se calcula en la petición (una consulta agregada; el rango es libre y no hay copia).
 - Lo vendido es lo que el tablero cuenta como ingreso: boletos cobrados que no se anularon ni se
   reasignaron, los no presentados incluidos.
@@ -43,7 +44,7 @@ los datos en varias gráficas ordenadas de mayor a menor.
 - **Táctil y teclado:** la cuña se busca por ángulo y cada una se toca en al menos 8°; con el dedo la
   elección queda al levantarlo. La dona es una sola parada de Tab: flechas recorren las cuñas, Enter
   abre "Otros", Escape vuelve. Tabla completa para lectores de pantalla.
-- Rótulos dentro de la cuña solo si caben enteros (no se recortan). Colores de la paleta categórica
+- Sin texto en las cuñas: los nombres van en la lista (la estación con su nombre completo y su sigla). Colores de la paleta categórica
   validada para daltonismo, en orden fijo; los de los tipos, elegidos para que cada par vecino pase.
 
 ## Alternativas descartadas

@@ -77,33 +77,12 @@ export function variacion(
   return { texto: tendencia === 'igual' ? (puntos ? '0 pp' : '0%') : texto, tendencia, valoracion }
 }
 
-/** Máximo "redondo" y marcas del eje para valores de 0 a `max` (1, 2, 2.5 o 5 × 10ⁿ). */
-export function escala(max: number, marcas = 4): { max: number; ticks: number[] } {
-  if (!(max > 0)) return { max: 1, ticks: [0, 1] }
-  const crudo = max / marcas
-  const potencia = 10 ** Math.floor(Math.log10(crudo))
-  const paso = ([1, 2, 2.5, 5, 10].find((m) => m * potencia >= crudo) ?? 10) * potencia
-  const tope = Math.ceil(max / paso) * paso
-  const ticks: number[] = []
-  for (let v = 0; v <= tope + paso / 2; v += paso) ticks.push(Math.round(v * 1e6) / 1e6)
-  return { max: tope, ticks }
-}
-
 /** Fecha local `AAAA-MM-DD[ HH:mm]` sin pasar por UTC. */
 export function fechaLocal(t: string): Date {
   const [d, h = '00:00'] = t.replace('T', ' ').split(' ')
   const [y, m, dd] = d!.split('-').map(Number)
   const [hh, mm] = h.split(':').map(Number)
   return new Date(y!, m! - 1, dd!, hh ?? 0, mm ?? 0)
-}
-
-/** Día de la semana de 0 = lunes. */
-export const diaSemana = (f: Date) => (f.getDay() + 6) % 7
-
-/** Etiqueta corta de un cubo de la serie: `14 h` (por hora) o `lun 12`. */
-export function etiquetaCubo(t: string, porHora: boolean): string {
-  const f = fechaLocal(t)
-  return porHora ? `${f.getHours()} h` : `${DIAS_SEMANA[diaSemana(f)]} ${f.getDate()}`
 }
 
 const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']

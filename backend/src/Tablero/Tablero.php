@@ -35,7 +35,7 @@ final class Tablero
     public const USUARIOS_TOP = 3;
 
     /**
-     * @param list<array{actual: bool, t: string, canal: string, ingresos: int, boletos: int}> $ventas cubos (hora o día) por canal
+     * @param list<array{actual: bool, canal: string, ingresos: int, boletos: int}> $ventas por ventana y canal
      * @param array{actual: array{anulados: int, montoAnulado: int, cortesias: int, valorCortesias: int}, anterior: array{anulados: int, montoAnulado: int, cortesias: int, valorCortesias: int}} $incidencias
      * @param list<SalidaTablero> $salidas desde `Periodo::inicioLectura()` hasta una semana adelante
      * @param list<array{id: int, fecha: string, ruta: string, estado: string, llegada: string}> $sinCerrar
@@ -75,17 +75,12 @@ final class Tablero
                 "hasta" => $p->ahora->format("Y-m-d"),
                 "anteriorDesde" => $p->inicioAnterior->format("Y-m-d"),
                 "anteriorHasta" => $p->finAnterior->format("Y-m-d"),
-                "rotuloAnterior" => $p->rotuloAnterior(),
-                "porHora" => $p->porHora(),
             ],
             "kpis" => $this->kpis(),
-            "serie" => $this->serie(),
-            "canales" => $this->canales(),
             "operacionHoy" => $this->operacionHoy(),
             "rutas" => $this->rutas(),
             "demanda" => $this->demanda(),
             "anticipada" => $this->anticipada(),
-            "puntos" => $this->puntos(),
             "agencias" => $this->agencias(),
             "flota" => $this->flotaResumen(),
             "alertas" => $this->alertas(),
@@ -142,51 +137,6 @@ final class Tablero
             "cortesias" => ["actual" => $this->incidencias["actual"]["cortesias"], "anterior" => $this->incidencias["anterior"]["cortesias"]],
             "valorCortesias" => ["actual" => $this->incidencias["actual"]["valorCortesias"], "anterior" => $this->incidencias["anterior"]["valorCortesias"]],
         ];
-    }
-
-    /**
-     * Un cubo por hora (hoy) o por día del periodo actual, con lo vendido por
-     * canal y el total del cubo equivalente del periodo anterior. Los cubos
-     * que aún no llegan quedan con `actual` en null (no son ceros).
-     *
-     * @return list<array{t: string, actual: ?array{estacion: int, agencia: int, web: int, total: int, boletos: int}, anterior: array{total: int, boletos: int}}>
-     */
-    public function serie(): array
-    {
-        $p = $this->periodo;
-        $formato = $p->porHora() ? "Y-m-d H:00" : "Y-m-d";
-        $paso = $p->porHora() ? "+1 hour" : "+1 day";
-        $fin = $p->hoy()->modify("+1 day");
-
-        $cubos = [];
-        for ($t = $p->inicio; $t < $fin; $t = $t->modify($paso)) {
-            $cubos[$t->format($formato)] = [
-                "t" => $t->format($formato),
-                "actual" => $t <= $p->ahora ? ["estacion" => 0, "agencia" => 0, "web" => 0, "total" => 0, "boletos" => 0] : null,
-                "anterior" => ["total" => 0, "boletos" => 0],
-            ];
-        }
-        foreach ($this->ventas as $v) {
-            $t = new \DateTimeImmutable($v["t"]);
-            if ($v["actual"]) {
-                $llave = $t->format($formato);
-                if (!isset($cubos[$llave]) || $cubos[$llave]["actual"] === null) {
-                    continue;
-                }
-                $canal = in_array($v["canal"], self::CANALES, true) ? $v["canal"] : "estacion";
-                $cubos[$llave]["actual"][$canal] += $v["ingresos"];
-                $cubos[$llave]["actual"]["total"] += $v["ingresos"];
-                $cubos[$llave]["actual"]["boletos"] += $v["boletos"];
-            } else {
-                $llave = $p->alActual($t)->format($formato);
-                if (isset($cubos[$llave])) {
-                    $cubos[$llave]["anterior"]["total"] += $v["ingresos"];
-                    $cubos[$llave]["anterior"]["boletos"] += $v["boletos"];
-                }
-            }
-        }
-
-        return array_values($cubos);
     }
 
     /** @return list<array{canal: string, ingresos: int, boletos: int, anterior: int}> */

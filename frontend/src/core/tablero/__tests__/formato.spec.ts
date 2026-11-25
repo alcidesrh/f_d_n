@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dinero, escala, etiquetaCubo, nivelOcupacion, parte, porciento, rango, variacion } from '../formato'
+import { dinero, nivelOcupacion, parte, porciento, rango, variacion } from '../formato'
 
 describe('formato del tablero', () => {
   it('formatea dinero completo y compacto', () => {
@@ -39,16 +39,7 @@ describe('formato del tablero', () => {
     expect(variacion(0.4, 0, { puntos: true })?.texto).toBe('+40 pp')
   })
 
-  it('escala redonda del eje', () => {
-    expect(escala(87)).toEqual({ max: 100, ticks: [0, 25, 50, 75, 100] })
-    expect(escala(1)).toEqual({ max: 1, ticks: [0, 0.25, 0.5, 0.75, 1] })
-    expect(escala(0)).toEqual({ max: 1, ticks: [0, 1] })
-    expect(escala(13_000_000).max).toBe(15_000_000)
-  })
-
   it('etiquetas de fecha sin pasar por UTC', () => {
-    expect(etiquetaCubo('2026-10-12', false)).toBe('lun 12')
-    expect(etiquetaCubo('2026-10-12 14:00', true)).toBe('14 h')
     expect(rango('2026-10-06', '2026-10-12')).toBe('6 – 12 oct')
     expect(rango('2026-09-14', '2026-10-12')).toBe('14 sep – 12 oct')
   })

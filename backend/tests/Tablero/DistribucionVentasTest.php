@@ -136,6 +136,16 @@ final class DistribucionVentasTest extends TestCase
         FiltroDistribucion::desdeQuery(["desde" => "2026-11-24", "hasta" => "2026-11-01"], $hoy);
     }
 
+    public function testVariasEmpresasSinRepetirYEnOrden(): void
+    {
+        $hoy = new \DateTimeImmutable("2026-11-24");
+        self::assertSame([], FiltroDistribucion::desdeQuery([], $hoy)->empresas, "sin empresas: todas las del alcance");
+        self::assertSame([1, 3], FiltroDistribucion::desdeQuery(["empresas" => "3,1,3, "], $hoy)->empresas);
+
+        $this->expectException(ParametroInvalido::class);
+        FiltroDistribucion::desdeQuery(["empresas" => "1,x"], $hoy);
+    }
+
     public function testNoMasDeUnAno(): void
     {
         $hoy = new \DateTimeImmutable("2026-11-24");

@@ -25,21 +25,6 @@ export interface Kpis {
 
 export type Canal = 'estacion' | 'agencia' | 'web'
 
-export interface CuboSerie {
-  /** `AAAA-MM-DD` o `AAAA-MM-DD HH:00` (hoy, por hora). */
-  t: string
-  /** Null: el cubo todavía no llega. */
-  actual: (Record<Canal, number> & { total: number; boletos: number }) | null
-  anterior: { total: number; boletos: number }
-}
-
-export interface CanalVentas {
-  canal: Canal
-  ingresos: number
-  boletos: number
-  anterior: number
-}
-
 /** Estado de un boleto (`BoletoAsiento.estado`) en las salidas de hoy, sin la página web. */
 export type EstadoBoleto = 'emitido' | 'chequeado' | 'transito' | 'finalizado' | 'anulado' | 'reasignado' | 'cancelado'
 
@@ -96,14 +81,6 @@ export interface DiaAnticipado {
   semanaAnterior: number | null
 }
 
-export interface PuntoVenta {
-  tipo: Canal
-  nombre: string
-  ingresos: number
-  boletos: number
-  anterior: number
-}
-
 export interface AgenciaCobertura {
   id: number
   nombre: string
@@ -149,17 +126,12 @@ export interface Tablero {
     hasta: string
     anteriorDesde: string
     anteriorHasta: string
-    rotuloAnterior: string
-    porHora: boolean
   }
   kpis: Kpis
-  serie: CuboSerie[]
-  canales: CanalVentas[]
   operacionHoy: OperacionHoy
   rutas: RutaTablero[]
   demanda: { desde: string; celdas: CeldaDemanda[] }
   anticipada: DiaAnticipado[]
-  puntos: PuntoVenta[]
   agencias: AgenciaCobertura[]
   flota: Flota
   alertas: Alerta[]
@@ -174,8 +146,8 @@ export interface Vendido {
 }
 
 export interface DistribucionVentas {
-  /** La pedida; null = todas las del alcance. */
-  empresa: number | null
+  /** Las pedidas; vacío = todas las del alcance. */
+  elegidas: number[]
   empresas: { id: number; nombre: string }[]
   moneda: string
   generado: string

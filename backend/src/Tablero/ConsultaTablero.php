@@ -140,17 +140,17 @@ final class ConsultaTablero
                    LEFT JOIN enclave en ON en.id = g.estacion_id
                    LEFT JOIN usuario u ON u.id = g.usuario_id",
                 // La salida solo hace falta para acotar por empresa.
-                $f->empresaId !== null || str_contains($condicion, "s.empresa_id") ? "JOIN salida s ON s.id = b.salida_id" : "",
+                $f->empresas !== [] || str_contains($condicion, "s.empresa_id") ? "JOIN salida s ON s.id = b.salida_id" : "",
                 $condicion,
-                self::deEmpresa($f->empresaId),
+                $f->empresas !== [] ? "AND s.empresa_id IN (:empresas)" : "",
             ),
             [
                 "moneda" => self::MONEDA,
                 "desde" => $f->desde->format("Y-m-d H:i:s"),
                 "hasta" => $f->fin()->format("Y-m-d H:i:s"),
                 ...$ambitos,
-            ] + ($f->empresaId !== null ? ["empresa" => $f->empresaId] : []),
-            array_map(static fn() => ArrayParameterType::INTEGER, $ambitos),
+            ] + ($f->empresas !== [] ? ["empresas" => $f->empresas] : []),
+            array_map(static fn() => ArrayParameterType::INTEGER, $ambitos) + ["empresas" => ArrayParameterType::INTEGER],
         );
 
         return new DistribucionVentas($f, array_map(static fn(array $r) => [
@@ -170,12 +170,12 @@ final class ConsultaTablero
     }
 
     /**
-     * Una sola pasada por los boletos vendidos de las dos ventanas, por cubo
-     * (hora o día), canal y punto de venta; de ahí salen la serie, las
-     * incidencias y el ranking de puntos. Agrupa primero por ids y pone los
-     * nombres a los grupos (cientos), no a cada boleto (decenas de miles).
+     * Una sola pasada por los boletos vendidos de las dos ventanas, por canal
+     * y punto de venta; de ahí salen los indicadores, las incidencias y el
+     * ranking de puntos. Agrupa primero por ids y pone los nombres a los
+     * grupos (cientos), no a cada boleto (decenas de miles).
      *
-     * @return array{ventas: list<array{actual: bool, t: string, canal: string, ingresos: int, boletos: int}>, incidencias: array{actual: array{anulados: int, montoAnulado: int, cortesias: int, valorCortesias: int}, anterior: array{anulados: int, montoAnulado: int, cortesias: int, valorCortesias: int}}, puntos: list<array{tipo: string, nombre: string, ingresos: int, boletos: int, anterior: int}>}
+     * @return array{ventas: list<array{actual: bool, canal: string, ingresos: int, boletos: int}>, incidencias: array{actual: array{anulados: int, montoAnulado: int, cortesias: int, valorCortesias: int}, anterior: array{anulados: int, montoAnulado: int, cortesias: int, valorCortesias: int}}, puntos: list<array{tipo: string, nombre: string, ingresos: int, boletos: int, anterior: int}>}
      */
     private function movimientos(Periodo $p, ?int $empresa): array
     {
@@ -185,8 +185,7 @@ final class ConsultaTablero
         $filas = $this->db->fetchAllAssociative(
             sprintf(
                 "WITH m AS (
-                    SELECT v.created_at >= :inicio AS actual, date_trunc(:unidad, v.created_at) AS t,
-                           v.canal, v.agencia_id, v.estacion_id,
+                    SELECT v.created_at >= :inicio AS actual, v.canal, v.agencia_id, v.estacion_id,
                            SUM(b.precio_monto) FILTER (WHERE {$cobrado}) AS ingresos,
                            COUNT(*) FILTER (WHERE {$cobrado}) AS boletos,
                            COUNT(*) FILTER (WHERE b.estado = 'anulado') AS anulados,
@@ -197,9 +196,9 @@ final class ConsultaTablero
                       JOIN boleto_venta v ON v.id = b.boleto_venta_id
                       %s
                      WHERE v.estado = 'confirmada' AND b.precio_moneda = :moneda AND %s %s
-                     GROUP BY 1, 2, 3, 4, 5
+                     GROUP BY 1, 2, 3, 4
                  )
-                 SELECT m.actual, to_char(m.t, 'YYYY-MM-DD HH24:00') AS t, m.canal,
+                 SELECT m.actual, m.canal,
                         CASE WHEN m.canal = 'web' THEN 'web' WHEN m.agencia_id IS NOT NULL THEN 'agencia' ELSE 'estacion' END AS tipo,
                         CASE WHEN m.canal = 'web' THEN 'Página web' ELSE COALESCE(ag.nombre, en.nombre, 'Sin estación') END AS nombre,
                         COALESCE(SUM(m.ingresos), 0) AS ingresos,
@@ -211,13 +210,13 @@ final class ConsultaTablero
                    FROM m
                    LEFT JOIN agencia ag ON ag.id = m.agencia_id
                    LEFT JOIN enclave en ON en.id = m.estacion_id
-                  GROUP BY 1, 2, 3, 4, 5",
+                  GROUP BY 1, 2, 3, 4",
                 // La salida solo hace falta para acotar por empresa.
                 $empresa !== null ? "JOIN salida s ON s.id = b.salida_id" : "",
                 self::ventanas("v.created_at"),
                 self::deEmpresa($empresa),
             ),
-            $this->parametros($p, $empresa) + ["unidad" => $p->porHora() ? "hour" : "day"],
+            $this->parametros($p, $empresa),
         );
 
         $vacio = ["anulados" => 0, "montoAnulado" => 0, "cortesias" => 0, "valorCortesias" => 0];
@@ -234,7 +233,7 @@ final class ConsultaTablero
             if ((int) $f["boletos"] === 0) {
                 continue;
             }
-            $ventas[] = ["actual" => $actual, "t" => (string) $f["t"], "canal" => (string) $f["canal"], "ingresos" => (int) $f["ingresos"], "boletos" => (int) $f["boletos"]];
+            $ventas[] = ["actual" => $actual, "canal" => (string) $f["canal"], "ingresos" => (int) $f["ingresos"], "boletos" => (int) $f["boletos"]];
             $punto = $f["tipo"] . "|" . $f["nombre"];
             $puntos[$punto] ??= ["tipo" => (string) $f["tipo"], "nombre" => (string) $f["nombre"], "ingresos" => 0, "boletos" => 0, "anterior" => 0];
             if ($actual) {

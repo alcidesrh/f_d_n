@@ -1,7 +1,8 @@
 <!--
   Cómo se reparte lo vendido (la primera gráfica de la portada): por canal,
   por punto de venta, por usuario o, en boletos, por tipo; de un día (hoy por
-  defecto) o un rango, de todas las empresas del alcance o de una. Datos de
+  defecto) o un rango, de todas las empresas del alcance o de las que se
+  marquen. Datos de
   `GET /api/tablero/distribucion`, aparte del resto del tablero (su rango es
   libre). Si el rango llega a hoy, se actualiza sola cada 5 minutos.
 -->
@@ -25,14 +26,23 @@
         aria-label="Día o rango de venta"
         placeholder="Hoy"
       />
-      <Select v-if="empresas.length > 1" v-model="empresa" :options="empresas" option-label="nombre" option-value="id" show-clear placeholder="Todas las empresas" size="small" class="w-full @md:w-52" aria-label="Empresa" />
+    </div>
+    <div v-if="empresas.length > 1" class="empresas" role="group" aria-label="Empresas">
+      <label class="empresa" for="distribucion-empresa-todas">
+        <Checkbox :model-value="!elegidas.length" binary input-id="distribucion-empresa-todas" @update:model-value="elegidas = []" />
+        Todas
+      </label>
+      <label v-for="e in empresas" :key="e.id" class="empresa" :for="`distribucion-empresa-${e.id}`">
+        <Checkbox :model-value="elegidas" :value="e.id" :input-id="`distribucion-empresa-${e.id}`" @update:model-value="marcar" />
+        {{ e.nombre }}
+      </label>
     </div>
 
     <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
     <Skeleton v-if="!datos && cargando" height="16rem" />
     <DonaPorciones
       v-else-if="datos"
-      :key="`${vista}|${datos.desde}|${datos.hasta}|${datos.empresa}`"
+      :key="`${vista}|${datos.desde}|${datos.hasta}|${datos.elegidas.join(',')}`"
       :porciones="porciones"
       :formato="formato"
       :total-rotulo="vista === 'tipo' ? 'boletos' : `${numero(datos.total.boletos)} boletos`"
@@ -50,6 +60,7 @@ import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vu
 import { claveDeUsuario } from '@/core/auth/alcanceSesion'
 import { aDia } from '@/core/reporte/filtro'
 import { fetchDistribucion } from '@/core/tablero/api'
+import { elegirEmpresas } from '@/core/tablero/empresas'
 import { dinero, numero, rango as rotuloRango } from '@/core/tablero/formato'
 import type { Porcion } from '@/core/tablero/porciones'
 import type { Canal, DistribucionVentas, TipoBoleto } from '@/core/tablero/types'
@@ -67,7 +78,7 @@ const VISTAS: { id: Vista; nombre: string; titulo: string }[] = [
 const VENDIDO = 'Lo vendido son los boletos cobrados, también los de pasajeros que no se presentaron; no cuentan anulados, reasignados, cortesías ni vouchers.'
 const AYUDAS: Record<Vista, string> = {
   venta: `Por canal: taquillas, agencias y página web. ${VENDIDO}`,
-  estacion: `Cada estación por su sigla; la página y las agencias, como dos puntos más. ${VENDIDO}`,
+  estacion: `Cada estación con su nombre y su sigla; la página y las agencias, como dos puntos más. ${VENDIDO}`,
   usuario: `Cada usuario que vendió (la página vende con el usuario "web"). ${VENDIDO}`,
   tipo: 'Boletos de las ventas del periodo, cada uno en un solo tipo: anulados y reasignados por su estado; de los demás, cortesías y vouchers por no cobrarse; cancelados, los cobrados que no se presentaron. Cobrados incluye los pospuestos de la página.',
 }
@@ -89,19 +100,23 @@ const NOMBRE_RESTO: Record<Vista, string> = { venta: 'canales', estacion: 'punto
 const ACTUALIZAR_MS = 5 * 60_000
 const PREFERENCIAS = 'tablero.distribucion'
 
-/** Vista y empresa elegidas, recordadas en este navegador; el día no (siempre arranca en hoy). */
-function leerPreferencias(): { vista: Vista; empresa: number | null } {
+/** Vista y empresas elegidas, recordadas en este navegador; el día no (siempre arranca en hoy). */
+function leerPreferencias(): { vista: Vista; empresas: number[] } {
   try {
-    const p = JSON.parse(localStorage.getItem(claveDeUsuario(PREFERENCIAS)) ?? '{}') as { vista?: string; empresa?: number | null }
-    return { vista: VISTAS.some((v) => v.id === p.vista) ? (p.vista as Vista) : 'venta', empresa: typeof p.empresa === 'number' ? p.empresa : null }
+    const p = JSON.parse(localStorage.getItem(claveDeUsuario(PREFERENCIAS)) ?? '{}') as { vista?: string; empresas?: unknown }
+    return {
+      vista: VISTAS.some((v) => v.id === p.vista) ? (p.vista as Vista) : 'venta',
+      empresas: Array.isArray(p.empresas) ? p.empresas.filter((x): x is number => typeof x === 'number') : [],
+    }
   } catch {
-    return { vista: 'venta', empresa: null }
+    return { vista: 'venta', empresas: [] }
   }
 }
 
 const inicial = leerPreferencias()
 const vista = ref<Vista>(inicial.vista)
-const empresa = ref<number | null>(inicial.empresa)
+/** Empresas marcadas; vacío = "Todas". */
+const elegidas = ref<number[]>(inicial.empresas)
 const hoy = ref(new Date(new Date().setHours(0, 0, 0, 0)))
 /** `[desde, hasta]`; `hasta` es null mientras se elige el segundo día (entonces es ese día). Vacío: hoy. */
 const rango = ref<(Date | null)[] | null>(null)
@@ -110,9 +125,10 @@ const cargando = ref(false)
 const error = ref('')
 
 const empresas = computed(() => datos.value?.empresas ?? [])
+const marcar = (v: number[]) => (elegidas.value = elegirEmpresas(v, empresas.value.map((e) => e.id)))
 const consulta = computed(() => {
   const desde = rango.value?.[0] ?? hoy.value
-  return { desde: aDia(desde), hasta: aDia(rango.value?.[1] ?? desde), empresa: empresa.value }
+  return { desde: aDia(desde), hasta: aDia(rango.value?.[1] ?? desde), empresas: elegidas.value }
 })
 const subtitulo = computed(() => {
   if (!datos.value) return ''
@@ -125,7 +141,8 @@ const conBoletos = (n: number) => `${numero(n)} ${n === 1 ? 'boleto' : 'boletos'
 /** Las porciones de cada vista. */
 const PORCIONES: Record<Vista, (d: DistribucionVentas) => Porcion[]> = {
   venta: (d) => d.canales.map((c) => ({ clave: c.canal, etiqueta: CANALES[c.canal], nombre: CANALES[c.canal], valor: c.monto, detalle: conBoletos(c.boletos), color: `var(--serie-${c.canal})` })),
-  estacion: (d) => d.estaciones.map((e) => ({ clave: e.clave, etiqueta: e.sigla, nombre: e.nombre, valor: e.monto, detalle: conBoletos(e.boletos) })),
+  // El nombre completo de la estación, y su sigla al lado (la página y las agencias no tienen).
+  estacion: (d) => d.estaciones.map((e) => ({ clave: e.clave, etiqueta: e.nombre, nombre: e.canal === 'estacion' ? e.sigla : e.nombre, valor: e.monto, detalle: conBoletos(e.boletos) })),
   usuario: (d) => d.usuarios.map((u) => ({ clave: u.clave, etiqueta: u.usuario, nombre: u.nombre, valor: u.monto, detalle: conBoletos(u.boletos) })),
   tipo: (d) => d.tipos.map((t) => ({ clave: t.tipo, etiqueta: TIPOS[t.tipo].nombre, nombre: TIPOS[t.tipo].detalle, valor: t.boletos, detalle: t.monto ? dinero(t.monto, true) : undefined, color: TIPOS[t.tipo].color })),
 }
@@ -135,7 +152,7 @@ const formato = computed(() => (vista.value === 'tipo' ? (v: number) => numero(v
 let pedido = 0
 async function cargar(silencioso = false) {
   const n = ++pedido
-  const { desde, hasta, empresa: e } = consulta.value
+  const { desde, hasta, empresas: e } = consulta.value
   cargando.value = true
   if (!silencioso) error.value = ''
   try {
@@ -143,8 +160,9 @@ async function cargar(silencioso = false) {
     if (n !== pedido) return
     datos.value = r
     error.value = ''
-    // Una empresa recordada que ya no está en su alcance: vuelve a todas.
-    if (e !== null && !r.empresas.some((x) => x.id === e)) empresa.value = null
+    // Una empresa recordada que ya no está en su alcance se quita (y si no queda ninguna, "Todas").
+    const limpias = elegirEmpresas(e, r.empresas.map((x) => x.id))
+    if (limpias.join() !== e.join()) elegidas.value = limpias
   } catch (err) {
     if (n !== pedido) return
     if (!silencioso || !datos.value) error.value = err instanceof Error && err.message ? `No se pudo cargar la distribución: ${err.message}` : 'No se pudo cargar la distribución.'
@@ -153,10 +171,10 @@ async function cargar(silencioso = false) {
   }
 }
 
-watch(consulta, (a, b) => (a.desde !== b.desde || a.hasta !== b.hasta || a.empresa !== b.empresa) && void cargar())
-watch([vista, empresa], () => {
+watch(consulta, (a, b) => (a.desde !== b.desde || a.hasta !== b.hasta || a.empresas.join() !== b.empresas.join()) && void cargar())
+watch([vista, elegidas], () => {
   try {
-    localStorage.setItem(claveDeUsuario(PREFERENCIAS), JSON.stringify({ vista: vista.value, empresa: empresa.value }))
+    localStorage.setItem(claveDeUsuario(PREFERENCIAS), JSON.stringify({ vista: vista.value, empresas: elegidas.value }))
   } catch {
     /* sin almacenamiento: solo no se recuerda */
   }
@@ -185,5 +203,20 @@ onBeforeUnmount(() => {
   clearInterval(temporizador)
   document.removeEventListener('visibilitychange', alVolver)
 })
-
 </script>
+
+<style scoped>
+.empresas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+}
+.empresa {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+</style>

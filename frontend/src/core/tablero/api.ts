@@ -10,8 +10,8 @@ export function fetchTablero(dias: DiasTablero, empresa: number | null, silent =
 }
 
 /** Reparto de lo vendido en un día o un rango (`AAAA-MM-DD`, ambos incluidos); sin empresa, todas las del alcance. */
-export function fetchDistribucion(desde: string, hasta: string, empresa: number | null, silent = false): Promise<DistribucionVentas> {
+export function fetchDistribucion(desde: string, hasta: string, empresas: number[], silent = false): Promise<DistribucionVentas> {
   const query = new URLSearchParams({ desde, hasta })
-  if (empresa !== null) query.set('empresa', String(empresa))
+  if (empresas.length) query.set('empresas', empresas.join(','))
   return http.get<DistribucionVentas>(`/tablero/distribucion?${query}`, { silent })
 }

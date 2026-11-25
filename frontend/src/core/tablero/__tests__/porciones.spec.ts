@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { anguloDe, arco, cabeRotulo, cunaEn, cunas, lectura, lugarRotulo, nivel, OTROS, REGLAS, TODAS, type Porcion } from '../porciones'
+import { anguloDe, arco, cunaEn, cunas, lectura, nivel, OTROS, REGLAS, TODAS, type Porcion } from '../porciones'
 
 const p = (clave: string, valor: number): Porcion => ({ clave, etiqueta: clave, nombre: clave, valor })
 const claves = (l: { clave: string }[]) => l.map((x) => x.clave)
@@ -87,36 +87,6 @@ describe('arco', () => {
   it('una cuña de toda la vuelta son dos medias', () => {
     expect(arco(0, 2 * Math.PI, 100, 60).match(/M/g)).toHaveLength(2)
     expect(arco(0, Math.PI / 2, 100, 60)).toBe('M0.000,-100.000A100,100 0 0 1 100.000,-0.000L60.000,-0.000A60,60 0 0 0 0.000,-60.000Z')
-  })
-})
-
-describe('cabeRotulo', () => {
-  const cuarto = (inicio: number) => ({ clave: 'x', inicio, fin: inicio + Math.PI / 4, parte: 0.125 })
-
-  it('un rótulo corto cabe a media altura del anillo', () => {
-    const c = cuarto(0)
-    const a = Math.PI / 8
-    expect(cabeRotulo(c, 81 * Math.sin(a), -81 * Math.cos(a), 16, 9, 62, 96)).toBe(true)
-  })
-
-  it('uno largo no cabe a las 3, donde el anillo corre de lado', () => {
-    const c = cuarto((3 * Math.PI) / 8)
-    expect(cabeRotulo(c, 81, 0, 43, 9, 62, 96)).toBe(false)
-    expect(cabeRotulo(c, 81, 0, 16, 9, 62, 96)).toBe(true)
-  })
-})
-
-describe('lugarRotulo', () => {
-  it('en una cuña grande que no lo admite en su mitad, lo pone abajo', () => {
-    const grande = { clave: 'x', inicio: 0, fin: 1.5 * Math.PI, parte: 0.75 }
-    expect(cabeRotulo(grande, 81 * Math.sin(0.75 * Math.PI), -81 * Math.cos(0.75 * Math.PI), 49, 12, 62, 96)).toBe(false)
-    const lugar = lugarRotulo(grande, 49, 12, 62, 96)!
-    expect(lugar.x).toBeCloseTo(0)
-    expect(lugar.y).toBeCloseTo(79)
-  })
-
-  it('en una angosta no lo pone', () => {
-    expect(lugarRotulo({ clave: 'x', inicio: 1, fin: 1.1, parte: 0.016 }, 20, 12, 62, 96)).toBeNull()
   })
 })
 

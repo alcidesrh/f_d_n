@@ -47,7 +47,6 @@
             class="cuna"
             :class="{ apagada: cunaActiva !== null && c.clave !== cunaActiva, otros: c.clave === OTROS }"
           />
-          <text v-for="r in rotulos" :key="r.clave" :x="r.x" :y="r.y" text-anchor="middle" dominant-baseline="central" class="rotulo" :class="{ oscuro: r.oscuro }">{{ r.texto }}</text>
         </svg>
         <div class="centro" aria-hidden="true">
           <template v-if="enfocada">
@@ -121,9 +120,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { parte as parteDe, porciento } from '@/core/tablero/formato'
-import { anguloDe, arco, cunaEn, cunas, lectura, lugarRotulo, nivel, ordenar, OTROS, REGLAS, TODAS, type Nivel, type Porcion } from '@/core/tablero/porciones'
+import { anguloDe, arco, cunaEn, cunas, lectura, nivel, ordenar, OTROS, REGLAS, TODAS, type Nivel, type Porcion } from '@/core/tablero/porciones'
 import FilaPorcion from './FilaPorcion.vue'
 
 const props = withDefaults(
@@ -150,20 +149,24 @@ const INTERIOR = 62
 const REALCE = 4
 /** Ángulo en el que se puede tocar una cuña, por angosta que sea (8°: ~13 px de arco en el borde de una dona de 15 rem). */
 const TOQUE = (8 * Math.PI) / 180
-/** Rótulo dentro de la cuña: letra de 9 unidades, ~0.6 de ancho por carácter, con 3 de aire a cada lado. */
-const LETRA = 9
-const AIRE = 3
 /**
  * Colores por puesto en el nivel (la paleta categórica del tablero, en su
  * orden fijo); "Otros" y lo que agrupa, gris. Las categorías con identidad
  * propia (canal, tipo) traen su color.
  */
 const PALETA = ['var(--cat-1)', 'var(--cat-2)', 'var(--cat-3)', 'var(--cat-4)', 'var(--cat-5)', 'var(--cat-6)', 'var(--cat-7)']
-/** Sobre los tonos claros (aqua, amarillo, magenta, ámbar) el rótulo va oscuro. */
-const CLAROS = new Set(['var(--cat-3)', 'var(--cat-4)', 'var(--cat-5)', 'var(--serie-web)'])
 
 const reglas = { ...(props.agrupa ? REGLAS : TODAS), fijo: props.fijo }
 const niveles = ref<Nivel[]>([nivel(props.porciones, reglas)])
+/** Cifras nuevas (la actualización de cada 5 minutos): se rehacen los niveles sin cerrar los que estaban abiertos. */
+watch(
+  () => props.porciones,
+  (p) => {
+    const nuevos = [nivel(p, reglas)]
+    while (nuevos.length < niveles.value.length && nuevos.at(-1)!.resto.length) nuevos.push(nivel(nuevos.at(-1)!.resto, reglas))
+    niveles.value = nuevos
+  },
+)
 const actual = computed(() => niveles.value[niveles.value.length - 1]!)
 const total = computed(() => niveles.value[0]!.total)
 const lista = computed(() => cunas(actual.value))
@@ -256,20 +259,8 @@ function volver(i: number) {
 /** La lista de otro nivel empieza arriba. */
 const listaEl = ref<HTMLElement | null>(null)
 function arriba() {
-  listaEl.value?.scrollTo({ top: 0 })
+  if (listaEl.value) listaEl.value.scrollTop = 0
 }
-
-/**
- * Rótulos dentro de las cuñas donde caben enteros (sigla o nombre corto); los
- * demás los dicen la lista y el centro.
- */
-const rotulos = computed(() =>
-  lista.value.flatMap((c) => {
-    const texto = c.clave === OTROS ? 'Otros' : (propias.value.find((p) => p.clave === c.clave)?.etiqueta ?? '')
-    const lugar = texto ? lugarRotulo(c, texto.length * LETRA * 0.6 + 2 * AIRE, LETRA + AIRE, INTERIOR, R - REALCE) : null
-    return lugar ? [{ clave: c.clave, ...lugar, texto, oscuro: CLAROS.has(color(c.clave)) }] : []
-  }),
-)
 
 const resumen = computed(() => {
   const partes = propias.value.map((p) => `${p.etiqueta} ${props.formato(p.valor)} (${parte(p.valor)})`)
@@ -336,16 +327,6 @@ const resumen = computed(() => {
 }
 .cuna.apagada {
   opacity: 0.35;
-}
-/* Rótulo dentro del color de la cuña: blanco, u oscuro sobre los tonos claros. */
-.rotulo {
-  fill: #fff;
-  font-size: 9px;
-  font-weight: 600;
-  pointer-events: none;
-}
-.rotulo.oscuro {
-  fill: #0b0b0b;
 }
 .centro {
   position: absolute;

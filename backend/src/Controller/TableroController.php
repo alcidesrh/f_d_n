@@ -78,8 +78,8 @@ final class TableroController extends AbstractController
     /**
      * Cómo se reparte lo vendido en un día o un rango (`?desde=&hasta=`,
      * `AAAA-MM-DD`; por defecto hoy): por canal, punto de venta, usuario y
-     * tipo de boleto. Con `?empresa=`, solo esa; sin ella, todas las de su
-     * alcance. Se calcula en la petición: el rango es libre y no hay copia.
+     * tipo de boleto. Con `?empresas=1,3`, solo esas; sin ellas, todas las de
+     * su alcance. Se calcula en la petición: el rango es libre y no hay copia.
      */
     #[Route("/distribucion", name: "_distribucion", methods: ["GET"])]
     public function distribucion(Request $request): JsonResponse
@@ -91,7 +91,7 @@ final class TableroController extends AbstractController
         $filtro = FiltroDistribucion::desdeQuery($request->query->all(), $ahora);
 
         return $this->json([
-            "empresa" => $filtro->empresaId,
+            "elegidas" => $filtro->empresas,
             "empresas" => $this->consulta->empresas($alcance->empresas(), soloActivas: true),
             "moneda" => ConsultaTablero::MONEDA,
             "generado" => $ahora->format(DATE_ATOM),

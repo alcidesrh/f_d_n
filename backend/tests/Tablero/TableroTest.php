@@ -108,10 +108,8 @@ final class TableroTest extends TestCase
     public function testHoySeComparaConElMismoDiaDeLaSemanaPasada(): void
     {
         $p = new Periodo(1, new \DateTimeImmutable(self::AHORA));
-        $this->assertTrue($p->porHora());
         $this->assertSame("2026-10-05 00:00", $p->inicioAnterior->format("Y-m-d H:i"));
         $this->assertSame("2026-10-05 15:30", $p->finAnterior->format("Y-m-d H:i"));
-        $this->assertSame("2026-10-12 09:00", $p->alActual(new \DateTimeImmutable("2026-10-05 09:00"))->format("Y-m-d H:i"));
     }
 
     public function testPeriodoInvalido(): void
@@ -136,9 +134,9 @@ final class TableroTest extends TestCase
     {
         $t = self::tablero(
             ventas: [
-                ["actual" => true, "t" => "2026-10-12 00:00", "canal" => "estacion", "ingresos" => 30000, "boletos" => 3],
-                ["actual" => true, "t" => "2026-10-11 00:00", "canal" => "web", "ingresos" => 10000, "boletos" => 1],
-                ["actual" => false, "t" => "2026-10-04 00:00", "canal" => "estacion", "ingresos" => 20000, "boletos" => 4],
+                ["actual" => true, "canal" => "estacion", "ingresos" => 30000, "boletos" => 3],
+                ["actual" => true, "canal" => "web", "ingresos" => 10000, "boletos" => 1],
+                ["actual" => false, "canal" => "estacion", "ingresos" => 20000, "boletos" => 4],
             ],
             salidas: [
                 self::salida(1, "2026-10-11 08:00", ocupado: 20, ingresos: 50000, boletos: 18, noPresentados: 2),
@@ -153,20 +151,6 @@ final class TableroTest extends TestCase
         $this->assertSame(["actual" => 0.5, "anterior" => 0.25], $k["ocupacion"], "la salida de las 18:00 aún no sale");
         $this->assertSame(0.1, $k["tasaNoPresentados"]["actual"]);
         $this->assertSame(50000, $k["ingresoPorSalida"]["actual"]);
-    }
-
-    public function testSerieAlineaElPeriodoAnteriorYDejaNuloLoQueNoHaLlegado(): void
-    {
-        $serie = self::tablero(dias: 1, ventas: [
-            ["actual" => true, "t" => "2026-10-12 09:00", "canal" => "agencia", "ingresos" => 15000, "boletos" => 1],
-            ["actual" => false, "t" => "2026-10-05 09:00", "canal" => "estacion", "ingresos" => 7000, "boletos" => 1],
-        ])->serie();
-
-        $this->assertCount(24, $serie);
-        $this->assertSame(["estacion" => 0, "agencia" => 15000, "web" => 0, "total" => 15000, "boletos" => 1], $serie[9]["actual"]);
-        $this->assertSame(["total" => 7000, "boletos" => 1], $serie[9]["anterior"]);
-        $this->assertNotNull($serie[15]["actual"]);
-        $this->assertNull($serie[16]["actual"], "las 16:00 todavía no llegan");
     }
 
     public function testSenalDeRutas(): void
@@ -209,8 +193,8 @@ final class TableroTest extends TestCase
     {
         $alertas = self::tablero(
             ventas: [
-                ["actual" => true, "t" => "2026-10-12 00:00", "canal" => "estacion", "ingresos" => 50000, "boletos" => 5],
-                ["actual" => false, "t" => "2026-10-05 00:00", "canal" => "estacion", "ingresos" => 100000, "boletos" => 10],
+                ["actual" => true, "canal" => "estacion", "ingresos" => 50000, "boletos" => 5],
+                ["actual" => false, "canal" => "estacion", "ingresos" => 100000, "boletos" => 10],
             ],
             salidas: [
                 self::salida(1, "2026-10-12 17:00", ocupado: 2, estado: "programada"),

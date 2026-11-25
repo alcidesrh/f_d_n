@@ -50,12 +50,6 @@ final class Periodo
         return $this->ahora->setTime(0, 0);
     }
 
-    /** Hoy se mira por hora; los demás periodos, por día. */
-    public function porHora(): bool
-    {
-        return $this->dias === 1;
-    }
-
     /** Desde cuándo mira el mapa de demanda (al menos cuatro semanas). */
     public function inicioDemanda(): \DateTimeImmutable
     {
@@ -75,12 +69,6 @@ final class Periodo
             7 => "7 días anteriores",
             default => "{$this->dias} días anteriores",
         };
-    }
-
-    /** Llave del cubo (hora o día) del periodo actual al que corresponde un instante del anterior. */
-    public function alActual(\DateTimeImmutable $t): \DateTimeImmutable
-    {
-        return $t->modify("+{$this->desfase} days");
     }
 
     public function esActual(\DateTimeImmutable $t): bool
