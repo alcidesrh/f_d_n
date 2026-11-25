@@ -1,6 +1,8 @@
 <!--
   Dona de porciones, de mayor a menor desde las 12 en el sentido del reloj,
-  junto a su lista ordenada. Con `agrupa`, la cola de cuñas angostas va a
+  junto a su lista ordenada; cada puesto con su color fijo (la mayor siempre
+  el primero de la paleta) y, en la cuña donde cabe, su porcentaje del total.
+  Con `agrupa`, la cola de cuñas angostas va a
   "Otros" (gris) y abrir "Otros" la vuelve a repartir en la misma dona como
   otro nivel, con su camino de vuelta: ninguna cuña queda tan delgada que no
   se lea ni se acierte, sin lupas que deformen los ángulos. La lista trae todo
@@ -47,6 +49,7 @@
             class="cuna"
             :class="{ apagada: cunaActiva !== null && c.clave !== cunaActiva, otros: c.clave === OTROS }"
           />
+          <text v-for="r in rotulos" :key="`r${r.clave}`" :x="r.x" :y="r.y" :fill="tinta(r.clave)" :font-size="LETRA" class="rotulo" :class="{ apagada: cunaActiva !== null && r.clave !== cunaActiva }">{{ r.texto }}</text>
         </svg>
         <div class="centro" aria-hidden="true">
           <template v-if="enfocada">
@@ -63,7 +66,7 @@
         <p class="sr-only" aria-live="polite">{{ enfocada ? `${enfocada.etiqueta}: ${formato(enfocada.valor)}, ${parte(enfocada.valor)} del total` : '' }}</p>
       </div>
 
-      <div ref="listaEl" class="lista" :class="{ larga: propias.length + resto.length > 8 }">
+      <div ref="listaEl" class="lista" :class="{ larga: propias.length + resto.length + ceros.length > 8 }">
         <ol>
           <li v-for="(f, i) in propias" :key="f.clave">
             <FilaPorcion :fila="f" :puesto="fijo ? null : puestoBase + i + 1" :color="color(f.clave)" :valor="formato(f.valor)" :parte="parte(f.valor)" :barra="f.valor / mayor" :activa="activa === f.clave" @pointerenter="activa = f.clave" @pointerleave="salir" />
@@ -98,6 +101,11 @@
             </li>
           </ol>
         </template>
+        <ul v-if="ceros.length">
+          <li v-for="f in ceros" :key="f.clave">
+            <FilaPorcion :fila="f" :puesto="null" color="transparent" :valor="formato(0)" :parte="parte(0)" :barra="0" :activa="false" />
+          </li>
+        </ul>
       </div>
     </div>
 
@@ -122,7 +130,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { parte as parteDe, porciento } from '@/core/tablero/formato'
-import { anguloDe, arco, cunaEn, cunas, lectura, nivel, ordenar, OTROS, REGLAS, TODAS, type Nivel, type Porcion } from '@/core/tablero/porciones'
+import { anchoCifras, anguloDe, arco, cunaEn, cunas, lectura, lugarRotulo, nivel, ordenar, OTROS, REGLAS, TODAS, type Nivel, type Porcion } from '@/core/tablero/porciones'
 import FilaPorcion from './FilaPorcion.vue'
 
 const props = withDefaults(
@@ -133,7 +141,7 @@ const props = withDefaults(
     totalRotulo: string
     /** La cola de cuñas angostas va a "Otros" (`REGLAS`); sin agrupar, todas tienen cuña. */
     agrupa?: boolean
-    /** Categorías fijas (canales, tipos): en su orden, sin puesto, con las que están en cero en la lista. */
+    /** Categorías fijas (canales, operaciones): sin puesto, y las que están en cero siguen al final de la lista. */
     fijo?: boolean
     /** Cómo se llaman las porciones en plural ("usuarios"). */
     nombreResto?: string
@@ -150,13 +158,16 @@ const REALCE = 4
 /** Ángulo en el que se puede tocar una cuña, por angosta que sea (8°: ~13 px de arco en el borde de una dona de 15 rem). */
 const TOQUE = (8 * Math.PI) / 180
 /**
- * Colores por puesto en el nivel (la paleta categórica del tablero, en su
- * orden fijo); "Otros" y lo que agrupa, gris. Las categorías con identidad
- * propia (canal, tipo) traen su color.
+ * Un color por puesto en el nivel, en todas las vistas: la mayor siempre
+ * `--cat-1`, la segunda `--cat-2`… (la paleta categórica del tablero, una por
+ * cuña propia: `REGLAS.maximo`); "Otros" y lo que agrupa, gris. En ese orden
+ * cada par vecino pasa la prueba de daltonismo, también el que cierra la vuelta.
  */
-const PALETA = ['var(--cat-1)', 'var(--cat-2)', 'var(--cat-3)', 'var(--cat-4)', 'var(--cat-5)', 'var(--cat-6)', 'var(--cat-7)']
+const PALETA = ['var(--cat-1)', 'var(--cat-2)', 'var(--cat-3)', 'var(--cat-4)', 'var(--cat-5)', 'var(--cat-6)']
+/** Tamaño de letra del porcentaje en la cuña (unidades del viewBox: 12 px en la dona de 15 rem). */
+const LETRA = 10
 
-const reglas = { ...(props.agrupa ? REGLAS : TODAS), fijo: props.fijo }
+const reglas = props.agrupa ? REGLAS : TODAS
 const niveles = ref<Nivel[]>([nivel(props.porciones, reglas)])
 /** Cifras nuevas (la actualización de cada 5 minutos): se rehacen los niveles sin cerrar los que estaban abiertos. */
 watch(
@@ -170,7 +181,9 @@ watch(
 const actual = computed(() => niveles.value[niveles.value.length - 1]!)
 const total = computed(() => niveles.value[0]!.total)
 const lista = computed(() => cunas(actual.value))
-const todas = computed(() => (props.fijo ? props.porciones : ordenar(props.porciones)))
+/** Las categorías fijas que están en cero: sin cuña, al final de la lista del primer nivel. */
+const ceros = computed(() => (props.fijo && niveles.value.length === 1 ? props.porciones.filter((p) => p.valor <= 0) : []))
+const todas = computed(() => [...ordenar(props.porciones), ...(props.fijo ? props.porciones.filter((p) => p.valor <= 0) : [])])
 const lecturaTexto = computed(() => (props.agrupa && !props.fijo ? lectura(props.porciones, props.nombreResto) : null))
 const mayor = computed(() => Math.max(1, ...props.porciones.map((p) => p.valor)))
 const propias = computed(() => actual.value.porciones)
@@ -186,9 +199,22 @@ const parte = (v: number) => parteDe(v / total.value)
 
 function color(clave: string): string {
   if (clave === OTROS || enResto.value.has(clave)) return 'var(--dona-otros)'
-  const i = propias.value.findIndex((p) => p.clave === clave)
-  return propias.value[i]?.color ?? PALETA[Math.max(0, i) % PALETA.length]!
+  return PALETA[propias.value.findIndex((p) => p.clave === clave)] ?? 'transparent'
 }
+/** El texto sobre la cuña: blanco o casi negro según el fondo (`--cat-N-tinta`); sobre "Otros", el del texto. */
+function tinta(clave: string): string {
+  const i = propias.value.findIndex((p) => p.clave === clave)
+  return i < 0 ? 'var(--p-text-color)' : `var(--cat-${i + 1}-tinta)`
+}
+
+/** El porcentaje del total en las cuñas donde cabe entero; en las demás lo dicen la lista y el centro. */
+const rotulos = computed(() =>
+  lista.value.flatMap((c) => {
+    const texto = parte(c.clave === OTROS ? valorOtros.value : (propias.value.find((p) => p.clave === c.clave)?.valor ?? 0))
+    const lugar = lugarRotulo(c, anchoCifras(texto) * LETRA, LETRA * 0.8, R - REALCE, INTERIOR)
+    return lugar ? [{ clave: c.clave, texto, ...lugar }] : []
+  }),
+)
 
 /** Lo que se resalta: una fila o una cuña; una fila de lo que agrupa "Otros" resalta "Otros". */
 const activa = ref<string | null>(null)
@@ -317,15 +343,25 @@ const resumen = computed(() => {
   stroke-linejoin: round;
   transition: opacity 0.15s;
 }
+.rotulo {
+  text-anchor: middle;
+  dominant-baseline: central;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
 @media (prefers-reduced-motion: reduce) {
-  .cuna {
+  .cuna,
+  .rotulo {
     transition: none;
   }
 }
 .cuna.otros {
   cursor: pointer;
 }
-.cuna.apagada {
+.cuna.apagada,
+.rotulo.apagada {
   opacity: 0.35;
 }
 .centro {

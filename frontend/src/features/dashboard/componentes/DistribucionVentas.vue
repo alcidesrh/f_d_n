@@ -1,7 +1,7 @@
 <!--
   Cómo se reparte lo vendido (la primera gráfica de la portada): por canal,
-  por punto de venta, por usuario o, en boletos, por tipo; de un día (hoy por
-  defecto) o un rango, de todas las empresas del alcance o de las que se
+  por punto de venta, por usuario o, en boletos, por operación; de un día (hoy
+  por defecto) o un rango, de todas las empresas del alcance o de las que se
   marquen. Datos de
   `GET /api/tablero/distribucion`, aparte del resto del tablero (su rango es
   libre). Si el rango llega a hoy, se actualiza sola cada 5 minutos.
@@ -73,30 +73,26 @@ const VISTAS: { id: Vista; nombre: string; titulo: string }[] = [
   { id: 'venta', nombre: 'Venta', titulo: 'por canal' },
   { id: 'estacion', nombre: 'Estación', titulo: 'por punto de venta' },
   { id: 'usuario', nombre: 'Usuario', titulo: 'por usuario' },
-  { id: 'tipo', nombre: 'Tipo', titulo: 'por tipo de boleto' },
+  { id: 'tipo', nombre: 'Operaciones', titulo: 'por operación' },
 ]
 const VENDIDO = 'Lo vendido son los boletos cobrados, también los de pasajeros que no se presentaron; no cuentan anulados, reasignados, cortesías ni vouchers.'
 const AYUDAS: Record<Vista, string> = {
   venta: `Por canal: taquillas, agencias y página web. ${VENDIDO}`,
   estacion: `Cada estación con su nombre y su sigla; la página y las agencias, como dos puntos más. ${VENDIDO}`,
   usuario: `Cada usuario que vendió (la página vende con el usuario "web"). ${VENDIDO}`,
-  tipo: 'Boletos de las ventas del periodo, cada uno en un solo tipo: anulados y reasignados por su estado; de los demás, cortesías y vouchers por no cobrarse; cancelados, los cobrados que no se presentaron. Cobrados incluye los pospuestos de la página.',
+  tipo: 'Boletos de las ventas del periodo, cada uno en una sola operación: anulados y reasignados por su estado; de los demás, cortesías y vouchers por no cobrarse; cancelados, los cobrados que no se presentaron. Cobrados incluye los pospuestos de la página.',
 }
 const CANALES: Record<Canal, string> = { estacion: 'Taquilla', agencia: 'Agencias', web: 'Página web' }
-/**
- * Cada tipo con su tono de la paleta categórica: en el orden fijo de la dona
- * (el de la respuesta), cada par vecino pasa la prueba de daltonismo, también
- * los que quedan juntos al abrir "Otros".
- */
-const TIPOS: Record<TipoBoleto, { nombre: string; detalle: string; color: string }> = {
-  cobrado: { nombre: 'Cobrados', detalle: 'Se cobraron y siguen vigentes', color: 'var(--cat-1)' },
-  anulado: { nombre: 'Anulados', detalle: 'Se anuló la compra', color: 'var(--cat-2)' },
-  reasignado: { nombre: 'Reasignados', detalle: 'Pasaron a otro asiento o salida', color: 'var(--cat-3)' },
-  cortesia: { nombre: 'Cortesías', detalle: 'Emitidos sin cobro', color: 'var(--cat-4)' },
-  cancelado: { nombre: 'Cancelados', detalle: 'El pasajero no se presentó', color: 'var(--cat-7)' },
-  voucher: { nombre: 'Vouchers', detalle: 'Del sistema anterior, sin cobro', color: 'var(--cat-6)' },
+/** Las operaciones (cada boleto en una sola, `DistribucionVentas::tipo()` del backend). */
+const TIPOS: Record<TipoBoleto, { nombre: string; detalle: string }> = {
+  cobrado: { nombre: 'Cobrados', detalle: 'Se cobraron y siguen vigentes' },
+  anulado: { nombre: 'Anulados', detalle: 'Se anuló la compra' },
+  reasignado: { nombre: 'Reasignados', detalle: 'Pasaron a otro asiento o salida' },
+  cortesia: { nombre: 'Cortesías', detalle: 'Emitidos sin cobro' },
+  cancelado: { nombre: 'Cancelados', detalle: 'El pasajero no se presentó' },
+  voucher: { nombre: 'Vouchers', detalle: 'Del sistema anterior, sin cobro' },
 }
-const NOMBRE_RESTO: Record<Vista, string> = { venta: 'canales', estacion: 'puntos de venta', usuario: 'usuarios', tipo: 'tipos' }
+const NOMBRE_RESTO: Record<Vista, string> = { venta: 'canales', estacion: 'puntos de venta', usuario: 'usuarios', tipo: 'operaciones' }
 const ACTUALIZAR_MS = 5 * 60_000
 const PREFERENCIAS = 'tablero.distribucion'
 
@@ -140,11 +136,11 @@ const subtitulo = computed(() => {
 const conBoletos = (n: number) => `${numero(n)} ${n === 1 ? 'boleto' : 'boletos'}`
 /** Las porciones de cada vista. */
 const PORCIONES: Record<Vista, (d: DistribucionVentas) => Porcion[]> = {
-  venta: (d) => d.canales.map((c) => ({ clave: c.canal, etiqueta: CANALES[c.canal], nombre: CANALES[c.canal], valor: c.monto, detalle: conBoletos(c.boletos), color: `var(--serie-${c.canal})` })),
+  venta: (d) => d.canales.map((c) => ({ clave: c.canal, etiqueta: CANALES[c.canal], nombre: CANALES[c.canal], valor: c.monto, detalle: conBoletos(c.boletos) })),
   // El nombre completo de la estación, y su sigla al lado (la página y las agencias no tienen).
   estacion: (d) => d.estaciones.map((e) => ({ clave: e.clave, etiqueta: e.nombre, nombre: e.canal === 'estacion' ? e.sigla : e.nombre, valor: e.monto, detalle: conBoletos(e.boletos) })),
   usuario: (d) => d.usuarios.map((u) => ({ clave: u.clave, etiqueta: u.usuario, nombre: u.nombre, valor: u.monto, detalle: conBoletos(u.boletos) })),
-  tipo: (d) => d.tipos.map((t) => ({ clave: t.tipo, etiqueta: TIPOS[t.tipo].nombre, nombre: TIPOS[t.tipo].detalle, valor: t.boletos, detalle: t.monto ? dinero(t.monto, true) : undefined, color: TIPOS[t.tipo].color })),
+  tipo: (d) => d.tipos.map((t) => ({ clave: t.tipo, etiqueta: TIPOS[t.tipo].nombre, nombre: TIPOS[t.tipo].detalle, valor: t.boletos, detalle: t.monto ? dinero(t.monto, true) : undefined })),
 }
 const porciones = computed(() => (datos.value ? PORCIONES[vista.value](datos.value) : []))
 const formato = computed(() => (vista.value === 'tipo' ? (v: number) => numero(v) : (v: number) => dinero(v, true)))

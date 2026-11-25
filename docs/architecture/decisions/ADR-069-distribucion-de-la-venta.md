@@ -6,7 +6,7 @@
 
 La primera gráfica de la portada reparte lo vendido de un día (hoy por defecto) o un rango, de todas
 las empresas del alcance o de las que se marquen, en cuatro vistas: por canal, por estación (la página y las agencias
-como dos estaciones más), por usuario y, en boletos, por tipo. Con datos reales el reparto tiene una
+como dos estaciones más), por usuario y, en boletos, por operación. Con datos reales el reparto tiene una
 cola larga: en octubre vendieron 38 estaciones, las 3 primeras hacen 55% y 30 quedan bajo 2% (la menor,
 0.03%: 0.2 px de arco en una dona de 240 px); un día venden unos 65 usuarios. Una cuña así no se lee ni
 se acierta con el dedo (WCAG 2.5.8 pide 24 px).
@@ -24,15 +24,15 @@ los datos en varias gráficas ordenadas de mayor a menor.
   fecha de venta. Se calcula en la petición (una consulta agregada; el rango es libre y no hay copia).
 - Lo vendido es lo que el tablero cuenta como ingreso: boletos cobrados que no se anularon ni se
   reasignaron, los no presentados incluidos.
-- Cada boleto en un solo tipo (`DistribucionVentas::tipo()`): anulados y reasignados por su estado;
+- Cada boleto en una sola operación (`DistribucionVentas::tipo()`): anulados y reasignados por su estado;
   de los demás, cortesías y vouchers por no cobrarse (las ventas de agencia siempre se cobran); los
   cobrados que no abordaron son cancelados; los pospuestos de la página siguen cobrados.
 
 ### Gráfica (`DonaPorciones`, reglas puras en `core/tablero/porciones.ts`)
 
-- Dona de mayor a menor desde las 12 en el sentido del reloj, con el total en el centro, junto a una
-  lista con todo el nivel. Canales y tipos conservan su orden fijo (se comparan de un día a otro sin
-  que las cuñas cambien de lugar).
+- Dona de mayor a menor desde las 12 en el sentido del reloj, en todas las vistas, con el total en el
+  centro, junto a una lista con todo el nivel. Los canales y las operaciones en cero siguen al final de
+  la lista, sin cuña.
 - **Cola agrupada:** hasta 6 cuñas propias, cada una de al menos 5% del nivel (18°: aloja un blanco
   táctil de 24 px en un teléfono); el resto va a "Otros" (gris), que nunca agrupa una sola. Sin ángulo
   mínimo artificial: inflar las cuñas chicas deja de representar los valores.
@@ -44,8 +44,12 @@ los datos en varias gráficas ordenadas de mayor a menor.
 - **Táctil y teclado:** la cuña se busca por ángulo y cada una se toca en al menos 8°; con el dedo la
   elección queda al levantarlo. La dona es una sola parada de Tab: flechas recorren las cuñas, Enter
   abre "Otros", Escape vuelve. Tabla completa para lectores de pantalla.
-- Sin texto en las cuñas: los nombres van en la lista (la estación con su nombre completo y su sigla). Colores de la paleta categórica
-  validada para daltonismo, en orden fijo; los de los tipos, elegidos para que cada par vecino pase.
+- **En la cuña, solo su porcentaje del total**, si cabe entero con margen en el anillo
+  (`lugarRotulo`); si no, no se recorta: lo dicen la lista y el centro. Los nombres van en la lista
+  (la estación con su nombre completo y su sigla).
+- **Un color por puesto:** la mayor siempre el primero de la paleta categórica validada para
+  daltonismo, la segunda el segundo… (también al abrir "Otros"). En ese orden pasa cada par vecino y
+  el que cierra la vuelta. El porcentaje va en blanco o casi negro según la luminancia del fondo.
 
 ## Alternativas descartadas
 
@@ -63,6 +67,8 @@ los datos en varias gráficas ordenadas de mayor a menor.
 
 - "Otros" puede ser la cuña mayor (por usuario, unos 70% en un mes); la línea de lectura sobre la dona
   ("los 3 primeros suman 42%; 26 de 39 quedan bajo 2%") y la lista cuentan esa concentración.
-- El color de una estación o un usuario es el de su puesto en el nivel: puede cambiar de un día a otro.
+- El color dice el puesto, no la categoría: si las agencias pasan del segundo al tercer lugar de un
+  día a otro, cambian de color (va contra la regla general de que el color siga a la categoría; se
+  eligió porque el puesto es lo que se compara de un vistazo). El nombre está siempre en la lista.
 - Los umbrales (6 cuñas, 5%) son convenciones de las guías y de la geometría, no de un estudio; están
   en `REGLAS` para ajustarlos con uso real.

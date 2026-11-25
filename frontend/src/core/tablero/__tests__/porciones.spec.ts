@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { anguloDe, arco, cunaEn, cunas, lectura, nivel, OTROS, REGLAS, TODAS, type Porcion } from '../porciones'
+import { anchoCifras, anguloDe, arco, cunaEn, cunas, lectura, lugarRotulo, nivel, OTROS, REGLAS, type Porcion } from '../porciones'
 
 const p = (clave: string, valor: number): Porcion => ({ clave, etiqueta: clave, nombre: clave, valor })
 const claves = (l: { clave: string }[]) => l.map((x) => x.clave)
@@ -31,22 +31,6 @@ describe('nivel', () => {
     expect(claves(n.porciones)).toEqual(['a'])
     expect(claves(n.resto)).toEqual(['b', 'c'])
     expect(claves(nivel([p('a', 98), p('b', 2)], { maximo: 6, minimo: 0.03 }).porciones)).toEqual(['a', 'b'])
-  })
-
-  it('en orden fijo conserva el orden y los ceros (sin cuña)', () => {
-    const n = nivel([p('cobrado', 90), p('anulado', 0), p('cancelado', 1), p('voucher', 9)], { ...TODAS, fijo: true })
-    expect(claves(n.porciones)).toEqual(['cobrado', 'anulado', 'cancelado', 'voucher'])
-    expect(n.resto).toEqual([])
-    expect(claves(cunas(n))).toEqual(['cobrado', 'cancelado', 'voucher'])
-  })
-
-  it('en orden fijo también agrupa, sin cambiar el orden', () => {
-    const tipos = [p('cobrado', 75), p('anulado', 3), p('reasignado', 1.5), p('cortesia', 2.6), p('cancelado', 0), p('voucher', 17)]
-    const n = nivel(tipos, { ...REGLAS, fijo: true })
-    expect(claves(n.porciones)).toEqual(['cobrado', 'cancelado', 'voucher'])
-    expect(claves(n.resto)).toEqual(['anulado', 'reasignado', 'cortesia'])
-    expect(claves(cunas(n))).toEqual(['cobrado', 'voucher', OTROS])
-    expect(claves(nivel(n.resto, { ...REGLAS, fijo: true }).porciones)).toEqual(['anulado', 'reasignado', 'cortesia'])
   })
 
   it('abrir "Otros" es otro nivel con sus propias partes', () => {
@@ -104,5 +88,32 @@ describe('cunaEn', () => {
     const afuera = b.inicio - 0.05
     expect(cunaEn(lista, afuera)!.clave).toBe('a')
     expect(cunaEn(lista, afuera, 0.2)!.clave).toBe('b')
+  })
+})
+
+describe('lugarRotulo', () => {
+  // La dona del tablero: anillo de 62 a 96 y letra de 10.
+  const rotulo = (inicio: number, fin: number, texto: string) => lugarRotulo({ clave: 'a', inicio, fin, parte: 0 }, anchoCifras(texto) * 10, 8, 96, 62)
+  const grados = (g: number) => (g * Math.PI) / 180
+
+  it('va a media altura del anillo, sobre la bisectriz', () => {
+    const l = rotulo(0, grados(90), '25%')!
+    expect(Math.hypot(l.x, l.y)).toBeCloseTo(79)
+    expect(anguloDe(l.x, l.y)).toBeCloseTo(grados(45))
+  })
+
+  it('en una cuña angosta no cabe, y una cifra más larga necesita más', () => {
+    expect(rotulo(0, grados(18), '5%')).not.toBeNull()
+    expect(rotulo(0, grados(10), '3%')).toBeNull()
+    expect(rotulo(0, grados(18), '5.3%')).toBeNull()
+    expect(rotulo(0, grados(24), '6.7%')).not.toBeNull()
+  })
+
+  it('la cuña de toda la vuelta lo lleva', () => {
+    expect(rotulo(0, 2 * Math.PI, '100%')).not.toBeNull()
+  })
+
+  it('un anillo más delgado que la letra no lo lleva', () => {
+    expect(lugarRotulo({ clave: 'a', inicio: 0, fin: Math.PI, parte: 0.5 }, 20, 8, 96, 90)).toBeNull()
   })
 })

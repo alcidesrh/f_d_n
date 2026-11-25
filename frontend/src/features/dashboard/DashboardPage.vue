@@ -1,7 +1,8 @@
 <!--
   Tablero de gestión (portada): primero, cómo se reparte lo vendido (con su
-  propio día o rango, `DistribucionVentas`); luego el mapa de demanda,
-  operación de hoy, cobertura de agencias y rendimiento por ruta. Datos de `GET /api/tablero` (permiso `reporte.ventas`; un usuario con
+  propio día o rango, `DistribucionVentas`); luego, de dos en dos, el mapa de
+  demanda y el rendimiento por ruta, la operación de hoy y la cobertura de
+  agencias. Datos de `GET /api/tablero` (permiso `reporte.ventas`; un usuario con
   empresa solo ve la suya). Se actualiza solo cada 5 minutos mientras la
   pestaña está visible. Sin el permiso, muestra accesos directos. Arriba, los
   videos sobre el nuevo sistema para todos menos los administradores del sistema.
@@ -31,14 +32,19 @@
       <DistribucionVentas />
       <Message v-if="error" severity="error" :closable="false">{{ error }}</Message>
       <template v-if="!datos && cargando">
-        <Skeleton height="18rem" />
+        <div class="fila-1-1"><Skeleton height="18rem" /><Skeleton height="18rem" /></div>
         <div class="fila-1-1"><Skeleton height="18rem" /><Skeleton height="18rem" /></div>
       </template>
 
       <template v-if="datos">
-        <TableroPanel titulo="Demanda por día y hora" icono="grid-on-outline" subtitulo="Ocupación media según la hora de salida" ayuda="Mira al menos las últimas 4 semanas. Mover salidas de las franjas claras a las oscuras sube la ocupación sin sumar buses.">
-          <MapaDemanda :demanda="datos.demanda" />
-        </TableroPanel>
+        <div class="fila-1-1">
+          <TableroPanel titulo="Demanda por día y hora" icono="grid-on-outline" subtitulo="Ocupación media según la hora de salida" ayuda="Mira al menos las últimas 4 semanas. Mover salidas de las franjas claras a las oscuras sube la ocupación sin sumar buses.">
+            <MapaDemanda :demanda="datos.demanda" />
+          </TableroPanel>
+          <TableroPanel titulo="Rendimiento por ruta" icono="route-outline" subtitulo="Salidas que ya salieron en el periodo" :ayuda="`Saturada: ocupación de ${porciento(OCUPACION_SATURADA)} o más (sumar frecuencia o un bus más grande). Baja: menos de ${porciento(OCUPACION_BAJA)} (sobran salidas o hay que promoverla). Se juzga con 3 salidas o más.`">
+            <RendimientoRutas :rutas="datos.rutas" />
+          </TableroPanel>
+        </div>
 
         <div class="fila-1-1">
           <TableroPanel titulo="Operación de hoy" icono="today-outline" :subtitulo="`${datos.operacionHoy.total} salidas programadas para hoy`">
@@ -48,10 +54,6 @@
             <CoberturaAgencias :agencias="datos.agencias" />
           </TableroPanel>
         </div>
-
-        <TableroPanel titulo="Rendimiento por ruta" icono="route-outline" subtitulo="Salidas que ya salieron en el periodo" :ayuda="`Saturada: ocupación de ${porciento(OCUPACION_SATURADA)} o más (sumar frecuencia o un bus más grande). Baja: menos de ${porciento(OCUPACION_BAJA)} (sobran salidas o hay que promoverla). Se juzga con 3 salidas o más.`">
-          <RendimientoRutas :rutas="datos.rutas" />
-        </TableroPanel>
       </template>
     </template>
   </div>
@@ -161,14 +163,11 @@ onBeforeUnmount(() => {
 <style scoped>
 /*
  * Colores de las gráficas (paleta validada para daltonismo, claro y oscuro):
- * los tres canales en orden fijo; una escala de un tono para la ocupación;
- * los estados reservados para alertas (siempre con ícono y texto).
+ * una escala de un tono para la ocupación; los estados reservados para
+ * alertas (siempre con ícono y texto).
  */
 
 .tablero {
-  --serie-estacion: var(--p-emerald-500);
-  --serie-agencia: var(--p-blue-500);
-  --serie-web: var(--p-amber-500);
   --secuencial-min: #e6f0fd;
   --secuencial-max: #0d366b;
   --estado-bueno: #0ca30c;
@@ -177,21 +176,24 @@ onBeforeUnmount(() => {
   --estado-critico: #d03b3b;
   --estado-info: #2a78d6;
   --estado-generico: var(--p-emerald-500);
-  /* Distribución de la venta: las porciones sin identidad propia (puntos de
-     venta, usuarios) toman la paleta categórica por puesto, en su orden fijo;
-     la cola agrupada ("Otros") va en gris. Los tipos de boleto tienen cada uno
-     su tono fijo de esta paleta (`DistribucionVentas`). */
+  /* Distribución de la venta: un color por puesto en todas las vistas (la
+     mayor siempre --cat-1…, `DonaPorciones`); la cola agrupada ("Otros"), en
+     gris. El porcentaje sobre cada cuña va en blanco o casi negro según la
+     luminancia de su fondo (--cat-N-tinta). */
   --cat-1: #2a78d6;
   --cat-2: #eb6834;
   --cat-3: #1baf7a;
   --cat-4: #eda100;
   --cat-5: #e87ba4;
   --cat-6: #008300;
-  --cat-7: #6250d6;
+  --cat-1-tinta: #ffffff;
+  --cat-2-tinta: #0b0b0b;
+  --cat-3-tinta: #0b0b0b;
+  --cat-4-tinta: #0b0b0b;
+  --cat-5-tinta: #0b0b0b;
+  --cat-6-tinta: #ffffff;
   --dona-otros: var(--p-surface-300);
 }
-/* Los canales no cambian: cada uno tiene un solo tono, el mismo en ambos
-   modos, como en el croquis. */
 .dark .tablero {
   --secuencial-min: #1b2636;
   --secuencial-max: #9ec5f4;
@@ -201,7 +203,7 @@ onBeforeUnmount(() => {
   --cat-3: #199e70;
   --cat-4: #c98500;
   --cat-5: #d55181;
-  --cat-7: #9085e9;
+  --cat-1-tinta: #0b0b0b;
 }
 .fila-1-1 {
   display: grid;

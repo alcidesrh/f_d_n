@@ -1,7 +1,8 @@
 /**
  * Porciones de la gráfica de pastel de la portada: la cola de cuñas angostas
  * se agrupa en "Otros" y "Otros" se abre como otro nivel de la misma gráfica,
- * de mayor a menor; y la geometría de cada cuña. Puro (con tests).
+ * de mayor a menor; la geometría de cada cuña y dónde cabe su rótulo. Puro
+ * (con tests).
  */
 
 export interface Porcion {
@@ -13,8 +14,6 @@ export interface Porcion {
   valor: number
   /** Dato secundario de la lista y el tooltip (p. ej. "87 boletos"). */
   detalle?: string
-  /** Color propio de una categoría con identidad (canal, tipo); sin él, el de su puesto en el nivel. */
-  color?: string
 }
 
 export interface ReglasNivel {
@@ -22,12 +21,6 @@ export interface ReglasNivel {
   maximo: number
   /** Parte mínima del nivel para tener cuña propia (la mayor siempre la tiene). */
   minimo: number
-  /**
-   * Categorías fijas (canales, tipos de boleto): conservan el orden en que
-   * vienen, también lo que va a "Otros", y las que están en cero quedan en
-   * la lista (sin cuña). Sin `fijo`, de mayor a menor y sin ceros.
-   */
-  fijo?: boolean
 }
 
 /**
@@ -41,7 +34,7 @@ export const REGLAS: ReglasNivel = { maximo: 6, minimo: 0.05 }
 export const TODAS: ReglasNivel = { maximo: Infinity, minimo: 0 }
 
 export interface Nivel {
-  /** Las que tienen cuña propia (y, si es fijo, las que están en cero). */
+  /** Las que tienen cuña propia, de mayor a menor. */
   porciones: Porcion[]
   /** Lo que agrupa "Otros" (al menos dos; vacío si no hay "Otros"). */
   resto: Porcion[]
@@ -57,9 +50,9 @@ export function ordenar(porciones: Porcion[]): Porcion[] {
 }
 
 /**
- * Un nivel de la gráfica: las `maximo` mayores que lleguen a `minimo` del
- * total tienen cuña propia; el resto va a "Otros", que nunca agrupa una sola
- * (esa se dibuja como es).
+ * Un nivel de la gráfica, de mayor a menor: las `maximo` mayores que lleguen
+ * a `minimo` del total tienen cuña propia; el resto va a "Otros", que nunca
+ * agrupa una sola (esa se dibuja como es).
  */
 export function nivel(porciones: Porcion[], reglas: ReglasNivel = REGLAS): Nivel {
   const orden = ordenar(porciones)
@@ -67,13 +60,7 @@ export function nivel(porciones: Porcion[], reglas: ReglasNivel = REGLAS): Nivel
   let propias = 0
   while (propias < orden.length && propias < reglas.maximo && (propias === 0 || orden[propias]!.valor / total >= reglas.minimo)) propias++
   if (orden.length - propias === 1) propias++
-  if (!reglas.fijo) return { porciones: orden.slice(0, propias), resto: orden.slice(propias), total }
-  const elegidas = new Set(orden.slice(0, propias).map((p) => p.clave))
-  return {
-    porciones: porciones.filter((p) => p.valor <= 0 || elegidas.has(p.clave)),
-    resto: porciones.filter((p) => p.valor > 0 && !elegidas.has(p.clave)),
-    total,
-  }
+  return { porciones: orden.slice(0, propias), resto: orden.slice(propias), total }
 }
 
 /**
@@ -102,9 +89,9 @@ export interface Cuna {
   parte: number
 }
 
-/** Ubica las cuñas del nivel (las propias que tienen valor y, al final, "Otros" con la clave `otros`). */
+/** Ubica las cuñas del nivel (las propias y, al final, "Otros" con la clave `otros`). */
 export function cunas(n: Nivel): Cuna[] {
-  const lista = [...n.porciones.filter((p) => p.valor > 0).map((p) => ({ clave: p.clave, valor: p.valor })), ...(n.resto.length ? [{ clave: OTROS, valor: suma(n.resto) }] : [])]
+  const lista = [...n.porciones.map((p) => ({ clave: p.clave, valor: p.valor })), ...(n.resto.length ? [{ clave: OTROS, valor: suma(n.resto) }] : [])]
   let angulo = 0
   return lista.map((p) => {
     const parte = n.total > 0 ? p.valor / n.total : 0
@@ -155,3 +142,35 @@ export function cunaEn(lista: Cuna[], angulo: number, minimo = 0): Cuna | null {
 
 /** Ángulo desde las 12, en el sentido del reloj, de un punto relativo al centro. */
 export const anguloDe = (x: number, y: number) => (Math.atan2(x, -y) + 2 * Math.PI) % (2 * Math.PI)
+
+/** Ancho de las cifras de un porcentaje ("24%", "4.5%", "<0.1%") con números tabulares, en tamaños de letra (un poco de más). */
+export function anchoCifras(texto: string): number {
+  return [...texto].reduce((s, c) => s + (c === '%' ? 0.85 : c === '.' ? 0.3 : 0.6), 0)
+}
+
+/**
+ * Dónde va el rótulo de una cuña (su centro, en las unidades del trazo), o
+ * null si no cabe: la caja del texto, a media altura del anillo sobre la
+ * bisectriz, debe quedar dentro de la cuña con `aire` de margen hasta los
+ * bordes. Un rótulo que no cabe no se recorta: lo dicen la lista y el centro.
+ */
+export function lugarRotulo(c: Cuna, ancho: number, alto: number, exterior: number, interior: number, aire = 2): { x: number; y: number } | null {
+  const medio = (c.inicio + c.fin) / 2
+  const mitad = (c.fin - c.inicio) / 2
+  const radio = (exterior + interior) / 2
+  const x = radio * Math.sin(medio)
+  const y = -radio * Math.cos(medio)
+  const [x0, x1, y0, y1] = [x - ancho / 2, x + ancho / 2, y - alto / 2, y + alto / 2]
+  // Lo más cerca del centro de la dona puede ser un lado de la caja; lo más lejos, una esquina.
+  const cerca = Math.hypot(Math.max(x0, Math.min(0, x1)), Math.max(y0, Math.min(0, y1)))
+  if (cerca < interior + aire) return null
+  for (const [px, py] of [[x0, y0], [x1, y0], [x1, y1], [x0, y1]] as const) {
+    const r = Math.hypot(px, py)
+    if (r > exterior - aire) return null
+    const desvio = Math.abs(anguloDe(px, py) - medio)
+    const d = Math.min(desvio, 2 * Math.PI - desvio)
+    // Distancia de la esquina al borde de la cuña (pasado un cuarto de vuelta, el borde más cercano es el centro).
+    if (d >= mitad || (mitad - d < Math.PI / 2 ? r * Math.sin(mitad - d) : r) < aire) return null
+  }
+  return { x, y }
+}
