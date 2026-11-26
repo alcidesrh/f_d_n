@@ -24,8 +24,9 @@ export const useNavigationHistoryStore = defineStore("navigationHistory", {
     push(route: RouteLocationNormalized) {
       const label = (route.meta.label as string | undefined) || (route.name ? String(route.name) : route.path);
 
-      // Si la ruta ya está en el historial, se quita para volver a agregarla al final.
-      this.entries = this.entries.filter((entry) => entry.path !== route.fullPath);
+      // Un mismo texto no se repite: lo que ya está (otra sección de la misma pantalla, p. ej. "Mi cuenta" con `?seccion=`)
+      // se quita y vuelve al final con la ruta actual, así que la migaja siempre lleva a donde se está.
+      this.entries = this.entries.filter((entry) => entry.label !== label);
 
       this.entries.push({
         label,
