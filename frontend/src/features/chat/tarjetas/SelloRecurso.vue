@@ -1,5 +1,5 @@
 <!--
-  Sello pegado en el borde superior derecho de una tarjeta, de su grupo o de
+  Sello pegado en el borde superior izquierdo de una tarjeta, de su grupo o de
   la burbuja que las lleva: el recurso al que pertenece ("Salida",
   "Boletos"…) en su color, para distinguir de un vistazo tarjetas de distinto
   tipo intercaladas en la conversación. Va sobre un padre con `position`.
@@ -22,7 +22,7 @@ const tipo = computed(() => tipoTarjeta(props.adjunto.tipo))
 .sello {
   position: absolute;
   top: 0;
-  right: 0.75rem;
+  left: 0.6rem;
   z-index: 1;
   display: inline-flex;
   align-items: center;
@@ -39,7 +39,7 @@ const tipo = computed(() => tipoTarjeta(props.adjunto.tipo))
   color: var(--sello);
   background: color-mix(in srgb, var(--sello) 12%, var(--p-content-background));
   box-shadow: var(--shadow-sm);
-  transform: translateY(-55%) rotate(2deg);
+  transform: translateY(-55%) rotate(-2deg);
   pointer-events: none;
 }
 </style>
