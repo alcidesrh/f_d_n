@@ -130,7 +130,7 @@ front: ## Instala las dependencias del frontend (bun.lock, sin cambiarlo) y comp
 # El prerender le pide al backend el directorio de estaciones. En la VPS el certificado es solo del
 # dominio (SERVER_NAME de .env.prod.local): por localhost falla el TLS y la página sale sin él.
 # Un PAGINA_BACKEND del entorno tiene prioridad; sin .env.prod.local queda el valor del script.
-PROD_DOMINIO = $(firstword $(shell sed -n 's/^SERVER_NAME=//p' .env.prod.local 2>/dev/null | tr ",\"'" '   '))
+PROD_DOMINIO = $(patsubst https://%,%,$(firstword $(shell sed -n 's/^SERVER_NAME=//p' .env.prod.local 2>/dev/null | tr ",\"'" '   ')))
 
 pagina: ## Compila la página web pública en backend/public/pagina
 	cd pagina && $(if $(PAGINA_BACKEND),,$(if $(PROD_DOMINIO),PAGINA_BACKEND=https://$(PROD_DOMINIO))) npm run build
