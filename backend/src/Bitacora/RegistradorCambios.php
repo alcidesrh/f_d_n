@@ -23,6 +23,7 @@ use App\Entity\EnvioReporte;
 use App\Entity\EstadoTarea;
 use App\Entity\LecturaGps;
 use App\Entity\LecturaGpsPrueba;
+use App\Entity\Movimiento;
 use App\Entity\ReservaAsiento;
 use App\Entity\RevisionMetadata;
 use App\Entity\SuscripcionPush;
@@ -62,7 +63,7 @@ final class RegistradorCambios implements ResetInterface
     public const EXCLUIDAS = [
         Bitacora::class, ApiToken::class, LecturaGps::class, LecturaGpsPrueba::class, RevisionMetadata::class,
         ChatMensaje::class, ChatMiembro::class, ChatArchivo::class, ChatContactoFijado::class,
-        CorreoMensaje::class, CorreoAdjunto::class, EstadoTarea::class, AvisoOperativo::class, AvisoMantenimiento::class, Afectacion::class,
+        CorreoMensaje::class, CorreoAdjunto::class, EstadoTarea::class, AvisoOperativo::class, AvisoMantenimiento::class, Afectacion::class, Movimiento::class,
         EnvioReporte::class, EnvioMensajePredeterminado::class, ReservaAsiento::class, SuscripcionPush::class, DispositivoPush::class,
     ];
 
