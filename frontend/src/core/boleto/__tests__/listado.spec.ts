@@ -50,6 +50,12 @@ describe('listado de boletos', () => {
     expect(aQuery({ ...filtroInicial(), mios: false }, paginaInicial())).not.toContain('mios')
   })
 
+  it('manda el día de la salida y no cuenta como filtro', () => {
+    expect(aQuery({ ...filtroInicial(), fecha: '2026-10-09' }, paginaInicial())).toContain('fecha=2026-10-09&')
+    expect(aQuery(filtroInicial(), paginaInicial())).not.toContain('fecha')
+    expect(filtrosActivos({ ...filtroInicial(), fecha: '2026-10-09' })).toBe(0)
+  })
+
   it('manda el asiento y los canales cuando se eligen', () => {
     const q = aQuery({ ...filtroInicial(), asiento: 12, canales: ['estacion', 'web'] }, paginaInicial())
     expect(q).toContain('asiento=12&')

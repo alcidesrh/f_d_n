@@ -1,7 +1,7 @@
 <!--
   Panel de control del calendario de salidas: la fecha (los días van de esa
   fecha en adelante; el botón de al lado vuelve a hoy), cuántos días se ven
-  (con - y + se pasa a los anteriores o siguientes), una hora exacta (solo
+  (con - y + se pasa a los anteriores o siguientes; `dias` lo oculta), una hora exacta (solo
   las salidas a esa hora, en todos los días), ocupación en asientos o en
   porciento, la empresa y la selección de salidas para eliminarlas («Todas»
   marca las que cumplen el filtro y la ruta fijada en la leyenda).
@@ -21,7 +21,7 @@
         </Button>
       </div>
 
-      <div class="flex items-center gap-1" role="group" aria-label="Días visibles">
+      <div v-if="dias" class="flex items-center gap-1" role="group" aria-label="Días visibles">
         <Button severity="secondary" outlined size="small" class="tap-target" :aria-label="`${etiquetaDias} antes`" v-tooltip.bottom="`${etiquetaDias} antes`" @click="store.mover(-1)">
           <template #icon><icon name="remove" /></template>
         </Button>
@@ -71,7 +71,7 @@ import { horaMinuto, tonoEmpresa } from "@/core/salida/calendario";
 import { aDia, deDia } from "@/core/salida/filtro";
 import { useCalendarioSalidasStore } from "./store";
 
-const props = withDefaults(defineProps<{ ocupacion?: boolean; seleccion?: boolean; empresas?: boolean; extraEnLinea?: boolean }>(), { ocupacion: true, seleccion: false, empresas: true, extraEnLinea: false });
+const props = withDefaults(defineProps<{ dias?: boolean; ocupacion?: boolean; seleccion?: boolean; empresas?: boolean; extraEnLinea?: boolean }>(), { dias: true, ocupacion: true, seleccion: false, empresas: true, extraEnLinea: false });
 const emit = defineEmits<{ hoy: []; eliminar: [] }>();
 
 const OPCIONES_DIAS = [

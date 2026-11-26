@@ -47,6 +47,8 @@ export interface FiltroBoletos {
   /** `AAAA-MM-DD`, ambos incluidos; entra el boleto cuya salida y cuya venta caen en el rango. */
   desde: string | null
   hasta: string | null
+  /** `AAAA-MM-DD`: el día de la salida, en cualquier fecha de venta; con él no aplica el rango. */
+  fecha: string | null
   id: number | null
   salida: number | null
   /** Vacío = todos. */
@@ -79,6 +81,7 @@ export function filtroInicial(desde: string | null = null, hasta: string | null 
   return {
     desde,
     hasta,
+    fecha: null,
     id: null,
     salida: null,
     estados: [],
@@ -105,6 +108,7 @@ export function aQuery(f: FiltroBoletos, p: Pagina): string {
   }
   poner('desde', f.desde)
   poner('hasta', f.hasta)
+  poner('fecha', f.fecha)
   poner('id', f.id)
   poner('salida', f.salida)
   poner('estado', f.estados.join(','))
@@ -126,7 +130,7 @@ export function aQuery(f: FiltroBoletos, p: Pagina): string {
 
 /** Cuántos filtros (además del rango de fechas) hay aplicados. */
 export function filtrosActivos(f: FiltroBoletos): number {
-  const { desde: _d, hasta: _h, estados, canales, mios, ...resto } = f
+  const { desde: _d, hasta: _h, fecha: _f, estados, canales, mios, ...resto } = f
   return Object.values(resto).filter((v) => v !== null && v !== '').length + (estados.length ? 1 : 0) + (canales.length ? 1 : 0) + (mios ? 1 : 0)
 }
 

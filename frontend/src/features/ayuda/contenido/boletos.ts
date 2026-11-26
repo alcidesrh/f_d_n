@@ -23,8 +23,8 @@ export const guiasBoletos: Guia[] = [
       'Era la pantalla «Boletos» del sistema anterior: mismos filtros, ahora con las acciones junto a la lista.',
     pasos: [
       'Abra «Boletos» en el menú.',
-      'Arriba está el calendario de salidas: elija la fecha y los días, y pulse una salida para ver solo sus boletos (vuelva a pulsarla, o la ✕ del aviso, para soltarla). Sin salida elegida muestra los de 30 días antes y después de hoy.',
-      'Filtre además por empresa (debajo de los controles del calendario), por el id del boleto, por el número de asiento, por la clase (A o B) o por canal de venta (estación, agencia o página web). El id busca en cualquier fecha.',
+      'Arriba, elija la fecha: la lista muestra los boletos de las salidas de ese día (al abrir, las de hoy). Para ver solo una salida, elíjala en «Salida»; borre su texto para soltarla. La hora acota las salidas que ofrece «Salida».',
+      'Filtre además por el id del boleto, por el número de asiento, por la clase (A o B), por canal de venta (estación, agencia o página web) o por empresa. El id busca en cualquier fecha.',
       'Elija un boleto de la lista. El panel de acciones se activa con el boleto elegido: Consultar, Cancelar, Revertir, Anular, Chequear, Reasignar, Correo, Imp. factura, Bitácora y Chat.',
       'Las columnas se ocultan o reordenan desde «Columnas»; el sistema recuerda su elección.',
     ],

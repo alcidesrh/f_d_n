@@ -1,10 +1,11 @@
 <!--
   Boletos (el "Boletos" del legado): arriba, los filtros (se aplican al
-  cambiar; el id y el asiento, con retardo): los controles del calendario de
-  salidas sin la grilla (fecha, días, hora y las rutas en la leyenda) acotan
-  el buscador de la salida (por ruta, parada, bus o id; borrarla la suelta);
-  luego el id, el asiento y la clase; debajo, el canal, «Mis boletos» (los que
-  vendió el usuario), «Reasignado» y la empresa. Sin salida elegida, los de 30 días antes y después de hoy. Debajo, el panel de acciones sobre el boleto elegido y la
+  cambiar; el id y el asiento, con retardo): el calendario de salidas sin la
+  grilla y sin días: su fecha es el día de las salidas cuyos boletos se ven
+  (hoy, al abrir), y su hora y las rutas de la leyenda acotan el buscador de
+  la salida (por ruta, parada, bus o id; borrarla la suelta). Luego el id, el
+  asiento y la clase; debajo, el canal, «Mis boletos» (los que vendió el
+  usuario), «Reasignado» y la empresa. Debajo, el panel de acciones sobre el boleto elegido y la
   lista paginada en el servidor. Se elige un boleto con un clic (o Enter) y el panel
   ofrece Consultar, Cancelar, Revertir, Anular, Chequear, Reasignar, Correo, Imp.
   factura, Bitácora y Chat; cada acción explica por qué no se puede si no se
@@ -14,30 +15,34 @@
 -->
 <template>
   <div class="@container flex flex-col gap-3">
-    <!-- Filtros: los controles del calendario (fecha, días, hora, rutas en la leyenda) acotan las salidas del buscador; además, el id, el asiento y la clase. -->
-    <CalendarioSalidas :grilla="false" :empresas="false" extra-en-linea>
+    <!-- Filtros: el calendario sin días (la fecha es el día de las salidas cuyos boletos se ven; la hora y las rutas de la leyenda acotan el buscador de la salida). -->
+    <CalendarioSalidas :grilla="false" :empresas="false" :dias="false" extra-en-linea>
       <SalidaBuscador v-model="salidaElegida" />
-      <label class="filtro-campo">
-        <span class="text-sm font-medium">Id</span>
-        <InputText :model-value="String(borrador.id ?? '')" inputmode="numeric" size="small" class="w-24" aria-label="Id del boleto" @input="borrador.id = soloNumero($event)" />
-      </label>
-      <label class="filtro-campo">
-        <span class="text-sm font-medium">Asiento</span>
-        <InputText :model-value="String(borrador.asiento ?? '')" inputmode="numeric" size="small" class="w-20" aria-label="Número de asiento" @input="borrador.asiento = soloNumero($event)" />
-      </label>
-      <div class="chips" role="group" aria-label="Clase de asiento">
-        <span class="text-sm font-medium">Clase</span>
-        <button v-for="c in CLASES" :key="c" type="button" class="chip" :class="{ 'chip-on': borrador.clase === c }" :aria-pressed="borrador.clase === c" @click="borrador.clase = borrador.clase === c ? null : c">{{ c }}</button>
-      </div>
-      <!-- Fila de abajo: el canal, los del usuario, los reasignados y la empresa (como los demás chips, sin colores). -->
+      <!-- Filas de abajo: el id, el asiento y la clase; luego el canal, los del usuario, los reasignados y la empresa (como los demás chips, sin colores). -->
       <template #abajo>
-        <div class="chips" role="group" aria-label="Canal de venta y más filtros">
-          <button v-for="c in CANALES" :key="c.valor" type="button" class="chip" :class="{ 'chip-on': borrador.canales.includes(c.valor) }" :aria-pressed="borrador.canales.includes(c.valor)" @click="alternarCanal(c.valor)">{{ c.etiqueta }}</button>
-          <button type="button" class="chip" :class="{ 'chip-on': borrador.mios }" :aria-pressed="borrador.mios" v-tooltip.top="'Solo los que vendió usted'" @click="borrador.mios = !borrador.mios">Mis boletos</button>
-          <button type="button" class="chip" :class="{ 'chip-on': soloReasignados }" :aria-pressed="soloReasignados" v-tooltip.top="'Solo los reasignados'" @click="borrador.estados = soloReasignados ? [] : ['reasignado']">Reasignado</button>
-        </div>
-        <div v-if="(calendario.opciones?.empresas.length ?? 0) > 1" class="chips" role="group" aria-label="Empresa">
-          <button v-for="e in calendario.opciones?.empresas ?? []" :key="e.id" type="button" class="chip" :class="{ 'chip-on': calendario.empresa === e.id }" :aria-pressed="calendario.empresa === e.id" @click="calendario.empresa = calendario.empresa === e.id ? null : e.id">{{ e.nombre }}</button>
+        <div class="flex w-full flex-col gap-2">
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-2" role="group" aria-label="Id, asiento y clase">
+            <label class="filtro-campo">
+              <span class="text-sm font-medium">Id</span>
+              <InputText :model-value="String(borrador.id ?? '')" inputmode="numeric" size="small" class="w-24" aria-label="Id del boleto" @input="borrador.id = soloNumero($event)" />
+            </label>
+            <label class="filtro-campo">
+              <span class="text-sm font-medium">Asiento</span>
+              <InputText :model-value="String(borrador.asiento ?? '')" inputmode="numeric" size="small" class="w-20" aria-label="Número de asiento" @input="borrador.asiento = soloNumero($event)" />
+            </label>
+            <div class="chips" role="group" aria-label="Clase de asiento">
+              <span class="text-sm font-medium">Clase</span>
+              <button v-for="c in CLASES" :key="c" type="button" class="chip" :class="{ 'chip-on': borrador.clase === c }" :aria-pressed="borrador.clase === c" @click="borrador.clase = borrador.clase === c ? null : c">{{ c }}</button>
+            </div>
+          </div>
+          <div class="chips" role="group" aria-label="Canal de venta y más filtros">
+            <button v-for="c in CANALES" :key="c.valor" type="button" class="chip" :class="{ 'chip-on': borrador.canales.includes(c.valor) }" :aria-pressed="borrador.canales.includes(c.valor)" @click="alternarCanal(c.valor)">{{ c.etiqueta }}</button>
+            <button type="button" class="chip" :class="{ 'chip-on': borrador.mios }" :aria-pressed="borrador.mios" v-tooltip.top="'Solo los que vendió usted'" @click="borrador.mios = !borrador.mios">Mis boletos</button>
+            <button type="button" class="chip" :class="{ 'chip-on': soloReasignados }" :aria-pressed="soloReasignados" v-tooltip.top="'Solo los reasignados'" @click="borrador.estados = soloReasignados ? [] : ['reasignado']">Reasignado</button>
+          </div>
+          <div v-if="(calendario.opciones?.empresas.length ?? 0) > 1" class="chips" role="group" aria-label="Empresa">
+            <button v-for="e in calendario.opciones?.empresas ?? []" :key="e.id" type="button" class="chip" :class="{ 'chip-on': calendario.empresa === e.id }" :aria-pressed="calendario.empresa === e.id" @click="calendario.empresa = calendario.empresa === e.id ? null : e.id">{{ e.nombre }}</button>
+          </div>
         </div>
       </template>
     </CalendarioSalidas>
@@ -132,6 +137,7 @@ import type { CanalVenta, EstadoBoleto, TipoDocumento } from "@/core/boleto/type
 import type { BoletoFila, OpcionesBoletos, OrdenBoletos, PaginaBoletos } from "@/core/boleto/types";
 import { HttpError } from "@/core/http";
 import { notify } from "@/core/notify";
+import { aDia } from "@/core/salida/filtro";
 import type { SalidaCalendario } from "@/core/salida/types";
 import { fecha, hora } from "@/core/venta/modelo";
 import BitacoraDialog from "@/shared/bitacora/BitacoraDialog.vue";
@@ -340,6 +346,14 @@ watch(
     espera = setTimeout(aplicar, ESPERA_TEXTO);
   },
 );
+// Otro día: la lista vuelve a la primera página y la salida elegida, si era de otro día, se suelta.
+watch(
+  () => calendario.fecha,
+  (dia) => {
+    pagina.value = { ...pagina.value, pagina: 1 };
+    if (salidaElegida.value && aDia(new Date(salidaElegida.value.fecha)) !== dia) salidaElegida.value = null;
+  },
+);
 onBeforeUnmount(() => clearTimeout(espera));
 
 function paginar(e: { page: number; rows: number }) {
@@ -347,7 +361,8 @@ function paginar(e: { page: number; rows: number }) {
 }
 
 // —— Datos ——
-const consulta = computed(() => aQuery(aplicado.value, pagina.value));
+/** La fecha del calendario es el día de las salidas (sus boletos en cualquier fecha de venta). */
+const consulta = computed(() => aQuery({ ...aplicado.value, fecha: calendario.fecha }, pagina.value));
 let pedido = 0;
 async function cargar() {
   const n = ++pedido;

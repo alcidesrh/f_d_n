@@ -1,6 +1,6 @@
 <!--
   Filtro de salida de los boletos: busca entre las salidas que dejan los
-  controles del calendario (fecha, días, hora, empresa y la ruta fijada en la
+  controles del calendario (el día, la hora, la empresa y la ruta fijada en la
   leyenda) por ruta, parada, bus o id; la flecha, sin escribir, las ofrece
   todas. Las más cercanas a ahora primero. Borrar el texto suelta la salida.
 -->

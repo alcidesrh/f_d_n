@@ -289,11 +289,18 @@ final class ListadoBoletos
         }
 
         // Un id exacto o una salida concreta se buscan en cualquier fecha (enlaces del chat, "Consultar" de otro boleto).
-        // La salida y la venta, ambas en el rango: así entra por los índices de fecha (con OR leía las tablas enteras).
         if ($f->id === null && $f->salida === null) {
-            $qb->andWhere("s.fecha >= :desde AND s.fecha < :fin AND v.createdAt >= :desde AND v.createdAt < :fin")
-                ->setParameter("desde", $f->desde)
-                ->setParameter("fin", $f->finExclusivo());
+            if ($f->diaSalida !== null) {
+                // El día de la salida, en cualquier fecha de venta.
+                $qb->andWhere("s.fecha >= :diaSalida AND s.fecha < :diaSalidaFin")
+                    ->setParameter("diaSalida", $f->diaSalida)
+                    ->setParameter("diaSalidaFin", $f->diaSalida->modify("+1 day"));
+            } else {
+                // La salida y la venta, ambas en el rango: así entra por los índices de fecha (con OR leía las tablas enteras).
+                $qb->andWhere("s.fecha >= :desde AND s.fecha < :fin AND v.createdAt >= :desde AND v.createdAt < :fin")
+                    ->setParameter("desde", $f->desde)
+                    ->setParameter("fin", $f->finExclusivo());
+            }
         }
 
         $iguales = [

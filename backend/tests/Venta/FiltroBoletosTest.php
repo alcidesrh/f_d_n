@@ -76,6 +76,15 @@ final class FiltroBoletosTest extends TestCase
         $this->assertFalse(FiltroBoletos::desdeQuery(["mios" => "0"], self::hoy())->mios);
     }
 
+    public function testDiaDeLaSalida(): void
+    {
+        $f = FiltroBoletos::desdeQuery(["fecha" => "2026-10-09", "desde" => "2026-10-01", "hasta" => "2026-10-31"], self::hoy());
+
+        $this->assertSame("2026-10-09 00:00", $f->diaSalida->format("Y-m-d H:i"));
+        $this->assertNull(FiltroBoletos::desdeQuery([], self::hoy())->diaSalida);
+        $this->assertSame("fecha_invalida", $this->codigo(["fecha" => "09/10/2026"]));
+    }
+
     public function testCanalesDeVenta(): void
     {
         $f = FiltroBoletos::desdeQuery(["canal" => "web, estacion,web"], self::hoy());

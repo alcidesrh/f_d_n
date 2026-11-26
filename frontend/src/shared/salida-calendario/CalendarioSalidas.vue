@@ -17,7 +17,7 @@
 <template>
   <div ref="raiz" class="flex flex-col gap-3">
     <div ref="cabecera" class="flex flex-col gap-3">
-      <ControlesCalendario :ocupacion="grilla && ocupacion" :seleccion="grilla && seleccion" :empresas="empresas" :extra-en-linea="extraEnLinea" @hoy="irAHoy" @eliminar="emit('eliminar')"
+      <ControlesCalendario :dias="dias" :ocupacion="grilla && ocupacion" :seleccion="grilla && seleccion" :empresas="empresas" :extra-en-linea="extraEnLinea" @hoy="irAHoy" @eliminar="emit('eliminar')"
         ><slot /><template v-if="$slots.abajo" #abajo><slot name="abajo" /></template
       ></ControlesCalendario>
       <LeyendaRutas />
@@ -37,7 +37,7 @@ import GrillaCalendario from './GrillaCalendario.vue'
 import LeyendaRutas from './LeyendaRutas.vue'
 import { useCalendarioSalidasStore } from './store'
 
-const props = withDefaults(defineProps<{ grilla?: boolean; seleccion?: boolean; ocupacion?: boolean; empresas?: boolean; extraEnLinea?: boolean; activa?: number | null; maxAlto?: string }>(), { grilla: true, seleccion: false, ocupacion: true, empresas: true, extraEnLinea: false, activa: null, maxAlto: undefined })
+const props = withDefaults(defineProps<{ grilla?: boolean; seleccion?: boolean; ocupacion?: boolean; empresas?: boolean; dias?: boolean; extraEnLinea?: boolean; activa?: number | null; maxAlto?: string }>(), { grilla: true, seleccion: false, ocupacion: true, empresas: true, dias: true, extraEnLinea: false, activa: null, maxAlto: undefined })
 const emit = defineEmits<{ abrir: [evento: MouseEvent, salida: SalidaCalendario]; eliminar: [] }>()
 
 const route = useRoute()

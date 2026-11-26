@@ -12,9 +12,9 @@ use App\Venta\Excepcion\VentaRechazada;
 
 /**
  * Filtros del listado de boletos (el "Boletos" del legado): rango de días
- * (entra el boleto cuya salida o cuya venta cae en él, ambos días
- * incluidos; no aplica si se pide un id) y el resto opcionales. Página,
- * tamaño y orden.
+ * (entra el boleto cuya salida y cuya venta caen en él, ambos días
+ * incluidos; no aplica si se pide un id, una salida o un día de salida) y el
+ * resto opcionales. Página, tamaño y orden.
  */
 final readonly class FiltroBoletos
 {
@@ -60,6 +60,8 @@ final readonly class FiltroBoletos
         public bool $mios = false,
         /** Canales de la venta (estación, agencia, página web); vacío = todos. */
         public array $canales = [],
+        /** Día de la salida: sus boletos en cualquier fecha de venta, en lugar del rango (`fecha` en el query). */
+        public ?\DateTimeImmutable $diaSalida = null,
     ) {
         if ($hasta < $desde) {
             throw new VentaRechazada("La fecha final no puede ser anterior a la inicial.", "rango_invalido", 400);
@@ -125,6 +127,7 @@ final readonly class FiltroBoletos
             empresa: Parametros::entero($q["empresa"] ?? null, "la empresa"),
             mios: Parametros::bandera($q["mios"] ?? null),
             canales: array_values(array_unique($canales, SORT_REGULAR)),
+            diaSalida: Parametros::dia($q["fecha"] ?? null, "la fecha"),
         );
     }
 
