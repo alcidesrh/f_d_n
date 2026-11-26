@@ -96,6 +96,30 @@ final class Afectaciones
         return $this->crear(new Afectacion($tipo, $descripcion, $empresa ?? $bus?->getEmpresa(), $estacion, $bus, null, $this->ahora(), $clave));
     }
 
+    /**
+     * Para los detectores: lo detectado se normalizó (el stock volvió al
+     * mínimo). Resuelve, como el sistema, la que siga abierta con esa
+     * `$clave` y la creó un detector; null si no hay.
+     */
+    public function resolverDetectada(string $clave, string $resolucion): ?Afectacion
+    {
+        $abierta = $this->em->createQueryBuilder()
+            ->select("a")
+            ->from(Afectacion::class, "a")
+            ->where("a.clave = :clave AND a.estado <> :resuelta AND a.reportadaPor IS NULL")
+            ->setParameter("clave", $clave)
+            ->setParameter("resuelta", EstadoAfectacion::RESUELTA)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+        if (!$abierta instanceof Afectacion) {
+            return null;
+        }
+        $this->transaccion->ejecutar(fn() => $abierta->resolver(null, $resolucion, $this->ahora()));
+
+        return $abierta;
+    }
+
     public function editar(int $id, Usuario $yo, string $descripcion): Afectacion
     {
         $a = $this->paraAtender($id, $yo);

@@ -123,6 +123,31 @@ La tarea que vigila las afectaciones abiertas: da el primer aviso a quien la ati
 _Avoid_: monitor, recordatorio, vigilante
 Modelo: nuevo (`App\Afectacion\Centinela`, `ReglasCentinela`, tarea `vigilar_afectaciones`, ADR-070)
 
+**Almacén** (`Almacen`):
+Un lugar de una empresa donde se guardan cosas: una estación, un taller, una oficina o un bus (la llanta de repuesto, el extintor). No hay bodega central: lo que falta en un lugar se compra allí o se envía desde otro almacén, casi siempre de la capital.
+_Avoid_: bodega, depósito, inventario (el inventario es lo que hay en los almacenes)
+Modelo: nuevo (ADR-071)
+
+**Artículo** (`Articulo`):
+Lo que se guarda y se gasta: papel térmico, tóner, aceite, filtros, una llanta. Se cuenta en su unidad (rollo, caja, litro, unidad).
+_Avoid_: producto, insumo (el insumo es un tipo de artículo), ítem
+Modelo: nuevo (ADR-071)
+
+**Existencia**:
+Cuánto hay de un artículo en un almacén y a qué costo promedio, con sus niveles: debajo del **mínimo** el sistema crea la afectación del faltante; en el **punto de reorden** o debajo toca reponer; el **máximo** es hasta dónde llenar.
+_Avoid_: stock, saldo (el saldo es lo que dejó cada movimiento)
+Modelo: nuevo (`App\Inventario\Inventario`, `ReglasInventario`, ADR-071)
+
+**Movimiento**:
+Una línea del libro de un almacén: una **entrada** (lo comprado, con su factura), una **salida** (lo que se gasta o se instala), un **envío** a otro almacén, su **recepción** al llegar, o un **ajuste** (la diferencia de un conteo). No se edita: un error se corrige con otro movimiento.
+_Avoid_: transacción, operación, kardex
+Modelo: nuevo (ADR-071)
+
+**En camino**:
+Un envío que salió de un almacén y aún no se recibe en el otro: ya no cuenta en el que lo mandó ni todavía en el que lo espera, pero se resta de lo que este debe reponer.
+_Avoid_: en tránsito, pendiente
+Modelo: nuevo (ADR-071)
+
 ## Ventas
 
 **Salida**:

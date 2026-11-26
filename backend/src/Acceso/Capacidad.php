@@ -82,6 +82,11 @@ enum Capacidad: string
     case AFECTACION_SUPERVISAR = 'afectacion.supervisar';
     case AFECTACION_TIPOS = 'afectacion.tipos';
 
+    case INVENTARIO_VER = 'inventario.ver';
+    case INVENTARIO_MOVER = 'inventario.mover';
+    case INVENTARIO_AJUSTAR = 'inventario.ajustar';
+    case INVENTARIO_ARTICULOS = 'inventario.articulos';
+
     public function nombre(): string
     {
         return match ($this) {
@@ -134,6 +139,10 @@ enum Capacidad: string
             self::AFECTACION_FLOTA => 'Atender afectaciones de la flota (averías, llantas y repuestos)',
             self::AFECTACION_SUPERVISAR => 'Supervisar afectaciones: ver todas las de su alcance y recibir las que escalan sin resolver',
             self::AFECTACION_TIPOS => 'Configurar los tipos de afectación (quién reporta, quién atiende, prioridad y centinela)',
+            self::INVENTARIO_VER => 'Ver las existencias y los movimientos de los almacenes',
+            self::INVENTARIO_MOVER => 'Registrar entradas, salidas, envíos y recepciones en los almacenes',
+            self::INVENTARIO_AJUSTAR => 'Contar y ajustar las existencias de los almacenes',
+            self::INVENTARIO_ARTICULOS => 'Mantener los artículos, los almacenes y sus mínimos',
         };
     }
 
@@ -153,7 +162,7 @@ enum Capacidad: string
             'bitacora' => 'Auditoría',
             'chat' => 'Chat',
             'correo' => 'Correo',
-            'afectacion' => 'Logística',
+            'afectacion', 'inventario' => 'Logística',
             default => 'Sistema',
         };
     }
@@ -176,9 +185,11 @@ enum Capacidad: string
             self::REPORTE_VENTAS, self::REPORTE_ENCOMIENDAS,
             self::IAM_ASIGNAR, self::AUTORIZACION_APROBAR,
             self::AFECTACION_REPORTAR, self::AFECTACION_INFORMATICA, self::AFECTACION_INSUMOS, self::AFECTACION_INSTALACIONES => [Dimension::EMPRESA, Dimension::ESTACION],
+            self::INVENTARIO_VER, self::INVENTARIO_MOVER, self::INVENTARIO_AJUSTAR => [Dimension::EMPRESA, Dimension::ESTACION],
             self::SALIDA_VER, self::SALIDA_CREAR, self::SALIDA_EDITAR, self::SALIDA_CANCELAR, self::SALIDA_ELIMINAR,
             self::BITACORA_VER,
             self::AFECTACION_REPORTAR_FLOTA, self::AFECTACION_FLOTA, self::AFECTACION_SUPERVISAR => [Dimension::EMPRESA],
+            self::INVENTARIO_ARTICULOS => [Dimension::EMPRESA],
             default => [],
         };
     }

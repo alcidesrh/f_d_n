@@ -427,6 +427,18 @@ export const router = createRouter({
       },
     },
     {
+      path: "/inventario",
+      name: "inventario",
+      component: () => import("@/features/inventario/InventarioPage.vue"),
+      // Qué almacenes ve y qué puede hacer en cada uno lo decide el backend por dónde está cada almacén (ADR-071).
+      meta: {
+        capacidad: ["inventario.ver", "inventario.mover", "inventario.ajustar", "inventario.articulos"],
+        title: "Inventario",
+        label: "Inventario",
+        icon: "inventory-2-outline",
+      },
+    },
+    {
       path: "/seguimiento/reproducir",
       name: "seguimiento-reproducir",
       component: () => import("@/features/seguimiento/ReproduccionPage.vue"),
