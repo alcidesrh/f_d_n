@@ -101,7 +101,7 @@ final class DatosBoleto
             "creada" => $venta->getCreada()?->format(DATE_ATOM),
             "codigoBarras" => sprintf("%08d", $venta->getId()),
             "empresa" => $empresa === null ? null : [
-                "nombre" => $empresa->getNombre(),
+                "nombre" => $empresa->getNombreCorto(),
                 "nit" => $empresa->getNit(),
                 "direccion" => $empresa->getDireccion(),
                 "telefono" => $empresa->getTelefono(),

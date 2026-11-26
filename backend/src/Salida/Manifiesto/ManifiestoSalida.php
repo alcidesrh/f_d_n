@@ -51,7 +51,7 @@ final class ManifiestoSalida
             \DateTimeImmutable::createFromMutable($salida->getFecha()),
             (string) $ruta->getOrigen()?->getNombre(),
             sprintf("%s - %s", $ruta->getOrigen()?->getNombre() ?? "?", $ruta->getDestino()?->getNombre() ?? "?"),
-            $empresa?->getNombre() ?? "",
+            $empresa?->getNombreCorto() ?? "",
             $bus?->getCodigo(),
             [self::piloto($bus?->getPiloto()), self::piloto($bus?->getCopiloto())],
             array_map($this->pasajero(...), $boletos),

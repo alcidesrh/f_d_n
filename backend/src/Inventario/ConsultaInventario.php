@@ -272,7 +272,7 @@ final class ConsultaInventario
             "tipo" => $a->getTipo()->value,
             "tipoEtiqueta" => $a->getTipo()->etiqueta(),
             "activo" => $a->isActivo(),
-            "empresa" => $a->getEmpresa() === null ? null : ["id" => (int) $a->getEmpresa()->getId(), "nombre" => (string) $a->getEmpresa()->getNombre()],
+            "empresa" => $a->getEmpresa() === null ? null : ["id" => (int) $a->getEmpresa()->getId(), "nombre" => (string) $a->getEmpresa()->getNombreCorto()],
             "estacion" => $a->getEstacion() === null ? null : ["id" => (int) $a->getEstacion()->getId(), "nombre" => (string) $a->getEstacion()->getNombre()],
             "bus" => $a->getBus() === null ? null : ["id" => (int) $a->getBus()->getId(), "codigo" => $a->getBus()->getCodigo()],
         ];

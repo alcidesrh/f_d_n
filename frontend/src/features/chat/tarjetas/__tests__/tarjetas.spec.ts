@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { mount, RouterLinkStub } from '@vue/test-utils'
 import type { AsientoCroquis, ElementoCroquis } from '@/core/croquis/types'
 import { plantasClaseBPrimero } from '../croquis'
-import { tipoTarjeta } from '../catalogo'
+import { textoSello, tipoTarjeta } from '../catalogo'
 import TarjetaBus from '../TarjetaBus.vue'
 import TarjetaSalida from '../TarjetaSalida.vue'
 import TarjetaBoleto from '../TarjetaBoleto.vue'
@@ -146,10 +146,11 @@ describe('desempeño del día', () => {
     const w = mount(TarjetaDesempenoDia, { props: { datos }, global })
     expect(w.text()).toContain('GTQ 4,765.00')
     expect(w.find('.barra').findAll('span').map((s) => s.attributes('style'))).toEqual(['width: 93.39%;', 'width: 0%;', 'width: 6.61%;'])
-    expect(w.find('.chip.aviso').text()).toContain('Cancelados 4')
+    expect(w.find('.operacion .aviso').text()).toBe('Cancelados4')
     expect(w.find('li .detalle').text()).toBe('11 boletos · 0 encomiendas')
     expect(w.find('.empresa').text()).toBe('Autobuses Maya De Oro, S.A.')
-    expect(w.findAll('.chip').map((c) => c.text())).toContain('Vouchers 2')
+    expect(w.findAll('.operacion tr').map((c) => c.text())).toContain('Vouchers2')
+    expect(w.text()).not.toContain('Desempeño del miércoles')
   })
 
   it('un día sin ventas no muestra cifras', () => {
@@ -160,13 +161,23 @@ describe('desempeño del día', () => {
 })
 
 describe('tarjetas de un mensaje', () => {
+  it('el sello del resumen del día lleva su fecha', () => {
+    expect(textoSello({ tipo: 'DesempenoDia', id: 20261125_000_003 })).toBe('Resumen 25/11/2026')
+    expect(textoSello({ tipo: 'Salida', id: 4 })).toBe('Salida')
+  })
+
+  it('sin sellos (la burbuja lleva el suyo) no pone ninguno', () => {
+    const w = mount(TarjetasMensaje, { props: { adjuntos: [{ tipo: 'Afectacion', id: 1, estado: 'ok' as const, datos: { titulo: 'x' } }], sinSellos: true }, global })
+    expect(w.find('.sello').exists()).toBe(false)
+  })
+
   const afectacion = (id: number) => ({ tipo: 'Afectacion', id, estado: 'ok' as const, datos: { titulo: `Afectación ${id}` } })
 
   it('un registro solo va sin acordeón, con el sello de su recurso', () => {
     const w = mount(TarjetasMensaje, { props: { adjuntos: [afectacion(1), { tipo: 'Salida', id: 2, estado: 'sin_acceso' as const }] }, global })
     expect(w.find('.grupo').exists()).toBe(false)
     expect(w.findAll('.tarjeta')).toHaveLength(2)
-    expect(w.findAll('.sello').map((s) => s.text())).toEqual(['Afectaciones', 'Salidas'])
+    expect(w.findAll('.sello').map((s) => s.text())).toEqual(['Afectaciones', 'Salida'])
   })
 
   it('dos o más del mismo tipo van plegados bajo un solo sello', () => {

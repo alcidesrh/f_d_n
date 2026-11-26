@@ -172,7 +172,7 @@ final class Contenidos
             "ruta" => self::ruta($salida),
             "inicio" => $salida->getFecha() === null ? "?" : self::formato("EEE d 'de' MMM, h:mm a")->format($salida->getFecha()),
             "bus" => $salida->getBus()?->getCodigo(),
-            "empresa" => $salida->getEmpresa()?->getNombreCorto() ?: $salida->getEmpresa()?->getNombre(),
+            "empresa" => $salida->getEmpresa()?->getNombreCorto(),
         ];
     }
 
@@ -184,7 +184,7 @@ final class Contenidos
         $k = $t->kpis();
         $q = static fn(int $c) => Dinero::con($c, ConsultaTablero::MONEDA);
         $lineas = [
-            sprintf("Ventas del %s · %s", ResumenDiario::fechaLarga($ahora), $empresa?->getNombre() ?? "Todas las empresas"),
+            sprintf("Ventas del %s · %s", ResumenDiario::fechaLarga($ahora), $empresa?->getNombreCorto() ?? "Todas las empresas"),
             sprintf("Total: %s en %d boletos.", $q((int) $k["ingresos"]["actual"]), (int) $k["boletos"]["actual"]),
             sprintf("Anulados: %d (%s). Cortesías: %d.", (int) $k["anulados"]["actual"], $q((int) $k["montoAnulado"]["actual"]), (int) $k["cortesias"]["actual"]),
         ];
@@ -243,7 +243,7 @@ final class Contenidos
 
         return DesempenoDelDia::datos(
             $titulo,
-            $empresa?->getNombre() ?? "Todas las empresas",
+            $empresa?->getNombreCorto() ?? "Todas las empresas",
             $this->boletosDelDia($dia, $hasta, $empresaId),
             $this->encomiendasDelDia($dia, $hasta, $empresaId),
             $this->incidencias->totales($dia, $empresaId),

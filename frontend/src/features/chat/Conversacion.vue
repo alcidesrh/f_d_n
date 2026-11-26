@@ -79,7 +79,8 @@
                           <template v-else>{{ s.texto }}</template>
                         </template>
                       </p>
-                      <TarjetasMensaje v-if="m.adjuntos.length" :adjuntos="m.adjuntos" class="burbuja__tarjetas" />
+                      <TarjetasMensaje v-if="m.adjuntos.length" :adjuntos="m.adjuntos" :sin-sellos="!!selloBurbuja(m)" class="burbuja__tarjetas" />
+                      <SelloRecurso v-if="selloBurbuja(m)" :adjunto="selloBurbuja(m)!" />
                     </template>
                     <span class="burbuja__pie">
                       <span v-if="m.editado" class="burbuja__editado">editado</span>
@@ -152,6 +153,7 @@ import GrupoDialog from "./GrupoDialog.vue";
 import HojaAcciones, { type AccionHoja } from "./HojaAcciones.vue";
 import { prepararArchivo } from "./imagen";
 import Redactor from "./Redactor.vue";
+import SelloRecurso from "./tarjetas/SelloRecurso.vue";
 import TarjetasMensaje from "./tarjetas/TarjetasMensaje.vue";
 import { useVentanaChat } from "./ventana";
 import VisorImagen from "./VisorImagen.vue";
@@ -165,6 +167,9 @@ const AMBITOS = { administracion: "Administración", estacion: "Estación", agen
 const CERCA = 120;
 /** Páginas hacia atrás que se cargan, como mucho, para llegar a un mensaje citado. */
 const MAX_PAGINAS_CITA = 10;
+
+/** Con texto, las tarjetas van dentro de la burbuja: si son de un solo tipo, el sello va en la burbuja y no en cada tarjeta. */
+const selloBurbuja = (m: Mensaje) => (m.texto && m.adjuntos.length && m.adjuntos.every((a) => a.tipo === m.adjuntos[0]!.tipo) ? m.adjuntos[0]! : null);
 
 const chat = useChatStore();
 const acceso = useAccesoStore();

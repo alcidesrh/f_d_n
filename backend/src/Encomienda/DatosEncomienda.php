@@ -37,7 +37,7 @@ final class DatosEncomienda
             "porCobrar" => $e->getModalidad() === ModalidadEncomienda::POR_COBRAR && $e->getFactura() === null && $e->getNumeroAcceso() === null,
             "empresa" => $empresa === null ? null : [
                 "id" => $empresa->getId(),
-                "nombre" => $empresa->getNombre(),
+                "nombre" => $empresa->getNombreCorto(),
                 "nit" => $empresa->getNit(),
                 "direccion" => $empresa->getDireccion(),
                 "telefono" => self::telefono($empresa->getTelefono()),

@@ -28,7 +28,7 @@ final class ConsultaComprasWeb
         "p.id", "p.token", "p.estado", "p.creado", "p.actualizado", "p.monto_monto", "p.monto_moneda",
         "p.marca", "p.ultimos4", "p.autorizacion", "p.referencia_pasarela", "p.mensaje", "p.comprador",
         "p.recargo_porciento", "p.viajes", "p.boleto_venta_id", "p.boleto_venta_regreso_id",
-        "e.id AS empresa_id", "COALESCE(e.alias, e.nombre) AS empresa_nombre",
+        "e.id AS empresa_id", "COALESCE(NULLIF(e.alias, ''), e.nombre) AS empresa_nombre",
     ];
 
     /** Las acciones de la compra que son transiciones de sus boletos. */
@@ -136,7 +136,7 @@ final class ConsultaComprasWeb
             ->fetchAllAssociative();
 
         $porEmpresa = $this->filtrado($f)
-            ->select("COALESCE(e.alias, e.nombre, '—') AS empresa", "COUNT(*) AS compras", "COALESCE(SUM(p.monto_monto), 0) AS monto")
+            ->select("COALESCE(NULLIF(e.alias, ''), e.nombre, '—') AS empresa", "COUNT(*) AS compras", "COALESCE(SUM(p.monto_monto), 0) AS monto")
             ->andWhere("p.estado = 'completado'")
             ->groupBy("e.alias", "e.nombre")
             ->orderBy("monto", "DESC")
@@ -291,7 +291,7 @@ final class ConsultaComprasWeb
                     JSON_AGG(JSON_BUILD_OBJECT('id', b.id, 'estado', b.estado, 'asiento', a.numero, 'salidaId', s.id, 'salida', s.fecha) ORDER BY b.id) AS boletos,
                     MIN(s.fecha) AS salida, MIN(s.id) AS salida_id,
                     MIN(o.nombre) AS origen, MIN(d.nombre) AS destino,
-                    MIN(COALESCE(em.alias, em.nombre)) AS empresa,
+                    MIN(COALESCE(NULLIF(em.alias, ''), em.nombre)) AS empresa,
                     STRING_AGG(CAST(a.numero AS text), ', ' ORDER BY a.numero) AS asientos,
                     COUNT(b.id) AS cantidad
              FROM boleto_venta v

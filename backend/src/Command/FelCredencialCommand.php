@@ -48,7 +48,7 @@ final class FelCredencialCommand
         }
 
         $this->credenciales->guardar($empresa, $usuario, $clave);
-        $io->success(sprintf("Credenciales guardadas para %s.", $empresa->getNombre()));
+        $io->success(sprintf("Credenciales guardadas para %s.", $empresa->getNombreCorto()));
 
         if ($probar !== null) {
             try {

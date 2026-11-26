@@ -87,7 +87,7 @@ final class EncomiendaController extends AbstractController
         return $this->json([
             "usuario" => ["id" => $usuario->getId(), "username" => $usuario->getUsername()],
             "estacion" => $estacion === null ? null : ["id" => $estacion->getId(), "nombre" => $estacion->getNombre(), "departamento" => $estacion->getDepartamento()],
-            "empresa" => $empresa === null ? null : ["id" => $empresa->getId(), "nombre" => $empresa->getNombre()],
+            "empresa" => $empresa === null ? null : ["id" => $empresa->getId(), "nombre" => $empresa->getNombreCorto()],
             "permisos" => [
                 "ver" => $this->isGranted(self::VER),
                 "registrar" => $this->isGranted(self::REGISTRAR),
@@ -99,7 +99,7 @@ final class EncomiendaController extends AbstractController
                 "sinFactura" => $this->isGranted(VentaController::SIN_FACTURA),
             ],
             "empresas" => array_map(
-                static fn(Empresa $e) => ["id" => $e->getId(), "nombre" => $e->getNombre(), "alias" => $e->getAlias()],
+                static fn(Empresa $e) => ["id" => $e->getId(), "nombre" => $e->getNombreCorto(), "alias" => $e->getAlias()],
                 $this->em->getRepository(Empresa::class)->findBy(["activa" => true] + ($empresas === null ? [] : ["id" => $empresas]), ["nombre" => "ASC"]),
             ),
             "estaciones" => array_map(
@@ -147,7 +147,7 @@ final class EncomiendaController extends AbstractController
         $empresas = [];
         if ($lista !== []) {
             $filas = $this->em->createQueryBuilder()
-                ->select("IDENTITY(s.ruta) AS ruta", "e.id", "e.nombre")
+                ->select("IDENTITY(s.ruta) AS ruta", "e.id", "COALESCE(NULLIF(e.alias, ''), e.nombre) AS nombre")
                 ->distinct()
                 ->from(Salida::class, "s")
                 ->join("s.empresa", "e")

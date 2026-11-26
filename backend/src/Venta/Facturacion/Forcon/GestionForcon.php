@@ -176,10 +176,10 @@ final class GestionForcon
                 throw new VentaRechazada("Cada emisor en línea debe ser un par de empresas con NIT.", "emisores_invalidos");
             }
             if ($empresa === $emisor) {
-                throw new VentaRechazada(sprintf("%s no puede facturar a nombre de sí misma: quite el renglón.", $empresa->getNombre()), "emisores_invalidos");
+                throw new VentaRechazada(sprintf("%s no puede facturar a nombre de sí misma: quite el renglón.", $empresa->getNombreCorto()), "emisores_invalidos");
             }
             if (isset($mapa[$empresa->getNit()])) {
-                throw new VentaRechazada(sprintf("%s aparece dos veces en los emisores en línea.", $empresa->getNombre()), "emisores_invalidos");
+                throw new VentaRechazada(sprintf("%s aparece dos veces en los emisores en línea.", $empresa->getNombreCorto()), "emisores_invalidos");
             }
             $mapa[(string) $empresa->getNit()] = (string) $emisor->getNit();
         }

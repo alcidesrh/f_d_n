@@ -44,7 +44,7 @@ final class PagoCredencialCommand
         }
 
         $this->credenciales->guardar($empresa, trim($comercio), trim($llave), $secreto);
-        $io->success(sprintf("Comercio %s guardado para %s.", $comercio, $empresa->getNombre()));
+        $io->success(sprintf("Comercio %s guardado para %s.", $comercio, $empresa->getNombreCorto()));
 
         return 0;
     }

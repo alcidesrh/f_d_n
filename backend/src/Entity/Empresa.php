@@ -95,7 +95,7 @@ class Empresa extends Base
         return $this;
     }
 
-    /** Nombre para pantallas: el alias, o el nombre si no tiene. Tickets, PDF y facturas usan `getNombre()`. */
+    /** Nombre para mostrar en todo (pantallas, tickets, PDF, chat): el alias, o el nombre si no tiene. Solo la factura (Forcon) usa `getNombre()`. */
     public function getNombreCorto(): ?string
     {
         return $this->alias ?: $this->nombre;

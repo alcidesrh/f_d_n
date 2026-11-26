@@ -42,7 +42,7 @@ final class TarjetaBus implements Tarjeta
             $datos[(int) $bus->getId()] = [
                 "titulo" => sprintf("Bus %s", $bus->getCodigo()),
                 "codigo" => $bus->getCodigo(),
-                "empresa" => $empresa ? ($empresa->getAlias() ?? $empresa->getNombre()) : null,
+                "empresa" => $empresa ? ($empresa->getNombreCorto()) : null,
                 "clase" => $bus->getClase()?->getNombre(),
                 "asientos" => count(array_filter($croquis, static fn(array $e) => $e["tipo"] === "asiento")),
                 "croquis" => $croquis,

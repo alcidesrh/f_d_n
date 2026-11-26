@@ -49,7 +49,7 @@ final class ConsultaReportesEncomienda
             (int) $salida->getId(),
             \DateTimeImmutable::createFromInterface($salida->getFecha()),
             (string) $salida->getRuta()?->getNombre(),
-            (string) $salida->getEmpresa()?->getNombre(),
+            (string) $salida->getEmpresa()?->getNombreCorto(),
             $bus?->getCodigo(),
             [self::pilotoDe($bus?->getPiloto()), self::pilotoDe($bus?->getCopiloto())],
             $this->nombreEnclave($f->destinoId),
@@ -213,7 +213,7 @@ final class ConsultaReportesEncomienda
                 "e.entregadaEn AS entregadaEn",
                 "e.motivoAnulacion AS motivoAnulacion",
                 "e.observacion AS observacion",
-                "em.nombre AS empresa",
+                "COALESCE(NULLIF(em.alias, ''), em.nombre) AS empresa",
                 "o.nombre AS origen",
                 "d.nombre AS destino",
                 "d.alias AS destinoAlias",
@@ -465,6 +465,6 @@ final class ConsultaReportesEncomienda
 
     private function nombreEmpresa(?int $id): ?string
     {
-        return $id === null ? null : $this->em->find(Empresa::class, $id)?->getNombre();
+        return $id === null ? null : $this->em->find(Empresa::class, $id)?->getNombreCorto();
     }
 }

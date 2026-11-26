@@ -73,7 +73,7 @@ final class MensajesPredeterminados
             "horaCierre" => TipoMensajePredeterminado::HORA_CIERRE,
             "usuarios" => array_map(static fn(Usuario $u) => ["id" => (int) $u->getId(), "label" => $u->getLabel(), "usuario" => $u->getUsername()], $usuarios),
             "grupos" => array_map(static fn(ChatCanal $c) => ["id" => (int) $c->getId(), "nombre" => (string) $c->getNombre()], $grupos),
-            "empresas" => array_map(static fn(Empresa $e) => ["id" => (int) $e->getId(), "nombre" => (string) $e->getNombre()], $empresas),
+            "empresas" => array_map(static fn(Empresa $e) => ["id" => (int) $e->getId(), "nombre" => (string) $e->getNombreCorto()], $empresas),
             "rutas" => array_map(static fn(Ruta $r) => ["id" => (int) $r->getId(), "nombre" => $r->getNombre()], $rutas),
         ];
     }
@@ -134,7 +134,7 @@ final class MensajesPredeterminados
             "tipo" => $tipo->value,
             "tipoNombre" => $tipo->nombre(),
             "activo" => $m->isActivo(),
-            "empresa" => $m->getEmpresa() === null ? null : ["id" => (int) $m->getEmpresa()->getId(), "nombre" => (string) $m->getEmpresa()->getNombre()],
+            "empresa" => $m->getEmpresa() === null ? null : ["id" => (int) $m->getEmpresa()->getId(), "nombre" => (string) $m->getEmpresa()->getNombreCorto()],
             "ruta" => $m->getRuta() === null ? null : ["id" => (int) $m->getRuta()->getId(), "nombre" => $m->getRuta()->getNombre()],
             "hora" => $m->getHora() ?? ($tipo->conHora() && $tipo !== TipoMensajePredeterminado::LIBRE ? TipoMensajePredeterminado::HORA_CIERRE : null),
             "dias" => $m->getDias(),

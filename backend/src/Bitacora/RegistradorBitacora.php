@@ -284,7 +284,7 @@ final class RegistradorBitacora implements ResetInterface
             "trayecto" => self::viaje($t->getTrayecto()),
             "clase" => $t->getClase()->value,
             "precio" => $t->getImporte(),
-            "empresa" => $t->getEmpresa()?->getNombre(),
+            "empresa" => $t->getEmpresa()?->getNombreCorto(),
             "vigenteDesde" => $t->getVigenteDesde()->format("Y-m-d H:i"),
         ];
     }

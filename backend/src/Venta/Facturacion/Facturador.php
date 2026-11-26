@@ -312,7 +312,7 @@ final class Facturador
         }
 
         throw new CertificacionFallida(
-            sprintf("Las ventas en línea de %s se facturan con el NIT %s, pero no hay empresa con ese NIT.", $empresa->getNombre(), $nit),
+            sprintf("Las ventas en línea de %s se facturan con el NIT %s, pero no hay empresa con ese NIT.", $empresa->getNombreCorto(), $nit),
             false,
             "emisor_en_linea_inexistente",
         );
@@ -341,7 +341,7 @@ final class Facturador
         return $propio
             ?? $repo->findOneBy(["empresa" => $empresa, "estacion" => null])
             ?? throw new CertificacionFallida(
-                sprintf("La empresa %s no tiene establecimiento FEL configurado: no se puede facturar.", $empresa->getNombre()),
+                sprintf("La empresa %s no tiene establecimiento FEL configurado: no se puede facturar.", $empresa->getNombreCorto()),
                 false,
                 "sin_establecimiento",
             );

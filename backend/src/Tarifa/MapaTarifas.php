@@ -160,7 +160,7 @@ final class MapaTarifas
             "nombre" => $t->getNombre(),
             "clase" => $t->getClase()->value,
             "empresaId" => $t->getEmpresa()?->getId(),
-            "empresa" => $t->getEmpresa()?->getNombre(),
+            "empresa" => $t->getEmpresa()?->getNombreCorto(),
             "busId" => $t->getBus()?->getId(),
             "bus" => $t->getBus()?->getCodigo(),
             "busClaseId" => $t->getBusClase()?->getId(),

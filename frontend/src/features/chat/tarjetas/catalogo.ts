@@ -23,19 +23,24 @@ export interface TipoTarjeta {
   sinMarco?: boolean
   /** Lo que dice el sello de la tarjeta (el recurso al que pertenece); por defecto, `nombre`. */
   recurso?: string
+  /** El sello de un registro en particular (p. ej. con su fecha); por defecto, `recurso`. */
+  sello?: (a: Pick<Adjunto, 'tipo' | 'id'>) => string
   /** Color del sello; por defecto, el primario. */
   color?: string
 }
+
+/** `dd/mm/aaaa` del id de `DesempenoDia` (`AAAAMMDD` · 1 000 000 + empresa). */
+const diaDelCodigo = (id: number) => String(Math.floor(id / 1_000_000)).replace(/^(\d{4})(\d{2})(\d{2})$/, '$3/$2/$1')
 
 const formulario = (a: Adjunto): RouteLocationRaw => ({ name: 'entity-form', params: { entity: entitySlug(a.tipo), id: a.id } })
 
 export const TARJETAS: Record<string, TipoTarjeta> = {
   BoletoAsiento: { nombre: 'Boleto', icono: 'confirmation-number-outline', componente: TarjetaBoleto, destino: (a) => ({ name: 'boletos', query: { id: a.id } }), recurso: 'Boletos', color: '#16a34a' },
-  Salida: { nombre: 'Salida', icono: 'directions-bus-outline', componente: TarjetaSalida, destino: (a) => ({ name: 'salidas', query: { ver: a.id } }), recurso: 'Salidas', color: '#2563eb' },
+  Salida: { nombre: 'Salida', icono: 'directions-bus-outline', componente: TarjetaSalida, destino: (a) => ({ name: 'salidas', query: { ver: a.id } }), recurso: 'Salida', color: '#2563eb' },
   // Llega en "Desempeño del día" (ADR-045): el resumen del día de la empresa, calculado al leer; el id codifica día y empresa.
-  DesempenoDia: { nombre: 'Desempeño del día', icono: 'insights-outline', componente: TarjetaDesempenoDia, destino: () => ({ name: 'dashboard' }), sinMarco: true, recurso: 'Desempeño', color: '#7c3aed' },
+  DesempenoDia: { nombre: 'Desempeño del día', icono: 'insights-outline', componente: TarjetaDesempenoDia, destino: () => ({ name: 'dashboard' }), sinMarco: true, recurso: 'Resumen', sello: (a) => `Resumen ${diaDelCodigo(a.id)}`, color: '#7c3aed' },
   // Llega en "Salida iniciada" (ADR-045): la tabla por vendedor, calculada al leer; el id es el de la salida.
-  OcupacionSalida: { nombre: 'Ocupación por vendedor', icono: 'groups-outline', componente: TarjetaOcupacionSalida, destino: (a) => ({ name: 'salidas', query: { ver: a.id } }), sinMarco: true, recurso: 'Salidas', color: '#2563eb' },
+  OcupacionSalida: { nombre: 'Ocupación por vendedor', icono: 'groups-outline', componente: TarjetaOcupacionSalida, destino: (a) => ({ name: 'salidas', query: { ver: a.id } }), sinMarco: true, recurso: 'Salida', color: '#2563eb' },
   Bus: { nombre: 'Bus', icono: 'airport-shuttle-outline', componente: TarjetaBus, destino: formulario, recurso: 'Buses', color: '#0891b2' },
   // Llega en los avisos del sistema (ADR-040): sin vista propia, «Abrir» lleva a la autorización.
   SolicitudAutorizacion: { nombre: 'Autorización', icono: 'verified-user-outline', destino: (a) => ({ name: 'autorizaciones', query: { id: a.id } }), recurso: 'Autorizaciones', color: '#d97706' },
@@ -60,5 +65,11 @@ export const HABITUALES = ['BoletoAsiento', 'Salida', 'BoletoVenta', 'Bus', 'Cli
 export function tipoTarjeta(tipo: string): Required<Pick<TipoTarjeta, 'nombre' | 'icono' | 'destino' | 'recurso' | 'color'>> & TipoTarjeta {
   const propia = TARJETAS[tipo]
   const nombre = propia?.nombre ?? tipo.replace(/([a-z])([A-Z])/g, '$1 $2')
-  return { nombre, icono: propia?.icono ?? 'description-outline', destino: propia?.destino ?? formulario, componente: propia?.componente, sinMarco: propia?.sinMarco, recurso: propia?.recurso ?? nombre, color: propia?.color ?? 'var(--p-primary-color)' }
+  return { sello: propia?.sello, nombre, icono: propia?.icono ?? 'description-outline', destino: propia?.destino ?? formulario, componente: propia?.componente, sinMarco: propia?.sinMarco, recurso: propia?.recurso ?? nombre, color: propia?.color ?? 'var(--p-primary-color)' }
+}
+
+/** Lo que dice el sello de un registro. */
+export const textoSello = (a: Pick<Adjunto, 'tipo' | 'id'>) => {
+  const t = tipoTarjeta(a.tipo)
+  return t.sello ? t.sello(a) : t.recurso
 }

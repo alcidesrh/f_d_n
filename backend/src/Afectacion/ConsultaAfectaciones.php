@@ -117,7 +117,7 @@ final class ConsultaAfectaciones
             "estado" => $a->getEstado()->value,
             "descripcion" => $a->getDescripcion(),
             "lugar" => ReglasAfectacion::lugar($a),
-            "empresa" => $a->getEmpresa() === null ? null : ["id" => (int) $a->getEmpresa()->getId(), "nombre" => (string) $a->getEmpresa()->getNombre()],
+            "empresa" => $a->getEmpresa() === null ? null : ["id" => (int) $a->getEmpresa()->getId(), "nombre" => (string) $a->getEmpresa()->getNombreCorto()],
             "estacion" => $a->getEstacion() === null ? null : ["id" => (int) $a->getEstacion()->getId(), "nombre" => (string) $a->getEstacion()->getNombre()],
             "bus" => $a->getBus() === null ? null : ["id" => (int) $a->getBus()->getId(), "codigo" => $a->getBus()->getCodigo()],
             "reportadaPor" => $usuario($a->getReportadaPor()),
@@ -173,7 +173,7 @@ final class ConsultaAfectaciones
     public function empresas(): array
     {
         return array_map(
-            static fn(Empresa $e) => ["id" => (int) $e->getId(), "nombre" => (string) $e->getNombre()],
+            static fn(Empresa $e) => ["id" => (int) $e->getId(), "nombre" => (string) $e->getNombreCorto()],
             $this->em->getRepository(Empresa::class)->findBy([], ["nombre" => "ASC"]),
         );
     }

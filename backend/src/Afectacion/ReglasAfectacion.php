@@ -71,7 +71,7 @@ final class ReglasAfectacion
             return "bus " . $bus->getCodigo() . ($estacion ? " ({$estacion})" : "");
         }
 
-        return $estacion ?? $a->getEmpresa()?->getNombre() ?? "sin lugar";
+        return $estacion ?? $a->getEmpresa()?->getNombreCorto() ?? "sin lugar";
     }
 
     /** «45 min», «3 h», «2 días» (hacia abajo). */

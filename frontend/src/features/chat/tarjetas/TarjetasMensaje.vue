@@ -1,6 +1,7 @@
 <!--
   Registros compartidos en un mensaje, agrupados por tipo. Cada tarjeta (o
-  grupo) lleva el sello de su recurso para distinguirla de un vistazo. Un
+  grupo) lleva el sello de su recurso para distinguirla de un vistazo, salvo
+  con `sinSellos` (la burbuja lleva uno solo por todas). Un
   registro solo, o de un tipo `sinMarco` del catálogo, se ve tal cual; dos o
   más del mismo tipo van plegados: el grupo dice cuántos son y adelanta sus
   títulos; al desplegarlo, las tarjetas vivas.
@@ -10,13 +11,13 @@
     <template v-for="g in grupos" :key="g.tipo">
       <template v-if="tipoTarjeta(g.tipo).sinMarco || g.adjuntos.length === 1">
         <div v-for="a in g.adjuntos" :key="`${a.tipo}:${a.id}`" class="sellado">
-          <SelloRecurso :tipo="a.tipo" />
+          <SelloRecurso v-if="!sinSellos" :adjunto="a" />
           <component :is="tipoTarjeta(a.tipo).componente" v-if="tipoTarjeta(a.tipo).sinMarco && a.estado === 'ok'" :datos="a.datos" :id="a.id" />
           <Tarjeta v-else :adjunto="a" />
         </div>
       </template>
       <div v-else class="sellado">
-        <SelloRecurso :tipo="g.tipo" />
+        <SelloRecurso v-if="!sinSellos" :adjunto="g.adjuntos[0]!" />
         <section class="grupo" :class="{ 'grupo--abierto': abiertos.has(g.tipo) }">
           <button type="button" class="grupo__cabeza" :aria-expanded="abiertos.has(g.tipo)" @click="alternar(g.tipo)">
             <span class="grupo__icono"><icon :name="tipoTarjeta(g.tipo).icono" size="1.05rem" color="text-current" /></span>
@@ -43,7 +44,7 @@ import { tipoTarjeta } from "./catalogo";
 import SelloRecurso from "./SelloRecurso.vue";
 import Tarjeta from "./Tarjeta.vue";
 
-const props = defineProps<{ adjuntos: Adjunto[] }>();
+const props = defineProps<{ adjuntos: Adjunto[]; sinSellos?: boolean }>();
 
 /** En el orden en que aparece cada tipo. */
 const grupos = computed(() => {
@@ -69,6 +70,7 @@ const avance = (adjuntos: Adjunto[]) => adjuntos.map((a) => (a.estado === "ok" ?
   gap: 1rem;
 }
 .sellado {
+  position: relative;
   display: flex;
   flex-direction: column;
   min-width: 0;

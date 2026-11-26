@@ -11,13 +11,10 @@ use App\Tablero\ConsultaTablero;
  * El desempeño del día (ADR-045): ingresos del día por boleto (ruta completa
  * e intermedia) y por encomienda, cómo se repartieron por canal, la operación
  * del día (reasignados, anulados, cancelados, cortesías) y el ranking de
- * estaciones. Puro: recibe las filas ya leídas y arma las cifras de la tarjeta.
+ * todas las estaciones que vendieron. Puro: recibe las filas ya leídas y arma las cifras de la tarjeta.
  */
 final class DesempenoDelDia
 {
-    /** Cuántas estaciones entran al ranking. */
-    public const TOP_ESTACIONES = 5;
-
     private const CANALES = ["estacion" => "Estaciones", "agencia" => "Agencias", "web" => "Página web"];
 
     /**
@@ -124,7 +121,7 @@ final class DesempenoDelDia
         }
         uasort($r, static fn(array $a, array $b) => $b["ingresos"] <=> $a["ingresos"]);
 
-        return array_slice(array_filter($r, static fn(array $e) => $e["ingresos"] > 0), 0, self::TOP_ESTACIONES, true);
+        return array_filter($r, static fn(array $e) => $e["ingresos"] > 0);
     }
 
     /** Porcentaje de `$parte` sobre `$todo`, con dos decimales; 0 si no hay base. */

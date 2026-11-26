@@ -159,7 +159,7 @@ final class ConsultaVenta
                 "salida" => $this->horaEn($r, $it, $origenId),
                 "llegada" => $this->horaEn($r, $it, $destinoId),
                 "salidaInicio" => $r->getFecha()->format(DATE_ATOM),
-                "empresa" => $r->getEmpresa()?->getAlias() ?: $r->getEmpresa()?->getNombre(),
+                "empresa" => $r->getEmpresa()?->getNombreCorto(),
                 "ruta" => $r->getRuta()->getPuntas(),
                 "rutaOrigen" => $r->getRuta()->getOrigen()?->getNombre(),
                 // La hora en la parada del cliente es estimada salvo en el origen del bus.
@@ -417,7 +417,7 @@ final class ConsultaVenta
             "salida" => $r->getFecha()->format(DATE_ATOM),
             "salidaEstacion" => $estacionId !== null ? $this->horaEn($r, $it, $estacionId) : null,
             "estado" => $r->getEstado()->value,
-            "empresa" => $r->getEmpresa() === null ? null : ["id" => $r->getEmpresa()->getId(), "nombre" => $r->getEmpresa()->getAlias() ?? $r->getEmpresa()->getNombre()],
+            "empresa" => $r->getEmpresa() === null ? null : ["id" => $r->getEmpresa()->getId(), "nombre" => $r->getEmpresa()->getNombreCorto()],
             "bus" => $r->getBus() === null ? null : ["id" => $busId, "codigo" => $r->getBus()->getCodigo(), "gama" => $r->getBus()->getGama(), "claseId" => $r->getBus()->getClase()?->getId()],
             "ruta" => [
                 "id" => $r->getRuta()->getId(),
