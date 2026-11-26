@@ -6,6 +6,7 @@ namespace App\Bitacora;
 
 use App\Actividad\AjustesBitacora;
 use App\Actividad\RegistroActividad;
+use App\Entity\Afectacion;
 use App\Entity\ApiToken;
 use App\Entity\AvisoMantenimiento;
 use App\Entity\AvisoOperativo;
@@ -61,7 +62,7 @@ final class RegistradorCambios implements ResetInterface
     public const EXCLUIDAS = [
         Bitacora::class, ApiToken::class, LecturaGps::class, LecturaGpsPrueba::class, RevisionMetadata::class,
         ChatMensaje::class, ChatMiembro::class, ChatArchivo::class, ChatContactoFijado::class,
-        CorreoMensaje::class, CorreoAdjunto::class, EstadoTarea::class, AvisoOperativo::class, AvisoMantenimiento::class,
+        CorreoMensaje::class, CorreoAdjunto::class, EstadoTarea::class, AvisoOperativo::class, AvisoMantenimiento::class, Afectacion::class,
         EnvioReporte::class, EnvioMensajePredeterminado::class, ReservaAsiento::class, SuscripcionPush::class, DispositivoPush::class,
     ];
 

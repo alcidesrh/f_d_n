@@ -415,6 +415,18 @@ export const router = createRouter({
       },
     },
     {
+      path: "/afectaciones",
+      name: "afectaciones",
+      component: () => import("@/features/afectacion/AfectacionesPage.vue"),
+      // Lo que cada uno ve y puede hacer lo decide el backend por el tipo de cada afectación (ADR-070).
+      meta: {
+        capacidad: ["afectacion.reportar", "afectacion.reportar_flota", "afectacion.informatica", "afectacion.insumos", "afectacion.instalaciones", "afectacion.flota", "afectacion.supervisar", "afectacion.tipos"],
+        title: "Afectaciones",
+        label: "Afectaciones",
+        icon: "report-outline",
+      },
+    },
+    {
       path: "/seguimiento/reproducir",
       name: "seguimiento-reproducir",
       component: () => import("@/features/seguimiento/ReproduccionPage.vue"),

@@ -32,10 +32,21 @@ export interface SerializeFormOptions {
   labels?: Record<string, string>
   /** Options por campo de relación (de `loadFullList`): `{ id: IRI, label }`. */
   relationOptions?: Record<string, AgnosticOption[]>
+  /**
+   * Options fijas de un campo que no es relación (p. ej. códigos de capacidad,
+   * `fieldOptions.ts`): con ellas el campo se elige de la lista, con `Select`
+   * o, si guarda una lista, `MultiSelect`.
+   */
+  fieldOptions?: Record<string, FieldOption[]>
   /** Valores iniciales por campo (ya hidratados, ver `hydrateInitialValues`). */
   values?: Record<string, unknown>
   /** Sufijo de `key` para remontar el formulario (reset sin perder estado viejo). */
   resetKey?: string | number
+}
+
+export interface FieldOption {
+  label: string
+  value: string
 }
 
 const PASSWORD_RE = /password|clave|contrasena|secret/i
@@ -65,6 +76,11 @@ export const TRANSFER_LIST_FIELDS: Record<string, string[]> = {
 
 export function isTransferListField(entityName: string, entry: FormFieldSource): boolean {
   return entry.isRelation && entry.isList && (TRANSFER_LIST_FIELDS[entityName]?.includes(entry.name) ?? false)
+}
+
+/** ¿El campo guarda una lista? Una relación a-muchos o un arreglo JSON (`Iterable` en GraphQL). */
+export function guardaLista(entry: FormFieldSource): boolean {
+  return entry.isList || entry.namedType === 'Iterable'
 }
 
 export function inferInputType(entry: FormFieldSource): string {
@@ -219,7 +235,8 @@ function buildFieldNode(
   // `name` es la clave del valor enviado (debe ser el campo real); el label
   // configurado solo cambia el texto visible.
   const name = entry.name
-  const inputType = isTransferListField(entityName, entry) ? 'TransferList' : inferInputType(entry)
+  const fijas = entry.isRelation ? undefined : opts.fieldOptions?.[name]
+  const inputType = fijas ? (guardaLista(entry) ? 'MultiSelect' : 'Select') : isTransferListField(entityName, entry) ? 'TransferList' : inferInputType(entry)
   const node: Record<string, unknown> = {
     key: `${entityName}.${name}${opts.resetKey !== undefined ? `_${String(opts.resetKey)}` : ''}`,
     $formkit: inputType,
@@ -234,7 +251,7 @@ function buildFieldNode(
 
   switch (inputType) {
     case 'Select':
-      node.options = buildFieldOptions(entry, opts.relationOptions?.[name] ?? [])
+      node.options = fijas ?? buildFieldOptions(entry, opts.relationOptions?.[name] ?? [])
       node.filter = true
       node.showClear = true
       node.placeholder = 'Selecciona…'
@@ -242,7 +259,7 @@ function buildFieldNode(
       node.optionValue = 'value'
       break
     case 'MultiSelect':
-      node.options = buildFieldOptions(entry, opts.relationOptions?.[name] ?? [])
+      node.options = fijas ?? buildFieldOptions(entry, opts.relationOptions?.[name] ?? [])
       node.filter = true
       node.display = 'chip'
       node.placeholder = 'Selecciona…'

@@ -73,6 +73,15 @@ enum Capacidad: string
 
     case CORREO_EXTERNO = 'correo.externo';
 
+    case AFECTACION_REPORTAR = 'afectacion.reportar';
+    case AFECTACION_REPORTAR_FLOTA = 'afectacion.reportar_flota';
+    case AFECTACION_INFORMATICA = 'afectacion.informatica';
+    case AFECTACION_INSUMOS = 'afectacion.insumos';
+    case AFECTACION_INSTALACIONES = 'afectacion.instalaciones';
+    case AFECTACION_FLOTA = 'afectacion.flota';
+    case AFECTACION_SUPERVISAR = 'afectacion.supervisar';
+    case AFECTACION_TIPOS = 'afectacion.tipos';
+
     public function nombre(): string
     {
         return match ($this) {
@@ -117,6 +126,14 @@ enum Capacidad: string
             self::BITACORA_CONFIGURAR => 'Configurar la bitácora diaria (nivel, retención y usuarios seguidos)',
             self::CHAT_PREDETERMINADOS => 'Configurar los mensajes predeterminados del chat',
             self::CORREO_EXTERNO => 'Enviar correos a direcciones de fuera de la empresa',
+            self::AFECTACION_REPORTAR => 'Reportar afectaciones de la estación (equipos, red, insumos, instalaciones)',
+            self::AFECTACION_REPORTAR_FLOTA => 'Reportar averías y desgaste de los buses',
+            self::AFECTACION_INFORMATICA => 'Atender afectaciones de informática (computadoras, impresoras, red e internet)',
+            self::AFECTACION_INSUMOS => 'Atender afectaciones de insumos (papel, tóner y consumibles de la estación)',
+            self::AFECTACION_INSTALACIONES => 'Atender afectaciones de instalaciones (energía, agua, local y mobiliario)',
+            self::AFECTACION_FLOTA => 'Atender afectaciones de la flota (averías, llantas y repuestos)',
+            self::AFECTACION_SUPERVISAR => 'Supervisar afectaciones: ver todas las de su alcance y recibir las que escalan sin resolver',
+            self::AFECTACION_TIPOS => 'Configurar los tipos de afectación (quién reporta, quién atiende, prioridad y centinela)',
         };
     }
 
@@ -136,6 +153,7 @@ enum Capacidad: string
             'bitacora' => 'Auditoría',
             'chat' => 'Chat',
             'correo' => 'Correo',
+            'afectacion' => 'Logística',
             default => 'Sistema',
         };
     }
@@ -156,9 +174,11 @@ enum Capacidad: string
             self::ENCOMIENDA_VER, self::ENCOMIENDA_REGISTRAR, self::ENCOMIENDA_INTERNA, self::ENCOMIENDA_EMBARCAR,
             self::ENCOMIENDA_ENTREGAR, self::ENCOMIENDA_ANULAR,
             self::REPORTE_VENTAS, self::REPORTE_ENCOMIENDAS,
-            self::IAM_ASIGNAR, self::AUTORIZACION_APROBAR => [Dimension::EMPRESA, Dimension::ESTACION],
+            self::IAM_ASIGNAR, self::AUTORIZACION_APROBAR,
+            self::AFECTACION_REPORTAR, self::AFECTACION_INFORMATICA, self::AFECTACION_INSUMOS, self::AFECTACION_INSTALACIONES => [Dimension::EMPRESA, Dimension::ESTACION],
             self::SALIDA_VER, self::SALIDA_CREAR, self::SALIDA_EDITAR, self::SALIDA_CANCELAR, self::SALIDA_ELIMINAR,
-            self::BITACORA_VER => [Dimension::EMPRESA],
+            self::BITACORA_VER,
+            self::AFECTACION_REPORTAR_FLOTA, self::AFECTACION_FLOTA, self::AFECTACION_SUPERVISAR => [Dimension::EMPRESA],
             default => [],
         };
     }

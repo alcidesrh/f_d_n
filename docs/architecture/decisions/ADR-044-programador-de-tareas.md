@@ -47,6 +47,7 @@ La evaluación previa recomendó `symfony/scheduler` sobre el Messenger y el Pos
 | `mantenimiento_flota` | 03:30 | Suma al odómetro de cada bus lo recorrido por GPS y avisa el mantenimiento que vence (ADR-065). |
 | `purgar_lecturas_gps` | 03:45 | Lecturas GPS de más de 90 días (ADR-050). |
 | `refrescar_tablero` | 1 min | Rehace las copias del tablero que alguien miró en los últimos 10 minutos (`Tablero\TableroEnCache`, ADR-046). |
+| `vigilar_afectaciones` | 1 min | El centinela de las afectaciones abiertas: primer aviso, escalamiento y repetición hasta que se resuelven; también se encola al reportarse una (ADR-070). |
 
 Los comandos de antes siguen, pero corren una pasada: sirven para correr una tarea a mano. Ya no tienen `--cada` ni `--durante`.
 

@@ -106,6 +106,23 @@ Un trabajo de taller hecho a un bus: fecha, odómetro, costo y taller. Con plan,
 _Avoid_: orden de trabajo, ticket, servicio
 Modelo: nuevo (ADR-065)
 
+## Logística
+
+**Tipo de afectación** (`TipoAfectacion`):
+Una clase de problema que se repite (impresora averiada, papel agotado, avería de bus): dice sobre qué cae (estación, bus o empresa), qué capacidad hace falta para reportarla (**owner**), cuál para atenderla (**target**), su prioridad (normal, grave o urgente) y cómo la vigila el centinela (cada cuánto avisa, cuándo escala y a qué capacidades más).
+_Avoid_: categoría, tipo de incidencia, tipo de ticket
+Modelo: nuevo (ADR-070)
+
+**Afectación**:
+Un problema concreto en la logística: una impresora rota en una estación, el papel que se acabó, una llanta dañada en un bus. Nace **creada**, pasa a **pendiente** cuando le llega a alguien que la puede atender y queda **resuelta** cuando ese alguien la cierra. La reporta una persona o la detecta el sistema.
+_Avoid_: incidencia, ticket, reporte, avería (la avería es un tipo de afectación)
+Modelo: nuevo (`App\Afectacion\Afectaciones`, ADR-070)
+
+**Centinela**:
+La tarea que vigila las afectaciones abiertas: da el primer aviso a quien la atiende (target), y si pasado el umbral del tipo sigue sin resolver, **escala**: avisa también a las capacidades de escalamiento y repite el aviso a ese grupo a cada intervalo hasta que se resuelve.
+_Avoid_: monitor, recordatorio, vigilante
+Modelo: nuevo (`App\Afectacion\Centinela`, `ReglasCentinela`, tarea `vigilar_afectaciones`, ADR-070)
+
 ## Ventas
 
 **Salida**:

@@ -35,6 +35,8 @@ export const TARJETAS: Record<string, TipoTarjeta> = {
   Bus: { nombre: 'Bus', icono: 'airport-shuttle-outline', componente: TarjetaBus, destino: formulario },
   // Llega en los avisos del sistema (ADR-040): sin vista propia, «Abrir» lleva a la autorización.
   SolicitudAutorizacion: { nombre: 'Autorización', icono: 'verified-user-outline', destino: (a) => ({ name: 'autorizaciones', query: { id: a.id } }) },
+  // Llega en los avisos del centinela (ADR-070): sin vista propia, «Abrir» lleva a la afectación.
+  Afectacion: { nombre: 'Afectación', icono: 'report-outline', destino: (a) => ({ name: 'afectaciones', query: { id: a.id } }) },
   // Sin vista propia (tarjeta genérica): solo nombre e ícono.
   BoletoVenta: { nombre: 'Venta', icono: 'receipt-long-outline' },
   Cliente: { nombre: 'Cliente', icono: 'person-outline' },

@@ -29,6 +29,7 @@ import {
   serializeSubmitValue,
   type FormFieldSource,
 } from './formSchema'
+import { loadFieldOptions } from './fieldOptions'
 import { apiIconGateway } from './iconGateway'
 import { createIconRelationResolver, isIconRelation } from './iconRelation'
 
@@ -176,7 +177,10 @@ export function useEntityForm(
 
       let values = hydrateInitialValues(selected, source, mode.value)
       if (mode.value === 'create') values = { ...values, ...valoresDeRuta(selected, initial.value ?? {}) }
-      const relationOptions = await conLoGuardado(selected, await loadRelationOptions(selected), values)
+      const [relationOptions, fieldOptions] = await Promise.all([
+        loadRelationOptions(selected).then((options) => conLoGuardado(selected, options, values)),
+        loadFieldOptions(entity.name, selected),
+      ])
       if (selected.some(isIconRelation)) values = await icons.hydrate(selected, values)
 
       if (seq !== buildSeq) return
@@ -185,6 +189,7 @@ export function useEntityForm(
         mode: mode.value,
         labels: columnLabels(target),
         relationOptions,
+        fieldOptions,
         values,
         resetKey: ++generation,
       })

@@ -82,6 +82,45 @@ describe('capitalizeLabel', () => {
   })
 })
 
+describe('opciones fijas (fieldOptions)', () => {
+  const capacidades = [
+    { label: 'Logística · Atender informática', value: 'afectacion.informatica' },
+    { label: 'Logística · Supervisar', value: 'afectacion.supervisar' },
+  ]
+
+  it('un texto con opciones fijas se elige con Select y un arreglo JSON con MultiSelect', () => {
+    const fields = [
+      field({ name: 'target', namedType: 'String', required: true }),
+      field({ name: 'escalamiento', namedType: 'Iterable' }),
+      field({ name: 'nombre', namedType: 'String' }),
+    ]
+    const nodes = serializeEntityForm('TipoAfectacion', fields, {
+      fieldOptions: { target: capacidades, escalamiento: capacidades },
+      values: { target: 'afectacion.informatica', escalamiento: ['afectacion.supervisar'] },
+    })
+
+    const target = findField(nodes, 'target')
+    expect(target.$formkit).toBe('Select')
+    expect(target.options).toEqual(capacidades)
+    expect(target.value).toBe('afectacion.informatica')
+    expect(target.validation).toBe('required')
+
+    const escalamiento = findField(nodes, 'escalamiento')
+    expect(escalamiento.$formkit).toBe('MultiSelect')
+    expect(escalamiento.value).toEqual(['afectacion.supervisar'])
+
+    expect(findField(nodes, 'nombre').$formkit).toBe('InputText')
+  })
+
+  it('guarda los códigos tal cual', () => {
+    const fields = [field({ name: 'target', namedType: 'String' }), field({ name: 'escalamiento', namedType: 'Iterable' })]
+    expect(serializeSubmitValue(fields, { target: 'afectacion.flota', escalamiento: ['afectacion.supervisar'] })).toEqual({
+      target: 'afectacion.flota',
+      escalamiento: ['afectacion.supervisar'],
+    })
+  })
+})
+
 describe('isTransferListField', () => {
   it('usa la lista de transferencia para los permisos y acciones del rol', () => {
     const permisos = field({ name: 'permisos', namedType: 'Permiso', isRelation: true, isList: true })
