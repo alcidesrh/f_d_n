@@ -1,6 +1,6 @@
 <!--
   Un registro compartido en el chat: cabecera (id en la base de datos y abrir;
-  el tipo y su ícono ya los dice el grupo de `TarjetasMensaje`) y el cuerpo
+  el recurso lo dice el sello que le pone `TarjetasMensaje`) y el cuerpo
   propio del tipo, o la etiqueta si no tiene. Si quien lee no tiene permiso o
   el registro ya no existe, lo dice en lugar de mostrar datos.
 -->

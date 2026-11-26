@@ -21,39 +21,44 @@ export interface TipoTarjeta {
   destino?: (a: Adjunto) => RouteLocationRaw
   /** Sin grupo plegable ni cabecera: se ve el cuerpo del tipo tal cual. */
   sinMarco?: boolean
+  /** Lo que dice el sello de la tarjeta (el recurso al que pertenece); por defecto, `nombre`. */
+  recurso?: string
+  /** Color del sello; por defecto, el primario. */
+  color?: string
 }
 
 const formulario = (a: Adjunto): RouteLocationRaw => ({ name: 'entity-form', params: { entity: entitySlug(a.tipo), id: a.id } })
 
 export const TARJETAS: Record<string, TipoTarjeta> = {
-  BoletoAsiento: { nombre: 'Boleto', icono: 'confirmation-number-outline', componente: TarjetaBoleto, destino: (a) => ({ name: 'boletos', query: { id: a.id } }) },
-  Salida: { nombre: 'Salida', icono: 'directions-bus-outline', componente: TarjetaSalida, destino: (a) => ({ name: 'salidas', query: { ver: a.id } }) },
+  BoletoAsiento: { nombre: 'Boleto', icono: 'confirmation-number-outline', componente: TarjetaBoleto, destino: (a) => ({ name: 'boletos', query: { id: a.id } }), recurso: 'Boletos', color: '#16a34a' },
+  Salida: { nombre: 'Salida', icono: 'directions-bus-outline', componente: TarjetaSalida, destino: (a) => ({ name: 'salidas', query: { ver: a.id } }), recurso: 'Salidas', color: '#2563eb' },
   // Llega en "Desempeño del día" (ADR-045): el resumen del día de la empresa, calculado al leer; el id codifica día y empresa.
-  DesempenoDia: { nombre: 'Desempeño del día', icono: 'insights-outline', componente: TarjetaDesempenoDia, destino: () => ({ name: 'dashboard' }), sinMarco: true },
+  DesempenoDia: { nombre: 'Desempeño del día', icono: 'insights-outline', componente: TarjetaDesempenoDia, destino: () => ({ name: 'dashboard' }), sinMarco: true, recurso: 'Desempeño', color: '#7c3aed' },
   // Llega en "Salida iniciada" (ADR-045): la tabla por vendedor, calculada al leer; el id es el de la salida.
-  OcupacionSalida: { nombre: 'Ocupación por vendedor', icono: 'groups-outline', componente: TarjetaOcupacionSalida, destino: (a) => ({ name: 'salidas', query: { ver: a.id } }), sinMarco: true },
-  Bus: { nombre: 'Bus', icono: 'airport-shuttle-outline', componente: TarjetaBus, destino: formulario },
+  OcupacionSalida: { nombre: 'Ocupación por vendedor', icono: 'groups-outline', componente: TarjetaOcupacionSalida, destino: (a) => ({ name: 'salidas', query: { ver: a.id } }), sinMarco: true, recurso: 'Salidas', color: '#2563eb' },
+  Bus: { nombre: 'Bus', icono: 'airport-shuttle-outline', componente: TarjetaBus, destino: formulario, recurso: 'Buses', color: '#0891b2' },
   // Llega en los avisos del sistema (ADR-040): sin vista propia, «Abrir» lleva a la autorización.
-  SolicitudAutorizacion: { nombre: 'Autorización', icono: 'verified-user-outline', destino: (a) => ({ name: 'autorizaciones', query: { id: a.id } }) },
+  SolicitudAutorizacion: { nombre: 'Autorización', icono: 'verified-user-outline', destino: (a) => ({ name: 'autorizaciones', query: { id: a.id } }), recurso: 'Autorizaciones', color: '#d97706' },
   // Llega en los avisos del centinela (ADR-070): sin vista propia, «Abrir» lleva a la afectación.
-  Afectacion: { nombre: 'Afectación', icono: 'report-outline', destino: (a) => ({ name: 'afectaciones', query: { id: a.id } }) },
+  Afectacion: { nombre: 'Afectación', icono: 'report-outline', destino: (a) => ({ name: 'afectaciones', query: { id: a.id } }), recurso: 'Afectaciones', color: '#dc2626' },
   // Sin vista propia (tarjeta genérica): solo nombre e ícono.
-  BoletoVenta: { nombre: 'Venta', icono: 'receipt-long-outline' },
-  Cliente: { nombre: 'Cliente', icono: 'person-outline' },
-  Piloto: { nombre: 'Piloto', icono: 'badge-outline' },
-  Agencia: { nombre: 'Agencia', icono: 'storefront-outline' },
-  Estacion: { nombre: 'Estación', icono: 'location-city' },
-  Trayecto: { nombre: 'Trayecto', icono: 'route' },
-  Empresa: { nombre: 'Empresa', icono: 'domain' },
-  Factura: { nombre: 'Factura', icono: 'request-quote-outline' },
-  Usuario: { nombre: 'Usuario', icono: 'account-circle-outline' },
-  Enclave: { nombre: 'Enclave', icono: 'location-on-outline' },
+  BoletoVenta: { nombre: 'Venta', icono: 'receipt-long-outline', recurso: 'Ventas', color: '#059669' },
+  Cliente: { nombre: 'Cliente', icono: 'person-outline', recurso: 'Clientes' },
+  Piloto: { nombre: 'Piloto', icono: 'badge-outline', recurso: 'Pilotos' },
+  Agencia: { nombre: 'Agencia', icono: 'storefront-outline', recurso: 'Agencias' },
+  Estacion: { nombre: 'Estación', icono: 'location-city', recurso: 'Estaciones' },
+  Trayecto: { nombre: 'Trayecto', icono: 'route', recurso: 'Trayectos' },
+  Empresa: { nombre: 'Empresa', icono: 'domain', recurso: 'Empresas' },
+  Factura: { nombre: 'Factura', icono: 'request-quote-outline', recurso: 'Facturas', color: '#db2777' },
+  Usuario: { nombre: 'Usuario', icono: 'account-circle-outline', recurso: 'Usuarios' },
+  Enclave: { nombre: 'Enclave', icono: 'location-on-outline', recurso: 'Enclaves' },
 }
 
 /** Los que el selector de registros ofrece primero. */
 export const HABITUALES = ['BoletoAsiento', 'Salida', 'BoletoVenta', 'Bus', 'Cliente', 'Piloto', 'Agencia', 'Estacion', 'Trayecto']
 
-export function tipoTarjeta(tipo: string): Required<Pick<TipoTarjeta, 'nombre' | 'icono' | 'destino'>> & TipoTarjeta {
+export function tipoTarjeta(tipo: string): Required<Pick<TipoTarjeta, 'nombre' | 'icono' | 'destino' | 'recurso' | 'color'>> & TipoTarjeta {
   const propia = TARJETAS[tipo]
-  return { nombre: propia?.nombre ?? tipo.replace(/([a-z])([A-Z])/g, '$1 $2'), icono: propia?.icono ?? 'description-outline', destino: propia?.destino ?? formulario, componente: propia?.componente, sinMarco: propia?.sinMarco }
+  const nombre = propia?.nombre ?? tipo.replace(/([a-z])([A-Z])/g, '$1 $2')
+  return { nombre, icono: propia?.icono ?? 'description-outline', destino: propia?.destino ?? formulario, componente: propia?.componente, sinMarco: propia?.sinMarco, recurso: propia?.recurso ?? nombre, color: propia?.color ?? 'var(--p-primary-color)' }
 }

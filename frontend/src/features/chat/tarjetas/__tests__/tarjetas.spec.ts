@@ -9,6 +9,7 @@ import TarjetaBoleto from '../TarjetaBoleto.vue'
 import TarjetaOcupacionSalida from '../TarjetaOcupacionSalida.vue'
 import TarjetaDesempenoDia from '../TarjetaDesempenoDia.vue'
 import Tarjeta from '../Tarjeta.vue'
+import TarjetasMensaje from '../TarjetasMensaje.vue'
 
 const asiento = (numero: number, planta: number, clase: 'A' | 'B'): AsientoCroquis => ({ tipo: 'asiento', id: numero, numero, clase, planta, fila: numero, columna: 1 })
 
@@ -155,5 +156,23 @@ describe('desempeño del día', () => {
     const w = mount(TarjetaDesempenoDia, { props: { datos: { ...datos, vacio: true } }, global })
     expect(w.text()).toContain('Hoy no hubo ventas ni encomiendas.')
     expect(w.find('.total').exists()).toBe(false)
+  })
+})
+
+describe('tarjetas de un mensaje', () => {
+  const afectacion = (id: number) => ({ tipo: 'Afectacion', id, estado: 'ok' as const, datos: { titulo: `Afectación ${id}` } })
+
+  it('un registro solo va sin acordeón, con el sello de su recurso', () => {
+    const w = mount(TarjetasMensaje, { props: { adjuntos: [afectacion(1), { tipo: 'Salida', id: 2, estado: 'sin_acceso' as const }] }, global })
+    expect(w.find('.grupo').exists()).toBe(false)
+    expect(w.findAll('.tarjeta')).toHaveLength(2)
+    expect(w.findAll('.sello').map((s) => s.text())).toEqual(['Afectaciones', 'Salidas'])
+  })
+
+  it('dos o más del mismo tipo van plegados bajo un solo sello', () => {
+    const w = mount(TarjetasMensaje, { props: { adjuntos: [afectacion(1), afectacion(2)] }, global })
+    expect(w.find('.grupo').exists()).toBe(true)
+    expect(w.find('.tarjeta').exists()).toBe(false)
+    expect(w.findAll('.sello').map((s) => s.text())).toEqual(['Afectaciones'])
   })
 })
