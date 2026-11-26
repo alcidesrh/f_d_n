@@ -53,6 +53,7 @@ import ChatAviso from '@/features/chat/ChatAviso.vue'
 import { useVentanaChat } from '@/features/chat/ventana'
 import SolicitarAutorizacionDialog from '@/shared/autorizacion/SolicitarAutorizacionDialog.vue'
 import { LISTADO_DE_REGISTROS, REPORTES_ADJUNTABLES } from '@/shared/chat/integracion'
+import { EDITOR_DE_APARIENCIA } from '@/shared/cuenta/integracion'
 import AppHeader from './AppHeader.vue'
 import ChatFlotante from './ChatFlotante.vue'
 import NavArea from './navigation/NavArea.vue'
@@ -78,6 +79,9 @@ const ChatVentana = defineAsyncComponent(() => import('@/features/chat/ChatVenta
 
 // El selector de registros del chat usa el listado genérico (una feature no importa a otra).
 provide(LISTADO_DE_REGISTROS, defineAsyncComponent(() => import('@/features/entity-crud/ListPage.vue')))
+
+// La sección "Apariencia" de Mi cuenta edita el tema, que es del shell.
+provide(EDITOR_DE_APARIENCIA, defineAsyncComponent(() => import('./ThemeEditor.vue')))
 
 provide(REPORTES_ADJUNTABLES, [
   { id: 'cuadre-venta-boletos', nombre: 'Cuadre de venta', icono: 'request-quote-outline', componente: defineAsyncComponent(() => import('@/features/reporte/CuadreVentaBoletosPage.vue')) },

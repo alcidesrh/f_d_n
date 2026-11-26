@@ -29,7 +29,7 @@ export const guiasEmpezar: Guia[] = [
       'Botón de menú (las tres líneas, arriba a la izquierda): abre o cierra el menú lateral. En el teléfono aparece como un cajón que se abre desde el borde.',
       'Migas de pan (en el centro de la cabecera): muestran por dónde llegó a la pantalla actual. Cada una lo lleva de vuelta.',
       'Reloj (arriba a la izquierda): la hora del sistema.',
-      'Botones de la derecha: apariencia (paleta), mensajes, ayuda (signo de pregunta), autorizaciones (campana), pantalla completa y su nombre de usuario.',
+      'Botones de la derecha: mensajes, autorizaciones (campana), estación de trabajo y su nombre de usuario con la foto, que abre Mi cuenta, Instalar app, Ayuda y Cerrar sesión.',
       'Si la pantalla tiene un panel lateral derecho, el botón de la extrema derecha lo muestra u oculta.',
     ],
     ojo: [
@@ -75,11 +75,11 @@ export const guiasEmpezar: Guia[] = [
     para: [],
     pasos: [
       'Toque su nombre de usuario (arriba a la derecha) → «Mi cuenta».',
-      'En «Cambiar contraseña» escriba la actual y dos veces la nueva.',
+      'Abra la sección «Seguridad» y escriba la contraseña actual y dos veces la nueva.',
       'Pulse «Cambiar contraseña».',
     ],
     ojo: ['¿Olvidó la actual? Pida a quien administra los usuarios que le ponga una nueva.'],
-    abrir: { etiqueta: 'Abrir Mi cuenta', destino: { name: 'mi-cuenta' } },
+    abrir: { etiqueta: 'Abrir Seguridad', destino: { name: 'mi-cuenta', query: { seccion: 'seguridad' } } },
     pantallas: ['mi-cuenta'],
     palabras: ['clave', 'password', 'contrasena olvidada'],
   },
@@ -91,9 +91,9 @@ export const guiasEmpezar: Guia[] = [
     para: [],
     pasos: [
       'Abra «Mi cuenta» desde su nombre de usuario.',
-      '«Cambiar foto»: elija una imagen (JPG, PNG o WebP de hasta 2 MB).',
-      '«Datos personales»: corrija nombre, correo o teléfono y pulse «Guardar cambios».',
-      '«Notificaciones»: actívelas en cada navegador o teléfono donde quiera recibir los mensajes del chat.',
+      'En «Perfil», «Cambiar foto»: elija una imagen (JPG, PNG o WebP de hasta 2 MB).',
+      'En «Perfil», corrija nombre, correo o teléfono y pulse «Guardar cambios».',
+      'En «Notificaciones», actívelas en cada navegador o teléfono donde quiera recibir los mensajes del chat, y elija por dónde le llegan los reportes.',
     ],
     ojo: [
       'Las notificaciones son propias de cada navegador: si cambia de computadora, actívelas de nuevo.',
@@ -110,13 +110,16 @@ export const guiasEmpezar: Guia[] = [
     resumen: 'La apariencia de la aplicación en su equipo.',
     para: [],
     pasos: [
-      'Pulse el botón de la paleta, en la cabecera: se abre «Personalizar apariencia».',
-      'Elija el modo claro u oscuro y, si lo desea, los colores.',
+      'Toque su nombre de usuario (arriba a la derecha) → «Mi cuenta» → «Apariencia».',
+      'Elija el modo claro u oscuro y, si lo desea, los colores y el estilo. Cada cambio se ve al instante.',
+      '«Restablecer» vuelve a la apariencia de fábrica.',
     ],
     ojo: [
       'Al entrar por primera vez el modo sigue el del sistema operativo.',
       'La apariencia es de cada navegador; no cambia la de otros usuarios.',
     ],
+    abrir: { etiqueta: 'Abrir Apariencia', destino: { name: 'mi-cuenta', query: { seccion: 'apariencia' } } },
+    pantallas: ['mi-cuenta'],
     palabras: ['tema', 'modo oscuro', 'colores', 'dark', 'personalizar'],
   },
   {
@@ -140,10 +143,10 @@ export const guiasEmpezar: Guia[] = [
     id: 'ayuda-de-la-pantalla',
     tema: 'empezar',
     titulo: 'Ayuda de la pantalla donde estoy',
-    resumen: 'El signo de pregunta de la cabecera lleva a las guías de la pantalla actual.',
+    resumen: '«Ayuda», en el menú de su nombre de usuario, lleva a las guías de la pantalla actual.',
     para: [],
     pasos: [
-      'Pulse el signo de pregunta de la cabecera mientras está en una pantalla.',
+      'Mientras está en una pantalla, toque su nombre de usuario (arriba a la derecha) → «Ayuda».',
       'Aparecen primero las guías de esa pantalla; «Ver todas» muestra el manual completo.',
       'Use la búsqueda para encontrar una palabra: «contraseña», «anular», «encomienda».',
     ],

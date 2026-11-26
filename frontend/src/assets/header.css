@@ -223,14 +223,6 @@
     padding-right: 0.5rem;
   }
 }
-/* Si la franja no cabe, el tema y la apariencia quedan al final: mensajes y
-   notificaciones primero, a la vista. */
-.header-secundario {
-  order: 1;
-  @variant lg {
-    order: 0;
-  }
-}
 /* Acciones solo de escritorio: en el teléfono no se muestran (el chat tiene su disparador flotante). */
 .header-escritorio {
   display: none;

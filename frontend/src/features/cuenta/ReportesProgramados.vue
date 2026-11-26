@@ -1,11 +1,11 @@
 <!--
-  "Reportes y avisos" de Mi cuenta (ADR-044): los reportes que el programador
+  "Reportes y avisos" de la sección Notificaciones de Mi cuenta (ADR-044): los reportes que el programador
   de tareas manda cada mañana (o al ocurrir, las alertas) y por dónde los
   quiere el usuario. Cada uno llega recortado a lo que su rol le deja ver.
 -->
 <template>
   <section v-if="datos && datos.reportes.some((r) => r.puede || r.suscrito)">
-    <h2 class="mb-1 text-base font-semibold">Reportes y avisos</h2>
+    <h3 class="mb-1 text-sm font-semibold">Reportes y avisos</h3>
     <p class="mb-3 text-sm text-muted-color">Llegan a «Bitácora del sistema» en el chat o a su correo, con lo que su rol le deja ver.</p>
     <ul class="m-0 flex list-none flex-col gap-3 p-0">
       <li v-for="r in datos.reportes" :key="r.codigo" class="flex flex-col gap-2 @xl:flex-row @xl:items-start @xl:justify-between">

@@ -43,6 +43,8 @@ export const router = createRouter({
         title: "Mi cuenta",
         label: "Mi cuenta",
         icon: "manage-accounts-outline",
+        // La sección va en `?seccion=`: cambiarla no rearma la página.
+        conservar: true,
       },
     },
     {

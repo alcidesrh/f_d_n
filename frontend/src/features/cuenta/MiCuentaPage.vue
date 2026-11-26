@@ -1,192 +1,54 @@
 <!--
-  "Mi cuenta" (`/mi-cuenta`): lo que el usuario puede editar de su propio
-  perfil: foto, datos personales, contraseña (`MiCuentaController`), las
-  notificaciones del chat en este dispositivo (`core/chat/push.ts`) y los
-  reportes programados que recibe (`ReportesProgramados`, ADR-044). El
+  "Mi cuenta" (`/mi-cuenta`): lo que el usuario puede editar de sí mismo,
+  agrupado en secciones (`secciones.ts`): perfil, seguridad, notificaciones y
+  apariencia. La abierta va en `?seccion=` (la ayuda enlaza directo). El
   usuario, los roles y los permisos los administra otra persona.
 -->
 <template>
   <div>
     <PageHead />
     <div v-if="cuenta.cuenta" class="form-fluid @container">
-      <div class="grid grid-cols-1 items-start gap-4 @4xl:grid-cols-[18rem_minmax(0,1fr)]">
-        <section class="flex flex-col items-center gap-4 text-center">
-          <ChatAvatar
-            :id="cuenta.cuenta.id"
-            :nombre="cuenta.nombre"
-            :foto="cuenta.foto"
-            tamano="xl"
-          />
-          <div class="min-w-0 max-w-full">
-            <div class="truncate text-lg font-semibold">{{ cuenta.nombre }}</div>
-            <div class="truncate text-sm text-muted-color">@{{ cuenta.cuenta.username }}</div>
-          </div>
-          <div class="flex flex-wrap justify-center gap-2">
-            <Button
-              label="Cambiar foto"
-              severity="secondary"
-              size="small"
-              :loading="subiendo"
-              @click="elegir?.click()"
-            >
-              <template #icon><icon name="photo-camera" size="1rem" /></template>
-            </Button>
-            <Button
-              v-if="cuenta.cuenta.foto"
-              label="Quitar"
-              severity="danger"
-              text
-              size="small"
-              :disabled="subiendo"
-              @click="quitar"
-            >
-              <template #icon><icon name="delete-outline" size="1rem" /></template>
-            </Button>
-          </div>
-          <input
-            ref="elegir"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            class="hidden"
-            @change="onFoto"
-          />
-          <p class="text-xs text-muted-color">JPG, PNG o WebP. Se recorta en cuadrado.</p>
-
-          <dl
-            v-if="vinculos.length"
-            class="w-full border-t border-surface-200 pt-3 text-left text-sm"
-          >
-            <div v-for="v in vinculos" :key="v.etiqueta" class="flex justify-between gap-3 py-0.5">
-              <dt class="text-muted-color">{{ v.etiqueta }}</dt>
-              <dd class="truncate font-medium">{{ v.valor }}</dd>
+      <div class="grid grid-cols-1 items-start gap-4 @4xl:grid-cols-[16rem_minmax(0,1fr)] @4xl:gap-6">
+        <aside class="flex min-w-0 flex-col gap-3 @4xl:sticky @4xl:top-4">
+          <div class="flex items-center gap-3 rounded-xl border border-surface-200 bg-surface-0 p-3">
+            <ChatAvatar :id="cuenta.cuenta.id" :nombre="cuenta.nombre" :foto="cuenta.foto" tamano="lg" />
+            <div class="min-w-0">
+              <div class="truncate font-semibold">{{ cuenta.nombre }}</div>
+              <div class="truncate text-sm text-muted-color">@{{ cuenta.cuenta.username }}</div>
+              <!-- Dónde trabaja (solo lectura). -->
+              <div v-for="v in vinculos" :key="v.etiqueta" class="truncate text-xs text-muted-color" :title="`${v.etiqueta}: ${v.valor}`">{{ v.valor }}</div>
             </div>
-          </dl>
+          </div>
+
+          <!-- En el teléfono, una fila que se desliza; desde @4xl, la lista a la izquierda. -->
+          <nav ref="menu" aria-label="Secciones de Mi cuenta" class="-mx-1 overflow-x-auto px-1 pb-1 @4xl:mx-0 @4xl:overflow-visible @4xl:p-0">
+            <ul class="m-0 flex list-none gap-1 p-0 @4xl:flex-col">
+              <li v-for="s in SECCIONES" :key="s.id" class="shrink-0">
+                <RouterLink
+                  :to="{ query: { ...route.query, seccion: s.id } }"
+                  replace
+                  class="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium whitespace-nowrap no-underline transition-colors"
+                  :class="activa === s.id ? 'bg-primary-50 text-primary-700' : 'text-surface-700 hover:bg-surface-100'"
+                  :aria-current="activa === s.id ? 'page' : undefined"
+                >
+                  <icon :name="s.icono" size="1.1rem" />
+                  {{ s.titulo }}
+                </RouterLink>
+              </li>
+            </ul>
+          </nav>
+        </aside>
+
+        <section :key="activa" class="min-w-0" :aria-labelledby="`seccion-${activa}`">
+          <header class="mb-4 border-b border-surface-200 pb-3">
+            <h2 :id="`seccion-${activa}`" class="m-0 text-base font-semibold">{{ seccion.titulo }}</h2>
+            <p class="m-0 text-sm text-muted-color">{{ seccion.descripcion }}</p>
+          </header>
+          <PerfilSeccion v-if="activa === 'perfil'" />
+          <SeguridadSeccion v-else-if="activa === 'seguridad'" />
+          <NotificacionesSeccion v-else-if="activa === 'notificaciones'" />
+          <component :is="editorApariencia" v-else-if="activa === 'apariencia' && editorApariencia" />
         </section>
-
-        <div class="flex min-w-0 flex-col gap-4">
-          <section>
-            <h2 class="mb-3 text-base font-semibold">Datos personales</h2>
-            <FormKit
-              :key="`datos-${cuenta.cuenta.id}-${version}`"
-              type="form"
-              :actions="false"
-              :value="inicial"
-              @submit="guardarDatos"
-            >
-              <div class="grid grid-cols-1 gap-x-4 @xl:grid-cols-2">
-                <FormKit
-                  type="InputText"
-                  name="nombre"
-                  label="Nombre"
-                  validation="required|length:0,255"
-                  fluid
-                />
-                <FormKit
-                  type="InputText"
-                  name="apellido"
-                  label="Apellido"
-                  validation="length:0,50"
-                  fluid
-                />
-                <FormKit
-                  type="InputText"
-                  name="email"
-                  label="Correo"
-                  validation="email|length:0,50"
-                  autocomplete="email"
-                  fluid
-                />
-                <FormKit
-                  type="InputText"
-                  name="telefono"
-                  label="Teléfono"
-                  validation="length:0,15"
-                  autocomplete="tel"
-                  fluid
-                />
-                <FormKit type="InputText" name="nit" label="NIT" validation="length:0,20" fluid />
-                <FormKit
-                  type="InputText"
-                  name="direccion"
-                  label="Dirección"
-                  validation="length:0,255"
-                  autocomplete="street-address"
-                  fluid
-                />
-              </div>
-              <div class="flex justify-end">
-                <Button type="submit" label="Guardar cambios" :loading="guardando" />
-              </div>
-            </FormKit>
-          </section>
-
-          <section v-if="estadoPush !== 'no-disponible'">
-            <h2 class="mb-3 text-base font-semibold">Notificaciones</h2>
-            <div class="flex items-start justify-between gap-4">
-              <label for="notificaciones-chat" class="min-w-0">
-                <span class="block font-medium">Mensajes del chat en este dispositivo</span>
-                <span class="block text-sm text-muted-color">
-                  {{
-                    estadoPush === 'bloqueadas'
-                      ? esAppNativa()
-                        ? 'Están bloqueadas para esta app: permítalas en los ajustes del teléfono.'
-                        : 'El navegador las tiene bloqueadas para este sitio: permítalas en su configuración.'
-                      : 'Avisa quién escribe y el inicio del mensaje aunque la app esté cerrada. Se desactivan al cerrar sesión.'
-                  }}
-                </span>
-              </label>
-              <ToggleSwitch
-                input-id="notificaciones-chat"
-                :model-value="estadoPush === 'activas'"
-                :disabled="estadoPush === 'bloqueadas' || cambiandoPush"
-                @update:model-value="alternarPush"
-              />
-            </div>
-          </section>
-
-          <ReportesProgramados />
-
-          <section>
-            <h2 class="mb-3 text-base font-semibold">Cambiar contraseña</h2>
-            <FormKit
-              :key="`clave-${claveForm}`"
-              type="form"
-              :actions="false"
-              @submit="cambiarClave"
-            >
-              <div class="grid grid-cols-1 gap-x-4 @xl:grid-cols-3">
-                <FormKit
-                  type="Password"
-                  name="actual"
-                  label="Contraseña actual"
-                  validation="required"
-                  autocomplete="current-password"
-                  fluid
-                />
-                <FormKit
-                  type="Password"
-                  name="password"
-                  label="Nueva contraseña"
-                  validation="required"
-                  autocomplete="new-password"
-                  fluid
-                />
-                <FormKit
-                  type="Password"
-                  name="password_confirm"
-                  label="Repetir contraseña"
-                  validation="required|confirm"
-                  :validation-messages="{ confirm: 'Las contraseñas no coinciden.' }"
-                  autocomplete="new-password"
-                  fluid
-                />
-              </div>
-              <div class="flex justify-end">
-                <Button type="submit" label="Cambiar contraseña" :loading="cambiando" />
-              </div>
-            </FormKit>
-          </section>
-        </div>
       </div>
     </div>
     <div v-else class="flex justify-center py-12">
@@ -196,57 +58,37 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import { activarPush, desactivarPush, estadoPush, revisarPush } from '@/core/chat/push'
-import { esAppNativa } from '@/core/chat/pushNativo'
-import { cambiarPassword } from '@/core/cuenta/api'
+import { computed, inject, nextTick, onMounted, useTemplateRef, watch } from 'vue'
 import { useCuentaStore } from '@/core/cuenta/store'
-import { notify } from '@/core/notify'
 import ChatAvatar from '@/shared/chat/ChatAvatar.vue'
+import { EDITOR_DE_APARIENCIA } from '@/shared/cuenta/integracion'
 import PageHead from '@/shared/ui/PageHead.vue'
-import { recortarCuadrada } from './foto'
-import ReportesProgramados from './ReportesProgramados.vue'
+import NotificacionesSeccion from './NotificacionesSeccion.vue'
+import PerfilSeccion from './PerfilSeccion.vue'
+import { SECCIONES, seccionDe } from './secciones'
+import SeguridadSeccion from './SeguridadSeccion.vue'
 
+const route = useRoute()
 const cuenta = useCuentaStore()
-const elegir = ref<HTMLInputElement | null>(null)
-const subiendo = ref(false)
-const guardando = ref(false)
-const cambiando = ref(false)
-const cambiandoPush = ref(false)
-const claveForm = ref(0)
-/** Cambia al guardar para que el formulario vuelva a leer los valores guardados. */
-const version = ref(0)
+const editorApariencia = inject(EDITOR_DE_APARIENCIA, null)
 
-onMounted(() => {
-  void cuenta.cargar()
-  void revisarPush().catch(() => undefined)
-})
+const activa = computed(() => seccionDe(route.query.seccion))
+const seccion = computed(() => SECCIONES.find((s) => s.id === activa.value)!)
 
-async function alternarPush(activar: boolean) {
-  cambiandoPush.value = true
-  try {
-    if (!activar) await desactivarPush()
-    else if ((await activarPush()) === 'activas') notify.success('Notificaciones activadas en este dispositivo.')
-  } catch (e) {
-    notify.error(mensaje(e, 'No se pudieron cambiar las notificaciones.'))
-  } finally {
-    cambiandoPush.value = false
-  }
-}
+onMounted(() => void cuenta.cargar())
 
-const inicial = computed(() => {
-  const c = cuenta.cuenta
-  return {
-    nombre: c?.nombre ?? '',
-    apellido: c?.apellido ?? '',
-    email: c?.email ?? '',
-    telefono: c?.telefono ?? '',
-    nit: c?.nit ?? '',
-    direccion: c?.direccion ?? '',
-  }
-})
+// En el teléfono la fila de secciones se desliza: que la abierta quede a la vista.
+const menu = useTemplateRef<HTMLElement>('menu')
+watch(
+  [activa, menu],
+  async () => {
+    await nextTick()
+    menu.value?.querySelector('[aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+  },
+  { immediate: true },
+)
 
-/** Dónde trabaja: empresa, estación o agencia (solo lectura). */
+/** Dónde trabaja: empresa, estación o agencia. */
 const vinculos = computed(() =>
   [
     { etiqueta: 'Empresa', valor: cuenta.cuenta?.empresa },
@@ -254,68 +96,4 @@ const vinculos = computed(() =>
     { etiqueta: 'Agencia', valor: cuenta.cuenta?.agencia },
   ].filter((v): v is { etiqueta: string; valor: string } => Boolean(v.valor)),
 )
-
-const mensaje = (e: unknown, defecto: string) =>
-  e instanceof Error && e.message ? e.message : defecto
-
-async function onFoto(evento: Event) {
-  const entrada = evento.target as HTMLInputElement
-  const archivo = entrada.files?.[0]
-  entrada.value = ''
-  if (!archivo) return
-  subiendo.value = true
-  try {
-    await cuenta.subirFoto(await recortarCuadrada(archivo), 'foto.jpg')
-    notify.success('Foto actualizada.')
-  } catch (e) {
-    notify.error(mensaje(e, 'No se pudo cambiar la foto.'))
-  } finally {
-    subiendo.value = false
-  }
-}
-
-async function quitar() {
-  subiendo.value = true
-  try {
-    await cuenta.quitarFoto()
-    notify.success('Foto eliminada.')
-  } catch (e) {
-    notify.error(mensaje(e, 'No se pudo quitar la foto.'))
-  } finally {
-    subiendo.value = false
-  }
-}
-
-async function guardarDatos(v: Record<'nombre' | 'apellido' | 'email' | 'telefono' | 'nit' | 'direccion', string>) {
-  guardando.value = true
-  try {
-    await cuenta.guardar({
-      nombre: v.nombre,
-      apellido: v.apellido || null,
-      email: v.email || null,
-      telefono: v.telefono || null,
-      nit: v.nit || null,
-      direccion: v.direccion || null,
-    })
-    version.value++
-    notify.success('Datos guardados.')
-  } catch (e) {
-    notify.error(mensaje(e, 'No se pudieron guardar los datos.'))
-  } finally {
-    guardando.value = false
-  }
-}
-
-async function cambiarClave(v: { actual: string; password: string }) {
-  cambiando.value = true
-  try {
-    await cambiarPassword({ actual: v.actual, password: v.password })
-    claveForm.value++
-    notify.success('Contraseña cambiada.')
-  } catch (e) {
-    notify.error(mensaje(e, 'No se pudo cambiar la contraseña.'))
-  } finally {
-    cambiando.value = false
-  }
-}
 </script>

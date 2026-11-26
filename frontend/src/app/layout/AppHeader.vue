@@ -39,21 +39,10 @@
       <div class="header-actions">
         <slot name="menu-content"></slot>
 
-        <button class="icon-btn header-secundario header-escritorio cursor-pointer" title="Personalizar apariencia" aria-label="Personalizar apariencia" aria-haspopup="dialog" :class="{ 'active-state': temaAbierto }" @click="temaPopover?.toggle($event)">
-          <icon name="palette-outline" />
-        </button>
-        <Popover ref="temaPopover" @show="temaAbierto = true" @hide="temaAbierto = false">
-          <ThemeEditor @cerrar="temaPopover?.hide()" />
-        </Popover>
-
         <button type="button" class="icon-btn header-chat header-escritorio" :aria-label="sinLeer ? `Mensajes y correo, ${sinLeer} sin leer` : 'Mensajes y correo'" v-tooltip.bottom="'Mensajes y correo'" @click="invocarChat">
           <icon name="forum-outline" />
           <span v-if="sinLeer" class="header-chat__badge">{{ sinLeer > 99 ? "99+" : sinLeer }}</span>
         </button>
-        <!-- Ayuda: abre las guías de la pantalla actual (o todas si no hay). -->
-        <RouterLink :to="destinoAyuda" class="icon-btn header-secundario header-escritorio" aria-label="Ayuda" v-tooltip.bottom="'Ayuda'">
-          <icon name="help-outline" />
-        </RouterLink>
         <!-- Campana: autorizaciones (ADR-040) y los avisos automáticos del chat (salidas, etc.), aparte de las conversaciones. -->
         <button type="button" class="icon-btn header-chat" :aria-label="pendientesCampana ? `Notificaciones, ${pendientesCampana} por atender` : 'Notificaciones'" aria-haspopup="true" aria-controls="menu-campana" v-tooltip.bottom="'Notificaciones'" @click="abrirCampana">
           <icon name="notifications-outline" />
@@ -78,9 +67,9 @@
         <icon name="person_pin_circle-outline" :size="ui.isMobile ? undefined : '1.05rem'" />
         <span class="header-estacion__nombre">{{ acceso.estacionTrabajo?.alias || acceso.estacionTrabajo?.nombre || "Elegir estación" }}</span>
       </button>
-      <!-- Fuera de la franja que scrollea: Mi cuenta, Instalar app y Cerrar sesión siempre a la vista. -->
+      <!-- Fuera de la franja que scrollea: Mi cuenta, Instalar app, Ayuda y Cerrar sesión siempre a la vista. -->
       <div class="header-user-wrap">
-        <button ref="botonUsuario" type="button" class="header-user" :title="session.user ?? ''" aria-haspopup="true" aria-controls="menu-usuario" @click="menuUsuario?.toggle($event)">
+        <button type="button" class="header-user" :title="session.user ?? ''" aria-haspopup="true" aria-controls="menu-usuario" @click="menuUsuario?.toggle($event)">
           <ChatAvatar :id="cuenta.cuenta?.id ?? 0" :nombre="cuenta.nombre" :foto="cuenta.foto" tamano="sm" />
           <span class="header-user__name">{{ session.user }}</span>
           <icon name="keyboard-arrow-down" size=".9rem" class="hidden! md:inline-block!" />
@@ -115,7 +104,6 @@
 <script setup lang="ts">
 import type { MenuItem } from "primevue/menuitem";
 import type Menu from "primevue/menu";
-import type Popover from "primevue/popover";
 import { instalar, puedeInstalar } from "@/app/pwa";
 import { router } from "@/app/router";
 import { useUiStore } from "@/app/ui";
@@ -134,7 +122,6 @@ import ChatAvatar from "@/shared/chat/ChatAvatar.vue";
 import IndicadorSincronizacion from "./IndicadorSincronizacion.vue";
 import { useNavigationHistoryStore } from "./navigationHistory";
 import { defineSidebarStore, type SidebarStore } from "./sidebarStore";
-import ThemeEditor from "./ThemeEditor.vue";
 
 /** Store del panel derecho visible (menú o panel propio de la ruta). */
 defineProps<{ rightSidebar: SidebarStore | null }>();
@@ -190,9 +177,6 @@ function invocarChat() {
   void router.push({ name: "chat", params: { canal: ventanaChat.canal ?? undefined } });
 }
 
-const temaPopover = ref<InstanceType<typeof Popover> | null>(null);
-const temaAbierto = ref(false);
-
 const sidebarStore = defineSidebarStore("left")();
 const navigationHistory = useNavigationHistoryStore();
 
@@ -214,14 +198,12 @@ onMounted(() => {
 onUnmounted(() => clearInterval(clockTimer));
 
 const menuUsuario = ref<InstanceType<typeof Menu> | null>(null);
-const botonUsuario = useTemplateRef<HTMLElement>("botonUsuario");
 const opcionesUsuario = computed<MenuItem[]>(() => [
   { label: "Mi cuenta", iconName: "manage-accounts-outline", command: () => void router.push({ name: "mi-cuenta" }) },
   ...(acceso.estaciones.length > 1 ? [{ label: "Estación de trabajo", iconName: "location-on-outline", command: () => (acceso.eligiendoEstacion = true) }] : []),
-  // En el teléfono no están en la cabecera.
-  { label: "Apariencia", iconName: "palette-outline", class: "md:hidden", command: ({ originalEvent }) => temaPopover.value?.show(originalEvent, botonUsuario.value) },
-  { label: "Ayuda", iconName: "help-outline", class: "md:hidden", command: () => void router.push(destinoAyuda.value) },
   ...(puedeInstalar.value ? [{ label: "Instalar app", iconName: "install-mobile", command: () => void instalar() }] : []),
+  // Las guías de la pantalla actual (o todas si no hay).
+  { label: "Ayuda", iconName: "help-outline", command: () => void router.push(destinoAyuda.value) },
   { separator: true },
   { label: "Cerrar sesión", iconName: "logout", command: () => void logout() },
 ]);
