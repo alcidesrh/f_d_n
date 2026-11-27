@@ -102,9 +102,9 @@
             <!-- Hasta tener la salida y su ocupación, el esqueleto: ni carrocería vacía ni asientos que se ocupan de golpe. -->
             <div v-if="store.detalle && !store.cargandoDetalle" :key="`salida-${store.salidaId}`" class="flex flex-col gap-5 text-sm">
               <div class="flex items-start justify-center gap-3 overflow-x-auto">
-                <BusMapLegend :items="leyenda" :conteos="conteos" vertical />
                 <BusMap :elementos="store.detalle?.croquis ?? []" :estado="store.estadoAsiento" interactivo inspeccionable tamano="md" class="justify-center" @asiento="(a) => a.id != null && store.alternarAsiento(a.id)" @ocupado="verOcupado" />
                 <AsientoOcupadoPopover ref="detalleAsiento" @anular="(b) => (anular = [b.id])" @reasignar="(b) => void store.iniciarReasignacion([b.id])" />
+                <BusMapLegend :items="leyenda" :conteos="conteos" vertical />
               </div>
               <Divider align="center" class="my-0! before:border-surface-400!" type="dashed">
                 <span class="text-xs font-bold text-surface-500">{{ store.ocupados.length }} / {{ store.asientosCroquis.length }}</span>
@@ -140,8 +140,8 @@
             </div>
             <div v-else key="vacio" class="relative flex flex-col gap-5 tex-sm">
               <div class="flex items-start justify-center gap-3">
-                <BusMapLegend :items="leyenda" vertical class="opacity-40" />
                 <CroquisPlaceholder />
+                <BusMapLegend :items="leyenda" vertical class="opacity-40" />
               </div>
               <div v-if="!store.cargandoDetalle" class="absolute inset-0 grid place-items-center p-4">
                 <p class="m-0 flex items-center gap-2 rounded-full bg-surface-0 px-4 py-2 text-center text-sm text-muted-color shadow-md">
