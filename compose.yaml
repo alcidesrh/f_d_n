@@ -153,6 +153,8 @@ services:
   database:
     image: postgres:${POSTGRES_VERSION:-16}-alpine
     container_name: database
+    # pg_stat_statements: estadísticas de consultas (CREATE EXTENSION en la base). Cambiarlo exige reiniciar la base.
+    command: postgres -c shared_preload_libraries=pg_stat_statements
     environment:
       - TZ=America/Guatemala
       - POSTGRES_DB=${POSTGRES_DB:-app}
