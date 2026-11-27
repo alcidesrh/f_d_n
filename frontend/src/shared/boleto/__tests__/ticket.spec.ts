@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Comprobante } from '@/core/venta/types'
-import { altoPaginaMm, ticketHtml, ticketsPorAsiento } from '../ticket'
+import { ticketHtml, ticketsPorAsiento } from '../ticket'
 
 const base: Comprobante = {
   id: 7,
@@ -117,13 +117,8 @@ describe('ticketsPorAsiento', () => {
   })
 })
 
-describe('altoPaginaMm', () => {
-  it('convierte px CSS a mm y suma los márgenes de la página', () => {
-    // 377 px ≈ 99.75 mm de contenido + 2 × 3 mm de margen + 1 mm de holgura.
-    expect(altoPaginaMm(377)).toBe(107)
-  })
-
-  it('redondea hacia arriba para no partir el ticket en dos páginas', () => {
-    expect(altoPaginaMm(1)).toBe(8)
+describe('página del ticket', () => {
+  it('no fija el tamaño: el navegador centraría el ticket en el rollo de la térmica', () => {
+    expect(ticketHtml(base)).not.toMatch(/@page\s*{[^}]*\bsize\s*:/)
   })
 })

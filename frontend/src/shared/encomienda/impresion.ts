@@ -17,7 +17,7 @@ const esc = (v: unknown) =>
 const SEP = '<div class="sep">**************************</div>'
 
 const ESTILOS = `
-  @page { size: 80mm auto; margin: 3mm; }
+  @page { margin: 3mm; }
   * { box-sizing: border-box; }
   body { width: 74mm; margin: 0; font: 12px/1.3 "DejaVu Serif", Georgia, serif; color: #000; }
   p { margin: 2px 0; }
