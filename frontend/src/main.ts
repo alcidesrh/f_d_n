@@ -1,6 +1,7 @@
 /**
- * Arranque de la aplicación: plugins → tema → schema GraphQL (el guardado, si
- * el manifiesto de la metadata dice que sigue vigente; ADR-036) → montaje.
+ * Arranque de la aplicación: plugins → apariencia (la del navegador, con su
+ * preset de PrimeVue) → schema GraphQL (el guardado, si el manifiesto de la
+ * metadata dice que sigue vigente; ADR-036) → montaje.
  * La sincronización de rutas con el backend se lanza sin bloquear.
  */
 import { createApp } from "vue";
@@ -11,11 +12,11 @@ import ToastService from "primevue/toastservice";
 import { es } from "primelocale/js/es.js";
 import { defaultConfig as formkitDefaultConfig, plugin as formkitPlugin } from "@formkit/vue";
 import App from "./App.vue";
-import "@/assets/main.css";
+import "@/styles/main.css";
 import { pinia } from "@/app/pinia";
 import { router } from "@/app/router";
 import formkitConfig, { precargarInputs } from "@/shared/formkit/config";
-import { useUiStore } from "@/app/ui";
+import { useAparienciaStore } from "@/app/apariencia/store";
 import { useMetadataStore } from "@/core/metadata/sincronizacion";
 import { escucharInstalacion } from "@/app/pwa";
 
@@ -27,14 +28,13 @@ async function bootstrap() {
     .use(pinia)
     .use(router)
     .use(formkitPlugin, formkitDefaultConfig(formkitConfig()))
-    // Sin modo oscuro propio de PrimeVue: el oscuro sale de invertir las rampas (app/theme.ts).
+    // Sin modo oscuro propio de PrimeVue: el oscuro sale de invertir las rampas (app/apariencia/preset.ts).
     .use(PrimeVue, { locale: es, theme: { options: { darkModeSelector: false } } })
     .use(DialogService)
     .use(ConfirmationService)
     .use(ToastService);
 
-  const uiStore = useUiStore();
-  await uiStore.init();
+  await useAparienciaStore().init();
   await useMetadataStore().arrancar();
   // Sin esto se monta con la ruta inicial sin resolver (sin `meta.layout`) y parpadea el layout de la app antes del de /login.
   await router.isReady();

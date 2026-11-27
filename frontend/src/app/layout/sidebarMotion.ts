@@ -37,22 +37,21 @@
 import { gsap } from "gsap";
 import { Flip } from "gsap/Flip";
 import { nextTick, onBeforeUnmount, onMounted, watch, type Ref } from "vue";
+import { useAparienciaStore } from "@/app/apariencia/store";
 import { useUiStore } from "@/app/ui";
 import type { SidebarStore } from "./sidebarStore";
 
 gsap.registerPlugin(Flip);
 
+/** Duración de fábrica (s); la real sigue a «Animaciones» de la apariencia (0 = sin animación). */
 const DURATION = 0.3;
 const EASE = "circ.out";
-/** Lo que se acomoda con el panel ya quieto (el menú al llegar a `mini`). */
-const SETTLE: Motion = { duration: DURATION, ease: "power3.out" };
 /**
  * Paso máximo por fotograma (ms). Un fotograma lento (el reacomodo único de `.main`,
  * el render de Vue del clic) cuenta como mucho esto: la animación se demora un
  * instante en lugar de saltar adelante para recuperar el tiempo.
  */
 const MAX_STEP_MS = 1000 / 30;
-const SHADOW = "0 12px 32px rgb(0 0 0 / 0.2)";
 const SHADOW_OFF = "0 12px 32px rgb(0 0 0 / 0)";
 const MORPH = "data-sb-morph";
 /** Lo que el pliegue lleva a alto 0: miden su alto natural en `--h` al empezar. */
@@ -337,6 +336,12 @@ function moveContent(main: HTMLElement, layout: (final: boolean) => void, deferr
 
 export function useSidebarMotion(store: SidebarStore, panel: Ref<HTMLElement | null>) {
   const ui = useUiStore();
+  const apariencia = useAparienciaStore();
+  /** Duraciones y sombra del drawer según la apariencia (al animar, no al montar: GSAP no lee variables CSS). */
+  const duration = (factor = 1) => DURATION * factor * apariencia.ajustes.movimiento;
+  const shadow = () => `0 12px 32px rgb(0 0 0 / ${0.2 * apariencia.ajustes.sombras})`;
+  /** Lo que se acomoda con el panel ya quieto (el menú al llegar a `mini`). */
+  const settle = (): Motion => ({ duration: duration(), ease: "power3.out" });
   const shared = widths[store.side];
   const varName = `--sb-${store.side}-w`;
   /** Lo que anima GSAP; `render` lo vuelca al DOM. */
@@ -432,7 +437,7 @@ export function useSidebarMotion(store: SidebarStore, panel: Ref<HTMLElement | n
 
     const to = store.mode;
     // Interrumpido ya va en movimiento: arrancar desde reposo se sentiría como un tirón.
-    const motion: Motion = { duration: DURATION, ease: interrupted ? "power1.out" : EASE };
+    const motion: Motion = { duration: duration(), ease: interrupted ? "power1.out" : EASE };
     let targetC = state.c;
     let onDone: (() => void) | undefined;
 
@@ -473,7 +478,7 @@ export function useSidebarMotion(store: SidebarStore, panel: Ref<HTMLElement | n
           await nextTick();
           if (gen !== generation) return;
           endFold(el);
-          flipPanel(before, SETTLE);
+          flipPanel(before, settle());
         };
       }
     } else {
@@ -534,14 +539,14 @@ export function useSidebarMotion(store: SidebarStore, panel: Ref<HTMLElement | n
     const hidden = store.side === "left" ? -100 : 100;
     drawerTl?.kill();
     if (!animate) {
-      gsap.set(el, { xPercent: open ? 0 : hidden, visibility: open ? "visible" : "hidden", boxShadow: open ? SHADOW : SHADOW_OFF });
+      gsap.set(el, { xPercent: open ? 0 : hidden, visibility: open ? "visible" : "hidden", boxShadow: open ? shadow() : SHADOW_OFF });
       return;
     }
     drawerTl = gsap.timeline();
     if (open) {
-      drawerTl.set(el, { visibility: "visible" }).to(el, { xPercent: 0, boxShadow: SHADOW, duration: DURATION, ease: "power2.out" });
+      drawerTl.set(el, { visibility: "visible" }).to(el, { xPercent: 0, boxShadow: shadow(), duration: duration(), ease: "power2.out" });
     } else {
-      drawerTl.to(el, { xPercent: hidden, boxShadow: SHADOW_OFF, duration: DURATION * 0.8, ease: "power2.in" }).set(el, { visibility: "hidden" });
+      drawerTl.to(el, { xPercent: hidden, boxShadow: SHADOW_OFF, duration: duration(0.8), ease: "power2.in" }).set(el, { visibility: "hidden" });
     }
   }
 
@@ -567,7 +572,7 @@ export function useSidebarMotion(store: SidebarStore, panel: Ref<HTMLElement | n
     gsap.to(text, {
       opacity: visible ? 1 : 0,
       pointerEvents: visible ? "auto" : "none",
-      duration: visible ? DURATION : DURATION * 0.5,
+      duration: visible ? duration() : duration(0.5),
       ease: "power1.out",
       overwrite: "auto",
     });

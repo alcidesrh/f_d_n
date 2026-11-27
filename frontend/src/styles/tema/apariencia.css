@@ -1,0 +1,31 @@
+/* ======================= PARÁMETROS DE APARIENCIA =======================
+   Nivel 1 del tema: los rasgos generales del diseño que el usuario cambia en
+   Mi cuenta → Apariencia. Aquí va el valor de fábrica; el elegido lo escribe
+   la store en el `style` de <html> (app/apariencia/store.ts), que gana.
+
+   Se leen en pocos sitios: los tokens (tema/tokens.css), el preset de PrimeVue
+   (app/apariencia/preset.ts, que escala con ellos sus radios, rellenos,
+   sombras y duraciones) y, en un `calc()`, lo propio que deba seguirlos
+   (la densidad de `DataGrid`). Cambiarlos no regenera el CSS de PrimeVue:
+   el navegador solo recalcula estilos.
+
+   Las opciones de cada uno están en app/apariencia/ajustes.ts: un parámetro
+   nuevo va en los dos lados (un test compara los valores de fábrica). */
+:root {
+  /* Tamaño de la letra de la raíz: todo lo que mide en `rem` lo sigue. */
+  --apariencia-texto: 15px;
+  /* Familia del texto. Roboto Flex es la única que se descarga. */
+  --apariencia-fuente: "Roboto Flex Variable", sans-serif;
+  /* Factores (1 = el diseño de fábrica). Esquinas: radios; densidad: el
+     relleno de controles, listas, tablas y paneles; sombras: su opacidad;
+     movimiento: la duración de las transiciones (0 = sin animaciones). */
+  --apariencia-esquinas: 1;
+  --apariencia-densidad: 1;
+  --apariencia-sombras: 1;
+  --apariencia-movimiento: 1;
+  /* Contraste de textos y bordes: 0 normal, 1 alto (los colores de PrimeVue
+     lo mezclan en oklch; ver `contrastado` en app/apariencia/tokens.ts). */
+  --apariencia-contraste: 0;
+  /* Fondo de la página y de la cabecera, sobre `surface-0`. */
+  --apariencia-fondo: color-mix(in srgb, var(--p-surface-50) 60%, transparent);
+}

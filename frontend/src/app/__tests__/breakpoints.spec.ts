@@ -8,9 +8,9 @@ describe('breakpoints', () => {
     expect(mediaUp('lg')).toBe('(width >= 64rem)')
   })
 
-  it('coincide con los tokens CSS (`--breakpoint-*` en assets/tokens.css)', () => {
+  it('coincide con los tokens CSS (`--breakpoint-*` en styles/tema/tokens.css)', () => {
     // Vitest es la raíz del frontend (vitest.config.ts).
-    const tokens = readFileSync(resolve(process.cwd(), 'src/assets/tokens.css'), 'utf8')
+    const tokens = readFileSync(resolve(process.cwd(), 'src/styles/tema/tokens.css'), 'utf8')
     for (const [name, rem] of Object.entries(BREAKPOINTS))
       expect(tokens).toContain(`--breakpoint-${name}: ${rem}rem;`)
   })

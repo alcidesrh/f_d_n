@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Acceso\Autorizacion;
+use App\Cuenta\Apariencia;
 use App\Cuenta\FotoPerfil;
 use App\Entity\Usuario;
 use Doctrine\ORM\EntityManagerInterface;
@@ -22,7 +23,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 /**
  * "Mi cuenta": lo que el usuario con sesión puede editar de su propio perfil
- * (datos personales, foto y contraseña). Usuario, roles y permisos no se
+ * (datos personales, foto, contraseña y apariencia). Usuario, roles y permisos no se
  * tocan aquí: eso es administración (`usuario.editar`).
  */
 #[AsController]
@@ -104,6 +105,25 @@ final class MiCuentaController extends AbstractController
         return $this->json(["ok" => true]);
     }
 
+    /**
+     * La apariencia elegida en "Mi cuenta → Apariencia" (`{ modo, primario,
+     * esquinas, … }`): reemplaza la guardada. La manda el frontend al rato de
+     * cada cambio; se devuelve tal como quedó.
+     */
+    #[Route("/api/me/apariencia", name: "api_me_apariencia", methods: ["PUT"])]
+    public function apariencia(Request $request, #[CurrentUser] Usuario $yo): JsonResponse
+    {
+        try {
+            $apariencia = Apariencia::limpiar(json_decode($request->getContent(), true, 4, \JSON_THROW_ON_ERROR));
+        } catch (\JsonException | \InvalidArgumentException) {
+            return $this->error("La apariencia debe ser un objeto.");
+        }
+        $yo->setApariencia($apariencia === [] ? null : $apariencia);
+        $this->em->flush();
+
+        return $this->json(["apariencia" => $yo->getApariencia()]);
+    }
+
     /** Multipart, campo `foto` (JPG, PNG o WebP, máximo 2 MB). */
     #[Route("/api/me/foto", name: "api_me_foto_subir", methods: ["POST"])]
     public function subirFoto(Request $request, #[CurrentUser] Usuario $yo): JsonResponse
@@ -172,6 +192,8 @@ final class MiCuentaController extends AbstractController
             "foto" => $this->fotos->url($u),
             "estacion" => $u->getEstacion()?->getNombre(),
             "agencia" => $u->getAgencia()?->getNombre(),
+            // La elegida en otro equipo; el frontend descarta lo que ya no exista.
+            "apariencia" => $u->getApariencia(),
             // Los roles que tiene vigentes (ADR-039).
             "roles" => array_values(array_unique(array_map(static fn($c) => $c->rolNombre, $this->autorizacion->de($u)->concesiones()))),
         ];

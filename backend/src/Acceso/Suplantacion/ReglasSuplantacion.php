@@ -25,6 +25,7 @@ final class ReglasSuplantacion
         ["POST", '#^/auth$#'],
         ["*", '#^/api/me/password$#'],
         ["PUT", '#^/api/me/cuenta$#'],
+        ["PUT", '#^/api/me/apariencia$#'],
         ["POST", '#^/api/me/foto$#'],
         ["DELETE", '#^/api/me/foto$#'],
         ["POST", '#^/api/usuarios/-?\d+/password$#'],

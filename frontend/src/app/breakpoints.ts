@@ -1,6 +1,6 @@
 /**
  * Breakpoints del layout (rem, min-width, mobile-first). Mismos valores que
- * `--breakpoint-*` en `assets/tokens.css`; ver docs/frontend/responsive.md.
+ * `--breakpoint-*` en `styles/tema/tokens.css`; ver docs/frontend/responsive.md.
  *
  * Solo para diferencias de comportamiento que CSS no puede resolver (p. ej.
  * el shell: drawer debajo de `lg`, sidebar fijo desde `lg`). Lo visual va

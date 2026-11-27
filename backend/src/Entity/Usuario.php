@@ -125,6 +125,20 @@ class Usuario extends PersonaBase implements
     #[Ignore]
     private ?string $foto = null;
 
+    /**
+     * Apariencia elegida en "Mi cuenta → Apariencia" (modo, colores, esquinas,
+     * densidad…): la sigue en otro equipo o en la app móvil. Lo que vale cada
+     * opción lo decide el frontend; aquí solo se guarda, ya limpia
+     * (`App\Cuenta\Apariencia`). Se lee con `/api/me/cuenta` y se escribe por
+     * `/api/me/apariencia`, nunca por la API genérica.
+     *
+     * @var array<string, string|int|float|bool>|null
+     */
+    #[ApiProperty(readable: false, writable: false)]
+    #[ORM\Column(type: "json", nullable: true)]
+    #[Ignore]
+    private ?array $apariencia = null;
+
     // Solo al crear: al editar, vacío significa "no cambiar la contraseña" (ver UsuarioPasswordHasher).
     #[Assert\NotBlank(groups: ["usuario:crear"])]
     private ?string $plainPassword = null;
@@ -288,6 +302,20 @@ class Usuario extends PersonaBase implements
     public function setFoto(?string $foto): static
     {
         $this->foto = $foto;
+
+        return $this;
+    }
+
+    /** @return array<string, string|int|float|bool>|null */
+    public function getApariencia(): ?array
+    {
+        return $this->apariencia;
+    }
+
+    /** @param array<string, string|int|float|bool>|null $apariencia */
+    public function setApariencia(?array $apariencia): static
+    {
+        $this->apariencia = $apariencia;
 
         return $this;
     }

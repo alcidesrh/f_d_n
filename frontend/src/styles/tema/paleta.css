@@ -1,7 +1,7 @@
 /* ============================= PALETAS DE TAILWIND =============================
    Las rampas fijas de Tailwind (`text-red-600`, `bg-amber-50`, `border-slate-300`…)
    leen las primitivas del tema de PrimeVue (`--p-red-600`…), que en modo oscuro
-   se invierten (50 ↔ 950, app/theme.ts) como `surface-*` y `primary-*`
+   se invierten (50 ↔ 950, app/apariencia/preset.ts) como `surface-*` y `primary-*`
    (tailwindcss-primeui). Así una clase de color sirve en ambos modos y no lleva
    `dark:`: `text-red-600` es rojo oscuro sobre claro y rojo claro sobre oscuro.
    Generado desde `tailwindcss/colors`; si Tailwind suma una paleta, sumarla aquí. */

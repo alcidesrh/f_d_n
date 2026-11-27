@@ -1,0 +1,39 @@
+/* ============================= ESTILOS GLOBALES =============================
+   Única entrada de CSS de la app (la importa main.ts). Tres niveles, como los
+   tokens de PrimeVue (primitivos → semánticos → componentes):
+
+   1. Parámetros de apariencia (`tema/apariencia.css`, `--apariencia-*`): los
+      rasgos generales que el usuario cambia en Mi cuenta → Apariencia
+      (tamaño y tipo de letra, esquinas, densidad, sombras, animaciones,
+      fondo). Los escribe la store en <html> (app/apariencia/store.ts).
+   2. Tokens: los de PrimeVue (`--p-*`: rampas, colores semánticos y medidas
+      del preset, conectados a los parámetros en app/apariencia/preset.ts), las
+      rampas de Tailwind que leen de ellos (`tema/paleta.css`) y los propios de
+      la app (`tema/tokens.css`: fondos, estados, sombras, radios, layout).
+   3. Lo que los usa: elementos HTML (`base.css`), el shell (`shell/`), los
+      ajustes de PrimeVue que sus tokens no alcanzan (`primevue/`) y las
+      utilidades propias (`utilidades.css`).
+
+   El CSS que solo sirve a un componente va en su `<style scoped>`, no aquí.
+   Ver docs/frontend/apariencia.md. */
+@import "tailwindcss";
+@import "tailwindcss-primeui";
+
+@import "./tema/apariencia.css";
+@import "./tema/paleta.css";
+@import "./tema/tokens.css";
+@import "./tema/fuentes.css";
+
+@import "./base.css";
+@import "./shell/cabecera.css";
+@import "./shell/sidebar.css";
+@import "./shell/contenido.css";
+@import "./primevue/index.css";
+@import "./utilidades.css";
+
+/* `dark:` de Tailwind sigue a la clase `.dark` de <html> (no al SO). Todas las
+   rampas de color (`surface-*`, `primary-*` y las fijas red-*, amber-*…, ver
+   tema/paleta.css) ya se invierten con el tema (app/apariencia/preset.ts):
+   `dark:` no se usa para colores (se invertirían dos veces), solo para lo que
+   no es una rampa (invertir un logo, opacidad). */
+@custom-variant dark (&:where(.dark, .dark *));

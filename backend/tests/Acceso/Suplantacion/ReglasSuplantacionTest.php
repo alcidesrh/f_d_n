@@ -76,6 +76,7 @@ final class ReglasSuplantacionTest extends TestCase
         yield "su contraseña" => ["POST", "/api/me/password", ModoChat::PERMITIR, Bloqueo::PROHIBIDO];
         yield "su cuenta" => ["PUT", "/api/me/cuenta", ModoChat::PERMITIR, Bloqueo::PROHIBIDO];
         yield "ver su cuenta" => ["GET", "/api/me/cuenta", ModoChat::PERMITIR, Bloqueo::NINGUNO];
+        yield "su apariencia" => ["PUT", "/api/me/apariencia", ModoChat::PERMITIR, Bloqueo::PROHIBIDO];
         yield "su foto" => ["DELETE", "/api/me/foto", ModoChat::PERMITIR, Bloqueo::PROHIBIDO];
         yield "contraseña de otro" => ["POST", "/api/usuarios/9/password", ModoChat::PERMITIR, Bloqueo::PROHIBIDO];
         yield "encadenar" => ["POST", "/api/usuarios/9/suplantar", ModoChat::PERMITIR, Bloqueo::PROHIBIDO];

@@ -140,7 +140,7 @@ No existe un sitio MkDocs — se eliminó el 2026-09 por documentar un modelo de
 | Terminología + modelo de cada término | `CONTEXT.md` |
 | Referencia funcional (ventas y operación) | `docs/architecture/ventas-y-operacion.md` |
 | Referencia funcional (plataforma) | `docs/architecture/plataforma.md` |
-| ADRs (decisiones de arquitectura) | `docs/architecture/decisions/` (ADR-001 a ADR-071, ver `index.md`) |
+| ADRs (decisiones de arquitectura) | `docs/architecture/decisions/` (ADR-001 a ADR-072, ver `index.md`) |
 | Convención de exploración de dominio para skills | `docs/agents/domain.md` |
 | Convención de issue tracker | `docs/agents/issue-tracker.md` |
 | Backend (Symfony, Doctrine, GraphQL) | `backend/AGENTS.md` |
@@ -148,6 +148,7 @@ No existe un sitio MkDocs — se eliminó el 2026-09 por documentar un modelo de
 | Página web pública | `pagina/AGENTS.md` |
 | App móvil del personal (Capacitor) | `movil/AGENTS.md` |
 | Responsive (breakpoints, patrones mobile-first) | `docs/frontend/responsive.md` |
+| CSS y apariencia (niveles, parámetros del usuario) | `docs/frontend/apariencia.md` |
 
 Si necesitas documentación de un tema que no está en esta lista (ERD, mapa de entidades por subdominio, guía de performance, etc.), **no asumas que existe en `docs/`** — verifícalo primero; probablemente haya que escribirla desde cero contra el estado actual del código.
 

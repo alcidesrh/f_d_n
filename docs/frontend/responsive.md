@@ -10,7 +10,7 @@ Reglas del frontend para todas las pantallas. Las decisiones y su contexto está
 
 ## Breakpoints
 
-Son los de Tailwind y se declaran en `src/assets/tokens.css` (`@theme`). En JS están en
+Son los de Tailwind y se declaran en `src/styles/tema/tokens.css` (`@theme`). En JS están en
 `src/app/breakpoints.ts`, con los mismos valores (hay un test que verifica que coincidan).
 
 | Nombre | Desde | Escenario | Qué cambia en el shell |
@@ -24,7 +24,7 @@ Son los de Tailwind y se declaran en `src/assets/tokens.css` (`@theme`). En JS e
   (`md:`, `lg:`, `@variant lg {}`, `@media (width >= 64rem)`). No uses `max-width`.
 - No crees breakpoints nuevos ni cortes por dispositivo. `sm`/`2xl` existen en Tailwind, pero
   no son cortes del layout.
-- En CSS global (`src/assets/*.css`) usá `@variant md|lg|xl { … }`. En `<style>` de un SFC
+- En CSS global (`src/styles/**/*.css`) usá `@variant md|lg|xl { … }`. En `<style>` de un SFC
   preferí clases en el template; si hace falta una media query, escribí el valor en rem
   (`@media (width >= 48rem)`) y no en px.
 - **Container queries** (`@container`, clases `@md:`, `@xl:`…) cuando el componente depende

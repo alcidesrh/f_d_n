@@ -1,0 +1,74 @@
+/* ============================= ELEMENTOS HTML =============================
+   Lo que vale para toda la página: raíz, cuerpo, enlaces, foco, barras de
+   desplazamiento y la transición `fade` del router. Responsive: sin reglas por
+   página aquí (breakpoints en tema/tokens.css, patrones en
+   docs/frontend/responsive.md); cada regla vive junto a lo que adapta. */
+
+/* El tamaño de la letra de la raíz es el parámetro `--apariencia-texto`: todo
+   lo que mide en `rem` (textos, controles, espaciado de Tailwind) lo sigue. */
+html {
+  height: 100%;
+  font-size: var(--apariencia-texto);
+}
+html.light {
+  color-scheme: light;
+}
+html.dark {
+  /* Scrollbars, autocompletado y controles nativos oscuros. */
+  color-scheme: dark;
+  & > body {
+    background-color: transparent;
+  }
+}
+body {
+  height: 100%;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  background: var(--p-surface-0);
+  color: var(--text-body);
+  -webkit-font-smoothing: antialiased;
+  /* El scroll es de `.main` (shell) o del layout en blanco, nunca del body. */
+  overflow: hidden;
+}
+
+input {
+  font-family: inherit;
+}
+ul {
+  list-style: none;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+button {
+  cursor: pointer;
+}
+svg[stroke-width] g,
+svg[stroke-width] path {
+  stroke-width: inherit !important;
+  color: inherit !important;
+}
+/* Con puntero fino, barras finas y discretas: dicen que hay más contenido sin
+   ocupar sitio. Con el dedo quedan las del sistema, que solo aparecen al desplazar. */
+@media (pointer: fine) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--p-surface-500) 45%, transparent) transparent;
+  }
+}
+:focus-visible {
+  outline: 2px solid var(--p-primary-color);
+  outline-offset: 2px;
+  border-radius: var(--p-border-radius-sm);
+}
+
+/* Cambio de página y de layout (`<transition name="fade">` en App.vue). */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity var(--transition) ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}

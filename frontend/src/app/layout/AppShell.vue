@@ -38,6 +38,7 @@
 import { configuracionesVencidas } from '@/core/entities/registry'
 import { defineAsyncComponent, provide } from 'vue'
 import { useUiStore } from '@/app/ui'
+import { useAparienciaStore } from '@/app/apariencia/store'
 import { useSessionStore } from '@/core/auth/session'
 import { useAccesoStore } from '@/core/acceso/store'
 import { useUserMenusStore } from '@/core/navigation/userMenus'
@@ -81,7 +82,7 @@ const ChatVentana = defineAsyncComponent(() => import('@/features/chat/ChatVenta
 provide(LISTADO_DE_REGISTROS, defineAsyncComponent(() => import('@/features/entity-crud/ListPage.vue')))
 
 // La sección "Apariencia" de Mi cuenta edita el tema, que es del shell.
-provide(EDITOR_DE_APARIENCIA, defineAsyncComponent(() => import('./ThemeEditor.vue')))
+provide(EDITOR_DE_APARIENCIA, defineAsyncComponent(() => import('@/app/apariencia/EditorApariencia.vue')))
 
 provide(REPORTES_ADJUNTABLES, [
   { id: 'cuadre-venta-boletos', nombre: 'Cuadre de venta', icono: 'request-quote-outline', componente: defineAsyncComponent(() => import('@/features/reporte/CuadreVentaBoletosPage.vue')) },
@@ -140,6 +141,12 @@ watch(
     void iniciarActividad(router)
   },
   { immediate: true },
+)
+// La apariencia guardada en la cuenta llega con ella: sigue al usuario entre equipos.
+const apariencia = useAparienciaStore()
+watch(
+  () => cuenta.cuenta,
+  (c) => c && apariencia.recibirDeLaCuenta(c.apariencia),
 )
 onBeforeUnmount(() => {
   chat.detener()

@@ -4,7 +4,7 @@
 
 **[Material Symbols](https://fonts.google.com/icons)** (Google, licencia Apache 2.0, ~3.900 símbolos con hasta seis variantes cada uno) es el repositorio de íconos del proyecto. Todo ícono nuevo se busca ahí; el nombre que muestra el sitio (`snake_case`: `drag_indicator`, `directions_bus`) se pasa al componente en **kebab-case** (`drag-indicator`, `directions-bus`), que es el formato de la colección Iconify `material-symbols`.
 
-El paquete instalado es `@iconify-json/material-symbols`. También está `@iconify-json/lucide` (solo lo usa `ThemeEditor.vue` con `unplugin-icons`); **la colección por defecto es Material Symbols**: mezclarlas rompe la coherencia visual.
+El paquete instalado es `@iconify-json/material-symbols`, la única colección: mezclar otras rompe la coherencia visual.
 
 ### Variantes de estilo
 

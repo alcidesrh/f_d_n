@@ -1,4 +1,4 @@
-/** "Mi cuenta": datos, foto y contraseña del usuario con sesión (`MiCuentaController`). */
+/** "Mi cuenta": datos, foto, contraseña y apariencia del usuario con sesión (`MiCuentaController`). */
 import { config } from '@/core/config'
 import { HttpError, http, request } from '@/core/http'
 import { useSessionStore } from '@/core/auth/session'
@@ -18,6 +18,11 @@ export interface Cuenta {
   estacion: string | null
   agencia: string | null
   roles: string[]
+  /**
+   * La apariencia guardada en la cuenta (`app/apariencia/ajustes.ts`), tal
+   * como se guardó: quien la lee la normaliza. `null` si nunca se guardó.
+   */
+  apariencia: Record<string, unknown> | null
 }
 
 export type DatosCuenta = Pick<
@@ -35,6 +40,9 @@ export const guardarCuenta = (datos: DatosCuenta) =>
 export const cambiarPassword = (body: { actual: string; password: string }) =>
   http.post<{ ok: true }>('/me/password', body)
 export const quitarFoto = () => http.delete<Cuenta>('/me/foto')
+/** Guarda la apariencia en la cuenta; de fondo (sin barra de carga) y aunque se cierre la página. */
+export const guardarApariencia = (apariencia: object) =>
+  request<{ apariencia: Record<string, unknown> }>('/me/apariencia', { method: 'PUT', body: apariencia, silent: true, keepalive: true })
 
 /** Sube la foto (multipart, campo `foto`). */
 export async function subirFoto(imagen: Blob, nombre: string): Promise<Cuenta> {

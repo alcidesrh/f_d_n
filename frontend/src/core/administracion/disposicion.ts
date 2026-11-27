@@ -6,7 +6,7 @@
  */
 import type { Destino, Enlace, EnlacePayload, Persona, Seccion, SeccionPayload } from './api'
 
-/** Rampas de la paleta (`assets/palette.css`) que puede llevar una caja; espejo de `App\Administracion\Datos::COLORES`. */
+/** Rampas de la paleta (`styles/tema/paleta.css`) que puede llevar una caja; espejo de `App\Administracion\Datos::COLORES`. */
 export const COLORES = ['blue', 'sky', 'cyan', 'teal', 'emerald', 'green', 'lime', 'yellow', 'amber', 'orange', 'red', 'rose', 'pink', 'fuchsia', 'purple', 'violet', 'indigo', 'slate', 'stone'] as const
 
 /** Orden completo para `PUT /orden`. */

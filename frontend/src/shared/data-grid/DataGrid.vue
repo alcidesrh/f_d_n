@@ -249,7 +249,8 @@ const template = computed(() =>
 
 const rootVars = computed(() => ({
   "--dg-cols": template.value.columns,
-  "--dg-row-h": ROW_HEIGHT[props.density],
+  // La densidad de la vista, por el parámetro «Densidad» de la apariencia (styles/tema/apariencia.css).
+  "--dg-row-h": `calc(${ROW_HEIGHT[props.density]} * var(--apariencia-densidad, 1))`,
   "--dg-card-lines": String(Math.max(0, cardColumns.value.length - 1)),
   ...(props.maxHeight ? { "--dg-max-h": props.maxHeight } : {}),
 }));
@@ -289,10 +290,10 @@ useColumnDrag({
 .dg {
   --dg-bg: var(--p-content-background);
   --dg-border: var(--p-content-border-color);
-  --dg-head-bg: var(--bg);
+  --dg-head-bg: var(--bg-panel);
   --dg-hover: color-mix(in srgb, var(--p-surface-500) 7%, var(--dg-bg));
   --dg-selected: color-mix(in srgb, var(--p-primary-color) 11%, var(--dg-bg));
-  --dg-pad-x: 0.75rem;
+  --dg-pad-x: calc(0.75rem * var(--apariencia-densidad, 1));
   position: relative;
   display: flex;
   min-height: 0;
@@ -300,7 +301,7 @@ useColumnDrag({
   font-size: 0.875rem;
 }
 .dg--compact {
-  --dg-pad-x: 0.5rem;
+  --dg-pad-x: calc(0.5rem * var(--apariencia-densidad, 1));
   font-size: 0.8125rem;
 }
 

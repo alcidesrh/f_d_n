@@ -38,11 +38,7 @@ onMounted(() => {
 })
 onBeforeUnmount(() => unwatchViewport())
 
-/** Clases de tema en `<html>` (modo, color primario y superficie) y barra del navegador del color de la cabecera. */
-watchEffect(() => {
-  document.documentElement.className = `${ui.mode} primary-${ui.primary} surface-${ui.surface}`
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', ui.mode === 'dark' ? '#000000' : '#f8fafc')
-})
+// La apariencia (clase del modo, parámetros CSS, preset) la aplica su store: app/apariencia/store.ts.
 </script>
 
 <style scoped>

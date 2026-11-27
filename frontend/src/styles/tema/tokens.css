@@ -1,0 +1,132 @@
+/* ============================= TOKENS DE LA APP =============================
+   Nivel 2 del tema (ver main.css): lo que usan el shell, las utilidades y los
+   componentes propios. Salen de PrimeVue (`--p-*`) y de los parámetros de
+   apariencia (`--apariencia-*`, tema/apariencia.css): con ellos cambian solos.
+   Para colores, las rampas (`--p-surface-*`, `--p-primary-*`, `--p-red-*`…, o
+   sus clases de Tailwind) y los semánticos de PrimeVue (`--p-text-color`,
+   `--p-content-border-color`…) sirven en ambos modos sin `.dark`. */
+
+/* ---- Tailwind ----
+   BREAKPOINTS. Única fuente de verdad (ver docs/frontend/responsive.md).
+   Mobile-first: los estilos base son el móvil y cada breakpoint mejora hacia arriba.
+     base  < 48rem (768px)   Mobile
+     md   ≥ 48rem (768px)    Tablet
+     lg   ≥ 64rem (1024px)   Desktop: sidebars fijos (debajo, drawers)
+     xl   ≥ 80rem (1280px)   Wide desktop
+   Son los de Tailwind; se declaran aquí para que la escala sea explícita.
+   `sm` (40rem) y `2xl` (96rem) siguen existiendo en Tailwind pero no son
+   cortes del layout. En JS: `app/breakpoints.ts` (mismos valores). */
+@theme {
+  --breakpoint-md: 48rem;
+  --breakpoint-lg: 64rem;
+  --breakpoint-xl: 80rem;
+
+  /* Letra secundaria (fechas, rótulos, ayudas): 0.8 de la raíz, 12 px con la
+     de fábrica (15 px), lo mínimo legible en un teléfono. */
+  --text-xs: 0.8rem;
+  --text-xs--line-height: 1.3;
+
+  /* La familia de `font-sans` (y del body) es la del parámetro. */
+  --font-sans: var(--apariencia-fuente);
+}
+
+/* RADIOS. La escala de Tailwind (`rounded-sm`…`rounded-4xl`, o `var(--radius-lg)`
+   en un `<style>`) sigue a «Esquinas», como los de PrimeVue (`--p-border-radius-xs`…`xl`:
+   2, 4, 6, 8 y 12 px, y `--p-content-border-radius`, `rounded-border`). Un radio
+   escrito a mano (`border-radius: 0.6rem`) no la sigue; `rounded-full` y `50%`
+   tampoco, a propósito. `static`: las variables están aunque ninguna clase las use. */
+@theme static {
+  --radius-xs: calc(0.125rem * var(--apariencia-esquinas));
+  --radius-sm: calc(0.25rem * var(--apariencia-esquinas));
+  --radius-md: calc(0.375rem * var(--apariencia-esquinas));
+  --radius-lg: calc(0.5rem * var(--apariencia-esquinas));
+  --radius-xl: calc(0.75rem * var(--apariencia-esquinas));
+  --radius-2xl: calc(1rem * var(--apariencia-esquinas));
+  --radius-3xl: calc(1.5rem * var(--apariencia-esquinas));
+  --radius-4xl: calc(2rem * var(--apariencia-esquinas));
+}
+
+:root {
+  /* ---- Fondos ---- */
+  /* Página y cabecera (`.main`, `.app-header`): el parámetro «Fondo de la página». */
+  --bg-page: var(--apariencia-fondo);
+  /* Paneles sobre la página: sidebars y la cabecera de las tablas. */
+  --bg-panel: var(--p-surface-0);
+  /* Texto del body; con contraste alto, más cerca del extremo (como `--p-text-color`). */
+  --text-body: color-mix(in oklch, var(--p-surface-900) calc(var(--apariencia-contraste) * 100%), var(--p-surface-700));
+
+  /* ---- Estados ----
+     Salen de las rampas del tema, que se invierten en oscuro: el tono medio
+     (500) se queda, el texto (`-ink`, 700) pasa a claro y el fondo suave se
+     mezcla con transparente. Sirven en ambos modos sin `.dark`. */
+  --c-success: var(--p-emerald-500);
+  --c-success-soft: color-mix(in srgb, var(--p-emerald-500) 12%, transparent);
+  --c-success-ink: var(--p-green-700);
+  --c-warning: var(--p-amber-500);
+  --c-warning-soft: color-mix(in srgb, var(--p-amber-500) 14%, transparent);
+  --c-warning-ink: var(--p-amber-700);
+  --c-danger: var(--p-red-500);
+  --c-danger-soft: color-mix(in srgb, var(--p-red-500) 12%, transparent);
+  --c-danger-ink: var(--p-red-700);
+  --c-info: var(--p-blue-500);
+  --c-info-soft: color-mix(in srgb, var(--p-blue-500) 12%, transparent);
+  --c-info-ink: var(--p-blue-700);
+
+  /* ---- Sombras ----
+     Siguen al parámetro «Sombras» (0 = sin sombras). `--shadow`: avisos
+     flotantes y paneles; `--shadow-sm`: tarjetas sobre la página. */
+  --shadow: 4px 0px 10px rgb(0 0 0 / calc(0.19 * var(--apariencia-sombras)));
+  --shadow-sm: 0px 0.5px calc(3px * var(--apariencia-sombras)) 0px color-mix(in srgb, var(--p-surface-300) calc(min(1, var(--apariencia-sombras)) * 100%), transparent);
+
+  /* ---- Movimiento ----
+     `--transition` sigue al parámetro «Animaciones» (0 = sin transiciones). */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --transition: calc(0.3s * var(--apariencia-movimiento));
+  --transition-fast: calc(0.15s * var(--apariencia-movimiento));
+
+  /* ---- Layout ----
+     Espaciado: la escala de Tailwind (`--spacing` = 0.25rem; p-2, gap-4…).
+     Estos tokens son los semánticos del layout; no inventar valores sueltos. */
+  --header-h: 3.5rem;
+  @variant lg {
+    --header-h: 4rem;
+  }
+  --sidebar-width: 250px;
+  --sb-mini: 60px;
+  /* Ancho abierto de cada sidebar (lo escribe `sidebarMotion.ts`
+     sobre su panel). El ancho animado (`--sb-<lado>-w`) está abajo. */
+  --sb-left-open: var(--sidebar-width);
+  --sb-right-open: var(--sidebar-width);
+  /* Margen lateral de página y de superficies grandes (formularios), continuo
+     según el ancho de `.main` (1cqi = 1 % de ese ancho): 1rem hasta 500px y
+     2.5rem desde 1250px. Sin saltos: al abrir o cerrar un sidebar el contenido
+     se acomoda de a poco. */
+  --page-gutter: clamp(1rem, 3cqi, 2.5rem);
+  /* Margen arriba y abajo de la página. El de arriba crece con el lateral
+     (3/4 de él: 1rem en el teléfono, ~1.9rem en pantalla ancha) para separar
+     el contenido de la cabecera. Debajo de `md` el de abajo deja libre el
+     disparador del chat (fijo en la esquina). */
+  --page-top: max(1rem, var(--page-gutter) * 1.75);
+  --page-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  @variant md {
+    --page-bottom: max(var(--page-gutter), 1.5rem);
+  }
+  /* Área táctil mínima de un control (ver utilidad `tap-target`). */
+  --tap-min: 2.75rem;
+}
+
+/* Ancho actual (animado) de cada sidebar. Registradas y SIN herencia a
+   propósito: `sidebarMotion.ts` las anima solo sobre `.sidebar`
+   y `.main`, los únicos que las leen. Una variable heredada animada en
+   `:root` recalculaba el estilo de todo el documento en cada fotograma
+   (animación a tirones). */
+@property --sb-left-w {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 250px;
+}
+@property --sb-right-w {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 250px;
+}

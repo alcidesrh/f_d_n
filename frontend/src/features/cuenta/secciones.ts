@@ -7,7 +7,7 @@ export const SECCIONES = [
   { id: 'perfil', titulo: 'Perfil', icono: 'person-outline', descripcion: 'Su foto y sus datos de contacto.' },
   { id: 'seguridad', titulo: 'Seguridad', icono: 'lock-outline', descripcion: 'La contraseña con la que entra.' },
   { id: 'notificaciones', titulo: 'Notificaciones', icono: 'notifications-outline', descripcion: 'Los avisos del chat y los reportes que recibe.' },
-  { id: 'apariencia', titulo: 'Apariencia', icono: 'palette-outline', descripcion: 'Modo claro u oscuro y colores. Se guarda en este navegador.' },
+  { id: 'apariencia', titulo: 'Apariencia', icono: 'palette-outline', descripcion: 'Modo, colores, esquinas, densidad, tamaño del texto y animaciones. Se guarda en su cuenta.' },
 ] as const
 
 export type SeccionId = (typeof SECCIONES)[number]['id']
