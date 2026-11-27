@@ -420,7 +420,7 @@ final class ListadoBoletos
     /** El alias de la estación («GUA»), o su nombre si no tiene; «?» sin estación. */
     private static function alias(?Enclave $e): string
     {
-        return $e === null ? "?" : (string) $e->getNombreCorto();
+        return $e === null ? "?" : (string) ($e->getAlias() ?: $e->getNombre());
     }
 
     /** @return array{id: int, nombre: string, documento: ?string, email: ?string}|null */

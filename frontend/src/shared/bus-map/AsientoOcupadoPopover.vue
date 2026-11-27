@@ -139,26 +139,19 @@
             Vendido por otro usuario: no tiene acceso al detalle de esa venta.
           </p>
 
-          <div
-            v-if="detalle.auditoria || b.completo"
-            class="aop-speed flex items-center justify-start"
-          >
-            <SpeedDial
-              :model="accionesDe(b)"
-              direction="right"
-              type="linear"
-              :transition-delay="60"
-              :tooltip-options="{ event: 'hover', position: 'top' }"
-              :button-props="{
-                size: 'small',
-                severity: 'secondary',
-                outlined: true,
-                'aria-label': 'Más acciones del boleto',
-              }"
+          <div v-if="detalle.auditoria || b.completo" class="aop-acciones">
+            <Button
+              v-for="a in accionesDe(b)"
+              :key="a.etiqueta"
+              size="small"
+              severity="secondary"
+              outlined
+              :aria-label="a.etiqueta"
+              @click="a.ejecutar()"
             >
-              <template #icon><icon name="more-horiz" /></template>
-              <template #itemicon="{ item }"><icon :name="String(item.icon)" /></template>
-            </SpeedDial>
+              <icon :name="a.icono" />
+              {{ a.etiqueta }}
+            </Button>
           </div>
         </article>
       </template>
@@ -186,7 +179,6 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import type { MenuItem } from 'primevue/menuitem'
 import { notify } from '@/core/notify'
 import { fetchDetalleAsiento } from '@/core/venta/api'
 import { usePermisosBoleto } from '@/core/venta/permisos'
@@ -230,24 +222,43 @@ function verBitacora(boleto: BoletoDeAsiento) {
 const chatDe = ref<BoletoDeAsiento | null>(null)
 const cancelarDe = ref<BoletoACancelar | null>(null)
 
-/** Las acciones de cada boleto, en el desplegable: solo las que aplican. */
-function accionesDe(b: BoletoDeAsiento): MenuItem[] {
-  const items: MenuItem[] = []
+/** Una acción que se muestra como botón sobre el boleto. */
+interface AccionBoleto {
+  etiqueta: string
+  icono: string
+  ejecutar: () => void
+}
+
+/** Las acciones de cada boleto, siempre visibles: solo las que aplican. */
+function accionesDe(b: BoletoDeAsiento): AccionBoleto[] {
+  const items: AccionBoleto[] = []
   if (b.completo && b.operable && permisos.reasignar) {
-    items.push({ label: 'Reasignar', icon: 'swap-horiz', command: () => elegir('reasignar', b) })
+    items.push({
+      etiqueta: 'Reasignar',
+      icono: 'swap-horiz',
+      ejecutar: () => elegir('reasignar', b),
+    })
   }
   if (b.completo && b.operable && permisos.anular) {
-    items.push({ label: 'Anular', icon: 'cancel-outline', command: () => elegir('anular', b) })
+    items.push({ etiqueta: 'Anular', icono: 'cancel-outline', ejecutar: () => elegir('anular', b) })
   }
   if (b.completo) {
-    items.push({ label: 'Imp. factura', icon: 'print-outline', command: () => void imprimir(b) })
-    items.push({ label: 'Chat', icon: 'forum-outline', command: () => abrirChat(b) })
+    items.push({
+      etiqueta: 'Imp. factura',
+      icono: 'print-outline',
+      ejecutar: () => void imprimir(b),
+    })
+    items.push({ etiqueta: 'Chat', icono: 'forum-outline', ejecutar: () => abrirChat(b) })
   }
   if (b.completo && b.operable && permisos.cancelar) {
-    items.push({ label: 'Cancelar', icon: 'person-off-outline', command: () => abrirCancelar(b) })
+    items.push({
+      etiqueta: 'Cancelar',
+      icono: 'person-off-outline',
+      ejecutar: () => abrirCancelar(b),
+    })
   }
   if (detalle.value?.auditoria) {
-    items.push({ label: 'Bitácora', icon: 'history', command: () => verBitacora(b) })
+    items.push({ etiqueta: 'Bitácora', icono: 'history', ejecutar: () => verBitacora(b) })
   }
   return items
 }
@@ -414,13 +425,10 @@ const fechaHora = (iso: string) =>
   padding-top: 0.75rem;
   border-top: 1px dashed var(--p-content-border-color);
 }
-/*
-  Las acciones del SpeedDial se abren a la derecha en su misma fila; con este espacio entre ellas
-  caben las seis en un teléfono angosto. La clase va en el contenedor: SpeedDial tiene varias
-  raíces y su `div` no recibe el `data-v` de este componente, así que el selector con scope no
-  lo alcanzaría.
-*/
-.aop-speed :deep(.p-speeddial-list) {
-  gap: 0.25rem;
+/* Las acciones del boleto, a la vista: los botones pasan a otra línea si no caben. */
+.aop-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
 }
 </style>
