@@ -102,9 +102,9 @@
             <!-- Hasta tener la salida y su ocupación, el esqueleto: ni carrocería vacía ni asientos que se ocupan de golpe. -->
             <div v-if="store.detalle && !store.cargandoDetalle" :key="`salida-${store.salidaId}`" class="flex flex-col gap-5 text-sm">
               <div class="flex items-start justify-center gap-3 overflow-x-auto">
+                <BusMapLegend :items="leyenda" :conteos="conteos" vertical />
                 <BusMap :elementos="store.detalle?.croquis ?? []" :estado="store.estadoAsiento" interactivo inspeccionable tamano="md" class="justify-center" @asiento="(a) => a.id != null && store.alternarAsiento(a.id)" @ocupado="verOcupado" />
                 <AsientoOcupadoPopover ref="detalleAsiento" @anular="(b) => (anular = [b.id])" @reasignar="(b) => void store.iniciarReasignacion([b.id])" />
-                <BusMapLegend :items="leyenda" :conteos="conteos" vertical />
               </div>
               <Divider align="center" class="my-0! before:border-surface-400!" type="dashed">
                 <span class="text-xs font-bold text-surface-500">{{ store.ocupados.length }} / {{ store.asientosCroquis.length }}</span>
@@ -140,8 +140,8 @@
             </div>
             <div v-else key="vacio" class="relative flex flex-col gap-5 tex-sm">
               <div class="flex items-start justify-center gap-3">
-                <CroquisPlaceholder />
                 <BusMapLegend :items="leyenda" vertical class="opacity-40" />
+                <CroquisPlaceholder />
               </div>
               <div v-if="!store.cargandoDetalle" class="absolute inset-0 grid place-items-center p-4">
                 <p class="m-0 flex items-center gap-2 rounded-full bg-surface-0 px-4 py-2 text-center text-sm text-muted-color shadow-md">
@@ -212,7 +212,9 @@
     <Teleport to="body">
       <div class="barra-movil fixed inset-x-0 bottom-0 z-30 flex items-center justify-between gap-3 border-t border-surface-200 bg-surface-0 px-4 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-[0_-2px_8px_rgb(0_0_0/0.06)] md:hidden">
         <div class="flex min-w-0 flex-col leading-tight" aria-live="polite">
-          <span class="text-xs text-muted-color">{{ store.totalAsientos }} {{ store.totalAsientos === 1 ? "asiento" : "asientos" }}<template v-if="store.variasSalidas"> · {{ store.grupos.length }} salidas</template></span>
+          <span class="text-xs text-muted-color"
+            >{{ store.totalAsientos }} {{ store.totalAsientos === 1 ? "asiento" : "asientos" }}<template v-if="store.variasSalidas"> · {{ store.grupos.length }} salidas</template></span
+          >
           <span class="truncate text-lg font-semibold tabular-nums">{{ store.total?.texto ?? "—" }}</span>
         </div>
         <div class="flex shrink-0 gap-2">
@@ -404,9 +406,7 @@ const pasajerosPorSalida = computed(() =>
       ruta: g.ruta,
       fecha: fechaCorta(g.fecha),
       empresa: g.empresa,
-      lineas: g.asientos
-        .map((asiento) => ({ asiento, numero: g.numeros[asiento] ?? asiento, precio: precios.get(asiento) ?? "—", pasajero: g.pasajeros[asiento] ?? null }))
-        .sort((a, b) => a.numero - b.numero),
+      lineas: g.asientos.map((asiento) => ({ asiento, numero: g.numeros[asiento] ?? asiento, precio: precios.get(asiento) ?? "—", pasajero: g.pasajeros[asiento] ?? null })).sort((a, b) => a.numero - b.numero),
     };
   }),
 );
@@ -537,7 +537,6 @@ const consecuenciaFallo = computed(() => {
   if (!vendidas) return undefined;
   return `${vendidas === 1 ? "La venta anterior sí quedó registrada" : `Las ${vendidas} ventas anteriores sí quedaron registradas`}; esta no, y sus asientos siguen libres.`;
 });
-
 </script>
 
 <style scoped>
