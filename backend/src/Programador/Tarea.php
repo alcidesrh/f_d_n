@@ -11,6 +11,7 @@ use App\Chat\Predeterminado\Tarea\RevisarAnomalias;
 use App\Chat\Tarea\PurgarArchivosChat;
 use App\Mantenimiento\Tarea\RevisarMantenimiento;
 use App\Reporte\Diario\EnviarReportesDiarios;
+use App\Salida\Cierre\CerrarSalidas;
 use App\Salida\Horizonte\ExtenderHorizontes;
 use App\Seguimiento\Tarea\PurgarLecturasGps;
 use App\Sincronizacion\BarrerSalidasLegado;
@@ -52,6 +53,7 @@ enum Tarea: string
     case BITACORA_DIARIA = 'bitacora_diaria';
     case MANTENIMIENTO_FLOTA = 'mantenimiento_flota';
     case VIGILAR_AFECTACIONES = 'vigilar_afectaciones';
+    case CERRAR_SALIDAS = 'cerrar_salidas';
 
     public const COLA_TAREAS = 'tareas';
     public const COLA_PESADAS = 'pesadas';
@@ -74,6 +76,7 @@ enum Tarea: string
             self::BITACORA_DIARIA => 'Bitácora diaria: particiones, resumen del día anterior y retención',
             self::MANTENIMIENTO_FLOTA => 'Sumar al odómetro lo recorrido por GPS y avisar el mantenimiento que vence',
             self::VIGILAR_AFECTACIONES => 'Vigilar las afectaciones abiertas: primer aviso, escalamiento y recordatorios',
+            self::CERRAR_SALIDAS => 'Iniciar y finalizar por la hora las salidas que nadie marcó',
         };
     }
 
@@ -82,7 +85,7 @@ enum Tarea: string
     {
         return match ($this) {
             self::PURGAR_VENTA, self::SINCRONIZAR_LEGADO, self::REFRESCAR_TABLERO, self::VIGILAR_AFECTACIONES => '1 minute',
-            self::MENSAJES_PREDETERMINADOS => '5 minutes',
+            self::MENSAJES_PREDETERMINADOS, self::CERRAR_SALIDAS => '5 minutes',
             // Cada hora: la hora del resumen es configurable (`ConfiguracionBitacora::horaResumen`).
             self::BITACORA_DIARIA => '1 hour',
             self::CERTIFICAR_PENDIENTES => '10 minutes',
@@ -127,7 +130,7 @@ enum Tarea: string
     {
         return match ($this) {
             self::PURGAR_VENTA, self::SINCRONIZAR_LEGADO, self::REFRESCAR_TABLERO, self::VIGILAR_AFECTACIONES => '15 minutes',
-            self::CERTIFICAR_PENDIENTES, self::MENSAJES_PREDETERMINADOS => '1 hour',
+            self::CERTIFICAR_PENDIENTES, self::MENSAJES_PREDETERMINADOS, self::CERRAR_SALIDAS => '1 hour',
             self::VIGILAR_OPERACION, self::BARRER_SALIDAS_LEGADO => '2 hours',
             self::BITACORA_DIARIA => '3 hours',
             self::HORIZONTE_SALIDAS, self::REPORTES_DIARIOS, self::PURGAR_ARCHIVOS_CHAT, self::REVISAR_ANOMALIAS, self::PURGAR_LECTURAS_GPS, self::MANTENIMIENTO_FLOTA => '26 hours',
@@ -152,6 +155,7 @@ enum Tarea: string
             self::BITACORA_DIARIA => new MantenerBitacora(),
             self::MANTENIMIENTO_FLOTA => new RevisarMantenimiento(),
             self::VIGILAR_AFECTACIONES => new VigilarAfectaciones(),
+            self::CERRAR_SALIDAS => new CerrarSalidas(),
         };
     }
 }

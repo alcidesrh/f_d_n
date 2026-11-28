@@ -106,6 +106,21 @@ Un trabajo de taller hecho a un bus: fecha, odómetro, costo y taller. Con plan,
 _Avoid_: orden de trabajo, ticket, servicio
 Modelo: nuevo (ADR-065)
 
+**Precio de combustible** (`PrecioCombustible`):
+Lo que cuesta un galón de un tipo de combustible en el mercado nacional en un día. Lo carga quien tiene `combustible.precios`. Una salida usa el de su día o, si no hay, el último anterior.
+_Avoid_: precio del día (ambiguo), tarifa de combustible, gasolina (es un tipo)
+Modelo: nuevo (`App\Entity\PrecioCombustible`, ADR-073)
+
+**Rendimiento** (`Bus.rendimientoKmGal`):
+Kilómetros que recorre un bus con un galón de su combustible. Mientras no se mida, 5 km/gal.
+_Avoid_: consumo (se mide en litros por km), eficiencia
+Modelo: nuevo (ADR-073)
+
+**Costo de combustible** (de una salida):
+Lo que gasta una salida en combustible: los km de su ruta entre el rendimiento de su bus, por el precio del galón de su día. Solo combustible: sin pilotos, peajes ni mantenimiento.
+_Avoid_: costo de la salida (sugiere que incluye todo), gasto
+Modelo: concepto (`App\Combustible\CostoSalida`, ADR-073)
+
 ## Logística
 
 **Tipo de afectación** (`TipoAfectacion`):

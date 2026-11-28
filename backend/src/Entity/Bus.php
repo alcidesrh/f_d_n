@@ -6,6 +6,7 @@ use App\Acceso\Recurso;
 use ApiPlatform\Metadata\ApiProperty;
 use App\Attribute\ApiResourcePaginationPage;
 use App\Entity\Base\Base;
+use App\Entity\Enum\TipoCombustible;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -141,11 +142,50 @@ class Bus extends Base
     #[ORM\Column(type: "datetimetz_immutable", nullable: true)]
     private ?\DateTimeImmutable $odometroAl = null;
 
+    /**
+     * Kilómetros por galón que rinde el bus (ADR-073). Mientras no se mida, 5
+     * km/gal: el costo de combustible de sus salidas se calcula con este valor.
+     */
+    #[Assert\NotNull(message: "Indique el rendimiento del bus.")]
+    #[Assert\Type("numeric", message: "El rendimiento debe ser un número.")]
+    #[Assert\Positive(message: "El rendimiento debe ser mayor que cero.")]
+    #[ORM\Column(type: "decimal", precision: 6, scale: 2, options: ["default" => "5.00"])]
+    private string $rendimientoKmGal = "5.00";
+
+    /** Qué combustible usa: decide el precio con que se costea su salida. */
+    #[ORM\Column(type: "string", length: 20, enumType: TipoCombustible::class, options: ["default" => "diesel"])]
+    private TipoCombustible $combustible = TipoCombustible::DIESEL;
+
     public function __construct()
     {
         $this->asientos = new ArrayCollection();
         $this->senales = new ArrayCollection();
     }
+    /** Kilómetros por galón, como lo guarda la base (`5.00`). */
+    public function getRendimientoKmGal(): string
+    {
+        return $this->rendimientoKmGal;
+    }
+
+    public function setRendimientoKmGal(string $rendimientoKmGal): static
+    {
+        $this->rendimientoKmGal = $rendimientoKmGal;
+
+        return $this;
+    }
+
+    public function getCombustible(): TipoCombustible
+    {
+        return $this->combustible;
+    }
+
+    public function setCombustible(TipoCombustible $combustible): static
+    {
+        $this->combustible = $combustible;
+
+        return $this;
+    }
+
     #[Override]
     public function getLabel(): string
     {

@@ -87,6 +87,8 @@ enum Capacidad: string
     case INVENTARIO_AJUSTAR = 'inventario.ajustar';
     case INVENTARIO_ARTICULOS = 'inventario.articulos';
 
+    case COMBUSTIBLE_PRECIOS = 'combustible.precios';
+
     public function nombre(): string
     {
         return match ($this) {
@@ -143,6 +145,7 @@ enum Capacidad: string
             self::INVENTARIO_MOVER => 'Registrar entradas, salidas, envíos y recepciones en los almacenes',
             self::INVENTARIO_AJUSTAR => 'Contar y ajustar las existencias de los almacenes',
             self::INVENTARIO_ARTICULOS => 'Mantener los artículos, los almacenes y sus mínimos',
+            self::COMBUSTIBLE_PRECIOS => 'Registrar el precio del combustible del día (costo de las salidas)',
         };
     }
 
@@ -163,6 +166,7 @@ enum Capacidad: string
             'chat' => 'Chat',
             'correo' => 'Correo',
             'afectacion', 'inventario' => 'Logística',
+            'combustible' => 'Flota',
             default => 'Sistema',
         };
     }

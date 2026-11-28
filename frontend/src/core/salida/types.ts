@@ -219,6 +219,23 @@ export interface ResumenSalida {
   ingresos: Importe | null
 }
 
+/** Costo de combustible de una salida (ADR-073): solo combustible, en quetzales por galón. */
+export interface CostoCombustible {
+  kilometros: number | null
+  rendimientoKmGal: number | null
+  galones: number | null
+  precioGalon: number | null
+  /** Día del precio que se usó (`AAAA-MM-DD`). */
+  precioFecha: string | null
+  /** El precio es de otro día: el último anterior al de la salida. */
+  precioEstimado: boolean
+  moneda: string
+  costo: number | null
+  combustible: 'diesel' | 'regular' | 'superior' | null
+  /** Por qué no hay costo: sin bus, la ruta sin km o sin precio. */
+  motivo: 'sin_bus' | 'ruta_sin_km' | 'sin_precio' | null
+}
+
 /** `GET /gestion-salidas/{id}/detalle`: lo que muestra "Ver". */
 export interface DetalleSalida {
   id: number
@@ -237,6 +254,7 @@ export interface DetalleSalida {
   creadaPor: string | null
   creadaEn: string | null
   resumen: ResumenSalida
+  costoCombustible: CostoCombustible
 }
 
 /** Una salida en el calendario (`GET /gestion-salidas/calendario`): compacta, con ids en lugar de objetos. */

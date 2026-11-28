@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Salida;
 
+use App\Combustible\CostoSalida;
 use App\Entity\Salida;
 use App\Salida\Manifiesto\Manifiesto;
 use App\Salida\Manifiesto\ManifiestoSalida;
@@ -23,6 +24,7 @@ final class DetalleSalida
         private readonly ConsultaVenta $consulta,
         private readonly Itinerarios $itinerarios,
         private readonly ManifiestoSalida $manifiestos,
+        private readonly CostoSalida $combustible,
     ) {}
 
     /** @return array<string, mixed> */
@@ -42,6 +44,7 @@ final class DetalleSalida
             "creadaPor" => self::quien($salida->getCreatedBy()),
             "creadaEn" => $salida->getCreatedAt()?->format(DATE_ATOM),
             "resumen" => self::resumen($detalle["croquis"], $ocupados, $manifiesto),
+            "costoCombustible" => $this->combustible->de($salida),
         ];
     }
 

@@ -54,6 +54,12 @@
             <div class="!p-3"><div class="text-xs text-muted-color">Boletos vigentes</div><div class="text-lg font-semibold tabular-nums">{{ totalBoletos }}</div></div>
           </div>
 
+          <div class="!p-3">
+            <div class="text-xs text-muted-color">Combustible</div>
+            <div class="text-lg font-semibold tabular-nums">{{ textoCombustible.principal }}</div>
+            <div class="text-xs text-muted-color">{{ textoCombustible.detalle }}</div>
+          </div>
+
           <div class="flex flex-col gap-1">
             <span class="text-sm font-medium">Por clase</span>
             <table class="w-full text-sm">
@@ -132,6 +138,23 @@ const conteos = computed(() => conteosPorEstado(detalle.value?.croquis ?? [], es
 const libres = computed(() => Math.max(0, resumen.value.asientos - resumen.value.vendidos - resumen.value.reservados))
 const porcentaje = computed(() => (resumen.value.asientos ? Math.round(((resumen.value.vendidos + resumen.value.reservados) / resumen.value.asientos) * 100) : 0))
 const totalBoletos = computed(() => Object.values(resumen.value.boletosPorEstado).reduce<number>((a, n) => a + (n ?? 0), 0))
+
+/** Por qué una salida no tiene costo de combustible (ADR-073). */
+const MOTIVO_COMBUSTIBLE: Record<string, string> = {
+  sin_bus: 'La salida no tiene bus: no hay rendimiento con que calcularlo.',
+  ruta_sin_km: 'La ruta no tiene kilómetros calculados.',
+  sin_precio: 'Falta el precio del combustible de ese día.',
+}
+const quetzales = (n: number) => `Q ${n.toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+const textoCombustible = computed(() => {
+  const c = detalle.value!.costoCombustible
+  if (c.costo === null) return { principal: 'Sin costo', detalle: MOTIVO_COMBUSTIBLE[c.motivo ?? ''] ?? '' }
+  const dia = c.precioEstimado && c.precioFecha ? ` · precio del ${c.precioFecha.split('-').reverse().join('/')}` : ''
+  return {
+    principal: quetzales(c.costo),
+    detalle: `${c.kilometros} km · ${c.galones} gal a ${quetzales(c.precioGalon!)}/gal${dia}`,
+  }
+})
 const canales = computed(() => {
   const c = resumen.value.canales
   return [
